@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.1.2.6 2002/04/01 07:45:14 nathanw Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.1.2.7 2002/04/17 00:05:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.1.2.6 2002/04/01 07:45:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.1.2.7 2002/04/17 00:05:28 nathanw Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.1.2.6 2002/04/01 07:45:14 nathanw Exp $";
+    "$NetBSD: hpcfb.c,v 1.1.2.7 2002/04/17 00:05:28 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,14 +460,25 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
-	if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
+	switch (ri->ri_depth) {
+	case 8:
+		if (32 <= fbconf->hf_pack_width &&
+		    (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) &&
+		    (fbconf->hf_order_flags & HPCFB_REVORDER_WORD)) {
+			ri->ri_flg |= RI_BSWAP;
+		}
+		break;
+	default:
+		if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
 #if BYTE_ORDER == BIG_ENDIAN
-		ri->ri_flg |= RI_BSWAP;
+			ri->ri_flg |= RI_BSWAP;
 #endif
-	} else {
+		} else {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		ri->ri_flg |= RI_BSWAP;
+			ri->ri_flg |= RI_BSWAP;
 #endif
+		}
+		break;
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {

@@ -1,49 +1,41 @@
-/*
- *   Copyright (c) 1998,1999 Martin Husemann. All rights reserved.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
- *   are met:
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of the author nor the names of any co-contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *   4. Altered versions must be plainly marked as such, and must not be
- *      misrepresented as being the original software and/or documentation.
- *   
- *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *   SUCH DAMAGE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- *---------------------------------------------------------------------------
- *
- *	isic_pci.c - pci bus frontend for i4b_isic driver
- *	----------------------------------------------------
- *
- *	$Id: isic_pci.c,v 1.2.2.5 2002/04/01 07:46:29 nathanw Exp $ 
- *
- *      last edit-date: [Fri Jan  5 11:38:58 2001]
- *
- *	-mh	original implementation
- *	-mh	added support for Fritz! PCI card
- *
- *---------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.5 2002/04/01 07:46:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.6 2002/04/17 00:06:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -296,10 +288,8 @@ isic_pci_isdn_attach(psc, pa, cardname)
 	psc->sc_pc = pc;
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/* ISAC setup */
-	
-	isic_isac_init(sc);
-
+	sc->sc_intr_valid = ISIC_INTR_DISABLED;
+ 
 	/* HSCX setup */
 
 	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
@@ -334,7 +324,6 @@ isic_pci_isdn_attach(psc, pa, cardname)
 #endif
 	
 	/* init higher protocol layers */
-
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
 
@@ -368,7 +357,7 @@ isic_pci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isic_detach_bri(&psc->sc_isic);
 		break;
 	}

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.13.2.2 2002/02/28 04:12:57 nathanw Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.13.2.3 2002/04/17 00:05:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,13 +51,11 @@
 #include <compat/linux/arch/mips/linux_signal.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_signal.h>
-#else
-#error Undefined linux_signal.h machine type.
 #endif
 
 #ifdef _KERNEL
-extern const int native_to_linux_sig[];
-extern const int linux_to_native_sig[];
+extern const int native_to_linux_signo[];
+extern const int linux_to_native_signo[];
 __BEGIN_DECLS
 int linux_sigprocmask1 __P((struct proc *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *));

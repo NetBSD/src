@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.5 2002/04/01 07:40:50 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.6 2002/04/17 00:03:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1959,6 +1959,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB190, "PowerBook", " 190 ", MACH_CLASSPB, &romvecs[8]},
+	{MACH_MACPB190CS, "PowerBook", " 190cs ", MACH_CLASSPB, &romvecs[8]},
 	{MACH_MACPB500, "PowerBook", " 500 ", MACH_CLASSPB, &romvecs[8]},
 
 /* The Duos */
@@ -2016,6 +2017,7 @@ struct intvid_info_t {
 	{ MACH_MACPB165C,	0xfc040000,	0x0,		512 * 1024 },
 	{ MACH_MACPB180C,	0xfc040000,	0x0,		512 * 1024 },
 	{ MACH_MACPB190,	0x60000000,	0x0,		512 * 1024 },
+	{ MACH_MACPB190CS,	0x60000000,	0x0,		512 * 1024 },
 	{ MACH_MACPB500,	0x60000000,	0x0,		512 * 1024 },
 	{ MACH_MACLCIII,	0x60b00000,	0x0,		768 * 1024 },
 	{ MACH_MACLC520,	0x60000000,	0x0,		1024 * 1024 },

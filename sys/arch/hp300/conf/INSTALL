@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.2.2.3 2002/04/01 07:39:49 nathanw Exp $
+# $NetBSD: INSTALL,v 1.2.2.4 2002/04/17 00:02:59 nathanw Exp $
 #
 # INSTALL machine description file
 #
@@ -16,6 +16,7 @@ options 	NMBCLUSTERS=64
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
 options 	VNODE_OP_NOINLINE
+#options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Support for various CPU types

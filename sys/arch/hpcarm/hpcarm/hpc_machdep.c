@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.20.2.4 2002/04/01 07:40:19 nathanw Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.20.2.5 2002/04/17 00:03:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,7 +48,6 @@
  * hpc_machdep.c 
  */
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -83,6 +82,7 @@
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bootinfo.h>
+#include <arm/cpuconf.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/platid.h>
@@ -287,7 +287,6 @@ initarm(argc, argv, bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
-	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 #ifdef DDB
@@ -422,9 +421,9 @@ initarm(argc, argv, bi)
 	freemempos += (np) * NBPG;
 
 
-	valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
+	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		alloc_pages(kernel_pt_table[loop].pv_pa, PT_SIZE / NBPG);
+		alloc_pages(kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE / NBPG);
 		kernel_pt_table[loop].pv_va = kernel_pt_table[loop].pv_pa;
 	}
 
@@ -436,7 +435,7 @@ initarm(argc, argv, bi)
 	valloc_pages(systempage, 1);
 
 	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, PT_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -553,7 +552,7 @@ initarm(argc, argv, bi)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -591,11 +590,8 @@ initarm(argc, argv, bi)
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 
-	/*
-	 * Map the system page in the kernel page table for the bottom 1Meg
-	 * of the virtual memory map.
-	 */
-	pmap_map_entry(l1pagetable, 0x0000000, systempage.pv_pa,
+	/* Map the vector page. */
+	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map any I/O modules here, as we don't have real bus_space_map() */
@@ -614,9 +610,6 @@ initarm(argc, argv, bi)
 	 */
 
 	printf("done.\n");
-
-	/* Right set up the vectors at the bottom of page 0 */
-	memcpy((char *)systempage.pv_va, page0, page0_end - page0);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -665,6 +658,8 @@ initarm(argc, argv, bi)
 #endif
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
+
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
 	consinit();
 
@@ -774,7 +769,8 @@ rpc_sa110_cc_setup(void)
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
 		pte = vtopte(sa110_cc_base + loop);
-		*pte = L2_PTE(kaddr, AP_KR);
+		*pte = L2_S_PROTO | kaddr |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	}
 	sa110_cache_clean_addr = sa110_cc_base;
 	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;

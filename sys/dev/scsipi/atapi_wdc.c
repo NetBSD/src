@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.39.2.5 2002/02/28 04:14:21 nathanw Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.39.2.6 2002/04/17 00:06:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.39.2.5 2002/02/28 04:14:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.39.2.6 2002/04/17 00:06:11 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -120,7 +120,6 @@ wdc_atapibus_attach(chp)
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &wdc->sc_dev;
 	adapt->adapt_nchannels = wdc->nchannels;
 	adapt->adapt_request = wdc_atapi_scsipi_request;
@@ -411,7 +410,7 @@ wdc_atapi_start(chp, xfer)
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->ch_callout, sc_xfer->timeout * hz / 1000,
+		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
 		    wdctimeout, chp);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
@@ -936,7 +935,7 @@ wdc_atapi_phase_complete(xfer)
 			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
 				/* 10ms not enouth, try again in 1 tick */
 				if (xfer->c_dscpoll++ > 
-				    sc_xfer->timeout * hz / 1000) {
+				    mstohz(sc_xfer->timeout)) {
 					printf("%s:%d:%d: wait_for_dsc "
 					    "failed\n",
 					    chp->wdc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.26.8.3 2002/02/28 04:12:22 nathanw Exp $
+#	$NetBSD: KGDB,v 1.26.8.4 2002/04/17 00:04:34 nathanw Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -24,6 +24,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

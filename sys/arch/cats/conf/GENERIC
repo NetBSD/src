@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.2.4 2002/04/01 07:39:39 nathanw Exp $
+# $NetBSD: GENERIC,v 1.11.2.5 2002/04/17 00:02:51 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -37,9 +37,6 @@ options 	NTP		# NTP phase/frequency locked loop
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-
-# Architecture options
-options 	FOOTBRIDGE	# We have DC21285 'Footbridge' core logic
 
 # FPA options
 
@@ -122,7 +119,7 @@ options 	SYSVSHM		# System V-like memory sharing
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -137,6 +134,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # wscons options
@@ -401,10 +399,8 @@ isapnp0	at isa?
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms?
-wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?

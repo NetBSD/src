@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.1.2.3 2002/04/01 07:45:27 nathanw Exp $ 
+ *	$Id: isic.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.1.2.3 2002/04/01 07:45:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -63,11 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.1.2.3 2002/04/01 07:45:27 nathanw Exp $")
 
 isdn_link_t *isic_ret_linktab(void*, int channel);
 void isic_set_link(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
-void n_connect_request(u_int cdid);
-void n_connect_response(u_int cdid, int response, int cause);
-void n_disconnect_request(u_int cdid, int cause);
-void n_alert_request(u_int cdid);
-void n_mgmt_command(int bri, int cmd, void *parm);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
 const struct isdn_l3_driver_functions
 isic_l3_driver = {
@@ -90,8 +90,15 @@ isicintr(void *arg)
 {
 	struct isic_softc *sc = arg;
 
-	if (sc->sc_dying)
+	/* could this be an interrupt for us? */
+	if (sc->sc_intr_valid != ISIC_INTR_VALID) {
+		/* just in case - clear it, or we might never get interrupted
+		 * again */
+		if (sc->sc_intr_valid == ISIC_INTR_DISABLED &&
+		    sc->clearirq)
+			sc->clearirq(sc);
 		return 0;
+	}
 
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
@@ -135,8 +142,8 @@ isicintr(void *arg)
 	
 			if(isac_irq_stat)
 			{
-				if (isic_isac_irq(sc, isac_irq_stat)) /* isac handler */
-					break;	/* bad IRQ */
+				/* isac handler */
+				isic_isac_irq(sc, isac_irq_stat);
 				was_isac_irq = 1;
 			}
 		}
@@ -196,8 +203,7 @@ isicintr(void *arg)
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
 				/* force ISAC interrupt handling */
-				if (isic_isac_irq(sc, ISAC_ISTA_EXI))
-					break;	/* bad IRQ */
+				isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
 	
@@ -225,6 +231,7 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 	sc->sc_l2.l1_token = sc;
 	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	isdn_bri_ready(drv->bri);
 	return 1;
 }
 

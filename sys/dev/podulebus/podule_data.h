@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.4.8.2 2002/04/01 07:47:00 nathanw Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.4.8.3 2002/04/17 00:06:10 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.7 2002/03/09 13:44:09 bjh21 Exp 
+ *	NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp 
  */
 
 /*
@@ -42,7 +42,7 @@ static struct podule_description podules_acorn[] = {
 	{ PODULE_ACORN_ETHER3XXX,	"Ether3 (NOROM)" },
 	{ PODULE_ACORN_SCSI,	"SCSI 1 interface" },
 	{ PODULE_ACORN_ETHER1,	"ether 1 interface" },
-	{ PODULE_ACORN_RAMROM,	"RAM/ROM podule" },
+	{ PODULE_ACORN_ROMRAM,	"ROM/RAM podule" },
 	{ PODULE_ACORN_BBCIO,	"BBC IO interface" },
 	{ PODULE_ACORN_ST506,	"ST506 HD interface" },
 	{ PODULE_ACORN_MIDI,	"MIDI interface" },
@@ -61,6 +61,7 @@ static struct podule_description podules_watford[] = {
 };
 
 static struct podule_description podules_cconcepts[] = {
+	{ PODULE_CCONCEPTS_ROMRAM,	"ROM/RAM podule" },
 	{ PODULE_CCONCEPTS_LASERDIRECT,	"laser direct (Canon LBP-4)" },
 	{ 0x0000, NULL }
 };

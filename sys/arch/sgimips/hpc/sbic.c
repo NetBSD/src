@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.3.2.4 2002/04/01 07:42:23 nathanw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.3.2.5 2002/04/17 00:04:18 nathanw Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -81,9 +81,6 @@
  * Convenience macro for waiting for a particular wd33c93 event
  */
 #define SBIC_WAIT(regs, until, timeo) wd33c93_wait(regs, until, timeo, __LINE__)
-
-/* Convert SCSI timeout from millisecs to hz avoiding overflow */
-#define SCSI_TIMEOUT(t)	((t)>1000000 ? ((t)/1000)*hz : ((t)*hz)/1000)
 
 void	wd33c93_init __P((struct wd33c93_softc *));
 void	wd33c93_reset __P((struct wd33c93_softc *));
@@ -838,7 +835,7 @@ wd33c93_abort(dev, acb, where)
 	 */
 	if (dev->sc_nexus == acb) {
 		/* Reschedule timeout. */
-		callout_reset(&acb->xs->xs_callout, SCSI_TIMEOUT(acb->timeout),
+		callout_reset(&acb->xs->xs_callout, mstohz(acb->timeout),
 		    wd33c93_timeout, acb);
 
 		while (asr & SBIC_ASR_DBR) {
@@ -922,7 +919,7 @@ wd33c93_selectbus(dev, acb)
 	SBIC_DEBUG(PHASE, ("wd33c93_selectbus %d: ", target));
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&xs->xs_callout, SCSI_TIMEOUT(acb->timeout),
+		callout_reset(&xs->xs_callout, mstohz(acb->timeout),
 		    wd33c93_timeout, acb);
 
 	/*

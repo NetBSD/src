@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.4 2002/04/01 07:42:02 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.5 2002/04/17 00:04:11 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -883,6 +883,11 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		ppc4xx_tlb_enter(pm->pm_ctx, va, tte);
 	}
 	splx(s);
+
+	/* Flush the real memory from the instruction cache. */
+	if ((prot & VM_PROT_EXECUTE) && (tte & TTE_I) == 0)
+		__syncicache((void *)pa, PAGE_SIZE);
+
 	return 0;
 }
 

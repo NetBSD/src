@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.8 2002/02/28 04:14:44 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.9 2002/04/17 00:06:17 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.8 2002/02/28 04:14:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.9 2002/04/17 00:06:17 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -162,7 +162,6 @@ const struct emul emul_netbsd = {
  */
 struct lock exec_lock;
  
-static const struct emul * emul_search(const char *);
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
@@ -813,8 +812,9 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 #ifdef LKM
 /*
  * Find an emulation of given name in list of emulations.
+ * Needs to be called with the exec_lock held.
  */
-static const struct emul *
+const struct emul *
 emul_search(const char *name)
 {
 	struct emul_entry *it;

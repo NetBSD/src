@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.29.2.4 2002/04/01 07:42:58 nathanw Exp $
+# 	$NetBSD: NONPLUS,v 1.29.2.5 2002/04/17 00:04:29 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -54,6 +54,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol

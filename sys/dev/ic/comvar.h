@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.39.2.2 2001/09/21 22:35:35 nathanw Exp $	*/
+/*	$NetBSD: comvar.h,v 1.39.2.3 2002/04/17 00:05:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,6 +63,7 @@ int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 #define	COM_HW_TXFIFO_DISABLE	0x100
+#define	COM_HW_NO_TXPRELOAD	0x200
 
 /* Buffer size for character buffer */
 #define	COM_RING_SIZE	2048

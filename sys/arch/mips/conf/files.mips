@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.32.2.4 2002/04/01 07:40:56 nathanw Exp $
+#	$NetBSD: files.mips,v 1.32.2.5 2002/04/17 00:03:45 nathanw Exp $
 #
 
 defflag	opt_cputype.h		NOFPU	# and the rest...
@@ -26,7 +26,6 @@ file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/cpu_exec.c
 file	arch/mips/mips/kgdb_machdep.c		kgdb
 file	arch/mips/mips/mem.c
-file	arch/mips/mips/mips_mcclock.c		mcclock	# CPU speed via mcclock
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/syscall.c		# syscalls
 file	arch/mips/mips/trap.c			# interrupt, trap handlers

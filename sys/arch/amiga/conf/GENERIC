@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162.6.4 2002/04/01 07:38:54 nathanw Exp $
+# $NetBSD: GENERIC,v 1.162.6.5 2002/04/17 00:02:14 nathanw Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.162.6.4 $"
+#ident 		"GENERIC-$Revision: 1.162.6.5 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -184,6 +184,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 #endif
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USERCONF	# userconf(4) support
 #ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

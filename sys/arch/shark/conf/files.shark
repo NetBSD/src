@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.2.2.2 2002/02/28 04:11:40 nathanw Exp $
+#	$NetBSD: files.shark,v 1.2.2.3 2002/04/17 00:04:20 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -17,9 +17,6 @@ defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
 defflag	COMPAT_OLD_BOOTLOADER
-
-# Architectures and core logic
-defflag	NETWINDER
 
 define todservice {}
 

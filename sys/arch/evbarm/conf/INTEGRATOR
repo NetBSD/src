@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.3.4.4 2002/04/01 07:39:43 nathanw Exp $
+#	$NetBSD: INTEGRATOR,v 1.3.4.5 2002/04/17 00:02:54 nathanw Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -102,7 +102,7 @@ options 	COMPAT_15	# NetBSD 1.5 compatibility.
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=4000	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=4000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -118,6 +118,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to
 					# configure PCI devices
 options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
 options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -205,8 +206,6 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 #wskbd*		at pckbd? console ?
 #pms*		at pckbc?
 #wsmouse*	at pms? mux 0
-#pmsi*		at pckbc?
-#wsmouse*	at pmsi? mux 0
 
 #vga*		at pci? dev ? function ?
 #wsdisplay*	at vga? console ?

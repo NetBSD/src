@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.33.8.3 2002/02/28 04:08:24 nathanw Exp $
+# $NetBSD: BOOTX,v 1.33.8.4 2002/04/17 00:02:39 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -125,7 +125,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- #ATAPI bus support
+ # ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices

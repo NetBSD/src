@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.8.4.2 2001/08/24 00:12:53 nathanw Exp $	*/
+/*	$NetBSD: key_var.h,v 1.8.4.3 2002/04/17 00:06:28 nathanw Exp $	*/
 /*	$KAME: key_var.h,v 1.8 2000/05/24 17:28:23 itojun Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 }
 
 #define KEYCTL_VARS { \
-	0, \
 	0, \
 	0, \
 	&key_spi_trycnt, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.7 2002/04/01 07:44:10 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.8 2002/04/17 00:04:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.7 2002/04/01 07:44:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.8 2002/04/17 00:04:57 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -134,12 +134,44 @@ linux_setregs(l, epp, stack)
 	u_long stack;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf;
 
-	setregs(l, epp, stack);
-	if (i386_use_fxsave)
+#if NNPX > 0
+	/* If we were using the FPU, forget about it. */
+	if (npxproc == l)
+		npxdrop();
+#endif
+
+#ifdef USER_LDT
+	pmap_ldt_cleanup(l);
+#endif
+
+	l->l_md.md_flags &= ~MDP_USEDFPU;
+	pcb->pcb_flags = 0;
+
+	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;
-	else
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
+
+	tf = l->l_md.md_regs;
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_edi = 0;
+	tf->tf_esi = 0;
+	tf->tf_ebp = 0;
+	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_edx = 0;
+	tf->tf_ecx = 0;
+	tf->tf_eax = 0;
+	tf->tf_eip = epp->ep_entry;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags = PSL_USERSET;
+	tf->tf_esp = stack;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 /*
@@ -182,7 +214,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
-	frame.sf_sig = native_to_linux_sig[sig];
+	frame.sf_sig = native_to_linux_signo[sig];
 
 	/* Save register context. */
 #ifdef VM86
@@ -234,6 +266,8 @@ linux_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
@@ -313,7 +347,8 @@ linux_sys_sigreturn(l, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
@@ -451,6 +486,8 @@ linux_write_ldt(l, uap, retval)
 		sd.sd_gran = ldt_info.limit_in_pages;
 		if (!oldmode)
 			sd.sd_xx = ldt_info.useable;
+		else
+			sd.sd_xx = 0;
 	}
 	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
@@ -741,9 +778,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = native_to_linux_sig[lvt.relsig];
-		lvt.acqsig = native_to_linux_sig[lvt.acqsig];
-		lvt.frsig = native_to_linux_sig[lvt.frsig];
+		lvt.relsig = native_to_linux_signo[lvt.relsig];
+		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
+		lvt.frsig = native_to_linux_signo[lvt.frsig];
 		return copyout((caddr_t)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
 	case LINUX_VT_SETMODE:
@@ -751,9 +788,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = linux_to_native_sig[lvt.relsig];
-		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
-		lvt.frsig = linux_to_native_sig[lvt.frsig];
+		lvt.relsig = linux_to_native_signo[lvt.relsig];
+		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
+		lvt.frsig = linux_to_native_signo[lvt.frsig];
 		sg = stackgap_init(p, 0);
 		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))

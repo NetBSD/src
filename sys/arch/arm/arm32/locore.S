@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.8.4 2002/04/01 07:39:08 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.8.5 2002/04/17 00:02:26 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -48,12 +48,10 @@
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 
-#ifndef netwinder
-ENTRY_NP(kernel_text)
-#endif
-
 	.text
 	.align	0
+
+ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
 	add	r1, pc, #(Lstart - . - 8)

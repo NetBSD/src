@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.3.6.5 2002/04/01 07:39:09 nathanw Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.3.6.6 2002/04/17 00:02:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -57,34 +57,9 @@
 extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
 
-#if 0
-void
-footbridge_sa110_cc_setup(void)
-{
-	vm_offset_t vaddr;
-	vm_offset_t addr;
-	int cleanarea;
-	int loop;
-	pt_entry_t *pte;
-
-	cleanarea = (NBPG * 4) * 2;
-	vaddr = uvm_km_valloc(kernel_map, cleanarea + (NBPG * 4));
-	addr = (vaddr + (cleanarea - 1)) & ~(cleanarea - 1);
-
-/*	printf("vaddr=%x addr=%x\n", vaddr, addr);*/
-
-	for (loop = 0; loop < cleanarea; loop += NBPG) {
-		pte = vtopte(addr + loop);
-		*pte = L2_PTE(DC21285_SA_CACHE_FLUSH_BASE + loop, AP_KR);
-	}
-	sa110_cache_clean_addr = addr;
-	sa110_cache_clean_size = cleanarea / 2;
-}
-#else
 void
 footbridge_sa110_cc_setup(void)
 {
 	sa110_cache_clean_addr = DC21285_CACHE_FLUSH_VBASE;
 	sa110_cache_clean_size = (NBPG * 4);
 }
-#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.26.6.7 2002/04/01 07:40:36 nathanw Exp $
+#	$NetBSD: DR-EVIL,v 1.26.6.8 2002/04/17 00:03:14 nathanw Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -67,6 +67,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -308,9 +309,8 @@ pcmcia*		at cardslot?
 # wscons
 pckbc*	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
@@ -319,7 +319,6 @@ wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ? mux 1
 wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?

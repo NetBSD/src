@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.4 2002/04/01 07:39:07 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.5 2002/04/17 00:02:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,11 +42,10 @@
  */
 
 #include "opt_armfpe.h"
-#include "opt_cputypes.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.4 2002/04/01 07:39:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.5 2002/04/17 00:02:25 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -55,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.4 2002/04/01 07:39:07 nathanw Exp $");
 #include <uvm/uvm_extern.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
+
+#include <arm/cpuconf.h>
 #include <arm/undefined.h>
 
 #ifdef ARMFPE

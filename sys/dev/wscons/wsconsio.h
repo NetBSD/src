@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37.2.7 2002/02/28 04:14:38 nathanw Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.8 2002/04/17 00:06:16 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -352,7 +352,7 @@ struct wsdisplay_delscreendata {
 struct wsdisplay_usefontdata {
 	char *name;
 };
-#define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
+#define WSDISPLAYIO_SFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
 
 /* Obsolete, replaced by WSMUXIO_{ADD,REMOVE}_DEVICE */
 struct wsdisplay_kbddata {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.3.2.8 2002/04/01 07:45:25 nathanw Exp $ */
+/*	$NetBSD: iha.c,v 1.3.2.9 2002/04/17 00:05:39 nathanw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.3.2.8 2002/04/01 07:45:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.3.2.9 2002/04/17 00:05:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1193,9 +1193,7 @@ iha_exec_scb(sc, scb)
 		scb->bufaddr = dm->dm_segs[0].ds_addr;
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = xs->timeout;
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
+		int timeout = mstohz(xs->timeout);
 		if (timeout == 0)
 			timeout = 1;
 		callout_reset(&xs->xs_callout, timeout, iha_timeout, scb);

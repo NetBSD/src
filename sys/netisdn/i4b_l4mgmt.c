@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.2.2.3 2002/04/01 07:48:59 nathanw Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.2.2.4 2002/04/17 00:06:27 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.2.2.3 2002/04/01 07:48:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.2.2.4 2002/04/17 00:06:27 nathanw Exp $");
 
 #include "isdn.h"
 
@@ -80,9 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.2.2.3 2002/04/01 07:48:59 nathanw E
 
 static unsigned int get_cdid(void);
 
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
-void i4b_init_callout(call_desc_t *);
-#endif
+static void i4b_init_callout(call_desc_t *);
+static void i4b_stop_callout(call_desc_t *cd);
 
 #define N_CALL_DESC 40	/* XXX - make this sizeable */
 call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
@@ -175,9 +174,7 @@ reserve_cd(void)
 	if(cd == NULL)
 		panic("reserve_cd: no free call descriptor available!");
 
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
 	i4b_init_callout(cd);
-#endif
 
 	return(cd);
 }
@@ -226,8 +223,11 @@ void free_all_cd_of_bri(int bri)
 		    call_desc[i].bri == bri) {
 			NDBGL4(L4_MSG, "releasing cd - index=%d cdid=%u cr=%d",
 				i, call_desc[i].cdid, call_desc[i].cr);
+			if (call_desc[i].callouts_inited)
+				i4b_stop_callout(&call_desc[i]);
 			call_desc[i].cdid = CDID_UNUSED;
 			call_desc[i].bri = -1;
+			call_desc[i].l3drv = NULL;
 			break;
 		}
 	}
@@ -253,9 +253,7 @@ cd_by_cdid(unsigned int cdid)
 		{
 			NDBGL4(L4_MSG, "found cdid - index=%d cdid=%u cr=%d",
 					i, call_desc[i].cdid, call_desc[i].cr);
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
 			i4b_init_callout(&call_desc[i]);
-#endif
 			return(&(call_desc[i]));
 		}
 	}
@@ -281,9 +279,7 @@ cd_by_bricr(int bri, int cr, int crf)
 	  {
 	    NDBGL4(L4_MSG, "found cd, index=%d cdid=%u cr=%d",
 			i, call_desc[i].cdid, call_desc[i].cr);
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
 	    i4b_init_callout(&call_desc[i]);
-#endif
 	    return(&(call_desc[i]));
 	  }
 	}
@@ -343,25 +339,30 @@ get_rand_cr(int unit)
 	return(0);	/* XXX */
 }
 
+static void
+i4b_stop_callout(call_desc_t *cd)
+{
+	if (!cd->callouts_inited)
+		return;
+
+	callout_stop(&cd->idle_timeout_handle);
+	callout_stop(&cd->T303_callout);
+	callout_stop(&cd->T305_callout);
+	callout_stop(&cd->T308_callout);
+	callout_stop(&cd->T309_callout);
+	callout_stop(&cd->T310_callout);
+	callout_stop(&cd->T313_callout);
+	callout_stop(&cd->T400_callout);
+}
+
 /*---------------------------------------------------------------------------*
  *	initialize the callout handles for FreeBSD
  *---------------------------------------------------------------------------*/
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
 void
 i4b_init_callout(call_desc_t *cd)
 {
 	if(cd->callouts_inited == 0)
 	{
-#ifdef __FreeBSD__
-		callout_handle_init(&cd->idle_timeout_handle);
-		callout_handle_init(&cd->T303_callout);
-		callout_handle_init(&cd->T305_callout);
-		callout_handle_init(&cd->T308_callout);
-		callout_handle_init(&cd->T309_callout);
-		callout_handle_init(&cd->T310_callout);
-		callout_handle_init(&cd->T313_callout);
-		callout_handle_init(&cd->T400_callout);
-#else
 		callout_init(&cd->idle_timeout_handle);
 		callout_init(&cd->T303_callout);
 		callout_init(&cd->T305_callout);
@@ -370,11 +371,9 @@ i4b_init_callout(call_desc_t *cd)
 		callout_init(&cd->T310_callout);
 		callout_init(&cd->T313_callout);
 		callout_init(&cd->T400_callout);
-#endif
 		cd->callouts_inited = 1;
 	}
 }
-#endif
 
 #ifdef I4B_CD_DEBUG_PRINT
 

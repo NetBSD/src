@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110.4.5 2002/04/01 07:40:52 nathanw Exp $
+# $NetBSD: GENERIC,v 1.110.4.6 2002/04/17 00:03:41 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.110.4.5 $"
+#ident 		"GENERIC-$Revision: 1.110.4.6 $"
 
 maxusers	32
 
@@ -43,6 +43,7 @@ options 	SYSVSHM		# System V shared memory
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -170,8 +171,9 @@ ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
-siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
@@ -236,6 +238,7 @@ wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
 scsibus* at adv?
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at bha?
 scsibus* at iha?
@@ -244,6 +247,7 @@ scsibus* at esp?
 scsibus* at mesh?
 scsibus* at pcscp?
 scsibus* at siop?
+scsibus* at trm?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -320,6 +324,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # OPL[23] FM synthesizers
+#opl*	at cmpci? flags 1
 #opl*	at eso?
 #opl*	at fms?
 
@@ -334,6 +339,7 @@ audio*	at eap?
 audio*	at uaudio?
 
 # MPU 401 UARTs
+#mpu*	at cmpci?
 #mpu*	at eso?
 #mpu*	at fms?
 

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.1.2.9 2002/04/01 07:44:18 nathanw Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.1.2.10 2002/04/17 00:05:03 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -530,6 +530,12 @@ struct linux_sys_fstat64_args {
 	syscallarg(struct linux_stat64 *) sp;
 };
 
+struct linux_sys_getdents64_args {
+	syscallarg(int) fd;
+	syscallarg(struct linux_dirent64 *) dent;
+	syscallarg(unsigned int) count;
+};
+
 struct linux_sys_fcntl64_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
@@ -709,5 +715,6 @@ int	linux_sys_truncate64(struct lwp *, void *, register_t *);
 int	linux_sys_stat64(struct lwp *, void *, register_t *);
 int	linux_sys_lstat64(struct lwp *, void *, register_t *);
 int	linux_sys_fstat64(struct lwp *, void *, register_t *);
+int	linux_sys_getdents64(struct lwp *, void *, register_t *);
 int	linux_sys_fcntl64(struct lwp *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

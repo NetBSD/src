@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.37.2.6 2002/02/28 04:13:26 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.37.2.7 2002/04/17 00:05:46 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -141,7 +141,7 @@ struct isposinfo {
 
 #define	INLINE			__inline
 
-#define	ISP2100_SCRLEN		0x400
+#define	ISP2100_SCRLEN		0x800
 
 #define	MEMZERO(dst, amt)	memset((dst), 0, (amt))
 #define	MEMCPY(dst, src, amt)	memcpy((dst), (src), (amt))
@@ -175,25 +175,20 @@ case SYNC_REQUEST:						\
 case SYNC_RESULT:						\
 {								\
 	off_t off = (off_t) offset * QENTRY_LEN;		\
-	off += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));		\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rsdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\
 }								\
 case SYNC_SFORDEV:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_PREWRITE);			\
 	break;							\
 }								\
 case SYNC_SFORCPU:						\
 {								\
-	off_t off =						\
-	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
-	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	off_t off = (off_t) offset;				\
 	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
 	    off, size, BUS_DMASYNC_POSTREAD);			\
 	break;							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.70.6.4 2002/01/08 00:29:33 nathanw Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.70.6.5 2002/04/17 00:05:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.4 2002/01/08 00:29:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.5 2002/04/17 00:05:31 nathanw Exp $");
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -1855,8 +1855,7 @@ loop:
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
 				callout_reset(&acb->xs->xs_callout,
-				    (acb->timeout * hz) / 1000,
-				    aic_timeout, acb);
+				    mstohz(acb->timeout), aic_timeout, acb);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.34.2.7 2002/04/01 07:44:11 nathanw Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.34.2.8 2002/04/17 00:04:58 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -598,6 +598,12 @@ struct linux_sys_setfsuid_args {
 	syscallarg(uid_t) uid;
 };
 
+struct linux_sys_getdents64_args {
+	syscallarg(int) fd;
+	syscallarg(struct linux_dirent64 *) dent;
+	syscallarg(unsigned int) count;
+};
+
 struct linux_sys_fcntl64_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
@@ -788,5 +794,6 @@ int	sys_setuid(struct lwp *, void *, register_t *);
 int	sys_setgid(struct lwp *, void *, register_t *);
 int	linux_sys_setfsuid(struct lwp *, void *, register_t *);
 int	linux_sys_getfsuid(struct lwp *, void *, register_t *);
+int	linux_sys_getdents64(struct lwp *, void *, register_t *);
 int	linux_sys_fcntl64(struct lwp *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.12 2002/04/11 06:34:36 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.13 2002/04/17 00:02:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.12 2002/04/11 06:34:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.13 2002/04/17 00:02:22 nathanw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -97,6 +97,18 @@ process_frame(struct lwp *l)
 
 	return (l->l_addr->u_pcb.pcb_tf);
 }
+
+/*
+ * The ARM architecture places the vector page at address 0.
+ * Later ARM architecture versions, however, allow it to be
+ * relocated to a high address (0xffff0000).  This is primarily
+ * to support the Fast Context Switch Extension.
+ *
+ * This variable contains the address of the vector page.  It
+ * defaults to 0; it only needs to be initialized if we enable
+ * relocated vectors.
+ */
+vaddr_t	vector_page;
 
 /*
  * Clear registers on exec

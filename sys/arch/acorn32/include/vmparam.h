@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2.2.3 2002/04/01 07:38:45 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2.2.4 2002/04/17 00:02:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,45 +39,6 @@
 #ifdef _KERNEL
 
 #include <arm/arm32/vmparam.h>
-
-#define	USRTEXT		VM_MIN_ADDRESS
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
- * Note that MAXTSIZ mustn't be greater than 32M. Otherwise you'd have
- * to change the compiler to not generate bl instructions
- */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
-#ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
-#endif
-#ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS       1024
-#endif
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a `long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP		20
 
 /*
  * Address space constants
@@ -162,11 +123,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
 #define VM_FREELIST_RPCDMA	1
-
-/*
- * define structure pmap_physseg: there is one of these structures
- * for each chunk of noncontig RAM you have.
- */
 
 #endif /* _KERNEL */
 

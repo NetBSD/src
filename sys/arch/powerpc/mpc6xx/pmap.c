@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28.4.5 2002/04/01 07:42:06 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.4.6 2002/04/17 00:04:13 nathanw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -397,12 +397,14 @@ pmap_pte_to_va(volatile const pte_t *pt)
 #endif
 
 static __inline struct pvo_head *
-pa_to_pvoh(paddr_t pa)
+pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page *pg;
 
 	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg_p != NULL)
+		*pg_p = pg;
 	if (pg == NULL)
 		return &pmap_pvo_unmanaged;
 	return &pg->mdpage.mdpg_pvoh;
@@ -411,6 +413,8 @@ pa_to_pvoh(paddr_t pa)
 	int bank, pg;
 
 	bank = vm_physseg_find(atop(pa), &pg);
+	if (pg_p != NULL)
+		*pg_p = pg;
 	if (bank == -1)
 		return &pmap_pvo_unmanaged;
 	return &vm_physmem[bank].pmseg.pvoh[pg];
@@ -424,7 +428,7 @@ vm_page_to_pvoh(struct vm_page *pg)
 	return &pg->mdpage.mdpg_pvoh;
 #endif
 #ifdef __HAVE_PMAP_PHYSSEG
-	return pa_to_pvoh(VM_PAGE_TO_PHYS(pg));
+	return pa_to_pvoh(VM_PAGE_TO_PHYS(pg), NULL);
 #endif
 }
 
@@ -1336,7 +1340,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	}
 
 	if (pvo->pvo_vaddr & PVO_MANAGED) {
-		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN);
+		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN, NULL);
 	} else {
 		if (pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS) {
 			printf("pmap_pvo_check: pvo %p: non kernel address "
@@ -1413,7 +1417,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	struct pvo_entry *pvo;
 	u_int32_t msr;
 	sr_t sr;
-	int first;
 	int ptegidx;
 	int i;
 	int poolflags = PR_NOWAIT;
@@ -1496,12 +1499,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		pvo->pvo_vaddr |= PVO_MANAGED; 
 	pmap_pte_create(&pvo->pvo_pte, sr, va, pa | pte_lo);
 
-	/*
-	 * Remember is the list was empty and therefore will be
-	 * the first item.
-	 */
-	first = LIST_FIRST(pvo_head) == NULL;
-
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
 	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count++;
@@ -1530,7 +1527,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pmap_pvo_enter_depth--;
 #endif
 	pmap_interrupts_restore(msr);
-	return first ? ENOENT : 0;
+	return 0;
 }
 
 void
@@ -1602,26 +1599,49 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct mem_region *mp;
 	struct pvo_head *pvo_head;
+	struct vm_page *pg;
 	struct pool *pl;
 	u_int32_t pte_lo;
 	int s;
 	int error;
 	u_int pvo_flags;
+	u_int was_exec = 0;
 
 	if (__predict_false(!pmap_initialized)) {
 		pvo_head = &pmap_pvo_kunmanaged;
 		pl = &pmap_upvo_pool;
 		pvo_flags = 0;
+		pg = NULL;
+		was_exec = PTE_EXEC;
 	} else {
-		pvo_head = pa_to_pvoh(pa);
+		pvo_head = pa_to_pvoh(pa, &pg);
 		pl = &pmap_mpvo_pool;
 		pvo_flags = PVO_MANAGED;
 	}
 
 	DPRINTFN(ENTER,
-	    ("pmap_enter(0x%p, 0x%lx, 0x%lx, 0x%x, 0x%x) ",
+	    ("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x):",
 	    pm, va, pa, prot, flags));
 
+	/*
+	 * If this is a managed page, and it's the first reference to the
+	 * page clear the execness of the page.  Otherwise fetch the execness.
+	 */
+	if (pg != NULL) {
+		if (LIST_EMPTY(pvo_head)) {
+			pmap_attr_clear(pg, PTE_EXEC);
+			DPRINTFN(ENTER, (" first"));
+		} else {
+			was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
+		}
+	}
+
+	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
+
+	/*
+	 * Assume the page is cache inhibited and access is guarded unless
+	 * it's in our available memory array.
+	 */
 	pte_lo = PTE_I | PTE_G;
 	if ((flags & PMAP_NC) == 0) {
 		for (mp = mem; mp->size; mp++) {
@@ -1661,15 +1681,22 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	error = pmap_pvo_enter(pm, pl, pvo_head, va, pa, pte_lo, flags);
 	splx(s);
 
-	if (error == ENOENT) {
-		/* 
-		 * Flush the real memory from the cache.
-		 */
-		if (((prot|flags) & VM_PROT_EXECUTE) && (pte_lo & PTE_I) == 0) {
-			pmap_syncicache(pa, NBPG);
-		}
-		error = 0;
+	/* 
+	 * Flush the real page from the instruction cache if this page is
+	 * mapped executable and cacheable and was not previously mapped
+	 * (or was not mapped executable).
+	 */
+	if (error == 0 &&
+            (flags & VM_PROT_EXECUTE) &&
+            (pte_lo & PTE_I) == 0 &&
+	    was_exec == 0) {
+		DPRINTFN(ENTER, (" syncicache"));
+		pmap_syncicache(pa, NBPG);
+		if (pg != NULL)
+			pmap_attr_save(pg, PTE_EXEC);
 	}
+
+	DPRINTFN(ENTER, (" error=%d\n", error));
 
 	return error;
 }
@@ -1710,7 +1737,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pmap_interrupts_restore(msr);
 	splx(s);
 
-	if (error != 0 && error != ENOENT)
+	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d", va, pa, error);
 
 	/* 
@@ -2644,8 +2671,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	kernelstart = trunc_page(kernelstart);
 	kernelend = round_page(kernelend);
 	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
-		s = trunc_page(mp->start);
-		e = round_page(mp->start + mp->size);
+		mp->start = round_page(mp->start);
+		mp->size = trunc_page(mp->size);
+		s = mp->start;
+		e = mp->start + mp->size;
 
 		DPRINTFN(BOOT,
 		    ("pmap_bootstrap: b-avail[%d] start 0x%lx size 0x%lx\n",
@@ -2658,10 +2687,19 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			e = pmap_memlimit;
 
 		/*
+		 * Is this region empty or strange?  skip it.
+		 */
+		if (e <= s) {
+			mp->start = 0;
+			mp->size = 0;
+			continue;
+		}
+
+		/*
 		 * Does this overlap the beginning of kernel?
 		 *   Does extend past the end of the kernel?
 		 */
-		if (s < kernelstart && e > kernelstart) {
+		else if (s < kernelstart && e > kernelstart) {
 			if (e > kernelend) {
 				avail[avail_cnt].start = kernelend;
 				avail[avail_cnt].size = e - kernelend;

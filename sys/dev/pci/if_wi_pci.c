@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.1.2.4 2002/02/28 04:14:02 nathanw Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.1.2.5 2002/04/17 00:06:01 nathanw Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.4 2002/02/28 04:14:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.5 2002/04/17 00:06:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ static int	wi_pci_match __P((struct device *, struct cfdata *, void *));
 static void	wi_pci_attach __P((struct device *, struct device *, void *));
 static int	wi_pci_enable __P((struct wi_softc *));
 static void	wi_pci_disable __P((struct wi_softc *));
+static void	wi_pci_reset __P((struct wi_softc *));
 static void	wi_pci_powerhook __P((int, void *));
 
 static const struct wi_pci_product
@@ -150,6 +151,20 @@ wi_pci_disable(sc)
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
 	pci_intr_disestablish(psc->psc_pa->pa_pc, sc->sc_ih);
+}
+
+static void
+wi_pci_reset(sc)
+	struct wi_softc		*sc;
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			  WI_PCI_COR, WI_PCI_SOFT_RESET);
+	DELAY(100*1000); /* 100 m sec */
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
+	DELAY(100*1000); /* 100 m sec */
+
+	return;
 }
 
 static const struct wi_pci_product *
@@ -289,7 +304,8 @@ wi_pci_attach(parent, self, aux)
 	printf("%s:", sc->sc_dev.dv_xname);
 	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
-		printf(" failed to attach controller\n");
+		printf("%s: failed to attach controller\n",
+			sc->sc_dev.dv_xname);
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}

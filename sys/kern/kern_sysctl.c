@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.13 2002/04/01 07:47:55 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.14 2002/04/17 00:06:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.13 2002/04/01 07:47:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.14 2002/04/17 00:06:18 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -826,33 +826,53 @@ int
 emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
-	extern int nexecs_builtin;
-	extern const struct execsw execsw_builtin[];
 	static struct {
 		const char *name;
 		int  type;
 	} emulations[] = CTL_EMUL_NAMES;
+	const struct emul *e;
 	const char *ename;
+#ifdef LKM
+	extern struct lock exec_lock;	/* XXX */
+	int error;
+#else
+	extern int nexecs_builtin;
+	extern const struct execsw execsw_builtin[];
 	int i;
+#endif
 
 	/* all sysctl names at this level are name and field */
 	if (namelen < 2)
 		return (ENOTDIR);		/* overloaded */
 
-	if (name[0] >= EMUL_MAXID || name[0] == 0)
+	if ((u_int) name[0] >= EMUL_MAXID || name[0] == 0)
 		return (EOPNOTSUPP);
 
 	ename = emulations[name[0]].name;
 
+#ifdef LKM
+	lockmgr(&exec_lock, LK_SHARED, NULL);
+	if ((e = emul_search(ename))) {
+		error = (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
+				newp, newlen, p);
+	} else
+		error = EOPNOTSUPP;
+	lockmgr(&exec_lock, LK_RELEASE, NULL);
+
+	return (error);
+#else
 	for (i = 0; i < nexecs_builtin; i++) {
-	     const struct emul *e = execsw_builtin[i].es_emul;
-	     if (e != NULL && strcmp(ename, e->e_name) == 0 &&
-		execsw_builtin[i].es_sysctl != NULL)
-		    return (*execsw_builtin[i].es_sysctl)(name + 1, namelen - 1,
-			oldp, oldlenp, newp, newlen, p);
+	    e = execsw_builtin[i].es_emul;
+	    if (e == NULL || strcmp(ename, e->e_name) != 0 ||
+		e->e_sysctl != NULL)
+		continue;
+
+	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
+					newp, newlen, p);
 	}
 
 	return (EOPNOTSUPP);
+#endif
 }
 /*
  * Convenience macros.
@@ -1163,7 +1183,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	struct shm_sysctl_info *shmsi;
 #endif
 	size_t infosize, dssize, tsize, buflen;
-	void *buf = NULL, *buf2;
+	void *buf = NULL;
 	char *start;
 	int32_t nds;
 	int i, error, ret;
@@ -1231,21 +1251,18 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
-		buf2 = &msgsi->msgids[0];
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
 		semsi = (struct sem_sysctl_info *)buf;
-		buf2 = &semsi->semids[0];
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
 		shmsi = (struct shm_sysctl_info *)buf;
-		buf2 = &shmsi->shmids[0];
 		shmsi->shminfo = shminfo;
 		break;
 #endif

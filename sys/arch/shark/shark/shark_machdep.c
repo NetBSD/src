@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.1.2.2 2002/02/28 04:11:58 nathanw Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.1.2.3 2002/04/17 00:04:22 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -221,8 +221,8 @@ initarm(ofw_handle)
 
 	/* Map-in ISA I/O and memory space. */
 	/* XXX - this should be done in the isa-bus attach routine! -JJK */
-	isa_mem_virtaddr = ofw_map(isa_mem_physaddr, NBPD, 0);
-	isa_io_virtaddr  = ofw_map(isa_io_physaddr,  NBPD, 0);
+	isa_mem_virtaddr = ofw_map(isa_mem_physaddr, L1_S_SIZE, 0);
+	isa_io_virtaddr  = ofw_map(isa_io_physaddr,  L1_S_SIZE, 0);
 
 	/* Set-up the ISA system: must be done before consinit */
 	isa_init(isa_io_virtaddr, isa_mem_virtaddr);
@@ -241,7 +241,7 @@ initarm(ofw_handle)
 	/* allocate a cache clean space */
 	if ((pclean = ofw_getcleaninfo()) != -1) {
 		sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2,
-		     PT_B | PT_C);
+		     L2_B | L2_C);
 		sa110_cache_clean_size = 0x4000;
 	}
 
@@ -265,27 +265,7 @@ initarm(ofw_handle)
          * 	    irq, fiq
 	 * OFW retains:  reset
          */
-	{
-		int our_vecnums[] = {1, 2, 3, 4, 5, 6, 7};
-		unsigned int *vectors = (unsigned int *)0;
-		extern unsigned int page0[];
-		int i;
-
-		for (i = 0; i < (sizeof(our_vecnums) / sizeof(int)); i++) {
-			int vecnum = our_vecnums[i];
-
-			/* Copy both the instruction and the data word
-			 * for the vector.
-			 * The latter is needed to support branching
-			 * arbitrarily far.
-			 */
-			vectors[vecnum] = page0[vecnum];
-			vectors[vecnum + 8] = page0[vecnum + 8];
-		}
-
-		/* Sync the first 16 words of memory */
-		cpu_icache_sync_range(0, 64);
-	}
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL & ~ARM_VEC_RESET);
 
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;

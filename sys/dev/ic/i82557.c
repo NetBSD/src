@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.44.2.4 2001/11/14 19:14:24 nathanw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.44.2.5 2002/04/17 00:05:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.4 2001/11/14 19:14:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.5 2002/04/17 00:05:37 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.4 2001/11/14 19:14:24 nathanw Exp 
 
 #include <dev/ic/i82557reg.h>
 #include <dev/ic/i82557var.h>
+
+#include <dev/microcode/i8255x/rcvbundl.h>
 
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The
@@ -195,14 +197,23 @@ void	fxp_statchg(struct device *);
 void	fxp_mdi_write(struct device *, int, int, int);
 void	fxp_autosize_eeprom(struct fxp_softc*);
 void	fxp_read_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_write_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_eeprom_update_cksum(struct fxp_softc *);
 void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
+void	fxp_load_ucode(struct fxp_softc *);
 
 void	fxp_shutdown(void *);
 void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
+
+/*
+ * Variables for interrupt mitigating microcode.
+ */
+int	fxp_int_delay = 1000;		/* usec */
+int	fxp_bundle_max = 6;		/* packets */
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
@@ -577,6 +588,65 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	enaddr[3] = myea[1] >> 8;
 	enaddr[4] = myea[2] & 0xff;
 	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Systems based on the ICH2/ICH2-M chip from Intel, as well
+	 * as some i82559 designs, have a defect where the chip can
+	 * cause a PCI protocol violation if it receives a CU_RESUME
+	 * command when it is entering the IDLE state.
+	 *
+	 * The work-around is to disable Dynamic Standby Mode, so that
+	 * the chip never deasserts #CLKRUN, and always remains in the
+	 * active state.
+	 *
+	 * Unfortunately, the only way to disable Dynamic Standby is
+	 * to frob an EEPROM setting and reboot (the EEPROM setting
+	 * is only consulted when the PCI bus comes out of reset).
+	 *
+	 * See Intel 82801BA/82801BAM Specification Update, Errata #30.
+	 */
+	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
+		fxp_read_eeprom(sc, &data, 10, 1);
+		if (data & 0x02) {		/* STB enable */
+			printf("%s: disabling Dynamic Standby Mode in EEPROM\n",
+			    sc->sc_dev.dv_xname);
+			data &= ~0x02;
+			fxp_write_eeprom(sc, &data, 10, 1);
+			printf("%s: new EEPROM ID: 0x%04x\n",
+			    sc->sc_dev.dv_xname, data);
+			fxp_eeprom_update_cksum(sc);
+			printf("%s: PLEASE RESET YOUR SYSTEM FOR CHANGE TO "
+			    "TAKE EFFECT!\n", sc->sc_dev.dv_xname);
+		} else {
+#if 1
+			/*
+			 * If Dynamic Standby Mode is disabled, we don't
+			 * need to work around the Resume bug anymore.
+			 */
+			sc->sc_flags &= ~FXPF_HAS_RESUME_BUG;
+#endif
+		}
+	}
+}
+
+static void
+fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
+{
+	uint16_t reg;
+	int x;
+
+	for (x = 1 << (len - 1); x != 0; x >>= 1) {
+		if (data & x)
+			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+		else
+			reg = FXP_EEPROM_EECS;
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
+		    reg | FXP_EEPROM_EESK);
+		DELAY(4);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(4);
+	}
 }
 
 /*
@@ -609,31 +679,18 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 void
 fxp_autosize_eeprom(struct fxp_softc *sc)
 {
-	u_int16_t reg;
 	int x;
 
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-	/*
-	 * Shift in read opcode.
-	 */
-	for (x = 3; x > 0; x--) {
-		if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
-			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-		} else {
-			reg = FXP_EEPROM_EECS;
-		}
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-		DELAY(4);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(4);
-	}
+
+	/* Shift in read opcode. */
+	fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
+
 	/*
 	 * Shift in address, wait for the dummy zero following a correct
 	 * address shift.
 	 */
-	for (x = 1; x <=  8; x++) {
+	for (x = 1; x <= 8; x++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
@@ -670,43 +727,17 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 
 	for (i = 0; i < words; i++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		/*
-		 * Shift in read opcode.
-		 */
-		for (x = 3; x > 0; x--) {
-			if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
-				reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-			} else {
-				reg = FXP_EEPROM_EECS;
-			}
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
-		}
-		/*
-		 * Shift in address.
-		 */
-		for (x = sc->sc_eeprom_size; x > 0; x--) {
-			if ((i + offset) & (1 << (x - 1))) {
-			    reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-			} else {
-			    reg = FXP_EEPROM_EECS;
-			}
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
-		}
+
+		/* Shift in read opcode. */
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
+
+		/* Shift in address. */
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
+
 		reg = FXP_EEPROM_EECS;
 		data[i] = 0;
-		/*
-		 * Shift out data.
-		 */
+
+		/* Shift out data. */
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
@@ -720,6 +751,74 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
 	}
+}
+
+/*
+ * Write data to the serial EEPROM.
+ */
+void
+fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
+{
+	int i, j;
+
+	for (i = 0; i < words; i++) {
+		/* Erase/write enable. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_ERASE, 3);
+		fxp_eeprom_shiftin(sc, 0x3 << (sc->sc_eeprom_size - 2),
+		    sc->sc_eeprom_size);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Shift in write opcode, address, data. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
+		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, data[i], 16);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Wait for the EEPROM to finish up. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		DELAY(4);
+		for (j = 0; j < 1000; j++) {
+			if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
+			    FXP_EEPROM_EEDO)
+				break;
+			DELAY(50);
+		}
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Erase/write disable. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_ERASE, 3);
+		fxp_eeprom_shiftin(sc, 0, sc->sc_eeprom_size);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+	}
+}
+
+/*
+ * Update the checksum of the EEPROM.
+ */
+void
+fxp_eeprom_update_cksum(struct fxp_softc *sc)
+{
+	int i;
+	uint16_t data, cksum;
+
+	cksum = 0;
+	for (i = 0; i < (1 << sc->sc_eeprom_size) - 1; i++) {
+		fxp_read_eeprom(sc, &data, i, 1);
+		cksum += data;
+	}
+	i = (1 << sc->sc_eeprom_size) - 1;
+	cksum = 0xbaba - cksum;
+	fxp_read_eeprom(sc, &data, i, 1);
+	fxp_write_eeprom(sc, &cksum, i, 1);
+	printf("%s: EEPROM checksum @ 0x%x: 0x%04x -> 0x%04x\n",
+	    sc->sc_dev.dv_xname, i, data, cksum);
 }
 
 /*
@@ -1296,10 +1395,12 @@ fxp_stop(struct ifnet *ifp, int disable)
 	}
 
 	/*
-	 * Issue software reset
+	 * Issue software reset.  This unloads any microcode that
+	 * might already be loaded.
 	 */
-	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
-	DELAY(10);
+	sc->sc_flags &= ~FXPF_UCODE_LOADED;
+	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SOFTWARE_RESET);
+	DELAY(50);
 
 	/*
 	 * Release any xmit buffers.
@@ -1415,6 +1516,11 @@ fxp_init(struct ifnet *ifp)
 
 	cbp = &sc->sc_control_data->fcd_configcb;
 	memset(cbp, 0, sizeof(struct fxp_cb_config));
+
+	/*
+	 * Load microcode for this controller.
+	 */
+	fxp_load_ucode(sc);
 
 	/*
 	 * This copy is kind of disgusting, but there are a bunch of must be
@@ -1946,6 +2052,121 @@ fxp_mc_setup(struct fxp_softc *sc)
 		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
+}
+
+static const uint32_t fxp_ucode_d101a[] = D101_A_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101b0[] = D101_B0_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
+static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
+
+#define	UCODE(x)	x, sizeof(x)
+
+static const struct ucode {
+	uint32_t	revision;
+	const uint32_t	*ucode;
+	size_t		length;
+	uint16_t	int_delay_offset;
+	uint16_t	bundle_max_offset;
+} ucode_table[] = {
+	{ FXP_REV_82558_A4, UCODE(fxp_ucode_d101a),
+	  D101_CPUSAVER_DWORD, 0 },
+
+	{ FXP_REV_82558_B0, UCODE(fxp_ucode_d101b0),
+	  D101_CPUSAVER_DWORD, 0 },
+
+	{ FXP_REV_82559_A0, UCODE(fxp_ucode_d101ma),
+	  D101M_CPUSAVER_DWORD, D101M_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82559S_A, UCODE(fxp_ucode_d101s),
+	  D101S_CPUSAVER_DWORD, D101S_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82550, UCODE(fxp_ucode_d102),
+	  D102_B_CPUSAVER_DWORD, D102_B_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ FXP_REV_82550_C, UCODE(fxp_ucode_d102c),
+	  D102_C_CPUSAVER_DWORD, D102_C_CPUSAVER_BUNDLE_MAX_DWORD },
+
+	{ 0, NULL, 0, 0, 0 }
+};
+
+void
+fxp_load_ucode(struct fxp_softc *sc)
+{
+	const struct ucode *uc;
+	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
+	int count;
+
+	if (sc->sc_flags & FXPF_UCODE_LOADED)
+		return;
+
+	/*
+	 * Only load the uCode if the user has requested that
+	 * we do so.
+	 */
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_LINK0) == 0) {
+		sc->sc_int_delay = 0;
+		sc->sc_bundle_max = 0;
+		return;
+	}
+
+	for (uc = ucode_table; uc->ucode != NULL; uc++) {
+		if (sc->sc_rev == uc->revision)
+			break;
+	}
+	if (uc->ucode == NULL)
+		return;
+
+	/* BIG ENDIAN: no need to swap to store 0 */
+	cbp->cb_status = 0;
+	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE | FXP_CB_COMMAND_EL);
+	cbp->link_addr = 0xffffffff;		/* (no) next command */
+	memcpy((void *) cbp->ucode, uc->ucode, uc->length);
+
+	if (uc->int_delay_offset)
+		*(uint16_t *) &cbp->ucode[uc->int_delay_offset] =
+		    htole16(fxp_int_delay + (fxp_int_delay / 2));
+
+	if (uc->bundle_max_offset)
+		*(uint16_t *) &cbp->ucode[uc->bundle_max_offset] =
+		    htole16(fxp_bundle_max);
+	
+	FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * Download the uCode to the chip.
+	 */
+	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDUCODEOFF);
+	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
+
+	/* ...and wait for it to complete. */
+	count = 10000;
+	do {
+		FXP_CDUCODESYNC(sc,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DELAY(2);
+	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	if (count == 0) {
+		sc->sc_int_delay = 0;
+		sc->sc_bundle_max = 0;
+		printf("%s: timeout loading microcode\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (sc->sc_int_delay != fxp_int_delay ||
+	    sc->sc_bundle_max != fxp_bundle_max) {
+		sc->sc_int_delay = fxp_int_delay;
+		sc->sc_bundle_max = fxp_bundle_max;
+		printf("%s: Microcode loaded: int delay: %d usec, "
+		    "max bundle: %d\n", sc->sc_dev.dv_xname,
+		    sc->sc_int_delay,
+		    uc->bundle_max_offset == 0 ? 0 : sc->sc_bundle_max);
+	}
+
+	sc->sc_flags |= FXPF_UCODE_LOADED;
 }
 
 int

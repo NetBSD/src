@@ -1,0 +1,98 @@
+# $NetBSD: RAWHIDE,v 1.12.4.2 2002/04/17 00:02:10 nathanw Exp $
+#
+# Alpha 4100 stripped for action server kernel.
+#
+include	"arch/alpha/conf/std.alpha"
+maxusers	64
+#makeoptions	DEBUG="-g"
+options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
+options 	KTRACE		# System call tracing support
+options 	DEBUG		# Expensive debugging checks/support
+options 	KMEMSTATS	# Collect kmem usage statistics
+#options 	USERCONF	# userconf(4) support
+options 	DIAGNOSTIC	# Cheap kernel consistency checks
+options 	DDB		# Kernel Dynamic Debugger
+
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system	EXT2FS		# Linux ext2 file system
+file-system	NFS		# Sun NFS-compatible file system client
+file-system	NULLFS		# Null file system layer
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	FDESC		# File descriptor file system (/dev/fd)
+file-system	PORTAL		# Portal file system
+file-system	UMAPFS		# User-mapping file system layer
+file-system	PROCFS		# Process file system (/proc)
+file-system	UNION		# union file system
+
+options 	INET
+options 	GATEWAY
+options 	COMPAT_43
+options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+options 	SYSVMSG
+options 	SYSVSEM
+options 	SYSVSHM
+options 	EISAVERBOSE
+options 	PCIVERBOSE
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
+options 	SCSIVERBOSE
+options 	UCONSOLE
+
+config		netbsd	root on ? type ?
+
+mainbus0 at	root
+cpu*	at	mainbus0
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ?
+#i2c	at	mcbus?
+mcpcia*	at	mcbus? mid ?
+pci*	at	ppb?
+pci*	at	mcpcia?
+
+ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
+ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
+esh*	at	pci? dev ? function ?		# Essential HIPPI card
+fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
+isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+isa*	at	pceb?
+eisa*	at	pceb?
+isa*	at	sio?
+mcclock* at	isa? port 0x70
+com*	at	isa? port 0x3f8 irq 4
+com*	at	isa? port 0x2f8 irq 3
+
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
+fd*	at	fdc? drive ?			# floppy drives
+
+scsibus* at	ahc?
+scsibus* at	bha?
+scsibus* at	isp?
+#scsibus* at	ncr?
+scsibus* at	siop?
+
+cd*	at	scsibus? target ? lun ?
+sd*	at	scsibus? target ? lun ?
+st*	at	scsibus? target ? lun ?
+ch*	at	scsibus? target ? lun ?
+
+pseudo-device	bpfilter	16
+pseudo-device	ccd		16
+pseudo-device	ipfilter	1
+pseudo-device	loop		1
+pseudo-device	md		1
+pseudo-device	ppp		4
+pseudo-device	pty
+pseudo-device	sl		4
+pseudo-device	vnd		4

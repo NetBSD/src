@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.3.2.3 2002/04/01 07:48:56 nathanw Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.3.2.4 2002/04/17 00:06:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.3.2.3 2002/04/01 07:48:56 nathanw Exp $ 
+ *	$Id: i4b_l2.c,v 1.3.2.4 2002/04/17 00:06:26 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.3.2.3 2002/04/01 07:48:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.3.2.4 2002/04/17 00:06:26 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.3.2.3 2002/04/01 07:48:56 nathanw Exp $
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
@@ -221,13 +222,19 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 	
 	s = splnet();
 
-	NDBGL1(L1_PRIM, "bri %d, status=%d, parm=%d", l2sc->bri, status, parm);
+	NDBGL2(L2_PRIM, "bri %d, status=%d, parm=%d", l2sc->bri, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
-			if (parm == 0) 	/* detach */
+			if (parm == 0) {
+				/* detach */
+				callout_stop(&l2sc->T200_callout);
+				callout_stop(&l2sc->T202_callout);
+				callout_stop(&l2sc->T203_callout);
+				callout_stop(&l2sc->IFQU_callout);
 				break;
+			}
 
 			l2sc->i_queue.ifq_maxlen = IQUEUE_MAXLEN;
 			l2sc->ua_frame = NULL;
@@ -251,6 +258,8 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 			{
 				NDBGL2(L2_ERROR, "bri %d, persistent deactivation!", l2sc->bri);
 				i4b_l2_unit_init(l2sc);
+				parm = -1;	/* this is passed as the new
+						 * TEI to upper layers */
 			}
 			else
 			{
@@ -279,11 +288,11 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 /*---------------------------------------------------------------------------*
  *	MDL_COMMAND_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_mdl_command_req(int bri, int command, void * parm)
+int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
 {
-	struct l2_softc *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
+	struct l2_softc *sc = (l2_softc_t*)drv->l1_token;
 
-	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", bri, command, parm);
+	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", drv->bri, command, parm);
 
 	switch(command)
 	{
@@ -297,7 +306,8 @@ int i4b_mdl_command_req(int bri, int command, void * parm)
 	}		
 
 	/* pass down to layer 1 driver */
-	sc->driver->mph_command_req(sc->l1_token, command, parm);
+	if (sc->driver)
+		sc->driver->mph_command_req(sc->l1_token, command, parm);
 	
 	return(0);
 }

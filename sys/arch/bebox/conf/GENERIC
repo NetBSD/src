@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44.4.4 2002/04/01 07:39:37 nathanw Exp $
+# $NetBSD: GENERIC,v 1.44.4.5 2002/04/17 00:02:48 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.44.4.4 $"
+#ident 		"GENERIC-$Revision: 1.44.4.5 $"
 
 maxusers	32
 
@@ -37,7 +37,8 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43
@@ -100,7 +101,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

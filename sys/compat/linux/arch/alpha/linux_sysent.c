@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.35.2.7 2002/04/01 07:44:05 nathanw Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.35.2.8 2002/04/17 00:04:54 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.35.2.7 2002/04/01 07:44:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.35.2.8 2002/04/17 00:04:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -824,8 +824,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 375 = unimplemented mincore */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 376 = unimplemented pciconfig_iobase */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 377 = unimplemented getdents64 */
+	{ 3, s(struct linux_sys_getdents64_args), 0,
+	    linux_sys_getdents64 },		/* 377 = getdents64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 378 = filler */
 	{ 0, 0, 0,

@@ -1,11 +1,11 @@
-/*	$NetBSD: nwmmu.S,v 1.2.10.3 2002/02/28 04:11:13 nathanw Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.2.10.4 2002/04/17 00:03:58 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas <matt@3am-software.com>
+ * by Matt Thomas <matt@3am-software.com>, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,104 +36,100 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#incude "assym.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
 
-	.text
+	.section .start,"ax",%progbits
 
-ENTRY_NP(kernel_text)
+	.global	_C_LABEL(nwstart)
+_C_LABEL(nwstart):
+	/*
+	 * The NetWinder's NeTTrom has disabled the MMU
+	 * and loaded us at 0x0000c000.
+	 *
+	 * We are going to plop a 16K L1 table at 0x00008000 and:
+	 *
+	 *	1. Map the entire address space VA==PA.
+	 *
+	 *	2. Double-map the first 64MB of RAM at 0xf0000000.
+	 *
+	 *	3. Map the 21285's PCI I/O space at the virtual
+	 *	   address that we will later map it to in
+	 *	   netwinder_start().
+	 */
 
-ASENTRY_NP(nwstart)
-	mov	r6, #0x7c000000
-	add	r6, r6, #0x3f8
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
+	/*
+	 * Step 1: Map the entire address space VA==PA.
+	 */
+	add	r0, pc, #(Ltable - . - 8)
+	ldr	r0, [r0]		/* r0 = &l1table */
+
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000		/* advance by 1MB */
-	mov	r1, #0x8000		/* page table start */
-	mov	r0, #0x1000		/* page table size */
-
-L1:
-	str	r3, [r1], #0x0004
+	mov	r1, #0x1000		/* 4096MB */
+1:
+	str	r3, [r0], #0x04
 	add	r3, r3, r2
-	subs	r0, r0, #1
-	bgt	L1			/* done */
+	subs	r1, r1, #1
+	bgt	1b
 
-/*
- * Page Table now maps 1:1 to physical memory.
- */
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
-	mov	r2, #0x100000		/* advance by 1MB */
-	mov	r1, #0x8000		/* page table start */
-	add	r1, r1, #(0x100 * 4)	/* offset to 0x100xxxxx */
-	mov	r0, #256
-L2:
-	str	r3, [r1], #0x0004	/* 0x10000000-0x1fffffff */
+	/*
+	 * Step 2: Map VA 0xf0000000->0xf3ffffff to PA 0x00000000->0x03ffffff.
+	 */
+	add	r0, pc, #(Ltable - . - 8)
+	ldr	r0, [r0]		/* r0 = &l1table */
+
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
+	add	r0, r0, #(0xf00 * 4)	/* offset to 0xf00xxxxx */
+	mov	r1, #0x40		/* 64MB */
+1:
+	str	r3, [r0], #0x04
 	add	r3, r3, r2
-	subs	r0, r0, #1
-	bgt	L2
-/*
- * 0x10000000-0x1fffffff now maps to 0x00000000-0x0fffffff
- */
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
-	mov	r1, #0x8000		/* page table start */
-	add	r1, r1, #(0xf00 * 4)	/* offset to 0xf03xxxxx */
-	mov	r0, #64
-L3:
-	str	r3, [r1], #0x0004	/* 0xf000000-0xf03fffff */
-	add	r3, r3, r2
-	subs	r0, r0, #1
-	bgt	L3
-/*
- * 0xf0000000-0xf3ffffff now maps to 0x00000000-0x03ffffff
- */
-	mov	r1, #0x8000		/* page table start */
-	add	r1, r1, #(0xfd0 * 4)	/* DC21285_PCI_IO_VBASE */
-	add	r1, r1, #8
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #L1_SECTION
-	add	r3, r3, #0x7c000000	/* DC21285_PCI_IO_BASE */
-	str	r3, [r1]		/* 0xfd20000-0xfd2fffff */
-/*
- * 0xfd200000-0xfd2fffff now maps to 0x7c000000-0x7c0fffff
- */
+	subs	r1, r1, #1
+	bgt	1b
 
+	/*
+	 * Step 3: Map VA 0xfd200000 to PA 0x7c000000
+	 */
+	add	r0, pc, #(Ltable - . - 8)
+	ldr	r0, [r0]		/* r0 = &l1table */
 
-	/* set the location of the L1 page table */
-	mov	r1, #0x8000
-	mcr	15, 0, r1, c2, c0, 0
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
+	orr	r3, r3, #0x7c000000
+	add	r0, r0, #(0xfd0 * 4)	/* offset to 0xfd0xxxxx */
+	str	r3, [r0, #0x08]		/* -> 0xfd2xxxxx */
 
-	mov	r2, #0x2a
-	strb	r2, [r6]
+	/* OK!  Page table is set up.  Give it to the CPU. */
+	add	r0, pc, #(Ltable - . - 8)
+	ldr	r0, [r0]
+	mcr	p15, 0, r0, c2, c0, 0
 
-	/* set mmu bit (you may want to set other bits as well) */
-	mov	r1, #CPU_CONTROL_MMU_ENABLE
+	/* Flush the old TLBs, just in case. */
+	mcr	p15, 0, r0, c8, c7, 0
 
-	/* fetch current control state */
-	mrc	15, 0, r2, c1, c0, 0
-	orr	r2, r2, r1
+	/* Set the Domain Access register.  Very important! */
+	mov	r0, #1
+	mcr	p15, 0, r0, c3, c0, 0
 
-	/* set new control state */
-	mcr	15, 0, r2, c1, c0, 0
+	/* OK, let's enable the MMU. */
+	mrc	p15, 0, r2, c1, c0, 0
+	orr	r2, r2, #CPU_CONTROL_MMU_ENABLE
+	mcr	p15, 0, r2, c1, c0, 0
 
-	/* jump to kernel space */
-	mov	r0, r0
-	mov	r0, r0
-	mov	r0, r0
+	nop
+	nop
+	nop
 
-	/* emit a char */
-	mov	r6, #0
-	add	r6, r6, #0xfd200000
-	add	r6, r6, #0x3f8
-	mov	r2, #0x2a
-	strb	r2, [r6]
+	/* ...and now we jump to the "real" kernel entry point! */
+	add	r0, pc, #(Lstart - . - 8)
+	ldr	pc, [r0]
 
-	mov	r0, #0x0200
+Ltable:
+	.word	0x00008000
 
-	/* now startup for real */
-	ldr	pc, Lstart
-
-Lstart:	.long	start
+Lstart:
+	.word	start

@@ -1,7 +1,7 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.1.4.3 2002/04/01 07:41:50 nathanw Exp $
+# 	$NetBSD: RAMDISK,v 1.1.4.4 2002/04/17 00:04:08 nathanw Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -18,7 +18,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=10240	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=10240	# size of memory disk, in blocks
 
 # Reboot from HDD
 options 	KLOADER_KERNEL_PATH="\"/mnt/netbsd\""

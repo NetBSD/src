@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.15.6.2 2002/01/08 00:29:27 nathanw Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.15.6.3 2002/04/17 00:05:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.6.2 2002/01/08 00:29:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.6.3 2002/04/17 00:05:27 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -265,7 +265,7 @@ u24_start_mbox(sc, mscp)
 
 	if ((mscp->xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&mscp->xs->xs_callout,
-		    (mscp->timeout * hz) / 1000, uha_timeout, mscp);
+		    mstohz(mscp->timeout), uha_timeout, mscp);
 }
 
 int

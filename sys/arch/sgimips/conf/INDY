@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.7.8.4 2002/04/01 07:42:17 nathanw Exp $
+#	$NetBSD: INDY,v 1.7.8.5 2002/04/17 00:04:18 nathanw Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -29,9 +29,10 @@ options 	MIPS3_5200		# XXX
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT
 #options 	MEMORY_DISK_SERVER=0
-#options 	MEMORY_DISK_SIZE=8192
+#options 	MEMORY_DISK_ROOT_SIZE=8192
 
 options 	KTRACE
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 options 	DDB
@@ -88,10 +89,8 @@ cd*		at scsibus? target ? lun ?
 
 #pckbd*		at pckbc?
 #pms*		at pckbc?
-#pmsi*		at pckbc?
 #wskbd*		at pckbd? console ?
 #wsmouse* 	at pms? mux 0
-#wsmouse* 	at pmsi? mux 0
 #wsdisplay* 	at foofb? console ?
 
 # Indy

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.89.2.7 2002/04/01 07:44:47 nathanw Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.89.2.8 2002/04/17 00:05:20 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.89.2.7 2002/04/01 07:44:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.89.2.8 2002/04/17 00:05:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,11 +154,11 @@ svr4_sys_wait(l, v, retval)
 	if (WIFSIGNALED(st)) {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			st = (st & ~0177) | native_to_svr4_sig[sig];
+			st = (st & ~0177) | native_to_svr4_signo[sig];
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			st = (st & ~0xff00) | (native_to_svr4_sig[sig] << 8);
+			st = (st & ~0xff00) | (native_to_svr4_signo[sig] << 8);
 	}
 
 	/*
@@ -1162,7 +1162,7 @@ svr4_setinfo(p, st, s)
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_sig[sig];
+			i.si_status = native_to_svr4_signo[sig];
 
 		if (i.si_status == SVR4_SIGCONT)
 			i.si_code = SVR4_CLD_CONTINUED;
@@ -1171,7 +1171,7 @@ svr4_setinfo(p, st, s)
 	} else {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_sig[sig];
+			i.si_status = native_to_svr4_signo[sig];
 
 		if (WCOREDUMP(st))
 			i.si_code = SVR4_CLD_DUMPED;

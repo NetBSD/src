@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310_7seg.c,v 1.2.4.3 2002/02/28 04:09:14 nathanw Exp $	*/
+/*	$NetBSD: iq80310_7seg.c,v 1.2.4.4 2002/04/17 00:02:57 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -48,12 +48,9 @@
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
 
-#define	ASCIIMAP_START	'0'
-#define	ASCIIMAP_END	'9'
-
 static int snakestate;
 
-static const uint8_t asciimap[] = {
+static const uint8_t digitmap[] = {
 /*	+#####+
  *	#     #
  *	#     #
@@ -175,20 +172,28 @@ static const uint8_t asciimap[] = {
 	SEG_D|SEG_E,
 };
 
+static uint8_t 
+iq80310_7seg_xlate(char c)
+{
+	uint8_t rv;
+
+	if (c >= '0' && c <= '9')
+		rv = digitmap[c - '0'];
+	else if (c == '.')
+		rv = (uint8_t) ~SEG_DP;
+	else
+		rv = 0xff;
+
+	return (rv);
+}
+
 void
 iq80310_7seg(char a, char b)
 {
 	uint8_t msb, lsb;
 
-	if (a < ASCIIMAP_START || a > ASCIIMAP_END)
-		msb = 0xff;
-	else
-		msb = asciimap[a - ASCIIMAP_START] | SEG_DP;
-
-	if (b < ASCIIMAP_START || b > ASCIIMAP_END)
-		lsb = 0xff;
-	else
-		lsb = asciimap[b - ASCIIMAP_START] | SEG_DP;
+	msb = iq80310_7seg_xlate(a);
+	lsb = iq80310_7seg_xlate(b);
 
 	snakestate = 0;
 

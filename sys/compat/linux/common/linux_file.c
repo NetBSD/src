@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.8 2002/04/01 07:44:25 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.9 2002/04/17 00:05:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.8 2002/04/01 07:44:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.9 2002/04/17 00:05:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,10 +406,7 @@ linux_sys_fcntl(l, v, retval)
 		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
 		if ((error = copyout(&bfl, bfp, sizeof bfl)))
 			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = cmd;
-		SCARG(&fca, arg) = bfp;
-		return sys_fcntl(l, &fca, retval);
+		arg = (caddr_t)bfp;
 		break;
 
 	case LINUX_F_SETOWN:

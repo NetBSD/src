@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.4.2.2 2002/02/28 04:12:42 nathanw Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4.2.3 2002/04/17 00:04:49 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,11 @@
 #include <sys/types.h> 
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+/* IRIX specific per-process data */
+struct irix_emuldata {
+	void *ied_sigtramp;	/* Address of signal trampoline */
+};
 
 /* e_flags used by IRIX for ABI selection */
 #define IRIX_EF_IRIX_ABI64	0x00000010

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.8 2002/04/01 07:39:10 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.9 2002/04/17 00:02:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -74,10 +74,10 @@
  */
 
 #ifndef _LKM
-#include "opt_cputypes.h"
 #include "opt_lockdebug.h"
 #endif /* !_LKM */
 
+#include <arm/cpuconf.h>
 
 #include <machine/intr.h>
 #ifndef _LOCORE
@@ -164,6 +164,23 @@ extern int current_intr_depth;
 #define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
 #endif
 
+/* The address of the vector page. */
+extern vaddr_t vector_page;
+#ifdef __PROG32
+void	arm32_vector_init(vaddr_t, int);
+
+#define	ARM_VEC_RESET			(1 << 0)
+#define	ARM_VEC_UNDEFINED		(1 << 1)
+#define	ARM_VEC_SWI			(1 << 2)
+#define	ARM_VEC_PREFETCH_ABORT		(1 << 3)
+#define	ARM_VEC_DATA_ABORT		(1 << 4)
+#define	ARM_VEC_ADDRESS_EXCEPTION	(1 << 5)
+#define	ARM_VEC_IRQ			(1 << 6)
+#define	ARM_VEC_FIQ			(1 << 7)
+
+#define	ARM_NVEC			8
+#define	ARM_VEC_ALL			0xffffffff
+#endif
 
 /*
  * Per-CPU information.  For now we assume one CPU.

@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.4.8.3 2002/04/01 07:38:55 nathanw Exp $
+#	$NetBSD: MDINSTALL,v 1.4.8.4 2002/04/17 00:02:15 nathanw Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -54,6 +54,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #
@@ -278,6 +279,6 @@ config	netbsd root on ? type ?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2048	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2048	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk [ramdisk]

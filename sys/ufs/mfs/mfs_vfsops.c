@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32.2.6 2002/04/01 07:49:18 nathanw Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.32.2.7 2002/04/17 00:06:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.6 2002/04/01 07:49:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.7 2002/04/17 00:06:31 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -340,7 +340,8 @@ mfs_start(mp, flags, p)
 		 * If that fails, or the filesystem is already in the
 		 * process of being unmounted, clear the signal (it has been
 		 * "processed"), otherwise we will loop here, as tsleep
-		 * will always return EINTR/ERESTART.  */
+		 * will always return EINTR/ERESTART.
+		 */
 		if (sleepreturn != 0) {
 			/*
 			 * XXX Freeze syncer.  Must do this before locking

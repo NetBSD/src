@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.2.2.2 2002/04/01 07:46:00 nathanw Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.2.2.3 2002/04/17 00:05:57 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.2 2002/04/01 07:46:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.3 2002/04/17 00:05:57 nathanw Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -86,6 +86,8 @@ static void i4b_eq1i_clrirq(void* base);
 #else
 static void i4b_eq1i_clrirq(struct isic_softc *sc);
 void isic_attach_Eqs1pi __P((struct isic_softc *sc));
+static void elsa_command_req(struct isic_softc *sc, int command, void *data);
+static void elsa_led_handler(void *);
 #endif
 
 /* masks for register encoded in base addr */
@@ -463,22 +465,119 @@ isic_attach_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 
 #else /* !__FreeBSD__ */
 
+static void
+elsa_command_req(struct isic_softc *sc, int command, void *data)
+{
+	int v, s, blink;
+	u_int8_t led_val;
+
+	switch (command) {
+	case CMR_DOPEN:
+		s = splnet();
+
+		v = ELSA_CTRL_SECRET & ~ELSA_CTRL_RESET;
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		v |= ELSA_CTRL_RESET;
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_IRQ, 0xff);
+
+		splx(s);
+		break;
+
+	case CMR_DCLOSE:
+		s = splnet();
+		callout_stop(&sc->sc_driver_callout);
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_IRQ, 0);
+		v = ELSA_CTRL_SECRET & ~ELSA_CTRL_RESET;
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		v |= ELSA_CTRL_RESET;
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		splx(s);
+		break;
+
+	case CMR_SETLEDS:
+		/* the magic value and keep reset off */
+		led_val = ELSA_CTRL_SECRET|ELSA_CTRL_RESET;
+
+		/* now see what LEDs we want to add */
+		v = (int)data;
+		if (v & CMRLEDS_TEI)
+			led_val |= ELSA_CTRL_LED_GREEN;
+		blink = 0;
+		if (v & (CMRLEDS_B0|CMRLEDS_B1)) {
+			led_val |= ELSA_CTRL_LED_YELLOW;
+			if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
+				blink = hz/4;
+			else
+				blink = hz;
+			sc->sc_driver_specific = v;
+		}
+
+		s = splnet();
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, led_val);
+		callout_stop(&sc->sc_driver_callout);
+		if (blink)
+			callout_reset(&sc->sc_driver_callout, blink,
+			    elsa_led_handler, sc);
+		splx(s);
+
+		break;
+
+	default:
+		return;
+	}
+}
+
+static void
+elsa_led_handler(void *token)
+{
+	struct isic_softc *sc = token;
+	int v, s, blink, off = 0;
+	u_int8_t led_val = ELSA_CTRL_SECRET|ELSA_CTRL_RESET;
+
+	s = splnet();
+	v = sc->sc_driver_specific;
+	if (v > 0) {
+		/* turn blinking LED off */
+		v = -sc->sc_driver_specific;
+		sc->sc_driver_specific = v;
+		off = 1;
+	} else {
+		sc->sc_driver_specific = -v;
+	}
+	if (v & CMRLEDS_TEI)
+		led_val |= ELSA_CTRL_LED_GREEN;
+	blink = 0;
+	if (off == 0) {
+		if (v & (CMRLEDS_B0|CMRLEDS_B1))
+			led_val |= ELSA_CTRL_LED_YELLOW;
+	}
+	if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
+		blink = hz/4;
+	else
+		blink = hz;
+
+	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+	    ELSA_OFF_CTRL, led_val);
+	if (blink)
+		callout_reset(&sc->sc_driver_callout, blink,
+		    elsa_led_handler, sc);
+	splx(s);
+}
+
 void
 isic_attach_Eqs1pi(struct isic_softc *sc)
 {
-	bus_space_tag_t t = sc->sc_maps[0].t;
-	bus_space_handle_t h = sc->sc_maps[0].h;
-	u_char byte = ELSA_CTRL_SECRET;
-
-	byte &= ~ELSA_CTRL_RESET;
-        bus_space_write_1(t, h, ELSA_OFF_CTRL, byte);
-        DELAY(20);
-	byte |= ELSA_CTRL_RESET;
-        bus_space_write_1(t, h, ELSA_OFF_CTRL, byte);
-
-        DELAY(20);
-        bus_space_write_1(t, h, ELSA_OFF_IRQ, 0xff);
-
 	/* setup access routines */
 
 	sc->clearirq = i4b_eq1i_clrirq;
@@ -487,6 +586,8 @@ isic_attach_Eqs1pi(struct isic_softc *sc)
 
 	sc->readfifo = eqs1pi_read_fifo;
 	sc->writefifo = eqs1pi_write_fifo;
+
+	sc->drv_command = elsa_command_req;
 
 	/* setup card type */
 	
@@ -498,6 +599,9 @@ isic_attach_Eqs1pi(struct isic_softc *sc)
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
+
+	callout_init(&sc->sc_driver_callout);
+	sc->sc_driver_specific = 0;
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.1.2.2 2002/04/01 07:39:16 nathanw Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.1.2.3 2002/04/17 00:02:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -53,6 +53,8 @@
 bs_protos(i80321);
 bs_protos(i80321_io);
 bs_protos(i80321_mem);
+bs_protos(generic);
+bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 
 /*
@@ -82,39 +84,39 @@ const struct bus_space i80321_bs_tag_template = {
 	i80321_bs_barrier,
 
 	/* read (single) */
-	i80321_bs_r_1,
-	i80321_bs_r_2,
-	i80321_bs_r_4,
+	generic_bs_r_1,
+	generic_armv4_bs_r_2,
+	generic_bs_r_4,
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	i80321_bs_rm_1,
-	i80321_bs_rm_2,
-	i80321_bs_rm_4,
+	generic_bs_rm_1,
+	generic_armv4_bs_rm_2,
+	generic_bs_rm_4,
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	bs_notimpl_bs_rr_1,
-	i80321_bs_rr_2,
-	i80321_bs_rr_4,
+	generic_armv4_bs_rr_2,
+	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	i80321_bs_w_1,
-	i80321_bs_w_2,
-	i80321_bs_w_4,
+	generic_bs_w_1,
+	generic_armv4_bs_w_2,
+	generic_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	i80321_bs_wm_1,
-	i80321_bs_wm_2,
-	i80321_bs_wm_4,
+	generic_bs_wm_1,
+	generic_armv4_bs_wm_2,
+	generic_bs_wm_4,
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	bs_notimpl_bs_wr_1,
-	i80321_bs_wr_2,
-	i80321_bs_wr_4,
+	generic_armv4_bs_wr_2,
+	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -125,13 +127,13 @@ const struct bus_space i80321_bs_tag_template = {
 
 	/* set region */
 	bs_notimpl_bs_sr_1,
-	i80321_bs_sr_2,
+	generic_armv4_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	i80321_bs_c_2,
+	generic_armv4_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3.4.4 2002/04/01 07:42:06 nathanw Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.3.4.5 2002/04/17 00:04:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -216,6 +216,7 @@ cpu_attach_common(struct device *self, int id)
 			break;
 		default:
 			bitmask = HID0_BITMASK;
+			break;
 		}
 		bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
 		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
@@ -368,6 +369,18 @@ cpu_config_l2cr(int vers)
 	}
 
 	if (l2cr & L2CR_L2E) {
+		if (vers == MPC7450 || vers == MPC7455) {
+			u_int l3cr;
+
+			printf(": 256KB L2 cache");
+
+			__asm __volatile("mfspr %0,%1" :
+			    "=r"(l3cr) : "n"(SPR_L3CR) );
+			if (l3cr & L3CR_L3E)
+				printf(", %cMB L3 backside cache",
+				   l3cr & L3CR_L3SIZ ? '2' : '1');
+			printf("\n");
+		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:
 			printf(": 256KB");

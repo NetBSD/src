@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.8.2.3 2002/02/28 04:06:13 nathanw Exp $
+# $NetBSD: YEAH-BABY,v 1.8.2.4 2002/04/17 00:02:11 nathanw Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -119,6 +119,7 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 #options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

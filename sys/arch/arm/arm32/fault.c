@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.7 2002/04/11 07:00:59 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.8 2002/04/17 00:02:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,7 +43,6 @@
  * Created      : 28/11/94
  */
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -55,6 +54,8 @@
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <arm/cpuconf.h>
 
 #include <machine/frame.h>
 #include <arm/arm32/katelib.h>
@@ -623,7 +624,7 @@ prefetch_abort_handler(frame)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("prefetch_abort: PC = %08x\n", fault_pc);
+		printf("prefetch_abort: PC = %08lx\n", fault_pc);
 #endif
 	/* Ok validate the address, can only execute in USER space */
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
@@ -661,8 +662,8 @@ prefetch_abort_handler(frame)
 #ifdef DDB
 			if (kernel_debug & 2)
 				Debugger();
-		}
 #endif
+		}
 	}
 #endif /* CPU_SA110 */
 

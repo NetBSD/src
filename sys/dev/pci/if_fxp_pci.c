@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.12.2.3 2001/11/14 19:15:15 nathanw Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.12.2.4 2002/04/17 00:06:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.12.2.3 2001/11/14 19:15:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.12.2.4 2002/04/17 00:06:01 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -322,6 +322,13 @@ fxp_pci_attach(parent, self, aux)
 			chipname = "i82559S Ethernet";
 		if (sc->sc_rev >= FXP_REV_82550)
 			chipname = "i82550 Ethernet";
+
+		/*
+		 * Mark all i82559 and i82550 revisions as having
+		 * the "resume bug".  See i82557.c for details.
+		 */
+		if (sc->sc_rev >= FXP_REV_82559_A0)
+			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 
 		printf(": %s, rev %d\n", chipname != NULL ? chipname :
 		    fpp->fpp_name, sc->sc_rev);

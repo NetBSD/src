@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.1.6.6 2002/02/28 04:10:12 nathanw Exp $
+#	$NetBSD: DELPHI,v 1.1.6.7 2002/04/17 00:03:13 nathanw Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.1.6.6 $"
+ident 		"DELPHI-$Revision: 1.1.6.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -61,6 +61,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -274,9 +275,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci? dev ? function ?
@@ -285,7 +285,6 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?

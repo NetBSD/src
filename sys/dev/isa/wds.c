@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.41.2.6 2002/02/28 04:13:48 nathanw Exp $	*/
+/*	$NetBSD: wds.c,v 1.41.2.7 2002/04/17 00:05:56 nathanw Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.6 2002/02/28 04:13:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.7 2002/04/17 00:05:56 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -790,7 +790,7 @@ wds_start_scbs(sc)
 
 		if ((scb->flags & SCB_POLLED) == 0)
 			callout_reset(&scb->xs->xs_callout,
-			    (scb->timeout * hz) / 1000, wds_timeout, scb);
+			    mstohz(scb->timeout), wds_timeout, scb);
 
 		++sc->sc_mbofull;
 		wds_nextmbx(wmbo, wmbx, mbo);

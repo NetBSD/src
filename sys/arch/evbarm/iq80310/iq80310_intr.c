@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.4.4.3 2002/02/28 04:09:14 nathanw Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.4.4.4 2002/04/17 00:02:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -270,7 +270,7 @@ iq80310_intr_calculate_masks(void)
 }
 
 static void
-iq80310_do_pending(void)
+iq80310_do_soft(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int new, oldirqstate;
@@ -324,6 +324,10 @@ splx(int new)
 	old = current_spl_level;
 	current_spl_level = new;
 
+	/* If there are software interrupts to process, do it. */
+	if ((ipending & ~IRQ_BITS) & ~new)
+		iq80310_do_soft();
+
 	/*
 	 * If there are pending hardware interrupts (i.e. the
 	 * external interrupt is disabled in the ICU), and all
@@ -336,10 +340,6 @@ splx(int new)
 	 */
 	if ((new & IRQ_BITS) == 0 && (ipending & IRQ_BITS))
 		i80200_intr_enable(INTCTL_IM);
-
-	/* If there are software interrupts to process, do it. */
-	if ((ipending & ~IRQ_BITS) & ~new)
-		iq80310_do_pending();
 }
 
 int
@@ -362,7 +362,7 @@ _setsoftintr(int si)
 
 	/* Process unmasked pending soft interrupts. */
 	if ((ipending & ~IRQ_BITS) & ~current_spl_level)
-		iq80310_do_pending();
+		iq80310_do_soft();
 }
 
 void
@@ -495,7 +495,7 @@ iq80310_intr_dispatch(struct clockframe *frame)
 	/* Check for pendings soft intrs. */
 	if ((ipending & ~IRQ_BITS) & ~current_spl_level) {
 		oldirqstate = enable_interrupts(I32_bit);
-		iq80310_do_pending();
+		iq80310_do_soft();
 		restore_interrupts(oldirqstate);
 	}
 

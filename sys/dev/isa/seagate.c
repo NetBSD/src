@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.6 2002/02/28 04:13:47 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.7 2002/04/17 00:05:56 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.6 2002/02/28 04:13:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.7 2002/04/17 00:05:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ sea_scsipi_request(chan, req, arg)
 
 		if ((flags & XS_CTL_POLL) == 0) {
 			callout_reset(&scb->xs->xs_callout,
-			    (xs->timeout * hz) / 1000, sea_timeout, scb);
+			    mstohz(xs->timeout), sea_timeout, scb);
 			splx(s);
 			return;
 		}

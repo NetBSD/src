@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.12.2.6 2002/04/01 07:40:38 nathanw Exp $
+#	$NetBSD: IOPENER,v 1.12.2.7 2002/04/17 00:03:18 nathanw Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.12.2.6 $"
+#ident 		"IOPENER-$Revision: 1.12.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -45,6 +45,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -224,15 +225,13 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?

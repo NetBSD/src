@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.8.3 2002/04/01 07:39:02 nathanw Exp $
+#	$NetBSD: Makefile,v 1.22.8.4 2002/04/17 00:02:16 nathanw Exp $
 
 ### what we need:
 
@@ -42,10 +42,6 @@ DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 ### main target: ###
 
 realall: machine m68k ${FILES}
-
-# Copy boot.amiga to / as well.
-afterinstall:
-	cp -p ${DESTDIR}${BINDIR}/boot.amiga ${DESTDIR}/
 
 CLEANFILES += boot.amiga x.out xxstart.o libboot.a vers.c machine m68k
 

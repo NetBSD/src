@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.1.2.2 2002/04/01 07:45:28 nathanw Exp $ */
+/* $NetBSD: isic_l1.h,v 1.1.2.3 2002/04/17 00:05:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -159,7 +159,10 @@ struct isic_softc
 	struct l2_softc	sc_l2;		/* D-channel variables */
 
 	int		sc_irq;		/* interrupt vector	*/
-	int		sc_dying;	/* set when card is detached */
+	int		sc_intr_valid;	/* set when card is detached or disable */
+#define	ISIC_INTR_VALID		0	/* normal operation */
+#define	ISIC_INTR_DISABLED	1	/* ISDN subsystem not opened */
+#define	ISIC_INTR_DYING		2	/* card is detaching */
 
 	int sc_num_mappings;		/* number of io mappings provided */
 	struct isic_io_map *sc_maps;
@@ -241,6 +244,9 @@ struct isic_softc
 	int		sc_I430T4;	/* Timer T4 running */	
 	struct callout sc_T4_callout;
 
+	int		sc_driver_specific;	/* used for LED values */
+	struct callout	sc_driver_callout;	/* used for LED timer */
+
 	/*
 	 * byte fields for the AVM Fritz!Card PCI. These are packed into
 	 * a u_int in the driver.
@@ -248,8 +254,6 @@ struct isic_softc
 	u_char		avma1pp_cmd;
 	u_char		avma1pp_txl;
 	u_char		avma1pp_prot;
-
-	int		sc_enabled;	/* daemon is running */
 
 	int		sc_ipac;	/* flag, running on ipac */
 	int		sc_bfifolen;	/* length of b channel fifos */
@@ -264,6 +268,8 @@ struct isic_softc
 	void		(*readfifo) __P((struct isic_softc *sc, int what, void *buf, size_t size));
 	void		(*writefifo) __P((struct isic_softc *sc, int what, const void *data, size_t size));
 	void		(*clearirq) __P((struct isic_softc *sc));
+
+	void		(*drv_command) __P((struct isic_softc *sc, int cmd, void *data));
 
 #define	ISAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_ISAC, (r))
 #define	ISAC_WRITE(r,v)		(*sc->writereg)(sc, ISIC_WHAT_ISAC, (r), (v))
@@ -340,7 +346,7 @@ extern void isic_hscx_cmd __P(( struct isic_softc *sc, int h_chan, unsigned char
 extern void isic_hscx_waitxfw __P(( struct isic_softc *sc, int h_chan ));
 extern void isic_init_linktab __P((struct isic_softc *sc));
 extern int isic_isac_init __P((struct isic_softc *sc));
-extern int isic_isac_irq __P((struct isic_softc *sc, int r));
+extern void isic_isac_irq __P((struct isic_softc *sc, int r));
 extern void isic_isac_l1_cmd __P((struct isic_softc *sc, int command));
 extern void isic_next_state __P((struct isic_softc *sc, int event));
 extern char * isic_printstate __P((struct isic_softc *sc));

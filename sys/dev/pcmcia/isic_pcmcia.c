@@ -1,48 +1,41 @@
-/*
- *   Copyright (c) 1998 Martin Husemann. All rights reserved.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
- *   are met:
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of the author nor the names of any co-contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *   4. Altered versions must be plainly marked as such, and must not be
- *      misrepresented as being the original software and/or documentation.
- *   
- *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *   SUCH DAMAGE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- *---------------------------------------------------------------------------
- *
- *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
- *	-------------------------------------------------------
- *
- *	$Id: isic_pcmcia.c,v 1.2.2.4 2002/04/01 07:46:52 nathanw Exp $ 
- *
- *      last edit-date: [Fri Jan  5 11:39:32 2001]
- *
- *	-mh	original implementation
- *
- *---------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.2.2.4 2002/04/01 07:46:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.2.2.5 2002/04/17 00:06:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -215,20 +208,21 @@ isic_pcmcia_attach(parent, self, aux)
 	const struct isic_pcmcia_card_entry * cde;
 	int s;
 
+	psc->sc_pf = pa->pf;
+	cfe = pa->pf->cfe_head.sqh_first;
+	psc->sc_ih = NULL;
+
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL)
-		return; /* oops - not found?!? */
-
-	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+		goto bad2;	/* oops - not found?!? */
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
 	pcmcia_function_enable(pa->pf);
 
 	if (!cde->attach(psc, cfe, pa))
-		return;		/* Ooops ? */
+		goto bad;	/* Ooops ? */
 
 	/* Announce card name */
 	printf(": %s\n", cde->name);
@@ -242,9 +236,16 @@ isic_pcmcia_attach(parent, self, aux)
 	if (isic_pcmcia_isdn_attach(sc, cde->name) == 0) {
 		/* setup interrupt */
 		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
-	}
+	} else
+		goto bad;
 
 	splx(s);
+	return;
+bad:
+	pcmcia_function_disable(psc->sc_pf);
+	splx(s);
+bad2:
+	printf("%s: attach failed\n", psc->sc_isic.sc_dev.dv_xname);
 }
 
 static int
@@ -257,7 +258,8 @@ isic_pcmcia_detach(self, flags)
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	if (psc->sc_ih != NULL)
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 
 	return (0);
 }
@@ -277,8 +279,9 @@ isic_pcmcia_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
-		isic_detach_bri(&psc->sc_isic);
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
+		if (psc->sc_isic.sc_l3token != NULL)
+			isic_detach_bri(&psc->sc_isic);
 		break;
 	}
 	splx(s);
@@ -322,6 +325,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 		"Unknown Version"
 	};
 
+	sc->sc_l3token = NULL;
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
@@ -348,16 +352,14 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 		case HSCX_VA3:
 		case HSCX_V21:
 			break;
-			
+
 		default:
 			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 				ISIC_PARM, sc->sc_hscx_version);
 			return(EIO);
 	};
 
-	/* ISAC setup */
-	
-	isic_isac_init(sc);
+        sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
 	/* HSCX setup */
 
@@ -392,10 +394,6 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	callout_init(&sc->sc_T4_callout);
 #endif
 
-	/* init higher protocol layers */
-	
-	isic_attach_bri(sc, cardname, &isic_std_driver);
-
 	/* announce chip versions */
 	
 	if(sc->sc_isac_version >= ISAC_UNKN)
@@ -426,6 +424,9 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 				ISIC_PARM,
 				HSCXversion[sc->sc_hscx_version]);
 	}
+
+	/* init higher protocol layers */
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 
 	return(0);
 }

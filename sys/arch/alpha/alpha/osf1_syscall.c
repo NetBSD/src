@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.5.4.2 2001/08/30 23:43:41 nathanw Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.5.4.3 2002/04/17 00:02:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5.4.2 2001/08/30 23:43:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5.4.3 2002/04/17 00:02:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	default:
 	bad:
-		error = osf1_errno_rxlist[error];
+		error = native_to_osf1_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
@@ -330,7 +330,7 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	default:
 	bad:
-		error = osf1_errno_rxlist[error];
+		error = native_to_osf1_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.7 2002/04/01 07:45:19 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.8 2002/04/17 00:05:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.7 2002/04/01 07:45:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.8 2002/04/17 00:05:34 nathanw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -660,6 +660,15 @@ com_detach(self, flags)
 	mn |= COMDIALOUT_MASK;
 	vdevgone(maj, mn, mn, VCHR);
 
+	if (sc->sc_rbuf == NULL) {
+		/*
+		 * Ring buffer allocation failed in the com_attach_subr,
+		 * only the tty is allocated, and nothing else.
+		 */
+		ttyfree(sc->sc_tty);
+		return 0;
+	}
+	
 	/* Free the receive buffer. */
 	free(sc->sc_rbuf, M_DEVBUF);
 
@@ -1725,7 +1734,7 @@ comstart(tp)
 	}
 
 	/* Output the first chunk of the contiguous buffer. */
-	{
+	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		int n;
 
 		n = sc->sc_tbc;
@@ -2446,8 +2455,6 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	tcflag_t cflag;
 {
 	int res;
-
-	printf("com_kgdb_attach\n");
 
 	if (iot == comconstag && iobase == comconsaddr)
 		return (EBUSY); /* cannot share with console */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.13 2002/04/01 07:44:56 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.14 2002/04/17 00:05:22 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -181,7 +181,7 @@ defflag				SYSCALL_DEBUG
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
-defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_SIZE
+defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 
 # device classes
 #
@@ -772,10 +772,10 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
-# CyberPro 20x0 graphics (linear non-VGA mode)
+# Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	cprofb: wsemuldisplaydev
-file	dev/ic/cyberpro.c		cprofb needs-flag
+device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
+file	dev/ic/igsfb.c			igsfb
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -820,6 +820,11 @@ attach	radio at radiodev
 # IEEE 1212 routines
 define	ieee1212
 file	dev/std/ieee1212.c		ieee1212
+
+#
+# SBP2 routines for IEEE 1394
+define	sbp2
+file	dev/ieee1394/sbp2.c		sbp2
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
@@ -1193,7 +1198,7 @@ file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan | vlan | pppoe
+					    wlan
 file	net/if_faith.c			faith & inet & inet6	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag

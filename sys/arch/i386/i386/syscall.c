@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.4.4 2002/02/23 22:53:37 gmcgarry Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.5 2002/04/17 00:03:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.4 2002/02/23 22:53:37 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.5 2002/04/17 00:03:23 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -274,7 +274,7 @@ syscall_vm86(frame)
 	register struct lwp *l;
 
 	l = curproc;
-	trapsignal(l, SIGBUS, T_PROTFLT);
+	(*p->p_emul->e_trapsignal)(l, SIGBUS, T_PROTFLT);
 	userret(l);
 }
 #endif

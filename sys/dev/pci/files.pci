@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123.2.11 2002/04/01 07:46:22 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.12 2002/04/17 00:06:01 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -240,6 +240,11 @@ file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
 file	dev/ic/ibm561.c			tga
+
+# Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
+# device declaration in sys/conf/files
+attach	igsfb at pci with igsfb_pci
+file	dev/pci/igsfb_pci.c		igsfb_pci
 
 # Brooktree Bt848 video capture
 device	bktr: pcibus, radiodev

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.3 2002/04/01 07:39:34 nathanw Exp $
+#	$NetBSD: Makefile,v 1.11.4.4 2002/04/17 00:02:45 nathanw Exp $
 
 LIB=	sa
 
@@ -24,7 +24,7 @@ SRCS=	consio.S diskio.c
 SRCS+=	ashldi3.c ashrdi3.c bzero.c strcmp.c strlen.c
 
 # stand routines
-SRCS+=	alloc.c bcopy.c exec.c getfile.c gets.c globals.c panic.c \
+SRCS+=	alloc.c bcopy.c exec.c files.c getfile.c gets.c globals.c panic.c \
 	memcpy.c printf.c strerror.c subr_prf.c twiddle.c 
 
 # io routines

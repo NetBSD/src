@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.7 2002/04/01 07:49:17 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.8 2002/04/17 00:06:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.7 2002/04/01 07:49:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.8 2002/04/17 00:06:31 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -187,7 +187,7 @@ ffs_mount(mp, path, data, ndp, p)
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
 	size_t size;
-	int error, flags;
+	int error, flags, update;
 	mode_t accessmode;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
@@ -198,14 +198,101 @@ ffs_mount(mp, path, data, ndp, p)
 	mp->mnt_flag &= ~MNT_SOFTDEP;
 #endif
 
+	update = mp->mnt_flag & MNT_UPDATE;
+
+	/* Check arguments */
+	if (update) {
+		/* Use the extant mount */
+		ump = VFSTOUFS(mp);
+		devvp = ump->um_devvp;
+		if (args.fspec == NULL)
+			vref(devvp);
+	} else {
+		/* New mounts must have a filename for the device */
+		if (args.fspec == NULL)
+			return (EINVAL);
+	}
+
+	if (args.fspec != NULL) {
+		/*
+		 * Look up the name and verify that it's sane.
+		 */
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+		if ((error = namei(ndp)) != 0)
+			return (error);
+		devvp = ndp->ni_vp;
+
+		if (!update) {
+			/*
+			 * Be sure this is a valid block device
+			 */
+			if (devvp->v_type != VBLK)
+				error = ENOTBLK;
+			else if (major(devvp->v_rdev) >= nblkdev)
+				error = ENXIO;
+		} else {
+			/*
+			 * Be sure we're still naming the same device
+			 * used for our initial mount
+			 */
+			if (devvp != ump->um_devvp)
+				error = EINVAL;
+		}
+	}
+
 	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (error == 0 && p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if (update ?
+		    (mp->mnt_flag & MNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0);
+	}
+
+	if (error) {
+		vrele(devvp);
+		return (error);
+	}
+
+	if (!update) {
+		error = ffs_mountfs(devvp, mp, p);
+		if (error) {
+			vrele(devvp);
+			return (error);
+		}
+
 		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
+		if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
+		    (MNT_SOFTDEP | MNT_ASYNC)) {
+			printf("%s fs uses soft updates, "
+			    "ignoring async mode\n",
+			    fs->fs_fsmnt);
+			mp->mnt_flag &= ~MNT_ASYNC;
+		}
+	} else {
+		/*
+		 * Update the mount.
+		 */
+
+		/*
+		 * The initial mount got a reference on this
+		 * device, so drop the one obtained via
+		 * namei(), above.
+		 */
+		vrele(devvp);
+
+		fs = ump->um_fs;
 		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+			/*
+			 * Changing from r/w to r/o
+			 */
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -272,24 +359,15 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
+			error = ffs_reload(mp, p->p_ucred, p);
 			if (error)
 				return (error);
 		}
+
 		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
 			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
+			 * Changing from read-only to read/write
 			 */
-			devvp = ump->um_devvp;
-			if (p->p_ucred->cr_uid != 0) {
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   p->p_ucred, p);
-				VOP_UNLOCK(devvp, 0);
-				if (error)
-					return (error);
-			}
 			fs->fs_ronly = 0;
 			fs->fs_clean <<= 1;
 			fs->fs_fmod = 1;
@@ -313,63 +391,7 @@ ffs_mount(mp, path, data, ndp, p)
 			mp->mnt_flag &= ~MNT_ASYNC;
 		}
 	}
-	/*
-	 * Not an update, or updating the name: look up the name
-	 * and verify that it refers to a sensible block device.
-	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if ((error = namei(ndp)) != 0)
-		return (error);
-	devvp = ndp->ni_vp;
 
-	if (devvp->v_type != VBLK) {
-		vrele(devvp);
-		return (ENOTBLK);
-	}
-	if (major(devvp->v_rdev) >= nblkdev) {
-		vrele(devvp);
-		return (ENXIO);
-	}
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (p->p_ucred->cr_uid != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
-		if (error) {
-			vrele(devvp);
-			return (error);
-		}
-	}
-	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
-		error = ffs_mountfs(devvp, mp, p);
-		if (!error) {
-			ump = VFSTOUFS(mp);
-			fs = ump->um_fs;
-			if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
-			    (MNT_SOFTDEP | MNT_ASYNC)) {
-				printf("%s fs uses soft updates, "
-				       "ignoring async mode\n",
-				    fs->fs_fsmnt);
-				mp->mnt_flag &= ~MNT_ASYNC;
-			}
-		}
-	}
-	else {
-		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
-	}
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
 	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
@@ -966,7 +988,7 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_bsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
-	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
+	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
 		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -

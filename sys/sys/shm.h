@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.26.4.2 2001/06/21 20:09:53 nathanw Exp $	*/
+/*	$NetBSD: shm.h,v 1.26.4.3 2002/04/17 00:06:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ void	shminit __P((void));
 void	shmfork __P((struct vmspace *, struct vmspace *));
 void	shmexit __P((struct vmspace *));
 int	shmctl1 __P((struct proc *, int, int, struct shmid_ds *));
+int	shmat1 __P((struct proc *, int, const void *, int, vaddr_t *, int));
 #else /* !_KERNEL */
 
 #include <sys/cdefs.h>

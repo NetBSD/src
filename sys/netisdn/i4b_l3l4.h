@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.1.1.1.4.2 2002/04/01 07:48:58 nathanw Exp $
+ *	$Id: i4b_l3l4.h,v 1.1.1.1.4.3 2002/04/17 00:06:27 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -66,15 +66,17 @@ typedef struct i4b_isdn_bchan_linktab {
 } isdn_link_t;
 
 struct isdn_l4_driver_functions;
+struct isdn_l3_driver;
 
 /*---------------------------------------------------------------------------*
  *	this structure describes one call/connection on one B-channel
  *	and all its parameters
  *---------------------------------------------------------------------------*/
-typedef struct
+typedef struct call_desc
 {
 	u_int	cdid;			/* call descriptor id		*/
 	int	bri;			/* isdn controller number	*/
+	struct isdn_l3_driver *l3drv;
 	int	cr;			/* call reference value		*/
 
 	int	crflag;			/* call reference flag		*/
@@ -96,9 +98,12 @@ typedef struct
 	
 	u_char	dst_telno[TELNO_MAX];	/* destination number	*/
 	u_char	src_telno[TELNO_MAX];	/* source number	*/
+	u_char	src_subaddr[SUBADDR_MAX];
+	u_char	dest_subaddr[SUBADDR_MAX];
 
 	int	scr_ind;		/* screening ind for incoming call */
 	int	prs_ind;		/* presentation ind for incoming call */
+	int	type_plan;		/* type and plan for incoming number */
 	
 	int	Q931state;		/* Q.931 state for call	*/
 	int	event;			/* event to be processed */
@@ -227,13 +232,13 @@ struct isdn_l3_driver_functions {
 	isdn_link_t* (*get_linktab)(void*, int channel);
 	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 	
-	void	(*N_CONNECT_REQUEST)	(unsigned int);	
-	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
-	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
-	void	(*N_ALERT_REQUEST)	(unsigned int);
+	void	(*N_CONNECT_REQUEST)	(struct call_desc *cd);	
+	void	(*N_CONNECT_RESPONSE)	(struct call_desc *cd, int, int);
+	void	(*N_DISCONNECT_REQUEST)	(struct call_desc *cd, int);
+	void	(*N_ALERT_REQUEST)	(struct call_desc *cd);
 	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
 	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
-	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
+	void	(*N_MGMT_COMMAND)	(struct isdn_l3_driver *, int cmd, void *);
 };
 
 /*---------------------------------------------------------------------------*
@@ -270,10 +275,12 @@ struct isdn_l3_driver {
 	const struct isdn_l3_driver_functions * l3driver;
 };
 
+void i4b_l4_contr_ev_ind(int controller, int attach);
 struct isdn_l3_driver * isdn_attach_bri(const char *devname,
     const char *cardname, void *l1_token, 
     const struct isdn_l3_driver_functions * l3driver);
 int isdn_detach_bri(struct isdn_l3_driver *);
+void isdn_bri_ready(int bri);
 struct isdn_l3_driver *isdn_find_l3_by_bri(int bri);
 int isdn_count_bri(int *maxbri);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.62.2.5 2002/04/01 07:44:36 nathanw Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.62.2.6 2002/04/17 00:05:16 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.62.2.5 2002/04/01 07:44:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.62.2.6 2002/04/17 00:05:16 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -191,7 +191,7 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 		break;
 	case OSF_GET_IEEE_FP_CONTROL:
 		if (((fpflags = alpha_read_fp_c(l)) & IEEE_INHERIT) != 0) {
-			fpflags |= 1UL << 63;
+			fpflags |= 1ULL << 63;
 			fpflags &= ~IEEE_INHERIT;
 		}
 		error = copyout(&fpflags, SCARG(uap, buffer), sizeof fpflags);
@@ -203,7 +203,11 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 			error = EINVAL;
 		else {
 			memset(&cpuinfo, 0, sizeof(cpuinfo));
+#ifdef __alpha__
 			unit = alpha_pal_whami();
+#else
+			unit = 0; /* XXX */
+#endif
 			cpuinfo.current_cpu = unit;
 			cpuinfo.cpus_in_box = ncpus;
 			cpuinfo.cpu_type = 
@@ -223,8 +227,12 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 		if(SCARG(uap, nbytes) < sizeof(proctype))
 			error = EINVAL;
 		else {
+#ifdef __alpha__
 			unit = alpha_pal_whami();
 			proctype = LOCATE_PCS(hwrpb, unit)->pcs_proc_type;
+#else
+			proctype = 0;	/* XXX */
+#endif
 			error = copyout (&proctype, SCARG(uap, buffer),
 			    sizeof(percpu));
 			retval[0] = 1;

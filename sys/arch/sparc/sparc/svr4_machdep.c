@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43.8.2 2001/11/20 16:31:58 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.43.8.3 2002/04/17 00:04:27 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -323,7 +323,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = native_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 	/*

@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.5.2.2 2002/04/01 07:46:29 nathanw Exp $
+ *	$Id: ifpci.c,v 1.5.2.3 2002/04/17 00:06:02 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.2 2002/04/01 07:46:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.3 2002/04/17 00:06:02 nathanw Exp $");
 
 
 #include <sys/param.h>
@@ -84,11 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.2 2002/04/01 07:46:29 nathanw Exp $"
 static isdn_link_t *avma1pp_ret_linktab(void *token, int channel);
 static void avma1pp_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 
-void n_connect_request(u_int cdid);
-void n_connect_response(u_int cdid, int response, int cause);
-void n_disconnect_request(u_int cdid, int cause);
-void n_alert_request(u_int cdid);
-void n_mgmt_command(int bri, int cmd, void *parm);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
@@ -394,6 +394,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_l2.l1_token = sc;
 	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	isdn_bri_ready(drv->bri);
 }
 
 static int
@@ -425,7 +426,7 @@ ifpci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, STI_ATTACH, 0);
 		isdn_detach_bri(psc->sc_isic.sc_l3token);
 		psc->sc_isic.sc_l3token = NULL;
@@ -924,7 +925,7 @@ avma1pp_intr(void * parm)
 #define OURS	ret = 1
 	u_char stat;
 
-	if (sc->sc_dying)
+	if (sc->sc_intr_valid != ISIC_INTR_VALID)
 		return 0;
 
 	stat = bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET);
@@ -949,8 +950,7 @@ avma1pp_intr(void * parm)
 			u_int8_t isac_irq_stat = ISAC_READ(I_ISTA);
 			if (!isac_irq_stat)
 				break;
-			if (isic_isac_irq(sc, isac_irq_stat))
-				break;	/* bad IRQ */
+			isic_isac_irq(sc, isac_irq_stat);
 		}
 		OURS;
 	}

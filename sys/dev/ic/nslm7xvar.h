@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.7 2000/08/03 09:27:01 bouyer Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.7.4.1 2002/04/17 00:05:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #define LM_ID_LM78	0x00
 #define LM_ID_LM78J	0x40
 #define LM_ID_LM79	0xC0
+#define LM_ID_LM81	0x80
 #define LM_ID_MASK	0xFE
 
 /*

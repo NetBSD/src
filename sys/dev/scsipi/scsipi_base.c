@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.9 2002/04/01 07:47:19 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.10 2002/04/17 00:06:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.9 2002/04/01 07:47:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.10 2002/04/17 00:06:12 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -1598,9 +1598,10 @@ scsipi_complete(xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
-
-	if (periph->periph_switch->psw_done)
-		periph->periph_switch->psw_done(xs);
+	/*
+	 * Set buffer fields in case the periph
+	 * switch done func uses them
+	 */
 	if ((bp = xs->bp) != NULL) {
 		if (error) {
 			bp->b_error = error;
@@ -1610,8 +1611,13 @@ scsipi_complete(xs)
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
 		}
-		biodone(bp);
 	}
+
+	if (periph->periph_switch->psw_done)
+		periph->periph_switch->psw_done(xs);
+
+	if (bp)
+		biodone(bp);
 
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);
@@ -2133,8 +2139,7 @@ scsipi_create_completion_thread(arg)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	if (kthread_create1(scsipi_completion_thread, chan,
-	    &chan->chan_thread, "%s:%d", adapt->adapt_dev->dv_xname,
-	    chan->chan_channel)) {
+	    &chan->chan_thread, "%s", chan->chan_name)) {
 		printf("%s: unable to create completion thread for "
 		    "channel %d\n", adapt->adapt_dev->dv_xname,
 		    chan->chan_channel);

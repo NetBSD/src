@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_MD,v 1.5.8.1 2002/04/01 07:40:52 nathanw Exp $
+#	$NetBSD: GENERIC_MD,v 1.5.8.2 2002/04/17 00:03:41 nathanw Exp $
 #
 # GENERIC_MD config file
 #
@@ -11,4 +11,4 @@ makeoptions	TEXTADDR=0x800000
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MEMORY_DISK_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes

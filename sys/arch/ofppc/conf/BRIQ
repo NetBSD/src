@@ -1,11 +1,11 @@
-#	$NetBSD: BRIQ,v 1.2.4.4 2002/04/01 07:41:47 nathanw Exp $
+#	$NetBSD: BRIQ,v 1.2.4.5 2002/04/17 00:04:07 nathanw Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.2.4.4 $"
+#ident 		"GENERIC-$Revision: 1.2.4.5 $"
 
 maxusers	32
 
@@ -33,6 +33,7 @@ options 	SYSVSHM		# System V shared memory
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

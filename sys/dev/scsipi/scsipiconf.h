@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46.2.7 2002/01/08 00:31:53 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.8 2002/04/17 00:06:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ struct scsipi_bustype {
  */
 struct scsipi_channel {
 	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
+	const char *chan_name;	/* this channel's name */
 
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
 

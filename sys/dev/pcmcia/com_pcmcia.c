@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21.14.3 2002/04/01 07:46:49 nathanw Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.14.4 2002/04/17 00:06:07 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.14.3 2002/04/01 07:46:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.14.4 2002/04/17 00:06:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,8 @@ com_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
+	psc->sc_io_window = -1;
+
 retry:
 	/* find a cfe we can use */
 
@@ -307,6 +309,13 @@ com_pcmcia_detach(self, flags)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) self;
 	int error;
+
+	/* Unmap our i/o window. */
+	if (psc->sc_io_window == -1) {
+		printf("%s: I/O window not allocated.",
+		    psc->sc_com.sc_dev.dv_xname);
+		return 0;
+	}
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;

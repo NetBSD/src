@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.2.2.3 2002/04/12 23:27:58 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.2.2.4 2002/04/17 00:05:19 nathanw Exp $
+; based on NetBSD: syscalls.master,v 1.110 2001/07/01 18:06:11 thorpej Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -9,6 +10,9 @@
 ;	number	system call number, must be in order
 ;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
 ;		the compatibility options defined in syscalls.conf.
+;
+; An optional field, MPSAFE, after the type field, indicates that
+; the system call is MP-safe.
 ;
 ; types:
 ;	STD	always included
@@ -72,8 +76,7 @@
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	NOARGS		{ int compat_43_sys_creat(const char *path, mode_t mode); } \
-			    ocreat
+8	EXCL		{ int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD		{ int pecoff_sys_link(const char *path, \
 			    const char *link); }
 10	STD		{ int pecoff_sys_unlink(const char *path); }
@@ -88,14 +91,22 @@
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
-19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
-			    int whence); } olseek
+19	EXCL		{ long sys_lseek(int fd, long offset, int whence); } \
+			    olseek
+#ifdef COMPAT_43
+20	NOARGS 		{ pid_t sys_getpid_with_ppid(void); } getpid
+#else
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-21	NOARGS		{ int sys_mount(const char *type, \
-			    const char *path, int flags, void *data); }
+#endif
+21	NOARGS		{ int sys_mount(const char *type, const char *path, \
+			    int flags, void *data); }
 22	STD		{ int pecoff_sys_unmount(const char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
+#ifdef COMPAT_43
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); } getuid
+#else
 24	NOARGS		{ uid_t sys_getuid(void); }
+#endif
 25	NOARGS		{ uid_t sys_geteuid(void); }
 26	NOARGS		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
@@ -105,23 +116,23 @@
 			    const struct msghdr *msg, int flags); }
 29	NOARGS		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
-			    int *fromlenaddr); }
+			    unsigned int *fromlenaddr); }
 30	NOARGS		{ int sys_accept(int s, struct sockaddr *name, \
-			    int *anamelen); }
+			    unsigned int *anamelen); }
 31	NOARGS		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
-			    int *alen); }
+			    unsigned int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
-			    int *alen); }
+			    unsigned int *alen); }
 33	STD		{ int pecoff_sys_access(const char *path, int flags); }
 34	STD		{ int pecoff_sys_chflags(const char *path, \
 			    u_long flags); }
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int pecoff_compat_43_sys_stat(const char *path, \
+38	EXCL		{ int pecoff_compat_43_sys_stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
-40	STD		{ int pecoff_compat_43_sys_lstat(const char *path, \
+40	EXCL		{ int pecoff_compat_43_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -134,22 +145,26 @@
 #else
 45	EXCL		ktrace
 #endif
-46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
+46	EXCL		{ int sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
+#ifdef COMPAT_43
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); } getgid
+#else
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
+#endif
+48	EXCL		{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
 50	NOARGS		{ int sys___setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
-52	NOARGS		{ int compat_13_sys_sigpending(void); } sigpending13
-53	NOARGS		{ int compat_13_sys_sigaltstack( \
+52	EXCL		{ int sys_sigpending(void); } sigpending13
+53	EXCL		{ int sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
 54	NOARGS		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
-55	NOARGS		{ int compat_12_sys_reboot(int opt); } oreboot
+55	EXCL		{ int sys_reboot(int opt); } oreboot
 56	STD		{ int pecoff_sys_revoke(const char *path); }
 57	STD		{ int pecoff_sys_symlink(const char *path, \
 			    const char *link); }
@@ -159,20 +174,19 @@
 			    char * const *argp, char * const *envp); }
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
 61	STD		{ int pecoff_sys_chroot(const char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, \
-			    struct stat43 *sb); } fstat43
-63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
-			    int *size, int arg); } ogetkerninfo
-64	NOARGS		{ int compat_43_sys_getpagesize(void); } ogetpagesize
-65	NOARGS		{ int compat_12_sys_msync(caddr_t addr, size_t len); }
+62	EXCL		{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
+63	EXCL		{ int sys_getkerninfo(int op, char *where, int *size, \
+			    int arg); } ogetkerninfo
+64	EXCL		{ int sys_getpagesize(void); } ogetpagesize
+65	EXCL		{ int sys_msync(caddr_t addr, size_t len); }
 ; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
-			    int prot, int flags, int fd, long pos); } ommap
+71	EXCL		{ int sys_mmap(caddr_t addr, size_t len, int prot, \
+			    int flags, int fd, long pos); } ommap
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
 74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
@@ -181,7 +195,7 @@
 			    int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	NOARGS		{ int sys_mincore(caddr_t addr, size_t len, \
+78	NOARGS		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	NOARGS		{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
@@ -192,16 +206,15 @@
 83	NOARGS		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-84	NOARGS		{ int compat_43_sys_wait(void); } owait
-85	NOARGS		{ int compat_12_sys_swapon(const char *name); } oswapon
+84	EXCL		{ int sys_wait(void); } owait
+85	EXCL		{ int sys_swapon(const char *name); } oswapon
 86	NOARGS		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
-87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
-			    u_int len); } ogethostname
-88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
-			    u_int len); } osethostname
-89	NOARGS		{ int compat_43_sys_getdtablesize(void); } \
-			    ogetdtablesize
+87	EXCL		{ int sys_gethostname(char *hostname, u_int len); } \
+			    ogethostname
+88	EXCL		{ int sys_sethostname(char *hostname, u_int len); } \
+			    osethostname
+89	EXCL		{ int sys_getdtablesize(void); } ogetdtablesize
 90	NOARGS		{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	NOARGS		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
@@ -212,43 +225,39 @@
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
-			    int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+			    unsigned int namelen); }
+99	EXCL		{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	EXCL		{ int sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	EXCL		{ int sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
-#ifdef COMPAT_13
-103	NOARGS		{ int compat_13_sys_sigreturn( \
-			    struct sigcontext13 *sigcntxp); } sigreturn13
-#else
-103	EXCL		compat_13_sys_sigreturn
-#endif
+103	EXCL		{ int sys_sigreturn(struct sigcontext13 *sigcntxp); } \
+			    sigreturn13
 104	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
-			    int namelen); }
+			    unsigned int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
-			    const void *val, int valsize); }
+			    const void *val, unsigned int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
-108	NOARGS		{ int compat_43_sys_sigvec(int signum, \
-			    struct sigvec *nsv, struct sigvec *osv); } osigvec
-109	NOARGS		{ int compat_43_sys_sigblock(int mask); } osigblock
-110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); } osigsetmask
-111	NOARGS		{ int compat_13_sys_sigsuspend(int mask); } sigsuspend13
-112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
+108	EXCL		{ int sys_sigvec(int signum, struct sigvec *nsv, \
+			    struct sigvec *osv); } osigvec
+109	EXCL		{ int sys_sigblock(int mask); } osigblock
+110	EXCL		{ int sys_sigsetmask(int mask); } osigsetmask
+111	EXCL		{ int sys_sigsuspend(int mask); } sigsuspend13
+112	EXCL		{ int sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
-113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
-			    struct omsghdr *msg, int flags); } orecvmsg
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
-			    int flags); } osendmsg
+113	EXCL		{ int sys_recvmsg(int s, struct omsghdr *msg, \
+			    int flags); } orecvmsg
+114	EXCL		{ int sys_sendmsg(int s, caddr_t msg, int flags); } \
+			    osendmsg
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
 117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
-			    void *val, int *avalsize); }
+			    void *val, unsigned int *avalsize); }
 119	OBSOL		resuba
 120	NOARGS		{ ssize_t sys_readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
@@ -258,22 +267,21 @@
 			    const struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
-			    int *fromlenaddr); } orecvfrom
+125	EXCL		{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
+			    int flags, caddr_t from, int *fromlenaddr); } \
+			    orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int pecoff_sys_rename(const char *from, \
 			    const char *to); }
-129	STD		{ int pecoff_compat_43_sys_truncate(const char *path, \
+129	EXCL		{ int pecoff_compat_43_sys_truncate(const char *path, \
 			    long length); } otruncate
-130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
-			    oftruncate
+130	EXCL		{ int sys_ftruncate(int fd, long length); } oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
 132	NOARGS		{ int sys_mkfifo(const char *path, mode_t mode); }
 133	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
-			    int tolen); }
+			    unsigned int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
@@ -284,23 +292,22 @@
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+141	EXCL		{ int sys_getpeername(int fdes, caddr_t asa, \
 			    int *alen); } ogetpeername
-142	NOARGS		{ int32_t compat_43_sys_gethostid(void); } ogethostid
-143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); } \
-			    osethostid
-144	NOARGS		{ int compat_43_sys_getrlimit(int which, \
+142	EXCL		{ int32_t sys_gethostid(void); } ogethostid
+143	EXCL		{ int sys_sethostid(int32_t hostid); } osethostid
+144	EXCL		{ int sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
-145	NOARGS		{ int compat_43_sys_setrlimit(int which, \
+145	EXCL		{ int sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
-146	NOARGS		{ int compat_43_sys_killpg(int pgid, int signum); } \
-			    okillpg
+146	EXCL		{ int sys_killpg(int pgid, int signum); } okillpg
 147	NOARGS		{ int sys_setsid(void); }
-148	NOARGS		{ int sys_quotactl(const char *path, \
-			    int cmd, int uid, caddr_t arg); }
-149	NOARGS		{ int compat_43_sys_quota(void); } oquota
-150	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
+148	NOARGS		{ int sys_quotactl(const char *path, int cmd, \
+			    int uid, caddr_t arg); }
+149	EXCL		{ int sys_quota(void); } oquota
+150	EXCL		{ int sys_getsockname(int fdec, caddr_t asa, \
 			    int *alen); } ogetsockname
+
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
 ; system calls.  (This includes various calls added for compatibity
 ; with other Unix variants.)
@@ -314,47 +321,42 @@
 #else
 155	EXCL		nfssvc
 #endif
-156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
+156	EXCL		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int pecoff_sys_statfs(const char *path, \
 			    struct statfs *buf); }
 158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 161	STD		{ int pecoff_sys_getfh(const char *fname, \
 			    fhandle_t *fhp); }
-#else
-161	EXCL		getfh
-#endif
-162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
-			    int len); } ogetdomainname
-163	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
-			    int len); } osetdomainname
-164	NOARGS		{ int compat_09_sys_uname(struct outsname *name); } \
-			    ouname
+162	EXCL		{ int sys_getdomainname(char *domainname, int len); } \
+			    ogetdomainname
+163	EXCL		{ int sys_setdomainname(char *domainname, int len); } \
+			    osetdomainname
+164	EXCL		{ int sys_uname(struct outsname *name); } ouname
 165	NOARGS		{ int sys_sysarch(int op, void *parms); }
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
-169	NOARGS		{ int compat_10_sys_semsys(int which, int a2, int a3, \
-			    int a4, int a5); } osemsys
+169	EXCL		{ int sys_semsys(int which, int a2, int a3, int a4, \
+			    int a5); } osemsys
 #else
 169	EXCL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
-170	NOARGS		{ int compat_10_sys_msgsys(int which, int a2, int a3, \
-			    int a4, int a5, int a6); } omsgsys
+170	EXCL		{ int sys_msgsys(int which, int a2, int a3, int a4, \
+			    int a5, int a6); } omsgsys
 #else
 170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
-171	NOARGS		{ int compat_10_sys_shmsys(int which, int a2, int a3, \
-			    int a4); } oshmsys
+171	EXCL		{ int sys_shmsys(int which, int a2, int a3, int a4); } \
+			    oshmsys
 #else
 171	EXCL		1.0 shmsys
 #endif
@@ -393,10 +395,10 @@
 186	EXCL		lfs_segclean
 187	EXCL		lfs_segwait
 #endif
-188	STD		{ int pecoff_compat_12_sys_stat(const char *path, \
+188	EXCL		{ int pecoff_compat_12_sys_stat(const char *path, \
 			    struct stat12 *ub); } stat12
-189	NOARGS		{ int compat_12_sys_fstat(int fd, struct stat12 *sb); } fstat12
-190	STD		{ int pecoff_compat_12_sys_lstat(const char *path, \
+189	EXCL		{ int sys_fstat(int fd, struct stat12 *sb); } fstat12
+190	EXCL		{ int pecoff_compat_12_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
 191	STD		{ long pecoff_sys_pathconf(const char *path, int name); }
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
@@ -405,7 +407,7 @@
 			    struct rlimit *rlp); }
 195	NOARGS		{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
-196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
+196	EXCL		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	NOARGS		{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
@@ -455,12 +457,8 @@
 #endif	/* !LKM */
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL)
-#ifdef COMPAT_14
-220	NOARGS		{ int compat_14_sys___semctl(int semid, \
-			    int semnum, int cmd, union __semun *arg); }
-#else
-220	EXCL		compat_14_semctl
-#endif
+220	EXCL		{ int sys___semctl(int semid, int semnum, int cmd, \
+			    union __semun *arg); }
 221	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
 222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
 			    size_t nsops); }
@@ -472,12 +470,8 @@
 223	EXCL		semconfig
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-#ifdef COMPAT_14
-224	NOARGS		{ int compat_14_sys_msgctl(int msqid, int cmd, \
+224	EXCL		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
-#else
-224	EXCL		compat_14_sys_msgctl
-#endif
 225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
 226	NOARGS		{ int sys_msgsnd(int msqid, const void *msgp, \
 			    size_t msgsz, int msgflg); }
@@ -492,12 +486,8 @@
 #if defined(SYSVSHM) || !defined(_KERNEL)
 228	NOARGS		{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
-#ifdef COMPAT_14
-229	NOARGS		{ int compat_14_sys_shmctl(int shmid, int cmd, \
+229	EXCL		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds14 *buf); }
-#else
-229	EXCL		compat_14_sys_shmctl
-#endif
 230	NOARGS		{ int sys_shmdt(const void *shmaddr); }
 231	NOARGS		{ int sys_shmget(key_t key, size_t size, int shmflg); }
 #else
@@ -626,3 +616,44 @@
 #endif
 304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
 305	NOARGS		{ int sys_issetugid(void); }
+306	NOARGS		{ int sys_utrace(const char *label, void *addr, \
+			    size_t len); }
+;
+; Syscalls 307 and 308 are reserved for getcontext and setcontext
+;
+307	UNIMPL
+308	UNIMPL
+;
+; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
+;
+309	UNIMPL
+310	UNIMPL
+311	UNIMPL
+312	UNIMPL
+313	UNIMPL
+314	UNIMPL
+315	UNIMPL
+316	UNIMPL
+317	UNIMPL
+318	UNIMPL
+319	UNIMPL
+320	UNIMPL
+321	UNIMPL
+322	UNIMPL
+323	UNIMPL
+324	UNIMPL
+325	UNIMPL
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+330	UNIMPL
+331	UNIMPL
+332	UNIMPL
+333	UNIMPL
+334	UNIMPL
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL

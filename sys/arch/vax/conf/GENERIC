@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.6.3 2002/02/28 04:12:28 nathanw Exp $
+# $NetBSD: GENERIC,v 1.90.6.4 2002/04/17 00:04:39 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.90.6.3 $"
+#ident 		"GENERIC-$Revision: 1.90.6.4 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -128,6 +128,7 @@ options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.1.4.4 2001/09/21 22:37:17 nathanw Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.1.4.5 2002/04/17 00:06:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -119,7 +119,9 @@ boolean_t	 pmap_clear_reference __P((struct vm_page *));
 void		 pmap_collect __P((pmap_t));
 void		 pmap_copy __P((pmap_t,
 		    pmap_t, vaddr_t, vsize_t, vaddr_t));
+#if !defined(pmap_copy_page)
 void		 pmap_copy_page __P((paddr_t, paddr_t));
+#endif
 struct pmap 	 *pmap_create __P((void));
 void		 pmap_destroy __P((pmap_t));
 int		 pmap_enter __P((pmap_t,
@@ -156,7 +158,9 @@ long		 pmap_resident_count __P((pmap_t));
 #if !defined(pmap_wired_count)
 long		 pmap_wired_count __P((pmap_t));
 #endif
+#if !defined(pmap_zero_page)
 void		 pmap_zero_page __P((paddr_t));
+#endif
 
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #if defined(PMAP_STEAL_MEMORY)

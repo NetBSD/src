@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.3.2.2 2002/04/01 18:48:12 nathanw Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.3.2.3 2002/04/17 00:06:22 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3.2.2 2002/04/01 18:48:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3.2.3 2002/04/17 00:06:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,13 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.3.2.2 2002/04/01 18:48:12 nathanw
 #include <sys/lkm.h>
 #include <sys/signalvar.h>
 
+#include <sys/exec_coff.h>
 #include <compat/pecoff/pecoff_exec.h>
 
 int exec_pecoff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_pecoff =
 	/* Win32/WinCE PE/COFF (native word size) */
-	{ sizeof(struct exec),
+	{ PECOFF_HDR_SIZE,
 	  exec_pecoff_makecmds,
 	  { NULL },
 	  NULL, /* will be set by exec_add() */

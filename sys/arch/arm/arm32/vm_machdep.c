@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.6 2002/04/01 07:39:09 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.7 2002/04/17 00:02:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -255,10 +255,12 @@ cpu_swapin(l)
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
 
-	/* Map the system page */
-	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-	pmap_update(p->p_vmspace->vm_map.pmap);
+	if (vector_page < KERNEL_BASE) {
+		/* Map the vector page */
+		pmap_enter(p->p_vmspace->vm_map.pmap, vector_page,
+		    systempage.pv_pa, VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update(p->p_vmspace->vm_map.pmap);
+	}
 #endif
 }
 
@@ -280,9 +282,12 @@ cpu_swapout(l)
 		    p->p_comm, &p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
 
-	/* Free the system page mapping */
-	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update(p->p_vmspace->vm_map.pmap);
+	if (vector_page < KERNEL_BASE) {
+		/* Free the system page mapping */
+		pmap_remove(p->p_vmspace->vm_map.pmap, vector_page,
+		    vector_page + NBPG);
+		pmap_update(p->p_vmspace->vm_map.pmap);
+	}
 #endif
 }
 

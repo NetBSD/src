@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.11.2.5 2002/04/01 07:46:14 nathanw Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.11.2.6 2002/04/17 00:06:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.5 2002/04/01 07:46:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.6 2002/04/17 00:06:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,13 @@ tqphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (mii_phy_match(ma, tqphys) != NULL)
+	if (mii_phy_match(ma, tqphys) != NULL) {
+		/* The DIAG register is unreliable on early revisions. */
+		if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxTSC_78Q2120 &&
+		    MII_REV(ma->mii_id2) <= 3)
+			return (0);
 		return (10);
+	}
 
 	return (0);
 }

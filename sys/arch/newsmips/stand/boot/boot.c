@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.8.1 2002/02/28 04:11:17 nathanw Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.8.2 2002/04/17 00:04:03 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -66,7 +66,7 @@ boot(a0, a1, a2, a3, a4, a5)
 	struct btinfo_systype bi_sys;
 
 	/* Clear BSS. */
-	bzero(_edata, _end - _edata);
+	memset(_edata, 0, _end - _edata);
 
 	/*
 	 * XXX a3 contains:
@@ -207,7 +207,21 @@ putchar(x)
 		rom_write(1, &c, 1);
 }
 
-void halt __P((void));
+int
+getchar()
+{
+	unsigned char c = '\0';
+	int i;
+
+	for (;;) {
+		i = apbus ? apcall_read(1, &c, 1) : rom_read(1, &c, 1);
+		if (i == 1)
+			break;
+		if (i != -2 && i != 0)
+			return -1;
+	}
+	return c;
+}
 
 void
 _rtt()
@@ -215,7 +229,7 @@ _rtt()
 	if (apbus)
 		apcall_exit(8);
 	else
-		halt();
+		rom_halt();
 
 	for (;;);
 }

@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.9.2.3 2002/02/28 04:06:12 nathanw Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.9.2.4 2002/04/17 00:02:09 nathanw Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.3 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.4 $"
 
 maxusers 64
 
@@ -99,6 +99,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.98.8.3 2002/02/28 04:10:35 nathanw Exp $
+#	$NetBSD: files.mac68k,v 1.98.8.4 2002/04/17 00:03:32 nathanw Exp $
 
 # mac68k-specific configuration info
 
@@ -141,6 +141,9 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 
 file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
 include "arch/m68k/fpe/files.fpe"
+
+file	arch/m68k/m68k/bus_dma.c
+file	arch/m68k/m68k/cacheops.c
 
 # legitimate pseudo-devices
 defpseudo grf

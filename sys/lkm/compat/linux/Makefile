@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.5 2002/02/28 04:14:53 nathanw Exp $
+#	$NetBSD: Makefile,v 1.13.2.6 2002/04/17 00:06:21 nathanw Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -18,7 +18,7 @@ KMOD=	compat_linux
 SRCS+=	lkminit_emul.c
 SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_ioctl.c linux_ipc.c linux_misc.c linux_pipe.c \
-	linux_sched.c linux_sigaction.c linux_sigarray.c linux_signal.c \
+	linux_sched.c linux_sigaction.c linux_signal.c linux_signo.c \
 	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c linux_sysctl.c

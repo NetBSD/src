@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.15.6.3 2002/02/28 04:11:12 nathanw Exp $
+#	$NetBSD: files.netwinder,v 1.15.6.4 2002/04/17 00:03:55 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -17,9 +17,6 @@ defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
 defflag	COMPAT_OLD_BOOTLOADER
-
-# Architectures and core logic
-defflag	NETWINDER
 
 define todservice {}
 
@@ -79,10 +76,9 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 file	arch/arm/arm32/conf.c
-file	dev/cninit.c				!footbridge
 
 # ISA support.
-file	arch/netwinder/isa/isa_machdep.c	isa & netwinder
+file	arch/netwinder/isa/isa_machdep.c	isa
 file	arch/arm/footbridge/isa/isa_io.c	isa
 file	arch/arm/footbridge/isa/isa_io_asm.S	isa
 

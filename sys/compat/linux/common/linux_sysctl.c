@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.2.2.4 2002/04/01 07:44:30 nathanw Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.2.2.5 2002/04/17 00:05:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.4 2002/04/01 07:44:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.2.5 2002/04/17 00:05:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,17 +170,14 @@ linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	return (error);
 }
 
-/*
- * NOTE: DO NOT CHANGE THIS
- * Linux makes assumptions about specific features being present with
- * more recent kernels. Specifically, LinuxThreads use RT queued
- * signals if the kernel release is bigger. Since we don't support them
- * yet, the version needs to stay this way until we'd have the RT queued
- * signals implemented.
- */
 char linux_sysname[128] = "Linux";
+#ifdef __i386__
+char linux_release[128] = "2.4.18";
+char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
+#else
 char linux_release[128] = "2.0.38";
 char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
+#endif
 
 /*
  * kernel related system variables.
@@ -212,7 +209,7 @@ linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
  * kernel related system variables.
  */
 int
-sysctl_linux(int *name, u_int nlen, void *oldp, size_t *oldlenp,
+linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct proc *p)
 {
 	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)

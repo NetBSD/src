@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.54.2.5 2002/04/01 07:44:13 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.54.2.6 2002/04/17 00:04:59 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -366,5 +366,6 @@
 217	UNIMPL		pivot_root
 218	UNIMPL		mincore
 219	UNIMPL		madvise
-220	UNIMPL		getdents64
+220	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.16.4.2 2002/01/08 00:26:02 nathanw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.16.4.3 2002/04/17 00:03:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -816,7 +816,7 @@ mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int8_t *a, size_t c)
+	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -832,7 +832,7 @@ mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int8_t *a, size_t c)
+		 const u_int8_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_1(t, *h, offset, *a++);
@@ -841,7 +841,7 @@ mac68k_bswm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int16_t *a, size_t c)
+	     const u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -857,7 +857,7 @@ mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int16_t *a, size_t c)
+		  const u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -875,7 +875,7 @@ mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int16_t *a, size_t c)
+		 const u_int16_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_2(t, *h, offset, *a++);
@@ -884,7 +884,7 @@ mac68k_bswm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int16_t *a, size_t c)
+		  const u_int16_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_stream_2(t, *h, offset, *a++);
@@ -893,7 +893,7 @@ mac68k_bswms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int32_t *a, size_t c)
+	     const u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -909,7 +909,7 @@ mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int32_t *a, size_t c)
+		  const u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -929,7 +929,7 @@ mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int32_t *a, size_t c)
+		 const u_int32_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_4(t, *h, offset, *a++);
@@ -938,7 +938,7 @@ mac68k_bswm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int32_t *a, size_t c)
+		  const u_int32_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_stream_4(t, *h, offset, *a++);
@@ -947,7 +947,7 @@ mac68k_bswms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int8_t *a, size_t c)
+	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -963,7 +963,7 @@ mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int8_t *a, size_t c)
+		 const u_int8_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_1(t, *h, offset, *a++);
@@ -973,7 +973,7 @@ mac68k_bswr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int16_t *a, size_t c)
+	     const u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -989,7 +989,7 @@ mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int16_t *a, size_t c)
+		  const u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -1007,7 +1007,7 @@ mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int16_t *a, size_t c)
+		 const u_int16_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_2(t, *h, offset, *a++);
@@ -1017,7 +1017,7 @@ mac68k_bswr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswrs2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int16_t *a, size_t c)
+		  const u_int16_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_stream_2(t, *h, offset, *a++);
@@ -1027,7 +1027,7 @@ mac68k_bswrs2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-	     u_int32_t *a, size_t c)
+	     const u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -1043,7 +1043,7 @@ mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int32_t *a, size_t c)
+		  const u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,%%a0		;
@@ -1063,7 +1063,7 @@ mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		 u_int32_t *a, size_t c)
+		 const u_int32_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_4(t, *h, offset, *a++);
@@ -1073,7 +1073,7 @@ mac68k_bswr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 
 void
 mac68k_bswrs4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
-		  u_int32_t *a, size_t c)
+		  const u_int32_t *a, size_t c)
 {
 	while (c--) {
 		bus_space_write_4(t, *h, offset, *a++);

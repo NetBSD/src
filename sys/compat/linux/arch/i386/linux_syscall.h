@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.34.2.7 2002/04/01 07:44:11 nathanw Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.34.2.8 2002/04/17 00:04:58 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -556,6 +556,9 @@
 
 /* syscall: "getfsuid" ret: "int" args: */
 #define	LINUX_SYS_getfsuid	216
+
+/* syscall: "getdents64" ret: "int" args: "int" "struct linux_dirent64 *" "unsigned int" */
+#define	LINUX_SYS_getdents64	220
 
 /* syscall: "fcntl64" ret: "int" args: "int" "int" "void *" */
 #define	LINUX_SYS_fcntl64	221

@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.23 2001/02/19 22:48:57 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.23.2.1 2002/04/17 00:02:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -62,7 +62,6 @@
 
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/stat.h>
-#include <include/disklabel.h>	/* defeat <machine/disklabel.h>, force alpha */
 #include <sys/disklabel.h>
 #include <dev/sun/disklabel.h>
 #include <assert.h>
@@ -73,11 +72,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <dev/dec/dec_boot.h>
+
 static void usage(void);
 static void clr_bootstrap(const char *disk);
-void check_sparc(const struct boot_block * const, const char *);
+void check_sparc(const struct alpha_boot_block * const, const char *);
 static u_int16_t compute_sparc(const u_int16_t *);
-static void sun_bootstrap(struct boot_block * const);
+static void sun_bootstrap(struct alpha_boot_block * const);
 static void set_bootstrap(const char *disk, const char *bootstrap);
 
 int sunrewrite, sunflag, verbose, nowrite;
@@ -149,9 +150,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "bootstrap: %s\n",
 		    bootstrap != NULL ? bootstrap : "to be cleared");
 	}
-	if (sizeof (struct boot_block) != BOOT_BLOCK_BLOCKSIZE)
+	if (sizeof (struct alpha_boot_block) != ALPHA_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
-		    "boot_block structure badly sized (build error)");
+		    "alpha_boot_block structure badly sized (build error)");
 
 	if (clearflag)
 		clr_bootstrap(disk);
@@ -166,7 +167,7 @@ argdeath:
 static void
 clr_bootstrap(const char *disk)
 {
-	struct boot_block bb;
+	struct alpha_boot_block bb;
 	u_int64_t cksum;
 	ssize_t rv;
 	int diskfd;
@@ -174,13 +175,13 @@ clr_bootstrap(const char *disk)
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, ALPHA_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
-	CHECKSUM_BOOT_BLOCK(&bb, &cksum);
+	ALPHA_BOOT_BLOCK_CKSUM(&bb, &cksum);
 	if (cksum != bb.bb_cksum) {
 		fprintf(stderr,
 		    "old boot block checksum invalid (was %#llx,"
@@ -199,7 +200,7 @@ clr_bootstrap(const char *disk)
 	}
 
 	bb.bb_secstart = bb.bb_secsize = bb.bb_flags = 0;
-	CHECKSUM_BOOT_BLOCK(&bb, &bb.bb_cksum);
+	ALPHA_BOOT_BLOCK_CKSUM(&bb, &bb.bb_cksum);
 
 	fprintf(stderr, "new boot block checksum: %#llx\n",
 	    (unsigned long long)bb.bb_cksum);
@@ -217,7 +218,7 @@ clr_bootstrap(const char *disk)
 	if (verbose)
 		fprintf(stderr, "writing\n");
 	
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, ALPHA_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)
@@ -231,7 +232,7 @@ static void
 set_bootstrap(const char *disk, const char *bootstrap)
 {
 	struct stat bootstrapsb;
-	struct boot_block bb;
+	struct alpha_boot_block bb;
 	int bootstrapfd, diskfd;
 	char *bootstrapbuf;
 	size_t bootstrapsize;
@@ -252,7 +253,8 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	 * to the next block size boundary, and with space for the boot
 	 * block. 
 	 */
-	bootstrapsize = roundup(bootstrapsb.st_size, BOOT_BLOCK_BLOCKSIZE);
+	bootstrapsize = roundup(bootstrapsb.st_size,
+	    ALPHA_BOOT_BLOCK_BLOCKSIZE);
 
 	bootstrapbuf = malloc(bootstrapsize);
 	if (bootstrapbuf == NULL)
@@ -271,7 +273,7 @@ bbonly:
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, ALPHA_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
@@ -283,11 +285,11 @@ bbonly:
 	/* fill in the updated boot block fields, and checksum boot block */
 	if (!sunrewrite) {
 		bb.bb_secsize = howmany(bootstrapsb.st_size,
-		    BOOT_BLOCK_BLOCKSIZE);
+		    ALPHA_BOOT_BLOCK_BLOCKSIZE);
 		bb.bb_secstart = 1;
 		bb.bb_flags = 0;
 	}
-	CHECKSUM_BOOT_BLOCK(&bb, &bb.bb_cksum);
+	ALPHA_BOOT_BLOCK_CKSUM(&bb, &bb.bb_cksum);
 
 	if (verbose) {
 		fprintf(stderr, "bootstrap starting sector: %llu\n",
@@ -312,7 +314,7 @@ bbonly:
 
 	if (!sunrewrite) {
 		rv = pwrite(diskfd, bootstrapbuf, bootstrapsize,
-		    BOOT_BLOCK_OFFSET + BOOT_BLOCK_BLOCKSIZE);
+		    ALPHA_BOOT_BLOCK_OFFSET + ALPHA_BOOT_BLOCK_BLOCKSIZE);
 		if (rv == -1)
 			err(EXIT_FAILURE, "write %s", disk);
 		else if (rv != bootstrapsize)
@@ -322,7 +324,7 @@ bbonly:
 			fprintf(stderr, "writing boot block\n");
 	}
 
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, ALPHA_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)
@@ -356,13 +358,13 @@ done:
  */
 
 static void
-resum(struct boot_block * const bb, u_int16_t *bb16)
+resum(struct alpha_boot_block * const bb, u_int16_t *bb16)
 {
 	static u_int64_t lastsum;
 
 	if (bb16 != NULL)
 		memcpy(bb, bb16, sizeof *bb);
-	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
+	ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 	if (bb16 != NULL)
 		memcpy(bb16, bb, sizeof *bb);
 	if (verbose && lastsum != bb->bb_cksum)
@@ -371,7 +373,7 @@ resum(struct boot_block * const bb, u_int16_t *bb16)
 }
 
 static void
-sun_bootstrap(struct boot_block * const bb)
+sun_bootstrap(struct alpha_boot_block * const bb)
 {
 #	define BB_ADJUST_OFFSET 64
 	static char our_int16s[] = "\2\3\6\7\12";
@@ -434,7 +436,7 @@ sun_bootstrap(struct boot_block * const bb)
 }
 
 void
-check_sparc(const struct boot_block * const bb, const char *when)
+check_sparc(const struct alpha_boot_block * const bb, const char *when)
 {
 	u_int16_t bb16[256];
 	const char * const wmsg = "warning, %s sparc %s 0x%04x invalid,"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8.2.2 2002/02/28 04:12:51 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8.2.3 2002/04/17 00:05:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.2 2002/02/28 04:12:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.3 2002/04/17 00:05:00 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -131,7 +131,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */
-	kf.sf_signum = native_to_linux_sig[sig];
+	kf.sf_signum = native_to_linux_signo[sig];
 	kf.sf_code = frame->f_vector;		/* Does anyone use it? */
 	kf.sf_scp = &fp->sf_c.c_sc;
 
@@ -291,7 +291,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */
-	kf.sf_signum = native_to_linux_sig[sig];
+	kf.sf_signum = native_to_linux_signo[sig];
 	kf.sf_pinfo = &fp->sf_info;
 	kf.sf_puc = &fp->sf_uc;
 
@@ -399,10 +399,10 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 	 * XXX -erh
 	 */
 	bzero(&kf.sf_info, sizeof(struct linux_siginfo));
-	kf.sf_info.si_signo = sig;
-	kf.sf_info.si_code = LINUX_SI_USER;
-	kf.sf_info.si_pid = p->p_pid;
-	kf.sf_info.si_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	kf.sf_info.lsi_signo = sig;
+	kf.sf_info.lsi_code = LINUX_SI_USER;
+	kf.sf_info.lsi_pid = p->p_pid;
+	kf.sf_info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
