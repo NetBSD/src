@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.64 2001/11/15 09:48:06 lukem Exp $	*/
+/*	$NetBSD: i82365.c,v 1.65 2001/12/15 13:23:21 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.64 2001/11/15 09:48:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.65 2001/12/15 13:23:21 soren Exp $");
 
 #define	PCICDEBUG
 
@@ -1013,7 +1013,7 @@ pcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;

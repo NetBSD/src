@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.10 2001/09/15 12:47:04 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.11 2001/12/15 13:23:20 soren Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ int it8368_intr(void *);
 int it8368_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t, 
     struct pcmcia_mem_handle *);
 void it8368_chip_mem_free(pcmcia_chipset_handle_t, struct pcmcia_mem_handle *);
-int it8368_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
+int it8368_chip_mem_map(pcmcia_chipset_handle_t, int, bus_size_t, bus_size_t,
     struct pcmcia_mem_handle *, bus_addr_t *, int *);
 void it8368_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 int it8368_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
@@ -537,7 +537,7 @@ it8368_chip_mem_free(pcmcia_chipset_handle_t pch,
 int 
 it8368_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
     bus_addr_t card_addr, bus_size_t size, struct pcmcia_mem_handle *pcmhp,
-    bus_addr_t *offsetp, int *windowp)
+    bus_size_t *offsetp, int *windowp)
 {
 	/* attribute mode */
 	it8368_mode(pch, IT8368_ATTR_MODE, IT8368_WIDTH_16);
