@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.7 2004/03/25 22:08:33 pooka Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.8 2004/04/01 01:49:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.7 2004/03/25 22:08:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.8 2004/04/01 01:49:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -155,6 +155,7 @@ int
 ras_install(struct proc *p, caddr_t addr, size_t len)
 {
 	struct ras *rp;
+	struct ras *newrp;
 	caddr_t endaddr = addr + len;
 	int nras = 0;
 
@@ -165,6 +166,8 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 	if (len <= 0)
 		return (EINVAL);
 
+	newrp = NULL;
+again:
 	simple_lock(&p->p_lock);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (++nras >= ras_per_proc ||
@@ -173,11 +176,15 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 			return (EINVAL);
 		}
 	}
-	rp = pool_get(&ras_pool, PR_WAITOK);
-	rp->ras_startaddr = addr;
-	rp->ras_endaddr = endaddr;
-	rp->ras_hits = 0;
-	LIST_INSERT_HEAD(&p->p_raslist, rp, ras_list);
+	if (newrp == NULL) {
+		simple_unlock(&p->p_lock);
+		newrp = pool_get(&ras_pool, PR_WAITOK);
+		goto again;
+	}
+	newrp->ras_startaddr = addr;
+	newrp->ras_endaddr = endaddr;
+	newrp->ras_hits = 0;
+	LIST_INSERT_HEAD(&p->p_raslist, newrp, ras_list);
 	simple_unlock(&p->p_lock);
 
 	return (0);
