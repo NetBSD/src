@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.5 2002/11/24 22:29:58 tron Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.6 2002/11/24 22:33:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.5 2002/11/24 22:29:58 tron Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.6 2002/11/24 22:33:47 tron Exp $");
 #endif
 
 /*
@@ -255,6 +255,11 @@ setupCoproc(const char *base)
     int answer_pipe[2];
     int rc1, rc2;
     char buf[20];
+    char *argv0 = strrchr(FTP_CMD, '/');
+    if (argv0 == NULL)
+	argv0 = FTP_CMD;
+    else
+	argv0++;
 
     rc1 = pipe(command_pipe);
     rc2 = pipe(answer_pipe);
@@ -300,8 +305,8 @@ setupCoproc(const char *base)
 	    
 	    if (Verbose)
 		    fprintf(stderr, "[1mftp -detv %s[0m\n", base);
-	    rc1 = execl(FTP_FULLPATHNAME, FTP_CMD, "-detv", base, NULL);
-	    warn("setupCoproc: execl() failed");
+	    rc1 = execlp(FTP_CMD, argv0, "-detv", base, NULL);
+	    warn("setupCoproc: execlp() failed");
 	    exit(1);
 	    break;
     default: 
@@ -689,7 +694,7 @@ unpackURL(const char *url, const char *dir)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | " TAR_FULLPATHNAME " -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | " TAR_CMD " -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
