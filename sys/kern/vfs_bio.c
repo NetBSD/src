@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.68 2000/06/27 17:41:47 mrg Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.69 2000/11/08 05:53:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -739,7 +739,7 @@ allocbuf(bp, size)
 	vsize_t       desired_size;
 	int	     s;
 
-	desired_size = roundup(size, NBPG);
+	desired_size = round_page((vsize_t)size);
 	if (desired_size > MAXBSIZE)
 		panic("allocbuf: buffer larger than MAXBSIZE requested");
 
