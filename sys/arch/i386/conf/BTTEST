@@ -1,7 +1,7 @@
 #
 #	SCSITEST -- Generic ISA machine -- scsi test kernel
 #
-#	$Id: BTTEST,v 1.13 1993/06/03 01:30:23 cgd Exp $
+#	$Id: BTTEST,v 1.14 1993/06/06 04:15:31 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -36,7 +36,7 @@ device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 #controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 #controller	aha1	at isa? port "IO_AHA1" bio irq 12 drq 7 vector ahaintr
 
-controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
+controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
 disk		sd0	at bt0 flags 0 drive ?
 disk		sd1	at bt0 flags 0 drive ?
 disk		sd2	at bt0 flags 0 drive ?
@@ -46,7 +46,7 @@ tape		st1	at bt0 flags 1 drive ?
 disk		cd0	at bt0 flags 2 drive ?
 disk		cd1	at bt0 flags 2 drive ?
 
-device		we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
+device		we0 at isa? port 0x280 net irq 9 iomem 0xd0000 iosiz 8192 vector weintr
 
 
 pseudo-device	loop

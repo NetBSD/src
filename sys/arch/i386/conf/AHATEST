@@ -1,7 +1,7 @@
 #
 # SCSITEST -- Generic ISA machine -- scsi test kernel
 #
-#	$Id: AHATEST,v 1.13 1993/06/03 01:30:19 cgd Exp $
+#	$Id: AHATEST,v 1.14 1993/06/06 04:15:24 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -53,7 +53,7 @@ tape		st9	at aha1 flags 1 drive ?
 disk		cd8	at aha1	flags 2 drive ?
 disk		cd9	at aha1	flags 2 drive ?
 
-#controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
+#controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
 
 
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.6 1993/05/22 08:01:07 cgd Exp $
+ *	$Id: clock.c,v 1.7 1993/06/06 04:16:28 cgd Exp $
  */
 
 /*
@@ -53,8 +53,8 @@
 #define DAYST 119
 #define DAYEN 303
 
-#ifndef	XTALSPEED
-#define XTALSPEED 1193182
+#ifndef	TIMER_FREQ
+#define TIMER_FREQ 1193182
 #endif
 
 startrtclock() {
@@ -66,8 +66,8 @@ startrtclock() {
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb (IO_TIMER1, (XTALSPEED+hz/2)/hz);
-	outb (IO_TIMER1, ((XTALSPEED+hz/2)/hz)/256);
+	outb (IO_TIMER1, (TIMER_FREQ+hz/2)/hz);
+	outb (IO_TIMER1, ((TIMER_FREQ+hz/2)/hz)/256);
 
 	/* initialize brain-dead battery powered clock */
 	outb (IO_RTC, RTC_STATUSA);
@@ -103,9 +103,8 @@ findcpuspeed()
 	/* Formula for delaycount is :
 	 *  (loopcount * timer clock speed)/ (counter ticks * 1000)
 	 */
-	delaycount = (FIRST_GUESS * (XTALSPEED/1000)) / (0xffff-remainder);
+	delaycount = (FIRST_GUESS * (TIMER_FREQ/1000)) / (0xffff-remainder);
 }
-
 
 
 /* convert 2 digit BCD number */
@@ -236,21 +235,16 @@ resettodr()
 #define V(s)	__CONCAT(V, s)
 extern V(clk)();
 enablertclock() {
-	INTREN(IRQ0);
 	setidt(ICU_OFFSET+0, &V(clk), SDT_SYS386IGT, SEL_KPL);
-	splnone();
+	INTREN(IRQ0);
 }
 
-
-
-
+/*
+ * Delay for some number of milliseconds.
+ */
+void
 spinwait(millisecs)
-int millisecs;		/* number of milliseconds to delay */
+	int millisecs;
 {
-	int i, j;
-
-	for (i=0;i<millisecs;i++)
-		for (j=0;j<delaycount;j++)
-			;
+	DELAY(1000 * millisecs);
 }
-
