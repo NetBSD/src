@@ -8,19 +8,13 @@ maxusers 2 8 64
 device mainbus at root { [base = -1], [dack = -1], [irq = -1] }
 file	arch/arm32/mainbus/mainbus.c		mainbus
 
-#define cpubus {}
+device hydrabus at mainbus { [slot = -1] }
+file	arch/arm32/mainbus/exp/hydra.c			hydrabus needs-flag
+file	arch/arm32/mainbus/exp/hydraboot.S		hydrabus
 
-#device cpu at cpubus {cpu = -1}
-device cpu at mainbus
+device cpu at mainbus, hydrabus
 file	arch/arm32/mainbus/cpu.c			cpu needs-flag
 major	{cpu = 38}
-
-device hydra at mainbus
-file	arch/arm32/mainbus/exp/hydra.c			hydra needs-flag
-file	arch/arm32/mainbus/exp/hydraboot.S		hydra
-
-#device podule at mainbus { slot = -1, offset = -1 }
-#file	arch/arm32/podulebus/podule.c		podule
 
 #Standard NetBSD wd driver
 device  wdc at mainbus {drive = -1}
@@ -226,4 +220,3 @@ file	arch/arm32/fpe-sp/fpetoe.S		fpe
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.c		armfpe
-
