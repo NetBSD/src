@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.37 2003/06/03 11:54:48 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.38 2003/06/12 16:48:43 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,9 +105,9 @@ struct part_id {
 
 int dosptyp_nbsd = MBR_PTYPE_NETBSD;
 
-static int get_mapping (struct mbr_partition *, int, int *, int *, int *,
-			    long *absolute);
-static void convert_mbr_chs (int, int, int, u_int8_t *, u_int8_t *,
+static int get_mapping(struct mbr_partition *, int, int *, int *, int *,
+			    long *);
+static void convert_mbr_chs(int, int, int, u_int8_t *, u_int8_t *,
 				 u_int8_t *, u_int32_t);
 
 #ifdef BOOTSEL
@@ -115,25 +115,12 @@ static int defbootselpart, defbootseldisk;
 struct mbr_bootsel *mbs;
 #endif
 
-#ifdef notdef
-/*
- * First, geometry  stuff...
- */
-int
-check_geom()
-{
-
-	return bcyl <= 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
-}
-#endif
-
 /*
  * get C/H/S geometry from user via menu interface and
  * store in globals.
  */
 void
-set_bios_geom(cyl, head, sec)
-	int cyl, head, sec;
+set_bios_geom(int cyl, int head, int sec)
 {
 	char res[80];
 
@@ -153,7 +140,7 @@ set_bios_geom(cyl, head, sec)
 
 #ifdef notdef
 void
-disp_cur_geom()
+disp_cur_geom(void)
 {
 
 	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
@@ -166,16 +153,14 @@ disp_cur_geom()
  * Then,  the partition stuff...
  */
 int
-otherpart(id)
-	int id;
+otherpart(int id)
 {
 
 	return (id != 0 && id != MBR_PTYPE_386BSD && id != MBR_PTYPE_NETBSD);
 }
 
 int
-ourpart(id)
-	int id;
+ourpart(int id)
 {
 
 	return (id == MBR_PTYPE_386BSD || id == MBR_PTYPE_NETBSD);
@@ -185,8 +170,7 @@ ourpart(id)
  * Let user change incore Master Boot Record partitions via menu.
  */
 int
-edit_mbr(mbr)
-	struct mbr_sector *mbr;
+edit_mbr(struct mbr_sector *mbr)
 {
 	int i, j;
 
@@ -350,7 +334,7 @@ edit_ptn_bounds(void)
 	if (sizemult > 1 && start < bsec)
 		start = bsec;
 	msg_table_add(MSG_mbrpart_size_special);
-	msg_prompt_add (MSG_size, NULL, buf, 40);
+	msg_prompt_add(MSG_size, NULL, buf, 40);
 	inp = atoi(buf);
 	/*
 	 * -0, -1, -2, -3: until start of part # given
@@ -376,10 +360,7 @@ edit_ptn_bounds(void)
 }
 
 int
-partsoverlap(part, i, j)
-	struct mbr_partition *part;
-	int i;
-	int j;
+partsoverlap(struct mbr_partition *part, int i, int j)
 {
 
 	/*
@@ -401,8 +382,7 @@ partsoverlap(part, i, j)
 }
 
 char *
-get_partname(i)
-	int i;
+get_partname(int i)
 {
 	int j;
 	static char unknown[32];
@@ -416,10 +396,7 @@ get_partname(i)
 }
 
 void
-disp_cur_part(part, sel, disp)
-	struct mbr_partition *part;
-	int sel;
-	int disp;
+disp_cur_part(struct mbr_partition *part, int sel, int disp)
 {
 	int i, start, stop, rsize, rend;
 
@@ -452,10 +429,7 @@ disp_cur_part(part, sel, disp)
 }
 
 int
-read_mbr(disk, mbr, len)
-	const char *disk;
-	mbr_sector_t *mbr;
-	size_t len;
+read_mbr(const char *disk, mbr_sector_t *mbr, size_t len)
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i;
@@ -496,11 +470,7 @@ read_mbr(disk, mbr, len)
 }
 
 int
-write_mbr(disk, mbr, len, convert)
-	const char *disk;
-	mbr_sector_t *mbr;
-	size_t len;
-	int convert;
+write_mbr(const char *disk, mbr_sector_t *mbr, size_t len, int convert)
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i, ret = 0;
@@ -551,18 +521,16 @@ write_mbr(disk, mbr, len, convert)
 }
 
 int
-valid_mbr(mbr)
-	mbr_sector_t *mbr;
+valid_mbr(mbr_sector_t *mbr)
 {
 
 	return (le_to_native16(mbr->mbr_signature) == MBR_MAGIC);
 }
 
 static void
-convert_mbr_chs(cyl, head, sec, cylp, headp, secp, relsecs)
-	int cyl, head, sec;
-	u_int8_t *cylp, *headp, *secp;
-	u_int32_t relsecs;
+convert_mbr_chs(int cyl, int head, int sec,
+		u_int8_t *cylp, u_int8_t *headp, u_int8_t *secp,
+		u_int32_t relsecs)
 {
 	unsigned int tcyl, temp, thead, tsec;
 
@@ -593,9 +561,7 @@ convert_mbr_chs(cyl, head, sec, cylp, headp, secp, relsecs)
  * device.
  */
 int
-guess_biosgeom_from_mbr(mbr, cyl, head, sec)
-	mbr_sector_t *mbr;
-	int *cyl, *head, *sec;
+guess_biosgeom_from_mbr(mbr_sector_t *mbr, int *cyl, int *head, int *sec)
 {
 	struct mbr_partition *parts = &mbr->mbr_parts[0];
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
@@ -668,10 +634,8 @@ guess_biosgeom_from_mbr(mbr, cyl, head, sec)
 }
 
 static int
-get_mapping(parts, i, cylinder, head, sector, absolute)
-	struct mbr_partition *parts;
-	int i, *cylinder, *head, *sector;
-	long *absolute;
+get_mapping(mbr_partition_t *parts, int i,
+	    int *cylinder, int *head, int *sector, long *absolute)
 {
 	struct mbr_partition *apart = &parts[i / 2];
 
@@ -719,6 +683,7 @@ disp_bootsel(void)
 void
 edit_bootsel_entry(int ptn)
 {
+
 	if (part[ptn].mbrp_typ != 0)
 		msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[ptn],
 			    mbs->mbrb_nametab[ptn], 8);
