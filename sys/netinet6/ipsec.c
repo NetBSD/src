@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.46 2002/05/10 05:49:21 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.47 2002/05/19 00:46:40 itojun Exp $	*/
+/*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.46 2002/05/10 05:49:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47 2002/05/19 00:46:40 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -195,6 +195,10 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	}
 	if (!pcbsp->cache[dir])
 		return NULL;
+	if (pcbsp->cache[dir]->state != IPSEC_SPSTATE_ALIVE) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
 	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
 		if (!pcbsp->cache[dir])
 			return NULL;
