@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.48 2000/12/11 05:22:56 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.49 2001/01/14 02:06:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1306,7 +1306,7 @@ pool_drain(void *arg)
 	struct pool *pp;
 	int s;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pool_head_slock);
 
 	if (drainpp == NULL && (drainpp = TAILQ_FIRST(&pool_head)) == NULL)
@@ -1331,7 +1331,7 @@ pool_print(struct pool *pp, const char *modif)
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	if (simple_lock_try(&pp->pr_slock) == 0) {
 		printf("pool %s is locked; try again later\n",
 		    pp->pr_wchan);
