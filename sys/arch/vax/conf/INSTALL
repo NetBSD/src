@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.21 2002/03/28 05:42:16 matt Exp $
+#	$NetBSD: INSTALL,v 1.22 2002/03/28 05:45:08 matt Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -196,6 +196,7 @@ dl0		at uba? csr 0176500	# DL-11
 smg0		at vsbus0 csr 0x200f0000# Small monochrome display ctlr.
 wsdisplay0	at smg0			# display device driver.
 lkkbd0		at dz0 line 0		# Keyboard LK201
+wskbd0		at lkkbd0		# wscons keyboard
 
 pseudo-device	loop	1
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
