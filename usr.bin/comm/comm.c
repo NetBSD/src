@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.8 1995/03/27 15:54:30 glass Exp $	*/
+/*	$NetBSD: comm.c,v 1.9 1995/09/02 05:54:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,10 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)comm.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$NetBSD: comm.c,v 1.8 1995/03/27 15:54:30 glass Exp $";
+static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: comm.c,v 1.9 1995/09/02 05:54:48 jtc Exp $";
 #endif /* not lint */
 
 #include <err.h>

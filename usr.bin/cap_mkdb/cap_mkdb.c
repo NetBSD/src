@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.4 1995/03/26 03:59:38 glass Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,10 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cap_mkdb.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.4 1995/03/26 03:59:38 glass Exp $";
+static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
+static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

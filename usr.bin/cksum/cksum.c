@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.6 1995/03/26 05:15:17 glass Exp $	*/
+/*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,10 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$NetBSD: cksum.c,v 1.6 1995/03/26 05:15:17 glass Exp $";
+static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
+static char rcsid[] = "$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -70,8 +69,8 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	u_int32_t len, val;
 	register int ch, fd, rval;
+	u_int32_t len, val;
 	char *fn;
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));

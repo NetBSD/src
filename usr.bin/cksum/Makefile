@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1995/03/26 05:15:12 glass Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.6 1995/09/02 05:45:13 jtc Exp $
+#	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
 PROG=	cksum
 SRCS=	cksum.c crc.c print.c sum1.c sum2.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: colrm.c,v 1.3 1995/03/26 09:04:02 glass Exp $	*/
+/*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,10 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)colrm.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$NetBSD: colrm.c,v 1.3 1995/03/26 09:04:02 glass Exp $";
+static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,6 +54,7 @@ static char rcsid[] = "$NetBSD: colrm.c,v 1.3 1995/03/26 09:04:02 glass Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define	TAB	8
 
