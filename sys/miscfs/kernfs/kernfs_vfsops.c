@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.52.2.2 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.52.2.3 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.52.2.2 2004/08/03 10:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.52.2.3 2004/08/24 17:57:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -76,9 +76,8 @@ int	kernfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int	kernfs_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct lwp *));
 int	kernfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	kernfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **,
-			    struct lwp *));
+int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
@@ -207,14 +206,13 @@ kernfs_unmount(mp, mntflags, l)
 }
 
 int
-kernfs_root(mp, vpp, l)
+kernfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	/* setup "." */
-	return (kernfs_allocvp(mp, vpp, KFSkern, &kern_targets[0], 0, l));
+	return (kernfs_allocvp(mp, vpp, KFSkern, &kern_targets[0], 0));
 }
 
 int
@@ -269,11 +267,10 @@ kernfs_sync(mp, waitfor, uc, l)
  * Currently unsupported.
  */
 int
-kernfs_vget(mp, ino, vpp, l)
+kernfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -281,11 +278,10 @@ kernfs_vget(mp, ino, vpp, l)
 
 /*ARGSUSED*/
 int
-kernfs_fhtovp(mp, fhp, vpp, l)
+kernfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);

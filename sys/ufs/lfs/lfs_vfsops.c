@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.3 2004/08/03 10:56:58 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.4 2004/08/24 17:57:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.3 2004/08/03 10:56:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.4 2004/08/24 17:57:53 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1090,7 +1090,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * artificially increment the reference count and keep a pointer
 	 * to it in the incore copy of the superblock.
 	 */
-	if ((error = VFS_VGET(mp, LFS_IFILE_INUM, &vp, l)) != 0) {
+	if ((error = VFS_VGET(mp, LFS_IFILE_INUM, &vp)) != 0) {
 #ifdef DEBUG
 		printf("lfs_mountfs: ifile vget failed, error=%d\n", error);
 #endif
@@ -1486,7 +1486,7 @@ extern struct lock ufs_hashlock;
  * Detection and handling of mount points must be done by the calling routine.
  */
 int
-lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *l)
+lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct lfs *fs;
 	struct ufs1_dinode *dip;
@@ -1511,7 +1511,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *l)
 	while ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
 
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE, l)) != NULL)
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
 	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
@@ -1520,7 +1520,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *l)
 	}
 
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE, l)) != NULL) {
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
 			ungetnewvnode(vp);
 			return (0);
 		}
@@ -1645,7 +1645,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *l)
  * File handle to vnode
  */
 int
-lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp, struct lwp *l)
+lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct lfid *lfhp;
 	struct buf *bp;
@@ -1674,7 +1674,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp, struct lwp *l)
 			return ESTALE;
 	}
 
-	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp, l));
+	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.16.24.1 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.16.24.2 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,14 +128,14 @@ extern dev_t rrootdev;
 struct secasvar;
 struct secpolicy;
 
-int kernfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int kernfs_root __P((struct mount *, struct vnode **));
 
 void kernfs_hashinit __P((void));
 void kernfs_hashreinit __P((void));
 void kernfs_hashdone __P((void));
 int kernfs_freevp __P((struct vnode *));
 int kernfs_allocvp __P((struct mount *, struct vnode **, kfstype,
-	const struct kern_target *, u_int32_t, struct lwp *));
+	const struct kern_target *, u_int32_t));
 
 void kernfs_revoke_sa __P((struct secasvar *));
 void kernfs_revoke_sp __P((struct secpolicy *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.4.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.4.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.2 2004/08/03 10:52:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,10 +225,9 @@ iso_dunmap(device)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-cd9660_ihashget(dev, inum, l)
+cd9660_ihashget(dev, inum)
 	dev_t dev;
 	ino_t inum;
-	struct lwp *l;
 {
 	struct iso_node *ip;
 	struct vnode *vp;
@@ -240,7 +239,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&cd9660_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

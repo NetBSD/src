@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.56.2.3 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.56.2.4 2004/08/24 17:57:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.3 2004/08/18 10:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.4 2004/08/24 17:57:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ loop:
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&pfs_hash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

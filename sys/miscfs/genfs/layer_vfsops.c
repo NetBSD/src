@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.9.2.2 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.9.2.3 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.2 2004/08/03 10:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.3 2004/08/24 17:57:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -104,10 +104,9 @@ layerfs_start(mp, flags, l)
 }
 
 int
-layerfs_root(mp, vpp, l)
+layerfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *vp;
 
@@ -200,17 +199,16 @@ layerfs_sync(mp, waitfor, cred, l)
 }
 
 int
-layerfs_vget(mp, ino, vpp, l)
+layerfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	int error;
 	struct vnode *vp;
 
 	if ((error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-	    ino, &vp, l))) {
+	    ino, &vp))) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -224,17 +222,16 @@ layerfs_vget(mp, ino, vpp, l)
 }
 
 int
-layerfs_fhtovp(mp, fidp, vpp, l)
+layerfs_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	int error;
 	struct vnode *vp;
 
 	if ((error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-	    fidp, &vp, l)))
+	    fidp, &vp)))
 		return (error);
 
 	if ((error = layer_node_create(mp, vp, vpp))) {

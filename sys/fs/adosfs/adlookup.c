@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.3.2.3 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.3.2.4 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.3 2004/08/03 10:52:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.4 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,7 @@ adosfs_lookup(v)
 		VOP_UNLOCK(vdp, 0); /* race */
 		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, 
-				      (ino_t)adp->pblock, vpp,
-				      cnp->cn_lwp)) != 0) {
+				      (ino_t)adp->pblock, vpp)) != 0) {
 			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 		} else if (last && lockp ) {
@@ -178,8 +177,8 @@ adosfs_lookup(v)
 	bn = adp->tab[hval];
 	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp,
-				      cnp->cn_lwp)) != 0) {
+		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp
+				      )) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif

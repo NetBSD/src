@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.2 2004/08/03 10:56:50 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.3 2004/08/24 17:57:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.2 2004/08/03 10:56:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.3 2004/08/24 17:57:43 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -632,7 +632,7 @@ loop:
 		 */
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&mntvnode_slock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ffs_reload: dirty2");
@@ -1300,7 +1300,7 @@ loop:
 			continue;
 		}
 		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, l);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)
@@ -1360,11 +1360,10 @@ loop:
  * done by the calling routine.
  */
 int
-ffs_vget(mp, ino, vpp, l)
+ffs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct fs *fs;
 	struct inode *ip;
@@ -1377,7 +1376,7 @@ ffs_vget(mp, ino, vpp, l)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE, l)) != NULL)
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
 	/* Allocate a new vnode/inode. */
@@ -1392,7 +1391,7 @@ ffs_vget(mp, ino, vpp, l)
 	 */
 
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE, l)) != NULL) {
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
 			ungetnewvnode(vp);
 			return (0);
 		}
@@ -1499,11 +1498,10 @@ ffs_vget(mp, ino, vpp, l)
  *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(mp, fhp, vpp, l)
+ffs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct ufid *ufhp;
 	struct fs *fs;
@@ -1513,7 +1511,7 @@ ffs_fhtovp(mp, fhp, vpp, l)
 	if (ufhp->ufid_ino < ROOTINO ||
 	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
-	return (ufs_fhtovp(mp, ufhp, vpp, l));
+	return (ufs_fhtovp(mp, ufhp, vpp));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.15.2.2 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.15.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15.2.2 2004/08/03 10:43:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,14 +188,14 @@ int coda_kernel_version = CODA_KERNEL_VERSION;
 
 int
 venus_root(void *mdp,
-	struct ucred *cred, struct lwp *l,
+	struct ucred *cred, struct proc *p,
 /*out*/	CodaFid *VFid)
 {
     DECL_NO_IN(coda_root);		/* sets Isize & Osize */
     ALLOC_NO_IN(coda_root);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(inp, CODA_ROOT, cred, l->l_proc);
+    INIT_IN(inp, CODA_ROOT, cred, p);
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error)
@@ -682,14 +682,14 @@ venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
 
 int
 venus_fhtovp(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	struct ucred *cred, struct proc *p,
 /*out*/	CodaFid *VFid, int *vtype)
 {
     DECL(coda_vget);			/* sets Isize & Osize */
     ALLOC(coda_vget);			/* sets inp & outp */
 
     /* Send the open to Venus. */
-    INIT_IN(&inp->ih, CODA_VGET, cred, l->l_proc);
+    INIT_IN(&inp->ih, CODA_VGET, cred, p);
     inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);

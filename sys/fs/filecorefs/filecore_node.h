@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.1.4.2 2004/08/03 10:52:24 skrll Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.1.4.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -131,7 +131,7 @@ int	filecore_print		__P((void *));
 int	filecore_pathconf	__P((void *));
 int	filecore_blkatoff	__P((void *));
 
-struct	vnode *filecore_ihashget __P((dev_t, ino_t, struct lwp *));
+struct	vnode *filecore_ihashget __P((dev_t, ino_t));
 void	filecore_ihashins __P((struct filecore_node *));
 void	filecore_ihashrem __P((struct filecore_node *));
 

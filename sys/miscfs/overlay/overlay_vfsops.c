@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.17.2.3 2004/08/03 10:54:06 skrll Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.17.2.4 2004/08/24 17:57:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.3 2004/08/03 10:54:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.4 2004/08/24 17:57:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ ov_mount(mp, path, data, ndp, l)
 	 * Find lower node
 	 */
 	lowerrootvp = mp->mnt_vnodecovered;
-	if ((error = vget(lowerrootvp, LK_EXCLUSIVE | LK_RETRY, l)))
+	if ((error = vget(lowerrootvp, LK_EXCLUSIVE | LK_RETRY)))
 		return (error);
 
 	/*

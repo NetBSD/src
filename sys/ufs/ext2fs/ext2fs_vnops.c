@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.2 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.3 2004/08/24 17:57:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.2 2004/08/03 10:56:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.3 2004/08/24 17:57:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,6 @@ ext2fs_mknod(v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
-	struct componentname *cnp = ap->a_cnp;
 	int error;
 	struct mount	*mp;	
 	ino_t		ino;
@@ -194,7 +193,7 @@ ext2fs_mknod(v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp, cnp->cn_lwp);
+	error = VFS_VGET(mp, ino, vpp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);

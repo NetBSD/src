@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.201.2.2 2004/08/03 10:52:59 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.201.2.3 2004/08/24 17:57:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.2 2004/08/03 10:52:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.3 2004/08/24 17:57:38 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1159,7 +1159,7 @@ loop:
 			vgonel(vp, l);
 			goto loop;
 		}
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_NOWAIT, l)) {
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_NOWAIT)) {
 			simple_unlock(&spechash_slock);
 			goto loop;
 		}
@@ -1216,10 +1216,9 @@ loop:
  * longer usable (possibly having been changed to a new file system type).
  */
 int
-vget(vp, flags, l)
+vget(vp, flags)
 	struct vnode *vp;
 	int flags;
-	struct lwp *l;
 {
 	int error;
 
@@ -2508,7 +2507,7 @@ vfs_setpublicfs(mp, nep, argp)
 	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
 	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
 
-	if ((error = VFS_ROOT(mp, &rvp, curlwp)))	/* XXX */
+	if ((error = VFS_ROOT(mp, &rvp)))
 		return (error);
 
 	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
