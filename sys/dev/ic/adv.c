@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.20 2000/11/14 18:21:00 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.21 2001/03/07 23:07:12 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -675,15 +675,17 @@ adv_scsi_cmd(xs)
                  */
 #ifdef TFS
 		if (flags & SCSI_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-				  ccb->dmamap_xfer, (struct uio *) xs->data,
-						    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			error = bus_dmamap_load_uio(dmat, ccb->dmamap_xfer,
+			    (struct uio *) xs->data,
+			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		} else
 #endif				/* TFS */
 		{
-			error = bus_dmamap_load(dmat,
-			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-						(flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			error = bus_dmamap_load(dmat, ccb->dmamap_xfer,
+			    xs->data, xs->datalen, NULL,
+			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		}
 
 		if (error) {
