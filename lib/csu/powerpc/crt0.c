@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.19 2002/04/17 13:32:42 matt Exp $ */
+/* $NetBSD: crt0.c,v 1.20 2002/04/17 17:36:13 kleink Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -38,6 +38,15 @@
 #include "common.h"
 
 /*
+ * Small Data Area designators.  If not defined, will show up as being
+ * at address zero.
+ */
+extern int _SDA_BASE_;
+__weak_extern(_SDA_BASE_);
+extern int _SDA2_BASE_;
+__weak_extern(_SDA2_BASE_);
+
+/*
  * First 5 arguments are specified by the PowerPC SVR4 ABI.  The
  * last argument, ps_strings, is a NetBSD extension.
  */
@@ -59,10 +68,8 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
 	 * _SDA_BASE is defined in the SVR4 ABI for PPC.
 	 * _SDA2_BASE is defined in the E[mbedded] ABI for PPC.
 	 */
-	__asm(	".weak _SDA_BASE_;"
-		"addis 13,0,_SDA_BASE_@ha;"
+	__asm(  "addis 13,0,_SDA_BASE_@ha;"
 		"addi 13,13,_SDA_BASE_@l;"
-		".weak _SDA2_BASE_;"
 		"addis 2,0,_SDA2_BASE_@ha;"
 		"addi 2,2,_SDA2_BASE_@l" );
 
@@ -98,7 +105,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.19 2002/04/17 13:32:42 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.20 2002/04/17 17:36:13 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
