@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.26 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.27 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.26 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.27 2005/01/09 03:11:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,12 +174,6 @@ ntfs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("ntfs_mountroot: can't setup rootvp");
-
 	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -194,7 +188,6 @@ ntfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.21 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.22 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.21 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.22 2005/01/09 03:11:48 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -197,12 +197,6 @@ msdosfs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
-	/*
-	 * Get vnodes for swapdev and rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("msdosfs_mountroot: can't setup rootvp");
-
 	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -219,7 +213,6 @@ msdosfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 
@@ -376,21 +369,43 @@ msdosfs_mount(mp, path, data, ndp, p)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
+		int flags;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, flags, FSCRED, p);
+		if (error)
+			goto fail;
 		error = msdosfs_mountfs(devvp, mp, p, &args);
+		if (error) {
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void) VOP_CLOSE(devvp, flags, NOCRED, p);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
+		}
 #ifdef MSDOSFS_DEBUG		/* only needed for the printf below */
 		pmp = VFSTOMSDOSFS(mp);
 #endif
 	} else {
-		if (devvp != pmp->pm_devvp)
-			error = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
-	}
-	if (error) {
 		vrele(devvp);
-		return (error);
+		if (devvp != pmp->pm_devvp)
+			return (EINVAL);	/* needs translation */
 	}
-
 	if ((error = update_mp(mp, &args)) != 0) {
 		msdosfs_unmount(mp, MNT_FORCE, p);
 		return error;
@@ -401,6 +416,10 @@ msdosfs_mount(mp, path, data, ndp, p)
 #endif
 	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, p);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 int
@@ -423,23 +442,11 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	int	bsize = 0, dtype = 0, tmp;
 	u_long	dirsperblk;
 
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
+	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
-	if (error)
-		return (error);
 
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
@@ -770,9 +777,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 error_exit:;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
