@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2002/02/17 19:35:30 christos Exp $
+	$NetBSD: syscalls.master,v 1.37 2002/03/22 15:17:04 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -232,7 +232,8 @@
 123	STD		{ int linux_sys_cacheflush(unsigned long addr, \
 			    int scope, int cache, unsigned long len); }
 124	UNIMPL		adjtimex
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    const linux_old_sigset_t *set, \
 			    linux_old_sigset_t *oset); }
@@ -335,8 +336,7 @@
 190	NOARGS		{ int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct orlimit *rlp); }
-192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+192	UNIMPL		mmap2
 193	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
 194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, off_t length); }
