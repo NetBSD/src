@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.246 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.247 2004/02/06 12:34:11 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -586,7 +586,7 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 		${DESTDIR}${_LIBSODIR}/lib${LIB}.so
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} ${SYSPKGTAG} \
-		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
