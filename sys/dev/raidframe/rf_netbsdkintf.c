@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.70 2000/03/07 03:09:47 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.71 2000/03/20 22:59:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1251,8 +1251,10 @@ raidioctl(dev, cmd, data, flag, p)
 		/* return the percentage completion of reconstruction */
 	case RAIDFRAME_CHECK_RECON_STATUS:
 		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* This makes no sense on a RAID 0 */
-			return(EINVAL);
+			/* This makes no sense on a RAID 0, so tell the
+			   user it's done. */
+			*(int *) data = 100;
+			return(0);
 		}
 		row = 0; /* XXX we only consider a single row... */
 		if (raidPtr->status[row] != rf_rs_reconstructing)
