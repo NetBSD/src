@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.33 2001/11/02 04:42:09 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.34 2001/11/08 19:39:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.33 2001/11/02 04:42:09 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.34 2001/11/08 19:39:10 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -321,7 +321,6 @@ term_setflags(EditLine *el)
 protected int
 term_init(EditLine *el)
 {
-	int error;
 
 	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_term.t_buf == NULL)
@@ -342,9 +341,9 @@ term_init(EditLine *el)
 		return (-1);
 	(void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
 	term_outfile = el->el_outfile;
-	error = term_set(el, NULL);
+	(void) term_set(el, NULL);
 	term_init_arrow(el);
-	return (error);
+	return (0);
 }
 /* term_end():
  *	Clean up the terminal stuff
