@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.25 2004/11/18 01:13:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.25 2004/11/18 01:13:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $");
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <sys/queue.h>
+#include <sys/event.h>
 
 #include <netinet/in.h>
 
@@ -90,7 +91,6 @@ __RCSID("$NetBSD: syslogd.c,v 1.69.2.24 2004/11/17 15:35:42 thorpej Exp $");
 #include <grp.h>
 #include <locale.h>
 #include <netdb.h>
-#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -263,18 +263,35 @@ int	main(int, char *[]);
 void	logpath_add(char ***, int *, int *, char *);
 void	logpath_fileadd(char ***, int *, int *, char *);
 
+static int fkq;
+
+static struct kevent *allocevchange(void);
+static int wait_for_events(struct kevent *, size_t);
+
+static void dispatch_read_klog(struct kevent *);
+static void dispatch_read_finet(struct kevent *);
+static void dispatch_read_funix(struct kevent *);
+
+/*
+ * Global line buffer.  Since we only process one event at a time,
+ * a global one will do.
+ */
+static char *linebuf;
+static size_t linebufsize;
+
+#define	A_CNT(x)	(sizeof((x)) / sizeof((x)[0]))
+
 int
 main(int argc, char *argv[])
 {
-	int ch, *funix, i, j, fklog, len, linesize;
-	int *nfinetix, nfklogix, nfunixbaseix, nfds;
+	int ch, *funix, j, fklog;
 	int funixsize = 0, funixmaxsize = 0;
-	struct sockaddr_un sunx, fromunix;
-	struct sockaddr_storage frominet;
+	struct kevent events[16];
+	struct sockaddr_un sunx;
 	struct sigaction sact;
 	sigset_t mask;
-	char *line, **pp;
-	struct pollfd *readfds;
+	char **pp;
+	struct kevent *ev;
 	uid_t uid = 0;
 	gid_t gid = 0;
 	char *user = NULL;
@@ -399,12 +416,12 @@ getgroup:
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
 	    sizeof(consfile.f_un.f_fname));
-	linesize = getmsgbufsize();
-	if (linesize < MAXLINE)
-		linesize = MAXLINE;
-	linesize++;
-	line = malloc(linesize);
-	if (line == NULL) {
+	linebufsize = getmsgbufsize();
+	if (linebufsize < MAXLINE)
+		linebufsize = MAXLINE;
+	linebufsize++;
+	linebuf = malloc(linebufsize);
+	if (linebuf == NULL) {
 		logerror("Couldn't allocate line buffer");
 		die(0);
 	}
@@ -461,6 +478,11 @@ getgroup:
 		dprintf("Listening on kernel log `%s'\n", _PATH_KLOG);
 	}
 
+	if ((fkq = kqueue()) < 0) {
+		logerror("Cannot create event queue");
+		die(0);
+	}
+
 	dprintf("Off & running....\n");
 
 	/* prevent SIGHUP and SIGCHLD handlers from running together */
@@ -471,31 +493,22 @@ getgroup:
 	sact.sa_flags = SA_RESTART;
 	(void)sigaction(SIGHUP, &sact, NULL);
 
-	/* setup pollfd set. */
-	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
-			(funixsize + (finet ? *finet : 0) + 1));
-	if (readfds == NULL) {
-		logerror("Couldn't allocate pollfds");
-		die(0);
-	}
-	nfds = 0;
 	if (fklog >= 0) {
-		nfklogix = nfds++;
-		readfds[nfklogix].fd = fklog;
-		readfds[nfklogix].events = POLLIN | POLLPRI;
+		ev = allocevchange();
+		EV_SET(ev, fklog, EVFILT_READ, EV_ADD | EV_ENABLE,
+		    0, 0, (intptr_t) dispatch_read_klog);
 	}
 	if (finet && !SecureMode) {
-		nfinetix = malloc(*finet * sizeof(*nfinetix));
 		for (j = 0; j < *finet; j++) {
-			nfinetix[j] = nfds++;
-			readfds[nfinetix[j]].fd = finet[j+1];
-			readfds[nfinetix[j]].events = POLLIN | POLLPRI;
+			ev = allocevchange();
+			EV_SET(ev, finet[j+1], EVFILT_READ, EV_ADD | EV_ENABLE,
+			    0, 0, (intptr_t) dispatch_read_finet);
 		}
 	}
-	nfunixbaseix = nfds;
-	for (j = 0, pp = LogPaths; *pp; pp++) {
-		readfds[nfds].fd = funix[j++];
-		readfds[nfds++].events = POLLIN | POLLPRI;
+	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+		ev = allocevchange();
+		EV_SET(ev, funix[j], EVFILT_READ, EV_ADD | EV_ENABLE,
+		    0, 0, (intptr_t) dispatch_read_funix);
 	}
 
 	/* 
@@ -535,14 +548,15 @@ getgroup:
 	(void)alarm(TIMERINTVL);
 
 	for (;;) {
-		int rv;
+		void (*handler)(struct kevent *);
+		int i, rv;
 
-		rv = poll(readfds, nfds, INFTIM);
+		rv = wait_for_events(events, A_CNT(events));
 		if (rv == 0)
 			continue;
 		if (rv < 0) {
 			if (errno != EINTR)
-				logerror("poll() failed");
+				logerror("kevent() failed");
 			if (gothup) {
 				init();
 				gothup = 0;
@@ -550,71 +564,9 @@ getgroup:
 			continue;
 		}
 		dprintf("Got a message (%d)\n", rv);
-		if (fklog >= 0 &&
-		    (readfds[nfklogix].revents & (POLLIN | POLLPRI))) {
-			dprintf("Kernel log active\n");
-			i = read(fklog, line, linesize - 1);
-			if (i > 0) {
-				line[i] = '\0';
-				printsys(line);
-			} else if (i < 0 && errno != EINTR) {
-				logerror("klog failed");
-				fklog = -1;
-			}
-		}
-		for (j = 0, pp = LogPaths; *pp; pp++, j++) {
-			if ((readfds[nfunixbaseix + j].revents &
-			    (POLLIN | POLLPRI)) == 0)
-				continue;
-
-			dprintf("Unix socket (%s) active\n", *pp);
-			len = sizeof(fromunix);
-			i = recvfrom(funix[j], line, MAXLINE, 0,
-			    (struct sockaddr *)&fromunix, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				printline(LocalHostName, line);
-			} else if (i < 0 && errno != EINTR) {
-				logerror("recvfrom() unix `%s'", *pp);
-			}
-		}
-		if (finet && !SecureMode) {
-			for (j = 0; j < *finet; j++) {
-		    		if (readfds[nfinetix[j]].revents &
-				    (POLLIN | POLLPRI)) {
-#ifdef LIBWRAP
-					struct request_info req;
-#endif
-					int reject = 0;
-
-					dprintf("inet socket active\n");
-
-#ifdef LIBWRAP
-					request_init(&req, RQ_DAEMON, "syslogd",
-					    RQ_FILE, finet[j + 1], NULL);
-					fromhost(&req);
-					reject = !hosts_access(&req);
-					if (reject)
-						dprintf("access denied\n");
-#endif
-
-					len = sizeof(frominet);
-					i = recvfrom(finet[j+1], line, MAXLINE,
-					    0, (struct sockaddr *)&frominet,
-					    &len);
-					if (i == 0 || (i < 0 && errno == EINTR))
-						continue;
-					else if (i < 0) {
-						logerror("recvfrom inet");
-						continue;
-					}
-
-					line[i] = '\0';
-					if (!reject)
-						printline(cvthname(&frominet),
-						    line);
-				}
-			}
+		for (i = 0; i < rv; i++) {
+			handler = (void *) events[i].udata;
+			(*handler)(&events[i]);
 		}
 	}
 }
@@ -628,6 +580,110 @@ usage(void)
 	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
 	    "\t[-t chroot_dir] [-u user]\n", getprogname());
 	exit(1);
+}
+
+/*
+ * Dispatch routine for reading /dev/klog
+ */
+static void
+dispatch_read_klog(struct kevent *ev)
+{
+	ssize_t rv;
+	int fd = ev->ident;
+
+	dprintf("Kernel log active\n");
+
+	rv = read(fd, linebuf, linebufsize - 1);
+	if (rv > 0) {
+		linebuf[rv] = '\0';
+		printsys(linebuf);
+	} else if (rv < 0 && errno != EINTR) {
+		/*
+		 * /dev/klog has croaked.  Disable the event
+		 * so it won't bother us again.
+		 */
+		struct kevent *cev = allocevchange();
+		logerror("klog failed");
+		EV_SET(cev, fd, EVFILT_READ, EV_DISABLE,
+		    0, 0, (intptr_t) dispatch_read_klog);
+	}
+}
+
+/*
+ * Dispatch routine for reading Unix domain sockets.
+ */
+static void
+dispatch_read_funix(struct kevent *ev)
+{
+	struct sockaddr_un myname, fromunix;
+	ssize_t rv;
+	socklen_t sunlen;
+	int fd = ev->ident;
+
+	sunlen = sizeof(myname);
+	if (getsockname(fd, (struct sockaddr *)&myname, &sunlen) != 0) {
+		/*
+		 * This should never happen, so ensure that it doesn't
+		 * happen again.
+		 */
+		struct kevent *cev = allocevchange();
+		logerror("getsockname() unix failed");
+		EV_SET(cev, fd, EVFILT_READ, EV_DISABLE,
+		    0, 0, (intptr_t) dispatch_read_funix);
+		return;
+	}
+
+	dprintf("Unix socket (%s) active\n", myname.sun_path);
+
+	sunlen = sizeof(fromunix);
+	rv = recvfrom(fd, linebuf, MAXLINE, 0,
+	    (struct sockaddr *)&fromunix, &sunlen);
+	if (rv > 0) {
+		linebuf[rv] = '\0';
+		printline(LocalHostName, linebuf);
+	} else if (rv < 0 && errno != EINTR) {
+		logerror("recvfrom() unix `%s'", myname.sun_path);
+	}
+}
+
+/*
+ * Dispatch routine for reading Internet sockets.
+ */
+static void
+dispatch_read_finet(struct kevent *ev)
+{
+#ifdef LIBWRAP
+	struct request_info req;
+#endif
+	struct sockaddr_storage frominet;
+	ssize_t rv;
+	socklen_t len;
+	int fd = ev->ident;
+	int reject = 0;
+
+	dprintf("inet socket active\n");
+
+#ifdef LIBWRAP
+	request_init(&req, RQ_DAEMON, "syslogd", RQ_FILE, fd, NULL);
+	fromhost(&req);
+	reject = !hosts_access(&req);
+	if (reject)
+		dprintf("access denied\n");
+#endif
+
+	len = sizeof(frominet);
+	rv = recvfrom(fd, linebuf, MAXLINE, 0,
+	    (struct sockaddr *)&frominet, &len);
+	if (rv == 0 || (rv < 0 && errno == EINTR))
+		return;
+	else if (rv < 0) {
+		logerror("recvfrom inet");
+		return;
+	}
+
+	linebuf[rv] = '\0';
+	if (!reject)
+		printline(cvthname(&frominet), linebuf);
 }
 
 /*
@@ -2116,4 +2172,30 @@ log_deadchild(pid_t pid, int status, const char *name)
 	    "Logging subprocess %d (%s) exited %s %d.",
 	    pid, name, reason, code);
 	logerror(buf);
+}
+
+static struct kevent changebuf[8];
+static int nchanges;
+
+static struct kevent *
+allocevchange(void)
+{
+
+	if (nchanges == A_CNT(changebuf)) {
+		/* XXX Error handling could be improved. */
+		(void) wait_for_events(NULL, 0);
+	}
+
+	return (&changebuf[nchanges++]);
+}
+
+static int
+wait_for_events(struct kevent *events, size_t nevents)
+{
+	int rv;
+
+	rv = kevent(fkq, nchanges ? changebuf : NULL, nchanges,
+		    events, nevents, NULL);
+	nchanges = 0;
+	return (rv);
 }
