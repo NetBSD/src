@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 1997/07/10 07:37:25 mikel Exp $
+.\"	$NetBSD: boot.8,v 1.6 1997/10/28 20:45:29 drochner Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,14 +60,17 @@ a boot selector program (such as OS-BS, BOOTEASY, or the OS/2 Boot Menu)
 .Pp
 Once running, a prompt similar to the following will appear.
 .Bd -unfilled -offset indent
->> NetBSD BOOT: 637/15360 k [1.28]
-use hd(1,a)/netbsd to boot sd0 when wd0 is also installed
-Boot: [[wd(0,a)]/netbsd][-adrs]] :-
+>> NetBSD BIOS Boot, revision 2.2
+>> (user@buildhost, builddate)
+>> Memory: 637/15360 k
+Use hd1a:netbsd to boot sd0 when wd0 is also installed
+Press return to boot now, any other key for boot menu
+booting wd0a:netbsd - starting in 5
 .Ed
 .Pp
-After a short delay the system image listed will be loaded. (In the
+After a countdown the system image listed will be loaded. (In the
 above example, it will be
-.Dq Li wd(0,a)/netbsd
+.Dq Li wd0a:netbsd
 which is the file
 .Nm netbsd
 on partition 
@@ -85,13 +88,12 @@ just specifying the name of the image.
 The following list of supported devices may vary from installation to
 installation:
 .Bd -unfilled -offset indent
-sd	SCSI disks on a controller recognized by the BIOS
+sd	SCSI disks on a controller recognized by the BIOS. The unit
+	number is the BIOS device number.
 wd	ST506, IDE, ESDI, RLL disks on a WD100[2367] or
-	lookalike controller
-hd	A hard disk as numbered by the BIOS. Must be used
-	to boot from the second disk (D:) when it is SCSI
-	and the first disk (C:) is non SCSI.
-fd	5 1/4" or 3 1/2" High density floppies
+	lookalike controller(s), as numbered by the BIOS.
+hd	Hard disks as numbered by the BIOS.
+fd	Floppy drives as numbered by the BIOS.
 .Ed
 .Pp
 The
@@ -100,7 +102,7 @@ flag to the boot loader will bring the system up in single-user mode.
 The
 .Op Fl a
 flag instructs the system to prompt for the location of the root filesystem
-and the primary swap partition.
+and the system crash dump device.
 The
 .Op Fl r
 flag instructs the system to use the compiled in value for the root
@@ -110,23 +112,34 @@ The
 flag to the boot loader will bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
-Other flags are currently ignored.
 .Pp
 In an emergency, the bootstrap methods described in the
 .Nx
 installation notes for the i386 architecture
 can be used to boot from floppy.
 .Sh FILES
-.Bl -tag -width /usr/mdec/xxboot -compact
+.Bl -tag -width /usr/mdec/biosboot.sym -compact
 .It Pa /netbsd
 system code
-.It Pa /usr/mdec/xxboot
-sector-0 boot block, xx is disk type
-.It Pa /usr/mdec/bootxx
-second-stage boot, xx is disk type
+.It Pa /usr/mdec/biosboot.sym
+boot block (not installed)
+.It Pa /boot
+boot block (installed).
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr halt 8 ,
+.Xr installboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
+.Sh BUGS
+Hard disks are always accessed by BIOS functions. Unit numbers are
+BIOS device numbers which might differ from numbering in the
+.Nx
+kernel or physical parameters (eg SCSI slave numbers). The distiction
+into
+.Dq sd
+and
+.Dq wd
+devices at the bootloader level is meaningless and exists for
+historical reasons.
