@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.1 2001/10/22 23:01:17 thorpej Exp $	*/
+/*	$NetBSD: platform.c,v 1.2 2001/10/23 04:19:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,10 +66,8 @@ struct platmap platmap[] = {
 	{ "FirePower,Powerized_LX MP",
 	  PLATID_FIREPOWER_LX },
 
-#if 0
-	{ "XXX briQ",
+	{ "TotalImpact,BRIQ",
 	  PLATID_TOTALIMPACT_BRIQ },
-#endif
 
 	{ NULL,
 	  PLATID_UNKNOWN },
