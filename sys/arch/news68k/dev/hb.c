@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.8 2002/09/27 20:34:08 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.9 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -42,9 +42,8 @@ static void	hb_attach __P((struct device *, struct device *, void *));
 static int	hb_search __P((struct device *, struct cfdata *, void *));
 static int	hb_print __P((void *, const char *));
 
-const struct cfattach hb_ca = {
-	sizeof(struct device), hb_match, hb_attach
-};
+CFATTACH_DECL(hb, sizeof(struct device),
+    hb_match, hb_attach, NULL, NULL);
 
 extern struct cfdriver hb_cd;
 
