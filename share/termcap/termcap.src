@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.65 2001/12/04 17:56:34 wiz Exp $
+#	$NetBSD: termcap.src,v 1.66 2002/02/11 11:19:26 wiz Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -469,7 +469,7 @@ ansi|ansi/pc-term compatible with color:\
 #
 # This completely describes the sequences specified in the DOS 2.1 ANSI.SYS
 # documentation (except for the keyboard key reassignment feature, which
-# doen't fit the <pfkey> model well).  The klone+acs sequences were valid
+# doesn't fit the <pfkey> model well).  The klone+acs sequences were valid
 # though undocumented.  The <pfkey> capability is untested but should work for
 # keys F1-F10 (%p1 values outside this range will yield unpredictable results).
 # From: Eric S. Raymond <esr@snark.thyrsus.com> Nov 7 1995
