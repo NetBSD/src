@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.11 1998/08/03 14:32:04 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.12 1999/09/06 22:20:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -72,7 +72,7 @@
 #define NL_MSGMAX		32767
 #define NL_NMAX			1
 #define NL_SETMAX		255
-#define NL_TEXTMAX		255
+#define NL_TEXTMAX		2048
 
 #define TMP_MAX			308915776
 #endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
