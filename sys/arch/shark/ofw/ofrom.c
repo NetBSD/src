@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.11 2003/07/15 03:36:02 lukem Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.12 2005/01/05 10:25:43 tsutsui Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.11 2003/07/15 03:36:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.12 2005/01/05 10:25:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.11 2003/07/15 03:36:02 lukem Exp $");
 struct ofrom_softc {
 	struct device	sc_dev;
 	int		enabled;
-	vm_offset_t	base;
-	vm_size_t	size;
+	paddr_t		base;
+	paddr_t		size;
 };
 
 int ofromprobe __P((struct device *, struct cfdata *, void *));
@@ -143,7 +143,8 @@ ofromrw(dev, uio, flags)
 	struct ofrom_softc *sc;
 	int c, error = 0, unit = minor(dev);
 	struct iovec *iov;
-	vm_offset_t o, v;
+	paddr_t v;
+	psize_t o;
 	extern int physlock;
 	extern char *memhook;
 
@@ -182,15 +183,15 @@ ofromrw(dev, uio, flags)
 			break;
 
 		v = sc->base + uio->uio_offset;
-		pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
+		pmap_enter(pmap_kernel(), (vaddr_t)memhook,
 		    trunc_page(v), uio->uio_rw == UIO_READ ?
 		    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
 		pmap_update(pmap_kernel());
 		o = uio->uio_offset & PGOFSET;
 		c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 		error = uiomove((caddr_t)memhook + o, c, uio);
-		pmap_remove(pmap_kernel(), (vm_offset_t)memhook,
-		    (vm_offset_t)memhook + PAGE_SIZE);
+		pmap_remove(pmap_kernel(), (vaddr_t)memhook,
+		    (vaddr_t)memhook + PAGE_SIZE);
 		pmap_update(pmap_kernel());
 	}
 
