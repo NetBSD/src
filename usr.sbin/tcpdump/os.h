@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.3 1996/05/20 00:41:06 fvdl Exp $	*/
+/*	$NetBSD: os.h,v 1.4 1997/03/15 18:37:42 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
@@ -29,10 +29,29 @@
 #define BSD
 #endif
 
+#ifdef __NetBSD__	/* actually NetBSD 1.2D and later */
+#define APTYPE  struct arphdr
+#define HRD(ap)	((ap)->ar_hrd)
+#define HLN(ap)	((ap)->ar_hln)
+#define PLN(ap)	((ap)->ar_pln)
+#define OP(ap)	((ap)->ar_op)
+#define PRO(ap)	((ap)->ar_pro)
+#define SHA(ap) (ar_sha(ap))
+#define SPA(ap) (ar_spa(ap))
+#define THA(ap) (ar_tha(ap))
+#define TPA(ap) (ar_tpa(ap))
+#else
+#define APTYPE  struct ether_arp
+#define HRD(ap)	((ap)->arp_hrd)
+#define HLN(ap)	((ap)->arp_hln)
+#define PLN(ap)	((ap)->arp_pln)
+#define OP(ap)	((ap)->arp_op)
+#define PRO(ap)	((ap)->arp_pro)
 #define SHA(ap) ((ap)->arp_sha)
 #define SPA(ap) ((ap)->arp_spa)
 #define THA(ap) ((ap)->arp_tha)
 #define TPA(ap) ((ap)->arp_tpa)
+#endif
 
 #define EDST(ep) ((ep)->ether_dhost)
 #define ESRC(ep) ((ep)->ether_shost)

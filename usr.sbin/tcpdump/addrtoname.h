@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.h,v 1.2 1995/03/06 19:09:50 mycroft Exp $	*/
+/*	$NetBSD: addrtoname.h,v 1.3 1997/03/15 18:37:41 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994
@@ -25,6 +25,7 @@
 
 /* Name to address translation routines. */
 
+extern char *linkaddr_string(const u_char *, const int);
 extern char *etheraddr_string(const u_char *);
 extern char *etherproto_string(u_short);
 extern char *tcpport_string(u_short);

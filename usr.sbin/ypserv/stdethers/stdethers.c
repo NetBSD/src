@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.1.1.1 1996/08/09 10:14:57 thorpej Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.2 1997/03/15 18:38:02 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -35,8 +35,11 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#ifndef NTOA_FIX	/* XXX the below is wrong with old ARP code */
+#include <net/if_ether.h> 
+#endif
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>

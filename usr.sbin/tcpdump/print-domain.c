@@ -32,8 +32,12 @@ static char rcsid[] =
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
+#include <netinet/if_ether.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.15 1997/03/10 19:26:23 is Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.16 1997/03/15 18:37:38 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.15 1997/03/10 19:26:23 is Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.16 1997/03/15 18:37:38 is Exp $";
 #endif
 
 
@@ -51,9 +51,16 @@ static char rcsid[] = "$NetBSD: rarpd.c,v 1.15 1997/03/10 19:26:23 is Exp $";
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#endif
 #include <net/if_types.h>
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <netdb.h>
@@ -298,7 +305,9 @@ rarp_open(device)
 		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ETHERTYPE_REVARP, 0, 3),
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 20),
 		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ARPOP_REVREQUEST, 0, 1),
-		BPF_STMT(BPF_RET | BPF_K, sizeof(struct ether_arp) +
+		BPF_STMT(BPF_RET | BPF_K, 
+		    sizeof(struct arphdr) + 
+		    2 * ETHER_ADDR_LEN + 2 * sizeof(struct in_addr) +
 		    sizeof(struct ether_header)),
 		BPF_STMT(BPF_RET | BPF_K, 0),
 	};
@@ -347,7 +356,11 @@ rarp_check(p, len)
 	int     len;
 {
 	struct ether_header *ep = (struct ether_header *) p;
+#ifdef __NetBSD__
+	struct arphdr *ap = (struct arphdr *) (p + sizeof(*ep));
+#else
 	struct ether_arp *ap = (struct ether_arp *) (p + sizeof(*ep));
+#endif
 
 	(void) debug("got a packet");
 
@@ -355,6 +368,13 @@ rarp_check(p, len)
 		err(NONFATAL, "truncated request");
 		return 0;
 	}
+#ifdef __NetBSD__
+	/* now that we know the fixed part of the ARP hdr is there: */
+	if (len < sizeof(*ap) + 2 * ap->ar_hln + 2 * ap->ar_pln) {
+		err(NONFATAL, "truncated request");
+		return 0;
+	}
+#endif
 	/* XXX This test might be better off broken out... */
 #ifdef __FreeBSD__
 	/* BPF (incorrectly) returns this in host order. */
@@ -362,18 +382,33 @@ rarp_check(p, len)
 #else
 	if (ntohs (ep->ether_type) != ETHERTYPE_REVARP ||
 #endif
+#ifdef __NetBSD__
+	    ntohs (ap->ar_hrd) != ARPHRD_ETHER ||
+	    ntohs (ap->ar_op) != ARPOP_REVREQUEST ||
+	    ntohs (ap->ar_pro) != ETHERTYPE_IP ||
+	    ap->ar_hln != 6 || ap->ar_pln != 4) {
+#else
 	    ntohs (ap->arp_hrd) != ARPHRD_ETHER ||
 	    ntohs (ap->arp_op) != ARPOP_REVREQUEST ||
 	    ntohs (ap->arp_pro) != ETHERTYPE_IP ||
 	    ap->arp_hln != 6 || ap->arp_pln != 4) {
+#endif
 		err(NONFATAL, "request fails sanity check");
 		return 0;
 	}
-	if (bcmp((char *) &ep->ether_shost, (char *) &ap->arp_sha, 6) != 0) {
+#ifdef __NetBSD__
+	if (bcmp((char *) &ep->ether_shost, ar_sha(ap), 6) != 0) {
+#else
+	if (bcmp((char *) &ep->ether_shost, ap->arp_sha, 6) != 0) {
+#endif
 		err(NONFATAL, "ether/arp sender address mismatch");
 		return 0;
 	}
+#ifdef __NetBSD__
+	if (bcmp(ar_sha(ap), ar_tha(ap), 6) != 0) {
+#else
 	if (bcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
+#endif
 		err(NONFATAL, "ether/arp target address mismatch");
 		return 0;
 	}
@@ -723,10 +758,19 @@ rarp_reply(ii, ep, ipaddr)
 	u_long  ipaddr;
 {
 	int     n;
+#ifdef __NetBSD__
+	struct arphdr *ap = (struct arphdr *) (ep + 1);
+#else
 	struct ether_arp *ap = (struct ether_arp *) (ep + 1);
+#endif
+
 	int     len;
 
+#ifdef __NetBSD__
+	update_arptab(ar_sha(ap), ipaddr);
+#else
 	update_arptab((u_char *) & ap->arp_sha, ipaddr);
+#endif
 
 	/* Build the rarp reply by modifying the rarp request in place. */
 #ifdef __FreeBSD__
@@ -735,6 +779,22 @@ rarp_reply(ii, ep, ipaddr)
 #else
 	ep->ether_type = htons(ETHERTYPE_REVARP);
 #endif
+#ifdef __NetBSD__
+	ap->ar_hrd = htons(ARPHRD_ETHER);
+	ap->ar_pro = htons(ETHERTYPE_IP);
+	ap->ar_op = htons(ARPOP_REVREPLY);
+
+	bcopy(ar_sha(ap), (char *) &ep->ether_dhost, 6);
+	bcopy((char *) ii->ii_eaddr, (char *) &ep->ether_shost, 6);
+	bcopy((char *) ii->ii_eaddr, ar_sha(ap), 6);
+
+	bcopy((char *) &ipaddr, ar_tpa(ap), 4);
+	/* Target hardware is unchanged. */
+	bcopy((char *) &ii->ii_ipaddr, ar_spa(ap), 4);
+
+	len = sizeof(*ep) + sizeof(*ap) + 
+	    2 * ap->ar_pln + 2 * ap->ar_hln;
+#else
 	ap->ea_hdr.ar_hrd = htons(ARPHRD_ETHER);
 	ap->ea_hdr.ar_pro = htons(ETHERTYPE_IP);
 	ap->arp_op = htons(ARPOP_REVREPLY);
@@ -748,6 +808,8 @@ rarp_reply(ii, ep, ipaddr)
 	bcopy((char *) &ii->ii_ipaddr, (char *) ap->arp_spa, 4);
 
 	len = sizeof(*ep) + sizeof(*ap);
+#endif
+
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len) {
 		err(NONFATAL, "write: only %d of %d bytes written", n, len);

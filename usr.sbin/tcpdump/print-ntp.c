@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ntp.c,v 1.2 1995/03/06 19:11:22 mycroft Exp $	*/
+/*	$NetBSD: print-ntp.c,v 1.3 1997/03/15 18:37:55 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -38,7 +38,11 @@ static char rcsid[] =
 #include <net/if.h>
 
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 
 #include <ctype.h>
 #include <stdio.h>
