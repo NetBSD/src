@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.21 1999/04/14 16:26:42 chopps Exp $	*/
+/*	$NetBSD: esis.c,v 1.22 2000/01/08 20:39:45 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -279,11 +279,20 @@ esis_input(m0, va_alist)
 	struct snpa_hdr *shp;	/* subnetwork header */
 	register struct esis_fixed *pdu = mtod(m0, struct esis_fixed *);
 	register int    type;
+	struct ifaddr *ifa;
 	va_list ap;
 
 	va_start(ap, m0);
 	shp = va_arg(ap, struct snpa_hdr *);
 	va_end(ap);
+
+	for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
+	     ifa = ifa->ifa_list.tqe_next)
+		if (ifa->ifa_addr->sa_family == AF_ISO)
+			break;
+	/* if we have no iso address just send it to the sockets */
+	if (ifa == 0)
+		goto bad;
 
 	/*
 	 *	check checksum if necessary
@@ -1142,9 +1151,13 @@ isis_output(m, va_alist)
 	bzero((caddr_t) & siso, sizeof(siso));
 	siso.siso_family = AF_ISO;	/* This convention may be useful for
 					 * X.25 */
-	siso.siso_data[0] = AFI_SNA;
-	siso.siso_nlen = sn_len + 1;
-	bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+	if (sn_len == 0)
+		siso.siso_nlen = 0;
+	else {
+		siso.siso_data[0] = AFI_SNA;
+		siso.siso_nlen = sn_len + 1;
+		bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {
 #ifdef ARGO_DEBUG
