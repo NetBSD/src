@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 1997/01/16 23:10:43 perry Exp $
+#	$NetBSD: Makefile,v 1.63 1997/01/22 04:10:42 mikel Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -65,8 +65,9 @@ distribution: distrib-dirs
 		    ${DESTDIR}/etc/mtree; \
 		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
 		    ${DESTDIR}/etc/mtree)
-	cd namedb; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
-	    ${DESTDIR}/etc/namedb
+	(cd namedb; \
+		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
+		    ${DESTDIR}/etc/namedb
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
