@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.3 2000/01/19 03:33:18 jonathan Exp $	*/
+/*	$NetBSD: timepps.h,v 1.3.4.1 2000/07/26 23:09:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -144,8 +144,10 @@ static __inline int time_pps_getcap __P((pps_handle_t handle, int *mode));
 static __inline int time_pps_fetch __P((pps_handle_t handle,
 	const int tsformat, pps_info_t *ppsinfobuf,
 	const struct timespec *timeout));
+#if 0
 static __inline int time_pps_wait __P((pps_handle_t handle,
        const struct timespec *timeout, pps_info_t *ppsinfobuf));
+#endif
 
 static __inline int time_pps_kcbind __P((pps_handle_t handle,
 	 const int kernel_consumer, const int edge, const int tsformat));
