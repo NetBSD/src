@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2004/03/24 15:34:47 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2004/03/25 15:29:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2004/03/24 15:34:47 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2004/03/25 15:29:26 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -446,8 +446,8 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
-static void
-sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -462,8 +462,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
 	default:	/* unknown version */
 		printf("nsendsig: bad version %d\n",
 		    ps->sa_sigdesc[sig].sd_vers);
@@ -511,16 +509,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
-}
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
