@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.17 1999/03/22 18:30:45 garbled Exp $
+.\"	$NetBSD: pax.1,v 1.18 1999/08/24 07:57:07 tron Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
 .Op Ar pattern ...\&
 .Nm ""
 .Fl r
-.Op Fl cdiknuvzDYZ
+.Op Fl cdiknuvzADYZ
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -117,7 +117,7 @@
 .Op Ar pattern ...\&
 .Nm ""
 .Fl w
-.Op Fl dituvzHLPX
+.Op Fl dituvzAHLPX
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -162,7 +162,7 @@
 .Nm ""
 .Fl r
 .Fl w
-.Op Fl diklntuvzDHLPXYZ
+.Op Fl diklntuvzADHLPXYZ
 .Bk -words
 .Op Fl p Ar string
 .Ar ...\&
@@ -783,6 +783,8 @@ file pathname length, file size, link pathname length and the type of the file.
 Use
 .Xr gzip 1
 compression, when reading or writing archive files.
+.It Fl A
+Do not strip leading `/'s from file names.
 .It Fl B Ar bytes
 Limit the number of bytes written to a single archive volume to
 .Ar bytes .
