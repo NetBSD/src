@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.21 2003/02/01 06:23:39 thorpej Exp $      */
+/*      $NetBSD: esm.c,v 1.22 2003/02/03 01:11:54 kleink Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.21 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.22 2003/02/03 01:11:54 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,7 +1331,7 @@ esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
 	int off;
 
 	DPRINTF(ESM_DEBUG_DMA,
-	    ("esm_malloc(%p, %d, 0x%x, 0x%x, 0x%x)",
+	    ("esm_malloc(%p, %d, 0x%x, %p, 0x%x)",
 	    sc, direction, size, pool, flags));
 
 	/*
@@ -1362,7 +1362,7 @@ esm_free(void *sc, void *ptr, struct malloc_type *pool)
 	struct esm_softc *ess = sc;
 
 	DPRINTF(ESM_DEBUG_DMA,
-	    ("esm_free(%p, %p, 0x%x)\n",
+	    ("esm_free(%p, %p, %p)\n",
 	    sc, ptr, pool));
 
 	if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
