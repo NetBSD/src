@@ -43,7 +43,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: pr.c,v 1.1 1994/01/06 15:57:25 cgd Exp $";
+static char *rcsid = "$Id: pr.c,v 1.2 1994/03/07 05:42:17 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1745,9 +1745,6 @@ setup(argc, argv)
 			pgwd = SPGWD;
 		else
 			pgwd = PGWD;
-	} else if (clcnt == 1) {
-		(void)fputs("pr: -w requires multiple columns\n", err);
-		return(1);
 	}
 	if (cflag || merge) {
 		if (!eflag) {
