@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.25 1997/02/04 19:13:15 ragge Exp $
+#       $NetBSD: files.vax,v 1.26 1997/03/15 16:32:16 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -75,17 +75,17 @@ file    arch/vax/uba/uda.c		uda | mtc
 
 device	de:ifnet, ether
 attach	de at uba
-file	arch/vax/if/if_de.c		de
+file	arch/vax/if/if_de.c		de needs-flag
 
 # DEQNA/DELQA used on Qbus
 device	qe:ifnet, ether
 attach	qe at uba
-file	arch/vax/if/if_qe.c		qe
+file	arch/vax/if/if_qe.c		qe needs-flag
 
 # DEBNA/DEBNT Ethernet Adapter
 device	ni:ifnet, ether
 attach	ni at bi
-file	arch/vax/bi/ni.c		ni
+file	arch/vax/bi/ni.c		ni needs-flag
 
 # TS11 at UBA
 device	ts
@@ -129,7 +129,7 @@ file	arch/vax/vsa/ncr.c		ncr needs-flag
 
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus
-file	arch/vax/if/if_le.c		le
+file	arch/vax/if/if_le.c		le needs-flag
 
 # DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
 # controls keyboard, mouse, modem, and printer/console)
@@ -316,12 +316,11 @@ file	arch/vax/vax/uvax.c		vax630 | vax410 | vax43
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
-file	arch/vax/vax/emulate.s		vax630 | vax650
+file	arch/vax/vax/emulate.s		vax630|vax650|vax410|vax420
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
-file	arch/vax/vax/rootfil.c
 file	arch/vax/vax/trap.c
 
 file	arch/vax/vax/vm_machdep.c
