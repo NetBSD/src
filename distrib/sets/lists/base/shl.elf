@@ -20,7 +20,7 @@
 ./usr/lib/libtelnet.so.1
 ./usr/lib/libtermcap.so.0
 ./usr/lib/libtermlib.so.0
-./usr/lib/libutil.so.4
+./usr/lib/libutil.so.5
 ./usr/lib/libwrap.so.0
 ./usr/lib/libz.so.0
 ./usr/libexec/ld.elf_so
