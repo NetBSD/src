@@ -76,6 +76,7 @@ optpat()
 	if (exp && !patlock)
 		regfree(exp);
 	else if ((exp = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
