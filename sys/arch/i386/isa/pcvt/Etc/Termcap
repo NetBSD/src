@@ -199,8 +199,6 @@ pcvtXX|pcvtXX|pcvt 3.00 emulator (DEC VT220):\
 	:IC=\E[%d@:\
 	:LE=\E[%dD:\
 	:RI=\E[%dC:\
-	:SF=\E%dD:\
-	:SR=\E%dM:\
 	:UP=\E[%dA:\
 	:ae=^O:\
 	:al=\E[L:\
