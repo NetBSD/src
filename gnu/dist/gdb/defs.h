@@ -660,30 +660,6 @@ extern void free ();
 
 #endif /* MALLOC_INCOMPATIBLE */
 
-#ifndef __WIN32__
-
-#ifndef strchr
-extern char *strchr ();
-#endif
-
-#ifndef strrchr
-extern char *strrchr ();
-#endif
-
-#ifndef strstr
-extern char *strstr ();
-#endif
-
-#ifndef strtok
-extern char *strtok ();
-#endif
-
-#ifndef strerror
-extern char *strerror ();
-#endif
-
-#endif	/* !__WIN32__ */
-
 /* Various possibilities for alloca.  */
 #ifndef alloca
 # ifdef __GNUC__
