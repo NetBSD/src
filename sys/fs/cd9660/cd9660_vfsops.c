@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.9 2003/08/07 16:31:35 agc Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.9 2003/08/07 16:31:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
@@ -97,7 +98,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_reinit,
 	cd9660_done,
-	cd9660_sysctl,
+	NULL,
 	cd9660_mountroot,
 	cd9660_check_export,
 	cd9660_vnodeopv_descs,
@@ -983,15 +984,20 @@ cd9660_vptofh(vp, fhp)
 	return 0;
 }
 
-int
-cd9660_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_cd9660_setup, "sysctl vfs.cd9660 subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "cd9660", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 14, CTL_EOL);
+	/*
+	 * XXX the "14" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "14" is the order as taken from sys/mount.h
+	 */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.2 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: keysock.c,v 1.3 2003/12/04 19:38:25 atatat Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.2 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.3 2003/12/04 19:38:25 atatat Exp $");
 
 #include "opt_ipsec.h"
 
@@ -684,7 +684,7 @@ struct protosw keysw[] = {
   0,		key_output,	raw_ctlinput,	0,
   key_usrreq,
   raw_init,	0,		0,		0,
-  key_sysctl,
+  NULL,
 }
 };
 

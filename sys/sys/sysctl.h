@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.99 2003/09/28 13:02:19 dsl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.100 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,6 +56,10 @@
  */
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
+#define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
+
+#define CREATE_BASE	(1024)	/* start of dynamic mib allocation */
+#define SYSCTL_DEFSIZE	16	/* initial size of a child set */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -73,6 +77,55 @@ struct ctlname {
 #define	CTLTYPE_STRING	3	/* name describes a string */
 #define	CTLTYPE_QUAD	4	/* name describes a 64-bit number */
 #define	CTLTYPE_STRUCT	5	/* name describes a structure */
+
+/*
+ * Flags that apply to each node, governing access and other features
+ */
+#define SYSCTL_READONLY		0x00000000
+#define SYSCTL_READONLY1	0x00000010
+#define SYSCTL_READONLY2	0x00000020
+/* #define SYSCTL_READ*		0x00000040 */
+#define SYSCTL_READWRITE	0x00000070
+#define SYSCTL_ANYWRITE		0x00000080
+#define SYSCTL_PRIVATE		0x00000100
+#define SYSCTL_PERMANENT	0x00000200
+#define SYSCTL_OWNDATA		0x00000400
+#define SYSCTL_IMMEDIATE	0x00000800
+#define SYSCTL_HEX		0x00001000
+#define SYSCTL_ROOT		0x00002000
+#define SYSCTL_ANYNUMBER	0x00004000
+#define SYSCTL_HIDDEN		0x00008000
+#define SYSCTL_ALIAS		0x00010000
+#define SYSCTL_MMAP		0x00020000
+
+/*
+ * Flags that can be set by a create request from user-space
+ */
+#define SYSCTL_USERFLAGS	(SYSCTL_READWRITE|\
+				SYSCTL_ANYWRITE|\
+				SYSCTL_PRIVATE|\
+				SYSCTL_OWNDATA|\
+				SYSCTL_IMMEDIATE|\
+				SYSCTL_HEX|\
+				SYSCTL_HIDDEN)
+
+/*
+ * Accessor macros
+ */
+#define SYSCTL_TYPEMASK		0x0000000f
+#define SYSCTL_TYPE(x)		((x) & SYSCTL_TYPEMASK)
+#define SYSCTL_FLAGMASK		0x00fffff0
+#define SYSCTL_FLAGS(x)		((x) & SYSCTL_FLAGMASK)
+
+/*
+ * Meta-identifiers
+ */
+#define CTL_EOL		-1		/* end of createv/destroyv list */
+#define CTL_QUERY	-2		/* enumerates children of a node */
+#define CTL_CREATE	-3		/* node create request */
+#define CTL_CREATESYM	-4		/* node create request with symbol */
+#define CTL_DESTROY	-5		/* node destroy request */
+#define CTL_MMAP	-6		/* mmap request */
 
 /*
  * Top-level identifiers
@@ -739,6 +792,10 @@ struct kinfo_drivers {
  * conveniently locate them when querried. If more debugging
  * variables are added, they must also be declared here and also
  * entered into the array.
+ *
+ * Note that the debug subtree is largely obsolescent in terms of
+ * functionality now that we have dynamic sysctl, but the
+ * infrastructure is retained for backwards compatibility.
  */
 struct ctldebug {
 	char	*debugname;	/* name of debugging variable */
@@ -751,62 +808,170 @@ extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
 extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif	/* DEBUG */
 
+#define SYSCTLFN_PROTO const int *, u_int, void *, \
+	size_t *, const void *, size_t, \
+	const int *, struct lwp *, const struct sysctlnode *
+#define SYSCTLFN_ARGS const int *name, u_int namelen, void *oldp, \
+	size_t *oldlenp, const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, const struct sysctlnode *rnode
+#define SYSCTLFN_RWPROTO const int *, u_int, void *, \
+	size_t *, const void *, size_t, \
+	const int *, struct lwp *, struct sysctlnode *
+#define SYSCTLFN_RWARGS const int *name, u_int namelen, void *oldp, \
+	size_t *oldlenp, const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, struct sysctlnode *rnode
+#define SYSCTLFN_CALL(node) name, namelen, oldp, \
+	oldlenp, newp, newlen, \
+	oname, l, (struct sysctlnode *)node
+
+#ifdef SYSCTL_DEBUG_SETUP
+#define SYSCTL_SETUP(name, desc)			\
+	static void __CONCAT(___,name)(void);		\
+	static void name(void) {			\
+		printf("%s\n", desc);			\
+		__CONCAT(___,name)(); }			\
+	__link_set_add_data(sysctl_funcs, name);	\
+	static void __CONCAT(___,name)(void)
+#else
+#define SYSCTL_SETUP(name, desc)			\
+	static void name(void);				\
+	__link_set_add_data(sysctl_funcs, name);	\
+	static void name(void)
+#endif
+typedef void (*sysctl_setup_func)(void);
+
 /*
  * Internal sysctl function calling convention:
  *
- *	(*sysctlfn)(name, namelen, oldval, oldlenp, newval, newlen);
+ *	(*sysctlfn)(name, namelen, oldval, oldlenp, newval, newlen,
+ *		    origname, lwp, node);
  *
  * The name parameter points at the next component of the name to be
  * interpreted.  The namelen parameter is the number of integers in
- * the name.
+ * the name.  The origname parameter points to the start of the name
+ * being parsed.  The node parameter points to the node on which the
+ * current operation is to be performed.
  */
-typedef int (sysctlfn)
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+typedef int (*sysctlfn)(SYSCTLFN_PROTO);
 
-int sysctl_int(void *, size_t *, void *, size_t, int *);
-int sysctl_rdint(void *, size_t *, void *, int);
-int sysctl_quad(void *, size_t *, void *, size_t, quad_t *);
-int sysctl_rdquad(void *, size_t *, void *, quad_t);
-int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
-int sysctl_rdstring(void *, size_t *, void *, const char *);
-int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
-int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
-int sysctl_rdminstruct(void *, size_t *, void *, const void *, size_t);
-int sysctl_clockrate(void *, size_t *);
-int sysctl_disknames(void *, size_t *);
-int sysctl_diskstats(int *, u_int, void *, size_t *);
-int sysctl_vnode(char *, size_t *, struct proc *);
-int sysctl_ntptime(void *, size_t *);
-#ifdef GPROF
-int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
-#endif
-int sysctl_dombuf(int *, u_int, void *, size_t *, void *, size_t);
+/*
+ * used in more than just sysctl
+ */
+void	fill_eproc(struct proc *, struct eproc *);
 
-void fill_eproc(struct proc *, struct eproc *);
-
-int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int proc_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-#ifdef DEBUG
-int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-#endif
-int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int emul_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-
-/* ddb_sysctl() declared in ddb_var.h */
-
+/*
+ * subsystem setup
+ */
 void	sysctl_init(void);
 
-#ifdef __SYSCTL_PRIVATE
-extern struct lock sysctl_memlock;
-#endif
+/*
+ * typical syscall call order
+ */
+int	sysctl_lock(struct lwp *, void *, size_t);
+int	sysctl_dispatch(SYSCTLFN_RWPROTO);
+void	sysctl_unlock(struct lwp *);
+
+/*
+ * tree navigation primitives (must obtain lock before using these)
+ */
+int	sysctl_locate(struct lwp *, const int *, u_int, struct sysctlnode **,
+		      int *);
+int	sysctl_query(SYSCTLFN_PROTO);
+#ifdef SYSCTL_DEBUG_CREATE
+#define sysctl_create _sysctl_create
+#endif /* SYSCTL_DEBUG_CREATE */
+int	sysctl_create(SYSCTLFN_RWPROTO);
+int	sysctl_destroy(SYSCTLFN_RWPROTO);
+int	sysctl_lookup(SYSCTLFN_RWPROTO);
+
+/*
+ * simple variadic interface for adding/removing nodes
+ */
+int	sysctl_createv(int, int, const char *, struct sysctlnode **,
+		       sysctlfn, u_quad_t, void *, size_t, ...);
+int	sysctl_destroyv(struct sysctlnode *, ...);
+
+/*
+ * miscellany
+ */
+void	sysctl_dump(const struct sysctlnode *);
+void	sysctl_free(struct sysctlnode *);
+
+/*
+ * simple interface similar to old interface for in-kernel consumption
+ */
+int	old_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+
+/*
+ * these helpers are in other files (XXX so should the nodes be) or
+ * are used by more than one node
+ */
+int	sysctl_hw_disknames(SYSCTLFN_PROTO);
+int	sysctl_hw_diskstats(SYSCTLFN_PROTO);
+int	sysctl_kern_vnode(SYSCTLFN_PROTO);
+int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
+int	sysctl_consdev(SYSCTLFN_PROTO);
+int	sysctl_root_device(SYSCTLFN_PROTO);
+
+/*
+ * primitive helper stubs
+ */
+int	sysctl_needfunc(SYSCTLFN_PROTO);
+int	sysctl_notavail(SYSCTLFN_PROTO);
+int	sysctl_null(SYSCTLFN_PROTO);
+
+MALLOC_DECLARE(M_SYSCTLNODE);
+MALLOC_DECLARE(M_SYSCTLDATA);
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
+typedef void *sysctlfn;
+struct sysctlnode;
+
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));
+int     sysctlnametomib __P((const char *, int *, u_int *,
+			     char *, size_t *, struct sysctlnode **));
 __END_DECLS
-#endif	/* _KERNEL */
+
+#endif	/* !_KERNEL */
+
+struct sysctlnode {
+	uint sysctl_flags;
+	int sysctl_num;
+	size_t sysctl_size;
+	char sysctl_name[SYSCTL_NAMELEN];
+	union {
+		struct {
+			uint scn_csize;
+			uint scn_clen;
+			struct sysctlnode *scn_child;
+		} scu_node;
+		int scu_alias;
+		int scu_idata;
+		u_quad_t scu_qdata;
+		void *scu_data;
+	} sysctl_un;
+	sysctlfn sysctl_func;
+	struct sysctlnode *sysctl_parent;
+	uint sysctl_ver;
+};
+
+#define sysctl_csize	sysctl_un.scu_node.scn_csize
+#define sysctl_clen	sysctl_un.scu_node.scn_clen
+#define sysctl_child	sysctl_un.scu_node.scn_child
+#define sysctl_alias	sysctl_un.scu_alias
+#define sysctl_data	sysctl_un.scu_data
+#define sysctl_idata	sysctl_un.scu_idata
+#define sysctl_qdata	sysctl_un.scu_qdata
+
+static __inline struct sysctlnode *
+sysctl_rootof(struct sysctlnode *n)
+{
+	while (n->sysctl_parent != NULL)
+		n = n->sysctl_parent;
+	return (n);
+}
+
 #endif	/* !_SYS_SYSCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.19 2003/09/26 12:02:57 simonb Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.20 2003/12/04 19:38:22 atatat Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2003/09/26 12:02:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2003/12/04 19:38:22 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ linux_sys_sysmips(l, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case LINUX_SETNAME: {
 		char nodename [LINUX___NEW_UTS_LEN + 1];
-		int name;
+		int name[2];
 		size_t len;
 
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -434,8 +434,9 @@ linux_sys_sysmips(l, v, retval)
 		    LINUX___NEW_UTS_LEN, &len)) != 0)
 			return error;
 
-		name = KERN_HOSTNAME;
-		return (kern_sysctl(&name, 1, 0, 0, nodename, len, p));
+		name[0] = CTL_KERN;
+		name[1] = KERN_HOSTNAME;
+		return (old_sysctl(&name[0], 2, 0, 0, nodename, len, NULL));
 		
 		break;
 	}

@@ -1,11 +1,11 @@
-/*	$NetBSD: irix_sysctl.c,v 1.1 2002/11/09 09:03:58 manu Exp $ */
+/*	$NetBSD: irix_sysctl.c,v 1.2 2003/12/04 19:38:22 atatat Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Andrew Brown.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.1 2002/11/09 09:03:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.2 2003/12/04 19:38:22 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -45,42 +45,65 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysctl.c,v 1.1 2002/11/09 09:03:58 manu Exp $")
 
 #include <compat/irix/irix_sysctl.h>
 
-int
-irix_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+SYSCTL_SETUP(sysctl_irix_setup, "sysctl emul.irix subtree setup")
 {
-	if (nlen != 2 || name[0] != EMUL_IRIX_KERN)
-		return EOPNOTSUPP;
 
-	switch (name[1]) {
-	case EMUL_IRIX_KERN_VENDOR:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_vendor, sizeof(irix_si_vendor));
-	case EMUL_IRIX_KERN_OSPROVIDER:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_os_provider, sizeof(irix_si_os_provider));
-	case EMUL_IRIX_KERN_OSNAME:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_os_name, sizeof(irix_si_os_name));
-	case EMUL_IRIX_KERN_HWNAME:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_hw_name, sizeof(irix_si_hw_name));
-	case EMUL_IRIX_KERN_OSRELMAJ:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_osrel_maj, sizeof(irix_si_osrel_maj));
-	case EMUL_IRIX_KERN_OSRELMIN:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_osrel_min, sizeof(irix_si_osrel_min));
-	case EMUL_IRIX_KERN_OSRELPATCH:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_osrel_patch, sizeof(irix_si_osrel_patch));
-	case EMUL_IRIX_KERN_PROCESSOR:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_processors, sizeof(irix_si_processors));
-	case EMUL_IRIX_KERN_VERSION:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    irix_si_version, sizeof(irix_si_version));
-	default:
-		return EOPNOTSUPP;
-	}
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "emul", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "irix", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_IRIX, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "vendor", NULL,
+		       NULL, 0, irix_si_vendor, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_VENDOR, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "osprovider", NULL,
+		       NULL, 0, irix_si_os_provider, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_OSPROVIDER, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "osname", NULL,
+		       NULL, 0, irix_si_os_name, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_OSNAME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "hwname", NULL,
+		       NULL, 0, irix_si_hw_name, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_HWNAME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "osrelmaj", NULL,
+		       NULL, 0, irix_si_osrel_maj, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_OSRELMAJ, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "osrelmin", NULL,
+		       NULL, 0, irix_si_osrel_min, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_OSRELMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "osrelpatch", NULL,
+		       NULL, 0, irix_si_osrel_patch, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_OSRELPATCH, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "processor", NULL,
+		       NULL, 0, irix_si_processors, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_PROCESSOR, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRING, "version", NULL,
+		       NULL, 0, irix_si_version, 128,
+		       CTL_EMUL, EMUL_IRIX, EMUL_IRIX_KERN,
+		       EMUL_IRIX_KERN_VERSION, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.49 2003/06/29 22:29:48 fvdl Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.50 2003/12/04 19:38:23 atatat Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.49 2003/06/29 22:29:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.50 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,9 +586,8 @@ svr4_sys_systeminfo(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_systeminfo_args *uap = v;
-	struct proc *p = l->l_proc;
 	const char *str = NULL;
-	int name;
+	int name[2];
 	int error;
 	size_t len;
 	char buf[256];
@@ -647,15 +646,11 @@ svr4_sys_systeminfo(l, v, retval)
 		break;
 
 	case SVR4_SI_SET_HOSTNAME:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return error;
-		name = KERN_HOSTNAME;
+		name[1] = KERN_HOSTNAME;
 		break;
 
 	case SVR4_SI_SET_SRPC_DOMAIN:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return error;
-		name = KERN_DOMAINNAME;
+		name[1] = KERN_DOMAINNAME;
 		break;
 
 	case SVR4_SI_SET_KERB_REALM:
@@ -683,10 +678,14 @@ svr4_sys_systeminfo(l, v, retval)
 			error = 0;
 	}
 	else {
+		/*
+		 * looks redundant to do this, but actually it retrieves "len" 
+		 */
 		error = copyinstr(SCARG(uap, buf), buf, sizeof(buf), &len);
 		if (error)
 			return error;
-		error = kern_sysctl(&name, 1, 0, 0, buf, len, p);
+		name[0] = CTL_KERN;
+		error = old_sysctl(&name[0], 2, 0, 0, SCARG(uap, buf), len, l);
 	}
 
 	*retval = len;

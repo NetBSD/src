@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.38 2003/08/07 16:32:40 agc Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.39 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.38 2003/08/07 16:32:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.39 2003/12/04 19:38:24 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.38 2003/08/07 16:32:40 agc Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
@@ -80,8 +81,6 @@ int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	portal_vptofh __P((struct vnode *, struct fid *));
-int	portal_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct proc *));
 
 void
 portal_init()
@@ -334,17 +333,22 @@ portal_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-int
-portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "portal", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 8, CTL_EOL);
+	/*
+	 * XXX the "8" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "8" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc portal_vnodeop_opv_desc;
@@ -369,7 +373,7 @@ struct vfsops portal_vfsops = {
 	portal_init,
 	NULL,
 	portal_done,
-	portal_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	portal_checkexp,
 	portal_vnodeopv_descs,

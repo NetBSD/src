@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.38 2003/09/21 00:26:09 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.39 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.38 2003/09/21 00:26:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.39 2003/12/04 19:38:21 atatat Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -350,70 +350,83 @@ cpu_startup()
 /*
  * machine dependent system variables.
  */
-
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 {
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	struct sysctlnode node;
 
-	switch (name[0]) {
-	case CPU_DEBUG:
-		return(sysctl_int(oldp, oldlenp, newp, newlen, &kernel_debug));
-
-	case CPU_BOOTED_DEVICE:
-		if (booted_device != NULL)
-			return (sysctl_rdstring(oldp, oldlenp, newp,
-			    booted_device->dv_xname));
+	if (booted_device == NULL)
 		return (EOPNOTSUPP);
 
-	case CPU_CONSDEV: {
-		dev_t consdev;
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-			sizeof consdev));
-	}
-	case CPU_BOOTED_KERNEL: {
-		if (booted_kernel != NULL && booted_kernel[0] != '\0')
-			return sysctl_rdstring(oldp, oldlenp, newp,
-			    booted_kernel);
+	node = *rnode;
+	node.sysctl_data = booted_device->dv_xname;
+	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	if (booted_kernel == NULL || booted_kernel[0] == '\0')
 		return (EOPNOTSUPP);
-	}
-	case CPU_POWERSAVE: {
-		int error, newval;
 
-		newval = cpu_do_powersave;
+	node = *rnode;
+	node.sysctl_data = booted_kernel;
+	node.sysctl_size = strlen(booted_kernel) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-		if (cpufuncs.cf_sleep == (void *) cpufunc_nullop)
-			error = sysctl_rdint(oldp, oldlenp, newp, newval);
-		else
-			error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &newval);
-		if (error || newval == cpu_do_powersave)
-			return (error);
+static int
+sysctl_machdep_powersave(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int error, newval;
 
-		if (newval < 0 || newval > 1)
-			return (EINVAL);
+	newval = cpu_do_powersave;
+	node.sysctl_data = &newval;
+	if (cpufuncs.cf_sleep == (void *) cpufunc_nullop)
+		node.sysctl_flags &= ~SYSCTL_READWRITE;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL || newval == cpu_do_powersave)
+		return (error);
 
-		cpu_do_powersave = newval;
-		return (0);
-	}
+	if (newval < 0 || newval > 1)
+		return (EINVAL);
+	cpu_do_powersave = newval;
 
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "debug", NULL,
+		       NULL, 0, &kernel_debug, 0,
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_device", NULL,
+		       sysctl_machdep_booted_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "powersave", NULL,
+		       sysctl_machdep_powersave, 0, &cpu_do_powersave, 0,
+		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
 }
 
 void

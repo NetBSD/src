@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.74 2003/10/03 20:56:11 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.75 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.74 2003/10/03 20:56:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.75 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -184,98 +184,136 @@ mbinit(void)
 #endif
 }
 
-int
-sysctl_dombuf(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
+/*
+ * sysctl helper routine for the kern.mbuf subtree.  nmbclusters may
+ * or may not be writable, and mblowat and mcllowat need range
+ * checking and pool tweaking after being reset.
+ */
+static int
+sysctl_kern_mbuf(SYSCTLFN_ARGS)
 {
 	int error, newval;
+	struct sysctlnode node;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case MBUF_MSIZE:
-		return (sysctl_rdint(oldp, oldlenp, newp, msize));
-	case MBUF_MCLBYTES:
-		return (sysctl_rdint(oldp, oldlenp, newp, mclbytes));
+	node = *rnode;
+	node.sysctl_data = &newval;
+	switch (rnode->sysctl_num) {
 	case MBUF_NMBCLUSTERS:
-		/*
-		 * If we have direct-mapped pool pages, we can adjust this
-		 * number on the fly.  If not, we're limited by the size
-		 * of mb_map, and cannot change this value.
-		 *
-		 * Note: we only allow the value to be increased, never
-		 * decreased.
-		 */
 		if (mb_map == NULL) {
-			newval = nmbclusters;
-			error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &newval);
-			if (error != 0)
-				return (error);
-			if (newp != NULL) {
-				if (newval >= nmbclusters) {
-					nmbclusters = newval;
-					pool_sethardlimit(&mclpool,
-					    nmbclusters, mclpool_warnmsg, 60);
-				} else
-					error = EINVAL;
-			}
-			return (error);
-		} else
-			return (sysctl_rdint(oldp, oldlenp, newp, nmbclusters));
+			node.sysctl_flags &= ~SYSCTL_READWRITE;
+			node.sysctl_flags |= SYSCTL_READONLY;
+		}
+		/* FALLTHROUGH */
 	case MBUF_MBLOWAT:
 	case MBUF_MCLLOWAT:
-		/* New value must be >= 0. */
-		newval = (name[0] == MBUF_MBLOWAT) ? mblowat : mcllowat;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
-		if (error != 0)
-			return (error);
-		if (newp != NULL) {
-			if (newval >= 0) {
-				if (name[0] == MBUF_MBLOWAT) {
-					mblowat = newval;
-					pool_setlowat(&mbpool, newval);
-				} else {
-					mcllowat = newval;
-					pool_setlowat(&mclpool, newval);
-				}
-			} else
-				error = EINVAL;
-		}
-		return (error);
-	case MBUF_STATS:
-		return (sysctl_rdstruct(oldp, oldlenp, newp,
-		    &mbstat, sizeof(mbstat)));
-#ifdef MBUFTRACE
-	case MBUF_MOWNERS: {
-		struct mowner *mo;
-		size_t len = 0;
-		if (newp != NULL)
-			return (EPERM);
-		error = 0;
-		LIST_FOREACH(mo, &mowners, mo_link) {
-			if (oldp != NULL) {
-				if (*oldlenp - len < sizeof(*mo)) {
-					error = ENOMEM;
-					break;
-				}
-				error = copyout(mo, (caddr_t) oldp + len,
-					sizeof(*mo));
-				if (error)
-					break;
-			}
-			len += sizeof(*mo);
-		}
-		*oldlenp = len;
-		return (error);
-	}
-#endif
+		newval = *(int*)rnode->sysctl_data;
+		break;
 	default:
 		return (EOPNOTSUPP);
 	}
-	/* NOTREACHED */
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+	if (newval < 0)
+		return (EINVAL);
+
+	switch (node.sysctl_num) {
+	case MBUF_NMBCLUSTERS:
+		if (newval < nmbclusters)
+			return (EINVAL);
+		nmbclusters = newval;
+		pool_sethardlimit(&mclpool, nmbclusters, mclpool_warnmsg, 60);
+		break;
+	case MBUF_MBLOWAT:
+		mblowat = newval;
+		pool_setlowat(&mclpool, mblowat);
+		break;
+	case MBUF_MCLLOWAT:
+		mblowat = newval;
+		pool_setlowat(&mclpool, mblowat);
+		break;
+	}
+
+	return (0);
+}
+
+#ifdef MBUFTRACE
+static int
+sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
+{
+	struct mowner *mo;
+	size_t len = 0;
+	int error = 0;
+
+	if (namelen != 0)
+		return (EINVAL);
+	if (newp != NULL)
+		return (EPERM);
+
+	LIST_FOREACH(mo, &mowners, mo_link) {
+		if (oldp != NULL) {
+			if (*oldlenp - len < sizeof(*mo)) {
+				error = ENOMEM;
+				break;
+			}
+			error = copyout(mo, (caddr_t) oldp + len,
+					sizeof(*mo));
+			if (error)
+				break;
+		}
+		len += sizeof(*mo);
+	}
+
+	if (error == 0)
+		*oldlenp = len;
+
+	return (error);
+}
+#endif /* MBUFTRACE */
+
+SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "mbuf", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_MBUF, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "msize", NULL,
+		       NULL, msize, NULL, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_MSIZE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "mclbytes", NULL,
+		       NULL, mclbytes, NULL, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_MCLBYTES, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "nmbclusters", NULL,
+		       sysctl_kern_mbuf, 0, &nmbclusters, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "mblowat", NULL,
+		       sysctl_kern_mbuf, 0, &mblowat, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_MBLOWAT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "mcllowat", NULL,
+		       sysctl_kern_mbuf, 0, &mcllowat, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_MCLLOWAT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "stats", NULL,
+		       NULL, 0, &mbstat, sizeof(mbstat),
+		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
+#ifdef MBUFTRACE
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "mowners", NULL,
+		       sysctl_kern_mbuf_mowners, 0, NULL, 0,
+		       CTL_KERN, KERN_MBUF, MBUF_MOWNERS, CTL_EOL);
+#endif /* MBUFTRACE */
 }
 
 void *

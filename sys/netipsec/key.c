@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: key.c,v 1.4 2003/12/04 19:38:25 atatat Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.3 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.4 2003/12/04 19:38:25 atatat Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7314,54 +7314,65 @@ key_alloc_mbuf(l)
 }
 
 #ifdef __NetBSD__
-int
-key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 {
-	if (name[0] >= KEYCTL_MAXID)
-		return EOPNOTSUPP;
-	switch (name[0]) {
-	case KEYCTL_DEBUG_LEVEL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_debug_level);
-	case KEYCTL_SPI_TRY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_trycnt);
-	case KEYCTL_SPI_MIN_VALUE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_minval);
-	case KEYCTL_SPI_MAX_VALUE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_maxval);
-	case KEYCTL_RANDOM_INT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_int_random);
-	case KEYCTL_LARVAL_LIFETIME:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_larval_lifetime);
-	case KEYCTL_BLOCKACQ_COUNT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_blockacq_count);
-	case KEYCTL_BLOCKACQ_LIFETIME:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_blockacq_lifetime);
-	case KEYCTL_ESP_KEYMIN:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_esp_keymin);
-	case KEYCTL_ESP_AUTH:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_esp_auth);
-	case KEYCTL_AH_KEYMIN:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_ah_keymin);
-	default:
-		return EOPNOTSUPP;
-	}
-	/* NOTREACHED */
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "keyv2", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_KEY_V2, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "debug", NULL,
+		       NULL, 0, &key_debug_level, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_DEBUG_LEVEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_try", NULL,
+		       NULL, 0, &key_spi_trycnt, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_TRY, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_min_value", NULL,
+		       NULL, 0, &key_spi_minval, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_max_value", NULL,
+		       NULL, 0, &key_spi_maxval, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "random_int", NULL,
+		       NULL, 0, &key_int_random, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_RANDOM_INT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "larval_lifetime", NULL,
+		       NULL, 0, &key_larval_lifetime, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "blockacq_count", NULL,
+		       NULL, 0, &key_blockacq_count, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "blockacq_lifetime", NULL,
+		       NULL, 0, &key_blockacq_lifetime, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_keymin", NULL,
+		       NULL, 0, &ipsec_esp_keymin, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_KEYMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_auth", NULL,
+		       NULL, 0, &ipsec_esp_auth, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_AUTH, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_keymin", NULL,
+		       NULL, 0, &ipsec_ah_keymin, 0,
+		       CTL_NET, PF_KEY_V2, KEYCTL_AH_KEYMIN, CTL_EOL);
+
+	/*
+	 * @@@ no KEYCTL_DUMPSA or KEYCTL_DUMPSP here?!
+	 */
 }
 #endif /*__NetBSD__*/

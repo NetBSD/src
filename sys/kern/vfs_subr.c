@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.211 2003/12/01 18:53:10 dbj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.212 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.211 2003/12/01 18:53:10 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.212 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1997,83 +1997,80 @@ printlockedvnodes()
 #endif
 
 /*
+ * sysctl helper routine for vfs.generic.conf lookups.
+ */
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+static int
+sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
+{
+        struct vfsconf vfc;
+        extern const char * const mountcompatnames[];
+        extern int nmountcompatnames;
+	struct sysctlnode node;
+	struct vfsops *vfsp;
+	u_int vfsnum;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+	vfsnum = name[0];
+	if (vfsnum >= nmountcompatnames ||
+	    mountcompatnames[vfsnum] == NULL)
+		return (EOPNOTSUPP);
+	vfsp = vfs_getopsbyname(mountcompatnames[vfsnum]);
+	if (vfsp == NULL)
+		return (EOPNOTSUPP);
+
+	vfc.vfc_vfsops = vfsp;
+	strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
+	vfc.vfc_typenum = vfsnum;
+	vfc.vfc_refcount = vfsp->vfs_refcount;
+	vfc.vfc_flags = 0;
+	vfc.vfc_mountroot = vfsp->vfs_mountroot;
+	vfc.vfc_next = NULL;
+
+	node = *rnode;
+	node.sysctl_data = &vfc;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+#endif
+
+/*
  * Top level filesystem related information gathering.
  */
-int
-vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 {
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-	struct vfsconf vfc;
-	extern const char * const mountcompatnames[];
 	extern int nmountcompatnames;
 #endif
-	struct vfsops *vfsp;
 
-	/* all sysctl names at this level are at least name and field */
-	if (namelen < 2)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "generic", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_EOL);
 
-	/* Not generic: goes to file system. */
-	if (name[0] != VFS_GENERIC) {
-		static const struct ctlname vfsnames[VFS_MAXID+1]=CTL_VFS_NAMES;
-		const char *vfsname;
-
-		if (name[0] < 0 || name[0] > VFS_MAXID
-		    || (vfsname = vfsnames[name[0]].ctl_name) == NULL)
-			return (EOPNOTSUPP);
-
-		vfsp = vfs_getopsbyname(vfsname);
-		if (vfsp == NULL || vfsp->vfs_sysctl == NULL)
-			return (EOPNOTSUPP);
-		return ((*vfsp->vfs_sysctl)(&name[1], namelen - 1,
-		    oldp, oldlenp, newp, newlen, p));
-	}
-
-	/* The rest are generic vfs sysctls. */
-	switch (name[1]) {
-	case VFS_USERMOUNT:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &dovfsusermount);
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-	case VFS_MAXTYPENUM:
-		/*
-		 * Provided for 4.4BSD-Lite2 compatibility.
-		 */
-		return (sysctl_rdint(oldp, oldlenp, newp, nmountcompatnames));
-	case VFS_CONF:
-		/*
-		 * Special: a node, next is a file system name.
-		 * Provided for 4.4BSD-Lite2 compatibility.
-		 */
-		if (namelen < 3)
-			return (ENOTDIR);	/* overloaded */
-		if (name[2] >= nmountcompatnames || name[2] < 0 ||
-		    mountcompatnames[name[2]] == NULL)
-			return (EOPNOTSUPP);
-		vfsp = vfs_getopsbyname(mountcompatnames[name[2]]);
-		if (vfsp == NULL)
-			return (EOPNOTSUPP);
-		vfc.vfc_vfsops = vfsp;
-		strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
-		vfc.vfc_typenum = name[2];
-		vfc.vfc_refcount = vfsp->vfs_refcount;
-		vfc.vfc_flags = 0;
-		vfc.vfc_mountroot = vfsp->vfs_mountroot;
-		vfc.vfc_next = NULL;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &vfc,
-		    sizeof(struct vfsconf)));
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "maxtypenum", NULL,
+		       NULL, nmountcompatnames, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
 #endif
-	default:
-		break;
-	}
-	return (EOPNOTSUPP);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "usermount", NULL,
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "conf", NULL,
+		       sysctl_vfs_generic_conf, 0, NULL,
+		       sizeof(struct vfsconf),
+		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
+#endif
 }
+
 
 int kinfo_vdebug = 1;
 int kinfo_vgetfailed;
@@ -2084,16 +2081,20 @@ int kinfo_vgetfailed;
  */
 /* ARGSUSED */
 int
-sysctl_vnode(where, sizep, p)
-	char *where;
-	size_t *sizep;
-	struct proc *p;
+sysctl_kern_vnode(SYSCTLFN_ARGS)
 {
+	char *where = oldp;
+	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
 	struct vnode *nvp, *vp;
 	char *bp = where, *savebp;
 	char *ewhere;
 	int error;
+
+	if (namelen != 0)
+		return (EOPNOTSUPP);
+	if (newp != NULL)
+		return (EPERM);
 
 #define VPTRSZ	sizeof(struct vnode *)
 #define VNODESZ	sizeof(struct vnode)

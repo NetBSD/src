@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.40 2003/08/07 16:32:46 agc Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.41 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.40 2003/08/07 16:32:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.41 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
@@ -289,6 +290,28 @@ umapfs_unmount(mp, mntflags, p)
 	return (0);
 }
 
+SYSCTL_SETUP(sysctl_vfs_umap_setup, "sysctl vfs.umap subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "umap", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 10, CTL_EOL);
+	/*
+	 * XXX the "10" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "10" is the order as taken from sys/mount.h
+	 *
+	 * this subtree should really be an alias to "layerfs_sysctl",
+	 * but since we can't tell if layerfs has been instantiated
+	 * yet, we can't do that
+	 */
+}
+
 extern const struct vnodeopv_desc umapfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const umapfs_vnodeopv_descs[] = {
@@ -311,7 +334,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	layerfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
 	umapfs_vnodeopv_descs,

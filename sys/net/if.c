@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.135 2003/11/28 08:56:48 keihan Exp $	*/
+/*	$NetBSD: if.c,v 1.136 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.135 2003/11/28 08:56:48 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.136 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 
@@ -1698,39 +1698,67 @@ ifconf(cmd, data)
 	return (error);
 }
 
-int
-sysctl_ifq(name, namelen, oldp, oldlenp, newp, newlen, ifq)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct ifqueue *ifq;
+static void
+sysctl_net_ifq_setup(int pf, const char *pfname,
+		     int ipn, const char *ipname,
+		     int qid, struct ifqueue *ifq)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
 
-	switch (name[0]) {
-	case IFQCTL_LEN:
-		return (sysctl_rdint(oldp, oldlenp, newp,
-			ifq->ifq_len));
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, pfname, NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, ipname, NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, ipn, CTL_EOL);
+        sysctl_createv(SYSCTL_PERMANENT,
+                       CTLTYPE_NODE, "ifq", NULL,
+                       NULL, 0, NULL, 0,
+                       CTL_NET, pf, ipn, qid, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "len", NULL,
+		       NULL, 0, &ifq->ifq_len, 0,
+		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxlen", NULL,
+		       NULL, 0, &ifq->ifq_maxlen, 0,
+		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 #ifdef notyet
-	case IFQCTL_PEAK:
-		return (sysctl_rdint(oldp, oldlenp, newp,
-			ifq->ifq_peak));
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "peak", NULL,
+		       NULL, 0, &ifq->ifq_peak, 0,
+		       CTL_NET, pf, ipn, qid, IFQCTL_PEAK, CTL_EOL);
 #endif
-	case IFQCTL_MAXLEN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-			&ifq->ifq_maxlen));
-
-	case IFQCTL_DROPS:
-		return (sysctl_rdint(oldp, oldlenp, newp,
-			ifq->ifq_drops));
-	default:
-		return (EOPNOTSUPP);
-	}
-  	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "drops", NULL,
+		       NULL, 0, &ifq->ifq_drops, 0,
+		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
 }
 
+#ifdef INET
+SYSCTL_SETUP(sysctl_net_inet_ip_ifq_setup,
+	     "sysctl net.inet.ip.ifq subtree setup")
+{
+	extern struct ifqueue ipintrq;
+
+	sysctl_net_ifq_setup(PF_INET, "inet", IPPROTO_IP, "ip",
+			     IPCTL_IFQ, &ipintrq);
+}
+#endif /* INET */
+
+#ifdef INET6
+SYSCTL_SETUP(sysctl_net_inet6_ip6_ifq_setup,
+	     "sysctl net.inet6.ip6.ifq subtree setup")
+{
+	extern struct ifqueue ip6intrq;
+
+	sysctl_net_ifq_setup(PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
+			     IPV6CTL_IFQ, &ip6intrq);
+}
+#endif /* INET6 */

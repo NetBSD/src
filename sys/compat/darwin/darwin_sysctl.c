@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.19 2003/11/22 23:26:52 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.20 2003/12/04 19:38:22 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.19 2003/11/22 23:26:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.20 2003/12/04 19:38:22 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,369 +72,305 @@ int darwin_ioframebuffer_screen = 0;
 int darwin_iohidsystem_mux = 0;
 static char *darwin_sysctl_hw_machine = "Power Macintosh";
 
-static int darwin_kern_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_vm_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_vfs_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_net_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_debug_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_hw_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_machdep_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-static int darwin_user_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-
-static int darwin_sysctl_dokproc(int *, u_int, void *, size_t *);
+static int darwin_sysctl_dokproc(SYSCTLFN_PROTO);
 static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
 static void native_to_darwin_pflag(int *, int);
-static int darwin_procargs(int *, u_int, void *, size_t *, struct proc *);
+static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
+
+static struct sysctlnode darwin_sysctl_root = {
+	.sysctl_flags = SYSCTL_ROOT|CTLTYPE_NODE,
+	.sysctl_num = 0,
+	.sysctl_size = sizeof(struct sysctlnode),
+	.sysctl_name = "(darwin_root)",
+};
+
+static int
+darwin_sysctl_redispatch(SYSCTLFN_ARGS)
+{
+
+	/*
+	 * put namelen and name back at the top
+	 */
+	namelen += (name - oname);
+	name = oname;
+
+	/*
+	 * call into (via NULL) main native tree
+	 */
+	return sysctl_dispatch(SYSCTLFN_CALL(NULL));
+}
+
+/*
+ * this setup routine is a complement to darwin_sys___sysctl()
+ */
+SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
+{
+	struct sysctlnode *r;
+
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", &r,
+		       NULL, 0, NULL, 0,
+		       DARWIN_CTL_KERN, CTL_EOL);
+
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "ostype", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_OSTYPE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "osrelease", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_OSRELEASE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "osrevision", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_OSREV, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "version", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_VERSION, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "maxvnodes", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_MAXVNODES, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "maxproc", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_MAXPROC, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "maxfiles", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_MAXFILES, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "argmax", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_ARGMAX, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "securelevel", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_SECURELVL, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "hostname", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_HOSTNAME, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "hostid", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_HOSTID, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "clockrate", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_CLOCKRATE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "vnode", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_VNODE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "file", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_FILE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "profiling", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_PROF, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "posix1version", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_POSIX1, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "ngroups", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_NGROUPS, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "job_control", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_JOB_CONTROL, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "saved_ids", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_SAVED_IDS, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "boottime", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_BOOTTIME, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "nisdomainname", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_NISDOMAINNAME, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "maxpartitions", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_MAXPARTITIONS, CTL_EOL);
+
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "procargs", &r,
+		       darwin_sysctl_procargs, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_PROCARGS, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "proc", &r,
+		       darwin_sysctl_dokproc, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_PROC, CTL_EOL);
+
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "hw", &r,
+		       NULL, 0, NULL, 0,
+		       DARWIN_CTL_HW, CTL_EOL);
+
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "machine", &r,
+		       NULL, 0, darwin_sysctl_hw_machine, 0,
+		       DARWIN_CTL_HW, DARWIN_HW_MACHINE, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "ncpu", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_HW, DARWIN_HW_NCPU, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "vectorunit", &r,
+		       NULL, 0, NULL, 0,
+		       DARWIN_CTL_HW, DARWIN_HW_VECTORUNIT, CTL_EOL);
+	r = &darwin_sysctl_root;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "pagesize", &r,
+		       darwin_sysctl_redispatch, 0, NULL, 0,
+		       DARWIN_CTL_HW, DARWIN_HW_PAGESIZE, CTL_EOL);
+}
 
 int
 darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
-	struct darwin_sys___sysctl_args /* {
-		syscallarg(int *) name;
-		syscallarg(u_int) namelen;
-		syscallarg(void *) oldp;
-		syscallarg(size_t *) oldlenp;
-		syscallarg(void *) newp;
-		syscallarg(size_t) newlen;
-	} */ *uap = v;
-	int error;
-	sysctlfn *fn;
-	int name[CTL_MAXNAME];
-	size_t oldlen;
-	size_t savelen;
-	int *namep = SCARG(uap, name);
-	int namelen = SCARG(uap, namelen);
-	void *oldp = SCARG(uap, oldp);
-	size_t *oldlenp = SCARG(uap, oldlenp);
-	void *newp = SCARG(uap, newp);
-	size_t newlen = SCARG(uap, newlen);
-	struct proc *p = l->l_proc;
+	struct darwin_sys___sysctl_args *uap = v;
+	int error, nerror, name[CTL_MAXNAME];
+	size_t savelen = 0, oldlen = 0;
 
 	/*
-	 * all top-level sysctl names are non-terminal
+	 * get oldlen
 	 */
-	if (namelen > CTL_MAXNAME || namelen < 2)
-		return EINVAL;
-	if ((error = copyin(namep, &name, namelen * sizeof(int))) != 0)
-		return error;
-
-#ifdef DEBUG_DARWIN
-	{
-		int i;
-
-		printf("darwin_sys___sysctl: name = [ ");
-		for (i = 0; i < namelen; i++)
-			printf("%d, ", name[i]);
-		printf("]\n");
+	oldlen = 0;
+	if (SCARG(uap, oldlenp) != NULL) {
+		error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen));
+		if (error)
+			return (error);
 	}
-#endif /* DEBUG_DARWIN */
-	/* 
-	 * Need to be root to change a value
+	savelen = oldlen;
+
+	/*
+	 * top-level sysctl names may or may not be non-terminal, but
+	 * we don't care
 	 */
-	if ((newp != NULL) && (error = suser(p->p_ucred, &p->p_acflag)))
-		return error;
-
-	switch (name[0]) {
-	case DARWIN_CTL_KERN:
-		fn = darwin_kern_sysctl;
-		break;
-	case DARWIN_CTL_VM:
-		fn = darwin_vm_sysctl;
-		break;
-	case DARWIN_CTL_VFS:
-		fn = darwin_vfs_sysctl;
-		break;
-	case DARWIN_CTL_NET:
-		fn = darwin_net_sysctl;
-		break;
-	case DARWIN_CTL_DEBUG:
-		fn = darwin_debug_sysctl;
-		break;
-	case DARWIN_CTL_HW:
-		fn = darwin_hw_sysctl;
-		break;
-	case DARWIN_CTL_MACHDEP:
-		fn = darwin_machdep_sysctl;
-		break;
-	case DARWIN_CTL_USER:
-		fn = darwin_user_sysctl;
-		break;
-	default:
-		return EOPNOTSUPP;
-	}
-
-	if (oldlenp) {
-		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))) != 0)
-			return error;
-		oldlenp = &oldlen;
-	}
-
-	if (oldp) {
-		error = uvm_vslock(p, oldp, oldlen, 
-		    VM_PROT_READ|VM_PROT_WRITE);
-		savelen = oldlen;
-	} else
-		savelen = 0;
-
-
-	error = (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
-
-	if (oldp)
-		uvm_vsunlock(p, oldp, savelen);
-
+	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 1)
+		return (EINVAL);
+	error = copyin(SCARG(uap, name), &name,
+		       SCARG(uap, namelen) * sizeof(int));
 	if (error)
-		return error;
+		return (error);
 
-	if (oldlenp)
-		error = copyout(&oldlen, SCARG(uap, oldlenp), sizeof(oldlen));
+	/*
+	 * wire old so that copyout() is less likely to fail?
+	 */
+	error = sysctl_lock(l, SCARG(uap, oldp), savelen);
+	if (error)
+		return (error);
 
-	return error;
-}
+	/*
+	 * dispatch request into darwin sysctl tree
+	 */
+	error = sysctl_dispatch(&name[0], SCARG(uap, namelen),
+				SCARG(uap, oldp), &oldlen,
+				SCARG(uap, newp), SCARG(uap, newlen),
+				&name[0], l, &darwin_sysctl_root);
 
+	/*
+	 * release the sysctl lock
+	 */
+	sysctl_unlock(l);
 
-static int
-darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	/* sysctl with the same definition */
-	case DARWIN_KERN_OSTYPE:
-	case DARWIN_KERN_OSRELEASE:
-	case DARWIN_KERN_OSREV:
-	case DARWIN_KERN_VERSION:
-	case DARWIN_KERN_MAXVNODES:
-	case DARWIN_KERN_MAXPROC:
-	case DARWIN_KERN_MAXFILES:
-	case DARWIN_KERN_ARGMAX:
-	case DARWIN_KERN_SECURELVL:
-	case DARWIN_KERN_HOSTNAME:
-	case DARWIN_KERN_HOSTID:
-	case DARWIN_KERN_CLOCKRATE:
-	case DARWIN_KERN_VNODE:
-	case DARWIN_KERN_FILE:
-	case DARWIN_KERN_PROF:
-	case DARWIN_KERN_POSIX1:
-	case DARWIN_KERN_NGROUPS:
-	case DARWIN_KERN_JOB_CONTROL:
-	case DARWIN_KERN_SAVED_IDS:
-	case DARWIN_KERN_BOOTTIME:
-	case DARWIN_KERN_NISDOMAINNAME:
-	case DARWIN_KERN_MAXPARTITIONS:
-		return kern_sysctl(name, 1, oldp, oldlenp, newp, newlen, p);
-		break;
+	/*
+	 * lock state should now be only "needlock" and "canwait"
+	 */
+	/* XXX KASSERT */
 
-	case DARWIN_KERN_PROCARGS: 
-		return darwin_procargs(name + 1, nlen - 1, oldp, oldlenp, p);
-		break;
-
-	case DARWIN_KERN_PROC:
-		return darwin_sysctl_dokproc(name, nlen, oldp, oldlenp);
-		break;
-		
-	default:
-		return EOPNOTSUPP;
+	/*
+	 * reset caller's oldlen, even if we got an error
+	 */
+	if (SCARG(uap, oldlenp) != NULL) {
+		nerror = copyout(&oldlen, SCARG(uap, oldlenp), sizeof(oldlen));
+		if (error == 0)
+			error = nerror;
 	}
 
-	/* NOTREACHED */
-	return 0;
+	/*
+	 * if the only problem is that we weren't given enough space,
+	 * that's an ENOMEM error
+	 */
+	if (error == 0 && SCARG(uap, oldp) != NULL && savelen < oldlen)
+		error = ENOMEM;
+
+	return (error);
 }
 
-static int
-darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 {
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
 
-	/* NOTREACHED */
-	return 0;
-}
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "emul", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "darwin", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_DARWIN, CTL_EOL);
 
-static int
-darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-static int
-darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-static int
-darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-static int
-darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	case DARWIN_HW_NCPU:
-		name[0] = HW_NCPU;
-		return hw_sysctl(name, 1, oldp, oldlenp, newp, newlen, p);
-		break;
-	case DARWIN_HW_VECTORUNIT:
-		return sysctl_rdint(oldp, oldlenp, newp, 0);
-		break;
-	case DARWIN_HW_MACHINE:
-		return sysctl_rdstring(oldp, oldlenp, newp,
-		    darwin_sysctl_hw_machine);
-		break; 
-	case DARWIN_HW_PAGESIZE:
-		return sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE);
-		break;
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-static int
-darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-static int
-darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
-
-	/* NOTREACHED */
-	return 0;
-}
-
-int
-darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int nlen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	if (nlen != 1)
-		return EOPNOTSUPP;
-
-	switch (name[0]) {
-	case EMUL_DARWIN_INIT_PID:
-		return sysctl_int(oldp, oldlenp, 
-		    newp, newlen, &darwin_init_pid);
-
-	case EMUL_DARWIN_IOFRAMEBUFFER_UNIT:
-		return sysctl_int(oldp, oldlenp, 
-		    newp, newlen, &darwin_ioframebuffer_unit);
-
-	case EMUL_DARWIN_IOFRAMEBUFFER_SCREEN:
-		return sysctl_int(oldp, oldlenp, 
-		    newp, newlen, &darwin_ioframebuffer_screen);
-
-	case EMUL_DARWIN_IOHIDSYSTEM_MUX:
-		return sysctl_int(oldp, oldlenp, 
-		    newp, newlen, &darwin_iohidsystem_mux);
-
-	default:
-		return EOPNOTSUPP;
-	}
-
-	return 0;
+	/*
+	 * XXX - darwin_init_pid is a pid_t, not an int
+	 */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "init_pid", NULL,
+		       NULL, 0, &darwin_init_pid, 0,
+		       CTL_EMUL, EMUL_DARWIN,
+		       EMUL_DARWIN_INIT_PID, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ioframebuffer_unit", NULL,
+		       NULL, 0, &darwin_ioframebuffer_unit, 0,
+		       CTL_EMUL, EMUL_DARWIN,
+		       EMUL_DARWIN_IOFRAMEBUFFER_UNIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ioframebuffer_screen", NULL,
+		       NULL, 0, &darwin_ioframebuffer_screen, 0,
+		       CTL_EMUL, EMUL_DARWIN,
+		       EMUL_DARWIN_IOFRAMEBUFFER_SCREEN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "iohidsystem_mux", NULL,
+		       NULL, 0, &darwin_iohidsystem_mux, 0,
+		       CTL_EMUL, EMUL_DARWIN,
+		       EMUL_DARWIN_IOHIDSYSTEM_MUX, CTL_EOL);
 }
 
 /*
@@ -479,7 +415,7 @@ darwin_sys_getpid(l, v, retval)
 #define DARWIN_KERN_PROCSLOP	(5 * sizeof(struct darwin_kinfo_proc))
 
 static int
-darwin_sysctl_dokproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
+darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 {
 	struct darwin_kinfo_proc kproc;
 	struct darwin_kinfo_proc *dp;
@@ -491,30 +427,33 @@ darwin_sysctl_dokproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	size_t buflen, needed;
 	int error;
 
-	dp = vwhere;
-	dp2 = where = vwhere;
-	buflen = where != NULL ? *sizep : 0;
+	if (newp != NULL)
+		return (EPERM);
+
+	dp = oldp;
+	dp2 = where = oldp;
+	buflen = where != NULL ? *oldlenp : 0;
 	error = 0;
 	needed = 0;
-	type = name[0];
+	type = rnode->sysctl_num;
 
 	if (type == DARWIN_KERN_PROC) {
-		if (namelen != 3 && 
-		    !(namelen == 2 && name[1] == DARWIN_KERN_PROC_ALL))
+		if (namelen != 2 && 
+		    !(namelen == 1 && name[0] == DARWIN_KERN_PROC_ALL))
 			return (EINVAL);
-		op = name[1];
+		op = name[0];
 		if (op != DARWIN_KERN_PROC_ALL)
-			arg = name[2];
+			arg = name[1];
 		else
 			arg = 0;		/* Quell compiler warning */
 		elem_size = elem_count = 0;	/* Ditto */
 	} else {
-		if (namelen != 5)
+		if (namelen != 4)
 			return (EINVAL);
-		op = name[1];
-		arg = name[2];
-		elem_size = name[3];
-		elem_count = name[4];
+		op = name[0];
+		arg = name[1];
+		elem_size = name[2];
+		elem_count = name[3];
 	}
 
 	proclist_lock_read();
@@ -598,12 +537,12 @@ again:
 	proclist_unlock_read();
 
 	if (where != NULL) {
-		*sizep = (caddr_t)dp - where;
-		if (needed > *sizep)
+		*oldlenp = (caddr_t)dp - where;
+		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {
 		needed += DARWIN_KERN_PROCSLOP;
-		*sizep = needed;
+		*oldlenp = needed;
 	}
 	return (0);
  cleanup:
@@ -612,7 +551,7 @@ again:
 }
 
 /* 
- * Native struct proc to Darin's struct kinfo_proc 
+ * Native struct proc to Darwin's struct kinfo_proc 
  */
 static void
 darwin_fill_kproc(p, dkp)
@@ -773,15 +712,10 @@ native_to_darwin_pflag(dfp, bf)
 
 /* Derived from sys/kern/kern_sysctl.c:sysctl_procargs() */
 static int
-darwin_procargs(name, namelen, where, sizep, up)
-	int *name;
-	u_int namelen;
-	void *where;
-	size_t *sizep;
-	struct proc *up;
+darwin_sysctl_procargs(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
-	struct proc *p;
+	struct proc *p, *up = l->l_proc;
 	size_t len, upper_bound, xlen, i;
 	struct uio auio;
 	struct iovec aiov;
@@ -806,12 +740,10 @@ darwin_procargs(name, namelen, where, sizep, up)
 			return (EPERM);
 	}
 
-	if (sizep != NULL && where == NULL) {
-		*sizep = ARG_MAX;	/* XXX XXX XXX */
+	if (oldp == NULL) {
+		*oldlenp = ARG_MAX;	/* XXX XXX XXX */
 		return (0);
 	}
-	if (where == NULL || sizep == NULL)
-		return (EINVAL);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -838,7 +770,7 @@ darwin_procargs(name, namelen, where, sizep, up)
 	 * Zero fill the destination buffer.
 	 */
 	(void)memset(arg, 0, PAGE_SIZE);
-	upper_bound = *sizep;
+	upper_bound = *oldlenp;
 	len = 0;
 	while (len < upper_bound) {
 		if (len + PAGE_SIZE > upper_bound)
@@ -846,7 +778,7 @@ darwin_procargs(name, namelen, where, sizep, up)
 		else
 			xlen = PAGE_SIZE;
 
-		if ((error = copyout(arg, (char *)where + len, xlen)) != 0)
+		if ((error = copyout(arg, (char *)oldp + len, xlen)) != 0)
 			goto done;
 
 		len += PAGE_SIZE;
@@ -895,7 +827,7 @@ darwin_procargs(name, namelen, where, sizep, up)
 	 * the data at the end of the buffer.
 	 */ 
 	len = 0;
-	upper_bound = *sizep;
+	upper_bound = *oldlenp;
 	for (; nstr != 0 && len < upper_bound; len += xlen) {
 		aiov.iov_base = arg;
 		aiov.iov_len = PAGE_SIZE;
@@ -933,30 +865,30 @@ darwin_procargs(name, namelen, where, sizep, up)
 	 * Try to keep one null word at the
 	 * end, and align on a word boundary 
 	 */
-	len = (((u_long)where + len - 5) & ~0x3UL) - (u_long)where;
+	len = (((u_long)oldp + len - 5) & ~0x3UL) - (u_long)oldp;
 	len = upper_bound - len; 
 
 	/* 
 	 * Align to a word boundary, and copy the program name 
 	 */
-	len = (((u_long)where + len - 1) & ~0x3UL) - (u_long)where;
+	len = (((u_long)oldp + len - 1) & ~0x3UL) - (u_long)oldp;
 	len = len - strlen(p->p_comm);
 	if (len < 0)
 		len = 0;
 
-	error = copyout(p->p_comm, (char *)where + len, strlen(p->p_comm) + 1);
+	error = copyout(p->p_comm, (char *)oldp + len, strlen(p->p_comm) + 1);
 	if (error != 0)
 		goto done;
 
 	len = len + strlen(p->p_comm);
-	len = (((u_long)where + len + 5) & ~0x3UL) - (u_long)where;
+	len = (((u_long)oldp + len + 5) & ~0x3UL) - (u_long)oldp;
 
 	/*
 	 * Now copy in the actual argument vector, one page at a time,
 	 * since we don't know how long the vector is (though, we do
 	 * know how many NUL-terminated strings are in the vector).
 	 */
-	upper_bound = *sizep;
+	upper_bound = *oldlenp;
 	nstr = nargv + nenv;
 	for (; nstr != 0 && len < upper_bound; len += xlen) {
 		aiov.iov_base = arg;
@@ -985,7 +917,7 @@ darwin_procargs(name, namelen, where, sizep, up)
 		if (len + i > upper_bound)
 			i = upper_bound - len;
 
-		if ((error = copyout(arg, (char *)where + len, i)) != 0)
+		if ((error = copyout(arg, (char *)oldp + len, i)) != 0)
 			break;
 
 		if (nstr == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.4 2003/12/04 19:38:25 atatat Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.3 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.4 2003/12/04 19:38:25 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -316,92 +316,131 @@ ipsec_invalpcbcacheall(void)
 {
 }
 
-/* XXX will need a different oid at parent */
-int
-ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+static int
+sysctl_fast_ipsec(SYSCTLFN_ARGS)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
+	int error, t;
+	struct sysctlnode node;
 
-	/* common sanity checks */
-	switch (name[0]) {
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	switch (rnode->sysctl_num) {
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 	case IPSECCTL_DEF_ESP_NETLEV:
 	case IPSECCTL_DEF_AH_TRANSLEV:
 	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
+		if (t != IPSEC_LEVEL_USE && 
+		    t != IPSEC_LEVEL_REQUIRE)
+			return (EINVAL);
+		ipsec_invalpcbcacheall();
 		break;
-	case IPSECCTL_DEF_POLICY:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_POLICY_DISCARD:
-			case IPSEC_POLICY_NONE:
-				break;
-			default:
-				return EINVAL;
-			}
-			ipsec_invalpcbcacheall();
-		}
+      	case IPSECCTL_DEF_POLICY:
+		if (t != IPSEC_POLICY_DISCARD &&
+		    t != IPSEC_POLICY_NONE)
+			return (EINVAL);
+		ipsec_invalpcbcacheall();
 		break;
-	}
-
-	switch (name[0]) {
-	case IPSECCTL_STATS:
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ipsecstat, sizeof(ipsecstat));
-	case IPSECCTL_DEF_POLICY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_def_policy.policy);
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_esp_trans_deflev);
-	case IPSECCTL_DEF_ESP_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_esp_net_deflev);
-	case IPSECCTL_DEF_AH_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_trans_deflev);
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_net_deflev);
-	case IPSECCTL_AH_CLEARTOS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		  &/*ip4_*/ah_cleartos);
-	case IPSECCTL_AH_OFFSETMASK:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_offsetmask);
-	case IPSECCTL_DFBIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ipsec_dfbit);
-	case IPSECCTL_ECN:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip4_ipsec_ecn);
-	case IPSECCTL_DEBUG:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ipsec_debug);
 	default:
-		return EOPNOTSUPP;
+		return (EINVAL);
 	}
-	/* NOTREACHED */
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+/* XXX will need a different oid at parent */
+/* @@@ i have called it "fast_ipsec" instead of "ipsec" */
+SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.fast_ipsec subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "inet", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "fast_ipsec", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "stats", NULL,
+		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_STATS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "def_policy", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_def_policy.policy, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_ah_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_cleartos", NULL,
+		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_offsetmask", NULL,
+		       NULL, 0, &ip4_ah_offsetmask, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_AH_OFFSETMASK, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "dfbit", NULL,
+		       NULL, 0, &ip4_ipsec_dfbit, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DFBIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ecn", NULL,
+		       NULL, 0, &ip4_ipsec_ecn, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_ECN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "debug", NULL,
+		       NULL, 0, &ipsec_debug, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEBUG, CTL_EOL);
+
+	/*
+	 * "aliases" for the fast ipsec subtree
+	 */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_ALIAS,
+		       CTLTYPE_NODE, "fast_esp", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_ALIAS,
+		       CTLTYPE_NODE, "fast_ipcomp", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IPCOMP, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_ALIAS,
+		       CTLTYPE_NODE, "fast_ah", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
 }

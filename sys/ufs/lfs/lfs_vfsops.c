@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.140 2003/11/07 17:55:29 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.141 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.140 2003/11/07 17:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.141 2003/12/04 19:38:25 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -150,7 +150,7 @@ struct vfsops lfs_vfsops = {
 	lfs_init,
 	lfs_reinit,
 	lfs_done,
-	lfs_sysctl,
+	NULL,
 	lfs_mountroot,
 	ufs_check_export,
 	lfs_vnodeopv_descs,
@@ -1674,35 +1674,53 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp)
 	return (0);
 }
 
-int
-lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
+static int
+sysctl_lfs_dostats(SYSCTLFN_ARGS)
 {
-	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
 	extern struct lfs_stats lfs_stats;
+	extern int lfs_dostats;
 	int error;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	switch (name[0]) {
-	case LFS_WRITEINDIR:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &lfs_writeindir));
-	case LFS_CLEAN_VNHEAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &lfs_clean_vnhead));
-	case LFS_DOSTATS:
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
-				       &lfs_dostats)))
-			return error;
-		if (lfs_dostats == 0)
-			memset(&lfs_stats,0,sizeof(lfs_stats));
-		return 0;
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	if (lfs_dostats == 0)
+		memset(&lfs_stats,0,sizeof(lfs_stats));
+
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
+{
+	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "lfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 5, CTL_EOL);
+	/*
+	 * XXX the "5" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "2" is the order as taken from sys/mount.h
+	 */
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "flushindir", NULL,
+		       NULL, 0, &lfs_writeindir, 0,
+		       CTL_VFS, 5, LFS_WRITEINDIR, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "clean_vnhead", NULL,
+		       NULL, 0, &lfs_clean_vnhead, 0,
+		       CTL_VFS, 5, LFS_CLEAN_VNHEAD, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "dostats", NULL,
+		       sysctl_lfs_dostats, 0, &lfs_dostats, 0,
+		       CTL_VFS, 5, LFS_DOSTATS, CTL_EOL);
 }
 
 /*

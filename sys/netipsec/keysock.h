@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.1 2003/08/13 20:06:51 jonathan Exp $	*/
+/*	$NetBSD: keysock.h,v 1.2 2003/12/04 19:38:25 atatat Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -79,7 +79,6 @@ extern int key_usrreq __P((struct socket *,
 #else
 extern int key_usrreq __P((struct socket *,
 	int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
-extern int key_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
 
 extern int key_sendup __P((struct socket *, struct sadb_msg *, u_int, int));

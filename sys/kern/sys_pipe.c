@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.46 2003/11/13 11:59:46 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.47 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.46 2003/11/13 11:59:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.47 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1463,34 +1463,38 @@ pipe_fcntl(fp, cmd, data, p)
 /*
  * Handle pipe sysctls.
  */
-int
-sysctl_dopipe(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
 
-	switch (name[0]) {
-	case KERN_PIPE_MAXKVASZ:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxpipekva));
-	case KERN_PIPE_LIMITKVA:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &limitpipekva));
-	case KERN_PIPE_MAXBIGPIPES:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxbigpipes));
-	case KERN_PIPE_NBIGPIPES:
-		return (sysctl_rdint(oldp, oldlenp, newp, nbigpipe));
-	case KERN_PIPE_KVASIZE:
-		return (sysctl_rdint(oldp, oldlenp, newp, amountpipekva));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "pipe", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_PIPE, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxkvasz", NULL,
+		       NULL, 0, &maxpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXKVASZ, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxloankvasz", NULL,
+		       NULL, 0, &limitpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_LIMITKVA, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "maxbigpipes", NULL,
+		       NULL, 0, &maxbigpipes, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXBIGPIPES, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "nbigpipes", NULL,
+		       NULL, 0, &nbigpipe, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_NBIGPIPES, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "kvasize", NULL,
+		       NULL, 0, &amountpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_KVASIZE, CTL_EOL);
 }
 
 /*

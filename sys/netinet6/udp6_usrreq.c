@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.60 2003/10/25 08:26:14 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.61 2003/12/04 19:38:24 atatat Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.60 2003/10/25 08:26:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.61 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -412,29 +412,29 @@ release:
 	return (error);
 }
 
-int
-udp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "udp6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_UDP, CTL_EOL);
 
-	switch (name[0]) {
-
-	case UDP6CTL_SENDSPACE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &udp6_sendspace);
-	case UDP6CTL_RECVSPACE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &udp6_recvspace);
-	default:
-		return ENOPROTOOPT;
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sendspace", NULL,
+		       NULL, 0, &udp6_sendspace, 0,
+		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_SENDSPACE,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "recvspace", NULL,
+		       NULL, 0, &udp6_recvspace, 0,
+		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_RECVSPACE,
+		       CTL_EOL);
 }

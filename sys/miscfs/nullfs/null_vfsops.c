@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.43 2003/08/07 16:32:38 agc Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.44 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,10 +74,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.43 2003/08/07 16:32:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.44 2003/12/04 19:38:24 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -272,6 +273,28 @@ nullfs_unmount(mp, mntflags, p)
 	return (0);
 }
 
+SYSCTL_SETUP(sysctl_vfs_null_setup, "sysctl vfs.null subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "null", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 9, CTL_EOL);
+	/*
+	 * XXX the "9" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "9" is the order as taken from sys/mount.h
+	 *
+	 * this subtree should really be an alias to "layerfs_sysctl",
+	 * but since we can't tell if layerfs has been instantiated
+	 * yet, we can't do that
+	 */
+}
+
 extern const struct vnodeopv_desc null_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const nullfs_vnodeopv_descs[] = {
@@ -294,7 +317,7 @@ struct vfsops nullfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	layerfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
 	nullfs_vnodeopv_descs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.85 2003/10/22 02:45:57 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.86 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.85 2003/10/22 02:45:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.86 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -156,8 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.85 2003/10/22 02:45:57 thorpej Exp 
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
-
-static int tcp_sysctl_ident(int *, u_int, void *, size_t *, void *, size_t);
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -921,103 +919,411 @@ tcp_usrclosed(tp)
 	return (tp);
 }
 
-static const struct {
-	 unsigned int valid : 1;
-	 unsigned int rdonly : 1;
-	 int *var;
-	 int val;
-	 } tcp_ctlvars[] = TCPCTL_VARIABLES;
+/*
+ * sysctl helper routine for net.inet.ip.mssdflt.  it can't be less
+ * than 32.
+ */
+static int
+sysctl_net_inet_tcp_mssdflt(SYSCTLFN_ARGS)
+{
+	int error, mssdflt;
+	struct sysctlnode node;
+
+	mssdflt = tcp_mssdflt;
+	node = *rnode;
+	node.sysctl_data = &mssdflt;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (mssdflt < 32)
+		return (EINVAL);
+	tcp_mssdflt = mssdflt;
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for setting port related values under
+ * net.inet.ip and net.inet6.ip6.  does basic range checking and does
+ * additional checks for each type.  this code has placed in
+ * tcp_input.c since INET and INET6 both use the same tcp code.
+ *
+ * this helper is not static so that both inet and inet6 can use it.
+ */
+int
+sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	int apmin, apmax;
+#ifndef IPNOPRIVPORTS
+	int lpmin, lpmax;
+#endif /* IPNOPRIVPORTS */
+	struct sysctlnode node;
+
+	if (namelen != 0)
+		return (EINVAL);
+
+	switch (name[-3]) {
+#ifdef INET
+	    case PF_INET:
+		apmin = anonportmin;
+		apmax = anonportmax;
+#ifndef IPNOPRIVPORTS
+		lpmin = lowportmin;
+		lpmax = lowportmax;
+#endif /* IPNOPRIVPORTS */
+		break;
+#endif /* INET */
+#ifdef INET6
+	    case PF_INET6:
+		apmin = ip6_anonportmin;
+		apmax = ip6_anonportmax;
+#ifndef IPNOPRIVPORTS
+		lpmin = ip6_lowportmin;
+		lpmax = ip6_lowportmax;
+#endif /* IPNOPRIVPORTS */
+		break;
+#endif /* INET6 */
+	    default:
+		return (EINVAL);
+	}
+
+	/*
+	 * insert temporary copy into node, perform lookup on
+	 * temporary, then restore pointer
+	 */
+	node = *rnode;
+	tmp = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	/*
+	 * simple port range check
+	 */
+	if (tmp < 0 || tmp > 65535)
+		return (EINVAL);
+
+	/*
+	 * per-node range checks
+	 */
+	switch (rnode->sysctl_num) {
+	case IPCTL_ANONPORTMIN:
+		if (tmp >= apmax)
+			return (EINVAL);
+#ifndef IPNOPRIVPORTS
+		if (tmp < IPPORT_RESERVED)
+                        return (EINVAL);
+#endif /* IPNOPRIVPORTS */
+		break;
+
+	case IPCTL_ANONPORTMAX:
+                if (apmin >= tmp)
+			return (EINVAL);
+#ifndef IPNOPRIVPORTS
+		if (tmp < IPPORT_RESERVED)
+                        return (EINVAL);
+#endif /* IPNOPRIVPORTS */
+		break;
+
+#ifndef IPNOPRIVPORTS
+	case IPCTL_LOWPORTMIN:
+		if (tmp >= lpmax ||
+		    tmp > IPPORT_RESERVEDMAX ||
+		    tmp < IPPORT_RESERVEDMIN)
+			return (EINVAL);
+		break;
+
+	case IPCTL_LOWPORTMAX:
+		if (lpmin >= tmp ||
+		    tmp > IPPORT_RESERVEDMAX ||
+		    tmp < IPPORT_RESERVEDMIN)
+			return (EINVAL);
+		break;
+#endif /* IPNOPRIVPORTS */
+
+	default:
+		return (EINVAL);
+	}
+
+	*(int*)rnode->sysctl_data = tmp;
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for the net.inet.tcp.ident and
+ * net.inet6.tcp6.ident nodes.  contains backwards compat code for the
+ * old way of looking up the ident information for ipv4 which involves
+ * stuffing the port/addr pairs into the mib lookup.
+ */
+static int
+sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
+{
+#ifdef INET
+	struct inpcb *inb;
+	struct sockaddr_in *si4[2];
+#endif /* INET */
+#ifdef INET6
+	struct in6pcb *in6b;
+	struct sockaddr_in6 *si6[2];
+#endif /* INET6 */
+	struct in_addr laddr, raddr;
+	struct sockaddr_storage sa[2];
+	struct socket *sockp;
+	u_int lport, rport;
+	size_t sz;
+	uid_t uid;
+	int error, pf;
+
+	if (namelen != 4 && namelen != 0)
+		return (EINVAL);
+	if (name[-2] != IPPROTO_TCP)
+		return (EINVAL);
+	pf = name[-3];
+
+	/* old style lookup, ipv4 only */
+	if (namelen == 4) {
+#ifdef INET
+		if (pf != PF_INET)
+			return (EPROTONOSUPPORT);
+		raddr.s_addr = (uint32_t)name[0];
+		rport = (u_int)name[1];
+		laddr.s_addr = (uint32_t)name[2];
+		lport = (u_int)name[3];
+		inb = in_pcblookup_connect(&tcbtable, raddr, rport,
+					   laddr, lport);
+		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
+			return (ESRCH);
+		uid = sockp->so_uid;
+		if (oldp) {
+			sz = MIN(sizeof(uid), *oldlenp);
+			error = copyout(&uid, oldp, sz);
+			if (error)
+				return (error);
+		}
+		*oldlenp = sizeof(uid);
+		return (0);
+#else /* INET */
+		return (EINVAL);
+#endif /* INET */
+	}
+
+	if (newp == NULL || newlen != sizeof(sa))
+		return (EINVAL);
+	error = copyin(newp, &sa, newlen);
+	if (error)
+		return (error);
+
+	/*
+	 * requested families must match
+	 */
+	if (pf != sa[0].ss_family || sa[0].ss_family != sa[1].ss_family)
+		return (EINVAL);
+
+	switch (pf) {
+#ifdef INET
+	    case PF_INET:
+		si4[0] = (struct sockaddr_in*)&sa[0];
+		si4[1] = (struct sockaddr_in*)&sa[1];
+		if (si4[0]->sin_len != sizeof(*si4[0]) ||
+		    si4[0]->sin_len != si4[1]->sin_len)
+			return (EINVAL);
+		inb = in_pcblookup_connect(&tcbtable,
+		    si4[0]->sin_addr, si4[0]->sin_port,
+		    si4[1]->sin_addr, si4[1]->sin_port);
+		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
+			return (ESRCH);
+		break;
+#endif /* INET */
+#ifdef INET6
+	    case PF_INET6:
+		si6[0] = (struct sockaddr_in6*)&sa[0];
+		si6[1] = (struct sockaddr_in6*)&sa[1];
+		if (si6[0]->sin6_len != sizeof(*si6[0]) ||
+		    si6[0]->sin6_len != si6[1]->sin6_len)
+			return (EINVAL);
+		in6b = in6_pcblookup_connect(&tcbtable,
+		    &si6[0]->sin6_addr, si6[0]->sin6_port,
+		    &si6[1]->sin6_addr, si6[1]->sin6_port, 0);
+		if (in6b == NULL || (sockp = in6b->in6p_socket) == NULL)
+			return (ESRCH);
+		break;
+#endif /* INET6 */
+	    default:
+		return (EPROTONOSUPPORT);
+	}
+
+	uid = sockp->so_uid;
+	if (oldp) {
+		sz = MIN(sizeof(uid), *oldlenp);
+		error = copyout(&uid, oldp, sz);
+		if (error)
+			return (error);
+	}
+	*oldlenp = sizeof(uid);
+
+	return (0);
+}
+
+/*
+ * this (second stage) setup routine is a replacement for tcp_sysctl()
+ * (which is currently used for ipv4 and ipv6)
+ */
+static void
+sysctl_net_inet_tcp_setup2(int pf, const char *pfname, const char *tcpname)
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, pfname, NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, tcpname, NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "rfc1323", NULL,
+		       NULL, 0, &tcp_do_rfc1323, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RFC1323, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sendspace", NULL,
+		       NULL, 0, &tcp_sendspace, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SENDSPACE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "recvspace", NULL,
+		       NULL, 0, &tcp_recvspace, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RECVSPACE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "mssdflt", NULL,
+		       sysctl_net_inet_tcp_mssdflt, 0, &tcp_mssdflt, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSSDFLT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "syn_cache_limit", NULL,
+		       NULL, 0, &tcp_syn_cache_limit, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_CACHE_LIMIT,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "syn_bucket_limit", NULL,
+		       NULL, 0, &tcp_syn_bucket_limit, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_BUCKET_LIMIT,
+		       CTL_EOL);
+#if 0 /* obsoleted */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "syn_cache_interval", NULL,
+		       NULL, 0, &tcp_syn_cache_interval, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_CACHE_INTER,
+		       CTL_EOL);
+#endif
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "init_win", NULL,
+		       NULL, 0, &tcp_init_win, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "mss_ifmtu", NULL,
+		       NULL, 0, &tcp_mss_ifmtu, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSS_IFMTU, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sack", NULL,
+		       NULL, 0, &tcp_do_sack, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "win_scale", NULL,
+		       NULL, 0, &tcp_do_win_scale, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_WSCALE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "timestamps", NULL,
+		       NULL, 0, &tcp_do_timestamps, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_TSTAMP, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "compat_42", NULL,
+		       NULL, 0, &tcp_compat_42, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_COMPAT_42, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "cwm", NULL,
+		       NULL, 0, &tcp_cwm, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_CWM, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "cwm_burstsize", NULL,
+		       NULL, 0, &tcp_cwm_burstsize, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_CWM_BURSTSIZE,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ack_on_push", NULL,
+		       NULL, 0, &tcp_ack_on_push, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_ACK_ON_PUSH, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "keepidle", NULL,
+		       NULL, 0, &tcp_keepidle, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPIDLE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "keepintvl", NULL,
+		       NULL, 0, &tcp_keepintvl, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPINTVL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "keepcnt", NULL,
+		       NULL, 0, &tcp_keepcnt, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPCNT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "slowhz", NULL,
+		       NULL, PR_SLOWHZ, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SLOWHZ, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "newreno", NULL,
+		       NULL, 0, &tcp_do_newreno, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_NEWRENO, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "log_refused", NULL,
+		       NULL, 0, &tcp_log_refused, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_LOG_REFUSED, CTL_EOL);
+#if 0 /* obsoleted */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "rstratelimit", NULL,
+		       NULL, 0, &tcp_rst_ratelim, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RSTRATELIMIT, CTL_EOL);
+#endif
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "rstppslimit", NULL,
+		       NULL, 0, &tcp_rst_ppslim, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RSTPPSLIMIT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "delack_ticks", NULL,
+		       NULL, 0, &tcp_delack_ticks, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DELACK_TICKS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "init_win_local", NULL,
+		       NULL, 0, &tcp_init_win_local, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN_LOCAL,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "ident", NULL,
+		       sysctl_net_inet_tcp_ident, 0, NULL, sizeof(uid_t),
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_IDENT, CTL_EOL);
+}
 
 /*
  * Sysctl for tcp variables.
  */
-int
-tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+#ifdef INET
+SYSCTL_SETUP(sysctl_net_inet_tcp_setup, "sysctl net.inet.tcp subtree setup")
 {
-	int error, saved_value = 0;
 
-	if (name[0] == TCPCTL_IDENT)
-		return tcp_sysctl_ident(&name[1], namelen - 1, oldp, oldlenp,
-		    newp, newlen);
-
-	/* All remaining sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
-	    && tcp_ctlvars[name[0]].valid) {
-		if (tcp_ctlvars[name[0]].rdonly) {
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    tcp_ctlvars[name[0]].val));
-		} else {
-			switch (name[0]) {
-			case TCPCTL_MSSDFLT:
-				saved_value = tcp_mssdflt;
-				break;
-			}
-			error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    tcp_ctlvars[name[0]].var);
-			if (error)
-				return (error);
-			switch (name[0]) {
-			case TCPCTL_MSSDFLT:
-				if (tcp_mssdflt < 32) {
-					tcp_mssdflt = saved_value;
-					return (EINVAL);
-				}
-				break;
-			}
-			/* Update the TCPCB template. */
-			if (newp != NULL)
-				tcp_tcpcb_template();
-			return (0);
-		}
-	}
-
-	return (ENOPROTOOPT);
+	sysctl_net_inet_tcp_setup2(PF_INET, "inet", "tcp");
 }
+#endif /* INET */
 
-
-static int 
-tcp_sysctl_ident(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
+#ifdef INET6
+SYSCTL_SETUP(sysctl_net_inet6_tcp6_setup, "sysctl net.inet6.tcp6 subtree setup")
 {
-	struct inpcb *inb;
-	struct in_addr laddr, raddr;
-	u_int lport, rport;
-	uid_t uid;
-	int error;
 
-	if (*oldlenp != sizeof(uid_t))
-		return ENOMEM;
-	if (!oldp || *oldlenp != sizeof(uid_t))
-		return ENOMEM;
-	if (namelen != 4)
-		return EINVAL;
-
-	raddr.s_addr = (uint32_t)name[0];
-	rport = (u_int)name[1];
-	laddr.s_addr = (uint32_t)name[2];
-	lport = (u_int)name[3];
-
-	inb = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport);
-	if (inb) {
-		struct socket *sockp = inb->inp_socket;
-		if (sockp)
-			uid = sockp->so_uid;
-		else
-			return ESRCH;
-	} else
-		return ESRCH;
-
-	if ((error = copyout(&uid, oldp, sizeof(uid))) != 0)
-		return error;
-
-	return 0;
+	sysctl_net_inet_tcp_setup2(PF_INET6, "inet6", "tcp6");
 }
+#endif /* INET6 */
+

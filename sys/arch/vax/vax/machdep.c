@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.141 2003/09/29 22:54:28 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.142 2003/12/04 19:38:22 atatat Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2003/09/29 22:54:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2003/12/04 19:38:22 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -332,46 +332,41 @@ cpu_dumpconf()
 		dumplo = btodb(PAGE_SIZE);
 }
 
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct	proc *p;
+static int
+sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 {
-	dev_t consdev;
+	struct sysctlnode node = *rnode;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);
+	if (booted_device == NULL)
+		return (EOPNOTSUPP);
+	node.sysctl_data = booted_device->dv_xname;
+	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-	switch (name[0]) {
-	case CPU_PRINTFATALTRAPS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &cpu_printfataltraps));
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof(consdev)));
-	case CPU_BOOTED_DEVICE:
-		if (booted_device != NULL)
-			return (sysctl_rdstring(oldp, oldlenp, newp,
-			    booted_device->dv_xname));
-		break;
-	case CPU_BOOTED_KERNEL:
-		/*
-		 * I don't think this is available to the kernel.
-		 */
-	default:
-		break;
-	}
-	return (EOPNOTSUPP);
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_machdep_booted_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	/*
+	 * I don't think CPU_BOOTED_KERNEL is available to the kernel.
+	 */
 }
 
 void

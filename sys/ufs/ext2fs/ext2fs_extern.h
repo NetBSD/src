@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.20 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.21 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -148,8 +148,6 @@ int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
-int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
 

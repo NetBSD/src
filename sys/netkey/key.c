@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.107 2003/11/27 18:26:46 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.108 2003/12/04 19:38:25 atatat Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -31,11 +31,11 @@
  */
 
 /*
- * This code is referd to RFC 2367
+ * This code is referred to RFC 2367
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.107 2003/11/27 18:26:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.108 2003/12/04 19:38:25 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -7768,141 +7768,160 @@ key_alloc_mbuf(l)
 	return m;
 }
 
-int
-key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+static int
+sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 {
-	int error = 0;
+	struct mbuf *m, *n;
+	int err2 = 0;
+	char *p, *ep;
+	size_t len;
+	int s, error;
 
-	if (name[0] >= KEYCTL_MAXID)
-		return (EOPNOTSUPP);
-	if ((name[0] == KEYCTL_DUMPSA && namelen == 2) || namelen == 1)
-		;
-	else
-		return (EOPNOTSUPP);
-	switch (name[0]) {
-	case KEYCTL_DEBUG_LEVEL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_debug_level);
-	case KEYCTL_SPI_TRY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_trycnt);
-	case KEYCTL_SPI_MIN_VALUE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_minval);
-	case KEYCTL_SPI_MAX_VALUE:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_spi_maxval);
-	case KEYCTL_RANDOM_INT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_int_random);
-	case KEYCTL_LARVAL_LIFETIME:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_larval_lifetime);
-	case KEYCTL_BLOCKACQ_COUNT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_blockacq_count);
-	case KEYCTL_BLOCKACQ_LIFETIME:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &key_blockacq_lifetime);
-	case KEYCTL_ESP_KEYMIN:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_esp_keymin);
-	case KEYCTL_ESP_AUTH:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_esp_auth);
-	case KEYCTL_AH_KEYMIN:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ipsec_ah_keymin);
-	case KEYCTL_DUMPSA:
-		if (newp)
-			return (EPERM);
-		if (oldlenp) {
-			struct mbuf *m, *n;
-			int err2 = 0;
-			char *p, *ep;
-			size_t l;
-			int s;
+	if (newp)
+		return (EPERM);
+	if (namelen != 1)
+		return (EINVAL);
 
-			s = splsoftnet();
-			m = key_setdump(name[1], &error);
-			splx(s);
-			if (!m)
-				return (error);
-			if (!oldp)
-				*oldlenp = m->m_pkthdr.len;
-			else {
-				p = oldp;
-				if (*oldlenp < m->m_pkthdr.len) {
-					err2 = ENOMEM;
-					ep = p + *oldlenp;
-				} else {
-					*oldlenp = m->m_pkthdr.len;
-					ep = p + m->m_pkthdr.len;
-				}
-				for (n = m; n; n = n->m_next) {
-					l =  (ep - p < n->m_len) ?
-					    ep - p : n->m_len;
-					error = copyout(mtod(n, const void *),
-					    p, l);
-					p += l;
-					if (error)
-						break;
-				}
-				if (error == 0)
-					error = err2;
-			}
-			m_freem(m);
-		}
+	s = splsoftnet();
+	m = key_setdump(name[0], &error);
+	splx(s);
+	if (!m)
 		return (error);
-	case KEYCTL_DUMPSP:
-		if (newp)
-			return (EPERM);
-		if (oldlenp) {
-			struct mbuf *m, *n;
-			int err2 = 0;
-			char *p, *ep;
-			size_t l;
-			int s;
-
-			s = splsoftnet();
-			m = key_setspddump(&error);
-			splx(s);
-			if (!m)
-				return (error);
-			if (!oldp)
-				*oldlenp = m->m_pkthdr.len;
-			else {
-				p = oldp;
-				if (*oldlenp < m->m_pkthdr.len) {
-					err2 = ENOMEM;
-					ep = p + *oldlenp;
-				} else {
-					*oldlenp = m->m_pkthdr.len;
-					ep = p + m->m_pkthdr.len;
-				}
-				for (n = m; n; n = n->m_next) {
-					l =  (ep - p < n->m_len) ?
-					    ep - p : n->m_len;
-					error = copyout(mtod(n, const void *),
-					    p, l);
-					p += l;
-					if (error)
-						break;
-				}
-				if (error == 0)
-					error = err2;
-			}
-			m_freem(m);
+	if (!oldp)
+		*oldlenp = m->m_pkthdr.len;
+	else {
+		p = oldp;
+		if (*oldlenp < m->m_pkthdr.len) {
+			err2 = ENOMEM;
+			ep = p + *oldlenp;
+		} else {
+			*oldlenp = m->m_pkthdr.len;
+			ep = p + m->m_pkthdr.len;
 		}
-		return (error);
-	default:
-		return (EOPNOTSUPP);
+		for (n = m; n; n = n->m_next) {
+			len =  (ep - p < n->m_len) ?
+				ep - p : n->m_len;
+			error = copyout(mtod(n, const void *), p, len);
+			p += len;
+			if (error)
+				break;
+		}
+		if (error == 0)
+			error = err2;
 	}
-	/* NOTREACHED */
+	m_freem(m);
+
+	return (error);
+}
+
+static int
+sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
+{
+	struct mbuf *m, *n;
+	int err2 = 0;
+	char *p, *ep;
+	size_t len;
+	int s, error;
+
+	if (newp)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	s = splsoftnet();
+	m = key_setspddump(&error);
+	splx(s);
+	if (!m)
+		return (error);
+	if (!oldp)
+		*oldlenp = m->m_pkthdr.len;
+	else {
+		p = oldp;
+		if (*oldlenp < m->m_pkthdr.len) {
+			err2 = ENOMEM;
+			ep = p + *oldlenp;
+		} else {
+			*oldlenp = m->m_pkthdr.len;
+			ep = p + m->m_pkthdr.len;
+		}
+		for (n = m; n; n = n->m_next) {
+			len =  (ep - p < n->m_len) ?
+				ep - p : n->m_len;
+			error = copyout(mtod(n, const void *), p, len);
+			p += len;
+			if (error)
+				break;
+		}
+		if (error == 0)
+			error = err2;
+	}
+	m_freem(m);
+
+	return (error);
+}
+
+SYSCTL_SETUP(sysctl_net_key_setup, "sysctl net.key subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "key", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_KEY, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "debug", NULL,
+		       NULL, 0, &key_debug_level, 0,
+		       CTL_NET, PF_KEY, KEYCTL_DEBUG_LEVEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_try", NULL,
+		       NULL, 0, &key_spi_trycnt, 0,
+		       CTL_NET, PF_KEY, KEYCTL_SPI_TRY, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_min_value", NULL,
+		       NULL, 0, &key_spi_minval, 0,
+		       CTL_NET, PF_KEY, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "spi_max_value", NULL,
+		       NULL, 0, &key_spi_maxval, 0,
+		       CTL_NET, PF_KEY, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "random_int", NULL,
+		       NULL, 0, &key_int_random, 0,
+		       CTL_NET, PF_KEY, KEYCTL_RANDOM_INT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "larval_lifetime", NULL,
+		       NULL, 0, &key_larval_lifetime, 0,
+		       CTL_NET, PF_KEY, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "blockacq_count", NULL,
+		       NULL, 0, &key_blockacq_count, 0,
+		       CTL_NET, PF_KEY, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "blockacq_lifetime", NULL,
+		       NULL, 0, &key_blockacq_lifetime, 0,
+		       CTL_NET, PF_KEY, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_keymin", NULL,
+		       NULL, 0, &ipsec_esp_keymin, 0,
+		       CTL_NET, PF_KEY, KEYCTL_ESP_KEYMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "esp_auth", NULL,
+		       NULL, 0, &ipsec_esp_auth, 0,
+		       CTL_NET, PF_KEY, KEYCTL_ESP_AUTH, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "ah_keymin", NULL,
+		       NULL, 0, &ipsec_ah_keymin, 0,
+		       CTL_NET, PF_KEY, KEYCTL_AH_KEYMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "dumpsa", NULL,
+		       sysctl_net_key_dumpsa, 0, NULL, 0,
+		       CTL_NET, PF_KEY, KEYCTL_DUMPSA, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "dumpsp", NULL,
+		       sysctl_net_key_dumpsp, 0, NULL, 0,
+		       CTL_NET, PF_KEY, KEYCTL_DUMPSP, CTL_EOL);
 }

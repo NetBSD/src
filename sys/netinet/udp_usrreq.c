@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.113 2003/10/23 20:55:08 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.114 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.113 2003/10/23 20:55:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.114 2003/12/04 19:38:24 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1110,31 +1110,36 @@ release:
 /*
  * Sysctl for udp variables.
  */
-int
-udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
 
-	switch (name[0]) {
-	case UDPCTL_CHECKSUM:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &udpcksum));
-	case UDPCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &udp_sendspace));
-	case UDPCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &udp_recvspace));
-	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "inet", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "udp", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "checksum", NULL,
+		       NULL, 0, &udpcksum, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_CHECKSUM,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "sendspace", NULL,
+		       NULL, 0, &udp_sendspace, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_SENDSPACE,
+		       CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "recvspace", NULL,
+		       NULL, 0, &udp_recvspace, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_RECVSPACE,
+		       CTL_EOL);
 }
 #endif

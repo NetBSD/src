@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.9 2003/08/07 16:31:40 agc Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.9 2003/08/07 16:31:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.10 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -106,8 +107,6 @@ int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int union_checkexp __P((struct mount *, struct mbuf *, int *,
 		      struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
-int union_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *));
 
 /*
  * Mount union filesystem
@@ -590,17 +589,22 @@ union_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-int
-union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "union", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 15, CTL_EOL);
+	/*
+	 * XXX the "15" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "15" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc union_vnodeop_opv_desc;
@@ -625,7 +629,7 @@ struct vfsops union_vfsops = {
 	union_init,
 	NULL,				/* vfs_reinit */
 	union_done,
-	union_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	union_checkexp,
 	union_vnodeopv_descs,

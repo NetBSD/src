@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.30 2003/08/07 16:34:11 agc Exp $	*/
+/*	$NetBSD: protosw.h,v 1.31 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -94,8 +94,7 @@ struct protosw {
 			__P((void));
 	void	(*pr_drain)		/* flush any excess space possible */
 			__P((void));
-	int	(*pr_sysctl)		/* sysctl for protocol */
-			__P((int *, u_int, void *, size_t *, void *, size_t));
+	int	*pr_wassysctl;		/* @@@ was sysctl for protocol, now obsolete */
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */

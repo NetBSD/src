@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.26 2003/06/29 22:32:50 fvdl Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.27 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26 2003/06/29 22:32:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.27 2003/12/04 19:38:25 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -74,7 +74,6 @@ static fixpt_t cexp[3] = {
 
 static void uvm_loadav __P((struct loadavg *));
 static void uvm_total __P((struct vmtotal *));
-static int sysctl_uvmexp __P((void *, size_t *));
 
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)
@@ -120,114 +119,40 @@ uvm_loadav(avg)
 }
 
 /*
- * uvm_sysctl: sysctl hook into UVM system.
+ * sysctl helper routine for the vm.vmmeter node.
  */
-int
-uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_vm_meter(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	struct vmtotal vmtotals;
-	int rv, t;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	node = *rnode;
+	node.sysctl_data = &vmtotals;
+	uvm_total(&vmtotals);
 
-	switch (name[0]) {
-	case VM_LOADAVG:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &averunnable,
-		    sizeof(averunnable)));
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-	case VM_METER:
-		uvm_total(&vmtotals);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &vmtotals,
-		    sizeof(vmtotals)));
+/*
+ * sysctl helper routine for the vm.uvmexp node.
+ */
+static int
+sysctl_vm_uvmexp(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
 
-	case VM_UVMEXP:
-		return (sysctl_rdminstruct(oldp, oldlenp, newp, &uvmexp,
-		    sizeof(uvmexp)));
-	case VM_UVMEXP2:
-		if (newp)
-			return (EPERM);
-		return (sysctl_uvmexp(oldp, oldlenp));
+	node = *rnode;
+	if (oldp)
+		node.sysctl_size = min(*oldlenp, node.sysctl_size);
 
-	case VM_NKMEMPAGES:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
-
-#define UPDATEMIN(a, ap, bp, cp) 					\
-	{								\
-		t = uvmexp.ap;						\
-		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);	\
-		if (rv) {						\
-			return rv;					\
-		}							\
-		if (t + uvmexp.bp + uvmexp.cp > 95 || t < 0) {		\
-			return EINVAL;					\
-		}							\
-		uvmexp.ap = t;						\
-		uvmexp.a = t * 256 / 100;				\
-		return rv;						\
-	}
-
-	case VM_ANONMIN:
-		UPDATEMIN(anonmin, anonminpct, fileminpct, execminpct);
-
-	case VM_EXECMIN:
-		UPDATEMIN(execmin, execminpct, fileminpct, anonminpct);
-
-	case VM_FILEMIN:
-		UPDATEMIN(filemin, fileminpct, execminpct, anonminpct);
-
-#undef UPDATEMIN
-#define UPDATEMAX(a, ap)	 					\
-	{								\
-		t = uvmexp.ap;						\
-		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);	\
-		if (rv) {						\
-			return rv;					\
-		}							\
-		if (t > 100 || t < 0) {					\
-			return EINVAL;					\
-		}							\
-		uvmexp.ap = t;						\
-		uvmexp.a = t * 256 / 100;				\
-		return rv;						\
-	}
-
-	case VM_ANONMAX:
-		UPDATEMAX(anonmax, anonmaxpct);
-
-	case VM_EXECMAX:
-		UPDATEMAX(execmax, execmaxpct);
-
-	case VM_FILEMAX:
-		UPDATEMAX(filemax, filemaxpct);
-
-#undef UPDATEMAX
-
-	case VM_MAXSLP:
-		return (sysctl_rdint(oldp, oldlenp, newp, maxslp));
-
-	case VM_USPACE:
-		return (sysctl_rdint(oldp, oldlenp, newp, USPACE));
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 static int
-sysctl_uvmexp(oldp, oldlenp)
-	void *oldp;
-	size_t *oldlenp;
+sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
 	struct uvmexp_sysctl u;
 
 	memset(&u, 0, sizeof(u));
@@ -310,7 +235,136 @@ sysctl_uvmexp(oldp, oldlenp)
 	u.colorhit = uvmexp.colorhit;
 	u.colormiss = uvmexp.colormiss;
 
-	return (sysctl_rdminstruct(oldp, oldlenp, NULL, &u, sizeof(u)));
+	node = *rnode;
+	node.sysctl_data = &u;
+	node.sysctl_size = sizeof(u);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * sysctl helper routine for the vm.{anon,exec,file}{min,max} nodes.
+ * makes sure that they all correlate properly and none are set too
+ * large.
+ */
+static int
+sysctl_vm_updateminmax(SYSCTLFN_ARGS)
+{
+	int t, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = *(int*)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0 || t > 100)
+		return (EINVAL);
+
+#define UPDATEMIN(a, ap, bp, cp, tp) do { \
+		if (tp + uvmexp.bp + uvmexp.cp > 95) \
+			return (EINVAL); \
+		uvmexp.ap = tp; \
+		uvmexp.a = uvmexp.ap * 256 / 100; \
+	} while (0/*CONSTCOND*/)
+
+#define UPDATEMAX(a, ap, tp) do { \
+		uvmexp.ap = tp; \
+		uvmexp.a = tp * 256 / 100; \
+	} while (0/*CONSTCOND*/)
+
+	switch (rnode->sysctl_num) {
+	case VM_ANONMIN:
+		UPDATEMIN(anonmin, anonminpct, fileminpct, execminpct, t);
+		break;
+	case VM_EXECMIN:
+		UPDATEMIN(filemin, fileminpct, execminpct, anonminpct, t);
+		break;
+	case VM_FILEMIN:
+		UPDATEMIN(execmin, execminpct, anonminpct, fileminpct, t);
+		break;
+	case VM_ANONMAX:
+		UPDATEMAX(anonmax, anonmaxpct, t);
+		break;
+	case VM_EXECMAX:
+		UPDATEMAX(execmax, execmaxpct, t);
+		break;
+	case VM_FILEMAX:
+		UPDATEMAX(filemax, filemaxpct, t);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+#undef UPDATEMIN
+#undef UPDATEMAX
+
+	return (0);
+}
+
+/*
+ * uvm_sysctl: sysctl hook into UVM system.
+ */
+SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vm", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VM, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "vmmeter", NULL,
+		       sysctl_vm_meter, 0, NULL, sizeof(struct vmtotal),
+		       CTL_VM, VM_METER, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "loadavg", NULL,
+		       NULL, 0, &averunnable, sizeof(averunnable),
+		       CTL_VM, VM_LOADAVG, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "uvmexp", NULL,
+		       sysctl_vm_uvmexp, 0, &uvmexp, sizeof(uvmexp),
+		       CTL_VM, VM_UVMEXP, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "nkmempages", NULL,
+		       NULL, 0, &nkmempages, 0,
+		       CTL_VM, VM_NKMEMPAGES, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "uvmexp2", NULL,
+		       sysctl_vm_uvmexp2, 0, NULL, 0,
+		       CTL_VM, VM_UVMEXP2, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "anonmin", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.anonminpct, 0,
+		       CTL_VM, VM_ANONMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "execmin", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.execminpct, 0,
+		       CTL_VM, VM_EXECMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "filemin", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.fileminpct, 0,
+		       CTL_VM, VM_FILEMIN, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "maxslp", NULL,
+		       NULL, 0, &maxslp, 0,
+		       CTL_VM, VM_MAXSLP, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "uspace", NULL,
+		       NULL, USPACE, NULL, 0,
+		       CTL_VM, VM_USPACE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "anonmax", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.anonmaxpct, 0,
+		       CTL_VM, VM_ANONMAX, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "execmax", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.execmaxpct, 0,
+		       CTL_VM, VM_EXECMAX, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "filemax", NULL,
+		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
+		       CTL_VM, VM_FILEMAX, CTL_EOL);
 }
 
 /*

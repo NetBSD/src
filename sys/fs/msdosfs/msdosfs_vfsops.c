@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.11 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.12 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.11 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.12 2003/12/04 19:38:23 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.11 2003/10/14 14:02:56 dbj Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -94,8 +95,6 @@ int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *,
     struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
-int msdosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct proc *));
 
 int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
     struct msdosfs_args *));
@@ -129,7 +128,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_init,
 	msdosfs_reinit,
 	msdosfs_done,
-	msdosfs_sysctl,
+	NULL,
 	msdosfs_mountroot,
 	msdosfs_checkexp,
 	msdosfs_vnodeopv_descs,
@@ -1028,15 +1027,20 @@ msdosfs_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-int
-msdosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_msdosfs_setup, "sysctl vfs.msdosfs subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "msdosfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 4, CTL_EOL);
+	/*
+	 * XXX the "4" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "4" is the order as taken from sys/mount.h
+	 */
 }

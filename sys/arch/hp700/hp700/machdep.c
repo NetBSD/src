@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/11/24 02:51:35 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/11/24 02:51:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1742,29 +1742,19 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);	/* overloaded */
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
-
 
 /*
  * consinit:

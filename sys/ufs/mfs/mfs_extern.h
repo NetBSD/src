@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.17 2003/08/07 16:34:41 agc Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.18 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,8 +55,6 @@ int	mfs_mount	__P((struct mount *, const char *, void *,
 			     struct nameidata *, struct proc *));
 int	mfs_start	__P((struct mount *, int, struct proc *));
 int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));
-int	mfs_sysctl	__P((int *, u_int, void *, size_t *, void *, size_t,
-			     struct proc *));
 
 void	mfs_init	__P((void));
 void	mfs_reinit	__P((void));

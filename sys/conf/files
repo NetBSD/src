@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.644 2003/11/16 12:10:41 tls Exp $
+#	$NetBSD: files,v 1.645 2003/12/04 19:38:23 atatat Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1110,6 +1110,7 @@ file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
+file	kern/init_sysctl.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_allocsys.c

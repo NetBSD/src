@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.53 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.54 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.53 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.54 2003/12/04 19:38:25 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.53 2003/10/14 14:02:56 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -97,11 +98,30 @@ struct vfsops mfs_vfsops = {
 	mfs_init,
 	mfs_reinit,
 	mfs_done,
-	ffs_sysctl,
+	NULL,
 	NULL,
 	ufs_check_export,
 	mfs_vnodeopv_descs,
 };
+
+SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_ALIAS,
+		       CTLTYPE_NODE, "mfs", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_VFS, 3, CTL_EOL);
+	/*
+	 * XXX the "1" and the "3" above could be dynamic, thereby
+	 * eliminating one more instance of the "number to vfs"
+	 * mapping problem, but they are in order as taken from
+	 * sys/mount.h
+	 */
+}
 
 /* 
  * Memory based filesystem initialization.
