@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.66 2001/11/13 02:09:13 lukem Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.67 2002/03/16 20:43:55 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.66 2001/11/13 02:09:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.67 2002/03/16 20:43:55 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -455,8 +455,8 @@ osf1_sys_wait4(p, v, retval)
 	if (SCARG(uap, rusage) == NULL)
 		SCARG(&a, rusage) = NULL;
 	else {
-		sg = stackgap_init(p->p_emul);
-		SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
+		sg = stackgap_init(p, 0);
+		SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
 	}
 
 	error = sys_wait4(p, &a, retval);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.21 2002/03/13 20:33:41 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.22 2002/03/16 20:43:52 christos Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.21 2002/03/13 20:33:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.22 2002/03/16 20:43:52 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -398,7 +398,7 @@ irix_syssgi_sysconf(name, p, retval)
 	int mib[2], value;
 	int len = sizeof(value);
 	struct sys___sysctl_args cup;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
@@ -452,14 +452,14 @@ irix_syssgi_sysconf(name, p, retval)
 		break;
 	}
 
-	SCARG(&cup, name) = stackgap_alloc(&sg, sizeof(mib));
+	SCARG(&cup, name) = stackgap_alloc(p, &sg, sizeof(mib));
 	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
 		return error;
 	SCARG(&cup, namelen) = sizeof(mib);
-	SCARG(&cup, old) = stackgap_alloc(&sg, sizeof(value));
+	SCARG(&cup, old) = stackgap_alloc(p, &sg, sizeof(value));
 	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
 		return error;
-	SCARG(&cup, oldlenp) = stackgap_alloc(&sg, sizeof(len));
+	SCARG(&cup, oldlenp) = stackgap_alloc(p, &sg, sizeof(len));
 	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
 		return error;
 	SCARG(&cup, new) = NULL;
