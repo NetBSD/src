@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.3 2004/12/20 23:05:41 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.4 2004/12/25 06:58:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.3 2004/12/20 23:05:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.4 2004/12/25 06:58:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	int i;
 	uint32_t wrbbp, rdbbp;
 
-	RTW_DPRINTF(("%s: bbp[%u] <- %u\n", __func__, addr, val));
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: bbp[%u] <- %u\n", __func__, addr, val));
 
 	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
 	KASSERT((val & ~PRESHIFT(RTW_BB_WR_MASK)) == 0);
@@ -91,8 +92,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	rdbbp = LSHIFT(addr, RTW_BB_ADDR_MASK) |
 	    RTW_BB_WR_MASK | RTW_BB_RD_MASK;
 
-	RTW_DPRINTF2(("%s: rdbbp = %#08x, wrbbp = %#08x\n", __func__,
-	    rdbbp, wrbbp));
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: rdbbp = %#08x, wrbbp = %#08x\n", __func__, rdbbp, wrbbp));
 
 	for (i = BBP_WRITE_ITERS; --i >= 0; ) {
 		RTW_RBW(regs, RTW_BB, RTW_BB);
@@ -103,7 +104,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 		delay(BBP_WRITE_DELAY);	/* 1 microsecond */
 		if (MASK_AND_RSHIFT(RTW_READ(regs, RTW_BB),
 		                    RTW_BB_RD_MASK) == val) {
-			RTW_DPRINTF2(("%s: finished in %dus\n", __func__,
+			RTW_DPRINTF(RTW_DEBUG_PHYIO,
+			    ("%s: finished in %dus\n", __func__,
 			    BBP_WRITE_DELAY * (BBP_WRITE_ITERS - i)));
 			return 0;
 		}
@@ -123,7 +125,8 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 
 	KASSERT(nbits <= 32);
 
-	RTW_DPRINTF(("%s: %u bits, %#08x, %s\n", __func__, nbits, bits,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: %u bits, %#08x, %s\n", __func__, nbits, bits,
 	    (lo_to_hi) ? "lo to hi" : "hi to lo"));
 
 	reg = RTW_PHYCFG_HST;
@@ -136,7 +139,8 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 		mask = 1 << (nbits - 1);
 
 	for (i = 0; i < nbits; i++) {
-		RTW_DPRINTF3(("%s: bits %#08x mask %#08x -> bit %#08x\n",
+		RTW_DPRINTF(RTW_DEBUG_PHYBITIO,
+		    ("%s: bits %#08x mask %#08x -> bit %#08x\n",
 		    __func__, bits, mask, bits & mask));
 
 		if ((bits & mask) != 0)
@@ -174,7 +178,7 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 {
 	int i;
 
-	RTW_DPRINTF(("%s: %#08x\n", __func__, reg));
+	RTW_DPRINTF(RTW_DEBUG_PHY, ("%s: %#08x\n", __func__, reg));
 
 	RTW_WRITE(regs, RTW_PHYCFG, RTW_PHYCFG_MAC_POLL | reg);
 
@@ -188,7 +192,8 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 
 	for (i = rtw_macbangbits_timeout; --i >= 0; delay(1)) {
 		if ((RTW_READ(regs, RTW_PHYCFG) & RTW_PHYCFG_MAC_POLL) == 0) {
-			RTW_DPRINTF2(("%s: finished in %dus\n", __func__,
+			RTW_DPRINTF(RTW_DEBUG_PHY,
+			    ("%s: finished in %dus\n", __func__,
 			    rtw_macbangbits_timeout - i));
 			return 0;
 		}
@@ -255,7 +260,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	int lo_to_hi;
 	u_int32_t bits;
 
-	RTW_DPRINTF(("%s: %s[%u] <- %#08x\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
 
 	switch (rfchipid) {
@@ -317,7 +322,7 @@ rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 {
 	uint32_t reg;
 
-	RTW_DPRINTF(("%s: %s[%u] <- %#08x\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
 
 	switch (rfchipid) {

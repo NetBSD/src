@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.2 2004/12/12 06:37:59 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.3 2004/12/25 06:58:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.2 2004/12/12 06:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.3 2004/12/25 06:58:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,9 +597,10 @@ rtw_phy_init(struct rtw_regs *regs, struct rtw_rf *rf, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	int rc;
-	RTW_DPRINTF(("%s: txpower %u csthresh %u freq %u antdiv %u dflantb %u "
-	             "pwrstate %s\n", __func__, opaque_txpower, cs_threshold,
-	             freq, antdiv, dflantb, rtw_pwrstate_string(power)));
+	RTW_DPRINTF(RTW_DEBUG_PHY,
+	    ("%s: txpower %u csthresh %u freq %u antdiv %u dflantb %u "
+	     "pwrstate %s\n", __func__, opaque_txpower, cs_threshold, freq,
+	     antdiv, dflantb, rtw_pwrstate_string(power)));
 
 	/* XXX is this really necessary? */
 	if ((rc = rtw_rf_txpower(rf, opaque_txpower)) != 0)
