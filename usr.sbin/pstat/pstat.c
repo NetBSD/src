@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.53 2000/10/11 20:23:55 is Exp $	*/
+/*	$NetBSD: pstat.c,v 1.54 2000/11/02 21:40:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.53 2000/10/11 20:23:55 is Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.54 2000/11/02 21:40:37 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,7 +762,8 @@ ttyprt(tp)
 {
 	int i, j;
 	pid_t pgid;
-	char *name, state[20];
+	char *name, state[20], buffer;
+	struct linesw t_linesw;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
 		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev));
@@ -784,29 +785,17 @@ ttyprt(tp)
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
 	(void)printf("%6d ", pgid);
-	switch (tp->t_line) {
-	case TTYDISC:
-		(void)printf("term\n");
-		break;
-	case TABLDISC:
-		(void)printf("tab\n");
-		break;
-	case SLIPDISC:
-		(void)printf("slip\n");
-		break;
-	case PPPDISC:
-		(void)printf("ppp\n");
-		break;
-	case STRIPDISC:
-		(void)printf("strip\n");
-		break;
-	case HDLCDISC:
-		(void)printf("hdlc\n");
-		break;
-	default:
-		(void)printf("%d\n", tp->t_line);
-		break;
+	KGET2(tp->t_linesw, &t_linesw, sizeof(t_linesw),
+		"line discipline switch table");
+	name = t_linesw.l_name;
+	for (;;) {
+		KGET2(name, &buffer, sizeof(buffer), "line discipline name");
+		if (buffer == '\0')
+			break;
+		(void)putchar(buffer);
+		name++;
 	}
+	(void)putchar('\n');
 }
 
 void
