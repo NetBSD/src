@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 1996/03/31 22:38:41 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 1996/04/01 17:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -55,15 +55,17 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+
 #include <sparc/sparc/auxreg.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
-#include <sparc/dev/dev_conf.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -983,14 +985,14 @@ fdcstatus(dv, n, s)
 		break;
 	case 2:
 		printf(" (st0 %b cyl %d)\n",
-		    (u_int)fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
-		    (u_int)fdc->sc_status[0], NE7_ST0BITS,
-		    (u_int)fdc->sc_status[1], NE7_ST1BITS,
-		    (u_int)fdc->sc_status[2], NE7_ST2BITS,
+		    fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[1], NE7_ST1BITS,
+		    fdc->sc_status[2], NE7_ST2BITS,
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 		break;
 #ifdef DIAGNOSTIC
@@ -1487,9 +1489,9 @@ fdcretry(fdc)
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
-		    (u_int)fdc->sc_status[0], NE7_ST0BITS,
-		    (u_int)fdc->sc_status[1], NE7_ST1BITS,
-		    (u_int)fdc->sc_status[2], NE7_ST2BITS,
+		    fdc->sc_status[0], NE7_ST0BITS,
+		    fdc->sc_status[1], NE7_ST1BITS,
+		    fdc->sc_status[2], NE7_ST2BITS,
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
