@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.8 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: IXM1200,v 1.9 2004/08/07 10:47:19 rearnsha Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -21,7 +21,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 options 	CPU_IXP12X0	# Support the IXP12X0
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
+makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
 
 # Architecture options
 
