@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.13 1999/12/03 19:02:49 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.1 1999/12/03 22:48:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -29,7 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
@@ -44,11 +43,10 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
-
 #include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+
+#include "locators.h"
 
 #ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbc */
 #include "pckbd.h"
@@ -71,17 +69,6 @@ struct pckbc_devcmd {
 	int status, responselen, responseidx;
 };
 
-struct pckbc_softc {
-	struct device sc_dv;
-	isa_chipset_tag_t sc_ic;
-
-	struct pckbc_internal *id;
-
-	int sc_irq[2];
-	pckbc_inputfcn inputhandler[2];
-	void *inputarg[2];
-};
-
 /* data per slave device */
 struct pckbc_slotdata {
 	int polling; /* don't read data port in interrupt handler */
@@ -93,42 +80,18 @@ struct pckbc_slotdata {
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
-/*
- * external representation (pckbc_tag_t),
- * needed early for console operation
- */
-struct pckbc_internal {
-	bus_space_tag_t t_iot;
-	bus_space_handle_t t_ioh_d, t_ioh_c; /* data port, cmd port */
-	u_char t_cmdbyte; /* shadow */
-
-	int t_haveaux; /* controller has an aux port */
-	struct pckbc_slotdata *t_slotdata[2];
-
-	struct pckbc_softc *t_sc; /* back pointer */
-};
-
-int pckbc_match __P((struct device *, struct cfdata *, void *));
-void pckbc_attach __P((struct device *, struct device *, void *));
 void pckbc_init_slotdata __P((struct pckbc_slotdata *));
 int pckbc_attach_slot __P((struct pckbc_softc *, pckbc_slot_t));
 int pckbc_submatch __P((struct device *, struct cfdata *, void *));
 int pckbcprint __P((void *, const char *));
 
-struct cfattach pckbc_ca = {
-	sizeof(struct pckbc_softc), pckbc_match, pckbc_attach,
-};
+struct pckbc_internal pckbc_consdata;
+int pckbc_console_attached;
 
-static int pckbc_console, pckbc_console_attached;
-static struct pckbc_internal pckbc_consdata;
+static int pckbc_console;
 static struct pckbc_slotdata pckbc_cons_slotdata;
-static int pckbc_is_console __P((bus_space_tag_t));
 
 static int pckbc_wait_output __P((bus_space_tag_t, bus_space_handle_t));
-static int pckbc_send_cmd __P((bus_space_tag_t, bus_space_handle_t, u_char));
-static int pckbc_poll_data1 __P((bus_space_tag_t,
-				 bus_space_handle_t, bus_space_handle_t,
-				 pckbc_slot_t, int));
 
 static int pckbc_get8042cmd __P((struct pckbc_internal *));
 static int pckbc_put8042cmd __P((struct pckbc_internal *));
@@ -141,8 +104,6 @@ void pckbc_cleanqueue __P((struct pckbc_slotdata *));
 void pckbc_cleanup __P((void *));
 int pckbc_cmdresponse __P((struct pckbc_internal *, pckbc_slot_t, u_char));
 void pckbc_start __P((struct pckbc_internal *, pckbc_slot_t));
-
-int pckbcintr __P((void *));
 
 const char *pckbc_slot_names[] = { "kbd", "aux" };
 
@@ -166,7 +127,7 @@ pckbc_wait_output(iot, ioh_c)
 	return (0);
 }
 
-static int
+int
 pckbc_send_cmd(iot, ioh_c, val)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_c;
@@ -178,7 +139,7 @@ pckbc_send_cmd(iot, ioh_c, val)
 	return (1);
 }
 
-static int
+int
 pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
@@ -278,66 +239,16 @@ pckbc_send_devcmd(t, slot, val)
 	return (1);
 }
 
-static int
-pckbc_is_console(iot)
+int
+pckbc_is_console(iot, addr)
 	bus_space_tag_t iot;
+	bus_addr_t addr;
 {
 	if (pckbc_console && !pckbc_console_attached &&
-	    pckbc_consdata.t_iot == iot)
+	    pckbc_consdata.t_iot == iot &&
+	    pckbc_consdata.t_addr == addr)
 		return (1);
 	return (0);
-}
-
-int
-pckbc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh_d, ioh_c;
-	int res, ok = 1;
-
-	/* If values are hardwired to something that they can't be, punt. */
-	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != IO_KBD) ||
-	    ia->ia_maddr != MADDRUNK ||
-	    (ia->ia_irq != IRQUNK && ia->ia_irq != 1 /* XXX */) ||
-	    ia->ia_drq != DRQUNK)
-		return (0);
-
-	if (!pckbc_is_console(iot)) {
-		if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d))
-			return (0);
-		if (bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c)) {
-			bus_space_unmap(iot, ioh_d, 1);
-			return (0);
-		}
-
-		/* flush KBC */
-		(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
-
-		/* KBC selftest */
-		if (!pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST)) {
-			ok = 0;
-			goto out;
-		}
-		res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
-		if (res != 0x55) {
-			printf("kbc selftest: %x\n", res);
-			ok = 0;
-		}
-out:
-		bus_space_unmap(iot, ioh_d, 1);
-		bus_space_unmap(iot, ioh_c, 1);
-	}
-
-	if (ok) {
-		ia->ia_iobase = IO_KBD;
-		ia->ia_iosize = 5;
-		ia->ia_msize = 0x0;
-	}
-	return (ok);
 }
 
 int
@@ -377,52 +288,19 @@ pckbc_attach_slot(sc, slot)
 }
 
 void
-pckbc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_attach(sc)
+	struct pckbc_softc *sc;
 {
-	struct pckbc_softc *sc = (struct pckbc_softc *)self;
-	struct isa_attach_args *ia = aux;
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
 	int res;
 	u_char cmdbits = 0;
 
-	sc->sc_ic = ia->ia_ic;
-	iot = ia->ia_iot;
-
-	/*
-	 * Set up IRQs for "normal" ISA.
-	 *
-	 * XXX The "aux" slot is different on the Alpha AXP150 Jensen.
-	 */
-	sc->sc_irq[PCKBC_KBD_SLOT] = 1;
-	sc->sc_irq[PCKBC_AUX_SLOT] = 12;
-
-	if (pckbc_is_console(iot)) {
-		t = &pckbc_consdata;
-		ioh_d = t->t_ioh_d;
-		ioh_c = t->t_ioh_c;
-		pckbc_console_attached = 1;
-		/* t->t_cmdbyte was initialized by cnattach */
-	} else {
-		if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d) ||
-		    bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c))
-			panic("pckbc_attach: couldn't map");
-
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
-		t->t_iot = iot;
-		t->t_ioh_d = ioh_d;
-		t->t_ioh_c = ioh_c;
-		t->t_cmdbyte = KC8_CPU; /* Enable ports */
-	}
-
-	t->t_sc = sc;
-	sc->id = t;
-
-	printf("\n");
+	t = sc->id;
+	iot = t->t_iot;
+	ioh_d = t->t_ioh_d;
+	ioh_c = t->t_ioh_c;
 
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
@@ -982,20 +860,11 @@ pckbc_set_inputhandler(self, slot, func, arg)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
-	void *rv;
 
-	if (slot != PCKBC_KBD_SLOT && slot != PCKBC_AUX_SLOT)
+	if (slot >= PCKBC_NSLOTS)
 		panic("pckbc_set_inputhandler: bad slot %d", slot);
 
-	rv = isa_intr_establish(sc->sc_ic, sc->sc_irq[slot], IST_EDGE,
-	    IPL_TTY, pckbcintr, sc);
-	if (rv == NULL) {
-		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
-	} else {
-		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
-		    sc->sc_irq[slot], pckbc_slot_names[slot]);
-	}
+	(*sc->intr_establish)(sc, slot);
 
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;
@@ -1052,16 +921,17 @@ pckbcintr(vsc)
 }
 
 int
-pckbc_cnattach(iot, slot)
+pckbc_cnattach(iot, addr, slot)
 	bus_space_tag_t iot;
+	bus_addr_t addr;
 	pckbc_slot_t slot;
 {
 	bus_space_handle_t ioh_d, ioh_c;
 	int res = 0;
 
-	if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d))
+	if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
                 return (ENXIO);
-	if (bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c)) {
+	if (bus_space_map(iot, addr + KBCMDP, 1, 0, &ioh_c)) {
 		bus_space_unmap(iot, ioh_d, 1);
                 return (ENXIO);
 	}
@@ -1069,6 +939,7 @@ pckbc_cnattach(iot, slot)
 	pckbc_consdata.t_iot = iot;
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
+	pckbc_consdata.t_addr = addr;
 
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
