@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.37 2000/04/04 19:22:51 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.38 2000/05/26 16:38:14 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -176,10 +176,8 @@ const struct tulip_pci_product {
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
 	  TULIP_CHIP_WB89C840F },
 
-#if 0
 	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
 	  TULIP_CHIP_DM9102 },
-#endif
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
 	  TULIP_CHIP_AL981 },
@@ -420,6 +418,11 @@ tlp_pci_attach(parent, self, aux)
 			sc->sc_chip = TULIP_CHIP_AX88141;
 		break;
 
+	case TULIP_CHIP_DM9102:
+		if (sc->sc_rev >= 0x30)
+			sc->sc_chip = TULIP_CHIP_DM9102A;
+		break;
+
 	default:
 		/* Nothing. */
 	}
@@ -462,6 +465,8 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
 	case TULIP_CHIP_MX98725:
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -813,6 +818,22 @@ tlp_pci_attach(parent, self, aux)
 		 * special registers.
 		 */
 		sc->sc_mediasw = &tlp_al981_mediasw;
+		break;
+
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		if (tlp_isv_srom_enaddr(sc, enaddr)) {
+			printf("%s: SROM not in ISV format\n",
+			    sc->sc_dev.dv_xname);
+			goto cant_cope;
+		}
+
+		/*
+		 * Davicom chips all have an internal MII interface
+		 * and a built-in PHY.  DM9102A also has a HomePNA
+		 * interface on an external MII interface.
+		 */
+		sc->sc_mediasw = &tlp_dm9102_mediasw;
 		break;
 
 	default:

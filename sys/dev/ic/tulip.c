@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.67 2000/05/25 18:46:07 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.68 2000/05/26 16:38:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -101,6 +101,9 @@ const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
 const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
     TLP_TXTHRESH_TAB_WINB;
 
+const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
+    TLP_TXTHRESH_TAB_DM9102;
+
 void	tlp_start __P((struct ifnet *));
 void	tlp_watchdog __P((struct ifnet *));
 int	tlp_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -130,6 +133,7 @@ void	tlp_txintr __P((struct tulip_softc *));
 void	tlp_mii_tick __P((void *));
 void	tlp_mii_statchg __P((struct device *));
 void	tlp_winb_mii_statchg __P((struct device *));
+void	tlp_dm9102_mii_statchg __P((struct device *));
 
 void	tlp_mii_getmedia __P((struct tulip_softc *, struct ifmediareq *));
 int	tlp_mii_setmedia __P((struct tulip_softc *));
@@ -146,10 +150,12 @@ void	tlp_al981_mii_writereg __P((struct device *, int, int, int));
 void	tlp_2114x_preinit __P((struct tulip_softc *));
 void	tlp_2114x_mii_preinit __P((struct tulip_softc *));
 void	tlp_pnic_preinit __P((struct tulip_softc *));
+void	tlp_dm9102_preinit __P((struct tulip_softc *));
 
 void	tlp_21140_reset __P((struct tulip_softc *));
 void	tlp_21142_reset __P((struct tulip_softc *));
 void	tlp_pmac_reset __P((struct tulip_softc *));
+void	tlp_dm9102_reset __P((struct tulip_softc *));
 
 #define	tlp_mchash(addr, sz)						\
 	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((sz) - 1))
@@ -219,6 +225,11 @@ tlp_attach(sc, enaddr)
 		sc->sc_txth = tlp_10_txthresh_tab;
 		break;
 
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		sc->sc_txth = tlp_dm9102_txthresh_tab;
+		break;
+
 	default:
 		sc->sc_txth = tlp_10_100_txthresh_tab;
 		break;
@@ -247,6 +258,11 @@ tlp_attach(sc, enaddr)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_statchg = tlp_winb_mii_statchg;
+		break;
+
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		sc->sc_statchg = tlp_dm9102_mii_statchg;
 		break;
 
 	default:
@@ -331,6 +347,24 @@ tlp_attach(sc, enaddr)
 		sc->sc_flags |= TULIPF_IC_FS;
 		break;
 
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		/*
+		 * Run these chips in chained mode.
+		 */
+		sc->sc_tdctl_ch = TDCTL_CH;
+		sc->sc_tdctl_er = 0;
+		sc->sc_preinit = tlp_dm9102_preinit;
+
+		/*
+		 * These chips have a broken bus interface, so we
+		 * can't use any optimized bus commands.  For this
+		 * reason, we tend to underrun pretty quickly, so
+		 * just to Store-and-Forward mode from the get-go.
+		 */
+		sc->sc_txthresh = TXTH_DM9102_SF;
+		break;
+
 	default:
 		/*
 		 * Default to running in ring mode.
@@ -397,9 +431,14 @@ tlp_attach(sc, enaddr)
 	 * 4-byte aligned.  We're almost guaranteed to have to copy
 	 * the packet in that case, so we just limit ourselves to
 	 * one segment.
+	 *
+	 * On the DM9102, the transmit logic can only handle one
+	 * DMA segment.
 	 */
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_X3201_3:
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
 		sc->sc_ntxsegs = 1;
 		break;
 
@@ -1076,6 +1115,17 @@ tlp_intr(arg)
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
+	/* Disable interrupts on the DM9102 (interrupt edge bug). */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		TULIP_WRITE(sc, CSR_INTEN, 0);
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
 	for (;;) {
 		status = TULIP_READ(sc, CSR_STATUS);
 		if (status)
@@ -1204,6 +1254,17 @@ tlp_intr(arg)
 		 *	use single-segment receive DMA, so this
 		 *	is mostly useless.
 		 */
+	}
+
+	/* Bring interrupts back up on the DM9102. */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		TULIP_WRITE(sc, CSR_INTEN, sc->sc_inten);
+		break;
+
+	default:
+		/* Nothing. */
 	}
 
 	/* Try to get more packets going. */
@@ -1659,6 +1720,20 @@ tlp_init(sc)
 	 * always work.
 	 */
 #endif
+
+	/*
+	 * Some chips have a broken bus interface.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		sc->sc_busmode = 0;
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
 	TULIP_WRITE(sc, CSR_BUSMODE, sc->sc_busmode);
 
 	/*
@@ -2839,7 +2914,7 @@ tlp_idle(sc, bits)
 	struct tulip_softc *sc;
 	u_int32_t bits;
 {
-	static const char *tx_state_names[] = {
+	static const char *tlp_tx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - WAIT",
@@ -2849,7 +2924,7 @@ tlp_idle(sc, bits)
 		"SUSPENDED",
 		"RUNNING - CLOSE",
 	};
-	static const char *rx_state_names[] = {
+	static const char *tlp_rx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - CHECK",
@@ -2859,8 +2934,43 @@ tlp_idle(sc, bits)
 		"RUNNING - FLUSH",
 		"RUNNING - QUEUE",
 	};
+	static const char *dm9102_tx_state_names[] = {
+		"STOPPED",
+		"RUNNING - FETCH",
+		"RUNNING - SETUP",
+		"RUNNING - READING",
+		"RUNNING - CLOSE - CLEAR OWNER",
+		"RUNNING - WAIT",
+		"RUNNING - CLOSE - WRITE STATUS",
+		"SUSPENDED",
+	};
+	static const char *dm9102_rx_state_names[] = {
+		"STOPPED",
+		"RUNNING - FETCH",
+		"RUNNING - WAIT",
+		"RUNNING - QUEUE",
+		"RUNNING - CLOSE - CLEAR OWNER",
+		"RUNNING - CLOSE - WRITE STATUS",
+		"SUSPENDED",
+		"RUNNING - FLUSH",
+	};
+
+	const char **tx_state_names, **rx_state_names;
 	u_int32_t csr, ackmask = 0;
 	int i;
+
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		tx_state_names = dm9102_tx_state_names;
+		rx_state_names = dm9102_rx_state_names;
+		break;
+
+	default:
+		tx_state_names = tlp_tx_state_names;
+		rx_state_names = tlp_rx_state_names;
+		break;
+	}
 
 	if (bits & OPMODE_ST)
 		ackmask |= STATUS_TPS;
@@ -3014,6 +3124,36 @@ tlp_winb_mii_statchg(self)
 	/*
 	 * Write new OPMODE bits.  This also restarts the transmit
 	 * and receive processes.
+	 */
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+/*
+ * tlp_dm9102_mii_statchg: [mii interface function]
+ *
+ *	Callback from PHY when media changes.  This version is
+ *	for the DM9102.
+ */
+void
+tlp_dm9102_mii_statchg(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/*
+	 * Don't idle the transmit and receive processes, here.  It
+	 * seems to fail, and just causes excess noise.
+	 */
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD);
+
+	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) != IFM_100_TX)
+		sc->sc_opmode |= OPMODE_TTM;
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		sc->sc_opmode |= OPMODE_FD;
+
+	/*
+	 * Write new OPMODE bits.
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 }
@@ -3326,6 +3466,36 @@ tlp_pnic_preinit(sc)
 }
 
 /*
+ * tlp_dm9102_preinit:
+ *
+ *	Pre-init function for the Davicom DM9102.
+ */
+void
+tlp_dm9102_preinit(sc)
+	struct tulip_softc *sc;
+{
+
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+		sc->sc_opmode |= OPMODE_MBO|OPMODE_HBD|OPMODE_PS;
+		break;
+
+	case TULIP_CHIP_DM9102A:
+		/*
+		 * XXX Figure out how to actually deal with the HomePNA
+		 * XXX portion of the DM9102A.
+		 */
+		sc->sc_opmode |= OPMODE_MBO|OPMODE_HBD;
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+/*
  * tlp_21140_reset:
  *
  *	Issue a reset sequence on the 21140 via the GPIO facility.
@@ -3419,6 +3589,21 @@ tlp_pmac_reset(sc)
 	default:
 		/* Nothing. */
 	}
+}
+
+/*
+ * tlp_dm9102_reset:
+ *
+ *	Reset routine for the Davicom DM9102.
+ */
+void
+tlp_dm9102_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	TULIP_WRITE(sc, CSR_DM_PHYSTAT, DM_PHYSTAT_GEPC|DM_PHYSTAT_GPED);
+	delay(100);
+	TULIP_WRITE(sc, CSR_DM_PHYSTAT, 0);
 }
 
 /*****************************************************************************
@@ -5386,4 +5571,89 @@ tlp_al981_tmsw_init(sc)
 		sc->sc_tick = tlp_mii_tick;
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
+}
+
+/*
+ * Davicom DM9102 media switch.  Internal PHY and possibly HomePNA.
+ */
+void	tlp_dm9102_tmsw_init __P((struct tulip_softc *));
+void	tlp_dm9102_tmsw_getmedia __P((struct tulip_softc *,
+	    struct ifmediareq *));
+int	tlp_dm9102_tmsw_setmedia __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_dm9102_mediasw = {
+	tlp_dm9102_tmsw_init, tlp_dm9102_tmsw_getmedia,
+	    tlp_dm9102_tmsw_setmedia
+};
+
+void
+tlp_dm9102_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int32_t opmode;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	/* PHY block already reset via tlp_reset(). */
+
+	/*
+	 * Configure OPMODE properly for the internal MII interface.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_DM9102:
+		opmode = OPMODE_MBO|OPMODE_HBD|OPMODE_PS;
+		break;
+
+	case TULIP_CHIP_DM9102A:
+		opmode = OPMODE_MBO|OPMODE_HBD;
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	TULIP_WRITE(sc, CSR_OPMODE, opmode);
+
+	/* Now, probe the internal MII for the internal PHY. */
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+
+	/*
+	 * XXX Figure out what to do about the HomePNA portion
+	 * XXX of the DM9102A.
+	 */
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
+}
+
+void
+tlp_dm9102_tmsw_getmedia(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+
+	/* XXX HomePNA on DM9102A. */
+	tlp_mii_getmedia(sc, ifmr);
+}
+
+int
+tlp_dm9102_tmsw_setmedia(sc)
+	struct tulip_softc *sc;
+{
+
+	/* XXX HomePNA on DM9102A. */
+	return (tlp_mii_setmedia(sc));
 }

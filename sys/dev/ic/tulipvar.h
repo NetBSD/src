@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.35 2000/05/25 18:46:08 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.36 2000/05/26 16:38:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -140,10 +140,11 @@ typedef enum {
 	TULIP_CHIP_MX98725   = 15,	/* Macronix 98725 PMAC */
 	TULIP_CHIP_WB89C840F = 16,	/* Winbond 89C840F */
 	TULIP_CHIP_DM9102    = 17,	/* Davicom DM9102 */
-	TULIP_CHIP_AL981     = 18,	/* ADMtek AL981 */
-	TULIP_CHIP_AX88140   = 19,	/* ASIX AX88140 */
-	TULIP_CHIP_AX88141   = 20,	/* ASIX AX88141 */
-	TULIP_CHIP_X3201_3   = 21,	/* Xircom X3201-3 */
+	TULIP_CHIP_DM9102A   = 18,	/* Davicom DM9102A */
+	TULIP_CHIP_AL981     = 19,	/* ADMtek AL981 */
+	TULIP_CHIP_AX88140   = 20,	/* ASIX AX88140 */
+	TULIP_CHIP_AX88141   = 21,	/* ASIX AX88141 */
+	TULIP_CHIP_X3201_3   = 22,	/* Xircom X3201-3 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -166,6 +167,7 @@ typedef enum {
 	"Macronix MX98725",						\
 	"Winbond 89C840F",						\
 	"Davicom DM9102",						\
+	"Davicom DM9102A",						\
 	"ADMtek AL981",							\
 	"ASIX AX88140",							\
 	"ASIX AX88141",							\
@@ -215,6 +217,19 @@ struct tulip_txthresh_tab {
 #define	TXTH_128		2
 #define	TXTH_160		3
 #define	TXTH_SF			4
+
+#define	TLP_TXTHRESH_TAB_DM9102 {					\
+	{ OPMODE_TR_72,		"72/128 bytes" },			\
+	{ OPMODE_TR_96,		"96/256 bytes" },			\
+	{ OPMODE_TR_128,	"128/512 bytes" },			\
+	{ OPMODE_SF,		"store and forward mode" },		\
+	{ 0,			NULL },					\
+}
+
+#define	TXTH_DM9102_72		0
+#define	TXTH_DM9102_96		1
+#define	TXTH_DM9102_128		2
+#define	TXTH_DM9102_SF		3
 
 /*
  * The Winbond 89C840F does transmit threshold control totally
@@ -555,6 +570,7 @@ extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 extern const struct tulip_mediasw tlp_pmac_mediasw;
 extern const struct tulip_mediasw tlp_al981_mediasw;
+extern const struct tulip_mediasw tlp_dm9102_mediasw;
 
 void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
 int	tlp_activate __P((struct device *, enum devact));
