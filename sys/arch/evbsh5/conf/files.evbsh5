@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh5,v 1.6 2002/10/22 15:19:06 scw Exp $
+#	$NetBSD: files.evbsh5,v 1.7 2002/11/23 09:05:04 scw Exp $
 
 # Config file for SuperH CAYMAN SH5 Evaluation Board
 
@@ -23,5 +23,9 @@ file	arch/evbsh5/dev/superio.c		superio		needs-flag
 
 attach	sm at sysfpga with sm_sysfpga
 file	arch/evbsh5/dev/if_sm_sysfpga.c		sm_sysfpga	needs-flag
+
+device	alphaled
+attach	alphaled at sysfpga with alphaled
+file	arch/evbsh5/dev/alphaled.c		alphaled
 
 include "arch/sh5/conf/majors.sh5"
