@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.29 1998/06/30 05:33:12 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.30 1998/07/28 18:37:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -220,7 +220,7 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	enum uio_seg segflg;
 	int ioflg;
 	struct ucred *cred;
-	int *aresid;
+	size_t *aresid;
 	struct proc *p;
 {
 	struct uio auio;
