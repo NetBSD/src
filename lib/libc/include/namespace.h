@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.34 1999/01/25 00:13:28 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.35 1999/02/04 05:09:26 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,13 @@
 #define MD5Final		_MD5Final
 #define MD5Init			_MD5Init
 #define MD5Update		_MD5Update
+#define SHA1Data		_SHA1Data
+#define SHA1End			_SHA1End
+#define SHA1File		_SHA1File
+#define SHA1Final		_SHA1Final
+#define SHA1Init		_SHA1Init
+#define SHA1Transform		_SHA1Transform
+#define SHA1Update		_SHA1Update
 #define a64l			_a64l
 #define alarm			_alarm
 #define alphasort		_alphasort
