@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1997/11/19 11:11:29 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 1998/01/06 07:16:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -728,7 +728,6 @@ pmap_activate(p)
 	pcb->pcb_cr3 = pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
 	if (p == curproc)
 		lcr3(pcb->pcb_cr3);
-	pmap->pm_pdchanged = FALSE;
 }
 
 /*
