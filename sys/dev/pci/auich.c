@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.27 2002/10/08 10:25:45 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.28 2002/10/08 12:31:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.27 2002/10/08 10:25:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.28 2002/10/08 12:31:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,10 +780,11 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		}
 
 		if (IS_FIXED_RATE(sc->codec_if)) {
-			return auich_set_rate(sc, mode, &p->hw_sample_rate);
+			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
-			return auich_set_rate(sc, mode, &p->sample_rate);
+			if (auich_set_rate(sc, mode, &p->sample_rate))
+				return EINVAL;
 		}
 	}
 
