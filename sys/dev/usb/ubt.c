@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.9 2004/01/02 02:36:25 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.10 2004/01/04 05:47:43 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.9 2004/01/02 02:36:25 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.10 2004/01/04 05:47:43 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ struct ubt_softc {
 	struct device		*sc_child;
 	struct btframe_callback_methods const *sc_cb;
 
-	unsigned int		sc_blocked;
-
 	int			sc_refcnt;
 	char			sc_dying;
 };
@@ -126,8 +124,6 @@ static u_int8_t* ubt_alloc_scodata(void*, size_t, struct btframe_buffer**);
 static int ubt_send_scodata(void*, struct btframe_buffer*, size_t);
 
 static int ubt_splraise(void);
-static unsigned int ubt_blockcb(void *h, unsigned int cbblocks);
-static unsigned int ubt_unblockcb(void *h, unsigned int cbblocks);
 
 static void ubt_event_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void ubt_aclrd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -138,7 +134,7 @@ static struct btframe_methods const ubt_methods = {
 	{ubt_alloc_control, ubt_send_control},
 	{ubt_alloc_acldata, ubt_send_acldata},
 	{ubt_alloc_scodata, ubt_send_scodata},
-	ubt_splraise, ubt_blockcb, ubt_unblockcb
+	ubt_splraise
 };
 
 USB_DECLARE_DRIVER(ubt);
@@ -651,7 +647,7 @@ ubt_aclrd_request(struct ubt_softc *sc)
 		    usbd_errstr(status)));
 
 	sc->sc_aclrd_running = 0;
-	sc->sc_blocked |= BT_CBBLOCK_ACL_DATA;
+	/* XXX now what!? */
 }
 
 static void
@@ -674,37 +670,9 @@ ubt_aclrd_cb(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
 
 	sc->sc_cb->bt_recvacldata(sc->sc_child, buf, (size_t)size);
 
-	/* Re-issue the request if not blocked */
-	if (!sc->sc_dying && !(sc->sc_blocked & BT_CBBLOCK_ACL_DATA))
+	/* Re-issue the request */
+	if (!sc->sc_dying)
 		ubt_aclrd_request(sc);
-}
-
-static unsigned int
-ubt_blockcb(void *h, unsigned int cbblocks)
-{
-	struct ubt_softc *sc = h;
-
-	sc->sc_blocked |= (cbblocks & BT_CBBLOCK_ACL_DATA);
-
-	return sc->sc_blocked;
-}
-
-static unsigned int
-ubt_unblockcb(void *h, unsigned int cbblocks)
-{
-	struct ubt_softc *sc = h;
-	unsigned int oblocks, changes;
-
-	oblocks = sc->sc_blocked;
-	sc->sc_blocked = oblocks & ~cbblocks;
-
-	changes = oblocks & cbblocks;
-
-	if (changes & BT_CBBLOCK_ACL_DATA)
-		/* Re-issue the request if action un-blocked reads */
-		ubt_aclrd_request(sc);
-
-	return sc->sc_blocked;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.4 2003/07/08 10:06:29 itojun Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.5 2004/01/04 05:47:43 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -42,9 +42,24 @@ struct btframe_buffer;
 struct btframe_channel {
 	/*
 	 * Allocate and transmit a buffer for transmission to
-	 * Bluetooth device
+	 * Bluetooth device.
+	 */
+
+	/*
+	 * bt_alloc() allocates a buffer suitable for passing to
+	 * bt_send() on this channel.  The required buffer size should
+	 * be passed in, and the method returns a pointer to the
+	 * buffer space, and a handle for the buffer to be passed to
+	 * bt_send().  Returns NULL on error (invalid size, or
+	 * allocation error).
 	 */
 	u_int8_t* (*bt_alloc)(void*, size_t, struct btframe_buffer **);
+
+	/*
+	 * bt_send() sends the data stored in the given buffer with
+	 * the given size.  Returns zero on success, or a standard
+	 * error number on failure.
+	 */
 	int (*bt_send)(void*, struct btframe_buffer *, size_t);
 };
 
@@ -57,25 +72,8 @@ struct btframe_methods {
 	struct btframe_channel bt_acldata;
 	struct btframe_channel bt_scodata;
 
+	/* Raise SPL to a level that will prevent callbacks */
 	int (*bt_splraise)(void);
-
-	/*
-	 * Attempt to activate flow control.  The driver MAY be able
-	 * to block certain events, but it isn't guaranteed, and even
-	 * blocked events may still be delivered if one was in
-	 * progress at the time.
-	 *
-	 *
-	 * In addition, it is possible for an error to occur
-	 * unblocking an event.
-	 *
-	 * Returns bit map of post-operation blocked/unblocked events.
-	 */
-#define BT_CBBLOCK_EVENT        1
-#define BT_CBBLOCK_ACL_DATA     2
-#define BT_CBBLOCK_SCO_DATA     4
-        unsigned int (*bt_blockcb)(void *, unsigned int);
-        unsigned int (*bt_unblockcb)(void *, unsigned int);
 };
 
 struct btframe_callback_methods {
@@ -92,9 +90,6 @@ struct bt_attach_args {
 };
 
 int bt_print(void *aux, const char *pnp);
-
-#define splbt spltty
-#define IPL_BT IPL_TTY
 
 #define BTGETW(x) (((u_int8_t const*)(x))[0] | ((u_int8_t const*)(x))[1] << 8)
 
