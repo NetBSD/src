@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.76 2003/04/10 22:06:53 christos Exp $
+# $NetBSD: DRACO,v 1.77 2003/04/16 20:43:29 is Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.9 2002/11/22 12:20:59 wiz Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.12 2003/04/16 20:42:34 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 
 maxusers	8
@@ -183,6 +183,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	SERIBUF_SIZE=4096
 #options 	SEROBUF_SIZE=32
 #options 	LEV6_DEFER	# defers l6 to l4 (below serial l5)
+
 
 options 	RETINACONSOLE	# enable code to allow retina to be console
 #options 	KFONT_8X11	# 8x11 font
