@@ -72,7 +72,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.2 1993/11/29 00:38:53 briggs Exp $
+ *	$Id: vmparam.h,v 1.3 1993/12/04 03:49:13 briggs Exp $
  */
 
 /*
@@ -91,7 +91,7 @@
  * beginning of the stack respectively.
  *
  */
-#define	USRTEXT		0
+#define	USRTEXT		8192
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
 						/* -1048576 */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
