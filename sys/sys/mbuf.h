@@ -1,7 +1,7 @@
-/*	$NetBSD: mbuf.h,v 1.40 1999/01/24 01:07:50 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.41 1999/01/24 01:08:22 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
