@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.14 2003/03/10 20:41:29 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.15 2003/03/10 21:18:50 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,26 +65,26 @@ extern size_t __mb_len_max_runtime;
  * The lower 8 bits of runetype[] contain the digit value of the rune.
  */
 typedef uint32_t _RuneType;
-#define	_CTYPE_A	UINT32_C(0x00000100)	/* Alpha */
-#define	_CTYPE_C	UINT32_C(0x00000200)	/* Control */
-#define	_CTYPE_D	UINT32_C(0x00000400)	/* Digit */
-#define	_CTYPE_G	UINT32_C(0x00000800)	/* Graph */
-#define	_CTYPE_L	UINT32_C(0x00001000)	/* Lower */
-#define	_CTYPE_P	UINT32_C(0x00002000)	/* Punct */
-#define	_CTYPE_S	UINT32_C(0x00004000)	/* Space */
-#define	_CTYPE_U	UINT32_C(0x00008000)	/* Upper */
-#define	_CTYPE_X	UINT32_C(0x00010000)	/* X digit */
-#define	_CTYPE_B	UINT32_C(0x00020000)	/* Blank */
-#define	_CTYPE_R	UINT32_C(0x00040000)	/* Print */
-#define	_CTYPE_I	UINT32_C(0x00080000)	/* Ideogram */
-#define	_CTYPE_T	UINT32_C(0x00100000)	/* Special */
-#define	_CTYPE_Q	UINT32_C(0x00200000)	/* Phonogram */
-#define	_CTYPE_SWM	UINT32_C(0xc0000000)/* Mask to get screen width data */
-#define	_CTYPE_SWS	30		/* Bits to shift to get width */
-#define	_CTYPE_SW0	UINT32_C(0x00000000)	/* 0 width character */
-#define	_CTYPE_SW1	UINT32_C(0x40000000)	/* 1 width character */
-#define	_CTYPE_SW2	UINT32_C(0x80000000)	/* 2 width character */
-#define	_CTYPE_SW3	UINT32_C(0xc0000000)	/* 3 width character */
+#define	_RUNETYPE_A	UINT32_C(0x00000100)	/* Alpha */
+#define	_RUNETYPE_C	UINT32_C(0x00000200)	/* Control */
+#define	_RUNETYPE_D	UINT32_C(0x00000400)	/* Digit */
+#define	_RUNETYPE_G	UINT32_C(0x00000800)	/* Graph */
+#define	_RUNETYPE_L	UINT32_C(0x00001000)	/* Lower */
+#define	_RUNETYPE_P	UINT32_C(0x00002000)	/* Punct */
+#define	_RUNETYPE_S	UINT32_C(0x00004000)	/* Space */
+#define	_RUNETYPE_U	UINT32_C(0x00008000)	/* Upper */
+#define	_RUNETYPE_X	UINT32_C(0x00010000)	/* X digit */
+#define	_RUNETYPE_B	UINT32_C(0x00020000)	/* Blank */
+#define	_RUNETYPE_R	UINT32_C(0x00040000)	/* Print */
+#define	_RUNETYPE_I	UINT32_C(0x00080000)	/* Ideogram */
+#define	_RUNETYPE_T	UINT32_C(0x00100000)	/* Special */
+#define	_RUNETYPE_Q	UINT32_C(0x00200000)	/* Phonogram */
+#define	_RUNETYPE_SWM	UINT32_C(0xc0000000)/* Mask to get screen width data */
+#define	_RUNETYPE_SWS	30		/* Bits to shift to get width */
+#define	_RUNETYPE_SW0	UINT32_C(0x00000000)	/* 0 width character */
+#define	_RUNETYPE_SW1	UINT32_C(0x40000000)	/* 1 width character */
+#define	_RUNETYPE_SW2	UINT32_C(0x80000000)	/* 2 width character */
+#define	_RUNETYPE_SW3	UINT32_C(0xc0000000)	/* 3 width character */
 
 
 /*
