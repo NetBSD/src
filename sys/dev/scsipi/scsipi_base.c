@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.60 2001/10/14 20:31:24 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.61 2001/10/14 21:17:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2075,6 +2075,11 @@ scsipi_thread_call_callback(chan, callback, arg)
 	int s;
 
 	s = splbio();
+	if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+		/* kernel thread doesn't exist yet */
+		splx(s);
+		return ESRCH;
+	}
 	if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
 		splx(s);
 		return EBUSY;
