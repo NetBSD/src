@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.27 1999/04/18 00:35:30 ad Exp $
+$NetBSD: isapnpdevs,v 1.28 1999/08/24 12:46:55 rh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ devlogic	wss	AZT0001		1	Aztech AZT2320 AUDIO
 devlogic	wss	CSC0000		0	Windows Sound System
 devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
 devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
+devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB
 
 /*
  * ym
