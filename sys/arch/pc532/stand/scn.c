@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.2 1994/10/26 08:25:52 cgd Exp $	*/
+/*	$NetBSD: scn.c,v 1.3 1995/08/29 21:55:49 phil Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.
@@ -70,7 +70,8 @@ scninit(cp)
 	/* leave things they way the PROM set them */
 }
 
-scngetchar()
+scngetchar(cp)
+	struct consdev *cp;
 {
 	register unsigned char * volatile scn = scncnaddr;
 
@@ -79,7 +80,8 @@ scngetchar()
 	return scn[SCN_DATA];
 }
 
-scnputchar(c)
+scnputchar(cp, c)
+	struct consdev *cp;
 	register int c;
 {
 	register unsigned char * volatile scn = scncnaddr;

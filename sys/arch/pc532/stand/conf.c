@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1994/10/26 08:25:45 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1995/08/29 21:55:42 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,15 +38,22 @@
 #include <sys/param.h>
 #include "stand.h"
 
+int	rdstrategy __P((void *devdata, int rw,
+			daddr_t blk, u_int size, char *buf, u_int *rsize));
+int	rdopen __P((struct open_file *f, ...));
+
 int	sdstrategy __P((void *devdata, int rw,
 			daddr_t blk, u_int size, char *buf, u_int *rsize));
 int	sdopen __P((struct open_file *f, ...));
 
-extern int	sdstrategy(), sdopen();
 #define	sdioctl	noioctl
+#define rdioctl noioctl
 
 struct devsw devsw[] = {
-	{ "sd",	sdstrategy,	sdopen,	nullsys,	sdioctl }, /*0*/
+	{ "sd",	sdstrategy, sdopen, nullsys, sdioctl }, /*0*/
+	{ NULL,	      NULL,   NULL,    NULL,    NULL },
+	{ NULL,	      NULL,   NULL,    NULL,    NULL },
+	{ "rd",	rdstrategy, rdopen, nullsys, rdioctl }, /*3*/
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
