@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 1998/09/09 11:17:31 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.12 1998/11/11 06:43:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -246,22 +246,29 @@ cpu_fork(p1, p2)
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork()\n");
 #endif
-	write_user_windows();
+	if (p1 == curproc) {
+		write_user_windows();
 #if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-	/* 
-	 * We should not need to copy this out cause we should be able to
-	 * directly reload our windows from the pcb.
-	 */
-	rwindow_save(p1);
+		/* Make sure our D$ is not polluted w/bad data */
+		blast_vcache();
+		/* 
+		 * We should not need to copy this out cause we should be
+		 * able to directly reload our windows from the pcb.
+		 */
+		rwindow_save(p1);
 #endif
 
-	/*
-	 * We're in the kernel, so we don't really care about %ccr or %asi.
-	 * We do want to duplicate %pstate and %cwp.  */
-	opcb->pcb_pstate = getpstate();
-	opcb->pcb_cwp = getcwp();
+		/*
+		 * We're in the kernel, so we don't really care about
+		 * %ccr or %asi.  We do want to duplicate %pstate and %cwp.
+		 */
+		opcb->pcb_pstate = getpstate();
+		opcb->pcb_cwp = getcwp();
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */
 	opcb->lastcall = cpu_forkname;
@@ -331,7 +338,7 @@ cpu_fork(p1, p2)
  *
  * Arrange for in-kernel execution of a process to continue at the
  * named pc, as if the code at that address were called as a function
- * with the current process's process pointer as an argument.
+ * with the supplied argument.
  *
  * Note that it's assumed that when the named process returns,
  * we immediately return to user mode.
@@ -339,9 +346,10 @@ cpu_fork(p1, p2)
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb;
 	struct rwindow *rp;
@@ -355,7 +363,7 @@ cpu_set_kpc(p, pc)
 
 	rp = (struct rwindow *)((u_long)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (long)pc;		/* Function to call */
-	rp->rw_local[1] = (long)p;		/* and its argument */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
 
 	/*
 	 * Frob PCB:

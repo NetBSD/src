@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 1998/09/30 23:47:36 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 1998/11/11 06:43:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -169,7 +169,7 @@ GLOBAL(proc_do_uret)
  * When we get here, the stack has:
  *
  * SP+8:	switchframe from before cpu_set_kpc
- * SP+4:	void *proc;
+ * SP+4:	void *arg;
  * SP:  	u_long func;
  *
  * On entry, the switchframe pushed by cpu_set_kpc has already been
@@ -179,7 +179,7 @@ GLOBAL(proc_do_uret)
  */
 GLOBAL(proc_trampoline)
 	movl	sp@+,a0			| function pointer
-	jbsr	a0@			| (*func)(procp)
+	jbsr	a0@			| (*func)(arg)
 	addql	#4,sp			| toss the arg
 	rts				| as cpu_switch would do
 

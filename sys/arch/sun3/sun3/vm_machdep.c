@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1998/09/09 11:17:32 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 1998/11/11 06:43:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -96,6 +96,10 @@ cpu_fork(p1, p2)
 	 */
 	if (p1 == curproc)
 		savectx(p1pcb);
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 
 	/* copy over the machdep part of struct proc */
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -137,15 +141,15 @@ cpu_fork(p1, p2)
 	 * onto the stack of p2, very much like signal delivery.
 	 * When p2 runs, it will find itself in child_return().
 	 */
-	cpu_set_kpc(p2, child_return);
+	cpu_set_kpc(p2, child_return, p2);
 }
 
 /*
  * cpu_set_kpc:
  *
  * Arrange for in-kernel execution of a process to continue in the
- * named function, as if that function were called with one argument,
- * the current process's process pointer.
+ * named function, as if that function were called with the supplied
+ * argument.
  *
  * Note that it's assumed that when the named process returns,
  * rei() should be invoked, to return to user mode.  That is
@@ -162,15 +166,16 @@ cpu_fork(p1, p2)
  * before we "pushed" this call.
  */
 void
-cpu_set_kpc(proc, func)
+cpu_set_kpc(proc, func, arg)
 	struct proc *proc;
-	void (*func)(struct proc *);
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct pcb *pcbp;
 	struct ksigframe {
 		struct switchframe sf;
-		void (*func)(struct proc *);
-		void *proc;
+		void (*func) __P((void *));
+		void *arg;
 	} *ksfp;
 
 	pcbp = &proc->p_addr->u_pcb;
@@ -182,7 +187,7 @@ cpu_set_kpc(proc, func)
 	/* Now fill it in for proc_trampoline. */
 	ksfp->sf.sf_pc = (u_int)proc_trampoline;
 	ksfp->func = func;
-	ksfp->proc = proc;
+	ksfp->arg  = arg;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1998/09/30 18:38:57 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.42 1998/11/11 06:43:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -219,8 +219,15 @@ cpu_fork(p1, p2)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-	write_user_windows();
-	opcb->pcb_psr = getpsr();
+	if (p1 == curproc) {
+		write_user_windows();
+		opcb->pcb_psr = getpsr();
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
 		if (p1 == cpuinfo.fpproc)
@@ -281,7 +288,7 @@ cpu_fork(p1, p2)
  *
  * Arrange for in-kernel execution of a process to continue at the
  * named pc, as if the code at that address were called as a function
- * with the current process's process pointer as an argument.
+ * with the supplied argument.
  *
  * Note that it's assumed that when the named process returns,
  * we immediately return to user mode.
@@ -289,9 +296,10 @@ cpu_fork(p1, p2)
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb;
 	struct rwindow *rp;
@@ -300,7 +308,7 @@ cpu_set_kpc(p, pc)
 
 	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)pc;		/* Function to call */
-	rp->rw_local[1] = (int)p;		/* and its argument */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
 
 	/*
 	 * Frob PCB:

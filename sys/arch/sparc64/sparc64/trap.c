@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1998/10/08 02:31:41 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.19 1998/11/11 06:43:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2084,9 +2084,10 @@ syscall(code, tf, pc)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 
 	/*
 	 * Return values in the frame set by cpu_fork().

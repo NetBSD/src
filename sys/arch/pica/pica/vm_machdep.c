@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1998/07/28 18:34:57 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 1998/11/11 06:43:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,7 +117,7 @@ cpu_fork(p1, p2)
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
 #ifdef DIAGNOSTIC
-	if (p1 != curproc)
+	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
 	if (copykstack(up)) {

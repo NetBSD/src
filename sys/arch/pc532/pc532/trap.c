@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1998/09/02 19:17:21 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 1998/11/11 06:43:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -643,9 +643,11 @@ syscall(frame)
 }
 
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+
 	p->p_md.md_regs->r_r0 = 0;
 	p->p_md.md_regs->r_psr &= ~PSL_C;
 
