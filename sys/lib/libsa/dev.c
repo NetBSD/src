@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.3 1994/10/26 05:44:41 cgd Exp $	*/
+/*	$NetBSD: dev.c,v 1.4 1994/10/30 21:48:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -57,7 +57,7 @@ nullsys()
 int
 noioctl(f, cmd, data)
 	struct open_file *f;
-	int cmd;
+	u_long cmd;
 	void *data;
 {
 	return (EINVAL);

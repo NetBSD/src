@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47 1994/10/27 04:15:11 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.48 1994/10/30 21:43:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -52,7 +52,7 @@ int	lkmenodev();
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, int, caddr_t, int, struct proc *))
+	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
 #define	dev_type_dump(n)	int n()

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.3 1994/06/29 06:47:13 cgd Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.4 1994/10/30 21:50:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -137,7 +137,7 @@ int
 mfs_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

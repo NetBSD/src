@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.25 1994/07/04 22:26:38 cgd Exp $	*/
+/*	$NetBSD: vnode.h,v 1.26 1994/10/30 21:50:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -385,7 +385,8 @@ int	vn_bwrite __P((struct vop_bwrite_args *ap));
 int 	vn_close __P((struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
-int	vn_ioctl __P((struct file *fp, int com, caddr_t data, struct proc *p));
+int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
+	    struct proc *p));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,

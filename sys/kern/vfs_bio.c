@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.32 1994/08/29 01:47:02 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.33 1994/10/30 21:48:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -67,7 +67,7 @@
  * Definitions for the buffer hash lists.
  */
 #define	BUFHASH(dvp, lbn)	\
-	(&bufhashtbl[((int)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
+	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.13 1994/10/26 02:45:14 cgd Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.14 1994/10/30 21:44:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1237,7 +1237,7 @@ bsdtohpuxstat(sb, hsb)
 }
 
 hpuxtobsdioctl(com)
-	int com;
+	u_long com;
 {
 	switch (com) {
 	case HPUXTIOCSLTC:
@@ -1272,7 +1272,7 @@ hpuxtobsdioctl(com)
  */
 struct hpux_ioctl_args {
 	int	fdes;
-	int	cmd;
+	u_long	cmd;
 	caddr_t	cmarg;
 };
 hpux_ioctl(p, uap, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.21 1994/10/28 23:39:59 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.22 1994/10/30 21:44:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -129,7 +129,7 @@ struct mcd_softc {
 int mcdopen __P((dev_t, int, int, struct proc *));
 int mcdclose __P((dev_t, int, int));
 int mcd_start __P((struct mcd_softc *));
-int mcdioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int mcdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int mcd_getdisklabel __P((struct mcd_softc *));
 int mcdsize __P((dev_t));
 void mcd_configure __P((struct mcd_softc *));
@@ -413,7 +413,7 @@ loop:
 int
 mcdioctl(dev, cmd, addr, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flags;
 	struct proc *p;

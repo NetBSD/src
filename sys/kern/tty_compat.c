@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.16 1994/08/03 03:41:34 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.17 1994/10/30 21:47:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -83,7 +83,7 @@ static int compatspcodes[] = {
 /*ARGSUSED*/
 ttcompat(tp, com, data, flag, p)
 	register struct tty *tp;
-	int com;
+	u_long com;
 	caddr_t data;
 	int flag;
 	struct proc *p;

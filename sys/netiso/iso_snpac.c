@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.6 1994/06/29 06:39:51 cgd Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.7 1994/10/30 21:49:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -488,7 +488,7 @@ snpac_fixdstandmask(nsellength)
  */
 snpac_ioctl (so, cmd, data)
 struct socket *so;
-int		cmd;	/* ioctl to process */
+u_long	cmd;	/* ioctl to process */
 caddr_t	data;	/* data for the cmd */
 {
 	register struct systype_req *rq = (struct systype_req *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.8 1994/10/27 04:17:04 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.9 1994/10/30 21:43:32 cgd Exp $	*/
 
 /*
  * cyclades cyclom-y serial driver
@@ -1060,7 +1060,7 @@ cyintr(int unit)
 
 
 int
-cyioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int		unit = UNIT(dev);
 	struct cy	*infop = info[unit];

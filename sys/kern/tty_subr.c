@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.10 1994/10/02 04:11:53 cgd Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.11 1994/10/30 21:48:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -38,7 +38,9 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#ifdef REAL_CLISTS
 #include <sys/clist.h>
+#endif
 #include <sys/malloc.h>
 
 /*

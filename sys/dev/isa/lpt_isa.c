@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.23 1994/10/27 04:17:54 cgd Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.24 1994/10/30 21:44:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -531,7 +531,7 @@ lptintr(sc)
 int
 lptioctl(dev, cmd, data, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 {

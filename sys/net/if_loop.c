@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.12 1994/06/29 06:36:14 cgd Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.13 1994/10/30 21:48:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -209,7 +209,7 @@ lortrequest(cmd, rt, sa)
 int
 loioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa;

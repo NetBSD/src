@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.9 1994/06/29 06:41:42 cgd Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.10 1994/10/30 21:49:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -120,7 +120,7 @@ nsipattach()
 /* ARGSUSED */
 nsipioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	int error = 0;

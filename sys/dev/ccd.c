@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.4 1994/08/14 07:41:08 mycroft Exp $      */
+/*	$NetBSD: ccd.c,v 1.5 1994/10/30 21:47:27 cgd Exp $      */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -686,7 +686,7 @@ ccdwrite(dev, uio)
 
 ccdioctl(dev, cmd, data, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 {

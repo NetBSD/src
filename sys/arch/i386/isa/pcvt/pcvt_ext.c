@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.5 1994/10/27 04:18:48 cgd Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.6 1994/10/30 21:44:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2285,7 +2285,7 @@ vgapage(int new_screen)
  *	ioctl handling for VT_USL mode
  *---------------------------------------------------------------------------*/
 int
-usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int i, j, error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.12 1994/09/28 00:44:30 deraadt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.13 1994/10/30 21:48:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -602,8 +602,12 @@ m_devget(buf, totlen, off0, ifp, copy)
 	cp = buf;
 	epkt = cp + totlen;
 	if (off) {
-		cp += off + 2 * sizeof(u_short);
-		totlen -= 2 * sizeof(u_short);
+		/*
+		 * If 'off' is non-zero, packet is trailer-encapsulated,
+		 * so we have to skip the type and length fields.
+		 */
+		cp += off + 2 * sizeof(u_int16_t);
+		totlen -= 2 * sizeof(u_int16_t);
 	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.8 1994/08/30 03:07:00 mycroft Exp $	*/
+/*	$NetBSD: file.h,v 1.9 1994/10/30 21:49:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,7 +62,7 @@ struct file {
 					    struct ucred *cred));
 		int	(*fo_write)	__P((struct file *fp, struct uio *uio,
 					    struct ucred *cred));
-		int	(*fo_ioctl)	__P((struct file *fp, int com,
+		int	(*fo_ioctl)	__P((struct file *fp, u_long com,
 					    caddr_t data, struct proc *p));
 		int	(*fo_select)	__P((struct file *fp, int which,
 					    struct proc *p));

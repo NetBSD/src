@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.8 1994/10/27 04:18:51 cgd Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.9 1994/10/30 21:44:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1482,7 +1482,7 @@ int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
-int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
+int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
 int	pcrint ( void );
 int	pcparam ( struct tty *tp, struct termios *t );
@@ -1500,7 +1500,7 @@ void	consinit ( void );
 
 #if PCVT_USL_VT_COMPAT
 void	switch_screen ( int n, int dontsave );
-int	usl_vt_ioctl (Dev_t dev, int cmd, caddr_t data, int flag,
+int	usl_vt_ioctl (Dev_t dev, u_long cmd, caddr_t data, int flag,
 		      struct proc *);
 int	vt_activate ( int newscreen );
 int	vgapage ( int n );
@@ -1510,7 +1510,7 @@ void	vgapage ( int n );
 #endif /* PCVT_USL_VT_COMPAT */
 
 #if PCVT_EMU_MOUSE
-int mouse_ioctl ( Dev_t dev, int cmd, caddr_t data );
+int mouse_ioctl ( Dev_t dev, u_long cmd, caddr_t data );
 #endif /*  PCVT_EMU_MOUSE */
 
 #if PCVT_SCREENSAVER
@@ -1538,7 +1538,7 @@ void	init_ufkl ( struct video_state *svsp );
 int	kbd_cmd ( int val );
 void	kbd_code_init ( void );
 void	kbd_code_init1 ( void );
-int	kbdioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
+int	kbdioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
 void	loadchar ( int fontset, int character, int char_scanlines,
 		   u_char *char_table );
 #if PCVT_NEEDPG
@@ -1574,7 +1574,7 @@ void	vga_screen_off ( void );
 void	vga_screen_on ( void );
 char   *vga_string ( int number );
 int	vga_test ( void );
-int	vgaioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
+int	vgaioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
 void	vgapaletteio ( unsigned idx, struct rgb *val, int writeit );
 void	vt_aln ( struct video_state *svsp );
 void	vt_clearudk ( struct video_state *svsp );

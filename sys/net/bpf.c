@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.15 1994/07/15 22:29:32 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.16 1994/10/30 21:48:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -586,7 +586,7 @@ reset_d(d)
 int
 bpfioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

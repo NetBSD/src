@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.31 1994/07/16 06:26:28 cgd Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.32 1994/10/30 21:48:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -341,7 +341,7 @@ slclose(tp)
 int
 sltioctl(tp, cmd, data, flag)
 	struct tty *tp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 {
@@ -859,7 +859,7 @@ newpack:
 int
 slioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;

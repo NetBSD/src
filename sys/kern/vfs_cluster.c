@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.3 1994/08/21 06:38:42 cgd Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.4 1994/10/30 21:48:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -137,7 +137,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		trace(TR_BREADHIT, pack(vp, size), lblkno);
 		flags |= B_ASYNC;
 		ioblkno = lblkno + (vp->v_ralen ? vp->v_ralen : 1);
-		alreadyincore = (int)incore(vp, ioblkno);
+		alreadyincore = (long)incore(vp, ioblkno);
 		bp = NULL;
 	} else {
 		/* Block wasn't in cache, case 3, 4, 5. */

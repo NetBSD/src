@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.6 1994/10/27 04:18:47 cgd Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.7 1994/10/30 21:44:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -462,7 +462,7 @@ pcwrite(Dev_t dev, struct uio *uio, int flag)
 }
 
 int
-pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	register error;
 	register struct tty *tp;

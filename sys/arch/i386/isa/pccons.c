@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.71 1994/10/27 04:18:06 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.72 1994/10/30 21:44:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -556,7 +556,7 @@ pcrint()
 int
 pcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

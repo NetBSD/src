@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.14 1994/09/18 04:40:47 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.15 1994/10/30 21:48:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -361,7 +361,7 @@ vn_stat(vp, sb, p)
  */
 vn_ioctl(fp, com, data, p)
 	struct file *fp;
-	int com;
+	u_long com;
 	caddr_t data;
 	struct proc *p;
 {

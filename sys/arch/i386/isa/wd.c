@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.100 1994/10/27 04:18:26 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.101 1994/10/30 21:44:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -1152,7 +1152,7 @@ wdclose(dev, flag, fmt)
 int
 wdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.8 1994/06/29 06:39:37 cgd Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.9 1994/10/30 21:49:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -174,14 +174,14 @@ eonattach()
  */
 eonioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 {
 	int s = splimp();
 	register int error = 0;
 
 	IFDEBUG(D_EON)
-		printf("eonioctl (cmd 0x%x) \n", cmd);
+		printf("eonioctl (cmd 0x%lx) \n", cmd);
 	ENDDEBUG
 
 	switch (cmd) {

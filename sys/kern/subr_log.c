@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.7 1994/06/29 06:32:57 cgd Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.8 1994/10/30 21:47:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -194,7 +194,7 @@ logwakeup()
 int
 logioctl(dev, com, data, flag)
 	dev_t dev;
-	int com;
+	u_long com;
 	caddr_t data;
 	int flag;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.19 1994/07/27 09:05:33 deraadt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.20 1994/10/30 21:48:52 cgd Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -134,12 +134,12 @@ int	pppopen __P((dev_t dev, struct tty *tp));
 void	pppclose __P((struct tty *tp, int flag));
 int	pppread __P((struct tty *tp, struct uio *uio, int flag));
 int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
-int	ppptioctl __P((struct tty *tp, int cmd, caddr_t data, int flag,
+int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data, int flag,
 		       struct proc *));
 int	pppoutput __P((struct ifnet *ifp, struct mbuf *m0,
 		       struct sockaddr *dst, struct rtentry *rtp));
 void	pppinput __P((int c, struct tty *tp));
-int	pppioctl __P((struct ifnet *ifp, int cmd, caddr_t data));
+int	pppioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 void	pppstart __P((struct tty *tp));
 
 static int	pppasyncstart __P((struct ppp_softc *));
@@ -451,8 +451,9 @@ pppwrite(tp, uio, flag)
 int
 ppptioctl(tp, cmd, data, flag, p)
     struct tty *tp;
+    u_long cmd;
     caddr_t data;
-    int cmd, flag;
+    int flag;
     struct proc *p;
 {
     register struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
@@ -1438,7 +1439,7 @@ pppinput(c, tp)
  */
 pppioctl(ifp, cmd, data)
     register struct ifnet *ifp;
-    int cmd;
+    u_long cmd;
     caddr_t data;
 {
     struct proc *p = curproc;	/* XXX */

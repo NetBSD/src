@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.6 1994/10/20 04:26:40 cgd Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.7 1994/10/30 21:48:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -751,7 +751,7 @@ int
 union_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

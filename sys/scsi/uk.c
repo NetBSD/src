@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.8 1994/10/20 20:31:38 mycroft Exp $	*/
+/*	$NetBSD: uk.c,v 1.9 1994/10/30 21:49:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -154,7 +154,7 @@ ukclose(dev)
 int
 ukioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

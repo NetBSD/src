@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.38 1994/10/20 20:31:34 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.39 1994/10/30 21:49:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1090,7 +1090,7 @@ ststart(unit)
 int 
 stioctl(dev, cmd, arg, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t arg;
 	int flag;
 {

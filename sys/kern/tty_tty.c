@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.10 1994/06/29 06:33:31 cgd Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.11 1994/10/30 21:48:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -116,7 +116,7 @@ cttywrite(dev, uio, flag)
 /*ARGSUSED*/
 cttyioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;

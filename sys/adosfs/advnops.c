@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.13 1994/10/29 07:58:27 cgd Exp $	*/
+/*	$NetBSD: advnops.c,v 1.14 1994/10/30 21:43:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -238,7 +238,7 @@ int
 adosfs_ioctl(sp)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

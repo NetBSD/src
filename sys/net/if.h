@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.12 1994/10/19 20:57:56 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.13 1994/10/30 21:48:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -118,7 +118,7 @@ struct ifnet {
 	int	(*if_start)		/* initiate output routine */
 		__P((struct ifnet *));
 	int	(*if_ioctl)		/* ioctl routine */
-		__P((struct ifnet *, int, caddr_t));
+		__P((struct ifnet *, u_long, caddr_t));
 	int	(*if_reset)		/* XXX bus reset routine */
 		__P((int));
 	int	(*if_watchdog)		/* timer routine */
@@ -329,7 +329,7 @@ void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
 int	ifconf __P((int, caddr_t));
 void	ifinit __P((void));
-int	ifioctl __P((struct socket *, int, caddr_t, struct proc *));
+int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((char *));
 
@@ -343,7 +343,7 @@ struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 
-int	loioctl __P((struct ifnet *, int, caddr_t));
+int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));
 int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));

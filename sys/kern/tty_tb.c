@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.14 1994/06/29 06:33:30 cgd Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.15 1994/10/30 21:48:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -305,7 +305,7 @@ poldecode(tc, cp, polpos)
 /*ARGSUSED*/
 tbtioctl(tp, cmd, data, flag, p)
 	struct tty *tp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

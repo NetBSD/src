@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.11 1994/06/29 06:33:08 cgd Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.12 1994/10/30 21:47:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@ soo_write(fp, uio, cred)
 int
 soo_ioctl(fp, cmd, data, p)
 	struct file *fp;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 	struct proc *p;
 {

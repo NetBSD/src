@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.3 1994/10/20 04:23:26 cgd Exp $
+#	$NetBSD: vnode_if.src,v 1.4 1994/10/30 21:48:17 cgd Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ vop_write {
 
 vop_ioctl {
 	IN struct vnode *vp;
-	IN int command;
+	IN u_long command;
 	IN caddr_t data;
 	IN int fflag;
 	IN struct ucred *cred;

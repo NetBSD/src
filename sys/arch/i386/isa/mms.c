@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.13 1994/10/27 04:18:00 cgd Exp $	*/
+/*	$NetBSD: mms.c,v 1.14 1994/10/30 21:44:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -213,7 +213,7 @@ mmsread(dev, uio, flag)
 int
 mmsioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

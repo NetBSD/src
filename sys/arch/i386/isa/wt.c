@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.18 1994/10/27 04:18:32 cgd Exp $	*/
+/*	$NetBSD: wt.c,v 1.19 1994/10/30 21:44:24 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -419,7 +419,7 @@ done:
 int
 wtioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	void *addr;
 	int flag;
 {

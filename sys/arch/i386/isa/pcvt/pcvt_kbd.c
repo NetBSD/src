@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.4 1994/10/27 04:18:54 cgd Exp $	*/
+/*	$NetBSD: pcvt_kbd.c,v 1.5 1994/10/30 21:44:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -1728,7 +1728,7 @@ setkeydef(Ovl_tbl *data)
  *	keyboard ioctl's entry
  *---------------------------------------------------------------------------*/
 int
-kbdioctl(Dev_t dev, int cmd, caddr_t data, int flag)
+kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 {
 	int key;
 
@@ -1807,7 +1807,7 @@ kbdioctl(Dev_t dev, int cmd, caddr_t data, int flag)
  *	mouse emulator ioctl
  *--------------------------------------------------------------------------*/
 int
-mouse_ioctl(Dev_t dev, int cmd, caddr_t data)
+mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data)
 {
 	struct mousedefs *def = (struct mousedefs *)data;
 	

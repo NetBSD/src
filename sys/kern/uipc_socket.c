@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.16 1994/06/29 06:33:37 cgd Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.17 1994/10/30 21:48:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -83,8 +83,8 @@ socreate(dom, aso, type, proto)
 		so->so_state = SS_PRIV;
 	so->so_proto = prp;
 	error =
-	    (*prp->pr_usrreq)(so, PRU_ATTACH,
-		(struct mbuf *)0, (struct mbuf *)proto, (struct mbuf *)0);
+	    (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
+		(struct mbuf *)(long)proto, (struct mbuf *)0);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
@@ -521,8 +521,8 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 		flags = 0;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
-		error = (*pr->pr_usrreq)(so, PRU_RCVOOB,
-		    m, (struct mbuf *)(flags & MSG_PEEK), (struct mbuf *)0);
+		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
+		    (struct mbuf *)(long)(flags & MSG_PEEK), (struct mbuf *)0);
 		if (error)
 			goto bad;
 		do {
@@ -777,7 +777,7 @@ dontblock:
 			so->so_rcv.sb_mb = nextrecord;
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-			    (struct mbuf *)flags, (struct mbuf *)0,
+			    (struct mbuf *)(long)flags, (struct mbuf *)0,
 			    (struct mbuf *)0);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&

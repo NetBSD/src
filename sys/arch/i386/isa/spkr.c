@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.16 1994/10/27 04:18:15 cgd Exp $	*/
+/*	$NetBSD: spkr.c,v 1.17 1994/10/30 21:44:18 cgd Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -467,13 +467,13 @@ dev_t	dev;
 
 int spkrioctl(dev, cmd, data, flag, p)
 dev_t	dev;
-int	cmd;
+u_long	cmd;
 caddr_t data;
 int	flag;
 struct	proc *p;
 {
 #ifdef DEBUG
-    printf("spkrioctl: entering with dev = %x, cmd = %x\n", dev, cmd);
+    printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* DEBUG */
 
     if (minor(dev) != 0)

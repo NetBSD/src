@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.42 1994/10/20 04:23:08 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.43 1994/10/30 21:47:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -200,7 +200,7 @@ ptrace(p, uap, retval)
 		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
 		uio.uio_resid = sizeof(int);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;

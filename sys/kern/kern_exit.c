@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.27 1994/10/20 22:54:35 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.28 1994/10/30 21:47:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -71,8 +71,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-__dead void cpu_exit __P((struct proc *));
-__dead void exit1 __P((struct proc *, int));
+__dead void cpu_exit __P((struct proc *)) __attribute__((noreturn));
+__dead void exit1 __P((struct proc *, int)) __attribute__((noreturn));
 
 /*
  * exit --

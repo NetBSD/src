@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.14 1994/06/29 06:33:25 cgd Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.15 1994/10/30 21:48:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -54,7 +54,7 @@
 #define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
 
-int	nullioctl __P((struct tty *tp, int cmd, caddr_t data,
+int	nullioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
 
 #include "tb.h"
@@ -62,7 +62,7 @@ int	nullioctl __P((struct tty *tp, int cmd, caddr_t data,
 int	tbopen __P((dev_t dev, struct tty *tp));
 int	tbclose __P((struct tty *tp, int flags));
 int	tbread __P((struct tty *tp, struct uio *uio, int flags));
-int	tbtioctl __P((struct tty *tp, int cmd, caddr_t data,
+int	tbtioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
 int	tbinput __P((int c, struct tty *tp));
 #endif
@@ -71,7 +71,7 @@ int	tbinput __P((int c, struct tty *tp));
 #if NSL > 0
 int	slopen __P((dev_t dev, struct tty *tp));
 int	slclose __P((struct tty *tp, int flags));
-int	sltioctl __P((struct tty *tp, int cmd, caddr_t data,
+int	sltioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
 int	slinput __P((int c, struct tty *tp));
 int	slstart __P((struct tty *tp));
@@ -81,7 +81,7 @@ int	slstart __P((struct tty *tp));
 #if NPPP > 0
 int	pppopen __P((dev_t dev, struct tty *tp));
 int	pppclose __P((struct tty *tp, int flags));
-int	ppptioctl __P((struct tty *tp, int cmd, caddr_t data,
+int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
 int	pppinput __P((int c, struct tty *tp));
 int	pppstart __P((struct tty *tp));
@@ -139,7 +139,7 @@ int	nlinesw = sizeof (linesw) / sizeof (linesw[0]);
 /*ARGSUSED*/
 nullioctl(tp, cmd, data, flags, p)
 	struct tty *tp;
-	int cmd;
+	u_long cmd;
 	char *data;
 	int flags;
 	struct proc *p;

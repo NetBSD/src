@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.14 1994/10/27 04:18:09 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.15 1994/10/30 21:44:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -309,7 +309,7 @@ pmsread(dev, uio, flag)
 int
 pmsioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.25 1994/10/20 04:22:41 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.26 1994/10/30 21:47:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -165,7 +165,7 @@ fcntl(p, uap, retval)
 	register struct fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
-		syscallarg(int) arg;
+		syscallarg(void *) arg;
 	} */ *uap;
 	register_t *retval;
 {
@@ -175,7 +175,7 @@ fcntl(p, uap, retval)
 	struct vnode *vp;
 	int i, tmp, error, flg = F_POSIX;
 	struct flock fl;
-	u_int newmin;
+	u_long newmin;
 
 	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
@@ -184,7 +184,7 @@ fcntl(p, uap, retval)
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
-		newmin = (long)SCARG(uap, arg);
+		newmin = (u_long)SCARG(uap, arg);
 		if (newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    newmin >= maxfiles)
 			return (EINVAL);
@@ -242,7 +242,7 @@ fcntl(p, uap, retval)
 			struct proc *p1 = pfind((long)SCARG(uap, arg));
 			if (p1 == 0)
 				return (ESRCH);
-			SCARG(uap, arg) = (void *)p1->p_pgrp->pg_id;
+			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
 		}
 		return ((*fp->f_ops->fo_ioctl)
 			(fp, (int)TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
