@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:43 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -34,6 +34,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 CPPFLAGS.lsb_fixed_xaaBitmap.c=		-DLSBFIRST -DFIXEDBASE
 CPPFLAGS.lsb_fixed_xaaBitmap3.c=	-DLSBFIRST -DFIXEDBASE -DTRIPLE_BITS

@@ -1,23 +1,30 @@
-#	$NetBSD: Makefile,v 1.13 2004/04/15 14:54:32 drochner Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2004/11/15 09:12:39 rtr Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ddc doc drivers dummy etc fbdevhw i2c input int10 loader \
-	pcidata rac ramdac scanpci shadowfb vbe vgahw xaa xf1bpp \
-	xf24_32bpp xf4bpp xf86 xf86_os xf86config xf8_16bpp \
-	xf8_32bpp xloader \
-	.WAIT bin
+SUBDIR=	ddc doc dummy etc fbdevhw i2c int10 loader pcidata rac \
+	ramdac scanpci shadowfb vbe vgahw xaa xf1bpp xf24_32bpp \
+	xf4bpp xf86 xf86_os xf86config xf8_16bpp xf8_32bpp xloader
 
+.if ${X11LOADABLE} != "no"
+SUBDIR+=drivers input
+.else
+SUBDIR+=driver idriver
+.endif
+
+# build drm if building dri
 .if ${X11DRI} != "no"
 SUBDIR+=	drm
 .endif
 
+SUBDIR+=.WAIT bin
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
 
-BUILDSYMLINKS=	XF86Conf.cpp XF86Config.eg.cpp \
-		XF98Conf.cpp XF86Config.98.cpp
+BUILDSYMLINKS=	xorgconf.cpp xorg.cfg.cpp \
+		XF98Conf.cpp XF98Config.cpp
 
-CPPSCRIPTS=	XF86Config.eg XF86Config.98
+CPPSCRIPTS=	xorg.cfg XF98Config
 
 CPPSCRIPTFLAGS=	-DRGBPATH=\"${X11LIBDIR}/rgb\" \
 		-DMISCFONTPATH=\"${X11FONTDIR}/misc/\" \
@@ -32,7 +39,7 @@ CPPSCRIPTFLAGS=	-DRGBPATH=\"${X11LIBDIR}/rgb\" \
 		-DMANPAGE=${X11MANDIR}/cat5/XF86Config.0 \
 		-DMODULEPATH=\"${X11USRLIBDIR}/modules\"
 
-CPPSCRIPTFLAGS_XF86Config.98=${CPPSCRIPTFLAGS} \
+CPPSCRIPTFLAGS_XF86Config=${CPPSCRIPTFLAGS} \
 		-DFREEBSDMOUSEDEV='\#    Option	"Device"	"/dev/mse0"' \
 		-DNETBSDNEWMOUSEDEV='Option	"Device"	"/dev/lms0"' \
 		-DNETBSDOLDMOUSEDEV='\#    Option	"Device"	"/dev/mms0"' \
@@ -47,3 +54,5 @@ FILESDIR=	${X11LIBDIR}
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
+
+XTODO=	#remove X11FLAGS.LOADABLE everywhere use the one in Makefile.serverlib

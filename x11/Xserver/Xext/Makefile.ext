@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.ext,v 1.9 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile.ext,v 1.9.2.1 2004/11/15 09:12:38 rtr Exp $
 
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
 
+SRCS+=		fontcache.c
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/Xext \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext/extmod \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \

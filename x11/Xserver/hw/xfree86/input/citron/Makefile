@@ -1,25 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:41 rtr Exp $
 
-XMODULEDIR=	${X11USRLIBDIR}/modules/input
+XMODULE=	citron
 
 .include "../../../../Makefile.serverlib"
+.include "Makefile.citron"
 
-MODULE=	citron_drv
-MAN=	citron.4
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/citron
-
-SRCS=	citron.c
-
-CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/citron \
-		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
-		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/loader \
-		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
-		-I${X11SRCDIR.xc}/programs/Xserver/include \
-		-I${X11SRCDIR.xc}/programs/Xserver/mi \
-                -I${DESTDIR}${X11INCDIR}/X11 \
-                -I${DESTDIR}${X11INCDIR}/X11/extensions \
-                -I${XSERVERINCDIR}
+SRCS+=		${SRCS.citron}
+CPPFLAGS+=	${CPPFLAGS.citron} ${X11FLAGS.LOADABLE}
 
 .include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
+LIBDIR=	${X11USRLIBDIR}/modules/input
 .include "../../Makefile.drivermod"

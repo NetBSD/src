@@ -1,5 +1,0 @@
-# FRV assembler testsuite.
-
-if [istarget frv*-*-*] {
-    run_dump_test "allinsn"
-}

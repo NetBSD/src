@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,11 @@ SRCS=	main.c pmdb.c config.c
 
 PROXYMANAGERDIR=	${X11ETCDIR}/proxymngr
 
-CPPFLAGS.main.c=	-DCONFIG_FILE=\"${PROXYMANAGERDIR}/pmconfig\"
+CPPFLAGS.main.c=	-DCONFIG_FILE=\"${PROXYMANAGERDIR}/pmconfig\" \
+			-DXVENDORNAMESHORT=${XVENDORNAMESHORT} \
+                	-DXVENDORNAME=${XVENDORNAME} \
+			-DXORG_RELEASE=${XORG_RELEASE}
+
 
 X11EXTRAMANDEFS+=	-DPROXYMANAGERDIR=${PROXYMANAGERDIR}
 

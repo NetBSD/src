@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/29 02:14:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2004/11/15 09:12:44 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -32,11 +32,12 @@ CPPFLAGS+=	-DXSERV_t -DTRANS_SERVER \
 # XXX The XFree86 Xserver has its own GetTimeInMillis(), however if we are
 #     building XFree86 and Xmacppc or Xsun* we want both copies.  The copy
 #     here is linked into the non XFree86 server.
-.if ${XSERVER_XFREE86} == "no" || \
-    ${XSERVER_XMACPPC} != "no" || \
-    ${XSERVER_XSUN} != "no"
+#.if ${XSERVER_XFREE86} == "no" || \
+#    ${XSERVER_XMACPPC} != "no" || \
+#    ${XSERVER_XSUN} != "no"
 SRCS+=	GetTimeInMillis.c
-.endif
+SRCS+=	ddxInitGlobals.c
+#.endif
 
 XDMCP_DEFINES=		-DXDMCP -DXDMCP_NO_IPV6
 

@@ -1,5 +1,0 @@
-s:struct drive:struct _drive:g
-s:struct sd:struct _sd:g
-s:struct plex:struct _plex:g
-s:struct volume:struct _volume:g
-s:struct _vinum_conf:struct __vinum_conf:g

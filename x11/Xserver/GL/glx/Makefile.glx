@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.5 2004/03/06 03:31:05 rtr Exp $
+#	$NetBSD: Makefile.glx,v 1.5.4.1 2004/11/15 09:12:38 rtr Exp $
 
 LIB=		glx
 
@@ -19,9 +19,12 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
-		-I${X11SRCDIR.xc}/lib/GL/include
+		-I${X11SRCDIR.xc}/lib/GL/include \
+		-I${X11SRCDIR.xc}/extras/Mesa/include \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common
 
-CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
+CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
