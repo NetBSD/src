@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 1999/05/07 16:19:28 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.3 2002/03/29 15:15:07 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -77,7 +77,7 @@ net_open(op)
 	struct of_dev *op;
 {
 	int error = 0;
-	
+
 	/*
 	 * On first open, do netif open, mount, etc.
 	 */
@@ -120,21 +120,21 @@ net_mountroot()
 #ifdef	DEBUG
 	printf("net_mountroot\n");
 #endif
-	
+
 	/*
 	 * Get info for NFS boot: our IP address, out hostname,
 	 * server IP address, and our root path on the server.
 	 * We use BOOTP (RFC951, RFC1532) exclusively as mandated
 	 * by PowerPC Reference Platform Specification I.4.2
 	 */
-	
+
 	bootp(netdev_sock);
-	
+
 	if (myip.s_addr == 0)
 		return ETIMEDOUT;
-	
+
 	printf("Using IP address: %s\n", inet_ntoa(myip));
-	
+
 #ifdef	DEBUG
 	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
 	if (gateip.s_addr)
@@ -144,7 +144,7 @@ net_mountroot()
 	printf("\n");
 #endif
 	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
-	
+
 	/*
 	 * Get the NFS file handle (mount).
 	 */
