@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.c,v 1.3 1996/12/17 20:46:13 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.4 1997/05/02 17:41:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -40,15 +40,7 @@
 #include "kbd_tables.h"
 
 
-/*
- * Toggle keys are not yet supported, but could be with
- * fairly simple changes.  Both CapsLock and NumLock
- * could be easily done with "post-translation" on the
- * keysymbols from these tables (WITHOUT new tables).
- *
- * The "compose" operations are not implemented.
- */
-
+/* The "compose" operations are not implemented. */
 #define	KEYSYM_COMPOSE KEYSYM_NOP
 
 
