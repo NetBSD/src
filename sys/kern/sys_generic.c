@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.31 1996/12/22 10:21:12 cgd Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.32 1997/02/18 04:20:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -772,15 +772,20 @@ pollscan(p, fds, nfd, retval)
 	int n = 0;
 
 	for (i = 0; i < nfd; i++, fds++) {
-		fp = fdp->fd_ofiles[fds->fd];
-		if (fp == 0) {
+		if (fds->fd >= fdp->fd_nfiles) {
 			fds->revents = POLLNVAL;
 			n++;
 		} else {
-			fds->revents = (*fp->f_ops->fo_poll)(fp,
-			    fds->events | POLLERR | POLLHUP, p);
-			if (fds->revents != 0)
+			fp = fdp->fd_ofiles[fds->fd];
+			if (fp == 0) {
+				fds->revents = POLLNVAL;
 				n++;
+			} else {
+				fds->revents = (*fp->f_ops->fo_poll)(fp,
+				    fds->events | POLLERR | POLLHUP, p);
+				if (fds->revents != 0)
+					n++;
+			}
 		}
 	}
 	*retval = n;
