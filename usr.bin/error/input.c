@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.7 1998/11/06 23:10:08 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.8 2000/11/15 19:54:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.7 1998/11/06 23:10:08 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.8 2000/11/15 19:54:43 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -226,6 +226,8 @@ cpp()
 	 *		morsesend.c: 237: MAGNIBBL: argument mismatch
 	 *		test1.c: 6: undefined control
 	 */
+	if (wordc < 3)
+		return (C_UNKNOWN);
 	if (   (language != INLD)		/* loader errors have almost same fmt*/
 	    && (lastchar(wordv[1]) == ':')
 	    && (isdigit((unsigned char)firstchar(wordv[2])))
@@ -248,6 +250,8 @@ pccccom()
 	 *	  "test.c", line 7: warning: old-fashioned initialization: use =
 	 *	  "subdir.d/foo2.h", line 1: illegal initialization
 	 */
+	if (wordc < 4)
+		return (C_UNKNOWN);
 	if (   (firstchar(wordv[1]) == '"')
 	    && (lastchar(wordv[1]) == ',')
 	    && (next_lastchar(wordv[1]) == '"')
@@ -284,6 +288,9 @@ richieccom()
 	char	**nwordv;
 	char	*file;
 
+	if (wordc < 2)
+		return (C_UNKNOWN);
+
 	if (lastchar(wordv[1]) == ':'){
 		cp = wordv[1] + strlen(wordv[1]) - 1;
 		while (isdigit((unsigned char)*--cp))
@@ -316,22 +323,22 @@ lint0()
 	 *	
 	 *	printf("%s(%d): %s\n", filename, linenumber, message);
 	 */
-	if (wordc >= 2){
-		if (   (lastchar(wordv[1]) == ':')
-		    && (next_lastchar(wordv[1]) == ')')
-		) {
-			clob_last(wordv[1], '\0'); /* colon */
-			if (persperdexplode(wordv[1], &line, &file)){
-				nwordv = wordvsplice(1, wordc, wordv+1);
-				nwordv[0] = file;	/* file name */
-				nwordv[1] = line;	/* line number */
-				wordc += 1;
-				wordv = nwordv - 1;
-				language = INLINT;
-				return(C_TRUE);
-			}
-			wordv[1][strlen(wordv[1])] = ':';
+	if (wordc < 2)
+		return (C_UNKNOWN);
+
+	if (   (lastchar(wordv[1]) == ':')
+	    && (next_lastchar(wordv[1]) == ')') ) {
+		clob_last(wordv[1], '\0'); /* colon */
+		if (persperdexplode(wordv[1], &line, &file)){
+			nwordv = wordvsplice(1, wordc, wordv+1);
+			nwordv[0] = file;	/* file name */
+			nwordv[1] = line;	/* line number */
+			wordc += 1;
+			wordv = nwordv - 1;
+			language = INLINT;
+			return(C_TRUE);
 		}
+		wordv[1][strlen(wordv[1])] = ':';
 	}
 	return (C_UNKNOWN);
 }
@@ -389,6 +396,9 @@ lint2()
 	 *
 	 *	bufp defined( "./metric.h"(10) ), but never used
 	 */
+	if (wordc < 5)
+		return (C_UNKNOWN);
+
 	if (   (lastchar(wordv[2]) == '(' /* ')' */ )	
 	    && (strcmp(wordv[4], "),") == 0) ){
 		language = INLINT;
@@ -409,6 +419,8 @@ char	*Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
 Errorclass
 lint3()
 {
+	if (wordc < 3)
+		return(C_UNKNOWN);
 	if (   (wordvcmp(wordv+2, 4, Lint31) == 0)
 	    || (wordvcmp(wordv+2, 6, Lint32) == 0) ){
 		language = INLINT;
@@ -503,6 +515,8 @@ ri()
  *		synerrs++;
  *	}
  */
+	if (wordc < 3)
+		return(C_UNKNOWN);
 	if (  (firstchar(wordv[1]) == '"')
 	    &&(lastchar(wordv[1]) == '"')
 	    &&(lastchar(wordv[2]) == ':')
@@ -533,6 +547,9 @@ troff()
 	 *	troff source error message, from eqn, bib, tbl...
 	 *	Just like pcc ccom, except uses `'
 	 */
+	if (wordc < 4)
+		return(C_UNKNOWN);
+		
 	if (   (firstchar(wordv[1]) == '`')
 	    && (lastchar(wordv[1]) == ',')
 	    && (next_lastchar(wordv[1]) == '\'')
@@ -558,6 +575,8 @@ mod2()
 	/*
 	 *	for decwrl modula2 compiler (powell)
 	 */
+	if (wordc < 5)
+		return(C_UNKNOWN);
 	if (   (  (strcmp(wordv[1], "!!!") == 0)	/* early version */
 	        ||(strcmp(wordv[1], "File") == 0))	/* later version */
 	    && (lastchar(wordv[2]) == ',')	/* file name */
