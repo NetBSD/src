@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17.2.1.2.2 1999/08/02 22:55:59 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.17.2.1.2.3 1999/08/06 12:54:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -298,6 +298,8 @@ void	_simple_lock __P((__volatile struct simplelock *, const char *, int));
 int	_simple_lock_try __P((__volatile struct simplelock *, const char *,
 	    int));
 void	_simple_unlock __P((__volatile struct simplelock *, const char *, int));
+void	_simple_lock_assert __P((__volatile struct simplelock *, int,
+				 const char *, int));
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
