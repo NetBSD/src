@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.15 1998/11/26 19:34:38 mycroft Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.16 1999/03/23 17:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -83,6 +83,11 @@ ENTRY(copyin)
 	cmp	r1, r3
 	bcs	Lbadaddress
 
+	/* Quick exit if length is zero */	
+	teq	r2, #0
+	moveq	r0, #0
+	moveq	lr, pc
+
 	/* Do the actual copy */
 	b	do_copyinout
 
@@ -94,6 +99,9 @@ ENTRY(copyin)
  * Copies bytes from user space to kernel space
  */
 
+Lpgbase:
+	.long	PROCESS_PAGE_TBLS_BASE
+	
 ENTRY(copyout)
 	/* Validate user and kernel addresses */
 	ldr	r3, Lvm_min_address
@@ -108,14 +116,58 @@ ENTRY(copyout)
 	cmp	r0, r3
 	bcs	Lbadaddress
 
-	/* Do the actual copy */
-
-do_copyinout:
 	/* Quick exit if length is zero */	
-	teq	r2, #0x00000000
-	moveq	r0, #0x00000000
+	teq	r2, #0
+	moveq	r0, #0
 	moveq	pc, lr
 
+	/* Check the page protection for copy-on-write */
+	stmfd	sp!, {r4-r7}
+	ldr	r4, Lcurpcb
+	ldr	r4, [r4]
+
+	ldr	r5, [r4, #PCB_ONFAULT]
+	add	r3, pc, #do_cowfault - . - 8
+	str	r3, [r4, #PCB_ONFAULT]
+
+	ldr	r3, Lpgbase
+	add	r6, r3, r1, lsr #(PGSHIFT-2)
+	bic	r6, r6, #3			/* beginning PTE */
+
+	mov	r7, r1, lsl #(32-PGSHIFT)
+	add	r7, r2, r7, lsr #(32-PGSHIFT)
+	sub	r7, r7, #1
+	mov	r7, r7, lsr #(PGSHIFT)		/* number of pages -1 */
+
+do_ptecheck:
+	ldr	r3, [r6]			/* grab PTE */
+	tst	r3, #1				/* check writable bit */
+	beq	do_cowfault			/* if clear, do COW fault */
+do_ptecheck_next:
+	add	r6, r6, #4
+	subs	r7, r7, #1
+	bpl	do_ptecheck
+	str	r5, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4-r7}
+
+	/* Do the actual copy */
+	b	do_copyinout
+
+do_cowfault:
+	stmfd	sp!, {r0-r2, lr}
+	ldr	r3, Lpgbase
+	sub	r0, r6, r3
+	mov	r0, r0, lsl #(PGSHIFT-2)	/* calculate VA of page */
+	bl	_cowfault
+	mov	r3, r0
+	ldmfd	sp!, {r0-r2, lr}
+	teq	r3, #0				/* check for error return */
+	beq	do_ptecheck_next
+	mov	r0, r3
+	str	r5, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4-r7}
+
+do_copyinout:
 	stmfd	sp!, {r4, r5}
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
