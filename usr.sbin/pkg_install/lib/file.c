@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.67 2003/09/23 14:55:01 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.68 2003/10/04 00:50:34 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.67 2003/09/23 14:55:01 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.68 2003/10/04 00:50:34 wiz Exp $");
 #endif
 #endif
 
@@ -678,12 +678,12 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 			}
 			switch (*fmt) {
 			case 'F':
-				strnncpy(bufp, size - (int) (bufp - buf), name, strlen(name));
+				strlcpy(bufp, name, size - (int) (bufp - buf));
 				bufp += strlen(bufp);
 				break;
 
 			case 'D':
-				strnncpy(bufp, size - (int) (bufp - buf), dir, strlen(dir));
+				strlcpy(bufp, dir, size - (int) (bufp - buf));
 				bufp += strlen(bufp);
 				break;
 
@@ -692,7 +692,8 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
 					cp = scratch;
 				}
-				strnncpy(bufp, size - (int) (bufp - buf), scratch, (size_t) (cp - scratch));
+				*cp = '\0';
+				strlcpy(bufp, scratch, size - (int) (bufp - buf));
 				bufp += strlen(bufp);
 				break;
 
@@ -703,7 +704,7 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 				} else {
 					cp++;
 				}
-				strnncpy(bufp, size - (int) (bufp - buf), cp, strlen(cp));
+				strlcpy(bufp, cp, size - (int) (bufp - buf));
 				bufp += strlen(bufp);
 				break;
 
