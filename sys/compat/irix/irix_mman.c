@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.6 2002/10/23 20:45:38 manu Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.7 2002/11/30 12:28:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.6 2002/10/23 20:45:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.7 2002/11/30 12:28:26 jdolecek Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
