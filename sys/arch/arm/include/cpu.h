@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2001/04/20 18:08:49 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2001/04/24 18:20:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,8 +45,8 @@
  * Based on kate/katelib/arm6.h
  */
 
-#ifndef _ARM32_CPU_H_
-#define _ARM32_CPU_H_
+#ifndef _ARM_CPU_H_
+#define _ARM_CPU_H_
 
 /*
  * User-visible definitions
@@ -103,18 +103,12 @@
 #endif /* !_LKM */
 
 
+#include <machine/intr.h>
 #ifndef _LOCORE
 #include <sys/user.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #endif	/* !_LOCORE */
-
-#ifdef arm26
-extern int astpending;
-#define setsoftast() (astpending = 1)
-#else
-#include <machine/psl.h>
-#endif
 
 #include <arm/armreg.h>
 
@@ -140,55 +134,65 @@ extern int astpending;
 #endif	/* _LOCORE */
 #endif
 
+#ifndef _LOCORE
+
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
+/*
+ * CLKF_USERMODE: Return TRUE/FALSE (1/0) depending on whether the
+ * frame came from USR mode or not.
+ */
 #ifdef PROG32
-/*
- * Return TRUE/FALSE (1/0) depending on whether the frame came from USR
- * mode or not.
- */
- 
-#define CLKF_USERMODE(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
-
-/*
- * This needs straighening, prob is the frame does not have info on the
- * priority a guess that needs trying is (current_spl_level == SPL0)
- */
-
-#define CLKF_BASEPRI(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
-
-#define CLKF_PC(frame) (frame->if_pc)
-
-/*#define CLKF_INTR(frame) (current_intr_depth > 1)*/
-
-/* Hack to treat FPE time as interrupt time so we can measure it */
-#define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
-
-#define	PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
-
-#elif defined(PROG26)
-
-/* True if we took the interrupt in user mode */
+#define CLKF_USERMODE(frame)	((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
+#else
 #define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
-
-/* True if we were at spl0 before the interrupt */
-#define CLKF_BASEPRI(frame)	0	/* FIXME */
-
-/* Extract the program counter from a clockframe */
-#define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
-
-/* True if we took the interrupt from inside another interrupt handler. */
-/* Non-trivial to check because we handle interrupts in SVC mode. */
-#define CLKF_INTR(frame)	0	/* FIXME */
-
 #endif
 
 /*
- * definitions of cpu-dependent requirements
- * referenced in generic code
+ * CLKF_BASEPRI: True if we were at spl0 before the interrupt
+ *
+ * This needs straighening, prob is the frame does not have info on the
+ * priority a guess that needs trying is (current_spl_level == SPL0)
+ */
+#define CLKF_BASEPRI(frame)	CLKF_USERMODE(frame)
+
+/*
+ * CLKF_INTR: True if we took the interrupt from inside another
+ * interrupt handler.
+ */
+extern int current_intr_depth;
+#ifdef PROG32
+/* Hack to treat FPE time as interrupt time so we can measure it */
+#define CLKF_INTR(frame)						\
+	((current_intr_depth > 1) ||					\
+	    (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
+#else
+#define CLKF_INTR(frame)	(current_intr_depth > 1) 
+#endif
+
+/*
+ * CLKF_PC: Extract the program counter from a clockframe
+ */
+#ifdef PROG32
+#define CLKF_PC(frame)		(frame->if_pc)
+#else
+#define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
+#endif
+
+/*
+ * PROC_PC: Find out the program counter for the given process.
+ */
+#ifdef PROG32
+#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
+#else
+#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
+#endif
+
+
+/*
+ * Per-CPU information.  For now we assume one CPU.
  */
 
-#ifndef _LOCORE
 #include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -197,11 +201,18 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 };
-#ifdef _KERNEL
+
 extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
-#endif /* _KERNEL */
-#endif /* ! _LOCORE */
+#define cpu_number()	0
+
+
+/*
+ * Scheduling glue
+ */
+
+extern int astpending;
+#define setsoftast() (astpending = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -211,13 +222,6 @@ extern struct cpu_info cpu_info_store;
 #define signotify(p)            setsoftast()
 
 #define cpu_wait(p)	/* nothing */
-#define cpu_number()	0
-
-#ifndef _LOCORE
-extern int current_intr_depth;
-
-struct device;
-void	cpu_attach	__P((struct device *));
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -232,6 +236,20 @@ int	want_resched;		/* resched() was called */
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+
+#ifndef arm26
+/*
+ * cpu device glue (belongs in cpuvar.h)
+ */
+
+struct device;
+void	cpu_attach	__P((struct device *));
+#endif
+
+
+/*
+ * Random cruft
+ */
 
 /* locore.S */
 void atomic_set_bit	__P((u_int *address, u_int setmask));
@@ -259,6 +277,6 @@ void child_return	__P((void *));
 
 #endif /* _KERNEL */
 
-#endif /* !_ARM32_CPU_H_ */
+#endif /* !_ARM_CPU_H_ */
 
 /* End of cpu.h */
