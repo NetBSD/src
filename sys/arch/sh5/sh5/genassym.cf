@@ -1,0 +1,341 @@
+#	$NetBSD: genassym.cf,v 1.1 2002/07/05 13:32:04 scw Exp $
+
+# Copyright 2002 Wasabi Systems, Inc.
+# All rights reserved.
+#
+# Written by Steve C. Woodford for Wasabi Systems, Inc.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#      This product includes software developed for the NetBSD Project by
+#      Wasabi Systems, Inc.
+# 4. The name of Wasabi Systems, Inc. may not be used to endorse
+#    or promote products derived from this software without specific prior
+#    written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+include <sys/param.h>
+include <sys/types.h>
+include <sys/proc.h>
+include <sys/signal.h>
+include <sys/syscall.h>
+
+include <uvm/uvm_extern.h>
+
+include <machine/cpu.h>
+include <machine/frame.h>
+include <machine/pcb.h>
+include <machine/trap.h>
+include <machine/proc.h>
+include <machine/memregion.h>
+
+include <sh5/pte.h>
+
+
+define	SH5_KSEG0_BASE		SH5_KSEG0_BASE
+define	SH5_KSEG0_SIZE		SH5_KSEG0_SIZE
+define	SH5_KSEG1_BASE		SH5_KSEG1_BASE
+define	SH5_KSEG1_SIZE		SH5_KSEG1_SIZE
+
+define	SH5_NEFF_BITS		SH5_NEFF_BITS
+define	SH5_ASID_BITS		SH5_ASID_BITS
+
+define	PGSHIFT			PGSHIFT
+
+define	_PTRSZ			sizeof(void *)
+
+define	SZ_CPU_INFO		sizeof(struct cpu_info)
+define	CI_SCHEDSTATE		offsetof(struct cpu_info, ci_schedstate)
+define	CI_SPIN_LOCKS		offsetof(struct cpu_info, ci_spin_locks)
+define	CI_SIMPLE_LOCKS		offsetof(struct cpu_info, ci_simple_locks)
+define	CI_CURPROC		offsetof(struct cpu_info, ci_curproc)
+define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define	CI_CURVSID		offsetof(struct cpu_info, ci_curvsid)
+define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
+define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_ESCRATCH		offsetof(struct cpu_info, ci_escratch)
+define	CI_TSCRATCH		offsetof(struct cpu_info, ci_tscratch)
+
+define	PCB_CTX_PC		offsetof(struct pcb, pcb_ctx.sf_pc)
+define	PCB_CTX_SR		offsetof(struct pcb, pcb_ctx.sf_sr)
+define	PCB_CTX_SP		offsetof(struct pcb, pcb_ctx.sf_sp)
+define	PCB_CTX_REGS_R10	offsetof(struct pcb, pcb_ctx.sf_regs.r10)
+define	PCB_CTX_REGS_R11	offsetof(struct pcb, pcb_ctx.sf_regs.r11)
+define	PCB_CTX_REGS_R12	offsetof(struct pcb, pcb_ctx.sf_regs.r12)
+define	PCB_CTX_REGS_R13	offsetof(struct pcb, pcb_ctx.sf_regs.r13)
+define	PCB_CTX_REGS_R28	offsetof(struct pcb, pcb_ctx.sf_regs.r28)
+define	PCB_CTX_REGS_R29	offsetof(struct pcb, pcb_ctx.sf_regs.r29)
+define	PCB_CTX_REGS_R30	offsetof(struct pcb, pcb_ctx.sf_regs.r30)
+define	PCB_CTX_REGS_R31	offsetof(struct pcb, pcb_ctx.sf_regs.r31)
+define	PCB_CTX_REGS_R32	offsetof(struct pcb, pcb_ctx.sf_regs.r32)
+define	PCB_CTX_REGS_R33	offsetof(struct pcb, pcb_ctx.sf_regs.r33)
+define	PCB_CTX_REGS_R34	offsetof(struct pcb, pcb_ctx.sf_regs.r34)
+define	PCB_CTX_REGS_R35	offsetof(struct pcb, pcb_ctx.sf_regs.r35)
+define	PCB_CTX_REGS_R44	offsetof(struct pcb, pcb_ctx.sf_regs.r44)
+define	PCB_CTX_REGS_R45	offsetof(struct pcb, pcb_ctx.sf_regs.r45)
+define	PCB_CTX_REGS_R46	offsetof(struct pcb, pcb_ctx.sf_regs.r46)
+define	PCB_CTX_REGS_R47	offsetof(struct pcb, pcb_ctx.sf_regs.r47)
+define	PCB_CTX_REGS_R48	offsetof(struct pcb, pcb_ctx.sf_regs.r48)
+define	PCB_CTX_REGS_R49	offsetof(struct pcb, pcb_ctx.sf_regs.r49)
+define	PCB_CTX_REGS_R50	offsetof(struct pcb, pcb_ctx.sf_regs.r50)
+define	PCB_CTX_REGS_R51	offsetof(struct pcb, pcb_ctx.sf_regs.r51)
+define	PCB_CTX_REGS_R52	offsetof(struct pcb, pcb_ctx.sf_regs.r52)
+define	PCB_CTX_REGS_R53	offsetof(struct pcb, pcb_ctx.sf_regs.r53)
+define	PCB_CTX_REGS_R54	offsetof(struct pcb, pcb_ctx.sf_regs.r54)
+define	PCB_CTX_REGS_R55	offsetof(struct pcb, pcb_ctx.sf_regs.r55)
+define	PCB_CTX_REGS_R56	offsetof(struct pcb, pcb_ctx.sf_regs.r56)
+define	PCB_CTX_REGS_R57	offsetof(struct pcb, pcb_ctx.sf_regs.r57)
+define	PCB_CTX_REGS_R58	offsetof(struct pcb, pcb_ctx.sf_regs.r58)
+define	PCB_CTX_REGS_R59	offsetof(struct pcb, pcb_ctx.sf_regs.r59)
+define	PCB_CTX_REGS_TR5	offsetof(struct pcb, pcb_ctx.sf_regs.tr5)
+define	PCB_CTX_REGS_TR6	offsetof(struct pcb, pcb_ctx.sf_regs.tr6)
+define	PCB_CTX_REGS_TR7	offsetof(struct pcb, pcb_ctx.sf_regs.tr7)
+define	PCB_CTX_FPREGS_FPSCR	offsetof(struct pcb, pcb_ctx.sf_fpregs.fpscr)
+define	PCB_CTX_FPREGS_DR0	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[0])
+define	PCB_CTX_FPREGS_DR8	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[4])
+define	PCB_CTX_FPREGS_DR16	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[8])
+define	PCB_CTX_FPREGS_DR24	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[12])
+define	PCB_CTX_FPREGS_DR32	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[16])
+define	PCB_CTX_FPREGS_DR40	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[20])
+define	PCB_CTX_FPREGS_DR48	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[24])
+define	PCB_CTX_FPREGS_DR56	offsetof(struct pcb, pcb_ctx.sf_fpregs.fp[28])
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+
+define	SF_FLAGS		offsetof(struct stateframe, sf_flags)
+define	SF_FLAGS_CALLEE_SAVED	SF_FLAGS_CALLEE_SAVED
+define	SF_SSR			offsetof(struct stateframe, sf_ssr)
+define	SF_SPC			offsetof(struct stateframe, sf_spc)
+define	SF_EXPEVT		offsetof(struct stateframe, sf_expevt)
+define	SF_INTEVT		offsetof(struct stateframe, sf_intevt)
+define	SF_TEA			offsetof(struct stateframe, sf_tea)
+define	SF_TRA			offsetof(struct stateframe, sf_tra)
+define	SF_USR			offsetof(struct stateframe, sf_usr)
+
+define	SZ_INTRFRAME		sizeof(struct intrframe)
+define	IF_R0			offsetof(struct intrframe, if_caller.r0)
+define	IF_R1			offsetof(struct intrframe, if_caller.r1)
+define	IF_R2			offsetof(struct intrframe, if_caller.r2)
+define	IF_R3			offsetof(struct intrframe, if_caller.r3)
+define	IF_R4			offsetof(struct intrframe, if_caller.r4)
+define	IF_R5			offsetof(struct intrframe, if_caller.r5)
+define	IF_R6			offsetof(struct intrframe, if_caller.r6)
+define	IF_R7			offsetof(struct intrframe, if_caller.r7)
+define	IF_R8			offsetof(struct intrframe, if_caller.r8)
+define	IF_R9			offsetof(struct intrframe, if_caller.r9)
+define	IF_R14			offsetof(struct intrframe, if_caller.r14)
+define	IF_R15			offsetof(struct intrframe, if_caller.r15)
+define	IF_R16			offsetof(struct intrframe, if_caller.r16)
+define	IF_R17			offsetof(struct intrframe, if_caller.r17)
+define	IF_R18			offsetof(struct intrframe, if_caller.r18)
+define	IF_R19			offsetof(struct intrframe, if_caller.r19)
+define	IF_R20			offsetof(struct intrframe, if_caller.r20)
+define	IF_R21			offsetof(struct intrframe, if_caller.r21)
+define	IF_R22			offsetof(struct intrframe, if_caller.r22)
+define	IF_R23			offsetof(struct intrframe, if_caller.r23)
+define	IF_R25			offsetof(struct intrframe, if_caller.r25)
+define	IF_R26			offsetof(struct intrframe, if_caller.r26)
+define	IF_R27			offsetof(struct intrframe, if_caller.r27)
+define	IF_R36			offsetof(struct intrframe, if_caller.r36)
+define	IF_R37			offsetof(struct intrframe, if_caller.r37)
+define	IF_R38			offsetof(struct intrframe, if_caller.r38)
+define	IF_R39			offsetof(struct intrframe, if_caller.r39)
+define	IF_R40			offsetof(struct intrframe, if_caller.r40)
+define	IF_R41			offsetof(struct intrframe, if_caller.r41)
+define	IF_R42			offsetof(struct intrframe, if_caller.r42)
+define	IF_R43			offsetof(struct intrframe, if_caller.r43)
+define	IF_R60			offsetof(struct intrframe, if_caller.r60)
+define	IF_R61			offsetof(struct intrframe, if_caller.r61)
+define	IF_R62			offsetof(struct intrframe, if_caller.r62)
+define	IF_TR0			offsetof(struct intrframe, if_caller.tr0)
+define	IF_TR1			offsetof(struct intrframe, if_caller.tr1)
+define	IF_TR2			offsetof(struct intrframe, if_caller.tr2)
+define	IF_TR3			offsetof(struct intrframe, if_caller.tr3)
+define	IF_TR4			offsetof(struct intrframe, if_caller.tr4)
+define	IF_SSR			offsetof(struct intrframe, if_state.sf_ssr)
+
+define	SZ_TRAPFRAME		sizeof(struct trapframe)
+define	TF_R10			offsetof(struct trapframe, tf_callee.r10)
+define	TF_R11			offsetof(struct trapframe, tf_callee.r11)
+define	TF_R12			offsetof(struct trapframe, tf_callee.r12)
+define	TF_R13			offsetof(struct trapframe, tf_callee.r13)
+define	TF_R28			offsetof(struct trapframe, tf_callee.r28)
+define	TF_R29			offsetof(struct trapframe, tf_callee.r29)
+define	TF_R30			offsetof(struct trapframe, tf_callee.r30)
+define	TF_R31			offsetof(struct trapframe, tf_callee.r31)
+define	TF_R32			offsetof(struct trapframe, tf_callee.r32)
+define	TF_R33			offsetof(struct trapframe, tf_callee.r33)
+define	TF_R34			offsetof(struct trapframe, tf_callee.r34)
+define	TF_R35			offsetof(struct trapframe, tf_callee.r35)
+define	TF_R44			offsetof(struct trapframe, tf_callee.r44)
+define	TF_R45			offsetof(struct trapframe, tf_callee.r45)
+define	TF_R46			offsetof(struct trapframe, tf_callee.r46)
+define	TF_R47			offsetof(struct trapframe, tf_callee.r47)
+define	TF_R48			offsetof(struct trapframe, tf_callee.r48)
+define	TF_R49			offsetof(struct trapframe, tf_callee.r49)
+define	TF_R50			offsetof(struct trapframe, tf_callee.r50)
+define	TF_R51			offsetof(struct trapframe, tf_callee.r51)
+define	TF_R52			offsetof(struct trapframe, tf_callee.r52)
+define	TF_R53			offsetof(struct trapframe, tf_callee.r53)
+define	TF_R54			offsetof(struct trapframe, tf_callee.r54)
+define	TF_R55			offsetof(struct trapframe, tf_callee.r55)
+define	TF_R56			offsetof(struct trapframe, tf_callee.r56)
+define	TF_R57			offsetof(struct trapframe, tf_callee.r57)
+define	TF_R58			offsetof(struct trapframe, tf_callee.r58)
+define	TF_R59			offsetof(struct trapframe, tf_callee.r59)
+define	TF_TR5			offsetof(struct trapframe, tf_callee.tr5)
+define	TF_TR6			offsetof(struct trapframe, tf_callee.tr6)
+define	TF_TR7			offsetof(struct trapframe, tf_callee.tr7)
+define	TF_SSR			offsetof(struct trapframe, tf_state.sf_ssr)
+define	TF_USR			offsetof(struct trapframe, tf_state.sf_usr)
+
+# Exception Scratch Frame Offsets
+define	ES_CRITICAL		offsetof(struct exc_scratch_frame, es_critical)
+define	ES_USR			offsetof(struct exc_scratch_frame, es_usr)
+define	ES_R0			offsetof(struct exc_scratch_frame, es_r[0])
+define	ES_R1			offsetof(struct exc_scratch_frame, es_r[1])
+define	ES_R2			offsetof(struct exc_scratch_frame, es_r[2])
+define	ES_R15			offsetof(struct exc_scratch_frame, es_r15)
+define	ES_EXPEVT		offsetof(struct exc_scratch_frame, es_expevt)
+define	ES_INTEVT		offsetof(struct exc_scratch_frame, es_intevt)
+define	ES_TEA			offsetof(struct exc_scratch_frame, es_tea)
+define	ES_TRA			offsetof(struct exc_scratch_frame, es_tra)
+
+# TLB Miss Scratch Frame Offsets
+define	TS_R0			offsetof(struct tlb_scratch_frame, ts_r[0])
+define	TS_R1			offsetof(struct tlb_scratch_frame, ts_r[1])
+define	TS_R2			offsetof(struct tlb_scratch_frame, ts_r[2])
+define	TS_R3			offsetof(struct tlb_scratch_frame, ts_r[3])
+define	TS_R4			offsetof(struct tlb_scratch_frame, ts_r[4])
+define	TS_R5			offsetof(struct tlb_scratch_frame, ts_r[5])
+define	TS_R6			offsetof(struct tlb_scratch_frame, ts_r[6])
+define	TS_TR0			offsetof(struct tlb_scratch_frame, ts_tr[0])
+define	TS_TR1			offsetof(struct tlb_scratch_frame, ts_tr[1])
+define	TS_STACK		(sizeof(struct tlb_scratch_frame)-8)
+
+define	P_ADDR			offsetof(struct proc, p_addr)
+define	P_BACK			offsetof(struct proc, p_back)
+define	P_FORW			offsetof(struct proc, p_forw)
+define	P_STAT			offsetof(struct proc, p_stat)
+define	P_WCHAN			offsetof(struct proc, p_wchan)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	PH_LINK			offsetof(struct prochd, ph_link)
+
+define	T_TRAP			T_TRAP
+define	T_AST			T_AST
+define	T_WTLBMISS		T_WTLBMISS
+define	T_ITLBMISS		T_ITLBMISS
+
+# Process status constants
+define	SONPROC			SONPROC
+define	SRUN			SRUN
+
+# VM constants
+define	NBPG			NBPG
+define	USPACE			USPACE
+define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
+define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
+define	KERNEL_IPT_SIZE		KERNEL_IPT_SIZE
+define	KERNEL_IPT_SHIFT	KERNEL_IPT_SHIFT
+
+# PTE constants
+define	SH5_PTE_PTEL		offsetof(pte_t, ptel)
+define	SH5_PTE_PTEH		offsetof(pte_t, pteh)
+define	SH5_PTE_VSID		offsetof(pte_t, vsid)
+define	SZ_SH5_PTE_T		sizeof(pte_t)
+
+define	SH5_PTEG_SIZE		SH5_PTEG_SIZE
+
+define	SH5_PTEH_V		SH5_PTEH_V
+define	SH5_PTEH_SH		SH5_PTEH_SH
+define	SH5_PTEH_ASID_MASK	SH5_PTEH_ASID_MASK
+define	SH5_PTEH_ASID_SHIFT	SH5_PTEH_ASID_SHIFT
+define	SH5_PTEH_TLBCOOKIE_MASK	SH5_PTEH_TLBCOOKIE_MASK
+
+define	SH5_PTEL_CB_NOCACHE	SH5_PTEL_CB_NOCACHE
+define	SH5_PTEL_SZ_512MB	SH5_PTEL_SZ_512MB
+define	SH5_PTEL_PR_R		SH5_PTEL_PR_R
+define	SH5_PTEL_PR_W		SH5_PTEL_PR_W
+define	SH5_PTEL_PR_X		SH5_PTEL_PR_X
+define	SH5_PTEL_PR_U		SH5_PTEL_PR_U
+define	SH5_PTEL_PR_U_SHIFT	SH5_PTEL_PR_U_SHIFT
+
+define	SH5_PTEL_M		SH5_PTEL_M
+define	SH5_PTEL_R		SH5_PTEL_R
+define	SH5_PTEL_RM_MASK	SH5_PTEL_RM_MASK
+
+define	SH5_PTE_PN_MASK_MOVI	SH5_PTE_PN_MASK_MOVI
+
+
+# Control register bits
+define	SH5_CONREG_SR_S			SH5_CONREG_SR_S
+define	SH5_CONREG_SR_IMASK_MASK	SH5_CONREG_SR_IMASK_MASK
+define	SH5_CONREG_SR_IMASK_SHIFT	SH5_CONREG_SR_IMASK_SHIFT
+define	SH5_CONREG_SR_IMASK_ALL		SH5_CONREG_SR_IMASK_ALL
+define	SH5_CONREG_SR_IMASK_IPL0	SH5_CONREG_SR_IMASK_IPL0
+define	SH5_CONREG_SR_IMASK_IPL1	SH5_CONREG_SR_IMASK_IPL1
+define	SH5_CONREG_SR_IMASK_IPL2	SH5_CONREG_SR_IMASK_IPL2
+define	SH5_CONREG_SR_IMASK_IPL3	SH5_CONREG_SR_IMASK_IPL3
+define	SH5_CONREG_SR_IMASK_IPL4	SH5_CONREG_SR_IMASK_IPL4
+define	SH5_CONREG_SR_IMASK_IPL5	SH5_CONREG_SR_IMASK_IPL5
+define	SH5_CONREG_SR_IMASK_IPL6	SH5_CONREG_SR_IMASK_IPL6
+define	SH5_CONREG_SR_IMASK_IPL7	SH5_CONREG_SR_IMASK_IPL7
+define	SH5_CONREG_SR_IMASK_IPL8	SH5_CONREG_SR_IMASK_IPL8
+define	SH5_CONREG_SR_IMASK_IPL9	SH5_CONREG_SR_IMASK_IPL9
+define	SH5_CONREG_SR_IMASK_IPL10	SH5_CONREG_SR_IMASK_IPL10
+define	SH5_CONREG_SR_IMASK_IPL11	SH5_CONREG_SR_IMASK_IPL11
+define	SH5_CONREG_SR_IMASK_IPL12	SH5_CONREG_SR_IMASK_IPL12
+define	SH5_CONREG_SR_IMASK_IPL13	SH5_CONREG_SR_IMASK_IPL13
+define	SH5_CONREG_SR_IMASK_IPL14	SH5_CONREG_SR_IMASK_IPL14
+define	SH5_CONREG_SR_IMASK_IPL15	SH5_CONREG_SR_IMASK_IPL15
+define	SH5_CONREG_SR_Q			SH5_CONREG_SR_Q
+define	SH5_CONREG_SR_M			SH5_CONREG_SR_M
+define	SH5_CONREG_SR_CD		SH5_CONREG_SR_CD
+define	SH5_CONREG_SR_PR		SH5_CONREG_SR_PR
+define	SH5_CONREG_SR_SZ		SH5_CONREG_SR_SZ
+define	SH5_CONREG_SR_FR		SH5_CONREG_SR_FR
+define	SH5_CONREG_SR_FD		SH5_CONREG_SR_FD
+define	SH5_CONREG_SR_FD_SHIFT		SH5_CONREG_SR_FD_SHIFT
+define	SH5_CONREG_SR_ASID_MASK		SH5_CONREG_SR_ASID_MASK
+define	SH5_CONREG_SR_ASID_SHIFT	SH5_CONREG_SR_ASID_SHIFT
+define	SH5_CONREG_SR_WATCH		SH5_CONREG_SR_WATCH
+define	SH5_CONREG_SR_STEP		SH5_CONREG_SR_STEP
+define	SH5_CONREG_SR_BL		SH5_CONREG_SR_BL
+define	SH5_CONREG_SR_BL_SHIFT		SH5_CONREG_SR_BL_SHIFT
+define	SH5_CONREG_SR_MD		SH5_CONREG_SR_MD
+define	SH5_CONREG_SR_MD_SHIFT		SH5_CONREG_SR_MD_SHIFT
+define	SH5_CONREG_SR_MMU		SH5_CONREG_SR_MMU
+define	SH5_CONREG_SR_MMU_SHIFT		SH5_CONREG_SR_MMU_SHIFT
+define	SH5_CONREG_SR_INIT		SH5_CONREG_SR_INIT
+
+# Errno constants
+define	EFAULT				EFAULT
+define	ENAMETOOLONG			ENAMETOOLONG
+
+# System call constants
+define	SYS_exit			SYS_exit
+
+# Memory Region
+define	MR_START			offsetof(struct mem_region, mr_start)
+define	MR_SIZE				offsetof(struct mem_region, mr_size)
+define	SIZEOF_MEM_REGION		sizeof(struct mem_region)

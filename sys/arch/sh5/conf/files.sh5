@@ -1,0 +1,127 @@
+#	$NetBSD: files.sh5,v 1.1 2002/07/05 13:31:51 scw Exp $
+
+
+#
+# System bus types
+#
+
+define	mainbus { }
+device	mainbus: mainbus
+attach	mainbus at root
+
+# The SuperHighway Bus
+device	superhyway { pport }
+attach	superhyway at mainbus
+file	arch/sh5/dev/superhyway.c			superhyway
+
+# CPUs have a set of control registers on the SuperHighway bus
+device	cpu
+attach	cpu at superhyway with cpu_sh
+file	arch/sh5/dev/cpu_sh.c				cpu_sh
+
+# The External Memory Interface
+device	emi
+attach	emi at superhyway
+file	arch/sh5/dev/emi.c				emi
+
+# The Peripheral Controller Interface
+device	pbridge { [ipl = -1], [intevt = -1] }
+attach	pbridge at superhyway
+file	arch/sh5/dev/pbridge.c				pbridge
+
+# The Flash/External Memory Interface
+device	femi { offset }
+attach	femi at superhyway
+file	arch/sh5/dev/femi.c				femi
+
+# The PCI Interface
+device	pchb
+attach	pchb at superhyway
+file	arch/sh5/dev/pchb.c				pchb
+
+# XXX: This should really attach under a SuperHyway Debug Link Module
+# XXX: It's all a bit of a hack anyway and should ideally go away...
+device	dtfcons
+attach	dtfcons at mainbus
+file	arch/sh5/dev/dtfcons.c				dtfcons needs-flag
+
+# Clock, Power and Reset Controller
+device	cprc { }
+attach	cprc at pbridge
+device	clock
+attach	clock at cprc
+device	watchdog
+attach	watchdog at cprc
+device	power
+attach	power at cprc
+device	reset
+attach	reset at cprc
+file	arch/sh5/dev/cprc.c	cprc & (clock | watchdog | power | reset)
+
+# Interrupt Controller
+device	intc
+attach	intc at pbridge
+file	arch/sh5/dev/intc.c				intc
+
+# Timer Unit
+device	tmu
+attach	tmu at pbridge
+file	arch/sh5/dev/tmu.c				tmu
+
+# Real-time Clock
+device	rtc
+attach	rtc at pbridge
+file	arch/sh5/dev/rtc.c				rtc
+
+# Serial Interface with FIFO
+# XXX: Not likely to work at this time.
+device	scif
+attach	scif at pbridge
+file	arch/sh5/dev/scif.c				scif needs-flag
+
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+major	{wd = 0}
+
+# Memory Disk for install floppy
+file dev/md_root.c				memory_disk_hooks
+major	{md = 17}
+
+
+# Source files
+file	arch/sh5/sh5/autoconf.c
+file	arch/sh5/sh5/bus_dma.c
+file	arch/sh5/sh5/bus_space.c
+file	arch/sh5/sh5/conf.c
+file	arch/sh5/sh5/disksubr.c
+file	arch/sh5/sh5/dtf_comms.c		dtfcons
+file	arch/sh5/sh5/interrupt.c
+file	arch/sh5/sh5/mem.c
+file	arch/sh5/sh5/pmap.c
+file	arch/sh5/sh5/process_machdep.c
+file	arch/sh5/sh5/sh5_clock.c
+file	arch/sh5/sh5/sh5_machdep.c
+file	arch/sh5/sh5/sig_machdep.c
+file	arch/sh5/sh5/softintr.c
+file	arch/sh5/sh5/syscall.c
+file	arch/sh5/sh5/trap.c
+file	arch/sh5/sh5/vm_machdep.c
+file	dev/clock_subr.c
+file	dev/cons.c
+file	dev/cninit.c
+
+file	arch/sh5/sh5/in_cksum.c			inet
+file	netinet/in4_cksum.c			inet
+file	netns/ns_cksum.c			ns

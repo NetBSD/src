@@ -1,0 +1,68 @@
+/*	$NetBSD: __clone.S,v 1.1 2002/07/05 13:31:32 scw Exp $	*/
+
+/*
+ * Copyright 2002 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Steve C. Woodford for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/errno.h>
+#include "SYS.h"
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(clone, __clone)
+#endif
+
+/*
+ * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
+ */
+ENTRY(__clone)
+	pta/u	1f, tr0		/* Preload error path */
+	beq/u	r2, r63, tr0	/* Bomb if fn is NULL */
+	beq/u	r3, r63, tr0	/* Bomb if stack is NULL */
+	or	r2, r63, r6	/* Preserve "fn" in r6 (syscall won't trash) */
+	or	r3, r63, r2	/* Shuffle syscall args: stack */
+	or	r4, r63, r3	/* Shuffle syscall args: flags */
+	SYSCALL(__clone)
+	ptabs/l	r18, tr0
+	bne/l	r2, r63, tr0	/* If parent, just return. */
+	ptabs/l	r6, tr0		/* Clone's "fn" was safe in r6 */
+	or	r5, r63, r2	/* Clone's "arg" was safe in r5 */
+	blink	tr0, r18	/* Invoke the clone */
+	pt/l	_C_LABEL(_exit), tr0
+	blink	tr0, r63	/* If clone returns, invoke _exit(3) */
+	/*NOTREACHED*/
+
+1:	movi	EINVAL, r2
+	pt/l	_C_LABEL(__cerror), tr0
+	blink	tr0, r63
+	/*NOTREACHED*/

@@ -1,0 +1,118 @@
+#	$NetBSD: CAYMAN,v 1.1 2002/07/05 13:31:37 scw Exp $
+
+#
+# Config file for SuperH "CAYMAN" SH-5 Evaluation board
+#
+
+include 	"arch/evbsh5/conf/std.evbsh5.el"
+
+maxusers	2
+
+options 	INCLUDE_CONFIG_FILE
+
+#ident		"CAYMAN-$Revision: 1.1 $"
+
+options 	CPU_STB1
+
+options 	DIAGNOSTIC
+options 	DEBUG
+#options 	DDB
+
+options 	KTRACE
+
+file-system 	FFS
+file-system 	NFS
+file-system 	KERNFS
+file-system 	MFS
+
+options 	SOFTDEP
+
+options 	INET
+options 	INET6
+
+config netbsd	root on ? type ?
+
+options 	NFS_BOOT_DHCP
+
+pseudo-device	loop
+pseudo-device	bpfilter
+pseudo-device	pty
+pseudo-device	rnd
+
+# The mainbus to which all devices attach
+mainbus0	at root
+
+#
+# The SuperHyway bus is the main interconnect between the constituent
+# "modules" which make up an SH-5 system
+#
+superhyway0	at mainbus0
+
+#
+# These are the "modules" present on the Cayman's SH-5
+#
+cpu0		at superhyway0 pport 0x0d	# A single CPU
+#emi0		at superhyway0 pport 0x80	# The memory controller module
+pbridge0	at superhyway0 pport 0x09	# Peripheral Bridge
+#dmac0		at superhyway0 pport 0x0e	# DMA controller
+femi0		at superhyway0 pport 0x08	# Flash/External memory
+#pchb0		at superhyway0 pport 0x60	# PCI bus
+
+#
+# The Peripheral Bridge and all its sub-devices are actually on the same
+# silicon as the CPU itself.
+#
+cprc0		at pbridge0			# Clock, Power & Reset Control
+intc0		at pbridge0			# Interrupt controller
+tmu0		at pbridge0 ipl 14 intevt 0x400	# Timer
+#scif0		at pbridge0 ipl 12 intevt 0x700	# On-chip serial controller
+rtc0		at pbridge0			# Battery-backed Date/Time chip
+
+#
+# The Clock, Power and Reset controller has a number of sub-devices, only one
+# of which is currently used.
+#
+clock0		at cprc0			# Primary clock generator
+#watchdog0 	at cprc0			# Watchdog
+#power0 	at cprc0			# Power Management
+#reset0 	at cprc0			# Reset controller
+
+#
+# The FEMI module (which hangs off the SuperHyway) is actually more than
+# just an interface to Flash memory. It's pretty much a complete expansion
+# bus in its own right.
+#
+sysfpga0	at femi0 offset 0x4000000	# The main System FPGA chip
+
+#
+# The Super I/O chip is straight out of the x86 PeeCee world in that
+# it implements a bunch if "standard" PeeCee type devices (although
+# a few of those are not connected on Cayman).
+#
+# We make it look like a PeeCee isa bus so that we can re-use all the
+# pre-existing NetBSD drivers for the devices implemented in the Super IO.
+#
+superio0	at sysfpga0			# SMC Super I/O Device
+isa0		at superio0			# The ISAbus attachment.
+
+#
+# These are the devices Cayman uses
+#
+# Note that the addresses and irqs are hard-coded and should really be
+# moved into a `knowndevs' structure ...
+#
+#pckbc0	at isa0					# Keyboard Controller
+#pms0	at pckbc0				# Mouse
+com0	at isa0 port 0x3f8 irq 4		# PC-style serial ports
+com1	at isa0 port 0x2f8 irq 3
+lpt0	at isa0 port 0x378 irq 7		# Parallel printer port
+sm0	at isa0 port 0x1000 irq 10		# SMC91C100 LAN controller
+wdc0	at isa0 port 0x1f0 irq 14 flags 0x0	# IDE-style disk controller
+
+# Support for IDE/ATAPI device
+wd*		at wdc0 channel ? drive ? flags 0x0000
+atapibus*	at wdc0 channel ?
+cd*		at atapibus? drive ? flags 0x0000
+
+# The MII device on the LAN controller
+ukphy*	at mii? phy ?
