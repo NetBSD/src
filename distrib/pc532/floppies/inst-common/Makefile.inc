@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/04/10 03:59:58 simonb Exp $ 
+#	$NetBSD: Makefile.inc,v 1.13 1999/05/11 20:46:59 veego Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -84,7 +84,7 @@ netbsd.gz: ramdisk.fs
 		rm /var/tmp/$$$$
 
 clean cleandir distclean:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 	/bin/rm -f netbsd*
 
 .include <bsd.obj.mk>

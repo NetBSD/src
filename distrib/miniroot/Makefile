@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/04/18 21:01:57 is Exp $
+#	$NetBSD: Makefile,v 1.21 1999/05/11 20:46:59 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -69,7 +69,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.lo *.c
+	${CBIN}.conf *.o *.cro *.c
 
 .endif	# DESTDIR check
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/04/14 14:11:56 minoura Exp $
+#	$NetBSD: Makefile,v 1.10 1999/05/11 20:47:00 veego Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -65,7 +65,7 @@ HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 
 .if make(clean) || make(cleandir) || make(distclean) || make(depend) || make(obj)
 UTILDIR=	../../../utils

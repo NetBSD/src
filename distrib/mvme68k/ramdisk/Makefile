@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.5 1999/05/11 20:46:59 veego Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,7 +56,7 @@ unconfig:
 .PRECIOUS: ${IMAGE}
 
 CLEANFILES+= ${CBIN} ${CBIN}.c ${CBIN}.cache ${CBIN}.mk ${CBIN}.syms
-CLEANFILES+= *.lo *_stub.o *_stub.c
+CLEANFILES+= *.cro *_stub.o *_stub.c
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}

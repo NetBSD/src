@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/05/06 20:51:22 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 1999/05/11 20:47:00 veego Exp $
 
 BINDIR=		/installation/netboot
 
@@ -64,7 +64,7 @@ realinstall:
 		-m ${NONBINMODE} ${DISKIMAGE} ${RELEASEDIR}${BINDIR}
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} *.o *.lo *.c
+	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c
 
 # XXX!
 depend:
