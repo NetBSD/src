@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2003/01/18 06:55:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134 2003/01/27 14:53:08 martin Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1613,41 +1613,6 @@ pmap_collect(pm)
 	}
 	simple_unlock(&pm->pm_lock);
 }
-
-#if 0
-/*
- * The two following routines are now in locore.s so I can code them in assembly
- * They can bypass the MMU or use VIS bcopy extensions for speed.
- */
-/*
- * Fill the given physical page with zeroes.
- */
-void
-pmap_zero_page(pa)
-	paddr_t pa;
-{
-	/* 
-	 * We don't need to worry about flushing caches
-	 * since all our virtual caches are write-through.
-	 * All we need to do is map the page in somewhere, bzero it,
-	 * and unmap it.  However, we need to be sure we don't
-	 * map it in anywhere near the kernel or we may lose, badly.
-	 */
-	bzero((caddr_t)pa, NBPG);
-}
-
-/*
- * Copy the given physical source page to its destination.
- *
- * I will code this in assembly RSN.
- */
-void
-pmap_copy_page(src, dst)
-	paddr_t src, dst;
-{
-	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
-}
-#endif
 
 /*
  * Activate the address space for the specified process.  If the
