@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.13 1996/09/16 06:14:21 leo Exp $
+#	$NetBSD: ATARITT,v 1.14 1996/10/04 07:08:28 leo Exp $
 #
 # ATARI-TT
 #
@@ -72,6 +72,7 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
+options		COMPAT_12	# Compatibility to NetBSD1.2
 
 #
 # Support for System V IPC facilities.
