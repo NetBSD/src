@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.15 2000/12/17 15:52:42 jdolecek Exp $
+#	$NetBSD: Makefile.macppc,v 1.16 2001/05/17 23:48:31 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
-AFLAGS=		-D_LOCORE
+AFLAGS=		-D_LOCORE ${AOPTS}
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e __start
 STRIPFLAGS=	--strip-debug
 
