@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 1996/12/22 07:00:57 cgd Exp $
+	$NetBSD: syscalls.master,v 1.45 1996/12/22 07:47:43 cgd Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -310,7 +310,7 @@
 172	UNIMPL
 173	UNIMPL
 174	UNIMPL
-175	STD		{ int sys_ntp_gettime(struct ntptimeval *tp); }
+175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
 176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
 177	UNIMPL
 178	UNIMPL
