@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.95 2000/01/23 21:10:26 aymeric Exp $
+#	$NetBSD: files.amiga,v 1.96 2000/01/31 22:47:07 mhitch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -417,6 +417,13 @@ device	pccard: pcmciabus, gayle
 attach	pccard at mainbus
 
 include "dev/pcmcia/files.pcmcia"
+
+include "dev/ata/files.ata"
+major	{wd = 17}
+
+# Amiga 4000/1200 IDE using MI wdc
+attach	wdc at mainbus with wdc_amiga: gayle
+file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 
 major	{md = 15}	# Memory disk (for mini-kernel)
 
