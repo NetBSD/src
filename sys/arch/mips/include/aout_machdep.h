@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.5 1994/10/26 21:09:39 cgd Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.6 2002/12/10 17:14:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,6 @@
  *	@(#)exec.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	__LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 #include <machine/reloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2000/05/28 01:53:07 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2002/12/10 17:14:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define	MAX_ALIGNMENT		(sizeof (long))
 
 #ifdef NetBSD
-#define PAGSIZ			__LDPGSZ
+#define PAGSIZ			AOUT_LDPGSZ
 #else
 #define PAGSIZ			4096
 #endif

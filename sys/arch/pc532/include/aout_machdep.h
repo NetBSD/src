@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.8 1998/09/05 15:21:55 pk Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.9 2002/12/10 17:14:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _PC532_EXEC_H_
 #define _PC532_EXEC_H_
 
-#define __LDPGSZ	4096
+#define AOUT_LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_pc532 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.28 2002/07/11 13:10:16 scw Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.29 2002/12/10 17:14:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 #define _SYS_EXEC_AOUT_H_
 
 #ifndef N_PAGSIZ
-#define	N_PAGSIZ(ex)	(__LDPGSZ)
+#define	N_PAGSIZ(ex)	(AOUT_LDPGSZ)
 #endif
 
 /*
@@ -135,7 +135,7 @@ struct exec {
 
 #define	N_ALIGN(ex,x) \
 	(N_GETMAGIC(ex) == ZMAGIC || N_GETMAGIC(ex) == QMAGIC ? \
-	((x) + __LDPGSZ - 1) & ~(__LDPGSZ - 1) : (x))
+	((x) + AOUT_LDPGSZ - 1) & ~(AOUT_LDPGSZ - 1) : (x))
 
 /* Valid magic number check. */
 #define	N_BADMAG(ex) \
@@ -143,12 +143,12 @@ struct exec {
 	N_GETMAGIC(ex) != ZMAGIC && N_GETMAGIC(ex) != QMAGIC)
 
 /* Address of the bottom of the text segment. */
-#define	N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : __LDPGSZ)
+#define	N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : AOUT_LDPGSZ)
 
 /* Address of the bottom of the data segment. */
 #define	N_DATADDR(ex) \
 	(N_GETMAGIC(ex) == OMAGIC ? N_TXTADDR(ex) + (ex).a_text : \
-	(N_TXTADDR(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
+	(N_TXTADDR(ex) + (ex).a_text + AOUT_LDPGSZ - 1) & ~(AOUT_LDPGSZ - 1))
 
 /* Address of the bottom of the bss segment. */
 #define	N_BSSADDR(ex) \
@@ -157,7 +157,7 @@ struct exec {
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
 	( N_GETMAGIC2(ex)==ZMAGIC || N_GETMAGIC2(ex)==(QMAGIC|0x10000) ? \
-	0 : (N_GETMAGIC2(ex)==(ZMAGIC|0x10000) ? __LDPGSZ : \
+	0 : (N_GETMAGIC2(ex)==(ZMAGIC|0x10000) ? AOUT_LDPGSZ : \
 	sizeof(struct exec)) )
 
 /* Data segment offset. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.80 2002/09/02 12:54:40 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.81 2002/12/10 17:14:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.80 2002/09/02 12:54:40 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.81 2002/12/10 17:14:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1109,8 +1109,8 @@ kernel_image_magic_copy(dest)
 	    + memlist->m_nseg * sizeof(struct boot_memseg) + 4);
 }
 
-#undef __LDPGSZ
-#define __LDPGSZ 8192 /* XXX ??? */
+#undef AOUT_LDPGSZ
+#define AOUT_LDPGSZ 8192 /* XXX ??? */
 
 int
 kernel_reload_write(uio)
@@ -1143,7 +1143,7 @@ kernel_reload_write(uio)
 		 * Looks good - allocate memory for a kernel image.
 		 */
 		kernel_text_size = (kernel_exec.a_text
-			+ __LDPGSZ - 1) & (-__LDPGSZ);
+			+ AOUT_LDPGSZ - 1) & (-AOUT_LDPGSZ);
 		/*
 		 * Estimate space needed for symbol names, since we don't
 		 * know how big it really is.

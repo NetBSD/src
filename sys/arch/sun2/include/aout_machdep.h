@@ -1,5 +1,5 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 2001/04/06 13:13:02 fredette Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.2 2002/12/10 17:14:21 thorpej Exp $	*/
 
-#define	__LDPGSZ	2048
+#define	AOUT_LDPGSZ	2048
 
 #include <m68k/aout_machdep.h>

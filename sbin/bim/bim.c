@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.13 2002/02/26 07:50:30 matthias Exp $	*/
+/*	$NetBSD: bim.c,v 1.14 2002/12/10 17:14:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.13 2002/02/26 07:50:30 matthias Exp $");
+__RCSID("$NetBSD: bim.c,v 1.14 2002/12/10 17:14:32 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -387,7 +387,7 @@ add_image(num, args, syntax)
 		close(im_file);
 		return FALSE;
 	}
-	im_load_adr = im_exec.a_entry - sizeof(im_exec); /* & ~(__LDPGSZ-1); */
+	im_load_adr = im_exec.a_entry - sizeof(im_exec); /* & ~(AOUT_LDPGSZ-1); */
 	im_run_adr = im_exec.a_entry;
 
 	if (im_load_adr > 0xFFFFFF) {

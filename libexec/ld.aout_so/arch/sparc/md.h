@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2000/05/28 01:53:12 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2002/12/10 17:14:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define	MAX_ALIGNMENT	(sizeof (double))
 
 #ifdef __NetBSD__
-#define PAGSIZ			__LDPGSZ
+#define PAGSIZ			AOUT_LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), \
 					MID_MACHINE, N_GETFLAG(ex)|(f))

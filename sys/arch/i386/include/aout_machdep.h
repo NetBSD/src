@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.7 2002/12/10 17:14:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 #ifndef _I386_EXEC_H_
 #define _I386_EXEC_H_
 
-#define __LDPGSZ	4096
+#define AOUT_LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_i386 {

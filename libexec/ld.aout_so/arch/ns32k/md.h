@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2000/05/28 01:53:11 matt Exp $  */
+/*	$NetBSD: md.h,v 1.9 2002/12/10 17:14:39 thorpej Exp $  */
 
 /*
  *	- ns32k dependent definitions
@@ -10,7 +10,7 @@
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
-#define PAGSIZ			__LDPGSZ
+#define PAGSIZ			AOUT_LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), MID_MACHINE, \
 						N_GETFLAG(ex)|(f))
