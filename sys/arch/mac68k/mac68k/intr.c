@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2000/07/05 07:33:52 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.17 2001/04/12 18:26:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ netintr()
 	int s, isr;
 
 	for (;;) {
-		s = splimp();
+		s = splhigh();
 		isr = netisr;
 		netisr = 0;
 		splx(s);
