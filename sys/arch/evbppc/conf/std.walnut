@@ -1,0 +1,20 @@
+#	$NetBSD: std.walnut,v 1.1 2002/12/09 12:15:53 scw Exp $
+#
+# Standard/required options for NetBSD/walnut.
+
+machine	evbppc powerpc
+
+# standard ("mandatory") kernel options.
+options 	PPC_IBM4XX	# IBM 40x family
+
+# Executable support:
+options 	EXEC_ELF32	# (native) ELF32 binary support
+options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
+options 	EXEC_SCRIPT	# shell script support
+
+makeoptions	TEXTADDR=0x25000
+makeoptions	BOARDTYPE="walnut"
+makeoptions	PPCDIR="ibm4xx"
+
+include		"arch/powerpc/conf/files.ibm4xx"
+include		"arch/evbppc/conf/files.walnut"
