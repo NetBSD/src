@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1.2.3 1999/02/02 23:46:05 minoura Exp $	*/
+/*	$NetBSD: bus.c,v 1.1.2.4 1999/02/13 17:51:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,9 @@ x68k_bus_space_read_1(t, bsh, offset)
 	bus_space_handle_t bsh;
 	bus_size_t offset;
 {
-	return (*((volatile u_int8_t *) (bsh + offset)));
+	return (*((volatile u_int8_t *) ((bsh&0x80000000)
+					 ? (bsh&0x7fffffff) + offset*2
+					 : bsh + offset)));
 }
 
 u_int16_t
@@ -96,7 +98,9 @@ x68k_bus_space_read_2(t, bsh, offset)
 	bus_space_handle_t bsh;
 	bus_size_t offset;
 {
-	return (*((volatile u_int16_t *) (bsh + offset)));
+	return (*((volatile u_int16_t *) ((bsh&0x80000000)
+					  ? (bsh&0x7fffffff) + offset*2
+					  : bsh + offset)));
 }
 
 u_int32_t
@@ -105,7 +109,9 @@ x68k_bus_space_read_4(t, bsh, offset)
 	bus_space_handle_t bsh;
 	bus_size_t offset;
 {
-	return (*((volatile u_int32_t *) (bsh + offset)));
+	return (*((volatile u_int32_t *) ((bsh&0x80000000)
+					  ? (bsh&0x7fffffff) + offset*2
+					  : bsh + offset)));
 }
 
 void
@@ -117,7 +123,10 @@ x68k_bus_space_read_multi_1(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*datap++ = *(volatile u_int8_t *) (bsh + offset);
+		*datap++ = *(volatile u_int8_t *) ((bsh&0x80000000)
+						   ? ((bsh&0x7fffffff)
+						      + offset*2)
+						   : bsh + offset);
 	}
 }
 
@@ -130,7 +139,10 @@ x68k_bus_space_read_multi_2(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*datap++ = *(volatile u_int16_t *) (bsh + offset);
+		*datap++ = *(volatile u_int16_t *) ((bsh&0x80000000)
+						    ? ((bsh&0x7fffffff)
+						       + offset*2)
+						    : bsh + offset);
 	}
 }
 
@@ -143,7 +155,10 @@ x68k_bus_space_read_multi_4(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*datap++ = *(volatile u_int32_t *) (bsh + offset);
+		*datap++ = *(volatile u_int32_t *) ((bsh&0x80000000)
+						    ? ((bsh&0x7fffffff)
+						       + offset*2)
+						    : bsh + offset);
 	}
 }
 
@@ -155,7 +170,9 @@ x68k_bus_space_read_region_1(t, bsh, offset, datap, count)
 	u_int8_t *datap;
 	bus_size_t count;
 {
-	volatile u_int8_t *addr = (void *) (bsh + offset);
+	volatile u_int8_t *addr = (void *) ((bsh&0x80000000)
+					    ? (bsh&0x7fffffff) + offset*2
+					    : bsh + offset);
 
 	while (count-- > 0) {
 		*datap++ = *addr++;
@@ -170,7 +187,9 @@ x68k_bus_space_read_region_2(t, bsh, offset, datap, count)
 	u_int16_t *datap;
 	bus_size_t count;
 {
-	volatile u_int16_t *addr = (void *) (bsh + offset);
+	volatile u_int16_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*datap++ = *addr++;
@@ -185,7 +204,9 @@ x68k_bus_space_read_region_4(t, bsh, offset, datap, count)
 	u_int32_t *datap;
 	bus_size_t count;
 {
-	volatile u_int32_t *addr = (void *) (bsh + offset);
+	volatile u_int32_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*datap++ = *addr++;
@@ -199,7 +220,9 @@ x68k_bus_space_write_1(t, bsh, offset, value)
 	bus_size_t offset;
 	u_int8_t value;
 {
-	*(volatile u_int8_t *) (bsh + offset) = value;
+	*(volatile u_int8_t *) ((bsh&0x80000000)
+				? (bsh&0x7fffffff) + offset*2
+				: bsh + offset) = value;
 }
 
 void
@@ -209,7 +232,9 @@ x68k_bus_space_write_2(t, bsh, offset, value)
 	bus_size_t offset;
 	u_int16_t value;
 {
-	*(volatile u_int16_t *) (bsh + offset) = value;
+	*(volatile u_int16_t *) ((bsh&0x80000000)
+				 ? (bsh&0x7fffffff) + offset*2
+				 : bsh + offset) = value;
 }
 
 void
@@ -219,7 +244,9 @@ x68k_bus_space_write_4(t, bsh, offset, value)
 	bus_size_t offset;
 	u_int32_t value;
 {
-	*(volatile u_int32_t *) (bsh + offset) = value;
+	*(volatile u_int32_t *) ((bsh&0x80000000)
+				 ? (bsh&0x7fffffff) + offset*2
+				 : bsh + offset) = value;
 }
 
 void
@@ -231,7 +258,9 @@ x68k_bus_space_write_multi_1(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*(volatile u_int8_t *) (bsh + offset) = *datap++;
+		*(volatile u_int8_t *) ((bsh&0x80000000)
+					? (bsh&0x7fffffff) + offset*2
+					: bsh + offset) = *datap++;
 	}
 }
 
@@ -244,7 +273,9 @@ x68k_bus_space_write_multi_2(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*(volatile u_int16_t *) (bsh + offset) = *datap++;
+		*(volatile u_int16_t *) ((bsh&0x80000000)
+					 ? (bsh&0x7fffffff) + offset*2
+					 : bsh + offset) = *datap++;
 	}
 }
 
@@ -257,7 +288,9 @@ x68k_bus_space_write_multi_4(t, bsh, offset, datap, count)
 	bus_size_t count;
 {
 	while (count-- > 0) {
-		*(volatile u_int32_t *) (bsh + offset) = *datap++;
+		*(volatile u_int32_t *) ((bsh&0x80000000)
+					 ? (bsh&0x7fffffff) + offset*2
+					 : bsh + offset) = *datap++;
 	}
 }
 
@@ -269,7 +302,9 @@ x68k_bus_space_write_region_1(t, bsh, offset, datap, count)
 	u_int8_t *datap;
 	bus_size_t count;
 {
-	volatile u_int8_t *addr = (void *) (bsh + offset);
+	volatile u_int8_t *addr = (void *) ((bsh&0x80000000)
+					    ? (bsh&0x7fffffff) + offset*2
+					    : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = *datap++;
@@ -284,7 +319,9 @@ x68k_bus_space_write_region_2(t, bsh, offset, datap, count)
 	u_int16_t *datap;
 	bus_size_t count;
 {
-	volatile u_int16_t *addr = (void *) (bsh + offset);
+	volatile u_int16_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = *datap++;
@@ -299,7 +336,9 @@ x68k_bus_space_write_region_4(t, bsh, offset, datap, count)
 	u_int32_t *datap;
 	bus_size_t count;
 {
-	volatile u_int32_t *addr = (void *) (bsh + offset);
+	volatile u_int32_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = *datap++;
@@ -314,7 +353,9 @@ x68k_bus_space_set_region_1(t, bsh, offset, value, count)
 	u_int8_t value;
 	bus_size_t count;
 {
-	volatile u_int8_t *addr = (void *) (bsh + offset);
+	volatile u_int8_t *addr = (void *) ((bsh&0x80000000)
+					    ? (bsh&0x7fffffff) + offset*2
+					    : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = value;
@@ -329,7 +370,9 @@ x68k_bus_space_set_region_2(t, bsh, offset, value, count)
 	u_int16_t value;
 	bus_size_t count;
 {
-	volatile u_int16_t *addr = (void *) (bsh + offset);
+	volatile u_int16_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = value;
@@ -344,7 +387,9 @@ x68k_bus_space_set_region_4(t, bsh, offset, value, count)
 	u_int32_t value;
 	bus_size_t count;
 {
-	volatile u_int32_t *addr = (void *) (bsh + offset);
+	volatile u_int32_t *addr = (void *) ((bsh&0x80000000)
+					     ? (bsh&0x7fffffff) + offset*2
+					     : bsh + offset);
 
 	while (count-- > 0) {
 		*addr++ = value;
