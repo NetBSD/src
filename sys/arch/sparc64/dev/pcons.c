@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.3 2000/07/10 20:24:23 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.4 2000/11/02 00:21:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -143,7 +143,7 @@ pconsopen(dev, flag, mode, p)
 		callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 	}
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
 int
@@ -157,7 +157,7 @@ pconsclose(dev, flag, mode, p)
 
 	callout_stop(&sc->sc_poll_ch);
 	sc->of_flags &= ~OFPOLL;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
@@ -171,7 +171,7 @@ pconsread(dev, uio, flag)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -183,7 +183,7 @@ pconswrite(dev, uio, flag)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -198,7 +198,7 @@ pconsioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -293,7 +293,7 @@ static int nplus = 0;
 		} else nplus = 0;
 #endif
 		if (tp && (tp->t_state & TS_ISOPEN))
-			(*linesw[tp->t_line].l_rint)(ch, tp);
+			(*tp->t_linesw->l_rint)(ch, tp);
 	}
 	callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 }
