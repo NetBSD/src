@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.14 2001/03/04 05:17:41 matt Exp $
+#	$NetBSD: files.arm,v 1.15 2001/03/04 08:25:38 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -52,6 +52,13 @@ file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
 # files common to arm32 implementations
+file	arch/arm/arm32/compat_13_machdep.c	arm32 & compat_13
 file	arch/arm/arm32/pmap.c			arm32
-file	arch/arm/arm32/sys_machdep.c		arm32
 file	arch/arm/arm32/syscall.c		arm32
+file	arch/arm/arm32/sys_machdep.c		arm32
+
+# arm32 library functions
+file	arch/arm/arm32/strstr.c			arm32
+file	arch/arm/arm32/bcopy_page.S		arm32
+file	arch/arm/arm32/bcopyinout.S		arm32
+file	arch/arm/arm32/copystr.S		arm32

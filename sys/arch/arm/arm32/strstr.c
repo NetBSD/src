@@ -1,4 +1,4 @@
-/* $NetBSD: strstr.c,v 1.1 2001/02/23 03:48:13 ichiro Exp $ */
+/* $NetBSD: strstr.c,v 1.1 2001/03/04 08:25:39 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
