@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.10 2002/04/13 10:28:36 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.11 2002/04/29 13:42:43 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.10 2002/04/13 10:28:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.11 2002/04/29 13:42:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -62,7 +62,7 @@ unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
-static void isic_enable_intr(struct isic_softc *sc, int enabled);
+static void isic_enable_intr(struct isic_softc *sc, int enable);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
 	isic_std_ph_data_req,
@@ -263,17 +263,16 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 }
 
 static void
-isic_enable_intr(struct isic_softc *sc, int enabled)
+isic_enable_intr(struct isic_softc *sc, int enable)
 {
-	if (sc->sc_ipac) {
-		if (enabled) {
-			isic_isac_init(sc);
-		} else {
-			IPAC_WRITE(IPAC_MASK, 0xff);
-		}
+	if (enable) {
+		isic_isac_init(sc);
 	} else {
-		if (enabled) {
-			isic_isac_init(sc);
+		/* disable receiver */
+		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_DIM0);
+		/* mask interrupts */
+		if (sc->sc_ipac) {
+			IPAC_WRITE(IPAC_MASK, 0xff);
 		} else {
 			ISAC_WRITE(I_MASK, 0xff);
 		}
