@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.32 1993/12/21 05:25:35 brezak Exp $
+#	$Id: files.oldconf,v 1.33 1993/12/22 12:48:25 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -85,10 +85,26 @@ miscfs/fdesc/fdesc_vnops.c	optional fdesc
 miscfs/fifofs/fifo_vnops.c	optional fifo
 miscfs/kernfs/kernfs_vfsops.c	optional kernfs
 miscfs/kernfs/kernfs_vnops.c	optional kernfs
+miscfs/lofs/lofs_subr.c		optional lofs
+miscfs/lofs/lofs_vfsops.c	optional lofs
+miscfs/lofs/lofs_vnops.c	optional lofs
+miscfs/portal/portal_vfsops.c	optional portal
+miscfs/portal/portal_vnops.c	optional portal
+miscfs/procfs/procfs_ctl.c	optional procfs
+miscfs/procfs/procfs_mem.c	optional procfs
+miscfs/procfs/procfs_note.c	optional procfs
+miscfs/procfs/procfs_regs.c	optional procfs
+miscfs/procfs/procfs_status.c	optional procfs
+miscfs/procfs/procfs_subr.c	optional procfs
 miscfs/procfs/procfs_vfsops.c	optional procfs
 miscfs/procfs/procfs_vnops.c	optional procfs
-miscfs/procfs/procfs_subr.c	optional procfs
 miscfs/specfs/spec_vnops.c	standard
+msdosfs/msdosfs_conv.c	optional msdosfs
+msdosfs/msdosfs_denode.c	optional msdosfs
+msdosfs/msdosfs_fat.c		optional msdosfs
+msdosfs/msdosfs_lookup.c	optional msdosfs
+msdosfs/msdosfs_vfsops.c	optional msdosfs
+msdosfs/msdosfs_vnops.c	optional msdosfs
 net/af.c		standard
 net/bpf.c		optional bpfilter
 net/bpf_filter.c	optional bpfilter device-driver
@@ -189,12 +205,6 @@ nfs/nfs_subs.c		optional nfsserver or nfsclient requires inet
 nfs/nfs_syscalls.c	optional nfsserver or nfsclient requires inet
 nfs/nfs_vfsops.c	optional nfsclient requires inet
 nfs/nfs_vnops.c		optional nfsclient requires inet
-msdosfs/msdosfs_conv.c	optional msdosfs
-msdosfs/msdosfs_denode.c	optional msdosfs
-msdosfs/msdosfs_fat.c		optional msdosfs
-msdosfs/msdosfs_lookup.c	optional msdosfs
-msdosfs/msdosfs_vfsops.c	optional msdosfs
-msdosfs/msdosfs_vnops.c	optional msdosfs
 ufs/mfs_vfsops.c	optional mfs
 ufs/mfs_vnops.c		optional mfs
 ufs/ufs_alloc.c		standard
