@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 2000/12/03 01:54:49 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 2002/02/03 22:21:56 skrll Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,3 +80,10 @@ give sizes and mount points for the following partitions.
 message askfspart
 {The next partition is /dev/%s%c.  You have %d %s left on your disk.
 Partition size? }
+
+message emulbackup
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted filesystem. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
+}
