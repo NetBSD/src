@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.1 2001/10/16 15:38:32 uch Exp $
+# 	$NetBSD: config.playstation2,v 1.2 2001/10/17 01:34:41 shin Exp $
 #
 
 maxusers	8
@@ -77,3 +77,5 @@ pseudo-device	vnd		2	# virtual disk ick
 pseudo-device	rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	gif		2	# IPv[46] over IPv[46] tunnel (RFC1933)
+
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
