@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.5 2002/01/19 11:44:58 wiz Exp $
+.\"	$NetBSD: ntpdate.8,v 1.6 2002/02/02 01:25:25 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -63,10 +63,10 @@ in one of two ways. If
 .Nm
 determines the clock is in error more than 0.5 second
 it will simply step the time by calling the system
-.Pa settimeofday()
+.Xr settimeofday 2
 routine. If the error is less than 0.5 seconds, it will slew the time by
 calling the system
-.Pa adjtime()
+.Xr adjtime 2
 routine. The latter technique is
 less disruptive and more accurate when the error is small, and works quite
 well when
@@ -191,6 +191,8 @@ string to be logged.
 encryption keys used by
 .Nm "" .
 .El
+.Sh AUTHORS
+David L. Mills (mills@udel.edu)
 .Sh BUGS
 The slew adjustment is actually 50% larger than the measured offset, since
 this (it is argued) will tend to keep a badly drifting clock more accurate.
@@ -199,5 +201,3 @@ values of the kernel variables
 .Pa tick
 and
 .Pa tickadj .
-.Sh AUTHOR
-David L. Mills (mills@udel.edu)
