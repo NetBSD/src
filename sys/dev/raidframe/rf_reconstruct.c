@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.74 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.75 2004/03/13 02:00:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.74 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.75 2004/03/13 02:00:15 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -582,8 +582,6 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		Dprintf("RECON: begin request suspend\n");
 		rf_SuspendNewRequestsAndWait(raidPtr);
 		Dprintf("RECON: end request suspend\n");
-		rf_StartUserStats(raidPtr);	/* zero out the stats kept on
-						 * user accs */
 
 		/* fall through to state 1 */
 
@@ -694,10 +692,6 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		reconDesc->state = 6;
 
 		rf_SuspendNewRequestsAndWait(raidPtr);
-		rf_StopUserStats(raidPtr);
-		rf_PrintUserStats(raidPtr);	/* print out the stats on user
-						 * accs accumulated during
-						 * recon */
 
 		/* fall through to state 6 */
 	case 6:

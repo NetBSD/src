@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.29 2004/03/08 02:25:27 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.30 2004/03/13 02:00:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -198,10 +198,6 @@ struct RF_Raid_s {
 	/*
          * Statistics
          */
-#if !defined(_KERNEL) && !defined(SIMULATE)
-	RF_ThroughputStats_t throughputstats;
-#endif				/* !KERNEL && !SIMULATE */
-	RF_CumulativeStats_t userstats;
 	int     parity_rewrite_stripes_done;
 	int     recon_stripes_done;
 	int     copyback_stripes_done;
