@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.278 2004/06/17 12:43:37 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.279 2004/06/17 20:08:39 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4017,4 +4017,13 @@ usr.sbin/racoon/racoon/Makefile				patch
 
 	Pullup racoon to version 20040617a which includes security fixes.
 	[itojun, ticket #505]
+
+sys/arch/amd64/amd64/gdt.c			1.5
+sys/arch/amd64/include/gdt.h			1.2
+
+	When converting GDT length units from segment structures to bytes for
+	the amd64 port, I converted MINGDTSIZ wrongly; it was not page aligned,
+	causing	gdt_grow to corrupt the GDT. Fix this, and remove the
+	extraneous definitions of the sizes from gdt.c.
+	[fvdl, ticket #506]
 
