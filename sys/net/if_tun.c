@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.16 1995/03/08 02:57:09 cgd Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.17 1995/06/12 01:09:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -166,14 +166,14 @@ tunclose(dev, flag)
 		s = splimp();
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
-		    /* find internet addresses and delete routes */
-		    register struct ifaddr *ifa;
-		    for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
-			if (ifa->ifa_addr->sa_family == AF_INET) {
-			    rtinit(ifa, (int)RTM_DELETE,
-				   tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+			/* find internet addresses and delete routes */
+			register struct ifaddr *ifa;
+			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+			    ifa = ifa->ifa_list.le_next) {
+				if (ifa->ifa_addr->sa_family == AF_INET)
+			    		rtinit(ifa, (int)RTM_DELETE,
+					    p->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
 			}
-		    }
 		}
 		splx(s);
 	}
@@ -196,17 +196,18 @@ tuninit(unit)
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.le_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
-		    struct sockaddr_in *si;
+			struct sockaddr_in *sin;
 
-		    si = (struct sockaddr_in *)ifa->ifa_addr;
-		    if (si && si->sin_addr.s_addr)
-			    tp->tun_flags |= TUN_IASET;
+			sin = satosin(ifa->ifa_addr);
+			if (sin && sin->sin_addr.s_addr)
+				tp->tun_flags |= TUN_IASET;
 
-		    si = (struct sockaddr_in *)ifa->ifa_dstaddr;
-		    if (si && si->sin_addr.s_addr)
-			    tp->tun_flags |= TUN_DSTADDR;
+			sin = satosin(ifa->ifa_dstaddr);
+			if (sin && sin->sin_addr.s_addr)
+				tp->tun_flags |= TUN_DSTADDR;
 		}
 
 	return 0;
