@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.508 2003/02/03 13:28:54 pooka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.509 2003/02/18 00:10:31 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.505 2003/02/03 13:27:57 pooka Exp 
+ *	NetBSD: pcidevs,v 1.506 2003/02/18 00:09:43 grant Exp 
  */
 
 /*
@@ -1407,6 +1407,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_4	0x103c		/* PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_4	0x103d		/* PRO/100 VE (MOB) Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM (MOB) Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
