@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.23 2000/04/18 14:42:42 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.24 2000/04/19 13:41:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.23 2000/04/18 14:42:42 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.24 2000/04/19 13:41:28 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,6 +291,10 @@ t_getstr(info, id, area, limit)
 	ids[1] = id[1];
 	ids[2] = '\0';
 
+	if ((ids[0] == 'Z') && (ids[1] == 'Z')) {
+		  /* return info->info address??? */
+	}
+	
 	if ((i = cgetstr(info->info, ids, &s)) < 0) {
 		errno = ENOENT;
 		return NULL;
@@ -348,3 +352,40 @@ t_freent(info)
 	free(info->info);
 	free(info);
 }
+
+/*
+ * Get the terminal name string from the termcap entry.
+ *
+ */
+int
+t_getterm(struct tinfo *info, char **area, size_t *limit)
+{
+	char *endp;
+	size_t count;
+
+	if ((endp = index(info->info, ':')) == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	
+
+	count = endp - info->info + 1;
+	if (area == NULL) {
+		*limit = count;
+		return 0;
+	} else {
+		if ((limit != NULL) && (count > *limit)) {
+			errno = E2BIG;
+			return -1;
+		}
+
+		strncpy(*area, info->info, count);
+		(*area)[count] = '\0';
+		if (limit != NULL)
+			*limit -= count;
+	}
+
+	return 0;
+}
+
+		
