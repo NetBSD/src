@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.4 1998/11/19 21:49:17 thorpej Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.5 2000/01/11 12:59:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,12 +174,6 @@ espattach_obio(parent, self, aux)
 		return;
 	}
 
-	if (oba->oba_bp != NULL && strcmp(oba->oba_bp->name, "esp") == 0 &&
-	    oba->oba_bp->val[0] == -1 &&
-	    oba->oba_bp->val[1] == sc->sc_dev.dv_unit)
-		bootpath_store(1, oba->oba_bp + 1);
-
-
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
@@ -281,8 +275,6 @@ espattach_obio(parent, self, aux)
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
-
-	bootpath_store(1, NULL);
 }
 
 /*

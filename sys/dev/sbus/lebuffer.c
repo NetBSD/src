@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.5 1998/08/29 20:38:38 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.6 2000/01/11 12:59:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@ lebufattach(parent, self, aux)
 	int sbusburst;
 	bus_space_tag_t sbt;
 	bus_space_handle_t bh;
-	struct bootpath *bp;
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
@@ -139,12 +138,6 @@ lebufattach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	/* Propagate bootpath */
-	if (sa->sa_bp != NULL)
-		bp = sa->sa_bp + 1;
-	else
-		bp = NULL;
-
 	/* Allocate a bus tag */
 	sbt = (bus_space_tag_t)
 		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
@@ -163,7 +156,7 @@ lebufattach(parent, self, aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, bp, &sa);
+				       sbt, sc->sc_dmatag, node, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 		sbus_destroy_attach_args(&sa);
 	}
