@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2002/03/29 03:29:10 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.3 2002/03/29 22:58:14 thorpej Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,6 +37,8 @@ runs on the following ARM architecture evaluation boards:
 ARM, Ltd. Integrator
 .It
 Intel IQ80310
+.It
+Intel IQ80321
 .bullet)
 .
 .Ss2 Supported devices (ARM, Ltd. Integrator)
@@ -92,7 +94,7 @@ General Purpose I/O unit
 .bullet)
 .bullet)
 .
-.Ss2 Supported devices (Intel IQ80310)
+.Ss2 Supported devices (Intel IQ80321)
 For devices that have machine-independent drivers,
 this is not an exhaustive list, but merely reflects the
 devices that have been tested on this platform.
