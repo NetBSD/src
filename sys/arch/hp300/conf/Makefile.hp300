@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.hp300,v 1.15 1994/06/08 07:51:36 mycroft Exp $
+#	$Id: Makefile.hp300,v 1.16 1994/06/16 02:14:26 hpeyerl Exp $
 #
 # Makefile for NetBSD
 #
@@ -27,6 +27,7 @@ CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld
 TOUCH=	touch -f -c
+AWK=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -72,7 +73,7 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vnode_if.o ${LIBKERN}
+SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
@@ -153,9 +154,7 @@ param.c: $S/conf/param.c
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
 
-vnode_if.c: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
-vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
