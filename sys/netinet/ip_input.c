@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.87 1999/05/04 20:13:09 hwr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.88 1999/06/26 06:16:48 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1426,7 +1426,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
-	extern int subnetsarelocal;
+	extern int subnetsarelocal, hostzeroisbroadcast;
 
 	int error, old;
 
@@ -1518,6 +1518,10 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (error);
 	    }
 #endif
+	case IPCTL_HOSTZEROBROADCAST:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &hostzeroisbroadcast));
+
 	default:
 		return (EOPNOTSUPP);
 	}
