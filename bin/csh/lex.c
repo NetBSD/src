@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lex.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: lex.c,v 1.5 1994/09/21 00:11:01 mycroft Exp $";
+static char *rcsid = "$Id: lex.c,v 1.6 1994/09/23 11:16:35 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1504,7 +1504,7 @@ again:
 		    goto again;
 		}
 		if (c > 0)
-		    bcopy(ttyline, fbuf[buf] + off, c * sizeof(Char));
+		    memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
 		numleft = 0;
 	    }
 	    else {

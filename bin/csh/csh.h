@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)csh.h	8.1 (Berkeley) 5/31/93
- *	$Id: csh.h,v 1.6 1994/09/21 00:10:39 mycroft Exp $
+ *	$Id: csh.h,v 1.7 1994/09/23 11:16:30 mycroft Exp $
  */
 
 /*
@@ -187,8 +187,8 @@ jmp_buf reslab;
 #define	setexit()	(setjmp(reslab))
 #define	reset()		longjmp(reslab, 1)
  /* Should use structure assignment here */
-#define	getexit(a)	bcopy((char *)reslab, ((char *)(a)), sizeof reslab)
-#define	resexit(a)	bcopy((char *)(a), (char *)reslab, sizeof reslab)
+#define	getexit(a)	memcpy((a), reslab, sizeof reslab)
+#define	resexit(a)	memcpy(reslab, (a), sizeof reslab)
 
 Char   *gointr;			/* Label for an onintr transfer */
 

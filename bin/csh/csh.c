@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	8.2 (Berkeley) 10/12/93";*/
-static char *rcsid = "$Id: csh.c,v 1.7 1994/09/21 00:10:35 mycroft Exp $";
+static char *rcsid = "$Id: csh.c,v 1.8 1994/09/23 11:16:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -724,7 +724,7 @@ srcunit(unit, onlyown, hflg)
     if (setintr)
 	omask = sigblock(sigmask(SIGINT));
     /* Setup the new values of the state stuff saved above */
-    bcopy((char *) &B, (char *) &(saveB), sizeof(B));
+    memcpy(&saveB, &B, sizeof(B));
     fbuf = NULL;
     fseekp = feobp = fblocks = 0;
     oSHIN = SHIN, SHIN = unit, arginp = 0, onelflg = 0;
@@ -758,7 +758,7 @@ srcunit(unit, onlyown, hflg)
 	xfree((ptr_t) fbuf);
 
 	/* Reset input arena */
-	bcopy((char *) &(saveB), (char *) &B, sizeof(B));
+	memcpy(&B, &saveB, sizeof(B));
 
 	(void) close(SHIN), SHIN = oSHIN;
 	arginp = oarginp, onelflg = oonelflg;
@@ -807,7 +807,8 @@ rechist()
   	    (void) Strcat(buf, STRsldthist);
   	}
 
-  	if ((fp = creat(short2str(hfile), 0600)) == -1) 
+  	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
+	    0600)) == -1) 
   	    return;
 
 	oldidfds = didfds;
