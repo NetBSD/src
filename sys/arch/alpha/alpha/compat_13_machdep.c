@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 01:51:29 thorpej Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.2 1998/09/20 18:54:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 01:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.2 1998/09/20 18:54:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,6 @@ compat_13_sys_sigreturn(p, v, retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
 	if (ALIGN(scp) != (u_int64_t)scp)
 		return (EINVAL);
 
@@ -116,9 +112,5 @@ compat_13_sys_sigreturn(p, v, retval)
 	native_sigset13_to_sigset(&mask13, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): returns\n", p->p_pid);
-#endif
 	return (EJUSTRETURN);
 }
