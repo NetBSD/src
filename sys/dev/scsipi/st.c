@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.86 1997/12/28 19:25:35 is Exp $	*/
+/*	$NetBSD: st.c,v 1.87 1998/01/12 09:49:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -319,9 +319,7 @@ struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach
 };
 
-struct cfdriver st_cd = {
-	NULL, "st", DV_TAPE
-};
+extern struct cfdriver st_cd;
 
 struct scsipi_device st_switch = {
 	st_interpret_sense,
