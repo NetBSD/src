@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.1.6.2 2000/07/07 17:33:50 he Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.1.6.3 2000/07/27 17:58:08 he Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -108,6 +108,9 @@
 #define HPT_STAT2_POLLST		0x01
 
 #define HPT_CSEL		0x5a
+#define HPT_CSEL_IRQDIS			0x10 /* 370 only */
+#define HPT_CSEL_PCIDIS			0x08 /* 370 only */
+#define HPT_CSEL_PCIWR			0x04 /* 370 only */
 #define HPT_CSEL_CBLID(chan)		 (0x01 << (1 - (chan)))
 
 static u_int32_t hpt366_pio[] =
