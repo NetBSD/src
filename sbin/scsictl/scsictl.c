@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.4 1998/11/12 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.5 1999/02/24 18:51:39 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,8 @@ main(argc, argv)
 			    sizeof(dvname_store), 1);
 			if (fd == -1)
 				err(1, "%s", dvname);
-		}
-		err(1, "%s", dvname);
+		} else
+			err(1, "%s", dvname);
 	}
 
 	/*
