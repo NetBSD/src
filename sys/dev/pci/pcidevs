@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.11 2002/11/01 13:16:36 tron Exp $
+$NetBSD: pcidevs,v 1.428.2.12 2002/11/07 08:25:43 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1310,13 +1310,18 @@ product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82452 Gigabit Ethernet
-product INTEL 82543_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
-product INTEL 82543_SC		0x1003	i82453-SC Gigabit Ethernet
-product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
-product INTEL 82544_XT		0x1008	i82544 Gigabit Ethernet (1000BASE-T)
-product INTEL 82544_XF		0x1009	i82544 Gigabit Ethernet (1000BASE-X)
-product INTEL 82544GC		0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
-product INTEL 82544GC_64	0x100d	i82544GC (64-bit) Gigabit Ethernet (1000BASE-T)
+product INTEL 82543GC_FIBER	0x1001	i82453GC Gigabit Ethernet (1000BASE-X)
+product INTEL 82543GC_COPPER	0x1004	i82543GC Gigabit Ethernet (1000BASE-T)
+product INTEL 82544EI_COPPER	0x1008	i82544EI Gigabit Ethernet (1000BASE-T)
+product INTEL 82544EI_FIBER	0x1009	i82544EI Gigabit Ethernet (1000BASE-X)
+product INTEL 82544GC_COPPER	0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
+product INTEL 82544GC_LOM	0x100d	i82544GC (LOM) Gigabit Ethernet
+product INTEL 82540EM		0x100e	i82540EM Gigabit Ethernet (1000BASE-T)
+product INTEL 82545EM_COPPER	0x100f	i82545EM Gigabit Ethernet (1000BASE-T)
+product INTEL 82546EB_COPPER	0x1010	i82546EB Gigabit Ethernet (1000BASE-T)
+product INTEL 82545EM_FIBER	0x1011	i82545EM Gigabit Ethernet (1000BASE-X)
+product INTEL 82546EB_FIBER	0x1012	i82546EB Gigabit Ethernet (1000BASE-X)
+product INTEL 82540EM_LOM	0x1015	i82540EM (LOM) Gigabit Ethernet
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
