@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.10 1998/12/18 20:28:54 sommerfe Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.10 1998/12/18 20:28:54 sommerfe Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $");
 #endif
 #endif
 
@@ -110,28 +110,31 @@ static int tcp_cksum(register const struct ip *ip,
 		     register int len)
 {
 	int i, tlen;
-	struct phdr {
-		u_long src;
-		u_long dst;
-		u_char mbz;
-		u_char proto;
-		u_short len;
-	} ph;
-	register const u_short *sp;
-	int sum;
+	union phu {
+		struct phdr {
+			u_int32_t src;
+			u_int32_t dst;
+			u_char mbz;
+			u_char proto;
+			u_int16_t len;
+		} ph;
+		u_int16_t pa[6];
+	} phu;
+	register const u_int16_t *sp;
+	u_int32_t sum;
 	tlen = ntohs(ip->ip_len) - ((const char *)tp-(const char*)ip);
 
 	/* pseudo-header.. */
-	ph.len = htons(tlen);
-	ph.mbz = 0;
-	ph.proto = ip->ip_p;
-	ph.src = ip->ip_src.s_addr;
-	ph.dst = ip->ip_dst.s_addr;
+	phu.ph.len = htons(tlen);
+	phu.ph.mbz = 0;
+	phu.ph.proto = ip->ip_p;
+	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
+	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
 
-	sp = (const u_short *)&ph;
+	sp = &phu.pa[0];
 	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
 
-	sp = (const u_short *)tp;
+	sp = (const u_int16_t *)tp;
 
 	for (i=0; i<(tlen&~1); i+= 2)
 		sum += *sp++;
@@ -157,7 +160,7 @@ tcp_print(register const u_char *bp, register u_int length,
 	register u_char flags;
 	register int hlen;
 	register char ch;
-	u_short sport, dport, win, urp;
+	u_int16_t sport, dport, win, urp;
 	tcp_seq seq, ack;
 
 	tp = (struct tcphdr *)bp;

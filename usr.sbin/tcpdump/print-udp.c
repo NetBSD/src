@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.8 1999/04/29 21:20:13 sommerfe Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.9 1999/06/25 03:08:02 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.8 1999/04/29 21:20:13 sommerfe Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.9 1999/06/25 03:08:02 sommerfeld Exp $");
 #endif
 #endif
 
@@ -296,28 +296,31 @@ static int udp_cksum(register const struct ip *ip,
 		     register int len)
 {
 	int i, tlen;
-	struct phdr {
-		u_long src;
-		u_long dst;
-		u_char mbz;
-		u_char proto;
-		u_short len;
-	} ph;
-	register const u_short *sp;
-	int sum;
+	union phu {
+		struct phdr {
+			u_int32_t src;
+			u_int32_t dst;
+			u_char mbz;
+			u_char proto;
+			u_int16_t len;
+		} ph;
+		u_int16_t pa[6];
+	} phu;
+	register const u_int16_t *sp;
+	u_int32_t sum;
 	tlen = ntohs(ip->ip_len) - ((const char *)up-(const char*)ip);
 
 	/* pseudo-header.. */
-	ph.len = htons(tlen);
-	ph.mbz = 0;
-	ph.proto = ip->ip_p;
-	ph.src = ip->ip_src.s_addr;
-	ph.dst = ip->ip_dst.s_addr;
+	phu.ph.len = htons(tlen);
+	phu.ph.mbz = 0;
+	phu.ph.proto = ip->ip_p;
+	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
+	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
 
-	sp = (const u_short *)&ph;
+	sp = &phu.pa[0];
 	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
 
-	sp = (const u_short *)up;
+	sp = (const u_int16_t *)up;
 
 	for (i=0; i<(tlen&~1); i+= 2)
 		sum += *sp++;
@@ -352,7 +355,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	register const struct ip *ip;
 	register const u_char *cp;
 	register const u_char *ep = bp + length;
-	u_short sport, dport, ulen;
+	u_int16_t sport, dport, ulen;
 
 	if (ep > snapend)
 		ep = snapend;
