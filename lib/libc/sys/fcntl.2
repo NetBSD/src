@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.19 2001/05/05 19:48:04 kleink Exp $
+.\"	$NetBSD: fcntl.2,v 1.20 2001/09/16 01:39:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ and
 signals;
 process groups are specified by supplying
 .Fa arg
-as negative, otherwise 
+as negative, otherwise
 .Fa arg
 is interpreted as a process ID.
 The argument
@@ -317,7 +317,7 @@ For example if an application for updating the password file locks the
 password file database while making the update, and then calls
 .Xr getpwnam 3
 to retrieve a record,
-the lock will be lost because 
+the lock will be lost because
 .Xr getpwnam 3
 opens, reads, and closes the password database.
 The database close will release all locks that the process has
@@ -336,9 +336,9 @@ Calling
 is recommended for applications that want to ensure the integrity
 of their locks when using library routines or wish to pass locks
 to their children.
-Note that 
+Note that
 .Xr flock 2
-and 
+and
 .Xr fcntl 2
 locks may be safely used concurrently.
 .Pp

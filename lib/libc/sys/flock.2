@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.11 2001/05/19 17:23:39 jdolecek Exp $
+.\"	$NetBSD: flock.2,v 1.12 2001/09/16 01:39:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@ locks and
 locks.
 At any time multiple shared locks may be applied to a file,
 but at no time are multiple exclusive, or both shared and exclusive,
-locks allowed simultaneously on a file.  
+locks allowed simultaneously on a file.
 .Pp
 A shared lock may be
 .Em upgraded
@@ -140,7 +140,7 @@ The argument
 .Fa operation
 does not include one of
 .Dv LOCK_EX ,
-.Dv LOCK_SH 
+.Dv LOCK_SH
 or
 .Dv LOCK_UN .
 .El

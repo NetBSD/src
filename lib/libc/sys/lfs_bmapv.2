@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_bmapv.2,v 1.1 2000/05/24 21:54:59 perseant Exp $
+.\"	$NetBSD: lfs_bmapv.2,v 1.2 2001/09/16 01:39:01 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ The
 .Fa fsidp
 argument contains the id of the filesystem to which the inodes and
 blocks belong.
-The 
+The
 .Fa blkiov
 argument is an array of BLOCK_INFO structures (see below).  The
 .Fa blkcnt
@@ -97,7 +97,7 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem. 
+does not specify a valid filesystem.
 .El
 .Sh SEE ALSO
 .Xr lfs_cleanerd 8 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: statfs.2,v 1.18 2000/02/28 14:21:46 enami Exp $
+.\"	$NetBSD: statfs.2,v 1.19 2001/09/16 01:39:03 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,11 +155,11 @@ is not a directory.
 .It Bq Er ENAMETOOLONG
 The length of a component of
 .Fa path
-exceeds 
+exceeds
 .Dv {NAME_MAX}
 characters, or the length of
 .Fa path
-exceeds 
+exceeds
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

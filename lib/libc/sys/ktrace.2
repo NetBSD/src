@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.2,v 1.8 2001/03/18 21:51:11 pooka Exp $
+.\"	$NetBSD: ktrace.2,v 1.9 2001/09/16 01:39:01 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,7 @@ struct ktr_header {
 .Pp
 The
 .Nm ktr_len
-field specifies the length of the 
+field specifies the length of the
 .Nm ktr_type
 data that follows this header.
 The
@@ -132,7 +132,7 @@ The
 .Nm ktr_buf
 is an internal kernel pointer and is not useful.
 .Pp
-The generic header is followed by 
+The generic header is followed by
 .Nm ktr_len
 bytes of a
 .Nm ktr_type

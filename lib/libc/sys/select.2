@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.12 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: select.2,v 1.13 2001/09/16 01:39:02 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,7 +106,7 @@ to the maximum number of descriptors supported by the system.
 If
 .Fa timeout
 is a non-nil pointer, it specifies a maximum interval to wait for the
-selection to complete.  If 
+selection to complete.  If
 .Fa timeout
 is a nil pointer, the select blocks indefinitely.  To affect a poll, the
 .Fa timeout
