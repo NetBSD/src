@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.55 2001/10/29 21:30:54 simonb Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.56 2001/10/31 17:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
  */
 
 #include <machine/int_types.h>
+
+#include <machine/elf_machdep.h>
 
 typedef	__uint8_t  	Elf_Byte;
 
@@ -654,8 +656,6 @@ typedef struct {
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
-
-#include <machine/elf_machdep.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr
