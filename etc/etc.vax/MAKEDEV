@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.35 2001/02/18 10:50:45 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.36 2001/05/10 01:31:40 lukem Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -59,7 +59,6 @@
 #	ad*	unibus interface to data translation a/d converter
 #	np*	unibus ethernet co-processor interface, for downloading.
 #	qv*	qvss (microvax) display
-#	ttyv0	qvss (microvax) display reserved pty
 #	lkm	loadable kernel modules
 #	bpf*	berkeley packet filter
 #	tun*	network tunnel device
@@ -429,9 +428,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with another use."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
@@ -535,12 +532,6 @@ qv0)
 	mknod qv0 c 40 0
 	mknod qvcons c 40 1
 	mknod mouse c 40 2
-	;;
-
-ttyv0)
-	if [ ! -f ttyqe ]; then sh ./$0 pty1; fi
-	mv ttyqf ttyv0
-	mv ptyqf ptyv0
 	;;
 
 scsibus*)
