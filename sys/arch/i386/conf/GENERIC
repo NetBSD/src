@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.285 1999/12/30 04:18:51 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.286 1999/12/31 00:14:56 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -305,7 +305,6 @@ com2	at isa? port 0x3e8 irq 5
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
 #com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 16-port serial cards (BB2016)
 #boca1	at isa? port 0x140 irq 5	# this line is also needed for BB2016
 #com*	at boca? slave ?
