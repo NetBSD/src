@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 1997/10/17 22:17:35 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.7 1997/10/17 22:24:20 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,8 @@ static int config_network (void)
 	run_prog ("/sbin/ifconfig %s inet %s netmask %s", net_dev, net_ip,
 		  net_mask);
 	run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
-	run_prog ("/sbin/route add default %s 2> /dev/null", net_defroute);
+	run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
+		  net_defroute);
 
 	return run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
 		|| run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
@@ -181,7 +182,10 @@ get_via_ftp (void)
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
 	process_menu (MENU_ftpsource);
 	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, "ftp");
-	snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
+	if (*dist_dir == '/')
+		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
+	else
+		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
 	strcpy (dist_dir, realdir);
 	run_prog ("/bin/mkdir %s", realdir);
 	clean_dist_dir = 1;
@@ -209,6 +213,7 @@ get_via_ftp (void)
 				       filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
+			puts (CL);
 			wrefresh (stdscr);
 			msg_display (MSG_ftperror);
 			process_menu (MENU_yesno);
