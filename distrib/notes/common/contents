@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.22 2002/07/29 14:23:39 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.23 2002/07/29 15:29:12 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -897,7 +897,7 @@ server which supports 256 colors with man pages.
 .if \n[pmax] \{\
 .It Sy xserver
 The Xpmax server with man page.
-.showsize -unknown- -unknown-
+.showsize 2 6
 .\}
 .
 .if \n[sparc] \{\
