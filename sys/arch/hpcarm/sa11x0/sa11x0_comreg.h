@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_comreg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $        */
+/*      $NetBSD: sa11x0_comreg.h,v 1.3 2001/03/10 13:34:35 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -50,7 +50,7 @@
 #define SACOM_RXFIFOLEN		12
 
 /* UART control register 0 */
-#define SACOM_CR0	0
+#define SACOM_CR0	0x00
 #define CR0_PE		0x01	/* Parity enable */
 #define CR0_OES		0x02	/* Odd/even parity select */
 #define CR0_SBS		0x04	/* Stop bit select */
@@ -60,11 +60,11 @@
 #define CR0_TCE		0x40	/* Transmit clock edge enable */
 
 /* UART control register 1 and 2 - baud rate divisor */
-#define SACOM_CR1	1
-#define SACOM_CR2	2
+#define SACOM_CR1	0x04
+#define SACOM_CR2	0x08
 
 /* UART control register 3 */
-#define SACOM_CR3	3
+#define SACOM_CR3	0x0C
 #define CR3_RXE		0x01	/* Receiver enable */
 #define CR3_TXE		0x02	/* Transmitter enable */
 #define CR3_BRK		0x04	/* Break */
@@ -73,13 +73,13 @@
 #define CR3_LBM		0x20	/* Loopback mode */
 
 /* UART data register */
-#define SACOM_DR	5
+#define SACOM_DR	0x14
 #define DR_PRE		0x100	/* Parity error */
 #define DR_FRE		0x200	/* Framing error */
 #define DR_ROR		0x400	/* Receiver overrun */
 
 /* UART status register 0 */
-#define SACOM_SR0	7
+#define SACOM_SR0	0x1C
 #define SR0_TFS		0x01	/* Transmit FIFO service request */
 #define SR0_RFS		0x02	/* Receive FIFO service request */
 #define SR0_RID		0x04	/* Receiver idle */
@@ -88,7 +88,7 @@
 #define SR0_EIF		0x20	/* Error in FIFO */
 
 /* UART status register 1 */
-#define SACOM_SR1	8
+#define SACOM_SR1	0x20
 #define SR1_TBY		0x01	/* Transmitter busy */
 #define SR1_RNE		0x02	/* Receive FIFO not empty */
 #define SR1_TNF		0x04	/* Transmit FIFO not full */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcdreg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $ */
+/*	$NetBSD: sa11x0_lcdreg.h,v 1.3 2001/03/10 13:34:35 toshii Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,21 +59,21 @@
 #define CR0_DPD		(1<<9)
 
 /* LCD Control Register 1 */
-#define SALCD_CR1	8
+#define SALCD_CR1	0x20
 	/* PPL ; Pixel per line - 16 */
 	/* HSW ; */
 	/* ELW ; */
 	/* BLW ; */
 
 /* LCD Control Register 2 */
-#define SALCD_CR2	9
+#define SALCD_CR2	0x24
 	/* LPP ; Lines per panel */
 	/* VSW ; */
 	/* EFW ; */
 	/* BFW ; */
 
 /* LCD Control Register 3 */
-#define SALCD_CR3	10
+#define SALCD_CR3	0x28
 	/* PCD ; Pixel clock divisor	*/
 	/* ACB ; */
 	/* API ; AC Bias 		*/
@@ -82,19 +82,19 @@
 	/* PCP ; Pixel clock polarity	*/
 
 /* DMA Channel 1 Base Address Register */
-#define SALCD_BA1	4
+#define SALCD_BA1	0x10
 
 /* DMA Channel 1 Current Address Register */
-#define SALCD_CA1	5
+#define SALCD_CA1	0x14
 
 /* DMA Channel 1 Base Address Register */
-#define SALCD_BA2	6
+#define SALCD_BA2	0x18
 
 /* DMA Channel 1 Current Address Register */
-#define SALCD_CA2	7
+#define SALCD_CA2	0x1C
 
 /* LCD Status Register */
-#define SALCD_SR	1
+#define SALCD_SR	0x04
 #define SR_LDD		(1<<0)
 #define SR_BAU		(1<<1)
 #define SR_BER		(1<<2)

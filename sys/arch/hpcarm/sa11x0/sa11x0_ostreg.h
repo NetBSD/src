@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ostreg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_ostreg.h,v 1.3 2001/03/10 13:34:35 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,41 +40,41 @@
  */
 
 /* OS Timer Match Register */
-#define SAOST_MR0	0
-#define SAOST_MR1	1
-#define SAOST_MR2	2
-#define SAOST_MR3	3
+#define SAOST_MR0	0x00
+#define SAOST_MR1	0x04
+#define SAOST_MR2	0x08
+#define SAOST_MR3	0x0C
 
 /* OS Timer Count Register */
-#define SAOST_CR	4
+#define SAOST_CR	0x10
 
 /* OS Timer Status Register */
-#define SAOST_SR	5
+#define SAOST_SR	0x14
 #define SR_CH0		(1<<0)
 #define SR_CH1		(1<<1)
 #define SR_CH2		(1<<2)
 #define SR_CH3		(1<<3)
 
 /* OS Timer Watchdog Match Enable Register */
-#define SAOST_WR	6
+#define SAOST_WR	0x18
 
 /* OS Timer Interrupt Enable Register */
-#define SAOST_IR	7
+#define SAOST_IR	0x1C
 
 /*
  * SA-1110 Real Time Clock
  */
 
 /* RTC Alarm Register */
-#define SARTC_AR	0
+#define SARTC_AR	0x00
 
 /* RTC Counter Register */
-#define SARTC_CR	1
+#define SARTC_CR	0x04
 
 /* RTC Trim Register */
-#define SARTC_TR	2
+#define SARTC_TR	0x08
 
 /* RTC Status Register */
-#define SARTC_SR	3
+#define SARTC_SR	0x0C
 
 /* end of sa11x0_ostreg.h */
