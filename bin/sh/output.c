@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: output.c,v 1.11 1994/12/05 19:07:47 cgd Exp $";
+static char *rcsid = "$Id: output.c,v 1.12 1994/12/23 13:24:11 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: output.c,v 1.11 1994/12/05 19:07:47 cgd Exp $";
 #include <sys/ioctl.h>
 
 #include <stdio.h>	/* defines BUFSIZ */
+#include <string.h>
 #include "shell.h"
 #include "syntax.h"
 #include "output.h"
