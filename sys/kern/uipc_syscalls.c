@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.76 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.77 2003/02/26 14:36:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.76 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.77 2003/02/26 14:36:43 drochner Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -100,7 +100,7 @@ sys_socket(struct lwp *l, void *v, register_t *retval)
 		fdremove(fdp, fd);
 		ffree(fp);
 	} else {
-		KASSERT(so->so_rcv.sb_mowner);
+		MBUFTRACE_ASSERT(so->so_rcv.sb_mowner);
 		fp->f_data = (caddr_t)so;
 		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, p);
@@ -320,7 +320,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	if (error == ERESTART)
 		error = EINTR;
  out:
-	KASSERT(so->so_rcv.sb_mowner);
+	MBUFTRACE_ASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -559,7 +559,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	if (to)
 		m_freem(to);
  out:
-	KASSERT(so->so_rcv.sb_mowner);
+	MBUFTRACE_ASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -774,7 +774,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	if (control)
 		m_freem(control);
  out1:
-	KASSERT(so->so_rcv.sb_mowner);
+	MBUFTRACE_ASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -843,7 +843,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	}
 	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
  out:
-	KASSERT(so->so_rcv.sb_mowner);
+	MBUFTRACE_ASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
