@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.3 1997/07/28 22:48:01 deraadt Exp $ */
+/*	$NetBSD: mkalias.c,v 1.2 1997/10/06 06:10:16 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -31,36 +31,48 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.3 1997/07/28 22:48:01 deraadt Exp $";
+__RCSID("$NetBSD: mkalias.c,v 1.2 1997/10/06 06:10:16 lukem Exp $");
 #endif
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <resolv.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
+
+#include <rpc/rpc.h>
+
 #include "ypdb.h"
 #include "ypdef.h"
+
+void	capitalize __P((char *, int));
+int	check_host __P((char *, char *, int, int, int));
+int	main __P((int, char *[]));
+void	split_address __P((char *, int, char *, char *));
+void	usage __P((void));
 
 extern char *__progname;		/* from crt0.o */
 
 void
 split_address(address, len, user, host)
-char *address;
-int    len;
-char  *user, *host;
+	char	*address;
+	int	 len;
+	char	*user, *host;
 {
-	char *c,*s,*r;
+	char *c, *s, *r;
 	int  i = 0;
 
-	if (index(address,'@')) {
+	if ((strchr(address, '@')) != NULL) {
 		
 		s = user;
 		
@@ -68,16 +80,14 @@ char  *user, *host;
 			if (*c == '@') {
 				*s = '\0';
 				s = host;
-			} else {
+			} else
 				*s++ = *c;
-			}
 			c++;
 		}
 		*s = '\0';
-	
 	}
 		
-	if (r = rindex(address,'!')) {
+	if ((r = strrchr(address, '!')) != NULL) {
 		
 		s = host;
 		
@@ -85,27 +95,25 @@ char  *user, *host;
 			if (c == r) {
 				*s = '\0';
 				s = user;
-			} else {
+			} else
 				*s++ = *c;
-			}
 			c++;
 		}
 		*s = '\0';
-		
 	}
-		
 }
 
 int
 check_host(address, host, dflag, uflag, Eflag)
-char *address, *host;
-int   dflag, uflag, Eflag;
+	char	*address, *host;
+	int	 dflag, uflag, Eflag;
 {
 	char answer[PACKETSZ];
 	int  status;
 
-	if ((dflag && index(address,'@')) ||
-	    (uflag && index(address,'!'))) return(0);
+	if ((dflag && strchr(address, '@')) ||
+	    (uflag && strchr(address, '!')))
+		return(0);
 
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
@@ -122,9 +130,9 @@ int   dflag, uflag, Eflag;
 }
 
 void
-capitalize(name,len)
-char *name;
-int len;
+capitalize(name, len)
+	char	*name;
+	int	 len;
 {
 	char last = ' ';
 	char *c;
@@ -138,21 +146,18 @@ int len;
 	i = 0;
 	if (last == '.') {
 		for(c = name; i < len; i++) {
-			if (last == '.') {
+			if (last == '.')
 				*c = toupper(*c);
-			}
 			last = *c++;
 		}
 	}
-	
 }
 
 int
-main (argc,argv)
-int argc;
-char *argv[];
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	int	usage = 0;
 	int	eflag = 0;
 	int	dflag = 0;
 	int	nflag = 0;
@@ -164,77 +169,69 @@ char *argv[];
 	char	*input = NULL;
 	char	*output = NULL;
 	DBM	*db;
-	datum	key,val;
+	datum	key, val;
 	char	*slash;
 	DBM	*new_db = NULL;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN],db_outfile[MAXPATHLEN],
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
 		db_tempname[MAXPATHLEN];
 	int	status;
-	char	user[4096],host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
+	char	user[4096], host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
 	char	datestr[11];
 	char	myname[MAXHOSTNAMELEN];
 	
-	while ((ch = getopt(argc, argv, "Edensuv")) != -1)
-	  switch(ch) {
-	  case 'E':
-	    eflag++;			/* Check hostname */
-	    Eflag++;			/* .. even check MX records */
-	    break;
-	  case 'd':
-	    dflag++;			/* Don't check DNS hostname */
-	    break;
-	  case 'e':
-	    eflag++;			/* Check hostname */
-	    break;
-	  case 'n':
-	    nflag++;			/* Capitalize name parts */
-	    break;
-	  case 's':
-	    sflag++;			/* Don't know... */
-	    break;
-	  case 'u':
-	    uflag++;			/* Don't check UUCP hostname */
-	    break;
-	  case 'v':
-	    vflag++;			/* Verbose */
-	    break;
-	  default:
-	    usage++;
-	    break;
-	  }
+	while ((ch = getopt(argc, argv, "Edensuv")) != -1) {
+		switch(ch) {
+		case 'd':
+			dflag++;		/* Don't check DNS hostname */
+			break;
 
-	if (optind == argc) {
-		usage++;
-	} else {
-		input = argv[optind++];
-		if (optind < argc)
-			output = argv[optind++];
-		if (optind < argc)
-			usage++;
+		case 'e':
+			eflag++;		/* Check hostname */
+			break;
+
+		case 'E':
+			eflag++;		/* Check hostname */
+			Eflag++;		/* .. even check MX records */
+			break;
+
+		case 'n':
+			nflag++;		/* Capitalize name parts */
+			break;
+
+		case 's':
+			sflag++;		/* Don't know... */
+			break;
+
+		case 'u':
+			uflag++;		/* Don't check UUCP hostname */
+			break;
+
+		case 'v':
+			vflag++;		/* Verbose */
+			break;
+
+		default:
+			usage();
+		}
 	}
 
-	if (usage) {
-		fprintf(stderr,
-			"usage: %s [-v] [-e|-E [-d] [-u]] [-n] input [output]\n",
-			__progname);
-		exit(1);
-	}
+	if (optind == argc)
+		usage();
+
+	input = argv[optind++];
+	if (optind < argc)
+		output = argv[optind++];
+	if (optind < argc)
+		usage();
 	
 	db = ypdb_open(input, O_RDONLY, 0444);
-	if (db == NULL) {
-		fprintf(stderr,
-			"%s: Unable to open input database %s\n",
-			__progname,
-			input);
-		exit(1);
-	}
+	if (db == NULL)
+		errx(1, "Unable to open input database `%s'", input);
 
 	if (output != NULL) {
-		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
-			fprintf(stderr,"%s: %s: file name too long\n",
-			        __progname, output);
-		}
+		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
+			warnx("file name `%s' too long", output);
 		snprintf(db_outfile, sizeof(db_outfile),
 			 "%s%s", output, YPDB_SUFFIX);
 
@@ -246,12 +243,9 @@ char *argv[];
 	
 		/* note: output is now directory where map goes ! */
 	
-		if (strlen(output) + strlen(mapname) 
-				+ strlen(YPDB_SUFFIX) > MAXPATHLEN) {
-			fprintf(stderr,"%s: %s: directory name too long\n",
-				__progname, output);
-			exit(1);
-		}
+		if (strlen(output) + strlen(mapname)
+		    + strlen(YPDB_SUFFIX) > MAXPATHLEN)
+			errx(1, "directory name `%s' too long", output);
 	
 		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
 			mapname);
@@ -260,45 +254,43 @@ char *argv[];
 			YPDB_SUFFIX);
 	
 		new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
-		if (new_db == NULL) {
-			fprintf(stderr,
-				"%s: Unable to open output database %s\n",
-				__progname,
-				db_outfile);
-			exit(1);
-		}
+		if (new_db == NULL)
+			errx(1, "Unable to open output database `%s'",
+			    db_outfile);
 	}
 
 	for (key = ypdb_firstkey(db);
 	     key.dptr != NULL;
 	     key = ypdb_nextkey(db)) {
 		
-	        val = ypdb_fetch(db,key);
+	        val = ypdb_fetch(db, key);
 
-		if (val.dptr == NULL) continue;		/* No value */
+		if (val.dptr == NULL)
+			continue;			/* No value */
 		if ((*key.dptr == '@') && (key.dsize == 1))
 			continue;			/* Sendmail token */
 		if (strncmp(key.dptr, "YP_", 3)==0)	/* YP token */
 			continue;
-		if (index(val.dptr,',')) continue;	/* List... */
-		if (index(val.dptr,'|')) continue;	/* Pipe... */
+		if (strchr(val.dptr, ','))		/* List... */
+			continue;
+		if (strchr(val.dptr, '|'))		/* Pipe... */
+			continue;
 
-		if (!((index(val.dptr,'@')) ||
-		      (index(val.dptr,'!')))) continue;	/* Skip local users */
+		if (!((strchr(val.dptr, '@')) ||
+		    (strchr(val.dptr, '!'))))
+			continue;			/* Skip local users */
 
-		split_address(val.dptr,val.dsize,user,host);
+		split_address(val.dptr, val.dsize, user, host);
 
 		if (eflag && check_host(val.dptr, host, dflag, uflag, Eflag)) {
-			printf("Invalid host %s in %*.*s:%*.*s\n",
-			       host,
+			printf("Invalid host %s in %*.*s:%*.*s\n", host,
 			       key.dsize, key.dsize, key.dptr,
 			       val.dsize, val.dsize, val.dptr);
 			continue;
 		}
 
-		if (nflag) {
-			capitalize(key.dptr,key.dsize);
-		}
+		if (nflag)
+			capitalize(key.dptr, key.dsize);
 
 		if (new_db != NULL) {
 			status = ypdb_store(new_db, val, key, YPDB_INSERT);
@@ -319,18 +311,16 @@ char *argv[];
 	}
 
 	if (new_db != NULL) {
-	  	sprintf(datestr, "%010d", time(NULL));
+	  	sprintf(datestr, "%010d", (int)time(NULL));
 		key.dptr = YP_LAST_KEY;
 		key.dsize = strlen(YP_LAST_KEY);
 		val.dptr = datestr;
 		val.dsize = strlen(datestr);
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
-		if (status != 0) {
-			printf("%s: problem storing %*.*s %*.*s\n",
-			       __progname,
+		if (status != 0)
+			warnx("problem storing %*.*s %*.*s",
 			       key.dsize, key.dsize, key.dptr,
 			       val.dsize, val.dsize, val.dptr);
-		}
 	}
 
 	if (new_db != NULL) {
@@ -340,28 +330,29 @@ char *argv[];
 		val.dptr = myname;
 		val.dsize = strlen(myname);
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
-		if (status != 0) {
-			printf("%s: problem storing %*.*s %*.*s\n",
-			       __progname,
+		if (status != 0)
+			warnx("problem storing %*.*s %*.*s",
 			       key.dsize, key.dsize, key.dptr,
 			       val.dsize, val.dsize, val.dptr);
-		}
 	}
-
-	
 
 	ypdb_close(db);
 
 	if (new_db != NULL) {
 		ypdb_close(new_db);
-		if (rename(db_mapname,db_outfile) < 0) {
-			perror("rename");
-			fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
+		if (rename(db_mapname, db_outfile) < 0)
+			err(1, "rename `%s' to `%s' failed", db_mapname,
 				db_outfile);
-			exit(1);
-		}
 	}
 	
-	return(0);
-	
+	exit(0);
+}
+
+void
+usage()
+{
+	fprintf(stderr,
+		"usage: %s [-e|-E [-d] [-u]] [-n] [-v] input [output]\n",
+		__progname);
+	exit(1);
 }
