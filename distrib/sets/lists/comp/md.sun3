@@ -1,6 +1,5 @@
-# $NetBSD: md.sun3,v 1.51 2003/01/18 17:50:30 thorpej Exp $
+# $NetBSD: md.sun3,v 1.52 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/sun3	comp-c-include
-./usr/include/sun3/_G_config.h	comp-c-include
 ./usr/include/sun3/ansi.h	comp-c-include
 ./usr/include/sun3/aout_machdep.h	comp-c-include
 ./usr/include/sun3/asm.h	comp-c-include

@@ -1,6 +1,5 @@
-# $NetBSD: md.news68k,v 1.17 2003/01/18 17:50:27 thorpej Exp $
+# $NetBSD: md.news68k,v 1.18 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/news68k	comp-c-include
-./usr/include/news68k/_G_config.h	comp-c-include
 ./usr/include/news68k/ansi.h	comp-c-include
 ./usr/include/news68k/aout_machdep.h	comp-c-include
 ./usr/include/news68k/asm.h	comp-c-include
