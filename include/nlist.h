@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.6 1996/10/01 21:48:30 cgd Exp $	*/
+/*	$NetBSD: nlist.h,v 1.7 1998/07/26 17:53:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,11 +50,11 @@
 struct nlist {
 #ifdef _AOUT_INCLUDE_
 	union {
-		char *n_name;	/* symbol name (in memory) */
-		long n_strx;	/* file string table offset (on disk) */
+		const char *n_name;	/* symbol name (in memory) */
+		long n_strx;		/* file string table offset (on disk) */
 	} n_un;
 #else
-	char *n_name;		/* symbol name (in memory) */
+	const char *n_name;		/* symbol name (in memory) */
 #endif
 
 #define	N_UNDF	0x00		/* undefined */

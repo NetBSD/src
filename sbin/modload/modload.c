@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.19 1997/12/01 19:30:59 mjacob Exp $	*/
+/*	$NetBSD: modload.c,v 1.20 1998/07/26 18:04:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.19 1997/12/01 19:30:59 mjacob Exp $");
+__RCSID("$NetBSD: modload.c,v 1.20 1998/07/26 18:04:45 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -163,16 +163,16 @@ verify_entry(entry, filename)
 {
 	struct	nlist	names[2];
 	int n;
+	char *s;
 
-	memset((char *)names, 0, sizeof(names));
+	memset(names, 0, sizeof(names));
+	s = malloc(strlen(entry) + 2);
+	s[0] = '_';
+	strcpy(s + 1, entry);
 #ifdef	_AOUT_INCLUDE_
-	names[0].n_un.n_name = (char *)malloc(strlen(entry) + 2);
-	names[0].n_un.n_name[0] = '_';
-	strcpy(names[0].n_un.n_name + 1, entry);
+	names[0].n_un.n_name = s;
 #else
-	names[0].n_name = (char *)malloc(strlen(entry) + 2);
-	names[0].n_name[0] = '_';
-	strcpy(names[0].n_name + 1, entry);
+	names[0].n_name = s;
 #endif
 
 	n = nlist(filename, names);
