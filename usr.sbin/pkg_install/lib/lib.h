@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.21 1999/03/22 05:02:41 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.21.2.1 1999/08/22 18:14:29 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -187,7 +187,7 @@ Boolean		isemptydir(char *fname);
 Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);
 Boolean		isempty(char *);
-Boolean		isURL(char *);
+int		URLlength(char *);
 char		*fileGetURL(char *, char *);
 char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);
@@ -197,7 +197,6 @@ Boolean		make_preserve_name(char *, size_t, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);
-void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
 void		format_cmd(char *, size_t , char *, char *, char *);
