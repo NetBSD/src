@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.46 1998/05/21 19:17:50 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.47 1998/06/09 00:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -122,7 +122,7 @@ wssattach(sc)
     
 	madattach(sc);
 
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->wss_irq, IST_EDGE, 
+	sc->sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq, IST_EDGE, 
 				       IPL_AUDIO, ad1848_intr, &sc->sc_ad1848);
 
 	ad1848_attach(&sc->sc_ad1848);

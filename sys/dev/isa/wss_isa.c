@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.2 1998/02/23 14:12:18 drochner Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.3 1998/06/09 00:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -159,8 +159,9 @@ wssfind(parent, sc, ia)
 	goto bad;
     }
     sc->wss_drq = ia->ia_drq;
+    sc->wss_ic  = ia->ia_ic;
 
-    if (sc->wss_drq != DRQUNK && !isa_drq_isfree(parent, sc->wss_drq))
+    if (sc->wss_drq != DRQUNK && !isa_drq_isfree(sc->wss_ic, sc->wss_drq))
 	    goto bad;
 
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
@@ -175,7 +176,8 @@ wssfind(parent, sc, ia)
     sc->wss_recdrq = 
 	sc->sc_ad1848.mode > 1 && ia->ia_drq2 != DRQUNK ? 
 	ia->ia_drq2 : ia->ia_drq;
-    if (sc->wss_recdrq != sc->wss_drq && !isa_drq_isfree(parent, sc->wss_recdrq))
+    if (sc->wss_recdrq != sc->wss_drq && !isa_drq_isfree(sc->wss_ic,
+      sc->wss_recdrq))
 	goto bad;
 
     /* XXX recdrq */
@@ -208,8 +210,7 @@ wss_isa_attach(parent, self, aux)
         return;
     }
 
-    sc->sc_ic = ia->ia_ic;
-    sc->sc_ad1848.sc_isa = parent;
+    sc->wss_ic = ia->ia_ic;
 
     wssattach(sc);
 }

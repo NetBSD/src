@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.42 1998/05/20 16:19:43 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.43 1998/06/09 00:05:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1142,7 +1142,7 @@ spattach(parent, self, aux)
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
 	ad1848_intr, sc);
 
-    sc->sc_isa = parent->dv_parent;
+    sc->sc_ic = ic;
 
     ad1848_attach(sc);
     printf(": %s\n", sc->chip_name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.8 1998/01/14 12:14:43 drochner Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.9 1998/06/09 00:05:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -434,7 +434,7 @@ esp_isa_attach(parent, self, aux)
 	}
 
 	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(parent, ia->ia_drq);
+		isa_dmacascade(ic, ia->ia_drq);
 
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    (int (*)(void *))ncr53c9x_intr, esc);
