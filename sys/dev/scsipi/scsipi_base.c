@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.35 2000/05/23 10:16:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.36 2000/05/27 23:59:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -777,14 +777,14 @@ sc_err1(xs, async)
 		if (xs->retries) {
 			if ((xs->xs_control & XS_CTL_POLL) != 0)
 				delay(1000000);
-			else if ((xs->xs_control &
+			else if (!async && (xs->xs_control &
 			    (XS_CTL_NOSLEEP|XS_CTL_DISCOVERY)) == 0)
 				tsleep(&lbolt, PRIBIO, "scbusy", 0);
 			else
 #if 0
 				timeout(scsipi_requeue, xs, hz);
 #else
-				goto lose;
+				goto retry;
 #endif
 		}
 	case XS_TIMEOUT:
@@ -796,7 +796,6 @@ sc_err1(xs, async)
 			return (ERESTART);
 		}
 	case XS_DRIVER_STUFFUP:
-	lose:
 		error = EIO;
 		break;
 
