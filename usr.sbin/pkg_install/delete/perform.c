@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.24 1999/08/19 19:37:21 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.25 1999/08/21 02:21:13 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.24 1999/08/19 19:37:21 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.25 1999/08/21 02:21:13 hubertf Exp $");
 #endif
 #endif
 
@@ -596,6 +596,18 @@ pkg_do(char *pkg)
 	    return (1);
 	
 	require_delete(home, 1);
+    }
+    if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	if (Fake)
+	    printf("Would execute post-de-install script at this point.\n");
+	else {
+	    vsystem("chmod +x %s", DEINSTALL_FNAME);	/* make sure */
+	    if (vsystem("./%s %s POST-DEINSTALL", DEINSTALL_FNAME, pkg)) {
+		warnx("post-deinstall script returned error status");
+		if (!Force)
+		    return 1;
+	    }
+	}
     }
     return 0;
 }
