@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.22 2001/01/02 04:03:42 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.23 2001/06/03 15:08:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -267,6 +267,34 @@ skpc(int mask, size_t size, u_char *cp)
 			: "r"(mask),"r"(size),"r"(cp)
 			: "r0","r1" );
 	return	ret;
+}
+
+/*
+ * Set/clear a bit at a memory position; interlocked.
+ * Return 0 if already set, 1 otherwise.
+ */
+static __inline__ int
+bbssi(int bitnr, long *addr)
+{
+	register int ret;
+
+	__asm__ __volatile("clrl r0;bbssi %1,%2,1f;incl r0;1:movl r0,%0"
+		: "=&r"(ret)
+		: "g"(bitnr),"m"(*addr)
+		: "r0","cc","memory");
+	return ret;
+}
+
+static __inline__ int
+bbcci(int bitnr, long *addr)
+{
+	register int ret;
+
+	__asm__ __volatile("clrl r0;bbcci %1,%2,1f;incl r0;1:movl r0,%0"
+		: "=&r"(ret)
+		: "g"(bitnr),"m"(*addr)
+		: "r0","cc","memory");
+	return ret;
 }
 
 #define setrunqueue(p)	\
