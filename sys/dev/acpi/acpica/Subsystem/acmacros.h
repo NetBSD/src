@@ -492,7 +492,8 @@
 
 #ifdef ACPI_DEBUG
 
-#define MODULE_NAME(name)               static char *_THIS_MODULE = name;
+#define MODULE_NAME(name)               static char *_THIS_MODULE \
+			__attribute__((__unused__)) = name;
 
 /*
  * Function entry tracing.
