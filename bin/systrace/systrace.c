@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.6 2002/09/16 04:31:47 itojun Exp $	*/
+/*	$NetBSD: systrace.c,v 1.7 2002/09/17 04:54:36 itojun Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -513,7 +513,7 @@ main(int argc, char **argv)
 			err(1, "attachpid");
 
 		if (background) {
-			if (daemon(0, 1) == -1)
+			if (daemon(1, 1) == -1)
 				err(1, "daemon");
 		}
 	}
