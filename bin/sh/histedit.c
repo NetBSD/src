@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.27 2002/11/24 22:35:40 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.28 2003/05/04 01:05:24 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.27 2002/11/24 22:35:40 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.28 2003/05/04 01:05:24 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,27 @@ setterm(const char *term)
 			outfmt(out2, "sh: Can't set terminal type %s\n", term);
 			outfmt(out2, "sh: Using dumb terminal settings.\n");
 		}
+}
+
+int
+inputrc(argc, argv)
+	int argc;
+	char **argv;
+{
+	if (argc != 2) {
+		out2str("usage: inputrc file\n");
+		return 1;
+	}
+	if (el != NULL) {
+		if (el_source(el, argv[1])) {
+			out2str("inputrc: failed\n");
+			return 1;
+		} else
+			return 0;
+	} else {
+		out2str("sh: inputrc ignored, not editing\n");
+		return 1;
+	}
 }
 
 /*
@@ -499,6 +520,14 @@ str_to_event(const char *str, int last)
 #else
 int
 histcmd(int argc, char **argv)
+{
+	error("not compiled with history support");
+	/* NOTREACHED */
+}
+int
+inputrc(int argc, char **argv)
+	int argc;
+	char **argv;
 {
 	error("not compiled with history support");
 	/* NOTREACHED */

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: builtins.def,v 1.16 2002/11/24 22:35:39 christos Exp $
+#	$NetBSD: builtins.def,v 1.17 2003/05/04 01:05:24 gmcgarry Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -62,6 +62,7 @@ expcmd		exp let
 exportcmd	-s export -s readonly
 falsecmd	-u false
 histcmd -h	-u fc
+inputrc		inputrc
 fgcmd -j	-u fg
 getoptscmd	-u getopts
 hashcmd		hash
