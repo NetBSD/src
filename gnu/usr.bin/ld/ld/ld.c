@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.48 1996/12/22 01:10:37 pk Exp $
+ *	$Id: ld.c,v 1.49 1996/12/28 01:11:25 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -2361,6 +2361,10 @@ digest_pass2()
 			 * compute the correct number of symbol table entries.
 			 */
 			if (!sp->defined) {
+				if (building_shared_object &&
+				    !sp->alias->defined)
+					/* Exclude aliases in shared objects */
+					continue;
 				/*
 				 * Change aliased symbol's definition too.
 				 * These things happen if shared object commons
