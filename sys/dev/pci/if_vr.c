@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.41 2000/11/15 01:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.42 2000/12/14 06:42:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -948,7 +948,7 @@ vr_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -971,7 +971,6 @@ vr_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->vr_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -980,7 +979,6 @@ vr_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->vr_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
@@ -993,10 +991,11 @@ vr_start(ifp)
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
@@ -1625,6 +1624,8 @@ vr_attach(parent, self, aux)
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_init = vr_init;
 	ifp->if_stop = vr_stop;
+	IFQ_SET_READY(&ifp->if_snd);
+
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.20 2000/11/15 01:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.21 2000/12/14 06:42:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -582,6 +582,7 @@ sip_attach(parent, self, aux)
 	ifp->if_watchdog = sip_watchdog;
 	ifp->if_init = sip_init;
 	ifp->if_stop = sip_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Attach the interface.
@@ -681,7 +682,7 @@ sip_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -699,7 +700,6 @@ sip_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -708,7 +708,6 @@ sip_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
@@ -721,10 +720,11 @@ sip_start(ifp)
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
 		 * Ensure we have enough descriptors free to describe

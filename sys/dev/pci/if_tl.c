@@ -1,4 +1,6 @@
-/*	$NetBSD: if_tl.c,v 1.37 2000/11/15 01:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.38 2000/12/14 06:42:57 thorpej Exp $	*/
+
+/* XXX ALTQ XXX */
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
