@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57.6.7 2003/01/03 16:55:25 thorpej Exp $ */
+/*	$NetBSD: cache.c,v 1.57.6.8 2003/01/03 17:25:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -345,6 +345,14 @@ cache_flush(base, len)
 }
 
 /*
+ * Note: the sun4 & sun4c the cache flush functions ignore the `ctx'
+ * parameter. This can be done since the pmap operations that need
+ * to flush cache lines will already have switched to the proper
+ * context to manipulate the MMU. Hence we can avoid the overhead
+ * if saving and restoring the context here.
+ */
+
+/*
  * Flush the current context from the cache.
  *
  * This is done by writing to each cache line in the `flush context'
@@ -562,6 +570,13 @@ sun4_cache_flush(base, len, ctx)
 
 
 #if defined(SUN4M) || defined(SUN4D)
+#ifdef MULTIPROCESSOR
+#define trapoff()	do { setpsr(getpsr() & ~PSR_ET); } while(0)
+#define trapon()	do { setpsr(getpsr() | PSR_ET); } while(0)
+#else
+#define trapoff()
+#define trapon()
+#endif
 /*
  * Flush the current context from the cache.
  *
@@ -573,15 +588,20 @@ void
 srmmu_vcache_flush_context(ctx)
 	int ctx;
 {
+	int i, ls, octx;
 	char *p;
-	int i, ls;
 
 	cachestats.cs_ncxflush++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFC, 0);
+	setcontext4m(octx);
+	trapon();
 }
 
 /*
@@ -596,15 +616,20 @@ srmmu_vcache_flush_region(vreg, ctx)
 	int vreg;
 	int ctx;
 {
-	int i, ls;
+	int i, ls, octx;
 	char *p;
 
 	cachestats.cs_nrgflush++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFR, 0);
+	setcontext4m(octx);
+	trapon();
 }
 
 /*
@@ -621,15 +646,20 @@ srmmu_vcache_flush_segment(vreg, vseg, ctx)
 	int vreg, vseg;
 	int ctx;
 {
-	int i, ls;
+	int i, ls, octx;
 	char *p;
 
 	cachestats.cs_nsgflush++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_totalsize >> CACHEINFO.c_l2linesize;
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFS, 0);
+	setcontext4m(octx);
+	trapon();
 }
 
 /*
@@ -642,7 +672,7 @@ srmmu_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	int i, ls;
+	int i, ls, octx;
 	char *p;
 
 #ifdef DEBUG
@@ -654,8 +684,13 @@ srmmu_vcache_flush_page(va, ctx)
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
 	i = NBPG >> CACHEINFO.c_l2linesize;
+	octx = getcontext4m();
+	trapoff();
+	setcontext4m(ctx);
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_IDCACHELFP, 0);
+	setcontext4m(octx);
+	trapon();
 }
 
 /*
@@ -739,10 +774,7 @@ srmmu_cache_flush(base, len, ctx)
 	else {
 		baseoff = (u_int)base & RGOFSET;
 		i = (baseoff + len + RGOFSET) >> RGSHIFT;
-		if (i == 1)
-			srmmu_vcache_flush_region(VA_VREG(base), ctx);
-		else
-			srmmu_vcache_flush_context(ctx);
+		srmmu_vcache_flush_region(VA_VREG(base), ctx);
 	}
 }
 
@@ -976,7 +1008,7 @@ smp_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_page, va, ctx, 0, 0, 0);
+	XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
 }
 
 void
@@ -984,7 +1016,7 @@ smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, 0, 0);
+	XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
 }
 
 void
@@ -992,14 +1024,14 @@ smp_vcache_flush_region(vr, ctx)
 	int vr;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_region, vr, ctx, 0, 0, 0);
+	XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
 }
 
 void
 smp_vcache_flush_context(ctx)
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_vcache_flush_context, ctx, 0, 0, 0, 0);
+	XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
 }
 
 void
@@ -1008,6 +1040,6 @@ smp_cache_flush(va, size, ctx)
 	u_int size;
 	int ctx;
 {
-	xcall((xcall_func_t)cpuinfo.sp_cache_flush, (int)va, (int)size, ctx, 0, 0);
+	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.18 2003/01/03 16:55:28 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.19 2003/01/03 17:25:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -366,7 +366,7 @@ trap(type, psr, pc, tf)
 			(*cpuinfo.pure_vcache_flush)();
 #if defined(MULTIPROCESSOR)
 			/* Broadcast to other CPUs */
-			/* e.g. xcall(cpuinfo.pure_vcache_flush, 0, 0, 0, 0);*/
+			/* e.g. XCALL0(cpuinfo.pure_vcache_flush, CPUSET_ALL);*/
 #endif
 			ADVANCE;
 			return;
@@ -511,34 +511,31 @@ badtrap:
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
-#if notyet
-		simple_lock(&cpuinfo.fplock);
+#if 1
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
+			struct cpu_info *cpi;
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
-				cpuinfo.fplwp->l_md.md_fpumid = -1;
+				cpuinfo.fpproc->l_md.md_fpu = NULL;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
 			 * still have our state. Tell the owning processor
 			 * to save the process' FPU state.
 			 */
-			cpi = l->l_md.md_fpumid;
-			if (cpi != NULL) {
-				if (cpi->mid == cpuinfo.mid)
-					panic("FPU on module %d", mid);
-				LOCK_XPMSG();
-				simple_lock(&cpi->fplock);
-				simple_lock(&cpi->msg.lock);
-				cpi->msg.tag = XPMSG_SAVEFPU;
-				raise_ipi_wait_and_unlock(cpi);
-				UNLOCK_XPMSG();
+			if ((cpi = l->l_md.md_fpu) != NULL) {
+				if (cpi->ci_cpuid == cpuinfo.ci_cpuid)
+					panic("FPU(%d): state for %p",
+							cpi->ci_cpuid, l);
+#if defined(MULTIPROCESSOR)
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+#endif
+				cpi->fpproc = NULL;
 			}
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
-			l->l_md.md_fpumid = cpuinfo.mid;
+			l->l_md.md_fpu = curcpu();
 		}
-		simple_unlock(&cpuinfo.fplock);
 #else
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			int mid;
@@ -853,7 +850,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (1)");
 		savefpstate(l->l_md.md_fpstate);
-		l->l_md.md_fpumid = -1;
+		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
@@ -1031,7 +1028,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (2)");
 		savefpstate(l->l_md.md_fpstate);
-		l->l_md.md_fpumid = -1;
+		l->l_md.md_fpu = NULL;
 		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);

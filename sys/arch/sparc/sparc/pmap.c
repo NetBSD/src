@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.14 2003/01/03 16:55:27 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.15 2003/01/03 17:25:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -589,81 +589,80 @@ static __inline__ void sp_tlb_flush_all(void)
 
 #if defined(MULTIPROCESSOR)
 /*
- * The SMP versions of the tlb flush routines.
+ * The SMP versions of the tlb flush routines.  We only need to
+ * do a cross call for these on sun4m systems, which itself
+ * ensures that there is only one concurrent flush happening.
+ * For the sun4d case, we provide a special lock.
  */
+
+#if defined(SUN4D)
+static struct simplelock sun4d_tlb_lock = SIMPLELOCK_INITIALIZER;
+#define LOCK_4DTLB()	simple_lock(&sun4d_tlb_lock);
+#define UNLOCK_4DTLB()	simple_unlock(&sun4d_tlb_lock);
+#else
+#define LOCK_4DTLB()	/* nothing */
+#define UNLOCK_4DTLB()	/* nothing */
+#endif
+
 static __inline__ void	smp_tlb_flush_context __P((int ctx));
 static __inline__ void	smp_tlb_flush_region __P((int va, int ctx));
 static __inline__ void	smp_tlb_flush_segment __P((int va, int ctx));
 static __inline__ void	smp_tlb_flush_page __P((int va, int ctx));
 static __inline__ void	smp_tlb_flush_all __P((void));
 
-#if 0
-int smp_tlb_fc_cnt[2];	/* [0] -> calls, [1] -> ipi generating calls */
-int smp_tlb_fr_cnt[2];
-int smp_tlb_fs_cnt[2];
-int smp_tlb_fp_cnt[2];
-int smp_tlb_fa_cnt[2];
-#define INCR_COUNT(x) x[0]++
-#define INCR_CALL(x) x[1]++
-
-void db_print_tlb_stats(void);
-void
-db_print_tlb_stats()
-{
-
-	printf("SMP TLB shootdown statistics:\n");
-	printf("\twhat\tcount\tcalls\n");
-	printf("\tcontext\t%d\t%d\n", smp_tlb_fc_cnt[0], smp_tlb_fc_cnt[1]);
-	printf("\tregion\t%d\t%d\n", smp_tlb_fr_cnt[0], smp_tlb_fr_cnt[1]);
-	printf("\tseg\t%d\t%d\n", smp_tlb_fs_cnt[0], smp_tlb_fs_cnt[1]);
-	printf("\tpage\t%d\t%d\n", smp_tlb_fp_cnt[0], smp_tlb_fp_cnt[1]);
-	printf("\tall\t%d\t%d\n", smp_tlb_fa_cnt[0], smp_tlb_fa_cnt[1]);
-}
-#else
-#define INCR_COUNT(x) /* nothing */
-#define INCR_CALL(x) /* nothing */
-#endif /* MULTIPROCESSOR */
-
-/*
- * SMP TLB flush routines; these *must* be broadcast on sun4m systems
- */
 static __inline__ void
 smp_tlb_flush_page(int va, int ctx)
 {
-	INCR_COUNT(smp_tlb_fp_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_page, va, ctx, 0, 0, 0);
+	if (CPU_ISSUN4D) {
+		LOCK_4DTLB();
+		sp_tlb_flush_page(va, ctx);
+		UNLOCK_4DTLB();
+	} else
+		XCALL2(sp_tlb_flush_page, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
 smp_tlb_flush_segment(int va, int ctx)
 {
-
-	INCR_COUNT(smp_tlb_fs_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_segment, va, ctx, 0, 0, 0);
+	if (CPU_ISSUN4D) {
+		LOCK_4DTLB();
+		sp_tlb_flush_segment(va, ctx);
+		UNLOCK_4DTLB();
+	} else
+		XCALL2(sp_tlb_flush_segment, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
 smp_tlb_flush_region(int va, int ctx)
 {
-
-	INCR_COUNT(smp_tlb_fr_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_region, va, ctx, 0, 0, 0);
+	if (CPU_ISSUN4D) {
+		LOCK_4DTLB();
+		sp_tlb_flush_region(va, ctx);
+		UNLOCK_4DTLB();
+	} else
+		XCALL2(sp_tlb_flush_region, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
 smp_tlb_flush_context(int ctx)
 {
-
-	INCR_COUNT(smp_tlb_fc_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_context, ctx, 0, 0, 0, 0);
+	if (CPU_ISSUN4D) {
+		LOCK_4DTLB();
+		sp_tlb_flush_context(ctx);
+		UNLOCK_4DTLB();
+	} else
+		XCALL1(sp_tlb_flush_context, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
 smp_tlb_flush_all()
 {
-
-	INCR_COUNT(smp_tlb_fa_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_all, 0, 0, 0, 0, 0);
+	if (CPU_ISSUN4D) {
+		LOCK_4DTLB();
+		sp_tlb_flush_all();
+		UNLOCK_4DTLB();
+	} else
+		XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.4.8 2002/12/19 00:38:04 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.4.9 2003/01/03 17:25:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -231,11 +231,20 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-	if (l1->l_md.md_fpstate) {
-		if (l1 == cpuinfo.fplwp)
-			savefpstate(l1->l_md.md_fpstate);
-		else if (l1->l_md.md_fpumid != -1)
-			panic("FPU on module %d; fix this", l1->l_md.md_fpumid);
+	if (l1->l_md.md_fpstate != NULL) {
+		struct cpu_info *cpi;
+		if ((cpi = l1->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l1)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l1 == cpuinfo.fplwp)
+				savefpstate(l1->l_md.md_fpstate);
+#if defined(MULTIPROCESSOR)
+			else
+				XCALL1(savefpstate, l1->l_md.md_fpstate,
+					1 << cpi->ci_cpuid);
+#endif
+		}
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
@@ -243,7 +252,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	} else
 		l2->l_md.md_fpstate = NULL;
 
-	l2->l_md.md_fpumid = -1;
+	l2->l_md.md_fpu = NULL;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
@@ -308,9 +317,18 @@ cpu_exit(l, proc)
 	struct fpstate *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL) {
-		if (l == cpuinfo.fplwp) {
-			savefpstate(fs);
-			cpuinfo.fplwp = NULL;
+		struct cpu_info *cpi;
+		if ((cpi = l->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l == cpuinfo.fplwp)
+				savefpstate(fs);
+#if defined(MULTIPROCESSOR)
+			else
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+#endif
+			cpi->fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}

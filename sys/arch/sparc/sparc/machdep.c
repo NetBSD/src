@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.21 2002/12/20 15:33:32 uwe Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.22 2003/01/03 17:25:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -409,18 +409,25 @@ setregs(l, pack, stack)
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
 	if ((fs = l->l_md.md_fpstate) != NULL) {
+		struct cpu_info *cpi;
 		/*
-		 * We hold an FPU state.  If we own *the* FPU chip state
+		 * We hold an FPU state.  If we own *some* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (l == cpuinfo.fplwp) {
-			savefpstate(fs);
-			cpuinfo.fplwp = NULL;
-		} else if (l->l_md.md_fpumid != -1)
-			panic("setreg: own FPU on module %d; fix this",
-				l->l_md.md_fpumid);
-		l->l_md.md_fpumid = -1;
+		if ((cpi = l->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l == cpuinfo.fplwp)
+				savefpstate(fs);
+#if defined(MULTIPROCESSOR)
+			else
+				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+#endif
+			cpi->fplwp = NULL;
+		}
+		l->l_md.md_fpu = NULL;
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
@@ -2251,5 +2258,15 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
-	sparc_mainbus_intr_establish	/* bus_intr_establish */
+	sparc_mainbus_intr_establish,	/* bus_intr_establish */
+#if __FULL_SPARC_BUS_SPACE
+	NULL,				/* read_1 */
+	NULL,				/* read_2 */
+	NULL,				/* read_4 */
+	NULL,				/* read_8 */
+	NULL,				/* write_1 */
+	NULL,				/* write_2 */
+	NULL,				/* write_4 */
+	NULL				/* write_8 */
+#endif
 };
