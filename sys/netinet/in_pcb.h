@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.12 1995/06/18 20:01:13 cgd Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.13 1996/01/31 03:49:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,6 +45,7 @@
  * control block.
  */
 struct inpcb {
+	LIST_ENTRY(inpcb) inp_hash;
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
 	struct	  in_addr inp_faddr;	/* foreign host table entry */
@@ -61,7 +62,9 @@ struct inpcb {
 };
 
 struct inpcbtable {
-	CIRCLEQ_HEAD(inpcbhead, inpcb) inpt_queue;
+	CIRCLEQ_HEAD(, inpcb) inpt_queue;
+	LIST_HEAD(inpcbhead, inpcb) *inpt_hashtbl;
+	u_long	  inpt_hash;
 	u_int16_t inpt_lastport;
 };
 
@@ -84,7 +87,10 @@ int	 in_pcbbind __P((struct inpcb *, struct mbuf *));
 int	 in_pcbconnect __P((struct inpcb *, struct mbuf *));
 int	 in_pcbdetach __P((struct inpcb *));
 int	 in_pcbdisconnect __P((struct inpcb *));
-void	 in_pcbinit __P((struct inpcbtable *));
+struct inpcb *
+	 in_pcbhashlookup __P((struct inpcbtable *,
+	    struct in_addr, u_int, struct in_addr, u_int));
+void	 in_pcbinit __P((struct inpcbtable *, int));
 struct inpcb *
 	 in_pcblookup __P((struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int, int));
@@ -92,6 +98,7 @@ void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
 void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
 	    int, void (*)(struct inpcb *, int)));
+void	 in_pcbrehash __P((struct inpcb *));
 void	 in_rtchange __P((struct inpcb *, int));
 int	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
 int	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
