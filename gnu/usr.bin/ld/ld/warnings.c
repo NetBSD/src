@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.4 1993/11/05 12:45:25 pk Exp $
+ * $Id: warnings.c,v 1.5 1993/12/07 01:44:26 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/errno.h>
 #include <fcntl.h>
 #include <ar.h>
 #include <ranlib.h>
@@ -112,10 +113,8 @@ fatal_with_file (fmt, entry, va_alist)
  */
 void
 perror_name (name)
-     char *name;
+	char *name;
 {
-	extern int errno, sys_nerr;
-	extern char *sys_errlist[];
 	char *s;
 
 	if (errno < sys_nerr)
@@ -133,8 +132,6 @@ void
 perror_file (entry)
      struct file_entry *entry;
 {
-	extern int errno, sys_nerr;
-	extern char *sys_errlist[];
 	char *s;
 
 	if (errno < sys_nerr)
