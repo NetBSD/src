@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.39 2003/02/04 20:52:23 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.40 2003/03/01 15:10:13 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.39 2003/02/04 20:52:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.40 2003/03/01 15:10:13 aymeric Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -314,7 +314,7 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list)
 		if (sc == t) break;
 
-	if (sc != t) {
+	if (sc == NULL) {
 #ifdef PPPOE_DEBUG
 		printf("pppoe: alien host unique tag, no session found\n");
 #endif
