@@ -1,4 +1,4 @@
-/*	$NetBSD: if_depca_isa.c,v 1.4 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: if_depca_isa.c,v 1.5 2000/06/28 16:27:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,8 +93,6 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
