@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_headers1.h,v 1.1.1.2 2001/05/13 17:50:31 veego Exp $	*/
+
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_TEMPLATE.c,v 1.1.1.3 2001/05/13 17:34:20 veego Exp $
+ * Id: ops_TEMPLATE.c,v 1.3.2.2 2001/01/12 23:28:57 ro Exp
  *
  */
 
