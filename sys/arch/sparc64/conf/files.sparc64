@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.64 2002/05/16 01:01:41 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.64.4.1 2003/06/24 09:30:09 grant Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -175,6 +175,7 @@ file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
+file	kern/kern_microtime.c
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
