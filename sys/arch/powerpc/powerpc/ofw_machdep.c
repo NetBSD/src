@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.7 2000/12/05 05:16:00 mycroft Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.8 2001/06/10 11:36:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ dk_establish(dk, dev)
 	struct device *dev;
 {
 	struct ofb_disk *od;
-	struct ofb_softc *ofp = (void *)dev;
+	struct ofbus_softc *ofp = (void *)dev;
 
 	MALLOC(od, struct ofb_disk *, sizeof *od, M_TEMP, M_NOWAIT);
 	if (!od)
