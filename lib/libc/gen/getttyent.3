@@ -1,4 +1,4 @@
-.\"	$NetBSD: getttyent.3,v 1.9 1998/02/05 18:46:56 perry Exp $
+.\"	$NetBSD: getttyent.3,v 1.10 1999/01/15 18:47:49 tsarna Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,6 +78,7 @@ struct ttyent {
 	int	ty_status;	/* flag values */
 	char	*ty_window;	/* command for window manager */
 	char	*ty_comment;	/* comment field */
+	char	*ty_class;	/* category of tty usage */
 };
 .Ed
 .Pp
@@ -123,6 +124,11 @@ The command to execute for a window system associated with the line.
 .It Fa ty_comment
 Any trailing comment field, with any leading hash marks (``#'') or
 whitespace removed.
+.It Fa ty_class
+A key indexing into a termcap-style database (/etc/ttyclasses)
+of attributes for this class of tty. No attributes are currently
+defined or used, so there are currently no functions to retrieve
+them.
 .El
 .Pp
 If any of the fields pointing to character strings are unspecified,
