@@ -1,7 +1,7 @@
-/*	$NetBSD: prom.c,v 1.6 1996/06/12 21:59:52 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.7 1996/06/13 18:32:09 cgd Exp $	*/
 
 /* 
- * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
+ * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its

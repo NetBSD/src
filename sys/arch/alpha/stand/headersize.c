@@ -1,7 +1,7 @@
-/*	$NetBSD: headersize.c,v 1.3 1996/05/10 00:15:04 cgd Exp $	*/
+/*	$NetBSD: headersize.c,v 1.4 1996/06/13 18:32:17 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
