@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.33 2001/12/15 20:40:37 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.34 2001/12/16 00:55:40 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.33 2001/12/15 20:40:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.34 2001/12/16 00:55:40 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1193,7 +1193,6 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		if (! (ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			if_up(ifp);
-			printf (SPP_FMT "up\n", SPP_ARGS(ifp));
 		}
 		break;
 	case CISCO_ADDR_REQ:
@@ -2447,7 +2446,6 @@ sppp_lcp_tlu(struct sppp *sp)
 	    (ifp->if_flags & IFF_RUNNING)) {
 		/* Coming out of loopback mode. */
 		if_up(ifp);
-		printf (SPP_FMT "up\n", SPP_ARGS(ifp));
 	}
 
 	for (i = 0; i < IDX_COUNT; i++)
