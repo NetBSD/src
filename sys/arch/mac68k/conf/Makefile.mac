@@ -22,7 +22,7 @@
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	as ${DEBUG}
 CC=	cc ${DEBUG}
-CPP=	/usr/libexec/cpp
+CPP=	/usr/bin/cpp
 LD=	ld
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/lib/libc/csu.mac/gmon.ex
@@ -59,8 +59,8 @@ PROFILE_C=	${CC} -S -c ${COPTS} $<; \
 
 # This really bites for now, but we need to run assembly through sed
 # until the real problem (cpp, I think) is fixed.
-NORMAL_S=	${CPP} ${COPTS} $< | sed -e 's/ *:/:/g' | ${AS} -o $@
-NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | sed -e 's/ *:/:/g' | ${AS} -o $@
+NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
+NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 
 %OBJS
 
@@ -108,7 +108,7 @@ symbols.sort: ${MAC}/mac/symbols.raw
 locore.o: assym.s ${MAC}/mac/vectors.s ${MAC}/mac/locore.s 
 locore.o: ${MAC}/include/trap.h ${MAC}/include/psl.h ${MAC}/include/pte.h
 locore.o: ${MAC}/include/cpu.h
-	${CPP} -DLOCORE ${COPTS} ${MAC}/mac/locore.s | sed -e 's/ *:/:/g' | ${AS} -o locore.o
+	${CPP} -DLOCORE ${COPTS} ${MAC}/mac/locore.s | ${AS} -o locore.o
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile
