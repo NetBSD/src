@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.22 1996/03/16 23:20:30 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.23 1996/03/30 22:38:07 christos Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -630,19 +630,19 @@ svr4_sys_context(p, v, retval)
 
 	switch (SCARG(uap, func)) {
 	case 0:
-		DPRINTF(("getcontext(%x)\n", SCARG(uap, uc)));
+		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_getcontext(p, &uc, p->p_sigmask,
 		    p->p_sigacts->ps_sigstk.ss_flags & SS_ONSTACK);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
 	case 1: 
-		DPRINTF(("setcontext(%x)\n", SCARG(uap, uc)));
+		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
 		if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
 			return error;
 		return svr4_setcontext(p, &uc);
 
 	default:
-		DPRINTF(("context(%d, %x)\n", SCARG(uap, func),
+		DPRINTF(("context(%d, %p)\n", SCARG(uap, func),
 		    SCARG(uap, uc)));
 		return ENOSYS;
 	}
