@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17.2.1 1997/11/18 00:59:50 mellon Exp $	*/
+/*	$NetBSD: extern.h,v 1.17.2.2 1998/11/10 18:48:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -36,6 +36,7 @@
  */
 
 struct fd_set;
+struct sockaddr;
 
 void    abort_remote __P((FILE *));
 void    abortpt __P((int));
@@ -44,7 +45,7 @@ void    abortsend __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
-int	auto_fetch __P((int, char **));
+int	auto_fetch __P((int, char **, char *));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
@@ -67,20 +68,22 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
+int	foregroundproc __P((void));
+int	ftp_login __P((const char *, const char *, const char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
 int	getreply __P((int));
+int	getsockbufsize __P((const char *));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
-char   *hookup __P((const char *, int));
+char   *hookup __P((const char *, in_port_t));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P((void));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-int	login __P((const char *, char *, char *));
 void	lostpeer __P((void));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
@@ -109,6 +112,7 @@ void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
+void	rcvbuf __P((int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int, int));
 void	reget __P((int, char **));
@@ -118,10 +122,12 @@ time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
+void	resetsockbufsize __P((void));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
-int	ruserpass __P((const char *, char **, char **, char **));
+int	ruserpass __P((const char *, const char **, const char **,
+	    const char **));
 void    sendrequest __P((const char *, const char *, const char *, int));
 void	setascii __P((int, char **));
 void	setbell __P((int, char **));
@@ -150,16 +156,23 @@ void	settenex __P((int, char **));
 void	settrace __P((int, char **));
 void	setttywidth __P((int));
 void	settype __P((int, char **));
+void	setupsockbufsize __P((int));
 void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
 char   *slurpstring __P((void));
+void	sndbuf __P((int, char **));
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
 void	usage __P((void));
 void	user __P((int, char **));
+int	xconnect __P((int, const struct sockaddr *, int));
+int	xlisten __P((int, int));
+void   *xmalloc __P((size_t));
+char   *xstrdup __P((const char *));
+sig_t	xsignal __P((int, void (func) __P((int))));
 
 extern struct	cmd cmdtab[];
 extern FILE    *cout;
