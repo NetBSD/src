@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.2 2003/12/13 23:04:38 ad Exp $	*/
+/*	$NetBSD: dt.c,v 1.3 2003/12/23 09:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,8 +125,22 @@ SOFTWARE.
 
 ********************************************************/
 
+/*
+ * ACCESS.bus device support for the Personal DECstation.  This code handles
+ * only the keyboard and mouse, and will likely not work if other ACCESS.bus
+ * devices are physically attached to the system.
+ *
+ * Since we do not know how to drive the hardware (the only reference being
+ * Mach), we can't identify which devices are connected to the system by
+ * sending idenfication requests.  With only a mouse and keyboard attached
+ * to the system, we do know which two slave addresses will be in use. 
+ * However, we don't know which is the mouse, and which is the keyboard. 
+ * So, we resort to inspecting device reports and making an educated guess
+ * as to which is which.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.2 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.3 2003/12/23 09:39:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.2 2003/12/13 23:04:38 ad Exp $");
 
 #define	DT_BUF_CNT		16
 #define	DT_ESC_CHAR		0xf8
+#define	DT_XMT_OK		0xfb
 #define	DT_MAX_POLL		0x70000		/* about half a sec */
 
 #define	DT_GET_BYTE(data)	(((*(data)) >> 8) & 0xff)
@@ -165,10 +180,12 @@ int	dt_intr(void *);
 int	dt_null_handler(struct device *, struct dt_msg *, int);
 int	dt_print(void *, const char *);
 void	dt_strvis(uint8_t *, char *, int);
-int	dt_msg_put(struct dt_msg *);
+void	dt_dispatch(void *);
 
 int	dt_kbd_addr = DT_ADDR_KBD;
-
+struct	dt_device dt_kbd_dv;
+int	dt_ms_addr = DT_ADDR_MOUSE;
+struct	dt_device dt_ms_dv;
 struct	dt_state dt_state;
 
 CFATTACH_DECL(dt, sizeof(struct dt_softc),
@@ -210,6 +227,13 @@ dt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_sih = softintr_establish(IPL_SOFTSERIAL, dt_dispatch, sc);
+	if (sc->sc_sih == NULL) {
+		printf("%s: memory exhausted\n", sc->sc_dv.dv_xname);
+		free(msg, M_DEVBUF);
+	}
+
+	SIMPLEQ_INIT(&sc->sc_queue);
 	SLIST_INIT(&sc->sc_free);
 	for (i = 0; i < DT_BUF_CNT; i++, msg++)
 		SLIST_INSERT_HEAD(&sc->sc_free, msg, chain.slist);
@@ -217,10 +241,10 @@ dt_attach(struct device *parent, struct device *self, void *aux)
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY, dt_intr, sc);
 	printf("\n");
 
-	for (i = DT_ADDR_FIRST; i <= DT_ADDR_LAST; i += 2) {
-		dta.dta_addr = i;
-		config_found(self, &dta, dt_print);
-	}
+	dta.dta_addr = DT_ADDR_KBD;
+	config_found(self, &dta, dt_print);
+	dta.dta_addr = DT_ADDR_MOUSE;
+	config_found(self, &dta, dt_print);
 }
 
 void
@@ -241,33 +265,20 @@ dt_print(void *aux, const char *pnp)
 }
 
 int
-dt_establish_handler(struct dt_softc *sc, int devno, struct device *dv,
-		     void (*hdlr)(void *))
+dt_establish_handler(struct dt_softc *sc, struct dt_device *dtdv,
+    struct device *dv, void (*hdlr)(void *, struct dt_msg *))
 {
-	struct dt_device *dtdv;
-
-	devno = DT_DEVICE_NO(devno);
-	if (devno < 0 || devno > DT_MAX_DEVICES)
-		return (EINVAL);
-
-	dtdv = &sc->sc_dtdv[devno];
-	SIMPLEQ_INIT(&dtdv->dtdv_queue);
-
-	dtdv->dtdv_sih = softintr_establish(IPL_SOFTSERIAL, hdlr, dtdv);
-	if (dtdv->dtdv_sih == NULL)
-		return (ENOMEM);
 
 	dtdv->dtdv_dv = dv;
+	dtdv->dtdv_handler = hdlr;
 	return (0);
 }
 
 int
 dt_intr(void *cookie)
 {
-	struct dt_device *dtdv;
 	struct dt_softc *sc;
 	struct dt_msg *msg, *pend;
-	int devno;
 
 	sc = cookie;
 
@@ -280,9 +291,7 @@ dt_intr(void *cookie)
 		 * whenever a data overrun occurs.
 		 */
 		sc->sc_msg.src = dt_kbd_addr;
-		sc->sc_msg.code.val.P = 0;
-		sc->sc_msg.code.val.sub = 0;
-		sc->sc_msg.code.val.len = 1;
+		sc->sc_msg.ctl = DT_CTL(1, 0, 0);
 		sc->sc_msg.body[0] = DT_KBD_EMPTY;
 #ifdef DIAGNOSTIC
 		printf("%s: data overrun or stray interrupt\n",
@@ -297,40 +306,88 @@ dt_intr(void *cookie)
 		return (1);
 	}
 
-	devno = DT_DEVICE_NO(sc->sc_msg.src);
-	if (devno < 0 || devno > DT_MAX_DEVICES) {
-#ifdef DIAGNOSTIC
-		printf("%s: received message from unknown device 0x%x\n",
-		    sc->sc_dv.dv_xname, msg->src);
-#endif
-		return (1);
-	}
-
-	dtdv = &sc->sc_dtdv[devno];
-	if (dtdv->dtdv_sih == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: received message from unknown device 0x%x\n",
-		    sc->sc_dv.dv_xname, msg->src);
-#endif
-		return (1);
-	}
-
 	if ((msg = SLIST_FIRST(&sc->sc_free)) == NULL) {
-#ifdef DIAGNOSTIC
 		printf("%s: input overflow\n", sc->sc_dv.dv_xname);
-#endif
 		return (1);
 	}
-
 	SLIST_REMOVE_HEAD(&sc->sc_free, chain.slist);
 	memcpy(msg, &sc->sc_msg, sizeof(*msg));
 
-	pend = SIMPLEQ_FIRST(&dtdv->dtdv_queue);
-	SIMPLEQ_INSERT_TAIL(&dtdv->dtdv_queue, msg, chain.simpleq);
+	pend = SIMPLEQ_FIRST(&sc->sc_queue);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, msg, chain.simpleq);
 	if (pend == NULL)
-		softintr_schedule(dtdv->dtdv_sih);
+		softintr_schedule(sc->sc_sih);
 
 	return (1);
+}
+
+void
+dt_dispatch(void *cookie)
+{
+	struct dt_softc *sc;
+	struct dt_msg *msg;
+	int s, other, mouse;
+	struct dt_device *dtdv;
+
+	sc = cookie;
+	msg = NULL;
+	other = DT_ADDR_KBD;
+	mouse = 0;
+
+	for (;;) {
+		s = spltty();
+		if (msg != NULL) {
+			SLIST_INSERT_HEAD(&sc->sc_free, msg, chain.slist);
+			if (mouse) {
+				dt_ms_addr = msg->src;
+				dt_kbd_addr = other;
+			} else {
+				dt_kbd_addr = msg->src;
+				dt_ms_addr = other;
+			}
+		}
+		msg = SIMPLEQ_FIRST(&sc->sc_queue);
+		if (msg != NULL)
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, chain.simpleq);
+		splx(s);
+		if (msg == NULL)
+			break;
+
+		if (msg->src == DT_ADDR_MOUSE)
+			other = DT_ADDR_KBD;
+		else if (msg->src == DT_ADDR_KBD)
+			other = DT_ADDR_MOUSE;
+		else {
+			printf("%s: message from unknown dev 0x%x\n",
+			    sc->sc_dv.dv_xname, sc->sc_msg.src);
+			dt_msg_dump(msg);
+			continue;
+		}
+		if (DT_CTL_P(msg->ctl) != 0) {
+			printf("%s: received control message\n",
+			    sc->sc_dv.dv_xname);
+			dt_msg_dump(msg);
+			continue;
+		}
+
+		/*
+		 * 1. Mouse should have no more than eight buttons.
+		 * 2. Mouse should always send full locator report.
+		 * 3. Keyboard should never report all-up (0x00) in
+		 *    a packet with size > 1.
+		 */
+		if (DT_CTL_LEN(msg->ctl) == sizeof(struct dt_locator_msg) &&
+		    msg->body[0] == 0) {
+			mouse = 1;
+			dtdv = &dt_ms_dv;
+		} else {
+			mouse = 0;
+			dtdv = &dt_kbd_dv;
+		}
+
+		if (dtdv->dtdv_handler != NULL)
+			(*dtdv->dtdv_handler)(dtdv->dtdv_dv, msg);
+	}
 }
 
 int
@@ -397,9 +454,9 @@ dt_msg_get(struct dt_msg *msg, int intr)
 			msg->src = c;
 			dt_state.ds_state = 1;
 		} else if (dt_state.ds_state == 1) {
-			msg->code.bits = c;
+			msg->ctl = c;
 			dt_state.ds_state = 2;
-			dt_state.ds_len = msg->code.val.len + 1;
+			dt_state.ds_len = DT_CTL_LEN(msg->ctl) + 1;
 			if (dt_state.ds_len > sizeof(msg->body))
 				printf("dt_msg_get: msg truncated: %d\n",
 				    dt_state.ds_len);
@@ -416,94 +473,24 @@ dt_msg_get(struct dt_msg *msg, int intr)
 	return (DT_GET_DONE);
 }
 
-int
-dt_msg_put(struct dt_msg *msg)
-{
-	volatile u_int *poll, *data;
-	uint8_t *p;
-	int max, len;
-
-	poll = dt_state.ds_poll;
-	data = dt_state.ds_data;
-
-	len = msg->code.val.len + 3;
-	p = (uint8_t *)&msg;
-
-	for (; len != 0; len--, p++) {
-		max = DT_MAX_POLL;
-
-		while (!DT_TX_AVAIL(poll)) {
-			if (max-- <= 0)
-				break;
-			DELAY(1);
-		}
-
-		if (max <= 0)
-			return (-1);
-
-		DT_PUT_BYTE(data, *p);
-	}
-
-	return (0);
-}
-
 void
-dt_strvis(uint8_t *i, char *o, int len)
+dt_msg_dump(struct dt_msg *msg)
 {
+	int i, l;
 
-	memcpy(o, i, len);
-	o[len] = '\0';
-}
+	l = DT_CTL_LEN(msg->ctl);
 
-int
-dt_identify(int addr, struct dt_ident *ident)
-{
-	struct dt_msg msg;
-	u_char buf[16];
-	int i;
+	printf("hdr: dst=%02x src=%02x p=%02x sub=%02x len=%02x\n",
+	   msg->dst, msg->src, DT_CTL_P(msg->ctl), DT_CTL_SUBADDR(msg->ctl),
+	   l);
 
-	msg.dst = addr;
-	msg.src = DT_ADDR_HOST;
-	msg.code.val.P = 1;
-	msg.code.val.sub = 0;
-	msg.code.val.len = 1;
-	msg.body[0] = DT_MSG_ID_REQUEST;
-
-	if (dt_msg_put(&msg) != 0) {
-		printf("dt_identify: msg_put timed out\n");
-		return (-1);
+	printf("body: ");	   
+	for (i = 0; i < l && i < 20; i++)
+		printf("%02x ", msg->body[i]);
+	if (i < l) {
+		printf("\n");
+		for (; i < l; i++)
+			printf("%02x ", msg->body[i]);
 	}
-
-	for (i = 3000; i != 0; i--) {
-		DELAY(1000);
-		if (dt_msg_get(&msg, 0) != DT_GET_DONE)
-			continue;
-		if (msg.src == addr) {
-			if (msg.code.val.P != 0)
-				break;
-			else
-				printf("dt_identify: received junk\n");
-		} else
-			printf("dt_identify: message not for us\n");
-	}
-	if (i == 0) {
-		printf("dt_identify: msg_get timed out\n");
-		return (-1);
-	}
-
-	if (msg.code.val.len < sizeof(*ident) - 3)
-		printf("dt_identify: short response\n");
-	if (msg.code.val.len > sizeof(*ident))
-		printf("dt_identify: long response\n");
-
-	dt_strvis(ident->vendor, buf, sizeof(ident->vendor));
-	printf("dt_identify(%x): vendor <%s>\n", addr, buf);
-
-	dt_strvis(ident->module, buf, sizeof(ident->module));
-	printf("dt_identify(%x): module <%s>\n", addr, buf);
-
-	dt_strvis(ident->revision, buf, sizeof(ident->revision));
-	printf("dt_identify(%x): revision <%s>\n", addr, buf);
-
-	return (0);
+	printf("\n");
 }
