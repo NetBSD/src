@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1998/09/05 16:23:08 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.7 1998/09/05 17:43:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -434,14 +434,6 @@ st_crazymap(n)
 	return prom_st_crazymap[n];
 }
 
-struct devnametobdevmaj sparc64_nam2blk[] = {
-	{ "sd",		7 },
-	{ "st",		11 },
-	{ "fd",		16 },
-	{ "cd",		18 },
-	{ NULL,		0 },
-};
-
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -481,7 +473,7 @@ cpu_rootconf()
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
-	setroot(bootdv, bootpartition, sparc64_nam2blk);
+	setroot(bootdv, bootpartition, dev_name2blk);
 }
 
 /*
