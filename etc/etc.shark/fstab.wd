@@ -1,4 +1,4 @@
-#	$NetBSD: fstab.wd,v 1.2 1997/07/28 17:38:45 mark Exp $
+#	$NetBSD: fstab.wd,v 1.1 2002/02/10 19:30:42 pooka Exp $
 #
 # Sample fstab for IDE disk based system
 # see fstab(5) for details on what the fields mean
@@ -11,4 +11,4 @@
 /dev/wd0b	none	swap	sw		0 0
 /dev/wd0e	/usr	ffs	rw		1 2
 kernfs		/kern	kernfs	rw		0 0
-procfs		/proc	procfs	rw		0 0
+#procfs		/proc	procfs	rw		0 0
