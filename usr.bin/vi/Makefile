@@ -1,19 +1,18 @@
-#	@(#)Makefile	8.26 (Berkeley) 1/12/94
+#	@(#)Makefile	8.30 (Berkeley) 3/22/94
 
 PROG=	nvi
-MAN1=	vi.0
 #CFLAGS=-g -DDEBUG
 #CFLAGS+=-pg
 CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/ex -I${.CURDIR}/vi
 #STRIP=
-.PATH:	${.CURDIR}/ex ${.CURDIR}/sex ${.CURDIR}/vi ${.CURDIR}/svi \
-	${.CURDIR}/xaw
+.PATH:	${.CURDIR}/docs ${.CURDIR}/ex ${.CURDIR}/sex ${.CURDIR}/vi \
+	${.CURDIR}/svi ${.CURDIR}/xaw
 CLEANFILES+=nex
 
 # General sources.
-SRCS=	ascii.c cut.c delete.c exf.c line.c log.c main.c mark.c \
-	options.c options_f.c screen.c search.c seq.c recover.c \
-	term.c timer.c trace.c util.c
+SRCS=	ascii.c cut.c delete.c exf.c intr.c line.c log.c main.c \
+	mark.c options.c options_f.c put.c screen.c search.c seq.c \
+	recover.c term.c timer.c trace.c util.c
 
 # Ex source.
 SRCS+=	ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c ex_at.c \
@@ -30,13 +29,13 @@ SRCS+=	sex_confirm.c sex_get.c sex_refresh.c sex_screen.c sex_term.c \
 	sex_util.c
 
 # Vi source.
-SRCS+=	getc.c v_again.c v_at.c v_ch.c v_delete.c v_ex.c v_exit.c \
-	v_exmode.c v_filter.c v_increment.c v_init.c v_join.c v_left.c \
-	v_mark.c v_match.c v_ntext.c v_paragraph.c v_put.c v_redraw.c \
-	v_replace.c v_right.c v_screen.c v_scroll.c v_search.c v_section.c \
-	v_sentence.c v_shift.c v_status.c v_stop.c v_switch.c v_tag.c \
-	v_text.c v_ulcase.c v_undo.c v_util.c v_word.c v_xchar.c v_yank.c \
-	v_z.c vcmd.c vi.c
+SRCS+=	getc.c v_again.c v_at.c v_ch.c v_delete.c v_ex.c v_filter.c \
+	v_increment.c v_init.c v_join.c v_left.c v_mark.c v_match.c \
+	v_ntext.c v_paragraph.c v_put.c v_redraw.c v_replace.c v_right.c \
+	v_screen.c v_scroll.c v_search.c v_section.c v_sentence.c \
+	v_shift.c v_status.c v_stop.c v_switch.c v_tag.c v_text.c \
+	v_ulcase.c v_undo.c v_util.c v_word.c v_xchar.c v_yank.c \
+	v_z.c v_zexit.c vcmd.c vi.c
 
 # Vi curses screen source.
 SRCS+=	svi_confirm.c svi_ex.c svi_get.c svi_line.c svi_refresh.c \
@@ -48,11 +47,11 @@ SRCS+=	xaw_screen.c
 #LDADD+=-pg
 DPADD+= ${LIBCURSES} ${LIBTERM}
 LDADD+=	-lcurses -ltermlib -lutil
-SPECHDR=excmd.h options.h
+SPECHDR=compat.h excmd.h options.h
 CLEANFILES+=${SPECHDR}
 LINKS=	${BINDIR}/nvi ${BINDIR}/nex
 
-all: nvi vi.0
+all: nvi docs
 	rm -f nex
 	ln nvi nex
 
@@ -67,6 +66,9 @@ warn:: ${SRCS}
 	    	-e "/warning: .*inline call to/d" \
 	    	-e "/warning: comparison is always 1 due /d") > \
 		${.CURDIR}/WARN.OUT
+
+compat.h:
+	:> compat.h
 
 options.h: options.h.stub options.c # Makefile
 	rm -f options.h
@@ -92,6 +94,20 @@ excmd.h: excmd.h.stub excmd.c # Makefile
 	 echo '}') > /tmp/__vi.excmd.h
 	 awk -f /tmp/__vi.excmd.h ${.CURDIR}/ex/excmd.c >> excmd.h
 	 rm -f /tmp/__vi.excmd.h
+
+docs: vi.0.txt vi.0.ps vi.ref.txt vi.ref.ps
+vi.0.txt: vi.1 set.opt.roff
+	cpp -DMANUAL -I${.CURDIR}/docs ${.CURDIR}/docs/vi.1 | \
+	    sed -e '/^#/d' -e '/^$$/d' | groff -man -Tascii > $@
+vi.0.ps: vi.1 set.opt.roff
+	cpp -DMANUAL -I${.CURDIR}/docs ${.CURDIR}/docs/vi.1 | \
+	    sed -e '/^#/d' -e '/^$$/d' | groff -man > $@
+vi.ref.txt: vi.ref set.opt.roff
+	cpp -DREFERENCE -I${.CURDIR}/docs ${.CURDIR}/docs/vi.ref | \
+	    sed -e '/^#/d' -e '/^$$/d' | groff -man -Tascii > $@
+vi.ref.ps: vi.ref set.opt.roff
+	cpp -DREFERENCE -I${.CURDIR}/docs ${.CURDIR}/docs/vi.ref | \
+	    sed -e '/^#/d' -e '/^$$/d' | groff -man > $@
 
 .include <bsd.prog.mk>
 
