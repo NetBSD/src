@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.5 2002/03/24 18:04:41 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.6 2002/03/28 15:34:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -342,16 +342,22 @@ _C_LABEL(sh_vector_interrupt):
 	/* Enable exception for P3 access */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
+	/* uvmexp.intrs++ */
+	mov.l	__L.uvmexp.intrs, r0
+	mov.l	@r0,	r1
+	add	#1	r1
+	mov.l	r1,	@r0
 	/* Dispatch interrupt handler */
-	mov.l	1f,	r0
+	mov.l	__L.intc_intr, r0
 	jsr	@r0		/* intc_intr(ssr, spc, ssp) */
 	 nop
 	/* Check for ASTs on exit to user mode. */
-	mov.l	2f,	r0
+	mov.l	__L.ast, r0
 	jsr	@r0
 	 mov	r14,	r4
 	__EXCEPTION_RETURN
 	.align	2
-1:	.long	_C_LABEL(intc_intr)	
-2:	.long	_C_LABEL(ast)	
+__L.intc_intr:		.long	_C_LABEL(intc_intr)	
+__L.ast:		.long	_C_LABEL(ast)	
+__L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
 _C_LABEL(sh_vector_interrupt_end):	.long	0
