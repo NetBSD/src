@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/19 08:07:28 jmc Exp $
 
 NOMAN=		# defined
 
@@ -10,6 +10,8 @@ INPUTS=		${TESTS:S/$/.in/}
 EXPECTS=	${TESTS:S/$/.exp/}
 OUTPUTS=	${TESTS:S/$/.out/}
 
+UUDECODE_FILES=	${INPUTS} ${EXPECTS}
+
 CLEANFILES+=	${OUTPUTS} ${INPUTS} ${EXPECTS}
 
 regress: ${PROG} ${INPUTS} ${EXPECTS}
@@ -18,12 +20,5 @@ regress: ${PROG} ${INPUTS} ${EXPECTS}
 	@cmp $L.exp $L.out && echo "ok." 1>&2
 .endfor
 
-# paranoia: protect against non-ASCII characters
-.for L in ${TESTS}
-$L.in: $L.in.uu
-	uudecode ${.ALLSRC}
-$L.exp: $L.exp.uu
-	uudecode ${.ALLSRC}
-.endfor
-
+.include <bsd.files.mk>
 .include <bsd.prog.mk>

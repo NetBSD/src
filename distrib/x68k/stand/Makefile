@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/19 08:07:28 jmc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,14 +7,15 @@ ARCHIVES=	gzip rawrite
 MEMBER_gzip=	gz124x5f.lzh gzip.x
 MEMBER_rawrite=	rawrite.doc rawrite.lzh rawrite.x
 
+UUDECODE_FILES=	${ARCHIVES:C/$/.tar.gz/}
+
 .for archive in ${ARCHIVES}
-CLEANFILES+=	${archive}.tar.gz ${MEMBER_${archive}}
+CLEANFILES+=	${MEMBER_${archive}}
 .endfor
 
-realall:
-.for archive in ${ARCHIVES}
-	${TOOL_UUDECODE} ${.CURDIR}/${archive}.uue
-	${TOOL_PAX} -O -zrvpp -f ${archive}.tar.gz
+realall: ${UUDECODE_FILES}
+.for archive in ${UUDECODE_FILES}
+	${TOOL_PAX} -O -zrvpp -f ${archive}
 .endfor
 
 release:
@@ -23,4 +24,5 @@ release:
 	    ${RELEASEDIR}/${MACHINE}/installation/misc
 .endfor
 
+.include <bsd.files.mk>
 .include <bsd.prog.mk>

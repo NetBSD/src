@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.45 2004/03/19 08:07:28 jmc Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -48,16 +48,16 @@ SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
 FILES=		ld.so
 FILESDIR=	/usr/libexec
 FILESMODE=	${BINMODE}
-CLEANFILES+=	ld.so
+UUDECODE_FILES=	ld.so.${MACHINE_ARCH}
+UUDECODE_FILES_RENAME_${UUDECODE_FILES}= ld.so
 
 all dependall: ${FILES}
 
-ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
-	${_MKTARGET_CREATE}
-	${TOOL_UUDECODE} ${.ALLSRC}
+ld.so:	ld.so.${MACHINE_ARCH}
 
 .endif
 
 MAN= ld.aout_so.1
 
+.include <bsd.files.mk>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/07/10 10:34:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2004/03/19 08:07:28 jmc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,21 +13,26 @@ MDSETTARGETS=		RAMDISK		${MINIROOT}	netbsd		\
 MDSET_RELEASEDIR=	installation
 
 PBSDBOOTDIR=	${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
-PBSDBOOT=	${PBSDBOOTDIR}/pbsdboot.uu
-PBSDBOOT1=	${PBSDBOOTDIR}/pbsdboot1.uu
-HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand
-HPCBOOT=	${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
+PBSDBOOT=	pbsdboot.exe
+PBSDBOOT1=	pbsdboot1.exe
+HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand/binary/MIPS
+HPCBOOT=	hpcboot.exe
+
+.PATH: ${PBSDBOOTDIR} ${HPCBOOTDIR}
+
+UUDECODE_FILES=	${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
+UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
 release:: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
-	(cd ${RELEASEDIR}/${MACHINE}/installation; ${TOOL_UUDECODE} ${PBSDBOOT1}; \
-	    chmod ${NONBINMODE} pbsdboot1.exe)
-	(cd ${RELEASEDIR}/${MACHINE}/installation; ${TOOL_UUDECODE} ${PBSDBOOT}; \
-	    chmod ${NONBINMODE} pbsdboot.exe)
-	(cd ${RELEASEDIR}/${MACHINE}/installation; rm -f hpcboot.exe; \
-	    ${TOOL_UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; \
-	    chmod ${NONBINMODE} hpcboot.exe)
+	cp pbsdboot1.exe ${RELEASEDIR}/${MACHINE}/installation; \
+	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/pbsdboot1.exe
+	cp pbsdboot.exe ${RELEASEDIR}/${MACHINE}/installation; \
+	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/pbsdboot.exe
+	cp hpcboot.exe ${RELEASEDIR}/${MACHINE}/installation; \
+	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/hpcboot.exe
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation '*.gz' '*.exe'
 
+.include <bsd.files.mk>
 .include <bsd.prog.mk>

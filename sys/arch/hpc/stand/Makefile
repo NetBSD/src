@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.12 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2004/03/19 08:07:22 jmc Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
 
 PROJECT_DIRS=	hpcboot libz libsa
 
-all:
-	find binary -name "hpcboot*.exe.uu" -exec ${TOOL_UUDECODE} {} \;
+UUDECODE_FILES= binary/ARM/hpcboot.exe \
+		binary/SH3/hpcboot.exe \
+		binary/MIPS/hpcboot.exe \
+		binary/SH4/hpcboot.exe
 
 #
 # generates project/work files for Embeded Visual C++ 3.0
@@ -84,3 +86,5 @@ uuencode:
 			printf("%s\n", $$0);				\
 		}}' build_number.h > binary/build_number.h
 	rm -f build_number.h
+
+.include <bsd.files.mk>
