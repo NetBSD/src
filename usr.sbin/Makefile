@@ -1,9 +1,9 @@
 #	@(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 #
-#	$Header: /cvsroot/src/usr.sbin/Makefile,v 1.8 1993/04/26 08:06:33 deraadt Exp $
+#	$Header: /cvsroot/src/usr.sbin/Makefile,v 1.9 1993/05/03 01:53:53 cgd Exp $
 #
 
-SUBDIR=	accton arp chroot config dbsym dev_mkdb diskpart \
+SUBDIR=	accountant accton arp chroot config dbsym dev_mkdb diskpart \
 	edquota flcopy gettable htable inetd iostat kgmon \
 	kvm_mkdb lpr mtree named portmap pwd_mkdb quotaon repquota \
 	rmt rwalld rwhod sendmail sliplogin swapinfo syslogd timed \
