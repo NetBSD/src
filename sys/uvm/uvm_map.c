@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.135 2003/03/02 08:57:49 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.136 2003/04/09 21:39:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.135 2003/03/02 08:57:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136 2003/04/09 21:39:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2900,8 +2900,11 @@ uvm_map_clean(map, start, end, flags)
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
-			error = (uobj->pgops->pgo_put)(uobj, offset,
-			    offset + size, flags | PGO_CLEANIT);
+			if (uobj->pgops->pgo_put != NULL)
+				error = (uobj->pgops->pgo_put)(uobj, offset,
+				    offset + size, flags | PGO_CLEANIT);
+			else
+				error = 0;
 		}
 		start += size;
 	}
