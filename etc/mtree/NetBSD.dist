@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.152 2001/04/21 09:54:33 shin Exp $
+#	$NetBSD: NetBSD.dist,v 1.153 2001/04/25 03:54:26 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2444,6 +2444,122 @@ list
 ..
 
 # ./usr/share/sushi/install
+..
+
+# ./usr/share/sushi/network
+network
+
+# ./usr/share/sushi/network/routing
+routing
+
+# ./usr/share/sushi/network/routing/ipv4table
+ipv4table
+# ./usr/share/sushi/network/routing/ipv4table
+..
+
+# ./usr/share/sushi/network/routing/default
+default
+# ./usr/share/sushi/network/routing/default
+..
+
+# ./usr/share/sushi/network/routing
+..
+
+# ./usr/share/sushi/network/hosts
+hosts
+
+# ./usr/share/sushi/network/hosts/addhost
+addhost
+# ./usr/share/sushi/network/hosts/addhost
+..
+
+# ./usr/share/sushi/network/hosts/delhost
+delhost
+# ./usr/share/sushi/network/hosts/delhost
+..
+
+# ./usr/share/sushi/network/hosts/modhost
+modhost
+# ./usr/share/sushi/network/hosts/modhost
+..
+
+# ./usr/share/sushi/network/hosts/addv6host
+addv6host
+# ./usr/share/sushi/network/hosts/addv6host
+..
+
+# ./usr/share/sushi/network/hosts/modv6host
+modv6host
+# ./usr/share/sushi/network/hosts/modv6host
+..
+
+# ./usr/share/sushi/hosts
+..
+
+# ./usr/share/sushi/network/interfaces
+interfaces
+
+# ./usr/share/sushi/network/interfaces/interface
+interface
+# ./usr/share/sushi/network/interfaces/interface
+..
+
+# ./usr/share/sushi/network/interfaces/listif
+listif
+# ./usr/share/sushi/network/interfaces/listif
+..
+
+# ./usr/share/sushi/network/interfaces
+..
+
+# ./usr/share/sushi/network/hostname
+hostname
+# ./usr/share/sushi/network/hostname
+..
+
+# ./usr/share/sushi/network/yp
+yp
+
+# ./usr/share/sushi/network/yp/domainname
+domainname
+# ./usr/share/sushi/network/yp/domainname
+..
+
+# ./usr/share/sushi/network/yp/client
+client
+# ./usr/share/sushi/network/yp/client
+..
+
+# ./usr/share/sushi/network/yp/slave
+slave
+# ./usr/share/sushi/network/yp/slave
+..
+
+# ./usr/share/sushi/network/yp/master
+master
+# ./usr/share/sushi/network/yp/master
+..
+
+# ./usr/share/sushi/network/yp
+..
+
+# ./usr/share/sushi/network/exports
+exports
+
+# ./usr/share/sushi/network/exports/addexport
+addexport
+# ./usr/share/sushi/network/exports/addexport
+..
+
+# ./usr/share/sushi/network/exports/delexport
+delexport
+# ./usr/share/sushi/network/exports/delexport
+..
+
+# ./usr/share/sushi/network/exports
+..
+
+# ./usr/share/sushi/network
 ..
 
 # ./usr/share/sushi/util
