@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.25 2000/09/04 19:56:04 soren Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.26 2000/09/04 20:21:30 soren Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -1236,7 +1236,7 @@ static int
 ahc_raid_setup(struct pci_attach_args *pa, char *channel,
 	       ahc_chip *chip, ahc_feature *features, ahc_flag *flags)
 {
-	printf("RAID functionality unsupported\n");
+	printf(": RAID functionality unsupported\n");
 	return (ENXIO);
 }
 
