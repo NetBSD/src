@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.32.2.1 2000/07/18 06:25:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.32.2.1 2000/07/18 06:25:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -306,29 +306,37 @@ ioasic_intr(val)
 	register struct ioasic_softc *sc = val;
 	register int ifound;
 	int gifound;
-	u_int32_t sir;
+	u_int32_t sir, osir;
 
 	gifound = 0;
 	do {
 		ifound = 0;
 		tc_syncbus();
 
-		sir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
+		osir = sir =
+		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
 #define	INCRINTRCNT(slot)	ioasicintrs[slot].iai_evcnt.ev_count++
 
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
-#define	CHECKINTR(slot, bits)						\
+#define	CHECKINTR(slot, bits, clear)					\
 		if (sir & (bits)) {					\
 			ifound = 1;					\
 			INCRINTRCNT(slot);				\
 			(*ioasicintrs[slot].iai_func)			\
 			    (ioasicintrs[slot].iai_arg);		\
+			if (clear)					\
+				sir &= ~(bits);				\
 		}
-		CHECKINTR(IOASIC_DEV_SCC0, IOASIC_INTR_SCC_0);
-		CHECKINTR(IOASIC_DEV_SCC1, IOASIC_INTR_SCC_1);
-		CHECKINTR(IOASIC_DEV_LANCE, IOASIC_INTR_LANCE);
-		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
+		CHECKINTR(IOASIC_DEV_SCC0, IOASIC_INTR_SCC_0, 0);
+		CHECKINTR(IOASIC_DEV_SCC1, IOASIC_INTR_SCC_1, 0);
+		CHECKINTR(IOASIC_DEV_LANCE, IOASIC_INTR_LANCE, 0);
+		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN_TXLOAD |
+		    IOASIC_INTR_ISDN_RXLOAD | IOASIC_INTR_ISDN_OVRUN, 1);
+
+		if (sir != osir)
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+			    IOASIC_INTR, sir);
 
 		gifound |= ifound;
 	} while (ifound);
