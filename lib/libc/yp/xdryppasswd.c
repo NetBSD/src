@@ -1,6 +1,3 @@
-#ifdef YP
-
-
 #include <rpc/rpc.h>
 #include <rpcsvc/yppasswd.h>
 
@@ -49,6 +46,3 @@ yppasswd *objp;
 	}
 	return (TRUE);
 }
-
-
-#endif /* YP */

@@ -1,5 +1,3 @@
-#ifdef YP
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -359,5 +357,3 @@ struct ypresp_order *objp;
 	}
 	return (TRUE);
 }
-
-#endif /* YP */
