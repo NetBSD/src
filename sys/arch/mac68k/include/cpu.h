@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.11 1994/06/26 13:25:16 briggs Exp $
+ *	$Id: cpu.h,v 1.12 1994/07/07 00:24:10 briggs Exp $
  */
 
 /*
@@ -202,9 +202,10 @@ extern unsigned char ssir;
 #define MACH_PENTIUM	3	/* 66 and 99 MHz versions *only* */
 
 /* Defines for mmutype */
-#define MMU_68851	-1
-#define MMU_68030	0
-#define MMU_68040	1
+#define MMU_68040	-2
+#define MMU_68030	-1
+/* #define MMU_HP	0    Just a reminder as to where this came from. */
+#define MMU_68851	1
 
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_8		1
