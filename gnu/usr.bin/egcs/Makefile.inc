@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2000/02/16 11:23:49 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2000/02/19 00:44:32 tsutsui Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -23,7 +23,6 @@ COMMONOBJ!=	cd ${.CURDIR}/../common; ${MAKE} print-objdir
 
 .if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
 ARCHSUBDIR= mips
-CPPFLAGS+=	-D${MACHINE_ARCH}
 .else
 ARCHSUBDIR= ${MACHINE_ARCH}
 .endif
@@ -43,6 +42,14 @@ HOST_CPPFLAGS+= -I${.CURDIR}/../arch \
 
 .if (${OBJECT_FMT} == "ELF" || defined(BOOTSTRAP_ELF))
 CPPFLAGS+=-DDEFAULT_ELF
+.endif
+
+.if (${MACHINE_ARCH} == "mipseb")
+CPPFLAGS+=-DTARGET_BIG_ENDIAN_DEFAULT
+.endif
+
+.if (${MACHINE_ARCH} == "mipsel")
+CPPFLAGS+=-DTARGET_LITTLE_ENDIAN_DEFAULT
 .endif
 
 .if (${MACHINE} == "hpcmips") # XXX
