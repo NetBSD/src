@@ -1,3 +1,4 @@
+/*	$NetBSD: bzlib_private.h,v 1.2 1998/09/14 03:08:17 ross Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Private header file for the library.                  ---*/
