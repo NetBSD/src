@@ -1312,10 +1312,12 @@ $(srcdir)/c-parse.y: c-parse.in
 	  $(srcdir)/c-parse.in >>tmp-c-parse.y
 	sh $(srcdir)/move-if-change tmp-c-parse.y $(srcdir)/c-parse.y
 
-$(srcdir)/c-gperf.h: c-parse.gperf
-	gperf -L C -F ', 0, 0' -p -j1 -i 1 -g -o -t -G -N is_reserved_word \
-	   -k1,3,$$ $(srcdir)/c-parse.gperf >tmp-gperf.h
-	 sh $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
+# Disabled Fri Feb  7 04:11:30 UTC 2003, lukem@netbsd.org
+#
+#$(srcdir)/c-gperf.h: c-parse.gperf
+#	gperf -L C -F ', 0, 0' -p -j1 -i 1 -g -o -t -G -N is_reserved_word \
+#	   -k1,3,$$ $(srcdir)/c-parse.gperf >tmp-gperf.h
+#	 sh $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
 
 c-decl.o : c-decl.c $(CONFIG_H) system.h $(TREE_H) c-tree.h c-lex.h flags.h \
     output.h toplev.h
