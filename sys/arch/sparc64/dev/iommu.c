@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.68 2003/09/15 07:38:22 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.69 2003/10/21 08:12:46 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.68 2003/09/15 07:38:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.69 2003/10/21 08:12:46 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -715,7 +715,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 	map->_dm_dvmasize = sgsize;
 
 	if ((pglist = segs[0]._ds_mlist) == NULL) {
-		u_long prev_va = NULL;
+		u_long prev_va = 0UL;
 		paddr_t prev_pa = 0;
 		int end = 0, offset;
 
