@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.6.4.2 2000/08/06 04:18:21 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $";
+    "$Id: hpcfb.c,v 1.6.4.2 2000/08/06 04:18:21 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,7 @@ struct hpcfb_softc {
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
 	int nscreens;
+	void			*sc_powerhook;	/* power management hook */
 };
 /*
  *  function prototypes
@@ -148,6 +149,7 @@ int	hpcfbprint __P((void *aux, const char *pnp));
 
 int	hpcfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 paddr_t	hpcfb_mmap __P((void *, off_t, int));
+static void	hpcfb_refresh_screen __P((struct hpcfb_softc *sc));
 static int	hpcfb_init __P((struct hpcfb_fbconf *fbconf,
 				struct hpcfb_devconfig *dc));
 static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -155,6 +157,7 @@ static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void	hpcfb_free_screen __P((void *, void *));
 static int	hpcfb_show_screen __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
+static void	hpcfb_power __P((int, void *));
 
 static int	pow __P((int, int));
 
@@ -350,6 +353,12 @@ hpcfbattach(parent, self, aux)
 					  &hpcfb_console_dc.dc_rinfo);
 	}
 
+	/* Add a power hook to power management */
+	sc->sc_powerhook = powerhook_establish(hpcfb_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
+
 	wa.console = hpcfbconsole;
 	wa.scrdata = &hpcfb_screenlist;
 	wa.accessops = &hpcfb_accessops;
@@ -470,6 +479,12 @@ hpcfb_init(fbconf, dc)
 	if (rasops_init(ri, 200, 200)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
+
+	/* over write color map of rasops */
+	ri->ri_devcmap[0] = bg;
+	for (i = 1; i < 16; i++)
+		ri->ri_devcmap[i] = fg;
+
 #ifdef HPCFB_TVRAM
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
@@ -551,6 +566,45 @@ hpcfb_mmap(v, offset, prot)
 	struct hpcfb_softc *sc = v;
 
 	return (*sc->sc_accessops->mmap)(sc->sc_accessctx, offset, prot);
+}
+
+static void 
+hpcfb_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct hpcfb_softc *sc = arg;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		break;
+	case PWR_RESUME:
+		hpcfb_refresh_screen(sc);
+		break;
+	}
+}
+
+void
+hpcfb_refresh_screen(sc)
+	struct hpcfb_softc *sc;
+{
+#ifdef HPCFB_TVRAM
+	struct hpcfb_devconfig *dc = sc->sc_dc;
+	int x, y;
+
+	/*
+	 * refresh screen
+	 */
+	x = dc->dc_curx;
+	y = dc->dc_cury;
+	if (0 <= x && 0 <= y)
+		hpcfb_cursor(dc, 0,  y, x); /* disable cursor */
+	/* redraw all text */
+	hpcfb_redraw(dc, 0, dc->dc_rows);
+	if (0 <= x && 0 <= y)
+		hpcfb_cursor(dc, 1,  y, x); /* enable cursor */
+#endif
 }
 
 static int
