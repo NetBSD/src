@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.7 1999/09/02 23:39:43 ross Exp $
+#	$NetBSD: Makefile,v 1.8 2000/01/19 16:40:11 tsutsui Exp $
 
 RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 	${MAKE} -s -f-
 
 KERNEL?=${.CURDIR}/../../../../sys/arch/alpha/compile/INSTALL/netbsd
-STRIP?=	strip		# make STRIP=echo can be useful
+STRIPPROG?=	strip		# make STRIPPROG=echo can be useful
 
 all:
 	cp ${KERNEL} netbsd
 	mdsetimage -v netbsd ${RAMDISK}
-	${STRIP} netbsd
+	${STRIPPROG} netbsd
 	gzip -9f netbsd
 
 clean cleandir distclean:
