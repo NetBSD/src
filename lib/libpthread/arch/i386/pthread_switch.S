@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.12 2001/09/04 21:21:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.13 2002/08/14 18:48:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ ENTRY(pthread__switch)
 	movl	PT_UC(%ecx), %esi
 	pushl	%esi			/* ucontext_t *ucp */
 	pushl	%edi			/* ucontext_t *oucp */
-	call	PIC_PLT(_C_LABEL(_swapcontext_u))
+	call	*PIC_GOTOFF(_C_LABEL(_md_swapcontext_u))
 	addl	$CONTEXTSIZE+8, %esp
 	PIC_EPILOGUE
 	popl	%edi
@@ -155,7 +155,7 @@ pthread__switch_away:
 
 pthread__switch_no_decrement:	
 	pushl	%esi			/* ucontext_t *ucp */
-	call	PIC_PLT(_C_LABEL(_setcontext_u))
+	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
 	NOTREACHED
 
 /*
@@ -182,7 +182,7 @@ ENTRY(pthread__locked_switch)
 	pushl	%ecx			/* caller save */
 	pushl	%edx			/* caller save */
 	pushl	%edi			/* ucontext_t *ucp */
-	call	PIC_PLT(_C_LABEL(_getcontext_u))
+	call	*PIC_GOTOFF(_C_LABEL(_md_getcontext_u))
 	addl	$4, %esp
 	popl	%edx
 	popl	%ecx	
@@ -255,7 +255,7 @@ locked_no_old_preempt:
 	
 locked_no_new_preempt:		
 	pushl	%esi			/* ucontext_t *ucp */
-	call	PIC_PLT(_C_LABEL(_setcontext_u))
+	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
 	addl	$CONTEXTSIZE+16, %esp
@@ -325,5 +325,5 @@ upcall_no_old_preempt:
 	
 upcall_no_new_preempt:		
 	pushl	%esi
-	call	PIC_PLT(_C_LABEL(_setcontext_u))
+	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
 	NOTREACHED

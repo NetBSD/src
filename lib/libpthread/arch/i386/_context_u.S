@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.8 2002/04/24 20:04:12 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.9 2002/08/14 18:48:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,68 +39,12 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-#define GETC \
-	movl	%edi,  (UC_REGS + _REG_EDI * 4)(%ecx)	; \
-	movl	%esi,  (UC_REGS + _REG_ESI * 4)(%ecx)	; \
-	movl	%ebp,  (UC_REGS + _REG_EBP * 4)(%ecx)	; \
-	movl	%ebx,  (UC_REGS + _REG_EBX * 4)(%ecx)	; \
-	movl	%edx,  (UC_REGS + _REG_EIP * 4)(%ecx)	; \
-	fnsave  UC_FPREGS(%ecx)				; \
-	movl	$(_UC_USER | _UC_CPU | _UC_FPU),%eax	; \
- 	movl	%eax,   UC_FLAGS(%ecx)	
 
-#define SETC \
-	bt	$_UC_USER_BIT, UC_FLAGS(%ecx)		; \
-	jnc	1f					; \
-							; \
-	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
-	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
-	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
-	movl	(UC_REGS + _REG_EBX * 4)(%ecx), %ebx	; \
-	movl	(UC_REGS + _REG_UESP * 4)(%ecx), %edx	; \
-	movl	(UC_REGS + _REG_EIP * 4)(%ecx), %eax	; \
-	movl	%eax, -4(%edx)				; \
-	leal	-4(%edx), %esp				; \
-	ret						; \
-							; \
-1:	movl	UC_FLAGS(%ecx), %eax			; \
-	and	$_UC_FPU, %eax				; \
-	jz	2f					; \
-	frstor	UC_FPREGS(%ecx)				; \
-2:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
-	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
-	movl	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
-	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
-	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
-	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
-	movl	(UC_REGS + _REG_EBX * 4)(%ecx), %ebx	; \
-	movl	(UC_REGS + _REG_UESP * 4)(%ecx), %edx	; \
-	movl	(UC_REGS + _REG_CS * 4)(%ecx), %eax	; \
-	mov	%eax, -4(%edx)				; \
-	movl	(UC_REGS + _REG_EIP * 4)(%ecx), %eax	; \
-	movl	%eax, -8(%edx)				; \
-	movl	(UC_REGS + _REG_DS * 4)(%ecx), %eax	; \
-	movl	%eax, -12(%edx)				; \
-	movl	(UC_REGS + _REG_EDX * 4)(%ecx), %eax	; \
-	movl	%eax, -16(%edx)				; \
-	movl	(UC_REGS + _REG_ECX * 4)(%ecx), %eax	; \
-	movl	%eax, -20(%edx)				; \
-	movl	(UC_REGS + _REG_EAX * 4)(%ecx), %eax	; \
-	movl	%eax, -24(%edx)				; \
-	movl	(UC_REGS + _REG_EFL * 4)(%ecx), %eax	; \
-	movl	%eax, -28(%edx)				; \
-	movl	(UC_REGS + _REG_SS * 4)(%ecx), %ss	; \
-	leal	-28(%edx), %esp				; \
-	popfl						; \
-	popl	%eax					; \
-	popl	%ecx					; \
-	popl	%edx					; \
-	popl	%ds					; \
-	lret
-
-
-
-ENTRY(_getcontext_u)
+#define FPSAVE(reg)	fnsave UC_FPREGS(reg)
+#define FPLOAD(reg)	frstor UC_FPREGS(reg)
+#include "_getsetc.S"
+	
+ENTRY(_getcontext_u_s87)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
@@ -110,11 +54,43 @@ ENTRY(_getcontext_u)
 	xorl	%eax,  %eax
 	ret
 
-ENTRY(_setcontext_u)					
+ENTRY(_setcontext_u_s87)					
 	movl	4(%esp), %ecx
 	SETC
 
-ENTRY(_swapcontext_u)
+ENTRY(_swapcontext_u_s87)
+	movl	4(%esp), %ecx
+	movl	0(%esp), %edx
+	GETC
+	movl	%esp, %eax
+	addl	$4, %eax
+	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
+	movl	8(%esp), %ecx
+	SETC
+
+
+#undef FPSAVE
+#undef FPLOAD
+		
+#define FPSAVE(reg)	fxrstor UC_FXSAVEREGS(reg)
+#define FPLOAD(reg)	fxsave UC_FXSAVEREGS(reg)
+#include "_getsetc.S"
+
+ENTRY(_getcontext_u_xmm)
+	movl	4(%esp), %ecx
+	movl	0(%esp), %edx
+	GETC
+	movl	%esp, %eax
+	addl	$4, %eax
+	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
+	xorl	%eax,  %eax
+	ret
+
+ENTRY(_setcontext_u_xmm)					
+	movl	4(%esp), %ecx
+	SETC
+
+ENTRY(_swapcontext_u_xmm)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
