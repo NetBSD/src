@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.79 2000/05/21 04:03:34 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.80 2000/05/21 04:25:57 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.79 2000/05/21 04:03:34 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.80 2000/05/21 04:25:57 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -423,11 +423,17 @@ mips_vector_init()
 #ifndef ENABLE_MIPS_R3NKK /* ID conflict */
 	case MIPS_R5000:
 #endif
-	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_RM5200:
 		cpu_arch = 4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 1;
+		mips3_cacheflush_bug = 0;
+		break;
+
+	case MIPS_R10000:
+		cpu_arch = 4;
+		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
 		mips3_cacheflush_bug = 0;
 		break;
