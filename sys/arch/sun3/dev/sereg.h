@@ -1,4 +1,4 @@
-/*	$NetBSD: sereg.h,v 1.3 1997/12/08 19:17:12 gwr Exp $	*/
+/*	$NetBSD: sereg.h,v 1.4 1998/03/08 18:56:08 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,9 +39,6 @@
 /*
  * Sun3/E SCSI/Ethernet board.  This is a VME board with some memory,
  * an Intel Ether, and an NCR5380 SCSI with a cheap DMA engine.
- * The Sun3/E H/W manual says the ivec2 register is at offset 1E,
- * but the SunOS sereg.h file has it at offset 1F (more likely).
- * Perhaps the H/W really implements a short at 1E or something.
  */
 
 /*****************************************************************
@@ -74,7 +71,7 @@ struct se_regs {
 
 
 /*****************************************************************
- * Register definitions for the SCSI portion.
+ * Register definitions for the Ethernet portion.
  * (size=0x100)
  */
 struct ie_regs {
