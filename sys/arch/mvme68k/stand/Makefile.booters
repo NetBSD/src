@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.3 2000/11/20 19:35:31 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.4 2000/11/30 22:26:26 scw Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -17,7 +17,8 @@ MKLINT=no
 
 INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
         -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS= -nostdinc -m68020-60 -Wa,-m68030 -D_STANDALONE ${INCPATH} ${DEFS}
+CFLAGS= -nostdinc -m68020-60 -Wa,-m68030 -D_STANDALONE \
+	-DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY ${INCPATH} ${DEFS}
 BINDIR= ${MDEC_DIR}
 
 .if exists(${.CURDIR}/version)
@@ -46,7 +47,7 @@ beforedepend:	machine m68k
 .else
 
 ${PROG}: machine m68k ${OBJS} ${LIBS} ${BUGCRT} ${SRTOBJ}
-	${LD} -N -T ${RELOC} -o $@ ${BUGCRT} ${SRTOBJ} ${OBJS} ${LIBS}
+	${LD} -N -Ttext ${RELOC} -o $@ ${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS}
 
 LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=cd ${LIB_SA_DIR}; \
