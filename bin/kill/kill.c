@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
+/*	$NetBSD: kill.c,v 1.12 1997/02/22 01:45:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $";
+static char rcsid[] = "$NetBSD: kill.c,v 1.12 1997/02/22 01:45:41 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 			if (!isdigit(**argv))
 				usage();
 			numsig = strtol(*argv, &ep, 10);
-			if (!*argv || *ep)
+			if (*ep)
 				errx(1, "illegal signal number: %s", *argv);
 			if (numsig >= 128)
 				numsig -= 128;
@@ -128,7 +128,7 @@ main(argc, argv)
 
 	for (errors = 0; argc; argc--, argv++) {
 		pid = strtol(*argv, &ep, 10);
-		if (!*argv || *ep) {
+		if (!**argv || *ep) {
 			warnx("illegal process id: %s", *argv);
 			errors = 1;
 		} else if (kill(pid, numsig) == -1) {
