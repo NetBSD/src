@@ -1,5 +1,5 @@
-#	$Id: Makefile,v 1.1 1993/07/04 14:02:53 cgd Exp $
+#	$Id: Makefile,v 1.1.4.1 1993/09/14 18:14:40 mycroft Exp $
 
-SUBDIR+= arch/${MACHINE}
+SUBDIR+= libkern arch/${MACHINE}
 
 .include <bsd.subdir.mk>
