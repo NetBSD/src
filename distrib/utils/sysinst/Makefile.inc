@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2003/03/18 00:55:09 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2003/03/18 20:03:30 fvdl Exp $
 #
 # Makefile for install
 
@@ -59,10 +59,10 @@ MSGC?=		msgc
 .include <bsd.prog.mk>
 
 menu_defs.c menu_defs.h: menus.def
-	${MENUC} ${.CURDIR}/menus.def
+	${MENUC} menus.def
 
 msg_defs.c msg_defs.h: msg.def
-	${MSGC} ${.CURDIR}/msg.def
+	${MSGC} msg.def
 
 # Needed to get proper dependency checks on osrelease
 msgtouch: ${VERDEP}
