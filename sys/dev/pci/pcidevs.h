@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.526 2003/04/13 01:53:21 explorer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.527 2003/04/15 21:43:56 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.523 2003/04/13 01:53:00 explorer Exp 
+ *	NetBSD: pcidevs,v 1.524 2003/04/15 21:32:28 rjs Exp 
  */
 
 /*
@@ -519,6 +519,7 @@
 #define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta Corp */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
+#define	PCI_VENDOR_ITE	0x1283		/* Integrated Technology Express, Inc. */
 #define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology, Inc. */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
@@ -1579,6 +1580,9 @@
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
+
+/* ITE products */
+#define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
