@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.78 1996/09/07 12:40:31 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.79 1996/09/08 00:46:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -145,6 +145,8 @@ cdev_decl(sd);
 cdev_decl(st);
 #include "ss.h"
 cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 cdev_decl(cd);
 #include "lpt.h"
 cdev_decl(lpt);
@@ -198,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_scanner_init(NSS,ss),	/* 19: SCSI scanner */
-	cdev_notdef(),			/* 20 */
+	cdev_uk_init(NUK,uk),		/* 20: SCSI unknown */
 	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
