@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.7 2000/01/24 02:00:50 enami Exp $
+#	$NetBSD: changelist,v 1.8 2000/03/24 22:37:48 enami Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -32,6 +32,7 @@
 /etc/floppytab
 /etc/fstab
 /etc/ftpchroot
+/etc/ftpd.conf
 /etc/ftpusers
 /etc/ftpwelcome
 /etc/gated.conf
