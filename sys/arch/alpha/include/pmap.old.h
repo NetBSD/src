@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.15 1998/01/09 08:18:22 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.16 1998/01/09 19:13:09 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -121,6 +121,10 @@ typedef	int		pmap_attr_t;
 
 extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
+
+#if defined(MACHINE_NEW_NONCONTIG)
+#define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
+#endif
 
 /* Machine-specific functions. */
 void	pmap_bootstrap __P((vm_offset_t firstaddr, vm_offset_t ptaddr));
