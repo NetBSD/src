@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2000/03/03 19:54:40 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2000/03/12 13:46:29 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,6 +153,8 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 #if notyet
 /* USB */
@@ -235,6 +237,13 @@ struct cdevsw	cdevsw[] =
 #endif
 #if notyet
 	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
+#else
+	cdev_notdef(),
+#endif
+#if NWSMUX > 0
+	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
+#else
+	cdev_notdef(),
 #endif
 };
 
