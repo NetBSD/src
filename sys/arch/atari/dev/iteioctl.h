@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.4 2004/05/18 20:08:51 he Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.5 2004/05/19 08:44:20 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,9 @@
 #ifndef _MACHINE_ITEIOCTL_H_
 #define _MACHINE_ITEIOCTL_H_
 
+#ifndef _KERNEL
 #include <machine/kbdmap.h>
+#endif
 
 struct itewinsize {
 	int x;			/* leftedge offset to the right */
