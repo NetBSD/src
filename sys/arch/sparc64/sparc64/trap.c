@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1998/09/07 23:49:21 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.15 1998/09/11 00:17:00 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -773,7 +773,7 @@ badtrap:
 		fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (p->p_md.md_fpstate->fs_qsize == 0) {
-			p->p_md.md_fpstate->fs_queue[0].fq_instr = fuword((caddr_t)pc);
+			copyin((caddr_t)pc, &p->p_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
 			p->p_md.md_fpstate->fs_qsize = 1;
 			fpu_cleanup(p, p->p_md.md_fpstate);
 			ADVANCE;
@@ -919,33 +919,19 @@ rwindow_save(p)
 			}
 #endif
 		} else {
-			struct rwindow32 *rwstack;
+			struct rwindow32 rwstack;
 
 			/* 32-bit window */
-			rwstack = (struct rwindow32 *)rwdest;
 			for (j=0; j<8; j++) { 
+				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
+				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
+			}
+			if (copyout(&rwstack, rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
-				if (rwindow_debug&RW_FOLLOW)
-					printf("%%l%d[%x]->%p\t", j, (int)rw[i].rw_local[j], &rwstack->rw_local[j]);
+				if (rwindow_debug&RW_ERR)
+					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", rwdest);
 #endif
-				if(suword((void *)(&rwstack->rw_local[j]), (int)rw[i].rw_local[j])) {
-#ifdef DEBUG
-					if (rwindow_debug&RW_ERR)
-						printf("rwindow_save: 32-bit pcb suword of %%l%d to %p failed\n", j, &rwstack->rw_local[j]);
-#endif
-					return (-1);
-				}
-#ifdef DEBUG
-				if (rwindow_debug&RW_FOLLOW)
-					printf("%%i%d[%x]->%p\n", j, (int)rw[i].rw_in[j],  &rwstack->rw_in[j]);
-#endif
-				if(suword((void *)(&rwstack->rw_in[j]), (int)rw[i].rw_in[j])) {
-#ifdef DEBUG
-					if (rwindow_debug&RW_ERR)
-						printf("rwindow_save: 32-bit pcb suword of %%i%d to %p failed\n", j, &rwstack->rw_in[j]);
-#endif
-					return (-1);
-				}
+				return (-1);
 			}
 		}
 /*		rw++; */

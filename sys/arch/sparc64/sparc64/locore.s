@@ -4397,189 +4397,7 @@ badregs:
 	.globl	_C_LABEL(endtrapcode)
 _C_LABEL(endtrapcode):
 
-#if 0
-#define	xword	word	0, 
-	.data
-	.align	8
-Lcons:
-	.xword	0		! This is our device handle
-	
-	.align	8
-of_finddev:			! Here are the commands themselves.  64 bits each field.
-	.xword	Lfinddevice	! command name
-	.xword	1		! # params
-	.xword	1		! # returns
-	.xword	Lchosen		! Name of device
-	.xword	0		! handle -- return value
-	.align	8
-of_getprop:
-	.xword	Lgetprop
-	.xword	4
-	.xword	1
-	.xword	0		! handle to "/chosen"
-	.xword	Lstdout
-	.xword	Lcons		! buffer
-	.xword	4		! size of buffer value
-	.xword	0
-	.align	8
-of_write:	
-	.xword	Lwrite
-	.xword	3
-	.xword	1
-	.xword	0		! the handle
-of_mesg:	
-	.xword	Lstring
-	.xword	(Lfinddevice-Lstring-1)! strlen
-	.xword	0		!  number written
-	.align	8
-
-of_enter:
-	.xword	Lenter
-	.xword	0
-	.xword	0
-	
-	.text
-	.align 	8
-
-	.global	start
-	.type	start, #function
-
-	/*
-	 * Yet another debug rom_halt
-	 */
-trap_enter:
-	set	panicstack - CC64FSZ + STKB - BIAS, %sp
-	mov	7, %o3
-	wrpr	%g0, %o3, %cleanwin	
-	set	of_enter, %o1
-	set	romp, %o2
-	CHKPT(%o3,%o4,0x34)
-	jmpl	%o2, %o7	! Call prom
-	 wrpr	%g0, 0, %tl
-	
-	/*
-	 * Panic to prom -- panic str in %g1
-	 */
-	.global _C_LABEL(prom_panic)
-_C_LABEL(prom_panic):
-	set	romitsbp, %g2			
-	ldx	[%g2], %g5			! Restore TSB pointers
-	set	TSB, %g3
-	stxa	%g5, [%g3] ASI_IMMU
-	membar	#Sync
-	set	romdtsbp, %g2
-	ldx	[%g2], %g5
-	stxa	%g5, [%g3] ASI_DMMU
-	membar	#Sync
-	
-	set	romtrapbase, %g3		! Restore trapbase
-	ldx	[%g3], %g5
-	wrpr	%g5, 0, %tba
-	set	romwstate, %g3			! Restore wstate
-	ldx	[%g3], %g5
-	wrpr	%g5, 0, %wstate
-	
-#ifndef NOTDEF
-	set	.ebootstack, %o1
-	and	%o1, ~(STACK_ALIGN64-1), %o1
-	sub	%o1, SA64(CC64FSZ), %o1
-	save	%o1, -SA64(CC64FSZ), %sp
-	sub	%sp, BIAS, %sp		! delay; Now a 64 bit frame ????????
-#else
-	save	%sp, -CC64FSZ, %sp
-	andcc	%sp, 1, %g0
-	bz,a	0f
-	 sub	%sp, BIAS, %sp
-0:	
-#endif
-
-	mov	%g1, %i0		! Save our input param
-	set	of_mesg, %l1
-	stx	%i0, [%l1]	! Save str
-	set	romp, %l0
-	LDPTR	[%l0], %i4	! Load romp
-
-	clr	%i1
-1:
-	ldub	[%i0+%i1], %i2	! Calculate strlen
-	brnz,a,pt	%i2, 1b
-	 inc	%i1
-
-	stx	%i1, [%l1+8]	! Save strlen
-	
-	/*
-	 * Set the psr into a known state:
-	 * Set supervisor mode, interrupt level >= 13, traps enabled
-	 */
-	wrpr	%g0, 13, %pil
-	wrpr	%g0, PSTATE_KERN, %pstate
-	
-	set	of_finddev, %o0
-	jmpl	%i4, %o7	! Call prom
-	mov	%o0, %l1
-	
-	ldx	[%l1+(4*8)], %l2	! get retval
-	set	of_getprop,%o0
-	jmpl	%i4, %o7		! Call prom
-	stx	%l2, [%o0+(3*8)]	! store handle
-
-	set	Lcons, %l1
-	ld	[%l1], %l2		! get fd
-	set	of_write, %o0		! Store fd in command
-	jmpl	%i4, %o7		! Call prom
-	stx	%l2, [%o0+(3*8)]
-
-	mov	%i4, %o4	! Set things up again like they were when we started
-
-	ret			! Looks like we got problems w/the stack here.
-	 restore
-	
-	set	of_enter, %o0	! Halt
-	jmpl	%i4, %o7
-	 nop
-	
-	ret
-	 restore
-	
-	.data
-	.align 8
-#define STACK_SIZE	0x14000
-	.space	STACK_SIZE
-.ebootstack:			! end (top) of boot stack
-
-	.align	8
-Lstring:	
-	.asciz	"This is a test message from Eduardo\r\n"
-	.align	8
-Lfinddevice:
-	.asciz	"finddevice"
-	.align	8
-Lchosen:
-	.asciz	"/chosen"
-	.align	8
-Lgetprop:
-	.asciz	"getprop"
-	.align	8
-Lstdout:
-	.asciz "stdout"
-	.align	8
-Lwrite:
-	.asciz "write"
-	.align	8
-Lenter:
-	.asciz "exit"
-	.align 8
-romp:	.xword 0		! ROM interface pointer
-romtrapbase:
-	.xword 0
-romitsbp:
-	.xword 0
-romdtsbp:
-	.xword 0
-romwstate:
-	.xword 0
-	.text
-#endif
+#ifdef DEBUG
 !!!
 !!! Dump the DTLB to phys address in %o0 and print it
 !!!
@@ -4689,6 +4507,8 @@ print_dtlb:
 3:
 	.asciz	"%2d:%08x:%08x %08x:%08x\r\n"
 #endif
+#endif
+	
 	.align	8
 dostart:
 	/*
@@ -5583,9 +5403,9 @@ _C_LABEL(esigcode):
  * work out.
  */
 #ifdef _LP64
-	.globl	_C_LABEL(SPARC32_sigcode)
-	.globl	_C_LABEL(SPARC32_esigcode)
-_C_LABEL(SPARC32_sigcode):
+	.globl	_C_LABEL(sparc32_sigcode)
+	.globl	_C_LABEL(sparc32_esigcode)
+_C_LABEL(sparc32_sigcode):
 #else
 	.globl	_C_LABEL(sigcode)
 	.globl	_C_LABEL(esigcode)
@@ -5674,6 +5494,13 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 #ifdef _LP64
+	restore	%g0, sparc32_SYS_sigreturn, %g1	! get registers back & set syscall #
+	add	%sp, 64 + 16, %o0	! compute scp
+	t	ST_SYSCALL		! sigreturn(scp)
+	! sigreturn does not return unless it fails
+	mov	sparc32_SYS_exit, %g1		! exit(errno)
+	t	ST_SYSCALL
+_C_LABEL(sparc32_esigcode):
 #else
 	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
@@ -7310,7 +7137,7 @@ ENTRY(fuword)
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	lda	[%o0] ASI_AIUS, %o0	! fetch the word
+	LDPTRA	[%o0] ASI_AIUS, %o0	! fetch the word
 	retl				! phew, made it, return the word
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
@@ -7372,7 +7199,7 @@ ENTRY(suword)
 	LDPTR	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	sta	%o1, [%o0] ASI_AIUS	! store the word
+	STPTRA	%o1, [%o0] ASI_AIUS	! store the word
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
 	retl				! and return 0
 	clr	%o0

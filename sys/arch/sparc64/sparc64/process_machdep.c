@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 1998/09/07 23:59:08 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.4 1998/09/11 00:16:59 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -89,11 +89,10 @@ process_read_regs(p, regs)
 	regp->r_y = tf->tf_y;
 	for (i=0; i<8; i++) {
 		struct rwindow32 *rw = (struct rwindow32 *)tf->tf_out[6];
+		int32_t tmp;
 
 		regp->r_global[i] = tf->tf_global[i];
 		regp->r_out[i] = tf->tf_out[i];
-		suword((void*)&rw->rw_local[i], tf->tf_local[i]);
-		suword((void*)&rw->rw_in[i], tf->tf_in[i]);
 	}
 	/* We should also write out the ins and locals.  See signal stuff */
 	return (0);
@@ -116,8 +115,6 @@ process_write_regs(p, regs)
 
 		tf->tf_global[i] = regp->r_global[i];
 		tf->tf_out[i] = regp->r_out[i];
-		tf->tf_local[i] = fuword((void*)&rw->rw_local[i]);
-		tf->tf_in[i] = fuword((void*)&rw->rw_in[i]);
 	}
 	/* We should also read in the ins and locals.  See signal stuff */
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
