@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hd_input.c	7.7 (Berkeley) 5/29/91
- *	$Id: hd_input.c,v 1.3 1993/05/20 04:12:06 cgd Exp $
+ *	$Id: hd_input.c,v 1.4 1993/09/06 18:09:55 mycroft Exp $
  */
 
 #include "param.h"
@@ -55,7 +55,7 @@
 #include "hd_var.h"
 #include "x25.h"
 
-int frame_reject(), rej_routine(), free_iframes();
+static int frame_reject(), rej_routine(), free_iframes();
 
 /*
  *      HDLC INPUT INTERFACE
