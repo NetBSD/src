@@ -1,4 +1,4 @@
-/*	$NetBSD: sum1.c,v 1.6 1997/10/17 11:37:19 lukem Exp $	*/
+/*	$NetBSD: sum1.c,v 1.7 2001/03/21 03:16:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sum1.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sum1.c,v 1.6 1997/10/17 11:37:19 lukem Exp $");
+__RCSID("$NetBSD: sum1.c,v 1.7 2001/03/21 03:16:38 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ csum1(fd, cval, clen)
 {
 	register u_int32_t total;
 	register int nr;
-	register u_int crc;
+	register u_int thecrc;
 	register u_char *p;
 	u_char buf[8192];
 
@@ -62,17 +62,17 @@ csum1(fd, cval, clen)
 	 * 16-bit checksum, rotating right before each addition;
 	 * overflow is discarded.
 	 */
-	crc = total = 0;
+	thecrc = total = 0;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (total += nr, p = buf; nr--; ++p) {
-			if (crc & 1)
-				crc |= 0x10000;
-			crc = ((crc >> 1) + *p) & 0xffff;
+			if (thecrc & 1)
+				thecrc |= 0x10000;
+			thecrc = ((thecrc >> 1) + *p) & 0xffff;
 		}
 	if (nr < 0)
 		return(1);
 
-	*cval = crc;
+	*cval = thecrc;
 	*clen = total;
 	return(0);
 }
