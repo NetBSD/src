@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.26 2002/12/23 12:15:04 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.27 2003/01/09 12:48:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -241,6 +241,7 @@ struct __screen {
 	char ttytype[128];
 	int endwin;
 	int notty;
+	int half_delay;
 };
 
 

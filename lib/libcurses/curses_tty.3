@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.1 2002/10/21 13:55:23 blymn Exp $
+.\"	$NetBSD: curses_tty.3,v 1.2 2003/01/09 12:48:05 blymn Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@netbsd.org, brett_lymn@yahoo.com.au)
@@ -48,6 +48,7 @@
 .Nm erasechar ,
 .Nm flushinp ,
 .Nm gettmode ,
+.Nm halfdelay ,
 .Nm has_ic ,
 .Nm has_il ,
 .Nm idcok ,
@@ -119,6 +120,8 @@
 .Fn cbreak "void"
 .Ft int
 .Fn nocbreak "void"
+.Ft int
+.Fn halfdelay "int"
 .Ft int
 .Fn raw "void"
 .Ft int
@@ -279,6 +282,17 @@ newline character, line discipline processing will be performed.
 The
 .Fn nocbreak
 function disables this mode.
+.Pp
+Calling
+.Fn halfdelay
+puts the terminal into the same mode as
+.Fn cbreak
+excepting that if no character is received within the specified
+number of tenths of a second then the input routine will return
+.Er ERR .
+This mode can be cancelled by calling
+.Fn nocbreak .
+The valid range for the timeout is from 1 to 255 tenths of a second.
 .Pp
 The
 .Fn noraw

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.70 2002/12/23 12:13:44 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.71 2003/01/09 12:48:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -522,6 +522,7 @@ int	 getmaxx(WINDOW *);
 int	 getpary(WINDOW *);
 int	 getparx(WINDOW *);
 int	 gettmode(void);
+int	 halfdelay(int);
 bool	 has_colors(void);
 bool	 has_ic(void);
 bool	 has_il(void);
