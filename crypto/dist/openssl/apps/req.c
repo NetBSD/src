@@ -1061,7 +1061,7 @@ start2:			for (;;)
 					== NULL)
 					def="";
 				
-				snprintf(buf, sizeof(buf), "%s_value", type);
+				snprintf(buf, sizeof(buf), "%s_value", type);
 				if ((value=CONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					value=NULL;
