@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.11 2003/08/07 11:16:03 agc Exp $");
+__RCSID("$NetBSD: tail.c,v 1.12 2004/02/16 21:57:04 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	FILE *fp;
-	long off;
+	off_t off;
 	enum STYLE style;
 	int ch, first;
 	char *p;
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 #define	ARG(units, forward, backward) {					\
 	if (style)							\
 		usage();						\
-	off = strtol(optarg, &p, 10) * (units);				\
+	off = strtoll(optarg, &p, 10) * (units);			\
 	if (*p)								\
 		err(1, "illegal offset -- %s", optarg);			\
 	switch(optarg[0]) {						\
