@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.4 2002/10/29 12:31:20 blymn Exp $
+#	$NetBSD: majors.i386,v 1.5 2002/12/04 00:28:45 haya Exp $
 #
 # Device majors for i386
 #
@@ -93,3 +93,4 @@ device-major	kttcp		char 91			kttcp
 device-major	dmoverio	char 92			dmoverio
 device-major	cgd		char 93  block 21	cgd
 device-major	verifiedexec	char 94			verifiedexec
+device-major	fwiso		char 95			fwiso
