@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.6 2004/07/02 00:05:23 sjg Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.7 2004/10/12 16:46:59 sjg Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.6 2004/07/02 00:05:23 sjg Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.7 2004/10/12 16:46:59 sjg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -125,6 +125,7 @@ print_passwd(char *string, int operation, void *extra)
 			__crypt_to64(&buffer[n + 4], arc4random(), 4);
 			buffer[n + 8] = '$';
 			buffer[n + 9] = '\0';
+			salt = buffer;
 		}
 		break;
 	case DO_BLF:
