@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.31 1999/01/03 04:25:26 erh Exp $
+#	$NetBSD: makesyscalls.sh,v 1.32 1999/02/11 09:32:01 christos Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -232,7 +232,7 @@ $1 ~ /^#[ 	]*else/ {
 $1 ~ /^#/ {
 	if ($1 ~ /^#[       ]*endif/) {
 		if (savedepth <= 0) {
-			printf "%s: line %d: unbalenced #endif\n", \
+			printf "%s: line %d: unbalanced #endif\n", \
 			    infile, NR
 			exit 1
 		}
@@ -253,6 +253,8 @@ syscall != $1 {
 function parserr(was, wanted) {
 	printf "%s: line %d: unexpected %s (expected %s)\n", \
 	    infile, NR, was, wanted
+	printf "line is:\n"
+	print
 	exit 1
 }
 function parseline() {
