@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.68 2000/01/23 23:56:58 chopps Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.69 2000/01/25 01:17:40 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp 
+ *	NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp 
  */
 
 /*-
@@ -321,6 +321,9 @@
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BAY_STACK_650	0x0804
 #define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
+#define	PCMCIA_CIS_BAY_STACK_660	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BAY_STACK_660	0x0807
+#define	PCMCIA_STR_BAY_STACK_660	"BayStack 660 Wireless LAN"
 
 /* Raylink/WebGear */
 #define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
