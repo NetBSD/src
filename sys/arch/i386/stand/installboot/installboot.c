@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.6 1998/07/28 20:10:54 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.7 1998/09/02 08:24:51 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -406,7 +406,7 @@ main(argc, argv)
 			warnx("invalid partition");
 			goto out;
 		}
-		bsdoffs = dl.d_partitions[c - 'a'].p_offset;
+		bsdoffs = dl.d_partitions[p - 'a'].p_offset;
 	}
 	if (verbose)
 		(void) fprintf(stderr, "BSD partition starts at sector %d\n",
