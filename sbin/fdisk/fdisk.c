@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.25 1998/02/19 14:47:43 drochner Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.26 1998/02/25 14:19:12 drochner Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.25 1998/02/19 14:47:43 drochner Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.26 1998/02/25 14:19:12 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -544,7 +544,7 @@ init_sector0(start)
 		memset (&mboot.parts[i], 0, sizeof(struct dos_partition));
 
 	partp = &mboot.parts[3];
-	partp->dp_typ = DOSPTYP_386BSD;
+	partp->dp_typ = DOSPTYP_NETBSD;
 	partp->dp_flag = ACTIVE;
 	putlong(&partp->dp_start, start);
 	putlong(&partp->dp_size, dos_disksectors - start);
