@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 1996/03/17 01:26:45 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 1996/03/20 12:41:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -170,7 +170,7 @@ struct fd_types {
 		{ 2, 18, 2880 , FLP_HD },	/* 1.44 Mb	*/
 };
 
-typedef void	(*FPV)();
+typedef void	(*FPV) __P((void *));
 
 /*
  * {b,c}devsw[] function prototypes
@@ -199,6 +199,9 @@ static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static int	fdselect __P((int, int, int));
 static void	fddeselect __P((void));
 static void	fdmoff __P((struct fd_softc *));
+       u_char	read_fdreg __P((u_short));
+       void	write_fdreg __P((u_short, u_short));
+       u_char	read_dmastat __P((void));
 
 extern __inline__ u_char read_fdreg(u_short regno)
 {

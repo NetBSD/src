@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.8 1996/02/22 10:10:50 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.9 1996/03/20 12:41:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -160,9 +160,9 @@ main(void)
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
-	printf("#define\tATARI_68020 %d\n", ATARI_68020);
-	printf("#define\tATARI_68030 %d\n", ATARI_68030);
-	printf("#define\tATARI_68040 %d\n", ATARI_68040);
+	printf("#define\tATARI_68020 %ld\n", ATARI_68020);
+	printf("#define\tATARI_68030 %ld\n", ATARI_68030);
+	printf("#define\tATARI_68040 %ld\n", ATARI_68040);
 	printf("#define\tMMU_68030 %d\n", MMU_68030);
 	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
