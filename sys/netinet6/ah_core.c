@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.19.2.1 2000/07/25 04:24:46 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.19.2.2 2001/02/26 21:53:48 he Exp $	*/
 /*	$KAME: ah_core.c,v 1.36 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
@@ -833,6 +833,19 @@ again:
 			p = mtod(n, u_char *);
 			i = sizeof(struct ip);
 			while (i < hlen) {
+				if (i + IPOPT_OPTVAL >= hlen) {
+					error = EINVAL;
+					goto fail;
+				}
+				if (p[i + IPOPT_OPTVAL] == IPOPT_EOL ||
+				    p[i + IPOPT_OPTVAL] == IPOPT_NOP ||
+				    i + IPOPT_OLEN < hlen)
+					;
+				else {
+					error = EINVAL;
+					goto fail;
+				}
+
 				skip = 1;
 				switch (p[i + IPOPT_OPTVAL]) {
 				case IPOPT_EOL:
@@ -859,8 +872,6 @@ again:
 					    "(type=%02x len=%02x)\n",
 					    p[i + IPOPT_OPTVAL],
 					    p[i + IPOPT_OLEN]));
-					m_free(n);
-					n = NULL;
 					error = EINVAL;
 					goto fail;
 				}
