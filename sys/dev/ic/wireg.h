@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.42 2002/10/21 11:57:25 soren Exp $	*/
+/*	$NetBSD: wireg.h,v 1.43 2003/02/25 00:56:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -117,6 +117,7 @@
 #define WI_CMD_ACCESS		0x0021
 #define WI_CMD_PROGRAM		0x0022
 #define WI_CMD_READEE		0x0030
+#define WI_CMD_TEST		0x0038 /* PRISM2 test mode */
 
 #define WI_CMD_CODE_MASK	0x003F
 
@@ -139,6 +140,11 @@
 #define WI_PROGRAM_ENABLE_RAM	0x0100
 #define WI_PROGRAM_ENABLE_NVRAM	0x0200
 #define WI_PROGRAM_NVRAM	0x0300
+
+/*
+ * DEBUG mode options.
+ */
+#define WI_TEST_MONITOR		0x0B /* monitor mode for testing */
 
 /* Status register values */
 #define WI_STAT_CMD_CODE	0x003F
