@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/08/19 09:56:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2003/07/28 15:25:02 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -39,7 +39,7 @@ const.h: const.c
 	    sed -e 's/Char \([a-zA-Z0-9_]*\)\(.*\)/extern Char \1[];/' | \
 	    sort >> ${.TARGET}
 
-.depend alloc.o: const.h errnum.h 
+${DEPENDSRCS} alloc.o: const.h errnum.h 
 
 alloc.o const.o csh.o dir.o dol.o err.o exec.o exp.o file.o func.o glob.o \
     hist.o init.o lex.o misc.o parse.o proc.o sem.o set.o str.o time.o: const.h
