@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.27 2005/03/16 12:36:57 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.28 2005/03/16 12:55:28 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -720,4 +720,35 @@ share/tmac/doc-common                           patch
 gnu/usr.bin/groff/tmac/mdoc.local               patch
 
 	Welcome to 2.0.2
+
+sys/arch/sparc/include/lock.h			1.18
+
+	Add the early-clobber modifier on the destination reg of ldstub.
+	In some implementations (eg. sun4c), the hardware modifies the
+	destination reg before checking for write permission on the memory
+	location. Without this change, gcc was using the same register for
+	the address and the destination, so if the store part of the
+	instruction faulted, the address was already gone when the instruction
+	was retried after resolving the fault. Part of PR 25633, PR 25896.
+	[chs, ticket #1159]
+
+gnu/usr.bin/groff/tmac/mdoc.local		1.19 via patch
+
+	Teach groff about NetBSD 1.6.3 (used by njs(4), noted by tron).
+	[wiz, ticket #1167]
+
+sys/nfs/nfs_vnops.c				1.219
+
+	nfs_readdirrpc, nfs_readdirplusrpc:
+	Avoid infinite loops when getting readdir response without
+	any entries or EOF. PR/28971.
+	[yamt, ticket #1208]
+
+sys/arch/sun3/include/param3.h                  1.50
+
+	Bring back the sun3 MAXPHYS definition that has been missing for
+	8 years. More recently, we changed to relying on MAXPHYS rather
+	than MAXBSIZE to limit page cache I/O sizes, and sun3 has been
+	broken since then.
+	[chs, ticket #1229]
 
