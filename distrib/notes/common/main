@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.216 2002/09/24 15:29:24 provos Exp $
+.\"	$NetBSD: main,v 1.217 2002/09/28 09:45:04 kano Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1822,6 +1822,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
 .It Ta Jesse Off Ta Mt joff@netbsd.org
 .It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
+.It Ta OKANO Takayoshi Ta Mt kano@netbsd.org
 .It Ta Masaru Oki Ta Mt oki@netbsd.org
 .It Ta Atsushi Onoe Ta Mt onoe@netbsd.org
 .It Ta Greg Oster Ta Mt oster@netbsd.org
