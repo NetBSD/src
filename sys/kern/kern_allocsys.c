@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.21 2002/09/27 15:37:43 provos Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.22 2003/02/01 21:07:01 erh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.21 2002/09/27 15:37:43 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.22 2003/02/01 21:07:01 erh Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_callout.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.21 2002/09/27 15:37:43 provos Ex
 #endif
 
 u_int	nbuf = NBUF;
-u_int	nswbuf = 0;
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
@@ -209,14 +208,6 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
 #endif
 
-	/*
-	 * We allocate 1/2 as many swap buffer headers as file I/O buffers.
-	 */
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
 	ALLOCSYS(v, buf, struct buf, nbuf);
 
 	return (v);
