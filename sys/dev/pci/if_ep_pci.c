@@ -1,6 +1,7 @@
-/*	$NetBSD: if_ep_pci.c,v 1.20 1997/03/30 21:31:01 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.21 1997/03/30 22:47:09 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
@@ -44,9 +45,8 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
-
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
