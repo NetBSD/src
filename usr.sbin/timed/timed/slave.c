@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.7 1997/10/17 08:56:41 mrg Exp $	*/
+/*	$NetBSD: slave.c,v 1.8 1997/10/17 14:19:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: slave.c,v 1.8 1997/10/17 14:19:40 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -81,7 +86,6 @@ slave()
 	struct timeval ntime, wait, tmptv;
 	time_t tmpt;
 	struct tsp *answer;
-	int timeout();
 	char olddate[32];
 	char newdate[32];
 	struct netinfo *ntp;

@@ -43,6 +43,6 @@ void	intr(int);
 void	makeargv(void);
 void	msite(int, char *[]);
 int	priv_resources(void);
-void	quit(void);
+void	quit(int, char *[]);
 void	testing(int, char *[]);
 void	tracing(int, char *[]);

@@ -47,6 +47,6 @@ void	intr __P((int));
 void	makeargv __P((void));
 void	msite __P((int, char *[]));
 int	priv_resources __P((void));
-void	quit __P((void));
+void	quit __P((int, char *[]));
 void	testing __P((int, char *[]));
 void	tracing __P((int, char *[]));

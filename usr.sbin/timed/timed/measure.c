@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.6 1997/10/17 08:56:16 mrg Exp $	*/
+/*	$NetBSD: measure.c,v 1.7 1997/10/17 14:19:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
+#else
+__RCSID("$NetBSD: measure.c,v 1.7 1997/10/17 14:19:29 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "globals.h"
@@ -90,6 +95,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	measure_status = HOSTDOWN;
 	measure_delta = HOSTDOWN;
 	errno = 0;
+	trials = 0;
 
 	/* open raw socket used to measure time differences */
 	if (sock_raw < 0) {
@@ -145,7 +151,6 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	mstotvround(&twait, wmsec);
 
 	rcvcount = 0;
-	trials = 0;
 	while (rcvcount < MSGS) {
 		(void)gettimeofday(&tcur, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.7 1997/10/17 08:56:08 mrg Exp $	*/
+/*	$NetBSD: master.c,v 1.8 1997/10/17 14:19:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: master.c,v 1.8 1997/10/17 14:19:26 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -68,7 +73,10 @@ static void mchgdate(struct tsp*);
 #ifdef sgi
 extern	void	getutmpx(const struct utmp *, struct utmpx *);
 extern	void	logwtmp(struct timeval*, struct timeval*);
+#else
+extern	void	logwtmp __P((char *, char *, char *));
 #endif /* sgi */
+
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: netcryptvoid.c,v 1.3 1997/06/17 18:56:23 christos Exp $	*/
+/*	$NetBSD: netcryptvoid.c,v 1.4 1997/10/17 14:16:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -66,11 +66,10 @@ char *pword;
 	}
 	return (SCMERR);
 }
+
 int getcryptbuf (x)
 int x;
 {
-	static int cryptsize = 0;	/* size of current cryptbuf */
-
 	if (cryptflag == 0) {
 		return(SCMOK);
 	} else 

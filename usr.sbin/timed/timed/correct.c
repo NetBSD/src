@@ -1,4 +1,4 @@
-/*	$NetBSD: correct.c,v 1.7 1997/10/17 08:55:53 mrg Exp $	*/
+/*	$NetBSD: correct.c,v 1.8 1997/10/17 14:19:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)correct.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: correct.c,v 1.8 1997/10/17 14:19:23 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -169,8 +174,8 @@ adjclock(struct timeval *corr)
 		}
 	} else {
 		syslog(LOG_WARNING,
-		       "clock correction %d sec too large to adjust",
-		       adj.tv_sec);
+		       "clock correction %ld sec too large to adjust",
+		       (long)adj.tv_sec);
 		(void) gettimeofday(&now, 0);
 		timeradd(&now, corr, &now);
 		if (settimeofday(&now, 0) < 0)

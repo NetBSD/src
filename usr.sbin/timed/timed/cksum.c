@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1985, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1985, 1993 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,15 +31,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93";
+#if 0
+static char sccsid[] = "@(#)cksum.c	5.2 (Berkeley) 5/11/93";
+#else
+__RCSID("$NetBSD: cksum.c,v 1.2 1997/10/17 14:19:20 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include <sys/types.h>
+#include "globals.h"
 
 /*
  *			I N _ C K S U M
@@ -53,9 +59,7 @@ static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93";
  * worry about carries except at the end.
  */
 int
-in_cksum(addr, len)
-	u_short *addr;
-	int len;
+in_cksum(u_short *addr, int len)
 {
 	register int nleft = len;
 	register u_short *w = addr;

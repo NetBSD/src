@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.4 1997/10/17 08:57:30 mrg Exp $	*/
+/*	$NetBSD: timedc.h,v 1.5 1997/10/17 14:20:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -61,7 +61,7 @@ extern int errno;
 struct	cmd {
 	char	*c_name;		/* command name */
 	char	*c_help;		/* help message */
-	void	(*c_handler)();		/* routine to do the work */
+	void	(*c_handler) __P((int, char **)); /* routine to do the work */
 	int	c_priv;			/* privileged command */
 };
 

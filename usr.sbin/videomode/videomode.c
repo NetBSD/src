@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.2 1995/10/09 13:52:49 chopps Exp $	*/
+/*	$NetBSD: videomode.c,v 1.3 1997/10/17 14:01:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
@@ -38,16 +38,19 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 
-#include <unistd.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-void dump_mode __P((int));
-void dump_vm   __P((struct grfvideo_mode *));
-int  get_grf __P((void));
-void set_mode __P((int));
-void usage __P((void));
+void	dump_mode __P((int));
+void	dump_vm   __P((struct grfvideo_mode *));
+int	get_grf __P((void));
+int	main __P((int, char **));
+void	set_mode __P((int));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -61,7 +64,7 @@ main(argc, argv)
 		dump_mode(0);
 		return (0);
 	}
-	while ((c = getopt(argc, argv, "as:")) != EOF) {
+	while ((c = getopt(argc, argv, "as:")) != -1) {
 		switch (c) {
 		case 'a':
 			if (optind < argc)
@@ -153,7 +156,8 @@ dump_vm(vm)
 	struct grfvideo_mode *vm;
 {
 	(void)printf("%d: %s\n", vm->mode_num, vm->mode_descr);
-	(void)printf("pixel_clock = %u, width = %d, height = %d, depth = %d\n", 
+	(void)printf(
+	    "pixel_clock = %lu, width = %d, height = %d, depth = %d\n", 
 	    vm->pixel_clock, vm->disp_width, vm->disp_height, vm->depth);
 }
 

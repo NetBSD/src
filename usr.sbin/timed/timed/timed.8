@@ -1,4 +1,4 @@
-.\"	$NetBSD: timed.8,v 1.6 1997/10/17 08:56:47 mrg Exp $
+.\"	$NetBSD: timed.8,v 1.7 1997/10/17 14:19:43 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm timed
 .Nd time server daemon
 .Sh SYNOPSIS
-.Nm timed
+.Nm
 .Op Fl M
 .Op Fl t
 .Op Fl d
@@ -55,7 +55,7 @@ at boot time from the
 file.  
 It synchronizes the host's time with the time of other
 machines in a local area network running 
-.Nm timed .
+.Nm "" .
 These time servers will slow down the clocks of some machines
 and speed up the clocks of others to bring them to the average network time.
 The average network time is computed from measurements of clock differences
@@ -64,11 +64,11 @@ using the
 timestamp request message.
 .Pp
 The service provided by
-.Nm timed
+.Nm
 is based  on a master-slave
 scheme.
 When
-.Nm timed
+.Nm
 is started on a machine, it asks the master for the network time
 and sets the host's clock to that time.
 After that, it accepts synchronization messages periodically sent by
@@ -87,7 +87,7 @@ a new master from among slaves running with the
 .Fl M
 flag.
 A
-.Nm timed
+.Nm
 running without the
 .Fl M
 or
@@ -96,7 +96,7 @@ flags will remain a slave.
 The 
 .Fl t
 flag enables
-.Nm timed
+.Nm
 to trace the messages it receives in the
 file
 .Pa /var/log/timed.log .
@@ -107,7 +107,7 @@ The
 flag is for debugging the daemon.
 It causes the program to not put itself into the background.
 Normally
-.Nm timed
+.Nm
 checks for a master time server on each network to which
 it is connected, except as modified by the options described below.
 It will request synchronization service from the first master server
@@ -144,7 +144,7 @@ and
 .Fl i
 flags are meaningless if used together.
 .Pp
-.Nm Timed
+.Nm
 checks for a master time server on each network to which
 it is connected, except as modified by the
 .Fl n
@@ -178,7 +178,7 @@ machines that looked for time masters on more than one network and eventually
 chose to become a slave on the other network.
 .Sh WARNINGS
 If two or more time daemons, whether 
-.Nm timed ,
+.Nm "" ,
 .Xr NTP ,
 try to adjust the same clock, temporal chaos will result.
 If both 
@@ -187,7 +187,7 @@ and another time daemon are run on the same machine,
 ensure that the 
 .Fl F
 flag is used, so that 
-.Nm timed
+.Nm
 never attempts to adjust the local clock.
 .Pp 
 The protocol is based on UDP/IP broadcasts.  All machines within

@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.4 1997/10/17 08:57:26 mrg Exp $	*/
+/*	$NetBSD: timedc.c,v 1.5 1997/10/17 14:20:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,18 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1985, 1993 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: timedc.c,v 1.5 1997/10/17 14:20:19 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "timedc.h"
@@ -109,7 +114,7 @@ main(int argc, char *argv[])
 			(void) fflush(stdout);
 		}
 		if (fgets(cmdline, sizeof(cmdline), stdin) == 0)
-			quit();
+			quit(0, NULL);
 		if (cmdline[0] == 0)
 			break;
 		makeargv();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 1997/10/17 08:57:10 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 1997/10/17 14:19:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
+#else
+__RCSID("$NetBSD: cmds.c,v 1.7 1997/10/17 14:19:58 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "timedc.h"
@@ -350,7 +355,7 @@ msite(int argc, char *argv[])
  * quits timedc
  */
 void
-quit()
+quit(int argc, char *argv[])
 {
 	exit(0);
 }
