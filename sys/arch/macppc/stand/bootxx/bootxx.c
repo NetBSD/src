@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2002/05/17 18:45:55 lukem Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.9 2002/05/18 04:24:22 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -302,7 +302,7 @@ startup(arg1, arg2, openfirm)
 			break;
 	}
 
-	putstr("OF_open bootpath=");
+	putstr("\r\nOF_open bootpath=");
 	putstrn(bootpath, i);
 	fd = OF_open(bootpath);
 
@@ -311,7 +311,7 @@ startup(arg1, arg2, openfirm)
 	for (i = 0; i < bbinfo.bbi_block_count; i++) {
 		if ((blk = bbinfo.bbi_block_table[i]) == 0)
 			break;
-		putc('A' + i);
+		putc('0' + i % 10);
 		OF_seek(fd, (u_quad_t)blk * 512);
 		OF_read(fd, addr, bbinfo.bbi_block_size);
 		addr += bbinfo.bbi_block_size;
