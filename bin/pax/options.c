@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.59 2003/01/15 21:56:46 kristerw Exp $	*/
+/*	$NetBSD: options.c,v 1.60 2003/01/19 01:13:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.59 2003/01/15 21:56:46 kristerw Exp $");
+__RCSID("$NetBSD: options.c,v 1.60 2003/01/19 01:13:46 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -735,7 +735,6 @@ struct option tar_longopts[] = {
 						OPT_IGNORE_FAILED_READ },
 	{ "keep-old-files",	no_argument,		0,	'k' },
 	{ "starting-file",	no_argument,		0,	'K' },
-	/* XXX: Conflicts with current -L */
 	{ "tape-length",	required_argument,	0,	'L' },
 	{ "multi-volume",	no_argument,		0,	'M' },
 	{ "after-date",		required_argument,	0,	'N' },
