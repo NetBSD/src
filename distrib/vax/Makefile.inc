@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.5 2000/05/02 16:06:55 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2000/05/18 02:12:45 matt Exp $
 
 .include "../../Makefile.inc"
 
-REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+REV!=sh ${.CURDIR}/../../..//sys/conf/osrelease.sh -s
