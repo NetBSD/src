@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.76 2002/02/05 15:03:50 reinoud Exp $
+# $NetBSD: mi,v 1.77 2002/02/12 01:50:12 thorpej Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -392,13 +392,25 @@
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples
 ./usr/share/examples/openssl/der_chop		misc-crypto-examples
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples
+./usr/share/examples/postfix/DEBUG_README		misc-postfix-examples
+./usr/share/examples/postfix/ETRN_README		misc-postfix-examples
+./usr/share/examples/postfix/FILTER_README		misc-postfix-examples
 ./usr/share/examples/postfix/LICENSE			misc-postfix-examples
+./usr/share/examples/postfix/LMTP_README		misc-postfix-examples
+./usr/share/examples/postfix/PCRE_README		misc-postfix-examples
+./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples
+./usr/share/examples/postfix/SASL_README		misc-postfix-examples
+./usr/share/examples/postfix/UUCP_README		misc-postfix-examples
+./usr/share/examples/postfix/VERP_README		misc-postfix-examples
+./usr/share/examples/postfix/VIRTUAL_README		misc-postfix-examples
 ./usr/share/examples/postfix/access			misc-postfix-examples
 ./usr/share/examples/postfix/aliases			misc-postfix-examples
 ./usr/share/examples/postfix/canonical			misc-postfix-examples
 ./usr/share/examples/postfix/main.cf			misc-postfix-examples
 ./usr/share/examples/postfix/master.cf			misc-postfix-examples
 ./usr/share/examples/postfix/pcre_table			misc-postfix-examples
+./usr/share/examples/postfix/post-install		misc-postfix-examples
+./usr/share/examples/postfix/postfix-files		misc-postfix-examples
 ./usr/share/examples/postfix/postfix-script		misc-postfix-examples
 ./usr/share/examples/postfix/regexp_table		misc-postfix-examples
 ./usr/share/examples/postfix/relocated			misc-postfix-examples
@@ -416,6 +428,7 @@
 ./usr/share/examples/postfix/sample-pcre-access.cf	misc-postfix-examples
 ./usr/share/examples/postfix/sample-pcre-body.cf	misc-postfix-examples
 ./usr/share/examples/postfix/sample-pcre-header.cf	misc-postfix-examples
+./usr/share/examples/postfix/sample-qmqpd.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-rate.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-regexp-access.cf	misc-postfix-examples
 ./usr/share/examples/postfix/sample-regexp-body.cf	misc-postfix-examples
