@@ -17969,19 +17969,19 @@ Prints expressions, sending the output down a pipe to @var{command}.
 The pipeline to the command stays open until the @code{close} function
 is called.
 
-@item printf @var{fmt, expr-list}
+@item printf @var{fmt}, @var{expr-list}
 Format and print.
 
-@item printf @var{fmt, expr-list} > file
+@item printf @var{fmt}, @var{expr-list} > file
 Format and print to @var{file}. If @var{file} does not exist, it is
 created. If it does exist, its contents are deleted the first time the
 @code{printf} is executed.
 
-@item printf @var{fmt, expr-list} >> @var{file}
+@item printf @var{fmt}, @var{expr-list} >> @var{file}
 Format and print to @var{file}.  The previous contents of @var{file}
 are retained, and the output of @code{printf} is appended to the file.
 
-@item printf @var{fmt, expr-list} | @var{command}
+@item printf @var{fmt}, @var{expr-list} | @var{command}
 Format and print, sending the output down a pipe to @var{command}.
 The pipeline to the command stays open until the @code{close} function
 is called.
