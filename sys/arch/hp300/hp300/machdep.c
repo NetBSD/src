@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.21 1994/01/08 11:11:46 cgd Exp $
+ *	$Id: machdep.c,v 1.22 1994/01/08 12:25:25 cgd Exp $
  */
 
 #include "param.h"
@@ -1541,18 +1541,20 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	NEW_VMCMD(vmcmd_map_pagedvn, execp->a_text, epp->ep_taddr, epp->ep_vp,
-	    NBPG, /* XXX - should NBPG be CLBYTES? */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, NBPG, /* XXX - should NBPG be CLBYTES? */
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	NEW_VMCMD(vmcmd_map_pagedvn, execp->a_data, epp->ep_daddr, epp->ep_vp,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp,
 	    execp->a_text + NBPG, /* XXX - should NBPG be CLBYTES? */
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(vmcmd_map_zero, execp->a_bss, epp->ep_daddr + execp->a_data,
-	    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, 0, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
