@@ -1,5 +1,0 @@
-cd /usr/src/linux
-make mrproper
-cp /boot/config-* .config
-make oldconfig
-make prepare-all
