@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.372 2002/12/17 14:49:19 jdolecek Exp $
+# $NetBSD: mi,v 1.373 2002/12/17 15:16:41 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -934,6 +934,7 @@
 ./usr/share/examples/emul/svr4/etc	base-sys-examples
 ./usr/share/examples/emul/ultrix	base-sys-examples
 ./usr/share/examples/emul/ultrix/etc	base-sys-examples
+./usr/share/examples/disktab		base-sys-examples
 ./usr/share/examples/fstab		base-fstab-examples
 ./usr/share/examples/ftpd		base-netutil-examples
 ./usr/share/examples/ipf		base-netutil-examples

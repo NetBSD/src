@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.78 2002/12/17 14:49:18 jdolecek Exp $
+# $NetBSD: mi,v 1.79 2002/12/17 15:16:42 jdolecek Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -331,6 +331,7 @@
 ./usr/share/examples/amd/cd			misc-amd-examples
 ./usr/share/examples/amd/net			misc-amd-examples
 ./usr/share/examples/apm/script			misc-amd-examples
+./usr/share/examples/disktab/disktab		misc-sys-examples
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV		misc-sys-examples
 ./usr/share/examples/emul/svr4/etc/netconfig		misc-sys-examples
