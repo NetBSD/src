@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.43 1994/05/05 05:36:33 cgd Exp $
+ *	$Id: fd.c,v 1.44 1994/05/05 07:48:20 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -520,7 +520,7 @@ fdstrategy(bp)
 #endif
 	s = splbio();
 	disksort(&fd->sc_q, bp);
-	untimeout(fd_motor_off, (caddr_t)fd); /* a good idea */
+	untimeout(fd_motor_off, fd); /* a good idea */
 	if (!fd->sc_q.b_active)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -802,7 +802,7 @@ again:
 		fdc->sc_retry = 0;
 		fd->sc_skip = 0;
 		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
-		untimeout(fd_motor_off, (caddr_t)fd);
+		untimeout(fd_motor_off, fd);
 		if (fd->sc_flags & FD_MOTOR_WAIT) {
 			fdc->sc_state = MOTORWAIT;
 			return 1;
@@ -811,14 +811,14 @@ again:
 			/* lame controller */
 			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				untimeout(fd_motor_off, (caddr_t)ofd);
+				untimeout(fd_motor_off, ofd);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* allow .25s for motor to stabilize */
-			timeout(fd_motor_on, (caddr_t)fd, hz/4);
+			timeout(fd_motor_on, fd, hz / 4);
 			return 1;
 		}
 		/* at least make sure we are selected */
@@ -844,7 +844,7 @@ again:
 		out_fdc(iobase, bp->b_cylin);
 		fd->sc_track = -1;
 		fdc->sc_state = SEEKWAIT;
-		timeout(fdctimeout, (caddr_t)fdc, hz*4);
+		timeout(fdctimeout, fdc, 4 * hz);
 		return 1;
 
 	case DOIO:
@@ -898,14 +898,14 @@ again:
 		out_fdc(iobase, type->datalen);		/* data length */
 		fdc->sc_state = IOCOMPLETE;
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, (caddr_t)fdc, 2 * hz);
+		timeout(fdctimeout, fdc, 2 * hz);
 		return 1;				/* will return later */
 
 	case SEEKWAIT:
-		untimeout(fdctimeout, (caddr_t)fdc);
+		untimeout(fdctimeout, fdc);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
-		timeout(fdcpseudointr, (caddr_t)fdc, hz/50);
+		timeout(fdcpseudointr, fdc, hz / 50);
 		return 1;
 		
 	case SEEKCOMPLETE:
@@ -932,7 +932,7 @@ again:
 		goto again;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fdctimeout, (caddr_t)fdc);
+		untimeout(fdctimeout, fdc);
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 #ifdef NEWCONFIG
 			at_dma_abort(fdc->sc_drq);
@@ -975,11 +975,11 @@ again:
 		delay(100);
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
-		timeout(fdctimeout, (caddr_t)fdc, hz/2);
+		timeout(fdctimeout, fdc, hz / 2);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
-		untimeout(fdctimeout, (caddr_t)fdc);
+		untimeout(fdctimeout, fdc);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
 			out_fdc(iobase, NE7CMD_SENSEI);
@@ -991,14 +991,14 @@ again:
 		out_fdc(iobase, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout(fdctimeout, (caddr_t)fdc, 5 * hz);
+		timeout(fdctimeout, fdc, 5 * hz);
 		return 1;			/* will return later */
 
 	case RECALWAIT:
-		untimeout(fdctimeout, (caddr_t)fdc);
+		untimeout(fdctimeout, fdc);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
-		timeout(fdcpseudointr, (caddr_t)fdc, hz/30);
+		timeout(fdcpseudointr, fdc, hz / 30);
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
@@ -1095,7 +1095,7 @@ fdfinish(fd, bp)
 	fd->sc_q.b_actf = bp->b_actf;
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(fd_motor_off, (caddr_t)fd, hz*5);
+	timeout(fd_motor_off, fd, 5 * hz);
 	fdc->sc_state = DEVIDLE;
 }
 
