@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.3 2000/01/26 16:21:33 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -86,12 +86,12 @@ void e2fs_cg_bswap(old, new, size)
 {
 	int i;
 	for (i=0; i < (size / sizeof(struct  ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	=	bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	=	bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	=	bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	=	bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	=	bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	=	bswap16(old[i].ext2bgd_ndirs);
+		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
+		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
+		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
+		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
+		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
+		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
 	}
 }
 

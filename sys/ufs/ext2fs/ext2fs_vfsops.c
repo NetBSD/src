@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.31 2000/01/26 16:21:34 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.32 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -678,6 +678,7 @@ ext2fs_statfs(mp, sbp, p)
 	register struct ufsmount *ump;
 	register struct m_ext2fs *fs;
 	u_int32_t overhead, overhead_per_group;
+	int i, ngroups;
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
@@ -693,14 +694,21 @@ ext2fs_statfs(mp, sbp, p)
 	/*
 	 * Compute the overhead (FS structures)
 	 */
-	overhead_per_group = 1 /* super block */ +
-						 fs->e2fs_ngdb +
-						 1 /* block bitmap */ +
-						 1 /* inode bitmap */ +
-						 fs->e2fs_itpg;
+	overhead_per_group = 1 /* block bitmap */ +
+				 1 /* inode bitmap */ +
+				 fs->e2fs_itpg;
 	overhead = fs->e2fs.e2fs_first_dblock +
 		   fs->e2fs_ncg * overhead_per_group;
-
+	if (fs->e2fs.e2fs_rev > E2FS_REV0 &&
+	    fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+		for (i = 0, ngroups = 0; i < fs->e2fs_ncg; i++) {
+			if (cg_has_sb(i))
+				ngroups++;
+		}
+	} else {
+		ngroups = fs->e2fs_ncg;
+	}
+	overhead += ngroups * (1 + fs->e2fs_ngdb);
 
 	sbp->f_bsize = fs->e2fs_bsize;
 	sbp->f_iosize = fs->e2fs_bsize;
