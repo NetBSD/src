@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.70.2.3 2000/11/01 14:56:04 tv Exp $
+#	$NetBSD: GENERIC,v 1.70.2.4 2001/02/04 20:23:07 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.70.2.3 $"
+#ident 		"GENERIC-$Revision: 1.70.2.4 $"
 
 maxusers	32
 
@@ -179,6 +179,7 @@ zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
+awacs*	at obio?			# Apple audio device
 
 cardslot* at cbb?
 cardbus* at cardslot?
@@ -282,6 +283,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # Audio support
 #audio*	at auvia?
+audio* at awacs?
 #audio*	at clcs?
 #audio*	at cmpci?
 audio*	at eap?
