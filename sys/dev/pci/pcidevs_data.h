@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.385 2002/01/05 16:36:59 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.386 2002/01/09 19:29:40 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.382 2002/01/05 16:35:52 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.383 2002/01/09 19:29:07 augustss Exp 
  */
 
 /*
@@ -3274,6 +3274,66 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801BA Hub-to-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC,
+	    0,
+	    "Intel",
+	    "82801CA LPC Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB,
+	    0,
+	    "Intel",
+	    "82801CA/CAM USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_SMB,
+	    0,
+	    "Intel",
+	    "82801CA/CAM SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBB,
+	    0,
+	    "Intel",
+	    "82801CA/CAM USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
+	    0,
+	    "Intel",
+	    "82801CA/CAM AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_MOD,
+	    0,
+	    "Intel",
+	    "82801CA/CAM Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBC,
+	    0,
+	    "Intel",
+	    "82801CA/CAM USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAA,
+	    0,
+	    "Intel",
+	    "82801CA UltraATA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_ATAB,
+	    0,
+	    "Intel",
+	    "82801CA UltraATA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC,
+	    0,
+	    "Intel",
+	    "82801CAM LPC Interface",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
 	    0,
 	    "Intel",
@@ -3284,6 +3344,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82820 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO1,
+	    0,
+	    "Intel",
+	    "82830MP CPU to I/O Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
+	    0,
+	    "Intel",
+	    "82830MP CPU to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV,
+	    0,
+	    "Intel",
+	    "82830MP Integrated Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO2,
+	    0,
+	    "Intel",
+	    "82830MP CPU to I/O Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
