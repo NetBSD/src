@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.34 2001/09/13 11:05:02 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.35 2002/11/11 20:24:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.34 2001/09/13 11:05:02 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.35 2002/11/11 20:24:38 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -440,7 +440,7 @@ res_send(buf, buflen, ans, anssiz)
 			do {
 				res_sendhookact act;
 
-				act = (*Qhook)((struct sockaddr_in **)&nsap,
+				act = (*Qhook)((void *)&nsap,
 					       &buf, &buflen,
 					       ans, anssiz, &resplen);
 				switch (act) {
