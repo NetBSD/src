@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.7.2.1 1994/07/28 05:25:17 cgd Exp $";
+static char *rcsid = "$Id: dir.c,v 1.7.2.2 1994/07/29 03:37:15 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -342,7 +342,7 @@ mkentry(idesc)
 #		endif
 	}
 	dirp->d_reclen = newent.d_reclen;
-	bcopy(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
+	bcopy(idesc->id_name, dirp->d_name, (size_t)newent.d_namlen + 1);
 	return (ALTERED|STOP);
 }
 
