@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.77 1999/07/12 21:55:19 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.78 1999/12/02 13:15:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ ssize_t	 write __P((int, const void *, size_t));
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 4
-int	 getopt __P((int, char * const *, const char *));
+int	 getopt __P((int, char * const [], const char *));
 
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
