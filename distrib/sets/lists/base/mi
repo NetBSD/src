@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.269 2001/08/02 05:45:36 garbled Exp $
+# $NetBSD: mi,v 1.270 2001/08/03 14:21:27 drochner Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -682,6 +682,7 @@
 ./usr/sbin/ntptime		base-ntp-bin
 ./usr/sbin/ntptimeset		base-ntp-bin
 ./usr/sbin/ntptrace		base-ntp-bin
+./usr/sbin/omshell		base-dhcpd-bin
 ./usr/sbin/pac			base-sysutil-bin
 ./usr/sbin/pkg_add		base-pkgutil-bin
 ./usr/sbin/pkg_admin		base-pkgutil-bin

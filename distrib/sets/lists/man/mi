@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.389 2001/07/30 19:59:04 ad Exp $
+# $NetBSD: mi,v 1.390 2001/08/03 14:21:28 drochner Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -231,6 +231,7 @@
 ./usr/share/man/cat1/nl.0			man-util-catman
 ./usr/share/man/cat1/nohup.0			man-util-catman
 ./usr/share/man/cat1/od.0			man-util-catman
+./usr/share/man/cat1/omshell.0			man-dhcpd-catman
 ./usr/share/man/cat1/openssl.0			man-crypto-catman
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman
@@ -1790,6 +1791,7 @@
 ./usr/share/man/man1/nl.1			man-util-man
 ./usr/share/man/man1/nohup.1			man-util-man
 ./usr/share/man/man1/od.1			man-util-man
+./usr/share/man/man1/omshell.1			man-dhcpd-man
 ./usr/share/man/man1/openssl.1			man-crypto-man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man
