@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.22 1997/09/24 09:24:24 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.23 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.22 1997/09/24 09:24:24 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.23 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: utilities.c,v 1.22 1997/09/24 09:24:24 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -68,7 +69,7 @@ int
 ftypeok(dp)
 	struct dinode *dp;
 {
-	switch (dp->di_mode & IFMT) {
+	switch (iswap16(dp->di_mode) & IFMT) {
 
 	case IFDIR:
 	case IFREG:
@@ -81,7 +82,7 @@ ftypeok(dp)
 
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", dp->di_mode);
+			printf("bad file type 0%o\n", iswap16(dp->di_mode));
 		return (0);
 	}
 }
@@ -130,18 +131,18 @@ bufinit()
 	char *bufp;
 
 	pbp = pdirbp = (struct bufarea *)0;
-	bufp = malloc((unsigned int)sblock.fs_bsize);
+	bufp = malloc((unsigned int)sblock->fs_bsize);
 	if (bufp == 0)
 		errx(EEXIT, "cannot allocate buffer pool");
 	cgblk.b_un.b_buf = bufp;
 	initbarea(&cgblk);
 	bufhead.b_next = bufhead.b_prev = &bufhead;
-	bufcnt = MAXBUFSPACE / sblock.fs_bsize;
+	bufcnt = MAXBUFSPACE / sblock->fs_bsize;
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
 		bp = (struct bufarea *)malloc(sizeof(struct bufarea));
-		bufp = malloc((unsigned int)sblock.fs_bsize);
+		bufp = malloc((unsigned int)sblock->fs_bsize);
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS)
 				break;
@@ -168,7 +169,7 @@ getdatablk(blkno, size)
 	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
-		if (bp->b_bno == fsbtodb(&sblock, blkno))
+		if (bp->b_bno == fsbtodb(sblock, blkno))
 			goto foundit;
 	for (bp = bufhead.b_prev; bp != &bufhead; bp = bp->b_prev)
 		if ((bp->b_flags & B_INUSE) == 0)
@@ -197,7 +198,7 @@ getblk(bp, blk, size)
 {
 	ufs_daddr_t dblk;
 
-	dblk = fsbtodb(&sblock, blk);
+	dblk = fsbtodb(sblock, blk);
 	if (bp->b_bno != dblk) {
 		flush(fswritefd, bp);
 		diskreads++;
@@ -225,11 +226,29 @@ flush(fd, bp)
 	bwrite(fd, bp->b_un.b_buf, bp->b_bno, (long)bp->b_size);
 	if (bp != &sblk)
 		return;
-	for (i = 0, j = 0; i < sblock.fs_cssize; i += sblock.fs_bsize, j++) {
-		bwrite(fswritefd, (char *)sblock.fs_csp[j],
-		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
-		    sblock.fs_cssize - i < sblock.fs_bsize ?
-		    sblock.fs_cssize - i : sblock.fs_bsize);
+	for (i = 0, j = 0; i < sblock->fs_cssize; i += sblock->fs_bsize, j++) {
+		int size = sblock->fs_cssize - i < sblock->fs_bsize ?
+			sblock->fs_cssize - i : sblock->fs_bsize;
+		/*
+		 * The following routines assumes that struct csum is made of
+		 * u_int32_t's
+		 */
+		if (needswap) {
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+			int k;
+			for (k = 0; k < size / sizeof(u_int32_t); k++)
+				cd[k] = bswap32(cd[k]);
+		}
+		bwrite(fswritefd, (char *)sblock->fs_csp[j],
+		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
+		    sblock->fs_cssize - i < sblock->fs_bsize ?
+		    sblock->fs_cssize - i : sblock->fs_bsize);
+		if (needswap) {
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+			int k;
+			for (k = 0; k < size / sizeof(u_int32_t); k++)
+				cd[k] = bswap32(cd[k]);
+		}
 	}
 }
 
@@ -247,8 +266,7 @@ rwerror(mesg, blk)
 }
 
 void
-ckfini(markclean)
-	int markclean;
+ckfini()
 {
 	struct bufarea *bp, *nbp;
 	int ofsmodified, cnt = 0;
@@ -276,7 +294,7 @@ ckfini(markclean)
 	if (bufhead.b_size != cnt)
 		errx(EEXIT, "Panic: lost %d buffers", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
-	if (markclean && (sblock.fs_clean & FS_ISCLEAN) == 0) {
+	if (markclean && (sblock->fs_clean & FS_ISCLEAN) == 0) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
 		 */
@@ -285,7 +303,7 @@ ckfini(markclean)
 		else if (!reply("MARK FILE SYSTEM CLEAN"))
 			markclean = 0;
 		if (markclean) {
-			sblock.fs_clean = FS_ISCLEAN;
+			sblock->fs_clean = FS_ISCLEAN;
 			sbdirty();
 			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
@@ -386,10 +404,10 @@ allocblk(frags)
 {
 	int i, j, k;
 
-	if (frags <= 0 || frags > sblock.fs_frag)
+	if (frags <= 0 || frags > sblock->fs_frag)
 		return (0);
-	for (i = 0; i < maxfsblock - sblock.fs_frag; i += sblock.fs_frag) {
-		for (j = 0; j <= sblock.fs_frag - frags; j++) {
+	for (i = 0; i < maxfsblock - sblock->fs_frag; i += sblock->fs_frag) {
+		for (j = 0; j <= sblock->fs_frag - frags; j++) {
 			if (testbmap(i + j))
 				continue;
 			for (k = 1; k < frags; k++)
@@ -486,8 +504,10 @@ void
 catch(sig)
 	int sig;
 {
-	if (!doinglevel2)
-		ckfini(0);
+	if (!doinglevel2) {
+		markclean = 0;
+		ckfini();
+	}
 	exit(12);
 }
 
@@ -561,4 +581,90 @@ dofix(idesc, msg)
 	}
 	/* NOTREACHED */
 	return (0);
+}
+
+void copyback_cg(blk)
+	struct bufarea *blk;
+{
+	memcpy(blk->b_un.b_cg, cgrp, SBSIZE);
+	if (needswap)
+		swap_cg(cgrp, blk->b_un.b_cg);
+}
+
+void
+swap_cg(o, n)
+	struct cg *o, *n;
+{
+	int i;
+	u_int32_t *n32, *o32;
+	u_int16_t *n16, *o16;
+
+	n->cg_firstfield = bswap32(o->cg_firstfield);
+	n->cg_magic = bswap32(o->cg_magic);
+	n->cg_time = bswap32(o->cg_time);
+	n->cg_cgx = bswap32(o->cg_cgx);
+	n->cg_ncyl = bswap16(o->cg_ncyl);
+	n->cg_niblk = bswap16(o->cg_niblk);
+	n->cg_ndblk = bswap32(o->cg_ndblk);
+	n->cg_cs.cs_ndir = bswap32(o->cg_cs.cs_ndir);
+	n->cg_cs.cs_nbfree = bswap32(o->cg_cs.cs_nbfree);
+	n->cg_cs.cs_nifree = bswap32(o->cg_cs.cs_nifree);
+	n->cg_cs.cs_nffree = bswap32(o->cg_cs.cs_nffree);
+	n->cg_rotor = bswap32(o->cg_rotor);
+	n->cg_frotor = bswap32(o->cg_frotor);
+	n->cg_irotor = bswap32(o->cg_irotor);
+	n->cg_btotoff = bswap32(o->cg_btotoff);
+	n->cg_boff = bswap32(o->cg_boff);
+	n->cg_iusedoff = bswap32(o->cg_iusedoff);
+	n->cg_freeoff = bswap32(o->cg_freeoff);
+	n->cg_nextfreeoff = bswap32(o->cg_nextfreeoff);
+	n->cg_clustersumoff = bswap32(o->cg_clustersumoff);
+	n->cg_clusteroff = bswap32(o->cg_clusteroff);
+	n->cg_nclusterblks = bswap32(o->cg_nclusterblks);
+	for (i=0; i < MAXFRAG; i++)
+		n->cg_frsum[i] = bswap32(o->cg_frsum[i]);
+
+	if (sblock->fs_postblformat == FS_42POSTBLFMT) { /* old format */
+		struct ocg *on, *oo;
+		int j;
+		on = (struct ocg *)n;
+		oo = (struct ocg *)o;
+		for(i = 0; i < 8; i++) {
+			on->cg_frsum[i] = bswap32(oo->cg_frsum[i]);
+		}
+		for(i = 0; i < 32; i++) {
+			on->cg_btot[i] = bswap32(oo->cg_btot[i]);
+			for (j = 0; j < 8; j++)
+				on->cg_b[i][j] = bswap16(oo->cg_b[i][j]);
+		}
+		memmove(on->cg_iused, oo->cg_iused, 256);
+		on->cg_magic = bswap32(oo->cg_magic);
+	} else {  /* new format */
+		if (n->cg_magic == CG_MAGIC) {
+			n32 = (u_int32_t*)((u_int8_t*)n + n->cg_btotoff);
+			o32 = (u_int32_t*)((u_int8_t*)o + n->cg_btotoff);
+			n16 = (u_int16_t*)((u_int8_t*)n + n->cg_boff);
+			o16 = (u_int16_t*)((u_int8_t*)o + n->cg_boff);
+		} else {
+			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_btotoff);
+			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_btotoff);
+			n16 = (u_int16_t*)((u_int8_t*)n + o->cg_boff);
+			o16 = (u_int16_t*)((u_int8_t*)o + o->cg_boff);
+		}
+		for (i=0; i < sblock->fs_cpg; i++)
+			n32[i] = bswap32(o32[i]);
+		
+		for (i=0; i < sblock->fs_cpg * sblock->fs_nrpos; i++)
+			n16[i] = bswap16(o16[i]);
+
+		if (n->cg_magic == CG_MAGIC) {
+			n32 = (u_int32_t*)((u_int8_t*)n + n->cg_clustersumoff);
+			o32 = (u_int32_t*)((u_int8_t*)o + n->cg_clustersumoff);
+		} else {
+			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_clustersumoff);
+			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_clustersumoff);
+		}
+		for (i = 0; i < sblock->fs_contigsumsize + 1; i++)
+			n32[i] = bswap32(o32[i]);
+	}
 }

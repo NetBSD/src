@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1997/09/16 16:44:52 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1998/03/18 17:01:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -38,17 +38,13 @@ void		catch __P((int));
 void		catchquit __P((int));
 int		changeino __P((ino_t, char *, ino_t));
 int		chkrange __P((ufs_daddr_t, int));
-void		ckfini __P((int));
+void		ckfini __P((void));
 int		ckinode __P((struct dinode *, struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
 struct		dinode * getnextinode __P((ino_t));
 void		direrror __P((ino_t, char *));
 int		dirscan __P((struct inodesc *));
 int		dofix __P((struct inodesc *, char *));
-void		ffs_clrblock __P((struct fs *, u_char *, ufs_daddr_t));
-void		ffs_fragacct __P((struct fs *, int, int32_t [], int));
-int		ffs_isblock __P((struct fs *, u_char *, ufs_daddr_t));
-void		ffs_setblock __P((struct fs *, u_char *, ufs_daddr_t));
 void		fileerror __P((ino_t, ino_t, char *));
 int		findino __P((struct inodesc *));
 int		findname __P((struct inodesc *));
@@ -85,3 +81,6 @@ int		reply __P((char *));
 void		resetinodebuf __P((void));
 int		setup __P((char *));
 void		voidquit __P((int));
+
+void	swap_cg __P((struct cg *, struct cg *));
+void copyback_cg __P((struct bufarea *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.23 1997/09/21 03:51:34 lukem Exp $	*/
+/*	$NetBSD: pass2.c,v 1.24 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.23 1997/09/21 03:51:34 lukem Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.24 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ pass2()
 		}
 		if (reply("CONTINUE") == 0)
 			exit(EEXIT);
+		markclean = 0;
 		break;
 
 	case FSTATE:
@@ -107,8 +108,7 @@ pass2()
 		if (reply("FIX") == 0)
 			exit(EEXIT);
 		dp = ginode(ROOTINO);
-		dp->di_mode &= ~IFMT;
-		dp->di_mode |= IFDIR;
+		dp->di_mode = iswap16((iswap16(dp->di_mode) & ~IFMT) | IFDIR);
 		inodirty();
 		break;
 
@@ -142,9 +142,10 @@ pass2()
 			inp->i_isize = roundup(MINDIRSIZE, DIRBLKSIZ);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = inp->i_isize;
+				dp->di_size = iswap64(inp->i_isize);
 				inodirty();
-			}
+			} else
+				markclean = 0;
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
 			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
@@ -154,18 +155,39 @@ pass2()
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = inp->i_isize;
+				dp->di_size = iswap64(inp->i_isize);
 				inodirty();
+			} else
+				markclean = 0;
 			}
-		}
 		memset(&dino, 0, sizeof(struct dinode));
-		dino.di_mode = IFDIR;
-		dino.di_size = inp->i_isize;
+		dino.di_mode = iswap16(IFDIR);
+		dino.di_size = iswap64(inp->i_isize);
+		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
+		curino.id_number = inp->i_number;
+		curino.id_parent = inp->i_parent;
+		(void)ckinode(&dino, &curino);
+		}
+
+	/* byte swapping in direcoties entries, if needed, have been done.
+	 * Now rescan dirs for pass2check()
+	 */
+	if (do_dirswap) { 
+		do_dirswap = 0;
+		for (inpp = inpsort; inpp < inpend; inpp++) {
+			inp = *inpp;
+			if (inp->i_isize == 0)
+				continue;
+		memset(&dino, 0, sizeof(struct dinode));
+			dino.di_mode = iswap16(IFDIR);
+			dino.di_size = iswap64(inp->i_isize);
 		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
 		(void)ckinode(&dino, &curino);
 	}
+	}
+
 	/*
 	 * Now that the parents of all directories have been found,
 	 * make another pass to verify the value of `..'
@@ -180,16 +202,20 @@ pass2()
 		if (inp->i_dotdot == 0) {
 			inp->i_dotdot = inp->i_parent;
 			fileerror(inp->i_parent, inp->i_number, "MISSING '..'");
-			if (reply("FIX") == 0)
+			if (reply("FIX") == 0) {
+				markclean = 0;
 				continue;
+			}
 			(void)makeentry(inp->i_number, inp->i_parent, "..");
 			lncntp[inp->i_parent]--;
 			continue;
 		}
 		fileerror(inp->i_parent, inp->i_number,
 		    "BAD INODE NUMBER FOR '..'");
-		if (reply("FIX") == 0)
+		if (reply("FIX") == 0) {
+			markclean = 0;
 			continue;
+		}
 		lncntp[inp->i_dotdot]++;
 		lncntp[inp->i_parent]--;
 		inp->i_dotdot = inp->i_parent;
@@ -217,8 +243,8 @@ pass2check(idesc)
 	/*
 	 * If converting, set directory entry type.
 	 */
-	if (doinglevel2 && dirp->d_ino > 0 && dirp->d_ino < maxino) {
-		dirp->d_type = typemap[dirp->d_ino];
+	if (doinglevel2 && iswap32(dirp->d_ino) > 0 && iswap32(dirp->d_ino) < maxino) {
+		dirp->d_type = typemap[iswap32(dirp->d_ino)];
 		ret |= ALTERED;
 	}
 	/* 
@@ -227,22 +253,26 @@ pass2check(idesc)
 	if (idesc->id_entryno != 0)
 		goto chk1;
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") == 0) {
-		if (dirp->d_ino != idesc->id_number) {
+		if (iswap32(dirp->d_ino) != idesc->id_number) {
 			direrror(idesc->id_number, "BAD INODE NUMBER FOR '.'");
-			dirp->d_ino = idesc->id_number;
+			dirp->d_ino = iswap32(idesc->id_number);
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
+			else
+				markclean = 0;
 		}
 		if (newinofmt && dirp->d_type != DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
 			dirp->d_type = DT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
+			else
+				markclean = 0;
 		}
 		goto chk1;
 	}
 	direrror(idesc->id_number, "MISSING '.'");
-	proto.d_ino = idesc->id_number;
+	proto.d_ino = iswap32(idesc->id_number);
 	if (newinofmt)
 		proto.d_type = DT_DIR;
 	else
@@ -250,42 +280,50 @@ pass2check(idesc)
 	proto.d_namlen = 1;
 	(void)strcpy(proto.d_name, ".");
 #	if BYTE_ORDER == LITTLE_ENDIAN
-		if (!newinofmt) {
+		if (!newinofmt && !needswap) {
+#	else
+		if (!newinofmt && needswap) {
+#	endif
 			u_char tmp;
 
 			tmp = proto.d_type;
 			proto.d_type = proto.d_namlen;
 			proto.d_namlen = tmp;
 		}
-#	endif
-	entrysize = DIRSIZ(0, &proto);
+	entrysize = DIRSIZ(0, &proto, 0);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
-	} else if (dirp->d_reclen < entrysize) {
+		markclean = 0;
+	} else if (iswap16(dirp->d_reclen) < entrysize) {
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '.'\n");
-	} else if (dirp->d_reclen < 2 * entrysize) {
+		markclean = 0;
+	} else if (iswap16(dirp->d_reclen) < 2 * entrysize) {
 		proto.d_reclen = dirp->d_reclen;
 		memmove(dirp, &proto, (size_t)entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
+		else
+			markclean = 0;
 	} else {
-		n = dirp->d_reclen - entrysize;
-		proto.d_reclen = entrysize;
+		n = iswap16(dirp->d_reclen) - entrysize;
+		proto.d_reclen = iswap16(entrysize);
 		memmove(dirp, &proto, (size_t)entrysize);
 		idesc->id_entryno++;
-		lncntp[dirp->d_ino]--;
+		lncntp[iswap32(dirp->d_ino)]--;
 		dirp = (struct direct *)((char *)(dirp) + entrysize);
 		memset(dirp, 0, (size_t)n);
-		dirp->d_reclen = n;
+		dirp->d_reclen = iswap16(n);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
+		else
+			markclean = 0;
 	}
 chk1:
 	if (idesc->id_entryno > 1)
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
-	proto.d_ino = inp->i_parent;
+	proto.d_ino = iswap32(inp->i_parent);
 	if (newinofmt)
 		proto.d_type = DT_DIR;
 	else
@@ -293,46 +331,52 @@ chk1:
 	proto.d_namlen = 2;
 	(void)strcpy(proto.d_name, "..");
 #	if BYTE_ORDER == LITTLE_ENDIAN
-		if (!newinofmt) {
+		if (!newinofmt && !needswap) {
+#	else
+		if (!newinofmt && needswap) {
+#	endif
 			u_char tmp;
 
 			tmp = proto.d_type;
 			proto.d_type = proto.d_namlen;
 			proto.d_namlen = tmp;
 		}
-#	endif
-	entrysize = DIRSIZ(0, &proto);
+	entrysize = DIRSIZ(0, &proto, 0);
 	if (idesc->id_entryno == 0) {
-		n = DIRSIZ(0, dirp);
-		if (dirp->d_reclen < n + entrysize)
+		n = DIRSIZ(0, dirp, 0);
+		if (iswap16(dirp->d_reclen) < n + entrysize)
 			goto chk2;
-		proto.d_reclen = dirp->d_reclen - n;
-		dirp->d_reclen = n;
+		proto.d_reclen = iswap16(iswap16(dirp->d_reclen) - n);
+		dirp->d_reclen = iswap16(n);
 		idesc->id_entryno++;
-		lncntp[dirp->d_ino]--;
+		lncntp[iswap32(dirp->d_ino)]--;
 		dirp = (struct direct *)((char *)(dirp) + n);
-		memset(dirp, 0, (size_t)proto.d_reclen);
+		memset(dirp, 0, (size_t)iswap16(proto.d_reclen));
 		dirp->d_reclen = proto.d_reclen;
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
-		inp->i_dotdot = dirp->d_ino;
+		inp->i_dotdot = iswap32(dirp->d_ino);
 		if (newinofmt && dirp->d_type != DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
 			dirp->d_type = DT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
+			else
+				markclean = 0;
 		}
 		goto chk2;
 	}
-	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") != 0) {
+	if (iswap32(dirp->d_ino) != 0 && strcmp(dirp->d_name, ".") != 0) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, SECOND ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
 		inp->i_dotdot = (ino_t)-1;
-	} else if (dirp->d_reclen < entrysize) {
+		markclean = 0;
+	} else if (iswap16(dirp->d_reclen) < entrysize) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '..'\n");
 		inp->i_dotdot = (ino_t)-1;
+		markclean = 0;
 	} else if (inp->i_parent != 0) {
 		/*
 		 * We know the parent, so fix now.
@@ -343,10 +387,12 @@ chk1:
 		memmove(dirp, &proto, (size_t)entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
+		else
+			markclean = 0;
 	}
 	idesc->id_entryno++;
 	if (dirp->d_ino != 0)
-		lncntp[dirp->d_ino]--;
+		lncntp[iswap32(dirp->d_ino)]--;
 	return (ret|KEEPON);
 chk2:
 	if (dirp->d_ino == 0)
@@ -359,6 +405,8 @@ chk2:
 			dirp->d_ino = 0;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
+			else
+				markclean = 0;
 			return (KEEPON | ret);
 		}
 		if (dirp->d_name[1] == '.') {
@@ -366,37 +414,45 @@ chk2:
 			dirp->d_ino = 0;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
+			else
+				markclean = 0;
 			return (KEEPON | ret);
 		}
 	}
 	idesc->id_entryno++;
 	n = 0;
-	if (dirp->d_ino > maxino) {
+	if (iswap32(dirp->d_ino) > maxino) {
 		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
 		n = reply("REMOVE");
+		if (n == 0)
+			markclean = 0;
 	} else if (newinofmt &&
-		   ((dirp->d_ino == WINO && dirp->d_type != DT_WHT) ||
-		    (dirp->d_ino != WINO && dirp->d_type == DT_WHT))) {
-		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
-		dirp->d_ino = WINO;
+		   ((iswap32(dirp->d_ino) == WINO && dirp->d_type != DT_WHT) ||
+		    (iswap32(dirp->d_ino) != WINO && dirp->d_type == DT_WHT))) {
+		fileerror(idesc->id_number, iswap32(dirp->d_ino), "BAD WHITEOUT ENTRY");
+		dirp->d_ino = iswap32(WINO);
 		dirp->d_type = DT_WHT;
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
+		else
+			markclean = 0;
 	} else {
 again:
-		switch (statemap[dirp->d_ino]) {
+		switch (statemap[iswap32(dirp->d_ino)]) {
 		case USTATE:
 			if (idesc->id_entryno <= 2)
 				break;
-			fileerror(idesc->id_number, dirp->d_ino, "UNALLOCATED");
+			fileerror(idesc->id_number, iswap32(dirp->d_ino), "UNALLOCATED");
 			n = reply("REMOVE");
+			if (n == 0)
+				markclean = 0;
 			break;
 
 		case DCLEAR:
 		case FCLEAR:
 			if (idesc->id_entryno <= 2)
 				break;
-			if (statemap[dirp->d_ino] == FCLEAR)
+			if (statemap[iswap32(dirp->d_ino)] == FCLEAR)
 				errmsg = "DUP/BAD";
 			else if (!preen)
 				errmsg = "ZERO LENGTH DIRECTORY";
@@ -404,22 +460,23 @@ again:
 				n = 1;
 				break;
 			}
-			fileerror(idesc->id_number, dirp->d_ino, errmsg);
+			fileerror(idesc->id_number, iswap32(dirp->d_ino), errmsg);
 			if ((n = reply("REMOVE")) == 1)
 				break;
-			dp = ginode(dirp->d_ino);
-			statemap[dirp->d_ino] =
-			    (dp->di_mode & IFMT) == IFDIR ? DSTATE : FSTATE;
-			lncntp[dirp->d_ino] = dp->di_nlink;
+			dp = ginode(iswap32(dirp->d_ino));
+			statemap[iswap32(dirp->d_ino)] =
+			    (iswap16(dp->di_mode) & IFMT) == IFDIR ? DSTATE : FSTATE;
+			lncntp[iswap32(dirp->d_ino)] = iswap16(dp->di_nlink);
 			goto again;
 
 		case DSTATE:
 		case DFOUND:
-			inp = getinoinfo(dirp->d_ino);
+			inp = getinoinfo(iswap32(dirp->d_ino));
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
 				getpathname(pathbuf, idesc->id_number,
 				    idesc->id_number);
-				getpathname(namebuf, dirp->d_ino, dirp->d_ino);
+				getpathname(namebuf, iswap32(dirp->d_ino),
+					iswap32(dirp->d_ino));
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);
@@ -433,19 +490,21 @@ again:
 			/* fall through */
 
 		case FSTATE:
-			if (newinofmt && dirp->d_type != typemap[dirp->d_ino]) {
-				fileerror(idesc->id_number, dirp->d_ino,
+			if (newinofmt && dirp->d_type != typemap[iswap32(dirp->d_ino)]) {
+				fileerror(idesc->id_number, iswap32(dirp->d_ino),
 				    "BAD TYPE VALUE");
-				dirp->d_type = typemap[dirp->d_ino];
+				dirp->d_type = typemap[iswap32(dirp->d_ino)];
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
+				else
+					markclean = 0;
 			}
-			lncntp[dirp->d_ino]--;
+			lncntp[iswap32(dirp->d_ino)]--;
 			break;
 
 		default:
 			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
-			    statemap[dirp->d_ino], dirp->d_ino);
+			    statemap[iswap32(dirp->d_ino)], iswap32(dirp->d_ino));
 		}
 	}
 	if (n == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.12 1997/09/16 16:45:12 lukem Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.13 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.12 1997/09/16 16:45:12 lukem Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.13 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ pass1b()
 	idesc.id_func = pass1bcheck;
 	duphead = duplist;
 	inumber = 0;
-	for (c = 0; c < sblock.fs_ncg; c++) {
-		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
+	for (c = 0; c < sblock->fs_ncg; c++) {
+		for (i = 0; i < sblock->fs_ipg; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;
 			dp = ginode(inumber);

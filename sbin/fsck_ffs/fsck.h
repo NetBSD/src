@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.16 1997/09/21 00:24:55 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.17 1998/03/18 17:01:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -88,10 +88,16 @@ struct bufarea *pbp;		/* current inode block */
 	(bp)->b_bno = (ufs_daddr_t)-1; \
 	(bp)->b_flags = 0;
 
-#define	sbdirty()	sblk.b_dirty = 1
-#define	cgdirty()	cgblk.b_dirty = 1
-#define	sblock		(*sblk.b_un.b_fs)
-#define	cgrp		(*cgblk.b_un.b_cg)
+struct fs *sblock;
+struct cg *cgrp;
+#define	sbdirty() \
+	do { \
+		memmove(sblk.b_un.b_fs, sblock, SBSIZE); \
+		if (needswap) \
+			ffs_sb_swap(sblock, sblk.b_un.b_fs, 1); \
+		sblk.b_dirty = 1; \
+	} while (0)
+#define	cgdirty()	do {copyback_cg(&cgblk); cgblk.b_dirty = 1;} while (0)
 
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
@@ -177,6 +183,12 @@ int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
 int	preen;			/* just fix normal inconsistencies */
+int doswap;			/* convert byte order */
+int needswap;			/* need to convert byte order in memory */
+int do_blkswap;			/* need to do block addr byteswap */
+int do_dirswap;			/* need to do dir entry byteswap */
+int endian;				/* endian coversion */
+int markclean;			/* mark file system clean when done */
 char	havesb;			/* superblock has been read */
 char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
@@ -213,3 +225,32 @@ struct	dinode zino;
 #define	FOUND	0x10
 
 #define	EEXIT	8		/* Standard error exit. */
+
+/* some inline functs to help the byte-swapping mess */
+static __inline u_int16_t iswap16 __P((u_int16_t));
+static __inline u_int32_t iswap32 __P((u_int32_t));
+static __inline u_int64_t iswap64 __P((u_int64_t));
+
+static __inline u_int16_t iswap16(x)
+	u_int16_t x;
+{
+	if (needswap)
+		return bswap16(x);
+	else return x;
+}
+
+static __inline u_int32_t iswap32(x)
+	u_int32_t x;
+{
+	if (needswap)
+		return bswap32(x);
+	else return x;
+}
+
+static __inline u_int64_t iswap64(x)
+	u_int64_t x;
+{
+	if (needswap)
+		return bswap64(x);
+	else return x;
+}
