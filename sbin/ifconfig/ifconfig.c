@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.7 1993/06/06 08:55:30 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.8 1993/06/09 20:04:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,8 +107,6 @@ struct	cmd {
 	{ "-arp",	IFF_NOARP,	setifflags },
 	{ "debug",	IFF_DEBUG,	setifflags },
 	{ "-debug",	-IFF_DEBUG,	setifflags },
-	{ "aui",	IFF_LLC0,	setifflags },	/* 06 Sep 92*/
-	{ "bnc",	-IFF_LLC0,	setifflags },
 	{ "llc0",	IFF_LLC0,	setifflags },	/* 10 Mar 93 */
 	{ "-llc0",	-IFF_LLC0,	setifflags },
 	{ "llc1",	IFF_LLC1,	setifflags },
