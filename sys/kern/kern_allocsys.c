@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.18 2001/11/12 15:25:05 lukem Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.19 2002/08/21 02:48:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.18 2001/11/12 15:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.19 2002/08/21 02:48:54 itojun Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_callout.h"
@@ -171,7 +171,6 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 				panic("bufcache is out of range (%d)\n",
 				    bufcache);
 			bufpages = physmem / 100 * bufcache;
-
 		} else {
 			if (physmem < btoc(2 * 1024 * 1024))
 				bufpages = physmem / 10;
@@ -206,7 +205,7 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 	 * XXX stopgap measure to prevent wasting too much KVM on
 	 * the sparsely filled buffer cache.
 	 */
-	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
+	if (nbuf > VM_MAX_KERNEL_BUF / MAXBSIZE)
 		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
 #endif
 
