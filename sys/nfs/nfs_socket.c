@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.29 1996/07/02 23:21:15 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.30 1996/10/10 23:31:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -562,7 +562,7 @@ tryagain:
 			} while (error == EWOULDBLOCK ||
 				 (!error && *mp == NULL && control));
 			if ((rcvflg & MSG_EOR) == 0)
-				printf("Egad!!\n");
+				kprintf("Egad!!\n");
 			if (!error && *mp == NULL)
 				error = EPIPE;
 			len -= auio.uio_resid;
@@ -1702,7 +1702,7 @@ nfs_getreq(nd, nfsd, has_header)
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			if (*tl++ != rpc_auth_kerb ||
 				fxdr_unsigned(int, *tl) != 4 * NFSX_UNSIGNED) {
-				printf("Bad kerb verifier\n");
+				kprintf("Bad kerb verifier\n");
 				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
@@ -1710,7 +1710,7 @@ nfs_getreq(nd, nfsd, has_header)
 			nfsm_dissect(cp, caddr_t, 4 * NFSX_UNSIGNED);
 			tl = (u_int32_t *)cp;
 			if (fxdr_unsigned(int, *tl) != RPCAKN_FULLNAME) {
-				printf("Not fullname kerb verifier\n");
+				kprintf("Not fullname kerb verifier\n");
 				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
@@ -1723,7 +1723,7 @@ nfs_getreq(nd, nfsd, has_header)
 			break;
 		case RPCAKN_NICKNAME:
 			if (len != 2 * NFSX_UNSIGNED) {
-				printf("Kerb nickname short\n");
+				kprintf("Kerb nickname short\n");
 				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADCRED);
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
@@ -1732,7 +1732,7 @@ nfs_getreq(nd, nfsd, has_header)
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			if (*tl++ != rpc_auth_kerb ||
 				fxdr_unsigned(int, *tl) != 3 * NFSX_UNSIGNED) {
-				printf("Kerb nick verifier bad\n");
+				kprintf("Kerb nick verifier bad\n");
 				nd->nd_repstat = (NFSERR_AUTHERR|AUTH_BADVERF);
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
