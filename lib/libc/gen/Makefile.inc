@@ -1,26 +1,28 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.39 1994/05/05 23:13:19 cgd Exp $
+#	$Id: Makefile.inc,v 1.40 1994/05/07 04:11:34 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
 SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
-	cuserid.c daemon.c difftime.c \
+	cuserid.c daemon.c devname.c difftime.c \
 	directory.c disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
 	frexp.c fstab.c fts.c \
-	getbsize.c getcap.c getcwd.c getgrent.c getgrouplist.c \
-	getloadavg.c getlogin.c getmntinfo.c \
+	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
+	gethostname.c getloadavg.c getlogin.c getmntinfo.c getpagesize.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
 	infinity.c initgroups.c isatty.c isctype.c isinf.c  \
 	lfind.c lsearch.c \
 	msgctl.c msgget.c msgsnd.c msgrcv.c \
 	mktemp.c nice.c nlist.c pause.c popen.c psignal.c pwcache.c raise.c \
-	scandir.c semconfig.c semctl.c semget.c semop.c setjmperr.c setmode.c \
+	scandir.c semconfig.c semctl.c semget.c semop.c \
+	setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c shmat.c shmctl.c shmdt.c shmget.c siginterrupt.c \
-	siglist.c signal.c signame.c sigsetops.c sleep.c syslog.c \
+	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
+	syslog.c \
 	termios.c time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c \
-	toupper_.c \
-	ualarm.c unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c \
+	toupper_.c ualarm.c uname.c unvis.c usleep.c \
+	utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
 
 .if   (${MACHINE_ARCH} == "m68k")
@@ -49,19 +51,22 @@ SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 .endif
 
 MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 \
-	daemon.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
-	getbsize.0 getcap.0 getcwd.0 getdiskbyname.0 getfsent.0 getgrent.0 \
-	getgrouplist.0 getloadavg.0 getmntinfo.0 getpass.0 getpwent.0 \
+	daemon.0 devname.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
+	getbsize.0 getcap.0 getcwd.0 getdomainname.0 getdiskbyname.0 \
+	getfsent.0 getgrent.0 \
+	getgrouplist.0 gethostname.0 getloadavg.0 \
+	getmntinfo.0 getpagesize.0 getpass.0 getpwent.0 \
 	getsubopt.0 getttyent.0 getusershell.0 glob.0 \
 	initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 lsearch.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
 	pwcache.0 raise.0 scandir.0 setjmp.0 setmode.0 setproctitle.0 \
-	siginterrupt.0 signal.0 sigsetops.0 sleep.0 syslog.0 tcgetpgrp.0 \
+	siginterrupt.0 signal.0 sigsetops.0 sleep.0 sysconf.0 sysctl.0 \
+	syslog.0 tcgetpgrp.0 \
 	tcsendbreak.0 tcsetattr.0 tcsetpgrp.0 time.0 times.0 timezone.0 \
 	tolower.0 toupper.0 ttyname.0 tzset.0 \
-	ualarm.0 unvis.0 usleep.0 utime.0 valloc.0 vis.0
+	ualarm.0 uname.0 unvis.0 usleep.0 utime.0 valloc.0 vis.0
 
 MLINKS+=ctime.3 asctime.3 ctime.3 difftime.3 ctime.3 gmtime.3 \
 	ctime.3 localtime.3 ctime.3 mktime.3
@@ -80,10 +85,12 @@ MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
 	getcap.3 cgetustr.3
 MLINKS+=getcwd.3 getwd.3
+MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 	getfsent.3 getfstype.3 getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3
+MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 	getpwent.3 getpwuid.3 getpwent.3 setpwent.3 getpwent.3 setpwfile.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
