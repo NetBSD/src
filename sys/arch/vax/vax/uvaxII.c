@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.1 1995/02/23 17:54:10 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.2 1995/04/18 22:08:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -199,7 +199,7 @@ ka630_clkread(stopped_flag)
 		/* simple sanity checks */
 		if (claddr->mon < 1 || claddr->mon > 12 ||
 		    claddr->day < 1 || claddr->day > 31) {
-			printf("WARNING: preposterous clock chip time");
+			printf("WARNING: preposterous clock chip time.\n");
 			year_secs = 0;
 		} else {
 			days = dayyr[claddr->mon - 1] + claddr->day - 1;
@@ -208,14 +208,14 @@ ka630_clkread(stopped_flag)
 		}
 		claddr->yr = 70;	/* any non-leap year */
 #ifndef lint
-		{ int t = claddr->csr2; }	/* ??? */
+		{ volatile int t = claddr->csr2; }	/* ??? */
 #endif
 		claddr->csr0 = KA630CLK_RATE;
 		claddr->csr1 = KA630CLK_ENABLE;
 
 		return (year_secs);
 	}
-	printf("WARNING: TOY clock invalid");
+	printf("WARNING: TOY clock invalid.\n");
 	return (0);
 }
 
