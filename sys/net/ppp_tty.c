@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.28 2001/11/13 00:49:36 lukem Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.29 2002/03/05 04:13:01 itojun Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -77,7 +77,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.28 2001/11/13 00:49:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.29 2002/03/05 04:13:01 itojun Exp $");
 
 #include "ppp.h"
 
@@ -895,6 +895,15 @@ pppstart(tp)
     if ((CCOUNT(&tp->t_outq) >= PPP_LOWAT)
 	&& ((sc == NULL) || (sc->sc_flags & SC_TIMEOUT)))
 	return 0;
+#ifdef ALTQ
+    /*
+     * if ALTQ is enabled, don't invoke NETISR_PPP.
+     * pppintr() could loop without doing anything useful
+     * under rate-limiting.
+     */
+    if (ALTQ_IS_ENABLED(&sc->sc_if.if_snd))
+	return 0;
+#endif
     if (!((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	&& sc != NULL && tp == (struct tty *) sc->sc_devp) {
 	ppp_restart(sc);
