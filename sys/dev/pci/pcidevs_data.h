@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.295 2001/01/18 13:11:22 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.296 2001/01/22 13:58:37 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.291 2001/01/17 20:55:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.292 2001/01/22 13:57:54 mjl Exp 
  */
 
 /*
@@ -1322,6 +1322,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AVM",
 	    "Fritz! Card ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
+	    0,
+	    "Stallion Technologies",
+	    "EC8/32",
+	},
+	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_64,
+	    0,
+	    "Stallion Technologies",
+	    "EC8/64",
+	},
+	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO,
+	    0,
+	    "Stallion Technologies",
+	    "EasyIO",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
