@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2002/05/04 08:12:18 takemura Exp $
+# $NetBSD: GENERIC,v 1.123 2002/05/04 09:37:24 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 maxusers	16
 
@@ -348,11 +348,6 @@ hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
 hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 connect 1
 
 #
-# Sharp Telios HC-AJ1, HC-VJ1C
-#
-txcsbus1	at tx39biu? platform SHARP_TELIOS
-
-#
 # Fujitsu INTERTOP CX310
 #
 vrc4172gpio0 at vrgiu? platform FUJITSU_INTERTOP_IT310 addr 0x15001080 size 0x4a port 10
@@ -371,6 +366,11 @@ options	VRC4172PCI_MCR700_SUPPORT
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700
 hpcioman9 at vrgiu? platform NEC_MCR_700
 hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
+
+#
+# Sharp Telios HC-AJ1, HC-VJ1C
+#
+txcsbus1	at tx39biu? platform SHARP_TELIOS
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
