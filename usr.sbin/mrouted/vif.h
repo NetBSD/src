@@ -7,7 +7,7 @@
  * Leland Stanford Junior University.
  *
  *
- * $Id: vif.h,v 1.2 1994/05/16 15:17:41 brezak Exp $
+ * $Id: vif.h,v 1.3 1994/06/09 16:04:05 brezak Exp $
  */
 
 /*
@@ -31,7 +31,7 @@ struct uvif {
     struct listaddr *uv_neighbors;  /* list of neighboring routers          */
 };
 
-#define VIFF_KERNEL_FLAGS	(VIFF_TUNNEL)
+#define VIFF_KERNEL_FLAGS	(VIFF_TUNNEL|VIFF_SRCRT)
 #define VIFF_DOWN		0x0100	       /* kernel state of interface */
 #define VIFF_DISABLED		0x0200	       /* administratively disabled */
 #define VIFF_QUERIER		0x0400	       /* I am the subnet's querier */
