@@ -1,4 +1,4 @@
-#	$NetBSD: list.sysinst,v 1.8 2003/02/22 03:20:47 lukem Exp $
+#	$NetBSD: list.sysinst,v 1.9 2003/03/25 23:07:29 lukem Exp $
 #
 # list file (c.f. parselist.awk) for sysinst-using install media.
 #
@@ -11,4 +11,4 @@ PROG	usr/bin/progress
 SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/${MACHINE}
 
 # generate the lists of obsolete files used by sysinst
-CMD	sh ${DISTRIBDIR}/sets/makeobsolete -b -s ${DISTRIBDIR}/sets -t ./var/db/obsolete
+CMD	MAKE=${MAKE} sh ${DISTRIBDIR}/sets/makeobsolete -b -s ${DISTRIBDIR}/sets -t ./var/db/obsolete
