@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.23 1995/10/06 12:05:36 tls Exp $
+#	$Id: Makefile,v 1.24 1995/10/07 22:58:52 pk Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -23,8 +23,8 @@ regression-tests:
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
 
-beforeinstall:
-(cd $.{CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+#beforeinstall:
+#	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 
 afterinstall:
 .ifndef NOMAN
