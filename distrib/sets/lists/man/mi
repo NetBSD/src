@@ -2,8 +2,8 @@
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
 ./usr/share/info/dc.info
-./usr/share/info/dir
 ./usr/share/info/diff.info
+./usr/share/info/dir
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/g77.info
 ./usr/share/info/gcc.info
@@ -14,8 +14,8 @@
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
 ./usr/share/info/iostream.info
-./usr/share/info/stabs.info
 ./usr/share/info/send-pr.info
+./usr/share/info/stabs.info
 ./usr/share/info/texinfo.info
 ./usr/share/info/uucp.info
 ./usr/share/man/cat1/Mail.0
@@ -417,9 +417,12 @@
 ./usr/share/man/cat4/null.0
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
+./usr/share/man/cat4/pcdisplay.0
 ./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pciide.0
+./usr/share/man/cat4/pckbd.0
 ./usr/share/man/cat4/pcmcia.0
+./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/ppp.0
 ./usr/share/man/cat4/pss.0
 ./usr/share/man/cat4/pty.0
@@ -466,6 +469,7 @@
 ./usr/share/man/cat4/ums.0
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat4/usb.0
+./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/wdc.0
@@ -709,8 +713,8 @@
 ./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
-./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newfs_lfs.0
+./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nfsiod.0
@@ -1510,9 +1514,12 @@
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
+./usr/share/man/man4/pcdisplay.4
 ./usr/share/man/man4/pci.4
 ./usr/share/man/man4/pciide.4
+./usr/share/man/man4/pckbd.4
 ./usr/share/man/man4/pcmcia.4
+./usr/share/man/man4/pcscp.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pss.4
 ./usr/share/man/man4/pty.4
@@ -1559,6 +1566,7 @@
 ./usr/share/man/man4/ums.4
 ./usr/share/man/man4/unix.4
 ./usr/share/man/man4/usb.4
+./usr/share/man/man4/vga.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/wd.4
 ./usr/share/man/man4/wdc.4
@@ -1802,8 +1810,8 @@
 ./usr/share/man/man8/ndc.8
 ./usr/share/man/man8/netgroup_mkdb.8
 ./usr/share/man/man8/newfs.8
-./usr/share/man/man8/newfs_msdos.8
 ./usr/share/man/man8/newfs_lfs.8
+./usr/share/man/man8/newfs_msdos.8
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
 ./usr/share/man/man8/nfsiod.8
