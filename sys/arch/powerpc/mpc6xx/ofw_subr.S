@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.1 2002/07/06 18:01:23 matt Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.2 2002/07/24 06:04:43 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,11 @@
 	.data
 GLOBAL(ofmsr)
 	.long	0,0,0,0,0		/* msr & sprg[0-3] used in OF */
+
+#ifdef MULTIPROCESSOR
+GLOBAL(ofwsprg0save)
+	.long	0
+#endif
 
 	.comm	firmstk,NBPG,8
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
@@ -107,6 +112,13 @@ ENTRY(openfirmware)
 	cmpwi	5,0
 	bne	1b
 
+#ifdef MULTIPROCESSOR
+	mfsprg	5,0			/* save current sprg0 (curcpu) */
+	lis	4,ofwsprg0save@ha
+	addi	4,4,ofwsprg0save@l
+	stw	5,0(4)
+#endif
+
 	lis	4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
 	addi	4,4,_C_LABEL(ofw_pmap)@l
 	lwz	0,PM_KERNELSR(4)
@@ -134,6 +146,13 @@ ENTRY(openfirmware)
 	isync
 
 	blrl				/* call Open Firmware */
+
+#ifdef MULTIPROCESSOR
+	lis	4,ofwsprg0save@ha	/* return saved sprg0 (curcpu) */
+	addi	4,4,ofwsprg0save@l
+	lwz	5,0(4)
+	mtsprg	0,5
+#endif
 
 	lis	4,ofwsrsave@ha		/* restore saved SRs */
 	addi	4,4,ofwsrsave@l
