@@ -1210,7 +1210,7 @@ __transfer_from_trampoline ()		\
 extern int current_function_uses_pic_offset_table, flag_pic;
 #define LEGITIMATE_PIC_OPERAND_P(X) \
   (((! current_function_uses_pic_offset_table			\
-     && global_symbolic_reference_mentioned_p (X, 1))?		\
+     && symbolic_reference_mentioned_p (X))?			\
       (current_function_uses_pic_offset_table = 1):0		\
    ), (! SYMBOLIC_CONST (X)					\
    || GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == LABEL_REF))
