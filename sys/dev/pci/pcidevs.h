@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.110 1999/02/14 22:44:36 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.111 1999/02/19 05:53:36 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.104 1999/02/14 22:38:18 tron Exp 
+ *	NetBSD: pcidevs,v 1.105 1999/02/19 05:53:00 thorpej Exp 
  */
 
 /*
@@ -496,6 +496,7 @@
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
+#define	PCI_VENDOR_ASIX	0x125b		/* ASIX Electronics */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
@@ -628,6 +629,9 @@
 #define	PCI_PRODUCT_ARC_2000PV	0xa099		/* 2000PV */
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
 
+/* ASIX Electronics products */
+#define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
+
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
@@ -727,6 +731,7 @@
 
 /* Compex products - XXX better descriptions */
 #define	PCI_PRODUCT_COMPEX_NE2KETHER	0x1401		/* Ethernet */
+#define	PCI_PRODUCT_COMPEX_RL100ATX	0x2011		/* RL100-ATX 10/100 Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -875,8 +880,12 @@
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 
+/* Lite-On products */
+#define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
+
 /* Macronix */
-#define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 100/10base PCI MAC controller */
+#define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
+#define	PCI_PRODUCT_MACRONIX_MX987x5	0x0531		/* MX987x5 (PMAC) 10/100 Ethernet */
 
 /* Madge Networks products */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
@@ -1159,7 +1168,8 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
-#define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F */
+#define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
+#define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
