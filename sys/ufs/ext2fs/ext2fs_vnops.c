@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.26 2000/05/13 23:43:13 perseant Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.27 2000/06/28 14:16:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -58,10 +58,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.19 2000/06/27 20:57:12 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.20 2000/06/28 14:16:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,10 +92,6 @@
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
 
