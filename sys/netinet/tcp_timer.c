@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.46 2000/03/30 13:25:10 augustss Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.47 2000/10/17 03:06:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -299,6 +299,11 @@ tcp_timers(tp, timer)
 {
 	short	rto;
 
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_timers: both t_inpcb and t_in6pcb are set");
+#endif
+
 	switch (timer) {
 
 	/*
@@ -347,10 +352,12 @@ tcp_timers(tp, timer)
 		if (ip_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 			struct rtentry *rt = NULL;
 
+#ifdef INET
 			if (tp->t_inpcb)
 				rt = in_pcbrtentry(tp->t_inpcb);
+#endif
 #ifdef INET6
-			else if (tp->t_in6pcb)
+			if (tp->t_in6pcb)
 				rt = in6_pcbrtentry(tp->t_in6pcb);
 #endif
 
@@ -366,10 +373,12 @@ tcp_timers(tp, timer)
 		 * retransmit times until then.
 		 */
 		if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
+#ifdef INET
 			if (tp->t_inpcb)
 				in_losing(tp->t_inpcb);
+#endif
 #ifdef INET6
-			else if (tp->t_in6pcb)
+			if (tp->t_in6pcb)
 				in6_losing(tp->t_in6pcb);
 #endif
 			tp->t_rttvar += (tp->t_srtt >> TCP_RTT_SHIFT);
@@ -463,10 +472,12 @@ tcp_timers(tp, timer)
 		tcpstat.tcps_keeptimeo++;
 		if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 			goto dropit;
+#ifdef INET
 		if (tp->t_inpcb)
 			so = tp->t_inpcb->inp_socket;
+#endif
 #ifdef INET6
-		else if (tp->t_in6pcb)
+		if (tp->t_in6pcb)
 			so = tp->t_in6pcb->in6p_socket;
 #endif
 		if (so->so_options & SO_KEEPALIVE &&
