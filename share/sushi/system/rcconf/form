@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.1 2001/01/05 02:06:59 garbled Exp $
+# $NetBSD: form,v 1.2 2001/01/21 06:57:03 garbled Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
 escript:15,script2,defaultroute	Default Route, if blank use /etc/mygate
@@ -14,6 +14,8 @@ script:script1,update_motd	Update /etc/motd at boot?
 script:script1,dmesg		Create /var/run/dmesg.boot at boot?
 escript:15,script2,dmesg_flags	Flags to pass to dmesg
 script:script1,accounting	Start accounting?
+script:script1,newsyslog	Run newsyslog?
+escript:15,script2,newsyslog_flags	Flags to pass newsyslog
 escript:1,script2,securelevel	If non-blank, set securelevel early in boot
 script:script1,ipfilter		Start ipfiltering?
 script:script1,ipnat		Start ipnat NAT daemon?
