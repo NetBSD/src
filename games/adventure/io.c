@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.6 1997/10/11 01:53:29 lukem Exp $	*/
+/*	$NetBSD: io.c,v 1.7 1998/08/29 22:40:07 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.6 1997/10/11 01:53:29 lukem Exp $");
+__RCSID("$NetBSD: io.c,v 1.7 1998/08/29 22:40:07 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,20 +98,6 @@ getin(wrd1, wrd2)		/* get command from user        */
 			s++;
 		}
 	}
-}
-
-int
-confirm(mesg)			/* confirm irreversible action  */
-	char   *mesg;
-{
-	int     result;
-	printf("%s", mesg);	/* tell him what he did         */
-	if (getchar() == 'y')	/* was his first letter a 'y'?  */
-		result = 1;
-	else
-		result = 0;
-	FLUSHLINE;
-	return (result);
 }
 
 int
