@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fe.c,v 1.20 1998/01/12 09:43:37 thorpej Exp $	*/
+/*	$NetBSD: if_fe.c,v 1.21 1998/03/22 12:48:41 drochner Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -210,7 +210,11 @@ struct fe_softc {
 };
 
 /* Standard driver entry points.  These can be static. */
-int	feprobe		__P((struct device *, void *, void *));
+#ifdef __BROKEN_INDIRECT_CONFIG
+int	feprobe __P((struct device *, void *, void *));
+#else
+int	feprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	feattach	__P((struct device *, struct device *, void *));
 int	feintr		__P((void *));
 void	fe_init		__P((struct fe_softc *));
@@ -299,8 +303,16 @@ outblk (int addr, u_char const * mem, int len)
 int
 feprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
+#ifndef __BROKEN_INDIRECT_CONFIG
+	return(0);
+#else
 	struct fe_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 
@@ -318,6 +330,7 @@ feprobe(parent, match, aux)
 	if (fe_probe_mbh(sc, ia))
 		return (1);
 	return (0);
+#endif
 }
 
 /*
