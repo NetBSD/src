@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.41 1995/07/24 07:17:12 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.42 1995/07/27 01:00:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -723,8 +723,10 @@ AGAIN:
 			bt_nextmbx(wmbi, wmbx, mbi);
 		}
 		if (!found) {
-			printf("%s: mbi at 0x%08x should be found, stat=%02x..resync\n",
-			    bt->sc_dev.dv_xname, wmbi, wmbi->stat);
+#ifdef DIAGNOSTIC
+			printf("%s: mbi interrupt with no full mailboxes\n",
+			    bt->sc_dev.dv_xname);
+#endif
 		} else {
 			found = 0;
 			goto AGAIN;
