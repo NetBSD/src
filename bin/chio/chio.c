@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.10 1998/07/28 05:31:22 mycroft Exp $	*/
+/*	$NetBSD: chio.c,v 1.11 1999/08/05 02:47:09 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -39,7 +39,7 @@
 #ifndef lint
 __COPYRIGHT(
     "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.10 1998/07/28 05:31:22 mycroft Exp $");
+__RCSID("$NetBSD: chio.c,v 1.11 1999/08/05 02:47:09 hubertf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -90,16 +90,18 @@ const struct element_type elements[] = {
 
 /* Valid commands. */
 const struct changer_command commands[] = {
-	{ "move",		do_move },
-	{ "exchange",		do_exchange },
-	{ "position",		do_position },
-	{ "params",		do_params },
-	{ "getpicker",		do_getpicker },
-	{ "setpicker",		do_setpicker },
-	{ "status",		do_status },
-	{ "ielem", 		do_ielem },
-	{ "cdlu",		do_cdlu },
-	{ NULL,			0 },
+	{ "move", 	" <from ET> <from EU> <to ET> <to EU> [inv]", 	do_move },
+	{ "exchange",	" <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
+	                "\t\t [<dst2 ET> <dst2 EU>] [inv1] [inv2]", 		do_exchange },
+	{ "position",	" <to ET> <to EU> [inv]", 				do_position },
+	{ "params",	"", 							do_params },
+	{ "getpicker",	"", 							do_getpicker },
+	{ "setpicker",	" <picker>", 						do_setpicker },
+	{ "status",	" [<element type>]", 					do_status },
+	{ "ielem", 	"", 							do_ielem },
+	{ "cdlu",	" load|unload <slot>\n"
+	                "\t     abort", 						do_cdlu },
+	{ NULL,		NULL, 							0 },
 };
 
 /* Valid special words. */
@@ -180,10 +182,10 @@ do_move(cname, argc, argv)
 	 */
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
-		goto usage;
+		usage();
 	} else if (argc > 5) {
 		warnx("%s: too many arguments", cname);
-		goto usage;
+		usage();
 	}
 	(void) memset(&cmd, 0, sizeof(cmd));
 
@@ -223,11 +225,6 @@ do_move(cname, argc, argv)
 		err(1, "%s: CHIOMOVE", changer_name);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s "
-	    "<from ET> <from EU> <to ET> <to EU> [inv]\n", __progname, cname);
-	return (1);
 }
 
 static int
@@ -248,10 +245,10 @@ do_exchange(cname, argc, argv)
 	 */
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
-		goto usage;
+		usage();
 	} else if (argc > 8) {
 		warnx("%s: too many arguments", cname);
-		goto usage;
+		usage();
 	}
 	(void) memset(&cmd, 0, sizeof(cmd));
 
@@ -316,13 +313,6 @@ do_exchange(cname, argc, argv)
 		err(1, "%s: CHIOEXCHANGE", changer_name);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr,
-	    "usage: %s %s <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
-	    "       [<dst2 ET> <dst2 EU>] [inv1] [inv2]\n",
-	    __progname, cname);
-	return (1);
 }
 
 static int
@@ -343,10 +333,10 @@ do_position(cname, argc, argv)
 	 */
 	if (argc < 2) {
 		warnx("%s: too few arguments", cname);
-		goto usage;
+		usage();
 	} else if (argc > 3) {
 		warnx("%s: too many arguments", cname);
-		goto usage;
+		usage();
 	}
 	(void) memset(&cmd, 0, sizeof(cmd));
 
@@ -378,11 +368,6 @@ do_position(cname, argc, argv)
 		err(1, "%s: CHIOPOSITION", changer_name);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s <to ET> <to EU> [inv]\n",
-	    __progname, cname);
-	return (1);
 }
 
 /* ARGSUSED */
@@ -397,7 +382,7 @@ do_params(cname, argc, argv)
 	/* No arguments to this command. */
 	if (argc) {
 		warnx("%s: no arguements expected", cname);
-		goto usage;
+		usage();
 	}
 
 	/* Get params from changer and display them. */
@@ -417,10 +402,6 @@ do_params(cname, argc, argv)
 	    data.cp_curpicker);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s\n", __progname, cname);
-	return (1);
 }
 
 /* ARGSUSED */
@@ -435,7 +416,7 @@ do_getpicker(cname, argc, argv)
 	/* No arguments to this command. */
 	if (argc) {
 		warnx("%s: no arguments expected", cname);
-		goto usage;
+		usage();
 	}
 
 	/* Get current picker from changer and display it. */
@@ -445,10 +426,6 @@ do_getpicker(cname, argc, argv)
 	(void) printf("%s: current picker: %d\n", changer_name, picker);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s\n", __progname, cname);
-	return (1);
 }
 
 static int
@@ -461,10 +438,10 @@ do_setpicker(cname, argc, argv)
 
 	if (argc < 1) {
 		warnx("%s: too few arguments", cname);
-		goto usage;
+		usage();
 	} else if (argc > 1) {
 		warnx("%s: too many arguments", cname);
-		goto usage;
+		usage();
 	}
 
 	picker = parse_element_unit(*argv);
@@ -474,10 +451,6 @@ do_setpicker(cname, argc, argv)
 		err(1, "%s: CHIOSPICKER", changer_name);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s <picker>\n", __progname, cname);
-	return (1);
 }
 
 static int
@@ -505,7 +478,7 @@ do_status(cname, argc, argv)
 	 */
 	if (argc > 1) {
 		warnx("%s: too many arguments", cname);
-		goto usage;
+		usage();
 	}
 
 	/*
@@ -586,11 +559,6 @@ do_status(cname, argc, argv)
 	}
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s [<element type>]\n", __progname,
-	    cname);
-	return (1);
 }
 
 /* ARGSUSED */
@@ -631,7 +599,7 @@ do_cdlu(cname, argc, argv)
 	 */
 
 	if (argc < 1 || argc > 2)
-		goto usage;
+		usage();
 
 	for (i = 0; cdlu_subcmds[i].sw_name != NULL; i++) {
 		if (strcmp(argv[0], cdlu_subcmds[i].sw_name) == 0) {
@@ -640,7 +608,7 @@ do_cdlu(cname, argc, argv)
 		}
 	}
 	if (cdlu_subcmds[i].sw_name == NULL)
-		goto usage;
+		usage();
 
 	if (strcmp(argv[0], "abort") == 0)
 		cmd.slot = 0;
@@ -655,12 +623,6 @@ do_cdlu(cname, argc, argv)
 		err(1, "%s: CDIOCLOADUNLOAD", changer_name);
 
 	return (0);
-
- usage:
-	(void) fprintf(stderr, "usage: %s %s load|unload <slot>\n",
-	    __progname, cname);
-	(void) fprintf(stderr, "       %s %s abort\n", __progname, cname);
-	return (1);
 }
 
 static int
@@ -758,13 +720,14 @@ cleanup()
 static void
 usage()
 {
+	int i;
 
-	(void) fprintf(stderr, "usage: %s command arg1 arg2 ...\n", __progname);
-	(void) fprintf(stderr, "Examples:\n");
-	(void) fprintf(stderr, "\tchio -f /dev/ch0 move slot 1 drive 0\n");
-	(void) fprintf(stderr, "\tchio ielem\n");
-	(void) fprintf(stderr, "\tchio -f /dev/ch1 status\n");
-	(void) fprintf(stderr, "\tchio -f /dev/cd0a cdlu load 1\n");
+	(void) fprintf(stderr, "Usage: %s command arg1 arg2 ...\n", __progname);
+	
+	(void) fprintf(stderr, "Where command (and args) are:\n");
+	for (i=0; commands[i].cc_name != NULL; i++)
+		(void) fprintf(stderr, "\t%s%s\n", commands[i].cc_name,
+					    commands[i].cc_args);
 	exit(1);
 	/* NOTREACHED */
 }
