@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.1 1998/08/07 00:00:58 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.2 1998/08/12 18:11:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,14 +71,14 @@ int	mididebug = 0;
 
 int midi_wait;
 
-void midi_in(void *, int);
-void midi_out(void *);
-int midi_start_output(struct midi_softc *, int);
-static __inline int midi_sleep_timo(int *, char *, int);
-static __inline int midi_sleep(int *, char *);
-static __inline void midi_wakeup(int *);
-void midi_initbuf(struct midi_buffer *);
-void midi_timeout(void *);
+void	midi_in __P((void *, int));
+void	midi_out __P((void *));
+int	midi_start_output __P((struct midi_softc *, int));
+int	midi_sleep_timo __P((int *, char *, int));
+int	midi_sleep __P((int *, char *));
+void	midi_wakeup __P((int *));
+void	midi_initbuf __P((struct midi_buffer *));
+void	midi_timeout __P((void *));
 
 int	midiprobe __P((struct device *, struct cfdata *, void *));
 void	midiattach __P((struct device *, struct device *, void *));
@@ -111,7 +111,6 @@ midiattach(parent, self, aux)
 	struct audio_attach_args *sa = aux;
 	struct midi_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
-	struct midi_info mi;
 
 	DPRINTFN(6, ("MIDI attach\n"));
 
@@ -125,10 +124,18 @@ midiattach(parent, self, aux)
 		return;
 	}
 #endif
-
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
-	sc->sc_dev = parent;
+	midi_attach(sc, parent);
+}
+
+void
+midi_attach(sc, parent)
+	struct midi_softc *sc;
+	struct device *parent;
+{
+	struct midi_info mi;
+
 	sc->isopen = 0;
 
 	midi_initbuf(&sc->outbuf);
@@ -138,9 +145,10 @@ midiattach(parent, self, aux)
 	if (midi_wait == 0)
 		midi_wait = 1;
 
-	hwp->getinfo(hdlp, &mi);
+	sc->sc_dev = parent;
+	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
-	printf(" <%s>\n", mi.name);
+	printf(": <%s>\n", mi.name);
 }
 
 int
@@ -159,7 +167,7 @@ midi_initbuf(mb)
 	mb->inp = mb->outp = mb->start;
 }
 
-static __inline int
+int
 midi_sleep_timo(chan, label, timo)
 	int *chan;
 	char *label;
@@ -181,7 +189,7 @@ midi_sleep_timo(chan, label, timo)
 	return st;
 }
 
-static __inline int
+int
 midi_sleep(chan, label)
 	int *chan;
 	char *label;
@@ -189,7 +197,7 @@ midi_sleep(chan, label)
 	return midi_sleep_timo(chan, label, 0);
 }
 
-static __inline void
+void
 midi_wakeup(chan)
 	int *chan;
 {
@@ -276,8 +284,8 @@ deliver:
 	sc->in_state = MIDI_IN_START;
 #if NSEQUENCER > 0
 	if (sc->seqopen) {
-		extern void midisyn_in __P((struct midi_softc *,u_char *,int));
-		midisyn_in(sc, sc->in_msg, sc->in_pos);
+		extern void midiseq_in __P((struct midi_softc *,u_char *,int));
+		midiseq_in(sc, sc->in_msg, sc->in_pos);
 		return;
 	}
 #endif
@@ -587,7 +595,7 @@ midiioctl(dev, cmd, addr, flag, p)
 
 	default:
 		if (hw->ioctl)
-			error = hw->ioctl(cmd, addr, flag, p);
+			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, p);
 		else
 			error = EINVAL;
 		break;

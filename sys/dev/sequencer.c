@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.2 1998/08/07 00:28:20 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.3 1998/08/12 18:11:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,8 @@ int seq_do_chnvoice __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_chncommon __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_timing __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_local __P((struct sequencer_softc *, seq_event_rec *));
-int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, struct uio *));
+int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, 
+			 struct uio *));
 int seq_timer __P((struct sequencer_softc *, int, int, seq_event_rec *));
 int seq_input_event __P((struct sequencer_softc *, seq_event_rec *));
 int seq_drain __P((struct sequencer_softc *));
@@ -129,18 +130,19 @@ static void seq_wakeup(int *);
 
 struct midi_softc;
 int midiout __P((struct midi_dev *, u_char *, u_int, int));
-struct midi_dev *midisyn_open __P((int, int));
-void midisyn_close __P((struct midi_dev *));
-void midisyn_reset __P((struct midi_dev *));
-int midisyn_noteon __P((struct midi_dev *, int, int, int));
-int midisyn_noteoff __P((struct midi_dev *, int, int, int));
-int midisyn_keypressure __P((struct midi_dev *, int, int, int));
-int midisyn_pgmchange __P((struct midi_dev *, int, int));
-int midisyn_ctlchange __P((struct midi_dev *, int, int, int));
-int midisyn_pitchbend __P((struct midi_dev *, int, int));
-int midisyn_loadpatch __P((struct midi_dev *, struct sysex_info *, struct uio *));
-int midisyn_putc __P((struct midi_dev *, int));
-void midisyn_in __P((struct midi_dev *, u_char *, int));
+struct midi_dev *midiseq_open __P((int, int));
+void midiseq_close __P((struct midi_dev *));
+void midiseq_reset __P((struct midi_dev *));
+int midiseq_noteon __P((struct midi_dev *, int, int, int));
+int midiseq_noteoff __P((struct midi_dev *, int, int, int));
+int midiseq_keypressure __P((struct midi_dev *, int, int, int));
+int midiseq_pgmchange __P((struct midi_dev *, int, int));
+int midiseq_ctlchange __P((struct midi_dev *, int, int, int));
+int midiseq_pitchbend __P((struct midi_dev *, int, int));
+int midiseq_loadpatch __P((struct midi_dev *, struct sysex_info *, 
+			   struct uio *));
+int midiseq_putc __P((struct midi_dev *, int));
+void midiseq_in __P((struct midi_dev *, u_char *, int));
 
 void
 sequencerattach(n)
@@ -184,7 +186,7 @@ sequenceropen(dev, flags, ifmt, p)
 	sc->devs = malloc(nmidi * sizeof(struct midi_dev *),
 			  M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < nmidi; unit++) {
-		md = midisyn_open(unit, flags);
+		md = midiseq_open(unit, flags);
 		if (md) {
 			sc->devs[sc->nmidi++] = md;
 			md->seq = sc;
@@ -256,7 +258,7 @@ seq_drain(sc)
 	seq_startoutput(sc);
 	error = 0;
 	while(!SEQ_QEMPTY(&sc->outq) && !error)
-		error = seq_sleep_timo(&sc->wchan, "seq dr", 30*hz);
+		error = seq_sleep_timo(&sc->wchan, "seq_dr", 30*hz);
 	return error;
 }
 
@@ -308,7 +310,7 @@ sequencerclose(dev, flags, ifmt, p)
 	seq_reset(sc);
 
 	for (n = 0; n < sc->nmidi; n++)
-		midisyn_close(sc->devs[n]);
+		midiseq_close(sc->devs[n]);
 	free(sc->devs, M_DEVBUF);
 	sc->isopen = 0;
 	return (0);
@@ -440,7 +442,7 @@ sequencerwrite(dev, uio, ioflag)
 			if (SEQ_QFULL(q)) {
 				if (ioflag & IO_NDELAY)
 					return EWOULDBLOCK;
-				error = seq_sleep(&sc->wchan, "seq wr");
+				error = seq_sleep(&sc->wchan, "seq_wr");
 				if (error)
 					return error;
 			}
@@ -520,7 +522,7 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case SEQUENCER_NRSYNTHS:
-		*(int *)addr = 0;
+		*(int *)addr = sc->nmidi;
 		break;
 
 	case SEQUENCER_NRMIDIS:
@@ -588,7 +590,7 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case SEQUENCER_CTRLRATE:
-		*(int *)addr = (sc->timer.tempo * sc->timer.timebase + 30) / 60;
+		*(int *)addr = (sc->timer.tempo*sc->timer.timebase + 30) / 60;
 		break;
 
 	case SEQUENCER_GETTIME:
@@ -650,11 +652,11 @@ seq_reset(sc)
 
 	for (i = 0; i < sc->nmidi; i++) {
 		md = sc->devs[i];
-		midisyn_reset(md);
+		midiseq_reset(md);
 		for (chn = 0; chn < MAXCHAN; chn++) {
-			midisyn_ctlchange(md, chn, MIDI_CTRL_ALLOFF, 0);
-			midisyn_ctlchange(md, chn, MIDI_CTRL_RESET, 0);
-			midisyn_pitchbend(md, chn, MIDI_BEND_NEUTRAL);
+			midiseq_ctlchange(md, chn, MIDI_CTRL_ALLOFF, 0);
+			midiseq_ctlchange(md, chn, MIDI_CTRL_RESET, 0);
+			midiseq_pitchbend(md, chn, MIDI_BEND_NEUTRAL);
 		}
 	}
 }
@@ -682,7 +684,7 @@ seq_do_command(sc, b)
 		dev = b->arr[2];
 		if (dev < 0 || dev >= sc->nmidi)
 			return (ENXIO);
-		return midisyn_putc(sc->devs[dev], b->arr[1]);
+		return midiseq_putc(sc->devs[dev], b->arr[1]);
 	default:
 		DPRINTF(("seq_do_command: unimpl command %02x\n", SEQ_CMD(b)));
 		return (EINVAL);
@@ -715,14 +717,15 @@ seq_do_chnvoice(sc, b)
 	}
 	switch(cmd) {
 	case MIDI_NOTEON:
-		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n", md, voice, note, parm));
-		error = midisyn_noteon(md, voice, note, parm);
+		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n", 
+			     md, voice, note, parm));
+		error = midiseq_noteon(md, voice, note, parm);
 		break;
 	case MIDI_NOTEOFF:
-		error = midisyn_noteoff(md, voice, note, parm);
+		error = midiseq_noteoff(md, voice, note, parm);
 		break;
 	case MIDI_KEY_PRESSURE:
-		error = midisyn_keypressure(md, voice, note, parm);
+		error = midiseq_keypressure(md, voice, note, parm);
 		break;
 	default:
 		DPRINTF(("seq_do_chnvoice: unimpl command %02x\n", cmd));
@@ -761,7 +764,7 @@ seq_do_chncommon(sc, b)
 	switch(cmd) {
 	case MIDI_PGM_CHANGE:
 		md->chan_info[chan].pgm_num = p1;
-		error = midisyn_pgmchange(md, chan, p1);
+		error = midiseq_pgmchange(md, chan, p1);
 		break;
 	case MIDI_CTL_CHANGE:
 		if (chan > 15 || p1 > 127)
@@ -769,11 +772,11 @@ seq_do_chncommon(sc, b)
 		md->chan_info[chan].controllers[p1] = w14 & 0x7f;
 		if (p1 < 32)
 			md->chan_info[chan].controllers[p1 + 32] = 0;
-		error = midisyn_ctlchange(md, chan, p1, w14);
+		error = midiseq_ctlchange(md, chan, p1, w14);
 		break;
 	case MIDI_PITCH_BEND:
 		md->chan_info[chan].bender_value = w14;
-		error = midisyn_pitchbend(md, chan, w14);
+		error = midiseq_pitchbend(md, chan, w14);
 		break;
 	default:
 		DPRINTF(("seq_do_chncommon: unimpl command %02x\n", cmd));
@@ -843,7 +846,6 @@ seq_timer(sc, cmd, parm, b)
 				/* Waiting more than 20s */
 				printf("seq_timer: funny ticks=%d, usec=%lld, parm=%d, tick=%ld\n",
 				       ticks, usec, parm, t->tick);
-				ticks = 20 * hz;
 			}
 #endif
 			sc->timeout = 1;
@@ -911,7 +913,7 @@ seq_do_fullsize(sc, b, uio)
 	dev = sysex.device_no;
 	DPRINTFN(2, ("seq_do_fullsize: fmt=%04x, dev=%d, len=%d\n",
 		     sysex.key, dev, sysex.len));
-	return (midisyn_loadpatch(sc->devs[dev], &sysex, uio));
+	return (midiseq_loadpatch(sc->devs[dev], &sysex, uio));
 }
 
 /* Convert an old sequencer event to a new one. */
@@ -993,7 +995,7 @@ seq_to_new(ev, uio)
 /**********************************************/
 
 void
-midisyn_in(md, msg, len)
+midiseq_in(md, msg, len)
 	struct midi_dev *md;
 	u_char *msg;
 	int len;
@@ -1002,7 +1004,7 @@ midisyn_in(md, msg, len)
 	seq_event_rec ev;
 	int status, chan;
 
-	DPRINTFN(2, ("midisyn_in: %p %02x %02x %02x\n", 
+	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n", 
 		     md, msg[0], msg[1], msg[2]));
 
 	status = MIDI_GET_STATUS(msg[0]);
@@ -1036,7 +1038,7 @@ midisyn_in(md, msg, len)
 }
 
 struct midi_dev *
-midisyn_open(unit, flags)
+midiseq_open(unit, flags)
 	int unit;
 	int flags;
 {
@@ -1046,7 +1048,7 @@ midisyn_open(unit, flags)
 	struct midi_softc *sc;
 	struct midi_info mi;
 
-	DPRINTFN(2, ("midisyn_open: %d %d\n", unit, flags));
+	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
 	error = midiopen(makedev(0, unit), flags, 0, 0);
 	if (error)
 		return (0);
@@ -1067,19 +1069,19 @@ midisyn_open(unit, flags)
 }
 
 void
-midisyn_close(md)
+midiseq_close(md)
 	struct midi_dev *md;
 {
-	DPRINTFN(2, ("midisyn_close: %d\n", md->unit));
+	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
 	midiclose(makedev(0, md->unit), 0, 0, 0);
 	free(md, M_DEVBUF);
 }
 
 void
-midisyn_reset(md)
+midiseq_reset(md)
 	struct midi_dev *md;
 {
-	DPRINTFN(3, ("midisyn_reset: %d\n", md->unit));
+	DPRINTFN(3, ("midiseq_reset: %d\n", md->unit));
 }
 
 int
@@ -1114,13 +1116,13 @@ midiout(md, buf, cc, chk)
 }
 
 int
-midisyn_noteon(md, chan, note, vel)
+midiseq_noteon(md, chan, note, vel)
 	struct midi_dev *md;
 	int chan, note, vel;
 {
 	u_char buf[3];
 
-	DPRINTFN(6, ("midisyn_noteon 0x%02x %d %d\n", 
+	DPRINTFN(6, ("midiseq_noteon 0x%02x %d %d\n", 
 		     MIDI_NOTEON | chan, note, vel));
 	if (chan < 0 || chan > 15 ||
 	    note < 0 || note > 127)
@@ -1134,7 +1136,7 @@ midisyn_noteon(md, chan, note, vel)
 }
 
 int
-midisyn_noteoff(md, chan, note, vel)
+midiseq_noteoff(md, chan, note, vel)
 	struct midi_dev *md;
 	int chan, note, vel;
 {
@@ -1152,7 +1154,7 @@ midisyn_noteoff(md, chan, note, vel)
 }
 
 int
-midisyn_keypressure(md, chan, note, vel)
+midiseq_keypressure(md, chan, note, vel)
 	struct midi_dev *md;
 	int chan, note, vel;
 {
@@ -1170,7 +1172,7 @@ midisyn_keypressure(md, chan, note, vel)
 }
 
 int
-midisyn_pgmchange(md, chan, parm)
+midiseq_pgmchange(md, chan, parm)
 	struct midi_dev *md;
 	int chan, parm;
 {
@@ -1185,7 +1187,7 @@ midisyn_pgmchange(md, chan, parm)
 }
 
 int
-midisyn_ctlchange(md, chan, parm, w14)
+midiseq_ctlchange(md, chan, parm, w14)
 	struct midi_dev *md;
 	int chan, parm, w14;
 {
@@ -1201,7 +1203,7 @@ midisyn_ctlchange(md, chan, parm, w14)
 }
 
 int
-midisyn_pitchbend(md, chan, parm)
+midiseq_pitchbend(md, chan, parm)
 	struct midi_dev *md;
 	int chan, parm;
 {
@@ -1216,7 +1218,7 @@ midisyn_pitchbend(md, chan, parm)
 }
 
 int
-midisyn_loadpatch(md, sysex, uio)
+midiseq_loadpatch(md, sysex, uio)
 	struct midi_dev *md;
 	struct sysex_info *sysex;
 	struct uio *uio;
@@ -1230,7 +1232,7 @@ midisyn_loadpatch(md, sysex, uio)
 		/* adjust length, should be an error */
 		sysex->len = uio->uio_resid;
 
-	DPRINTFN(2, ("midisyn_loadpatch: len=%d\n", sysex->len));
+	DPRINTFN(2, ("midiseq_loadpatch: len=%d\n", sysex->len));
 	if (sysex->len == 0)
 		return EINVAL;
 	error = uiomove(&c, 1, uio);
@@ -1267,12 +1269,12 @@ midisyn_loadpatch(md, sysex, uio)
 }
 
 int
-midisyn_putc(md, data)
+midiseq_putc(md, data)
 	struct midi_dev *md;
 	int data;
 {
 	u_char c = data;
-	DPRINTFN(4,("midisyn_putc: 0x%02x\n", data));
+	DPRINTFN(4,("midiseq_putc: 0x%02x\n", data));
 	return midiout(md, &c, 1, 0);
 }
 
