@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 1999/04/08 12:54:52 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 1999/04/09 10:24:41 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,6 @@ message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
 choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
 sur une partie de celui-ci.
-
 Une installation sur une partie du disque crée une partition, ou `slice', pour
 NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
 disque. Une installation sur la totalité du disque est `dangereusement
@@ -128,8 +127,8 @@ actuellement active. La table des partitions est :
 
 message reeditpart
 {Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
-exactement une partition NetBSD. Vous devez éditer de nouveau la table des
-partitions.
+exactement une partition NetBSD. Vous devez éditer de nouveau la table
+des partitions.
 
 Voulez vous la rééditer ?
 }
@@ -193,3 +192,6 @@ message biosmultmatch
 
 message pickdisk
 {Choisissez un disque: }
+
+message wmbrfail
+{L'écriture du MBR a échouée. Je ne peux pas continuer.}

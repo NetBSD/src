@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1999/03/31 00:44:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1999/04/09 10:24:41 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,19 +109,19 @@ md_get_info()
 /*
  * hook called before writing new disklabel.
  */
-void
+int
 md_pre_disklabel()
 {
-
+	return 0;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-void
-md_post_disklabel()
+int
+md_post_disklabel(void)
 {
-
+	return 0;
 }
 
 /*
@@ -143,15 +143,16 @@ md_post_newfs()
 	sync();
 	run_prog(0, 1, "/usr/mdec/installboot %s %s /dev/r%sa",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
+	return 0;
 }
 
 /*
  * some ports use this to copy the MD filesystem, we do not.
  */
-void
+int
 md_copy_filesystem()
 {
-
+	return 0;
 }
 
 int
