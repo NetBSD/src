@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.19 2000/10/27 17:47:44 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.20 2000/10/27 17:55:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -116,6 +116,26 @@ pchbattach(parent, self, aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_PEQUR:
+		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
+
+		if (pbnum == 0)
+			break;
+
+		/*
+		 * This host bridge has a second PCI bus.
+		 * Configure it.
+		 */
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = pbnum;
+		pba.pba_flags = pa->pa_flags;
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
+		break;
+
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82443BX_AGP:
@@ -230,11 +250,6 @@ pchbattach(parent, self, aux)
 			}
 			break;
 		}
-	/*
-	 * XXX: vendor=PEQUR, device=0x0005 - host bridge with
-	 * auxiliary PCI bus (used in Compaq Proliant) should
-	 * be here, but I don't have enough information.
-	 */
 	}
 }
 
