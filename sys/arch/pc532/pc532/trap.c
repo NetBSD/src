@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1997/04/21 16:17:44 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.26.8.1 1997/10/22 23:16:22 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -59,6 +59,7 @@
 #include <sys/kgdb.h>
 #endif
 
+#include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
