@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.4 1994/01/21 00:20:57 briggs Exp $
+ *	$Id: disksubr.c,v 1.5 1994/02/10 04:29:11 briggs Exp $
  */
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -67,17 +67,241 @@
  *
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "disklabel.h"
-#include "syslog.h"
+/* rewritten, 2-5-93 MLF */
+/* its alot cleaner now, and adding support for new partition types
+isn't a bitch anymore
+known bugs:
+1) when only an HFS part exists on a drive it gets assigned to "B"
+this is because of line 623 of sd.c, I think this line should go.
+2) /sbin/disklabel expects the whole disk to be in "D", we put it in
+"C" (I think) and we don't set that position in the disklabel structure
+as used.  Again, not my fault.
+*/
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 #include "dpme.h"	/* MF the structure of a mac partition entry */
 
 #define	b_cylin	b_resid
 
+static int print=0;
 static char *mstr2upper(char *str);
+
+#define ROOT 1
+#define UFS 2
+#define SWAP 3
+#define HFS 4
+#define SCRATCH 5
+
+int getFreeLabelEntry(struct disklabel *lp)
+{
+/*
+find an entry in the disk label that is unused and return it
+or -1 if no entry
+*/
+	int i=0;
+
+	for(i=0;i<MAXPARTITIONS;i++)
+	{
+		if (lp->d_partitions[i].p_fstype==FS_UNUSED)
+			return i;
+	}
+
+	return -1;
+}
+
+int whichType(struct partmapentry *part)
+{
+	struct blockzeroblock *bzb;
+
+/*
+figure out what the type of the given part is and return it
+*/
+	if (part->pmPartType[0]=='\0') return 0;
+
+	if (strcmp(PART_DRIVER_TYPE,(char *)part->pmPartType)==0 ) return 0;
+	if (strcmp(PART_PARTMAP_TYPE,(char *)part->pmPartType)==0 ) return 0;
+
+	if (strcmp(PART_UNIX_TYPE,(char *)part->pmPartType)==0)
+	{
+	/* unix part, swap, root, usr */
+		bzb= (struct blockzeroblock *)(&part->pmBootArgs);
+		if (bzb->bzbMagic!=BZB_MAGIC)
+			return 0;
+
+		if(bzb->bzbFlags & BZB_ROOTFS)	return ROOT;
+
+		if(bzb->bzbFlags & BZB_USRFS)  return UFS;
+
+	   if(bzb->bzbType == BZB_TYPESWAP) return SWAP;
+
+		return 0;
+	}
+	if (strcmp(PART_MAC_TYPE,(char *)part->pmPartType)==0 ) return HFS;
+
+/*
+	if (strcmp(PART_SCRATCH,(char *)part->pmPartType)==0 ) return SCRATCH;
+*/
+
+	return SCRATCH;	/* no known type, but label it, anyway */
+}
+
+
+
+int fixPartTable(struct partmapentry *partTable,long size,char *base)
+{
+	int i=0;
+	struct partmapentry *pmap;
+
+/*
+take part table in crappy form, place it in a structure we can depend
+upon.  make sure names are null terminated.  Capitalize the names
+of part types.
+*/
+
+	for(i=0;i<MAXPARTITIONS;i++)
+	{
+		pmap=(struct partmapentry *)((i*size)+base);
+		pmap->pmPartName[31]='\0';
+		pmap->pmPartType[31]='\0';
+
+		mstr2upper((char *)pmap->pmPartType);
+
+		if (pmap->pmSig!=DPME_MAGIC) /* this is not valid */
+			pmap->pmPartType[0]='\0';
+
+		partTable[i]=*pmap;
+
+	}
+
+	return 0;
+}
+
+
+int setRoot(struct partmapentry *part,struct disklabel *lp,int slot)
+{
+	lp->d_partitions[slot].p_size =part->pmPartBlkCnt;
+	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
+	lp->d_partitions[slot].p_fstype=FS_BSDFFS;
+
+	printf("%c: Root '%s' at %d size %d\n",slot+'a',
+		part->pmPartName,
+		part->pmPyPartStart,
+		part->pmPartBlkCnt);
+
+	part->pmPartType[0]='\0';
+
+	return 0;
+}
+
+int setSwap(struct partmapentry *part,struct disklabel *lp,int slot)
+{
+	lp->d_partitions[slot].p_size =part->pmPartBlkCnt;
+	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
+	lp->d_partitions[slot].p_fstype=FS_SWAP;
+
+	printf("%c: Swap '%s' at %d size %d\n",slot+'a',
+		part->pmPartName,
+		part->pmPyPartStart,
+		part->pmPartBlkCnt);
+
+	part->pmPartType[0]='\0';
+
+	return 0;
+}
+					
+int setUfs(struct partmapentry *part,struct disklabel *lp,int slot)
+{
+	lp->d_partitions[slot].p_size =part->pmPartBlkCnt;
+	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
+	lp->d_partitions[slot].p_fstype=FS_BSDFFS;
+
+	printf("%c: Usr '%s' at %d size %d\n",slot+'a',
+		part->pmPartName,
+		part->pmPyPartStart,
+		part->pmPartBlkCnt);
+
+	part->pmPartType[0]='\0';
+
+	return 0;
+}
+
+int setHfs(struct partmapentry *part,struct disklabel *lp,int slot)
+{
+	lp->d_partitions[slot].p_size =part->pmPartBlkCnt;
+	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
+	lp->d_partitions[slot].p_fstype=FS_HFS;
+
+	printf("%c: HFS '%s' at %d size %d\n",slot+'a',
+		part->pmPartName,
+		part->pmPyPartStart,
+		part->pmPartBlkCnt);
+
+	part->pmPartType[0]='\0';
+
+	return 0;
+}
+
+int setScratch(struct partmapentry *part,struct disklabel *lp,int slot)
+{
+	lp->d_partitions[slot].p_size =part->pmPartBlkCnt;
+	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
+	lp->d_partitions[slot].p_fstype=FS_OTHER;
+
+	printf("%c: Other (%s) '%s' at %d size %d\n",slot+'a',
+		part->pmPartType,
+		part->pmPartName,
+		part->pmPyPartStart,
+		part->pmPartBlkCnt);
+
+	part->pmPartType[0]='\0';
+
+	return 0;
+}
+
+int getNamedType(struct partmapentry *part,struct disklabel *lp,int type, int alt)
+{
+	struct blockzeroblock	*bzb;
+	int			i=0;
+
+	for(i=0;i<MAXPARTITIONS;i++)
+	{
+		if (whichType(&(part[i]))==type)
+		{
+			switch(type)
+			{
+				case ROOT:
+					bzb = (struct blockzeroblock *)
+						(&part[i].pmBootArgs);
+					if (alt >= 0 && alt != bzb->bzbCluster)
+						goto skip;
+					setRoot(&(part[i]),lp,0);
+					break;
+				case UFS:
+					bzb = (struct blockzeroblock *)
+						(&part[i].pmBootArgs);
+					if (alt >= 0 && alt != bzb->bzbCluster)
+						goto skip;
+					setUfs(&(part[i]),lp,6);
+					break;
+				case SWAP:
+					setSwap(&(part[i]),lp,1);
+					break;
+				default:
+					printf("disksubr.c: can't do type \n",type);
+					break;
+			}
+
+			return 0;
+		}
+skip:
+	}
+
+	return -1;
+}
 
 /*
  * Attempt to read a disk label from a device
@@ -96,49 +320,34 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	register struct buf *bp;
 	char *msg = NULL;
-	struct partmapentry *pmap;
 	struct blockzeroblock *bzb;
 
 /* MF 
-NOTE: This code may be bad but its better than jim's
-
 here's what i'm gonna do:
 read in the entire diskpartition table, it may be bigger or smaller
 than MAXPARTITIONS but read that many entries.  Each entry has a magic
 number so we'll know if an entry is crap.
 next fill in the disklabel with info like this 
+next fill in the root, usr, and swap parts.
+Then look for anything else and fit it in
 A: root
 B: Swap
-C: 
-D: Whole disk
-E: FIrst macos guy
-F: scratch
+C: Whole disk
 G: Usr
 
 
 I'm not entirely sure what netbsd386 wants in c &d 
 386bsd wants other stuff, so i'll leave them alone 
 
+AKB --	I added to Mike's original algorithm by searching for a bzbCluster
+	of zero for root, first.  This allows A/UX to live on cluster 1 and
+	NetBSD to live on cluster 0--regardless of the actual order on the
+	disk.  This whole algorithm should probably be changed in the future.
 
-
-Say hi to jim for me
-
-
----- later 8-14-93
-netbsd puts the whole disk in d, go figure
 */
-
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 
-
-/* MF these lines bother the hell out of me, If there is
-	no root part why force one? I call this Disk Rape*/
-	/* lp->d_npartitions = 1; */
-	/* if (lp->d_partitions[0].p_size == 0) */
-		/* lp->d_partitions[0].p_size = 0x1fffffff; */
-	/* lp->d_partitions[0].p_offset = 0; */
-	/* get buffer */
 	if (lp->d_secpercyl == 0) {
 		return msg = "Zero secpercyl";
 	}
@@ -155,110 +364,52 @@ netbsd puts the whole disk in d, go figure
 	} 
 	else {
 		int i=0;
-		/* if I was smart i'd use bit fields */
-		int root=0;	/* flag root is assigned A */
-		int usr=0;	/* flag usr is assigned G */
-		int swap=0;	/* flag swap B */
-		int macos=0;	/* flag macos D */
-		int scratch=0;
-		/* drive c is set hopefully ... */
-		int index=0;
+		struct partmapentry pmap[MAXPARTITIONS];
 
-		/* printf("sd%d Disk Label\n", minor(dev) >>3 ); */
+		fixPartTable(pmap,lp->d_secsize,bp->b_un.b_addr);
+		if (getNamedType(pmap,lp,ROOT, 0))
+			getNamedType(pmap,lp,ROOT, -1);
+		if (getNamedType(pmap,lp,UFS, 0))
+			getNamedType(pmap,lp,UFS, -1);
+		getNamedType(pmap,lp,SWAP, -1);
 		for(i=0;i<MAXPARTITIONS;i++)
 		{
-			pmap=(struct partmapentry *)((i*lp->d_secsize)+bp->b_un.b_addr);
-			/* if these are 32 in len there is no null, ARGH! */
-			/* but we know better, that case never happens ;-) */
-			pmap->pmPartName[31]='\0';
-			pmap->pmPartType[31]='\0';
+			int partType;
+			int slot;
 
-			mstr2upper((char *)pmap->pmPartType);
+			slot=getFreeLabelEntry(lp);
+			if (slot < 0)
+				break;
 
-			if (pmap->pmSig==DPME_MAGIC) /* this is valid */
+			partType=whichType(&(pmap[i]));
+
+			switch (partType)
 			{
-			
-			/* grossness */
-			
 
-			if (strcmp(PART_UNIX_TYPE,(char *)pmap->pmPartType)==0)
-			{
-	/* unix part, swap, root, usr */
-			bzb= (struct blockzeroblock *)(&pmap->pmBootArgs);
-			if (bzb->bzbMagic!=BZB_MAGIC)
-				continue;
-			if (bzb->bzbCluster)
-				continue;
+				case ROOT:
+/*
+another root part will turn into a plain old UFS partition,
+live with it.
+*/
+				case UFS:
+					setUfs(&(pmap[i]),lp,slot);
+					break;
+				case SWAP:
+					setSwap(&(pmap[i]),lp,slot);
+					break;
+				case HFS:
+					setHfs(&(pmap[i]),lp,slot);
+					break;
+				case SCRATCH:
+					setScratch(&(pmap[i]),lp,slot);
+					break;
+				default:
+					break;
 
-		/* brad wrote this in mac bsd */
-		/* I have no idea where these magic numbers came from */
-		    if((bzb->bzbFlags & BZB_ROOTFS && !root)){
-			root ++;
-			lp->d_partitions[0].p_size =pmap->pmPartBlkCnt;
-			lp->d_partitions[0].p_offset=pmap->pmPyPartStart;
-			lp->d_partitions[0].p_fstype=FS_BSDFFS;
-			/* just in case name is 32 long */
-			printf("A: Root '%s' at %d size %d\n",
-				pmap->pmPartName,
-				pmap->pmPyPartStart,
-				pmap->pmPartBlkCnt);
-		    }else if((bzb->bzbFlags & BZB_USRFS) && !usr ){
-			usr ++;
-			lp->d_partitions[6].p_size =pmap->pmPartBlkCnt;
-			lp->d_partitions[6].p_offset=pmap->pmPyPartStart;
-			lp->d_partitions[6].p_fstype=FS_BSDFFS;
-			printf("G: Usr '%s' at %d size %d\n",
-				pmap->pmPartName,
-				pmap->pmPyPartStart,
-				pmap->pmPartBlkCnt);
-
-		    }
-		    if((bzb->bzbType == BZB_TYPESWAP) && !swap){
-			swap++;
-			lp->d_partitions[1].p_size =pmap->pmPartBlkCnt;
-			lp->d_partitions[1].p_offset=pmap->pmPyPartStart;
-			lp->d_partitions[1].p_fstype=FS_SWAP;
-			printf("B: Swap '%s' at %d size %d\n",
-				pmap->pmPartName,
-				pmap->pmPyPartStart,
-				pmap->pmPartBlkCnt);
-		    }
-
-			}
-			else if (strcmp(PART_MAC_TYPE,(char *)pmap->pmPartType)==0 && !macos)
-			{
-	/* mac part */
-			macos++;
-			lp->d_partitions[4].p_size =pmap->pmPartBlkCnt;
-			lp->d_partitions[4].p_offset=pmap->pmPyPartStart;
-			lp->d_partitions[4].p_fstype=FS_HFS;
-			/* printf("E: MacOS '%s' at %d size %d\n", */
-				/* pmap->pmPartName, */
-				/* pmap->pmPyPartStart, */
-				/* pmap->pmPartBlkCnt); */
-
-			}
-			else if (strcmp(PART_SCRATCH,(char *)pmap->pmPartType)==0 && !scratch)
-			{
-	/* nice place for raw tar files, not a nice place to live */
-			scratch++;
-			lp->d_partitions[5].p_size =pmap->pmPartBlkCnt;
-			lp->d_partitions[5].p_offset=pmap->pmPyPartStart;
-			lp->d_partitions[5].p_fstype=FS_SCRATCH;
-			/* printf("F: Scratch '%s' at %d size %d\n", */
-				/* pmap->pmPartName, */
-				/* pmap->pmPyPartStart, */
-				/* pmap->pmPartBlkCnt); */
-			}	
-
-			}
-			else
-			{
-				break;	/* out of map entries */
 			}
 		}
-	
 	}
+
 
 	lp->d_npartitions=MAXPARTITIONS;
 
