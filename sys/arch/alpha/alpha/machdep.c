@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.91 1997/10/17 18:47:39 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.92 1997/11/06 00:41:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 1997/10/17 18:47:39 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 1997/11/06 00:41:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,11 +461,11 @@ alpha_init(pfn, ptb, bim, bip)
 	 * Find out what hardware we're on, and remember its type name.
 	 */
 	cputype = hwrpb->rpb_type;
-	if (unknown_cpu(cputype)) {
-		nocpu();
+	if (cputype >= ncpuinit) {
+		platform_not_supported();
 		/* NOTREACHED */
 	}
-	cpuinit[cputype]();
+	(*cpuinit[cputype].init)();
 	strcpy(cpu_model, platform.model);
 
 	/* XXX SANITY CHECKING.  SHOULD GO AWAY */

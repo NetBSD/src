@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.7 1997/09/23 23:15:43 mjacob Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.8 1997/11/06 00:41:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,136 +36,121 @@
 #include <machine/cpuconf.h>
 #include <machine/rpb.h>
 
-#include "dec_3000_500.h"
-#if	NDEC_3000_500 > 0
+#include "opt_dec_3000_500.h"
+#ifdef DEC_3000_500
 extern void dec_3000_500_init __P((void));
 #else
-#define	dec_3000_500_init	nocpu
+#define	dec_3000_500_init	platform_not_configured
 #endif
 
-#include "dec_3000_300.h"
-#if	NDEC_3000_300 > 0
+#include "opt_dec_3000_300.h"
+#ifdef DEC_3000_300
 extern void dec_3000_300_init __P((void));
 #else
-#define	dec_3000_300_init	nocpu
+#define	dec_3000_300_init	platform_not_configured
 #endif
 
-#include "dec_axppci_33.h"
-#if	NDEC_AXPPCI_33 > 0
+#include "opt_dec_axppci_33.h"
+#ifdef DEC_AXPPCI_33
 extern void dec_axppci_33_init __P((void));
 #else
-#define	dec_axppci_33_init	nocpu
+#define	dec_axppci_33_init	platform_not_configured
 #endif
 
-#include "dec_kn8ae.h"
-#if	NDEC_KN8AE > 0
+#include "opt_dec_kn8ae.h"
+#ifdef DEC_KN8AE
 extern void dec_kn8ae_init __P((void));
 #else
-#define	dec_kn8ae_init		nocpu
+#define	dec_kn8ae_init		platform_not_configured
 #endif
 
-#include "dec_2100_a50.h"
-#if	NDEC_2100_A50 > 0
+#include "opt_dec_2100_a50.h"
+#ifdef DEC_2100_A50
 extern void dec_2100_a50_init __P((void));
 #else
-#define	dec_2100_a50_init	nocpu
+#define	dec_2100_a50_init	platform_not_configured
 #endif
 
-#include "dec_kn20aa.h"
-#if	NDEC_KN20AA > 0
+#include "opt_dec_kn20aa.h"
+#ifdef DEC_KN20AA
 extern void dec_kn20aa_init __P((void));
 #else
-#define	dec_kn20aa_init		nocpu
+#define	dec_kn20aa_init		platform_not_configured
 #endif
 
-#include "dec_eb64plus.h"
-#if	NDEC_EB64PLUS > 0
+#include "opt_dec_eb64plus.h"
+#ifdef DEC_EB64PLUS
 extern void dec_eb64plus_init __P((void));
 #else
-#define	dec_eb64plus_init	nocpu
+#define	dec_eb64plus_init	platform_not_configured
 #endif
 
-#include "dec_eb164.h"
-#if	NDEC_EB164 > 0
+#include "opt_dec_eb164.h"
+#ifdef DEC_EB164
 extern void dec_eb164_init __P((void));
 #else
-#define	dec_eb164_init		nocpu
+#define	dec_eb164_init		platform_not_configured
 #endif
 
-void (*cpuinit[]) __P((void)) = {
-	nocpu,				/*  0: ??? */
-	nocpu,				/*  1: ST_ADU */
-	nocpu,				/*  2: ST_DEC_4000 */
-	nocpu,				/*  3: ST_DEC_7000 */
-	dec_3000_500_init,		/*  4: ST_DEC_3000_500 */
-	nocpu,				/*  5: ??? */
-	nocpu,				/*  6: ST_DEC_2000_300 */
-	dec_3000_300_init,		/*  7: ST_DEC_3000_300 */
-	nocpu,				/*  8: ??? */
-	nocpu,				/*  9: ST_DEC_2100_A500 */
-	nocpu,				/* 10: ST_DEC_APXVME_64 */
-	dec_axppci_33_init,		/* 11: ST_DEC_AXPPCI_33 */
-	dec_kn8ae_init,			/* 12: ST_DEC_21000 */
-	dec_2100_a50_init,		/* 13: ST_DEC_2100_A50 */
-	nocpu,				/* 14: ST_DEC_MUSTANG */
-	dec_kn20aa_init,		/* 15: ST_DEC_KN20AA */
-	nocpu,				/* 16: ??? */
-	nocpu,				/* 17: ST_DEC_1000 */
-	nocpu,				/* 18: ??? */
-	nocpu,				/* 19: ST_EB66 */
-	dec_eb64plus_init,		/* 20: ST_EB64P */
-	nocpu,				/* 21: ??? */
-	nocpu,				/* 22: ST_DEC_4100 */
-	nocpu,				/* 23: ST_DEC_EV45_PBP */
-	nocpu,				/* 24: ST_DEC_2100A_A500 */
-	nocpu,				/* 25: ??? */
-	dec_eb164_init			/* 26: ST_EB164 */
+struct cpuinit cpuinit[] = {
+	cpu_notsupp("???"),			     /*  0: ??? */
+	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
+	cpu_notsupp("ST_DEC_4000"),		     /*  2: ST_DEC_4000 */
+	cpu_notsupp("ST_DEC_7000"),		     /*  3: ST_DEC_7000 */
+	cpu_init(dec_3000_500_init,"DEC_3000_500"),  /*  4: ST_DEC_3000_500 */
+	cpu_notsupp("???"),			     /*  5: ??? */
+	cpu_notsupp("ST_DEC_2000_300"),		     /*  6: ST_DEC_2000_300 */
+	cpu_init(dec_3000_300_init,"DEC_3000_300"),  /*  7: ST_DEC_3000_300 */
+	cpu_notsupp("???"),			     /*  8: ??? */
+	cpu_notsupp("ST_DEC_2100_A500"),	     /*  9: ST_DEC_2100_A500 */
+	cpu_notsupp("ST_DEC_APXVME_64"),	     /* 10: ST_DEC_APXVME_64 */
+	cpu_init(dec_axppci_33_init,"DEC_AXPPCI_33"),/* 11: ST_DEC_AXPPCI_33 */
+	cpu_init(dec_kn8ae_init,"DEC_KN8AE"),	     /* 12: ST_DEC_21000 */
+	cpu_init(dec_2100_a50_init,"DEC_2100_A50"),  /* 13: ST_DEC_2100_A50 */
+	cpu_notsupp("ST_DEC_MUSTANG"),		     /* 14: ST_DEC_MUSTANG */
+	cpu_init(dec_kn20aa_init,"DEC_KN20AA"),	     /* 15: ST_DEC_KN20AA */
+	cpu_notsupp("???"),			     /* 16: ??? */
+	cpu_notsupp("ST_DEC_1000"),		     /* 17: ST_DEC_1000 */
+	cpu_notsupp("???"),			     /* 18: ??? */
+	cpu_notsupp("ST_EB66"),			     /* 19: ST_EB66 */
+	cpu_init(dec_eb64plus_init,"DEC_EB64PLUS"),  /* 20: ST_EB64P */
+	cpu_notsupp("???"),			     /* 21: ??? */
+	cpu_notsupp("ST_DEC_4100"),		     /* 22: ST_DEC_4100 */
+	cpu_notsupp("ST_DEC_EV45_PBP"),		     /* 23: ST_DEC_EV45_PBP */
+	cpu_notsupp("ST_DEC_2100A_A500"),	     /* 24: ST_DEC_2100A_A500 */
+	cpu_notsupp("???"),			     /* 25: ??? */
+	cpu_init(dec_eb164_init,"DEC_EB164"),	     /* 26: ST_EB164 */
 };
-int ncpuinit = (sizeof (cpuinit) / sizeof (cpuinit[0]));
+int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
 
 void
-nocpu()
+platform_not_configured()
 {
 	extern int cputype;
+
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
 	    cputype);
-	if (unknown_cpu(cputype)) {
-		printf("NetBSD doesn't support this platform yet.\n");
-	} else {
-		char *o;
-		switch (cputype) {
-		case ST_DEC_3000_500:
-			o = "DEC_3000_500";
-			break;
-		case ST_DEC_3000_300:
-			o = "DEC_3000_300";
-			break;
-		case ST_DEC_AXPPCI_33:
-			o = "DEC_AXPPCI_33";
-			break;
-		case ST_DEC_21000:
-			o = "DEC_KN8AE";
-			break;
-		case ST_DEC_2100_A50:
-			o = "DEC_2100_A50";
-			break;
-		case ST_DEC_KN20AA:
-			o = "DEC_KN20AA";
-			break;
-		case ST_EB64P:
-			o = "DEC_EB64PLUS";
-			break;
-		case ST_EB164:
-			o = "DEC_EB164";
-			break;
-		default:
-			o = "JESUS_KNOWS";
-			break;
-		}
-		printf("Build a kernel with \"options %s\" and reboot.\n", o);
-	}
+	printf("Please build a kernel with \"options %s\" and reboot.\n",
+	    cpuinit[cputype].option);
 	printf("\n");   
-	panic("support for system not present");
-	/* NOTREACHED */
+	panic("platform not configured\n");
+}
+
+void
+platform_not_supported()
+{
+	extern int cputype;
+	const char *typestr;
+
+	if (cputype >= ncpuinit)
+		typestr = "???";
+	else
+		typestr = cpuinit[cputype].option;
+
+	printf("\n");
+	printf("NetBSD does not yet support system type %d (%s).\n", cputype,
+	     typestr);
+	printf("\n");
+	panic("platform not supported");
 }
