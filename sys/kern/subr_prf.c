@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.61 1999/02/10 18:03:05 explorer Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.62 1999/02/12 00:46:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -993,11 +993,11 @@ reswitch:	switch (ch) {
 			_uquad = va_arg(ap, int);
 			b = va_arg(ap, char *);
 			if (*b == 8)
-				sprintf(buf, "%qo", _uquad);
+				sprintf(buf, "%qo", (unsigned long long)_uquad);
 			else if (*b == 10)
-				sprintf(buf, "%qd", _uquad);
+				sprintf(buf, "%qd", (unsigned long long)_uquad);
 			else if (*b == 16)
-				sprintf(buf, "%qx", _uquad);
+				sprintf(buf, "%qx", (unsigned long long)_uquad);
 			else
 				break;
 			b++;
