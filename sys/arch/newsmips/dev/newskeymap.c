@@ -1,4 +1,4 @@
-/*	$NetBSD: newskeymap.c,v 1.1 2000/11/13 16:48:45 tsubai Exp $	*/
+/*	$NetBSD: newskeymap.c,v 1.2 2000/11/20 14:55:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -72,8 +72,8 @@ const keysym_t newskb_keydesc_jp[] = {
     KC(34),				KS_i,
     KC(35),				KS_o,
     KC(36),				KS_p,
-    KC(37),				KS_bracketright, KS_braceright,
-    KC(38),				KS_bracketleft,	KS_braceleft,
+    KC(37),				KS_bracketleft,	KS_braceleft,
+    KC(38),				KS_bracketright, KS_braceright,
     KC(39),	KS_Cmd_ResetEmul,	KS_Delete,
 
     KC(40),	KS_Cmd1,		KS_Control_L,
