@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.10 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.1 2000/11/26 11:47:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,34 +46,20 @@
  * NOTICE: This is not a standalone file.  To use it, #include it in
  * your port's locore.s, like so:
  *
- *	#include <m68k/m68k/sigcode.s>
+ *	#ifdef COMPAT_SUNOS
+ *	#include <m68k/m68k/sunos_sigcode.s>
+ *	#endif
  */
 
-/*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- *
- * Stack looks like:
- *
- *	sp+0	->	signal number
- *	sp+4		signal specific code
- *	sp+8		pointer to signal context frame (scp)
- *	sp+12		address of handler
- *	sp+16		saved hardware state
- *				.
- *				.
- *				.
- *	scp+0	->	beginning of signal context frame
- */
-
-	.data
+ 	.data
+ 	.align	2
+GLOBAL(sunos_sigcode)
+	movl	%sp@(12),%a0	| signal handler addr	(4 bytes)
+	jsr	%a0@		| call signal handler	(2 bytes)
+	addql	#4,%sp		| pop signal number	(2 bytes)
+	trap	#1		| special syscall entry	(2 bytes)
+	movl	%d0,%sp@(4)	| save errno		(4 bytes)
+	moveq	#1,%d0		| syscall == exit	(2 bytes)
+	trap	#0		| exit(errno)		(2 bytes)
 	.align	2
-GLOBAL(sigcode)
-	movl	%sp@(12),%a0	| signal handler addr		(4 bytes)
-	jsr	%a0@		| call signal handler		(2 bytes)
-	addql	#4,%sp		| pop signal number		(2 bytes)
-	trap	#3		| special sigreturn trap	(2 bytes)
-	movl	%d0,%sp@(4)	| save errno			(4 bytes)
-	moveq	#SYS_exit,%d0	| syscall == exit		(2 bytes)
-	trap	#0		| exit(errno)			(2 bytes)
-	.align	2
-GLOBAL(esigcode)
+GLOBAL(sunos_esigcode)

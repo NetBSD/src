@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.10 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1 2000/11/26 11:47:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,34 +46,25 @@
  * NOTICE: This is not a standalone file.  To use it, #include it in
  * your port's locore.s, like so:
  *
- *	#include <m68k/m68k/sigcode.s>
- */
-
-/*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- *
- * Stack looks like:
- *
- *	sp+0	->	signal number
- *	sp+4		signal specific code
- *	sp+8		pointer to signal context frame (scp)
- *	sp+12		address of handler
- *	sp+16		saved hardware state
- *				.
- *				.
- *				.
- *	scp+0	->	beginning of signal context frame
+ *	#ifdef COMPAT_SVR4
+ *	#include <m68k/m68k/svr4_sigcode.s>
+ *	#endif
  */
 
 	.data
 	.align	2
-GLOBAL(sigcode)
-	movl	%sp@(12),%a0	| signal handler addr		(4 bytes)
-	jsr	%a0@		| call signal handler		(2 bytes)
-	addql	#4,%sp		| pop signal number		(2 bytes)
-	trap	#3		| special sigreturn trap	(2 bytes)
-	movl	%d0,%sp@(4)	| save errno			(4 bytes)
-	moveq	#SYS_exit,%d0	| syscall == exit		(2 bytes)
-	trap	#0		| exit(errno)			(2 bytes)
+GLOBAL(svr4_sigcode)
+	movl	%sp@(SVR4_SIGF_HANDLER),%a0	| signal handler addr
+	jsr	%a0@				| call signal handler
+	lea	%sp@(SVR4_SIGF_UC),%a0		| ucontext to resume addr
+	movl	%a0,%sp@-			| push pointer to ucontext
+	movl	#SVR4_SETCONTEXT,%sp@-		| push context() subcode
+	subql	#4,%sp				| padding for call frame layout
+	movql	#SVR4_SYS_context,%d0		| setcontext(&sf.sf_uc)
+	trap	#0				|  shouldn't return
+	movl	%d0,%sp@(4)			|  so save `errno'
+	moveq	#SVR4_SYS_exit,%d0		|  and exit hard
+	trap	#0				| _exit(errno)
 	.align	2
-GLOBAL(esigcode)
+GLOBAL(svr4_esigcode)
+
