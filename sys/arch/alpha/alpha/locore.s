@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.10 2002/10/18 02:34:02 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.11 2002/10/23 16:42:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.10 2002/10/18 02:34:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.11 2002/10/23 16:42:53 thorpej Exp $");
 
 #include "assym.h"
 
@@ -828,6 +828,7 @@ cpu_switch_queuescan:
 	mov	t4, s2				/* save new proc */
 	ldq	s3, L_MD_PCBPADDR(s2)		/* save new pcbpaddr */
 
+switch_resume:
 	/*
 	 * Check to see if we're switching to ourself.  If we are,
 	 * don't bother loading the new context.
@@ -899,7 +900,7 @@ cpu_switch_queuescan:
 #if defined(MULTIPROCESSOR)
 	stq	v0, L_CPU(s2)			/* p->p_cpu = curcpu() */
 #endif
-	stq	s2, CPU_INFO_CURLWP(v0)	/* curlwp = l */
+	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
 	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
 
 	/*
@@ -913,11 +914,10 @@ cpu_switch_queuescan:
 	/*
 	 * Check for restartable atomic sequences (RAS).
 	 */
-	ldl	s3, L_PROC(s2)
-	ldl	t0, P_NRAS(s3)			/* p->p_nras == 0? */
+	ldq	a0, L_PROC(s2)			/* first ras_lookup() arg */
+	ldl	t0, P_NRAS(a0)			/* p->p_nras == 0? */
 	beq	t0, 1f				/* yes, skip */
 	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
-	mov	s3, a0				/* first ras_lookup() arg */
 	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
 	CALL(ras_lookup)			/* ras_lookup(p, PC) */
 	addq	v0, 1, t0			/* -1 means "not in ras" */
@@ -956,25 +956,23 @@ LEAF(cpu_preempt, 0)
 	 * Note: GET_CURLWP clobbers v0, t0, t8...t11.
 	 */
 	GET_CURLWP
-	mov	a1, a2
 	ldq	a0, 0(v0)
-	ldq	a1, L_ADDR(a0)
+	ldq	a2, L_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
-	stq	s0, U_PCB_CONTEXT+(0 * 8)(a1)	/* store s0 - s6 */
-	stq	s1, U_PCB_CONTEXT+(1 * 8)(a1)
-	stq	s2, U_PCB_CONTEXT+(2 * 8)(a1)
-	stq	s3, U_PCB_CONTEXT+(3 * 8)(a1)
-	stq	s4, U_PCB_CONTEXT+(4 * 8)(a1)
-	stq	s5, U_PCB_CONTEXT+(5 * 8)(a1)
-	stq	s6, U_PCB_CONTEXT+(6 * 8)(a1)
-	stq	ra, U_PCB_CONTEXT+(7 * 8)(a1)	/* store ra */
+	stq	s0, U_PCB_CONTEXT+(0 * 8)(a2)	/* store s0 - s6 */
+	stq	s1, U_PCB_CONTEXT+(1 * 8)(a2)
+	stq	s2, U_PCB_CONTEXT+(2 * 8)(a2)
+	stq	s3, U_PCB_CONTEXT+(3 * 8)(a2)
+	stq	s4, U_PCB_CONTEXT+(4 * 8)(a2)
+	stq	s5, U_PCB_CONTEXT+(5 * 8)(a2)
+	stq	s6, U_PCB_CONTEXT+(6 * 8)(a2)
+	stq	ra, U_PCB_CONTEXT+(7 * 8)(a2)	/* store ra */
 	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
-	stq	v0, U_PCB_CONTEXT+(8 * 8)(a1)	/* store ps, for ipl */
+	stq	v0, U_PCB_CONTEXT+(8 * 8)(a2)	/* store ps, for ipl */
 
 	mov	a0, s0				/* save old curlwp */
-	mov	a1, s1				/* save old U-area */
+	mov	a2, s1				/* save old U-area */
 
-	mov	a2, t4				/* use given new LWP */
 cpu_preempt_queuescan:
 	br	pv, 1f
 1:	LDGP(pv)
@@ -983,9 +981,9 @@ cpu_preempt_queuescan:
 	PANIC("cpu_preempt",Lcpu_preempt_pmsg)
 
 4:
-	ldq	t5, L_BACK(t4)			/* t5 = l->l_back */
-	stq	zero, L_BACK(t4)		/* firewall: l->l_back = NULL*/
-	ldq	t6, L_FORW(t4)			/* t6 = l->l_forw */
+	ldq	t5, L_BACK(a1)			/* t5 = l->l_back */
+	stq	zero, L_BACK(a1)		/* firewall: l->l_back = NULL*/
+	ldq	t6, L_FORW(a1)			/* t6 = l->l_forw */
 	stq	t5, L_BACK(t6)			/* t6->l_back = t5 */
 	stq	t6, L_FORW(t5)			/* t5->l_forw = t6 */
 
@@ -993,109 +991,17 @@ cpu_preempt_queuescan:
 	beq	t0, 5f				/* nope, it's not! */
 
 	ldiq	t0, 1				/* compute bit in whichqs */
-	ldq	t2, L_PRIORITY(t4)
+	ldq	t2, L_PRIORITY(a1)
 	srl	t2, 2, t2	
 	sll	t0, t2, t0
 	xor	t3, t0, t3			/* clear bit in whichqs */
 	stl	t3, sched_whichqs
 
 5:
-	mov	t4, s2				/* save new proc */
+	mov	a1, s2				/* save new lwp */
 	ldq	s3, L_MD_PCBPADDR(s2)		/* save new pcbpaddr */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	CALL(sched_unlock_idle)
-#endif
 
-	/*
-	 * Check to see if we're switching to ourself.  If we are,
-	 * don't bother loading the new context.
-	 *
-	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curlwp value because any
-	 * users of that register between then and now must have
-	 * saved it.  Also note that switch_exit() ensures that
-	 * s0 is clear before jumping here to find a new process.
-	 */
-	ldiq	s4, 0
-	cmpeq	s0, s2, t0			/* oldproc == newproc? */
-	bne	t0, 7f				/* Yes!  Skip! */
-
-	/*
-	 * Deactivate the old address space before activating the
-	 * new one.  We need to do this before activating the
-	 * new process's address space in the event that new
-	 * process is using the same vmspace as the old.  If we
-	 * do this after we activate, then we might end up
-	 * incorrectly marking the pmap inactive!
-	 *
-	 * Note that don't deactivate if we don't have to...
-	 * We know this if oldproc (s0) == NULL.  This is the
-	 * case if we've come from switch_exit() (pmap no longer
-	 * exists; vmspace has been freed), or if we switched to
-	 * the Idle PCB in the MULTIPROCESSOR case.
-	 */
-	beq	s0, 6f
-
-	mov	s0, a0				/* pmap_deactivate(oldproc) */
-	CALL(pmap_deactivate)
-
-6:	/*
-	 * Activate the new process's address space and perform
-	 * the actual context swap.
-	 */
-
-	mov	s2, a0				/* pmap_activate(p) */
-	CALL(pmap_activate)
-
-	mov	s3, a0				/* swap the context */
-	SWITCH_CONTEXT
-
-	ldiq	s4, 1				/* note that we switched */
-7:	/*
-	 * Now that the switch is done, update curlwp and other
-	 * globals.  We must do this even if switching to ourselves
-	 * because we might have re-entered cpu_switch() from idle(),
-	 * in which case curlwp would be NULL.
-	 *
-	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
-	 */
-	ldiq	t0, LSONPROC			/* l->l_stat = LSONPROC */
-	stl	t0, L_STAT(s2)
-
-	GET_CPUINFO
-	/* p->p_cpu initialized in fork1() for single-processor */
-#if defined(MULTIPROCESSOR)
-	stq	v0, L_CPU(s2)			/* p->p_cpu = curcpu() */
-#endif
-	stq	s2, CPU_INFO_CURLWP(v0)	/* curlwp = l */
-	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
-
-	mov	s4, t1
-	/*
-	 * Now running on the new u struct.
-	 * Restore registers and return.
-	 */
-	ldq	t0, L_ADDR(s2)
-
-	/* NOTE: ksp is restored by the swpctx */
-	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
-	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
-	ldq	s2, U_PCB_CONTEXT+(2 * 8)(t0)
-	ldq	s3, U_PCB_CONTEXT+(3 * 8)(t0)
-	ldq	s4, U_PCB_CONTEXT+(4 * 8)(t0)
-	ldq	s5, U_PCB_CONTEXT+(5 * 8)(t0)
-	ldq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
-	ldq	ra, U_PCB_CONTEXT+(7 * 8)(t0)		/* restore ra */
-	ldq	a0, U_PCB_CONTEXT+(8 * 8)(t0)		/* restore ipl */
-	and	a0, ALPHA_PSL_IPL_MASK, a0
-	call_pal PAL_OSF1_swpipl
-
-	mov	t1, v0			/* return whether we switched */
-	RET
+	br	switch_resume			/* finish the switch */
 	END(cpu_preempt)
 
 /*
