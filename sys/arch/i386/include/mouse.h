@@ -19,8 +19,11 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mouse.h,v 1.2 1993/08/02 17:52:25 mycroft Exp $
+ *	$Id: mouse.h,v 1.3 1993/12/20 05:25:24 mycroft Exp $
  */
+
+#ifndef _I386_MOUSE_H_
+#define _I386_MOUSE_H_
 
 struct mouseinfo {
 	unsigned char status;
@@ -42,3 +45,5 @@ struct mouseinfo {
 
 #define MOUSEIOC        ('M'<<8)
 #define MOUSEIOCREAD	(MOUSEIOC|60)
+
+#endif /* !_I386_MOUSE_H_ */

@@ -31,18 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.2 1993/05/22 08:00:31 cgd Exp $
+ *	$Id: proc.h,v 1.3 1993/12/20 05:25:36 mycroft Exp $
  */
 
 /*
- * Machine-dependent part of the proc structure for hp300.
+ * Machine-dependent part of the proc structure for i386.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
+	int	unused;
 #ifdef notyet
 	int	*p_regs;		/* registers on current frame */
 #endif
 };
-
-/* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */

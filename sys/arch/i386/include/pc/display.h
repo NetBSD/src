@@ -1,7 +1,7 @@
 /*
  * IBM PC display definitions
  *
- *	$Id: display.h,v 1.2 1993/05/22 08:00:49 cgd Exp $
+ *	$Id: display.h,v 1.3 1993/12/20 05:26:02 mycroft Exp $
  */
 
 /* Color attributes for foreground text */
@@ -23,6 +23,7 @@
 #define	FG_YELLOW		  14
 #define	FG_WHITE		  15
 #define	FG_BLINK		0x80
+#define	FG_MASK			0x8f
 
 /* Color attributes for text background */
 
@@ -34,6 +35,7 @@
 #define	BG_MAGENTA		0x50
 #define	BG_BROWN		0x60
 #define	BG_LIGHTGREY		0x70
+#define	BG_MASK			0x70
 
 /* Monochrome attributes for foreground text */
 

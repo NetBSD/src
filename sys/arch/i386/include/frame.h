@@ -46,7 +46,6 @@
 /*
  * Exception/Trap Stack Frame
  */
-
 struct trapframe {
 	int	tf_es;
 	int	tf_ds;
@@ -70,7 +69,6 @@ struct trapframe {
 };
 
 /* Interrupt stack frame */
-
 struct intrframe {
 	int	if_vec;
 	int	if_ppl;
@@ -104,4 +102,4 @@ struct sigframe {
 	struct	sigcontext *sf_scp;
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
-} ;
+};

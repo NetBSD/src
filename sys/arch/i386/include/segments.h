@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)segments.h	7.1 (Berkeley) 5/9/91
- *	$Id: segments.h,v 1.4 1993/10/26 15:53:54 brezak Exp $
+ *	$Id: segments.h,v 1.5 1993/12/20 05:25:43 mycroft Exp $
  */
 
 /*
@@ -210,9 +210,8 @@ struct region_descriptor {
 #define	GPANIC_SEL	5	/* Task state to consider panic from */
 #define	GPROC0_SEL	6	/* Task state process slot zero and up */
 #define	GUSERLDT_SEL	7	/* User LDT */
-#define NGDT 		GUSERLDT_SEL+1
+#define	NGDT 		GUSERLDT_SEL+1
 
-/*
 /*
  * Entries in the Local Descriptor Table (LDT)
  */
@@ -222,7 +221,7 @@ struct region_descriptor {
 #define	LUCODE_SEL	3
 #define	LUDATA_SEL	4
 #if 0
-/* seperate stack, es,fs,gs sels ? */
+/* XXX seperate stack, es,fs,gs sels ? */
 #define	LPOSIXCALLS_SEL	5	/* notyet */
 #endif
 #define NLDT		LUDATA_SEL+1
@@ -233,7 +232,7 @@ extern union descriptor gdt[NGDT];
 extern union descriptor ldt[NLDT];
 extern struct soft_segment_descriptor gdt_segs[];
 #endif
-        
+
 #if __GNUC__ >= 2
 #pragma pack(4)
 #endif
