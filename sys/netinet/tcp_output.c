@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.25 1997/12/17 05:59:32 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.26 1997/12/31 03:31:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -642,7 +642,8 @@ out:
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
-	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
+	tp->t_flags &= ~TF_ACKNOW;
+	TCP_CLEAR_DELACK(tp);
 	if (sendalot)
 		goto again;
 	return (0);
