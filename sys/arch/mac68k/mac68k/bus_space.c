@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 1998/04/24 05:27:24 scottr Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 1998/12/22 08:47:06 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	u_long pa, endpa;
+	paddr_t pa, endpa;
 	int error;
 
 	/*
@@ -161,7 +161,8 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vm_offset_t va;
+	vaddr_t va;
+	pt_entry_t *pte;
 
 	pa = m68k_trunc_page(bpa);
 	endpa = m68k_round_page((bpa + size) - 1);
@@ -184,8 +185,12 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
-			pmap_changebit(pa, PG_CI, TRUE);
+		pte = kvtopte(va);
+		if ((flags & BUS_SPACE_MAP_CACHEABLE))
+			*pte &= ~PG_CI;
+		else
+			*pte |= PG_CI;
+		pmap_update();
 	}
  
 	return 0;
@@ -197,7 +202,7 @@ bus_space_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	vm_offset_t	va, endva;
+	vaddr_t va, endva;
 	bus_addr_t bpa;
 
 	va = m68k_trunc_page(bsh);
