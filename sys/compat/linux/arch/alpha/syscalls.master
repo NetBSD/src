@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1999/12/05 21:24:28 tron Exp $
+	$NetBSD: syscalls.master,v 1.14 1999/12/05 21:25:36 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -510,7 +510,7 @@
 346	UNIMPL		pciconfig_write
 347	UNIMPL		query_module
 348	UNIMPL		prctl
-340	STD		{ int linux_sys_pread(int fd, char *buf, \
+349	STD		{ int linux_sys_pread(int fd, char *buf, \
 			    size_t nbyte, linux_off_t offset); }
 350	STD		{ int linux_sys_pwrite(int fd, char *buf, \
 			    size_t nbyte, linux_off_t offset); }
