@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.30 2005/03/16 15:19:50 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.31 2005/03/16 15:27:33 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -782,3 +782,24 @@ sys/arch/xen/i386/locore.S			1.10
 	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
 	[bouyer, ticket #1321]
 
+xsrc/xfree/xc/extras/Xpm/lib/Attrib.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/CrDatFrI.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/hashtab.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/parse.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/scan.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/CrBufFrI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/RdFToI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/WrFFrI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/XpmI.h		1.3
+xsrc/xfree/xc/extras/Xpm/lib/data.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/xpm.h		1.3
+xsrc/xfree/xc/extras/Xpm/lib/Imakefile		1.2
+xsrc/xfree/xc/extras/Xpm/lib/RdFToBuf.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/WrFFrBuf.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/misc.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/create.c		1.6
+
+        Import latest Xpm sources from OpenBSD:
+          o Changes from X.Org 6.8.2 RC1
+          o Fix security problems reported in CAN-2005-0605
+        [tron, ticket #1304]
