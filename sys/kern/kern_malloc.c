@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.25 1997/10/09 13:02:18 mycroft Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.26 1997/10/09 13:05:59 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -109,7 +109,7 @@ malloc(size, type, flags)
 #ifdef DIAGNOSTIC
 	int32_t *end, *lp;
 	int copysize;
-	char *savedtype;
+	const char *savedtype;
 #endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
