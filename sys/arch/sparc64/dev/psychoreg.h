@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.3 2000/04/10 16:04:02 mrg Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.4 2000/05/24 20:27:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -295,6 +295,11 @@ struct psychoreg {
  * bits in 64 bit space, with ll..ll being the low 32 bits in both cases,
  * with offset handling being driver via `n == 0' as for I/O space.
  */
+
+/* commonly used */
+#define TAG2BUS(tag)	((tag) >> 16) & 0xff;
+#define TAG2DEV(tag)	((tag) >> 11) & 0x1f;
+#define TAG2FN(tag)	((tag) >> 8) & 0x7;
 
 struct psycho_registers {
 	u_int32_t	phys_hi;

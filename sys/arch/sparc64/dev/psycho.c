@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.11 2000/05/17 10:28:14 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.12 2000/05/24 20:27:52 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -252,7 +252,8 @@ sabre_init(sc, pba)
 	printf("sabre: ");
 
 	/* setup the PCI control register; there is only one for the sabre */
-	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
+	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)
+		&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
 	       PCICTL_ERRINTEN |
@@ -261,7 +262,8 @@ sabre_init(sc, pba)
 		 PCICTL_CPU_PRIO |
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
+	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 
+		0, csr);
 
 	/* allocate a pair of psycho_pbm's for our simba's */
 	sc->sc_sabre = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
@@ -293,6 +295,8 @@ sabre_init(sc, pba)
 	for (node = firstchild(sc->sc_node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 		char *model, who;
+		struct psycho_registers *regs;
+		int nregs, fn;
 
 		if (strcmp(name, ROM_PCI_NAME) != 0)
 			continue;
@@ -302,13 +306,24 @@ sabre_init(sc, pba)
 			continue;
 
 		psycho_get_bus_range(node, simba_br);
+		psycho_get_registers(node, &regs, &nregs);
 
-		if (simba_br[0] == 1) {		/* PCI B */
-			pp = sc->sc_simba_b;
-			who = 'b';
-		} else {			/* PCI A */
+		fn = TAG2FN(regs->phys_hi);
+		switch (fn) {
+		case 0:
 			pp = sc->sc_simba_a;
 			who = 'a';
+			pp->pp_regs = regs;
+			pp->pp_nregs = nregs;
+			break;
+		case 1:
+			pp = sc->sc_simba_b;
+			who = 'b';
+			pp->pp_regs = regs;
+			pp->pp_nregs = nregs;
+			break;
+		default:
+			panic("illegal simba funcion %d\n");
 		}
 		pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 		/* link us in .. */
@@ -317,7 +332,6 @@ sabre_init(sc, pba)
 		printf("; simba %c, PCI bus %d", who, simba_br[0]);
 
 		/* grab the simba registers, interrupt map and map mask */
-		psycho_get_registers(node, &pp->pp_regs, &pp->pp_nregs);
 		psycho_get_intmap(node, &pp->pp_intmap, &pp->pp_nintmap);
 		psycho_get_intmapmask(node, &pp->pp_intmapmask);
 
@@ -330,6 +344,7 @@ sabre_init(sc, pba)
 
 		/* allocate a chipset for this */
 		pp->pp_pc = psycho_alloc_chipset(pp, node, &_sparc_pci_chipset);
+		pp->pp_pc->busno = pp->pp_bus = simba_br[0];
 	}
 
 	/* setup the rest of the sabre pbm */

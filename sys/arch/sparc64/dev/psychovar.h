@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.2 2000/04/10 16:11:23 mrg Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.3 2000/05/24 20:27:52 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -60,6 +60,7 @@ struct psycho_pbm {
 	bus_space_tag_t			pp_memt;
 	bus_space_tag_t			pp_iot;
 	bus_dma_tag_t			pp_dmat;
+	int				pp_bus;
 	int				pp_flags;
 
 	/* and pointers into the psycho regs for our bits */
@@ -98,7 +99,7 @@ struct psycho_softc {
 
 	/* config space */
 	bus_space_tag_t			sc_configtag;
-	paddr_t				sc_configaddr;
+	bus_space_handle_t		sc_configaddr;
 
 	int				sc_clockfreq;
 	int				sc_node;	/* prom node */
