@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.53 1999/08/02 01:12:21 sommerfeld Exp $	*/
+/*	$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.53 1999/08/02 01:12:21 sommerfeld Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.54 1999/09/15 09:59:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1842,13 +1842,15 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 {
 	char buffer[BUFSIZE];
 	int i, size;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
+	struct sockaddr *sa;
 
-	size = sizeof(sa);
-	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size)) < 0)
+	sa = (struct sockaddr *)&ss;
+	size = sizeof(ss);
+	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, sa, &size)) < 0)
 		return;
-	if (port_good_dg(&sa))
-		(void) sendto(s, buffer, i, 0, &sa, sizeof(sa));
+	if (port_good_dg(sa))
+		(void) sendto(s, buffer, i, 0, sa, size);
 }
 
 /* ARGSUSED */
@@ -1931,7 +1933,8 @@ chargen_dg(s, sep)		/* Character generator */
 	int s;
 	struct servtab *sep;
 {
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
+	struct sockaddr *sa;
 	static char *rs;
 	int len, size;
 	char text[LINESIZ+2];
@@ -1941,11 +1944,12 @@ chargen_dg(s, sep)		/* Character generator */
 		rs = ring;
 	}
 
-	size = sizeof(sa);
-	if (recvfrom(s, text, sizeof(text), 0, &sa, &size) < 0)
+	sa = (struct sockaddr *)&ss;
+	size = sizeof(ss);
+	if (recvfrom(s, text, sizeof(text), 0, sa, &size) < 0)
 		return;
 
-	if (!port_good_dg(&sa))
+	if (!port_good_dg(sa))
 		return;
 
 	if ((len = endring - rs) >= LINESIZ)
@@ -1958,7 +1962,7 @@ chargen_dg(s, sep)		/* Character generator */
 		rs = ring;
 	text[LINESIZ] = '\r';
 	text[LINESIZ + 1] = '\n';
-	(void) sendto(s, text, sizeof(text), 0, &sa, sizeof(sa));
+	(void) sendto(s, text, sizeof(text), 0, sa, size);
 }
 
 /*
@@ -2003,16 +2007,18 @@ machtime_dg(s, sep)
 	struct servtab *sep;
 {
 	long result;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
+	struct sockaddr *sa;
 	int size;
 
-	size = sizeof(sa);
-	if (recvfrom(s, (char *)&result, sizeof(result), 0, &sa, &size) < 0)
+	sa = (struct sockaddr *)&ss;
+	size = sizeof(ss);
+	if (recvfrom(s, (char *)&result, sizeof(result), 0, sa, &size) < 0)
 		return;
-	if (!port_good_dg(&sa))
+	if (!port_good_dg(sa))
 		return;
 	result = machtime();
-	(void) sendto(s, (char *) &result, sizeof(result), 0, &sa, sizeof(sa));
+	(void) sendto(s, (char *) &result, sizeof(result), 0, sa, size);
 }
 
 /* ARGSUSED */
@@ -2039,18 +2045,20 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 {
 	char buffer[256];
 	time_t clock;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
+	struct sockaddr *sa;
 	int size, len;
 
 	clock = time((time_t *) 0);
 
-	size = sizeof(sa);
-	if (recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size) < 0)
+	sa = (struct sockaddr *)&ss;
+	size = sizeof(ss);
+	if (recvfrom(s, buffer, sizeof(buffer), 0, sa, &size) < 0)
 		return;
-	if (!port_good_dg(&sa))
+	if (!port_good_dg(sa))
 		return;
 	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
-	(void) sendto(s, buffer, len, 0, &sa, sizeof(sa));
+	(void) sendto(s, buffer, len, 0, sa, size);
 }
 
 /*
@@ -2197,7 +2205,7 @@ dolog(sep, ctrl)
 	int		ctrl;
 {
 	struct sockaddr_storage	ss;
-	struct sockaddr		*sa = (struct sockaddr *)ss;
+	struct sockaddr		*sa = (struct sockaddr *)&ss;
 	struct sockaddr_in	*sin = (struct sockaddr_in *)&ss;
 	int			len = sizeof(ss);
 	struct hostent		*hp;
@@ -2429,26 +2437,39 @@ int	ctrl;
  * that are used for denial of service attacks like two echo ports
  * just echoing data between them
  */
-int port_good_dg(struct sockaddr *sa)
+int
+port_good_dg(sa)
+	struct sockaddr *sa;
 {
-	struct sockaddr_in *sin;
 	u_int16_t port;
-	int i,bad;
+	int i, bad;
+	char hbuf[80];
 
-	bad=0;
+	bad = 0;
 
-	sin=(struct sockaddr_in *)sa;
-	port=ntohs(sin->sin_port);
+	switch (sa->sa_family) {
+	case AF_INET:
+		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+		break;
+	case AF_INET6:
+		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
+		break;
+	default:
+		/* XXX unsupported af, is it safe to assume it to be safe? */
+		return 1;
+	}
 
-	for(i=0;bad_ports[i]!=0;i++)
-		if (port==bad_ports[i]) {
-			bad=1;
+	for (i = 0; bad_ports[i] != 0; i++)
+		if (port == bad_ports[i]) {
+			bad = 1;
 			break;
 		}
 
 	if (bad) {
+		getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf),
+			NULL, 0, NI_NUMERICHOST);
 		syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
-			inet_ntoa(sin->sin_addr),port);
+			hbuf, port);
 		return (0);
 	} else
 		return (1);
