@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_verrx, verrx);
+__indr_reference(_verrx, verrx)
 #else
 
 #define	__NO_NAMESPACE_H	/* XXX */

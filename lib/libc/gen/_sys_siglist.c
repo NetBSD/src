@@ -6,8 +6,8 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_sys_siglist, sys_siglist);
-__indr_reference(_sys_siglist, __sys_siglist); /* Backwards compat with v.12 */
+__indr_reference(_sys_siglist, sys_siglist)
+__indr_reference(_sys_siglist, __sys_siglist) /* Backwards compat with v.12 */
 #else
 
 #undef _sys_siglist

@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.9 1997/07/13 20:15:31 christos Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.10 1997/11/04 23:53:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.9 1997/07/13 20:15:31 christos Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.10 1997/11/04 23:53:00 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: tempnam.c,v 1.9 1997/07/13 20:15:31 christos Exp $");
 #include "local.h"
 
 __warn_references(tempnam,
-    "warning: tempnam() possibly used unsafely, consider using mkstemp()");
+    "warning: tempnam() possibly used unsafely, consider using mkstemp()")
 
 char *
 tempnam(dir, pfx)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __res_close.c,v 1.3 1997/07/17 21:27:34 thorpej Exp $	*/
+/*	$NetBSD: __res_close.c,v 1.4 1997/11/04 23:52:38 thorpej Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(__res_close,_res_close);
+__indr_reference(__res_close,_res_close)
 #else
 
 #include <sys/types.h>

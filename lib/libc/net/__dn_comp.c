@@ -1,4 +1,4 @@
-/*	$NetBSD: __dn_comp.c,v 1.3 1997/07/17 21:27:33 thorpej Exp $	*/
+/*	$NetBSD: __dn_comp.c,v 1.4 1997/11/04 23:52:36 thorpej Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(__dn_comp,dn_comp);
+__indr_reference(__dn_comp,dn_comp)
 #else
 
 #include <sys/types.h>

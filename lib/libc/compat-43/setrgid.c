@@ -1,4 +1,4 @@
-/*	$NetBSD: setrgid.c,v 1.7 1997/07/13 18:50:12 christos Exp $	*/
+/*	$NetBSD: setrgid.c,v 1.8 1997/11/04 23:52:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,14 +38,14 @@
 #if 0
 static char *sccsid = "@(#)setrgid.c	5.5 (Berkeley) 2/23/91";
 #else
-__RCSID("$NetBSD: setrgid.c,v 1.7 1997/07/13 18:50:12 christos Exp $");
+__RCSID("$NetBSD: setrgid.c,v 1.8 1997/11/04 23:52:05 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
 
-__warn_references(setrgid, "warning: this program uses setrgid(), which is deprecated.");
+__warn_references(setrgid, "warning: this program uses setrgid(), which is deprecated.")
 
 int
 #ifdef __STDC__
