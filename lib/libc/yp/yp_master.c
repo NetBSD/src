@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.5 1997/05/21 06:55:25 lukem Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.6 1997/07/07 02:00:35 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_master.c,v 1.5 1997/05/21 06:55:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: yp_master.c,v 1.6 1997/07/07 02:00:35 lukem Exp $";
 #endif
 
 #include <string.h>
@@ -58,8 +58,7 @@ yp_master(indomain, inmap, outname)
 		return YPERR_BADARGS;
 	*outname = NULL;
 
-	if (indomain == NULL || *indomain == '\0'
-	    || strlen(indomain) > YPMAXDOMAIN)
+	if (_yp_invalid_domain(indomain))
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)

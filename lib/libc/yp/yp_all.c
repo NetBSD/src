@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.4 1996/05/29 20:05:58 thorpej Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.5 1997/07/07 02:00:30 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_all.c,v 1.4 1996/05/29 20:05:58 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yp_all.c,v 1.5 1997/07/07 02:00:30 lukem Exp $";
 #endif
 
 #include <string.h>
@@ -55,8 +55,7 @@ yp_all(indomain, inmap, incallback)
 	CLIENT         *clnt;
 	int             clnt_sock;
 
-	if (indomain == NULL || *indomain == '\0'
-	    || strlen(indomain) > YPMAXDOMAIN)
+	if (_yp_invalid_domain(indomain))
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)

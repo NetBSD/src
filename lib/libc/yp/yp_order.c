@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.4 1996/05/23 13:49:03 christos Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.5 1997/07/07 02:00:39 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_order.c,v 1.4 1996/05/23 13:49:03 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_order.c,v 1.5 1997/07/07 02:00:39 lukem Exp $";
 #endif
 
 #include <string.h>
@@ -54,8 +54,7 @@ yp_order(indomain, inmap, outorder)
 	struct ypreq_nokey yprnk;
 	int r, nerrs = 0;
 
-	if (indomain == NULL || *indomain == '\0'
-	    || strlen(indomain) > YPMAXDOMAIN)
+	if (_yp_invalid_domain(indomain))
 		return YPERR_BADARGS;
 	if (inmap == NULL || *inmap == '\0'
 	    || strlen(inmap) > YPMAXMAP)

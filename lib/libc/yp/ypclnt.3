@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.7 1997/05/21 06:55:27 lukem Exp $
+.\"	$NetBSD: ypclnt.3,v 1.8 1997/07/07 02:00:41 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .Ft int
 .Fn yp_first "const char *indomain" "const char *inmap" "char **outkey" "int *outkeylen" "char **outval" "int *outvallen"
 .Ft int
-.Fn yp_get_default_domain "char **domp"
+.Fn yp_get_default_domain "char **outdomain"
 .Ft int
 .Fn yp_master "const char *indomain" "const char *inmap" "char **outname"
 .Ft int
