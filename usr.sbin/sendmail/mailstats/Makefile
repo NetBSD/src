@@ -4,5 +4,4 @@ PROG=	mailstats
 MAN=	mailstats.8
 CFLAGS+=-I${.CURDIR}/../src
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
