@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.60 2003/04/02 10:39:36 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.61 2003/04/10 20:03:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.60 2003/04/02 10:39:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.61 2003/04/10 20:03:40 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -727,6 +727,7 @@ ffs_valloc(v)
 		DIP(ip, blocks) = 0;
 	}
 	ip->i_flag &= ~IN_SPACECOUNTED;
+	ip->i_flags = 0;
 	DIP(ip, flags) = 0;
 	/*
 	 * Set up a new generation number for this inode.
