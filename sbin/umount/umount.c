@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.21 1997/11/01 12:54:45 drochner Exp $	*/
+/*	$NetBSD: umount.c,v 1.22 1997/12/18 07:11:49 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.21 1997/11/01 12:54:45 drochner Exp $");
+__RCSID("$NetBSD: umount.c,v 1.22 1997/12/18 07:11:49 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: %s\n       %s\n",
-	    "umount [-fv] [-t fstypelist] special | node",
-	    "umount -a[fv] [-h host] [-t fstypelist]");
+	    "umount [-fvF] [-t fstypelist] special | node",
+	    "umount -a[fvF] [-h host] [-t fstypelist]");
 	exit(1);
 }
