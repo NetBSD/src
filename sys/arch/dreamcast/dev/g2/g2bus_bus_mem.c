@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.2 2001/01/31 21:58:37 marcus Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.3 2001/02/01 01:01:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,12 @@ void	g2bus_bus_mem_write_2(void *, bus_space_handle_t, bus_size_t,
 void	g2bus_bus_mem_write_4(void *, bus_space_handle_t, bus_size_t,
 	    u_int32_t);
 
+void	g2bus_bus_mem_read_region_1(void *, bus_space_handle_t, bus_size_t,
+	    u_int8_t *, bus_size_t);
+
+void	g2bus_bus_mem_write_region_1(void *, bus_space_handle_t, bus_size_t,
+	    const u_int8_t *, bus_size_t);
+
 void
 g2bus_bus_mem_init(struct g2bus_softc *sc)
 {
@@ -89,6 +95,10 @@ g2bus_bus_mem_init(struct g2bus_softc *sc)
 	t->dbs_w_1 = g2bus_bus_mem_write_1;
 	t->dbs_w_2 = g2bus_bus_mem_write_2;
 	t->dbs_w_4 = g2bus_bus_mem_write_4;
+
+	t->dbs_rr_1 = g2bus_bus_mem_read_region_1;
+
+	t->dbs_wr_1 = g2bus_bus_mem_write_region_1;
 }
 
 int
@@ -136,7 +146,7 @@ g2bus_bus_mem_read_1(void *v, bus_space_handle_t sh, bus_size_t off)
 
 	G2_LOCK;
 
-	rv = *(u_int8_t *)(sh + off);
+	rv = *(__volatile u_int8_t *)(sh + off);
 
 	G2_UNLOCK;
 
@@ -150,7 +160,7 @@ g2bus_bus_mem_read_2(void *v, bus_space_handle_t sh, bus_size_t off)
 
 	G2_LOCK;
 
-	rv = *(u_int16_t *)(sh + off);
+	rv = *(__volatile u_int16_t *)(sh + off);
 
 	G2_UNLOCK;
 
@@ -164,7 +174,7 @@ g2bus_bus_mem_read_4(void *v, bus_space_handle_t sh, bus_size_t off)
 
 	G2_LOCK;
 
-	rv = *(u_int32_t *)(sh + off);
+	rv = *(__volatile u_int32_t *)(sh + off);
 
 	G2_UNLOCK;
 
@@ -178,7 +188,7 @@ g2bus_bus_mem_write_1(void *v, bus_space_handle_t sh, bus_size_t off,
 
 	G2_LOCK;
 
-	*(u_int8_t *)(sh + off) = val;
+	*(__volatile u_int8_t *)(sh + off) = val;
 
 	G2_UNLOCK;
 }
@@ -190,7 +200,7 @@ g2bus_bus_mem_write_2(void *v, bus_space_handle_t sh, bus_size_t off,
 
 	G2_LOCK;
 
-	*(u_int16_t *)(sh + off) = val;
+	*(__volatile u_int16_t *)(sh + off) = val;
 
 	G2_UNLOCK;
 }
@@ -202,7 +212,35 @@ g2bus_bus_mem_write_4(void *v, bus_space_handle_t sh, bus_size_t off,
 
 	G2_LOCK;
 
-	*(u_int32_t *)(sh + off) = val;
+	*(__volatile u_int32_t *)(sh + off) = val;
+
+	G2_UNLOCK;
+}
+
+void
+g2bus_bus_mem_read_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
+    u_int8_t *addr, bus_size_t len)
+{
+	__volatile const u_int8_t *baddr = (u_int8_t *)(sh + off);
+
+	G2_LOCK;
+
+	while (len--)
+		*addr++ = *baddr++;
+
+	G2_UNLOCK;
+}
+
+void
+g2bus_bus_mem_write_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
+    const u_int8_t *addr, bus_size_t len)
+{
+	__volatile u_int8_t *baddr = (u_int8_t *)(sh + off);
+
+	G2_LOCK;
+
+	while (len--)
+		*baddr++ = *addr++;
 
 	G2_UNLOCK;
 }
