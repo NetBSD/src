@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.2 1996/05/25 22:13:07 leo Exp $
+#	$NetBSD: install.md,v 1.3 1996/05/30 07:09:20 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -182,7 +182,6 @@ __md_copy_kernel_1
 }
 
 md_welcome_banner() {
-{
 	if [ "$MODE" = "install" ]; then
 		echo ""
 		echo "Welcome to the NetBSD/atari ${VERSION} installation program."
@@ -222,7 +221,6 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_3
-} | more
 }
 
 md_not_going_to_install() {
