@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.15 1997/10/19 09:25:33 mrg Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.16 1998/03/18 17:19:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.15 1997/10/19 09:25:33 mrg Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.16 1998/03/18 17:19:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,9 @@ __RCSID("$NetBSD: dumpfs.c,v 1.15 1997/10/19 09:25:33 mrg Exp $");
 #include <sys/time.h>
 
 #include <ufs/ufs/dinode.h>
+#include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
 #include <errno.h>
@@ -75,12 +77,14 @@ union {
 #define	acg	cgun.cg
 
 long	dev_bsize = 1;
+int needswap = 0;
 
 int	dumpfs __P((char *));
 int	dumpcg __P((char *, int, int));
 int	main __P((int, char **));
 void	pbits __P((void *, int));
 void	usage __P((void));
+void swap_cg __P((struct cg *));
 
 int
 main(argc, argv)
@@ -123,12 +127,23 @@ dumpfs(name)
 	if (read(fd, &afs, SBSIZE) != SBSIZE)
 		goto err;
 
- 	if (afs.fs_magic != FS_MAGIC) {
-		warnx("%s: superblock has bad magic number, skipped", name);
-		(void)close(fd);
- 		return (1);
- 	}
-
+ 	if (afs.fs_magic != FS_MAGIC)
+		if (afs.fs_magic == bswap32(FS_MAGIC)) {
+			ffs_sb_swap(&afs, &afs, 0);
+			needswap = 1;
+		} else {
+			warnx("%s: superblock has bad magic number, skipped", name);
+			(void)close(fd);
+ 			return (1);
+ 		}
+#if BYTE_ORDER == LITTLE_ENDIAN
+	if (needswap)
+#else
+	if (!needswap)
+#endif
+		printf("Endian big-endian ");
+	else
+		printf("Endian little-endian ");
 	if (afs.fs_postblformat == FS_42POSTBLFMT)
 		afs.fs_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
@@ -215,6 +230,8 @@ dumpfs(name)
 			goto err;
 		if (read(fd, afs.fs_csp[j], size) != size)
 			goto err;
+		if (needswap)
+			ffs_csum_swap(afs.fs_csp[j], afs.fs_csp[j], size);
 	}
 	for (i = 0; i < afs.fs_ncg; i++) {
 		struct csum *cs = &afs.fs_cs(&afs, i);
@@ -259,6 +276,8 @@ dumpcg(name, fd, c)
 		warnx("%s: error reading cg", name);
 		return (1);
 	}
+	if (needswap)
+		swap_cg(&acg);
 	printf("magic\t%x\ttell\t%qx\ttime\t%s",
 	    afs.fs_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
@@ -281,29 +300,29 @@ dumpcg(name, fd, c)
 				printf("\nclusters %d-%d:", i,
 				    afs.fs_contigsumsize - 1 < i + 7 ?
 				    afs.fs_contigsumsize - 1 : i + 7);
-			printf("\t%d", cg_clustersum(&acg)[i]);
+			printf("\t%d", cg_clustersum(&acg, 0)[i]);
 		}
 		printf("\nclusters size %d and over: %d\n",
 		    afs.fs_contigsumsize,
-		    cg_clustersum(&acg)[afs.fs_contigsumsize]);
+		    cg_clustersum(&acg, 0)[afs.fs_contigsumsize]);
 		printf("clusters free:\t");
-		pbits(cg_clustersfree(&acg), acg.cg_nclusterblks);
+		pbits(cg_clustersfree(&acg, 0), acg.cg_nclusterblks);
 	} else
 		printf("\n");
 	printf("iused:\t");
-	pbits(cg_inosused(&acg), afs.fs_ipg);
+	pbits(cg_inosused(&acg, 0), afs.fs_ipg);
 	printf("free:\t");
-	pbits(cg_blksfree(&acg), afs.fs_fpg);
+	pbits(cg_blksfree(&acg, 0), afs.fs_fpg);
 	printf("b:\n");
 	for (i = 0; i < afs.fs_cpg; i++) {
-		if (cg_blktot(&acg)[i] == 0)
+		if (cg_blktot(&acg, 0)[i] == 0)
 			continue;
-		printf("   c%d:\t(%d)\t", i, cg_blktot(&acg)[i]);
+		printf("   c%d:\t(%d)\t", i, cg_blktot(&acg, 0)[i]);
 		for (j = 0; j < afs.fs_nrpos; j++) {
 			if (afs.fs_cpc > 0 &&
 			    fs_postbl(&afs, i % afs.fs_cpc)[j] == -1)
 				continue;
-			printf(" %d", cg_blks(&afs, &acg, i)[j]);
+			printf(" %d", cg_blks(&afs, &acg, i, 0)[j]);
 		}
 		printf("\n");
 	}
@@ -340,4 +359,74 @@ usage()
 
 	(void)fprintf(stderr, "usage: dumpfs filesys | device\n");
 	exit(1);
+}
+
+void
+swap_cg(cg)
+	struct cg *cg;
+{
+	int i;
+	u_int32_t *n32;
+	u_int16_t *n16;
+
+	cg->cg_firstfield = bswap32(cg->cg_firstfield);
+	cg->cg_magic = bswap32(cg->cg_magic);
+	cg->cg_time = bswap32(cg->cg_time);
+	cg->cg_cgx = bswap32(cg->cg_cgx);
+	cg->cg_ncyl = bswap16(cg->cg_ncyl);
+	cg->cg_niblk = bswap16(cg->cg_niblk);
+	cg->cg_ndblk = bswap32(cg->cg_ndblk);
+	cg->cg_cs.cs_ndir = bswap32(cg->cg_cs.cs_ndir);
+	cg->cg_cs.cs_nbfree = bswap32(cg->cg_cs.cs_nbfree);
+	cg->cg_cs.cs_nifree = bswap32(cg->cg_cs.cs_nifree);
+	cg->cg_cs.cs_nffree = bswap32(cg->cg_cs.cs_nffree);
+	cg->cg_rotor = bswap32(cg->cg_rotor);
+	cg->cg_frotor = bswap32(cg->cg_frotor);
+	cg->cg_irotor = bswap32(cg->cg_irotor);
+	cg->cg_btotoff = bswap32(cg->cg_btotoff);
+	cg->cg_boff = bswap32(cg->cg_boff);
+	cg->cg_iusedoff = bswap32(cg->cg_iusedoff);
+	cg->cg_freeoff = bswap32(cg->cg_freeoff);
+	cg->cg_nextfreeoff = bswap32(cg->cg_nextfreeoff);
+	cg->cg_clustersumoff = bswap32(cg->cg_clustersumoff);
+	cg->cg_clusteroff = bswap32(cg->cg_clusteroff);
+	cg->cg_nclusterblks = bswap32(cg->cg_nclusterblks);
+	for (i=0; i < MAXFRAG; i++)
+		cg->cg_frsum[i] = bswap32(cg->cg_frsum[i]);
+
+	if (afs.fs_postblformat == FS_42POSTBLFMT) { /* old format */
+		struct ocg *ocg;
+		int j;
+		ocg = (struct ocg *)cg;
+		for(i = 0; i < 8; i++) {
+			ocg->cg_frsum[i] = bswap32(ocg->cg_frsum[i]);
+		}
+		for(i = 0; i < 32; i++) {
+			ocg->cg_btot[i] = bswap32(ocg->cg_btot[i]);
+			for (j = 0; j < 8; j++)
+				ocg->cg_b[i][j] = bswap16(ocg->cg_b[i][j]);
+		}
+		ocg->cg_magic = bswap32(ocg->cg_magic);
+	} else {  /* new format */
+		if (cg->cg_magic == CG_MAGIC) {
+			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_btotoff);
+			n16 = (u_int16_t*)((u_int8_t*)cg + cg->cg_boff);
+		} else {
+			n32 = (u_int32_t*)((u_int8_t*)cg + bswap32(cg->cg_btotoff));
+			n16 = (u_int16_t*)((u_int8_t*)cg + bswap32(cg->cg_boff));
+		}
+		for (i=0; i< afs.fs_cpg; i++)
+			n32[i] = bswap32(n32[i]);
+		
+		for (i=0; i < afs.fs_cpg * afs.fs_nrpos; i++)
+			n16[i] = bswap16(n16[i]);
+
+		if (cg->cg_magic == CG_MAGIC) {
+			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_clustersumoff);
+		} else {
+			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_clustersumoff);
+		}
+		for (i = 0; i < afs.fs_contigsumsize + 1; i++)
+			n32[i] = bswap32(n32[i]);
+	}
 }

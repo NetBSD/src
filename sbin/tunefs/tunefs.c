@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.12 1997/09/16 12:54:42 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.13 1998/03/18 17:19:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.12 1997/09/16 12:54:42 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.13 1998/03/18 17:19:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.12 1997/09/16 12:54:42 lukem Exp $");
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <errno.h>
 #include <err.h>
@@ -73,9 +74,11 @@ union {
 	char pad[MAXBSIZE];
 } sbun;
 #define	sblock sbun.sb
+char buf[MAXBSIZE];
 
 int fi;
 long dev_bsize = 1;
+int needswap = 0;
 
 void bwrite __P((daddr_t, char *, int));
 int bread __P((daddr_t, char *, int));
@@ -260,11 +263,14 @@ again:
 	fi = open(special, 1);
 	if (fi < 0)
 		err(3, "cannot open %s for writing", special);
-	bwrite((daddr_t)SBOFF / dev_bsize, (char *)&sblock, SBSIZE);
+	memcpy(buf, (char *)&sblock, SBSIZE);
+	if (needswap)
+		ffs_sb_swap((struct fs*)buf, (struct fs*)buf, 1);
+	bwrite((daddr_t)SBOFF / dev_bsize, buf, SBSIZE);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
 			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
-			    (char *)&sblock, SBSIZE);
+			    buf, SBSIZE);
 	close(fi);
 	exit(0);
 }
@@ -296,7 +302,11 @@ getsb(fs, file)
 	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE))
 		err(4, "%s: bad super block", file);
 	if (fs->fs_magic != FS_MAGIC)
-		err(5, "%s: bad magic number", file);
+		if (fs->fs_magic == bswap32(FS_MAGIC)) {
+			needswap = 1;
+			ffs_sb_swap(fs, fs, 0);
+		} else
+			err(5, "%s: bad magic number", file);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	close(fi);
 }
