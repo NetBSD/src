@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.5 1995/01/10 16:47:03 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.6 1996/03/14 21:09:21 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,16 +53,22 @@
 
 #include <machine/bsd_openprom.h>
 #include <machine/openpromio.h>
+#include <machine/autoconf.h>
+
+#include <sparc/sparc/sparc_conf.h>
 
 static	int lastnode;			/* speed hack */
 extern	int optionsnode;		/* node ID of ROM's options */
-extern	int findroot();			/* returns node ID of top node */
 extern	struct promvec *promvec;
 
+static int openpromcheckid __P((int, int));
+static int openpromgetstr __P((int, char *, char **));
+
 int
-openpromopen(dev, flags, mode)
+openpromopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
+	struct proc *p;
 {
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4)
@@ -73,9 +79,10 @@ openpromopen(dev, flags, mode)
 }
 
 int
-openpromclose(dev, flags, mode)
+openpromclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
+	struct proc *p;
 {
 
 	return (0);

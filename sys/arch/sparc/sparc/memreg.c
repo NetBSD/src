@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.8 1995/12/11 12:45:19 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.9 1996/03/14 21:09:20 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -57,6 +58,8 @@ static int memregmatch __P((struct device *, void *, void *));
 static void memregattach __P((struct device *, struct device *, void *));
 struct cfdriver memregcd =
     { 0, "memreg", memregmatch, memregattach, DV_DULL, sizeof(struct device) };
+
+void memerr __P((int, int, int, int, int));
 
 /*
  * The OPENPROM calls this "memory-error".
@@ -109,23 +112,23 @@ void
 memerr(issync, ser, sva, aer, ava)
 	int issync, ser, sva, aer, ava;
 {
-
+	static const char fmt1[] = "mem err: ser=%b sva=%x\n";
+	static const char fmt2[] = "parity error register = %b\n";
+	static const char fmt3[] = "%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n";
 	if (cputyp == CPU_SUN4) {
 		if (par_err_reg) {
-			printf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);
-			printf("parity error register = %b\n",
-				*par_err_reg, PER_BITS);
+			printf(fmt1, ser, SER_BITS, sva);
+			printf(fmt2, *par_err_reg, PER_BITS);
 		} else {
 			printf("mem err: ser=? sva=?\n");
 			printf("parity error register not mapped yet!\n"); /* XXX */
 		}
 	} else {
-		printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
+		printf(fmt3,
 		    issync ? "" : "a", ser, SER_BITS, sva, aer & 0xff,
 		    AER_BITS, ava);
 		if (par_err_reg)
-			printf("parity error register = %b\n",
-				*par_err_reg, PER_BITS);
+			printf(fmt2, *par_err_reg, PER_BITS);
 	}
 #ifdef DEBUG
 	callrom();

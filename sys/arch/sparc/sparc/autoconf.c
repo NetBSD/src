@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1996/01/15 00:06:49 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.43 1996/03/14 21:08:50 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,10 @@
 
 #include <net/if.h>
 
+#include <dev/cons.h>
+
+#include <vm/vm.h>
+
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
 #ifdef SUN4
@@ -69,6 +73,14 @@
 #include <sparc/sparc/memreg.h>
 #endif
 #include <machine/cpu.h>
+#include <machine/pmap.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
+
 
 /*
  * The following several variables are related to
@@ -90,11 +102,21 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
-int	findroot __P((void));
 void	setroot __P((void));
+static	char *str2hex __P((char *, int *));
 static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct device *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
+static int mbprint __P((void *, char *));
+static	void crazymap __P((char *, int *));
+int	st_crazymap __P((int));
+void	swapconf __P((void));
+void	sync_crash __P((void));
+int	findnode __P((int, const char *));
+int	mainbus_match __P((struct device *, void *, void *));
+static	void mainbus_attach __P((struct device *, struct device *, void *));
+volatile void romhalt __P((void));
+volatile void romboot __P((char *));
 
 struct	bootpath bootpath[8];
 static	void bootpath_build __P((void));
@@ -180,10 +202,9 @@ void	getidprom __P((struct idprom *, int size));
 void
 bootstrap()
 {
-	int nregion, nsegment, ncontext, node;
+	int nregion = 0, nsegment = 0, ncontext = 0, node;
 
 #if defined(SUN4)
-	extern void oldmon_w_cmd();
 	extern struct msgbuf *msgbufp;
 
 	if (cputyp == CPU_SUN4) {
@@ -286,14 +307,13 @@ bootpath_build()
 {
 	register char *cp, *pp;
 	register struct bootpath *bp;
-	int v0val[3];
 
 	/*
 	 * On SS1s, promvec->pv_v0bootargs->ba_argv[1] contains the flags
 	 * that were given after the boot command.  On SS2s, pv_v0bootargs
 	 * is NULL but *promvec->pv_v2bootargs.v2_bootargs points to
 	 * "vmunix -s" or whatever.
-	 * ###	DO THIS BEFORE pmap_boostrap?
+	 * XXX	DO THIS BEFORE pmap_boostrap?
 	 */
 	bzero(bootpath, sizeof(bootpath));
 	bp = bootpath;
@@ -583,7 +603,6 @@ crazymap(prop, map)
 {
 	int i;
 	char *propval;
-	struct nodeops *no;
 
 	if (cputyp != CPU_SUN4 && promvec->pv_romvec_vers < 2) {
 		/*
@@ -654,12 +673,12 @@ st_crazymap(n)
  * attach it as `mainbus0'.  We also set up to handle the PROM `sync'
  * command.
  */
+void
 configure()
 {
 	struct confargs oca;
 	register int node = 0;
 	register char *cp;
-	void sync_crash();
 
 	/* Initialize the mountroot_hook list. */
 	LIST_INIT(&mrh_list);
@@ -746,7 +765,6 @@ clockfreq(freq)
 	register int freq;
 {
 	register char *p;
-int n;
 	static char buf[10];
 
 	freq /= 1000;
@@ -795,7 +813,7 @@ findroot()
 int
 findnode(first, name)
 	int first;
-	register char *name;
+	register const char *name;
 {
 	register int node;
 
@@ -867,11 +885,12 @@ romprop(rp, cp, node)
 }
 
 int
-mainbus_match(parent, cf, aux)
+mainbus_match(parent, self, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *self;
 	void *aux;
 {
+	struct cfdata *cf = self;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -892,16 +911,18 @@ mainbus_attach(parent, dev, aux)
 {
 	struct confargs oca, *ca = aux;
 	register int node0, node;
-	register const char *cp, *const *ssp, *sp;
+	register const char *cp, *const *ssp, *sp = NULL;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
 #ifdef L1A_HACK
 	int nzs = 0, audio = 0;
 #endif
+#if defined(SUN4)
 	static const char *const oldmon_special[] = {
 		"vmel",
 		"vmes",
 		NULL
 	};
+#endif
 
 	static const char *const openboot_special[] = {
 		/* find these first (end with empty string) */
@@ -1068,7 +1089,6 @@ findzs(zs)
 		}
 	}
 #endif
-bail:
 	panic("findzs: cannot find zs%d", zs);
 	/* NOTREACHED */
 }
@@ -1318,11 +1338,11 @@ romgetcursoraddr(rowp, colp)
 	 */
 	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
 		sprintf(buf,
-		    "' line# >body >user %x ! ' column# >body >user %x !",
+		    "' line# >body >user %p ! ' column# >body >user %p !",
 		    rowp, colp);
 	else
 		sprintf(buf,
-		    "stdout @ is my-self addr line# %x ! addr column# %x !",
+		    "stdout @ is my-self addr line# %p ! addr column# %p !",
 		    rowp, colp);
 	*rowp = *colp = NULL;
 	rominterpret(buf);
@@ -1347,6 +1367,7 @@ romboot(str)
 	panic("PROM boot failed");
 }
 
+void
 callrom()
 {
 
@@ -1360,6 +1381,7 @@ callrom()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -1510,15 +1532,15 @@ setroot()
 	register int len, majdev, mindev;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-	extern int (*mountroot)();
+	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct mountroot_hook *mrhp;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot();
+	extern int nfs_mountroot __P((void *));
 #endif
 #if defined(FFS)
-	extern int ffs_mountroot();
+	extern int ffs_mountroot __P((void *));
 #endif
 
 	if (boothowto & RB_ASKNAME) {
@@ -1573,6 +1595,11 @@ setroot()
 				case DV_DISK:
 					nswapdev = makedev(major(nrootdev),
 					    (minor(nrootdev) & ~ PARTITIONMASK) | 1);
+					break;
+				case DV_TAPE:
+				case DV_TTY:
+				case DV_DULL:
+				case DV_CPU:
 					break;
 				}
 				break;

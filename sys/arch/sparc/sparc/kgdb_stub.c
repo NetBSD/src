@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.2 1994/11/20 20:54:23 deraadt Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.3 1996/03/14 21:09:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,12 +53,14 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 
+#include <vm/vm.h>
+
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/reg.h>
 #include <machine/remote-sl.h>
 #include <machine/trap.h>
+#include <machine/cpu.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/kgdb_proto.h>
@@ -78,9 +80,20 @@ int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 #define	getpte(va)	lda(va, ASI_PTE)
 #define	setpte(va, pte)	sta(va, ASI_PTE, pte)
 
+void kgdb_copy __P((char *, char *, int));
+static void kgdb_send __P((u_int, u_char *, int));
+static int kgdb_recv __P((u_char *, int *));
+static int computeSignal __P((int));
+void regs_to_gdb __P((struct trapframe *, u_long *));
+void gdb_to_regs __P((struct trapframe *, u_long *));
+int kgdb_trap __P((int, struct trapframe *));
+int kgdb_acc __P((caddr_t, int, int, int));
+void kdb_mkwrite __P((caddr_t, int));
+
 /*
  * This little routine exists simply so that bcopy() can be debugged.
  */
+void
 kgdb_copy(src, dst, len)
 	register char *src, *dst;
 	register int len;
@@ -110,6 +123,7 @@ static void *kgdb_ioarg;
 	PUTC(c); \
 }
 
+void
 kgdb_attach(getfn, putfn, ioarg)
 	int (*getfn) __P((void *));
 	void (*putfn) __P((void *, int));
@@ -126,7 +140,7 @@ kgdb_attach(getfn, putfn, ioarg)
  */
 static void
 kgdb_send(type, bp, len)
-	register u_char type;
+	register u_int type;
 	register u_char *bp;
 	register int len;
 {
@@ -215,7 +229,7 @@ restart:
 /*
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
- * ### should this be done at the other end?
+ * XXX should this be done at the other end?
  */
 static int 
 computeSignal(type)
@@ -267,6 +281,7 @@ computeSignal(type)
  * Trap into kgdb to wait for debugger to connect, 
  * noting on the console why nothing else is going on.
  */
+void
 kgdb_connect(verbose)
 	int verbose;
 {
@@ -282,6 +297,7 @@ kgdb_connect(verbose)
 /*
  * Decide what to do on panic.
  */
+void
 kgdb_panic()
 {
 
@@ -353,7 +369,7 @@ gdb_to_regs(tf, gdb_regs)
 {
 
 	kgdb_copy((caddr_t)&gdb_regs[1], (caddr_t)&tf->tf_global[1], 15 * 4);
-	kgdb_copy((caddr_t)&gdb_regs[GDB_L0], (caddr_t)tf->tf_out[6]);
+	kgdb_copy((caddr_t)&gdb_regs[GDB_L0], (caddr_t)tf->tf_out[6], 16 * 4);
 	tf->tf_y = gdb_regs[GDB_Y];
 	tf->tf_psr = gdb_regs[GDB_PSR];
 	tf->tf_pc = gdb_regs[GDB_PC];
@@ -552,19 +568,17 @@ kgdb_trap(type, tf)
 	}
 }
 
-extern int kernacc();
-extern void chgkprot();
 extern char *kernel_map;			/* XXX! */
 extern char *curproc;				/* XXX! */
 
 /*
  * XXX do kernacc and useracc calls if safe, otherwise use PTE protections.
  */
+int
 kgdb_acc(addr, len, rw, usertoo)
 	caddr_t addr;
 	int len, rw, usertoo;
 {
-	extern char end[];
 	int pte;
 
 	/* XXX icky: valid address but causes timeout */
@@ -582,12 +596,13 @@ kgdb_acc(addr, len, rw, usertoo)
 		    ((int)addr >> PG_VSHIFT) != -1)
 			return (0);
 		pte = getpte(addr);
-		if ((pte & PG_V) == 0 || rw == B_WRITE && (pte & PG_W) == 0)
+		if ((pte & PG_V) == 0 || (rw == B_WRITE && (pte & PG_W) == 0))
 			return (0);
 	}
 	return (1);
 }
 
+void
 kdb_mkwrite(addr, len)
 	register caddr_t addr;
 	register int len;

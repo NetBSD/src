@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1996/03/14 00:54:34 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.22 1996/03/14 21:09:36 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,8 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/map.h>
+#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -66,9 +68,10 @@
 /*
  * Move pages from one kernel virtual address to another.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t pa;
 
@@ -211,7 +214,7 @@ dvma_mapin(map, va, len, canwait)
 /*
  * Remove double map of `va' in DVMA space at `kva'.
  */
-int
+void
 dvma_mapout(kva, va, len)
 	vm_offset_t	kva, va;
 	int		len;
@@ -472,7 +475,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
 	struct md_coredump md_core;
 	struct coreseg cseg;
 

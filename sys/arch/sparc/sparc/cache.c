@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.5 1995/04/13 14:32:44 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.6 1996/03/14 21:08:56 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/ctlreg.h>
 #include <machine/pte.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 1996/02/14 01:03:17 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.8 1996/03/14 21:09:05 christos Exp $ */
 
 /* 
  * Mach Operating System
@@ -34,13 +34,19 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <machine/db_machdep.h>
 #include <ddb/db_command.h>
+#include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
 #include <machine/bsd_openprom.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
@@ -94,21 +100,27 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
+void kdb_kbd_trap __P((struct trapframe *));
+static void db_write_text __P((unsigned char *, int));
+void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
+
 /*
  * Received keyboard interrupt sequence.
  */
+void
 kdb_kbd_trap(tf)
 	struct trapframe *tf;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, 0, tf);
+		kdb_trap(-1, tf);
 	}
 }
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
+int
 kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
@@ -151,13 +163,13 @@ kdb_trap(type, tf)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*src;
 
 	src = (char *)addr;
-	while (--size >= 0)
+	while (size-- > 0)
 		*data++ = *src++;
 }
 
@@ -202,14 +214,14 @@ db_write_text(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	extern char	etext[];
 	register char	*dst;
 
 	dst = (char *)addr;
-	while (--size >= 0) {
+	while (size-- > 0) {
 		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
 			db_write_text(dst, *data);
 		else
@@ -219,14 +231,18 @@ db_write_bytes(addr, size, data)
 
 }
 
-int
+void
 Debugger()
 {
 	asm("ta 0x81");
 }
 
 void
-db_prom_cmd()
+db_prom_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
 {
 	extern struct promvec *promvec;
 	promvec->pv_abort();

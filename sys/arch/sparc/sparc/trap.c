@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1996/03/14 00:55:59 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.35 1996/03/14 21:09:35 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,8 +63,20 @@
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
-#include <machine/frame.h>
 #include <machine/trap.h>
+#include <machine/instr.h>
+#include <machine/pmap.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#else
+#include <machine/frame.h>
+#endif
+#ifdef COMPAT_SVR4
+#include <machine/svr4_machdep.h>
+#endif
+
+#include <sparc/fpu/fpu_extern.h>
 
 #define	offsetof(s, f) ((int)&((s *)0)->f)
 
@@ -162,12 +174,21 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
+static __inline void userret __P((struct proc *, int,  u_quad_t));
+void trap __P((unsigned, int, int, struct trapframe *));
+static __inline void share_fpu __P((struct proc *, struct trapframe *));
+void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
+void syscall __P((register_t, struct trapframe *, register_t));
+
 /*
  * Define the code needed before returning to user mode, for
  * trap, mem_access_fault, and syscall.
  */
-static inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
+static __inline void
+userret(p, pc, oticks)
+	struct proc *p;
+	int pc;
+	u_quad_t oticks;
 {
 	int sig;
 
@@ -215,7 +236,10 @@ userret(struct proc *p, int pc, u_quad_t oticks)
  * the ktrsysret() in syscall().  Actually, it is likely that the
  * ktrsysret should occur before the call to userret.
  */
-static inline void share_fpu(struct proc *p, struct trapframe *tf) {
+static __inline void share_fpu(p, tf)
+	struct proc *p;
+	struct trapframe *tf;
+{
 	if ((tf->tf_psr & PSR_EF) != 0 && fpproc != p)
 		tf->tf_psr &= ~PSR_EF;
 }
@@ -224,6 +248,7 @@ static inline void share_fpu(struct proc *p, struct trapframe *tf) {
  * Called from locore.s trap handling, for non-MMU-related traps.
  * (MMU-related traps go through mem_access_fault, below.)
  */
+void
 trap(type, psr, pc, tf)
 	register unsigned type;
 	register int psr, pc;
@@ -273,8 +298,10 @@ trap(type, psr, pc, tf)
 
 	default:
 		if (type < 0x80) {
+			static const char fmt1[] =
+			    "trap type 0x%x: pc=%x npc=%x psr=%b\n";
 dopanic:
-			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
+			printf(fmt1,
 			    type, pc, tf->tf_npc, psr, PSR_BITS);
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
@@ -525,6 +552,7 @@ printf("\n");
  * and then erasing any pcb tracks.  Otherwise we might try to write
  * the registers into the new process after the exec.
  */
+void
 kill_user_windows(p)
 	struct proc *p;
 {
@@ -544,6 +572,7 @@ kill_user_windows(p)
  * more than one `cause'.  But we do not care what the cause, here;
  * we just want to page in the page and try again.
  */
+void
 mem_access_fault(type, ser, v, pc, psr, tf)
 	register unsigned type;
 	register int ser;
@@ -556,7 +585,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	register vm_offset_t va;
 	register int rv;
 	vm_prot_t ftype;
-	int onfault, mmucode;
+	int onfault;
 	u_quad_t sticks;
 
 	cnt.v_trap++;
@@ -582,8 +611,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
+			static const char fmt1[] = "text fault: pc=%x ser=%b\n";
 			(void) splhigh();
-			printf("text fault: pc=%x ser=%b\n", pc, ser, SER_BITS);
+			printf(fmt1, pc, ser, SER_BITS);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -660,9 +690,10 @@ kfault:
 			onfault = p->p_addr ?
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
+				static const char fmt1[] =
+				    "data fault: pc=%x addr=%x ser=%b\n";
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x ser=%b\n",
-				    pc, v, ser, SER_BITS);
+				printf(fmt1, pc, v, ser, SER_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -687,9 +718,11 @@ out:
  * `save' effect of each trap).  They are, however, the %o registers of the
  * thing that made the system call, and are named that way here.
  */
+void
 syscall(code, tf, pc)
-	register_t code, pc;
+	register_t code;
 	register struct trapframe *tf;
+	register_t pc;
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
@@ -700,7 +733,9 @@ syscall(code, tf, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
+#ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
+#endif
 
 	cnt.v_syscall++;
 	p = curproc;
