@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.16 2002/01/13 10:57:57 aymeric Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.17 2002/01/14 16:04:44 aymeric Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.16 2002/01/13 10:57:57 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.17 2002/01/14 16:04:44 aymeric Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.16 2002/01/13 10:57:57 aymeric Exp $"
 #include <net/bpf.h>
 #endif
 
-#include <machine/types.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
 #endif
