@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.13 2000/03/30 09:27:14 augustss Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.13.4.1 2000/12/24 06:36:44 jhawk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -253,7 +253,8 @@ unionread:
 				}
 				cpos += reclen;
 			}
-		}
+		} else
+			goto out;
 	} while (!eofflag);
 #if 0
 	/*
