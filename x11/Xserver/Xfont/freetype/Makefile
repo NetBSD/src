@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2004/11/15 09:12:38 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2004/11/21 00:20:22 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -22,7 +22,7 @@ SRCS+=	ftbase.c ftinit.c ftglyph.c ftbbox.c ftsystem.c fttype1.c ftxf86.c ftbdf.
 SRCS+=	ftgzip.c
 
 .PATH:	${FT2SRC}/lzw
-SRCS+=	lzw.c
+SRCS+=	ftlzw.c
 
 .PATH:	${FT2SRC}/raster
 SRCS+=	raster.c
