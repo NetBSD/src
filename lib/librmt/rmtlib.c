@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.17 2001/04/06 11:13:55 wiz Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.18 2001/11/05 15:10:25 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -249,14 +249,14 @@ _rmt_open(const char *path, int oflag, int mode)
 {
 	int i, rc;
 	char buffer[BUFMAGIC];
-	char system[MAXHOSTLEN];
+	char host[MAXHOSTLEN];
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
 	char *sys, *dev, *user;
 
 	_DIAGASSERT(path != NULL);
 
-	sys = system;
+	sys = host;
 	dev = device;
 	user = login;
 
@@ -290,9 +290,9 @@ _rmt_open(const char *path, int oflag, int mode)
 	path++;
 
 	if (*(path - 1) == '@') {
-		(void)strncpy(user, system, sizeof(login) - 1);
+		(void)strncpy(user, host, sizeof(login) - 1);
 				/* saw user part of user@host */
-		sys = system;			/* start over */
+		sys = host;			/* start over */
 		while (*path != ':') {
 			*sys++ = *path++;
 		}
@@ -320,7 +320,7 @@ _rmt_open(const char *path, int oflag, int mode)
 /*
  *	Execute the remote command using rexec
  */
-	READ(i) = WRITE(i) = _rmt_rexec(system, login);
+	READ(i) = WRITE(i) = _rmt_rexec(host, login);
 	if (READ(i) < 0)
 		return (-1);
 #else
@@ -354,10 +354,10 @@ _rmt_open(const char *path, int oflag, int mode)
 			rsh++;
 
 		if (*login) {
-			execl(rshpath, rsh, system, "-l", login,
+			execl(rshpath, rsh, host, "-l", login,
 			    _PATH_RMT, NULL);
 		} else {
-			execl(rshpath, rsh, system,
+			execl(rshpath, rsh, host,
 			    _PATH_RMT, NULL);
 		}
 
