@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.1 2000/11/05 04:06:13 thorpej Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.2 2001/11/13 06:28:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,6 +39,9 @@
  * register themselves to provide backplane fan and temperature
  * information, etc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.2 2001/11/13 06:28:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
