@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $	*/
+/*	$NetBSD: master.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $");
+__RCSID("$NetBSD: master.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static int slvcount;			/* slaves listening to our clock */
 
 static void mchgdate(struct tsp*);
 
-extern	void	logwtmp __P((char *, char *, char *));
+extern	void	logwtmp(char *, char *, char *);
 
 
 
@@ -75,7 +75,7 @@ extern	void	logwtmp __P((char *, char *, char *));
  * takes the appropriate action.
  */
 int
-master()
+master(void)
 {
 	struct hosttbl *htp;
 	long pollingtime;
@@ -466,7 +466,7 @@ synch(long mydelta)
  * has received the command to set the network time
  */
 void
-spreadtime()
+spreadtime(void)
 {
 	struct hosttbl *htp;
 	struct tsp to;

@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)byteorder.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: byteorder.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $");
+__RCSID("$NetBSD: byteorder.c,v 1.7 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,8 +47,7 @@ __RCSID("$NetBSD: byteorder.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $");
  * messages. Protocol is defined in /usr/include/protocols/timed.h
  */
 void
-bytenetorder(ptr)
-	struct tsp *ptr;
+bytenetorder(struct tsp *ptr)
 {
 	ptr->tsp_seq = htons((u_short)ptr->tsp_seq);
 	switch (ptr->tsp_type) {
@@ -67,8 +66,7 @@ bytenetorder(ptr)
 }
 
 void
-bytehostorder(ptr)
-	struct tsp *ptr;
+bytehostorder(struct tsp *ptr)
 {
 	ptr->tsp_seq = ntohs((u_short)ptr->tsp_seq);
 	switch (ptr->tsp_type) {

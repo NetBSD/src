@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.9 2001/09/02 00:13:07 reinoud Exp $	*/
+/*	$NetBSD: slave.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.9 2001/09/02 00:13:07 reinoud Exp $");
+__RCSID("$NetBSD: slave.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ extern void logwtmp(char *, char *, char *);
 
 
 int
-slave()
+slave(void)
 {
 	int tries;
 	long electiontime, refusetime, looktime, looptime, adjtime;
