@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.65 2000/12/13 03:16:37 mycroft Exp $ */
+/* $NetBSD: trap.c,v 1.66 2001/01/03 22:15:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2000/12/13 03:16:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2001/01/03 22:15:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,30 +119,17 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2000/12/13 03:16:37 mycroft Exp $");
 #include <machine/db_machdep.h>
 #endif
 #include <alpha/alpha/db_instruction.h>		/* for handle_opdec() */
+#include <machine/userret.h>
 
-void		userret __P((struct proc *));
-
-unsigned long	Sfloat_to_reg __P((unsigned int));
-unsigned int	reg_to_Sfloat __P((unsigned long));
-unsigned long	Tfloat_reg_cvt __P((unsigned long));
-#ifdef FIX_UNALIGNED_VAX_FP
-unsigned long	Ffloat_to_reg __P((unsigned int));
-unsigned int	reg_to_Ffloat __P((unsigned long));
-unsigned long	Gfloat_reg_cvt __P((unsigned long));
-#endif
-
-int		unaligned_fixup __P((unsigned long, unsigned long,
-		    unsigned long, struct proc *));
+int		unaligned_fixup(unsigned long, unsigned long,
+		    unsigned long, struct proc *);
 int		handle_opdec(struct proc *p, u_int64_t *ucodep);
-
-static void printtrap __P((const unsigned long, const unsigned long,
-      const unsigned long, const unsigned long, struct trapframe *, int, int));
 
 /*
  * Initialize the trap vectors for the current processor.
  */
 void
-trap_init()
+trap_init(void)
 {
 
 	/*
@@ -163,31 +150,9 @@ trap_init()
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 }
 
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-void
-userret(p)
-	register struct proc *p;
-{
-	int sig;
-
-	/* Do any deferred user pmap operations. */
-	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
-
 static void
-printtrap(a0, a1, a2, entry, framep, isfatal, user)
-	const unsigned long a0, a1, a2, entry;
-	struct trapframe *framep;
-	int isfatal, user;
+printtrap(const u_long a0, const u_long a1, const u_long a2,
+    const u_long entry, struct trapframe *framep, int isfatal, int user)
 {
 	char ubuf[64];
 	const char *entryname;
@@ -246,9 +211,8 @@ printtrap(a0, a1, a2, entry, framep, isfatal, user)
  */
 /*ARGSUSED*/
 void
-trap(a0, a1, a2, entry, framep)
-	const unsigned long a0, a1, a2, entry;
-	struct trapframe *framep;
+trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
+    struct trapframe *framep)
 {
 	register struct proc *p;
 	register int i;
@@ -610,8 +574,7 @@ dopanic:
  * This is relatively easy.
  */
 void
-ast(framep)
-	struct trapframe *framep;
+ast(struct trapframe *framep)
 {
 	register struct proc *p;
 
@@ -651,7 +614,7 @@ ast(framep)
  * Unaligned access handler.  It's not clear that this can get much slower...
  *
  */
-const static int reg_to_framereg[32] = {
+static const int reg_to_framereg[32] = {
 	FRAME_V0,	FRAME_T0,	FRAME_T1,	FRAME_T2,
 	FRAME_T3,	FRAME_T4,	FRAME_T5,	FRAME_T6,
 	FRAME_T7,	FRAME_S0,	FRAME_S1,	FRAME_S2,
@@ -703,9 +666,8 @@ const static int reg_to_framereg[32] = {
 	dump_fp_regs();							\
 	unaligned_store(storage, frp, mod)
 
-unsigned long
-Sfloat_to_reg(s)
-	unsigned int s;
+static unsigned long
+Sfloat_to_reg(u_int s)
 {
 	unsigned long sign, expn, frac;
 	unsigned long result;
@@ -726,9 +688,8 @@ Sfloat_to_reg(s)
 	return (result);
 }
 
-unsigned int
-reg_to_Sfloat(r)
-	unsigned long r;
+static unsigned int
+reg_to_Sfloat(u_long r)
 {
 	unsigned long sign, expn, frac;
 	unsigned int result;
@@ -748,18 +709,16 @@ reg_to_Sfloat(r)
  * Conversion of T floating datums to and from register format
  * requires no bit reordering whatsoever.
  */
-unsigned long
-Tfloat_reg_cvt(input)
-	unsigned long input;
+static unsigned long
+Tfloat_reg_cvt(u_long input)
 {
 
 	return (input);
 }
 
 #ifdef FIX_UNALIGNED_VAX_FP
-unsigned long
-Ffloat_to_reg(f)
-	unsigned int f;
+static unsigned long
+Ffloat_to_reg(u_int f)
 {
 	unsigned long sign, expn, frlo, frhi;
 	unsigned long result;
@@ -779,9 +738,8 @@ Ffloat_to_reg(f)
 	return (result);
 }
 
-unsigned int
-reg_to_Ffloat(r)
-	unsigned long r;
+static unsigned int
+reg_to_Ffloat(u_long r)
 {
 	unsigned long sign, expn, frhi, frlo;
 	unsigned int result;
@@ -802,9 +760,8 @@ reg_to_Ffloat(r)
  * Conversion of G floating datums to and from register format is
  * symmetrical.  Just swap shorts in the quad...
  */
-unsigned long
-Gfloat_reg_cvt(input)
-	unsigned long input;
+static unsigned long
+Gfloat_reg_cvt(u_long input)
 {
 	unsigned long a, b, c, d;
 	unsigned long result;
@@ -836,9 +793,7 @@ struct unaligned_fixup_data {
 #define	NOFIX_ST(n,s)	{ n, 0, s, B_WRITE }
 
 int
-unaligned_fixup(va, opcode, reg, p)
-	unsigned long va, opcode, reg;
-	struct proc *p;
+unaligned_fixup(u_long va, u_long opcode, u_long reg, struct proc *p)
 {
 	const struct unaligned_fixup_data tab_unknown[1] = {
 		UNKNOWN(),
@@ -1038,9 +993,7 @@ out:
  * and fills in *ucodep with the code to be delivered.
  */
 int
-handle_opdec(p, ucodep)
-	struct proc *p;
-	u_int64_t *ucodep;
+handle_opdec(struct proc *p, u_int64_t *ucodep)
 {
 	alpha_instruction inst;
 	register_t *regptr, memaddr;

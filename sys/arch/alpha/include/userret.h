@@ -1,11 +1,12 @@
-/* $NetBSD: sys_machdep.c,v 1.12 2001/01/03 22:15:38 thorpej Exp $ */
+/* $NetBSD: userret.h,v 1.1 2001/01/03 22:15:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +38,36 @@
  */
 
 /*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -63,129 +94,26 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#ifndef _ALPHA_USERRET_H_
+#define	_ALPHA_USERRET_H_
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.12 2001/01/03 22:15:38 thorpej Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-
-#include <machine/sysarch.h>
-
-#include <dev/pci/pcivar.h>
-
-u_int	alpha_bus_window_count[ALPHA_BUS_TYPE_MAX + 1];
-
-int	(*alpha_bus_get_window)(int, int,
-	    struct alpha_bus_space_translation *);
-
-struct alpha_pci_chipset *alpha_pci_chipset;
-
-int
-sys_sysarch(struct proc *p, void *v, register_t *retval)
+/*
+ * Define the code needed before returning to user mode, for
+ * trap and syscall.
+ */
+static __inline void
+userret(struct proc *p)
 {
-	struct sys_sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(void *) parms;
-	} */ *uap = v;
-	int error = 0;
+	int sig;
 
-	switch(SCARG(uap, op)) {
-	case ALPHA_FPGETMASK:
-	case ALPHA_FPSETMASK:
-	case ALPHA_FPSETSTICKY:
-		/* XXX kernel Magick required here */
-		break;
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
-	case ALPHA_BUS_GET_WINDOW_COUNT:
-	    {
-		struct alpha_bus_get_window_count_args args;
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
 
-		error = copyin(SCARG(uap, parms), &args, sizeof(args));
-		if (error)
-			return (error);
-
-		if (args.type > ALPHA_BUS_TYPE_MAX)
-			return (EINVAL);
-
-		if (alpha_bus_window_count[args.type] == 0)
-			return (EOPNOTSUPP);
-
-		args.count = alpha_bus_window_count[args.type];
-		error = copyout(&args, SCARG(uap, parms), sizeof(args));
-		break;
-	    }
-
-	case ALPHA_BUS_GET_WINDOW:
-	    {
-		struct alpha_bus_space_translation abst;
-		struct alpha_bus_get_window_args args;
-
-		error = copyin(SCARG(uap, parms), &args, sizeof(args));
-		if (error)
-			return (error);
-
-		if (args.type > ALPHA_BUS_TYPE_MAX)
-			return (EINVAL);
-
-		if (alpha_bus_window_count[args.type] == 0)
-			return (EOPNOTSUPP);
-
-		if (args.window >= alpha_bus_window_count[args.type])
-			return (EINVAL);
-
-		error = (*alpha_bus_get_window)(args.type, args.window,
-		    &abst);
-		if (error)
-			return (error);
-
-		error = copyout(&abst, args.translation, sizeof(abst));
-		break;
-	    }
-
-	case ALPHA_PCI_CONF_READWRITE:
-	    {
-		struct alpha_pci_conf_readwrite_args args;
-		pcitag_t tag;
-
-		error = copyin(SCARG(uap, parms), &args, sizeof(args));
-		if (error)
-			return (error);
-
-		if (alpha_pci_chipset == NULL)
-			return (EOPNOTSUPP);
-
-		if (args.bus > 0xff)		/* XXX MAGIC NUMBER */
-			return (EINVAL);
-		if (args.device > pci_bus_maxdevs(alpha_pci_chipset, args.bus))
-			return (EINVAL);
-		if (args.function > 7)		/* XXX MAGIC NUMBER */
-			return (EINVAL);
-		if (args.reg > 0xff)		/* XXX MAGIC NUMBER */
-			return (EINVAL);
-
-		tag = pci_make_tag(alpha_pci_chipset, args.bus, args.device,
-		    args.function);
-
-		if (args.write)
-			pci_conf_write(alpha_pci_chipset, tag, args.reg,
-			    args.val);
-		else {
-			args.val = pci_conf_read(alpha_pci_chipset, tag,
-			    args.reg);
-			error = copyout(&args, SCARG(uap, parms), sizeof(args));
-		}
-		break;
-	    }
-
-	default:
-		error = EINVAL;
-		break;
-	}
-
-	return (error);
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
+
+#endif /* _ALPHA_USERRET_H_ */
