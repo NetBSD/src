@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	5.12 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: quota.c,v 1.3 1994/04/01 01:19:21 jtc Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.4 1994/04/01 03:31:37 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -428,7 +428,7 @@ getprivs(id, quotatype)
 				free(qup);
 				continue;
 			}
-			lseek(fd, (long)(id * sizeof(struct dqblk)), L_SET);
+			lseek(fd, (id * sizeof(struct dqblk)), L_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
