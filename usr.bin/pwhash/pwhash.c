@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.6 2004/07/02 00:05:23 sjg Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.6 2004/07/02 00:05:23 sjg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $");
 #include <unistd.h>
 #include <login_cap.h>
 
+#include <crypt.h>
+
 /*
  * Very simple little program, for encrypting passwords from the command
  * line.  Useful for scripts and such.
@@ -51,13 +53,14 @@ __RCSID("$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $");
 #define DO_DES     1
 #define DO_MD5     2
 #define DO_BLF     3
+#define DO_SHA1	   4
 
 static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-b rounds] [-k] [-m] [-s salt] [-p | string]\n",
+	    "usage: %s [-b rounds] [-k] [-m] [-S rounds] [-s salt] [-p | string]\n",
 	    getprogname());
 	exit(1);
 }
@@ -81,7 +84,6 @@ trim(char *line)
 
 /* these are pulled from usr.bin/passwd/pwd_gensalt.c */
 int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-void to64(char *, int32_t, int n);
 
 static void
 print_passwd(char *string, int operation, void *extra)
@@ -106,12 +108,25 @@ print_passwd(char *string, int operation, void *extra)
 
 	case DO_MD5:
 		strlcpy(buffer, "$1$", sizeof(buffer));
-		to64(&buffer[3], arc4random(), 4);
-		to64(&buffer[7], arc4random(), 4);
+		__crypt_to64(&buffer[3], arc4random(), 4);
+		__crypt_to64(&buffer[7], arc4random(), 4);
 		strlcpy(buffer + 11, "$", sizeof(buffer) - 11);
 		salt = buffer;
 		break;
 
+	case DO_SHA1:
+		{
+			int n;
+			
+			n = snprintf(buffer, sizeof(buffer),
+				     "%s%u$", SHA1_MAGIC,
+				     __crypt_sha1_iterations(*(int *)extra));
+			__crypt_to64(&buffer[n], arc4random(), 4);
+			__crypt_to64(&buffer[n + 4], arc4random(), 4);
+			buffer[n + 8] = '$';
+			buffer[n + 9] = '\0';
+		}
+		break;
 	case DO_BLF:
 		strlcpy(buffer, bcrypt_gensalt(*(int *)extra), _PASSWORD_LEN);
 		salt = buffer;
@@ -148,7 +163,7 @@ main(int argc, char **argv)
 	if (strcmp(getprogname(), "makekey") == 0)
 		operation = DO_MAKEKEY;
 
-	while ((opt = getopt(argc, argv, "kmps:b:")) != -1) {
+	while ((opt = getopt(argc, argv, "kmpS:s:b:")) != -1) {
 		switch (opt) {
 		case 'k':                       /* Stdin/Stdout Unix crypt */
 			if (operation != -1 || prompt)
@@ -166,6 +181,14 @@ main(int argc, char **argv)
 			if (operation == DO_MAKEKEY)
 				usage();
 			prompt = 1;
+			break;
+
+		case 'S':                       /* SHA1 password hash */
+			if (operation != -1)
+				usage();
+			operation = DO_SHA1;
+			rounds = atoi(optarg);
+			extra = &rounds;
 			break;
 
 		case 's':                       /* Unix crypt (DES) */

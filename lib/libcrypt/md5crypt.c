@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.7 2003/08/06 08:37:19 jdolecek Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.8 2004/07/02 00:05:23 sjg Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.7 2003/08/06 08:37:19 jdolecek Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.8 2004/07/02 00:05:23 sjg Exp $");
 #endif /* not lint */
 
 /*
@@ -34,13 +34,10 @@ __RCSID("$NetBSD: md5crypt.c,v 1.7 2003/08/06 08:37:19 jdolecek Exp $");
 #endif
 #include <string.h>
 
+#include "crypt.h"
+
 #define MD5_MAGIC	"$1$"
 #define MD5_MAGIC_LEN	3
-
-char	*__md5crypt(const char *pw, const char *salt);	/* XXX */
-
-static const unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 #ifdef libcrypto
 #define	INIT(x)			MD5_Init((x))
@@ -52,15 +49,6 @@ static const unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
 #define	FINAL(v, x)		MD5Final((v), (x))
 #endif
 
-static void
-to64(char *s, u_int32_t v, int n)
-{
-
-	while (--n >= 0) {
-		*s++ = itoa64[v & 0x3f];
-		v >>= 6;
-	}
-}
 
 /*
  * MD5 password encryption.
@@ -159,12 +147,12 @@ __md5crypt(const char *pw, const char *salt)
 
 	p = passwd + sl + MD5_MAGIC_LEN + 1;
 
-	l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; to64(p,l,4); p += 4;
-	l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; to64(p,l,4); p += 4;
-	l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; to64(p,l,4); p += 4;
-	l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; to64(p,l,4); p += 4;
-	l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; to64(p,l,4); p += 4;
-	l =		       final[11]		; to64(p,l,2); p += 2;
+	l = (final[ 0]<<16) | (final[ 6]<<8) | final[12]; __crypt_to64(p,l,4); p += 4;
+	l = (final[ 1]<<16) | (final[ 7]<<8) | final[13]; __crypt_to64(p,l,4); p += 4;
+	l = (final[ 2]<<16) | (final[ 8]<<8) | final[14]; __crypt_to64(p,l,4); p += 4;
+	l = (final[ 3]<<16) | (final[ 9]<<8) | final[15]; __crypt_to64(p,l,4); p += 4;
+	l = (final[ 4]<<16) | (final[10]<<8) | final[ 5]; __crypt_to64(p,l,4); p += 4;
+	l =		       final[11]		; __crypt_to64(p,l,2); p += 2;
 	*p = '\0';
 
 	/* Don't leave anything around in vm they could use. */
