@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.340 2004/07/16 21:25:52 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.341 2004/07/17 16:56:07 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5824,3 +5824,30 @@ sys/dev/pci/if_wm.c				1.74
 	avoid FIFO overruns.  This fixes the horrible performance
 	problems reported in PR#23782.
 	[tron, ticket #670]
+
+sys/arch/xen/xen/clock.c			1.6
+
+	Set the system clock (via Xen) in resettodr(), if we are
+	running in domain 0, to improve timekeeping.
+	[tls, ticket #671]
+
+sys/arch/alpha/alpha/syscall.c			1.15
+sys/arch/alpha/alpha/trap.c			1.94
+
+	Update uvmexp's traps and syscalls.
+	[petrov, ticket #672]
+
+libexec/ld.elf_so/reloc.c			1.84
+
+	Don't print relocated content (in DEBUG mode), as it can
+	cause misaligned accesses.  Fixes PR#20907.
+	[petrov, ticket #673]
+
+sys/netipsec/ipsec_netbsd.c			1.11
+sys/netipsec/ipsec_var.h			1.2
+usr.bin/netstat/fast_ipsec.c			1.6
+
+	Rework ipsec_netbsd.c to present a more consistent tree.
+	Rework netstat to find the stats nodes under the new names.
+	Fixes PR#25526.
+	[atatat, ticket #674]
