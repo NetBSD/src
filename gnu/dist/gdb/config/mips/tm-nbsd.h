@@ -25,6 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Offset to saved PC in sigcontext, from <machine/signal.h>.  */
 /* #define SIGCONTEXT_PC_OFFSET ? */
 
+/* Need single-step simulation in mips-tdep.c */
+#define NO_SINGLE_STEP
+
 /* Generic definitions.  */
 #include "mips/tm-mips.h"
 #include "tm-nbsd.h"
