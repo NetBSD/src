@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_input.c,v 1.5 1996/10/13 03:06:07 christos Exp $ */
+/*	$NetBSD: kshell_input.c,v 1.6 1997/10/14 09:01:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -295,4 +295,4 @@ deleteline(loop, entered)
 	}
 }
 
-/* End of shell_input.c */
+/* End of kshell_input.c */
