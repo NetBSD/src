@@ -52,7 +52,6 @@ struct trapframe {
 	int	tf_edi;
 	int	tf_esi;
 	int	tf_ebp;
-	int	tf_isp;
 	int	tf_ebx;
 	int	tf_edx;
 	int	tf_ecx;
@@ -76,7 +75,6 @@ struct intrframe {
 	int	if_edi;
 	int	if_esi;
 	int	if_ebp;
-	int	:32;
 	int	if_ebx;
 	int	if_edx;
 	int	if_ecx;
