@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.18 1994/01/08 04:22:40 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.19 1994/03/23 01:54:02 chopps Exp $
  */
 
 /*
@@ -148,9 +148,14 @@ smmap(p, uap, retval)
 #endif
 	/*
 	 * Make sure one of the sharing types is specified
+	 * if none given default to MAP_FILE.
 	 */
 	mtype = flags & MAP_TYPE;
 	switch (mtype) {
+	case 0:
+		mtype = MAP_FILE;
+		flags |= MAP_FILE;
+		break;
 	case MAP_FILE:
 	case MAP_ANON:
 		break;
@@ -214,7 +219,7 @@ smmap(p, uap, retval)
 		maxprot = VM_PROT_NONE;
 		if (fp->f_flag & FREAD)
 			maxprot |= VM_PROT_READ|VM_PROT_EXECUTE;
-		if (uap->flags & MAP_SHARED) {
+		if (flags & MAP_SHARED) {
 			if (fp->f_flag & FWRITE)
 				maxprot |= VM_PROT_WRITE;
 		} else
