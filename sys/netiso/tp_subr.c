@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.15 2003/02/04 01:21:05 thorpej Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.16 2003/02/04 07:19:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.15 2003/02/04 01:21:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.16 2003/02/04 07:19:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ tp_rtt_rtv(tpcb)
 	struct tp_pcb *tpcb;
 {
 	int             old = tpcb->tp_rtt;
-	int             s, elapsed, delta = 0;
+	int             elapsed, delta = 0;
 
 	elapsed = hardclock_ticks - tpcb->tp_rttemit;
 
@@ -495,7 +495,7 @@ tp_send(tpcb)
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
 	unsigned int    eotsdu = 0;
 	SeqNum          highseq, checkseq;
-	int             s, idle, idleticks, off, cong_win;
+	int             idle, idleticks, off, cong_win;
 #ifdef TP_PERF_MEAS
 	int             send_start_time = hardclock_ticks;
 	SeqNum          oldnxt = tpcb->tp_sndnxt;
