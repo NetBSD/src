@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 1997/01/28 04:36:14 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 1997/02/04 06:30:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -336,7 +336,7 @@ identify_arm_cpu(cpu_number)
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
 
-	case ID_SARM110 :
+	case ID_SA110 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-110 rev %d",
