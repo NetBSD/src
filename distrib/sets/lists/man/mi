@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.484 2002/06/02 18:57:11 jmcneill Exp $
+# $NetBSD: mi,v 1.485 2002/06/06 02:37:08 simonb Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1490,6 +1490,7 @@
 ./usr/share/man/cat8/moused.0			man-sysutil-catman
 ./usr/share/man/cat8/mrinfo.0			man-netutil-catman
 ./usr/share/man/cat8/mrouted.0			man-router-catman
+./usr/share/man/cat8/mscdlabel.0		man-sysutil-catman
 ./usr/share/man/cat8/mtrace.0			man-netutil-catman
 ./usr/share/man/cat8/mtree.0			man-sysutil-catman
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0		man-sysutil-catman
@@ -3208,6 +3209,7 @@
 ./usr/share/man/man8/moused.8			man-sysutil-man
 ./usr/share/man/man8/mrinfo.8			man-netutil-man
 ./usr/share/man/man8/mrouted.8			man-router-man
+./usr/share/man/man8/mscdlabel.8		man-sysutil-man
 ./usr/share/man/man8/mtrace.8			man-netutil-man
 ./usr/share/man/man8/mtree.8			man-sysutil-man
 ./usr/share/man/man8/mvme68k/MAKEDEV.8		man-sysutil-man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.327 2002/05/31 12:21:09 wiz Exp $
+# $NetBSD: mi,v 1.328 2002/06/06 02:37:07 simonb Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -694,6 +694,7 @@
 ./usr/sbin/moused		base-sysutil-bin
 ./usr/sbin/mrinfo		base-router-bin
 ./usr/sbin/mrouted		base-router-bin
+./usr/sbin/mscdlabel		base-sysutil-bin
 ./usr/sbin/mtrace		base-netutil-bin
 ./usr/sbin/mtree		base-sysutil-bin
 ./usr/sbin/named		base-bind-bin
