@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.44 2004/04/06 20:33:39 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.45 2004/04/07 04:47:12 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -478,3 +478,36 @@ x11/bin/xdm/config/Makefile			1.6
 xsrc/xfree/xc/programs/xdm/sessreg.c		1.2
 	Add support for utmpx in current (since 1.6C).  OKed by tron.
 	[markd, ticket #73]
+
+gnu/dist/gdb/sim/ppc/emul_netbsd.c		1.2
+gnu/dist/gdb/sim/ppc/hw_htab.c			1.2
+gnu/dist/gdb/sim/ppc/hw_init.c			1.2
+gnu/dist/gdb/sim/ppc/hw_register.c		1.2
+gnu/dist/gdb/sim/ppc/hw_trace.c			1.2
+gnu/dist/gdb/sim/ppc/hw_vm.c			1.2
+gnu/dist/gdb/sim/ppc/ppc-instructions		1.2
+gnu/dist/gdb/sim/ppc/sim_calls.c		1.2
+gnu/usr.bin/gdb53/Makefile			1.3
+gnu/usr.bin/gdb53/arch/powerpc/defs.mk		1.3
+gnu/usr.bin/gdb53/arch/powerpc/init.c		1.4
+gnu/usr.bin/gdb53/gdb/Makefile			1.7
+gnu/usr.bin/gdb53/sim/Makefile			0-1.1
+gnu/usr.bin/gdb53/sim/arch/powerpc/config.h	0-1.1
+gnu/usr.bin/gdb53/sim/arch/powerpc/subdir.mk	0-1.1
+gnu/usr.bin/gdb53/sim/ppc/Makefile		0-1.2
+gnu/usr.bin/gdb53/sim/ppc/psim/Makefile		0-1.1
+gnu/usr.bin/sim/Makefile			1.4-0
+gnu/usr.bin/sim/arch/powerpc/config.h		1.1-0
+gnu/usr.bin/sim/arch/powerpc/subdir.mk		1.1-0
+gnu/usr.bin/sim/ppc/Makefile			1.7-0
+gnu/usr.bin/sim/ppc/psim/Makefile		1.2-0
+
+	Restore some functionality that was lost in the gdb5.3 upgrade.
+	[mrg, ticket #62]
+
+sys/dev/hpc/hpckbdkeymap.h			1.27
+
+	Give the MobilePro 800 and MobilePro 880 correct keymaps:  fix the
+	positioning of the cursor keys to match the keycaps, and make the cmdmap
+	work correctly.
+	[tv, ticket #74]
