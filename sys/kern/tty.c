@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.119.4.1 2002/04/26 17:56:24 he Exp $	*/
+/*	$NetBSD: tty.c,v 1.119.4.2 2002/09/04 02:53:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -982,6 +982,10 @@ ttioctl(tp, cmd, data, flag, p)
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		     (tp->t_session != p->p_session)))
 			return (EPERM);
+
+		if (tp->t_session)
+			SESSRELE(tp->t_session);
+
 		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
