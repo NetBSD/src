@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.220 2005/03/02 12:25:27 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.221 2005/03/28 22:08:51 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220 2005/03/02 12:25:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.221 2005/03/28 22:08:51 fvdl Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1482,10 +1482,10 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		    wdr->cmd_iohs[wd_seccnt], 0);
 		ata_c->r_sector = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_sector], 0);
-		ata_c->r_cyl |= bus_space_read_1(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_cyl_lo], 0);
 		ata_c->r_cyl = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_cyl_hi], 0) << 8;
+		ata_c->r_cyl |= bus_space_read_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_cyl_lo], 0);
 		ata_c->r_error = bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_error], 0);
 		ata_c->r_features = bus_space_read_1(wdr->cmd_iot,
