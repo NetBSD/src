@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.8.1 2000/08/07 01:36:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.10.8.2 2001/05/15 22:18:35 he Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,6 @@ SUBDIR=		common cc1 cc1plus cc1obj f771 \
 
 all-cc1 all-cc1obj all-cc1plus all-f771: all-common
 depend-cc1 depend-cc1obj depend-cc1plus depend-f771: depend-common
-.else
-SUBDIR=		cc cpp g++ g77
 .endif
 
 TEXINFO=	cpp.texi g77.texi gcc.texi g++FAQ.texi
