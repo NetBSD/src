@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.472 2004/04/01 21:43:32 christos Exp $
+# $NetBSD: mi,v 1.473 2004/04/27 07:38:23 heas Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -852,7 +852,8 @@
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/local			base-postfix-bin	postfix
 ./usr/libexec/postfix/master			base-postfix-bin	postfix
-./usr/libexec/postfix/nqmgr			base-postfix-bin	postfix
+./usr/libexec/postfix/nqmgr			base-postfix-bin	obsolete
+./usr/libexec/postfix/oqmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/pickup			base-postfix-bin	postfix
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
@@ -863,6 +864,7 @@
 ./usr/libexec/postfix/smtpd			base-postfix-bin	postfix
 ./usr/libexec/postfix/spawn			base-postfix-bin	postfix
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin	postfix
+./usr/libexec/postfix/verify			base-postfix-bin	postfix
 ./usr/libexec/postfix/virtual			base-postfix-bin	postfix
 ./usr/libexec/rexecd				base-netutil-bin
 ./usr/libexec/rlogind				base-netutil-bin

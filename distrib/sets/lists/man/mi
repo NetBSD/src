@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.683 2004/04/27 00:51:32 jonathan Exp $
+# $NetBSD: mi,v 1.684 2004/04/27 07:38:23 heas Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1339,10 +1339,12 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
+./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman	.cat
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman	.cat
 ./usr/share/man/cat5/canonical.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
+./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/core.0			man-sys-catman		.cat
 ./usr/share/man/cat5/crontab.0			man-cron-catman		.cat
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
@@ -1369,6 +1371,7 @@
 ./usr/share/man/cat5/genassym.cf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/gettytab.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/group.0			man-sys-catman		.cat
+./usr/share/man/cat5/header_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/hesiod.conf.0		man-hesiod-catman	.cat
 ./usr/share/man/cat5/hosts.0			man-net-catman		.cat
 ./usr/share/man/cat5/hosts.allow.0		man-net-catman		.cat
@@ -1854,7 +1857,7 @@
 ./usr/share/man/cat8/nfsiod.0			man-obsolete		obsolete
 ./usr/share/man/cat8/nis.0			man-nis-catman		.cat
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/nqmgr.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/nqmgr.0			man-postfix-catman	obsolete
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
@@ -1866,6 +1869,7 @@
 ./usr/share/man/cat8/ntptrace.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ofppc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/ofppc/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/oqmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/pac.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman	.cat
@@ -2041,6 +2045,7 @@
 ./usr/share/man/cat8/timed.0			man-timed-catman	.cat
 ./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
@@ -2072,6 +2077,7 @@
 ./usr/share/man/cat8/vax/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/veriexecctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/verifiedexec_load.0	man-obsolete		obsolete
+./usr/share/man/cat8/verify.8			man-postfix-man		postfix,.cat
 ./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/vinum.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman	.cat
@@ -3424,10 +3430,12 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
+./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/bootparams.5		man-bootserver-man	.man
 ./usr/share/man/man5/bootptab.5			man-bootserver-man	.man
 ./usr/share/man/man5/canonical.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
+./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/core.5			man-sys-man		.man
 ./usr/share/man/man5/crontab.5			man-cron-man		.man
 ./usr/share/man/man5/daily.conf.5		man-sys-man		.man
@@ -3454,6 +3462,7 @@
 ./usr/share/man/man5/genassym.cf.5		man-sys-man		.man
 ./usr/share/man/man5/gettytab.5			man-sysutil-man		.man
 ./usr/share/man/man5/group.5			man-sys-man		.man
+./usr/share/man/man5/header_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/hesiod.conf.5		man-hesiod-man		.man
 ./usr/share/man/man5/hosts.5			man-net-man		.man
 ./usr/share/man/man5/hosts.allow.5		man-net-man		.man
@@ -3939,7 +3948,7 @@
 ./usr/share/man/man8/nfsiod.8			man-obsolete		obsolete
 ./usr/share/man/man8/nis.8			man-nis-man		.man
 ./usr/share/man/man8/nologin.8			man-sysutil-man		.man
-./usr/share/man/man8/nqmgr.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/nqmgr.8			man-postfix-man		obsolete
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
@@ -3949,6 +3958,7 @@
 ./usr/share/man/man8/ntpq.8			man-ntp-man		.man
 ./usr/share/man/man8/ntptime.8			man-ntp-man		.man
 ./usr/share/man/man8/ntptrace.8			man-ntp-man		.man
+./usr/share/man/man8/oqmgr.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/ofppc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/ofppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/pac.8			man-sysutil-man		.man
@@ -4126,6 +4136,7 @@
 ./usr/share/man/man8/timed.8			man-timed-man		.man
 ./usr/share/man/man8/timedc.8			man-timed-man		.man
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
+./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man		.man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
@@ -4157,6 +4168,7 @@
 ./usr/share/man/man8/vax/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/veriexecctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/verifiedexec_load.8	man-obsolete		obsolete
+./usr/share/man/man8/verify.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/verify_krb5_conf.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/vinum.8			man-sysutil-man		.man
 ./usr/share/man/man8/vipw.8			man-sysutil-man		.man
