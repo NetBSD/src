@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscalls.c,v 1.3 1998/08/26 13:46:57 mrg Exp $	*/
+/*	$NetBSD: netbsd32_syscalls.c,v 1.4 1998/10/01 14:27:57 eeh Exp $	*/
 
 /*
  * System call names.
@@ -11,6 +11,7 @@
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
+#include "opt_ntp.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #include <sys/param.h>
@@ -24,19 +25,19 @@
 
 char *sparc32_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
-	"exit",			/* 1 = exit */
+	"compat_sparc32_exit",			/* 1 = compat_sparc32_exit */
 	"fork",			/* 2 = fork */
 	"compat_sparc32_read",			/* 3 = compat_sparc32_read */
 	"compat_sparc32_write",			/* 4 = compat_sparc32_write */
 	"compat_sparc32_open",			/* 5 = compat_sparc32_open */
-	"close",			/* 6 = close */
+	"compat_sparc32_close",			/* 6 = compat_sparc32_close */
 	"compat_sparc32_wait4",			/* 7 = compat_sparc32_wait4 */
 	"compat_43_compat_sparc32_ocreat",	/* 8 = compat_43 compat_sparc32_ocreat */
 	"compat_sparc32_link",			/* 9 = compat_sparc32_link */
 	"compat_sparc32_unlink",			/* 10 = compat_sparc32_unlink */
 	"#11 (obsolete execv)",		/* 11 = obsolete execv */
 	"compat_sparc32_chdir",			/* 12 = compat_sparc32_chdir */
-	"fchdir",			/* 13 = fchdir */
+	"compat_sparc32_fchdir",			/* 13 = compat_sparc32_fchdir */
 	"compat_sparc32_mknod",			/* 14 = compat_sparc32_mknod */
 	"compat_sparc32_chmod",			/* 15 = compat_sparc32_chmod */
 	"compat_sparc32_chown",			/* 16 = compat_sparc32_chown */
@@ -46,7 +47,7 @@ char *sparc32_syscallnames[] = {
 	"getpid",			/* 20 = getpid */
 	"compat_sparc32_mount",			/* 21 = compat_sparc32_mount */
 	"compat_sparc32_unmount",			/* 22 = compat_sparc32_unmount */
-	"setuid",			/* 23 = setuid */
+	"compat_sparc32_setuid",			/* 23 = compat_sparc32_setuid */
 	"getuid",			/* 24 = getuid */
 	"geteuid",			/* 25 = geteuid */
 	"compat_sparc32_ptrace",			/* 26 = compat_sparc32_ptrace */
@@ -60,11 +61,11 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32_chflags",			/* 34 = compat_sparc32_chflags */
 	"compat_sparc32_fchflags",			/* 35 = compat_sparc32_fchflags */
 	"sync",			/* 36 = sync */
-	"kill",			/* 37 = kill */
+	"compat_sparc32_kill",			/* 37 = compat_sparc32_kill */
 	"compat_43_compat_sparc32_stat43",	/* 38 = compat_43 compat_sparc32_stat43 */
 	"getppid",			/* 39 = getppid */
 	"compat_43_compat_sparc32_lstat43",	/* 40 = compat_43 compat_sparc32_lstat43 */
-	"dup",			/* 41 = dup */
+	"compat_sparc32_dup",			/* 41 = compat_sparc32_dup */
 	"pipe",			/* 42 = pipe */
 	"getegid",			/* 43 = getegid */
 	"compat_sparc32_profil",			/* 44 = compat_sparc32_profil */
@@ -75,15 +76,15 @@ char *sparc32_syscallnames[] = {
 #endif
 	"compat_sparc32_sigaction",			/* 46 = compat_sparc32_sigaction */
 	"getgid",			/* 47 = getgid */
-	"sigprocmask",			/* 48 = sigprocmask */
+	"compat_13_sigprocmask13",	/* 48 = compat_13 sigprocmask13 */
 	"compat_sparc32___getlogin",			/* 49 = compat_sparc32___getlogin */
 	"compat_sparc32_setlogin",			/* 50 = compat_sparc32_setlogin */
 	"compat_sparc32_acct",			/* 51 = compat_sparc32_acct */
-	"sigpending",			/* 52 = sigpending */
+	"compat_13_sigpending13",	/* 52 = compat_13 sigpending13 */
 	"compat_13_compat_sparc32_sigaltstack13",	/* 53 = compat_13 compat_sparc32_sigaltstack13 */
 	"compat_sparc32_ioctl",			/* 54 = compat_sparc32_ioctl */
 #ifdef COMPAT_12
-	"reboot",			/* 55 = reboot */
+	"compat_12_compat_sparc32_reboot",	/* 55 = compat_12 compat_sparc32_reboot */
 #else
 	"#55 (obsolete oreboot)",		/* 55 = obsolete oreboot */
 #endif
@@ -91,7 +92,7 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32_symlink",			/* 57 = compat_sparc32_symlink */
 	"compat_sparc32_readlink",			/* 58 = compat_sparc32_readlink */
 	"compat_sparc32_execve",			/* 59 = compat_sparc32_execve */
-	"umask",			/* 60 = umask */
+	"compat_sparc32_umask",			/* 60 = compat_sparc32_umask */
 	"compat_sparc32_chroot",			/* 61 = compat_sparc32_chroot */
 	"compat_43_compat_sparc32_fstat43",	/* 62 = compat_43 compat_sparc32_fstat43 */
 	"compat_43_compat_sparc32_ogetkerninfo",	/* 63 = compat_43 compat_sparc32_ogetkerninfo */
@@ -100,8 +101,8 @@ char *sparc32_syscallnames[] = {
 	"vfork",			/* 66 = vfork */
 	"#67 (obsolete vread)",		/* 67 = obsolete vread */
 	"#68 (obsolete vwrite)",		/* 68 = obsolete vwrite */
-	"sbrk",			/* 69 = sbrk */
-	"sstk",			/* 70 = sstk */
+	"compat_sparc32_sbrk",			/* 69 = compat_sparc32_sbrk */
+	"compat_sparc32_sstk",			/* 70 = compat_sparc32_sstk */
 	"compat_43_compat_sparc32_ommap",	/* 71 = compat_43 compat_sparc32_ommap */
 	"vadvise",			/* 72 = vadvise */
 	"compat_sparc32_munmap",			/* 73 = compat_sparc32_munmap */
@@ -113,7 +114,7 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32_getgroups",			/* 79 = compat_sparc32_getgroups */
 	"compat_sparc32_setgroups",			/* 80 = compat_sparc32_setgroups */
 	"getpgrp",			/* 81 = getpgrp */
-	"setpgid",			/* 82 = setpgid */
+	"compat_sparc32_setpgid",			/* 82 = compat_sparc32_setpgid */
 	"compat_sparc32_setitimer",			/* 83 = compat_sparc32_setitimer */
 	"compat_43_owait",	/* 84 = compat_43 owait */
 	"compat_12_compat_sparc32_oswapon",	/* 85 = compat_12 compat_sparc32_oswapon */
@@ -121,38 +122,38 @@ char *sparc32_syscallnames[] = {
 	"compat_43_compat_sparc32_ogethostname",	/* 87 = compat_43 compat_sparc32_ogethostname */
 	"compat_43_compat_sparc32_osethostname",	/* 88 = compat_43 compat_sparc32_osethostname */
 	"compat_43_ogetdtablesize",	/* 89 = compat_43 ogetdtablesize */
-	"dup2",			/* 90 = dup2 */
+	"compat_sparc32_dup2",			/* 90 = compat_sparc32_dup2 */
 	"#91 (unimplemented getdopt)",		/* 91 = unimplemented getdopt */
 	"compat_sparc32_fcntl",			/* 92 = compat_sparc32_fcntl */
 	"compat_sparc32_select",			/* 93 = compat_sparc32_select */
 	"#94 (unimplemented setdopt)",		/* 94 = unimplemented setdopt */
-	"fsync",			/* 95 = fsync */
-	"setpriority",			/* 96 = setpriority */
-	"socket",			/* 97 = socket */
+	"compat_sparc32_fsync",			/* 95 = compat_sparc32_fsync */
+	"compat_sparc32_setpriority",			/* 96 = compat_sparc32_setpriority */
+	"compat_sparc32_socket",			/* 97 = compat_sparc32_socket */
 	"compat_sparc32_connect",			/* 98 = compat_sparc32_connect */
 	"compat_43_compat_sparc32_oaccept",	/* 99 = compat_43 compat_sparc32_oaccept */
-	"getpriority",			/* 100 = getpriority */
+	"compat_sparc32_getpriority",			/* 100 = compat_sparc32_getpriority */
 	"compat_43_compat_sparc32_osend",	/* 101 = compat_43 compat_sparc32_osend */
 	"compat_43_compat_sparc32_orecv",	/* 102 = compat_43 compat_sparc32_orecv */
 	"compat_sparc32_sigreturn",			/* 103 = compat_sparc32_sigreturn */
 	"compat_sparc32_bind",			/* 104 = compat_sparc32_bind */
 	"compat_sparc32_setsockopt",			/* 105 = compat_sparc32_setsockopt */
-	"listen",			/* 106 = listen */
+	"compat_sparc32_listen",			/* 106 = compat_sparc32_listen */
 	"#107 (obsolete vtimes)",		/* 107 = obsolete vtimes */
 	"compat_43_compat_sparc32_osigvec",	/* 108 = compat_43 compat_sparc32_osigvec */
 #ifdef COMPAT_43
-	"sigblock",			/* 109 = sigblock */
-	"sigsetmask",			/* 110 = sigsetmask */
+	"compat_43_compat_sparc32_sigblock",	/* 109 = compat_43 compat_sparc32_sigblock */
+	"compat_43_compat_sparc32_sigsetmask",	/* 110 = compat_43 compat_sparc32_sigsetmask */
 #else
 	"#109 (obsolete sigblock)",		/* 109 = obsolete sigblock */
 	"#110 (obsolete sigsetmask)",		/* 110 = obsolete sigsetmask */
 #endif
-	"sigsuspend",			/* 111 = sigsuspend */
+	"compat_13_sigsuspend13",	/* 111 = compat_13 sigsuspend13 */
 	"compat_43_compat_sparc32_osigstack",	/* 112 = compat_43 compat_sparc32_osigstack */
 	"compat_43_compat_sparc32_orecvmsg",	/* 113 = compat_43 compat_sparc32_orecvmsg */
 	"compat_43_compat_sparc32_osendmsg",	/* 114 = compat_43 compat_sparc32_osendmsg */
 #ifdef TRACE
-	"vtrace",			/* 115 = vtrace */
+	"compat_sparc32_vtrace",			/* 115 = compat_sparc32_vtrace */
 #else
 	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */
 #endif
@@ -163,18 +164,18 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32_readv",			/* 120 = compat_sparc32_readv */
 	"compat_sparc32_writev",			/* 121 = compat_sparc32_writev */
 	"compat_sparc32_settimeofday",			/* 122 = compat_sparc32_settimeofday */
-	"fchown",			/* 123 = fchown */
-	"fchmod",			/* 124 = fchmod */
+	"compat_sparc32_fchown",			/* 123 = compat_sparc32_fchown */
+	"compat_sparc32_fchmod",			/* 124 = compat_sparc32_fchmod */
 	"compat_43_compat_sparc32_orecvfrom",	/* 125 = compat_43 compat_sparc32_orecvfrom */
-	"setreuid",			/* 126 = setreuid */
-	"setregid",			/* 127 = setregid */
+	"compat_sparc32_setreuid",			/* 126 = compat_sparc32_setreuid */
+	"compat_sparc32_setregid",			/* 127 = compat_sparc32_setregid */
 	"compat_sparc32_rename",			/* 128 = compat_sparc32_rename */
 	"compat_43_compat_sparc32_otruncate",	/* 129 = compat_43 compat_sparc32_otruncate */
 	"compat_43_compat_sparc32_oftruncate",	/* 130 = compat_43 compat_sparc32_oftruncate */
-	"flock",			/* 131 = flock */
+	"compat_sparc32_flock",			/* 131 = compat_sparc32_flock */
 	"compat_sparc32_mkfifo",			/* 132 = compat_sparc32_mkfifo */
 	"compat_sparc32_sendto",			/* 133 = compat_sparc32_sendto */
-	"shutdown",			/* 134 = shutdown */
+	"compat_sparc32_shutdown",			/* 134 = compat_sparc32_shutdown */
 	"compat_sparc32_socketpair",			/* 135 = compat_sparc32_socketpair */
 	"compat_sparc32_mkdir",			/* 136 = compat_sparc32_mkdir */
 	"compat_sparc32_rmdir",			/* 137 = compat_sparc32_rmdir */
@@ -184,14 +185,14 @@ char *sparc32_syscallnames[] = {
 	"compat_43_compat_sparc32_ogetpeername",	/* 141 = compat_43 compat_sparc32_ogetpeername */
 	"compat_43_ogethostid",	/* 142 = compat_43 ogethostid */
 #ifdef COMPAT_43
-	"sethostid",			/* 143 = sethostid */
+	"compat_43_compat_sparc32_sethostid",	/* 143 = compat_43 compat_sparc32_sethostid */
 #else
 	"#143 (obsolete sethostid)",		/* 143 = obsolete sethostid */
 #endif
 	"compat_43_compat_sparc32_ogetrlimit",	/* 144 = compat_43 compat_sparc32_ogetrlimit */
 	"compat_43_compat_sparc32_osetrlimit",	/* 145 = compat_43 compat_sparc32_osetrlimit */
 #ifdef COMPAT_43
-	"killpg",			/* 146 = killpg */
+	"compat_43_compat_sparc32_killpg",	/* 146 = compat_43 compat_sparc32_killpg */
 #else
 	"#146 (obsolete killpg)",		/* 146 = obsolete killpg */
 #endif
@@ -243,15 +244,20 @@ char *sparc32_syscallnames[] = {
 	"#172 (unimplemented)",		/* 172 = unimplemented */
 	"compat_sparc32_pread",			/* 173 = compat_sparc32_pread */
 	"compat_sparc32_pwrite",			/* 174 = compat_sparc32_pwrite */
+#ifdef NTP
 	"compat_sparc32_ntp_gettime",			/* 175 = compat_sparc32_ntp_gettime */
 	"compat_sparc32_ntp_adjtime",			/* 176 = compat_sparc32_ntp_adjtime */
+#else
+	"#175 (unimplemented compat_sparc32_ntp_gettime)",		/* 175 = unimplemented compat_sparc32_ntp_gettime */
+	"#176 (unimplemented compat_sparc32_ntp_adjtime)",		/* 176 = unimplemented compat_sparc32_ntp_adjtime */
+#endif
 	"#177 (unimplemented)",		/* 177 = unimplemented */
 	"#178 (unimplemented)",		/* 178 = unimplemented */
 	"#179 (unimplemented)",		/* 179 = unimplemented */
 	"#180 (unimplemented)",		/* 180 = unimplemented */
-	"setgid",			/* 181 = setgid */
-	"setegid",			/* 182 = setegid */
-	"seteuid",			/* 183 = seteuid */
+	"compat_sparc32_setgid",			/* 181 = compat_sparc32_setgid */
+	"compat_sparc32_setegid",			/* 182 = compat_sparc32_setegid */
+	"compat_sparc32_seteuid",			/* 183 = compat_sparc32_seteuid */
 #ifdef LFS
 	"compat_sparc32_lfs_bmapv",			/* 184 = compat_sparc32_lfs_bmapv */
 	"compat_sparc32_lfs_markv",			/* 185 = compat_sparc32_lfs_markv */
@@ -274,15 +280,15 @@ char *sparc32_syscallnames[] = {
 	"compat_12_compat_sparc32_getdirentries",	/* 196 = compat_12 compat_sparc32_getdirentries */
 	"compat_sparc32_mmap",			/* 197 = compat_sparc32_mmap */
 	"__syscall",			/* 198 = __syscall */
-	"lseek",			/* 199 = lseek */
+	"compat_sparc32_lseek",			/* 199 = compat_sparc32_lseek */
 	"compat_sparc32_truncate",			/* 200 = compat_sparc32_truncate */
-	"ftruncate",			/* 201 = ftruncate */
+	"compat_sparc32_ftruncate",			/* 201 = compat_sparc32_ftruncate */
 	"compat_sparc32___sysctl",			/* 202 = compat_sparc32___sysctl */
 	"compat_sparc32_mlock",			/* 203 = compat_sparc32_mlock */
 	"compat_sparc32_munlock",			/* 204 = compat_sparc32_munlock */
 	"compat_sparc32_undelete",			/* 205 = compat_sparc32_undelete */
 	"compat_sparc32_futimes",			/* 206 = compat_sparc32_futimes */
-	"getpgid",			/* 207 = getpgid */
+	"compat_sparc32_getpgid",			/* 207 = compat_sparc32_getpgid */
 	"compat_sparc32_reboot",			/* 208 = compat_sparc32_reboot */
 	"compat_sparc32_poll",			/* 209 = compat_sparc32_poll */
 #ifdef LKM
@@ -312,7 +318,7 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32___semctl",			/* 220 = compat_sparc32___semctl */
 	"compat_sparc32_semget",			/* 221 = compat_sparc32_semget */
 	"compat_sparc32_semop",			/* 222 = compat_sparc32_semop */
-	"semconfig",			/* 223 = semconfig */
+	"compat_sparc32_semconfig",			/* 223 = compat_sparc32_semconfig */
 #else
 	"#220 (unimplemented compat_sparc32_semctl)",		/* 220 = unimplemented compat_sparc32_semctl */
 	"#221 (unimplemented compat_sparc32_semget)",		/* 221 = unimplemented compat_sparc32_semget */
@@ -350,7 +356,7 @@ char *sparc32_syscallnames[] = {
 	"#238 (unimplemented timer_gettime)",		/* 238 = unimplemented timer_gettime */
 	"#239 (unimplemented timer_getoverrun)",		/* 239 = unimplemented timer_getoverrun */
 	"compat_sparc32_nanosleep",			/* 240 = compat_sparc32_nanosleep */
-	"fdatasync",			/* 241 = fdatasync */
+	"compat_sparc32_fdatasync",			/* 241 = compat_sparc32_fdatasync */
 	"#242 (unimplemented)",		/* 242 = unimplemented */
 	"#243 (unimplemented)",		/* 243 = unimplemented */
 	"#244 (unimplemented)",		/* 244 = unimplemented */
@@ -393,12 +399,12 @@ char *sparc32_syscallnames[] = {
 	"compat_sparc32___sigaltstack14",			/* 281 = compat_sparc32___sigaltstack14 */
 	"__vfork14",			/* 282 = __vfork14 */
 	"compat_sparc32___posix_chown",			/* 283 = compat_sparc32___posix_chown */
-	"__posix_fchown",			/* 284 = __posix_fchown */
+	"compat_sparc32___posix_fchown",			/* 284 = compat_sparc32___posix_fchown */
 	"compat_sparc32___posix_lchown",			/* 285 = compat_sparc32___posix_lchown */
-	"getsid",			/* 286 = getsid */
+	"compat_sparc32_getsid",			/* 286 = compat_sparc32_getsid */
 	"#287 (unimplemented)",		/* 287 = unimplemented */
 #ifdef KTRACE
-	"fktrace",			/* 288 = fktrace */
+	"compat_sparc32_fktrace",			/* 288 = compat_sparc32_fktrace */
 #else
 	"#288 (unimplemented)",		/* 288 = unimplemented */
 #endif
