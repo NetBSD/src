@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $	*/
+/*	$NetBSD: proc.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
+__RCSID("$NetBSD: proc.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,6 @@ pjwait(pp)
 	if ((jobflags & PSTOPPED) == 0)
 	    pflush(pp);
 	pintr1(0);
-	/* NOTREACHED */
     }
     reason = 0;
     fp = pp;
@@ -346,10 +345,8 @@ pjwait(pp)
 	(void) fprintf(cshout, "Exit %d\n", reason);
     }
     set(STRstatus, putn(reason));
-    if (reason && exiterr) {
+    if (reason && exiterr)
 	exitstat();
-	/* NOTREACHED */
-    }
     pflush(pp);
 }
 
@@ -869,10 +866,8 @@ dojobs(v, t)
     if (chkstop)
 	chkstop = 2;
     if (*++v) {
-	if (v[1] || !eq(*v, STRml)) {
+	if (v[1] || !eq(*v, STRml))
 	    stderror(ERR_JOBS);
-	    /* NOTREACHED */
-	}
 	flag |= FANCY | JOBDIR;
     }
     for (i = 1; i <= pmaxindex; i++)
@@ -984,16 +979,12 @@ dokill(v, t)
     if (v[0] && v[0][0] == '-') {
 	if (v[0][1] == 'l') {
 	    if (v[1]) {
-		if (!Isdigit(v[1][0])) {
+		if (!Isdigit(v[1][0]))
 		    stderror(ERR_NAME | ERR_BADSIG);
-		    /* NOTREACHED */
-		}
 
 		signum = atoi(short2str(v[1]));
-		if (signum < 0 || signum >= NSIG) {
+		if (signum < 0 || signum >= NSIG)
 		    stderror(ERR_NAME | ERR_BADSIG);
-		    /* NOTREACHED */
-		}
 		else if (signum == 0)
 		    (void) fputc('0', cshout); /* 0's symbolic name is '0' */
 		else
@@ -1010,10 +1001,8 @@ dokill(v, t)
 	}
 	if (Isdigit(v[0][1])) {
 	    signum = atoi(short2str(v[0] + 1));
-	    if (signum < 0 || signum > NSIG) {
+	    if (signum < 0 || signum > NSIG)
 		stderror(ERR_NAME | ERR_BADSIG);
-		/* NOTREACHED */
-	    }
 	}
 	else {
 	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0'))
@@ -1021,10 +1010,8 @@ dokill(v, t)
 	    else
 		(*v)++;
 
-	    if (v[0] == NULL || v[1] == NULL) {
+	    if (v[0] == NULL || v[1] == NULL)
 		stderror(ERR_NAME | ERR_TOOFEW);
-		/* NOTREACHED */
-	    }
 
 	    name = short2str(&v[0][0]);
 	    for (signum = 1; signum < NSIG; signum++)
@@ -1037,7 +1024,6 @@ dokill(v, t)
 		else {
 		    setname(vis_str(&v[0][0]));
 		    stderror(ERR_NAME | ERR_UNKSIG);
-		    /* NOTREACHED */
 		}
 	    }
 	}
@@ -1065,10 +1051,8 @@ pkill(v, signum)
     gflag = 0, tglob(v);
     if (gflag) {
 	v = globall(v);
-	if (v == 0) {
+	if (v == 0)
 	    stderror(ERR_NAME | ERR_NOMATCH);
-	    /* NOTREACHED */
-	}
     }
     else {
 	v = gargv = saveblk(v);
@@ -1110,10 +1094,8 @@ pkill(v, signum)
 	    if (signum == SIGTERM || signum == SIGHUP)
 		(void) kill(-pp->p_jobid, SIGCONT);
 	}
-	else if (!(Isdigit(*cp) || *cp == '-')) {
+	else if (!(Isdigit(*cp) || *cp == '-'))
 	    stderror(ERR_NAME | ERR_JOBARGS);
-	    /* NOTREACHED */
-	}
 	else {
 	    pid = atoi(short2str(cp));
 	    if (kill((pid_t) pid, signum) < 0) {
@@ -1130,10 +1112,8 @@ cont:
     if (gargv)
 	blkfree(gargv), gargv = 0;
     (void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
-    if (err1) {
+    if (err1)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
 }
 
 /*
@@ -1181,10 +1161,8 @@ panystop(neednl)
 
     chkstop = 2;
     for (pp = proclist.p_next; pp; pp = pp->p_next)
-	if (pp->p_flags & PSTOPPED) {
+	if (pp->p_flags & PSTOPPED)
 	    stderror(ERR_STOPPED, neednl ? "\n" : "");
-	    /* NOTREACHED */
-	}
 }
 
 struct process *
@@ -1194,17 +1172,13 @@ pfind(cp)
     struct process *pp, *np;
 
     if (cp == 0 || cp[1] == 0 || eq(cp, STRcent2) || eq(cp, STRcentplus)) {
-	if (pcurrent == NULL) {
+	if (pcurrent == NULL)
 	    stderror(ERR_NAME | ERR_JOBCUR);
-	    /* NOTREACHED */
-	}
 	return (pcurrent);
     }
     if (eq(cp, STRcentminus) || eq(cp, STRcenthash)) {
-	if (pprevious == NULL) {
+	if (pprevious == NULL)
 	    stderror(ERR_NAME | ERR_JOBPREV);
-	    /* NOTREACHED */
-	}
 	return (pprevious);
     }
     if (Isdigit(cp[1])) {
@@ -1214,7 +1188,6 @@ pfind(cp)
 	    if (pp->p_index == idx && pp->p_pid == pp->p_jobid)
 		return (pp);
 	stderror(ERR_NAME | ERR_NOSUCHJOB);
-	/* NOTREACHED */
     }
     np = NULL;
     for (pp = proclist.p_next; pp; pp = pp->p_next)
@@ -1231,10 +1204,8 @@ pfind(cp)
 	    }
 	    else if (prefix(cp + 1, pp->p_command)) {
 	match:
-		if (np) {
+		if (np)
 		    stderror(ERR_NAME | ERR_AMBIG);
-		    /* NOTREACHED */
-		}
 		np = pp;
 	    }
 	}
@@ -1242,7 +1213,6 @@ pfind(cp)
 	return (np);
     stderror(ERR_NAME | (cp[1] == '?' ? ERR_JOBPAT : ERR_NOSUCHJOB));
     /* NOTREACHED */
-    return (0);
 }
 
 
@@ -1318,10 +1288,8 @@ pfork(t, wanttty)
     /*
      * Check for maximum nesting of 16 processes to avoid Forking loops
      */
-    if (child == 16) {
+    if (child == 16)
 	stderror(ERR_NESTING, 16);
-	/* NOTREACHED */
-    }
     /*
      * Hold SIGCHLD until we have the process installed in our table.
      */
@@ -1334,7 +1302,6 @@ pfork(t, wanttty)
 	else {
 	    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 	    stderror(ERR_NOPROC);
-	    /* NOTREACHED */
 	}
     if (pid == 0) {
 	settimes();
@@ -1428,7 +1395,6 @@ pgetty(wanttty, pgrp)
 	if (setpgid(0, pgrp) == -1) {
 	    (void) fprintf(csherr, "csh: setpgid error.\n");
 	    xexit(0);
-	    /* NOTREACHED */
 	}
 
     if (wanttty > 0) {

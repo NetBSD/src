@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.24 1998/07/28 05:31:23 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.25 1998/07/28 11:41:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.24 1998/07/28 05:31:23 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.25 1998/07/28 11:41:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,6 @@ setthetime(p)
 		if (settimeofday(&tv, NULL)) {
 			perror("date: settimeofday");
 			exit(1);
-			/* NOTREACHED */
 		}
 		logwtmp("{", "date", "");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dol.c,v 1.11 1998/07/28 02:23:38 mycroft Exp $	*/
+/*	$NetBSD: dol.c,v 1.12 1998/07/28 11:41:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.11 1998/07/28 02:23:38 mycroft Exp $");
+__RCSID("$NetBSD: dol.c,v 1.12 1998/07/28 11:41:42 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,6 @@ Dfix1(cp)
     if (gargc != 1) {
 	setname(vis_str(cp));
 	stderror(ERR_NAME | ERR_AMBIG);
-	/* NOTREACHED */
     }
     cp = Strsave(gargv[0]);
     blkfree(gargv), gargv = 0;
@@ -211,10 +210,8 @@ Dpack(wbuf, wp)
 	    Gcat(STRNULL, wbuf);
 	    return (NULL);
 	}
-	if (--i <= 0) {
+	if (--i <= 0)
 	    stderror(ERR_WTOOLONG);
-	    /* NOTREACHED */
-	}
 	*wp++ = c;
     }
 }
@@ -273,16 +270,12 @@ Dword()
 		c = DgetC(dolflg);
 		if (c == c1)
 		    break;
-		if (c == '\n' || c == DEOF) {
+		if (c == '\n' || c == DEOF)
 		    stderror(ERR_UNMATCHED, c1);
-		    /* NOTREACHED */
-		}
 		if ((c & (QUOTE | TRIM)) == ('\n' | QUOTE))
 		    --wp, ++i;
-		if (--i <= 0) {
+		if (--i <= 0)
 		    stderror(ERR_WTOOLONG);
-		    /* NOTREACHED */
-		}
 		switch (c1) {
 
 		case '"':
@@ -436,10 +429,8 @@ Dgetdol()
     switch (c) {
 
     case '!':
-	if (dimen || bitset) {
+	if (dimen || bitset)
 	    stderror(ERR_SYNTAX);
-	    /* NOTREACHED */
-	}
 	if (backpid != 0) {
 	    if (dolbang) 
 		xfree((ptr_t) dolbang);
@@ -448,28 +439,20 @@ Dgetdol()
 	goto eatbrac;
 
     case '$':
-	if (dimen || bitset) {
+	if (dimen || bitset)
 	    stderror(ERR_SYNTAX);
-	    /* NOTREACHED */
-	}
 	setDolp(doldol);
 	goto eatbrac;
 
     case '<' | QUOTE:
-	if (bitset) {
+	if (bitset)
 	    stderror(ERR_NOTALLOWED, "$?<");
-	    /* NOTREACHED */
-	}
-	if (dimen) {
+	if (dimen)
 	    stderror(ERR_NOTALLOWED, "$?#");
-	    /* NOTREACHED */
-	}
 	for (np = wbuf; read(OLDSTD, &tnp, 1) == 1; np++) {
 	    *np = (unsigned char) tnp;
-	    if (np >= &wbuf[BUFSIZ - 1]) {
+	    if (np >= &wbuf[BUFSIZ - 1])
 		stderror(ERR_LTOOLONG);
-		/* NOTREACHED */
-	    }
 	    if (tnp == '\n')
 		break;
 	}
@@ -500,10 +483,8 @@ Dgetdol()
     default:
 	np = name;
 	if (Isdigit(c)) {
-	    if (dimen) {
+	    if (dimen)
 		stderror(ERR_NOTALLOWED, "$#<num>");
-		/* NOTREACHED */
-	    }
 	    subscr = 0;
 	    do {
 		subscr = subscr * 10 + c - '0';
@@ -519,18 +500,14 @@ Dgetdol()
 		    dolp = ffile ? STR1 : STR0;
 		    goto eatbrac;
 		}
-		if (ffile == 0) {
+		if (ffile == 0)
 		    stderror(ERR_DOLZERO);
-		    /* NOTREACHED */
-		}
 		fixDolMod();
 		setDolp(ffile);
 		goto eatbrac;
 	    }
-	    if (bitset) {
+	    if (bitset)
 		stderror(ERR_DOLQUEST);
-		/* NOTREACHED */
-	    }
 	    vp = adrof(STRargv);
 	    if (vp == 0) {
 		vp = &nulargv;
@@ -538,19 +515,15 @@ Dgetdol()
 	    }
 	    break;
 	}
-	if (!alnum(c)) {
+	if (!alnum(c))
 	    stderror(ERR_VARALNUM);
-	    /* NOTREACHED */
-	}
 	for (;;) {
 	    *np++ = c;
 	    c = DgetC(0);
 	    if (!alnum(c))
 		break;
-	    if (np >= &name[MAXVARLEN]) {
+	    if (np >= &name[MAXVARLEN])
 		stderror(ERR_VARTOOLONG);
-		/* NOTREACHED */
-	    }
 	}
 	*np++ = 0;
 	unDredc(c);
@@ -568,7 +541,6 @@ Dgetdol()
 	    goto eatbrac;
 	}
 	udvar(name);
-	/* NOTREACHED */
     }
     c = DgetC(0);
     upb = blklen(vp->vec);
@@ -578,25 +550,17 @@ Dgetdol()
 	    c = DgetC(DODOL);	/* Allow $ expand within [ ] */
 	    if (c == ']')
 		break;
-	    if (c == '\n' || c == DEOF) {
+	    if (c == '\n' || c == DEOF)
 		stderror(ERR_INCBR);
-		/* NOTREACHED */
-	    }
-	    if (np >= &name[sizeof(name) / sizeof(Char) - 2]) {
+	    if (np >= &name[sizeof(name) / sizeof(Char) - 2])
 		stderror(ERR_VARTOOLONG);
-		/* NOTREACHED */
-	    }
 	    *np++ = c;
 	}
 	*np = 0, np = name;
-	if (dolp || dolcnt)	/* $ exp must end before ] */ {
+	if (dolp || dolcnt)	/* $ exp must end before ] */
 	    stderror(ERR_EXPORD);
-	    /* NOTREACHED */
-	}
-	if (!*np) {
+	if (!*np)
 	    stderror(ERR_SYNTAX);
-	    /* NOTREACHED */
-	}
 	if (Isdigit(*np)) {
 	    int     i;
 
@@ -612,10 +576,9 @@ Dgetdol()
 	}
 	if (*np == '*')
 	    np++;
-	else if (*np != '-') {
+	else if (*np != '-')
 	    stderror(ERR_MISSING, '-');
-	    /* NOTREACHED */
-	} else {
+	else {
 	    int i = upb;
 
 	    np++;
@@ -640,10 +603,8 @@ Dgetdol()
 	    }
 	    upb = -1;
 	}
-	if (*np) {
+	if (*np)
 	    stderror(ERR_SYNTAX);
-	    /* NOTREACHED */
-	}
     }
     else {
 	if (subscr > 0)
@@ -668,10 +629,8 @@ eatmod:
 eatbrac:
     if (sc == '{') {
 	c = Dredc();
-	if (c != '}') {
+	if (c != '}')
 	    stderror(ERR_MISSING, '}');
-	    /* NOTREACHED */
-	}
     }
 }
 
@@ -722,10 +681,8 @@ fixDolMod()
 		}
 		continue;
 	    }
-	    if (!any("htrqxes", c)) {
+	    if (!any("htrqxes", c))
 		stderror(ERR_BADMOD, c);
-		/* NOTREACHED */
-	    }
 	    dolmod[dolnmod++] = c;
 	    if (c == 'q')
 		dolmcnt = 10000;
@@ -837,10 +794,8 @@ setDolp(cp)
 	addla(cp);
 
     dolp = STRNULL;
-    if (seterr) {
+    if (seterr)
 	stderror(ERR_OLD);
-	/* NOTREACHED */
-    }
 }
 
 static void
@@ -899,10 +854,8 @@ heredoc(term)
     char   *tmp;
 
     tmp = short2str(shtemp);
-    if (open(tmp, O_RDWR | O_CREAT | O_TRUNC, 0600) < 0) {
+    if (open(tmp, O_RDWR | O_CREAT | O_TRUNC, 0600) < 0)
 	stderror(ERR_SYSTEM, tmp, strerror(errno));
-	/* NOTREACHED */
-    }
     (void) unlink(tmp);		/* 0 0 inode! */
     Dv[0] = term;
     Dv[1] = NULL;
@@ -927,7 +880,6 @@ heredoc(term)
 		if (--lcnt < 0) {
 		    setname("<<");
 		    stderror(ERR_NAME | ERR_OVERFLOW);
-		    /* NOTREACHED */
 		}
 	    }
 	}
@@ -985,7 +937,6 @@ heredoc(term)
 	    if (--mcnt == 0) {
 		setname("<<");
 		stderror(ERR_NAME | ERR_OVERFLOW);
-		/* NOTREACHED */
 	    }
 	}
 	*mbp++ = 0;

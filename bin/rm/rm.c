@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.23 1998/07/28 05:31:27 mycroft Exp $	*/
+/*	$NetBSD: rm.c,v 1.24 1998/07/28 11:41:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.23 1998/07/28 05:31:27 mycroft Exp $");
+__RCSID("$NetBSD: rm.c,v 1.24 1998/07/28 11:41:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,8 @@ main(argc, argv)
 			rm_file(argv);
 	}
 
-	exit (eval);
+	exit(eval);
+	/* NOTREACHED */
 }
 
 void
@@ -184,6 +185,7 @@ rm_tree(argv)
 			continue;
 		case FTS_ERR:
 			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
+			/* NOTREACHED */
 		case FTS_NS:
 			/*
 			 * FTS_NS: assume that if can't stat the file, it

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1998/07/28 11:41:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 1998/07/28 11:41:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,7 @@ state4:	/* XXX ??? - why isn't this before the "if" statement */
 	monitor(0);
 #endif
 	exitshell(exitstatus);
-	/*NOTREACHED*/
-	return 0;
+	/* NOTREACHED */
 }
 
 
@@ -371,6 +370,5 @@ exitcmd(argc, argv)
 	else
 		exitstatus = oexitstatus;
 	exitshell(exitstatus);
-	/*NOTREACHED*/
-	return 0;
+	/* NOTREACHED */
 }
