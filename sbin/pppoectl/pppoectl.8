@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.12 2002/08/16 23:54:52 itojun Exp $
+.\"	$NetBSD: pppoectl.8,v 1.13 2002/09/01 09:42:05 martin Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.12 2002/08/16 23:54:52 itojun Exp $
+.\" $Id: pppoectl.8,v 1.13 2002/09/01 09:42:05 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -229,6 +229,10 @@ retry count. If
 is set to
 .Em 0
 this feature is disabled.
+.It Ar clear-auth-failure
+If authentication failure has been caused by remote problems and you want
+to retry connecting using unchanged local settings, this command can be used
+to reset the failure count to zero.
 .It Ar query-dns Ns \&= Ns Em flags
 During PPP protocol negotiation we can query the peer for addresses of two name
 servers. If
