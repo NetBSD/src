@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2002/04/12 08:10:49 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.177 $"
+#ident 		"GENERIC-$Revision: 1.178 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -245,6 +245,11 @@ options 	GRF_SUPER72	# AGA Super-72
 #endif
 #options 	KFONT_8X11	# 8x11 font
 
+# select a font for the console according to the character set and keymap
+# you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
+
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
@@ -280,7 +285,7 @@ grfrt0		at zbus0		# retina II
 #endif
 grfrh0		at zbus0		# retina III
 #ifdef AMIGA_CONFIGURATION
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
