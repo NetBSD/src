@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/21 08:03:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/21 08:06:15 thorpej Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 PROG=           unprotoize
 SRCS=		unprotoize.c ${G_PROTO_OBJS:.o=.c}
-
-NOMAN=		# defined
 
 .include "../Makefile.frontend"
 
