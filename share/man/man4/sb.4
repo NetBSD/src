@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.6 1997/02/24 00:01:50 jonathan Exp $
+.\"	$NetBSD: sb.4,v 1.7 1997/04/10 07:30:03 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,13 +39,14 @@
 .Os NetBSD
 .Sh NAME
 .Nm sb
-.Nd
-SoundBlaster family (and compatibles) audio device driver
+.Nd SoundBlaster family (and compatible) audio device driver
 .Sh SYNOPSIS
-.Cd "sb0 at isa? port 0xPPP irq X drq Y flags Z"
+.Cd "sb0 at isa? port 0x220 irq 5 drq 1"
+.Cd "sb1 at isa? port 0x240 irq 7 drq 1 flags 1"
+.Cd "sb2 at isapnp?"
 .Sh DESCRIPTION
 The
-.Nm sb
+.Nm
 driver provides support for the SoundBlaster, SoundBlaster Pro,
 SoundBlaster 16, Jazz 16, and hardware register-level compatible audio cards.
 .Pp
@@ -68,15 +69,23 @@ specification to enable the Jazz16 support.  This is to avoid potential
 conflicts with other devices when probing the Jazz 16 because it requires
 use of extra I/O ports not in the base port range.
 .Pp
+The joystick interface (if enabled by a jumper) is handled by the
+.Xr joy 4
+driver, and the optional SCSI CD-ROM interface is handled by the
+.Xr aic 4
+driver.
 .Sh BUGS
 The driver has not been extensively tested on original SoundBlaster,
 SoundBlaster 16, or newer cards.
 .Pp
-The FM synthesizer, joystick and MIDI port interfaces are not supported.
+The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
+supported.
 .Sh SEE ALSO
-.Xr audio 4
+.Xr aic 4 ,
+.Xr audio 4 ,
+.Xr joy 4
 .Sh HISTORY
 The
-.Nm sb
+.Nm
 device driver appeared in
 .Nx 1.0 .
