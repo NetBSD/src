@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1997/03/26 22:39:22 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1997/07/17 02:22:29 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -51,6 +51,8 @@
 #include <machine/clock.h>
 
 #include <vax/vax/gencons.h>
+
+#include "locators.h"
 
 void	gencnslask __P((void));
 
@@ -313,7 +315,7 @@ mem_match(parent, gcf, aux)
 		return 1;
 	}
 #endif
-	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
+	if (cf->cf_loc[SBICF_TR] != sa->nexnum && cf->cf_loc[SBICF_TR] > -1)
 		return 0;
 
 	switch (sa->type) {

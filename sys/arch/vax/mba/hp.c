@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.15 1997/06/24 01:09:37 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.16 1997/07/17 02:22:26 jtk Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,6 +63,8 @@
 #include <vax/mba/mbareg.h>
 #include <vax/mba/hpreg.h>
 
+#include "locators.h"
+
 #define	HPMASK 0xffff
 
 struct	hp_softc {
@@ -106,7 +108,8 @@ hpmatch(parent, match, aux)
 	struct	cfdata *cf = match;
 	struct	mba_attach_args *ma = aux;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ma->unit)
+	if (cf->cf_loc[MBACF_DRIVE] != MBACF_DRIVE_DEFAULT &&
+	    cf->cf_loc[MBACF_DRIVE] != ma->unit)
 		return 0;
 
 	if (ma->devtyp != MB_RP)

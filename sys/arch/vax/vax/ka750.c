@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.18 1997/02/19 10:04:17 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.19 1997/07/17 02:22:30 jtk Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -54,6 +54,8 @@
 
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
+
+#include "locators.h"
 
 void	ctuattach __P((void));
 
@@ -111,7 +113,7 @@ ka750_memmatch(parent, gcf, aux)
 	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct  cfdata  *cf = gcf;
 
-        if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
+        if (cf->cf_loc[SBICF_TR] != sa->nexnum && cf->cf_loc[SBICF_TR] > -1)
                 return 0;
 
 	if (sa->type != NEX_MEM16)
