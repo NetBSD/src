@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.13 1999/06/22 14:51:58 oster Exp $ */
+/* 	$NetBSD: px.c,v 1.14 1999/07/25 22:50:29 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.13 1999/06/22 14:51:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.14 1999/07/25 22:50:29 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -338,10 +338,10 @@ px_attach(parent, self, aux)
  * XXX use magic number to make sure fi isn't a real struct fbinfo?
  */
 int
-px_init(fi, slotbase, unit, silent)
+px_init(fi, slotbase, unit, console)
 	struct fbinfo *fi;
 	caddr_t slotbase;
-	int unit, silent;
+	int unit, console;
 {
 	struct px_info *pxi;
 	u_long bufpa;
@@ -394,7 +394,7 @@ px_init(fi, slotbase, unit, silent)
 	}
 
 	/* Get a font and lock. If we're not the console, we don't care */
-	if (fi == NULL) {
+	if (console) {
 		wsfont_init();
 
 		if ((i = wsfont_find(NULL, 0, 0, 2)) <= 0)
@@ -416,7 +416,7 @@ px_init(fi, slotbase, unit, silent)
 	pxi->pxi_fontscale = pxi->pxi_font->fontheight * pxi->pxi_font->stride;
 
 	/* Connect to rcons if this is the console device */
-	if (fi == NULL) {
+	if (console) {
 		px_cons_info = pxi;
 		
 		/* XXX no multiscreen X support yet */

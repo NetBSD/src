@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.24 1999/06/24 18:47:58 ad Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.25 1999/07/25 22:50:59 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.24 1999/06/24 18:47:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.25 1999/07/25 22:50:59 ad Exp $");
 
 
 #include <sys/types.h>
@@ -336,6 +336,7 @@ tc_consprobeslot(tc_slotaddr)
 {
 
 	void *slotaddr = (void *) tc_slotaddr;
+	struct fbinfo *fi;
 	char name[20];
 	int i;
 
@@ -349,6 +350,9 @@ tc_consprobeslot(tc_slotaddr)
 	if (tc_checkslot(tc_slotaddr, name) == 0)
 		return (0);
 
+	if (fballoc((caddr_t)tc_slotaddr, &fi))
+		return (0);
+
 	/*
 	 * We found an device in the given slot. Now see if it's a
 	 * framebuffer for which we have a driver.
@@ -357,7 +361,7 @@ tc_consprobeslot(tc_slotaddr)
 		if (tcfbsw[i].fbsw_initfn == 0)
 			break;
 		if (strcmp(name, tcfbsw[i].fbsw_name) == 0) {
-			if (tcfbsw[i].fbsw_initfn(NULL, slotaddr, 0, 1))
+			if (tcfbsw[i].fbsw_initfn(fi, slotaddr, 0, 1))
 				return (1);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.4 1999/06/21 19:21:10 ad Exp $ */
+/*	$NetBSD: fbvar.h,v 1.5 1999/07/25 22:50:50 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -58,19 +58,12 @@ struct hw_cursor {
 	int	cmap_size;		/* Size of cursor colormap... */
 };
 
-#ifdef notyet
-/*
- * This will shortly become the preferred way to hook-up framebuffers,
- * ridding us of the ungainly hack that 'struct fbinfo' currently presents.
- */
 struct fbsoftc {
 	struct	device sc_dv;
 	struct	fbinfo *sc_fi;
 };
-#endif
 
 struct fbinfo {
-	struct device	fi_dv;		/* autoconfig device struct */
 	int 	fi_unit;		/* Physical frame buffer unit. */
 	struct	fbtype fi_type;		/* Geometry of frame buffer. */
 	caddr_t	fi_pixels;		/* display RAM */
@@ -80,6 +73,7 @@ struct fbinfo {
 	caddr_t fi_cmap_bits;		/* Colormap backing store... */
 	int	fi_size;		/* Size of entire fb address space. */
 	int	fi_linebytes;		/* bytes per display line */
+	caddr_t	fi_savedcmap;		/* Colormap before open() */
 
 	struct	fbdriver *fi_driver;	/* pointer to driver */
 	struct	hw_cursor fi_cursor;	/* Hardware cursor info */
@@ -108,7 +102,12 @@ struct fbdriver {
 	void	(*fbd_cursorcolor) __P ((struct fbinfo *fi, u_int *color));
 };
 
+#ifdef _KERNEL
+
 #define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
 #define romgetcursoraddr(xp, yp)	0
 
-void fbconnect __P ((char *name, struct fbinfo *info, int silent));
+void	fbconnect __P ((char *name, struct fbinfo *info, int silent));
+int	fballoc __P ((caddr_t base, struct fbinfo **fip));
+
+#endif /* _KERNEL */
