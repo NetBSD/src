@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.132 2002/12/07 06:52:11 toshii Exp $	*/
+/*	$NetBSD: ohci.c,v 1.133 2002/12/07 07:14:28 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.132 2002/12/07 06:52:11 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.133 2002/12/07 07:14:28 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,7 +1331,9 @@ ohci_softintr(void *v)
 				xfer->actlen += len;
 			if (std->flags & OHCI_CALL_DONE) {
 				xfer->status = USBD_NORMAL_COMPLETION;
+				s = splusb();
 				usb_transfer_complete(xfer);
+				splx(s);
 			}
 			ohci_free_std(sc, std);
 		} else {
@@ -1362,7 +1364,9 @@ ohci_softintr(void *v)
 				xfer->status = USBD_STALLED;
 			else
 				xfer->status = USBD_IOERROR;
+			s = splusb();
 			usb_transfer_complete(xfer);
+			splx(s);
 		}
 	}
 
@@ -1748,7 +1752,7 @@ ohci_rem_ed(ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 	SPLUSBCHECK;
 
 	/* XXX */
-	for (p = head; p == NULL && p->next != sed; p = p->next)
+	for (p = head; p != NULL && p->next != sed; p = p->next)
 		;
 	if (p == NULL)
 		panic("ohci_rem_ed: ED not found");
@@ -2103,6 +2107,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 	}
 #endif
 	ohci_rem_ed(sed, head);
+	/* Make sure the host controller is not touching this ED */
+	usb_delay_ms(&sc->sc_bus, 1);
 	splx(s);
 	ohci_free_sed(sc, opipe->sed);
 }
