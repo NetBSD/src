@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.4 1999/11/21 10:31:22 veego Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.5 2000/03/01 10:49:58 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -2524,9 +2524,7 @@ deallocate_everything(void) {
 	if (nsid_pool != NULL)
 		memput(nsid_pool, 0x10000 * (sizeof(u_int16_t)));
 	nsid_pool = NULL;
-#ifndef __NetBSD__
 	irs_destroy();
-#endif
 	if (f != NULL) {
 		memstats(f);
 		(void)fclose(f);

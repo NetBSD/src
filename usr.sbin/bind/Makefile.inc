@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 1999/11/20 20:42:39 veego Exp $
+# $NetBSD: Makefile.inc,v 1.6 2000/03/01 10:50:01 itojun Exp $
 
 WARNS=0
 
@@ -14,6 +14,5 @@ PS=		ps
 LIB_BIND!=	cd ${BIND_DIR}/lib; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | \
 		${MAKE} -s -f -
-INCLUDE?=	-I${LIB_BIND} -I${.OBJDIR} -I${BIND_DIR}/include -I${BIND_DIST_DIR}/include
+INCLUDE?=	-I${LIB_BIND} -I${.OBJDIR} -I${BIND_DIST_DIR}/include
 LIBRARY?=	-L${LIB_BIND} -lbind
-
