@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.58 2002/04/20 17:04:32 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.59 2002/04/20 17:36:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.58 2002/04/20 17:04:32 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.59 2002/04/20 17:36:16 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2505,7 +2505,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	}
 	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, play);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec);
 	}
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n",
