@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.28 2004/08/21 21:58:58 hubertf Exp $
+.\"	$NetBSD: macros,v 1.29 2004/10/13 23:28:35 gavan Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -401,6 +401,7 @@
 .\" Define registers for MACHINE_ARCHs with multiple or different MACHINEs
 .
 .ds A \*M
+.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[iyonix]:\n[netwinder]:\n[shark] .ds A arm
 .ds P \*M
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[netwinder]:\n[shark] .ds A arm
 .if \n[hp700] .ds A hppa

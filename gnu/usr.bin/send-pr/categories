@@ -31,6 +31,7 @@ port-hpcmips
 port-hpcsh
 port-hppa
 port-i386
+port-iyonix
 port-luna68k
 port-m68k
 port-mac68k
