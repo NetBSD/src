@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.52 2000/10/31 23:39:24 jeffs Exp $ */
+/* $NetBSD: locore.h,v 1.53 2001/06/11 23:52:38 thorpej Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -67,9 +67,9 @@ void	mips1_cpu_switch_resume(void);
 
 void	mips3_ConfigCache(int);
 void	mips3_FlushCache(void);
-void	mips3_FlushDCache(vaddr_t addr, vaddr_t len);
-void	mips3_FlushICache(vaddr_t addr, vaddr_t len);
-void	mips3_HitFlushDCache(vaddr_t, int);
+void	mips3_FlushDCache(vaddr_t addr, vsize_t len);
+void	mips3_FlushICache(vaddr_t addr, vsize_t len);
+void	mips3_HitFlushDCache(vaddr_t, vsize_t);
 
 void	mips3_SetPID(int pid);
 void	mips3_TBIA(int);
@@ -83,8 +83,8 @@ void	mips3_cpu_switch_resume(void);
 
 void	mips3_FlushCache_2way(void);
 void	mips3_FlushDCache_2way(vaddr_t addr, vaddr_t len);
-void	mips3_HitFlushDCache_2way(vaddr_t, int);
 void	mips3_FlushICache_2way(vaddr_t addr, vaddr_t len);
+void	mips3_HitFlushDCache_2way(vaddr_t, vsize_t);
 
 u_int32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(u_int32_t);
@@ -111,6 +111,7 @@ typedef struct  {
 	void (*flushCache)(void);
 	void (*flushDCache)(vaddr_t addr, vsize_t len);
 	void (*flushICache)(vaddr_t addr, vsize_t len);
+	void (*hitflushDCache)(vaddr_t, vsize_t);
 	void (*setTLBpid)(int pid);
 	void (*TBIAP)(int);
 	void (*TBIS)(vaddr_t);
@@ -129,31 +130,22 @@ void	logstacktrace(void);
 
 /*
  * The "active" locore-fuction vector, and
-
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern mips_locore_jumpvec_t r2000_locore_vec;
 extern mips_locore_jumpvec_t r4000_locore_vec;
 extern long *mips_locoresw[];
 
-#if defined(MIPS3) && !defined (MIPS1)
-#if	defined(MIPS3_5200)
-#define MachFlushCache		mips3_FlushCache_2way
-#define MachFlushDCache		mips3_FlushDCache_2way
-#define MachHitFlushDCache	mips3_HitFlushDCache_2way
-#define MachFlushICache		mips3_FlushICache_2way
-#else
-#define MachFlushCache		mips3_FlushCache
-#if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_4100)
-#define MachFlushDCache         mips3_FlushDCache		/* VR4100 */
-#elif	!defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_L2CACHE_PRESENT)
-#define MachFlushDCache		mips3_FlushDCache
-#else
+/*
+ * Always indirect to get the cache ops.  There are just too many
+ * combinations to try and worry about.
+ */
+#define MachFlushCache		(*(mips_locore_jumpvec.flushCache))
 #define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
-#endif
-#define MachHitFlushDCache	mips3_HitFlushDCache
-#define MachFlushICache		mips3_FlushICache
-#endif
+#define MachFlushICache		(*(mips_locore_jumpvec.flushICache))
+#define	MachHitFlushDCache	(*(mips_locore_jumpvec.hitflushDCache))
+
+#if defined(MIPS3) && !defined(MIPS1)
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips3_TBIS
@@ -162,10 +154,7 @@ extern long *mips_locoresw[];
 #define proc_trampoline		mips3_proc_trampoline
 #endif
 
-#if !defined(MIPS3) && defined (MIPS1)
-#define MachFlushCache		mips1_FlushCache
-#define MachFlushDCache		mips1_FlushDCache
-#define MachFlushICache		mips1_FlushICache
+#if !defined(MIPS3) && defined(MIPS1)
 #define MachSetPID		mips1_SetPID
 #define MIPS_TBIAP()		mips1_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips1_TBIS
@@ -174,17 +163,11 @@ extern long *mips_locoresw[];
 #define proc_trampoline		mips1_proc_trampoline
 #endif
 
-
-
-#if defined(MIPS3) && defined (MIPS1)
-#define MachFlushCache		(*(mips_locore_jumpvec.flushCache))
-#define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
-#define MachFlushICache		(*(mips_locore_jumpvec.flushICache))
+#if defined(MIPS3) && defined(MIPS1)
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
 #define MIPS_TBIAP()		(*(mips_locore_jumpvec.TBIAP))(mips_num_tlb_entries)
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
-#define MachHitFlushDCache	mips3_HitFlushDCache
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
 #define proc_trampoline		(mips_locoresw[1])
 #endif

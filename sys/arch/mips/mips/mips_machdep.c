@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.117 2001/05/31 02:06:26 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.118 2001/06/11 23:52:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.117 2001/05/31 02:06:26 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118 2001/06/11 23:52:39 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -137,6 +137,7 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_FlushCache,
 	mips1_FlushDCache,
 	mips1_FlushICache,
+	NULL,
 	mips1_SetPID,
 	mips1_TBIAP,
 	mips1_TBIS,
@@ -183,6 +184,7 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_FlushCache,
 	mips3_FlushDCache,
 	mips3_FlushICache,
+	mips3_HitFlushDCache,
 	mips3_SetPID,
 	mips3_TBIAP,
 	mips3_TBIS,
@@ -487,6 +489,12 @@ mips_vector_init()
 			mips3_locore_vec.flushCache = mips3_FlushCache_2way;
 			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
 			mips3_locore_vec.flushICache = mips3_FlushICache_2way;
+			/*
+			 * XXX 2-way version does not yet handle L2 cache.
+			 */
+			if (mips_L2CachePresent == 0)
+				mips3_locore_vec.hitflushDCache =
+				    mips3_HitFlushDCache_2way;
 		}
 		mips3_vector_init(mips3_csizebase);
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
