@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.51 2002/03/27 21:42:45 briggs Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.52 2002/05/03 00:18:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.51 2002/03/27 21:42:45 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52 2002/05/03 00:18:31 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -138,10 +138,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.51 2002/03/27 21:42:45 briggs Exp $");
  * enough descriptors for 128 pending transmissions, and 8 segments
  * per packet.  This MUST work out to a power of 2.
  */
-#define	SIP_NTXSEGS		8
+#define	SIP_NTXSEGS		16
+#define	SIP_NTXSEGS_ALLOC	8
 
 #define	SIP_TXQUEUELEN		256
-#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
+#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS_ALLOC)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
 
