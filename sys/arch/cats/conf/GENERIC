@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2003/04/26 14:10:13 ragge Exp $
+# $NetBSD: GENERIC,v 1.48 2003/05/04 01:27:53 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -530,5 +530,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
-
+pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
