@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.9 1998/12/19 23:36:07 christos Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.10 1999/01/20 15:59:00 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.9 1998/12/19 23:36:07 christos Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.10 1999/01/20 15:59:00 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -61,6 +61,9 @@ __RCSID("$NetBSD: uudecode.c,v 1.9 1998/12/19 23:36:07 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <limits.h>
 
 static int decode __P((void));
 static void usage __P((void));
@@ -105,7 +108,9 @@ decode()
 	struct passwd *pw;
 	int n;
 	char ch, *p;
-	int mode, n1;
+	int n1;
+	long mode;
+	char *fn;
 	char buf[MAXPATHLEN];
 
 	/* search for header line */
@@ -115,16 +120,32 @@ decode()
 			return(1);
 		}
 	} while (strncmp(buf, "begin ", 6));
-	(void)sscanf(buf, "begin %o %s", &mode, buf);
-
+        /* must be followed by an octal mode and a space */
+	mode = strtol(buf + 6, &fn, 8);
+	if (fn == (buf+6) || !isspace(*fn) || mode==LONG_MIN || mode==LONG_MAX)
+	{
+	        warnx("%s: invalid mode on \"begin\" line\n", filename);
+		return(1);
+	}
+	/* skip whitespace for file name */
+	while (*fn && isspace(*fn)) fn++;
+	if (*fn == 0) {
+                warnx("%s: no filename on \"begin\" line\n", filename);
+		return(1);
+	}
+	/* zap newline */
+	for (p = fn; *p && *p != '\n'; p++) 
+	        ;
+	if (*p) *p = 0;
+	
 	/* handle ~user/file format */
-	if (buf[0] == '~') {
-		if (!(p = strchr(buf, '/'))) {
+	if (*fn == '~') {
+		if (!(p = strchr(fn, '/'))) {
 			warnx("%s: illegal ~user.", filename);
 			return(1);
 		}
 		*p++ = '\0';
-		if (!(pw = getpwnam(buf + 1))) {
+		if (!(pw = getpwnam(fn + 1))) {
 			warnx("%s: no user %s.", filename, buf);
 			return(1);
 		}
@@ -134,15 +155,17 @@ decode()
 			warnx("%s: path too long.", filename);
 			return(1);
 		}
+		/* make space at beginning of buf by moving end of pathname */
 		memmove(buf + n + 1, p, n1 + 1);
 		memmove(buf, pw->pw_dir, n);
 		buf[n] = '/';
+		fn = buf;
 	}
 
 	/* create output file, set mode */
-	if (!freopen(buf, "w", stdout) ||
+	if (!freopen(fn, "w", stdout) ||
 	    fchmod(fileno(stdout), mode&0666)) {
-		warnx("%s: %s", buf, filename);
+		warnx("%s: %s", fn, filename);
 		return(1);
 	}
 
