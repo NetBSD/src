@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.57 2002/11/19 04:24:16 atatat Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.58 2003/07/13 12:36:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,13 +82,14 @@ mkmakefile(void)
 
 	/* Try a makefile for the port first.
 	 */
-	(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machine, machine);
+	(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
+	    machine, machine);
 	ifname = sourcepath(buf);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		/* Try a makefile for the architecture second.
 		 */
-		(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machinearch,
-			machinearch);
+		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
+		    machinearch, machinearch);
 		ifname = sourcepath(buf);
 	}
 	if ((ifp = fopen(ifname, "r")) == NULL) {
@@ -382,7 +383,8 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 	 */
 	if (suffix == 'c') {
 		TAILQ_FOREACH(cf, &allcf, cf_next) {
-			(void)sprintf(swapname, "swap%s.c", cf->cf_name);
+			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
+			    cf->cf_name);
 			len = strlen(swapname);
 			if (lpos + len > 72) {
 				if (fputs(" \\\n", fp) < 0)
@@ -437,7 +439,7 @@ emitrules(FILE *fp)
 			ch = fpath[strlen(fpath) - 1];
 			if (islower(ch))
 				ch = toupper(ch);
-			(void)sprintf(buf, "${%s_%c}", cp, ch);
+			(void)snprintf(buf, sizeof(buf), "${%s_%c}", cp, ch);
 			cp = buf;
 		}
 		if (fprintf(fp, "\t%s\n\n", cp) < 0)
