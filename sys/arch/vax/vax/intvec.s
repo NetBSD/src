@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.27 1998/07/05 00:51:16 jonathan Exp $   */
+/*	$NetBSD: intvec.s,v 1.28 1998/07/05 02:12:28 jonathan Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -34,7 +34,7 @@
 #include "assym.h"
 
 #include "opt_inet.h"
-#include "opt_atalk.h"
+#include "opt_ccitt.h"
 #include "arp.h"
 #include "ppp.h"
 

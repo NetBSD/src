@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.14 1998/07/05 00:51:25 jonathan Exp $	*/
+/*	$NetBSD: if_se.c,v 1.15 1998/07/05 02:12:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -60,6 +60,7 @@
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
+#include "opt_ccitt.h"
 #include "bpfilter.h"
 
 #include <sys/types.h>
