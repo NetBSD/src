@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2003/04/18 19:14:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.206 2003/05/10 07:12:37 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -52,6 +52,10 @@
 #	(See etc/Makefile for more information on this.)
 #   regression-tests:
 #	Runs the regression tests in "regress" on this host.
+#   sets:
+#	Populate ${RELEASEDIR}/${MACHINE}/binary/sets from ${DESTDIR}
+#   sourcesets:
+#	Populate ${RELEASEDIR}/source/sets from ${NETBSDSRCDIR}
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
@@ -245,11 +249,13 @@ installworld:
 	@printf "make ${.TARGET} finished at: " && date
 
 #
-# Create sets from $DESTDIR into $RELEASEDIR
+# Create sets from $DESTDIR or $NETBSDSRCDIR into $RELEASEDIR
 #
 
-sets:
-	(cd ${.CURDIR}/distrib/sets && ${MAKE} maketars)
+.for tgt in sets sourcesets
+${tgt}:
+	(cd ${.CURDIR}/distrib/sets && ${MAKE} $@)
+.endfor
 
 #
 # Build a release or snapshot (implies "make build").  Note that
