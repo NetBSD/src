@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)statfs.2	6.5 (Berkeley) 7/23/91
-.\"	$Id: statfs.2,v 1.6 1994/04/22 00:13:49 jtc Exp $
+.\"	$Id: statfs.2,v 1.7 1994/04/25 18:47:04 cgd Exp $
 .\"
 .Dd July 23, 1991
 .Dt STATFS 2
@@ -55,32 +55,27 @@ is a pointer to a
 .Fn statfs
 structure defined as follows:
 .Bd -literal
-typedef quad fsid_t;
+typedef struct { long val[2]; } fsid_t;
 
-#define MNAMELEN 32	/* length of buffer for returned name */
+#define	MFSNAMELEN	15	/* length of fs type name, not inc. null */
+#define	MNAMELEN	90	/* length of buffer for returned name */
 
 struct statfs {
-short	f_type;		  /* type of filesystem (see below) */
-short	f_flags;	  /* copy of mount flags */
-long	f_fsize;	  /* fundamental file system block size */
-long	f_bsize;	  /* optimal transfer block size */
-long	f_blocks;	  /* total data blocks in file system */
-long	f_bfree;	  /* free blocks in fs */
-long	f_bavail;	  /* free blocks avail to non-superuser */
-long	f_files;	  /* total file nodes in file system */
-long	f_ffree;	  /* free file nodes in fs */
-fsid_t	f_fsid;		  /* file system id */
-long	f_spare[6];	  /* spare for later */
-char	f_mntonname[MNAMELEN];	  /* mount point */
-char	f_mntfromname[MNAMELEN];  /* mounted filesystem */
+	short	f_type;		  /* type of filesystem (unused; zero) */
+	short	f_flags;	  /* copy of mount flags */
+	long	f_fsize;	  /* fundamental file system block size */
+	long	f_bsize;	  /* optimal transfer block size */
+	long	f_blocks;	  /* total data blocks in file system */
+	long	f_bfree;	  /* free blocks in fs */
+	long	f_bavail;	  /* free blocks avail to non-superuser */
+	long	f_files;	  /* total file nodes in file system */
+	long	f_ffree;	  /* free file nodes in fs */
+	fsid_t	f_fsid;		  /* file system id */
+	long	f_spare[6];	  /* spare for later */
+	char	f_fstypename[MFSNAMELEN+1]; /* fs type name (inc. null) */
+	char	f_mntonname[MNAMELEN];	/* mount point */
+	char	f_mntfromname[MNAMELEN]; /* mounted filesystem */
 };
-/*
-* File system types.
-*/
-#define	MOUNT_UFS	1
-#define	MOUNT_NFS	2
-#define	MOUNT_MFS	3
-#define	MOUNT_PC	4
 .Ed
 .Pp
 Fields that are undefined for a particular file system are set to -1.
