@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.2 1997/03/22 01:48:38 thorpej Exp $	 */
+/*	$NetBSD: pread.c,v 1.3 1999/01/28 20:22:32 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -46,11 +46,11 @@
 
 static char     buf[BUFSIZE];
 
-int 
+ssize_t 
 pread(fd, dest, size)
-	int             fd;
-	physaddr_t      dest;
-	int             size;
+	int	fd;
+	void	*dest;
+	size_t	size;
 {
 	int             rsize;
 
