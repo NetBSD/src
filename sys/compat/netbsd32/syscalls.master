@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2000/12/09 05:27:30 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.17 2001/01/27 07:58:22 thorpej Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -84,7 +84,7 @@
 17	STD		{ int netbsd32_break(netbsd32_charp nsize); }
 18	STD		{ int netbsd32_getfsstat(netbsd32_statfsp_t buf, netbsd32_long bufsize, int flags); }
 19	COMPAT_43	{ netbsd32_long netbsd32_olseek(int fd, netbsd32_long offset, int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	STD		{ int netbsd32_mount(const netbsd32_charp type, const netbsd32_charp path, int flags, netbsd32_voidp data); }
 22	STD		{ int netbsd32_unmount(const netbsd32_charp path, int flags); }
 23	STD		{ int netbsd32_setuid(uid_t uid); }
