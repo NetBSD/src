@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.2 2003/04/02 10:39:27 fvdl Exp $ */
+/* $NetBSD: lfs.c,v 1.3 2003/05/08 18:39:09 petrov Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -710,7 +710,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 	for (i = 0, j = 0;
 	     i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, INOPB(fs)); i++) {
 		if (i >= sp->ss_nfinfo && *idp != daddr) {
-			warnx("Not enough inode blocks in pseg at 0x" PRIx32
+			warnx("Not enough inode blocks in pseg at 0x%" PRIx32
 			      ": found %d, wanted %d\n",
 			      pseg_addr, j, howmany(sp->ss_ninos, INOPB(fs)));
 			if (debug)
