@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.12 1998/08/23 12:42:17 hubertf Exp $	
+	$NetBSD: install,v 1.13 1998/09/07 21:48:08 veego Exp $	
 
 0. Introduction
 
@@ -362,7 +362,7 @@
 
 	cd /mnt
         for i in base kern comp etc games man misc text; do
-            tar xpfz /mnt/usr/release/$i.tgz;
+            tar xpzf /mnt/usr/release/$i.tgz;
 	done
 
     or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
@@ -370,7 +370,7 @@
 	cd /mnt
 	for i in /mnt/usr/release/[a-z]*.tgz; do
 	    echo $i
-	    tar xpfz $i
+	    tar xpzf $i
 	done
 
     Now make the device nodes:
@@ -408,4 +408,4 @@
     This module unpacks into ./toolchain, so:
 
 	cd /usr/local
-	tar xpfz .../toolchain.tgz
+	tar xpzf .../toolchain.tgz
