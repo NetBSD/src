@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.35 1999/04/29 23:37:23 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.36 1999/04/30 01:57:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1502,10 +1502,6 @@ osf1_sys_setitimer(p, v, retval)
 	struct itimerval b_itv, b_oitv;
 	caddr_t sg;
 	int error;
-
-#if 1
-	return EINVAL;
-#endif
 
 	switch (SCARG(uap, which)) {
 	case OSF1_ITIMER_REAL:
