@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.47 1999/09/07 19:30:11 soren Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.48 1999/09/09 18:12:05 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.45 1999/09/09 18:09:10 is Exp 
  */
 
 /*-
@@ -479,6 +479,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "SVEC PCMCIA Lan Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8002T,
+	    PCMCIA_CIS_AMBICOM_AMB8002T,
+	    0,
+	    "AmbiCom Inc",
+	    "AmbiCom AMB8002T"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -707,6 +714,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "SVEC/Hawking Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_AMBICOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "AmbiCom Inc",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
