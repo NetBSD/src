@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22.2.4 2001/07/19 08:57:26 sommerfeld Exp $
+#	$NetBSD: GENERIC_TINY,v 1.22.2.5 2001/09/03 19:48:07 sommerfeld Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -549,6 +549,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol

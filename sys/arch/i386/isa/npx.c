@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.13 2001/05/23 03:13:39 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.14 2001/09/03 19:48:12 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -42,6 +42,8 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +106,11 @@
 
 int npxdna(struct cpu_info *);
 
+#ifdef I686_CPU
+#define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
+#define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
+#endif /* I686_CPU */
+
 static	enum npx_type		npx_type;
 volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
@@ -113,6 +120,33 @@ extern int i386_fpu_exception;
 extern int i386_fpu_fdivbug;
 
 struct npx_softc		*npx_softc;
+
+static __inline void
+fpu_save(union savefpu *addr)
+{
+#ifdef I686_CPU
+	if (i386_use_fxsave)
+	{
+                fxsave(&addr->sv_xmm);
+
+		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
+		fwait();
+		/* XXX needed? */
+		fninit();
+	} else
+#endif /* I686_CPU */
+		fnsave(&addr->sv_87);
+}
+
+int	npxdna_notset(struct cpu_info *);
+int	npxdna_s87(struct cpu_info *);
+#ifdef I686_CPU
+int	npxdna_xmm(struct cpu_info *);
+#endif /* I686_CPU */
+
+int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
+
+
 
 enum npx_type
 npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
@@ -170,7 +204,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 		/*
 		 * Good, now check for a proper control word.
 		 */
-		control = 0x5a5a;	
+		control = 0x5a5a;
 		fnstcw(&control);
 		if ((control & 0x1f3f) == 0x033f) {
 			/*
@@ -239,6 +273,13 @@ npxattach(struct npx_softc *sc)
 
 	npxinit(&cpu_info_primary);
 	i386_fpu_present = 1;
+
+#ifdef I686_CPU
+	if (i386_use_fxsave)
+		npxdna_func = npxdna_xmm;
+	else
+#endif /* I686_CPU */
+		npxdna_func = npxdna_s87;
 }
 
 /*
@@ -260,8 +301,8 @@ int
 npxintr(void *arg)
 {
 	struct cpu_info *ci = curcpu();
-	register struct proc *p = ci->ci_fpcurproc;
-	register struct save87 *addr;
+	struct proc *p = ci->ci_fpcurproc;
+	union savefpu *addr;
 	struct intrframe *frame = arg;
 	struct npx_softc *sc;
 	int code;
@@ -300,20 +341,24 @@ npxintr(void *arg)
 #endif
 
 	/*
-	 * Find the address of fpcurproc's saved FPU state.  (Given the invariant
-	 * above, this is always the one in curpcb.)
+	 * Find the address of fpcurproc's saved FPU state.  (Given the
+	 * invariant above, this is always the one in curpcb.)
 	 */
 	addr = &p->p_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
 	 */
-	fnsave(addr);
+	fpu_save(addr);
 	fwait();
-	/*
-	 * Restore control word (was clobbered by fnsave).
-	 */
-	fldcw(&addr->sv_env.en_cw);
+        if (i386_use_fxsave) {
+		fldcw(&addr->sv_xmm.sv_env.en_cw);
+		/*
+		 * FNINIT doesn't affect MXCSR or the XMM registers;
+		 * no need to re-load MXCSR here.
+		 */
+        } else
+                fldcw(&addr->sv_87.sv_env.en_cw);
 	fwait();
 	/*
 	 * Remember the exception status word and tag word.  The current
@@ -323,9 +368,13 @@ npxintr(void *arg)
 	 * preserved the control word and will copy the status and tag
 	 * words, so the complete exception state can be recovered.
 	 */
-	addr->sv_ex_sw = addr->sv_env.en_sw;
-	addr->sv_ex_tw = addr->sv_env.en_tw;
-
+        if (i386_use_fxsave) {
+		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
+		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
+	} else {
+		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
+		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
+	}
 	/*
 	 * Pass exception to process.
 	 */
@@ -376,12 +425,22 @@ npxintr(void *arg)
  * XXX If we were the last process to use the FPU, we should be able
  * to simply return.
  */
+
 int
-npxdna(struct cpu_info *ci)
+npxdna_notset(struct cpu_info *ci)
+{
+	panic("npxdna vector not initialized");
+}
+
+#ifdef I686_CPU
+int
+npxdna_xmm(struct cpu_info *ci)
 {
 	struct proc *p;
 	int s;
-	
+
+	KDASSERT(i386_use_fxsave == 1);
+
 	if (npx_type == NPX_NONE) {
 		IPRINTF(("%s: fp emul\n", ci->ci_dev->dv_xname));
 		return (0);
@@ -391,15 +450,84 @@ npxdna(struct cpu_info *ci)
 		printf("recursive npx trap; cr0=%x\n", rcr0());
 		return (0);
 	}
-	
+
 	s = splipi();		/* lock out IPI's while we clean house.. */
 #ifdef MULTIPROCESSOR
 	p = ci->ci_curproc;
 #else
 	p = curproc;
 #endif
-	
-	IPRINTF(("%s: dna for %p\n", ci->ci_dev->dv_xname, p));	
+	/*
+	 * XXX should have a fast-path here when no save/restore is necessary
+	 */
+	/*
+	 * Initialize the FPU state to clear any exceptions.  If someone else
+	 * was using the FPU, save their state (which does an implicit
+	 * initialization).
+	 */
+	if (ci->ci_fpcurproc != NULL) {
+		IPRINTF(("Save"));
+		npxsave_cpu(ci, 1);
+	} else {
+		clts();
+		IPRINTF(("Init"));
+		fninit();
+		fwait();
+		stts();		
+	}
+	splx(s);
+
+	KDASSERT(ci->ci_fpcurproc == NULL);
+#ifndef MULTIPROCESSOR
+	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
+#else
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 1);
+#endif
+	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	clts();
+	s = splipi();
+	ci->ci_fpcurproc = p;
+	p->p_addr->u_pcb.pcb_fpcpu = ci;
+	splx(s);
+
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		p->p_md.md_flags |= MDP_USEDFPU;
+	} else {
+		fxrstor(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm);
+	}
+
+	return (1);
+}
+#endif /* I686_CPU */
+
+int
+npxdna_s87(struct cpu_info *ci)
+{
+	struct proc *p;
+	int s;
+
+	KDASSERT(i386_use_fxsave == 0);
+
+	if (npx_type == NPX_NONE) {
+		IPRINTF(("%s: fp emul\n", ci->ci_dev->dv_xname));
+		return (0);
+	}
+
+	if (ci->ci_fpsaving) {
+		printf("recursive npx trap; cr0=%x\n", rcr0());
+		return (0);
+	}
+
+	s = splipi();		/* lock out IPI's while we clean house.. */
+#ifdef MULTIPROCESSOR
+	p = ci->ci_curproc;
+#else
+	p = curproc;
+#endif
+
+	IPRINTF(("%s: dna for %p\n", ci->ci_dev->dv_xname, p));
 	/*
 	 * If someone else was using our FPU, save their state (which does an
 	 * implicit initialization); otherwise, initialize the FPU state to
@@ -416,7 +544,7 @@ npxdna(struct cpu_info *ci)
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));		
+	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
 	KDASSERT(ci->ci_fpcurproc == NULL);
 #ifndef MULTIPROCESSOR
 	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
@@ -430,9 +558,9 @@ npxdna(struct cpu_info *ci)
 	ci->ci_fpcurproc = p;
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
-	
+
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw);
+		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw);
 		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*
@@ -448,7 +576,7 @@ npxdna(struct cpu_info *ci)
 		 * fnclex if it is the first FPU instruction after a context
 		 * switch.
 		 */
-		frstor(&p->p_addr->u_pcb.pcb_savefpu);
+		frstor(&p->p_addr->u_pcb.pcb_savefpu.sv_87);
 	}
 
 	return (1);
@@ -468,7 +596,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 
 	IPRINTF(("%s: fp cpu %s %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", p));
-	
+
 	if (save) {
 #ifdef DIAGNOSTIC
 		if (ci->ci_fpsaving != 0)
@@ -489,8 +617,7 @@ npxsave_cpu (struct cpu_info *ci, int save)
 		  */
 		clts();
 		ci->ci_fpsaving = 1;
-		fnsave(&p->p_addr->u_pcb.pcb_savefpu);
-		fwait();
+		fpu_save(&p->p_addr->u_pcb.pcb_savefpu);
 		ci->ci_fpsaving = 0;
 	}
 
@@ -522,14 +649,14 @@ npxsave_proc(struct proc *p, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
-	
+
 	KDASSERT(p->p_addr != NULL);
 	KDASSERT(p->p_flag & P_INMEM);
-	
+
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
 		return;
-	
+
 	IPRINTF(("%s: fp proc %s %p\n", ci->ci_dev->dv_xname,
 	    save? "save" : "flush", p));
 
@@ -540,7 +667,7 @@ npxsave_proc(struct proc *p, int save)
 		splx(s);
 	} else {
 		int spincount;
-		
+
 		IPRINTF(("%s: fp ipi to %s %s %p\n",
 		    ci->ci_dev->dv_xname,
 		    oci->ci_dev->dv_xname,
@@ -548,7 +675,7 @@ npxsave_proc(struct proc *p, int save)
 
 		i386_send_ipi(oci,
 		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
-		
+
 		spincount = 0;
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		{

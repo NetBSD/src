@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.135.2.3 2001/04/30 16:23:10 sommerfeld Exp $	*/
+/*	$NetBSD: conf.c,v 1.135.2.4 2001/09/03 19:48:09 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -231,6 +231,8 @@ cdev_decl(vmegeneric);
 cdev_decl(iop);
 #include "mlx.h"
 cdev_decl(mlx);
+#include "mly.h"
+cdev_decl(mly);
 cdev_decl(edmca);
 
 #include <altq/altqconf.h>
@@ -324,6 +326,7 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
 	cdev_disk_init(NED_MCA,edmca),	/* 79: PS/2 ESDI disk */
+	cdev__oci_init(NMLY,mly),	/* 80: Newer Mylex control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -445,6 +448,7 @@ static int chrtoblktbl[] = {
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
 	/* 79 */	20,
+	/* 80 */	NODEV,
 };
 
 /*

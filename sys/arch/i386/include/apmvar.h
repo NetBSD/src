@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.9.10.3 2001/05/23 03:13:38 sommerfeld Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.9.10.4 2001/09/03 19:48:11 sommerfeld Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -282,7 +282,9 @@ struct apm_power_info {
 	u_char battery_life;
 	u_char spare1;
 	u_int minutes_left;		/* estimate */
-	u_int spare2[6];
+	u_int nbattery;		
+	u_int batteryid;
+	u_int spare2[4];
 };
 
 struct apm_ctl {

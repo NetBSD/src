@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.22 2001/05/27 00:02:18 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.23 2001/09/03 19:48:09 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  *      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.  
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -164,8 +164,8 @@ cpu_init_first()
 
 int
 cpu_match(parent, match, aux)
-	struct device *parent;  
-	struct cfdata *match;   
+	struct device *parent;
+	struct cfdata *match;
 	void *aux;
 {
 	struct cpu_attach_args *caa = aux;
@@ -179,7 +179,7 @@ static void
 cpu_vm_init(struct cpu_info *ci)
 {
 	int ncolors = 2, i;
-	
+
 	for (i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
 		struct i386_cache_info *cai;
 		int tcolors;
@@ -192,14 +192,14 @@ cpu_vm_init(struct cpu_info *ci)
 			tcolors = 1; /* fully associative */
 			break;
 		case 0:
-		case 1:			
+		case 1:
 			break;
 		default:
 			tcolors /= cai->cai_associativity;
 		}
 		ncolors = max(ncolors, tcolors);
 	}
-	
+
 	/*
 	 * Knowing the size of the largest cache on this CPU, re-color
 	 * our pages.
@@ -211,14 +211,14 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 
-void 
-cpu_attach(parent, self, aux)   
+void
+cpu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
-	struct cpu_info *ci;  
+	struct cpu_info *ci;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 	vaddr_t kstack;
@@ -310,7 +310,7 @@ cpu_attach(parent, self, aux)
 		ioapic_bsp_id = caa->cpu_number;
 #endif
 		break;
-		
+
 	case CPU_ROLE_AP:
 		/*
 		 * report on an AP
@@ -328,19 +328,17 @@ cpu_attach(parent, self, aux)
 		printf("%s: not started\n", sc->sc_dev.dv_xname);
 #endif
 		break;
-		
+
 	default:
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
 
-	
-
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
 		    sc->sc_dev.dv_xname, kstack, USPACE);
-		printf("%s: idle pcb at %p, idle sp at 0x%x\n", 
+		printf("%s: idle pcb at %p, idle sp at 0x%x\n",
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
@@ -382,6 +380,21 @@ cpu_init(ci)
 		mtrr_init_cpu(ci);
 	}
 #endif
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		lcr4(rcr4() | CR4_OSFXSR);
+
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+	}
+#endif /* I686_CPU */
+
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
 	cpus_running |= 1 << cpu_number();
@@ -439,11 +452,11 @@ cpu_start_secondary (ci)
 	extern u_int32_t mp_pdirpa;
 
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
-	
+
 	pcb = ci->ci_idle_pcb;
 
 	ci->ci_flags |= CPUF_AP;
-	
+
 	printf("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
@@ -470,7 +483,7 @@ cpu_boot_secondary(ci)
 	struct cpu_info *ci;
 {
 	int i;
-	
+
 	ci->ci_flags |= CPUF_GO; /* XXX atomic */
 
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
@@ -485,7 +498,7 @@ cpu_boot_secondary(ci)
 	}
 }
 
-	
+
 
 /*
  * The CPU ends up here when its ready to run
@@ -496,14 +509,14 @@ cpu_boot_secondary(ci)
  * XXX should share some of this with init386 in machdep.c
  */
 void
-cpu_hatch(void *v) 
+cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
-	
+
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
-	
+
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
@@ -513,7 +526,7 @@ cpu_hatch(void *v)
 
 	lapic_enable();
 	lapic_initclocks();
-	
+
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);
 #ifdef DEBUG
@@ -580,8 +593,8 @@ cpu_copy_trampoline()
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
-	memcpy((caddr_t)MP_TRAMPOLINE, 
-	    cpu_spinup_trampoline, 
+	memcpy((caddr_t)MP_TRAMPOLINE,
+	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
 }
 
