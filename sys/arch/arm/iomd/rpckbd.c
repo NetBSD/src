@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.11 2004/01/29 16:43:42 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.11 2004/01/29 16:43:42 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $");
 #include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/wskbdmap_mfii.h>
 #include <dev/cons.h>
-
-#include "beep.h"
 
 /* Keyboard commands */
 
@@ -127,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $");
 int	rpckbd_enable(void *, int);
 void	rpckbd_set_leds(void *, int);
 int	rpckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	sysbeep(int, int);
 
 
 const struct wskbd_accessops rpckbd_accessops = {
