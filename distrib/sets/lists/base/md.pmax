@@ -1,5 +1,0 @@
-# $NetBSD: md.pmax,v 1.35 1999/05/18 23:23:32 tron Exp $
-./boot
-./usr/mdec/boot
-./usr/mdec/bootrz
-./usr/mdec/rzboot

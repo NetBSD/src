@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.9 1999/05/30 21:13:04 christos Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.10.2.2 1999/10/19 00:03:19 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -288,7 +288,71 @@ usl_attachtimeout(arg)
 }
 
 int
-wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
+wsdisplay_usl_ioctl1(sc, cmd, data, flag, p)
+	struct wsdisplay_softc *sc;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	int idx, maxidx;
+
+	switch (cmd) {
+	    case VT_OPENQRY:
+		maxidx = wsdisplay_maxscreenidx(sc);
+		for (idx = 0; idx <= maxidx; idx++) {
+			if (wsdisplay_screenstate(sc, idx) == 0) {
+				*(int *)data = idx + 1;
+				return (0);
+			}
+		}
+		return (ENXIO);
+	    case VT_GETACTIVE:
+		idx = wsdisplay_getactivescreen(sc);
+		*(int *)data = idx + 1;
+		return (0);
+	    case VT_ACTIVATE:
+		idx = *(int *)data - 1;
+		return (wsdisplay_switch((struct device *)sc, idx, 1));
+	    case VT_WAITACTIVE:
+		idx = *(int *)data - 1;
+		return (wsscreen_switchwait(sc, idx));
+	    case VT_GETSTATE:
+#define ss ((struct vt_stat *)data)
+		idx = wsdisplay_getactivescreen(sc);
+		ss->v_active = idx + 1;
+		ss->v_state = 0;
+		maxidx = wsdisplay_maxscreenidx(sc);
+		for (idx = 0; idx <= maxidx; idx++)
+			if (wsdisplay_screenstate(sc, idx) == EBUSY)
+				ss->v_state |= (1 << (idx + 1));
+#undef s
+		return (0);
+
+#ifdef WSDISPLAY_COMPAT_PCVT
+	    case VGAPCVTID:
+#define id ((struct pcvtid *)data)
+		strcpy(id->name, "pcvt");
+		id->rmajor = 3;
+		id->rminor = 32;
+#undef id
+		return (0);
+#endif
+#ifdef WSDISPLAY_COMPAT_SYSCONS
+	    case CONS_GETVERS:
+		*(int *)data = 0x200;    /* version 2.0 */
+		return (0);
+#endif
+
+	    default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 	u_long cmd;
@@ -296,7 +360,7 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int res, idx, maxidx;
+	int res;
 	struct usl_syncdata *sd;
 	int req, intarg;
 	struct wskbd_bell_data bd;
@@ -345,36 +409,7 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 		}
 #undef d
 		return (0);
-	    case VT_OPENQRY:
-		maxidx = wsdisplay_maxscreenidx(sc);
-		for (idx = 0; idx <= maxidx; idx++) {
-			if (wsdisplay_screenstate(sc, idx) == 0) {
-				*(int *)data = idx + 1;
-				return (0);
-			}
-		}
-		return (ENXIO);
-	    case VT_GETACTIVE:
-		idx = wsdisplay_getactivescreen(sc);
-		*(int *)data = idx + 1;
-		return (0);
-	    case VT_ACTIVATE:
-		idx = *(int *)data - 1;
-		return (wsdisplay_switch((struct device *)sc, idx, 1));
-	    case VT_WAITACTIVE:
-		idx = *(int *)data - 1;
-		return (wsscreen_switchwait(sc, idx));
-	    case VT_GETSTATE:
-#define ss ((struct vt_stat *)data)
-		idx = wsdisplay_getactivescreen(sc);
-		ss->v_active = idx + 1;
-		ss->v_state = 0;
-		maxidx = wsdisplay_maxscreenidx(sc);
-		for (idx = 0; idx <= maxidx; idx++)
-			if (wsdisplay_screenstate(sc, idx) == EBUSY)
-				ss->v_state |= (1 << (idx + 1));
-#undef s
-		return (0);
+
 	    case KDENABIO:
 		if (suser(p->p_ucred, &p->p_acflag) || securelevel > 1)
 			return (EPERM);
@@ -395,21 +430,6 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 	    case KDSETRAD:
 		/* XXX ignore for now */
 		return (0);
-
-#ifdef WSDISPLAY_COMPAT_PCVT
-	    case VGAPCVTID:
-#define id ((struct pcvtid *)data)
-		strcpy(id->name, "pcvt");
-		id->rmajor = 3;
-		id->rminor = 32;
-#undef id
-		return (0);
-#endif
-#ifdef WSDISPLAY_COMPAT_SYSCONS
-	    case CONS_GETVERS:
-		*(int *)data = 0x200;    /* version 2.0 */
-		return (0);
-#endif
 
 	    default:
 		return (-1);
