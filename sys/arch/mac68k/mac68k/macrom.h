@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.11 1997/05/12 07:53:04 scottr Exp $	*/
+/*	$NetBSD: macrom.h,v 1.12 2000/11/15 07:15:36 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -228,7 +228,6 @@ int	mrg_PostEvent __P((void));
 int	mrg_SetTrapAddress __P((void));
 void	mrg_StripAddress __P((void));
 void	mrg_aline_super __P((struct frame *));
-void	mrg_aline_user __P((void));
 void	mrg_init __P((void));
 void	mrg_FixDiv __P((void));
 void	mrg_FixMul __P((void));
