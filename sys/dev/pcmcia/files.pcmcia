@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.5 1998/01/12 09:36:53 thorpej Exp $
+#	$NetBSD: files.pcmcia,v 1.6 1998/01/23 01:18:52 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -34,9 +34,9 @@ device	wl class ifnet: arp, ether, ifnet
 attach	wl at pcmcia with wl_pcmcia
 file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
 
-# PCMCIA hard drive / cdrom (IDE) controller
-#attach	wdc at pcmcia with wdc_pcmcia
-#file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
+# PCMCIA IDE controller
+attach	wdc at pcmcia with wdc_pcmcia
+file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
 
 # SMC91Cxx Ethernet Controllers (i.e. Megahertz X-Jack)
 attach	sm at pcmcia with sm_pcmcia
