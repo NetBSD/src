@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1995/04/29 21:10:31 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1995/05/02 19:51:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -713,6 +713,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	    }
 #else
 #ifdef DEBUG
+		stacktrace();
 		trapDump("trap");
 #endif
 #endif
@@ -1732,7 +1733,8 @@ specialframe:
 	subr = 0;
 	if	(frames++ > 100) {
 		(*printfn)("\nstackframe count exceeded\n");
-		return;	/*XXX*/
+		/* return breaks stackframe-size heuristics with gcc -O2 */
+		goto finish;	/*XXX*/
 	}
 
 	/* check for bad SP: could foul up next frame */
@@ -1922,6 +1924,7 @@ done:
 			goto loop;
 		}
 	} else {
+finish:
 		if (curproc)
 			(*printfn)("User-level: pid %d\n", curproc->p_pid);
 		else
