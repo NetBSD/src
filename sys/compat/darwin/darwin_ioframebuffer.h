@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.6 2003/05/14 18:28:05 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.7 2003/05/15 23:35:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,6 +69,43 @@ struct darwin_ioframebuffer_shmem {
 	darwin_iogpoint dis_hotspot[4];
 	unsigned char dis_curs[0];
 };
+
+/* I/O selectors for io_connect_method_{scalar|struct}i_{scalar|struct}o */
+#define DARWIN_IOFBCREATESHAREDCURSOR 0
+#define DARWIN_IOFBGETPIXELINFORMATION 1
+#define DARWIN_IOFBGETCURRENTDISPLAYMODE 2
+#define DARWIN_IOFBGETVRAMMAPOFFSET 8
+#define DARWIN_IOFBGETATTRIBUTE 18
+
+#define DARWIN_IOMAXPIXELBITS 64
+
+typedef int32_t darwin_ioindex;
+typedef int32_t darwin_iodisplaymodeid;
+typedef uint32_t darwin_iobytecount;
+typedef darwin_ioindex darwin_iopixelaperture;
+typedef char darwin_iopixelencoding[DARWIN_IOMAXPIXELBITS];
+
+/* pixeltype */
+#define DARWIN_IOFB_CLUTPIXELS 0;
+#define DARWIN_IOFB_FIXEDCLUTPIXELS 1;
+#define DARWIN_IOFB_RGBDIRECTPIXELS 2;
+#define DARWIN_IOFB_MONODIRECTPIXELS 3;
+#define DARWIN_IOFB_MONOINVERSEDIRECTPIXELS 4;
+
+typedef struct {
+	darwin_iobytecount bytesperrow;
+	darwin_iobytecount bytesperplane;
+	uint32_t bitsperpixel;
+	uint32_t pixeltype;
+	uint32_t componentcount;
+	uint32_t bitspercomponent;
+	uint32_t componentmasks[16];
+	darwin_iopixelencoding pixelformat;
+	uint32_t flags;
+	uint32_t activewidth;
+	uint32_t activeheight;
+	uint32_t reserved[2];
+} darwin_iopixelinformation;
 
 int 
 darwin_ioframebuffer_connect_method_scalari_scalaro(struct mach_trap_args *);
