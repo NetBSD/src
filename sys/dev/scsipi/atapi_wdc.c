@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.70 2004/05/08 15:03:32 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.71 2004/07/31 21:26:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.70 2004/05/08 15:03:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.71 2004/07/31 21:26:43 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -88,7 +88,8 @@ static void	wdc_atapi_probe_device(struct atapibus_softc *, int);
 static void	wdc_atapi_minphys (struct buf *bp);
 static void	wdc_atapi_start(struct wdc_channel *,struct ata_xfer *);
 static int	wdc_atapi_intr(struct wdc_channel *, struct ata_xfer *, int);
-static void	wdc_atapi_kill_xfer(struct wdc_channel *, struct ata_xfer *);
+static void	wdc_atapi_kill_xfer(struct wdc_channel *,
+				    struct ata_xfer *, int);
 static void	wdc_atapi_phase_complete(struct ata_xfer *);
 static void	wdc_atapi_done(struct wdc_channel *, struct ata_xfer *);
 static void	wdc_atapi_reset(struct wdc_channel *, struct ata_xfer *);
@@ -168,15 +169,27 @@ wdc_atapi_kill_pending(struct scsipi_periph *periph)
 }
 
 static void
-wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
 	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
-	sc_xfer->error = XS_DRIVER_STUFFUP;
-	scsipi_done(sc_xfer);
+	switch (reason) {
+	case KILL_GONE:
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		scsipi_done(sc_xfer);
+		break;
+	case KILL_RESET:
+		sc_xfer->error = XS_RESET;
+		wdc_atapi_reset(chp, xfer);
+		break;
+	default:
+		printf("wdc_ata_bio_kill_xfer: unknown reason %d\n",
+		    reason);
+		panic("wdc_ata_bio_kill_xfer");
+	}
 }
 
 static int
