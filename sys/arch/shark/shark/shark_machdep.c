@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.3 2002/04/05 16:58:12 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.4 2002/05/03 21:28:11 rjs Exp $	*/
 
 /*
  * Copyright 1997
@@ -132,8 +132,8 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
  * on total size boundry so the banks can be alternated by
  * xorring the size bit (assumes the bank size is a power of 2)
  */
-extern unsigned int sa110_cache_clean_addr;
-extern unsigned int sa110_cache_clean_size;
+extern unsigned int sa1_cache_clean_addr;
+extern unsigned int sa1_cache_clean_size;
 
 struct cfattach ofbus_root_ca = {
 	sizeof(struct device), ofbus_match, ofbus_attach
@@ -240,9 +240,9 @@ initarm(ofw_handle)
 
 	/* allocate a cache clean space */
 	if ((pclean = ofw_getcleaninfo()) != -1) {
-		sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2,
+		sa1_cache_clean_addr = ofw_map(pclean, 0x4000 * 2,
 		     L2_B | L2_C);
-		sa110_cache_clean_size = 0x4000;
+		sa1_cache_clean_size = 0x4000;
 	}
 
 	/* Configure memory. */
