@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2003/08/07 11:16:01 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2004/02/16 21:57:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,8 +37,8 @@
 
 enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 
-void forward(FILE *, enum STYLE, long, struct stat *);
-void reverse(FILE *, enum STYLE, long, struct stat *);
+void forward(FILE *, enum STYLE, off_t, struct stat *);
+void reverse(FILE *, enum STYLE, off_t, struct stat *);
 
 int bytes(FILE *, off_t);
 int lines(FILE *, off_t);
