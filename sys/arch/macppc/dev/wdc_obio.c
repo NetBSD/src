@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.7 2000/04/02 12:36:38 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.8 2000/04/14 10:22:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct cfattach wdc_obio_ca = {
 };
 
 static int	wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
-static void 	wdc_obio_dma_start __P((void *, int, int, int));
+static void 	wdc_obio_dma_start __P((void *, int, int));
 static int	wdc_obio_dma_finish __P((void *, int, int, int));
 
 int
@@ -279,7 +279,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_obio_dma_start(v, channel, drive, read)
+wdc_obio_dma_start(v, channel, drive)
 	void *v;
 	int channel, drive;
 {
