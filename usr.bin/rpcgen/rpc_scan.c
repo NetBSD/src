@@ -47,8 +47,8 @@ static char sccsid[] = "@(#)rpc_scan.c 1.6 87/06/24 (C) 1987 SMI";
 static int pushed = 0;	/* is a token pushed */
 static token lasttok;	/* last token, if pushed */
 
-int unget_token(), findstrconst(), findconst(), findkind(), cppline(),
-    directive(), printdirective(), docppline();
+static int unget_token(), findstrconst(), findconst(), findkind(), cppline(),
+	   directive(), printdirective(), docppline();
 /*
  * scan expecting 1 given token 
  */
