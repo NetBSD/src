@@ -38,8 +38,8 @@
 
 main()
 {
-	DICT=/usr/share/dict/words
-	PROG=obj/dbtest
+	DICT=/usr/share/dict/web2
+	PROG=dbtest
 	TMP1=t1
 	TMP2=t2
 	TMP3=t3

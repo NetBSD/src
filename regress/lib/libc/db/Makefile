@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 1/11/93
-#	$Id: Makefile,v 1.2 1993/05/27 21:24:06 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/05/27 21:27:46 cgd Exp $
 
 PROG=	dbtest
 SRCS=	dbtest.c
@@ -17,6 +17,7 @@ SRCS=	dbtest.c
 
 CFLAGS=	-g -DDEBUG -DSTATISTICS
 NOMAN=	noman
+CLEANFILES+= t1 t2 t3
 
 install:
 
