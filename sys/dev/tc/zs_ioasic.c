@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.4 2000/10/17 08:55:43 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.4 2000/10/17 08:55:43 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
- * handles Z8530 chips attached to the Alpha IOASIC.  Modified for
- * NetBSD/alpha by Ken Hornstein and Jason R. Thorpe.
+ * handles Z8530 chips attached to the DECstation/Alpha IOASIC.  Modified
+ * for NetBSD/alpha by Ken Hornstein and Jason R. Thorpe.  NetBSD/pmax
+ * adaption by Mattias Drochner.  Merge work by Tohru Nishimura.
  *
  * Runs two serial lines per chip using slave drivers.
  * Plain tty/async lines use the zstty slave.
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -78,14 +80,17 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 2000/09/09 06:08:42 nisimura Exp $
 
 #include <dev/tc/zs_ioasicvar.h>
 
-#if 1
-#define SPARSE
+#ifdef alpha
+#include <machine/rpb.h>
+#endif
+#ifdef pmax
+#include <pmax/pmax/pmaxtype.h>
 #endif
 
 /*
  * Helpers for console support.
  */
-
+void	zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
 int	zs_ioasic_cngetc __P((dev_t));
 void	zs_ioasic_cnputc __P((dev_t, int));
 void	zs_ioasic_cnpollc __P((dev_t, int));
@@ -98,21 +103,22 @@ struct consdev zs_ioasic_cons = {
 tc_offset_t zs_ioasic_console_offset;
 int zs_ioasic_console_channel;
 int zs_ioasic_console;
+struct zs_chanstate zs_ioasic_conschanstate_store;
 
 int	zs_ioasic_isconsole __P((tc_offset_t, int));
-
-struct zs_chanstate zs_ioasic_conschanstate_store;
-struct zs_chanstate *zs_ioasic_conschanstate;
-
 int	zs_getc __P((struct zs_chanstate *));
 void	zs_putc __P((struct zs_chanstate *, int));
-void	zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
 
 /*
  * Some warts needed by z8530tty.c
  */
 int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+#if alpha
 int zs_major = 15;
+#endif
+#if pmax
+int zs_major = 17;
+#endif
 
 /*
  * ZS chips are feeded a 7.372 MHz clock.
@@ -121,13 +127,17 @@ int zs_major = 15;
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zshan {
+#ifdef alpha
 	volatile u_int	zc_csr;		/* ctrl,status, and indirect access */
-#ifdef SPARSE
 	u_int		zc_pad0;
-#endif
 	volatile u_int	zc_data;	/* data */
-#ifdef SPARSE
 	u_int		sc_pad1;
+#endif
+#ifdef pmax
+	volatile u_int16_t zc_csr;	/* ctrl,status, and indirect access */
+	unsigned : 16;
+	volatile u_int16_t zc_data;	/* data */
+	unsigned : 16;
 #endif
 };
 
@@ -166,9 +176,11 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
 	struct zsdevice *addr;
 	struct zshan *zc;
 
-	addr = (struct zsdevice *) zsaddr;
-#ifdef SPARSE
-	addr = (struct zsdevice *) TC_DENSE_TO_SPARSE((tc_addr_t) addr);
+#if alpha
+	addr = (struct zsdevice *)TC_DENSE_TO_SPARSE(zsaddr);
+#endif
+#if pmax
+	addr = (struct zsdevice *)MIPS_PHYS_TO_KSEG1(zsaddr);
 #endif
 
 	if (channel == 0)
@@ -188,6 +200,7 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
 int	zs_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	zs_ioasic_attach __P((struct device *, struct device *, void *));
 int	zs_ioasic_print __P((void *, const char *name));
+int	zs_ioasic_submatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach zsc_ioasic_ca = {
 	sizeof(struct zsc_softc), zs_ioasic_match, zs_ioasic_attach
@@ -198,7 +211,6 @@ int	zs_ioasic_hardintr __P((void *));
 void	zs_ioasic_softintr __P((void *));
 
 extern struct cfdriver ioasic_cd;
-extern struct cfdriver zsc_cd;
 
 /*
  * Is the zs chip present?
@@ -233,10 +245,7 @@ zs_ioasic_match(parent, cf, aux)
 	/*
 	 * Find out the device address, and check it for validity.
 	 */
-	zs_addr = (void *) d->iada_addr;
-#ifdef SPARSE
 	zs_addr = (void *) TC_DENSE_TO_SPARSE((tc_addr_t) zs_addr);
-#endif
 	if (tc_badaddr(zs_addr))
 		return (0);
 
@@ -256,8 +265,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct zsc_attach_args zs_args;
 	struct zs_chanstate *cs;
 	struct ioasicdev_attach_args *d = aux;
-	volatile struct zshan *zc;
-	tc_addr_t zs_addr;
+	struct zshan *zc;
 	int s, channel;
 
 	printf("\n");
@@ -269,22 +277,14 @@ zs_ioasic_attach(parent, self, aux)
 		zs_args.channel = channel;
 		zs_args.hwflags = 0;
 
-		cs = &zs->zsc_cs_store[channel];
-		zs->zsc_cs[channel] = cs;
-
-		/*
-		 * If we're the console, copy the channel state, and
-		 * adjust the console channel pointer.
-		 */
 		if (zs_ioasic_isconsole(d->iada_offset, channel)) {
-			bcopy(zs_ioasic_conschanstate, cs,
-			    sizeof(struct zs_chanstate));
-			zs_ioasic_conschanstate = cs;
+			cs = &zs_ioasic_conschanstate_store;
 			zs_args.hwflags |= ZS_HWFLAG_CONSOLE;
 		} else {
-			zs_addr = d->iada_addr;
-			zc = zs_ioasic_get_chan_addr(zs_addr, channel);
-			cs->cs_reg_csr  = (void *)&zc->zc_csr;
+			cs = malloc(sizeof(struct zs_chanstate),
+					M_DEVBUF, M_NOWAIT);
+			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
+			cs->cs_reg_csr = (void *)&zc->zc_csr;
 
 			bcopy(zs_ioasic_init_reg, cs->cs_creg, 16);
 			bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
@@ -294,6 +294,8 @@ zs_ioasic_attach(parent, self, aux)
 			(void) zs_set_modes(cs, cs->cs_defcflag);
 		}
 
+		zs->zsc_cs[channel] = cs;
+		zs->zsc_addroffset = d->iada_offset; /* cookie only */
 		cs->cs_channel = channel;
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = PCLK / 16;
@@ -304,8 +306,11 @@ zs_ioasic_attach(parent, self, aux)
 		 *
 		 * XXX This is sorta gross.
 		 */
-		if (d->iada_offset == 0x00100000 && channel == 1)
+		if (d->iada_offset == 0x00100000 && channel == 1) {
+			cs->cs_creg[15] |= ZSWR15_DCD_IE;
+			cs->cs_preg[15] |= ZSWR15_DCD_IE;
 			(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
+		}
 		else
 			cs->cs_private = NULL;
 
@@ -334,8 +339,8 @@ zs_ioasic_attach(parent, self, aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (config_found(self, (void *)&zs_args, zs_ioasic_print)
-		    == NULL) {
+		if (config_found_sm(self, (void *)&zs_args,
+				zs_ioasic_print, zs_ioasic_submatch) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -368,12 +373,12 @@ zs_ioasic_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(zs->zsc_cs[0], 9, zs_ioasic_init_reg[9]);
 	zs_write_reg(zs->zsc_cs[1], 9, zs_ioasic_init_reg[9]);
-
+#if alpha
 	/* ioasic interrupt enable */
 	*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
 		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
 	tc_mb();
-
+#endif
 	splx(s);
 }
 
@@ -393,6 +398,48 @@ zs_ioasic_print(aux, name)
 	return (UNCONF);
 }
 
+int
+zs_ioasic_submatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct zsc_softc *zs = (void *)parent;
+	struct zsc_attach_args *pa = aux;
+	char *defname = "";
+
+	if (cf->cf_loc[ZSCCF_CHANNEL] != ZSCCF_CHANNEL_DEFAULT &&
+	    cf->cf_loc[ZSCCF_CHANNEL] != pa->channel)
+		return (0);
+	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT) {
+		if (pa->channel == 0) {
+#ifdef pmax
+			if (systype == DS_MAXINE)
+				return (0);
+#endif
+			if (zs->zsc_addroffset == 0x100000)
+				defname = "vsms";
+			else
+				defname = "lkkbd";
+		}
+		else if (zs->zsc_addroffset == 0x100000)
+			defname = "zstty";
+#ifdef pmax
+		else if (systype == DS_MAXINE)
+			return (0);
+#endif
+#ifdef alpha
+		else if (cputype == ST_DEC_3000_300)
+			return (0);
+#endif
+		else
+			defname = "zstty"; /* 3min/3max+, DEC3000/500 */
+
+		if (strcmp(cf->cf_driver->cd_name, defname))
+			return (0);
+	}
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
 
 /*
  * Hardware interrupt handler.
@@ -518,21 +565,30 @@ zs_set_modes(cs, cflag)
 }
 
 /*
- * Read or write the chip with suitable delays.
+ * Functions to read and write individual registers in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses,
+ * and the Alpha TC hardware does NOT take care of this for you.
+ * The delay is now handled inside the chip access functions.
+ * These could be inlines, but with the delay, speed is moot.
  */
+#ifdef pmax
+#undef	DELAY
+#define	DELAY(x)
+#endif
+
 u_int
 zs_read_reg(cs, reg)
 	struct zs_chanstate *cs;
 	u_int reg;
 {
-        struct zshan *zc = (void *)cs->cs_reg_csr;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
 	unsigned val;
-  
-        zc->zc_csr = reg << 8;
-	tc_mb();
+
+	zc->zc_csr = reg << 8;
+	tc_wmb();
 	DELAY(5);
 	val = (zc->zc_csr >> 8) & 0xff;
-	tc_mb();
+	/* tc_mb(); */
 	DELAY(5);
 	return (val);
 }
@@ -542,13 +598,13 @@ zs_write_reg(cs, reg, val)
 	struct zs_chanstate *cs;
 	u_int reg, val;
 {
-        struct zshan *zc = (void *)cs->cs_reg_csr;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
    
-        zc->zc_csr = reg << 8;
-        tc_mb();
+	zc->zc_csr = reg << 8;
+	tc_wmb();
 	DELAY(5);
-        zc->zc_csr = val << 8;
-        tc_mb();
+	zc->zc_csr = val << 8;
+	tc_wmb();
 	DELAY(5);
 }
 
@@ -560,9 +616,8 @@ zs_read_csr(cs)
 	unsigned val;
 
 	val = (zc->zc_csr >> 8) & 0xff;
-	tc_mb();
+	/* tc_mb(); */
 	DELAY(5);
-
 	return (val);
 }
 
@@ -571,11 +626,10 @@ zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_int val;
 {
-
 	struct zshan *zc = (void *)cs->cs_reg_csr;
 
 	zc->zc_csr = val << 8;
-	tc_mb();
+	tc_wmb();
 	DELAY(5);
 }
 
@@ -587,9 +641,8 @@ zs_read_data(cs)
 	unsigned val;
 
 	val = (zc->zc_data) >> 8 & 0xff;
-	tc_mb();
+	/* tc_mb(); */
 	DELAY(5);
-
 	return (val);
 }
 
@@ -598,16 +651,15 @@ zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_int val;
 {
-
 	struct zshan *zc = (void *)cs->cs_reg_csr;
 
 	zc->zc_data = val << 8;
-	tc_mb();
+	tc_wmb();
 	DELAY(5);
 }
 
 /****************************************************************
- * Console support functions (Alpha TC specific!)
+ * Console support functions 
  ****************************************************************/
 
 /*
@@ -689,7 +741,7 @@ zs_putc(cs, c)
 /*
  * zs_ioasic_cninit --
  *	Initialize the serial channel for console use--either the
- * primary keyboard or as the serial console.
+ * primary keyboard or the serial console.
  */
 void
 zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
@@ -709,22 +761,24 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	zs_ioasic_console = 1;
 
 	/*
-	 * Pointer to channel state.  Later, the console channel
-	 * state is copied into the softc, and the console channel
-	 * pointer adjusted to point to the new copy.
+	 * Pointer to channel state.
 	 */
-	zs_ioasic_conschanstate = cs = &zs_ioasic_conschanstate_store;
+	cs = &zs_ioasic_conschanstate_store;
 
 	/*
 	 * Compute the physical address of the chip, "map" it via
 	 * K0SEG, and then get the address of the actual channel.
 	 */
+#if alpha
 	zs_addr = ALPHA_PHYS_TO_K0SEG(ioasic_addr + zs_offset);
+#endif
+#if pmax
+	zs_addr = MIPS_PHYS_TO_KSEG1(ioasic_addr + zs_offset);
+#endif
 	zc = zs_ioasic_get_chan_addr(zs_addr, channel);
 
 	/* Setup temporary chanstate. */
-	cs->cs_reg_csr  = (volatile u_char *)&zc->zc_csr;
-	cs->cs_reg_data = (volatile u_char *)&zc->zc_data;
+	cs->cs_reg_csr = (void *)&zc->zc_csr;
 
 	/* Initialize the pending registers. */
 	bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
@@ -755,21 +809,21 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
  * zs_ioasic_cnattach --
  *	Initialize and attach a serial console.
  */
-int
-zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
+void
+zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	tc_addr_t ioasic_addr;
 	tc_offset_t zs_offset;
-	int channel, rate, cflag;
 {
-	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
 
-	zs_ioasic_conschanstate->cs_defspeed = rate;
-	zs_ioasic_conschanstate->cs_defcflag = cflag;
+	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	cs->cs_defspeed = 9600;
+	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 
 	/* Point the console at the SCC. */
 	cn_tab = &zs_ioasic_cons;
-
-	return (0);
+	cn_tab->cn_pri = CN_REMOTE;
+	cn_tab->cn_dev = makedev(zs_major, (zs_offset == 0x100000) ? 0 : 1);
 }
 
 /*
@@ -783,12 +837,13 @@ zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
 	int channel;
 {
 #if (NZSKBD > 0)
+	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
+
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
-	zs_ioasic_conschanstate->cs_defspeed = 4800;
-	zs_ioasic_conschanstate->cs_defcflag =
-	     (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-	zs_ioasic_conschanstate->cs_brg_clk = PCLK / 16;
-	return (zskbd_cnattach(zs_ioasic_conschanstate));
+	cs->cs_defspeed = 4800;
+	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+	cs->cs_brg_clk = PCLK / 16;
+	return (zskbd_cnattach(cs));
 #else
 	return (ENXIO);
 #endif
@@ -816,7 +871,7 @@ zs_ioasic_cngetc(dev)
 	dev_t dev;
 {
 
-	return (zs_getc(zs_ioasic_conschanstate));
+	return (zs_getc(&zs_ioasic_conschanstate_store));
 }
 
 /*
@@ -828,7 +883,7 @@ zs_ioasic_cnputc(dev, c)
 	int c;
 {
 
-	zs_putc(zs_ioasic_conschanstate, c);
+	zs_putc(&zs_ioasic_conschanstate_store, c);
 }
 
 /*
