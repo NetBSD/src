@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.14 1998/04/09 05:59:35 fair Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.15 1999/01/28 20:11:54 tron Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ while :
 done
 
 if [ $# = 0 ] ; then
-	echo 'usage: mkdep [-p] [-f depend_file] [cc_flags] file ...'
+	echo 'usage: mkdep [-a] [-p] [-f depend_file] [cc_flags] file ...'
 	exit 1
 fi
 
