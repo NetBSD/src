@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.25 2004/09/17 23:30:22 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.26 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.25 2004/09/17 23:30:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.26 2004/09/17 23:43:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,18 +72,16 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.25 2004/09/17 23:30:22 mycroft Exp 
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 int
-scsipi_command(struct scsipi_periph *periph, struct scsipi_xfer *xs,
-    struct scsipi_generic *cmd, int cmdlen, u_char *data_addr, int datalen,
-    int retries, int timeout, struct buf *bp, int flags)
+scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
+    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
+    struct buf *bp, int flags)
 {
+	struct scsipi_xfer *xs;
  
-	if (xs == NULL) {
-		if ((xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr,
-		    datalen, retries, timeout, bp, flags)) == NULL) {
-			/* let the caller deal with this */
-			return (ENOMEM);
-		}
-	}
+	xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr, datalen, retries,
+	    timeout, bp, flags);
+	if (!xs)
+		return (ENOMEM);
 
 	return (scsipi_execute_xs(xs));
 }

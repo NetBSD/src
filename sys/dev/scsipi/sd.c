@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.225 2004/09/17 23:35:13 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.226 2004/09/17 23:43:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.225 2004/09/17 23:35:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.226 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1645,7 +1645,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		cmd.opcode = READ_FORMAT_CAPACITIES;
 		_lto2b(sizeof(data), cmd.length);
 
-		error = scsipi_command(sd->sc_periph, NULL,
+		error = scsipi_command(sd->sc_periph,
 		    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
 		    SDRETRIES, 20000, NULL,
 		    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -1934,7 +1934,7 @@ sd_flush(struct sd_softc *sd, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
-	return (scsipi_command(periph, NULL, (void *)&cmd, sizeof(cmd), 0, 0,
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: st_scsi.c,v 1.12 2004/09/09 19:35:33 bouyer Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.13 2004/09/17 23:43:17 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.12 2004/09/09 19:35:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.13 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -155,7 +155,7 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 	/*
 	 * do the command, update the global values
 	 */
-	error = scsipi_command(periph, NULL, (struct scsipi_generic *)&cmd,
+	error = scsipi_command(periph, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
 	    ST_RETRIES, ST_CTL_TIME, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);

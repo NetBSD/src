@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.24 2004/09/09 19:35:33 bouyer Exp $ */
+/*	$NetBSD: ses.c,v 1.25 2004/09/17 23:43:17 mycroft Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.24 2004/09/09 19:35:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.25 2004/09/17 23:43:17 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -500,7 +500,7 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 #ifndef	SCSIDEBUG
 	flg |= XS_CTL_SILENT;
 #endif
-	error = scsipi_command(ssc->sc_periph, NULL, &sgen, cdbl,
+	error = scsipi_command(ssc->sc_periph, &sgen, cdbl,
 	    (u_char *) dptr, dl, SCSIPIRETRIES, 30000, NULL, flg);
 
 	if (error == 0 && dptr)
