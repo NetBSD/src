@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.49 1998/01/12 09:43:32 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.50 1998/01/13 19:33:29 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -383,7 +383,7 @@ STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
 
 STATIC int	gus_mic_ctl __P((void *, int));
 STATIC int	gus_linein_ctl __P((void *, int));
-STATIC int	gus_test_iobase __P((struct gus_softc *, int));
+STATIC int	gus_test_iobase __P((bus_space_tag_t, int));
 STATIC void	guspoke __P((bus_space_tag_t, bus_space_handle_t, long, u_char));
 STATIC void	gusdmaout __P((struct gus_softc *, int, u_long, caddr_t, int));
 STATIC void	gus_init_cs4231 __P((struct gus_softc *));
@@ -436,7 +436,11 @@ void	stereo_dmaintr __P((void *));
  * ISA bus driver routines
  */
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	gusprobe __P((struct device *, void *, void *));
+#else
+int	gusprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	gusattach __P((struct device *, struct device *, void *));
 
 struct cfattach gus_ca = {
@@ -665,14 +669,17 @@ struct audio_device gus_device = {
 int
 gusprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	struct gus_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
 	int recdrq = ia->ia_drq2;
 
-	sc->sc_iot = ia->ia_iot;
 	/*
 	 * Before we do anything else, make sure requested IRQ and DRQ are
 	 * valid for this card.
@@ -700,22 +707,17 @@ gusprobe(parent, match, aux)
 	if (iobase == IOBASEUNK) {
 		int i;
 		for(i = 0; i < gus_addrs; i++)
-			if (gus_test_iobase(sc, gus_base_addrs[i])) {
+			if (gus_test_iobase(ia->ia_iot, gus_base_addrs[i])) {
 				iobase = gus_base_addrs[i];
 				goto done;
 			}
 		return 0;
-	} else if (!gus_test_iobase(sc, iobase))
+	} else if (!gus_test_iobase(ia->ia_iot, iobase))
 			return 0;
 
 done:
-	sc->sc_iobase = iobase;
-	sc->sc_irq = ia->ia_irq;
-	sc->sc_drq = ia->ia_drq;
-	sc->sc_recdrq = recdrq;
-
-	if ((sc->sc_drq    != -1 && !isa_drq_isfree(parent, sc->sc_drq)) ||
-	    (sc->sc_recdrq != -1 && !isa_drq_isfree(parent, sc->sc_recdrq)))
+	if ((ia->ia_drq    != -1 && !isa_drq_isfree(parent, ia->ia_drq)) ||
+	    (recdrq != -1 && !isa_drq_isfree(parent, recdrq)))
 		return 0;
 
 	ia->ia_iobase = iobase;
@@ -729,32 +731,27 @@ done:
  */
 
 STATIC int
-gus_test_iobase (sc, iobase)
-	struct gus_softc *sc;
+gus_test_iobase (iot, iobase)
+	bus_space_tag_t iot;
 	int iobase;
 {
-	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
 	u_char s1, s2;
-	int s;
+	int s, rv = 0;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, iobase, GUS_NPORT1, 0, &ioh1))
 		return 0;
-	sc->sc_ioh1 = ioh1;
 	if (bus_space_map(iot, iobase+GUS_IOH2_OFFSET, GUS_NPORT2, 0, &ioh2))
 		goto bad1;
-	sc->sc_ioh2 = ioh2;
 
 	/* XXX Maybe we shouldn't fail on mapping this, but just assume
 	 * the card is of revision 0? */
 	if (bus_space_map(iot, iobase+GUS_IOH3_OFFSET, GUS_NPORT3, 0, &ioh3))
 		goto bad2;
-	sc->sc_ioh3 = ioh3;
 
 	if (bus_space_map(iot, iobase+GUS_IOH4_OFFSET, GUS_NPORT4, 0, &ioh4))
 		goto bad3;
-	sc->sc_ioh4 = ioh4;
 
 	/*
 	 * Reset GUS to an initial state before we do anything.
@@ -791,17 +788,17 @@ gus_test_iobase (sc, iobase)
 	guspoke(iot, ioh2, 0L, s1);
 	guspoke(iot, ioh2, 1L, s2);
 
-	return 1;
+	rv = 1;
 
 bad:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh4, GUS_NPORT4);
+	bus_space_unmap(iot, ioh4, GUS_NPORT4);
 bad3:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh3, GUS_NPORT3);
+	bus_space_unmap(iot, ioh3, GUS_NPORT3);
 bad2:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh2, GUS_NPORT2);
+	bus_space_unmap(iot, ioh2, GUS_NPORT2);
 bad1:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh1, GUS_NPORT1);
-	return 0;
+	bus_space_unmap(iot, ioh1, GUS_NPORT1);
+	return rv;
 }
 
 /*
@@ -815,12 +812,36 @@ gusattach(parent, self, aux)
 {
 	struct gus_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
-	bus_space_handle_t ioh3 = sc->sc_ioh3;
- 	int		i;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
+ 	int		iobase, i;
 	unsigned char	c,d,m;
+
+	sc->sc_iot = iot = ia->ia_iot;
+	iobase = ia->ia_iobase;
+
+	/* Map i/o space */
+	if (bus_space_map(iot, iobase, GUS_NPORT1, 0, &ioh1))
+		panic("%s: can't map io port range 1", self->dv_xname);
+	sc->sc_ioh1 = ioh1;
+	if (bus_space_map(iot, iobase+GUS_IOH2_OFFSET, GUS_NPORT2, 0, &ioh2))
+		panic("%s: can't map io port range 2", self->dv_xname);
+	sc->sc_ioh2 = ioh2;
+
+	/* XXX Maybe we shouldn't fail on mapping this, but just assume
+	 * the card is of revision 0? */
+	if (bus_space_map(iot, iobase+GUS_IOH3_OFFSET, GUS_NPORT3, 0, &ioh3))
+		panic("%s: can't map io port range 3", self->dv_xname);
+	sc->sc_ioh3 = ioh3;
+
+	if (bus_space_map(iot, iobase+GUS_IOH4_OFFSET, GUS_NPORT4, 0, &ioh4))
+		panic("%s: can't map io port range 4", self->dv_xname);
+	sc->sc_ioh4 = ioh4;
+
+	sc->sc_iobase = iobase;
+	sc->sc_irq = ia->ia_irq;
+	sc->sc_drq = ia->ia_drq;
+	sc->sc_recdrq = ia->ia_drq2;
 
 	/*
 	 * Figure out our board rev, and see if we need to initialize the

@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.25 1998/01/12 09:43:47 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.26 1998/01/13 19:33:28 drochner Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -305,7 +305,11 @@ struct scsipi_device sea_dev = {
 	NULL,		/* Use default 'done' routine */
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	seaprobe __P((struct device *, void *, void *));
+#else
+int	seaprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	seaattach __P((struct device *, struct device *, void *));
 
 struct cfattach sea_ca = {
@@ -341,11 +345,16 @@ sea_queue_length(sea)
 int
 seaprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	struct sea_softc *sea = match;
 	struct isa_attach_args *ia = aux;
-	int i;
+	int i, type = 0;
+	caddr_t maddr;
 
 	/*
 	 * Could try to find a board by looking through all possible addresses.
@@ -359,7 +368,49 @@ seaprobe(parent, match, aux)
 		/* XXX */
 		return 0;
 	} else
-		sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
+		maddr = ISA_HOLE_VADDR(ia->ia_maddr);
+	
+	/* check board type */	/* No way to define this through config */
+	for (i = 0; i < nsignatures; i++)
+		if (!bcmp(maddr + signatures[i].offset,
+		    signatures[i].signature, signatures[i].length)) {
+			type = signatures[i].type;
+			break;
+		}
+
+	/* Find controller and data memory addresses */
+	switch (type) {
+	case SEAGATE:
+	case FDOMAIN840:
+	case FDOMAIN:
+		break;
+	default:
+#ifdef DEBUG
+		printf("seaprobe: board type unknown at address 0x%x\n",
+		    ia->ia_maddr);
+#endif
+		return 0;
+	}
+
+	ia->ia_drq = DRQUNK;
+	ia->ia_msize = 0x2000;
+	ia->ia_iosize = 0;
+	return 1;
+}
+
+/*
+ * Attach all sub-devices we can find
+ */
+void
+seaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	struct sea_softc *sea = (void *)self;
+	int i;
+
+	sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
@@ -389,7 +440,7 @@ seaprobe(parent, match, aux)
 		printf("%s: board type unknown at address 0x%x\n",
 		    sea->sc_dev.dv_xname, ia->ia_maddr);
 #endif
-		return 0;
+		return;
 	}
 
 	/* Test controller RAM (works the same way on future domain cards?) */
@@ -399,25 +450,8 @@ seaprobe(parent, match, aux)
 	if ((*((u_char *)sea->maddr + SEA_RAMOFFSET) != 0xa5) ||
 	    (*((u_char *)sea->maddr + SEA_RAMOFFSET + 1) != 0x5a)) {
 		printf("%s: board RAM failure\n", sea->sc_dev.dv_xname);
-		return 0;
+		return;
 	}
-  
-	ia->ia_drq = DRQUNK;
-	ia->ia_msize = 0x2000;
-	ia->ia_iosize = 0;
-	return 1;
-}
-
-/*
- * Attach all sub-devices we can find
- */
-void
-seaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	struct sea_softc *sea = (void *)self;
 
 	sea_init(sea);
 
