@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.32 2002/11/01 17:06:33 thorpej Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.33 2002/12/11 14:22:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_SIGEV:
 		PTHREADD_ADD(PTHREADD_UP_SIGEV);
 		si = arg;
-		if (si->si_value.sival_int == PT_ALARMTIMER_MAGIC)
+		if (si->si_sigval.sival_int == PT_ALARMTIMER_MAGIC)
 			runalarms = 1;
 		/*
 		 * PT_RRTIMER_MAGIC doesn't need explicit handling;
