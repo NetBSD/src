@@ -1,5 +1,8 @@
+#include <vax/vax.h>
+#include <netbsd.h>
+
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dvax -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
+#define CPP_PREDEFINES "-D__vax__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -21,4 +24,3 @@
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
 #define DWARF2_UNWIND_INFO 0
-
