@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.4 2002/10/13 21:07:41 manu Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.5 2002/11/09 09:03:58 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.4 2002/10/13 21:07:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.5 2002/11/09 09:03:58 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -60,16 +60,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.4 2002/10/13 21:07:41 manu Exp
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_sysctl.h>
 #include <compat/irix/irix_syscallargs.h>
 
-const char irix_si_vendor[] = "Silicon Graphics, Inc.";
-const char irix_si_os_provider[] = "Silicon Graphics, Inc.";
-const char irix_si_os_name[] = "IRIX";
-const char irix_si_hw_name[] = "IP22"; /* XXX */
-const char irix_si_osrel_maj[] = "6";
-const char irix_si_osrel_min[] = "5";
-const char irix_si_osrel_patch[] = "0";
-const char irix_si_processors[] = "R5000 1.0"; /* XXX */
+char irix_si_vendor[128] = "Silicon Graphics, Inc.";
+char irix_si_os_provider[128] = "Silicon Graphics, Inc.";
+char irix_si_os_name[128] = "IRIX";
+char irix_si_hw_name[128] = "IP22"; /* XXX */
+char irix_si_osrel_maj[128] = "6";
+char irix_si_osrel_min[128] = "5";
+char irix_si_osrel_patch[128] = "0";
+char irix_si_processors[128] = "R5000 1.0"; /* XXX */
+char irix_si_version[128] = "04131232";
 
 #define BUF_SIZE 16
 

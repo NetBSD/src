@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.3 2002/10/05 23:17:29 manu Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.3 2002/10/05 23:17:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.3 2002/10/05 23:17:29 manu Exp $");
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_exec.h>
+#include <compat/irix/irix_sysctl.h>
 #include <compat/irix/irix_syscallargs.h>
 
 /* 
@@ -89,6 +90,8 @@ irix_sys_setpgrp(p, v, retval)
 		return sys_setpgid(p, uap, retval);
 }
 
+#define BUF_SIZE 16
+
 int
 irix_sys_uname(p, v, retval)
 	struct proc *p;
@@ -99,14 +102,13 @@ irix_sys_uname(p, v, retval)
 		syscallarg(struct irix_utsname *) name;
 	} */ *uap = v;
 	struct irix_utsname sut;
-	char *irix_sysname = "IRIX";
-	char *irix_release = "6.5";
-	char *irix_machine = "IP22"; /* XXX */
-	char *irix_version = "04131232";
-
+	char irix_release[BUF_SIZE + 1];
+	
+	snprintf(irix_release, sizeof(irix_release), "%s.%s", 
+	    irix_si_osrel_maj, irix_si_osrel_min);
 	memset(&sut, 0, sizeof(sut));
 
-	strncpy(sut.sysname, irix_sysname, sizeof(sut.sysname));
+	strncpy(sut.sysname, irix_si_os_name, sizeof(sut.sysname));
 	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
 
 	strncpy(sut.nodename, hostname, sizeof(sut.nodename)); 
@@ -115,10 +117,10 @@ irix_sys_uname(p, v, retval)
 	strncpy(sut.release, irix_release, sizeof(sut.release));
 	sut.release[sizeof(sut.release) - 1] = '\0';
 
-	strncpy(sut.version, irix_version, sizeof(sut.version));
+	strncpy(sut.version, irix_si_version, sizeof(sut.version));
 	sut.version[sizeof(sut.version) - 1] = '\0';
 
-	strncpy(sut.machine, irix_machine, sizeof(sut.machine));
+	strncpy(sut.machine, irix_si_hw_name, sizeof(sut.machine));
 	sut.machine[sizeof(sut.machine) - 1] = '\0';
 
 	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
