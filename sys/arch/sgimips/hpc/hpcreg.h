@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.11 2004/08/17 00:48:08 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.12 2004/12/30 02:35:42 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -417,7 +417,7 @@ struct hpc_dma_desc {
 #define HPC1_ENET_REGS		0x00000000	/* Ethernet registers */
 #define HPC1_ENET_REGS_SIZE	0x00000100
 #define HPC1_ENET_INTDELAY	0x0000002c	/* Interrupt Delay Count */
-#define HPC1_ENET_INTDELAYVAL	0x01000000
+#define HPC1_ENET_INTDELAY_OFF	0x01000000	/* Disable Interrupt Delay */
 #define HPC1_ENETR_CBP		0x00000054	/* Recv: Current buffer ptr */
 #define HPC1_ENETR_NDBP		0x00000050	/* Recv: Next descriptor ptr */
 #define HPC1_ENETR_BC		0x00000048	/* Recv: DMA byte cnt/flags */
@@ -428,7 +428,6 @@ struct hpc_dma_desc {
 #define HPC1_ENETR_RESET_CLRINT	0x0002		/* Clear channel interrupt */
 #define HPC1_ENETR_RESET_LOOPBK	0x0004		/* External loopback enable */
 #define HPC1_ENETR_RESET_CLRRBO	0x0008		/* Clear RBO condition (??) */
-#define HPC1_ENETR_PIOCFG	0x0000101c	/* Recv: PIO configuration */
 #define HPC1_ENETX_CBP		0x00000020	/* Xmit: Current buffer ptr */
 #define HPC1_ENETX_NDBP		0x00000010	/* Xmit: Next descriptor ptr */
 #define HPC1_ENETX_CFXBP	0x00000024	/* Xmit: Current first buf */
@@ -436,10 +435,6 @@ struct hpc_dma_desc {
 #define HPC1_ENETX_BC		0x00000014	/* Xmit: DMA byte cnt/flags */
 #define HPC1_ENETX_CTL		0x00000034	/* Xmit: DMA control flags */
 #define HPC1_ENETX_CTL_ACTIVE	0x00400000
-#define HPC1_ENETX_GIO		0x00003008	/* Xmit: GIO DMA FIFO ptr */
-#define HPC1_ENETX_DEV		0x0000300c	/* Xmit: Device DMA FIFO ptr */
-#define HPC1_PBUS_FIFO		0x00020000	/* PBus DMA FIFO */
-#define HPC1_PBUS_FIFO_SIZE	0x00007fff	/* PBus DMA FIFO size */
 #define HPC1_ENETR_FIFO		0x0002c000	/* Ether recv DMA FIFO */
 #define HPC1_ENETR_FIFO_SIZE	0x00001fff	/* Ether recv DMA FIFO size */
 #define HPC1_ENETX_FIFO		0x0002e000	/* Ether xmit DMA FIFO */
