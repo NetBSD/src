@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.15 1996/02/03 01:43:41 mycroft Exp $   */
+/*	$NetBSD: intvec.s,v 1.16 1996/02/17 18:48:59 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -147,13 +147,8 @@ _rpb:
 	INTVEC(strayE4, ISTACK)	# Unused, E4
 	INTVEC(strayE8, ISTACK)	# Unused, E8
 	INTVEC(strayEC, ISTACK)	# Unused, EC
-#ifdef VAX750
-	INTVEC(cstrint, ISTACK)	# Console Storage Recieve Interrupt
-	INTVEC(csttint, ISTACK)	# Console Storage Transmit Interrupt
-#else
 	INTVEC(strayF0, ISTACK)
 	INTVEC(strayF4, ISTACK)
-#endif
 	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
 	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
 
@@ -304,14 +299,8 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 	STRAY(0,E4)
 	STRAY(0,E8)
 	STRAY(0,EC)
-
-#ifdef VAX750
-	FASTINTR(cstrint,cturintr)
-	FASTINTR(csttint,ctutintr)
-#else
 	STRAY(0,F0)
 	STRAY(0,F4)
-#endif
 
 	FASTINTR(consrint,gencnrint)
 	FASTINTR(constint,gencntint)
