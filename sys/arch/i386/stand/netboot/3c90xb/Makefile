@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/17 20:03:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1 2002/02/19 19:49:39 thorpej Exp $
 
 USE_NETIF=	3c90xb
 
@@ -7,4 +7,4 @@ USE_NETIF=	3c90xb
 CPPFLAGS+= -DPCI_DID=0x9055 # 3c905b TX 
 #CPPFLAGS+= -DPCI_DID=0x9058 # 3c905b combo
 
-.include "../netboot/Makefile"
+.include "../Makefile.netboot"
