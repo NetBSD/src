@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.3 2002/06/12 19:17:23 fvdl Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.4 2004/03/05 16:27:56 drochner Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD
@@ -28,12 +28,14 @@ ENTRY(fpsetsticky)
 
 	movl	-24(%rsp),%eax
 	movl	%eax,%edx
-	andl	$63,%eax
 
 	orl	%edi,%edx
 	movl	%edx,-24(%rsp)
 
 	movl	-32(%rsp),%edx
+	orl	%edx,%eax
+	andl	$63,%eax
+	andb	$0xc0,%dl
 	orl	%edi,%edx
 	movl	%edx,-32(%rsp)
 
