@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.4 2001/10/30 15:32:03 thorpej Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.5 2001/11/10 20:49:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
 		goto bad;
 	}
-	epp->ep_vp |= VTEXT;
+	epp->ep_vp->v_flag |= VTEXT;
 	return exec_macho_setup_stack(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
