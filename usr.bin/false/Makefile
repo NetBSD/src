@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/01/09 20:18:42 tls Exp $
+#	$NetBSD: Makefile,v 1.9 1997/03/24 21:59:34 christos Exp $
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
 
 MAN=	false.1
-
-beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.CURDIR}/false.sh ${DESTDIR}${BINDIR}/false
+SCRIPTS=false.sh
 
 .include <bsd.prog.mk>

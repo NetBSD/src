@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:25:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 22:00:06 christos Exp $
 
 LIBS=	llib-lposix.ln llib-lstdc.ln
+FILES=	${LIBS}
+FILESDIR= ${LINTLIBDIR}
 
 all:	${LIBS}
-
-install:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-	    ${LIBS} ${DESTDIR}${LINTLIBDIR}
 
 clean cleanall:
 	rm -f ${LIBS}
