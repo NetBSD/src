@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/05/07 17:28:57 mycroft Exp $
+#	$NetBSD: Makefile,v 1.10 1997/06/07 00:35:42 perry Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for i386 tags file and boot blocks
@@ -6,7 +6,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	boot
+SUBDIR=	stand
 
 TI386=	../i386/tags
 SI386=	../i386/i386/*.[ch] ../i386/include/*.h ../i386/isa/*.[ch]
