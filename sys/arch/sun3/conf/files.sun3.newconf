@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.26 1995/04/10 22:11:22 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.27 1995/04/11 10:03:45 mellon Exp $
 
 #
 # sun3-specific configuration info
@@ -28,6 +28,7 @@ file arch/sun3/sun3/vm_machdep.c
 file arch/m68k/fpe/fpu_emulate.c		fpu_emulate
 file arch/m68k/m68k/copy.s
 file dev/cons.c
+file dev/cninit.c
 
 # Declare our "catch-all" root node.
 device mainbus at root {}
