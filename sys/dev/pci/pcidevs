@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.665 2004/11/17 03:04:45 junyoung Exp $
+$NetBSD: pcidevs,v 1.666 2004/11/17 11:15:03 jdarrow Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -585,6 +585,7 @@ vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst
 vendor I4		0x17cf	I4
 vendor S2IO		0x17d5	S2io Technologies
+vendor RALINK		0x1814	Ralink Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor HINT		0x3388	HiNT
@@ -2311,6 +2312,9 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 /* Rainbow Technologies products */
 product RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
 
+/* Ralink Technologies products */
+product RALINK	RT2460		0x0101	RT2460 802.11b
+
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
@@ -2625,6 +2629,7 @@ product TI	PCI4510LYNX	0x8029	PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus B
 product TI	PCI4520LYNX	0x802A	PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	ACX100		0x8400	ACX100 802.11b
+product TI	ACX111		0x9066	ACX111 802.11b/g
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
