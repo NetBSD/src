@@ -17,7 +17,7 @@ KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
 FLOPPY_NETBSD=	${KERNOBJ}/netbsd.gz
 FLOPPY_BOOT=	${MDEC}/ustarboot
 FLOPPYINSTBOOT=\
-	"${INSTALLBOOT} -m ${MACHINE} -t raw -v -b 17 @IMAGE@ ${FLOPPY_BOOT}"
+	"${INSTALLBOOT} -v -m ${MACHINE} -t raw -b 17 @IMAGE@ ${FLOPPY_BOOT}"
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 
