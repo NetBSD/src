@@ -1,17 +1,12 @@
-#	$NetBSD: Makefile,v 1.10 2000/12/18 20:50:09 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11 2001/10/27 12:09:34 jdolecek Exp $
 
+COMPAT_UTIL_OVERRIDE=	freebsd
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/freebsd
 
 CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_FREEBSD -DKTRACE
 CPPFLAGS+=	-nostdinc
-# compat_util.c symbol redifinitions
-CPPFLAGS+=	-Demul_find=freebsd_emul_find				\
-		-Dstackgap_init=freebsd_stackgap_init			\
-		-Demul_flags_translate=freebsd_emul_flags_translate	\
-		-Dstackgap_alloc=freebsd_stackgap_alloc		 	\
-		-Dcompat_offseterr=freebsd_compat_offseterr
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
 		-I. -I${S}
 
@@ -20,13 +15,9 @@ MKMAN=	no
 KMOD=	compat_freebsd
 
 # common source files
-SRCS=	lkminit_emul.c
+SRCS+=	lkminit_emul.c
 SRCS+=	freebsd_exec.c freebsd_file.c freebsd_ioctl.c freebsd_ipc.c \
 	freebsd_misc.c freebsd_ptrace.c freebsd_syscalls.c freebsd_sysent.c
-
-# emul_find() and friends - symbols are redefined to freebsd_FOO()
-.PATH: $S/compat/common
-SRCS+=	compat_util.c
 
 # XXXX - temporary, not applicable for kernel with COMPAT_43, OSSAUDIO
 #.PATH: $S/compat/common $S/compat/ossaudio
