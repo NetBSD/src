@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.28 2000/02/09 13:08:35 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.29 2000/02/27 18:06:43 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -90,6 +90,10 @@ file arch/macppc/dev/ofb.c			ofb needs-flag
 device pchb
 attach pchb at pci
 file arch/macppc/pci/pchb.c			pchb
+
+device gm: ifnet, ether, arp, mii
+attach gm at pci
+file arch/macppc/dev/if_gm.c			gm
 
 define obio {}
 device obio: obio
