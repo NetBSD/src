@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/12/12 03:46:59 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1998/02/12 19:56:25 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -13,7 +13,8 @@ TREE=	${TOP}/common/${IMAGE}.tree
 LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
-KERNEL=${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
+KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
+KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/RAMDISK3X/netbsd
 
 MOUNT_POINT=	/mnt
 #BDEV=		/dev/md0
@@ -27,10 +28,17 @@ NBLKS=		512
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
-CLEANFILES= netbsd-rd rdsetroot ${IMAGE}.fs
+CLEANFILES= netbsd-rd.sun3 netbsd-rd.sun3x rdsetroot ${IMAGE}.fs
 
-netbsd-rd : rdsetroot ${IMAGE}.fs
-	cp ${KERNEL} netbsd-tmp
+all: netbsd-rd.sun3 netbsd-rd.sun3x
+
+netbsd-rd.sun3 : rdsetroot ${IMAGE}.fs
+	cp ${KERNEL3} netbsd-tmp
+	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
+	-mv -f netbsd-tmp $@
+
+netbsd-rd.sun3x : rdsetroot ${IMAGE}.fs
+	cp ${KERNEL3X} netbsd-tmp
 	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
