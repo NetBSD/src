@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.40 1994/12/04 03:09:54 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.41 1994/12/13 09:49:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1993,7 +1993,8 @@ unionread:
 #endif /* UNION */
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) && (vp->v_mount->mnt_flag & MNT_UNION)) {
+	    (vp->v_flag & VROOT) &&
+	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
@@ -2002,8 +2003,8 @@ unionread:
 		vrele(tvp);
 		goto unionread;
 	}
-	error =
-	    copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep), sizeof(long));
+	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
+	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
 	return (error);
 }
@@ -2085,7 +2086,8 @@ unionread:
 #endif /* UNION */
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) && (vp->v_mount->mnt_flag & MNT_UNION)) {
+	    (vp->v_flag & VROOT) &&
+	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
