@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.24 2003/11/28 21:53:32 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.24 2003/11/28 21:53:32 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $");
 #include <stdio.h>
 #include <fcntl.h>
 #include <regex.h>
+#include <errno.h>
 #include <fnmatch.h>
 #include <err.h>
 
@@ -54,9 +55,13 @@ __RCSID("$NetBSD: filter.c,v 1.23 2003/08/02 14:24:30 provos Exp $");
 extern int allow;
 extern int noalias;
 extern int connected;
+extern int cradle;
 extern char cwd[];
 extern char home[];
 extern char username[];
+extern char *guipath;
+
+int requestor_restart = 0;
 
 static void logic_free(struct logic *);
 static int filter_match(struct intercept_pid *, struct intercept_tlq *,
@@ -564,8 +569,18 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				}
 			}
 
-			if (fgets(line, sizeof(line), stdin) == NULL)
-				errx(1, "EOF on policy input request");
+			if (fgets(line, sizeof(line), stdin) == NULL) {
+				if (connected && !cradle && errno == EPIPE &&
+					!requestor_restart) {
+					requestor_start(guipath, 0);
+					clearerr(stdin);
+					clearerr(stdout);
+					requestor_restart = 1;
+					printf("%s\n", output);
+					continue;
+				}
+				err(1, "EOF on policy input request");
+			}
 			p = line;
 			strsep(&p, "\n");
 		} else if (!first) {
@@ -573,6 +588,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			errx(1, "Filter generation error: %s", line);
 		}
 		first = 0;
+		requestor_restart = 0;
 
 		/* Simple keywords */
 		if (!strcasecmp(line, "detach")) {
