@@ -100,12 +100,9 @@ int    arm_structure_size_boundary = 32; /* Used to be 8 */
 #define FL_MODE26     0x04            /* 26-bit mode support */
 #define FL_MODE32     0x08            /* 32-bit mode support */
 #define FL_ARCH4      0x10            /* Architecture rel 4 */
-#define FL_ARCH5      0x20            /* Architecture rel 5 */
-#define FL_THUMB      0x40            /* Thumb aware */
-#define FL_LDSCHED    0x80	      /* Load scheduling necessary */
-#define FL_STRONG     0x100	      /* StrongARM */
-#define FL_ARCH5E     0x200           /* DSP extensions to v5 */
-#define FL_XSCALE     0x400           /* XScale */
+#define FL_THUMB      0x20            /* Thumb aware */
+#define FL_LDSCHED    0x40	      /* Load scheduling necessary */
+#define FL_STRONG     0x80	      /* StrongARM */
 
 /* The bits in this mask specify which instructions we are allowed to generate.  */
 static int insn_flags = 0;
@@ -124,20 +121,11 @@ int arm_fast_multiply = 0;
 /* Nonzero if this chip supports the ARM Architecture 4 extensions */
 int arm_arch4 = 0;
 
-/* Nonzero if this chip supports the ARM Architecture 5 extensions.  */
-int arm_arch5 = 0;
-
-/* Nonzero if this chip supports the ARM Architecture 5E extensions.  */
-int arm_arch5e = 0;
-
 /* Nonzero if this chip can benefit from load scheduling.  */
 int arm_ld_sched = 0;
 
 /* Nonzero if this chip is a StrongARM.  */
 int arm_is_strong = 0;
-
-/* Nonzero if this chip is an XScale.  */
-int arm_is_xscale = 0;
 
 /* Nonzero if this chip is a an ARM6 or an ARM7.  */
 int arm_is_6_or_7 = 0;
@@ -232,9 +220,22 @@ static struct processors all_cores[] =
   {"strongarm",	             FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm110",           FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm1100",          FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
-  {"arm10tdmi",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED             | FL_ARCH5 },
-  {"arm1020t",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED             | FL_ARCH5 },
-  {"xscale",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG | FL_ARCH5 | FL_ARCH5E | FL_XSCALE },
+
+  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
+     have been added to the NetBSD in-tree 2.95.3 in order to provide for
+     command-line compatibility with gcc 3.x.
+
+     We treat them like other CPUs that 2.95.3 already supports:
+
+     arm10tdmi -> arm9tdmi
+     arm1020t -> arm9tdmi
+
+     xscame -> strongarm
+
+     --thorpej@netbsd.org  */
+  {"arm10tdmi",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
+  {"arm1020t",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
+  {"xscale",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   
   {NULL, 0}
 };
@@ -251,9 +252,20 @@ static struct processors all_architectures[] =
   /* Strictly, FL_MODE26 is a permitted option for v4t, but there are no
      implementations that support it, so we will leave it out for now.  */
   {"armv4t",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
-  {"armv5",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 },
-  {"armv5t",   FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 },
-  {"armv5te",  FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 | FL_ARCH5E },
+  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
+     have been added to the NetBSD in-tree 2.95.3 in order to provide for
+     command-line compatibility with gcc 3.x.
+
+     We treat them like other ARCHs that 2.95.3 already supports:
+
+     armv5 -> armv4t
+     armv5t -> armv4t
+     armv5te -> armv4t
+
+     --thorpej@netbsd.org  */
+  {"armv5",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  {"armv5t",   FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  {"armv5te",  FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
   {NULL, 0}
 };
 
@@ -511,9 +523,6 @@ arm_override_options ()
   /* Initialise boolean versions of the flags, for use in the arm.md file.  */
   arm_fast_multiply = (insn_flags & FL_FAST_MULT) != 0;
   arm_arch4         = (insn_flags & FL_ARCH4) != 0;
-  arm_arch5         = (insn_flags & FL_ARCH5) != 0;
-  arm_arch5e        = (insn_flags & FL_ARCH5E) != 0;
-  arm_is_xscale     = (insn_flags & FL_XSCALE) != 0;
   
   arm_ld_sched      = (tune_flags & FL_LDSCHED) != 0;
   arm_is_strong     = (tune_flags & FL_STRONG) != 0;
@@ -565,9 +574,6 @@ arm_override_options ()
      to load a constant, and the load scheduler may well reduce that to 1.  */
   if (optimize_size || (tune_flags & FL_LDSCHED))
     arm_constant_limit = 1;
-
-  if (arm_is_xscale)
-    arm_constant_limit = 2;
   
   /* If optimizing for size, bump the number of instructions that we
      are prepared to conditionally execute (even on a StrongARM). 
@@ -1873,47 +1879,6 @@ arm_adjust_cost (insn, link, dep, cost)
 {
   rtx i_pat, d_pat;
 
-  /* Some true dependencies can have a higher cost depending
-     on precisely how certain input operands are used.  */
-  if (arm_is_xscale
-      && REG_NOTE_KIND (link) == 0
-      && recog_memoized (insn) < 0
-      && recog_memoized (dep) < 0)
-    {
-      int shift_opnum = get_attr_shift (insn);
-      enum attr_type attr_type = get_attr_type (dep);
-
-      /* If nonzero, SHIFT_OPNUM contains the operand number of a shifted
-	 operand for INSN.  If we have a shifted input operand and the
-	 instruction we depend on is another ALU instruction, then we may
-	 have to account for an additional stall.  */
-      if (shift_opnum != 0 && attr_type == TYPE_NORMAL)
-	{
-	  rtx shifted_operand;
-	  int opno;
-
-	  /* Get the shifted operand.  */
-	  extract_insn (insn);
-	  shifted_operand = recog_operand[shift_opnum];
-
-	  /* Iterate over all the operands in DEP.  If we write an operand
-	     that overlaps with SHIFTED_OPERAND, then we have increate the
-	     cost of this dependency.  */
-	  extract_insn (dep);
-	  preprocess_constraints ();
-	  for (opno = 0; opno < recog_n_operands; opno++)
-	    {
-	      /* We can ignore strict inputs.  */
-	      if (recog_op_type[opno] == OP_IN)
-		continue;
-
-	      if (reg_overlap_mentioned_p (recog_operand[opno],
-					   shifted_operand))
-		return 2;
-	    }
-	}
-    }
-
   /* XXX This is not strictly true for the FPA. */
   if (REG_NOTE_KIND(link) == REG_DEP_ANTI
       || REG_NOTE_KIND(link) == REG_DEP_OUTPUT)
@@ -3211,58 +3176,6 @@ arm_gen_load_multiple (base_regno, count, from, up, write_back, unchanging_p,
   int sign = up ? 1 : -1;
   rtx mem;
 
-  /* XScale has load-store double instructions, but they have stricter
-     alignment requirements than load-store multiple, so we can not
-     use them.
-
-     For XScale ldm requires 2 + NREGS cycles to complete and blocks
-     the pipeline until completion.
-
-	NREGS		CYCLES
-	  1		  3
-	  2		  4
-	  3		  5
-	  4		  6
-     
-     an ldr instruction takes 1-3 cycles, but does not block the
-     pipeline.
-
-	NREGS		CYCLES
-	  1		 1-3
-	  2		 2-6
-	  3		 3-9
-	  4		 4-12
-
-     Best case ldr will always win.  However, the more ldr instructions
-     we issue, the less likely we are to be able to schedule them well.
-     Using ldr instructions also increases code size.
-
-     As a compromise, we use ldr for counts of 1 or 2 regs, and ldm
-     for counts of 3 or 4 regs.  */
-  if (arm_is_xscale && count <= 2 && ! optimize_size)
-    {
-      rtx seq;
-
-      start_sequence ();
-
-      for (i = 0; i < count; i++)
-	{
-	  mem = gen_rtx_MEM (SImode, plus_constant (from, i * 4 * sign));
-	  RTX_UNCHANGING_P (mem) = unchanging_p;
-	  MEM_IN_STRUCT_P (mem) = in_struct_p;
-	  MEM_SCALAR_P (mem) = scalar_p;
-	  emit_move_insn (gen_rtx_REG (SImode, base_regno + i), mem);
-	}
-
-      if (write_back)
-	emit_move_insn (from, plus_constant (from, count * 4 * sign));
-
-      seq = gen_sequence ();
-      end_sequence ();
-
-      return seq;
-    }
-
   result = gen_rtx_PARALLEL (VOIDmode,
 			     rtvec_alloc (count + (write_back ? 2 : 0)));
   if (write_back)
@@ -3306,32 +3219,6 @@ arm_gen_store_multiple (base_regno, count, to, up, write_back, unchanging_p,
   rtx result;
   int sign = up ? 1 : -1;
   rtx mem;
-
-  /* See arm_gen_load_multiple for discussion of
-     the pros/cons of ldm/stm usage for XScale.  */
-  if (arm_is_xscale && count <= 2 && ! optimize_size)
-    {
-      rtx seq;
-
-      start_sequence ();
-
-      for (i = 0; i < count; i++)
-	{
-	  mem = gen_rtx_MEM (SImode, plus_constant (to, i * 4 * sign));
-	  RTX_UNCHANGING_P (mem) = unchanging_p;
-	  MEM_IN_STRUCT_P (mem) = in_struct_p;
-	  MEM_SCALAR_P (mem) = scalar_p;
-	  emit_move_insn (mem, gen_rtx_REG (SImode, base_regno + i));
-	}
-
-      if (write_back)
-	emit_move_insn (to, plus_constant (to, count * 4 * sign));
-
-      seq = gen_sequence ();
-      end_sequence ();
-
-      return seq;
-    }
 
   result = gen_rtx_PARALLEL (VOIDmode,
 			     rtvec_alloc (count + (write_back ? 2 : 0)));
