@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.72 2002/04/24 21:41:22 nathanw Exp $	*/
+/*	$NetBSD: print.c,v 1.73 2002/06/17 16:48:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.72 2002/04/24 21:41:22 nathanw Exp $");
+__RCSID("$NetBSD: print.c,v 1.73 2002/06/17 16:48:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,6 +428,8 @@ state(k, ve, mode)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
+	if (flag & P_SYSTRACE)
+		*cp++ = 'x';
 	if (flag & P_WEXIT && !is_zombie)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
