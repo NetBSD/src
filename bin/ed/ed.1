@@ -1,4 +1,3 @@
-.\"	$Id: ed.1,v 1.8 1993/08/02 17:15:35 mycroft Exp $	-*- nroff -*-
 .TH ED 1 "21 May 1993"
 .SH NAME
 ed, red \- text editor
@@ -135,7 +134,7 @@ The default filename is set to
 only if it is not prefixed with a bang.
 
 .SS LINE ADDRESSING
-An address represents the number of line in the buffer.
+An address represents the number of a line in the buffer.
 .B ed
 maintains a
 .I current address
@@ -166,25 +165,26 @@ and is legal wherever it makes sense.
 
 An address range is two addresses separated either by a comma or
 semi-colon. The value of the first address in a range cannot exceed the
-value of the the second.  If an
+value of the the second.  If only one address is given in a range, then
+the second address is set to the given address.  If an
 .IR n- tuple
 of addresses is given where
 .I n > 2,
-then the corresponding range is determined by the last two addresses
-in the
+then the corresponding range is determined by the last two addresses in
+the
 .IR n- tuple.
-If only one address is expected, then the last
-address is used.
+If only one address is expected, then the last address is used.
 
 Each address in a comma-delimited range is interpreted relative to the
 current address.  In a semi-colon-delimited range, the first address is
 used to set the current address, and the second address is interpreted
 relative to the first.
 
+
 The following address symbols are recognized.
 
 .TP 8
-\fR.\fR
+\&.
 The current line (address) in the buffer.
 
 .TP 8
