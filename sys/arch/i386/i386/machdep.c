@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 1997/08/25 21:17:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.248 1997/08/25 23:02:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1995,10 +1995,20 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+#if 0
+		/* 
+		 * Not done for two reasons:
+		 *
+		 *	(1) PG_N doesn't exist on the 386.
+		 *
+		 *	(2) pmap_changebit() only deals with
+		 *	    managed pages.
+		 */
 		if (!cacheable)
 			pmap_changebit(pa, PG_N, ~0);
 		else
 			pmap_changebit(pa, 0, ~PG_N);
+#endif
 	}
  
 	return 0;
@@ -2379,6 +2389,10 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 #if 0
+			/*
+			 * This is not necessary on x86-family
+			 * processors.
+			 */
 			if (flags & BUS_DMAMEM_NOSYNC)
 				pmap_changebit(addr, PG_N, ~0);
 			else
