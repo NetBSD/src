@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.31 2000/11/21 14:19:10 ad Exp $ */
+/* $NetBSD: dec_3100.c,v 1.32 2001/04/12 19:24:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -118,7 +118,7 @@ dec_3100_init()
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL_0_1;
 	splvec.spltty = MIPS_SPL_0_1_2;
-	splvec.splimp = MIPS_SPLHIGH;				/* ??? */
+	splvec.splvm = MIPS_SPLHIGH;				/* ??? */
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.42 2001/02/18 06:51:18 tsutsui Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.43 2001/04/12 19:24:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.42 2001/02/18 06:51:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43 2001/04/12 19:24:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ dec_3maxplus_init()
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
-	splvec.splimp = MIPS_SPL0;
+	splvec.splvm = MIPS_SPL0;
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
 
