@@ -19,3 +19,28 @@ as `stair-stepping xterms').
 
 [kernel/generic]: Fix a problem in FFS that could cause panics in
 ffs_clusteracct() after running fsck(8).
+
+
+Mondo patch 2:
+
+[kernel/generic]: Fix a reversed test in the tty driver that caused
+ECHONL to not work correctly.
+
+[kernel/generic]: Fix a problem in many system calls which take a file
+descriptor as an argument, which could cause the system to crash.
+
+[kernel/generic]: Speed up searching for a TCP control block by
+hashing certain values.
+
+[kernel/generic]: Fix a bad interaction with the Linux NFS server by
+not specifying an explicit gid (or uid) in create and related calls.
+
+[kernel/generic]: Fix problems in TCP that could, in strange
+circumstances, cause sockets to be left in CLOSE_WAIT or FIN_WAIT_2
+states.
+
+[kernel/generic]: Fix a problem in bind(2) that could allow a user to
+steal a port from another process.
+
+[user/generic]: Fix oversights in quota-related utilities that would
+cause them to not work on file systems with type `ffs' in fstab.
