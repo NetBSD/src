@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.1 2002/02/02 18:37:44 jdolecek Exp $	*/
+/*	$NetBSD: joy.c,v 1.2 2002/02/03 23:32:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.1 2002/02/02 18:37:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2 2002/02/03 23:32:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.1 2002/02/02 18:37:44 jdolecek Exp $");
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 #include <machine/joystick.h>
 #include <machine/conf.h>
 
