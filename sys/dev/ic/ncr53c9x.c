@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.20 1997/10/04 03:59:00 mhitch Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.20.2.1 1997/10/27 19:43:14 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -1680,11 +1680,17 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 
 				switch (sc->sc_espstep) {
 				case 0:
-					printf("%s: select timeout/no "
-					    "disconnect\n",
-					    sc->sc_dev.dv_xname);
-					ecb->xs->error = XS_SELTIMEOUT;
-					goto finish;
+					/*
+					 * The target did not respond with a
+					 * message out phase - probably an old
+					 * device that doesn't recognize ATN.
+					 * Clear ATN and just continue, the
+					 * target should be in the command
+					 * phase.
+					 * XXXX check for command phase?
+					 */
+					NCRCMD(sc, NCRCMD_RSTATN);
+					break;
 				case 1:
 					if ((ti->flags & T_NEGOTIATE) == 0) {
 						printf("%s: step 1 & !NEG\n",
