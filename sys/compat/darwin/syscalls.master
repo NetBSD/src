@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2003/12/31 02:55:04 manu Exp $
+	$NetBSD: syscalls.master,v 1.22 2004/07/04 21:03:55 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -230,7 +230,7 @@
 			    int flags); } osend
 102	NOARGS    	{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
-103	STD	    	{ int darwin_sys_sigreturn(struct \
+103	STD	    	{ int darwin_sys_sigreturn_x2(struct \
 			    darwin_ucontext *uctx); }
 104	NODEF		{ int bsd_sys_bind(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
@@ -356,7 +356,12 @@
 181	NOARGS		{ int sys_setgid(gid_t gid); }
 182	NOARGS		{ int sys_setegid(gid_t egid); }
 183	NOARGS		{ int sys_seteuid(uid_t euid); }
+#ifdef __powerpc__
+184	STD	    	{ int darwin_sys_sigreturn(struct \
+			    darwin_ucontext *uctx, int ucvers); }
+#else
 184	UNIMPL
+#endif
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
