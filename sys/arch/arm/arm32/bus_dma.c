@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 2002/08/14 19:21:50 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.17 2002/08/14 20:50:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
 	    &lastaddr, &seg, 1);
@@ -214,6 +217,9 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
+
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
 	first = 1;
 	seg = 0;
@@ -266,6 +272,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
 #endif
 	}
+
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
 	first = 1;
 	seg = 0;
@@ -512,9 +521,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (ops == 0)
 		return;
 
-	/*
-	 * XXX Skip cache frobbing if mapping was COHERENT.
-	 */
+	/* Skip cache frobbing if mapping was COHERENT. */
+	if (map->_dm_flags & ARM32_DMAMAP_COHERENT) {
+		/* Drain the write buffer. */
+		cpu_drain_writebuf();
+		return;
+	}
 
 	/*
 	 * If the mapping is not the kernel's and also not the
@@ -688,7 +700,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
-				*ptep &= ~pte_l2_s_cache_mask;
+				*ptep &= ~L2_S_CACHE_MASK;
 				tlb_flush();
 			}
 #ifdef DEBUG_DMA
@@ -776,6 +788,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
+	pd_entry_t *pde;
+	pt_entry_t pte;
 	int seg;
 	pmap_t pmap;
 
@@ -795,8 +809,41 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	for (seg = *segp; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
+		 *
+		 * XXX Don't support checking for coherent mappings
+		 * XXX in user address space.
 		 */
-		(void) pmap_extract(pmap, (vaddr_t)vaddr, &curaddr);
+		if (__predict_true(pmap == pmap_kernel())) {
+			pde = pmap_pde(pmap, vaddr);
+			if (__predict_false(pmap_pde_section(pde))) {
+				curaddr = (*pde & L1_S_FRAME) |
+				    (vaddr & L1_S_OFFSET);
+				if (*pde & L1_S_CACHE_MASK) {
+					map->_dm_flags &=
+					    ~ARM32_DMAMAP_COHERENT;
+				}
+			} else {
+				pte = *vtopte(vaddr);
+				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
+				if (__predict_false((pte & L2_TYPE_MASK)
+						    == L2_TYPE_L)) {
+					curaddr = (pte & L2_L_FRAME) |
+					    (vaddr & L2_L_OFFSET);
+					if (pte & L2_L_CACHE_MASK) {
+						map->_dm_flags &=
+						    ~ARM32_DMAMAP_COHERENT;
+					}
+				} else {
+					curaddr = (pte & L2_S_FRAME) |
+					    (vaddr & L2_S_OFFSET);
+					if (pte & L2_S_CACHE_MASK) {
+						map->_dm_flags &=
+						    ~ARM32_DMAMAP_COHERENT;
+					}
+				}
+			}
+		} else
+			(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * Make sure we're in an allowed DMA range.
