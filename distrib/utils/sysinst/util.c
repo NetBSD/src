@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.108 2003/07/27 07:45:09 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.109 2003/07/27 08:57:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -421,8 +421,18 @@ get_via_localdir(void)
 	process_menu(MENU_localdirsource, NULL);
 
 	/* Complain if not a directory or distribution files absent */
-	while ((dir_exists_p(localfs_dir) == 0 && (errmsg = MSG_badlocalsetdir)) ||
-	    (distribution_sets_exist_p(localfs_dir) == 0 && (errmsg = MSG_badsetdir))) {
+	for (;;) {
+		/*
+		 * We have to have an absolute path ('cos pax runs in a
+		 * different directory), make it so.
+		 */
+		if (localfs_dir[0] != '/') {
+			memmove(localfs_dir + 1, localfs_dir, sizeof localfs_dir - 1);
+			localfs_dir[0] = '/';
+		}
+		if ((errmsg = MSG_badlocalsetdir, dir_exists_p(localfs_dir)) &&
+		    (errmsg = MSG_badsetdir, distribution_sets_exist_p(localfs_dir)))
+			break;
 		process_menu(MENU_localdirbad, &errmsg);
 		if (!yesno)
 			return (0);
@@ -431,7 +441,7 @@ get_via_localdir(void)
 	}
 
 	/* return location, don't clean... */
-	strlcpy(ext_dir, localfs_dir, STRSIZE);
+	strlcpy(ext_dir, localfs_dir, sizeof ext_dir);
 	clean_dist_dir = 0;
 	mnt2_mounted = 0;
 	return 1;
