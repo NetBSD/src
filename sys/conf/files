@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.666 2004/04/17 12:56:26 cl Exp $
+#	$NetBSD: files,v 1.667 2004/04/21 12:44:13 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -78,7 +78,8 @@ defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
-defflag	opt_compat_netbsd.h	COMPAT_16
+defflag	opt_compat_netbsd.h	COMPAT_20
+defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
 defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
 defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
 defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
