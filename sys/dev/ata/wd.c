@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.94 1994/10/20 14:08:07 mycroft Exp $
+ *	$Id: wd.c,v 1.95 1994/10/20 16:19:08 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -448,7 +448,7 @@ wdfinish(wd, bp)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 
 #ifdef INSTRUMENT
-	dk_busy &= ~(1 << wd->sc_drive);
+	dk_busy &= ~(1 << wd->sc_dev.dv_unit);
 #endif
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR);
 	wdc->sc_errors = 0;
@@ -492,9 +492,6 @@ wdcstart(wdc)
 {
 	struct wd_softc *wd;	/* disk unit for IO */
 	struct buf *bp;
-	struct disklabel *lp;
-	long blkno, cylin, head, sector;
-	long secpertrk, secpercyl;
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
@@ -542,106 +539,114 @@ loop:
 		wdc->sc_flags &= ~WDCF_ERROR;
 		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
 			wdc->sc_flags |= WDCF_SINGLE;
-			wd->sc_skip = 0;
-			wd->sc_mskip = 0;
+			wd->sc_skip = wd->sc_mskip = 0;
 		}
 	}
 
-	/* Calculate transfer details. */
-	blkno = bp->b_blkno / (wd->sc_dk.dk_label.d_secsize / DEV_BSIZE) +
-	    wd->sc_skip;
+	if (wd->sc_skip == 0) {
 #ifdef WDDEBUG
-	if (wd->sc_skip == 0)
-		printf("\nwdcstart %s: %s %d@%d; map ", wd->sc_dev.dv_xname,
+		printf("\n%s: wdcstart %s %d@%d; map ", wd->sc_dev.dv_xname,
 		    (bp->b_flags & B_READ) ? "read" : "write", bp->b_bcount,
-		    blkno);
-	else
+		    bp->b_blkno);
+#endif
+		wd->sc_bcount = bp->b_bcount;
+#ifdef INSTRUMENT
+		dk_busy |= (1 << wd->sc_dev.dv_unit);
+		dk_wds[wd->sc_dev.dv_unit] += bp->b_bcount >> 6;
+#endif
+	} else {
+#ifdef WDDEBUG
 		printf(" %d)%x", wd->sc_skip, inb(wd->sc_iobase+wd_altsts));
 #endif
-	if (wd->sc_skip == 0)
-		wd->sc_bcount = bp->b_bcount;
-	if (wd->sc_mskip == 0) {
-		struct buf *oldbp, *nextbp;
-		oldbp = bp;
-		nextbp = bp->b_actf;
-		wd->sc_mbcount = wd->sc_bcount;
-		oldbp->b_flags |= B_XXX;
-		while (nextbp && oldbp->b_dev == nextbp->b_dev &&
-		    nextbp->b_blkno ==
-		    (oldbp->b_blkno + (oldbp->b_bcount / wd->sc_dk.dk_label.d_secsize)) &&
-		    (oldbp->b_flags & B_READ) == (nextbp->b_flags & B_READ)) {
-			if ((wd->sc_mbcount + nextbp->b_bcount) / wd->sc_dk.dk_label.d_secsize >= 240)
-				break;
-			wd->sc_mbcount += nextbp->b_bcount; 
-			nextbp->b_flags |= B_XXX;
-			oldbp = nextbp;
-			nextbp = nextbp->b_actf;
-		}
 	}
-    
-	lp = &wd->sc_dk.dk_label;
-	secpertrk = lp->d_nsectors;
-	secpercyl = lp->d_secpercyl;
-	if (WDPART(bp->b_dev) != RAW_PART)
-		blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
-	cylin = blkno / secpercyl;
-	head = (blkno % secpercyl) / secpertrk;
-	sector = blkno % secpertrk;
-    
-	/*
-	 * Check for bad sectors if we have them, and not formatting.  Only do
-	 * this in single-sector mode, or when starting a multiple-sector
-	 * transfer.
-	 */
-	if ((wd->sc_flags & WDF_BADSECT) &&
-#ifdef B_FORMAT
-	    (bp->b_flags & B_FORMAT) == 0 &&
-#endif
-	    (wd->sc_mskip == 0 || (wdc->sc_flags & WDCF_SINGLE))) {
 
-		long blkchk, blkend, blknew;
-		int i;
-
-		blkend = blkno + howmany(wd->sc_mbcount, DEV_BSIZE) - 1;
-		for (i = 0; (blkchk = wd->sc_badsect[i]) != -1; i++) {
-			if (blkchk > blkend)
-				break;	/* Transfer is completely OK; done. */
-			if (blkchk == blkno) {
-				blknew =
-				    lp->d_secperunit - lp->d_nsectors - i - 1;
-				cylin = blknew / secpercyl;
-				head = (blknew % secpercyl) / secpertrk;
-				sector = blknew % secpertrk;
-				wdc->sc_flags |= WDCF_SINGLE;
-				/* Found and replaced first blk of transfer; done. */
-				break;
-			} else if (blkchk > blkno) {
-				wdc->sc_flags |= WDCF_SINGLE;
-				break;	/* Bad block inside transfer; done. */
+	if (wd->sc_mskip == 0) {
+		wd->sc_mbcount = wd->sc_bcount;
+		/* If multi-sector, try to cluster. */
+		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
+			struct buf *oldbp, *nextbp;
+			oldbp = bp;
+			nextbp = bp->b_actf;
+			oldbp->b_flags |= B_XXX;
+			while (nextbp && oldbp->b_dev == nextbp->b_dev &&
+			    nextbp->b_blkno ==
+			    (oldbp->b_blkno + (oldbp->b_bcount / wd->sc_dk.dk_label.d_secsize)) &&
+			    (oldbp->b_flags & B_READ) == (nextbp->b_flags & B_READ)) {
+				if ((wd->sc_mbcount + nextbp->b_bcount) / wd->sc_dk.dk_label.d_secsize >= 240)
+					break;
+				wd->sc_mbcount += nextbp->b_bcount; 
+				nextbp->b_flags |= B_XXX;
+				oldbp = nextbp;
+				nextbp = nextbp->b_actf;
 			}
 		}
 	}
-	if (wdc->sc_flags & WDCF_SINGLE) {
-		wd->sc_mbcount = wd->sc_bcount;
-		wd->sc_mskip = wd->sc_skip;
-	}
-
-#ifdef WDDEBUG
-	printf("c%d h%d s%d ", cylin, head, sector);
-#endif
-
-	sector++;	/* Sectors begin with 1, not 0. */
     
-#ifdef INSTRUMENT
-	if (wd->sc_skip == 0) {
-		dk_busy |= 1 << wd->sc_dev.dv_unit;
-		dk_wds[wd->sc_dev.dv_unit] += bp->b_bcount >> 6;
-	}
-#endif
-
 	/* If starting a multisector transfer, or doing single transfers. */
 	if (wd->sc_mskip == 0 || (wdc->sc_flags & WDCF_SINGLE)) {
-		int command, count;
+		struct disklabel *lp;
+		long blkno, nblks;
+		long cylin, head, sector;
+		int command;
+
+		lp = &wd->sc_dk.dk_label;
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) + wd->sc_skip;
+		if (WDPART(bp->b_dev) != RAW_PART)
+			blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
+		if (wdc->sc_flags & WDCF_SINGLE)
+			nblks = 1;
+		else
+			nblks = howmany(wd->sc_mbcount, lp->d_secsize);
+
+		/*
+		 * Check for bad sectors if we have them, and not formatting.  Only do
+		 * this in single-sector mode, or when starting a multiple-sector
+		 * transfer.
+		 */
+		if ((wd->sc_flags & WDF_BADSECT)
+#ifdef B_FORMAT
+		    && (bp->b_flags & B_FORMAT) == 0
+#endif
+		    ) {
+			long blkdiff;
+			int i;
+
+			for (i = 0; (blkdiff = wd->sc_badsect[i]) != -1; i++) {
+				blkdiff -= blkno;
+				if (blkdiff < 0)
+					continue;
+				if (blkdiff >= nblks)
+					break;
+				if (blkdiff == 0) {
+					/* Replace current block of transfer. */
+					blkno =
+					    lp->d_secperunit - lp->d_nsectors - i - 1;
+					if (wdc->sc_flags & WDCF_SINGLE)
+						break;
+				} else {
+					/* If clustered, try unclustering. */
+					if (wd->sc_mbcount > wd->sc_bcount) {
+						nblks = howmany(wd->sc_bcount, lp->d_secsize);
+						if (blkdiff >= nblks) {
+							/* Unclustering was enough. */
+							wd->sc_mbcount = wd->sc_bcount;
+							break;
+						}
+					}
+					/* Bad block inside transfer. */
+				}
+				/* Force single-sector mode. */
+				wd->sc_mbcount = wd->sc_bcount;
+				wdc->sc_flags |= WDCF_SINGLE;
+				nblks = 1;
+			}
+			/* Tranfer is okay now. */
+		}
+
+		cylin = blkno / lp->d_secpercyl;
+		head = (blkno % lp->d_secpercyl) / lp->d_nsectors;
+		sector = blkno % lp->d_nsectors;
+		sector++;	/* Sectors begin with 1, not 0. */
 
 #ifdef INSTRUMENT
 		++dk_seek[wd->sc_dev.dv_unit];
@@ -651,26 +656,15 @@ loop:
 #ifdef B_FORMAT
 		if (bp->b_flags & B_FORMAT) {
 			sector = lp->d_gap3;
-			count = lp->d_nsectors;
+			nblks = lp->d_nsectors;
 			command = WDCC_FORMAT;
-		} else {
-			if (wdc->sc_flags & WDCF_SINGLE)
-				count = 1;
-			else
-				count = howmany(wd->sc_mbcount, DEV_BSIZE);
+		} else
+#endif
 			command =
 			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
-		}
-#else
-		if (wdc->sc_flags & WDCF_SINGLE)
-			count = 1;
-		else
-			count = howmany(wd->sc_mbcount, DEV_BSIZE);
-		command = (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
-#endif
 	
 		/* Initiate command! */
-		if (wdcommand(wd, cylin, head, sector, count, command) != 0) {
+		if (wdcommand(wd, cylin, head, sector, nblks, command) != 0) {
 			wderror(wd, NULL,
 			    "wdcstart: timeout waiting for unbusy");
 			wdcunwedge(wdc);
