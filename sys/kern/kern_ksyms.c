@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.5 2003/05/01 20:46:20 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.6 2003/05/02 09:19:51 tron Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -195,8 +195,10 @@ addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 		if (sym[i].st_name == 0)
 			continue;
 		j = strlen(sym[i].st_name + tab->sd_strstart) + 1;
+#if NKSYMS
 		if (j > ksyms_maxlen)
 			ksyms_maxlen = j;
+#endif
 	}
 
 	CIRCLEQ_INSERT_HEAD(&symtab_queue, tab, sd_queue);
@@ -407,8 +409,10 @@ addsym(Elf_Sym *sym, char *name)
 	savedsyms[cursyms] = *sym;
 	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
 	curnamep += len;
+#ifdef KSYMS_DEBUG
 	if (len > ksyms_maxlen)
 		ksyms_maxlen = len;
+#endif
 	cursyms++;
 }
 /*
