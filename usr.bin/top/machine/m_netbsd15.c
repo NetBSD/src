@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.7.2.1 2001/05/26 15:35:22 he Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.7.2.2 2002/02/09 19:56:24 he Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.7.2.1 2001/05/26 15:35:22 he Exp $
+ * $Id: m_netbsd15.c,v 1.7.2.2 2002/02/09 19:56:24 he Exp $
  */
 
 #include <sys/param.h>
@@ -85,21 +85,20 @@ struct handle {
  */
 
 static char header[] =
-  "  PID X        PRI NICE   SIZE   RES STATE     TIME   WCPU    CPU COMMAND";
+  "  PID X        PRI NICE   SIZE   RES STATE      TIME   WCPU    CPU COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-7s%7s %5.2f%% %5.2f%% %.12s"
+	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.2f%% %5.2f%% %.12s"
 
 
-/* Process state names for the "STATE" column of the display.
- * The extra nulls in the string "run" are for adding a slash and
- * the processor number when needed.
+/* 
+ * Process state names for the "STATE" column of the display.
  */
 
-char *state_abbrev[] = {
-	"", "start", "run\0\0\0", "sleep", "stop", "zomb", "dead", "onproc"
+const char *state_abbrev[] = {
+	"", "START", "RUN", "SLEEP", "STOP", "ZOMB", "DEAD", "CPU"
 };
 
 static kvm_t *kd;
@@ -448,6 +447,11 @@ format_next_process(handle, get_userid)
 	long cputime;
 	double pct;
 	struct handle *hp;
+	const char *statep;
+#ifdef KI_NOCPU
+	char state[10];
+#endif
+	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[128];		/* static area where result is built */
 
 	/* find and remember the next proc structure */
@@ -481,6 +485,26 @@ format_next_process(handle, get_userid)
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
+	if (pp->p_stat == SSLEEP) {
+		strlcpy(wmesg, pp->p_wmesg, sizeof(wmesg));
+		statep = wmesg;
+	} else
+		statep = state_abbrev[(unsigned)pp->p_stat];
+
+#ifdef KI_NOCPU
+	/* Post-1.5 change: add cpu number if appropriate */
+	if (pp->p_cpuid != KI_NOCPU) {
+		switch (pp->p_stat) {
+		case SONPROC:
+		case SRUN:
+		case SSLEEP:			
+			snprintf(state, sizeof(state), "%.6s/%lld", 
+				 statep, (long long)pp->p_cpuid);
+			statep = state;
+			break;
+		}
+	}
+#endif
 	/* format this entry */
 	sprintf(fmt,
 	    Proc_format,
@@ -490,7 +514,7 @@ format_next_process(handle, get_userid)
 	    pp->p_nice - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(pp->p_vm_rssize)),
-	    state_abbrev[(unsigned char) pp->p_stat],
+	    statep,
 	    format_time(cputime),
 	    100.0 * weighted_cpu(pct, pp),
 	    100.0 * pct,
