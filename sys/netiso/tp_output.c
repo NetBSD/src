@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.26 2004/04/20 02:13:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.26 2004/04/20 02:13:26 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
 #include <sys/proc.h>
 
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_user.h>
 #include <netiso/tp_stat.h>
 #include <netiso/tp_ip.h>
@@ -87,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
 #include <netiso/argo_debug.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_var.h>
 
 #define TPDUSIZESHIFT 24
 #define CLASSHIFT 16
