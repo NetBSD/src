@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.6 2003/07/14 12:37:13 itojun Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.7 2003/08/06 08:37:19 jdolecek Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.6 2003/07/14 12:37:13 itojun Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.7 2003/08/06 08:37:19 jdolecek Exp $");
 #endif /* not lint */
 
 /*
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: md5crypt.c,v 1.6 2003/07/14 12:37:13 itojun Exp $");
 
 char	*__md5crypt(const char *pw, const char *salt);	/* XXX */
 
-static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
+static const unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 #ifdef libcrypto
