@@ -1,4 +1,4 @@
-.\"	$NetBSD: battlestar.6,v 1.7 1999/07/28 01:45:41 hubertf Exp $
+.\"	$NetBSD: battlestar.6,v 1.8 2000/09/08 17:18:36 jsm Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)battlestar.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd September 7, 2000
 .Dt BATTLESTAR 6
 .Os
 .Sh NAME
@@ -120,15 +120,35 @@ want to take advantage of it.  That is, saying "take knife" and then
 "drop"
 will drop the knife you just took.
 .Sh SCORE & INVEN
-The two commands "score" and "inven" will print out your current status
-in the game.
+The two commands
+.Dq score
+and
+.Dq inven
+will print out your current status in the game.
 .Sh SAVING A GAME
-The command "save" will save your game in a file, by default called
-".Bstar" in your home directory.  You
-can recover a saved game by using the 
+The command
+.Dq save
+will save your game in a file called
+.Pa .Bstar
+in your home directory
+by default.
+You can recover a saved game by using the
 .Fl r
 option when you start up the
 game, or by giving the name of the saved file as an argument.
+Save files will be saved to and restored from your home directory unless a
+path is specified \- i.e.,
+.Dq Li battlestar -r savedgame
+will look for
+.Pa savedgame
+in your home directory,
+but
+.Dq Li battlestar -r ./savedgame
+will look in the current directory.
+.Dq Li battlestar -r
+will look for the default file,
+.Pa .Bstar
+in your home directory.
 .Sh DIRECTIONS
 The compass directions N, S, E, and W can be used if you have a compass.
 If you don't have a compass, you'll have to say R, L, A, or B, which
