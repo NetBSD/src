@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.203 2001/10/31 16:25:21 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.204 2001/10/31 17:46:08 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -46,13 +46,26 @@ USETOOLS?=	no
 	@false
 .endif
 
-.if ${USETOOLS} == "yes"
-# Define default locations for common tools.
-.if !defined(TOOLDIR)
-.BEGIN:
-	@echo "USETOOLS=yes, but TOOLDIR isn't set which is a requirement"; exit 1
+PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
+
+# Host platform information; may be overridden
+.if !defined(HOST_OSTYPE)
+_HOST_OSNAME!=	uname -s
+_HOST_OSREL!=	uname -r
+_HOST_ARCH!=	uname -p 2>/dev/null || uname -m
+HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL}-${_HOST_ARCH}
+.MAKEOVERRIDES+= HOST_OSTYPE
 .endif
 
+.if ${USETOOLS} == "yes"
+# Provide a default for TOOLDIR.
+.if !defined(TOOLDIR)
+_TOOLOBJ!=	cd ${_SRC_TOP_:U${BSDSRCDIR}}/tools && ${PRINTOBJDIR}
+TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
+.MAKEOVERRIDES+= TOOLDIR
+.endif
+
+# Define default locations for common tools.
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
 ASN1_COMPILE=	${TOOLDIR}/bin/asn1_compile
@@ -102,7 +115,6 @@ YACC=		${TOOLDIR}/bin/yacc
 # Make sure DESTDIR is set, so that builds with these tools always
 # get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
 # <empty string>, meaning start from /, the root directory.
-
 DESTDIR?=
 .endif
 
@@ -280,8 +292,6 @@ realdepend:	.NOTMAIN
 distclean:	.NOTMAIN cleandir
 cleandir:	.NOTMAIN clean
 .endif
-
-PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-
 
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
