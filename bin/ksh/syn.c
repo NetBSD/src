@@ -1,4 +1,4 @@
-/*	$NetBSD: syn.c,v 1.2 1997/01/12 19:12:19 tls Exp $	*/
+/*	$NetBSD: syn.c,v 1.3 1998/10/09 02:45:34 erh Exp $	*/
 
 /*
  * shell parser (C version)
@@ -578,10 +578,10 @@ function_body(name, ksh_func)
 	if ((t->left = get_command(CONTIN)) == (struct op *) 0) {
 		/* create empty command so foo(): will work */
 		t->left = newtp(TCOM);
-		t->args = (char **) alloc(sizeof(char *), ATEMP);
-		t->args[0] = (char *) 0;
-		t->vars = (char **) alloc(sizeof(char *), ATEMP);
-		t->vars[0] = (char *) 0;
+		t->left->args = (char **) alloc(sizeof(char *), ATEMP);
+		t->left->args[0] = (char *) 0;
+		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
+		t->left->vars[0] = (char *) 0;
 	}
 	if (!old_func_parse)
 		e->flags &= ~EF_FUNC_PARSE;
