@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.82 2002/08/12 16:56:39 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.83 2002/08/21 03:26:29 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.82 2002/08/12 16:56:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.83 2002/08/21 03:26:29 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -181,8 +181,11 @@ wi_attach(sc)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 	const char *sep = "";
+	int i, nrate;
+	u_int8_t *r;
 	struct wi_ltv_macaddr   mac;
 	struct wi_ltv_gen       gen;
+	struct wi_ltv_str	rate;
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -319,95 +322,80 @@ wi_attach(sc)
 		sc->wi_flags |= WI_FLAGS_HAS_WEP;
 
 	/* Find supported rates. */
-	gen.wi_type = WI_RID_DATA_RATES;
-	gen.wi_len = 2;
-	if (wi_read_record(sc, &gen))
-		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
-		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
-	else
-		sc->wi_supprates = le16toh(gen.wi_val);
+	rate.wi_type = WI_RID_DATA_RATES;
+	rate.wi_len = 6;
+	if (wi_read_record(sc, (struct wi_ltv_gen *)&rate) == 0) {
+		nrate = le16toh(rate.wi_str[0]);
+		r = (u_int8_t *)&rate.wi_str[1];
+		for (i = 0; i < nrate; i++) {
+			switch (r[i] & IEEE80211_RATE_VAL) {
+			case 2:
+				sc->wi_supprates |= WI_SUPPRATES_1M;
+				break;
+			case 4:
+				sc->wi_supprates |= WI_SUPPRATES_2M;
+				break;
+			case 11:
+				sc->wi_supprates |= WI_SUPPRATES_5M;
+				break;
+			case 22:
+				sc->wi_supprates |= WI_SUPPRATES_11M;
+				break;
+			}
+		}
+	}
 
 	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
 	if (sc->wi_supprates != 0)
 		printf("%s: supported rates: ", sc->sc_dev.dv_xname);
-#define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
+#define	ADD(s, o)	ifmedia_add(&sc->sc_media, \
+	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
 #define	PRINT(n)	printf("%s%s", sep, (n)); sep = ", "
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_ADHOC, 0), 0);
-	if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_IBSS,
-		    0), 0);
-	if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
-		    IFM_IEEE80211_IBSSMASTER, 0), 0);
+	ADD(IFM_AUTO, 0);
 	if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
-		    IFM_IEEE80211_HOSTAP, 0), 0);
+		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
+	if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
+	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	if (sc->wi_supprates & WI_SUPPRATES_1M) {
 		PRINT("1Mbps");
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-			    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-			    IFM_IEEE80211_IBSSMASTER, 0), 0);
+		ADD(IFM_IEEE80211_DS1, 0);
 		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-			    IFM_IEEE80211_HOSTAP, 0), 0);
+			ADD(IFM_IEEE80211_DS1, IFM_IEEE80211_HOSTAP);
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_IEEE80211_DS1, IFM_IEEE80211_ADHOC);
+		ADD(IFM_IEEE80211_DS1, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_2M) {
 		PRINT("2Mbps");
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-			    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-			    IFM_IEEE80211_IBSSMASTER, 0), 0);
+		ADD(IFM_IEEE80211_DS2, 0);
 		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-			    IFM_IEEE80211_HOSTAP, 0), 0);
+			ADD(IFM_IEEE80211_DS2, IFM_IEEE80211_HOSTAP);
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_IEEE80211_DS2, IFM_IEEE80211_ADHOC);
+		ADD(IFM_IEEE80211_DS2, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_5M) {
 		PRINT("5.5Mbps");
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-			    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-			    IFM_IEEE80211_IBSSMASTER, 0), 0);
+		ADD(IFM_IEEE80211_DS5, 0);
 		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-			    IFM_IEEE80211_HOSTAP, 0), 0);
+			ADD(IFM_IEEE80211_DS5, IFM_IEEE80211_HOSTAP);
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_IEEE80211_DS5, IFM_IEEE80211_ADHOC);
+		ADD(IFM_IEEE80211_DS5, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	}
 	if (sc->wi_supprates & WI_SUPPRATES_11M) {
 		PRINT("11Mbps");
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-			    IFM_IEEE80211_IBSS, 0), 0);
-		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-			    IFM_IEEE80211_IBSSMASTER, 0), 0);
+		ADD(IFM_IEEE80211_DS11, 0);
 		if (sc->wi_flags & WI_FLAGS_HAS_HOSTAP)
-			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-			    IFM_IEEE80211_HOSTAP, 0), 0);
-		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
+			ADD(IFM_IEEE80211_DS11, IFM_IEEE80211_HOSTAP);
+		if (sc->wi_flags & WI_FLAGS_HAS_IBSS)
+			ADD(IFM_IEEE80211_DS11, IFM_IEEE80211_ADHOC);
+		ADD(IFM_IEEE80211_DS11, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	}
 	if (sc->wi_supprates != 0)
 		printf("\n");
-	ifmedia_set(&sc->sc_media,
-	    IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
+	ifmedia_set(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
 #undef ADD
 #undef PRINT
 
@@ -415,7 +403,7 @@ wi_attach(sc)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, mac.wi_mac_addr);
+	ether_ifattach(ifp, sc->sc_macaddr);
 
 	ifp->if_baudrate = IF_Mbps(2);
 
@@ -1044,16 +1032,6 @@ static int wi_read_record(sc, ltv)
 			p2ltv.wi_len = 2;
 			ltv = &p2ltv;
 			break;
-		case WI_RID_ROAMING_MODE:
-			if (sc->sc_firmware_type == WI_INTERSIL)
-				break;
-			/* not supported */
-			ltv->wi_len = 1;
-			return 0;
-		case WI_RID_MICROWAVE_OVEN:
-			/* not supported */
-			ltv->wi_len = 1;
-			return 0;
 		}
 	}
 
@@ -1236,16 +1214,6 @@ static int wi_write_record(sc, ltv)
 				p2ltv.wi_val = htole16(0x02);
 			ltv = &p2ltv;
 			break;
-
-		case WI_RID_ROAMING_MODE:
-			if (sc->sc_firmware_type == WI_INTERSIL)
-				break;
-			/* not supported */
-			return 0;
-
-		case WI_RID_MICROWAVE_OVEN:
-			/* not supported */
-			return 0;
 		}
 	}
 
@@ -1737,7 +1705,13 @@ wi_ioctl(ifp, command, data)
 				memcpy((char *)&wreq, (char *)&sc->wi_keys,
 				    sizeof(struct wi_ltv_keys));
 		} else {
-			if (sc->sc_enabled == 0)
+			if (sc->sc_enabled == 0 ||
+			    (wreq.wi_type == WI_RID_ROAMING_MODE &&
+			     (sc->wi_flags & WI_FLAGS_HAS_ROAMING) == 0) ||
+			    (wreq.wi_type == WI_RID_CREATE_IBSS &&
+			     (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS) == 0) ||
+			    (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
+			     (sc->wi_flags & WI_FLAGS_HAS_MOR) == 0))
 				error = wi_getdef(sc, &wreq);
 			else if (wreq.wi_len > WI_MAX_DATALEN)
 				error = EINVAL;
@@ -2669,13 +2643,10 @@ wi_sync_media(sc, ptype, txrate)
 		/* default port type */
 		break;
 	case WI_PORTTYPE_ADHOC:
-		options |= IFM_IEEE80211_ADHOC;
+		options |= IFM_IEEE80211_ADHOC | IFM_FLAG0;
 		break;
 	case WI_PORTTYPE_IBSS:
-		if (sc->wi_create_ibss)
-			options |= IFM_IEEE80211_IBSSMASTER;
-		else
-			options |= IFM_IEEE80211_IBSS;
+		options |= IFM_IEEE80211_ADHOC;
 		break;
 	default:
 		subtype = IFM_MANUAL;		/* Unable to represent */
@@ -2706,20 +2677,16 @@ wi_media_change(ifp)
 	case 0:
 		sc->wi_ptype = WI_PORTTYPE_BSS;
 		break;
-	case IFM_IEEE80211_ADHOC:
-		sc->wi_ptype = WI_PORTTYPE_ADHOC;
-		break;
 	case IFM_IEEE80211_HOSTAP:
 		sc->wi_ptype = WI_PORTTYPE_HOSTAP;
 		break;
-	case IFM_IEEE80211_IBSSMASTER:
-	case IFM_IEEE80211_IBSSMASTER|IFM_IEEE80211_IBSS:
-		if ((sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS) == 0)
-			return (EINVAL);
-		sc->wi_create_ibss = 1;
-		/* FALLTHROUGH */
-	case IFM_IEEE80211_IBSS:
+	case IFM_IEEE80211_ADHOC:
 		sc->wi_ptype = WI_PORTTYPE_IBSS;
+		if (sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)
+			sc->wi_create_ibss = 1;
+		break;
+	case IFM_IEEE80211_ADHOC | IFM_FLAG0:
+		sc->wi_ptype = WI_PORTTYPE_ADHOC;
 		break;
 	default:
 		/* Invalid combination. */
