@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.68 2003/11/18 14:21:59 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.69 2003/11/24 16:53:38 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.68 2003/11/18 14:21:59 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.69 2003/11/24 16:53:38 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ void	ktrpsig __P((void *, int));
 void	ktrcsw __P((struct ktr_csw *));
 void	ktruser __P((struct ktr_user *, int));
 void	ktrmmsg __P((struct ktr_mmsg *, int));
+void	ktrmool __P((struct ktr_mool *, int));
 void	usage __P((void));
 void	eprint __P((int));
 void	rprint __P((register_t));
@@ -262,6 +263,9 @@ main(argc, argv)
 		case KTR_MMSG:
 			ktrmmsg(m, ktrlen);
 			break;
+		case KTR_MOOL:
+			ktrmool(m, ktrlen);
+			break;
 		case KTR_EXEC_ARG:
 		case KTR_EXEC_ENV:
 			visdump_buf(m, ktrlen, col);
@@ -326,6 +330,9 @@ dumpheader(kth)
 		break;
 	case KTR_MMSG:
 		type = "MMSG";
+		break;
+	case KTR_MOOL:
+		type = "MOOL";
 		break;
 	case KTR_EXEC_ENV:
 		type = "ENV";
@@ -879,6 +886,18 @@ ktrmmsg(mmsg, len)
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
+}
+
+void
+ktrmool(mool, len)
+	struct ktr_mool *mool;
+	int len;
+{
+	size_t size = mool->size;
+
+	printf("%d/0x%x bytes at %p\n", size, size, mool->uaddr);
+	mool++;
+	hexdump_buf(mool, size, word_size ? word_size : 4);
 }
 
 static const char *
