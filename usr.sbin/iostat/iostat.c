@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.37 2003/07/02 13:20:14 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.38 2003/07/02 13:47:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.37 2003/07/02 13:20:14 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.38 2003/07/02 13:47:57 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,9 +99,10 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
+static int	defdrives;
 static int	winlines = 20;
+static int	wincols = 80;
 
-#define	DEFDRIVES	3
 #define	ISSET(x, a)	((x) & (a))
 #define	SHOW_CPU	1<<0
 #define	SHOW_TTY	1<<1
@@ -180,6 +181,20 @@ main(int argc, char *argv[])
 		todo |= SHOW_STATS_X;
 	}
 
+	if (ioctl(STDOUT_FILENO, TIOCGSIZE, &ts) != -1) {
+		if (ts.ts_lines)
+			winlines = ts.ts_lines;
+		if (ts.ts_cols)
+			wincols = ts.ts_cols;
+	}
+
+	defdrives = wincols;
+	if (ISSET(todo, SHOW_CPU))
+		defdrives -= 16;	/* XXX magic number */
+	if (ISSET(todo, SHOW_TTY))
+		defdrives -= 9;		/* XXX magic number */
+	defdrives /= 18;		/* XXX magic number */
+
 	dkinit(0);
 	dkreadstats();
 	ndrives = selectdrives(argc, argv);
@@ -196,11 +211,6 @@ main(int argc, char *argv[])
 
 	tv.tv_sec = interval;
 	tv.tv_nsec = 0;
-
-	if (ioctl(STDOUT_FILENO, TIOCGSIZE, &ts) != -1) {
-		if (ts.ts_lines)
-			winlines = ts.ts_lines;
-	}
 
 	/* print a new header on sigcont */
 	(void)signal(SIGCONT, header);
@@ -496,14 +506,14 @@ selectdrives(int argc, char *argv[])
 
 	if (ndrives == 0 && tried == 0) {
 		/*
-		 * Pick up to DEFDRIVES (or all if -x is given) drives
+		 * Pick up to defdrives (or all if -x is given) drives
 		 * if none specified.
 		 */
-		maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : DEFDRIVES;
+		maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : defdrives;
 		for (i = 0; i < maxdrives; i++) {
 			cur.dk_select[i] = 1;
 			++ndrives;
-			if (!ISSET(todo, SHOW_STATS_X) && ndrives == DEFDRIVES)
+			if (!ISSET(todo, SHOW_STATS_X) && ndrives == defdrives)
 				break;
 		}
 	}
