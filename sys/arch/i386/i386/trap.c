@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 1994/10/27 04:15:49 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.59 1994/11/06 20:28:57 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -158,10 +158,10 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register struct proc *p;
-	register struct pcb *pcb;
-	int type;
+	register struct proc *p = curproc;
+	int type = frame.tf_trapno;
 	u_quad_t sticks;
+	struct pcb *pcb;
 	extern char fusubail[];
 
 	cnt.v_trap++;
@@ -174,14 +174,6 @@ trap(frame)
 		printf("curproc %x\n", curproc);
 	}
 #endif
-
-	type = frame.tf_trapno;
-
-	if ((p = curproc) == 0)
-		p = &proc0;
-	/* can't use curpcb, as it might be NULL; and we have p in a register
-	   anyway */
-	pcb = &p->p_addr->u_pcb;
 
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
@@ -215,6 +207,9 @@ trap(frame)
 
 	case T_PROTFLT:
 	case T_ALIGNFLT:
+		if (p == 0)
+			goto we_re_toast;
+		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault == 0)
 			goto we_re_toast;
 	copyfault:
@@ -275,6 +270,9 @@ trap(frame)
 		break;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+		if (p == 0)
+			goto we_re_toast;
+		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -361,7 +359,7 @@ trap(frame)
 
 	nogo:
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault)
+			if (pcb->pcb_onfault != 0)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
