@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 1997/06/08 23:54:25 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 1997/06/10 19:03:38 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -2719,8 +2719,8 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	if (error)
 		return (error);
 
-	pa = mac68k_trunc_page(bpa + t);
-	endpa = mac68k_round_page((bpa + t + size) - 1);
+	pa = m68k_trunc_page(bpa + t);
+	endpa = m68k_round_page((bpa + t + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -2798,8 +2798,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vm_offset_t va;
 
-	pa = mac68k_trunc_page(bpa);
-	endpa = mac68k_round_page((bpa + size) - 1);
+	pa = m68k_trunc_page(bpa);
+	endpa = m68k_round_page((bpa + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -2831,8 +2831,8 @@ bus_space_unmap(t, bsh, size)
 	vm_offset_t	va, endva;
 	bus_addr_t bpa;
 
-	va = mac68k_trunc_page(bsh);
-	endva = mac68k_round_page((bsh + size) - 1);
+	va = m68k_trunc_page(bsh);
+	endva = m68k_round_page((bsh + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endva <= va)
