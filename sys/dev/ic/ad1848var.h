@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.4 1999/02/18 17:27:39 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.5 1999/09/06 17:07:05 rh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -150,7 +150,9 @@ typedef struct ad1848_devmap {
 } ad1848_devmap_t;
 
 int	ad_read __P((struct ad1848_softc *, int));
+int	ad_xread __P((struct ad1848_softc *, int));
 void	ad_write __P((struct ad1848_softc *, int, int));
+void	ad_xwrite __P((struct ad1848_softc *, int, int));
 
 void	ad1848_attach __P((struct ad1848_softc *));
 void	ad1848_reset __P((struct ad1848_softc *));
