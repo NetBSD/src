@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.1 1999/10/19 17:39:35 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.2 1999/10/19 21:04:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ void	scsipi_put_tag __P((struct scsipi_xfer *));
 
 void	scsipi_async_event_max_openings __P((struct scsipi_channel *,
 	    struct scsipi_max_openings *));
+void	scsipi_async_event_xfer_mode __P((struct scsipi_channel *,
+	    struct scsipi_xfer_mode *));
 
 struct pool scsipi_xfer_pool;
 
@@ -1586,6 +1588,11 @@ scsipi_async_event(chan, event, arg)
 		scsipi_async_event_max_openings(chan,
 		    (struct scsipi_max_openings *)arg);
 		break;
+
+	case ASYNC_EVENT_XFER_MODE:
+		scsipi_async_event_xfer_mode(chan,
+		    (struct scsipi_xfer_mode *)arg);
+		break;
 	}
 	splx(s);
 }
@@ -1668,6 +1675,30 @@ scsipi_async_event_max_openings(chan, mo)
 	else if (mo->mo_openings > periph->periph_openings &&
 	    (periph->periph_flags & PERIPH_GROW_OPENINGS) != 0)
 		periph->periph_openings = mo->mo_openings;
+}
+
+/*
+ * scsipi_async_event_xfer_mode:
+ *
+ *	Update the xfer mode for all periphs sharing the
+ *	specified I_T Nexus.
+ */
+void
+scsipi_async_event_xfer_mode(chan, xm)
+	struct scsipi_channel *chan;
+	struct scsipi_xfer_mode *xm;
+{
+	struct scsipi_periph *periph;
+	int lun;
+
+	for (lun = 0; lun < chan->chan_nluns; lun++) {
+		periph = scsipi_lookup_periph(chan, xm->xm_target, lun);
+		if (periph == NULL)
+			continue;
+		scsipi_adapter_request(chan, ADAPTER_REQ_GET_XFER_MODE, periph);
+		periph->periph_mode &= periph->periph_cap;
+		scsipi_print_xfer_mode(periph);
+	}
 }
 
 /*

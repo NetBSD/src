@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.1 1999/10/19 17:39:38 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.2 1999/10/19 21:04:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,9 +92,13 @@ struct scsipi_generic {
  *	ASYNC_EVENT_MAX_OPENINGS	scsipi_max_openings * -- max
  *					openings, device specified in
  *					parameters
+ *
+ *	ASYNC_EVENT_XFER_MODE		scsipi_xfer_mode * -- xfer mode
+ *					parameters changed for I_T Nexus
  */
 typedef enum {
 	ASYNC_EVENT_MAX_OPENINGS,	/* set max openings on periph */
+	ASYNC_EVENT_XFER_MODE,		/* xfer mode update for I_T */
 } scsipi_async_event_t;
 
 /*
@@ -106,6 +110,15 @@ struct scsipi_max_openings {
 	int	mo_target;		/* openings are for this target... */
 	int	mo_lun;			/* ...and this lun */
 	int	mo_openings;		/* openings value */
+};
+
+/*
+ * scsipi_xfer_mode:
+ *
+ *	Argument for an ASYNC_EVENT_XFER_MODE event.
+ */
+struct scsipi_xfer_mode {
+	int	xm_target;		/* target, for I_T Nexus */
 };
 
 
