@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:17 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2002/08/12 02:22:56 grant Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -89,17 +89,17 @@ prawdziwa geometria:	%d cylindrow, %d glowic, %d sektorow
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Calkowity rozmiar dysku %d sektorow.
+{   Calkowity rozmiar dysku %d %s.
 
-    Pocz(%3s) Rozm(%3s)  Koniec(%3s)Rodzaj
-   ---------- ---------- ---------- ----
+   Pocz(%3s)  Koniec(%3s) Rozm(%3s)  Rodzaj
+   ---------- ----------- ---------- ----
 }
 
 message part_row_start_unused
 {%-1d:                                 }
 
 message part_row_start_used
-{%-1d: %-10d %-10d %-10d}
+{%-1d: %-10d %-11d %-10d}
 
 message part_row_end
 { %s\n}

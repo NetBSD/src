@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.45 2002/06/30 04:02:47 scottr Exp $ */
+/*	$NetBSD: disks.c,v 1.46 2002/08/12 02:22:52 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -202,7 +202,7 @@ disp_cur_fspart(int disp, int showall)
 				pend = (bsdlabel[i].pi_offset +
 				bsdlabel[i].pi_size) / sizemult - 1;
 			msg_table_add(MSG_fspart_row_start,
-					'a'+i, psize, poffset, pend,
+					'a'+i, poffset, pend, psize,
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (PI_ISBSDFS(&bsdlabel[i]))
 				msg_table_add(MSG_fspart_row_end_bsd,

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.44 2002/08/02 04:08:48 grant Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.45 2002/08/12 02:22:53 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -226,7 +226,7 @@ message fspart
 }
 
 message fspart_header
-{   Size      Offset    End       FStype Bsize Fsize Preserve Mount point
+{   Start     End       Size      FStype Bsize Fsize Preserve Mount point
    --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
