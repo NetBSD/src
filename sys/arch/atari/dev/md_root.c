@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15 2000/11/27 08:39:40 chs Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15.8.1 2001/11/17 23:18:08 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -134,7 +135,7 @@ struct md_conf	*md;
 	if(md->md_addr == NULL)
 		return;
 	if(ri->ramd_flag & RAMD_LOAD) {
-		if (loaddisk(md, ri->ramd_dev, curproc)) {
+		if (loaddisk(md, ri->ramd_dev, curproc->l_proc)) {
 			free(md->md_addr, M_DEVBUF);
 			md->md_addr = NULL;
 			return;
