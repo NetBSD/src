@@ -1,6 +1,6 @@
 %!PS-Adobe-3.0
 %%Creator: groff version 1.10
-%%CreationDate: Tue Dec 17 20:12:52 1996
+%%CreationDate: Mon Jun 23 22:15:07 1997
 %%DocumentNeededResources: font Times-Bold
 %%+ font Times-Italic
 %%+ font Times-Roman
@@ -1304,13 +1304,13 @@ F2(bit in)2.5 E F0(_r)2.5 E(es.options)-.18 E F2(.)A F0(ndots:)102 325.2
 Q F5(n)A F2 .367(sets the lo)127 337.2 R .367
 (wer threshold \(measured in `)-.25 F .366(`number of dots')-.74 F .366
 ('\) on names gi)-.74 F -.15(ve)-.25 G 2.866(nt).15 G(o)-2.866 E F5 -.37
-(re)2.866 G(s_query).37 E F2 .366(\(\) such)B 1.283(that names with more than this number of dots will be tried as absolute names before an)
-127 349.2 R(y)-.15 E F5(local-domain)127 361.2 Q F2(or)2.5 E F5(sear)2.5
-E -.15(ch)-.37 G(-list).15 E F2(processing is done.)2.5 E(The def)5 E
-(ault for this internal v)-.1 E(ariable is `)-.25 E(`1')-.74 E('.)-.74 E
-F0 2.5(6.3. Cache)87 397.2 R(Initialization File)2.5 E 2.5(6.3.1. r)102
-421.2 R(oot.cache)-.18 E F2 .454(The name serv)142 437.4 R .454
-(er needs to kno)-.15 F 2.954(wt)-.25 G .454(he serv)-2.954 F .454
+(re)2.866 G(s_query).37 E F2 .366(\(\) such)B .407(that names with at least this number of dots will be tried as absolute names before an)
+127 349.2 R(y)-.15 E F5(local-)2.908 E(domain)127 361.2 Q F2(or)2.5 E F5
+(sear)2.5 E -.15(ch)-.37 G(-list).15 E F2(processing is done.)2.5 E
+(The def)5 E(ault for this internal v)-.1 E(ariable is `)-.25 E(`1')-.74
+E('.)-.74 E F0 2.5(6.3. Cache)87 397.2 R(Initialization File)2.5 E 2.5
+(6.3.1. r)102 421.2 R(oot.cache)-.18 E F2 .454(The name serv)142 437.4 R
+.454(er needs to kno)-.15 F 2.954(wt)-.25 G .454(he serv)-2.954 F .454
 (ers that are the authoritati)-.15 F .754 -.15(ve n)-.25 H .454
 (ame serv).15 F .454(ers for the)-.15 F 1.56(root domain of the netw)117
 449.4 R 4.06(ork. T)-.1 F 4.06(od)-.8 G 4.06(ot)-4.06 G 1.56(his we ha)

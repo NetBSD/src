@@ -1,6 +1,6 @@
 OPTIONS
     Original: Paul Vixie, 28Mar92
-    Revised: $Id: OPTIONS,v 1.1.1.1 1997/04/13 09:06:11 mrg Exp $
+    Revised: $Id: OPTIONS,v 8.6 1996/05/21 07:32:31 vixie Exp 
 
 Options available in this version of BIND are controlled by conf/options.h,
 rather than by $(DEFS) in the Makefile.  The options are:
