@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2002/03/07 13:10:12 wiz Exp $
+# $NetBSD: GENERIC,v 1.124 2002/04/10 13:41:04 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	32
 
@@ -237,6 +237,7 @@ wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
 scsibus* at adv?
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at bha?
 scsibus* at iha?
