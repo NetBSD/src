@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.38 2003/06/19 00:35:15 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.39 2003/06/19 00:57:48 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -546,3 +546,11 @@ lib/libc/shlib_version				1.131 (via patch)
 	Bump to libc.so.12.83.2, due to addition of {h,n}to{n,h}{l,s}() on
 	PowerPC.
 	[kleink, ticket #1288]
+
+dist/dhcp/common/discover.c			1.6
+
+	Skip !IFF_BROADCAST interfaces (such as strip). After discussion
+	with Ted Lemon leave in checks for IFF_LOOPBACK and IFF_POINTTOPOINT
+	in case an OS incorrectly marks them with IFF_BROADCAST.
+	Patch submitted back to dhcp-server@isc.org
+	[abs, ticket #1292]
