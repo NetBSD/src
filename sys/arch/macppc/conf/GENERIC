@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.114 2001/11/14 21:25:15 matt Exp $
+#	$NetBSD: GENERIC,v 1.115 2001/11/23 05:00:26 atatat Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	32
 
@@ -340,7 +340,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
