@@ -1,13 +1,13 @@
-# $NetBSD: login,v 1.2 2004/12/12 08:54:34 christos Exp $
+# $NetBSD: login,v 1.3 2005/01/23 09:48:38 manu Exp $
 # $FreeBSD: src/etc/pam.d/login,v 1.16 2003/06/14 12:35:05 des Exp $
 #
 # PAM configuration for the "login" service
 #
 
 # auth
-auth		required	pam_nologin.so		no_warn
 auth		sufficient	pam_self.so		no_warn
 auth		include		system
+auth		required	pam_nologin.so		no_warn
 
 # account
 account		requisite	pam_securetty.so
