@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
+/*	$NetBSD: mount_ados.c,v 1.6 1997/09/15 04:15:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $";
+__RCSID("$NetBSD: mount_ados.c,v 1.6 1997/09/15 04:15:05 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -57,6 +58,7 @@ const struct mntopt mopts[] = {
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
 mode_t	a_mask __P((char *));
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -72,7 +74,7 @@ main(argc, argv)
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "u:g:m:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "u:g:m:o:")) != -1) {
 		switch (c) {
 		case 'u':
 			args.uid = a_uid(optarg);
@@ -183,6 +185,7 @@ a_mask(s)
 	char *ep;
 
 	done = 0;
+	rv = -1;
 	if (*s >= '0' && *s <= '7') {
 		done = 1;
 		rv = strtol(optarg, &ep, 8);
