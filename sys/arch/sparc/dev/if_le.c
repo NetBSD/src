@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.37 1996/09/27 15:11:43 abrown Exp $	*/
+/*	$NetBSD: if_le.c,v 1.38 1996/09/27 18:30:15 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -89,7 +89,7 @@ myleintr(arg)
 	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND)
 		return ledmaintr(lesc->sc_dma);
 
-	return am7990_intr(arg);
+	return (am7990_intr(arg));
 }
 #endif
 
@@ -120,7 +120,8 @@ lewrcsr(sc, port, val)
 	 * easily be accomplished by reading back the register that we
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */	   
-	discard = ler1->ler1_rdp;
+	if (CPU_ISSUN4M)
+		discard = ler1->ler1_rdp;
 #endif
 }
 
