@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.c,v 1.2 1996/03/18 19:33:07 mark Exp $ */
+/* $NetBSD: vidc.c,v 1.3 1996/10/15 01:05:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -112,10 +112,6 @@ vidc_write(reg, value)
 	current = (int *)vidc_current; 
 
 	/* End higly doddgy code */
-/*
-WriteWord ( VIDC_BASE, reg | value );
-return 1;
-*/
 
 	/*
 	 * OK, the VIDC_PALETTE register is handled differently
@@ -123,12 +119,12 @@ return 1;
 	 */
 	if (reg==VIDC_PALREG) {
 		vidc_current->palreg = 0;
-		WriteWord ( VIDC_BASE, reg | value );
+		WriteWord(VIDC_BASE, reg | value);
 		return 0;
 	}
 
 	if (reg==VIDC_PALETTE) {
-		WriteWord ( VIDC_BASE, reg | value );
+		WriteWord(VIDC_BASE, reg | value);
 		vidc_current->palette[vidc_current->palreg] = value;
 		vidc_current->palreg++;
 		vidc_current->palreg = vidc_current->palreg & 0xff;
@@ -237,19 +233,3 @@ vidc_stdpalette()
         WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(128, 255, 255));
         WriteWord(VIDC_BASE, VIDC_PALETTE | VIDC_COL(255, 255, 255));
 }
-
-#if 0
-int
-vidc_col(red, green, blue)
-	int red;
-	int green;
-	int blue;
-{
-	red 	= red 	& 0xFF;
-	green 	= green & 0xFF;
-	blue 	= blue 	& 0xFF;
-
-	return ( (blue<<16) + (green<<8) + red );
-}
-
-#endif
