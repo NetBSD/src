@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.19 2000/06/26 17:18:40 mrg Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.20 2000/08/12 17:44:02 sommerfeld Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -423,11 +423,9 @@ vm_map_lock(map)
 
  try_again:
 	simple_lock(&map->flags_lock);
-	if (map->flags & VM_MAP_BUSY) {
+	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		simple_unlock(&map->flags_lock);
-		(void) tsleep(&map->flags, PVM, "vmmapbsy", 0);
-		goto try_again;
+		ltsleep(&map->flags, PVM, "vmmapbsy", 0, &map->flags_lock);
 	}
 
 	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,
