@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp $
+$NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -555,6 +555,7 @@ vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
+vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
@@ -1193,6 +1194,9 @@ product HIFN 7751	0x0005	7751
 product HIFN 6500	0x0006	6500
 product HIFN 7811	0x0007	7811
 product HIFN 7951	0x0012	7951
+
+/* HiNT products */
+product HINT HB1	0x0021	HB1 PCI-PCI Bridge
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
