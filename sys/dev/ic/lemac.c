@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.2 1997/10/15 05:55:45 explorer Exp $ */
+/* $NetBSD: lemac.c,v 1.3 1998/01/12 09:23:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -82,11 +82,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-struct cfdriver lc_cd = {
-    NULL, "lc", DV_IFNET
-};
-
 
 static void lemac_init(lemac_softc_t *sc);
 static void lemac_ifstart(struct ifnet *ifp);

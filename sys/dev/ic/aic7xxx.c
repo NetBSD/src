@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.26 1997/10/09 02:17:36 jtk Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.27 1998/01/12 09:23:13 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -356,10 +356,6 @@ char *ahc_name(ahc)
 	return (name);
 }
 
-#elif defined(__NetBSD__)
-struct cfdriver ahc_cd = {
-	NULL, "ahc", DV_DULL
-};
 #endif
 
 #ifdef  AHC_DEBUG

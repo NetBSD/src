@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.22 1997/04/28 17:04:08 mycroft Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.23 1998/01/12 09:23:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -195,10 +195,6 @@ int	clkread();
 
 struct cfattach bah_zbus_ca = {
 	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
-};
-
-struct cfdriver bah_cd = {
-	NULL, "bah", DV_IFNET
 };
 
 int
