@@ -1,6 +1,6 @@
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.43";
+static char	elsieid[] = "@(#)localtime.c	7.44";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -190,7 +190,7 @@ const char * const	codep;
 	register long	result;
 	register int	i;
 
-	result = 0;
+ 	result = (codep[0] & 0x80) ? ~0L : 0L;
 	for (i = 0; i < 4; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
 	return result;
