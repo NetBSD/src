@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.2 2003/08/21 20:00:15 jonathan Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.3 2003/08/27 22:07:57 thorpej Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -2594,14 +2594,14 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 
 #ifdef DIAGNOSTIC
 	if (rp->rpr_msgin.dma_paddr & 3 || rp->rpr_msgin.dma_size & 3) {
-		panic("%s: rsapriv: invalid msgin %p(0x%x)",
-		    sc->sc_dv.dv_xname, rp->rpr_msgin.dma_paddr,
-		    rp->rpr_msgin.dma_size);
+		panic("%s: rsapriv: invalid msgin 0x%lx(0x%lx)",
+		    sc->sc_dv.dv_xname, (u_long) rp->rpr_msgin.dma_paddr,
+		    (u_long) rp->rpr_msgin.dma_size);
 	}
 	if (rp->rpr_msgout.dma_paddr & 3 || rp->rpr_msgout.dma_size & 3) {
-		panic("%s: rsapriv: invalid msgout %p(0x%x)",
-		    sc->sc_dv.dv_xname, rp->rpr_msgout.dma_paddr,
-		    rp->rpr_msgout.dma_size);
+		panic("%s: rsapriv: invalid msgout 0x%lx(0x%lx)",
+		    sc->sc_dv.dv_xname, (u_long) rp->rpr_msgout.dma_paddr,
+		    (u_long) rp->rpr_msgout.dma_size);
 	}
 #endif
 
