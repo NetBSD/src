@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.177 2003/08/07 16:33:55 agc Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.178 2003/09/17 09:10:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.177 2003/08/07 16:33:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.178 2003/09/17 09:10:00 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -867,11 +867,11 @@ nfs_lookup(v)
 
 		if (error == ENOENT) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
-			    cnp->cn_proc) && vattr.va_mtime.tv_sec ==
-			    VTONFS(dvp)->n_nctime)
+			    cnp->cn_proc) && timespeccmp(&vattr.va_mtime,
+			    &VTONFS(dvp)->n_nctime, ==))
 				return ENOENT;
 			cache_purge(dvp);
-			np->n_nctime = 0;
+			timespecclear(&np->n_nctime);
 			goto dorpc;
 		}
 
@@ -1026,9 +1026,10 @@ dorpc:
 		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
 		    cnp->cn_nameiop != CREATE) {
-			if (VTONFS(dvp)->n_nctime == 0)
+			if (timespecisset(&VTONFS(dvp)->n_nctime))
 				VTONFS(dvp)->n_nctime =
-				    VTONFS(dvp)->n_vattr->va_mtime.tv_sec;
+				    VTONFS(dvp)->n_vattr->va_mtime;
+
 			cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
