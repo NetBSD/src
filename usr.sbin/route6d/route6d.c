@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.13 2000/05/18 13:23:43 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.13.4.1 2000/07/13 01:12:18 thorpej Exp $	*/
+/*	$KAME: route6d.c,v 1.30 2000/06/04 06:48:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.13 2000/05/18 13:23:43 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.13.4.1 2000/07/13 01:12:18 thorpej Exp $");
 #endif
 
 #include <stdio.h>
@@ -182,7 +182,7 @@ int	hflag = 0;	/* don't split horizon */
 int	lflag = 0;	/* exchange site local routes */
 int	sflag = 0;	/* announce static routes w/ split horizon */
 int	Sflag = 0;	/* announce static routes to every interface */
-int	routetag = 0;	/* route tag attached on originating case */
+unsigned long routetag = 0;	/* route tag attached on originating case */
 
 char	*filter[MAXFILTER];
 int	filtertype[MAXFILTER];
@@ -277,6 +277,7 @@ main(argc, argv)
 	sigset_t mask, omask;
 	FILE	*pidfile;
 	char *progname;
+	char *ep;
 
 	progname = strrchr(*argv, '/');
 	if (progname)
@@ -292,35 +293,41 @@ main(argc, argv)
 		case 'O':
 		case 'T':
 		case 'L':
-			if (nfilter >= MAXFILTER)
+			if (nfilter >= MAXFILTER) {
 				fatal("Exceeds MAXFILTER");
+				/*NOTREACHED*/
+			}
 			filtertype[nfilter] = ch;
 			filter[nfilter++] = allocopy(optarg);
 			break;
 		case 't':
-			sscanf(optarg, "%i", &routetag);
-			if (routetag & ~0xffff) {
+			ep = NULL;
+			routetag = strtoul(optarg, &ep, 0);
+			if (!ep || *ep != '\0' || (routetag & ~0xffff) != 0) {
 				fatal("invalid route tag");
 				/*NOTREACHED*/
 			}
 			break;
 		case 'R':
-			if ((rtlog = fopen(optarg, "w")) == NULL)
+			if ((rtlog = fopen(optarg, "w")) == NULL) {
 				fatal("Can not write to routelog");
+				/*NOTREACHED*/
+			}
 			break;
-#define	FLAG(c, flag, n)	case c: flag = n; break
-		FLAG('a', aflag, 1);
-		FLAG('d', dflag, 1);
-		FLAG('D', dflag, 2);
-		FLAG('h', hflag, 1);
-		FLAG('l', lflag, 1);
-		FLAG('n', nflag, 1);
-		FLAG('q', qflag, 1);
-		FLAG('s', sflag, 1);
-		FLAG('S', Sflag, 1);
+#define	FLAG(c, flag, n)	case c: do { flag = n; break; } while(0)
+		FLAG('a', aflag, 1); break;
+		FLAG('d', dflag, 1); break;
+		FLAG('D', dflag, 2); break;
+		FLAG('h', hflag, 1); break;
+		FLAG('l', lflag, 1); break;
+		FLAG('n', nflag, 1); break;
+		FLAG('q', qflag, 1); break;
+		FLAG('s', sflag, 1); break;
+		FLAG('S', Sflag, 1); break;
 #undef	FLAG
 		default:
 			fatal("Invalid option specified, terminating");
+			/*NOTREACHED*/
 		}
 	}
 	argc -= optind;
@@ -583,7 +590,8 @@ init()
 		rtsock = -1;	/*just for safety */
 }
 
-#define	RIPSIZE(n)	(sizeof(struct rip6) + (n-1) * sizeof(struct netinfo6))
+#define	RIPSIZE(n) \
+	(sizeof(struct rip6) + ((n)-1) * sizeof(struct netinfo6))
 
 /*
  * ripflush flushes the rip datagram stored in the rip buffer
@@ -611,7 +619,7 @@ ripflush(ifcp, sin)
 		for (i = 0; i < nrt; i++, np++) {
 			if (np->rip6_metric == NEXTHOP_METRIC) {
 				if (IN6_IS_ADDR_UNSPECIFIED(&np->rip6_dest))
-						trace(2, "    NextHop reset");
+					trace(2, "    NextHop reset");
 				else {
 					trace(2, "    NextHop %s",
 						inet6_n2p(&np->rip6_dest));
@@ -1038,6 +1046,12 @@ riprecv()
 			np->rip6_plen, np->rip6_metric);
 		if (np->rip6_tag)
 			trace(2, "  tag=0x%04x", ntohs(np->rip6_tag) & 0xffff);
+		if (dflag >= 2) {
+			ia = np->rip6_dest;
+			applyplen(&ia, np->rip6_plen);
+			if (!IN6_ARE_ADDR_EQUAL(&ia, &np->rip6_dest))
+				trace(2, " [junk outside prefix]");
+		}
 
 		/* Listen-only filter */
 		ok = 1;		/* if there's no L filter, it is ok */
@@ -2101,7 +2115,11 @@ const char *
 rttypes(rtm)
 	struct rt_msghdr *rtm;
 {
-#define	RTTYPE(s, f)	if (rtm->rtm_type == (f)) return (s)
+#define	RTTYPE(s, f) \
+do { \
+	if (rtm->rtm_type == (f)) \
+		return (s); \
+} while (0)
 	RTTYPE("ADD", RTM_ADD);
 	RTTYPE("DELETE", RTM_DELETE);
 	RTTYPE("CHANGE", RTM_CHANGE);
@@ -2127,7 +2145,11 @@ rtflags(rtm)
 	static char buf[BUFSIZ];
 
 	strcpy(buf, "");
-#define	RTFLAG(s, f)	if (rtm->rtm_flags & (f)) strcat(buf, (s))
+#define	RTFLAG(s, f) \
+do { \
+	if (rtm->rtm_flags & (f)) \
+		strcat(buf, (s)); \
+} while (0)
 	RTFLAG("U", RTF_UP);
 	RTFLAG("G", RTF_GATEWAY);
 	RTFLAG("H", RTF_HOST);
@@ -2156,8 +2178,14 @@ ifflags(flags)
 	static char buf[BUFSIZ];
 
 	strcpy(buf, "");
-#define	IFFLAG(s, f)	\
-	if (flags & f) { if (buf[0]) strcat(buf, ","); strcat(buf, s); }
+#define	IFFLAG(s, f) \
+do { \
+	if (flags & f) { \
+		if (buf[0]) \
+			strcat(buf, ","); \
+		strcat(buf, s); \
+	} \
+} while (0)
 	IFFLAG("UP", IFF_UP);
 	IFFLAG("BROADCAST", IFF_BROADCAST);
 	IFFLAG("DEBUG", IFF_DEBUG);
@@ -2862,14 +2890,14 @@ mask2len(addr, lenlim)
 	}
 	if (j < lenlim) {
 		switch (*p) {
-#define	MASKLEN(m, l)	case m: i += l; break
-		MASKLEN(0xfe, 7);
-		MASKLEN(0xfc, 6);
-		MASKLEN(0xf8, 5);
-		MASKLEN(0xf0, 4);
-		MASKLEN(0xe0, 3);
-		MASKLEN(0xc0, 2);
-		MASKLEN(0x80, 1);
+#define	MASKLEN(m, l)	case m: do { i += l; break; } while (0)
+		MASKLEN(0xfe, 7); break;
+		MASKLEN(0xfc, 6); break;
+		MASKLEN(0xf8, 5); break;
+		MASKLEN(0xf0, 4); break;
+		MASKLEN(0xe0, 3); break;
+		MASKLEN(0xc0, 2); break;
+		MASKLEN(0x80, 1); break;
 #undef	MASKLEN
 		}
 	}
@@ -3114,6 +3142,7 @@ setindex2ifc(index, ifcp)
 	struct ifc *ifcp;
 {
 	int n;
+	struct ifc **p;
 
 	if (!index2ifc) {
 		nindex2ifc = 5;	/*initial guess*/
@@ -3127,10 +3156,11 @@ setindex2ifc(index, ifcp)
 	while (nindex2ifc <= index)
 		nindex2ifc *= 2;
 	if (n != nindex2ifc) {
-		index2ifc = (struct ifc **)
-			realloc(index2ifc, sizeof(*index2ifc) * nindex2ifc);
-		if (index2ifc == NULL)
+		p = (struct ifc **)realloc(index2ifc,
+		    sizeof(*index2ifc) * nindex2ifc);
+		if (p == NULL)
 			fatal("realloc");
+		index2ifc = p;
 	}
 	index2ifc[index] = ifcp;
 }
