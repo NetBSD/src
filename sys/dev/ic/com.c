@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.118 1997/10/21 01:25:41 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.119 1997/10/29 18:28:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -444,22 +444,23 @@ com_attach_subr(sc)
 				if (bus_space_read_1(iot, ioh, com_efr) == 0) {
 					CLR(sc->sc_hwflags, COM_HW_FIFO);
 					sc->sc_fifolen = 0;
-					printf(": st16650, broken fifo\n");
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
-					printf(": st16650a, working fifo\n");
 					sc->sc_fifolen = 32;
 				}
 			} else
 #endif
-			{
-				printf(": ns16550a, working fifo\n");
 				sc->sc_fifolen = 16;
-			}
 
 #ifdef COM16650
-			bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
+			bus_space_write_1(iot, ioh, com_lcr, lcr);
+			if (sc->sc_fifolen == 0)
+				printf(": st16650, broken fifo\n");
+			else if (sc->sc_fifolen == 32)
+				printf(": st16650a, working fifo\n");
+			else
 #endif
+				printf(": ns16550a, working fifo\n");
 		} else
 			printf(": ns16550, broken fifo\n");
 	else
