@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.4 2001/09/27 03:24:02 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.5 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.46 2001/09/17 20:52:47 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.50 2001/10/10 22:18:47 markus Exp $"); */
 
 #ifndef CHANNEL_H
 #define CHANNEL_H
@@ -69,7 +69,6 @@ struct Channel {
 	int     type;		/* channel type/state */
 	int     self;		/* my own channel identifier */
 	int     remote_id;	/* channel identifier for remote peer */
-	/* peer can be reached over encrypted connection, via packet-sent */
 	int     istate;		/* input from channel (state of receive half) */
 	int     ostate;		/* output to channel  (state of transmit half) */
 	int     flags;		/* close sent/rcvd */
@@ -78,7 +77,8 @@ struct Channel {
 	int     efd;		/* extended fd */
 	int     sock;		/* sock fd */
 	int     isatty;		/* rfd is a tty */
-	int     force_drain;		/* force close on iEOF */
+	int     force_drain;	/* force close on iEOF */
+	int     delayed;		/* fdset hack */
 	Buffer  input;		/* data read from socket, to be sent over
 				 * encrypted connection */
 	Buffer  output;		/* data received over encrypted connection for
@@ -144,7 +144,6 @@ Channel *channel_new(char *, int, int, int, int, int, int, int, char *, int);
 void	 channel_set_fds(int, int, int, int, int, int);
 void	 channel_free(Channel *);
 void	 channel_free_all(void);
-void	 channel_detach_all(void);
 void	 channel_stop_listening(void);
 
 void	 channel_send_open(int);
@@ -178,12 +177,12 @@ void     channel_output_poll(void);
 
 int      channel_not_very_much_buffered_data(void);
 void     channel_close_all(void);
-void     channel_free_all(void);
 int      channel_still_open(void);
 char	*channel_open_message(void);
 int	 channel_find_open(void);
 
-/* channel_tcpfwd.c */
+/* tcp forwarding */
+void	 channel_set_af(int af);
 void     channel_permit_all_opens(void);
 void	 channel_add_permitted_opens(char *, int);
 void	 channel_clear_permitted_opens(void);
@@ -216,7 +215,7 @@ void	 auth_input_open_request(int, int, void *);
 
 /* channel close */
 
-int	 chan_is_dead(Channel *);
+int	 chan_is_dead(Channel *, int);
 void	 chan_mark_dead(Channel *);
 void 	 chan_init_iostates(Channel *);
 void	 chan_init(void);

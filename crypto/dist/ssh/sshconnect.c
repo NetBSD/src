@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.13 2001/09/27 03:24:06 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.14 2001/11/07 06:26:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.110 2001/07/25 14:35:18 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.115 2001/10/08 19:05:05 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -38,9 +38,6 @@ char *server_version_string = NULL;
 
 extern Options options;
 extern char *__progname;
-
-/* AF_UNSPEC or AF_INET or AF_INET6 */
-extern int IPv4or6;
 
 static const char *
 sockaddr_ntop(struct sockaddr *sa)
@@ -201,7 +198,7 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
 		return sock;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = IPv4or6;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 	gaierr = getaddrinfo(options.bind_address, "0", &hints, &res);
@@ -240,9 +237,8 @@ ssh_create_socket(struct passwd *pw, int privileged, int family)
  */
 int
 ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
-	    u_short port, int connection_attempts,
-	    int anonymous, struct passwd *pw,
-	    const char *proxy_command)
+    u_short port, int family, int connection_attempts,
+    int anonymous, struct passwd *pw, const char *proxy_command)
 {
 	int gaierr;
 	int on = 1;
@@ -276,7 +272,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	/* No proxy command. */
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = IPv4or6;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	snprintf(strport, sizeof strport, "%d", port);
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
@@ -484,7 +480,7 @@ ssh_exchange_identification(void)
 
 /* defaults to 'no' */
 static int
-read_yes_or_no(const char *prompt, int defval)
+confirm(const char *prompt)
 {
 	char buf[1024];
 	FILE *f;
@@ -492,39 +488,28 @@ read_yes_or_no(const char *prompt, int defval)
 
 	if (options.batch_mode)
 		return 0;
-
 	if (isatty(STDIN_FILENO))
 		f = stdin;
 	else
 		f = fopen(_PATH_TTY, "rw");
-
 	if (f == NULL)
 		return 0;
-
 	fflush(stdout);
-
+	fprintf(stderr, "%s", prompt);
 	while (1) {
-		fprintf(stderr, "%s", prompt);
 		if (fgets(buf, sizeof(buf), f) == NULL) {
-			/*
-			 * Print a newline (the prompt probably didn\'t have
-			 * one).
-			 */
 			fprintf(stderr, "\n");
 			strlcpy(buf, "no", sizeof buf);
 		}
 		/* Remove newline from response. */
 		if (strchr(buf, '\n'))
 			*strchr(buf, '\n') = 0;
-
-		if (buf[0] == 0)
-			retval = defval;
 		if (strcmp(buf, "yes") == 0)
 			retval = 1;
 		else if (strcmp(buf, "no") == 0)
 			retval = 0;
 		else
-			fprintf(stderr, "Please type 'yes' or 'no'.\n");
+			fprintf(stderr, "Please type 'yes' or 'no': ");
 
 		if (retval != -1) {
 			if (f != stdin)
@@ -576,7 +561,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		local = 0;
 		break;
 	}
-	if (local && options.host_key_alias == NULL) {
+	if (options.no_host_authentication_for_localhost == 1 && local &&
+	    options.host_key_alias == NULL) {
 		debug("Forcing accepting of host key for "
 		    "loopback/localhost.");
 		return 0;
@@ -701,8 +687,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			    "Are you sure you want to continue connecting "
 			    "(yes/no)? ", host, ip, type, fp);
 			xfree(fp);
-			if (!read_yes_or_no(prompt, -1)) {
-				log("Aborted by user!");
+			if (!confirm(prompt)) {
 				goto fail;
 			}
 		}
@@ -818,9 +803,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			error("Exiting, you have requested strict checking.");
 			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
-			if (!read_yes_or_no("Are you sure you want " 
-			    "to continue connecting (yes/no)? ", -1)) {
-				log("Aborted by user!");
+			if (!confirm("Are you sure you want " 
+			    "to continue connecting (yes/no)? ")) {
 				goto fail;
 			}
 		}

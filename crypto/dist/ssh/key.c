@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.9 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.10 2001/11/07 06:26:47 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.32 2001/09/19 13:23:29 markus Exp $");
+RCSID("$OpenBSD: key.c,v 1.33 2001/10/04 14:34:16 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -355,7 +355,7 @@ write_bignum(FILE *f, BIGNUM *num)
 		return 0;
 	}
 	fprintf(f, " %s", buf);
-	xfree(buf);
+	OPENSSL_free(buf);
 	return 1;
 }
 
