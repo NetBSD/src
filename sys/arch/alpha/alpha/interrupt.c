@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.33 1998/09/29 19:40:34 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.34 1998/11/19 02:23:15 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.33 1998/09/29 19:40:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.34 1998/11/19 02:23:15 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,17 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.33 1998/09/29 19:40:34 thorpej Exp $
 #include <machine/rpb.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
+#include <machine/intrcnt.h>
+#include <machine/alpha.h>
 
 #if defined(MULTIPROCESSOR)
 #include <sys/device.h>
 #include <alpha/alpha/cpuvar.h>
-#endif
-
-#ifdef EVCNT_COUNTERS
-#include <sys/device.h>
-struct evcnt clock_intr_evcnt;	/* event counter for clock intrs. */
-#else
-#include <machine/intrcnt.h>
 #endif
 
 void
@@ -127,11 +122,7 @@ interrupt(a0, a1, a2, framep)
 #else
 		cnt.v_intr++;
 #endif
-#ifdef EVCNT_COUNTERS
-		clock_intr_evcnt.ev_count++;
-#else
 		intrcnt[INTRCNT_CLOCK]++;
-#endif
 		if (platform.clockintr)
 			(*platform.clockintr)(framep);
 		break;
