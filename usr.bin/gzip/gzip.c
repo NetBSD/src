@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.46 2004/05/25 04:34:40 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.47 2004/06/05 15:47:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.46 2004/05/25 04:34:40 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.47 2004/06/05 15:47:10 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -94,6 +94,8 @@ enum filetype {
 #define GZIP_MAGIC0	0x1F
 #define GZIP_MAGIC1	0x8B
 #define GZIP_OMAGIC1	0x9E
+
+#define GZIP_ORIGNAME	(off_t)10
 
 #define HEAD_CRC	0x02
 #define EXTRA_FIELD	0x04
@@ -1065,6 +1067,10 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 			size_t rbytes;
 			int i;
 
+			if (lseek(fd, GZIP_ORIGNAME, SEEK_SET) == -1) {
+				maybe_warn("can't lseek %s", file);
+				goto close_header_read;
+			}
 			rbytes = read(fd, name, PATH_MAX + 1);
 			if (rbytes < 0) {
 				maybe_warn("can't read %s", file);
@@ -1089,6 +1095,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 			}
 		}
 	}
+close_header_read:
 	close(fd);
 
 	if (cflag == 0 || lflag) {
