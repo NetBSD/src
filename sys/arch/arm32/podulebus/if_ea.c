@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.25 2001/03/17 18:46:25 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.26 2001/03/17 20:34:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -96,7 +96,7 @@
 
 #include <arm32/podulebus/if_eareg.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #ifndef EA_TIMEOUT
 #define EA_TIMEOUT	60

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.8 2001/03/10 22:32:17 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.9 2001/03/17 20:34:44 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.8 2001/03/10 22:32:17 bjh21 Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.9 2001/03/17 20:34:44 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: if_ei.c,v 1.8 2001/03/10 22:32:17 bjh21 Exp $");
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 #include <arch/arm26/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 #include <arch/arm26/podulebus/if_eireg.h>
 
 /* Callbacks from the MI 82586 driver */

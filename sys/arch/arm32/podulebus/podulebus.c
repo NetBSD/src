@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.36 2001/03/17 18:46:26 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.37 2001/03/17 20:34:45 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -59,8 +59,8 @@
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
-#include <arm32/podulebus/podule_data.h>
+#include <dev/podulebus/podules.h>
+#include <dev/podulebus/podule_data.h>
 
 #include "locators.h"
 
