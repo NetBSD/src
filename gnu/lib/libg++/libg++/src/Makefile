@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/07 07:15:36 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/07 07:57:56 mycroft Exp $
 
 LIB=		g++
 
@@ -26,6 +26,6 @@ DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 NOMAN=		noman
 NOLINT=		nolint
 LIBCURSES!=	printf "xxx: .MAKE\n\t@echo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
-			$(MAKE) -s -f-
+			$(MAKE) -s -f- xxx
 
 .include <bsd.lib.mk>
