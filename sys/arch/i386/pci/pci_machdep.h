@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.4.1 1997/08/27 22:26:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,14 @@
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
+
+/*
+ * Many i386 PCI systems only work properly with I/O mapped space, in
+ * particular, buses behind PCI-PCI bridges may not have memory
+ * space mapped at all.  For this reason, tell drivers that have
+ * a choice that we "prefer" I/O space.
+ */
+#define	PCI_PREFER_IOSPACE
 
 /*
  * i386-specific PCI structure and type definitions.

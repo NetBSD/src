@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1997/04/21 16:17:36 matthias Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12.4.1 1997/08/27 22:32:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,8 +44,9 @@
 #include <sys/reboot.h>
 #include <sys/syslog.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1996/10/13 03:31:38 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4.10.1 1997/08/27 22:34:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,8 +34,9 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
