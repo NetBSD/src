@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.4 2003/10/14 07:51:45 scw Exp $	*/
+/*	$NetBSD: memmove.S,v 1.5 2004/08/21 11:25:17 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ ENTRY(bcopy)
 #endif
 	/* Do the buffers overlap? */
 	cmp	r0, r1
-	moveq	pc, lr		/* Bail now if src/dst are the same */
+	RETc(eq)		/* Bail now if src/dst are the same */
 	subcc	r3, r0, r1	/* if (dst > src) r3 = dst - src */
 	subcs	r3, r1, r0	/* if (src > dsr) r3 = src - dst */
 	cmp	r3, r2		/* if (r3 < len) we have an overlap */
@@ -63,7 +63,7 @@ ENTRY(bcopy)
 	bcc	.Lmemmove_backwards
 
 	moveq	r0, #0			/* Quick abort for len=0 */
-	moveq	pc, lr
+	RETc(eq)
 
 	stmdb	sp!, {r0, lr}		/* memmove() returns dest addr */
 	subs	r2, r2, #4
@@ -381,7 +381,7 @@ ENTRY(bcopy)
 .Lmemmove_bl4:
 	/* less than 4 bytes to go */
 	adds	r2, r2, #4
-	moveq	pc, lr			/* done */
+	RETc(eq)
 
 	/* copy the crud byte at a time */
 	cmp	r2, #2
@@ -391,7 +391,7 @@ ENTRY(bcopy)
 	strgeb	r3, [r0, #-1]!
 	ldrgtb	r3, [r1, #-1]!
 	strgtb	r3, [r0, #-1]!
-	mov	pc, lr
+	RET
 
 	/* erg - unaligned destination */
 .Lmemmove_bdestul:
