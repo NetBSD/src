@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_ddb.h,v 1.5 2000/11/25 06:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_ddb.h,v 1.6 2001/04/27 00:14:47 marcus Exp $	*/
 
 /*
  *
@@ -51,4 +51,4 @@ void	uvmexp_print(void (*)(const char *, ...));
 
 #endif /* _KERNEL */
 
-#endif _UVM_UVM_DDB_H_
+#endif /* _UVM_UVM_DDB_H_ */
