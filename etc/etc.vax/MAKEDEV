@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.20 1998/11/13 04:49:04 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1998/11/21 23:41:55 oster Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -24,7 +24,7 @@
 #	rl*	unibus rl02
 #	rb*	730 idc w/ rb80 and/or rb02
 #	ccd*	"concatenated" pseudo-disks
-#	raidd*	RAIDframe disk driver
+#	raid*	RAIDframe disk driver
 #	vnd*	"file" pseudo-disks
 #	rd*	HDC9224 rd disks on VS2000
 #	sd*	SCSI disks
