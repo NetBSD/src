@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.67 2003/01/18 17:50:25 thorpej Exp $
+# $NetBSD: md.i386,v 1.68 2003/02/13 23:57:53 jmc Exp $
 ./lib/libm387.so			base-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
@@ -86,3 +86,14 @@
 ./usr/lib/libpmc_pic.a		comp-c-piclib
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib
+./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
+./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
+./usr/include/pthread_dbg.h		comp-c-include
+./usr/lib/libpthread.a		comp-c-lib
+./usr/lib/libpthread_dbg.a	comp-c-lib
+./usr/lib/libpthread_p.a	comp-c-proflib
+./usr/lib/libpthread_dbg_p.a	comp-c-proflib
+./usr/lib/libpthread.so		comp-c-lib
+./usr/lib/libpthread_dbg.so	comp-c-lib
+./usr/lib/libpthread_dbg_pic.a	comp-c-piclib
+./usr/lib/libpthread_pic.a	comp-c-piclib

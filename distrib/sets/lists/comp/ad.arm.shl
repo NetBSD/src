@@ -1,6 +1,4 @@
-# $NetBSD: ad.m68k.shl,v 1.2 2003/02/13 23:57:52 jmc Exp $
-./usr/lib/libm68k.so		comp-c-lib
-./usr/lib/libm68k_pic.a		comp-c-lib
+# $NetBSD: ad.arm.shl,v 1.1 2003/02/13 23:57:52 jmc Exp $
 ./usr/lib/libpthread.so		comp-c-lib
 ./usr/lib/libpthread_dbg.so	comp-c-lib
 ./usr/lib/libpthread_dbg_pic.a	comp-c-piclib

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.41 2003/01/18 17:50:21 thorpej Exp $
+# $NetBSD: md.alpha,v 1.42 2003/02/13 23:57:53 jmc Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -67,3 +67,14 @@
 ./usr/lib/libalpha_pic.a	comp-c-piclib
 ./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib
 ./usr/include/ieeefp.h		comp-c-include
+./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
+./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
+./usr/include/pthread_dbg.h		comp-c-include
+./usr/lib/libpthread.a		comp-c-lib
+./usr/lib/libpthread_dbg.a	comp-c-lib
+./usr/lib/libpthread_p.a	comp-c-proflib
+./usr/lib/libpthread_dbg_p.a	comp-c-proflib
+./usr/lib/libpthread.so		comp-c-lib
+./usr/lib/libpthread_dbg.so	comp-c-lib
+./usr/lib/libpthread_dbg_pic.a	comp-c-piclib
+./usr/lib/libpthread_pic.a	comp-c-piclib

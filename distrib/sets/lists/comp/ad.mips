@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.26 2003/01/18 17:50:20 thorpej Exp $
+# $NetBSD: ad.mips,v 1.27 2003/02/13 23:57:52 jmc Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -55,3 +55,10 @@
 ./usr/include/mips/types.h		comp-c-include
 ./usr/include/mips/varargs.h		comp-c-include
 ./usr/include/mips/vmparam.h		comp-c-include
+./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib
+./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib
+./usr/include/pthread_dbg.h		comp-c-include
+./usr/lib/libpthread.a		comp-c-lib
+./usr/lib/libpthread_dbg.a	comp-c-lib
+./usr/lib/libpthread_p.a	comp-c-proflib
+./usr/lib/libpthread_dbg_p.a	comp-c-proflib
