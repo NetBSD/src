@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.4 2002/05/02 14:48:27 nonaka Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.5 2002/05/02 14:58:37 nonaka Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_platform.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -43,12 +45,17 @@
 #include <machine/platform.h>
 
 static struct platform *platform_ibm[] = {
+#if defined(PLATFORM_IBM_6050)
 	&platform_ibm_6050,
+#endif
+#if defined(PLATFORM_IBM_7248)
 	&platform_ibm_7248,
+#endif
+	NULL
 };
 
 struct plattab plattab_ibm = {
-	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0])
+	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0]) - 1
 };
 
 void
