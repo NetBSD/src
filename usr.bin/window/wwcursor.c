@@ -1,4 +1,4 @@
-/*	$NetBSD: wwcursor.c,v 1.4 1996/02/08 20:45:08 mycroft Exp $	*/
+/*	$NetBSD: wwcursor.c,v 1.5 1997/11/21 08:37:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,20 +36,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwcursor.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwcursor.c,v 1.4 1996/02/08 20:45:08 mycroft Exp $";
+__RCSID("$NetBSD: wwcursor.c,v 1.5 1997/11/21 08:37:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
+void
 wwcursor(w, on)
-register struct ww *w;
+	struct ww *w;
+	int on;
 {
-	register char *win;
+	char *win;
 
 	if (on) {
 		if (ISSET(w->ww_wflags, WWW_HASCURSOR))
@@ -77,12 +80,13 @@ register struct ww *w;
 	}
 }
 
+void
 wwsetcursormodes(new)
-register new;
+	int new;
 {
-	register i;
-	register struct ww *w;
-	register old = wwcursormodes;
+	int i;
+	struct ww *w;
+	int old = wwcursormodes;
 
 	new &= wwavailmodes;
 	if (new == wwcursormodes)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.9 1996/10/12 23:46:23 christos Exp $	*/
+/*	$NetBSD: ww.h,v 1.10 1997/11/21 08:36:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,20 @@
  *	@(#)ww.h	8.1 (Berkeley) 6/6/93
  */
 
+#include <sys/types.h>
 #ifdef OLD_TTY
 #include <sgtty.h>
 #else
 #include <termios.h>
 #endif
 #include <setjmp.h>
-#include <sys/types.h>
+
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include <stdio.h>
 
 #define NWW	30		/* maximum number of windows */
 
@@ -260,7 +267,6 @@ int wwnselect, wwnselecte, wwnselectz;
 #define wwupdate()	wwupdate1(0, wwnrow);
 
 	/* things for handling input */
-void wwrint();		/* interrupt handler */
 struct ww *wwcurwin;	/* window to copy input into */
 char *wwib;		/* input (keyboard) buffer */
 char *wwibe;		/* wwib + sizeof buffer */
@@ -306,22 +312,72 @@ char wwwintermcap[1024];	/* terminal-specific but window-independent
 char wwterminfopath[1024];
 #endif
 
-	/* our functions */
-struct ww *wwopen();
-void wwchild();
-void wwalarm();
-void wwquit();
-char **wwalloc();
-char *wwerror();
-
-	/* c library functions */
-char *malloc();
-char *calloc();
-char *getenv();
-char *tgetstr();
-char *rindex();
-char *strcpy();
-char *strcat();
+struct ww *wwopen __P((int, int, int, int, int, int, int));
+void	wwadd __P((struct ww *, struct ww *));
+void	wwaddcap __P((char *, char **));
+void	wwaddcap1 __P((char *, char **));
+void	wwalarm __P((int));
+char  **wwalloc __P((int, int, int, int, int));
+void	wwbell __P((void));
+void	wwbox __P((struct ww *, int, int, int, int));
+void	wwcheckpoint __P((void));
+void	wwchild __P((int));
+void	wwclose __P((struct ww *));
+void	wwclreol1 __P((struct ww *, int, int, char));
+void	wwclreos __P((struct ww *, int, int));
+void	wwcopyscreen __P((union ww_char **s1, union ww_char **s2));
+void	wwcursor __P((struct ww *, int));
+void	wwdelchar __P((struct ww *, int, int));
+void	wwdelete __P((struct ww *));
+void	wwdelete1 __P((struct ww *, int, int, int, int));
+void	wwdelline __P((struct ww *, int));
+void	wwdumpns __P((void));
+void	wwdumpnvis __P((struct ww *));
+void	wwdumpos __P((void));
+void	wwdumpsmap __P((void));
+void	wwdumpwin __P((struct ww *));
+void	wwend __P((int));
+int	wwenviron __P((struct ww *));
+char   *wwerror __P((void));
+void	wwflush __P((void));
+void	wwframe __P((struct ww *, struct ww *));
+void	wwframec __P((struct ww *, int, int, char));
+void	wwfree __P((char **, int));
+int	wwgetpty __P((struct ww *));
+int	wwgettty __P((int, struct ww_tty *));
+int	wwgetttysize __P((int, int *, int *));
+void	wwgets __P((char *, int, struct ww *));
+int	wwinit __P((void));
+void	wwinschar __P((struct ww *, int, int, char, char));
+void	wwinsline __P((struct ww *, int));
+void	wwiomux __P((void));
+void	wwlabel __P((struct ww *, struct ww *, int, char *, int));
+void	wwmove __P((struct ww *, int, int));
+void	wwprintf __P((struct ww *, const char *, ...));
+void	wwputc __P((char, struct ww *));
+void	wwputs __P((char *, struct ww *));
+void	wwredraw __P((void));
+void	wwredrawwin1 __P((struct ww *,int, int, int));
+void	wwquit __P((int));
+void	wwreset __P((void));
+void	wwrint __P((void));
+void	wwscroll __P((struct ww *, int));
+int	wwscroll1 __P((struct ww *, int, int, int, int));
+void	wwsetcursormodes __P((int));
+int	wwsettty __P((int, struct ww_tty *));
+int	wwsetttysize __P((int, int, int));
+int	wwsize __P((struct ww *, int, int));
+int	wwspawn __P((struct ww *, char *, char **));
+void	wwstart __P((void));
+void	wwstart1 __P((void));
+int	wwstarttty __P((int));
+int	wwstoptty __P((int));
+void	wwsuspend __P((void));
+void	wwunframe __P((struct ww *));
+void	wwupdate1 __P((int, int));
+int	wwvisible __P((struct ww *));
+void	wwvprintf __P((struct ww *, const char *, va_list));
+int	wwwrite __P((struct ww *, char *, int));
 
 #undef MIN
 #undef MAX

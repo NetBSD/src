@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $	*/
+/*	$NetBSD: compress.c,v 1.4 1997/11/21 08:35:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,20 +36,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $";
+__RCSID("$NetBSD: compress.c,v 1.4 1997/11/21 08:35:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "defs.h"
 #include "tt.h"
 
 	/* special */
-#include <stdio.h>
-#include <fcntl.h>
 int cc_trace = 0;
 FILE *cc_trace_fp;
 
@@ -129,8 +132,8 @@ struct cc cc_q0a, cc_q0b, cc_q1a, cc_q1b;
 
 #define qinsert(p1, p2) \
 	do { \
-		register struct cc *forw = (p1)->qforw; \
-		register struct cc *back = (p1)->qback; \
+		struct cc *forw = (p1)->qforw; \
+		struct cc *back = (p1)->qback; \
 		back->qforw = forw; \
 		forw->qback = back; \
 		forw = (p2)->qforw; \
@@ -151,7 +154,7 @@ struct cc cc_q0a, cc_q0b, cc_q1a, cc_q1b;
 
 #define H		(14)
 #define HSIZE		(1 << H)
-#define hash(h, c)	((((h) >> H - 8 | (h) << 8) ^ (c)) & HSIZE - 1)
+#define hash(h, c)	(((((h) >> (H - 8)) | (h) << 8) ^ (c)) & (HSIZE - 1))
 
 char *cc_buffer;
 struct cc **cc_output;			/* the output array */
@@ -168,10 +171,22 @@ long cc_time, cc_time0;
 
 char *cc_tt_ob, *cc_tt_obe;
 
+int	cc_compress __P((struct cc **, struct cc **, char));
+void	cc_compress_cleanup __P((struct cc **, int));
+void	cc_compress_phase __P((struct cc **, int, struct cc **, int));
+void	cc_compress_phase1 __P((struct cc **, struct cc **, int, int));
+void	cc_output_phase __P((char *, struct cc **, int));
+int	cc_sweep __P((char *, int, struct cc **, int));
+void	cc_sweep0 __P((char *, int, int));
+int	cc_sweep_phase __P((char *, int, struct cc **));
+void	cc_sweep_reverse __P((struct cc **, short *));
+int	cc_token_compare __P((const void *, const void *));
+
+int
 ccinit()
 {
-	register i, j;
-	register struct cc *p;
+	int i, j;
+	struct cc *p;
 
 	if (tt.tt_token_max > cc_token_max)
 		tt.tt_token_max = cc_token_max;
@@ -291,10 +306,9 @@ nomem:
 	return -1;
 }
 
+void
 ccstart()
 {
-	int ccflush();
-
 	ttflush();
 	tt_obp = tt_ob = cc_buffer;
 	tt_obe = tt_ob + cc_bufsize;
@@ -306,17 +320,19 @@ ccstart()
 	ccreset();
 }
 
+void
 ccreset()
 {
-	register struct cc *p;
+	struct cc *p;
 
-	bzero((char *) cc_htab, HSIZE * sizeof *cc_htab);
+	memset((char *) cc_htab, 0, HSIZE * sizeof *cc_htab);
 	for (p = cc_q0a.qforw; p != &cc_q0a; p = p->qforw)
 		p->hback = 0;
 	for (p = cc_q1a.qforw; p != &cc_q1a; p = p->qforw)
 		p->hback = 0;
 }
 
+void
 ccend()
 {
 
@@ -330,6 +346,7 @@ ccend()
 	}
 }
 
+void
 ccflush()
 {
 	int bufsize = tt_obp - tt_ob;
@@ -362,12 +379,14 @@ out:
 	tt.tt_flush = ccflush;
 }
 
+int
 cc_sweep_phase(buffer, bufsize, tokens)
 	char *buffer;
+	int bufsize;
 	struct cc **tokens;
 {
-	register struct cc **pp = tokens;
-	register i, n;
+	struct cc **pp = tokens;
+	int i, n;
 #ifdef STATS
 	int nn, ii;
 #endif
@@ -419,14 +438,16 @@ cc_sweep_phase(buffer, bufsize, tokens)
 	return pp - tokens;
 }
 
+void
 cc_sweep0(buffer, n, length)
 	char *buffer;
+	int n, length;
 {
-	register char *p;
-	register short *hc;
-	register i;
-	register short c;
-	register short pc = tt.tt_padc;
+	char *p;
+	short *hc;
+	int i;
+	short c;
+	short pc = tt.tt_padc;
 
 	/* n and length are at least 1 */
 	p = buffer++;
@@ -449,14 +470,16 @@ cc_sweep0(buffer, n, length)
 	}
 }
 
+int
 cc_sweep(buffer, bufsize, tokens, length)
 	char *buffer;
+	int bufsize;
 	struct cc **tokens;
-	register length;
+	int length;
 {
-	register struct cc *p;
-	register char *cp;
-	register i;
+	struct cc *p;
+	char *cp;
+	int i;
 	short *hc;
 	short *places = cc_places[length];
 	struct cc **pp = tokens;
@@ -477,9 +500,9 @@ cc_sweep(buffer, bufsize, tokens, length)
 		struct cc **h;
 
 		{
-			register short *hc1 = hc;
-			register short c = *cp++;
-			register short hh;
+			short *hc1 = hc;
+			short c = *cp++;
+			short hh;
 			if ((hh = *hc1) < 0 || c == pc) {
 				*hc1++ = -1;
 				hc = hc1;
@@ -490,9 +513,9 @@ cc_sweep(buffer, bufsize, tokens, length)
 		}
 		for (p = *h; p != 0; p = p->hforw)
 			if (p->length == (char) length) {
-				register char *p1 = p->string;
-				register char *p2 = cp - length;
-				register n = length;
+				char *p1 = p->string;
+				char *p2 = cp - length;
+				int n = length;
 				do
 					if (*p1++ != *p2++)
 						goto fail;
@@ -503,15 +526,15 @@ cc_sweep(buffer, bufsize, tokens, length)
 		if (p == 0) {
 			p = cc_q1a.qback;
 			if (p == &cc_q1a ||
-			    p->time >= cc_time0 && p->length == (char) length)
+			    (p->time >= cc_time0 && p->length == (char) length))
 				continue;
 			if (p->hback != 0)
 				if ((*p->hback = p->hforw) != 0)
 					p->hforw->hback = p->hback;
 			{
-				register char *p1 = p->string;
-				register char *p2 = cp - length;
-				register n = length;
+				char *p1 = p->string;
+				char *p2 = cp - length;
+				int n = length;
 				do
 					*p1++ = *p2++;
 				while (--n);
@@ -611,7 +634,6 @@ cc_sweep(buffer, bufsize, tokens, length)
 		if (cc_reverse)
 			cc_sweep_reverse(tokens, places);
 		if (cc_sort && i > 1) {
-			int cc_token_compare();
 			qsort((char *) tokens, i, sizeof *tokens,
 			      cc_token_compare);
 		}
@@ -625,12 +647,13 @@ cc_sweep(buffer, bufsize, tokens, length)
 	return i;
 }
 
+void
 cc_sweep_reverse(pp, places)
-	register struct cc **pp;
-	register short *places;
+	struct cc **pp;
+	short *places;
 {
-	register struct cc *p;
-	register short front, back, t;
+	struct cc *p;
+	short front, back, t;
 
 	while ((p = *pp++) != 0) {
 		back = -1;
@@ -645,13 +668,16 @@ cc_sweep_reverse(pp, places)
 	}
 }
 
+void
 cc_compress_phase(output, bufsize, tokens, ntoken)
 	struct cc **output;
+	int bufsize;
 	struct cc **tokens;
+	int ntoken;
 {
-	register i;
+	int i;
 
-	bzero((char *) output, bufsize * sizeof *output);
+	memset((char *) output, 0, bufsize * sizeof *output);
 	for (i = 0; i < cc_npass0; i++)
 		cc_compress_phase1(output, tokens, ntoken, 0);
 	for (i = 0; i < cc_npass1; i++)
@@ -659,13 +685,15 @@ cc_compress_phase(output, bufsize, tokens, ntoken)
 	cc_compress_cleanup(output, bufsize);
 }
 
+void
 cc_compress_phase1(output, tokens, ntoken, flag)
-	register struct cc **output;
+	struct cc **output;
 	struct cc **tokens;
+	int ntoken, flag;
 {
-	register struct cc **pp;
+	struct cc **pp;
 #ifdef STATS
-	register int i = 0;
+	int i = 0;
 	int nt = 0, cc = 0, nc = 0;
 #endif
 
@@ -710,16 +738,18 @@ cc_compress_phase1(output, tokens, ntoken, flag)
 #endif
 }
 
+void
 cc_compress_cleanup(output, bufsize)
-	register struct cc **output;
+	struct cc **output;
+	int bufsize;
 {
-	register struct cc **end;
+	struct cc **end;
 
 	/* the previous output phase may have been interrupted */
 	qinsertq(&cc_q0b, &cc_q0a);
 	for (end = output + bufsize; output < end;) {
-		register struct cc *p;
-		register length;
+		struct cc *p;
+		int length;
 		if ((p = *output) == 0) {
 			output++;
 			continue;
@@ -745,13 +775,14 @@ cc_compress_cleanup(output, bufsize)
 	}
 }
 
+int
 cc_compress(output, tokens, flag)
 	struct cc **output;
 	struct cc **tokens;
 	char flag;
 {
 	struct cc **pp = tokens;
-	register struct cc *p = *pp++;
+	struct cc *p = *pp++;
 	int length = p->length;
 	int threshold = thresh(length);
 #ifndef cc_weight
@@ -763,7 +794,7 @@ cc_compress(output, tokens, flag)
 
 	do {
 		int score;
-		register struct cc_undo *undop;
+		struct cc_undo *undop;
 		int ccount;
 #ifdef STATS
 		int ncover;
@@ -788,10 +819,10 @@ cc_compress(output, tokens, flag)
 		ncover = 0;
 #endif
 		for (i = p->places; i >= 0; i = places[i]) {
-			register struct cc **jp;
-			register struct cc *x;
-			register struct cc **ip = output + i;
-			register score0 = initial_score0;
+			struct cc **jp;
+			struct cc *x;
+			struct cc **ip = output + i;
+			int score0 = initial_score0;
 			struct cc **iip = ip + length;
 			struct cc_undo *undop1 = undop;
 
@@ -834,7 +865,7 @@ cc_compress(output, tokens, flag)
 			continue;
 		undo:
 			while (--undop >= undop1)
-				if (*undop->pos = x = undop->val)
+				if ((*undop->pos = x = undop->val))
 					x->ccount++;
 			undop++;
 		}
@@ -846,10 +877,10 @@ cc_compress(output, tokens, flag)
 #endif
 			p->ccount = ccount;
 		} else {
-			register struct cc_undo *u = cc_undo;
+			struct cc_undo *u = cc_undo;
 			while (--undop >= u) {
-				register struct cc *x;
-				if (*undop->pos = x = undop->val)
+				struct cc *x;
+				if ((*undop->pos = x = undop->val))
 					x->ccount++;
 			}
 		}
@@ -857,13 +888,14 @@ cc_compress(output, tokens, flag)
 	return pp - tokens;
 }
 
+void
 cc_output_phase(buffer, output, bufsize)
-	register char *buffer;
-	register struct cc **output;
-	register bufsize;
+	char *buffer;
+	struct cc **output;
+	int bufsize;
 {
-	register i;
-	register struct cc *p, *p1;
+	int i;
+	struct cc *p, *p1;
 
 	for (i = 0; i < bufsize;) {
 		if ((p = output[i]) == 0) {
@@ -898,8 +930,11 @@ cc_output_phase(buffer, output, bufsize)
 	wwntokc += bufsize;
 }
 
+int
 cc_token_compare(p1, p2)
-	struct cc **p1, **p2;
+	const void *p1, *p2;
 {
-	return (*p2)->bcount - (*p1)->bcount;
+	const struct cc **vp1 = (void *)p1;
+	const struct cc **vp2 = (void *)p2;
+	return (*vp2)->bcount - (*vp1)->bcount;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd7.c,v 1.3 1995/09/28 10:34:12 tls Exp $	*/
+/*	$NetBSD: cmd7.c,v 1.4 1997/11/21 08:35:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,23 +36,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd7.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd7.c,v 1.3 1995/09/28 10:34:12 tls Exp $";
+__RCSID("$NetBSD: cmd7.c,v 1.4 1997/11/21 08:35:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "defs.h"
 #include "string.h"
+
+void	unyank __P((void));
+void	yank_highlight __P((int, int, int, int));
+void	yank_highlight_line __P((int, int, int));
+void	yank_line __P((int, int, int));
 
 /*
  * Window size.
  */
-
+void
 c_size(w)
-register struct ww *w;
+	struct ww *w;
 {
 	int col, row;
 
@@ -101,6 +109,7 @@ struct yb {
 };
 struct yb *yb_head, *yb_tail;
 
+void
 c_yank()
 {
 	struct ww *w = selwin;
@@ -154,7 +163,7 @@ c_yank()
 		}
 		break;
 	}
-	if (row2 < row1 || row2 == row1 && col2 < col1) {
+	if (row2 < row1 || (row2 == row1 && col2 < col1)) {
 		r = row1;
 		c = col1;
 		row1 = row2;
@@ -176,14 +185,16 @@ out:
 	wwcursor(w, 1);
 }
 
+void
 yank_highlight(row1, col1, row2, col2)
+	int row1, col1, row2, col2;
 {
 	struct ww *w = selwin;
 	int r, c;
 
 	if ((wwavailmodes & WWM_REV) == 0)
 		return;
-	if (row2 < row1 || row2 == row1 && col2 < col1) {
+	if (row2 < row1 || (row2 == row1 && col2 < col1)) {
 		r = row1;
 		c = col1;
 		row1 = row2;
@@ -199,7 +210,9 @@ yank_highlight(row1, col1, row2, col2)
 	yank_highlight_line(r, c, col2);
 }
 
+void
 yank_highlight_line(r, c, cend)
+	int r, c, cend;
 {
 	struct ww *w = selwin;
 	char *win;
@@ -223,6 +236,7 @@ yank_highlight_line(r, c, cend)
 	}
 }
 
+void
 unyank()
 {
 	struct yb *yp, *yq;
@@ -235,7 +249,9 @@ unyank()
 	yb_head = yb_tail = 0;
 }
 
+void
 yank_line(r, c, cend)
+	int r, c, cend;
 {
 	struct yb *yp;
 	int nl = 0;
@@ -268,6 +284,7 @@ yank_line(r, c, cend)
 		yb_head = yb_tail = yp;
 }
 
+void
 c_put()
 {
 	struct yb *yp;

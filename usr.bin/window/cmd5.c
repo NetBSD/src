@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd5.c,v 1.3 1995/09/28 10:34:09 tls Exp $	*/
+/*	$NetBSD: cmd5.c,v 1.4 1997/11/21 08:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd5.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd5.c,v 1.3 1995/09/28 10:34:09 tls Exp $";
+__RCSID("$NetBSD: cmd5.c,v 1.4 1997/11/21 08:35:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +51,11 @@ static char rcsid[] = "$NetBSD: cmd5.c,v 1.3 1995/09/28 10:34:09 tls Exp $";
  * Window movement.
  */
 
+void	getminmax __P((int, int, int, int, int *, int *, int *));
+
+void
 c_move(w)
-register struct ww *w;
+	struct ww *w;
 {
 	int col, row;
 	int mincol, minrow;
@@ -94,8 +98,9 @@ register struct ww *w;
 	movewin(w, row, col);
 }
 
+void
 movewin(w, row, col)
-register struct ww *w;
+	struct ww *w;
 {
 	struct ww *back = w->ww_back;
 
@@ -110,9 +115,10 @@ register struct ww *w;
 /*
  * Weird stufff, don't ask.
  */
+void
 getminmax(x, n, a, b, curx, minx, maxx)
-register x, n, a, b;
-int *curx, *minx, *maxx;
+	int x, n, a, b;
+	int *curx, *minx, *maxx;
 {
 	if (x < 0)
 		*curx = x + n - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwputs.c,v 1.3 1995/09/28 10:35:48 tls Exp $	*/
+/*	$NetBSD: wwputs.c,v 1.4 1997/11/21 08:37:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwputs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwputs.c,v 1.3 1995/09/28 10:35:48 tls Exp $";
+__RCSID("$NetBSD: wwputs.c,v 1.4 1997/11/21 08:37:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
+void
 wwputs(s, w)
-register char *s;
-struct ww *w;
+	char *s;
+	struct ww *w;
 {
-	register char *p = s;
+	char *p = s;
 
 	while (*p++)
 		;

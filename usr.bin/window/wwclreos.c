@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreos.c,v 1.4 1996/02/08 20:45:07 mycroft Exp $	*/
+/*	$NetBSD: wwclreos.c,v 1.5 1997/11/21 08:37:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwclreos.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwclreos.c,v 1.4 1996/02/08 20:45:07 mycroft Exp $";
+__RCSID("$NetBSD: wwclreos.c,v 1.5 1997/11/21 08:37:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
 
+void
 wwclreos(w, row, col)
-register struct ww *w;
+	struct ww *w;
+	int row, col;
 {
-	register i;
+	int i;
 
 	wwclreol(w, row, col);
 	for (i = row + 1; i < w->ww_b.b; i++)

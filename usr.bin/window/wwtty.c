@@ -1,4 +1,4 @@
-/*	$NetBSD: wwtty.c,v 1.4 1995/12/21 11:06:50 mycroft Exp $	*/
+/*	$NetBSD: wwtty.c,v 1.5 1997/11/21 08:37:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,23 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwtty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwtty.c,v 1.4 1995/12/21 11:06:50 mycroft Exp $";
+__RCSID("$NetBSD: wwtty.c,v 1.5 1997/11/21 08:37:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
 #include <sys/types.h>
-#include <fcntl.h>
 #if !defined(OLD_TTY) && !defined(TIOCGWINSZ)
 #include <sys/ioctl.h>
 #endif
+#include <fcntl.h>
+#include "ww.h"
 
+int
 wwgettty(d, t)
-register struct ww_tty *t;
+	int d;
+	struct ww_tty *t;
 {
 #ifdef OLD_TTY
 	if (ioctl(d, TIOCGETP, (char *)&t->ww_sgttyb) < 0)
@@ -80,8 +83,10 @@ bad:
  * 'o' is the current modes.  We set the line discipline only if
  * it changes, to avoid unnecessary flushing of typeahead.
  */
+int
 wwsettty(d, t)
-register struct ww_tty *t;
+	int d;
+	struct ww_tty *t;
 {
 #ifdef OLD_TTY
 	int i;
@@ -121,7 +126,9 @@ bad:
  * on the control side of pseudoterminals.
  */
 
+int
 wwgetttysize(d, r, c)
+	int d;
 	int *r, *c;
 {
 	struct winsize winsize;
@@ -137,7 +144,9 @@ wwgetttysize(d, r, c)
 	return 0;
 }
 
+int
 wwsetttysize(d, r, c)
+	int d, r, c;
 {
 	struct winsize winsize;
 
@@ -151,7 +160,9 @@ wwsetttysize(d, r, c)
 	return 0;
 }
 
+int
 wwstoptty(d)
+	int d;
 {
 #if !defined(OLD_TTY) && defined(TCOOFF)
 	/* not guaranteed to work on the pty side */
@@ -166,7 +177,9 @@ wwstoptty(d)
 	return 0;
 }
 
+int
 wwstarttty(d)
+	int d;
 {
 #if !defined(OLD_TTY) && defined(TCOON)
 	/* not guaranteed to work on the pty side */

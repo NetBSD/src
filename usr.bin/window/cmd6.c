@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd6.c,v 1.3 1995/09/28 10:34:10 tls Exp $	*/
+/*	$NetBSD: cmd6.c,v 1.4 1997/11/21 08:35:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd6.c,v 1.3 1995/09/28 10:34:10 tls Exp $";
+__RCSID("$NetBSD: cmd6.c,v 1.4 1997/11/21 08:35:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +53,16 @@ static char rcsid[] = "$NetBSD: cmd6.c,v 1.3 1995/09/28 10:34:10 tls Exp $";
  * Debugging commands.
  */
 
+void	debug_str __P((void));
+
+void
 c_debug()
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if (!terse)
-		wwputs("[m(smap) n(ns) o(os) s(string) v(nvis) w(win)]? ", cmdwin);
+		wwputs("[m(smap) n(ns) o(os) s(string) v(nvis) w(win)]? ",
+		    cmdwin);
 	wwcurtowin(cmdwin);
 	while (wwpeekc() < 0)
 		wwiomux();
@@ -89,10 +94,11 @@ c_debug()
 	}
 }
 
-#ifdef STR_DEBUG
+void
 debug_str()
 {
-	register struct ww *w;
+#ifdef STR_DEBUG
+	struct ww *w;
 	struct string *s;
 
 	if ((w = openiwin(wwnrow - 3, "Allocated Strings")) == 0) {
@@ -107,10 +113,7 @@ debug_str()
 	waitnl(w);
 out:
 	closeiwin(w);
-}
 #else
-debug_str()
-{
 	error("No string debugging.");
-}
 #endif
+}

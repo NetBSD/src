@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.6 1996/02/08 21:08:04 mycroft Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.7 1997/11/21 08:37:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwopen.c,v 1.6 1996/02/08 21:08:04 mycroft Exp $";
+__RCSID("$NetBSD: wwopen.c,v 1.7 1997/11/21 08:37:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "ww.h"
 
 struct ww *
 wwopen(type, oflags, nrow, ncol, row, col, nline)
+	int type, oflags, nrow, ncol, row, col, nline;
 {
-	register struct ww *w;
-	register i, j;
+	struct ww *w;
+	int i, j;
 	char m;
 	short nvis;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd.c,v 1.3 1995/09/28 10:34:21 tls Exp $	*/
+/*	$NetBSD: lcmd.c,v 1.4 1997/11/21 08:36:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,41 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lcmd.c,v 1.3 1995/09/28 10:34:21 tls Exp $";
+__RCSID("$NetBSD: lcmd.c,v 1.4 1997/11/21 08:36:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
-#include "value.h"
 #include "lcmd.h"
-
-int l_alias();
-int l_close();
-int l_cursormodes();
-int l_debug();
-int l_def_nline();
-int l_def_shell();
-int l_def_smooth();
-int l_echo();
-int l_escape();
-int l_foreground();
-int l_iostat();
-int l_label();
-int l_list();
-int l_select();
-int l_smooth();
-int l_source();
-int l_terse();
-int l_time();
-int l_unalias();
-int l_unset();
-int l_variable();
-int l_window();
-int l_write();
+#include "string.h"
 
 extern struct lcmd_arg arg_alias[];
 extern struct lcmd_arg arg_cursormodes[];
@@ -95,39 +72,39 @@ extern struct lcmd_arg arg_write[];
 struct lcmd_arg arg_null[1] = { { 0 } };
 
 struct lcmd_tab lcmd_tab[] = {
-	"alias",		1,	l_alias,	arg_alias,
-	"close",		2,	l_close,	arg_close,
-	"cursormodes",		2,	l_cursormodes,	arg_cursormodes,
-	"debug",		1,	l_debug,	arg_debug,
-	"default_nlines",	9,	l_def_nline,	arg_def_nline,
-	"default_shell",	10,	l_def_shell,	arg_def_shell,
-	"default_smooth",	10,	l_def_smooth,	arg_def_smooth,
-	"echo",			2,	l_echo,		arg_echo,
-	"escape",		2,	l_escape,	arg_escape,
-	"foreground",		1,	l_foreground,	arg_foreground,
-	"iostat",		1,	l_iostat,	arg_null,
-	"label",		2,	l_label,	arg_label,
-	"list",			2,	l_list,		arg_null,
-	"nlines",		1,	l_def_nline,	arg_def_nline,
-	"select",		2,	l_select,	arg_select,
-	"shell",		2,	l_def_shell,	arg_def_shell,
-	"smooth",		2,	l_smooth,	arg_smooth,
-	"source",		2,	l_source,	arg_source,
-	"terse",		2,	l_terse,	arg_terse,
-	"time",			2,	l_time,		arg_time,
-	"unalias",		3,	l_unalias,	arg_unalias,
-	"unset",		3,	l_unset,	arg_unset,
-	"variable",		1,	l_variable,	arg_null,
-	"window",		2,	l_window,	arg_window,
-	"write",		2,	l_write,	arg_write,
-	0
+	{ "alias",		1,	l_alias,	arg_alias },
+	{ "close",		2,	l_close,	arg_close },
+	{ "cursormodes",	2,	l_cursormodes,	arg_cursormodes },
+	{ "debug",		1,	l_debug,	arg_debug },
+	{ "default_nlines",	9,	l_def_nline,	arg_def_nline },
+	{ "default_shell",	10,	l_def_shell,	arg_def_shell },
+	{ "default_smooth",	10,	l_def_smooth,	arg_def_smooth },
+	{ "echo",		2,	l_echo,		arg_echo },
+	{ "escape",		2,	l_escape,	arg_escape },
+	{ "foreground",		1,	l_foreground,	arg_foreground },
+	{ "iostat",		1,	l_iostat,	arg_null },
+	{ "label",		2,	l_label,	arg_label },
+	{ "list",		2,	l_list,		arg_null },
+	{ "nlines",		1,	l_def_nline,	arg_def_nline },
+	{ "select",		2,	l_select,	arg_select },
+	{ "shell",		2,	l_def_shell,	arg_def_shell },
+	{ "smooth",		2,	l_smooth,	arg_smooth },
+	{ "source",		2,	l_source,	arg_source },
+	{ "terse",		2,	l_terse,	arg_terse },
+	{ "time",		2,	l_time,		arg_time },
+	{ "unalias",		3,	l_unalias,	arg_unalias },
+	{ "unset",		3,	l_unset,	arg_unset },
+	{ "variable",		1,	l_variable,	arg_null },
+	{ "window",		2,	l_window,	arg_window },
+	{ "write",		2,	l_write,	arg_write },
+	{ 0,			0,	0,		0 }
 };
 
 struct lcmd_tab *
 lcmd_lookup(name)
-char *name;
+	char *name;
 {
-	register struct lcmd_tab *p;
+	struct lcmd_tab *p;
 
 	for (p = lcmd_tab; p->lc_name != 0; p++)
 		if (str_match(name, p->lc_name, p->lc_minlen))
@@ -135,8 +112,9 @@ char *name;
 	return 0;
 }
 
+int
 dosource(filename)
-char *filename;
+	char *filename;
 {
 	if (cx_beginfile(filename) < 0)
 		return -1;
@@ -146,10 +124,11 @@ char *filename;
 	return 0;
 }
 
+int
 dolongcmd(buffer, arg, narg)
-char *buffer;
-struct value *arg;
-int narg;
+	char *buffer;
+	struct value *arg;
+	int narg;
 {
 	if (cx_beginbuf(buffer, arg, narg) < 0)
 		return -1;
