@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.63 2004/04/21 01:05:43 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.64 2005/01/02 18:33:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -298,7 +298,9 @@ typedef	_BSD_USECONDS_T_	useconds_t;
  */
 #define	__NBBY	8		/* number of bits in a byte */
 typedef int32_t	__fd_mask;
-#define __NFDBITS	(sizeof(__fd_mask) * __NBBY)	/* bits per mask */
+
+/* bits per mask */
+#define __NFDBITS	((unsigned int)sizeof(__fd_mask) * __NBBY)
 
 #ifndef howmany
 #define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
