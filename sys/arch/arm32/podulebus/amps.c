@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.3 1998/01/18 04:09:46 mark Exp $	*/
+/*	$NetBSD: amps.c,v 1.4 1998/08/04 20:09:37 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -313,6 +313,6 @@ com_amps_attach(parent, self, aux)
 	sc->sc_frequency = AMPS_FREQ;
 	com_attach_subr(sc);
 
-	asc->sc_ih = intr_claim(aa->aa_irq, IPL_TTY, "com",
+	asc->sc_ih = intr_claim(aa->aa_irq, IPL_SERIAL, "com",
 	    comintr, sc);
 }
