@@ -1,8 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2003/09/02 06:36:23 mrg Exp $
-
-.include <bsd.own.mk>
-# XXX
-.if ${HAVE_GCC3} == "no"
+# $NetBSD: Makefile,v 1.7 2003/09/03 20:53:16 drochner Exp $
 
 NOPROFILE=	yes
 
@@ -25,9 +21,7 @@ all realall:
 
 ${TESTLIB}: lib${LIB}.so.1.0
 	cp lib${LIB}.so.1.0 ${TESTLIB}
-.endif
 
 regress:
 
 .include <bsd.lib.mk>
-
