@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 1995/10/09 04:00:24 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22 1995/10/09 06:34:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -231,9 +231,8 @@ i386_set_ldt(p, args, retval)
 		}
 		bzero((caddr_t)new_ldt + oldlen, len - oldlen);
 		pcb->pcb_ldt = (caddr_t)new_ldt;
-		gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)new_ldt;
-		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
-		ssdtosd(&gdt_segs[GUSERLDT_SEL], &pcb->pcb_ldt_desc);
+		setsegment(&pcb->pcb_ldt_desc, new_ldt, len - 1, SDT_SYSLDT,
+		    SEL_KPL, 0, 0);
 		if (p == curproc)
 			set_user_ldt(pcb);
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 1995/10/07 06:25:40 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.174 1995/10/09 06:34:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -939,136 +939,41 @@ struct	i386tss	tss;
 
 extern  struct user *proc0paddr;
 
-/* software prototypes -- in more palatable form */
-struct soft_segment_descriptor gdt_segs[] = {
-	/* Null descriptor */
-{	0x0,			/* segment base address */
-	0x0,			/* length */
-	0,			/* segment type */
-	0,			/* segment descriptor privilege level */
-	0,			/* segment descriptor present */
-	0, 0,
-	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-	/* Kernel code descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMERA,		/* segment type */
-	SEL_KPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-	/* Kernel data descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMRWA,		/* segment type */
-	SEL_KPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-	/* LDT descriptor */
-{	(int) ldt,		/* segment base address */
-	sizeof(ldt)-1,		/* length - all address space */
-	SDT_SYSLDT,		/* segment type */
-	0,			/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-	/* User code descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMERA,		/* segment type */
-	SEL_UPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-	/* User data descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMRWA,		/* segment type */
-	SEL_UPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-	/* Proc 0 TSS descriptor */
-{	(int) USRSTACK,		/* segment base address */
-	sizeof(tss)-1,		/* length - all address space */
-	SDT_SYS386TSS,		/* segment type */
-	SEL_KPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-	/* User LDT descriptor per process */
-{	(int) ldt,		/* segment base address */
-	(512 * sizeof(union descriptor)-1),		/* length */
-	SDT_SYSLDT,		/* segment type */
-	0,			/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	0,			/* unused - default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-};
-
-struct soft_segment_descriptor ldt_segs[] = {
-	/* Null descriptor - overwritten by call gate */
-{	0x0,			/* segment base address */
-	0x0,			/* length */
-	0,			/* segment type */
-	0,			/* segment descriptor privilege level */
-	0,			/* segment descriptor present */
-	0, 0,
-	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-	/* Null descriptor - overwritten by call gate */
-{	0x0,			/* segment base address */
-	0x0,			/* length */
-	0,			/* segment type */
-	0,			/* segment descriptor privilege level */
-	0,			/* segment descriptor present */
-	0, 0,
-	0,			/* default 32 vs 16 bit size */
-	0  			/* limit granularity (byte/page units) */ },
-	/* User code descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMERA,		/* segment type */
-	SEL_UPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-	/* User data descriptor */
-{	0x0,			/* segment base address */
-	0xfffff,		/* length - all address space */
-	SDT_MEMRWA,		/* segment type */
-	SEL_UPL,		/* segment descriptor privilege level */
-	1,			/* segment descriptor present */
-	0, 0,
-	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ },
-};
-
 void
-setgate(gdp, func, args, typ, dpl)
-	struct gate_descriptor *gdp;
-	void *func;
-	int args, typ, dpl;
+setsegment(sd, base, limit, type, dpl, def32, gran)
+	struct segment_descriptor *sd;
+	void *base;
+	size_t limit;
+	int type, dpl, def32, gran;
 {
 
-	gdp->gd_looffset = (int)func;
-	gdp->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
-	gdp->gd_stkcpy = args;
-	gdp->gd_xx = 0;
-	gdp->gd_type = typ;
-	gdp->gd_dpl = dpl;
-	gdp->gd_p = 1;
-	gdp->gd_hioffset = (int)func >> 16;
+	sd->sd_lolimit = (int)limit;
+	sd->sd_lobase = (int)base;
+	sd->sd_type = type;
+	sd->sd_dpl = dpl;
+	sd->sd_p = 1;
+	sd->sd_hilimit = (int)limit >> 16;
+	sd->sd_xx = 0;
+	sd->sd_def32 = def32;
+	sd->sd_gran = gran;
+	sd->sd_hibase = (int)base >> 24;
+}
+
+void
+setgate(gd, func, args, type, dpl)
+	struct gate_descriptor *gd;
+	void *func;
+	int args, type, dpl;
+{
+
+	gd->gd_looffset = (int)func;
+	gd->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
+	gd->gd_stkcpy = args;
+	gd->gd_xx = 0;
+	gd->gd_type = type;
+	gd->gd_dpl = dpl;
+	gd->gd_p = 1;
+	gd->gd_hioffset = (int)func >> 16;
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
@@ -1078,38 +983,6 @@ extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
 	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
 	IDTVEC(fpu),     IDTVEC(align),
 	IDTVEC(syscall), IDTVEC(osyscall);
-
-void
-sdtossd(sd, ssd)
-	struct segment_descriptor *sd;
-	struct soft_segment_descriptor *ssd;
-{
-
-	ssd->ssd_base = (sd->sd_hibase << 24) | sd->sd_lobase;
-	ssd->ssd_limit = (sd->sd_hilimit << 16) | sd->sd_lolimit;
-	ssd->ssd_type = sd->sd_type;
-	ssd->ssd_dpl = sd->sd_dpl;
-	ssd->ssd_p = sd->sd_p;
-	ssd->ssd_def32 = sd->sd_def32;
-	ssd->ssd_gran = sd->sd_gran;
-}
-
-void
-ssdtosd(ssd, sd)
-	struct soft_segment_descriptor *ssd;
-	struct segment_descriptor *sd;
-{
-
-	sd->sd_lobase = ssd->ssd_base;
-	sd->sd_hibase = ssd->ssd_base >> 24;
-	sd->sd_lolimit = ssd->ssd_limit;
-	sd->sd_hilimit = ssd->ssd_limit >> 16;
-	sd->sd_type = ssd->ssd_type;
-	sd->sd_dpl = ssd->ssd_dpl;
-	sd->sd_p = ssd->ssd_p;
-	sd->sd_def32 = ssd->ssd_def32;
-	sd->sd_gran = ssd->ssd_gran;
-}
 
 void
 init386(first_avail)
@@ -1134,23 +1007,24 @@ init386(first_avail)
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_ioopt = sizeof(struct i386tss) << 16;
 
+	/* make gdt gates memory segments */
+	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
+	    0, 0);
+	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GPROC0_SEL].sd, (void *)USRSTACK, sizeof(tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
-#ifndef LKM
-	/* set code segment limit to end of kernel text */
-	gdt_segs[GCODE_SEL].ssd_limit = i386_btop(i386_round_page(&etext)) - 1;
-#endif
-	for (x = 0; x < NGDT; x++)
-		ssdtosd(&gdt_segs[x], &gdt[x].sd);
-
-	/* make ldt memory segments */
-	ldt_segs[LUCODE_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
-	ldt_segs[LUDATA_SEL].ssd_limit = i386_btop(VM_MAXUSER_ADDRESS) - 1;
-	for (x = 0; x < NLDT; x++)
-		ssdtosd(&ldt_segs[x], &ldt[x].sd);
-
-	/* Set up the old-style call gate descriptor for system calls. */
+	/* make ldt gates memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
 	    SEL_UPL);
+	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
+	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
+	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
 	for (x = 0; x < NIDT; x++)
