@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198 2004/03/11 11:39:25 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.199 2004/03/11 11:42:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2004/03/11 11:39:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2004/03/11 11:42:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -380,6 +380,17 @@ copyfault:
 			goto we_re_toast;
 
 		frame->tf_eip = resume;
+
+		/*
+		 * clear PSL_NT.  it can be set by userland because setting it
+		 * isn't a privileged operation.
+		 *
+		 * set PSL_I.  otherwise, if SIGSEGV is ignored, we'll
+		 * continue to generate traps infinitely with
+		 * interrupts disabled.
+		 */
+
+		frame->tf_eflags = (frame->tf_eflags & ~PSL_NT) | PSL_I;
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
