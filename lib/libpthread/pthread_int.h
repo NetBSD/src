@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.6 2001/07/17 20:22:41 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.7 2001/07/20 21:16:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -168,6 +168,10 @@ void	pthread__sa_start(void);
 void	pthread__sa_recycle(pthread_t old, pthread_t new);
 
 #include "pthread_md.h"
+
+int	_getcontext_u(ucontext_t *);
+int	_setcontext_u(const ucontext_t *);
+int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
