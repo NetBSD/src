@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.10 1999/06/29 16:08:10 is Exp $
+#	$NetBSD: install.md,v 1.11 1999/06/29 20:32:54 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -131,12 +131,13 @@ md_prep_disklabel() {
 	echo "If you like, you can now examine the labels of your disks."
 	echo ""
 	echo -n "Available are "${_DKDEVS}". Look at which? [skip this step] "
-	while [ "X$resp" != X"done" ]; do
-		getresp	"done"
+	getresp	"done"
+	while [ "X$resp" != "Xdone" ]; do
 		echo ""
 		disklabel ${resp}
 		echo ""
 		echo -n "Available are "${_DKDEVS}". Look at which? [done] "
+		getresp	"done"
 	done
 	cat << \__prep_disklabel_1
 
