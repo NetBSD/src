@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.6 1998/12/10 02:22:52 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,9 @@
 /*
  * HISTORY
  * $Log: coda_vfsops.c,v $
+ * Revision 1.6  1998/12/10 02:22:52  rvb
+ * Commit a couple of old fixes
+ *
  * Revision 1.5  1998/09/25 15:01:13  rvb
  * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
  * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
@@ -442,6 +445,7 @@ coda_unmount(vfsp, mntflags, p)
 	vrele(mi->mi_rootvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
+	mi->mi_rootvp->v_flag &= ~VROOT;
 	error = vflush(mi->mi_vfsp, NULLVP, FORCECLOSE);
 	printf("coda_unmount: active = %d, vflush active %d\n", active, error);
 	error = 0;
@@ -513,7 +517,7 @@ coda_root(vfsp, vpp)
 	vn_lock(*vpp, LK_EXCLUSIVE);
 	MARK_INT_SAT(CODA_ROOT_STATS);
 	goto exit;
-    } else if (error == ENODEV) {
+    } else if (error == ENODEV || error == EINTR) {
 	/* Gross hack here! */
 	/*
 	 * If Venus fails to respond to the CODA_ROOT call, coda_call returns
