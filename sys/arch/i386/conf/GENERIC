@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.321 2000/04/09 18:34:02 augustss Exp $
+#	$NetBSD: GENERIC,v 1.322 2000/04/10 07:58:18 haya Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.321 $"
+#ident 		"GENERIC-$Revision: 1.322 $"
 
 maxusers	32		# estimated number of users
 
@@ -571,6 +571,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#rl*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
