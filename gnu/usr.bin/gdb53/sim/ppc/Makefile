@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/07/29 14:36:38 chs Exp $
 
 MKPRIVATELIB=	yes
 
@@ -8,17 +8,14 @@ TOP=	${NETBSDSRCDIR}/gnu
 DIST=	${TOP}/dist/gdb
 
 LIB=	sim
-SRCS=	debug.c filter_filename.o bits.c sim-endian.c os_emul.c emul_generic.c \
+SRCS=	debug.c filter_filename.c bits.c sim-endian.c os_emul.c emul_generic.c \
 	emul_bugapi.c emul_chirp.c emul_netbsd.c emul_unix.c registers.c vm.c \
 	corefile.c model.c spreg.c cpu.c interrupts.c events.c cap.c device.c \
 	tree.c device_table.c itable.c mon.c icache.c semantics.c idecode.c \
 	support.c psim.c pk_disklabel.c hw_cpu.c hw_memory.c hw_nvram.c \
 	hw_iobus.c hw_htab.c hw_disk.c hw_trace.c hw_register.c hw_vm.c \
 	hw_init.c hw_core.c hw_pal.c hw_com.c hw_eeprom.c hw_opic.c hw_glue.c \
-	hw_phb.c hw_ide.c options.c sim_calls.c callback.o targ-map.c
-
-.include <bsd.lib.mk>
-.include "../../Makefile.inc"
+	hw_phb.c hw_ide.c options.c sim_calls.c callback.c targ-map.c
 
 MIC=	${HOST_SH} ${DIST}/move-if-change
 
@@ -65,6 +62,7 @@ IGENED_FILES=	icache.h icache.c idecode.h idecode.c semantics.h semantics.c \
 		itable.h itable.c model.h model.c support.h support.c
 IGENSRCS= igen.c table.c lf.c misc.c filter_host.c ld-decode.c ld-cache.c filter.c ld-insn.c gen-model.c gen-itable.c gen-icache.c gen-semantics.c gen-idecode.c gen-support.c
 IGENOBJS= ${IGENSRCS:S/.c/.lo/}
+DPSRCS+= ${IGENED_FILES:M*.h}
 
 ${IGENED_FILES}: run-igen
 run-igen: igen ppc-instructions ppc-cache-rules
@@ -95,6 +93,7 @@ DGEN_FLAGS=	-r ${DIST}/sim/ppc/ppc-spr-table \
 DGENED_FILES=	spreg.h spreg.c
 DGENSRCS= dgen.c table.c lf.c misc.c filter_host.c
 DGENOBJS= ${DGENSRCS:S/.c/.lo/}
+DPSRCS+= ${DGENED_FILES:M*.h}
 
 ${DGENED_FILES}: run-dgen
 run-dgen: dgen
@@ -115,8 +114,6 @@ gentmap: ${GENTMAPOBJS}
 
 gentmap.c: targ-vals.def
 
-callback.o: targ-vals.h targ-vals.def
-
 targ-vals.def: ${DIST}/sim/ppc/../common/nltvals.def
 	rm -f targ-vals.def tmp-def
 	cat ${DIST}/sim/ppc/../common/nltvals.def > tmp-vals.def
@@ -126,6 +123,7 @@ targ-vals.h: gentmap targ-vals.def
 	rm -f tmp-vals.h
 	./gentmap -h > tmp-vals.h
 	${MIC} tmp-vals.h targ-vals.h
+DPSRCS+= targ-vals.h
 
 targ-map.c: gentmap targ-vals.def
 	rm -f tmp-map.c
@@ -136,10 +134,6 @@ targ-map.c: gentmap targ-vals.def
 HWSRCS=	hw_cpu.c hw_memory.c hw_nvram.c hw_iobus.c hw_htab.c hw_disk.c \
 	hw_trace.c hw_register.c hw_vm.c hw_init.c hw_core.c hw_pal.c \
 	hw_com.c hw_eeprom.c hw_opic.c hw_glue.c hw_phb.c hw_ide.c
-HWOBJS= ${HWSRCS:S/.c/.o/}
-
-${HWSRCS}: hw.h
-${HWOBJS}: ${HWSRCS}
 
 hw.h hw.c: run-hw
 run-hw: Makefile
@@ -171,6 +165,7 @@ run-hw: Makefile
 	${MIC} tmp-hw.h hw.h
 	${MIC} tmp-hw.c hw.c
 	touch run-hw
+DPSRCS+= hw.h
 
 # package portion
 PACKAGE_SRC =	pk_disklabel.c
@@ -192,10 +187,7 @@ run-pk: $(PACKAGE_SRC)
 		   -e 's/$$/_create_instance;/' > tmp-pk.h
 	${MIC} tmp-pk.h pk.h
 	touch run-pk
-
-pk_disklabel.o: ${PK_H}
-
-hw_disk.c: ${PK_H}
+DPSRCS+= ${PK_H}
 
 # defines portion
 DEFINES_H=	defines.h
@@ -206,22 +198,15 @@ run-defines:
 	       < ${.CURDIR}/../arch/${MACHINE_ARCH}/config.h > tmp-defines.h
 	${MIC} tmp-defines.h defines.h
 	touch run-defines
-
-options.c: ${DEFINES_H}
+DPSRCS+= ${DEFINES_H}
 
 # misc. dependancies.
-corefile.o: device_table.h
-device_table.h: hw.h
-
-filter_host.lo filter_filename.o debug.c: ppc-config.h
-
-os_emul.c: ${IGENED_FILES} ${DGENED_FILES}
-
 filter_host.c: ${DIST}/sim/ppc/filter_filename.c
 	cp ${.ALLSRC} ${.TARGET}
 
 ppc-config.h: ${DIST}/sim/ppc/std-config.h
 	cp ${.ALLSRC} ${.TARGET}
+DPSRCS+= ppc-config.h
 
 CLEANFILES+=	igen dgen gentmap *.lo \
 		ppc-config.h filter_host.c \
@@ -249,7 +234,7 @@ CLEANFILES+=	igen dgen gentmap *.lo \
 .c.lo:
 	${HOST_COMPILE.c} -o ${.TARGET} $<
 
-corefile.c: hw.h
-cpu.c: spreg.h idecode.h itable.h model.h
-
 .PATH: ${DIST}/sim/ppc ${DIST}/sim/common
+
+.include <bsd.lib.mk>
+.include "../../Makefile.inc"
