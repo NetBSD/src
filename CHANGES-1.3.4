@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.12 1999/02/02 05:21:07 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.13 1999/02/02 06:40:14 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -202,3 +202,55 @@ etc/services					1.27-1.30
 usr.bin/less/less/main.c			1.7
 
   Use lgetenv() for "LESS" and "MORE" variables.  (simonb)
+
+sys/dev/ic/i82365.c				patch
+
+  Improve PCMCIA card powerup sequence.  (msaitoh)
+
+sys/arch/pmax/stand/Makefile			1.11
+sys/arch/pmax/stand/Makefile.booters		1.11-1.14
+sys/arch/pmax/stand/Makefile.inc		1.1-1.3 (new)
+sys/arch/pmax/stand/README			1.3 (deleted)
+sys/arch/pmax/stand/boot.c			1.7 (deleted)
+sys/arch/pmax/stand/byteswap.h			1.3 (deleted)
+sys/arch/pmax/stand/conf.c			1.6 (deleted)
+sys/arch/pmax/stand/dec_boot.h			1.5 (deleted)
+sys/arch/pmax/stand/dec_exec.h			1.5 (deleted)
+sys/arch/pmax/stand/dec_label/Makefile		1.2 (deleted)
+sys/arch/pmax/stand/dec_label/dec_label.c	1.5 (deleted)
+sys/arch/pmax/stand/dec_prom.h			1.10 (deleted)
+sys/arch/pmax/stand/filesystem.c		1.3 (deleted)
+sys/arch/pmax/stand/libsa/Makefile		1.6, 1.7, 1.8, 1.9
+sys/arch/pmax/stand/libsa/Makefile		1.6-1.9
+sys/arch/pmax/stand/libsa/alloc.c		1.1-1.2 (new)
+sys/arch/pmax/stand/libsa/alloc.c		1.1-1.2 (new)
+sys/arch/pmax/stand/libsa/callvec.c		1.8
+sys/arch/pmax/stand/libsa/callvec.c		1.8
+sys/arch/pmax/stand/libsa/dec_boot.h		1.1-1.4 (new)
+sys/arch/pmax/stand/libsa/dec_exec.h		1.1-1.4 (new)
+sys/arch/pmax/stand/libsa/dec_prom.h		1.1-1.9 (new)
+sys/arch/pmax/stand/libsa/devopen.c		1.7
+sys/arch/pmax/stand/libsa/getenv.c		1.8
+sys/arch/pmax/stand/libsa/gets.c		1.8
+sys/arch/pmax/stand/libsa/read.c		1.1-1.2 (new)
+sys/arch/pmax/stand/libsa/strcat.c		1.8
+sys/arch/pmax/stand/libsa/strcmp.c		1.7
+sys/arch/pmax/stand/libsa/strcpy.c		1.8
+sys/arch/pmax/stand/libsa/ufs.c			1.1-1.3 (new)
+sys/arch/pmax/stand/mkboot.c			1.6 (deleted)
+sys/arch/pmax/stand/mkboottape.c		1.8 (deleted)
+sys/arch/pmax/stand/rz.c			1.7 (deleted)
+sys/arch/pmax/stand/scsiboot/Makefile		patch (new)
+sys/arch/pmax/stand/scsiboot/boot.c		1.1-1.8 (new)
+sys/arch/pmax/stand/scsiboot/byteswap.h		1.1-1.2 (new)
+sys/arch/pmax/stand/scsiboot/conf.c		1.1-1.7 (new)
+sys/arch/pmax/stand/scsiboot/filesystem.c	1.1-1.2 (new)
+sys/arch/pmax/stand/scsiboot/mkboot.c		1.1-1.6 (new)
+sys/arch/pmax/stand/scsiboot/mkboottape.c	1.1-1.9 (new)
+sys/arch/pmax/stand/scsiboot/rz.c		1.1-1.8 (new)
+sys/arch/pmax/stand/scsiboot/rz.h		1.1 (new)
+sys/arch/pmax/stand/scsiboot/start.S		1.1-1.4 (new)
+sys/arch/pmax/stand/scsiboot/tz.h		1.1 (new)
+sys/arch/pmax/stand/start.S			1.3 (deleted)
+
+  ??? (simonb)
