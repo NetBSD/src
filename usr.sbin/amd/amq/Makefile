@@ -7,6 +7,8 @@ CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-DARCH_REP=\"${MACHINE}\"
 CFLAGS+=-DOS_REP=\"${OS}\"
 CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
+# arguably XXX -- for broken (?) rpcgen #include lines
+CFLAGS+=-I/usr/include/rpcsvc
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc
 .PATH: ${.CURDIR}/../amd
