@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.22 2003/09/10 05:25:44 mycroft Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.23 2004/03/22 14:55:42 tls Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -265,4 +265,4 @@ struct umass_softc {
 	struct umassbus_softc	*bus;		 /* bus dependent data */
 };
 
-#define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE
+#define UMASS_MAX_TRANSFER_SIZE	MAXPHYS
