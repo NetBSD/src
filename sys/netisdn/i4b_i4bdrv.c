@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.3 2001/03/24 12:40:31 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.4 2001/04/21 07:23:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -136,12 +136,7 @@ PDEVSTATIC void i4battach __P((void));
 PDEVSTATIC int i4bopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 PDEVSTATIC int i4bclose __P((dev_t dev, int flag, int fmt, struct proc *p));
 PDEVSTATIC int i4bread __P((dev_t dev, struct uio *uio, int ioflag));
-
-#ifdef __bsdi__
 PDEVSTATIC int i4bioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
-#else
-PDEVSTATIC int i4bioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-#endif
 
 #ifdef OS_USES_POLL
 PDEVSTATIC int i4bpoll __P((dev_t dev, int events, struct proc *p));
@@ -359,13 +354,7 @@ i4bread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-#if defined (__FreeBSD_version) && __FreeBSD_version >= 300003
 i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#elif defined(__bsdi__)
-i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#else
-i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
-#endif
 {
 	call_desc_t *cd;
 	int error = 0;
