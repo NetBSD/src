@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.11 1995/01/13 00:27:49 jtc Exp $
+#	$NetBSD: bsd.README,v 1.12 1995/09/24 23:49:06 christos Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -229,7 +229,8 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBUTIL		/usr/lib/libutil.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
-		strings, using xstr(1).
+		strings, using xstr(1). Note that this will not work with
+		parallel makes.
 
 STRIP		The flag passed to the install program to cause the binary
 		to be stripped.
