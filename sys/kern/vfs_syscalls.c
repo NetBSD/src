@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.207 2004/05/02 11:13:29 pk Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.208 2004/05/02 12:21:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.207 2004/05/02 11:13:29 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.208 2004/05/02 12:21:02 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -296,6 +296,7 @@ sys_mount(l, v, retval)
 		M_MOUNT, M_WAITOK);
 	memset((char *)mp, 0, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
+	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	mp->mnt_op = vfs;
 	vfs->vfs_refcount++;
@@ -557,10 +558,13 @@ dounmount(mp, flags, p)
 		    &mountlist_slock);
 		if (used_syncer)
 			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		simple_lock(&mp->mnt_slock);
 		while (mp->mnt_wcnt > 0) {
 			wakeup(mp);
-			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
+			ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1",
+				0, &mp->mnt_slock);
 		}
+		simple_unlock(&mp->mnt_slock);
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
@@ -575,10 +579,12 @@ dounmount(mp, flags, p)
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-	while(mp->mnt_wcnt > 0) {
+	simple_lock(&mp->mnt_slock);
+	while (mp->mnt_wcnt > 0) {
 		wakeup(mp);
-		tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0);
+		ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_slock);
 	}
+	simple_unlock(&mp->mnt_slock);
 	free(mp, M_MOUNT);
 	return (0);
 }

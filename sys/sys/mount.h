@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.120 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: mount.h,v 1.121 2004/05/02 12:21:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -132,6 +132,8 @@ struct mount {
 	struct proc	*mnt_unmounter;		/* who is unmounting */
 	int		mnt_writeopcountupper;	/* upper writeops in progress */
 	int		mnt_writeopcountlower;	/* lower writeops in progress */
+	struct simplelock mnt_slock;		/* mutex for wcnt and
+						   writeops counters */
 };
 
 /*
