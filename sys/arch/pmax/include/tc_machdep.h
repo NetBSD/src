@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.8.4.3 1999/03/15 03:58:27 nisimura Exp $	*/
+/* $NetBSD: tc_machdep.h,v 1.8.4.4 2000/02/03 09:46:48 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -72,24 +72,12 @@ typedef int32_t		tc_offset_t;
 #define	tc_badaddr(tcaddr) badaddr((void *)(tcaddr), sizeof (u_int32_t))
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
+
 #define	TC_PHYS_TO_UNCACHED(addr) MIPS_PHYS_TO_KSEG1(addr)
 
-/*
- * Port-specific declarations:
- * Declarations "private" sys/dev/tc/tc.c MI functions used to search
- * for potential TC-option console devices (framebuffers),
- */
-extern int tc_checkslot __P((tc_addr_t slotbase, char *namep));
+extern int badaddr	 __P((void *, u_int));
 
-/*
- * And declarations for the MD function used to search for and configure
- * a TC framebuffer as system console, and to configure the TC bus.
- */
-
-extern int tc_findconsole __P((int preferred_slot));
-extern void config_tcbus __P((struct device *parent, int cputype,
-			      int printfn __P((void*, const char*)) ));
-extern int badaddr       __P((void *, u_int));
-
+#define TC_KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+#define TC_C(x)	 ((void *)(u_long)(x))
 
 #endif /* __MACHINE_TC_MACHDEP_H__*/

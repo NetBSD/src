@@ -1,39 +1,58 @@
-/*	$NetBSD: ibusvar.h,v 1.2.2.3 1999/03/15 08:40:31 nisimura Exp $	*/
+/* $NetBSD: ibusvar.h,v 1.2.2.4 2000/02/03 09:46:50 nisimura Exp $ */
 
-#ifndef __IBUSVAR_H
-#define __IBUSVAR_H
+#ifndef _IBUSVAR_H_
+#define _IBUSVAR_H_ 1
 
+#include <machine/bus.h>
+
+struct ibus_attach_args;
+
+struct ibus_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bst;
+
+	void	(*sc_intr_establish) __P((struct device *, void *,
+					int, int (*)(void *), void *));
+	void	(*sc_intr_disestablish) __P((struct device *, void *));
+};
+
+/*
+ * Arguments used to attach an ibus "device" to its parent
+ */
+struct ibus_dev_attach_args {
+	const char *ida_busname;		/* XXX should be common */
+	bus_space_tag_t	ida_memt;
+
+	int	ida_ndevs;
+	struct ibus_attach_args	*ida_devs;
+	void	(*ida_establish) __P((struct device *, void *,
+					int, int (*)(void *), void *));
+	void	(*ida_disestablish) __P((struct device *, void *));
+};
+
+/*
+ * Arguments used to attach devices to an ibus
+ */
 struct ibus_attach_args {
 	char	*ia_name;		/* Device name. */
 	u_int32_t ia_addr;		/* Device address. */
-	void	*ia_cookie;		/* Device cookie */
+	void	*ia_cookie;		/* Device cookie. */
 };
 
-struct ibus_dev_attach_args {
-	const char *ibd_busname;		/* XXX should be common */
-#ifdef notyet
-	bus_space_tag_t	iba_memt;
-#endif
-	void (*ibd_establish)
-		__P((struct device *, void *, int, int (*)(void *), void *));
-	void (*ibd_disestablish) __P((struct device *, void *));
-	int ibd_ndevs;
-	struct ibus_attach_args	*ibd_devs;
-};
-
-struct ibus_softc {
-	struct device	ibd_dev;
-	int		ibd_ndevs;
-	struct ibus_attach_args *ibd_devs;
-	void (*ibd_establish)
-		__P((struct device *, void *, int, int (*)(void *), void *));
-	void (*ibd_disestablish) __P((struct device *, void *));
-};
-
-void ibus_devattach __P((struct device *, void *));
-
-void ibus_intr_establish
-		__P((struct device *, void *, int, int (*)(void *), void *));
+void ibusattach __P((struct device *, struct device *, void *));
+int  ibusprint __P((void *, const char *));
+void ibus_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
 void ibus_intr_disestablish __P((struct device *, void *));
 
-#endif /* __IBUSVAR_H */
+void dec_3100_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
+void dec_3100_intr_disestablish __P((struct device *, void *));
+
+void dec_5100_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
+void dec_5100_intr_disestablish __P((struct device *, void *));
+
+int  badaddr __P((void *, u_int));
+
+#endif /* _IBUSVAR_H_ */
