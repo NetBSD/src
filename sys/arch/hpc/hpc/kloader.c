@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.12 2004/06/11 22:56:00 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.13 2004/06/12 14:31:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12 2004/06/11 22:56:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.13 2004/06/12 14:31:49 uch Exp $");
 
 #include "debug_kloader.h"
 
@@ -177,8 +177,8 @@ int
 kloader_load()
 {
 	Elf_Ehdr eh;
-	Elf_Phdr ph[16], *p;
-	Elf_Shdr sh[16];
+	Elf_Phdr *ph, *p;
+	Elf_Shdr *sh;
 	Elf_Addr entry;
 	vaddr_t kv;
 	size_t sz;
@@ -191,29 +191,49 @@ kloader_load()
 	char **ap;
 	int i;
 
+	ph = NULL;
+	sh = NULL;
+	shstrtab = NULL;
+
 	/* read kernel's ELF header */
 	kloader_read(0, sizeof(Elf_Ehdr), &eh);
-  
+
 	if (eh.e_ident[EI_MAG0] != ELFMAG0 ||
 	    eh.e_ident[EI_MAG1] != ELFMAG1 ||
 	    eh.e_ident[EI_MAG2] != ELFMAG2 ||
 	    eh.e_ident[EI_MAG3] != ELFMAG3) {
 		PRINTF("not an ELF file\n");
-		return (1);
+		goto err;
 	}
 
 	/* read program headers */
-	kloader_read(eh.e_phoff, eh.e_phentsize * eh.e_phnum, ph);
+	sz = eh.e_phentsize * eh.e_phnum;
+	if ((ph = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+		PRINTF("can't allocate program header table.\n");
+		goto err;
+	}
+	if (kloader_read(eh.e_phoff, sz, ph) != 0) {
+		PRINTF("program header read error.\n");
+		goto err;
+	}
 
 	/* read section headers */
-	kloader_read(eh.e_shoff, eh.e_shentsize * eh.e_shnum, sh);
+	sz = eh.e_shentsize * eh.e_shnum;
+	if ((sh = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+		PRINTF("can't allocate section header table.\n");
+		goto err;
+	}
+	if (kloader_read(eh.e_shoff, eh.e_shentsize * eh.e_shnum, sh) != 0) {
+		PRINTF("section header read error.\n");
+		goto err;
+	}
 
 	/* read section names */
 	shstrsz = ROUND4(sh[eh.e_shstrndx].sh_size);
 	shstrtab = malloc(shstrsz, M_TEMP, M_NOWAIT);
 	if (shstrtab == NULL) {
 		PRINTF("unable to allocate memory for .shstrtab\n");
-		return (1);
+		goto err;
 	}
 	DPRINTF("reading 0x%x bytes of .shstrtab at 0x%x\n",
 		sh[eh.e_shstrndx].sh_size, sh[eh.e_shstrndx].sh_offset);
@@ -244,7 +264,7 @@ kloader_load()
 	}
 
 	if (sz == 0)		/* nothing to load? */
-		return (1);
+		goto err;
 
 	/* symbols/strings sections */
 	symndx = strndx = -1;
@@ -279,7 +299,7 @@ kloader_load()
 
 	/* get memory for new kernel */
 	if (kloader_alloc_memory(sz) != 0)
-		return (1);
+		goto err;
 
 
 	/*
@@ -390,7 +410,6 @@ kloader_load()
 	kloader.rebootinfo = (void *)kv;
 	/* kv += sizeof(struct kloader_bootinfo); */
 
-
 	/*
 	 * Copy loader code
 	 */
@@ -405,6 +424,15 @@ kloader_load()
 		kloader.loader, (void *)kloader.loader_sp, (void *)nbi.entry);
 
 	return (0);
+ err:
+	if (ph != NULL)
+		free(ph, M_TEMP);
+	if (sh != NULL)
+		free(sh, M_TEMP);
+	if (shstrtab != NULL)
+		free(shstrtab, M_TEMP);
+
+	return 1;
 }
 
 
@@ -423,6 +451,7 @@ kloader_alloc_memory(size_t sz)
 		PRINTF("can't allocate memory.\n");
 		return (1);
 	}
+	DPRINTF("allocated %d pages.\n", n);
 
 	kloader.cur_pg = TAILQ_FIRST(&kloader.pg_head);
 	kloader.tagstart = (void *)PG_VADDR(kloader.cur_pg);
@@ -464,6 +493,7 @@ kloader_get_tag(vaddr_t dst)
 	tag->src = addr + sizeof(struct kloader_page_tag);
 	tag->dst = dst;
 	tag->sz = 0;
+	tag->next = 0;	/* Terminate. this member may overwrite after. */
 	if (kloader.cur_tag)
 		kloader.cur_tag->next = addr;
 	kloader.cur_tag = tag;
@@ -699,15 +729,29 @@ kloader_pagetag_dump()
 {
 	struct kloader_page_tag *tag = kloader.tagstart;
 	struct kloader_page_tag *p, *op;
+	boolean_t print;
 	int i, n;
 
 	p = tag;
+	op = NULL;
 	i = 0, n = 15;
 
 	dbg_banner_function();
 	PRINTF("[page tag chain]\n");
 	do  {
-		if (i < n) {
+		print = FALSE;
+		if (i < n)
+			print = TRUE;
+		if ((u_int32_t)p & 3) {
+			printf("tag alignment error\n");
+			break;
+		}
+		if ((p->src & 3) || (p->dst & 3)) {
+			printf("data alignement error.\n");
+			print = TRUE;
+		}
+
+		if (print) {
 			printf("[%2d] next 0x%08x src 0x%08x dst 0x%08x"
 			    " sz 0x%x\n", i, p->next, p->src, p->dst, p->sz);
 		} else if (i == n) {
@@ -716,9 +760,13 @@ kloader_pagetag_dump()
 		op = p;
 		i++;
 	} while ((p = (struct kloader_page_tag *)(p->next)) != 0);
-  
-	printf("[%d(last)] next 0x%08x src 0x%08x dst 0x%08x sz 0x%x\n",
-	    i - 1, op->next, op->src, op->dst, op->sz);
+
+	if (op != NULL)
+		printf("[%d(last)] next 0x%08x src 0x%08x dst 0x%08x sz 0x%x\n",
+		    i - 1, op->next, op->src, op->dst, op->sz);
 	dbg_banner_line();
 }
+
 #endif /* KLOADER_DEBUG */
+
+
