@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.h,v 1.1 2002/03/17 22:14:19 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -147,6 +147,22 @@ _citrus_ctype_wctomb(_citrus_ctype_t cc, char *s, wchar_t wc, int *nresult)
 
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wctomb && nresult);
 	return (*cc->cc_ops->co_wctomb)(cc->cc_closure, s, wc, nresult);
+}
+
+static __inline int
+_citrus_ctype_btowc(_citrus_ctype_t cc, int c, wint_t *wcresult)
+{
+
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_btowc && wcresult);
+	return (*cc->cc_ops->co_btowc)(cc, c, wcresult);
+}
+
+static __inline int
+_citrus_ctype_wctob(_citrus_ctype_t cc, wint_t c, int *cresult)
+{
+
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wctob && cresult);
+	return (*cc->cc_ops->co_wctob)(cc, c, cresult);
 }
 
 extern _citrus_ctype_rec_t _citrus_ctype_default;
