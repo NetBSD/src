@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.2 $
+/* $Revision: 1.3 $
 **
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -40,7 +40,7 @@ char *alloca ();
    tricks are need, but defaults to using the gettimeofday system call.
    Include <sys/time.h> if that will be used.  */
 
-#if !defined (USG) && !defined (sgi) && !defined (__386BSD__)
+#if !defined (USG) && !defined (sgi) && !defined (__NetBSD__)
 #include <sys/time.h>
 #endif
 
@@ -98,7 +98,7 @@ extern struct tm	*localtime();
 
 #if	!defined(lint) && !defined(SABER)
 static char RCS[] =
-	"$Header: /cvsroot/src/gnu/usr.bin/tar/Attic/getdate.y,v 1.2 1993/07/18 11:47:13 cgd Exp $";
+	"$Header: /cvsroot/src/gnu/usr.bin/tar/Attic/getdate.y,v 1.3 1993/12/06 09:38:59 cgd Exp $";
 #endif	/* !defined(lint) && !defined(SABER) */
 
 
@@ -872,21 +872,21 @@ get_date(p, now)
 #if sgi
 	    ftz.timezone = (int) _timezone / 60;
 #else /* not sgi */
-#ifdef __386BSD__
+#ifdef __NetBSD__
 	    ftz.timezone = 0;
-#else /* neither sgi nor 386BSD */
+#else /* neither sgi nor NetBSD */
 #if defined (USG)
 	    extern time_t timezone;
 
 	    ftz.timezone = (int) timezone / 60;
-#else /* neither sgi nor 386BSD nor USG */
+#else /* neither sgi nor NetBSD nor USG */
 	    struct timeval tv;
 	    struct timezone tz;
 
 	    gettimeofday (&tv, &tz);
 	    ftz.timezone = (int) tz.tz_minuteswest;
-#endif /* neither sgi nor 386BSD nor USG */
-#endif /* neither sgi nor 386BSD */
+#endif /* neither sgi nor NetBSD nor USG */
+#endif /* neither sgi nor NetBSD */
 #endif /* not sgi */
 	}
 #else /* HAVE_FTIME */
