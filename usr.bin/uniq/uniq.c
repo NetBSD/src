@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.6 1994/12/06 07:51:17 jtc Exp $	*/
+/*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)uniq.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: uniq.c,v 1.6 1994/12/06 07:51:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: uniq.c,v 1.6 1994/12/06 07:51:17 jtc Exp $";
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define	MAXLINELEN	(8 * 1024)
 
@@ -176,7 +177,8 @@ show(ofp, str)
 	FILE *ofp;
 	char *str;
 {
-	if (cflag)
+
+	if (cflag && *str)
 		(void)fprintf(ofp, "%4d %s", repeats + 1, str);
 	if (dflag && repeats || uflag && !repeats)
 		(void)fprintf(ofp, "%s", str);
