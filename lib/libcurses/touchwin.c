@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.13 2000/04/26 12:29:47 blymn Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.14 2000/05/19 07:39:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.13 2000/04/26 12:29:47 blymn Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.14 2000/05/19 07:39:20 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -119,15 +119,21 @@ untouchwin(WINDOW *win)
 int
 wtouchln(WINDOW *win, int line, int n, int changed)
 {
-	int y;
+	int	y;
+	__LINE	*wlp;
 
 	for (y = line; y < line + n; y++) {
 		if (changed == 1)
 			__touchline(win, y, 0, (int) win->maxx - 1, 0);
 		else {
-  			*win->lines[y]->firstchp = win->maxx + win->ch_off;
-  			*win->lines[y]->lastchp = win->ch_off;
-			win->lines[y]->flags &= ~(__FORCEPAINT | __ISDIRTY);
+			wlp = win->lines[y];
+			if (*wlp->firstchp >= win->ch_off &&
+			    *wlp->firstchp < win->maxx + win->ch_off)
+				*wlp->firstchp = win->maxx + win->ch_off;
+			if (*wlp->lastchp >= win->ch_off &&
+			    *wlp->lastchp < win->maxx + win->ch_off)
+				*wlp->lastchp = win->ch_off;
+			wlp->flags &= ~(__FORCEPAINT | __ISDIRTY);
 		}
 	}
 
