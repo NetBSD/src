@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.24 2000/06/29 09:02:58 mrg Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.24 2000/06/29 09:02:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,9 @@ void		tc_mem_free __P((void *, bus_space_handle_t, bus_size_t));
 
 /* get kernel virtual address */
 void *		tc_mem_vaddr __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		tc_mem_mmap __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	tc_mem_barrier __P((void *, bus_space_handle_t,
@@ -177,6 +180,9 @@ static struct alpha_bus_space tc_mem_space = {
 
 	/* get kernel virtual address */
 	tc_mem_vaddr,
+
+	/* mmap for user */
+	tc_mem_mmap,
 
 	/* barrier */
 	tc_mem_barrier,
@@ -366,6 +372,25 @@ tc_mem_vaddr(v, bsh)
 	}
 #endif
 	return ((void *)bsh);
+}
+
+paddr_t
+tc_mem_mmap(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	bus_addr_t rv;
+
+	if (linear)
+		rv = addr + off;
+	else
+		rv = TC_DENSE_TO_SPARSE(addr + off);
+
+	return (alpha_btop(rv));
 }
 
 inline void
