@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2001/12/14 05:34:51 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.37 2001/12/28 12:22:00 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.36 $"
+#ident		"GENERIC-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -423,6 +423,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty

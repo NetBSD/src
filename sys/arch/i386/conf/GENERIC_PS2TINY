@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.8 2001/12/04 20:49:40 jdolecek Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.9 2001/12/28 12:21:57 martin Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -211,6 +211,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2001/12/14 05:34:46 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.31 2001/12/28 12:21:54 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -201,6 +201,7 @@ pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MINIROOTSIZE=
 pseudo-device	ppp		4
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4
 pseudo-device	vnd		4
