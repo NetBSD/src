@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.245 2003/04/16 00:07:17 darrenr Exp $ */
+/*	$NetBSD: wd.c,v 1.246 2003/04/18 00:35:14 mason Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.245 2003/04/16 00:07:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.246 2003/04/18 00:35:14 mason Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -214,7 +214,7 @@ static const struct wd_quirk {
 	 * Some Seagate S-ATA drives have a PHY which can get confused
 	 * with the way data is packetized by some S-ATA controllers.
 	 *
-	 * The work-around is to split in two any write transfer who's
+	 * The work-around is to split in two any write transfer whose
 	 * sector count % 15 == 1 (assuming 512 byte sectors).
 	 *
 	 * XXX This is an incomplete list.  There are at least a couple
