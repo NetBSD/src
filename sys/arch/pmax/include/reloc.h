@@ -1,3 +1,5 @@
+/*	$NetBSD: reloc.h,v 1.4 1994/10/26 21:09:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)reloc.h	8.1 (Berkeley) 6/10/93
- *      $Id: reloc.h,v 1.3 1994/05/27 09:02:19 glass Exp $
+ *	@(#)reloc.h	8.1 (Berkeley) 6/10/93
  *
  * from: Header: reloc.h,v 1.6 92/06/20 09:59:37 torek Exp
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: tz.c,v 1.4 1994/10/26 21:09:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tz.c	8.4 (Berkeley) 1/11/94
- *      $Id: tz.c,v 1.3 1994/05/27 08:59:40 glass Exp $
+ *	@(#)tz.c	8.4 (Berkeley) 1/11/94
  *
  * from: Header: /sprite/src/kernel/dev/RCS/devSCSITape.c,
  *	v 8.14 89/07/31 17:26:13 mendel Exp  SPRITE (Berkeley)
