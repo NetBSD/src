@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.10 2001/08/21 22:47:18 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.10.10.1 2002/03/17 23:43:46 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -50,7 +50,7 @@
 #define IPL_NET		4
 #define IPL_TTY		5
 #define IPL_LPT		IPL_TTY
-#define IPL_IMP		6
+#define IPL_VM		6
 #define IPL_AUDIO	7
 #define IPL_SERIAL	8
 #define IPL_CLOCK	9
@@ -69,7 +69,7 @@
 #define splnet()	raisespl(IPL_NET)
 #define spltty()	raisespl(IPL_TTY)
 #define spllpt()	raisespl(IPL_LPT)
-#define splvm()		raisespl(IPL_IMP)
+#define splvm()		raisespl(IPL_VM)
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/10/29 19:04:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.6.1 2002/03/17 23:43:53 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	6	/* software serial interrupt */
 #define	IPL_TTY		7	/* terminals */
-#define	IPL_IMP		8	/* memory allocation */
+#define	IPL_VM		8	/* memory allocation */
 #define	IPL_AUDIO	9	/* audio device */
 #define	IPL_CLOCK	10	/* clock interrupt */
 #define	IPL_HIGH	11	/* everything */
@@ -130,7 +130,7 @@ extern struct machvec machine_interface;
 #define	splbio()	_splraise(IPL_BIO)
 #define	splnet()	_splraise(IPL_NET)
 #define	spltty()	_splraise(IPL_TTY)
-#define	splvm()		_splraise(IPL_IMP)
+#define	splvm()		_splraise(IPL_VM)
 #define	splaudio()	_splraise(IPL_AUDIO)
 #define	splclock()	_splraise(IPL_CLOCK)
 #define	splserial()	_splraise(IPL_SERIAL)

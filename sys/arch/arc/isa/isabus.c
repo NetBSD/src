@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.16 2002/03/04 02:19:07 simonb Exp $	*/
+/*	$NetBSD: isabus.c,v 1.16.2.1 2002/03/17 23:43:45 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -229,7 +229,7 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_VM] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not

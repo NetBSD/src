@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2002/02/10 01:58:01 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.6.1 2002/03/17 23:43:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -198,9 +198,9 @@ cpu_configure()
 
 	/* Debugging information */
 #ifndef TERSE
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_IMP]);
+	    irqmasks[IPL_VM]);
 	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
 	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
 	    irqmasks[IPL_SERIAL]);

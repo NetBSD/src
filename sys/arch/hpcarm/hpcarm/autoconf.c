@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2001/11/27 01:12:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.4.1 2002/03/17 23:43:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -171,9 +171,9 @@ cpu_configure()
 
 	/* Debugging information */
 
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY],
-	    imask[IPL_IMP]);
+	    imask[IPL_VM]);
 	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
 	    imask[IPL_AUDIO], imask[IPL_CLOCK], imask[IPL_HIGH],
 	    imask[IPL_SERIAL]);

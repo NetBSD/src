@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.26 2001/04/13 23:30:03 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.26.10.1 2002/03/17 23:43:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #define	IPL_NET		3	/* network */
 #define	IPL_TTY		4	/* terminal */
 #define	IPL_CLOCK	5	/* clock */
-#define IPL_IMP		6	/* memory allocation */
+#define IPL_VM		6	/* memory allocation */
 #define	IPL_SOFTCLOCK	7	/* softlock */
 #define	IPL_SOFTNET	8	/* softnet */
 #define	NIPL		9	/* number of interrupt priority levels */
@@ -183,7 +183,7 @@ splx(ncpl)
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_VM])
 #define splrtty()	splraise(imask[IPL_RTTY])
 #define	splstatclock()	splclock()
 

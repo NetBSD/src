@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.75 2002/03/05 11:56:33 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.75.2.1 2002/03/17 23:43:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.75 2002/03/05 11:56:33 haya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.75.2.1 2002/03/17 23:43:59 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1090,8 +1090,8 @@ pccbbintr_function(sc)
 			s = splclock();
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
-		} else if (pil->pil_level == IPL_IMP) {
-			s = splvm();	/* XXX */
+		} else if (pil->pil_level == IPL_VM) {
+			s = splvm();
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 		} else if (pil->pil_level == IPL_SOFTSERIAL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2001/06/13 15:08:06 soda Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.12.1 2002/03/17 23:43:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -37,7 +37,7 @@
 #define IPL_BIO		1	/* disable block I/O interrupts */
 #define IPL_NET		2	/* disable network interrupts */
 #define IPL_TTY		3	/* disable terminal interrupts */
-#define IPL_IMP		4	/* memory allocation */
+#define IPL_VM		4	/* memory allocation */
 #define IPL_CLOCK	5	/* disable clock interrupts */
 #define IPL_STATCLOCK	6	/* disable profiling interrupts */
 #if 0 /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2002/03/04 02:19:09 simonb Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5.2.1 2002/03/17 23:43:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -230,15 +230,15 @@ intr_calculatemasks()
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	imask[IPL_VM] |= imask[IPL_TTY];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
-	imask[IPL_CLOCK] |= imask[IPL_IMP];
+	imask[IPL_CLOCK] |= imask[IPL_VM];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2002/01/30 03:59:41 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.6.1 2002/03/17 23:43:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	6	/* software serial interrupt */
 #define	IPL_TTY		7	/* terminals */
-#define	IPL_IMP		8	/* memory allocation */
+#define	IPL_VM		8	/* memory allocation */
 #define	IPL_AUDIO	9	/* audio device */
 #define	IPL_CLOCK	10	/* clock interrupt */
 #define	IPL_STATCLOCK	11	/* statistics clock interrupt */
@@ -97,7 +97,7 @@ void	_setsoftintr(int);	/* provided by BSP */
 #define	splbio()	_splraise(IPL_BIO)
 #define	splnet()	_splraise(IPL_NET)
 #define	spltty()	_splraise(IPL_TTY)
-#define	splvm()		_splraise(IPL_IMP)
+#define	splvm()		_splraise(IPL_VM)
 #define	splaudio()	_splraise(IPL_AUDIO)
 #define	splclock()	_splraise(IPL_CLOCK)
 #define	splstatclock()	_splraise(IPL_STATCLOCK)

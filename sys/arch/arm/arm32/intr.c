@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2002/01/31 09:43:42 chris Exp $	*/
+/*	$NetBSD: intr.c,v 1.8.4.1 2002/03/17 23:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -207,7 +207,7 @@ set_spl_masks()
 	spl_masks[_SPL_NET]        = irqmasks[IPL_NET];
 	spl_masks[_SPL_SOFTSERIAL] = irqmasks[IPL_TTY];
 	spl_masks[_SPL_TTY]        = irqmasks[IPL_TTY];
-	spl_masks[_SPL_IMP]        = irqmasks[IPL_IMP];
+	spl_masks[_SPL_IMP]        = irqmasks[IPL_VM];
 	spl_masks[_SPL_AUDIO]      = irqmasks[IPL_AUDIO];
 	spl_masks[_SPL_CLOCK]      = irqmasks[IPL_CLOCK];
 #ifdef IPL_STATCLOCK

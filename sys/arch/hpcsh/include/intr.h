@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2002/02/22 19:44:03 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.4.1 2002/03/17 23:43:50 thorpej Exp $	*/
 #ifndef _HPCSH_INTR_H_
 #define _HPCSH_INTR_H_
 
@@ -10,7 +10,7 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* serial */
 #define	IPL_TTY		3	/* terminal */
-#define	IPL_IMP		3	/* memory allocation */
+#define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	1	/* everything */
