@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1999/11/17 01:22:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.1 2000/02/20 17:50:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,6 +68,12 @@
 #include <machine/cpu.h>
 #include <machine/bootinfo.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
+
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
 void findroot __P((struct device **, int *));
@@ -107,8 +113,12 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+	    (u_short)IMASK(IPL_BIO), (u_short)IMASK(IPL_NET),
+	    (u_short)IMASK(IPL_TTY));
+
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
 
 	spl0();
 
