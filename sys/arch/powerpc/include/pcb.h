@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1998/11/22 21:21:32 ws Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3 1999/12/07 15:14:56 danw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@ struct pcb {
 #define	PCB_FPU		1	/* Process had FPU initialized */
 	struct fpu {
 		double fpr[32];
-		double fpcsr;	/* FPCSR stored as double for easier access */
+		double fpscr;	/* FPSCR stored as double for easier access */
 	} pcb_fpu;		/* Floating point processor */
 };
 
