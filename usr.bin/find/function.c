@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.12 1994/02/16 03:59:52 andrew Exp $";
+static char rcsid[] = "$Id: function.c,v 1.13 1994/04/14 03:34:16 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -345,6 +345,7 @@ f_fstype(plan, entry)
 	static int first = 1;
 	struct statfs sb;
 	static short val;
+	static char fstype[MFSNAMELEN+1];
 	char *p, save[2];
 
 	/* Only check when we cross mount point. */
@@ -383,7 +384,8 @@ f_fstype(plan, entry)
 			val = sb.f_flags;
 			break;
 		case F_MTTYPE:
-			val = sb.f_type;
+			strncpy(fstype, sb.f_fstypename, MFSNAMELEN);
+			fstype[MFSNAMELEN] = '\0';
 			break;
 		default:
 			abort();
@@ -393,7 +395,7 @@ f_fstype(plan, entry)
 	case F_MTFLAG:
 		return (val & plan->mt_data);	
 	case F_MTTYPE:
-		return (val == plan->mt_data);
+		return (strncmp(fstype, plan->c_data, MFSNAMELEN) == 0);
 	default:
 		abort();
 	}
@@ -409,68 +411,12 @@ c_fstype(arg)
     
 	new = palloc(N_FSTYPE, f_fstype);
 	switch (*arg) {
-	case 'f':
-#ifdef MOUNT_FDESC
-		if (!strcmp(arg, "fdesc")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_FDESC;
-			return (new);
-		}
-#endif
-		break;
-	case 'i':
-#ifdef MOUNT_ISOFS
-		if (!strcmp(arg, "isofs")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_ISOFS;
-			return (new);
-		}
-#endif
-		break;
-	case 'k':
-#ifdef MOUNT_KERNFS
-		if (!strcmp(arg, "kernfs")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_KERNFS;
-			return (new);
-		}
-#endif
-		break;
 	case 'l':
 		if (!strcmp(arg, "local")) {
 			new->flags = F_MTFLAG;
 			new->mt_data = MNT_LOCAL;
 			return (new);
 		}
-		break;
-	case 'm':
-		if (!strcmp(arg, "mfs")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_MFS;
-			return (new);
-		}
-#ifdef MOUNT_MSDOS
-		if (!strcmp(arg, "msdos")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_MSDOS;
-		}
-#endif
-		break;
-	case 'n':
-		if (!strcmp(arg, "nfs")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_NFS;
-			return (new);
-		}
-		break;
-	case 'p':
-#ifdef MOUNT_PC
-		if (!strcmp(arg, "pc")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_PC;
-			return (new);
-		}
-#endif
 		break;
 	case 'r':
 		if (!strcmp(arg, "rdonly")) {
@@ -479,16 +425,11 @@ c_fstype(arg)
 			return (new);
 		}
 		break;
-	case 'u':
-		if (!strcmp(arg, "ufs")) {
-			new->flags = F_MTTYPE;
-			new->mt_data = MOUNT_UFS;
-			return (new);
-		}
-		break;
 	}
-	errx(1, "%s: unknown file type", arg);
-	/* NOTREACHED */
+
+	new->flags = F_MTTYPE;
+	new->c_data = arg;
+	return (new);
 }
  
 /*
