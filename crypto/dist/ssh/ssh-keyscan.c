@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.1 2001/01/14 04:51:09 itojun Exp $	*/
-
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,33 +7,26 @@
  * intact).
  */
 
-/* OpenBSD: ssh-keyscan.c,v 1.6 2000/12/19 23:17:58 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.1.1.1 2001/01/14 04:51:09 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.12 2001/02/04 15:32:26 stevesk Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
 
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
+#include "ssh1.h"
 #include "key.h"
 #include "buffer.h"
 #include "bufaux.h"
+#include "log.h"
 
 static int argno = 1;		/* Number of argument currently being parsed */
 
 int family = AF_UNSPEC;		/* IPv4, IPv6 or both */
 
-#define PORT 22
 #define MAXMAXFD 256
 
 /* The number of seconds after which to give up on a TCP connection */
@@ -103,7 +94,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	if (filename) {
 		lb->filename = filename;
 		if (!(lb->stream = fopen(filename, "r"))) {
-			free(lb);
+			xfree(lb);
 			if (errfun)
 				(*errfun) ("%s: %s\n", filename, strerror(errno));
 			return (NULL);
@@ -116,7 +107,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	if (!(lb->buf = malloc(lb->size = LINEBUF_SIZE))) {
 		if (errfun)
 			(*errfun) ("linebuf (%s): malloc failed\n", lb->filename);
-		free(lb);
+		xfree(lb);
 		return (NULL);
 	}
 	lb->errfun = errfun;
@@ -128,8 +119,8 @@ static inline void
 Linebuf_free(Linebuf * lb)
 {
 	fclose(lb->stream);
-	free(lb->buf);
-	free(lb);
+	xfree(lb->buf);
+	xfree(lb);
 }
 
 static inline void
@@ -211,7 +202,7 @@ fdlim_set(int lim)
  * separators.  This is the same as the 4.4BSD strsep, but different from the
  * one in the GNU libc.
  */
-static inline char *
+inline char *
 xstrsep(char **str, const char *delim)
 {
 	char *s, *e;
@@ -233,7 +224,7 @@ xstrsep(char **str, const char *delim)
  * Get the next non-null token (like GNU strsep).  Strsep() will return a
  * null token for two adjacent separators, so we may have to loop.
  */
-static char *
+char *
 strnnsep(char **stringp, char *delim)
 {
 	char *tok;
@@ -244,7 +235,7 @@ strnnsep(char **stringp, char *delim)
 	return (tok);
 }
 
-static void
+void
 keyprint(char *host, char *output_name, char *kd, int len)
 {
 	static Key *rsa;
@@ -279,14 +270,14 @@ keyprint(char *host, char *output_name, char *kd, int len)
 	fputs("\n", stdout);
 }
 
-static int
+int
 tcpconnect(char *host)
 {
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr, s = -1;
 
-	snprintf(strport, sizeof strport, "%d", PORT);
+	snprintf(strport, sizeof strport, "%d", SSH_DEFAULT_PORT);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
@@ -298,7 +289,7 @@ tcpconnect(char *host)
 			error("socket: %s", strerror(errno));
 			continue;
 		}
-		if (fcntl(s, F_SETFL, O_NDELAY) < 0)
+		if (fcntl(s, F_SETFL, O_NONBLOCK) < 0)
 			fatal("F_SETFL: %s", strerror(errno));
 		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0 &&
 		    errno != EINPROGRESS)
@@ -312,7 +303,7 @@ tcpconnect(char *host)
 	return s;
 }
 
-static int
+int
 conalloc(char *iname, char *oname)
 {
 	int s;
@@ -323,7 +314,7 @@ conalloc(char *iname, char *oname)
 	do {
 		name = xstrsep(&namelist, ",");
 		if (!name) {
-			free(namebase);
+			xfree(namebase);
 			return (-1);
 		}
 	} while ((s = tcpconnect(name)) < 0);
@@ -350,23 +341,23 @@ conalloc(char *iname, char *oname)
 	return (s);
 }
 
-static void
+void
 confree(int s)
 {
 	close(s);
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
 		fatal("confree: attempt to free bad fdno %d", s);
-	free(fdcon[s].c_namebase);
-	free(fdcon[s].c_output_name);
+	xfree(fdcon[s].c_namebase);
+	xfree(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
-		free(fdcon[s].c_data);
+		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
 	FD_CLR(s, &read_wait);
 	ncon--;
 }
 
-static void
+void
 contouch(int s)
 {
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
@@ -375,7 +366,7 @@ contouch(int s)
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
 }
 
-static int
+int
 conrecycle(int s)
 {
 	int ret;
@@ -383,15 +374,15 @@ conrecycle(int s)
 	char *iname, *oname;
 
 	iname = xstrdup(c->c_namelist);
-	oname = c->c_output_name;
-	c->c_output_name = NULL;/* prevent it from being freed */
+	oname = xstrdup(c->c_output_name);
 	confree(s);
 	ret = conalloc(iname, oname);
-	free(iname);
+	xfree(iname);
+	xfree(oname);
 	return (ret);
 }
 
-static void
+void
 congreet(int s)
 {
 	char buf[80];
@@ -422,7 +413,7 @@ congreet(int s)
 	contouch(s);
 }
 
-static void
+void
 conread(int s)
 {
 	int n;
@@ -462,7 +453,7 @@ conread(int s)
 	contouch(s);
 }
 
-static void
+void
 conloop(void)
 {
 	fd_set r, e;
@@ -498,14 +489,14 @@ conloop(void)
 	c = tq.tqh_first;
 	while (c &&
 	       (c->c_tv.tv_sec < now.tv_sec ||
-	        (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
+		(c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
 		int s = c->c_fd;
 		c = c->c_link.tqe_next;
 		conrecycle(s);
 	}
 }
 
-static char *
+char *
 nexthost(int argc, char **argv)
 {
 	static Linebuf *lb;

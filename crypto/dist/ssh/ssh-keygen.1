@@ -1,6 +1,6 @@
-.\"  -*- nroff -*-
+.\"	$OpenBSD: ssh-keygen.1,v 1.29 2001/01/29 01:58:18 niklas Exp $
 .\"
-.\" $NetBSD: ssh-keygen.1,v 1.1.1.2 2001/01/14 04:50:44 itojun Exp $
+.\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,12 +37,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2000
+.Dd September 25, 1999
 .Dt SSH-KEYGEN 1
 .Os
 .Sh NAME
 .Nm ssh-keygen
-.Nd generate Secure Shell authentication keys
+.Nd authentication key generation
 .Sh SYNOPSIS
 .Nm ssh-keygen
 .Op Fl q
@@ -73,8 +73,6 @@
 .Nm ssh-keygen
 .Fl l
 .Op Fl f Ar input_keyfile
-.Nm ssh-keygen
-.Fl R
 .Sh DESCRIPTION
 .Nm
 generates and manages authentication keys for
@@ -83,19 +81,17 @@ generates and manages authentication keys for
 defaults to generating an RSA key for use by protocols 1.3 and 1.5;
 specifying the
 .Fl t
-allows you to create a key for use by protocol 2.0.
+option allows you to create a key for use by protocol 2.0.
 .Pp
-Normally each user wishing to use Secure Shell
+Normally each user wishing to use SSH
 with RSA or DSA authentication runs this once to create the authentication
 key in
 .Pa $HOME/.ssh/identity
 or
 .Pa $HOME/.ssh/id_dsa .
-Additionally, the system administrator may use this to generate host keys;
-An example of this can be found in the
-.Xr sshd 8
-startup script
-.Pa /etc/rc.d/sshd .
+Additionally, the system administrator may use this to generate host keys,
+as seen in
+.Pa /etc/rc .
 .Pp
 Normally this program generates the key and asks for a file in which
 to store the private key.
@@ -104,7 +100,7 @@ The public key is stored in a file with the same name but
 appended.
 The program also asks for a passphrase.
 The passphrase may be empty to indicate no passphrase
-(host keys must have empty passphrase), or it may be a string of
+(host keys must have an empty passphrase), or it may be a string of
 arbitrary length.
 Good passphrases are 10-30 characters long and are
 not simple sentences or otherwise easily guessable (English
@@ -157,7 +153,7 @@ new passphrase.
 Silence
 .Nm ssh-keygen .
 Used by
-.Pa /etc/rc.d/sshd
+.Pa /etc/rc
 when creating a new key.
 .It Fl t Ar type
 Specifies the type of the key to create.
@@ -176,10 +172,6 @@ Provides the new comment.
 Provides the new passphrase.
 .It Fl P Ar passphrase
 Provides the (old) passphrase.
-.It Fl R
-If RSA support is functional, immediately exits with code 0.  If RSA
-support is not functional, exits with code 1.  This flag will be
-removed once the RSA patent expires.
 .It Fl x
 This option will read a private
 OpenSSH DSA format file and print a SSH2-compatible public key to stdout.
@@ -231,9 +223,17 @@ where you wish to log in using public key authentication.
 There is no need to keep the contents of this file secret.
 .El
 .Sh AUTHORS
-Tatu Ylonen <ylo@cs.hut.fi>
+OpenSSH is a derivative of the original and free
+ssh 1.2.12 release by Tatu Ylonen.
+Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos,
+Theo de Raadt and Dug Song
+removed many bugs, re-added newer features and
+created OpenSSH.
+Markus Friedl contributed the support for SSH
+protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
-.Xr sshd 8
+.Xr sshd 8 ,
+.Xr ssl 8

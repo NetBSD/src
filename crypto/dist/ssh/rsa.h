@@ -1,5 +1,3 @@
-/*	$NetBSD: rsa.h,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: rsa.h,v 1.9 2000/11/12 19:50:38 markus Exp */
+/* RCSID("$OpenBSD: rsa.h,v 1.10 2001/01/29 19:47:30 markus Exp $"); */
 
 #ifndef RSA_H
 #define RSA_H
@@ -22,6 +20,6 @@
 #include <openssl/rsa.h>
 
 void rsa_public_encrypt __P((BIGNUM * out, BIGNUM * in, RSA * prv));
-void rsa_private_decrypt __P((BIGNUM * out, BIGNUM * in, RSA * prv));
+int rsa_private_decrypt __P((BIGNUM * out, BIGNUM * in, RSA * prv));
 
 #endif				/* RSA_H */

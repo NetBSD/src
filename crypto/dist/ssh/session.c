@@ -1,5 +1,3 @@
-/*	$NetBSD: session.c,v 1.1.1.2 2001/01/14 04:50:41 itojun Exp $	*/
-
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,35 +32,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: session.c,v 1.46 2001/01/04 22:41:03 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: session.c,v 1.1.1.2 2001/01/14 04:50:41 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: session.c,v 1.53 2001/02/04 15:32:25 stevesk Exp $");
 
-#include "xmalloc.h"
 #include "ssh.h"
+#include "ssh1.h"
+#include "ssh2.h"
+#include "xmalloc.h"
 #include "pty.h"
 #include "packet.h"
 #include "buffer.h"
 #include "mpaux.h"
-#include "servconf.h"
 #include "uidswap.h"
 #include "compat.h"
 #include "channels.h"
 #include "nchan.h"
-#include "session.h"
-#include "pathnames.h"
-
 #include "bufaux.h"
-#include "ssh2.h"
 #include "auth.h"
 #include "auth-options.h"
+#include "pathnames.h"
+#include "log.h"
+#include "servconf.h"
+#include "login.h"
+#include "serverloop.h"
+#include "canohost.h"
 
+#ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
+#endif
 
 /* types */
 
@@ -117,18 +114,20 @@ extern int startup_pipe;
 static char *xauthfile;
 
 /* original command from peer. */
-char *original_command = NULL; 
+char *original_command = NULL;
 
 /* data */
 #define MAX_SESSIONS 10
 Session	sessions[MAX_SESSIONS];
 
+#ifdef HAVE_LOGIN_CAP
 static login_cap_t *lc;
+#endif
 
 /*
  * Remove local Xauthority file.
  */
-static void
+void
 xauthfile_cleanup_proc(void *ignore)
 {
 	debug("xauthfile_cleanup_proc called");
@@ -150,7 +149,7 @@ xauthfile_cleanup_proc(void *ignore)
  * Function to perform cleanup if we get aborted abnormally (e.g., due to a
  * dropped connection).
  */
-static void
+void
 pty_cleanup_proc(void *session)
 {
 	Session *s=session;
@@ -208,7 +207,12 @@ do_authenticated(struct passwd * pw)
 	s = session_new();
 	s->pw = pw;
 
-	lc = login_getclass(pw->pw_class);
+#ifdef HAVE_LOGIN_CAP
+	if ((lc = login_getclass(pw->pw_class)) == NULL) {
+		error("unable to get login class");
+		return;
+	}
+#endif
 
 	/*
 	 * We stay in this loop until the client requests to execute a shell
@@ -365,10 +369,6 @@ do_authenticated(struct passwd * pw)
 
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
-			/* Set interactive/non-interactive mode. */
-			packet_set_interactive(have_pty || s->display != NULL,
-			    options.keepalives);
-
 			if (type == SSH_CMSG_EXEC_CMD) {
 				command = packet_get_string(&dlen);
 				debug("Exec command '%.500s'", command);
@@ -445,7 +445,7 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
 		/* Child.  Reinitialize the log since the pid has changed. */
-		log_init(__progname, options.log_level, options.log_facility, log_stderr, 0, 0);
+		log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
 		/*
 		 * Create a new session and process group since the 4.4BSD
@@ -498,6 +498,8 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 	if (pid < 0)
 		packet_disconnect("fork failed: %.100s", strerror(errno));
 	s->pid = pid;
+	/* Set interactive/non-interactive mode. */
+	packet_set_interactive(s->display != NULL);
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
 	close(pin[0]);
@@ -549,8 +551,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
 		/* Child.  Reinitialize the log because the pid has changed. */
-		log_init(__progname, options.log_level, options.log_facility,
-		    log_stderr, 0, 0);
+		log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
 		/* Close the master side of the pseudo tty. */
 		close(ptyfd);
@@ -577,10 +578,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 		if (!(options.use_login && command == NULL))
 			do_login(s, command);
 
-		/*
-		 * Do common processing for the child, such as execing
-		 * the command.
-		 */
+		/* Do common processing for the child, such as execing the command. */
 		do_child(command, pw, s->term, s->display, s->auth_proto,
 		    s->auth_data, s->tty);
 		/* NOTREACHED */
@@ -608,6 +606,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	s->ptymaster = ptymaster;
 
 	/* Enter interactive session. */
+	packet_set_interactive(1);
 	if (compat20) {
 		session_set_fds(s, ptyfd, fdout, -1);
 	} else {
@@ -617,12 +616,12 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	}
 }
 
-static const char *
+const char *
 get_remote_name_or_ip(void)
 {
 	static const char *remote = "";
 	if (utmp_len > 0)
-		remote = get_canonical_hostname();
+		remote = get_canonical_hostname(options.reverse_mapping_check);
 	if (utmp_len == 0 || strlen(remote) > utmp_len)
 		remote = get_remote_ipaddr();
 	return remote;
@@ -670,7 +669,11 @@ do_login(Session *s, const char *command)
 	if (command != NULL)
 		return;
 	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
+#ifdef HAVE_LOGIN_CAP
 	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
+#else
+	if (stat(buf, &st) >= 0)
+#endif
 		return;
 	if (last_login_time != 0) {
 		time_string = ctime(&last_login_time);
@@ -682,8 +685,12 @@ do_login(Session *s, const char *command)
 			printf("Last login: %s from %s\r\n", time_string, hostname);
 	}
 	if (options.print_motd) {
-		f = fopen(login_getcapstr(lc, "welcome", _PATH_MOTD,
-		    _PATH_MOTD), "r");
+#ifdef HAVE_LOGIN_CAP
+		f = fopen(login_getcapstr(lc, "welcome", "/etc/motd",
+		    "/etc/motd"), "r");
+#else
+		f = fopen("/etc/motd", "r");
+#endif
 		if (f) {
 			while (fgets(buf, sizeof(buf), f))
 				fputs(buf, stdout);
@@ -696,7 +703,7 @@ do_login(Session *s, const char *command)
  * Sets the value of the given variable in the environment.  If the variable
  * already exists, its value is overriden.
  */
-static void
+void
 child_set_env(char ***envp, u_int *envsizep, const char *name,
 	      const char *value)
 {
@@ -737,7 +744,7 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
  * Otherwise, it must consist of empty lines, comments (line starts with '#')
  * and assignments of the form name=value.  No other forms are allowed.
  */
-static void
+void
 read_environment_file(char ***env, u_int *envsize,
 		      const char *filename)
 {
@@ -797,9 +804,14 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		options.use_login = 0;
 
 	if (!options.use_login) {
+#ifdef HAVE_LOGIN_CAP
 		if (!login_getcapbool(lc, "ignorenologin", 0) && pw->pw_uid)
 			f = fopen(login_getcapstr(lc, "nologin", _PATH_NOLOGIN,
 			    _PATH_NOLOGIN), "r");
+#else
+		if (pw->pw_uid)
+			f = fopen(_PATH_NOLOGIN, "r");
+#endif
 		if (f) {
 			/* /etc/nologin exists.  Print its contents and exit. */
 			while (fgets(buf, sizeof(buf), f))
@@ -813,12 +825,30 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	   switch, so we let login(1) to this for us. */
 	if (!options.use_login) {
 		if (getuid() == 0 || geteuid() == 0) {
+#ifdef HAVE_LOGIN_CAP
 			if (setusercontext(lc, pw, pw->pw_uid,
 			    (LOGIN_SETALL & ~LOGIN_SETPATH)) < 0) {
 				perror("unable to set user context");
 				exit(1);
-				
+
 			}
+#else
+			if (setlogin(pw->pw_name) < 0)
+				error("setlogin failed: %s", strerror(errno));
+			if (setgid(pw->pw_gid) < 0) {
+				perror("setgid");
+				exit(1);
+			}
+			/* Initialize the group list. */
+			if (initgroups(pw->pw_name, pw->pw_gid) < 0) {
+				perror("initgroups");
+				exit(1);
+			}
+			endgrent();
+
+			/* Permanently switch to the desired uid. */
+			permanently_set_uid(pw->pw_uid);
+#endif
 		}
 		if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
 			fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
@@ -828,7 +858,9 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	 * legal, and means /bin/sh.
 	 */
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
+#ifdef HAVE_LOGIN_CAP
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
+#endif
 
 #ifdef AFS
 	/* Try to get AFS tokens for the local cell. */
@@ -852,8 +884,12 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		child_set_env(&env, &envsize, "USER", pw->pw_name);
 		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
 		child_set_env(&env, &envsize, "HOME", pw->pw_dir);
+#ifdef HAVE_LOGIN_CAP
 		(void) setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH);
 		child_set_env(&env, &envsize, "PATH", getenv("PATH"));
+#else
+		child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
+#endif
 
 		snprintf(buf, sizeof buf, "%.200s/%.50s",
 			 _PATH_MAILDIR, pw->pw_name);
@@ -963,8 +999,10 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	if (chdir(pw->pw_dir) < 0) {
 		fprintf(stderr, "Could not chdir to home directory %s: %s\n",
 			pw->pw_dir, strerror(errno));
+#ifdef HAVE_LOGIN_CAP
 		if (login_getcapbool(lc, "requirehome", 0))
 			exit(1);
+#endif
 	}
 
 	/*
@@ -988,8 +1026,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 					fprintf(f, "%s %s\n", auth_proto, auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n",
-				    _PATH_SSH_USER_RC);
+				fprintf(stderr, "Could not run %s\n", _PATH_SSH_USER_RC);
 		} else if (stat(_PATH_SSH_SYSTEM_RC, &st) >= 0) {
 			if (debug_flag)
 				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_SYSTEM_RC);
@@ -1000,8 +1037,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 					fprintf(f, "%s %s\n", auth_proto, auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n",
-				    _PATH_SSH_SYSTEM_RC);
+				fprintf(stderr, "Could not run %s\n", _PATH_SSH_SYSTEM_RC);
 		} else if (options.xauth_location != NULL) {
 			/* Add authority data to .Xauthority if appropriate. */
 			if (auth_proto != NULL && auth_data != NULL) {
@@ -1023,7 +1059,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 				if (f) {
 					fprintf(f, "add %s %s %s\n", display,
 					    auth_proto, auth_data);
-					if (screen != NULL) 
+					if (screen != NULL)
 						fprintf(f, "add %.*s/unix%s %s %s\n",
 						    (int)(screen-display), display,
 						    screen, auth_proto, auth_data);
@@ -1085,7 +1121,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		} else {
 			/* Launch login(1). */
 
-			execl(_PATH_LOGIN, "login", "-h", hostname,
+			execl("/usr/bin/login", "login", "-h", hostname,
 			     "-p", "-f", "--", pw->pw_name, NULL);
 
 			/* Login couldn't be executed, die. */
@@ -1143,7 +1179,7 @@ session_new(void)
 	return NULL;
 }
 
-static void
+void
 session_dump(void)
 {
 	int i;
@@ -1175,7 +1211,7 @@ session_open(int chanid)
 	return 1;
 }
 
-static Session *
+Session *
 session_by_channel(int id)
 {
 	int i;
@@ -1191,7 +1227,7 @@ session_by_channel(int id)
 	return NULL;
 }
 
-static Session *
+Session *
 session_by_pid(pid_t pid)
 {
 	int i;
@@ -1206,7 +1242,7 @@ session_by_pid(pid_t pid)
 	return NULL;
 }
 
-static int
+int
 session_window_change_req(Session *s)
 {
 	s->col = packet_get_int();
@@ -1218,7 +1254,7 @@ session_window_change_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_pty_req(Session *s)
 {
 	u_int len;
@@ -1267,7 +1303,7 @@ session_pty_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_subsystem_req(Session *s)
 {
 	u_int len;
@@ -1293,7 +1329,7 @@ session_subsystem_req(Session *s)
 	return success;
 }
 
-static int
+int
 session_x11_req(Session *s)
 {
 	int fd;
@@ -1349,7 +1385,7 @@ session_x11_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_shell_req(Session *s)
 {
 	/* if forced_command == NULL, the shell is execed */
@@ -1363,7 +1399,7 @@ session_shell_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_exec_req(Session *s)
 {
 	u_int len;
@@ -1384,7 +1420,7 @@ session_exec_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_auth_agent_req(Session *s)
 {
 	static int called = 0;
@@ -1499,7 +1535,7 @@ session_pty_cleanup(Session *s)
 		error("close(s->ptymaster): %s", strerror(errno));
 }
 
-static void
+void
 session_exit_message(Session *s, int status)
 {
 	Channel *c;
@@ -1544,7 +1580,7 @@ session_exit_message(Session *s, int status)
 	s->chanid = -1;
 }
 
-static void
+void
 session_free(Session *s)
 {
 	debug("session_free: session %d pid %d", s->self, s->pid);
@@ -1559,7 +1595,7 @@ session_free(Session *s)
 	s->used = 0;
 }
 
-static void
+void
 session_close(Session *s)
 {
 	session_pty_cleanup(s);
@@ -1608,7 +1644,7 @@ session_close_by_channel(int id, void *arg)
 	}
 }
 
-static char *
+char *
 session_tty_list(void)
 {
 	static char buf[1024];
@@ -1637,10 +1673,8 @@ session_proctitle(Session *s)
 }
 
 void
-do_authenticated2(void)
+do_authenticated2(Authctxt *authctxt)
 {
-	struct passwd *pw;
-
 	/*
 	 * Cancel the alarm we set to limit the time taken for
 	 * authentication.
@@ -1650,8 +1684,12 @@ do_authenticated2(void)
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
-	pw = auth_get_user();
-	lc = login_getclass(pw->pw_class);
+#ifdef HAVE_LOGIN_CAP
+	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
+		error("unable to get login class");
+		return;
+	}
+#endif
 	server_loop2();
 	if (xauthfile)
 		xauthfile_cleanup_proc(NULL);

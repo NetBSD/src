@@ -1,5 +1,3 @@
-/*	$NetBSD: cipher.h,v 1.1.1.2 2001/01/14 04:50:13 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,7 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: cipher.h,v 1.25 2000/12/19 23:17:56 markus Exp */
+/* RCSID("$OpenBSD: cipher.h,v 1.25 2000/12/19 23:17:56 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
