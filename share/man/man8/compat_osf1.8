@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_osf1.8,v 1.1 1999/11/05 07:59:38 elric Exp $
+.\" $NetBSD: compat_osf1.8,v 1.2 1999/12/27 22:59:18 mrg Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,8 @@ If you have access to an OSF/1 machine, you can copy the contents of:
 And the files
 .Bl -tag -width 123 -compact -offset indent
 .It /etc/svc.conf
-.It /emul/osf1/usr/ccs/lib/cmplrs/otabase/libots.so
+.It /usr/ccs/lib/cmplrs/otabase/libots.so
+.It /sbin/loader
 .El
 .Pp
 Or, simply NFS mount the appropriate directories under /emul/osf1.
