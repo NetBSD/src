@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/10/22 05:58:31 lukem Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -33,6 +33,7 @@ LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.
 ${GENSRCS}: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
+	${_MKMSG_CREATE} ${GENSRCS}
 	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
 
 .include <bsd.prog.mk>
