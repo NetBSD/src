@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.10 2002/11/02 19:49:21 provos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.11 2003/03/25 23:15:22 provos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -282,12 +282,14 @@ print_pidname(char *buf, size_t buflen, struct intercept_translate *tl)
 	struct intercept_pid *icpid;
 	pid_t pid = (intptr_t)tl->trans_addr;
 
-	icpid = intercept_getpid(pid);
-	snprintf(buf, buflen, "%s",
-	    icpid->name != NULL ? icpid->name : "<unknown>");
-
-	if (icpid->name == NULL)
-		intercept_freepid(pid);
+	if (pid != 0) {
+		icpid = intercept_getpid(pid);
+		snprintf(buf, buflen, "%s",
+		    icpid->name != NULL ? icpid->name : "<unknown>");
+		if (icpid->name == NULL)
+			intercept_freepid(pid);
+	} else
+		strlcpy(buf, "<own process group>", buflen);
 
 	return (0);
 }
