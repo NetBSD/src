@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.18 1997/03/31 07:40:03 scottr Exp $	*/
+/*	$NetBSD: scsi.c,v 1.19 1997/04/14 02:33:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -53,6 +53,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -62,8 +63,6 @@
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
-
-#include <hp300/hp300/isr.h>
 
 struct scsi_softc {
 	struct	device sc_dev;		/* generic device glue */
@@ -319,7 +318,7 @@ scsiattach(parent, self, aux)
 	hs->sc_regs = hd;
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(scsiintr, hs, ipl, ISRPRI_BIO);
+	(void) intr_establish(scsiintr, hs, ipl, IPL_BIO);
 	dmacomputeipl();
 
 	/* Reset the controller. */
