@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.62 2000/06/02 23:17:55 fvdl Exp $	*/
+/*	$NetBSD: inetd.c,v 1.62.2.1 2000/07/04 00:56:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.62 2000/06/02 23:17:55 fvdl Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.62.2.1 2000/07/04 00:56:16 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -821,17 +821,6 @@ config(signo)
 				SWAP(char *, sep->se_argv[i], cp->se_argv[i]);
 #ifdef IPSEC
 			SWAP(char *, sep->se_policy, cp->se_policy);
-			if (sep->se_fd != -1) {
-				if (ipsecsetup(sep->se_family, sep->se_fd,
-				    sep->se_policy) < 0 && sep->se_policy) {
-					syslog(LOG_ERR, "%s/%s: "
-					    "ipsec initialization failed",
-					    sep->se_service, sep->se_proto);
-					sep->se_checked = 0;
-					sigsetmask(omask);
-					continue;
-				}
-			}
 #endif
 			SWAP(int, cp->se_type, sep->se_type);
 			SWAP(int, cp->se_max, sep->se_max);
