@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.7 1999/08/31 13:58:58 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.8 1999/09/10 08:59:47 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.7 1999/08/31 13:58:58 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.8 1999/09/10 08:59:47 itojun Exp $");
 #endif
 #endif
 
@@ -140,7 +140,7 @@ struct host_info *host;
 
     if (!sa)
 	return;
-    switch (sa->sa_family) {
+    switch (af = sa->sa_family) {
     case AF_INET:
 	ap = (char *)&((struct sockaddr_in *)sa)->sin_addr;
 	alen = sizeof(struct in_addr);
