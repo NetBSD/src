@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.53 2000/03/29 03:43:33 simonb Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.53.4.1 2000/12/15 00:08:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ nfs_boot_sobind_ipport(so, port)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m);
+	error = sobind(so, m, curproc);
 	m_freem(m);
 	return (error);
 }
