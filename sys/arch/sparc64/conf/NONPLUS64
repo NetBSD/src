@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS64,v 1.14 2000/07/05 04:07:27 sommerfeld Exp $
+# 	$NetBSD: NONPLUS64,v 1.15 2000/07/18 04:17:23 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -191,9 +191,9 @@ sbus0	at mainbus0				# sun4c and sun4u
 
 #### Standard system devices -- all required for a given architecture
 
-## Auxiliary system registers on sun4c and sun4m
-#auxreg0 at sbus0
-#auxreg0 at pci0
+## Auxiliary system registers -- We use the OBP for power management
+#auxio*	at ebus?				# auxio registers
+#auxio*	at sbus? slot ? offset ?		# auxio registers
 
 # We also need:
 # bpp0 at sbus0					# parallel port
