@@ -1,3 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2 1996/03/23 03:42:38 jonathan Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 1997/10/17 04:44:17 jonathan Exp $	*/
 
+#define BYTE_ORDER LITTLE_ENDIAN
 #include <mips/endian.h>
