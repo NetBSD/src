@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.20 2003/01/19 18:26:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: initgroups.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: initgroups.c,v 1.20 2003/01/19 18:26:16 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: initgroups.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $");
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(initgroups,_initgroups)
@@ -58,14 +60,29 @@ initgroups(uname, agroup)
 	const char *uname;
 	gid_t agroup;
 {
-	gid_t groups[NGROUPS];
+	gid_t groups_list[NGROUPS];
 	int ngroups;
+	gid_t *groups = groups_list;
+	int rval;
 
 	_DIAGASSERT(uname != NULL);
 
 	ngroups = NGROUPS;
-	getgrouplist(uname, agroup, groups, &ngroups);
-	if (setgroups(ngroups, groups) < 0)
-		return (-1);
-	return (0);
+	if (getgrouplist(uname, agroup, groups, &ngroups) == -1) {
+		int maxgroups = ngroups;
+		groups = calloc((size_t)maxgroups, sizeof *groups);
+		if (groups == NULL)
+			return -1;
+		if (getgrouplist(uname, agroup, groups, &ngroups) == -1)
+			ngroups = maxgroups;
+	}
+	rval = setgroups(ngroups, groups);
+	if (rval == -1 && errno == EINVAL) {
+		int ng = (int)sysconf(_SC_NGROUPS_MAX);
+		if (ng > 0 && ng < ngroups)
+			rval = setgroups(ng, groups);
+	}
+	if (groups != groups_list)
+		free(groups);
+	return rval;
 }
