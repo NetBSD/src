@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.128.2.6 2001/08/16 16:03:45 tv Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.128.2.7 2002/02/09 19:20:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2007,7 +2007,7 @@ vfs_hang_addrlist(mp, nep, argp)
 			return (EPERM);
 		np = &nep->ne_defexported;
 		np->netc_exflags = argp->ex_flags;
-		np->netc_anon = argp->ex_anon;
+		crcvt(&np->netc_anon, &argp->ex_anon);
 		np->netc_anon.cr_ref = 1;
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return (0);
@@ -2075,7 +2075,7 @@ vfs_hang_addrlist(mp, nep, argp)
 		goto out;
 	}
 	np->netc_exflags = argp->ex_flags;
-	np->netc_anon = argp->ex_anon;
+	crcvt(&np->netc_anon, &argp->ex_anon);
 	np->netc_anon.cr_ref = 1;
 	return (0);
 out:
