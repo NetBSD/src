@@ -81,12 +81,14 @@ static char *crl_usage[]={
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -hash           - print hash value\n",
+" -fingerprint    - print the crl fingerprint\n",
 " -issuer         - print issuer DN\n",
 " -lastupdate     - lastUpdate field\n",
 " -nextupdate     - nextUpdate field\n",
 " -noout          - no CRL output\n",
 " -CAfile  name   - verify CRL using certificates in file \"name\"\n",
 " -CApath  dir    - verify CRL using certificates in \"dir\"\n",
+" -nameopt arg    - various certificate name options\n",
 NULL
 };
 
@@ -97,6 +99,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	unsigned long nmflag = 0;
 	X509_CRL *x=NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	int ret=1,i,num,badops=0;
@@ -105,7 +108,7 @@ int MAIN(int argc, char **argv)
 	char *infile=NULL,*outfile=NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
 	int fingerprint = 0;
-	char **pp,buf[256];
+	char **pp;
 	X509_STORE *store = NULL;
 	X509_STORE_CTX ctx;
 	X509_LOOKUP *lookup = NULL;
@@ -120,11 +123,14 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	if (bio_out == NULL)
 		if ((bio_out=BIO_new(BIO_s_file())) != NULL)
 			{
 			BIO_set_fp(bio_out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 			{
 			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 			bio_out = BIO_push(tmpbio, bio_out);
@@ -185,6 +191,11 @@ int MAIN(int argc, char **argv)
 			text = 1;
 		else if (strcmp(*argv,"-hash") == 0)
 			hash= ++num;
+		else if (strcmp(*argv,"-nameopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
+			}
 		else if (strcmp(*argv,"-issuer") == 0)
 			issuer= ++num;
 		else if (strcmp(*argv,"-lastupdate") == 0)
@@ -214,7 +225,7 @@ int MAIN(int argc, char **argv)
 		{
 bad:
 		for (pp=crl_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,*pp);
+			BIO_printf(bio_err,"%s",*pp);
 		goto end;
 		}
 
@@ -235,7 +246,11 @@ bad:
 			X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 		ERR_clear_error();
 
-		X509_STORE_CTX_init(&ctx, store, NULL, NULL);
+		if(!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+			BIO_printf(bio_err,
+				"Error initialising X509 store\n");
+			goto end;
+		}
 
 		i = X509_STORE_get_by_subject(&ctx, X509_LU_X509, 
 					X509_CRL_get_issuer(x), &xobj);
@@ -264,9 +279,7 @@ bad:
 			{
 			if (issuer == i)
 				{
-				X509_NAME_oneline(X509_CRL_get_issuer(x),
-								buf,256);
-				BIO_printf(bio_out,"issuer= %s\n",buf);
+				print_name(bio_out, "issuer=", X509_CRL_get_issuer(x), nmflag);
 				}
 
 			if (hash == i)
@@ -324,7 +337,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -364,7 +377,8 @@ end:
 		X509_STORE_CTX_cleanup(&ctx);
 		X509_STORE_free(store);
 	}
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}
 
 static X509_CRL *load_crl(char *infile, int format)
