@@ -371,6 +371,12 @@ u_int	hw_addr, hw_pages;
 	atarihwpg   = hw_pages;
 
 	/*
+	 * Announce page-size to the VM-system
+	 */
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+
+	/*
 	 * Setup physical address ranges
 	 */
 	for (i = 0; usable_segs[i+1].start; i++)
