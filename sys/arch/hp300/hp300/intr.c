@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 1998/07/07 18:27:13 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.11 1998/08/12 06:46:57 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ void	arpintr __P((void));
 void	atintr __P((void));
 void	ipintr __P((void));
 void	nsintr __P((void));
-void	clnintr __P((void));
+void	clnlintr __P((void));
 void	ccittintr __P((void));
 void	pppintr __P((void));
 
