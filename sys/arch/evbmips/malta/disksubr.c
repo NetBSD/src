@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2002/03/07 14:44:03 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2002/09/09 06:36:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -159,15 +159,6 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
-
-#ifdef notdef
-	/* XXX WHY WAS THIS HERE?! */
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return (0);
-	}
-#endif
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
