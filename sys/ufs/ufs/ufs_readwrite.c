@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.44 2002/10/23 09:15:08 jdolecek Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.45 2002/12/26 13:37:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.44 2002/10/23 09:15:08 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.45 2002/12/26 13:37:21 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -211,6 +211,9 @@ WRITE(void *v)
 	vsize_t bytelen;
 	boolean_t async;
 	boolean_t usepc = FALSE;
+#ifdef LFS_READWRITE
+	boolean_t need_unreserve = FALSE;
+#endif
 
 	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
@@ -415,6 +418,13 @@ WRITE(void *v)
 		else
 			flags &= ~B_CLRBUF;
 
+#ifdef LFS_READWRITE
+		error = lfs_reserve(fs, vp,
+		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		if (error)
+			break;
+		need_unreserve = TRUE;
+#endif
 		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
 
@@ -442,11 +452,10 @@ WRITE(void *v)
 			break;
 		}
 #ifdef LFS_READWRITE
-		if (!error)
-			error = lfs_reserve(fs, vp, btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		(void)VOP_BWRITE(bp);
-		if (!error)
-			lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		lfs_reserve(fs, vp,
+		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+		need_unreserve = FALSE;
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
@@ -458,6 +467,13 @@ WRITE(void *v)
 		if (error || xfersize == 0)
 			break;
 	}
+#ifdef LFS_READWRITE
+	if (need_unreserve) {
+		lfs_reserve(fs, vp,
+		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
+	}
+#endif
+
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against

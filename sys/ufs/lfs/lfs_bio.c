@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.50 2002/12/22 17:31:52 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.51 2002/12/26 13:37:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.50 2002/12/22 17:31:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.51 2002/12/26 13:37:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,69 @@ int	lfs_writing          = 0;	/* Set if already kicked off a writer
 extern int lfs_dostats;
 
 /*
+ * reserved number/bytes of locked buffers
+ */
+int locked_queue_rcount = 0;
+long locked_queue_rbytes = 0L;
+
+int lfs_fits_buf(struct lfs *, int, int);
+int lfs_reservebuf(struct lfs *, int, int);
+int lfs_reserveavail(struct lfs *, struct vnode *, int);
+
+int
+lfs_fits_buf(struct lfs *fs, int n, int bytes)
+{
+	int count_fit =
+	    (locked_queue_count + locked_queue_rcount + n < LFS_WAIT_BUFS);
+	int bytes_fit =
+	    (locked_queue_bytes + locked_queue_rbytes + bytes < LFS_WAIT_BYTES);
+
+#ifdef DEBUG_LFS
+	if (!count_fit) {
+		printf("lfs_fits_buf: no fit count: %d + %d + %d >= %d\n",
+			locked_queue_count, locked_queue_rcount,
+			n, LFS_WAIT_BUFS);
+	}
+	if (!bytes_fit) {
+		printf("lfs_fits_buf: no fit bytes: %ld + %ld + %d >= %d\n",
+			locked_queue_bytes, locked_queue_rbytes,
+			bytes, LFS_WAIT_BYTES);
+	}
+#endif /* DEBUG_LFS */
+
+	return (count_fit && bytes_fit);
+}
+
+int
+lfs_reservebuf(struct lfs *fs, int n, int bytes)
+{
+	KASSERT(locked_queue_rcount >= 0);
+	KASSERT(locked_queue_rbytes >= 0);
+
+	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
+		int error;
+
+		++fs->lfs_writer;
+		lfs_flush(fs, 0);
+		if (--fs->lfs_writer == 0)
+			wakeup(&fs->lfs_dirops);
+
+		error = tsleep(&locked_queue_count, PCATCH | PUSER,
+		    "lfsresbuf", hz * LFS_BUFWAIT);
+		if (error && error != EWOULDBLOCK)
+			return error;
+	}
+
+	locked_queue_rcount += n;
+	locked_queue_rbytes += bytes;
+
+	KASSERT(locked_queue_rcount >= 0);
+	KASSERT(locked_queue_rbytes >= 0);
+
+	return 0;
+}
+
+/*
  * Try to reserve some blocks, prior to performing a sensitive operation that
  * requires the vnode lock to be honored.  If there is not enough space, give
  * up the vnode lock temporarily and wait for the space to become available.
@@ -126,7 +189,7 @@ extern int lfs_dostats;
  * is going to be removed as well.
  */
 int
-lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
+lfs_reserveavail(struct lfs *fs, struct vnode *vp, int fsb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
@@ -179,20 +242,56 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 		printf("lfs_reserve: woke up\n");
 #endif
 	fs->lfs_ravail += fsb;
+
 	return 0;
 }
 
-/*
- *
- * XXX we don't let meta-data writes run out of space because they can
- * come from the segment writer.  We need to make sure that there is
- * enough space reserved so that there's room to write meta-data
- * blocks.
- *
- * Also, we don't let blocks that have come to us from the cleaner
- * run out of space.
- */
-#define CANT_WAIT(BP,F) (IS_IFILE((BP)) || (BP)->b_lblkno < 0 || ((F) & BW_CLEAN))
+#ifdef DIAGNOSTIC
+int lfs_rescount;
+int lfs_rescountdirop;
+#endif
+
+int
+lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
+{
+	int error;
+	int cantwait;
+
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP);
+#ifdef DIAGNOSTIC
+	if (cantwait) {
+		if (fsb > 0)
+			lfs_rescountdirop++;
+		else if (fsb < 0)
+			lfs_rescountdirop--;
+		if (lfs_rescountdirop < 0)
+			panic("lfs_rescountdirop");
+	}
+	else {
+		if (fsb > 0)
+			lfs_rescount++;
+		else if (fsb < 0)
+			lfs_rescount--;
+		if (lfs_rescount < 0)
+			panic("lfs_rescount");
+	}
+#endif
+	if (cantwait)
+		return 0;
+
+	error = lfs_reserveavail(fs, vp, fsb);
+	if (error)
+		return error;
+
+	/*
+	 * XXX just a guess. should be more precise.
+	 */
+	error = lfs_reservebuf(fs, fragstoblks(fs, fsb), fsbtob(fs, fsb));
+	if (error)
+		lfs_reserveavail(fs, vp, -fsb);
+
+	return error;
+}
 
 int
 lfs_bwrite(void *v)
@@ -274,7 +373,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 {
 	struct lfs *fs;
 	struct inode *ip;
-	int fsb, error, s;
+	int fsb, s;
 
 	KASSERT(bp->b_flags & B_BUSY);
 	KASSERT(flags & BW_CLEAN || !(bp->b_flags & B_CALL));
@@ -310,12 +409,6 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	if (!(bp->b_flags & B_LOCKED)) {
 		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
-		if (!CANT_WAIT(bp, flags)) {
-			if ((error = lfs_availwait(fs, fsb)) != 0) {
-				brelse(bp);
-				return error;
-			}
-		}
 		
 		ip = VTOI(bp->b_vp);
 		if (flags & BW_CLEAN) {

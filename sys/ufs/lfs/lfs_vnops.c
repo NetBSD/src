@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.69 2002/11/24 08:23:41 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.70 2002/12/26 13:37:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.69 2002/11/24 08:23:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.70 2002/12/26 13:37:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,6 +361,8 @@ lfs_inactive(void *v)
 static int lfs_set_dirop(struct vnode *);
 extern int lfs_dirvcount;
 
+#define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
+
 static int
 lfs_set_dirop(struct vnode *vp)
 {
@@ -372,8 +374,9 @@ lfs_set_dirop(struct vnode *vp)
 	 * We might need one directory block plus supporting indirect blocks,
 	 * plus an inode block and ifile page for the new vnode.
 	 */
-	if ((error = lfs_reserve(fs, vp, btofsb(fs, (NIADDR + 3) << fs->lfs_bshift))) != 0)
+	if ((error = lfs_reserve(fs, vp, NRESERVE(fs))) != 0)
 		return (error);
+
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
@@ -394,8 +397,7 @@ lfs_set_dirop(struct vnode *vp)
 #endif
 			if ((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
 					   "lfs_maxdirop", 0)) != 0) {
-				lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 3) << fs->lfs_bshift));
-				return error;
+				goto unreserve;
 			}
 		}							
 	}								
@@ -406,6 +408,10 @@ lfs_set_dirop(struct vnode *vp)
 	lfs_vref(vp);
 
 	return 0;
+
+unreserve:
+	lfs_reserve(fs, vp, -NRESERVE(fs));
+	return error;
 }
 
 #define	SET_ENDOP(fs,vp,str) {						\
@@ -418,7 +424,7 @@ lfs_set_dirop(struct vnode *vp)
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
-	lfs_reserve((fs), vp, -btofsb((fs), (NIADDR + 3) << (fs)->lfs_bshift)); /* XXX */	\
+	lfs_reserve((fs), vp, -NRESERVE(fs)); /* XXX */			\
 	lfs_vunref(vp);							\
 }
 
