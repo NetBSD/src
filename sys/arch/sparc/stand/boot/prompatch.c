@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.5 2002/01/11 01:44:32 uwe Exp $ */
+/*	$NetBSD: prompatch.c,v 1.6 2002/12/16 13:01:01 jdc Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -31,6 +31,7 @@
 #include <lib/libsa/stand.h>
 #include <machine/promlib.h>
 
+char *match_c5ip(void);
 void prom_patch(void);
 
 /*
@@ -46,11 +47,11 @@ struct patch_entry {
  * PROM patches to apply to machine matching name/promvers.
  */
 struct prom_patch {
-	char *name;		/* "name" of the root node */
-	int promvers;		/* prom_version() */
-	struct patch_entry *patches;
+	char *name;			/* "name" of the root node */
+	int promvers;			/* prom_version() */
+	char *(*submatch)(void);	/* Additional matches to test */
+	struct patch_entry *patches;	/* The patches themselves */
 };
-
 
 /*
  * Patches for JavaStation 1 with OBP 2.30
@@ -169,18 +170,48 @@ static struct patch_entry patch_js1_ofw[] = {
 { NULL, NULL }
 }; /* patch_js1_ofw */
 
+/*
+ * Patches for Cycle 5 IP
+ */
+static struct patch_entry patch_c5ip[] = {
 
+/*
+ * Can not remove a node, so just rename bogus /iommu/sbus/SUNW,CS4231
+ * so that it does not get matched.
+ */
+{ "SUNW,CS4231: renaming out of the way",
+	"\" /iommu/sbus/SUNW,CS4231@3,c000000\" find-device \" fakeCS4231\" name"
+	" device-end"
+},
+    
+{ NULL, NULL }
+}; /* patch_c5ip */
 
 static struct prom_patch prom_patch_tab[] = {
-	{ "SUNW,JavaStation-1", PROM_OBP_V3,	patch_js1_obp	},
-	{ "SUNW,JDM1",		PROM_OPENFIRM,	patch_js1_ofw	},
+	{ "SUNW,JavaStation-1",  PROM_OBP_V3,   NULL,	    patch_js1_obp },
+	{ "SUNW,JDM1",		 PROM_OPENFIRM, NULL,	    patch_js1_ofw },
+	{ "SUNW,SPARCstation-5", PROM_OBP_V3,   match_c5ip, patch_c5ip	  },
 	{ NULL, 0, NULL }
 };
 
 
 /*
- * Check if this machine needs tweaks to its PROM.  It's simpler to
- * fix PROM than to invent workarounds in the kernel code.  We do this
+ * Additional match routine for Cycle 5 IP
+ * This uses the SPARCstation 5 PROM almost unchanged, so we check the
+ * "banner-name" attribute of the root node.
+ */
+char * match_c5ip(void)
+{
+	if (strcmp(PROM_getpropstring(prom_findroot(), "banner-name"),
+	    "Cycle Computer Corporation") == 0)
+		 return "Cycle 5 IP";
+
+	return NULL;
+}
+
+/*
+ * Check if this machine needs tweaks to its PROM.  It's simpler to fix
+ * the PROM than to invent workarounds in the kernel code.  We do this
  * patching in the secondary boot to avoid wasting space in the kernel.
  */
 void
@@ -203,6 +234,7 @@ prom_patch(void)
 		    && strcmp(p->name, namebuf) == 0) {
 			struct patch_entry *e;
 			const char *promstr = "???";
+			char *submatch_info = NULL;
 
 			switch (prom_version()) {
 			case PROM_OBP_V0:
@@ -219,7 +251,19 @@ prom_patch(void)
 				break;
 			}
 
-			printf("Patching %s for %s\n", promstr, p->name);
+
+			if (p->submatch != NULL) {
+				submatch_info = (*p->submatch)();
+				if (submatch_info == NULL)
+					continue;
+			}
+
+			if (submatch_info != NULL)
+				printf("Patching %s for %s (%s)\n",
+				    promstr, p->name, submatch_info);
+			else
+				printf("Patching %s for %s\n",
+				    promstr, p->name);
 			for (e = p->patches; e->message != NULL; ++e) {
 				printf("%s", e->message);
 				prom_interpret(e->patch);
