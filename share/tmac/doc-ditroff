@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-ditroff,v 1.6 1999/01/13 07:06:35 ross Exp $
+.\"	$NetBSD: doc-ditroff,v 1.7 1999/03/09 06:33:46 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -194,8 +194,12 @@
 .		nr aP \\n(aP -1
 .	\}
 .	if (\\n(aP==0) \{\
-.		rm C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
-.		rm S1 S2 S3 S4 S5 S6 S7 S8 S9
+.		ie \n(.g .reset C0 C1 C2 C3 C4 C5 C6 C7 C8 C9\
+                                S1 S2 S3 S4 S5 S6 S7 S8 S9\" no tabs!
+.		el \{\
+.			rm C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
+.			rm S1 S2 S3 S4 S5 S6 S7 S8 S9
+.		\}
 .		rn A8 A9
 .		rn A7 A8
 .		rn A6 A7
