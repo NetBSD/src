@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.13 1998/12/24 02:07:36 ross Exp $
+.\"	$NetBSD: sed.1,v 1.14 2001/12/08 19:14:18 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,7 @@ deletes the pattern space.
 Some of the functions use a
 .Em "hold space"
 to save all or part of the pattern space for subsequent retrieval.
-.Sh "Sed Addresses"
+.Sh SED ADDRESSES
 An address is not required, but if specified must be a number (that counts
 input lines
 cumulatively across input files), a dollar
@@ -156,7 +156,7 @@ of the exclamation character
 .Dq !
 .Pc
 function.
-.Sh "Sed Regular Expressions"
+.Sh SED REGULAR EXPRESSIONS
 The
 .Nm
 regular expressions are basic regular expressions (BRE's, see
@@ -206,7 +206,7 @@ will substitute
 .Dq XXX
 for the pattern
 .Dq abc .
-.Sh "Sed Functions"
+.Sh SED FUNCTIONS
 In the following list of commands, the maximum number of permissible
 addresses for each command is indicated by [0addr], [1addr], or [2addr],
 representing zero, one, or two addresses.
@@ -404,7 +404,7 @@ where
 .Dq #
 is a digit, is replaced by the text matched
 by the corresponding backreference expression (see
-.Xr re_format 7 ).
+.Xr re_format 7 ) .
 .Pp
 A line can be split by substituting a newline character into it.
 To specify a newline character in the replacement string, precede it with
