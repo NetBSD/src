@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.13 1993/10/18 07:35:26 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.14 1993/10/18 07:38:32 mycroft Exp $
  */
 
 /*
@@ -228,7 +228,7 @@ comattach(parent, self, aux)
 			printf(": ns16550a, working fifo\n");
 		} else
 			printf(": ns82550 or ns16550, broken fifo\n");
-	} else
+	else
 		printf(": ns82450 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
 	isa_establish(&sc->sc_id, &sc->sc_dev);
