@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.36 2003/04/13 20:54:31 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.37 2003/04/18 23:38:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -256,6 +256,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  PQUIRK_NOMODESENSE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_PILOTECH, USB_PRODUCT_PILOTECH_CRW600 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE | PQUIRK_FORCELUNS,
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 
