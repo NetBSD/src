@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 1998/02/13 07:41:55 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 1998/08/22 05:47:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,6 +189,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define MACH_MACPB280		102
 #define MACH_MACPB280C		103
 #define MACH_MACPB150		115
+#define MACH_MACPB190		122
 
 /*
  * Machine classes.  These define subsets of the above machines.
