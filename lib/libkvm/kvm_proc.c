@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.24 1998/06/30 20:29:40 thorpej Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.25 1998/08/10 02:46:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.24 1998/06/30 20:29:40 thorpej Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.25 1998/08/10 02:46:07 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -499,8 +499,8 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 				continue;
 			break;
 		}
-		bcopy(&proc, &bp->kp_proc, sizeof(proc));
-		bcopy(&eproc, &bp->kp_eproc, sizeof(eproc));
+		memcpy(&bp->kp_proc, &proc, sizeof(proc));
+		memcpy(&bp->kp_eproc, &eproc, sizeof(eproc));
 		++bp;
 		++cnt;
 	}
@@ -896,7 +896,7 @@ kvm_uread(kd, p, uva, buf, len)
 			return (0);
 		}
 		cc = MIN(cnt, len);
-		bcopy(dp, cp, cc);
+		memcpy(cp, dp, cc);
 
 		cp += cc;
 		uva += cc;
