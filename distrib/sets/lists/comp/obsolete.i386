@@ -1,2 +1,2 @@
-# $NetBSD: obsolete.i386,v 1.4 2002/09/07 12:48:55 gehenna Exp $
-/usr/include/i386/conf.h
+# $NetBSD: obsolete.i386,v 1.5 2002/11/17 02:48:04 lukem Exp $
+./usr/include/i386/conf.h

@@ -1,2 +1,2 @@
-# $NetBSD: obsolete.cobalt,v 1.1 2002/09/07 12:48:54 gehenna Exp $
-/usr/include/cobalt/conf.h
+# $NetBSD: obsolete.cobalt,v 1.2 2002/11/17 02:48:03 lukem Exp $
+./usr/include/cobalt/conf.h

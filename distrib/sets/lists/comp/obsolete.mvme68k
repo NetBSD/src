@@ -1,2 +1,2 @@
-# $NetBSD: obsolete.mvme68k,v 1.1 2001/11/28 13:29:30 kleink Exp $
-/usr/include/mvme68k/svr4_machdep.h
+# $NetBSD: obsolete.mvme68k,v 1.2 2002/11/17 02:48:05 lukem Exp $
+./usr/include/mvme68k/svr4_machdep.h

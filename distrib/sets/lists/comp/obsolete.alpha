@@ -1,5 +1,5 @@
-# $NetBSD: obsolete.alpha,v 1.7 2002/10/29 06:19:37 lukem Exp $
-/usr/include/alpha/conf.h
-/usr/include/alpha/fbio.h
-/usr/include/alpha/intrcnt.h
-/usr/include/alpha/wsconsio.h 
+# $NetBSD: obsolete.alpha,v 1.8 2002/11/17 02:48:02 lukem Exp $
+./usr/include/alpha/conf.h
+./usr/include/alpha/fbio.h
+./usr/include/alpha/intrcnt.h
+./usr/include/alpha/wsconsio.h 

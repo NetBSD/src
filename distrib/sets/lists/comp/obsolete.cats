@@ -1,2 +1,2 @@
-# $NetBSD: obsolete.cats,v 1.1 2002/09/28 16:02:54 chris Exp $
-/usr/include/cats/byte_swap.h
+# $NetBSD: obsolete.cats,v 1.2 2002/11/17 02:48:03 lukem Exp $
+./usr/include/cats/byte_swap.h

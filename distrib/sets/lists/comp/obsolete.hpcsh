@@ -1,8 +1,8 @@
-# $NetBSD: obsolete.hpcsh,v 1.5 2002/10/29 06:04:16 lukem Exp $
-/usr/include/hpcsh/conf.h
-/usr/include/hpcsh/cpufunc.h
-/usr/include/hpcsh/pio.h
-/usr/include/hpcsh/segments.h
-/usr/include/hpcsh/shbvar.h
-/usr/include/hpcsh/trap.h
-/usr/include/sh3/db_disasm.h
+# $NetBSD: obsolete.hpcsh,v 1.6 2002/11/17 02:48:04 lukem Exp $
+./usr/include/hpcsh/conf.h
+./usr/include/hpcsh/cpufunc.h
+./usr/include/hpcsh/pio.h
+./usr/include/hpcsh/segments.h
+./usr/include/hpcsh/shbvar.h
+./usr/include/hpcsh/trap.h
+./usr/include/sh3/db_disasm.h
