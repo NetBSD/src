@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/05/30 12:28:38 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2002/02/26 12:45:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,7 @@
 #include <mips/mips_param.h>
 
 /*
- * Machine dependent constants for mips-based DECstations.
+ * Machine dependent constants for Algorithmics boards.
  */
 
 #define	_MACHINE_ARCH	mipsel
