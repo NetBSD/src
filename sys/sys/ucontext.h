@@ -1,11 +1,11 @@
-/*	$NetBSD: ucontext.h,v 1.1.2.3 2002/02/23 22:59:44 gmcgarry Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.1.2.4 2003/01/16 03:15:00 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,10 +39,7 @@
 #ifndef _SYS_UCONTEXT_H_
 #define _SYS_UCONTEXT_H_
 
-
-#if !defined(_STANDALONE) && !defined(_KERNEL)
-#include <signal.h> /* FIXME: too much. */
-#endif
+#include <sys/sigtypes.h>
 #include <machine/mcontext.h>
 
 typedef struct __ucontext	ucontext_t;
@@ -63,6 +60,43 @@ struct __ucontext {
 #define _UC_STACK	0x02		/* valid uc_stack */
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
+
+/*      
+ * The following macros are used to convert from a ucontext to sigcontext,
+ * and vice-versa.  This is for building a sigcontext to deliver to old-style
+ * signal handlers, and converting back (in the event the handler modifies
+ * the context).
+ *
+ * The only valid use of these macros is to convert a ucontext to a
+ * sigcontext for old-style signal delivery and then back to the same
+ * ucontext after the handler has returned.
+ *
+ * The _MCONTEXT_TO_SIGCONTEXT() and _SIGCONTEXT_TO_MCONTEXT() macros
+ * should be provided by <machine/signal.h>.
+ */     
+#define	_UCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	(sc)->sc_mask = (uc)->uc_sigmask;				\
+	if (((uc)->uc_flags & _UC_STACK) != 0 &&			\
+	    ((uc)->uc_stack.ss_flags & SS_ONSTACK) != 0)		\
+		(sc)->sc_onstack = 1;					\
+	else								\
+		(sc)->sc_onstack = 0;					\
+									\
+	_MCONTEXT_TO_SIGCONTEXT(uc, sc);				\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_UCONTEXT(sc, uc)					\
+do {									\
+	(uc)->uc_sigmask = (sc)->sc_mask;				\
+									\
+	/*								\
+	 * XXX What do do about uc_stack?  See				\
+	 * XXX kern_sig.c:setucontext().				\
+	 */								\
+									\
+	_SIGCONTEXT_TO_MCONTEXT(sc, uc);				\
+} while (/*CONSTCOND*/0)
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
