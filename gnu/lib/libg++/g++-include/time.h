@@ -1,4 +1,4 @@
-//	$Id: time.h,v 1.2 1993/08/02 17:22:20 mycroft Exp $
+//	$Id: time.h,v 1.3 1993/08/14 22:07:33 mycroft Exp $
 
 #ifndef _G_time_h
 #define _G_time_h
@@ -97,7 +97,7 @@ long      clock(void);
 #endif
 _G_time_t      time(_G_time_t*);
 unsigned  ualarm(unsigned, unsigned);
-#ifndef __386BSD__
+#ifndef __NetBSD__
 unsigned   usleep(unsigned);
 void       profil _G_ARGS((unsigned short*, _G_size_t, unsigned int, unsigned));
 #else

@@ -1,4 +1,4 @@
-//	$Id: unistd.h,v 1.2 1993/08/02 17:22:21 mycroft Exp $
+//	$Id: unistd.h,v 1.3 1993/08/14 22:07:34 mycroft Exp $
 
 #ifndef _G_unistd_h
 #define _G_unistd_h 1
@@ -67,7 +67,7 @@ void _exit(int);
 #endif
 
 extern unsigned alarm _G_ARGS((unsigned));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern int      brk _G_ARGS((void*));
 #else
 extern char*    brk _G_ARGS((const char*));
@@ -79,7 +79,7 @@ extern int      close _G_ARGS((int));
 extern char*    crypt _G_ARGS((const char*, const char*));
 extern int      dup _G_ARGS((int));
 extern int      dup2 _G_ARGS((int, int));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern void	encrypt _G_ARGS((char*, int));
 #else
 extern int	encrypt _G_ARGS((char*, int));
@@ -87,7 +87,7 @@ extern int	encrypt _G_ARGS((char*, int));
 extern int      execl (const char*, const char *, ...);
 extern int      execle (const char*, const char *, ...);
 extern int      execlp (const char*, const char*, ...);
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern int      exect _G_ARGS((const char*,  const char**,  char**));
 extern int      execv _G_ARGS((const char*,  const char * const *));
 extern int      execve _G_ARGS((const char*, const char * const *, const char * const *));
@@ -106,7 +106,7 @@ extern int      ftruncate _G_ARGS((int, _G_off_t));
 extern char*    getcwd _G_ARGS((char*, _G_size_t));
 extern int      getdomainname _G_ARGS((char*, int));
 extern int      getdtablesize _G_ARGS((void));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern int      getgroups _G_ARGS((int, _G_gid_t*));
 #else
 extern int      getgroups _G_ARGS((int, int*));
@@ -122,7 +122,7 @@ extern _G_pid_t getppid _G_ARGS((void));
 extern char*    getlogin _G_ARGS((void));
 extern char*    getpass _G_ARGS((const char*));
 extern _G_uid_t getuid _G_ARGS((void));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern int      ioctl (int, int, ... );
 #else
 extern int      ioctl (int, unsigned long, ... );
@@ -138,7 +138,7 @@ extern int      pipe _G_ARGS((int*));
 extern int      readlink _G_ARGS((const char*, char*, int));
 extern int      rename _G_ARGS((const char*, const char*));
 extern int      rmdir _G_ARGS((const char*)); 
-#if defined( __OSF1__ ) || defined (__386BSD__)
+#if defined( __OSF1__ ) || defined (__NetBSD__)
 extern char*	sbrk _G_ARGS((int));
 #else
 extern void*    sbrk _G_ARGS((int)); 
@@ -150,7 +150,7 @@ extern int      sethostname _G_ARGS((const char*, int));
 extern _G_pid_t setpgrp _G_ARGS((void));
 extern _G_pid_t setsid _G_ARGS((void));
 #else
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern _G_pid_t setpgrp _G_ARGS((_G_pid_t, _G_pid_t));
 #else
 extern _G_pid_t setsid _G_ARGS((void));
@@ -169,7 +169,7 @@ extern char*    ttyname _G_ARGS((int));
 extern int      ttyslot _G_ARGS((void));
 //extern int   umask _G_ARGS((int)); /* commented out for now; wrong for SunOs4.1 */
 extern int      unlink _G_ARGS((const char*));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern _G_pid_t vfork _G_ARGS((void));
 #else
 extern int      vfork _G_ARGS((void));
