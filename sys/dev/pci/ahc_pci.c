@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.16 1997/08/27 11:25:20 bouyer Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.17 1998/03/16 15:39:13 leo Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -475,7 +475,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 #elif defined(__NetBSD__)
-	ahc_construct(ahc, st, sh, ahc_t, ahc_f);
+	ahc_construct(ahc, st, sh, pa->pa_dmat, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
