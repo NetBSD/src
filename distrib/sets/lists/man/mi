@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.193 2000/01/19 06:35:22 itojun Exp $
+# $NetBSD: mi,v 1.194 2000/01/20 19:26:45 wrstuden Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -777,6 +777,7 @@
 ./usr/share/man/cat8/mount_nfs.0
 ./usr/share/man/cat8/mount_ntfs.0
 ./usr/share/man/cat8/mount_null.0
+./usr/share/man/cat8/mount_overlay.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
 ./usr/share/man/cat8/mount_ufs.0
@@ -1704,7 +1705,7 @@
 ./usr/share/man/man8/mount_msdos.8
 ./usr/share/man/man8/mount_nfs.8
 ./usr/share/man/man8/mount_ntfs.8
-./usr/share/man/man8/mount_null.8
+./usr/share/man/man8/mount_overlay.8
 ./usr/share/man/man8/mount_portal.8
 ./usr/share/man/man8/mount_procfs.8
 ./usr/share/man/man8/mount_ufs.8
