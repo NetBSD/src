@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.4 2000/04/13 07:53:29 itojun Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.5 2002/07/06 21:51:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.4 2000/04/13 07:53:29 itojun Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.5 2002/07/06 21:51:30 wiz Exp $");
 #endif
 #endif
 
@@ -52,10 +52,8 @@ __RCSID("$NetBSD: ifaddrlist.c,v 1.4 2000/04/13 07:53:29 itojun Exp $");
 #endif
 #include <sys/time.h>				/* concession to AIX */
 
-#if __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 
 #include <net/if.h>
 #include <netinet/in.h>
