@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.27 1997/06/26 22:23:17 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.28 1997/06/30 20:16:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -584,12 +584,8 @@ ufs_remove(v)
 	register struct vnode *dvp = ap->a_dvp;
 	int error;
 
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 	ip = VTOI(vp);
-	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
+	if (vp->v_type == VDIR || (ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_ffs_flags & APPEND)) {
 		error = EPERM;
 		goto out;
