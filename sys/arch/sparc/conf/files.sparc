@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.45 1997/10/17 23:59:57 gwr Exp $
+#	$NetBSD: files.sparc,v 1.46 1997/12/23 23:57:20 tv Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -125,39 +125,43 @@ file	arch/sparc/sparc/amd7930intr.s		audio
 # Brooktree DAC attribute
 define bt_dac
 
-device bwtwo
+# Include /dev/fb driver only if a framebuffer card is included
+define fb
+
+device bwtwo: fb
 attach bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo
+device cgtwo: fb
 attach cgtwo at sbus, obio, vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree: bt_dac
+device cgthree: bt_dac, fb
 attach cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgfour: bt_dac
+device cgfour: bt_dac, fb
 attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix: bt_dac
+device cgsix: bt_dac, fb
 attach cgsix at sbus, obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
-device cgeight: bt_dac
+device cgeight: bt_dac, fb
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device tcx: bt_dac
+device tcx: bt_dac, fb
 attach tcx at sbus
 file	arch/sparc/dev/tcx.c		tcx needs-flag
 
-device cgfourteen
+device cgfourteen: fb
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
 file	arch/sparc/dev/bt_subr.c	bt_dac
+file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
 attach le at sbus, ledma, lebuffer, obio
@@ -202,7 +206,6 @@ file	arch/sparc/dev/isp_sbus.c	isp_sbus
 #
 
 file	dev/cons.c
-file	arch/sparc/dev/fb.c
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
