@@ -187,8 +187,10 @@ Novell NE1000, or NE2000 Ethernet boards
 3COM 3c509 or 3COM 3c579 Ethernet boards
 		ep0	any	any
 
-AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
+AT&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
+EtherExpress 16 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
+		ie1	0x300	10		iomem 0xd0000
 
 PCNet-PCI based Ethernet boards; see above for partial list
 		le0	any	any	[you must assign an interrupt in your
