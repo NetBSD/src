@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$NetBSD: systrace.h,v 1.3 2002/08/01 08:47:04 itojun Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.12 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -186,5 +186,9 @@ extern struct intercept_translate gidt;
 extern struct intercept_translate trargv;
 
 extern struct intercept_translate linux_oflags;
+
+#if defined(__i386__) || defined(__m68k__) || defined(__alpha__) || defined(__powerpc__) || defined(__mips__) || defined(__arm__)
+#define HAVE_LINUX_FCNTL_H
+#endif
 
 #endif /* _SYSTRACE_H_ */
