@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.10 2004/07/20 14:34:27 heas Exp $
+.\"	$NetBSD: uiomove.9,v 1.11 2005/02/14 12:44:15 skrll Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,7 +117,7 @@ or vice versa.
 The lesser of
 .Fa n
 or
-.Fa uio-\*[Gt]resid
+.Fa uio-\*[Gt]uio_resid
 bytes are copied.
 .Pp
 .Nm
