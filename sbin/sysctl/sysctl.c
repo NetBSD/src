@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.89 2004/04/08 06:12:43 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.90 2004/04/08 06:49:03 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.89 2004/04/08 06:12:43 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.90 2004/04/08 06:49:03 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -1502,7 +1502,7 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 			if (desc == NULL)
 				desc = (char *)-1;
 			else
-				memcpy(desc, &p->descr_str[0], sz);
+				memcpy(desc, &p->descr_str[0], p->descr_len);
 			node->sysctl_desc = desc;
 		}
 	}
