@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uucico_rcsid[] = "$Id: uucico.c,v 1.4 2002/07/10 23:16:33 wiz Exp $";
+const char uucico_rcsid[] = "$Id: uucico.c,v 1.5 2004/11/05 20:37:28 dsl Exp $";
 #endif
 
 #include <ctype.h>
@@ -1436,7 +1436,7 @@ fdo_call (qdaemon, qstat, qdialer, pfcalled, pterr)
 	      char *zend;
 
 	      b = *zopt++;
-	      if (isspace (b) || b != '-')
+	      if (isspace ((unsigned char)b) || b != '-')
 		continue;
 	      switch (*zopt)
 		{
@@ -1452,7 +1452,7 @@ fdo_call (qdaemon, qstat, qdialer, pfcalled, pterr)
 		  zopt = zend;
 		  break;
 		}
-	      while (*zopt != '\0' && ! isspace (*zopt))
+	      while (*zopt != '\0' && ! isspace ((unsigned char)*zopt))
 		++zopt;
 	    }
 	}
