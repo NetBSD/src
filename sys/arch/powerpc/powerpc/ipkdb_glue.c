@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.1 1996/10/17 12:09:05 ws Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.2 1997/04/16 22:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,23 +71,36 @@ ipkdb_trap_glue(frame)
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 #ifdef	IPKDBUSERHACK
-		asm ("mfsr %0,%1" : "=r"(savesr) : "K"(USER_SR)); /* see above		XXX */
+		/* XXX see above */
+		asm ("mfsr %0,%1" : "=r"(savesr) : "n"(USER_SR));
 #endif
-		ipkdbcopy(frame, ipkdbregs, sizeof ipkdbregs);
-		ipkdbregs[MSR] &= ~PSL_BE;
+		ipkdbzero(ipkdbregs, sizeof ipkdbregs);
+		ipkdbcopy(frame->fixreg, &ipkdbregs[FIX], NFIX * sizeof(int));
+		ipkdbregs[PC] = frame->srr0;
+		ipkdbregs[PS] = frame->srr1 & ~PSL_BE;
+		ipkdbregs[CR] = frame->cr;
+		ipkdbregs[LR] = frame->lr;
+		ipkdbregs[CTR] = frame->ctr;
+		ipkdbregs[XER] = frame->xer;
 
 		switch (ipkdbcmds()) {
 		case 2:
 		case 0:
-			ipkdbregs[MSR] &= ~PSL_SE;
+			ipkdbregs[PS] &= ~PSL_SE;
 			break;
 		case 1:
-			ipkdbregs[MSR] |= PSL_SE;
+			ipkdbregs[PS] |= PSL_SE;
 			break;
 		}
-		ipkdbcopy(ipkdbregs, frame, sizeof ipkdbregs);
+		ipkdbcopy(&ipkdbregs[FIX], frame->fixreg, NFIX * sizeof(int));
+		frame->srr0 = ipkdbregs[PC];
+		frame->srr1 = ipkdbregs[PS];
+		frame->cr = ipkdbregs[CR];
+		frame->lr = ipkdbregs[LR];
+		frame->ctr = ipkdbregs[CTR];
+		frame->xer = ipkdbregs[XER];
 #ifdef	IPKDBUSERHACK
-		asm ("mtsr %0,%1; isync" :: "K"(USER_SR), "r"(savesr));
+		asm ("mtsr %0,%1; isync" :: "n"(USER_SR), "r"(savesr));
 #endif
 		return 1;
 	}
