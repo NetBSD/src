@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 1998/10/01 00:29:53 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.8 1999/03/24 14:01:50 minoura Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,9 +46,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/cpu.h>
 include <machine/psl.h>
@@ -116,11 +114,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 define	T_BUSERR		T_BUSERR
 define	T_ADDRERR		T_ADDRERR
