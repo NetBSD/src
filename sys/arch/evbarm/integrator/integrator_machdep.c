@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.47 2003/09/06 10:57:12 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.48 2003/09/06 11:33:23 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.47 2003/09/06 10:57:12 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.48 2003/09/06 11:33:23 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -780,7 +780,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("irq ");
 #endif
-	irq_init();
+	ifpga_intr_init();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
