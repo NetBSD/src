@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/24 19:45:36 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/24 21:20:09 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,10 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/html
 FILES=	access.5.html aliases.5.html architecture.html \
 	backstage.html basic.html big-picture.gif big-picture.html \
 	bounce.8.html canonical.5.html cleanup.8.html \
-	commands.html defer.8.html delivering.html error.8.html \
-	qfaq.html flush.8.html goals.html inbound.gif index.html \
-	lmtp.8.html local.8.html mailq.1.html master.8.html \
-	motivation.html newaliases.1.html nqmgr.8.html \
+	commands.html delivering.html error.8.html \
+	faq.html flush.8.html goals.html inbound.gif index.html \
+	lmtp.8.html local.8.html master.8.html \
+	motivation.html nqmgr.8.html \
 	outbound.gif pcre_table.5.html pickup.8.html \
 	pipe.8.html postalias.1.html postcat.1.html \
 	postconf.1.html postdrop.1.html postfix.1.html \
@@ -25,6 +25,10 @@ FILES=	access.5.html aliases.5.html architecture.html \
 	showq.8.html small-picture.gif smtp.8.html smtpd.8.html \
 	spawn.8.html transport.5.html trivial-rewrite.8.html \
 	uce.html virtual.5.html virtual.8.html
+
+SYMLINKS= bounce.8.html ${DESTDIR}/${BINDIR}/defer.8.html
+SYMLINKS+=sendmail.1.html ${DESTDIR}/${BINDIR}/mailq.1.html
+SYMLINKS+=sendmail.1.html ${DESTDIR}/${BINDIR}/newaliases.1.html
 
 # not installed:
 # qmqpd.8.html
