@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.78 1998/08/27 14:05:58 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.79 1998/08/31 17:55:26 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -71,6 +71,7 @@ STRIPFLAG?=	-s
 # Systems on which UVM is the standard VM system.
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "hp300") || \
+	(${MACHINE} == "i386") || \
 	(${MACHINE} == "mac68k") || \
 	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "sparc") || \
@@ -80,6 +81,7 @@ UVM?=		yes
 
 # Systems that use UVM's new pmap interface.
 .if	(${MACHINE} == "alpha") || \
+	(${MACHINE} == "i386") || \
 	(${MACHINE} == "vax")
 PMAP_NEW?=	yes
 .endif
