@@ -69,7 +69,7 @@ struct wds_scb {
 
 	TAILQ_ENTRY(wds_scb) chain;
 	struct wds_scb *nexthash;
-	long hashkey;
+	u_long hashkey;
 	struct scsipi_xfer *xs;
 	int flags;
 #define	SCB_ALLOC	0x01

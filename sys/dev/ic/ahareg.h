@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.5 1997/08/27 11:24:46 bouyer Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.6 1997/09/09 18:56:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ struct aha_ccb {
 	/*----------------------------------------------------------------*/
 	TAILQ_ENTRY(aha_ccb) chain;
 	struct aha_ccb *nexthash;
-	long hashkey;
+	u_long hashkey;
 	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
 	int flags;
 #define	CCB_ALLOC	0x01
