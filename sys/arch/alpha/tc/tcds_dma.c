@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.23 1998/03/07 00:42:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.23 1998/03/07 00:42:08 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $")
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <vm/vm.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -56,9 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.22 1997/10/17 18:58:16 mjacob Exp $")
 #include <alpha/tc/tcdsreg.h>
 #include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/ascvar.h>
-
-#include <machine/vmparam.h>
-#include <machine/pte.h>
 
 void
 tcds_dma_reset(sc)
@@ -244,12 +243,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	NCR_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
-	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
-	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
-		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
-	} else {
-		*sc->sc_sda = ALPHA_K0SEG_TO_PHYS((u_long)*addr) >> 2;
-	}
+	*sc->sc_sda = vtophys((vm_offset_t)*addr) >> 2;
 	alpha_mb();
 	dic = *sc->sc_dic;
 	dic &= ~TCDS_DIC_ADDRMASK;

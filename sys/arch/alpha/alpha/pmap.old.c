@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.44 1998/03/06 23:41:01 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.45 1998/03/07 00:42:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.44 1998/03/06 23:41:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.45 1998/03/07 00:42:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2342,7 +2342,8 @@ vtophys(vaddr)
 	} else if (vaddr <= ALPHA_K0SEG_END)
 		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
 	else
-		paddr = vatopa(vaddr);
+		paddr = pmap_pte_pa(pmap_l3pte(pmap_kernel(), vaddr)) |
+		    (vaddr & PGOFSET);
 
 #if 0
 	printf("vtophys(0x%lx) -> %lx\n", vaddr, paddr);
