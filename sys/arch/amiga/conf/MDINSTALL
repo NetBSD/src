@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.17 2004/07/15 03:53:45 atatat Exp $
+#	$NetBSD: MDINSTALL,v 1.18 2004/11/21 19:26:33 is Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -257,8 +257,14 @@ cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
-idesc0		at mainbus0		# A4000 & A1200 IDE
-scsibus*	at idesc0
+#idesc0		at mainbus0		# A4000 & A1200 IDE
+#scsibus*	at idesc0
+wdc0            at mainbus0             # A4000 & A1200 IDE bus
+atabus*         at wdc? channel ?       # ATA bus 
+wd*             at atabus? drive ?      #  + drives
+atapibus*       at atabus?              # ATAPI bus
+cd*             at atapibus? drive ?    # ATAPI CD-ROM drives
+sd*             at atapibus? drive ?    # ATAPI disk drives
 
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
