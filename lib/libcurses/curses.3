@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.15 1999/08/17 03:36:35 enami Exp $
+.\"	$NetBSD: curses.3,v 1.16 2000/04/11 13:57:08 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,12 +84,14 @@ should be called before exiting.
 .It attroff(attribute)	turn off attribute modes
 .It attrset(attribute)	set attribute modes
 .It beep()	sound the terminal bell
+.It border(ls,rs,ts,bs,tl,tr,bl,br)	draw a border around
+.Em stdscr
 .It box(win,vert,hor)	draw a box around a window
 .It cbreak()	set cbreak mode
 .It clear()	clear
 .Em stdscr
-.It clearok(scr,boolf)	set clear flag for
-.Em scr
+.It clearok(win,boolf)	set clear flag for
+.Em win
 .It clrtobot()	clear to bottom on
 .Em stdscr
 .It clrtoeol()	clear to end of line on
@@ -106,6 +108,8 @@ should be called before exiting.
 .It flushinp()	flush terminal input
 .It flushok(win,boolf)	set flush-on-refresh flag for
 .Em win
+.It fullname(termbuf,name) get full name from
+.Em termbuf
 .It getch()	get a char through
 .Em stdscr
 .It getcap(name)	get terminal capability
@@ -114,15 +118,19 @@ should be called before exiting.
 .Em stdscr
 .It gettmode()	get tty modes
 .It getyx(win,y,x)	get (y,x) co-ordinates
+.It idlok(win,boolf)	set insert/deleteln flags for
+.Em win
 .It inch()	get char at current (y,x) co-ordinates
 .It initscr()	initialize screens
 .It insch(c)	insert a char
+.It insdelln(n)	insert/delete n lines on
+.Em stdstr
 .It insertln()	insert a line
 .It isendwin()	check if endwin() or wrefresh() was called latest
 .It keypad(win,boolf)	set keypad flag for
 .Em win
 .It leaveok(win,boolf)	set leave flag for
-.Em stdscr
+.Em win
 .It longname(termbuf,name)	get long name from
 .Em termbuf
 .It move(y,x)	move to (y,x) on
@@ -149,14 +157,20 @@ should be called before exiting.
 .It savetty()	stored current tty flags
 .It scanw(fmt,arg1,arg2,...)	scanf through
 .Em stdscr
+.It scrl(n)	scroll
+.Em stdscr
+n lines
 .It scroll(win)	scroll
 .Em win
 one line
-.It scrollok(win,boolf)	set scroll flag
+.It scrollok(win,boolf)	set scroll flag for
+.Em win
 .It setterm(name)	set term variables for name
 .It standend()	end standout mode
 .It standout()	start standout mode
 .It subwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
+.It timeout(delay)	set blocking or non-blocking read for
+.Em stdscr
 .It touchline(win,y,sx,ex)	mark line
 .Em y
 .Em sx
@@ -184,6 +198,8 @@ as changed
 .Em win
 .It wattrset(attribute)	set attribute modes for
 .Em win
+.It wborder(win,ls,rs,ts,bs,tl,tr,bl,br)	draw a border around
+.Em win
 .It wclear(win)	clear
 .Em win
 .It wclrtobot(win)	clear to bottom of
@@ -204,6 +220,8 @@ as changed
 .Em win
 .It winsch(win,c)	insert char into
 .Em win
+.It winsdelln(win,n)	insert/delete n lines on
+.Em win
 .It winsertln(win)	insert line into
 .Em win
 .It wmove(win,y,x)	set current (y,x) co-ordinates on
@@ -214,9 +232,14 @@ as changed
 .Em win
 .It wscanw(win,fmt,arg1,arg2,...)\ 	scanf through
 .Em win
+.It wscrl(win,n)	scroll
+.Em win
+n lines
 .It wstandend(win)	end standout mode on
 .Em win
 .It wstandout(win)	start standout mode on
+.Em win
+.It wtimeout(win,delay)	set blocking or non-blocking read for
 .Em win
 .It wunderend(win)	end underscore mode on
 .Em win
