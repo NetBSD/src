@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.51 1999/01/23 17:02:35 sommerfe Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.52 1999/01/23 22:23:19 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -110,8 +110,6 @@ sys___vfork14(p, v, retval)
 
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval, NULL));
 }
-
-int slowchild = 1;
 
 int
 fork1(p1, flags, retval, rnewprocp)
@@ -278,12 +276,6 @@ again:
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
 
-	/*
-	 * slow us down if parent was cpu-bound
-	 */
-	if (slowchild)
-		p2->p_estcpu = p1->p_estcpu;
-
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
 	if (p2->p_textvp)
@@ -323,6 +315,13 @@ again:
 			ktradref(p2);
 	}
 #endif
+
+        /*
+         * set priority of child to be that of parent
+	 * XXX should move p_estcpu into the region of struct proc which gets
+	 * copied.
+         */
+        p2->p_estcpu = p1->p_estcpu;
 
 	/*
 	 * This begins the section where we must prevent the parent

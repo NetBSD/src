@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.70 1999/01/21 23:12:50 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.71 1999/01/23 22:23:19 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -145,7 +145,7 @@ struct	proc {
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
 	/* scheduling */
-	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
+	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. XXX belongs in p_startcopy section */
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
