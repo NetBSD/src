@@ -1,24 +1,88 @@
-.\"	$NetBSD: prep,v 1.11 2001/04/16 20:42:43 mbw Exp $
+.\"	$NetBSD: prep,v 1.12 2001/05/12 07:32:17 mbw Exp $
 .
-.Ss2 Gather Information
+.Ss2 Prepare yourself
 .
-Go to the
+Take a deep breath.
+.Pp
+Good.  Now, make sure you are reading the PostScript or HTML version of
+this document, as the 
+.Pa \&.txt No and Pa \&.more
+versions lack important formatting information that will prevent you from
+following the twisted path you must follow.  OK, good.  Now, print out
+this document.
+.Pp
+While it's printing, get some coffee, relax a bit, and mentally prepare
+yourself for something that promises to be confusing, frustrating, and
+annoying.  If you assume the worst, you'll be pleasantly surprised when
+everything works easier than you expected.  Also, forget everything you've
+been told about installing 
+.Nx*M No Ns .
+.Pp
+It's done printing?  Fine, now get a dark writing implement.
+.Pp
+The recommended installation procedure is as follows:
+.(enum
+Go to the 
 .Nx*M
-Model Support webpage and look up your system. Take note of the comments
-about your model and keep these in mind during the rest of this 
-installation
-procedure.
+model support page and look up your model information and issues (I can't
+stress this enough times).
 .Lk http://www.netbsd.org/Ports/macppc/models.html
 .Pp
-Also, you 
-.Em must
-know what version of Open Firmware is in the machine you will be 
-installing
-.Nx*M
-onto.  The instructions that follow will make absolutely no sense
-if you follow directions for a version of Open Firmware other than
-the one on your machine.
+.It
+Spend about 15 minutes and read all the way through this document
+once.  While you're reading, use the writing implement to cross out the
+sections that do not apply to your model (or hilight the sections that do
+depending on your preferences).
 .Pp
+.It
+Now spend another 5 minutes and re-read this document, and mentally piece
+together how you think you'll be installing onto your machine.  It may
+help to take a blank piece of paper and write out an outline of the
+procedure you think you'll be going through.
+.Pp
+.It
+Now create your bootable media and media for the distribution sets.
+.Pp
+.It
+Prepare your machine, depending on the instructions for your model.
+.Pp
+.It
+Boot into Open Firmware, and verify that it has the version of Open
+Firmware you think it does.  Also make sure that the other variables
+are set correctly.
+.Pp
+.It
+Figure out the correct boot command, and boot your machine from the
+bootable media you just created.
+.Pp
+.It
+Celebrate!  The worst is over, but you've still got some work to do.  Take
+a break, maybe more coffee, maybe a quick walk around the block, whatever
+turns your fancy.
+.Pp
+.It
+Now use the installer to install the distribution sets onto your system
+and do some initial configurations.
+.Pp
+.It
+Figure out how to boot from the installed partition.  Boot into 
+.Nx
+for the first time.
+.Pp
+.It
+Configure to your preferences, install your favorite packages, and have
+fun with your new
+.Nx*M
+machine!
+.enum)
+.Pp
+.(Note
+You really actually truly do need to follow the procedure listed in this
+document in the order that we describe.  These systems are rather
+tricky to boot for the novice and expert alike.  Once you cross off the
+sections that don't apply to you, it will make more sense.
+.Note)
+.(Note
 If the instructions in a subsection below do not apply to 
 .Em all
 versions of Open Firmware, there will be a line listing which versions of
@@ -26,48 +90,13 @@ Open Firmware they apply to, such as:
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4, Open Firmware 3)
-.
-.Ss2 Open Firmware System Preparation
-.
-(Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
-.Pp
-All pre-Open Firmware 3 \*M systems have Open Firmware bugs. Luckily, Open 
-Firmware has a small
-Non-Volatile RAM variable (NVRAM) which is reserved for FORTH commands which
-will be run before booting an operating system. Apple has released a freeware
-.Tn MacOS
-tool called System Disk, which patches
-most of these bugs. We
-.Em strongly
-recommend that you use this tool to patch your Open Firmware,
-as several systems cannot boot without these patches.  If you read
-the Model Support page, you'd also know that some models are broken by
-or are unsupported by System Disk.  If you are trying to install on such
-a model, then skip the rest of this section.
-.Pp
-Download System Disk from Apple's site:
-.Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
-.Pp
-For a brief tutorial on how to use System Disk, see:
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/
-.Pp
-Make sure you click the
-.Dq Save
-button, or the patches will not be saved to NVRAM.
-.(Note
-NVRAM patches and Open Firmware settings will be erased if you
-.Sq zap your PRAM
-by holding down
-.Key COMMAND-OPTION-P-R
-keys during the boot chimes
 .Note)
-.Pp
 .
-.Ss2 Updating your firmware
+.Ss2 Updating your BootROM
 .
 (Open Firmware 3)
 .Pp
-Open Firmware 3 systems have a rewritable firmware. Go to the
+Open Firmware 3 systems have a rewritable BootROM. Go to the
 .Sq Apple Software Updates
 web site at
 .Lk http://asu.info.apple.com/
@@ -76,7 +105,7 @@ and search for
 and install the most recent version for your model.
 .Pp
 .(Note
-The most recent versions available (4.1.7 and 4.1.8) as of April 2001 are
+The most recent BootROMs available (4.1.7 and 4.1.8) as of April 2001 are
 known to have some problems.  Some PowerBook G4 users find they are
 unable to boot 
 .Nx
@@ -100,18 +129,23 @@ key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
 key may look like a two-way switch with four straight line segments).
 .Pp
-You should now see the Open Firmware command prompt:
+You should now see the Open Firmware command prompt on your screen:
 .Pp
-.Dl 0 >
+.(disp
+Apple PowerBook3,1 2.1f1 BootROM built on 01/29/00 at 22:38:07
+Copyright 1994-2000 Apple Computer, Inc.
+All Rights Reserved
+
+Welcome to Open Firmware.
+To continue booting, type "mac-boot" and press return.
+To shut down, type "shut-down" and press return.
+ ok
+0 >
+.disp)
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .Dl 0 > Ic "setenv auto-boot? false
-.Pp
-To undo this, and allow Open Firmware to automatically boot the specified 
-operating system when the system is rebooted, type:
-.Pp
-.Dl 0 > Ic "setenv auto-boot? true
 .Pp
 Skip down to the section on
 .Sx Setting up Open Firmware 3 to boot NetBSD
@@ -122,7 +156,18 @@ since the next several pages are instructions for older models.
 .
 (Open Firmware 1.1.22)
 .Pp
-Hold down a special key combination when your system boots.
+The version of Open Firmware in the
+Apple Network Servers can only use a serial console.
+You must first hook up a serial console
+(38400 bps, 8 bits, no parity, 1 stop bit, no handshaking) to 
+.Sq Port 2
+(the
+.Sq Li ttya
+device in Open Firmware).
+.Pp
+Hold down a special key combination on the keyboard attached to
+the ADB port on your system (not the serial console) when your system
+boots.
 .Pp
 After the chime starts, but before it stops, hold down the
 .Key COMMAND-OPTION-O-F
@@ -132,38 +177,76 @@ key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
 key may look like a two-way switch with four straight line segments).
 .Pp
-You should now see the Open Firmware command prompt:
+You should now see some introductory text and the Open Firmware command
+prompt on your terminal:
 .Pp
 .Dl 0 >
 .Pp
-Your screen remains black, since the version of Open Firmware in the
-Apple Network Servers can only use a serial console.
-You must hook up a serial console
-(38400 bps, 8 bits, no parity, 1 stop bit, no handshaking) to 
-.Sq Port 2
-(the
-.Sq Li ttya
-device in Open Firmware).
+Your screen will remain black.
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .Dl 0 > Ic "setenv auto-boot? false
-.Pp
-To undo this, and allow Open Firmware to automatically boot the specified 
-operating system when the system is rebooted, type:
-.Pp
-.Dl 0 > Ic "setenv auto-boot? true
 .Pp
 Skip down to the section on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
 since the next several pages are instructions for MacOS models.
 .Pp
 .
-.Ss2 Getting to the Open Firmware Prompt on Older Models
+.Ss2 Older Open Firmware System Preparation
 .
 (Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
 .Pp
 These models are significantly trickier than the newer machines.
+.Pp
+All pre-Open Firmware 3 \*M systems have Open Firmware bugs. Luckily, Open 
+Firmware has a small
+Non-Volatile RAM variable (NVRAM) which is reserved for FORTH commands which
+will be run before booting an operating system. Apple has released a freeware
+.Tn MacOS
+tool called System Disk, which patches
+most of these bugs. We
+.Em strongly
+recommend that you use this tool to patch your Open Firmware,
+as several systems cannot boot without these patches.  If you read
+the Model Support page, you'd also know that some models are broken by
+or are unsupported by System Disk.
+.Pp
+If you have one of the following models, then skip down to the section on
+.Sx Getting to the Open Firmware Prompt (Harder method using MacOS)
+.br
+Apple Performa 4400, 5500, 6500, 54xx, 6400, and 6360, 
+.br
+Motorola Starmax 3000, 4000, 5000, and 5500, 
+.br
+APS Tech M*Power 604e/200,
+.br
+PowerComputing PowerBase,
+.br
+Umax Apus 2000, Apus 3000, C500, and C600
+.Pp
+For every other model, download System Disk from Apple's site:
+.Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
+.Pp
+For a brief tutorial on how to use System Disk, see:
+.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/
+.Pp
+Make sure you click the
+.Dq Save
+button, or the patches will not be saved to NVRAM.
+.(Note
+NVRAM patches and Open Firmware settings will be erased if you
+.Sq zap your PRAM
+by holding down
+.Key COMMAND-OPTION-P-R
+keys during the boot chimes, or if you accidentally boot into 
+.Tn MacOS No Ns .
+.Note)
+.Pp
+.
+.Ss2 Getting to the Open Firmware Prompt on Older Models
+.
+(Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
 .Pp
 Open Firmware has two variables,
 .Sq input-device
@@ -232,21 +315,30 @@ is
 your monitor will not sync. See
 .Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
 .Pp
-You should now see the Open Firmware command prompt:
+You should now see the Open Firmware command prompt on your screen:
 .Pp
-.Dl 0 >
+.(disp
+Open Firmware, 1.0.5
+To continue booting the MacOS type:
+BYE<return>
+To continue booting from the default boot device type:
+BOOT<return>
+ ok
+0 >
+.disp)
 .Pp
 If your screen is black, then your model does not support using the 
 on-board video in
-Open Firmware. You will need to connect up a serial console
+Open Firmware. You will need to connect a serial console to the 
+.Sq Modem
+port of your system
 (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
 .(Note
 The
 .Dq Stop Boot at Open Firmware prompt
-setting is persistent.  Your system will always stop at the Open Firmware
-prompt unless you uncheck this checkbox or tell Open Firmware
+setting is persistent.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 > Ic "setenv auto-boot? true
+.Dl 0 > Ic "setenv auto-boot? false
 .Note)
 .(Note
 Unfortunately, there are a few models that are better off without the System
@@ -274,7 +366,7 @@ BootVars tool.
 BootVars does
 .Em not
 apply the (possibly critical) NVRAM patches that System Disk does.
-Expect some devices to not work.
+Expect some devices to not work (such as hard drives and ethernet).
 .Note)
 .Pp
 Look up the proper
@@ -319,9 +411,17 @@ is
 your monitor will not sync. See
 .Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
 .Pp
-You should now see the Open Firmware command prompt:
+You should now see the Open Firmware command prompt on your screen:
 .Pp
-.Dl 0 >
+.(disp
+Open Firmware, 1.0.5
+To continue booting the MacOS type:
+BYE<return>
+To continue booting from the default boot device type:
+BOOT<return>
+ ok
+0 >
+.disp)
 .Pp
 If your screen is black, then your model has defaulted to using a serial 
 console.  This is fairly common on Open Firmware 1 and 2 models if you do not
@@ -331,9 +431,9 @@ console (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
 The
 .Dq auto-boot?
 setting is persistent.  Your system will always stop at the Open Firmware
-prompt unless you uncheck this checkbox or tell Open Firmware
+prompt.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 > Ic "setenv auto-boot? true
+.Dl 0 > Ic "setenv auto-boot? false
 .Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Without using MacOS)
@@ -344,11 +444,14 @@ If you don't
 have
 .Tn MacOS ,
 then you need to hold down a special key combination when your system boots.
+Do this on the keyboard attached to
+the ADB port on your system (not the serial console) when your system
+boots.
 .(Note
 Your system will
 .Em not
 have the (possibly critical) NVRAM patches that System Disk applies.
-Expect some devices to not work.
+Expect some devices to not work (such as hard drives and ethernet).
 .Note)
 .Pp
 After the chime starts, but before it stops, hold down the
@@ -359,9 +462,17 @@ key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
 key may look like a two-way switch with four straight line segments).
 .Pp
-You should now see the Open Firmware command prompt:
+You should now see the Open Firmware command prompt on your screen:
 .Pp
-.Dl 0 >
+.(disp
+Open Firmware, 1.0.5
+To continue booting the MacOS type:
+BYE<return>
+To continue booting from the default boot device type:
+BOOT<return>
+ ok
+0 >
+.disp)
 .Pp
 If your screen is black, then your system has defaulted to using a serial
 console. This is fairly common on Open Firmware 1 and 2 models if you do
@@ -372,11 +483,6 @@ Disk tool to set up Open Firmware. You must hook up a serial console
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .Dl 0 > Ic "setenv auto-boot? false
-.Pp
-To undo this, and allow Open Firmware to automatically boot the specified 
-operating system when the system is rebooted, type:
-.Pp
-.Dl 0 > Ic "setenv auto-boot? true
 .Pp
 To use your on-board video and keyboard, look up the proper
 .Sq output-device
@@ -413,8 +519,13 @@ Open Firmware 2.4)
 .Pp
 Double-check your Open Firmware version:
 .Pp
-.Dl 0 > Ic "dev /openprom"
-.Dl 0 > Ic ".properties"
+.Dl 0 > Ic "dev /openprom .properties"
+.(disp
+name                    openprom
+model                   Open Firmware, 1.0.5
+relative-addressing
+ ok
+.disp)
 .Pp
 If your system has Open Firmware prior to version 3, then you must set
 some Open Firmware variables before
@@ -447,13 +558,9 @@ Without the patch, the machine will still work, but its MAC address
 may conflict with another ethernet device on your network.
 .Note)
 .Pp
-For future reference, when you want to boot into
-.Tn MacOS ,
-type:
-.Dl 0 > Ic bye
 .(Note
 Open Firmware 1.0.5 settings and nvram patches will be erased if you boot into
-.Tn MacOS .
+.Tn MacOS No Ns .
 You will need to re-enter them before booting
 .Nx
 again.
@@ -462,9 +569,9 @@ again.
 .(Note
 Open Firmware 2.0.x and Open Firmware 2.4 systems will set the
 .Li real-base
-environment variable to its default value (which doesn't work) if you boot
-into 
-.Tn MacOS .
+environment variable to its default value (which prevents
+.Nx from booting) if you boot into 
+.Tn MacOS No Ns .
 .Note)
 .
 .Ss2 Setting up Open Firmware 3 to boot NetBSD
@@ -473,8 +580,15 @@ into
 .Pp
 Double-check your Open Firmware version:
 .Pp
-.Dl 0 > Ic "dev /openprom"
-.Dl 0 > Ic ".properties"
+.Dl 0 > Ic "dev /openprom .properties"
+.(disp
+name                    openprom
+device_type             BootROM
+model                   OpenFirmware 3
+relative-addressing     
+supports-bootinfo       
+ ok
+.disp)
 .Pp
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
@@ -491,11 +605,6 @@ it will be different than what Open Firmware 3 uses to contact your netboot
 server. Your machine will still work, but its MAC address may conflict with
 another ethernet device on your network.
 .Note)
-.Pp
-For future reference, when you want to boot into
-.Tn MacOS ,
-type:
-.Dl 0 > Ic mac-boot
 .
 .Ss2 Available Boot Media
 .
@@ -599,7 +708,11 @@ bootloader and a
 .Nx
 file system with an installation kernel.
 .Pp
-Description of bootable media:
+.
+.Ss2 Description of bootable media
+.
+(All Open Firmware versions)
+.Pp
 .(bullet -offset indent
 .
 .Em "Partition zero"
@@ -636,11 +749,13 @@ does not yet support it on these systems.
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
-Whilst you can load
+This method loads 
 .Pa ofwboot.xcf
-from an HFS or HFS+ partition, you will not be able to load the kernel
-from HFS or HFS+ filesystems. This will be resolved in a future release of
-.Nx*M
+from an HFS or HFS+ partition which then loads the kernel from an FFS
+filesystem.  This may be either a complete FFS partition or the boot
+floppy image
+.No ( Ns Pa boot.fs No Ns )
+located on an HFS or HFS+ partition.
 .
 .It
 .Em "MS-DOS file system"
