@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.2 1998/11/10 04:29:21 mark Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.3 1999/02/27 11:14:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -80,7 +80,7 @@ struct bus_space footbridge_bs_tag = {
 
 	/* read region */
 	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
+	footbridge_bs_rr_2,
 	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
@@ -98,7 +98,7 @@ struct bus_space footbridge_bs_tag = {
 
 	/* write region */
 	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
+	footbridge_bs_wr_2,
 	bs_notimpl_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 

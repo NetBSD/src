@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io_asm.S,v 1.2 1998/11/10 04:29:21 mark Exp $	*/
+/*	$NetBSD: footbridge_io_asm.S,v 1.3 1999/02/27 11:14:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -176,6 +176,47 @@ Lfootbridge_bs_wm_4_loop:
 
 	mov	pc, lr
 
+/*
+ * read region
+ */
+
+ENTRY(footbridge_bs_rr_2)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lfootbridge_rr_2_loop:
+	ldrh	r3, [r0], #2
+	strh	r3, [r1], #2	/*.word 0xe0c130b2*/
+	subs	r2, r2, #1
+	bne	Lfootbridge_rr_2_loop
+
+	mov	pc, lr
+
+/*
+ * write region.
+ */
+
+ENTRY(footbridge_bs_wr_2)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lfootbridge_wr_2_loop:	
+	ldrh	r3, [r1], #2	/*.word 0xe0d130b2*/
+	strh	r3, [r0], #2
+	subs	r2, r2, #1
+	bne	Lfootbridge_wr_2_loop
+
+	mov	pc, lr
+
+/*
+ * set region
+ */
 
 ENTRY(footbridge_bs_sr_2)
 	add	r0, r1, r2
@@ -191,6 +232,10 @@ Lfootbridge_bs_sr_2_loop:
 
 	mov	pc, lr
 
+/*
+ * copy region
+ */
+
 ENTRY(footbridge_bs_c_2)
 	add	r0, r1, r2
 	ldr	r2, [sp, #0]
@@ -199,10 +244,27 @@ ENTRY(footbridge_bs_c_2)
 	teq	r2, #0
 	moveq	pc, lr
 
-Lfootbridge_bs_c_2_loop:
+	cmp	r0, r1
+	blt	Lfootbridge_bs_c_2_backwards
+
+Lfootbridge_bs_cf_2_loop:
 	ldrh	r3, [r0], #2
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
-	bne	Lfootbridge_bs_c_2_loop
+	bne	Lfootbridge_bs_cf_2_loop
+
+	mov	pc, lr
+
+Lfootbridge_bs_c_2_backwards:
+	add	r0, r0, r2, lsl #1
+	add	r1, r1, r2, lsl #1
+	sub	r0, r0, #2
+	sub	r1, r1, #2
+
+Lfootbridge_bs_cb_2_loop:
+	ldrh	r3, [r0], #-2
+	strh	r3, [r1], #-2
+	subs	r2, r2, #1
+	bne	Lfootbridge_bs_cb_2_loop
 
 	mov	pc, lr
