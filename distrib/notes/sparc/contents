@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.16 1999/05/24 07:03:21 ross Exp $
+.\"	$NetBSD: contents,v 1.16.8.1 2000/08/10 03:38:09 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -629,33 +629,6 @@ and
 .Xr pppd 8 .
 .\}
 .el \{\
-.Pp
-The \*m security distribution set is named
-.Sy secr No and can be found in the
-.D1 Pa \*m/binary/security
-subdirectory of the
-.Nx \*V
-distribution tree. It contains security-related binaries
-which depend on cryptographic source code. You do not need this
-distribution set to use encrypted passwords in your password file; the
-.Sy base
-distribution includes a crypt library which can perform
-only the one-way encryption function. The security distribution
-includes a version of the Kerberos IV network security system, and
-a Kerberized version of
-.Xr telnet 1
-.No program. The Sy secr
-distribution set can be found only on those sites which carry the complete
-.Nx
-distribution and which can legally obtain it. Because
-of United States law, it may not be legal to distribute this set
-to locations outside of the United States and Canada.
-.br
-.if r_alpha .Em 1M gzipped, 3M uncompressed
-.if r_i386 . Em 798K gzipped, 2.4M uncompressed
-.\}
-.
-.
 .Pp
 .Nx
 maintains its own set of sources for the X Window System in order to
