@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.65 1999/08/22 12:49:00 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.66 1999/08/29 22:21:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.65 1999/08/22 12:49:00 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.66 1999/08/29 22:21:57 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -431,7 +431,13 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char		*proxyauth;
 	char		*wwwauth;
 {
-	struct addrinfo		hints, *res;
+#ifdef NI_NUMERICHOST
+	struct addrinfo		hints, *res = NULL;
+	int			error;
+#else
+	struct sockaddr_in	sin;
+	struct hostent		*hp = NULL;
+#endif
 	volatile sig_t		oldintr, oldintp;
 	volatile int		s;
 	int 			ischunked, isproxy, rval, hcode;
@@ -446,7 +452,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	time_t			mtime;
 	url_t			urltype;
 	in_port_t		portnum;
-	int			error;
 
 	closefunc = NULL;
 	fin = fout = NULL;
@@ -455,7 +460,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	auth = location = message = NULL;
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
-	res = NULL;
 	user = pass = host = path = decodedpath = puser = ppass = NULL;
 
 #ifdef __GNUC__			/* shut up gcc warnings */
@@ -615,7 +619,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			}
 		} /* proxyenv != NULL */
 
-#if 0
+#ifndef NI_NUMERICHOST
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 
@@ -634,6 +638,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				warnx("`%s': not an Internet address?", host);
 				goto cleanup_fetch_url;
 			}
+			if (hp->h_length > sizeof(sin.sin_addr))
+				hp->h_length = sizeof(sin.sin_addr);
 			memcpy(&sin.sin_addr, hp->h_addr, hp->h_length);
 		}
 
@@ -1161,8 +1167,10 @@ cleanup_fetch_url:
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
+#ifdef NI_NUMERICHOST
 	if (res != NULL)
 		freeaddrinfo(res);
+#endif
 	FREEPTR(savefile);
 	FREEPTR(user);
 	FREEPTR(pass);
