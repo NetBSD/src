@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.12 2003/12/20 07:26:27 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.13 2003/12/20 07:33:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -720,8 +720,8 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
  */
 
 /*
- * sysctl helper routine for kern.maxvnodes.  handles ensuring that
- * new values never falls below desiredvnodes and then calls reinit
+ * sysctl helper routine for kern.maxvnodes.  drain vnodes if
+ * new value is lower than desiredvnodes and then calls reinit
  * routines that needs to adjust to the new value.
  */
 static int
