@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.86 2000/10/27 20:54:59 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.87 2000/10/27 21:06:52 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1852,3 +1852,9 @@ lib/libkvm/kvm_sun3x.c				1.7
 sys/miscfs/specfs/spec_vnops.c			1.51
 
   Fix security problem in spec_open().
+
+lib/libkvm/kvm_ns32k.c				1.13
+lib/libkvm/kvm_sparc64.c			1.6
+lib/libkvm/kvm_vax.c				1.11
+
+  Use %lx to format u_long parameter.
