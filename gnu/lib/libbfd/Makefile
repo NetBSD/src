@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/06/18 08:19:04 itojun Exp $
+#	$NetBSD: Makefile,v 1.27 2002/06/18 08:48:29 itojun Exp $
 
 LIB=		bfd
 
@@ -280,7 +280,7 @@ elf64-ia64.c: elfxx-ia64.c
 	sed -e s/NN/64/g < $> > $@
 
 peigen.c: peXXigen.c
-	sed -e s/NN/pe/g < $> > $@
+	sed -e s/XX/pe/g < $> > $@
 
 pepigen.c: peXXigen.c
-	sed -e s/NN/pep/g < $> > $@
+	sed -e s/XX/pep/g < $> > $@
