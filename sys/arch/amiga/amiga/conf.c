@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65.4.1 2002/05/16 13:22:30 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.65.4.2 2002/07/09 05:38:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65.4.1 2002/05/16 13:22:30 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65.4.2 2002/07/09 05:38:58 gehenna Exp $");
 
 #include <dev/cons.h>
 

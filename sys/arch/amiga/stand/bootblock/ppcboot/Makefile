@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/01/26 15:03:18 aymeric Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2002/07/09 05:39:11 gehenna Exp $
 
 ### what we need:
 
@@ -44,7 +44,7 @@ AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
 COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
-CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
+CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:
 	${CC} ${CFLAGS} -S $< -o $*.s

@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.50 2002/04/25 15:06:22 atatat Exp $
+# $NetBSD: AMIGA,v 1.50.2.1 2002/07/09 05:39:00 gehenna Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
+# Created from: #NetBSD: GENERIC,v 1.181 2002/06/17 05:14:05 lukem Exp $
 
 #GENERIC machine description file
 
@@ -26,7 +26,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.50 $"
+#ident  		"GENERIC-$Revision: 1.50.2.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -157,7 +157,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 
@@ -422,6 +422,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
