@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2000/12/22 20:57:21 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2001/02/15 11:49:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1128,7 +1128,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
 	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
 	lea	%sp@(12),%sp		| pop value args
 	INTERRUPT_RESTOREREG
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 
 #undef INTERRUPT_SAVEREG
 #undef INTERRUPT_RESTOREREG
