@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.13 2002/05/12 15:04:27 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.14 2002/05/13 05:37:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.13 2002/05/12 15:04:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.14 2002/05/13 05:37:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,8 +334,6 @@ linux_sys_fcntl64(p, v, retval)
 	default:
 		return linux_sys_fcntl(p, v, retval);
 	}
-
-	return error;
 }
 #endif /* !m68k */
 
