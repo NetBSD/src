@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.4 1995/02/13 00:43:32 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.5 1995/05/03 19:53:48 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,12 @@ struct	trapframe {
         int     r3;
         int     r4;
         int     r5;
+        int     r6;
+        int     r7;
+        int     r8;
+        int     r9;
+        int     r10;
+        int     r11;
 	int	trap;	/* Type of trap */
         u_int	code;   /* Trap specific code */
         u_int   pc;     /* User pc */

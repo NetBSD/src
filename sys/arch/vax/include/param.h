@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.7 1995/03/30 20:43:00 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.8 1995/05/03 19:53:46 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -196,5 +196,10 @@
 
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
+
+#if !defined(VAX630) && !defined(VAX410)
+#define todr()          mfpr(PR_TODR)
+#endif
+#define	DELAY(x) {int N=todr()+(x/1000)+1;while(todr()!=N);}
 
 #endif /* _VAX_PARAM_H_ */

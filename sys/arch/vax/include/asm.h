@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 1994/10/26 08:02:01 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.3 1995/05/03 19:53:40 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,37 +36,41 @@
  * SUCH DAMAGE.
  *
  *	@(#)asm.h	5.5 (Berkeley) 5/7/91
+ *      @(#)DEFS.h      5.3 (Berkeley) 6/1/90
  */
 
-#ifndef _SYS_ASM_H_
-#define _SYS_ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
-/*
- * XXX assumes that arguments are not passed in %eax
- */
-
-#ifdef PROF
-# define _BEGIN_ENTRY	.data; 1:; .long 0; .text; .align 2
-# define _END_ENTRY	moval 1b,r0; jsb mcount
-#else
-# define _BEGIN_ENTRY	.text; .align 2
-# define _END_ENTRY
-#endif
+#define R0      0x001
+#define R1      0x002
+#define R2      0x004
+#define R3      0x008
+#define R4      0x010
+#define R5      0x020
+#define R6      0x040
+#define R7      0x080
+#define R8      0x100
+#define R9      0x200
+#define R10     0x400
+#define R11     0x800
 
 #ifdef __STDC__
-# define _C_FUNC(x)	_ ## x
+# define _FUNC(x)       _ ## x ## :
+# define _GLOB(x)       .globl _ ## x
 #else
-# define _C_FUNC(x)	_/**/x
+# define _FUNC(x)       _/**/x:
+# define _GLOB(x)        .globl _/**/x
 #endif
-#define	_ASM_FUNC(x)	x
 
-#define _ENTRY(x)	.globl x; x:
-
-#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
-#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
-			_END_ENTRY
-#define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
+#ifdef PROF
+#define ENTRY(x,regs) \
+        _GLOB(x);.align 2;_FUNC(x);.word regs;jsb mcount;
+#else   
+#define ENTRY(x,regs) \
+        _GLOB(x);.align 2;_FUNC(x);.word regs;
+#endif
 
 #define	ASMSTR		.asciz
 
-#endif /* !_SYS_ASM_H_ */
+#endif /* !_MACHINE_ASM_H_ */
