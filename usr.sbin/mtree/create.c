@@ -1,3 +1,5 @@
+/*	$NetBSD: create.c,v 1.9 1995/03/07 21:12:06 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: create.c,v 1.9 1995/03/07 21:12:06 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
