@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: io.c,v 1.4 1993/08/02 17:52:16 mycroft Exp $
+ *	$Id: io.c,v 1.5 1993/08/28 01:19:01 brezak Exp $
  */
 
 #include <i386/include/pio.h>
@@ -39,10 +39,10 @@
 
 #define KC_CMD_WIN	0xd0		/* read  output port */
 #define KC_CMD_WOUT	0xd1		/* write output port */
-#define KB_A20		0x9f		/* enable A20,
+#define KB_A20		0xdf		/* enable A20,
 					   enable output buffer full interrupt
 					   enable data line
-					   disable clock line */
+					   enable clock line */
 
 /*
  * Gate A20 for high memory
