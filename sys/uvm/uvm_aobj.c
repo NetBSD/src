@@ -1,4 +1,4 @@
-/*	$Id: uvm_aobj.c,v 1.1.1.1 1998/02/05 06:25:10 mrg Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.2 1998/02/06 22:31:37 thorpej Exp $	*/
 
 /* copyright here */
 

@@ -1,4 +1,4 @@
-/*	$Id: uvm_km.h,v 1.1.1.1 1998/02/05 06:25:10 mrg Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.2 1998/02/06 22:31:57 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
