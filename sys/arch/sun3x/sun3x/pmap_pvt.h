@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.2 1997/02/12 23:09:34 gwr Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.3 1997/02/14 03:56:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -160,13 +160,9 @@ struct pmap_physmem_struct {
 a_tmgr_t *get_a_table __P((void));
 b_tmgr_t *get_b_table __P((void));
 c_tmgr_t *get_c_table __P((void));
-a_tmgr_t *pmap_find_a_tmgr __P((mmu_long_dte_t *));
-b_tmgr_t *pmap_find_b_tmgr __P((mmu_short_dte_t *));
-c_tmgr_t *pmap_find_c_tmgr __P((mmu_short_pte_t *));
 int    free_a_table __P((a_tmgr_t *, boolean_t));
 int    free_b_table __P((b_tmgr_t *, boolean_t));
 int    free_c_table __P((c_tmgr_t *, boolean_t));
-void   free_c_table_novalid __P((c_tmgr_t *));
 void   pmap_bootstrap_aalign __P((int));
 void   pmap_alloc_usermmu __P((void));
 void   pmap_alloc_usertmgr __P((void));
@@ -177,28 +173,22 @@ void   pmap_init_c_tables __P((void));
 void   pmap_init_pv __P((void));
 void   pmap_clear_pv __P((vm_offset_t, int));
 boolean_t pmap_remove_a __P((a_tmgr_t *, vm_offset_t, vm_offset_t));
-boolean_t pmap_remove_b __P((pmap_t, b_tmgr_t *, vm_offset_t, vm_offset_t));
-boolean_t pmap_remove_c __P((pmap_t, c_tmgr_t *, vm_offset_t, vm_offset_t));
+boolean_t pmap_remove_b __P((b_tmgr_t *, vm_offset_t, vm_offset_t));
+boolean_t pmap_remove_c __P((c_tmgr_t *, vm_offset_t, vm_offset_t));
 void   pmap_remove_pte __P((mmu_short_pte_t *));
-void   pmap_dereference_pte __P((mmu_short_pte_t *));
 void   pmap_enter_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
 void   pmap_remove_kernel __P((vm_offset_t, vm_offset_t));
 void   pmap_protect_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
-pmap_t pmap_who_owns_pte __P((mmu_short_pte_t *));
 vm_offset_t pmap_extract_kernel __P((vm_offset_t));
-vm_offset_t pmap_get_pteinfo __P((mmu_short_pte_t *, pmap_t *, c_tmgr_t **));
-vm_offset_t pmap_find_va __P((mmu_short_pte_t *));
-char   pmap_find_tia __P((mmu_long_dte_t *));
-char   pmap_find_tib __P((mmu_short_dte_t *));
-char   pmap_find_tic __P((mmu_short_pte_t *));
+vm_offset_t pmap_get_pteinfo __P((u_int, pmap_t *, c_tmgr_t **));
 void   pmap_pinit __P((pmap_t));
 int    pmap_dereference __P((pmap_t));
-void   flush_atc_crp __P((mmu_long_dte_t *));
 boolean_t is_managed __P((vm_offset_t));
 boolean_t pmap_stroll __P((pmap_t, vm_offset_t, a_tmgr_t **, b_tmgr_t **,\
 	c_tmgr_t **, mmu_short_pte_t **, int *, int *, int *));
 void  pmap_bootstrap_copyprom __P((void));
 void  pmap_takeover_mmu __P((void));
+
 /* Debugging function definitions */
 void  pv_list __P((vm_offset_t, int));
 
