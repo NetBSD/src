@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1999/11/10 05:23:18 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1999/11/13 00:30:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -376,8 +376,8 @@ restore_ofw_mapping()
 			continue;
 
 		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1,
-			    VM_PROT_ALL);
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
+			    VM_PROT_ALL|PMAP_WIRED);
 			pa += NBPG;
 			va += NBPG;
 			size -= NBPG;
@@ -530,7 +530,7 @@ cpu_startup()
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1010,7 +1010,7 @@ mapiodev(pa, len)
 
 	for (; len > 0; len -= NBPG) {
 		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1999/09/12 01:17:27 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1999/11/13 00:32:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -735,7 +735,7 @@ dumpsys()
 
 			/* Make a temporary mapping for the page. */
 			pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-					   VM_PROT_READ, FALSE, 0);
+					   VM_PROT_READ, 0);
 			error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 			if (error)
