@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.45 2004/09/15 09:10:42 drochner Exp $	*/
+/*	$NetBSD: iop.c,v 1.46 2004/09/15 15:49:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.45 2004/09/15 09:10:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.46 2004/09/15 15:49:10 drochner Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -842,7 +842,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 			continue;
 
 		ldesc->len = 1;
-		ldesc->locs[IOPCF_TID] = ii->ii_tid;
+		ldesc->locs[IOPCF_TID] = ia.ia_tid;
 
 		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
 					 iop_print, iop_submatch);
