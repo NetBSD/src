@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.18 1999/08/09 09:56:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,13 +126,11 @@ struct wdc_softc { /* Per controller state */
   */
 struct wdc_xfer {
 	volatile u_int c_flags;    
-#define C_INUSE  	0x0001 /* xfer struct is in use */
-#define C_ATAPI  	0x0002 /* xfer is ATAPI request */
-#define C_TIMEOU  	0x0004 /* xfer processing timed out */
-#define C_NEEDDONE  	0x0010 /* need to call upper-level done */
-#define C_POLL		0x0020 /* cmd is polled */
-#define C_DMA		0x0040 /* cmd uses DMA */
-#define C_SENSE		0x0080 /* cmd is a internal command */
+#define C_ATAPI  	0x0001 /* xfer is ATAPI request */
+#define C_TIMEOU  	0x0002 /* xfer processing timed out */
+#define C_POLL		0x0004 /* cmd is polled */
+#define C_DMA		0x0008 /* cmd uses DMA */
+#define C_SENSE		0x0010 /* cmd is a internal command */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
@@ -144,7 +142,6 @@ struct wdc_xfer {
 	int c_bcount;      /* byte count left */
 	int c_skip;        /* bytes already transferred */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
-	LIST_ENTRY(wdc_xfer) free_list;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
 };
