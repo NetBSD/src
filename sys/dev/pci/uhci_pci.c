@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.10 1999/09/14 09:29:05 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.11 1999/09/15 10:25:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,8 @@ int	uhci_pci_match __P((struct device *, struct cfdata *, void *));
 void	uhci_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uhci_pci_ca = {
-	sizeof(uhci_softc_t), uhci_pci_match, uhci_pci_attach
+	sizeof(uhci_softc_t), uhci_pci_match, uhci_pci_attach,
+	uhci_detach, uhci_activate
 };
 
 int
@@ -163,5 +164,5 @@ uhci_pci_attach(parent, self, aux)
 	}
 
 	/* Attach usb device. */
-	config_found((void *)sc, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
 }
