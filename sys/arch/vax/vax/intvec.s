@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.60 2001/05/16 05:36:55 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.61 2001/05/29 21:28:14 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -37,6 +37,8 @@
 
 #include "opt_cputype.h"
 #include "opt_emulate.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #include "leds.h"
 
 #define SCBENTRY(name) \
@@ -304,7 +306,7 @@ SCBENTRY(softnet)
 #	tstl	_C_LABEL(netisr)			# any netisr's set
 #	beql	2f			# no, skip looking at them one by one
 #define DONETISR(bit, fn) \
-	bbcc	$bit,_C_LABEL(netisr),1f; \
+	bbcci	$bit,_C_LABEL(netisr),1f; \
 	calls	$0,_C_LABEL(fn); \
 	1:
 
@@ -330,6 +332,11 @@ SCBENTRY(softserial)
 
 	.align	2
 softintr_dispatch:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	pushl	r0
+	calls	$0,_C_LABEL(krnlock)
+	movl	(sp)+,r0
+#endif
 	movl	SHD_INTRS(r0), r0	# anything to do? (get first handler)
 	beql	3f			# nope return
 	pushl	r7			# we need to use r7 so save it
@@ -342,7 +349,11 @@ softintr_dispatch:
 2:	movl	SH_NEXT(r7), r7		# get next handler
 	bneq	1b			# if not null, process it
 	movl	(sp)+, r7		# done, restore r7
-3:	rsb				# return to caller
+3:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(krnunlock)
+#endif
+	rsb				# return to caller
 
 TRAPCALL(ddbtrap, T_KDBTRAP)
 
