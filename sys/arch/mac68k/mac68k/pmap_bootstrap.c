@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 1995/07/23 21:54:47 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 1995/08/04 03:22:09 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -76,7 +76,7 @@ extern int		nbnumranges;
 extern u_long	nbphys[];
 extern u_long	nblog[];
 extern   signed long	nblen[];
-#define VIDMAPSIZE	btoc(mac68k_vidlen)
+#define VIDMAPSIZE	btoc(mac68k_round_page(mac68k_vidlen))
 extern u_int32_t	mac68k_vidlen;
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
@@ -368,38 +368,12 @@ pmap_bootstrap(nextpa, firstpa)
 		protopte += NBPG;
 	}
 
-	if (nbnumranges) {
-		int	len;
-		u_long	offset;
-
-		for (i = 0; i < nbnumranges; i++) {
-			pte = (PA2VA(nbpa, u_int *))
-				+ mac68k_btop(nblog[i] - NBBASE);
-			protopte = (nbphys[i]&PG_FRAME) | PG_RW | PG_V | PG_CI;
-			if (nblen[i] < 0) {
-				len = mac68k_btop(-nblen[i]);
-				offset = 0;
-				while (len--) {
-					*pte++ = protopte + offset;
-					/* Wrap around every 32k: */
-					offset = (offset + NBPG) & 0x7fff;
-				}
-			} else {
-				len = mac68k_btop(nblen[i]);
-				while (len--) {
-					*pte++ = protopte;
-					protopte += NBPG;
-				}
-			}
-		}
-	} else {
-		pte = PA2VA(nbpa, u_int *);
-		epte = pte + NBMAPSIZE;
-		protopte = NBBASE | PG_RW | PG_V | PG_CI;
-		while (pte < epte) {
-			*pte++ = protopte;
-			protopte += NBPG;
-		}
+	pte = PA2VA(nbpa, u_int *);
+	epte = pte + NBMAPSIZE;
+	protopte = NBBASE | PG_RW | PG_V | PG_CI;
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
 	}
 
 	if (mac68k_vidlog) {

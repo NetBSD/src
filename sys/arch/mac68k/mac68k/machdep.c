@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1995/08/02 11:50:43 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1995/08/04 03:21:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,8 +152,6 @@ long    nblen[NBMAXRANGES];	/* Length of this range If the length is */
 
 extern u_long videoaddr;	/* Addr used in kernel for video. */
 extern u_long videorowbytes;	/* Used in kernel for video. */
-u_long  int_video_start,	/* IIsi-type internal video start */
-        int_video_length;	/* IIsi-type internal video len */
 
 /*
  * Values for IIvx-like internal video
@@ -2223,9 +2221,6 @@ get_mapping(void)
 	 * because that's the page size that MacOS uses.
 	 */
 
-	int_video_start = 0;	/* Logical address */
-	int_video_length = 0;	/* Length in bytes */
-
 	nbnumranges = 0;
 	for (i = 0; i < NBMAXRANGES; i++) {
 		nbphys[i] = 0;
@@ -2292,9 +2287,9 @@ get_mapping(void)
 		if (nblen[i] > 0
 		    && nbphys[i] <= 32768
 		    && 32768 <= nbphys[i] + nblen[i]) {
-			int_video_start = nblog[i] - nbphys[i];
-			/* XXX Guess: */
-			int_video_length = nblen[i] + nbphys[i];
+			mac68k_vidlog = nblog[i] - nbphys[i];
+			mac68k_vidlen = nblen[i] + nbphys[i];
+			mac68k_vidphys = 0;
 			break;
 		}
 	}
@@ -2323,9 +2318,9 @@ get_mapping(void)
 	} else {
 		printf("  Video address = 0x%x\n", videoaddr);
 		printf("  Int video starts at 0x%x\n",
-		    int_video_start);
+		    mac68k_vidlog);
 		printf("  Length = 0x%x (%d) bytes\n",
-		    int_video_length, int_video_length);
+		    mac68k_vidlen, mac68k_vidlen);
 	}
 
 	return low[0];		/* Return physical address of logical 0 */
