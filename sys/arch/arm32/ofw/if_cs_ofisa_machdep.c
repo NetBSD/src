@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.1 1998/08/15 02:59:01 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.2 1998/08/17 20:38:08 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -93,6 +93,34 @@ cs_ofisa_md_match(parent, cf, aux)
 			rv = 2;
 	}
 	return (rv);
+}
+
+int
+cs_ofisa_md_reg_fixup(parent, self, aux, descp, ndescs, ndescsfilled)
+	struct device *parent, *self;
+	void *aux;
+	struct ofisa_reg_desc *descp;
+	int ndescs, ndescsfilled;
+{
+
+	if (1) {		/* XXX old firmware compat enabled */
+		/* We can't provide it. */
+		if (ndescs != 2)
+			return (ndescsfilled);
+
+		/* Firmware provided it. */
+		if (ndescsfilled == 2)
+			return (ndescsfilled);
+
+		descp[0].type = OFISA_REG_TYPE_IO;
+		descp[0].addr = 0x300;
+		descp[0].len  = CS8900_IOSIZE;
+
+		descp[1].type = OFISA_REG_TYPE_MEM;
+		descp[1].addr = 0xd0000;
+		descp[1].len  = 4096;
+	}
+	return (ndescsfilled);
 }
 
 int
