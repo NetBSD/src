@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/18 06:23:28 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/01/20 00:53:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,46 @@
 typedef	int		__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
+#define	_REG_R0		0
+#define	_REG_R1		1
+#define	_REG_R2		2
+#define	_REG_R3		3
+#define	_REG_R4		4
+#define	_REG_R5		5
+#define	_REG_R6		6
+#define	_REG_R7		7
+#define	_REG_R8		8
+#define	_REG_R9		9
+#define	_REG_R10	10
+#define	_REG_R11	11
+#define	_REG_R12	12
+#define	_REG_R13	13
+#define	_REG_R14	14
+#define	_REG_R15	15
+#define	_REG_R16	16
+#define	_REG_R17	17
+#define	_REG_R18	18
+#define	_REG_R19	19
+#define	_REG_R20	20
+#define	_REG_R21	21
+#define	_REG_R22	22
+#define	_REG_R23	23
+#define	_REG_R24	24
+#define	_REG_R25	25
+#define	_REG_R26	26
+#define	_REG_R27	27
+#define	_REG_R28	28
+#define	_REG_R29	29
+#define	_REG_R30	30
+#define	_REG_R31	31
+#define	_REG_CR		32		/* Condition Register */
+#define	_REG_LR		33		/* Link Register */
+#define	_REG_PC		34		/* PC (copy of SRR0) */
+#define	_REG_MSR	35		/* MSR (copy of SRR1) */
+#define	_REG_CTR	36		/* Count Register */
+#define	_REG_XER	37		/* Integet Exception Reigster */
+#define	_REG_MQ		38		/* MQ Register (POWER only) */
+#if 0
 struct __gregs {
 	__greg_t	__r_r0;		/* GR0-31 */
 	__greg_t	__r_r1;
@@ -93,6 +133,7 @@ struct __gregs {
 	__greg_t	__r_xer;	/* Integer Exception Register */
 	__greg_t	__r_mq;		/* MQ Register (POWER only) */
 };
+#endif
 
 typedef struct {
 	double		__fpu_regs[32];	/* FP0-31 */
