@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.22 2003/10/28 23:33:46 mycroft Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.23 2003/11/07 21:27:56 carrel Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.22 2003/10/28 23:33:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.23 2003/11/07 21:27:56 carrel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ struct uvisor_type {
 static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO }, PALM4 },
+	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_TREO600 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M500 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M505 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M515 }, PALM4 },
