@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: signal.c,v 1.3 1994/02/07 22:04:29 proven Exp $ $provenid: signal.c,v 1.18 1994/02/07 02:19:28 proven Exp $";
+static const char rcsid[] = "$Id: signal.c,v 1.4 1997/10/08 04:11:16 christos Exp $ $provenid: signal.c,v 1.18 1994/02/07 02:19:28 proven Exp $";
 #endif
 
 #include <pthread.h>
@@ -155,7 +155,7 @@ context_switch_reschedule:;
 		fd_kern_wait();
 
 		/* Check for interrupts, but ignore SIGVTALR */
-		sigdelset(&sig_to_process, SIGVTALRM); 
+		sigdelset((sigset_t *) &sig_to_process, SIGVTALRM); 
 
 		if (sig_to_process) {
 			/* Process interrupts */
@@ -198,7 +198,7 @@ void sig_handler_pause()
  */
 void context_switch_done()
 {
-	sigdelset(&sig_to_process, SIGVTALRM);
+	sigdelset((sigset_t *) &sig_to_process, SIGVTALRM);
 	set_thread_timer();
 }
 
@@ -245,13 +245,13 @@ static void sig_handler(int sig)
  	 * check any twice.
      */
 	if (sig_to_tryagain) {
-		if (sigismember(&sig_to_tryagain, SIGALRM)) {
+		if (sigismember((sigset_t *) &sig_to_tryagain, SIGALRM)) {
 			switch (sleep_wakeup()) {
 			case 1:
 				/* Do the default action, no threads were sleeping */
 			case OK:
 				/* Woke up a sleeping thread */
-				sigdelset(&sig_to_tryagain, SIGALRM);
+				sigdelset((sigset_t *) &sig_to_tryagain, SIGALRM);
 				break;
 			case NOTOK:
 				/* Couldn't get appropriate locks, try again later */
@@ -286,7 +286,7 @@ sig_handler_top:;
 		context_switch_done();
 		break;
 	case SIGALRM:
-		sigdelset(&sig_to_process, SIGALRM);
+		sigdelset((sigset_t *) &sig_to_process, SIGALRM);
 		switch (sleep_wakeup()) {
 		case 1:
 			/* Do the default action, no threads were sleeping */
@@ -295,7 +295,7 @@ sig_handler_top:;
 			break;
 		case NOTOK:
 			/* Couldn't get appropriate locks, try again later */
-			sigaddset(&sig_to_tryagain, SIGALRM);
+			sigaddset((sigset_t *) &sig_to_tryagain, SIGALRM);
 			break;
 		} 
 		break;
@@ -306,7 +306,7 @@ sig_handler_top:;
 	/* Determine if there are any other signals */
 	if (sig_to_process) {
 		for (sig = 1; sig <= SIGMAX; sig++) {
-			if (sigismember(&sig_to_process, sig)) {
+			if (sigismember((sigset_t *) &sig_to_process, sig)) {
 		
 				/* goto sig_handler_top */
 				goto sig_handler_top;
@@ -325,7 +325,7 @@ void sig_handler_real(int sig)
 {
 	if (kernel_lock) {
 		__fd_kern_wait_timeout.tv_sec = 0;
-		sigaddset(&sig_to_process, sig);
+		sigaddset((sigset_t *) &sig_to_process, sig);
 		return;
 	}
 	sig_prevent();
