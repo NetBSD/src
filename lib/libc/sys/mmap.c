@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.7 1997/07/13 20:25:31 christos Exp $	*/
+/*	$NetBSD: mmap.c,v 1.8 1997/10/16 23:21:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: mmap.c,v 1.7 1997/07/13 20:25:31 christos Exp $");
+__RCSID("$NetBSD: mmap.c,v 1.8 1997/10/16 23:21:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,9 +51,9 @@ __RCSID("$NetBSD: mmap.c,v 1.7 1997/07/13 20:25:31 christos Exp $");
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
-caddr_t
+void *
 mmap(addr, len, prot, flags, fd, offset)
-	caddr_t addr;
+	void   *addr;
 	size_t	len;
 	int	prot;
 	int	flags;
