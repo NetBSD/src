@@ -27,7 +27,7 @@
  *	i4b_ipac.h - definitions for the Siemens IPAC PSB2115 chip
  *	==========================================================
  *
- *	$Id: i4b_ipac.h,v 1.1.1.1 2001/01/05 12:50:10 martin Exp $
+ *	$Id: ipac.h,v 1.1 2001/02/20 22:24:36 martin Exp $
  *
  *      last edit-date: [Thu Jan  6 14:54:19 2000]
  *

@@ -27,7 +27,7 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.1 2001/02/18 09:24:53 martin Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.2 2001/02/20 22:24:39 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -71,9 +71,9 @@
 
 #include <netisdn/i4b_global.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 /*---------------------------------------------------------------------------*
  *	Niccy GO@ definitions
