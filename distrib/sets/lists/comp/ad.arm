@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.18 2003/12/29 03:13:26 lukem Exp $
+# $NetBSD: ad.arm,v 1.19 2004/01/03 15:43:50 lukem Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -79,11 +79,11 @@
 ./usr/lib/libarm32.a            	comp-obsolete	obsolete
 ./usr/lib/libarm32_p.a          	comp-obsolete	obsolete
 ./usr/lib/libarm32_pic.a        	comp-obsolete	obsolete
-./usr/lib/libarm_p.a			comp-c-lib
+./usr/lib/libarm_p.a			comp-c-lib	profile
 ./usr/lib/libarm_pic.a			comp-c-piclib
 ./usr/lib/libpmc.a			comp-c-lib
 ./usr/lib/libpmc.so			comp-c-lib
-./usr/lib/libpmc_p.a			comp-c-proflib
+./usr/lib/libpmc_p.a			comp-c-proflib	profile
 ./usr/lib/libpmc_pic.a			comp-c-piclib
 ./usr/libdata/lint/llib-larm.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-larm32.ln	comp-obsolete	obsolete
