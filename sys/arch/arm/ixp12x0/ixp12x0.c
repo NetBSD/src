@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.1 2002/07/15 16:27:16 ichiro Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.2 2002/07/21 14:19:43 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -67,7 +67,7 @@ ixp12x0_attach(sc)
 	/*
 	 * PCI bus reset
 	 */
-	/* assert PCI reset */
+	/* XXX assert PCI reset Mode */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
 		SA_CONTROL) &~ SA_CONTROL_PNR;
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
@@ -79,15 +79,15 @@ ixp12x0_attach(sc)
 		PCI_CAP_PTR, 0xc);
 	/* Disable door bell int to PCI */
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		DBELL_PCI_MASK, 0xc);
+		DBELL_PCI_MASK, 0x0);
 	/* Disable door bell int to SA-core */
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		DBELL_SA_MASK, 0xc);
+		DBELL_SA_MASK, 0x0);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		PCI_ADDR_EXT, 0);
 
-	/* Negate PCI reset */
+	/* XXX Negate PCI reset */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
 		SA_CONTROL) | SA_CONTROL_PNR;
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,

@@ -1,5 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.2 2002/07/20 03:09:03 ichiro Exp $ */
-#undef POLLING_COM
+/*	$NetBSD: ixp12x0_com.c,v 1.3 2002/07/21 14:19:43 ichiro Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,20 +110,6 @@
 
 #include <dev/cons.h>
 #include "ixpcom.h"
-
-#if 0
-#ifdef POLLING_COM
-#undef CR_RIE
-#define CR_RIE 0
-#undef CR_XIE
-#define CR_XIE 0
-#endif
-
-#ifdef NOXIE
-#undef CR_XIE
-#define CR_XIE 0
-#endif
-#endif
 
 cdev_decl(ixpcom);
 
@@ -828,9 +813,6 @@ ixpcominit(iot, iobase, baud, cflag, iohp)
 
 	cr = cflag2cr(cflag);
 	cr |= IXPCOMSPEED2BRD(baud);
-#if 0
-	cr |= (CR_UE | CR_RIE | CR_XIE);
-#endif
 	cr |= CR_UE;
 	ixpcom_cr = cr;
 

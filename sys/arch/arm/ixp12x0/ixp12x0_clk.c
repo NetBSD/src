@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.1 2002/07/15 16:27:16 ichiro Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.2 2002/07/21 14:19:43 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -48,8 +48,6 @@
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>
-
-#include <evbarm/ixm1200/ixm1200reg.h>
 
 #include <arm/ixp12x0/ixpsipvar.h> 
 
@@ -238,15 +236,9 @@ cpu_initclocks()
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_LOAD,
 			  sc->sc_clock_count);
-#if 1 /* XXX */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
 			  IXPCL_ENABLE | IXPCL_PERIODIC
 			  | IXPCL_STP_CORE);
-#else
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
-			  IXPCL_ENABLE | IXPCL_PERIODIC
-			  | IXPCL_STP_DIV256);
-#endif
 }
 
 int
@@ -288,10 +280,6 @@ microtime(tvp)
 	oldirqstate = disable_interrupts(I32_bit);
 
 	counts = ixpclk_sc->sc_clock_count - GET_TIMER_VALUE(ixpclk_sc);
-
-#ifdef DEBUG
-	printf("microtime: counts = %d\n", counts);
-#endif
 
         /* Fill in the timeval struct. */
 	*tvp = time;
