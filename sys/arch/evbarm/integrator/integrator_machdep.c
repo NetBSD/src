@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.21 2002/04/05 16:58:08 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.22 2002/04/12 06:13:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -921,59 +921,3 @@ consinit(void)
 #endif
 	panic("No serial console configured");
 }
-
-#if 0
-static bus_space_handle_t kcom_base = (bus_space_handle_t) (DC21285_PCI_IO_VBASE + CONCOMADDR);
-
-u_int8_t footbridge_bs_r_1(void *, bus_space_handle_t, bus_size_t);
-void footbridge_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-
-#define	KCOM_GETBYTE(r)		footbridge_bs_r_1(0, kcom_base, (r))
-#define	KCOM_PUTBYTE(r,v)	footbridge_bs_w_1(0, kcom_base, (r), (v))
-
-static int
-kcomcngetc(dev_t dev)
-{
-	int stat, c;
-
-	/* block until a character becomes available */
-	while (!ISSET(stat = KCOM_GETBYTE(com_lsr), LSR_RXRDY))
-		;
-
-	c = KCOM_GETBYTE(com_data);
-	stat = KCOM_GETBYTE(com_iir);
-	return c;
-}
-
-/*
- * Console kernel output character routine.
- */
-static void
-kcomcnputc(dev_t dev, int c)
-{
-	int timo;
-
-	/* wait for any pending transmission to finish */
-	timo = 150000;
-	while (!ISSET(KCOM_GETBYTE(com_lsr), LSR_TXRDY) && --timo)
-		continue;
-
-	KCOM_PUTBYTE(com_data, c);
-
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(KCOM_GETBYTE(com_lsr), LSR_TXRDY) && --timo)
-		continue;
-}
-
-static void
-kcomcnpollc(dev_t dev, int on)
-{
-}
-
-struct consdev kcomcons = {
-	NULL, NULL, kcomcngetc, kcomcnputc, kcomcnpollc, NULL,
-	NODEV, CN_NORMAL
-};
-
-#endif
