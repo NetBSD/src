@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 1997/09/11 14:01:07 chopps Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17.2.1 1998/10/03 05:17:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,5 +157,5 @@
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)4)		/* XXX: SYSPTSIZE */
 #endif /* !_MACHINE_VMPARAM_H_ */
