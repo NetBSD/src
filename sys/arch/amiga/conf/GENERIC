@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 1996/03/02 14:00:31 veego Exp $
+#	$NetBSD: GENERIC,v 1.53 1996/03/05 17:46:23 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -159,7 +159,7 @@ ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
 ite3		at grf3			# terminal emulators for grf's
 ite4		at grf4			# terminal emulators for grf's
-ite5		at grf4			# terminal emulators for grf's
+ite5		at grf5			# terminal emulators for grf's
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
