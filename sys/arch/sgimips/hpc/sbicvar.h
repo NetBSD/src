@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.8 2004/02/24 15:12:51 wiz Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.9 2004/12/07 22:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@ struct wd33c93_acb {
 #define ACB_ABORT	0x40		/* Require Abort */
 
 	int	timeout;
-	struct scsi_generic cmd;	/* SCSI command block */
+	struct scsipi_generic cmd;	/* SCSI command block */
 	int	clen;
 	char	*daddr;			/* kva for data */
 	size_t	dleft;			/* bytes remaining */
