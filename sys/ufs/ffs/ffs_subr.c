@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.23 2002/07/06 15:39:07 fredette Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.24 2002/12/01 00:12:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.23 2002/07/06 15:39:07 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.24 2002/12/01 00:12:09 matt Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.23 2002/07/06 15:39:07 fredette Exp $
 #include <sys/param.h>
 
 /* in ffs_tables.c */
-extern int inside[], around[];
-extern u_char *fragtbl[];
+extern const int inside[], around[];
+extern const u_char * const fragtbl[];
 
 #ifndef _KERNEL
 #include <ufs/ufs/dinode.h>

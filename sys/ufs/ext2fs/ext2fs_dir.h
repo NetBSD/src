@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.5 2002/12/01 00:12:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -42,8 +42,8 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
-#ifndef _EXT2FS_DIR_H_
-#define	_EXT2FS_DIR_H_
+#ifndef _UFS_EXT2FS_EXT2FS_DIR_H_
+#define	_UFS_EXT2FS_EXT2FS_DIR_H_
 
 /*
  * Theoretically, directories can be more than 2Gb in length, however, in
@@ -157,4 +157,4 @@ struct ext2fs_dirtemplate {
 	char		dotdot_name[4];	/* ditto */
 };
 
-#endif /* !_EXT2FS_DIR_H_ */
+#endif /* !_UFS_EXT2FS_EXT2FS_DIR_H_ */
