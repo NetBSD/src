@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.4 1996/10/17 08:29:05 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.5 1996/11/21 18:42:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct extent_fixed {
 #define EX_NOALIGN	1		/* don't do alignment */
 #define EX_NOBOUNDARY	0		/* don't do boundary checking */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_EXTENT_TESTING)
 #define EXTENT_FIXED_STORAGE_SIZE(_nregions)		\
 	(ALIGN(sizeof(struct extent_fixed)) +		\
 	((ALIGN(sizeof(struct extent_region))) *	\
@@ -113,6 +113,6 @@ void	extent_print __P((struct extent *));
 #define extent_alloc(_ex, _size, _alignment, _boundary, _flags, _result) \
 	extent_alloc_subregion((_ex), (_ex)->ex_start, (_ex)->ex_end,	\
 	(_size), (_alignment), (_boundary), (_flags), (_result))
-#endif /* _KERNEL */
+#endif /* _KERNEL || _EXTENT_TESTING */
 
 #endif /* ! _SYS_EXTENT_H_ */
