@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.3 1997/10/11 15:33:26 augustss Exp $
+.\"	$NetBSD: audio.9,v 1.4 1997/10/13 21:30:57 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -222,13 +222,11 @@ Calling this is a shortcut to changing some setting in the mixer device.
 Return 0 on success, otherwise an error code.
 
 .It Dv int get_out_port(void *hdl)
-called to fill the play
-.Va port
-for an
+called to query the output port for an
 .Dv AUDIO_GETINFO
 .Xr ioctl 2 .
 Calling this is a shortcut to getting some setting in the mixer device.
-Return 0 on success, otherwise an error code.
+Returns the output port.
 
 .It Dv int set_in_port(void *hdl, int port)
 called if the record
@@ -240,13 +238,11 @@ Calling this is a shortcut to changing some setting in the mixer device.
 Return 0 on success, otherwise an error code.
 
 .It Dv int get_in_port(void *hdl)
-called to fill the record
-.Va port
-for an
+called to query the input port for an
 .Dv AUDIO_GETINFO
 .Xr ioctl 2 .
 Calling this is a shortcut to getting some setting in the mixer device.
-Return 0 on success, otherwise an error code.
+Returns the input port.
 
 .It Dv int commit_settings(void *hdl)
 optional, called after all calls to
