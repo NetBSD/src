@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.129 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.130 2004/03/02 02:28:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.129 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.130 2004/03/02 02:28:28 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -218,7 +218,7 @@ ip_output(m0, va_alist)
 		inp = (struct inpcb *)so->so_pcb;
 	else
 		inp = NULL;
-#endif /*IPSEC*/
+#endif /* FAST_IPSEC */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -469,8 +469,12 @@ sendit:
 	if (so == NULL)
 		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
 		    flags, &error);
-	else
+	else {
+		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb_hdr(so)->inph_sp,
+					 IPSEC_DIR_OUTBOUND))
+			goto skip_ipsec;
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
+	}
 
 	if (sp == NULL) {
 		ipsecstat.out_inval++;
@@ -612,6 +616,9 @@ skip_ipsec:
 			error = -EINVAL;	/* force silent drop */
 		m_tag_delete(m, mtag);
 	} else {
+		if (inp != NULL &&
+		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+			goto spd_done;
 		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
 					&error, inp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.80 2004/03/01 22:32:35 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.81 2004/03/02 02:28:28 thorpej Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.80 2004/03/01 22:32:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.81 2004/03/02 02:28:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -203,8 +203,14 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	/* get a security policy for this packet */
 	if (so == NULL)
 		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, 0, &error);
-	else
+	else {
+		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb_hdr(so)->inph_sp,
+					 IPSEC_DIR_OUTBOUND)) {
+			needipsec = 0;
+			goto skippolicycheck;
+		}
 		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
+	}
 
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
