@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.4.18.1 1998/01/29 11:29:37 mellon Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.4.18.2 1998/05/05 09:41:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -40,6 +40,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <compat/common/compat_util.h>
+
 #include <vm/vm.h>
 #include <vm/vm_map.h>
 #include <vm/vm_map.h>
@@ -78,13 +80,17 @@ compat_10_sys_semsys(p, v, retval)
 	struct sys_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ semconfig_args;
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
 		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
 		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
 		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = (union semun *)SCARG(uap, a5);
+		SCARG(&__semctl_args, arg) = stackgap_alloc(&sg,
+			sizeof(union semun *));
+		copyout(&SCARG(uap, a5), SCARG(&__semctl_args, arg),
+			sizeof(union semun));
 		return (sys___semctl(p, &__semctl_args, retval));
 
 	case 1:						/* semget() */
