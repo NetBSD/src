@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/05/11 20:47:00 veego Exp $
+#	$NetBSD: Makefile,v 1.10 1999/12/28 10:54:20 simonb Exp $
 
 BINDIR=		/installation/netboot
 
@@ -33,8 +33,7 @@ ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	-(disklabel ${VND_CDEV} > /tmp/proto; disklabel -R -r ${VND_CDEV} /tmp/proto)
-	-newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
+	newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
@@ -58,6 +57,9 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+echoimage:
+	@echo ${.OBJDIR}/${IMAGE}
 
 realinstall:
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
