@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.22 2003/01/05 23:23:43 sommerfeld Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.23 2003/02/11 10:45:28 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.22 2003/01/05 23:23:43 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.23 2003/02/11 10:45:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,7 +816,7 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 static u_int
 wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 {
-	int i;
+	int i, j;
 
 	switch (c) {
 	case '5': /*  DECSWL single width, single height */
@@ -851,13 +851,11 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 				edp->ccol = (edp->ncols >> 1) - 1;
 		}
 		break;
-	case '8': { /* DECALN */
-		int i, j;
+	case '8': /* DECALN */
 		for (i = 0; i < edp->nrows; i++)
 			for (j = 0; j < edp->ncols; j++)
 				(*edp->emulops->putchar)(edp->emulcookie, i, j,
 							 'E', edp->curattr);
-		}
 		edp->ccol = 0;
 		edp->crow = 0;
 		break;
