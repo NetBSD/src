@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: hil.4,v 1.5 1997/10/19 12:57:00 mrg Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Systems Programming Group of the University of Utah Computer
@@ -33,10 +35,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)hil.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: hil.4,v 1.4 1997/10/13 11:22:40 lukem Exp $
+.\"     from: @(#)hil.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd March 27, 1991
+.Dd November 30, 1993
 .Dt HIL 4 hp300
 .Os
 .Sh NAME
@@ -196,7 +197,7 @@ ioctl.
 .It Dv HILIOCAROFF
 Disable Auto Repeat
 .Pp
-Turn off auto repeat on the keyboard while it is cooked mode.
+Turn off auto repeat on the keyboard while it is in cooked mode.
 Identical to the
 .Tn HP-UX
 .Dv HILDKR
