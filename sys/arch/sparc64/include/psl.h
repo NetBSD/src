@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.25 2003/11/15 05:24:51 petrov Exp $ */
+/*	$NetBSD: psl.h,v 1.26 2004/03/14 18:18:54 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,6 +256,8 @@ static __inline void setcwp __P((int));
 static __inline void splx __P((int));
 #endif
 static __inline u_int64_t getver __P((void));
+static __inline int intr_disable __P((void));
+static __inline void intr_restore __P((int));
 
 /*
  * GCC pseudo-functions for manipulating privileged registers
@@ -294,6 +296,21 @@ static __inline u_int64_t getver()
 
 	__asm __volatile("rdpr %%ver,%0" : "=r" (ver));
 	return (ver);
+}
+
+static __inline int
+intr_disable(void)
+{
+	int pstate = getpstate();
+
+	setpstate(pstate & ~PSTATE_IE);
+	return (pstate);
+}
+
+static __inline void
+intr_restore(int pstate)
+{
+	setpstate(pstate);
 }
 
 /*
