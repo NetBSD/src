@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.57 1998/10/27 23:48:22 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58 1998/11/09 01:18:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -505,7 +505,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_CACHE);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -589,7 +589,7 @@ start:
 			    bp->b_bcount < size)
 				panic("getblk: block size invariant failed");
 #endif
-			SET(bp->b_flags, (B_BUSY | B_CACHE));
+			SET(bp->b_flags, B_BUSY);
 			bremfree(bp);
 			splx(s);
 			break;

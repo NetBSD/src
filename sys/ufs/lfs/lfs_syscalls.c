@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.20 1998/10/23 00:32:36 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.21 1998/11/09 01:18:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -225,7 +225,7 @@ lfs_markv(p, v, retval)
 			    blkp->bi_bp);
 		else {
 			bp = getblk(vp, blkp->bi_lbn, bsize, 0, 0);
-			if (!(bp->b_flags & (B_DELWRI | B_DONE | B_CACHE)) &&
+			if (!(bp->b_flags & (B_DELWRI | B_DONE)) &&
 			    (error = copyin(blkp->bi_bp, bp->b_data,
 			    blkp->bi_size)))
 				goto err2;
