@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.25 1999/08/08 01:51:37 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.26 1999/08/08 08:58:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -307,7 +307,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	addbytes(s, n)			__waddbytes(stdscr, s, n, 0)
 #define	addch(ch)			waddch(stdscr, ch)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
-#define	addstr(s)			waddnstr(stdscr, s, -1);
+#define	addstr(s)			waddnstr(stdscr, s, -1)
 #define	clear()				wclear(stdscr)
 #define	clrtobot()			wclrtobot(stdscr)
 #define	clrtoeol()			wclrtoeol(stdscr)
@@ -330,7 +330,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	attroff(attr)			wattroff(stdscr, attr)
 #define	attrset(attr)			wattrset(stdscr, attr)
 #define	waddbytes(w, s, n)		__waddbytes(w, s, n, 0)
-#define	waddstr(w, s)			waddnstr(w, s, -1);
+#define	waddstr(w, s)			waddnstr(w, s, -1)
 
 /* Attributes */
 #define A_NORMAL	__NORMAL
