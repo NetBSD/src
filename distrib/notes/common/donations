@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.18 2001/02/06 16:08:59 reinoud Exp $
+.\"	$NetBSD: donations,v 1.19 2001/03/05 14:13:43 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,6 +110,7 @@ Internet Software Consortium
 MS Macro System GmbH, Germany
 Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Piermont Information Systems Inc.
+Precedence Technologies Ltd
 Salient Systems Inc.
 VMC Harald Frank, Germany
 Warped Communications, Inc.
