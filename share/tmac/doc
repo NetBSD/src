@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)doc	5.8 (Berkeley) 8/5/91
+.\"	from @(#)doc	5.8 (Berkeley) 8/5/91
+.\"	$NetBSD: doc,v 1.2 1996/10/15 20:04:24 perry Exp $
 .\"
 .\" .mdoc-parse - attempt to parse troff request arguments
 .\"     %beginstrip%
