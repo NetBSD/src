@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.14 1998/01/12 10:21:18 thorpej Exp $ */
+/* $NetBSD: sfb.c,v 1.15 1998/04/15 21:15:08 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.14 1998/01/12 10:21:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.15 1998/04/15 21:15:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.14 1998/01/12 10:21:18 thorpej Exp $");
 #endif
 
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wscons_raster.h>
-#include <alpha/wscons/wsconsvar.h>
+#include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <machine/fbio.h>
 
 #include <machine/autoconf.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.14 1998/01/12 10:21:18 thorpej Exp $");
 
 int	sfbmatch __P((struct device *, struct cfdata *, void *));
 void	sfbattach __P((struct device *, struct device *, void *));
-int	sfbprint __P((void *, const char *));
 
 struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
@@ -68,24 +67,55 @@ struct cfattach sfb_ca = {
 
 void	sfb_getdevconfig __P((tc_addr_t dense_addr, struct sfb_devconfig *dc));
 struct sfb_devconfig sfb_console_dc;
+tc_addr_t sfb_consaddr;
 
-struct wscons_emulfuncs sfb_emulfuncs = {
+struct wsdisplay_emulops sfb_emulfuncs = {
 	rcons_cursor,			/* could use hardware cursor; punt */
 	rcons_putstr,
 	rcons_copycols,
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
-	10,				/* skip 10 rows per scroll */
+};
+
+struct wsscreen_descr sfb_stdscreen = {
+	"std",
+	0, 0,	/* will be filled in */
+	&sfb_emulfuncs,
+	0, 0
+};
+
+const struct wsscreen_descr *_sfb_scrlist[] = {
+	&sfb_stdscreen,
+	/* XXX other formats, graphics screen? */
+};
+
+struct wsscreen_list sfb_screenlist = {
+	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
 int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	sfbmmap __P((void *, off_t, int));
 
+static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+				      void **, int *, int *));
+static void	sfb_free_screen __P((void *, void *));
+static void	sfb_show_screen __P((void *, void *));
+static int	sfb_load_font __P((void *, void *, int, int, int, void *));
+
 #if 0
 void	sfb_blank __P((struct sfb_devconfig *));
 void	sfb_unblank __P((struct sfb_devconfig *));
 #endif
+
+struct wsdisplay_accessops sfb_accessops = {
+	sfbioctl,
+	sfbmmap,
+	sfb_alloc_screen,
+	sfb_free_screen,
+	sfb_show_screen,
+	sfb_load_font
+};
 
 int
 sfbmatch(parent, match, aux)
@@ -197,6 +227,9 @@ sfb_getdevconfig(dense_addr, dc)
 	rcp->rc_crowp = &rcp->rc_crow;
 	rcp->rc_ccolp = &rcp->rc_ccol;
 	rcons_init(rcp, 34, 80);
+
+	sfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
+	sfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
 }
 
 void
@@ -206,14 +239,14 @@ sfbattach(parent, self, aux)
 {
 	struct sfb_softc *sc = (struct sfb_softc *)self;
 	struct tc_attach_args *ta = aux;
-	struct wscons_attach_args waa;
-	struct wscons_odev_spec *wo;
+	struct wsemuldisplaydev_attach_args waa;
 	int console;
 
-	console = 0;					/* XXX */
-	if (console)
+	console = (ta->ta_addr == sfb_consaddr);
+	if (console) {
 		sc->sc_dc = &sfb_console_dc;
-	else {
+		sc->nscreens = 1;
+	} else {
 		sc->sc_dc = (struct sfb_devconfig *)
 		    malloc(sizeof(struct sfb_devconfig), M_DEVBUF, M_WAITOK);
 		sfb_getdevconfig(ta->ta_addr, sc->sc_dc);
@@ -235,33 +268,12 @@ sfbattach(parent, self, aux)
 	    *(u_int32_t *)(x + SFB_ASIC_VIDEO_VSETUP));
 #endif
 
-	waa.waa_isconsole = console;
-	wo = &waa.waa_odev_spec;
+	waa.console = console;
+	waa.scrdata = &sfb_screenlist;
+	waa.accessops = &sfb_accessops;
+	waa.accesscookie = sc;
 
-	wo->wo_emulfuncs = &sfb_emulfuncs;
-	wo->wo_emulfuncs_cookie = &sc->sc_dc->dc_rcons;
-
-	wo->wo_ioctl = sfbioctl;
-	wo->wo_mmap = sfbmmap;
-	wo->wo_miscfuncs_cookie = sc;
-
-	wo->wo_nrows = sc->sc_dc->dc_rcons.rc_maxrow;
-	wo->wo_ncols = sc->sc_dc->dc_rcons.rc_maxcol;
-	wo->wo_crow = 0;
-	wo->wo_ccol = 0;
-
-	config_found(self, &waa, sfbprint);
-}
-
-int
-sfbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	if (pnp)
-		printf("wscons at %s", pnp);
-	return (UNCONF);
+	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
 int
@@ -344,42 +356,67 @@ sfbmmap(v, offset, prot)
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
 
-#if 0
-void
-tga_console(bc, pc, bus, device, function)
-	bus_chipset_tag_t bc;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+int
+sfb_alloc_screen(v, type, cookiep, curxp, curyp)
+	void *v;
+	const struct wsscreen_descr *type;
+	void **cookiep;
+	int *curxp, *curyp;
 {
-	struct tga_devconfig *dcp = &tga_console_dc;
-	struct wscons_odev_spec wo;
+	struct sfb_softc *sc = v;
 
-	tga_getdevconfig(bc, pc, pci_make_tag(pc, bus, device, function), dcp);
+	if (sc->nscreens > 0)
+		return (ENOMEM);
 
-	/* sanity checks */
-	if (dcp->dc_vaddr == NULL)
-		panic("tga_console(%d, %d): couldn't map memory space",
-		    device, function);
-	if (dcp->dc_tgaconf == NULL)
-		panic("tga_console(%d, %d): unknown board configuration",
-		    device, function);
+	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*curxp = 0;
+	*curyp = 0;
+	return (0);
+}
 
-	/*
-	 * Initialize the RAMDAC but DO NOT allocate any private storage.
-	 * Initialization includes disabling cursor, setting a sane
-	 * colormap, etc.  It will be reinitialized in tgaattach().
-	 */
-	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
+void
+sfb_free_screen(v, cookie)
+	void *v;
+	void *cookie;
+{
+	struct sfb_softc *sc = v;
 
-	wo.wo_ef = &tga_emulfuncs;
-	wo.wo_efa = &dcp->dc_rcons;
-	wo.wo_nrows = dcp->dc_rcons.rc_maxrow;
-	wo.wo_ncols = dcp->dc_rcons.rc_maxcol;
-	wo.wo_crow = 0;
-	wo.wo_ccol = 0;
-	/* ioctl and mmap are unused until real attachment. */
+	if (sc->sc_dc == &sfb_console_dc)
+		panic("sfb_free_screen: console");
 
-	wscons_attach_console(&wo);
+	sc->nscreens--;
+}
+
+void
+sfb_show_screen(v, cookie)
+	void *v;
+	void *cookie;
+{
+}
+
+static int
+sfb_load_font(v, cookie, first, num, stride, data)
+	void *v;
+	void *cookie;
+	int first, num, stride;
+	void *data;
+{
+	return (EINVAL);
+}
+
+#if 0
+int
+sfb_cnattach(addr)
+	tc_addr_t addr;
+{
+	struct sfb_devconfig *dcp = &sfb_console_dc;
+
+	sfb_getdevconfig(addr, dcp);
+
+	wsdisplay_cnattach(&sfb_stdscreen, &dcp->dc_rcons,
+			   0, 0);
+	sfb_consaddr = addr;
+	return(0);
 }
 #endif
 
