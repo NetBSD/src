@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/01/30 01:01:39 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/04/30 00:40:44 thorpej Exp $
 
 # MD4/MD5 sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/md ${.CURDIR}/md
@@ -13,12 +13,6 @@ MLINKS+=md5.3 MD5Init.3 md5.3 MD5Update.3 md5.3 MD5Final.3
 MLINKS+=md5.3 MD5End.3  md5.3 MD5File.3   md5.3 MD5Data.3
 
 CLEANFILES+=	md[45]hl.c md[45].3
-
-md4hl.c: mdXhl.c
-	sed -e 's/mdX/md4/g' -e 's/MDX/MD4/g' $> > $@
-
-md5hl.c: mdXhl.c
-	sed -e 's/mdX/md5/g' -e 's/MDX/MD5/g' $> > $@
 
 .if !defined(NOMAN)
 md4.3: mdX.3
