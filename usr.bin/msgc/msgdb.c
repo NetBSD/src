@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.2 1997/10/03 16:37:25 enami Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.2.4.1 1999/06/24 00:34:51 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,11 +46,9 @@
 
 static struct id_rec *head = NULL, *tail = NULL;
 static int msg_no = 0;
-static int maxstr = 1;
 
 void define_msg (char *name, char *value)
 {
-	int vlen = strlen(value);
 	struct id_rec *tmp = (struct id_rec *)malloc(sizeof(struct id_rec));
 
 	if (find_id (root, name))
@@ -68,9 +66,6 @@ void define_msg (char *name, char *value)
 	}
 
 	insert_id (&root, tmp);
-
-	if (vlen > maxstr)
-		maxstr = vlen;
 }
 
 static void write_str (FILE *f, char *str)
@@ -140,14 +135,15 @@ write_msg_file ()
 		"#ifndef MSG_DEFS_H\n"
 		"#define MSG_DEFS_H\n"
 		"#include <stdio.h>\n"
+		"#include <stdlib.h>\n"
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
 		"#include <stdarg.h>\n"
 		"#include <curses.h>\n"
 		"\n"
 		"/* Prototypes */\n"
-		"void beep(void);\n"
-		"void msg_window(WINDOW *window);\n"
+		"void msg_beep(void);\n"
+		"int  msg_window(WINDOW *window);\n"
 		"char *msg_string (int msg_no);\n"
 		"void msg_clear(void);\n"
 		"void msg_standout(void);\n"
@@ -174,7 +170,7 @@ write_msg_file ()
 		(void) fprintf (out_file, "#define MSG_%s\t%d\n",
 				t->id, t->msg_no);
 	}
-	(void) fprintf (out_file, "#define MAXSTR %d\n\n#endif\n", 2*maxstr);
+	(void) fprintf (out_file, "\n#endif\n");
 
 	fclose (out_file);
 
