@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.9 2000/01/31 14:19:04 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.10 2000/08/25 21:25:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -92,7 +92,7 @@ deflate_alloc(aux, items, siz)
 	u_int siz;
 {
 	void *ptr;
-	MALLOC(ptr, void *, items * siz, M_TEMP, M_NOWAIT);
+	ptr = malloc(items * siz, M_TEMP, M_NOWAIT);
 	return ptr;
 }
 
@@ -101,7 +101,7 @@ deflate_free(aux, ptr)
 	void *aux;
 	void *ptr;
 {
-	FREE(ptr, M_TEMP);
+	free(ptr, M_TEMP);
 }
 
 static int
