@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20 2000/12/27 08:28:12 castor Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.21 2003/01/17 23:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2000/12/27 08:28:12 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2003/01/17 23:36:18 thorpej Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -75,67 +75,67 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2000/12/27 08:28:12 castor 
 #include <mips/regnum.h>			/* symbolic register indices */
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
+process_read_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	memcpy(regs, p->p_md.md_regs, sizeof(struct reg));
+	memcpy(regs, l->l_md.md_regs, sizeof(struct reg));
 	return 0;
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
+process_write_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
 	struct frame *f;
 	mips_reg_t sr;
 
-	f = (struct frame *) p->p_md.md_regs;
+	f = (struct frame *) l->l_md.md_regs;
 	sr = f->f_regs[SR];
-	memcpy(p->p_md.md_regs, regs, sizeof(struct reg));
+	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
 	f->f_regs[SR] = sr;
 	return 0;
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
+process_read_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
-	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
-		savefpregs(p);
-	memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		savefpregs(l);
+	memcpy(regs, &l->l_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	return 0;
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
+process_write_fpregs(l, regs)
+	struct lwp *l;
 	struct fpreg *regs;
 {
 	/* to load FPA contents next time when FP insn is executed */
-	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
-		fpcurproc = (struct proc *)0;
-	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
+	memcpy(&l->l_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 {
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if (sstep)
-		mips_singlestep(p);
+		mips_singlestep(l);
 	return 0;
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
+process_set_pc(l, addr)
+	struct lwp *l;
 	caddr_t addr;
 {
-	((struct frame *)p->p_md.md_regs)->f_regs[PC] = (int)addr;
+	((struct frame *)l->l_md.md_regs)->f_regs[PC] = (int)addr;
 	return 0;
 }

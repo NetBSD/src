@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.4 2002/03/29 17:03:27 christos Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.5 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.4 2002/03/29 17:03:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5 2003/01/17 23:10:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
@@ -133,7 +134,7 @@ static int linux_x86_vec_to_sig[] = {
 #define ASIZE(a) (sizeof(a[0]) / sizeof(a))
 
 void
-linux_trapsignal(struct proc *p, int signo, u_long type)
+linux_trapsignal(struct lwp *l, int signo, u_long type)
 {
 	switch (signo) {
 	case SIGILL:
@@ -154,7 +155,7 @@ linux_trapsignal(struct proc *p, int signo, u_long type)
 		}
 		/*FALLTHROUGH*/
 	default:
-		trapsignal(p, signo, type);
-		break;
+		trapsignal(l, signo, type);
+		return;
 	}
 }

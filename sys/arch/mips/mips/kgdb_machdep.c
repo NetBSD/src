@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2001/07/07 14:20:59 simonb Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 2003/01/17 23:36:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -263,7 +263,6 @@ void
 kgdb_connect(verbose)
 	int verbose;
 {
-	verbose = 1; /* ETHAN !!! */
 	if (kgdb_dev < 0)
 		return;
 

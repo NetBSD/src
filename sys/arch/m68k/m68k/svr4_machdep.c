@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8 2002/07/04 23:32:05 thorpej Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.9 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 
@@ -70,24 +71,24 @@ static void	svr4_getsiginfo __P((union svr4_siginfo *, int, unsigned long,
 		    caddr_t));
 
 void
-svr4_setregs(p, epp, stack)
-	struct proc *p;
+svr4_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	unsigned long stack;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	frame->f_regs[FP] = (int)stack;
 }
 
 void *
-svr4_getmcontext(p, mc, flags)
-	struct proc *p;
+svr4_getmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	unsigned long *flags;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = frame->f_format;
 	svr4_greg_t *r = mc->gregs;
 
@@ -143,12 +144,12 @@ svr4_getmcontext(p, mc, flags)
 }
 
 int
-svr4_setmcontext(p, mc, flags)
-	struct proc *p;
+svr4_setmcontext(l, mc, flags)
+	struct lwp *l;
 	svr4_mcontext_t *mc;
 	unsigned long flags;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mc->mc_pad.frame.format;
 	svr4_greg_t *r = mc->gregs;
 	int sz;
@@ -249,13 +250,14 @@ svr4_sendsig(sig, mask, code)
 	sigset_t *mask;
 	unsigned long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct frame *frame;
 	struct svr4_sigframe *sfp, sf;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 
 	onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -269,7 +271,7 @@ svr4_sendsig(sig, mask, code)
 		sfp = (struct svr4_sigframe *)frame->f_regs[SP];
 	sfp--;
 
-	svr4_getcontext(p, &sf.sf_uc, mask);
+	svr4_getcontext(l, &sf.sf_uc);
 	/* Passing the PC is *wrong*! */
 	svr4_getsiginfo(&sf.sf_si, sig, code, (caddr_t)frame->f_pc);
 
@@ -289,7 +291,7 @@ svr4_sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -305,8 +307,8 @@ svr4_sendsig(sig, mask, code)
  * sysm68k()
  */
 int
-svr4_sys_sysarch(p, v, retval)
-	struct proc *p;
+svr4_sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -314,6 +316,7 @@ svr4_sys_sysarch(p, v, retval)
 		syscallarg(int) op;
 		syscallarg(void *) a1;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	char tmp[MAXHOSTNAMELEN];
 	size_t len;
 	int error, name;

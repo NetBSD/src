@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.33 2001/05/30 12:28:45 mrg Exp $	*/
+/*	$NetBSD: psl.h,v 1.34 2003/01/17 23:10:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,7 @@
 #else
 #define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_NT | PSL_VM | PSL_VIF | PSL_VIP)
 #endif
+#define PSL_USER (PSL_C | PSL_MBO | PSL_PF | PSL_AF | PSL_Z | PSL_N | PSL_V)
 
 #ifdef _KERNEL
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.3 2002/11/23 10:50:09 fvdl Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.4 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,10 +113,10 @@ IDTVEC(svr4_fasttrap)
 	call	_C_LABEL(svr4_fasttrap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING()		
+	CHECK_ASTPENDING(%eax)		
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING()
+	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/11/26 23:30:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2003/01/17 23:42:03 thorpej Exp $
 
 INCSDIR= /usr/include/mvme68k
 
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	intr.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	param.h pcb.h pmap.h pmc.h \
 	proc.h profile.h prom.h psl.h pte.h ptrace.h \
 	reg.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2002/11/12 14:00:42 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.93 2003/01/17 23:36:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2002/11/12 14:00:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2003/01/17 23:36:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2002/11/12 14:00:42 nisimura Exp
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -87,8 +89,8 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func)(void *);
@@ -108,27 +110,27 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * XXXJRT pmap_zero_page().
 	 */
 	if (CPUISMIPS3 && mips_sdcache_line_size)
-		mips_dcache_wbinv_range((vaddr_t) p2->p_addr, USPACE);
+		mips_dcache_wbinv_range((vaddr_t) l2->l_addr, USPACE);
 #endif
 
 #ifdef DIAGNOSTIC
 	/*
-	 * If p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
 	 */
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
-	if ((p1->p_md.md_flags & MDP_FPUSED) && p1 == fpcurproc)
-		savefpregs(p1);
+	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
+		savefpregs(l1);
 
 	/*
 	 * Copy pcb from proc p1 to p2.
 	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
-	memcpy(&p2->p_addr->u_pcb, &p1->p_addr->u_pcb, sizeof(struct pcb));
-	f = (struct frame *)((caddr_t)p2->p_addr + USPACE) - 1;
-	memcpy(f, p1->p_md.md_regs, sizeof(struct frame));
+	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
+	f = (struct frame *)((caddr_t)l2->l_addr + USPACE) - 1;
+	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
 
 	/*
 	 * If specified, give the child a different stack.
@@ -136,14 +138,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		f->f_regs[SP] = (u_int)stack + stacksize;
 
-	p2->p_md.md_regs = (void *)f;
-	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+	l2->l_md.md_regs = (void *)f;
+	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
-	pte = kvtopte(p2->p_addr);
+	pte = kvtopte(l2->l_addr);
 	for (i = 0; i < UPAGES; i++)
-		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
+		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 
-	pcb = &p2->p_addr->u_pcb;
+	pcb = &l2->l_addr->u_pcb;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f;			/* SP */
 	pcb->pcb_context[0] = (int)func;		/* S0 */
@@ -155,13 +157,40 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 /*
+ * Set the given LWP to start at the given function via the
+ * proc_trampoline.
+ */
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb;
+	struct frame *f;
+
+	f = (struct frame *)((caddr_t)l->l_addr + USPACE) - 1;
+	KASSERT(l->l_md.md_regs == f);
+
+	pcb = &l->l_addr->u_pcb;
+	pcb->pcb_context[0] = (int)func;		/* S0 */
+	pcb->pcb_context[1] = (int)arg;			/* S1 */
+	pcb->pcb_context[8] = (int)f - 24;		/* SP */
+	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
+	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
+#ifdef IPL_ICU_MASK
+	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
+#endif
+}	
+
+/*
  * Finish a swapin operation.
  * We neded to update the cached PTEs for the user area in the
  * machine dependent part of the proc structure.
  */
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(l)
+	struct lwp *l;
 {
 	pt_entry_t *pte;
 	int i, x;
@@ -172,9 +201,9 @@ cpu_swapin(p)
 	 * the user struct and kernel stack.
 	 */
 	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
-	pte = kvtopte(p->p_addr);
+	pte = kvtopte(l->l_addr);
 	for (i = 0; i < UPAGES; i++)
-		p->p_md.md_upte[i] = pte[i].pt_entry &~ x;
+		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 }
 
 /*
@@ -186,17 +215,18 @@ cpu_swapin(p)
  * into the middle of cpu_switch(), as if it were switching from proc0.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
-	void switch_exit(struct proc *);
+	void switch_exit(struct lwp *, void (*)(struct lwp *));
 
-	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
-		fpcurproc = (struct proc *)0;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
 
 	uvmexp.swtch++;
 	(void)splhigh();
-	switch_exit(p);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
 }
 
@@ -204,8 +234,8 @@ cpu_exit(p)
  * Dump the machine specific segment at the start of a core dump.
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
@@ -216,16 +246,17 @@ cpu_coredump(p, vp, cred, chdr)
 		struct frame frame;
 		struct fpreg fpregs;
 	} cpustate;
+	struct proc *p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(struct core));
 	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
 	chdr->c_cpusize = sizeof(struct cpustate);
 
-	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
-		savefpregs(p);
-	cpustate.frame = *(struct frame *)p->p_md.md_regs;
-	cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		savefpregs(l);
+	cpustate.frame = *(struct frame *)l->l_md.md_regs;
+	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

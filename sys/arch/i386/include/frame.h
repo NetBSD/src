@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.19 2002/11/22 15:23:46 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.20 2003/01/17 23:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #define _I386_FRAME_H_
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * System stack frames.
@@ -160,6 +161,18 @@ struct sigframe {
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
+};
+
+/*
+ * Scheduler activations upcall frame
+ */
+struct saframe {
+	int		sa_ra;
+	int		sa_type;
+	struct sa_t**	sa_sas;
+	int		sa_events;
+	int		sa_interrupted;
+	void*		sa_arg;
 };
 
 #endif  /* _I386_FRAME_H_ */

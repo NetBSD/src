@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.94 2003/01/07 18:48:44 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95 2003/01/17 23:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@ struct cpu_info {
 	/*
 	 * Public members.
 	 */
-	struct proc *ci_curproc;	/* current owner of the processor */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
@@ -103,7 +103,7 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	struct proc *ci_fpcurproc;	/* current owner of the FPU */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 
 	volatile u_int32_t	ci_tlb_ipi_mask;
@@ -217,7 +217,7 @@ extern struct cpu_info *cpu_info_list;
 #define i386_ipisend(ci)	0
 #endif
 
-#define aston(ci)		((ci)->ci_astpending = 1, i386_ipisend(ci))
+#define aston(p)		((p)->p_md.md_astpending = 1)
 
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 
@@ -238,6 +238,7 @@ extern void need_resched __P((struct cpu_info *));
 extern struct cpu_info cpu_info_primary;
 
 #define	curcpu()		(&cpu_info_primary)
+
 #endif
 
 /*
@@ -255,17 +256,18 @@ extern struct cpu_info cpu_info_primary;
 do {									\
 	struct cpu_info *__ci = (ci);					\
 	__ci->ci_want_resched = 1;					\
-	aston(__ci);							\
+	if (__ci->ci_curlwp != NULL)					\
+		aston(__ci->ci_curlwp->l_proc);       			\
 } while (/*CONSTCOND*/0)
 
-#define aston(ci)		(curcpu()->ci_astpending = 1)
+#define aston(p)		((p)->p_md.md_astpending = 1)
 
 #endif
 
 extern u_int32_t cpus_attached;
 
 #define	curpcb			curcpu()->ci_curpcb
-#define	curproc			curcpu()->ci_curproc
+#define	curlwp			curcpu()->ci_curlwp
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -287,20 +289,20 @@ extern u_int32_t cpus_attached;
  * This is used during profiling to integrate system time.  It can safely
  * assume that the process is resident.
  */
-#define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
+#define	LWP_PC(l)		((l)->l_md.md_regs->tf_eip)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p->p_cpu))
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		aston(p->p_cpu)
+#define	signotify(p)		aston(p)
 
 /*
  * We need a machine-independent name for this.
@@ -363,6 +365,9 @@ void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
 void	i386_proc0_tss_ldt_init __P((void));
 void	i386_bufinit __P((void));
 
+/* vm_machdep.c */
+void	cpu_proc_fork __P((struct proc *, struct proc *));
+
 /* locore.s */
 struct region_descriptor;
 void	lgdt __P((struct region_descriptor *));
@@ -370,7 +375,7 @@ void	fillw __P((short, void *, size_t));
 
 struct pcb;
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
 void	proc_trampoline __P((void));
 
 /* clock.c */
@@ -390,7 +395,7 @@ void	tsc_microset __P((struct cpu_info *));
 void	cpu_probe_features __P((struct cpu_info *));
 
 /* npx.c */
-void	npxsave_proc __P((struct proc *, int));
+void	npxsave_lwp __P((struct lwp *, int));
 void	npxsave_cpu __P((struct cpu_info *, int));
 
 /* vm_machdep.c */
@@ -409,8 +414,8 @@ int	math_emulate __P((struct trapframe *));
 #endif
 #ifdef USER_LDT
 /* sys_machdep.h */
-int	i386_get_ldt __P((struct proc *, void *, register_t *));
-int	i386_set_ldt __P((struct proc *, void *, register_t *));
+int	i386_get_ldt __P((struct lwp *, void *, register_t *));
+int	i386_set_ldt __P((struct lwp *, void *, register_t *));
 #endif
 
 /* isa_machdep.c */
@@ -422,7 +427,7 @@ int	isa_nmi __P((void));
 #endif
 #ifdef VM86
 /* vm86.c */
-void	vm86_gpfault __P((struct proc *, int));
+void	vm86_gpfault __P((struct lwp *, int));
 #endif /* VM86 */
 
 /* consinit.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.1 2002/11/05 07:41:25 chs Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.1 2002/11/05 07:41:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -864,15 +864,15 @@ pmap_reference(pmap)
  *	by a critical section in cpu_switch()!
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
-	    ("pmap_activate(%p)\n", p));
+	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, p == curproc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*
@@ -885,8 +885,8 @@ pmap_activate(p)
  *	as well.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 
 	/* No action necessary in this pmap implementation. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.24 2001/11/15 07:03:30 lukem Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.24 2001/11/15 07:03:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.25 2003/01/17 23:10:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ int
 math_emulate(info)
 	struct trapframe *info;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 	u_short cw, code;
 	temp_real tmp;
 	char * address;
@@ -89,14 +89,14 @@ math_emulate(info)
 		panic("math emulator called from supervisor mode");
 
 	/* ever used fp? */
-	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
 		if (i386_use_fxsave)
-			cw = p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw;
+			cw = l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw;
 		else
-			cw = p->p_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw;
+			cw = l->l_addr->u_pcb.pcb_savefpu.sv_87.sv_env.en_cw;
 		fninit();
 		I387.cwd = cw;
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	if (I387.cwd & I387.swd & 0x3f)
@@ -579,7 +579,7 @@ static int __regoffset[] = {
 	tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI
 };
 
-#define REG(x) (((int *)curproc->p_md.md_regs)[__regoffset[(x)]])
+#define REG(x) (((int *)curlwp->l_md.md_regs)[__regoffset[(x)]])
 
 static char * sib(struct trapframe * info, int mod)
 {

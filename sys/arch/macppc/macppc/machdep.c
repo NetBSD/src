@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2002/09/25 22:21:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2003/01/17 23:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -646,10 +647,10 @@ ofkbd_cngetc(dev)
  * (though by the time our IPI is processed, it may have been flushed already).
  */
 void
-mp_save_fpu_proc(p)
-	struct proc *p;
+mp_save_fpu_lwp(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct cpu_info *fpcpu;
 	int i;
 
@@ -675,8 +676,8 @@ mp_save_fpu_proc(p)
 		if (pcb->pcb_fpcpu == NULL)
 			return;
 	}
-	printf("mp_save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
-	    cpu_number(), p->p_pid, fpcpu->ci_cpuid);
+	printf("mp_save_fpu_proc{%d} pid = %d.%d, fpcpu->ci_cpuid = %d\n",
+	    cpu_number(), l->l_proc->p_pid, l->l_lid, fpcpu->ci_cpuid);
 	panic("mp_save_fpu_proc");
 #endif
 }
@@ -689,10 +690,10 @@ mp_save_fpu_proc(p)
  * this function).
  */
 void
-mp_save_vec_proc(p)
-	struct proc *p;
+mp_save_vec_lwp(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct cpu_info *veccpu;
 	int i;
 
@@ -718,9 +719,9 @@ mp_save_vec_proc(p)
 		if (pcb->pcb_veccpu == NULL)
 			return;
 	}
-	printf("mp_save_vec_proc{%d} pid = %d, veccpu->ci_cpuid = %d\n",
-	    cpu_number(), p->p_pid, veccpu->ci_cpuid);
-	panic("mp_save_vec_proc");
+	printf("mp_save_vec_lwp{%d} pid = %d.%d, veccpu->ci_cpuid = %d\n",
+	    cpu_number(), l->l_proc->p_pid, l->l_lid, veccpu->ci_cpuid);
+	panic("mp_save_vec_lwp");
 #endif
 }
 #endif /* ALTIVEC */

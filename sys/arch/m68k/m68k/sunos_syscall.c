@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.3 2002/12/21 16:23:58 manu Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.4 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@
 #include <compat/sunos/sunos_exec.h>
 
 void	sunos_syscall_intern(struct proc *);
-static void sunos_syscall_plain(register_t, struct proc *, struct frame *);
-static void sunos_syscall_fancy(register_t, struct proc *, struct frame *);
+static void sunos_syscall_plain(register_t, struct lwp *, struct frame *);
+static void sunos_syscall_fancy(register_t, struct lwp *, struct frame *);
 
 void
 sunos_syscall_intern(struct proc *p)
@@ -126,8 +126,9 @@ sunos_syscall_intern(struct proc *p)
 }
 
 static void
-sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
+sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
+	struct proc *p = l->l_proc;
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
@@ -159,9 +160,9 @@ sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		 * might have to undo this if the system call
 		 * returns ERESTART.
 		 */
-		p->p_md.md_flags |= MDP_STACKADJ;
+		l->l_md.md_flags |= MDL_STACKADJ;
 	} else
-		p->p_md.md_flags &= ~MDP_STACKADJ;
+		l->l_md.md_flags &= ~MDL_STACKADJ;
 
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
 
@@ -190,12 +191,12 @@ sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -226,8 +227,8 @@ sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 	}
 
 	/* need new p-value for this */
-	if (p->p_md.md_flags & MDP_STACKADJ) {
-		p->p_md.md_flags &= ~MDP_STACKADJ;
+	if (l->l_md.md_flags & MDL_STACKADJ) {
+		l->l_md.md_flags &= ~MDL_STACKADJ;
 		if (error == ERESTART)
 			frame->f_regs[SP] -= sizeof (int);
 	}
@@ -238,8 +239,9 @@ sunos_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 }
 
 static void
-sunos_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
+sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
+	struct proc *p = l->l_proc;
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
@@ -271,9 +273,9 @@ sunos_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		 * might have to undo this if the system call
 		 * returns ERESTART.
 		 */
-		p->p_md.md_flags |= MDP_STACKADJ;
+		l->l_md.md_flags |= MDL_STACKADJ;
 	} else
-		p->p_md.md_flags &= ~MDP_STACKADJ;
+		l->l_md.md_flags &= ~MDL_STACKADJ;
 
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
 
@@ -301,12 +303,12 @@ sunos_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -337,11 +339,11 @@ sunos_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 	}
 
 	/* need new p-value for this */
-	if (p->p_md.md_flags & MDP_STACKADJ) {
-		p->p_md.md_flags &= ~MDP_STACKADJ;
+	if (l->l_md.md_flags & MDL_STACKADJ) {
+		l->l_md.md_flags &= ~MDL_STACKADJ;
 		if (error == ERESTART)
 			frame->f_regs[SP] -= sizeof (int);
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2002/11/22 15:23:38 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66 2003/01/17 23:10:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2002/11/22 15:23:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2003/01/17 23:10:29 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -148,7 +148,7 @@ cpu_configure()
 	ioapic_enable();
 #endif
 	/* resync cr0 after FPU configuration */
-	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
+	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_pcbs();

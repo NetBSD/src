@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.17 2002/07/04 23:32:05 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.18 2003/01/17 23:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,19 +48,27 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/ucontext.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
+
+#include <m68k/saframe.h>
 
 extern int fputype;
 extern short exframesize[];
+struct fpframe m68k_cached_fpu_idle_frame;
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
@@ -73,6 +81,26 @@ int sigpid = 0;
 #endif
 
 /*
+ * Test for a null floating point frame given a pointer to the start
+ * of an fsave'd frame.
+ */
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+#define	FPFRAME_IS_NULL(fp)						    \
+	    ((fputype == FPU_68060 &&					    \
+	      ((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL) || \
+	     (fputype != FPU_68060  &&					    \
+	      ((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0))
+#else
+#define FPFRAME_IS_NULL(fp) \
+	    (((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0)
+#endif
+#else
+#define FPFRAME_IS_NULL(fp) \
+	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
+#endif
+
+/*
  * Send an interrupt to process.
  */
 void
@@ -81,7 +109,8 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp, kf;
 	struct frame *frame;
@@ -89,7 +118,7 @@ sendsig(sig, mask, code)
 	int onstack, fsize;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
 
 	/* Do we need to jump onto the signal stack? */
@@ -126,7 +155,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	kf.sf_signum = sig;
@@ -215,7 +244,7 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -243,6 +272,39 @@ sendsig(sig, mask, code)
 #endif
 }
 
+void
+cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
+	struct lwp *l;
+	int type, nevents, ninterrupted;
+	void *sas, *ap, *sp;
+	sa_upcall_t upcall;
+{
+	struct saframe *sfp, sf;
+	struct frame *frame;
+
+	frame = (struct frame *)l->l_md.md_regs;
+
+	/* Finally, copy out the rest of the frame */
+	sf.sa_ra = 0;
+	sf.sa_type = type;
+	sf.sa_sas = sas;
+	sf.sa_events = nevents;
+	sf.sa_interrupted = ninterrupted;
+	sf.sa_arg = ap;
+	
+	sfp = (struct saframe *)sp - 1;
+	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	frame->f_pc = (int)upcall;
+	frame->f_regs[SP] = (int) sfp;
+	frame->f_regs[A6] = 0; /* indicate call-frame-top to debuggers */
+	frame->f_sr &= ~PSL_T;
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -254,14 +316,15 @@ sendsig(sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp;
 	struct frame *frame;
 	struct sigcontext tsigc;
@@ -290,7 +353,7 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 
 	/*
 	 * Grab pointer to hardware state information.
@@ -391,4 +454,195 @@ sys___sigreturn14(p, v, retval)
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
+}
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	__greg_t *gr = mcp->__gregs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	unsigned int format = frame->f_format;
+
+	/* Save general registers. */
+	gr[_REG_D0] = frame->f_regs[D0];
+	gr[_REG_D1] = frame->f_regs[D1];
+	gr[_REG_D2] = frame->f_regs[D2];
+	gr[_REG_D3] = frame->f_regs[D3];
+	gr[_REG_D4] = frame->f_regs[D4];
+	gr[_REG_D5] = frame->f_regs[D5];
+	gr[_REG_D6] = frame->f_regs[D6];
+	gr[_REG_D7] = frame->f_regs[D7];
+	gr[_REG_A0] = frame->f_regs[A0];
+	gr[_REG_A1] = frame->f_regs[A1];
+	gr[_REG_A2] = frame->f_regs[A2];
+	gr[_REG_A3] = frame->f_regs[A3];
+	gr[_REG_A4] = frame->f_regs[A4];
+	gr[_REG_A5] = frame->f_regs[A5];
+	gr[_REG_A6] = frame->f_regs[A6];
+	gr[_REG_A7] = frame->f_regs[SP];
+	gr[_REG_PS] = frame->f_sr;
+	gr[_REG_PC] = frame->f_pc;
+	*flags |= _UC_CPU;
+
+	/* Save exception frame information. */
+	mcp->__mc_pad.__mc_frame.__mcf_format = format;
+	if (format >= FMT4) {
+		mcp->__mc_pad.__mc_frame.__mcf_vector = frame->f_vector;
+		(void)memcpy(&mcp->__mc_pad.__mc_frame.__mcf_exframe,
+		    &frame->F_u, (size_t)exframesize[format]);
+		
+		/* Leave indicators, see above. */
+		frame->f_stackadj += exframesize[format];
+		frame->f_format = frame->f_vector = 0;
+	}
+
+	if (fputype != FPU_NONE) {
+		/* Save FPU context. */
+		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
+
+		/*
+		 * If we're dealing with the current lwp, we need to
+		 * save its FP state. Otherwise, its state is already
+		 * store in its PCB.
+		 */
+		if (l == curlwp)
+			m68881_save(fpf);
+
+		mcp->__mc_pad.__mc_frame.__mcf_fpf_u1 = fpf->FPF_u1;
+
+		/* If it's a null frame there's no need to save/convert. */
+		if (!FPFRAME_IS_NULL(fpf)) {
+			mcp->__mc_pad.__mc_frame.__mcf_fpf_u2 = fpf->FPF_u2;
+			(void)memcpy(mcp->__fpregs.__fp_fpregs,
+			    fpf->fpf_regs, sizeof(fpf->fpf_regs));
+			mcp->__fpregs.__fp_pcr = fpf->fpf_fpcr;
+			mcp->__fpregs.__fp_psr = fpf->fpf_fpsr;
+			mcp->__fpregs.__fp_piaddr = fpf->fpf_fpiar;
+			*flags |= _UC_FPU;
+		}
+	}
+}
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	__greg_t *gr = mcp->__gregs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	unsigned int format = mcp->__mc_pad.__mc_frame.__mcf_format;
+	int sz;
+
+	/* Validate the supplied context */
+	if (((flags & _UC_CPU) != 0 &&
+	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0) ||
+	    ((flags & _UC_M68K_UC_USER) == 0 &&
+	     (format > FMTB || (sz = exframesize[format]) < 0)))
+		return (EINVAL);
+
+	/* Restore exception frame information if necessary. */
+	if ((flags & _UC_M68K_UC_USER) == 0 && format >= FMT4) {
+		if (frame->f_stackadj == 0) {
+			reenter_syscall(frame, sz);
+			/* NOTREACHED */
+		}
+
+#ifdef DIAGNOSTIC
+		if (sz != frame->f_stackadj)
+			panic("cpu_setmcontext: %d != %d",
+			    sz, frame->f_stackadj);
+#endif
+
+		frame->f_format = format;
+		frame->f_vector = mcp->__mc_pad.__mc_frame.__mcf_vector;
+		(void)memcpy(&frame->F_u,
+		    &mcp->__mc_pad.__mc_frame.__mcf_exframe, (size_t)sz);
+		frame->f_stackadj -= sz;
+	}
+
+	if ((flags & _UC_CPU) != 0) {
+		/* Restore general registers. */
+		frame->f_regs[D0] = gr[_REG_D0];
+		frame->f_regs[D1] = gr[_REG_D1];
+		frame->f_regs[D2] = gr[_REG_D2];
+		frame->f_regs[D3] = gr[_REG_D3];
+		frame->f_regs[D4] = gr[_REG_D4];
+		frame->f_regs[D5] = gr[_REG_D5];
+		frame->f_regs[D6] = gr[_REG_D6];
+		frame->f_regs[D7] = gr[_REG_D7];
+		frame->f_regs[A0] = gr[_REG_A0];
+		frame->f_regs[A1] = gr[_REG_A1];
+		frame->f_regs[A2] = gr[_REG_A2];
+		frame->f_regs[A3] = gr[_REG_A3];
+		frame->f_regs[A4] = gr[_REG_A4];
+		frame->f_regs[A5] = gr[_REG_A5];
+		frame->f_regs[A6] = gr[_REG_A6];
+		frame->f_regs[SP] = gr[_REG_A7];
+		frame->f_sr = gr[_REG_PS];
+		frame->f_pc = gr[_REG_PC];
+	}
+
+	if (fputype != FPU_NONE) {
+		const __fpregset_t *fpr = &mcp->__fpregs;
+		struct fpframe *fpf = &l->l_addr->u_pcb.pcb_fpregs;
+
+		switch (flags & (_UC_FPU | _UC_M68K_UC_USER)) {
+		case _UC_FPU:
+			/*
+			 * We're restoring FPU context saved by the above
+			 * cpu_getmcontext(). We can do a full frestore if
+			 * something other than an null frame was saved.
+			 */
+			fpf->FPF_u1 = mcp->__mc_pad.__mc_frame.__mcf_fpf_u1;
+			if (!FPFRAME_IS_NULL(fpf)) {
+				fpf->FPF_u2 =
+				    mcp->__mc_pad.__mc_frame.__mcf_fpf_u2;
+				(void)memcpy(fpf->fpf_regs,
+				    fpr->__fp_fpregs, sizeof(fpf->fpf_regs));
+				fpf->fpf_fpcr = fpr->__fp_pcr;
+				fpf->fpf_fpsr = fpr->__fp_psr;
+				fpf->fpf_fpiar = fpr->__fp_piaddr;
+			}
+			break;
+
+		case _UC_FPU | _UC_M68K_UC_USER:
+			/*
+			 * We're restoring FPU context saved by the
+			 * userland _getcontext_() function. Since there
+			 * is no FPU frame to restore. We assume the FPU was
+			 * "idle" when the frame was created, so use the
+			 * cached idle frame.
+			 */
+			fpf->FPF_u1 = m68k_cached_fpu_idle_frame.FPF_u1;
+			fpf->FPF_u2 = m68k_cached_fpu_idle_frame.FPF_u2;
+			(void)memcpy(fpf->fpf_regs, fpr->__fp_fpregs,
+			    sizeof(fpf->fpf_regs));
+			fpf->fpf_fpcr = fpr->__fp_pcr;
+			fpf->fpf_fpsr = fpr->__fp_psr;
+			fpf->fpf_fpiar = fpr->__fp_piaddr;
+			break;
+
+		default:
+			/*
+			 * The saved context contains no FPU state.
+			 * Restore a NULL frame.
+			 */
+			fpf->FPF_u1.FPF_null = 0;
+			break;
+		}
+
+		/*
+		 * We only need to restore FP state right now if we're
+		 * dealing with curlwp. Otherwise, it'll be restored
+		 * (from the PCB) when this lwp is given the cpu.
+		 */
+		if (l == curlwp)
+			m68881_restore(fpf);
+	}
+
+	return (0);
 }

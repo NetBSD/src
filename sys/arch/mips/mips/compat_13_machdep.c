@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.9 2002/11/09 19:26:12 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:36:10 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/11/09 19:26:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:36:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,6 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2002/11/09 19:26:12 thorpe
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <mips/regnum.h>
@@ -37,8 +38,8 @@ extern int sigdebug;
 #endif
 
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -46,6 +47,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext13 *scp, ksc;
+	struct proc *p = l->l_proc;
 	int error;
 	struct frame *f;
 	sigset_t mask;
@@ -67,14 +69,14 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	/* Resture the register context. */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 	f->f_regs[PC] = ksc.sc_pc;
 	f->f_regs[MULLO] = ksc.mullo;
 	f->f_regs[MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
-		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)

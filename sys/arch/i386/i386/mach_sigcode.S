@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.2 2002/11/23 10:50:09 fvdl Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.3 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,15 +114,15 @@ IDTVEC(mach_trap)
 	pushl	$7		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movl	CPUVAR(CURPROC),%edx
-	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
+	movl	CPUVAR(CURLWP),%edx
+	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
 	call	_C_LABEL(mach_trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING()
+	CHECK_ASTPENDING(%eax)
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING()
+	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 2003/01/07 18:50:13 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.146 2003/01/17 23:10:31 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.145 2003/01/07 18:50:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/01/17 23:10:31 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -860,8 +860,8 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_npages = 0;
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
-	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
+	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		i386_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -1834,11 +1834,11 @@ pmap_fork(pmap1, pmap2)
  */
 
 void
-pmap_ldt_cleanup(p)
-	struct proc *p;
+pmap_ldt_cleanup(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
 
@@ -1868,20 +1868,20 @@ pmap_ldt_cleanup(p)
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
  * => called from cpu_switch()
- * => if proc is the curproc, then load it into the MMU
+ * => if proc is the curlwp, then load it into the MMU
  */
 
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-	if (p == curproc) {
+	if (l == curlwp) {
 		lcr3(pcb->pcb_cr3);
 		lldt(pcb->pcb_ldt_sel);
 
@@ -1907,10 +1907,10 @@ pmap_activate(p)
  */
 
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
 	 * mark the pmap no longer in use by this processor.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.11 2002/12/21 16:23:56 manu Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.12 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.11 2002/12/21 16:23:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.12 2003/01/17 23:10:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.11 2002/12/21 16:23:56 manu Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -101,13 +102,15 @@ freebsd_syscall_plain(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -143,15 +146,15 @@ freebsd_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
 
-	KERNEL_PROC_LOCK(p);
-	error = (*callp->sy_call)(p, args, rval);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_LOCK(l);
+	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:
@@ -178,9 +181,9 @@ freebsd_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
@@ -189,13 +192,15 @@ freebsd_syscall_fancy(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -230,14 +235,14 @@ freebsd_syscall_fancy(frame)
 			goto bad;
 	}
 
-	KERNEL_PROC_LOCK(p);
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	KERNEL_PROC_LOCK(l);
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
-	error = (*callp->sy_call)(p, args, rval);
-	KERNEL_PROC_UNLOCK(p);	
+	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);	
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -262,7 +267,7 @@ freebsd_syscall_fancy(frame)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }

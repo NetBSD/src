@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2002/11/22 15:23:39 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2002/11/22 15:23:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,17 +387,19 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
+			struct lwp *l;
 			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
 			}	
-			if (!(p->p_flag&P_INMEM)) {
+			l = proc_representative_lwp(p); /* XXX NJWLWP */
+			if (!(l->l_flag & L_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			u = p->p_addr;
+			u = l->l_addr;
 			frame = (int *)u->u_pcb.pcb_ebp;
 			(*pr)("at %p\n", frame);
 		} else

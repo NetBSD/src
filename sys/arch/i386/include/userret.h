@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2 2000/12/10 19:29:31 mycroft Exp $	*/
+/*	$NetBSD: userret.h,v 1.3 2003/01/17 23:10:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,21 +73,31 @@
  *
  */
 
-static __inline void userret __P((register struct proc *));
+static __inline void userret __P((register struct lwp *));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p)
-	register struct proc *p;
+userret(l)
+	register struct lwp *l;
 {
 	int sig;
 
+	struct proc *p = l->l_proc;
+
 	/* Take pending signals. */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

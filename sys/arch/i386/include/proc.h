@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.16 2002/10/12 14:30:08 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.17 2003/01/17 23:10:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,18 +35,31 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
+#ifndef _I386_PROC_H_
+#define _I386_PROC_H_
+
 #include <machine/frame.h>
 
 /*
  * Machine-dependent part of the proc structure for i386.
  */
-struct mdproc {
+struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
-					/* Syscall handling function */
-	void	(*md_syscall) __P((struct trapframe));
 };
+
+/* md_flags */
+#define	MDP_USEDFPU	0x0001	/* has used the FPU */
+
+struct mdproc {
+					/* Syscall handling function */
+	int	md_flags;
+	void	(*md_syscall) __P((struct trapframe));
+	__volatile int md_astpending;	/* AST pending for this process */
+};
+
+#endif /* _I386_PROC_H_ */
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
@@ -55,8 +68,8 @@ struct mdproc {
 /* kernel stack params */
 #ifndef NOREDZONE
 /* override default for redzone */
-#define	KSTACK_LOWEST_ADDR(p)	\
-	((caddr_t)(p)->p_addr + NBPG*2)
+#define	KSTACK_LOWEST_ADDR(l)	\
+	((caddr_t)(l)->l_addr + NBPG*2)
 #define	KSTACK_SIZE	\
 	(USPACE - NBPG*2)
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2002/02/14 07:08:10 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 2003/01/17 23:42:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,8 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
 
@@ -91,7 +93,7 @@ void	dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
 
-static inline void userret __P((struct proc *p, struct frame *fp,
+static inline void userret __P((struct lwp *l, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 int	astpending;
@@ -193,13 +195,14 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(p, fp, oticks, faultaddr, fromtrap)
-	struct proc *p;
+userret(l, fp, oticks, faultaddr, fromtrap)
+	struct lwp *l;
 	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
 {
+	struct proc *p = l->l_proc;
 	int sig;
 #ifdef M68040
 	int beenhere = 0;
@@ -207,17 +210,16 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 again:
 #endif
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
+
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
@@ -228,6 +230,7 @@ again:
 		addupc_task(p, fp->f_pc,
 			    (int)(p->p_sticks - oticks) * psratio);
 	}
+
 #ifdef M68040
 	/*
 	 * Deal with user mode writebacks (from trap, or from sigreturn).
@@ -253,28 +256,28 @@ again:
 		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, faultaddr);
+			trapsignal(l, sig, faultaddr);
 			goto again;
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
  * Used by the common m68k syscall() and child_return() functions.
  * XXX: Temporary until all m68k ports share common trap()/userret() code.
  */
-void machine_userret(struct proc *, struct frame *, u_quad_t);
+void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(p, f, t)
-	struct proc *p;
+machine_userret(l, f, t)
+	struct lwp *l;
 	struct frame *f;
 	u_quad_t t;
 {
 
-	userret(p, f, t, 0, 0);
+	userret(l, f, t, 0, 0);
 }
 
 /*
@@ -291,6 +294,7 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
+	struct lwp *l;
 	struct proc *p;
 	int i, s;
 	u_int ucode;
@@ -298,21 +302,23 @@ trap(type, code, v, frame)
 	static int panicing = 0;
 
 	uvmexp.traps++;
-	p = curproc;
+	l = curlwp;
 	ucode = 0;
 
 	/* I have verified that this DOES happen! -gwr */
-	if (p == NULL)
-		p = &proc0;
+	if (l == NULL)
+		l = &lwp0;
+	p = l->l_proc;
+
 #ifdef DIAGNOSTIC
-	if (p->p_addr == NULL)
+	if (l->l_addr == NULL)
 		panic("trap: no pcb");
 #endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = frame.f_regs;
+		l->l_md.md_regs = frame.f_regs;
 	}
 	switch (type) {
 
@@ -354,7 +360,7 @@ trap(type, code, v, frame)
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (p->p_addr->u_pcb.pcb_onfault == 0)
+		if (l->l_addr->u_pcb.pcb_onfault == 0)
 			goto dopanic;
 		/* FALLTHROUGH */
 
@@ -367,7 +373,7 @@ trap(type, code, v, frame)
 		 */
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
-		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
+		frame.f_pc = (int) l->l_addr->u_pcb.pcb_onfault;
 		return;
 
 	case T_BUSERR|T_USER:	/* bus error */
@@ -552,6 +558,8 @@ trap(type, code, v, frame)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		if (want_resched)
+			preempt(0);
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
@@ -559,8 +567,8 @@ trap(type, code, v, frame)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == subail)
+		if (l->l_addr->u_pcb.pcb_onfault == fubail ||
+		    l->l_addr->u_pcb.pcb_onfault == subail)
 			goto copyfault;
 		/* fall into ... */
 
@@ -587,7 +595,7 @@ trap(type, code, v, frame)
 		 * argument space is lazy-allocated.
 		 */
 		if ((type & T_USER) == 0 &&
-		    ((p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
+		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = vm ? &vm->vm_map : kernel_map;
@@ -664,7 +672,7 @@ trap(type, code, v, frame)
 			goto out;
 		}
 		if (type == T_MMUFLT) {
-			if (p->p_addr->u_pcb.pcb_onfault)
+			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
@@ -685,11 +693,11 @@ trap(type, code, v, frame)
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode);
+	trapsignal(l, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, &frame, sticks, v, 1);
+	userret(l, &frame, sticks, v, 1);
 }
 
 #ifdef M68040
@@ -730,10 +738,11 @@ writeback(fp, docachepush)
 	int docachepush;
 {
 	struct fmt7 *f = &fp->f_fmt7;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	int err = 0;
 	u_int fa;
-	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
+	caddr_t oonfault = l->l_addr->u_pcb.pcb_onfault;
 	extern int suline(caddr_t, caddr_t);	/* locore.s */
 
 #ifdef DEBUG
@@ -955,7 +964,7 @@ writeback(fp, docachepush)
 #endif
 		}
 	}
-	p->p_addr->u_pcb.pcb_onfault = oonfault;
+	l->l_addr->u_pcb.pcb_onfault = oonfault;
 	if (err)
 		err = SIGSEGV;
 	return (err);
@@ -995,7 +1004,8 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.84 2002/11/08 00:49:32 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.85 2003/01/17 23:36:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -176,7 +176,7 @@ END(mips3_wbflush)
  *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
  */
 LEAF(mips_wait_idle)
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop

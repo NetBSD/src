@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 2003/01/07 18:54:08 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.9 2003/01/17 23:10:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -637,8 +637,8 @@ cpu_debug_dump(void)
 		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
 		    ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
-		    ci->ci_curproc,
-		    ci->ci_fpcurproc);
+		    ci->ci_curlwp,
+		    ci->ci_fpcurlwp);
 	}
 }
 #endif

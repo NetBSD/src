@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 2002/07/13 12:30:11 drochner Exp $	*/
+/*	$NetBSD: proc.h,v 1.3 2003/01/17 23:18:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,15 +39,29 @@
 #define _M68K_PROC_H
 
 #include <machine/frame.h>
-struct proc;
+
+/*
+ * Machine-dependent part of the lwp structure for m68k.
+ */
+struct mdlwp {
+	int	*md_regs;		/* registers on current frame */
+	int	md_flags;		/* machine-dependent flags */
+};
+
+/* md_flags */
+#define MDL_STACKADJ    0x0001  /* frame SP adjusted, might have to
+                                   undo when system call returns
+                                   ERESTART. */
+#define MDL_FPUSED	0x0002	/* floating point coprocessor used (sun[23]) */
+
+struct lwp;
 
 /*
  * Machine-dependent part of the proc structure for m68k-based ports.
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
-	int	md_flags;		/* machine-dependent flags */
-	void	(*md_syscall)(register_t, struct proc *, struct frame *);
+	int	mdp_flags;		/* machine-dependent flags */
+	void	(*md_syscall)(register_t, struct lwp *, struct frame *);
 };
 
 /*
@@ -56,13 +70,9 @@ struct mdproc {
  * Some of them are probably obsolete and/or not applicable to all ports.
  */
 /* md_flags */
-#define	MDP_FPUSED	0x0001  /* floating point coprocessor used */
 #define	MDP_HPUXTRACE	0x0004  /* being traced by HP-UX process */
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
 #define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
-#define MDP_STACKADJ	0x0040	/* Frame SP adjusted, might have to
-				 * undo when system call returns
-				 * ERESTART. */
 
 #endif /* _M68K_PROC_H */

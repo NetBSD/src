@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.11 2002/10/04 19:39:54 joda Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.12 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.11 2002/10/04 19:39:54 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12 2003/01/17 23:10:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,13 +181,13 @@ procfs_machdep_allocvp(struct vnode *vp)
 }
 
 int
-procfs_machdep_rw(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_machdep_rw(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
     struct uio *uio)
 {
 
 	switch (pfs->pfs_type) {
 	case Pmachdep_xmmregs:
-		return (procfs_machdep_doxmmregs(curp, p, pfs, uio));
+		return (procfs_machdep_doxmmregs(curp, l, pfs, uio));
 
 	default:
 		panic("procfs_machdep_rw");
@@ -215,11 +215,11 @@ procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
 }
 
 int
-procfs_machdep_doxmmregs(struct proc *curp, struct proc *p,
+procfs_machdep_doxmmregs(struct proc *curp, struct lwp *l,
     struct pfsnode *pfs, struct uio *uio)
 {
 
-	return (process_machdep_doxmmregs(curp, p, uio));
+	return (process_machdep_doxmmregs(curp, l, uio));
 }
 
 int
