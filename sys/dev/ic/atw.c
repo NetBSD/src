@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.40 2004/07/15 06:06:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.40 2004/07/15 06:06:53 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -211,7 +211,6 @@ static void atw_tsf(struct atw_softc *);
 static void atw_start_beacon(struct atw_softc *, int);
 static void atw_write_wep(struct atw_softc *);
 static void atw_write_bssid(struct atw_softc *);
-static void atw_write_bcn_thresh(struct atw_softc *);
 static void atw_write_ssid(struct atw_softc *);
 static void atw_write_sup_rates(struct atw_softc *);
 static void atw_clear_sram(struct atw_softc *);
@@ -880,8 +879,6 @@ atw_reset(struct atw_softc *sc)
 	atw_clear_sram(sc);
 
 	memset(sc->sc_bssid, 0, sizeof(sc->sc_bssid));
-
-	sc->sc_lost_bcn_thresh = 0;
 }
 
 static void
@@ -1929,44 +1926,6 @@ atw_write_bssid(struct atw_softc *sc)
 	memcpy(sc->sc_bssid, bssid, sizeof(sc->sc_bssid));
 }
 
-/* Tell the ADM8211 how many beacon intervals must pass without
- * receiving a beacon with the preferred BSSID & SSID set by
- * atw_write_bssid and atw_write_ssid before ATW_INTR_LINKOFF
- * raised.
- */
-static void
-atw_write_bcn_thresh(struct atw_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	int lost_bcn_thresh;
-
-	/* Lose link after one second or 7 beacons, whichever comes
-	 * first, but do not lose link before 2 beacons are lost.
-	 *
-	 * In host AP mode, set the lost-beacon threshold to 0.
-	 */
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		lost_bcn_thresh = 0;
-	else {
-		int beacons_per_second =
-		    1000000 / (IEEE80211_DUR_TU * MAX(1,ic->ic_bss->ni_intval));
-		lost_bcn_thresh = MAX(2, MIN(7, beacons_per_second));
-	}
-
-	/* XXX resets wake-up status bits */
-	ATW_WRITE(sc, ATW_WCSR,
-	    (ATW_READ(sc, ATW_WCSR) & ~ATW_WCSR_BLN_MASK) |
-	    (LSHIFT(lost_bcn_thresh, ATW_WCSR_BLN_MASK) & ATW_WCSR_BLN_MASK));
-
-	DPRINTF(sc, ("%s: lost-beacon threshold %d -> %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_lost_bcn_thresh, lost_bcn_thresh));
-
-	sc->sc_lost_bcn_thresh = lost_bcn_thresh;
-
-	DPRINTF(sc, ("%s: atw_write_bcn_thresh reg[WCSR] = %08x\n",
-	    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_WCSR)));
-}
-
 /* Write buflen bytes from buf to SRAM starting at the SRAM's ofs'th
  * 16-bit word.
  */
@@ -2199,7 +2158,6 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
 
 	atw_write_bssid(sc);
-	atw_write_bcn_thresh(sc);
 	atw_start_beacon(sc, 1);
 }
 
@@ -2426,7 +2384,6 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/*FALLTHROUGH*/
 	case IEEE80211_S_AUTH:
 		atw_write_bssid(sc);
-		atw_write_bcn_thresh(sc);
 		atw_write_ssid(sc);
 		atw_write_sup_rates(sc);
 
