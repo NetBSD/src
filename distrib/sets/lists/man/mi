@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.765 2005/03/02 02:56:24 thorpej Exp $
+# $NetBSD: mi,v 1.766 2005/03/07 02:26:31 thorpej Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1491,6 +1491,7 @@
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/pcfs.0			man-obsolete		obsolete
@@ -3691,6 +3692,7 @@
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
+./usr/share/man/man5/pam.conf.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man		.man
 ./usr/share/man/man5/pcfs.5			man-obsolete		obsolete
