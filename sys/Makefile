@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.30 1998/08/14 13:05:37 augustss Exp $
+#	$NetBSD: Makefile,v 1.31 1998/10/02 20:20:29 drochner Exp $
 
-SUBDIR=	adosfs arch dev filecorefs isofs miscfs msdosfs net netatalk netccitt \
-	netinet netiso netnatm netns nfs sys ufs uvm vm
+SUBDIR=	adosfs arch compat dev filecorefs isofs miscfs msdosfs net \
+	netatalk netccitt netinet netiso netnatm netns nfs sys ufs uvm vm
 
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && \
      ${MACHINE_ARCH} != "powerpc")
