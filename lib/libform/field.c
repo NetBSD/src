@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -58,7 +58,7 @@ FIELD _formi_default_field = {
 	0, /* start of a new page on the form if 1 */
 	0, /* number of the page this field is on */
 	A_NORMAL, /* character attributes for the foreground */
-	A_REVERSE, /* character attributes for the background */
+	A_NORMAL, /* character attributes for the background */
 	' ', /* padding character */
 	DEFAULT_FORM_OPTS, /* options for the field */
 	NULL, /* the form this field is bound to, if any */

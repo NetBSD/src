@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -221,6 +221,7 @@ struct _form_fieldtype {
 struct _form_struct {
 	int in_init; /* true if performing a init or term function */
 	int posted; /* the form is posted */
+	int wrap; /* wrap from last field to first field if true */
 	WINDOW *win; /* window for the form */
 	WINDOW *subwin; /* subwindow for the form */
 	void *userptr; /* user defined pointer */
