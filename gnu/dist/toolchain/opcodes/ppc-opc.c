@@ -722,7 +722,7 @@ insert_mbe (insn, value, errmsg)
   /* me: location of last 1->0 transition */
   /* count: # transitions */
 
-  for (mx = 0, mask = 1 << 31; mx < 32; ++mx, mask >>= 1)
+  for (mx = 0, mask = (long) 1 << 31; mx < 32; ++mx, mask >>= 1)
     {
       if ((uval & mask) && !last)
 	{
