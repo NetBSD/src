@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.5 2003/01/27 15:16:12 tsutsui Exp $ */
+/* $NetBSD: vgareg.h,v 1.6 2003/01/31 21:57:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -63,6 +63,13 @@ struct reg_vgagdc { /* indexed via port 0x3ce */
 /*
  * CRTC registers are defined in sys/dev/ic/mc6845reg.h
  */
+
+/* video DAC palette registers */
+#define VGA_DAC_PELMASK	0x6
+#define VGA_DAC_STATE	0x7
+#define VGA_DAC_ADDRR	0x7
+#define VGA_DAC_ADDRW	0x8
+#define VGA_DAC_PALETTE	0x9
 
 /* misc output register */
 #define VGA_MISC_DATAR	0xc

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.9 2003/01/27 15:27:44 tsutsui Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.10 2003/01/31 21:57:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -74,6 +74,8 @@
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
+
+int vga_no_builtinfont = 0;
 
 u_int8_t builtinfont_data[256 * 16];
 
@@ -394,11 +396,27 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
 	callout_init(&vc->vc_switch_callout);
 
+	wsfont_init();
 	vc->nfonts = 1;
 	LIST_INIT(&vc->vc_fontlist);
 	vf = &vga_console_fontset_ascii;
-	vga_load_builtinfont(vh, builtinfont_data, 0, 256);
-	vf->font = &builtinfont;
+	if (vga_no_builtinfont) {
+		struct wsdisplay_font *wf;
+		int cookie;
+
+		/* prefer 8x16 pixel font */
+		cookie = wsfont_find(NULL, 8, 16, 0,
+		     WSDISPLAY_FONTORDER_L2R, 0);
+		if (cookie == -1)
+			cookie = wsfont_find(NULL, 0, 0, 0,
+			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+		if (cookie == -1 || wsfont_lock(cookie, &wf))
+			panic("vga_raster_init: can't load console font");
+		vf->font = wf;
+	} else {
+		vga_load_builtinfont(vh, builtinfont_data, 0, 256);
+		vf->font = &builtinfont;
+	}
 	LIST_INSERT_HEAD(&vc->vc_fontlist, vf, next);
 }
 
@@ -415,10 +433,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	scr->type = type;
 	scr->mindispoffset = 0;
 	scr->maxdispoffset = 0x10000;
-	scr->encoding = WSDISPLAY_FONTENC_IBM;
 	vh = &vc->hdl;
 
-	wsfont_init();
 	LIST_INIT(&scr->fontset);
 	vga_raster_setup_font(vc, scr);
 
@@ -449,7 +465,7 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 			    vh->vh_allmemh, 0x18000 + i * 2);
 			scr->mem[i].attr = bus_space_read_1(vh->vh_memt,
 			    vh->vh_allmemh, 0x18000 + i * 2 + 1);
-			scr->mem[i].enc = WSDISPLAY_FONTENC_IBM;
+			scr->mem[i].enc = scr->encoding;
 		}
 
 		vga_raster_setscreentype(vc, type);
@@ -782,6 +798,7 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 
 	LIST_FOREACH(vf, &vc->vc_fontlist, next) {
 		if (wsfont_matches(vf->font, 0, 0, scr->type->fontheight, 0)) {
+			scr->encoding = vf->font->encoding;
 			LIST_INSERT_HEAD(&scr->fontset, vf, next);
 			return;
 		}
@@ -802,6 +819,7 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 	}
 
 	vf->font = wf;
+	scr->encoding = vf->font->encoding;
 	LIST_INSERT_HEAD(&scr->fontset, vf, next);
 }
 
@@ -993,7 +1011,7 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		scr->cursortmp.ch = 0;
 		scr->cursortmp.attr = 0;
 		scr->cursortmp.second = 0;
-		scr->cursortmp.enc = WSDISPLAY_FONTENC_IBM;
+		scr->cursortmp.enc = scr->encoding;
 	}
 
 	scr->cursoron = 1;
@@ -1109,7 +1127,7 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 	scr->mem[off].ch = c;
 	scr->mem[off].attr = attr;
 	scr->mem[off].second = 0;
-	scr->mem[off].enc = WSDISPLAY_FONTENC_IBM;
+	scr->mem[off].enc = scr->encoding;
 }
 
 static void
@@ -1323,7 +1341,7 @@ vga_raster_eraserows(void *id, int startrow, int nrows, long fillattr)
 		scr->mem[off + i].ch = ' ';
 		scr->mem[off + i].attr = fillattr;
 		scr->mem[off + i].second = 0;
-		scr->mem[off + i].enc = WSDISPLAY_FONTENC_IBM;
+		scr->mem[off + i].enc = scr->encoding;
 	}
 }
 

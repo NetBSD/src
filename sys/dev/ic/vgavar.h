@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.17 2003/01/27 15:16:12 tsutsui Exp $ */
+/* $NetBSD: vgavar.h,v 1.18 2003/01/31 21:57:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -203,3 +203,8 @@ void 	vga_setscreentype(struct vga_handle *, const struct wsscreen_descr *);
 #else /* !VGA_RASTERCONSOLE */
 void 	vga_load_builtinfont(struct vga_handle *, u_int8_t *, int, int);
 #endif /* !VGA_RASTERCONSOLE */
+#ifdef VGA_RESET
+void	vga_reset(struct vga_handle *, void (*)(struct vga_handle *));
+#endif
+
+extern int vga_no_builtinfont;

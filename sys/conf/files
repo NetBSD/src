@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.592 2003/01/20 20:02:01 christos Exp $
+#	$NetBSD: files,v 1.593 2003/01/31 21:57:23 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -781,6 +781,7 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 defflag opt_vga.h		VGA_RASTERCONSOLE
+defflag opt_vga.h		VGA_RESET
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
