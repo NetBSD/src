@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.2 1997/07/06 12:35:33 fvdl Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.3 1997/07/06 22:51:59 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -50,7 +50,7 @@
  * Locks provide shared/exclusive sychronization.
  */
 
-#ifdef DEBUG
+#ifdef LOCKDEBUG
 #define COUNT(p, x) if (p) (p)->p_locks += (x)
 #else
 #define COUNT(p, x)
@@ -443,7 +443,7 @@ lockmgr_printinfo(lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(DEBUG) && NCPUS == 1
+#if defined(LOCKDEBUG) && NCPUS == 1
 #include <sys/kernel.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -536,4 +536,4 @@ _simple_unlock(alp, id, l)
 	if (curproc)
 		curproc->p_simple_locks--;
 }
-#endif /* DEBUG && NCPUS == 1 */
+#endif /* LOCKDEBUG && NCPUS == 1 */
