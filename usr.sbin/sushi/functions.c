@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.11 2005/01/18 18:07:21 peter Exp $       */
+/*      $NetBSD: functions.c,v 1.12 2005/03/09 22:09:36 kleink Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/utsname.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +57,6 @@ extern int scripting;
 extern int logging;
 extern FILE *logfile;
 extern FILE *script;
-extern int errno;
 extern nl_catd catalog;
 
 char *ftp_base(int);
