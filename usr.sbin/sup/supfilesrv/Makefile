@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/10/07 01:31:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1999/08/24 15:52:57 bouyer Exp $
 
 PROG=	supfilesrv
 SRCS=	supfilesrv.c scan.c
@@ -8,7 +8,7 @@ MLINKS=	supservers.8 supfilesrv.8 supservers.8 supscan.8
 .PATH:	${.CURDIR}/../source
 
 DPADD=	${LIBSUP} ${LIBCRYPT}
-LDADD=	${SUPLIB} -lcrypt
+LDADD=	${SUPLIB} -lcrypt -lwrap
 
 supfilesrv: .NOPATH
 
