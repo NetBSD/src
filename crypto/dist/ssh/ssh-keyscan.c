@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-keyscan.c,v 1.8 2001/04/10 08:08:02 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *

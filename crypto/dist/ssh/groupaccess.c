@@ -1,4 +1,4 @@
-/*	$NetBSD: groupaccess.c,v 1.1.1.2 2001/04/10 07:13:55 itojun Exp $	*/
+/*	$NetBSD: groupaccess.c,v 1.2 2001/04/10 08:07:57 itojun Exp $	*/
 /*	$OpenBSD: groupaccess.c,v 1.3 2001/01/29 01:58:15 niklas Exp $	*/
 
 /*

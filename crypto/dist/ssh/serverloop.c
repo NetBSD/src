@@ -1,3 +1,4 @@
+/*	$NetBSD: serverloop.c,v 1.7 2001/04/10 08:08:00 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.55 2001/03/16 19:06:29 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.60 2001/04/05 23:39:20 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -53,8 +54,12 @@ RCSID("$OpenBSD: serverloop.c,v 1.55 2001/03/16 19:06:29 markus Exp $");
 #include "auth-options.h"
 #include "serverloop.h"
 #include "misc.h"
+#include "kex.h"
 
 extern ServerOptions options;
+
+/* XXX */
+extern Kex *xxx_kex;
 
 static Buffer stdin_buffer;	/* Buffer for stdin data. */
 static Buffer stdout_buffer;	/* Buffer for stdout data. */
@@ -73,7 +78,8 @@ static int fderr_eof = 0;	/* EOF encountered readung from fderr. */
 static int fdin_is_tty = 0;	/* fdin points to a tty. */
 static int connection_in;	/* Connection to client (input). */
 static int connection_out;	/* Connection to client (output). */
-static u_int buffer_high;/* "Soft" max buffer size. */
+static int connection_closed = 0;	/* Connection to client closed. */
+static u_int buffer_high;	/* "Soft" max buffer size. */
 
 /*
  * This SIGCHLD kludge is used to detect when the child exits.  The server
@@ -190,7 +196,7 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 retry_select:
 
 	/* Allocate and update select() masks for channel descriptors. */
-	channel_prepare_select(readsetp, writesetp, maxfdp);
+	channel_prepare_select(readsetp, writesetp, maxfdp, 0);
 
 	if (compat20) {
 		/* wrong: bad condition XXX */
@@ -273,6 +279,9 @@ process_input(fd_set * readset)
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
 			verbose("Connection closed by remote host.");
+			connection_closed = 1;
+			if (compat20)
+				return;
 			fatal_cleanup();
 		} else if (len < 0) {
 			if (errno != EINTR && errno != EAGAIN) {
@@ -391,7 +400,7 @@ drain_output(void)
 static void
 process_buffered_input_packets(void)
 {
-	dispatch_run(DISPATCH_NONBLOCK, NULL, NULL);
+	dispatch_run(DISPATCH_NONBLOCK, NULL, compat20 ? xxx_kex : NULL);
 }
 
 /*
@@ -646,9 +655,7 @@ void
 server_loop2(void)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int max_fd;
-	int had_channel = 0;
-	int status;
+	int rekeying = 0, max_fd, status;
 	pid_t pid;
 
 	debug("Entering interactive session for SSH2.");
@@ -664,22 +671,23 @@ server_loop2(void)
 
 	for (;;) {
 		process_buffered_input_packets();
-		if (!had_channel && channel_still_open())
-			had_channel = 1;
-		if (had_channel && !channel_still_open()) {
-			debug("!channel_still_open.");
-			break;
-		}
-		if (packet_not_very_much_data_to_write())
+
+		rekeying = (xxx_kex != NULL && !xxx_kex->done);
+
+		if (!rekeying && packet_not_very_much_data_to_write())
 			channel_output_poll();
-		wait_until_can_do_something(&readset, &writeset, &max_fd, 0);
+		wait_until_can_do_something(&readset, &writeset, &max_fd,
+		    rekeying);
 		if (child_terminated) {
 			while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 				session_close_by_pid(pid, status);
 			child_terminated = 0;
 		}
-		channel_after_select(readset, writeset);
+		if (!rekeying)
+			channel_after_select(readset, writeset);
 		process_input(readset);
+		if (connection_closed)
+			break;
 		process_output(writeset);
 	}
 	if (readset)
@@ -905,6 +913,9 @@ server_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &channel_input_channel_request);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
+
+	/* rekeying */
+	dispatch_set(SSH2_MSG_KEXINIT, &kex_input_kexinit);
 }
 static void
 server_init_dispatch_13(void)
