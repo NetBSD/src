@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxio.h,v 1.1 2001/02/04 17:05:12 ad Exp $	*/
+/*	$NetBSD: mlxio.h,v 1.1.22.1 2003/07/28 18:07:20 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Smith
@@ -86,11 +86,23 @@ struct mlx_rebuild_status {
 	int		rs_remaining;
 };
 
+struct mlx_cinfo {
+	u_int		ci_iftype;
+	u_int		ci_nchan;
+	u_int		ci_max_sg;
+	u_int		ci_max_commands;
+	u_int		ci_mem_size;
+	u_int8_t	ci_firmware_id[4];
+	u_int8_t	ci_hardware_id;
+	u_int8_t	ci_pad[3];
+};
+
 #define MLX_RESCAN_DRIVES	_IO('M', 0)
 #define MLX_PAUSE_CHANNEL	_IOW('M', 1, struct mlx_pause)
 #define MLX_COMMAND		_IOWR('M', 2, struct mlx_usercommand)
 #define MLX_REBUILDASYNC	_IOWR('M', 3, struct mlx_rebuild_request)
 #define MLX_REBUILDSTAT		_IOR('M', 4, struct mlx_rebuild_status)
 #define MLX_GET_SYSDRIVE	_IOWR('M', 5, int)
+#define	MLX_GET_CINFO		_IOR('M', 6, struct mlx_cinfo)
 
 #endif	/* !_IC_MLXIO_H_ */
