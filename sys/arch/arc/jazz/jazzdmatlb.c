@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.3 2000/11/09 06:09:59 thorpej Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.4 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <arc/pica/pica.h>
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/jazzdmatlbvar.h>
 

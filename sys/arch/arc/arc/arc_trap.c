@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.16 2000/10/05 02:36:44 cgd Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.17 2000/12/24 09:25:24 ur Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -55,8 +55,8 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 #include <arc/arc/arctype.h>
 
 int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));

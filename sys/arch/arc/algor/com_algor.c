@@ -1,4 +1,4 @@
-/*	$NetBSD: com_lbus.c,v 1.10 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: com_algor.c,v 1.1 2000/12/24 09:25:24 ur Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -91,20 +91,15 @@
 extern struct arc_bus_space *arc_bus_com;	/* XXX */
 extern int com_freq;
 
-int	com_localbus_probe __P((struct device *, struct cfdata *, void *));
-void	com_localbus_attach __P((struct device *, struct device *, void *));
-
-
-struct cfattach com_pica_ca = {
-	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
-};
+int	com_algor_probe __P((struct device *, struct cfdata *, void *));
+void	com_algor_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_algor_ca = {
-	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
+	sizeof(struct com_softc), com_algor_probe, com_algor_attach
 };
 
 int
-com_localbus_probe(parent, match, aux)
+com_algor_probe(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -133,7 +128,7 @@ com_localbus_probe(parent, match, aux)
 }
 
 void
-com_localbus_attach(parent, self, aux)
+com_algor_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {

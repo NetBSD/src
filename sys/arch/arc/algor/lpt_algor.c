@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_lbus.c,v 1.10 2000/06/09 05:42:00 soda Exp $	*/
+/*	$NetBSD: lpt_algor.c,v 1.1 2000/12/24 09:25:24 ur Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -69,10 +69,6 @@ extern struct arc_bus_space arc_bus_io;
 
 int lpt_localbus_probe __P((struct device *, struct cfdata *, void *));
 void lpt_localbus_attach __P((struct device *, struct device *, void *));
-
-struct cfattach lpt_pica_ca = {
-	sizeof(struct lpt_softc), lpt_localbus_probe, lpt_localbus_attach
-};
 
 struct cfattach lpt_algor_ca = {
 	sizeof(struct lpt_softc), lpt_localbus_probe, lpt_localbus_attach
