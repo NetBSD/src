@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.413 2004/08/25 03:14:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.414 2004/08/25 03:16:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6818,3 +6818,11 @@ bin/pax/ar_subs.c				1.31
 	Propery handle "cpio" archives where the last hardlink includes the
 	data of a file. PR#26514
 	[tron, ticket #784]
+
+distrib/utils/sysinst/msg.mi.de			1.14
+distrib/utils/sysinst/msg.mi.en			1.131
+distrib/utils/sysinst/msg.mi.fr			1.81
+distrib/utils/sysinst/msg.mi.pl			1.42
+
+	CD-ROM -> CD-ROM / DVD
+	[hubertf, ticket #785]
