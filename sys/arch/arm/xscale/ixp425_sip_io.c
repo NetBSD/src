@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip_io.c,v 1.2 2003/06/01 21:42:27 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip_io.c,v 1.3 2003/11/02 21:20:32 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip_io.c,v 1.2 2003/06/01 21:42:27 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip_io.c,v 1.3 2003/11/02 21:20:32 scw Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -89,7 +89,7 @@ struct bus_space ixpsip_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -107,7 +107,7 @@ struct bus_space ixpsip_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
