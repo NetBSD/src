@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.2 2003/01/18 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.3 2003/01/21 17:45:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,8 +46,7 @@ __BEGIN_DECLS
 int	getcontext(ucontext_t *);
 int	setcontext(const ucontext_t *);
 void	makecontext(ucontext_t *, void (*)(), int, ...);
-int	swapcontext(ucontext_t *, const ucontext_t *);
-
+int	swapcontext(ucontext_t * __restrict, const ucontext_t * __restrict);
 __END_DECLS
 
 #endif /* !_UCONTEXT_H_ */
