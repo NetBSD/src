@@ -1,0 +1,14 @@
+.\"	$NetBSD: prep,v 1.1.2.2 2002/06/19 01:14:42 lukem Exp $
+.
+First and foremost, before beginning the installation process,
+.Em make sure you have a reliable backup
+of any data on your
+.Tn "Windows CE"
+memory and settings that you wish to keep.
+Sadly, there is no freely available program to accomplish this task,
+so you must use
+.Tn ActiveSync
+or another commercially available program to backup your
+.Tn "Windows CE"
+machine before installing
+.Nx*M .
