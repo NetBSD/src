@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.24 1998/05/25 01:14:38 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,17 +66,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.24 1998/05/25 01:14:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#ifdef __alpha__
 #include <machine/rpb.h>
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
+#endif /* __alpha__ */
 
 #include <machine/bus.h>
 
@@ -99,6 +101,8 @@ struct tcds_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 
+	bus_dma_tag_t sc_dmat;
+
 	void	*sc_cookie;
 
 	int	sc_flags;
@@ -108,7 +112,7 @@ struct tcds_softc {
 
 /* sc_flags */
 #define	TCDSF_BASEBOARD		0x01	/* baseboard on DEC 3000 */
-#define	TCDSF_FASTSCSI		0x02	/* fast SCSI device */
+#define	TCDSF_FASTSCSI		0x02	/* supports Fast SCSI */
 
 /* Definition of the driver for autoconfig. */
 int	tcdsmatch __P((struct device *, struct cfdata *, void *));
@@ -127,8 +131,10 @@ struct tcds_device {
 	const char *td_name;
 	int td_flags;
 } tcds_devices[] = {
+#ifdef __alpha__
 	{ "PMAZ-DS ",	TCDSF_BASEBOARD },
 	{ "PMAZ-FS ",	TCDSF_BASEBOARD|TCDSF_FASTSCSI },
+#endif /* __alpha__ */
 	{ "PMAZB-AA",	0 },
 	{ "PMAZC-AA",	TCDSF_FASTSCSI },
 	{ NULL,		0 },
@@ -172,7 +178,7 @@ tcdsattach(parent, self, aux)
 	struct tcds_slotconfig *slotc;
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
-	int i, id, fast;
+	int i, error, gpi2;
 	extern int cputype;
 
 	td = tcds_lookup(ta->ta_modname);
@@ -181,22 +187,17 @@ tcdsattach(parent, self, aux)
 
 	printf(": TurboChannel Dual SCSI");
 	if (td->td_flags & TCDSF_BASEBOARD)
-		printf(", baseboard");
-	if (td->td_flags & TCDSF_FASTSCSI)
-		printf(", fast");
+		printf(" (baseboard)");
 	printf("\n");
 
 	sc->sc_flags = td->td_flags;
 
-#ifndef __alpha__
-	if (sc->sc_flags & TCDSF_BASEBOARD)
-		panic("tcdsattach: baseboard TCDS on non-Alpha?!");
-#endif
+	sc->sc_bst = ta->ta_memt;
+	sc->sc_dmat = ta->ta_dmat;
 
 	/*
 	 * Map the device.
 	 */
-	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(sc->sc_bst, ta->ta_addr,
 	    (TCDS_SCSI1_OFFSET + 0x100), 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
@@ -229,6 +230,12 @@ tcdsattach(parent, self, aux)
 	/* XXX Initial contents of CIR? */
 
 	/*
+	 * Remember if GPI2 is set in the CIR; we'll need it later.
+	 */
+	gpi2 = (bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR) &
+	    TCDS_CIR_GPI_2) != 0;
+
+	/*
 	 * Set up the per-slot defintions for later use.
 	 */
 
@@ -244,6 +251,12 @@ tcdsattach(parent, self, aux)
 		slotc->sc_asc = NULL;
 		slotc->sc_intrhand = tcds_intrnull;
 		slotc->sc_intrarg = (void *)(long)i;
+		slotc->sc_dmat = sc->sc_dmat;
+		if ((error = tcds_dma_init(slotc)) != 0) {
+			printf("%s: tcds_dma_init failed, error = %d\n",
+			    sc->sc_dv.dv_xname, error);
+			return;
+		}
 	}
 
 	/* information for slot 0 */
@@ -274,18 +287,28 @@ tcdsattach(parent, self, aux)
 
 	/* find the hardware attached to the TCDS ASIC */
 	for (i = 0; i < 2; i++) {
-		tcds_params(sc, i, &id, &fast);
+		tcds_params(sc, i, &tcdsdev.tcdsda_id,
+		    &tcdsdev.tcdsda_fast);
 
 		tcdsdev.tcdsda_bst = sc->sc_bst;
 		tcdsdev.tcdsda_bsh = sbsh[i];
 		tcdsdev.tcdsda_chip = i;
 		tcdsdev.tcdsda_sc = &sc->sc_slots[i];
-		tcdsdev.tcdsda_id = id;				/* XXX */
-		tcdsdev.tcdsda_freq = 25000000;			/* XXX */
-		if (sc->sc_flags & TCDSF_FASTSCSI)
-			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C96;
-		else
+		/*
+		 * Determine the chip frequency.  If GPI2 is set, we have a
+		 * 25MHz clock, else a 40MHz clock.
+		 */
+		if (gpi2) {
+			tcdsdev.tcdsda_freq = 25000000;
+			tcdsdev.tcdsda_period = 5;
+		} else {
+			tcdsdev.tcdsda_freq = 40000000;
+			tcdsdev.tcdsda_period = tcdsdev.tcdsda_fast ? 4 : 8;
+		}
+		if (sc->sc_flags & TCDSF_BASEBOARD)
 			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C94;
+		else
+			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C96;
 
 		tcds_scsi_reset(tcdsdev.tcdsda_sc);
 
@@ -546,13 +569,15 @@ tcds_params(sc, chip, idp, fastp)
 	struct tcds_softc *sc;
 	int chip, *idp, *fastp;
 {
+	int id, fast;
 	u_int32_t ids;
 
 #ifdef __alpha__
 	if (sc->sc_flags && TCDSF_BASEBOARD) {
-		/* XXX Implement me. */
-		*idp = 7;
-		*fastp = 0;
+		extern u_int8_t dec_3000_scsiid[], dec_3000_scsifast[];
+
+		id = dec_3000_scsiid[chip];
+		fast = dec_3000_scsifast[chip];
 	} else
 #endif /* __alpha__ */
 	{
@@ -565,11 +590,23 @@ tcds_params(sc, chip, idp, fastp)
 		if (chip == 0)
 			ids >>= 4;
 
-		*idp = ids & 0x7;
-		*fastp = ids & 0x8;
+		id = ids & 0x7;
+		fast = ids & 0x8;
 	}
 
-	if ((sc->sc_flags & TCDSF_FASTSCSI) != 0 && *fastp == 0)
-		printf("%s: WARNING: chip %d not in fast mode\n",
+	if (id < 0 || id > 7) {
+		printf("%s: WARNING: bad SCSI ID %d for chip %d, using 7\n",
+		    sc->sc_dv.dv_xname, id, chip);
+		id = 7;
+	}
+
+	if ((sc->sc_flags & TCDSF_FASTSCSI) == 0)
+		fast = 0;
+
+	if (fast)
+		printf("%s: fast mode set for chip %d\n",
 		    sc->sc_dv.dv_xname, chip);
+
+	*idp = id;
+	*fastp = fast;
 }

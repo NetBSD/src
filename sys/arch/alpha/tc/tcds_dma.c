@@ -1,4 +1,41 @@
-/* $NetBSD: tcds_dma.c,v 1.24 1998/05/24 23:41:43 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -31,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.24 1998/05/24 23:41:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.25 1998/05/26 23:43:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,10 +132,12 @@ tcds_dma_intr(sc)
 	struct tcds_slotconfig *sc;
 {
 	struct ncr53c9x_softc *nsc = &sc->sc_asc->sc_ncr53c9x;
+	bus_dmamap_t map = sc->sc_dmamap;
 	u_int32_t dud;
 	int trans = 0, resid = 0;
 	u_int32_t *addr, dudmask;
 	u_int8_t tcl, tcm, tch;
+	bus_addr_t pa;
 
 	NCR_DMA(("tcds_dma %d: intr", sc->sc_slot));
 
@@ -149,6 +188,9 @@ tcds_dma_intr(sc)
 	NCR_DMA(("tcds_dma_intr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, tch, trans, resid));
 
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    (sc->sc_iswrite ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+
 	/*
 	 * Clean up unaligned DMAs into main memory.
 	 */
@@ -157,7 +199,7 @@ tcds_dma_intr(sc)
 		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud0);
 		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
 			addr = (u_int32_t *)
-			    ((vm_offset_t)sc->sc_dmaaddr & ~0x3);
+			    ((vm_offset_t)*sc->sc_dmaaddr & ~0x3);
 			dudmask = 0;
 			if (dud & TCDS_DUD0_VALID00)
 				panic("tcds_dma: dud0 byte 0 valid");
@@ -171,15 +213,12 @@ tcds_dma_intr(sc)
 #endif
 			NCR_DMA(("dud0 at 0x%p dudmask 0x%x\n",
 			    addr, dudmask));
-			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud1);
 		if ((dud & TCDS_DUD1_VALIDBITS) != 0) {
-	
-			addr = (u_int32_t *)
-			    ((vm_offset_t)bus_space_read_4(sc->sc_bst,
-			     sc->sc_bsh, sc->sc_sda) << 2);
+			pa = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+			    sc->sc_sda) << 2;
 			dudmask = 0;
 			if (dud & TCDS_DUD1_VALID00)
 				dudmask |= TCDS_DUD_BYTE00;
@@ -192,12 +231,21 @@ tcds_dma_intr(sc)
 				panic("tcds_dma: dud1 byte 3 valid");
 #endif
 			NCR_DMA(("dud1 at 0x%p dudmask 0x%x\n",
-			    addr, dudmask));
-			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
+			    pa, dudmask));
+			/* XXX Fix TC_PHYS_TO_UNCACHED() */
+#if defined(__alpha__)
+			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG(pa);
+#elif defined(__mips__)
+			addr = (u_int32_t *)MIPS_PHYS_TO_KSEG1(pa);
+#else
+#error TurboChannel only exists on DECs, folks...
+#endif
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		/* XXX deal with saved residual byte? */
 	}
+
+	bus_dmamap_unload(sc->sc_dmat, map);
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
@@ -226,6 +274,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	size_t *len, *dmasize;
 	int datain;				/* DMA into main memory */
 {
+	bus_dmamap_t map = sc->sc_dmamap;
 	u_int32_t dic;
 	size_t size;
 
@@ -245,12 +294,24 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 
 	NCR_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
 
+	if (bus_dmamap_load(sc->sc_dmat, map, *addr, size,
+	    NULL, BUS_DMA_NOWAIT)) {
+		/*
+		 * XXX Should return an error, here, but the upper-layer
+		 * XXX doesn't check the return value!
+		 */
+		panic("tcds_dma_setup: dmamap load failed");
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    (sc->sc_iswrite ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_sda,
-	    vtophys((vm_offset_t)*addr) >> 2);
+	    map->dm_segs[0].ds_addr >> 2);
 	dic = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dic);
 	dic &= ~TCDS_DIC_ADDRMASK;
-	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
+	dic |= map->dm_segs[0].ds_addr & TCDS_DIC_ADDRMASK;
 	if (datain)
 		dic |= TCDS_DIC_WRITE;
 	else
@@ -278,4 +339,19 @@ tcds_dma_isactive(sc)
 {
 
 	return (sc->sc_active);
+}
+
+int
+tcds_dma_init(sc)
+	struct tcds_slotconfig *sc;
+{
+
+	/*
+	 * The TCDS ASIC cannot DMA across 8k boundaries, and this
+	 * driver is written such that each DMA segment gets a new
+	 * call to tcds_dma_setup().  Thus, the DMA map only needs
+	 * to support 8k transfers.
+	 */
+	return (bus_dmamap_create(sc->sc_dmat, 0x2000, 1, 0x2000,
+	    0x2000, BUS_DMA_NOWAIT, &sc->sc_dmamap));
 }
