@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.1 2000/05/03 10:55:53 veego Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.2 2000/08/09 20:49:40 veego Exp $	*/
 
 /*
  * Copyright 1999 Guido van Rooij.  All rights reserved.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: mlfk_ipl.c,v 2.1.2.1 2000/04/26 12:17:24 darrenr Exp
+ * Id: mlfk_ipl.c,v 2.1.2.2 2000/08/05 14:46:36 darrenr Exp
  */
 
 
@@ -84,6 +84,7 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_authused, CTLFLAG_RD,
 	   &fr_authused, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_defaultauthage, CTLFLAG_RW,
 	   &fr_defaultauthage, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_chksrc, CTLFLAG_RW, &fr_chksrc, 0, "");
 
 #define CDEV_MAJOR 79
 static struct cdevsw ipl_cdevsw = {
