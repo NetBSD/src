@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_pf.c,v 1.1 2004/06/22 14:18:58 itojun Exp $	*/
+/*	$NetBSD: mln_pf.c,v 1.2 2004/06/22 18:04:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_pf.c,v 1.1 2004/06/22 14:18:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_pf.c,v 1.2 2004/06/22 18:04:05 christos Exp $");
 
 #include <sys/param.h>
 
@@ -75,10 +75,16 @@ static	int	pf_unload __P((void));
 static	int	pf_load __P((void));
 static	int	pf_remove __P((void));
 static	int	pfaction __P((struct lkm_table *, int));
-static	char	*ipf_devfiles[] = { "pf" };
+static	char	*ipf_devfiles[] = { "/dev/pf" };
 
 extern void pfattach(int);
-int pf_pfil_detach(void);
+extern int pfdetach(void);
+
+#ifdef DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 extern const struct cdevsw pf_cdevsw;
 
@@ -103,37 +109,50 @@ static int pfaction(lkmtp, cmd)
 	int cmd;
 {
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
-	int err = 0;
+	int error = 0;
 
-	switch (cmd)
-	{
+	switch (cmd) {
 	case LKM_E_LOAD :
-		if (lkmexists(lkmtp))
+		if (lkmexists(lkmtp)) {
+			DPRINTF(("lkm exists\n"));
 			return EEXIST;
+		}
 
-		err = devsw_attach(args->lkm_devname,
+		error = devsw_attach(args->lkm_devname,
 				   args->lkm_bdev, &args->lkm_bdevmaj,
 				   args->lkm_cdev, &args->lkm_cdevmaj);
-		if (err != 0)
-			return (err);
+		if (error != 0) {
+			DPRINTF(("devsw_attach(%s, %u, %u) failed %d\n",
+			    args->lkm_devname, (unsigned)args->lkm_bdev,
+			    (unsigned)args->lkm_cdev, error));
+			return error;
+		}
+		if ((error = pf_load()) != 0) {
+			DPRINTF(("pf_load failed %d\n", error));
+			devsw_detach(args->lkm_bdev, args->lkm_cdev);
+			return error;
+		}
 		pf_major = args->lkm_cdevmaj;
 		printf("PF: loaded into slot %d\n", pf_major);
-		return pf_load();
+		break;
 	case LKM_E_UNLOAD :
 		devsw_detach(args->lkm_bdev, args->lkm_cdev);
 		args->lkm_bdevmaj = -1;
 		args->lkm_cdevmaj = -1;
-		err = pf_unload();
-		if (!err)
-			printf("PF: unloaded from slot %d\n", pf_major);
+		if ((error = pf_unload()) != 0) {
+			DPRINTF(("unload failed %d\n", error));
+			return error;
+		}
+		printf("PF: unloaded from slot %d\n", pf_major);
 		break;
 	case LKM_E_STAT :
 		break;
 	default:
-		err = EIO;
+		DPRINTF(("unknown command %d\n", cmd));
+		error = EIO;
 		break;
 	}
-	return err;
+	return 0;
 }
 
 static int pf_remove()
@@ -145,8 +164,10 @@ static int pf_remove()
         for (i = 0; (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, DELETE, LOCKPARENT|LOCKLEAF, UIO_SYSSPACE,
 		       name, curproc);
-		if ((error = namei(&nd)))
-			return (error);
+		if ((error = namei(&nd)) != 0) {
+			DPRINTF(("namei failed %d\n", error));
+			return error;
+		}
 		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
 		(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
@@ -162,13 +183,17 @@ static int pf_unload()
 	 * Unloading - remove the filter rule check from the IP
 	 * input/output stream.
 	 */
-	error = pf_pfil_detach();
-
-	if (error == 0) {
-		error = pf_remove();
-		printf("PF unloaded\n");
+	if ((error = pfdetach()) != 0) {
+		DPRINTF(("Detach failed %d\n", error));
+		return error;
 	}
-	return error;
+
+	if ((error = pf_remove()) != 0) {
+		DPRINTF(("Remove failed %d\n", error));
+		return error;
+	}
+	printf("PF unloaded\n");
+	return 0;
 }
 
 static int pf_load()
@@ -189,7 +214,7 @@ static int pf_load()
 
 	for (i = 0; (error == 0) && (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
-		if ((error = namei(&nd)))
+		if ((error = namei(&nd)) != 0)
 			break;
 		if (nd.ni_vp != NULL) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
