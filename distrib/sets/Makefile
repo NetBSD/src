@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2003/12/29 03:13:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.39 2003/12/29 04:46:18 jmc Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -69,7 +69,7 @@ checkflist-x11: check_DESTDIR
 	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist -x ${CHECKFLIST_FLAGS}
 
 .PRECIOUS: maketars
-maketars: check_DESTDIR check_RELEASEDIR .WAIT maketarsetup .WAIT ${MAKETARSETS:@.TARS.@${RELEASEDIR}/${MACHINE}/binary/sets/${.TARS.}.tgz@}
+maketars: check_DESTDIR check_RELEASEDIR .WAIT maketarsetup .WAIT ${MAKETARSETS:@.TARS.@do-${.TARS.}@}
 	@true
 
 maketarsetup: .PHONY
@@ -78,12 +78,10 @@ maketarsetup: .PHONY
 .endif
 	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/sets
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
-		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; done
-	-[ "${MAKETARSETS}" ] && for i in ${MAKETARSETS}; do \
-		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tgz; done
+		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; done
 	
 .for tar in ${MAKETARSETS}
-${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz:
+do-${tar}: .PHONY
 	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
 	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
 	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}
@@ -102,7 +100,7 @@ makesums: check_RELEASEDIR .WAIT ${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
 			${RELEASEDIR}/${MACHINE}/binary/sets/$$i; done
 
 .for tar in ${MAKETARSETS}
-do-sum-${tar}: .PHONY ${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz
+do-sum-${tar}: .PHONY do-${tar}
 	${SETSENV} ${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}.tgz
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
 		${TOOL_CAT} ${RELEASEDIR}/${MACHINE}/binary/sets/$$i >> ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; \
