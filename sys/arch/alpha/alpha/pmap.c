@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.147 2000/09/19 01:02:37 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2000/09/19 01:02:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3970,13 +3970,11 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 		    pmap->pm_asn[cpu_id], pmap);
 #endif
 
-#if 0	/* XXX Not sure if this is safe yet.  --thorpej */
 	/*
 	 * Have a new ASN, so there's no need to sync the I-stream
 	 * on the way back out to userspace.
 	 */
 	atomic_clearbits_ulong(&pmap->pm_needisync, (1UL << cpu_id));
-#endif
 }
 
 #if defined(MULTIPROCESSOR)
