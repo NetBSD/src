@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 1998/02/22 14:07:21 mycroft Exp $ */
+/*	$NetBSD: db_interface.c,v 1.23 1998/04/03 19:53:36 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -50,9 +50,9 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
-#include <machine/instr.h>
 #endif
 
+#include <machine/instr.h>
 #include <machine/bsd_openprom.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
@@ -240,6 +240,7 @@ db_machine_init()
 {
 	db_machine_commands_install(sparc_db_command_table);
 }
+#endif /* DDB */
 
 
 /*
@@ -473,6 +474,3 @@ db_inst_store(inst)
 	return 0;
     }
 }
-
-
-#endif /* DDB */
