@@ -586,6 +586,7 @@ extern const bfd_target tekhex_vec;
 extern const bfd_target tic30_aout_vec;
 extern const bfd_target tic30_coff_vec;
 extern const bfd_target vaxnetbsd_vec;
+extern const bfd_target host_aout_vec;
 extern const bfd_target versados_vec;
 extern const bfd_target we32kcoff_vec;
 extern const bfd_target w65_vec;

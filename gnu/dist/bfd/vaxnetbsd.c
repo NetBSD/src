@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_vax
-#define	DEFAULT_MID 	M_VAX4K_NETBSD
-#define	ADDITIONAL_MID	M_VAX_NETBSD
+#define	DEFAULT_MID 	M_VAX_NETBSD
+#define	ADDITIONAL_MID	M_VAX1K_NETBSD
 
 /* XXX Recognize kernels, which have little-endian ULTRIX magic */
 #define SWAP_MAGIC(ext) (bfd_getb32(ext) == 0x0b010000 ? 0x008c010b : bfd_getb32(ext))
