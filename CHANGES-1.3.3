@@ -108,3 +108,8 @@ sys/netinet/tcp_fsm.h				1.9-1.10
   TH_FIN from the output flags for CLOSING state.  Fix TCPS_HAVERCVDFIN()
   to actually catch all TCP states in which a FIN has been received
   (CLOSE_WAIT, CLOSING, LAST_ACK, and TIME_WAIT).  (mycroft)
+
+sys/arch/amiga/include/vmparam.h		1.20
+
+  Yet another workaround for pmap bugs. Several reports on the port-amiga
+  list claim this helps with some big-machine situations. (is)
