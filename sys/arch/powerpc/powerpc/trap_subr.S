@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.22 2002/06/26 01:14:45 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.23 2002/06/26 20:00:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,6 @@
 	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
 	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
 	RESTORE_SRS(pmap,sr)
-#endif
 
 /*
  * Data used during primary/secondary traps/interrupts
@@ -92,9 +91,9 @@ GLOBAL(intr_depth)
 	.comm	spillstk,SPILLSTK,8
 
 /*
- * This code gets copied to all the trap vectors
- * (except ISI/DSI, ALI, the interrupts, and possibly the debugging 
- * traps when using IPKDB).
+ * This code gets copied to all the trap vectors (except ISI/DSI, ALI, the
+ * interrupts, and possibly the debugging traps when using IPKDB).
+ * Note that it is 7 instructions long and can fit in the smallest vector.
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -106,13 +105,7 @@ _C_LABEL(trapcode):
 /* Test whether we already had PR set */
 	mfsrr1	31
 	mtcr	31
-	bc	4,17,1f			/* branch if PSL_PR is clear */
-	lis	1,_C_LABEL(curpcb)@ha
-	lwz	1,_C_LABEL(curpcb)@l(1)
-	addi	1,1,USPACE		/* stack is top of user struct */
-	bla	u_trap
-1:
-	bla	k_trap
+	bla	s_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
 /*
@@ -130,13 +123,7 @@ _C_LABEL(alitrap):
 /* Test whether we already had PR set */
 	mfsrr1	31
 	mtcr	31
-	bc	4,17,1f			/* branch if PSL_PR is clear */
-	lis	1,_C_LABEL(curpcb)@ha
-	lwz	1,_C_LABEL(curpcb)@l(1)
-	addi	1,1,USPACE		/* stack is top of user struct */
-	bla	u_trap
-1:
-	bla	k_trap
+	bla	s_trap
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
@@ -714,6 +701,7 @@ realtrap:
 	mtcr	1
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
+s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
@@ -723,7 +711,6 @@ realtrap:
  * Now the common trap catching code.
  */
 
-u_trap:
 	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
 	CPU601_KERN_ENTRY(30,31)
 
