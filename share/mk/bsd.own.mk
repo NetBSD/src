@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.68 1998/05/10 14:58:09 kleink Exp $
+#	$NetBSD: bsd.own.mk,v 1.69 1998/05/22 16:43:42 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -127,6 +127,19 @@ NOLINT=
 NOPROFILE=
 NOSHLIB=
 .endif
+
+# GNU sources and packages sometimes see architecture names differently.
+# This table maps an architecture name to its GNU counterpart.
+# Use as so:  ${GNU_ARCH.${TARGET_ARCH}} or ${MACHINE_GNU_ARCH}
+GNU_ARCH.alpha=alpha
+GNU_ARCH.arm32=arm
+GNU_ARCH.i386=i386
+GNU_ARCH.m68k=m68k
+GNU_ARCH.mips=mips
+GNU_ARCH.ns32k=ns32k
+GNU_ARCH.powerpc=powerpc
+GNU_ARCH.vax=vax
+MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 
 TARGETS+=	all clean cleandir depend includes install lint obj regress \
 		tags
