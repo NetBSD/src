@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.73 1999/02/09 20:46:40 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.74 1999/03/22 17:30:40 sommerfe Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -540,39 +540,6 @@ svr4_sys_mmap64(p, v, retval)
 		SCARG(&mm, addr) = rp;
 
 	return sys_mmap(p, &mm, retval);
-}
-
-
-int
-svr4_sys_fchroot(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_sys_fchroot_args *uap = v;
-	struct filedesc	*fdp = p->p_fd;
-	struct vnode	*vp;
-	struct file	*fp;
-	int		 error;
-
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return error;
-	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
-		return error;
-	vp = (struct vnode *) fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_type != VDIR)
-		error = ENOTDIR;
-	else
-		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp, 0);
-	if (error)
-		return error;
-	VREF(vp);
-	if (fdp->fd_rdir != NULL)
-		vrele(fdp->fd_rdir);
-	fdp->fd_rdir = vp;
-	return 0;
 }
 
 
