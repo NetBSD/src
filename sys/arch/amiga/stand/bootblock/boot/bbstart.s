@@ -1,5 +1,5 @@
 /*
- * $NetBSD: bbstart.s,v 1.2 1997/01/21 18:26:10 is Exp $
+ * $NetBSD: bbstart.s,v 1.3 1998/11/13 22:12:35 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -46,7 +46,6 @@
 
 #define Cmd_Rd	2
 
-	.globl	_configure
 	.globl	_pain
 
 	.text
@@ -170,11 +169,6 @@ Lendtab:
 	movl	a6,_SysBase
 
 	movl	a1,sp@-
-	bsr	_configure
-	addql	#4,sp
-	tstl	d0
-	jne	Lerr
-
 	bsr	_pain
 
 Lerr:
