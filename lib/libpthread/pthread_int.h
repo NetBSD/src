@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.8 2003/02/15 21:18:59 jdolecek Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.9 2003/02/26 22:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,10 +112,13 @@ struct	pthread_st {
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
 
+	/* Thread's name, set by the application. */
+	char*		pt_name;
+
 	/* Other threads trying to pthread_join() us. */
 	struct pthread_queue_t	pt_joiners;
 	/* Lock for above, and for changing pt_state to ZOMBIE or DEAD,
-	 * and for setting the DETACHED flag
+	 * and for setting the DETACHED flag.  Also protects pt_name.
 	 */
 	pthread_spin_t	pt_join_lock;
 
