@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.44 2000/07/14 12:10:58 fvdl Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.45 2000/07/27 17:32:11 mason Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,7 +62,7 @@
 
 #if NPTY == 1
 #undef NPTY
-#define	NPTY	32		/* crude XXX */
+#define	NPTY	64		/* crude XXX */
 #endif
 
 /* Macros to clear/set/test flags. */
@@ -104,7 +104,7 @@ ptyattach(n)
 	int n;
 {
 #ifdef notyet
-#define	DEFAULT_NPTY	32
+#define	DEFAULT_NPTY	64
 
 	/* maybe should allow 0 => none? */
 	if (n <= 1)
