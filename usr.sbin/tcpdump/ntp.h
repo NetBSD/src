@@ -1,6 +1,6 @@
-/*	$NetBSD: ntp.h,v 1.2 1995/03/06 19:10:41 mycroft Exp $	*/
+/*	$NetBSD: ntp.h,v 1.3 1997/10/03 19:54:47 christos Exp $	*/
 
-/* Header: ntp.h,v 1.2 93/11/12 21:43:36 mccanne Exp */
+/* Header: ntp.h,v 1.3 95/05/04 17:52:49 mccanne Exp  */
 
 /*
  * Based on ntp.h from the U of MD implementation
@@ -30,8 +30,8 @@
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
 struct l_fixedpt {
-	u_int32 int_part;
-	u_int32 fraction;
+	u_int32_t int_part;
+	u_int32_t fraction;
 };
 
 struct s_fixedpt {
@@ -76,7 +76,7 @@ struct ntpdata {
 	int precision:8;
 	struct s_fixedpt distance;
 	struct s_fixedpt dispersion;
-	u_int32 refid;
+	u_int32_t refid;
 	struct l_fixedpt reftime;
 	struct l_fixedpt org;
 	struct l_fixedpt rec;
