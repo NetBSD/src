@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.7 1995/04/10 03:54:46 mycroft Exp $     */
+/*      $NetBSD: subr.s,v 1.8 1995/04/12 15:35:09 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -137,28 +137,7 @@ _badaddr:	.word	0x0
 5:		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
-#if 0
-		.align 2
-_mba_0:		.globl _mba_0
-		movl	$0,mbanum
-		brb	_mba
-		.align 2
-_mba_1:		.globl _mba_1
-		movl	$1,mbanum
-		brb	_mba
-		.align 2
-_mba_2:		.globl _mba_2
-		movl	$2,mbanum
-		brb	_mba
-		.align 2
-_mba_3:		.globl _mba_3
-		movl	$3,mbanum
-_mba:		pushr	$0xffff
-		pushl	mbanum
-		calls	$1,_mbainterrupt
-		popr	$0xffff
-		rei
-#endif
+
 #
 # copyin(from, to, len) copies from userspace to kernelspace.
 #
@@ -260,27 +239,6 @@ _loswtch:	.globl	_loswtch
 	mtpr	_nypcb,$PR_PCBB
 	ldpctx
 	rei
-
-#if 0
-		.globl _savectx
-_savectx:
-		clrl	r0
-		svpctx
-		ldpctx
-		mtpr	_p0lr,$PR_P0LR
-		mtpr	_p0br,$PR_P0BR
-		mtpr	_p1lr,$PR_P1LR
-		mtpr    _p1br,$PR_P1BR
-		mfpr	$PR_ESP,r0	# PR_ESP == start chld pcb
-		mtpr	$0,$PR_ESP	# Clear ESP, used in fault routine
-		clrl	4(r0)		# Clear ESP in child
-                movl    _ustat,(r0)     # New kernel sp in chld
-                addl2   _uofset,68(r0)  # set fp to new stack
-                movl    _ustat,r0
-                movl    (sp),(r0)
-                movl    4(sp),4(r0)
-                rei
-#endif
 
 	.data
 
