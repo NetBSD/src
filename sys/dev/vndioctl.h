@@ -1,4 +1,4 @@
-/*	$NetBSD: vndioctl.h,v 1.3 1994/06/29 06:31:37 cgd Exp $	*/
+/*	$NetBSD: vndioctl.h,v 1.4 1995/01/25 04:45:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,16 +48,16 @@
 
 #define _PATH_VNTAB	"/etc/vntab"	/* default config file */
 
-struct vn_ioctl {
-	char	*vn_file;	/* pathname of file to mount */
-	int	vn_size;	/* (returned) size of disk */
+struct vnd_ioctl {
+	char	*vnd_file;	/* pathname of file to mount */
+	int	vnd_size;	/* (returned) size of disk */
 };
 
 /*
- * Before you can use a unit, it must be configured with VNIOCSET.
+ * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
- * an VNIOCCLR must be used to reset a configuration.  An attempt to
- * VNIOCSET an already active unit will return EBUSY.
+ * an VNDIOCCLR must be used to reset a configuration.  An attempt to
+ * VNDIOCSET an already active unit will return EBUSY.
  */
-#define VNIOCSET	_IOWR('F', 0, struct vn_ioctl)	/* enable disk */
-#define VNIOCCLR	_IOW('F', 1, struct vn_ioctl)	/* disable disk */
+#define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
+#define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
