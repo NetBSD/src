@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.193 2003/10/20 05:19:50 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.194 2003/10/20 05:26:11 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2470,4 +2470,10 @@ sys/arch/i386/conf/INSTALL_LAPTOP		1.47
 
 	Add entry for bce(4).
 	[tron, ticket #1512]
+
+sys/dev/raidframe/rf_disks.c			1.42
+
+	Remember to close the component if we decide it's not suitable for use
+	as a hot spare.  Closes PR#20989 by David Brownlee.
+	[oster, ticket #1531]
 
