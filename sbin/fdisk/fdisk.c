@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.33.2.2 1999/05/02 21:27:49 perry Exp $ */
+/*	$NetBSD: fdisk.c,v 1.33.2.3 1999/06/22 14:26:32 perry Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.33.2.2 1999/05/02 21:27:49 perry Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.33.2.3 1999/06/22 14:26:32 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -831,6 +831,9 @@ editentries:
 		}
 	}
 
+	/* bootsel is dirty from here on out. */
+	bootsel_modified = 1;
+
 	/* The timeout value is in ticks, 18.2 Hz. Avoid using floats. */
 	timo = ((1000 * mbs->timeo) / 18200);
 	do {
@@ -875,7 +878,7 @@ done:
 		}
 	}
 
-	if (!yesno("Update the bootselector?"))
+	if (bootsel_modified != 0 && !yesno("Update the bootselector?"))
 		bootsel_modified = 0;
 }
 #endif
