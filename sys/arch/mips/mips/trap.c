@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 1998/08/29 16:13:33 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 1998/09/11 16:46:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 1998/08/29 16:13:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 1998/09/11 16:46:34 jonathan Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -120,13 +120,17 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 1998/08/29 16:13:33 mrg Exp $");
  * Port-specific hardware interrupt handler
  */
 
+int astpending;
+int want_resched;
+
 int (*mips_hardware_intr) __P((unsigned mask, unsigned pc, unsigned status,
 			       unsigned cause)) =
 	( int (*) __P((unsigned, unsigned, unsigned, unsigned)) ) 0;
 
-#ifdef MIPS3
+#if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
 extern u_int32_t mips3_intr_cycle_count;
 u_int32_t mips3_intr_cycle_count;
+u_int32_t mips3_timer_delta;
 #endif
 
 
@@ -134,14 +138,23 @@ u_int32_t mips3_intr_cycle_count;
  * Exception-handling functions, called via ExceptionTable from locore
  */
 #ifdef MIPS1
- extern void mips1_KernGenException __P((void));
+extern void mips1_KernGenException __P((void));
 extern void mips1_UserGenException __P((void));
-extern void mips1_TLBMissException __P((void));
 extern void mips1_SystemCall __P((void));
 extern void mips1_KernIntr __P((void));
 extern void mips1_UserIntr __P((void));
-/* marks end of vector code */
-extern void mips1_UTLBMiss	__P((void));
+#if 0
+extern void mips1_TLBModException  __P((void));
+#endif
+extern void mips1_TLBMissException __P((void));
+
+/* marks start/end of vector code */
+extern void mips1_KernGenExceptionEnd __P((void));
+extern void mips1_UserGenExceptionEnd __P((void));
+extern void mips1_SystemCallEnd __P((void));
+extern void mips1_KernIntrEnd __P((void));
+extern void mips1_UserIntrEnd __P((void));
+extern void mips1_exceptionentry_start __P((void));
 extern void mips1_exceptionentry_end __P((void));
 #endif
 
@@ -151,14 +164,19 @@ extern void mips3_UserGenException __P((void));
 extern void mips3_SystemCall __P((void));
 extern void mips3_KernIntr __P((void));
 extern void mips3_UserIntr __P((void));
-extern void mips3_TLBModException  __P((void));
-extern void mips3_TLBMissException __P((void));
 extern void mips3_TLBInvalidException __P((void));
-extern void mips3_VCED __P((void));
-extern void mips3_VCEI __P((void));
+extern void mips3_TLBMissException __P((void));
 
-/* marks end of vector code */
-extern void mips3_TLBMiss	__P((void));
+extern void mips3_VCED __P((void));
+extern void mips3_VCEI __P((void));	/* XXXX */
+
+/* marks start/end of vector code */
+extern void mips3_KernGenExceptionEnd __P((void));
+extern void mips3_UserGenExceptionEnd __P((void));
+extern void mips3_SystemCallEnd __P((void));
+extern void mips3_KernIntrEnd __P((void));
+extern void mips3_UserIntrEnd __P((void));
+extern void mips3_exceptionentry_start __P((void));
 extern void mips3_exceptionentry_end __P((void));
 #endif
 
@@ -364,6 +382,13 @@ struct trapdebug {		/* trap history buffer for debugging */
 
 void trapDump __P((char * msg));
 #endif	/* DEBUG */
+
+/* marks start/end of code */
+extern void splx_end __P((void));
+extern void cpu_switch_end __P((void));
+extern void idle_end __P((void));
+extern void bcopy_end __P((void));
+extern char start[], edata[];
 
 
 void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
@@ -1013,9 +1038,11 @@ interrupt(status, cause, pc, frame)
 
 	mask = cause & status;	/* pending interrupts & enable mask */
 
-#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
-	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3)
+#if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
+	if (CPUISMIPS3 && (mask & MIPS_INT_MASK_5)) {
 		mips3_intr_cycle_count = mips3_cycle_count();
+		mips3_write_compare(mips3_intr_cycle_count + mips3_timer_delta);
+	}
 #endif
 
 #ifdef DEBUG
@@ -1472,7 +1499,6 @@ stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	extern char start[], edata[];
 	unsigned int frames =  0;
 	int foundframesize = 0;
 
@@ -1507,7 +1533,7 @@ specialframe:
 
 	/* Backtraces should continue through interrupts from kernel mode */
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
-	if (pcBetween(mips1_KernIntr, mips1_UserIntr)) {
+	if (pcBetween(mips1_KernIntr, mips1_KernIntrEnd)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips1_KernIntr, a0, a1, a2);
@@ -1521,7 +1547,7 @@ specialframe:
 		sp = sp + 176;
 		goto specialframe;
 	}
-	else if (pcBetween(mips1_KernGenException, mips1_UserGenException)) {
+	else if (pcBetween(mips1_KernGenException, mips1_KernGenExceptionEnd)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips1_KernGenException, a0, a1, a2);
@@ -1539,7 +1565,7 @@ specialframe:
 #endif	/* MIPS1 */
 
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
-	if (pcBetween(mips3_KernIntr, mips3_UserIntr)) {
+	if (pcBetween(mips3_KernIntr, mips3_KernIntrEnd)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("------ mips3 KernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips3_KernIntr, a0, a1, a2);
@@ -1553,7 +1579,7 @@ specialframe:
 		sp = sp + 176;
 		goto specialframe;
 	}
-	else if (pcBetween(mips3_KernGenException, mips3_UserGenException)) {
+	else if (pcBetween(mips3_KernGenException, mips3_KernGenExceptionEnd)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips3_KernGenException, a0, a1, a2);
@@ -1582,17 +1608,17 @@ specialframe:
 	/* R4000  exception handlers */
 
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
-	if (pcBetween(mips1_KernGenException, mips1_UserGenException))
+	if (pcBetween(mips1_KernGenException, mips1_KernGenExceptionEnd))
 		subr = (unsigned) mips1_KernGenException;
-	else if (pcBetween(mips1_UserGenException,mips1_SystemCall))
+	else if (pcBetween(mips1_UserGenException, mips1_UserGenExceptionEnd))
 		subr = (unsigned) mips1_UserGenException;
-	else if (pcBetween(mips1_SystemCall,mips1_KernIntr))
-		subr = (unsigned) mips1_UserGenException;
-	else if (pcBetween(mips1_KernIntr, mips1_UserIntr))
+	else if (pcBetween(mips1_SystemCall, mips1_SystemCallEnd))
+		subr = (unsigned) mips1_SystemCall;
+	else if (pcBetween(mips1_KernIntr, mips1_KernIntrEnd))
 		subr = (unsigned) mips1_KernIntr;
-	else if (pcBetween(mips1_UserIntr, mips1_TLBMissException))
+	else if (pcBetween(mips1_UserIntr, mips1_UserIntrEnd))
 		subr = (unsigned) mips1_UserIntr;
-	else if (pcBetween(mips1_UTLBMiss, mips1_exceptionentry_end)) {
+	else if (pcBetween(mips1_exceptionentry_start, mips1_exceptionentry_end)) {
 		(*printfn)("<<mips1 locore>>");
 		goto done;
 	}
@@ -1602,25 +1628,26 @@ specialframe:
 
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	/* R4000  exception handlers */
-	if (pcBetween(mips3_KernGenException, mips3_UserGenException))
+	if (pcBetween(mips3_KernGenException, mips3_KernGenExceptionEnd))
 		subr = (unsigned) mips3_KernGenException;
-	else if (pcBetween(mips3_UserGenException,mips3_SystemCall))
+	else if (pcBetween(mips3_UserGenException, mips3_UserGenExceptionEnd))
 		subr = (unsigned) mips3_UserGenException;
-	else if (pcBetween(mips3_SystemCall,mips3_KernIntr))
+	else if (pcBetween(mips3_SystemCall, mips3_SystemCallEnd))
 		subr = (unsigned) mips3_SystemCall;
-	else if (pcBetween(mips3_KernIntr, mips3_UserIntr))
+	else if (pcBetween(mips3_KernIntr, mips3_KernIntrEnd))
 		subr = (unsigned) mips3_KernIntr;
-
-	else if (pcBetween(mips3_UserIntr, mips3_TLBInvalidException))
+	else if (pcBetween(mips3_UserIntr, mips3_UserIntrEnd))
 		subr = (unsigned) mips3_UserIntr;
-	else if (pcBetween(mips3_TLBMiss, mips3_exceptionentry_end)) {
+	else if (pcBetween(mips3_exceptionentry_start, mips3_exceptionentry_end)) {
 		(*printfn)("<<mips3 locore>>");
 		goto done;
 	} else
 #endif /* MIPS3 */
 
 
-	if (pcBetween(cpu_switch, savectx))
+	if (pcBetween(splx, splx_end))
+		subr = (unsigned) splx;
+ 	else if (pcBetween(cpu_switch, cpu_switch_end))
 		subr = (unsigned) cpu_switch;
 	else if (pcBetween(idle, cpu_switch))	{
 		subr = (unsigned) idle;

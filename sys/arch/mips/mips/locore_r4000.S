@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.44 1998/09/09 00:07:53 thorpej Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.45 1998/09/11 16:46:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -94,12 +94,18 @@
  *
  *============================================================================
 
+/*
+ *  Mark where code entered from exception hander jumptable
+ * starts, for stack traceback code.
+ */
+
+	.globl	_C_LABEL(mips3_exceptionentry_start)
+_C_LABEL(mips3_exceptionentry_start):
 
 /*
  *----------------------------------------------------------------------------
  *
  * mips3_TLBMiss --
- * MachTLBMiss --
  *
  *	Vector code for the TLB-miss exception vector 0x80000180
  *	on an r4000.
@@ -114,8 +120,6 @@
  */
 	.globl	_C_LABEL(mips3_TLBMiss)
 _C_LABEL(mips3_TLBMiss):
-	.globl	_C_LABEL(MachTLBMiss)
-_C_LABEL(MachTLBMiss):
 	.set	noat
 	.set	mips3
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
@@ -153,14 +157,12 @@ _C_LABEL(MachTLBMiss):
 	nop
 	eret
 1:
-	j	mips3_TLBMissException
+	j	_C_LABEL(mips3_TLBMissException)
 	nop
 2:
 	j	mips3_SlowFault
 	nop
 
-	.globl	_C_LABEL(MachTLBMissEnd)
-_C_LABEL(MachTLBMissEnd):
 	.globl	_C_LABEL(mips3_TLBMissEnd)
 _C_LABEL(mips3_TLBMissEnd):
 	.set	at
@@ -178,7 +180,7 @@ _C_LABEL(mips3_TLBMissEnd):
  * NOTE: This code must be relocatable!!!
  *----------------------------------------------------------------------------
  */
-	.globl	mips3_exception
+	.globl	_C_LABEL(mips3_exception)
 _C_LABEL(mips3_exception):
 /*
  * Find out what mode we came from and jump to the proper handler.
@@ -193,7 +195,7 @@ _C_LABEL(mips3_exception):
 	and	k1, k1, MIPS3_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
-	la	k0, mips3_ExceptionTable	# get base of the jump table
+	la	k0, _C_LABEL(mips3_ExceptionTable) # get base of the jump table
 	addu	k0, k0, k1			# Get the address of the
 						#  function entry.  Note that
 						#  the cause is already
@@ -204,7 +206,7 @@ _C_LABEL(mips3_exception):
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	mips3_exceptionEnd
+	.globl	_C_LABEL(mips3_exceptionEnd)
 _C_LABEL(mips3_exceptionEnd):
 
 
@@ -212,7 +214,7 @@ _C_LABEL(mips3_exceptionEnd):
  *
  * mips3_SlowFault --
  *
- * Alternate entry point into the mips3_UserGenExceptionor or
+ * Alternate entry point into the mips3_UserGenException or
  * or mips3_user_Kern_exception, when the ULTB miss handler couldn't
  * find a TLB entry.
  *
@@ -230,7 +232,7 @@ mips3_SlowFault:
 	mfc0	k0, MIPS_COP_0_STATUS_REG
 	nop
 	and	k0, k0, MIPS3_SR_KSU_USER
-	bne	k0, zero, mips3_UserGenException
+	bne	k0, zero, _C_LABEL(mips3_UserGenException)
 	nop
 	.set	at
 /*
@@ -357,6 +359,8 @@ NNON_LEAF(mips3_KernGenException, TRAP_FRAME_SIZE, ra)
 	addu	sp, sp, TRAP_FRAME_SIZE
 	eret					#  exception.
 	.set	at
+	.globl	_C_LABEL(mips3_KernGenExceptionEnd)
+_C_LABEL(mips3_KernGenExceptionEnd):
 END(mips3_KernGenException)
 
 /*----------------------------------------------------------------------------
@@ -499,6 +503,8 @@ NNON_LEAF(mips3_UserGenException, STAND_FRAME_SIZE, ra)
 
 	eret
 	.set	at
+	.globl	_C_LABEL(mips3_UserGenExceptionEnd)
+_C_LABEL(mips3_UserGenExceptionEnd):
 END(mips3_UserGenException)
 
 /*
@@ -622,6 +628,8 @@ NNON_LEAF(mips3_SystemCall, STAND_FRAME_SIZE, ra)
 	nop
 	eret
 	.set	at
+	.globl	_C_LABEL(mips3_SystemCallEnd)
+_C_LABEL(mips3_SystemCallEnd):
 END(mips3_SystemCall)
 
 /*----------------------------------------------------------------------------
@@ -724,6 +732,8 @@ NNON_LEAF(mips3_KernIntr, KINTR_FRAME_SIZE, ra)
 	addu	sp, sp, KINTR_FRAME_SIZE
 	eret					#  interrupt.
 	.set	at
+	.globl	_C_LABEL(mips3_KernIntrEnd)
+_C_LABEL(mips3_KernIntrEnd):
 END(mips3_KernIntr)
 
 /*----------------------------------------------------------------------------
@@ -812,7 +822,7 @@ NNON_LEAF(mips3_UserIntr, STAND_FRAME_SIZE, ra)
 
 	lw	k1, _C_LABEL(curpcb)
  #	lw	a0, U_PCB_REGS+(SR * 4)(k1)
-	lw	v0, astpending			# any pending interrupts?
+	lw	v0, _C_LABEL(astpending)	# any pending interrupts?
 	nop
  #	mtc0	a0, MIPS_COP_0_STATUS_REG	# Restore the SR, disable intrs
 	bne	v0, zero, 1f			# dont restore, call softintr
@@ -920,6 +930,8 @@ NNON_LEAF(mips3_UserIntr, STAND_FRAME_SIZE, ra)
 
 	eret
 	.set	at
+	.globl	_C_LABEL(mips3_UserIntrEnd)
+_C_LABEL(mips3_UserIntrEnd):
 END(mips3_UserIntr)
 
 
@@ -960,11 +972,11 @@ NLEAF(mips3_TLBInvalidException)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
-	lw	k1, Sysmapsize			# index within range?
+	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
-	lw	k1, Sysmap
+	lw	k1, _C_LABEL(Sysmap)
 
 	sll	k0, k0, 2			# compute offset from index
 	tlbp					# Probe the invalid entry
@@ -986,7 +998,7 @@ NLEAF(mips3_TLBInvalidException)
 	dsrl	k0, k0, 34
 	dmtc0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
-	beq	k0, zero, mips3_KernGenException	# PTE invalid
+	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -1014,7 +1026,7 @@ KernTLBIOdd:
 	dsrl	k0, k0, 34
 	dmtc0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
-	beq	k0, zero, mips3_KernGenException	# PTE invalid
+	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -1050,11 +1062,11 @@ NLEAF(mips3_TLBMissException)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
-	lw	k1, Sysmapsize			# index within range?
+	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
-	lw	k1, Sysmap
+	lw	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1
 	sll	k0, k0, 3			# compute offset from index
 	addu	k1, k1, k0
@@ -1078,7 +1090,7 @@ NLEAF(mips3_TLBMissException)
 sys_stk_chk:
 	subu	k0, sp, UADDR + 0x200		# check to see if we have a
 	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, mips3_KernGenException	# Go panic
+	bne	k0, zero, _C_LABEL(mips3_KernGenException)	# Go panic
 	nop
 
 	la	a0, start - START_FRAME - 8	# set sp to a valid place
@@ -1091,7 +1103,7 @@ sys_stk_chk:
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
 	move	a2, ra
-	jal	printf
+	jal	_C_LABEL(printf)
 	dmfc0	a3, MIPS_COP_0_BAD_VADDR
 	.data
 1:
@@ -1101,7 +1113,7 @@ sys_stk_chk:
 	/* Call mips3_dump_tlb(0, 2, printf) to show the bad kstack TLB */
 	la	a2, _C_LABEL(printf)
 	li	a0, 0
-	jal	mips3_dump_tlb
+	jal	_C_LABEL(mips3_dump_tlb)
 	li	a1, 2				# BDslot
 
 	la	sp, start - START_FRAME		# set sp to a valid place
@@ -1113,7 +1125,7 @@ sys_stk_chk:
 END(mips3_TLBMissException)
 
 /*
- *  Mark where code entreed from exception hander jumptable
+ *  Mark where code entered from exception hander jumptable
  * ends, for stack traceback code.
  */
 
@@ -1296,8 +1308,9 @@ END(mips3_GetWIRED)
  *
  *	Flush the "random" entries from the TLB.
  *	Uses "wired" register to determine what register to start with.
+ *	Arg "tlbsize" is the number of entries to flush.
  *
- *	mips3_TLBFlush()
+ *	mips3_TLBFlush(tlbsize)
  *
  * Results:
  *	None.
@@ -1311,7 +1324,6 @@ LEAF(mips3_TLBFlush)
 	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
-	li	t2, MIPS3_TLB_NUM_TLB_ENTRIES
 	li	v0, MIPS_KSEG0_START		# invalid address
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
 
@@ -1320,7 +1332,7 @@ LEAF(mips3_TLBFlush)
 	dmtc0	zero, MIPS_COP_0_TLB_LO1	# Zero out low entry1.
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# Zero out mask entry.
 /*
- * Align the starting value (t1) and the upper bound (t2).
+ * Align the starting value (t1) and the upper bound (a0).
  */
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
@@ -1328,7 +1340,7 @@ LEAF(mips3_TLBFlush)
 	tlbwi					# Write the TLB entry.
 	nop
 	nop
-	bne	t1, t2, 1b
+	bne	t1, a0, 1b
 	nop
 
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID
@@ -1600,72 +1612,14 @@ END(mips3_TLBGetPID)
 
 /*----------------------------------------------------------------------------
  *
- *	R4000 cache sizing and flushing code.
+ *	R4000 cache flushing code.
  *
  *----------------------------------------------------------------------------
  */
 
-
-/*----------------------------------------------------------------------------
- *
- * mips3_ConfigCache --
- *
- *	Size the caches.
- *	NOTE: should only be called from mach_init().
- *
- * Results:
- *     	None.
- *
- * Side effects:
- *	The size of the data cache is stored into mips_L1DataCacheSize.
- *	The size of instruction cache is stored into mips_L1InstCacheSize.
- *	Alignment mask for cache aliasing test is stored in mips_CacheAliasMask.
- *
- *----------------------------------------------------------------------------
+/*
+ * XXX  need to handle two-way caches for r4600 and mips ISA-IV.
  */
-LEAF(mips3_ConfigCache)
-	mfc0	v0, MIPS_COP_0_CONFIG		# Get configuration register
-	nop
-	srl	t1, v0, 9			# Get D cache size.
-	and	t1, 7				# ???
-	li	t2, 4096
-	sllv	t2, t2, t1
-	sw	t2, mips_L1DataCacheSize
-	addiu	t2, -1
-	and	t2, ~(NBPG - 1)
-	sw	t2, mips_CacheAliasMask
-
-	and	t2, v0, 0x20
-	srl	t2, t2, 1
-	addu	t2, t2, 16
-	sw	t2, mips_L1DataCacheLSize
-
-	srl	t1, v0, 6			# Get I cache size.
-	and	t1, 7				# ???
-	li	t2, 4096
-	sllv	t2, t2, t1
-	sw	t2, mips_L1InstCacheSize
-
-	and	t2, v0, 0x10
-	addu	t2, t2, 16
-	sw	t2, mips_L1InstCacheLSize
-
-	lui	t1, 2
-	and	t1, t1, v0
-	bne	t1, zero, 1f
-	nop
-	lui	t1, 0x10
-	sw	t1, mips_L2CacheSize
-	lui	t1, 0xc0
-	and	t1, t1, v0
-	srl	t1, 22
-	li	t2, 16
-	sllv	t2, t2, t1
-	sw	t2, mips_L2CacheLSize
-1:
-	j	ra
-	nop
-END(mips3_ConfigCache)
 
 /*----------------------------------------------------------------------------
  *
@@ -1682,10 +1636,10 @@ END(mips3_ConfigCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_FlushCache)
-	lw	t1, mips_L1InstCacheSize
-	lw	t2, mips_L1DataCacheSize
- #	lw	t3, mips_L1InstCacheLSize
- #	lw	t4, mips_L1DataCacheLSize
+	lw	t1, mips_L1ICacheSize
+	lw	t2, mips_L1DCacheSize
+ #	lw	t3, mips_L1ICacheLSize
+ #	lw	t4, mips_L1DCacheLSize
 /*
  * Flush the instruction cache.
  */
@@ -1803,7 +1757,7 @@ END(mips3_FlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_FlushDCache)
-	lw	a2, mips_L1DataCacheSize
+	lw	a2, mips_L1DCacheSize
 	addiu	a2, -1
 	move	t0, a0		# copy start address
 	and	a0, a0, a2	# get index into primary cache
@@ -1962,7 +1916,7 @@ ALEAF(mips3_VCEI)	/* XXXX */
 	and	k0, -16
 	sw	k0, vce_savek0			# save virtual address
 	cache	1, 0(k0)			# writeback primary line
-	lw	k1, mips_L1DataCacheSize
+	lw	k1, _C_LABEL(mips_L1DCacheSize)
 	addiu	k1, -1
 	and	k0, k0, k1			# mask to cache index
 	or	k0, 0x80000000			# physical K0SEG address
@@ -2317,6 +2271,12 @@ LEAF(mips3_read_compare)
 	nop
 END(mips3_read_compare)
 
+LEAF(mips3_read_config)
+	mfc0	v0,	MIPS_COP_0_CONFIG
+	nop
+	j	ra
+	nop
+END(mips3_read_config)
 
 /*
  * Write value to compare register.
@@ -2331,10 +2291,25 @@ LEAF(mips3_write_compare)
 	nop
 END(mips3_write_compare)
 
+/*
+ * The variables below are used to communicate the cache handling
+ * to  higher-level software.
+ */
+	.data
+
+	.globl	_C_LABEL(mips3_L1TwoWayCache)
+_C_LABEL(mips3_L1TwoWayCache):
+	.word	0
+
+	.globl	_C_LABEL(mips3_cacheflush_bug)
+_C_LABEL(mips3_cacheflush_bug):
+	.word	0
+
 /*----------------------------------------------------------------------------
  *
  *			XXX  END of r4000-specific code  XXX 
  *
  *----------------------------------------------------------------------------
  */
+	.text
 	.set	mips2
