@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.24 1997/03/19 04:55:07 mycroft Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.25 1997/03/21 06:50:48 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -215,7 +215,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_OSRELEASE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osrelease));
 	case KERN_OSREV:
-		return (sysctl_rdint(oldp, oldlenp, newp, BSD));
+		return (sysctl_rdint(oldp, oldlenp, newp, NetBSD));
 	case KERN_VERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_MAXVNODES:
