@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.6 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.7 2000/04/27 00:22:44 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -129,6 +129,7 @@ int	 __timeout(int delay);
 int	 __touchline(WINDOW *win, int y, int sx, int ex, int force);
 int	 __touchwin(WINDOW *win);
 char	*__tscroll(const char *cap, int n1, int n2);
+void	 __unsetattr(int);
 int	 __waddch(WINDOW *win, __LDATA *dp);
 
 /* Private #defines. */
@@ -143,3 +144,4 @@ extern int		 __rawmode;
 extern int		 __noqch;
 extern attr_t		 __nca;
 extern struct __winlist	*__winlistp;
+extern WINDOW		*__virtscr;
