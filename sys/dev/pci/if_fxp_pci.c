@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.22.4.4 2003/01/27 06:26:57 jmc Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.22.4.5 2003/06/30 02:36:44 grant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.22.4.4 2003/01/27 06:26:57 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.22.4.5 2003/06/30 02:36:44 grant Exp $");
 
 #include "rnd.h"
 
@@ -137,6 +137,12 @@ const struct fxp_pci_product {
 	  "Intel PRO/100 VM Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_2,
 	  "Intel PRO/100 VM Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_3,
+	  "Intel PRO/100 VM Network Controller with 82562EM/EX PHY" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VM_4,
+	  "Intel PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY" },
+	{ PCI_PRODUCT_INTEL_PRO_100_M,
+	  "Intel PRO/100 M Network Controller" },
 	{ 0,
 	  NULL },
 };
@@ -370,6 +376,8 @@ fxp_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_4:
 		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
 		/*
