@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.159 2005/03/19 23:13:42 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.160 2005/03/19 23:16:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.159 2005/03/19 23:13:42 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.160 2005/03/19 23:16:55 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,7 @@ void 	iso_status(int);
 void 	iso_getaddr(const char *, int);
 
 /* Known address families */
-struct afswtch afs[] = {
+const struct afswtch afs[] = {
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
 	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, &ridreq, &in_addreq },
 #ifdef INET6
@@ -377,7 +377,7 @@ struct afswtch afs[] = {
 	{ 0,	0,	    0,		0 }
 };
 
-struct afswtch *afp;	/*the address family being set or asked about*/
+const struct afswtch *afp;	/*the address family being set or asked about*/
 
 int
 main(int argc, char *argv[])
@@ -653,10 +653,10 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-struct afswtch *
+const struct afswtch *
 lookup_af_byname(const char *cp)
 {
-	struct afswtch *a;
+	const struct afswtch *a;
 
 	for (a = afs; a->af_name != NULL; a++)
 		if (strcmp(a->af_name, cp) == 0)
@@ -664,10 +664,10 @@ lookup_af_byname(const char *cp)
 	return (NULL);
 }
 
-struct afswtch *
+const struct afswtch *
 lookup_af_bynum(int afnum)
 {
-	struct afswtch *a;
+	const struct afswtch *a;
 
 	for (a = afs; a->af_name != NULL; a++)
 		if (a->af_af == afnum)
@@ -1423,7 +1423,7 @@ const struct ifmedia_status_description ifm_status_descriptions[] =
 void
 status(const struct sockaddr_dl *sdl)
 {
-	struct afswtch *p = afp;
+	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	struct ifdatareq ifdr;
 	int *media_list, i;
