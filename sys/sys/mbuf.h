@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.15 1995/06/07 00:21:28 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.16 1995/06/13 06:43:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -229,6 +229,7 @@ union mcluster {
 		(m)->m_data = (m)->m_ext.ext_buf; \
 		(m)->m_flags |= M_EXT; \
 		(m)->m_ext.ext_size = MCLBYTES;  \
+		(m)->m_ext.ext_free = 0; \
 	  } \
 	}
 
