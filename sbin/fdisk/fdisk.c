@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.33.2.1 1999/04/18 00:18:49 fvdl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.33.2.2 1999/05/02 21:27:49 perry Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.33.2.1 1999/04/18 00:18:49 fvdl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.33.2.2 1999/05/02 21:27:49 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,6 +90,7 @@ struct mbr_bootsel {
 } __attribute__((packed));
 
 #define BFL_SELACTIVE   0x01
+#define BFL_EXTINT13	0x02
 
 #define SCAN_ENTER      0x1c
 #define SCAN_F1         0x3b
@@ -865,6 +866,15 @@ editentries:
 		mbs->defkey = SCAN_F1 + item;
 
 done:
+	for (i = 0; i < NMBRPART; i++) {
+		if (mboot.parts[i].mbrp_typ != 0 &&
+		   mboot.parts[i].mbrp_start >=
+		     (dos_cylinders * dos_heads * dos_sectors)) {
+			mbs->flags |= BFL_EXTINT13;
+			break;
+		}
+	}
+
 	if (!yesno("Update the bootselector?"))
 		bootsel_modified = 0;
 }
