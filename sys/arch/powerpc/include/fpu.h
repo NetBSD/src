@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.2 1999/12/07 15:14:56 danw Exp $	*/
+/*	$NetBSD: fpu.h,v 1.3 2001/02/04 17:38:10 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -65,5 +65,10 @@
 #define	FPSCR_XE	0x00000008
 #define	FPSCR_NI	0x00000004
 #define	FPSCR_RN	0x00000003
+
+#ifdef _KERNEL
+void	enable_fpu __P((struct proc *p));
+void	save_fpu __P((struct proc *p));
+#endif
 
 #endif	/* _MACHINE_FPU_H_ */

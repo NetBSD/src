@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 2000/11/25 02:59:34 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 2001/02/04 17:38:11 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,6 +42,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/fpu.h>
 #include <machine/pcb.h>
 
 /*
@@ -186,6 +187,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
+	void switchexit __P((struct proc *));	/* Defined in locore.S */
 #ifdef ALTIVEC
 	struct pcb *pcb = &p->p_addr->u_pcb;
 #endif
@@ -245,13 +247,13 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	if (error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 			    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p))
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)) != 0)
 		return error;
-	if (error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
+	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
 			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p))
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)) != 0)
 		return error;
 
 	chdr->c_nseg++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 2000/06/09 14:05:04 kleink Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5 2001/02/04 17:38:11 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/ptrace.h>
 
+#include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
 

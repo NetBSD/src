@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 2001/01/18 10:54:28 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 2001/02/04 17:38:11 briggs Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -36,6 +36,7 @@
 #include <machine/pmap.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
