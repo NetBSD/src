@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.2 1997/10/11 21:41:46 christos Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.3 1997/10/14 05:17:35 cjs Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.2 1997/10/11 21:41:46 christos Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.3 1997/10/14 05:17:35 cjs Exp $");
 #endif
 #endif
 
@@ -208,7 +208,9 @@ struct request_info *request;
     int     verdict;
     struct tcpd_context saved_context;
 #ifdef __GNUC__
+    /* XXX hack to avoid gcc warnings */
     (void) &real_verdict;
+    (void) &saved_context;
 #endif
 
     saved_context = tcpd_context;		/* stupid compilers */
