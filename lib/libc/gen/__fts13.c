@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.31 2000/08/07 06:08:33 enami Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.32 2000/11/05 20:05:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.31 2000/08/07 06:08:33 enami Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.32 2000/11/05 20:05:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1115,7 +1115,7 @@ fts_padjust(sp, head)
 		(p)->fts_accpath =					\
 		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 	addr = sp->fts_path;
 
