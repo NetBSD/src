@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.8 2004/09/13 12:36:18 drochner Exp $
+#	$NetBSD: files.discovery,v 1.9 2005/02/01 20:59:15 matt Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -56,3 +56,7 @@ define	obio { [offset=-1], [size=0], [irq=-1] }
 device	obio: obio
 attach	obio at gt
 file	dev/marvell/obio.c			obio
+
+device	gtiic: i2cbus
+attach	gtiic at gt
+file	dev/marvell/gti2c.c			gtiic
