@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.35 2001/01/05 21:21:35 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.36 2001/02/25 16:15:09 ad Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -8,6 +8,7 @@
 /usr/include/dev/ic/aic7xxxreg.h
 /usr/include/dev/ic/awictl.h
 /usr/include/dev/ic/isp_netbsd.h
+/usr/include/dev/ic/mlxvar.h
 /usr/include/dev/ic/opl3sa3.h
 /usr/include/dev/isa/ahareg.h
 /usr/include/dev/isa/btreg.h
