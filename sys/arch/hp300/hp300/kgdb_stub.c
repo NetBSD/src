@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.2 1994/10/26 07:25:41 cgd Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.3 1995/04/12 08:30:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.2 1994/10/26 07:25:41 cgd Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.3 1995/04/12 08:30:40 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -548,8 +548,8 @@ kgdb_acc(addr, len, rw)
 
 	if (kernel_map != NULL)
 		return (kernacc(addr, len, rw));
-	if (addr < proc0paddr + UPAGES * NBPG  ||
-	    kstack <= addr && addr < kstack + UPAGES * NBPG)
+	if (addr < proc0paddr + USPACE  ||
+	    kstack <= addr && addr < kstack + USPACE)
 		return (1);
 	return (0);
 }
