@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.35 1999/02/19 20:58:51 leo Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.36 1999/09/21 01:04:44 danw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -525,6 +525,7 @@ ahc_reset(devname, st, sh)
 	/*
 	 * Ensure that the reset has finished
 	 */
+	DELAY(100);
 	wait = 1000;
 #if defined(__FreeBSD__)
 	while (--wait && !(inb(HCNTRL + iobase) & CHIPRSTACK))
