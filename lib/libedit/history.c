@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.8 1998/05/20 01:02:38 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.9 1998/05/20 01:37:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.8 1998/05/20 01:02:38 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.9 1998/05/20 01:37:54 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,6 +69,7 @@ typedef int	(*history_sfun_t) __P((ptr_t, HistEvent *, const int));
 
 struct history {
     ptr_t	   h_ref;		/* Argument for history fcns	*/
+    int 	   h_ent;		/* Last entry point for history	*/
     history_gfun_t h_first;		/* Get the first element	*/
     history_gfun_t h_next;		/* Get the next element		*/
     history_gfun_t h_last;		/* Get the last element		*/
@@ -493,7 +494,7 @@ history_init()
     HistEvent ev;
 
     history_def_init(&h->h_ref, &ev, 0);
-
+    h->h_ent   = -1;
     h->h_next  = history_def_next;
     h->h_first = history_def_first;
     h->h_last  = history_def_last;
@@ -601,6 +602,7 @@ history_set_fun(h, nh)
     if (h->h_next == history_def_next)
 	history_def_clear(h->h_ref, &ev);
 
+    h->h_ent   = -1;
     h->h_first = nh->h_first;
     h->h_next  = nh->h_next;
     h->h_last  = nh->h_last;
@@ -801,7 +803,14 @@ history(va_alist)
 
     case H_ENTER:
 	str = va_arg(va, const char *);
-	retval = HENTER(h, ev, str);
+	if ((retval = HENTER(h, ev, str)) != -1)
+	    h->h_ent = ev->num;
+	break;
+
+    case H_APPEND:
+	str = va_arg(va, const char *);
+	if ((retval = HSET(h, ev, h->h_ent)) != -1)
+	    retval = HADD(h, ev, str);
 	break;
 
     case H_FIRST:
@@ -866,6 +875,7 @@ history(va_alist)
 	    History hf;
 
 	    hf.h_ref   = va_arg(va, ptr_t);
+	    h->h_ent   = -1;
 	    hf.h_first = va_arg(va, history_gfun_t);
 	    hf.h_next  = va_arg(va, history_gfun_t);
 	    hf.h_last  = va_arg(va, history_gfun_t);

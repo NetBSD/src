@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.7 1998/05/20 01:02:09 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.8 1998/05/20 01:37:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -173,13 +173,14 @@ int 		history		__P((History *, HistEvent *, int, ...));
 #define H_SET		 7	/* , void);		*/
 #define H_ADD		 9	/* , const char *);	*/
 #define H_ENTER		10	/* , const char *);	*/
-#define H_END		11	/* , void);		*/
-#define H_NEXT_STR	12	/* , const char *);	*/
-#define H_PREV_STR	13	/* , const char *);	*/
-#define H_NEXT_EVENT	14	/* , const int);	*/
-#define H_PREV_EVENT	15	/* , const int);	*/
-#define H_LOAD		16	/* , const char *);	*/
-#define H_SAVE		17	/* , const char *);	*/
-#define H_CLEAR		18	/* , void);		*/
+#define H_APPEND	11	/* , const char *);	*/
+#define H_END		12	/* , void);		*/
+#define H_NEXT_STR	13	/* , const char *);	*/
+#define H_PREV_STR	14	/* , const char *);	*/
+#define H_NEXT_EVENT	15	/* , const int);	*/
+#define H_PREV_EVENT	16	/* , const int);	*/
+#define H_LOAD		17	/* , const char *);	*/
+#define H_SAVE		18	/* , const char *);	*/
+#define H_CLEAR		19	/* , void);		*/
 
 #endif /* _h_editline */
