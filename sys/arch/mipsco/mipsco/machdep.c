@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2001/09/10 21:19:36 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2001/09/10 21:19:36 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -551,8 +551,6 @@ cpu_reboot(howto, bootstr)
 	volatile int howto;
 	char *bootstr;
 {
-	extern int cold;
-
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
 		savectx((struct user *)curpcb);
