@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/06 16:41:28 fredb Exp $
+#	$NetBSD: Makefile,v 1.4 2004/08/04 11:10:19 lukem Exp $
 
 SUBDIR=	X11 ICE Xau .WAIT \
 	SM Xext .WAIT \
@@ -15,4 +15,16 @@ SUBDIR=	X11 ICE Xau .WAIT \
 SUBDIR+= xlibi18n
 .endif
 
+# Cache .OBJDIRS of LIBDPLIBS commonly used in SUBDIRs.
+#
+LIBDPLIBS=	X11	X11/dynamic \
+		Xext	Xext \
+		ICE	ICE \
+		SM	SM \
+		Xt	Xt
+
+libinstall::
+
+
+.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
