@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.211 2001/01/14 05:22:34 itojun Exp $
+# $NetBSD: mi,v 1.212 2001/01/20 16:33:03 itojun Exp $
 .
 ./altroot
 ./bin
@@ -1051,6 +1051,12 @@
 ./usr/share/locale/ru
 ./usr/share/locale/ru/LC_MESSAGES
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo
+./usr/share/locale/ru_RU.CP866
+./usr/share/locale/ru_RU.CP866/LC_CTYPE
+./usr/share/locale/ru_RU.ISO8859-5
+./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE
+./usr/share/locale/ru_RU.KOI8-R
+./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE
 ./usr/share/locale/ru_SU.CP866
 ./usr/share/locale/ru_SU.CP866/LC_CTYPE
 ./usr/share/locale/ru_SU.ISO8859-5

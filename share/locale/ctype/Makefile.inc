@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2000/12/30 02:33:15 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.2 2001/01/20 16:33:02 itojun Exp $
 # $FreeBSD: src/usr.bin/mklocale/data/Makefile,v 1.17.2.3 1999/08/29 15:31:04 peter Exp $
 
 NOMAN=YES
@@ -247,6 +247,18 @@ LOCALES += ja_JP.SJIS
 LOCALES += zh_TW.Big5
  LOCALESRC_zh_TW.Big5 = zh_TW.BIG5
    ALIASES_zh_TW.Big5+= zh_TW.BIG5
+
+LOCALES += ru_RU.CP866
+ LOCALESRC_ru_RU.CP866 = ru_SU.CP866
+   ALIASES_ru_RU.CP866+=
+
+LOCALES += ru_RU.KOI8-R
+ LOCALESRC_ru_RU.KOI8-R = ru_SU.KOI8-R
+   ALIASES_ru_RU.KOI8-R+=
+
+LOCALES += ru_RU.ISO8859-5
+ LOCALESRC_ru_RU.ISO8859-5 = ru_SU.ISO_8859-5
+   ALIASES_ru_RU.ISO8859-5+=
 
 LOCALES += ru_SU.CP866
  LOCALESRC_ru_SU.CP866 = ru_SU.CP866
