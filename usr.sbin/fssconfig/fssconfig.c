@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.1 2003/12/10 11:40:12 hannken Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.2 2004/01/11 19:05:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ config(int argc, char **argv)
 	if (argc > 4)
 		bssize = strsuftoll("bs size", argv[4], 0, LLONG_MAX);
 	else
-		bssize = (off_t)fsbuf.f_blocks*fsbuf.f_bsize/10;
+		bssize = (off_t)fsbuf.f_blocks*fsbuf.f_bsize;
 
 	/*
 	 * Create the backing store. If it is a directory, create a temporary
@@ -162,8 +162,8 @@ config(int argc, char **argv)
 	if (fstat(fd, &sbuf) < 0)
 		err(1, "stat: %s", fss.fss_bstore);
 	isreg = S_ISREG(sbuf.st_mode);
-	if (isreg && mkfile(fd, bssize) < 0)
-		err(1, "write %s", fss.fss_bstore);
+	if (isreg && ftruncate(fd, bssize) < 0)
+		err(1, "truncate %s", fss.fss_bstore);
 	close(fd);
 
 	if ((fd = opendisk(argv[0], O_RDWR, full, sizeof(full), 0)) < 0) {
@@ -180,6 +180,9 @@ config(int argc, char **argv)
 
 	if ((xflag || istmp) && isreg && unlink(fss.fss_bstore) < 0)
 		err(1, "unlink: %s", fss.fss_bstore);
+
+	if (vflag)
+		list(1, argv);
 }
 
 void
@@ -190,6 +193,9 @@ unconfig(int argc, char **argv)
 
 	if (argc != 1)
 		usage();
+
+	if (vflag)
+		list(1, argv);
 
 	if ((fd = opendisk(argv[0], O_RDWR, full, sizeof(full), 0)) < 0)
 		err(1, "open: %s", argv[0]);
