@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2002/04/30 13:10:56 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2003/04/19 21:30:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -62,11 +62,9 @@ boot(d4, d5, d6, d7)
 	static char devname[32], file[32];
 	void (*entry)(void);
 
-	printf("\n");
 	printf("%s Secondary Boot, Revision %s\n",
 	    bootprog_name, bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
-	printf("\n");
 
 	/* bootname is "boot" by default. */
 	if (netbsd == NULL || strcmp(netbsd, "boot") == 0 ||
