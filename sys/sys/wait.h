@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.20 2003/08/07 16:34:24 agc Exp $	*/
+/*	$NetBSD: wait.h,v 1.21 2003/09/20 14:59:56 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -45,11 +45,10 @@
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
-#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) )
+#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) ) || defined(_KERNEL)
 #define	_W_INT(i)	(i)
 #else
 #define	_W_INT(w)	(*(int *)(void *)&(w))	/* convert union wait to int */
-#define	WCOREFLAG	0200
 #endif
 
 #define	_WSTATUS(x)	(_W_INT(x) & 0177)
@@ -60,7 +59,8 @@
 #define WTERMSIG(x)	(_WSTATUS(x))
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
 #define WEXITSTATUS(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) || defined(_KERNEL)
+#define	WCOREFLAG	0200
 #define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
