@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
+/*	$NetBSD: mtrmt.c,v 1.2.4.1 1996/11/29 19:30:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -126,7 +126,6 @@ rmtgetconn()
 #endif
 	char *tuser;
 	int size;
-	int maxseg;
 
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
@@ -160,11 +159,6 @@ rmtgetconn()
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
-
-	maxseg = 1024;
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
-	    &maxseg, sizeof (maxseg)) < 0)
-		perror("TCP_MAXSEG setsockopt");
 
 #ifdef notdef
 	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
