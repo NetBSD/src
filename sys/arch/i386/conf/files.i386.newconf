@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.37 1995/01/27 05:46:41 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.38 1995/01/27 06:06:00 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -173,7 +173,7 @@ file	arch/i386/isa/spkr.c		speaker needs-flag
 # EISA-only drivers
 #
 device	ahb at isa: scsi
-file	arch/i386/eisa/aha1742.c	ahb
+file	dev/eisa/aha1742.c	ahb
 
 #
 # PCI-only drivers
