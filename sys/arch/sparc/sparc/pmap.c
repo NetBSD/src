@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 1997/03/10 23:26:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.70 1997/03/14 14:28:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -132,6 +132,9 @@ struct pmap_stats {
 	int	ps_useless_changewire;	/* useless wiring changes */
 	int	ps_npg_prot_all;	/* # of active pages protected */
 	int	ps_npg_prot_actual;	/* # pages actually affected */
+	int	ps_npmeg_free;		/* # of free pmegs */
+	int	ps_npmeg_locked;	/* # of pmegs on locked list */
+	int	ps_npmeg_lru;		/* # of pmegs on lru list */
 } pmap_stats;
 
 #ifdef DEBUG
@@ -1313,6 +1316,13 @@ me_alloc(mh, newpm, newvreg, newvseg)
 
 		/* onto on pmap chain; pmap is already locked, if needed */
 		TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
+#ifdef DIAGNOSTIC
+		pmap_stats.ps_npmeg_free--;
+		if (mh == &segm_locked)
+			pmap_stats.ps_npmeg_locked++;
+		else
+			pmap_stats.ps_npmeg_lru++;
+#endif
 
 		/* into pmap segment table, with backpointers */
 		newpm->pm_regmap[newvreg].rg_segmap[newvseg].sg_pmeg = me->me_cookie;
@@ -1343,6 +1353,13 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	TAILQ_REMOVE(&segm_lru, me, me_list);
 	TAILQ_INSERT_TAIL(mh, me, me_list);
+
+#ifdef DIAGNOSTIC
+	if (mh == &segm_locked) {
+		pmap_stats.ps_npmeg_lru--;
+		pmap_stats.ps_npmeg_locked++;
+	}
+#endif
 
 	rp = &pm->pm_regmap[me->me_vreg];
 	if (rp->rg_segmap == NULL)
@@ -1487,13 +1504,22 @@ if (getcontext() != 0) panic("me_free: ctx != 0");
 	/* off LRU or lock chain */
 	if (pm == pmap_kernel()) {
 		TAILQ_REMOVE(&segm_locked, me, me_list);
+#ifdef DIAGNOSTIC
+		pmap_stats.ps_npmeg_locked--;
+#endif
 	} else {
 		TAILQ_REMOVE(&segm_lru, me, me_list);
+#ifdef DIAGNOSTIC
+		pmap_stats.ps_npmeg_lru--;
+#endif
 	}
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
 	TAILQ_INSERT_TAIL(&segm_freelist, me, me_list);
+#ifdef DIAGNOSTIC
+	pmap_stats.ps_npmeg_free++;
+#endif
 }
 
 #if defined(SUN4_MMU3L)
@@ -2905,6 +2931,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		/* set up the mmu entry */
 		TAILQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
 		TAILQ_INSERT_TAIL(&pmap_kernel()->pm_seglist, mmuseg, me_pmchain);
+		pmap_stats.ps_npmeg_locked++;
 		mmuseg->me_cookie = scookie;
 		mmuseg->me_pmap = pmap_kernel();
 		mmuseg->me_vreg = vr;
@@ -2951,6 +2978,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	for (; scookie < nsegment; scookie++, mmuseg++) {
 		mmuseg->me_cookie = scookie;
 		TAILQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
+		pmap_stats.ps_npmeg_free++;
 	}
 
 	/* Erase all spurious user-space segmaps */
