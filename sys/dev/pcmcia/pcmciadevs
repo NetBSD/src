@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.147 2001/11/19 05:24:26 imp Exp $
+$NetBSD: pcmciadevs,v 1.148 2001/11/26 04:18:26 ichiro Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -145,6 +145,7 @@ product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
 
 /* BUFFALO */
 product BUFFALO WLI_PCM_S11	0x0305	BUFFALO AirStation 11Mbps WLAN
+product BUFFALO WLI_CF_S11G	0x030b	BUFFALO AirStation 11Mbps CF WLAN
 
 /* Compaq Products */
 product COMPAQ NC5004		0x0002 Compaq Agency NC5004 Wireless Card
