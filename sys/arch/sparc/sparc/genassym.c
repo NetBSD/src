@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1994/11/20 20:54:17 deraadt Exp $ */
+/*	$NetBSD: genassym.c,v 1.10 1994/12/07 14:47:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,9 @@
 
 #include <machine/pmap.h>
 #include <machine/cpu.h>
+
 #include <machine/oldmon.h>
+#include <machine/bsd_openprom.h>
 
 #ifdef notyet
 #include <sparc/dev/zsreg.h>
@@ -190,6 +192,18 @@ main()
 	off("AMD_BBTB", struct amd7930, bbtb);
 
 	def("PROM_BASE", PROM_BASE);
+
+	off("PV_NODEOPS", struct promvec, pv_nodeops);
+	off("PV_HALT", struct promvec, pv_halt);
+	off("PV_EVAL", struct promvec, pv_fortheval.v0_eval);
+	off("PV_ROMVEC_VERS", struct promvec, pv_romvec_vers);
+
+	off("NO_NEXTNODE", struct nodeops, no_nextnode);
+	off("NO_GETPROP", struct nodeops, no_getprop);
+
+	off("OLDMON_PRINTF", struct om_vector, printf);
+	off("OLDMON_HALT", struct om_vector, exitToMon);
+
 	flush();
 
 	exit(0);
