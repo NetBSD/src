@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $	*/
+/*	$NetBSD: inode.c,v 1.18.2.1 1996/12/10 01:18:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.18.2.1 1996/12/10 01:18:38 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $
 
 static ino_t startinum;
 
-int iblock __P((struct inodesc *, long, quad_t));
+int iblock __P((struct inodesc *, long, u_int64_t));
 
 int
 ckinode(dp, idesc)
@@ -68,7 +68,7 @@ ckinode(dp, idesc)
 	register ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
-	quad_t remsize, sizepb;
+	u_int64_t remsize, sizepb;
 	mode_t mode;
 
 	if (idesc->id_fix != IGNORE)
@@ -118,13 +118,13 @@ int
 iblock(idesc, ilevel, isize)
 	struct inodesc *idesc;
 	long ilevel;
-	quad_t isize;
+	u_int64_t isize;
 {
 	register daddr_t *ap;
 	register daddr_t *aplim;
 	register struct bufarea *bp;
 	int i, n, (*func)(), nif;
-	quad_t sizepb;
+	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	extern int pass1check();
 
@@ -332,6 +332,7 @@ cacheino(dp, inumber)
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
+	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
 	if (inumber == ROOTINO)
 		inp->i_parent = ROOTINO;
 	else
