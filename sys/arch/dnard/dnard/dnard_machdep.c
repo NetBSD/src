@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.2 2001/11/02 21:51:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -309,7 +309,7 @@ initarm(ofw_handle)
 	printf("ddb: ");
 	db_machine_init();
 	{
-		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
