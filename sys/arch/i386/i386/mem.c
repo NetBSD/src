@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.8 1993/10/21 23:55:02 cgd Exp $
+ *	$Id: mem.c,v 1.9 1994/02/01 05:40:11 mycroft Exp $
  */
 
 /*
@@ -54,7 +54,6 @@
 #include "proc.h"
 
 #include "machine/cpu.h"
-#include "machine/psl.h"
 
 #include "vm/vm_param.h"
 #include "vm/lock.h"
@@ -81,6 +80,7 @@ mmclose(dev, uio, flags)
 	}
 	return(0);
 }
+
 /*ARGSUSED*/
 mmopen(dev, uio, flags)
 	dev_t dev;
@@ -99,6 +99,7 @@ mmopen(dev, uio, flags)
 	}
 	return(0);
 }
+
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
 	dev_t dev;
@@ -229,48 +230,29 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-/*
- * mmap() memory sections
- */
 
+/*
+ * mmap() physical memory sections
+ */
 int
-mmmmap(dev, offset, nprot)
+mmmmap(dev, offset)
 	dev_t dev;
 	int offset;
-	int nprot;
 {
 
-#ifdef notdef
+#ifdef notyet
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
 		if (offset > ctob(physmem))
 			return -1;
 		return i386_btop(offset);
-
 /* minor device 1 is kernel memory */
 	case 1:
-		/*
-		 * don't use kernacc() it doesn't check "executable"
-		 * permissions.  rather, use the (new) generalized version.
-		 */
-		if (!kerncheckprot((caddr_t) offset, NBPG, nprot)) {
-#ifdef notdef
-printf("kmem mmap request: offset 0x%x failed\n", offset);
-#endif
+		/* kernacc() doesn't check executable permissions. */
+		if (!kerncheckprot((caddr_t)offset, NBPG, nprot))
 			return -1;
-		}
-
-#ifdef notdef
-		printf("kmem mmap request: offset 0x%x -> page 0x%x (%d, %d)\n", offset,
-			i386_btop(vtophys(offset)),
-			ispt(vtopte(offset)) ? 1 : 0,
-			vtopte(offset)->pg_v ? 1 : 0);
-		return -1;
-#else
 		return i386_btop(vtophys(offset));
-#endif
-
 	default:
 		return -1;
 	}
