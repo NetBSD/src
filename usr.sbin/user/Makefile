@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1999/12/06 22:52:18 simonb Exp $
+# $NetBSD: Makefile,v 1.5 1999/12/08 00:01:36 soren Exp $
 #
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ LINKS+=	${BINDIR}/user ${BINDIR}/groupmod
 LDADD+= -lutil 
 DPADD+= ${LIBUTIL}
 MAN= user.8 useradd.8 userdel.8 usermod.8 group.8 groupadd.8 groupdel.8 groupmod.8
+MLINKS=	useradd.8 adduser.8
 
 .if ${MKSHARE} != "no"
 FILES=			dot.cshrc dot.login dot.profile
