@@ -33,8 +33,11 @@
 #
 #	@(#)sendbug.sh	5.11 (Berkeley) 7/25/90
 #
+#  Modified to support 386bsd bugfiler running at sun-lamp.cs.berkeley.edu
+#  by Rodney W. Grimes on April 1, 1993.
+#
 
-# create a bug report and mail it to '4bsd-bugs'.
+# create a bug report and mail it to 'bugs'.
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin
 export PATH
@@ -42,8 +45,9 @@ export PATH
 TEMP=/tmp/bug$$
 FORMAT=/usr/share/misc/bugformat
 
-# uucp sites should use ": ${BUGADDR=ucbvax!4bsd-bugs}" with a suitable path.
-: ${BUGADDR=4bsd-bugs@BERKELEY.EDU}
+# uucp sites should use:
+#	": ${BUGADDR=sun-lamp!386bsd_bugs}" with a suitable path.
+: ${BUGADDR=386bsd_bugs@sun-lamp.cs.berkeley.edu}
 : ${EDITOR=vi}
 
 trap 'rm -f $TEMP ; exit 1' 1 2 3 13 15

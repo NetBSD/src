@@ -1,7 +1,8 @@
 #	@(#)Makefile	5.17 (Berkeley) 5/24/90
+# Fixed to use sun-lamp.cs.berkeley.edu as a bugs host - rgrimes 4/01/93
 
 PROG=	bugfiler
-CFLAGS+=-I${.CURDIR}
+CFLAGS+=-I${.CURDIR} -D"BUGS_HOME \"owner-386bsd_bugs@sun-lamp.cs.berkeley.edu\""
 SRCS=	bugfiler.c error.c gethead.c process.c redist.c reply.c
 BINOWN=	root
 BINMODE=4555
