@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.298 1998/03/30 06:02:14 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.299 1998/03/30 06:04:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1687,8 +1687,10 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	int IDTVEC(syscall), IDTVEC(osyscall);
-extern	int *IDTVEC(exceptions)[];
+typedef void (vector) __P((void));
+extern vector IDTVEC(syscall);
+extern vector IDTVEC(osyscall);
+extern vector *IDTVEC(exceptions)[];
 
 void
 init386(first_avail)
