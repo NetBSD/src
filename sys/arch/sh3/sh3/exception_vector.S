@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.11 2003/11/24 03:06:01 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.12 2003/11/24 04:16:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
 #include <sh3/ubcreg.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
+
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.12 2003/11/24 04:16:51 uwe Exp $")
+
 
 /*
  * Exception vectors. following routines are copied to vector addreses.
