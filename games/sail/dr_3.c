@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.8 2000/11/30 22:02:20 jwise Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.9 2001/01/01 21:57:37 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,15 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.8 2000/11/30 22:02:20 jwise Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.9 2001/01/01 21:57:37 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
 #include <stdlib.h>
 
+/* move all comp ships */
 void
-moveall()		/* move all comp ships */
+moveall(void)
 {
 	struct ship *sp, *sq;
 	int n;
@@ -86,10 +87,10 @@ moveall()		/* move all comp ships */
 	n = 0;
 	foreachship(sp) {
 		if (snagged(sp))
-			(void) strcpy(sp->file->movebuf, "d");
+			strcpy(sp->file->movebuf, "d");
 		else
 			if (*sp->file->movebuf != 'd')
-				(void) strcat(sp->file->movebuf, "d");
+				strcat(sp->file->movebuf, "d");
 		row[n] = sp->file->row;
 		col[n] = sp->file->col;
 		dir[n] = sp->file->dir;
@@ -183,8 +184,7 @@ moveall()		/* move all comp ships */
 }
 
 int
-stillmoving(k)
-int k;
+stillmoving(int k)
 {
 	struct ship *sp;
 
@@ -195,8 +195,7 @@ int k;
 }
 
 int
-is_isolated(ship)
-struct ship *ship;
+is_isolated(struct ship *ship)
 {
 	struct ship *sp;
 
@@ -208,8 +207,7 @@ struct ship *ship;
 }
 
 int
-push(from, to)
-struct ship *from, *to;
+push(struct ship *from, struct ship *to)
 {
 	int bs, sb;
 
@@ -223,10 +221,7 @@ struct ship *from, *to;
 }
 
 void
-step(com, sp, moved)
-char com;
-struct ship *sp;
-char *moved;
+step(int com, struct ship *sp, char *moved)
 {
 	int dist;
 
@@ -266,10 +261,7 @@ char *moved;
 }
 
 void
-sendbp(from, to, sections, isdefense)
-struct ship *from, *to;
-int sections;
-char isdefense;
+sendbp(struct ship *from, struct ship *to, int sections, int isdefense)
 {
 	int n;
 	struct BP *bp;
@@ -288,9 +280,7 @@ char isdefense;
 }
 
 int
-is_toughmelee(ship, to, isdefense, count)
-struct ship *ship, *to;
-int isdefense, count;
+is_toughmelee(struct ship *ship, struct ship *to, int isdefense, int count)
 {
 	struct BP *bp;
 	int obp = 0;
@@ -321,7 +311,7 @@ int isdefense, count;
 }
 
 void
-reload()
+reload(void)
 {
 	struct ship *sp;
 
@@ -331,7 +321,7 @@ reload()
 }
 
 void
-checksails()
+checksails(void)
 {
 	struct ship *sp;
 	int rig, full; 

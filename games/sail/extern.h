@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2000/11/30 22:06:04 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.18 2001/01/01 21:57:38 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -317,10 +317,10 @@ void thinkofgrapples (void);
 void checkup (void);
 void prizecheck (void);
 int str_end (const char *);
-void closeon (struct ship *, struct ship *, char[], int, int, int);
-int score (char[], struct ship *, struct ship *, int);
+void closeon (struct ship *, struct ship *, char *, int, int, int);
+int score (char *, struct ship *, struct ship *, int);
 void move_ship (const char *, struct ship *, unsigned char *, short *, short *, char *);
-void try (char[], char [], int, int, int, int, int, struct ship *,
+void try (char *, char *, int, int, int, int, int, struct ship *,
     struct ship *, int *, int);
 void rmend (char *);
 

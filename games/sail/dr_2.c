@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.12 2000/11/30 22:02:20 jwise Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.13 2001/01/01 21:57:37 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.12 2000/11/30 22:02:20 jwise Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.13 2001/01/01 21:57:37 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: dr_2.c,v 1.12 2000/11/30 22:02:20 jwise Exp $");
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 
 void
-thinkofgrapples()
+thinkofgrapples(void)
 {
 	struct ship *sp, *sq;
 	char friendly;
@@ -79,7 +79,7 @@ thinkofgrapples()
 }
 
 void
-checkup()
+checkup(void)
 {
 	struct ship *sp, *sq;
 	char explode, sink;
@@ -110,7 +110,7 @@ checkup()
 }
 
 void
-prizecheck()
+prizecheck(void)
 {
 	struct ship *sp;
 
@@ -128,8 +128,7 @@ prizecheck()
 }
 
 int
-str_end(str)
-	const char *str;
+str_end(const char *str)
 {
 	const char *p;
 
@@ -139,10 +138,7 @@ str_end(str)
 }
 
 void
-closeon(from, to, command, ta, ma, af)
-struct ship *from, *to;
-char command[];
-int ma, ta, af;
+closeon(struct ship *from, struct ship *to, char *command, int ta, int ma, int af)
 {
 	int high;
 	char temp[10];
@@ -155,10 +151,7 @@ int ma, ta, af;
 const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
 int
-score(movement, ship, to, onlytemp)
-char movement[];
-struct ship *ship, *to;
-char onlytemp;
+score(char *movement, struct ship *ship, struct ship *to, int onlytemp)
 {
 	char drift;
 	int row, col, dir, total, ran;
@@ -171,7 +164,7 @@ char onlytemp;
 	drift = fp->drift;
 	move_ship(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
 	if (!*movement)
-		(void) strcpy(movement, "d");
+		strcpy(movement, "d");
 
 	ran = range(ship, to);
 	total = -50 * ran;
@@ -189,12 +182,7 @@ char onlytemp;
 }
 
 void
-move_ship(p, ship, dir, row, col, drift)
-const char *p;
-struct ship *ship;
-unsigned char *dir;
-short *row, *col;
-char *drift;
+move_ship(const char *p, struct ship *ship, unsigned char *dir, short *row, short *col, char *drift)
 {
 	int dist;
 	char moved = 0;
@@ -234,10 +222,7 @@ char *drift;
 }
 
 void
-try(command, temp, ma, ta, af, vma, dir, f, t, high, rakeme)
-struct ship *f, *t;
-int ma, ta, af, vma, dir, *high, rakeme;
-char command[], temp[];
+try(char *command, char *temp, int ma, int ta, int af, int vma, int dir, struct ship *f, struct ship *t, int *high, int rakeme)
 {
 	int new, n;
 	char st[4];
@@ -245,33 +230,33 @@ char command[], temp[];
 
 	if ((n = str_end(temp)) < '1' || n > '9')
 		for (n = 1; vma - n >= 0; n++) {
-			(void) sprintf(st, "%d", n);
-			(void) strcat(temp, st);
+			sprintf(st, "%d", n);
+			strcat(temp, st);
 			new = score(temp, f, t, rakeme);
 			if (new > *high && (!rakeme || rakeyou)) {
 				*high = new;
-				(void) strcpy(command, temp);
+				strcpy(command, temp);
 			}
 			try(command, temp, ma-n, ta, af, vma-n,
 				dir, f, t, high, rakeme);
 			rmend(temp);
 		}
 	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)) {
-		(void) strcat(temp, "r");
+		strcat(temp, "r");
 		new = score(temp, f, t, rakeme);
 		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))) {
 			*high = new;
-			(void) strcpy(command, temp);
+			strcpy(command, temp);
 		}
 		try(command, temp, ma-1, ta-1, af, min(ma-1, maxmove(f, (dir == 8 ? 1 : dir+1), 0)), (dir == 8 ? 1 : dir+1),f,t,high,rakeme);
 		rmend(temp);
 	}
 	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)){
-		(void) strcat(temp, "l");
+		strcat(temp, "l");
 		new = score(temp, f, t, rakeme);
 		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))){
 			*high = new;
-			(void) strcpy(command, temp);
+			strcpy(command, temp);
 		}
 		try(command, temp, ma-1, ta-1, af, (min(ma-1,maxmove(f, (dir-1 ? dir-1 : 8), 0))), (dir-1 ? dir -1 : 8), f, t, high, rakeme);
 		rmend(temp);
@@ -279,8 +264,7 @@ char command[], temp[];
 }
 
 void
-rmend(str)
-char *str;
+rmend(char *str)
 {
 	char *p;
 
