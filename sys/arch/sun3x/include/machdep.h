@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 1997/01/16 21:56:36 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 1997/01/17 16:25:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -88,6 +88,7 @@
 
 struct frame;
 struct fpframe;
+struct mmu_rootptr;
 struct pcb;
 struct proc;
 struct reg;
@@ -147,7 +148,7 @@ void	isr_config __P((void));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
-void	loadcrp __P((int crp));
+void	loadcrp __P((struct mmu_rootptr *));
 
 void	netintr __P((void));
 void	proc_trampoline __P((void));
