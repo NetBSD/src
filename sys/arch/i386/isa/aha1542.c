@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.30 1994/05/05 05:36:20 cgd Exp $
+ *	$Id: aha1542.c,v 1.31 1994/06/13 18:54:41 mycroft Exp $
  */
 
 /*
@@ -305,7 +305,7 @@ struct aha_softc {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	u_short aha_base;	/* base port for each board */
+	u_short aha_base;			/* base port for each board */
 	/*
 	 * xor this with a physaddr to get a kv addr and visa versa
 	 * for items in THIS STRUCT only. 
@@ -314,11 +314,11 @@ struct aha_softc {
 	 */
 	long int kv_phys_xor;
 	struct aha_mbx aha_mbx;			/* all the mailboxes */
-	struct aha_ccb *aha_ccb_free;		/* the next free ccb */
+	struct aha_ccb *aha_ccb_free;		/* the next free CCB */
 	struct aha_ccb aha_ccb[AHA_MBX_SIZE];	/* all the CCBs */
-	int aha_int;				/* our irq level */
-	int aha_dma;				/* out DMA req channel */
-	int aha_scsi_dev;			/* ourscsi bus address */
+	int aha_int;				/* our IRQ level */
+	int aha_dma;				/* our DMA req channel */
+	int aha_scsi_dev;			/* our SCSI bus address */
 	struct scsi_link sc_link;		/* prototype for subdevs */
 };
 
