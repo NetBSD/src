@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.35 1994/07/28 02:39:25 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.36 1994/07/31 19:21:40 mycroft Exp $
  */
 
 /*
@@ -188,16 +188,16 @@ typedef struct {
 /* 
  * U14_CONFIG bits (read only)
  */
-#define U14_DMA_CH5		0x00	/* DMA channel 5 */
-#define U14_DMA_CH6		0x40	/* 6 */
-#define U14_DMA_CH7		0x80	/* 7 */
-#define	U14_DMA_MASK		0xc0
-#define U14_IRQ15		0x00	/* IRQ 15 */
-#define U14_IRQ14		0x10	/* 14 */
-#define U14_IRQ11		0x20	/* 11 */
-#define U14_IRQ10		0x30	/* 10 */
-#define	U14_IRQ_MASK		0x30
-#define	U14_HOSTID_MASK		0x07
+#define U14_DMA_CH5		0x0000	/* DMA channel 5 */
+#define U14_DMA_CH6		0x4000	/* 6 */
+#define U14_DMA_CH7		0x8000	/* 7 */
+#define	U14_DMA_MASK		0xc000
+#define U14_IRQ15		0x0000	/* IRQ 15 */
+#define U14_IRQ14		0x1000	/* 14 */
+#define U14_IRQ11		0x2000	/* 11 */
+#define U14_IRQ10		0x3000	/* 10 */
+#define	U14_IRQ_MASK		0x3000
+#define	U14_HOSTID_MASK		0x0007
 
 /*
  * U24_CONFIG bits (read only)
@@ -948,48 +948,43 @@ u14_find(uha, ia)
 	struct uha_softc *uha;
 	struct isa_attach_args *ia;
 {
-	u_char ad[4];
-	volatile u_char model;
-	volatile u_char submodel;
-	u_char config_reg1;
-	u_char config_reg2;
-	u_char dma_ch;
-	u_char irq_ch;
-	u_char uha_id;
 	u_short iobase = uha->sc_iobase;
-	int i;
+	u_short model, config;
 	int resetcount = 4000;	/* 4 secs? */
 
 	if (ia->ia_iobase == IOBASEUNK)
 		return ENXIO;
 
-	model = inb(iobase + U14_ID);
-	submodel = inb(iobase + U14_ID + 1);
-	if ((model != 0x56) & (submodel != 0x40))
+	model = htons(inw(iobase + U14_ID));
+	if ((model & 0xfff0) != 0x5640)
 		return ENXIO;
 
-	config_reg1 = inb(iobase + U14_CONFIG);
-	config_reg2 = inb(iobase + U14_CONFIG + 1);
-	dma_ch = (config_reg1 & U14_DMA_MASK);
-	irq_ch = (config_reg1 & U14_IRQ_MASK);
-	uha_id = (config_reg2 & U14_HOSTID_MASK);
+	config = htons(inw(iobase + U14_CONFIG));
 
-	switch (dma_ch) {
-	case U14_DMA_CH5:
-		uha->uha_dma = 5;
-		break;
-	case U14_DMA_CH6:
-		uha->uha_dma = 6;
-		break;
-	case U14_DMA_CH7:
-		uha->uha_dma = 7;
+	switch (model & 0x000f) {
+	case 0x0001:
+		/* This is a 34f, and doens't need an ISA DMA channel. */
+		uha->uha_dma = DRQUNK;
 		break;
 	default:
-		printf("illegal dma setting %x\n", dma_ch);
-		return EIO;
+		switch (config & U14_DMA_MASK) {
+		case U14_DMA_CH5:
+			uha->uha_dma = 5;
+			break;
+		case U14_DMA_CH6:
+			uha->uha_dma = 6;
+			break;
+		case U14_DMA_CH7:
+			uha->uha_dma = 7;
+			break;
+		default:
+			printf("illegal dma setting %x\n", config & U14_DMA_MASK);
+			return EIO;
+		}
+		break;
 	}
 
-	switch (irq_ch) {
+	switch (config & U14_IRQ_MASK) {
 	case U14_IRQ10:
 		uha->uha_int = IRQ10;
 		break;
@@ -1003,12 +998,12 @@ u14_find(uha, ia)
 		uha->uha_int = IRQ15;
 		break;
 	default:
-		printf("illegal int setting %x\n", irq_ch);
+		printf("illegal int setting %x\n", config & U14_IRQ_MASK);
 		return EIO;
 	}
 
 	/* who are we on the scsi bus */
-	uha->uha_scsi_dev = uha_id;
+	uha->uha_scsi_dev = config & U14_HOSTID_MASK;
 
 	outb(iobase + U14_LINT, U14_ASRST);
 
