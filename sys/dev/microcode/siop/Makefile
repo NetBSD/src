@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/04/21 22:52:06 bouyer Exp $
+# $NetBSD: Makefile,v 1.6 2003/04/06 09:50:29 tsutsui Exp $
 
 all: esiop.out siop.out osiop.out oosiop.out
 
@@ -20,4 +20,4 @@ osiop.out: osiop.ss ${PROG}
 	./${PROG} osiop.ss -p osiop.out
 
 oosiop.out: oosiop.ss ${PROG}
-	./${PROG} oosiop.ss -o oosiop.out
+	./${PROG} oosiop.ss -p oosiop.out
