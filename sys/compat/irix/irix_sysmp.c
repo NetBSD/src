@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.7 2002/03/28 10:37:46 manu Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.8 2002/04/20 21:25:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.7 2002/03/28 10:37:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.8 2002/04/20 21:25:01 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.7 2002/03/28 10:37:46 manu Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/svr4/svr4_types.h>
 
@@ -81,6 +83,7 @@ irix_sys_sysmp(p, v, retval)
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
 	int error = 0;
+	caddr_t sg = stackgap_init(p, 0);
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sysmp(): cmd = %d\n", cmd);
@@ -89,13 +92,14 @@ irix_sys_sysmp(p, v, retval)
 	switch(cmd) {
 	case IRIX_MP_NPROCS:	/* Number of processors in complex */
 	case IRIX_MP_NAPROCS: {	/* Number of active processors in complex */
-		int ncpu;
+		int *ncpu = stackgap_alloc(p, &sg, sizeof(int));
 		int name = HW_NCPU;
 		int namelen = sizeof(name);
 
-		error = hw_sysctl(&name, 1, &ncpu, &namelen, NULL, 0, p);
+		error = hw_sysctl(&name, 1, ncpu, &namelen, NULL, 0, p);
 		if (!error)
-			*retval = (register_t)ncpu;
+			error = copyin(ncpu, retval, sizeof(int));
+
 		return error;
 		break;
 	}
