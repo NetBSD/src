@@ -1,4 +1,4 @@
-/*	$NetBSD: en_US.ISO_8859-4.src,v 1.3 2002/12/06 02:50:21 thorpej Exp $	*/
+/*	$NetBSD: en_US.ISO_8859-4.src,v 1.4 2004/06/24 03:28:50 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for the iso_8859_4 Locale
@@ -7,9 +7,9 @@
 ENCODING	"NONE"
 VARIABLE        Latin-4 character set, CODESET=ISO8859-4
 
-//
-// This is a comment
-//
+/*
+ * This is a comment
+ */
 ALPHA		'A' - 'Z' 'a' - 'z' 
 		0xa1 - 0xa3 0xa5 0xa6 0xa9 - 0xac 0xae
 		0xb1 0xb3 0xb5 0xb6 0xb9 - 0xd6 0xd8 - 0xf6 0xf8 - 0xfe
@@ -30,9 +30,9 @@ XDIGIT		'a' - 'f' 'A' - 'F'
 BLANK		' ' '\t' 0xa0
 PRINT		0x20 - 0x7e 0xa0 - 0xff
 SWIDTH1		0x20 - 0x7e 0xa0 - 0xff
-// IDEOGRAM
-// SPECIAL
-// PHONEGRAM
+/* IDEOGRAM */
+/* SPECIAL */
+/* PHONEGRAM */
 
 MAPLOWER       	<'A' - 'Z' : 'a'>
 MAPLOWER       	<'a' - 'z' : 'a'>
