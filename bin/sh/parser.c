@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)parser.c	5.3 (Berkeley) 4/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.3 1993/03/23 00:29:10 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.4 1993/04/26 22:07:46 dpassage Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -1057,7 +1057,7 @@ parsebackq: {
 			ckfree(str);
 		parsebackquote = 0;
 		handler = savehandler;
-		longjmp(handler, 1);
+		longjmp(handler->loc, 1);
 	}
 	INTOFF;
 	str = NULL;
@@ -1131,7 +1131,7 @@ attyline() {
 		if (exception == EXERROR)
 			out2str("\033]D\n");
 		handler = savehandler;
-		longjmp(handler, 1);
+		longjmp(handler->loc, 1);
 	}
 	savehandler = handler;
 	handler = &jmploc;
