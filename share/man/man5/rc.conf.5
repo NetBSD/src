@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.15 1997/11/23 04:18:14 mrg Exp $
+.\"	$NetBSD: rc.conf.5,v 1.16 1998/04/07 04:47:53 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -459,6 +459,11 @@ Both servers implement version IV of the Kerberos protocol, not the
 newer Kerberos version 5.
 The kerberos server is only available with the domestic distribution of
 .Nx .
+.It Sy screenblank
+YES or NO.  Runs
+.Xr screenblank 8
+and passes
+.Sy screenblank_flags .
 .El
 .Sh FILES
 .Pa /etc/rc.conf
