@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.7.6.3 2004/09/21 13:19:04 skrll Exp $	*/
+/*	$NetBSD: i82072.c,v 1.7.6.4 2005/01/31 09:00:35 skrll Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.7.6.3 2004/09/21 13:19:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.7.6.4 2005/01/31 09:00:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ fd_reset(struct fd_softc *sc)
 }
 
 int
-fdopen(dev_t dev, int flags, int mode, struct proc *p)
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return (EBADF);
 }
