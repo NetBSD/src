@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.22 2003/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: fgen.l,v 1.23 2003/11/02 17:40:41 thorpej Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -44,7 +44,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.22 2003/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.23 2003/11/02 17:40:41 thorpej Exp $");
 #endif
 
 %}
@@ -1017,9 +1017,7 @@ main(argc, argv)
 		case 'o':
 			outfile = optarg;
 			break;
-		case '?':
 		default:
-			warnx("Illegal argument: %c", ch);
 			usage(myname);
 		}
 	argc -= optind;
