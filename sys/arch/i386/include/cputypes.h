@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cputypes.h,v 1.5 1994/01/28 23:44:11 jtc Exp $
+ *	$Id: cputypes.h,v 1.6 1994/05/24 07:24:37 deraadt Exp $
  */
 
 /*
@@ -44,4 +44,4 @@
 #define	CPU_486SX	2	/* Intel 80486SX */
 #define	CPU_486		3	/* Intel 80486DX */
 #define	CPU_586		4	/* Intel P.....m (I hate lawyers; it's TM) */
-
+#define	CPU_486DLC	5	/* Cyrix 486DLC */
