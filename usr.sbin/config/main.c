@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2001/12/21 19:09:43 atatat Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2001/12/23 22:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1060,12 +1060,11 @@ logconfig_start(void)
 	    conffile);
 	(void)fprintf(cfg, "#endif /* %s */\n\n", LOGCONFIG_LARGE);
 
-	(void)fprintf(cfg, "\"");
 	logconfig_include(yyin, NULL);
-	(void)fprintf(cfg, "\"\n\n");
 
 	(void)fprintf(cfg, "#ifdef %s\n\n", LOGCONFIG_LARGE);
-	(void)fprintf(cfg, "\"_CFG_### END CONFIG FILE \\\"%s\\\"\n", conffile);
+	(void)fprintf(cfg, "\"_CFG_### END CONFIG FILE \\\"%s\\\"\\n\"\n",
+	    conffile);
 
 	rewind(yyin);
 }
@@ -1087,24 +1086,29 @@ logconfig_include(FILE *cf, const char *filename)
 		cfgtime = st.st_mtimespec;
 
 	if (filename)
-		(void)fprintf(cfg, "_CFG_### (included from \\\"%s\\\")\n",
+		(void)fprintf(cfg,
+		    "\"_CFG_### (included from \\\"%s\\\")\\n\"\n",
 		    filename);
 	while (fgets(line, sizeof(line), cf) != NULL) {
-		(void)fprintf(cfg, "_CFG_");
+		(void)fprintf(cfg, "\"_CFG_");
 		if (filename)
 			(void)fprintf(cfg, "###> ");
 		strvis(in, line, VIS_TAB);
 		for (out = in; *out; out++)
 			switch (*out) {
+			case '\n':
+				(void)fprintf(cfg, "\\n\"\n");
+				break;
 			case '"': case '\\':
 				(void)fputc('\\', cfg);
+				/* FALLTHROUGH */
 			default:
 				(void)fputc(*out, cfg);
 				break;
 			}
 	}
 	if (filename)
-		(void)fprintf(cfg, "_CFG_### (end include \\\"%s\\\")\n",
+		(void)fprintf(cfg, "\"_CFG_### (end include \\\"%s\\\")\\n\"\n",
 		    filename);
 
 	rewind(cf);
@@ -1120,7 +1124,6 @@ logconfig_end(void)
 	if (!cfg)
 		return;
 
-	(void)fprintf(cfg, "\"\n");
 	(void)fprintf(cfg, "#endif /* %s */\n", LOGCONFIG_LARGE);
 	(void)fprintf(cfg, ";\n");
 	(void)fprintf(cfg, "#endif /* %s || %s */\n",
