@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.4 2003/07/15 00:24:51 lukem Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.5 2004/10/02 23:42:57 toshii Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.4 2003/07/15 00:24:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.5 2004/10/02 23:42:57 toshii Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,6 +83,7 @@ static	void	sapcic_intr_disestablish(pcmcia_chipset_handle_t,
 						void *);
 static	void	sapcic_socket_enable(pcmcia_chipset_handle_t);
 static	void	sapcic_socket_disable(pcmcia_chipset_handle_t);
+static	void	sapcic_socket_settype(pcmcia_chipset_handle_t, int);
 
 static	void	sapcic_event_thread(void *);
 
@@ -110,6 +111,7 @@ struct pcmcia_chip_functions sa11x0_pcmcia_functions = {
 
 	sapcic_socket_enable,
 	sapcic_socket_disable,
+	sapcic_socket_settype,
 };
 
 
@@ -471,4 +473,13 @@ sapcic_socket_disable(pch)
 
 	/* float controller lines */
 	(so->pcictag->write)(so, SAPCIC_CONTROL_LINEENABLE, 0);
+}
+
+static void
+sapcic_socket_settype(pch, type)
+	pcmcia_chipset_handle_t pch;
+	int type;
+{
+
+	/* XXX nothing to do */
 }
