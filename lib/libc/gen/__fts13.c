@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.23 1999/08/27 18:33:29 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.24 1999/08/27 20:02:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.23 1999/08/27 18:33:29 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.24 1999/08/27 20:02:14 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1013,6 +1013,12 @@ fts_pow2(x)
 	x |= x>>4;
 	x |= x>>8;
 	x |= x>>16;
+#if LONG_BIT > 32
+	x |= x>>32;
+#endif
+#if LONG_BIT > 64
+	x |= x>>64;
+#endif
 	x++;
 	return (x);
 }
