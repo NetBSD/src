@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.15.2.1 2002/11/03 16:41:02 he Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.15.2.2 2002/11/30 15:10:12 he Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -188,6 +188,19 @@ int issetugid(void);
 
 #define bswap64(x)	(((u_int64_t)bswap32((x)) << 32) | \
 			 ((u_int64_t)bswap32((x) >> 32)))
+#endif
+
+#if !HAVE_MKSTEMP
+int mkstemp(char *);
+#endif
+
+#if !HAVE_MKDTEMP
+char *mkdtemp(char *);
+#endif
+
+#if !HAVE_MKSTEMP || !HAVE_MKDTEMP
+/* This is a prototype for the internal function. */
+int gettemp(char *, int *, int);
 #endif
 
 #if !HAVE_PREAD
