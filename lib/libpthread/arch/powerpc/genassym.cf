@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2003/06/26 01:29:29 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.5 2003/07/17 20:55:28 nathanw Exp $
 
 # Copyright (c) 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -60,14 +60,14 @@ define _UC_USER_BIT	_UC_USER_BIT
 
 #========================================================================
 # for pthread_switch.S
-define PT_UC		offsetof(struct pthread_st, pt_uc)
-define PT_TRAPUC	offsetof(struct pthread_st, pt_trapuc)
-define PT_NEXT		offsetof(struct pthread_st, pt_next)
-define PT_SPINLOCKS	offsetof(struct pthread_st, pt_spinlocks)
-define PT_SWITCHTO	offsetof(struct pthread_st, pt_switchto)
-define PT_SWITCHTOUC	offsetof(struct pthread_st, pt_switchtouc)
-define PT_STATE		offsetof(struct pthread_st, pt_state)
-define PT_HELDLOCK	offsetof(struct pthread_st, pt_heldlock)
+define PT_UC		offsetof(struct __pthread_st, pt_uc)
+define PT_TRAPUC	offsetof(struct __pthread_st, pt_trapuc)
+define PT_NEXT		offsetof(struct __pthread_st, pt_next)
+define PT_SPINLOCKS	offsetof(struct __pthread_st, pt_spinlocks)
+define PT_SWITCHTO	offsetof(struct __pthread_st, pt_switchto)
+define PT_SWITCHTOUC	offsetof(struct __pthread_st, pt_switchtouc)
+define PT_STATE		offsetof(struct __pthread_st, pt_state)
+define PT_HELDLOCK	offsetof(struct __pthread_st, pt_heldlock)
 
 define PT_STATE_RECYCLABLE PT_STATE_RECYCLABLE
 define CONTEXTSIZE	sizeof(ucontext_t)
