@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1998/11/11 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1998/11/24 07:02:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1905,7 +1905,6 @@ ASGLOBAL(fullcflush)
 #endif
 
 /* interrupt counters */
-#if defined(ENABLE_HP_CODE)
 GLOBAL(intrnames)
 	.asciz	"spur"
 	.asciz	"lev1"
@@ -1918,7 +1917,6 @@ GLOBAL(intrnames)
 	.asciz	"nmi"
 GLOBAL(eintrnames)
 	.even
-#endif
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
