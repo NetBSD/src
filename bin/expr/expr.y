@@ -2,7 +2,7 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * $Header: /cvsroot/src/bin/expr/expr.y,v 1.8 1993/07/20 00:52:57 jtc Exp $
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.9 1993/07/20 01:10:55 jtc Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,13 +219,10 @@ int
 is_zero_or_null (vp)
 struct val *vp;
 {
-	/* Like most other versions of expr, this version will return
-	   false for a string value of multiple zeros.*/
-
 	if (vp->type == integer) {
 		return (vp->u.i == 0);
 	} else {
-		return (*vp->u.s == 0 || strcmp (vp->u.s, "0") == 0);
+		return (*vp->u.s == 0 || (to_integer (vp) && vp->u.i == 0));
 	}
 	/* NOTREACHED */
 }
@@ -507,17 +504,24 @@ struct val *a, *b;
 	char errbuf[256];
 	int eval;
 	struct val *v;
+	char *newpat;
 
 	/* coerce to both arguments to strings */
 	to_string(a);
 	to_string(b);
 
+	/* patterns are anchored to the beginning of the line */
+	newpat = malloc (strlen (b->u.s) + 2);
+	strcpy (newpat, "^");
+	strcat (newpat, b->u.s);
+
 	/* compile regular expression */
-	if ((eval = regcomp (&rp, b->u.s, 0)) != 0) {
+	if ((eval = regcomp (&rp, newpat, 0)) != 0) {
 		regerror (eval, &rp, errbuf, sizeof(errbuf));
 		fprintf (stderr, "expr: %s\n", errbuf);
 		exit (2);
 	}
+	free (newpat);
 
 	/* compare string against pattern */
 	if (regexec(&rp, a->u.s, SE_MAX, rm, 0) == 0) {
