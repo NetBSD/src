@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.10 1998/02/10 03:52:14 lukem Exp $	*/
+/*	$NetBSD: auth.h,v 1.11 1998/02/11 08:05:54 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -87,9 +87,9 @@ __END_DECLS
  * Authentication info.  Opaque to client.
  */
 struct opaque_auth {
-	enum_t	oa_flavor;		/* flavor of auth */
-	caddr_t	oa_base;		/* address of more auth stuff */
-	size_t	oa_length;		/* not to exceed MAX_AUTH_BYTES */
+	enum_t		oa_flavor;	/* flavor of auth */
+	caddr_t		oa_base;	/* address of more auth stuff */
+	u_int32_t	oa_length;	/* not to exceed MAX_AUTH_BYTES */
 };
 
 
