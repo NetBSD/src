@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.8 2001/10/20 18:25:52 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.9 2001/10/21 20:45:15 thorpej Exp $ */
 
 /*
  * 
@@ -923,8 +923,7 @@ gem_start(ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
-	       sc->sc_txfree != 0) {
+	for (;;) {
 		/*
 		 * Grab a packet off the queue.
 		 */
@@ -932,6 +931,12 @@ gem_start(ifp)
 		if (m0 == NULL)
 			break;
 		m = NULL;
+
+		/* Get a work queue entry. */
+		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
+			/* We've run out. */
+			break;
+		}
 
 		dmamap = txs->txs_dmamap;
 
@@ -971,9 +976,11 @@ gem_start(ifp)
 
 		/*
 		 * Ensure we have enough descriptors free to describe
-		 * the packet.
+		 * the packet.  Note, we always reserve one descriptor
+		 * at the end of the ring as a termination point, to
+		 * prevent wrap-around.
 		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
+		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed to anything yet,
