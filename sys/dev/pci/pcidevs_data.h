@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.439 2002/06/04 08:57:48 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.440 2002/06/09 16:51:33 taca Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.436 2002/06/04 08:53:47 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.437 2002/06/09 16:50:51 taca Exp 
  */
 
 /*
@@ -6848,6 +6848,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
+	    0,
+	    "VIA Technologies",
+	    "VT8231 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
