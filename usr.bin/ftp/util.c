@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.38 1999/01/01 02:05:05 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.39 1999/01/01 03:55:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.38 1999/01/01 02:05:05 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.39 1999/01/01 03:55:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -847,16 +847,15 @@ progressmeter(flag)
 		if (elapsed > 0.0)
 			bytespersec /= elapsed;
 	}
-	bytespersec /= 10;
-	for (i = 1; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, sizeof(buf) - len,
 #ifndef NO_QUAD
-	    " %3qd.%02d %cB/s ", (long long)bytespersec / 100,
+	    " %3qd.%02d %cB/s ", (long long)bytespersec / 1024,
 #else
-	    " %3ld.%02d %cB/s ", (long)bytespersec / 100,
+	    " %3ld.%02d %cB/s ", (long)bytespersec / 1024,
 #endif
-	    (int)(bytespersec % 100),
+	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
@@ -953,16 +952,15 @@ ptransfer(siginfo)
 	len += snprintf(buf + len, sizeof(buf) - len,
 	    "%02d:%02d ", remaining / 60, remaining % 60);
 
-	bytespersec /= 10;
-	for (i = 1; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, sizeof(buf) - len,
 #ifndef NO_QUAD
-	    "(%qd.%02d %cB/s)", (long long)bytespersec / 100,
+	    "(%qd.%02d %cB/s)", (long long)bytespersec / 1024,
 #else
-	    "(%ld.%02d %cB/s)", (long)bytespersec / 100,
+	    "(%ld.%02d %cB/s)", (long)bytespersec / 1024,
 #endif
-	    (int)(bytespersec % 100),
+	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
