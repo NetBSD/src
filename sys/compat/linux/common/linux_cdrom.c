@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.3 1998/10/03 20:17:40 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.4 1998/10/03 20:28:03 christos Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		    break;
 
 	    default:
-		    printf("linux_ioctl: unknown format msf/lba\n");
+		    DPRINTF(("linux_ioctl: unknown format msf/lba\n"));
 		    return EINVAL;
 	    }
 
@@ -332,7 +332,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		break;
 
 	default:
-		printf("linux_ioctl: unimplemented ioctl %08lx\n", com);
+		DPRINTF(("linux_ioctl: unimplemented ioctl %08lx\n", com));
 		return EINVAL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.32 1998/10/03 20:17:41 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.33 1998/10/03 20:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,8 +159,6 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 	Elf_Shdr *sh;
 	int error;
 
-printf("XAXlinuxgccsig.\n");
-DELAY(500000);
 	error = ENOEXEC;
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
 
@@ -222,15 +220,12 @@ ELFNAME2(linux,signature)(p, epp, eh)
 		Elf_Phdr *ephp = &ph[i];
 		u_int32_t ostype;
 
-/* XAX 
-use interp field.
-/lib/ld-linux
-1234567890123	= 13
-*/
-printf("inloop:%d is %d\n", i, ephp->p_type);
 		if (ephp->p_type != Elf_pt_interp /* XAX pt_note */
-/*		    ephp->p_flags != 0 ||
-		    ephp->p_filesz < sizeof(Elf_Note))*/ )
+#if 0
+		    || ephp->p_flags != 0
+		    || ephp->p_filesz < sizeof(Elf_Note))
+#endif
+		    )
 			continue;
 
 		notep = (Elf_Note *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
@@ -240,43 +235,35 @@ printf("inloop:%d is %d\n", i, ephp->p_type);
 
 		testp = (char *)notep;
 		testp[16] = '\0';
-		printf("interp:%s\n", testp);
-		if (testp[8] == 'l' && testp[9] == 'i' && testp[12] == 'x')  {
-printf("okok\n");
+		if (strncmp(&testp[8], "linux", 5) != 0)  {
 			error = 0;
 			goto out3;
 		}
 
 		goto out2;
 
-printf("checkosverfor:%d\n", ELF_NOTE_TYPE_OSVERSION);
 		/* XXX XAX Should handle NETBSD_TYPE_EMULNAME */
 		if (notep->type != ELF_NOTE_TYPE_OSVERSION) {
 			free(notep, M_TEMP);
 			continue;
 		}
 
-printf("checksize: n=%d, d=%d\n", notep->namesz, notep->descsz);
 		/* Check the name and description sizes. */
 		if (notep->namesz != ELF_NOTE_GNU_NAMESZ ||
 		    notep->descsz != ELF_NOTE_GNU_DESCSZ)
 			goto out2;
 
-printf("checkname: %s\n", (char *)(notep + sizeof(Elf_Note)));
 		/* Is the name "GNU\0"? */
 		if (memcmp((notep + sizeof(Elf_Note)),
 			   ELF_NOTE_GNU_NAME, ELF_NOTE_GNU_NAMESZ))
 			goto out2;
 
 		/* Make sure the OS is Linux */
-		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Note)
-						+ notep->namesz))
-			& ELF_NOTE_GNU_OSMASK;
-printf("ostype:%d\n", ostype);
+		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Note) +
+		    notep->namesz)) & ELF_NOTE_GNU_OSMASK;
 		if (ostype != ELF_NOTE_GNU_OSLINUX)
 			goto out2;
 
-printf("allok\n");
 		/* All checks succeeded. */
 		error = 0;
 		goto out3;
@@ -325,7 +312,6 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	}
 	epp->ep_emul = &ELFNAMEEND(emul_linux);
 	*pos = ELF_NO_ADDR;
-printf("ret0\n");
 	return 0;
 }
 
