@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.21 1999/05/05 20:01:08 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.22 1999/05/07 17:38:41 tv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -191,7 +191,7 @@ check_shell:
 		fp->f_ops = &vnops;
 		fp->f_data = (caddr_t) epp->ep_vp;
 		fp->f_flag = FREAD;
-		FILE_UNUSE(fp);
+		FILE_UNUSE(fp, p);
 	}
 #endif
 
