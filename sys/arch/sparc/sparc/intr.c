@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.68 2002/12/21 12:55:54 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.69 2002/12/23 00:55:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,21 +270,14 @@ nmi_soft(tf)
 		cpuinfo.fpproc = NULL;
 		break;
 	case XPMSG_PAUSECPU:
-	    {
-#if defined(DDB)
-		db_regs_t regs;
-
-		regs.db_tf = *tf;
-		regs.db_fr = *(struct frame *)tf->tf_out[6];
-		cpuinfo.ci_ddb_regs = &regs;
-#endif
+		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
-		while (cpuinfo.flags & CPUFLG_PAUSED) /*void*/;
 #if defined(DDB)
-		cpuinfo.ci_ddb_regs = 0;
+		__asm("ta 0x8b");	/* trap(T_DBPAUSE) */
+#else
+		while (cpuinfo.flags & CPUFLG_PAUSED) /**/;
 #endif
 		return;
-	    }
 	case XPMSG_FUNC:
 	    {
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
@@ -306,22 +299,14 @@ static void xcallintr(void *v)
 
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_PAUSECPU:
-	    {
-#if defined(DDB)
-		struct trapframe *tf = v;
-		volatile db_regs_t regs;
-
-		regs.db_tf = *tf;
-		regs.db_fr = *(struct frame *)tf->tf_out[6];
-		cpuinfo.ci_ddb_regs = &regs;
-#endif
+		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
-		while (cpuinfo.flags & CPUFLG_PAUSED) /**/;
 #if defined(DDB)
-		cpuinfo.ci_ddb_regs = NULL;
+		__asm("ta 0x8b");	/* trap(T_DBPAUSE) */
+#else
+		while (cpuinfo.flags & CPUFLG_PAUSED) /**/;
 #endif
 		return;
-	    }
 	case XPMSG_FUNC:
 	    {
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;

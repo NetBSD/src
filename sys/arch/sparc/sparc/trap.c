@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2002/12/21 16:23:59 manu Exp $ */
+/*	$NetBSD: trap.c,v 1.117 2002/12/23 00:55:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -292,6 +292,14 @@ trap(type, psr, pc, tf)
 				return;
 			}
 		}
+		if (type == T_DBPAUSE) {
+			/* XXX - deal with kgdb too */
+			extern void ddb_suspend(struct trapframe *tf);
+			write_all_windows();
+			ddb_suspend(tf);
+			ADVANCE;
+			return;
+		}
 #endif
 #ifdef DIAGNOSTIC
 		/*
@@ -334,6 +342,7 @@ trap(type, psr, pc, tf)
 		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 		       PSR_BITS, bits, sizeof(bits)));
 #ifdef DDB
+		write_all_windows();
 		(void) kdb_trap(type, tf);
 #endif
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
