@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/07 07:15:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/07 16:20:30 mycroft Exp $
 
 LIB=	cc1
 
@@ -187,6 +187,7 @@ c-parse.c: c-parse.y
 	mv -f c.tab.c c-parse.c
 	mv -f c.tab.h c-parse.h
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

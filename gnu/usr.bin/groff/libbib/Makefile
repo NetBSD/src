@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/10/05 21:39:08 pk Exp $
+#	$Id: Makefile,v 1.5 1997/05/07 16:20:35 mycroft Exp $
 
 LIB=		bib
 SRCS=		common.cc index.cc linear.cc search.cc map.c
@@ -8,7 +8,8 @@ NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
 
-install:
+# only needed during build
+libinstall::
 
 .include "../Makefile.cfg"
 .include <bsd.lib.mk>
