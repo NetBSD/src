@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32var.h,v 1.2.2.2 2004/08/30 09:24:58 tron Exp $	*/
+/*	$NetBSD: ninjascsi32var.h,v 1.2.2.3 2004/08/30 09:54:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -251,9 +251,9 @@ struct njsc32_softc {
 };
 
 #ifdef _KERNEL
-void	njsc32_attach __P((struct njsc32_softc *));
-int	njsc32_detach __P((struct njsc32_softc *, int));
-int	njsc32_intr __P((void *));
+void	njsc32_attach(struct njsc32_softc *);
+int	njsc32_detach(struct njsc32_softc *, int);
+int	njsc32_intr(void *);
 #endif
 
 #endif	/* _NJSC32VAR_H_ */
