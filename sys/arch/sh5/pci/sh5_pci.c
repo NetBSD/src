@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.2 2002/09/28 11:18:01 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.3 2002/09/28 13:08:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,7 +109,7 @@ static int	sh5pciprint(void *, const char *);
 const struct cfattach sh5pci_ca = {
 	sizeof(struct sh5pci_softc), sh5pcimatch, sh5pciattach
 };
-extern struct cfdriver pcibus_cd;
+extern struct cfdriver sh5pci_cd;
 
 static int	sh5pci_dmamap_create(void *, bus_size_t, int, bus_size_t,
 		    bus_size_t, int, bus_dmamap_t *);
@@ -211,7 +211,7 @@ sh5pcimatch(struct device *parent, struct cfdata *cf, void *args)
 	bus_addr_t vcrbase;
 	u_int64_t vcr;
 
-	if (strcmp(sa->sa_name, pcibus_cd.cd_name))
+	if (strcmp(sa->sa_name, sh5pci_cd.cd_name))
 		return (0);
 
 	sa->sa_pport = 0;
