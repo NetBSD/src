@@ -1,10 +1,8 @@
-NetBSD/amiga 1.2 runs on any Amiga that has a 68020 or better CPU with
+NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
 
-For 68020 and 68030 systems, a FPU is recommended but not
-required. 68LC040, 68040V and 68LC060 systems don't work correctly at
-the moment.
-
+For 68020 and 68030 systems, a FPU is recommended but not required. 
+68LC040, 68040V and 68LC060 systems don't work correctly at the moment.
 
 The minimal configuration requires 4M of RAM and about 75M of disk
 space.  To install the entire system requires much more disk space,
@@ -17,7 +15,7 @@ Here is a table of recommended HD partition sizes for a full install:
 	root (/)	20M	20M	15M	15M
 	user (/usr)	80M	110M	60M 	90M
 	swap		----- 2M for every M ram -----
-	local (/local)	up to you
+	local (/usr/local)	up to you
 
 
 As you may note the recommended size of /usr is 20M greater than
@@ -81,6 +79,7 @@ Supported devices include:
 	Amiga serial port.
 	Amiga mouse.
 	DraCo serial port, including serial mouse.
+	DraCo parallel printer port.
 	Real-time clocks:
 		A2000, A3000, A4000 builtin (r/w),
 		DraCo builtin (r/o).
@@ -89,7 +88,7 @@ If its not on the above lists, there is no support for it in this
 release. Especially (but this is an incomplete list), there is no
 driver for:
 
-	Cyberstorm SCSI option, Blizzard IV SCSI, Blizzard 2060 SCSI,
+	Cyberstorm I SCSI option, Blizzard IV SCSI,
 	Ferret SCSI, Oktagon SCSI, CyberVision64/3D.
 
 Known problems with some hardware:
