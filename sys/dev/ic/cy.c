@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.13 2000/05/29 12:05:42 tsubai Exp $	*/
+/*	$NetBSD: cy.c,v 1.14 2000/07/06 01:47:37 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -229,7 +229,6 @@ cyopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -241,17 +240,17 @@ cyopen(dev, flag, mode, p)
 	    card, port, flag, mode);
 #endif
 
-	if (card >= cy_cd.cd_ndevs || (sc = cy_cd.cd_devs[card]) == NULL)
-		return ENXIO;
-
+	sc = device_lookup(&cy_cd, CY_CARD(dev));
+	if (sc == NULL)
+		return (ENXIO);
 	cy = &sc->sc_ports[port];
 
 	s = spltty();
 	if (cy->cy_tty == NULL) {
 		if ((cy->cy_tty = ttymalloc()) == NULL) {
 			splx(s);
-			printf("cy%d: port %d: can't allocate tty\n",
-			    card, port);
+			printf("%s: port %d: can't allocate tty\n",
+			    sc->sc_dev.dv_xname, port);
 			return ENOMEM;
 		}
 		tty_attach(cy->cy_tty);
@@ -367,9 +366,8 @@ cyclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	struct tty *tp = cy->cy_tty;
 	int s;
@@ -411,9 +409,8 @@ cyread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	struct tty *tp = cy->cy_tty;
 
@@ -434,9 +431,8 @@ cywrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	struct tty *tp = cy->cy_tty;
 
@@ -455,9 +451,8 @@ struct tty *
 cytty(dev)
 	dev_t dev;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	struct tty *tp = cy->cy_tty;
 
@@ -478,9 +473,8 @@ cyioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int card = CY_CARD(dev);
 	int port = CY_PORT(dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	struct tty *tp = cy->cy_tty;
 	int error;
@@ -564,9 +558,8 @@ void
 cystart(tp)
 	struct tty *tp;
 {
-	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(tp->t_dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	int s;
 
@@ -608,9 +601,8 @@ cystop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(tp->t_dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	int s;
 
@@ -643,9 +635,8 @@ cyparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int card = CY_CARD(tp->t_dev);
 	int port = CY_PORT(tp->t_dev);
-	struct cy_softc *sc = cy_cd.cd_devs[card];
+	struct cy_softc *sc = device_lookup(&cy_cd, CY_CARD(tp->t_dev));
 	struct cy_port *cy = &sc->sc_ports[port];
 	int ibpr, obpr, i_clk_opt, o_clk_opt;
 	int s, opt;
@@ -910,7 +901,7 @@ cy_poll(arg)
 	splx(s);
 
 	for (card = 0; card < cy_cd.cd_ndevs; card++) {
-		sc = cy_cd.cd_devs[card];
+		sc = device_lookup(&cy_cd, card);
 		if (sc == NULL)
 			continue;
 

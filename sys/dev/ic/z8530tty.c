@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.67 2000/04/14 20:33:48 pk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.68 2000/07/06 01:47:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -413,14 +413,8 @@ struct tty *
 zstty(dev)
 	dev_t dev;
 {
-	struct zstty_softc *zst;
-	int unit = ZSUNIT(dev);
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 
-#ifdef	DIAGNOSTIC
-	if (unit >= zstty_cd.cd_ndevs)
-		panic("zstty");
-#endif
-	zst = zstty_cd.cd_devs[unit];
 	return (zst->zst_tty);
 }
 
@@ -484,18 +478,16 @@ zsopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = ZSUNIT(dev);
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
 	int s, s2;
 	int error;
 
-	if (unit >= zstty_cd.cd_ndevs)
+	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	if (zst == NULL)
 		return (ENXIO);
-	zst = zstty_cd.cd_devs[unit];
-	if (zst == 0)
-		return (ENXIO);
+
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
 
@@ -636,7 +628,7 @@ zsclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
@@ -667,7 +659,7 @@ zsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
@@ -679,7 +671,7 @@ zswrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
@@ -693,7 +685,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
@@ -912,7 +904,7 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -975,7 +967,7 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	int s;
 
 	s = splzs();
@@ -999,7 +991,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5;
@@ -1298,7 +1290,7 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
