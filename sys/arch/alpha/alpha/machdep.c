@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.127 1998/06/26 00:01:32 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.128 1998/07/04 22:18:14 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,10 +69,11 @@
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 1998/06/26 00:01:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 1998/07/04 22:18:14 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

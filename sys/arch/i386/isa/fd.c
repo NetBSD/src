@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.121 1998/06/09 00:11:34 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.122 1998/07/04 22:18:25 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -58,6 +58,7 @@
  */
 
 #include "rnd.h"
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

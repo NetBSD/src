@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.15 1998/06/25 19:18:06 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.16 1998/07/04 22:18:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.4 1998/03/25 09:46:10 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.5 1998/07/04 22:18:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

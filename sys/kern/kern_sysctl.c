@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.37 1998/06/28 21:34:59 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.38 1998/07/04 22:18:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,7 @@
  * sysctl system call.
  */
 
+#include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_shortcorename.h"
 #include "opt_uvm.h"
@@ -72,6 +73,10 @@
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
+#endif
+
+#if defined(DDB)
+#include <ddb/ddbvar.h>
 #endif
 
 /*

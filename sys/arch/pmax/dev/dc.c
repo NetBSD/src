@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.43 1998/04/19 10:44:41 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.44 1998/07/04 22:18:36 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.43 1998/04/19 10:44:41 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.44 1998/07/04 22:18:36 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -823,12 +823,16 @@ dcrint(sc)
 				(*dcDivertXInput)(cc);
 				return;
 			}
+#if NRASTERCONSOLE > 0
 			if ((cc = kbdMapChar(cc)) < 0)
 				return;
 			rcons_input(0, cc);
+#endif
 			return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
+#if NRASTERCONSOLE > 0	
 			mouseInput(cc);
+#endif
 			return;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {

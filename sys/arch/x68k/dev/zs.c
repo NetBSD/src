@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 1998/06/30 11:59:11 msaitoh Exp $ */
+/*	$NetBSD: zs.c,v 1.10 1998/07/04 22:18:46 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,9 @@
  *
  * This driver knows far too much about chip to usage mappings.
  */
+
+#include "opt_ddb.h"
+
 #include "zs.h"
 #if NZS > 0
 

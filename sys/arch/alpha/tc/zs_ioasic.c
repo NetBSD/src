@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.2 1998/05/23 00:51:10 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.3 1998/07/04 22:18:15 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.2 1998/05/23 00:51:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.3 1998/07/04 22:18:15 jonathan Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.2 1998/05/23 00:51:10 thorpej Exp $"
  * Plain tty/async lines use the zstty slave.
  */
 
+#include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
 #include "opt_zs_ioasic_dma.h"
 

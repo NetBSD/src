@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.49 1998/07/02 14:00:39 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.50 1998/07/04 22:18:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
  * TODO:
  *	add "inuse/lock" bit (or ref. count) along with valid bit
  */
+
+#include "opt_ddb.h"
 
 #ifdef INET
 

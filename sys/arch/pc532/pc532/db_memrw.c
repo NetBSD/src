@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 1998/04/21 20:12:17 matthias Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 1998/07/04 22:18:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -42,6 +42,8 @@
  * specific size, then the read/write functions have to
  * make sure to do the correct sized pointer access.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

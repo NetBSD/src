@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.24 1998/05/03 12:59:57 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.25 1998/07/04 22:18:45 jonathan Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,6 +33,7 @@
 #include <machine/asm.h>
 
 #include "assym.h"
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #define JSBENTRY(x)	.globl x ; .align 2 ; x :

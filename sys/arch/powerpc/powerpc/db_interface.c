@@ -1,5 +1,7 @@
-/*	$NetBSD: db_interface.c,v 1.2 1998/02/23 03:23:05 mycroft Exp $ */
+/*	$NetBSD: db_interface.c,v 1.3 1998/07/04 22:18:37 jonathan Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

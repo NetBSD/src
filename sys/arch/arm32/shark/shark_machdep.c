@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.7 1998/06/28 00:53:21 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.8 1998/07/04 22:18:20 jonathan Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,8 @@
 /*
  *  Kernel setup for the SHARK Configuration
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

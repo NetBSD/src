@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.19 1997/11/03 11:10:48 is Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.20 1998/07/04 22:18:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,6 +35,8 @@
  * mc68881 emulator
  * XXX - Just a start at it for now...
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11 1998/06/07 20:19:13 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.12 1998/07/04 22:18:44 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,8 @@
  * Interface to new debugger.
  * Taken from i386 port and modified for vax.
  */
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>

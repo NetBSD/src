@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.18 1998/01/12 09:23:16 thorpej Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.19 1998/07/04 22:18:49 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,6 +70,10 @@
 
 #if NRND > 0
 #include <sys/rnd.h>
+#endif
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
 #endif
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.42 1998/03/30 20:10:26 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.43 1998/07/04 22:18:35 jonathan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -46,6 +46,7 @@
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
+#include "opt_ddb.h"
 #include "scn.h"
 
 #include <sys/param.h>
