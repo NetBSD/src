@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.26 1997/05/12 20:35:50 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.27 1997/07/01 19:04:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -226,6 +226,7 @@ bad:
 	switch (sc->card_id) {
 	case NUBUS_DRHW_M2HRVC:
 	case NUBUS_DRHW_TFB:
+	case NUBUS_DRHW_PVC:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
 		add_nubus_intr(na->slot, grfmv_intr_generic, sc);
