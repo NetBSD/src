@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.12 1997/06/24 23:53:20 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.13 1997/10/19 15:29:20 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -211,6 +211,16 @@ option only makes sense in combination with the
 or
 .Fl webnfs
 flags.
+.Pp
+.Bf -symbolic
+Warning: exporting a filesystem both using WebNFS and read/write in
+the normal way to other hosts should be avoided in an environment
+that is vulnerable to IP spoofing.
+.Ef
+WebNFS enables any client to get filehandles to the exported filesystem.
+Using IP spoofing, a client could then pretend to be a host to which
+the same filesystem was exported read/write, and use the handle to
+gain access to that filesystem.
 .Pp
 The third component of a line specifies the host set to which the line applies.
 The set may be specified in three ways.
