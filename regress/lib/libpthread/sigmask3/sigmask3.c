@@ -6,6 +6,7 @@
 
 /* Test that signal masks are respected while threads are running. */
 volatile sig_atomic_t flag;
+volatile sig_atomic_t flag2;
 
 void handler1(int, siginfo_t *, void *);
 void handler2(int, siginfo_t *, void *);
@@ -28,6 +29,7 @@ handler2(int sig, siginfo_t *info, void *ctx)
 {
 	if (flag == 1)
 		flag = 2;
+	flag2 = 1;
 }
 
 void *
@@ -39,7 +41,7 @@ threadroutine(void *arg)
 	if (flag == 2)
 		printf("Success: Both handlers ran in order\n");
 	else {
-		printf("Failure: flag was %d\n", flag);
+		printf("Failure: flag was %d, flag2 was %d\n", flag, flag2);
 		exit(1);
 	}
 
