@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.86 2000/03/26 10:24:51 itojun Exp $
+$NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -272,3 +272,4 @@ product AMD AM79C930		{ "AMD", "Am79C930", NULL, NULL } AMD Am79C930
 product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
+product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } Sohoware ND5100E NE2000 Compatible Card
