@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 1997/10/05 23:12:21 mark Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 1998/02/03 20:01:35 perry Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -59,10 +59,10 @@ start(void)
 	 *	ALL REGISTER VARIABLES!!!
 	 */
 
-	register struct kframe *kfp;
-	register char **targv;
-	register char **argv;
-	register int *ptr;
+	struct kframe *kfp;
+	char **targv;
+	char **argv;
+	int *ptr;
     
 	/* just above the saved frame pointer */
 
