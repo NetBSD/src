@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.129 2000/11/02 13:34:59 pk Exp $ */
+/*	$NetBSD: st.c,v 1.130 2000/11/03 10:22:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -744,7 +744,8 @@ stopen(dev, flags, mode, p)
 	 * mount session.
 	 */
 	if (!(st->flags & ST_MOUNTED)) {
-		st_mount_tape(dev, flags);
+		if ((error = st_mount_tape(dev, flags)) != 0)
+			goto bad;
 		st->last_dsty = dsty;
 	}
 
@@ -1384,8 +1385,15 @@ stioctl(dev, cmd, arg, flag, p)
 		 * (to get the current state of READONLY)
 		 */
 		error = st_mode_sense(st, XS_CTL_SILENT);
-		if (error)
-			break;
+		if (error) {
+			/*
+			 * Ignore the error if in control mode;
+			 * this is mandated by st(4).
+			 */
+			if (STMODE(dev) != CTRL_MODE)
+				break;
+			error = 0;
+		}
 		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
 		bzero(g, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
@@ -1551,8 +1559,13 @@ try_new_value:
 	/*
 	 * Check that the mode being asked for is aggreeable to the
 	 * drive. If not, put it back the way it was.
+	 *
+	 * If in control mode, we can make (persistent) mode changes
+	 * even if no medium is loaded (see st(4)).
 	 */
-	if ((error = st_mode_select(st, 0)) != 0) {/* put it back as it was */
+	if ((STMODE(dev) != CTRL_MODE || (st->flags & ST_MOUNTED) != 0) &&
+	    (error = st_mode_select(st, 0)) != 0) {
+		/* put it back as it was */
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		st->density = hold_density;
 		st->blksize = hold_blksize;
