@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassifyf_ieee754.c,v 1.1 2003/10/28 22:05:37 kleink Exp $	*/
+/*	$NetBSD: fpclassifyf_ieee754.c,v 1.2 2003/10/29 19:34:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassifyf_ieee754.c,v 1.1 2003/10/28 22:05:37 kleink Exp $");
+__RCSID("$NetBSD: fpclassifyf_ieee754.c,v 1.2 2003/10/29 19:34:11 kleink Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -60,7 +60,7 @@ __fpclassifyf(float x)
 			return FP_ZERO;
 		else
 			return FP_SUBNORMAL;
-	} else if (u.sngu_sng.sng_exp == DBL_EXP_INFNAN) {
+	} else if (u.sngu_sng.sng_exp == SNG_EXP_INFNAN) {
 		if (u.sngu_sng.sng_frac == 0)
 			return FP_INFINITE;
 		else
