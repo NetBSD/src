@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.15 2004/07/02 23:54:08 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.15 2004/07/02 23:54:08 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -708,26 +708,27 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 	ni = _ieee80211_find_node(ic, wh->i_addr2);
 	ieee80211_node_critsec_end(ic, s);
 
-	if (ni == NULL) {
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
-			if ((ni = ieee80211_dup_bss(ic, wh->i_addr2)) != NULL)
-				IEEE80211_ADDR_COPY(ni->ni_bssid,
-				    (bssid != NULL) ? bssid : zero);
+	if (ni != NULL)
+		return ni;
 
-			/* XXX see remarks in ieee80211_find_txnode */
-			if (ni != NULL) {
-				/* XXX no rate negotiation; just dup */
-				ni->ni_rates = ic->ic_bss->ni_rates;
-				if (ic->ic_newassoc)
-					(*ic->ic_newassoc)(ic, ni, 1);
-			}
-			IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
-			    __func__, ni, ether_sprintf(wh->i_addr2)));
-		}
-		ni = ieee80211_ref_node((ni == NULL) ? ic->ic_bss : ni);
-	}
-	IASSERT(ni != NULL, ("%s: null node", __func__));
-	return ni;
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		return ieee80211_ref_node(ic->ic_bss);
+
+	/* XXX see remarks in ieee80211_find_txnode */
+	/* XXX no rate negotiation; just dup */
+	if ((ni = ieee80211_dup_bss(ic, wh->i_addr2)) == NULL)
+		return ieee80211_ref_node(ic->ic_bss);
+
+	IEEE80211_ADDR_COPY(ni->ni_bssid, (bssid != NULL) ? bssid : zero);
+
+	ni->ni_rates = ic->ic_bss->ni_rates;
+	if (ic->ic_newassoc)
+		(*ic->ic_newassoc)(ic, ni, 1);
+
+	IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n", __func__, ni,
+	    ether_sprintf(wh->i_addr2)));
+
+	return ieee80211_ref_node(ni);
 }
 
 /*
