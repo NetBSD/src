@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.1 2002/04/23 12:01:16 augustss Exp $
+.\" $NetBSD: acpi.4,v 1.2 2002/07/29 03:08:09 augustss Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,18 @@
 .Cd "acpiec*   at acpi?"
 .Cd "acpilib*  at acpi?"
 .Cd "spic*     at acpi?"
+.Pp
+.Cd "options   ACPI_PCI_FIXUP=1"
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
 .Tn ACPI
 devices.
+.Pp
+The
+.Dv "ACPI_PCI_FIXUP"
+option determines if the ACPI driver should attempt to set
+up PCI interrupt routing.  The default is to do the fixup.
 .Sh SEE ALSO
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
@@ -57,6 +64,7 @@ devices.
 .Xr acpiec 4 ,
 .Xr acpilid 4 ,
 .Xr apm 4 ,
+.Xr pci 4 ,
 .Xr spic 4
 .Sh HISTORY
 The
