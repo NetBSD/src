@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.1 1997/12/04 11:33:44 jonathan Exp $	*/
+/*	$NetBSD: label.c,v 1.2 1997/12/05 14:01:02 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,12 +37,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.1 1997/12/04 11:33:44 jonathan Exp $");
+__RCSID("$NetBSD: label.c,v 1.2 1997/12/05 14:01:02 jonathan Exp $");
 #endif
 
-#include <stdio.h>
-#include <util.h>
 #include <sys/types.h>
+#include <errno.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <util.h>
+#include <unistd.h>
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
 
 #include "defs.h"
 #include "msg_defs.h"
@@ -51,12 +56,12 @@ __RCSID("$NetBSD: label.c,v 1.1 1997/12/04 11:33:44 jonathan Exp $");
 /*
  * local prototypes
  */
-
-
 static int boringpart __P((partinfo *lp, int i, int rawpart, int bsdpart));
 
-int checklabel __P((partinfo *lp, int nparts, int rawpart, int bsdpart,
+int	checklabel __P((partinfo *lp, int nparts, int rawpart, int bsdpart,
 		    int *bad1, int *bad2));
+void	translate_partinfo __P((partinfo *lp, struct partition *pp));
+
 
 /*
  * Return 1 iff partition i in lp should be ignored when checking
@@ -163,7 +168,6 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 }
 
 	
-
 void emptylabel(partinfo *lp)
 {
 	register int i, maxpart;
@@ -179,3 +183,110 @@ void emptylabel(partinfo *lp)
 	}
 }
 
+int
+savenewlabel(partinfo *lp, int nparts)
+{
+	FILE *f;
+	int i;
+
+#ifdef DEBUG
+	f = fopen ("/tmp/disktab", "a");
+#else
+	f = fopen ("/etc/disktab", "a");
+#endif
+	if (f == NULL) {
+		endwin();
+		(void) fprintf (stderr, "Could not open /etc/disktab");
+		exit (1);
+	}
+	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
+	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
+	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	for (i=0; i < nparts; i++) {
+		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
+			       'a'+i, bsdlabel[i][D_SIZE],
+			       'a'+i, bsdlabel[i][D_OFFSET],
+			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
+		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+			(void)fprintf (f, "b%c#%d:f%c#%d",
+				       'a'+i, bsdlabel[i][D_BSIZE],
+				       'a'+i, bsdlabel[i][D_FSIZE]);
+		if (i < 7)
+			(void)fprintf (f, "\\\n");
+		else
+			(void)fprintf (f, "\n");
+	}
+	fclose (f);
+
+	return(0);
+}
+
+
+void
+translate_partinfo(partinfo *lp, struct partition *pp)
+{
+	switch (pp->p_fstype) {
+
+	case FS_UNUSED:				/* XXX */
+		(*lp)[D_FSTYPE] = T_UNUSED;
+		break;
+
+	case FS_SWAP:
+		(*lp)[D_FSTYPE] = T_SWAP;
+		break;
+
+	case FS_BSDFFS:
+		(*lp)[D_FSTYPE] = T_42BSD;
+		(*lp)[D_OFFSET] = 0;
+		(*lp)[D_SIZE] = 0;
+		(*lp)[D_BSIZE] = pp->p_fsize * pp->p_frag;
+		(*lp)[D_FSIZE] = pp->p_fsize;
+		break;
+
+	case FS_EX2FS:
+		(*lp)[D_FSTYPE] = T_UNUSED;	/* XXX */
+		(*lp)[D_BSIZE] = pp->p_fsize * pp->p_frag;
+		(*lp)[D_FSIZE] = pp->p_fsize;
+		break;
+
+	default:
+		(*lp)[D_FSTYPE] = T_UNUSED;
+		break;
+	}
+}
+
+/*
+ * Read a label from disk into a sysist label structure.
+ */
+int incorelabel(const char *dkname, partinfo *lp)
+{
+	struct disklabel lab;
+	int fd;
+	int i, maxpart;
+	struct partition *pp;
+	char nambuf[STRSIZE];
+
+	fd = opendisk(dkname, O_RDONLY,  nambuf, STRSIZE, 0);
+
+	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
+		/*XXX err(4, "ioctl DIOCGDINFO");*/
+		return(errno);
+	}
+	close(fd);
+
+	maxpart = getmaxpartitions();
+	if (maxpart > 16) maxpart = 16;
+
+
+	/* XXX set globals used by MD code to compute disk size? */
+	
+	pp = &lab.d_partitions[0];
+	emptylabel(lp);
+	for (i = 0; i < maxpart; i++) {
+		translate_partinfo(lp+i, pp+i);
+	}
+
+	return (0);
+}

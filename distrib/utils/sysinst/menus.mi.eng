@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.16 1997/12/05 13:39:01 simonb Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.17 1997/12/05 14:01:04 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,12 +57,14 @@
 
 default x=20, y=12, no exit;
 
-menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
+menu netbsd, x=15, title "  NetBSD-@@VERSION@@ Install System";
 	display action  { toplevel(); };
 	option "Install NetBSD to hard disk",
 		action { do_install(); };
 	option "Upgrade NetBSD on a hard disk",
 		action { do_upgrade(); };
+	option "Re-install sets or install additional sets",
+		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
@@ -227,16 +229,32 @@ menu selfskind, title "  Select the type ", y=15;
 
 menu distmedium, title "  Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option "ftp",  action { process_menu (MENU_distset);
-				got_dist = get_via_ftp(); }, exit;
-	option "nfs",  action { process_menu (MENU_distset);
-				got_dist = get_via_nfs(); }, exit;
-	option "cdrom", action { process_menu (MENU_distset);
-				 got_dist = get_via_cdrom(); }, exit; 
-	option "floppy", action { process_menu (MENU_distset);
-				  got_dist = get_via_floppy(); }, exit;
-	option "local", action { process_menu (MENU_distset);
-				got_dist = get_via_localfs(); }, exit;
+	option "ftp",  action	{
+				  got_dist = get_via_ftp();
+				  if (got_dist) process_menu (MENU_distset);
+			        },
+				exit;
+	option "nfs",  action	{ 
+				  got_dist = get_via_nfs();
+				  if (got_dist) process_menu (MENU_distset);
+			 	}, exit;
+	option "cdrom", action  {
+				  got_dist = get_via_cdrom();
+				  if (got_dist) process_menu (MENU_distset);
+				}, exit; 
+	option "floppy", action {
+			          got_dist = get_via_floppy(); 
+				  if (got_dist) process_menu (MENU_distset); 
+				}, exit;
+	option "unmounted fs", action {
+				  got_dist = get_via_localfs(); 
+				  if (got_dist) process_menu (MENU_distset);
+				}, exit;
+	option "local dir", action {
+				   got_dist = get_via_localdir();
+				  if (got_dist) 
+					process_menu (MENU_distset);
+				 }, exit;
 	option "none",  action { nodist = 1; }, exit;
 
 menu distset, title " Select your distribution";
@@ -281,12 +299,12 @@ menu nfssource, title "  Change";
 	option "Continue", exit;
 
 menu nfsbadmount, title "  What do you want to do?";
-	display action
-		{ msg_display (MSG_nfsbadmount, nfs_host, nfs_dir); };
 	option "Try again", exit, sub menu nfssource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Give up", exit, action
-		{ yesno = 0; };
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
 
 
 menu fdremount, title " What do you want to do? ";
@@ -308,12 +326,13 @@ menu cdromsource, title "  Change";
 	option "Continue", exit;
 
 menu cdrombadmount, title "  What do you want to do?";
-	display action
-		{ msg_display (MSG_cdrombadmount, nfs_host, nfs_dir); };
 	option "Try again", exit, sub menu cdromsource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Give up", exit, action
-		{ yesno = 0; };
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
 
 menu localfssource, title "  Change";
 	display action
@@ -327,10 +346,29 @@ menu localfssource, title "  Change";
 	option "Continue", exit;
 
 menu localfsbadmount, title "  What do you want to do?";
-	display action
-		{ msg_display (MSG_localfsbadmount, localfs_dir, localfs_dev); };
 	option "Try again", exit, sub menu localfssource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Give up", exit, action
-		{ yesno = 0; };
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+menu localdirsource, title "Change";
+	display action
+		{ msg_display(MSG_localdir, localfs_dir); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
+		exit;
+	option "Continue", exit;
+
+menu localdirbad, title "  What do you want to do?";
+	option "Change directory path",  action
+		{ yesno = 1;
+	          msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
+		}, exit;
+	option "Give up", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
 
