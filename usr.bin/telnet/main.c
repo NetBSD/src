@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/11/01 06:51:46 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/02/27 10:44:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/11/01 06:51:46 lukem Exp $";
+__RCSID("$NetBSD: main.c,v 1.7 1998/02/27 10:44:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/11/01 06:51:46 lukem Exp $";
 #if 0
 #define FORWARD
 #endif
+
+int main P((int, char *[]));
 
 /*
  * Initialize variables.
@@ -112,6 +114,7 @@ usage()
  */
 
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -119,7 +122,7 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch;
-	char *user, *strrchr();
+	char *user;
 #ifdef	FORWARD
 	extern int forward_flags;
 #endif	/* FORWARD */
@@ -131,7 +134,7 @@ main(argc, argv)
 
 	TerminalSaveState();
 
-	if (prompt = strrchr(argv[0], '/'))
+	if ((prompt = strrchr(argv[0], '/')) != NULL)
 		++prompt;
 	else
 		prompt = argv[0];
@@ -287,6 +290,9 @@ main(argc, argv)
 
 	if (argc) {
 		char *args[7], **argp = args;
+#ifdef __GNUC__
+		(void) &argp;	/* avoid longjmp clobbering */
+#endif
 
 		if (argc > 2)
 			usage();
