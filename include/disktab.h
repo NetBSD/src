@@ -1,4 +1,4 @@
-/*	$NetBSD: disktab.h,v 1.4 1998/02/02 21:07:22 perry Exp $	*/
+/*	$NetBSD: disktab.h,v 1.5 1998/07/26 18:29:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,21 +43,23 @@
  */
 #define	DISKTAB		"/etc/disktab"
 
+struct	partition {
+	int	p_size;		/* #sectors in partition */
+	short	p_bsize;	/* block size in bytes */
+	short	p_fsize;	/* frag size in bytes */
+};
+
 struct	disktab {
-	char	*d_name;		/* drive name */
-	char	*d_type;		/* drive type */
-	int	d_secsize;		/* sector size in bytes */
-	int	d_ntracks;		/* # tracks/cylinder */
-	int	d_nsectors;		/* # sectors/track */
-	int	d_ncylinders;		/* # cylinders */
-	int	d_rpm;			/* revolutions/minute */
-	int	d_badsectforw;		/* supports DEC bad144 std */
-	int	d_sectoffset;		/* use sect rather than cyl offsets */
-	struct	partition {
-		int	p_size;		/* #sectors in partition */
-		short	p_bsize;	/* block size in bytes */
-		short	p_fsize;	/* frag size in bytes */
-	} d_partitions[8];
+	const char *d_name;		/* drive name */
+	const char *d_type;		/* drive type */
+	int	    d_secsize;		/* sector size in bytes */
+	int	    d_ntracks;		/* # tracks/cylinder */
+	int	    d_nsectors;		/* # sectors/track */
+	int	    d_ncylinders;	/* # cylinders */
+	int	    d_rpm;		/* revolutions/minute */
+	int	    d_badsectforw;	/* supports DEC bad144 std */
+	int	    d_sectoffset;	/* use sect rather than cyl offsets */
+	struct	    partition d_partitions[8];
 };
 
 #endif /* !_DISKTAB_H_ */

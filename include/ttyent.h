@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.7 1998/02/02 21:08:07 perry Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.8 1998/07/26 18:29:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,19 +51,19 @@
 #define	_TTYS_MDMBUF	"mdmbuf"
 
 struct ttyent {
-	char	*ty_name;	/* terminal device name */
-	char	*ty_getty;	/* command to execute, usually getty */
-	char	*ty_type;	/* terminal type for termcap */
+	const char *ty_name;	/* terminal device name */
+	const char *ty_getty;	/* command to execute, usually getty */
+	const char *ty_type;	/* terminal type for termcap */
 #define	TTY_ON		0x01	/* enable logins (start ty_getty program) */
 #define	TTY_SECURE	0x02	/* allow uid of 0 to login */
 #define	TTY_LOCAL	0x04	/* set 'CLOCAL' on open (dev. specific) */
 #define	TTY_RTSCTS	0x08	/* set 'CRTSCTS' on open (dev. specific) */
 #define	TTY_SOFTCAR	0x10	/* ignore hardware carrier (dev. spec.) */
 #define	TTY_MDMBUF	0x20	/* set 'MDMBUF' on open (dev. specific) */
-#define        TTY_DTRCTS      0x40    /* set 'CDTRCTS' on open (dev. specific) */
-	int	ty_status;	/* status flags */
-	char 	*ty_window;	/* command to start up window manager */
-	char	*ty_comment;	/* comment field */
+#define TTY_DTRCTS      0x40    /* set 'CDTRCTS' on open (dev. specific) */
+	int	    ty_status;	/* status flags */
+	const char *ty_window;	/* command to start up window manager */
+	const char *ty_comment;	/* comment field */
 };
 
 #include <sys/cdefs.h>
