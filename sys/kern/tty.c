@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.55 1994/10/30 21:47:54 cgd Exp $	*/
+/*	$NetBSD: tty.c,v 1.56 1994/10/30 22:11:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -621,8 +621,8 @@ int
 ttioctl(tp, cmd, data, flag, p)
 	register struct tty *tp;
 	u_long cmd;
+	caddr_t data;
 	int flag;
-	void *data;
 	struct proc *p;
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
