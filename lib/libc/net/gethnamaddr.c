@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.32 2000/04/25 13:47:38 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.33 2000/05/23 07:03:10 tron Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.32 2000/04/25 13:47:38 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.33 2000/05/23 07:03:10 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -903,13 +903,13 @@ _gethtbyname2(name, af)
 	if (num == 0) return NULL;
 
 	len = ptr - tmpbuf;
-	if (len > sizeof(hostbuf)) {
+	if (len > (sizeof(hostbuf) - ALIGNBYTES)) {
 		free(tmpbuf);
 		errno = ENOSPC;
 		h_errno = NETDB_INTERNAL;
 		return NULL;
 	}
-	ptr = memcpy(hostbuf, tmpbuf, len);
+	ptr = memcpy((void *)ALIGN(hostbuf), tmpbuf, len);
 	free(tmpbuf);
 
 	host.h_name = ptr;
