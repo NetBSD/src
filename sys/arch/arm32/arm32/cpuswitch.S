@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.6 1996/03/27 21:24:39 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.7 1996/05/06 00:36:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -36,7 +36,7 @@
  *
  * RiscBSD kernel project
  *
- * cpu.S
+ * cpuswitch.S
  *
  * cpu switching functions
  *
@@ -249,7 +249,11 @@ idle:
 
 	IRQenable
 
-#ifdef CPU_ARM7500
+/*
+ * The RC7500 doesn't support this yet!
+ */
+
+#if defined(CPU_ARM7500) && !defined(RC7500)
 /* ARM7500 has a suspend mode so use it ! [danny, does this work ? - mark] */
 
 	mov	r7, #(IOMD_BASE)
