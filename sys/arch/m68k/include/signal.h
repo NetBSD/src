@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 2003/11/25 23:11:52 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 2004/03/26 21:39:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -37,8 +37,6 @@
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
-
-#define __HAVE_SIGINFO
 
 #if defined(_NETBSD_SOURCE)
 
