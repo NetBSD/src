@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.19 2002/08/03 14:34:22 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.20 2002/08/05 12:43:44 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -123,9 +123,9 @@ set_field_opts(FIELD *field, Form_Options options)
 		return E_CURRENT;
 	
 	if ((options & O_STATIC) == O_STATIC) {
-		for (i = 0; i < field->nbuf; i++) {
-			if (field->buffers[i].length > field->cols)
-				field->buffers[i].string[field->cols] = '\0';
+		for (i = 0; i < fp->nbuf; i++) {
+			if (fp->buffers[i].length > fp->cols)
+				fp->buffers[i].string[fp->cols] = '\0';
 		}
 	}
 	
@@ -158,9 +158,9 @@ field_opts_on(FIELD *field, Form_Options options)
 		return E_CURRENT;
 	
 	if ((options & O_STATIC) == O_STATIC) {
-		for (i = 0; i < field->nbuf; i++) {
-			if (field->buffers[i].length > field->cols)
-				field->buffers[i].string[field->cols] = '\0';
+		for (i = 0; i < fp->nbuf; i++) {
+			if (fp->buffers[i].length > fp->cols)
+				fp->buffers[i].string[fp->cols] = '\0';
 		}
 	}
 	
