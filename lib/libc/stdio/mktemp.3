@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.22 2003/08/07 16:43:28 agc Exp $
+.\"	$NetBSD: mktemp.3,v 1.23 2003/10/14 14:29:46 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ The template may be any file name with some number of
 .Ql X Ns s
 appended
 to it, for example
-.Pa /tmp/temp.XXXX .
+.Pa /tmp/temp.XXXXXX .
 The trailing
 .Ql X Ns s
 are replaced with the current process number and/or a
@@ -68,16 +68,17 @@ The number of unique file names
 .Fn mktemp
 can return depends on the number of
 .Ql X Ns s
-provided; six
-.Ql X Ns s
-will
-result in
+provided.
+Although the
+.Nx
+implementation of the functions will accept any number of trailing
+.Ql X Ns s ,
+for portability reasons one should use only six.
+Using six 
+.Ql X Ns s ,
+will result in
 .Fn mktemp
-testing roughly 26 ** 6 combinations.
-At least 6
-.So Li X
-.Sc Ns s
-should be used, though 10 is much better.
+testing roughly 26 ** 6 (308915776) combinations.
 .Pp
 The
 .Fn mkstemp
@@ -304,3 +305,5 @@ A link-time warning will be issued advising the use of
 or
 .Fn mkdtemp
 instead.
+.\" .SH STANDARDS
+.\" .St -p1003.1-2003
