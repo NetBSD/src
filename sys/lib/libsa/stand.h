@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.34 1999/11/11 18:11:25 thorpej Exp $	*/
+/*	$NetBSD: stand.h,v 1.35 1999/11/11 20:22:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -201,8 +201,10 @@ extern struct open_file files[];
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define tolower(c)	((c) - 'A' + 'a')
-#define isspace(c)	((c) == ' ' || (c) == '\t')
+#define	toupper(c)	((c) >= 'a' && (c) <= 'z' ? (c) - 'a' + 'A' : (c))
+#define isspace(c)	(((c) == ' ') || ((c) == '\t') || ((c) == '\n'))
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
+#define	isxdigit(c)	(((c) >= 'A') && ((c) <= 'F'))
 
 int	devopen __P((struct open_file *, const char *, char **));
 #ifdef HEAP_VARIABLE
@@ -242,6 +244,16 @@ size_t	strlen __P((const char *));
 int	strcmp __P((const char *, const char *));
 int	strncmp __P((const char *, const char *, size_t));
 
+u_int32_t inet_addr __P((const char *));
+const char *intoa __P((u_int32_t));
+#define	inet_ntoa(a)	intoa((a).s_addr)
+
+u_int32_t htonl __P((u_int32_t));
+u_int16_t htons __P((u_int16_t));
+
+u_int32_t ntohl __P((u_int32_t));
+u_int16_t ntohs __P((u_int16_t));
+
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
 int	getopt __P((int, char * const *, const char *));
@@ -273,3 +285,13 @@ int	oclose __P((int));
 ssize_t	oread __P((int, void *, size_t));
 off_t	olseek __P((int, off_t, int));
 #endif
+
+static __inline u_int max __P((u_int, u_int)) __attribute__((__unused__));
+
+static __inline u_int
+max(a, b)
+	u_int a, b;
+{
+
+	return (a > b ? a : b);
+}
