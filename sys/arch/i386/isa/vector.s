@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.28 1995/05/03 14:31:35 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.29 1995/05/08 18:00:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,8 @@
 
 #include <i386/isa/icu.h>
 #include <dev/isa/isareg.h>
+
+#define ICU_HARDWARE_MASK
 
 /*
  * These macros are fairly self explanatory.  If ICU_SPECIAL_MASK_MODE is
