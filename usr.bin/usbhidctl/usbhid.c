@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.25 2004/10/30 05:16:13 dsainty Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.26 2004/10/31 07:36:19 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.25 2004/10/30 05:16:13 dsainty Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.26 2004/10/31 07:36:19 dsainty Exp $");
 #endif
 
 #include <sys/types.h>
@@ -438,8 +438,9 @@ getreport(struct Sreport *report, int hidfd, report_desc_t rd, int repindex)
 
 		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
 		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
-			err(1, "USB_GET_REPORT (probably not supported by "
-			    "device)");
+			err(1, "USB_GET_REPORT(%s) [probably not supported by "
+			    "device]",
+			    reptoparam[repindex].name);
 	}
 }
 
