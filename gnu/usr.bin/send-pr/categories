@@ -7,9 +7,11 @@ pkg
 port-alpha
 port-amiga
 port-arc
+port-arm26
 port-arm32
 port-atari
 port-bebox
+port-cobalt
 port-hp300
 port-hpcmips
 port-i386
