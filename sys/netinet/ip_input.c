@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.178 2003/09/06 03:36:30 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.179 2003/09/28 04:45:14 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.178 2003/09/06 03:36:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.179 2003/09/28 04:45:14 mycroft Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -442,16 +442,6 @@ ip_input(struct mbuf *m)
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ipintr no HDR");
-#endif
-#ifdef IPSEC
-	/*
-	 * should the inner packet be considered authentic?
-	 * see comment in ah4_input().
-	 */
-	if (m) {
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-	}
 #endif
 
 	/*
