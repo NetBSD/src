@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.45 2000/09/19 22:03:15 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.46 2000/10/14 23:22:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -326,7 +326,8 @@ lfs_inactive(v)
 static int lfs_set_dirop __P((struct vnode *));
 extern int lfs_dirvcount;
 
-static int lfs_set_dirop(vp)
+static int
+lfs_set_dirop(vp)
 	struct vnode *vp;
 {
 	struct lfs *fs;
@@ -367,6 +368,9 @@ static int lfs_set_dirop(vp)
 	++fs->lfs_dirops;						
 	fs->lfs_doifile = 1;						
 
+	/* Hold a reference so SET_ENDOP will be happy */
+	lfs_vref(vp);
+
 	return 0;
 }
 
@@ -381,6 +385,7 @@ static int lfs_set_dirop(vp)
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 	lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3)); /* XXX */	\
+	lfs_vunref(vp);							\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
