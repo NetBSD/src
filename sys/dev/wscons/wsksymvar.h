@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.7 1998/09/17 18:10:53 drochner Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.8 1999/12/21 11:59:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@ struct wskbd_mapdata {
 	const struct wscons_keydesc *keydesc;
 	kbd_t layout;
 };
+
+/* layout variant bits ignored by mapping code */
+#define KB_HANDLEDBYWSKBD KB_METAESC
 
 /*
  * Utility functions.
