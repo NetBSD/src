@@ -1,5 +1,5 @@
 #!/bin/csh
-#	$NetBSD: which.csh,v 1.2 1999/02/15 04:54:37 hubertf Exp $
+#	$NetBSD: which.csh,v 1.3 1999/03/11 11:15:44 fair Exp $
 #
 # DO NOT USE "csh -f"
 #
@@ -41,6 +41,11 @@
 #
 set prompt = "% "
 set noglob
+unset keepgoing
+if ( $1 == "-a" ) then
+  set keepgoing=1
+  shift
+endif
 foreach arg ( $argv )
     set alius = `alias $arg`
     switch ( $#alius )
@@ -66,7 +71,7 @@ foreach arg ( $argv )
 	    if ( -x $i/$arg && ! -d $i/$arg ) then
 		echo $i/$arg
 		set found
-		break
+		if ( ! $?keepgoing ) break
 	    endif
 	end
     endif
