@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1999/11/28 04:38:41 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1999/12/07 05:30:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.22 1999/11/28 04:38:41 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.23 1999/12/07 05:30:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,11 +49,12 @@ __RCSID("$NetBSD: conf.c,v 1.22 1999/11/28 04:38:41 lukem Exp $");
 #include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
 #include <string.h>
 #include <stringlist.h>
 #include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+#include <util.h>
 
 #ifdef KERBEROS5
 #include <krb5/krb5.h>
@@ -83,16 +84,16 @@ parse_conf(findclass)
 	char		*endp;
 	char		*class, *word, *arg;
 	const char	*infile;
-	int		 line;
+	size_t		 line;
 	unsigned int	 timeout;
 	struct ftpconv	*conv, *cnext;
 
 #define REASSIGN(X,Y)	if (X) free(X); (X)=(Y)
-#define NEXTWORD(W)	while ((W = strsep(&buf, " \t")) != NULL && *W == '\0')
+#define NEXTWORD(P, W)	while ((W = strsep(&P, " \t")) != NULL && *W == '\0')
 #define EMPTYSTR(W)	(W == NULL || *W == '\0')
 
 	REASSIGN(curclass.classname, findclass);
-	for (conv = curclass.conversions; conv != NULL; conv=cnext) {
+	for (conv = curclass.conversions; conv != NULL; conv = cnext) {
 		REASSIGN(conv->suffix, NULL);
 		REASSIGN(conv->types, NULL);
 		REASSIGN(conv->disable, NULL);
@@ -120,25 +121,22 @@ parse_conf(findclass)
 		return;
 
 	line = 0;
-	while ((buf = fgetln(f, &len)) != NULL) {
+	for (;
+	    (buf = fparseln(f, &len, &line, NULL, FPARSELN_UNESCCOMM |
+	    		FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
+	    free(buf)) {
 		none = match = 0;
-		line++;
+		p = buf;
 		if (len < 1)
 			continue;
-		if (buf[len - 1] != '\n') {
-			syslog(LOG_WARNING,
-			    "%s line %d is partially truncated?", infile, line);
-			continue;
-		}
-		buf[--len] = '\0';
-		if ((p = strchr(buf, '#')) != NULL)
-			*p = '\0';
-		if (EMPTYSTR(buf))
+		if (p[len - 1] == '\n')
+			p[--len] = '\0';
+		if (EMPTYSTR(p))
 			continue;
 		
-		NEXTWORD(word);
-		NEXTWORD(class);
-		NEXTWORD(arg);
+		NEXTWORD(p, word);
+		NEXTWORD(p, class);
+		NEXTWORD(p, arg);
 		if (EMPTYSTR(word) || EMPTYSTR(class))
 			continue;
 		if (strcasecmp(class, "none") == 0)
@@ -153,45 +151,31 @@ parse_conf(findclass)
 				curclass.checkportcmd = 0;
 			else
 				curclass.checkportcmd = 1;
+
 		} else if (strcasecmp(word, "conversion") == 0) {
 			char *suffix, *types, *disable, *convcmd;
 
 			if (EMPTYSTR(arg)) {
 				syslog(LOG_WARNING,
 				    "%s line %d: %s requires a suffix",
-				    infile, line, word);
+				    infile, (int)line, word);
 				continue;	/* need a suffix */
 			}
-			NEXTWORD(types);
-			NEXTWORD(disable);
-			convcmd = buf;
+			NEXTWORD(p, types);
+			NEXTWORD(p, disable);
+			convcmd = p;
 			if (convcmd)
 				convcmd += strspn(convcmd, " \t");
-			suffix = strdup(arg);
-			if (suffix == NULL) {
-				syslog(LOG_WARNING, "can't strdup");
-				continue;
-			}
+			suffix = xstrdup(arg);
 			if (none || EMPTYSTR(types) ||
 			    EMPTYSTR(disable) || EMPTYSTR(convcmd)) {
 				types = NULL;
 				disable = NULL;
 				convcmd = NULL;
 			} else {
-				types = strdup(types);
-				disable = strdup(disable);
-				convcmd = strdup(convcmd);
-				if (types == NULL || disable == NULL ||
-				    convcmd == NULL) {
-					syslog(LOG_WARNING, "can't strdup");
-					if (types)
-						free(types);
-					if (disable)
-						free(disable);
-					if (convcmd)
-						free(convcmd);
-					continue;
-				}
+				types = xstrdup(types);
+				disable = xstrdup(disable);
+				convcmd = xstrdup(convcmd);
 			}
 			for (conv = curclass.conversions; conv != NULL;
 			    conv = conv->next) {
@@ -205,19 +189,28 @@ parse_conf(findclass)
 					syslog(LOG_WARNING, "can't malloc");
 					continue;
 				}
-				conv->next = curclass.conversions;
-				curclass.conversions = conv;
+				conv->next = NULL;
+				for (cnext = curclass.conversions;
+				    cnext != NULL; cnext = cnext->next)
+					if (cnext->next == NULL)
+						break;
+				if (cnext != NULL)
+					cnext->next = conv;
+				else
+					curclass.conversions = conv;
 			}
 			REASSIGN(conv->suffix, suffix);
 			REASSIGN(conv->types, types);
 			REASSIGN(conv->disable, disable);
 			REASSIGN(conv->command, convcmd);
+
 		} else if (strcasecmp(word, "display") == 0) {
 			if (none || EMPTYSTR(arg))
 				arg = NULL;
 			else
-				arg = strdup(arg);
+				arg = xstrdup(arg);
 			REASSIGN(curclass.display, arg);
+
 		} else if (strcasecmp(word, "maxtimeout") == 0) {
 			if (none || EMPTYSTR(arg))
 				continue;
@@ -225,40 +218,45 @@ parse_conf(findclass)
 			if (*endp != 0) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid maxtimeout %s",
-				    infile, line, arg);
+				    infile, (int)line, arg);
 				continue;
 			}
 			if (timeout < 30) {
 				syslog(LOG_WARNING,
 				    "%s line %d: maxtimeout %d < 30 seconds",
-				    infile, line, timeout);
+				    infile, (int)line, timeout);
 				continue;
 			}
 			if (timeout < curclass.timeout) {
 				syslog(LOG_WARNING,
 				    "%s line %d: maxtimeout %d < timeout (%d)",
-				    infile, line, timeout, curclass.timeout);
+				    infile, (int)line, timeout,
+				    curclass.timeout);
 				continue;
 			}
 			curclass.maxtimeout = timeout;
+
 		} else if (strcasecmp(word, "modify") == 0) {
 			if (none ||
 			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
 				curclass.modify = 0;
 			else
 				curclass.modify = 1;
+
 		} else if (strcasecmp(word, "notify") == 0) {
 			if (none || EMPTYSTR(arg))
 				arg = NULL;
 			else
-				arg = strdup(arg);
+				arg = xstrdup(arg);
 			REASSIGN(curclass.notify, arg);
+
 		} else if (strcasecmp(word, "passive") == 0) {
 			if (none ||
 			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
 				curclass.passive = 0;
 			else
 				curclass.passive = 1;
+
 		} else if (strcasecmp(word, "timeout") == 0) {
 			if (none || EMPTYSTR(arg))
 				continue;
@@ -266,22 +264,24 @@ parse_conf(findclass)
 			if (*endp != 0) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid timeout %s",
-				    infile, line, arg);
+				    infile, (int)line, arg);
 				continue;
 			}
 			if (timeout < 30) {
 				syslog(LOG_WARNING,
 				    "%s line %d: timeout %d < 30 seconds",
-				    infile, line, timeout);
+				    infile, (int)line, timeout);
 				continue;
 			}
 			if (timeout > curclass.maxtimeout) {
 				syslog(LOG_WARNING,
 				    "%s line %d: timeout %d > maxtimeout (%d)",
-				    infile, line, timeout, curclass.maxtimeout);
+				    infile, (int)line, timeout,
+				    curclass.maxtimeout);
 				continue;
 			}
 			curclass.timeout = timeout;
+
 		} else if (strcasecmp(word, "umask") == 0) {
 			mode_t umask;
 
@@ -291,20 +291,18 @@ parse_conf(findclass)
 			if (*endp != 0 || umask > 0777) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid umask %s",
-				    infile, line, arg);
+				    infile, (int)line, arg);
 				continue;
 			}
 			curclass.umask = umask;
+
 		} else {
 			syslog(LOG_WARNING,
 			    "%s line %d: unknown directive '%s'",
-			    infile, line, word);
+			    infile, (int)line, word);
 			continue;
 		}
 	}
-#undef REASSIGN
-#undef NEXTWORD
-#undef EMPTYSTR
 	fclose(f);
 }
 
@@ -345,11 +343,7 @@ show_chdir_messages(code)
 	if (sl_find(slist, cwd) != NULL)
 		return;	
 
-	cp = strdup(cwd);
-	if (cp == NULL) {
-		syslog(LOG_WARNING, "can't strdup");
-		return;
-	}
+	cp = xstrdup(cwd);
 	if (sl_add(slist, cp) == -1)
 		syslog(LOG_WARNING, "can't add `%s' to stringlist", cp);
 
@@ -394,7 +388,7 @@ show_chdir_messages(code)
 }
 
 /*
- * Find s2 at the end of s1.  If found, return a string up and up (but
+ * Find s2 at the end of s1.  If found, return a string up to (but
  * not including) s2, otherwise returns NULL.
  */
 static char *
@@ -451,18 +445,20 @@ filetypematch(types, mode)
  * routine doesn't need to be re-entrant unless we start using a
  * multi-threaded ftpd, and that's not likely for a while...
  */
-char *
+char **
 do_conversion(fname)
 	const char *fname;
 {
-	static char	 cmd[LINE_MAX];
-
 	struct ftpconv	*cp;
 	struct stat	 st;
 	int		 o_errno;
 	char		*base = NULL;
+	char		*cmd, *p, *lp, **argv;
+	StringList	*sl;
 
 	o_errno = errno;
+	sl = NULL;
+	cmd = NULL;
 	for (cp = curclass.conversions; cp != NULL; cp = cp->next) {
 		if (cp->suffix == NULL) {
 			syslog(LOG_WARNING,
@@ -488,11 +484,33 @@ do_conversion(fname)
 	}
 
 	/* If we got through the list, no conversion */
-	if (cp == NULL) {
-		errno = o_errno;
-		return(NULL);
+	if (cp == NULL)
+		goto cleanup_do_conv;
+
+	/* Split up command into an argv */
+	if ((sl = sl_init()) == NULL)
+		goto cleanup_do_conv;
+	cmd = xstrdup(cp->command);
+	p = cmd;
+	while (p) {
+		NEXTWORD(p, lp);
+		if (strcmp(lp, "%s") == 0)
+			lp = base;
+		if (sl_add(sl, xstrdup(lp)) == -1)
+			goto cleanup_do_conv;
 	}
 
-	snprintf(cmd, LINE_MAX, cp->command, base);
-	return(cmd);
+	if (sl_add(sl, NULL) == -1)
+		goto cleanup_do_conv;
+	argv = sl->sl_str;
+	free(cmd);
+	free(sl);
+	return(argv);
+
+ cleanup_do_conv:
+	if (sl)
+		sl_free(sl, 1);
+	free(cmd);
+	errno = o_errno;
+	return(NULL);
 }

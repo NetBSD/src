@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.39 1999/10/04 17:36:52 tron Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.40 1999/12/07 05:30:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.39 1999/10/04 17:36:52 tron Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.40 1999/12/07 05:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,11 +321,7 @@ cmd
 
 			/*XXX checks for login */
 
-			tmp = strdup($4);
-			if (!tmp) {
-				fatal("not enough core.");
-				/*NOTREACHED*/
-			}
+			tmp = xstrdup($4);
 			p = tmp;
 			delim = p[0];
 			p++;
@@ -619,14 +615,20 @@ cmd
 
 	| LIST check_login CRLF
 		{
+			char *argv[] = { INTERNAL_LS, "-lgA", NULL };
+			
 			if ($2)
-				retrieve("/bin/ls -lgA", "");
+				retrieve(argv, "");
 		}
 
 	| LIST check_login SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				retrieve("/bin/ls -lgA %s", $4);
+			char *argv[] = { INTERNAL_LS, "-lgA", NULL, NULL };
+
+			if ($2 && $4 != NULL) {
+				argv[2] = $4;
+				retrieve(argv, $4);
+			}
 			if ($4 != NULL)
 				free($4);
 		}
