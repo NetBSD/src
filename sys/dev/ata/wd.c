@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.198 1999/11/10 14:11:34 leo Exp $ */
+/*	$NetBSD: wd.c,v 1.196.6.1 1999/12/21 23:19:53 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -317,11 +317,11 @@ wdattach(parent, self, aux)
 		printf("%s: %dMB, %d cyl, %d head, %d sec, "
 		    "%d bytes/sect x %d sectors\n",
 		    self->dv_xname,
-		    wd->sc_capacity / (1048576 / DEV_BSIZE),
+		    wd->sc_capacity / (1048576 / WD_DEF_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
 		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
+		    WD_DEF_BSIZE,
 		    wd->sc_capacity);
 	} else {
 		printf(" chs addressing\n");
@@ -331,11 +331,11 @@ wdattach(parent, self, aux)
 		    wd->sc_params.atap_sectors;
 		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d "
 		    "sectors\n", self->dv_xname,
-		    wd->sc_capacity / (1048576 / DEV_BSIZE),
+		    wd->sc_capacity / (1048576 / WD_DEF_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
 		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
+		    WD_DEF_BSIZE,
 		    wd->sc_capacity);
 	}
 	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
@@ -524,7 +524,7 @@ __wdstart(wd, bp)
 	else
 		p_offset = 0;
 	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
-	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / WD_DEF_BSIZE);
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
 	/*
@@ -601,11 +601,6 @@ retry:		/* Just reset and retry. Can we do more ? */
 noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			printf("%s: soft error (corrected)\n",
 			    wd->sc_dev.dv_xname);
-		break;
-	case ERR_NODEV:
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-		break;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
 #if NRND > 0
@@ -639,7 +634,8 @@ wdread(dev, uio, flags)
 {
 
 	WDCDEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
-	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio,
+			WD_DEF_BSHIFT));
 }
 
 int
@@ -650,7 +646,8 @@ wdwrite(dev, uio, flags)
 {
 
 	WDCDEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
-	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio,
+			WD_DEF_BSHIFT));
 }
 
 /*
@@ -745,6 +742,8 @@ wdopen(dev, flag, fmt, p)
 			/* Load the physical device parameters. */
 			wd_get_params(wd, AT_WAIT, &wd->sc_params);
 
+			wd->sc_dk.dk_byteshift = WD_DEF_BSHIFT;
+
 			/* Load the partition info if not already loaded. */
 			wdgetdisklabel(wd);
 		}
@@ -832,17 +831,22 @@ wdgetdefaultlabel(wd, lp)
 	WDCDEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
 	memset(lp, 0, sizeof(struct disklabel));
 
-	lp->d_secsize = DEV_BSIZE;
+	lp->d_secsize = WD_DEF_BSIZE;
 	lp->d_ntracks = wd->sc_params.atap_heads;
 	lp->d_nsectors = wd->sc_params.atap_sectors;
 	lp->d_ncylinders = wd->sc_params.atap_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
+#if 0
+	if (strcmp(wd->sc_params.atap_model, "ST506") == 0) {
 		lp->d_type = DTYPE_ST506;
-	else
+		strncpy(lp->d_typename, "ST506 disk", 16);
+	} else {
 		lp->d_type = DTYPE_ESDI;
-
+		strncpy(lp->d_typename, "ESDI/IDE",
+		sizeof lp->d_typename);
+	}
+#endif
 	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = wd->sc_capacity;
@@ -851,8 +855,7 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -882,7 +885,7 @@ wdgetdisklabel(wd)
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+	    wdstrategy, lp, wd->sc_dk.dk_cpulabel, WD_DEF_BSHIFT);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -893,7 +896,8 @@ wdgetdisklabel(wd)
 		if (wd->drvp->state > RECAL)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
-		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel,
+		    WD_DEF_BSHIFT);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
@@ -938,6 +942,10 @@ wdioctl(dev, xfer, addr, flag, p)
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
 		return 0;
+
+	case DIOCGBSHIFT:
+		*(int *)addr = wd->sc_dk.dk_byteshift;
+		return 0;
 	
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
@@ -963,7 +971,7 @@ wdioctl(dev, xfer, addr, flag, p)
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(WDLABELDEV(dev),
 				    wdstrategy, wd->sc_dk.dk_label,
-				    wd->sc_dk.dk_cpulabel);
+				    wd->sc_dk.dk_cpulabel, WD_DEF_BSHIFT);
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;
@@ -1041,7 +1049,7 @@ wdioctl(dev, xfer, addr, flag, p)
 			wi->wi_uio.uio_procp = p;
 			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
-			    minphys, &wi->wi_uio);
+			    minphys, &wi->wi_uio, WD_DEF_BSHIFT);
 		} else {
 			/* No need to call physio if we don't have any
 			   user data */
@@ -1050,6 +1058,8 @@ wdioctl(dev, xfer, addr, flag, p)
 			wi->wi_bp.b_bcount = 0;
 			wi->wi_bp.b_dev = 0;
 			wi->wi_bp.b_proc = p;
+			wi->wi_bp.b_bshift = WD_DEF_BSHIFT;
+			wi->wi_bp.b_bsize = WD_DEF_BSIZE;
 			wdioctlstrategy(&wi->wi_bp);
 			error = wi->wi_bp.b_error;
 		}
@@ -1103,11 +1113,12 @@ wdsize(dev)
 		size = -1;
 	else
 		size = wd->sc_dk.dk_label->d_partitions[part].p_size *
-		    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+		    (wd->sc_dk.dk_label->d_secsize / DEF_BSIZE);
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	return (size);
 }
+
 
 #ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
@@ -1155,7 +1166,7 @@ wddump(dev, blkno, va, size)
 	if ((size % lp->d_secsize) != 0)
 		return EFAULT;
 	nblks = size / lp->d_secsize;
-	blkno = blkno / (lp->d_secsize / DEV_BSIZE);
+	blkno = blkno / (lp->d_secsize / DEF_BSIZE);
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + nblks) > lp->d_partitions[part].p_size))

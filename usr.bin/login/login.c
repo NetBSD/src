@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.46 1999/12/05 23:39:11 aidan Exp $       */
+/*     $NetBSD: login.c,v 1.45 1999/08/25 19:58:15 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.46 1999/12/05 23:39:11 aidan Exp $");
+__RCSID("$NetBSD: login.c,v 1.45 1999/08/25 19:58:15 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -123,7 +123,6 @@ char	*krbtkfile_env;
 #ifdef KERBEROS5
 extern krb5_context kcontext;
 extern int	have_forward;
-extern int	use_krb5;
 #endif
 
 struct	passwd *pwd;
@@ -190,7 +189,6 @@ main(argc, argv)
 	Fflag = fflag = hflag = pflag = sflag = 0;
 #ifdef KERBEROS5
 	have_forward = 0;
-	use_krb5 = 1;
 #endif
 	uid = getuid();
 	while ((ch = getopt(argc, argv, "Ffh:ps")) != -1)
@@ -249,7 +247,7 @@ main(argc, argv)
 	if (kerror) {
 		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
 		    error_message(kerror));
-		use_krb5 = 0;
+		exit(1);
 	}
 #endif KERBEROS5
 

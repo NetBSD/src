@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.6 1999/10/09 19:42:46 sommerfeld Exp $	*/
+/*	$NetBSD: systime.c,v 1.5 1999/07/03 12:30:31 simonb Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -193,7 +193,7 @@ int
 adj_systime(now)
 	l_fp *now;
 {
-	register u_int32 offset_i, offset_f;
+	register u_long offset_i, offset_f;
 	register long temp;
 	register u_long residual;
 	register int isneg = 0;

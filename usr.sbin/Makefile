@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 1999/12/20 09:50:20 jdc Exp $
+#	$NetBSD: Makefile,v 1.125 1999/09/03 05:19:59 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -8,7 +8,7 @@ SRCTOP=	..
 .include <bsd.crypto.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
-	chown chroot chrtbl cnwctl config cron dbsym dev_mkdb \
+	chown chroot chrtbl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
 	kvm_mkdb lastlogin link lpr mailwrapper map-mbone mbrlabel \
@@ -18,10 +18,11 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank \
-	sliplogin slstats spray sup sysctl syslogd tadpolectl tcpdchk \
-	tcpdmatch tcpdump timed traceroute trpt trsp unlink \
-	usbdevs user videomode vipw vnconfig wiconfig wsconscfg \
-	wsfontload xntp ypbind yppoll ypserv ypset zdump zic
+	sliplogin slstats spray sup sysctl syslogd tcpdchk \
+	tcpdmatch tcpdump timed traceroute trpt trsp unlink update \
+	usbdevs videomode vipw vnconfig wiconfig wsconscfg wsfontload xntp \
+	ypbind yppoll ypserv ypset \
+	zdump zic
 
 # IPv6
 SUBDIR+=faithd gifconfig ifmcstat mld6query ndp pim6dd rip6query route6d \

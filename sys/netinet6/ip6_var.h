@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.6 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.4 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -139,41 +139,37 @@ struct	ip6_pktopts {
 };
 
 struct	ip6stat {
-	u_quad_t ip6s_total;		/* total packets received */
-	u_quad_t ip6s_tooshort;		/* packet too short */
-	u_quad_t ip6s_toosmall;		/* not enough data */
-	u_quad_t ip6s_fragments;	/* fragments received */
-	u_quad_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
-	u_quad_t ip6s_fragtimeout;	/* fragments timed out */
-	u_quad_t ip6s_fragoverflow;	/* fragments that exceeded limit */
-	u_quad_t ip6s_forward;		/* packets forwarded */
-	u_quad_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
-	u_quad_t ip6s_redirectsent;	/* packets forwarded on same net */
-	u_quad_t ip6s_delivered;	/* datagrams delivered to upper level*/
-	u_quad_t ip6s_localout;		/* total ip packets generated here */
-	u_quad_t ip6s_odropped;		/* lost packets due to nobufs, etc. */
-	u_quad_t ip6s_reassembled;	/* total packets reassembled ok */
-	u_quad_t ip6s_fragmented;	/* datagrams sucessfully fragmented */
-	u_quad_t ip6s_ofragments;	/* output fragments created */
-	u_quad_t ip6s_cantfrag;		/* don't fragment flag was set, etc. */
-	u_quad_t ip6s_badoptions;	/* error in option processing */
-	u_quad_t ip6s_noroute;		/* packets discarded due to no route */
-	u_quad_t ip6s_badvers;		/* ip6 version != 6 */
-	u_quad_t ip6s_rawout;		/* total raw ip packets generated */
-	u_quad_t ip6s_badscope;		/* scope error */
-	u_quad_t ip6s_notmember;	/* don't join this multicast group */
-	u_quad_t ip6s_nxthist[256];	/* next header history */
-	u_quad_t ip6s_m1;		/* one mbuf */
-	u_quad_t ip6s_m2m[32];		/* two or more mbuf */
-	u_quad_t ip6s_mext1;		/* one ext mbuf */
-	u_quad_t ip6s_mext2m;		/* two or more ext mbuf */
-	u_quad_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
-	u_quad_t ip6s_nogif;		/* no match gif found */
-	u_quad_t ip6s_toomanyhdr;	/* discarded due to too many headers */
-	/* XXX the following two items are not really AF_INET6 thing */
-	u_quad_t ip6s_pulldown;		/* # of calls to m_pulldown */
-	u_quad_t ip6s_pulldown_copy;	/* # of mbuf copies in m_pulldown */
-	u_quad_t ip6s_pulldown_alloc;	/* # of mbuf allocs in m_pulldown */
+	u_long	ip6s_total;		/* total packets received */
+	u_long 	ip6s_tooshort;		/* packet too short */
+	u_long 	ip6s_toosmall;		/* not enough data */
+	u_long 	ip6s_fragments;		/* fragments received */
+	u_long 	ip6s_fragdropped;       /* frags dropped(dups, out of space) */
+	u_long 	ip6s_fragtimeout;	/* fragments timed out */
+	u_long	ip6s_fragoverflow;	/* fragments that exceeded limit */
+	u_long  ip6s_forward;		/* packets forwarded */
+	u_long 	ip6s_cantforward;	/* packets rcvd for unreachable dest */
+	u_long 	ip6s_redirectsent;	/* packets forwarded on same net */
+	u_long 	ip6s_delivered;	        /* datagrams delivered to upper level*/
+	u_long 	ip6s_localout;		/* total ip packets generated here */
+	u_long 	ip6s_odropped;		/* lost packets due to nobufs, etc. */
+	u_long 	ip6s_reassembled;	/* total packets reassembled ok */
+	u_long 	ip6s_fragmented;	/* datagrams sucessfully fragmented */
+	u_long 	ip6s_ofragments;	/* output fragments created */
+	u_long 	ip6s_cantfrag;		/* don't fragment flag was set, etc. */
+	u_long 	ip6s_badoptions;	/* error in option processing */
+	u_long 	ip6s_noroute;		/* packets discarded due to no route */
+	u_long 	ip6s_badvers;		/* ip6 version != 6 */
+	u_long 	ip6s_rawout;		/* total raw ip packets generated */
+	u_long	ip6s_badscope;		/* scope error */
+	u_long	ip6s_notmember;		/* don't join this multicast group */
+	u_long	ip6s_nxthist[256];	/* next header history */
+	u_long	ip6s_m1;		/* one mbuf */
+	u_long	ip6s_m2m[32];		/* two or more mbuf */
+	u_long	ip6s_mext1;		/* one ext mbuf */
+	u_long	ip6s_mext2m;		/* two or more ext mbuf */
+	u_long	ip6s_exthdrtoolong;	/* ext hdr are not continuous */
+	u_long	ip6s_nogif;		/* no match gif found */
+	u_long	ip6s_toomanyhdr;	/* discarded due to too many headers */
 };
 
 #ifdef _KERNEL
@@ -188,13 +184,6 @@ extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
-extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
-extern int	ip6_rr_prune;		/* router renumbering prefix
-					 * walk list every 5 sec.    */
-#ifdef MAPPED_ADDR_ENABLED
-extern int	ip6_mapped_addr_on;
-#endif /* MAPPED_ADDR_ENABLED */
-
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
@@ -210,24 +199,11 @@ extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 struct in6pcb;
 #endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern struct	pr_usrreqs rip6_usrreqs;
-struct sockopt;
-#endif
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-struct inpcb;
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	icmp6_ctloutput __P((struct socket *, struct sockopt *sopt));
-#else
 int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
-
 void	ip6_init __P((void));
 void	ip6intr __P((void));
 void	ip6_input __P((struct mbuf *));
@@ -237,13 +213,8 @@ char *	ip6_get_prevhdr __P((struct mbuf *, int));
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
 int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-void	ip6_savecontrol __P((struct inpcb *, struct mbuf **, struct ip6_hdr *,
-		struct mbuf *));
-#else
 void	ip6_savecontrol __P((struct in6pcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *));
-#endif
 int	ip6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 void	ip6_forward __P((struct mbuf *, int));
@@ -251,18 +222,10 @@ void	ip6_forward __P((struct mbuf *, int));
 void	ip6_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *));
 int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 			struct route_in6 *, int,
-			struct ip6_moptions *, struct ifnet **));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	ip6_ctloutput __P((struct socket *, struct sockopt *sopt));
-#else
+			struct ip6_moptions *));
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
 int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-int	ip6_optlen __P((struct inpcb *));
-#else
 int	ip6_optlen __P((struct in6pcb *));
-#endif
 
 int	route6_input __P((struct mbuf **, int *, int));
 
@@ -273,11 +236,7 @@ void	frag6_drain __P((void));
 
 void	rip6_init __P((void));
 int	rip6_input __P((struct mbuf **mp, int *offp, int proto));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	rip6_ctloutput __P((struct socket *so, struct sockopt *sopt));
-#else
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
 int	rip6_output __P((struct mbuf *, ...));
 int	rip6_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));

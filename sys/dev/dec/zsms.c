@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.5 1999/10/26 18:20:44 drochner Exp $	*/
+/*	$NetBSD: zsms.c,v 1.4 1999/09/19 14:45:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,13 +135,9 @@ zsms_match(parent, cf, aux)
 {
 	struct zsc_attach_args *args = aux;
 
-	/* Exact match is better than wildcard. */
+	/* Exact match required for keyboard. */
 	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
-
-	/* This driver accepts wildcard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
-		return 1;
 
 	return 0;
 }

@@ -1082,8 +1082,6 @@ bc_raise (num1, num2, result, scale)
    bc_num temp, power;
    long exponent;
    int rscale;
-   int pwrscale;
-   int calcscale;
    char neg;
 
    /* Check the exponent for scale digits and convert to a long. */
@@ -1116,27 +1114,21 @@ bc_raise (num1, num2, result, scale)
 
    /* Set initial value of temp.  */
    power = copy_num (num1);
-   pwrscale = num1->n_scale;
    while ((exponent & 1) == 0)
      {
-       pwrscale = 2*pwrscale;
-       bc_multiply (power, power, &power, pwrscale);
+       bc_multiply (power, power, &power, rscale);
        exponent = exponent >> 1;
      }
    temp = copy_num (power);
-   calcscale = pwrscale;
    exponent = exponent >> 1;
 
 
    /* Do the calculation. */
    while (exponent > 0)
      {
-       pwrscale = 2*pwrscale;
-       bc_multiply (power, power, &power, pwrscale);
-       if ((exponent & 1) == 1) {
-	 calcscale = pwrscale + calcscale;
-	 bc_multiply (temp, power, &temp, calcscale);
-       }
+       bc_multiply (power, power, &power, rscale);
+       if ((exponent & 1) == 1)
+	 bc_multiply (temp, power, &temp, rscale);
        exponent = exponent >> 1;
      }
 
@@ -1150,8 +1142,6 @@ bc_raise (num1, num2, result, scale)
      {
        free_num (result);
        *result = temp;
-       if ((*result)->n_scale > rscale)
-	 (*result)->n_scale = rscale;
      }
    free_num (&power);
 }

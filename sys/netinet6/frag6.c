@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.7 1999/12/13 15:17:21 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.6 1999/08/26 11:10:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,20 +47,11 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/ip6.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3) && !defined(__OpenBSD__)
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
-
-#include <net/net_osdep.h>
-
-/*
- * Define it to get a correct behavior on per-interface statistics.
- * You will need to perform an extra routing table lookup, per fragment,
- * to do it.  This may, or may not be, a performance hit.
- */
-#define IN6_IFSTAT_STRICT
 
 static void frag6_enq __P((struct ip6asfrag *, struct ip6asfrag *));
 static void frag6_deq __P((struct ip6asfrag *));
@@ -71,11 +62,6 @@ static void frag6_freef __P((struct ip6q *));
 int frag6_doing_reass;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
-
-/* FreeBSD tweak */
-#if !defined(M_FTABLE) && (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-MALLOC_DEFINE(M_FTABLE, "fragment", "fragment reassembly header");
-#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.
@@ -110,55 +96,15 @@ frag6_input(mp, offp, proto)
 	int offset = *offp, nxt, i, next;
 	int first_frag = 0;
 	u_short fragoff, frgpartlen;
-	struct ifnet *dstifp;
-#ifdef IN6_IFSTAT_STRICT
-	static struct route_in6 ro;
-	struct sockaddr_in6 *dst;
-#endif
+
+	IP6_EXTHDR_CHECK(m, offset, sizeof(struct ip6_frag), IPPROTO_DONE);
 
 	ip6 = mtod(m, struct ip6_hdr *);
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, offset, sizeof(struct ip6_frag), IPPROTO_DONE);
 	ip6f = (struct ip6_frag *)((caddr_t)ip6 + offset);
-#else
-	IP6_EXTHDR_GET(ip6f, struct ip6_frag *, m, offset, sizeof(*ip6f));
-	if (ip6f == NULL)
-		return IPPROTO_DONE;
-#endif
-
-	dstifp = NULL;
-#ifdef IN6_IFSTAT_STRICT
-	/* find the destination interface of the packet. */
-	dst = (struct sockaddr_in6 *)&ro.ro_dst;
-	if (ro.ro_rt
-	 && ((ro.ro_rt->rt_flags & RTF_UP) == 0
-	  || !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
-		RTFREE(ro.ro_rt);
-		ro.ro_rt = (struct rtentry *)0;
-	}
-	if (ro.ro_rt == NULL) {
-		bzero(dst, sizeof(*dst));
-		dst->sin6_family = AF_INET6;
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_addr = ip6->ip6_dst;
-	}
-#ifndef __bsdi__
-	rtalloc((struct route *)&ro);
-#else
-	rtcalloc((struct route *)&ro);
-#endif
-	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
-		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
-#else
-	/* we are violating the spec, this is not the destination interface */
-	if ((m->m_flags & M_PKTHDR) != 0)
-		dstifp = m->m_pkthdr.rcvif;
-#endif
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, offset);
-		in6_ifstat_inc(dstifp, ifs6_reass_fail);
 		return IPPROTO_DONE;
 	}
 
@@ -173,20 +119,16 @@ frag6_input(mp, offp, proto)
 		icmp6_error(m, ICMP6_PARAM_PROB,
 			    ICMP6_PARAMPROB_HEADER,
 			    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
-		in6_ifstat_inc(dstifp, ifs6_reass_fail);
 		return IPPROTO_DONE;
 	}
 
 	ip6stat.ip6s_fragments++;
-	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
 	
 	/*
 	 * Presence of header sizes in mbufs
 	 * would confuse code below.
 	 */
-#ifdef PULLDOWN_TEST
-	/* XXX too strong mbuf requirement in m_pulldown() world */
-#endif
+	
 	offset += sizeof(struct ip6_frag);
 	m->m_data += offset;
 	m->m_len -= offset;
@@ -212,7 +154,6 @@ frag6_input(mp, offp, proto)
 		 */
 		if (frag6_nfragpackets >= (u_int)ip6_maxfragpackets) {
 			ip6stat.ip6s_fragoverflow++;
-			in6_ifstat_inc(dstifp, ifs6_reass_fail);
 			frag6_freef(ip6q.ip6q_prev);
 		}
 		q6 = (struct ip6q *)malloc(sizeof(struct ip6q), M_FTABLE,
@@ -456,10 +397,10 @@ insert:
 	 */
 
 	if (offset < m->m_len)
-		ovbcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
+		bcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
 			offset);
 	else {
-		ovbcopy(mtod(m, caddr_t), (caddr_t)ip6 + offset, m->m_len);
+		bcopy(mtod(m, caddr_t), (caddr_t)ip6 + offset, m->m_len);
 		m->m_data -= sizeof(struct ip6_frag);
 	}
 	m->m_data -= offset;	
@@ -485,7 +426,6 @@ insert:
 	}
 	
 	ip6stat.ip6s_reassembled++;
-	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 
 	/*
 	 * Tell launch routine the next header
@@ -498,7 +438,6 @@ insert:
 	return nxt;
 
  dropfrag:
-	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	ip6stat.ip6s_fragdropped++;
 	m_freem(m);
 	return IPPROTO_DONE;
@@ -600,11 +539,7 @@ void
 frag6_slowtimo()
 {
 	struct ip6q *q6;
-#ifdef __NetBSD__
 	int s = splsoftnet();
-#else
-	int s = splnet();
-#endif
 #if 0
 	extern struct	route_in6 ip6_forward_rt;
 #endif
@@ -617,7 +552,6 @@ frag6_slowtimo()
 			q6 = q6->ip6q_next;
 			if (q6->ip6q_prev->ip6q_ttl == 0) {
 				ip6stat.ip6s_fragtimeout++;
-				/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 				frag6_freef(q6->ip6q_prev);
 			}
 		}
@@ -628,7 +562,6 @@ frag6_slowtimo()
 	 */
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets) {
 		ip6stat.ip6s_fragoverflow++;
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_prev);
 	}
 	frag6_doing_reass = 0;
@@ -662,7 +595,6 @@ frag6_drain()
 		return;
 	while (ip6q.ip6q_next != &ip6q) {
 		ip6stat.ip6s_fragdropped++;
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_next);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.27 1999/11/15 03:41:49 nisimura Exp $	*/
+/*	$NetBSD: tc.c,v 1.26 1998/05/22 21:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,6 +37,18 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
 
+struct tc_softc {
+	struct	device sc_dv;
+
+	int	sc_speed;
+	int	sc_nslots;
+	struct tc_slotdesc *sc_slots;
+
+	void	(*sc_intr_establish) __P((struct device *, void *,
+		    tc_intrlevel_t, int (*)(void *), void *));
+	void	(*sc_intr_disestablish) __P((struct device *, void *));
+	bus_dma_tag_t (*sc_get_dma_tag) __P((int));
+};
 
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, struct cfdata *, void *));
@@ -45,7 +57,6 @@ void	tcattach __P((struct device *, struct device *, void *));
 struct cfattach tc_ca = {
 	sizeof(struct tc_softc), tcmatch, tcattach
 };
-extern struct cfdriver tc_cd;
 
 int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
@@ -263,12 +274,13 @@ void
 tc_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie, *arg;
-	int level;
+	tc_intrlevel_t level;
 	int (*handler) __P((void *));
 {
-	struct tc_softc *sc = tc_cd.cd_devs[0];
+	struct tc_softc *sc = (struct tc_softc *)dev;
 
-	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
+	(*sc->sc_intr_establish)(sc->sc_dv.dv_parent, cookie, level,
+	    handler, arg);
 }
 
 void
@@ -276,9 +288,9 @@ tc_intr_disestablish(dev, cookie)
 	struct device *dev;
 	void *cookie;
 {
-	struct tc_softc *sc = tc_cd.cd_devs[0];
+	struct tc_softc *sc = (struct tc_softc *)dev;
 
-	(*sc->sc_intr_disestablish)(dev, cookie);
+	(*sc->sc_intr_disestablish)(sc->sc_dv.dv_parent, cookie);
 }
 
 #ifdef TCVERBOSE

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.so.conf.5,v 1.13 1999/12/20 01:43:05 christos Exp $
+.\"	$NetBSD: ld.so.conf.5,v 1.10 1999/08/20 03:06:44 christos Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,32 +55,11 @@ systems, this file is scanned directly by the run-time linker
 .Pp
 Lines beginning with
 .Dq #
-are treated as comments and ignored.  Any other non-blank lines beginning
-with '/' are stripped of leading whitespace and trailing comments
-(introduced with
+are treated as comments and ignored.  Any other non-blank lines
+are stripped of leading whitespace and trailing comments (introduced with
 .Dq # )
 together with any preceding whitespace, then treated as directories to be
 scanned for shared libraries to add to the hints.
-.Pp
-On elf
-.\" .Xr elf 5
-lines that do not begin with a '/' are parsed as hardware dependent per
-library directives:
-.sp
-.nf
-<library_name> <sysctl_variable> <variable_value>[,...]:<library_name>[,...] ...
-.fi
-.sp
-If there is no match, the standard action is taken.
-.Sh EXAMPLES
-.sp
-.nf
-libm.so.0	machdep.fpu_present	1:libm387.so.0,libm.so.0
-.fi
-.sp
-The above line loads both libm387 and libm when the
-.Xr sysctl 3
-variable fpu_present has the value 1.
 .Sh FILES
 .Pa /etc/ld.so.conf
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.23 1999/12/07 23:57:49 thorpej Exp $
+#	$NetBSD: vnode_if.src,v 1.20 1999/08/11 00:20:50 wrstuden Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -49,10 +49,6 @@
 # -: not applicable.  vnode does not yet (or no longer) exists.
 # =: the same on input and output, may be either L or U.
 # X: locked if not nil.
-#
-# For operations other than VOP_LOOKUP which require a component name
-# parameter, the flags required for the initial namei() call are listed.
-# Additional flags may be added to the namei() call, but these are required.
 #     
  
 #
@@ -78,8 +74,8 @@
 #          last component name, dvp is returned unlocked on a successful
 #          lookup.
 #     On failure, *vpp is NULL, and *dvp is left locked. If there was
-#          an error re-locking dvp (for instance in the ISDOTDOT case),
-#          the error is returned with PDIRUNLOCK set.
+#          an error re-locking dvp in the ISDOTDOT case, an error is
+#          returned with PDIRUNLOCK set.
 #	
 #     *vpp is always locked on return if the operation succeeds.
 #     typically, if *vpp == dvp, you need to release twice, but unlock once.
@@ -88,9 +84,6 @@
 #          It signals the caller that dvp's lock state changed. It will
 #          be set on exit if either a successful lookup unlocked the
 #          parrent, or there was an error re-locking dvp in the ISDOTDOT case.
-#
-#     See sys/sys/namei.h for a description of the SAVENAME and SAVESTART
-#          flags.
 #
 vop_lookup {
 	IN struct vnode *dvp;
@@ -102,8 +95,6 @@ vop_lookup {
 #% create     dvp     L U U
 #% create     vpp     - L -
 #
-#! create cnp	CREATE, LOCKPARENT
-#
 vop_create {
 	IN WILLPUT struct vnode *dvp;
 	OUT struct vnode **vpp;
@@ -114,8 +105,6 @@ vop_create {
 #
 #% mknod      dvp     L U U
 #% mknod      vpp     - X -
-#
-#! mknod cnp	CREATE, LOCKPARENT
 #
 vop_mknod {
 	IN WILLPUT struct vnode *dvp;
@@ -269,8 +258,6 @@ vop_seek {
 #% remove     dvp     L U U
 #% remove     vp      L U U
 #
-#! remove cnp	DELETE, LOCKPARENT | LOCKLEAF
-#
 vop_remove {
 	IN WILLPUT struct vnode *dvp;
 	IN WILLPUT struct vnode *vp;
@@ -280,8 +267,6 @@ vop_remove {
 #
 #% link               vp      U U U
 #% link               tdvp    L U U
-#
-#! link	 cnp	CREATE, LOCKPARENT
 #
 vop_link {
 	IN WILLPUT struct vnode *dvp;
@@ -294,11 +279,6 @@ vop_link {
 #% rename     fvp     U U U
 #% rename     tdvp    L U U
 #% rename     tvp     X U U
-#
-#! rename fcnp	DELETE,	WANTPARENT | SAVESTART
-#! rename tcnp	RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART
-#
-# XXX the vop_rename routines should REALLY NOT be depending on SAVESTART!
 #
 vop_rename {
 	IN WILLRELE struct vnode *fdvp;
@@ -313,8 +293,6 @@ vop_rename {
 #% mkdir      dvp     L U U
 #% mkdir      vpp     - L - 
 #
-#! mkdir cnp	CREATE, LOCKPARENT
-#
 vop_mkdir {
 	IN WILLPUT struct vnode *dvp;
 	OUT struct vnode **vpp;
@@ -326,8 +304,6 @@ vop_mkdir {
 #% rmdir      dvp     L U U
 #% rmdir      vp      L U U
 #
-#! rmdir cnp	DELETE, LOCKPARENT | LOCKLEAF
-#
 vop_rmdir {
 	IN WILLPUT struct vnode *dvp;
 	IN WILLPUT struct vnode *vp;
@@ -337,8 +313,6 @@ vop_rmdir {
 #
 #% symlink    dvp     L U U
 #% symlink    vpp     - U -
-#
-#! symlink cnp	CREATE, LOCKPARENT
 #
 # XXX - note that the return vnode has already been VRELE'ed
 #     by the filesystem layer.  To use it you must use vget,
@@ -375,8 +349,6 @@ vop_readlink {
 
 #
 #% abortop    dvp     = = =
-#
-#! abortop cnp	as appropriate.
 #
 vop_abortop {
 	IN struct vnode *dvp;
@@ -489,18 +461,6 @@ vop_valloc {
 };
 
 #
-#% balloc     vp      L L L
-#
-vop_balloc {
-	IN struct vnode *vp;
-	IN off_t startoffset;
-	IN int size;
-	IN struct ucred *cred;	
-	IN int flags;
-	OUT struct buf **bpp;
-};
-
-#
 #% reallocblks        vp      L L L
 #
 vop_reallocblks {
@@ -552,8 +512,6 @@ vop_lease {
 #% whiteout   dvp     L L L
 #% whiteout   cnp     - - -
 #% whiteout   flag    - - -
-#
-#! whiteout cnp	CREATE, LOCKPARENT
 # 
 vop_whiteout {
 	IN struct vnode *dvp;

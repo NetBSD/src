@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.3 1999/12/16 09:37:33 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -36,12 +36,6 @@
 #include <hpcmips/vr/vrpmuvar.h>
 #include <hpcmips/vr/vrpmureg.h>
 
-#include "vrbcu.h"
-#if NVRBCU > 0
-#include <hpcmips/vr/bcuvar.h>
-#include <hpcmips/vr/bcureg.h>
-#endif
-
 static int vrpmumatch __P((struct device *, struct cfdata *, void *));
 static void vrpmuattach __P((struct device *, struct device *, void *));
 
@@ -49,29 +43,10 @@ static void vrpmu_write __P((struct vrpmu_softc *, int, unsigned short));
 static unsigned short vrpmu_read __P((struct vrpmu_softc *, int));
 
 int vrpmu_intr __P((void *));
-static void vrpmu_dump_intr __P((unsigned int, unsigned int));
-static void vrpmu_dump_regs __P((void *));
 
 struct cfattach vrpmu_ca = {
 	sizeof(struct vrpmu_softc), vrpmumatch, vrpmuattach
 };
-
-static inline void
-vrpmu_write(sc, port, val)
-	struct vrpmu_softc *sc;
-	int port;
-	unsigned short val;
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
-}
-
-static inline unsigned short
-vrpmu_read(sc, port)
-	struct vrpmu_softc *sc;
-	int port;
-{
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
-}
 
 static int
 vrpmumatch(parent, cf, aux)
@@ -110,101 +85,26 @@ vrpmuattach(parent, self, aux)
 	}
 
 	printf("\n");
-	/* dump current registers */
-	vrpmu_dump_regs(sc);
-	/* clear interrupt status */
-	vrpmu_write(sc, PMUINT_REG_W, PMUINT_ALL);
-	vrpmu_write(sc, PMUINT2_REG_W, PMUINT2_ALL);
-
 }
 
-/*
- * dump PMU intr status regs
- */
-void
-vrpmu_dump_intr(intstat1, intstat2)
-unsigned int intstat1, intstat2;
+static inline void
+vrpmu_write(sc, port, val)
+	struct vrpmu_softc *sc;
+	int port;
+	unsigned short val;
 {
-	if (intstat1 & PMUINT_GPIO3)
-		printf("vrpmu: GPIO[3] activation\n");
-	if (intstat1 & PMUINT_GPIO2)
-		printf("vrpmu: GPIO[2] activation\n");
-	if (intstat1 & PMUINT_GPIO1)
-		printf("vrpmu: GPIO[1] activation\n");
-	if (intstat1 & PMUINT_GPIO0)
-		printf("vrpmu: GPIO[0] activation\n");
-
-	if (intstat1 & PMUINT_RTC)
-		printf("vrpmu: RTC alarm detected\n");
-	if (intstat1 & PMUINT_BATT)
-		printf("vrpmu: Battery low during activation\n");
-
-	if (intstat1 & PMUINT_TIMOUTRST)
-		printf("vrpmu: HAL timer reset\n");
-	if (intstat1 & PMUINT_RTCRST)
-		printf("vrpmu: RTC reset detected\n");
-	if (intstat1 & PMUINT_RSTSWRST)
-		printf("vrpmu: RESET switch detected\n");
-	if (intstat1 & PMUINT_DMSWRST)
-		printf("vrpmu: Deadman's switch detected\n");
-	if (intstat1 & PMUINT_BATTINTR)
-		printf("vrpmu: Battery low during normal ops\n");
-	if (intstat1 & PMUINT_POWERSW)
-		printf("vrpmu: POWER switch detected\n");
-
-	if (intstat2 & PMUINT_GPIO12)
-		printf("vrpmu: GPIO[12] activation\n");
-	if (intstat2 & PMUINT_GPIO11)
-		printf("vrpmu: GPIO[11] activation\n");
-	if (intstat2 & PMUINT_GPIO10)
-		printf("vrpmu: GPIO[10] activation\n");
-	if (intstat2 & PMUINT_GPIO9)
-		printf("vrpmu: GPIO[9] activation\n");
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
 }
 
-/*
- * dump PMU registers
- *
- */
-void
-vrpmu_dump_regs(arg)
-	void *arg;
+static inline unsigned short
+vrpmu_read(sc, port)
+	struct vrpmu_softc *sc;
+	int port;
 {
-        struct vrpmu_softc *sc = arg;
-	unsigned int intstat1;
-	unsigned int intstat2;
-	unsigned int reg;
-#if NVRBCU > 0
-	int cpuid;
-#endif
-	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
-	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
-	vrpmu_dump_intr(intstat1, intstat2);
-
-	/* others? XXXX */
-	reg = vrpmu_read(sc, PMUCNT_REG_W);
-	printf("vrpmu: cnt 0x%x: ", reg);
-	bitdisp16(reg);
-	reg = vrpmu_read(sc, PMUCNT2_REG_W);
-	printf("vrpmu: cnt2 0x%x: ", reg);
-	bitdisp16(reg);
-#if NVRBCU > 0
-	cpuid = vrbcu_vrip_getcpuid();
-	if (cpuid >= BCUREVID_RID_4111){
-		reg = vrpmu_read(sc, PMUWAIT_REG_W);
-		printf("vrpmu: wait 0x%x", reg);
-	}
-	if (cpuid >= BCUREVID_RID_4121){
-		reg = vrpmu_read(sc, PMUDIV_REG_W);
-		printf(" div 0x%x", reg);
-	}
-#endif
-	printf("\n");
-
+	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
 }
 
 /*
- * PMU interrupt handler.
  * XXX
  *
  * In the following interrupt routine we should actually DO something
@@ -215,55 +115,49 @@ vrpmu_intr(arg)
 	void *arg;
 {
         struct vrpmu_softc *sc = arg;
-	unsigned int intstat1;
-	unsigned int intstat2;
+	unsigned int intmask;
 
-	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
-	/* clear interrupt status */
-	vrpmu_write(sc, PMUINT_REG_W, intstat1);
+	intmask = vrpmu_read(sc, PMUINT_REG_W);
+	vrpmu_write(sc, PMUINT_REG_W, intmask);
 
+	if (intmask & PMUINT_GPIO3)
+		printf("vrpmu: GPIO[3] activation\n");
+	if (intmask & PMUINT_GPIO2)
+		printf("vrpmu: GPIO[2] activation\n");
+	if (intmask & PMUINT_GPIO1)
+		printf("vrpmu: GPIO[1] activation\n");
+	if (intmask & PMUINT_GPIO0)
+		printf("vrpmu: GPIO[0] activation\n");
 
-	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
-	/* clear interrupt status */
-	vrpmu_write(sc, PMUINT2_REG_W, intstat2);
+	if (intmask & PMUINT_RTC)
+		printf("vrpmu: RTC alarm detected\n");
+	if (intmask & PMUINT_BATT)
+		printf("vrpmu: Battery low during activation\n");
 
-	vrpmu_dump_intr(intstat1, intstat2);
+	if (intmask & PMUINT_TIMOUTRST)
+		printf("vrpmu: HAL timer reset\n");
+	if (intmask & PMUINT_RTCRST)
+		printf("vrpmu: RTC reset detected\n");
+	if (intmask & PMUINT_RSTSWRST)
+		printf("vrpmu: RESET switch detected\n");
+	if (intmask & PMUINT_DMSWRST)
+		printf("vrpmu: Deadman's switch detected\n");
+	if (intmask & PMUINT_BATTINTR)
+		printf("vrpmu: Battery low during normal ops\n");
+	if (intmask & PMUINT_POWERSW)
+		printf("vrpmu: POWER switch detected\n");
 
-	if (intstat1 & PMUINT_GPIO3)
-		;
-	if (intstat1 & PMUINT_GPIO2)
-		;
-	if (intstat1 & PMUINT_GPIO1)
-		;
-	if (intstat1 & PMUINT_GPIO0)
-		;
+	intmask = vrpmu_read(sc, PMUINT2_REG_W);
+	vrpmu_write(sc, PMUINT2_REG_W, intmask);
 
-	if (intstat1 & PMUINT_RTC)
-		;
-	if (intstat1 & PMUINT_BATT)
-		;
-
-	if (intstat1 & PMUINT_TIMOUTRST)
-		;
-	if (intstat1 & PMUINT_RTCRST)
-		;
-	if (intstat1 & PMUINT_RSTSWRST)
-		;
-	if (intstat1 & PMUINT_DMSWRST)
-		;
-	if (intstat1 & PMUINT_BATTINTR)
-		;
-	if (intstat1 & PMUINT_POWERSW)
-		;
-
-	if (intstat2 & PMUINT_GPIO12)
-		;
-	if (intstat2 & PMUINT_GPIO11)
-		;
-	if (intstat2 & PMUINT_GPIO10)
-		;
-	if (intstat2 & PMUINT_GPIO9)
-		;
+	if (intmask & PMUINT_GPIO12)
+		printf("vrpmu: GPIO[12] activation\n");
+	if (intmask & PMUINT_GPIO11)
+		printf("vrpmu: GPIO[11] activation\n");
+	if (intmask & PMUINT_GPIO10)
+		printf("vrpmu: GPIO[10] activation\n");
+	if (intmask & PMUINT_GPIO9)
+		printf("vrpmu: GPIO[9] activation\n");
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.24 1999/11/30 17:02:39 tron Exp $ */
+/* $NetBSD: if_eb.c,v 1.22 1999/05/18 23:52:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1340,8 +1340,6 @@ ebread(sc, buf, len)
 	m = ebget(buf, len, ifp);
 	if (m == 0)
 		return;
-
-	ifp->if_ipackets++;
 
 #if NBPFILTER > 0
 	/*

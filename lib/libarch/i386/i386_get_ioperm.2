@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_get_ioperm.2,v 1.9 1999/12/20 02:04:24 hubertf Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.8 1999/07/02 15:14:07 simonb Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,6 @@ is set in the bitmap, then an attempt to access I/O port
 .Va n
 results in delivery of a SIGBUS signal unless the process's I/O
 permission level would grant I/O access.
-Bit #0 is the LSB of the first longword in the array.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_get_ioperm

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.7 1999/10/25 23:48:15 thorpej Exp $	*/
+/*	$NetBSD: ffs.S,v 1.6 1997/01/04 03:26:21 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,18 +43,18 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.7 1999/10/25 23:48:15 thorpej Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.6 1997/01/04 03:26:21 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
 
 ENTRY(ffs)
-	movl	%sp@(4),%d0
-	movl	%d0,%d1
-	negl	%d0
-	andl	%d0,%d1
-	movql	#32,%d0
-	bfffo	%d1{#0:#32},%d1
-	subl	%d1,%d0
+	movl	sp@(4),d0
+	movl	d0,d1
+	negl	d0
+	andl	d0,d1
+	movql	#32,d0
+	bfffo	d1{#0:#32},d1
+	subl	d1,d0
 	rts

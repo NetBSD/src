@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.4 1999/12/16 12:10:02 shin Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -49,65 +49,48 @@
 #include <hpcmips/vr/bcureg.h>
 #include <hpcmips/vr/bcuvar.h>
 
-static int vrbcu_match __P((struct device *, struct cfdata *, void *));
-static void vrbcu_attach __P((struct device *, struct device *, void *));
-
-static void vrbcu_write __P((struct vrbcu_softc *, int, unsigned short));
-static unsigned short vrbcu_read __P((struct vrbcu_softc *, int));
-
-char	*vr_cpuname=NULL;
-int	vr_major=-1;
-int	vr_minor=-1;
-int	vr_cpuid=-1;
-
-struct cfattach vrbcu_ca = {
-	sizeof(struct vrbcu_softc), vrbcu_match, vrbcu_attach
+struct vrbcu_vrip_softc {
+  struct vrbcu_softc sc_vrbcu;
 };
 
-struct vrbcu_softc *the_bcu_sc = NULL;
+/* Definition of the mainbus driver. */
+static int	vrbcu_vrip_match __P((struct device *,
+				      struct cfdata *, void *));
+static void	vrbcu_vrip_attach __P((struct device *,
 
-static inline void
-vrbcu_write(sc, port, val)
-	struct vrbcu_softc *sc;
-	int port;
-	unsigned short val;
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
-}
+				       struct device *, void*));
+char	*vrbcu_vrip_getcpuname __P((void));
+int	vrbcu_vrip_getcpumajor __P((void));
+int	vrbcu_vrip_getcpuminor __P((void));
 
-static inline unsigned short
-vrbcu_read(sc, port)
-	struct vrbcu_softc *sc;
-	int port;
-{
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
-}
+struct cfattach vrbcu_ca = {
+	sizeof(struct vrbcu_vrip_softc), vrbcu_vrip_match, vrbcu_vrip_attach
+};
 
 static int
-vrbcu_match(parent, cf, aux)
+vrbcu_vrip_match(parent, cf, aux)
      struct device *parent;
      struct cfdata *cf;
      void *aux;
 {
-	return 2;
+	return 1;
 }
 
 static void
-vrbcu_attach(parent, self, aux)
+vrbcu_vrip_attach(parent, self, aux)
      struct device *parent;
      struct device *self;
      void *aux;
 {
 	struct vrip_attach_args *va = aux;
-	struct vrbcu_softc *sc = (struct vrbcu_softc *)self;
+	struct vrbcu_vrip_softc *sc = (struct vrbcu_vrip_softc *)self;
 
-	sc->sc_iot = va->va_iot;
-	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
+	sc->sc_vrbcu.sc_iot = va->va_iot;
+	bus_space_map(sc->sc_vrbcu.sc_iot, va->va_addr, va->va_size,
 		0, /* no flags */
-		&sc->sc_ioh);
+		&sc->sc_vrbcu.sc_ioh);
 
 	printf("\n");
-	the_bcu_sc = sc;
 }
 
 static char *cpuname[] = {
@@ -120,104 +103,41 @@ static char *cpuname[] = {
 	"UNKNOWN",
 	"UNKNOWN" };
 
-int
-vrbcu_vrip_getcpuid(void)
-{
-	volatile u_int16_t *revreg;
-
-	if (vr_cpuid != -1)
-		return vr_cpuid; 
-
-	if (vr_cpuid == -1) {
-		revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
-
-		vr_cpuid = *revreg;
-		vr_cpuid = (vr_cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
-	}
-	return vr_cpuid;
-}	
-
 char *
 vrbcu_vrip_getcpuname(void)
 {
-	int cpuid;	
+	volatile u_int16_t *revreg;
+	int cpuid;
 
-	if (vr_cpuname != NULL)
-		return vr_cpuname;
+	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
-	cpuid = vrbcu_vrip_getcpuid();
-	vr_cpuname = cpuname[cpuid];
-	return vr_cpuname;
+	cpuid = *revreg;
+	cpuid = (cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
+	return cpuname[cpuid];
 }	
-
 
 int
 vrbcu_vrip_getcpumajor(void)
 {
 	volatile u_int16_t *revreg;
-
-	if (vr_major != -1)
-		return vr_major;
+	int major;
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
-	vr_major = *revreg;
-	vr_major = (vr_major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
-	return vr_major;
+	major = *revreg;
+	major = (major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
+	return major;
 }	
 
 int
 vrbcu_vrip_getcpuminor(void)
 {
 	volatile u_int16_t *revreg;
-
-	if (vr_minor != -1)
-		return vr_minor;
+	int minor;
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
-	vr_minor = *revreg;
-	vr_minor = (vr_minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
-	return vr_minor;
+	minor = *revreg;
+	minor = (minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
+	return minor;
 }	
-
-#define CLKX	18432000	/* CLKX1,CLKX2: 18.432MHz */
-#define MHZ	1000000
-
-int
-vrbcu_vrip_getcpuclock(void)
-{
-	u_int16_t clksp;
-	int cpuid, cpuclock;
-
-	clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
-	cpuid = vrbcu_vrip_getcpuid();
-
-	switch (cpuid) {
-	case BCUREVID_RID_4101:
-		/* assume 33MHz */
-		cpuclock = 33000000;
-		/* branch delay is 1 clock; 2 clock/loop */
-		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
-		break;
-	case BCUREVID_RID_4102:
-		cpuclock = CLKX / clksp * 32;
-		/* branch delay is 1 clock; 2 clock/loop */
-		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
-		break;
-	case BCUREVID_RID_4111:
-		cpuclock = CLKX / clksp * 64;
-		/* branch delay is 1 clock; 2 clock/loop */
-		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
-		break;
-	case BCUREVID_RID_4121:
-		cpuclock = CLKX / clksp * 64;
-		/* branch delay is 2 clock; 3 clock/loop */
-		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
-		break;
-	default:
-		panic("unknown CPU type %d\n", cpuid);
-		break;
-	}
-	return cpuclock;
-}

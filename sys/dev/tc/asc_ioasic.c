@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.18 1999/12/03 04:26:17 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.16 1999/04/20 06:48:58 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -21,6 +21,8 @@
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
+
+#include <machine/autoconf.h>
 
 #include <pmax/dev/device.h>		/* XXX */
 #include <pmax/dev/scsi.h>		/* XXX */
@@ -70,7 +72,12 @@ asc_ioasic_match(parent, match, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
-	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) != 0)
+	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) &&
+	    strncmp(d->iada_modname, "PMAZ-AA ", TC_ROM_LLEN))
+		return (0);
+
+	/* probe for chip */
+	if (tc_badaddr(d->iada_addr + ASC_OFFSET_53C94))
 		return (0);
 
 	return (1);
@@ -143,22 +150,6 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	if (len > ((caddr_t)mips_trunc_page(cp + NBPG * 2) - cp))
 		len = (caddr_t)mips_trunc_page(cp + NBPG * 2) - cp;
 
-	if ((vaddr_t)cp & 7) {
-		u_int32_t *p;
-		u_int32_t scrval;
-
-		p = (u_int32_t *)((vaddr_t)cp & ~7);
-		*((volatile u_int32_t *)IOASIC_REG_SCSI_SDR0(ioasic_base)) = p[0];
-		*((volatile u_int32_t *)IOASIC_REG_SCSI_SDR1(ioasic_base)) = p[1];
-		scrval = ((vaddr_t)cp >> 1) & 3;
-		cp = (caddr_t)((vaddr_t)cp & ~7);
-		if (flag != ASCDMA_READ) {
-			scrval |= 4;
-			cp += 8;
-		}
-		*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = scrval;
-	}
-
 	/* If R4K, writeback and invalidate  the buffer */
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)cp, len);
@@ -210,6 +201,7 @@ asic_dma_end(asc, state, flag)
 	register volatile u_int *dmap = (volatile u_int *)
 		IOASIC_REG_SCSI_DMAPTR(ioasic_base);
 	register u_short *to;
+	register int w;
 	int nb;
 
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
@@ -236,13 +228,19 @@ asic_dma_end(asc, state, flag)
 			    state->dmalen);
 #endif	/* USE_CACHED_BUFFER */
 		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
-			int sdr[2];
-			/* pick up last upto 6 bytes, sigh. */
-
-			/* Copy untransferred data from IOASIC */
-			sdr[0] = *(int *)IOASIC_REG_SCSI_SDR0(ioasic_base);
-			sdr[1] = *(int *)IOASIC_REG_SCSI_SDR1(ioasic_base);
-			memcpy(to, (char *)sdr, nb * 2);
+			/* pick up last upto6 bytes, sigh. */
+	
+			/* Last byte really xferred is.. */
+			w = *(int *)IOASIC_REG_SCSI_SDR0(ioasic_base);
+			*to++ = w;
+			if (--nb > 0) {
+				w >>= 16;
+				*to++ = w;
+			}
+			if (--nb > 0) {
+				w = *(int *)IOASIC_REG_SCSI_SDR1(ioasic_base);
+				*to++ = w;
+			}
 		}
 	}
 }

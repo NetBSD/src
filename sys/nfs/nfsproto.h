@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.8 1998/08/06 19:44:28 kleink Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.8.18.1 1999/12/21 23:20:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,6 +66,7 @@
 #define NFS_MAXPACKET	(NFS_MAXPKTHDR + NFS_MAXDATA)
 #define	NFS_MINPACKET	20
 #define	NFS_FABLKSIZE	512	/* Size in bytes of a block wrt fa_blocks */
+#define	NFS_FABLKSHIFT	9	/* log2(NFS_FABLKSIZE) */
 
 /* Stat numbers for rpc returns (version 2 and 3) */
 #define	NFS_OK			0

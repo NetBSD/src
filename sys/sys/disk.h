@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.15 1998/09/13 14:46:23 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.15.18.1 1999/12/21 23:20:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@ struct disk {
 	int		dk_copenmask;	/* character devices open */
 	int		dk_openmask;	/* composite (bopen|copen) */
 	int		dk_state;	/* label state   ### */
+#if 0
 	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks */
+#endif
 	int		dk_byteshift;	/* shift to convert bytes to blks */
 
 	/*

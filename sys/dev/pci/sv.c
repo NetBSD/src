@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.10 1999/11/01 18:12:21 augustss Exp $ */
+/*      $NetBSD: sv.c,v 1.9 1999/07/10 16:46:19 kleink Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -709,26 +709,26 @@ sv_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision == 16) {
 				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
+					p->sw_code = swap_bytes_change_sign16;
 				else
-					p->sw_code = change_sign16_swap_bytes_le;
+					p->sw_code = change_sign16_swap_bytes;
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
+				p->sw_code = change_sign16;
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
+				p->sw_code = mulaw_to_slinear16;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
+				p->sw_code = alaw_to_slinear16;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;

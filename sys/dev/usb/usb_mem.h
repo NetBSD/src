@@ -1,5 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.11 1999/11/18 23:32:31 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.8 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,14 +75,12 @@ void		usb_freemem  __P((usbd_bus_handle, usb_dma_t *));
 
 #include <machine/pmap.h>       /* for vtophys */
 
+typedef void * usb_dma_t;
+
 #define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
 #define		usb_freemem(t,p)	(free(*(p), M_USB))
 
-#ifdef __alpha__
-#define DMAADDR(dma)	(alpha_XXX_dmamap((vm_offset_t) *(dma)))
-#else
 #define DMAADDR(dma)	(vtophys(*(dma)))
-#endif
 #define KERNADDR(dma)	((void *) *(dma))
 #endif
 

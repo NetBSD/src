@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1999/05/04 23:55:27 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6.8.1 1999/12/21 23:16:12 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -79,11 +79,12 @@ get_long(p)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, bno)
+get_netbsd_label(dev, strat, lp, bno, bshift, bsize)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	daddr_t bno;
+	int bshift, bsize;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -91,12 +92,14 @@ get_netbsd_label(dev, strat, lp, bno)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* Now get the label block */
 	bp->b_blkno = bno + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp))
@@ -124,7 +127,7 @@ done:
  * Construct disklabel entries from partition entries.
  */
 static int
-mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
+mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off, bshift, bsize)
 	dev_t dev;
 	void (*strat)();
 	daddr_t bno;
@@ -132,6 +135,7 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	unsigned short *pnpart;
 	struct cpu_disklabel *osdep;
 	daddr_t off;
+	int bshift, bsize;
 {
 	static int recursion = 0;
 	struct mbr_partition *mp;
@@ -152,6 +156,8 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* Now get the MBR */
 	bp->b_blkno = bno;
@@ -222,11 +228,12 @@ done:
  * based on the MBR (and extended partition) information
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct mbr_partition *mp;
 	struct buf *bp;
@@ -235,7 +242,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* Initialize disk label with some defaults */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = blocksize(bshift);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = 1;
 	if (lp->d_secperunit == 0)
@@ -292,11 +299,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct buf *bp;
 	int error;
@@ -306,16 +314,18 @@ writedisklabel(dev, strat, lp, osdep)
 	 * Try to re-read a disklabel, in case he changed the MBR.
 	 */
 	label = *lp;
-	readdisklabel(dev, strat, &label, osdep);
+	readdisklabel(dev, strat, &label, osdep, bshift);
 	if (osdep->cd_start < 0)
 		return EINVAL;
 
 	/* get a buffer and initialize it */
 	bp = geteblk(lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	bp->b_blkno = osdep->cd_start + LABELSECTOR;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_WRITE;
 
@@ -324,6 +334,7 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	error = biowait(bp);
 
+done:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 

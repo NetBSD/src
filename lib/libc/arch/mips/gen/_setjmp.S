@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.14 1999/10/11 05:25:35 shin Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.11 1999/02/05 00:41:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.14 1999/10/11 05:25:35 shin Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.11 1999/02/05 00:41:42 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -85,7 +85,6 @@ LEAF(_setjmp)
 	REG_S	s7, (S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_S	sp, (SP * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_S	s8, (S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
-#ifndef SOFTFLOAT
 	cfc1	v0, $31				# too bad cant check if FP used
 	swc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	swc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
@@ -100,7 +99,6 @@ LEAF(_setjmp)
 	swc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	swc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	sw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-#endif
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
@@ -129,12 +127,9 @@ LEAF(_longjmp)
 	REG_L	s5, (S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s6, (S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s7, (S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
-#ifndef SOFTFLOAT
 	lw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)	# get fpu status
-#endif
 	REG_L	sp, (SP * SZREG + _OFFSETOF_SC_REGS)(a0)
 	REG_L	s8, (S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
-#ifndef SOFTFLOAT
 	ctc1	v0, $31
 	lwc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	lwc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
@@ -148,7 +143,6 @@ LEAF(_longjmp)
 	lwc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	lwc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	lwc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-#endif
 
 	j	ra
 	move	v0, a1

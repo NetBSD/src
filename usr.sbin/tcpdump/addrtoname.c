@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.9 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.8 1999/07/02 11:31:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: addrtoname.c,v 1.61 97/06/15 13:20:18 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.9 1999/12/10 05:45:07 itojun Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.8 1999/07/02 11:31:28 itojun Exp $");
 #endif
 #endif
 
@@ -291,7 +291,7 @@ getname6(const u_char *ap)
 	char ntop_buf[INET6_ADDRSTRLEN];
 
 	memcpy(&addr, ap, sizeof(addr));
-	p = &h6nametable[*(u_int16_t *)&addr.s6_addr[14] & (HASHNAMESIZE-1)];
+	p = &h6nametable[addr.s6_addr16[7] & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
 			return (p->name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.36 1998/01/12 18:31:10 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.36.20.1 1999/12/21 23:15:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -475,11 +475,11 @@ sdgetinfo(dev)
 		lp->d_partitions[2].p_offset = 0;
 		/* XXX we can open a device even without SDF_ALIVE */
 		if (sc->sc_blksize == 0)
-			sc->sc_blksize = DEV_BSIZE;
+			sc->sc_blksize = DEF_BSIZE;
 		/* XXX ensure size is at least one device block */
 		lp->d_partitions[2].p_size =
-			roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
-		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
+			roundup(LABELSECTOR+1, btodb(sc->sc_blksize, DEF_BSHIFT));
+		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL, DEF_BSHIFT);
 		if (msg == NULL)
 			return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.9 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.9.14.1 1999/12/21 23:20:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ lfs_check_bpp(fs, sp, file, line)
 				       (*bpp)->b_blkno);
 			}
 		}
-		blkno += (*bpp)->b_bcount / DEV_BSIZE;
+		blkno += (*bpp)->b_bcount / DEF_BSIZE;
 	}
 }
 #endif /* DEBUG */

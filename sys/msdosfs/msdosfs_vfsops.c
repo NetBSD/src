@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.65 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.62.2.1 1999/12/21 23:20:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -428,7 +428,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, 512, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, BLKDEV_IOSIZE, NOCRED, &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
@@ -571,6 +571,15 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	    SecPerClust;
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
+#if 0
+	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+		tmp = DEV_BSIZE;
+	else
+		tmp = dpart.disklab->d_secsize;
+#endif
+
+	mp->mnt_bshift = devvp->v_specbshift;
+	pmp->pm_fsbtosb = ffs(pmp->pm_BytesPerSec) - ffs(tmp);
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
@@ -707,16 +716,14 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 #endif
-	devvp->v_specmountpoint = mp;
+	devvp->v_specflags |= SI_MOUNTEDON;
 
 	return (0);
 
 error_exit:;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
@@ -756,8 +763,7 @@ msdosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
-	if (pmp->pm_devvp->v_type != VBAD)
-		pmp->pm_devvp->v_specmountpoint = NULL;
+	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;
@@ -780,10 +786,9 @@ msdosfs_unmount(mp, mntflags, p)
 		    ((u_int *)vp->v_data)[1]);
 	}
 #endif
-	vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
-	vput(pmp->pm_devvp);
+	vrele(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = (qaddr_t)0;
@@ -892,10 +897,9 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
-		if (vp->v_type == VNON || (((dep->de_flag &
-		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
-		    (vp->v_dirtyblkhd.lh_first == NULL ||
-		     waitfor == MNT_LAZY))) {
+		if (((dep->de_flag
+		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0)
+		    && (vp->v_dirtyblkhd.lh_first == NULL)) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -921,7 +925,6 @@ loop:
 	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
 		allerror = error;
 #ifdef QUOTA
-	/* qsync(mp); */
 #endif
 	return (allerror);
 }

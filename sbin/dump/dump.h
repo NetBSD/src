@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.19 1999/10/01 04:35:22 perseant Exp $	*/
+/*	$NetBSD: dump.h,v 1.16 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,36 +39,6 @@
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
 #define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
-
-/*
- * Filestore-independent UFS data, so code can be more easily shared
- * between ffs, lfs, and maybe ext2fs and others as well.
- */
-struct ufsi {
-	int64_t ufs_dsize;	/* filesystem size, in sectors */
-	int32_t ufs_bsize;	/* block size */
-	int32_t ufs_bshift;	/* log2(ufs_bsize) */
-	int32_t ufs_fsize;	/* fragment size */
-	int32_t ufs_frag;       /* block size / frag size */
-	int32_t ufs_fsatoda;	/* disk address conversion constant */
-	int32_t	ufs_nindir;	/* disk addresses per indirect block */
-	int32_t ufs_inopb;      /* inodes per block */
-	int32_t ufs_maxsymlinklen; /* max symlink length */
-	int32_t ufs_bmask;      /* block mask */
-	int32_t ufs_fmask;      /* frag mask */
-	int64_t ufs_qbmask;     /* ~ufs_bmask */
-	int64_t ufs_qfmask;     /* ~ufs_fmask */
-};
-#define fsatoda(u,a) ((a) << (u)->ufs_fsatoda)
-#define ufs_fragroundup(u,size) /* calculates roundup(size, ufs_fsize) */ \
-        (((size) + (u)->ufs_qfmask) & (u)->ufs_fmask)
-#define ufs_blkoff(u,loc)   /* calculates (loc % u->ufs_bsize) */ \
-        ((loc) & (u)->ufs_qbmask)
-#define ufs_dblksize(u,d,b) \
-	((((b) >= NDADDR || (d)->di_size >= ((b)+1) << (u)->ufs_bshift \
-		? (u)->ufs_bsize \
-		: (ufs_fragroundup((u), ufs_blkoff(u, (d)->di_size))))))
-struct ufsi *ufsib;
 
 /*
  * Dump maps used to describe what is to be dumped.
@@ -114,7 +84,8 @@ int	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
 int	xferrate;	/* averaged transfer rate of all volumes */
-char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
+struct	fs *sblock;	/* the file system super block */
+char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
@@ -151,11 +122,6 @@ static __inline u_int64_t iswap64(x)
 #ifndef __P
 #include <sys/cdefs.h>
 #endif
-
-/* filestore-specific hooks */
-int	fs_read_sblock __P((char *));
-struct ufsi *fs_parametrize __P((void));
-ino_t	fs_maxino __P((void));
 
 /* operator interface functions */
 void	broadcast __P((char *message));

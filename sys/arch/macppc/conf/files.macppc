@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.25 1999/10/15 07:16:16 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.22 1999/07/21 19:20:04 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -162,15 +162,3 @@ attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
 include "dev/usb/files.usb"
-
-#
-# Machine-independent CardBus drivers
-#
-
-# XXX dev/pcmcia needs fdc
-device fdc {drive = -1}
-
-include "dev/cardbus/files.cardbus"
-include "dev/pcmcia/files.pcmcia"
-
-file arch/macppc/macppc/rbus_machdep.c		cardbus

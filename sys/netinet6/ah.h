@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.6 1999/12/02 05:08:16 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.5 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ struct ah_algorithm {
 
 #define	AH_MAXSUMSIZE	16
 
-#ifdef _KERNEL
+#ifdef KERNEL
 extern struct ah_algorithm ah_algorithms[];
 
 struct inpcb;
@@ -104,6 +104,6 @@ extern int ah6_calccksum __P((struct mbuf *, caddr_t,
 			      struct ah_algorithm *, struct secas *));
 #endif /* INET6 */
 
-#endif /*_KERNEL*/
+#endif /*KERNEL*/
 
 #endif /*_NETINET6_AH_H_*/

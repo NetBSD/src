@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 1999/11/06 20:18:13 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.4 1999/05/30 19:13:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -158,8 +158,8 @@ cpu_attach(parent, dev, aux)
 	int impl, vers, fver;
 	char *fpuname;
 	struct mainbus_attach_args *ma = aux;
-	struct fpstate64 *fpstate;
-	struct fpstate64 fps[2];
+	struct fpstate *fpstate;
+	struct fpstate fps[2];
 	char *sep;
 	char fpbuf[40];
 	register int i, l;

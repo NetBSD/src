@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.16 1999/11/15 20:53:56 fvdl Exp $
+.\"	$NetBSD: tunefs.8,v 1.14 1999/03/07 11:02:08 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,6 @@
 .Op Fl e Ar maxbpg
 .Op Fl m Ar minfree
 .Bk -words
-.Op Fl n Ar soft_dependency_enabling
 .Op Fl o Ar optimize_preference
 .Ek
 .Op Fl t Ar trackskew
@@ -129,18 +128,6 @@ running out of full sized blocks.
 For values of minfree greater than or equal to 10%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
-.It Fl n Ar soft_dependency_enabling
-The soft dependency code allows most filesystem I/O to be done
-asynchronously by reordering disk writes to ensure that the
-Use of this facility does not require any changes to the filesystem,
-so it can be enabled or disabled any time that the filesystem is unmounted.
-This experimental facility is turned off by default.
-It is turned on by using
-.Fl n
-enable;
-it is turned off by using
-.Fl n
-disable.
 .It Fl t Ar trackskew
 This specifies the skew in sectors from one track to the next in a cylinder.
 The default value is zero, indicating that each track in a cylinder begins at

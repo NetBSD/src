@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.77 1999/11/28 20:04:22 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74 1999/09/23 11:04:32 enami Exp $ */
 
 
 /*
@@ -120,7 +120,6 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
-void	wdc_kill_pending __P((struct channel_softc *));
 
 
 #define DEBUG_INTR   0x01
@@ -312,17 +311,17 @@ wdcattach(chp)
 			continue;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
-		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
-		if (error == CMD_OK) {
+		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
+		    CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
+			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
 			    chp->wdc->sc_dev.dv_xname,
-			    chp->channel, i, error), DEBUG_PROBE);
+			    chp->channel, i), DEBUG_PROBE);
 			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
 				continue;
 			/*
@@ -474,8 +473,6 @@ wdcactivate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (wdc->sc_dying != 0)
-			goto out;
 		for (i = 0; i < wdc->nchannels; i++) {
 			chp = wdc->channels[i];
 
@@ -506,7 +503,6 @@ wdcactivate(self, act)
 				}
 			}
 		}
-		wdc->sc_dying = 1;
 		break;
 	}
 
@@ -561,8 +557,6 @@ wdcdetach(self, flags)
 					goto out;
 			}
 		}
-
-		wdc_kill_pending(chp);
 	}
 
 out:
@@ -652,7 +646,6 @@ wdcintr(arg)
 {
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
-	int ret;
 
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
@@ -662,10 +655,7 @@ wdcintr(arg)
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
-	ret = xfer->c_intr(chp, xfer, 1);
-	if (ret == 0) /* irq was not for us, still waiting for irq */
-		chp->ch_flags |= WDCF_IRQ_WAIT;
-	return (ret);
+	return xfer->c_intr(chp, xfer, 1);
 }
 
 /* Put all disk in RESET state */
@@ -821,10 +811,10 @@ wdcwait(chp, mask, bits, timeout)
 			break;
 		if (++time > timeout) {
 			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
-			    "error %x (mask 0x%x bits 0x%x)\n", status,
+			    "error %x\n", status,
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_error), mask, bits),
-			    DEBUG_STATUS | DEBUG_PROBE);
+				wd_error)),
+			    DEBUG_STATUS);
 			return -1;
 		}
 		delay(WDCDELAY);
@@ -1179,7 +1169,6 @@ wdc_exec_command(drvp, wdc_c)
 	xfer->cmd = wdc_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
-	xfer->c_kill_xfer = __wdccommand_done;
 
 	s = splbio();
 	wdc_exec_xfer(chp, xfer);
@@ -1303,8 +1292,8 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
-	if ((wdc_c->flags & AT_READREG) != 0 && chp->wdc->sc_dying != 0 &&
-	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
+	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
+								== 0) {
 		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						 wd_sdh);
 		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
@@ -1443,23 +1432,6 @@ wdc_free_xfer(chp, xfer)
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
 	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
-}
-
-/*
- * Kill off all pending xfers for a channel_softc.
- *
- * Must be called at splbio().
- */
-void
-wdc_kill_pending(chp)
-	struct channel_softc *chp;
-{
-	struct wdc_xfer *xfer;
-
-	while ((xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer)) != NULL) {
-		chp = xfer->chp;
-		(*xfer->c_kill_xfer)(chp, xfer);
-	}
 }
 
 static void

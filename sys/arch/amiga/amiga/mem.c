@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 1999/12/04 21:20:02 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 1999/03/26 23:41:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,7 +139,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-			    trunc_page(v), prot, prot|PMAP_WIRED);
+			    trunc_page(v), prot, TRUE, prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -163,9 +163,9 @@ mmrw(dev, uio, flags)
 				if (uio->uio_rw == UIO_READ) {
 					if (devzeropage == NULL) {
 						devzeropage = (caddr_t)
-						    malloc(NBPG, M_TEMP,
+						    malloc(CLBYTES, M_TEMP,
 						    M_WAITOK);
-						bzero(devzeropage, NBPG);
+						bzero(devzeropage, CLBYTES);
 					}
 					c = min(c, NBPG - (int)v);
 					v = (vm_offset_t) devzeropage;
@@ -193,10 +193,10 @@ mmrw(dev, uio, flags)
 			}
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
+				bzero(devzeropage, CLBYTES);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 

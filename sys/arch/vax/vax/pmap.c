@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 1999/12/11 17:51:35 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71 1999/09/12 01:17:29 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -146,7 +146,6 @@ pmap_bootstrap()
 	 * size calculations must be done now.
 	 * Remember: sysptsize is in PTEs and nothing else!
 	 */
-	physmem = btoc(avail_end);
 
 #define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
 	/* Kernel alloc area */
@@ -238,7 +237,7 @@ pmap_bootstrap()
 	virtual_end = TRUNC_PAGE(virtual_end);
 
 
-#if 0 /* Breaks cninit() on some machines */
+#if defined(PMAPDEBUG)
 	cninit();
 	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
@@ -632,29 +631,28 @@ if(startpmapdebug)
 /*
  * pmap_enter() is the main routine that puts in mappings for pages, or
  * upgrades mappings to more "rights". Note that:
+ * - "wired" isn't used. We don't loose mappings unless asked for.
+ * - "access_type" is set if the entering was caused by a fault.
  */
-int
-pmap_enter(pmap, v, p, prot, flags)
+void
+pmap_enter(pmap, v, p, prot, wired, access_type)
 	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
-	vm_prot_t prot;
-	int flags;
+	vm_prot_t prot, access_type;
+	boolean_t wired;
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
-#ifdef PMAPDEBUG
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-#endif
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
 	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
-		    pmap, v, p, prot, wired, flags & VM_PROT_ALL);
+		    pmap, v, p, prot, wired, access_type);
 #endif
 	/* Can this happen with UVM??? */
 	if (pmap == 0)
-		return (KERN_SUCCESS);
+		return;
 
 	RECURSESTART;
 	/* Find addess of correct pte */
@@ -725,7 +723,7 @@ if (startpmapdebug)
 	/* No mapping change. Can this happen??? */
 	if (newpte == oldpte) {
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return;
 	}
 
 	pv = pv_table + (p >> PGSHIFT);
@@ -762,11 +760,11 @@ if (startpmapdebug)
 	}
 	pmap->pm_stats.resident_count++;
 
-	if (flags & VM_PROT_READ) {
+	if (access_type & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
-	if (flags & VM_PROT_WRITE)
+	if (access_type & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
 
 	patch[i] = newpte;
@@ -785,8 +783,6 @@ if (startpmapdebug)
 #endif
 	if (pventries < 10)
 		more_pventries();
-
-	return (KERN_SUCCESS);
 }
 
 void *

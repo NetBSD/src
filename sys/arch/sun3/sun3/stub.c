@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.18 1999/11/22 19:00:57 jdolecek Exp $	*/
+/*	$NetBSD: stub.c,v 1.17 1998/07/04 22:18:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,15 +43,20 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-#include <sys/systm.h>
 
-#ifndef DDB
+void Debugger __P((void));
+
 /*
- * When DDB is included, cpu_Debugger() comes from db_interface.c
+ * XXX: isr.c:netintr() - move to conf.c?
+ */
+
+/*
+ * When DDB is included, Debugger() comes from db_interface.c
  * otherwise we get the one compiled here.
  */
+#ifndef DDB
 void
-cpu_Debugger()
+Debugger()
 {
 	__asm ("trap #15");
 }

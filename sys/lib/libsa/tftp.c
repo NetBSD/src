@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.9 1999/11/13 21:17:57 thorpej Exp $	 */
+/*	$NetBSD: tftp.c,v 1.7 1999/07/12 12:34:57 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996

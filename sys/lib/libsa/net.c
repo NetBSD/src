@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.25 1999/11/13 21:17:57 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.23 1999/05/07 14:49:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

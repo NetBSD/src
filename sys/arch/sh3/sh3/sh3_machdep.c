@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.2 1999/12/04 21:21:25 ragge Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.1 1999/09/21 13:16:16 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ sh3_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -212,7 +212,7 @@ sh3_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

@@ -15,11 +15,7 @@
 6	beshort		0407		unicos (cray) executable
 # Ultrix 4.3
 596	string		\130\337\377\377	Ultrix core file
->600	string		>\0		from '%s'
+>600	string		>\0	'%s'
 # BeOS and MAcOS PEF executables
 # From: hplus@zilker.net (Jon Watte)
 0	string		Joy!peffpwpc	header for PowerPC PEF executable
-#
-# ava assembler/linker Uros Platise <uros.platise@ijs.si>
-0       string          avaobj  AVR assembler object code
->7      string          >\0     version '%s'

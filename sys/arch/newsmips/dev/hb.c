@@ -1,10 +1,11 @@
-/*	$NetBSD: hb.c,v 1.4 1999/12/17 03:06:14 tsubai Exp $	*/
+/*	$NetBSD: hb.c,v 1.3 1999/07/11 12:44:04 tsubai Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/adrsmap.h>
 
 static int	hb_match __P((struct device *, struct cfdata *, void *));
 static void	hb_attach __P((struct device *, struct device *, void *));
@@ -16,14 +17,6 @@ struct cfattach hb_ca = {
 };
 
 extern struct cfdriver hb_cd;
-
-struct intrhand {
-	int (*func) __P((void *));
-	void *arg;
-};
-
-#define NHBINTR	4
-struct intrhand hb_intrhand[6][NHBINTR];
 
 static int
 hb_match(parent, cf, aux)
@@ -87,53 +80,4 @@ hb_print(args, name)
 		printf(" addr 0x%x", ca->ca_addr);
 
 	return UNCONF;
-}
-
-void *
-hb_intr_establish(irq, level, func, arg)
-	int irq, level;
-	int (*func) __P((void *));
-	void *arg;
-{
-	struct intrhand *ih = hb_intrhand[irq];
-	int i;
-
-	for (i = NHBINTR; i > 0; i--) {
-		if (ih->func == NULL)
-			goto found;
-		ih++;
-	}
-	panic("hb_intr_establish: no room");
-
-found:
-	ih->func = func;
-	ih->arg = arg;
-
-#ifdef HB_DEBUG
-	for (irq = 0; irq <= 2; irq++) {
-		for (i = 0; i < NHBINTR; i++) {
-			printf("%p(%p) ",
-			       hb_intrhand[irq][i].func,
-			       hb_intrhand[irq][i].arg);
-		}
-		printf("\n");
-	}
-#endif
-
-	return ih;
-}
-
-void
-hb_intr_dispatch(irq)
-	int irq;
-{
-	struct intrhand *ih;
-	int i;
-
-	ih = hb_intrhand[irq];
-	for (i = NHBINTR; i > 0; i--) {
-		if (ih->func)
-			(*ih->func)(ih->arg);
-		ih++;
-	}
 }

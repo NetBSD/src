@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1999/11/06 20:13:49 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.12 1999/08/10 21:08:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,12 +50,10 @@
 /*
  * CTL_MACHDEP definitions.
  */
-#define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_MAXID	1	/* no valid machdep ids */
 
-#define	CTL_MACHDEP_NAMES {			\
-	{ 0, 0 },				\
-	{ "booted_kernel", CTLTYPE_STRING },	\
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
 }
 
 #ifdef _KERNEL
@@ -85,7 +83,7 @@
  */
 extern int eintstack[];
 struct clockframe {
-	struct trapframe64 t;
+	struct trapframe t;
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
@@ -171,9 +169,9 @@ int	tickintr __P((void *)); /* level 10 (tick) interrupt code */
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
-struct fpstate64;
-void	savefpstate __P((struct fpstate64 *));
-void	loadfpstate __P((struct fpstate64 *));
+struct fpstate;
+void	savefpstate __P((struct fpstate *));
+void	loadfpstate __P((struct fpstate *));
 int	probeget __P((paddr_t, int, int));
 int	probeset __P((paddr_t, int, int, u_int64_t));
 #if 0
@@ -216,8 +214,8 @@ void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
 /* emul.c */
-int	fixalign __P((struct proc *, struct trapframe64 *));
-int	emulinstr __P((vaddr_t, struct trapframe64 *));
+int	fixalign __P((struct proc *, struct trapframe *));
+int	emulinstr __P((vaddr_t, struct trapframe *));
 
 /*
  *

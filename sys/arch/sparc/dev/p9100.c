@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.8 1999/12/15 08:12:30 garbled Exp $ */
+/*	$NetBSD: p9100.c,v 1.6 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@
 
 #include "tctrl.h"
 #if NTCTRL > 0
-#include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>
 #endif
 
@@ -145,9 +144,7 @@ static void p9100_set_video(struct p9100_softc *, int);
 static int p9100_get_video(struct p9100_softc *);
 static uint32_t p9100_ctl_read_4(struct p9100_softc *, bus_size_t);
 static void p9100_ctl_write_4(struct p9100_softc *, bus_size_t, uint32_t);
-#if 0
 static uint8_t p9100_ramdac_read(struct p9100_softc *, bus_size_t);
-#endif
 static void p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
 
 /*
@@ -406,14 +403,12 @@ p9100_ctl_write_4(struct p9100_softc *sc, bus_size_t off, uint32_t v)
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off, v);
 }
 
-#if 0
 static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
 {
 	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
 	return p9100_ctl_read_4(sc, off) >> 16;
 }
-#endif
 
 static void
 p9100_ramdac_write(struct p9100_softc *sc, bus_size_t off, uint8_t v)

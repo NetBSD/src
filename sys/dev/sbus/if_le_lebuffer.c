@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.4 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.3 1998/08/29 20:32:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,8 +226,6 @@ leattach_lebuffer(parent, self, aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-	/* Establish interrupt handler */
-	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
-					 am7990_intr, sc);
+	(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
+				 am7990_intr, sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 1999/10/25 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.18 1999/05/01 19:20:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
 	.text; .even; .globl name; .type name,@function; name:
 
 #ifdef GPROF
-#define _PROF_PROLOG	link %a6,#0; jbsr mcount; unlk %a6
+#define _PROF_PROLOG	link a6,#0; jbsr mcount; unlk a6
 #else
 #define _PROF_PROLOG
 #endif

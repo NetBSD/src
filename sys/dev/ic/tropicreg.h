@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicreg.h,v 1.3 1999/10/17 23:53:45 cgd Exp $	*/
+/*	$NetBSD: tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -30,7 +30,30 @@
  * the rights to redistribute these changes.
  */
 
+/*
+ * HISTORY
+ * $Log: tropicreg.h,v $
+ * Revision 1.2  1999/03/22 23:01:37  bad
+ * Oops. RcsID police.
+ *
+ * Revision 1.1  1999/03/22 22:21:26  bad
+ * Chipset driver for TROPIC based Token-Ring cards.
+ * Frontends for IBM and 3COM ISA cards.
+ *
+ * By Onno van der Linden <onno@simplex.nl>.
+ *
+ * Revision 2.2  93/02/04  08:00:27  danner
+ * 	Integrate PS2 code from IBM.
+ * 	[93/01/18            prithvi]
+ * 
+ */
+
+/* $Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $ */
 /* $ACIS:if_lanreg.h 12.0$ */
+
+#if !defined(lint) && !defined(LOCORE)  && defined(RCS_HDRS)
+static char *rcsidif_lanreg = "$Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $";
+#endif
 
 #define TR_SWITCH 0
 #define TR_RESET 1

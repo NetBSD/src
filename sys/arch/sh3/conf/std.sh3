@@ -1,12 +1,8 @@
-# $NetBSD: std.sh3,v 1.2 1999/11/15 19:00:30 fvdl Exp $
+# $NetBSD: std.sh3,v 1.1 1999/09/13 10:31:07 itojun Exp $
 #
 # standard, required NetBSD/sh3 'options'
 
 machine sh3
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 #options PMAP_NEW	# UVM's new pmap interface
 options EXEC_SCRIPT	# exec #! scripts

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdbreg.h,v 1.3 1999/11/03 21:57:40 ragge Exp $	*/
+/*	$NetBSD: kdbreg.h,v 1.2 1999/07/12 13:43:24 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,6 @@
  * The KDB50 registers are embedded inside the bi interface
  * general-purpose registers.
  */
-#ifdef notdef
 struct	kdb_regs {
 	struct	biiregs kdb_bi;
 	short	kdb_xxx;	/* first half of GPR 0 unused */
@@ -49,11 +48,6 @@ struct	kdb_regs {
 	short	kdb_sa;		/* status & address (r/o half) */
 	short	kdb_sw;		/* status & address (w/o half) */
 };
-#endif
-
-#define	KDB_IP	0xf2
-#define	KDB_SA	0xf4
-#define	KDB_SW	0xf6
 
 #define KDBSR_BITS \
 "\20\20ERR\17STEP4\16STEP3\15STEP2\14STEP1\13oldNV\12oldQB\11DI\10IE\1GO"

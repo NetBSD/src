@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 1999/10/26 00:20:40 itohy Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1999/09/23 15:24:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,14 +154,14 @@ Lberr2:
 	movw	d0,sp@			| save (ONLY LOW 16 BITS!)
 	jra	Lismerr
 #endif
-ENTRY_NOPROFILE(addrerr)
+_addrerr:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lbenot040		| no, skip
 	movl	a1@(8),sp@-		| yes, push fault address
 	clrl	sp@-			| no SSW for address fault
@@ -388,17 +388,9 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
-
-	| Check PSW and see what happen.
-	|   T=0 S=0	(should not happen)
-	|   T=1 S=0	trace trap from user mode
-	|   T=0 S=1	trace trap on a trap instruction
-	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
-
 	movw	sp@(FR_HW),d1		| get PSW
-	notw	d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
-	jeq	Lkbrkpt			| yes, kernel breakpoint
+	andw	#PSL_S,d1		| from system mode?
+	jne	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
@@ -1469,7 +1461,7 @@ Lmotommu7:
  * and TBI*.
  */
 ENTRY(DCIA)
-_C_LABEL(_DCIA):
+__DCIA:
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
 	jne	Lmotommu8		| no, skip

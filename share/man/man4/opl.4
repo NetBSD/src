@@ -1,4 +1,4 @@
-.\" $NetBSD: opl.4,v 1.10 1999/12/15 22:07:33 abs Exp $
+.\" $NetBSD: opl.4,v 1.6 1999/08/22 12:49:57 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,21 +39,19 @@
 .Os
 .Sh NAME
 .Nm opl
-.Nd Yamaha OPL2 and OPL3 FM midi synthesizer driver
+.Nd Yamaha OPL2 and OPL3 FM syntheziser driver
 .Sh SYNOPSIS
 .Cd "opl*  at eso?"
 .Cd "opl*  at ess?"
-.Cd "opl*  at fms?"
 .Cd "opl0  at isa? port 0x388"
 .Cd "opl*  at sb?"
 .Cd "opl*  at wss?"
-.Cd "opl*  at ym?"
 .Cd "midi* at opl?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Yamaha OPL2 (YM3812) and OPL3
-(YMF262) chips.  The chips are FM synthesizers and are capable
+(YMF262) chips.  The chips are FM synthezisers and are capable
 of producing a wide range of (mostly awful) sounds.
 .Pp
 Access to the device is through the MIDI driver.
@@ -65,12 +63,10 @@ directly on the ISA bus.
 .Sh SEE ALSO
 .Xr eso 4 ,
 .Xr ess 4 ,
-.Xr fms 4 ,
 .Xr isa 4 ,
 .Xr midi 4 ,
 .Xr sb 4 ,
-.Xr wss 4 ,
-.Xr ym 4
+.Xr wss 4
 .Sh HISTORY
 The
 .Nm

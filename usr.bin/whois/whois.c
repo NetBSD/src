@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.12 1999/12/03 08:22:09 fair Exp $	*/
+/*	$NetBSD: whois.c,v 1.11 1999/09/06 06:23:08 itojun Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.12 1999/12/03 08:22:09 fair Exp $");
+__RCSID("$NetBSD: whois.c,v 1.11 1999/09/06 06:23:08 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -155,7 +155,7 @@ typedef __caddr_t caddr_t;
 #include <sys/param.h>
 #define NICHOST "whois.ripe.net"
 #else
-#define NICHOST "whois.networksolutions.com"
+#define NICHOST "whois.internic.net"
 #endif
 
 int main __P((int, char **));

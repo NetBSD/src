@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.19 1999/08/14 11:33:09 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.19.8.1 1999/12/21 23:16:20 wrstuden Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -154,7 +154,7 @@ hpattach(parent, self, aux)
 	 */
 	dl = sc->sc_disk.dk_label;
 
-	dl->d_secsize = DEV_BSIZE;
+	dl->d_secsize = DEF_BSIZE;
 	dl->d_ntracks = 1;
 	dl->d_nsectors = 32;
 	dl->d_secpercyl = 32;
@@ -163,7 +163,7 @@ hpattach(parent, self, aux)
 	 * Read in label.
 	 */
 	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
-	    dl, NULL)) != NULL)
+	    dl, NULL, DEF_BSHIFT)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
 	/*

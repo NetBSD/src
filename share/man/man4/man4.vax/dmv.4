@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmv.4,v 1.7 1999/12/15 23:44:55 abs Exp $
+.\"	$NetBSD: dmv.4,v 1.5 1999/03/16 01:19:23 garbled Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,9 @@
 .Nd
 .Tn DEC
 .Tn DMV-11
-point-to-point serial communications device
+point-to-point communications device
 .Sh SYNOPSIS
-.Cd "dmv0 at uba0 csr 167000 vector dmvrint dmvxint"
+.Cd "device dmv0 at uba0 csr 167000 vector dmvrint dmvxint"
 .Sh DESCRIPTION
 The
 .Nm dmv
@@ -109,7 +109,7 @@ An input packet was received which contained a type of
 address unknown to the driver.
 .Pp
 .It "dmvxint: dmv%d unallocated packet 0x%x."
-A protocol error has occurred with the board.
+A protocol error has occured with the board.
 .Pp
 .It "dmvoutput, dmv%d can't handle af%d."
 A packet for an unsupported address family has been sent.

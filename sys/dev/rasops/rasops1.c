@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.10 1999/10/23 23:14:13 ad Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.9 1999/08/31 10:11:52 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.10 1999/10/23 23:14:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.9 1999/08/31 10:11:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,14 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.10 1999/10/23 23:14:13 ad Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
+static void	rasops1_putchar __P((void *, int, int col, u_int, long));
+static void	rasops1_putchar8 __P((void *, int, int col, u_int, long));
+static void	rasops1_putchar16 __P((void *, int, int col, u_int, long));
 static void	rasops1_copycols __P((void *, int, int, int, int));
 static void	rasops1_erasecols __P((void *, int, int, int, long));
 static void	rasops1_do_cursor __P((struct rasops_info *));
-static void	rasops1_putchar __P((void *, int, int col, u_int, long));
-#ifndef RASOPS_SMALL
-static void	rasops1_putchar8 __P((void *, int, int col, u_int, long));
-static void	rasops1_putchar16 __P((void *, int, int col, u_int, long));
-#endif
+
+void	rasops1_init __P((struct rasops_info *ri));
 
 /*
  * Initalize rasops_info struct for this colordepth.
@@ -69,14 +69,12 @@ rasops1_init(ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
-#ifndef RASOPS_SMALL
 	case 8:
 		ri->ri_ops.putchar = rasops1_putchar8;
 		break;
 	case 16:
 		ri->ri_ops.putchar = rasops1_putchar16;
 		break;
-#endif
 	default:
 		ri->ri_ops.putchar = rasops1_putchar;
 		break;
@@ -89,6 +87,7 @@ rasops1_init(ri)
 	}
 }
 
+
 /*
  * Paint a single character. This is the generic version, this is ugly.
  */
@@ -99,8 +98,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	u_int fs, rs, fb, bg, fg, lmask, rmask;
-	u_int32_t height, width;
+	u_int32_t height, width, fs, rs, fb, bg, fg, lmask, rmask;
 	struct rasops_info *ri;
 	int32_t *rp;
 	u_char *fr;
@@ -175,7 +173,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 		}
 		
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if (attr & 1) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			*rp = (*rp & lmask) | (fg & rmask);
 		}
@@ -228,7 +226,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 		}
 
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if (attr & 1) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			rp[0] = (rp[0] & lmask) | (fg & ~lmask);
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
@@ -236,7 +234,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	}
 }
 
-#ifndef RASOPS_SMALL
+
 /*
  * Paint a single character. This is for 8-pixel wide fonts.
  */
@@ -298,9 +296,10 @@ rasops1_putchar8(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if (attr & 1)
 		rp[-(ri->ri_stride << 1)] = fg;
 }
+
 
 /*
  * Paint a single character. This is for 16-pixel wide fonts.
@@ -364,10 +363,9 @@ rasops1_putchar16(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if (attr & 1)
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = fg;
 }
-#endif	/* !RASOPS_SMALL */
 
 /*
  * Grab routines common to depths where (bpp < 8)

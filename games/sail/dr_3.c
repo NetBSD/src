@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.7 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.6 1999/02/10 00:45:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.7 1999/09/30 18:01:33 jsm Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.6 1999/02/10 00:45:45 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ moveall()		/* move all comp ships */
 		 */
 		n = 0;
 		foreachship(sp) {
-			if (sp->file->dir == 0 || is_isolated(sp))
+			if (sp->file->dir == 0 || isolated(sp))
 				goto cont1;
 			l = 0;
 			foreachship(sq) {
@@ -195,7 +195,7 @@ int k;
 }
 
 int
-is_isolated(ship)
+isolated(ship)
 struct ship *ship;
 {
 	struct ship *sp;
@@ -288,7 +288,7 @@ char isdefense;
 }
 
 int
-is_toughmelee(ship, to, isdefense, count)
+toughmelee(ship, to, isdefense, count)
 struct ship *ship, *to;
 int isdefense, count;
 {
@@ -311,9 +311,9 @@ int isdefense, count;
 	}
 	if (count || isdefense)
 		return obp;
-	OBP = is_toughmelee(to, ship, 0, count + 1);
-	dbp = is_toughmelee(ship, to, 1, count + 1);
-	DBP = is_toughmelee(to, ship, 1, count + 1);
+	OBP = toughmelee(to, ship, 0, count + 1);
+	dbp = toughmelee(ship, to, 1, count + 1);
+	DBP = toughmelee(to, ship, 1, count + 1);
 	if (OBP > obp + 10 || OBP + DBP >= obp + dbp + 10)
 		return 1;
 	else

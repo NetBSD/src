@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1999/11/21 14:00:41 itojun Exp $
+#	$NetBSD: GENERIC,v 1.2.8.1 1999/12/21 23:16:06 wrstuden Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -27,27 +27,11 @@ file-system 	KERNFS
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
+#options	NON_PO2_BLOCKS	# non-2**n block size support
 
 # Networking options
 options 	INET
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        GATEWAY         # IP packet forwarding
 #options        ISO             # OSI networking
@@ -72,8 +56,6 @@ pseudo-device	sl
 pseudo-device	ppp 2
 pseudo-device	loop
 pseudo-device	bpfilter
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	pty
 pseudo-device	vnd 2
 

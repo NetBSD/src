@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.27 1999/11/17 00:29:54 mrg Exp $	*/
+/*	$NetBSD: pass2.c,v 1.25 1998/10/23 01:13:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.27 1999/11/17 00:29:54 mrg Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.25 1998/10/23 01:13:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,8 @@ pass2()
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
-		if (reply("ALLOCATE") == 0) {
-			markclean = 0;
-			ckfini();
+		if (reply("ALLOCATE") == 0)
 			exit(EEXIT);
-		}
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
 			errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 		break;
@@ -94,11 +91,9 @@ pass2()
 				errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
-		markclean = 0;
-		if (reply("CONTINUE") == 0) {
-			ckfini();
+		if (reply("CONTINUE") == 0)
 			exit(EEXIT);
-		}
+		markclean = 0;
 		break;
 
 	case FSTATE:
@@ -110,11 +105,8 @@ pass2()
 				errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
-		if (reply("FIX") == 0) {
-			markclean = 0;
-			ckfini();
+		if (reply("FIX") == 0)
 			exit(EEXIT);
-		}
 		dp = ginode(ROOTINO);
 		dp->di_mode = iswap16((iswap16(dp->di_mode) & ~IFMT) | IFDIR);
 		inodirty();
@@ -156,14 +148,8 @@ pass2()
 				markclean = 0;
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
-			if (usedsoftdep)
-				pfatal("%s %s: LENGTH %qd NOT MULTIPLE OF %d",
-					"DIRECTORY", pathbuf,
-					(long long)inp->i_isize, DIRBLKSIZ);
-			else
-				pwarn("%s %s: LENGTH %qd NOT MULTIPLE OF %d",
-					"DIRECTORY", pathbuf,
-					(long long)inp->i_isize, DIRBLKSIZ);
+			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
+				pathbuf, (u_long)inp->i_isize, DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
@@ -468,7 +454,7 @@ again:
 				break;
 			if (statemap[iswap32(dirp->d_ino)] == FCLEAR)
 				errmsg = "DUP/BAD";
-			else if (!preen && !usedsoftdep)
+			else if (!preen)
 				errmsg = "ZERO LENGTH DIRECTORY";
 			else {
 				n = 1;

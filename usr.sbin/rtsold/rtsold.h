@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.h,v 1.3 1999/12/09 15:08:33 itojun Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.2 1999/09/03 05:14:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -58,8 +58,6 @@ struct ifinfo {
 #define IFS_TENTATIVE	4
 
 /* rtsold.c */
-extern struct timeval tm_max;
-extern int dflag;
 struct ifinfo *find_ifinfo __P((int ifindex));
 void rtsol_timer_update __P((struct ifinfo *ifinfo));
 #ifdef __STDC__
@@ -86,6 +84,3 @@ extern void rtsol_input __P((int s));
 /* probe.c */
 extern int probe_init __P((void));
 extern void defrouter_probe __P((int ifindex));
-
-/* dump.c */
-extern void rtsold_dump_file __P((char *));

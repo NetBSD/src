@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.11 1999/12/06 14:52:08 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,14 +38,12 @@
 .Dt PCMCIA 4
 .Os
 .Sh NAME
-.Nm pcmcia ,
-.Nm pcic
+.Nm pcmcia
 .Nd introduction to PCMCIA (PC Card) support
 .Sh SYNOPSIS
 .Cd "pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000"
 .Cd "pcic1   at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000"
 .Cd "pcmcia* at pcic? controller ? socket ?"
-.Cd "pcmcia* at cardslot?"
 .Cd "XX*     at pcmcia? function ?"
 .Pp
 .Sh INTRODUCTION
@@ -67,22 +65,14 @@ drivers, sorted by function and driver name:
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
-.It awi
-BayStack 650 wireless 802.11FH controller.
-.It cnw
-Netwave AirSurfer Wireless LAN interface.
 .It ep
 3com 3c589 Etherlink-III Ethernet card.
 .It mbe
 Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
-.It mhzc
-Megahertz Ethernet/Modem combo cards
 .It ne
 NE2000 compatible cards.
 .It sm
 Megahertz Ethernet card.
-.It wi
-Lucent WaveLan/IEEE 802.11 controller.
 .El
 .\"
 .Pp
@@ -99,31 +89,14 @@ Digital Hinote Ultra Mobile Media Adapter
 .\"
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.
-.Sh NOTES
-The default configuration of the pcic gives each controller 16
-kilobytes of memory, to be shared between slots.  Some PC card devices
-require somewhat more memory than this; it may therefore be necessary
-to adjust the 
-.Va iomem
-and
-.Va iosiz
-parameters of the
-.Va pcic
-devices in the kernel config file to accomodate these cards.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr aic 4 ,
-.Xr awi 4 ,
-.Xr cardbus 4 ,
-.Xr cnw 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
 .Xr isa 4 ,
-.Xr mbe 4 ,
-.Xr mhzc 4 ,
 .Xr ne 4 ,
-.Xr sm 4 ,
-.Xr wi 4
+.Xr sm 4
 .Sh HISTORY
 The
 .Nm

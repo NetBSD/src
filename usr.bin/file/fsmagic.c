@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.13 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.12 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -27,43 +27,39 @@
  * 4. This notice may not be removed or altered.
  */
 
-#include "file.h"
-#ifdef __CYGWIN__
-#include <errno.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <stdlib.h>
-/* Since major is a function on SVR4, we can't use `ifndef major'.  */
-#ifdef MAJOR_IN_MKDEV
-# include <sys/mkdev.h>
-# define HAVE_MAJOR
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
-#ifdef MAJOR_IN_SYSMACROS
-# include <sys/sysmacros.h>
-# define HAVE_MAJOR
+#ifndef major
+# if defined(__SVR4) || defined(_SVR4_SOURCE)
+#  include <sys/mkdev.h>
+# endif
 #endif
-#ifdef major			/* Might be defined in sys/types.h.  */
-# define HAVE_MAJOR
+#ifndef	major			/* if `major' not defined in types.h, */
+#include <sys/sysmacros.h>	/* try this one. */
 #endif
-  
-#ifndef HAVE_MAJOR
-# define major(dev)  (((dev) >> 8) & 0xff)
-# define minor(dev)  ((dev) & 0xff)
-#endif
-#undef HAVE_MAJOR
+#ifndef	major	/* still not defined? give up, manual intervention needed */
+		/* If cc tries to compile this, read and act on it. */
+		/* On most systems cpp will discard it automatically */
+		Congratulations, you have found a portability bug.
+		Please grep /usr/include/sys and edit the above #include 
+		to point at the file that defines the "major" macro.
+#endif	/*major*/
+
+#include "file.h"
 
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
 FILE_RCSID("@(#)Id: fsmagic.c,v 1.27 1998/06/27 13:23:39 christos Exp ")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.13 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.12 1998/09/20 15:27:16 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -93,77 +89,34 @@ struct stat *sb;
 		return 1;
 	}
 
-#ifdef S_ISUID
 	if (sb->st_mode & S_ISUID) ckfputs("setuid ", stdout);
-#endif
-#ifdef S_ISGID
 	if (sb->st_mode & S_ISGID) ckfputs("setgid ", stdout);
-#endif
-#ifdef S_ISVTX
 	if (sb->st_mode & S_ISVTX) ckfputs("sticky ", stdout);
-#endif
 	
 	switch (sb->st_mode & S_IFMT) {
 	case S_IFDIR:
 		ckfputs("directory", stdout);
 		return 1;
-#ifdef S_IFCHR
 	case S_IFCHR:
-		/* 
-		 * If -s has been specified, treat character special files
-		 * like ordinary files.  Otherwise, just report that they
-		 * are block special files and go on to the next file.
-		 */
-		if (sflag)
-			break;
 #ifdef HAVE_ST_RDEV
-# ifdef dv_unit
-		(void) printf("character special (%d/%d/%d)",
-			major(sb->st_rdev),
-			dv_unit(sb->st_rdev),
-			dv_subunit(sb->st_rdev));
-# else
 		(void) printf("character special (%ld/%ld)",
 			(long) major(sb->st_rdev), (long) minor(sb->st_rdev));
-# endif
 #else
 		(void) printf("character special");
 #endif
 		return 1;
-#endif
-#ifdef S_IFBLK
 	case S_IFBLK:
-		/* 
-		 * If -s has been specified, treat block special files
-		 * like ordinary files.  Otherwise, just report that they
-		 * are block special files and go on to the next file.
-		 */
-		if (sflag)
-			break;
 #ifdef HAVE_ST_RDEV
-# ifdef dv_unit
-		(void) printf("block special (%d/%d/%d)",
-			major(sb->st_rdev),
-			dv_unit(sb->st_rdev),
-			dv_subunit(sb->st_rdev));
-# else
 		(void) printf("block special (%ld/%ld)",
 			(long) major(sb->st_rdev), (long) minor(sb->st_rdev));
-# endif
 #else
 		(void) printf("block special");
 #endif
 		return 1;
-#endif
 	/* TODO add code to handle V7 MUX and Blit MUX files */
 #ifdef	S_IFIFO
 	case S_IFIFO:
 		ckfputs("fifo (named pipe)", stdout);
-		return 1;
-#endif
-#ifdef	S_IFDOOR
-	case S_IFDOOR:
-		ckfputs("door", stdout);
 		return 1;
 #endif
 #ifdef	S_IFLNK
@@ -235,17 +188,8 @@ struct stat *sb;
 
 	/*
 	 * regular file, check next possibility
-	 *
-	 * If stat() tells us the file has zero length, report here that
-	 * the file is empty, so we can skip all the work of opening and 
-	 * reading the file.
-	 * But if the -s option has been given, we skip this optimization,
-	 * since on some systems, stat() reports zero size for raw disk
-	 * partitions.  (If the block special device really has zero length,
-	 * the fact that it is empty will be detected and reported correctly
-	 * when we read the file.)
 	 */
-	if (!sflag && sb->st_size == 0) {
+	if (sb->st_size == 0) {
 		ckfputs("empty", stdout);
 		return 1;
 	}

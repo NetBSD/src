@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,109 +70,33 @@
 #include <sys/map.h>
 #include <sys/extent.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <uvm/uvm_extern.h>
-
 #include <mips/cpuregs.h>
-#include <mips/pte.h>
 #include <machine/bus.h>
 
-#ifdef BUS_SPACE_DEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
-#endif
-
-#define MAX_BUSSPACE_TAG 10
-
-static  struct hpcmips_bus_space sys_bus_space[MAX_BUSSPACE_TAG];
+#define MAX_BUSSPACE_TAG 3
+/* vr_internal_alloc_bus_space_tag called before pmap_bootstrap. */
+static  struct hpcmips_bus_space sys_bus_space[MAX_BUSSPACE_TAG]; /* System internal, ISA port, ISA mem */
 static int bus_space_index = 0;
-bus_space_handle_t __hpcmips_cacheable __P((bus_space_tag_t, bus_addr_t, bus_size_t, int));
 
 bus_space_tag_t
 hpcmips_alloc_bus_space_tag()
 {
 	bus_space_tag_t	t;
 
-	if (bus_space_index >= MAX_BUSSPACE_TAG) {
-		panic("hpcmips_internal_alloc_bus_space_tag: tag full.");
-	}
+	if (bus_space_index >= MAX_BUSSPACE_TAG)
+		panic("vr_internal_alloc_bus_space_tag: tag full.");
 	t = &sys_bus_space[bus_space_index++];
 	return t;
 }
 
 void
-hpcmips_init_bus_space_extent(t)
-	bus_space_tag_t t;
+hpcmips_init_bus_space_extent(bus_space_tag_t t)
 {
-	u_int32_t pa, endpa;
-	vaddr_t va;
-	
-	/* 
-	 * If request physical address is greater than 512MByte,
-	 * mapping it to kseg2.
-	 */
-	if (t->t_base >= 0x20000000) {
-		pa = mips_trunc_page(t->t_base);
-		endpa = mips_round_page(t->t_base + t->t_size);
-
-		if (!(va = uvm_km_valloc(kernel_map, endpa - pa))) {
-			panic("hpcmips_init_bus_space_extent: can't allocate kernel virtual");
-		}
-		DPRINTF(("pa:0x%08x -> kv:0x%08x+0x%08x", (unsigned int)t->t_base, 
-		       (unsigned int)va, t->t_size));
-		t->t_base = va; /* kseg2 addr */
-				
-		for (; pa < endpa; pa += NBPG, va += NBPG) {
-			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		}
-	}
-
 	t->t_extent = (void*)extent_create(t->t_name, t->t_base, 
 					   t->t_base + t->t_size, M_DEVBUF,
 					   0, 0, EX_NOWAIT);
-	if (!t->t_extent) {
-		panic("hpcmips_init_bus_space_extent: unable to allocate %s map", t->t_name);
-	}
-}
-
-bus_space_handle_t
-__hpcmips_cacheable(t, bpa, size, cacheable)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-{
-	vaddr_t va, endva;
-	pt_entry_t *pte;
-	u_int32_t opte, npte;
-
-	MachFlushCache();
-	if (t->t_base >= MIPS_KSEG2_START) {
-		va = mips_trunc_page(bpa);
-		endva = mips_round_page(bpa + size);
-		npte = CPUISMIPS3 ? MIPS3_PG_UNCACHED : MIPS1_PG_N;
-		
-		for (; va < endva; va += NBPG) {
-			pte = kvtopte(va);
-			opte = pte->pt_entry;
-			if (cacheable) {
-				opte &= ~npte;
-			} else {
-				opte |= npte;
-			}
-			pte->pt_entry = opte;
-			/*
-			 * Update the same virtual address entry.
-			 */
-			MachTLBUpdate(va, opte);
-		}
-		return bpa;
-	}
-
-	return cacheable ? MIPS_PHYS_TO_KSEG0(bpa) : MIPS_PHYS_TO_KSEG1(bpa);
+	if (!t->t_extent)
+		panic("init_resource: unable to allocate %s map", t->t_name);
 }
 
 /* ARGSUSED */
@@ -188,19 +112,18 @@ bus_space_map(t, bpa, size, flags, bshp)
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
 	if (!t->t_extent) { /* Before autoconfiguration, can't use extent */
-		DPRINTF(("bus_space_map: map temprary region:0x%08x-0x%08x\n", bpa, bpa+size));
+		printf("bus_space_map: map temprary region:0x%08x-0x%08x\n", bpa, bpa+size);
 		bpa += t->t_base;
 	} else {
 		bpa += t->t_base;
-		if ((err = extent_alloc_region(t->t_extent, bpa, size, 
-					       EX_NOWAIT|EX_MALLOCOK))) {
+		if ((err = extent_alloc_region(t->t_extent, bpa, size, EX_NOWAIT|EX_MALLOCOK)))
 			return err;
-		}
 	}
-	*bshp = __hpcmips_cacheable(t, bpa, size, cacheable);
-	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n", bpa, bpa - t->t_base, size));
-
-	return 0;
+	if (cacheable)
+		*bshp = MIPS_PHYS_TO_KSEG0(bpa);
+	else
+		*bshp = MIPS_PHYS_TO_KSEG1(bpa);
+	return (0);
 }
 
 /* ARGSUSED */
@@ -222,20 +145,15 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
 		panic("bus_space_alloc: no extent");
 
 	rstart += t->t_base;
-	rend += t->t_base;
 	if ((err = extent_alloc_subregion(t->t_extent, rstart, rend, size,
 					  alignment, boundary, 
-					  EX_FAST|EX_NOWAIT|EX_MALLOCOK, &bpa))) {
+					  EX_FAST|EX_NOWAIT|EX_MALLOCOK, &bpa)))
 		return err;
-	}
-
-	*bshp = __hpcmips_cacheable(t, bpa, size, cacheable);
-
-	if (bpap) {
-		*bpap = bpa;
-	}
-
-	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa, (unsigned)(bpa - t->t_base), size));
+	if (cacheable)
+		*bshp = MIPS_PHYS_TO_KSEG0(bpa);
+	else
+		*bshp = MIPS_PHYS_TO_KSEG1(bpa);
+	*bpap = bpa;
 
 	return 0;
 }
@@ -259,21 +177,13 @@ bus_space_unmap(t, bsh, size)
 {
 	int err;
 	u_int32_t addr;
-
-	if (!t->t_extent) {
+	addr = MIPS_KSEG1_TO_PHYS(bsh);
+	if (!t->t_extent)
 		return; /* Before autoconfiguration, can't use extent */
-	}
+	if ((err = extent_free(t->t_extent, addr, size, EX_NOWAIT)))
+		printf("warning: %#x-%#x of %s space lost\n",
+		       bsh, bsh+size, t->t_name);
 
-	if (t->t_base < MIPS_KSEG2_START) {
-		addr = MIPS_KSEG1_TO_PHYS(bsh);
-	} else {
-		addr = bsh;
-	}
-
-	if ((err = extent_free(t->t_extent, addr, size, EX_NOWAIT))) {
-		DPRINTF(("warning: %#x-%#x of %s space lost\n",
-		       bsh, bsh+size, t->t_name));
-	}
 }
 
 /* ARGSUSED */
@@ -284,7 +194,7 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
 	bus_size_t offset, size;
 	bus_space_handle_t *nbshp;
 {
-	*nbshp = bsh + offset;
 
-	return 0;
+	*nbshp = bsh + offset;
+	return (0);
 }

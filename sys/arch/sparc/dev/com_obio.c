@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.4 1999/11/21 15:23:01 pk Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.2 1999/08/03 00:32:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,6 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#include <sparc/sparc/auxreg.h>
-
 struct com_obio_softc {
 	struct com_softc osc_com;	/* real "com" softc */
 
@@ -127,22 +125,13 @@ com_obio_match(parent, cf, aux)
 	if (strcmp("modem", sa->sa_name) == 0) {
 		bus_space_handle_t ioh;
 		int rv = 0;
-		u_int8_t auxregval = *AUXIO4M_REG;
-		 *AUXIO4M_REG = auxregval | (AUXIO4M_LED|AUXIO4M_LTE);
-		DELAY(100);
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset, sa->sa_size,
+				 sa->sa_offset, COM_NPORTS,
 				 BUS_SPACE_MAP_LINEAR, 0,
-				 &ioh) == 0) {
+				 &ioh) != 0) {
 			rv = comprobe1(sa->sa_bustag, ioh);
-#if 0
-			printf("modem: probe: lcr=0x%02x iir=0x%02x\n",
-				bus_space_read_1(sa->sa_bustag, ioh, 3),
-				bus_space_read_1(sa->sa_bustag, ioh, 2));
-#endif
-			bus_space_unmap(sa->sa_bustag, ioh, sa->sa_size);
+			bus_space_unmap(sa->sa_bustag, ioh, COM_NPORTS);
 		}
-		*AUXIO4M_REG = auxregval;
 		return (rv);
 	}
 	return (0);
@@ -159,37 +148,26 @@ com_obio_attach(parent, self, aux)
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
 	/*
-	 * We're living on an obio that looks like an sbus slot.
+	 * We're living on an obio (or an obio that looks like an sbus slot).
 	 */
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_iobase = sa->sa_offset;
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
 	    sbus_bus_map(sc->sc_iot, sa->sa_slot,
-			 sc->sc_iobase, sa->sa_size,
+			 sc->sc_iobase, COM_NPORTS,
 			 BUS_SPACE_MAP_LINEAR, 0,
 			 &sc->sc_ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
 
-	*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);
-	do {
-		DELAY(100);
-	} while (!comprobe1(sc->sc_iot, sc->sc_ioh));
-#if 0
-	printf("modem: attach: lcr=0x%02x iir=0x%02x\n",
-		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3),
-		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 2));
-#endif
-
 	sc->sc_frequency = COM_FREQ;
+
 	com_attach_subr(sc);
 
-	if (sa->sa_nintr != 0) {
-		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri,
-					 0, comintr, sc);
-		evcnt_attach(&osc->osc_com.sc_dev, "intr", &osc->osc_intrcnt);
-	}
+	(void)bus_intr_establish(sc->sc_iot, sa->sa_pri, 0, comintr, sc);
+
+	evcnt_attach(&osc->osc_com.sc_dev, "intr", &osc->osc_intrcnt);
 
 	/*
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART

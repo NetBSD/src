@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.22 1999/09/28 14:48:48 bouyer Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.21 1999/07/30 10:29:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.22 1999/09/28 14:48:48 bouyer Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.21 1999/07/30 10:29:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: sysctl.c,v 1.22 1999/09/28 14:48:48 bouyer Exp $");
 #include <sys/socket.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
-#include <sys/resource.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 
@@ -120,9 +119,6 @@ struct ctlname debugname[CTL_DEBUG_MAXID];
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
-/* this one is dummy, it's used only for '-a' or '-A' */
-struct ctlname procname[] = { {0, 0}, {"curproc", CTLTYPE_NODE} };
-
 char names[BUFSIZ];
 
 struct list {
@@ -145,7 +141,6 @@ struct list secondlevel[] = {
 #endif
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
 	{ ddbname, DDBCTL_MAXID },	/* CTL_DDB_NAMES */
-	{ procname, 2 },		/* dummy name */
 };
 
 int	Aflag, aflag, nflag, wflag;
@@ -156,11 +151,6 @@ int	Aflag, aflag, nflag, wflag;
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
-
-/*
- * A dummy type for limits, which requires special parsing
- */
-#define CTLTYPE_LIMIT	((~0x1) << 31)
 
 int main __P((int, char *[]));
 
@@ -177,7 +167,6 @@ static int sysctl_key __P((char *, char **, int[], int, int *));
 static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 static int sysctl_mbuf __P((char *, char **, int[], int, int *));
-static int sysctl_proc __P((char *, char **, int[], int, int *));
 static int findname __P((char *, char *, char **, struct list *));
 static void usage __P((void));
 
@@ -290,26 +279,21 @@ parse(string, flags)
 	mib[0] = indx;
 	if (indx == CTL_DEBUG)
 		debuginit();
-	if (mib[0] == CTL_PROC) {
-		type = CTLTYPE_NODE;
-		len = 1;
-	} else {
-		lp = &secondlevel[indx];
-		if (lp->list == 0) {
-			warnx("Class `%s' is not implemented",
-		    	topname[indx].ctl_name);
-			return;
-		}
-		if (bufp == NULL) {
-			listall(topname[indx].ctl_name, lp);
-			return;
-		}
-		if ((indx = findname(string, "second", &bufp, lp)) == -1)
-			return;
-		mib[1] = indx;
-		type = lp->list[indx].ctl_type;
-		len = 2;
+	lp = &secondlevel[indx];
+	if (lp->list == 0) {
+		warnx("Class `%s' is not implemented",
+		    topname[indx].ctl_name);
+		return;
 	}
+	if (bufp == NULL) {
+		listall(topname[indx].ctl_name, lp);
+		return;
+	}
+	if ((indx = findname(string, "second", &bufp, lp)) == -1)
+		return;
+	mib[1] = indx;
+	type = lp->list[indx].ctl_type;
+	len = 2;
 	switch (mib[0]) {
 
 	case CTL_KERN:
@@ -439,11 +423,7 @@ parse(string, flags)
 	case CTL_USER:
 	case CTL_DDB:
 		break;
-	case CTL_PROC:
-		len = sysctl_proc(string, &bufp, mib, flags, &type);
-		if (len < 0)
-			return;
-		break;
+
 	default:
 		warnx("Illegal top level value: %d", mib[0]);
 		return;
@@ -461,14 +441,6 @@ parse(string, flags)
 			newsize = sizeof intval;
 			break;
 
-		case CTLTYPE_LIMIT:
-			if (strcmp(newval, "unlimited") == 0) {
-				quadval = RLIM_INFINITY;
-				newval = &quadval;
-				newsize = sizeof quadval;
-				break;
-			}
-			/* FALLTHROUGH */
 		case CTLTYPE_QUAD:
 			sscanf(newval, "%qd", (long long *)&quadval);
 			newval = &quadval;
@@ -553,30 +525,6 @@ parse(string, flags)
 			fprintf(stdout, "%s\n", (char *) newval);
 		}
 		return;
-
-	case CTLTYPE_LIMIT:
-#define PRINTF_LIMIT(lim) { \
-if ((lim) == RLIM_INFINITY) \
-	fprintf(stdout, "unlimited");\
-else \
-	fprintf(stdout, "%qd", (lim)); \
-}
-
-		if (newsize == 0) {
-			if (!nflag)
-				fprintf(stdout, "%s = ", string);
-			PRINTF_LIMIT((long long)(*(quad_t *)buf));
-		} else {
-			if (!nflag) {
-				fprintf(stdout, "%s: ", string);
-				PRINTF_LIMIT((long long)(*(quad_t *)buf));
-				fprintf(stdout, " -> ");
-			}
-			PRINTF_LIMIT((long long)(*(quad_t *)newval));
-		}
-		fprintf(stdout, "\n");
-		return;
-#undef PRINTF_LIMIT
 
 	case CTLTYPE_QUAD:
 		if (newsize == 0) {
@@ -949,85 +897,9 @@ sysctl_vfsgen(string, bufpp, mib, flags, typep)
 	return (3);
 }
 
-struct ctlname procnames[] = PROC_PID_NAMES;
-struct list procvars = {procnames, PROC_PID_MAXID};
-struct ctlname proclimitnames[] = PROC_PID_LIMIT_NAMES;
-struct list proclimitvars = {proclimitnames, PROC_PID_LIMIT_MAXID};
-struct ctlname proclimittypenames[] = PROC_PID_LIMIT_TYPE_NAMES;
-struct list proclimittypevars = {proclimittypenames,
-    PROC_PID_LIMIT_TYPE_MAXID};
-/*
- * handle kern.proc requests
- */
-static int
-sysctl_proc(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
-{
-	char *cp, name[BUFSIZ];
-	struct list *lp;
-	int indx;
-
-	if (*bufpp == NULL) {
-		strcpy(name, string);
-		cp = &name[strlen(name)];
-		*cp++ = '.';
-		strcpy(cp, "curproc");
-		parse (name, Aflag);
-		return (-1);
-	}
-	cp = strsep(bufpp, ".");
-	if (cp == NULL) {
-		warnx("%s: incomplete specification", string);
-		return (-1);
-	}
-	if (strcmp(cp, "curproc") == 0) {
-		mib[1] = PROC_CURPROC;
-	} else {
-		mib[1] = atoi(cp);
-		if (mib[1] == 0) {
-			warnx("second level name %s in %s is invalid", cp,
-			    string);
-			return (-1);
-		}
-	}
-	*typep = CTLTYPE_NODE;
-	lp = &procvars;
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, lp)) == -1)
-		return (-1);
-	mib[2] = indx;
-	*typep = lp->list[indx].ctl_type;
-	if (*typep != CTLTYPE_NODE)
-		return(3);
-	lp = &proclimitvars;
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return (-1);
-	}
-	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
-		return (-1);
-	mib[3] = indx;
-	lp = &proclimittypevars;
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return (-1);
-	}
-	if ((indx = findname(string, "fifth", bufpp, lp)) == -1)
-		return (-1);
-	mib[4] = indx;
-	*typep = CTLTYPE_LIMIT;
-	return(5);
-}
-
 struct ctlname mbufnames[] = CTL_MBUF_NAMES;
 struct list mbufvars = { mbufnames, MBUF_MAXID };
+
 /*
  * handle kern.mbuf requests
  */

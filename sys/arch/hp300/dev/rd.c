@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.36 1998/01/12 18:31:06 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.36.20.1 1999/12/21 23:15:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -518,7 +518,7 @@ rdgetinfo(dev)
 	 */
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_type = DTYPE_HPIB;
-	lp->d_secsize = DEV_BSIZE;
+	lp->d_secsize = DEF_BSIZE;
 	lp->d_nsectors = 32;
 	lp->d_ntracks = 20;
 	lp->d_ncylinders = 1;
@@ -530,7 +530,7 @@ rdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL);
+	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL, DEF_BSHIFT);
 	if (msg == NULL)
 		return (0);
 

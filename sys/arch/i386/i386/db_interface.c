@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.27 1999/10/12 17:08:58 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 1999/04/12 20:38:18 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -144,7 +144,7 @@ kdb_trap(type, code, regs)
 }
 
 void
-cpu_Debugger()
+Debugger()
 {
 	breakpoint();
 }

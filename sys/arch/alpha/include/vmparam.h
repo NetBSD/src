@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.15 1999/12/04 21:20:00 ragge Exp $ */
+/* $NetBSD: vmparam.h,v 1.14 1999/03/26 00:15:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
  * consider doing that at some point, but it might require changes
  * to the exec code.
  */
-#define	USRTEXT		NBPG
+#define	USRTEXT		CLBYTES
 #define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*
@@ -126,7 +126,7 @@
  * by the page replacement algorithm.  Basically this says that if you are
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES pages which are not
+ * Note that each process has at least UPAGES+CLSIZE pages which are not
  * paged anyways, in addition to SAFERSS.
  */
 #define	SAFERSS		10		/* nominal ``small'' resident set size
@@ -144,8 +144,8 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define _VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
-#define _VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define _VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+#define _VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 #ifndef	_KERNEL
 #define VM_KMEM_SIZE		_VM_KMEM_SIZE

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-frag6.c,v 1.6 1999/12/11 18:19:20 thorpej Exp $	*/
+/*	$NetBSD: print-frag6.c,v 1.4 1999/09/04 03:36:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-frag6.c,v 1.6 1999/12/11 18:19:20 thorpej Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.4 1999/09/04 03:36:41 itojun Exp $");
 #endif
 #endif
 
@@ -57,11 +57,11 @@ __RCSID("$NetBSD: print-frag6.c,v 1.6 1999/12/11 18:19:20 thorpej Exp $");
 #include "interface.h"
 #include "addrtoname.h"
 
-int
+void
 frag6_print(register const u_char *bp, register const u_char *bp2)
 {
 	register const struct ip6_frag *dp;
-	register const struct ip6_hdr *ip6;
+	register const struct ip6_hdr *ip;
 	register const u_char *ep;
 
 #if 0
@@ -69,7 +69,7 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 #endif
 
 	dp = (struct ip6_frag *)bp;
-	ip6 = (struct ip6_hdr *)bp2;
+	ip = (struct ip6_hdr *)bp2;
 
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
@@ -77,31 +77,19 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 	TCHECK(dp->ip6f_offlg);
 
 	if (vflag) {
-		printf("frag (0x%08x:%d|%ld)",
+		printf("frag (%08x:%d|%d) ",
 		       ntohl(dp->ip6f_ident),
 		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
-		       sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) -
-			       (long)(bp - bp2) - sizeof(struct ip6_frag));
+		       ntohs(ip->ip6_plen));
 	} else {
-		printf("frag (%d|%ld)",
+		printf("frag (%d|%d) ",
 		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
-		       sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) -
-			       (long)(bp - bp2) - sizeof(struct ip6_frag));
+		       ntohs(ip->ip6_plen));
 	}
 
-#if 0
-	/* it is meaningless to decode non-first fragment */
-	if (ntohs(dp->ip6f_offlg & IP6F_OFF_MASK) != 0)
-		return 65535;
-	else
-#endif
-	{
-		fputs(" ", stdout);
-		return sizeof(struct ip6_frag);
-	}
+	return;
 trunc:
 	fputs("[|frag]", stdout);
-	return 65535;
 #undef TCHECK
 }
 #endif /* INET6 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.20 1999/11/20 00:37:59 thorpej Exp $	*/
+/*	$NetBSD: ip.h,v 1.19 1999/07/01 08:12:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,7 +68,7 @@ struct ip {
 	u_int8_t  ip_p;			/* protocol */
 	u_int16_t ip_sum;		/* checksum */
 	struct	  in_addr ip_src, ip_dst; /* source and dest address */
-} __attribute__((__packed__));
+};
 
 #define	IP_MAXPACKET	65535		/* maximum packet size */
 
@@ -147,8 +147,8 @@ struct	ip_timestamp {
 		 struct	ipt_ta {
 			struct in_addr ipt_addr;
 			n_time ipt_time;
-		 } ipt_ta[1] __attribute__((__packed__));
-	} ipt_timestamp /* XXX __attribute__((__packed__)) ??? */;
+		 } ipt_ta[1];
+	} ipt_timestamp;
 };
 
 /* flag bits for ipt_flg */

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1999/12/08 17:12:21 msaitoh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1 1999/09/13 10:31:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -245,31 +245,34 @@ copyoutstr(kaddr, uaddr, maxlen, lencopied)
 
 	curpcb->pcb_onfault = &&Err999;
 
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
-		cnt = maxlen;
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) < maxlen)
+		maxlen = cnt;
+	else
+		cnt = maxlen - 1;
 
 	while (cnt--) {
-		if ((*to++ = *from++) == 0) {
-			rc = 0;
-			goto out;
-		}
+		if ((*to++ = *from++) == 0)
+			break;
 	}
 
-	if (to >= (char *)VM_MAXUSER_ADDRESS)
-		rc = EFAULT;
-	else
-		rc = ENAMETOOLONG;
+	*lencopied = from - from_top;
 
-out:
-	if (lencopied)
-		*lencopied = from - from_top;
+	if (cnt == 0) {
+		if (to >= (char *)VM_MAXUSER_ADDRESS)
+			rc = EFAULT;
+		else
+			rc = ENAMETOOLONG;
+	} else
+		rc = 0;
+
 	curpcb->pcb_onfault = 0;
 	return rc;
 
  Err999:
-	if (lencopied)
-		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
+	if (lencopied != 0)
+		*lencopied = from - from_top;
+
 	return EFAULT;
 }
 
@@ -295,31 +298,36 @@ copyinstr(uaddr, kaddr, maxlen, lencopied)
 
 	curpcb->pcb_onfault = &&Err999;
 
-	if ((cnt = (char *)VM_MAXUSER_ADDRESS - to) > maxlen)
-		cnt = maxlen;
+	if ((cnt = (char *)VM_MAXUSER_ADDRESS - from) < maxlen)
+		maxlen = cnt;
+	else
+		cnt = maxlen - 1;
 
 	while (cnt--) {
-		if ((*to++ = *from++) == 0) {
-			rc = 0;
-			goto out;
-		}
+		if ((*to++ = *from++) == 0)
+			break;
 	}
 
-	if (to >= (char *)VM_MAXUSER_ADDRESS)
-		rc = EFAULT;
-	else
-		rc = ENAMETOOLONG;
-
-out:
-	if (lencopied)
+	if (lencopied != NULL)
 		*lencopied = from - from_top;
+
+	if (cnt == 0 && *(from - 1) != 0) {
+		if (to >= (char *)VM_MAXUSER_ADDRESS)
+			rc = EFAULT;
+		else
+			rc = ENAMETOOLONG;
+	} else
+		rc = 0;
+
 	curpcb->pcb_onfault = 0;
+
 	return rc;
 
  Err999:
-	if (lencopied)
-		*lencopied = from - from_top;
 	curpcb->pcb_onfault = 0;
+	if (lencopied != 0)
+		*lencopied = from - from_top;
+
 	return EFAULT;
 }
 
@@ -341,16 +349,18 @@ copystr(kfaddr, kdaddr, maxlen, lencopied)
 	int i;
 
 	for (i = 0; i < maxlen; i++) {
-		if ((*to++ = *from++) == NULL) {
-			if (lencopied)
-				*lencopied = i + 1;
-			return (0);
-		}
+		if ((*to++ = *from++) == NULL)
+			break;
 	}
 
-	if (lencopied)
+	if (i == maxlen) {
 		*lencopied = i;
-	return (ENAMETOOLONG);
+		return ENAMETOOLONG;
+	} else {
+		if (lencopied)
+			*lencopied = i + 1;
+		return 0;
+	}
 }
 
 /*

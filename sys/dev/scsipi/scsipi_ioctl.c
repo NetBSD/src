@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.37 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37.8.1 1999/12/21 23:19:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -355,7 +355,8 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
-			    sc_link->adapter->scsipi_minphys, &si->si_uio);
+			    sc_link->adapter->scsipi_minphys, &si->si_uio,
+			    DEF_BSHIFT);
 		} else {
 			/* if no data, no need to translate it.. */
 			si->si_bp.b_flags = 0;
@@ -363,6 +364,8 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			si->si_bp.b_bcount = 0;
 			si->si_bp.b_dev = dev;
 			si->si_bp.b_proc = p;
+			si->si_bp.b_bshift = DEF_BSHIFT;
+			si->si_bp.b_bsize = DEF_BSIZE;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}

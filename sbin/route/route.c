@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.35 1999/12/03 05:43:00 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.35 1999/12/03 05:43:00 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,9 @@ int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
+#ifdef INET6
+char ntop_buf[INET6_ADDRSTRLEN];	/*for inet_ntop()*/
+#endif
 
 static void
 usage(cp)
@@ -381,9 +384,6 @@ routename(sa)
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
 	struct in_addr in;
-#ifdef INET6
-	static char ntop_buf[NI_MAXHOST];
-#endif
 
 	if (first) {
 		first = 0;
@@ -479,9 +479,6 @@ netname(sa)
 	u_int32_t i;
 	int subnetshift;
 	struct in_addr in;
-#ifdef INET6
-	static char ntop_buf[NI_MAXHOST];
-#endif
 
 	switch (sa->sa_family) {
 
@@ -646,6 +643,13 @@ newroute(argc, argv)
 			case K_INET6:
 				af = AF_INET6;
 				aflen = sizeof(struct sockaddr_in6);
+				if (prefixlen("64") != 64) {
+					fprintf(stderr, "internal error:"
+						"setting prefixlen=64\n");
+					exit(1);
+				}
+				forcenet = 0;
+				ishost = 1;
 				break;
 #endif
 
@@ -970,7 +974,7 @@ getaddr(which, s, hpp)
 #ifndef SMALL
 #ifdef INET6
 	case AF_INET6:
-		if (inet_pton(AF_INET6, s, (void *)&su->sin6.sin6_addr) != 1) {
+		if (inet_pton(AF_INET6, s, (void *)&su->sin6.sin6_addr) == -1) {
 			(void) fprintf(stderr, "%s: bad value\n", s);
 			exit(1);
 		}
@@ -1407,7 +1411,7 @@ print_getmsg(rtm, msglen)
 	struct rt_msghdr *rtm;
 	int msglen;
 {
-	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
+	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr *sa;
 	char *cp;
@@ -1448,9 +1452,6 @@ print_getmsg(rtm, msglen)
 					   ((struct sockaddr_dl *)sa)->sdl_nlen)
 						ifp = (struct sockaddr_dl *)sa;
 					break;
-				case RTA_IFA:
-					ifa = sa;
-					break;
 				}
 				ADVANCE(cp, sa);
 			}
@@ -1467,8 +1468,6 @@ print_getmsg(rtm, msglen)
 	}
 	if (gate && rtm->rtm_flags & RTF_GATEWAY)
 		(void)printf("    gateway: %s\n", routename(gate));
-	if (ifa)
-		(void)printf(" local addr: %s\n", routename(ifa));
 	if (ifp)
 		(void)printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
@@ -1583,10 +1582,6 @@ sodump(su, which)
 	sup su;
 	char *which;
 {
-#ifdef INET6
-	char ntop_buf[NI_MAXHOST];
-#endif
-
 	switch (su->sa.sa_family) {
 	case AF_INET:
 		(void) printf("%s: inet %s; ",

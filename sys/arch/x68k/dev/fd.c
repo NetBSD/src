@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.28.14.1 1999/12/21 23:16:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1575,7 +1575,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = 128 << fd->sc_type->secsize;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL, fd->sc_type->secsize + 7) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1602,7 +1602,8 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL,
+				7 + fd->sc_type->secsize);
 		return error;
 
 	case DIOCLOCK:

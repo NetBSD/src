@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.28 1999/07/08 01:26:26 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.28.8.1 1999/12/21 23:19:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -111,6 +111,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_bshift = DEF_BSHIFT;
 	vfs_getnewfsid(mp, MOUNT_FDESC);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -232,8 +233,8 @@ fdesc_statfs(mp, sbp, p)
 	if (fdp->fd_nfiles < lim)
 		freefd += (lim - fdp->fd_nfiles);
 
-	sbp->f_bsize = DEV_BSIZE;
-	sbp->f_iosize = DEV_BSIZE;
+	sbp->f_bsize = blocksize(mp->mnt_bshift);
+	sbp->f_iosize = sbp->f_bsize;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

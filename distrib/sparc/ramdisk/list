@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 1999/11/23 23:16:05 simonb Exp $
+#	$NetBSD: list,v 1.9 1999/06/27 12:56:00 mrg Exp $
 
 LIBS	libhack.o -lz -lpcap -lbz2
 
@@ -10,7 +10,6 @@ CRUNCHSPECIAL	init srcdir distrib/utils/init_s
 CRUNCHSPECIAL	netstat srcdir distrib/utils/x_netstat
 CRUNCHSPECIAL	route srcdir distrib/utils/x_route
 CRUNCHSPECIAL	sh srcdir distrib/utils/x_sh
-CRUNCHSPECIAL	ping srcdir distrib/utils/x_ping
 
 SRCDIRS bin gnu/usr.bin/binutils gnu/usr.bin sbin sys/arch/sparc/stand usr.bin/less usr.bin usr.sbin/pppd usr.sbin
 
@@ -73,6 +72,7 @@ LINK	ramdiskbin			usr/mdec/installboot
 
 LINK	ramdiskbin			usr/sbin/chown usr/bin/chgrp
 LINK	ramdiskbin			usr/sbin/chroot
+LINK	ramdiskbin			usr/sbin/update
 LINK	ramdiskbin			usr/sbin/pppd
 LINK	ramdiskbin			usr/sbin/sysctl
 

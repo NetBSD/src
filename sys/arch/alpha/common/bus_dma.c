@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.34 1999/12/08 23:40:35 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.32 1999/09/12 01:16:58 chs Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 1999/12/08 23:40:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 1999/09/12 01:16:58 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 1999/12/08 23:40:35 thorpej Exp $")
 int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
 	    paddr_t *, int *, int));
-
-extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -458,28 +456,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags; 
 {
-
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
-}
-
-/*
- * Allocate physical memory from the given physical address range.
- * Called by DMA-safe memory allocation methods.
- */
-int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t; 
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags; 
-	paddr_t low;
-	paddr_t high;
-{
-	paddr_t curaddr, lastaddr;
+	extern paddr_t avail_start, avail_end;
+	paddr_t curaddr, lastaddr, high;
 	vm_page_t m;    
 	struct pglist mlist;
 	int curseg, error;
@@ -493,7 +471,7 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -605,8 +583,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.22 1999/11/25 05:03:53 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.20 1999/07/08 18:09:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
-			      struct sbus_intr **, int *, int));
+			      struct sbus_intr **, int *));
 static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int _sbus_bus_map __P((
@@ -233,7 +233,7 @@ sbus_print(args, busname)
 		printf("%s at %s", sa->sa_name, busname);
 	printf(" slot %ld offset 0x%lx", (long)sa->sa_slot, 
 	       (u_long)sa->sa_offset);
-	for (i = 0; i < sa->sa_nintr; i++) {
+	for (i=0; i<sa->sa_nintr; i++) {
 		struct sbus_intr *sbi = &sa->sa_intr[i];
 
 		printf(" vector %lx ipl %ld", 
@@ -387,8 +387,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 		}
 	}
 
-	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr,
-	    sa->sa_slot)) != 0)
+	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
 	error = getprop(node, "address", sizeof(u_int32_t),
@@ -545,15 +544,14 @@ sbusreset(sbus)
  * Get interrupt attributes for an Sbus device.
  */
 int
-sbus_get_intr(sc, node, ipp, np, slot)
+sbus_get_intr(sc, node, ipp, np)
 	struct sbus_softc *sc;
 	int node;
 	struct sbus_intr **ipp;
 	int *np;
-	int slot;
 {
 	int *ipl;
-	int n, i;
+	int i, n, error;
 	char buf[32];
 
 	/*
@@ -561,40 +559,28 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 */
 	ipl = NULL;
 	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
-		struct sbus_intr *ip;
-		int pri;
-
-		/* Default to interrupt level 2 -- otherwise unused */
-		pri = INTLEVENCODE(2);
-
 		/* Change format to an `struct sbus_intr' array */
+		struct sbus_intr *ip;
+		/* Default to interrupt level 2 -- otherwise unused */
+		int pri = INTLEVENCODE(2);
 		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
 		if (ip == NULL)
 			return (ENOMEM);
-
-		/*
-		 * Now things get ugly.  We need to take this value which is
+		/* Now things get ugly.  We need to take this value which is
 		 * the interrupt vector number and encode the IPL into it
 		 * somehow. Luckily, the interrupt vector has lots of free
-		 * space and we can easily stuff the IPL in there for a while.
+		 * space and we can easily stuff the IPL in there for a while.  
 		 */
 		getpropstringA(node, "device_type", buf);
-		if (!buf[0])
+		if (!buf[0]) {
 			getpropstringA(node, "name", buf);
-
-		for (i = 0; intrmap[i].in_class; i++) 
+		}
+		for (i=0; intrmap[i].in_class; i++) {
 			if (strcmp(intrmap[i].in_class, buf) == 0) {
 				pri = INTLEVENCODE(intrmap[i].in_lev);
 				break;
 			}
-
-		/*
-		 * Sbus card devices need the slot number encoded into
-		 * the vector as this is generally not done.
-		 */
-		if ((ipl[0] & INTMAP_OBIO) == 0)
-			pri |= slot << 3;
-
+		}
 		for (n = 0; n < *np; n++) {
 			/* 
 			 * We encode vector and priority into sbi_pri so we 
@@ -603,15 +589,41 @@ sbus_get_intr(sc, node, ipp, np, slot)
 			 * of an integer level.
 			 * Stuff the real vector in sbi_vec.
 			 */
-
 			ip[n].sbi_pri = pri|ipl[n];
 			ip[n].sbi_vec = ipl[n];
 		}
 		free(ipl, M_DEVBUF);
 		*ipp = ip;
+		return (0);
 	}
 	
-	return (0);
+	/* We really don't support the following */
+/*	printf("\nWARNING: sbus_get_intr() \"interrupts\" not found -- using \"intr\"\n"); */
+/* And some devices don't even have interrupts */
+	/*
+	 * Fall back on `intr' property.
+	 */
+	*ipp = NULL;
+	error = getprop(node, "intr", sizeof(struct sbus_intr),
+			 np, (void **)ipp);
+	switch (error) {
+	case 0:
+		for (n = *np; n-- > 0;) {
+			/* 
+			 * Move the interrupt vector into place.
+			 * We could remap the level, but the SBUS priorities 
+			 * are probably good enough.
+			 */
+			(*ipp)[n].sbi_vec = (*ipp)[n].sbi_pri;
+			(*ipp)[n].sbi_pri |= INTLEVENCODE((*ipp)[n].sbi_pri);
+		}
+		break;
+	case ENOENT:
+		error = 0;
+		break;
+	}
+
+	return (error);
 }
 
 
@@ -654,20 +666,18 @@ sbus_intr_establish(t, level, flags, handler, arg)
 		if ((vec & INTMAP_OBIO) == 0) {
 			/* We're in an SBUS slot */
 			/* Register the map and clear intr registers */
-
-			int slot = INTSLOT(level);
-
-			ih->ih_map = &(&sc->sc_sysio->sbus_slot0_int)[slot];
-			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[vec];
 #ifdef DEBUG
 			if (sbusdebug & SDB_INTR) {
-				int64_t intrmap = *ih->ih_map;
+				int64_t *intrptr = &(&sc->sc_sysio->sbus_slot0_int)[INTSLOT(vec)];
+				int64_t intrmap = *intrptr;
 				
-				printf("Found SBUS %lx IRQ as %llx in slot %d\n", 
-				       (long)vec, (long long)intrmap, slot);
-				printf("\tmap addr %p clr addr %p\n", ih->ih_map, ih->ih_clr);
+				printf("Found SBUS %lx IRQ as %llx in slot %ld\n", 
+				       (long)vec, (long)intrmap, 
+				       (long)INTSLOT(vec));
 			}
 #endif
+			ih->ih_map = &(&sc->sc_sysio->sbus_slot0_int)[INTSLOT(vec)];
+			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[INTVEC(vec)];
 			/* Enable the interrupt */
 			vec |= INTMAP_V;
 			/* Insert IGN */
@@ -680,10 +690,10 @@ sbus_intr_establish(t, level, flags, handler, arg)
 
 			/* Insert IGN */
 			vec |= sc->sc_ign;
-			for (i = 0; &intrptr[i] <=
-			    (int64_t *)&sc->sc_sysio->reserved_int_map &&
-			    INTVEC(intrmap = intrptr[i]) != INTVEC(vec); i++)
-				;
+			for (i=0;
+			     &intrptr[i] <= (int64_t *)&sc->sc_sysio->reserved_int_map &&
+				     INTVEC(intrmap=intrptr[i]) != INTVEC(vec); 
+			     i++);
 			if (INTVEC(intrmap) == INTVEC(vec)) {
 #ifdef DEBUG
 				if (sbusdebug & SDB_INTR)
@@ -701,7 +711,7 @@ sbus_intr_establish(t, level, flags, handler, arg)
 		}
 	}
 #ifdef DEBUG
-	if (sbusdebug & SDB_INTR) { long i; for (i=0; i<400000000; i++); }
+	if (sbusdebug & SDB_INTR) { long i; for (i=0; i<1400000000; i++); }
 #endif
 
 	ih->ih_fun = handler;
@@ -1132,8 +1142,8 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

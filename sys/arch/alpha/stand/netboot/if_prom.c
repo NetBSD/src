@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.15 1999/11/13 21:38:21 thorpej Exp $ */
+/* $NetBSD: if_prom.c,v 1.13 1999/05/26 06:22:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.

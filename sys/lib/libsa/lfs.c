@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.5 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: lfs.c,v 1.3 1999/08/19 00:19:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993

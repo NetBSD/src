@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.20 1999/12/17 03:24:33 tsubai Exp $
+#	$NetBSD: Makefile.newsmips,v 1.19 1999/07/26 05:20:47 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -51,7 +51,7 @@ CWARNFLAGS?=	-Werror -Wall -Wno-parentheses -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 0
+GP?=		-G0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE

@@ -1,4 +1,4 @@
-.\" $NetBSD: mpu.4,v 1.4 1999/11/15 18:55:28 augustss Exp $
+.\" $NetBSD: mpu.4,v 1.2 1999/08/02 17:43:52 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,7 @@
 .Sh SYNOPSIS
 .Cd "mpu*  at isa? port 0x330 irq 9"
 .Cd "mpu*  at eso?"
-.Cd "mpu*  at fms?"
 .Cd "mpu*  at sb?"
-.Cd "mpu*  at ym?"
 .Cd "midi* at mpu?"
 .Sh DESCRIPTION
 The
@@ -61,11 +59,9 @@ Access to the device is through the MIDI driver.
 .\" directly on the ISA bus.
 .Sh SEE ALSO
 .Xr eso 4 ,
-.Xr fms 4 ,
 .Xr isa 4 ,
 .Xr midi 4 ,
-.Xr sb 4 ,
-.Xr ym 4
+.Xr sb 4
 .Sh HISTORY
 The
 .Nm

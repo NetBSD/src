@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_masks.c,v 1.3 1999/10/23 23:14:14 ad Exp $	*/
+/* 	$NetBSD: rasops_masks.c,v 1.2 1999/05/18 21:51:59 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,19 @@ int32_t rasops_rmask[32+1] = {
 	MBE(0xfffffff0), MBE(0xfffffff8), MBE(0xfffffffc), MBE(0xfffffffe),
 	MBE(0xffffffff)
 };
+
+#ifdef notyet
+/* `ragged edge' bytemasks */
+int32_t rasops_lbmask[4+1] = {
+	MBE(0x00000000), MBE(0x00ffffff), MBE(0x0000ffff), MBE(0x000000ff),
+	MBE(0x00000000)
+};
+
+int32_t rasops_rbmask[4+1] = {
+	MBE(0x00000000), MBE(0xff000000), MBE(0xffff0000), MBE(0xffffff00),
+	MBE(0xffffffff)
+};
+#endif
 
 /* Part bitmasks */
 int32_t rasops_pmask[32][32] = {

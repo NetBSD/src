@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 1999/10/14 21:40:05 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 1999/08/10 21:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,6 +196,26 @@ u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
+void	DCIAS __P((vm_offset_t));
+void	DCIA __P((void));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+#if defined(M68040) || defined(M68060)
+void	DCFA __P((void));
+void	DCFP __P((vm_offset_t));
+void	DCFL __P((vm_offset_t));
+void	DCPL __P((vm_offset_t));
+void	DCPP __P((vm_offset_t));
+void	ICPL __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+#endif
 
 /*
  * Prototypes from machdep.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.6 1999/10/25 23:48:12 thorpej Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigsetjmp.S,v 1.6 1999/10/25 23:48:12 thorpej Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,20 +62,20 @@
 #include <m68k/setjmp.h>
 
 ENTRY(sigsetjmp)
-	movl	%sp@(8),%d1	/* grab the mask */
-        movl	%sp@(4),%a0	/* grab the area pointer */
-	movl	%d1,%a0@(_JBLEN * 4 )	/* save at end of area */
-	tstl	%d1
+	movl	sp@(8),d1	/* grab the mask */
+        movl	sp@(4),a0	/* grab the area pointer */
+	movl	d1,a0@(_JBLEN * 4 )	/* save at end of area */
+	tstl	d1
 	bne	dosig
-	jra	PIC_PLT(_C_LABEL(_setjmp))
+	jra	_C_LABEL(_setjmp)
 dosig:
-	jra	PIC_PLT(_C_LABEL(setjmp))
+	jra	_C_LABEL(setjmp)
 
 
 ENTRY(siglongjmp)
-	movl	%sp@(4),%a0	/* save area pointer */
-	tstl	%a0@(_JBLEN * 4) /* check mask... */
+	movl	sp@(4),a0	/* save area pointer */
+	tstl	a0@(_JBLEN * 4) /* check mask... */
 	bne	didsig
-	jra	PIC_PLT(_C_LABEL(_longjmp))
+	jra	_C_LABEL(_longjmp)
 didsig:
-	jra	PIC_PLT(_C_LABEL(longjmp))
+	jra	_C_LABEL(longjmp)

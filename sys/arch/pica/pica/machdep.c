@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1999/12/04 21:21:16 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 1999/05/20 08:21:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -521,7 +521,7 @@ cpu_startup()
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base+1 : base);
+		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
@@ -555,7 +555,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.30 1999/12/15 07:19:07 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.25 1999/09/03 22:48:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,16 +117,16 @@ lfs_valloc(v)
 	ino_t new_ino;
 	u_long i, max;
 	int error;
-	extern int lfs_dirvcount;
 
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	
 	/*
-	 * Prevent a race getting lfs_free.  We use
-	 * the ufs_hashlock here because we need that anyway for
-	 * the hash insertion later.
+	 * Prevent a race getting lfs_free - XXX - KS
+	 * (this should be a proper lock, in struct lfs)
 	 */
-	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
+
+	while(lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
+		;
 
 	/* Get the head of the freelist. */
 	new_ino = fs->lfs_free;
@@ -156,16 +156,14 @@ lfs_valloc(v)
 #else
 	brelse(bp);
 #endif
-
+	
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
 		VOP_LOCK(vp,LK_EXCLUSIVE);
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_ffs_size);
-		if ((error = VOP_BALLOC(vp, ip->i_ffs_size, fs->lfs_bsize,
-		    NULL, 0, &bp)) != 0)
-			return (error);
+		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		(void)uvm_vnp_uncache(vp);
@@ -191,6 +189,7 @@ lfs_valloc(v)
 			return (error);
 		}
 	}
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
@@ -198,10 +197,8 @@ lfs_valloc(v)
 #endif /* DIAGNOSTIC */
 	
 	/* Create a vnode to associate with the inode. */
-	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0) {
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0)
 		return (error);
-	}
 	
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
@@ -213,7 +210,6 @@ lfs_valloc(v)
 	
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 	
 	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
@@ -225,7 +221,7 @@ lfs_valloc(v)
 	*ap->a_vpp = vp;
 	if(!(vp->v_flag & VDIROP)) {
 		lfs_vref(vp);
-		++lfs_dirvcount;
+		++fs->lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
 	VREF(ip->i_devvp);
@@ -297,27 +293,24 @@ lfs_vfree(v)
 	struct buf *bp;
 	struct ifile *ifp;
 	struct inode *ip;
-	struct vnode *vp;
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
 	int already_locked;
-	extern int lfs_dirvcount;
 	
 	/* Get the inode number and file system. */
-	vp = ap->a_pvp;
-	ip = VTOI(vp);
+	ip = VTOI(ap->a_pvp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 	
 	/* If we already hold ufs_hashlock, don't panic, just do it anyway */
 	already_locked = lockstatus(&ufs_hashlock) && ufs_hashlock.lk_lockholder == curproc->p_pid;
-	while(WRITEINPROG(vp)
+	while(WRITEINPROG(ap->a_pvp)
 	      || fs->lfs_seglock
 	      || (!already_locked && lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)))
 	{
-		if (WRITEINPROG(vp)) {
-			tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
+		if (WRITEINPROG(ap->a_pvp)) {
+			tsleep(ap->a_pvp, (PRIBIO+1), "lfs_vfree", 0);
 		}
 		if (fs->lfs_seglock) {
 			if (fs->lfs_lockpid == curproc->p_pid) {
@@ -328,13 +321,6 @@ lfs_vfree(v)
 		}
 	}
 	
-	if(vp->v_flag & VDIROP) {
-		--lfs_dirvcount;
-		vp->v_flag &= ~VDIROP;
-		wakeup(&lfs_dirvcount);
-		lfs_vunref(vp);
-	}
-
 	if (ip->i_flag & IN_CLEANING) {
 		--fs->lfs_uinodes;
 	}

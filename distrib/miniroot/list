@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 1999/11/23 23:16:04 simonb Exp $
+#	$NetBSD: list,v 1.11 1999/03/25 15:51:15 leo Exp $
 
 SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -36,7 +36,7 @@ LINK	instbin			sbin/mount_cd9660
 LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/newfs sbin/mount_mfs
-LINK	instbin			sbin/x_ping sbin/ping
+LINK	instbin			sbin/ping
 LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
@@ -49,6 +49,7 @@ LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/sort
 LINK	instbin			usr/bin/tip
+LINK	instbin			usr/sbin/update
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs

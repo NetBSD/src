@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.10 1999/11/04 02:00:18 erh Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.6 1997/12/15 04:21:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.10 1999/11/04 02:00:18 erh Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.6 1997/12/15 04:21:34 mrg Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -64,6 +64,12 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.10 1999/11/04 02:00:18 erh Exp $");
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
+
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
@@ -145,8 +151,7 @@ ELFNAMEEND(create_knlist)(name, db)
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)&mappedfile[0];
 
-	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
+	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
 		BADUNMAP;
 
 	switch (ehdrp->e_machine) {
@@ -174,7 +179,7 @@ ELFNAMEEND(create_knlist)(name, db)
 	shdrp = (Elf_Shdr *)&mappedfile[shdr_off];
 
 	for (i = 0; i < nshdr; i++) {
-		if (shdrp[i].sh_type == SHT_SYMTAB) {
+		if (shdrp[i].sh_type == Elf_sht_symtab) {
 			symshdrp = &shdrp[i];
 			symstrshdrp = &shdrp[shdrp[i].sh_link];
 		}
@@ -245,22 +250,22 @@ ELFNAMEEND(create_knlist)(name, db)
 		 * as best we can.
 		 */
 		nbuf.n_value = symp[i].st_value;
-		switch (ELFDEFNNAME(ST_TYPE)(symp[i].st_info)) {
+		switch (ELF_SYM_TYPE(symp[i].st_info)) {
 		default:
-		case STT_NOTYPE:
+		case Elf_estt_notype:
 			nbuf.n_type = N_UNDF;
 			break;
-		case STT_OBJECT:
+		case Elf_estt_object:
 			nbuf.n_type = N_DATA;
 			break;
-		case STT_FUNC:
+		case Elf_estt_func:
 			nbuf.n_type = N_TEXT;
 			break;
-		case STT_FILE:
+		case Elf_estt_file:
 			nbuf.n_type = N_FN;
 			break;
 		}
-		if (ELFDEFNNAME(ST_BIND)(symp[i].st_info) != STB_LOCAL)
+		if (ELF_SYM_BIND(symp[i].st_info) != Elf_estb_local)
 			nbuf.n_type |= N_EXT;
 		nbuf.n_desc = 0;				/* XXX */
 		nbuf.n_other = 0;				/* XXX */

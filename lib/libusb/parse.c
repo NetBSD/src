@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 1999/10/13 17:48:04 drochner Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -29,7 +29,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

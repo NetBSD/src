@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1999/11/06 20:18:50 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.10 1999/03/24 05:51:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,11 +142,11 @@ main()
 	off("V_FAULTS", struct uvmexp, faults);
 
 	/* FPU state */
-	off("FS_REGS", struct fpstate64, fs_regs);
-	off("FS_FSR", struct fpstate64, fs_fsr);
-	off("FS_QSIZE", struct fpstate64, fs_qsize);
-	off("FS_QUEUE", struct fpstate64, fs_queue);
-	siz("FS_SIZE", struct fpstate64);
+	off("FS_REGS", struct fpstate, fs_regs);
+	off("FS_FSR", struct fpstate, fs_fsr);
+	off("FS_QSIZE", struct fpstate, fs_qsize);
+	off("FS_QUEUE", struct fpstate, fs_queue);
+	siz("FS_SIZE", struct fpstate);
 	def("FSR_QNE", FSR_QNE);
 	def("FPRS_FEF",FPRS_FEF);
 	def("FPRS_DU",FPRS_DU);
@@ -173,26 +173,26 @@ main()
 	off("PCB_LASTCALL", struct pcb, lastcall);
 	siz("PCB_SIZE", struct pcb);
 
-	/* trapframe64 fields */
-	off("TF_TSTATE", struct trapframe64, tf_tstate);
-	off("TF_PC", struct trapframe64, tf_pc);
-	off("TF_NPC", struct trapframe64, tf_npc);
-	off("TF_FAULT", struct trapframe64, tf_fault);
-	off("TF_KSTACK", struct trapframe64, tf_kstack);
-	off("TF_Y", struct trapframe64, tf_y);
-	off("TF_PIL", struct trapframe64, tf_pil);
-	off("TF_OLDPIL", struct trapframe64, tf_oldpil);
-	off("TF_TT", struct trapframe64, tf_tt);
-	off("TF_GLOBAL", struct trapframe64, tf_global);
-	off("TF_OUT", struct trapframe64, tf_out);
-	off("TF_LOCAL", struct trapframe64, tf_local);
-	off("TF_IN", struct trapframe64, tf_in);
+	/* trapframe fields */
+	off("TF_TSTATE", struct trapframe, tf_tstate);
+	off("TF_PC", struct trapframe, tf_pc);
+	off("TF_NPC", struct trapframe, tf_npc);
+	off("TF_FAULT", struct trapframe, tf_fault);
+	off("TF_KSTACK", struct trapframe, tf_kstack);
+	off("TF_Y", struct trapframe, tf_y);
+	off("TF_PIL", struct trapframe, tf_pil);
+	off("TF_OLDPIL", struct trapframe, tf_oldpil);
+	off("TF_TT", struct trapframe, tf_tt);
+	off("TF_GLOBAL", struct trapframe, tf_global);
+	off("TF_OUT", struct trapframe, tf_out);
+	off("TF_LOCAL", struct trapframe, tf_local);
+	off("TF_IN", struct trapframe, tf_in);
 	/* shortened versions */
-	off("TF_G", struct trapframe64, tf_global);
-	off("TF_O", struct trapframe64, tf_out);
-	off("TF_L", struct trapframe64, tf_local);
-	off("TF_I", struct trapframe64, tf_in);
-	siz("TF_SIZE", struct trapframe64);
+	off("TF_G", struct trapframe, tf_global);
+	off("TF_O", struct trapframe, tf_out);
+	off("TF_L", struct trapframe, tf_local);
+	off("TF_I", struct trapframe, tf_in);
+	siz("TF_SIZE", struct trapframe);
 
 #if 0
 	/* clockframe fields */

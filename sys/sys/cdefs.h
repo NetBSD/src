@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.30 1999/12/13 08:25:16 itohy Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.29 1999/03/20 01:39:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -163,12 +163,12 @@
 #endif /* _KERNEL */
 
 #ifdef __GNUC__
-#define	__RENAME(x)	___RENAME(x)
+#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #else
 #ifdef __lint__
 #define	__RENAME(x)	__symbolrename(x)
 #else
- #error "No function renaming possible"
+#error "No function renaming possible"
 #endif /* __lint__ */
 #endif /* __GNUC__ */
 

@@ -100,7 +100,7 @@ Subject:     @var{subject}
 >Number:       @var{gnats-id}
 >Category:     @var{category}
 >Synopsis:     @var{synopsis}
->Confidential: no @emph{or} yes
+>Confidential: yes @emph{or} no
 >Severity:     critical, serious, @emph{or} non-critical
 >Priority:     high, medium @emph{or} low
 >Responsible:  @var{responsible}

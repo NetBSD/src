@@ -1,5 +1,3 @@
-/*	$NetBSD: if_gif.c,v 1.4 1999/12/13 15:17:19 itojun Exp $	*/
-
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -40,16 +38,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#if defined(__FreeBSD__) || __FreeBSD__ >= 3
-/*nothing*/
-#else
+#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
@@ -78,6 +71,7 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
+#include <netinet6/in6_ifattach.h>
 #endif /* INET6 */
 
 #include <net/if_gif.h>
@@ -85,15 +79,9 @@
 #include "gif.h"
 #include "bpfilter.h"
 
-#include <net/net_osdep.h>
-
 #if NGIF > 0
 
-#ifdef __FreeBSD__
 void gifattach __P((void *));
-#else
-void gifattach __P((int));
-#endif
 
 /*
  * gif global variable definitions
@@ -103,11 +91,7 @@ struct gif_softc *gif = 0;
 
 void
 gifattach(dummy)
-#ifdef __FreeBSD__
 	void *dummy;
-#else
-	int dummy;
-#endif
 {
 	register struct gif_softc *sc;
 	register int i;
@@ -330,7 +314,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -344,11 +327,9 @@ gif_ioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-#endif /*not FreeBSD3*/
 		break;
 
 #ifdef	SIOCSIFMTU /* xxx */
-#ifndef __OpenBSD__
 	case SIOCGIFMTU:
 		break;
 	case SIOCSIFMTU:
@@ -366,13 +347,21 @@ gif_ioctl(ifp, cmd, data)
 			ifp->if_mtu = mtu;
 		}
 		break;
-#endif
 #endif /* SIOCSIFMTU */
 
 	case SIOCSIFPHYADDR:
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
+#ifdef INET6
+		if (found_first_ifid) 
+			in6_ifattach(ifp, IN6_IFT_P2P, NULL, 1);
+		else {
+			error = ENXIO; /* xxx */
+			goto bad;
+		}
+#endif /* INET6 */
+
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:

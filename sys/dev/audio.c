@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.121 1999/12/15 12:09:34 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.117 1999/09/23 11:53:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -217,8 +217,7 @@ audioattach(parent, self, aux)
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, oclass, props;
-	const char *sep = "";
+	int iclass, oclass;
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -241,23 +240,10 @@ audioattach(parent, self, aux)
         }
 #endif
 
-#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
-
-	props = hwp->get_props(hdlp);
-
-	if (props & AUDIO_PROP_FULLDUPLEX)
-		PRINT(": full duplex");
+	if (hwp->get_props(hdlp) & AUDIO_PROP_FULLDUPLEX)
+		printf(": full duplex\n");
 	else
-		PRINT(": half duplex");
-
-	if (props & AUDIO_PROP_MMAP)
-		PRINT("mmap");
-	if (props & AUDIO_PROP_INDEPENDENT)
-		PRINT("independent");
-
-	printf("\n");
-
-#undef PRINT
+		printf(": half duplex\n");
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
@@ -381,10 +367,7 @@ audiodetach(self, flags)
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
-	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
-	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
-	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);
-	vdevgone(maj, mn | MIXER_DEVICE,    mn | MIXER_DEVICE, VCHR);
+	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
 }
@@ -1328,12 +1311,6 @@ audio_calc_blksize(sc, mode)
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
-	/* 
-	 * The blocksize should never be 0, but a faulty
-	 * driver might set it wrong.  Just use something.
-	 */
-	if (bs <= 0)
-		bs = 512;
 	rb->blksize = bs;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n", 
@@ -2728,13 +2705,6 @@ audiosetinfo(sc, ai)
 			int bs = ai->blocksize;
 			if (hw->round_blocksize)
 				bs = hw->round_blocksize(sc->hw_hdl, bs);
-			/* 
-			 * The blocksize should never be 0, but a faulty
-			 * driver might set it wrong.  Just use something.
-			 */
-			if (bs <= 0)
-				bs = 512;
-
 			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
 		}

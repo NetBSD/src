@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.33 1999/12/01 23:22:59 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.30 1999/08/16 23:22:22 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.33 1999/12/01 23:22:59 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.30 1999/08/16 23:22:22 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,12 +265,10 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 
 cdev_decl(wskbd);
 
-#if NWSMUX > 0 || NWSDISPLAY > 0
 struct wsmuxops wskbd_muxops = {
 	wskbdopen, wskbddoclose, wskbddoioctl, wskbd_displayioctl,
 	wskbd_set_display
 };
-#endif
 
 #if NWSDISPLAY > 0
 static void wskbd_repeat __P((void *v));
@@ -407,6 +405,7 @@ wskbd_cnattach(consops, conscookie, mapdata)
 	void *conscookie;
 	const struct wskbd_mapdata *mapdata;
 {
+
 	KASSERT(!wskbd_console_initted);
 
 	wskbd_console_data.t_keymap = mapdata;
@@ -419,23 +418,6 @@ wskbd_cnattach(consops, conscookie, mapdata)
 #endif
 
 	wskbd_console_initted = 1;
-}
-
-void    
-wskbd_cndetach()
-{
-	KASSERT(wskbd_console_initted);
-
-	wskbd_console_data.t_keymap = 0;
-
-	wskbd_console_data.t_consops = 0;
-	wskbd_console_data.t_consaccesscookie = 0;
-
-#if NWSDISPLAY > 0
-	wsdisplay_unset_cons_kbd();
-#endif
-
-	wskbd_console_initted = 0;
 }
 
 #if NWSDISPLAY > 0
@@ -575,7 +557,7 @@ wskbd_input(dev, type, value)
 	if (!sc->sc_ready)
 		return;
 
-#if NWSMUX > 0
+#if NWSMUX > 0 || NWSDISPLAY > 0
 	if (sc->sc_mux)
 		evar = &sc->sc_mux->sc_events;
 	else
@@ -681,7 +663,7 @@ wskbdopen(dev, flags, mode, p)
 		return (0);
 	}
 
-#if NWSMUX > 0
+#if NWSMUX > 0 || NWSDISPLAY > 0
 	if (sc->sc_mux)
 		return (EBUSY);
 #endif

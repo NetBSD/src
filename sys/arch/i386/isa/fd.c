@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.128 1999/03/24 05:51:02 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.128.14.1 1999/12/21 23:16:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -642,7 +642,7 @@ fdstrategy(bp)
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
-	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
+	    ((bp->b_bcount & (bp->b_bsize - 1)) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -652,7 +652,7 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	sz = howmany(bp->b_bcount, FDC_BSIZE);
+	sz = howmany(bp->b_bcount, bp->b_bsize);
 
 	if (bp->b_blkno + sz > fd->sc_type->size) {
 		sz = fd->sc_type->size - bp->b_blkno;
@@ -666,10 +666,10 @@ fdstrategy(bp)
 			goto bad;
 		}
 		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
+		bp->b_bcount = sz << (fd->sc_type->secsize + 7);
 	}
 
- 	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
+ 	bp->b_cylin = bp->b_blkno / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
@@ -759,8 +759,10 @@ fdread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio,
+		fd->sc_type->secsize + 7));
 }
 
 int
@@ -769,8 +771,10 @@ fdwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio,
+		fd->sc_type->secsize + 7));
 }
 
 void
@@ -1051,7 +1055,7 @@ loop:
 		fdc->sc_errors = 0;
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
-		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
+		fd->sc_blkno = bp->b_blkno;
 		untimeout(fd_motor_off, fd);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
@@ -1105,10 +1109,11 @@ loop:
 				      (char *)finfo;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = min(nblks, fd->sc_bcount >> (type->secsize + 7));
+		nblks = min(nblks, FDC_MAXIOSIZE >> (type->secsize + 7));
 		fd->sc_nblks = nblks;
-		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
+		fd->sc_nbytes = finfo ? bp->b_bcount : nblks <<
+							(type->secsize + 7);
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -1220,7 +1225,8 @@ loop:
 		isa_dmadone(fdc->sc_ic, fdc->sc_drq);
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
-			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+			    fd->sc_skip >> (fd->sc_type->secsize + 7),
+			    (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
 		}
@@ -1327,7 +1333,7 @@ fdcretry(fdc)
 	fail:
 		if ((fd->sc_opts & FDOPT_SILENT) == 0) {
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
-				fd->sc_skip / FDC_BSIZE,
+				fd->sc_skip >> (fd->sc_type->secsize + 7),
 				(struct disklabel *)NULL);
 
 			printf(" (st0 %s",
@@ -1400,9 +1406,10 @@ fdioctl(dev, cmd, addr, flag, p)
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = FDC_BSIZE;
+		buffer.d_secsize = 1 << (fd->sc_type->secsize + 7);
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL,
+				fd->sc_type->secsize + 7) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
@@ -1414,6 +1421,10 @@ fdioctl(dev, cmd, addr, flag, p)
 		/* XXX do something */
 		return 0;
 
+	case DIOCGBSHIFT:
+		*(int *)addr = fd->sc_dk.dk_byteshift;
+		return (0);
+
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1422,13 +1433,14 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL,
+			fd->sc_type->secsize + 7);
 		return error;
 
 	case FDIOCGETFORMAT:
 		form_parms = (struct fdformat_parms *)addr;
 		form_parms->fdformat_version = FDFORMAT_VERSION;
-		form_parms->nbps = 128 * (1 << fd->sc_type->secsize);
+		form_parms->nbps = 1 << (fd->sc_type->secsize + 7);
 		form_parms->ncyl = fd->sc_type->cyls;
 		form_parms->nspt = fd->sc_type->sectrac;
 		form_parms->ntrk = fd->sc_type->heads;
@@ -1458,9 +1470,12 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (form_parms->fdformat_version != FDFORMAT_VERSION)
 			return EINVAL;	/* wrong version of formatting prog */
 
-		scratch = form_parms->nbps >> 7;
+		scratch = intlog2(form_parms->nbps);
+#if 0
 		if ((form_parms->nbps & 0x7f) || ffs(scratch) == 0 ||
 		    scratch & ~(1 << (ffs(scratch)-1)))
+#endif
+		if ((form_parms->nbps & ((1 << scratch)-1)) || scratch < 7)
 			/* not a power-of-two multiple of 128 */
 			return EINVAL;
 
@@ -1487,11 +1502,10 @@ fdioctl(dev, cmd, addr, flag, p)
 			return EINVAL;
 		fd->sc_type->heads = form_parms->ntrk;
 		fd->sc_type->seccyl = form_parms->nspt * form_parms->ntrk;
-		fd->sc_type->secsize = ffs(scratch)-1;
+		fd->sc_type->secsize = scratch - 7;
 		fd->sc_type->gap2 = form_parms->gaplen;
 		fd->sc_type->cyls = form_parms->ncyl;
-		fd->sc_type->size = fd->sc_type->seccyl * form_parms->ncyl *
-			form_parms->nbps / DEV_BSIZE;
+		fd->sc_type->size = fd->sc_type->seccyl * form_parms->ncyl;
 		fd->sc_type->step = form_parms->stepspercyl;
 		fd->sc_type->fillbyte = form_parms->fillbyte;
 		fd->sc_type->interleave = form_parms->interleave;
@@ -1576,7 +1590,7 @@ fdformat(dev, finfo, p)
 	 * seek to the requested cylinder
 	 */
 	bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
-		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
+		       + finfo->head * type->sectrac);
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (caddr_t)finfo;

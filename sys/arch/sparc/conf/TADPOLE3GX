@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.5 1999/11/12 06:15:38 matt Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.3 1999/08/11 01:46:25 matt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -76,7 +76,7 @@ options 	NFS_BOOT_BOOTPARAM
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-g"
+#makeoptions 	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -95,7 +95,7 @@ options 	SCSIVERBOSE
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,
 ## and other insecurities good only for development work.  Do not use this
 ## option on a production machine.
-options 	INSECURE
+#options 	INSECURE
 
 ## Allow non-root users to grab /dev/console with programs such as xconsole.
 ## `xconsole' therefore does not need setuid root with this option enabled.
@@ -119,7 +119,6 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-options		COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_AOUT	# NetBSD a.out compatibility

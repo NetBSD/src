@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1999/11/06 23:05:41 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 1999/08/04 16:01:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,35 +121,34 @@ intr_init()
 
 	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
+
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL3);
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL6);
+		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL4);
 
-		/* Non-standard interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL6);
+		/* Non-standard interrupt priority */
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL5);
 
 	} else {
 		inames = STD_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
+		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_BIO] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_NET] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[MAC68K_IPL_TTY] = (PSL_S | PSL_IPL1);
 		mac68k_ipls[MAC68K_IPL_IMP] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_CLOCK] = (PSL_S | PSL_IPL2);
 		mac68k_ipls[MAC68K_IPL_SCHED] = (PSL_S | PSL_IPL3);
 
-		/* Non-standard interrupt priorities */
-		mac68k_ipls[MAC68K_IPL_ADB] = (PSL_S | PSL_IPL1);
+		/* Non-standard interrupt priority */
 		mac68k_ipls[MAC68K_IPL_AUDIO] = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
@@ -173,8 +172,8 @@ void
 intr_computeipl()
 {
 	/*
-	 * Enforce the following relationship, as defined in spl(9):
-	 * `bio <= net <= tty <= imp <= statclock <= clock <= sched <= serial'
+	 * Enforce `bio <= net <= tty <= imp <= statclock <= clock <= sched'
+	 * as defined in spl(9)
 	 */
 	if (mac68k_ipls[MAC68K_IPL_BIO] > mac68k_ipls[MAC68K_IPL_NET])
 		mac68k_ipls[MAC68K_IPL_NET] = mac68k_ipls[MAC68K_IPL_BIO];
@@ -194,9 +193,6 @@ intr_computeipl()
 
 	if (mac68k_ipls[MAC68K_IPL_CLOCK] > mac68k_ipls[MAC68K_IPL_SCHED])
 		mac68k_ipls[MAC68K_IPL_SCHED] = mac68k_ipls[MAC68K_IPL_CLOCK];
-
-	if (mac68k_ipls[MAC68K_IPL_SCHED] > mac68k_ipls[MAC68K_IPL_SERIAL])
-		mac68k_ipls[MAC68K_IPL_SERIAL] = mac68k_ipls[MAC68K_IPL_SCHED];
 }
 
 /*

@@ -1,5 +1,3 @@
-/*	$NetBSD: s_copysign.S,v 1.6 1999/11/10 16:45:33 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,29 +40,29 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_copysign.S,v 1.6 1999/11/10 16:45:33 thorpej Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.5 1999/08/21 21:24:46 is Exp $")
 
 | copysign(x,y)
 | returns x with the sign of y.
 ENTRY(copysign)
 #ifdef __SVR4_ABI__
-	tstw	%sp@(12)
+	tstw	sp@(12)
 	jmi	Lneg
-	bclr	#31,%sp@(4)
-	fmoved	%sp@(4),%fp0
+	bclr	#31,sp@(4)
+	fmoved	sp@(4),fp0
 	rts
 Lneg:
-	bset	#31,%sp@(4)
-	fmoved	%sp@(4),%fp0
+	bset	#31,sp@(4)
+	fmoved	sp@(4),fp0
 	rts
 #else
-	movl	%sp@(4),%d0
-	movl	%sp@(8),%d1
-	tstw	%sp@(12)
+	movl	sp@(4),d0
+	movl	sp@(8),d1
+	tstw	sp@(12)
 	jmi	Lneg
-	bclr	#31,%d0
+	bclr	#31,d0
 	rts
 Lneg:
-	bset	#31,%d0
+	bset	#31,d0
 	rts
 #endif

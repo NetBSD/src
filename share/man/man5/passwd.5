@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.14 1999/12/16 22:02:00 abs Exp $
+.\"	$NetBSD: passwd.5,v 1.12 1999/01/16 14:16:43 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,10 +59,10 @@ as controlled by
 .Xr nsswitch.conf 5 .
 .Pp
 The
-.Nm master.passwd
-file is readable only by root, and consists of newline separated
-records, one per user, containing ten colon (``:'') separated
-fields.  These fields are as follows:
+.Nm
+files consisting of newline separated records, one per user,
+containing ten colon (``:'') separated fields.  These fields are as
+follows:
 .Pp
 .Bl -tag -width password -offset indent
 .It name
@@ -88,15 +88,6 @@ User's home directory.
 .It shell
 User's login shell.
 .El
-.Pp
-The
-.Nm 
-file is generated from the 
-.Nm master.password
-file by
-.Xr pwd_mkdb 8 ,
-has the class, change, and expire fields removed, and the password
-field replaced by a ``*''.
 .Pp
 The
 .Ar name
@@ -181,16 +172,9 @@ user's work phone number
 user's home phone number
 .El
 .Pp
-The full name may contain a ampersand (``&'') which will be replaced by
-the capitalized login name when the gecos field is displayed or used
-by various programs such as
-.Xr finger 1 ,
-.Xr sendmail 8 ,
-etc.
-.Pp
-The office and phone number subfields are used by the
+This information is used by the
 .Xr finger 1
-program, and possibly other applications.
+program.
 .Pp
 The user's home directory is the full
 .Ux

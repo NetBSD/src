@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114 1999/09/30 22:57:55 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.114.8.1 1999/12/21 23:19:56 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1219,7 +1219,7 @@ stread(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
-	    st->sc_link->adapter->scsipi_minphys, uio));
+	    st->sc_link->adapter->scsipi_minphys, uio, DEF_BSHIFT));
 }
 
 int
@@ -1231,7 +1231,7 @@ stwrite(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
-	    st->sc_link->adapter->scsipi_minphys, uio));
+	    st->sc_link->adapter->scsipi_minphys, uio, DEF_BSHIFT));
 }
 
 /*

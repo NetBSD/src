@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.33 1999/11/28 18:06:46 matt Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.32 1999/09/07 18:20:18 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -603,8 +603,7 @@ svr4_sys_fcntl(p, v, retval)
 			 * we must save the O_ASYNC flag, as that is
 			 * handled by ioctl(_, I_SETSIG, _) emulation.
 			 */
-			register_t flags;
-			int cmd;
+			int cmd, flags;
 
 			cmd = SCARG(&fa, cmd); /* save it for a while */
 

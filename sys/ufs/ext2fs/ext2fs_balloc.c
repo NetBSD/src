@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.3 1998/03/01 02:23:45 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.3.20.1 1999/12/21 23:20:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -261,7 +261,7 @@ fail:
 	if (allocib != NULL)
 		*allocib = 0;
 	if (deallocated) {
-		ip->i_e2fs_nblock -= btodb(deallocated);
+		ip->i_e2fs_nblock -= btodb(deallocated, UFS_BSHIFT);
 		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
 	}
 	return error;

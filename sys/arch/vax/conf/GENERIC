@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54 1999/11/21 14:00:44 itojun Exp $
+#	$NetBSD: GENERIC,v 1.51.8.1 1999/12/21 23:16:19 wrstuden Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -30,26 +30,11 @@ options 	KTRACE
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
+#options	NON_PO2_BLOCKS	# non-2**n block size support
 
 # Network support
 #options 	GATEWAY
 options         INET
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 
 # All supported filesystem types
 file-system 	FFS
@@ -66,7 +51,6 @@ file-system 	CD9660
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
@@ -93,6 +77,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 #options 	COMPAT_ULTRIX
+options 	TCP_COMPAT_42
 
 options 	LKM
 
@@ -197,13 +182,11 @@ lkc0		at dz0
 
 pseudo-device   loop	1
 pseudo-device   pty	48
-pseudo-device	bpfilter 8		# Not supported by de yet.
+pseudo-device	bpfilter 8	# Not supported by de yet.
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	2
-#pseudo-device	gre	2		# generic L3 over IP tunnel
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4

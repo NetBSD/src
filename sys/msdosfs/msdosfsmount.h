@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.19 1999/02/26 23:44:47 wrstuden Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.19.14.1 1999/12/21 23:20:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -87,6 +87,7 @@ struct msdosfsmount {
 	mode_t pm_mask;		/* mask to and with file protection bits */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
+ 	int pm_fsbtosb;		/* fsbtosb and sbtofsb shift constant */
 	u_long pm_FATsecs;	/* actual number of fat sectors */
 	u_long pm_fatblk;	/* block # of first FAT */
 	u_long pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
@@ -115,6 +116,16 @@ struct msdosfsmount {
 };
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	((cn) * (pmp)->pm_fatmult / (pmp)->pm_fatdiv)
+
+
+/*
+ * Turn file system block numbers into system block addresses.
+ * This maps file system blocks to system size blocks.
+ */
+#define fsbtosb(pmp, bn) \
+	((bn) << (pmp)->pm_fsbtosb)
+#define sbtofsb(pmp, bn) \
+	((bn) >> (pmp)->pm_fsbtosb)
 
 #define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.9 1999/11/04 02:00:18 erh Exp $	 */
+/*	$NetBSD: search.c,v 1.5 1999/08/01 19:47:07 kleink Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -52,6 +52,12 @@
 #include "debug.h"
 #include "rtld.h"
 
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+
 /*
  * Data declarations.
  */
@@ -77,8 +83,7 @@ _rtld_check_library(pathname)
 		goto lose;
 
 	/* Elf_e_ident includes class */
-	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdr.e_ident[EI_CLASS] != ELFCLASS)
+	if (memcmp(Elf_e_ident, ehdr.e_ident, Elf_e_siz) != 0)
 		goto lose;
 
 	switch (ehdr.e_machine) {
@@ -87,10 +92,10 @@ _rtld_check_library(pathname)
 		goto lose;
 	}
 
-	if (ehdr.e_ident[EI_VERSION] != EV_CURRENT ||
-	    ehdr.e_version != EV_CURRENT ||
-	    ehdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
-	    ehdr.e_type != ET_DYN)
+	if (ehdr.e_ident[Elf_ei_version] != Elf_ev_current ||
+	    ehdr.e_version != Elf_ev_current ||
+	    ehdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
+	    ehdr.e_type != Elf_et_dyn)
 		goto lose;
 
 	close(fd);

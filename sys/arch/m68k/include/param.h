@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1999/12/12 07:45:46 scottr Exp $	*/
+/*	$NetBSD: param.h,v 1.5.20.1 1999/12/21 23:16:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,11 +71,15 @@
 
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
+#define	DEF_BSIZE	(1 << DEF_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
+
+/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
@@ -104,6 +108,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
+#include "opt_non_po2_blocks.h"
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
@@ -114,16 +119,23 @@
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)		((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)		((x) >> (PGSHIFT - (sh)))
 
 /* pages to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
+#if defined(_LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -134,14 +146,12 @@
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 /*
- * Mach-derived conversion macros
+ * Mach derived conversion macros
  */
 #define	m68k_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define	m68k_seg_offset(x)	((unsigned)(x) & SEGOFSET)
 #define	m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
 #define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	m68k_page_offset(x)	((unsigned)(x) & PGOFSET)
 #define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 

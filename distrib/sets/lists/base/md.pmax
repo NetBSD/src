@@ -1,7 +1,5 @@
-# $NetBSD: md.pmax,v 1.36 1999/11/28 03:13:22 simonb Exp $
-./boot.pmax
-./usr/mdec/boot.pmax
-./usr/mdec/bootxx_cd9660
-./usr/mdec/bootxx_ffs
-./usr/mdec/bootxx_lfs
-./usr/mdec/installboot
+# $NetBSD: md.pmax,v 1.35 1999/05/18 23:23:32 tron Exp $
+./boot
+./usr/mdec/boot
+./usr/mdec/bootrz
+./usr/mdec/rzboot

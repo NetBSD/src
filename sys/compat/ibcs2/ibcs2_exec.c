@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.24 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.23 1999/04/30 23:07:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -180,7 +180,7 @@ ibcs2_elf32_signature(p, epp, eh)
 
 	for (i = 0; i < eh->e_shnum; i++) {
 		Elf32_Shdr *s = &sh[i];
-		if (s->sh_type != SHT_NOTE ||
+		if (s->sh_type != Elf_sht_note ||
 		    s->sh_flags != 0 ||
 		    s->sh_size < sizeof(signature) - 1)
 			continue;

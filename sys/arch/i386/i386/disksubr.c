@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40.8.1 1999/12/21 23:16:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -126,11 +126,12 @@ mbr_findslice(dp, bp)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -141,8 +142,9 @@ readdisklabel(dev, strat, lp, osdep)
 	int dospartoff, cyl, i, *ip;
 
 	/* minimal requirements for archtypal disk label */
-	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+	if (lp->d_secsize == 0) {
+		lp->d_secsize = blocksize(bshift);
+	}
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 #if 0
@@ -166,6 +168,8 @@ readdisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -254,6 +258,7 @@ nombrpart:
 		msg = "disk label I/O error";
 		goto done;
 	}
+printf("disklabel successfully read %d bytes\n", lp->d_secsize);
 	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
@@ -283,10 +288,14 @@ nombrpart:
 			/* read a bad sector table */
 			bp->b_flags = B_BUSY | B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
+#if 0
+/* I think this is unneeded as all the sector #'s are in the natural
+   size of the device, nto DEV_BSIZE */
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
+#endif
 			bp->b_bcount = lp->d_secsize;
 			bp->b_cylin = lp->d_ncylinders - 1;
 			(*strat)(bp);
@@ -330,7 +339,11 @@ setdisklabel(olp, nlp, openmask, osdep)
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
+#if 0
 		|| (nlp->d_secsize % DEV_BSIZE) != 0)
+#else
+		)
+#endif
 			return(EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
@@ -376,11 +389,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int	bshift;
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
@@ -390,6 +404,8 @@ writedisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -490,7 +506,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			goto bad;
 		}
 		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
+		bp->b_bcount = sz * lp->d_secsize;
 	}
 
 	/* Overwriting disk label? */
@@ -504,8 +520,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
-	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return (1);
 
 bad:

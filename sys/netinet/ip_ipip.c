@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.8 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.7 1999/08/26 02:56:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,12 +109,11 @@ ipip_input(m, va_alist)
 #if NIPIP > 0
 	struct ipip_softc *sc;
 #endif
-	int hlen, proto;
+	int hlen;
 	va_list ap;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
 	va_end(ap);
 
 #if NIPIP > 0
@@ -164,7 +163,7 @@ ipip_input(m, va_alist)
 #endif /* MROUTING */
 
 	/* Last try: give it to raw IP. */
-	rip_input(m, hlen, proto);
+	rip_input(m);
 }
 
 #if NIPIP > 0

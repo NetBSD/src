@@ -27,14 +27,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ae.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: ae.4,v 1.4 1999/03/16 01:19:21 garbled Exp $
 .\"
 .Dd June 7, 1997
 .Os
 .Dt AE 4 mac68k
 .Sh NAME
 .Nm ae
-.Nd Ethernet driver for DP8390-based NuBus Ethernet boards
+.Nd Ethernet driver for DP8390-based NuBus ethernet boards
 .Sh SYNOPSIS
 .Cd "ae* at nubus?"
 .Sh DESCRIPTION
@@ -76,7 +76,7 @@ Apple EtherTalk NB
 .Bl -diag -compact
 .It ae%d at nubus%d: address %s, type %s  %dKB memory.
 This is a normal autoconfiguration message noting the 6 byte physical
-Ethernet address of the adapter, its manufacturer, and how much buffer
+ethernet address of the adapter, its manufacturer, and how much buffer
 memory it has.
 .El
 .\" .Sh ERRORS

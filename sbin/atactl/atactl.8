@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.6 1999/10/19 10:35:37 soren Exp $
+.\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,12 +84,12 @@ driver performs this reset automatically, but this should still be
 used with caution.
 .Pp
 .Cm setidle
-.Ar idle-timer
+.Ar standby-timer
 .Pp
-Places the specified device into Idle mode, and sets the Idle timer
+Places the specified device into Idle mode, and sets the Standby timer
 to
-.Ar idle-timer
-seconds.  A value of 0 will disable the Idle timer.
+.Ar standby-timer
+seconds.  A value of 0 will disable the Standby timer.
 .Pp
 .Cm setstandby
 .Ar standby-timer

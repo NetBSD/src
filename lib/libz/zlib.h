@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.9 1999/10/26 22:16:48 itojun Exp $ */
+/* $NetBSD: zlib.h,v 1.7 1999/07/03 12:30:57 simonb Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.3, July 9th, 1998
@@ -32,10 +32,6 @@
 
 #ifndef _ZLIB_H
 #define _ZLIB_H
-
-#ifdef __NetBSD__
-#include <sys/cdefs.h>
-#endif
 
 #include "zconf.h"
 
@@ -758,23 +754,10 @@ ZEXTERN int ZEXPORT    gzflush OF((gzFile file, int flush));
    the flush parameter is Z_FINISH and all output could be flushed.
      gzflush should be called only when strictly necessary because it can
    degrade compression.
-
 */
 
-/* 
- * NetBSD note:
- * "long" gzseek has been there till Oct 1999 (1.4L), which was wrong.
- */
-#ifdef __ZLIB_BACKWARD_COMPAT
-ZEXTERN long ZEXPORT    gzseek OF((gzFile file,
-				      long offset, int whence));
-ZEXTERN z_off_t ZEXPORT    __gzseek1 OF((gzFile file,
-				      z_off_t offset, int whence));
-#else
 ZEXTERN z_off_t ZEXPORT    gzseek OF((gzFile file,
-				      z_off_t offset, int whence))
-				      __RENAME(__gzseek1);
-#endif
+				      z_off_t offset, int whence));
 /* 
       Sets the starting position for the next gzread or gzwrite on the
    given compressed file. The offset represents a number of bytes in the
@@ -798,16 +781,7 @@ ZEXTERN int ZEXPORT    gzrewind OF((gzFile file));
    gzrewind(file) is equivalent to (int)gzseek(file, 0L, SEEK_SET)
 */
 
-/* 
- * NetBSD note:
- * "long" gztell has been there till Oct 1999 (1.4L), which was wrong.
- */
-#ifdef __ZLIB_BACKWARD_COMPAT
-ZEXTERN long ZEXPORT    gztell OF((gzFile file));
-ZEXTERN z_off_t ZEXPORT    __gztell1 OF((gzFile file));
-#else
-ZEXTERN z_off_t ZEXPORT    gztell OF((gzFile file)) __RENAME(__gztell1);
-#endif
+ZEXTERN z_off_t ZEXPORT    gztell OF((gzFile file));
 /*
      Returns the starting position for the next gzread or gzwrite on the
    given compressed file. This position represents a number of bytes in the

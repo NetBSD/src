@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.10 1999/12/11 19:35:48 msaitoh Exp $
+.\"	$NetBSD: nfssvc.2,v 1.8 1998/04/30 22:01:07 fair Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,6 @@
 .Sh NAME
 .Nm nfssvc
 .Nd NFS services
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Fd #include <nfs/nfs.h>
@@ -102,9 +100,7 @@ If the mount point is using Kerberos, then the
 .Xr mount_nfs 8
 daemon will return from
 .Fn nfssvc
-with errno ==
-.Er ENEEDAUTH
-whenever the client side requires an ``rcmd''
+with errno == ENEEDAUTH whenever the client side requires an ``rcmd''
 authentication ticket for the user.
 The
 .Xr mount_nfs 8
@@ -153,8 +149,7 @@ Whenever an
 .Xr nfsd 8
 daemon receives a Kerberos authentication ticket, it will return from
 .Fn nfssvc
-with errno ==
-.Er ENEEDAUTH .
+with errno == ENEEDAUTH.
 The
 .Xr nfsd 8
 will attempt to authenticate the ticket and generate a set of credentials
@@ -239,7 +234,7 @@ system call is designed specifically for the
 support daemons and as such is specific to their requirements.
 It should really return values to indicate the need for authentication
 support, since
-.Er ENEEDAUTH
+.Dv ENEEDAUTH
 is not really an error.
 Several fields of the argument structures are assumed to be valid and
 sometimes to be unchanged from a previous call, such that

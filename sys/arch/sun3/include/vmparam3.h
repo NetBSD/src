@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.27 1999/12/04 21:21:42 ragge Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.26 1999/04/26 22:46:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -114,8 +114,8 @@
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)KERN_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */

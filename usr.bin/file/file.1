@@ -1,14 +1,14 @@
-.\" $NetBSD: file.1,v 1.15 1999/11/01 17:39:26 christos Exp $
+.\" $NetBSD: file.1,v 1.14 1998/09/20 15:27:16 christos Exp $
 .\"
-.TH FILE __CSECTION__ "Copyright but distributable"
-.\" Id: file.man,v 1.33 1999/02/14 17:16:07 christos Exp 
+.TH FILE 1 "Copyright but distributable"
+.\" Id: file.man,v 1.31 1998/02/15 23:18:53 christos Exp 
 .SH NAME
 file
 \- determine file type
 .SH SYNOPSIS
 .B file
 [
-.B \-bcnsvzL
+.B \-vbczL
 ]
 [
 .B \-f
@@ -107,6 +107,16 @@ archives) and determine whether an unknown file should be
 labelled as `ascii text' or `data'. 
 .SH OPTIONS
 .TP 8
+.B \-v
+Print the version of the program and exit.
+.TP 8
+.B \-m list
+Specify an alternate list of files containing magic numbers.
+This can be a single file, or a colon-separated list of files.
+.TP 8
+.B \-z
+Try to look inside compressed files.
+.TP 8
 .B \-b
 Do not prepend filenames to output lines (brief mode).
 .TP 8
@@ -126,46 +136,10 @@ Either
 or at least one filename argument must be present;
 to test the standard input, use ``-'' as a filename argument.
 .TP 8
-.B \-m list
-Specify an alternate list of files containing magic numbers.
-This can be a single file, or a colon-separated list of files.
-.TP 8
-.B \-n
-Force stdout to be flushed after check a file. This is only useful if
-checking a list of files. It is intended to be used by programs want
-filetype output from a pipe.
-.TP 8
-.B \-v
-Print the version of the program and exit.
-.TP 8
-.B \-z
-Try to look inside compressed files.
-.TP 8
 .B \-L
 option causes symlinks to be followed, as the like-named option in
 .BR ls (1).
 (on systems that support symbolic links).
-.TP 8
-.B \-s
-Normally,
-.B file
-only attempts to read and determine the type of argument files which
-.BR stat (2)
-reports are ordinary files.
-This prevents problems, because reading special files may have peculiar
-consequences.
-Specifying the
-.BR \-s
-option causes
-.B file
-to also read argument files which are block or character special files.
-This is useful for determining the filesystem types of the data in raw
-disk partitions, which are block special files.
-This option also causes
-.B file
-to disregard the file size as reported by
-.BR stat (2)
-since on some systems it reports a zero size for raw disk partitions.
 .SH FILES
 .I /usr/share/misc/magic
 \- default list of magic numbers
@@ -234,27 +208,6 @@ command uses a magic file,
 keep the old magic file around for comparison purposes
 (rename it to 
 .IR /usr/share/misc/magic.orig ).
-.SH EXAMPLES
-.nf
-$ file file.c file /dev/hda
-file.c:   C program text
-file:     ELF 32-bit LSB executable, Intel 80386, version 1,
-          dynamically linked, not stripped
-/dev/hda: block special
-
-$ file -s /dev/hda{,1,2,3,4,5,6,7,8,9,10}
-/dev/hda:   x86 boot sector
-/dev/hda1:  Linux/i386 ext2 filesystem
-/dev/hda2:  x86 boot sector
-/dev/hda3:  x86 boot sector, extended partition table
-/dev/hda4:  Linux/i386 ext2 filesystem
-/dev/hda5:  Linux/i386 swap file
-/dev/hda6:  Linux/i386 swap file
-/dev/hda7:  Linux/i386 swap file
-/dev/hda8:  Linux/i386 swap file
-/dev/hda9:  empty
-/dev/hda10: empty
-.fi
 .SH HISTORY
 There has been a 
 .B file
@@ -300,7 +253,7 @@ the process running
 .RE
 .PP
 Changes by Ian Darwin and various authors including
-Christos Zoulas (christos@astron.com), 1990-1999.
+Christos Zoulas (christos@astron.com), 1990-1997.
 .SH LEGAL NOTICE
 Copyright (c) Ian F. Darwin, Toronto, Canada,
 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993.

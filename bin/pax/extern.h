@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 1999/11/01 01:35:58 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -49,7 +49,6 @@
  * ar_io.c
  */
 extern const char *arcname;
-extern int curdirfd;
 extern const char *gzip_program;
 extern time_t starttime;
 int ar_open __P((const char *));
@@ -64,7 +63,6 @@ int ar_fow __P((off_t, off_t *));
 int ar_rev __P((off_t ));
 int ar_next __P((void));
 void ar_summary __P((int));
-int ar_dochdir __P((char *));
 
 /*
  * ar_subs.c
@@ -131,7 +129,6 @@ int bcpio_wr __P((ARCHD *));
 /*
  * file_subs.c
  */
-extern char *gnu_hack_string;
 int file_creat __P((ARCHD *));
 void file_close __P((ARCHD *, int));
 int lnk_creat __P((ARCHD *));
@@ -143,7 +140,6 @@ int chk_path __P((char *, uid_t, gid_t));
 void set_ftime __P((char *fnm, time_t mtime, time_t atime, int frc));
 int set_ids __P((char *, uid_t, gid_t));
 void set_pmode __P((char *, mode_t));
-void set_chflags __P((char *fnm, u_int32_t flags));
 int file_write __P((int, char *, int, int *, int *, int, char *));
 void file_flush __P((int, char *, int));
 void rdfile_close __P((ARCHD *, int *));
@@ -153,7 +149,7 @@ int set_crc __P((ARCHD *, int));
  * ftree.c
  */
 int ftree_start __P((void));
-int ftree_add __P((char *, int));
+int ftree_add __P((char *));
 void ftree_sel __P((ARCHD *));
 void ftree_chk __P((void));
 int next_file __P((ARCHD *));
@@ -184,17 +180,17 @@ int getoldopt __P((int, char **, char *));
 extern FSUB fsub[];
 extern int ford[];
 extern int cpio_mode;
+extern char *chdir_dir;
 void options __P((int, char **));
 OPLIST * opt_next __P((void));
 int opt_add __P((const char *));
-int opt_chdir __P((char *));
 int bad_opt __P((void));
 
 /*
  * pat_rep.c
  */
 int rep_add __P((char *));
-int pat_add __P((char *, int));
+int pat_add __P((char *));
 void pat_chk __P((void));
 int pat_sel __P((ARCHD *));
 int pat_match __P((ARCHD *));
@@ -226,7 +222,6 @@ extern int Zflag;
 extern int vfpart;
 extern int patime;
 extern int pmtime;
-extern int pfflags;
 extern int pmode;
 extern int pids;
 extern int exit_val;

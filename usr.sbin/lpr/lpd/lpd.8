@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.16 1999/12/11 01:59:43 mrg Exp $
+.\"	$NetBSD: lpd.8,v 1.14 1999/03/22 18:43:59 garbled Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,7 @@
 .Nd line printer spooler daemon
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl dlsr
-.Op Fl n Ar maxchild
-.Op Fl w Ar maxwait
+.Op Fl dls
 .Sh DESCRIPTION
 .Nm Lpd
 is the line printer daemon (spool area handler) and is normally invoked
@@ -81,21 +79,6 @@ flag causes
 .Nm lpd
 to log valid requests received from the network.
 This can be useful for debugging purposes.
-.It Fl n
-The
-.Fl n
-flag sets
-.Ar maxchild
-as the maximum number of child processes that
-.Nm
-will spawn.  The default is 32.
-.It Fl r
-The
-.Fl r
-flag allows the ``of'' filter to be use if specified for a remote
-printer.  Traditionally,
-.Nm
-would not use the output filter for remote printers.
 .It Fl s
 The
 .Fl s
@@ -109,15 +92,6 @@ This is valuable when the machine on which
 runs is subject to attack over the network and it is desired that the
 machine be protected from attempts to remotely fill spools and similar
 attacks.
-.It Fl w
-The
-.Fl w
-flag sets
-.Ar maxwait
-as the wait time (in seconds) for dead remote server detection.  If
-no response is returned from a connected server within this period,
-the connection is closed and a message logged.  The default is
-120 seconds.
 .El
 .Pp
 Access control is provided by two means.
@@ -300,12 +274,10 @@ but not under same administrative control.
 .Xr lpq 1 ,
 .Xr lpr 1 ,
 .Xr lprm 1 ,
-.Xr setsockopt 2 ,
 .Xr syslog 3 ,
-.Xr hosts.equiv 5 ,
 .Xr printcap 5 ,
 .Xr lpc 8 ,
-.Xr pac 8
+.Xr pac 8 ,
 .Rs
 .%T "4.3 BSD Line Printer Spooler Manual"
 .Re

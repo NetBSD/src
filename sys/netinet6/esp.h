@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.5 1999/12/02 05:08:16 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.4 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -90,7 +90,7 @@ struct esp_algorithm {
 		struct secas *, struct esp_algorithm *, int));
 };
 
-#ifdef _KERNEL
+#ifdef KERNEL
 extern struct esp_algorithm esp_algorithms[];
 
 /* crypt routines */
@@ -104,7 +104,7 @@ extern int esp6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
 extern int esp6_input __P((struct mbuf **, int *, int));
 #endif /* INET6 */
-#endif /*_KERNEL*/
+#endif /*KERNEL*/
 
 struct secas;
 extern int esp_auth __P((struct mbuf *, size_t, size_t,

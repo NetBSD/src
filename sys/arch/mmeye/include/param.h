@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1999/12/04 21:20:52 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.1.8.1 1999/12/21 23:16:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,6 +48,9 @@
 #else
 #include <machine/cpu.h>
 #endif
+#ifndef _LKM
+#include "opt_non_po2_blocks.h"
+#endif
 #endif
 
 #define	_MACHINE	mmeye
@@ -85,11 +88,15 @@
 #define NPGDIR (1*NBPG)
 #define SYSMAP (5*NBPG) /* page table area offset from _end */
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
+#define	DEF_BSIZE	(1 << DEF_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
+#define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
+
+/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 #if 0
@@ -128,23 +135,30 @@
 #endif
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
+ * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)		((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)		((x) >> (PGSHIFT - (sh)))
 
 /* bytes to pages */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
+#if defined(_LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Map a ``block device block'' to a file system block.

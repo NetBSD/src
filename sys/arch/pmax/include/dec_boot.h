@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.8 1999/11/27 01:51:20 simonb Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,32 +60,22 @@
  * after the boot information expected by the PROM boot loader.
  */
 
-struct boot_map {
-	int32_t	num_blocks;		/* Number of blocks to read. */
-	int32_t	start_block;		/* Starting block on disk. */
+struct Dec_BootMap {
+	int	numBlocks;		/* Number of blocks to read. */
+	int	startBlock;		/* Starting block on disk. */
 };
 
-/*
- * This is the structure of a disk or tape boot block.  The boot_map
- * can either be a single boot count and start block (contiguous mode)
- * or a list of up to 61 (to fill a 512 byte sector) block count and
- * start block pairs.  Under NetBSD, contiguous mode is always used.
- */
-struct boot_block {
-	char		pad[8];
-	int32_t		magic;			/* DEC_BOOT_MAGIC */
-	int32_t		mode;			/* Mode for boot info. */
-	u_int32_t	load_addr;		/* Address to start loading. */
-	u_int32_t	exec_addr;		/* Address to start execing. */
-	struct		boot_map map[61];	/* boot program section(s). */
+struct Dec_DiskBoot {
+	char	pad[8];
+	int	magic;			/* DEC_BOOT_MAGIC */
+	int	mode;			/* Mode for boot info. */
+	int	loadAddr;		/* Address to start loading. */
+	int	execAddr;		/* Address to start execing. */
+	struct	Dec_BootMap map[61];	/* boot program sections. */
 };
 
 #define DEC_BOOT_MAGIC		0x0002757a
-#define DEC_BOOTMODE_CONTIGUOUS	0
-#define DEC_BOOTMODE_SCATTERED	1
-
-#define BOOT_BLOCK_OFFSET	0
-#define BOOT_BLOCK_BLOCKSIZE	512
+#define DEC_BOOT_SECTOR		0
 
 /*
  * DEC_NUM_DISK_PARTS is the number of partitions that are recorded in
@@ -98,20 +88,20 @@ struct boot_block {
  * A disk is divided into partitions and this type specifies where a
  * partition starts and how many bytes it contains.
  */
-typedef struct dec_disk_map {
-	int32_t	num_blocks;	/* Number of 512 byte blocks in partition. */
-	int32_t	start_block;	/* Start of partition in blocks. */
-} dec_disk_map;
+typedef struct Dec_DiskMap {
+	int	numBlocks;	/* Number of 512 byte blocks in partition. */
+	int	startBlock;	/* Start of partition in blocks. */
+} Dec_DiskMap;
 
 /*
  * Label information on the 31st (DEC_LABEL_SECTOR) sector.
  */
-typedef struct dec_disklabel {
+typedef struct Dec_DiskLabel {
     char	pad0[440];		/* DIFFERENT from sprite!!! */
-    int32_t	magic;			/* DEC_LABEL_MAGIC */
-    int32_t	is_partitioned;		/* 1 if disk is partitioned. */
-    dec_disk_map map[DEC_NUM_DISK_PARTS]; /* Indicates disk partitions. */
-} dec_disklabel;
+    int		magic;			/* DEC_LABEL_MAGIC */
+    int		isPartitioned;		/* 1 if disk is partitioned. */
+    Dec_DiskMap map[DEC_NUM_DISK_PARTS]; /* Indicates disk partitions. */
+} Dec_DiskLabel;
 
 #define DEC_LABEL_MAGIC		0x00032957
 #define DEC_LABEL_SECTOR	31

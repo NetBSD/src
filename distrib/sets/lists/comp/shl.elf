@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.12 1999/11/25 10:44:18 blymn Exp $
+# $NetBSD: shl.elf,v 1.11 1999/07/04 20:07:52 fvdl Exp $
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
@@ -13,7 +13,6 @@
 ./usr/lib/libipsec.so
 ./usr/lib/libkvm.so
 ./usr/lib/libm.so
-./usr/lib/libmenu.so
 ./usr/lib/libntp.so
 ./usr/lib/libobjc.so
 ./usr/lib/libossaudio.so

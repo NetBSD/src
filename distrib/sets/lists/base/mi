@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.136 1999/12/08 09:47:45 soren Exp $
+# $NetBSD: mi,v 1.125 1999/09/21 14:20:38 hubertf Exp $
 .
 ./altroot
 ./bin
@@ -66,7 +66,6 @@
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
-./sbin/dump_lfs
 ./sbin/fastboot
 ./sbin/fasthalt
 ./sbin/fsck
@@ -110,9 +109,7 @@
 ./sbin/ping
 ./sbin/ping6
 ./sbin/raidctl
-./sbin/rcorder
 ./sbin/rdump
-./sbin/rdump_lfs
 ./sbin/reboot
 ./sbin/restore
 ./sbin/rndctl
@@ -430,7 +427,6 @@
 ./usr/include/netnatm
 ./usr/include/netns
 ./usr/include/nfs
-./usr/include/ntfs
 ./usr/include/objc
 ./usr/include/openssl
 ./usr/include/protocols
@@ -452,7 +448,6 @@
 ./usr/libexec/atrun
 ./usr/libexec/comsat
 ./usr/libexec/cpp
-./usr/libexec/dnskeygen
 ./usr/libexec/fingerd
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
@@ -548,10 +543,6 @@
 ./usr/sbin/fsinfo
 ./usr/sbin/gifconfig
 ./usr/sbin/greconfig
-./usr/sbin/group
-./usr/sbin/groupadd
-./usr/sbin/groupdel
-./usr/sbin/groupmod
 ./usr/sbin/hlfsd
 ./usr/sbin/ifmcstat
 ./usr/sbin/inetd
@@ -666,11 +657,8 @@
 ./usr/sbin/trpt
 ./usr/sbin/trsp
 ./usr/sbin/unlink
+./usr/sbin/update
 ./usr/sbin/usbdevs
-./usr/sbin/user
-./usr/sbin/useradd
-./usr/sbin/userdel
-./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/wiconfig
@@ -778,7 +766,6 @@
 ./usr/share/doc/usd/31.trek
 ./usr/share/examples
 ./usr/share/examples/amd
-./usr/share/examples/dhcp
 ./usr/share/examples/emul
 ./usr/share/examples/emul/svr4
 ./usr/share/examples/emul/svr4/etc
@@ -936,6 +923,7 @@
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
+./usr/share/man/man4/bebox
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
@@ -1016,8 +1004,6 @@
 ./usr/share/nls/C/libc.cat
 ./usr/share/nls/Pig
 ./usr/share/nls/Pig/libc.cat
-./usr/share/nls/cs
-./usr/share/nls/cs/libc.cat
 ./usr/share/nls/de
 ./usr/share/nls/de/libc.cat
 ./usr/share/nls/es
@@ -1145,11 +1131,9 @@
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
-./usr/share/zoneinfo/America/Boa_Vista
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
-./usr/share/zoneinfo/America/Cambridge_Bay
 ./usr/share/zoneinfo/America/Cancun
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Catamarca
@@ -1281,7 +1265,6 @@
 ./usr/share/zoneinfo/Asia/Colombo
 ./usr/share/zoneinfo/Asia/Dacca
 ./usr/share/zoneinfo/Asia/Damascus
-./usr/share/zoneinfo/Asia/Dili
 ./usr/share/zoneinfo/Asia/Dubai
 ./usr/share/zoneinfo/Asia/Dushanbe
 ./usr/share/zoneinfo/Asia/Gaza
@@ -1474,15 +1457,12 @@
 ./usr/share/zoneinfo/Europe/Stockholm
 ./usr/share/zoneinfo/Europe/Tallinn
 ./usr/share/zoneinfo/Europe/Tirane
-./usr/share/zoneinfo/Europe/Tiraspol
-./usr/share/zoneinfo/Europe/Uzhgorod
 ./usr/share/zoneinfo/Europe/Vaduz
 ./usr/share/zoneinfo/Europe/Vatican
 ./usr/share/zoneinfo/Europe/Vienna
 ./usr/share/zoneinfo/Europe/Vilnius
 ./usr/share/zoneinfo/Europe/Warsaw
 ./usr/share/zoneinfo/Europe/Zagreb
-./usr/share/zoneinfo/Europe/Zaporozhye
 ./usr/share/zoneinfo/Europe/Zurich
 ./usr/share/zoneinfo/Factory
 ./usr/share/zoneinfo/GB

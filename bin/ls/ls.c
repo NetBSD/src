@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.40 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: ls.c,v 1.38 1999/05/17 12:16:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.40 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: ls.c,v 1.38 1999/05/17 12:16:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: ls.c,v 1.40 1999/11/09 15:06:31 drochner Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,8 +118,6 @@ ls_main(argc, argv)
 	int ch, fts_options, notused;
 	int kflag = 0;
 	const char *p;
-
-	setlocale(LC_ALL, "");
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
@@ -352,7 +349,7 @@ traverse(argc, argv, options)
 
 	if ((ftsp =
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
-		err(EXIT_FAILURE, NULL);
+		err(EXIT_FAILURE, "%s", "");
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir)
@@ -527,7 +524,7 @@ display(p, list)
 
 				if ((np = malloc(sizeof(NAMES) +
 				    ulen + glen + flen + 3)) == NULL)
-					err(EXIT_FAILURE, NULL);
+					err(EXIT_FAILURE, "%s", "");
 
 				np->user = &np->data[0];
 				(void)strcpy(np->user, user);

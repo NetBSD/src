@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.21 1999/11/22 18:34:01 jdolecek Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.19 1998/02/05 04:56:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

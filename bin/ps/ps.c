@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.34 1999/12/04 01:23:09 hubertf Exp $	*/
+/*	$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.34 1999/12/04 01:23:09 hubertf Exp $");
+__RCSID("$NetBSD: ps.c,v 1.28 1999/03/27 21:38:08 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,12 +86,10 @@ int	dontuseprocfs=0;	/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-int	needuser, needcomm, needenv, commandonly, use_procfs;
-uid_t	myuid;
+int	needuser, needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
-static KINFO	*getkinfo_kvm __P((kvm_t *, int, int, int *, int));
 static char	*kludge_oldps_options __P((char *));
 static int	 pscomp __P((const void *, const void *));
 static void	 saveuser __P((KINFO *));
@@ -114,6 +112,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct kinfo_proc *kp;
 	struct varent *vent;
 	struct winsize ws;
 	gid_t egid = getegid();
@@ -136,7 +135,7 @@ main(argc, argv)
 
 	fmt = prtheader = wflag = xflg = 0;
 	what = KERN_PROC_UID;
-	flag = myuid = getuid();
+	flag = getuid();
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
 	    "acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
@@ -306,14 +305,8 @@ main(argc, argv)
 		(void)setegid(egid);
 
 	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
-	if (kd == 0) {
-		if (dontuseprocfs)
-			errx(1, "%s", errbuf);
-		else {
-			warnx("kvm_openfiles: %s", errbuf);
-			fprintf(stderr, "ps: falling back to /proc-based lookup\n");
-		}
-	}
+	if (kd == 0)
+		errx(1, "%s", errbuf);
 
 	if (nlistf == NULL && memf == NULL && swapf == NULL)
 		(void)setgid(getgid());
@@ -326,11 +319,10 @@ main(argc, argv)
 	 * and adjusting header widths as appropiate.
 	 */
 	scanvars();
-
 	/*
 	 * select procs
 	 */
-	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries, needuser)))
+	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
 	{
 		/*  If/when the /proc-based code is ripped out
 		 *  again, make sure all references to the -K
@@ -347,24 +339,28 @@ main(argc, argv)
 		 *  mounted) to grab as much information as we can.  
 		 *  The guts of emulating kvm_getprocs() is in
 		 *  the file procfs_ops.c.  */
-		if (kd)
-			warnx("%s.", kvm_geterr(kd));
+		warnx("%s.", kvm_geterr(kd));
 		if (dontuseprocfs) {
 			exit(1);
 		}
 		/*  procfs_getprocs supports all but the
 		 *  KERN_PROC_RUID flag.  */
-		kinfo = getkinfo_procfs(what, flag, &nentries);
-		if (kinfo == 0) {
+		kp=procfs_getprocs(what, flag, &nentries);
+		if (kp == 0) {
 		  errx(1, "fallback /proc-based lookup also failed.  %s",
 				  "Giving up...");
 		}
 		fprintf(stderr, "%s%s",
 		    "Warning:  /proc does not provide ",
 		    "valid data for all fields.\n");
-		use_procfs = 1;
 	}
-
+	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
+		err(1, "%s", "");
+	for (i = nentries; --i >= 0; ++kp) {
+		kinfo[i].ki_p = kp;
+		if (needuser)
+			saveuser(&kinfo[i]);
+	}
 	/*
 	 * print header
 	 */
@@ -398,29 +394,6 @@ main(argc, argv)
 	}
 	exit(eval);
 	/* NOTREACHED */
-}
-
-static KINFO *
-getkinfo_kvm(kd, what, flag, nentriesp, needuser)
-	kvm_t *kd;
-	int what, flag, *nentriesp, needuser;
-{
-	struct kinfo_proc *kp;
-	KINFO *kinfo=NULL;
-	size_t i;
-
-	if ((kp = kvm_getprocs(kd, what, flag, nentriesp)) != 0)
-	{
-		if ((kinfo = malloc((*nentriesp) * sizeof(*kinfo))) == NULL)
-			err(1, NULL);
-		for (i = (*nentriesp); i-- > 0; kp++) {
-			kinfo[i].ki_p = kp;
-			if (needuser)
-				saveuser(&kinfo[i]);
-		}
-	}
-
-	return (kinfo);
 }
 
 static void
@@ -510,7 +483,7 @@ kludge_oldps_options(s)
 
 	len = strlen(s);
 	if ((newopts = ns = malloc(len + 3)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	/*
 	 * options begin with '-'
 	 */
@@ -559,7 +532,7 @@ usage()
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
 	    "ps [-aChjKlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
-	    "[-M core] [-N system] [-W swap] [-U username]",
+	    "[-M core] [-N system] [-W swap]",
 	    "ps [-L]");
 	exit(1);
 	/* NOTREACHED */

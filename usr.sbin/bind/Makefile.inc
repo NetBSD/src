@@ -1,9 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.5 1999/11/20 20:42:39 veego Exp $
-
-WARNS=0
+# $NetBSD: Makefile.inc,v 1.3 1999/01/04 00:04:04 tron Exp $
 
 BIND_DIR=	${.CURDIR}/..
-BIND_DIST_DIR=	${.CURDIR}/../../../dist/bind
 
 VER!=		awk '$$1 == "VER=" { print $$2 ; exit }' ${BIND_DIR}/Makefile
 
@@ -14,6 +11,5 @@ PS=		ps
 LIB_BIND!=	cd ${BIND_DIR}/lib; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | \
 		${MAKE} -s -f -
-INCLUDE?=	-I${LIB_BIND} -I${.OBJDIR} -I${BIND_DIR}/include -I${BIND_DIST_DIR}/include
+INCLUDE?=	-I. -I${BIND_DIR}/include
 LIBRARY?=	-L${LIB_BIND} -lbind
-

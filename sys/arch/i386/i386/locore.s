@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.214 1999/10/25 17:26:06 drochner Exp $	*/
+/*	$NetBSD: locore.s,v 1.213 1999/09/17 19:59:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
-#include "opt_compat_oldboot.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -217,9 +216,7 @@
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-#ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
-#endif
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(curpcb),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
@@ -265,15 +262,14 @@ tmpstk:
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
-	 * Load parameters from stack
-	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
+	 * Load parameters from stack (howto, bootdev, unit, bootinfo, esym).
+	 * note: (%esp) is return address of boot
+	 * (If we want to hold onto /boot, it's physical %esp up to _end.)
 	 */
 	movl	4(%esp),%eax
 	movl	%eax,RELOC(boothowto)
-#ifdef COMPAT_OLDBOOT
 	movl	8(%esp),%eax
 	movl	%eax,RELOC(bootdev)
-#endif
 	movl	12(%esp),%eax
 
 	testl	%eax, %eax

@@ -1,4 +1,4 @@
-/* $NetBSD: bzero.c,v 1.3 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: bzero.c,v 1.1 1999/03/30 22:01:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

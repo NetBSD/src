@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.4 1999/10/20 15:22:25 enami Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -57,7 +57,6 @@ struct ata_bio {
 #define ERR_DF	2 /* Drive fault */
 #define ERR_DMA 3 /* DMA error */
 #define TIMEOUT 4 /* device timed out */
-#define ERR_NODEV 5 /* device has been gone */
     u_int8_t r_error; /* copy of error register */
     daddr_t badsect[127];    /* 126 plus trailing -1 marker */
 };

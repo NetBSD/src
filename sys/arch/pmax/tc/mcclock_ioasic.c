@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.9 1999/11/15 09:50:43 nisimura Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.8 1999/04/24 08:01:13 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,32 +29,32 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.9 1999/11/15 09:50:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.8 1999/04/24 08:01:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
 
+
 #include <dev/tc/tcreg.h>
-#include <dev/tc/tcvar.h> 
-#include <dev/tc/ioasicvar.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>                   /* XXX */
 
 #include  <dev/dec/mcclock_pad32.h>
 
-int  mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
-void mcclock_ioasic_attach __P((struct device *, struct device *, void *));
+int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
+void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ioasic_ca = {
 	sizeof (struct mcclock_pad32_softc),
-	mcclock_ioasic_match, mcclock_ioasic_attach, 
+	     (void *)mcclock_ioasic_match, mcclock_ioasic_attach,
 };
-extern struct cfdriver ioasic_cd;
-
 
 int
 mcclock_ioasic_match(parent, match, aux)
@@ -64,7 +64,8 @@ mcclock_ioasic_match(parent, match, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
-	if (parent->dv_cfdata->cf_driver != &ioasic_cd)
+#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
+	if (strcmp(CFNAME(parent), "ioasic") != 0)
 		return 0;
 
 	if (strcmp("mc146818", d->iada_modname) != 0)

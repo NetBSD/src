@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.13 1999/06/20 16:44:49 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.13.8.1 1999/12/21 23:19:53 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ int esh_fpopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
 int esh_fpclose __P((dev_t dev, int fflag, int devtype, struct proc *));
 int esh_fpread __P((dev_t dev, struct uio *uio, int ioflag));
 int esh_fpwrite __P((dev_t dev, struct uio *uio, int ioflag));
-static void esh_fpstrategy __P((struct buf *bp));
+void esh_fpstrategy __P((struct buf *bp));
 int esh_fpioctl __P((dev_t dev, u_long cmd, caddr_t data,
 		     int fflag, struct proc *p));
 void esh_fpstop __P((struct tty *tp, int rw));
@@ -1341,11 +1341,13 @@ fpwrite_done:
 	return error;
 
 /* To shut up compiler */
+#if 0
 	error = physio(esh_fpstrategy, NULL, dev, B_WRITE, minphys, uio);
 	return error;
+#endif
 }
 
-static void 
+void 
 esh_fpstrategy(bp)
 	struct buf *bp;
 {

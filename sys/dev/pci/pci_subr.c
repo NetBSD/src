@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.33 1999/12/15 12:27:26 kleink Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.32 1999/09/27 03:20:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -464,7 +464,6 @@ pci_conf_print_common(pc, tag, regs)
 	onoff("Fast back-to-back transactions", PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
-	onoff("Capability List support", PCI_STATUS_CAPLIST_SUPPORT);
 	onoff("66 MHz capable", PCI_STATUS_66MHZ_SUPPORT);
 	onoff("User Definable Features (UDF) support", PCI_STATUS_UDF_SUPPORT);
 	onoff("Fast back-to-back capable", PCI_STATUS_BACKTOBACK_SUPPORT);
@@ -655,13 +654,7 @@ pci_conf_print_type0(pc, tag, regs)
 
 	/* XXX */
 	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
-
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
-		printf("    Capability list pointer: 0x%02x\n",
-		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
-	else
-		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
-
+	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
 	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
 
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
@@ -690,43 +683,6 @@ pci_conf_print_type0(pc, tag, regs)
 	}
 	printf("\n");
 	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
-
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT) {
-		for (off = PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]);
-		     off != 0;
-		     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
-			rval = regs[o2i(off)];
-			printf("    Capability register at 0x%02x\n", off);
-
-			printf("      type: 0x%02x (", PCI_CAPLIST_CAP(rval));
-			switch (PCI_CAPLIST_CAP(rval)) {
-			case PCI_CAP_PWRMGMT:
-				printf("Power Management, rev. %d.0",
-				    (rval >> 0) & 0x07); /* XXX not clear */
-				break;
-			case PCI_CAP_AGP:
-				printf("AGP, rev. %d.%d",
-				    (rval >> 24) & 0x0f,
-				    (rval >> 20) & 0x0f);
-				break;
-			case PCI_CAP_VPD:
-				printf("VPD");
-				break;
-			case PCI_CAP_SLOTID:
-				printf("SlotID");
-				break;
-			case PCI_CAP_MBI:
-				printf("MBI");
-				break;
-			case PCI_CAP_HOTSWAP:
-				printf("Hot-swapping");
-				break;
-			default:
-				printf("unknown/reserved");
-			}
-			printf(")\n");
-		}
-	}
 }
 
 static void

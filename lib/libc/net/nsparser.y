@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.6 1999/11/28 05:46:15 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.5 1999/09/16 11:45:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsparser.y,v 1.6 1999/11/28 05:46:15 lukem Exp $");
+__RCSID("$NetBSD: nsparser.y,v 1.5 1999/09/16 11:45:17 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,9 +56,6 @@ static	void	_nsaddsrctomap __P((const char *));
 
 static	ns_dbt		curdbt;
 static	ns_src		cursrc;
-
-extern int	_nsyylineno;
-extern char *	_nsyytext;
 %}
 
 %union {
@@ -90,13 +87,7 @@ Entry
 	| Database ':' NL
 	| Database ':' Srclist NL
 		{
-			int lineno;
-
-			lineno = _nsyylineno - (*_nsyytext == '\n' ? 1 : 0);
-			if (_nsdbtput(&curdbt) == -1)
-					/* XXX: syslog the following */
-				warn("%s line %d: error adding entry",
-				    _PATH_NS_CONF, lineno);
+			_nsdbtput(&curdbt);
 		}
 	;
 
@@ -160,6 +151,8 @@ _nsaddsrctomap(elem)
 	const char *elem;
 {
 	int		i, lineno;
+	extern int	_nsyylineno;
+	extern char *	_nsyytext;
 
 	_DIAGASSERT(elem != NULL);
 
@@ -182,9 +175,5 @@ _nsaddsrctomap(elem)
 		}
 	}
 	cursrc.name = elem;
-	if (_nsdbtaddsrc(&curdbt, &cursrc) == -1) {
-			/* XXX: syslog the following */
-		warn("%s line %d: error adding '%s'",
-		    _PATH_NS_CONF, lineno, elem);
-	}
+	_nsdbtaddsrc(&curdbt, &cursrc);
 }

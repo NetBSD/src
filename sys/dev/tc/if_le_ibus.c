@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.13 1999/11/15 09:54:43 nisimura Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.11 1998/07/21 17:36:07 drochner Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -43,6 +43,7 @@
 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
+#include <machine/autoconf.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
 
@@ -72,7 +73,6 @@ void	le_pmax_attach __P((struct device *, struct device *, void *));
 struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
-extern struct cfdriver ibus_cd;
 
 int
 le_pmax_match(parent, match, aux)
@@ -82,8 +82,12 @@ le_pmax_match(parent, match, aux)
 {
   	struct ibus_attach_args *d = aux;
 
-	if (parent->dv_cfdata->cf_driver != &ibus_cd)
+#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
+
+	if (strcmp(CFNAME(parent), "ibus") != 0)
 		return (0);
+
+#undef CFNAME
 
 	if (strcmp("lance", d->ia_name) != 0)
 		return (0);
@@ -115,7 +119,8 @@ le_pmax_attach(parent, self, aux)
 
 	dec_le_common_attach(&lesc->sc_am7990, cp);
 
-	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_NET,
+	/* XXX more thought about ia->ia_cookie */
+	ibus_intr_establish((void*)ia->ia_cookie, TC_IPL_NET,
 			  am7990_intr, sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.42 1999/11/15 18:49:08 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.39.2.1 1999/12/21 23:19:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -261,7 +261,14 @@ iso_mountfs(devvp, mp, p, argp)
 	struct iso_directory_record *rootp;
 	int logical_block_size;
 	int sess = 0;
-	
+
+#if 1
+	int bsize, sshift;
+	struct ucred *cred;
+
+	cred = p ? p->p_ucred : NOCRED;
+#endif
+
 	if (!ronly)
 		return EROFS;
 	
@@ -289,7 +296,23 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, FSCRED, p);
+#if 1
+#if 0
+	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
+		bsize = DEV_BSIZE;
+	else bsize = dpart.disklab->d_secsize;
+#else
+	if ((mp->mnt_bshift = devvp->v_specbshift) < 0)
+		return (EINVAL);
+	bsize = blocksize(devvp->v_specbshift);
+	/* messy, but this is what we do now */
+#endif
+
+	sshift = intlog2(iso_bsize) - devvp->v_specbshift;
+#else
+	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, cred, p);
+#endif
+
 	if (error)
 		sess = 0;	/* never mind */
 #if 0
@@ -298,8 +321,13 @@ iso_mountfs(devvp, mp, p, argp)
 #endif
 	
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
+#if 1
+		if ((error = bread(devvp, iso_blknum << sshift,
+				   iso_bsize, NOCRED, &bp)) != 0)
+#else
 		if ((error = bread(devvp, (iso_blknum+sess) * btodb(iso_bsize),
 				   iso_bsize, NOCRED, &bp)) != 0)
+#endif
 			goto out;
 		
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
@@ -374,7 +402,7 @@ iso_mountfs(devvp, mp, p, argp)
 	
 	logical_block_size = isonum_723 (pri->logical_block_size);
 	
-	if (logical_block_size < DEV_BSIZE || logical_block_size > MAXBSIZE
+	if (logical_block_size < bsize || logical_block_size > MAXBSIZE
 	    || (logical_block_size & (logical_block_size - 1)) != 0) {
 		error = EINVAL;
 		goto out;
@@ -396,6 +424,8 @@ iso_mountfs(devvp, mp, p, argp)
 	while ((1 << isomp->im_bshift) < isomp->logical_block_size)
 		isomp->im_bshift++;
 	
+	isomp->system_block_size = bsize;
+	isomp->im_sshift = sshift;
 	pribp->b_flags |= B_AGE;
 	brelse(pribp);
 	pribp = NULL;
@@ -409,13 +439,17 @@ iso_mountfs(devvp, mp, p, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 	
-	devvp->v_specmountpoint = mp;
+	devvp->v_specflags |= SI_MOUNTEDON;
 	
 	/* Check the Rock Ridge Extention support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		if ((error = bread(isomp->im_devvp,
 				   (isomp->root_extent + isonum_711(rootp->ext_attr_length)) <<
+#if 1
+				   isomp->im_sshift,
+#else
 				   (isomp->im_bshift - DEV_BSHIFT),
+#endif
 				   isomp->logical_block_size, NOCRED,
 				   &bp)) != 0)
 		    goto out;
@@ -509,13 +543,10 @@ cd9660_unmount(mp, mntflags, p)
 	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
 		iso_dunmap(isomp->im_dev);
 #endif
-
-	if (isomp->im_devvp->v_type != VBAD)
-		isomp->im_devvp->v_specmountpoint = NULL;
-
-	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
+	
+	isomp->im_devvp->v_specflags &= ~SI_MOUNTEDON;
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
-	vput(isomp->im_devvp);
+	vrele(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -762,7 +793,11 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		}
 	
 		error = bread(imp->im_devvp,
+#if 1
+			      lbn << imp->im_sshift,
+#else
 			      lbn << (imp->im_bshift - DEV_BSHIFT),
+#endif
 			      imp->logical_block_size, NOCRED, &bp);
 		if (error) {
 			vput(vp);

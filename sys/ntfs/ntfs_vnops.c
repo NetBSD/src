@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.23 1999/10/31 19:45:27 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.17 1999/09/29 15:36:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,15 +216,15 @@ ntfs_getattr(ap)
 	dprintf(("ntfs_getattr: %d, flags: %d\n",ip->i_number,ip->i_flag));
 
 #if defined(__FreeBSD__)
-	vap->va_fsid = dev2udev(ip->i_dev);
+	vap->va_fsid = dev2udev(fp->f_dev);
 #else /* NetBSD */
-	vap->va_fsid = ip->i_dev;
+	vap->va_fsid = fp->f_dev;
 #endif
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mp->ntm_mode;
+	vap->va_mode = ip->i_mode;
 	vap->va_nlink = ip->i_nlink;
-	vap->va_uid = ip->i_mp->ntm_uid;
-	vap->va_gid = ip->i_mp->ntm_gid;
+	vap->va_uid = ip->i_uid;
+	vap->va_gid = ip->i_gid;
 	vap->va_rdev = 0;				/* XXX UNODEV ? */
 	vap->va_size = fp->f_size;
 	vap->va_bytes = fp->f_allocated;
@@ -234,7 +234,7 @@ ntfs_getattr(ap)
 	vap->va_flags = ip->i_flag;
 	vap->va_gen = 0;
 	vap->va_blocksize = ip->i_mp->ntm_spc * ip->i_mp->ntm_bps;
-	vap->va_type = vp->v_type;
+	vap->va_type = fp->f_type;
 	vap->va_filerev = 0;
 	return (0);
 }
@@ -250,25 +250,33 @@ ntfs_inactive(ap)
 	} */ *ap;
 {
 	register struct vnode *vp = ap->a_vp;
-#ifdef NTFS_DEBUG
 	register struct ntnode *ip = VTONT(vp);
-#endif
+	int error;
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
 	if (ntfs_prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
 
-	VOP__UNLOCK(vp, 0, ap->a_p);
+	error = 0;
 
-	/* XXX since we don't support any filesystem changes
-	 * right now, nothing more needs to be done
+	VOP__UNLOCK(vp,0,ap->a_p);
+
+	/*
+	 * If we are done with the ntnode, reclaim it
+	 * so that it can be reused immediately.
 	 */
-	return (0);
+	if (vp->v_usecount == 0 && ip->i_mode == 0)
+#if defined(__FreeBSD__)
+		vrecycle(vp, (struct simplelock *)0, ap->a_p);
+#else /* defined(__NetBSD__) */
+		vgone(vp);
+#endif
+	return (error);
 }
 
 /*
- * Reclaim an fnode/ntnode so that it can be used for other purposes.
+ * Reclaim an inode so that it can be used for other purposes.
  */
 int
 ntfs_reclaim(ap)
@@ -283,22 +291,26 @@ ntfs_reclaim(ap)
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	if (ntfs_prtactive && vp->v_usecount != 0)
-		vprint("ntfs_reclaim: pushing active", vp);
-
-	if ((error = ntfs_ntget(ip)) != 0)
+	error = ntfs_ntget(ip);
+	if (error)
 		return (error);
-	
+
+#if defined(__FreeBSD__)
+	VOP__UNLOCK(vp,0,ap->a_p);
+#endif
+
 	/* Purge old data structures associated with the inode. */
 	cache_purge(vp);
-	if (ip->i_devvp) {
-		vrele(ip->i_devvp);
-		ip->i_devvp = NULL;
+	if (fp->f_devvp) {
+		vrele(fp->f_devvp);
+		fp->f_devvp = NULL;
 	}
 
 	ntfs_frele(fp);
-	ntfs_ntput(ip);
+
 	vp->v_data = NULL;
+
+	ntfs_ntput(ip);
 
 	return (0);
 }
@@ -309,6 +321,8 @@ ntfs_print(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
+/*	printf("[ntfs_print]");*/
+	
 	return (0);
 }
 
@@ -417,7 +431,7 @@ ntfs_write(ap)
 	dprintf(("ntfs_write: filesize: %d",(u_int32_t)fp->f_size));
 
 	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
-		printf("ntfs_write: CAN'T WRITE BEYOND END OF FILE\n");
+		printf("ntfs_write: CAN'T WRITE BEYOND OF FILE\n");
 		return (EFBIG);
 	}
 
@@ -427,12 +441,12 @@ ntfs_write(ap)
 
 	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
 		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
-#ifdef NTFS_DEBUG
-	if (error)
-		printf("ntfs_write: ntfs_writeattr failed: %d\n", error);
-#endif
+	if (error) {
+		printf("ntfs_write: ntfs_writeattr failed: %d\n",error);
+		return (error);
+	}
 
-	return (error);
+	return (0);
 }
 
 int
@@ -476,6 +490,12 @@ ntfs_access(ap)
 		}
 	}
 
+	/* If immutable bit set, nobody gets to write it. */
+/*
+	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
+		return (EPERM);
+*/
+
 	/* Otherwise, user id 0 always gets access. */
 	if (cred->cr_uid == 0)
 		return (0);
@@ -483,26 +503,26 @@ ntfs_access(ap)
 	mask = 0;
 
 	/* Otherwise, check the owner. */
-	if (cred->cr_uid == ip->i_mp->ntm_uid) {
+	if (cred->cr_uid == ip->i_uid) {
 		if (mode & VEXEC)
 			mask |= S_IXUSR;
 		if (mode & VREAD)
 			mask |= S_IRUSR;
 		if (mode & VWRITE)
 			mask |= S_IWUSR;
-		return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
+		return ((ip->i_mode & mask) == mask ? 0 : EACCES);
 	}
 
 	/* Otherwise, check the groups. */
 	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (ip->i_mp->ntm_gid == *gp) {
+		if (ip->i_gid == *gp) {
 			if (mode & VEXEC)
 				mask |= S_IXGRP;
 			if (mode & VREAD)
 				mask |= S_IRGRP;
 			if (mode & VWRITE)
 				mask |= S_IWGRP;
-			return ((ip->i_mp->ntm_mode&mask) == mask ? 0 : EACCES);
+			return ((ip->i_mode & mask) == mask ? 0 : EACCES);
 		}
 
 	/* Otherwise, check everyone else. */
@@ -512,7 +532,7 @@ ntfs_access(ap)
 		mask |= S_IROTH;
 	if (mode & VWRITE)
 		mask |= S_IWOTH;
-	return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
+	return ((ip->i_mode & mask) == mask ? 0 : EACCES);
 }
 
 /*
@@ -726,9 +746,9 @@ ntfs_lookup(ap)
 #if NTFS_DEBUG
 	int wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
 #endif
-	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %d, lp: %d, wp: %d \n",
-		(int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
-		dip->i_number, lockparent, wantparent));
+	dprintf(("ntfs_lookup: %s (%ld bytes) in %d, lp: %d, wp: %d \n",
+		cnp->cn_nameptr, cnp->cn_namelen,
+		dip->i_number,lockparent, wantparent));
 
 	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_proc);
 	if(error)
@@ -770,7 +790,9 @@ ntfs_lookup(ap)
 			return (error);
 
 		VOP__UNLOCK(dvp,0,cnp->cn_proc);
+#ifdef __NetBSD__
 		cnp->cn_flags |= PDIRUNLOCK;
+#endif
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
@@ -778,25 +800,27 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (VN_LOCK(dvp,LK_EXCLUSIVE|LK_RETRY,cnp->cn_proc)==0)
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0) {
+#ifdef __NetBSD__
 				cnp->cn_flags &= ~PDIRUNLOCK;
-			return (error);
+#endif
+			}
+			return(error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = VN_LOCK(dvp, LK_EXCLUSIVE, cnp->cn_proc);
-			if (error) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
 				vput( *(ap->a_vpp) );
 				return (error);
 			}
+#ifdef __NetBSD__
 			cnp->cn_flags &= ~PDIRUNLOCK;
+#endif
 		}
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
-		if (error) {
-			dprintf(("ntfs_ntlookupfile: returned %d\n", error));
+		if(error)
 			return (error);
-		}
 
 		dprintf(("ntfs_lookup: found ino: %d\n", 
 			VTONT(*ap->a_vpp)->i_number));

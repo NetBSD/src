@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.3 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.2 1999/08/03 22:43:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -156,18 +156,6 @@ struct fxp_cb_ias {
 	volatile u_int8_t macaddr[6];
 };
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define	__FXP_BITFIELD2(a, b)			a, b
-#define	__FXP_BITFIELD3(a, b, c)		a, b, c
-#define	__FXP_BITFIELD4(a, b, c, d)		a, b, c, d
-#define	__FXP_BITFIELD6(a, b, c, d, e, f)	a, b, c, d, e, f
-#else
-#define	__FXP_BITFIELD2(a, b)			b, a
-#define	__FXP_BITFIELD3(a, b, c)		c, b, a
-#define	__FXP_BITFIELD4(a, b, c, d)		d, c, b, a
-#define	__FXP_BITFIELD6(a, b, c, d, e, f)	f, e, d, c, b, a
-#endif
-
 /*
  * Configure command.
  */
@@ -175,44 +163,59 @@ struct fxp_cb_config {
 	volatile u_int16_t	cb_status;
 	volatile u_int16_t	cb_command;
 	volatile u_int32_t	link_addr;
-	volatile u_int8_t	__FXP_BITFIELD2(byte_count:6, :2);
-	volatile u_int8_t	__FXP_BITFIELD3(rx_fifo_limit:4,
-				    tx_fifo_limit:3,
-				    :1);
+	volatile u_int8_t	byte_count:6,
+				:2;
+	volatile u_int8_t	rx_fifo_limit:4,
+				tx_fifo_limit:3,
+				:1;
 	volatile u_int8_t	adaptive_ifs;
 	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD2(rx_dma_bytecount:7, :1);
-	volatile u_int8_t	__FXP_BITFIELD2(tx_dma_bytecount:7,
-				    dma_bce:1);
-	volatile u_int8_t	__FXP_BITFIELD6(late_scb:1, :1,
-				    tno_int:1,
-				    ci_int:1, :3,
-				    save_bf:1);
-	volatile u_int8_t	__FXP_BITFIELD3(disc_short_rx:1,
-				    underrun_retry:2, :5);
-	volatile u_int8_t	__FXP_BITFIELD2(mediatype:1, :7);
+	volatile u_int8_t	rx_dma_bytecount:7,
+				:1;
+	volatile u_int8_t	tx_dma_bytecount:7,
+				dma_bce:1;
+	volatile u_int8_t	late_scb:1,
+				:1,
+				tno_int:1,
+				ci_int:1,
+				:3,
+				save_bf:1;
+	volatile u_int8_t	disc_short_rx:1,
+				underrun_retry:2,
+				:5;
+	volatile u_int8_t	mediatype:1,
+				:7;
 	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(:3,
-				    nsai:1,
-				    preamble_length:2,
-				    loopback:2);
-	volatile u_int8_t	__FXP_BITFIELD2(linear_priority:3, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(linear_pri_mode:1, :3,
-				    interfrm_spacing:4);
+	volatile u_int8_t	:3,
+				nsai:1,
+				preamble_length:2,
+				loopback:2;
+	volatile u_int8_t	linear_priority:3,
+				:5;
+	volatile u_int8_t	linear_pri_mode:1,
+				:3,
+				interfrm_spacing:4;
 	volatile u_int8_t	:8;
 	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(promiscuous:1,
-				    bcast_disable:1, :5,
-				    crscdt:1);
+	volatile u_int8_t	promiscuous:1,
+				bcast_disable:1,
+				:5,
+				crscdt:1;
 	volatile u_int8_t	:8;
 	volatile u_int8_t	:8;
-	volatile u_int8_t	__FXP_BITFIELD4(stripping:1,
-				    padding:1,
-				    rcv_crc_xfer:1, :5);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, force_fdx:1,
-				    fdx_pin_en:1);
-	volatile u_int8_t	__FXP_BITFIELD3(:6, multi_ia:1, :1);
-	volatile u_int8_t	__FXP_BITFIELD3(:3, mc_all:1, :4);
+	volatile u_int8_t	stripping:1,
+				padding:1,
+				rcv_crc_xfer:1,
+				:5;
+	volatile u_int8_t	:6,
+				force_fdx:1,
+				fdx_pin_en:1;
+	volatile u_int8_t	:6,
+				multi_ia:1,
+				:1;
+	volatile u_int8_t	:3,
+				mc_all:1,
+				:4;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.18 1999/11/02 19:35:44 tron Exp $	*/
+/*	$NetBSD: sem.c,v 1.17 1999/03/19 12:58:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.18 1999/11/02 19:35:44 tron Exp $");
+__RCSID("$NetBSD: sem.c,v 1.17 1999/03/19 12:58:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ execute(t, wanttty, pipein, pipeout)
 	     * Check if we have a builtin function and remember which one.
 	     */
 	    bifunc = isbfunc(t);
- 	    if (noexec && bifunc != NULL) {
+ 	    if (noexec) {
 		/*
 		 * Continue for builtins that are part of the scripting language
 		 */

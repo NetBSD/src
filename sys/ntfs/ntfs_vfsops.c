@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.23 1999/11/15 19:38:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.15 1999/09/29 15:58:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -438,9 +438,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
 #if defined(__FreeBSD__)
-	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP__UNLOCK(devvp, 0, p);
+	VOP_UNLOCK(devvp, 0, p);
 #else
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
 #endif
@@ -584,7 +584,11 @@ ntfs_mountfs(devvp, mp, argsp, p)
 #endif
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
+#if defined(__FreeBSD__)
 	devvp->v_specmountpoint = mp;
+#else
+	devvp->v_specflags |= SI_MOUNTEDON;
+#endif
 	return (0);
 
 out1:
@@ -595,19 +599,14 @@ out1:
 		dprintf(("ntfs_mountfs: vflush failed\n"));
 
 out:
+#if defined(__FreeBSD__)
 	devvp->v_specmountpoint = NULL;
+#else
+	devvp->v_specflags &= ~SI_MOUNTEDON;
+#endif
 	if (bp)
 		brelse(bp);
-
-#if defined __NetBSD__
-	/* lock the device vnode before calling VOP_CLOSE() */
-	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP__UNLOCK(devvp, 0, p);
-#else
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-#endif
-	
 	return (error);
 }
 
@@ -657,25 +656,21 @@ ntfs_unmount(
 	if (error)
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
 
-	/* Check if the type of device node isn't VBAD before
-	 * touching v_specinfo.  If the device vnode is revoked, the
-	 * field is NULL and touching it causes null pointer derefercence.
-	 */
-	if (ntmp->ntm_devvp->v_type != VBAD)
-		ntmp->ntm_devvp->v_specmountpoint = NULL;
+#if defined(__FreeBSD__)
+	ntmp->ntm_devvp->v_specmountpoint = NULL;
+#else
+	ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
+#endif
+
+#ifndef __NetBSD__
+	VOP_LOCK(ntmp->ntm_devvp);
+	vnode_pager_uncache(ntmp->ntm_devvp);
+	VOP_UNLOCK(ntmp->ntm_devvp);
+#endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
-
-#if defined(__NetBSD__)
-	/* lock the device vnode before calling VOP_CLOSE() */
-	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	VOP__UNLOCK(ntmp->ntm_devvp, 0, p);
-#else
-	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, p);
-#endif
 
 	vrele(ntmp->ntm_devvp);
 
@@ -882,7 +877,6 @@ ntfs_vgetex(
 	struct ntnode *ip;
 	struct fnode *fp;
 	struct vnode *vp;
-	enum vtype f_type;
 
 	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
 		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
@@ -918,13 +912,14 @@ ntfs_vgetex(
 
 	if (!(flags & VG_DONTVALIDFN) && !(fp->f_flag & FN_VALID)) {
 		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
-		    (fp->f_attrtype == NTFS_A_DATA && fp->f_attrname == NULL)) {
-			f_type = VDIR;
-		} else if (flags & VG_EXT) {
-			f_type = VNON;
-			fp->f_size = fp->f_allocated = 0;
+		    (fp->f_attrtype == 0x80 && fp->f_attrname == NULL)) {
+			fp->f_type = VDIR;
+		} else if(flags & VG_EXT) {
+			fp->f_type = VNON;
+
+			fp->f_size =fp->f_allocated = 0;
 		} else {
-			f_type = VREG;	
+			fp->f_type = VREG;	
 
 			error = ntfs_filesize(ntmp, fp, 
 					      &fp->f_size, &fp->f_allocated);
@@ -957,7 +952,7 @@ ntfs_vgetex(
 #endif
 	fp->f_vp = vp;
 	vp->v_data = fp;
-	vp->v_type = f_type;
+	vp->v_type = fp->f_type;
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_flag |= VROOT;
@@ -972,7 +967,7 @@ ntfs_vgetex(
 		}
 	}
 
-	VREF(ip->i_devvp);
+	VREF(fp->f_devvp);
 	*vpp = vp;
 	return (0);
 	
@@ -985,7 +980,7 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp);
+			   LK_EXCLUSIVE, 0, curproc, vpp);
 }
 
 #if defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.12 1999/10/07 23:50:58 soren Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.11 1999/03/07 11:02:07 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,8 +137,11 @@ for backwards compatibility purposes only.
 Set the retry count for doing the mount to the specified value.
 .It Fl T
 Use TCP transport instead of UDP.
-This is recommended for servers that are not on the same physical network as
-the client.  Not all NFS servers, especially not old ones, support this.
+This is recommended for servers that are not on the same LAN cable as
+the client.
+(NB: This is NOT supported by most non
+.Bx
+servers.)
 .It Fl U
 Force the mount protocol to use UDP transport, even for TCP NFS mounts.
 (Necessary for some old

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 1999/11/08 23:29:57 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.6 1999/06/12 12:49:25 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/exec.h>
+#include <a.out.h>
 
 #include <lib/libsa/stand.h>
 

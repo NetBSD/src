@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.35 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.35 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ main(argc, argv)
 	/* Dispose of random users. */
 	if (getuid() != 0) {
 		errno = EPERM;
-		err(1, NULL);
+		err(1, "%s", "");
 	}
 
 	/* System V users like to reexec init. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 1999/11/13 12:09:41 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.4 1999/04/28 15:22:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include "loadfile.h"
 
-int	verbose, nowrite, hflag = 1;
+int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 
 #if 0
@@ -83,6 +83,10 @@ int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
+char	*karch;
+char	cpumodel[100];
+
+
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
@@ -95,7 +99,7 @@ usage()
 {
 	extern char *__progname;
 	(void)fprintf(stderr,
-	    "Usage: %s [-n] [-v] <boot> <proto> <device>\n",
+	    "Usage: %s [-n] [-v] [-h] [-a <karch>] <boot> <proto> <device>\n",
 	    __progname);
 	exit(1);
 }
@@ -109,15 +113,17 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
+	int	mib[2];
+	size_t	size;
 
 	while ((c = getopt(argc, argv, "a:vnh")) != -1) {
 		switch (c) {
 		case 'a':
-			warnx("-a option is obsolete");
+			karch = optarg;
 			break;
 		case 'h':	/* Note: for backwards compatibility */
 			/* Don't strip a.out header */
-			warnx("-h option is obsolete");
+			hflag = 1;
 			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -140,11 +146,35 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	dev = argv[optind + 2];
 
+	if (karch == NULL) {
+		mib[0] = CTL_HW;
+		mib[1] = HW_MODEL;
+		size = sizeof(cpumodel);
+		if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
+			err(1, "sysctl");
+
+		if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
+			/* Assume a sun4c/sun4m */
+			karch = "sun4c";
+		else
+			karch = "sun4";
+	}
+
 	if (verbose) {
 		printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
+		printf("architecture: %s\n", karch);
 	}
+
+	if (strcmp(karch, "sun4") == 0) {
+		hflag = 1;
+	} else if (strcmp(karch, "sun4c") == 0) {
+		hflag = 1;
+	} else if (strcmp(karch, "sun4m") == 0) {
+		hflag = 1;
+	} else
+		errx(1, "Unsupported architecture");
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)

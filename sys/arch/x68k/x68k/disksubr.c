@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.14.1 1999/12/21 23:16:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -70,11 +70,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct dos_partition *dp = osdep->dosparts;
 	struct dkbad *bdp = &osdep->bad;
@@ -85,7 +86,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = bsize;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
@@ -100,6 +101,8 @@ readdisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -304,11 +307,12 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int bshift;
 {
 	struct dos_partition *dp = osdep->dosparts;
 	struct buf *bp;
@@ -319,6 +323,8 @@ writedisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;

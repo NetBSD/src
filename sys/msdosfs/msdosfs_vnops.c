@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.89 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.87.6.1 1999/12/21 23:20:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -383,7 +383,7 @@ msdosfs_setattr(v)
 		return (EINVAL);
 	}
 	/*
-	 * Silently ignore attributes modifications on directories.
+	 * Directories must not ever get their attributes modified
 	 */
 	if (ap->a_vp->v_type == VDIR)
 		return 0;
@@ -509,16 +509,19 @@ msdosfs_read(v)
 		 * vnode for the directory.
 		 */
 		if (isadir) {
-			error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, fsbtosb(pmp, lbn),
+							blsize, NOCRED, &bp);
 		} else {
 			rablock = lbn + 1;
 			if (vp->v_lastr + 1 == lbn &&
 			    de_cn2off(pmp, rablock) < dep->de_FileSize)
-				error = breada(vp, de_cn2bn(pmp, lbn),
+				error = breada(vp,
+				    fsbtosb(pmp, de_cn2bn(pmp, lbn)),
 				    pmp->pm_bpcluster, de_cn2bn(pmp, rablock),
 				    pmp->pm_bpcluster, NOCRED, &bp);
 			else
-				error = bread(vp, de_cn2bn(pmp, lbn),
+				error = bread(vp,
+				    fsbtosb(pmp, de_cn2bn(pmp, lbn)),
 				    pmp->pm_bpcluster, NOCRED, &bp);
 			vp->v_lastr = lbn;
 		}
@@ -648,7 +651,8 @@ msdosfs_write(v)
 			 * or we write the cluster from its start beyond EOF,
 			 * then no need to read data from disk.
 			 */
-			bp = getblk(thisvp, bn, pmp->pm_bpcluster, 0, 0);
+			bp = getblk(thisvp, fsbtosb(pmp, bn),
+						pmp->pm_bpcluster, 0, 0);
 			clrbuf(bp);
 			/*
 			 * Do the bmap now, since pcbmap needs buffers
@@ -656,10 +660,13 @@ msdosfs_write(v)
 			 */
 			if (bp->b_blkno == bp->b_lblkno) {
 				error = pcbmap(dep,
-					       de_bn2cn(pmp, bp->b_lblkno),
+					       de_bn2cn(pmp,
+						  sbtofsb(pmp, bp->b_lblkno)),
 					       &bp->b_blkno, 0, 0);
 				if (error)
 					bp->b_blkno = -1;
+				else
+					bp->b_blkno = fsbtosb(pmp, bp->b_blkno);
 			}
 			if (bp->b_blkno == -1) {
 				brelse(bp);
@@ -671,8 +678,8 @@ msdosfs_write(v)
 			/*
 			 * The block we need to write into exists, so read it in.
 			 */
-			error = bread(thisvp, bn, pmp->pm_bpcluster,
-				      NOCRED, &bp);
+			error = bread(thisvp, fsbtosb(pmp, bn),
+						pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				break;
@@ -782,7 +789,7 @@ msdosfs_update(v)
 	if (error)
 		return (error);
 	DE_EXTERNALIZE(dirp, dep);
-	if (ap->a_waitfor == MNT_WAIT)
+	if (ap->a_waitfor)
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);
@@ -1179,8 +1186,8 @@ abortit:
 			panic("msdosfs_rename: updating .. in root directory?\n");
 		} else
 			bn = cntobn(pmp, cn);
-		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			      NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn),
+					pmp->pm_bpcluster, NOCRED, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp);
@@ -1288,7 +1295,7 @@ msdosfs_mkdir(v)
 	 */
 	bn = cntobn(pmp, newcluster);
 	/* always succeeds */
-	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster, 0, 0);
+ 	bp = getblk(pmp->pm_devvp, fsbtosb(pmp, bn), pmp->pm_bpcluster, 0, 0);
 	memset(bp->b_data, 0, pmp->pm_bpcluster);
 	memcpy(bp->b_data, &dosdirtemplate, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;
@@ -1469,7 +1476,7 @@ msdosfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	off_t *cookies = NULL;
 	int ncookies = 0, nc = 0;
-	off_t offset, uio_off;
+	off_t offset;
 	int chksum = -1;
 
 #ifdef MSDOSFS_DEBUG
@@ -1503,7 +1510,6 @@ msdosfs_readdir(v)
 		return (EINVAL);
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
-	uio_off = uio->uio_offset;
 
 	if (ap->a_ncookies) {
 		nc = uio->uio_resid / 16;
@@ -1555,7 +1561,6 @@ msdosfs_readdir(v)
 				if (error)
 					goto out;
 				offset += sizeof(struct direntry);
-				uio_off = offset;
 				if (cookies) {
 					*cookies++ = offset;
 					ncookies++;
@@ -1576,7 +1581,8 @@ msdosfs_readdir(v)
 		n = min(n, diff);
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, fsbtosb(pmp, bn), blsize,
+								NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -1670,7 +1676,6 @@ msdosfs_readdir(v)
 				brelse(bp);
 				goto out;
 			}
-			uio_off = offset + sizeof(struct direntry);
 			if (cookies) {
 				*cookies++ = offset + sizeof(struct direntry);
 				ncookies++;
@@ -1684,7 +1689,7 @@ msdosfs_readdir(v)
 	}
 
 out:
-	uio->uio_offset = uio_off;
+	uio->uio_offset = offset;
 	uio->uio_resid += lost;
 	if (dep->de_FileSize - (offset - bias) <= 0)
 		*ap->a_eofflag = 1;
@@ -1739,6 +1744,7 @@ msdosfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
+	struct msdosfsmount *pmp = dep->de_pmp;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = dep->de_devvp;
@@ -1750,7 +1756,7 @@ msdosfs_bmap(v)
 		 */
 		*ap->a_runp = 0;
 	}
-	return (pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0));
+	return (pcbmap(dep, de_bn2cn(pmp, ap->a_bn), ap->a_bnp, 0, 0));
 }
 
 int
@@ -1789,10 +1795,13 @@ msdosfs_strategy(v)
 	 * don't allow files with holes, so we shouldn't ever see this.
 	 */
 	if (bp->b_blkno == bp->b_lblkno) {
-		error = pcbmap(dep, de_bn2cn(dep->de_pmp, bp->b_lblkno),
+		error = pcbmap(dep, de_bn2cn(dep->de_pmp,
+			       sbtofsb(dep->de_pmp, bp->b_lblkno)),
 			       &bp->b_blkno, 0, 0);
 		if (error)
 			bp->b_blkno = -1;
+		else
+			bp->b_blkno = fsbtosb(dep->de_pmp, bp->b_blkno);
 		if (bp->b_blkno == -1)
 			clrbuf(bp);
 	}

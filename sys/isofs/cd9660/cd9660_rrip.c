@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.19 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.19.8.1 1999/12/21 23:19:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -577,7 +577,11 @@ cd9660_rrip_loop(isodir, ana, table)
 			if (ana->iso_ce_blk >= ana->imp->volume_space_size
 			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
+#if 1
+				     ana->iso_ce_blk << ana->imp->im_sshift,
+#else
 				     ana->iso_ce_blk << (ana->imp->im_bshift - DEV_BSHIFT),
+#endif
 				     ana->imp->logical_block_size, NOCRED, &bp))
 				/* what to do now? */
 				break;

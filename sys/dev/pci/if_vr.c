@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.30 1999/12/12 02:56:49 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.26 1999/09/20 17:40:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -134,17 +134,24 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vrreg.h>
+
+#if BYTE_ORDER == BIG_ENDIAN
+#include <machine/bswap.h>
+#define	htopci(x)	bswap32(x)
+#define	pcitoh(x)	bswap32(x)
+#else
+#define	htopci(x)	(x)
+#define	pcitoh(x)	(x)
+#endif
 
 #define	VR_USEIOSPACE
 
@@ -260,11 +267,11 @@ do {									\
 	struct vr_desc *__d = VR_CDRX((sc), (i));			\
 	struct vr_descsoft *__ds = VR_DSRX((sc), (i));			\
 									\
-	__d->vr_next = htole32(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
-	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
+	__d->vr_next = htopci(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
+	__d->vr_status = htopci(VR_RXSTAT_FIRSTFRAG |			\
 	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
-	__d->vr_data = htole32(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
-	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
+	__d->vr_data = htopci(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
+	__d->vr_ctl = htopci(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
@@ -305,6 +312,8 @@ static void vr_tick		__P((void *));
 static int vr_ifmedia_upd	__P((struct ifnet *));
 static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
+static void vr_mii_sync		__P((struct vr_softc *));
+static void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
 static int vr_mii_readreg	__P((struct device *, int, int));
 static void vr_mii_writereg	__P((struct device *, int, int, int));
 static void vr_mii_statchg	__P((struct device *));
@@ -339,41 +348,57 @@ int	vr_copy_small = 0;
 	CSR_WRITE_4(sc, reg,				\
 		CSR_READ_4(sc, reg) & ~x)
 
+#define	SIO_SET(x)					\
+	CSR_WRITE_1(sc, VR_MIICMD,			\
+		CSR_READ_1(sc, VR_MIICMD) | x)
+
+#define	SIO_CLR(x)					\
+	CSR_WRITE_1(sc, VR_MIICMD,			\
+		CSR_READ_1(sc, VR_MIICMD) & ~x)
+
 /*
- * MII bit-bang glue.
+ * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-u_int32_t vr_mii_bitbang_read __P((struct device *));
-void vr_mii_bitbang_write __P((struct device *, u_int32_t));
-
-const struct mii_bitbang_ops vr_mii_bitbang_ops = {
-	vr_mii_bitbang_read,
-	vr_mii_bitbang_write,
-	{
-		VR_MIICMD_DATAOUT,	/* MII_BIT_MDO */
-		VR_MIICMD_DATAIN,	/* MII_BIT_MDI */
-		VR_MIICMD_CLK,		/* MII_BIT_MDC */
-		VR_MIICMD_DIR,		/* MII_BIT_DIR_HOST_PHY */
-		0,			/* MII_BIT_DIR_PHY_HOST */
-	}
-};
-
-u_int32_t
-vr_mii_bitbang_read(self)
-	struct device *self;
+static void
+vr_mii_sync(sc)
+	struct vr_softc *sc;
 {
-	struct vr_softc *sc = (void *) self;
+	int i;
 
-	return (CSR_READ_1(sc, VR_MIICMD));
+	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAOUT);
+
+	for (i = 0; i < 32; i++) {
+		SIO_SET(VR_MIICMD_CLK);
+		DELAY(1);
+		SIO_CLR(VR_MIICMD_CLK);
+		DELAY(1);
+	}
 }
 
-void
-vr_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+/*
+ * Clock a series of bits through the MII.
+ */
+static void
+vr_mii_send(sc, bits, cnt)
+	struct vr_softc *sc;
+	u_int32_t bits;
+	int cnt;
 {
-	struct vr_softc *sc = (void *) self;
+	int i;
 
-	CSR_WRITE_1(sc, VR_MIICMD, (val & 0xff) | VR_MIICMD_DIRECTPGM);
+	SIO_CLR(VR_MIICMD_CLK);
+
+	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
+		if (bits & i) {
+			SIO_SET(VR_MIICMD_DATAOUT);
+		} else {
+			SIO_CLR(VR_MIICMD_DATAOUT);
+		}
+		DELAY(1);
+		SIO_CLR(VR_MIICMD_CLK);
+		DELAY(1);
+		SIO_SET(VR_MIICMD_CLK);
+	}
 }
 
 /*
@@ -384,10 +409,77 @@ vr_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = (struct vr_softc *)self;
+	int i, ack, val = 0;
 
-	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-	return (mii_bitbang_readreg(self, &vr_mii_bitbang_ops, phy, reg));
+	CSR_WRITE_1(sc, VR_MIICMD, 0);
+	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+
+	/*
+	 * Turn on data xmit.
+	 */
+	SIO_SET(VR_MIICMD_DIR);
+
+	vr_mii_sync(sc);
+
+	/*
+	 * Send command/address info.
+	 */
+	vr_mii_send(sc, MII_COMMAND_START, 2);
+	vr_mii_send(sc, MII_COMMAND_READ, 2);
+	vr_mii_send(sc, phy, 5);
+	vr_mii_send(sc, reg, 5);
+
+	/* Idle bit */
+	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAOUT));
+	DELAY(1);
+	SIO_SET(VR_MIICMD_CLK);
+	DELAY(1);
+
+	/* Turn off xmit. */
+	SIO_CLR(VR_MIICMD_DIR);
+
+	/* Check for ack */
+	SIO_CLR(VR_MIICMD_CLK);
+	DELAY(1);
+	SIO_SET(VR_MIICMD_CLK);
+	DELAY(1);
+	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN;
+
+	/*
+	 * Now try reading data bits. If the ack failed, we still
+	 * need to clock through 16 cycles to keep the PHY(s) in sync.
+	 */
+	if (ack) {
+		for (i = 0; i < 16; i++) {
+			SIO_CLR(VR_MIICMD_CLK);
+			DELAY(1);
+			SIO_SET(VR_MIICMD_CLK);
+			DELAY(1);
+		}
+		goto fail;
+	}
+
+	for (i = 0x8000; i; i >>= 1) {
+		SIO_CLR(VR_MIICMD_CLK);
+		DELAY(1);
+		if (!ack) {
+			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN)
+				val |= i;
+			DELAY(1);
+		}
+		SIO_SET(VR_MIICMD_CLK);
+		DELAY(1);
+	}
+
+ fail:
+
+	SIO_CLR(VR_MIICMD_CLK);
+	DELAY(1);
+	SIO_SET(VR_MIICMD_CLK);
+	DELAY(1);
+
+	return (val);
 }
 
 /*
@@ -398,10 +490,35 @@ vr_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = (struct vr_softc *)self;
 
-	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-	mii_bitbang_writereg(self, &vr_mii_bitbang_ops, phy, reg, val);
+	CSR_WRITE_1(sc, VR_MIICMD, 0);
+	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+
+	/*
+	 * Turn on data output.
+	 */
+	SIO_SET(VR_MIICMD_DIR);
+
+	vr_mii_sync(sc);
+
+	vr_mii_send(sc, MII_COMMAND_START, 2);
+	vr_mii_send(sc, MII_COMMAND_WRITE, 2);
+	vr_mii_send(sc, phy, 5);
+	vr_mii_send(sc, reg, 5);
+	vr_mii_send(sc, MII_COMMAND_ACK, 2);
+	vr_mii_send(sc, val, 16);
+
+	/* Idle bit. */
+	SIO_SET(VR_MIICMD_CLK);
+	DELAY(1);
+	SIO_CLR(VR_MIICMD_CLK);
+	DELAY(1);
+
+	/*
+	 * Turn off xmit.
+	 */
+	SIO_CLR(VR_MIICMD_DIR);
 }
 
 static void
@@ -606,7 +723,7 @@ vr_rxeof(sc)
 
 		VR_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = le32toh(d->vr_status);
+		rxstat = pcitoh(d->vr_status);
 
 		if (rxstat & VR_RXSTAT_OWN) {
 			/*
@@ -663,7 +780,7 @@ vr_rxeof(sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		/* No errors; receive the packet. */
-		total_len = VR_RXBYTES(le32toh(d->vr_status));
+		total_len = VR_RXBYTES(pcitoh(d->vr_status));
 
 		/*
 		 * XXX The VIA Rhine chip includes the CRC with every
@@ -816,7 +933,7 @@ vr_txeof(sc)
 
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		txstat = le32toh(d->vr_status);
+		txstat = pcitoh(d->vr_status);
 		if (txstat & VR_TXSTAT_OWN)
 			break;
 
@@ -1030,12 +1147,11 @@ vr_start(ifp)
 		 * Fill in the transmit descriptor.  The Rhine
 		 * doesn't auto-pad, so we have to do this ourselves.
 		 */
-		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
-		d->vr_ctl = htole32(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
+		d->vr_data = htopci(ds->ds_dmamap->dm_segs[0].ds_addr);
+		d->vr_ctl = htopci(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
 		    VR_MIN_FRAMELEN : m0->m_pkthdr.len);
 		d->vr_ctl |=
-		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
-		    VR_TXCTL_LASTFRAG);
+		    htopci(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|VR_TXCTL_LASTFRAG);
 		
 		/*
 		 * If this is the first descriptor we're enqueuing,
@@ -1045,7 +1161,7 @@ vr_start(ifp)
 		if (nexttx == firsttx)
 			d->vr_status = 0;
 		else
-			d->vr_status = htole32(VR_TXSTAT_OWN);
+			d->vr_status = htopci(VR_TXSTAT_OWN);
 
 		VR_CDTXSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1072,7 +1188,7 @@ vr_start(ifp)
 		 * Cause a transmit interrupt to happen on the
 		 * last packet we enqueued.
 		 */
-		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htole32(VR_TXCTL_FINT);
+		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htopci(VR_TXCTL_FINT);
 		VR_CDTXSYNC(sc, sc->vr_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1080,7 +1196,7 @@ vr_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descriptor to the Rhine now.
 		 */
-		VR_CDTX(sc, firsttx)->vr_status = htole32(VR_TXSTAT_OWN);
+		VR_CDTX(sc, firsttx)->vr_status = htopci(VR_TXSTAT_OWN);
 		VR_CDTXSYNC(sc, firsttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1124,7 +1240,7 @@ vr_init(sc)
 	for (i = 0; i < VR_NTXDESC; i++) {
 		d = VR_CDTX(sc, i);
 		memset(d, 0, sizeof(struct vr_desc));
-		d->vr_next = htole32(VR_CDTXADDR(sc, VR_NEXTTX(i)));
+		d->vr_next = htopci(VR_CDTXADDR(sc, VR_NEXTTX(i)));
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->vr_txpending = 0;
@@ -1390,9 +1506,6 @@ vr_stop(sc, drain)
 
 	/* Cancel one second timer. */
 	untimeout(vr_tick, sc);
-
-	/* Down the MII. */
-	mii_down(&sc->vr_mii);
 
 	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
@@ -1710,8 +1823,7 @@ vr_attach(parent, self, aux)
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
 	ifmedia_init(&sc->vr_mii.mii_media, 0, vr_ifmedia_upd, vr_ifmedia_sts);
-	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);

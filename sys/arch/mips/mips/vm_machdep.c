@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1999/12/04 21:20:51 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 1999/07/08 18:08:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 1999/12/04 21:20:51 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 1999/07/08 18:08:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-#ifndef SOFTFLOAT
 	if (p1 == fpcurproc)
 		savefpregs(p1);
-#endif
 
 	/*
 	 * Copy pcb from proc p1 to p2.
@@ -231,10 +229,8 @@ cpu_coredump(p, vp, cred, chdr)
 
 	cpustate.frame = *(struct frame *)p->p_md.md_regs;
 	if (p->p_md.md_flags & MDP_FPUSED) {
-#ifndef SOFTFLOAT
 		if (p == fpcurproc)
 			savefpregs(p);
-#endif
 		cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 	else
@@ -264,7 +260,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of NBPG.
+ * and size must be a multiple of CLSIZE.
  */
 void
 pagemove(from, to, size)
@@ -273,7 +269,7 @@ pagemove(from, to, size)
 {
 	pt_entry_t *fpte, *tpte;
 
-	if (size % NBPG)
+	if (size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -330,7 +326,7 @@ vmapbuf(bp, len)
 		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.16 1999/06/10 01:37:10 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16 1999/06/10 01:37:10 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,8 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
+#include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
+#include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 /* all these to get ioasic_base */
@@ -92,7 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
+#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
@@ -102,10 +106,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp
  * Forward declarations
  */
 void		dec_maxine_init __P((void));
+void		dec_maxine_os_init __P((void));
 void		dec_maxine_bus_reset __P((void));
+void		dec_maxine_mach_init __P((void));
+
 void		dec_maxine_enable_intr
-		   __P ((unsigned slotno, int (*handler)(void *),
-			 void *sc, int onoff));
+		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
+			 intr_arg_t sc, int onoff));
 int		dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_maxine_device_register __P((struct device *, void *));
 void		dec_maxine_cons_init __P((void));
@@ -113,66 +120,79 @@ void		dec_maxine_cons_init __P((void));
 /*
  * local declarations
  */
-static u_int32_t xine_tc3_imask;
+u_long xine_tc3_imask;
+
 static unsigned latched_cycle_cnt;
 
 void kn02ca_wbflush __P((void));
 unsigned kn02ca_clkread __P((void));
+extern unsigned (*clkread) __P((void));
 
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
+
+/*
+ * Fill in platform struct.
+ */
 void
 dec_maxine_init()
 {
-	extern char cpu_model[];
 
-	platform.iobus = "tcbus";
+	platform.iobus = "tcmaxine";
+
+	platform.os_init = dec_maxine_os_init;
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
-	platform.iointr = dec_maxine_intr;
-	platform.memsize = memsize_scan;
-	platform.clkread = kn02ca_clkread;
-	/* MAXINE has 1 microsec. free-running high resolution timer */
- 
-	/* clear any memory errors */
+
+	dec_maxine_os_init();
+
+	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
+}
+
+
+/*
+ * Set up OS level stuff: spls, etc.
+ */
+void
+dec_maxine_os_init()
+{
+	/* clear any memory errors from probes */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
- 
+
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 	mips_hardware_intr = dec_maxine_intr;
-	tc_enable_interrupt = dec_maxine_enable_intr;
+	tc_enable_interrupt = dec_maxine_enable_intr;	/* XXX */
+	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 
-	/*
-	 * MAXINE IOASIC interrupts come through INT 3, while
-	 * clock interrupt does via INT 1.  splclock and splstatclock
-	 * should block IOASIC activities.
-	 */
-	splvec.splbio = MIPS_SPL3; 
+	/* MAXINE has 1 microsec. free-running high resolution timer */
+	clkread = kn02ca_clkread;
+
+	splvec.splbio = MIPS_SPL3;
 	splvec.splnet = MIPS_SPL3;
 	splvec.spltty = MIPS_SPL3;
 	splvec.splimp = MIPS_SPL3;
 	splvec.splclock = MIPS_SPL_0_1_3;
 	splvec.splstatclock = MIPS_SPL_0_1_3;
- 
-	/* calibrate cpu_mhz value */  
-	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
+
+	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-#if 0	
+#if 0
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
 	*(u_int32_t *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
 	*(u_int32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
-#endif	
-  
-	/* sanitize interrupt mask */
-	xine_tc3_imask = 0;
+#endif
+	/*
+	 * Initialize interrupts.
+	 */
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = XINE_IM0;
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
-	kn02ca_wbflush();
-
-	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 }
+
 
 /*
  * Initalize the memory system and I/O buses.
@@ -218,7 +238,7 @@ dec_maxine_device_register(dev, aux)
 void
 dec_maxine_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
-	int (*handler) __P((void *));
+	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
 {
@@ -288,9 +308,12 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
+		struct chiptime *clk;
+		volatile int temp;
 
-		__asm __volatile("lbu $0,48(%0)" ::
-			"r"(ioasic_base + IOASIC_SLOT_8_START));
+		clk = (void *)(ioasic_base + IOASIC_SLOT_8_START);
+		temp = clk->regc;	/* XXX clear interrupt bits */
+
 		latched_cycle_cnt =
 		    *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 		cf.pc = pc;
@@ -410,8 +433,7 @@ void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_IMSK */
-	__asm __volatile("lw $0,%0" ::
-	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
+	__asm __volatile("lw $0,%0" :: "i"(0xbc040120));
 }
 
 unsigned

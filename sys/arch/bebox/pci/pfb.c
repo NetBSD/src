@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.5 1999/12/06 19:25:57 drochner Exp $	*/
+/*	$NetBSD: pfb.c,v 1.4 1999/06/22 02:04:07 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -94,8 +94,7 @@ static int pfb_mmap __P((void *, off_t, int));
 static int pfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void pfb_free_screen __P((void *, void *));
-static int pfb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static void pfb_show_screen __P((void *, void *));
 
 struct wsdisplay_accessops pfb_accessops = {
 	pfb_ioctl,
@@ -272,16 +271,11 @@ pfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-int
-pfb_show_screen(v, cookie, waitok, cb, cbarg)
+void
+pfb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
 {
-
-	return (0);
 }
 
 int

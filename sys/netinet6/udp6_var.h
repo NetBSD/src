@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.5 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.3 1999/07/03 21:30:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -67,25 +67,25 @@
 #ifndef _NETINET6_UDP6_VAR_H_
 #define _NETINET6_UDP6_VAR_H_
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 /*
  * UDP Kernel structures and variables.
  */
 struct	udp6stat {
 				/* input statistics: */
-	u_quad_t udp6s_ipackets;	/* total input packets */
-	u_quad_t udp6s_hdrops;		/* packet shorter than header */
-	u_quad_t udp6s_badsum;		/* checksum error */
-	u_quad_t udp6s_nosum;		/* no checksum */
-	u_quad_t udp6s_badlen;		/* data length larger than packet */
-	u_quad_t udp6s_noport;		/* no socket on port */
-	u_quad_t udp6s_noportmcast;	/* of above, arrived as broadcast */
-	u_quad_t udp6s_fullsock;	/* not delivered, input socket full */
-	u_quad_t udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
+	u_long	udp6s_ipackets;		/* total input packets */
+	u_long	udp6s_hdrops;		/* packet shorter than header */
+	u_long	udp6s_badsum;		/* checksum error */
+	u_long	udp6s_nosum;		/* no checksum */
+	u_long	udp6s_badlen;		/* data length larger than packet */
+	u_long	udp6s_noport;		/* no socket on port */
+	u_long	udp6s_noportmcast;	/* of above, arrived as broadcast */
+	u_long	udp6s_fullsock;		/* not delivered, input socket full */
+	u_long	udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
 				/* output statistics: */
-	u_quad_t udp6s_opackets;	/* total output packets */
+	u_long	udp6s_opackets;		/* total output packets */
 };
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
 /*
  * Names for UDP sysctl objects
  */
@@ -106,6 +106,24 @@ struct	udp6stat {
 }
 #endif /*__FreeBSD__||__NetBSD__*/
 #ifdef __bsdi__
+/*
+ * UDP Kernel structures and variables.
+ */
+struct	udp6stat {
+				/* input statistics: */
+	u_quad_t udp6s_ipackets;	/* total input packets */
+	u_quad_t udp6s_hdrops;		/* packet shorter than header */
+	u_quad_t udp6s_badsum;		/* checksum error */
+	u_quad_t udp6s_nosum;		/* no checksum */
+	u_quad_t udp6s_badlen;		/* data length larger than packet */
+	u_quad_t udp6s_noport;		/* no socket on port */
+	u_quad_t udp6s_noportmcast;	/* of above, arrived as broadcast */
+	u_quad_t udp6s_fullsock;	/* not delivered, input socket full */
+	u_quad_t udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
+				/* output statistics: */
+	u_quad_t udp6s_opackets;		/* total output packets */
+};
+
 /*
  * Names for UDP sysctl objects
  */
@@ -135,20 +153,15 @@ struct	udp6stat {
 struct	in6pcb udb6;
 struct	udp6stat udp6stat;
 
-void	udp6_ctlinput __P((int, struct sockaddr *, void *));
+void	udp6_ctlinput __P((int, struct sockaddr *, struct ip6_hdr *,
+			   struct mbuf *, int));
 void	udp6_init __P((void));
 int	udp6_input __P((struct mbuf **, int *, int));
 int	udp6_output __P((struct in6pcb *,
 			 struct mbuf *, struct mbuf *, struct mbuf *));
 int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 int	udp6_usrreq __P((struct socket *,
-			 int, struct mbuf *, struct mbuf *, struct mbuf *,
-			 struct proc *));
-#else
-int	udp6_usrreq __P((struct socket *,
-			 int, struct mbuf *, struct mbuf *, struct mbuf *));
-#endif
+			 int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 #endif /* _KERNEL */
 
 #endif /*_NETINET6_UDP6_VAR_H_*/

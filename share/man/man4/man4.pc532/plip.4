@@ -1,4 +1,4 @@
-.\"	$NetBSD: plip.4,v 1.6 1999/12/15 23:44:53 abs Exp $
+.\"	$NetBSD: plip.4,v 1.5 1998/03/25 02:13:32 fair Exp $
 .\"
 .\" Copyright (c) 1994, 1997 Matthias Pfaller.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm plip
-.Nd Option for the lpt driver to allow IP over Centronics parallel ports
+.Nd "Option for the lpt driver to allow IP over Centronics parallel ports"
 .Sh SYNOPSIS
 .Cd "options PLIP"
 .Cd "options COMPAT_PLIP10"
@@ -75,8 +75,8 @@ Select|13|3|Data in 1
 Gnd|18-25|18-25|Ground
 .TE
 .Pp
-In both protocol versions Ethernet frames are used.
-The 1.0 protocol assigns an Ethernet address of the form
+In both protocol versions ethernet frames are used.
+The 1.0 protocol assigns an ethernet address of the form
 FD:FD:ww:xx:yy:zz to the interface.
 .Pp
 The 1.1 protocol uses FC instead of FD, with ww, xx, yy and zz are

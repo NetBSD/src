@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.47 1999/11/23 23:52:41 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.14.1 1999/12/21 23:20:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -211,7 +211,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize - 1);
-		bn = lbn * (biosize / DEV_BSIZE);
+		bn = lbn * (biosize / NFS_FABLKSIZE);
 		not_readin = 1;
 
 		/*
@@ -221,7 +221,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		    lbn - 1 == vp->v_lastr) {
 		    for (nra = 0; nra < nmp->nm_readahead &&
 			(lbn + 1 + nra) * biosize < np->n_size; nra++) {
-			rabn = (lbn + 1 + nra) * (biosize / DEV_BSIZE);
+			rabn = (lbn + 1 + nra) * (biosize / NFS_FABLKSIZE);
 			if (!incore(vp, rabn)) {
 			    rabp = nfs_getcacheblk(vp, rabn, biosize, p);
 			    if (!rabp)
@@ -650,7 +650,7 @@ nfs_write(v)
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
 		n = min((unsigned)(biosize - on), uio->uio_resid);
-		bn = lbn * (biosize / DEV_BSIZE);
+		bn = lbn * (biosize / NFS_FABLKSIZE);
 again:
 		bp = nfs_getcacheblk(vp, bn, biosize, p);
 		if (!bp)
@@ -931,7 +931,7 @@ again:
 				bp->b_wcred = cred;
 			}
 		}
-
+	
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
 		return (0);
@@ -958,7 +958,7 @@ nfs_doio(bp, cr, p)
 	register struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
-	int error = 0, diff, len, iomode, must_commit = 0, s;
+	int error = 0, diff, len, iomode, must_commit = 0;
 	struct uio uio;
 	struct iovec io;
 
@@ -981,7 +981,7 @@ nfs_doio(bp, cr, p)
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    /* mapping was done by vmapbuf() */
 	    io.iov_base = bp->b_data;
-	    uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE;
+	    uiop->uio_offset = ((off_t)bp->b_blkno) * NFS_FABLKSIZE;
 	    if (bp->b_flags & B_READ) {
 		uiop->uio_rw = UIO_READ;
 		nfsstats.read_physios++;
@@ -1002,7 +1002,7 @@ nfs_doio(bp, cr, p)
 	    uiop->uio_rw = UIO_READ;
 	    switch (vp->v_type) {
 	    case VREG:
-		uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE;
+		uiop->uio_offset = ((off_t)bp->b_blkno) * NFS_FABLKSIZE;
 		nfsstats.read_bios++;
 		error = nfs_readrpc(vp, uiop, cr);
 		if (!error) {
@@ -1015,7 +1015,7 @@ nfs_doio(bp, cr, p)
 			 * Just zero fill the rest of the valid area.
 			 */
 			diff = bp->b_bcount - uiop->uio_resid;
-			len = np->n_size - (((u_quad_t)bp->b_blkno) * DEV_BSIZE
+			len = np->n_size - (((u_quad_t)bp->b_blkno) * NFS_FABLKSIZE
 				+ diff);
 			if (len > 0) {
 			    len = min(len, uiop->uio_resid);
@@ -1069,7 +1069,7 @@ nfs_doio(bp, cr, p)
 	} else {
 	    io.iov_len = uiop->uio_resid = bp->b_dirtyend
 		- bp->b_dirtyoff;
-	    uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE
+	    uiop->uio_offset = ((off_t)bp->b_blkno) * NFS_FABLKSIZE
 		+ bp->b_dirtyoff;
 	    io.iov_base = (char *)bp->b_data + bp->b_dirtyoff;
 	    uiop->uio_rw = UIO_WRITE;
@@ -1084,7 +1084,6 @@ nfs_doio(bp, cr, p)
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
 	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
-	    s = splbio();
 	    if (!error && iomode == NFSV3WRITE_UNSTABLE)
 		bp->b_flags |= B_NEEDCOMMIT;
 	    else
@@ -1111,9 +1110,9 @@ nfs_doio(bp, cr, p)
 		 * buffer to the clean list, we have to reassign it back to the
 		 * dirty one. Ugh.
 		 */
-		if (bp->b_flags & B_ASYNC) {
+		if (bp->b_flags & B_ASYNC)
 		    reassignbuf(bp, vp);
-		} else if (error)
+		else if (error)
 		    bp->b_flags |= B_EINTR;
 	    } else {
 		if (error) {
@@ -1123,7 +1122,6 @@ nfs_doio(bp, cr, p)
 		}
 		bp->b_dirtyoff = bp->b_dirtyend = 0;
 	    }
-	    splx(s);
 	}
 	bp->b_resid = uiop->uio_resid;
 	if (must_commit)

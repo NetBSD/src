@@ -1,6 +1,7 @@
-/*	$NetBSD: mips_param.h,v 1.15 1999/12/04 21:20:48 ragge Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.14 1999/09/25 00:00:37 shin Exp $	*/
 
 /*
+ * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
  * to be the number of per-process-wired kernel-stack pages/PTES.
  */
@@ -46,10 +47,10 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
+ * Size of kernel malloc arena in CLBYTES-sized logical pages
  */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */

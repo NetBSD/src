@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1999/12/05 22:10:57 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5 1999/03/13 23:22:11 lukem Exp $
 
 LIB=	common
-SRCS=	common.c common_vars.c displayq.c fatal.c rmjob.c startdaemon.c
+SRCS=	common.c displayq.c rmjob.c startdaemon.c
 
 MKLINT=		no
 MKPIC=		no

@@ -232,7 +232,7 @@ X-send-pr-version: send-pr @value{VERSION}
 >Originator:    Jeffrey Osier
 >Organization:  
 Imaginary Software, Ltd.
->Confidential:  <[ no | yes ] (one line)>
+>Confidential:  <[ yes | no ] (one line)>
 >Synopsis:      <synopsis of the problem (one line)>
 >Severity:      <[ non-critical | serious | critical ] (one line)>
 >Priority:      <[ low | medium | high ] (one line)>

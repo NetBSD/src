@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $ */
+/* $NetBSD: disksubr.c,v 1.16.18.1 1999/12/21 23:15:51 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.18.1 1999/12/21 23:15:51 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,11 +66,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -80,20 +81,25 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = bsize;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff; 
 	lp->d_npartitions = RAW_PART + 1;
 	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		msg = "disk label read error"
+		goto done;
+	}
 
 	/* next, dig out disk label */
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
@@ -220,18 +226,25 @@ setdisklabel(olp, nlp, openmask, clp)
  * label.  Hope the user was carefull.
  */
 int
-writedisklabel(dev, strat, lp, clp)
+writedisklabel(dev, strat, lp, clp, bshift)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int bshift;
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
 	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
+	if (bshift < 0) {
+		error = EINVAL;
+		goto done;
+	}
 	bp->b_dev = dev;
+	bp->b_bshift = bshift;
+	bp->b_bsize = blocksize(bp->b_bshift);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.18 1999/11/18 15:03:03 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.17 1999/09/30 23:01:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -240,6 +240,7 @@ int	mhamatch	__P((struct device *, struct cfdata *, void *));
 void	mhaattach	__P((struct device *, struct device *, void *));
 void	mhaselect	__P((struct mha_softc *,
 				     u_char, u_char, u_char *, u_char));
+void	mha_scsi_reset	__P((struct mha_softc *));
 void	mha_reset	__P((struct mha_softc *));
 void	mha_free_acb	__P((struct mha_softc *, struct acb *, int));
 void	mha_sense	__P((struct mha_softc *, struct acb *));
@@ -345,6 +346,10 @@ mhaattach(parent, self, aux)
 
 	mha_init(sc);	/* Init chip and driver */
 
+	printf("\n%s: Resetting SCSI bus... ", self->dv_xname);
+	mha_scsi_reset(sc);	/* XXX: some devices need this. */
+	printf("done\n");
+
 	sc->sc_phase  = BUSFREE_PHASE;
 
 	/*
@@ -428,6 +433,19 @@ printf("reset...");
 printf("done.\n");
 }
 #endif
+
+/*
+ * Pull the SCSI RST line for 500us.
+ */
+void
+mha_scsi_reset(sc)	/* FINISH? */
+	struct mha_softc *sc;
+{
+
+	CMR = CMD_SCSI_RESET;	/* SCSI RESET */
+	while (!(SSR&SS_IREQUEST))
+	  delay(10);
+}
 
 /*
  * Initialize mha SCSI driver.

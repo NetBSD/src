@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 1999/12/04 21:20:34 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.37.14.1 1999/12/21 23:16:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,13 +80,18 @@
 #define	KERNTEXTOFF	0xf0100000	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
+#define	DEF_BSIZE	(1 << DEF_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
+#define	BLKDEV_IOSHIFT	11
 #ifndef	MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
 
+#define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
+
+/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 #define	UPAGES		2		/* pages of u-area */
@@ -98,7 +103,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * MCLBYTES must be no larger than CLBYTES (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -116,6 +121,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_gateway.h"
+#include "opt_non_po2_blocks.h"
 #endif /* _KERNEL && ! _LKM */
 
 #ifdef GATEWAY
@@ -126,23 +132,30 @@
 #endif
 
 /*
- * Size of kernel malloc arena in NBPG-sized logical pages
+ * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x, sh)		((x) << (PGSHIFT - (sh)))
+#define	dtoc(x, sh)		((x) >> (PGSHIFT - (sh)))
 
 /* bytes to pages */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
+#if defined(_LKM) || defined(NON_PO2_BLOCKS)
+#define	dbtob(x, sh)	(((sh) >= 0) ? ((x) << (sh)) : ((x) * (-sh)))
+#define	btodb(x, sh)	(((sh) >= 0) ? ((x) >> (sh)) : ((x) / (-sh)))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (-sh))
+#else
+#define	dbtob(x, sh)	((x) << (sh))
+#define	btodb(x, sh)	((x) >> (sh))
+#define	blocksize(sh)	(((sh) >= 0) ? (1 << (sh))   : (0))
+#endif
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -150,7 +163,7 @@
  * field from the disk label.
  * For now though just use DEV_BSIZE.
  */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
+#define	bdbtofsb(bn, sh)	((bn) >> (BLKDEV_IOSHIFT - (sh)))
 
 /*
  * Mach derived conversion macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 1999/12/15 08:03:43 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.155 1999/10/04 19:11:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,6 @@
 #include <sparc/dev/power.h>
 #endif
 #if NTCTRL > 0
-#include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>
 #endif
 
@@ -189,8 +188,7 @@ cpu_startup()
 	 * Map the message buffer (physical location 0).
 	 */
 	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0,
-	    VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * XXX - sun4
@@ -252,7 +250,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -261,7 +259,7 @@ cpu_startup()
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -305,7 +303,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -1377,7 +1375,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		pmap_enter(pmap_kernel(), dva,
 			   (pa & ~(NBPG-1))| PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+			   VM_PROT_READ|VM_PROT_WRITE, 1, 0);
 
 		dva += PAGE_SIZE;
 		vaddr += sgsize;
@@ -1501,7 +1499,7 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 #endif
 		pmap_enter(pmap_kernel(), (vaddr_t)dva,
 			   pa | PMAP_NC,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+			   VM_PROT_READ|VM_PROT_WRITE, 1, 0);
 		dva += PAGE_SIZE;
 	}
 
@@ -1584,8 +1582,8 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -1675,7 +1673,7 @@ static	vaddr_t iobase;
 
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.13 1999/12/17 06:05:37 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.10.8.1 1999/12/21 23:16:07 wrstuden Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -21,6 +21,7 @@ options 	LKM			# loadable kernel modules
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options	NON_PO2_BLOCKS	# non-2**n block size support
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger
@@ -57,27 +58,9 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 options 	INET		# Internet protocols
-options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 options 	NS		# Xerox NS networking
@@ -103,15 +86,15 @@ hb0	at mainbus0
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
 
-le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
-#le1	at hb0 addr 0xb8c30000 level 0
+le0	at hb0 addr 0xbff80000		# onboard LANCE ethernet
+#le1	at hb0 addr 0xb8c30000
 
-kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
-ms0	at hb0 addr 0xbfd00004 level 2	# mouse
+kb0	at hb0 addr 0xbfd00000		# keyboard
+ms0	at hb0 addr 0xbfd00004		# mouse
 
-zsc0	at hb0 addr 0xbfec0000 level 1	# on-board
-zsc1	at hb0 addr 0xb8c40100 level 1	# expansion board
-zsc2	at hb0 addr 0xb8c40104 level 1
+zsc0	at hb0 addr 0xbfec0000		# onboard
+#zsc1	at hb0 addr 0xb8c40100
+#zsc2	at hb0 addr 0xb8c40104
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
 #zstty2	at zsc1 channel 0		# tty02
@@ -119,9 +102,10 @@ zstty1	at zsc0 channel 1		# tty01
 #zstty4	at zsc2 channel 0		# tty04
 #zstty5	at zsc2 channel 1		# tty05
 
-fb0	at hb0 addr 0x88000000		# frame buffer
+fb0	at hb0 addr 0x88000000		# framebuffer
 
-sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
+sc0	at hb0 addr 0xbfe00100		# onboard cxd1185 SCSI controller
+
 scsibus0 at sc0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
@@ -136,8 +120,6 @@ pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	tun		4	# Network "tunnel" device
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver

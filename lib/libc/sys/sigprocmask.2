@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigprocmask.2,v 1.10 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: sigprocmask.2,v 1.8 1997/07/14 23:20:19 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,6 @@
 .Sh NAME
 .Nm sigprocmask
 .Nd manipulate current signal mask
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
@@ -114,9 +112,8 @@ has a value other than those listed here.
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
-.Xr sigsuspend 2 ,
 .Xr sigsetops 3 ,
-.Xr signal 7
+.Xr sigsuspend 2
 .Sh STANDARDS
 The
 .Fn sigprocmask

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.9 1999/10/26 06:53:44 cgd Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.8 1999/03/24 05:50:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -75,19 +75,19 @@
  */
 
 Ldisabled_mask:
-	.word	_C_LABEL(disabled_mask)
+	.word	_disabled_mask
 
 Lcurrent_spl_level:	
-	.word	_C_LABEL(current_spl_level)
+	.word	_current_spl_level
 
 Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+	.word	_current_intr_depth
 
 Lspl_masks:
-	.word	_C_LABEL(spl_masks)
+	.word	_spl_masks
 
 Lofw_ticktmp:
-	.word	_C_LABEL(ofw_ticktmp)
+	.word	_ofw_ticktmp
 
 Lirq_entry:
 	.word	irq_entry
@@ -244,7 +244,7 @@ Lfind_highest_ipl:
 	stmfd	sp!, {r1}
 
 	/* Update the irq masks */
-	bl	_C_LABEL(irq_setmasks)
+	bl	_irq_setmasks
 
         mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
@@ -262,7 +262,7 @@ irqloop:
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	beq	_C_LABEL(stray_irqhandler) /* call special handler */
+	beq	_stray_irqhandler	/* call special handler */
 
         ldr	r0, Lcnt
 	ldr	r1, [r0, #(V_INTR)]
@@ -314,9 +314,9 @@ nextirq:
 	ldmfd	sp!, {r2}
 	ldr	r1, Ldisabled_mask
 	str	r2, [r1]
-	bl	_C_LABEL(irq_setmasks)
+	bl	_irq_setmasks
 
-	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+	bl	_dosoftints		/* Handle the soft interrupts */
 
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 	ldr	r0, [sp]		/* Get the SPSR from stack */
@@ -373,7 +373,7 @@ irqast:
         msr     cpsr_all, r2
 
 	mov	r0, sp
-	bl	_C_LABEL(ast)
+	bl	_ast
 
 /* Kill IRQ's in preparation for exit */
 
@@ -387,10 +387,10 @@ irqast:
 	
 
 Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
+	.word	_spl_mask		/* irq's allowed at current spl level */
 
 Lcurrent_mask:
-	.word	_C_LABEL(current_mask)	/* irq's that are usable */
+	.word	_current_mask		/* irq's that are usable */
 
 
 ENTRY(irq_setmasks)
@@ -399,20 +399,20 @@ ENTRY(irq_setmasks)
 
 
 Lcnt:
-	.word	_C_LABEL(uvmexp)
+	.word	_uvmexp
 
 Lintrcnt:
-	.word	_C_LABEL(intrcnt)
+	.word	_intrcnt
 
 
 irqhandlers:
-	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
+	.word	_irqhandlers		/* Pointer to array of irqhandlers */
 
 Lastpending:
-	.word	_C_LABEL(astpending)
+	.word	_astpending
 
 	.text
-	.global	_C_LABEL(dotickgrovelling)
+	.global	_dotickgrovelling
 
 /* 
  *  Do magic to cause OFW to call our irq_entry
@@ -440,7 +440,7 @@ Lastpending:
  *  
  */
 
-_C_LABEL(dotickgrovelling):
+_dotickgrovelling:
 	/*assert((cpsr & PSR_MODE) == PSR_IRQ32_MODE);*/
 
 	stmfd	sp!, {r1-r5}		/* scratch registers r1-r5 */
@@ -534,7 +534,7 @@ _C_LABEL(dotickgrovelling):
 	.bss
 	.align 0
 
-_C_LABEL(ofw_ticktmp):
+_ofw_ticktmp:
 	.space	4 * 6	/* temporary storage for 6 words of machine state */
 
 ofwirqstk:			/* hack */
@@ -544,14 +544,14 @@ ofwirqstk:			/* hack */
 /* These symbols are used by vmstat */
 
 	.text
-	.global	_C_LABEL(_intrnames)
-_C_LABEL(_intrnames):
-	.word	_C_LABEL(intrnames)
+	.global	__intrnames
+__intrnames:
+	.word	_intrnames
 
 	.data
 
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
+        .globl  _intrnames, _eintrnames, _intrcnt, _sintrcnt, _eintrcnt
+_intrnames:
 	.asciz	"interrupt  0 "
 	.asciz	"interrupt  1 "
 	.asciz	"interrupt  2 "
@@ -585,7 +585,7 @@ _C_LABEL(intrnames):
 	.asciz	"interrupt 30 "
 	.asciz	"interrupt 31 "
 
-_C_LABEL(sintrnames):
+_sintrnames:
 	.asciz	"softclock    "
 	.asciz	"softnet      "
 	.asciz	"softserial   "
@@ -618,29 +618,29 @@ _C_LABEL(sintrnames):
 	.asciz	"softintr 29  "
 	.asciz	"softintr 30  "
 	.asciz	"softintr 31  "
-_C_LABEL(eintrnames):
+_eintrnames:
 
 	.bss
 	.align	0
-_C_LABEL(intrcnt):
+_intrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
 
-_C_LABEL(sintrcnt):
+_sintrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
-_C_LABEL(eintrcnt):
+_eintrcnt:
 
 #else	/* IRQSTATS */
 /* Dummy entries to keep vmstat happy */
 
 	.text
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
+        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
+_intrnames:
 	.long	0
-_C_LABEL(eintrnames):
+_eintrnames:
 
-_C_LABEL(intrcnt):
+_intrcnt:
 	.long	0
-_C_LABEL(eintrcnt):
+_eintrcnt:
 #endif	/* IRQSTATS */
 
 /* FIQ code */

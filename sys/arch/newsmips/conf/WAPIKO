@@ -1,18 +1,15 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.8 1999/12/17 06:05:37 tsubai Exp $
+# 	$NetBSD: WAPIKO,v 1.7 1999/07/29 10:37:20 augustss Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
 maxusers	16
 
-makeoptions	COPTS="-O2 -pipe"
-
 options 	news3400
 options 	MIPS1			# R2000/R3000 support
 options 	CPU_SINGLE
-options 	BUFPAGES=2048
 
 # Standard system options
 options 	KTRACE			# system call tracing support
@@ -21,7 +18,7 @@ options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
 options 	DIAGNOSTIC		# extra kernel sanity checking
 options 	SCSIVERBOSE		# Verbose SCSI errors
@@ -38,10 +35,10 @@ options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 file-system	FFS		# Berkeley Fast Filesystem
 #file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	MFS		# memory-based filesystem
-file-system	PROCFS		# /proc
 
 # Networking options
 options 	INET		# Internet protocols
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 
 config	netbsd root on ? type ?
@@ -53,15 +50,15 @@ hb0	at mainbus0
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
 
-le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
-le1	at hb0 addr 0xb8c30000 level 0
+le0	at hb0 addr 0xbff80000		# onboard LANCE ethernet
+#le1	at hb0 addr 0xb8c30000
 
-kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
-ms0	at hb0 addr 0xbfd00004 level 2	# mouse
+kb0	at hb0 addr 0xbfd00000		# keyboard
+ms0	at hb0 addr 0xbfd00004		# mouse
 
-zsc0	at hb0 addr 0xbfec0000 level 1	# on-board
-zsc1	at hb0 addr 0xb8c40100 level 1	# expansion board
-zsc2	at hb0 addr 0xb8c40104 level 1
+zsc0	at hb0 addr 0xbfec0000		# onboard
+zsc1	at hb0 addr 0xb8c40100
+zsc2	at hb0 addr 0xb8c40104
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
 zstty2	at zsc1 channel 0		# tty02
@@ -69,16 +66,16 @@ zstty3	at zsc1 channel 1		# tty03
 zstty4	at zsc2 channel 0		# tty04
 zstty5	at zsc2 channel 1		# tty05
 
-fb0	at hb0 addr 0x88000000		# frame buffer
+fb0	at hb0 addr 0x88000000		# framebuffer
 
-sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
+sc0	at hb0 addr 0xbfe00100		# onboard cxd1185 SCSI controller
 scsibus0 at sc0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 #st*	at scsibus? target ? lun ?	# SCSI tapes
 #cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
-pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		32	# pseudo-terminals

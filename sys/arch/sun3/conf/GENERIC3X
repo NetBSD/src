@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.27 1999/11/15 19:10:58 fvdl Exp $
+# $NetBSD: GENERIC3X,v 1.26 1999/07/29 10:37:25 augustss Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -65,7 +65,6 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
 
 # Networking options
 options 	INET		# IP prototol stack support

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.13 1999/09/27 16:24:39 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.12 1999/09/06 22:20:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,6 @@
 #define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	6
 #define	_POSIX_LINK_MAX		8
-#define	_POSIX_LOGIN_NAME_MAX	9
 #define	_POSIX_MAX_CANON	255
 #define	_POSIX_MAX_INPUT	255
 #define	_POSIX_NAME_MAX		14

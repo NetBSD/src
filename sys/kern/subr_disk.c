@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.25 1999/02/22 16:00:01 drochner Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.25.14.1 1999/12/21 23:19:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 	(*pr)("%s%d%c: %s %sing fsbn ", dname, unit, partname, what,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;
-	if (bp->b_bcount <= DEV_BSIZE)
+	if (bp->b_bcount <= blocksize(bp->b_bshift))
 		(*pr)("%d", sn);
 	else {
 		if (blkdone >= 0) {
@@ -248,7 +248,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 			(*pr)("%d of ", sn);
 		}
 		(*pr)("%d-%d", bp->b_blkno,
-		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
+		    bp->b_blkno + (bp->b_bcount - 1) / blocksize(bp->b_bshift));
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
 		sn += lp->d_partitions[part].p_offset;
