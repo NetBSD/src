@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.71 2002/04/15 12:45:33 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -156,7 +156,8 @@ static int    	aborting = 0;	    /* why is the make aborting? */
  * .END target but we keep it around to avoid having to search for it
  * all the time.
  */
-static GNode   	  *postCommands;    /* node containing commands to execute when
+static GNode   	  *postCommands = NILGNODE;
+				    /* node containing commands to execute when
 				     * everything else is done */
 static int     	  numCommands; 	    /* The number of commands actually printed
 				     * for a target. Should this number be
