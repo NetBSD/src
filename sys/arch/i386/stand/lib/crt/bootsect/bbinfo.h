@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.h,v 1.5 2003/04/02 10:39:33 fvdl Exp $	*/
+/*	$NetBSD: bbinfo.h,v 1.6 2003/05/08 23:09:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -54,7 +54,7 @@ struct fraglist {
   struct {
     int64_t offset;
     int num;
-  } entries[1];
+  } __attribute__((packed)) entries[1];
 };
 
 #endif
