@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.25 1998/07/27 13:35:00 mycroft Exp $	*/
+/*	$NetBSD: stdio.h,v 1.26 1998/07/30 00:44:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -311,9 +311,9 @@ __BEGIN_DECLS
 int	 getw __P((FILE *));
 int	 putw __P((int, FILE *));
 int	 snprintf __P((char *, size_t, const char *, ...))
-		__attribute__((format (printf, 3, 4)));
+	    __attribute__((__format__(__printf__, 3, 4)));
 int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
-		__attribute__((format (printf, 3, 0)));
+	    __attribute__((__format__(__printf__, 3, 0)));
 
 #ifndef __AUDIT__
 char	*tempnam __P((const char *, const char *));
@@ -332,9 +332,9 @@ int	 fpurge __P((FILE *));
 void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
 int	 vscanf __P((const char *, _BSD_VA_LIST_))
-		__attribute__((format (scanf, 1, 0)));
+	    __attribute__((__format__(__scanf__, 1, 0)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
-		__attribute__((format (scanf, 2, 0)));
+	    __attribute__((__format__(__scanf__, 2, 0)));
 __END_DECLS
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.40 1998/07/28 00:28:29 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.41 1998/07/30 00:44:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -94,7 +94,7 @@ extern int __mb_cur_max;
 #endif
 
 __BEGIN_DECLS
-__dead	 void abort __P((void)) __attribute__((noreturn));
+__dead	 void abort __P((void)) __attribute__((__noreturn__));
 __pure	 int abs __P((int));
 int	 atexit __P((void (*)(void)));
 double	 atof __P((const char *));
@@ -104,7 +104,7 @@ void	*bsearch __P((const void *, const void *, size_t,
 	    size_t, int (*)(const void *, const void *)));
 void	*calloc __P((size_t, size_t));
 div_t	 div __P((int, int));
-__dead	 void exit __P((int)) __attribute__((noreturn));
+__dead	 void exit __P((int)) __attribute__((__noreturn__));
 void	 free __P((void *));
 __aconst char *getenv __P((const char *));
 __pure long
