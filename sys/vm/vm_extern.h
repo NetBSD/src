@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.26 1997/07/04 20:22:20 drochner Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.26.2.1 1997/08/28 00:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,11 +145,7 @@ void		 vsunlock __P((caddr_t, u_int));
 void		vmapbuf __P((struct buf *, vm_size_t));
 void		vunmapbuf __P((struct buf *, vm_size_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
-#ifdef __FORK_BRAINDAMAGE
-int		cpu_fork __P((struct proc *, struct proc *));
-#else
 void		cpu_fork __P((struct proc *, struct proc *));
-#endif
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));
 #endif
