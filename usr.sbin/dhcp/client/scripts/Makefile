@@ -32,6 +32,6 @@
 
 SCRIPTS=netbsd
 SCRIPTSNAME_netbsd=dhclient-script
-SCRIPTSDIR=/etc
+SCRIPTSDIR=/sbin
 
 .include <bsd.prog.mk>
