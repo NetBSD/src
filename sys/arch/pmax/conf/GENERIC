@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.66 2000/02/19 09:46:49 nisimura Exp $
+# 	$NetBSD: GENERIC,v 1.67 2000/02/21 06:44:24 nisimura Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 maxusers	64
 
@@ -184,7 +184,7 @@ sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 # old 4.4BSD/pmax DECstation SCSI driver
 oldscsibus*	at sii?
 oldscsibus*	at asc?
-#include 	"arch/pmax/conf/scsi.pmax"
+include 	"arch/pmax/conf/scsi.pmax"
 
 # MI SCSI configuration 
 #include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
