@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.450 2001/08/02 21:04:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.451 2001/08/02 22:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -200,7 +200,9 @@ int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
-int	cpu_use_fxsave;
+int	i386_use_fxsave;
+int	i386_has_sse;
+int	i386_has_sse2;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -1523,10 +1525,22 @@ identifycpu(struct cpu_info *ci)
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature & CPUID_FXSR) {
-		cpu_use_fxsave = 1;
+		i386_use_fxsave = 1;
 		lcr4(rcr4() | CR4_OSFXSR);
+		
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions, and
+		 * notify userland.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2)) {
+			if (cpu_feature & CPUID_SSE)
+				i386_has_sse = 1;
+			if (cpu_feature & CPUID_SSE2)
+				i386_has_sse2 = 1;
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+		}
 	} else
-		cpu_use_fxsave = 0;
+		i386_use_fxsave = 0;
 #endif /* I686_CPU */
 }
 
@@ -1582,6 +1596,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, i386_alldisks,
 		    sizeof (struct disklist) +
 			(i386_ndisks - 1) * sizeof (struct nativedisk_info)));
+	case CPU_OSFXSR:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
+	case CPU_SSE:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
+	case CPU_SSE2:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2145,7 +2166,7 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	if (cpu_use_fxsave)
+	if (i386_use_fxsave)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 	else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
