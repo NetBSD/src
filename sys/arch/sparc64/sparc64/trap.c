@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2001/07/05 06:34:56 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.70 2001/07/19 23:33:09 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -773,6 +773,8 @@ badtrap:
 		}
 		
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
+		printf("Alignment error: dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
+		       fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
 		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}
