@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.6 2000/06/15 18:36:52 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.7 2000/06/16 14:18:56 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -671,11 +671,10 @@ gmac_setladrf(sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	struct ethercom *ec = &sc->sc_ethercom;
-	u_char *cp;
 	u_int32_t crc;
 	u_int32_t hash[16];
 	u_int v;
-	int len, i;
+	int i;
 
 	/* Clear hash table */
 	for (i = 0; i < 16; i++)
@@ -721,23 +720,8 @@ gmac_setladrf(sc)
 			goto chipit;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			int octet = *cp++;
-			int i;
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
-			for (i = 0; i < 8; i++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				} else {
-					crc >>= 1;
-				}
-				octet >>= 1;
-			}
-		}
 		/* Just want the 8 most significant bits. */
 		crc >>= 24;
 
