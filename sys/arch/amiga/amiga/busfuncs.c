@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.2 1998/10/12 21:15:54 is Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.3 1998/10/12 22:02:44 is Exp $	*/
 
 /*
  * Copyright (c) 1998 Ignatios Souvatzis.  All rights reserved.
@@ -131,7 +131,7 @@ amiga_contiguous_write_multi_2(t, h, o, p, s)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	u_int16_t *p;
+	const u_int16_t *p;
 	bus_size_t s;
 {
 	/* ARGSUSED */
@@ -163,7 +163,7 @@ amiga_contiguous_write_region_2(t, h, o, p, s)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	u_int16_t *p;
+	const u_int16_t *p;
 	bus_size_t s;
 {
 	/* ARGSUSED */
@@ -268,7 +268,7 @@ amiga_interleaved_write_multi_2(t, h, o, p, s)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	u_int16_t *p;
+	const u_int16_t *p;
 	bus_size_t s;
 {
 	volatile u_int8_t *q;
@@ -314,7 +314,7 @@ amiga_interleaved_write_region_2(t, h, o, p, s)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	bus_size_t o;
-	u_int16_t *p;
+	const u_int16_t *p;
 	bus_size_t s;
 {
 	volatile u_int8_t *q;

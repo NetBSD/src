@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1998/10/12 21:15:54 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1998/10/12 22:02:43 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -64,7 +64,7 @@ typedef u_long	bus_space_handle_t;
 
 #define bswm(what, typ) \
 	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, \
-		typ *, bus_size_t)
+		const typ *, bus_size_t)
 
 #define bssr(what, typ) \
 	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, \
@@ -160,7 +160,7 @@ bus_space_write_multi_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	bus_size_t		o, c;
-	u_int8_t		*a;
+	const u_int8_t		*a;
 {
 	for (; c; a++, c--)
 		bus_space_write_1(t, h, o, *a);
@@ -182,7 +182,7 @@ bus_space_write_region_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	bus_size_t		o, c;
-	u_int8_t		*a;
+	const u_int8_t		*a;
 {
 	for (; c; a++, c--)
 		 bus_space_write_1(t, h, o++, *a);
@@ -229,7 +229,7 @@ bus_space_write_stream_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	bus_size_t		o, c;
-	u_int8_t		*a;
+	const u_int8_t		*a;
 {
 	for (; c; a++, c--)
 		 bus_space_write_1(t, h, o++, *a);
