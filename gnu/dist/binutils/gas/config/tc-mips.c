@@ -294,8 +294,6 @@ static int mips_32bitmode = 0;
         && mips_pic != EMBEDDED_PIC))
 
 #define HAVE_64BIT_ADDRESSES (! HAVE_32BIT_ADDRESSES)
-#define HAVE_64BIT_ADDRESS_CONSTANTS (HAVE_64BIT_ADDRESSES \
-				      || HAVE_64BIT_GPRS)
 
 /* Return true if the given CPU supports the MIPS16 ASE.  */
 #define CPU_HAS_MIPS16(cpu)						\
@@ -841,7 +839,7 @@ static void macro_build_lui
   PARAMS ((char *place, int *counter, expressionS * ep, int regnum));
 static void macro_build_ldst_constoffset
   PARAMS ((char *place, int *counter, expressionS * ep, const char *op,
-	   int valreg, int breg));
+	   int valreg, int breg, int dbl));
 static void set_at
   PARAMS ((int *counter, int reg, int unsignedp));
 static void check_absolute_expr
@@ -3387,14 +3385,19 @@ macro_build_lui (place, counter, ep, regnum)
    offset off of a base register (breg) into/from a target register (treg),
    using AT if necessary.  */
 static void
-macro_build_ldst_constoffset (place, counter, ep, op, treg, breg)
+macro_build_ldst_constoffset (place, counter, ep, op, treg, breg, dbl)
      char *place;
      int *counter;
      expressionS *ep;
      const char *op;
-     int treg, breg;
+     int treg, breg, dbl;
 {
   assert (ep->X_op == O_constant);
+
+  /* Sign-extending 32-bit constants makes their handling easier.  */
+  if (! dbl)
+    ep->X_add_number = (((ep->X_add_number & 0xffffffff) ^ 0x80000000)
+			- 0x80000000);
 
   /* Right now, this routine can only handle signed 32-bit contants.  */
   if (! IS_SEXT_32BIT_NUM(ep->X_add_number))
@@ -3561,12 +3564,13 @@ load_register (counter, reg, ep, dbl)
   if (ep->X_op != O_big)
     {
       assert (ep->X_op == O_constant);
-      if (ep->X_add_number < 0x8000
-	  && (ep->X_add_number >= 0
-	      || (ep->X_add_number >= -0x8000
-		  && (! dbl
-		      || ! ep->X_unsigned
-		      || sizeof (ep->X_add_number) > 4))))
+
+      /* Sign-extending 32-bit constants makes their handling easier.  */
+      if (! dbl)
+	ep->X_add_number = (((ep->X_add_number & 0xffffffff) ^ 0x80000000)
+			    - 0x80000000);
+
+      if (IS_SEXT_16BIT_NUM (ep->X_add_number))
 	{
 	  /* We can handle 16 bit signed values with an addiu to
 	     $zero.  No need to ever use daddiu here, since $zero and
@@ -3583,17 +3587,7 @@ load_register (counter, reg, ep, dbl)
 		       (int) BFD_RELOC_LO16);
 	  return;
 	}
-      else if ((IS_SEXT_32BIT_NUM (ep->X_add_number)
-		&& (! dbl
-		    || ! ep->X_unsigned
-		    || sizeof (ep->X_add_number) > 4
-		    || (ep->X_add_number & 0x80000000) == 0))
-	       || ((HAVE_32BIT_GPRS || ! dbl)
-		   && (ep->X_add_number &~ (offsetT) 0xffffffff) == 0)
-	       || (HAVE_32BIT_GPRS
-		   && ! dbl
-		   && ((ep->X_add_number &~ (offsetT) 0xffffffff)
-		       == ~ (offsetT) 0xffffffff)))
+      else if ((IS_SEXT_32BIT_NUM (ep->X_add_number)))
 	{
 	  /* 32 bit values require an lui.  */
 	  macro_build ((char *) NULL, counter, ep, "lui", "t,u", reg,
@@ -5754,7 +5748,8 @@ macro (ip)
 		  expr1.X_add_number = mips_cprestore_offset;
   		  macro_build_ldst_constoffset ((char *) NULL, &icnt, &expr1,
 					        HAVE_32BIT_ADDRESSES ? "lw" : "ld",
-					        mips_gp_register, mips_frame_reg);
+					        mips_gp_register, mips_frame_reg,
+						HAVE_64BIT_ADDRESSES);
 		}
 	    }
 	}
@@ -5922,7 +5917,8 @@ macro (ip)
 		  expr1.X_add_number = mips_cprestore_offset;
   		  macro_build_ldst_constoffset ((char *) NULL, &icnt, &expr1,
 					        HAVE_32BIT_ADDRESSES ? "lw" : "ld",
-					        mips_gp_register, mips_frame_reg);
+					        mips_gp_register, mips_frame_reg,
+						HAVE_64BIT_ADDRESSES);
 		}
 	    }
 	}
@@ -6112,6 +6108,15 @@ macro (ip)
       else
 	fmt = "t,o(b)";
 
+      /* Sign-extending 32-bit constants makes their handling easier.
+         The HAVE_64BIT_GPRS... part is due to the linux kernel hack
+         described below.  */
+      if ((! HAVE_64BIT_ADDRESSES
+	   && (! HAVE_64BIT_GPRS && offset_expr.X_op == O_constant))
+          && (offset_expr.X_op == O_constant))
+	offset_expr.X_add_number = (((offset_expr.X_add_number & 0xffffffff)
+				     ^ 0x80000000) - 0x80000000);
+
       /* For embedded PIC, we allow loads where the offset is calculated
          by subtracting a symbol in the current segment from an unknown
          symbol, relative to a base register, e.g.:
@@ -6244,10 +6249,12 @@ macro (ip)
 	     end up converting the binary to ELF32 for a number of
 	     platforms whose boot loaders don't support ELF64
 	     binaries.  */
-	  if ((offset_expr.X_op != O_constant && HAVE_64BIT_ADDRESSES)
-	      || (offset_expr.X_op == O_constant
-		  && !IS_SEXT_32BIT_NUM (offset_expr.X_add_number + 0x8000)
-		  && HAVE_64BIT_ADDRESS_CONSTANTS))
+	  if ((HAVE_64BIT_ADDRESSES
+	       && ! (offset_expr.X_op == O_constant
+		     && IS_SEXT_32BIT_NUM (offset_expr.X_add_number + 0x8000)))
+	      || (HAVE_64BIT_GPRS
+		  && offset_expr.X_op == O_constant
+		  && ! IS_SEXT_32BIT_NUM (offset_expr.X_add_number + 0x8000)))
 	    {
 	      p = NULL;
 
@@ -6294,9 +6301,9 @@ macro (ip)
 
 	      return;
 	    }
-	  else if (offset_expr.X_op == O_constant
-		   && !HAVE_64BIT_ADDRESS_CONSTANTS
-		   && !IS_SEXT_32BIT_NUM (offset_expr.X_add_number))
+
+	  if (offset_expr.X_op == O_constant
+	      && ! IS_SEXT_32BIT_NUM (offset_expr.X_add_number))
 	    as_bad (_("load/store address overflow (max 32 bits)"));
 
 	  if (breg == 0)
@@ -12860,7 +12867,7 @@ s_cprestore (ignore)
 
   macro_build_ldst_constoffset ((char *) NULL, &icnt, &ex,
 				HAVE_32BIT_ADDRESSES ? "sw" : "sd",
-				mips_gp_register, SP);
+				mips_gp_register, SP, HAVE_64BIT_ADDRESSES);
 
   demand_empty_rest_of_line ();
 }
