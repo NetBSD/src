@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.8 2002/10/25 21:03:48 leo Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.9 2002/10/29 21:02:45 leo Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.8 2002/10/25 21:03:48 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9 2002/10/29 21:02:45 leo Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -151,7 +151,7 @@ timer3_expired(struct isic_softc *sc)
 #endif /* NNISACSX > 0 */
 			default:
 #if NNISAC > 0
-				isic_isac_recover(sc);
+				isic_recover(sc);
 #endif /* NNISAC > 0 */
 				break;
 		}
