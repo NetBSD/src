@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.old.8,v 1.8 1999/04/05 03:11:54 cgd Exp $
+.\" $NetBSD: installboot.old.8,v 1.9 1999/04/05 03:27:50 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -30,13 +30,13 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd January 31, 1998
-.Dt INSTALLBOOT 8
+.Dt INSTALLBOOT.OLD 8
 .Os
 .Sh NAME
-.Nm installboot
+.Nm installboot.old
 .Nd install disk or CD-ROM bootstrap software
 .Sh SYNOPSIS
-.Nm installboot
+.Nm installboot.old
 .Op Fl nv
 .Op Fl b Ar bn
 .Ar boot
@@ -44,7 +44,7 @@
 .Ar rawdiskdevice
 .Sh DESCRIPTION
 The
-.Nm installboot
+.Nm
 utility prepares a disk for bootstrapping.
 .Pp
 The
@@ -66,7 +66,7 @@ software.  After receiving control of the system, it loads the
 second-stage boot program from a set of filesystem block numbers that
 have been
 hard-coded into it by
-.Nm installboot .
+.Nm installboot.old .
 The second-stage boot program locates and loads the kernel.
 .Pp
 The second-stage boot program and the prototype code for the
@@ -78,12 +78,12 @@ respectively.
 .Pa /usr/mdec/boot
 may be installed simply by copying it to the root directory of the
 partition you wish to boot from, but after it is installed
-.Nm installboot
+.Nm
 .Em must
 be run.
 .Pp
 The options recognized by
-.Nm installboot
+.Nm
 are as follows:
 .Bl -tag -width -b\ bn
 .It Fl n
@@ -119,7 +119,7 @@ from
 you would install the first-stage boot program on the disk
 (and therefore make the disk bootable) by using the command:
 .Bd -literal -offset indent
-installboot /boot /usr/mdec/bootxx /dev/rsd0c
+installboot.old /boot /usr/mdec/bootxx /dev/rsd0c
 .Ed
 .Pp
 Assuming the second-stage boot program
@@ -132,7 +132,7 @@ you would install the first-stage boot progam into the CD-ROM image
 (and therefore make the image bootable once burned onto a CD) by using
 the command:
 .Bd -literal -offset indent
-installboot /mnt/boot /usr/mdec/bootxx /dev/rvnd0c
+installboot.old /mnt/boot /usr/mdec/bootxx /dev/rvnd0c
 .Ed
 .Sh BUGS
 The
