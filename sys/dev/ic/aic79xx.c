@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.6 2003/07/14 15:47:05 lukem Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.7 2003/07/26 06:15:57 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.6 2003/07/14 15:47:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.7 2003/07/26 06:15:57 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -4795,10 +4795,10 @@ ahd_free(struct ahd_softc *ahd)
 		TAILQ_REMOVE(&ahd_tailq, ahd, links);
 		/* FALLTHROUGH */
 	case 1:
-	  	bus_dmamap_unload(ahd->parent_dmat, ahd->shared_data_dmamap);
-		bus_dmamap_destroy(ahd->parent_dmat, ahd->shared_data_dmamap);
+	  	bus_dmamap_unload(ahd->parent_dmat, ahd->shared_data_map.dmamap);
+		bus_dmamap_destroy(ahd->parent_dmat, ahd->shared_data_map.dmamap);
 		bus_dmamem_unmap(ahd->parent_dmat, (caddr_t)ahd->qoutfifo, ahd->shared_data_size);
-		bus_dmamem_free(ahd->parent_dmat, &ahd->shared_data_seg, ahd->shared_data_nseg);
+		bus_dmamem_free(ahd->parent_dmat, &ahd->shared_data_map.dmasegs, ahd->shared_data_map.nseg);
 		break;
 	case 0:
 	  	break;
@@ -5378,6 +5378,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Can't allocate any more */
 		return;
 
+	KASSERT(scb_data->scbs_left >= 0);
 	if (scb_data->scbs_left != 0) {
 		int offset;
 
@@ -5525,6 +5526,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->sense_busaddr = sense_busaddr;
 		next_scb->hscb = hscb;
 		hscb->hscb_busaddr = ahd_htole32(hscb_busaddr);
+		KASSERT((vaddr_t)hscb >= (vaddr_t)hscb_map->vaddr &&
+			(vaddr_t)hscb < (vaddr_t)hscb_map->vaddr + PAGE_SIZE);
 
 		/*
 		 * The sequencer always starts with the second entry.
@@ -5665,23 +5668,21 @@ ahd_init(struct ahd_softc *ahd)
 		driver_data_size += PKT_OVERRUN_BUFSIZE;
 	ahd->shared_data_size = driver_data_size;
 
-	memset(&ahd->shared_data_dmamap, 0, sizeof(bus_dmamap_t));
-	memset(&ahd->shared_data_busaddr, 0, sizeof(bus_addr_t));
-	memset(&ahd->shared_data_seg, 0, sizeof(bus_dma_segment_t));
-	ahd->shared_data_nseg = 0;
+	memset(&ahd->shared_data_map, 0, sizeof(ahd->shared_data_map));
 	ahd->sc_dmaflags = BUS_DMA_NOWAIT;
 
 	if (ahd_createdmamem(ahd->parent_dmat, ahd->shared_data_size,
 			     ahd->sc_dmaflags,
-			     &ahd->shared_data_dmamap, (caddr_t *)&ahd->qoutfifo,
-			     &ahd->shared_data_busaddr, &ahd->shared_data_seg,
-			     &ahd->shared_data_nseg, ahd_name(ahd), "shared data") < 0)
+			     &ahd->shared_data_map.dmamap, (caddr_t *)&ahd->shared_data_map.vaddr,
+			     &ahd->shared_data_map.physaddr, &ahd->shared_data_map.dmasegs,
+			     &ahd->shared_data_map.nseg, ahd_name(ahd), "shared data") < 0)
 		return (ENOMEM);
+	ahd->qoutfifo = (void *) ahd->shared_data_map.vaddr;
 
 	ahd->init_level++;
 
 	next_vaddr = (uint8_t *)&ahd->qoutfifo[AHD_QOUT_SIZE];
-	next_baddr = ahd->shared_data_busaddr + AHD_QOUT_SIZE*sizeof(uint16_t);
+	next_baddr = ahd->shared_data_map.physaddr + AHD_QOUT_SIZE*sizeof(uint16_t);
 	if ((ahd->features & AHD_TARGETMODE) != 0) {
 		ahd->targetcmds = (struct target_cmd *)next_vaddr;
 		next_vaddr += AHD_TMODE_CMDS * sizeof(struct target_cmd);
@@ -5702,6 +5703,7 @@ ahd_init(struct ahd_softc *ahd)
 	 * specially from the DMA safe memory chunk used for the QOUTFIFO.
 	 */
 	ahd->next_queued_hscb = (struct hardware_scb *)next_vaddr;
+	ahd->next_queued_hscb_map = &ahd->shared_data_map;
 	ahd->next_queued_hscb->hscb_busaddr = next_baddr;
 
 	memset(&ahd->scb_data, 0, sizeof(struct scb_data));
@@ -6058,7 +6060,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	/*
 	 * Tell the sequencer where it can find our arrays in memory.
 	 */
-	busaddr = ahd->shared_data_busaddr;
+	busaddr = ahd->shared_data_map.physaddr;
 	ahd_outb(ahd, SHARED_DATA_ADDR, busaddr & 0xFF);
 	ahd_outb(ahd, SHARED_DATA_ADDR + 1, (busaddr >> 8) & 0xFF);
 	ahd_outb(ahd, SHARED_DATA_ADDR + 2, (busaddr >> 16) & 0xFF);
@@ -9225,7 +9227,7 @@ ahd_run_tqinfifo(struct ahd_softc *ahd, int paused)
 
 		cmd->cmd_valid = 0;
 		ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/,
-				ahd->shared_data_dmamap,
+				ahd->shared_data_map.dmamap,
 				ahd_targetcmd_offset(ahd, ahd->tqinfifonext),
 				sizeof(struct target_cmd),
 				BUS_DMASYNC_PREREAD);

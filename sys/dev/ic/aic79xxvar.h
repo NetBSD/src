@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic79xxvar.h,v 1.5 2003/07/08 10:06:30 itojun Exp $
+ * $Id: aic79xxvar.h,v 1.6 2003/07/26 06:15:57 thorpej Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic79xx.h#84 $
  *
@@ -1039,6 +1039,7 @@ struct ahd_softc {
 	struct scb_data		  scb_data;
 
 	struct hardware_scb	 *next_queued_hscb;
+	struct map_node		 *next_queued_hscb_map;
 
 	/*
 	 * SCBs that have been sent to the controller
@@ -1171,11 +1172,7 @@ struct ahd_softc {
 	 */
 	bus_dma_tag_t		  parent_dmat;
 	bus_dma_tag_t		  shared_data_dmat;
-	bus_dmamap_t		  shared_data_dmamap;
-	bus_addr_t		  shared_data_busaddr;
-
-	bus_dma_segment_t	  shared_data_seg;
-	int			  shared_data_nseg;
+	struct map_node		  shared_data_map;
 	int			  shared_data_size;
 	int			  sc_dmaflags;
 
