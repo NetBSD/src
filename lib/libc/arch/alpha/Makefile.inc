@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2004/03/21 18:04:27 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2004/05/25 21:06:50 petrov Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \
@@ -46,3 +46,6 @@ __remlu.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
 __reml.S: ${.CURDIR}/arch/alpha/gen/divrem.m4
 	m4 -DNAME=__reml -DOP=rem -DS=true -DWORDSIZE=32 \
 		${.ALLSRC} > ${.TARGET}
+
+CPPFLAGS+= -I.
+
