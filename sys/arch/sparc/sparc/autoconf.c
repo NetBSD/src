@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.191 2003/02/21 19:04:07 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.192 2003/02/26 17:39:06 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,7 @@
 #include "scsibus.h"
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
@@ -79,12 +80,9 @@
 
 #include <machine/bus.h>
 #include <machine/promlib.h>
-#include <machine/openfirm.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 
-#include <machine/oldmon.h>
-#include <machine/idprom.h>
 #include <sparc/sparc/memreg.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -1183,7 +1181,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		snprintf(machine_model, sizeof machine_model, "%s",
 		    PROM_getpropstringA(findroot(), "name", namebuf,
 		    sizeof(namebuf)));
-	printf(": %s\n", machine_model);
+
+	prom_getidprom();
+	printf(": %s: hostid %lx\n", machine_model, hostid);
 
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
