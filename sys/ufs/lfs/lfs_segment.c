@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.131 2003/08/07 16:34:37 agc Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.132 2003/09/07 11:47:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.131 2003/08/07 16:34:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.132 2003/09/07 11:47:07 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -105,6 +105,7 @@ MALLOC_DEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */
+extern struct simplelock bqueue_slock;			/* XXX */
 
 static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
 static void lfs_super_aiodone(struct buf *);
@@ -2187,21 +2188,24 @@ lfs_cluster_aiodone(struct buf *bp)
 		 */
 		vp = tbp->b_vp;
 
-		if ((tbp->b_flags & (B_LOCKED | B_DELWRI)) == B_LOCKED)
-			LFS_UNLOCK_BUF(tbp);
-
 		tbp->b_flags &= ~B_GATHERED;
 
 		LFS_BCLEAN_LOG(fs, tbp);
 
 		if (!(tbp->b_flags & B_CALL)) {
-			bremfree(tbp);
 			s = splbio();
+			simple_lock(&bqueue_slock);
+			bremfree(tbp);
+			simple_unlock(&bqueue_slock);
 			if (vp)
 				reassignbuf(tbp, vp);
 			splx(s);
 			tbp->b_flags |= B_ASYNC; /* for biodone */
 		}
+
+		if ((tbp->b_flags & (B_LOCKED | B_DELWRI)) == B_LOCKED)
+			LFS_UNLOCK_BUF(tbp);
+
 #ifdef DIAGNOSTIC
 		if (tbp->b_flags & B_DONE) {
 			printf("blk %d biodone already (flags %lx)\n",
