@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.47 1994/02/25 03:48:51 mycroft Exp $
+ *	$Id: pccons.c,v 1.48 1994/02/25 05:15:31 mycroft Exp $
  */
 
 /*
@@ -254,24 +254,10 @@ void
 do_async_update(poll)
 	u_char poll;
 {
-	int pos = crtat - Crtat;
+	int pos;
 	static int old_pos = -1;
 
-	if (pc_xmode > 0)
-		return;
-
 	async = 0;
-
-	if (pos != old_pos) {
-		register u_short iobase = addr_6845;
-		outb(iobase, 14);
-		outb(iobase+1, pos>>8);
-		outb(iobase, 15);
-		outb(iobase+1, pos);
-		old_pos = pos;
-	}
-	if (cursor_shape != old_cursor_shape)
-		set_cursor_shape();
 
 	if (lock_state != old_lock_state) {
 		old_lock_state = lock_state;
@@ -289,6 +275,21 @@ do_async_update(poll)
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
 	}
+
+	if (pc_xmode > 0)
+		return;
+
+	pos = crtat - Crtat;
+	if (pos != old_pos) {
+		register u_short iobase = addr_6845;
+		outb(iobase, 14);
+		outb(iobase+1, pos>>8);
+		outb(iobase, 15);
+		outb(iobase+1, pos);
+		old_pos = pos;
+	}
+	if (cursor_shape != old_cursor_shape)
+		set_cursor_shape();
 }
 
 void
