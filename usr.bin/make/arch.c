@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.12 1996/02/04 20:34:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.12 1996/02/04 20:34:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static char rcsid[] = "$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $
 #include    <sys/param.h>
 #include    <ctype.h>
 #include    <ar.h>
-#ifndef __svr4__
+#if !defined(__svr4__) && !defined(__SVR4) 
 #include    <ranlib.h>
 #endif
 #include    <stdio.h>
@@ -561,6 +561,12 @@ ArchStatMember (archive, member, hash)
 	    }
 	    cp[1] = '\0';
 
+#if defined(__svr4__) || defined(__SVR4)
+	    /* svr4 names are slash terminated */
+	    if (cp[0] == '/')
+		cp[0] = '\0';
+#endif
+
 #ifdef AR_EFMT1
 	    /*
 	     * BSD 4.4 extended AR format: #1/<namelen>, with name as the
@@ -828,6 +834,7 @@ void
 Arch_TouchLib (gn)
     GNode	    *gn;      	/* The node of the library to touch */
 {
+#ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
     struct ar_hdr   arh;      	/* Header describing table of contents */
     struct timeval  times[2];	/* Times for utimes() call */
@@ -843,6 +850,7 @@ Arch_TouchLib (gn)
 	times[0].tv_usec = times[1].tv_usec = 0;
 	utimes(gn->path, times);
     }
+#endif
 }
 
 /*-
