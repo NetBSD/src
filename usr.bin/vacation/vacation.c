@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.21 2003/04/20 01:58:00 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.22 2003/04/20 03:32:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.21 2003/04/20 01:58:00 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.22 2003/04/20 03:32:50 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: vacation.c,v 1.21 2003/04/20 01:58:00 christos Exp $");
 
 #include <ctype.h>
 #include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -91,6 +92,9 @@ alias_t *names;
 
 DB *db;
 char from[MAXLINE];
+static int tflag = 0;
+#define	APPARENTLY_TO	1
+#define	DELIVERED_TO	2
 
 int main(int, char **);
 int junkmail(void);
@@ -109,11 +113,12 @@ main(int argc, char **argv)
 	alias_t *cur;
 	time_t interval;
 	int ch, iflag;
+	char *p;
 
 	opterr = iflag = 0;
 	interval = -1;
 	openlog("vacation", 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
+	while ((ch = getopt(argc, argv, "a:Iir:t:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
@@ -134,6 +139,19 @@ main(int argc, char **argv)
 			}
 			else
 				interval = (time_t)LONG_MAX;	/* XXX */
+			break;
+		case 't':
+			for (p = optarg; *p; p++)
+				switch (*p) {
+				case 'A':
+					tflag |= APPARENTLY_TO;
+					break;
+				case 'D':
+					tflag |= DELIVERED_TO;
+					break;
+				default:
+					errx(1, "Unknown -t option `%c'", *p);
+				}
 			break;
 		case '?':
 		default:
@@ -249,12 +267,14 @@ readheaders(void)
 			cont = 1;
 			goto findme;
 		case 'A':
-			if (strncmp(buf, "Apparently-To:", 3))
+			if ((tflag & APPARENTLY_TO) == 0 ||
+			    strncmp(buf, "Apparently-To:", 3))
 				break;
 			cont = 1;
 			goto findme;
 		case 'D':
-			if (strncmp(buf, "Delivered-To:", 3))
+			if ((tflag & DELIVERED_TO) == 0 ||
+			    strncmp(buf, "Delivered-To:", 3))
 				break;
 			cont = 1;
 			goto findme;
@@ -452,7 +472,7 @@ void
 usage(void)
 {
 
-	syslog(LOG_ERR, "uid %u: usage: vacation [-i] [-a alias] login",
-	    getuid());
+	syslog(LOG_ERR, "uid %u: usage: %s [-i] [-a alias] [-t A|D] login",
+	    getuid(), getprogname());
 	exit(1);
 }
