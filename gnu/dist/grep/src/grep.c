@@ -923,6 +923,7 @@ Output control:\n\
   -b, --byte-offset         print the byte offset with output lines\n\
   -n, --line-number         print line number with output lines\n\
   -H, --with-filename       print the filename for each match\n\
+  -o                        print the filename for each match (BSD 4.4 compat)\n\
   -h, --no-filename         suppress the prefixing filename on output\n\
   -q, --quiet, --silent     suppress all normal output\n\
   -a, --text                do not suppress binary output\n\
@@ -1066,9 +1067,9 @@ main (argc, argv)
 
   while ((opt = getopt_long (argc, argv,
 #if O_BINARY
-         "0123456789A:B:C::EFGHVX:abcd:e:f:hiLlnqrsvwxyUu",
+         "0123456789A:B:C::EFGHVX:abcd:e:f:hiLlnoqrsvwxyUu",
 #else
-         "0123456789A:B:C::EFGHVX:abcd:e:f:hiLlnqrsvwxy",
+         "0123456789A:B:C::EFGHVX:abcd:e:f:hiLlnoqrsvwxy",
 #endif
          long_options, NULL)) != EOF)
     switch (opt)
@@ -1126,6 +1127,7 @@ main (argc, argv)
 	  fatal (_("you may specify only one of -E, -F, or -G"), 0);
 	matcher = "grep";
 	break;
+      case 'o':	/* BSD 4.4 compatibility */
       case 'H':
 	with_filenames = 1;
 	break;
