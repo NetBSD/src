@@ -1,6 +1,6 @@
-.\"	$NetBSD: netboot,v 1.9 2002/06/23 01:27:52 gmcgarry Exp $
+.\"	$NetBSD: netboot,v 1.10 2002/06/29 08:32:31 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -36,18 +36,18 @@
 Introduction
 .Pp
 To netboot a \*M, you must configure one or more servers to provide
-information and files to your \*M (the 
+information and files to your \*M (the
 .Sq client ).
 If you are using
 .Nx
 (any architecture) on your netboot server(s), the information
-provided here should be sufficient to configure everything.  Additionally,
-you may wish to look at the
-.Xr diskless 8 
+provided here should be sufficient to configure everything.
+Additionally, you may wish to look at the
+.Xr diskless 8
 manual page and the manual pages for each daemon you'll be configuring.
 If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
-configure the netboot services on a variety of platforms. 
+configure the netboot services on a variety of platforms.
 .Lk http://www.netbsd.org/Documentation/network/netboot/
 .if !\n[next68k] \{\
 .Pp
@@ -75,19 +75,19 @@ Once the kernel is loaded, it starts executing.
 .\}
 .ie !\n[next68k] \{\
 For RAM disk kernels, it mounts the RAM disk filesystem and begins
-executing the installer from the RAM disk.  For normal
-(non-RAM disk) kernels, the
+executing the installer from the RAM disk.
+For normal (non-RAM disk) kernels, the
 .\}
 .el The
 kernel tries to mount the NFS share that had the kernel and starts
-executing 
+executing
 .if !\n[next68k] the installation tools or
 .Xr init 8 .
 .ie \n[hp300] \{\
-All supported \*M systems use HP's proprietary RMP (the 
+All supported \*M systems use HP's proprietary RMP (the
 .Xr rbootd 8
-daemon) for the first discovery stage and bootstrap download stages.  The
-bootstrap program uses DHCP for its discovery stage.
+daemon) for the first discovery stage and bootstrap download stages.
+The bootstrap program uses DHCP for its discovery stage.
 .\}
 .el .ie \n[macppc]:\n[next68k]:\n[walnut] \{\
 All \*M systems use BOOTP for the discovery stage.
@@ -130,15 +130,17 @@ NFS is used in both the kernel and filesystem stages to download the
 kernel, and to access files on the file server.
 .\} \" !\n[walnut]
 .Pp
-We will use 
+We will use
 .Sq Li "CC:CC:CC:CC:CC:CC"
 as the MAC address (ethernet hardware address) of your netboot client
-machine.  You should have determined this address in an earlier stage.  In
-this example, we will use 
+machine.
+You should have determined this address in an earlier stage.
+In this example, we will use
 .Sq Li 192.168.1.10
 as the IP address of your client and
 .Sq Li client.test.net
-as its name.  We will assume you're providing all of your netboot services
+as its name.
+We will assume you're providing all of your netboot services
 on one machine called
 .Sq Li server.test.net
 with the client's files exported from the directory
@@ -166,7 +168,7 @@ directory of the distribution.
 .No # Ic "chmod -R a+rX /usr/mdec/rbootd"
 .disp)
 .Pp
-Create 
+Create
 .Pa /etc/rbootd.conf
 with the following line:
 .(disp
@@ -175,7 +177,7 @@ CC:CC:CC:CC:CC:CC SYS_UBOOT
 .Pp
 You will need to start the
 .Ic rbootd .
-If it's already running, you will need to 
+If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
 .Nx 1.5
@@ -189,18 +191,18 @@ or later, you can achieve this with:
 .\} \" ! \n[hp300]
 .if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]:\n[walnut] \{\
 .ie !\n[hp300] \{\
-.Xr dhcpd 8 
-in 
+.Xr dhcpd 8
+in
 .Xr bootpd 8
 compatible mode
 .Pp
 .\}
 .el \{\
-.Xr dhcpd 8 
+.Xr dhcpd 8
 .Pp
 The bootstrap program uses DHCP to discover the location of the kernel.
 .\}
-Put the following lines in your 
+Put the following lines in your
 .Pa /etc/dhcpd.conf
 (see
 .Xr dhcpd.conf 5
@@ -217,9 +219,9 @@ allow bootp;    # Allow bootp requests, thus the dhcp server
 authoritative;  # This is the authoritative DHCP server for this subnet
                 #
 subnet 192.168.1.0 netmask 255.255.255.0 {
-                # Which network interface the server will
-                # listen on.  The zeros indicate which
-                # range of addresses are allowed to connect.
+                # Which network interface the server will listen on.
+		# The zeros indicate which range of addresses are
+		# allowed to connect.
 }
 group {
                 # Set of parameters common to all clients
@@ -251,17 +253,17 @@ group {
                 #
                 filename                "netbsd.INSTALL.img"
 .\}
-.el .if !\n[sparc] \{\ 
+.el .if !\n[sparc] \{\
 
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
                 #
 .\}
-.ie \n[macppc] \{\ 
+.ie \n[macppc] \{\
                 filename                "ofwboot.xcf";
 .\}
-.el .if \n[next68k] \{\ 
+.el .if \n[next68k] \{\
                 filename                "boot";
 .\} \" \n[next68k]
 .\} \" !\n[hp300]
@@ -269,7 +271,7 @@ group {
                 # The path on the NFS server.
                 #
                 option root-path        "/export/client/root";
-.if \n[next68k] \{\ 
+.if \n[next68k] \{\
 
                 #
                 #next68k machines require non-RFC1048 BOOTP
@@ -291,7 +293,7 @@ file exists.
 .Pp
 You will need to start the
 .Ic dhcpd .
-If it's already running, you will need to 
+If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
 .Nx 1.5
@@ -325,7 +327,7 @@ file:
 .Pp
 You will need to start the
 .Ic rarpd .
-If it's already running, you will need to 
+If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
 .Nx 1.5
@@ -341,11 +343,12 @@ or later, you can achieve this with:
 .It
 .Xr tftpd 8
 .Pp
-The default configuration of the TFTP server is to run in a 
+The default configuration of the TFTP server is to run in a
 .Xr chroot 8
 environment in the
 .Pa /tftpboot
-directory.  Thus, the first order of business is to create this directory:
+directory.
+Thus, the first order of business is to create this directory:
 .(disp
 .No # Ic "mkdir -p /tftpboot"
 .disp)
@@ -357,18 +360,18 @@ and uncomment the line with the TFTP daemon:
 tftp            dgram   udp     wait    root    /usr/libexec/tftpd tftpd -l  -s /tftpboot
 .disp)
 .Pp
-Now, restart 
+Now, restart
 .Xr inetd 8 .
 If the server is running
 .Nx 1.5
 or later, you can achieve this with:
 .Pp
-.(disp 
-.No # Ic "/etc/rc.d/inetd restart"  
+.(disp
+.No # Ic "/etc/rc.d/inetd restart"
 .disp)
 .Pp
-.ie \n[walnut] Now, you need to copy the kernel for your \*M machine to 
-.el Now, you need to copy the bootloader for your \*M machine to 
+.ie \n[walnut] Now, you need to copy the kernel for your \*M machine to
+.el Now, you need to copy the bootloader for your \*M machine to
 .Pa /tftpboot .
 .ie \n[macppc] \{\
 Get
@@ -383,9 +386,9 @@ directory of the distribution.
 .el .ie \n[next68k] \{\
 Get
 .Pa base.tgz
-from the 
+from the
 .Pa binary/sets
-directory of the distribution and extract 
+directory of the distribution and extract
 .Pa boot
 from it.
 .(disp
@@ -405,10 +408,12 @@ directory of the distribution.
 .Pp
 Now, you need to link
 .Pa boot.net
-to the filename that your \*M will look for.  It will look for a filename
-composed of the machine's IP address (in hexadecimal) followed by the machine's
-architecture, separated by a period. For example, a sun4c machine which
-has been assigned IP address 192.168.1.10, will make a TFTP request for
+to the filename that your \*M will look for.
+It will look for a filename composed of the machine's IP address
+(in hexadecimal) followed by the machine's architecture,
+separated by a period.
+For example, a sun4c machine which has been assigned IP address
+192.168.1.10, will make a TFTP request for
 .Pa C0A8010A.SUN4C .
 .Pp
 You can use
@@ -436,10 +441,11 @@ Just to be sure, let's make everything readable.
 .No # Ic "chmod -R a+rX /tftpboot"
 .disp)
 .Pp
-Sometimes, the 
+Sometimes, the
 .Xr arp 8
 table gets messed up, and the TFTP server can't communicate with the
-client.  In this case, it will write a log message (via
+client.
+In this case, it will write a log message (via
 .Xr syslogd 8 )
 to
 .Pa /var/log/messages
@@ -468,8 +474,8 @@ You can either boot a kernel, or the RAM disk-based installer
 .Pa binary/kernel/netbsd.INSTALL.img.gz .
 In the first case you'll also need an NFS-mounted userland.
 .\}
-Let's set up the NFS server.  Create the
-directory you are exporting for the netboot client:
+Let's set up the NFS server.
+Create the directory you are exporting for the netboot client:
 .Pp
 .(disp
 .No # Ic "mkdir -p /export/client/root"
@@ -486,15 +492,15 @@ to enable NFS sharing:
 If your server is currently running an NFS server, you only need to
 restart
 .Xr mountd 8 .
-Otherwise, you need to start 
+Otherwise, you need to start
 .Xr rpcbind 8
-and 
+and
 .Xr nfsd 8 .
 If the server is running
 .Nx 1.5
 or later, you can achieve this with:
 .Pp
-.(disp 
+.(disp
 .No # Ic "/etc/rc.d/rpcbind start"
 .No # Ic "/etc/rc.d/nfsd start"
 .No # Ic "/etc/rc.d/mountd restart"
@@ -513,14 +519,15 @@ in
 your client should boot the kernel.
 .\} \" !\n[walnut]
 .ie \n[hp300] \{\
-If you are netbooting the installer, you can use either 
+If you are netbooting the installer, you can use either
 the traditional miniroot-based installer
 .Pa installation/miniroot/miniroot.fs.gz
 or the experimental RAM disk-based installer
 .Pa binary/kernel/netbsd.RAMDISK.gz .
 .Pp
 To use the miniroot-based installer, mount the miniroot filesystem on your
-netboot server.  This procedure does
+netboot server.
+This procedure does
 .Em not
 work on any operating system other than
 .Nx .
@@ -555,7 +562,7 @@ If you are running your \*M diskless, simply use
 .\}
 .el .ie \n[macppc] \{\
 If you are netbooting the installer, use
-.Pa binary/kernel/netbsd.GENERIC_MD.gz 
+.Pa binary/kernel/netbsd.GENERIC_MD.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
@@ -586,7 +593,7 @@ Use
 .No # Ic "mv netbsd-GENERIC /export/client/root/netbsd"
 .disp)
 .Pp
-If you are netbooting the installer, copy the distribution files to 
+If you are netbooting the installer, copy the distribution files to
 the client's root directory and extract the tools from
 .Pa installation/netboot/rootfs.tgz .
 .Pp
@@ -598,7 +605,7 @@ the client's root directory and extract the tools from
 .\}
 .el .if \n[walnut] \{\
 If you are netbooting the installer, use
-.Pa binary/kernel/netbsd.INSTALL.img.gz 
+.Pa binary/kernel/netbsd.INSTALL.img.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
@@ -616,10 +623,11 @@ Client filesystem
 .Pp
 .ie !\n[next68k] \{\
 You can skip this step if you do not plan to run your client
-diskless after installation.  Otherwise, you
+diskless after installation.
+Otherwise, you
 .\}
 .el You
-need to extract and set up the client's installation of 
+need to extract and set up the client's installation of
 .Nx .
 The Diskless HOW-TO describes how to provide better security and save
 space on the NFS server over the procedure listed here.
@@ -662,7 +670,7 @@ hosts.
 Set up the client's
 .Xr fstab 5
 .Pp
-Create a file in 
+Create a file in
 .Pa /export/client/root/etc/fstab
 with the following lines:
 .Pp
@@ -708,7 +716,7 @@ Edit
 .It
 Setting up the server daemons
 .Pp
-.ie !\n[next68k] If you want 
+.ie !\n[next68k] If you want
 .el You need
 these services to start up every time you boot
 your server, make sure the following lines are present in your
