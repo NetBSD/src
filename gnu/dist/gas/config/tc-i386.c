@@ -2733,6 +2733,7 @@ md_apply_fix3 (fixP, valp, seg)
     }
   else if ((fixP->fx_r_type == BFD_RELOC_32)
 	   && aout_pic_flag
+	   && (fixP->fx_addsy != NULL)
 	   && ((fixP->fx_addsy->bsym->flags & BSF_GLOBAL) != 0))
     {
       if (!bfd_is_com_section(bfd_get_section(fixP->fx_addsy->bsym)))
