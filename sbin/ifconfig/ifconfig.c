@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.73 2000/03/06 09:00:13 enami Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.74 2000/03/18 21:10:50 castor Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.73 2000/03/06 09:00:13 enami Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.74 2000/03/18 21:10:50 castor Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.73 2000/03/06 09:00:13 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 
-struct	ifreq		ifr, ridreq;
+struct	ifreq		ifr, flagreq, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
 #ifdef INET6
 struct	in6_ifreq	ifr6;
@@ -550,7 +550,7 @@ main(argc, argv)
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
 	}
-	if (reset_if_flags && ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
+	if (reset_if_flags && ioctl(s, SIOCSIFFLAGS, (caddr_t)&flagreq) < 0)
 		err(1, "SIOCSIFFLAGS");
 	exit(0);
 }
@@ -830,18 +830,18 @@ setifflags(vname, value)
 	char *vname;
 	int value;
 {
- 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+ 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&flagreq) < 0)
 		err(1, "SIOCGIFFLAGS");
-	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
- 	flags = ifr.ifr_flags;
+	(void) strncpy(flagreq.ifr_name, name, sizeof (flagreq.ifr_name));
+ 	flags = flagreq.ifr_flags;
 
 	if (value < 0) {
 		value = -value;
 		flags &= ~value;
 	} else
 		flags |= value;
-	ifr.ifr_flags = flags;
-	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
+	flagreq.ifr_flags = flags;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&flagreq) < 0)
 		err(1, "SIOCSIFFLAGS");
 
 	reset_if_flags = 1;
