@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.4 2001/07/23 02:37:58 christos Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.5 2001/07/24 13:46:04 christos Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -21,9 +21,7 @@ static int	newclone(void *);
 static int	stackdir(void *);
 static void	test1(void);
 static void	test2(void);
-#ifndef __sparc__
 static void	test3(void);
-#endif
 
 int	main(int, char *[]);
 
@@ -38,9 +36,7 @@ main(int argc, char *argv[])
 {
 	test1();
 	test2();
-#ifndef __sparc__
 	test3();
-#endif
 	return 0;
 }
 
@@ -106,14 +102,14 @@ test2()
 		errx(1, "clone did not return EINVAL on invalid arguments");
 }
 
-#ifndef __sparc__
-/*
- * XXX: does not work on the sparc, why?
- */
 static void
 test3()
 {
 	struct rlimit rl;
+
+	/* Can't enforce resource limit on root */
+	if (geteuid() == 0)
+		return 0;
 
 	if (getrlimit(RLIMIT_NPROC, &rl) == -1)
 		err(1, "getrlimit");
@@ -126,7 +122,6 @@ test3()
 	    (void *)&rl) != -1 || errno != EAGAIN)
 		errx(1, "clone did not return EAGAIN running out of procs");
 }
-#endif
 
 static int
 newclone(void *arg)
