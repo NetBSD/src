@@ -30870,7 +30870,7 @@ MEETINGS:
 %
 Meetings are an addictive, highly self indulgent activity that
 corporations and other large organizations habitually engage
-in only becuase they cannot actually masturbate.
+in only because they cannot actually masturbate.
 		-- Dave Barry
 %
 MEMO:
@@ -36197,7 +36197,7 @@ SAMPLE:  Proof of induction without proof of induction.
 for every natural number less than n.  N is arbitrary, so we can take n 
 as large as we want.  If n is sufficiently large, the case of n+1 is 
 trivially equivalent, so the only important n are n less than n.  We can
-take n = n (from above), so it's true for n+1 becuase it's just about n.
+take n = n (from above), so it's true for n+1 because it's just about n.
 	QED.	(QED translates from the Latin as "So what?")
 %
 Proof techniques #2: Proof by Oddity.

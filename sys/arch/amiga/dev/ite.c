@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.66 2003/11/01 12:56:32 jdolecek Exp $ */
+/*	$NetBSD: ite.c,v 1.67 2004/02/24 15:05:54 wiz Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2003/11/01 12:56:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2004/02/24 15:05:54 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -780,7 +780,7 @@ ite_reset(struct ite_softc *ip)
 }
 
 /*
- * has to be global becuase of the shared filters.
+ * has to be global because of the shared filters.
  */
 static u_char key_mod;
 static u_char last_dead;

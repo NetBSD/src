@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.27 2003/07/15 03:36:15 lukem Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.28 2004/02/24 15:05:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.27 2003/07/15 03:36:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.28 2004/02/24 15:05:54 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ si_obio_dma_setup(ncr_sc)
 
 	/*
 	 * XXX: Reset the FIFO again!  Comment from Sprite:
-	 * Go through reset again becuase of the bug on the 3/50
+	 * Go through reset again because of the bug on the 3/50
 	 * where bytes occasionally linger in the DMA fifo.
 	 */
 	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
