@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2003/04/14 01:44:06 petrov Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.2.1 2004/08/03 10:41:34 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -150,7 +150,7 @@ struct prom_map {
 #define PMAP_SZ_TO_TTE(x)	(((x)&0x018)<<58)
 /* If these bits are different in va's to the same PA
    then there is an aliasing in the d$ */
-#define VA_ALIAS_MASK   (1 << 14)
+#define VA_ALIAS_MASK   (1 << 13)
 
 typedef	struct pmap *pmap_t;
 
@@ -172,26 +172,13 @@ int pmap_count_wired __P((struct pmap *));
 #define	pmap_phys_address(x)		(x)
 
 void pmap_activate_pmap(struct pmap *);
-
-static __inline void
-pmap_update(struct pmap *pmap)
-{
-
-	if (pmap->pm_refs > 0) {
-		return;
-	}
-	pmap->pm_refs = 1;
-	pmap_activate_pmap(pmap);
-}
-
+void pmap_update(struct pmap *);
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define	PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 #define PMAP_NEED_PROCWR
-#define __HAVE_PMAP_PREDESTROY
-#define __HAVE_PMAP_ACTIVATE_KERNEL
 
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
@@ -201,6 +188,7 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
                                  daddr_t));
 int		pmap_pa_exists __P((paddr_t));
 void		switchexit __P((struct lwp *, int));
+void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
 int	ctx_alloc __P((struct pmap *));

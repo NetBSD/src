@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ cs4281_attach(parent, self, aux)
 
 	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
@@ -338,7 +338,7 @@ cs4281_intr(p)
 		handled = 1;
 		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
 			 (int)BA0READ4(sc, CS4281_DCC0)));
-		if (sc->sc_pintr) {
+		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
 		} else {
@@ -366,7 +366,7 @@ cs4281_intr(p)
 		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
-		if (sc->sc_rintr) {
+		if (sc->sc_rrun) {
 			if ((sc->sc_ri % sc->sc_rcount) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {

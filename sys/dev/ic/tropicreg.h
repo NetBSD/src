@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicreg.h,v 1.3 1999/10/17 23:53:45 cgd Exp $	*/
+/*	$NetBSD: tropicreg.h,v 1.3.34.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -479,7 +479,7 @@ struct param_addr {
 #define	OPEN_OK			0x00	/* Open completed successfully */
 #define	OPEN_BAD_COMMAND	0x01	/* Invalid command code */
 #define	OPEN_ALREADY		0x03	/* Adapter is ALREADY open */
-#define	OPEN_MISSING_PARAMS	0x05	/* Required paramaters missing */
+#define	OPEN_MISSING_PARAMS	0x05	/* Required parameters missing */
 #define	OPEN_UNRECOV_FAIL	0x07	/* Unrecoverable failure occurred */
 #define	OPEN_INAD_REC_BUFS	0x30	/* Inadequate receive buffers */
 #define	OPEN_BAD_NODE_ADDR	0x32	/* Invalid NODE address */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.2 2001/02/19 22:48:59 cgd Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -37,6 +37,9 @@
  * This program converts a binary Cyclades-Z firmware file into a
  * C header file for use in a device driver.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -96,7 +99,7 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2 2001/02/19 22:48:59 cgd Exp $\t*/\n\n");
+	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $\t*/\n\n");
 	fprintf(out_file, "\
 /*
  * Firmware for Cyclades Z series multiport serial boards.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1 2002/02/12 20:38:50 scw Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * VME support specific to the VMEchip2 found on all high-end MVME boards
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include "vmetwo.h"
 
@@ -101,7 +104,7 @@ vmetwo_init(sc)
 			sc->sc_master[0].vr_am |= MVMEBUS_AM_CAP_USER;
 
 		/* As is the datasize */
-		sc->sc_master[0].vr_datasize = VME_D32 | VME_D16 | VME_D8;
+		sc->sc_master[0].vr_datasize = VME_D32 | VME_D16;
 		if (reg & VME2_IO_CONTROL_I1D16)
 			sc->sc_master[0].vr_datasize &= ~VME_D32;
 
@@ -115,9 +118,9 @@ vmetwo_init(sc)
 	if (reg & VME2_IO_CONTROL_I2EN) {
 		/* These two ranges are fixed to A24D16 and A32D16 */
 		sc->sc_master[1].vr_am = VME_AM_A24;
-		sc->sc_master[1].vr_datasize = VME_D16 | VME_D8;
+		sc->sc_master[1].vr_datasize = VME_D16;
 		sc->sc_master[2].vr_am = VME_AM_A32;
-		sc->sc_master[2].vr_datasize = VME_D16 | VME_D8;
+		sc->sc_master[2].vr_datasize = VME_D16;
 
 		/* However, SUPER/USER is selectable */
 		if (reg & VME2_IO_CONTROL_I2SU) {
@@ -198,7 +201,7 @@ vmetwo_master_range(sc, range, vr)
 	/*
 	 * Fix up the datasizes available through this range
 	 */
-	vr->vr_datasize = VME_D32 | VME_D16 | VME_D8;
+	vr->vr_datasize = VME_D32 | VME_D16;
 	if (attr & VME2_MASTER_ATTR_D16)
 		vr->vr_datasize &= ~VME_D32;
 	attr &= VME2_MASTER_ATTR_AM_MASK;
@@ -232,8 +235,11 @@ vmetwo_master_range(sc, range, vr)
 	reg = vme2_lcsr_read(sc, VME2LCSR_MASTER_ADDRESS(range));
 	start = (reg & VME2_MAST_ADDRESS_START_MASK);
 	start <<= VME2_MAST_ADDRESS_START_SHIFT;
+	vr->vr_locstart = start & ~vr->vr_mask;
 	end = (reg & VME2_MAST_ADDRESS_END_MASK);
 	end <<= VME2_MAST_ADDRESS_END_SHIFT;
+	end |= 0xffffu;
+	end += 1;
 
 	/*
 	 * Local->VMEbus map '4' has optional translation bits, so
@@ -241,8 +247,6 @@ vmetwo_master_range(sc, range, vr)
 	 */
 	if (range == 3 && (reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS))!=0) {
 		uint32_t addr, sel, len = end - start;
-
-		vr->vr_locstart = start;
 
 		reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS);
 		reg &= VME2_MAST4_TRANS_SELECT_MASK;
@@ -255,8 +259,7 @@ vmetwo_master_range(sc, range, vr)
 		start = (addr & sel) | (start & (~sel));
 		end = start + len;
 		vr->vr_mask &= len - 1;
-	} else
-		vr->vr_locstart = 0;
+	}
 
 	/* XXX Deal with overlap of onboard RAM address space */
 	/* XXX Then again, 167-Bug warns about this at setup time ... */
@@ -264,8 +267,8 @@ vmetwo_master_range(sc, range, vr)
 	/*
 	 * Fixup the addresses this range corresponds to
 	 */
-	vr->vr_vmestart = start;
-	vr->vr_vmeend = end - 1;
+	vr->vr_vmestart = start & vr->vr_mask;
+	vr->vr_vmeend = (end - 1) & vr->vr_mask;
 }
 
 void

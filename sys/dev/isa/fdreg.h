@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.2 2000/05/02 03:33:45 thorpej Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2.30.1 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,6 +46,8 @@
 #define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
 
 #define	fdsts	2	/* NEC 765 Main Status Register (R) */
+#define	FDS_DRVBUSY(n)	((1 << n) * 0x01)	/* drive busy */
+
 #define	fddata	3	/* NEC 765 Data Register (R/W) */
 
 #define	fdctl	5	/* Control Register (W) */

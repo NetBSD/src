@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $ */
+/* $NetBSD: isp_target.c,v 1.23.2.1 2004/08/03 10:46:16 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23.2.1 2004/08/03 10:46:16 skrll Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -570,6 +570,11 @@ isp_target_async(struct ispsoftc *isp, int bus, int event)
 		msg.nt_msg[0] = MSG_BUS_DEV_RESET;
 		(void) isp_async(isp, ISPASYNC_TARGET_MESSAGE, &msg);
 		break;
+	case ASYNC_CTIO_DONE:
+		evt.ev_bus = bus;
+		evt.ev_event = event;
+		(void) isp_async(isp, ISPASYNC_TARGET_EVENT, &evt);
+		return (0);
 	default:
 		isp_prt(isp, ISP_LOGERR,
 		    "isp_target_async: unknown event 0x%x", event);
@@ -745,7 +750,7 @@ isp_handle_atio(struct ispsoftc *isp, at_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator
@@ -832,7 +837,7 @@ isp_handle_atio2(struct ispsoftc *isp, at2_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator
@@ -942,7 +947,7 @@ isp_handle_ctio(struct ispsoftc *isp, ct_entry_t *ct)
 		 * Bus Device Reset message received or the SCSI Bus has
 		 * been Reset; the firmware has gone to Bus Free.
 		 *
-		 * The firmware generates an async mailbox interupt to
+		 * The firmware generates an async mailbox interrupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.
@@ -1095,7 +1100,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 		/*
 		 * Target Reset function received.
 		 *
-		 * The firmware generates an async mailbox interupt to
+		 * The firmware generates an async mailbox interrupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.
@@ -1144,9 +1149,11 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 	case CT_PORTNOTAVAIL:
 		if (fmsg == NULL)
 			fmsg = "Port not available";
+		/*FALLTHROUGH*/
 	case CT_PORTCHANGED:
 		if (fmsg == NULL)
 			fmsg = "Port Changed";
+		/*FALLTHROUGH*/
 	case CT_NOACK:
 		if (fmsg == NULL)
 			fmsg = "unacknowledged Immediate Notify pending";

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.46 2003/06/14 17:01:06 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.46.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -132,6 +132,7 @@ struct com_softc {
 #define	COM_TYPE_NORMAL		0	/* normal 16x50 */
 #define	COM_TYPE_HAYESP		1	/* Hayes ESP modem */
 #define	COM_TYPE_PXA2x0		2	/* Intel PXA2x0 processor built-in */
+#define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 
 	/* power management hooks */
 	int (*enable) __P((struct com_softc *));

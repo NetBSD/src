@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.5 1998/10/10 02:13:55 matt Exp $	*/
+/*	$NetBSD: float.h,v 1.5.46.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,9 +34,27 @@
 #ifndef _VAX_FLOAT_H_
 #define _VAX_FLOAT_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if __GNUC_PREREQ__(3, 3)
+#define	FLT_EVAL_METHOD	__FLT_EVAL_METHOD__
+#else
+#define	FLT_EVAL_METHOD	0		/* evaluate all operations and
+					   constants just to the range and
+					   precision of the type */
+#endif /* GCC >= 3.3 */
+#endif /* !defined(_ANSI_SOURCE) && ... */
+					   
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
 #define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
@@ -71,4 +85,12 @@
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#define	DECIMAL_DIG	18		/* ceil((1+p*log10(b))-(b==10) */
+#endif
 #endif	/* _VAX_FLOAT_H_ */

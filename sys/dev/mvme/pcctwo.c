@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2 2003/01/01 00:10:22 thorpej Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.2.2.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCCchip2 and MCchip Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.2.2.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

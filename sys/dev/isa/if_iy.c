@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.62 2003/01/06 13:05:14 wiz Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.62.2.1 2004/08/03 10:47:58 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62 2003/01/06 13:05:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.1 2004/08/03 10:47:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1093,7 +1093,6 @@ void
 iy_intr_rx(sc)
 struct iy_softc *sc;
 {
-	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
@@ -1101,7 +1100,6 @@ struct iy_softc *sc;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	ifp = &sc->sc_ethercom.ec_if;
 
 	rxadrs = sc->rx_start;
 	bus_space_write_2(iot, ioh, HOST_ADDR_REG, rxadrs);

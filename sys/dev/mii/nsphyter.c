@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.19 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.19.2.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.19 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.19.2.1 2004/08/03 10:48:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,8 @@ nsphyter_status(struct mii_softc *sc)
 		else
 			mii->mii_media_active |= IFM_100_TX;
 		if (physts & PHYSTS_DUPLEX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |=
+			    IFM_FDX | mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

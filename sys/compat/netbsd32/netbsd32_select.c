@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.4 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.4.2.1 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.1 2004/08/03 10:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,7 @@ netbsd32_select(l, v, retval)
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
-	} else
-		timo = 0;
+	}
 retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
@@ -125,9 +124,10 @@ retry:
 		 * We have to recalculate the timeout on every retry.
 		 */
 		timo = hzto(&atv);
-		if (timo <= 0)
-			goto done;
-	}
+	} else
+		timo = 0;
+	if (timo <= 0)
+		goto done;
 	s = splhigh();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.9 2003/06/01 19:14:21 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.9.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,6 +102,10 @@
  * so only Intel MP specific stuff is here.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.9.2.1 2004/08/03 10:43:05 skrll Exp $");
+
+#include "opt_mpacpi.h"
 #include "opt_mpbios.h"
 
 #include <sys/param.h>
@@ -126,6 +130,11 @@
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
+#endif
+
+#ifdef MPACPI
+extern int mpacpi_ncpu;
+extern int mpacpi_nioapic;
 #endif
 
 #include "pci.h"
@@ -182,6 +191,7 @@ static void mp_cfg_eisa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_cfg_isa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_isa_intr (int intr);
 
+static void mpbios_cpus __P((struct device *));
 static void mpbios_cpu __P((const u_int8_t *, struct device *));
 static void mpbios_bus __P((const u_int8_t *, struct device *));
 static void mpbios_ioapic __P((const u_int8_t *, struct device *));
@@ -483,7 +493,7 @@ static struct mp_bus nmi_bus = {
  *	cpu_apic_address (common to all CPUs)
  *	ioapic_address[N]
  *	mp_naps
- *	mp_nbusses
+ *	mp_nbus
  *	mp_napics
  *	nintrs
  */
@@ -519,33 +529,33 @@ mpbios_scan(self)
 	 * XXX is this the right place??
 	 */
 
-	lapic_base = LAPIC_BASE;
-	if (mp_cth != NULL)
-		lapic_base = (paddr_t)mp_cth->apic_address;
+#ifdef MPACPI
+	if (mpacpi_ncpu == 0) {
+#endif
+		lapic_base = LAPIC_BASE;
+		if (mp_cth != NULL)
+			lapic_base = (paddr_t)mp_cth->apic_address;
 
-	lapic_boot_init(lapic_base);
+		lapic_boot_init(lapic_base);
+#ifdef MPACPI
+	}
+#endif
 
 	/* check for use of 'default' configuration */
 	if (mp_fps->mpfb1 != 0) {
-		struct mpbios_proc pe;
 
 		printf("\n%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
 
-		/* use default addresses */
-		pe.apic_id = lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-		pe.cpu_signature = cpu_info_primary.ci_signature;
-		pe.feature_flags = cpu_info_primary.ci_feature_flags;
+#ifdef MPACPI
+		if (mpacpi_ncpu == 0)
+#endif
+			mpbios_cpus(self);
 
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		pe.apic_id = 1 - lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN;
-
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		mpbios_ioapic((u_int8_t *)&default_ioapic, self);
+#ifdef MPACPI
+		if (mpacpi_nioapic == 0)
+#endif
+			mpbios_ioapic((u_int8_t *)&default_ioapic, self);
 
 		/* XXX */
 		printf("%s: WARNING: interrupts not configured\n",
@@ -606,10 +616,9 @@ mpbios_scan(self)
 		}
 
 		mp_busses = malloc(sizeof(struct mp_bus)*mp_nbus,
-		    M_DEVBUF, M_NOWAIT);
-		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		mp_nintr = intr_cnt;
 
 		/* re-walk the table, recording info of interest */
@@ -620,12 +629,22 @@ mpbios_scan(self)
 		while ((count--) && (position < end)) {
 			switch (type = *(u_char *) position) {
 			case MPS_MCT_CPU:
+#ifdef MPACPI
+				/* ACPI has done this for us */
+				if (mpacpi_ncpu)
+					break;
+#endif
 				mpbios_cpu(position, self);
 				break;
 			case MPS_MCT_BUS:
 				mpbios_bus(position, self);
 				break;
 			case MPS_MCT_IOAPIC:
+#ifdef MPACPI
+				/* ACPI has done this for us */
+				if (mpacpi_nioapic)
+					break;
+#endif
 				mpbios_ioapic(position, self);
 				break;
 			case MPS_MCT_IOINT:
@@ -697,6 +716,24 @@ mpbios_cpu(ent, self)
 	config_found_sm(self, &caa, mp_print, mp_match);
 }
 
+static void
+mpbios_cpus(struct device *self)
+{
+	struct mpbios_proc pe;
+	/* use default addresses */
+	pe.apic_id = lapic_cpu_number();
+	pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
+	pe.cpu_signature = cpu_info_primary.ci_signature;
+	pe.feature_flags = cpu_info_primary.ci_feature_flags;
+
+	mpbios_cpu((u_int8_t *)&pe, self);
+
+	pe.apic_id = 1 - lapic_cpu_number();
+	pe.cpu_flags = PROCENTRY_FLAG_EN;
+
+	mpbios_cpu((u_int8_t *)&pe, self);
+}
+
 /*
  * The following functions conspire to compute base ioapic redirection
  * table entry for a given interrupt line.
@@ -725,6 +762,7 @@ static void mp_cfg_special_intr (entry, redir)
 	case MPS_INTTYPE_SMI:
 		*redir |= (IOAPIC_REDLO_DEL_SMI<<IOAPIC_REDLO_DEL_SHIFT);
 		break;
+
 	case MPS_INTTYPE_ExtINT:
 		/*
 		 * We are using the ioapic in "native" mode.
@@ -734,8 +772,6 @@ static void mp_cfg_special_intr (entry, redir)
 		*redir |= (IOAPIC_REDLO_DEL_EXTINT<<IOAPIC_REDLO_DEL_SHIFT);
 		*redir |= (IOAPIC_REDLO_MASK);
 		break;
-	default:
-		panic("unknown MPS interrupt type %d", entry->int_type);
 	}
 }
 
@@ -1027,7 +1063,10 @@ mpbios_int(ent, enttype, mpi)
 	case MPS_INTTYPE_NMI:
 		mpb = &nmi_bus;
 		break;
+	default:
+		panic("unknown MPS interrupt type %d", entry->int_type);
 	}
+
 	mpi->next = mpb->mb_intrs;
 	mpb->mb_intrs = mpi;
 	mpi->bus = mpb;
@@ -1126,14 +1165,21 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 	if (mpbios_scanned == 0)
 		return ENOENT;
 
-	if (pba->pba_bus >= mp_nbus)
-		return EINVAL;
+	if (pba->pba_bus >= mp_nbus) {
+		intr_add_pcibus(pba);
+		return 0;
+	}
 
 	mpb = &mp_busses[pba->pba_bus];
-	if (mpb->mb_name == NULL || strcmp(mpb->mb_name, "pci"))
-		return EINVAL;
+	if (mpb->mb_name != NULL) {
+		if (strcmp(mpb->mb_name, "pci"))
+			return EINVAL;
+	} else
+		mpb->mb_name = "pci";
 
 	mpb->mb_configured = 1;
+	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;
+	mpb->mb_pci_chipset_tag = pba->pba_pc;
 	return 0;
 }
 

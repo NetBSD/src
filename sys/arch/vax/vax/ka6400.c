@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.4 2002/10/02 16:02:35 thorpej Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.4.6.1 2004/08/03 10:42:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -38,6 +38,9 @@
  *	- Machine check code
  *	- Vector processor code
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.4.6.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 

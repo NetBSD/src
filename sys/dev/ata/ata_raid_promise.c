@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.1 2003/01/27 18:21:27 thorpej Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.1.2.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -34,6 +34,9 @@
  * Adapted to NetBSD by Jason R. Thorpe of Wasabi Systems, Inc.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.1.2.1 2004/08/03 10:45:46 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
@@ -45,8 +48,6 @@
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>

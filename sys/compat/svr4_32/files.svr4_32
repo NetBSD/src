@@ -1,4 +1,4 @@
-#	$NetBSD: files.svr4_32,v 1.2 2001/02/19 15:48:59 eeh Exp $
+#	$NetBSD: files.svr4_32,v 1.2.24.1 2004/08/03 10:44:34 skrll Exp $
 #
 # Config file description for machine-independent SVR4_32 compat code.
 # Included by ports that need it.
@@ -15,6 +15,7 @@ file	compat/svr4_32/svr4_32_lwp.c		compat_svr4_32
 file	compat/svr4_32/svr4_32_misc.c		compat_svr4_32
 file	compat/svr4_32/svr4_32_net.c		compat_svr4_32
 file	compat/svr4_32/svr4_32_resource.c	compat_svr4_32
+file	compat/svr4_32/svr4_32_schedctl.c	compat_svr4_32
 file	compat/svr4_32/svr4_32_signal.c		compat_svr4_32
 file	compat/svr4_32/svr4_32_socket.c		compat_svr4_32
 file	compat/svr4_32/svr4_32_sockio.c		compat_svr4_32

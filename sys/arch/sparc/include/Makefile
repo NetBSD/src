@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/04/11 13:54:16 jdc Exp $
+#	$NetBSD: Makefile,v 1.26.2.1 2004/08/03 10:40:55 skrll Exp $
 
 INCSDIR= /usr/include/sparc
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	tctrl.h trap.h types.h \
-	varargs.h vmparam.h vuid_event.h
+	varargs.h vmparam.h vuid_event.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

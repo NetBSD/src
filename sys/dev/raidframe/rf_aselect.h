@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_aselect.h,v 1.3.42.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,6 +37,6 @@
 
 #include "rf_desc.h"
 
-int     rf_SelectAlgorithm(RF_RaidAccessDesc_t * desc, RF_RaidAccessFlags_t flags);
+int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
 #endif				/* !_RF__RF_ASELECT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.3 2003/04/19 19:33:29 fvdl Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3 2003/04/19 19:33:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ int
 ahc_aic77xx_attach(ahc)
 	struct ahc_softc *ahc;
 {
-	char *id_string;
 	u_int8_t sblkctl;
 	u_int8_t sblkctl_orig;
 	u_int8_t hostconf;
@@ -101,16 +100,14 @@ ahc_aic77xx_attach(ahc)
 	ahc_outb(ahc, SBLKCTL, sblkctl);
 	sblkctl = ahc_inb(ahc, SBLKCTL);
 	if (sblkctl != sblkctl_orig) {
-		id_string = "aic7770 >= Rev E, ";
+		printf("%s: aic7770 >= Rev E: R/O autoflush enabled\n",
+		    ahc_name(ahc));
 		/*
 		 * Ensure autoflush is enabled
 		 */
 		sblkctl &= ~AUTOFLUSHDIS;
 		ahc_outb(ahc, SBLKCTL, sblkctl);
-	} else
-		id_string = "aic7770 <= Rev C, ";
-
-	printf("%s: %s", ahc_name(ahc), id_string);
+	}
 
 	/* Setup the FIFO threshold and the bus off time */
 	hostconf = ahc_inb(ahc, HOSTCONF);

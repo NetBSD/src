@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.11 2002/05/07 14:13:02 pk Exp $
+#	$NetBSD: binstall.sh,v 1.11.10.1 2004/08/03 10:41:11 skrll Exp $
 #
 
 vecho () {
@@ -48,10 +48,10 @@ Secure () {
 }
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-MDEC=${MDEC:-/usr/mdec}
-INSTALLBOOT=${INSTALLBOOT:=/usr/sbin/installboot}
-BOOTPROG=${BOOTPROG:-boot}
-OFWBOOT=${OFWBOOTBLK:-ofwboot}
+: ${MDEC:=/usr/mdec}
+: ${INSTALLBOOT:=/usr/sbin/installboot}
+: ${BOOTPROG:=boot}
+: ${OFWBOOTBLK:=ofwboot}
 if [ "`sysctl -n hw.machine`" = sparc64 ]; then
 	ULTRASPARC=1
 else
@@ -69,7 +69,7 @@ do
 	-h) Help; shift ;;
 	-u) ULTRASPARC=1; shift ;;
 	-U) ULTRASPARC=0; shift ;;
-	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
+	-b) BOOTPROG=$2; OFWBOOTBLK=$2; shift 2 ;;
 	-f) DEV=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-i) INSTALLBOOT=$2; shift 2 ;;
@@ -100,8 +100,8 @@ fi
 if [ "$ULTRASPARC" = "1" ]; then
 	machine=sparc64
 	targ=ofwboot
-	netboot=ofwboot.net
-	BOOTPROG=$OFWBOOT
+	netboot=ofwboot
+	BOOTPROG=$OFWBOOTBLK
 	BOOTXX=${MDEC}/bootblk
 else
 	machine=sparc

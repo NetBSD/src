@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.39.2.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.1 2004/08/03 10:48:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,10 @@ CFATTACH_DECL(nsphy, sizeof(struct mii_softc),
 
 int	nsphy_service(struct mii_softc *, struct mii_data *, int);
 void	nsphy_status(struct mii_softc *);
+void	nsphy_reset(struct mii_softc *sc);
 
 const struct mii_phy_funcs nsphy_funcs = {
-	nsphy_service, nsphy_status, mii_phy_reset,
+	nsphy_service, nsphy_status, nsphy_reset,
 };
 
 const struct mii_phydesc nsphys[] = {
@@ -197,7 +198,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		reg |= PCR_LED4MODE;
 
 		/*
-		 * Make sure Carrier Intgrity Monitor function is
+		 * Make sure Carrier Integrity Monitor function is
 		 * disabled (normal for Node operation, but sometimes
 		 * it's not set?!)
 		 */
@@ -326,3 +327,42 @@ nsphy_status(struct mii_softc *sc)
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
+
+void
+nsphy_reset(struct mii_softc *sc)
+{
+	int reg, i;
+
+	if (sc->mii_flags & MIIF_NOISOLATE)
+		reg = BMCR_RESET;
+	else
+		reg = BMCR_RESET | BMCR_ISO;
+	PHY_WRITE(sc, MII_BMCR, reg);
+
+	/*
+	 * Give it a little time to settle in case we just got power.
+	 * The DP83840A data sheet suggests that a soft reset not happen
+	 * within 500us of power being applied.  Be conservative.
+	 */
+	delay(1000);
+
+	/*
+	 * Wait another 2s for it to complete.
+	 * This is only a little overkill as under normal circumstances
+	 * the PHY can take up to 1s to complete reset.
+	 * This is also a bit odd because after a reset, the BMCR will
+	 * clear the reset bit and simply reports 0 even though the reset
+	 * is not yet complete.
+	 */
+	for (i = 0; i < 1000; i++) {
+		reg = PHY_READ(sc, MII_BMCR); 
+		if (reg && ((reg & BMCR_RESET) == 0))
+			break;
+		delay(2000);
+	}
+
+	if (sc->mii_inst != 0 && ((sc->mii_flags & MIIF_NOISOLATE) == 0)) {
+		PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+	}
+}
+

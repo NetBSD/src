@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmem24 - Memory resource descriptors
- *              xRevision: 22 $
+ *              xRevision: 25 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.6 2003/03/04 17:25:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.6.2.1 2004/08/03 10:45:12 skrll Exp $");
 
 #define __RSMEMORY_C__
 
@@ -169,7 +169,7 @@ AcpiRsMemory24Resource (
      */
     Buffer += 1;
 
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     *BytesConsumed = (ACPI_SIZE) Temp16 + 3;
     OutputStruct->Id = ACPI_RSTYPE_MEM24;
@@ -184,28 +184,28 @@ AcpiRsMemory24Resource (
     /*
      * Get MinBaseAddress (Bytes 4-5)
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.MinBaseAddress = Temp16;
 
     /*
      * Get MaxBaseAddress (Bytes 6-7)
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.MaxBaseAddress = Temp16;
 
     /*
      * Get Alignment (Bytes 8-9)
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     OutputStruct->Data.Memory24.Alignment = Temp16;
 
     /*
      * Get RangeLength (Bytes 10-11)
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     OutputStruct->Data.Memory24.RangeLength = Temp16;
 
     /*
@@ -261,7 +261,7 @@ AcpiRsMemory24Stream (
      * The length field is static
      */
     Temp16 = 0x09;
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &Temp16);
+    ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
     /*
@@ -274,25 +274,25 @@ AcpiRsMemory24Stream (
     /*
      * Set the Range minimum base address
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &LinkedList->Data.Memory24.MinBaseAddress);
+    ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.MinBaseAddress);
     Buffer += 2;
 
     /*
      * Set the Range maximum base address
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &LinkedList->Data.Memory24.MaxBaseAddress);
+    ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.MaxBaseAddress);
     Buffer += 2;
 
     /*
      * Set the base alignment
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &LinkedList->Data.Memory24.Alignment);
+    ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.Alignment);
     Buffer += 2;
 
     /*
      * Set the range length
      */
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &LinkedList->Data.Memory24.RangeLength);
+    ACPI_MOVE_32_TO_16 (Buffer, &LinkedList->Data.Memory24.RangeLength);
     Buffer += 2;
 
     /*
@@ -346,7 +346,7 @@ AcpiRsMemory32RangeResource (
      */
     Buffer += 1;
 
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
     Buffer += 2;
     *BytesConsumed = (ACPI_SIZE) Temp16 + 3;
 
@@ -373,27 +373,25 @@ AcpiRsMemory32RangeResource (
     /*
      * Get MinBaseAddress (Bytes 4-7)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.Memory32.MinBaseAddress,
-                            Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.MinBaseAddress, Buffer);
     Buffer += 4;
 
     /*
      * Get MaxBaseAddress (Bytes 8-11)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.Memory32.MaxBaseAddress,
-                            Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.MaxBaseAddress, Buffer);
     Buffer += 4;
 
     /*
      * Get Alignment (Bytes 12-15)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.Memory32.Alignment, Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.Alignment, Buffer);
     Buffer += 4;
 
     /*
      * Get RangeLength (Bytes 16-19)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.Memory32.RangeLength, Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.Memory32.RangeLength, Buffer);
 
     /*
      * Set the Length parameter
@@ -450,7 +448,7 @@ AcpiRsFixedMemory32Resource (
      * Point past the Descriptor to get the number of bytes consumed
      */
     Buffer += 1;
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
     Buffer += 2;
     *BytesConsumed = (ACPI_SIZE) Temp16 + 3;
@@ -467,15 +465,13 @@ AcpiRsFixedMemory32Resource (
     /*
      * Get RangeBaseAddress (Bytes 4-7)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeBaseAddress,
-                            Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeBaseAddress, Buffer);
     Buffer += 4;
 
     /*
      * Get RangeLength (Bytes 8-11)
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeLength,
-                            Buffer);
+    ACPI_MOVE_32_TO_32 (&OutputStruct->Data.FixedMemory32.RangeLength, Buffer);
 
     /*
      * Set the Length parameter
@@ -531,7 +527,7 @@ AcpiRsMemory32RangeStream (
      */
     Temp16 = 0x11;
 
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &Temp16);
+    ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
     /*
@@ -544,25 +540,25 @@ AcpiRsMemory32RangeStream (
     /*
      * Set the Range minimum base address
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer, &LinkedList->Data.Memory32.MinBaseAddress);
+    ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.MinBaseAddress);
     Buffer += 4;
 
     /*
      * Set the Range maximum base address
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer, &LinkedList->Data.Memory32.MaxBaseAddress);
+    ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.MaxBaseAddress);
     Buffer += 4;
 
     /*
      * Set the base alignment
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer, &LinkedList->Data.Memory32.Alignment);
+    ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.Alignment);
     Buffer += 4;
 
     /*
      * Set the range length
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer, &LinkedList->Data.Memory32.RangeLength);
+    ACPI_MOVE_32_TO_32 (Buffer, &LinkedList->Data.Memory32.RangeLength);
     Buffer += 4;
 
     /*
@@ -614,7 +610,7 @@ AcpiRsFixedMemory32Stream (
      */
     Temp16 = 0x09;
 
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &Temp16);
+    ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
     /*
@@ -627,14 +623,14 @@ AcpiRsFixedMemory32Stream (
     /*
      * Set the Range base address
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer,
+    ACPI_MOVE_32_TO_32 (Buffer,
                             &LinkedList->Data.FixedMemory32.RangeBaseAddress);
     Buffer += 4;
 
     /*
      * Set the range length
      */
-    ACPI_MOVE_UNALIGNED32_TO_32 (Buffer,
+    ACPI_MOVE_32_TO_32 (Buffer,
                             &LinkedList->Data.FixedMemory32.RangeLength);
     Buffer += 4;
 

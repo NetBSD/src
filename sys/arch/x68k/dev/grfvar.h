@@ -1,9 +1,43 @@
-/*	$NetBSD: grfvar.h,v 1.3 1997/10/09 13:26:18 oki Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.3.52.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grfvar.h 1.11 93/08/13$
+ *
+ *	@(#)grfvar.h	8.2 (Berkeley) 9/9/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -70,10 +104,6 @@ struct	grf_softc {
 	caddr_t	g_regkva;		/* KVA of registers */
 	caddr_t	g_fbkva;		/* KVA of framebuffer */
 	struct	grfinfo g_display;	/* hardware description (for ioctl) */
-	struct	grf_lockpage *g_lock;	/* lock page associated with device */
-	struct	proc *g_lockp;		/* process holding lock */
-	short	*g_pid;			/* array of pids with device open */
-	int	g_lockpslot;		/* g_pid entry of g_lockp */
 	caddr_t	g_data;			/* device dependent data */
 };
 
@@ -82,11 +112,6 @@ struct	grf_softc {
 #define GF_OPEN		0x02
 #define GF_EXCLUDE	0x04
 #define GF_WANTED	0x08
-#define GF_BSDOPEN	0x10
-#define GF_HPUXOPEN	0x20
-
-/* display types - indices into grfdev */
-#define GT_CUSTOMCHIPS	0
 
 /* requests to mode routine */
 #define GM_GRFON	1
@@ -107,9 +132,7 @@ struct	grf_softc {
 #define GM_GRFIOCTL	15
 
 /* minor device interpretation */
-#define GRFOVDEV	0x10	/* overlay planes */
-#define GRFIMDEV	0x20	/* images planes */
-#define GRFUNIT(d)	((d) & 0x7)
+#define GRFUNIT(d)	minor(d)
 
 #ifdef _KERNEL
 extern	struct grfsw grfsw[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.41 2002/10/02 16:52:11 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.41.6.1 2004/08/03 10:50:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.41 2002/10/02 16:52:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.41.6.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,31 +125,31 @@ const struct ep_pcmcia_product {
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
 } ep_pcmcia_products[] = {
-	{ { PCMCIA_STR_3COM_3C562,		PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3C562,		0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { PCMCIA_STR_3COM_3C589,		PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3C589,		0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { PCMCIA_STR_3COM_3CXEM556,		PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3CXEM556,	0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { PCMCIA_STR_3COM_3CXEM556INT,	PCMCIA_VENDOR_3COM,
+	{ { "",	PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3CXEM556INT,	0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { PCMCIA_STR_3COM_3C574,		PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3C574,		0 },
 	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ { PCMCIA_STR_3COM_3CCFEM556BI,	PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3CCFEM556BI,	0 },
 	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ { PCMCIA_STR_3COM_3C1,		PCMCIA_VENDOR_3COM,
+	{ { "",		PCMCIA_VENDOR_3COM,
 	    PCMCIA_PRODUCT_3COM_3C1,		0 },
 	  ELINK_CHIPSET_3C509, 0 },
 
@@ -262,26 +262,28 @@ ep_pcmcia_attach(parent, self, aux)
 	u_int8_t *enaddr = NULL;
 	int i;
 
+	aprint_normal("\n");
+
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (ep_pcmcia_enable1(sc)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 	sc->enabled = 1;
 
 	if (cfe->num_memspace != 0) {
-		printf(": unexpected number of memory spaces %d should be 0\n",
-		    cfe->num_memspace);
+		aprint_error("%s: unexpected number of memory spaces %d should be 0\n",
+		    self->dv_xname, cfe->num_memspace);
 		goto ioalloc_failed;
 	}
 
 	if (cfe->num_iospace != 1) {
-		printf(": unexpected number of I/O spaces %d should be 1\n",
-		    cfe->num_iospace);
+		aprint_error("%s: unexpected number of I/O spaces %d should be 1\n",
+		    self->dv_xname, cfe->num_iospace);
 		goto ioalloc_failed;
 	}
 
@@ -310,13 +312,15 @@ ep_pcmcia_attach(parent, self, aux)
 				break;
 		}
 		if (i == 0x0380) {
-			printf(": can't allocate i/o space\n");
+			aprint_error("%s: can't allocate i/o space\n",
+			    self->dv_xname);
 			goto ioalloc_failed;
 		}
 	} else {
 		if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
 		    cfe->iospace[0].length, &psc->sc_pcioh)) {
-			printf(": can't allocate i/o space\n");
+			aprint_error("%s: can't allocate i/o space\n",
+			    self->dv_xname);
 			goto ioalloc_failed;
 		}
 	}
@@ -327,7 +331,7 @@ ep_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
+		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
 
@@ -355,8 +359,6 @@ ep_pcmcia_attach(parent, self, aux)
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
-	printf(": %s\n", epp->epp_product.pp_name);
-
 	sc->bustype = ELINK_BUS_PCMCIA;
 	sc->ep_flags = epp->epp_flags;
 
@@ -364,8 +366,8 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->disable = ep_pcmcia_disable;
 
 	if (epconfig(sc, epp->epp_chipset, enaddr)) {
-		printf("%s: couldn't configure controller\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't configure controller\n",
+		    self->dv_xname);
 		goto config_failed;
 	}
 

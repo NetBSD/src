@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 2003/01/18 08:02:49 thorpej Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.17.2.1 2004/08/03 10:44:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2003/01/18 08:02:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.1 2004/08/03 10:44:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,11 +121,11 @@ linux_setregs(l, pack, stack)
  */
 
 void
-linux_sendsig(sig, mask, code)  /* XXX Check me */
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(ksi, mask)
+	const ksiginfo_t *ksi;
+	const sigset_t *mask;
 {
+	const int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp;
@@ -161,7 +161,7 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
-		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[SP];
+		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[_R_SP];
 
 	/* 
 	 * Build stack frame for signal trampoline. 
@@ -179,12 +179,12 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 	for (i=0; i<32; i++) {
 		sf.lsf_sc.lsc_regs[i] = f->f_regs[i];
 	}
-	sf.lsf_sc.lsc_mdhi = f->f_regs[MULHI];
-	sf.lsf_sc.lsc_mdlo = f->f_regs[MULLO];
-	sf.lsf_sc.lsc_pc = f->f_regs[PC];
-	sf.lsf_sc.lsc_status = f->f_regs[SR];
-	sf.lsf_sc.lsc_cause = f->f_regs[CAUSE];
-	sf.lsf_sc.lsc_badvaddr = f->f_regs[BADVADDR];
+	sf.lsf_sc.lsc_mdhi = f->f_regs[_R_MULHI];
+	sf.lsf_sc.lsc_mdlo = f->f_regs[_R_MULLO];
+	sf.lsf_sc.lsc_pc = f->f_regs[_R_PC];
+	sf.lsf_sc.lsc_status = f->f_regs[_R_SR];
+	sf.lsf_sc.lsc_cause = f->f_regs[_R_CAUSE];
+	sf.lsf_sc.lsc_badvaddr = f->f_regs[_R_BADVADDR];
 
 	/* 
 	 * Save signal stack.  XXX broken
@@ -208,19 +208,19 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 	}
 
 	/* Set up the registers to return to sigcode. */
-	f->f_regs[A0] = native_to_linux_signo[sig];
-	f->f_regs[A1] = 0;
-	f->f_regs[A2] = (unsigned long)&fp->lsf_sc;
+	f->f_regs[_R_A0] = native_to_linux_signo[sig];
+	f->f_regs[_R_A1] = 0;
+	f->f_regs[_R_A2] = (unsigned long)&fp->lsf_sc;
 
 #ifdef DEBUG_LINUX
 	printf("sigcontext is at %p\n", &fp->lsf_sc);
 #endif /* DEBUG_LINUX */
 
-	f->f_regs[SP] = (unsigned long)fp;
+	f->f_regs[_R_SP] = (unsigned long)fp;
 	/* Signal trampoline code is at base of user stack. */
-	f->f_regs[RA] = (unsigned long)p->p_sigctx.ps_sigcode;
-	f->f_regs[T9] = (unsigned long)catcher;
-	f->f_regs[PC] = (unsigned long)catcher;
+	f->f_regs[_R_RA] = (unsigned long)p->p_sigctx.ps_sigcode;
+	f->f_regs[_R_T9] = (unsigned long)catcher;
+	f->f_regs[_R_PC] = (unsigned long)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -267,11 +267,11 @@ linux_sys_sigreturn(l, v, retval)
 	f = (struct frame *)l->l_md.md_regs;
 	for (i=0; i<32; i++)
 		f->f_regs[i] = ksf.lsf_sc.lsc_regs[i];
-	f->f_regs[MULLO] = ksf.lsf_sc.lsc_mdlo;
-	f->f_regs[MULHI] = ksf.lsf_sc.lsc_mdhi;
-	f->f_regs[PC] = ksf.lsf_sc.lsc_pc;
-	f->f_regs[BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
-	f->f_regs[CAUSE] = ksf.lsf_sc.lsc_cause;
+	f->f_regs[_R_MULLO] = ksf.lsf_sc.lsc_mdlo;
+	f->f_regs[_R_MULHI] = ksf.lsf_sc.lsc_mdhi;
+	f->f_regs[_R_PC] = ksf.lsf_sc.lsc_pc;
+	f->f_regs[_R_BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
+	f->f_regs[_R_CAUSE] = ksf.lsf_sc.lsc_cause;
 
 	/* Restore signal stack. */
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
@@ -425,7 +425,7 @@ linux_sys_sysmips(l, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case LINUX_SETNAME: {
 		char nodename [LINUX___NEW_UTS_LEN + 1];
-		int name;
+		int name[2];
 		size_t len;
 
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -434,20 +434,18 @@ linux_sys_sysmips(l, v, retval)
 		    LINUX___NEW_UTS_LEN, &len)) != 0)
 			return error;
 
-		name = KERN_HOSTNAME;
-		return (kern_sysctl(&name, 1, 0, 0, nodename, len, p));
+		name[0] = CTL_KERN;
+		name[1] = KERN_HOSTNAME;
+		return (old_sysctl(&name[0], 2, 0, 0, nodename, len, NULL));
 		
 		break;
 	}
 	case LINUX_MIPS_ATOMIC_SET: {
 		void *addr;
 		int s;
+		u_int8_t value = 0;
 
 		addr = (void *)SCARG(uap, arg1);
-
-		if ((uvm_useracc((caddr_t)addr, sizeof(int), 
-		    B_READ | B_WRITE)) != 1)
-			return EFAULT;
 
 		s = splhigh();
 		/*
@@ -455,8 +453,10 @@ linux_sys_sysmips(l, v, retval)
 		 * it like this. The source aknowledge "This is broken"
 		 * in a comment...
 		 */
-		*retval = (register_t)fubyte(addr);
-		error = subyte(addr, SCARG(uap, arg2));
+		(void) copyin(addr, &value, 1);
+		*retval = value;
+		value = (u_int8_t) SCARG(uap, arg2);
+		error = copyout(&value, addr, 1);
 		splx(s);
 
 		return 0;

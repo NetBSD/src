@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.15 2003/03/12 00:14:40 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.15.2.1 2004/08/03 10:50:14 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.15 2003/03/12 00:14:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.15.2.1 2004/08/03 10:50:14 skrll Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -503,7 +503,7 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
  *
  * However some makes of card (eg Hauppauge) come with a configuration eeprom
  * which tells us the make of the card. Most eeproms also tell us the
- * tuner type and other features of the the cards.
+ * tuner type and other features of the cards.
  *
  * The current probe code works as follows
  * A) If the card uses a Bt878/879:
@@ -540,10 +540,11 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
 #define PCI_VENDOR_STB		0x10B4
 #define PCI_VENDOR_ASKEY	0x144F
 #endif
-/* Following not confirmed with http://members.hyperlink.net.au/~chart,
+/* Following not confirmed with http://www.pcidatabase.com/,
    so not added to NetBSD's pcidevs */
 #define PCI_VENDOR_LEADTEK_ALT	0x6606
 #define PCI_VENDOR_LEADTEK_ALT_2	0x6607
+#define PCI_VENDOR_LEADTEK_ALT_3	0x107D
 #define PCI_VENDOR_FLYVIDEO	0x1851
 #define PCI_VENDOR_FLYVIDEO_2	0x1852
 #define PCI_VENDOR_PINNACLE_ALT	0xBD11
@@ -668,8 +669,10 @@ probeCard(bktr_ptr_t bktr, int verbose, int unit)
                     goto checkTuner;
                 }
 
-                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
-                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)) {
+                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_3)) {
                     bktr->card = cards[(card = CARD_LEADTEK)];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
@@ -919,10 +922,9 @@ checkTuner:
 	    /* Determine the model number from the eeprom */
 	    if (bktr->card.eepromAddr != 0) {
 	        /* eeprom data block structure */
-	        unsigned char *block_1, *block_2, *block_3, *block_4;
+	        unsigned char *block_1, *block_2, *block_3;
 	        int block_1_data_size,  block_2_data_size, block_3_data_size;
 	        int block_1_total_size, block_2_total_size, block_3_total_size;
-		int block_4_header_size;
 
 		unsigned int model,revision;
 		unsigned char tuner_code;
@@ -942,9 +944,6 @@ checkTuner:
 	        block_3 = &eeprom[block_1_total_size + block_2_total_size];
 	        block_3_data_size = (block_3[0] &0x07);
 	        block_3_total_size = block_3_data_size + 1; /* Header size */
-
-	        block_4 = &eeprom[block_1_total_size +block_2_total_size +block_3_total_size];
-	        block_4_header_size = 1;
 
 		model    = (block_1[12] << 8  | block_1[11]);
 		revision = (block_1[15] << 16 | block_1[14] << 8 | block_1[13]);

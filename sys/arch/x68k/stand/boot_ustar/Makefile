@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/04/10 15:36:54 he Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2004/08/03 10:42:56 skrll Exp $
 
 NOMAN=		# defined
 
@@ -27,7 +27,7 @@ SRCS=	boot_ustar.S
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $ */
+/* $NetBSD: isp_pci.c,v 1.88.2.1 2004/08/03 10:49:09 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88.2.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -72,10 +72,18 @@ static void isp_pci_wr_reg(struct ispsoftc *, int, u_int16_t);
 static u_int16_t isp_pci_rd_reg_1080(struct ispsoftc *, int);
 static void isp_pci_wr_reg_1080(struct ispsoftc *, int, u_int16_t);
 #endif
+#if !defined(ISP_DISABLE_2100_SUPPORT) && \
+	 !defined(ISP_DISABLE_2200_SUPPORT) && \
+	 !defined(ISP_DISABLE_1020_SUPPORT) && \
+	 !defined(ISP_DISABLE_1080_SUPPORT) && \
+	 !defined(ISP_DISABLE_12160_SUPPORT) 
 static int
 isp_pci_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
+#endif
+#if !defined(ISP_DISABLE_2300_SUPPORT)
 static int
 isp_pci_rd_isr_2300(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
+#endif
 static int isp_pci_mbxdma(struct ispsoftc *);
 static int isp_pci_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *,
     u_int16_t *, u_int16_t);
@@ -375,6 +383,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;
 	pci_intr_handle_t ih;
+	pcireg_t mem_type;
 	char *dstring;
 	const char *intrstr;
 	int ioh_valid, memh_valid;
@@ -382,9 +391,17 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
+	
+	mem_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MEM_MAP_REG);
+	if (PCI_MAPREG_TYPE(mem_type) != PCI_MAPREG_TYPE_MEM) {
+		memh_valid = 0;
+	} else if (PCI_MAPREG_MEM_TYPE(mem_type) != PCI_MAPREG_MEM_TYPE_32BIT &&
+	    PCI_MAPREG_MEM_TYPE(mem_type) != PCI_MAPREG_MEM_TYPE_64BIT) {
+		memh_valid = 0;
+	} else {
+		memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG, mem_type, 0,
+		    &memt, &memh, NULL, NULL) == 0);
+	}
 	if (memh_valid) {
 		st = memt;
 		sh = memh;
@@ -410,7 +427,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
-		dstring = ": QLogic 1020 Ultra Wide SCSI HBA\n";
+		dstring = ": QLogic 1020 Fast Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec;
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
@@ -705,6 +722,11 @@ isp_pci_rd_debounced(struct ispsoftc *isp, int off, u_int16_t *rp)
 	return (0);
 }
 
+#if !defined(ISP_DISABLE_2100_SUPPORT) && \
+	 !defined(ISP_DISABLE_2200_SUPPORT) && \
+	 !defined(ISP_DISABLE_1020_SUPPORT) && \
+	 !defined(ISP_DISABLE_1080_SUPPORT) && \
+	 !defined(ISP_DISABLE_12160_SUPPORT) 
 static int
 isp_pci_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
     u_int16_t *semap, u_int16_t *mbp)
@@ -741,6 +763,7 @@ isp_pci_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
 	}
 	return (1);
 }
+#endif
 
 #ifndef	ISP_DISABLE_2300_SUPPORT
 static int

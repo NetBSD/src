@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.6 1998/08/15 10:18:14 mycroft Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.6.46.1 2004/08/03 10:46:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -138,7 +134,7 @@ struct leinit {
 #define	LE_T1_ERR	0x40		/* error summary */
 #define	LE_T1_MORE	0x10		/* multiple collisions */
 #define	LE_T1_ONE	0x08		/* single collision */
-#define	LE_T1_DEF	0x04		/* defferred transmit */
+#define	LE_T1_DEF	0x04		/* deferred transmit */
 #define	LE_T1_STP	0x02		/* start of packet */
 #define	LE_T1_ENP	0x01		/* end of packet */
 

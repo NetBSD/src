@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.5 2003/06/25 20:34:00 ichiro Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,15 +35,6 @@
  * Offsets for various AGP configuration registers.
  */
 #define AGP_APBASE		0x10
-
-/*
- * Offsets from the AGP Capability pointer.
- */
-#define AGP_CAPID		0xa0
-#define AGP_CAPID_GET_MAJOR(x)		(((x) & 0x00f00000U) >> 20)
-#define AGP_CAPID_GET_MINOR(x)		(((x) & 0x000f0000U) >> 16)
-#define AGP_CAPID_GET_NEXT_PTR(x)	(((x) & 0x0000ff00U) >> 8)
-#define AGP_CAPID_GET_CAP_ID(x)		(((x) & 0x000000ffU) >> 0)
 
 #define AGP_STATUS		0x4
 #define AGP_COMMAND		0x8
@@ -198,4 +189,20 @@
 #define AGP_I830_GCC1_GMASIZE_64	0x01
 #define AGP_I830_GCC1_GMASIZE_128	0x00
 
+
+/*
+ * Config registers for 852GM/855GM/865G device 0
+ */
+#define AGP_I855_GCC1			0x52
+#define AGP_I855_GCC1_DEV2		0x08
+#define AGP_I855_GCC1_DEV2_ENABLED	0x00
+#define AGP_I855_GCC1_DEV2_DISABLED	0x08
+#define AGP_I855_GCC1_GMS		0x70
+#define AGP_I855_GCC1_GMS_STOLEN_0M	0x00
+#define AGP_I855_GCC1_GMS_STOLEN_1M	0x10
+#define AGP_I855_GCC1_GMS_STOLEN_4M	0x20
+#define AGP_I855_GCC1_GMS_STOLEN_8M	0x30
+#define AGP_I855_GCC1_GMS_STOLEN_16M	0x40
+#define AGP_I855_GCC1_GMS_STOLEN_32M	0x50
+ 
 #endif /* !_PCI_AGPREG_H_ */

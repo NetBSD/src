@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.11 2002/09/14 17:54:00 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.11.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11 2002/09/14 17:54:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include <sys/errno.h>
 
@@ -38,57 +38,33 @@ __KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11 2002/09/14 17:54:00 oster Exp $")
 #include "rf_revent.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_desc.h"
 #include "rf_shutdown.h"
 
-static RF_FreeList_t *rf_revent_freelist;
 #define RF_MAX_FREE_REVENT 128
-#define RF_REVENT_INC        8
-#define RF_REVENT_INITIAL    8
-
-
+#define RF_MIN_FREE_REVENT  32
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
 
-#define DO_WAIT(_rc)  \
-	ltsleep(&(_rc)->eventQueue, PRIBIO,  "raidframe eventq", \
-		0, &((_rc)->eq_mutex))
-
-#define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
-
-
 static void rf_ShutdownReconEvent(void *);
 
 static RF_ReconEvent_t *
-GetReconEventDesc(RF_RowCol_t row, RF_RowCol_t col,
-    void *arg, RF_Revent_t type);
+GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 
-static void rf_ShutdownReconEvent(ignored)
-	void   *ignored;
+static void rf_ShutdownReconEvent(void *ignored)
 {
-	RF_FREELIST_DESTROY(rf_revent_freelist, next, (RF_ReconEvent_t *));
+	pool_destroy(&rf_pools.revent);
 }
 
 int 
-rf_ConfigureReconEvent(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureReconEvent(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
-	RF_FREELIST_CREATE(rf_revent_freelist, RF_MAX_FREE_REVENT,
-	    RF_REVENT_INC, sizeof(RF_ReconEvent_t));
-	if (rf_revent_freelist == NULL)
-		return (ENOMEM);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownReconEvent, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownReconEvent(NULL);
-		return (rc);
-	}
-	RF_FREELIST_PRIME(rf_revent_freelist, RF_REVENT_INITIAL, next,
-	    (RF_ReconEvent_t *));
+	rf_pool_init(&rf_pools.revent, sizeof(RF_ReconEvent_t),
+		     "rf_revent_pl", RF_MIN_FREE_REVENT, RF_MAX_FREE_REVENT);
+	rf_ShutdownCreate(listp, rf_ShutdownReconEvent, NULL);
+
 	return (0);
 }
 
@@ -97,17 +73,13 @@ rf_ConfigureReconEvent(listp)
  * or will return an event if it is not */
 
 RF_ReconEvent_t *
-rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
-	RF_RaidReconDesc_t *reconDesc;
-	RF_RowCol_t row;
-	void    (*continueFunc) (void *);
-	void   *continueArg;
+rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
+		     void (*continueFunc)(void *), void *continueArg)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
-	RF_ReconCtrl_t *rctrl = raidPtr->reconControl[row];
+	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
 	RF_ReconEvent_t *event;
 
-	RF_ASSERT(row >= 0 && row <= raidPtr->numRow);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
@@ -156,7 +128,10 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 #if RF_RECON_STATS > 0
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
-		DO_WAIT(rctrl);
+
+		ltsleep(&(rctrl)->eventQueue, PRIBIO,  "raidframe eventq",
+			0, &((rctrl)->eq_mutex));
+
 		reconDesc->reconExecTicks = 0;	/* we've just waited */
 	}
 
@@ -177,20 +152,16 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 }
 /* enqueues a reconstruction event on the indicated queue */
 void 
-rf_CauseReconEvent(raidPtr, row, col, arg, type)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
-	RF_RowCol_t col;
-	void   *arg;
-	RF_Revent_t type;
+rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg, 
+		   RF_Revent_t type)
 {
-	RF_ReconCtrl_t *rctrl = raidPtr->reconControl[row];
-	RF_ReconEvent_t *event = GetReconEventDesc(row, col, arg, type);
+	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
+	RF_ReconEvent_t *event = GetReconEventDesc(col, arg, type);
 
 	if (type == RF_REVENT_BUFCLEAR) {
 		RF_ASSERT(col != rctrl->fcol);
 	}
-	RF_ASSERT(row >= 0 && row <= raidPtr->numRow && col >= 0 && col <= raidPtr->numCol);
+	RF_ASSERT(col >= 0 && col <= raidPtr->numCol);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
@@ -199,30 +170,24 @@ rf_CauseReconEvent(raidPtr, row, col, arg, type)
 	rctrl->eq_count++;
 	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 
-	DO_SIGNAL(rctrl);
+	wakeup(&(rctrl)->eventQueue);
 }
 /* allocates and initializes a recon event descriptor */
 static RF_ReconEvent_t *
-GetReconEventDesc(row, col, arg, type)
-	RF_RowCol_t row;
-	RF_RowCol_t col;
-	void   *arg;
-	RF_Revent_t type;
+GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 {
 	RF_ReconEvent_t *t;
 
-	RF_FREELIST_GET(rf_revent_freelist, t, next, (RF_ReconEvent_t *));
-	if (t == NULL)
-		return (NULL);
+	t = pool_get(&rf_pools.revent, PR_WAITOK);
 	t->col = col;
 	t->arg = arg;
 	t->type = type;
+	t->next = NULL;
 	return (t);
 }
 
 void 
-rf_FreeReconEventDesc(event)
-	RF_ReconEvent_t *event;
+rf_FreeReconEventDesc(RF_ReconEvent_t *event)
 {
-	RF_FREELIST_FREE(rf_revent_freelist, event, next);
+	pool_put(&rf_pools.revent, event);
 }

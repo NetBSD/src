@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.19 2002/04/02 23:25:07 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.19.10.1 2004/08/03 10:44:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,11 @@ void native_to_linux_old_extra_sigset __P((linux_old_sigset_t *,
     native_to_linux_sigset((linux_sigset_t *)x, y)
 #endif
 
+#ifdef LINUX_SS_ONSTACK
+void native_to_linux_sigaltstack __P((struct linux_sigaltstack *,
+    const struct sigaltstack *));
+#endif
+
 void linux_to_native_sigset __P((sigset_t *, const linux_sigset_t *));
 void native_to_linux_sigset __P((linux_sigset_t *, const sigset_t *));
 int linux_to_native_sigflags __P((const unsigned long));
@@ -92,6 +97,9 @@ void linux_to_native_sigaction __P((struct sigaction *,
     const struct linux_sigaction *));
 void native_to_linux_sigaction __P((struct linux_sigaction *,
     const struct sigaction *));
+
+void native_to_linux_sigaltstack __P((struct linux_sigaltstack *,
+    const struct sigaltstack *));
 
 __END_DECLS
 #endif /* !_KERNEL */

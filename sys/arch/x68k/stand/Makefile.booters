@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.1 2002/05/05 11:46:29 isaki Exp $
+#	$NetBSD: Makefile.booters,v 1.1.14.1 2004/08/03 10:42:56 skrll Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PHONY:	machine-links
+
+CFLAGS+= -ffreestanding
 
 machine-links:
 	-rm -f machine && \
@@ -14,3 +16,8 @@ CLEANFILES+=	machine ${MACHINE_ARCH}
 
 beforedepend:	machine-links
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=

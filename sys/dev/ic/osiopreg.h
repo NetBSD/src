@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopreg.h,v 1.2 2003/02/18 16:37:48 tsutsui Exp $	*/
+/*	$NetBSD: osiopreg.h,v 1.2.2.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -286,7 +282,7 @@
 #define OSIOP_CTEST4_MUX	0x80	/* Host bus multiplex mode */
 #define OSIOP_CTEST4_ZMOD	0x40	/* High-impedance outputs */
 #define OSIOP_CTEST4_SZM	0x20	/* ditto, SCSI "outputs" */
-#define OSIOP_CTEST4_SLBE	0x10	/* SCSI loobpack enable */
+#define OSIOP_CTEST4_SLBE	0x10	/* SCSI loopback enable */
 #define OSIOP_CTEST4_SFWR	0x08	/* SCSI FIFO write enable (from sodl) */
 #define OSIOP_CTEST4_FBL	0x07	/* DMA FIFO Byte Lane select
 					   (from ctest6) 4->0, .. 7->3 */

@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.16.10.1 2004/08/03 10:42:22 skrll Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -116,8 +112,6 @@ Xmain()
 		 */
 		bcopy ((void *)bootregs[11], rpb, sizeof(struct rpb));
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
-		if (rpb->devtyp == BDEV_SDN)
-			rpb->devtyp = BDEV_SD;	/* XXX until driver fixed */
 	} else {
 		bzero(rpb, sizeof(struct rpb));
 		rpb->devtyp = bootregs[0];

@@ -1,11 +1,45 @@
-/*	$NetBSD: clock.c,v 1.49 2002/10/02 16:02:28 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.6.1 2004/08/03 10:42:11 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: Utah Hdr: clock.c 1.18 91/01/21$
+ *	from: @(#)clock.c	8.2 (Berkeley) 1/12/94
+ */
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -48,11 +82,16 @@
  * Original by Adam Glass;  partially rewritten by Gordon Ross.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.6.1 2004/08/03 10:42:11 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/asm_single.h>
 
@@ -66,6 +105,8 @@
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170.h>
+
+extern int intrcnt[];
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
@@ -91,9 +132,9 @@ CFATTACH_DECL(clock, sizeof(struct device),
 
 static int
 clock_match(parent, cf, args)
-    struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-    void *args;
+	void *args;
 {
 	struct confargs *ca = args;
 
@@ -138,7 +179,7 @@ clock_attach(parent, self, args)
 	 * affect us, but we need to set the rate...
 	 */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 	intersil_clear();
 
 	/* Set the clock to 100 Hz, but do not enable it yet. */
@@ -205,7 +246,7 @@ set_clk_mode(on, off, enable_clk)
 		 * interrupt register to clear any pending signals there.
 		 */
 		intersil_clock->clk_cmd_reg =
-			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 		intersil_clear();
 	}
 
@@ -215,7 +256,7 @@ set_clk_mode(on, off, enable_clk)
 	/* Turn the clock back on (maybe) */
 	if (intersil_va && enable_clk)
 		intersil_clock->clk_cmd_reg =
-			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 
 	/* Finally, turn the "master" enable back on. */
 	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
@@ -234,7 +275,7 @@ cpu_initclocks(void)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isr_add_custom(5, (void*)_isr_clock);
+	isr_add_custom(CLOCK_PRI, (void *)_isr_clock);
 
 	/* Now enable the clock at level 5 in the interrupt reg. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
@@ -250,6 +291,7 @@ void
 setstatclockrate(newhz)
 	int newhz;
 {
+
 	/* nothing */
 }
 
@@ -275,7 +317,9 @@ clock_intr(cf)
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
 
-	
+	intrcnt[CLOCK_PRI]++;
+	uvmexp.intrs++;
+
 	{ /* Entertainment! */
 #ifdef	LED_IDLE_CHECK
 		/* With this option, LEDs move only when CPU is idle. */
@@ -304,9 +348,10 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	int s = splhigh();
+	int s;
 	static struct timeval lasttime;
 
+	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec++; 	/* XXX */
 	while (tvp->tv_usec >= 1000000) {
@@ -314,9 +359,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
-		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000)
-	{
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -361,7 +405,7 @@ void inittodr(fs_time)
 		if (fs_time != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* 1991/07/01  12:00:00 */
-		fs_time = 21*SECYR + 186*SECDAY + SECDAY/2;
+		fs_time = 21 * SECYR + 186 * SECDAY + SECDAY / 2;
 	}
 
 	clk_time = clk_get_secs();
@@ -376,10 +420,10 @@ void inittodr(fs_time)
 		diff = clk_time - fs_time;
 		if (diff < 0)
 			diff = -diff;
-		if (diff >= (SECDAY*2)) {
+		if (diff >= (SECDAY * 2)) {
 			printf("WARNING: clock %s %d days",
-				   (clk_time < fs_time) ? "lost" : "gained",
-				   (int) (diff / SECDAY));
+			    (clk_time < fs_time) ? "lost" : "gained",
+			    (int) (diff / SECDAY));
 			clk_bad = 1;
 		}
 	}
@@ -393,6 +437,7 @@ void inittodr(fs_time)
  */
 void resettodr()
 {
+
 	clk_set_secs(time.tv_sec);
 }
 
@@ -414,8 +459,8 @@ clk_get_secs()
 	intersil_get_dt(&dt);
 
 	if ((dt.dt_hour > 24) ||
-		(dt.dt_day  > 31) ||
-		(dt.dt_mon  > 12))
+	    (dt.dt_day  > 31) ||
+	    (dt.dt_mon  > 12))
 		return (0);
 
 	dt.dt_year += CLOCK_BASE_YEAR;
@@ -452,7 +497,7 @@ intersil_get_dt(struct clock_ymdhms *dt)
 
 	/* Enable read (stop time) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
 	/* Copy the info.  Careful about the order! */
 	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
@@ -466,7 +511,7 @@ intersil_get_dt(struct clock_ymdhms *dt)
 
 	/* Done reading (time wears on) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
@@ -481,7 +526,7 @@ intersil_set_dt(struct clock_ymdhms *dt)
 
 	/* Enable write (stop time) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
 	/* Copy the info.  Careful about the order! */
 	isdt->dt_csec = 0;
@@ -495,6 +540,6 @@ intersil_set_dt(struct clock_ymdhms *dt)
 
 	/* Done writing (time wears on) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }

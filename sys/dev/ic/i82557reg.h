@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.12 2003/05/26 16:14:49 yamt Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.12.2.1 2004/08/03 10:46:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -425,6 +425,7 @@ struct fxp_rfa {
 #define FXP_RFA_STATUS_RNR	0x0200	/* no resources */
 #define FXP_RFA_STATUS_ALIGN	0x0400	/* alignment error */
 #define FXP_RFA_STATUS_CRC	0x0800	/* CRC error */
+#define FXP_RFA_STATUS_VLAN	0x1000	/* VLAN */
 #define FXP_RFA_STATUS_OK	0x2000	/* packet received okay */
 #define FXP_RFA_STATUS_C	0x8000	/* packet reception complete */
 
@@ -455,7 +456,7 @@ struct fxp_stats {
 	volatile u_int32_t tx_latecols;
 	volatile u_int32_t tx_underruns;
 	volatile u_int32_t tx_lostcrs;
-	volatile u_int32_t tx_deffered;
+	volatile u_int32_t tx_deferred;
 	volatile u_int32_t tx_single_collisions;
 	volatile u_int32_t tx_multiple_collisions;
 	volatile u_int32_t tx_total_collisions;
@@ -466,7 +467,13 @@ struct fxp_stats {
 	volatile u_int32_t rx_overrun_errors;
 	volatile u_int32_t rx_cdt_errors;
 	volatile u_int32_t rx_shortframes;
-	volatile u_int32_t completion_status;
+	volatile u_int32_t tx_pauseframes;
+#define	completion_status	tx_pauseframes
+	volatile u_int32_t rx_pauseframes;
+	volatile u_int32_t rx_unsupportedframes;
+	volatile u_int32_t tx_tco_frames;
+	volatile u_int32_t rx_tco_frames;
+	volatile u_int32_t ext_completion_status;
 };
 #define FXP_STATS_DUMP_COMPLETE	0xa005
 #define FXP_STATS_DR_COMPLETE	0xa007

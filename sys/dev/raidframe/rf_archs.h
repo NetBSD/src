@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.20 2002/09/19 23:23:19 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.20.6.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -108,6 +108,14 @@
 #define RF_RECON_STATS     1
 #endif
 
+#ifndef RF_DEBUG_DAG
+#define RF_DEBUG_DAG 0
+#endif
+
+#ifndef RF_DEBUG_ENGINE
+#define RF_DEBUG_ENGINE 0
+#endif
+
 #ifndef RF_DEBUG_VALIDATE_DAG
 #define RF_DEBUG_VALIDATE_DAG 0
 #endif
@@ -138,6 +146,10 @@
 
 #ifndef RF_DEBUG_MAP
 #define RF_DEBUG_MAP 0
+#endif
+
+#ifndef RF_ACC_TRACE
+#define RF_ACC_TRACE 1
 #endif
 
 #include "rf_options.h"

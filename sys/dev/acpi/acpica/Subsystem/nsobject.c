@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              xRevision: 87 $
+ *              xRevision: 90 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,8 +115,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.6 2003/03/04 17:25:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSOBJECT_C__
 
@@ -184,7 +185,8 @@ AcpiNsAttachObject (
     {
         /* Not a name handle */
 
-        ACPI_REPORT_ERROR (("NsAttachObject: Invalid handle\n"));
+        ACPI_REPORT_ERROR (("NsAttachObject: Invalid handle %p [%s]\n",
+                Node, AcpiUtGetDescriptorName (Node)));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -235,7 +237,7 @@ AcpiNsAttachObject (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Installing %p into Node %p [%4.4s]\n",
-        ObjDesc, Node, Node->Name.Ascii));
+        ObjDesc, Node, AcpiUtGetNodeName (Node)));
 
     /* Detach an existing attached object if present */
 
@@ -324,7 +326,7 @@ AcpiNsDetachObject (
     Node->Type = ACPI_TYPE_ANY;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Node %p [%4.4s] Object %p\n",
-        Node, Node->Name.Ascii, ObjDesc));
+        Node, AcpiUtGetNodeName (Node), ObjDesc));
 
     /* Remove one reference on the object (and all subobjects) */
 

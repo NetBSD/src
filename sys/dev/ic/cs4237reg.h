@@ -1,11 +1,11 @@
-/*	$NetBSD: cs4237reg.h,v 1.1 1999/09/06 17:07:05 rh Exp $ */
+/*	$NetBSD: cs4237reg.h,v 1.1.36.1 2004/08/03 10:46:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Rene Hexel (rh@netbsd.org).
+ * by Rene Hexel (rh@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,8 +60,8 @@
 #define CS_X_RIGHT_DSP_SER_VOL	0x98	/* Right DSP Serial Port Volume */
 #define CS_X_RIGHT_LOOPBACK_VOL	0xa8	/* Right Loopback Monitor Volume */
 #define CS_X_DAC_MUTE_IFSE_EN	0xb8	/* DAC Mute and IFSE Enable */
-#define CS_X_INDEP_ADC_FREQ	0xc8	/* Independendt ADC Sample Freq */
-#define CS_X_INDEP_DAC_FREQ	0xd8	/* Independendt DAC Sample Freq */
+#define CS_X_INDEP_ADC_FREQ	0xc8	/* Independent ADC Sample Freq */
+#define CS_X_INDEP_DAC_FREQ	0xd8	/* Independent DAC Sample Freq */
 #define CS_X_LEFT_DIGITAL_VOL	0xe8	/* Left Master Digital Audio Volume */
 #define CS_X_RIGHT_DIGITAL_VOL	0xf8	/* Right Master Digital Audio Volume */
 #define CS_X_LEFT_WAVE_SER_VOL	0x0c	/* Left Wavetable Serial Port Volume */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.5 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.5.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,6 +102,9 @@ struct cs_softc {
 
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* MAC address */
 
+	int	eeprom_size;		/* how large is the eeprom (in bytes) */
+	u_int16_t *eeprom_data;		/* copy of the eeprom data */
+
 #if NRND > 0
 	rndsource_element_t rnd_source; /* random source */
 #endif
@@ -174,6 +177,7 @@ struct cs_softc {
 #define CFGFLG_ATTACHED     0x0040 /* XXX should not be here? */
 #define CFGFLG_CARDBUS_HACK 0x0080
 #define CFGFLG_ENABLED      0x0100 /* XXX should not be here? */
+#define CFGFLG_PARSE_EEPROM 0x0200
 #define CFGFLG_NOT_EEPROM   0x8000
 
 
@@ -272,10 +276,9 @@ do {									\
 
 #define MAXLOOP            0x8888
 
-int	cs_attach(struct cs_softc *sc, u_int8_t *enaddr,
-		  int *media, int nmedia, int defmedia);
-int	cs_detach(struct cs_softc *sc);
-int	cs_verify_eeprom(struct cs_softc *sc);
+int	cs_attach(struct cs_softc *, u_int8_t *, int *, int, int);
+int	cs_detach(struct cs_softc *);
+int	cs_verify_eeprom(struct cs_softc *);
 int	cs_read_eeprom(struct cs_softc *, int, u_int16_t *);
 int	cs_intr(void *);
 int	cs_activate(struct device *, enum devact);

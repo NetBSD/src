@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.16 2003/06/29 22:28:58 fvdl Exp $ */
+/*	$NetBSD: openprom.c,v 1.16.2.1 2004/08/03 10:41:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,10 @@
  *
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.16.2.1 2004/08/03 10:41:09 skrll Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@ const struct cdevsw openprom_cdevsw = {
 };
 
 static	int lastnode;			/* speed hack */
-extern	int optionsnode;		/* node ID of ROM's options */
 
 static int openpromcheckid __P((int, int));
 static int openpromgetstr __P((int, char *, char **));
@@ -130,8 +129,10 @@ openpromioctl(dev, cmd, data, flags, p)
 	struct proc *p;
 {
 	struct opiocdesc *op;
-	int node, len, ok, error, s;
+	int node, optionsnode, len, ok, error, s;
 	char *name, *value, *nextprop;
+
+	optionsnode = prom_getoptionsnode();
 
 	/* All too easy... */
 	if (cmd == OPIOCGETOPTNODE) {
@@ -177,7 +178,7 @@ openpromioctl(dev, cmd, data, flags, p)
 			break;
 		value = malloc(len, M_TEMP, M_WAITOK);
 		s = splhigh();
-		error = PROM_getprop(node, name, 1, &len, (void **)&value);
+		error = prom_getprop(node, name, 1, &len, &value);
 		splx(s);
 		if (error != 0)
 			break;
@@ -239,6 +240,20 @@ openpromioctl(dev, cmd, data, flags, p)
 		node = firstchild(node);
 		splx(s);
 		*(int *)data = lastnode = node;
+		break;
+
+	case OPIOCFINDDEVICE:
+		if ((flags & FREAD) == 0)
+			return (EBADF);
+		error = openpromgetstr(op->op_namelen, op->op_name, &name);
+		if (error)
+			break;
+		node = prom_finddevice(name);
+		if (node == 0 || node == -1) {
+			error = ENOENT;
+			break;
+		}
+		op->op_nodeid = lastnode = node;
 		break;
 
 	default:

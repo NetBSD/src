@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.89.2.1 2003/07/02 15:25:45 darrenr Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.89.2.2 2004/08/03 10:43:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.1 2003/07/02 15:25:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.2 2004/08/03 10:43:53 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89.2.1 2003/07/02 15:25:45 darre
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_errno.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -120,10 +121,14 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
-static void linux_savecontext __P((struct lwp *, struct trapframe *,
-    sigset_t *, struct linux_sigcontext *));
-static void linux_rt_sendsig __P((int, sigset_t *, u_long));
-static void linux_old_sendsig __P((int, sigset_t *, u_long));
+static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
+static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux_sigcontext *));
+static int linux_restore_sigcontext __P((struct lwp *,
+    struct linux_sigcontext *, register_t *));
+static void linux_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
+static void linux_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -149,7 +154,7 @@ linux_setregs(l, epp, stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;
@@ -170,7 +175,7 @@ linux_setregs(l, epp, stack)
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
 	tf->tf_eip = epp->ep_entry;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
@@ -188,23 +193,36 @@ linux_setregs(l, epp, stack)
  */
 
 void
-linux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	if (SIGACTION(curproc, sig).sa_flags & SA_SIGINFO)
-		linux_rt_sendsig(sig, mask, code);
+	if (SIGACTION(curproc, ksi->ksi_signo).sa_flags & SA_SIGINFO)
+		linux_rt_sendsig(ksi, mask);
 	else
-		linux_old_sendsig(sig, mask, code);
+		linux_old_sendsig(ksi, mask);
 }
 
 
 static void
-linux_savecontext(l, tf, mask, sc)
+linux_save_ucontext(l, tf, mask, sas, uc)
 	struct lwp *l;
 	struct trapframe *tf;
-	sigset_t *mask;
+	const sigset_t *mask;
+	struct sigaltstack *sas;
+	struct linux_ucontext *uc;
+{
+	uc->uc_flags = 0;
+	uc->uc_link = NULL;
+	native_to_linux_sigaltstack(&uc->uc_stack, sas);
+	linux_save_sigcontext(l, tf, mask, &uc->uc_mcontext);
+	native_to_linux_sigset(&uc->uc_sigmask, mask);
+	(void)memset(&uc->uc_fpregs_mem, 0, sizeof(uc->uc_fpregs_mem));
+}
+
+static void
+linux_save_sigcontext(l, tf, mask, sc)
+	struct lwp *l;
+	struct trapframe *tf;
+	const sigset_t *mask;
 	struct linux_sigcontext *sc;
 {
 	/* Save register context. */
@@ -249,16 +267,15 @@ linux_savecontext(l, tf, mask, sc)
 }
 
 static void
-linux_rt_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_rt_sigframe *fp, frame;
 	int onstack;
+	linux_siginfo_t *lsi;
+	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
@@ -276,22 +293,52 @@ linux_rt_sendsig(sig, mask, code)
 		fp = (struct linux_rt_sigframe *)tf->tf_esp;
 	fp--;
 
-	DPRINTF(("rt: onstack = %d, fp = %p sig = %d eip = 0x%x\n", onstack, fp,
-	    sig, tf->tf_eip));
+	DPRINTF(("rt: onstack = %d, fp = %p sig = %d eip = 0x%x cr2 = 0x%x\n",
+	    onstack, fp, sig, tf->tf_eip, l->l_addr->u_pcb.pcb_cr2));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 	frame.sf_sip = &fp->sf_si;
-	frame.sf_scp = &fp->sf_sc;
+	frame.sf_ucp = &fp->sf_uc;
 
 	/*
-	 * XXX: zero siginfo out until we provide more info.
+	 * XXX: the following code assumes that the constants for
+	 * siginfo are the same between linux and NetBSD.
 	 */
-	(void)memset(&frame.sf_si, 0, sizeof(frame.sf_si));
+	(void)memset(lsi = &frame.sf_si, 0, sizeof(frame.sf_si));
+	lsi->lsi_errno = native_to_linux_errno[ksi->ksi_errno];
+	lsi->lsi_code = ksi->ksi_code;
+	switch (lsi->lsi_signo = frame.sf_sig) {
+	case LINUX_SIGILL:
+	case LINUX_SIGFPE:
+	case LINUX_SIGSEGV:
+	case LINUX_SIGBUS:
+	case LINUX_SIGTRAP:
+		lsi->lsi_addr = ksi->ksi_addr;
+		break;
+	case LINUX_SIGCHLD:
+		lsi->lsi_uid = ksi->ksi_uid;
+		lsi->lsi_pid = ksi->ksi_pid;
+		lsi->lsi_status = ksi->ksi_status;
+		lsi->lsi_utime = ksi->ksi_utime;
+		lsi->lsi_stime = ksi->ksi_stime;
+		break;
+	case LINUX_SIGIO:
+		lsi->lsi_band = ksi->ksi_band;
+		lsi->lsi_fd = ksi->ksi_fd;
+		break;
+	default:
+		lsi->lsi_uid = ksi->ksi_uid;
+		lsi->lsi_pid = ksi->ksi_pid;
+		if (lsi->lsi_signo == LINUX_SIGALRM ||
+		    lsi->lsi_signo >= LINUX_SIGRTMIN)
+			lsi->lsi_value.sival_ptr = ksi->ksi_sigval.sival_ptr;
+		break;
+	}
 
 	/* Save register context. */
-	linux_savecontext(l, tf, mask, &frame.sf_sc);
+	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -322,16 +369,14 @@ linux_rt_sendsig(sig, mask, code)
 }
 
 static void
-linux_old_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
@@ -349,14 +394,14 @@ linux_old_sendsig(sig, mask, code)
 		fp = (struct linux_sigframe *)tf->tf_esp;
 	fp--;
 
-	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x\n",
-	    onstack, fp, sig, tf->tf_eip));
+	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x cr2 = 0x%x\n",
+	    onstack, fp, sig, tf->tf_eip, l->l_addr->u_pcb.pcb_cr2));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 
-	linux_savecontext(l, tf, mask, &frame.sf_sc);
+	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -375,7 +420,7 @@ linux_old_sendsig(sig, mask, code)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
@@ -401,8 +446,22 @@ linux_sys_rt_sigreturn(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* XXX XAX write me */
-	return(ENOSYS);
+	struct linux_sys_rt_sigreturn_args /* {
+		syscallarg(struct linux_ucontext *) ucp;
+	} */ *uap = v;
+	struct linux_ucontext context, *ucp = SCARG(uap, ucp);
+	int error;
+
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
+	if ((error = copyin(ucp, &context, sizeof(*ucp))) != 0)
+		return error;
+
+	/* XXX XAX we can do better here by using more of the ucontext */
+	return linux_restore_sigcontext(l, &context.uc_mcontext, retval);
 }
 
 int
@@ -414,35 +473,43 @@ linux_sys_sigreturn(l, v, retval)
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct linux_sigcontext *scp, context;
-	struct trapframe *tf;
-	sigset_t mask;
-	ssize_t ss_gap;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct linux_sigcontext context, *scp = SCARG(uap, scp);
+	int error;
 
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = SCARG(uap, scp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return EFAULT;
+	if ((error = copyin((caddr_t)scp, &context, sizeof(*scp))) != 0)
+		return error;
+	return linux_restore_sigcontext(l, &context, retval);
+}
 
+static int
+linux_restore_sigcontext(l, scp, retval)
+	struct lwp *l;
+	struct linux_sigcontext *scp;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct trapframe *tf;
+	sigset_t mask;
+	ssize_t ss_gap;
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
 
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe));
+	if (scp->sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe *));
 
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
+		tf->tf_vm86_gs = scp->sc_gs;
+		tf->tf_vm86_fs = scp->sc_fs;
+		tf->tf_vm86_es = scp->sc_es;
+		tf->tf_vm86_ds = scp->sc_ds;
+		set_vflags(l, scp->sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -453,31 +520,31 @@ linux_sys_sigreturn(l, v, retval)
 		 * automatically and generate a trap on violations.  We handle
 		 * the trap, rather than doing all of the checking here.
 		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
+		if (((scp->sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(scp->sc_cs, scp->sc_eflags))
 			return EINVAL;
 
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
+		tf->tf_gs = scp->sc_gs;
+		tf->tf_fs = scp->sc_fs;
+		tf->tf_es = scp->sc_es;
+		tf->tf_ds = scp->sc_ds;
 #ifdef VM86
 		if (tf->tf_eflags & PSL_VM)
 			(*p->p_emul->e_syscall_intern)(p);
 #endif
-		tf->tf_eflags = context.sc_eflags;
+		tf->tf_eflags = scp->sc_eflags;
 	}
-	tf->tf_edi = context.sc_edi;
-	tf->tf_esi = context.sc_esi;
-	tf->tf_ebp = context.sc_ebp;
-	tf->tf_ebx = context.sc_ebx;
-	tf->tf_edx = context.sc_edx;
-	tf->tf_ecx = context.sc_ecx;
-	tf->tf_eax = context.sc_eax;
-	tf->tf_eip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_esp = context.sc_esp_at_signal;
-	tf->tf_ss = context.sc_ss;
+	tf->tf_edi = scp->sc_edi;
+	tf->tf_esi = scp->sc_esi;
+	tf->tf_ebp = scp->sc_ebp;
+	tf->tf_ebx = scp->sc_ebx;
+	tf->tf_edx = scp->sc_edx;
+	tf->tf_ecx = scp->sc_ecx;
+	tf->tf_eax = scp->sc_eax;
+	tf->tf_eip = scp->sc_eip;
+	tf->tf_cs = scp->sc_cs;
+	tf->tf_esp = scp->sc_esp_at_signal;
+	tf->tf_ss = scp->sc_ss;
 
 	/* Restore signal stack. */
 	/*
@@ -485,14 +552,14 @@ linux_sys_sigreturn(l, v, retval)
 	 * to save the onstack flag.
 	 */
 	ss_gap = (ssize_t)
-	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) sas->ss_sp);
+	    ((caddr_t) scp->sc_esp_at_signal - (caddr_t) sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
 	else
 		sas->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_to_native_sigset(&mask, &context.sc_mask);
+	linux_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
@@ -932,9 +999,13 @@ linux_machdepioctl(l, v, retval)
 		com = VT_GETSTATE;
 		break;
 	case LINUX_KDGKBTYPE:
+	    {
+		static const u_int8_t kb101 = KB_101;
+
 		/* This is what Linux does. */
-		error = subyte(SCARG(uap, data), KB_101);
+		error = copyout(&kb101, SCARG(uap, data), 1);
 		goto out;
+	    }
 	case LINUX_KDGKBENT:
 		/*
 		 * The Linux KDGKBENT ioctl is different from the
@@ -1087,5 +1158,65 @@ linux_sys_ioperm(l, v, retval)
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
+	return 0;
+}
+
+int
+linux_exec_setup_stack(struct proc *p, struct exec_package *epp)
+{
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
+
+#ifndef	USRSTACK32
+#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
+#endif
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = USRSTACK32;
+		max_stack_size = MAXSSIZ;
+	} else {
+		epp->ep_minsaddr = USRSTACK;
+		max_stack_size = MAXSSIZ;
+	}
+
+	if (epp->ep_minsaddr > LINUX_USRSTACK)
+		epp->ep_minsaddr = LINUX_USRSTACK;
+#ifdef DEBUG_LINUX
+	else {
+		/*
+		 * Someone needs to make KERNBASE and TEXTADDR
+		 * java versions < 1.4.2 need the stack to be
+		 * at 0xC0000000
+		 */
+		uprintf("Cannot setup stack to 0xC0000000, "
+		    "java will not work properly\n");
+	}
+#endif
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+		max_stack_size);
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 */
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	    access_size), noaccess_size);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE);
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.22 2003/03/22 06:34:28 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.22.2.1 2004/08/03 10:41:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -86,10 +82,10 @@
 #define PIL_LPT		6
 #define PIL_NET		6
 #define PIL_IMP		7
+#define	PIL_AUD		8
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
-#define	PIL_AUD		13
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
 #define PIL_LOCK	PIL_HIGH
@@ -260,6 +256,8 @@ static __inline void setcwp __P((int));
 static __inline void splx __P((int));
 #endif
 static __inline u_int64_t getver __P((void));
+static __inline int intr_disable __P((void));
+static __inline void intr_restore __P((int));
 
 /*
  * GCC pseudo-functions for manipulating privileged registers
@@ -298,6 +296,21 @@ static __inline u_int64_t getver()
 
 	__asm __volatile("rdpr %%ver,%0" : "=r" (ver));
 	return (ver);
+}
+
+static __inline int
+intr_disable(void)
+{
+	int pstate = getpstate();
+
+	setpstate(pstate & ~PSTATE_IE);
+	return (pstate);
+}
+
+static __inline void
+intr_restore(int pstate)
+{
+	setpstate(pstate);
 }
 
 /*
@@ -416,6 +429,8 @@ SPLHOLD(splstatclock, 14)
 SPLHOLD(splsched, PIL_SCHED)
 SPLHOLD(spllock, PIL_LOCK)
 
+SPLHOLD(splipi, PIL_HIGH)
+
 SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
@@ -441,6 +456,7 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define	spllock()	spllockX(__FILE__, __LINE__)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
+#define splipi()	splhighX(__FILE__, __LINE__)
 
 static __inline void splxX __P((int, const char*, int));
 static __inline void splxX(newpil, file, line)

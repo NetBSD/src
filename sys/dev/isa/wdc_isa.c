@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.31.2.1 2004/08/03 10:48:00 skrll Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/wdcreg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
@@ -59,15 +60,14 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $");
 
 /* options passed via the 'flags' config keyword */
 #define WDC_OPTIONS_32			0x01 /* try to use 32bit data I/O */
-#define WDC_OPTIONS_SINGLE_DRIVE	0x02 /* Don't probe second drive */
 #define WDC_OPTIONS_ATA_NOSTREAM	0x04
 #define WDC_OPTIONS_ATAPI_NOSTREAM	0x08
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanlist[1];
-	struct	channel_softc wdc_channel;
-	struct	channel_queue wdc_chqueue;
+	struct	wdc_channel *wdc_chanlist[1];
+	struct	wdc_channel wdc_channel;
+	struct	ata_queue wdc_chqueue;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -92,9 +92,9 @@ wdc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	struct isa_attach_args *ia = aux;
-	int result = 0;
+	int result = 0, i;
 
 	if (ia->ia_nio < 1)
 		return (0);
@@ -116,8 +116,15 @@ wdc_isa_probe(parent, match, aux)
 	ch.cmd_iot = ia->ia_iot;
 
 	if (bus_space_map(ch.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_ioh))
+	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_baseioh))
 		goto out;
+
+	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
+			goto outunmap;
+	}
+	wdc_init_shadow_regs(&ch);
 
 	ch.ctl_iot = ia->ia_iot;
 	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
@@ -136,7 +143,7 @@ wdc_isa_probe(parent, match, aux)
 
 	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
 outunmap:
-	bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_ISA_REG_NPORTS);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_ISA_REG_NPORTS);
 out:
 	return (result);
 }
@@ -149,20 +156,32 @@ wdc_isa_attach(parent, self, aux)
 	struct wdc_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int wdc_cf_flags = self->dv_cfdata->cf_flags;
+	int i;
 
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
+	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
 	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
 	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
 		printf(": couldn't map registers\n");
 		return;
 	}
+
+	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+		      sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
+		      &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf(": couldn't subregion registers\n");
+			return;
+		}
+	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
+
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);
@@ -182,8 +201,6 @@ wdc_isa_attach(parent, self, aux)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
 	if (wdc_cf_flags & WDC_OPTIONS_32)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	if (wdc_cf_flags & WDC_OPTIONS_SINGLE_DRIVE)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	if (wdc_cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
 	if (wdc_cf_flags & WDC_OPTIONS_ATAPI_NOSTREAM)
@@ -193,8 +210,8 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.channel = 0;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_channel = 0;
+	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 
 	printf("\n");

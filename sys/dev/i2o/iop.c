@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.38.2.1 2003/07/02 15:26:03 darrenr Exp $	*/
+/*	$NetBSD: iop.c,v 1.38.2.2 2004/08/03 10:46:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.1 2003/07/02 15:26:03 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38.2.2 2004/08/03 10:46:06 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -223,7 +223,7 @@ static inline void	iop_outl_msg(struct iop_softc *, int, u_int32_t);
 
 static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
-static void	iop_devinfo(int, char *);
+static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
@@ -244,6 +244,7 @@ static int	iop_passthrough(struct iop_softc *, struct ioppt *,
 static void	iop_reconf_thread(void *);
 static void	iop_release_mfa(struct iop_softc *, u_int32_t);
 static int	iop_reset(struct iop_softc *);
+static int	iop_sys_enable(struct iop_softc *);
 static int	iop_systab_set(struct iop_softc *);
 static void	iop_tfn_print(struct iop_softc *, struct i2o_fault_notify *);
 
@@ -405,7 +406,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
 
-	for (i = 0, state++; i < sc->sc_maxib; i++, im++) {
+	for (i = 0; i < sc->sc_maxib; i++, im++) {
 		rv = bus_dmamap_create(sc->sc_dmat, IOP_MAX_XFER,
 		    IOP_MAX_SEGS, IOP_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -413,7 +414,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		if (rv != 0) {
 			printf("%s: couldn't create dmamap (%d)",
 			    sc->sc_dv.dv_xname, rv);
-			goto bail_out;
+			goto bail_out3;
 		}
 
 		im->im_tctx = i;
@@ -424,7 +425,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init oubound FIFO\n",
 		    sc->sc_dv.dv_xname);
-		goto bail_out;
+		goto bail_out3;
 	}
 
 	/*
@@ -455,13 +456,14 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
 	return;
 
- bail_out:
+ bail_out3:
  	if (state > 3) {
 		for (j = 0; j < i; j++)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_ims[j].im_xfer[0].ix_map);
 		free(sc->sc_ims, M_DEVBUF);
 	}
+ bail_out:
 	if (state > 2)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
 	if (state > 1)
@@ -547,8 +549,7 @@ iop_config_interrupts(struct device *self)
 		printf("%s: unable to set system table\n", sc->sc_dv.dv_xname);
 		return;
 	}
-	if (iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_ENABLE, IOP_ICTX, 1,
-	    30000) != 0) {
+	if (iop_sys_enable(sc) != 0) {
 		printf("%s: unable to enable system\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -853,7 +854,7 @@ iop_adjqparam(struct iop_softc *sc, int mpi)
 }
 
 static void
-iop_devinfo(int class, char *devinfo)
+iop_devinfo(int class, char *devinfo, size_t l)
 {
 #ifdef I2OVERBOSE
 	int i;
@@ -863,12 +864,12 @@ iop_devinfo(int class, char *devinfo)
 			break;
 	
 	if (i == sizeof(iop_class) / sizeof(iop_class[0]))
-		sprintf(devinfo, "device (class 0x%x)", class);
+		snprintf(devinfo, l, "device (class 0x%x)", class);
 	else
-		strcpy(devinfo, iop_class[i].ic_caption);
+		strlcpy(devinfo, iop_class[i].ic_caption, l);
 #else
 
-	sprintf(devinfo, "device (class 0x%x)", class);
+	snprintf(devinfo, l, "device (class 0x%x)", class);
 #endif
 }
 
@@ -881,7 +882,7 @@ iop_print(void *aux, const char *pnp)
 	ia = aux;
 
 	if (pnp != NULL) {
-		iop_devinfo(ia->ia_class, devinfo);
+		iop_devinfo(ia->ia_class, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
 	aprint_normal(" tid %d", ia->ia_tid);
@@ -1228,6 +1229,39 @@ iop_lct_get(struct iop_softc *sc)
 }
 
 /*
+ * Post a SYS_ENABLE message to the adapter.
+ */
+int
+iop_sys_enable(struct iop_softc *sc)
+{
+	struct iop_msg *im;
+	struct i2o_msg mf;
+	int rv;
+
+	im = iop_msg_alloc(sc, IM_WAIT | IM_NOSTATUS);
+
+	mf.msgflags = I2O_MSGFLAGS(i2o_msg);
+	mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_SYS_ENABLE);
+	mf.msgictx = IOP_ICTX;
+	mf.msgtctx = im->im_tctx;
+
+	rv = iop_msg_post(sc, im, &mf, 30000);
+	if (rv == 0) {
+		if ((im->im_flags & IM_FAIL) != 0)
+			rv = ENXIO;
+		else if (im->im_reqstatus == I2O_STATUS_SUCCESS ||
+		    (im->im_reqstatus == I2O_STATUS_ERROR_NO_DATA_XFER &&
+		    im->im_detstatus == I2O_DSC_INVALID_REQUEST))
+			rv = 0;
+		else
+			rv = EIO;
+	}
+
+	iop_msg_free(sc, im);
+	return (rv);
+}
+
+/*
  * Request the specified parameter group from the target.  If an initiator
  * is specified (a) don't wait for the operation to complete, but instead
  * let the initiator's interrupt handler deal with the reply and (b) place a
@@ -1239,7 +1273,6 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 {
 	struct iop_msg *im;
 	struct i2o_util_params_op *mf;
-	struct i2o_reply *rf;
 	int rv;
 	struct iop_pgop *pgop;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
@@ -1249,13 +1282,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 		iop_msg_free(sc, im);
 		return (ENOMEM);
 	}
-	if ((rf = malloc(sizeof(*rf), M_DEVBUF, M_WAITOK)) == NULL) {
-		iop_msg_free(sc, im);
-		free(pgop, M_DEVBUF);
-		return (ENOMEM);
-	}
 	im->im_dvcontext = pgop;
-	im->im_rb = rf;
 
 	mf = (struct i2o_util_params_op *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
@@ -1283,11 +1310,11 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
-		if (rf->reqstatus == I2O_STATUS_ERROR_PARTIAL_XFER &&
-		    le16toh(rf->detail) == I2O_DSC_UNKNOWN_ERROR)
+		if (im->im_reqstatus == I2O_STATUS_ERROR_PARTIAL_XFER &&
+		    im->im_detstatus == I2O_DSC_UNKNOWN_ERROR)
 			rv = 0;
 		else
-			rv = (rf->reqstatus != 0 ? EIO : 0);
+			rv = (im->im_reqstatus != 0 ? EIO : 0);
 
 		if (rv != 0)
 			printf("%s: FIELD_GET failed for tid %d group %d\n",
@@ -1298,7 +1325,6 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 		iop_msg_unmap(sc, im);
 		iop_msg_free(sc, im);
 		free(pgop, M_DEVBUF);
-		free(rf, M_DEVBUF);
 	}
 
 	return (rv);
@@ -1734,6 +1760,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 			iop_reply_print(sc, rb);
 #endif
 		im->im_reqstatus = status;
+		im->im_detstatus = le16toh(rb->detail);
 
 		/* Copy the reply frame, if requested. */
 		if (im->im_rb != NULL) {
@@ -1797,10 +1824,8 @@ static void
 iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
-	struct iop_softc *sc;
 	u_int event;
 
-	sc = (struct iop_softc *)dv;
 	rb = reply;
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0)
@@ -2541,7 +2566,8 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case IOPIOCRECONFIG:
-		rv = iop_reconfigure(sc, 0);
+		if ((rv = lockmgr(&sc->sc_conflock, LK_UPGRADE, NULL)) == 0)
+			rv = iop_reconfigure(sc, 0);
 		break;
 
 	case IOPIOCGTIDMAP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.9 2002/12/01 21:21:45 matt Exp $	*/
+/*	$NetBSD: ka650.h,v 1.9.6.1 2004/08/03 10:42:23 skrll Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,7 +38,7 @@
 
 /*
  *
- * Definitions specific to the ka650 (uVAX 3600/3602) cpu card.
+ * Definitions specific to the ka650 (uVAX 3600/3602) CPU card.
  */
 
 /*
@@ -75,7 +71,7 @@
 #define DSER_QPE	0x00000020	/* Q-22 Bus parity Error */
 #define DSER_MEM	0x00000010	/* Main mem err due to ext dev DMA */
 #define DSER_LOST	0x00000008	/* Lost error: DSER <7,5,4,0> set */
-#define DSER_NOGRANT	0x00000004	/* No Grant timeout on cpu demand R/W */
+#define DSER_NOGRANT	0x00000004	/* No Grant timeout on CPU demand R/W */
 #define DSER_DNXM	0x00000001	/* DMA NXM */
 #define DSER_CLEAR 	(DSER_QNXM | DSER_QPE | DSER_MEM |  \
 			 DSER_LOST | DSER_NOGRANT | DSER_DNXM)
@@ -203,7 +199,7 @@ struct ka650_ssc {
 
 /*
  * Inter Processor Communication Register
- * To determine if memory error was from QBUS device DMA (as opposed to cpu).
+ * To determine if memory error was from QBUS device DMA (as opposed to CPU).
  */
 struct ka650_ipcr {
 	u_long	pad[80];

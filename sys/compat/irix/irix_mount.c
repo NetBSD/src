@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.7.2.1 2003/07/02 15:25:45 darrenr Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.7.2.2 2004/08/03 10:43:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.7.2.1 2003/07/02 15:25:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.7.2.2 2004/08/03 10:43:52 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -68,7 +68,7 @@ irix_sys_getmountid(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct ucred *cred = crget();
+	struct ucred *cred;
 	struct vnode *vp;
 	int error = 0;
 	struct nameidata nd;
@@ -77,8 +77,7 @@ irix_sys_getmountid(l, v, retval)
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
-	cred->cr_ref = 1;
+	cred = crdup(p->p_ucred);
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 

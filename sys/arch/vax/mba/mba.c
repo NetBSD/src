@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.31 2003/05/03 18:11:06 wiz Exp $ */
+/*	$NetBSD: mba.c,v 1.31.2.1 2004/08/03 10:42:35 skrll Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,9 @@
  *  Autoconfig new devices 'on the fly'.
  *  More intelligent way to handle different interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.31.2.1 2004/08/03 10:42:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.28 2003/01/18 07:10:33 thorpej Exp $	*/
+/*	$NetBSD: macros.h,v 1.28.2.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -32,8 +32,11 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_) && !defined(lint)
+#if !defined(_VAX_MACROS_H_) && !defined(__lint__)
 #define _VAX_MACROS_H_
+
+void	__blkset(void *, int, size_t);
+void	__blkcpy(const void *, void *, size_t);
 
 /* Here general macros are supposed to be stored */
 
@@ -73,22 +76,31 @@ _insque(void *p, void *q)
 static __inline__ void * __attribute__((__unused__))
 memcpy(void *to, const void *from, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,%1,%2"
+	if (len > 65535) {
+		__blkcpy(from, to, len);
+	} else {
+		__asm__ __volatile ("movc3 %0,%1,%2"
 			:
 			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	}
 	return to;
 }
 static __inline__ void * __attribute__((__unused__))
 memmove(void *to, const void *from, size_t len)
 {
-	__asm__ __volatile ("movc3 %0,%1,%2"
+	if (len > 65535) {
+		__blkcpy(from, to, len);
+	} else {
+		__asm__ __volatile ("movc3 %0,%1,%2"
 			:
 			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	}
 	return to;
 }
 
+#ifdef notdef /* bcopy() is obsoleted in kernel */
 static __inline__ void __attribute__((__unused__))
 bcopy(const void *from, void *to, size_t len)
 {
@@ -97,15 +109,14 @@ bcopy(const void *from, void *to, size_t len)
 			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 }
-
-void	__blkset(void *, int, size_t);
+#endif
 
 static __inline__ void * __attribute__((__unused__))
 memset(void *block, int c, size_t len)
 {
-	if (len > 65535)
+	if (len > 65535) {
 		__blkset(block, c, len);
-	else {
+	} else {
 		__asm__ __volatile ("movc5 $0,(%%sp),%2,%1,%0"
 			:
 			: "m" (*(char *)block), "g" (len), "g" (c)
@@ -114,6 +125,7 @@ memset(void *block, int c, size_t len)
 	return block;
 }
 
+#ifdef notdef /* bzero() is obsoleted in kernel */
 static __inline__ void __attribute__((__unused__))
 bzero(void *block, size_t len)
 {
@@ -126,7 +138,9 @@ bzero(void *block, size_t len)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 }
+#endif
 
+#ifdef notdef 
 /* XXX - the return syntax of memcmp is wrong */
 static __inline__ int __attribute__((__unused__))
 memcmp(const void *b1, const void *b2, size_t len)
@@ -260,7 +274,7 @@ strcmp(const char *cp, const char *c2)
                         : "r0","r1","r2","r3","cc");
         return  ret;
 }
-/* End nya */
+#endif
 
 #if 0 /* unused, but no point in deleting it since it _is_ an instruction */
 static __inline__ int __attribute__((__unused__))
@@ -339,10 +353,10 @@ bbcci(int bitnr, long *addr)
 }
 
 #define setrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,%%r0;jsb Setrq" :: "g"(p):"r0","r1","r2")
 
 #define remrunqueue(p)	\
-	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2");
+	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2")
 
 #define cpu_switch(p, newp) ({ 						\
 	register int ret;						\
@@ -411,4 +425,4 @@ remqhi(void *header) {
 #define	Q_EMPTY		0	/* Queue is/was empty */
 #define	Q_OK		1	/* Inserted OK */
 
-#endif	/* _VAX_MACROS_H_ */
+#endif	/* !_VAX_MACROS_H_ && !__lint__ */

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.18 2001/11/15 09:48:04 lukem Exp $        */
+/*      $NetBSD: advlib.c,v 1.18.16.1 2004/08/03 10:46:06 skrll Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.18 2001/11/15 09:48:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.18.16.1 2004/08/03 10:46:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.18 2001/11/15 09:48:04 lukem Exp $");
 /*                                Static functions                            */
 /******************************************************************************/
 
-/* Initializzation routines */
+/* Initialization routines */
 static u_int32_t AscLoadMicroCode(bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t *, u_int16_t);
 static void AscInitLram(ASC_SOFTC *);
@@ -231,7 +231,7 @@ static void DvcDelayNanoSecond(u_int32_t);
 
 
 /******************************************************************************/
-/*                            Initializzation routines                        */
+/*                            Initialization routines                        */
 /******************************************************************************/
 
 /*
@@ -565,7 +565,7 @@ AscInitFromASC_SOFTC(ASC_SOFTC *sc)
 
 /*
  * - Initialize RISC chip
- * - Intialize Lram
+ * - Initialize Lram
  * - Load uCode into Lram
  * - Enable Interrupts
  */

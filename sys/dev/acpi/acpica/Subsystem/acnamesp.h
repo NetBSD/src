@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnamesp.h - Namespace subcomponent prototypes and defines
- *       xRevision: 133 $
+ *       xRevision: 135 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -273,6 +273,11 @@ int
 AcpiNsCompareNames (
     char                    *Name1,
     char                    *Name2);
+
+void
+AcpiNsRemoveReference (
+    ACPI_NAMESPACE_NODE     *Node);
+
 
 /*
  * Namespace modification - nsmodify

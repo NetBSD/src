@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.12 2003/04/20 16:52:40 fvdl Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.12.2.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.12 2003/04/20 16:52:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.12.2.1 2004/08/03 10:45:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.12 2003/04/20 16:52:40 fvdl Exp $"
 #include <dev/pci/pcireg.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -102,8 +102,8 @@ ahc_cardbus_match(parent, match, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == CARDBUS_VENDOR_ADP &&
-	    CARDBUS_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ADP_1480)
+	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADP &&
+	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADP_APA1480)
 		return (1);
 
 	return (0);
@@ -213,6 +213,11 @@ ahc_cardbus_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %d\n", ahc_name(ahc), ca->ca_intrline);
+
+	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
+				  M_DEVBUF, M_NOWAIT);
+	if (ahc->seep_config == NULL)
+		return;
 
 	ahc_check_extport(ahc, &sxfrctl1);
 	/*

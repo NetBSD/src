@@ -2,7 +2,7 @@
  *
  * Module Name: nsutils - Utilities for accessing ACPI namespace, accessing
  *                        parents and siblings and Scope manipulation
- *              xRevision: 122 $
+ *              xRevision: 132 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.6 2003/03/04 17:25:23 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSUTILS_C__
 
@@ -153,34 +153,43 @@ AcpiNsReportError (
     ACPI_STATUS             LookupStatus)
 {
     ACPI_STATUS             Status;
-    char                    *Name;
+    char                    *Name = NULL;
 
-
-    /* Convert path to external format */
-
-    Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, InternalName, NULL, &Name);
 
     AcpiOsPrintf ("%8s-%04d: *** Error: Looking up ",
         ModuleName, LineNumber);
 
-    /* Print target name */
-
-    if (ACPI_SUCCESS (Status))
+    if (LookupStatus == AE_BAD_CHARACTER)
     {
-        AcpiOsPrintf ("[%s]", Name);
+        /* There is a non-ascii character in the name */
+
+        AcpiOsPrintf ("[0x%4.4X] (NON-ASCII)\n", *(ACPI_CAST_PTR (UINT32, InternalName)));
     }
     else
     {
-        AcpiOsPrintf ("[COULD NOT EXTERNALIZE NAME]");
+        /* Convert path to external format */
+
+        Status = AcpiNsExternalizeName (ACPI_UINT32_MAX, InternalName, NULL, &Name);
+
+        /* Print target name */
+
+        if (ACPI_SUCCESS (Status))
+        {
+            AcpiOsPrintf ("[%s]", Name);
+        }
+        else
+        {
+            AcpiOsPrintf ("[COULD NOT EXTERNALIZE NAME]");
+        }
+
+        if (Name)
+        {
+            ACPI_MEM_FREE (Name);
+        }
     }
 
     AcpiOsPrintf (" in namespace, %s\n",
         AcpiFormatException (LookupStatus));
-
-    if (Name)
-    {
-        ACPI_MEM_FREE (Name);
-    }
 }
 
 
@@ -250,6 +259,12 @@ AcpiNsPrintNodePathname (
     ACPI_STATUS             Status;
 
 
+    if (!Node)
+    {
+        AcpiOsPrintf ("[NULL NAME]");
+        return;
+    }
+
     /* Convert handle to a full pathname and print it (with supplied message) */
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
@@ -257,7 +272,12 @@ AcpiNsPrintNodePathname (
     Status = AcpiNsHandleToPathname (Node, &Buffer);
     if (ACPI_SUCCESS (Status))
     {
-        AcpiOsPrintf ("%s [%s] (Node %p)", Msg, (char *) Buffer.Pointer, Node);
+        if (Msg)
+        {
+            AcpiOsPrintf ("%s ", Msg);
+        }
+
+        AcpiOsPrintf ("[%s] (Node %p)", (char *) Buffer.Pointer, Node);
         ACPI_MEM_FREE (Buffer.Pointer);
     }
 }
@@ -566,12 +586,12 @@ AcpiNsBuildInternalName (
 
     if (Info->FullyQualified)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "returning [%p] (abs) \"\\%s\"\n",
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Returning [%p] (abs) \"\\%s\"\n",
             InternalName, InternalName));
     }
     else
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "returning [%p] (rel) \"%s\"\n",
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Returning [%p] (rel) \"%s\"\n",
             InternalName, InternalName));
     }
 
@@ -728,7 +748,7 @@ AcpiNsExternalizeName (
             /* <count> 4-byte names */
 
             NamesIndex = PrefixLength + 2;
-            NumSegments = (UINT32) (UINT8) InternalName[(ACPI_NATIVE_UINT) (PrefixLength + 1)];
+            NumSegments = (ACPI_NATIVE_UINT) (UINT8) InternalName[(ACPI_NATIVE_UINT) (PrefixLength + 1)];
             break;
 
         case AML_DUAL_NAME_PREFIX:
@@ -921,39 +941,32 @@ void
 AcpiNsTerminate (void)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_NAMESPACE_NODE     *ThisNode;
 
 
     ACPI_FUNCTION_TRACE ("NsTerminate");
 
 
-    ThisNode = AcpiGbl_RootNode;
-
     /*
-     * 1) Free the entire namespace -- all objects, tables, and stacks
+     * 1) Free the entire namespace -- all nodes and objects
      *
-     * Delete all objects linked to the root
-     * (additional table descriptors)
+     * Delete all object descriptors attached to namepsace nodes
      */
-    AcpiNsDeleteNamespaceSubtree (ThisNode);
+    AcpiNsDeleteNamespaceSubtree (AcpiGbl_RootNode);
 
-    /* Detach any object(s) attached to the root */
+    /* Detach any objects attached to the root */
 
-    ObjDesc = AcpiNsGetAttachedObject (ThisNode);
+    ObjDesc = AcpiNsGetAttachedObject (AcpiGbl_RootNode);
     if (ObjDesc)
     {
-        AcpiNsDetachObject (ThisNode);
-        AcpiUtRemoveReference (ObjDesc);
+        AcpiNsDetachObject (AcpiGbl_RootNode);
     }
 
-    AcpiNsDeleteChildren (ThisNode);
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Namespace freed\n"));
-
 
     /*
      * 2) Now we can delete the ACPI tables
      */
-    AcpiTbDeleteAcpiTables ();
+    AcpiTbDeleteAllTables ();
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "ACPI Tables freed\n"));
 
     return_VOID;
@@ -1043,7 +1056,7 @@ AcpiNsGetNodeByPath (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+        goto Cleanup;
     }
 
     /* Setup lookup scope (search starting point) */
@@ -1062,9 +1075,11 @@ AcpiNsGetNodeByPath (
                 InternalPath, AcpiFormatException (Status)));
     }
 
-    /* Cleanup */
-
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
+
+Cleanup:
+
+    /* Cleanup */
 
     if (InternalPath)
     {
@@ -1106,8 +1121,8 @@ AcpiNsFindParentName (
         if (ParentNode)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Parent of %p [%4.4s] is %p [%4.4s]\n",
-                ChildNode,  ChildNode->Name.Ascii,
-                ParentNode, ParentNode->Name.Ascii));
+                ChildNode,  AcpiUtGetNodeName (ChildNode),
+                ParentNode, AcpiUtGetNodeName (ParentNode)));
 
             if (ParentNode->Name.Integer)
             {
@@ -1116,7 +1131,7 @@ AcpiNsFindParentName (
         }
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "unable to find parent of %p (%4.4s)\n",
-            ChildNode, ChildNode->Name.Ascii));
+            ChildNode, AcpiUtGetNodeName (ChildNode)));
     }
 
     return_VALUE (ACPI_UNKNOWN_NAME);

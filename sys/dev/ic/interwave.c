@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $	*/
+/*	$NetBSD: interwave.c,v 1.18.2.1 2004/08/03 10:46:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18.2.1 2004/08/03 10:46:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,6 @@ iwintr(arg)
 #ifdef DIAGNOSTIC
 		iw_inints++;
 #endif
-		sc->sc_reclocked = 0;
 		if (sc->sc_recintr != 0)
 			sc->sc_recintr(sc->sc_recarg);
 		val = 1;
@@ -153,7 +152,6 @@ iwintr(arg)
 #ifdef DIAGNOSTIC
 		iw_ints++;
 #endif
-		sc->sc_playlocked = 0;
 		if (sc->sc_playintr != 0)
 			sc->sc_playintr(sc->sc_playarg);
 		val = 1;
@@ -190,9 +188,6 @@ iwattach(sc)
 
 	sc->sc_fullduplex = 1;
 
-	sc->sc_reclocked = 0;
-	sc->sc_playlocked = 0;
-
 	sc->sc_dma_flags = 0;
 
 	/*
@@ -224,18 +219,8 @@ iwopen(sc, flags)
 	struct	iw_softc *sc;
 	int	flags;
 {
-	int	s;
 
-	s = splaudio();
-	if (sc->sc_open) {
-		splx(s);
-		DPRINTF(("iwopen: open %x sc %p\n", sc->sc_open, sc));
-		return EBUSY;
-	} else
-		sc->sc_open = 1;
-	splx(s);
-
-	DPRINTF(("iwopen: open %x sc %p\n", sc->sc_open, sc));
+	DPRINTF(("iwopen: sc %p\n", sc));
 
 #ifdef DIAGNOSTIC
 	outputs = 0;
@@ -246,22 +231,6 @@ iwopen(sc, flags)
 
 	iwreset(sc, 1);
 
-	/* READ/WRITE or both */
-
-	if (flags == FREAD) {
-		sc->sc_mode |= IW_READ;
-		sc->sc_reclocked = 0;
-	}
-	if (flags == FWRITE) {
-		sc->sc_mode |= IW_WRITE;
-		sc->sc_playlocked = 0;
-	}
-	sc->sc_playdma_cnt = 0;
-	sc->sc_recdma_cnt = 0;
-	sc->playfirst = 1;
-	sc->sc_playintr = 0;
-	sc->sc_recintr = 0;
-
 	return 0;
 }
 
@@ -271,27 +240,12 @@ void
 iwclose(addr)
 	void	*addr;
 {
-	struct	iw_softc *sc = addr;
-
-	DPRINTF(("iwclose sc %p\n", sc));
+	DPRINTF(("iwclose sc %p\n", addr));
 
 #ifdef DIAGNOSTIC
 	DPRINTF(("iwclose: outputs %d ints %d inputs %d in_ints %d\n",
 		outputs, iw_ints, inputs, iw_inints));
 #endif
-
-	/* close hardware */
-	sc->sc_open = 0;
-	sc->sc_flags = 0;
-	sc->sc_mode = 0;
-	sc->sc_playlocked = 0;
-	sc->sc_reclocked = 0;
-
-	iw_stop_dma(sc, IW_DMA_PLAYBACK, 1);
-	iw_stop_dma(sc, IW_DMA_RECORD, 1);
-
-	sc->sc_playdma_cnt = 0;
-	sc->sc_recdma_cnt = 0;
 }
 
 #define RAM_STEP          64*1024
@@ -486,7 +440,8 @@ iwreset(sc, warm)
 
 	sc->vers = reg >> 4;
 	if (!warm)
-		sprintf(iw_device.version, "%d.%d", sc->vers, sc->revision);
+		snprintf(iw_device.version, sizeof(iw_device.version), "%d.%d",
+		    sc->vers, sc->revision);
 
 	IW_WRITE_GENERAL_1(IDECI, 0x7f);	/* irqs and codec decode
 						 * enable */
@@ -1047,16 +1002,7 @@ iw_start_output(addr, p, cc, intr, arg)
 	void	*arg;
 {
 	struct	iw_softc *sc = addr;
-	int	counter;
 
-#ifdef AUDIO_DEBUG
-	if (sc->sc_playlocked) {
-		DPRINTF(("iw_start_output: playback DMA already going on\n"));
-		/* return 0; */
-	}
-#endif
-
-	sc->sc_playlocked = 1;
 #ifdef DIAGNOSTIC
 	if (!intr) {
 		printf("iw_start_output: no callback!\n");
@@ -1068,8 +1014,6 @@ iw_start_output(addr, p, cc, intr, arg)
 	sc->sc_playarg = arg;
 	sc->sc_dma_flags |= DMAMODE_WRITE;
 	sc->sc_playdma_bp = p;
-
-	counter = 0;
 
 	isa_dmastart(sc->sc_ic, sc->sc_playdrq, sc->sc_playdma_bp,
 		     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
@@ -1085,7 +1029,6 @@ iw_start_output(addr, p, cc, intr, arg)
 
 	cc -= iw_cc;
 
-
 	/* iw_dma_access(sc,1); */
 	if (cc != sc->sc_playdma_cnt) {
 		iw_dma_count(sc, (u_short) cc, IW_DMA_PLAYBACK);
@@ -1099,6 +1042,7 @@ iw_start_output(addr, p, cc, intr, arg)
 		printf("iw_start_output: out %d, int %d\n", outputs, iw_ints);
 	outputs++;
 #endif
+
 	return 0;
 }
 
@@ -1112,16 +1056,7 @@ iw_start_input(addr, p, cc, intr, arg)
 	void	*arg;
 {
 	struct	iw_softc *sc = addr;
-	int	counter;
 
-#if AUDIO_DEBUG
-	if (sc->sc_reclocked) {
-		DPRINTF(("iw_start_input: record DMA already going on\n"));
-		/* return 0; */
-	}
-#endif
-
-	sc->sc_reclocked = 1;
 #ifdef DIAGNOSTIC
 	if (!intr) {
 		printf("iw_start_input: no callback!\n");
@@ -1129,13 +1064,10 @@ iw_start_input(addr, p, cc, intr, arg)
 	}
 #endif
 
-
 	sc->sc_recintr = intr;
 	sc->sc_recarg = arg;
 	sc->sc_dma_flags |= DMAMODE_READ;
 	sc->sc_recdma_bp = p;
-
-	counter = 0;
 
 	isa_dmastart(sc->sc_ic, sc->sc_recdrq, sc->sc_recdma_bp,
 		     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
@@ -1174,8 +1106,8 @@ iw_halt_output(addr)
 	void	*addr;
 {
 	struct	iw_softc *sc = addr;
+
 	iw_stop_dma(sc, IW_DMA_PLAYBACK, 0);
-	/* sc->sc_playlocked = 0; */
 	return 0;
 }
 
@@ -1185,8 +1117,8 @@ iw_halt_input(addr)
 	void	*addr;
 {
 	struct	iw_softc *sc = addr;
+
 	iw_stop_dma(sc, IW_DMA_RECORD, 0);
-	/* sc->sc_reclocked = 0; */
 	return 0;
 }
 

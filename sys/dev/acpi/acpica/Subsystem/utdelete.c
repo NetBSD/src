@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 95 $
+ *              xRevision: 99 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,13 +115,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.6 2003/03/04 17:25:29 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.6.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __UTDELETE_C__
 
 #include "acpi.h"
 #include "acinterp.h"
 #include "acnamesp.h"
+#include "acevents.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdelete")
@@ -147,6 +148,7 @@ AcpiUtDeleteInternalObj (
     void                    *ObjPointer = NULL;
     ACPI_OPERAND_OBJECT     *HandlerDesc;
     ACPI_OPERAND_OBJECT     *SecondDesc;
+    ACPI_OPERAND_OBJECT     *NextDesc;
 
 
     ACPI_FUNCTION_TRACE_PTR ("UtDeleteInternalObj", Object);
@@ -211,6 +213,25 @@ AcpiUtDeleteInternalObj (
         break;
 
 
+    case ACPI_TYPE_DEVICE:
+
+        if (Object->Device.GpeBlock)
+        {
+            (void) AcpiEvDeleteGpeBlock (Object->Device.GpeBlock);
+        }
+
+        /* Walk the handler list for this device */
+
+        HandlerDesc = Object->Device.Handler;
+        while (HandlerDesc)
+        {
+            NextDesc = HandlerDesc->AddressSpace.Next;
+            AcpiUtRemoveReference (HandlerDesc);
+            HandlerDesc = NextDesc;
+        }
+        break;
+
+
     case ACPI_TYPE_MUTEX:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS, "***** Mutex %p, Semaphore %p\n",
@@ -257,11 +278,15 @@ AcpiUtDeleteInternalObj (
              * default handlers -- and therefore, we created the context object
              * locally, it was not created by an external caller.
              */
-            HandlerDesc = Object->Region.AddrHandler;
-            if ((HandlerDesc) &&
-                (HandlerDesc->AddrHandler.Hflags == ACPI_ADDR_HANDLER_DEFAULT_INSTALLED))
+            HandlerDesc = Object->Region.Handler;
+            if (HandlerDesc)
             {
-                ObjPointer = SecondDesc->Extra.RegionContext;
+                if (HandlerDesc->AddressSpace.Hflags & ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)
+                {
+                    ObjPointer = SecondDesc->Extra.RegionContext;
+                }
+
+                AcpiUtRemoveReference (HandlerDesc);
             }
 
             /* Now we can free the Extra object */
@@ -286,7 +311,6 @@ AcpiUtDeleteInternalObj (
     default:
         break;
     }
-
 
     /* Free any allocated memory (pointer within the object) found above */
 
@@ -378,7 +402,7 @@ AcpiUtUpdateRefCount (
     NewCount = Count;
 
     /*
-     * Reference count action (increment, decrement, or force delete)
+     * Perform the reference count action (increment, decrement, or force delete)
      */
     switch (Action)
     {
@@ -487,8 +511,6 @@ AcpiUtUpdateObjectReference (
 {
     ACPI_STATUS             Status;
     UINT32                  i;
-    ACPI_OPERAND_OBJECT     *Next;
-    ACPI_OPERAND_OBJECT     *New;
     ACPI_GENERIC_STATE       *StateList = NULL;
     ACPI_GENERIC_STATE       *State;
 
@@ -503,9 +525,8 @@ AcpiUtUpdateObjectReference (
         return_ACPI_STATUS (AE_OK);
     }
 
-    /*
-     * Make sure that this isn't a namespace handle
-     */
+    /* Make sure that this isn't a namespace handle */
+
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) == ACPI_DESC_TYPE_NAMED)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS, "Object %p is NS handle\n", Object));
@@ -528,30 +549,8 @@ AcpiUtUpdateObjectReference (
         {
         case ACPI_TYPE_DEVICE:
 
-            Status = AcpiUtCreateUpdateStateAndPush (Object->Device.AddrHandler,
-                                                     Action, &StateList);
-            if (ACPI_FAILURE (Status))
-            {
-                goto ErrorExit;
-            }
-
-            AcpiUtUpdateRefCount (Object->Device.SysHandler, Action);
-            AcpiUtUpdateRefCount (Object->Device.DrvHandler, Action);
-            break;
-
-
-        case ACPI_TYPE_LOCAL_ADDRESS_HANDLER:
-
-            /* Must walk list of address handlers */
-
-            Next = Object->AddrHandler.Next;
-            while (Next)
-            {
-                New = Next->AddrHandler.Next;
-                AcpiUtUpdateRefCount (Next, Action);
-
-                Next = New;
-            }
+            AcpiUtUpdateRefCount (Object->Device.SystemNotify, Action);
+            AcpiUtUpdateRefCount (Object->Device.DeviceNotify, Action);
             break;
 
 
@@ -689,17 +688,15 @@ AcpiUtAddReference (
     ACPI_FUNCTION_TRACE_PTR ("UtAddReference", Object);
 
 
-    /*
-     * Ensure that we have a valid object
-     */
+    /* Ensure that we have a valid object */
+
     if (!AcpiUtValidInternalObject (Object))
     {
         return_VOID;
     }
 
-    /*
-     * We have a valid ACPI internal object, now increment the reference count
-     */
+    /* Increment the reference count */
+
     (void) AcpiUtUpdateObjectReference  (Object, REF_INCREMENT);
     return_VOID;
 }
@@ -724,6 +721,7 @@ AcpiUtRemoveReference (
 
     ACPI_FUNCTION_TRACE_PTR ("UtRemoveReference", Object);
 
+
     /*
      * Allow a NULL pointer to be passed in, just ignore it.  This saves
      * each caller from having to check.  Also, ignore NS nodes.
@@ -736,9 +734,8 @@ AcpiUtRemoveReference (
         return_VOID;
     }
 
-    /*
-     * Ensure that we have a valid object
-     */
+    /* Ensure that we have a valid object */
+
     if (!AcpiUtValidInternalObject (Object))
     {
         return_VOID;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.23 2002/03/24 15:52:33 bjh21 Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.23.10.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -34,7 +34,7 @@
 
 /*
  * This file defines the interface between the machine-dependent
- * module and the machine-indepenedent ncr5380sbc.c module.
+ * module and the machine-independent ncr5380sbc.c module.
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.h,v 1.4 2001/07/26 15:05:10 wiz Exp $ */
+/*	$NetBSD: hdc9224.h,v 1.4.22.1 2004/08/03 10:42:45 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -100,9 +100,9 @@ struct hdc9224_DKCreg {
  * the Disk-Register-Data-Access-Port DKC_REG
  */
 struct hdc9224_UDCreg { /* internal disk controller registers */
-	u_char udc_dma7;	/*  0: DMA adress bits	0 -  7 */
-	u_char udc_dma15;	/*  1: DMA adress bits	8 - 15 */
-	u_char udc_dma23;	/*  2: DMA adress bits 16 - 23 */
+	u_char udc_dma7;	/*  0: DMA address bits  0 -  7 */
+	u_char udc_dma15;	/*  1: DMA address bits  8 - 15 */
+	u_char udc_dma23;	/*  2: DMA address bits 16 - 23 */
 	u_char udc_dsect;	/*  3: desired/starting sector number */
 #define udc_csect udc_dsect	/*     current sector number */
 	u_char udc_dhead;	/*  4: cyl-bits 8-10, desired head number */

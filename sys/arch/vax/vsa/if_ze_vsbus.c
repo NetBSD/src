@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.8 2002/10/02 16:02:37 thorpej Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.8.6.1 2004/08/03 10:42:45 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.8.6.1 2004/08/03 10:42:45 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -58,7 +61,7 @@
 
 #include "ioconf.h"
 /*
- * Adresses.
+ * Addresses.
  */
 #define SGECADDR        0x20008000
 #define NISA_ROM        0x27800000

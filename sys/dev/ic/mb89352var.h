@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.3 2001/04/25 17:53:33 bouyer Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.3.22.1 2004/08/03 10:46:17 skrll Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -82,10 +82,10 @@ struct spc_acb {
 	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
 #define ACB_ALLOC	0x01
-#define	ACB_NEXUS	0x02
+#define ACB_NEXUS	0x02
 #define ACB_SENSE	0x04
-#define	ACB_ABORT	0x40
-#define	ACB_RESET	0x80
+#define ACB_ABORT	0x40
+#define ACB_RESET	0x80
 	int timeout;
 };
 
@@ -103,7 +103,7 @@ struct spc_tinfo {
 	ushort	lubusy;		/* What local units/subr. are busy? */
 	u_char  flags;
 #define DO_SYNC		0x01	/* (Re)Negotiate synchronous options */
-#define	DO_WIDE		0x02	/* (Re)Negotiate wide options */
+#define DO_WIDE		0x02	/* (Re)Negotiate wide options */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	width;		/* Width suggestion */
@@ -133,18 +133,18 @@ struct spc_softc {
 	u_char	 sc_phase;	/* Current bus phase */
 	u_char	 sc_prevphase;	/* Previous bus phase */
 	u_char	 sc_state;	/* State applicable to the adapter */
-#define	SPC_INIT	0
+#define SPC_INIT	0
 #define SPC_IDLE	1
 #define SPC_SELECTING	2	/* SCSI command is arbiting  */
 #define SPC_RESELECTED	3	/* Has been reselected */
 #define SPC_CONNECTED	4	/* Actively using the SCSI bus */
-#define	SPC_DISCONNECT	5	/* MSG_DISCONNECT received */
-#define	SPC_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
+#define SPC_DISCONNECT	5	/* MSG_DISCONNECT received */
+#define SPC_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
 #define SPC_CLEANING	7
 	u_char	 sc_flags;
 #define SPC_DROP_MSGIN	0x01	/* Discard all msgs (parity err detected) */
-#define	SPC_ABORTING	0x02	/* Bailing out */
-#define SPC_DOINGDMA	0x04	/* The FIFO data path is active! */
+#define SPC_ABORTING	0x02	/* Bailing out */
+#define SPC_DOINGDMA	0x04	/* doing DMA */
 #define SPC_INACTIVE	0x80	/* The FIFO data path is active! */
 	u_char	sc_selid;	/* Reselection ID */
 
@@ -160,7 +160,7 @@ struct spc_softc {
 #define SEND_IDENTIFY		0x10
 #define SEND_ABORT		0x20
 #define SEND_SDTR		0x40
-#define	SEND_WDTR		0x80
+#define SEND_WDTR		0x80
 #define SPC_MAX_MSG_LEN 8
 	u_char  sc_omess[SPC_MAX_MSG_LEN];
 	u_char	*sc_omp;		/* Outgoing message pointer */
@@ -172,6 +172,10 @@ struct spc_softc {
 	int	sc_freq;		/* Clock frequency in MHz */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
+
+	/* DMA function set from MD code */
+	void (*sc_dma_start)(struct spc_softc *, void *, size_t, int);
+	void (*sc_dma_done)(struct spc_softc *);
 };
 
 #if SPC_DEBUG
@@ -183,13 +187,13 @@ struct spc_softc {
 #define SPC_SHOWSTART	0x20
 #define SPC_DOBREAK	0x40
 extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
-#define	SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) printf s;} while (0)
-#define	SPC_BREAK()	do {if ((spc_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
-#define	SPC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) printf s;} while (0)
+#define SPC_BREAK()	do {if ((spc_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
+#define SPC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
 #else
-#define	SPC_PRINT(b, s)
-#define	SPC_BREAK()
-#define	SPC_ASSERT(x)
+#define SPC_PRINT(b, s)
+#define SPC_BREAK()
+#define SPC_ASSERT(x)
 #endif
 
 #define SPC_ACBS(s)	SPC_PRINT(SPC_SHOWACBS, s)
@@ -199,8 +203,8 @@ extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define SPC_TRACE(s)	SPC_PRINT(SPC_SHOWTRACE, s)
 #define SPC_START(s)	SPC_PRINT(SPC_SHOWSTART, s)
 
-void	spcattach	__P((struct spc_softc *));
-int	spcintr		__P((void *));
+void	spc_attach	__P((struct spc_softc *));
+int	spc_intr	__P((void *));
 int	spc_find	__P((bus_space_tag_t, bus_space_handle_t, int));
 void	spc_init	__P((struct spc_softc *));
 void	spc_sched	__P((struct spc_softc *));

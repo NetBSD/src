@@ -1,11 +1,11 @@
-/* $NetBSD: isic_pci.h,v 1.6 2002/05/03 14:12:59 drochner Exp $ */
+/* $NetBSD: isic_pci.h,v 1.6.10.1 2004/08/03 10:49:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,6 +53,5 @@ struct pci_isic_softc {
 	int ledblinkfreq;
 };
 
-extern void isic_attach_Eqs1pp __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
-extern void isic_attach_fritzPci __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
+extern int isic_attach_Eqs1pp __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
 extern int isic_intr_qs1p(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_signal.h,v 1.2 2002/11/26 18:43:20 christos Exp $ */
+/*	$NetBSD: freebsd_signal.h,v 1.2.6.1 2004/08/03 10:43:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Atsushi Onoe
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -40,5 +40,8 @@ struct	freebsd_sigaction4 {
 	int	freebsd_sa_flags;		/* see signal options below */
 	sigset_t freebsd_sa_mask;		/* signal mask to apply */
 };
+#ifdef _KERNEL
+void freebsd_sendsig(const ksiginfo_t *, const sigset_t *);
+#endif
 
 #endif /* _FREEBSD_SIG_H */

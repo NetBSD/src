@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $ */
+/* $NetBSD: vga_subr.c,v 1.15.2.1 2004/08/03 10:46:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,8 +26,11 @@
  *
  */
 
+/* for WSDISPLAY_BORDER_COLOR */
+#include "opt_wsdisplay_border.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15.2.1 2004/08/03 10:46:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +65,7 @@ fontram(struct vga_handle *vh)
 
 	/* program graphics controller to access character generator */
 
-	vga_gdc_write(vh, rdplanesel, 0x02);	/* select map 2 for cpu reads */
+	vga_gdc_write(vh, rdplanesel, 0x02);	/* select map 2 for CPU reads */
 	vga_gdc_write(vh, mode, 0x00);	/* disable odd-even addressing */
 	vga_gdc_write(vh, misc, 0x04);	/* map starts at 0xA000 */
 }
@@ -86,7 +83,7 @@ textram(struct vga_handle *vh)
 
 	/* program graphics controller for text mode */
 
-	vga_gdc_write(vh, rdplanesel, 0x00);	/* select map 0 for cpu reads */
+	vga_gdc_write(vh, rdplanesel, 0x00);	/* select map 0 for CPU reads */
 	vga_gdc_write(vh, mode, 0x10);		/* enable odd-even addressing */
 	/* map starts at 0xb800 or 0xb000 (mono) */
 	vga_gdc_write(vh, misc, (vh->vh_mono ? 0x0a : 0x0e));
@@ -350,7 +347,7 @@ static const u_int8_t vga_atc[] = {
 	0x3e,	/* 0E: internal palette 14 */
 	0x3f,	/* 0F: internal palette 15 */
 	0x0c,	/* 10: attribute mode control */
-	0x00,	/* 11: overscan color */
+	WSDISPLAY_BORDER_COLOR,	/* 11: overscan color */
 	0x0f,	/* 12: color plane enable */
 	0x08,	/* 13: horizontal PEL panning */
 	0x00	/* 14: color select */

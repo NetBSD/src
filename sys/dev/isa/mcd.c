@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.84.2.1 2003/07/02 15:26:09 darrenr Exp $	*/
+/*	$NetBSD: mcd.c,v 1.84.2.2 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.1 2003/07/02 15:26:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.2 2004/08/03 10:47:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ struct mcd_mbx {
 struct mcd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dk;
+	struct	lock sc_lock;
 	void *sc_ih;
 
 	struct callout sc_pintr_ch;
@@ -132,8 +133,6 @@ struct mcd_softc {
 
 	char	*type;
 	int	flags;
-#define	MCDF_LOCKED	0x01
-#define	MCDF_WANTED	0x02
 #define	MCDF_WLABEL	0x04	/* label is writable */
 #define	MCDF_LABELLING	0x08	/* writing label */
 #define	MCDF_LOADED	0x10	/* parameters loaded */
@@ -218,8 +217,6 @@ void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
 void	mcdgetdisklabel __P((struct mcd_softc *));
 int	mcd_get_parms __P((struct mcd_softc *));
 void	mcdstart __P((struct mcd_softc *));
-int	mcdlock __P((struct mcd_softc *));
-void	mcdunlock __P((struct mcd_softc *));
 void	mcd_pseudointr __P((void *));
 
 struct dkdriver mcddkdriver = { mcdstrategy };
@@ -250,6 +247,8 @@ mcdattach(parent, self, aux)
 		printf(": can't map i/o space\n");
 		return;
 	}
+
+	lockinit(&sc->sc_lock, PRIBIO | PCATCH, "mcdlock", 0, 0);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
@@ -289,42 +288,6 @@ mcdattach(parent, self, aux)
 	    IST_EDGE, IPL_BIO, mcdintr, sc);
 }
 
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-int
-mcdlock(sc)
-	struct mcd_softc *sc;
-{
-	int error;
-
-	while ((sc->flags & MCDF_LOCKED) != 0) {
-		sc->flags |= MCDF_WANTED;
-		if ((error = tsleep(sc, PRIBIO | PCATCH, "mcdlck", 0)) != 0)
-			return error;
-	}
-	sc->flags |= MCDF_LOCKED;
-	return 0;
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-void
-mcdunlock(sc)
-	struct mcd_softc *sc;
-{
-
-	sc->flags &= ~MCDF_LOCKED;
-	if ((sc->flags & MCDF_WANTED) != 0) {
-		sc->flags &= ~MCDF_WANTED;
-		wakeup(sc);
-	}
-}
-
 int
 mcdopen(dev, flag, fmt, l)
 	dev_t dev;
@@ -338,7 +301,7 @@ mcdopen(dev, flag, fmt, l)
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((error = mcdlock(sc)) != 0)
+	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
 	if (sc->sc_dk.dk_openmask != 0) {
@@ -408,7 +371,7 @@ mcdopen(dev, flag, fmt, l)
 	}
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	mcdunlock(sc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	return 0;
 
 bad2:
@@ -423,7 +386,7 @@ bad:
 	}
 
 bad3:
-	mcdunlock(sc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	return error;
 }
 
@@ -439,7 +402,7 @@ mcdclose(dev, flag, fmt, l)
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
-	if ((error = mcdlock(sc)) != 0)
+	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -461,7 +424,7 @@ mcdclose(dev, flag, fmt, l)
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
 	}
 
-	mcdunlock(sc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -662,7 +625,7 @@ mcdioctl(dev, cmd, addr, flag, l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = mcdlock(sc)) != 0)
+		if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			return error;
 		sc->flags |= MCDF_LABELLING;
 
@@ -673,7 +636,7 @@ mcdioctl(dev, cmd, addr, flag, l)
 		}
 
 		sc->flags &= ~MCDF_LABELLING;
-		mcdunlock(sc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return error;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.9.2.1 2004/08/03 10:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9.2.1 2004/08/03 10:45:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $")
 #include <dev/pci/pccbbvar.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pci_addr_fixup.h>
 #include <i386/pci/pci_bus_fixup.h>
@@ -697,13 +697,14 @@ ppb_cardbus_attach(parent, self, aux)
 	csc->foo=parent_sc->sc_intrline;
 	
 
-	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
 
 	csc->sc_tag = ca->ca_tag;	/* XXX cardbustag_t == pcitag_t */
 
 	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
 	minbus = pcibios_max_bus;
+	maxbus = minbus;		/* XXX; gcc */
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
 	  printf("%s: not configured by system firmware calling pci_bus_fixup(%d)\n",

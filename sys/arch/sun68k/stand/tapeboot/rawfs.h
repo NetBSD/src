@@ -1,11 +1,11 @@
-/*	$NetBSD: rawfs.h,v 1.1 2001/06/14 12:57:17 fredette Exp $	*/
+/*	$NetBSD: rawfs.h,v 1.1.24.1 2004/08/03 10:42:21 skrll Exp $	*/
 
 /*
  * Raw file system - for stream devices like tapes.
  * No random access, only sequential read allowed.
  */
 
-int	rawfs_open __P((char *path, struct open_file *f));
+int	rawfs_open __P((const char *path, struct open_file *f));
 int	rawfs_close __P((struct open_file *f));
 int	rawfs_read __P((struct open_file *f, void *buf,
 		u_int size, u_int *resid));

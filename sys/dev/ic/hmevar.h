@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.10 2003/02/13 12:10:20 pk Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.10.2.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ struct hme_softc {
 
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
+	short			sc_if_flags;
 	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.10 2003/01/03 19:01:09 lha Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.10.2.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -284,6 +284,46 @@
 #define VR_STICKHW_LEGWOL_ENB	0x80
 
 /*
+ * BCR0 register bits.
+ */
+#define VR_BCR0_DMA_LENGTH	0x07
+#define VR_BCR0_DMA_32BYTES	0x00
+#define VR_BCR0_DMA_64BYTES	0x01
+#define VR_BCR0_DMA_128BYTES	0x02
+#define VR_BCR0_DMA_256BYTES	0x03
+#define VR_BCR0_DMA_512BYTES	0x04
+#define VR_BCR0_DMA_1024BYTES	0x05
+#define VR_BCR0_DMA_STORENFWD	0x07
+
+#define VR_BCR0_RX_THRESH	0x38
+#define VR_BCR0_RXTH_CFG	0x00
+#define VR_BCR0_RXTH_64BYTES	0x08
+#define VR_BCR0_RXTH_128BYTES	0x10
+#define VR_BCR0_RXTH_256BYTES	0x18
+#define VR_BCR0_RXTH_512BYTES	0x20
+#define VR_BCR0_RXTH_1024BYTES	0x28
+#define VR_BCR0_RXTH_STORENFWD	0x38
+
+#define VR_BCR0_EXTLED		0x40
+#define VR_BCR0_MED2		0x80
+
+/*
+ * BCR1 register bits.
+ */
+#define VR_BCR1_POT0		0x01
+#define VR_BCR1_POT1		0x02
+#define VR_BCR1_POT2		0x04
+
+#define VR_BCR1_TX_THRESH	0x38
+#define VR_BCR1_TXTH_CFG	0x00
+#define VR_BCR1_TXTH_64BYTES	0x08
+#define VR_BCR1_TXTH_128BYTES	0x10
+#define VR_BCR1_TXTH_256BYTES	0x18
+#define VR_BCR1_TXTH_512BYTES	0x20
+#define VR_BCR1_TXTH_1024BYTES	0x28
+#define VR_BCR1_TXTH_STORENFWD	0x38
+
+/*
  * Rhine TX/RX list structure.
  */
 
@@ -365,34 +405,7 @@ struct vr_desc {
  * other PCI registers.
  */
 
-#define	VR_PCI_VENDOR_ID	0x00
-#define	VR_PCI_DEVICE_ID	0x02
-#define	VR_PCI_COMMAND		0x04
-#define	VR_PCI_STATUS		0x06
-#define VR_PCI_REVID		0x08
-#define	VR_PCI_CLASSCODE	0x09
-#define	VR_PCI_LATENCY_TIMER	0x0D
-#define	VR_PCI_HEADER_TYPE	0x0E
 #define	VR_PCI_LOIO		0x10
 #define	VR_PCI_LOMEM		0x14
-#define	VR_PCI_BIOSROM		0x30
-#define	VR_PCI_INTLINE		0x3C
-#define	VR_PCI_INTPIN		0x3D
-#define	VR_PCI_MINGNT		0x3E
-#define	VR_PCI_MINLAT		0x0F
 #define	VR_PCI_RESETOPT		0x48
 #define	VR_PCI_EEPROM_DATA	0x4C
-
-/* power management registers */
-#define	VR_PCI_CAPID		0xDC /* 8 bits */
-#define	VR_PCI_NEXTPTR		0xDD /* 8 bits */
-#define	VR_PCI_PWRMGMTCAP	0xDE /* 16 bits */
-#define	VR_PCI_PWRMGMTCTRL	0xE0 /* 16 bits */
-
-#define	VR_PSTATE_MASK		0x0003
-#define	VR_PSTATE_D0		0x0000
-#define	VR_PSTATE_D1		0x0002
-#define	VR_PSTATE_D2		0x0002
-#define	VR_PSTATE_D3		0x0003
-#define	VR_PME_EN		0x0010
-#define	VR_PME_STATUS		0x8000

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.45 2003/04/29 08:47:29 scw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45.2.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45 2003/04/29 08:47:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.1 2004/08/03 10:46:20 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -491,7 +491,7 @@ smc91cxx_init(sc)
 	s = splnet();
 
 	/*
-	 * This resets the registersmostly to defaults, but doesn't
+	 * This resets the registers mostly to defaults, but doesn't
 	 * affect the EEPROM.  After the reset cycle, we pause briefly
 	 * for the chip to recover.
 	 *

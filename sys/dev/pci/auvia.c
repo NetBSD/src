@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $	*/
+/*	$NetBSD: auvia.c,v 1.31.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,12 @@ int	auvia_intr __P((void *));
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
 
+/* VIA VT823xx revision number */
+#define VIA_REV_8233C	0x20
+#define VIA_REV_8233	0x30
+#define VIA_REV_8233A	0x40
+#define VIA_REV_8235	0x50
+
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
 #define		AUVIA_PCICONF_ACLINKENAB 0x00008000	/* ac link enab */
@@ -128,6 +134,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define		AUVIA_PCICONF_ACSGD	 0x00000400	/* SGD enab */
 #define		AUVIA_PCICONF_ACFM	 0x00000200	/* FM enab */
 #define		AUVIA_PCICONF_ACSB	 0x00000100	/* SB enab */
+#define		AUVIA_PCICONF_PRIVALID	 0x00000001	/* primary codec rdy */
 
 #define	AUVIA_PLAY_BASE			0x00
 #define	AUVIA_RECORD_BASE		0x10
@@ -255,6 +262,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pcireg_t pr;
 	int r;
+	const char *revnum = NULL; /* VT823xx revision number */
 
 	aprint_naive(": Audio controller\n");
 
@@ -277,14 +285,27 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	r = PCI_REVISION(pa->pa_class);
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-		sprintf(sc->sc_revision, "0x%02X", r);
-		if (r < 0x50) {
-			aprint_normal(": VIA VT8233 AC'97 Audio (rev %s)\n",
-			       sc->sc_revision);
-		} else {
-			aprint_normal(": VIA VT8235 AC'97 Audio (rev %s)\n",
-			       sc->sc_revision);
+		snprintf(sc->sc_revision, sizeof(sc->sc_revision), "0x%02X", r);
+		switch(r) {
+		case VIA_REV_8233C:
+			/* 2 rec, 4 pb, 1 multi-pb */
+			revnum = "3C";
+			break;
+		case VIA_REV_8233:
+			/* 2 rec, 4 pb, 1 multi-pb, spdif */
+			revnum = "3";
+			break;
+		case VIA_REV_8233A:
+			/* 1 rec, 1 multi-pb, spdif */
+			revnum = "3A";
+			break;
+		default:
+			break;
 		}
+		if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
+			revnum = "5";
+		aprint_normal(": VIA Technologies VT823%s AC'97 Audio "
+		    "(rev %s)\n", revnum, sc->sc_revision);
 	} else {
 		sc->sc_revision[1] = '\0';
 		if (r == 0x20) {
@@ -292,11 +313,12 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		} else if ((r >= 0x10) && (r <= 0x14)) {
 			sc->sc_revision[0] = 'A' + (r - 0x10);
 		} else {
-			sprintf(sc->sc_revision, "0x%02X", r);
+			snprintf(sc->sc_revision, sizeof(sc->sc_revision),
+			    "0x%02X", r);
 		}
 
-		aprint_normal(": VIA VT82C686A AC'97 Audio (rev %s)\n",
-		       sc->sc_revision);
+		aprint_normal(": VIA Technologies VT82C686A AC'97 Audio "
+		    "(rev %s)\n", sc->sc_revision);
 	}
 
 	if (pci_intr_map(pa, &ih)) {
@@ -364,7 +386,7 @@ auvia_attach_codec(void *addr, struct ac97_codec_if *cif)
 void
 auvia_reset_codec(void *addr)
 {
-#ifdef notyet /* XXX seems to make codec become unready... ??? */
+	int i;
 	struct auvia_softc *sc = addr;
 	pcireg_t r;
 
@@ -380,8 +402,11 @@ auvia_reset_codec(void *addr)
 	pci_conf_write(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK, r);
 	delay(200);
 
-	auvia_waitready_codec(sc);
-#endif
+	for (i = 500000; i != 0 && !(pci_conf_read(sc->sc_pc, sc->sc_pt,
+		AUVIA_PCICONF_JUNK) & AUVIA_PCICONF_PRIVALID); i--)
+		DELAY(1);
+	if (i == 0)
+		printf("%s: codec reset timed out\n", sc->sc_dev.dv_xname);
 }
 
 
@@ -469,13 +494,6 @@ auvia_open(void *addr, int flags)
 void
 auvia_close(void *addr)
 {
-	struct auvia_softc *sc = addr;
-
-	auvia_halt_output(sc);
-	auvia_halt_input(sc);
-
-	sc->sc_play.sc_intr = NULL;
-	sc->sc_record.sc_intr = NULL;
 }
 
 
@@ -730,6 +748,12 @@ auvia_set_params(void *addr, int setmode, int usemode,
 int
 auvia_round_blocksize(void *addr, int blk)
 {
+	struct auvia_softc *sc = addr;
+
+	/* XXX VT823x might have the limitation of dma_ops size */
+	if (sc->sc_flags & AUVIA_FLAGS_VT8233 && blk < 288)
+		blk = 288;
+
 	return (blk & -32);
 }
 
@@ -741,6 +765,7 @@ auvia_halt_output(void *addr)
 	struct auvia_softc_chan *ch = &(sc->sc_play);
 
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
+	ch->sc_intr = NULL;
 	return 0;
 }
 
@@ -752,6 +777,7 @@ auvia_halt_input(void *addr)
 	struct auvia_softc_chan *ch = &(sc->sc_record);
 
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
+	ch->sc_intr = NULL;
 	return 0;
 }
 
@@ -937,13 +963,12 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 {
 	struct auvia_dma_op *op;
 	struct auvia_dma *dp;
-	bus_addr_t s, e;
+	bus_addr_t s;
 	size_t l;
 	int segs;
 
 	s = p->map->dm_segs[0].ds_addr;
 	l = ((char *)end - (char *)start);
-	e = s + l;
 	segs = (l + blksize - 1) / blksize;
 
 	if (segs > (ch->sc_dma_op_count)) {

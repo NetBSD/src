@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.20 2002/09/23 04:14:20 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.20.6.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.20 2002/09/23 04:14:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.20.6.1 2004/08/03 10:50:48 skrll Exp $");
 
 #include <sys/errno.h>
 
@@ -93,7 +93,7 @@ StateName(RF_AccessState_t state)
 #endif
 
 void 
-rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
+rf_ContinueRaidAccess(RF_RaidAccessDesc_t *desc)
 {
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
@@ -141,9 +141,10 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 			break;
 		}
 
-		/* after this point, we cannot dereference desc since desc may
-		 * have been freed. desc is only freed in LastState, so if we
-		 * renter this function or loop back up, desc should be valid. */
+		/* after this point, we cannot dereference desc since
+		 * desc may have been freed. desc is only freed in
+		 * LastState, so if we renter this function or loop
+		 * back up, desc should be valid. */
 
 #if RF_DEBUG_STATES
 		if (rf_printStatesDebug) {
@@ -160,21 +161,25 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 
 
 void 
-rf_ContinueDagAccess(RF_DagList_t * dagList)
+rf_ContinueDagAccess(RF_DagList_t *dagList)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &(dagList->desc->tracerec);
+	RF_Etimer_t timer;
+#endif
 	RF_RaidAccessDesc_t *desc;
 	RF_DagHeader_t *dag_h;
-	RF_Etimer_t timer;
 	int     i;
 
 	desc = dagList->desc;
 
+#if RF_ACC_TRACE > 0
 	timer = tracerec->timer;
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.exec_us = RF_ETIMER_VAL_US(timer);
 	RF_ETIMER_START(tracerec->timer);
+#endif
 
 	/* skip to dag which just finished */
 	dag_h = dagList->dags;
@@ -184,25 +189,26 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 
 	/* check to see if retry is required */
 	if (dag_h->status == rf_rollBackward) {
-		/* when a dag fails, mark desc status as bad and allow all
-		 * other dags in the desc to execute to completion.  then,
-		 * free all dags and start over */
+		/* when a dag fails, mark desc status as bad and allow
+		 * all other dags in the desc to execute to
+		 * completion.  then, free all dags and start over */
 		desc->status = 1;	/* bad status */
-		{
-			printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
-			       desc->raidPtr->raidid, desc->type, 
-			       (long) desc->raidAddress,
-			       (long) desc->raidAddress, (int) desc->numBlocks,
-			       (int) desc->numBlocks, 
-			       (unsigned long) (desc->bufPtr));
-		}
+#if 0
+		printf("raid%d: DAG failure: %c addr 0x%lx "
+		       "(%ld) nblk 0x%x (%d) buf 0x%lx state %d\n",
+		       desc->raidPtr->raidid, desc->type, 
+		       (long) desc->raidAddress,
+		       (long) desc->raidAddress, (int) desc->numBlocks,
+		       (int) desc->numBlocks, 
+		       (unsigned long) (desc->bufPtr), desc->state);
+#endif
 	}
 	dagList->numDagsDone++;
 	rf_ContinueRaidAccess(desc);
 }
 
 int 
-rf_State_LastState(RF_RaidAccessDesc_t * desc)
+rf_State_LastState(RF_RaidAccessDesc_t *desc)
 {
 	void    (*callbackFunc) (RF_CBParam_t) = desc->callbackFunc;
 	RF_CBParam_t callbackArg;
@@ -243,7 +249,7 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc)
+rf_State_IncrAccessCount(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr;
 
@@ -259,7 +265,7 @@ rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
+rf_State_DecrAccessCount(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr;
 
@@ -270,7 +276,6 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
 	if (raidPtr->accesses_suspended && raidPtr->accs_in_flight == 0) {
 		rf_SignalQuiescenceLock(raidPtr);
 	}
-	rf_UpdateUserStats(raidPtr, RF_ETIMER_VAL_US(desc->timer), desc->numBlocks);
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 
 	desc->state++;
@@ -278,36 +283,61 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
+rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
-	int     suspended = RF_FALSE;
+#endif
+	RF_CallbackDesc_t *cb;
 	RF_Raid_t *raidPtr;
+	int     suspended = RF_FALSE;
+	int need_cb, used_cb;
 
 	raidPtr = desc->raidPtr;
 
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_START(timer);
 	RF_ETIMER_START(desc->timer);
+#endif
+
+	need_cb = 0;
+	used_cb = 0;
+	cb = NULL;
+
+	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	/* Do an initial check to see if we might need a callback structure */
+	if (raidPtr->accesses_suspended) {
+		need_cb = 1;
+	}
+	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+
+	if (need_cb) {
+		/* create a callback if we might need it...
+		   and we likely do. */
+		cb = rf_AllocCallbackDesc();
+	}
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	if (raidPtr->accesses_suspended) {
-		RF_CallbackDesc_t *cb;
-		cb = rf_AllocCallbackDesc();
-		/* XXX the following cast is quite bogus...
-		 * rf_ContinueRaidAccess takes a (RF_RaidAccessDesc_t *) as an
-		 * argument..  GO */
 		cb->callbackFunc = (void (*) (RF_CBParam_t)) rf_ContinueRaidAccess;
 		cb->callbackArg.p = (void *) desc;
 		cb->next = raidPtr->quiesce_wait_list;
 		raidPtr->quiesce_wait_list = cb;
 		suspended = RF_TRUE;
+		used_cb = 1;
 	}
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 
+	if ((need_cb == 1) && (used_cb == 0)) {
+		rf_FreeCallbackDesc(cb);
+	}
+
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.suspend_ovhd_us += RF_ETIMER_VAL_US(timer);
+#endif
 
 #if RF_DEBUG_QUIESCE
 	if (suspended && rf_quiesceDebug)
@@ -318,102 +348,109 @@ rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_Map(RF_RaidAccessDesc_t * desc)
+rf_State_Map(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
 
 	RF_ETIMER_START(timer);
+#endif
 
 	if (!(desc->asmap = rf_MapAccess(raidPtr, desc->raidAddress, desc->numBlocks,
 		    desc->bufPtr, RF_DONT_REMAP)))
 		RF_PANIC();
 
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.map_us = RF_ETIMER_VAL_US(timer);
+#endif
 
 	desc->state++;
 	return RF_FALSE;
 }
 
 int 
-rf_State_Lock(RF_RaidAccessDesc_t * desc)
+rf_State_Lock(RF_RaidAccessDesc_t *desc)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
+	RF_Etimer_t timer;
+#endif
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_AccessStripeMap_t *asm_p;
-	RF_Etimer_t timer;
+	RF_StripeNum_t lastStripeID = -1;
 	int     suspended = RF_FALSE;
 
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_START(timer);
-	if (!(raidPtr->Layout.map->flags & RF_NO_STRIPE_LOCKS)) {
-		RF_StripeNum_t lastStripeID = -1;
-
-		/* acquire each lock that we don't already hold */
-		for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
-			RF_ASSERT(RF_IO_IS_R_OR_W(desc->type));
-			if (!rf_suppressLocksAndLargeWrites &&
-			    asm_p->parityInfo &&
-			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS) &&
-			    !(asm_p->flags & RF_ASM_FLAGS_LOCK_TRIED)) {
-				asm_p->flags |= RF_ASM_FLAGS_LOCK_TRIED;
-				RF_ASSERT(asm_p->stripeID > lastStripeID);	/* locks must be
-										 * acquired
-										 * hierarchically */
-				lastStripeID = asm_p->stripeID;
-				/* XXX the cast to (void (*)(RF_CBParam_t))
-				 * below is bogus!  GO */
-				RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
-				    (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
-				    raidPtr->Layout.dataSectorsPerStripe);
-				if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
-					&asm_p->lockReqDesc)) {
+#endif
+	
+	/* acquire each lock that we don't already hold */
+	for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
+		RF_ASSERT(RF_IO_IS_R_OR_W(desc->type));
+		if (!rf_suppressLocksAndLargeWrites &&
+		    asm_p->parityInfo &&
+		    !(desc->flags & RF_DAG_SUPPRESS_LOCKS) &&
+		    !(asm_p->flags & RF_ASM_FLAGS_LOCK_TRIED)) {
+			asm_p->flags |= RF_ASM_FLAGS_LOCK_TRIED;
+				/* locks must be acquired hierarchically */
+			RF_ASSERT(asm_p->stripeID > lastStripeID);
+			lastStripeID = asm_p->stripeID;
+			
+			RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
+					      (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
+					      raidPtr->Layout.dataSectorsPerStripe);
+			if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
+						 &asm_p->lockReqDesc)) {
+				suspended = RF_TRUE;
+				break;
+			}
+		}
+		if (desc->type == RF_IO_TYPE_WRITE &&
+		    raidPtr->status == rf_rs_reconstructing) {
+			if (!(asm_p->flags & RF_ASM_FLAGS_FORCE_TRIED)) {
+				int     val;
+				
+				asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
+				val = rf_ForceOrBlockRecon(raidPtr, asm_p,
+							   (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
+				if (val == 0) {
+					asm_p->flags |= RF_ASM_FLAGS_RECON_BLOCKED;
+				} else {
 					suspended = RF_TRUE;
 					break;
 				}
-			}
-			if (desc->type == RF_IO_TYPE_WRITE &&
-			    raidPtr->status[asm_p->physInfo->row] == rf_rs_reconstructing) {
-				if (!(asm_p->flags & RF_ASM_FLAGS_FORCE_TRIED)) {
-					int     val;
-
-					asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
-					/* XXX the cast below is quite
-					 * bogus!!! XXX  GO */
-					val = rf_ForceOrBlockRecon(raidPtr, asm_p,
-					    (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
-					if (val == 0) {
-						asm_p->flags |= RF_ASM_FLAGS_RECON_BLOCKED;
-					} else {
-						suspended = RF_TRUE;
-						break;
-					}
-				} else {
-					if (rf_pssDebug) {
-						printf("raid%d: skipping force/block because already done, psid %ld\n",
-						       desc->raidPtr->raidid, 
-						       (long) asm_p->stripeID);
-					}
-				}
 			} else {
+#if RF_DEBUG_PSS > 0
 				if (rf_pssDebug) {
-					printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+					printf("raid%d: skipping force/block because already done, psid %ld\n",
 					       desc->raidPtr->raidid, 
 					       (long) asm_p->stripeID);
 				}
+#endif
 			}
+		} else {
+#if RF_DEBUG_PSS > 0
+			if (rf_pssDebug) {
+				printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+				       desc->raidPtr->raidid, 
+				       (long) asm_p->stripeID);
+			}
+#endif
 		}
-
-		RF_ETIMER_STOP(timer);
-		RF_ETIMER_EVAL(timer);
-		tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
-
-		if (suspended)
-			return (RF_TRUE);
 	}
+#if RF_ACC_TRACE > 0
+	RF_ETIMER_STOP(timer);
+	RF_ETIMER_EVAL(timer);
+	tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
+#endif
+	if (suspended)
+		return (RF_TRUE);
+
 	desc->state++;
 	return (RF_FALSE);
 }
@@ -439,27 +476,39 @@ rf_State_Lock(RF_RaidAccessDesc_t * desc)
  *     done (FAIL)
  */
 int 
-rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
+rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
+#endif
 	RF_DagHeader_t *dag_h;
+	RF_DagList_t *dagList;
+	struct buf *bp;
 	int     i, selectStatus;
 
 	/* generate a dag for the access, and fire it off.  When the dag
 	 * completes, we'll get re-invoked in the next state. */
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_START(timer);
+#endif
 	/* SelectAlgorithm returns one or more dags */
 	selectStatus = rf_SelectAlgorithm(desc, desc->flags | RF_DAG_SUPPRESS_LOCKS);
 #if RF_DEBUG_VALIDATE_DAG
-	if (rf_printDAGsDebug)
-		for (i = 0; i < desc->numStripes; i++)
-			rf_PrintDAGList(desc->dagArray[i].dags);
+	if (rf_printDAGsDebug) {
+		dagList = desc->dagList;
+		for (i = 0; i < desc->numStripes; i++) {
+			rf_PrintDAGList(dagList.dags);
+			dagList = dagList->next;
+		}
+	}
 #endif /* RF_DEBUG_VALIDATE_DAG */
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	/* update time to create all dags */
 	tracerec->specific.user.dag_create_us = RF_ETIMER_VAL_US(timer);
+#endif
 
 	desc->status = 0;	/* good status */
 
@@ -467,17 +516,29 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("[Failed to create a DAG]\n");
-		RF_PANIC();
+		printf("raid%d: failed to create a dag. "
+		       "Too many component failures.\n", 
+		       desc->raidPtr->raidid);
+
+		desc->status = 1; /* bad status */ 
+		/* skip straight to rf_State_Cleanup() */
+		desc->state = rf_CleanupState;
+		bp = (struct buf *)desc->bp;
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
 	} else {
 		/* bind dags to desc */
+		dagList = desc->dagList;
 		for (i = 0; i < desc->numStripes; i++) {
-			dag_h = desc->dagArray[i].dags;
+			dag_h = dagList->dags;
 			while (dag_h) {
 				dag_h->bp = (struct buf *) desc->bp;
+#if RF_ACC_TRACE > 0
 				dag_h->tracerec = tracerec;
+#endif
 				dag_h = dag_h->next;
 			}
+			dagList = dagList->next;
 		}
 		desc->flags |= RF_DAG_DISPATCH_RETURNED;
 		desc->state++;	/* next state should be rf_State_ExecuteDAG */
@@ -487,38 +548,40 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 
 
 
-/* the access has an array of dagLists, one dagList per parity stripe.
+/* the access has an list of dagLists, one dagList per parity stripe.
  * fire the first dag in each parity stripe (dagList).
  * dags within a stripe (dagList) must be executed sequentially
  *  - this preserves atomic parity update
  * dags for independents parity groups (stripes) are fired concurrently */
 
 int 
-rf_State_ExecuteDAG(RF_RaidAccessDesc_t * desc)
+rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 {
 	int     i;
 	RF_DagHeader_t *dag_h;
-	RF_DagList_t *dagArray = desc->dagArray;
+	RF_DagList_t *dagList;
 
-	/* next state is always rf_State_ProcessDAG important to do this
-	 * before firing the first dag (it may finish before we leave this
-	 * routine) */
+	/* next state is always rf_State_ProcessDAG important to do
+	 * this before firing the first dag (it may finish before we
+	 * leave this routine) */
 	desc->state++;
 
-	/* sweep dag array, a stripe at a time, firing the first dag in each
-	 * stripe */
+	/* sweep dag array, a stripe at a time, firing the first dag
+	 * in each stripe */
+	dagList = desc->dagList;
 	for (i = 0; i < desc->numStripes; i++) {
-		RF_ASSERT(dagArray[i].numDags > 0);
-		RF_ASSERT(dagArray[i].numDagsDone == 0);
-		RF_ASSERT(dagArray[i].numDagsFired == 0);
-		RF_ETIMER_START(dagArray[i].tracerec.timer);
+		RF_ASSERT(dagList->numDags > 0);
+		RF_ASSERT(dagList->numDagsDone == 0);
+		RF_ASSERT(dagList->numDagsFired == 0);
+#if RF_ACC_TRACE > 0
+		RF_ETIMER_START(dagList->tracerec.timer);
+#endif
 		/* fire first dag in this stripe */
-		dag_h = dagArray[i].dags;
+		dag_h = dagList->dags;
 		RF_ASSERT(dag_h);
-		dagArray[i].numDagsFired++;
-		/* XXX Yet another case where we pass in a conflicting
-		 * function pointer :-(  XXX  GO */
-		rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess, &dagArray[i]);
+		dagList->numDagsFired++;
+		rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess, dagList);
+		dagList = dagList->next;
 	}
 
 	/* the DAG will always call the callback, even if there was no
@@ -533,27 +596,32 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t * desc)
  * if not, fire as many dags as possible */
 
 int 
-rf_State_ProcessDAG(RF_RaidAccessDesc_t * desc)
+rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_DagHeader_t *dag_h;
 	int     i, j, done = RF_TRUE;
-	RF_DagList_t *dagArray = desc->dagArray;
-	RF_Etimer_t timer;
+	RF_DagList_t *dagList, *temp;
 
 	/* check to see if this is the last dag */
-	for (i = 0; i < desc->numStripes; i++)
-		if (dagArray[i].numDags != dagArray[i].numDagsDone)
+	dagList = desc->dagList;
+	for (i = 0; i < desc->numStripes; i++) {
+		if (dagList->numDags != dagList->numDagsDone)
 			done = RF_FALSE;
+		dagList = dagList->next;
+	}
 
 	if (done) {
 		if (desc->status) {
 			/* a dag failed, retry */
-			RF_ETIMER_START(timer);
 			/* free all dags */
+			dagList = desc->dagList;
 			for (i = 0; i < desc->numStripes; i++) {
-				rf_FreeDAG(desc->dagArray[i].dags);
+				rf_FreeDAG(dagList->dags);
+				temp = dagList;
+				dagList = dagList->next;
+				rf_FreeDAGList(temp);
 			}
 			rf_MarkFailuresInASMList(raidPtr, asmh);
 			/* back up to rf_State_CreateDAG */
@@ -569,40 +637,45 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t * desc)
 		/* see if any are ready to be fired.  if so, fire them */
 		/* don't fire the initial dag in a list, it's fired in
 		 * rf_State_ExecuteDAG */
+		dagList = desc->dagList;
 		for (i = 0; i < desc->numStripes; i++) {
-			if ((dagArray[i].numDagsDone < dagArray[i].numDags)
-			    && (dagArray[i].numDagsDone == dagArray[i].numDagsFired)
-			    && (dagArray[i].numDagsFired > 0)) {
-				RF_ETIMER_START(dagArray[i].tracerec.timer);
+			if ((dagList->numDagsDone < dagList->numDags)
+			    && (dagList->numDagsDone == dagList->numDagsFired)
+			    && (dagList->numDagsFired > 0)) {
+#if RF_ACC_TRACE > 0
+				RF_ETIMER_START(dagList->tracerec.timer);
+#endif
 				/* fire next dag in this stripe */
 				/* first, skip to next dag awaiting execution */
-				dag_h = dagArray[i].dags;
-				for (j = 0; j < dagArray[i].numDagsDone; j++)
+				dag_h = dagList->dags;
+				for (j = 0; j < dagList->numDagsDone; j++)
 					dag_h = dag_h->next;
-				dagArray[i].numDagsFired++;
-				/* XXX and again we pass a different function
-				 * pointer.. GO */
+				dagList->numDagsFired++;
 				rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess,
-				    &dagArray[i]);
+				    dagList);
 			}
+			dagList = dagList->next;
 		}
 		return RF_TRUE;
 	}
 }
 /* only make it this far if all dags complete successfully */
 int 
-rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
+rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 {
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
+	RF_Etimer_t timer;
+#endif
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMap_t *asm_p;
-	RF_DagHeader_t *dag_h;
-	RF_Etimer_t timer;
+	RF_DagList_t *dagList;
 	int i;
 
 	desc->state++;
 
+#if RF_ACC_TRACE > 0
 	timer = tracerec->timer;
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
@@ -612,53 +685,42 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 	tracerec->specific.user.dag_retry_us = 0;
 
 	RF_ETIMER_START(timer);
-	if (desc->flags & RF_DAG_RETURN_DAG) {
-		/* copy dags into paramDAG */
-		*(desc->paramDAG) = desc->dagArray[0].dags;
-		dag_h = *(desc->paramDAG);
-		for (i = 1; i < desc->numStripes; i++) {
-			/* concatenate dags from remaining stripes */
-			RF_ASSERT(dag_h);
-			while (dag_h->next)
-				dag_h = dag_h->next;
-			dag_h->next = desc->dagArray[i].dags;
-		}
-	} else {
-		/* free all dags */
-		for (i = 0; i < desc->numStripes; i++) {
-			rf_FreeDAG(desc->dagArray[i].dags);
-		}
+#endif
+	/* free all dags */
+	dagList = desc->dagList;
+	for (i = 0; i < desc->numStripes; i++) {
+		rf_FreeDAG(dagList->dags);
+		dagList = dagList->next;
 	}
-
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.cleanup_us = RF_ETIMER_VAL_US(timer);
 
 	RF_ETIMER_START(timer);
-	if (!(raidPtr->Layout.map->flags & RF_NO_STRIPE_LOCKS)) {
-		for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
-			if (!rf_suppressLocksAndLargeWrites &&
-			    asm_p->parityInfo &&
-			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
-				RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
-				rf_ReleaseStripeLock(raidPtr->lockTable, 
-						     asm_p->stripeID,
-						     &asm_p->lockReqDesc);
-			}
-			if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
-				rf_UnblockRecon(raidPtr, asm_p);
-			}
+#endif
+	for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
+		if (!rf_suppressLocksAndLargeWrites &&
+		    asm_p->parityInfo &&
+		    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
+			RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
+			rf_ReleaseStripeLock(raidPtr->lockTable, 
+					     asm_p->stripeID,
+					     &asm_p->lockReqDesc);
+		}
+		if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
+			rf_UnblockRecon(raidPtr, asm_p);
 		}
 	}
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
 
 	RF_ETIMER_START(timer);
-	if (desc->flags & RF_DAG_RETURN_ASM)
-		*(desc->paramASM) = asmh;
-	else
-		rf_FreeAccessStripeMap(asmh);
+#endif
+	rf_FreeAccessStripeMap(asmh);
+#if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.cleanup_us += RF_ETIMER_VAL_US(timer);
@@ -672,7 +734,7 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 	desc->tracerec.total_us = RF_ETIMER_VAL_US(timer);
 
 	rf_LogTraceRec(raidPtr, tracerec);
-
+#endif
 	desc->flags |= RF_DAG_ACCESS_COMPLETE;
 
 	return RF_FALSE;

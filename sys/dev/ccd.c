@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.90.2.1 2003/07/02 15:25:59 darrenr Exp $	*/
+/*	$NetBSD: ccd.c,v 1.90.2.2 2004/08/03 10:44:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,9 +37,44 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: cd.c 1.6 90/11/28$
+ *
+ *	@(#)cd.c	8.2 (Berkeley) 11/16/93
+ */
+
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -90,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.1 2003/07/02 15:25:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.2 2004/08/03 10:44:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +258,7 @@ ccdattach(num)
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {
 		cs = &ccd_softc[i];
-		sprintf(cs->sc_xname, "ccd%d", i);	/* XXX */
+		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
 		cs->sc_dkdev.dk_name = cs->sc_xname;	/* XXX */
 		lockinit(&cs->sc_lock, PRIBIO, "ccdlk", 0, 0);
 	}
@@ -690,7 +725,7 @@ ccdstart(cs)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdstart(%p, %p)\n", cs, bp);
+		printf("ccdstart(%p)\n", cs);
 #endif
 
 	/* See if there is work for us to do. */
@@ -737,7 +772,7 @@ ccdstart(cs)
 			SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 			if ((cbp->cb_buf.b_flags & B_READ) == 0)
 				cbp->cb_buf.b_vp->v_numoutput++;
-			VOP_STRATEGY(&cbp->cb_buf);
+			DEV_STRATEGY(&cbp->cb_buf);
 		}
 	}
 }
@@ -818,7 +853,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
-	cbp->cb_buf.b_dev = ci->ci_dev;		/* XXX */
+	cbp->cb_buf.b_dev = ci->ci_dev;
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
@@ -834,6 +869,8 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_obp = bp;
 	cbp->cb_sc = cs;
 	cbp->cb_comp = ccdisk;
+
+	BIO_COPYPRIO(&cbp->cb_buf, bp);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
@@ -1454,8 +1491,11 @@ ccdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
+	if ((cs->sc_flags & CCDF_NOLABEL) != 0)
+		errstring = "CCDF_NOLABEL set; ignoring on-disk label";
+	else
+		errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
+		    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
 	if (errstring)
 		ccdmakedisklabel(cs);
 	else {

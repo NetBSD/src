@@ -1,11 +1,11 @@
-/*	$NetBSD: eapreg.h,v 1.6 2002/12/14 17:52:48 pooka Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.6.6.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson <augustss@netbsd.org> and Charles M. Hannum.
+ * by Lennart Augustsson <augustss@NetBSD.org> and Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,8 @@
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
+#define  E1371_JOY_ASEL(n)	(((n)&3)<<24)
+#define  E1371_JOY_ASELBITS	0x03000000
 #define  EAP_XTCL1		0x40000000
 #define  EAP_ADC_STOP		0x80000000
 

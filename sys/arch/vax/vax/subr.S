@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.7 2003/01/20 04:45:57 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.7.2.1 2004/08/03 10:42:37 skrll Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -169,7 +169,7 @@ _C_LABEL(sigcode):
 	movl	0x24(%sp),%r0
 	calls	$3,(%r0)
 	popr	$0x3f
-	chmk	$SYS___sigreturn14
+	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
 
@@ -191,7 +191,7 @@ _C_LABEL(ibcs2_sigcode):
 	movl	0x24(%sp),%r0
 	calls	$3,(%r0)
 	popr	$0x3f
-	chmk	$SYS___sigreturn14
+	chmk	$SYS_compat_16___sigreturn14
 	chmk	$SYS_exit
 	halt	
 _C_LABEL(ibcs2_esigcode):
@@ -387,7 +387,7 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 	movl	%r1,SSP(%r0)		# Put it in new PCB
 
 #
-# Nice routine to get physical from virtual adresses.
+# Nice routine to get physical from virtual addresses.
 #
 	extzv	$9,$21,%r0,%r1		# extract offset
 	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
@@ -456,9 +456,6 @@ JSBENTRY(Swtchto)
 ENTRY(cpu_exit,0)
 	movl	4(%ap),%r6	# Process pointer in %r6
 
-	pushl	%r6
-	calls	$1,_C_LABEL(pmap_deactivate)
-
 	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
 	mfpr	$PR_SSP,%r7	# get cpu_info ptr
 	movl	CI_EXIT(%r7),%r8	# scratch page address
@@ -467,7 +464,7 @@ ENTRY(cpu_exit,0)
 	mtpr	%r8,$PR_PCBB	# new PCB
 	mtpr	%r7,$PR_SSP	# In case...
 	pushl	%r6
-	calls	$1,_C_LABEL(exit2)	# release last resources.
+	calls	$1,_C_LABEL(lwp_exit2)	# release last resources.
 	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
 #if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_lock_idle)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2003/06/18 08:58:41 drochner Exp $ */
+/*	$NetBSD: autoconf.c,v 1.76.2.1 2004/08/03 10:41:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,10 +47,14 @@
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76.2.1 2004/08/03 10:41:34 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
@@ -80,7 +84,6 @@
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/sbus/sbusvar.h>
 
@@ -92,22 +95,31 @@
 
 #include "ksyms.h"
 
-int printspl = 0;
+struct evcnt intr_evcnts[] = {
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "spur"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev1"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev2"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev3"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev4"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev5"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev6"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev7"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev8"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev9"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "clock"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev11"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev12"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev13"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "prof"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev15")
+};
 
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	stdinnode;	/* node ID of ROM's console input device */
-int	fbnode;		/* node ID of ROM's console output device */
-int	optionsnode;	/* node ID of ROM's options */
+int printspl = 0;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
 #endif
 
-static	int rootnode;
 char	machine_model[100];
 
 static	char *str2hex __P((char *, int *));
@@ -117,6 +129,7 @@ int	st_crazymap __P((int));
 void	sync_crash __P((void));
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
+static  void get_ncpus(void);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
@@ -191,6 +204,25 @@ str2hex(str, vp)
 	return (str);
 }
 
+
+static void
+get_ncpus()
+{
+	int node;
+	char buf[32];
+
+	node = findroot();
+
+	ncpus = 0;
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") != 0)
+			continue;
+		ncpus++;
+	}
+}
+
 /*
  * locore.s code calls bootstrap() just before calling main().
  *
@@ -220,6 +252,8 @@ bootstrap(nctx)
 	extern void OF_val2sym32 __P((void *));
 #endif
 
+	prom_init();
+
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -234,6 +268,7 @@ bootstrap(nctx)
 #endif
 #endif
 
+	get_ncpus();
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
 }
 
@@ -263,7 +298,7 @@ bootpath_build()
 	register long chosen;
 	char buf[128];
 
-	bzero((void*)bootpath, sizeof(bootpath));
+	memset(bootpath, 0, sizeof(bootpath));
 	bp = bootpath;
 
 	/*
@@ -537,37 +572,6 @@ mbprint(aux, name)
 }
 
 int
-findroot()
-{
-	register int node;
-
-	if ((node = rootnode) == 0 && (node = OF_peer(0)) == 0)
-		panic("no PROM root device");
-	rootnode = node;
-	return (node);
-}
-
-/*
- * Given a `first child' node number, locate the node with the given name.
- * Return the node number, or 0 if not found.
- */
-int
-findnode(first, name)
-	int first;
-	register const char *name;
-{
-	int node;
-	char buf[32];
-
-	for (node = first; node; node = OF_peer(node)) {
-		if ((OF_getprop(node, "name", buf, sizeof(buf)) > 0) &&
-			(strcmp(buf, name) == 0))
-			return (node);
-	}
-	return (0);
-}
-
-int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -576,8 +580,6 @@ mainbus_match(parent, cf, aux)
 
 	return (1);
 }
-
-int autoconf_nzs = 0;	/* must be global so obio.c can see it */
 
 /*
  * Attach the mainbus.
@@ -597,7 +599,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char buf[32];
 	const char *const *ssp, *sp = NULL;
-	int node0, node, rv;
+	int node0, node, rv, i;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -616,7 +618,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	};
 
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
-	printf(": %s\n", machine_model);
+	prom_getidprom();
+	printf(": %s: hostid %lx\n", machine_model, hostid);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -624,36 +627,38 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
+	if (ncpus == 0)
+		panic("None of the CPUs found");
+
+	/*
+	 * Init static interrupt eventcounters
+	 */
+	for (i = 0; i < sizeof(intr_evcnts)/sizeof(intr_evcnts[0]); i++)
+		evcnt_attach_static(&intr_evcnts[i]);
 
 	node = findroot();
 
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
 
-	/* first early device to be configured is the cpu */
+	/* first early device to be configured is the CPU */
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
 			continue;
 		if (strcmp(buf, "cpu") != 0)
 			continue;
-		bzero(&ma, sizeof(ma));
+		memset(&ma, 0, sizeof(ma));
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
 		config_found(dev, &ma, mbprint);
-		break;
 	}
-	if (node == 0)
-		panic("None of the CPUs found");
 
 	node = findroot();	/* re-init root node */
 
 	/* Find the "options" node */
 	node0 = OF_child(node);
-	optionsnode = findnode(node0, "options");
-	if (optionsnode == 0)
-		panic("no options in OPENPROM");
 
 	/*
 	 * Configure the devices, in PROM order.  Skip
@@ -675,7 +680,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (sp != NULL)
 			continue; /* an "early" device already configured */
 
-		bzero(&ma, sizeof ma);
+		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = buf;
@@ -685,8 +690,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
-				 &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
+		if (prom_getprop(node, "reg", sizeof(*ma.ma_reg), 
+				 &ma.ma_nreg, &ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
@@ -698,8 +703,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no reg\n");
 		}
 #endif
-		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
-			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
+		rv = prom_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
+			&ma.ma_ninterrupts, &ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
@@ -712,8 +717,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no interrupts\n");
 		}
 #endif
-		rv = PROM_getprop(node, "address", sizeof(*ma.ma_address), 
-			&ma.ma_naddress, (void**)&ma.ma_address);
+		rv = prom_getprop(node, "address", sizeof(*ma.ma_address), 
+			&ma.ma_naddress, &ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			if (ma.ma_ninterrupts)
@@ -736,7 +741,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			free(ma.ma_address, M_DEVBUF);
 	}
 	/* Try to attach PROM console */
-	bzero(&ma, sizeof ma);
+	memset(&ma, 0, sizeof ma);
 	ma.ma_name = "pcons";
 	(void) config_found(dev, (void *)&ma, mbprint);
 }
@@ -744,131 +749,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int
-PROM_getprop(node, name, size, nitem, bufp)
-	int	node;
-	char	*name;
-	size_t	size;
-	int	*nitem;
-	void	**bufp;
-{
-	void	*buf;
-	long	len;
-
-	*nitem = 0;
-	len = PROM_getproplen(node, name);
-	if (len <= 0)
-		return (ENOENT);
-
-	if ((len % size) != 0)
-		return (EINVAL);
-
-	buf = *bufp;
-	if (buf == NULL) {
-		/* No storage provided, so we allocate some */
-		buf = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (buf == NULL)
-			return (ENOMEM);
-	}
-
-	OF_getprop(node, name, buf, len);
-	*bufp = buf;
-	*nitem = len / size;
-	return (0);
-}
-
-
-/*
- * Internal form of proplen().  Returns the property length.
- */
-long
-PROM_getproplen(node, name)
-	int node;
-	char *name;
-{
-	return (OF_getproplen(node, name));
-}
-
-/*
- * Return a string property.  There is a (small) limit on the length;
- * the string is fetched into a static buffer which is overwritten on
- * subsequent calls.
- */
-char *
-PROM_getpropstring(node, name)
-	int node;
-	char *name;
-{
-	static char stringbuf[32];
-
-	return (PROM_getpropstringA(node, name, stringbuf));
-}
-
-/* Alternative PROM_getpropstring(), where caller provides the buffer */
-char *
-PROM_getpropstringA(node, name, buffer)
-	int node;
-	char *name;
-	char *buffer;
-{
-	int blen;
-
-	if (PROM_getprop(node, name, 1, &blen, (void *)&buffer) != 0)
-		blen = 0;
-
-	buffer[blen] = '\0';	/* usually unnecessary */
-	return (buffer);
-}
-
-/*
- * Fetch an integer (or pointer) property.
- * The return value is the property, or the default if there was none.
- */
-int
-PROM_getpropint(node, name, deflt)
-	int node;
-	char *name;
-	int deflt;
-{
-	int intbuf;
-
-	
-
-	if (OF_getprop(node, name, &intbuf, sizeof(intbuf)) != sizeof(intbuf))
-		return (deflt);
-
-	return (intbuf);
-}
-
-/*
- * OPENPROM functions.  These are here mainly to hide the OPENPROM interface
- * from the rest of the kernel.
- */
-int
-firstchild(node)
-	int node;
-{
-
-	return OF_child(node);
-}
-
-int
-nextsibling(node)
-	int node;
-{
-
-	return OF_peer(node);
-}
-
-/* The following are used primarily in consinit() */
-
-int
-node_has_property(node, prop)	/* returns 1 if node has given property */
-	register int node;
-	register const char *prop;
-{
-	return (OF_getproplen(node, (caddr_t)prop) != -1);
-}
 
 #ifdef RASTERCONSOLE
 /*
@@ -877,9 +757,9 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
  */
 int
 romgetcursoraddr(rowp, colp)
-	register int **rowp, **colp;
+	int **rowp, **colp;
 {
-	cell_t row = NULL, col = NULL;
+	cell_t row = 0UL, col = 0UL;
 
 	OF_interpret("stdout @ is my-self addr line# addr column# ", 0, 2,
 		&col, &row);
@@ -890,17 +770,18 @@ romgetcursoraddr(rowp, colp)
 	 */
 	*rowp = (int *)(row+4);
 	*colp = (int *)(col+4);
-	return (row == NULL || col == NULL);
+	return (row == 0UL || col == 0UL);
 }
 #endif /* RASTERCONSOLE */
 
-void
-callrom()
+#if 0
+void callrom()
 {
 
 	__asm __volatile("wrpr	%%g0, 0, %%tl" : );
 	OF_enter();
 }
+#endif
 
 /*
  * find a device matching "name" and unit number
@@ -974,7 +855,10 @@ static struct {
 	{ "simba",	BUSCLASS_PCI },
 	{ "ppb",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
+	{ "cmdide",	BUSCLASS_PCI },
+	{ "aceride",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
+	{ "esiop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
 	{ "fdc",	BUSCLASS_FDC },
 };
@@ -1058,6 +942,8 @@ dev_compatible(dev, aux, bpname)
 				("\n%s: dev_compatible: comparing %s with %s\n",
 					dev->dv_xname, bpname, "network"));
 			if (strcmp(bpname, "network") == 0)
+				return (0);
+			if (strcmp(bpname, "ethernet") == 0)
 				return (0);
 			break;
 		default:
@@ -1250,7 +1136,9 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0) {
+		   strcmp(dvname, "hme") == 0 ||
+		   strcmp(dvname, "tlp") == 0) {
+
 		/*
 		 * ethernet devices.
 		 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt_pci.c,v 1.14 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.14.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.14 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.14.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.20 2003/01/06 13:05:13 wiz Exp $	*/
+/*	$NetBSD: tropic.c,v 1.20.2.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.20 2003/01/06 13:05:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.20.2.1 2004/08/03 10:46:20 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -243,10 +243,7 @@ tr_attach(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
-		bus_size_t srb;
 		int	nbuf = 0;
-
-		srb = sc->sc_srb;
 
 		switch (sc->sc_memsize) {
 		case 65536:
@@ -1448,7 +1445,7 @@ struct tr_softc *sc;
 
 
 /*
- * copy out the packet byte-by-byte in resonably optimal fashion
+ * copy out the packet byte-by-byte in reasonably optimal fashion
  */
 int
 tr_mbcopy(sc, dhb, m0)

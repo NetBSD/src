@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.216.2.1 2003/07/02 15:26:04 darrenr Exp $	*/
+/*	$NetBSD: com.c,v 1.216.2.2 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,17 +73,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.1 2003/07/02 15:26:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216.2.2 2004/08/03 10:46:12 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
+#endif
+
+/* The COM16650 option was renamed to COM_16650. */
+#ifdef COM16650
+#error Obsolete COM16650 option; use COM_16650 instead.
 #endif
 
 /*
@@ -172,7 +174,7 @@ void 	comsoft(void *);
 void 	comsoft(void);
 #else
 void 	comsoft(void *);
-struct callout comsoft_callout = CALLOUT_INITIALIZER;
+static struct callout comsoft_callout = CALLOUT_INITIALIZER;
 #endif
 #endif
 integrate void com_rxsoft(struct com_softc *, struct tty *);
@@ -219,9 +221,6 @@ static int ppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT | 
 	PPS_CAPTURECLEAR |
-#ifdef  PPS_SYNC 
-	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
-#endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -303,20 +302,20 @@ comstatus(struct com_softc *sc, char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
-	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
+	printf("%s: %s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
 	    sc->sc_dev.dv_xname, str,
-	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_DCD) ? "+" : "-",
-	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_DTR) ? "+" : "-",
-	    sc->sc_tx_stopped ? "+" : "-");
+	    ISSET(tp->t_cflag, CLOCAL) ? '+' : '-',
+	    ISSET(sc->sc_msr, MSR_DCD) ? '+' : '-',
+	    ISSET(tp->t_state, TS_CARR_ON) ? '+' : '-',
+	    ISSET(sc->sc_mcr, MCR_DTR) ? '+' : '-',
+	    sc->sc_tx_stopped ? '+' : '-');
 
-	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
+	printf("%s: %s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
 	    sc->sc_dev.dv_xname, str,
-	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_CTS) ? "+" : "-",
-	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_RTS) ? "+" : "-",
+	    ISSET(tp->t_cflag, CRTSCTS) ? '+' : '-',
+	    ISSET(sc->sc_msr, MSR_CTS) ? '+' : '-',
+	    ISSET(tp->t_state, TS_TTSTOP) ? '+' : '-',
+	    ISSET(sc->sc_mcr, MCR_RTS) ? '+' : '-',
 	    sc->sc_rx_flags);
 }
 #endif
@@ -425,7 +424,7 @@ com_attach_subr(struct com_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
-#ifdef COM16650
+#ifdef COM_16650
 	u_int8_t lcr;
 #endif
 #ifdef COM_HAYESP
@@ -452,7 +451,7 @@ com_attach_subr(struct com_softc *sc)
 		comconsattached = 1;
 
 		/* Make sure the console is always "hardwired". */
-		delay(1000);			/* wait for output to finish */
+		delay(10000);			/* wait for output to finish */
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
@@ -489,7 +488,7 @@ com_attach_subr(struct com_softc *sc)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
-#ifdef COM16650
+#ifdef COM_16650
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
 			 * on 16650s. We also know IIR != 0 at this point.
@@ -518,7 +517,7 @@ com_attach_subr(struct com_softc *sc)
 #endif
 				sc->sc_fifolen = 16;
 
-#ifdef COM16650
+#ifdef COM_16650
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 			if (sc->sc_fifolen == 0)
 				fifo_msg = "st16650, broken fifo";
@@ -1125,16 +1124,6 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * Compute msr masks from user-specified timestamp state.
 		 */
 		mode = sc->ppsparam.mode;
-#ifdef	PPS_SYNC
-		if (mode & PPS_HARDPPSONASSERT) {
-			mode |= PPS_CAPTUREASSERT;
-			/* XXX revoke any previous HARDPPS source */
-		}
-		if (mode & PPS_HARDPPSONCLEAR) {
-			mode |= PPS_CAPTURECLEAR;
-			/* XXX revoke any previous HARDPPS source */
-		}
-#endif	/* PPS_SYNC */
 		switch (mode & PPS_CAPTUREBOTH) {
 		case 0:
 			sc->sc_ppsmask = 0;
@@ -1176,6 +1165,32 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND: {
+		int edge = (*(int *)data) & PPS_CAPTUREBOTH;
+
+		if (edge == 0) {
+			/*
+			 * remove binding for this source; ignore
+			 * the request if this is not the current
+			 * hardpps source
+			 */
+			if (pps_kc_hardpps_source == sc) {
+				pps_kc_hardpps_source = NULL;
+				pps_kc_hardpps_mode = 0;
+			}
+		} else {
+			/*
+			 * bind hardpps to this source, replacing any
+			 * previously specified source or edges
+			 */
+			pps_kc_hardpps_source = sc;
+			pps_kc_hardpps_mode = edge;
+		}
+		break;
+	}
+#endif /* PPS_SYNC */
+
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		/*
 		 * Some GPS clocks models use the falling rather than
@@ -1189,7 +1204,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.assert_timestamp);
 #else
-		sc->sc_ppsassert = -1
+		sc->sc_ppsassert = -1;
 		sc->sc_ppsclear = 0;
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.clear_timestamp);
@@ -1332,13 +1347,7 @@ com_to_tiocm(struct com_softc *sc)
 	if (ISSET(combits, MSR_RI | MSR_TERI))
 		SET(ttybits, TIOCM_RI);
 
-#ifdef COM_PXA2X0
-	if (sc->sc_type == COM_TYPE_PXA2x0) {
-		if ((sc->sc_ier & 0x0f) != 0)
-			SET(ttybits, TIOCM_LE);
-	} else
-#endif
-	if ((sc->sc_ier & 0xbf) != 0)
+	if (ISSET(sc->sc_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC))
 		SET(ttybits, TIOCM_LE);
 
 	return (ttybits);
@@ -1504,8 +1513,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
 	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
-		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 :
-		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_4);
+		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8);
 	else
 		sc->sc_fifo = 0;
 
@@ -1743,6 +1751,7 @@ comstart(struct tty *tp)
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
 
+#if 0
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		u_int n;
@@ -1754,6 +1763,7 @@ comstart(struct tty *tp)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
+#endif
 	COM_UNLOCK(sc);
 out:
 	splx(s);
@@ -2083,18 +2093,13 @@ again:	do {
 				put[1] = lsr;
 				cn_check_magic(sc->sc_tty->t_dev,
 					       put[0], com_cnm_state);
-				if (cn_trapped) {
-					lsr = bus_space_read_1(iot, ioh, com_lsr);
-					if (!ISSET(lsr, LSR_RCV_MASK))
-						break;
-
-					continue;
-				}
+				if (cn_trapped)
+					goto next;
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
 				cc--;
-
+			next:
 				lsr = bus_space_read_1(iot, ioh, com_lsr);
 				if (!ISSET(lsr, LSR_RCV_MASK))
 					break;
@@ -2127,25 +2132,18 @@ again:	do {
 			 */
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				CLR(sc->sc_ier, IER_ERXRDY);
 #ifdef COM_PXA2X0
 				if (sc->sc_type == COM_TYPE_PXA2x0)
-					CLR(sc->sc_ier, IER_ERXTOUT);
+					CLR(sc->sc_ier, IER_ERXRDY|IER_ERXTOUT);
+				else
 #endif
+					CLR(sc->sc_ier, IER_ERXRDY);
 				bus_space_write_1(iot, ioh, com_ier,
 				    sc->sc_ier);
 			}
 		} else {
-			if ((iir & IIR_IMASK) == IIR_RXRDY) {
-#ifdef COM_PXA2X0
-				if (sc->sc_type == COM_TYPE_PXA2x0)
-					bus_space_write_1(iot, ioh, com_ier,
-					    IER_EUART);
-				else
-#endif
-					bus_space_write_1(iot, ioh, com_ier, 0);
-				delay(10);
-				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
+			if ((iir & (IIR_RXRDY|IIR_TXRDY)) == IIR_RXRDY) {
+				(void) bus_space_read_1(iot, ioh, com_data);
 				continue;
 			}
 		}
@@ -2171,8 +2169,10 @@ again:	do {
 				}
 
 #ifdef PPS_SYNC
-				if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
+				if (pps_kc_hardpps_source == sc &&
+				    pps_kc_hardpps_mode & PPS_CAPTUREASSERT) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				sc->ppsinfo.assert_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
@@ -2189,8 +2189,10 @@ again:	do {
 				}
 
 #ifdef PPS_SYNC
-				if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
+				if (pps_kc_hardpps_source == sc &&
+				    pps_kc_hardpps_mode & PPS_CAPTURECLEAR) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				sc->ppsinfo.clear_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
@@ -2218,12 +2220,24 @@ again:	do {
 
 			sc->sc_st_check = 1;
 		}
-	} while (ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_RXRDY)
-	    || ((iir & IIR_IMASK) == 0));
+	} while (!ISSET((iir =
+	    bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND) &&
+	    /*
+	     * Since some device (e.g., ST16C1550) doesn't clear IIR_TXRDY
+	     * by IIR read, so we can't do this way: `process all interrupts,
+	     * then do TX if possble'.
+	     */
+	    (iir & IIR_IMASK) != IIR_TXRDY);
 
 	/*
-	 * Done handling any receive interrupts. See if data can be
-	 * transmitted as well. Schedule tx done event if no data left
+	 * Read LSR again, since there may be an interrupt between
+	 * the last LSR read and IIR read above.
+	 */
+	lsr = bus_space_read_1(iot, ioh, com_lsr);
+
+	/*
+	 * See if data can be transmitted as well.
+	 * Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
 	if (ISSET(lsr, LSR_TXRDY)) {
@@ -2360,11 +2374,6 @@ com_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 	bus_space_write_1(iot, ioh, com_data, c);
 	COM_BARRIER(iot, ioh, BR | BW);
 
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		continue;
-
 	splx(s);
 }
 
@@ -2391,11 +2400,11 @@ cominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 #ifdef COM_PXA2X0
-	bus_space_write_1(iot, ioh, com_ier,
-	    type == COM_TYPE_PXA2x0 ?  IER_EUART : 0);
-#else
-	bus_space_write_1(iot, ioh, com_ier, 0);
+	if (type == COM_TYPE_PXA2x0)
+		bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+	else
 #endif
+		bus_space_write_1(iot, ioh, com_ier, 0);
 
 	*iohp = ioh;
 	return (0);
@@ -2469,7 +2478,6 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 		com_kgdb_ioh = comconsioh;
 #endif
 	} else {
-
 		res = cominit(iot, iobase, rate, frequency, type, cflag,
 			      &com_kgdb_ioh);
 		if (res)

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.41 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.41.2.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41.2.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include "isadma.h"
 
@@ -674,7 +674,7 @@ isapnp_isa_attach_hook(isa_sc)
 	 * (BTW, We're not alone in having problems with these chips: 
 	 * Windoze 98 couldn't detect the sound chip on a Dell when I tried.)
 	 *
-	 *     Lennart Augustsson <augustss@netbsd.org>
+	 *     Lennart Augustsson <augustss@NetBSD.org>
 	 *
 	 * (Implementation from John Kohl <jtk@kolvir.arlington.ma.us>)
 	 */

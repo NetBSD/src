@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.2 2001/05/16 05:36:56 matt Exp $	*/
+/*	$NetBSD: leds.c,v 1.2.24.1 2004/08/03 10:42:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Functions to flash the LEDs with some pattern.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.2.24.1 2004/08/03 10:42:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

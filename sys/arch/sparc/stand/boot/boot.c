@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2003/03/01 13:01:56 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.15.2.1 2004/08/03 10:41:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,6 +38,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
@@ -98,6 +95,8 @@ bootoptions(ap)
 
 	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
 		BOOT_FLAG(*ap, v);
+		if (*ap == 'C')
+			compatmode = 1;
 		ap++;
 	}
 
@@ -181,12 +180,19 @@ loadk(char *kernel, u_long *marks)
 
 	size = marks[MARK_END] - marks[MARK_START];
 
-	/* We want that leading 4K in front of the kernel image */
+	/* We want that leading 16K in front of the kernel image */
 	size += PROM_LOADADDR;
 	va = marks[MARK_START] - PROM_LOADADDR;
 
-	/* Extra space for bootinfo and kernel bootstrap */
-	size += 512 * 1024;
+	/*
+	 * Extra space for bootinfo and kernel bootstrap.
+	 * In compat mode, we get to re-use the space occupied by the
+	 * boot program. Traditionally, we've silently assumed that
+	 * is enough for the kernel to work with.
+	 */
+	size += BOOTINFO_SIZE;
+	if (!compatmode)
+		size += 512 * 1024;
 
 	/* Get a physical load address */
 	pa = getphysmem(size);
@@ -204,9 +210,17 @@ loadk(char *kernel, u_long *marks)
 
 	/* XXX - to do: inspect kernel image and set compat mode */
 	if (compatmode) {
-		/* Double-map at VA 0 for compatibility; ignore errors */
-		if (pa + size < bstart)
-			(void)pmap_map(0, pa, size);
+		/* Double-map at VA 0 for compatibility */
+		if (pa + size >= bstart) {
+			printf("%s: too large for compat mode\n", kernel);
+			error = EFBIG;
+			goto out;
+		}
+
+		if (pa != 0 && pmap_map(0, pa, size) != 0) {
+			error = EFAULT;
+			goto out;
+		}
 		loadaddrmask = 0x07ffffffUL;
 	}
 

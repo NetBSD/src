@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              xRevision: 53 $
+ *              xRevision: 57 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.8 2003/03/04 17:25:12 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.8.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -331,8 +332,8 @@ AcpiDbExecutionWalk (
 
     Status = AcpiEvaluateObject (Node, NULL, NULL, &ReturnObj);
 
-    AcpiOsPrintf ("[%4.4s] returned %s\n", Node->Name.Ascii,
-        AcpiFormatException (Status));
+    AcpiOsPrintf ("[%4.4s] returned %s\n", AcpiUtGetNodeName (Node),
+            AcpiFormatException (Status));
     AcpiGbl_MethodExecuting = FALSE;
 
     return (AE_OK);
@@ -410,7 +411,7 @@ AcpiDbExecute (
 
     if (Allocations > 0)
     {
-        AcpiOsPrintf ("Outstanding: %ld allocations after execution\n",
+        AcpiOsPrintf ("Outstanding: %u allocations after execution\n",
                         Allocations);
     }
 #endif
@@ -468,16 +469,35 @@ AcpiDbMethodThread (
 
     for (i = 0; i < Info->NumLoops; i++)
     {
-        Status = AcpiDbExecuteMethod (Info, &ReturnObj);
-        if (ACPI_SUCCESS (Status))
+#if 0
+       if (i == 0xEFDC)
         {
-            if (ReturnObj.Length)
-            {
-                AcpiOsPrintf ("Execution of %s returned object %p Buflen %X\n",
-                    Info->Pathname, ReturnObj.Pointer, (UINT32) ReturnObj.Length);
-                AcpiDbDumpObject (ReturnObj.Pointer, 1);
-            }
+            AcpiDbgLevel = 0x00FFFFFF;
         }
+#endif
+
+        Status = AcpiDbExecuteMethod (Info, &ReturnObj);
+
+        if (ACPI_FAILURE (Status))
+        {
+            AcpiOsPrintf ("%s During execution of %s at iteration %X\n",
+                AcpiFormatException (Status), Info->Pathname, i);
+            break;
+        }
+
+        if ((i % 1000) == 0)
+        {
+            AcpiOsPrintf ("%d executions\n", i);
+        }
+
+#if 0
+        if (ReturnObj.Length)
+        {
+            AcpiOsPrintf ("Execution of %s returned object %p Buflen %X\n",
+                Info->Pathname, ReturnObj.Pointer, (UINT32) ReturnObj.Length);
+            AcpiDbDumpObject (ReturnObj.Pointer, 1);
+        }
+#endif
     }
 
     /* Signal our completion */

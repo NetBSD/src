@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.11 2002/11/18 23:46:28 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.11.6.1 2004/08/03 10:50:42 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11 2002/11/18 23:46:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.11.6.1 2004/08/03 10:50:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -81,14 +81,14 @@ int     (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 
-/*****************************************************************************************
+/*****************************************************************************
  * main (only) configuration routine for this module
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_ConfigureDAGFuncs(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp)
 {
-	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) || ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
+	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) || 
+		  ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
 	rf_DiskReadFunc = rf_DiskReadFuncForThreads;
 	rf_DiskReadUndoFunc = rf_DiskUndoFunc;
 	rf_DiskWriteFunc = rf_DiskWriteFuncForThreads;
@@ -103,12 +103,11 @@ rf_ConfigureDAGFuncs(listp)
 
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a terminate node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_TerminateFunc(node)
-	RF_DagNode_t *node;
+rf_TerminateFunc(RF_DagNode_t *node)
 {
 	RF_ASSERT(node->dagHdr->numCommits == node->dagHdr->numCommitNodes);
 	node->status = rf_good;
@@ -116,14 +115,13 @@ rf_TerminateFunc(node)
 }
 
 int 
-rf_TerminateUndoFunc(node)
-	RF_DagNode_t *node;
+rf_TerminateUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * execution functions associated with a mirror node
  *
  * parameters:
@@ -134,11 +132,10 @@ rf_TerminateUndoFunc(node)
  * 3 - flags
  * 4 - physical disk address of mirror (parity)
  *
- ****************************************************************************************/
+ ****************************************************************************/
 
 int 
-rf_DiskReadMirrorIdleFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorIdleFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
@@ -149,8 +146,7 @@ rf_DiskReadMirrorIdleFunc(node)
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0) || (RF_DEBUG_VALIDATE_DAG > 0)
 int 
-rf_DiskReadMirrorPartitionFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorPartitionFunc(RF_DagNode_t *node)
 {
 	/* select the mirror copy with the shortest queue and fill in node
 	 * parameters with physical disk address */
@@ -161,8 +157,7 @@ rf_DiskReadMirrorPartitionFunc(node)
 #endif
 
 int 
-rf_DiskReadMirrorUndoFunc(node)
-	RF_DagNode_t *node;
+rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
@@ -170,21 +165,24 @@ rf_DiskReadMirrorUndoFunc(node)
 
 
 #if RF_INCLUDE_PARITYLOGGING > 0
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a parity log update node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_ParityLogUpdateFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		logData = rf_CreateParityLogData(RF_UPDATE, pda, buf,
 		    (RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node,
@@ -192,9 +190,11 @@ rf_ParityLogUpdateFunc(node)
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
 		else {
+#if RF_ACC_TRACE > 0
 			RF_ETIMER_STOP(timer);
 			RF_ETIMER_EVAL(timer);
 			tracerec->plog_us += RF_ETIMER_VAL_US(timer);
+#endif
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
@@ -202,29 +202,35 @@ rf_ParityLogUpdateFunc(node)
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a parity log overwrite node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_ParityLogOverwriteFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_ParityLogData_t *logData;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
-		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf, (RF_Raid_t *) (node->dagHdr->raidPtr),
+#endif
+		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf, 
+(RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node, node->dagHdr->tracerec, timer);
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
 		else {
+#if RF_ACC_TRACE > 0
 			RF_ETIMER_STOP(timer);
 			RF_ETIMER_EVAL(timer);
 			tracerec->plog_us += RF_ETIMER_VAL_US(timer);
+#endif
 			(node->wakeFunc) (node, ENOMEM);
 		}
 	}
@@ -232,199 +238,190 @@ rf_ParityLogOverwriteFunc(node)
 }
 
 int 
-rf_ParityLogUpdateUndoFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogUpdateUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
 
 int 
-rf_ParityLogOverwriteUndoFunc(node)
-	RF_DagNode_t *node;
+rf_ParityLogOverwriteUndoFunc(RF_DagNode_t *node)
 {
 	return (0);
 }
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a NOP node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_NullNodeFunc(node)
-	RF_DagNode_t *node;
+rf_NullNodeFunc(RF_DagNode_t *node)
 {
 	node->status = rf_good;
 	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
 }
 
 int 
-rf_NullNodeUndoFunc(node)
-	RF_DagNode_t *node;
+rf_NullNodeUndoFunc(RF_DagNode_t *node)
 {
 	node->status = rf_undone;
 	return (rf_FinishNode(node, RF_THREAD_CONTEXT));
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a disk-read node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_DiskReadFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
-	unsigned lock = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-	unsigned unlock = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
-	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_READ : RF_IO_TYPE_NOP;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
 
 	if (node->dagHdr->bp)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
-	RF_ASSERT(!(lock && unlock));
-	flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-	flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
-
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
-	    node, NULL, node->dagHdr->tracerec,
-	    (void *) (node->dagHdr->raidPtr), flags, b_proc);
+	    node, NULL, 
+#if RF_ACC_TRACE > 0
+	     node->dagHdr->tracerec,
+#else
+             NULL,
+#endif
+	    (void *) (node->dagHdr->raidPtr), 0, b_proc);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
 	return (0);
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a disk-write node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_DiskWriteFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
-	unsigned lock = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-	unsigned unlock = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
-	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_WRITE : RF_IO_TYPE_NOP;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
 
 	if (node->dagHdr->bp)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	/* normal processing (rollaway or forward recovery) begins here */
-	RF_ASSERT(!(lock && unlock));
-	flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-	flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node, NULL,
+#if RF_ACC_TRACE > 0
 	    node->dagHdr->tracerec,
+#else
+	    NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
-	    flags, b_proc);
+	    0, b_proc);
 
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 	}
 
 	return (0);
 }
-/*****************************************************************************************
+/*****************************************************************************
  * the undo function for disk nodes
  * Note:  this is not a proper undo of a write node, only locks are released.
  *        old data is not restored to disk!
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_DiskUndoFunc(node)
-	RF_DagNode_t *node;
+rf_DiskUndoFunc(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, node->dagHdr->tracerec,
+	    NULL, 
+#if RF_ACC_TRACE > 0
+	     node->dagHdr->tracerec,
+#else
+	     NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
 	    RF_UNLOCK_DISK_QUEUE, NULL);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, RF_IO_NORMAL_PRIORITY);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 	}
 
 	return (0);
 }
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with an "unlock disk queue" node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
-rf_DiskUnlockFuncForThreads(node)
-	RF_DagNode_t *node;
+rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
+	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 
 	req = rf_CreateDiskQueueData(RF_IO_TYPE_NOP,
 	    0L, 0, NULL, 0L, 0,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node,
-	    NULL, node->dagHdr->tracerec,
+	    NULL, 
+#if RF_ACC_TRACE > 0
+	    node->dagHdr->tracerec,
+#else
+	    NULL,
+#endif
 	    (void *) (node->dagHdr->raidPtr),
 	    RF_UNLOCK_DISK_QUEUE, NULL);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
 		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, RF_IO_NORMAL_PRIORITY);
+		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 	}
 
 	return (0);
 }
-/*****************************************************************************************
- * Callback routine for DiskRead and DiskWrite nodes.  When the disk op completes,
- * the routine is called to set the node status and inform the execution engine that
- * the node has fired.
- ****************************************************************************************/
+/*****************************************************************************
+ * Callback routine for DiskRead and DiskWrite nodes.  When the disk
+ * op completes, the routine is called to set the node status and
+ * inform the execution engine that the node has fired.
+ ****************************************************************************/
 int 
-rf_GenericWakeupFunc(node, status)
-	RF_DagNode_t *node;
-	int     status;
+rf_GenericWakeupFunc(RF_DagNode_t *node, int status)
 {
+
 	switch (node->status) {
-	case rf_bwd1:
-		node->status = rf_bwd2;
-		if (node->dagFuncData)
-			rf_FreeDiskQueueData((RF_DiskQueueData_t *) node->dagFuncData);
-		return (rf_DiskWriteFuncForThreads(node));
-		break;
 	case rf_fired:
 		if (status)
 			node->status = rf_bad;
@@ -451,49 +448,57 @@ rf_GenericWakeupFunc(node, status)
 }
 
 
-/*****************************************************************************************
- * there are three distinct types of xor nodes
- * A "regular xor" is used in the fault-free case where the access spans a complete
- * stripe unit.  It assumes that the result buffer is one full stripe unit in size,
- * and uses the stripe-unit-offset values that it computes from the PDAs to determine
- * where within the stripe unit to XOR each argument buffer.
+/*****************************************************************************
+ * there are three distinct types of xor nodes:
+
+ * A "regular xor" is used in the fault-free case where the access
+ * spans a complete stripe unit.  It assumes that the result buffer is
+ * one full stripe unit in size, and uses the stripe-unit-offset
+ * values that it computes from the PDAs to determine where within the
+ * stripe unit to XOR each argument buffer.
  *
- * A "simple xor" is used in the fault-free case where the access touches only a portion
- * of one (or two, in some cases) stripe unit(s).  It assumes that all the argument
- * buffers are of the same size and have the same stripe unit offset.
+ * A "simple xor" is used in the fault-free case where the access
+ * touches only a portion of one (or two, in some cases) stripe
+ * unit(s).  It assumes that all the argument buffers are of the same
+ * size and have the same stripe unit offset.
  *
- * A "recovery xor" is used in the degraded-mode case.  It's similar to the regular
- * xor function except that it takes the failed PDA as an additional parameter, and
- * uses it to determine what portions of the argument buffers need to be xor'd into
- * the result buffer, and where in the result buffer they should go.
- ****************************************************************************************/
+ * A "recovery xor" is used in the degraded-mode case.  It's similar
+ * to the regular xor function except that it takes the failed PDA as
+ * an additional parameter, and uses it to determine what portions of
+ * the argument buffers need to be xor'd into the result buffer, and
+ * where in the result buffer they should go.
+ ****************************************************************************/
 
 /* xor the params together and store the result in the result field.
- * assume the result field points to a buffer that is the size of one SU,
- * and use the pda params to determine where within the buffer to XOR
- * the input buffers.
- */
+ * assume the result field points to a buffer that is the size of one
+ * SU, and use the pda params to determine where within the buffer to
+ * XOR the input buffers.  */
 int 
-rf_RegularXorFunc(node)
-	RF_DagNode_t *node;
+rf_RegularXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 	int     i, retcode;
 
 	retcode = 0;
 	if (node->dagHdr->status == rf_enable) {
 		/* don't do the XOR if the input is the same as the output */
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_XorIntoBuffer(raidPtr, (RF_PhysDiskAddr_t *) node->params[i].p,
-				    (char *) node->params[i + 1].p, (char *) node->results[0], node->dagHdr->bp);
+							   (char *) node->params[i + 1].p, (char *) node->results[0]);
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
 							 * explicitly since no
@@ -501,41 +506,44 @@ rf_RegularXorFunc(node)
 }
 /* xor the inputs into the result buffer, ignoring placement issues */
 int 
-rf_SimpleXorFunc(node)
-	RF_DagNode_t *node;
+rf_SimpleXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	int     i, retcode = 0;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		/* don't do the XOR if the input is the same as the output */
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				retcode = rf_bxor((char *) node->params[i + 1].p, (char *) node->results[0],
-				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector),
-				    (struct buf *) node->dagHdr->bp);
+				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector));
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
 							 * explicitly since no
 							 * I/O in this node */
 }
-/* this xor is used by the degraded-mode dag functions to recover lost data.
- * the second-to-last parameter is the PDA for the failed portion of the access.
- * the code here looks at this PDA and assumes that the xor target buffer is
- * equal in size to the number of sectors in the failed PDA.  It then uses
- * the other PDAs in the parameter list to determine where within the target
- * buffer the corresponding data should be xored.
- */
+/* this xor is used by the degraded-mode dag functions to recover lost
+ * data.  the second-to-last parameter is the PDA for the failed
+ * portion of the access.  the code here looks at this PDA and assumes
+ * that the xor target buffer is equal in size to the number of
+ * sectors in the failed PDA.  It then uses the other PDAs in the
+ * parameter list to determine where within the target buffer the
+ * corresponding data should be xored.  */
 int 
-rf_RecoveryXorFunc(node)
-	RF_DagNode_t *node;
+rf_RecoveryXorFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
 	RF_RaidLayout_t *layoutPtr = (RF_RaidLayout_t *) & raidPtr->Layout;
@@ -544,45 +552,49 @@ rf_RecoveryXorFunc(node)
 	RF_PhysDiskAddr_t *pda;
 	int     suoffset, failedSUOffset = rf_StripeUnitOffset(layoutPtr, failedPDA->startSector);
 	char   *srcbuf, *destbuf;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
+#endif
 
 	if (node->dagHdr->status == rf_enable) {
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_START(timer);
+#endif
 		for (i = 0; i < node->numParams - 2; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				pda = (RF_PhysDiskAddr_t *) node->params[i].p;
 				srcbuf = (char *) node->params[i + 1].p;
 				suoffset = rf_StripeUnitOffset(layoutPtr, pda->startSector);
 				destbuf = ((char *) node->results[0]) + rf_RaidAddressToByte(raidPtr, suoffset - failedSUOffset);
-				retcode = rf_bxor(srcbuf, destbuf, rf_RaidAddressToByte(raidPtr, pda->numSector), node->dagHdr->bp);
+				retcode = rf_bxor(srcbuf, destbuf, rf_RaidAddressToByte(raidPtr, pda->numSector));
 			}
+#if RF_ACC_TRACE > 0
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
+#endif
 	}
 	return (rf_GenericWakeupFunc(node, retcode));
 }
-/*****************************************************************************************
- * The next three functions are utilities used by the above xor-execution functions.
- ****************************************************************************************/
+/*****************************************************************************
+ * The next three functions are utilities used by the above
+ * xor-execution functions.
+ ****************************************************************************/
 
 
 /*
- * this is just a glorified buffer xor.  targbuf points to a buffer that is one full stripe unit
- * in size.  srcbuf points to a buffer that may be less than 1 SU, but never more.  When the
- * access described by pda is one SU in size (which by implication means it's SU-aligned),
- * all that happens is (targbuf) <- (srcbuf ^ targbuf).  When the access is less than one
- * SU in size the XOR occurs on only the portion of targbuf identified in the pda.
- */
+ * this is just a glorified buffer xor.  targbuf points to a buffer
+ * that is one full stripe unit in size.  srcbuf points to a buffer
+ * that may be less than 1 SU, but never more.  When the access
+ * described by pda is one SU in size (which by implication means it's
+ * SU-aligned), all that happens is (targbuf) <- (srcbuf ^ targbuf).
+ * When the access is less than one SU in size the XOR occurs on only
+ * the portion of targbuf identified in the pda.  */
 
 int 
-rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
-	RF_Raid_t *raidPtr;
-	RF_PhysDiskAddr_t *pda;
-	char   *srcbuf;
-	char   *targbuf;
-	void   *bp;
+rf_XorIntoBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
+		 char *srcbuf, char *targbuf)
 {
 	char   *targptr;
 	int     sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
@@ -593,54 +605,49 @@ rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
 
 	targptr = targbuf + rf_RaidAddressToByte(raidPtr, SUOffset);
 	length = rf_RaidAddressToByte(raidPtr, pda->numSector);
-	retcode = rf_bxor(srcbuf, targptr, length, bp);
+	retcode = rf_bxor(srcbuf, targptr, length);
 	return (retcode);
 }
-/* it really should be the case that the buffer pointers (returned by malloc)
- * are aligned to the natural word size of the machine, so this is the only
- * case we optimize for.  The length should always be a multiple of the sector
- * size, so there should be no problem with leftover bytes at the end.
- */
+/* it really should be the case that the buffer pointers (returned by
+ * malloc) are aligned to the natural word size of the machine, so
+ * this is the only case we optimize for.  The length should always be
+ * a multiple of the sector size, so there should be no problem with
+ * leftover bytes at the end.  */
 int 
-rf_bxor(src, dest, len, bp)
-	char   *src;
-	char   *dest;
-	int     len;
-	void   *bp;
+rf_bxor(char *src, char *dest, int len)
 {
 	unsigned mask = sizeof(long) - 1, retcode = 0;
 
-	if (!(((unsigned long) src) & mask) && !(((unsigned long) dest) & mask) && !(len & mask)) {
-		retcode = rf_longword_bxor((unsigned long *) src, (unsigned long *) dest, len >> RF_LONGSHIFT, bp);
+	if (!(((unsigned long) src) & mask) && 
+	    !(((unsigned long) dest) & mask) && !(len & mask)) {
+		retcode = rf_longword_bxor((unsigned long *) src, 
+					   (unsigned long *) dest, 
+					   len >> RF_LONGSHIFT);
 	} else {
 		RF_ASSERT(0);
 	}
 	return (retcode);
 }
-/* map a user buffer into kernel space, if necessary */
-#define REMAP_VA(_bp,x,y) (y) = (x)
 
-/* When XORing in kernel mode, we need to map each user page to kernel space before we can access it.
- * We don't want to assume anything about which input buffers are in kernel/user
- * space, nor about their alignment, so in each loop we compute the maximum number
- * of bytes that we can xor without crossing any page boundaries, and do only this many
- * bytes before the next remap.
+/* When XORing in kernel mode, we need to map each user page to kernel
+ * space before we can access it.  We don't want to assume anything
+ * about which input buffers are in kernel/user space, nor about their
+ * alignment, so in each loop we compute the maximum number of bytes
+ * that we can xor without crossing any page boundaries, and do only
+ * this many bytes before the next remap.  
+ * 
+ * len - is in longwords 
  */
 int 
-rf_longword_bxor(src, dest, len, bp)
-	unsigned long *src;
-	unsigned long *dest;
-	int     len;		/* longwords */
-	void   *bp;
+rf_longword_bxor(unsigned long *src, unsigned long *dest, int len)
 {
 	unsigned long *end = src + len;
 	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
-	unsigned long *pg_src, *pg_dest;	/* per-page source/dest
-							 * pointers */
+	unsigned long *pg_src, *pg_dest;   /* per-page source/dest pointers */
 	int     longs_this_time;/* # longwords to xor in the current iteration */
 
-	REMAP_VA(bp, src, pg_src);
-	REMAP_VA(bp, dest, pg_dest);
+	pg_src = src;
+	pg_dest = dest;
 	if (!pg_src || !pg_dest)
 		return (EFAULT);
 
@@ -676,9 +683,9 @@ rf_longword_bxor(src, dest, len, bp)
 		 * (or possibly both) of the pointers */
 		if (len) {
 			if (RF_PAGE_ALIGNED(src))
-				REMAP_VA(bp, src, pg_src);
+				pg_src = src;
 			if (RF_PAGE_ALIGNED(dest))
-				REMAP_VA(bp, dest, pg_dest);
+				pg_dest = dest;
 			if (!pg_src || !pg_dest)
 				return (EFAULT);
 		}
@@ -689,9 +696,9 @@ rf_longword_bxor(src, dest, len, bp)
 		dest++;
 		len--;
 		if (RF_PAGE_ALIGNED(src))
-			REMAP_VA(bp, src, pg_src);
+			pg_src = src;
 		if (RF_PAGE_ALIGNED(dest))
-			REMAP_VA(bp, dest, pg_dest);
+			pg_dest = dest;
 	}
 	RF_ASSERT(len == 0);
 	return (0);
@@ -702,15 +709,11 @@ rf_longword_bxor(src, dest, len, bp)
    dst = a ^ b ^ c;
    a may equal dst
    see comment above longword_bxor
+   len is length in longwords
 */
 int 
-rf_longword_bxor3(dst, a, b, c, len, bp)
-	unsigned long *dst;
-	unsigned long *a;
-	unsigned long *b;
-	unsigned long *c;
-	int     len;		/* length in longwords */
-	void   *bp;
+rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
+		  unsigned long *c, int len, void *bp)
 {
 	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;
 	unsigned long *pg_a, *pg_b, *pg_c, *pg_dst;	/* per-page source/dest
@@ -718,14 +721,14 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 	int     longs_this_time;/* # longs to xor in the current iteration */
 	char    dst_is_a = 0;
 
-	REMAP_VA(bp, a, pg_a);
-	REMAP_VA(bp, b, pg_b);
-	REMAP_VA(bp, c, pg_c);
+	pg_a = a;
+	pg_b = b;
+	pg_c = c;
 	if (a == dst) {
 		pg_dst = pg_a;
 		dst_is_a = 1;
 	} else {
-		REMAP_VA(bp, dst, pg_dst);
+		pg_dst = dst;
 	}
 
 	/* align dest to cache line.  Can't cross a pg boundary on dst here. */
@@ -736,17 +739,17 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 		b++;
 		c++;
 		if (RF_PAGE_ALIGNED(a)) {
-			REMAP_VA(bp, a, pg_a);
+			pg_a = a;
 			if (!pg_a)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(b)) {
-			REMAP_VA(bp, a, pg_b);
+			pg_b = a;
 			if (!pg_b)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(c)) {
-			REMAP_VA(bp, a, pg_c);
+			pg_c = a;
 			if (!pg_c)
 				return (EFAULT);
 		}
@@ -810,25 +813,25 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 
 		if (len) {
 			if (RF_PAGE_ALIGNED(a)) {
-				REMAP_VA(bp, a, pg_a);
+				pg_a = a;
 				if (!pg_a)
 					return (EFAULT);
 				if (dst_is_a)
 					pg_dst = pg_a;
 			}
 			if (RF_PAGE_ALIGNED(b)) {
-				REMAP_VA(bp, b, pg_b);
+				pg_b = b;
 				if (!pg_b)
 					return (EFAULT);
 			}
 			if (RF_PAGE_ALIGNED(c)) {
-				REMAP_VA(bp, c, pg_c);
+				pg_c = c;
 				if (!pg_c)
 					return (EFAULT);
 			}
 			if (!dst_is_a)
 				if (RF_PAGE_ALIGNED(dst)) {
-					REMAP_VA(bp, dst, pg_dst);
+					pg_dst = dst;
 					if (!pg_dst)
 						return (EFAULT);
 				}
@@ -841,25 +844,25 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 		b++;
 		c++;
 		if (RF_PAGE_ALIGNED(a)) {
-			REMAP_VA(bp, a, pg_a);
+			pg_a = a;
 			if (!pg_a)
 				return (EFAULT);
 			if (dst_is_a)
 				pg_dst = pg_a;
 		}
 		if (RF_PAGE_ALIGNED(b)) {
-			REMAP_VA(bp, b, pg_b);
+			pg_b = b;
 			if (!pg_b)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(c)) {
-			REMAP_VA(bp, c, pg_c);
+			pg_c = c;
 			if (!pg_c)
 				return (EFAULT);
 		}
 		if (!dst_is_a)
 			if (RF_PAGE_ALIGNED(dst)) {
-				REMAP_VA(bp, dst, pg_dst);
+				pg_dst = dst;
 				if (!pg_dst)
 					return (EFAULT);
 			}
@@ -869,13 +872,8 @@ rf_longword_bxor3(dst, a, b, c, len, bp)
 }
 
 int 
-rf_bxor3(dst, a, b, c, len, bp)
-	unsigned char *dst;
-	unsigned char *a;
-	unsigned char *b;
-	unsigned char *c;
-	unsigned long len;
-	void   *bp;
+rf_bxor3(unsigned char *dst, unsigned char *a, unsigned char *b, 
+	 unsigned char *c, unsigned long len, void *bp)
 {
 	RF_ASSERT(((RF_UL(dst) | RF_UL(a) | RF_UL(b) | RF_UL(c) | len) & 0x7) == 0);
 

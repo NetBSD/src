@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.11 2003/05/15 21:29:50 fvdl Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.11.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@ struct acpi_devnode {
 	ACPI_HANDLE	ad_handle;	/* our ACPI handle */
 	u_int32_t	ad_level;	/* ACPI level */
 	u_int32_t	ad_type;	/* ACPI object type */
-	ACPI_DEVICE_INFO ad_devinfo;	/* our ACPI device info */
+	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
 	struct acpi_scope *ad_scope;	/* backpointer to scope */
 	struct device	*ad_device;	/* pointer to configured device */
 };
@@ -259,17 +259,34 @@ extern int acpi_active;
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
+int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, int *);
+ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
 ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
 
+ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
+		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
 ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
+const char*	acpi_name(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_resource_parse(struct device *, struct acpi_devnode *,
+ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
+void		acpi_resource_cleanup(struct acpi_resources *);
+
+ACPI_STATUS	acpi_pwr_switch_consumer(ACPI_HANDLE, int);
+
+#if defined(_KERNEL_OPT)
+#include "acpiec.h"
+
+#if NACPIEC > 0
+void		acpiec_early_attach(struct device *);
+#endif
+#else
+#define	NACPIEC	0
+#endif
 
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);
@@ -281,11 +298,7 @@ struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 /*
  * power state transition
  */
-ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);
-
-ACPI_STATUS	acpi_acquire_global_lock(UINT32 *);
-void		acpi_release_global_lock(UINT32);
-int		acpi_is_global_locked(void);
+ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
 
 /*
  * quirk handling

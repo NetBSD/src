@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.7 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.7.2.1 2004/08/03 10:50:43 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,82 +48,73 @@ struct RF_RedFuncs_s {
 	char   *SimpleName;
 };
 
+typedef struct RF_FuncList_s {
+	RF_VoidFuncPtr fp;
+   	struct RF_FuncList_s *next;
+} RF_FuncList_t;
+
 extern const RF_RedFuncs_t rf_xorFuncs;
 extern const RF_RedFuncs_t rf_xorRecoveryFuncs;
 
-void 
-rf_InitNode(RF_DagNode_t * node, RF_NodeStatus_t initstatus,
-	    int commit,
-	    int (*doFunc) (RF_DagNode_t * node),
-	    int (*undoFunc) (RF_DagNode_t * node),
-	    int (*wakeFunc) (RF_DagNode_t * node, int status),
-	    int nSucc, int nAnte, int nParam, int nResult,
-	    RF_DagHeader_t * hdr, char *name, RF_AllocListElem_t * alist);
+void rf_InitNode(RF_DagNode_t *, RF_NodeStatus_t, int,
+		 int (*doFunc) (RF_DagNode_t *),
+		 int (*undoFunc) (RF_DagNode_t *),
+		 int (*wakeFunc) (RF_DagNode_t *, int),
+		 int, int, int, int, RF_DagHeader_t *, 
+		 char *, RF_AllocListElem_t *);
 
-void    rf_FreeDAG(RF_DagHeader_t * dag_h);
-
-int     rf_ConfigureDAGs(RF_ShutdownList_t ** listp);
+void rf_FreeDAG(RF_DagHeader_t *);
+int rf_ConfigureDAGs(RF_ShutdownList_t **);
 
 RF_DagHeader_t *rf_AllocDAGHeader(void);
-
 void    rf_FreeDAGHeader(RF_DagHeader_t * dh);
 
-void   *rf_AllocBuffer(RF_Raid_t * raidPtr, RF_DagHeader_t * dag_h,
-		       RF_PhysDiskAddr_t * pda, 
-		       RF_AllocListElem_t * allocList);
+RF_DagNode_t *rf_AllocDAGNode(void);
+void rf_FreeDAGNode(RF_DagNode_t *);
 
-char   *rf_NodeStatusString(RF_DagNode_t * node);
+RF_DagList_t *rf_AllocDAGList(void);
+void rf_FreeDAGList(RF_DagList_t *);
 
-void    rf_PrintNodeInfoString(RF_DagNode_t * node);
+void *rf_AllocDAGPCache(void);
+void rf_FreeDAGPCache(void *);
 
-int     rf_AssignNodeNums(RF_DagHeader_t * dag_h);
+RF_FuncList_t *rf_AllocFuncList(void);
+void rf_FreeFuncList(RF_FuncList_t *);
 
-int     rf_RecurAssignNodeNums(RF_DagNode_t * node, int num, int unvisited);
+void *rf_AllocBuffer(RF_Raid_t *, RF_DagHeader_t *, int);
+void *rf_AllocIOBuffer(RF_Raid_t *, int);
+void rf_FreeIOBuffer(RF_Raid_t *, RF_VoidPointerListElem_t *);
+void *rf_AllocStripeBuffer(RF_Raid_t *, RF_DagHeader_t *, int);
+void rf_FreeStripeBuffer(RF_Raid_t *, RF_VoidPointerListElem_t *);
 
-void    rf_ResetDAGHeaderPointers(RF_DagHeader_t * dag_h, 
-				  RF_DagHeader_t * newptr);
-
-void    rf_RecurResetDAGHeaderPointers(RF_DagNode_t * node, 
-				       RF_DagHeader_t * newptr);
-
-void    rf_PrintDAGList(RF_DagHeader_t * dag_h);
-
-int     rf_ValidateDAG(RF_DagHeader_t * dag_h);
-
-void    rf_redirect_asm(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap);
-
-void    rf_MapUnaccessedPortionOfStripe(RF_Raid_t * raidPtr,
-					RF_RaidLayout_t * layoutPtr,
-					RF_AccessStripeMap_t * asmap, 
-					RF_DagHeader_t * dag_h,
-					RF_AccessStripeMapHeader_t ** new_asm_h, 
-					int *nRodNodes, char **sosBuffer,
-					char **eosBuffer, 
-					RF_AllocListElem_t * allocList);
-
-int     rf_PDAOverlap(RF_RaidLayout_t * layoutPtr, RF_PhysDiskAddr_t * src,
-		      RF_PhysDiskAddr_t * dest);
-
-void    rf_GenerateFailedAccessASMs(RF_Raid_t * raidPtr,
-				    RF_AccessStripeMap_t * asmap, 
-				    RF_PhysDiskAddr_t * failedPDA,
-				    RF_DagHeader_t * dag_h, 
-				    RF_AccessStripeMapHeader_t ** new_asm_h,
-				    int *nXorBufs, char **rpBufPtr, 
-				    char *overlappingPDAs,
-				    RF_AllocListElem_t * allocList);
+char *rf_NodeStatusString(RF_DagNode_t *);
+void rf_PrintNodeInfoString(RF_DagNode_t *);
+int rf_AssignNodeNums(RF_DagHeader_t *);
+int rf_RecurAssignNodeNums(RF_DagNode_t *, int, int);
+void rf_ResetDAGHeaderPointers(RF_DagHeader_t *, RF_DagHeader_t *);
+void rf_RecurResetDAGHeaderPointers(RF_DagNode_t *, RF_DagHeader_t *);
+void rf_PrintDAGList(RF_DagHeader_t *);
+int rf_ValidateDAG(RF_DagHeader_t *);
+void rf_redirect_asm(RF_Raid_t *, RF_AccessStripeMap_t *);
+void rf_MapUnaccessedPortionOfStripe(RF_Raid_t *, RF_RaidLayout_t *,
+				     RF_AccessStripeMap_t *, RF_DagHeader_t *,
+				     RF_AccessStripeMapHeader_t **, int *,
+				     char **, char **, RF_AllocListElem_t *);
+int rf_PDAOverlap(RF_RaidLayout_t *, RF_PhysDiskAddr_t *, RF_PhysDiskAddr_t *);
+void rf_GenerateFailedAccessASMs(RF_Raid_t *, RF_AccessStripeMap_t *,
+				 RF_PhysDiskAddr_t *, RF_DagHeader_t *, 
+				 RF_AccessStripeMapHeader_t **,
+				 int *, char **, char *, RF_AllocListElem_t *);
 
 /* flags used by RangeRestrictPDA */
 #define RF_RESTRICT_NOBUFFER 0
 #define RF_RESTRICT_DOBUFFER 1
 
-void    rf_RangeRestrictPDA(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * src,
-			    RF_PhysDiskAddr_t * dest, int dobuffer, 
-			    int doraidaddr);
+void rf_RangeRestrictPDA(RF_Raid_t *, RF_PhysDiskAddr_t *, 
+			 RF_PhysDiskAddr_t *, int, int);
 
-int     rf_compute_workload_shift(RF_Raid_t * raidPtr, 
-				  RF_PhysDiskAddr_t * pda);
-void    rf_SelectMirrorDiskIdle(RF_DagNode_t * node);
-void    rf_SelectMirrorDiskPartition(RF_DagNode_t * node);
+int rf_compute_workload_shift(RF_Raid_t *, RF_PhysDiskAddr_t *);
+void rf_SelectMirrorDiskIdle(RF_DagNode_t *);
+void rf_SelectMirrorDiskPartition(RF_DagNode_t *);
 
 #endif				/* !_RF__RF_DAGUTILS_H_ */

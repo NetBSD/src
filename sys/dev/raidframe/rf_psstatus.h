@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.4 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.4.18.1 2004/08/03 10:50:48 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,10 +54,23 @@
  * descriptor. Note that we use just one lock for the whole hash chain.
  */
 #define RF_HASH_PSID(_raid_,_psid_) ( (_psid_) % ((_raid_)->pssTableSize) )	/* simple hash function */
-#define RF_LOCK_PSS_MUTEX(_raidPtr, _row, _psid) \
-  RF_LOCK_MUTEX((_raidPtr)->reconControl[_row]->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
-#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _row, _psid) \
-  RF_UNLOCK_MUTEX((_raidPtr)->reconControl[_row]->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex)
+#define RF_LOCK_PSS_MUTEX(_raidPtr, _psid)                                                      \
+  do {                                                                                          \
+     RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);   \
+     while((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock) {           \
+          ltsleep(&(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock,     \
+	          PRIBIO, "rflockpss", 0,                                                       \
+	          &(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);   \
+     }                                                                                          \
+     (_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock = 1;               \
+     RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex); \
+  } while (0);
+
+#define RF_UNLOCK_PSS_MUTEX(_raidPtr, _psid)                                                    \
+  RF_LOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);      \
+  (_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock = 0;                  \
+  wakeup(&(_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].lock);             \
+  RF_UNLOCK_MUTEX((_raidPtr)->reconControl->pssTable[ RF_HASH_PSID(_raidPtr,_psid) ].mutex);
 
 struct RF_ReconParityStripeStatus_s {
 	RF_StripeNum_t parityStripeID;	/* the parity stripe ID */
@@ -73,7 +86,7 @@ struct RF_ReconParityStripeStatus_s {
 	int     xorBufCount;	/* num buffers waiting to be xored */
 	int     blockCount;	/* count of # proc that have blocked recon on
 				 * this parity stripe */
-	char   *issued;		/* issued[i]==1 <=> column i has already
+	char   issued[RF_MAXCOL];	/* issued[i]==1 <=> column i has already
 				 * issued a read request for the indicated RU */
 	RF_CallbackDesc_t *procWaitList;	/* list of user procs waiting
 						 * for recon to be done */
@@ -87,6 +100,8 @@ struct RF_ReconParityStripeStatus_s {
 
 struct RF_PSStatusHeader_s {
 	RF_DECLARE_MUTEX(mutex)	/* mutex for this hash chain */
+	int lock;               /* 1 if this hash chain is locked,
+				   0 otherwise */
 	RF_ReconParityStripeStatus_t *chain;	/* the hash chain */
 };
 /* masks for the "flags" field above */
@@ -107,26 +122,18 @@ struct RF_PSStatusHeader_s {
 #define RF_PSS_BUFFERWAIT      0x00000020	/* someone is waiting for a
 						 * buffer for this RU */
 
-int 
-rf_ConfigurePSStatus(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-
-RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t * raidPtr);
-void 
-rf_FreeParityStripeStatusTable(RF_Raid_t * raidPtr,
-    RF_PSStatusHeader_t * pssTable);
-RF_ReconParityStripeStatus_t *
-rf_LookupRUStatus(RF_Raid_t * raidPtr,
-    RF_PSStatusHeader_t * pssTable, RF_StripeNum_t psID,
-    RF_ReconUnitNum_t which_ru, RF_PSSFlags_t flags, int *created);
-void 
-rf_PSStatusDelete(RF_Raid_t * raidPtr, RF_PSStatusHeader_t * pssTable,
-    RF_ReconParityStripeStatus_t * pssPtr);
-void 
-rf_RemoveFromActiveReconTable(RF_Raid_t * raidPtr, RF_RowCol_t row,
-    RF_StripeNum_t psid, RF_ReconUnitNum_t which_ru);
-RF_ReconParityStripeStatus_t *rf_AllocPSStatus(RF_Raid_t * raidPtr);
-void    rf_FreePSStatus(RF_Raid_t * raidPtr, RF_ReconParityStripeStatus_t * p);
-void    rf_PrintPSStatusTable(RF_Raid_t * raidPtr, RF_RowCol_t row);
+int rf_ConfigurePSStatus(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t *);
+void rf_FreeParityStripeStatusTable(RF_Raid_t *, RF_PSStatusHeader_t *);
+RF_ReconParityStripeStatus_t *rf_LookupRUStatus(RF_Raid_t *, RF_PSStatusHeader_t *, 
+						RF_StripeNum_t, RF_ReconUnitNum_t, 
+						RF_PSSFlags_t, 
+						RF_ReconParityStripeStatus_t *);
+void rf_PSStatusDelete(RF_Raid_t *, RF_PSStatusHeader_t *,
+		       RF_ReconParityStripeStatus_t *);
+void rf_RemoveFromActiveReconTable(RF_Raid_t *, RF_StripeNum_t, RF_ReconUnitNum_t);
+RF_ReconParityStripeStatus_t *rf_AllocPSStatus(RF_Raid_t *);
+void rf_FreePSStatus(RF_Raid_t *, RF_ReconParityStripeStatus_t *);
+void rf_PrintPSStatusTable(RF_Raid_t *);
 
 #endif				/* !_RF__RF_PSSTATUS_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.31.2.1 2004/08/03 10:49:07 skrll Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Klaus J. Klein
+ * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31.2.1 2004/08/03 10:49:07 skrll Exp $");
 
 #include "mpu.h"
 
@@ -61,6 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.31 2003/02/05 00:07:34 kleink Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+/*
+ * XXX Work around the 24-bit implementation limit of the Audio 1 DMA
+ * XXX engine by allocating through the ISA DMA tag.
+ */
+#if defined(amd64) || defined(i386)
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
+#endif
+#endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) printf x
@@ -163,8 +174,10 @@ static uint8_t	eso_read_rdr __P((struct eso_softc *));
 static void	eso_reload_master_vol __P((struct eso_softc *));
 static int	eso_reset __P((struct eso_softc *));
 static void	eso_set_gain __P((struct eso_softc *, unsigned int));
-static int	eso_set_monooutsrc __P((struct eso_softc *, unsigned int));
 static int	eso_set_recsrc __P((struct eso_softc *, unsigned int));
+static int	eso_set_monooutsrc __P((struct eso_softc *, unsigned int));
+static int	eso_set_monoinbypass __P((struct eso_softc *, unsigned int));
+static int	eso_set_preamp __P((struct eso_softc *, unsigned int));
 static void	eso_write_cmd __P((struct eso_softc *, uint8_t));
 static void	eso_write_ctlreg __P((struct eso_softc *, uint8_t, uint8_t));
 static void	eso_write_mixreg __P((struct eso_softc *, uint8_t, uint8_t));
@@ -284,9 +297,10 @@ eso_attach(parent, self, aux)
 	eso_write_mixreg(sc, ESO_MIXREG_MVCTL, mvctl);
 
 	/* Set mixer regs to something reasonable, needs work. */
-	sc->sc_recsrc = ESO_MIXREG_ERS_LINE;
-	sc->sc_monooutsrc = ESO_MIXREG_MPM_MOMUTE;
 	sc->sc_recmon = sc->sc_spatializer = sc->sc_mvmute = 0;
+	eso_set_monooutsrc(sc, ESO_MIXREG_MPM_MOMUTE);
+	eso_set_monoinbypass(sc, 0);
+	eso_set_preamp(sc, 1);
 	for (idx = 0; idx < ESO_NGAINDEVS; idx++) {
 		int v;
 		
@@ -644,13 +658,6 @@ eso_open(hdl, flags)
 	void *hdl;
 	int flags;
 {
-	struct eso_softc *sc = hdl;
-	
-	DPRINTF(("%s: open\n", sc->sc_dev.dv_xname));
-
-	sc->sc_pintr = NULL;
-	sc->sc_rintr = NULL;
-	
 	return (0);
 }
 
@@ -658,8 +665,6 @@ static void
 eso_close(hdl)
 	void *hdl;
 {
-
-	DPRINTF(("%s: close\n", ((struct eso_softc *)hdl)->sc_dev.dv_xname));
 }
 
 static int
@@ -1070,7 +1075,13 @@ eso_set_port(hdl, cp)
 			return (EINVAL);
 
 		return (eso_set_monooutsrc(sc, cp->un.ord));
-		
+
+	case ESO_MONOIN_BYPASS:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+
+		return (eso_set_monoinbypass(sc, cp->un.ord));
+
 	case ESO_RECORD_MONITOR:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
@@ -1095,16 +1106,7 @@ eso_set_port(hdl, cp)
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
 
-		sc->sc_preamp = (cp->un.ord != 0);
-		
-		tmp = eso_read_mixreg(sc, ESO_MIXREG_MPM);
-		tmp &= ~ESO_MIXREG_MPM_RESV0;
-		if (sc->sc_preamp)
-			tmp |= ESO_MIXREG_MPM_PREAMP;
-		else
-			tmp &= ~ESO_MIXREG_MPM_PREAMP;
-		eso_write_mixreg(sc, ESO_MIXREG_MPM, tmp);
-		break;
+		return (eso_set_preamp(sc, cp->un.ord));
 		
 	default:
 		return (EINVAL);
@@ -1180,6 +1182,10 @@ eso_get_port(hdl, cp)
 
 	case ESO_MONOOUT_SOURCE:
 		cp->un.ord = sc->sc_monooutsrc;
+		break;
+
+	case ESO_MONOIN_BYPASS:
+		cp->un.ord = sc->sc_monoinbypass;
 		break;
 		
 	case ESO_SPATIALIZER_ENABLE:
@@ -1338,6 +1344,25 @@ eso_query_devinfo(hdl, dip)
 		strcpy(dip->un.e.member[2].label.name, AudioNmixerout);
 		dip->un.e.member[2].ord = ESO_MIXREG_MPM_MOREC;
 		break;
+
+	case ESO_MONOIN_BYPASS:
+		dip->mixer_class = ESO_MONOIN_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, "bypass");
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
+		break;
+	case ESO_MONOIN_CLASS:
+		dip->mixer_class = ESO_MONOIN_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, "mono_in");
+		dip->type = AUDIO_MIXER_CLASS;
+		break;
+
 	case ESO_SPATIALIZER:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
@@ -1550,27 +1575,38 @@ eso_allocm(hdl, direction, size, type, flags)
 	size_t boundary;
 	int error;
 
-	if ((ed = malloc(size, type, flags)) == NULL)
+	if ((ed = malloc(sizeof (*ed), type, flags)) == NULL)
 		return (NULL);
 
 	/*
 	 * Apparently the Audio 1 DMA controller's current address
 	 * register can't roll over a 64K address boundary, so we have to
-	 * take care of that ourselves.  The second channel DMA controller
-	 * doesn't have that restriction, however.
+	 * take care of that ourselves.  Similarly, the Audio 2 DMA
+	 * controller needs a 1M address boundary.
 	 */
 	if (direction == AUMODE_RECORD)
 		boundary = 0x10000;
 	else
-		boundary = 0;
+		boundary = 0x100000;
 
+	/*
+	 * XXX Work around allocation problems for Audio 1, which
+	 * XXX implements the 24 low address bits only, with
+	 * XXX machine-specific DMA tag use.
+	 */
 #ifdef alpha
 	/*
-	 * XXX For Audio 1, which implements the 24 low address bits only,
-	 * XXX force allocation through the (ISA) SGMAP.
+	 * XXX Force allocation through the (ISA) SGMAP.
 	 */
 	if (direction == AUMODE_RECORD)
 		ed->ed_dmat = alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_ISA);
+	else
+#elif defined(amd64) || defined(i386)
+	/*
+	 * XXX Force allocation through the ISA DMA tag.
+	 */
+	if (direction == AUMODE_RECORD)
+		ed->ed_dmat = &isa_bus_dma_tag;
 	else
 #endif
 		ed->ed_dmat = sc->sc_dmat;
@@ -1692,6 +1728,8 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
+	DPRINTF(("%s: dmaaddr %lx\n",
+	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 	
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
@@ -1779,6 +1817,8 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
+	DPRINTF(("%s: dmaaddr %lx\n",
+	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
@@ -1846,6 +1886,32 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	return (0);
 }
 
+/*
+ * Mixer utility functions.
+ */
+static int
+eso_set_recsrc(sc, recsrc)
+	struct eso_softc *sc;
+	unsigned int recsrc;
+{
+	mixer_devinfo_t di;
+	int i;
+
+	di.index = ESO_RECORD_SOURCE;
+	if (eso_query_devinfo(sc, &di) != 0)
+		panic("eso_set_recsrc: eso_query_devinfo failed");
+
+	for (i = 0; i < di.un.e.num_mem; i++) {
+		if (recsrc == di.un.e.member[i].ord) {
+			eso_write_mixreg(sc, ESO_MIXREG_ERS, recsrc);
+			sc->sc_recsrc = recsrc;
+			return (0);
+		}
+	}
+
+	return (EINVAL);
+}
+
 static int
 eso_set_monooutsrc(sc, monooutsrc)
 	struct eso_softc *sc;
@@ -1874,25 +1940,56 @@ eso_set_monooutsrc(sc, monooutsrc)
 }
 
 static int
-eso_set_recsrc(sc, recsrc)
+eso_set_monoinbypass(sc, monoinbypass)
 	struct eso_softc *sc;
-	unsigned int recsrc;
+	unsigned int monoinbypass;
 {
 	mixer_devinfo_t di;
 	int i;
+	uint8_t mpm;
 
-	di.index = ESO_RECORD_SOURCE;
+	di.index = ESO_MONOIN_BYPASS;
 	if (eso_query_devinfo(sc, &di) != 0)
-		panic("eso_set_recsrc: eso_query_devinfo failed");
+		panic("eso_set_monoinbypass: eso_query_devinfo failed");
 
 	for (i = 0; i < di.un.e.num_mem; i++) {
-		if (recsrc == di.un.e.member[i].ord) {
-			eso_write_mixreg(sc, ESO_MIXREG_ERS, recsrc);
-			sc->sc_recsrc = recsrc;
+		if (monoinbypass == di.un.e.member[i].ord) {
+			mpm = eso_read_mixreg(sc, ESO_MIXREG_MPM);
+			mpm &= ~(ESO_MIXREG_MPM_MOMASK | ESO_MIXREG_MPM_RESV0);
+			mpm |= (monoinbypass ? ESO_MIXREG_MPM_MIBYPASS : 0);
+			eso_write_mixreg(sc, ESO_MIXREG_MPM, mpm);
+			sc->sc_monoinbypass = monoinbypass;
 			return (0);
 		}
 	}
+	
+	return (EINVAL);
+}
 
+static int
+eso_set_preamp(sc, preamp)
+	struct eso_softc *sc;
+	unsigned int preamp;
+{
+	mixer_devinfo_t di;
+	int i;
+	uint8_t mpm;
+
+	di.index = ESO_MIC_PREAMP;
+	if (eso_query_devinfo(sc, &di) != 0)
+		panic("eso_set_preamp: eso_query_devinfo failed");
+
+	for (i = 0; i < di.un.e.num_mem; i++) {
+		if (preamp == di.un.e.member[i].ord) {
+			mpm = eso_read_mixreg(sc, ESO_MIXREG_MPM);
+			mpm &= ~(ESO_MIXREG_MPM_PREAMP | ESO_MIXREG_MPM_RESV0);
+			mpm |= (preamp ? ESO_MIXREG_MPM_PREAMP : 0);
+			eso_write_mixreg(sc, ESO_MIXREG_MPM, mpm);
+			sc->sc_preamp = preamp;
+			return (0);
+		}
+	}
+	
 	return (EINVAL);
 }
 

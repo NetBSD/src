@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2003/04/08 22:57:57 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.22.2.1 2004/08/03 10:42:57 skrll Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -118,7 +118,7 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # lwp fields and values
@@ -215,7 +215,7 @@ define	FPF_FPI			offsetof(struct fpframe, fpf_fpiar)
 # system calls
 define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
-define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 
 # errno

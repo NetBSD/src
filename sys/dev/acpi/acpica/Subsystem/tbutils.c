@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbutils - Table manipulation utilities
- *              xRevision: 58 $
+ *              xRevision: 61 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.6 2003/03/04 17:25:28 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.6.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __TBUTILS_C__
 
@@ -143,10 +143,10 @@ __KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.6 2003/03/04 17:25:28 kochi Exp $");
 ACPI_STATUS
 AcpiTbHandleToObject (
     UINT16                  TableId,
-    ACPI_TABLE_DESC         **TableDesc)
+    ACPI_TABLE_DESC         **ReturnTableDesc)
 {
     UINT32                  i;
-    ACPI_TABLE_DESC         *ListHead;
+    ACPI_TABLE_DESC         *TableDesc;
 
 
     ACPI_FUNCTION_NAME ("TbHandleToObject");
@@ -154,18 +154,17 @@ AcpiTbHandleToObject (
 
     for (i = 0; i < ACPI_TABLE_MAX; i++)
     {
-        ListHead = &AcpiGbl_AcpiTables[i];
-        do
+        TableDesc = AcpiGbl_TableLists[i].Next;
+        while (TableDesc)
         {
-            if (ListHead->TableId == TableId)
+            if (TableDesc->TableId == TableId)
             {
-                *TableDesc = ListHead;
+                *ReturnTableDesc = TableDesc;
                 return (AE_OK);
             }
 
-            ListHead = ListHead->Next;
-
-        } while (ListHead != &AcpiGbl_AcpiTables[i]);
+            TableDesc = TableDesc->Next;
+        }
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "TableId=%X does not exist\n", TableId));
@@ -214,7 +213,7 @@ AcpiTbValidateTableHeader (
 
     /* Ensure that the signature is 4 ASCII characters */
 
-    ACPI_MOVE_UNALIGNED32_TO_32 (&Signature, TableHeader->Signature);
+    ACPI_MOVE_32_TO_32 (&Signature, TableHeader->Signature);
     if (!AcpiUtValidAcpiName (Signature))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,

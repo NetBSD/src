@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              xRevision: 36 $
+ *              xRevision: 38 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.8 2003/03/04 17:25:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.8.2.1 2004/08/03 10:45:12 skrll Exp $");
 
 #define __RSDUMP_C__
 
@@ -994,24 +995,19 @@ AcpiRsDumpAddress64 (
                 "" : "not ");
 
     AcpiOsPrintf ("    Granularity: %8.8X%8.8X\n",
-                ACPI_HIDWORD (Address64Data->Granularity),
-                ACPI_LODWORD (Address64Data->Granularity));
+                ACPI_FORMAT_UINT64 (Address64Data->Granularity));
 
     AcpiOsPrintf ("    Address range min: %8.8X%8.8X\n",
-                ACPI_HIDWORD (Address64Data->MinAddressRange),
-                ACPI_HIDWORD (Address64Data->MinAddressRange));
+                ACPI_FORMAT_UINT64 (Address64Data->MinAddressRange));
 
     AcpiOsPrintf ("    Address range max: %8.8X%8.8X\n",
-                ACPI_HIDWORD (Address64Data->MaxAddressRange),
-                ACPI_HIDWORD (Address64Data->MaxAddressRange));
+                ACPI_FORMAT_UINT64 (Address64Data->MaxAddressRange));
 
     AcpiOsPrintf ("    Address translation offset: %8.8X%8.8X\n",
-                ACPI_HIDWORD (Address64Data->AddressTranslationOffset),
-                ACPI_HIDWORD (Address64Data->AddressTranslationOffset));
+                ACPI_FORMAT_UINT64 (Address64Data->AddressTranslationOffset));
 
     AcpiOsPrintf ("    Address Length: %8.8X%8.8X\n",
-                ACPI_HIDWORD (Address64Data->AddressLength),
-                ACPI_HIDWORD (Address64Data->AddressLength));
+                ACPI_FORMAT_UINT64 (Address64Data->AddressLength));
 
     if(0xFF != Address64Data->ResourceSource.Index)
     {
@@ -1229,8 +1225,7 @@ AcpiRsDumpIrqList (
             AcpiOsPrintf ("PCI IRQ Routing Table structure %X.\n", Count++);
 
             AcpiOsPrintf ("    Address: %8.8X%8.8X\n",
-                        ACPI_HIDWORD (PrtElement->Address),
-                        ACPI_LODWORD (PrtElement->Address));
+                        ACPI_FORMAT_UINT64 (PrtElement->Address));
 
             AcpiOsPrintf ("    Pin: %X\n", PrtElement->Pin);
 

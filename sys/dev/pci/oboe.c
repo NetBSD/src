@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.13.2.1 2003/07/02 15:26:12 darrenr Exp $	*/
+/*	$NetBSD: oboe.c,v 1.13.2.2 2004/08/03 10:49:10 skrll Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -43,6 +43,9 @@
  *
  * Based on information from the Linux driver, thus the magic hex numbers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.13.2.2 2004/08/03 10:49:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +251,7 @@ int
 oboe_activate(struct device *self, enum devact act)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
-	int error;
+	int error = 0;
 
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 
@@ -260,8 +263,6 @@ oboe_activate(struct device *self, enum devact act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
 			error = config_deactivate(sc->sc_child);
-		else
-			error = 0;
 		break;
 	}
 	return (error);
@@ -660,7 +661,7 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 	int i;
 	/* XXX */
 	uint32_t addr = (uint32_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
-	if (addr == NULL) {
+	if (addr == 0) {
 		goto bad;
 	}
 	addr &= ~(sizeof (struct OboeTaskFile) - 1);

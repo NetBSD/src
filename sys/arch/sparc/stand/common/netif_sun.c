@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.6 2003/03/13 12:02:54 hannken Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.6.2.1 2004/08/03 10:41:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -77,6 +77,7 @@ netif_open(machdep_hint)
 {
 	struct promdata *pd = machdep_hint;
 	struct iodesc *io;
+	int node;
 
 	/* find a free socket */
 	io = sockets;
@@ -93,7 +94,16 @@ netif_open(machdep_hint)
 	io->io_netif = &netif_prom;
 
 	/* Put our ethernet address in io->myea */
-	prom_getether(io->myea);
+	switch (prom_version()) {
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
+		node = prom_instance_to_package(pd->fd);
+		break;
+	default:
+		node = 0;
+	}
+	prom_getether(node, io->myea);
 
 	return(0);
 }

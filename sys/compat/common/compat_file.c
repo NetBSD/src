@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.10.2.2 2003/08/19 19:53:47 skrll Exp $ */
+/*	$NetBSD: compat_file.c,v 1.10.2.3 2004/08/03 10:43:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.2 2003/08/19 19:53:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.3 2004/08/03 10:43:29 skrll Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.2 2003/08/19 19:53:47 skrll E
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socketvar.h>
@@ -513,6 +512,75 @@ bsd_sys_bind(l, v, retval)
 }
 
 int
+bsd_sys_connect(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct sys_connect_args /* {
+		syscallarg(int) s;
+		syscallarg(struct sockaddr *) name;
+		syscallarg(unsigned int) namelen;
+	} */ *uap = v;
+	struct sys_connect_args cup;
+	struct proc *p = l->l_proc;
+	struct file *fp;
+	struct socket *so;
+	struct sockaddr_un sun;
+	struct sockaddr_un *usun;
+	const char *name;
+	caddr_t sg; 
+	int error;
+	extern struct domain unixdomain;
+	char namebuf[sizeof(sun.sun_path) + 1];
+
+	if (SCARG(uap, namelen) > UCHAR_MAX)
+		return EINVAL;
+
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+		return error;
+
+	so = (struct socket *)fp->f_data;
+	error = so->so_proto->pr_domain != &unixdomain;
+	FILE_UNUSE(fp, l);
+	if (error)
+		return sys_connect(l, uap, retval);
+
+	/*
+	 * Check for an alternate path.
+	 */
+	if ((error = copyin(SCARG(uap, name), &sun, sizeof(sun))) != 0)
+		return error;
+
+	(void)strncpy(namebuf, sun.sun_path, sizeof(namebuf));
+	namebuf[sizeof(namebuf) - 1] = '\0';
+	name = namebuf;
+	CHECK_ALT_EXIST(l, NULL, name);
+
+	if (strlen(name) >= sizeof(sun.sun_path))
+		error = ENAMETOOLONG;
+	(void)strncpy(sun.sun_path, name, sizeof(sun.sun_path));
+	if (name != namebuf)
+		free((void *)name, M_TEMP);
+	if (error)
+		return sys_connect(l, uap, retval);
+
+	/* 
+	 * Rebuild a new struct sockaddr_un and store it in userspace.
+	 */
+	sg = stackgap_init(p, 0);
+	usun = stackgap_alloc(p, &sg, sizeof(*usun));
+	if ((error = copyout(&sun, usun, sizeof(*usun))) != 0)
+		return error;
+
+	SCARG(&cup, s) = SCARG(uap, s);
+	SCARG(&cup, name) = (struct sockaddr *)usun;
+	SCARG(&cup, namelen) = sizeof(*usun);
+
+	return sys_connect(l, &cup, retval);
+}
+
+int
 bsd_sys_rename(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -640,15 +708,15 @@ bsd_sys_statfs(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_statfs_args /* {
+	struct compat_20_sys_statfs_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	return sys_statfs(l, uap, retval);
+	return compat_20_sys_statfs(l, uap, retval);
 }
 
 #if defined(NFS) || defined(NFSSERVER)

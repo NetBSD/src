@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdisasm.h - AML disassembler
- *       xRevision: 8 $
+ *       xRevision: 11 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -226,10 +226,6 @@ void
 AcpiDmDecodeInternalObject (
     ACPI_OPERAND_OBJECT     *ObjDesc);
 
-void
-AcpiDmDecodeNode (
-    ACPI_NAMESPACE_NODE     *Node);
-
 UINT32
 AcpiDmBlockType (
     ACPI_PARSE_OBJECT       *Op);
@@ -273,6 +269,34 @@ AcpiDmCommaIfListMember (
 
 void
 AcpiDmCommaIfFieldMember (
+    ACPI_PARSE_OBJECT       *Op);
+
+
+/*
+ * dmobject
+ */
+
+void
+AcpiDmDecodeNode (
+    ACPI_NAMESPACE_NODE     *Node);
+
+void
+AcpiDmDisplayInternalObject (
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_WALK_STATE         *WalkState);
+
+void
+AcpiDmDisplayArguments (
+    ACPI_WALK_STATE         *WalkState);
+
+void
+AcpiDmDisplayLocals (
+    ACPI_WALK_STATE         *WalkState);
+
+void
+AcpiDmDumpMethodInfo (
+    ACPI_STATUS             Status,
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op);
 
 

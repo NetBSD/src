@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.4 2003/05/31 18:25:40 uwe Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.4.2.1 2004/08/03 10:46:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -349,7 +349,7 @@
 
 
 /*
- * Horizontal/vertical dimentions of pixel blit function.
+ * Horizontal/vertical dimensions of pixel blit function.
  * 16 bit registers.  Only [11..0] are used.
  */
 #define IGS_COP_WIDTH_REG	0x060

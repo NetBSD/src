@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.64.2.1 2003/07/02 15:25:46 darrenr Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64.2.1 2003/07/02 15:25:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -108,10 +108,10 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	Elf_Ehdr *eh;
 {
 	size_t shsize;
-	int	strndx;
+	int strndx;
 	size_t i;
 	static const char signature[] = "__libc_atexit";
-	char* strtable;
+	char *strtable = NULL;
 	Elf_Shdr *sh;
 	
 	int error;
@@ -159,7 +159,8 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 
 out:
 	free(sh, M_TEMP);
-	free(strtable, M_TEMP);
+	if (strtable)
+		free(strtable, M_TEMP);
 	return (error);
 }
 #endif
@@ -293,7 +294,7 @@ ELFNAME2(linux,signature)(l, epp, eh, itp)
 	}
 
 	/* Check for certain intepreter names. */
-	if (itp[0]) {
+	if (itp) {
 		if (!strncmp(itp, "/lib/ld-linux", 13) ||
 		    !strncmp(itp, "/lib/ld.so.", 11))
 			error = 0;
@@ -328,12 +329,11 @@ ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
 	    1) 
 			return error;
 
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
 		    itp)))
 			return (error);
 	}
-	*pos = ELF_NO_ADDR;
 	DPRINTF(("linux_probe: returning 0\n"));
 	return 0;
 }

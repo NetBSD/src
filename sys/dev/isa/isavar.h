@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.40 2003/05/09 23:51:29 fvdl Exp $	*/
+/*	$NetBSD: isavar.h,v 1.40.2.1 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ struct isa_softc {
  */
 
 /* ISA interrupt sharing types */
-char	*isa_intr_typename __P((int type));
+char	*isa_intr_typename __P((int));
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              xRevision: 49 $
+ *              xRevision: 53 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.8 2003/03/04 17:25:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.8.2.1 2004/08/03 10:45:08 skrll Exp $");
 
 #define __EXCONVRT_C__
 
@@ -132,8 +133,9 @@ __KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.8 2003/03/04 17:25:16 kochi Exp $");
  *
  * FUNCTION:    AcpiExConvertToInteger
  *
- * PARAMETERS:  *ObjDesc        - Object to be converted.  Must be an
+ * PARAMETERS:  ObjDesc         - Object to be converted.  Must be an
  *                                Integer, Buffer, or String
+ *              ResultDesc      - Where the new Integer object is returned
  *              WalkState       - Current method state
  *
  * RETURN:      Status
@@ -274,8 +276,9 @@ AcpiExConvertToInteger (
  *
  * FUNCTION:    AcpiExConvertToBuffer
  *
- * PARAMETERS:  *ObjDesc        - Object to be converted.  Must be an
+ * PARAMETERS:  ObjDesc         - Object to be converted.  Must be an
  *                                Integer, Buffer, or String
+ *              ResultDesc      - Where the new buffer object is returned
  *              WalkState       - Current method state
  *
  * RETURN:      Status
@@ -410,6 +413,7 @@ AcpiExConvertToAscii (
 
     ACPI_FUNCTION_ENTRY ();
 
+
     if (DataWidth < sizeof (ACPI_INTEGER))
     {
         LeadingZero = FALSE;
@@ -421,25 +425,24 @@ AcpiExConvertToAscii (
         Length = sizeof (ACPI_INTEGER);
     }
 
-
     switch (Base)
     {
     case 10:
 
         Remainder = 0;
-        for (i = ACPI_MAX_DECIMAL_DIGITS; i > 0 ; i--)
+        for (i = ACPI_MAX_DECIMAL_DIGITS; i > 0; i--)
         {
             /* Divide by nth factor of 10 */
 
             Digit = Integer;
-            for (j = 1; j < i; j++)
+            for (j = 0; j < i; j++)
             {
                 (void) AcpiUtShortDivide (&Digit, 10, &Digit, &Remainder);
             }
 
             /* Create the decimal digit */
 
-            if (Digit != 0)
+            if (Remainder != 0)
             {
                 LeadingZero = FALSE;
             }
@@ -451,6 +454,7 @@ AcpiExConvertToAscii (
             }
         }
         break;
+
 
     case 16:
 
@@ -473,13 +477,14 @@ AcpiExConvertToAscii (
         }
         break;
 
+
     default:
         break;
     }
 
     /*
      * Since leading zeros are supressed, we must check for the case where
-     * the integer equals 0.
+     * the integer equals 0
      *
      * Finally, null terminate the string and return the length
      */
@@ -498,8 +503,11 @@ AcpiExConvertToAscii (
  *
  * FUNCTION:    AcpiExConvertToString
  *
- * PARAMETERS:  *ObjDesc        - Object to be converted.  Must be an
- *                                Integer, Buffer, or String
+ * PARAMETERS:  ObjDesc         - Object to be converted.  Must be an
+ *                                  Integer, Buffer, or String
+ *              ResultDesc      - Where the string object is returned
+ *              Base            - 10 or 16
+ *              MaxLength       - Max length of the returned string
  *              WalkState       - Current method state
  *
  * RETURN:      Status
@@ -517,10 +525,10 @@ AcpiExConvertToString (
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_OPERAND_OBJECT     *RetDesc;
-    UINT32                  i;
-    UINT32                  StringLength;
     UINT8                   *NewBuf;
     UINT8                   *Pointer;
+    UINT32                  StringLength;
+    UINT32                  i;
 
 
     ACPI_FUNCTION_TRACE_PTR ("ExConvertToString", ObjDesc);
@@ -656,7 +664,6 @@ AcpiExConvertToString (
         return_ACPI_STATUS (AE_TYPE);
     }
 
-
     /*
      * If we are about to overwrite the original object on the operand stack,
      * we must remove a reference on the original object because we are
@@ -681,6 +688,7 @@ AcpiExConvertToString (
  *
  * PARAMETERS:  DestinationType     - Current type of the destination
  *              SourceDesc          - Source object to be converted.
+ *              ResultDesc          - Where the converted object is returned
  *              WalkState           - Current method state
  *
  * RETURN:      Status
@@ -776,6 +784,8 @@ AcpiExConvertToTargetType (
 
 
         default:
+            ACPI_REPORT_ERROR (("Bad destination type during conversion: %X\n",
+                DestinationType));
             Status = AE_AML_INTERNAL;
             break;
         }
@@ -795,6 +805,8 @@ AcpiExConvertToTargetType (
             GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs),
             WalkState->OpInfo->Name, AcpiUtGetTypeName (DestinationType)));
 
+        ACPI_REPORT_ERROR (("Bad Target Type (ARGI): %X\n",
+            GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs)))
         Status = AE_AML_INTERNAL;
     }
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2003/04/26 14:10:06 ragge Exp $
+# $NetBSD: GENERIC,v 1.113.2.1 2004/08/03 10:42:22 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.113.2.1 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -54,7 +54,6 @@ options 	KTRACE
 options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	DIAGNOSTIC
 #options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG,LOCKDEBUG
-options 	USE_TOPDOWN_VM	# gives larger address space
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
@@ -79,6 +78,19 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 # All supported filesystem types
 file-system 	FFS
@@ -114,6 +126,7 @@ options 	SYSVSEM
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
@@ -137,6 +150,7 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -178,6 +192,8 @@ asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
+lcspx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
+#lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 rd*		at hdc0 drive?		# RD5x disks
@@ -190,7 +206,7 @@ le0		at ibus0		# LANCE ethernet (MV3400)
 #shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI
-cpu*		at bi? node?		# KA820/KA825 cpu
+cpu*		at bi? node?		# KA820/KA825 CPU
 mem*		at bi? node?		# Memory subsystems
 #uba*		at bi? node?		# DWBUA BI-Unibus adapter
 ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
@@ -220,6 +236,7 @@ mtc*		at uba? csr 0174500	# Tape MSCP ctlr
 #qv0		at uba? csr 0177400	# Monochrome graphics
 de*		at uba? csr 0174510	# DELUA/DEUNA
 qe*		at uba? csr 0174440	# DEQNA/DELQA
+qt*		at uba? csr 0174440	# DELQA-PLUS in Turbo mode
 dhu*		at uba? csr 0160440	# DHU-11
 #dmf*		at uba? csr 0160340	# DMF-32
 dz*		at uba? csr 0160100	# DZ-11
@@ -251,6 +268,8 @@ uk*		at scsibus? target? lun?
 
 # VAXstation graphics support
 wsdisplay0	at smg0
+wsdisplay0	at lcspx0
+#wsdisplay0	at lcg0
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
@@ -292,3 +311,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

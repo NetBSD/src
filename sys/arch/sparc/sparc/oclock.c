@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: oclock.c,v 1.7.2.1 2004/08/03 10:41:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
  *
  * Only 4/100's and 4/200's have this old clock device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.7.2.1 2004/08/03 10:41:08 skrll Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>
@@ -209,7 +213,6 @@ oclockattach(parent, self, aux)
 void
 oclock_init()
 {
-	int dummy;
 
 	profhz = hz = 100;
 	tick = 1000000 / hz;
@@ -220,7 +223,7 @@ oclock_init()
 
 	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
 	intersil_disable();		/* disable clock */
-	dummy = intersil_clear();	/* clear interrupts */
+	(void)intersil_clear();		/* clear interrupts */
 	ienab_bis(IE_L10);		/* enable l10 interrupt */
 	intersil_enable();		/* enable clock */
 }
@@ -234,11 +237,20 @@ int
 oclockintr(cap)
 	void *cap;
 {
-	volatile int discard;
+	int s;
 
-	discard = intersil_clear();
+	/*
+	 * Protect the clearing of the clock interrupt.  If we don't
+	 * do this, and we're interrupted (by the zs, for example),
+	 * the clock stops!
+	 * XXX WHY DOES THIS HAPPEN?
+	 */
+	s = splhigh();
+
+	(void)intersil_clear();
 	ienab_bic(IE_L10);  /* clear interrupt */
 	ienab_bis(IE_L10);  /* enable interrupt */
+	splx(s);
 
 	hardclock((struct clockframe *)cap);
 	return (1);

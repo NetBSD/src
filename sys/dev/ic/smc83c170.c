@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.53.2.1 2004/08/03 10:46:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53 2003/01/31 00:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.1 2004/08/03 10:46:19 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -371,6 +371,7 @@ epic_start(ifp)
 	struct epic_fraglist *fr;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, opending, seg;
+	u_int len;
 
 	/*
 	 * Remember the previous txpending and the first transmit
@@ -453,10 +454,11 @@ epic_start(ifp)
 			fr->ef_frags[seg].ef_length =
 			    dmamap->dm_segs[seg].ds_len;
 		}
-		if (m0->m_pkthdr.len < ETHER_PAD_LEN) {
+		len = m0->m_pkthdr.len;
+		if (len < ETHER_PAD_LEN) {
 			fr->ef_frags[seg].ef_addr = sc->sc_nulldma;
-			fr->ef_frags[seg].ef_length =
-			    ETHER_PAD_LEN - m0->m_pkthdr.len;
+			fr->ef_frags[seg].ef_length = ETHER_PAD_LEN - len;
+			len = ETHER_PAD_LEN;
 			seg++;
 		}
 		fr->ef_nfrags = seg;
@@ -476,7 +478,6 @@ epic_start(ifp)
 		 * Fill in the transmit descriptor.
 		 */
 		txd->et_control = ET_TXCTL_LASTDESC | ET_TXCTL_FRAGLIST;
-		txd->et_txlength = max(m0->m_pkthdr.len, ETHER_PAD_LEN);
 
 		/*
 		 * If this is the first descriptor we're enqueueing,
@@ -484,9 +485,10 @@ epic_start(ifp)
 		 * a race condition.  We'll do it below.
 		 */
 		if (nexttx == firsttx)
-			txd->et_txstatus = 0;
+			txd->et_txstatus = TXSTAT_TXLENGTH(len);
 		else
-			txd->et_txstatus = ET_TXSTAT_OWNER;
+			txd->et_txstatus =
+			    TXSTAT_TXLENGTH(len) | ET_TXSTAT_OWNER;
 
 		EPIC_CDTXSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -529,7 +531,7 @@ epic_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descriptor to the EPIC now.
 		 */
-		EPIC_CDTX(sc, firsttx)->et_txstatus = ET_TXSTAT_OWNER;
+		EPIC_CDTX(sc, firsttx)->et_txstatus |= ET_TXSTAT_OWNER;
 		EPIC_CDTXSYNC(sc, firsttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -612,7 +614,7 @@ epic_intr(arg)
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
 	struct mbuf *m;
-	u_int32_t intstat;
+	u_int32_t intstat, rxstatus, txstatus;
 	int i, claimed = 0;
 	u_int len;
 
@@ -643,7 +645,8 @@ epic_intr(arg)
 			EPIC_CDRXSYNC(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-			if (rxd->er_rxstatus & ER_RXSTAT_OWNER) {
+			rxstatus = rxd->er_rxstatus;
+			if (rxstatus & ER_RXSTAT_OWNER) {
 				/*
 				 * We have processed all of the
 				 * receive buffers.
@@ -657,11 +660,11 @@ epic_intr(arg)
 			 * The buffer will be reused the next time the
 			 * descriptor comes up in the ring.
 			 */
-			if ((rxd->er_rxstatus & ER_RXSTAT_PKTINTACT) == 0) {
-				if (rxd->er_rxstatus & ER_RXSTAT_CRCERROR)
+			if ((rxstatus & ER_RXSTAT_PKTINTACT) == 0) {
+				if (rxstatus & ER_RXSTAT_CRCERROR)
 					printf("%s: CRC error\n",
 					    sc->sc_dev.dv_xname);
-				if (rxd->er_rxstatus & ER_RXSTAT_ALIGNERROR)
+				if (rxstatus & ER_RXSTAT_ALIGNERROR)
 					printf("%s: alignment error\n",
 					    sc->sc_dev.dv_xname);
 				ifp->if_ierrors++;
@@ -675,7 +678,7 @@ epic_intr(arg)
 			/*
 			 * The EPIC includes the CRC with every packet.
 			 */
-			len = rxd->er_rxlength;
+			len = RXSTAT_RXLENGTH(rxstatus);
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -775,7 +778,8 @@ epic_intr(arg)
 			EPIC_CDTXSYNC(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-			if (txd->et_txstatus & ET_TXSTAT_OWNER)
+			txstatus = txd->et_txstatus;
+			if (txstatus & ET_TXSTAT_OWNER)
 				break;
 
 			EPIC_CDFLSYNC(sc, i, BUS_DMASYNC_POSTWRITE);
@@ -790,13 +794,13 @@ epic_intr(arg)
 			/*
 			 * Check for errors and collisions.
 			 */
-			if ((txd->et_txstatus & ET_TXSTAT_PACKETTX) == 0)
+			if ((txstatus & ET_TXSTAT_PACKETTX) == 0)
 				ifp->if_oerrors++;
 			else
 				ifp->if_opackets++;
 			ifp->if_collisions +=
-			    TXSTAT_COLLISIONS(txd->et_txstatus);
-			if (txd->et_txstatus & ET_TXSTAT_CARSENSELOST)
+			    TXSTAT_COLLISIONS(txstatus);
+			if (txstatus & ET_TXSTAT_CARSENSELOST)
 				printf("%s: lost carrier\n",
 				    sc->sc_dev.dv_xname);
 		}
@@ -1534,7 +1538,7 @@ epic_mediachange(ifp)
 	if (miisc->mii_flags & MIIF_HAVEFIBER) {
 		/* XXX XXX assume it's a Level1 - should check */
 
-		/* We have to powerup fiber tranceivers */
+		/* We have to powerup fiber transceivers */
 		cfg = PHY_READ(miisc, MII_LXTPHY_CONFIG);
 		if (IFM_SUBTYPE(media) == IFM_100_FX) {
 #ifdef EPICMEDIADEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.34 2003/05/10 23:12:41 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.34.2.1 2004/08/03 10:42:35 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,10 @@
  *  Handle disk media changes.
  *  Dual-port operations should be supported.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.1 2004/08/03 10:42:35 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -380,7 +384,7 @@ hper1:
 		bc = bus_space_read_4(md->md_mba->sc_iot,
 		    md->md_mba->sc_ioh, MBA_BC);
 		byte = ~(bc >> 16);
-		diskerr(buf, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
+		diskerr(bp, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
 		    btodb(bp->b_bcount - byte), sc->sc_disk.dk_label);
 		er1 &= ~(1<<HPER1_DCK);
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.12 2003/05/14 13:03:36 wiz Exp $ */
+/* $NetBSD: if_tireg.h,v 1.12.2.1 2004/08/03 10:49:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -966,13 +966,24 @@ struct ti_event_desc {
 /*
  * Register access macros. The Tigon always uses memory mapped register
  * accesses and all registers must be accessed with 32 bit operations.
+ * The Tigon can operate in big-endian mode, so we always write to the
+ * registers in native byte order. We assume that all big-endian hosts
+ * with a PCI bus have __BUS_SPACE_HAS_STREAM_METHODS defined.
  */
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_stream_4(sc->ti_btag, sc->ti_bhandle, (reg), (val))
+
+#define CSR_READ_4(sc, reg)		\
+	bus_space_read_stream_4(sc->ti_btag, sc->ti_bhandle, (reg))
+#else
 #define CSR_WRITE_4(sc, reg, val)	\
 	bus_space_write_4(sc->ti_btag, sc->ti_bhandle, (reg), (val))
 
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->ti_btag, sc->ti_bhandle, (reg))
+#endif
 
 #define TI_SETBIT(sc, reg, x)	\
 	CSR_WRITE_4(sc, (reg), (CSR_READ_4(sc, (reg)) | (x)))
@@ -985,9 +996,15 @@ struct ti_event_desc {
  * allocated for the standard, mini and jumbo receive rings.
  */
 
-#define TI_SSLOTS	64 /* 256 */
-#define TI_MSLOTS	64 /* 256 */
-#define TI_JSLOTS	64 /* 256 */
+#ifndef TI_SSLOTS
+#define TI_SSLOTS	256
+#endif
+#ifndef TI_MSLOTS
+#define TI_MSLOTS	256
+#endif
+#ifndef TI_JSLOTS
+#define TI_JSLOTS	384
+#endif
 #define TI_RSLOTS	128
 
 #define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))

@@ -1,8 +1,8 @@
-/*	$NetBSD: readufs.h,v 1.4 2003/04/09 12:57:14 itohy Exp $	*/
-/*	from Id: readufs.h,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
+/*	$NetBSD: readufs.h,v 1.4.2.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	from Id: readufs.h,v 1.9 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@netbsd.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
  * Public domain.
  */
 
@@ -30,6 +30,7 @@ union ufs_dinode {
 # define di_common	di2
 #endif
 
+/* for fields of same names and different locations */
 #if !(defined(USE_UFS1) && defined(USE_UFS2))
 # ifdef USE_UFS1
 #  define di_thisver	di1
@@ -39,11 +40,15 @@ union ufs_dinode {
 # endif
 #endif
 
+/* this is a size hack */
 #if defined(USE_UFS1) && defined(USE_UFS2)
 # define DI_SIZE(di)	((di)->di1.di_size)
 #else
 # define DI_SIZE(di)	((di)->di_thisver.di_size)
 #endif
+/* and may break following fields on UFS2 */
+#define di_gid		di_gid__is_not_available
+#define di_blksize	di_blksize__is_not_available
 
 /*
  * filesystem information
@@ -127,9 +132,9 @@ int try_lfs __P((void));
 
 #ifdef __GNUC__
 # ifndef alloca
-#  define alloca(n)     __builtin_alloca(n)
+#  define alloca(n)	__builtin_alloca(n)
 # endif
 # ifndef strcmp
-#  define strcmp(p, q)  __builtin_strcmp(p, q)
+#  define strcmp(p, q)	__builtin_strcmp(p, q)
 # endif
 #endif

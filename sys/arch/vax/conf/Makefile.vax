@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.70 2002/11/05 14:35:33 thorpej Exp $
+#	$NetBSD: Makefile.vax,v 1.70.6.1 2004/08/03 10:42:22 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -34,8 +34,10 @@ GENASSYM=	${VAX}/vax/genassym.cf
 CPPFLAGS+=	-D_VAX_INLINE_
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 .if ${OBJECT_FMT} == "ELF"
+.if ${HAVE_GCC3} == "no"
 CFLAGS+=	-mno-asm-pic
 AFLAGS+=	-mno-asm-pic
+.endif
 .else
 CFLAGS+=	-fno-pic
 .endif
@@ -74,6 +76,8 @@ LINKFLAGS_NORMAL=	-S
 tmscp.o ts.o uba.o uda.o clock.o emulate.o intvec.o: Makefile
 sbi.o subr.o: Makefile
 
+unimpl_emul.o: assym.h
+
 ##
 ## (7) misc settings
 ##
@@ -97,3 +101,8 @@ sbi.o subr.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

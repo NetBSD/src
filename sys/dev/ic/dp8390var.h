@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.23 2001/02/12 18:56:26 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.23.24.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -116,7 +116,7 @@ struct dp8390_softc {
  * Compile-time config flags
  */
 /*
- * This sets the default for enabling/disablng the tranceiver.
+ * This sets the default for enabling/disabling the tranceiver.
  */
 #define DP8390_DISABLE_TRANCEIVER	0x0001
 

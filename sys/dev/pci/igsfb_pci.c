@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.7 2003/05/10 01:51:56 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.7.2.1 2004/08/03 10:49:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.7 2003/05/10 01:51:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.7.2.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ igsfb_pci_attach(parent, self, aux)
 	int isconsole;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.8 2002/08/03 00:13:02 itojun Exp $ */
+/* $NetBSD: bt463.c,v 1.8.6.1 2004/08/03 10:46:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.8 2002/08/03 00:13:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.8.6.1 2004/08/03 10:46:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,9 @@ struct bt463data {
 	char curcmap_r[2];			/* cursor colormap */
 	char curcmap_g[2];
 	char curcmap_b[2];
+	char tmpcurcmap_r[2];			/* tmp cursor colormap */
+	char tmpcurcmap_g[2];
+	char tmpcurcmap_b[2];
 	char cmap_r[BT463_NCMAP_ENTRIES];	/* colormap */
 	char cmap_g[BT463_NCMAP_ENTRIES];
 	char cmap_b[BT463_NCMAP_ENTRIES];
@@ -366,29 +369,33 @@ bt463_set_cmap(rc, cmapp)
 {
 	struct bt463data *data = (struct bt463data *)rc;
 	u_int count, index;
-	int s;
+	uint8_t r[BT463_NCMAP_ENTRIES];
+	uint8_t g[BT463_NCMAP_ENTRIES];
+	uint8_t b[BT463_NCMAP_ENTRIES];
+	int s, error;
 
 	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
 	    cmapp->count > BT463_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
-	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
-		return (EFAULT);
-
-	s = spltty();
 
 	index = cmapp->index;
 	count = cmapp->count;
-	copyin(cmapp->red, &data->cmap_r[index], count);
-	copyin(cmapp->green, &data->cmap_g[index], count);
-	copyin(cmapp->blue, &data->cmap_b[index], count);
-
-	data->changed |= DATA_CMAP_CHANGED;
-
+	error = copyin(cmapp->red, &r[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->green, &g[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->blue, &b[index], count);
+	if (error)
+		return error;
+	s = spltty();
+	memcpy(&data->cmap_r[index], &r[index], count);
+	memcpy(&data->cmap_g[index], &g[index], count);
+	memcpy(&data->cmap_b[index], &b[index], count);
+ 	data->changed |= DATA_CMAP_CHANGED;
 	data->ramdac_sched_update(data->cookie, bt463_update);
 	splx(s);
-
 	return (0);
 }
 
@@ -423,17 +430,23 @@ bt463_check_curcmap(rc, cursorp)
 	struct ramdac_cookie *rc;
 	struct wsdisplay_cursor *cursorp;
 {
-	int count;
+	struct bt463data *data = (struct bt463data *)rc;
+	int count, index, error;
 
-	if ((u_int)cursorp->cmap.index > 2 ||
-	    ((u_int)cursorp->cmap.index +
-	     (u_int)cursorp->cmap.count) > 2)
+	if (cursorp->cmap.index > 2 ||
+	    (cursorp->cmap.index + cursorp->cmap.count) > 2)
 		return (EINVAL);
-	count = cursorp->cmap.count; 
-	if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
-	    !uvm_useracc(cursorp->cmap.green, count, B_READ) ||
-	    !uvm_useracc(cursorp->cmap.blue, count, B_READ))
-		return (EFAULT);
+	count = cursorp->cmap.count;
+	index = cursorp->cmap.index;
+	error = copyin(cursorp->cmap.red, &data->tmpcurcmap_r[index], count);
+	if (error)
+		return error;
+	error = copyin(cursorp->cmap.green, &data->tmpcurcmap_g[index], count);
+	if (error)
+		return error;
+	error = copyin(cursorp->cmap.blue, &data->tmpcurcmap_b[index], count);
+	if (error)
+		return error;
 	return (0);
 }
 
@@ -445,12 +458,11 @@ bt463_set_curcmap(rc, cursorp)
 	struct bt463data *data = (struct bt463data *)rc;
 	int count, index;
 
-	/* can't fail; parameters have already been checked. */
 	count = cursorp->cmap.count;
 	index = cursorp->cmap.index;
-	copyin(cursorp->cmap.red, &data->curcmap_r[index], count);
-	copyin(cursorp->cmap.green, &data->curcmap_g[index], count);
-	copyin(cursorp->cmap.blue, &data->curcmap_b[index], count);
+	memcpy(&data->curcmap_r[index], &data->tmpcurcmap_r[index], count);
+	memcpy(&data->curcmap_g[index], &data->tmpcurcmap_g[index], count);
+	memcpy(&data->curcmap_b[index], &data->tmpcurcmap_b[index], count);
 	data->changed |= DATA_CURCMAP_CHANGED;
 	data->ramdac_sched_update(data->cookie, bt463_update);
 }

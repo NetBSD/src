@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exfield - ACPI AML (p-code) execution - field manipulation
- *              xRevision: 118 $
+ *              xRevision: 120 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.6.2.1 2004/08/03 10:45:08 skrll Exp $");
 
 #define __EXFIELD_C__
 
@@ -247,10 +248,10 @@ AcpiExReadDataFromField (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
-        "Obj=%p Type=%X Buf=%p Len=%X\n",
+        "FieldRead [TO]:   Obj %p, Type %X, Buf %p, ByteLen %X\n",
         ObjDesc, ACPI_GET_OBJECT_TYPE (ObjDesc), Buffer, (UINT32) Length));
     ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
-        "FieldWrite: BitLen=%X BitOff=%X ByteOff=%X\n",
+        "FieldRead [FROM]: BitLen %X, BitOff %X, ByteOff %X\n",
         ObjDesc->CommonField.BitLength,
         ObjDesc->CommonField.StartFieldBitOffset,
         ObjDesc->CommonField.BaseByteOffset));
@@ -435,10 +436,13 @@ AcpiExWriteDataToField (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
-        "Obj=%p Type=%X Buf=%p Len=%X\n",
-        ObjDesc, ACPI_GET_OBJECT_TYPE (ObjDesc), Buffer, Length));
+        "FieldWrite [FROM]: Obj %p (%s:%X), Buf %p, ByteLen %X\n",
+        SourceDesc, AcpiUtGetTypeName (ACPI_GET_OBJECT_TYPE (SourceDesc)),
+        ACPI_GET_OBJECT_TYPE (SourceDesc), Buffer, Length));
     ACPI_DEBUG_PRINT ((ACPI_DB_BFIELD,
-        "FieldRead: BitLen=%X BitOff=%X ByteOff=%X\n",
+        "FieldWrite [TO]:   Obj %p (%s:%X), BitLen %X, BitOff %X, ByteOff %X\n",
+        ObjDesc, AcpiUtGetTypeName (ACPI_GET_OBJECT_TYPE (ObjDesc)),
+        ACPI_GET_OBJECT_TYPE (ObjDesc),
         ObjDesc->CommonField.BitLength,
         ObjDesc->CommonField.StartFieldBitOffset,
         ObjDesc->CommonField.BaseByteOffset));

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ucontext.h,v 1.2 2003/01/19 16:47:17 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_ucontext.h,v 1.2.2.1 2004/08/03 10:44:35 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ void *svr4_32_getmcontext __P((struct lwp *, struct svr4_32_mcontext *,
 int svr4_32_setmcontext __P((struct lwp *, struct svr4_32_mcontext *, 
 			     netbsd32_u_long));
 
-void svr4_32_getcontext __P((struct lwp *, struct svr4_32_ucontext *, sigset_t *));
+void svr4_32_getcontext __P((struct lwp *, struct svr4_32_ucontext *, const sigset_t *));
 int svr4_32_setcontext __P((struct lwp *, struct svr4_32_ucontext *));
 
 #endif /* !_SVR4_32_UCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.8.6.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.8 2002/10/02 16:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.8.6.1 2004/08/03 10:45:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.8 2002/10/02 16:33:39 thorpej Exp 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/advlib.h>
 #include <dev/ic/adv.h>
@@ -104,8 +104,8 @@ adv_cardbus_match(parent, match, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == CARDBUS_VENDOR_ADVSYS &&
-	    CARDBUS_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ADVSYS_ULTRA)
+	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS &&
+	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADVSYS_ULTRA)
 		return (1);
 
 	return (0);

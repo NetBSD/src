@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2003/06/15 23:09:08 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _X86_PCI_MACHDEP_H
+#define _X86_PCI_MACHDEP_H
 
 /*
  * Machine-specific definitions for PCI autoconfiguration.
@@ -103,9 +106,6 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
-
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
  * BY PORTABLE CODE.
@@ -117,3 +117,5 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * controller on a PC.
  */
 #define	X86_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
+
+#endif /* _X86_PCI_MACHDEP_H */

@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19 2002/10/02 16:52:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19.6.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19 2002/10/02 16:52:18 thorpej Exp
 
 #include "opt_isicpcmcia.h"
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -213,38 +213,43 @@ isic_pcmcia_attach(parent, self, aux)
 
 	/* Which card is it? */
 	cde = find_matching_card(pa);
-	if (cde == NULL)
-		goto bad2;	/* oops - not found?!? */
+	if (cde == NULL) {
+		printf("%s: attach failed, couldn't find matching card\n",
+		    psc->sc_isic.sc_dev.dv_xname);
+		return;
+	}
+	printf(": %s\n", cde->name);
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
 	pcmcia_function_enable(pa->pf);
 
-	if (!cde->attach(psc, cfe, pa))
-		goto bad;	/* Ooops ? */
-
-	/* Announce card name */
-	printf(": %s\n", cde->name);
+	if (!cde->attach(psc, cfe, pa)) {
+		pcmcia_function_disable(psc->sc_pf);
+		printf("%s: attach failed, card-specific attach unsuccesful\n",
+		    psc->sc_isic.sc_dev.dv_xname);
+		return;
+	}
 
 	/* XXX - we generate interrupts during card initialization.
 	   Block them for now, until the handler is established. */
 	s = splhigh();
-	
+
 	/* MI initilization */
 	sc->sc_cardtyp = cde->card_type;
 	if (isic_pcmcia_isdn_attach(sc, cde->name) == 0) {
 		/* setup interrupt */
 		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
-	} else
-		goto bad;
+	} else {
+		pcmcia_function_disable(psc->sc_pf);
+		splx(s);
+		printf("%s: attach failed, couldn't establish interrupt\n",
+		    psc->sc_isic.sc_dev.dv_xname);
+		return;
+	}
 
 	splx(s);
 	return;
-bad:
-	pcmcia_function_disable(psc->sc_pf);
-	splx(s);
-bad2:
-	printf("%s: attach failed\n", psc->sc_isic.sc_dev.dv_xname);
 }
 
 static int

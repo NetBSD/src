@@ -1,11 +1,11 @@
-/*	$NetBSD: joy_isa.c,v 1.4 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.4.6.1 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
  * All rights reserved.
  *
  * Ported to NetBSD by Matthieu Herrb <matthieu@laas.fr>.  Additional
- * modification by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * modification by Jason R. Thorpe <thorpej@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4.6.1 2004/08/03 10:47:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

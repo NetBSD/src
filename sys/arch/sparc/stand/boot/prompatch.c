@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.6 2002/12/16 13:01:01 jdc Exp $ */
+/*	$NetBSD: prompatch.c,v 1.6.6.1 2004/08/03 10:41:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/promlib.h>
 
 char *match_c5ip(void);
@@ -100,10 +101,10 @@ static struct patch_entry patch_js1_obp[] = {
 static struct patch_entry patch_js1_ofw[] = {
 
 /*
- * JS1/OFW has no cpu node in the device tree.  Create one to save us a
+ * JS1/OFW has no CPU node in the device tree.  Create one to save us a
  * _lot_ of headache in cpu.c and mainbus_attach.  Mostly copied from
  * OBP2.  While clock-frequency is usually at the root node, add it
- * here for brevity as kernel checks cpu node for this property anyway.
+ * here for brevity as kernel checks CPU node for this property anyway.
  */
 { "cpu: creating node ", /* NB: space at the end is intentional */
 	"0 0 0 0 \" /\" begin-package"
@@ -202,7 +203,7 @@ static struct prom_patch prom_patch_tab[] = {
  */
 char * match_c5ip(void)
 {
-	if (strcmp(PROM_getpropstring(prom_findroot(), "banner-name"),
+	if (strcmp(prom_getpropstring(prom_findroot(), "banner-name"),
 	    "Cycle Computer Corporation") == 0)
 		 return "Cycle 5 IP";
 
@@ -224,7 +225,7 @@ prom_patch(void)
 	if (prom_version() == PROM_OLDMON)
 		return;		/* don't bother - no forth in this */
 
-	propval = PROM_getpropstringA(prom_findroot(), "name",
+	propval = prom_getpropstringA(prom_findroot(), "name",
 				 namebuf, sizeof(namebuf));
 	if (propval == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.6 2002/10/02 16:02:31 thorpej Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.6.6.1 2004/08/03 10:42:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.6.6.1 2004/08/03 10:42:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -206,7 +209,7 @@ sun68k_vme_probe(cookie, addr, len, mod, datasize, callback, arg)
 	error = vmebus_translate(mod, addr, &iospace, &paddr);
 	if (error == 0)
 		error = bus_space_map2(sc->sc_bustag, iospace, paddr, len, 
-			0, NULL, &handle);
+			0, 0, &handle);
 	if (error)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2003/05/08 01:04:34 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,11 +49,6 @@
 
 #include <machine/cpufunc.h>
 
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
-
 /*
  * compiler barrier: prevent reordering of instructions.
  * XXX something similar will move to <sys/cdefs.h>
@@ -66,22 +61,22 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #ifdef LOCKDEBUG
 
-extern void __cpu_simple_lock_init __P((__cpu_simple_lock_t *));
-extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
-extern int __cpu_simple_lock_try __P((__cpu_simple_lock_t *));
-extern void __cpu_simple_unlock __P((__cpu_simple_lock_t *));
+extern void __cpu_simple_lock_init(__cpu_simple_lock_t *);
+extern void __cpu_simple_lock(__cpu_simple_lock_t *);
+extern int __cpu_simple_lock_try(__cpu_simple_lock_t *);
+extern void __cpu_simple_unlock(__cpu_simple_lock_t *);
 
 #else
 
 #include <machine/atomic.h>
 
-static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
 	__attribute__((__unused__));
 
 static __inline void
@@ -122,5 +117,9 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 }
 
 #endif /* !LOCKDEBUG */
+
+#ifdef _KERNEL
+#define	SPINLOCK_SPIN_HOOK	x86_pause()
+#endif
 
 #endif /* _I386_LOCK_H_ */

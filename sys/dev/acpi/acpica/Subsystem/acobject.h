@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: acobject.h - Definition of ACPI_OPERAND_OBJECT  (Internal object only)
- *       xRevision: 118 $
+ *       xRevision: 123 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -185,9 +185,9 @@
  * Common fields for objects that support ASL notifications
  */
 #define ACPI_COMMON_NOTIFY_INFO \
-    union acpi_operand_object       *SysHandler;         /* Handler for system notifies */\
-    union acpi_operand_object       *DrvHandler;         /* Handler for driver notifies */\
-    union acpi_operand_object       *AddrHandler;        /* Handler for Address space */
+    union acpi_operand_object       *SystemNotify;      /* Handler for system notifies */\
+    union acpi_operand_object       *DeviceNotify;      /* Handler for driver notifies */\
+    union acpi_operand_object       *Handler;           /* Handler for Address space */
 
 
 /******************************************************************************
@@ -280,6 +280,7 @@ typedef struct acpi_object_mutex
 {
     ACPI_OBJECT_COMMON_HEADER
     UINT16                          SyncLevel;
+    UINT16                          PreviousSyncLevel;
     UINT16                          AcquisitionDepth;
     struct acpi_thread_state        *OwnerThread;
     void                            *Semaphore;
@@ -295,7 +296,7 @@ typedef struct acpi_object_region
     ACPI_OBJECT_COMMON_HEADER
 
     UINT8                           SpaceId;
-    union acpi_operand_object       *AddrHandler;       /* Handler for system notifies */
+    union acpi_operand_object       *Handler;           /* Handler for region access */
     ACPI_NAMESPACE_NODE             *Node;              /* containing object */
     union acpi_operand_object       *Next;
     UINT32                          Length;
@@ -322,6 +323,7 @@ typedef struct acpi_object_device
 {
     ACPI_OBJECT_COMMON_HEADER
     ACPI_COMMON_NOTIFY_INFO
+    ACPI_GPE_BLOCK_INFO             *GpeBlock;
 
 } ACPI_OBJECT_DEVICE;
 
@@ -542,8 +544,8 @@ typedef union acpi_operand_object
     ACPI_OBJECT_BUFFER_FIELD        BufferField;
     ACPI_OBJECT_BANK_FIELD          BankField;
     ACPI_OBJECT_INDEX_FIELD         IndexField;
-    ACPI_OBJECT_NOTIFY_HANDLER      NotifyHandler;
-    ACPI_OBJECT_ADDR_HANDLER        AddrHandler;
+    ACPI_OBJECT_NOTIFY_HANDLER      Notify;
+    ACPI_OBJECT_ADDR_HANDLER        AddressSpace;
     ACPI_OBJECT_REFERENCE           Reference;
     ACPI_OBJECT_EXTRA               Extra;
     ACPI_OBJECT_DATA                Data;
@@ -561,21 +563,22 @@ typedef union acpi_operand_object
 
 /* Object descriptor types */
 
-#define ACPI_DESC_TYPE_CACHED           0x11        /* Used only when object is cached */
-#define ACPI_DESC_TYPE_STATE            0x20
-#define ACPI_DESC_TYPE_STATE_UPDATE     0x21
-#define ACPI_DESC_TYPE_STATE_PACKAGE    0x22
-#define ACPI_DESC_TYPE_STATE_CONTROL    0x23
-#define ACPI_DESC_TYPE_STATE_RPSCOPE    0x24
-#define ACPI_DESC_TYPE_STATE_PSCOPE     0x25
-#define ACPI_DESC_TYPE_STATE_WSCOPE     0x26
-#define ACPI_DESC_TYPE_STATE_RESULT     0x27
-#define ACPI_DESC_TYPE_STATE_NOTIFY     0x28
-#define ACPI_DESC_TYPE_STATE_THREAD     0x29
-#define ACPI_DESC_TYPE_WALK             0x44
-#define ACPI_DESC_TYPE_PARSER           0x66
-#define ACPI_DESC_TYPE_OPERAND          0x88
-#define ACPI_DESC_TYPE_NAMED            0xAA
+#define ACPI_DESC_TYPE_CACHED           0x01        /* Used only when object is cached */
+#define ACPI_DESC_TYPE_STATE            0x02
+#define ACPI_DESC_TYPE_STATE_UPDATE     0x03
+#define ACPI_DESC_TYPE_STATE_PACKAGE    0x04
+#define ACPI_DESC_TYPE_STATE_CONTROL    0x05
+#define ACPI_DESC_TYPE_STATE_RPSCOPE    0x06
+#define ACPI_DESC_TYPE_STATE_PSCOPE     0x07
+#define ACPI_DESC_TYPE_STATE_WSCOPE     0x08
+#define ACPI_DESC_TYPE_STATE_RESULT     0x09
+#define ACPI_DESC_TYPE_STATE_NOTIFY     0x0A
+#define ACPI_DESC_TYPE_STATE_THREAD     0x0B
+#define ACPI_DESC_TYPE_WALK             0x0C
+#define ACPI_DESC_TYPE_PARSER           0x0D
+#define ACPI_DESC_TYPE_OPERAND          0x0E
+#define ACPI_DESC_TYPE_NAMED            0x0F
+#define ACPI_DESC_TYPE_MAX              0x0F
 
 
 typedef union acpi_descriptor

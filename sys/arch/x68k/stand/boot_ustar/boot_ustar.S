@@ -1,9 +1,9 @@
 | file: boot_ustar.S
 | author: chapuni(webmaster@chapuni.com)
-|         Yasha(itohy@netbsd.org)
-|	  minoura@netbsd.org
+|         Yasha(itohy@NetBSD.org)
+|	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.4 2002/05/19 08:14:13 isaki Exp $
+| $NetBSD: boot_ustar.S,v 1.4.8.1 2004/08/03 10:42:56 skrll Exp $
 
 | supports floppy only
 

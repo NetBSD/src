@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 2003/04/10 22:07:05 christos Exp $
+# $NetBSD: INSTALL,v 1.20.2.1 2004/08/03 10:42:03 skrll Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -30,6 +30,7 @@ maxusers	2
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
@@ -56,6 +57,8 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -188,7 +191,7 @@ pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files

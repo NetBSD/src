@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscall.h,v 1.12 2003/01/18 23:42:16 thorpej Exp $ */
+/* $NetBSD: sunos32_syscall.h,v 1.12.2.1 2004/08/03 10:44:32 skrll Exp $ */
 
 /*
  * System call numbers.
@@ -362,9 +362,12 @@
 /* syscall: "netbsd32_poll" ret: "int" args: "netbsd32_pollfdp_t" "u_int" "int" */
 #define	SUNOS32_SYS_netbsd32_poll	153
 
+#ifdef NFSSERVER
 /* syscall: "nfssvc" ret: "int" args: "int" */
 #define	SUNOS32_SYS_nfssvc	155
 
+#else
+#endif
 /* syscall: "compat_43_netbsd32_ogetdirentries" ret: "int" args: "int" "netbsd32_charp" "u_int" "netbsd32_longp" */
 #define	SUNOS32_SYS_compat_43_netbsd32_ogetdirentries	156
 
@@ -377,12 +380,15 @@
 /* syscall: "unmount" ret: "int" args: "netbsd32_charp" */
 #define	SUNOS32_SYS_unmount	159
 
+#ifdef NFS
 /* syscall: "async_daemon" ret: "int" args: */
 #define	SUNOS32_SYS_async_daemon	160
 
 /* syscall: "getfh" ret: "int" args: "netbsd32_charp" "netbsd32_fhandlep_t" */
 #define	SUNOS32_SYS_getfh	161
 
+#else
+#endif
 /* syscall: "compat_09_netbsd32_ogetdomainname" ret: "int" args: "netbsd32_charp" "int" */
 #define	SUNOS32_SYS_compat_09_netbsd32_ogetdomainname	162
 
@@ -401,15 +407,24 @@
 /* syscall: "ustat" ret: "int" args: "int" "sunos32_ustatp_t" */
 #define	SUNOS32_SYS_ustat	168
 
+#ifdef SYSVSEM
 /* syscall: "osemsys" ret: "int" args: "int" "int" "int" "int" "int" */
 #define	SUNOS32_SYS_osemsys	169
 
+#else
+#endif
+#ifdef SYSVMSG
 /* syscall: "omsgsys" ret: "int" args: "int" "int" "int" "int" "int" "int" */
 #define	SUNOS32_SYS_omsgsys	170
 
+#else
+#endif
+#ifdef SYSVSHM
 /* syscall: "oshmsys" ret: "int" args: "int" "int" "int" "int" */
 #define	SUNOS32_SYS_oshmsys	171
 
+#else
+#endif
 /* syscall: "auditsys" ret: "int" args: "netbsd32_charp" */
 #define	SUNOS32_SYS_auditsys	172
 

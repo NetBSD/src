@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.78.2.1 2003/07/02 15:26:06 darrenr Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.78.2.2 2004/08/03 10:47:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,16 +40,16 @@
  * IEEE1394 Open Host Controller Interface
  *	based on OHCI Specification 1.1 (January 6, 2000)
  * The first version to support network interface part is wrtten by
- * Atsushi Onoe <onoe@netbsd.org>.
+ * Atsushi Onoe <onoe@NetBSD.org>.
  */
 
 /*
  * The first version to support isochronous acquisition part is wrtten
- * by HAYAKAWA Koichi <haya@netbsd.org>.
+ * by HAYAKAWA Koichi <haya@NetBSD.org>.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.1 2003/07/02 15:26:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.2 2004/08/03 10:47:56 skrll Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2168,8 +2168,10 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		    (pkt.fp_tcode == IEEE1394_TCODE_READ_REQ_BLOCK)) {
 			len = (pkt.fp_hdr[3] & 0xffff0000) >> 16;
 			naddr = ((u_int64_t)key1 << 32) + key2;
-		} else
+		} else {
 			len = 0;
+			naddr = 0; /* XXX: gcc */
+		}
 		for (fh = LIST_FIRST(&fc->fc_handler); fh != NULL;
 		    fh = LIST_NEXT(fh, fh_list)) {
 			if (pkt.fp_tcode == fh->fh_tcode) {
@@ -2598,7 +2600,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 }
 
 /*
- * Asynchronous Transmit Reponse -- in response of request packet.
+ * Asynchronous Transmit Response -- in response of request packet.
  */
 static void
 fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
@@ -3529,7 +3531,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
 	struct fwohci_pkt pkt;
 	u_int8_t *p;
-	int n, error, spd, hdrlen, maxrec;
+	int n = 0, error, spd, hdrlen, maxrec; /* XXX: gcc */
 #ifdef FW_DEBUG
 	struct mbuf *m;
 #endif
@@ -5012,7 +5014,7 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
 	int packetnum;
 	int copylen, hdrshim, fwisohdrsiz;
-	struct fwohci_desc *fd, *fdprev;
+	struct fwohci_desc *fd, *fdprev = NULL;	/* XXX fdprev use is suspect */
 	u_int8_t *data;
 	int status = 0;
 	u_int32_t tmpbranch;

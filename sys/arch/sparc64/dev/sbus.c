@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.60 2003/05/17 01:38:39 nakayama Exp $ */
+/*	$NetBSD: sbus.c,v 1.60.2.1 2004/08/03 10:41:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -32,6 +32,10 @@
 /*
  * Sbus stuff.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60.2.1 2004/08/03 10:41:24 skrll Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -67,7 +71,6 @@ int sbus_debug = 0;
 
 void sbusreset __P((int));
 
-static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct openprom_intr **, int *, int));
@@ -224,23 +227,27 @@ sbus_attach(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 
 		25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbt = sbus_alloc_bustag(sc);
+	sbt = bus_space_tag_alloc(sc->sc_bustag, sc);
+	sbt->type = SBUS_BUS_SPACE;
+	sbt->sparc_bus_map = _sbus_bus_map;
+	sbt->sparc_intr_establish = sbus_intr_establish;
+
 	sc->sc_dmatag = sbus_alloc_dmatag(sc);
 
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = PROM_getpropint(node, "burst-sizes", 0);
+	sc->sc_burst = prom_getpropint(node, "burst-sizes", 0);
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(node, "ranges", sizeof(struct openprom_range),
-			 &sc->sc_nrange, (void **)&sc->sc_range);
+	error = prom_getprop(node, "ranges", sizeof(struct openprom_range),
+			 &sbt->nranges, &sbt->ranges);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
@@ -304,7 +311,7 @@ sbus_attach(parent, self, aux)
 	 */
 	node0 = OF_child(node);
 	for (node = node0; node; node = OF_peer(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
@@ -329,8 +336,9 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int	error;
 	int n;
 
-	bzero(sa, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	memset(sa, 0, sizeof(struct sbus_attach_args));
+	n = 0;
+	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -340,13 +348,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			 &sa->sa_nreg, (void **)&sa->sa_reg);
+	error = prom_getprop(node, "reg", sizeof(struct openprom_addr),
+			 &sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(PROM_getpropstringA(node, "device_type", buf),
+		    strcmp(prom_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -363,8 +371,8 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	    sa->sa_slot)) != 0)
 		return (error);
 
-	error = PROM_getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+	error = prom_getprop(node, "address", sizeof(u_int32_t),
+			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
 
@@ -387,7 +395,7 @@ sbus_destroy_attach_args(sa)
 	if (sa->sa_promvaddrs)
 		free((void *)sa->sa_promvaddrs, M_DEVBUF);
 
-	bzero(sa, sizeof(struct sbus_attach_args)); /*DEBUG*/
+	memset(sa, 0, sizeof(struct sbus_attach_args)); /*DEBUG*/
 }
 
 
@@ -400,29 +408,15 @@ _sbus_bus_map(t, addr, size, flags, v, hp)
 	vaddr_t v;
 	bus_space_handle_t *hp;
 {
-	struct sbus_softc *sc = t->cookie;
-	int64_t slot = BUS_ADDR_IOSPACE(addr);
-	int64_t offset = BUS_ADDR_PADDR(addr);
-	int i;
+	int error;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
-
-		if (sc->sc_range[i].or_child_space != slot)
-			continue;
-
-		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].or_parent_base + offset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].or_parent_space<<32);
-		DPRINTF(SDB_DVMA,
-("\n_sbus_bus_map: mapping paddr slot %lx offset %lx poffset %lx paddr %lx\n",
-		    (long)slot, (long)offset,
-		    (long)sc->sc_range[i].or_parent_base,
-		    (long)paddr));
-		return (bus_space_map(sc->sc_bustag, paddr, size, flags, hp));
+	if (t->ranges != NULL) {
+		if ((error = bus_space_translate_address_generic(
+				t->ranges, t->nranges, &addr)) != 0)
+			return (error);
 	}
 
-	return (EINVAL);
+	return (bus_space_map(t->parent, addr, size, flags, hp));
 }
 
 
@@ -432,20 +426,20 @@ sbus_bus_addr(t, btype, offset)
 	u_int btype;
 	u_int offset;
 {
-	bus_addr_t baddr;
 	int slot = btype;
-	struct sbus_softc *sc = t->cookie;
+	struct openprom_range *rp;
 	int i;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		if (sc->sc_range[i].or_child_space != slot)
+	for (i = 0; i < t->nranges; i++) {
+		rp = &t->ranges[i];
+		if (rp->or_child_space != slot)
 			continue;
 
-		baddr = sc->sc_range[i].or_parent_base + offset;
-		baddr |= ((bus_addr_t)sc->sc_range[i].or_parent_space<<32);
+		return BUS_ADDR(rp->or_parent_base + offset,
+				rp->or_parent_space);
 	}
 
-	return (baddr);
+	return (0);
 }
 
 
@@ -544,7 +538,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void *)&ipl) == 0) {
+	if (prom_getprop(node, "interrupts", sizeof(int), np, &ipl) == 0) {
 		struct openprom_intr *ip;
 		int pri;
 
@@ -563,9 +557,9 @@ sbus_get_intr(sc, node, ipp, np, slot)
 		 * somehow. Luckily, the interrupt vector has lots of free
 		 * space and we can easily stuff the IPL in there for a while.
 		 */
-		PROM_getpropstringA(node, "device_type", buf);
-		if (!buf[0])
-			PROM_getpropstringA(node, "name", buf);
+		prom_getpropstringA(node, "device_type", buf, sizeof buf);
+		if (buf[0] == '\0')
+			prom_getpropstringA(node, "name", buf, sizeof buf);
 
 		for (i = 0; intrmap[i].in_class; i++) 
 			if (strcmp(intrmap[i].in_class, buf) == 0) {
@@ -650,10 +644,8 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 			}
 #endif
 			/* Enable the interrupt */
-			vec |= INTMAP_V;
-			/* Insert IGN */
-			vec |= sc->sc_ign;
-			/* XXXX */
+			vec |= INTMAP_V | sc->sc_ign |
+				(CPU_UPAID << INTMAP_TID_SHIFT);
 			*(ih->ih_map) = vec;
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
@@ -693,28 +685,6 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	intr_establish(ipl, ih);
 	return (ih);
 }
-
-static bus_space_tag_t
-sbus_alloc_bustag(sc)
-	struct sbus_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (sbt == NULL)
-		return (NULL);
-
-	bzero(sbt, sizeof *sbt);
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
-	sbt->type = SBUS_BUS_SPACE;
-	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
-	sbt->sparc_intr_establish = sbus_intr_establish;
-	return (sbt);
-}
-
 
 static bus_dma_tag_t
 sbus_alloc_dmatag(sc)

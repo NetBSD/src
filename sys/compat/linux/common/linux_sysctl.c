@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_sysctl.c,v 1.9.2.1 2003/07/02 15:25:48 darrenr Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.9.2.2 2004/08/03 10:44:05 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1982, 1986, 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Mike Karels at Berkeley Software Design, Inc.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Brown.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,25 +17,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)kern_sysctl.c	8.9 (Berkeley) 5/20/95
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -43,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.9.2.1 2003/07/02 15:25:48 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.9.2.2 2004/08/03 10:44:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,116 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.9.2.1 2003/07/02 15:25:48 darrenr
 #include <compat/linux/common/linux_sysctl.h>
 #include <compat/linux/common/linux_exec.h>
 
-int linux_kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-int linux_vm_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-int linux_net_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-int linux_proc_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-int linux_fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-#ifdef DEBUG
-int linux_debug_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-#endif
-int linux_dev_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-int linux_bus_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *);
-
-int
-linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
-{
-	struct linux_sys___sysctl_args /* {
-		syscallarg(struct linux___sysctl *) lsp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct linux___sysctl ls;
-	int error;
-	size_t savelen = 0, oldlen = 0;
-	sysctlfn *fn;
-	int name[CTL_MAXNAME];
-	size_t *oldlenp;
-
-
-	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
-		return error;
-	/*
-	 * all top-level sysctl names are non-terminal
-	 */
-	if (ls.nlen > CTL_MAXNAME || ls.nlen < 2)
-		return (EINVAL);
-	error = copyin(ls.name, &name, ls.nlen * sizeof(int));
-	if (error)
-		return (error);
-
-	/*
-	 * For all but CTL_PROC, must be root to change a value.
-	 * For CTL_PROC, must be root, or owner of the proc (and not suid),
-	 * this is checked in proc_sysctl() (once we know the targer proc).
-	 */
-	if (ls.newval != NULL && name[0] != CTL_PROC &&
-		    (error = suser(p->p_ucred, &p->p_acflag)))
-			return error;
-
-	switch (name[0]) {
-	case LINUX_CTL_KERN:
-		fn = linux_kern_sysctl;
-		break;
-	case LINUX_CTL_VM:
-		fn = linux_vm_sysctl;
-		break;
-	case LINUX_CTL_NET:
-		fn = linux_net_sysctl;
-		break;
-	case LINUX_CTL_PROC:
-		fn = linux_proc_sysctl;
-		break;
-	case LINUX_CTL_FS:
-		fn = linux_fs_sysctl;
-		break;
-#ifdef DEBUG
-	case LINUX_CTL_DEBUG:
-		fn = linux_debug_sysctl;
-		break;
-#endif
-	case LINUX_CTL_DEV:
-		fn = linux_dev_sysctl;
-		break;
-	case LINUX_CTL_BUS:
-		fn = linux_bus_sysctl;
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
-
-	/*
-	 * XXX Hey, we wire `oldval', but what about `newval'?
-	 */
-	oldlenp = ls.oldlenp;
-	if (oldlenp) {
-		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
-			return (error);
-		oldlenp = &oldlen;
-	}
-	if (ls.oldval != NULL) {
-		error = uvm_vslock(p, ls.oldval, oldlen,
-		    VM_PROT_READ|VM_PROT_WRITE);
-		savelen = oldlen;
-	}
-	error = (*fn)(name + 1, ls.nlen - 1, ls.oldval, oldlenp, ls.newval,
-	    ls.newlen, l);
-	if (ls.oldval != NULL)
-		uvm_vsunlock(p, ls.oldval, savelen);
-	if (error)
-		return (error);
-	if (ls.oldlenp)
-		error = copyout(&oldlen, ls.oldlenp, sizeof(oldlen));
-	return (error);
-}
-
 char linux_sysname[128] = "Linux";
 #if defined(__i386__) || defined(__powerpc__)
 char linux_release[128] = "2.4.18";
@@ -180,110 +68,170 @@ char linux_release[128] = "2.0.38";
 char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
 #endif
 
+#ifndef _LKM
+static
+#endif
+struct sysctlnode linux_sysctl_root = {
+	.sysctl_flags = SYSCTL_VERSION|
+	    CTLFLAG_ROOT|CTLTYPE_NODE|CTLFLAG_READWRITE,
+	.sysctl_num = 0,
+	.sysctl_name = "(linux_root)",
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+};
+
 /*
- * kernel related system variables.
+ * setup for small sysctl tree used by emulation
+ */
+SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
+{
+	struct sysctlnode *node = &linux_sysctl_root;
+
+	sysctl_createv(clog, 0, &node, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       LINUX_CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "ostype", NULL,
+		       NULL, 0, linux_sysname, sizeof(linux_sysname),
+		       LINUX_KERN_OSTYPE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "osrelease", NULL,
+		       NULL, 0, linux_release, sizeof(linux_release),
+		       LINUX_KERN_OSRELEASE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "version", NULL,
+		       NULL, 0, linux_version, sizeof(linux_version),
+		       LINUX_KERN_VERSION, CTL_EOL);
+
+	linux_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
+}
+
+/*
+ * linux sysctl system call
  */
 int
-linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
+linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
+	struct linux_sys___sysctl_args *uap = v;
+	struct linux___sysctl ls;
+	int error, nerror, name[CTL_MAXNAME];
+	size_t savelen = 0, oldlen = 0;
+
 	/*
-	 * Note that we allow writing into this, so that userland
-	 * programs can setup things as they see fit. This is suboptimal.
+	 * get linux args structure
 	 */
-	switch (name[0]) {
-	case LINUX_KERN_OSTYPE:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_sysname, sizeof(linux_sysname));
-	case LINUX_KERN_OSRELEASE:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_release, sizeof(linux_release));
-	case LINUX_KERN_VERSION:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_version, sizeof(linux_version));
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-/*
- * kernel related system variables.
- */
-int
-linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)
-		return EOPNOTSUPP;
+	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
+		return error;
 
 	/*
-	 * Note that we allow writing into this, so that userland
-	 * programs can setup things as they see fit. This is suboptimal.
+	 * get oldlen
 	 */
-	switch (name[1]) {
-	case EMUL_LINUX_KERN_OSTYPE:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_sysname, sizeof(linux_sysname));
-	case EMUL_LINUX_KERN_OSRELEASE:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_release, sizeof(linux_release));
-	case EMUL_LINUX_KERN_VERSION:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    linux_version, sizeof(linux_version));
-	default:
-		return EOPNOTSUPP;
+	oldlen = 0;
+	if (ls.oldlenp != NULL) {
+		error = copyin(ls.oldlenp, &oldlen, sizeof(oldlen));
+		if (error)
+			return (error);
 	}
+	savelen = oldlen;
+
+	/*
+	 * top-level sysctl names may or may not be non-terminal, but
+	 * we don't care
+	 */
+	if (ls.nlen > CTL_MAXNAME || ls.nlen < 1)
+		return (EINVAL);
+	error = copyin(ls.name, &name, ls.nlen * sizeof(int));
+	if (error)
+		return (error);
+
+	/*
+	 * wire old so that copyout() is less likely to fail?
+	 */
+	error = sysctl_lock(l, ls.oldval, savelen);
+	if (error)
+		return (error);
+
+	/*
+	 * dispatch request into linux sysctl tree
+	 */
+	error = sysctl_dispatch(&name[0], ls.nlen,
+				ls.oldval, &oldlen,
+				ls.newval, ls.newlen,
+				&name[0], l, &linux_sysctl_root);
+
+	/*
+	 * release the sysctl lock
+	 */
+	sysctl_unlock(l);
+
+	/*
+	 * reset caller's oldlen, even if we got an error
+	 */
+	if (ls.oldlenp) {
+		nerror = copyout(&oldlen, ls.oldlenp, sizeof(oldlen));
+		if (error == 0)
+			error = nerror;
+	}
+
+	/*
+	 * if the only problem is that we weren't given enough space,
+	 * that's an ENOMEM error
+	 */
+	if (error == 0 && ls.oldval != NULL && savelen < oldlen)
+		error = ENOMEM;
+
+	return (error);
 }
 
 /*
- * hardware related system variables.
+ * kernel related system variables under emul.linux in the main sysctl
+ * tree
  */
-int
-linux_vm_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
+SYSCTL_SETUP(sysctl_emul_linux_setup, "sysctl emul.linux subtree setup")
 {
-	return (EOPNOTSUPP);
-}
 
-int
-linux_net_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
-}
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "emul", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "linux",
+		       SYSCTL_DESCR("Linux emulation settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_LINUX, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern",
+		       SYSCTL_DESCR("Linux kernel emulation settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN, CTL_EOL);
 
-int
-linux_proc_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
-}
-
-int
-linux_fs_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
-}
-#ifdef DEBUG
-int
-linux_debug_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
-}
-#endif /* DEBUG */
-
-int
-linux_dev_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
-}
-
-int
-linux_bus_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
-{
-	return (EOPNOTSUPP);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "ostype",
+		       SYSCTL_DESCR("Linux operating system type"),
+		       NULL, 0, linux_sysname, sizeof(linux_sysname),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_OSTYPE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "osrelease",
+		       SYSCTL_DESCR("Linux operating system release"),
+		       NULL, 0, linux_release, sizeof(linux_release),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_OSRELEASE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "osversion",
+		       SYSCTL_DESCR("Linux operating system revision"),
+		       NULL, 0, linux_version, sizeof(linux_version),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_VERSION, CTL_EOL);
 }

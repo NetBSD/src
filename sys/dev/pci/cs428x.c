@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.6 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.6.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.6 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.6.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,15 +71,6 @@ cs428x_open(void *addr, int flags)
 void
 cs428x_close(void *addr)
 {
-	struct cs428x_softc *sc;
-
-	sc = addr;
-
-	(*sc->halt_output)(sc);
-	(*sc->halt_input)(sc);
-	
-	sc->sc_pintr = 0;
-	sc->sc_rintr = 0;
 }
 
 int

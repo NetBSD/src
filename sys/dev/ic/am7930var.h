@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.7 2000/05/02 06:30:51 augustss Exp $	*/
+/*	$NetBSD: am7930var.h,v 1.7.28.1 2004/08/03 10:46:10 skrll Exp $	*/
 
 struct am7930_softc;
 
@@ -16,9 +16,6 @@ struct am7930_glue {
 
 struct am7930_softc {
 	struct	device sc_dev;		/* base device */
-
-	int	sc_open;		/* single use device */
-	int	sc_locked;		/* true when transfering data */
 
 	u_int8_t	sc_rlevel;	/* record level */
 	u_int8_t	sc_plevel;	/* play level */

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.12.2.1 2003/07/02 15:25:59 darrenr Exp $ */
+/* $NetBSD: cgd.c,v 1.12.2.2 2004/08/03 10:44:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.1 2003/07/02 15:25:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.2 2004/08/03 10:44:53 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ const struct cdevsw cgd_cdevsw = {
 
 /* Internal Functions */
 
-static void	cgdstart(struct dk_softc *, struct buf *);
+static int	cgdstart(struct dk_softc *, struct buf *);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
@@ -139,19 +139,6 @@ static void	hexprint(char *, void *, int);
 #define DIAGCONDPANIC(x,y)
 #endif
 
-/* Component Buffer Pool structures and macros */
-
-struct cgdbuf {
-	struct buf		 cb_buf;	/* new I/O buf */
-	struct buf		*cb_obp;	/* ptr. to original I/O buf */
-	struct cgd_softc	*cb_sc;		/* pointer to cgd softc */
-};
-
-struct pool cgd_cbufpool;
-
-#define	CGD_GETBUF()		pool_get(&cgd_cbufpool, PR_NOWAIT)
-#define	CGD_PUTBUF(cbp)		pool_put(&cgd_cbufpool, cbp)
-
 /* Global variables */
 
 struct	cgd_softc *cgd_softc;
@@ -182,6 +169,7 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 
 	memset(cs, 0x0, sizeof(*cs));
 	snprintf(buf, DK_XNAME_SIZE, "cgd%d", num);
+	simple_lock_init(&cs->sc_slock);
 	dk_sc_init(&cs->sc_dksc, cs, buf);
 }
 
@@ -206,10 +194,6 @@ cgdattach(int num)
 	numcgd = num;
 	for (i=0; i<num; i++)
 		cgdsoftc_init(&cgd_softc[i], i);
-
-	/* Init component buffer pool. XXX, can we put this in dksubr.c? */
-	pool_init(&cgd_cbufpool, sizeof(struct cgdbuf), 0, 0, 0,
-	    "cgdpl", NULL);
 }
 
 int
@@ -255,15 +239,57 @@ cgdsize(dev_t dev)
 	return dk_size(di, &cs->sc_dksc, dev);
 }
 
+/*
+ * cgd_{get,put}data are functions that deal with getting a buffer
+ * for the new encrypted data.  We have a buffer per device so that
+ * we can ensure that we can always have a transaction in flight.
+ * We use this buffer first so that we have one less piece of
+ * malloc'ed data at any given point.
+ */
+
+static void *
+cgd_getdata(struct dk_softc *dksc, unsigned long size)
+{
+	struct	cgd_softc *cs =dksc->sc_osc;
+	caddr_t	data = NULL;
+
+	simple_lock(&cs->sc_slock);
+	if (cs->sc_data_used == 0) {
+		cs->sc_data_used = 1;
+		data = cs->sc_data;
+	}
+	simple_unlock(&cs->sc_slock);
+
+	if (data)
+		return data;
+
+	return malloc(size, M_DEVBUF, M_NOWAIT);
+}
+
 static void
+cgd_putdata(struct dk_softc *dksc, caddr_t data)
+{
+	struct	cgd_softc *cs =dksc->sc_osc;
+
+	if (data == cs->sc_data) {
+		simple_lock(&cs->sc_slock);
+		cs->sc_data_used = 0;
+		simple_unlock(&cs->sc_slock);
+	} else {
+		free(data, M_DEVBUF);
+	}
+}
+
+static int
 cgdstart(struct dk_softc *dksc, struct buf *bp)
 {
 	struct	cgd_softc *cs = dksc->sc_osc;
-	struct	cgdbuf *cbp;
+	struct	buf *nbp;
 	struct	partition *pp;
 	caddr_t	addr;
 	caddr_t	newaddr;
 	daddr_t	bn;
+	int s;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
@@ -281,67 +307,72 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
 	/*
+	 * We attempt to allocate all of our resources up front, so that
+	 * we can fail quickly if they are unavailable.
+	 */
+	
+	s = splbio();
+	nbp = pool_get(&bufpool, PR_NOWAIT);
+	splx(s);
+	if (nbp == NULL) {
+		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+		return -1;
+	}
+
+	/*
 	 * If we are writing, then we need to encrypt the outgoing
-	 * block.  In the best case scenario, we are able to allocate
-	 * enough memory to encrypt the data in a new block, otherwise
-	 * we encrypt it in place (noting we'll have to decrypt it after
-	 * the write.)
+	 * block into a new block of memory.  If we fail, then we
+	 * return an error and let the dksubr framework deal with it.
 	 */
 	newaddr = addr = bp->b_data;
 	if ((bp->b_flags & B_READ) == 0) {
-		newaddr = malloc(bp->b_bcount, M_DEVBUF, 0);
-		if (!newaddr)
-			newaddr = addr;
+		newaddr = cgd_getdata(dksc, bp->b_bcount);
+		if (!newaddr) {
+			s = splbio();
+			pool_put(&bufpool, nbp);
+			splx(s);
+			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+			return -1;
+		}
 		cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
 		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
 	}
 
-	cbp = CGD_GETBUF();
-	if (cbp == NULL) {
-		bp->b_error = ENOMEM;
-		bp->b_flags |= B_ERROR;
-		if (newaddr != addr)
-			free(newaddr, M_DEVBUF);
-		biodone(bp);
-		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-		return;
+	BUF_INIT(nbp);
+	nbp->b_data = newaddr;
+	nbp->b_flags = bp->b_flags | B_CALL;
+	nbp->b_iodone = cgdiodone;
+	nbp->b_proc = bp->b_proc;
+	nbp->b_blkno = bn;
+	nbp->b_vp = cs->sc_tvn;
+	nbp->b_bcount = bp->b_bcount;
+	nbp->b_private = bp;
+
+	BIO_COPYPRIO(nbp, bp);
+
+	if ((nbp->b_flags & B_READ) == 0) {
+		V_INCR_NUMOUTPUT(nbp->b_vp);
 	}
-	BUF_INIT(&cbp->cb_buf);
-	cbp->cb_buf.b_data = newaddr;
-	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
-	cbp->cb_buf.b_iodone = cgdiodone;
-	cbp->cb_buf.b_proc = bp->b_proc;
-	cbp->cb_buf.b_dev = cs->sc_tdev;
-	cbp->cb_buf.b_blkno = bn;
-	cbp->cb_buf.b_vp = cs->sc_tvn;
-	cbp->cb_buf.b_bcount = bp->b_bcount;
-
-	/* context for cgdiodone */
-	cbp->cb_obp = bp;
-	cbp->cb_sc = cs;
-
-	if ((cbp->cb_buf.b_flags & B_READ) == 0)
-		cbp->cb_buf.b_vp->v_numoutput++;
-	VOP_STRATEGY(&cbp->cb_buf);
+	VOP_STRATEGY(cs->sc_tvn, nbp);
+	return 0;
 }
 
+/* expected to be called at splbio() */
 void
-cgdiodone(struct buf *vbp)
+cgdiodone(struct buf *nbp)
 {
-	struct	cgdbuf *cbp = (struct cgdbuf *)vbp;
-	struct	buf *obp = cbp->cb_obp;
-	struct	buf *nbp = &cbp->cb_buf;
-	struct	cgd_softc *cs = cbp->cb_sc;
+	struct	buf *obp = nbp->b_private;
+	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
-	int	s;
+	
+	KDASSERT(cs);
 
-	DPRINTF_FOLLOW(("cgdiodone(%p)\n", vbp));
+	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
 	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %ld resid %ld\n",
 	    obp, obp->b_bcount, obp->b_resid));
-	DPRINTF(CGDB_IO, (" dev 0x%x, cbp %p bn %" PRId64 " addr %p bcnt %ld\n",
-	    cbp->cb_buf.b_dev, cbp, cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
-	    cbp->cb_buf.b_bcount));
-	s = splbio();
+	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %ld\n",
+	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
+	    nbp->b_bcount));
 	if (nbp->b_flags & B_ERROR) {
 		obp->b_flags |= B_ERROR;
 		obp->b_error  = nbp->b_error ? nbp->b_error : EIO;
@@ -349,23 +380,21 @@ cgdiodone(struct buf *vbp)
 		printf("%s: error %d\n", dksc->sc_xname, obp->b_error);
 	}
 
-	/* Perform the decryption if we need to:
-	 *	o  if we are reading, or
-	 *	o  we wrote and couldn't allocate memory.
+	/* Perform the decryption if we are reading.
 	 *
 	 * Note: use the blocknumber from nbp, since it is what
 	 *       we used to encrypt the blocks.
 	 */
 
-	if (nbp->b_flags & B_READ || nbp->b_data == obp->b_data)
+	if (nbp->b_flags & B_READ)
 		cgd_cipher(cs, obp->b_data, obp->b_data, obp->b_bcount,
 		    nbp->b_blkno, DEV_BSIZE, CGD_CIPHER_DECRYPT);
 
-	/* If we managed to allocate memory, free it now... */
+	/* If we allocated memory, free it now... */
 	if (nbp->b_data != obp->b_data)
-		free(nbp->b_data, M_DEVBUF);
+		cgd_putdata(dksc, nbp->b_data);
 
-	CGD_PUTBUF(cbp);
+	pool_put(&bufpool, nbp);
 
 	/* Request is complete for whatever reason */
 	obp->b_resid = 0;
@@ -374,7 +403,7 @@ cgdiodone(struct buf *vbp)
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
 	biodone(obp);
-	splx(s);
+	dk_iodone(di, dksc);
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
@@ -483,6 +512,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	struct	 cgd_ioctl *ci = data;
 	struct	 vnode *vp;
 	int	 ret;
+	int	 keybytes;			/* key length in bytes */
 	char	*cp;
 	char	 inbuf[MAX_KEYSIZE];
 
@@ -513,12 +543,13 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		goto bail;
 	}
 
-	if (ci->ci_keylen > MAX_KEYSIZE) {
+	keybytes = ci->ci_keylen / 8 + 1;
+	if (keybytes > MAX_KEYSIZE) {
 		ret = EINVAL;
 		goto bail;
 	}
 	memset(inbuf, 0x0, sizeof(inbuf));
-	ret = copyin(ci->ci_key, inbuf, ci->ci_keylen);
+	ret = copyin(ci->ci_key, inbuf, keybytes);
 	if (ret)
 		goto bail;
 
@@ -532,6 +563,11 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
 	}
+
+	bufq_alloc(&cs->sc_dksc.sc_bufq, BUFQ_FCFS);
+
+	cs->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
+	cs->sc_data_used = 0;
 
 	cs->sc_dksc.sc_flags |= DKF_INITED;
 
@@ -552,10 +588,25 @@ bail:
 static int
 cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 {
+	struct	buf *bp;
+	int	s;
+
+	/* Kill off any queued buffers. */
+	s = splbio();
+	while ((bp = BUFQ_GET(&cs->sc_dksc.sc_bufq)) != NULL) {
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+	splx(s);
+	bufq_free(&cs->sc_dksc.sc_bufq);
 
 	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_proc->p_ucred, l);
 	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);
 	free(cs->sc_tpath, M_DEVBUF);
+	free(cs->sc_data, M_DEVBUF);
+	cs->sc_data_used = 0;
 	cs->sc_dksc.sc_flags &= ~DKF_INITED;
 	disk_detach(&cs->sc_dksc.sc_dkdev);
 

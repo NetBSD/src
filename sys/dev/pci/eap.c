@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: eap.c,v 1.66.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -6,8 +6,8 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson <augustss@netbsd.org>, Charles M. Hannum, and
- * Antti Kantee <pooka@netbsd.org>.
+ * by Lennart Augustsson <augustss@NetBSD.org>, Charles M. Hannum, and
+ * Antti Kantee <pooka@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,9 +57,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include "midi.h"
+#include "joy_eap.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $");
 #include <machine/bus.h>
 
 #include <dev/pci/eapreg.h>
+#include <dev/pci/eapvar.h>
 
 #define	PCI_CBIO		0x10
 
@@ -155,6 +157,9 @@ struct eap_softc {
 	void	(*sc_ointr)(void *);	/* midi output ready handler */
 	void	*sc_arg;
 	struct device *sc_mididev;
+#endif
+#if NJOY_EAP > 0
+	struct device *sc_gameport;
 #endif
 
 	u_short	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
@@ -585,6 +590,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	int revision, ct5880;
 	const char *revstr = "";
+#if NJOY_EAP > 0
+	struct eap_gameport_args gpargs;
+#endif
 
 	aprint_naive(": Audio controller\n");
 
@@ -599,7 +607,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	 * The vendor and product ID's are quite "interesting". Just
 	 * trust the following and be happy.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
 	ct5880 = 0;
 	if (sc->sc_1371) {
@@ -793,13 +801,29 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 #if NMIDI > 0
 	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
 #endif
+
+#if NJOY_EAP > 0
+	if (sc->sc_1371) {
+		gpargs.gpa_iot = sc->iot;
+		gpargs.gpa_ioh = sc->ioh;
+		sc->sc_gameport = eap_joy_attach(&sc->sc_dev, &gpargs);
+	}
+#endif
 }
 
 int
 eap_detach(struct device *self, int flags)
 {
 	struct eap_softc *sc = (struct eap_softc *) self;
+#if NJOY_EAP > 0
+	struct eap_gameport_args gpargs;
 
+	if (sc->sc_gameport) {
+		gpargs.gpa_iot = sc->iot;
+		gpargs.gpa_ioh = sc->ioh;
+		eap_joy_detach(sc->sc_gameport, &gpargs);
+	}
+#endif
 #if NMIDI > 0
 	if (sc->sc_mididev != NULL)
 		config_detach(sc->sc_mididev, 0);
@@ -968,7 +992,7 @@ eap_open(void *addr, int flags)
 	struct eap_instance *ei = addr;
 
 	/* there is only one ADC */
-	if (ei->index == EAP_I2 && flags & AUOPEN_READ)
+	if (ei->index == EAP_I2 && flags & FREAD)
 		return (EOPNOTSUPP);
 
 	return (0);
@@ -980,16 +1004,6 @@ eap_open(void *addr, int flags)
 void
 eap_close(void *addr)
 {
-	struct eap_instance *ei = addr;
-	struct eap_softc *sc = (struct eap_softc *)ei->parent;
-    
-	eap_halt_output(ei);
-	if (ei->index == EAP_I1) {
-		eap_halt_input(ei);
-		sc->sc_rintr = 0;
-	}
-
-	ei->ei_pintr = 0;
 }
 
 int
@@ -1367,6 +1381,7 @@ eap_halt_output(void *addr)
 	DPRINTF(("eap: eap_halt_output\n"));
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~(EAP_DAC_EN(ei->index)));
+	ei->ei_pintr = 0;
 #ifdef DIAGNOSTIC
 	ei->ei_prun = 0;
 #endif
@@ -1385,9 +1400,11 @@ eap_halt_input(void *addr)
 	DPRINTF(("eap: eap_halt_input\n"));
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
+	sc->sc_rintr = 0;
 #ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
 #endif
+
 	return (0);
 }
 

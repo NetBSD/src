@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.19 2002/02/15 07:33:54 simonb Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.19.16.1 2004/08/03 10:44:46 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.19 2002/02/15 07:33:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.19.16.1 2004/08/03 10:44:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -163,8 +163,8 @@ db_list_watchpoints(void)
 	for (watch = db_watchpoint_list; watch != 0; watch = watch->link)
 		db_printf("%s%p  %8lx  %lx\n",
 		    db_map_current(watch->map) ? "*" : " ",
-		    watch->map, watch->loaddr,
-		    watch->hiaddr - watch->loaddr);
+		    watch->map, (long)watch->loaddr,
+		    (long)(watch->hiaddr - watch->loaddr));
 }
 
 /* Delete watchpoint */

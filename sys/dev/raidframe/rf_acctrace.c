@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.10.6.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.10.6.1 2004/08/03 10:50:41 skrll Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -49,63 +49,28 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $
 #include "rf_hist.h"
 #include "rf_shutdown.h"
 
+#if RF_ACC_TRACE > 0
 static long numTracesSoFar;
-static int accessTraceBufCount = 0;
-static RF_AccTraceEntry_t *access_tracebuf;
 
-int     rf_stopCollectingTraces;
 RF_DECLARE_MUTEX(rf_tracing_mutex)
 
-static void rf_ShutdownAccessTrace(void *);
-
-static void rf_ShutdownAccessTrace(ignored)
-	void   *ignored;
-{
-	if (rf_accessTraceBufSize) {
-		if (accessTraceBufCount)
-				accessTraceBufCount = 0;
-		RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-	}
-	rf_mutex_destroy(&rf_tracing_mutex);
-}
-
 int 
-rf_ConfigureAccessTrace(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
 {
-	int     rc;
-
-	accessTraceBufCount = rf_stopCollectingTraces = 0;
-	if (rf_accessTraceBufSize) {
-		RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-		accessTraceBufCount = 0;
-	}
 	numTracesSoFar = 0;
-	rc = rf_mutex_init(&rf_tracing_mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-	}
-	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		if (rf_accessTraceBufSize) {
-			RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-			rf_mutex_destroy(&rf_tracing_mutex);
-		}
-	}
-	return (rc);
+	rf_mutex_init(&rf_tracing_mutex);
+	return (0);
 }
-/* install a trace record.  cause a flush to disk or to the trace collector daemon
- * if the trace buffer is at least 1/2 full.
+
+/* install a trace record.  cause a flush to disk or to the trace
+ * collector daemon if the trace buffer is at least 1/2 full.  
  */
 void 
-rf_LogTraceRec(raid, rec)
-	RF_Raid_t *raid;
-	RF_AccTraceEntry_t *rec;
+rf_LogTraceRec(RF_Raid_t *raid, RF_AccTraceEntry_t *rec)
 {
 	RF_AccTotals_t *acc = &raid->acc_totals;
 
-	if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
+	if (((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
 		return;
 
 	/* update AccTotals for this device */
@@ -147,3 +112,5 @@ rf_LogTraceRec(raid, rec)
 		acc->user_reccount++;
 	}
 }
+#endif /* RF_ACC_TRACE > 0 */
+

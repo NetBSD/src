@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.15 2002/11/01 19:26:21 jdolecek Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.15.6.1 2004/08/03 10:43:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.15 2002/11/01 19:26:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.15.6.1 2004/08/03 10:43:28 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -55,14 +56,17 @@ extern struct sysent aout_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const aout_syscallnames[];
 #endif
+#ifdef COMPAT_16
 extern char sigcode[], esigcode[];
+struct uvm_object *emul_netbsd_aout_object;
+#endif
 #ifdef __HAVE_SYSCALL_INTERN
 void syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
 
-struct emul emul_netbsd_aout = {
+const struct emul emul_netbsd_aout = {
 	"netbsd",
 	"/emul/aout",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -79,9 +83,19 @@ struct emul emul_netbsd_aout = {
 #endif
 	sendsig,
 	trapsignal,
+	NULL,
+#ifdef COMPAT_16
 	sigcode,
 	esigcode,
+	&emul_netbsd_aout_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

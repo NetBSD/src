@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 2002/12/01 21:21:45 matt Exp $	*/
+/*	$NetBSD: reg.h,v 1.4.6.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -53,6 +53,9 @@ struct  reg {
 	int	sp;
 	int	pc;     /* User pc */
 	int	psl;    /* User psl */
+};
+
+struct	fpreg {
 };
 
 #endif /* _VAX_REG_H_ */

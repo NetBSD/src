@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.9 2002/10/02 16:02:41 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.9.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -37,9 +37,12 @@
  */
 
 /*
- * MFP is used as keyboard controler, which may be used before
+ * MFP is used as keyboard controller, which may be used before
  * ordinary initialization.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.9.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

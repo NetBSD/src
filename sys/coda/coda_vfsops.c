@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.26.2.2 2003/08/19 19:53:46 skrll Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.26.2.3 2004/08/03 10:43:19 skrll Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26.2.2 2003/08/19 19:53:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26.2.3 2004/08/03 10:43:19 skrll Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -55,9 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26.2.2 2003/08/19 19:53:46 skrll E
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/select.h>
@@ -105,7 +107,7 @@ struct vfsops coda_vfsops = {
     coda_unmount,
     coda_root,
     coda_quotactl,
-    coda_nb_statfs,
+    coda_nb_statvfs,
     coda_sync,
     coda_vget,
     (int (*) (struct mount *, struct fid *, struct vnode **, struct lwp *))
@@ -114,13 +116,15 @@ struct vfsops coda_vfsops = {
     coda_init,
     NULL,
     coda_done,
-    coda_sysctl,
+    NULL,
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
 	eopnotsupp,
+    (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
     coda_vnodeopv_descs,
     0
 };
+
 
 int
 coda_vfsopstats_init(void)
@@ -157,8 +161,8 @@ coda_mount(vfsp, path, data, ndp, l)
     struct coda_mntinfo *mi;
     struct vnode *rootvp;
     const struct cdevsw *cdev;
-    ViceFid rootfid;
-    ViceFid ctlfid;
+    CodaFid rootfid = INVAL_FID;
+    CodaFid ctlfid = CTL_FID;
     int error;
 
     if (vfsp->mnt_flag & MNT_GETARGS)
@@ -223,8 +227,10 @@ coda_mount(vfsp, path, data, ndp, l)
     
     /* No initialization (here) of mi_vcomm! */
     vfsp->mnt_data = mi;
-    vfsp->mnt_stat.f_fsid.val[0] = 0;
-    vfsp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CODA);
+    vfsp->mnt_stat.f_fsidx.__fsid_val[0] = 0;
+    vfsp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_CODA);
+    vfsp->mnt_stat.f_fsid = vfsp->mnt_stat.f_fsidx.__fsid_val[0];
+    vfsp->mnt_stat.f_namemax = MAXNAMLEN;
     mi->mi_vfsp = vfsp;
     
     /*
@@ -232,16 +238,10 @@ coda_mount(vfsp, path, data, ndp, l)
      * actually make the CODA_ROOT call to venus until the first call
      * to coda_root in case a server is down while venus is starting.
      */
-    rootfid.Volume = 0;
-    rootfid.Vnode = 0;
-    rootfid.Unique = 0;
     cp = make_coda_node(&rootfid, vfsp, VDIR);
     rootvp = CTOV(cp);
     rootvp->v_flag |= VROOT;
 	
-    ctlfid.Volume = CTL_VOL;
-    ctlfid.Vnode = CTL_VNO;
-    ctlfid.Unique = CTL_UNI;
 /*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
     I don't totally understand when it happens, it is caught
@@ -257,6 +257,7 @@ coda_mount(vfsp, path, data, ndp, l)
     
     /* set filesystem block size */
     vfsp->mnt_stat.f_bsize = 8192;	    /* XXX -JJK */
+    vfsp->mnt_stat.f_frsize = 8192;	    /* XXX -JJK */
 
     /* error is currently guaranteed to be zero, but in case some
        code changes... */
@@ -267,7 +268,7 @@ coda_mount(vfsp, path, data, ndp, l)
     else
 	MARK_INT_SAT(CODA_MOUNT_STATS);
 
-    return set_statfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
+    return set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
 	l);
 }
 
@@ -278,6 +279,7 @@ coda_start(vfsp, flags, l)
     struct lwp *l;
 {
     ENTRY;
+    vftomi(vfsp)->mi_started = 1;
     return (0);
 }
 
@@ -304,6 +306,8 @@ coda_unmount(vfsp, mntflags, l)
 #ifdef	DEBUG
 	printf("coda_unmount: ROOT: vp %p, cp %p\n", mi->mi_rootvp, VTOC(mi->mi_rootvp));
 #endif
+	mi->mi_started = 0;
+
 	vrele(mi->mi_rootvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
@@ -341,20 +345,17 @@ coda_root(vfsp, vpp, l)
 	struct lwp *l;
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
-    struct vnode **result;
     int error;
     struct proc *p;
-    ViceFid VFid;
+    CodaFid VFid;
+    static const CodaFid invalfid = INVAL_FID;
 
     p = l->l_proc;
     ENTRY;
     MARK_ENTRY(CODA_ROOT_STATS);
-    result = NULL;
     
     if (vfsp == mi->mi_vfsp) {
-	if ((VTOC(mi->mi_rootvp)->c_fid.Volume != 0) ||
-	    (VTOC(mi->mi_rootvp)->c_fid.Vnode != 0) ||
-	    (VTOC(mi->mi_rootvp)->c_fid.Unique != 0))
+    	if (memcmp(&VTOC(mi->mi_rootvp)->c_fid, &invalfid, sizeof(CodaFid)))
 	    { /* Found valid root. */
 		*vpp = mi->mi_rootvp;
 		/* On Mach, this is vref.  On NetBSD, VOP_LOCK */
@@ -412,7 +413,7 @@ coda_quotactl(vfsp, cmd, uid, arg, l)
     struct mount *vfsp;
     int cmd;
     uid_t uid;
-    caddr_t arg;
+    void *arg;
     struct lwp *l;
 {
     ENTRY;
@@ -423,9 +424,9 @@ coda_quotactl(vfsp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-coda_nb_statfs(vfsp, sbp, l)
+coda_nb_statvfs(vfsp, sbp, l)
     struct mount *vfsp;
-    struct statfs *sbp;
+    struct statvfs *sbp;
     struct lwp *l;
 {
     struct coda_statfs fsstat;
@@ -439,7 +440,6 @@ coda_nb_statfs(vfsp, sbp, l)
 	return(EINVAL);
     }
     
-    memset(sbp, 0, sizeof(struct statfs));
     /* XXX - what to do about f_flags, others? --bnoble */
     /* Below This is what AFS does
     	#define NB_SFS_SIZ 0x895440
@@ -449,15 +449,18 @@ coda_nb_statfs(vfsp, sbp, l)
     error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, l, &fsstat);
 
     if (!error) {
-	sbp->f_type = 0;
 	sbp->f_bsize = 8192; /* XXX */
+	sbp->f_frsize = 8192; /* XXX */
 	sbp->f_iosize = 8192; /* XXX */
 	sbp->f_blocks = fsstat.f_blocks;
 	sbp->f_bfree  = fsstat.f_bfree;
 	sbp->f_bavail = fsstat.f_bavail;
+	sbp->f_bresvd = 0;
 	sbp->f_files  = fsstat.f_files;
 	sbp->f_ffree  = fsstat.f_ffree;
-	copy_statfs_info(sbp, vfsp);
+	sbp->f_favail = fsstat.f_ffree;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, vfsp);
     }
 
     MARK_INT_SAT(CODA_STATFS_STATS);
@@ -510,7 +513,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp, l)
     struct cnode *cp = 0;
     int error;
     struct proc *p;
-    ViceFid VFid;
+    CodaFid VFid;
     int vtype;
 
     p = l->l_proc;
@@ -532,8 +535,8 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp, l)
 	    *vpp = (struct vnode *)0;
     } else {
 	CODADEBUG(CODA_VGET, 
-		 myprintf(("vget: vol %lx vno %lx uni %lx type %d result %d\n",
-			VFid.Volume, VFid.Vnode, VFid.Unique, vtype, error)); )
+		 myprintf(("vget: %s type %d result %d\n",
+			coda_f2s(&VFid), vtype, error)); )
 	    
 	cp = make_coda_node(&VFid, vfsp, vtype);
 	*vpp = CTOV(cp);
@@ -562,37 +565,41 @@ coda_done(void)
     ENTRY;
 }
 
-int
-coda_sysctl(name, namelen, oldp, oldlp, newp, newl, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlp;
-	void *newp;
-	size_t newl;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 {
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "coda",
+		       SYSCTL_DESCR("code vfs options"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 18, CTL_EOL);
+	/*
+	 * XXX the "18" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "18" is the order as taken from sys/mount.h
+	 */
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
 /*
-	case FFS_CLUSTERREAD:
-		return (sysctl_int(oldp, oldlp, newp, newl, &doclusterread));
- */
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "clusterread",
+		       SYSCTL_DESCR( anyone? ),
+		       NULL, 0, &doclusterread, 0,
+		       CTL_VFS, 18, FFS_CLUSTERREAD, CTL_EOL);
+*/
 }
 
 /*
  * To allow for greater ease of use, some vnodes may be orphaned when
  * Venus dies.  Certain operations should still be allowed to go
- * through, but without propagating ophan-ness.  So this function will
- * get a new vnode for the file from the current run of Venus.  */
+ * through, but without propagating orphan-ness.  So this function will
+ * get a new vnode for the file from the current run of Venus.
+ */
  
 int
 getNewVnode(vpp)
@@ -603,7 +610,7 @@ getNewVnode(vpp)
     
     ENTRY;
 
-    cfid.cfid_len = (short)sizeof(ViceFid);
+    cfid.cfid_len = (short)sizeof(CodaFid);
     cfid.cfid_fid = VTOC(*vpp)->c_fid;	/* Structure assignment. */
     /* XXX ? */
 

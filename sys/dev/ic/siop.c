@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.66 2003/05/03 18:11:23 wiz Exp $	*/
+/*	$NetBSD: siop.c,v 1.66.2.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.66 2003/05/03 18:11:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.66.2.1 2004/08/03 10:46:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ siop_intr(v)
 	struct siop_cmd *siop_cmd;
 	struct siop_lun *siop_lun;
 	struct scsipi_xfer *xs;
-	int istat, sist, sstat1, dstat;
+	int istat, sist, sstat1, dstat = 0; /* XXX: gcc */
 	u_int32_t irqcode;
 	int need_reset = 0;
 	int offset, target, lun, tag;
@@ -340,9 +340,9 @@ siop_intr(v)
 		    SIOP_ISTAT, 0);
 	}
 	/* use DSA to find the current siop_cmd */
+	siop_cmd = NULL;
 	dsa = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA);
-	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
-	    cbdp = TAILQ_NEXT(cbdp, next)) {
+	TAILQ_FOREACH(cbdp, &sc->cmds, next) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
 	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
@@ -352,9 +352,6 @@ siop_intr(v)
 			break;
 		}
 	} 
-	if (cbdp == NULL) {
-		siop_cmd = NULL;
-	}
 	if (siop_cmd) {
 		xs = siop_cmd->cmd_c.xs;
 		siop_target = (struct siop_target *)siop_cmd->cmd_c.siop_target;
@@ -444,7 +441,7 @@ siop_intr(v)
 		if (istat & ISTAT_DIP)
 			delay(10);
 		/*
-		 * Can't read sist0 & sist1 independantly, or we have to
+		 * Can't read sist0 & sist1 independently, or we have to
 		 * insert delay
 		 */
 		sist = bus_space_read_2(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -493,31 +490,31 @@ siop_intr(v)
 				/*
 				 * previous phase may be aborted for any reason
 				 * ( for example, the target has less data to
-				 * transfer than requested). Just go to status
-				 * and the command should terminate.
+				 * transfer than requested). Compute resid and
+				 * just go to status, the command should
+				 * terminate.
 				 */
 					INCSTAT(siop_stat_intr_shortxfer);
-					if ((dstat & DSTAT_DFE) == 0)
+					if (scratcha0 & A_flag_data)
+						siop_ma(&siop_cmd->cmd_c);
+					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
-					/* no table to flush here */
 					CALL_SCRIPT(Ent_status);
 					return 1;
 				case SSTAT1_PHASE_MSGIN:
-					/*
-					 * target may be ready to disconnect
-					 * Save data pointers just in case.
-					 */
+				/*
+				 * target may be ready to disconnect
+				 * Compute resid which would be used later
+				 * if a save data pointer is needed.
+				 */
 					INCSTAT(siop_stat_intr_xferdisc);
 					if (scratcha0 & A_flag_data)
-						siop_sdp(&siop_cmd->cmd_c);
+						siop_ma(&siop_cmd->cmd_c);
 					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
 					bus_space_write_1(sc->sc_c.sc_rt,
 					    sc->sc_c.sc_rh, SIOP_SCRATCHA,
 					    scratcha0 & ~A_flag_data);
-					siop_table_sync(siop_cmd,
-					    BUS_DMASYNC_PREREAD |
-					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_msgin);
 					return 1;
 				}
@@ -587,7 +584,7 @@ siop_intr(v)
 			    SIOP_DSP) - 8);
 			return 1;
 		}
-		/* Else it's an unhandled exeption (for now). */
+		/* Else it's an unhandled exception (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
 		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname, sist,
 		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -782,6 +779,14 @@ scintr:
 				CALL_SCRIPT(Ent_msgin_ack);
 				return 1;
 			}
+			if (msgin == MSG_IGN_WIDE_RESIDUE) {
+			/* use the extmsgdata table to get the second byte */
+				siop_cmd->cmd_tables->t_extmsgdata.count =
+				    htole32(1);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_get_extmsgdata);
+			}
 			if (xs)
 				scsipi_printaddr(xs->xs_periph);
 			else
@@ -825,6 +830,29 @@ scintr:
 			printf("\n");
 			}
 #endif
+			if (siop_cmd->cmd_tables->msg_in[0] ==
+			    MSG_IGN_WIDE_RESIDUE) {
+			/* we got the second byte of MSG_IGN_WIDE_RESIDUE */
+				if (siop_cmd->cmd_tables->msg_in[3] != 1)
+					printf("MSG_IGN_WIDE_RESIDUE: "
+					    "bad len %d\n",
+					    siop_cmd->cmd_tables->msg_in[3]);
+				switch (siop_iwr(&siop_cmd->cmd_c)) {
+				case SIOP_NEG_MSGOUT:
+					siop_table_sync(siop_cmd,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+					CALL_SCRIPT(Ent_send_msgout);
+					return(1);
+				case SIOP_NEG_ACK:
+					CALL_SCRIPT(Ent_msgin_ack);
+					return(1);
+				default:
+					panic("invalid retval from "
+					    "siop_iwr()");
+				}
+				return(1);
+			}
 			if (siop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&siop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
@@ -881,23 +909,9 @@ scintr:
 #ifdef SIOP_DEBUG_DR
 			printf("disconnect offset %d\n", offset);
 #endif
-			if (offset > SIOP_NSG) {
-				printf("%s: bad offset for disconnect (%d)\n",
-				    sc->sc_c.sc_dev.dv_xname, offset);
-				goto reset;
-			}
-			/* 
-			 * offset == SIOP_NSG may be a valid condition if
-			 * we get a sdp when the xfer is done.
-			 * Don't call memmove in this case.
-			 */
-			if (offset < SIOP_NSG) {
-				memmove(&siop_cmd->cmd_tables->data[0],
-				    &siop_cmd->cmd_tables->data[offset],
-				    (SIOP_NSG - offset) * sizeof(scr_table_t));
-				siop_table_sync(siop_cmd,
-				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			}
+			siop_sdp(&siop_cmd->cmd_c, offset);
+			siop_table_sync(siop_cmd,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_script_sched);
 			return 1;
 		case A_int_resfail:
@@ -921,6 +935,10 @@ scintr:
 			    le32toh(siop_cmd->cmd_tables->status));
 #endif
 			INCSTAT(siop_stat_intr_done);
+			/* update resid.  */
+			offset = bus_space_read_1(sc->sc_c.sc_rt,
+			    sc->sc_c.sc_rh, SIOP_SCRATCHA + 1);
+			siop_update_resid(&siop_cmd->cmd_c, offset);
 			siop_cmd->cmd_c.status = CMDST_DONE;
 			goto end;
 		default:
@@ -935,7 +953,7 @@ scintr:
 	}
 	/* We just should't get there */
 	panic("siop_intr: I shouldn't be there !");
-	return 1;
+
 end:
 	/*
 	 * restart the script now if command completed properly
@@ -1020,7 +1038,10 @@ siop_scsicmd_end(siop_cmd)
 	callout_stop(&siop_cmd->cmd_c.xs->xs_callout);
 	siop_cmd->cmd_c.status = CMDST_FREE;
 	TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
-	xs->resid = 0;
+#if 0
+	if (xs->resid != 0)
+		printf("resid %d datalen %d\n", xs->resid, xs->datalen);
+#endif
 	scsipi_done (xs);
 }
 
@@ -1119,7 +1140,7 @@ siop_handle_qtag_reject(siop_cmd)
 
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
- * target struct and report loosage to upper layer.
+ * target struct and report lossage to upper layer.
  * As the upper layer may requeue immediatly we have to first store
  * all active commands in a temporary queue.
  */
@@ -1143,7 +1164,7 @@ siop_handle_reset(sc)
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
 	/*
-	 * Process all commands: first commmands being executed
+	 * Process all commands: first commands being executed
 	 */
 	for (target = 0; target < sc->sc_c.sc_chan.chan_ntargets;
 	    target++) {
@@ -1522,7 +1543,9 @@ siop_timeout(v)
 	int s;
 
 	scsipi_printaddr(siop_cmd->cmd_c.xs->xs_periph);
-	printf("command timeout\n");
+	printf("command timeout, CDB: ");
+	scsipi_print_cdb(siop_cmd->cmd_c.xs->cmd);
+	printf("\n");
 
 	s = splbio();
 	/* reset the scsi bus */
@@ -1862,7 +1885,7 @@ siop_add_dev(sc, target, lun)
 	ntargets =  sc->sc_c.sc_chan.chan_ntargets - 1 - sc->sc_ntargets;
 
 	/*
-	 * we need 8 bytes for the lun sw additionnal entry, and
+	 * we need 8 bytes for the lun sw additional entry, and
 	 * eventually sizeof(tag_switch) for the tag switch entry.
 	 * Keep enough free space for the free targets that could be
 	 * probed later.

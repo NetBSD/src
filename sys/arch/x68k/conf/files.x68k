@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.54 2003/06/24 19:56:22 martin Exp $
+#	$NetBSD: files.x68k,v 1.54.2.1 2004/08/03 10:42:46 skrll Exp $
 #
 # new style config file for x68k architecture
 #
@@ -100,7 +100,6 @@ file	arch/x68k/dev/kbd.c		kbd needs-flag
 device rtc
 attach	rtc at intio
 file	arch/x68k/dev/rtclock.c		rtc
-file	dev/clock_subr.c		rtc
 
 device dmac
 attach	dmac at intio
@@ -156,10 +155,8 @@ device scsirom {}
 attach	scsirom at intio
 file	arch/x68k/dev/scsirom.c		scsirom
 
-device	spc: scsi
 attach	spc at scsirom with spc_intio
 file	arch/x68k/dev/spc.c		spc_intio needs-flag
-file	dev/ic/mb89352.c		spc
 
 device	mha: scsi
 attach	mha at scsirom
@@ -196,6 +193,10 @@ include "compat/aoutm68k/files.aoutm68k"
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
+# HP-UX Binary Compatibility (COMPAT_HPUX)
+include	"compat/hpux/files.hpux"
+file	arch/m68k/m68k/hpux_machdep.c	compat_hpux
+
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
 
@@ -208,6 +209,7 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 include "compat/ossaudio/files.ossaudio"
 
 # USB support
+include "dev/wscons/files.wscons"
 include "dev/usb/files.usb"
 
 include "arch/x68k/conf/majors.x68k"

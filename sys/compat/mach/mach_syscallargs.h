@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscallargs.h,v 1.11 2003/01/18 23:38:36 thorpej Exp $ */
+/* $NetBSD: mach_syscallargs.h,v 1.11.2.1 2004/08/03 10:44:07 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -59,6 +59,7 @@ struct mach_sys_semaphore_signal_all_trap_args {
 
 struct mach_sys_semaphore_signal_thread_trap_args {
 	syscallarg(mach_port_name_t) signal_name;
+	syscallarg(mach_port_name_t) thread;
 };
 
 struct mach_sys_semaphore_wait_trap_args {
@@ -166,34 +167,65 @@ struct mach_sys_timer_cancel_args {
  */
 
 int	mach_sys_reply_port(struct lwp *, void *, register_t *);
+
 int	mach_sys_thread_self_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_task_self_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_host_self_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_msg_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_msg_overwrite_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_signal_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_signal_all_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_signal_thread_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_wait_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_wait_signal_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_timedwait_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_semaphore_timedwait_signal_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_init_process(struct lwp *, void *, register_t *);
+
 int	mach_sys_map_fd(struct lwp *, void *, register_t *);
+
 int	mach_sys_task_for_pid(struct lwp *, void *, register_t *);
+
 int	mach_sys_pid_for_task(struct lwp *, void *, register_t *);
+
 int	mach_sys_macx_swapon(struct lwp *, void *, register_t *);
+
 int	mach_sys_macx_swapoff(struct lwp *, void *, register_t *);
+
 int	mach_sys_macx_triggers(struct lwp *, void *, register_t *);
+
 int	mach_sys_swtch_pri(struct lwp *, void *, register_t *);
+
 int	mach_sys_swtch(struct lwp *, void *, register_t *);
+
 int	mach_sys_syscall_thread_switch(struct lwp *, void *, register_t *);
+
 int	mach_sys_clock_sleep_trap(struct lwp *, void *, register_t *);
+
 int	mach_sys_timebase_info(struct lwp *, void *, register_t *);
+
 int	mach_sys_wait_until(struct lwp *, void *, register_t *);
+
 int	mach_sys_timer_create(struct lwp *, void *, register_t *);
+
 int	mach_sys_timer_destroy(struct lwp *, void *, register_t *);
+
 int	mach_sys_timer_arm(struct lwp *, void *, register_t *);
+
 int	mach_sys_timer_cancel(struct lwp *, void *, register_t *);
+
 int	mach_sys_get_time_base_info(struct lwp *, void *, register_t *);
+
 #endif /* _MACH_SYS__SYSCALLARGS_H_ */

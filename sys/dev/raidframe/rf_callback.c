@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.8 2002/10/25 03:14:37 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.8.6.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,15 +26,15 @@
  * rights to redistribute these changes.
  */
 
-/*****************************************************************************************
+/*****************************************************************************
  *
  * callback.c -- code to manipulate callback descriptor
  *
- ****************************************************************************************/
+ ****************************************************************************/
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8 2002/10/25 03:14:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8.6.1 2004/08/03 10:50:41 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -43,38 +43,29 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8 2002/10/25 03:14:37 oster Exp $"
 #include "rf_threadstuff.h"
 #include "rf_callback.h"
 #include "rf_debugMem.h"
-#include "rf_freelist.h"
+#include "rf_general.h"
 #include "rf_shutdown.h"
-
-static struct pool rf_callback_pool;
+#include "rf_netbsd.h"
 
 #define RF_MAX_FREE_CALLBACK 64
-#define RF_CALLBACK_INC       4
-#define RF_CALLBACK_INITIAL  32
+#define RF_MIN_FREE_CALLBACK 32
 
 static void rf_ShutdownCallback(void *);
 static void 
-rf_ShutdownCallback(ignored)
-	void   *ignored;
+rf_ShutdownCallback(void *ignored)
 {
-	pool_destroy(&rf_callback_pool);
+	pool_destroy(&rf_pools.callback);
 }
 
 int 
 rf_ConfigureCallback(listp)
 	RF_ShutdownList_t **listp;
 {
-	int     rc;
 
-	pool_init(&rf_callback_pool, sizeof(RF_CallbackDesc_t), 0, 0,
-		  RF_CALLBACK_INITIAL, "rf_callbackpl", NULL);
-	pool_sethiwat(&rf_callback_pool, RF_MAX_FREE_CALLBACK);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__,__LINE__, rc);
-		rf_ShutdownCallback(NULL);
-		return (rc);
-	}
+	rf_pool_init(&rf_pools.callback, sizeof(RF_CallbackDesc_t),
+		     "rf_callbackpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+	rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
+
 	return (0);
 }
 
@@ -83,7 +74,7 @@ rf_AllocCallbackDesc()
 {
 	RF_CallbackDesc_t *p;
 
-	p = pool_get(&rf_callback_pool, PR_NOWAIT);
+	p = pool_get(&rf_pools.callback, PR_WAITOK);
 	return (p);
 }
 
@@ -91,5 +82,5 @@ void
 rf_FreeCallbackDesc(p)
 	RF_CallbackDesc_t *p;
 {
-	pool_put(&rf_callback_pool, p);
+	pool_put(&rf_pools.callback, p);
 }

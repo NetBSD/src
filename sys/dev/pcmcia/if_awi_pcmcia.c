@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.26 2002/10/02 16:52:09 thorpej Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.26.6.1 2004/08/03 10:50:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,12 +40,12 @@
  * PCMCIA attachment for BayStack 650 802.11FH PCMCIA card,
  * based on the AMD 79c930 802.11 controller chip.
  *
- * This attachment can probably be trivally adapted for other FH and
+ * This attachment can probably be trivially adapted for other FH and
  * DS cards based on the same chipset.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.26 2002/10/02 16:52:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.26.6.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.26 2002/10/02 16:52:09 thorpej E
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

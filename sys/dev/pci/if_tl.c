@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.57.2.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57.2.1 2004/08/03 10:49:09 skrll Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -100,8 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/i2c/i2c_bus.h>
-#include <dev/i2c/i2c_eeprom.h>
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/at24cxxvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -113,8 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $");
 #endif /* __NetBSD__ */
 
 /* number of transmit/receive buffers */
-#ifndef TL_NBUF 
-#define TL_NBUF 10
+#ifndef TL_NBUF
+#define TL_NBUF 32
 #endif
 
 static int tl_pci_match __P((struct device *, struct cfdata *, void *));
@@ -147,7 +148,7 @@ void	tl_mii_sync __P((struct tl_softc *));
 void	tl_mii_sendbits __P((struct tl_softc *, u_int32_t, int));
 
 
-#if defined(TLDEBUG_RX) 
+#if defined(TLDEBUG_RX)
 static void ether_printheader __P((struct ether_header*));
 #endif
 
@@ -156,9 +157,30 @@ void tl_mii_write __P((struct device *, int, int, int));
 
 void tl_statchg __P((struct device *));
 
-void tl_i2c_set __P((void*, u_int8_t));
-void tl_i2c_clr __P((void*, u_int8_t));
-int tl_i2c_read __P((void*, u_int8_t));
+	/* I2C glue */
+static int tl_i2c_acquire_bus(void *, int);
+static void tl_i2c_release_bus(void *, int);
+static int tl_i2c_send_start(void *, int);
+static int tl_i2c_send_stop(void *, int);
+static int tl_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int tl_i2c_read_byte(void *, uint8_t *, int);
+static int tl_i2c_write_byte(void *, uint8_t, int);
+
+	/* I2C bit-bang glue */
+static void tl_i2cbb_set_bits(void *, uint32_t);
+static void tl_i2cbb_set_dir(void *, uint32_t);
+static uint32_t tl_i2cbb_read(void *);
+static const struct i2c_bitbang_ops tl_i2cbb_ops = {
+	tl_i2cbb_set_bits,
+	tl_i2cbb_set_dir,
+	tl_i2cbb_read,
+	{
+		TL_NETSIO_EDATA,	/* SDA */
+		TL_NETSIO_ECLOCK,	/* SCL */
+		TL_NETSIO_ETXEN,	/* SDA is output */
+		0,			/* SDA is input */
+	}
+};
 
 static __inline void netsio_clr __P((tl_softc_t*, u_int8_t));
 static __inline void netsio_set __P((tl_softc_t*, u_int8_t));
@@ -190,6 +212,8 @@ CFATTACH_DECL(tl, sizeof(tl_softc_t),
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
 	  "Compaq Netelligent 10/100 TX" },
+	{ PCI_PRODUCT_COMPAQ_INT100TX, TLPHY_MEDIA_NO_10_T,
+	  "Integrated Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
 	  "Compaq Netelligent 10 T" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
@@ -282,7 +306,7 @@ tl_pci_attach(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-	int i, tmp, ioh_valid, memh_valid;
+	int ioh_valid, memh_valid;
 	int reg_io, reg_mem;
 	pcireg_t reg10, reg14;
 	pcireg_t csr;
@@ -299,7 +323,7 @@ tl_pci_attach(parent, self, aux)
 
 	/*
 	 * Map the card space. First we have to find the I/O and MEM
-	 * registers. I/O is supposed to be at 0x10, MEM at 0x14, 
+	 * registers. I/O is supposed to be at 0x10, MEM at 0x14,
 	 * but some boards (Compaq Netflex 3/P PCI) seem to have it reversed.
 	 * The ThunderLAN manual is not consistent about this either (there
 	 * are both cases in code examples).
@@ -353,11 +377,15 @@ tl_pci_attach(parent, self, aux)
 
 	tl_reset(sc);
 
-	/* fill in the i2c struct */
-	sc->i2cbus.adapter_softc = sc;
-	sc->i2cbus.set_bit = tl_i2c_set;
-	sc->i2cbus.clr_bit = tl_i2c_clr;
-	sc->i2cbus.read_bit = tl_i2c_read;
+	/* fill in the i2c tag */
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = tl_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = tl_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = tl_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = tl_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = tl_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = tl_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = tl_i2c_write_byte;
 
 #ifdef TLDEBUG
 	printf("default values of INTreg: 0x%x\n",
@@ -365,15 +393,11 @@ tl_pci_attach(parent, self, aux)
 #endif
 
 	/* read mac addr */
-	for (i=0; i<ETHER_ADDR_LEN; i++) {
-		tmp = i2c_eeprom_read(&sc->i2cbus, 0x83 + i);
-		if (tmp < 0) {
-			printf("%s: error reading Ethernet adress\n",
-			    sc->sc_dev.dv_xname);
+	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
+				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
+		printf("%s: error reading Ethernet address\n",
+		    sc->sc_dev.dv_xname);
 			return;
-		} else {
-			sc->tl_enaddr[i] = tmp;
-		}
 	}
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->tl_enaddr));
@@ -414,7 +438,7 @@ tl_pci_attach(parent, self, aux)
 	}
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing 
+	 * doing
 	 * reboot before the driver initializes.
 	 */
 	(void) shutdownhook_establish(tl_shutdown, ifp);
@@ -436,13 +460,13 @@ tl_pci_attach(parent, self, aux)
 	    tl_mediastatus);
 	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
+	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	/* 
+	/*
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->tl_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -514,7 +538,7 @@ static void tl_stop(ifp, disable)
 	tl_softc_t *sc = ifp->if_softc;
 	struct Tx_list *Tx;
 	int i;
-	
+
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	/* disable interrupts */
@@ -525,7 +549,7 @@ static void tl_stop(ifp, disable)
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_STOP);
 	DELAY(100000);
 
-	/* stop statistics reading loop, read stats */ 
+	/* stop statistics reading loop, read stats */
 	callout_stop(&sc->tl_tick_ch);
 	tl_read_stats(sc);
 
@@ -540,7 +564,7 @@ static void tl_stop(ifp, disable)
 				    sc->Rx_list[i].m_dmamap);
 				m_freem(sc->Rx_list[i].m);
 			}
-			bus_dmamap_destroy(sc->tl_dmatag, 
+			bus_dmamap_destroy(sc->tl_dmatag,
 			    sc->Rx_list[i].m_dmamap);
 			sc->Rx_list[i].m = NULL;
 		}
@@ -632,7 +656,7 @@ static int tl_init(ifp)
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 1,
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
 		    &sc->Tx_dmamap);
-	if (error == 0) 
+	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag, ETHER_MIN_TX, 1,
 		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
 		    &sc->null_dmamap);
@@ -686,19 +710,19 @@ static int tl_init(ifp)
 			goto bad;
 		}
 		if (i > 0) { /* chain the list */
-			sc->Rx_list[i-1].next = &sc->Rx_list[i];
-			sc->hw_Rx_list[i-1].fwd =
+			sc->Rx_list[i - 1].next = &sc->Rx_list[i];
+			sc->hw_Rx_list[i - 1].fwd =
 			    htole32(sc->Rx_list[i].hw_listaddr);
-			sc->Tx_list[i-1].next = &sc->Tx_list[i];
+			sc->Tx_list[i - 1].next = &sc->Tx_list[i];
 		}
 	}
-	sc->hw_Rx_list[TL_NBUF-1].fwd = 0;
-	sc->Rx_list[TL_NBUF-1].next = NULL;
-	sc->hw_Tx_list[TL_NBUF-1].fwd = 0;
-	sc->Tx_list[TL_NBUF-1].next = NULL;
+	sc->hw_Rx_list[TL_NBUF - 1].fwd = 0;
+	sc->Rx_list[TL_NBUF - 1].next = NULL;
+	sc->hw_Tx_list[TL_NBUF - 1].fwd = 0;
+	sc->Tx_list[TL_NBUF - 1].next = NULL;
 
 	sc->active_Rx = &sc->Rx_list[0];
-	sc->last_Rx   = &sc->Rx_list[TL_NBUF-1];
+	sc->last_Rx   = &sc->Rx_list[TL_NBUF - 1];
 	sc->active_Tx = sc->last_Tx = NULL;
 	sc->Free_Tx   = &sc->Tx_list[0];
 	bus_dmamap_sync(sc->tl_dmatag, sc->Rx_dmamap, 0,
@@ -715,7 +739,7 @@ static int tl_init(ifp)
 
 	/* start ticks calls */
 	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
-	/* write adress of Rx list and enable interrupts */
+	/* write address of Rx list and enable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CH_PARM, sc->Rx_list[0].hw_listaddr);
 	TL_HR_WRITE(sc, TL_HOST_CMD,
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
@@ -889,71 +913,90 @@ tl_statchg(self)
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
 }
 
-void tl_i2c_set(v, bit)
-	void *v;
-	u_int8_t bit;
-{
-	tl_softc_t *sc = v;
+/********** I2C glue **********/
 
-	switch (bit) {
-	case I2C_DATA:
-		netsio_set(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		netsio_set(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		netsio_set(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_set: unknown bit %d\n", bit);
-	}
-	return;
+static int
+tl_i2c_acquire_bus(void *cookie, int flags)
+{
+
+	/* private bus */
+	return (0);
 }
 
-void tl_i2c_clr(v, bit)
-	void *v;
-	u_int8_t bit;
+static void
+tl_i2c_release_bus(void *cookie, int flags)
 {
-	tl_softc_t *sc = v;
 
-	switch (bit) {
-	case I2C_DATA:
-		netsio_clr(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		netsio_clr(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		netsio_clr(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_clr: unknown bit %d\n", bit);
-	}
-	return;
+	/* private bus */
 }
 
-int tl_i2c_read(v, bit)
-	void *v;
-	u_int8_t bit;
+static int
+tl_i2c_send_start(void *cookie, int flags)
 {
-	tl_softc_t *sc = v;
 
-	switch (bit) {
-	case I2C_DATA:
-		return netsio_read(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		return netsio_read(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		return netsio_read(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_read: unknown bit %d\n", bit);
-		return -1;
-	}
+	return (i2c_bitbang_send_start(cookie, flags, &tl_i2cbb_ops));
 }
+
+static int
+tl_i2c_send_stop(void *cookie, int flags)
+{
+
+	return (i2c_bitbang_send_stop(cookie, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+
+	return (i2c_bitbang_read_byte(cookie, valp, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+
+	return (i2c_bitbang_write_byte(cookie, val, flags, &tl_i2cbb_ops));
+}
+
+/********** I2C bit-bang glue **********/
+
+static void
+tl_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct tl_softc *sc = cookie;
+	uint8_t reg;
+
+	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio);
+	reg = (reg & ~(TL_NETSIO_EDATA|TL_NETSIO_ECLOCK)) | bits;
+	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio, reg);
+}
+
+static void
+tl_i2cbb_set_dir(void *cookie, uint32_t bits)
+{
+	struct tl_softc *sc = cookie;
+	uint8_t reg;
+
+	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio);
+	reg = (reg & ~TL_NETSIO_ETXEN) | bits;
+	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio, reg);
+}
+
+static uint32_t
+tl_i2cbb_read(void *cookie)
+{
+
+	return (tl_intreg_read_byte(cookie, TL_INT_NET + TL_INT_NetSio));
+}
+
+/********** End of I2C stuff **********/
 
 static int
 tl_intr(v)
@@ -968,7 +1011,7 @@ tl_intr(v)
 	int ack = 0;
 	int size;
 
-	int_reg = TL_HR_READ(sc, TL_HOST_INTR_DIOADR);	
+	int_reg = TL_HR_READ(sc, TL_HOST_INTR_DIOADR);
 	int_type = int_reg  & TL_INTR_MASK;
 	if (int_type == 0)
 		return 0;
@@ -990,7 +1033,7 @@ tl_intr(v)
 			Rx = sc->active_Rx;
 			sc->active_Rx = Rx->next;
 			bus_dmamap_sync(sc->tl_dmatag, Rx->m_dmamap, 0,
-			    MCLBYTES, BUS_DMASYNC_POSTREAD);
+			    Rx->m_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->tl_dmatag, Rx->m_dmamap);
 			m = Rx->m;
 			size = le32toh(Rx->hw_list->stat) >> 16;
@@ -1070,10 +1113,10 @@ tl_intr(v)
 			    "cleared\n", sc->sc_dev.dv_xname);
 			return 0;
 		} else
-#endif			
+#endif
 		{
 		/*
-		 * write adress of Rx list and send Rx GO command, ack
+		 * write address of Rx list and send Rx GO command, ack
 		 * interrupt and enable interrupts in one command
 		 */
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM, sc->active_Rx->hw_listaddr);
@@ -1097,7 +1140,7 @@ tl_intr(v)
 #endif
 			Tx->hw_list->stat = 0;
 			bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
-			    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+			    Tx->m_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->tl_dmatag, Tx->m_dmamap);
 			m_freem(Tx->m);
 			Tx->m = NULL;
@@ -1167,7 +1210,7 @@ tl_intr(v)
 			    sc->sc_dev.dv_xname, netstat);
 			/* Ack interrupts */
 			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts,
-			    netstat);	
+			    netstat);
 			ack++;
 		}
 		break;
@@ -1179,7 +1222,7 @@ tl_intr(v)
 
 	if (ack) {
 		/* Ack the interrupt and enable interrupts */
-		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK | 
+		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK |
 		    HOST_CMD_IntOn);
 		return 1;
 	}
@@ -1189,15 +1232,15 @@ tl_intr(v)
 }
 
 static int
-tl_ifioctl(ifp, cmd, data) 
-    struct ifnet *ifp;
+tl_ifioctl(ifp, cmd, data)
+	struct ifnet *ifp;
 	ioctl_cmd_t cmd;
 	caddr_t data;
 {
 	struct tl_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
-	
+
 	s = splnet();
 	switch(cmd) {
 	case SIOCSIFMEDIA:
@@ -1224,7 +1267,7 @@ tl_ifstart(ifp)
 	struct Tx_list *Tx;
 	int segment, size;
 	int again, error;
-	
+
 	if ((sc->tl_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 txloop:
@@ -1302,14 +1345,15 @@ tbdinit:
 	for (segment = 0; segment < Tx->m_dmamap->dm_nsegs; segment++) {
 		Tx->hw_list->seg[segment].data_addr =
 		    htole32(Tx->m_dmamap->dm_segs[segment].ds_addr);
-		    Tx->hw_list->seg[segment].data_count =
-			htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
+		Tx->hw_list->seg[segment].data_count =
+		    htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
 	}
-	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0, size,
+	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
+	    Tx->m_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* We are at end of mbuf chain. check the size and
 	 * see if it needs to be extended
- 	 */
+	 */
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
@@ -1327,13 +1371,13 @@ tbdinit:
 		segment++;
 	}
 	/* The list is done, finish the list init */
-	Tx->hw_list->seg[segment-1].data_count |=
+	Tx->hw_list->seg[segment - 1].data_count |=
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
 	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
 	    le32toh(Tx->hw_list->stat));
-#if 0 
+#if 0
 	for(segment = 0; segment < TL_NSEG; segment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
 		    segment,
@@ -1463,7 +1507,7 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 		return 0;
 	}
 	bus_dmamap_sync(sc->tl_dmatag, Rx->m_dmamap, 0,
-	    MCLBYTES, BUS_DMASYNC_PREREAD);
+	    Rx->m_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	/*
 	 * Move the data pointer up so that the incoming data packet
 	 * will be 32-bit aligned.
@@ -1471,9 +1515,9 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 	m->m_data += 2;
 
 	Rx->hw_list->stat =
-	    htole32(((Rx->m_dmamap->dm_segs[0].ds_len -2) << 16) | 0x3000);
+	    htole32(((Rx->m_dmamap->dm_segs[0].ds_len - 2) << 16) | 0x3000);
 	Rx->hw_list->seg.data_count =
-	    htole32(Rx->m_dmamap->dm_segs[0].ds_len -2);
+	    htole32(Rx->m_dmamap->dm_segs[0].ds_len - 2);
 	Rx->hw_list->seg.data_addr =
 	    htole32(Rx->m_dmamap->dm_segs[0].ds_addr + 2);
 	return (m != oldm);
@@ -1502,7 +1546,7 @@ tl_read_stats(sc)
 	int ierr_code;
 	int ierr_crc;
 	int oerr_underr;
-	int oerr_deffered;
+	int oerr_deferred;
 	int oerr_coll;
 	int oerr_multicoll;
 	int oerr_exesscoll;
@@ -1521,7 +1565,7 @@ tl_read_stats(sc)
 	reg =  tl_intreg_read(sc, TL_INT_STATS_FERR);
 	ierr_crc = (reg & TL_FERR_CRC) >> 16;
 	ierr_code = (reg & TL_FERR_CODE) >> 24;
-	oerr_deffered = (reg & TL_FERR_DEF);
+	oerr_deferred = (reg & TL_FERR_DEF);
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_COLL);
 	oerr_multicoll = (reg & TL_COL_MULTI);
@@ -1549,7 +1593,7 @@ tl_read_stats(sc)
 	sc->ierr_code		+= ierr_code;
 	sc->ierr_crc		+= ierr_crc;
 	sc->oerr_underr		+= oerr_underr;
-	sc->oerr_deffered	+= oerr_deffered;
+	sc->oerr_deferred	+= oerr_deferred;
 	sc->oerr_coll		+= oerr_coll;
 	sc->oerr_multicoll	+= oerr_multicoll;
 	sc->oerr_exesscoll	+= oerr_exesscoll;
@@ -1615,7 +1659,7 @@ static int tl_multicast_hash(a)
 	return hash;
 }
 
-#if defined(TLDEBUG_RX) 
+#if defined(TLDEBUG_RX)
 void
 ether_printheader(eh)
 	struct ether_header *eh;

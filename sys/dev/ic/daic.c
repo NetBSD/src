@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.14 2003/04/06 18:20:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.14.2.1 2004/08/03 10:46:13 skrll Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.14 2003/04/06 18:20:12 wiz Exp $");
 #ifdef NetBSD1_3
 #if NetBSD1_3 < 2
 /* the device is MI, only the attach struct is in the bus
-   dependend frontend. And only on old versions... */
+   dependent frontend. And only on old versions... */
 struct cfdriver daic_cd = {
 	NULL, "daic", DV_DULL
 };
@@ -696,12 +696,14 @@ daic_register_port(struct daic_softc *sc, int port)
 
 	/* make sure this hardware driver type is known to layer 4 */
 	if (sc->sc_cardtype == DAIC_TYPE_QUAD)
-		sprintf(devname, "%s port %d", sc->sc_dev.dv_xname, port);
+		snprintf(devname, sizeof(devname), "%s port %d",
+		    sc->sc_dev.dv_xname, port);
 	else
-		strcpy(devname, sc->sc_dev.dv_xname);
-	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
-	l3drv = isdn_attach_bri(
-	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
+		strlcpy(devname, sc->sc_dev.dv_xname, sizeof(devname));
+	snprintf(cardname, sizeof(cardname), "EICON.Diehl %s",
+	    cardtypename(sc->sc_cardtype));
+	l3drv = isdn_attach_isdnif(
+	    devname, cardname, &sc->sc_port[port], &daic_l3_functions, 2);
 	sc->sc_port[port].du_l3 = l3drv;
 
 	/* initialize linktabs for this port */
@@ -714,7 +716,7 @@ daic_register_port(struct daic_softc *sc, int port)
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
 
-	isdn_bri_ready(l3drv->bri);
+	isdn_isdnif_ready(l3drv->isdnif);
 }
 
 /*---------------------------------------------------------------------------*
@@ -782,7 +784,7 @@ daic_assign(
 	struct daic_softc *sc,	/* our state and port no */
 	int port,
 	u_int classid,		/* Diehl calls this "global instance id" */
-	bus_size_t parmsize, 	/* sizeof paramter arra */
+	bus_size_t parmsize, 	/* sizeof parameter arra */
 	const u_int8_t *parms)	/* task instance parameters */
 {
 	static char wchan[] = "daic assign";

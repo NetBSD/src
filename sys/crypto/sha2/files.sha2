@@ -1,0 +1,5 @@
+#	$NetBSD: files.sha2,v 1.3.4.2 2004/08/03 10:44:46 skrll Exp $
+
+define	sha2
+
+file	crypto/sha2/sha2.c	sha2

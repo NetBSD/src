@@ -1,4 +1,5 @@
-/*	$NetBSD: tweio.h,v 1.1 2002/12/13 23:31:33 christos Exp $	*/
+/*	$NetBSD: tweio.h,v 1.1.8.1 2004/08/03 10:49:12 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
@@ -28,7 +29,11 @@
  * from FreeBSD: tweio.h,v 1.1 2000/10/25 06:59:05 msmith Exp
  */
 
+#ifndef _DEV_PCI_TWEIO_H_
+#define	_DEV_PCI_TWEIO_H_
+
 #include <sys/ioccom.h>
+#include <dev/pci/twereg.h>
 
 /*
  * User-space command
@@ -92,3 +97,14 @@ struct twe_paramcommand {
  * Request a controller soft-reset
  */
 #define	TWEIO_RESET	_IO('T', 106)
+
+/*
+ * Request a drive addition or deletion
+ */
+struct twe_drivecommand {
+	int		td_unit;
+};
+#define	TWEIO_ADD_UNIT	_IOW('U', 107, struct twe_drivecommand)
+#define	TWEIO_DEL_UNIT	_IOW('U', 108, struct twe_drivecommand)
+
+#endif /* _DEV_PCI_TWEIO_H_ */

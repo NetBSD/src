@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.4 2000/03/30 13:39:07 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.4.28.1 2004/08/03 10:50:43 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,10 +57,10 @@ int     rf_SimpleXorFunc(RF_DagNode_t * node);
 int     rf_RecoveryXorFunc(RF_DagNode_t * node);
 int 
 rf_XorIntoBuffer(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, char *srcbuf,
-    char *targbuf, void *bp);
-int     rf_bxor(char *src, char *dest, int len, void *bp);
+		 char *targbuf);
+int     rf_bxor(char *src, char *dest, int len);
 int 
-rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp);
+rf_longword_bxor(unsigned long *src, unsigned long *dest, int len);
 int 
 rf_longword_bxor3(unsigned long *dest, unsigned long *a, unsigned long *b, 
 		  unsigned long *c, int len, void *bp);
@@ -80,10 +80,8 @@ extern int (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
 extern int (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 
 /* macros for manipulating the param[3] in a read or write node */
-#define RF_CREATE_PARAM3(pri, lk, unlk, wru) (((RF_uint64)(((wru&0xFFFFFF)<<8)|((lk)?0x10:0)|((unlk)?0x20:0)|((pri)&0xF)) ))
+#define RF_CREATE_PARAM3(pri, wru) (((RF_uint64)(((wru&0xFFFFFF)<<8)|((pri)&0xF)) ))
 #define RF_EXTRACT_PRIORITY(_x_)     ((((unsigned) ((unsigned long)(_x_))) >> 0) & 0x0F)
-#define RF_EXTRACT_LOCK_FLAG(_x_)    ((((unsigned) ((unsigned long)(_x_))) >> 4) & 0x1)
-#define RF_EXTRACT_UNLOCK_FLAG(_x_)  ((((unsigned) ((unsigned long)(_x_))) >> 5) & 0x1)
 #define RF_EXTRACT_RU(_x_)           ((((unsigned) ((unsigned long)(_x_))) >> 8) & 0xFFFFFF)
 
 #endif				/* !_RF__RF_DAGFUNCS_H_ */

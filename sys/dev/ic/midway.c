@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $	*/
+/*	$NetBSD: midway.c,v 1.61.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include "opt_natm.h"
 
@@ -255,7 +255,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.61 2003/06/23 11:01:58 martin Exp $");
 #define RX_NONE		0xffff	/* recv VC not in use */
 
 #define EN_OBHDR	ATM_PH_DRIVER7  /* TBD in first mbuf ! */
-#define EN_OBTRL	ATM_PH_DRIVER8  /* PDU trailier in last mbuf ! */
+#define EN_OBTRL	ATM_PH_DRIVER8  /* PDU trailer in last mbuf ! */
 
 #define ENOTHER_FREE	0x01		/* free rxslot */
 #define ENOTHER_DRAIN	0x02		/* almost free (drain DRQ DMA) */
@@ -484,7 +484,7 @@ static struct ifnet *en_vci2ifp __P((struct en_softc *, int));
  * [1] short/inline functions
  * [2] autoconfig stuff
  * [3] ioctl stuff
- * [4] reset -> init -> trasmit -> intr -> receive functions
+ * [4] reset -> init -> transmit -> intr -> receive functions
  *
  */
 
@@ -1293,9 +1293,10 @@ caddr_t data;
 	case SIOCGPVCSIF:
 		if (ifp != &sc->enif) {
 #ifdef __NetBSD__
-		  strcpy(ifr->ifr_name, sc->enif.if_xname);
+		  strlcpy(ifr->ifr_name, sc->enif.if_xname,
+		      sizeof(ifr->ifr_name));
 #else
-		  sprintf(ifr->ifr_name, "%s%d",
+		  snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%s%d",
 			  sc->enif.if_name, sc->enif.if_unit);
 #endif
 		}
@@ -1312,10 +1313,11 @@ caddr_t data;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
 #ifdef __NetBSD__
-		    strcpy(ifr->ifr_name, sifp->if_xname);
+		    strlcpy(ifr->ifr_name, sifp->if_xname,
+		        sizeof(ifr->ifr_name));
 #else
-		    sprintf(ifr->ifr_name, "%s%d",
-			    sifp->if_name, sifp->if_unit);
+		    snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%s%d",
+		        sifp->if_name, sifp->if_unit);
 #endif
 #if defined(__KAME__) && defined(INET6)
 		    /* get EUI64 for PVC, from ATM hardware interface */
@@ -2080,7 +2082,7 @@ struct mbuf **mm, *prev;
 #endif /* __FreeBSD__ */
 
 /*
- * en_txdma: start trasmit DMA, if possible
+ * en_txdma: start transmit DMA, if possible
  */
 
 STATIC void en_txdma(sc, chan)
@@ -2145,7 +2147,7 @@ again:
 
   if ((launch.atm_flags & EN_OBHDR) == 0) {
     dtqneed = 1;		/* header still needs to be added */
-    launch.need = MID_TBD_SIZE;	/* not includeded with mbuf */
+    launch.need = MID_TBD_SIZE;	/* not included with mbuf */
   } else {
     dtqneed = 0;		/* header on-board, DMA with mbuf */
     launch.need = 0;
@@ -2352,7 +2354,7 @@ struct en_launch *l;
 
 #ifdef EN_DIAG
   if ((need - MID_TBD_SIZE) % MID_ATMDATASZ) 
-    printf("%s: tx%d: bogus trasmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
+    printf("%s: tx%d: bogus transmit needs (%d)\n", sc->sc_dev.dv_xname, chan,
 		need);
 #endif
 #ifdef EN_DEBUG
@@ -2647,7 +2649,7 @@ struct en_launch *l;
   }
 
   if (addtail || dma != cur) {
-   /* write final descritor  */
+   /* write final descriptor  */
     EN_DTQADD(sc, WORD_IDX(start,cur), chan, MIDDMA_JK, 0, 
 				l->mlen, MID_DMA_END);
     /* dma = cur; */ 	/* not necessary since we are done */
@@ -2744,7 +2746,7 @@ void *arg;
 	else
 	  sc->txslot[lcv].bfree = (val + (EN_TXSZ*1024)) - sc->txslot[lcv].cur;
 #ifdef EN_DEBUG
-	printf("%s: tx%d: trasmit done.   %d bytes now free in buffer\n",
+	printf("%s: tx%d: transmit done.   %d bytes now free in buffer\n",
 		sc->sc_dev.dv_xname, lcv, sc->txslot[lcv].bfree);
 #endif
       }
@@ -2983,7 +2985,7 @@ struct en_softc *sc;
   struct mbuf *m, *tmp;
   u_int32_t cur, dstart, rbd, pdu, *sav, dma, bcode, count, *data, *datastop;
   u_int32_t start, stop, cnt, needalign;
-  int slot, raw, aal5, llc, vci, fill, mlen, tlen, drqneed, need, needfill, end;
+  int slot, raw, aal5, vci, fill, mlen, tlen, drqneed, need, needfill, end;
 
   aal5 = 0;		/* Silence gcc */
 next_vci:
@@ -3057,7 +3059,6 @@ defer:					/* defer processing */
 
     /* normal mode */
     aal5 = (sc->rxslot[slot].atm_flags & ATM_PH_AAL5);
-    llc = (aal5 && (sc->rxslot[slot].atm_flags & ATM_PH_LLCSNAP)) ? 1 : 0;
     rbd = EN_READ(sc, cur);
     if (MID_RBD_ID(rbd) != MID_RBD_STDID) 
       panic("en_service: id mismatch");
@@ -3454,7 +3455,7 @@ int unit, level;
       printf("    %d times we ran out of mbufs *and* DRQs\n", sc->rxoutboth);
       printf("    %d times we ran out of DRQs\n", sc->rxdrqout);
 
-      printf("    %d trasmit packets dropped due to mbsize\n", sc->txmbovr);
+      printf("    %d transmit packets dropped due to mbsize\n", sc->txmbovr);
       printf("    %d cells trashed due to turned off rxvc\n", sc->vtrash);
       printf("    %d cells trashed due to totally full buffer\n", sc->otrash);
       printf("    %d cells trashed due almost full buffer\n", sc->ttrash);
@@ -3933,10 +3934,11 @@ static int en_pvctx(sc, pvcreq)
 		struct pvcsif *pvcsif = (struct pvcsif *)ifp;
 
 #ifdef __NetBSD__
-    		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+    		strlcpy(pvcreq->pvc_ifname, sc->enif.if_xname,
+		    sizeof(pvcreq->pvc_ifname));
 #else
-    		sprintf(pvcreq->pvc_ifname, "%s%d",
-			sc->enif.if_name, sc->enif.if_unit);
+    		snprintf(pvcreq->pvc_ifname, sizeof(pvcreq->pvc_ifname), "%s%d",
+		    sc->enif.if_name, sc->enif.if_unit);
 #endif
 		ATM_PH_FLAGS(&api.aph) =
 			(ATM_PH_FLAGS(pvc_aph) & (ATM_PH_AAL5|ATM_PH_LLCSNAP));
@@ -3997,10 +3999,11 @@ static int en_pvctxget(sc, pvcreq)
 	else {
 		/* pvc subinterface */
 #ifdef __NetBSD__
-		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+		strlcpy(pvcreq->pvc_ifname, sc->enif.if_xname,
+		    sizeof(pvcreq->pvc_ifname));
 #else
-		sprintf(pvcreq->pvc_ifname, "%s%d",
-			sc->enif.if_name, sc->enif.if_unit);
+		snprintf(pvcreq->pvc_ifname, sizeof(pvcreq->pvc_ifname), "%s%d",
+		    sc->enif.if_name, sc->enif.if_unit);
 #endif
 
 		pvcsif = (struct pvcsif *)ifp;

@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.8 2000/11/16 19:25:42 matt Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.8.26.1 2004/08/03 10:42:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.8.26.1 2004/08/03 10:42:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +123,7 @@ vsbus_dma_init(sc, ptecnt)
 		}
 
 		error = bus_dmamem_map(t, segs, nsegs, mapsize, 
-		   (caddr_t *) &pte, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		   (caddr_t *)(void *) &pte, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
 			panic("vsbus_dma_init: error mapping memory for "
 			    "hw sgmap: error=%d", error);

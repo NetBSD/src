@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme,v 1.1 2002/02/12 20:38:42 scw Exp $
+#	$NetBSD: files.mvme,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $
 #
 # Config file and device description for drivers shared between all
 # Motorola MVME boards.
@@ -27,7 +27,6 @@ attach	clock at pcctwo with clock_pcctwo
 file	dev/mvme/clock_pcctwo.c			clock_pcctwo
 
 # MVME68K/MVME88K Printer
-device	lpt
 attach	lpt at pcctwo with lpt_pcctwo
 file	dev/mvme/lpt_mvme.c			lpt needs-flag
 file	dev/mvme/lpt_pcctwo.c			lpt_pcctwo

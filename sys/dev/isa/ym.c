@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.21 2002/03/10 13:57:11 itohy Exp $	*/
+/*	$NetBSD: ym.c,v 1.21.12.1 2004/08/03 10:48:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.21 2002/03/10 13:57:11 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.21.12.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -416,9 +416,9 @@ ym_getdev(addr, retp)
 	struct ym_softc *sc = addr;
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 
-	strcpy(retp->name, ac->chip_name);
-	sprintf(retp->version, "%d", sc->sc_version);
-	strcpy(retp->config, "ym");
+	strlcpy(retp->name, ac->chip_name, sizeof(retp->name));
+	snprintf(retp->version, sizeof(retp->version), "%d", sc->sc_version);
+	strlcpy(retp->config, "ym", sizeof(retp->config));
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxreg.h,v 1.1 2001/10/03 04:25:30 mrg Exp $	*/
+/*	$NetBSD: cd18xxreg.h,v 1.1.24.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -166,7 +166,7 @@
 #define	CD18xx_RDCR_GOODBYTES	0x0f	/* number of good bytes */
 
 /* receive character status register */
-#define	CD18xx_RCSR_TIMEOUT	0x80	/* timeout has occured on channel */
+#define	CD18xx_RCSR_TIMEOUT	0x80	/* timeout has occurred on channel */
 #define	CD18xx_RCSR_SCD		0x70	/* special character detect */
 #define	CD18xx_RCSR_BREAK	0x08	/* line break detected */
 #define	CD18xx_RCSR_PARITYERR	0x04	/* parity error detected */

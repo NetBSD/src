@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.18.2.1 2003/07/02 15:25:57 darrenr Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.18.2.2 2004/08/03 10:44:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.18.2.1 2003/07/02 15:25:57 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.18.2.2 2004/08/03 10:44:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,13 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.18.2.1 2003/07/02 15:25:57 dar
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
 
-static int ultrixstatfs __P((struct statfs *sp, caddr_t buf));
+static int ultrixstatfs(struct statvfs *, caddr_t);
 
 int
-ultrix_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_creat_args *uap = v;
 	struct sys_open_args ap;
@@ -105,10 +98,7 @@ ultrix_sys_creat(l, v, retval)
 
 
 int
-ultrix_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_access_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -119,10 +109,7 @@ ultrix_sys_access(l, v, retval)
 }
 
 int
-ultrix_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_stat_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -133,10 +120,7 @@ ultrix_sys_stat(l, v, retval)
 }
 
 int
-ultrix_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_lstat_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -147,10 +131,7 @@ ultrix_sys_lstat(l, v, retval)
 }
 
 int
-ultrix_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_execv_args /* {
 		syscallarg(const char *) path;
@@ -171,10 +152,7 @@ ultrix_sys_execv(l, v, retval)
 }
 
 int
-ultrix_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -196,10 +174,7 @@ ultrix_sys_execve(l, v, retval)
 }
 
 int
-ultrix_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_open_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -258,9 +233,7 @@ struct ultrix_statfs {
  *  block units to DEV_BSIZE necessary? 
  */
 static int
-ultrixstatfs(sp, buf)
-	struct statfs *sp;
-	caddr_t buf;
+ultrixstatfs(struct statvfs *sp, caddr_t buf)
 {
 	struct ultrix_statfs ssfs;
 
@@ -272,21 +245,18 @@ ultrixstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }
 
 
 int
-ultrix_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_statfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -300,28 +270,25 @@ ultrix_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
 /*
  * sys_fstatfs() takes an fd, not a path, and so needs no emul
- * pathname processing;  but it's similar enough to sys_statfs() that
+ * pathname processing;  but it's similar enough to sys_statvfs() that
  * it goes here anyway.
  */
 int
-ultrix_sys_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_fstatfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -329,9 +296,9 @@ ultrix_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
  out:
 	FILE_UNUSE(fp, p);
@@ -339,10 +306,7 @@ ultrix_sys_fstatfs(l, v, retval)
 }
 
 int
-ultrix_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_mknod_args *uap = v;
 	struct proc *p = l->l_proc;

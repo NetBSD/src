@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.25.2.2 2003/07/02 15:25:58 darrenr Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.25.2.3 2004/08/03 10:44:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.2 2003/07/02 15:25:58 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.3 2004/08/03 10:44:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +140,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
-		db_printf(" PID        %4s S %7s %18s %18s %-12s\n",
+		db_printf(" PID        %4s S %9s %18s %18s %-12s\n",
 		    "LID", "FLAGS", "STRUCT LWP *", "UAREA *", "WAIT");
 		break;
 	case 'n':
@@ -182,7 +178,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 			case 'l':
 				l = LIST_FIRST(&p->p_lwps);
 				 while (l != NULL) {
-					db_printf("%c%4d %d %#7x %18p %18p %s\n",
+					db_printf("%c%4d %d %#9x %18p %18p %s\n",
 					    " >"[cl == l], l->l_lid,
 					    l->l_stat, l->l_flag, l, 
 					    l->l_addr, 
@@ -276,4 +272,34 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	}
 	if (!newl)
 		db_printf("\n");
+}
+
+#ifdef __HAVE_BIGENDIAN_BITOPS
+#define	RQMASK(n) (0x80000000 >> (n))
+#else
+#define	RQMASK(n) (0x00000001 << (n))
+#endif
+
+void
+db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	struct prochd *ph;
+	struct lwp *l;
+	int i, first;
+
+	for (i = 0; i < RUNQUE_NQS; i++)
+	{
+		first = 1;
+		ph = &sched_qs[i];
+		for (l = ph->ph_link; l != (struct lwp *)ph; l = l->l_forw) {
+			if (first) {
+				db_printf("%c%d",
+				    (sched_whichqs & RQMASK(i))
+				    ? ' ' : '!', i);
+				first = 0;
+			}
+			db_printf("\t%d.%d (%s)\n", l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm);
+		}
+	}
 }

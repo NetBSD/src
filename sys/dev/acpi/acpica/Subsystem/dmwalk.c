@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmwalk - AML disassembly tree walk
- *              xRevision: 9 $
+ *              xRevision: 11 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.2 2003/02/13 14:16:17 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.2.2.1 2004/08/03 10:45:06 skrll Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -212,9 +213,8 @@ AcpiDmWalkParseTree (
         }
         else
         {
-            /*
-             * Let the callback process the node.
-             */
+            /* Let the callback process the node */
+
             Status = DescendingCallback (Op, Info->Level, Context);
             if (ACPI_SUCCESS (Status))
             {
@@ -479,9 +479,8 @@ AcpiDmDescendingOp (
         Info->Level--;
     }
 
-    /*
-     * Start the opcode argument list if necessary
-     */
+    /* Start the opcode argument list if necessary */
+
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
 
     if ((OpInfo->Flags & AML_HAS_ARGS) ||
@@ -494,9 +493,8 @@ AcpiDmDescendingOp (
             AcpiOsPrintf (" (");
         }
 
-        /*
-         * If this is a named opcode, print the associated name value
-         */
+        /* If this is a named opcode, print the associated name value */
+
         if (OpInfo->Flags & AML_NAMED)
         {
             switch (Op->Common.AmlOpcode)

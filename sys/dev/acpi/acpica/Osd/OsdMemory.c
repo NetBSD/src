@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.5 2003/05/11 19:08:37 fvdl Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.5.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.5 2003/05/11 19:08:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.5.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,7 +63,7 @@ AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length,
     void **LogicalAddress)
 {
 
-	return (acpi_md_OsMapMemory(PhysicalAddress, Length, LogicalAddress));
+	return acpi_md_OsMapMemory(PhysicalAddress, Length, LogicalAddress);
 }
 
 /*
@@ -88,7 +88,7 @@ AcpiOsGetPhysicalAddress(void *LogicalAddress,
     ACPI_PHYSICAL_ADDRESS *PhysicalAddress)
 {
 
-	return (acpi_md_OsGetPhysicalAddress(LogicalAddress, PhysicalAddress));
+	return acpi_md_OsGetPhysicalAddress(LogicalAddress, PhysicalAddress);
 }
 
 /*
@@ -100,7 +100,7 @@ void *
 AcpiOsAllocate(ACPI_SIZE Size)
 {
 
-	return (malloc(Size, M_ACPI, M_NOWAIT));
+	return malloc(Size, M_ACPI, M_NOWAIT);
 }
 
 /*
@@ -122,10 +122,10 @@ AcpiOsFree(void *Memory)
  *	Check if a memory region is readable.
  */
 BOOLEAN
-AcpiOsReadable(void *Pointer, UINT32 Length)
+AcpiOsReadable(void *Pointer, ACPI_SIZE Length)
 {
 
-	return (acpi_md_OsReadable(Pointer, Length));
+	return acpi_md_OsReadable(Pointer, Length);
 }
 
 /*
@@ -134,8 +134,8 @@ AcpiOsReadable(void *Pointer, UINT32 Length)
  *	Check if a memory region is writable (and readable).
  */
 BOOLEAN
-AcpiOsWritable(void *Pointer, UINT32 Length)
+AcpiOsWritable(void *Pointer, ACPI_SIZE Length)
 {
 
-	return (acpi_md_OsWritable(Pointer, Length));
+	return acpi_md_OsWritable(Pointer, Length);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.42.2.1 2003/07/02 15:26:01 darrenr Exp $	*/
+/*	$NetBSD: rnd.c,v 1.42.2.2 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.1 2003/07/02 15:26:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -128,7 +128,7 @@ volatile u_int32_t rnd_status;
 /*
  * Memory pool; accessed only at splhigh().
  */
-struct pool rnd_mempool;
+POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL);
 
 /*
  * Our random pool.  This is defined here rather than using the general
@@ -320,9 +320,6 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
-
-	pool_init(&rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample",
-	    NULL);
 
 	rndpool_init(&rnd_pool);
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              xRevision: 47 $
+ *              xRevision: 56 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.7 2003/05/12 00:19:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.7.2.1 2004/08/03 10:45:13 skrll Exp $");
 
 #define __TBCONVRT_C__
 
@@ -150,7 +150,6 @@ AcpiTbGetTableCount (
 
 
     ACPI_FUNCTION_ENTRY ();
-
 
 
     if (RSDP->Revision < 2)
@@ -212,7 +211,7 @@ AcpiTbConvertToXsdt (
     /* Copy the header and set the length */
 
     ACPI_MEMCPY (NewTable, TableInfo->Pointer, sizeof (ACPI_TABLE_HEADER));
-    NewTable->Header.Length = (UINT32) TableSize;
+    NewTable->Length = (UINT32) TableSize;
 
     /* Copy the table pointers */
 
@@ -221,12 +220,12 @@ AcpiTbConvertToXsdt (
         if (AcpiGbl_RSDP->Revision < 2)
         {
             ACPI_STORE_ADDRESS (NewTable->TableOffsetEntry[i],
-                ((RSDT_DESCRIPTOR_REV1 *) TableInfo->Pointer)->TableOffsetEntry[i]);
+                (ACPI_CAST_PTR (RSDT_DESCRIPTOR_REV1, TableInfo->Pointer))->TableOffsetEntry[i]);
         }
         else
         {
             NewTable->TableOffsetEntry[i] =
-                ((XSDT_DESCRIPTOR *) TableInfo->Pointer)->TableOffsetEntry[i];
+                (ACPI_CAST_PTR (XSDT_DESCRIPTOR, TableInfo->Pointer))->TableOffsetEntry[i];
         }
     }
 
@@ -236,11 +235,41 @@ AcpiTbConvertToXsdt (
 
     /* Point the table descriptor to the new table */
 
-    TableInfo->Pointer      = (ACPI_TABLE_HEADER *) NewTable;
+    TableInfo->Pointer      = ACPI_CAST_PTR (ACPI_TABLE_HEADER, NewTable);
     TableInfo->Length       = TableSize;
     TableInfo->Allocation   = ACPI_MEM_ALLOCATED;
 
     return (AE_OK);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiTbInitGenericAddress
+ *
+ * PARAMETERS:  NewGasStruct        - GAS struct to be initialized
+ *              RegisterBitWidth    - Width of this register
+ *              Address             - Address of the register
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Initialize a GAS structure.
+ *
+ ******************************************************************************/
+
+static void
+AcpiTbInitGenericAddress (
+    ACPI_GENERIC_ADDRESS    *NewGasStruct,
+    UINT8                   RegisterBitWidth,
+    ACPI_PHYSICAL_ADDRESS   Address)
+{
+
+    ACPI_STORE_ADDRESS (NewGasStruct->Address, Address);
+
+    NewGasStruct->AddressSpaceId    = ACPI_ADR_SPACE_SYSTEM_IO;
+    NewGasStruct->RegisterBitWidth  = RegisterBitWidth;
+    NewGasStruct->RegisterBitOffset = 0;
+    NewGasStruct->Reserved          = 0;
 }
 
 
@@ -313,14 +342,39 @@ AcpiTbConvertFadt1 (
     /*
      * Convert the V1.0 block addresses to V2.0 GAS structures
      */
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aEvtBlk, LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1aEvtBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bEvtBlk, LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1bEvtBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aCntBlk, LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1aCntBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bCntBlk, LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1bCntBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm2CntBlk,  LocalFadt->Pm2CntLen,  LocalFadt->V1_Pm2CntBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPmTmrBlk,   LocalFadt->PmTmLen,    LocalFadt->V1_PmTmrBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,    0,                     LocalFadt->V1_Gpe0Blk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,    0,                     LocalFadt->V1_Gpe1Blk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPm1aEvtBlk, LocalFadt->Pm1EvtLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Pm1aEvtBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPm1bEvtBlk, LocalFadt->Pm1EvtLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Pm1bEvtBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPm1aCntBlk, LocalFadt->Pm1CntLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Pm1aCntBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPm1bCntBlk, LocalFadt->Pm1CntLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Pm1bCntBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPm2CntBlk,  LocalFadt->Pm2CntLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Pm2CntBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XPmTmrBlk,   LocalFadt->PmTmLen,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_PmTmrBlk);
+    AcpiTbInitGenericAddress (&LocalFadt->XGpe0Blk,    0,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Gpe0Blk);
+    AcpiTbInitGenericAddress (&LocalFadt->XGpe1Blk,    0,
+                             (ACPI_PHYSICAL_ADDRESS)   LocalFadt->V1_Gpe1Blk);
+
+    /* Create separate GAS structs for the PM1 Enable registers */
+
+    AcpiTbInitGenericAddress (&AcpiGbl_XPm1aEnable,
+         (UINT8) ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen),
+         (ACPI_PHYSICAL_ADDRESS) (ACPI_GET_ADDRESS (LocalFadt->XPm1aEvtBlk.Address) +
+            ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen)));
+
+    /* PM1B is optional; leave null if not present */
+
+    if (ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address))
+    {
+        AcpiTbInitGenericAddress (&AcpiGbl_XPm1bEnable,
+             (UINT8) ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen),
+             (ACPI_PHYSICAL_ADDRESS) (ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address) +
+                ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen)));
+    }
 }
 
 
@@ -365,50 +419,69 @@ AcpiTbConvertFadt2 (
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1aEvtBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aEvtBlk,
-            LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1aEvtBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPm1aEvtBlk,
+            LocalFadt->Pm1EvtLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Pm1aEvtBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bEvtBlk,
-            LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1bEvtBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPm1bEvtBlk,
+            LocalFadt->Pm1EvtLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Pm1bEvtBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1aCntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aCntBlk,
-            LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1aCntBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPm1aCntBlk,
+            LocalFadt->Pm1CntLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Pm1aCntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1bCntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bCntBlk,
-            LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1bCntBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPm1bCntBlk,
+            LocalFadt->Pm1CntLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Pm1bCntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm2CntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm2CntBlk,
-            LocalFadt->Pm2CntLen,  LocalFadt->V1_Pm2CntBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPm2CntBlk,
+            LocalFadt->Pm2CntLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Pm2CntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPmTmrBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPmTmrBlk,
-            LocalFadt->PmTmLen,    LocalFadt->V1_PmTmrBlk);
+        AcpiTbInitGenericAddress (&LocalFadt->XPmTmrBlk,
+            LocalFadt->PmTmLen, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_PmTmrBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe0Blk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,
-            0, LocalFadt->V1_Gpe0Blk);
+        AcpiTbInitGenericAddress (&LocalFadt->XGpe0Blk,
+            0, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Gpe0Blk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe1Blk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,
-            0, LocalFadt->V1_Gpe1Blk);
+        AcpiTbInitGenericAddress (&LocalFadt->XGpe1Blk,
+            0, (ACPI_PHYSICAL_ADDRESS) LocalFadt->V1_Gpe1Blk);
+    }
+
+    /* Create separate GAS structs for the PM1 Enable registers */
+
+    AcpiTbInitGenericAddress (&AcpiGbl_XPm1aEnable,
+        (UINT8) ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen),
+        (ACPI_PHYSICAL_ADDRESS) (ACPI_GET_ADDRESS (LocalFadt->XPm1aEvtBlk.Address) +
+            ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen)));
+    AcpiGbl_XPm1aEnable.AddressSpaceId  = LocalFadt->XPm1aEvtBlk.AddressSpaceId;
+
+    /* PM1B is optional; leave null if not present */
+
+    if (ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address))
+    {
+        AcpiTbInitGenericAddress (&AcpiGbl_XPm1bEnable,
+            (UINT8) ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen),
+            (ACPI_PHYSICAL_ADDRESS) (ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address) +
+                ACPI_DIV_2 (AcpiGbl_FADT->Pm1EvtLen)));
+        AcpiGbl_XPm1bEnable.AddressSpaceId  = LocalFadt->XPm1bEvtBlk.AddressSpaceId;
     }
 }
 
@@ -453,20 +526,20 @@ AcpiTbConvertTableFadt (void)
      * FADT length and version validation.  The table must be at least as
      * long as the version 1.0 FADT
      */
-    if (AcpiGbl_FADT->Header.Length < sizeof (FADT_DESCRIPTOR_REV1))
+    if (AcpiGbl_FADT->Length < sizeof (FADT_DESCRIPTOR_REV1))
     {
-        ACPI_REPORT_ERROR (("Invalid FADT table length: 0x%X\n", AcpiGbl_FADT->Header.Length));
+        ACPI_REPORT_ERROR (("Invalid FADT table length: 0x%X\n", AcpiGbl_FADT->Length));
         return_ACPI_STATUS (AE_INVALID_TABLE_LENGTH);
     }
 
-    if (AcpiGbl_FADT->Header.Revision >= FADT2_REVISION_ID)
+    if (AcpiGbl_FADT->Revision >= FADT2_REVISION_ID)
     {
-        if (AcpiGbl_FADT->Header.Length < sizeof (FADT_DESCRIPTOR_REV2))
+        if (AcpiGbl_FADT->Length < sizeof (FADT_DESCRIPTOR_REV2))
         {
             /* Length is too short to be a V2.0 table */
 
             ACPI_REPORT_WARNING (("Inconsistent FADT length (0x%X) and revision (0x%X), using FADT V1.0 portion of table\n",
-                        AcpiGbl_FADT->Header.Length, AcpiGbl_FADT->Header.Revision));
+                        AcpiGbl_FADT->Length, AcpiGbl_FADT->Revision));
 
             AcpiTbConvertFadt1 (LocalFadt, (void *) AcpiGbl_FADT);
         }
@@ -488,16 +561,16 @@ AcpiTbConvertTableFadt (void)
      * Global FADT pointer will point to the new common V2.0 FADT
      */
     AcpiGbl_FADT = LocalFadt;
-    AcpiGbl_FADT->Header.Length = sizeof (FADT_DESCRIPTOR);
+    AcpiGbl_FADT->Length = sizeof (FADT_DESCRIPTOR);
 
     /* Free the original table */
 
-    TableDesc = &AcpiGbl_AcpiTables[ACPI_TABLE_FADT];
+    TableDesc = AcpiGbl_TableLists[ACPI_TABLE_FADT].Next;
     AcpiTbDeleteSingleTable (TableDesc);
 
     /* Install the new table */
 
-    TableDesc->Pointer      = (ACPI_TABLE_HEADER *) AcpiGbl_FADT;
+    TableDesc->Pointer      = ACPI_CAST_PTR (ACPI_TABLE_HEADER, AcpiGbl_FADT);
     TableDesc->Allocation   = ACPI_MEM_ALLOCATED;
     TableDesc->Length       = sizeof (FADT_DESCRIPTOR_REV2);
 
@@ -505,8 +578,8 @@ AcpiTbConvertTableFadt (void)
 
     ACPI_DEBUG_PRINT ((ACPI_DB_TABLES,
         "Hex dump of common internal FADT, size %d (%X)\n",
-        AcpiGbl_FADT->Header.Length, AcpiGbl_FADT->Header.Length));
-    ACPI_DUMP_BUFFER ((UINT8 *) (AcpiGbl_FADT), AcpiGbl_FADT->Header.Length);
+        AcpiGbl_FADT->Length, AcpiGbl_FADT->Length));
+    ACPI_DUMP_BUFFER ((UINT8 *) (AcpiGbl_FADT), AcpiGbl_FADT->Length);
 
     return_ACPI_STATUS (AE_OK);
 }

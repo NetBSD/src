@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.4 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.4.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * USB part of Nereid Ethernet/USB/Memory board
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.4.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

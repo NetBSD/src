@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.24 2002/10/02 16:02:25 thorpej Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.24.6.1 2004/08/03 10:42:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * After a write, it must not be touched for 10 milliseconds.
  * (See the Sun-3 Architecture Manual sec. 5.9)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.24.6.1 2004/08/03 10:42:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

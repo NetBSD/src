@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10 2003/06/01 20:26:14 fvdl Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.1 2004/08/03 10:49:07 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: if_bgereg.h,v 1.4 2002/04/04 06:01:31 wpaul Exp $
+ * $FreeBSD: if_bgereg.h,v 1.1.2.7 2002/11/02 18:17:55 mp Exp $
  */
 
 /*
@@ -219,25 +219,46 @@
 	(BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_CLEAR_INTA| \
 	 BGE_PCIMISCCTL_MASK_PCI_INTR|BGE_PCIMISCCTL_INDIRECT_ACCESS)
 
-#define BGE_ASICREV_TIGON_I		0x40000000
-#define BGE_ASICREV_TIGON_II		0x60000000
-#define BGE_ASICREV_BCM5700_A0		0x70000000
-#define BGE_ASICREV_BCM5700_A1		0x70010000
-#define BGE_ASICREV_BCM5700_B0		0x71000000
-#define BGE_ASICREV_BCM5700_B1		0x71020000
-#define BGE_ASICREV_BCM5700_B2		0x71030000
-#define BGE_ASICREV_BCM5700_ALTIMA	0x71040000
-#define BGE_ASICREV_BCM5700_C0		0x72000000
-#define BGE_ASICREV_BCM5701_A0		0x00000000	/* grrrr */
-#define BGE_ASICREV_BCM5701_B0		0x01000000
-#define BGE_ASICREV_BCM5701_B2		0x01020000
-#define BGE_ASICREV_BCM5701_B5		0x01050000
-#define BGE_ASICREV_BCM5703_A0		0x10000000
-#define BGE_ASICREV_BCM5703_A1		0x10010000
-#define BGE_ASICREV_BCM5703_A2		0x10020000
-#define BGE_ASICREV_BCM5704_A0		0x20000000
-#define BGE_ASICREV_BCM5704_A1		0x20010000
-#define BGE_ASICREV_BCM5704_A2		0x20020000
+#define BGE_CHIPID_TIGON_I		0x40000000
+#define BGE_CHIPID_TIGON_II		0x60000000
+#define BGE_CHIPID_BCM5700_A0		0x70000000
+#define BGE_CHIPID_BCM5700_A1		0x70010000
+#define BGE_CHIPID_BCM5700_B0		0x71000000
+#define BGE_CHIPID_BCM5700_B1		0x71020000
+#define BGE_CHIPID_BCM5700_B2		0x71030000
+#define BGE_CHIPID_BCM5700_ALTIMA	0x71040000
+#define BGE_CHIPID_BCM5700_C0		0x72000000
+#define BGE_CHIPID_BCM5701_A0		0x00000000	/* grrrr */
+#define BGE_CHIPID_BCM5701_B0		0x01000000
+#define BGE_CHIPID_BCM5701_B2		0x01020000
+#define BGE_CHIPID_BCM5701_B5		0x01050000
+#define BGE_CHIPID_BCM5703_A0		0x10000000
+#define BGE_CHIPID_BCM5703_A1		0x10010000
+#define BGE_CHIPID_BCM5703_A2		0x10020000
+#define BGE_CHIPID_BCM5703_A3		0x11000000
+#define BGE_CHIPID_BCM5704_A0		0x20000000
+#define BGE_CHIPID_BCM5704_A1		0x20010000
+#define BGE_CHIPID_BCM5704_A2		0x20020000
+#define BGE_CHIPID_BCM5704_A3		0x20030000
+#define BGE_CHIPID_BCM5705_A0		0x30000000
+#define BGE_CHIPID_BCM5705_A1		0x30010000
+#define BGE_CHIPID_BCM5705_A2		0x30020000
+#define BGE_CHIPID_BCM5705_A3		0x30030000
+
+/* shorthand one */
+#define BGE_ASICREV(x)                  ((x) >> 28)
+#define BGE_ASICREV_BCM5700             0x07
+#define BGE_ASICREV_BCM5701             0x00
+#define BGE_ASICREV_BCM5703             0x01
+#define BGE_ASICREV_BCM5704             0x02
+#define BGE_ASICREV_BCM5705             0x03
+
+/* chip revisions */
+#define BGE_CHIPREV(x)                  ((x) >> 24)
+#define BGE_CHIPREV_5700_AX             0x70
+#define BGE_CHIPREV_5700_BX             0x71
+#define BGE_CHIPREV_5700_CX             0x72
+#define BGE_CHIPREV_5701_AX             0x00
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -288,6 +309,15 @@
 #define BGE_PCISTATE_EXPROM_RETRY	0x00000040
 #define BGE_PCISTATE_FLATVIEW_MODE	0x00000100
 #define BGE_PCISTATE_PCI_TGT_RETRY_MAX	0x00000E00
+
+/*
+ * The following bits in PCI state register are reserved.
+ * If we check that the register values reverts on reset,
+ * do not check these bits. On some 5704C (rev A3) and some
+ * Altima chips, these bits do not revert until much later
+ * in the bge driver's bge_reset() chip-reset state machine.
+ */
+#define BGE_PCISTATE_RESERVED	((1 << 12) + (1 <<7)) 
 
 /*
  * PCI Clock Control register -- note, this register is read only
@@ -516,6 +546,7 @@
 #define BGE_RX_BD_RULES_CTL15		0x04F8
 #define BGE_RX_BD_RULES_MASKVAL15	0x04FC
 #define BGE_RX_RULES_CFG		0x0500
+#define BGE_MAX_RX_FRAME_LOWAT		0x0504
 #define BGE_RX_STATS			0x0800
 #define BGE_TX_STATS			0x0880
 
@@ -1098,6 +1129,13 @@
 #define BGE_HCCMODE_ATTN		0x00000004
 #define BGE_HCCMODE_COAL_NOW		0x00000008
 #define BGE_HCCMODE_MSI_BITS		0x0x000070
+#define BGE_HCCMODE_64BYTE		0x00000080
+#define BGE_HCCMODE_32BYTE		0x00000100
+#define BGE_HCCMODE_CLRTICK_RXBD	0x00000200
+#define BGE_HCCMODE_CLRTICK_TXBD	0x00000400
+#define BGE_HCCMODE_NOINT_ON_NOW	0x00000800
+#define BGE_HCCMODE_NOINT_ON_FORCE	0x00001000
+
 #define BGE_HCCMODE_STATBLK_SIZE	0x00000180
 
 #define BGE_STATBLKSZ_FULL		0x00000000
@@ -1564,6 +1602,7 @@
 #define BGE_MODE_CTL			0x6800
 #define BGE_MISC_CFG			0x6804
 #define BGE_MISC_LOCAL_CTL		0x6808
+#define BGE_MISC_TIMER			0x680c
 #define BGE_EE_ADDR			0x6838
 #define BGE_EE_DATA			0x683C
 #define BGE_EE_CTL			0x6840
@@ -1917,6 +1956,7 @@ struct bge_status_block {
 #define BGE_JUMBO_RX_RING_CNT	256
 #define BGE_MINI_RX_RING_CNT	1024
 #define BGE_RETURN_RING_CNT	1024
+#define BGE_RETURN_RING_CNT_5705	512
 
 /*
  * Possible TX ring sizes.
@@ -1936,6 +1976,44 @@ struct bge_status_block {
 /*
  * Tigon III statistics counters.
  */
+
+/* Stats counters access through registers */
+struct bge_mac_stats_regs {
+	u_int32_t		ifHCOutOctets;
+	u_int32_t		Reserved0;
+	u_int32_t		etherStatsCollisions;
+	u_int32_t		outXonSent;
+	u_int32_t		outXoffSent;
+	u_int32_t		Reserved1;
+	u_int32_t		dot3StatsInternalMacTransmitErrors;
+	u_int32_t		dot3StatsSingleCollisionFrames;
+	u_int32_t		dot3StatsMultipleCollisionFrames;
+	u_int32_t		dot3StatsDeferredTransmissions;
+	u_int32_t		Reserved2;
+	u_int32_t		dot3StatsExcessiveCollisions;
+	u_int32_t		dot3StatsLateCollisions;
+	u_int32_t		Reserved3[14];
+	u_int32_t		ifHCOutUcastPkts;
+	u_int32_t		ifHCOutMulticastPkts;
+	u_int32_t		ifHCOutBroadcastPkts;
+	u_int32_t		Reserved4[2];
+	u_int32_t		ifHCInOctets;
+	u_int32_t		Reserved5;
+	u_int32_t		etherStatsFragments;
+	u_int32_t		ifHCInUcastPkts;
+	u_int32_t		ifHCInMulticastPkts;
+	u_int32_t		ifHCInBroadcastPkts;
+	u_int32_t		dot3StatsFCSErrors;
+	u_int32_t		dot3StatsAlignmentErrors;
+	u_int32_t		xonPauseFramesReceived;
+	u_int32_t		xoffPauseFramesReceived;
+	u_int32_t		macControlFramesReceived;
+	u_int32_t		xoffStateEntered;
+	u_int32_t		dot3StatsFramesTooLong;
+	u_int32_t		etherStatsJabbers;
+	u_int32_t		etherStatsUndersizePkts;
+};
+
 struct bge_stats {
 	u_int8_t		Reserved0[256];
 
@@ -2159,7 +2237,7 @@ struct bge_ring_data {
 /*
  * Number of DMA segments in a TxCB. Note that this is carefully
  * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundry since
+ * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
@@ -2235,8 +2313,9 @@ struct bge_softc {
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
     	u_int8_t		bge_rx_alignment_bug;
+	u_int32_t		bge_return_ring_cnt;
 	bus_dma_tag_t		bge_dmatag;
-	u_int32_t		bge_asicrev;
+	u_int32_t		bge_chipid;
 	u_int32_t		bge_quirks;
 	u_int32_t		bge_local_ctrl_reg;
 	struct bge_ring_data	*bge_rdata;	/* rings */
@@ -2257,11 +2336,25 @@ struct bge_softc {
 	u_int32_t		bge_tx_buf_ratio;
 	int			bge_if_flags;
 	int			bge_flags;
+	int			bge_flowflags;
+#ifdef BGE_EVENT_COUNTERS
+	/*
+	 * Event counters.
+	 */
+	struct evcnt bge_ev_intr;	/* interrupts */
+	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
+	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
+	struct evcnt bge_ev_rx_xon;	/* receive PAUSE(len=0) packets */
+	struct evcnt bge_ev_rx_macctl;	/* receive MAC control packets */
+	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
+#endif /* BGE_EVENT_COUNTERS */
 	int			bge_txcnt;
 	int			bge_link;
 	struct callout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
+  	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };

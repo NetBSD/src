@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.36 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: ka820.c,v 1.36.2.1 2004/08/03 10:42:36 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,6 +37,9 @@
  * KA820 specific CPU code.  (Note that the VAX8200 uses a KA820, not
  * a KA8200.  Sigh.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.36.2.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -168,7 +167,7 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	mastercpu = mfpr(PR_BINID);
 	strcpy(cpu_model, "VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
-	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
+	printf(": ka82%c (%s) CPU rev %d, u patch rev %d, sec patch %d\n",
 	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 	sc->sc_binid = ba->ba_nodenr;
@@ -570,7 +569,7 @@ ka820_startslave(struct device *dev, struct cpu_info *ci)
 		if ((volatile int)ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
-		printf("%s: (ID %d) failed starting??!!??\n",
+		printf("%s: (ID %d) failed starting??\n",
 		    dev->dv_xname, sc->sc_binid);
 }
 

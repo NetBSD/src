@@ -1,10 +1,10 @@
-/*	$NetBSD: readufs_lfs.c,v 1.4 2003/04/09 12:57:14 itohy Exp $	*/
-/*	from Id: readufs_lfs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
+/*	$NetBSD: readufs_lfs.c,v 1.4.2.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
  * FS specific support for 4.4BSD Log-structured Filesystem
  *
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@netbsd.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).
@@ -209,9 +209,9 @@ get_lfs_inode(ino, dibuf)
 
 found:
 #ifdef DEBUG_WITH_STDIO
-	printf("LFS: dinode(%d): mode 0%o, nlink %d, inumber %d, size %d, uid %d, gid %d, db[0] %d\n",
+	printf("LFS: dinode(%d): mode 0%o, nlink %d, inumber %d, size %d, uid %d, db[0] %d\n",
 		ino, di->di_mode, di->di_nlink, di->di_inumber,
-		(int) di->di_size, di->di_uid, di->di_gid, di->di_db[0]);
+		(int) di->di_size, di->di_uid, di->di_db[0]);
 #endif
 
 #if 0	/* currently UFS1 only */

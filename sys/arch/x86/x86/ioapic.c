@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $");
+
 #include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -399,10 +404,10 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		/*
 		 * Destination: BSP CPU
 		 *
-		 * XXX will want to distribute interrupts across cpu's
+		 * XXX will want to distribute interrupts across CPUs
 		 * eventually.  most likely, we'll want to vector each
 		 * interrupt to a specific CPU and load-balance across
-		 * cpu's.  but there's no point in doing that until after 
+		 * CPUs.  but there's no point in doing that until after 
 		 * most interrupts run without the kernel lock.  
 		 */
 		redhi |= (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);

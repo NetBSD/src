@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.22.2.1 2003/07/02 15:25:52 darrenr Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.22.2.2 2004/08/03 10:44:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.1 2003/07/02 15:25:52 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.2 2004/08/03 10:44:24 skrll Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -71,7 +71,6 @@ void pecoff_load_section (struct exec_vmcmd_set *vcset, struct vnode *vp,
 int exec_pecoff_makecmds (struct lwp *l, struct exec_package *epp);
 int exec_pecoff_coff_makecmds (struct lwp *l, struct exec_package *epp,
 			       struct coff_filehdr *fp, int peofs);
-int exec_pecoff_setup_stack (struct proc *p, struct exec_package *epp);
 int exec_pecoff_prep_omagic (struct proc *p, struct exec_package *epp,
 			     struct coff_filehdr *fp,
 			     struct coff_aouthdr *ap, int peofs);
@@ -214,6 +213,9 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
+	if ((error = vn_marktext(vp)))
+		goto badunlock;
+
 	VOP_UNLOCK(vp, 0);
 	/*
 	 * Read header.
@@ -352,6 +354,10 @@ exec_pecoff_makecmds(l, epp)
 	}
 	if ((error = pecoff_signature(l, epp->ep_vp, dp)) != 0)
 		return error;
+
+	if ((error = vn_marktext(epp->ep_vp)) != 0)
+		return error;
+
 	peofs = dp->d_peofs + sizeof(signature) - 1;
 	fp = malloc(PECOFF_HDR_SIZE, M_TEMP, M_WAITOK);
 	error = exec_read_from(l, epp->ep_vp, peofs, fp, PECOFF_HDR_SIZE);
@@ -401,24 +407,6 @@ exec_pecoff_coff_makecmds(l, epp, fp, peofs)
 	}
 	
 	return error;
-}
-
-int
-exec_pecoff_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-		  ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-		  epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-		  (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
 }
 
 /*
@@ -519,15 +507,11 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 	/* set up ep_emul_arg */
 	argp = malloc(sizeof(struct pecoff_args), M_TEMP, M_WAITOK);
 	epp->ep_emul_arg = argp;
-	argp->a_base = wp->w_base;
+	argp->a_abiversion = NETBSDPE_ABI_VERSION;
+	argp->a_zero = 0;
 	argp->a_entry = wp->w_base + ap->a_entry;
 	argp->a_end = epp->ep_daddr + epp->ep_dsize;
-	argp->a_subsystem = wp->w_subvers;
-	memcpy(argp->a_imghdr, wp->w_imghdr, sizeof(wp->w_imghdr));
-	/* imghdr RVA --> VA */
-	for (i = 0; i < 16; i++) {
-		argp->a_imghdr[i].i_vaddr += wp->w_base;
-	}
+	argp->a_opthdr = *wp;
 
 	/*
 	 * load dynamic linker
@@ -547,5 +531,5 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 #endif
 
 	free(sh, M_TEMP);
-	return exec_pecoff_setup_stack(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 }

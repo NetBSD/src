@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.59.2.1 2004/08/03 10:46:16 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59.2.1 2004/08/03 10:46:16 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -130,7 +130,9 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
 	if (IS_FC(isp)) {
+#if 0	/* XXX channel "settle" time seems to sidestep some nasty race */
         	isp->isp_osinfo._chan.chan_flags = SCSIPI_CHAN_NOSETTLE;
+#endif
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
 		isp->isp_osinfo.threadwork = 1;
@@ -378,8 +380,10 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		hba->fc_scsi_supported = 1;
 		hba->fc_topology = FCPARAM(isp)->isp_topo + 1;
 		hba->fc_loopid = FCPARAM(isp)->isp_loopid;
-		hba->active_node_wwn = FCPARAM(isp)->isp_nodewwn;
-		hba->active_port_wwn = FCPARAM(isp)->isp_portwwn;
+		hba->nvram_node_wwn = FCPARAM(isp)->isp_nodewwn;
+		hba->nvram_port_wwn = FCPARAM(isp)->isp_portwwn;
+		hba->active_node_wwn = ISP_NODEWWN(isp);
+		hba->active_port_wwn = ISP_PORTWWN(isp);
 		ISP_UNLOCK(isp);
 		break;
 	}
@@ -719,7 +723,7 @@ isp_dog(void *arg)
 			(void) isp_control(isp, ISPCTL_ABORT_CMD, arg);
 
 			/*
-			 * After this point, the comamnd is really dead.
+			 * After this point, the command is really dead.
 			 */
 			if (XS_XFRLEN(xs)) {
 				ISP_DMAFREE(isp, xs, handle);
@@ -785,7 +789,7 @@ isp_fc_worker(void *arg)
 		s = splbio();
 		while (isp->isp_osinfo.threadwork) {
 			isp->isp_osinfo.threadwork = 0;
-			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
+			if (isp_fc_runstate(isp, 250000) == 0) {
 				break;
 			}
 			if  (isp->isp_osinfo.loop_checked &&
@@ -793,6 +797,7 @@ isp_fc_worker(void *arg)
 				splx(s);
 				goto skip;
 			}
+			isp->isp_osinfo.loop_checked = 1;
 			isp->isp_osinfo.threadwork = 1;
 			splx(s);
 			delay(500 * 1000);

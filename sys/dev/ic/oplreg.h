@@ -1,11 +1,11 @@
-/*	$NetBSD: oplreg.h,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
+/*	$NetBSD: oplreg.h,v 1.3.44.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

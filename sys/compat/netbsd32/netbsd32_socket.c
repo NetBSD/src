@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.11.2.1 2003/07/02 15:25:51 darrenr Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.11.2.2 2004/08/03 10:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.11.2.1 2003/07/02 15:25:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.11.2.2 2004/08/03 10:44:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -308,7 +308,7 @@ netbsd32_recvfrom(l, v, retval)
 	} else
 		msg.msg_namelen = 0;
 	msg.msg_name = SCARG(uap, from);
-	msg.msg_iov = NULL; /* ignored in recvit32(), uses iov */
+	msg.msg_iov = 0; /* ignored in recvit32(), uses iov */
 	msg.msg_iovlen = 1;
 	aiov.iov_base = (caddr_t)NETBSD32PTR64(SCARG(uap, buf));
 	aiov.iov_len = (u_long)SCARG(uap, len);

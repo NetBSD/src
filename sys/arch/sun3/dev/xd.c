@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.44 2003/05/10 23:12:40 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.44.2.1 2004/08/03 10:42:04 skrll Exp $	*/
 
 /*
  *
@@ -50,6 +50,9 @@
  * different sizes.   the 753 is a 6U VME card, while the 7053 is a 9U
  * VME card (found in many VME based suns).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.44.2.1 2004/08/03 10:42:04 skrll Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1478,7 +1481,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
  * picked up later by the interrupt routine.  for case [2] the
  * programmed i/o driver is called with a special flag that says
  * return when one iopb is free.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.19.2.1 2003/07/02 15:25:42 darrenr Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.19.2.2 2004/08/03 10:43:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.19.2.1 2003/07/02 15:25:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.19.2.2 2004/08/03 10:43:44 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -564,13 +564,13 @@ freebsd_sys_statfs(l, v, retval)
 {
 	struct freebsd_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	return sys_statfs(l, uap, retval);
+	return compat_20_sys_statfs(l, uap, retval);
 }
 
 #ifdef NFS

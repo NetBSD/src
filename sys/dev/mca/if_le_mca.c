@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.6 2002/10/02 16:34:11 thorpej Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.6.6.1 2004/08/03 10:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.6 2002/10/02 16:34:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.6.6.1 2004/08/03 10:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,6 +214,10 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 		/* Get configured media type */
 		supmedia = sknet_mcp_media[(pos4 & 0xc0) >> 6];
 		break;
+	default:
+		printf("%s: unknown product %d\n", sc->sc_dev.dv_xname,
+		    ma->ma_id);
+		return;
 	}
 
 	lesc->sc_memt = ma->ma_memt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.52 2003/05/03 18:11:29 wiz Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.52.2.1 2004/08/03 10:48:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -114,7 +114,6 @@ struct sbdsp_softc {
 #define SB_CLOSED 0
 #define SB_OPEN_AUDIO 1
 #define SB_OPEN_MIDI 2
-	int	sc_openflags;		/* flags used on open */
 	u_char	sc_fullduplex;		/* can do full duplex */
 
 	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
@@ -228,7 +227,7 @@ int	sbdsp_reset __P((struct sbdsp_softc *));
 void	sbdsp_spkron __P((struct sbdsp_softc *));
 void	sbdsp_spkroff __P((struct sbdsp_softc *));
 
-int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
+int	sbdsp_wdsp __P((struct sbdsp_softc *, int));
 int	sbdsp_rdsp __P((struct sbdsp_softc *));
 
 int	sbdsp_intr __P((void *));

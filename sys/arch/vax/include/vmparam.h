@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40 2003/02/26 21:54:37 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40.2.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -68,36 +64,17 @@
 #ifndef MAXTSIZ
 #define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
-#if USE_TOPDOWN_VM==1
 #ifndef DFLDSIZ
 #define DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define MAXDSIZ		(1024*1024*1024)	/* max data size */
 #endif
-#else
-#ifndef DFLDSIZ
-#define DFLDSIZ		(32*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#endif
 #ifndef DFLSSIZ
 #define DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 #ifndef MAXSSIZ
 #define MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
-
-#ifndef USE_TOPDOWN_VM
-/*
- * All mmap()'ed data will be mapped above MAXDSIZ. This means that
- * pte space must be allocated for (possible) mmap()'ed data.
- * Note: This is just a hint, if we mmap() more than this the page
- * table will be expanded. (at the cost of speed).
- */
-#define MMAPSPACE	(8*1024*1024)
 #endif
 
 /* 
@@ -133,11 +110,9 @@
 /*
  * The address to which unspecified mapping requests default
  */
-#define __HAVE_TOPDOWN_VM
-#ifdef USE_TOPDOWN_VM
+#define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
 	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
-#endif
 
 #define	USRIOSIZE		(8 * VAX_NPTEPG)	/* 512MB */
 #define	VM_PHYS_SIZE		(USRIOSIZE*VAX_NBPG)

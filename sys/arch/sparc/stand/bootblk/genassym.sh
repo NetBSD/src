@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.1 2000/08/20 14:58:45 mrg Exp $
+#	$NetBSD: genassym.sh,v 1.1.28.1 2004/08/03 10:41:22 skrll Exp $
 
 #
 # Copyright (c) 1998 Eduardo E. Horvath.
@@ -43,7 +43,7 @@ else
 	ccode=0
 fi
 
-#trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
+trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 
 $awk '
 BEGIN {

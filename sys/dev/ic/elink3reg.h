@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.25 2001/12/28 20:35:46 christos Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.25.16.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -33,7 +33,7 @@
 
 /*
  * These define the EEPROM data structure.  They are used in the probe
- * function to verify the existance of the adapter after having sent
+ * function to verify the existence of the adapter after having sent
  * the ID_Sequence.
  */
 #define EEPROM_NODE_ADDR_0	0x0	/* Word */
@@ -405,7 +405,7 @@
  *     20-22:   selected media type
  *        21:   unused
  *        24:  (nonvolatile) driver should autoselect media
- *     25-31: reseerved
+ *     25-31: reserved
  *
  * The low-order 16 bits should generally not be changed by software.
  * Offsets defined for two 16-bit words, to help out 16-bit busses.
@@ -449,7 +449,7 @@
 
 
 /*
- * RESET_OPTIONS (Window 3, on Demon/Vortex/Bomerang only)
+ * RESET_OPTIONS (Window 3, on Demon/Vortex/Boomerang only)
  * also mapped to PCI configuration space on PCI adaptors.
  *
  * (same register as  Vortex ELINK_W3_RESET_OPTIONS, mapped to pci-config space)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.38 2002/11/11 12:51:38 onoe Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.38.6.1 2004/08/03 10:45:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38 2002/11/11 12:51:38 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38.6.1 2004/08/03 10:45:47 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.38 2002/11/11 12:51:38 onoe Exp
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers used by the Tulip.
@@ -136,28 +136,37 @@ const struct tulip_cardbus_product {
 	u_int32_t	tcp_product;	/* PCI product ID */
 	tulip_chip_t	tcp_chip;	/* base Tulip chip type */
 } tlp_cardbus_products[] = {
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
+	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_21142,
 	  TULIP_CHIP_21142 },
 
-	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	{ PCI_VENDOR_XIRCOM,	PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
 
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ACCTON,	CARDBUS_PRODUCT_ACCTON_EN2242,
+	{ PCI_VENDOR_ACCTON,	PCI_PRODUCT_ACCTON_EN2242,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_FE2500,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_PCM200,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_PCM200,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500MX,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_FE2500MX,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_HAWKING,	CARDBUS_PRODUCT_HAWKING_PN672TX,
+	{ PCI_VENDOR_HAWKING,	PCI_PRODUCT_HAWKING_PN672TX,
+	  TULIP_CHIP_AN985 },
+
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985_2,
+	  TULIP_CHIP_AN985 },
+
+	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,
+	  TULIP_CHIP_AN985 },
+
+	{ CARDBUS_VENDOR_NETGEAR,	CARDBUS_PRODUCT_NETGEAR_FA511,
 	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,
@@ -570,18 +579,14 @@ tlp_cardbus_power(sc, why)
 	struct tulip_softc *sc;
 	int why;
 {
-	struct tulip_cardbus_softc *csc = (void *) sc;
 
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (TULIP_IS_ENABLED(sc) == 0)
-			panic("tlp_cardbus_power");
-#endif
-		tlp_cardbus_setup(csc);
+	switch (why) {
+	case PWR_RESUME:
+		tlp_cardbus_enable(sc);
+		break;
+	case PWR_SUSPEND:
+		tlp_cardbus_disable(sc);
+		break;
 	}
 }
 
@@ -594,7 +599,6 @@ tlp_cardbus_setup(csc)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
-	int pmreg;
 
 	/*
 	 * Check to see if the device is in power-save mode, and
@@ -618,35 +622,16 @@ tlp_cardbus_setup(csc)
 		break;
 	}
 
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
-	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
-#if 1 /* XXX Probably not right for CardBus. */
-		if (reg == 3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-#endif
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    pmreg + 4, 0);
-		}
-	}
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
+	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
+	    PCI_PWR_D0);
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);

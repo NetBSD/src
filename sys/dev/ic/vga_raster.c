@@ -1,7 +1,8 @@
-/*	$NetBSD: vga_raster.c,v 1.11 2003/04/07 05:48:54 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.11.2.1 2004/08/03 10:46:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
+ * Copyright (c) 2004 Julio M. Merino Vidal
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +54,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.11.2.1 2004/08/03 10:46:21 skrll Exp $");
+
+#include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +185,9 @@ static void vga_raster_erasecols(void *, int, int, int, long);
 static void vga_raster_copyrows(void *, int, int, int);
 static void vga_raster_eraserows(void *, int, int, long);
 static int  vga_raster_allocattr(void *, int, int, int, long *);
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+static void vga_raster_replaceattr(void *, long, long);
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 
 const struct wsdisplay_emulops vga_raster_emulops = {
 	vga_raster_cursor,
@@ -189,6 +198,11 @@ const struct wsdisplay_emulops vga_raster_emulops = {
 	vga_raster_copyrows,
 	vga_raster_eraserows,
 	vga_raster_allocattr,
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	vga_raster_replaceattr,
+#else /* WSDISPLAY_CUSTOM_OUTPUT */
+	NULL,
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 };
 
 /*
@@ -1326,17 +1340,23 @@ vga_raster_eraserows(void *id, int startrow, int nrows, long fillattr)
 	rascount = count * scr->type->fontheight;
 
 	if (scr->active) {
+		u_int8_t bgcolor = (fillattr >> 4) & 0x0F;
+
 		/* Paint background. */
 		vga_gdc_write(vh, mode, 0x02);
-		if (scr->type->ncols % 4 == 0)
+		if (scr->type->ncols % 4 == 0) {
+			u_int32_t fill = bgcolor | (bgcolor << 8) |
+			    (bgcolor << 16) | (bgcolor << 24);
 			/* We can speed up I/O */
 			for (i = rasoff; i < rasoff + rascount; i += 4)
 				bus_space_write_4(memt, memh,
-				    scr->dispoffset + i, fillattr >> 4);
-		else
+				    scr->dispoffset + i, fill);
+		} else {
+			u_int16_t fill = bgcolor | (bgcolor << 8);
 			for (i = rasoff; i < rasoff + rascount; i += 2)
 				bus_space_write_2(memt, memh,
-				    scr->dispoffset + i, fillattr >> 4);
+				    scr->dispoffset + i, fill);
+		}
 	}
 	for (i = 0; i < count; i++) {
 		scr->mem[off + i].ch = ' ';
@@ -1408,3 +1428,22 @@ vga_raster_setscreentype(struct vga_config *vc,
 	vga_setup_regs((struct videomode *)type->modecookie, &moderegs);
 	vga_set_mode(vh, &moderegs);
 }
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+void
+vga_raster_replaceattr(void *id, long oldattr, long newattr)
+{
+	struct vgascreen *scr = id;
+	const struct wsscreen_descr *type = scr->type;
+	int off;
+
+	for (off = 0; off < type->nrows * type->ncols; off++) {
+		if (scr->mem[off].attr == oldattr)
+			scr->mem[off].attr = newattr;
+	}
+
+	/* Repaint the whole screen, if needed */
+	if (scr->active)
+		vga_restore_screen(scr, type, scr->mem);
+}
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */

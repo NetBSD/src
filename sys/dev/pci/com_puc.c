@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.8 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.8.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8 2003/01/31 00:07:41 thorpej Exp $");
 #include <dev/pci/pucvar.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#include <dev/pci/cybervar.h>
 
 struct com_puc_softc {
 	struct com_softc sc_com;	/* real "com" softc */
@@ -112,6 +113,21 @@ com_puc_attach(parent, self, aux)
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
+
+	/* Enable Cyberserial 8X clock. */
+	if (aa->flags & (PUC_COM_SIIG10x|PUC_COM_SIIG20x)) {
+		int usrregno;
+
+		if	(aa->flags & PUC_PORT_USR3) usrregno = 3;
+		else if (aa->flags & PUC_PORT_USR2) usrregno = 2;
+		else if (aa->flags & PUC_PORT_USR1) usrregno = 1;
+		else /* (aa->flags & PUC_PORT_USR0) */ usrregno = 0;
+
+		if (aa->flags & PUC_COM_SIIG10x)
+			write_siig10x_usrreg(aa->pc, aa->tag, usrregno, 1);
+		else
+			write_siig20x_usrreg(aa->pc, aa->tag, usrregno, 1);
+	}
 
 	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
 	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,

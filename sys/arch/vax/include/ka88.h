@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.h,v 1.2 2002/12/01 21:21:45 matt Exp $	*/
+/*	$NetBSD: ka88.h,v 1.2.6.1 2004/08/03 10:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -66,12 +66,12 @@
 #define KA88_CSAOK	0x0000		/* floppy command succeeded */
 
 /* config data from PRO */
-#define KA88_LEFT	0x0001		/* left cpu available */
+#define KA88_LEFT	0x0001		/* left CPU available */
 #define KA88_SMALL	0x0001		/* small cabinet (8530/8550) */
-#define KA88_RIGHT	0x0002		/* right cpu available */
+#define KA88_RIGHT	0x0002		/* right CPU available */
 #define KA88_SECONDEN	0x0004		/* secondary enabled */
-#define KA88_SINGLE	0x0008		/* single cpu */
-#define KA88_LEFTPRIM	0x0040		/* left cpu is primary */
+#define KA88_SINGLE	0x0008		/* single CPU */
+#define KA88_LEFTPRIM	0x0040		/* left CPU is primary */
 #define KA88_SLOW	0x0080		/* low-speed version */
 
 /* floppy commands */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtintrreg.h,v 1.1 2003/03/05 22:08:21 matt Exp $	*/
+/*	$NetBSD: gtintrreg.h,v 1.1.2.1 2004/08/03 10:48:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -65,9 +65,9 @@
  */
 #define ICR_MIC_LO	0xc18	/* main interrupt cause low */
 #define ICR_MIC_HI	0xc68	/* main interrupt cause high */
-#define ICR_CIM_LO	0xc1c	/* cpu interrupt mask low */
-#define ICR_CIM_HI	0xc6c	/* cpu interrupt mask high */
-#define ICR_CSC		0xc70	/* cpu select cause */
+#define ICR_CIM_LO	0xc1c	/* CPU interrupt mask low */
+#define ICR_CIM_HI	0xc6c	/* CPU interrupt mask high */
+#define ICR_CSC		0xc70	/* CPU select cause */
 #define ICR_P0IM_LO	0xc24	/* PCI_0 interrupt mask low */
 #define ICR_P0IM_HI	0xc64	/* PCI_0 interrupt mask high */
 #define ICR_P0SC	0xc74	/* PCI_0 select cause */

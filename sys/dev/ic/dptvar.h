@@ -1,7 +1,7 @@
-/*	$NetBSD: dptvar.h,v 1.9 2002/12/07 19:48:32 ad Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.9.6.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
+ * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

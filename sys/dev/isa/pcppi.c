@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.9 2002/10/02 03:10:49 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.9.6.1 2004/08/03 10:48:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9 2002/10/02 03:10:49 thorpej Exp $");
 
 #include "pckbd.h"
 #if NPCKBD > 0
-#include <dev/ic/pckbcvar.h>
-#include <dev/pckbc/pckbdvar.h>
+#include <dev/pckbport/pckbdvar.h>
 
 void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int, int));
 #endif

@@ -1,11 +1,7 @@
-/*	$NetBSD: rijndael_local.h,v 1.2 2000/10/02 17:19:15 itojun Exp $	*/
-/*	$KAME: rijndael_local.h,v 1.3 2000/10/02 17:14:27 itojun Exp $	*/
+/*	$NetBSD: rijndael_local.h,v 1.2.28.1 2004/08/03 10:44:46 skrll Exp $	*/
+/*	$KAME: rijndael_local.h,v 1.4 2003/07/15 10:47:16 itojun Exp $	*/
 
 /* the file should not be used from outside */
-typedef u_int8_t		BYTE;
-typedef u_int8_t		word8;	
-typedef u_int16_t		word16;	
-typedef u_int32_t		word32;
-
-#define MAXKC		RIJNDAEL_MAXKC
-#define MAXROUNDS	RIJNDAEL_MAXROUNDS
+typedef u_int8_t		u8;
+typedef u_int16_t		u16;	
+typedef u_int32_t		u32;

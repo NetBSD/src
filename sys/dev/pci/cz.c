@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.28.2.1 2003/07/02 15:26:11 darrenr Exp $	*/
+/*	$NetBSD: cz.c,v 1.28.2.2 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.28.2.1 2003/07/02 15:26:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.28.2.2 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,8 +875,8 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 struct cztty_softc *
 cztty_getttysoftc(dev_t dev)
 {
-	int i, j, k, u = minor(dev) & ~CZTTYDIALOUT_MASK;
-	struct cz_softc *cz;
+	int i, j, k = 0, u = minor(dev) & ~CZTTYDIALOUT_MASK;
+	struct cz_softc *cz = NULL;
 
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;

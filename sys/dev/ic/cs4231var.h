@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.3 2003/02/01 13:23:28 martin Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.3.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ struct cs4231_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t sc_dmatag;
 
-	int sc_open;			/* single use device */
 	struct cs_dma *sc_dmas;		/* allocated dma resources */
 
 	struct evcnt sc_intrcnt;	/* parent counter */
@@ -109,8 +108,6 @@ void	cs4231_transfer_advance(struct cs_transfer *,
  */
 int	cs4231_open(void *, int);
 void	cs4231_close(void *);
-size_t	cs4231_round_buffersize(void *, int, size_t);
-int	cs4231_round_blocksize(void *, int);
 int	cs4231_getdev(void *, struct audio_device *);
 int	cs4231_set_port(void *, mixer_ctrl_t *);
 int	cs4231_get_port(void *, mixer_ctrl_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.24.2.1 2004/08/03 10:49:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
  * written by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
  * Technical manual available at
- * http://www.amd.com/products/npd/techdocs/techdocs.html
+ * http://www.amd.com/files/connectivitysolutions/networking/archivednetworking/19113.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24.2.1 2004/08/03 10:49:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,14 +99,13 @@ struct pcscp_softc {
 #define	WRITE_DMAREG(sc, reg, var) \
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (var))
 
-/* don't have to use MI defines in MD code... */
-#undef	NCR_READ_REG
-#define	NCR_READ_REG(sc, reg)		pcscp_read_reg((sc), (reg))
-#undef	NCR_WRITE_REG
-#define	NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
+#define	PCSCP_READ_REG(sc, reg)	\
+	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2)
+#define	PCSCP_WRITE_REG(sc, reg, val)	\
+	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2, (val))
 
-int	pcscp_match __P((struct device *, struct cfdata *, void *)); 
-void	pcscp_attach __P((struct device *, struct device *, void *));
+int	pcscp_match(struct device *, struct cfdata *, void *);
+void	pcscp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
     pcscp_match, pcscp_attach, NULL, NULL);
@@ -116,16 +114,16 @@ CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
  * Functions and the switch for the MI code.
  */
 
-u_char	pcscp_read_reg __P((struct ncr53c9x_softc *, int));
-void	pcscp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	pcscp_dma_isintr __P((struct ncr53c9x_softc *));
-void	pcscp_dma_reset __P((struct ncr53c9x_softc *));
-int	pcscp_dma_intr __P((struct ncr53c9x_softc *));
-int	pcscp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-			       size_t *, int, size_t *));
-void	pcscp_dma_go __P((struct ncr53c9x_softc *));
-void	pcscp_dma_stop __P((struct ncr53c9x_softc *));
-int	pcscp_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	pcscp_read_reg(struct ncr53c9x_softc *, int);
+void	pcscp_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	pcscp_dma_isintr(struct ncr53c9x_softc *);
+void	pcscp_dma_reset(struct ncr53c9x_softc *);
+int	pcscp_dma_intr(struct ncr53c9x_softc *);
+int	pcscp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+    size_t *);
+void	pcscp_dma_go(struct ncr53c9x_softc *);
+void	pcscp_dma_stop(struct ncr53c9x_softc *);
+int	pcscp_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue pcscp_glue = {
 	pcscp_read_reg,
@@ -177,12 +175,13 @@ pcscp_attach(parent, self, aux)
 	int error, rseg;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
+	printf("%s", sc->sc_dev.dv_xname);
 
 	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		printf(": unable to map registers\n");
 		return;
 	}
 
@@ -238,30 +237,10 @@ pcscp_attach(parent, self, aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 
-	sc->sc_minsync = 1000 / sc->sc_freq; 
+	sc->sc_minsync = 1000 / sc->sc_freq;
 
 	/* Really no limit, but since we want to fit into the TCR... */
 	sc->sc_maxxfer = 16 * 1024 * 1024;
-
-	/* map and establish interrupt */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-	    ncr53c9x_intr, esc);
-	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		    intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
@@ -271,9 +250,9 @@ pcscp_attach(parent, self, aux)
 #define MDL_SEG_OFFSET	0x0FFF
 #define MDL_SIZE	(MAXPHYS / MDL_SEG_SIZE + 1) /* no hardware limit? */
 
-	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MAXPHYS, 0,
-	    BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
-		printf("%s: can't create DMA maps\n", sc->sc_dev.dv_xname);
+	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MDL_SEG_SIZE,
+	    MDL_SEG_SIZE, BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
+		printf(": can't create DMA maps\n");
 		return;
 	}
 
@@ -284,35 +263,51 @@ pcscp_attach(parent, self, aux)
 	if ((error = bus_dmamem_alloc(esc->sc_dmat,
 	    sizeof(u_int32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate memory for the MDL, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		printf(": unable to allocate memory for the MDL, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
 	    sizeof(u_int32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map the MDL memory, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to map the MDL memory, error = %d\n", error);
 		return;
 	}
-	if ((error = bus_dmamap_create(esc->sc_dmat, 
+	if ((error = bus_dmamap_create(esc->sc_dmat,
 	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
-		printf("%s: unable to map_create for the MDL, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to map_create for the MDL, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(u_int32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load for the MDL, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf(": unable to load for the MDL, error = %d\n", error);
 		return;
 	}
 
+	/* map and establish interrupt */
+	if (pci_intr_map(pa, &ih)) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+	    ncr53c9x_intr, esc);
+	if (esc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	if (intrstr != NULL)
+		printf(": interrupting at %s\n", intrstr);
+
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
-
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
@@ -332,7 +327,7 @@ pcscp_read_reg(sc, reg)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	return bus_space_read_1(esc->sc_st, esc->sc_sh, reg << 2);
+	return PCSCP_READ_REG(esc, reg);
 }
 
 void
@@ -343,15 +338,16 @@ pcscp_write_reg(sc, reg, v)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	bus_space_write_1(esc->sc_st, esc->sc_sh, reg << 2, v);
+	PCSCP_WRITE_REG(esc, reg, v);
 }
 
 int
 pcscp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
+	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	return NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT;
+	return (PCSCP_READ_REG(esc, NCR_STAT) & NCRSTAT_INT) != 0;
 }
 
 void
@@ -398,9 +394,11 @@ pcscp_dma_intr(sc)
 		return 0;
 	}
 
+#ifdef DIAGNOSTIC
 	/* This is an "assertion" :) */
 	if (esc->sc_active == 0)
 		panic("pcscp dmaintr: DMA wasn't active");
+#endif
 
 	/* DMA has stopped */
 
@@ -409,10 +407,10 @@ pcscp_dma_intr(sc)
 	if (esc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
 		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-		    NCR_READ_REG(sc, NCR_TCL) |
-		    (NCR_READ_REG(sc, NCR_TCM) << 8),
-		    NCR_READ_REG(sc, NCR_TCL),
-		    NCR_READ_REG(sc, NCR_TCM)));
+		    PCSCP_READ_REG(esc, NCR_TCL) |
+		    (PCSCP_READ_REG(esc, NCR_TCM) << 8),
+		    PCSCP_READ_REG(esc, NCR_TCL),
+		    PCSCP_READ_REG(esc, NCR_TCM)));
 		return 0;
 	}
 
@@ -424,7 +422,7 @@ pcscp_dma_intr(sc)
 	 * bytes are clocked into the FIFO.
 	 */
 	if (!datain &&
-	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+	    (resid = (PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("pcscp_dma_intr: empty esp FIFO of %d ", resid));
 	}
 
@@ -434,10 +432,10 @@ pcscp_dma_intr(sc)
 		 * out of the ESP counter registers.
 		 */
 		if (datain) {
-			resid = NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
+			resid = PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF;
 			while (resid > 1)
 				resid =
-				    NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
+				    PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF;
 			WRITE_DMAREG(esc, DMA_CMD, DMACMD_BLAST | DMACMD_MDL |
 			    (datain ? DMACMD_DIR : 0));
 
@@ -450,22 +448,20 @@ pcscp_dma_intr(sc)
 				p = *esc->sc_dmaaddr;
 		}
 
-		resid += (NCR_READ_REG(sc, NCR_TCL) |
-		    (NCR_READ_REG(sc, NCR_TCM) << 8) |
-		    ((sc->sc_cfg2 & NCRCFG2_FE)
-		    ? (NCR_READ_REG(sc, NCR_TCH) << 16) : 0));
-
-		if (resid == 0 && esc->sc_dmasize == 65536 &&
-		    (sc->sc_cfg2 & NCRCFG2_FE) == 0)
-			/* A transfer of 64K is encoded as `TCL=TCM=0' */
-			resid = 65536;
+		resid += PCSCP_READ_REG(esc, NCR_TCL) |
+		    (PCSCP_READ_REG(esc, NCR_TCM) << 8) |
+		    (PCSCP_READ_REG(esc, NCR_TCH) << 16);
 	} else {
-		while((dmastat & DMASTAT_DONE) == 0)
+		while ((dmastat & DMASTAT_DONE) == 0)
 			dmastat = READ_DMAREG(esc, DMA_STAT);
 	}
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
+	/* sync MDL */
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_mdldmap,
+	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_POSTWRITE);
+	/* sync transfer buffer */
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, dmap);
@@ -483,7 +479,7 @@ pcscp_dma_intr(sc)
 
 	if (p) {
 		p += trans;
-		*p = NCR_READ_REG(sc, NCR_FIFO);
+		*p = PCSCP_READ_REG(esc, NCR_FIFO);
 		trans++;
 	}
 
@@ -501,9 +497,9 @@ pcscp_dma_intr(sc)
 	}
 
 	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-	    NCR_READ_REG(sc, NCR_TCL),
-	    NCR_READ_REG(sc, NCR_TCM),
-	    (sc->sc_cfg2 & NCRCFG2_FE) ? NCR_READ_REG(sc, NCR_TCH) : 0,
+	    PCSCP_READ_REG(esc, NCR_TCL),
+	    PCSCP_READ_REG(esc, NCR_TCM),
+	    PCSCP_READ_REG(esc, NCR_TCH),
 	    trans, resid));
 
 	*esc->sc_dmalen -= trans;
@@ -525,7 +521,6 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	u_int32_t *mdl;
 	int error, nseg, seg;
 	bus_addr_t s_offset, s_addr;
-	long rest, count;
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
@@ -559,47 +554,24 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	}
 
 	/* set transfer length */
-	WRITE_DMAREG(esc, DMA_STC, *dmasize); 
+	WRITE_DMAREG(esc, DMA_STC, *dmasize);
 
 	/* set up MDL */
 	mdl = esc->sc_mdladdr;
 	nseg = dmap->dm_nsegs;
 
 	/* the first segment is possibly not aligned with 4k MDL boundary */
-	count = dmap->dm_segs[0].ds_len;
 	s_addr = dmap->dm_segs[0].ds_addr;
 	s_offset = s_addr & MDL_SEG_OFFSET;
 	s_addr -= s_offset;
-	rest = MDL_SEG_SIZE - s_offset;
 
 	/* set the first MDL and offset */
-	WRITE_DMAREG(esc, DMA_SPA, s_offset); 
+	WRITE_DMAREG(esc, DMA_SPA, s_offset);
 	*mdl++ = htole32(s_addr);
-	count -= rest;
-
-	/* rests of the first dmamap segment */
-	while (count > 0) {
-		s_addr += MDL_SEG_SIZE;
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-	}
 
 	/* the rest dmamap segments are aligned with 4k boundary */
-	for (seg = 1; seg < nseg; seg++) {
-		count = dmap->dm_segs[seg].ds_len;
-		s_addr = dmap->dm_segs[seg].ds_addr;
-
-		/* first 4kbyte of each dmamap segment */
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-
-		/* trailing contiguous 4k frames of each dmamap segments */
-		while (count > 0) {
-			s_addr += MDL_SEG_SIZE;
-			*mdl++ = htole32(s_addr);
-			count -= MDL_SEG_SIZE;
-		}
-	}
+	for (seg = 1; seg < nseg; seg++)
+		*mdl++ = htole32(dmap->dm_segs[seg].ds_addr);
 
 	return 0;
 }
@@ -621,8 +593,8 @@ pcscp_dma_go(sc)
 	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* sync MDL */
-	bus_dmamap_sync(esc->sc_dmat, mdldmap, 0, mdldmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(esc->sc_dmat, mdldmap,
+	    0, sizeof(u_int32_t) * dmap->dm_nsegs, BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
 	WRITE_DMAREG(esc, DMA_SMDLA, mdldmap->dm_segs[0].ds_addr);

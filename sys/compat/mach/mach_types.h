@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.14 2003/04/05 21:18:02 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.14.2.1 2004/08/03 10:44:07 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -58,7 +58,9 @@ typedef int mach_vm_prot_t;
 typedef int mach_thread_state_flavor_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned long mach_vm_size_t;
+typedef uint64_t mach_memory_object_size_t;
 typedef unsigned long mach_vm_offset_t;
+typedef uint64_t mach_memory_object_offset_t;
 typedef int mach_vm_region_flavor_t;
 typedef int mach_vm_behavior_t;
 typedef int mach_vm_sync_t;
@@ -71,7 +73,12 @@ typedef mach_natural_t mach_port_mscount_t;
 typedef mach_natural_t mach_port_msgcount_t;
 typedef mach_natural_t mach_port_rights_t;
 typedef mach_natural_t mach_task_flavor_t;
+typedef mach_natural_t mach_thread_flavor_t;
 typedef int mach_policy_t;
+typedef int mach_vm_machine_attribute_val_t;
+typedef unsigned int mach_vm_machine_attribute_t;
+typedef mach_natural_t mach_port_urefs_t;
+typedef int mach_port_delta_t;
 
 
 /* 
@@ -105,7 +112,7 @@ typedef struct {
 } mach_time_value_t;
 
 #ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_MACH */

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.2.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -88,7 +84,7 @@
 #define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
- * CPUID "features" bits:
+ * CPUID "features" bits in %edx
  */
 
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
@@ -138,6 +134,7 @@
  */
 
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
+#define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
@@ -146,6 +143,19 @@
 				    "\24MPC\25NOX\26B21\27MMXX\30MMX"
 #define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35B28\36LONG" \
 				    "\0373DNOW2\0403DNOW"
+
+/*
+ * CPUID "features" bits in %ecx
+ */
+
+#define	CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
+#define	CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
+#define	CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
+#define	CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
+#define	CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
+#define	CPUID2_CID	0x00000400	/* Context ID */
+
+#define CPUID2_FLAGS	"\20\1SSE3\4MONITOR\5DS-CPL\10EST\11TM2\13CID"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -191,6 +201,13 @@
 #define MSR_MCG_CTL		0x17b
 #define MSR_EVNTSEL0		0x186
 #define MSR_EVNTSEL1		0x187
+#define MSR_PERF_STATUS		0x198	/* Pentium M */
+#define MSR_PERF_CTL		0x199	/* Pentium M */
+#define MSR_THERM_CONTROL	0x19a
+#define MSR_THERM_INTERRUPT	0x19b
+#define MSR_THERM_STATUS	0x19c
+#define MSR_THERM2_CTL		0x19d	/* Pentium M */
+#define MSR_MISC_ENABLE		0x1a0
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc

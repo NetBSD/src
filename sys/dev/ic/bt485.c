@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.9 2002/08/03 00:13:03 itojun Exp $ */
+/* $NetBSD: bt485.c,v 1.9.6.1 2004/08/03 10:46:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9 2002/08/03 00:13:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9.6.1 2004/08/03 10:46:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,28 +264,30 @@ bt485_set_cmap(rc, cmapp)
 {
 	struct bt485data *data = (struct bt485data *)rc;
 	u_int count, index;
-	int s;
+	uint8_t r[256], g[256], b[256];
+	int s, error;
 
 	if (cmapp->index >= 256 || cmapp->count > 256 - cmapp->index)
 		return (EINVAL);
-	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
-		return (EFAULT);
-
-	s = spltty();
 
 	index = cmapp->index;
 	count = cmapp->count;
-	copyin(cmapp->red, &data->cmap_r[index], count);
-	copyin(cmapp->green, &data->cmap_g[index], count);
-	copyin(cmapp->blue, &data->cmap_b[index], count);
-
+	error = copyin(cmapp->red, &r[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->green, &g[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->blue, &b[index], count);
+	if (error)
+		return error;
+	s = spltty();
+	memcpy(&data->cmap_r[index], &r[index], count);
+	memcpy(&data->cmap_g[index], &g[index], count);
+	memcpy(&data->cmap_b[index], &b[index], count);
 	data->changed |= DATA_CMAP_CHANGED;
-
 	data->ramdac_sched_update(data->cookie, bt485_update);
 	splx(s);
-
 	return (0);
 }
 
@@ -303,7 +305,6 @@ bt485_get_cmap(rc, cmapp)
 
 	count = cmapp->count;
 	index = cmapp->index;
-
 	error = copyout(&data->cmap_r[index], cmapp->red, count);
 	if (error)
 		return (error);
@@ -320,13 +321,14 @@ bt485_set_cursor(rc, cursorp)
 	struct wsdisplay_cursor *cursorp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	u_int count, index, v;
-	int s;
+	u_int count = 0, icount = 0, index = 0, v;
+	char r[2], g[2], b[2], image[512], mask[512];
+	int s, error;
 
 	v = cursorp->which;
 
 	/*
-	 * For DOCMAP and DOSHAPE, verify that parameters are OK
+	 * For DOCMAP and DOSHAPE, copy in the new data
 	 * before we do anything that we can't recover from.
 	 */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -334,19 +336,28 @@ bt485_set_cursor(rc, cursorp)
 		    (cursorp->cmap.index + cursorp->cmap.count) > 2)
 			return (EINVAL);
 		count = cursorp->cmap.count;
-		if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
-		    !uvm_useracc(cursorp->cmap.green, count, B_READ) ||
-		    !uvm_useracc(cursorp->cmap.blue, count, B_READ))
-			return (EFAULT);
+		index = cursorp->cmap.index;
+		error = copyin(cursorp->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(cursorp->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(cursorp->cmap.blue, &b[index], count);
+		if (error)
+			return error;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (cursorp->size.x > CURSOR_MAX_SIZE ||
 		    cursorp->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
-		if (!uvm_useracc(cursorp->image, count, B_READ) ||
-		    !uvm_useracc(cursorp->mask, count, B_READ))
-			return (EFAULT);
+		icount = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
+		error = copyin(cursorp->image, image, icount);
+		if (error)
+			return error;
+		error = copyin(cursorp->mask, mask, icount);
+		if (error)
+			return error;
 	}
 
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
@@ -359,17 +370,15 @@ bt485_set_cursor(rc, cursorp)
 
 	s = spltty();
 
-	/* Parameters are OK; perform the requested operations. */
+	/* Data is all available; perform the requested operations. */
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		data->curenb = cursorp->enable;
 		data->changed |= DATA_ENB_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		count = cursorp->cmap.count;
-		index = cursorp->cmap.index;
-		copyin(cursorp->cmap.red, &data->curcmap_r[index], count);
-		copyin(cursorp->cmap.green, &data->curcmap_g[index], count);
-		copyin(cursorp->cmap.blue, &data->curcmap_b[index], count);
+		memcpy(&data->curcmap_r[index], &r[index], count);
+		memcpy(&data->curcmap_g[index], &g[index], count);
+		memcpy(&data->curcmap_b[index], &b[index], count);
 		data->changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
@@ -377,8 +386,8 @@ bt485_set_cursor(rc, cursorp)
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
 		memset(data->curimage, 0, sizeof data->curimage);
 		memset(data->curmask, 0, sizeof data->curmask);
-		copyin(cursorp->image, data->curimage, count);	/* can't fail */
-		copyin(cursorp->mask, data->curmask, count);	/* can't fail */
+		memcpy(data->curimage, image, icount);
+		memcpy(data->curmask, mask, icount);
 		data->changed |= DATA_CURSHAPE_CHANGED;
 	}
 

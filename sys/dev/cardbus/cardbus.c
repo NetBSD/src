@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.47.2.1 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.2.1 2004/08/03 10:45:46 skrll Exp $");
 
 #include "opt_cardbus.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $")
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
 
@@ -456,7 +456,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
 
 		/* Invalid vendor ID value? */
-		if (CARDBUS_VENDOR(id) == CARDBUS_VENDOR_INVALID) {
+		if (CARDBUS_VENDOR(id) == PCI_VENDOR_INVALID) {
 			continue;
 		}
 
@@ -535,13 +535,15 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 		ca.ca_intrline = sc->sc_intrline;
 
-		if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-			printf("cardbus_attach_card: failed to read CIS\n");
-		} else {
+		if (cis_ptr != 0) {
+			if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+				printf("cardbus_attach_card: failed to read CIS\n");
+			} else {
 #ifdef CARDBUS_DEBUG
-			decode_tuples(tuple, 2048, print_tuple, NULL);
+				decode_tuples(tuple, 2048, print_tuple, NULL);
 #endif
-			decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+				decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+			}
 		}
 
 		if ((csc = config_found_sm((void *)sc, &ca, cardbusprint,
@@ -591,7 +593,8 @@ cardbusprint(void *aux, const char *pnp)
 	int i;
 
 	if (pnp) {
-		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
+		pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo,
+		    sizeof(devinfo));
 		for (i = 0; i < 4; i++) {
 			if (ca->ca_cis.cis1_info[i] == NULL)
 				break;
@@ -855,6 +858,121 @@ decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data)
 
 	return (tuple + len);
 }
+
+/*
+ * XXX: this is another reason why this code should be shared with PCI.
+ */
+int
+cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
+    int *oldstate)
+{
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+
+	int offset;
+	pcireg_t value, cap, now;
+
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
+	    &value))
+		return EOPNOTSUPP;
+
+	cap = value >> 16;
+	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
+	now = value & PCI_PMCSR_STATE_MASK;
+	value &= ~PCI_PMCSR_STATE_MASK;
+	if (oldstate) {
+		switch (now) {
+		case PCI_PMCSR_STATE_D0:
+			*oldstate = PCI_PWR_D0;
+			break;
+		case PCI_PMCSR_STATE_D1:
+			*oldstate = PCI_PWR_D1;
+			break;
+		case PCI_PMCSR_STATE_D2:
+			*oldstate = PCI_PWR_D2;
+			break;
+		case PCI_PMCSR_STATE_D3:
+			*oldstate = PCI_PWR_D3;
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+	if (newstate == NULL)
+		return 0;
+	switch (*newstate) {
+	case PCI_PWR_D0:
+		if (now == PCI_PMCSR_STATE_D0)
+			return 0;
+		value |= PCI_PMCSR_STATE_D0;
+		break;
+	case PCI_PWR_D1:
+		if (now == PCI_PMCSR_STATE_D1)
+			return 0;
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+			return EINVAL;
+		if (!(cap & PCI_PMCR_D1SUPP))
+			return EOPNOTSUPP;
+		value |= PCI_PMCSR_STATE_D1;
+		break;
+	case PCI_PWR_D2:
+		if (now == PCI_PMCSR_STATE_D2)
+			return 0;
+		if (now == PCI_PMCSR_STATE_D3)
+			return EINVAL;
+		if (!(cap & PCI_PMCR_D2SUPP))
+			return EOPNOTSUPP;
+		value |= PCI_PMCSR_STATE_D2;
+		break;
+	case PCI_PWR_D3:
+		if (now == PCI_PMCSR_STATE_D3)
+			return 0;
+		value |= PCI_PMCSR_STATE_D3;
+		break;
+	default:
+		return EINVAL;
+	}
+	cardbus_conf_write(cc, cf, tag, offset + PCI_PMCSR, value);
+	DELAY(1000);
+
+	return 0;
+}
+
+int
+cardbus_setpowerstate(const char *dvname, cardbus_devfunc_t ct, pcitag_t tag,
+    int newpwr)
+{
+	int oldpwr, error;
+
+	if ((error = cardbus_powerstate(ct, tag, &newpwr, &oldpwr)) != 0)
+		return error;
+
+	if (oldpwr == newpwr)
+		return 0;
+
+	if (oldpwr > newpwr) {
+		printf("%s: sleeping to power state D%d\n", dvname, oldpwr);
+		return 0;
+	}
+
+	/* oldpwr < newpwr */
+	switch (oldpwr) {
+	case PCI_PWR_D3:
+		/* 
+		 * XXX: This is because none of the devices do
+		 * the necessary song and dance for now to wakeup
+		 * Once this 
+		 */
+		printf("%s: cannot wake up from power state D%d\n",
+		    dvname, oldpwr);
+		return EINVAL;
+	default:
+		printf("%s: waking up from power state D%d\n",
+		    dvname, oldpwr);
+		return 0;
+	}
+}
+
 
 #ifdef CARDBUS_DEBUG
 static const char *tuple_name(int);

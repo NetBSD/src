@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.2 2003/06/23 11:01:52 martin Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.2.2.1 2004/08/03 10:43:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,9 +71,9 @@
  */
 
 struct cpu_functions {
-	int (*start) __P((struct cpu_info *));
-	int (*stop) __P((struct cpu_info *));
-	void (*cleanup) __P((struct cpu_info *));
+	int (*start)(struct cpu_info *);
+	int (*stop)(struct cpu_info *);
+	void (*cleanup)(struct cpu_info *);
 };
 
 extern struct cpu_functions mp_cpu_funcs;
@@ -99,12 +99,12 @@ struct cpu_attach_args {
 extern u_int32_t cpus_running;
 #endif
 
-int x86_ipi __P((int,int,int));
-void x86_self_ipi __P((int));
-int x86_ipi_init __P((int));
+int x86_ipi(int,int,int);
+void x86_self_ipi(int);
+int x86_ipi_init(int);
 
-void identifycpu __P((struct cpu_info *));
-void cpu_init __P((struct cpu_info *));
-void cpu_init_first __P((void));
+void identifycpu(struct cpu_info *);
+void cpu_init(struct cpu_info *);
+void cpu_init_first(void);
 
 #endif

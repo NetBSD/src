@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
+/*	$NetBSD: mpt.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -36,6 +36,9 @@
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -326,7 +329,7 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 	len = (len + 3) >> 2;
 	data32 = cmd;
 
-	/* Clear any left over pending doorbell interupts */
+	/* Clear any left over pending doorbell interrupts */
 	if (MPT_DB_INTR(mpt_rd_intr(mpt)))
 		mpt_write(mpt, MPT_OFFSET_INTR_STATUS, 0);
 
@@ -997,7 +1000,7 @@ mpt_send_event_request(mpt_softc_t *mpt, int onoff)
 }
 
 /*
- * Un-mask the interupts on the chip.
+ * Un-mask the interrupts on the chip.
  */
 void
 mpt_enable_ints(mpt_softc_t *mpt)
@@ -1007,7 +1010,7 @@ mpt_enable_ints(mpt_softc_t *mpt)
 }
 
 /*
- * Mask the interupts on the chip.
+ * Mask the interrupts on the chip.
  */
 void
 mpt_disable_ints(mpt_softc_t *mpt)

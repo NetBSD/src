@@ -1,4 +1,40 @@
-/*	$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $	*/
+/*	$NetBSD: wi.c,v 1.130.2.1 2004/08/03 10:46:21 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,10 +106,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130.2.1 2004/08/03 10:46:21 skrll Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
+#undef WI_HISTOGRAM
+#undef WI_RING_DEBUG
+#define STATIC static
 
 #include "bpfilter.h"
 
@@ -92,7 +131,13 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $");
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
+#include <net/route.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_radiotap.h>
+#include <net80211/ieee80211_rssadapt.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -105,44 +150,65 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $");
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
-static int  wi_init(struct ifnet *);
-static void wi_stop(struct ifnet *, int);
-static void wi_start(struct ifnet *);
-static int  wi_reset(struct wi_softc *);
-static void wi_watchdog(struct ifnet *);
-static int  wi_ioctl(struct ifnet *, u_long, caddr_t);
-static int  wi_media_change(struct ifnet *);
-static void wi_media_status(struct ifnet *, struct ifmediareq *);
+STATIC int  wi_init(struct ifnet *);
+STATIC void wi_stop(struct ifnet *, int);
+STATIC void wi_start(struct ifnet *);
+STATIC int  wi_reset(struct wi_softc *);
+STATIC void wi_watchdog(struct ifnet *);
+STATIC int  wi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_media_change(struct ifnet *);
+STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
 
-static void wi_rx_intr(struct wi_softc *);
-static void wi_tx_intr(struct wi_softc *);
-static void wi_tx_ex_intr(struct wi_softc *);
-static void wi_info_intr(struct wi_softc *);
+STATIC struct ieee80211_node *wi_node_alloc(struct ieee80211com *);
+STATIC void wi_node_copy(struct ieee80211com *, struct ieee80211_node *,
+    const struct ieee80211_node *);
+STATIC void wi_node_free(struct ieee80211com *, struct ieee80211_node *);
 
-static int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
-static int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
-static int  wi_write_txrate(struct wi_softc *);
-static int  wi_write_wep(struct wi_softc *);
-static int  wi_write_multi(struct wi_softc *);
-static int  wi_alloc_fid(struct wi_softc *, int, int *);
-static void wi_read_nicid(struct wi_softc *);
-static int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
+STATIC void wi_raise_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
+STATIC void wi_lower_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
+STATIC int wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
+    struct ieee80211_frame *, u_int);
+STATIC void wi_rssadapt_updatestats_cb(void *, struct ieee80211_node *);
+STATIC void wi_rssadapt_updatestats(void *);
+STATIC void wi_rssdescs_init(struct wi_rssdesc (*)[], wi_rssdescq_t *);
+STATIC void wi_rssdescs_reset(struct ieee80211com *, struct wi_rssdesc (*)[],
+    wi_rssdescq_t *, u_int8_t (*)[]);
+STATIC void wi_sync_bssid(struct wi_softc *, u_int8_t new_bssid[]);
 
-static int  wi_cmd(struct wi_softc *, int, int, int, int);
-static int  wi_seek_bap(struct wi_softc *, int, int);
-static int  wi_read_bap(struct wi_softc *, int, int, void *, int);
-static int  wi_write_bap(struct wi_softc *, int, int, void *, int);
-static int  wi_mwrite_bap(struct wi_softc *, int, int, struct mbuf *, int);
-static int  wi_read_rid(struct wi_softc *, int, void *, int *);
-static int  wi_write_rid(struct wi_softc *, int, void *, int);
+STATIC void wi_rx_intr(struct wi_softc *);
+STATIC void wi_txalloc_intr(struct wi_softc *);
+STATIC void wi_cmd_intr(struct wi_softc *);
+STATIC void wi_tx_intr(struct wi_softc *);
+STATIC void wi_tx_ex_intr(struct wi_softc *);
+STATIC void wi_info_intr(struct wi_softc *);
 
-static int  wi_newstate(void *, enum ieee80211_state);
-static int  wi_set_tim(struct ieee80211com *, int, int);
+STATIC void wi_push_packet(struct wi_softc *);
+STATIC int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_cfg_txrate(struct wi_softc *);
+STATIC int  wi_write_txrate(struct wi_softc *, int);
+STATIC int  wi_write_wep(struct wi_softc *);
+STATIC int  wi_write_multi(struct wi_softc *);
+STATIC int  wi_alloc_fid(struct wi_softc *, int, int *);
+STATIC void wi_read_nicid(struct wi_softc *);
+STATIC int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
 
-static int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
-static void wi_scan_result(struct wi_softc *, int, int);
+STATIC int  wi_sendcmd(struct wi_softc *, int, int);
+STATIC int  wi_cmd(struct wi_softc *, int, int, int, int);
+STATIC int  wi_seek_bap(struct wi_softc *, int, int);
+STATIC int  wi_read_bap(struct wi_softc *, int, int, void *, int);
+STATIC int  wi_write_bap(struct wi_softc *, int, int, void *, int);
+STATIC int  wi_mwrite_bap(struct wi_softc *, int, int, struct mbuf *, int);
+STATIC int  wi_read_rid(struct wi_softc *, int, void *, int *);
+STATIC int  wi_write_rid(struct wi_softc *, int, void *, int);
 
-static void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
+STATIC int  wi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+STATIC int  wi_set_tim(struct ieee80211com *, int, int);
+
+STATIC int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
+STATIC void wi_scan_result(struct wi_softc *, int, int);
+
+STATIC void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
 
 static inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
@@ -169,7 +235,8 @@ int wi_debug = 0;
 #define	IFF_DUMPPKTS(_ifp)	0
 #endif
 
-#define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO)
+#define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO | \
+			 WI_EV_TX | WI_EV_TX_EXC | WI_EV_CMD)
 
 struct wi_card_ident
 wi_card_ident[] = {
@@ -207,10 +274,12 @@ wi_attach(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int i, nrate, mword, buflen;
-	u_int8_t r;
-	u_int16_t val;
-	u_int8_t ratebuf[2 + IEEE80211_RATE_SIZE];
+	int chan, nrate, buflen;
+	u_int16_t val, chanavail;
+ 	struct {
+ 		u_int16_t nrates;
+ 		char rates[IEEE80211_RATE_SIZE];
+ 	} ratebuf;
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -257,41 +326,45 @@ wi_attach(struct wi_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_flags = IEEE80211_F_HASPMGT | IEEE80211_F_HASAHDEMO;
+	ic->ic_caps = IEEE80211_C_AHDEMO;
 	ic->ic_state = IEEE80211_S_INIT;
-	ic->ic_newstate = wi_newstate;
-	ic->ic_set_tim = wi_set_tim;
 	ic->ic_max_aid = WI_MAX_AID;
 
 	/* Find available channel */
-	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_CHANNEL_LIST, &val, &buflen) != 0)
-		val = htole16(0x1fff);	/* assume 1-11 */
-	for (i = 0; i < 16; i++) {
-		if (isset((u_int8_t*)&val, i))
-			setbit(ic->ic_chan_avail, i + 1);
-	}
-
-	sc->sc_dbm_adjust = 100; /* default */
-
-	buflen = sizeof(val);
-	if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
-	    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0) {
-		sc->sc_dbm_adjust = le16toh(val);
+	buflen = sizeof(chanavail);
+	if (wi_read_rid(sc, WI_RID_CHANNEL_LIST, &chanavail, &buflen) != 0)
+		chanavail = htole16(0x1fff);	/* assume 1-11 */
+	for (chan = 16; chan > 0; chan--) {
+		if (!isset((u_int8_t*)&chanavail, chan - 1))
+			continue;
+		ic->ic_ibss_chan = &ic->ic_channels[chan];
+		ic->ic_channels[chan].ic_freq =
+		    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_2GHZ);
+		ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_B;
 	}
 
 	/* Find default IBSS channel */
 	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0)
-		ic->ic_ibss_chan = le16toh(val);
-	else {
-		/* use lowest available channel */
-		for (i = 0; i < 16; i++) {
-			if (isset(ic->ic_chan_avail, i))
-				break;
-		}
-		ic->ic_ibss_chan = i;
+	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0) {
+		chan = le16toh(val);
+		if (isset((u_int8_t*)&chanavail, chan - 1))
+			ic->ic_ibss_chan = &ic->ic_channels[chan];
 	}
+	if (ic->ic_ibss_chan == NULL)
+		panic("%s: no available channel\n", sc->sc_dev.dv_xname);
+
+	if (sc->sc_firmware_type == WI_LUCENT) {
+		sc->sc_dbm_offset = WI_LUCENT_DBM_OFFSET;
+	} else {
+		buflen = sizeof(val);
+		if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
+		    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0)
+			sc->sc_dbm_offset = le16toh(val);
+		else
+			sc->sc_dbm_offset = WI_PRISM_DBM_OFFSET;
+	}
+
+	sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 
 	/*
 	 * Set flags based on firmware version.
@@ -308,9 +381,10 @@ wi_attach(struct wi_softc *sc)
 		if (sc->sc_sta_firmware_ver >= 60000)
 			sc->sc_flags |= WI_FLAGS_HAS_MOR;
 		if (sc->sc_sta_firmware_ver >= 60006) {
-			ic->ic_flags |= IEEE80211_F_HASIBSS;
-			ic->ic_flags |= IEEE80211_F_HASMONITOR;
+			ic->ic_caps |= IEEE80211_C_IBSS;
+			ic->ic_caps |= IEEE80211_C_MONITOR;
 		}
+		ic->ic_caps |= IEEE80211_C_PMGT;
 		sc->sc_ibss_port = 1;
 		break;
 
@@ -322,17 +396,19 @@ wi_attach(struct wi_softc *sc)
 			sc->sc_flags |= WI_FLAGS_HAS_DBMADJUST;
 		if (sc->sc_sta_firmware_ver >= 800) {
 			if (sc->sc_sta_firmware_ver != 10402)
-				ic->ic_flags |= IEEE80211_F_HASHOSTAP;
-			ic->ic_flags |= IEEE80211_F_HASIBSS;
-			ic->ic_flags |= IEEE80211_F_HASMONITOR;
+				ic->ic_caps |= IEEE80211_C_HOSTAP;
+			ic->ic_caps |= IEEE80211_C_IBSS;
+			ic->ic_caps |= IEEE80211_C_MONITOR;
 		}
+		ic->ic_caps |= IEEE80211_C_PMGT;
 		sc->sc_ibss_port = 0;
+		sc->sc_alt_retry = 2;
 		break;
 
 	case WI_SYMBOL:
 		sc->sc_flags |= WI_FLAGS_HAS_DIVERSITY;
 		if (sc->sc_sta_firmware_ver >= 20000)
-			ic->ic_flags |= IEEE80211_F_HASIBSS;
+			ic->ic_caps |= IEEE80211_C_IBSS;
 		sc->sc_ibss_port = 4;
 		break;
 	}
@@ -343,15 +419,17 @@ wi_attach(struct wi_softc *sc)
 	buflen = sizeof(val);
 	if (wi_read_rid(sc, WI_RID_WEP_AVAIL, &val, &buflen) == 0 &&
 	    val != htole16(0))
-		ic->ic_flags |= IEEE80211_F_HASWEP;
+		ic->ic_caps |= IEEE80211_C_WEP;
 
 	/* Find supported rates. */
 	buflen = sizeof(ratebuf);
-	if (wi_read_rid(sc, WI_RID_DATA_RATES, ratebuf, &buflen) == 0) {
-		nrate = le16toh(*(u_int16_t *)ratebuf);
+	if (wi_read_rid(sc, WI_RID_DATA_RATES, &ratebuf, &buflen) == 0) {
+		nrate = le16toh(ratebuf.nrates);
 		if (nrate > IEEE80211_RATE_SIZE)
 			nrate = IEEE80211_RATE_SIZE;
-		memcpy(ic->ic_sup_rates, ratebuf + 2, nrate);
+		memcpy(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates,
+		    &ratebuf.rates[0], nrate);
+		ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
 	}
 	buflen = sizeof(val);
 
@@ -362,44 +440,35 @@ wi_attach(struct wi_softc *sc)
 	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
 
-	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
-	printf("%s: supported rates: ", sc->sc_dev.dv_xname);
-#define	ADD(s, o)	ifmedia_add(&sc->sc_media, \
-	IFM_MAKEWORD(IFM_IEEE80211, (s), (o), 0), 0, NULL)
-	ADD(IFM_AUTO, 0);
-	if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
-		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
-	if (ic->ic_flags & IEEE80211_F_HASIBSS)
-		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
-	if (ic->ic_flags & IEEE80211_F_HASMONITOR)
-		ADD(IFM_AUTO, IFM_IEEE80211_MONITOR);
-	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-	for (i = 0; i < nrate; i++) {
-		r = ic->ic_sup_rates[i];
-		mword = ieee80211_rate2media(r, IEEE80211_T_DS);
-		if (mword == 0)
-			continue;
-		printf("%s%d%sMbps", (i != 0 ? " " : ""),
-		    (r & IEEE80211_RATE_VAL) / 2, ((r & 0x1) != 0 ? ".5" : ""));
-		ADD(mword, 0);
-		if (ic->ic_flags & IEEE80211_F_HASHOSTAP)
-			ADD(mword, IFM_IEEE80211_HOSTAP);
-		if (ic->ic_flags & IEEE80211_F_HASIBSS)
-			ADD(mword, IFM_IEEE80211_ADHOC);
-		if (ic->ic_flags & IEEE80211_F_HASMONITOR)
-			ADD(mword, IFM_IEEE80211_MONITOR);
-		ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
-	}
-	printf("\n");
-	ifmedia_set(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
-#undef ADD
+	callout_init(&sc->sc_rssadapt_ch);
 
 	/*
 	 * Call MI attach routines.
 	 */
-
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = wi_newstate;
+	ic->ic_node_alloc = wi_node_alloc;
+	ic->ic_node_free = wi_node_free;
+	ic->ic_node_copy = wi_node_copy;
+	ic->ic_set_tim = wi_set_tim;
+
+	ieee80211_media_init(ifp, wi_media_change, wi_media_status);
+
+#if NBPFILTER > 0
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+#endif
+
+	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.wr_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_present = WI_RX_RADIOTAP_PRESENT;
+
+	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.wt_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_present = WI_TX_RADIOTAP_PRESENT;
 
 	/* Attach is successful. */
 	sc->sc_attached = 1;
@@ -423,7 +492,7 @@ wi_detach(struct wi_softc *sc)
 	wi_stop(ifp, 1);
 
 	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
@@ -529,6 +598,9 @@ wi_intr(void *arg)
 			wi_rx_intr(sc);
 
 		if (status & WI_EV_ALLOC)
+			wi_txalloc_intr(sc);
+
+		if (status & WI_EV_TX)
 			wi_tx_intr(sc);
 
 		if (status & WI_EV_TX_EXC)
@@ -536,6 +608,11 @@ wi_intr(void *arg)
 
 		if (status & WI_EV_INFO)
 			wi_info_intr(sc);
+
+		CSR_WRITE_2(sc, WI_EVENT_ACK, status);
+
+		if (status & WI_EV_CMD)
+			wi_cmd_intr(sc);
 
 		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
 		    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0 &&
@@ -549,7 +626,39 @@ wi_intr(void *arg)
 	return 1;
 }
 
-static int
+#define arraylen(a) (sizeof(a) / sizeof((a)[0]))
+
+STATIC void
+wi_rssdescs_init(struct wi_rssdesc (*rssd)[WI_NTXRSS], wi_rssdescq_t *rssdfree)
+{
+	int i;
+	SLIST_INIT(rssdfree);
+	for (i = 0; i < arraylen(*rssd); i++) {
+		SLIST_INSERT_HEAD(rssdfree, &(*rssd)[i], rd_next);
+	}
+}
+
+STATIC void
+wi_rssdescs_reset(struct ieee80211com *ic, struct wi_rssdesc (*rssd)[WI_NTXRSS],
+    wi_rssdescq_t *rssdfree, u_int8_t (*txpending)[IEEE80211_RATE_MAXSIZE])
+{
+	struct ieee80211_node *ni;
+	int i;
+	for (i = 0; i < arraylen(*rssd); i++) {
+		ni = (*rssd)[i].rd_desc.id_node;
+		(*rssd)[i].rd_desc.id_node = NULL;
+		if (ni != NULL && (ic->ic_if.if_flags & IFF_DEBUG) != 0)
+			printf("%s: cleaning outstanding rssadapt "
+			    "descriptor for %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+		if (ni != NULL && ni != ic->ic_bss)
+			ieee80211_free_node(ic, ni);
+	}
+	memset(*txpending, 0, sizeof(*txpending));
+	wi_rssdescs_init(rssd, rssdfree);
+}
+
+STATIC int
 wi_init(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -607,12 +716,14 @@ wi_init(struct ifnet *ifp)
 	wi_write_val(sc, WI_RID_MAX_SLEEP, ic->ic_lintval);
 	wi_write_ssid(sc, WI_RID_DESIRED_SSID, ic->ic_des_essid,
 	    ic->ic_des_esslen);
-	wi_write_val(sc, WI_RID_OWN_CHNL, ic->ic_ibss_chan);
+	wi_write_val(sc, WI_RID_OWN_CHNL,
+	    ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	wi_write_ssid(sc, WI_RID_OWN_SSID, ic->ic_des_essid, ic->ic_des_esslen);
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-	wi_write_val(sc, WI_RID_PM_ENABLED,
-	    (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
+	if (ic->ic_caps & IEEE80211_C_PMGT)
+		wi_write_val(sc, WI_RID_PM_ENABLED,
+		    (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
 
 	/* not yet common 802.11 configuration */
 	wi_write_val(sc, WI_RID_MAX_DATALEN, sc->sc_max_datalen);
@@ -627,21 +738,51 @@ wi_init(struct ifnet *ifp)
 		wi_write_val(sc, WI_RID_ROAMING_MODE, sc->sc_roaming_mode);
 	if (sc->sc_flags & WI_FLAGS_HAS_MOR)
 		wi_write_val(sc, WI_RID_MICROWAVE_OVEN, sc->sc_microwave_oven);
-	wi_write_txrate(sc);
+	wi_cfg_txrate(sc);
 	wi_write_ssid(sc, WI_RID_NODENAME, sc->sc_nodename, sc->sc_nodelen);
 
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    sc->sc_firmware_type == WI_INTERSIL) {
 		wi_write_val(sc, WI_RID_OWN_BEACON_INT, ic->ic_lintval);
-		wi_write_val(sc, WI_RID_BASIC_RATE, 0x03);   /* 1, 2 */
-		wi_write_val(sc, WI_RID_SUPPORT_RATE, 0x0f); /* 1, 2, 5.5, 11 */
 		wi_write_val(sc, WI_RID_DTIM_PERIOD, 1);
+	}
+
+	if (sc->sc_firmware_type == WI_INTERSIL) {
+		struct ieee80211_rateset *rs =
+		    &ic->ic_sup_rates[IEEE80211_MODE_11B];
+		u_int16_t basic = 0, supported = 0, rate;
+
+		for (i = 0; i < rs->rs_nrates; i++) {
+			switch (rs->rs_rates[i] & IEEE80211_RATE_VAL) {
+			case 2:
+				rate = 1;
+				break;
+			case 4:
+				rate = 2;
+				break;
+			case 11:
+				rate = 4;
+				break;
+			case 22:
+				rate = 8;
+				break;
+			default:
+				rate = 0;
+				break;
+			}
+			if (rs->rs_rates[i] & IEEE80211_RATE_BASIC)
+				basic |= rate;
+			supported |= rate;
+		}
+		wi_write_val(sc, WI_RID_BASIC_RATE, basic);
+		wi_write_val(sc, WI_RID_SUPPORT_RATE, supported);
+		wi_write_val(sc, WI_RID_ALT_RETRY_COUNT, sc->sc_alt_retry);
 	}
 
 	/*
 	 * Initialize promisc mode.
-	 *	Being in the Host-AP mode causes a great
-	 *	deal of pain if primisc mode is set.
+	 *	Being in Host-AP mode causes a great
+	 *	deal of pain if promiscuous mode is set.
 	 *	Therefore we avoid confusing the firmware
 	 *	and always reset promisc mode in Host-AP
 	 *	mode.  Host-AP sees all the packets anyway.
@@ -654,11 +795,18 @@ wi_init(struct ifnet *ifp)
 	}
 
 	/* Configure WEP. */
-	if (ic->ic_flags & IEEE80211_F_HASWEP)
+	if (ic->ic_caps & IEEE80211_C_WEP)
 		wi_write_wep(sc);
 
 	/* Set multicast filter. */
 	wi_write_multi(sc);
+
+	sc->sc_txalloc = 0;
+	sc->sc_txalloced = 0;
+	sc->sc_txqueue = 0;
+	sc->sc_txqueued = 0;
+	sc->sc_txstart = 0;
+	sc->sc_txstarted = 0;
 
 	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
 		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
@@ -674,19 +822,22 @@ wi_init(struct ifnet *ifp)
 			}
 			DPRINTF2(("wi_init: txbuf %d allocated %x\n", i,
 			    sc->sc_txd[i].d_fid));
-			sc->sc_txd[i].d_len = 0;
+			++sc->sc_txalloced;
 		}
 	}
-	sc->sc_txcur = sc->sc_txnext = 0;
+
+	wi_rssdescs_init(&sc->sc_rssd, &sc->sc_rssdfree);
 
 	/* Enable desired port */
 	wi_cmd(sc, WI_CMD_ENABLE | sc->sc_portnum, 0, 0, 0);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	ic->ic_state = IEEE80211_S_INIT;
+
 	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
 	    ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP)
-		wi_newstate(sc, IEEE80211_S_RUN);
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
@@ -701,12 +852,13 @@ wi_init(struct ifnet *ifp)
 
 	if (ic->ic_opmode == IEEE80211_M_STA &&
 	    ((ic->ic_flags & IEEE80211_F_DESBSSID) ||
-	    ic->ic_des_chan != IEEE80211_CHAN_ANY)) {
+	    ic->ic_des_chan != IEEE80211_CHAN_ANYC)) {
 		memset(&join, 0, sizeof(join));
 		if (ic->ic_flags & IEEE80211_F_DESBSSID)
 			IEEE80211_ADDR_COPY(&join.wi_bssid, ic->ic_des_bssid);
-		if (ic->ic_des_chan != IEEE80211_CHAN_ANY)
-			join.wi_chan = htole16(ic->ic_des_chan);
+		if (ic->ic_des_chan != IEEE80211_CHAN_ANYC)
+			join.wi_chan =
+			    htole16(ieee80211_chan2ieee(ic, ic->ic_des_chan));
 		/* Lucent firmware does not support the JOIN RID. */
 		if (sc->sc_firmware_type != WI_LUCENT)
 			wi_write_rid(sc, WI_RID_JOIN_REQ, &join, sizeof(join));
@@ -721,10 +873,11 @@ wi_init(struct ifnet *ifp)
 	return error;
 }
 
-static void
+STATIC void
 wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int s;
 
 	if (!sc->sc_enabled)
@@ -734,11 +887,14 @@ wi_stop(struct ifnet *ifp, int disable)
 
 	DPRINTF(("wi_stop: disable %d\n", disable));
 
-	ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 	if (!sc->sc_invalid) {
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
 		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
 	}
+
+	wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+	    &sc->sc_txpending);
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
@@ -756,16 +912,93 @@ wi_stop(struct ifnet *ifp, int disable)
 	splx(s);
 }
 
-static void
+/*
+ * Choose a data rate for a packet len bytes long that suits the packet
+ * type and the wireless conditions.
+ *
+ * TBD Adapt fragmentation threshold.
+ */
+STATIC int
+wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_frame *wh, u_int len)
+{
+	struct wi_softc	*sc = ic->ic_if.if_softc;
+	struct wi_node *wn = (void*)ni;
+	struct ieee80211_rssadapt *ra = &wn->wn_rssadapt;
+	int do_not_adapt, i, rateidx, s;
+
+	do_not_adapt = (ic->ic_opmode != IEEE80211_M_HOSTAP) &&
+	    (sc->sc_flags & WI_FLAGS_RSSADAPTSTA) == 0;
+
+	s = splnet();
+
+	rateidx = ieee80211_rssadapt_choose(ra, &ni->ni_rates, wh, len,
+	    ic->ic_fixed_rate,
+	    ((ic->ic_if.if_flags & IFF_DEBUG) == 0) ? NULL : ic->ic_if.if_xname,
+	    do_not_adapt);
+
+	ni->ni_txrate = rateidx;
+
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
+		/* choose the slowest pending rate so that we don't
+		 * accidentally send a packet on the MAC's queue
+		 * too fast. TBD find out if the MAC labels Tx
+		 * packets w/ rate when enqueued or dequeued.
+		 */   
+		for (i = 0; i < rateidx && sc->sc_txpending[i] == 0; i++);
+		rateidx = i;
+	}
+
+	splx(s);
+	return (rateidx);
+}
+
+STATIC void
+wi_raise_rate(struct ieee80211com *ic, struct ieee80211_rssdesc *id)
+{
+	struct wi_node *wn;
+	if (id->id_node == NULL)
+		return;
+
+	wn = (void*)id->id_node;
+	ieee80211_rssadapt_raise_rate(ic, &wn->wn_rssadapt, id);
+}
+
+STATIC void
+wi_lower_rate(struct ieee80211com *ic, struct ieee80211_rssdesc *id)
+{
+	struct ieee80211_node *ni;
+	struct wi_node *wn;
+	int s;
+
+	s = splnet();
+
+	if ((ni = id->id_node) == NULL) {
+		DPRINTF(("wi_lower_rate: missing node\n"));
+		goto out;
+	}
+
+	wn = (void *)ni;
+
+	ieee80211_rssadapt_lower_rate(ic, ni, &wn->wn_rssadapt, id);
+out:
+	splx(s);
+	return;
+}
+
+STATIC void
 wi_start(struct ifnet *ifp)
 {
 	struct wi_softc	*sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rateset *rs;
+	struct wi_rssdesc *rd;
+	struct ieee80211_rssdesc *id;
 	struct mbuf *m0;
 	struct wi_frame frmhdr;
-	int cur, fid, off;
+	int cur, fid, off, rateidx;
 
 	if (!sc->sc_enabled || sc->sc_invalid)
 		return;
@@ -773,19 +1006,24 @@ wi_start(struct ifnet *ifp)
 		return;
 
 	memset(&frmhdr, 0, sizeof(frmhdr));
-	cur = sc->sc_txnext;
+	cur = sc->sc_txqueue;
 	for (;;) {
+		ni = ic->ic_bss;
+		if (sc->sc_txalloced == 0 || SLIST_EMPTY(&sc->sc_rssdfree)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 		if (!IF_IS_EMPTY(&ic->ic_mgtq)) {
-			if (sc->sc_txd[cur].d_len != 0) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
 			    (caddr_t)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = 0;
                         wh = mtod(m0, struct ieee80211_frame *);
-		} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
+		} else if (ic->ic_state != IEEE80211_S_RUN)
+			break;
+		else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 			struct llc *llc;
 
 			/* 
@@ -797,27 +1035,17 @@ wi_start(struct ifnet *ifp)
 			 * sleep as quickly as possible to save power...
 			 */
 
-			if (ic->ic_state != IEEE80211_S_RUN)
-				break;
-
-			if (sc->sc_txd[cur].d_len != 0) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
 			IF_DEQUEUE(&ic->ic_pwrsaveq, m0);
                         wh = mtod(m0, struct ieee80211_frame *);
 			llc = (struct llc *) (wh + 1);
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
 			    (caddr_t)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = llc->llc_snap.ether_type;
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
 		} else {
-			if (ic->ic_state != IEEE80211_S_RUN)
-				break;
 			IFQ_POLL(&ifp->if_snd, m0);
-			if (m0 == NULL)
-				break;
-			if (sc->sc_txd[cur].d_len != 0) {
-				ifp->if_flags |= IFF_OACTIVE;
+			if (m0 == NULL) {
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -829,26 +1057,23 @@ wi_start(struct ifnet *ifp)
 				bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-			if ((m0 = ieee80211_encap(ifp, m0)) == NULL) {
+			if ((m0 = ieee80211_encap(ifp, m0, &ni)) == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
                         wh = mtod(m0, struct ieee80211_frame *);
-			if (ic->ic_flags & IEEE80211_F_WEPON)
-				wh->i_fc[1] |= IEEE80211_FC1_WEP;
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 			    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 			    IEEE80211_FC0_TYPE_DATA) {
-				ni = ieee80211_find_node(ic, wh->i_addr1);
-				if (ni == NULL || ni->ni_associd == 0) {
+				if (ni->ni_associd == 0) {
 					m_freem(m0);
 					ifp->if_oerrors++;
-					continue;
+					goto next;
 				}
 				if (ni->ni_pwrsave & IEEE80211_PS_SLEEP) {
 					ieee80211_pwrsave(ic, ni, m0);
-					continue;
+					continue; /* don't free node. */
 				}
 			}
 		}
@@ -856,59 +1081,105 @@ wi_start(struct ifnet *ifp)
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m0);
 #endif
-		frmhdr.wi_tx_ctl = htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX);
+		frmhdr.wi_tx_ctl =
+		    htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX|WI_TXCNTL_TX_OK);
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_ALTRTRY);
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
 				ifp->if_oerrors++;
-				continue;
+				goto next;
 			}
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_NOCRYPT);
 		}
-		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
-		    (caddr_t)&frmhdr.wi_whdr);
-		m_adj(m0, sizeof(struct ieee80211_frame));
-		frmhdr.wi_dat_len = htole16(m0->m_pkthdr.len);
+
+		rateidx = wi_choose_rate(ic, ni, wh, m0->m_pkthdr.len);
+		rs = &ni->ni_rates;
+
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
 			struct mbuf mb;
 
+			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
+
+			tap->wt_rate = rs->rs_rates[rateidx];
+			tap->wt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+			/* TBD tap->wt_flags */
+
 			M_COPY_PKTHDR(&mb, m0);
-			mb.m_data = (caddr_t)&frmhdr;
-			mb.m_len = sizeof(frmhdr);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = tap->wt_ihdr.it_len;
 			mb.m_next = m0;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
+
+		rd = SLIST_FIRST(&sc->sc_rssdfree);
+		id = &rd->rd_desc;
+		id->id_len = m0->m_pkthdr.len;
+		id->id_rateidx = ni->ni_txrate;
+		id->id_rssi = ni->ni_rssi;
+
+		frmhdr.wi_tx_idx = rd - sc->sc_rssd;
+
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			frmhdr.wi_tx_rate = 5 * (rs->rs_rates[rateidx] &
+			    IEEE80211_RATE_VAL);
+		else if (sc->sc_flags & WI_FLAGS_RSSADAPTSTA)
+			(void)wi_write_txrate(sc, rs->rs_rates[rateidx]);
+
+		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
+		    (caddr_t)&frmhdr.wi_whdr);
+		m_adj(m0, sizeof(struct ieee80211_frame));
+		frmhdr.wi_dat_len = htole16(m0->m_pkthdr.len);
 		if (IFF_DUMPPKTS(ifp))
 			wi_dump_pkt(&frmhdr, ni, -1);
 		fid = sc->sc_txd[cur].d_fid;
 		off = sizeof(frmhdr);
 		if (wi_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0 ||
 		    wi_mwrite_bap(sc, fid, off, m0, m0->m_pkthdr.len) != 0) {
+			printf("%s: %s write fid %x failed\n",
+			    sc->sc_dev.dv_xname, __func__, fid);
 			ifp->if_oerrors++;
 			m_freem(m0);
-			continue;
+			goto next;
 		}
 		m_freem(m0);
-		sc->sc_txd[cur].d_len = off;
-		if (sc->sc_txcur == cur) {
-			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
-				printf("%s: xmit failed\n",
+		sc->sc_txpending[ni->ni_txrate]++;
+		--sc->sc_txalloced;
+		if (sc->sc_txqueued++ == 0) {
+#ifdef DIAGNOSTIC
+			if (cur != sc->sc_txstart)
+				printf("%s: ring is desynchronized\n",
 				    sc->sc_dev.dv_xname);
-				sc->sc_txd[cur].d_len = 0;
-				continue;
-			}
-			sc->sc_tx_timer = 5;
-			ifp->if_timer = 1;
+#endif
+			wi_push_packet(sc);
+		} else {
+#ifdef WI_RING_DEBUG
+	printf("%s: queue %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
 		}
-		sc->sc_txnext = cur = (cur + 1) % WI_NTXBUF;
+		sc->sc_txqueue = cur = (cur + 1) % WI_NTXBUF;
+		SLIST_REMOVE_HEAD(&sc->sc_rssdfree, rd_next);
+		id->id_node = ni;
+		continue;
+next:
+		if (ni != NULL && ni != ic->ic_bss)
+			ieee80211_free_node(ic, ni);
 	}
 }
 
 
-static int
+STATIC int
 wi_reset(struct wi_softc *sc)
 {
 	int i, error;
@@ -936,10 +1207,11 @@ wi_reset(struct wi_softc *sc)
 	return 0;
 }
 
-static void
+STATIC void
 wi_watchdog(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = 0;
 	if (!sc->sc_enabled)
@@ -970,7 +1242,7 @@ wi_watchdog(struct ifnet *ifp)
 			DPRINTF2(("%s: %d false syns\n",
 			    sc->sc_dev.dv_xname, sc->sc_false_syns));
 			sc->sc_false_syns = 0;
-			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 			sc->sc_syn_timer = 5;
 		}
 		ifp->if_timer = 1;
@@ -980,7 +1252,7 @@ wi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-static int
+STATIC int
 wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1014,7 +1286,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1064,61 +1336,26 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-static int
+STATIC int
 wi_media_change(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifmedia_entry *ime;
-	enum ieee80211_opmode newmode;
-	int i, rate, error = 0;
+	int error;
 
-	ime = sc->sc_media.ifm_cur;
-	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
-		i = -1;
-	} else {
-		rate = ieee80211_media2rate(ime->ifm_media, IEEE80211_T_DS);
-		if (rate == 0)
-			return EINVAL;
-		for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-			if ((ic->ic_sup_rates[i] & IEEE80211_RATE_VAL) == rate)
-				break;
-		}
-		if (i == IEEE80211_RATE_SIZE)
-			return EINVAL;
-	}
-	if (ic->ic_fixed_rate != i) {
-		ic->ic_fixed_rate = i;
-		error = ENETRESET;
-	}
-
-	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
-	    (ime->ifm_media & IFM_FLAG0))
-		newmode = IEEE80211_M_AHDEMO;
-	else if (ime->ifm_media & IFM_IEEE80211_ADHOC)
-		newmode = IEEE80211_M_IBSS;
-	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
-		newmode = IEEE80211_M_HOSTAP;
-	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
-		newmode = IEEE80211_M_MONITOR;
-	else
-		newmode = IEEE80211_M_STA;
-	if (ic->ic_opmode != newmode) {
-		ic->ic_opmode = newmode;
-		error = ENETRESET;
-	}
+	error = ieee80211_media_change(ifp);
 	if (error == ENETRESET) {
 		if (sc->sc_enabled)
 			error = wi_init(ifp);
 		else
 			error = 0;
 	}
-	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
+	ifp->if_baudrate = ifmedia_baudrate(ic->ic_media.ifm_cur->ifm_media);
 
 	return error;
 }
 
-static void
+STATIC void
 wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1142,6 +1379,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		rate = 0;
 	else {
 		/* convert to 802.11 rate */
+		val = le16toh(val);
 		rate = val * 2;
 		if (sc->sc_firmware_type == WI_LUCENT) {
 			if (rate == 10)
@@ -1153,7 +1391,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 				rate = 22;	/* 11Mbps */
 		}
 	}
-	imr->ifm_active |= ieee80211_rate2media(rate, IEEE80211_T_DS);
+	imr->ifm_active |= ieee80211_rate2media(ic, rate, IEEE80211_MODE_11B);
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		break;
@@ -1172,11 +1410,39 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 }
 
-static void
+STATIC struct ieee80211_node *
+wi_node_alloc(struct ieee80211com *ic)
+{
+	struct wi_node *wn =
+	    malloc(sizeof(struct wi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return wn ? &wn->wn_node : NULL;
+}
+
+STATIC void
+wi_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct wi_softc *sc = ic->ic_if.if_softc;
+	int i;
+
+	for (i = 0; i < WI_NTXRSS; i++) {
+		if (sc->sc_rssd[i].rd_desc.id_node == ni)
+			sc->sc_rssd[i].rd_desc.id_node = NULL;
+	}
+	free(ni, M_DEVBUF);
+}
+
+STATIC void
+wi_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
+    const struct ieee80211_node *src)
+{
+	*(struct wi_node *)dst = *(const struct wi_node *)src;
+}
+
+STATIC void
 wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &ic->ic_bss;
+	struct ieee80211_node *ni = ic->ic_bss;
 	struct ifnet *ifp = &ic->ic_if;
 
 	if (IEEE80211_ADDR_EQ(new_bssid, ni->ni_bssid))
@@ -1193,14 +1459,30 @@ wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 	    sc->sc_false_syns >= WI_MAX_FALSE_SYNS)
 		return;
 
-	ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 }
 
-static void
+static __inline void
+wi_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_frame *wh, int rssi)
+{
+	struct wi_node *wn;
+
+	if (ni == NULL) {
+		printf("%s: null node", __func__);
+		return;
+	}
+
+	wn = (void*)ni;
+	ieee80211_rssadapt_input(ic, ni, &wn->wn_rssadapt, rssi);
+}
+
+STATIC void
 wi_rx_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_node *ni;
 	struct wi_frame frmhdr;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
@@ -1213,9 +1495,9 @@ wi_rx_intr(struct wi_softc *sc)
 
 	/* First read in the frame header */
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr))) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
 		ifp->if_ierrors++;
-		DPRINTF(("wi_rx_intr: read fid %x failed\n", fid));
 		return;
 	}
 
@@ -1226,8 +1508,8 @@ wi_rx_intr(struct wi_softc *sc)
 	 * Drop undecryptable or packets with receive errors here
 	 */
 	status = le16toh(frmhdr.wi_status);
-	if (status & WI_STAT_ERRSTAT) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
+	if ((status & WI_STAT_ERRSTAT) != 0 &&
+	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		ifp->if_ierrors++;
 		DPRINTF(("wi_rx_intr: fid %x error status %x\n", fid, status));
 		return;
@@ -1244,7 +1526,6 @@ wi_rx_intr(struct wi_softc *sc)
 	 */
 	if (off + len > MCLBYTES) {
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 			ifp->if_ierrors++;
 			DPRINTF(("wi_rx_intr: oversized packet\n"));
 			return;
@@ -1254,7 +1535,6 @@ wi_rx_intr(struct wi_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 		ifp->if_ierrors++;
 		DPRINTF(("wi_rx_intr: MGET failed\n"));
 		return;
@@ -1262,7 +1542,6 @@ wi_rx_intr(struct wi_softc *sc)
 	if (off + len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
 			m_freem(m);
 			ifp->if_ierrors++;
 			DPRINTF(("wi_rx_intr: MCLGET failed\n"));
@@ -1277,17 +1556,23 @@ wi_rx_intr(struct wi_softc *sc)
 	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + len;
 	m->m_pkthdr.rcvif = ifp;
 
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
-
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
 		struct mbuf mb;
+		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->wr_rate = frmhdr.wi_rx_rate / 5;
+		tap->wr_antsignal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
+		tap->wr_antnoise = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
+
+		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		if (frmhdr.wi_status & WI_STAT_PCF)
+			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
 		M_COPY_PKTHDR(&mb, m);
-		mb.m_data = (caddr_t)&frmhdr;
-		frmhdr.wi_rx_signal -= sc->sc_dbm_adjust;
-		frmhdr.wi_rx_silence -= sc->sc_dbm_adjust;
-		mb.m_len = (char *)&frmhdr.wi_whdr - (char *)&frmhdr;
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = tap->wr_ihdr.it_len;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);
@@ -1307,90 +1592,234 @@ wi_rx_intr(struct wi_softc *sc)
 	if (ic->ic_opmode == IEEE80211_M_IBSS && dir == IEEE80211_FC1_DIR_NODS)
 		wi_sync_bssid(sc, wh->i_addr3);
 
-	ieee80211_input(ifp, m, rssi, rstamp);
+	ni = ieee80211_find_rxnode(ic, wh);
+
+	ieee80211_input(ifp, m, ni, rssi, rstamp);
+
+	wi_rssadapt_input(ic, ni, wh, rssi);
+
+	/*
+	 * The frame may have caused the node to be marked for
+	 * reclamation (e.g. in response to a DEAUTH message)
+	 * so use free_node here instead of unref_node.
+	 */
+	if (ni == ic->ic_bss)
+		ieee80211_unref_node(&ni);
+	else
+		ieee80211_free_node(ic, ni);
 }
 
-static void
+STATIC void
 wi_tx_ex_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_node *ni;
+	struct ieee80211_rssdesc *id;
+	struct wi_rssdesc *rssd;
+	struct wi_frame frmhdr;
+	int fid;
+	u_int16_t status;
+
+	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
+	/* Read in the frame header */
+	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
+	}
+
+	if (frmhdr.wi_tx_idx >= WI_NTXRSS) {
+		printf("%s: %s bad idx %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
+	}
+
+	status = le16toh(frmhdr.wi_status);
+
+	/*
+	 * Spontaneous station disconnects appear as xmit
+	 * errors.  Don't announce them and/or count them
+	 * as an output error.
+	 */
+	if (ppsratecheck(&lasttxerror, &curtxeps, wi_txerate)) {
+		printf("%s: tx failed", sc->sc_dev.dv_xname);
+		if (status & WI_TXSTAT_RET_ERR)
+			printf(", retry limit exceeded");
+		if (status & WI_TXSTAT_AGED_ERR)
+			printf(", max transmit lifetime exceeded");
+		if (status & WI_TXSTAT_DISCONNECT)
+			printf(", port disconnected");
+		if (status & WI_TXSTAT_FORM_ERR)
+			printf(", invalid format (data len %u src %s)",
+				le16toh(frmhdr.wi_dat_len),
+				ether_sprintf(frmhdr.wi_ehdr.ether_shost));
+		if (status & ~0xf)
+			printf(", status=0x%x", status);
+		printf("\n");
+	}
+	ifp->if_oerrors++;
+	rssd = &sc->sc_rssd[frmhdr.wi_tx_idx];
+	id = &rssd->rd_desc;
+	if ((status & WI_TXSTAT_RET_ERR) != 0)
+		wi_lower_rate(ic, id);
+
+	ni = id->id_node;
+	id->id_node = NULL;
+
+	if (ni == NULL) {
+		printf("%s: %s null node, rssdesc %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		goto out;
+	}
+
+	if (sc->sc_txpending[id->id_rateidx]-- == 0) {
+	        printf("%s: %s txpending[%i] wraparound", sc->sc_dev.dv_xname,
+		    __func__, id->id_rateidx);
+		sc->sc_txpending[id->id_rateidx] = 0;
+	}
+	if (ni != NULL && ni != ic->ic_bss)
+		ieee80211_free_node(ic, ni);
+	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
+out:
+	ifp->if_flags &= ~IFF_OACTIVE;
+}
+
+STATIC void
+wi_txalloc_intr(struct wi_softc *sc)
+{
+	int fid, cur;
+
+	fid = CSR_READ_2(sc, WI_ALLOC_FID);
+
+	cur = sc->sc_txalloc;
+#ifdef DIAGNOSTIC
+	if (sc->sc_txstarted == 0) {
+		printf("%s: spurious alloc %x != %x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid, cur,
+		    sc->sc_txqueue, sc->sc_txstart, sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+		return;
+	}
+#endif
+	--sc->sc_txstarted;
+	++sc->sc_txalloced;
+	sc->sc_txd[cur].d_fid = fid;
+	sc->sc_txalloc = (cur + 1) % WI_NTXBUF;
+#ifdef WI_RING_DEBUG
+	printf("%s: alloc %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
+}
+
+STATIC void
+wi_cmd_intr(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
+	if (--sc->sc_txqueued == 0) {
+		sc->sc_tx_timer = 0;
+		ifp->if_flags &= ~IFF_OACTIVE;
+#ifdef WI_RING_DEBUG
+	printf("%s: cmd       , alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
+	} else
+		wi_push_packet(sc);
+}
+
+STATIC void
+wi_push_packet(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int cur, fid;
+
+	cur = sc->sc_txstart;
+	fid = sc->sc_txd[cur].d_fid;
+	if (wi_sendcmd(sc, WI_CMD_TX | WI_RECLAIM, fid)) {
+		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
+		/* XXX ring might have a hole */
+	}
+	++sc->sc_txstarted;
+#ifdef DIAGNOSTIC
+	if (sc->sc_txstarted > WI_NTXBUF)
+		printf("%s: too many buffers started\n", sc->sc_dev.dv_xname);
+#endif
+	sc->sc_txstart = (cur + 1) % WI_NTXBUF;
+	sc->sc_tx_timer = 5;
+	ifp->if_timer = 1;
+#ifdef WI_RING_DEBUG
+	printf("%s: push  %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
+}
+
+STATIC void
+wi_tx_intr(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_node *ni;
+	struct ieee80211_rssdesc *id;
+	struct wi_rssdesc *rssd;
 	struct wi_frame frmhdr;
 	int fid;
 
 	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
 	/* Read in the frame header */
-	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) == 0) {
-		u_int16_t status = le16toh(frmhdr.wi_status);
+	if (wi_read_bap(sc, fid, 8, &frmhdr.wi_rx_rate, 2) != 0) {
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
+	}
 
-		/*
-		 * Spontaneous station disconnects appear as xmit
-		 * errors.  Don't announce them and/or count them
-		 * as an output error.
-		 */
-		if ((status & WI_TXSTAT_DISCONNECT) == 0) {
-			if (ppsratecheck(&lasttxerror, &curtxeps, wi_txerate)) {
-				curtxeps = 0;
-				printf("%s: tx failed", sc->sc_dev.dv_xname);
-				if (status & WI_TXSTAT_RET_ERR)
-					printf(", retry limit exceeded");
-				if (status & WI_TXSTAT_AGED_ERR)
-					printf(", max transmit lifetime exceeded");
-				if (status & WI_TXSTAT_DISCONNECT)
-					printf(", port disconnected");
-				if (status & WI_TXSTAT_FORM_ERR)
-					printf(", invalid format (data len %u src %s)",
-						le16toh(frmhdr.wi_dat_len),
-						ether_sprintf(frmhdr.wi_ehdr.ether_shost));
-				if (status & ~0xf)
-					printf(", status=0x%x", status);
-				printf("\n");
-			}
-			ifp->if_oerrors++;
-		} else {
-			DPRINTF(("port disconnected\n"));
-			ifp->if_collisions++;	/* XXX */
-		}
-	} else
-		DPRINTF(("wi_tx_ex_intr: read fid %x failed\n", fid));
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX_EXC);
+	if (frmhdr.wi_tx_idx >= WI_NTXRSS) {
+		printf("%s: %s bad idx %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
+	}
+
+	rssd = &sc->sc_rssd[frmhdr.wi_tx_idx];
+	id = &rssd->rd_desc;
+	wi_raise_rate(ic, id);
+
+	ni = id->id_node;
+	id->id_node = NULL;
+
+	if (ni == NULL) {
+		printf("%s: %s null node, rssdesc %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		goto out;
+	}
+
+	if (sc->sc_txpending[id->id_rateidx]-- == 0) {
+	        printf("%s: %s txpending[%i] wraparound", sc->sc_dev.dv_xname,
+		    __func__, id->id_rateidx);
+		sc->sc_txpending[id->id_rateidx] = 0;
+	}
+	if (ni != NULL && ni != ic->ic_bss)
+		ieee80211_free_node(ic, ni);
+	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
+out:
+	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
-static void
-wi_tx_intr(struct wi_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	int fid, cur;
-
-	fid = CSR_READ_2(sc, WI_ALLOC_FID);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
-
-	cur = sc->sc_txcur;
-	if (sc->sc_txd[cur].d_fid != fid) {
-		printf("%s: bad alloc %x != %x, cur %d nxt %d\n",
-		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid, cur,
-		    sc->sc_txnext);
-		return;
-	}
-	sc->sc_tx_timer = 0;
-	sc->sc_txd[cur].d_len = 0;
-	sc->sc_txcur = cur = (cur + 1) % WI_NTXBUF;
-	if (sc->sc_txd[cur].d_len == 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
-	else {
-		if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, sc->sc_txd[cur].d_fid,
-		    0, 0)) {
-			printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
-			sc->sc_txd[cur].d_len = 0;
-		} else {
-			sc->sc_tx_timer = 5;
-			ifp->if_timer = 1;
-		}
-	}
-}
-
-static void
+STATIC void
 wi_info_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1416,7 +1845,7 @@ wi_info_intr(struct wi_softc *sc)
 				break;
 			/* FALLTHROUGH */
 		case AP_CHANGE:
-			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 			break;
 		case AP_IN_RANGE:
 			sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
@@ -1435,7 +1864,7 @@ wi_info_intr(struct wi_softc *sc)
 		case DISCONNECTED:
 		case ASSOC_FAILED:
 			if (ic->ic_opmode == IEEE80211_M_STA)
-				ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
+				ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 			break;
 		}
 		break;
@@ -1447,6 +1876,7 @@ wi_info_intr(struct wi_softc *sc)
 		off = sizeof(ltbuf);
 		for (i = 0; i < len; i++, off += 2, ptr++) {
 			wi_read_bap(sc, fid, off, &stat, sizeof(stat));
+			stat = le16toh(stat);
 #ifdef WI_HERMES_STATS_WAR
 			if (stat & 0xf000)
 				stat = ~stat;
@@ -1468,10 +1898,9 @@ wi_info_intr(struct wi_softc *sc)
 		    le16toh(ltbuf[1]), le16toh(ltbuf[0])));
 		break;
 	}
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_INFO);
 }
 
-static int
+STATIC int
 wi_write_multi(struct wi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1506,7 +1935,7 @@ allmulti:
 }
 
 
-static void
+STATIC void
 wi_read_nicid(struct wi_softc *sc)
 {
 	struct wi_card_ident *id;
@@ -1585,7 +2014,7 @@ DPRINTF2(("wi_read_nicid: CARD_ID: %x %x %x %x\n", le16toh(ver[0]), le16toh(ver[
 	    sc->sc_sta_firmware_ver % 100);
 }
 
-static int
+STATIC int
 wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 {
 	struct wi_ssid ssid;
@@ -1598,7 +2027,7 @@ wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 	return wi_write_rid(sc, rid, &ssid, sizeof(ssid));
 }
 
-static int
+STATIC int
 wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1648,7 +2077,7 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    &len);
 			break;
 		}
-		wreq.wi_val[0] = htole16(sc->sc_dbm_adjust);
+		wreq.wi_val[0] = htole16(sc->sc_dbm_offset);
 		len = sizeof(u_int16_t);
 		break;
 
@@ -1746,12 +2175,13 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return copyout(&wreq, ifr->ifr_data, (wreq.wi_len + 1) * 2);
 }
 
-static int
+STATIC int
 wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ieee80211_rateset *rs = &ic->ic_sup_rates[IEEE80211_MODE_11B];
 	struct wi_req wreq;
 	struct mbuf *m;
 	int i, len, error;
@@ -1838,7 +2268,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		default:
 			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-				if ((ic->ic_sup_rates[i] & IEEE80211_RATE_VAL)
+				if ((rs->rs_rates[i] & IEEE80211_RATE_VAL)
 				    / 2 == le16toh(wreq.wi_val[0]))
 					break;
 			}
@@ -1847,7 +2277,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_fixed_rate = i;
 		}
 		if (sc->sc_enabled)
-			error = wi_write_txrate(sc);
+			error = wi_cfg_txrate(sc);
 		break;
 
 	case WI_RID_SCAN_APS:
@@ -1886,50 +2316,88 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-static int
-wi_write_txrate(struct wi_softc *sc)
+/* Rate is 0 for hardware auto-select, otherwise rate is
+ * 2, 4, 11, or 22 (units of 500Kbps).
+ */
+STATIC int
+wi_write_txrate(struct wi_softc *sc, int rate)
+{
+	u_int16_t hwrate;
+
+	/* rate: 0, 2, 4, 11, 22 */
+	switch (sc->sc_firmware_type) {
+	case WI_LUCENT:
+		switch (rate & IEEE80211_RATE_VAL) {
+		case 2:
+			hwrate = 1;
+			break;
+		case 4:
+			hwrate = 2;
+			break;
+		default:
+			hwrate = 3;	/* auto */
+			break;
+		case 11:
+			hwrate = 4;
+			break;
+		case 22:
+			hwrate = 5;
+			break;
+		}
+		break;
+	default:
+		switch (rate & IEEE80211_RATE_VAL) {
+		case 2:
+			hwrate = 1;
+			break;
+		case 4:
+			hwrate = 2;
+			break;
+		case 11:
+			hwrate = 4;
+			break;
+		case 22:
+			hwrate = 8;
+			break;
+		default:
+			hwrate = 15;	/* auto */
+			break;
+		}
+		break;
+	}
+
+	if (sc->sc_tx_rate == hwrate)
+		return 0;
+
+	if (sc->sc_if.if_flags & IFF_DEBUG)
+		printf("%s: tx rate %d -> %d (%d)\n", __func__, sc->sc_tx_rate,
+		    hwrate, rate);
+
+	sc->sc_tx_rate = hwrate;
+
+	return wi_write_val(sc, WI_RID_TX_RATE, sc->sc_tx_rate);
+}
+
+STATIC int
+wi_cfg_txrate(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	int i;
-	u_int16_t rate;
+	struct ieee80211_rateset *rs;
+	int rate;
+
+	rs = &ic->ic_sup_rates[IEEE80211_MODE_11B];
+
+	sc->sc_tx_rate = 0; /* force write to RID */
 
 	if (ic->ic_fixed_rate < 0)
 		rate = 0;	/* auto */
 	else
-		rate = (ic->ic_sup_rates[ic->ic_fixed_rate] &
-		    IEEE80211_RATE_VAL) / 2;
+		rate = rs->rs_rates[ic->ic_fixed_rate];
 
-	/* rate: 0, 1, 2, 5, 11 */
-
-	switch (sc->sc_firmware_type) {
-	case WI_LUCENT:
-		if (rate == 0)
-			rate = 3;	/* auto */
-		break;
-	default:
-		/* Choose a bit according to this table.
-		 *
-		 * bit | data rate
-		 * ----+-------------------
-		 * 0   | 1Mbps
-		 * 1   | 2Mbps
-		 * 2   | 5.5Mbps
-		 * 3   | 11Mbps
-		 */
-		for (i = 8; i > 0; i >>= 1) {
-			if (rate >= i)
-				break;
-		}
-		if (i == 0)
-			rate = 0xf;	/* auto */
-		else
-			rate = i;
-		break;
-	}
-	return wi_write_val(sc, WI_RID_TX_RATE, rate);
+	return wi_write_txrate(sc, rate);
 }
 
-static int
+STATIC int
 wi_write_wep(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1940,7 +2408,7 @@ wi_write_wep(struct wi_softc *sc)
 
 	switch (sc->sc_firmware_type) {
 	case WI_LUCENT:
-		val = (ic->ic_flags & IEEE80211_F_WEPON) ? 1 : 0;
+		val = (ic->ic_flags & IEEE80211_F_PRIVACY) ? 1 : 0;
 		error = wi_write_val(sc, WI_RID_ENCRYPTION, val);
 		if (error)
 			break;
@@ -1960,7 +2428,7 @@ wi_write_wep(struct wi_softc *sc)
 
 	case WI_INTERSIL:
 	case WI_SYMBOL:
-		if (ic->ic_flags & IEEE80211_F_WEPON) {
+		if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 			/*
 			 * ONLY HWB3163 EVAL-CARD Firmware version
 			 * less than 0.8 variant2
@@ -1968,7 +2436,7 @@ wi_write_wep(struct wi_softc *sc)
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
-			 * (ichiro@netbsd.org)
+			 * (ichiro@NetBSD.org)
 			 */
 			if (sc->sc_firmware_type == WI_INTERSIL &&
 			    sc->sc_sta_firmware_ver < 802 ) {
@@ -2019,22 +2487,84 @@ wi_write_wep(struct wi_softc *sc)
 }
 
 /* Must be called at proper protection level! */
-static int
+STATIC int
+wi_sendcmd(struct wi_softc *sc, int cmd, int val0)
+{
+#ifdef WI_HISTOGRAM
+	static int hist3[11];
+	static int hist3count;
+#endif
+	int i;
+
+	/* wait for the busy bit to clear */
+	for (i = 500; i > 0; i--) {	/* 5s */
+		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
+			break;
+		DELAY(1000);	/* 1 m sec */
+	}
+	if (i == 0) {
+		printf("%s: wi_sendcmd: busy bit won't clear.\n",
+		    sc->sc_dev.dv_xname);
+		return(ETIMEDOUT);
+  	}
+#ifdef WI_HISTOGRAM
+	if (i > 490)
+		hist3[500 - i]++;
+	else
+		hist3[10]++;
+	if (++hist3count == 1000) {
+		hist3count = 0;
+		printf("%s: hist3: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist3[0], hist3[1], hist3[2], hist3[3], hist3[4],
+		    hist3[5], hist3[6], hist3[7], hist3[8], hist3[9],
+		    hist3[10]);
+	}
+#endif
+	CSR_WRITE_2(sc, WI_PARAM0, val0);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
+	CSR_WRITE_2(sc, WI_COMMAND, cmd);
+
+	return 0;
+}
+
+STATIC int
 wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
+#ifdef WI_HISTOGRAM
+	static int hist1[11];
+	static int hist1count;
+	static int hist2[11];
+	static int hist2count;
+#endif
 	int i, status;
 
 	/* wait for the busy bit to clear */
 	for (i = 500; i > 0; i--) {	/* 5s */
 		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
 			break;
-		DELAY(10*1000);	/* 10 m sec */
+		DELAY(1000);	/* 1 m sec */
 	}
 	if (i == 0) {
 		printf("%s: wi_cmd: busy bit won't clear.\n",
 		    sc->sc_dev.dv_xname);
 		return(ETIMEDOUT);
   	}
+#ifdef WI_HISTOGRAM
+	if (i > 490)
+		hist1[500 - i]++;
+	else
+		hist1[10]++;
+	if (++hist1count == 1000) {
+		hist1count = 0;
+		printf("%s: hist1: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist1[0], hist1[1], hist1[2], hist1[3], hist1[4],
+		    hist1[5], hist1[6], hist1[7], hist1[8], hist1[9],
+		    hist1[10]);
+	}
+#endif
 	CSR_WRITE_2(sc, WI_PARAM0, val0);
 	CSR_WRITE_2(sc, WI_PARAM1, val1);
 	CSR_WRITE_2(sc, WI_PARAM2, val2);
@@ -2050,6 +2580,20 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 			break;
 		DELAY(WI_DELAY);
 	}
+#ifdef WI_HISTOGRAM
+	if (i < 100)
+		hist2[i/10]++;
+	else
+		hist2[10]++;
+	if (++hist2count == 1000) {
+		hist2count = 0;
+		printf("%s: hist2: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist2[0], hist2[1], hist2[2], hist2[3], hist2[4],
+		    hist2[5], hist2[6], hist2[7], hist2[8], hist2[9],
+		    hist2[10]);
+	}
+#endif
 
 	status = CSR_READ_2(sc, WI_STATUS);
 
@@ -2070,9 +2614,13 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	return 0;
 }
 
-static int
+STATIC int
 wi_seek_bap(struct wi_softc *sc, int id, int off)
 {
+#ifdef WI_HISTOGRAM
+	static int hist4[11];
+	static int hist4count;
+#endif
 	int i, status;
 
 	CSR_WRITE_2(sc, WI_SEL0, id);
@@ -2088,8 +2636,22 @@ wi_seek_bap(struct wi_softc *sc, int id, int off)
 			sc->sc_bap_off = WI_OFF_ERR;	/* invalidate */
 			return ETIMEDOUT;
 		}
-		DELAY(1);
+		DELAY(2);
 	}
+#ifdef WI_HISTOGRAM
+	if (i < 100)
+		hist4[i/10]++;
+	else
+		hist4[10]++;
+	if (++hist4count == 2500) {
+		hist4count = 0;
+		printf("%s: hist4: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist4[0], hist4[1], hist4[2], hist4[3], hist4[4],
+		    hist4[5], hist4[6], hist4[7], hist4[8], hist4[9],
+		    hist4[10]);
+	}
+#endif
 	if (status & WI_OFF_ERR) {
 		printf("%s: failed in wi_seek to %x/%x\n",
 		    sc->sc_dev.dv_xname, id, off);
@@ -2101,7 +2663,7 @@ wi_seek_bap(struct wi_softc *sc, int id, int off)
 	return 0;
 }
 
-static int
+STATIC int
 wi_read_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 {
 	int error, cnt;
@@ -2118,7 +2680,7 @@ wi_read_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_write_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 {
 	int error, cnt;
@@ -2167,7 +2729,7 @@ wi_write_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 {
 	int error, len;
@@ -2194,7 +2756,7 @@ wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 {
 	int i;
@@ -2219,7 +2781,7 @@ wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 	return 0;
 }
 
-static int
+STATIC int
 wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 {
 	int error, len;
@@ -2239,7 +2801,7 @@ wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 		    sc->sc_dev.dv_xname, rid, le16toh(ltbuf[1]));
 		return EIO;
 	}
-	len = (le16toh(ltbuf[0]) - 1) * 2;	 /* already got rid */
+	len = max(0, le16toh(ltbuf[0]) - 1) * 2;	 /* already got rid */
 	if (*buflenp < len) {
 		printf("%s: record buffer is too small, "
 		    "rid=%x, size=%d, len=%d\n",
@@ -2250,7 +2812,7 @@ wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 	return wi_read_bap(sc, rid, sizeof(ltbuf), buf, len);
 }
 
-static int
+STATIC int
 wi_write_rid(struct wi_softc *sc, int rid, void *buf, int buflen)
 {
 	int error;
@@ -2269,16 +2831,35 @@ wi_write_rid(struct wi_softc *sc, int rid, void *buf, int buflen)
 	return wi_cmd(sc, WI_CMD_ACCESS | WI_ACCESS_WRITE, rid, 0, 0);
 }
 
-static int
-wi_newstate(void *arg, enum ieee80211_state nstate)
+STATIC void
+wi_rssadapt_updatestats_cb(void *arg, struct ieee80211_node *ni)
+{
+	struct wi_node *wn = (void*)ni;
+	ieee80211_rssadapt_updatestats(&wn->wn_rssadapt);
+}
+
+STATIC void
+wi_rssadapt_updatestats(void *arg)
 {
 	struct wi_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &ic->ic_bss;
-	int i, buflen;
+	ieee80211_iterate_nodes(ic, wi_rssadapt_updatestats_cb, arg);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR &&
+	    ic->ic_state == IEEE80211_S_RUN)
+		callout_reset(&sc->sc_rssadapt_ch, hz / 10,
+		    wi_rssadapt_updatestats, arg);
+}
+
+STATIC int
+wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct wi_softc *sc = ic->ic_softc;
+	struct ieee80211_node *ni = ic->ic_bss;
+	int buflen, linkstate = LINK_STATE_DOWN, s;
 	u_int16_t val;
 	struct wi_ssid ssid;
-	u_int8_t old_bssid[IEEE80211_ADDR_LEN];
+	struct wi_macaddr bssid, old_bssid;
 	enum ieee80211_state ostate;
 #ifdef WI_DEBUG
 	static const char *stname[] =
@@ -2288,24 +2869,30 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 	ostate = ic->ic_state;
 	DPRINTF(("wi_newstate: %s -> %s\n", stname[ostate], stname[nstate]));
 
-	ic->ic_state = nstate;
 	switch (nstate) {
 	case IEEE80211_S_INIT:
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			callout_stop(&sc->sc_rssadapt_ch);
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
-		return 0;
+		return (*sc->sc_newstate)(ic, nstate, arg);
 
 	case IEEE80211_S_RUN:
+		linkstate = LINK_STATE_UP;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		buflen = IEEE80211_ADDR_LEN;
-		IEEE80211_ADDR_COPY(old_bssid, ni->ni_bssid);
-		wi_read_rid(sc, WI_RID_CURRENT_BSSID, ni->ni_bssid, &buflen);
-		IEEE80211_ADDR_COPY(ni->ni_macaddr, ni->ni_bssid);
+		IEEE80211_ADDR_COPY(old_bssid.wi_mac_addr, ni->ni_bssid);
+		wi_read_rid(sc, WI_RID_CURRENT_BSSID, &bssid, &buflen);
+		IEEE80211_ADDR_COPY(ni->ni_bssid, &bssid);
+		IEEE80211_ADDR_COPY(ni->ni_macaddr, &bssid);
 		buflen = sizeof(val);
 		wi_read_rid(sc, WI_RID_CURRENT_CHAN, &val, &buflen);
-		ni->ni_chan = le16toh(val);
+		if (!isset(ic->ic_chan_avail, le16toh(val)))
+			panic("%s: invalid channel %d\n", sc->sc_dev.dv_xname,
+			    le16toh(val));
+		ni->ni_chan = &ic->ic_channels[le16toh(val)];
 
-		if (IEEE80211_ADDR_EQ(old_bssid, ni->ni_bssid))
+		if (IEEE80211_ADDR_EQ(old_bssid.wi_mac_addr, ni->ni_bssid))
 			sc->sc_false_syns++;
 		else
 			sc->sc_false_syns = 0;
@@ -2313,15 +2900,11 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			ni->ni_esslen = ic->ic_des_esslen;
 			memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
-			ni->ni_nrate = 0;
-			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-				if (ic->ic_sup_rates[i])
-					ni->ni_rates[ni->ni_nrate++] =
-					    ic->ic_sup_rates[i];
-			}
+			ni->ni_rates = ic->ic_sup_rates[
+			    ieee80211_chan2mode(ic, ni->ni_chan)];
 			ni->ni_intval = ic->ic_lintval;
 			ni->ni_capinfo = IEEE80211_CAPINFO_ESS;
-			if (ic->ic_flags & IEEE80211_F_WEPON)
+			if (ic->ic_flags & IEEE80211_F_PRIVACY)
 				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		} else {
 			buflen = sizeof(ssid);
@@ -2330,7 +2913,12 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 			if (ni->ni_esslen > IEEE80211_NWID_LEN)
 				ni->ni_esslen = IEEE80211_NWID_LEN;	/*XXX*/
 			memcpy(ni->ni_essid, ssid.wi_ssid, ni->ni_esslen);
+			ni->ni_rates = ic->ic_sup_rates[
+			    ieee80211_chan2mode(ic, ni->ni_chan)]; /*XXX*/
 		}
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			callout_reset(&sc->sc_rssadapt_ch, hz / 10,
+			    wi_rssadapt_updatestats, sc);
 		break;
 
 	case IEEE80211_S_SCAN:
@@ -2339,11 +2927,18 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 		break;
 	}
 
+	if (ifp->if_link_state != linkstate) {
+		ifp->if_link_state = linkstate;
+		s = splnet();
+		rt_ifmsg(ifp);
+		splx(s);
+	}
+	ic->ic_state = nstate;
 	/* skip standard ieee80211 handling */
-	return EINPROGRESS;
+	return 0;
 }
 
-static int
+STATIC int
 wi_set_tim(struct ieee80211com *ic, int aid, int which)
 {
 	struct wi_softc *sc = ic->ic_softc;
@@ -2355,7 +2950,7 @@ wi_set_tim(struct ieee80211com *ic, int aid, int which)
 	return wi_write_val(sc, WI_RID_SET_TIM, aid);
 }
 
-static int
+STATIC int
 wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 {
 	int error = 0;
@@ -2368,8 +2963,8 @@ wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 		(void)wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS, 0, 0);
 		break;
 	case WI_INTERSIL:
-		val[0] = chanmask;	/* channel */
-		val[1] = txrate;	/* tx rate */
+		val[0] = htole16(chanmask);	/* channel */
+		val[1] = htole16(txrate);	/* tx rate */
 		error = wi_write_rid(sc, WI_RID_SCAN_REQ, val, sizeof(val));
 		break;
 	case WI_SYMBOL:
@@ -2390,7 +2985,7 @@ wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 	return error;
 }
 
-static void
+STATIC void
 wi_scan_result(struct wi_softc *sc, int fid, int cnt)
 {
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
@@ -2453,11 +3048,13 @@ done:
 #undef N
 }
 
-static void
+STATIC void
 wi_dump_pkt(struct wi_frame *wh, struct ieee80211_node *ni, int rssi)
 {
 	ieee80211_dump_pkt((u_int8_t *) &wh->wi_whdr, sizeof(wh->wi_whdr),
-	    ni ? ni->ni_rates[ni->ni_txrate] & IEEE80211_RATE_VAL : -1, rssi);
+	    ni	? ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL
+		: -1,
+	    rssi);
 	printf(" status 0x%x rx_tstamp1 %u rx_tstamp0 0x%u rx_silence %u\n",
 		le16toh(wh->wi_status), le16toh(wh->wi_rx_tstamp1),
 		le16toh(wh->wi_rx_tstamp0), wh->wi_rx_silence);

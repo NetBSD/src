@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.10 2003/05/03 18:11:22 wiz Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.10.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -207,7 +207,7 @@ typedef caddr_t bus_addr_t;
 				/* convert byte offset to reg value */
 #define MID_DRQ_REG2A(N)	(((N) << 3) + MID_DRQOFF) /* and back */
 
-/* note: format of word 1 of RXQ is different beween ENI and ADP cards */
+/* note: format of word 1 of RXQ is different between ENI and ADP cards */
 #define MID_MK_RXQ_ENI(CNT,VC,END,TYPE) \
 	( ((CNT) << 16)|((VC) << 6)|(END)|(TYPE) )
 
@@ -223,7 +223,7 @@ typedef caddr_t bus_addr_t;
 #define MID_DTQ_REG2A(N)	(((N) << 3) + MID_DTQOFF) /* and back */
 
 
-/* note: format of word 1 of TXQ is different beween ENI and ADP cards */
+/* note: format of word 1 of TXQ is different between ENI and ADP cards */
 #define MID_MK_TXQ_ENI(CNT,CHN,END,TYPE) \
 	( ((CNT) << 16)|((CHN) << 6)|(END)|(TYPE) )
 

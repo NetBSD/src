@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.5 2003/03/28 20:25:40 he Exp $   */
+/*	$NetBSD: intvec.S,v 1.5.2.1 2004/08/03 10:42:36 skrll Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -186,7 +186,7 @@ SCBENTRY(mcheck)
 
 L4:	addl2	(%sp)+,%sp	# remove info pushed on stack
 	pushr	$0x3f		# save regs for clobbering
-	movl	_C_LABEL(dep_call),%r0	# get cpu-specific mchk handler
+	movl	_C_LABEL(dep_call),%r0	# get CPU-specific mchk handler
 	tstl	BADADDR(%r0)	# any handler available?
 	bneq	4f		# yep, call it
 	popr	$0x3f		# nope, restore regs
@@ -208,7 +208,7 @@ L4:	addl2	(%sp)+,%sp	# remove info pushed on stack
 	brb	2f
 
 3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-2:	movl	_C_LABEL(memtest),(%sp)	# REI to new adress
+2:	movl	_C_LABEL(memtest),(%sp)	# REI to new address
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)

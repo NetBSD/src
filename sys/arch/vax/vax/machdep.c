@@ -1,12 +1,48 @@
-/* $NetBSD: machdep.c,v 1.136 2003/06/23 11:01:49 martin Exp $	 */
+/* $NetBSD: machdep.c,v 1.136.2.1 2004/08/03 10:42:36 skrll Exp $	 */
+
+/*
+ * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
+ * All rights reserved.
+ * 
+ * Changed for the VAX port (and for readability) /IC
+ * 
+ * This code is derived from software contributed to Berkeley by the Systems
+ * Programming Group of the University of Utah Computer Science Department.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ * 
+ * @(#)machdep.c	7.16 (Berkeley) 6/3/91
+ */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
  * 
  * Changed for the VAX port (and for readability) /IC
  * 
@@ -45,6 +81,9 @@
  * 
  * @(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136.2.1 2004/08/03 10:42:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -140,10 +179,7 @@ struct softintr_head softserial_head = { IPL_SOFTSERIAL };
 void
 cpu_startup()
 {
-	caddr_t		v;
-	u_int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
-	vsize_t		size;
 	extern paddr_t avail_end;
 	char pbuf[9];
 
@@ -166,64 +202,7 @@ cpu_startup()
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
-	/*
-	 * Find out how much space we need, allocate it, and then give
-	 * everything true virtual addresses.
-	 */
-
-	sz = (u_int) allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-	/*
-	 * Now allocate buffers proper.	 They are different than the above in
-	 * that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;		/* # bytes for buffers */
-
-	/* allocate VM for buffers... area is not managed by VM system */
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-
-	minaddr = (vaddr_t) buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	/* now allocate RAM for buffers */
-	for (i = 0 ; i < nbuf ; i++) {
-		vaddr_t curbuf;
-		vsize_t curbufsize;
-		struct vm_page *pg;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.	The rest get (base) physical pages.
-		 * 
-		 * The rest of each buffer occupies virtual space, but has no
-		 * physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t) buffers + i * MAXBSIZE;
-		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: "
-				    "not enough RAM for buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(kernel_map->pmap);
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively limits
 	 * the number of processes exec'ing at any time.
@@ -243,14 +222,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-
-	bufinit();
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -293,46 +265,45 @@ cpu_dumpconf()
 		dumplo = btodb(PAGE_SIZE);
 }
 
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct	proc *p;
+static int
+sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 {
-	dev_t consdev;
+	struct sysctlnode node = *rnode;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);
+	if (booted_device == NULL)
+		return (EOPNOTSUPP);
+	node.sysctl_data = booted_device->dv_xname;
+	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
-	switch (name[0]) {
-	case CPU_PRINTFATALTRAPS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &cpu_printfataltraps));
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof(consdev)));
-	case CPU_BOOTED_DEVICE:
-		if (booted_device != NULL)
-			return (sysctl_rdstring(oldp, oldlenp, newp,
-			    booted_device->dv_xname));
-		break;
-	case CPU_BOOTED_KERNEL:
-		/*
-		 * I don't think this is available to the kernel.
-		 */
-	default:
-		break;
-	}
-	return (EOPNOTSUPP);
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "printfataltraps", NULL,
+		       NULL, 0, &cpu_printfataltraps, 0,
+		       CTL_MACHDEP, CPU_PRINTFATALTRAPS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "booted_device", NULL,
+		       sysctl_machdep_booted_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
+	/*
+	 * I don't think CPU_BOOTED_KERNEL is available to the kernel.
+	 */
 }
 
 void
@@ -371,268 +342,6 @@ consinit()
 	if (sizeof(struct user) > REDZONEADDR)
 		panic("struct user inside red zone");
 #endif
-}
-
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct compat_13_sys_sigreturn_args /* {
-		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct trapframe *scf;
-	struct sigcontext13 *ucntx;
-	struct sigcontext13 ksc;
-	sigset_t mask;
-
-	scf = l->l_addr->u_pcb.framep;
-	ucntx = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
-		return EINVAL;
-
-	/* Compatibility mode? */
-	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (ksc.sc_ps & PSL_CM)) {
-		return (EINVAL);
-	}
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
-
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
-	return (EJUSTRETURN);
-}
-#endif
-
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct trapframe *scf;
-	struct sigcontext *ucntx;
-	struct sigcontext ksc;
-
-	scf = l->l_addr->u_pcb.framep;
-	ucntx = SCARG(uap, sigcntxp);
-
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
-		return EINVAL;
-	/* Compatibility mode? */
-	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (ksc.sc_ps & PSL_CM)) {
-		return (EINVAL);
-	}
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
-	return (EJUSTRETURN);
-}
-
-#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
-
-struct otrampframe {
-	unsigned	sig;	/* Signal number */
-	unsigned	code;	/* Info code */
-	unsigned	scp;	/* Pointer to struct sigcontext */
-	unsigned	r0, r1, r2, r3, r4, r5; /* Registers saved when
-						 * interrupt */
-	unsigned	pc;	/* Address of signal handler */
-	unsigned	arg;	/* Pointer to first (and only) sigreturn
-				 * argument */
-};
-
-static void
-oldsendsig(int sig, sigset_t *mask, u_long code)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct	sigacts *ps = p->p_sigacts;
-	struct	trapframe *syscf;
-	struct	sigcontext *sigctx, gsigctx;
-	struct	otrampframe *trampf, gtrampf;
-	unsigned	cursp;
-	int	onstack;
-	sig_t	catcher = SIGACTION(p, sig).sa_handler;
-
-	syscf = l->l_addr->u_pcb.framep;
-
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		cursp = ((int)p->p_sigctx.ps_sigstk.ss_sp + p->p_sigctx.ps_sigstk.ss_size);
-	else
-		cursp = syscf->sp;
-
-	/* Set up positions for structs on stack */
-	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
-	trampf = (struct otrampframe *) ((unsigned)sigctx -
-	    sizeof(struct otrampframe));
-
-	 /* Place for pointer to arg list in sigreturn */
-	cursp = (unsigned)sigctx - 8;
-
-	gtrampf.arg = (int) sigctx;
-	gtrampf.pc = (unsigned) catcher;
-	/* r0..r5 are saved by the popr in the sigcode snippet */
-	gtrampf.scp = (int) sigctx;
-	gtrampf.code = code;
-	gtrampf.sig = sig;
-
-	gsigctx.sc_pc = syscf->pc;
-	gsigctx.sc_ps = syscf->psl;
-	gsigctx.sc_ap = syscf->ap;
-	gsigctx.sc_fp = syscf->fp; 
-	gsigctx.sc_sp = syscf->sp; 
-	gsigctx.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-	gsigctx.sc_mask = *mask;
-
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-	native_sigset_to_sigset13(mask, &gsigctx.__sc_mask13);
-#endif
-
-	if (copyout(&gtrampf, trampf, sizeof(gtrampf)) ||
-	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
-		sigexit(l, SIGILL);
-
-	/*
-	 * Note the trampoline version numbers are coordinated with
-	 * machine-dependent code in libc.
-	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:
-		syscf->pc = (int)p->p_sigctx.ps_sigcode;
-		break;
-	case 1:
-		syscf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* ``cannot happen'' */
-		sigexit(l, SIGILL);
-	}
-	syscf->psl = PSL_U | PSL_PREVU;
-	syscf->ap = cursp;
-	syscf->sp = cursp;
-
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-#endif
-
-struct trampoline {
-	unsigned int narg;	/* Argument count (== 3) */
-	unsigned int sig;	/* Signal number */
-	unsigned int code;	/* Info code */
-	unsigned int scp;	/* Pointer to struct sigcontext */
-};
-
-/*
- * Brief description of how sendsig() works:
- * A struct sigcontext is allocated on the user stack. The relevant
- * registers are saved in it. Below it is a struct trampframe constructed, it
- * is actually an argument list for callg. The user
- * stack pointer is put below all structs.
- *
- * The registers will contain when the signal handler is called:
- * pc, psl	- Obvious
- * sp		- An address below all structs
- * fp 		- The address of the signal handler
- * ap		- The address to the callg frame
- *
- * The trampoline code will save r0-r5 before doing anything else.
- */
-void
-sendsig(int sig, sigset_t *mask, u_long code)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = curproc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trampoline tramp;
-	struct sigcontext sigctx;
-	struct trapframe *tf = l->l_addr->u_pcb.framep;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	int onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-	int cursp = onstack == 0 ? tf->sp :
-	    ((int)p->p_sigctx.ps_sigstk.ss_sp + p->p_sigctx.ps_sigstk.ss_size);
-
-#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
-	if (ps->sa_sigdesc[sig].sd_vers < 2)
-		return oldsendsig(sig, mask, code);
-#endif
-
-	/*
-	 * The sigcontext struct will be passed back to sigreturn().
-	 */
-	sigctx.sc_pc = tf->pc;
-	sigctx.sc_ps = tf->psl;
-	sigctx.sc_ap = tf->ap;
-	sigctx.sc_fp = tf->fp;
-	sigctx.sc_sp = tf->sp;
-	sigctx.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-	sigctx.sc_mask = *mask;
-
-	/*
-	 * Arguments given to the signal handler.
-	 */
-	tramp.narg = 3;
-	tramp.sig = sig;
-	tramp.code = code;
-	tramp.scp = cursp - sizeof(struct sigcontext);
-
-	if (copyout(&sigctx, (char *)tramp.scp, sizeof(struct sigcontext)) ||
-	    copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)))
-		sigexit(l, SIGILL);
-
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 2:
-		tf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(l, SIGILL);
-	}
-	tf->psl = PSL_U | PSL_PREVU;
-	tf->ap = tramp.scp - sizeof(tramp);
-	tf->fp = (int)catcher;
-	tf->sp = tf->ap;
-
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;
@@ -686,14 +395,14 @@ cpu_reboot(howto, b)
 		 * rely on that.
 		 */
 #ifdef notyet
-		asm("	movl	%sp, (0x80000200)
-			movl	0x80000200, %sp
-			mfpr	$0x10, -(%sp)	# PR_PCBB
-			mfpr	$0x11, -(%sp)	# PR_SCBB
-			mfpr	$0xc, -(%sp)	# PR_SBR
-			mfpr	$0xd, -(%sp)	# PR_SLR
-			mtpr	$0, $0x38	# PR_MAPEN
-		");
+		asm(	"\tmovl	%sp, (0x80000200)\n"
+			"\tmovl	0x80000200, %sp\n"
+			"\tmfpr	$0x10, -(%sp)\n"	/* PR_PCBB */
+			"\tmfpr	$0x11, -(%sp)\n"	/* PR_SCBB */
+			"\tmfpr	$0xc, -(%sp)\n"		/* PR_SBR */
+			"\tmfpr	$0xd, -(%sp)\n"		/* PR_SLR */
+			"\tmtpr	$0, $0x38\n"		/* PR_MAPEN */
+		);
 #endif
 
 		if (showto & RB_DUMP)

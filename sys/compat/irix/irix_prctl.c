@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.21.2.1 2004/08/03 10:43:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21 2003/01/28 23:47:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21.2.1 2004/08/03 10:43:52 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -284,7 +284,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	struct irix_sproc_child_args *isc;	
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
-	struct irix_share_group *isg;
+	struct irix_share_group *isg = NULL;
 	segsz_t stacksize;
 
 #ifdef DEBUG_IRIX
@@ -508,21 +508,21 @@ irix_sproc_child(isc)
 	/* 
 	 * Setup PC to return to the child entry point 
 	 */
-	tf->f_regs[PC] = (unsigned long)isc->isc_entry;
-	tf->f_regs[RA] = 0;
+	tf->f_regs[_R_PC] = (unsigned long)isc->isc_entry;
+	tf->f_regs[_R_RA] = 0;
 
 	/* 
 	 * Setup child arguments 
 	 */
-	tf->f_regs[A0] = (unsigned long)isc->isc_arg;
-	tf->f_regs[A1] = 0;
-	tf->f_regs[A2] = 0;
-	tf->f_regs[A3] = 0;
-	if (ptf->f_regs[S3] == (unsigned long)isc->isc_len) { 
-		tf->f_regs[S0] = ptf->f_regs[S0];
-		tf->f_regs[S1] = ptf->f_regs[S1];
-		tf->f_regs[S2] = ptf->f_regs[S2];
-		tf->f_regs[S3] = ptf->f_regs[S3];
+	tf->f_regs[_R_A0] = (unsigned long)isc->isc_arg;
+	tf->f_regs[_R_A1] = 0;
+	tf->f_regs[_R_A2] = 0;
+	tf->f_regs[_R_A3] = 0;
+	if (ptf->f_regs[_R_S3] == (unsigned long)isc->isc_len) { 
+		tf->f_regs[_R_S0] = ptf->f_regs[_R_S0];
+		tf->f_regs[_R_S1] = ptf->f_regs[_R_S1];
+		tf->f_regs[_R_S2] = ptf->f_regs[_R_S2];
+		tf->f_regs[_R_S3] = ptf->f_regs[_R_S3];
 	}
 
 	/*

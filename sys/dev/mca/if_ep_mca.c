@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.10 2002/10/02 16:34:11 thorpej Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.10.6.1 2004/08/03 10:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.10 2002/10/02 16:34:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.10.6.1 2004/08/03 10:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,10 @@ ep_mca_attach(parent, self, aux)
 		/* BNC */
 		media = IFM_10_2;
 		break;
+	default:
+		printf("%s: cannot determine media\n",
+		    sc->sc_dev.dv_xname);
+		return;
 	}
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|media);
 }

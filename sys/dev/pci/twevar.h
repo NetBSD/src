@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.13 2002/12/13 23:31:33 christos Exp $	*/
+/*	$NetBSD: twevar.h,v 1.13.6.1 2004/08/03 10:49:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,21 @@
 
 #define	TWE_MAX_QUEUECNT	129
 
+/* Callbacks from controller to array. */
+struct twe_callbacks {
+	void	(*tcb_openings)(struct device *, int);
+};
+
+/* Per-array drive information. */
+struct twe_drive {
+	uint32_t		td_size;
+	uint8_t			td_type;
+	uint8_t			td_stripe;
+
+	struct device		*td_dev;
+	const struct twe_callbacks *td_callbacks;
+};
+
 /* Per-controller state. */
 struct twe_softc {
 	struct device		sc_dv;
@@ -58,11 +73,20 @@ struct twe_softc {
 	SIMPLEQ_HEAD(, twe_ccb)	sc_ccb_queue;
 	SLIST_HEAD(, twe_ccb)	sc_ccb_freelist;
 	int			sc_flags;
+	int			sc_openings;
 	int			sc_nunits;
-	u_int			sc_dsize[TWE_MAX_UNITS];
+	struct twe_drive	sc_units[TWE_MAX_UNITS];
+
+	/* Asynchronous event notification queue for management tools. */
+#define	TWE_AEN_Q_LENGTH	256
+	uint16_t		sc_aen_queue[TWE_AEN_Q_LENGTH];
+	int			sc_aen_head;
+	int			sc_aen_tail;
 };
-#define	TWEF_AEN	0x01	/* retrieving an AEN */
-#define	TWEF_OPEN	0x02	/* control device is opened */
+#define	TWEF_OPEN	0x01	/* control device is opened */
+#define	TWEF_AENQ_WAIT	0x02	/* someone waiting for AENs */
+#define	TWEF_AEN	0x04	/* AEN fetch in progress */
+#define	TWEF_WAIT_CCB	0x08	/* someone waiting for a CCB */
 
 /* Optional per-command context. */
 struct twe_context {
@@ -90,7 +114,7 @@ struct twe_ccb {
 #define	TWE_CCB_DATA_OUT	0x02	/* Map describes outbound xfer */
 #define	TWE_CCB_COMPLETE	0x04	/* Command completed */
 #define	TWE_CCB_ACTIVE		0x08	/* Command active */
-#define	TWE_CCB_PARAM		0x10	/* For parameter retrieval */
+#define	TWE_CCB_AEN		0x10	/* For AEN retrieval */
 #define	TWE_CCB_ALLOCED		0x20	/* CCB allocated */
 
 struct twe_attach_args {
@@ -99,13 +123,25 @@ struct twe_attach_args {
 
 #define	tweacf_unit	cf_loc[TWECF_UNIT]
 
-int	twe_ccb_alloc(struct twe_softc *, struct twe_ccb **, int);
+struct twe_ccb *twe_ccb_alloc(struct twe_softc *, int);
+struct twe_ccb *twe_ccb_alloc_wait(struct twe_softc *, int);
 void	twe_ccb_enqueue(struct twe_softc *sc, struct twe_ccb *ccb);
 void	twe_ccb_free(struct twe_softc *sc, struct twe_ccb *);
 int	twe_ccb_map(struct twe_softc *, struct twe_ccb *);
 int	twe_ccb_poll(struct twe_softc *, struct twe_ccb *, int);
 int	twe_ccb_submit(struct twe_softc *, struct twe_ccb *);
 void	twe_ccb_unmap(struct twe_softc *, struct twe_ccb *);
+
+void	twe_ccb_wait_handler(struct twe_ccb *, int);
+
+int	twe_param_get(struct twe_softc *, int, int, size_t,
+	    void (*)(struct twe_ccb *, int), struct twe_param **);
+int	twe_param_get_1(struct twe_softc *, int, int, uint8_t *);
+int	twe_param_get_2(struct twe_softc *, int, int, uint16_t *);
+int	twe_param_get_4(struct twe_softc *, int, int, uint32_t *);
+
+void	twe_register_callbacks(struct twe_softc *, int,
+	    const struct twe_callbacks *);
 
 static __inline__ size_t twe_get_maxsegs(void) {
 	size_t max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
@@ -119,5 +155,20 @@ static __inline__ size_t twe_get_maxsegs(void) {
 static __inline__ size_t twe_get_maxxfer(size_t maxsegs) {
 	return (maxsegs - 1) * PAGE_SIZE;
 }
+
+/*
+ * Structures used to convert numeric codes to strings.
+ */
+struct twe_code_table {
+	uint32_t	code;
+	const char	*string;
+};
+extern const struct twe_code_table twe_table_status[];
+extern const struct twe_code_table twe_table_unitstate[];
+extern const struct twe_code_table twe_table_unittype[];
+extern const struct twe_code_table twe_table_stripedepth[];
+extern const struct twe_code_table twe_table_aen[];
+
+const char *twe_describe_code(const struct twe_code_table *, uint32_t);
 
 #endif	/* !_PCI_TWEVAR_H_ */

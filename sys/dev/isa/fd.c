@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.45.2.1 2003/07/02 15:26:08 darrenr Exp $	*/
+/*	$NetBSD: fd.c,v 1.45.2.2 2004/08/03 10:47:58 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -92,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.2.1 2003/07/02 15:26:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.2.2 2004/08/03 10:47:58 skrll Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -204,6 +200,7 @@ const struct fd_type fd_types[] = {
 };
 #endif /* defined(atari) */
 
+void fdcfinishattach __P((struct device *));
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
@@ -288,15 +285,6 @@ void
 fdcattach(fdc)
 	struct fdc_softc *fdc;
 {
-	struct fdc_attach_args fa;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-#if defined(i386)
-	int type;
-#endif
-
-	iot = fdc->sc_iot;
-	ioh = fdc->sc_ioh;
 	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
@@ -317,7 +305,22 @@ fdcattach(fdc)
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
+
+	config_interrupts(&fdc->sc_dev, fdcfinishattach);
+}
  
+void
+fdcfinishattach(self)
+	struct device *self;
+{
+	struct fdc_softc *fdc = (void *)self;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
+	struct fdc_attach_args fa;
+#if defined(i386)
+	int type;
+#endif
+
 	/* 
 	 * Reset the controller to get it into a known state. Not all
 	 * probes necessarily need do this to discover the controller up
@@ -348,6 +351,7 @@ fdcattach(fdc)
 #endif /* i386 */
 
 	/* physical limit: four drives per controller. */
+	fdc->sc_state = PROBING;
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		if (fdc->sc_known) {
 			if (fdc->sc_present & (1 << fa.fa_drive)) {
@@ -377,6 +381,7 @@ fdcattach(fdc)
 			(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
 		}
 	}
+	fdc->sc_state = DEVIDLE;
 }
 
 int
@@ -392,6 +397,7 @@ fdprobe(parent, match, aux)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
+	int s;
 
 	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
 	    cf->cf_loc[FDCCF_DRIVE] != drive)
@@ -408,14 +414,25 @@ fdprobe(parent, match, aux)
 	if (fdc->sc_known)
 		return 1;
 
+	s = splbio();
+	/* toss any interrupt status */
+	for (n = 0; n < 4; n++) {
+		out_fdc(iot, ioh, NE7CMD_SENSEI);
+		(void) fdcresult(fdc);
+	}
 	/* select drive and turn on motor */
 	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
-	delay(250000);
+	(void) tsleep(fdc, PWAIT, "fdprobe1", hz / 4);
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
-	/* wait for recalibrate */
-	delay(2000000);
+	/* wait for recalibrate, up to 2s */
+	if (tsleep(fdc, PWAIT, "fdprobe2", 2 * hz) != EWOULDBLOCK) {
+#ifdef FD_DEBUG
+		/* XXX */
+		printf("fdprobe: got intr\n");
+#endif
+	}
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -429,8 +446,9 @@ fdprobe(parent, match, aux)
 #endif
 	/* turn off motor */
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
+	splx(s);
 
-#if defined(bebox)	/* XXX What is this about? --thorpej@netbsd.org */
+#if defined(bebox)	/* XXX What is this about? --thorpej@NetBSD.org */
 	if (n != 2 || (fdc->sc_status[1] != 0))
 		return 0;
 #else
@@ -777,16 +795,19 @@ out_fdc(iot, ioh, x)
 	bus_space_handle_t ioh;
 	u_char x;
 {
-	int i = 100000;
+	u_char i;
+	u_int j = 100000;
 
-	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_DIO) && i-- > 0);
-	if (i <= 0)
-		return -1;
-	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
-	if (i <= 0)
-		return -1;
-	bus_space_write_1(iot, ioh, fddata, x);
-	return 0;
+	for (; j; j--) {
+		i = bus_space_read_1(iot, ioh, fdsts) &
+		    (NE7_DIO | NE7_RQM);
+		if (i == NE7_RQM) {
+			bus_space_write_1(iot, ioh, fddata, x);
+			return 0;
+		}
+		delay(10);
+	}
+	return -1;
 }
 
 int
@@ -942,6 +963,14 @@ fdcintr(arg)
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 	struct ne7_fd_formb *finfo = NULL;
+
+	if (fdc->sc_state == PROBING) {
+#ifdef DEBUG
+		printf("fdcintr: got probe interrupt\n");
+#endif
+		wakeup(fdc);
+		return 1;
+	}
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */

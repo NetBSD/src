@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.7.2.1 2004/08/03 10:47:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.7.2.1 2004/08/03 10:47:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ moxa_isaintr(arg)
 {
 	struct moxa_isa_softc *sc = arg;
 	int bits;
-	int rv;
+	int rv = 0;
 
 	bits = sc->sc_alive;
 	if (bits == 0)

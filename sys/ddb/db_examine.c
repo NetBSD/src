@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.25 2003/05/17 09:58:03 scw Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.25.2.1 2004/08/03 10:44:46 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.25 2003/05/17 09:58:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.25.2.1 2004/08/03 10:44:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				width = 12 * (sizeof value / 4);
 				break;
 			case 'a':	/* address */
-				db_printf("= 0x%lx\n", addr);
+				db_printf("= 0x%lx\n", (long)addr);
 				break;
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);

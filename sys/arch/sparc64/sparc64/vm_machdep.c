@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2003/06/29 22:29:03 fvdl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.49.2.1 2004/08/03 10:41:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -48,6 +48,9 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.2.1 2004/08/03 10:41:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +246,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #else
 	opcb->lastcall = NULL;
 #endif
-	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
+	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
 		if (l1 == fplwp) {
 			savefpstate(l1->l_md.md_fpstate);
@@ -251,7 +254,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		}
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
-		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
+		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
 		l2->l_md.md_fpstate = NULL;
@@ -276,25 +279,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
 
-#if 0
-	/* XXX not needed if pc/npc adjusted in syscall */
-	/* Duplicate efforts of syscall(), but slightly differently */
-	if (tf2->tf_global[1] & SYSCALL_G7RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[7];
-	} else if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[2];
-	} else {
-		/*
-		 * old system call convention: clear C on success
-		 * note: proc_trampoline() sets a fresh psr when
-		 * returning to user mode.
-		 */
-		/*tf2->tf_psr &= ~PSR_C;   -* success */
-	}
-#endif
-
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
 	tf2->tf_out[1] = 1;
@@ -312,7 +296,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 	else
-		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT); 
+		/* clear condition codes and disable FPU */
+		tf2->tf_tstate &=
+		    ~((PSTATE_PEF<<TSTATE_PSTATE_SHIFT)|TSTATE_CCR);
 
 
 #ifdef NOTDEF_DEBUG
@@ -346,16 +332,8 @@ cpu_setfunc(l, func, arg)
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }	
 
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
- */
 void
-cpu_exit(l, proc)
+cpu_lwp_free(l, proc)
 	struct lwp *l;
 	int proc;
 {
@@ -368,8 +346,6 @@ cpu_exit(l, proc)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(l, proc);
-	/* NOTREACHED */
 }
 
 /*
@@ -445,7 +421,7 @@ cpu_coredump(l, vp, cred, chdr)
 		}
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
-		bzero((caddr_t)&md_core.md_fpstate, 
+		memset(&md_core.md_fpstate, 0,
 		      sizeof(md_core.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);

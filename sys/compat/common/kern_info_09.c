@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.12.2.1 2003/07/02 15:25:40 darrenr Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.12.2.2 2004/08/03 10:43:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.12.2.1 2003/07/02 15:25:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.12.2.2 2004/08/03 10:43:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +56,13 @@ compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	int name;
+	int name[2];
 	size_t sz;
 
-	name = KERN_DOMAINNAME;
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
 	sz = SCARG(uap,len);
-	return (kern_sysctl(&name, 1, SCARG(uap, domainname), &sz, 0, 0, l));
+	return (old_sysctl(&name[0], 2, SCARG(uap, domainname), &sz, 0, 0, l));
 }
 
 
@@ -77,15 +74,12 @@ compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
-	int error;
+	int name[2];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
-			    SCARG(uap, len), l));
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
+	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, domainname),
+			   SCARG(uap, len), l));
 }
 
 struct outsname {

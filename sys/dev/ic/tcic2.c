@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.12.2.1 2004/08/03 10:46:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.1 2004/08/03 10:46:20 skrll Exp $");
 
 #undef	TCICDEBUG
 
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $");
 
 #include <dev/ic/tcic2reg.h>
 #include <dev/ic/tcic2var.h>
-
-#include "locators.h"
 
 #ifdef TCICDEBUG
 int	tcic_debug = 1;
@@ -319,7 +317,7 @@ tcic_attach(sc)
 {
 	int i, reg;
 
-	/* set more chipset dependend parameters in the softc. */
+	/* set more chipset dependent parameters in the softc. */
 	switch (sc->chipid) {
 	case TCIC_CHIPID_DB86084_1:
 	case TCIC_CHIPID_DB86084A:
@@ -542,24 +540,24 @@ tcic_submatch(parent, cf, aux)
 
 	switch (h->sock) {
 	case 0:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
+		    cf->pcmciabuscf_socket != 0)
 			return 0;
 
 		break;
 	case 1:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
+		    cf->pcmciabuscf_socket != 1)
 			return 0;
 
 		break;
@@ -1210,9 +1208,10 @@ tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	/* XXX wtf is this doing here? */
 
-	printf(" port 0x%lx", (u_long) ioaddr);
+	printf("%s: port 0x%lx", h->sc->dev.dv_xname, (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
+	printf("\n");
 
 	h->io[win].addr = ioaddr;
 	h->io[win].size = size;

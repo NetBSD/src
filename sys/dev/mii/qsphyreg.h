@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphyreg.h,v 1.1 1998/08/11 00:01:03 thorpej Exp $	*/
+/*	$NetBSD: qsphyreg.h,v 1.1.46.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #define	MII_QSPHY_PCTL		0x1f	/* PHY control */
 #define	PCTL_RXERDIS		0x2000	/* receive error counter disable */
 #define	PCTL_ANC		0x1000	/* autonegotiation complete */
-#define	PCTL_RLBEN		0x0200	/* remote coopback enable */
+#define	PCTL_RLBEN		0x0200	/* remote loopback enable */
 #define	PCTL_DCREN		0x0100	/* DC restoration enable */
 #define	PCTL_4B5BEN		0x0040	/* 4b/5b encoding */
 #define	PCTL_PHYISO		0x0020	/* isolate PHY */

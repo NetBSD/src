@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.10 2001/07/25 09:57:31 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.10.20.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,8 +40,14 @@
 struct rtk_type {
 	u_int16_t		rtk_vid;
 	u_int16_t		rtk_did;
+	int			rtk_basetype;
 	const char		*rtk_name;
+};
+
+struct rtk_hwrev {
+	uint32_t		rtk_rev;
 	int			rtk_type;
+	char			*rtk_desc;
 };
 
 struct rtk_mii_frame {
@@ -63,7 +69,35 @@ struct rtk_mii_frame {
 
 #define RTK_8129		1
 #define RTK_8139		2
+#define RTK_8139CPLUS		3
+#define RTK_8169		4
 
+#define RTK_ISCPLUS(x)	((x)->rtk_type == RTK_8139CPLUS || \
+			 (x)->rtk_type == RTK_8169)
+
+/*
+ * The 8139C+ and 8160 gigE chips support descriptor-based TX
+ * and RX. In fact, they even support TCP large send. Descriptors
+ * must be allocated in contiguous blocks that are aligned on a
+ * 256-byte boundary. The rings can hold a maximum of 64 descriptors.
+ */
+
+struct rtk_list_data {
+	struct mbuf		*rtk_tx_mbuf[RTK_TX_DESC_CNT];
+	struct mbuf		*rtk_rx_mbuf[RTK_RX_DESC_CNT];
+	int			rtk_tx_prodidx;
+	int			rtk_rx_prodidx;
+	int			rtk_tx_considx;
+	int			rtk_tx_free;
+	bus_dmamap_t		rtk_tx_dmamap[RTK_TX_DESC_CNT];
+	bus_dmamap_t		rtk_rx_dmamap[RTK_RX_DESC_CNT];
+	bus_dmamap_t		rtk_rx_list_map;
+	struct rtk_desc		*rtk_rx_list;
+	bus_dma_segment_t 	rtk_rx_listseg;
+	bus_dmamap_t		rtk_tx_list_map;
+	struct rtk_desc		*rtk_tx_list;
+	bus_dma_segment_t 	rtk_tx_listseg;
+};
 struct rtk_tx_desc {
 	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
 	struct mbuf		*txd_mbuf;
@@ -90,6 +124,11 @@ struct rtk_softc {
 	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_free;
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_dirty;
+	struct rtk_list_data	rtk_ldata;
+	struct mbuf		*rtk_head;
+	struct mbuf		*rtk_tail;
+	u_int32_t		rtk_rxlenmask;
+	int			rtk_testmode;
 
 	int			sc_flags;	/* misc flags */
 	int			sc_txthresh;	/* Early tx threshold */
@@ -121,6 +160,9 @@ struct rtk_softc {
 	bus_space_write_2(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
 	bus_space_write_1(sc->rtk_btag, sc->rtk_bhandle, reg, val)
+#define CSR_WRITE_STREAM_4(sc, reg, val)	\
+	bus_space_write_stream_4(sc->rtk_btag, sc->rtk_bhandle, reg, val)
+
 
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->rtk_btag, sc->rtk_bhandle, reg)
@@ -148,6 +190,8 @@ struct rtk_softc {
 #define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
+u_int16_t rtk_read_eeprom __P((struct rtk_softc *, int, int));
+void	rtk_setmulti	__P((struct rtk_softc *));
 void	rtk_attach	__P((struct rtk_softc *));
 int	rtk_detach	__P((struct rtk_softc *));
 int	rtk_activate	__P((struct device *, enum devact));

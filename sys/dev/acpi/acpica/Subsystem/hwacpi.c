@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              xRevision: 62 $
+ *              xRevision: 66 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.6 2003/03/04 17:25:20 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.6.2.1 2004/08/03 10:45:10 skrll Exp $");
 
 #define __HWACPI_C__
 
@@ -199,7 +199,7 @@ AcpiHwSetMode (
      */
     if (!AcpiGbl_FADT->SmiCmd)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No SMI_CMD in FADT, mode transition failed.\n"));
+        ACPI_REPORT_ERROR (("No SMI_CMD in FADT, mode transition failed.\n"));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 
@@ -212,7 +212,7 @@ AcpiHwSetMode (
      */
     if (!AcpiGbl_FADT->AcpiEnable && !AcpiGbl_FADT->AcpiDisable)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "No mode transition supported in this system.\n"));
+        ACPI_REPORT_ERROR (("No ACPI mode transition supported in this system (enable/disable both zero)\n"));
         return_ACPI_STATUS (AE_OK);
     }
 
@@ -223,7 +223,7 @@ AcpiHwSetMode (
         /* BIOS should have disabled ALL fixed and GP events */
 
         Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd,
-                        (ACPI_INTEGER) AcpiGbl_FADT->AcpiEnable, 8);
+                        (UINT32) AcpiGbl_FADT->AcpiEnable, 8);
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Attempting to enable ACPI mode\n"));
         break;
 
@@ -234,7 +234,7 @@ AcpiHwSetMode (
          * enable bits to default
          */
         Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd,
-                    (ACPI_INTEGER) AcpiGbl_FADT->AcpiDisable, 8);
+                    (UINT32) AcpiGbl_FADT->AcpiDisable, 8);
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                     "Attempting to enable Legacy (non-ACPI) mode\n"));
         break;
@@ -245,6 +245,7 @@ AcpiHwSetMode (
 
     if (ACPI_FAILURE (Status))
     {
+        ACPI_REPORT_ERROR (("Could not write mode change, %s\n", AcpiFormatException (Status)));
         return_ACPI_STATUS (Status);
     }
 
@@ -255,19 +256,17 @@ AcpiHwSetMode (
     Retry = 3000;
     while (Retry)
     {
-        Status = AE_NO_HARDWARE_RESPONSE;
-
         if (AcpiHwGetMode() == Mode)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Mode %X successfully enabled\n", Mode));
-            Status = AE_OK;
-            break;
+            return_ACPI_STATUS (AE_OK);
         }
         AcpiOsStall(1000);
         Retry--;
     }
 
-    return_ACPI_STATUS (Status);
+    ACPI_REPORT_ERROR (("Hardware never changed modes\n"));
+    return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
 }
 
 
@@ -292,6 +291,16 @@ AcpiHwGetMode (void)
 
 
     ACPI_FUNCTION_TRACE ("HwGetMode");
+
+
+    /*
+     * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
+     * system does not support mode transition.
+     */
+    if (!AcpiGbl_FADT->SmiCmd)
+    {
+        return_VALUE (ACPI_SYS_MODE_ACPI);
+    }
 
     Status = AcpiGetRegister (ACPI_BITREG_SCI_ENABLE, &Value, ACPI_MTX_LOCK);
     if (ACPI_FAILURE (Status))

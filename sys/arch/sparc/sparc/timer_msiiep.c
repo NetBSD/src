@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.10 2003/01/18 06:45:06 thorpej Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.10.2.1 2004/08/03 10:41:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,9 @@
  * MicroSPARC-IIep timer support.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.10.2.1 2004/08/03 10:41:11 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -70,8 +73,6 @@
 #include <sparc/sparc/msiiepreg.h> 
 #include <sparc/sparc/msiiepvar.h>
 
-static int timerok;
-
 static struct intrhand level10;
 static struct intrhand level14;
 
@@ -81,7 +82,7 @@ static struct intrhand level14;
 #define	msiiep	((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
 
 /*
- * ms-IIep counters tick every 4 cpu clock @100MHz.
+ * ms-IIep counters tick every 4 CPU clock @100MHz.
  * counter is reset to 1 when new limit is written.
  */
 #define	tmr_ustolimIIep(n)	((n) * 25 + 1)
@@ -108,10 +109,9 @@ timer_init_msiiep(void)
 static int
 clockintr_msiiep(void *cap)
 {
-	volatile int discard;
 
 	/* read the limit register to clear the interrupt */
-	discard = msiiep->pcic_sclr;
+	*((volatile int *)&msiiep->pcic_sclr);
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -123,24 +123,10 @@ static int
 statintr_msiiep(void *cap)
 {
 	struct clockframe *frame = cap;
-	volatile int discard;
 	u_long newint;
 
 	/* read the limit register to clear the interrupt */
-	discard = msiiep->pcic_pclr;
-	if (timerok == 0) {
-		/* Stop the clock */
-#ifdef DIAGNOSTIC
-		printf("note: counter running!\n");
-#endif
-		/*
-		 * Turn interrupting processor counter
-		 * into non-interrupting user timer.
-		 */
-		msiiep->pcic_pc_cfg = 1; /* make it a user timer */
-		msiiep->pcic_pc_ctl = 0; /* stop user timer */
-		return (1);
-	}
+	*((volatile int *)&msiiep->pcic_pclr);
 
 	statclock(frame);
 
@@ -190,7 +176,7 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 {
 
 	/*
-	 * Attach system and cpu counters (kernel hard and stat clocks)
+	 * Attach system and CPU counters (kernel hard and stat clocks)
 	 * for ms-IIep. Counters are part of the PCIC and there's no
 	 * PROM node for them.
 	 */
@@ -205,10 +191,10 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	 * Note: ms-IIep clocks ticks every 4 processor cycles.
 	 */
 	for (timerblurb = 1; ; ++timerblurb) {
-		volatile int discard;
-		int t;
+		volatile int t;
 
-		discard = msiiep->pcic_pclr; /* clear the limit bit */
+		/* clear the limit bit */
+		*((volatile int *)&msiiep->pcic_pclr);
 		msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
 		delay(100);
 		t = msiiep->pcic_pccr;
@@ -242,8 +228,6 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
-
-	timerok = 1;
 }
 
 CFATTACH_DECL(timer_msiiep, sizeof(struct device), 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.7 2003/01/18 06:45:07 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.7.2.1 2004/08/03 10:41:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,9 @@
  * Sun4m timer support.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.7.2.1 2004/08/03 10:41:11 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -72,8 +75,6 @@
 
 struct timer_4m		*timerreg4m;
 #define	counterreg4m	cpuinfo.counterreg_4m
-
-static int timerok;
 
 /*
  * Set up the real-time and statistics clocks.
@@ -102,20 +103,9 @@ timer_init_4m(void)
 int
 clockintr_4m(void *cap)
 {
-	volatile int discard;
-	int s;
-
-	/*
-	 * Protect the clearing of the clock interrupt.  If we don't
-	 * do this, and we're interrupted (by the zs, for example),
-	 * the clock stops!
-	 * XXX WHY DOES THIS HAPPEN?
-	 */
-	s = splhigh();
 
 	/* read the limit register to clear the interrupt */
-	discard = timerreg4m->t_limit;
-	splx(s); 
+	*((volatile int *)&timerreg4m->t_limit);
 
 	hardclock((struct clockframe *)cap);
 	return (1);
@@ -128,22 +118,10 @@ int
 statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
-	volatile int discard;
 	u_long newint;
 
 	/* read the limit register to clear the interrupt */
-	discard = counterreg4m->t_limit;
-	if (timerok == 0) {
-		/* Stop the clock */
-#ifdef DIAGNOSTIC
-		printf("note: counter running!\n");
-#endif
-		discard = counterreg4m->t_limit;
-		counterreg4m->t_limit = 0;
-		counterreg4m->t_ss = 0;
-		timerreg4m->t_cfg = TMR_CFG_USER;
-		return (1);
-	}
+	*((volatile int *)&counterreg4m->t_limit);
 
 	statclock(frame);
 
@@ -242,5 +220,4 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 	timerreg4m->t_cfg = 0;
 
 	timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
-	timerok = 1;
 }

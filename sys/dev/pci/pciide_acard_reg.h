@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acard_reg.h,v 1.2 2001/10/21 18:49:19 thorpej Exp $	*/
+/*	$NetBSD: pciide_acard_reg.h,v 1.2.20.1 2004/08/03 10:49:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -37,8 +37,8 @@
 	    ((channel) * 16 + (drive) * 8))
 #define	ATP860_SETTIME_MASK(channel)	(0xffff << ((channel) * 16))
 
-static const u_int8_t acard_act_udma[] = {0x3, 0x3, 0x3, 0x3, 0x3};
-static const u_int8_t acard_rec_udma[] = {0x1, 0x1, 0x1, 0x1, 0x1};
+static const u_int8_t acard_act_udma[] = {0x3, 0x3, 0x3, 0x3, 0x3, 0x3};
+static const u_int8_t acard_rec_udma[] = {0x1, 0x1, 0x1, 0x1, 0x1, 0x1};
 static const u_int8_t acard_act_dma[]  = {0x0, 0x3, 0x3};
 static const u_int8_t acard_rec_dma[]  = {0xa, 0x3, 0x1};
 static const u_int8_t acard_act_pio[]  = {0x0, 0x0, 0x0, 0x3, 0x3};
@@ -55,7 +55,7 @@ static const u_int8_t acard_rec_pio[]  = {0x0, 0xa, 0x8, 0x3, 0x1};
 #define	ATP860_UDMA_MASK(channel)	(0xff << ((channel) * 8))
 
 static const u_int8_t acard_udma_conf[] __attribute__((__unused__)) =
-    {0x1, 0x2, 0x3, 0x4, 0x5};
+    {0x1, 0x2, 0x3, 0x4, 0x5, 0x6};
 
 #define ATP8x0_CTRL		0x48
 #define  ATP8x0_CTRL_EN(chan)	(0x00020000 << (chan))

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.h,v 1.1 2002/10/14 02:08:40 takemura Exp $	*/
+/*	$NetBSD: apmbios.h,v 1.1.8.1 2004/08/03 10:45:46 skrll Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -229,7 +229,7 @@
 #define		APM_TIMER_REQS_GET	0x0002
      /* returns state in %cx */
 #define		APM_TIMER_REQS_DISABLED	0x0000
-#define		APM_TIEMR_REQS_ENABLED	0x0001
+#define		APM_TIMER_REQS_ENABLED	0x0001
 
 #define APM_OEM			0x80
 

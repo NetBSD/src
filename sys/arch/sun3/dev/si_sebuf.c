@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.20 2003/05/03 18:11:04 wiz Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.20.2.1 2004/08/03 10:42:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  * XXX - Mostly from the si driver.  Merge?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.20.2.1 2004/08/03 10:42:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

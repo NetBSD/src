@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390reg.h,v 1.5 2000/02/09 15:40:24 enami Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.5.28.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -511,7 +511,7 @@
 #define ED_RSR_PHY	0x20
 
 /*
- * DIS: Receiver Disabled.  Set to indicate that the receiver has enetered
+ * DIS: Receiver Disabled.  Set to indicate that the receiver has entered
  * monitor mode.  Cleared when the receiver exits monitor mode.
  */
 #define ED_RSR_DIS	0x40

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11 2003/01/18 08:02:47 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.11.2.1 2004/08/03 10:43:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2003/01/18 08:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11.2.1 2004/08/03 10:43:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,16 +94,14 @@ process_frame(struct lwp *l)
 }
 
 void
-linux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	const int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = process_frame(l);
@@ -163,7 +161,7 @@ linux_sendsig(sig, mask, code)
 	 */
 	frame.sf_sc.sc_trapno = 0;
 	frame.sf_sc.sc_error_code = 0;
-	frame.sf_sc.sc_fault_address = code;
+	frame.sf_sc.sc_fault_address = (u_int32_t) ksi->ksi_addr;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*

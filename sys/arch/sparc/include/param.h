@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.60 2003/04/11 13:55:24 jdc Exp $ */
+/*	$NetBSD: param.h,v 1.60.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -89,7 +85,16 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
+#if !(defined(PROM_AT_F0) || defined(MSIIEP))
 #define	KERNBASE	0xf0000000	/* start of kernel virtual space */
+#else
+/*
+ * JS1/OF has prom sitting in f000.0000..f007.ffff, modify kernel VA 
+ * layout to work around that. XXX - kernel should live beyound prom on
+ * those machines.
+ */
+#define	KERNBASE	0xe8000000
+#endif
 #define KERNEND		0xfe000000	/* end of kernel virtual space */
 /* Arbitrarily only use 1/4 of the kernel address space for buffers. */
 #define VM_MAX_KERNEL_BUF	((KERNEND - KERNBASE)/4)

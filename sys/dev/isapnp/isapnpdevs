@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.53 2003/06/10 19:39:00 christos Exp $
+$NetBSD: isapnpdevs,v 1.53.2.1 2004/08/03 10:48:22 skrll Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ $NetBSD: isapnpdevs,v 1.53 2003/06/10 19:39:00 christos Exp $
 driver	aha	Adaptec SCSI
 driver	aic	Adaptec SCSI
 driver	an	Aironet 802.11
+driver	atppc	AT Parallel Port
 driver	com	National Semiconductor Serial
 driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
 driver	ep	3Com 3CXXX Ethernet
@@ -77,6 +78,12 @@ devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
  * an
  */
 devlogic	an	AOL0001		0	Aironet 4500/4800
+
+/*
+ * atppc
+ */
+devlogic	atppc	PNP0400		0	Generic AT Parallel Port
+devlogic	atppc	PNP0401		0	Generic ECP Prallel Port
 
 /*
  * com
@@ -232,6 +239,7 @@ devlogic	wss	CSC0100		0	CS4235 CODEC
 devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
 devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
 devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB
+devlogic	wss	@@@0001		0	CMI8330/C3D Audio Adapter
 
 /*
  * ym

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.17 2003/03/12 07:51:00 jdc Exp $ */
+/*	$NetBSD: timer.c,v 1.17.2.1 2004/08/03 10:41:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,8 +56,11 @@
 /*
  * Kernel clocks provided by "timer" device.  The hardclock is provided by
  * the timer register (aka system counter).  The statclock is provided by
- * per cpu counter register(s) (aka processor counter(s)).
+ * per CPU counter register(s) (aka processor counter(s)).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.17.2.1 2004/08/03 10:41:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

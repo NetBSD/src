@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.16 2001/04/25 17:53:32 bouyer Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.16.22.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -432,7 +432,7 @@ struct bha_setup_reply {
 	u_int8_t	low_disc_info;
 };
 
-/* additional reply data supplied by wide controlers */
+/* additional reply data supplied by wide controllers */
 struct bha_setup_reply_wide {
 	u_int8_t	signature;
 	u_int8_t	letter_d;

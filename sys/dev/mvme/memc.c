@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.1 2002/02/12 20:38:46 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Support for the MEMECC and MEMC40 memory controllers on MVME68K
  * and MVME88K boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -585,11 +588,12 @@ memecc_log_error(struct memc_softc *sc, u_int8_t errlog, int off, int mbepanic)
 			strcpy(syntext, "Invalid!");
 		else
 		if ((syncode & MEMECC_SYN_CHECKBIT_ERR) != 0)
-			sprintf(syntext, "Checkbit#%d", bitnum);
+			snprintf(syntext, sizeof(syntext),
+			    "Checkbit#%d", bitnum);
 		else {
 			addr |= (u_int32_t) (bank << 2);
-			sprintf(syntext, "DRAM Bank %c, Bit#%d",
-			    'A' + bank, bitnum);
+			snprintf(syntext, sizeof(syntext),
+			    "DRAM Bank %c, Bit#%d", 'A' + bank, bitnum);
 		}
 	} else if ((errlog & MEMECC_ERROR_LOGGER_MBE) != 0)
 		etype = "Uncorrectable";
@@ -623,7 +627,7 @@ memecc_log_error(struct memc_softc *sc, u_int8_t errlog, int off, int mbepanic)
 	if (mbepanic && (errlog & MEMECC_ERROR_LOGGER_MBE) &&
 	    (errlog & (MEMECC_ERROR_LOGGER_ESCRB|MEMECC_ERROR_LOGGER_EALT))) {
 		/*
-		 * Ensure we don't get a Bus Error while panicing...
+		 * Ensure we don't get a Bus Error while panicking...
 		 */
 		rv = memc_reg_read(sc, MEMECC_REG_DRAM_CONTROL + off);
 		rv &= ~(MEMECC_DRAM_CONTROL_NCEBEN |

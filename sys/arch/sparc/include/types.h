@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.32 2003/04/28 23:16:25 bjh21 Exp $ */
+/*	$NetBSD: types.h,v 1.32.2.1 2004/08/03 10:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -91,11 +87,27 @@ typedef unsigned long int	paddr_t;
 typedef paddr_t			psize_t;
 #endif
 
+/*
+ * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores
+ * `lock_data' given its address (and the fact that SPARC is big-endian).
+ */
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	0xff000000
+#define	__SIMPLELOCK_UNLOCKED	0
+
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#define	__HAVE_NWSCONS
 
 #ifdef SUN4U
-#define __HAVE_CPU_COUNTER	/* sparc64 has %tick */
+#define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
+#if defined(_KERNEL)
+#define __HAVE_RAS
 #endif
+#endif
+
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.12 2003/06/29 22:29:52 fvdl Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.12.2.1 2004/08/03 10:44:34 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.12 2003/06/29 22:29:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.12.2.1 2004/08/03 10:44:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1512,7 +1512,7 @@ svr4_32_sys_putmsg(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	if (SCARG(uap, ctl) != NULL) {
+	if (SCARG(uap, ctl)) {
 		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ctl), 
 				    &ctl, sizeof(ctl))) != 0)
 			return error;
@@ -1520,7 +1520,7 @@ svr4_32_sys_putmsg(l, v, retval)
 	else
 		ctl.len = -1;
 
-	if (SCARG(uap, dat) != NULL) {
+	if (SCARG(uap, dat)) {
 	    	if ((error = copyin((caddr_t)(u_long)SCARG(uap, dat), 
 				    &dat, sizeof(dat))) != 0)
 			return error;
@@ -1686,7 +1686,7 @@ svr4_32_sys_getmsg(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	if (SCARG(uap, ctl) != NULL) {
+	if (SCARG(uap, ctl)) {
 		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ctl), 
 				    &ctl, sizeof(ctl))) != 0)
 			return error;
@@ -1696,7 +1696,7 @@ svr4_32_sys_getmsg(l, v, retval)
 		ctl.maxlen = 0;
 	}
 
-	if (SCARG(uap, dat) != NULL) {
+	if (SCARG(uap, dat)) {
 	    	if ((error = copyin((caddr_t)(u_long)SCARG(uap, dat), 
 				    &dat, sizeof(dat))) != 0)
 			return error;

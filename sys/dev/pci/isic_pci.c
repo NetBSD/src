@@ -1,11 +1,11 @@
-/* $NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $ */
+/* $NetBSD: isic_pci.c,v 1.18.6.1 2004/08/03 10:49:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.1 2004/08/03 10:49:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18 2002/10/02 16:51:40 thorpej Exp $"
 #include <dev/ic/hscx.h>
 #include <dev/pci/isic_pci.h>
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 static int isic_pci_match __P((struct device *, struct cfdata *, void *));
 static void isic_pci_attach __P((struct device *, struct device *, void *));
@@ -91,7 +91,7 @@ static const struct isic_pci_product {
 	pci_product_id_t npp_product;
 	int cardtype;
 	const char * name;
-	void (*attach)(struct pci_isic_softc *psc, struct pci_attach_args *pa);
+	int (*attach)(struct pci_isic_softc *psc, struct pci_attach_args *pa);
 	void (*pciattach)(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
 } isic_pci_products[] = {
 	{ PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
@@ -156,7 +156,8 @@ isic_pci_attach(parent, self, aux)
 	callout_init(&sc->sc_T4_callout);
 
 	/* card initilization and sc setup */
-	prod->attach(psc, pa);
+	if (!prod->attach(psc, pa))
+		return;
 
 	/* generic setup, if needed for this card */
 	if (prod->pciattach) prod->pciattach(psc, pa, prod->name);

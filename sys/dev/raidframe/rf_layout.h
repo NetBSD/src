@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.10 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.10.2.1 2004/08/03 10:50:44 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -99,7 +99,7 @@ struct RF_RaidLayout_s {
 #define RF_PDA_TYPE_Q      2
 
 struct RF_PhysDiskAddr_s {
-	RF_RowCol_t row, col;	/* disk identifier */
+	RF_RowCol_t col;	/* disk identifier */
 	RF_SectorNum_t startSector;	/* sector offset into the disk */
 	RF_SectorCount_t numSector;	/* number of sectors accessed */
 	int     type;		/* used by higher levels: currently, data,
@@ -135,8 +135,6 @@ struct RF_AccessStripeMap_s {
 	RF_PhysDiskAddr_t *qInfo;	/* list of physical addrs for the Q of
 					 * P + Q */
 	RF_LockReqDesc_t lockReqDesc;	/* used for stripe locking */
-	RF_RowCol_t origRow;	/* the original row:  we may redirect the acc
-				 * to a different row */
 	RF_AccessStripeMap_t *next;
 };
 /* flag values */
@@ -164,6 +162,47 @@ struct RF_AccessStripeMapHeader_s {
 						 * Also used for making lists */
 	RF_AccessStripeMapHeader_t *next;
 };
+
+/* A structure to be used in a linked list to keep track of function pointers. */
+typedef struct RF_VoidFunctionPointerListElem_s RF_VoidFunctionPointerListElem_t;
+struct RF_VoidFunctionPointerListElem_s {
+	RF_VoidFuncPtr fn;
+	RF_VoidFunctionPointerListElem_t *next;
+};
+
+/* We need something to just be a linked list of anonymous pointers
+   to stuff */
+typedef struct RF_VoidPointerListElem_s RF_VoidPointerListElem_t;
+struct RF_VoidPointerListElem_s {
+	void *p;
+	RF_VoidPointerListElem_t *next;
+};
+
+/* A structure to be used in a linked list to keep track of ASM Headers */
+typedef struct RF_ASMHeaderListElem_s RF_ASMHeaderListElem_t;
+struct RF_ASMHeaderListElem_s {
+	RF_AccessStripeMapHeader_t *asmh;
+	RF_ASMHeaderListElem_t *next;
+};
+
+/* A structure to keep track of all the data structures associated with 
+a failed stripe.  Used for constructing the appropriate DAGs in
+rf_SelectAlgorithm() in rf_aselect.c */
+typedef struct RF_FailedStripe_s RF_FailedStripe_t;
+struct RF_FailedStripe_s {
+	RF_VoidFunctionPointerListElem_t *vfple;   /* linked list of pointers to DAG creation
+						      functions for stripes */
+	RF_VoidFunctionPointerListElem_t *bvfple;  /* linked list of poitners to DAG creation
+						      functions for blocks */
+	RF_ASMHeaderListElem_t *asmh_u;            /* Access Stripe Map Headers for regular
+						      stripes */
+	RF_ASMHeaderListElem_t *asmh_b;            /* Access Stripe Map Headers used for the
+						      block functions */
+	RF_FailedStripe_t *next;
+};
+
+
+
 /*****************************************************************************************
  *
  * various routines mapping addresses in the RAID address space.  These work across

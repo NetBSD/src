@@ -1,4 +1,4 @@
-/*	$NetBSD: memcreg.h,v 1.1 2002/02/12 20:38:46 scw Exp $	*/
+/*	$NetBSD: memcreg.h,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #define  MEMC040_MEMORY_CONFIG_WPB	(1u << 4)  /* Write Per Bit mode */
 #define  MEMC_MEMORY_CONFIG_FSTRD	(1u << 5)  /* Fast RAM Read enabled */
 
-/* Where, in the cpu's address space, does this memory appear? */
+/* Where, in the CPU's address space, does this memory appear? */
 #define	MEMC_REG_BASE_ADDRESS_HI	0x14
 #define	MEMC_REG_BASE_ADDRESS_LO	0x18
 #define  MEMC_BASE_ADDRESS(hi,lo)	(((hi) << 24) | (((lo) & 0xc0) << 22))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.16 2003/01/18 07:40:44 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.16.2.1 2004/08/03 10:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.16 2003/01/18 07:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.16.2.1 2004/08/03 10:43:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.16 2003/01/18 07:40:44 thorpej Exp $
 #include <sys/ioctl.h>
 #include <sys/ipc.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $ */
+/*	$NetBSD: kbio.h,v 1.1.1.1.66.1 2004/08/03 10:42:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,9 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _X68K_KBIO_H_
+#define _X68K_KBIO_H_
 
 /*
  * The following is a minimal emulation of Sun's `kio' structures
@@ -130,3 +129,5 @@ struct kbiocbell {
 #define	TR_ASCII		1	/* X compat, unsupported */
 #define	TR_EVENT		2	/* X compat, unsupported */
 #define	TR_UNTRANS_EVENT	3
+
+#endif

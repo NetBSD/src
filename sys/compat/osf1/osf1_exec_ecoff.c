@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.1 2003/07/02 15:25:51 darrenr Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.2 2004/08/03 10:44:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.1 2003/07/02 15:25:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.2 2004/08/03 10:44:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto bad;
 
 	/* finally, set up the stack. */
-	error = exec_ecoff_setup_stack(p, epp);
+	error = (*epp->ep_esch->es_setup_stack)(p, epp);
 	if (error)
 		goto bad;
 

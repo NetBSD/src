@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.c,v 1.6 2002/08/04 03:22:07 oster Exp $	*/
+/*	$NetBSD: rf_debugprint.c,v 1.6.6.1 2004/08/03 10:50:43 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,21 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugprint.c,v 1.6 2002/08/04 03:22:07 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugprint.c,v 1.6.6.1 2004/08/03 10:50:43 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
-#include "rf_threadstuff.h"
 #include "rf_debugprint.h"
 #include "rf_general.h"
-#include "rf_options.h"
-
-#include <sys/param.h>
 
 void 
-rf_debug_printf(s, a1, a2, a3, a4, a5, a6, a7, a8)
-	char   *s;
-	void   *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
+rf_debug_printf(char *s, void *a1, void *a2, void *a3, void *a4, 
+		void *a5, void *a6, void *a7, void *a8)
 {
 	printf(s, a1, a2, a3, a4, a5, a6, a7, a8);
 }

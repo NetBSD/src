@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.10 2003/01/18 06:45:06 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.10.2.1 2004/08/03 10:41:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,9 @@
  * Sun4/Sun4c timer support.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.10.2.1 2004/08/03 10:41:11 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -92,10 +95,9 @@ timer_init_4(void)
 int
 clockintr_4(void *cap)
 {
-	volatile int discard;
 
 	/* read the limit register to clear the interrupt */
-	discard = timerreg4->t_c10.t_limit;
+	*((volatile int *)&timerreg4->t_c10.t_limit);
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -107,11 +109,10 @@ int
 statintr_4(void *cap)
 {
 	struct clockframe *frame = cap;
-	volatile int discard;
 	u_long newint;
 
 	/* read the limit register to clear the interrupt */
-	discard = timerreg4->t_c14.t_limit;
+	*((volatile int *)&timerreg4->t_c14.t_limit);
 
 	statclock(frame);
 

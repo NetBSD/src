@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.32 2002/10/02 16:52:05 thorpej Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.32.6.1 2004/08/03 10:50:14 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32 2002/10/02 16:52:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.1 2004/08/03 10:50:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,13 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32 2002/10/02 16:52:05 thorpej Exp 
 #include <dev/isa/isareg.h>
 
 struct com_dev {
-	char	*name;
 	char	*cis1_info[4];
 };
 
 /* Devices that we need to match by CIS strings */
 static struct com_dev com_devs[] = {
-	{ PCMCIA_STR_MEGAHERTZ_XJ2288, PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
 
@@ -242,8 +237,8 @@ retry:
 			    (cfe->iospace[0].start != 0)) {
 				if (!pcmcia_io_alloc(pa->pf,
 				    cfe->iospace[0].start, 
-				    cfe->iospace[0].length, 0,
-				    &psc->sc_pcioh)) {
+				    cfe->iospace[0].length,
+				    cfe->iospace[0].length, &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
@@ -289,7 +284,7 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 
-	printf(": serial device\n%s", sc->sc_dev.dv_xname);
+	aprint_normal("\n%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 
@@ -308,7 +303,7 @@ com_pcmcia_detach(self, flags)
 
 	/* Unmap our i/o window. */
 	if (psc->sc_io_window == -1) {
-		printf("%s: I/O window not allocated.",
+		printf("%s: I/O window not allocated.\n",
 		    psc->sc_com.sc_dev.dv_xname);
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.1 2003/07/02 15:25:45 darrenr Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.2 2004/08/03 10:43:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.1 2003/07/02 15:25:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.2 2004/08/03 10:43:52 skrll Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.1 2003/07/02 15:25:45 darr
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/errno.h>
+#include <sys/namei.h>	/* Used for irix_load_addr */
+#include <sys/vnode.h>	/* Used for irix_load_addr */
 
 #include <machine/vmparam.h>
 
@@ -72,7 +74,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	int error;
+	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32()\n");
@@ -81,7 +83,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 	    IRIX_EF_IRIX_ABIO32)
 		return error;
 
-	if (itp[0]) {
+	if (itp) {
 		/* o32 binaries use /lib/libc.so.1 */
 		if (strncmp(itp, "/lib/libc.so", 12) && 
 		    strncmp(itp, "/usr/lib/libc.so", 16))
@@ -89,8 +91,8 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
 		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
+		*pos = ELF_LINK_ADDR;
 	}
-	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32: returning 0\n");
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
@@ -110,7 +112,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	int error;
+	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32()\n");
@@ -119,7 +121,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	    IRIX_EF_IRIX_ABIN32)
 		return error;
 
-	if (itp[0]) {
+	if (itp) {
 		/* n32 binaries use /lib32/libc.so.1 */
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
@@ -128,7 +130,6 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}
-	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32: returning 0\n");
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);

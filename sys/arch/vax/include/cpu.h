@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.66 2003/03/01 21:51:59 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.66.2.1 2004/08/03 10:42:23 skrll Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -55,6 +55,7 @@
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
+#include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/sched.h>
@@ -65,7 +66,6 @@
 #include <machine/psl.h>
 
 #define enablertclock()
-#define	cpu_wait(p)
 
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the
@@ -148,6 +148,7 @@ struct cpu_info {
 	int ci_flags;			/* See below */
 	long ci_ipimsgs;		/* Sent IPI bits */
 	struct trapframe *ci_ddb_regs;	/* Used by DDB */
+	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
 #endif
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
@@ -167,15 +168,26 @@ struct cpu_mp_softc {
 };
 #endif /* defined(MULTIPROCESSOR) */
 
-#define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
-#define	curlwp	(curcpu()->ci_curlwp)
-#define	cpu_number() (curcpu()->ci_dev->dv_unit)
-#define	ci_cpuid ci_dev->dv_unit
-#define	need_resched(ci) {(ci)->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-#define	cpu_proc_fork(x, y)
+#define	ci_cpuid		ci_dev->dv_unit
+#define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
+#define	curlwp			(curcpu()->ci_curlwp)
+#define	cpu_number()		(curcpu()->ci_cpuid)
+#define	need_resched(ci)			\
+	do {					\
+		(ci)->ci_want_resched = 1;	\
+		mtpr(AST_OK,PR_ASTLVL);		\
+	} while (/*CONSTCOND*/ 0)
+#define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
+#define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
+#define	CPU_INFO_ITERATOR	int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = SIMPLEQ_FIRST(&cpus); \
+					ci != NULL; \
+					ci = SIMPLEQ_NEXT(ci, ci_next)
+
+extern SIMPLEQ_HEAD(cpu_info_qh, cpu_info) cpus;
 extern char tramp;
 #endif
 

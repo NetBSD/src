@@ -1,11 +1,45 @@
-/*	$NetBSD: trap.c,v 1.9 2003/06/23 11:01:45 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.9.2.1 2004/08/03 10:41:50 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	from: Utah Hdr: trap.c 1.37 92/12/20
+ *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
+ */
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -43,6 +77,9 @@
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9.2.1 2004/08/03 10:41:50 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_fpu_emulate.h"
@@ -62,6 +99,7 @@
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#include <sys/userret.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -173,19 +211,9 @@ userret(l, tf, oticks)
 	u_quad_t oticks;
 {
 	struct proc *p = l->l_proc;
-	int sig;
 
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
@@ -229,16 +257,16 @@ trap(type, code, v, tf)
 {
 	struct lwp *l;
 	struct proc *p;
-	int sig, tmp;
-	u_int ucode;
+	ksiginfo_t ksi;
+	int tmp;
 	u_quad_t sticks;
 
 	uvmexp.traps++;
 	l = curlwp;
-	ucode = 0;
-	sig = 0;
 
-	/* I have verified that this DOES happen! -gwr */
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_trap = type & ~T_USER;
+
 	if (l == NULL)
 		l = &lwp0;
 	p = l->l_proc;
@@ -312,8 +340,10 @@ trap(type, code, v, tf)
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
-		ucode = v;
-		sig = SIGBUS;
+		ksi.ksi_addr = (void *)v;
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = (type == (T_BUSERR|T_USER)) ?
+			BUS_OBJERR : BUS_ADRERR;
 		break;
 
 	case T_COPERR:		/* kernel coprocessor violation */
@@ -330,14 +360,16 @@ trap(type, code, v, tf)
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
-		sig = SIGILL;
-		ucode = tf.tf_format;
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_addr = (void *)(int)tf.tf_format;
+		ksi.ksi_code = (type == T_COPERR) ?
+			ILL_COPROC : ILL_ILLOPC;
 		break;
 
 	case T_COPERR|T_USER:	/* user coprocessor violation */
-		/* What is a proper response here? */
-		ucode = 0;
-		sig = SIGFPE;
+	/* What is a proper response here? */
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = FPE_FLTINV;
 		break;
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
@@ -350,8 +382,8 @@ trap(type, code, v, tf)
 		 * 3 bits of the status register are defined as 0 so there is
 		 * no clash.
 		 */
-		ucode = code;
-		sig = SIGFPE;
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)code;
 		break;
 
 	case T_FPEMULI:		/* FPU faults in supervisor mode */
@@ -363,25 +395,29 @@ trap(type, code, v, tf)
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef	FPU_EMULATE
-		sig = fpu_emulate(&tf, &l->l_addr->u_pcb.pcb_fpregs);
-		/* XXX - Deal with tracing? (tf.tf_sr & PSL_T) */
+		if (fpu_emulate(&tf, &l->l_addr->u_pcb.pcb_fpregs, &ksi) == 0)
+			; /* XXX - Deal with tracing? (tf.tf_sr & PSL_T) */
 #else
 		uprintf("pid %d killed: no floating point support\n", p->p_pid);
-		sig = SIGILL;
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
 #endif
 		break;
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-		ucode = tf.tf_format;
-		sig = SIGILL;
+		ksi.ksi_addr = (void *)(int)tf.tf_format;
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = (type == (T_PRIVINST|T_USER)) ?
+			ILL_PRVOPC : ILL_ILLOPC;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
+		ksi.ksi_code = FPE_FLTDIV;
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-		ucode = tf.tf_format;
-		sig = SIGFPE;
+		ksi.ksi_addr = (void *)(int)tf.tf_format;
+		ksi.ksi_signo = SIGFPE;
 		break;
 
 	/*
@@ -420,7 +456,7 @@ trap(type, code, v, tf)
 	case T_TRACE:		/* tracing a trap instruction */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		tf.tf_sr &= ~PSL_T;
-		sig = SIGTRAP;
+		ksi.ksi_signo = SIGTRAP;
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
@@ -491,6 +527,9 @@ trap(type, code, v, tf)
 			/* supervisor mode fault */
 			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
+		} else if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_flag |= L_SA_PAGEFAULT;
 		}
 
 		if (WRFAULT(code))
@@ -534,12 +573,18 @@ trap(type, code, v, tf)
 				nss = btoc((u_int)(USRSTACK-va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == EACCES)
-				rv = EFAULT;
+			}
 		}
-		if (rv == 0)
+		if (rv == 0) {
+			if ((type & T_USER) != 0)
+				l->l_flag &= ~L_SA_PAGEFAULT;
 			goto finish;
-
+		}
+		if (rv == EACCES) {
+			ksi.ksi_code = SEGV_ACCERR;
+			rv = EFAULT;
+		} else
+			ksi.ksi_code = SEGV_MAPERR;
 		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
 			if (l->l_addr->u_pcb.pcb_onfault) {
@@ -555,15 +600,16 @@ trap(type, code, v, tf)
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
-		ucode = v;
+		l->l_flag &= ~L_SA_PAGEFAULT;
+		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			sig = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
 		} else {
-			sig = SIGSEGV;
+			ksi.ksi_signo = SIGSEGV;
 		}
 		break;
 		} /* T_MMUFLT */
@@ -574,8 +620,8 @@ finish:
 	if ((type & T_USER) == 0)
 		goto done;
 	/* Post a signal if necessary. */
-	if (sig != 0)
-		trapsignal(l, sig, ucode);
+	if (ksi.ksi_signo)
+		trapsignal(l, &ksi);
 douret:
 	userret(l, &tf, sticks);
 

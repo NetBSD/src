@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.1 2003/04/16 22:03:00 thorpej Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.1.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -33,6 +33,9 @@
  *
  * Debug routines for LSI Fusion adapters.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.1.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include <dev/ic/mpt.h>
 

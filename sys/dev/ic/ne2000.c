@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.38 2003/01/15 22:20:06 bouyer Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.38.2.1 2004/08/03 10:46:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.38 2003/01/15 22:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.38.2.1 2004/08/03 10:46:17 skrll Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -126,19 +126,40 @@ ne2000_attach(nsc, myea)
 	 * Detect it again unless caller specified it; this gives us
 	 * the memory size.
 	 */
-	if (nsc->sc_type == 0) {
+	if (nsc->sc_type == NE2000_TYPE_UNKNOWN)
 		nsc->sc_type = ne2000_detect(nict, nich, asict, asich);
-		if (nsc->sc_type == 0) {
-			printf("%s: where did the card go?\n",
-			    dsc->sc_dev.dv_xname);
-			return (1);
-		}
+
+	/*
+	 * 8k of memory for NE1000, 16k for NE2000 and 24k for the
+	 * card uses DL10019.
+	 */
+	switch (nsc->sc_type) {
+	case NE2000_TYPE_UNKNOWN:
+	default:
+		printf("%s: where did the card go?\n", dsc->sc_dev.dv_xname);
+		return (1);
+	case NE2000_TYPE_NE1000:
+		memsize = 8192;
+		useword = 0;
+		break;
+	case NE2000_TYPE_NE2000:
+	case NE2000_TYPE_AX88190:		/* XXX really? */
+	case NE2000_TYPE_AX88790:
+		memsize = 8192 * 2;
+		useword = 1;
+		break;
+	case NE2000_TYPE_DL10019:
+	case NE2000_TYPE_DL10022:
+		memsize = 8192 * 3;
+		useword = 1;
+		break;
 	}
 
-	useword = NE2000_USE_WORD(nsc);
+	nsc->sc_useword = useword;
 
 	dsc->cr_proto = ED_CR_RD2;
-	if (nsc->sc_type == NE2000_TYPE_AX88190) {
+	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		dsc->rcr_proto = ED_RCR_INTT;
 		dsc->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 	} else
@@ -162,24 +183,6 @@ ne2000_attach(nsc, myea)
 	/* Registers are linear. */
 	for (i = 0; i < 16; i++)
 		dsc->sc_reg_map[i] = i;
-
-	/*
-	 * 8k of memory for NE1000, 16k for NE2000 and 24k for the
-	 * card uses DL10019.
-	 */
-	switch (nsc->sc_type) {
-	case NE2000_TYPE_NE1000:
-		memsize = 8192;
-		break;
-	case NE2000_TYPE_NE2000:
-	case NE2000_TYPE_AX88190:		/* XXX really? */
-		memsize = 8192 * 2;
-		break;
-	case NE2000_TYPE_DL10019:
-	case NE2000_TYPE_DL10022:
-		memsize = 8192 * 3;
-		break;
-	}
 
 	/*
 	 * NIC memory doens't start at zero on an NE board.
@@ -260,7 +263,8 @@ ne2000_attach(nsc, myea)
 
 	if (myea == NULL) {
 		/* Read the station address. */
-		if (nsc->sc_type == NE2000_TYPE_AX88190) {
+		if (nsc->sc_type == NE2000_TYPE_AX88190 ||
+		    nsc->sc_type == NE2000_TYPE_AX88790) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,
@@ -357,7 +361,7 @@ ne2000_detect(nict, nich, asict, asich)
 	delay(5000);
 
 	/*
-	 * Generic probe routine for testing for the existance of a DS8390.
+	 * Generic probe routine for testing for the existence of a DS8390.
 	 * Must be performed  after the NIC has just been reset.  This
 	 * works by looking at certain register values that are guaranteed
 	 * to be initialized a certain way after power-up or reset.
@@ -612,7 +616,7 @@ ne2000_write_mbuf(sc, m, buf)
 			    *(u_int16_t *)savebyte);
 		}
 		if (padlen) {
-			for(; padlen > 0; padlen -= 2)
+			for(; padlen > 1; padlen -= 2)
 				bus_space_write_stream_2(asict, asich,
 				    NE2000_ASIC_DATA, 0);
 		}
@@ -662,7 +666,7 @@ ne2000_ring_copy(sc, src, dst, amount)
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_short tmp_amount;
-	int useword = NE2000_USE_WORD(nsc);
+	int useword = nsc->sc_useword;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -693,7 +697,7 @@ ne2000_read_hdr(sc, buf, hdr)
 
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
-	    NE2000_USE_WORD(nsc));
+	    nsc->sc_useword);
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = bswap16(hdr->count);
 #endif
@@ -858,7 +862,7 @@ ne2000_ipkdb_attach(kip)
 	if (np->sc_type == 0)
 		return -1;
 
-	useword = NE2000_USE_WORD(np);
+	useword = np->sc_useword;
 
 	dp->cr_proto = ED_CR_RD2;
 	dp->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
@@ -888,6 +892,7 @@ ne2000_ipkdb_attach(kip)
 		    "dl10022" : "dl10019";
 		break;
 	case NE2000_TYPE_AX88190:
+	case NE2000_TYPE_AX88790:
 		dp->rcr_proto = ED_RCR_INTT;
 		dp->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 		dp->mem_start = dp->mem_size = 8192 * 2;
@@ -905,7 +910,8 @@ ne2000_ipkdb_attach(kip)
 		char romdata[16];
 
 		/* Read the station address. */
-		if (np->sc_type == NE2000_TYPE_AX88190) {
+		if (np->sc_type == NE2000_TYPE_AX88190 ||
+		    np->sc_type == NE2000_TYPE_AX88790) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,
@@ -919,9 +925,8 @@ ne2000_ipkdb_attach(kip)
 		} else {
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
 				0, romdata, sizeof romdata, useword);
-			useword = useword ? 2 : 1;
 			for (i = 0; i < ETHER_ADDR_LEN; i++)
-				kip->myenetaddr[i] = romdata[i * useword];
+				kip->myenetaddr[i] = romdata[i << useword];
 		}
 		kip->flags |= IPKDB_MYHW;
 

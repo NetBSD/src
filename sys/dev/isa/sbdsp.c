@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.112 2003/05/09 23:51:29 fvdl Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.112.2.1 2004/08/03 10:48:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112 2003/05/09 23:51:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112.2.1 2004/08/03 10:48:00 skrll Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -924,7 +924,6 @@ sbdsp_open(addr, flags)
 	if (sc->sc_open != SB_CLOSED)
 		return (EBUSY);
 	sc->sc_open = SB_OPEN_AUDIO;
-	sc->sc_openflags = flags;
 	state = 0;
 
 	if (sc->sc_drq8 != -1) {
@@ -983,9 +982,6 @@ sbdsp_close(addr)
 
 	sbdsp_spkroff(sc);
 	sc->spkr_state = SPKR_OFF;
-
-	sbdsp_halt_output(sc);
-	sbdsp_halt_input(sc);
 
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
@@ -2366,7 +2362,6 @@ sbdsp_midi_open(addr, flags, iintr, ointr, arg)
 		return EIO;
 
 	sc->sc_open = SB_OPEN_MIDI;
-	sc->sc_openflags = flags;
 
 	if (sc->sc_model >= SB_20)
 		if (sbdsp_wdsp(sc, SB_MIDI_UART_INTR)) /* enter UART mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd1190reg.h,v 1.2 1998/05/20 16:06:56 pk Exp $	*/
+/*	$NetBSD: cd1190reg.h,v 1.2.48.1 2004/08/03 10:46:12 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Iain Hibbert.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 /* Interrupt Status Register */
 #define CD1190_ISR		0x0c
-#define CD1190_ISR_INTERRUPT	(1<<7) /* Interrupt Has Occured */
+#define CD1190_ISR_INTERRUPT	(1<<7) /* Interrupt Has Occurred */
 #define CD1190_ISR_ACK		(1<<3) /* Unsolicited ACK */
 #define CD1190_ISR_FIFO		(1<<2) /* FIFO Thresh/Time */
 #define CD1190_ISR_SIGNAL	(1<<1) /* Signal Status */

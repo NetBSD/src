@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9var.h,v 1.2 2001/02/12 18:49:04 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9var.h,v 1.2.24.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Definitions on RealTek 8019 and 8029 NE2000-compatible network interfaces.
+ * Definitions on Realtek 8019 and 8029 NE2000-compatible network interfaces.
  *
  * Data sheets for these chips can be found at:
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 2003/06/29 22:28:59 fvdl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.76.2.1 2004/08/03 10:41:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,9 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76.2.1 2004/08/03 10:41:11 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -305,20 +308,10 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 /*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up the FPU state and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
- *
- * If proc==0, we're an exiting lwp and arrange to call lwp_exit2() instead
- * of exit2().
+ * Cleanup FPU state.
  */
 void
-cpu_exit(l, proc)
-	struct lwp *l;
-	int proc;
+cpu_lwp_free(struct lwp *l, int proc)
 {
 	struct fpstate *fs;
 
@@ -344,8 +337,6 @@ cpu_exit(l, proc)
 		l->l_md.md_fpstate = NULL;
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(l, proc ? exit2 : lwp_exit2);
-	/* NOTREACHED */
 }
 
 void

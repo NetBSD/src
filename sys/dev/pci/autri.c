@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.15 2003/04/04 01:04:37 perry Exp $	*/
+/*	$NetBSD: autri.c,v 1.15.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -33,6 +33,9 @@
  * Documentation links:
  * - ftp://ftp.alsa-project.org/pub/manuals/trident/
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include "midi.h"
 
@@ -419,6 +422,10 @@ autri_reset_codec(void *sc_)
 		addr = AUTRI_ALI_SCTRL;
 		ready = AUTRI_ALI_SCTRL_CODEC_READY;
 		break;
+	default:
+		printf("%s: autri_reset_codec : unknown device\n",
+		       sc->sc_dev.dv_xname);
+		return;
 	}
 
 	/* wait for 'Codec Ready' */
@@ -493,7 +500,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_revision);
 

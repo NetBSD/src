@@ -1,11 +1,11 @@
-/*	$NetBSD: opl.c,v 1.18 2003/02/09 09:28:21 itohy Exp $	*/
+/*	$NetBSD: opl.c,v 1.18.2.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.18 2003/02/09 09:28:21 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.18.2.1 2004/08/03 10:46:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,8 @@ opl_attach(sc)
 	}
 
 	sc->syn.mets = &opl3_midi;
-	sprintf(sc->syn.name, "%sYamaha OPL%d", sc->syn.name, sc->model);
+	snprintf(sc->syn.name, sizeof(sc->syn.name), "%sYamaha OPL%d",
+	    sc->syn.name, sc->model);
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
 	sc->syn.flags =  MS_DOALLOC | MS_FREQXLATE;
@@ -229,7 +230,7 @@ opl_find(sc)
 	u_int8_t status1, status2;
 
 	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)sc->ioh));
-	sc->model = OPL_2;	/* worst case assumtion */
+	sc->model = OPL_2;	/* worst case assumption */
 
 	/* Reset timers 1 and 2 */
 	opl_command(sc, OPL_L, OPL_TIMER_CONTROL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.16 2002/10/02 16:02:26 thorpej Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.16.6.1 2004/08/03 10:42:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16.6.1 2004/08/03 10:42:03 skrll Exp $");
 
 #include "opt_inet.h"
 

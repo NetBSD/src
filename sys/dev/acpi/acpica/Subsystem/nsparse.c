@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsparse - namespace interface to AML parser
- *              xRevision: 3 $
+ *              xRevision: 5 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.2 2003/02/13 14:16:23 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.2.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSPARSE_C__
 
@@ -163,10 +163,9 @@ AcpiNsOneCompleteParse (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
-
     /* Create and initialize a new walk state */
 
-    WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT,
+    WalkState = AcpiDsCreateWalkState (TableDesc->TableId,
                                     NULL, NULL, NULL);
     if (!WalkState)
     {

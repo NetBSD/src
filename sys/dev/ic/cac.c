@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.25 2003/01/31 00:26:28 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.25.2.1 2004/08/03 10:46:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.25 2003/01/31 00:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.25.2.1 2004/08/03 10:46:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,9 +284,9 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 
 	size = 0;
 
-	if ((ccb = cac_ccb_alloc(sc, 0)) == NULL) {
+	if ((ccb = cac_ccb_alloc(sc, 1)) == NULL) {
 		printf("%s: unable to alloc CCB", sc->sc_dv.dv_xname);
-		return (ENOMEM);
+		return (EAGAIN);
 	}
 
 	if ((flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
@@ -333,7 +333,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		/* Synchronous commands musn't wait. */
 		if ((*sc->sc_cl.cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
-			rv = -1;
+			rv = EAGAIN;
 		} else {
 #ifdef DIAGNOSTIC
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
@@ -345,7 +345,8 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	} else {
 		memcpy(&ccb->ccb_context, context, sizeof(struct cac_context));
 		s = splbio();
-		rv = cac_ccb_start(sc, ccb);
+		(void)cac_ccb_start(sc, ccb);
+		rv = 0;
 	}
 	
 	splx(s);
@@ -393,7 +394,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if ((*sc->sc_cl.cl_fifo_full)(sc))
-			return (EBUSY);
+			return (EAGAIN);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb_chain);
 #ifdef DIAGNOSTIC
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;

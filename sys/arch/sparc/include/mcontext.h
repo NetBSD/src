@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/18 06:44:56 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #ifndef _SPARC_MCONTEXT_H_
 #define _SPARC_MCONTEXT_H_
+
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
 
 /*
  * Layout of mcontext_t according the System V Application Binary Interface,
@@ -149,19 +152,22 @@ typedef struct {
 #ifdef __arch64__
 	__asrset_t	__asrs;		/* ASR state */
 #endif
-#ifdef __arch64__
-	long int	__filler[4];
-#else
-	long int	__filler[19];
-#endif
-} mcontext_t;	
+} mcontext_t;
 
 #ifdef __arch64__
-#define _UC_MACHINE_PAD	4		/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	8		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE_SP(uc)	(((uc)->uc_mcontext.__gregs[_REG_O6])+0x7ff)
 #else
-#define _UC_MACHINE_PAD	23		/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	43		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
 #endif
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_O0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)					\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_PC] = (pc);			\
+	(uc)->uc_mcontext.__gregs[_REG_nPC] = (pc) + 4;			\
+} while (/*CONSTCOND*/0)
 
 #endif	/* !_SPARC_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.6 2001/07/27 12:57:20 ragge Exp $ */
+/* $NetBSD: uba_dma.c,v 1.6.22.1 2004/08/03 10:42:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uba_dma.c,v 1.6.22.1 2004/08/03 10:42:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

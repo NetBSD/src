@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.22.2.1 2003/07/02 15:25:36 darrenr Exp $	*/
+/*	$NetBSD: bus.c,v 1.22.2.2 2004/08/03 10:42:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * bus_space(9) and bus_dma(9) implementation for NetBSD/x68k.
  * These are default implementations; some buses may use their own.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22.2.2 2004/08/03 10:42:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

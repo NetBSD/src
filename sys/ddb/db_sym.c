@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.1 2004/08/03 10:44:46 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.1 2004/08/03 10:44:46 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -90,6 +90,7 @@ boolean_t
 db_value_of_name(char *name, db_expr_t *valuep)
 {
 	char *mod, *sym;
+	unsigned long uval;
 	long val;
 
 #ifdef DB_AOUT_SYMBOLS
@@ -108,11 +109,13 @@ db_value_of_name(char *name, db_expr_t *valuep)
 	}
 #endif
 	db_symsplit(name, &mod, &sym);
-	if (ksyms_getval(mod, sym, &val, KSYMS_EXTERN) == 0) {
+	if (ksyms_getval_from_kernel(mod, sym, &uval, KSYMS_EXTERN) == 0) {
+		val = (long) uval;
 		*valuep = (db_expr_t)val;
 		return TRUE;
 	}
-	if (ksyms_getval(mod, sym, &val, KSYMS_ANY) == 0) {
+	if (ksyms_getval_from_kernel(mod, sym, &uval, KSYMS_ANY) == 0) {
+		val = (long) uval;
 		*valuep = (db_expr_t)val;
 		return TRUE;
 	}
@@ -201,6 +204,7 @@ db_sifting(char *symstr, int mode)
 db_sym_t
 db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
+/*###207 [cc] warning: `diff' might be used uninitialized in this function%%%*/
 	unsigned int diff;
 	unsigned long naddr;
 	db_sym_t ret = DB_SYM_NULL;
@@ -225,10 +229,11 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 #endif
 
 	if (ksyms_getname(&mod, &sym, (vaddr_t)val, strategy) == 0) {
-		(void)ksyms_getval(mod, sym, &naddr, KSYMS_ANY);
+		(void)ksyms_getval_from_kernel(mod, sym, &naddr, KSYMS_ANY);
 		diff = val - (db_addr_t)naddr;
 		ret = (db_sym_t)naddr;
-	}
+	} else
+		diff = 0;
 	*offp = diff;
 	return ret;
 }
@@ -292,7 +297,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 {
 	char  *name;
 	const char *mod;
-	long val;
+	unsigned long val;
 
 #ifdef DB_AOUT_SYMBOLS
 	if (using_aout_symtab) {
@@ -319,7 +324,8 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 					if ((*db_symformat->sym_line_at_pc)
 					    (NULL, cursym, &filename,
 					    &linenum, off))
-						sprintf(buf+strlen(buf),
+						snprintf(buf + strlen(buf),
+						    buflen - strlen(buf),
 						    " [%s:%d]",
 						    filename, linenum);
 				}
@@ -332,9 +338,9 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 #endif
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
-		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
+		(void)ksyms_getval_from_kernel(mod, name, &val, KSYMS_ANY);
 		if (((off - val) < db_maxoff) && val) {
-			sprintf(buf, "%s:%s", mod, name);
+			snprintf(buf, buflen, "%s:%s", mod, name);
 			if (off - val) {
 				strlcat(buf, "+", buflen);
 				db_format_radix(buf+strlen(buf),
@@ -342,7 +348,9 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 			}
 #ifdef notyet
 			if (strategy & KSYMS_PROC) {
-				if (ksyms_fmaddr(off, &filename, &linenum) == 0)					sprintf(buf+strlen(buf),
+				if (ksyms_fmaddr(off, &filename, &linenum) == 0)
+					snprintf(buf + strlen(buf),
+					    buflen - strlen(buf),
 					    " [%s:%d]", filename, linenum);
 			}
 #endif
@@ -358,6 +366,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 {
 	char  *name;
 	const char *mod;
+	unsigned long uval;
 	long val;
 #ifdef notyet
 	char *filename;
@@ -401,7 +410,8 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 #endif
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
-		(void)ksyms_getval(mod, name, &val, KSYMS_ANY);
+		(void)ksyms_getval_from_kernel(mod, name, &uval, KSYMS_ANY);
+		val = (long) uval;
 		if (((off - val) < db_maxoff) && val) {
 			(*pr)("%s:%s", mod, name);
 			if (off - val) {

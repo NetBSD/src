@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.26 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include "midi.h"
 
@@ -218,7 +218,7 @@ cs4280_attach(parent, self, aux)
 
 	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
@@ -376,7 +376,7 @@ cs4280_intr(p)
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_PFIE);
 		BA1WRITE4(sc, CS4280_PFIE, (mem & ~PFIE_PI_MASK) | PFIE_PI_DISABLE);
-		if (sc->sc_pintr) {
+		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
 		} else {
@@ -447,7 +447,7 @@ cs4280_intr(p)
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
 		BA1WRITE4(sc, CS4280_CIE, mem);
-		if (sc->sc_rintr) {
+		if (sc->sc_rrun) {
 			if ((sc->sc_ri%(sc->sc_rcount)) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {

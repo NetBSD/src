@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.6 2003/01/31 21:57:27 tsutsui Exp $ */
+/* $NetBSD: vgareg.h,v 1.6.2.1 2004/08/03 10:46:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -41,6 +35,7 @@ struct reg_vgaattr { /* indexed via port 0x3c0 */
 #define VGA_ATC_INDEX	0x0
 #define VGA_ATC_DATAW	0x0
 #define VGA_ATC_DATAR	0x1
+#define VGA_ATC_OVERSCAN	0x11
 
 struct reg_vgats { /* indexed via port 0x3c4 */
 	u_int8_t syncreset, mode, wrplmask, fontsel, memmode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.21.2.1 2004/08/03 10:49:10 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21.2.1 2004/08/03 10:49:10 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pccbbreg.h>
 
 int pci_conf_debug = 0;
 
@@ -427,9 +428,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 {
 	pciconf_dev_t	*pd;
 	pciconf_win_t	*pi, *pm;
-	pcireg_t	class, cmd, icr, bar, mask, bar64, mask64;
+	pcireg_t	class, cmd, icr, bhlc, bar, mask, bar64, mask64, busreg;
 	u_int64_t	size;
-	int		br, width;
+	int		br, width, reg_start, reg_end;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
@@ -456,12 +457,32 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
-	if (   (PCI_CLASS(class) == PCI_CLASS_BRIDGE)
-	    && (PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_PCI)) {
+	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(bhlc)) {
+	case PCI_HDRTYPE_DEVICE:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_END;
+		break;
+	case PCI_HDRTYPE_PPB:
 		pd->ppb = query_bus(pb, pd, dev);
 		if (pd->ppb == NULL)
 			return -1;
 		return 0;
+	case PCI_HDRTYPE_PCB:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PCB_END;
+
+		busreg = pci_conf_read(pb->pc, tag, PCI_BUSNUM);
+		busreg  =  (busreg & 0xff000000) |
+		    pb->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT |
+		    pb->next_busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT |
+		    pb->next_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
+		pci_conf_write(pb->pc, tag, PCI_BUSNUM, busreg);
+
+		pb->next_busno ++;
+		break;
+	default:
+		return -1;
 	}
 
 	icr = pci_conf_read(pb->pc, tag, PCI_INTERRUPT_REG);
@@ -489,7 +510,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	}
 
 	width = 4;
-	for (br = PCI_MAPREG_START; br < PCI_MAPREG_END; br += width) {
+	for (br = reg_start; br < reg_end; br += width) {
 #if 0
 /* XXX Should only ignore if IDE not in legacy mode? */
 		if (PCI_CLASS(class) == PCI_CLASS_MASS_STORAGE &&
@@ -533,7 +554,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pi->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
-				printf("Register 0x%x, I/O size %llu\n",
+				printf("Register 0x%x, I/O size %" PRIu64 "\n",
 				    br, pi->size);
 			}
 			pb->niowin++;
@@ -593,8 +614,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pm->prefetch = PCI_MAPREG_MEM_PREFETCHABLE(mask);
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
-				printf("Register 0x%x, memory size %llu\n",
-				    br, pm->size);
+				printf("Register 0x%x, memory size %"
+				    PRIu64 "\n", br, pm->size);
 			}
 			pb->nmemwin++;
 			if (pm->prefetch) {
@@ -626,7 +647,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pm->prefetch = 1;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
-				printf("Expansion ROM memory size %llu\n", pm->size);
+				printf("Expansion ROM memory size %"
+				    PRIu64 "\n", pm->size);
 			}
 			pb->nmemwin++;
 			pb->pmem_total += size;
@@ -657,7 +679,7 @@ pci_allocate_range(struct extent *ex, u_int64_t amt, int align)
 	r = extent_alloc(ex, amt, align, 0, EX_NOWAIT, &addr);
 	if (r) {
 		addr = (u_long) -1;
-		printf("extent_alloc(%p, %llu, %d) returned %d\n",
+		printf("extent_alloc(%p, %" PRIu64 ", %d) returned %d\n",
 		    ex, amt, align, r);
 		extent_print(ex);
 	}
@@ -679,8 +701,8 @@ setup_iowins(pciconf_bus_t *pb)
 		    pi->align);
 		if (pi->address == -1) {
 			print_tag(pd->pc, pd->tag);
-			printf("Failed to allocate PCI I/O space (%llu req)\n",
-			   pi->size);
+			printf("Failed to allocate PCI I/O space (%"
+			    PRIu64 " req)\n", pi->size);
 			return -1;
 		}
 		if (!pb->io_32bit && pi->address > 0xFFFF) {
@@ -702,8 +724,8 @@ setup_iowins(pciconf_bus_t *pb)
 		pd->enable |= PCI_CONF_ENABLE_IO;
 		if (pci_conf_debug) {
 			print_tag(pd->pc, pd->tag);
-			printf("Putting %llu I/O bytes @ %#llx (reg %x)\n",
-			    pi->size, pi->address, pi->reg);
+			printf("Putting %" PRIu64 " I/O bytes @ %#" PRIx64
+			    " (reg %x)\n", pi->size, pi->address, pi->reg);
 		}
 		pci_conf_write(pd->pc, pd->tag, pi->reg,
 		    PCI_MAPREG_IO_ADDR(pi->address) | PCI_MAPREG_TYPE_IO);
@@ -729,8 +751,8 @@ setup_memwins(pciconf_bus_t *pb)
 		if (pm->address == -1) {
 			print_tag(pd->pc, pd->tag);
 			printf(
-			   "Failed to allocate PCI memory space (%llu req)\n",
-			   pm->size);
+			   "Failed to allocate PCI memory space (%" PRIu64
+			   " req)\n", pm->size);
 			return -1;
 		}
 		if (pd->ppb && pm->reg == 0) {
@@ -761,8 +783,9 @@ setup_memwins(pciconf_bus_t *pb)
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
 				printf(
-				    "Putting %llu MEM bytes @ %#llx (reg %x)\n",
-				     pm->size, pm->address, pm->reg);
+				    "Putting %" PRIu64 " MEM bytes @ %#"
+				    PRIx64 " (reg %x)\n", pm->size,
+				    pm->address, pm->reg);
 			}
 			base = pci_conf_read(pd->pc, pd->tag, pm->reg);
 			base = PCI_MAPREG_MEM_ADDR(pm->address) |
@@ -783,8 +806,9 @@ setup_memwins(pciconf_bus_t *pb)
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
 				printf(
-				    "Putting %llu ROM bytes @ %#llx (reg %x)\n",
-				    pm->size, pm->address, pm->reg);
+				    "Putting %" PRIu64 " ROM bytes @ %#"
+				    PRIx64 " (reg %x)\n", pm->size,
+				    pm->address, pm->reg);
 			}
 			base = (pcireg_t) (pm->address | PCI_MAPREG_ROM_ENABLE);
 			pci_conf_write(pd->pc, pd->tag, pm->reg, base);

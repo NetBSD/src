@@ -1,8 +1,11 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.10.2.1 2004/08/03 10:44:22 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998, 2001 Matthew R. Green
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Brown.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10.2.1 2004/08/03 10:44:22 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -46,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Ex
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
-#define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
@@ -60,103 +62,84 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Ex
 #include <ddb/ddbvar.h>
 #endif
 
-int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int hw_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+struct sysctlnode netbsd32_sysctl_root = {
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
+	.sysctl_num = 0,
+	.sysctl_name = "(netbsd32_root)",
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+};
 
 /*
- * uvm_sysctl32: sysctl hook into UVM system, handling special 32-bit
- * sensitive calls.
+ * sysctl helper routine for netbsd32's kern.boottime node
  */
-int
-uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+netbsd32_sysctl_kern_boottime(SYSCTLFN_ARGS)
 {
-	struct netbsd32_loadavg av32;
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case VM_LOADAVG:
-		netbsd32_from_loadavg(&av32, &averunnable);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &av32,
-		    sizeof(av32)));
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
-}
-
-/*
- * kern_sysctl32: sysctl hook into KERN system, handling special 32-bit
- * sensitive calls.
- */
-int
-kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
+	struct sysctlnode node;
 	struct netbsd32_timeval bt32;
 
-	/* All sysctl names at this level, except for a few, are terminal. */
-	switch (name[0]) {
-#if 0
-	case KERN_PROC:
-	case KERN_PROC2:
-	case KERN_PROF:
-	case KERN_MBUF:
-	case KERN_PROC_ARGS:
-	case KERN_SYSVIPC_INFO:
-		/* Not terminal. */
-		break;
-#endif
-	default:
-		if (namelen != 1)
-			return (ENOTDIR);	/* overloaded */
-	}
+	netbsd32_from_timeval(&boottime, &bt32);
 
-	switch (name[0]) {
-	case KERN_BOOTTIME:
-		netbsd32_from_timeval(&boottime, &bt32);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt32,
-		    sizeof(struct netbsd32_timeval)));
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	node = *rnode;
+	node.sysctl_data = &bt32;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
- * hardware related system variables.
+ * sysctl helper routine for netbsd32's vm.loadavg node
  */
-int
-hw_sysctl32(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+static int
+netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
+	struct netbsd32_loadavg av32;
+
+	netbsd32_from_loadavg(&av32, &averunnable);
+
+	node = *rnode;
+	node.sysctl_data = &av32;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
+{
+	struct sysctlnode *_root = &netbsd32_sysctl_root;
 	extern char machine_arch32[];
 
-	switch (name[0]) {
-	case HW_MACHINE_ARCH:
-		return (sysctl_rdstring(oldp, oldlenp, newp, machine_arch32));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "boottime", NULL,
+		       netbsd32_sysctl_kern_boottime, 0, NULL,
+		       sizeof(struct netbsd32_timeval),
+		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
+
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vm", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VM, CTL_EOL);
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "loadavg", NULL,
+		       netbsd32_sysctl_vm_loadavg, 0, NULL,
+		       sizeof(struct netbsd32_loadavg),
+		       CTL_VM, VM_LOADAVG, CTL_EOL);
+
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW, CTL_EOL);
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine_arch", NULL,
+		       NULL, 0, machine_arch32, 0,
+		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 
 int
@@ -173,128 +156,78 @@ netbsd32___sysctl(l, v, retval)
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
 	} */ *uap = v;
-	int error;
-	netbsd32_size_t savelen = 0;
-	size_t oldlen = 0;
-	sysctlfn *fn;
-	struct proc *p = l->l_proc;
-	int name[CTL_MAXNAME];
-
-/*
- * Some of these sysctl functions do their own copyin/copyout.
- * We need to disable or emulate the ones that need their
- * arguments converted.
- */
-
-	if (SCARG(uap, new) != NULL &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
-		return (error);
-	/*
-	 * all top-level sysctl names are non-terminal
-	 */
-	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 2)
-		return (EINVAL);
-	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, name)), &name,
-	    SCARG(uap, namelen) * sizeof(int));
-	if (error)
-		return (error);
-
-	switch (name[0]) {
-	case CTL_KERN:
-		switch (name[1]) {
-#if 0
-		case KERN_FILE:
-		case KERN_NTPTIME:
-		case KERN_SYSVIPC_INFO:
-#endif
-		case KERN_BOOTTIME:
-			fn = kern_sysctl32;
-			break;
-		default:
-			fn = kern_sysctl;
-			break;
-		}
-		break;
-	case CTL_HW:
-		switch (name[1]) {
-		case HW_MACHINE_ARCH:
-			fn = hw_sysctl32;
-			break;
-		default:
-			fn = hw_sysctl;
-			break;
-		}
-		break;
-	case CTL_VM:
-		switch (name[1]) {
-		case VM_LOADAVG:
-			fn = uvm_sysctl32;	/* need to convert a `long' */
-			break;
-		default:
-			fn = uvm_sysctl;
-			break;
-		}
-		break;
-	case CTL_NET:
-		fn = net_sysctl;
-		break;
-	case CTL_VFS:
-		fn = vfs_sysctl;
-		break;
-	case CTL_MACHDEP:
-		fn = cpu_sysctl;
-		break;
-#ifdef DEBUG
-	case CTL_DEBUG:
-		fn = debug_sysctl;
-		break;
-#endif
-#ifdef DDB
-	case CTL_DDB:
-		fn = ddb_sysctl;
-		break;
-#endif
-	case CTL_PROC:
-		fn = proc_sysctl;
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
+	struct sysctlnode *pnode;
+	netbsd32_size_t netbsd32_oldlen;
+	size_t oldlen, *oldlenp, savelen;
+	int name[CTL_MAXNAME], error, nerror, *namep;
+	void *newp, *oldp;
 
 	/*
-	 * XXX Hey, we wire `old', but what about `new'?
+	 * get and convert 32 bit size_t to native size_t
 	 */
-
-	if (SCARG(uap, oldlenp) &&
-	    (error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, oldlenp)),
-	    &savelen, sizeof(savelen))))
-		return (error);
-	if (SCARG(uap, old) != NULL) {
-		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
+	namep = NETBSD32PTR64(SCARG(uap, name));
+	oldp = NETBSD32PTR64(SCARG(uap, old));
+	newp = NETBSD32PTR64(SCARG(uap, new));
+	oldlenp = NETBSD32PTR64(SCARG(uap, oldlenp));
+	oldlen = 0;
+	if (oldlenp != NULL) {
+		error = copyin(oldlenp, &netbsd32_oldlen,
+			       sizeof(netbsd32_oldlen));
 		if (error)
 			return (error);
-		error = uvm_vslock(p, (void *)(vaddr_t)SCARG(uap, old), savelen,
-		    VM_PROT_WRITE);
-		if (error) {
-			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
-			return error;
-		}
-		oldlen = savelen;
-	}
-	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, 
-	    (void *)NETBSD32PTR64(SCARG(uap, old)), &oldlen, 
-	    (void *)NETBSD32PTR64(SCARG(uap, new)), SCARG(uap, newlen), p);
-	if (SCARG(uap, old) != NULL) {
-		uvm_vsunlock(p, (void *)NETBSD32PTR64(SCARG(uap, old)),
-		    savelen);
-		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
+		oldlen = netbsd32_oldlen;
 	}
 	savelen = oldlen;
+
+	/*
+	 * retrieve name and see if we need to dispatch this query to
+	 * the shadow tree.  if we find it in the shadow tree,
+	 * dispatch to there, otherwise NULL means use the built-in
+	 * default main tree.
+	 */
+	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 1)
+		return (EINVAL);
+	error = copyin(namep, &name[0], SCARG(uap, namelen) * sizeof(int));
+        if (error)
+                return (error);
+
+	/*
+	 * wire old so that copyout() is less likely to fail?
+	 */
+	error = sysctl_lock(l, oldp, savelen);
 	if (error)
 		return (error);
-	if (SCARG(uap, oldlenp))
-		error = copyout(&savelen,
-		    (caddr_t)NETBSD32PTR64(SCARG(uap, oldlenp)),
-		    sizeof(savelen));
+
+	pnode = &netbsd32_sysctl_root;
+	error = sysctl_locate(l, &name[0], SCARG(uap, namelen), &pnode, NULL);
+	pnode = (error == 0) ? &netbsd32_sysctl_root : NULL;
+	error = sysctl_dispatch(&name[0], SCARG(uap, namelen),
+				oldp, &oldlen,
+				newp, SCARG(uap, newlen),
+				&name[0], l, pnode);
+
+	/*
+	 * release the sysctl lock
+	 */
+	sysctl_unlock(l);
+
+	/*
+	 * reset caller's oldlen, even if we got an error
+	 */
+	if (oldlenp) {
+		netbsd32_oldlen = oldlen;
+                nerror = copyout(&netbsd32_oldlen, oldlenp,
+				 sizeof(netbsd32_oldlen));
+                if (error == 0)
+                        error = nerror;
+	}
+
+	/*
+	 * if the only problem is that we weren't given enough space,
+	 * that's an ENOMEM error
+	 */
+	if (error == 0 && oldp != NULL && savelen < oldlen)
+		error = ENOMEM;
+
 	return (error);
 }

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nswalk - Functions for walking the ACPI namespace
- *              xRevision: 34 $
+ *              xRevision: 36 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,8 +114,9 @@
  *
  *****************************************************************************/
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.6 2003/03/04 17:25:23 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSWALK_C__
 
@@ -247,6 +248,7 @@ AcpiNsWalkNamespace (
     void                    **ReturnValue)
 {
     ACPI_STATUS             Status;
+    ACPI_STATUS             MutexStatus;
     ACPI_NAMESPACE_NODE     *ChildNode;
     ACPI_NAMESPACE_NODE     *ParentNode;
     ACPI_OBJECT_TYPE        ChildType;
@@ -300,10 +302,10 @@ AcpiNsWalkNamespace (
                  */
                 if (UnlockBeforeCallback)
                 {
-                    Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
-                    if (ACPI_FAILURE (Status))
+                    MutexStatus = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
+                    if (ACPI_FAILURE (MutexStatus))
                     {
-                        return_ACPI_STATUS (Status);
+                        return_ACPI_STATUS (MutexStatus);
                     }
                 }
 
@@ -312,10 +314,10 @@ AcpiNsWalkNamespace (
 
                 if (UnlockBeforeCallback)
                 {
-                    Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-                    if (ACPI_FAILURE (Status))
+                    MutexStatus = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
+                    if (ACPI_FAILURE (MutexStatus))
                     {
-                        return_ACPI_STATUS (Status);
+                        return_ACPI_STATUS (MutexStatus);
                     }
                 }
 

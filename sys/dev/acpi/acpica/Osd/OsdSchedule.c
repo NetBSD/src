@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.8.2.1 2003/07/02 15:26:02 darrenr Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.8.2.2 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.1 2003/07/02 15:26:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8.2.2 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -100,7 +100,9 @@ UINT32
 AcpiOsGetThreadId(void)
 {
 
-	KASSERT(curlwp != NULL);
+	/* XXX ACPI CA can call this function in interrupt context */
+	if (curlwp == NULL)
+		return 1;
 
 	/* XXX Bleh, we're not allowed to return 0 (how stupid!) */
 	return (curlwp->l_proc->p_pid + 1);
@@ -164,7 +166,7 @@ AcpiOsSleep(UINT32 Seconds, UINT32 Milliseconds)
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	timo = (Seconds * hz) + (Milliseconds / (1000 * hz));
+	timo = Seconds * hz + Milliseconds * hz / 1000;
 	if (timo == 0)
 		timo = 1;
 

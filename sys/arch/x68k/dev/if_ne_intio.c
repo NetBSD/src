@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.5 2002/10/02 16:02:40 thorpej Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.5.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Tetsuya Isaki.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -33,6 +30,9 @@
 /*
  * Ethernet part of Nereid Ethernet/USB/Memory board
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.5.6.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -189,7 +189,7 @@ ne_intio_attach(struct device *parent, struct device *self, void *aux)
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
 		/*
-		 * Check for a RealTek 8019.
+		 * Check for a Realtek 8019.
 		 */
 		bus_space_write_1(iot, ioh, ED_P0_CR,
 			ED_CR_PAGE_0 | ED_CR_STP);

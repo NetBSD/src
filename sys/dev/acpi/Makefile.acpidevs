@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.acpidevs,v 1.1 2003/01/05 22:33:53 christos Exp $
+#	$NetBSD: Makefile.acpidevs,v 1.1.4.1 2004/08/03 10:45:03 skrll Exp $
 #
-# As per tron@netbsd.org, the proper procedure is
+# As per tron@NetBSD.org, the proper procedure is
 #
 # 1.) Change "src/sys/dev/acpi/acpidevs".
 # 2.) Commit "src/sys/dev/acpi/acpidevs".
@@ -12,4 +12,4 @@ AWK=	awk
 
 acpidevs_data.h: acpidevs devlist2h.awk
 	/bin/rm -f acpidevs_data.h
-	${AWK} -F'	' -f devlist2h.awk acpidevs
+	${AWK} -f devlist2h.awk acpidevs

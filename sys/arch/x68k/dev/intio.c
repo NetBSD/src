@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.19 2003/05/03 18:11:07 wiz Exp $	*/
+/*	$NetBSD: intio.c,v 1.19.2.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 /*
  * NetBSD/x68k internal I/O virtual bus.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19.2.1 2004/08/03 10:42:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +200,7 @@ intio_attach(parent, self, aux)
 	sc->sc_map = extent_create("intiomap",
 				  PHYS_INTIODEV,
 				  PHYS_INTIODEV + 0x400000,
-				  M_DEVBUF, NULL, NULL, EX_NOWAIT);
+				  M_DEVBUF, NULL, 0, EX_NOWAIT);
 	intio_alloc_system_ports (sc);
 
 	sc->sc_bst = &intio_bus;
@@ -430,7 +433,8 @@ intio_intr (frame)
 	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
 #endif
 	if (iiv[vector].iiv_handler == 0) {
-		printf ("Stray interrupt: %d type %x\n", vector, frame->f_format);
+		printf ("Stray interrupt: %d type %x, pc %x\n",
+			vector, frame->f_format, frame->f_pc);
 		return 0;
 	}
 
@@ -440,7 +444,7 @@ intio_intr (frame)
 }
 
 /*
- * Intio I/O controler interrupt
+ * Intio I/O controller interrupt
  */
 static u_int8_t intio_ivec = 0;
 

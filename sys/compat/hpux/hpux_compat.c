@@ -1,9 +1,44 @@
-/*	$NetBSD: hpux_compat.c,v 1.65.2.1 2003/07/02 15:25:42 darrenr Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.65.2.2 2004/08/03 10:43:44 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: hpux_compat.c 1.64 93/08/05$
+ *
+ *	@(#)hpux_compat.c	8.4 (Berkeley) 2/13/94
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -47,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.1 2003/07/02 15:25:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.2 2004/08/03 10:43:44 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -224,7 +259,12 @@ hpux_sys_waitpid(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_waitpid_args *uap = v;
+	struct hpux_sys_waitpid_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap = v;
 	int rv, sig, xstat, error;
 
 	SCARG(uap, rusage) = 0;
@@ -244,7 +284,10 @@ hpux_sys_waitpid(l, v, retval)
 		 * pull it back, change the signal portion, and write
 		 * it back out.
 		 */
-		rv = fuword((caddr_t)SCARG(uap, status));
+		error = copyin(SCARG(uap, status), &rv, sizeof(int));
+		if (error)
+			return (error);
+
 		if (WIFSTOPPED(rv)) {
 			sig = WSTOPSIG(rv);
 			rv = W_STOPCODE(bsdtohpuxsig(sig));
@@ -254,7 +297,8 @@ hpux_sys_waitpid(l, v, retval)
 			rv = W_EXITCODE(xstat, bsdtohpuxsig(sig)) |
 				WCOREDUMP(rv);
 		}
-		(void)suword((caddr_t)SCARG(uap, status), rv);
+
+		error = copyout(&rv, SCARG(uap, status), sizeof(int));
 	}
 	return (error);
 }
@@ -741,12 +785,6 @@ hpux_sys_ioctl(l, v, retval)
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(l, SCARG(uap, fd), com, SCARG(uap, data)));
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
-		return (EBADF);
-
 	/*
 	 * Interpret high order word to find
 	 * amount of data to be copied to/from the
@@ -755,18 +793,27 @@ hpux_sys_ioctl(l, v, retval)
 	size = IOCPARM_LEN(com);
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
+
 	if (size > sizeof (stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		dt = memp;
 	}
+
 	if (com&IOC_IN) {
 		if (size) {
 			error = copyin(SCARG(uap, data), dt, (u_int)size);
-			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
-			}
+			if (error)
+				goto out;
 		} else
 			*(caddr_t *)dt = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
@@ -853,6 +900,8 @@ hpux_sys_ioctl(l, v, retval)
 	 */
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(dt, SCARG(uap, data), (u_int)size);
+out:
+	FILE_UNUSE(fp, p);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
@@ -1192,9 +1241,10 @@ hpux_sys_alarm_6x(l, v, retval)
 	struct itimerval *itp, it;
 	struct ptimer *ptp;
 
- 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+ 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL]) {
+		ptp = p->p_timers->pts_timers[ITIMER_REAL];
 		itp = &ptp->pt_time;
-	else
+	} else
 		itp = NULL;
 
 	s = splhigh();

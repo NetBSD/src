@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.78 2003/03/23 00:56:15 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.78.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78 2003/03/23 00:56:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -118,9 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78 2003/03/23 00:56:15 thorpej Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#ifdef DP83820
 #include <dev/mii/mii_bitbang.h>
-#endif /* DP83820 */
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -139,17 +137,24 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.78 2003/03/23 00:56:15 thorpej Exp $");
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
  * enough descriptors for 128 pending transmissions, and 8 segments
- * per packet.  This MUST work out to a power of 2.
+ * per packet (64 for DP83820 for jumbo frames).
+ *
+ * This MUST work out to a power of 2.
  */
+#ifdef DP83820
+#define	SIP_NTXSEGS		64
+#define	SIP_NTXSEGS_ALLOC	16
+#else
 #define	SIP_NTXSEGS		16
 #define	SIP_NTXSEGS_ALLOC	8
+#endif
 
 #define	SIP_TXQUEUELEN		256
 #define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS_ALLOC)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
 
-#if defined(DP83020)
+#if defined(DP83820)
 #define	TX_DMAMAP_SIZE		ETHER_MAX_LEN_JUMBO
 #else
 #define	TX_DMAMAP_SIZE		MCLBYTES
@@ -262,7 +267,9 @@ struct sip_softc {
 	struct evcnt sc_ev_txiintr;	/* Tx idle interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
 	struct evcnt sc_ev_hiberr;	/* HIBERR interrupts */
+	struct evcnt sc_ev_rxpause;	/* PAUSE received */
 #ifdef DP83820
+	struct evcnt sc_ev_txpause;	/* PAUSE transmitted */
 	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
 	struct evcnt sc_ev_rxtcpsum;	/* TCP checksums checked in-bound */
 	struct evcnt sc_ev_rxudpsum;	/* UDP checksums checked in-boudn */
@@ -288,7 +295,12 @@ struct sip_softc {
 
 	u_int32_t sc_rx_drain_thresh;	/* receive drain threshold */
 
-	int	sc_flags;		/* misc. flags; see below */
+	int	sc_flowflags;		/* 802.3x flow control flags */
+#ifdef DP83820
+	int	sc_rx_flow_thresh;	/* Rx FIFO threshold for flow control */
+#else
+	int	sc_paused;		/* paused indication */
+#endif
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
@@ -310,9 +322,6 @@ struct sip_softc {
 	rndsource_element_t rnd_source;	/* random source */
 #endif
 };
-
-/* sc_flags */
-#define	SIPF_PAUSED	0x00000001	/* paused (802.3x flow control) */
 
 #ifdef DP83820
 #define	SIP_RXCHAIN_RESET(sc)						\
@@ -365,7 +374,7 @@ do {									\
 
 #ifdef DP83820
 #define	SIP_INIT_RXDESC_EXTSTS	__sipd->sipd_extsts = 0;
-#define	SIP_RXBUF_LEN		(MCLBYTES - 4)
+#define	SIP_RXBUF_LEN		(MCLBYTES - 8)
 #else
 #define	SIP_INIT_RXDESC_EXTSTS	/* nothing */
 #define	SIP_RXBUF_LEN		(MCLBYTES - 1)	/* field width */
@@ -424,6 +433,7 @@ void	SIP_DECL(dp83815_set_filter)(struct sip_softc *);
 void	SIP_DECL(dp83820_read_macaddr)(struct sip_softc *,
 	    const struct pci_attach_args *, u_int8_t *);
 #else
+static void	SIP_DECL(sis900_eeprom_delay)(struct sip_softc *sc);
 void	SIP_DECL(sis900_read_macaddr)(struct sip_softc *,
 	    const struct pci_attach_args *, u_int8_t *);
 void	SIP_DECL(dp83815_read_macaddr)(struct sip_softc *,
@@ -476,13 +486,12 @@ struct sip_variant {
 		    const struct pci_attach_args *, u_int8_t *);
 };
 
-#if defined(DP83820)
-u_int32_t SIP_DECL(dp83820_mii_bitbang_read)(struct device *);
-void	SIP_DECL(dp83820_mii_bitbang_write)(struct device *, u_int32_t);
+u_int32_t SIP_DECL(mii_bitbang_read)(struct device *);
+void	SIP_DECL(mii_bitbang_write)(struct device *, u_int32_t);
 
-const struct mii_bitbang_ops SIP_DECL(dp83820_mii_bitbang_ops) = {
-	SIP_DECL(dp83820_mii_bitbang_read),
-	SIP_DECL(dp83820_mii_bitbang_write),
+const struct mii_bitbang_ops SIP_DECL(mii_bitbang_ops) = {
+	SIP_DECL(mii_bitbang_read),
+	SIP_DECL(mii_bitbang_write),
 	{
 		EROMAR_MDIO,		/* MII_BIT_MDO */
 		EROMAR_MDIO,		/* MII_BIT_MDI */
@@ -491,7 +500,6 @@ const struct mii_bitbang_ops SIP_DECL(dp83820_mii_bitbang_ops) = {
 		0,			/* MII_BIT_DIR_PHY_HOST */
 	}
 };
-#endif /* DP83820 */
 
 #if defined(DP83820)
 const struct sip_variant SIP_DECL(variant_dp83820) = {
@@ -576,7 +584,7 @@ SIP_DECL(lookup)(const struct pci_attach_args *pa)
  * send the output of "pcictl dump ..." of the device to me so that your
  * card will use the 64-bit data path when plugged into a 64-bit slot.
  *
- *	-- Jason R. Thorpe <thorpej@netbsd.org>
+ *	-- Jason R. Thorpe <thorpej@NetBSD.org>
  *	   June 30, 2002
  */
 static int
@@ -840,6 +848,12 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	if (SIP_SIS900_REV(sc,SIS_REV_635) ||
 	    SIP_SIS900_REV(sc,SIS_REV_900B))
 		sc->sc_cfg |= (CFG_PESEL | CFG_RNDCNT);
+
+	if (SIP_SIS900_REV(sc,SIS_REV_635) ||
+	    SIP_SIS900_REV(sc,SIS_REV_960) ||
+	    SIP_SIS900_REV(sc,SIS_REV_900B))
+		sc->sc_cfg |= (bus_space_read_4(sc->sc_st, sc->sc_sh,
+						SIP_CFG) & CFG_EDBMASTEN);
 #endif
 
 	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
@@ -945,8 +959,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, SIP_DECL(mediachange),
 	    SIP_DECL(mediastatus));
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	/*
+	 * XXX We cannot handle flow control on the DP83815.
+	 */
+	if (SIP_CHIP_MODEL(sc, PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815))
+		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+			   MII_OFFSET_ANY, 0);
+	else
+		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+			   MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -1012,7 +1033,11 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * may trash the first few outgoing packets if the
 	 * PCI bus is saturated.
 	 */
+#ifdef DP83820
+	sc->sc_tx_drain_thresh = 6400 / 32;	/* from FreeBSD nge(4) */
+#else
 	sc->sc_tx_drain_thresh = 1504 / 32;
+#endif
 
 	/*
 	 * Initialize the Rx FIFO drain threshold.
@@ -1042,7 +1067,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_hiberr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "hiberr");
+#ifndef DP83820
+	evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "rxpause");
+#endif /* !DP83820 */
 #ifdef DP83820
+	evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxpause");
+	evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpause");
 	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
@@ -1117,7 +1150,10 @@ void
 SIP_DECL(start)(struct ifnet *ifp)
 {
 	struct sip_softc *sc = ifp->if_softc;
-	struct mbuf *m0, *m;
+	struct mbuf *m0;
+#ifndef DP83820
+	struct mbuf *m;
+#endif
 	struct sip_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, seg;
@@ -1130,11 +1166,13 @@ SIP_DECL(start)(struct ifnet *ifp)
 	u_int32_t extsts;
 #endif
 
+#ifndef DP83820
 	/*
 	 * If we've been told to pause, don't transmit any more packets.
 	 */
-	if (sc->sc_flags & SIPF_PAUSED)
+	if (sc->sc_paused)
 		ifp->if_flags |= IFF_OACTIVE;
+#endif
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1316,7 +1354,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
 			sc->sc_txdescs[lasttx].sipd_extsts |=
 			    htole32(EXTSTS_VPKT |
-				    htons(*mtod(m, int *) & EXTSTS_VTCI));
+				    (*(u_int *)(mtag + 1) & EXTSTS_VTCI));
 		}
 
 		/*
@@ -1418,7 +1456,12 @@ SIP_DECL(start)(struct ifnet *ifp)
 #endif
 
 		/* Set a watchdog timer in case the chip flakes out. */
+#ifdef DP83820
+		/* Gigabit autonegotiation takes 5 seconds. */
+		ifp->if_timer = 10;
+#else
 		ifp->if_timer = 5;
+#endif
 	}
 }
 
@@ -1470,6 +1513,40 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+		    	ifr->ifr_media &= ~IFM_ETH_FMASK;
+#ifdef DP83820
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+#else
+		/* XXX */
+		if (SIP_CHIP_MODEL(sc, PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815))
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if (ifr->ifr_media & IFM_FLOW) {
+				/*
+				 * Both TXPAUSE and RXPAUSE must be set.
+				 * (SiS900 and DP83815 don't have PAUSE_ASYM
+				 * feature.)
+				 *
+				 * XXX Can SiS900 and DP83815 send PAUSE?
+				 */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+#endif
+		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
@@ -1506,6 +1583,9 @@ SIP_DECL(intr)(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int32_t isr;
 	int handled = 0;
+
+	/* Disable interrupts. */
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, 0);
 
 	for (;;) {
 		/* Reading clears interrupt. */
@@ -1581,11 +1661,12 @@ SIP_DECL(intr)(void *arg)
 #if !defined(DP83820)
 		if (sc->sc_imr & (ISR_PAUSE_END|ISR_PAUSE_ST)) {
 			if (isr & ISR_PAUSE_ST) {
-				sc->sc_flags |= SIPF_PAUSED;
+				sc->sc_paused = 1;
+				SIP_EVCNT_INCR(&sc->sc_ev_rxpause);
 				ifp->if_flags |= IFF_OACTIVE;
 			}
 			if (isr & ISR_PAUSE_END) {
-				sc->sc_flags &= ~SIPF_PAUSED;
+				sc->sc_paused = 0;
 				ifp->if_flags &= ~IFF_OACTIVE;
 			}
 		}
@@ -1622,6 +1703,9 @@ SIP_DECL(intr)(void *arg)
 		}
 	}
 
+	/* Re-enable interrupts. */
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, IER_IE);
+
 	/* Try to get more packets going. */
 	SIP_DECL(start)(ifp);
 
@@ -1640,7 +1724,9 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 	struct sip_txsoft *txs;
 	u_int32_t cmdsts;
 
-	if ((sc->sc_flags & SIPF_PAUSED) == 0)
+#ifndef DP83820
+	if (sc->sc_paused == 0)
+#endif
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
@@ -1713,7 +1799,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	struct sip_rxsoft *rxs;
 	struct mbuf *m, *tailm;
 	u_int32_t cmdsts, extsts;
-	int i, len;
+	int i, len, frame_len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1786,6 +1872,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
 		tailm = sc->sc_rxtail;
+		frame_len = sc->sc_rxlen;
 
 		SIP_RXCHAIN_RESET(sc);
 
@@ -1821,7 +1908,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * every packet.
 		 */
 		len = CMDSTS_SIZE(cmdsts);
-		tailm->m_len = len - sc->sc_rxlen;
+		frame_len += len;
+		tailm->m_len = len;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1909,7 +1997,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		ifp->if_ipackets++;
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = len;
+		m->m_pkthdr.len = frame_len;
 
 #if NBPFILTER > 0
 		/*
@@ -2110,6 +2198,18 @@ SIP_DECL(tick)(void *arg)
 	int s;
 
 	s = splnet();
+#ifdef DP83820
+#ifdef SIP_EVENT_COUNTERS
+	/* Read PAUSE related counts from MIB registers. */
+	sc->sc_ev_rxpause.ev_count +=
+	    bus_space_read_4(sc->sc_st, sc->sc_sh,
+			     SIP_NS_MIB(MIB_RXPauseFrames)) & 0xffff;
+	sc->sc_ev_txpause.ev_count +=
+	    bus_space_read_4(sc->sc_st, sc->sc_sh,
+			     SIP_NS_MIB(MIB_TXPauseFrames)) & 0xffff;
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_MIBC, MIBC_ACLR);
+#endif /* SIP_EVENT_COUNTERS */
+#endif /* DP83820 */
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -2280,8 +2380,9 @@ SIP_DECL(init)(struct ifnet *ifp)
 	sc->sc_rxcfg = RXCFG_MXDMA_512;
 #else
 	if ((SIP_SIS900_REV(sc, SIS_REV_635) ||
+	     SIP_SIS900_REV(sc, SIS_REV_960) ||
 	     SIP_SIS900_REV(sc, SIS_REV_900B)) &&
-	    (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG) & CFG_EDBMASTEN)) {
+	    (sc->sc_cfg & CFG_EDBMASTEN)) {
 		sc->sc_txcfg = TXCFG_MXDMA_64;
 		sc->sc_rxcfg = RXCFG_MXDMA_64;
 	} else {
@@ -2314,6 +2415,39 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * Initialize the prototype RXCFG register.
 	 */
 	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
+#ifdef DP83820
+	/*
+	 * Accept long packets (including FCS) so we can handle
+	 * 802.1q-tagged frames and jumbo frames properly.
+	 */
+	if (ifp->if_mtu > ETHERMTU ||
+	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU))
+		sc->sc_rxcfg |= RXCFG_ALP;
+
+	/*
+	 * Checksum offloading is disabled if the user selects an MTU
+	 * larger than 8109.  (FreeBSD says 8152, but there is emperical
+	 * evidence that >8109 does not work on some boards, such as the
+	 * Planex GN-1000TE).
+	 */
+	if (ifp->if_mtu > 8109 &&
+	    (ifp->if_capenable &
+	     (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))) {
+		printf("%s: Checksum offloading does not work if MTU > 8109 - "
+		       "disabled.\n", sc->sc_dev.dv_xname);
+		ifp->if_capenable &= ~(IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				       IFCAP_CSUM_UDPv4);
+		ifp->if_csum_flags_tx = 0;
+		ifp->if_csum_flags_rx = 0;
+	}
+#else
+	/*
+	 * Accept packets >1518 bytes (including FCS) so we can handle
+	 * 802.1q-tagged frames properly.
+	 */
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		sc->sc_rxcfg |= RXCFG_ALP;
+#endif
 	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
 
 #ifdef DP83820
@@ -2368,12 +2502,30 @@ SIP_DECL(init)(struct ifnet *ifp)
 	/* Set up the receive filter. */
 	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 
+#ifdef DP83820
+	/*
+	 * Tune sc_rx_flow_thresh.
+	 * XXX "More than 8KB" is too short for jumbo frames.
+	 * XXX TODO: Threshold value should be user-settable.
+	 */
+	sc->sc_rx_flow_thresh = (PCR_PS_STHI_8 | PCR_PS_STLO_4 |
+				 PCR_PS_FFHI_8 | PCR_PS_FFLO_4 |
+				 (PCR_PAUSE_CNT & PCR_PAUSE_CNT_MASK));
+#endif
+
 	/*
 	 * Set the current media.  Do this after initializing the prototype
 	 * IMR, since sip_mii_statchg() modifies the IMR for 802.3x flow
 	 * control.
 	 */
 	mii_mediachg(&sc->sc_mii);
+
+#ifdef DP83820
+	/*
+	 * Set the interrupt hold-off timer to 100us.
+	 */
+	bus_space_write_4(st, sh, SIP_IHR, 0x01);
+#endif
 
 	/*
 	 * Enable interrupts.
@@ -2650,6 +2802,25 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	/*
+	 * SiS900 (at least SiS963) requires us to register the address of
+	 * the PAUSE packet (01:80:c2:00:00:01) into the address filter.
+	 */
+	crc = 0x0ed423f9;
+
+	if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+	    SIP_SIS900_REV(sc, SIS_REV_960) ||
+	    SIP_SIS900_REV(sc, SIS_REV_900B)) {
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+	} else {
+		/* Just want the 7 most significant bits. */
+		crc >>= 25;
+	}
+
+	/* Set the corresponding bit in the hash table. */
+	mchash[crc >> 4] |= 1 << (crc & 0xf);
+
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -2667,6 +2838,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_960) ||
 		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
 			/* Just want the 8 most significant bits. */
 			crc >>= 24;
@@ -2716,6 +2888,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 		FILTER_EMIT(RFCR_RFADDR_MC6, mchash[6]);
 		FILTER_EMIT(RFCR_RFADDR_MC7, mchash[7]);
 		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_960) ||
 		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
 			FILTER_EMIT(RFCR_RFADDR_MC8, mchash[8]);
 			FILTER_EMIT(RFCR_RFADDR_MC9, mchash[9]);
@@ -2935,7 +3108,7 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 		return (rv);
 	}
 
-	return (mii_bitbang_readreg(self, &SIP_DECL(dp83820_mii_bitbang_ops),
+	return (mii_bitbang_readreg(self, &SIP_DECL(mii_bitbang_ops),
 	    phy, reg));
 }
 
@@ -2967,12 +3140,12 @@ SIP_DECL(dp83820_mii_writereg)(struct device *self, int phy, int reg, int val)
 		return;
 	}
 
-	mii_bitbang_writereg(self, &SIP_DECL(dp83820_mii_bitbang_ops),
+	mii_bitbang_writereg(self, &SIP_DECL(mii_bitbang_ops),
 	    phy, reg, val);
 }
 
 /*
- * sip_dp83815_mii_statchg:	[mii interface function]
+ * sip_dp83820_mii_statchg:	[mii interface function]
  *
  *	Callback from MII layer when media changes.
  */
@@ -2980,12 +3153,22 @@ void
 SIP_DECL(dp83820_mii_statchg)(struct device *self)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
-	u_int32_t cfg;
+	struct mii_data *mii = &sc->sc_mii;
+	u_int32_t cfg, pcr;
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags) {
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
 
 	/*
 	 * Update TXCFG for full-duplex operation.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		sc->sc_txcfg |= (TXCFG_CSI | TXCFG_HBI);
 	else
 		sc->sc_txcfg &= ~(TXCFG_CSI | TXCFG_HBI);
@@ -2993,8 +3176,8 @@ SIP_DECL(dp83820_mii_statchg)(struct device *self)
 	/*
 	 * Update RXCFG for full-duplex or loopback.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0 ||
-	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_LOOP)
+	if ((mii->mii_media_active & IFM_FDX) != 0 ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_LOOP)
 		sc->sc_rxcfg |= RXCFG_ATX;
 	else
 		sc->sc_rxcfg &= ~RXCFG_ATX;
@@ -3008,21 +3191,30 @@ SIP_DECL(dp83820_mii_statchg)(struct device *self)
 		cfg = sc->sc_cfg;
 
 	/*
-	 * XXX 802.3x flow control.
+	 * 802.3x flow control.
 	 */
+	pcr = 0;
+	if (sc->sc_flowflags & IFM_FLOW) {
+		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
+			pcr |= sc->sc_rx_flow_thresh;
+		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
+			pcr |= PCR_PSEN | PCR_PS_MCAST;
+	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CFG, cfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_PCR, pcr);
 }
+#endif /* ! DP83820 */
 
 /*
- * sip_dp83820_mii_bitbang_read: [mii bit-bang interface function]
+ * sip_mii_bitbang_read: [mii bit-bang interface function]
  *
  *	Read the MII serial port for the MII bit-bang module.
  */
 u_int32_t
-SIP_DECL(dp83820_mii_bitbang_read)(struct device *self)
+SIP_DECL(mii_bitbang_read)(struct device *self)
 {
 	struct sip_softc *sc = (void *) self;
 
@@ -3030,18 +3222,19 @@ SIP_DECL(dp83820_mii_bitbang_read)(struct device *self)
 }
 
 /*
- * sip_dp83820_mii_bitbang_write: [mii big-bang interface function]
+ * sip_mii_bitbang_write: [mii big-bang interface function]
  *
  *	Write the MII serial port for the MII bit-bang module.
  */
 void
-SIP_DECL(dp83820_mii_bitbang_write)(struct device *self, u_int32_t val)
+SIP_DECL(mii_bitbang_write)(struct device *self, u_int32_t val)
 {
 	struct sip_softc *sc = (void *) self;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_EROMAR, val);
 }
-#else /* ! DP83820 */
+
+#ifndef DP83820
 /*
  * sip_sis900_mii_readreg:	[mii interface function]
  *
@@ -3054,12 +3247,21 @@ SIP_DECL(sis900_mii_readreg)(struct device *self, int phy, int reg)
 	u_int32_t enphy;
 
 	/*
+	 * The PHY of recent SiS chipsets is accessed through bitbang
+	 * operations.
+	 */
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900)
+		return (mii_bitbang_readreg(self, &SIP_DECL(mii_bitbang_ops),
+		    phy, reg));
+
+#ifndef SIS900_MII_RESTRICT
+	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev < SIS_REV_635 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return (0);
+#endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
 	    (phy << ENPHY_PHYADDR_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
@@ -3081,13 +3283,20 @@ SIP_DECL(sis900_mii_writereg)(struct device *self, int phy, int reg, int val)
 	struct sip_softc *sc = (struct sip_softc *) self;
 	u_int32_t enphy;
 
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900) {
+		mii_bitbang_writereg(self, &SIP_DECL(mii_bitbang_ops),
+		    phy, reg, val);
+		return;
+	}
+
+#ifndef SIS900_MII_RESTRICT
 	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev < SIS_REV_635 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return;
+#endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
 	    (val << ENPHY_DATA_SHIFT) | (phy << ENPHY_PHYADDR_SHIFT) |
@@ -3106,12 +3315,22 @@ void
 SIP_DECL(sis900_mii_statchg)(struct device *self)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
+	struct mii_data *mii = &sc->sc_mii;
 	u_int32_t flowctl;
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags) {
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
 
 	/*
 	 * Update TXCFG for full-duplex operation.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		sc->sc_txcfg |= (TXCFG_CSI | TXCFG_HBI);
 	else
 		sc->sc_txcfg &= ~(TXCFG_CSI | TXCFG_HBI);
@@ -3119,8 +3338,8 @@ SIP_DECL(sis900_mii_statchg)(struct device *self)
 	/*
 	 * Update RXCFG for full-duplex or loopback.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0 ||
-	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_LOOP)
+	if ((mii->mii_media_active & IFM_FDX) != 0 ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_LOOP)
 		sc->sc_rxcfg |= RXCFG_ATX;
 	else
 		sc->sc_rxcfg &= ~RXCFG_ATX;
@@ -3128,7 +3347,7 @@ SIP_DECL(sis900_mii_statchg)(struct device *self)
 	/*
 	 * Update IMR for use of 802.3x flow control.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FLOW) != 0) {
+	if (sc->sc_flowflags & IFM_FLOW) {
 		sc->sc_imr |= (ISR_PAUSE_END|ISR_PAUSE_ST);
 		flowctl = FLOWCTL_FLOWEN;
 	} else {
@@ -3298,6 +3517,19 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 	enaddr[5] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] >> 8;
 }
 #else /* ! DP83820 */
+static void
+SIP_DECL(sis900_eeprom_delay)(struct sip_softc *sc)
+{
+	int i;
+
+	/*
+	 * FreeBSD goes from (300/33)+1 [10] to 0.  There must be
+	 * a reason, but I don't know it.
+	 */
+	for (i = 0; i < 10; i++)
+		bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CR);
+}
+
 void
 SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
     const struct pci_attach_args *pa, u_int8_t *enaddr)
@@ -3333,6 +3565,58 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 		myea[2] = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_RFDR) &
 		    0xffff;
 		break;
+
+	case SIS_REV_960:
+		{
+#define	SIS_SET_EROMAR(x,y)	bus_space_write_4(x->sc_st, x->sc_sh, SIP_EROMAR,	\
+				    bus_space_read_4(x->sc_st, x->sc_sh, SIP_EROMAR) | (y))
+
+#define	SIS_CLR_EROMAR(x,y)	bus_space_write_4(x->sc_st, x->sc_sh, SIP_EROMAR,	\
+				    bus_space_read_4(x->sc_st, x->sc_sh, SIP_EROMAR) & ~(y))
+
+			int waittime, i;
+
+			/* Allow to read EEPROM from LAN. It is shared
+			 * between a 1394 controller and the NIC and each
+			 * time we access it, we need to set SIS_EECMD_REQ.
+			 */
+			SIS_SET_EROMAR(sc, EROMAR_REQ);
+
+			for (waittime = 0; waittime < 1000; waittime++) { /* 1 ms max */
+				/* Force EEPROM to idle state. */
+
+				/*
+				 * XXX-cube This is ugly.  I'll look for docs about it.
+				 */
+				SIS_SET_EROMAR(sc, EROMAR_EECS);
+				SIP_DECL(sis900_eeprom_delay)(sc);
+				for (i = 0; i <= 25; i++) { /* Yes, 26 times. */
+					SIS_SET_EROMAR(sc, EROMAR_EESK);
+					SIP_DECL(sis900_eeprom_delay)(sc);
+					SIS_CLR_EROMAR(sc, EROMAR_EESK);
+					SIP_DECL(sis900_eeprom_delay)(sc);
+				}
+				SIS_CLR_EROMAR(sc, EROMAR_EECS);
+				SIP_DECL(sis900_eeprom_delay)(sc);
+				bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_EROMAR, 0);
+
+				if (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_EROMAR) & EROMAR_GNT) {
+					SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
+					    sizeof(myea) / sizeof(myea[0]), myea);
+					break;
+				}
+				DELAY(1);
+			}
+
+			/*
+			 * Set SIS_EECTL_CLK to high, so a other master
+			 * can operate on the i2c bus.
+			 */
+			SIS_SET_EROMAR(sc, EROMAR_EESK);
+
+			/* Refuse EEPROM access by LAN */
+			SIS_SET_EROMAR(sc, EROMAR_DONE);
+		} break;
 
 	default:
 		SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
@@ -3418,7 +3702,8 @@ SIP_DECL(mediastatus)(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+			   sc->sc_flowflags;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.41.2.1 2003/07/02 15:26:05 darrenr Exp $	*/
+/*	$NetBSD: dpt.c,v 1.41.2.2 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.41.2.1 2003/07/02 15:26:05 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.41.2.2 2004/08/03 10:46:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	char model[16];
 
 	ec = &sc->sc_ec;
-	sprintf(dpt_sig.dsDescription, "NetBSD %s DPT driver", osrelease);
+	snprintf(dpt_sig.dsDescription, sizeof(dpt_sig.dsDescription),
+	    "NetBSD %s DPT driver", osrelease);
 
 	/*
 	 * Allocate the CCB/status packet/scratch DMA map and load.
@@ -1273,9 +1274,9 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 	struct eata_sp sp;
 	struct eata_cp *cp;
 	struct eata_sg *sg;
-	bus_dmamap_t xfer;
+	bus_dmamap_t xfer = 0; /* XXX: gcc */
 	bus_dma_segment_t *ds;
-	int datain, s, rv, i, uslen;
+	int datain = 0, s, rv = 0, i, uslen; /* XXX: gcc */
 
 	/*
 	 * Get a CCB and fill.

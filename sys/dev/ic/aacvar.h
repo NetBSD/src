@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.1 2002/04/26 02:05:11 ad Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.1.14.1 2004/08/03 10:46:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct aac_softc;
 /*
  * We gather a number of adapter-visible items into a single structure.
  *
- * The ordering of this strucure may be important; we copy the Linux driver:
+ * The ordering of this structure may be important; we copy the Linux driver:
  *
  * Adapter FIBs
  * Init struct

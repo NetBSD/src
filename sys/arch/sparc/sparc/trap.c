@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136.2.1 2003/07/02 15:25:32 darrenr Exp $ */
+/*	$NetBSD: trap.c,v 1.136.2.2 2004/08/03 10:41:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,9 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136.2.2 2004/08/03 10:41:11 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -230,6 +233,10 @@ userret(l, pc, oticks)
 	struct proc *p = l->l_proc;
 	int sig;
 
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
+
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
@@ -250,8 +257,12 @@ userret(l, pc, oticks)
 			postsig(sig);
 	}
 
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*
@@ -328,8 +339,8 @@ trap(type, psr, pc, tf)
 	int n, s;
 	char bits[64];
 	u_quad_t sticks;
-	int sig;
-	u_long ucode;
+	ksiginfo_t ksi;
+	int code, sig;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -427,7 +438,6 @@ trap(type, psr, pc, tf)
 #endif
 
 	sig = 0;
-	ucode = 0;
 
 	switch (type) {
 
@@ -439,7 +449,10 @@ trap(type, psr, pc, tf)
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 			       PSR_BITS, bits, sizeof(bits)));
 			sig = SIGILL;
-			ucode = type;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_trap = type;
+			ksi.ksi_code = ILL_ILLTRP;
+			ksi.ksi_addr = (void *)pc;
 			break;
 		}
 #if defined(COMPAT_SVR4)
@@ -452,7 +465,10 @@ badtrap:
 			p->p_comm, p->p_pid, type);
 #endif
 		sig = SIGILL;
-		ucode = type;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLTRP;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 #ifdef COMPAT_SVR4
@@ -471,18 +487,35 @@ badtrap:
 	case T_AST:
 		break;	/* the work is all in userret() */
 
-	case T_ILLINST:
 	case T_UNIMPLFLUSH:
+		/* Invalidate the entire I-cache */
+#if defined(MULTIPROCESSOR)
+		/* Broadcast to all CPUs */
+		XCALL0(*cpuinfo.pure_vcache_flush, CPUSET_ALL);
+#else
+		(*cpuinfo.pure_vcache_flush)();
+#endif
+		ADVANCE;
+		break;
+
+	case T_ILLINST:
+		/* Note: Cypress generates a T_ILLINST on FLUSH instructions */
 		if ((sig = emulinstr(pc, tf)) == 0) {
 			ADVANCE;
 			break;
 		}
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_PRIVINST:
 		sig = SIGILL;
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FPDISABLED: {
@@ -512,7 +545,10 @@ badtrap:
 			fpu_emulate(l, tf, fs);
 #else
 			sig = SIGFPE;
-			/* XXX - ucode? */
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_trap = type;
+			ksi.ksi_code = SI_NOINFO;
+			ksi.ksi_addr = (void *)pc;
 #endif
 			break;
 		}
@@ -522,7 +558,13 @@ badtrap:
 		 * resolve the FPU state, turn it on, and try again.
 		 */
 		if (fs->fs_qsize) {
-			fpu_cleanup(l, fs);
+			if ((code = fpu_cleanup(l, fs)) != 0) {
+				sig = SIGFPE;
+				KSI_INIT_TRAP(&ksi);
+				ksi.ksi_trap = type;
+				ksi.ksi_code = code;
+				ksi.ksi_addr = (void *)pc;
+			}
 			break;
 		}
 
@@ -610,7 +652,7 @@ badtrap:
 		 * itself, which is at its %sp, and the one belonging to
 		 * the window above, which is at its %fp or %i6---both
 		 * in the pcb.  The restore's window may still be in
-		 * the cpu; we need to force it out to the stack.
+		 * the CPU; we need to force it out to the stack.
 		 */
 		KERNEL_PROC_LOCK(l);
 #ifdef DEBUG
@@ -647,7 +689,10 @@ badtrap:
 			}
 		}
 		sig = SIGBUS;
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = BUS_ADRALN;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FPE:
@@ -667,10 +712,15 @@ badtrap:
 		cpuinfo.fplwp = NULL;
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		fpu_cleanup(l, l->l_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(l);
-		/* fpu_cleanup posts signals if needed */
+		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
+		if ((code = fpu_cleanup(l, l->l_md.md_fpstate)) != 0) {
+			sig = SIGFPE;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_trap = type;
+			ksi.ksi_code = code;
+			ksi.ksi_addr = (void *)pc;
+		}
 #if 0		/* ??? really never??? */
 		ADVANCE;
 #endif
@@ -678,24 +728,37 @@ badtrap:
 
 	case T_TAGOF:
 		sig = SIGEMT;
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = SI_NOINFO;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
 		sig = SIGILL;
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_COPROC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_BREAKPOINT:
 		sig = SIGTRAP;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_DIV0:
 	case T_IDIV0:
 		ADVANCE;
 		sig = SIGFPE;
-		ucode = FPE_INTDIV_TRAP;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FLUSHWIN:
@@ -718,7 +781,10 @@ badtrap:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
 		sig = SIGILL;
-		/* XXX - ucode? */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLADR;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FIXALIGN:
@@ -734,12 +800,16 @@ badtrap:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
 		sig = SIGFPE;
-		ucode = FPE_INTOVF_TRAP;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTOVF;
+		ksi.ksi_addr = (void *)pc;
 		break;
 	}
 	if (sig != 0) {
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, sig, ucode);
+		ksi.ksi_signo = sig;
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 	}
 	userret(l, pc, sticks);
@@ -837,6 +907,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	int onfault;
 	u_quad_t sticks;
 	char bits[64];
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 	if ((l = curlwp) == NULL)	/* safety check */
@@ -901,13 +972,25 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
+			rv = mmu_pagein(pmap_kernel(), va, atype);
+			if (rv < 0) {
+				rv = EACCES;
+				goto kfault;
+			}
+			if (rv > 0)
+				return;
 			rv = uvm_fault(kernel_map, va, 0, atype);
 			if (rv == 0)
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+	}
 
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
@@ -915,8 +998,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(vm->vm_map.pmap, va,
-			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
+	rv = mmu_pagein(vm->vm_map.pmap, va, atype);
 	if (rv < 0) {
 		rv = EACCES;
 		goto fault;
@@ -926,9 +1008,6 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-	if (rv == EACCES) {
-		rv = EFAULT;
-	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -977,20 +1056,30 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
-			tf->tf_out[0] = rv;
+			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
 			return;
 		}
+		KSI_INIT_TRAP(&ksi);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, (u_int)v);
-		} else
-			trapsignal(l, SIGSEGV, (u_int)v);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = SI_NOINFO;
+		} else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = (rv == EACCES
+				? SEGV_ACCERR : SEGV_MAPERR);
+		}
+		ksi.ksi_errno = rv;
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)v;
+		trapsignal(l, &ksi);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
@@ -1018,6 +1107,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	int onfault;
 	u_quad_t sticks;
 	char bits[64];
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;	/* XXXSMP */
 
@@ -1041,6 +1131,12 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
+
+#if /*DIAGNOSTICS*/1
+	if (type == T_DATAERROR || type == T_TEXTERROR)
+		printf("%s[%d]: trap 0x%x: pc=0x%x sfsr=0x%x sfva=0x%x\n",
+			p->p_comm, p->p_pid, type, pc, sfsr, sfva);
+#endif
 
 	/*
 	 * Our first priority is handling serious faults, such as
@@ -1103,7 +1199,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * Q: test SFSR_FAV in the locore stubs too?
 	 */
 	if ((sfsr & SFSR_FAV) == 0) {
-		if (type == T_TEXTFAULT)
+		/* note: T_TEXTERROR == T_TEXTFAULT | 0x20 */
+		if ((type & ~0x20) == T_TEXTFAULT)
 			sfva = pc;
 		else {
 			rv = EACCES;
@@ -1145,6 +1242,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * Attempt to handle early fault. Ignores ASI 8,9 issue...may
 		 * do a useless VM read.
 		 * XXX: Is this really necessary?
+		 * XXX: If it's necessary, add SA_PAGEFAULT handling
 		 */
 		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
 			/* On HS, we have va for both */
@@ -1161,7 +1259,17 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	}
 
 	/* Now munch on protections... */
-	atype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
+	if (sfsr & SFSR_AT_STORE) {
+		/* stores are never text faults. */
+		atype = VM_PROT_WRITE;
+	} else {
+		if ((sfsr & SFSR_AT_TEXT) || (type & ~0x20) == T_TEXTFAULT) {
+			atype = VM_PROT_EXECUTE;
+		} else {
+			atype = VM_PROT_READ;
+		}
+	}
+
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
@@ -1194,16 +1302,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 			}
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)sfva;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-	if (rv == EACCES) {
-		rv = EFAULT;
-	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1238,21 +1348,31 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
-			tf->tf_out[0] = rv;
+			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
 			KERNEL_UNLOCK();
 			return;
 		}
+		KSI_INIT_TRAP(&ksi);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, (u_int)sfva);
-		} else
-			trapsignal(l, SIGSEGV, (u_int)sfva);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = SI_NOINFO;
+		} else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = (rv == EACCES)
+				? SEGV_ACCERR : SEGV_MAPERR;
+		}
+		ksi.ksi_errno = rv;
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)sfva;
+		trapsignal(l, &ksi);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 out_nounlock:
 		userret(l, pc, sticks);
@@ -1371,7 +1491,7 @@ syscall(code, tf, pc)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(l, code, code, NULL, args.i, rval)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
 		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 			KERNEL_PROC_UNLOCK(l);
 		goto bad;

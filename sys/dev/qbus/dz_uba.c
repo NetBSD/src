@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.19 2002/10/02 16:52:26 thorpej Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.19.6.1 2004/08/03 10:50:27 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19 2002/10/02 16:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.1 2004/08/03 10:50:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,9 @@ dz_uba_attach(parent, self, aux)
 	sc->sc_dr.dr_tcr = DZ_UBA_TCR;
 	sc->sc_dr.dr_dcd = DZ_UBA_DCD;
 	sc->sc_dr.dr_ring = DZ_UBA_RING;
+
+	sc->sc_dr.dr_firstreg = DZ_UBA_FIRSTREG;
+	sc->sc_dr.dr_winsize = DZ_UBA_WINSIZE;
 
 	sc->sc_type = DZ_DZ;
 

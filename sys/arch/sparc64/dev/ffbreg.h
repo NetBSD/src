@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.1 2003/05/23 06:51:16 petrov Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.1.2.1 2004/08/03 10:41:23 skrll Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -53,6 +53,25 @@
 #define	FFB_REG_SFB64		14
 #define	FFB_REG_DFB422A		15
 
+#define	FFB_DAC_TYPE		0x0
+#define	FFB_DAC_VALUE		0x4
+#define	FFB_DAC_TYPE2		0x8
+#define	FFB_DAC_VALUE2		0xc
+
+/* DAC "TYPE" commands */
+#define	FFB_DAC_SCMAP		0x2000	/* set (load) cmap */
+#define	FFB_DAC_GSBLANK		0x6000	/* get/set blanking */
+#define	FFB_DAC_GVERS		0x8000	/* get DAC version */
+
+#define	FFB_DAC_BLANK_OFF		0x1
+#define	FFB_DAC_BLANK_HSYNC_DISABLE	0x4
+#define	FFB_DAC_BLANK_VSYNC_DISABLE	0x8
+
+/* DAC "TYPE2" commands */
+#define	FFB_DAC_CURSENAB	0x100	/* cursor enable */
+#define	FFB_DAC_CURSECMAP	0x102	/* set cursor colormap */
+#define	FFB_DAC_CURSEPOS	0x104	/* set cursor position */
+
 #define	FFB_FBC_ALPHA		0x00c
 #define	FFB_FBC_RED		0x010
 #define	FFB_FBC_GREEN		0x014
@@ -74,14 +93,14 @@
 #define	FFB_FBC_BW		0x074
 #define	FFB_FBC_SUVTX		0x100
 #define	FFB_FBC_PPC		0x200	/* pixel processor control */
-#define	FFB_FBC_WID		0x204
+#define	FFB_FBC_WID		0x204	/* current WID */
 #define	FFB_FBC_FG		0x208
 #define	FFB_FBC_BG		0x20c
 #define	FFB_FBC_CONSTY		0x210
 #define	FFB_FBC_CONSTZ		0x214
 #define	FFB_FBC_XCLIP		0x218
 #define	FFB_FBC_DCSS		0x21c
-#define	FFB_FBC_VCLIPMIN	0x220
+#define	FFB_FBC_VCLIPMIN	0x220	/* Viewclip XY Min Bounds */
 #define	FFB_FBC_VCLIPMAX	0x224
 #define	FFB_FBC_VCLIPZMIN	0x228
 #define	FFB_FBC_VCLIPZMAX	0x22c
@@ -107,12 +126,12 @@
 #define	FFB_FBC_PPCFG		0x280
 #define	FFB_FBC_PICK		0x284
 #define	FFB_FBC_FILLMODE	0x288
-#define	FFB_FBC_FBRAMWAC	0x28c
+#define	FFB_FBC_FBRAMWAC	0x28c	/* FB RAM Write Address Control */
 #define	FFB_FBC_PMASK		0x290	/* RGB Plane Mask */
 #define	FFB_FBC_XPMASK		0x294	/* X PlaneMask */
 #define	FFB_FBC_YPMASK		0x298
 #define	FFB_FBC_ZPMASK		0x29c
-#define	FFB_FBC_CLIP0MIN	0x2a0
+#define	FFB_FBC_CLIP0MIN	0x2a0	/* Auxilliary Viewport Clips */
 #define	FFB_FBC_CLIP0MAX	0x2a4
 #define	FFB_FBC_CLIP1MIN	0x2a8
 #define	FFB_FBC_CLIP1MAX	0x2ac
@@ -137,8 +156,8 @@
 #define	FFB_FBC_RAWWAC		0x2f8
 #define	FFB_FBC_FBRAMID		0x2fc
 #define	FFB_FBC_DRAWOP		0x300	/* Draw OPeration */
-#define	FFB_FBC_FONTLPAT	0x30c
-#define	FFB_FBC_FONTXY		0x314
+#define	FFB_FBC_FONTLPAT	0x30c	/* Line Pattern control */
+#define	FFB_FBC_FONTXY		0x314	/* XY Font coordinate */
 #define	FFB_FBC_FONTW		0x318	/* Font Width */
 #define	FFB_FBC_FONTINC		0x31c	/* Font Increment */
 #define	FFB_FBC_FONT		0x320

@@ -1,4 +1,4 @@
-/*	$NetBSD: ir.h,v 1.2 2001/12/05 20:00:15 augustss Exp $	*/
+/*	$NetBSD: ir.h,v 1.2.20.1 2004/08/03 10:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct ir_attach_args {
 
 struct irframe_methods;
 
-int ir_print(void *aux, const char *pnp);
+int ir_print(void *, const char *);
 
 #define splir spltty
 #define IPL_IR IPL_TTY

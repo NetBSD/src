@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.24 2002/10/02 16:51:27 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.24.6.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.24 2002/10/02 16:51:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.24.6.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -111,7 +111,7 @@ const struct ne_pci_product {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
 	  rtl80x9_mediachange,		rtl80x9_mediastatus,
 	  rtl80x9_init_card,		rtl80x9_media_init,
-	  "RealTek 8029" },
+	  "Realtek 8029" },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
 	  NULL,				NULL,

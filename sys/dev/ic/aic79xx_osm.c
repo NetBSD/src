@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.3 2003/04/21 20:05:26 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -33,12 +33,15 @@
  *
  * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.c#26 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.8 2003/02/27 23:23:16 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.11 2003/05/04 00:20:07 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
  * - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -71,7 +74,7 @@ ahd_attach(struct ahd_softc *ahd)
 	int 	s;
 	char	ahd_info[256];
 
-	ahd_controller_info(ahd, ahd_info);
+	ahd_controller_info(ahd, ahd_info, sizeof(ahd_info));
         printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
 
         ahd_lock(ahd, &s);
@@ -150,7 +153,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct scsipi_xfer	*xs;
 	struct scsipi_periph	*periph;
-	int			target;
 	int			s;
 
 	LIST_REMOVE(scb, pending_links);
@@ -159,8 +161,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	periph = xs->xs_periph;
 
 	callout_stop(&scb->xs->xs_callout);
-
-	target = periph->periph_target;
 
 	if (xs->datalen) {
 		int op;
@@ -307,7 +307,12 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		tinfo = ahd_fetch_transinfo(ahd, channel, our_id,
 					    target_id, &tstate);
 
-		col_idx = AHD_NEVER_COL_IDX; /* ??? */
+		if (xs->xs_tag_type != 0 ||
+		    (tinfo->curr.ppr_options & MSG_EXT_PPR_IU_REQ) != 0)
+			col_idx = AHD_NEVER_COL_IDX;
+		else
+			col_idx = AHD_BUILD_COL_IDX(target_id,
+			    periph->periph_lun);
 
 		if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
 			xs->error = XS_RESOURCE_SHORTAGE;
@@ -354,6 +359,8 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		u_int width;
 		int s;
 		char channel;
+		u_int ppr_options, period, offset;
+		uint16_t old_autoneg;
 
 		target_id = xm->xm_target;	
 		our_id = chan->chan_id;
@@ -364,6 +371,8 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		ahd_compile_devinfo(&devinfo, our_id, target_id,
 		    0, channel, ROLE_INITIATOR);
 
+		old_autoneg = tstate->auto_negotiate;
+
 		/*
 		 * XXX since the period and offset are not provided here,
 		 * fake things by forcing a renegotiation using the user
@@ -372,7 +381,10 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		 * values, assuming that the user set it up that way.
 		 */
 		if (ahd->inited_target[target_id] == 0) {
-			tinfo->goal = tinfo->user;
+			period = tinfo->user.period;
+			offset = tinfo->user.offset;
+			ppr_options = tinfo->user.ppr_options;
+			width = tinfo->user.width;
 			tstate->tagenable |=
 			    (ahd->user_tagenable & devinfo.target_mask);
 			tstate->discenable |=
@@ -390,19 +402,23 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		ahd_validate_width(ahd, NULL, &width, ROLE_UNKNOWN);
 		if (width > tinfo->user.width)
 			width = tinfo->user.width;
-		tinfo->goal.width = width;
+		ahd_set_width(ahd, &devinfo, width, AHD_TRANS_GOAL, FALSE);
 
 		if (!(xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT))) {
-			tinfo->goal.period = 0;
-			tinfo->goal.offset = 0;
-			tinfo->goal.ppr_options = 0;
+			period = 0;
+			offset = 0;
+			ppr_options = 0;
 		}
 
 		if ((xm->xm_mode & PERIPH_CAP_DT) &&
 		    (tinfo->user.ppr_options & MSG_EXT_PPR_DT_REQ))
-			tinfo->goal.ppr_options |= MSG_EXT_PPR_DT_REQ;
+			ppr_options |= MSG_EXT_PPR_DT_REQ;
 		else
-			tinfo->goal.ppr_options &= ~MSG_EXT_PPR_DT_REQ;
+			ppr_options &= ~MSG_EXT_PPR_DT_REQ;
+
+		if ((tstate->discenable & devinfo.target_mask) == 0 ||
+		    (tstate->tagenable & devinfo.target_mask) == 0)
+			ppr_options &= ~MSG_EXT_PPR_IU_REQ;
 
 		if ((xm->xm_mode & PERIPH_CAP_TQING) &&
 		    (ahd->user_tagenable & devinfo.target_mask))
@@ -410,14 +426,43 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		else
 			tstate->tagenable &= ~devinfo.target_mask;
 
+		ahd_find_syncrate(ahd, &period, &ppr_options, AHD_SYNCRATE_MAX);
+		ahd_validate_offset(ahd, NULL, period, &offset,
+		    MSG_EXT_WDTR_BUS_8_BIT, ROLE_UNKNOWN);
+		if (offset == 0) {
+			period = 0;
+			ppr_options = 0;
+		}
+		if (ppr_options != 0
+		    && tinfo->user.transport_version >= 3) {
+			tinfo->goal.transport_version =
+			    tinfo->user.transport_version;
+			tinfo->curr.transport_version =
+			    tinfo->user.transport_version;
+		}
+
+		ahd_set_syncrate(ahd, &devinfo, period, offset,
+		    ppr_options, AHD_TRANS_GOAL, FALSE);
+
 		/*
 		 * If this is the first request, and no negotiation is
 		 * needed, just confirm the state to the scsipi layer,
 		 * so that it can print a message.
 		 */
-		if (!ahd_update_neg_request(ahd, &devinfo, tstate,
-		    tinfo, AHD_NEG_IF_NON_ASYNC) && first)
+		if (old_autoneg == tstate->auto_negotiate && first) {
+			xm->xm_mode = 0;
+			xm->xm_period = tinfo->curr.period;
+			xm->xm_offset = tinfo->curr.offset;
+			if (tinfo->curr.width == MSG_EXT_WDTR_BUS_16_BIT)
+				xm->xm_mode |= PERIPH_CAP_WIDE16;
+			if (tinfo->curr.period)
+				xm->xm_mode |= PERIPH_CAP_SYNC;
+			if (tstate->tagenable & devinfo.target_mask)
+				xm->xm_mode |= PERIPH_CAP_TQING;
+			if (tinfo->curr.ppr_options & MSG_EXT_PPR_DT_REQ)
+				xm->xm_mode |= PERIPH_CAP_DT;
 			scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		}
 		splx(s);
 	    }
 	}
@@ -503,13 +548,16 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 			scb->hscb->control &= ~MK_MESSAGE;
 	}
 
+#if 0	/* This looks like it makes sense at first, but it can loop */
 	if ((xs->xs_control & XS_CTL_DISCOVERY) &&
 	    (tinfo->goal.width != 0
 	     || tinfo->goal.period != 0
 	     || tinfo->goal.ppr_options != 0)) {
 		scb->flags |= SCB_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;
-	} else if ((tstate->auto_negotiate & mask) != 0) {
+	} else
+#endif
+	if ((tstate->auto_negotiate & mask) != 0) {
 	  	scb->flags |= SCB_AUTO_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;
 	}
@@ -639,9 +687,6 @@ ahd_timeout(void *arg)
 	struct	ahd_softc *ahd;
 	ahd_mode_state	   saved_modes;
 	int		   s;
-	int		   target;
-	int		   lun;
-	char		   channel;
 
 	scb = (struct scb *)arg; 
 	ahd = (struct ahd_softc *)scb->ahd_softc;
@@ -668,10 +713,6 @@ ahd_timeout(void *arg)
 		ahd_unlock(ahd, &s);
 		return;
 	}
-
-	target = SCB_GET_TARGET(ahd, scb);
-	channel = SCB_GET_CHANNEL(ahd, scb);
-	lun = SCB_GET_LUN(scb);
 
 	ahd_print_path(ahd, scb);
 	printf("SCB 0x%x - timed out\n", SCB_GET_TAG(scb));
@@ -729,11 +770,10 @@ void
 ahd_platform_set_tags(struct ahd_softc *ahd,
 		      struct ahd_devinfo *devinfo, ahd_queue_alg alg)
 {
-	struct ahd_initiator_tinfo *tinfo;
         struct ahd_tmode_tstate *tstate;
 
-        tinfo = ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
-                                    devinfo->target, &tstate);
+        ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
+                            devinfo->target, &tstate);
 
         if (alg != AHD_QUEUE_NONE)
                 tstate->tagenable |= devinfo->target_mask;

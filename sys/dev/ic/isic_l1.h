@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.13 2002/10/25 21:03:48 leo Exp $ */
+/* $NetBSD: isic_l1.h,v 1.13.6.1 2004/08/03 10:46:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -96,7 +96,7 @@ struct isic_attach_args {
 typedef struct
 {
 	int		channel;	/* which channel is this*/
-	
+
 	u_char		hscx_mask;	/* HSCX interrupt mask	*/
 
 	int		bprot;		/* B channel protocol	*/
@@ -114,7 +114,7 @@ typedef struct
 	struct	mbuf	*in_mbuf;	/* rx input buffer	*/
 	u_char 		*in_cbptr;	/* curr buffer pointer	*/
 	int		in_len;		/* rx input buffer len	*/
-	
+
 	/* transmit data to ISDN */
 
 	struct ifqueue	tx_queue;	/* transmitter queue	*/
@@ -124,10 +124,10 @@ typedef struct
 	struct mbuf	*out_mbuf_head;	/* first mbuf in possible chain	*/
 	struct mbuf	*out_mbuf_cur;	/* current mbuf in possbl chain */
 	unsigned char	*out_mbuf_cur_ptr; /* data pointer into mbuf	*/
-	int		out_mbuf_cur_len; /* remaining bytes in mbuf	*/	
-	
+	int		out_mbuf_cur_len; /* remaining bytes in mbuf	*/
+
 	/* link between b channel and driver */
-	
+
 	isdn_link_t	isdn_linktab;		/* b channel driver data	*/
 	const struct isdn_l4_driver_functions 
 			*l4_driver;		/* layer 4 driver		*/
@@ -136,9 +136,9 @@ typedef struct
 	/* statistics */
 
 	/* RSTA */
-	
+
 	int		stat_VFR;	/* HSCX RSTA Valid FRame */
-	int		stat_RDO;	/* HSCX RSTA Rx Data Overflow */	
+	int		stat_RDO;	/* HSCX RSTA Rx Data Overflow */
 	int		stat_CRC;	/* HSCX RSTA CRC */
 	int		stat_RAB;	/* HSCX RSTA Rx message ABorted */
 
@@ -146,7 +146,7 @@ typedef struct
 
 	int		stat_XDU;	/* HSCX EXIR tx data underrun */
 	int		stat_RFO;	/* HSCX EXIR rx frame overflow */
-	
+
 } l1_bchan_state_t;
 
 /*---------------------------------------------------------------------------*
@@ -231,18 +231,18 @@ struct isic_softc
 	int		sc_freeflag;	/* m_freem mbuf if set */
 
 	struct mbuf	*sc_obuf2;	/* pointer to an mbuf with TX frame */
-	int		sc_freeflag2;	/* m_freem mbuf if set */	
-	
+	int		sc_freeflag2;	/* m_freem mbuf if set */
+
 	int		sc_isac_version;	/* version number of ISAC */
 	int		sc_hscx_version;	/* version number of HSCX */
 	int		sc_ipac_version;	/* version number of IPAC */
-	
+
 	int		sc_I430state;	/* I.430 state F3 .... F8 */
 
-	int		sc_I430T3;	/* I.430 Timer T3 running */	
+	int		sc_I430T3;	/* I.430 Timer T3 running */
 	struct callout sc_T3_callout;
-	
-	int		sc_I430T4;	/* Timer T4 running */	
+
+	int		sc_I430T4;	/* Timer T4 running */
 	struct callout sc_T4_callout;
 
 	int		sc_driver_specific;	/* used for LED values */
@@ -258,19 +258,21 @@ struct isic_softc
 
 	int		sc_ipac;	/* flag, running on ipac */
 	int		sc_bfifolen;	/* length of b channel fifos */
-	
+
 #define	ISIC_WHAT_ISAC	0
 #define	ISIC_WHAT_HSCXA	1
 #define	ISIC_WHAT_HSCXB	2
 #define	ISIC_WHAT_IPAC	3
 
-	u_int8_t	(*readreg) __P((struct isic_softc *sc, int what, bus_size_t offs));
-	void		(*writereg) __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-	void		(*readfifo) __P((struct isic_softc *sc, int what, void *buf, size_t size));
-	void		(*writefifo) __P((struct isic_softc *sc, int what, const void *data, size_t size));
-	void		(*clearirq) __P((struct isic_softc *sc));
+	u_int8_t	(*readreg) __P((struct isic_softc *, int, bus_size_t));
+	void		(*writereg) __P((struct isic_softc *, int, bus_size_t, u_int8_t));
+	void		(*readfifo) __P((struct isic_softc *, int, void *,
+			    size_t));
+	void		(*writefifo) __P((struct isic_softc *, int what,
+			    const void *, size_t));
+	void		(*clearirq) __P((struct isic_softc *));
 
-	void		(*drv_command) __P((struct isic_softc *sc, int cmd, void *data));
+	void		(*drv_command) __P((struct isic_softc *, int, void *));
 
 #define	ISAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_ISAC, (r))
 #define	ISAC_WRITE(r,v)		(*sc->writereg)(sc, ISIC_WHAT_ISAC, (r), (v))
@@ -297,7 +299,7 @@ enum I430states {
 	ST_F6,		/* F6 Synchronized	*/
 	ST_F7,		/* F7 Activated		*/
 	ST_F8,		/* F8 Lost Framing	*/
-	ST_ILL,		/* Illegal State	*/	
+	ST_ILL,		/* Illegal State	*/
 	N_STATES
 };
 
@@ -311,8 +313,8 @@ enum I430events {
 	EV_RSY,		/* receiving any signal		*/
 	EV_INFO2,	/* receiving INFO2		*/
 	EV_INFO48,	/* receiving INFO4 pri 8/9 	*/
-	EV_INFO410,	/* receiving INFO4 pri 10/11	*/	
-	EV_DR,		/* Deactivate Request 		*/	
+	EV_INFO410,	/* receiving INFO4 pri 10/11	*/
+	EV_DR,		/* Deactivate Request 		*/
 	EV_PU,		/* Power UP			*/
 	EV_DIS,		/* Disconnected (only 2085) 	*/
 	EV_EI,		/* Error Indication 		*/
@@ -331,33 +333,33 @@ enum I430commands {
 
 #define N_COMMANDS CMD_ILL
 
-extern void isic_recover __P((struct isic_softc *sc));
+extern void isic_recover __P((struct isic_softc *));
 extern int isicintr __P((void *));
-extern int isicprobe __P((struct isic_attach_args *ia));
-extern int isic_attach_avma1 __P((struct isic_softc *sc));
-extern int isic_attach_s016 __P((struct isic_softc *sc));
-extern int isic_attach_s0163 __P((struct isic_softc *sc));
-extern int isic_attach_s08 __P((struct isic_softc *sc));
-extern int isic_attach_usrtai __P((struct isic_softc *sc));
-extern int isic_attach_itkix1 __P((struct isic_softc *sc));
-extern void isic_bchannel_setup __P((void*, int hscx_channel, int bprot, int activate));
-extern void isic_hscx_init __P((struct isic_softc *sc, int hscx_channel, int activate));
-extern void isic_hscx_irq __P((struct isic_softc *sc, u_char ista, int hscx_channel, u_char ex_irq));
-extern void isic_hscx_cmd __P(( struct isic_softc *sc, int h_chan, unsigned char cmd ));
-extern void isic_hscx_waitxfw __P(( struct isic_softc *sc, int h_chan ));
-extern void isic_init_linktab __P((struct isic_softc *sc));
-extern int isic_isac_init __P((struct isic_softc *sc));
-extern void isic_isac_irq __P((struct isic_softc *sc, int r));
-extern void isic_isac_l1_cmd __P((struct isic_softc *sc, int command));
-extern void isic_next_state __P((struct isic_softc *sc, int event));
-extern char * isic_printstate __P((struct isic_softc *sc));
-extern int isic_probe_avma1 __P((struct isic_attach_args *ia));
-extern int isic_probe_s016 __P((struct isic_attach_args *ia));
-extern int isic_probe_s0163 __P((struct isic_attach_args *ia));
+extern int isicprobe __P((struct isic_attach_args *));
+extern int isic_attach_avma1 __P((struct isic_softc *));
+extern int isic_attach_s016 __P((struct isic_softc *));
+extern int isic_attach_s0163 __P((struct isic_softc *));
+extern int isic_attach_s08 __P((struct isic_softc *));
+extern int isic_attach_usrtai __P((struct isic_softc *));
+extern int isic_attach_itkix1 __P((struct isic_softc *));
+extern void isic_bchannel_setup __P((void *, int, int, int));
+extern void isic_hscx_init __P((struct isic_softc *, int, int));
+extern void isic_hscx_irq __P((struct isic_softc *, u_char ista, int, u_char));
+extern void isic_hscx_cmd __P(( struct isic_softc *, int, unsigned char));
+extern void isic_hscx_waitxfw __P(( struct isic_softc *, int));
+extern void isic_init_linktab __P((struct isic_softc *));
+extern int isic_isac_init __P((struct isic_softc *));
+extern void isic_isac_irq __P((struct isic_softc *, int));
+extern void isic_isac_l1_cmd __P((struct isic_softc *, int));
+extern void isic_next_state __P((struct isic_softc *, int));
+extern char * isic_printstate __P((struct isic_softc *));
+extern int isic_probe_avma1 __P((struct isic_attach_args *));
+extern int isic_probe_s016 __P((struct isic_attach_args *));
+extern int isic_probe_s0163 __P((struct isic_attach_args *));
 extern int isic_probe_s08 __P((struct isic_attach_args *ia));
 extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
 extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
-extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver);
+extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_isdnif_driver *dchan_driver);
 extern int isic_detach_bri(struct isic_softc *sc);
 
 extern void isic_isacsx_disable_intr __P((struct isic_softc *sc));

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/06/23 14:59:21 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -111,11 +111,11 @@ struct intrhand {
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
-extern void Xspllower __P((int));
+extern void Xspllower(int);
 
-static __inline int splraise __P((int));
-static __inline void spllower __P((int));
-static __inline void softintr __P((int));
+static __inline int splraise(int);
+static __inline void spllower(int);
+static __inline void softintr(int);
 
 /*
  * Convert spl level to local APIC level
@@ -156,17 +156,21 @@ static __inline void
 spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
+	u_int32_t imask;
+	u_long psl;
 
 	__splbarrier();
-	/*
-	 * Since this should only lower the interrupt level,
-	 * the XOR below should only show interrupts that
-	 * are being unmasked.
-	 */
-	if (ci->ci_ipending & IUNMASK(ci,nlevel))
+
+	imask = IUNMASK(ci, nlevel);
+	psl = read_psl();
+	disable_intr();
+	if (ci->ci_ipending & imask) {
 		Xspllower(nlevel);
-	else
+		/* Xspllower does enable_intr() */
+	} else {
 		ci->ci_ilevel = nlevel;
+		write_psl(psl);
+	}
 }
 
 /*
@@ -189,7 +193,7 @@ spllower(int nlevel)
 /*
  * Software interrupt masks
  *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
+ * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
 #define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
@@ -245,6 +249,8 @@ struct cpu_info;
 
 extern char idt_allocmap[];
 
+struct pcibus_attach_args;
+
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct cpu_info *);
@@ -253,8 +259,10 @@ int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 		       int *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
+void intr_add_pcibus(struct pcibus_attach_args *);
+const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int bus, int pin, int *handle);
+int intr_find_mpmapping(int, int, int *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
@@ -264,8 +272,8 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);
-void x86_intlock(struct intrframe);
-void x86_intunlock(struct intrframe);
+void x86_intlock(struct intrframe *);
+void x86_intunlock(struct intrframe *);
 void x86_softintlock(void);
 void x86_softintunlock(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.18 2003/01/29 12:57:36 kanaoka Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.18.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,10 +35,10 @@
  */
 
 /*
- * RealTek 8129/8139 PCI NIC driver
+ * Realtek 8129/8139 PCI NIC driver
  *
  * Supports several extremely cheap PCI 10/100 adapters based on
- * the RealTek chipset. Datasheets can be obtained from
+ * the Realtek chipset. Datasheets can be obtained from
  * www.realtek.com.tw.
  *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.18 2003/01/29 12:57:36 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.18.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.18 2003/01/29 12:57:36 kanaoka Exp 
  * there appear to be problems with memory mapped mode: it looks like
  * doing too many memory mapped access back to back in rapid succession
  * can hang the bus. I'm inclined to blame this on crummy design/construction
- * on the part of RealTek. Memory mapped mode does appear to work on
+ * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
 #ifndef dreamcast		/* XXX */
@@ -100,27 +100,20 @@ struct rtk_pci_softc {
 
 static const struct rtk_type rtk_pci_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
-		"RealTek 8129 10/100BaseTX",
-		RTK_8129 },
+		RTK_8129, "Realtek 8129 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
-		"RealTek 8139 10/100BaseTX",
-		RTK_8139 },
+		RTK_8139, "Realtek 8139 10/100BaseTX" },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
-		"Accton MPX 5030/5038 10/100BaseTX",
-		RTK_8139 },
+		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
-		"Delta Electronics 8139 10/100BaseTX",
-		RTK_8139 },
+		RTK_8139, "Delta Electronics 8139 10/100BaseTX" },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
-		"Addtron Technology 8139 10/100BaseTX",
-		RTK_8139 },
+		RTK_8139, "Addtron Technology 8139 10/100BaseTX" },
 	{ PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
-		"SEGA Broadband Adapter",
-		RTK_8139 },
+		RTK_8139, "SEGA Broadband Adapter" },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
-		"D-Link Systems DFE 530TX+",
-		RTK_8139 },
-	{ 0, 0, NULL, 0 }
+		RTK_8139, "D-Link Systems DFE 530TX+" },
+	{ 0, 0, 0, NULL }
 };
 
 const struct rtk_type *rtk_pci_lookup __P((const struct pci_attach_args *));
@@ -250,7 +243,7 @@ rtk_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->rtk_type = t->rtk_type;
+	sc->rtk_type = t->rtk_basetype;
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 

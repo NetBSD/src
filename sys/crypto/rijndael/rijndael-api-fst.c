@@ -1,23 +1,44 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.12 2002/11/18 23:38:46 itojun Exp $	*/
-/*	$KAME: rijndael-api-fst.c,v 1.14 2002/10/18 23:50:12 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.12.6.1 2004/08/03 10:44:46 skrll Exp $	*/
 
-/*
- * rijndael-api-fst.c   v2.3   April '2000
+/**
+ * rijndael-api-fst.c
  *
- * Optimised ANSI C code
+ * @version 2.9 (December 2000)
  *
- * authors: v1.0: Antoon Bosselaers
- *          v2.0: Vincent Rijmen
- *          v2.1: Vincent Rijmen
- *          v2.2: Vincent Rijmen
- *          v2.3: Paulo Barreto
- *          v2.4: Vincent Rijmen
+ * Optimised ANSI C code for the Rijndael cipher (now AES)
  *
- * This code is placed in the public domain.
+ * @author Vincent Rijmen <vincent.rijmen@esat.kuleuven.ac.be>
+ * @author Antoon Bosselaers <antoon.bosselaers@esat.kuleuven.ac.be>
+ * @author Paulo Barreto <paulo.barreto@terra.com.br>
+ *
+ * This code is hereby placed in the public domain.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ''AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Acknowledgements:
+ *
+ * We are deeply indebted to the following people for their bug reports,
+ * fixes, and improvement suggestions to this implementation. Though we
+ * tried to list all contributions, we apologise in advance for any
+ * missing reference.
+ *
+ * Andrew Bales <Andrew.Bales@Honeywell.com>
+ * Markus Friedl <markus.friedl@informatik.uni-erlangen.de>
+ * John Skodon <skodonj@webquill.com>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.12 2002/11/18 23:38:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.12.6.1 2004/08/03 10:44:46 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -26,14 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.12 2002/11/18 23:38:46 itojun
 #include <stdlib.h>
 #include <string.h>
 #endif
+
+#include <crypto/rijndael/rijndael_local.h>
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael-api-fst.h>
-#include <crypto/rijndael/rijndael_local.h>
 
 int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
-	word8 k[MAXKC][4];
-	int i;
-	char *keyMat;
+	u_int8_t cipherKey[RIJNDAEL_MAXKB];
 	
 	if (key == NULL) {
 		return BAD_KEY_INSTANCE;
@@ -45,7 +65,7 @@ int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMate
 		return BAD_KEY_DIR;
 	}
 
-	if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) { 
+	if ((keyLen == 128) || (keyLen == 192) || (keyLen == 256)) {
 		key->keyLen = keyLen;
 	} else {
 		return BAD_KEY_MAT;
@@ -55,18 +75,14 @@ int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMate
 		memcpy(key->keyMaterial, keyMaterial, keyLen/8);
 	}
 
-	key->ROUNDS = keyLen/32 + 6;
-
 	/* initialize key schedule: */
-	keyMat = key->keyMaterial;
-	for (i = 0; i < key->keyLen/8; i++) {
-		k[i >> 2][i & 3] = (word8)keyMat[i]; 
+	memcpy(cipherKey, key->keyMaterial, keyLen/8);
+	if (direction == DIR_ENCRYPT) {
+		key->Nr = rijndaelKeySetupEnc(key->rk, cipherKey, keyLen);
+	} else {
+		key->Nr = rijndaelKeySetupDec(key->rk, cipherKey, keyLen);
 	}
-	rijndaelKeySched(k, key->keySched, key->ROUNDS);
-	if (direction == DIR_DECRYPT) {
-		rijndaelKeyEncToDec(key->keySched, key->ROUNDS);
-	}
-
+	rijndaelKeySetupEnc(key->ek, cipherKey, keyLen);
 	return TRUE;
 }
 
@@ -77,17 +93,17 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 		return BAD_CIPHER_MODE;
 	}
 	if (IV != NULL) {
-		memcpy(cipher->IV, IV, MAX_IV_SIZE);
+		memcpy(cipher->IV, IV, RIJNDAEL_MAX_IV_SIZE);
 	} else {
-		memset(cipher->IV, 0, MAX_IV_SIZE);
+		memset(cipher->IV, 0, RIJNDAEL_MAX_IV_SIZE);
 	}
 	return TRUE;
 }
 
 int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		BYTE *input, int inputLen, BYTE *outBuffer) {
-	int i, k, numBlocks;
-	word8 block[16], iv[4][4];
+	int i, k, t, numBlocks;
+	u_int8_t block[16], *iv;
 
 	if (cipher == NULL ||
 		key == NULL ||
@@ -101,87 +117,45 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	numBlocks = inputLen/128;
 	
 	switch (cipher->mode) {
-	case MODE_ECB: 
+	case MODE_ECB:
 		for (i = numBlocks; i > 0; i--) {
-			rijndaelEncrypt(input, outBuffer, key->keySched, key->ROUNDS);
+			rijndaelEncrypt(key->rk, key->Nr, input, outBuffer);
 			input += 16;
 			outBuffer += 16;
 		}
 		break;
 		
 	case MODE_CBC:
-#if 1 /*STRICT_ALIGN*/
-		memcpy(block, cipher->IV, 16);
-		memcpy(iv, input, 16);
-		((word32*)block)[0] ^= ((word32*)iv)[0];
-		((word32*)block)[1] ^= ((word32*)iv)[1];
-		((word32*)block)[2] ^= ((word32*)iv)[2];
-		((word32*)block)[3] ^= ((word32*)iv)[3];
-#else
-		((word32*)block)[0] = ((word32*)cipher->IV)[0] ^ ((word32*)input)[0];
-		((word32*)block)[1] = ((word32*)cipher->IV)[1] ^ ((word32*)input)[1];
-		((word32*)block)[2] = ((word32*)cipher->IV)[2] ^ ((word32*)input)[2];
-		((word32*)block)[3] = ((word32*)cipher->IV)[3] ^ ((word32*)input)[3];
-#endif
-		rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
-		input += 16;
-		for (i = numBlocks - 1; i > 0; i--) {
-#if 1 /*STRICT_ALIGN*/
-			memcpy(block, outBuffer, 16);
-			memcpy(iv, input, 16);
-			((word32*)block)[0] ^= ((word32*)iv)[0];
-			((word32*)block)[1] ^= ((word32*)iv)[1];
-			((word32*)block)[2] ^= ((word32*)iv)[2];
-			((word32*)block)[3] ^= ((word32*)iv)[3];
-#else
-			((word32*)block)[0] = ((word32*)outBuffer)[0] ^ ((word32*)input)[0];
-			((word32*)block)[1] = ((word32*)outBuffer)[1] ^ ((word32*)input)[1];
-			((word32*)block)[2] = ((word32*)outBuffer)[2] ^ ((word32*)input)[2];
-			((word32*)block)[3] = ((word32*)outBuffer)[3] ^ ((word32*)input)[3];
-#endif
-			outBuffer += 16;
-			rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
-			input += 16;
-		}
-		break;
-	
-	case MODE_CFB1:
-#if 1 /*STRICT_ALIGN*/
-		memcpy(iv, cipher->IV, 16); 
-#else  /* !STRICT_ALIGN */
-		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
-		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
-		*((word32*)iv[2]) = *((word32*)(cipher->IV+ 8));
-		*((word32*)iv[3]) = *((word32*)(cipher->IV+12));
-#endif /* ?STRICT_ALIGN */
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			for (k = 0; k < 128; k++) {
-				*((word32*) block    ) = *((word32*)iv[0]);
-				*((word32*)(block+ 4)) = *((word32*)iv[1]);
-				*((word32*)(block+ 8)) = *((word32*)iv[2]);
-				*((word32*)(block+12)) = *((word32*)iv[3]);
-				rijndaelEncrypt(block, block, key->keySched, key->ROUNDS);
-				outBuffer[k/8] ^= (block[0] & 0x80) >> (k & 7);
-				iv[0][0] = (iv[0][0] << 1) | (iv[0][1] >> 7);
-				iv[0][1] = (iv[0][1] << 1) | (iv[0][2] >> 7);
-				iv[0][2] = (iv[0][2] << 1) | (iv[0][3] >> 7);
-				iv[0][3] = (iv[0][3] << 1) | (iv[1][0] >> 7);
-				iv[1][0] = (iv[1][0] << 1) | (iv[1][1] >> 7);
-				iv[1][1] = (iv[1][1] << 1) | (iv[1][2] >> 7);
-				iv[1][2] = (iv[1][2] << 1) | (iv[1][3] >> 7);
-				iv[1][3] = (iv[1][3] << 1) | (iv[2][0] >> 7);
-				iv[2][0] = (iv[2][0] << 1) | (iv[2][1] >> 7);
-				iv[2][1] = (iv[2][1] << 1) | (iv[2][2] >> 7);
-				iv[2][2] = (iv[2][2] << 1) | (iv[2][3] >> 7);
-				iv[2][3] = (iv[2][3] << 1) | (iv[3][0] >> 7);
-				iv[3][0] = (iv[3][0] << 1) | (iv[3][1] >> 7);
-				iv[3][1] = (iv[3][1] << 1) | (iv[3][2] >> 7);
-				iv[3][2] = (iv[3][2] << 1) | (iv[3][3] >> 7);
-				iv[3][3] = (iv[3][3] << 1) | ((outBuffer[k/8] >> (7-(k&7))) & 1);
-			}
+			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
+			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
+			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
+			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
+			iv = outBuffer;
+			input += 16;
+			outBuffer += 16;
 		}
 		break;
-	
+
+    case MODE_CFB1:
+		iv = (u_int8_t *)cipher->IV;
+        for (i = numBlocks; i > 0; i--) {
+			memcpy(outBuffer, input, 16);
+            for (k = 0; k < 128; k++) {
+				rijndaelEncrypt(key->ek, key->Nr, iv, block);
+                outBuffer[k >> 3] ^= (block[0] & 0x80U) >> (k & 7);
+                for (t = 0; t < 15; t++) {
+                	iv[t] = (iv[t] << 1) | (iv[t + 1] >> 7);
+                }
+               	iv[15] = (iv[15] << 1) | ((outBuffer[k >> 3] >> (7 - (k & 7))) & 1);
+            }
+            outBuffer += 16;
+            input += 16;
+        }
+        break;
+
 	default:
 		return BAD_CIPHER_STATE;
 	}
@@ -201,7 +175,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 		BYTE *input, int inputOctets, BYTE *outBuffer) {
 	int i, numBlocks, padLen;
-	word8 block[16], *iv, *cp;
+	u_int8_t block[16], *iv;
 
 	if (cipher == NULL ||
 		key == NULL ||
@@ -215,43 +189,38 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 	numBlocks = inputOctets/16;
 
 	switch (cipher->mode) {
-	case MODE_ECB: 
+	case MODE_ECB:
 		for (i = numBlocks; i > 0; i--) {
-			rijndaelEncrypt(input, outBuffer, key->keySched, key->ROUNDS);
+			rijndaelEncrypt(key->rk, key->Nr, input, outBuffer);
 			input += 16;
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		if (padLen <= 0 || padLen > 16)
-			panic("rijndael_padEncrypt(ECB)");
 		memcpy(block, input, 16 - padLen);
-		for (cp = block + 16 - padLen; cp < block + 16; cp++)
-			*cp = padLen;
-		rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
+		memset(block + 16 - padLen, padLen, padLen);
+		rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 		break;
 
 	case MODE_CBC:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			((word32*)block)[0] = ((word32*)input)[0] ^ ((word32*)iv)[0];
-			((word32*)block)[1] = ((word32*)input)[1] ^ ((word32*)iv)[1];
-			((word32*)block)[2] = ((word32*)input)[2] ^ ((word32*)iv)[2];
-			((word32*)block)[3] = ((word32*)input)[3] ^ ((word32*)iv)[3];
-			rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
+			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
+			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
+			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
+			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
 			input += 16;
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		if (padLen <= 0 || padLen > 16)
-			panic("rijndael_padEncrypt(CBC)");
 		for (i = 0; i < 16 - padLen; i++) {
 			block[i] = input[i] ^ iv[i];
 		}
 		for (i = 16 - padLen; i < 16; i++) {
 			block[i] = (BYTE)padLen ^ iv[i];
 		}
-		rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
+		rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 		break;
 
 	default:
@@ -263,8 +232,8 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 
 int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		BYTE *input, int inputLen, BYTE *outBuffer) {
-	int i, k, numBlocks;
-	word8 block[16], iv[4][4];
+	int i, k, t, numBlocks;
+	u_int8_t block[16], *iv;
 
 	if (cipher == NULL ||
 		key == NULL ||
@@ -278,79 +247,45 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 	numBlocks = inputLen/128;
 
 	switch (cipher->mode) {
-	case MODE_ECB: 
-		for (i = numBlocks; i > 0; i--) { 
-			rijndaelDecrypt(input, outBuffer, key->keySched, key->ROUNDS);
+	case MODE_ECB:
+		for (i = numBlocks; i > 0; i--) {
+			rijndaelDecrypt(key->rk, key->Nr, input, outBuffer);
 			input += 16;
 			outBuffer += 16;
 		}
 		break;
 		
 	case MODE_CBC:
-#if 1 /*STRICT_ALIGN */
-		memcpy(iv, cipher->IV, 16); 
-#else
-		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
-		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
-		*((word32*)iv[2]) = *((word32*)(cipher->IV+ 8));
-		*((word32*)iv[3]) = *((word32*)(cipher->IV+12));
-#endif
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
-			((word32*)block)[0] ^= *((word32*)iv[0]);
-			((word32*)block)[1] ^= *((word32*)iv[1]);
-			((word32*)block)[2] ^= *((word32*)iv[2]);
-			((word32*)block)[3] ^= *((word32*)iv[3]);
-#if 1 /*STRICT_ALIGN*/
-			memcpy(iv, input, 16);
+			rijndaelDecrypt(key->rk, key->Nr, input, block);
+			((u_int32_t*)block)[0] ^= ((u_int32_t*)iv)[0];
+			((u_int32_t*)block)[1] ^= ((u_int32_t*)iv)[1];
+			((u_int32_t*)block)[2] ^= ((u_int32_t*)iv)[2];
+			((u_int32_t*)block)[3] ^= ((u_int32_t*)iv)[3];
+			memcpy(cipher->IV, input, 16);
 			memcpy(outBuffer, block, 16);
-#else
-			*((word32*)iv[0]) = ((word32*)input)[0]; ((word32*)outBuffer)[0] = ((word32*)block)[0];
-			*((word32*)iv[1]) = ((word32*)input)[1]; ((word32*)outBuffer)[1] = ((word32*)block)[1];
-			*((word32*)iv[2]) = ((word32*)input)[2]; ((word32*)outBuffer)[2] = ((word32*)block)[2];
-			*((word32*)iv[3]) = ((word32*)input)[3]; ((word32*)outBuffer)[3] = ((word32*)block)[3];
-#endif
 			input += 16;
 			outBuffer += 16;
 		}
 		break;
-	
-	case MODE_CFB1:
-#if 1 /*STRICT_ALIGN */
-		memcpy(iv, cipher->IV, 16); 
-#else
-		*((word32*)iv[0]) = *((word32*)(cipher->IV));
-		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
-		*((word32*)iv[2]) = *((word32*)(cipher->IV+ 8));
-		*((word32*)iv[3]) = *((word32*)(cipher->IV+12));
-#endif
-		for (i = numBlocks; i > 0; i--) {
-			for (k = 0; k < 128; k++) {
-				*((word32*) block    ) = *((word32*)iv[0]);
-				*((word32*)(block+ 4)) = *((word32*)iv[1]);
-				*((word32*)(block+ 8)) = *((word32*)iv[2]);
-				*((word32*)(block+12)) = *((word32*)iv[3]);
-				rijndaelEncrypt(block, block, key->keySched, key->ROUNDS);
-				iv[0][0] = (iv[0][0] << 1) | (iv[0][1] >> 7);
-				iv[0][1] = (iv[0][1] << 1) | (iv[0][2] >> 7);
-				iv[0][2] = (iv[0][2] << 1) | (iv[0][3] >> 7);
-				iv[0][3] = (iv[0][3] << 1) | (iv[1][0] >> 7);
-				iv[1][0] = (iv[1][0] << 1) | (iv[1][1] >> 7);
-				iv[1][1] = (iv[1][1] << 1) | (iv[1][2] >> 7);
-				iv[1][2] = (iv[1][2] << 1) | (iv[1][3] >> 7);
-				iv[1][3] = (iv[1][3] << 1) | (iv[2][0] >> 7);
-				iv[2][0] = (iv[2][0] << 1) | (iv[2][1] >> 7);
-				iv[2][1] = (iv[2][1] << 1) | (iv[2][2] >> 7);
-				iv[2][2] = (iv[2][2] << 1) | (iv[2][3] >> 7);
-				iv[2][3] = (iv[2][3] << 1) | (iv[3][0] >> 7);
-				iv[3][0] = (iv[3][0] << 1) | (iv[3][1] >> 7);
-				iv[3][1] = (iv[3][1] << 1) | (iv[3][2] >> 7);
-				iv[3][2] = (iv[3][2] << 1) | (iv[3][3] >> 7);
-				iv[3][3] = (iv[3][3] << 1) | ((input[k/8] >> (7-(k&7))) & 1);
-				outBuffer[k/8] ^= (block[0] & 0x80) >> (k & 7);
-			}
-		}
-		break;
+
+    case MODE_CFB1:
+		iv = (u_int8_t *)cipher->IV;
+        for (i = numBlocks; i > 0; i--) {
+			memcpy(outBuffer, input, 16);
+            for (k = 0; k < 128; k++) {
+				rijndaelEncrypt(key->ek, key->Nr, iv, block);
+                for (t = 0; t < 15; t++) {
+                	iv[t] = (iv[t] << 1) | (iv[t + 1] >> 7);
+                }
+               	iv[15] = (iv[15] << 1) | ((input[k >> 3] >> (7 - (k & 7))) & 1);
+                outBuffer[k >> 3] ^= (block[0] & 0x80U) >> (k & 7);
+            }
+            outBuffer += 16;
+            input += 16;
+        }
+        break;
 
 	default:
 		return BAD_CIPHER_STATE;
@@ -362,8 +297,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 		BYTE *input, int inputOctets, BYTE *outBuffer) {
 	int i, numBlocks, padLen;
-	word8 block[16];
-	word32 iv[4];
+	u_int8_t block[16];
 
 	if (cipher == NULL ||
 		key == NULL ||
@@ -382,13 +316,13 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 	switch (cipher->mode) {
 	case MODE_ECB:
 		/* all blocks but last */
-		for (i = numBlocks - 1; i > 0; i--) { 
-			rijndaelDecrypt(input, outBuffer, key->keySched, key->ROUNDS);
+		for (i = numBlocks - 1; i > 0; i--) {
+			rijndaelDecrypt(key->rk, key->Nr, input, outBuffer);
 			input += 16;
 			outBuffer += 16;
 		}
 		/* last block */
-		rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
+		rijndaelDecrypt(key->rk, key->Nr, input, block);
 		padLen = block[15];
 		if (padLen >= 16) {
 			return BAD_DATA;
@@ -402,25 +336,24 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 		
 	case MODE_CBC:
-		memcpy(iv, cipher->IV, 16);
 		/* all blocks but last */
 		for (i = numBlocks - 1; i > 0; i--) {
-			rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
-			((word32*)block)[0] ^= iv[0];
-			((word32*)block)[1] ^= iv[1];
-			((word32*)block)[2] ^= iv[2];
-			((word32*)block)[3] ^= iv[3];
-			memcpy(iv, input, 16);
+			rijndaelDecrypt(key->rk, key->Nr, input, block);
+			((u_int32_t*)block)[0] ^= ((u_int32_t*)cipher->IV)[0];
+			((u_int32_t*)block)[1] ^= ((u_int32_t*)cipher->IV)[1];
+			((u_int32_t*)block)[2] ^= ((u_int32_t*)cipher->IV)[2];
+			((u_int32_t*)block)[3] ^= ((u_int32_t*)cipher->IV)[3];
+			memcpy(cipher->IV, input, 16);
 			memcpy(outBuffer, block, 16);
 			input += 16;
 			outBuffer += 16;
 		}
 		/* last block */
-		rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
-		((word32*)block)[0] ^= iv[0];
-		((word32*)block)[1] ^= iv[1];
-		((word32*)block)[2] ^= iv[2];
-		((word32*)block)[3] ^= iv[3];
+		rijndaelDecrypt(key->rk, key->Nr, input, block);
+		((u_int32_t*)block)[0] ^= ((u_int32_t*)cipher->IV)[0];
+		((u_int32_t*)block)[1] ^= ((u_int32_t*)cipher->IV)[1];
+		((u_int32_t*)block)[2] ^= ((u_int32_t*)cipher->IV)[2];
+		((u_int32_t*)block)[3] ^= ((u_int32_t*)cipher->IV)[3];
 		padLen = block[15];
 		if (padLen <= 0 || padLen > 16) {
 			return BAD_DATA;
@@ -440,49 +373,3 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 	return 16*numBlocks - padLen;
 }
 
-#ifdef INTERMEDIATE_VALUE_KAT
-/**
- *	cipherUpdateRounds:
- *
- *	Encrypts/Decrypts exactly one full block a specified number of rounds.
- *	Only used in the Intermediate Value Known Answer Test.	
- *
- *	Returns:
- *		TRUE - on success
- *		BAD_CIPHER_STATE - cipher in bad state (e.g., not initialized)
- */
-int rijndael_cipherUpdateRounds(cipherInstance *cipher, keyInstance *key,
-		BYTE *input, int inputLen, BYTE *outBuffer, int rounds) {
-	int j;
-	word8 block[4][4];
-
-	if (cipher == NULL || key == NULL) {
-		return BAD_CIPHER_STATE;
-	}
-
-	for (j = 3; j >= 0; j--) {
-		/* parse input stream into rectangular array */
-  		*((word32*)block[j]) = *((word32*)(input+4*j));
-	}
-
-	switch (key->direction) {
-	case DIR_ENCRYPT:
-		rijndaelEncryptRound(block, key->keySched, key->ROUNDS, rounds);
-		break;
-		
-	case DIR_DECRYPT:
-		rijndaelDecryptRound(block, key->keySched, key->ROUNDS, rounds);
-		break;
-		
-	default:
-		return BAD_KEY_DIR;
-	} 
-
-	for (j = 3; j >= 0; j--) {
-		/* parse rectangular array into output ciphertext bytes */
-		*((word32*)(outBuffer+4*j)) = *((word32*)block[j]);
-	}
-	
-	return TRUE;
-}
-#endif /* INTERMEDIATE_VALUE_KAT */

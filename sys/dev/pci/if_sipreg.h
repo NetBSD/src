@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.11 2002/06/30 18:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.11.6.1 2004/08/03 10:49:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,9 +79,16 @@
 /*
  * Transmit FIFO size.  Used to compute the transmit drain threshold.
  *
- * The transmit FIFO is arranged as a 512 32-bit memory array.
+ * On the SiS 900, the transmit FIFO is arranged as a 512 32-bit memory
+ * array.
+ *
+ * On the DP83820, we have an 8KB transmit FIFO.
  */
+#ifdef DP83820
+#define	SIP_TXFIFO_SIZE	8192
+#else
 #define	SIP_TXFIFO_SIZE	(512 * 4)
+#endif
 
 /*
  * The SiS900 uses a single descriptor format for both transmit
@@ -264,11 +271,14 @@ struct sip_desc {
 #define	CFG_BEM		0x00000001	/* big-endian mode */
 
 #define	SIP_EROMAR	0x08	/* EEPROM access register */
-#ifdef DP83820
+#ifndef DP83820
+#define	EROMAR_REQ	0x00000400	/* SiS 96x specific */
+#define	EROMAR_DONE	0x00000200	/* SiS 96x specific */
+#define	EROMAR_GNT	0x00000100	/* SiS 96x specific */
+#endif /* DP83820 */
 #define	EROMAR_MDC	0x00000040	/* MII clock */
 #define	EROMAR_MDDIR	0x00000020	/* MII direction (1 == MAC->PHY) */
 #define	EROMAR_MDIO	0x00000010	/* MII data */
-#endif /* DP83820 */
 #define	EROMAR_EECS	0x00000008	/* chip select */
 #define	EROMAR_EESK	0x00000004	/* clock */
 #define	EROMAR_EEDO	0x00000002	/* data out */
@@ -450,7 +460,7 @@ struct sip_desc {
 #define	RXCFG_STRIPCRC	0x20000000	/* strip CRC */
 #endif /* DP83820 */
 #define	RXCFG_ATX	0x10000000	/* accept transmit packets */
-#define	RXCFG_AJAB	0x08000000	/* accept jabber packets */
+#define	RXCFG_ALP	0x08000000	/* accept long packets */
 #ifdef DP83820
 #define	RXCFG_AIRL	0x04000000	/* accept in-range length err packets */
 #define	RXCFG_MXDMA	 0x00700000	/* max DMA burst size */
@@ -494,9 +504,38 @@ struct sip_desc {
 #define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
 #endif /* DP83820 */
 
-#define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815) */
+#define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815/83820) */
 
-#define	SIP_NS_PCR	0x44	/* pause control/status register (83815) */
+#define	SIP_NS_PCR	0x44	/* pause control/status reg (83815/83820) */
+#define	PCR_PSEN	0x80000000 /* pause enable */
+#define	PCR_PS_MCAST	0x40000000 /* pause on multicast */
+#define	PCR_PS_DA	0x20000000 /* pause on DA */
+#define	PCR_PS_ACT	0x10000000 /* pause active */
+#define	PCR_PS_RCVD	0x08000000 /* pause packet recieved */
+#ifdef DP83820
+#define	PCR_PS_STHI_8	0x03000000 /* Status FIFO Hi Threshold (8packets) */
+#define	PCR_PS_STHI_4	0x02000000 /* Status FIFO Hi Threshold (4packets) */
+#define	PCR_PS_STHI_2	0x01000000 /* Status FIFO Hi Threshold (2packets) */
+#define	PCR_PS_STHI_0	0x00000000 /* Status FIFO Hi Threshold (disable) */
+#define	PCR_PS_STLO_8	0x00c00000 /* Status FIFO Lo Threshold (8packets) */
+#define	PCR_PS_STLO_4	0x00800000 /* Status FIFO Lo Threshold (4packets) */
+#define	PCR_PS_STLO_2	0x00400000 /* Status FIFO Lo Threshold (2packets) */
+#define	PCR_PS_STLO_0	0x00000000 /* Status FIFO Lo Threshold (disable) */
+#define	PCR_PS_FFHI_8	0x00300000 /* Data FIFO Hi Threshold (8Kbyte) */
+#define	PCR_PS_FFHI_4	0x00200000 /* Data FIFO Hi Threshold (4Kbyte) */
+#define	PCR_PS_FFHI_2	0x00100000 /* Data FIFO Hi Threshold (2Kbyte) */
+#define	PCR_PS_FFHI_0	0x00000000 /* Data FIFO Hi Threshold (disable) */
+#define	PCR_PS_FFLO_8	0x000c0000 /* Data FIFO Lo Threshold (8Kbyte) */
+#define	PCR_PS_FFLO_4	0x00080000 /* Data FIFO Lo Threshold (4Kbyte) */
+#define	PCR_PS_FFLO_2	0x00040000 /* Data FIFO Lo Threshold (2Kbyte) */
+#define	PCR_PS_FFLO_0	0x00000000 /* Data FIFO Lo Threshold (disable) */
+#define	PCR_PS_TX	0x00020000 /* Transmit PAUSE frame manually */
+#else
+#define	PCR_PSNEG	0x00200000 /* Pause Negoticated (83815) */
+#define	PCR_MLD_EN	0x00010000 /* Manual Load Enable (83815) */
+#endif /* DP83820 */
+#define PCR_PAUSE_CNT_MASK 0x0000ffff /* pause count mask */
+#define PCR_PAUSE_CNT	   65535      /* pause count (512bit-time) */
 
 #define	SIP_RFCR	0x48	/* receive filter control register */
 #define	RFCR_RFEN	0x80000000	/* Rx filter enable */
@@ -709,6 +748,15 @@ struct sip_desc {
 #define	SIS_REV_630EA1	0x83
 #define	SIS_REV_630ET	0x84
 #define	SIS_REV_635	0x90	/* same for 735 (745?) */
+#define	SIS_REV_960	0x91
+
+/*
+ * MII operations for recent SiS chipsets
+ */
+#define	SIS_MII_STARTDELIM	0x01
+#define	SIS_MII_READOP		0x02
+#define	SIS_MII_WRITEOP		0x01
+#define	SIS_MII_TURNAROUND	0x02
 
 /*
  * Serial EEPROM opcodes, including the start bit.

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.6 2003/01/18 08:32:05 thorpej Exp $ */
+/* $NetBSD: osf1_time.c,v 1.6.2.1 2004/08/03 10:44:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6 2003/01/18 08:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6.2.1 2004/08/03 10:44:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,7 @@ osf1_sys_getitimer(l, v, retval)
 	struct itimerval b_oitv;
 	caddr_t sg;
 	int error;
+
 	switch (SCARG(uap, which)) {
 	case OSF1_ITIMER_REAL:
 		SCARG(&a, which) = ITIMER_REAL;
@@ -209,8 +210,7 @@ osf1_sys_getitimer(l, v, retval)
 	}
 	sg = stackgap_init(p, 0);
 	SCARG(&a, itv) = stackgap_alloc(p, &sg, sizeof b_oitv);
-	if (error == 0)
-		error = sys_getitimer(l, &a, retval);
+	error = sys_getitimer(l, &a, retval);
 	if (error == 0 && SCARG(uap, itv) != NULL) {
 		/* get the NetBSD itimerval return value */
 		error = copyin((caddr_t)SCARG(&a, itv), (caddr_t)&b_oitv,
@@ -242,7 +242,7 @@ osf1_sys_settimeofday(l, v, retval)
 	struct osf1_timezone otz;
 	struct timeval tv;
 	struct timezone tz;
-	int error;
+	int error = 0;
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);

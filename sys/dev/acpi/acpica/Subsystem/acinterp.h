@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acinterp.h - Interpreter subcomponent prototypes and defines
- *       xRevision: 145 $
+ *       xRevision: 147 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -237,15 +237,17 @@ void
 AcpiExGetBufferDatum(
     ACPI_INTEGER            *Datum,
     void                    *Buffer,
+    UINT32                  BufferLength,
     UINT32                  ByteGranularity,
-    UINT32                  Offset);
+    UINT32                  BufferOffset);
 
 void
 AcpiExSetBufferDatum (
     ACPI_INTEGER            MergedDatum,
     void                    *Buffer,
+    UINT32                  BufferLength,
     UINT32                  ByteGranularity,
-    UINT32                  Offset);
+    UINT32                  BufferOffset);
 
 ACPI_STATUS
 AcpiExReadDataFromField (

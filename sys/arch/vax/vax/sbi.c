@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.28 2003/01/19 22:29:24 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.28.2.1 2004/08/03 10:42:37 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,6 +32,9 @@
 /*
  * Still to do: Write all SBI error handling.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.28.2.1 2004/08/03 10:42:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,14 +94,13 @@ void
 sbi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bp_conf *bp = aux;
-	u_int	nexnum, minnex;
+	u_int	nexnum, minnex = 0; /* default only one SBI, as on 780 */
 	struct	sbi_attach_args sa;
 
 	printf("\n");
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	if (vax_boardtype == VAX_BTYP_780) {
-		minnex = 0;	/* only one SBI */
 		sa.sa_sbinum = 0;
 	}
 	if (vax_boardtype == VAX_BTYP_790) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932reg.h,v 1.2 2002/05/03 00:07:02 thorpej Exp $	*/
+/*	$NetBSD: dp83932reg.h,v 1.2.10.1 2004/08/03 10:46:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ struct sonic_cda32 {
 #define	SONIC_ISR	0x05	/* Interrupt Status Register */
 	/* See IMR bits. */
 
-#define	SONIC_UTDAR	0x06	/* Upper Tx Descriptor Adress Register */
+#define	SONIC_UTDAR	0x06	/* Upper Tx Descriptor Address Register */
 
 #define	SONIC_CTDAR	0x07	/* Current Tx Descriptor Address Register */
 

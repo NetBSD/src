@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.5 2003/04/05 08:58:55 he Exp $
+\	$NetBSD: bootblk.fth,v 1.5.2.1 2004/08/03 10:41:22 skrll Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -441,7 +441,7 @@ h# 2000 buffer: indir-block
    then 2drop
    sboff read-super
    sb-buf fs_magic l@ fs_magic_value <>  if
-      64 dup to raid-offset 
+      rf_protected dup to raid-offset 
       dev_bsize * sboff + read-super
       sb-buf fs_magic l@ fs_magic_value <>  if
          ." Invalid superblock magic" cr

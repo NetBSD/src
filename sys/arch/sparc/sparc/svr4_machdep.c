@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.47 2003/01/18 06:45:06 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.47.2.1 2004/08/03 10:41:11 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.47.2.1 2004/08/03 10:41:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -451,16 +454,15 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	int onstack, oldsp, newsp, addr;
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_code;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = (struct trapframe *)l->l_md.md_tf;
@@ -586,8 +588,8 @@ svr4_trap(type, l)
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 
@@ -616,8 +618,8 @@ svr4_trap(type, l)
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 

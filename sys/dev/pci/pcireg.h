@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.42 2003/05/05 13:04:29 fvdl Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.42.2.1 2004/08/03 10:49:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -332,6 +332,13 @@ typedef u_int8_t pci_revision_t;
 	     (((cacheline) & PCI_CACHELINE_MASK) << PCI_CACHELINE_SHIFT))
 
 /*
+ * PCI header type
+ */
+#define PCI_HDRTYPE_DEVICE	0
+#define PCI_HDRTYPE_PPB		1
+#define PCI_HDRTYPE_PCB		2
+
+/*
  * Mapping registers
  */
 #define	PCI_MAPREG_START		0x10
@@ -398,7 +405,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_SUBSYS_ID_REG 0x2c
 
 /*
- * capabilities link list (PCI rev. 2.2)
+ * Capabilities link list (PCI rev. 2.2)
  */
 #define	PCI_CAPLISTPTR_REG		0x34	/* header type 0 */
 #define	PCI_CARDBUS_CAPLISTPTR_REG	0x14	/* header type 2 */
@@ -409,6 +416,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_RESERVED0	0x00
 #define	PCI_CAP_PWRMGMT		0x01
 #define	PCI_CAP_AGP		0x02
+#define PCI_CAP_AGP_MAJOR(cr)	(((cr) >> 20) & 0xf)
+#define PCI_CAP_AGP_MINOR(cr)	(((cr) >> 16) & 0xf)
 #define	PCI_CAP_VPD		0x03
 #define	PCI_CAP_SLOTID		0x04
 #define	PCI_CAP_MSI		0x05
@@ -456,25 +465,31 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Command. 16 bits at offset 2 (e.g. upper 16 bits of the first 32-bit
- * word at the capability).
+ * word at the capability; the lower 16 bits are the capability ID and
+ * next capability pointer).
+ *
+ * Since we always read PCI config space in 32-bit words, we define these
+ * as 32-bit values, offset and shifted appropriately.  Make sure you perform
+ * the appropriate R/M/W cycles!
  */
-#define PCI_PCIX_CMD			0x02
-#define PCI_PCIX_CMD_PERR_RECOVER	0x0001
-#define PCI_PCIX_CMD_RELAXED_ORDER	0x0002
-#define PCI_PCIX_CMD_BYTECNT_MASK	0x000c
-#define		PCI_PCIX_CMD_BCNT_512		0x0000
-#define		PCI_PCIX_CMD_BCNT_1024		0x0004
-#define		PCI_PCIX_CMD_BCNT_2048		0x0008
-#define		PCI_PCIX_CMD_BCNT_4096		0x000c
-#define PCI_PCIX_CMD_SPLTRANS_MASK	0x0070
-#define		PCI_PCIX_CMD_SPLTRANS_1		0x0000
-#define		PCI_PCIX_CMD_SPLTRANS_2		0x0010
-#define		PCI_PCIX_CMD_SPLTRANS_3		0x0020
-#define		PCI_PCIX_CMD_SPLTRANS_4		0x0030
-#define		PCI_PCIX_CMD_SPLTRANS_8		0x0040
-#define		PCI_PCIX_CMD_SPLTRANS_12	0x0050
-#define		PCI_PCIX_CMD_SPLTRANS_16	0x0060
-#define		PCI_PCIX_CMD_SPLTRANS_32	0x0070
+#define PCI_PCIX_CMD			0x00
+#define PCI_PCIX_CMD_PERR_RECOVER	0x00010000
+#define PCI_PCIX_CMD_RELAXED_ORDER	0x00020000
+#define PCI_PCIX_CMD_BYTECNT_MASK	0x000c0000
+#define	PCI_PCIX_CMD_BYTECNT_SHIFT	18
+#define		PCI_PCIX_CMD_BCNT_512		0x00000000
+#define		PCI_PCIX_CMD_BCNT_1024		0x00040000
+#define		PCI_PCIX_CMD_BCNT_2048		0x00080000
+#define		PCI_PCIX_CMD_BCNT_4096		0x000c0000
+#define PCI_PCIX_CMD_SPLTRANS_MASK	0x00700000
+#define		PCI_PCIX_CMD_SPLTRANS_1		0x00000000
+#define		PCI_PCIX_CMD_SPLTRANS_2		0x00100000
+#define		PCI_PCIX_CMD_SPLTRANS_3		0x00200000
+#define		PCI_PCIX_CMD_SPLTRANS_4		0x00300000
+#define		PCI_PCIX_CMD_SPLTRANS_8		0x00400000
+#define		PCI_PCIX_CMD_SPLTRANS_12	0x00500000
+#define		PCI_PCIX_CMD_SPLTRANS_16	0x00600000
+#define		PCI_PCIX_CMD_SPLTRANS_32	0x00700000
 
 /*
  * Status. 32 bits at offset 4.
@@ -489,6 +504,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIX_STATUS_SPLUNEX		0x00080000
 #define PCI_PCIX_STATUS_DEVCPLX		0x00100000
 #define PCI_PCIX_STATUS_MAXB_MASK	0x00600000
+#define	PCI_PCIX_STATUS_MAXB_SHIFT	21
 #define		PCI_PCIX_STATUS_MAXB_512	0x00000000
 #define		PCI_PCIX_STATUS_MAXB_1024	0x00200000
 #define		PCI_PCIX_STATUS_MAXB_2048	0x00400000
@@ -585,14 +601,14 @@ typedef u_int8_t pci_intr_line_t;
 #define PCI_BRIDGE_MEMORY_REG		0x20
 #define	  PCI_BRIDGE_MEMORY_BASE_SHIFT		4
 #define	  PCI_BRIDGE_MEMORY_LIMIT_SHIFT		20
-#define	  PCI_BRIDGE_MEMORY_BASE_MASK		0xffff
-#define	  PCI_BRIDGE_MEMORY_LIMIT_MASK		0xffff
+#define	  PCI_BRIDGE_MEMORY_BASE_MASK		0x0fff
+#define	  PCI_BRIDGE_MEMORY_LIMIT_MASK		0x0fff
 
 #define PCI_BRIDGE_PREFETCHMEM_REG	0x24
 #define	  PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT	4
 #define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT	20
-#define	  PCI_BRIDGE_PREFETCHMEM_BASE_MASK	0xffff
-#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK	0xffff
+#define	  PCI_BRIDGE_PREFETCHMEM_BASE_MASK	0x0fff
+#define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK	0x0fff
 #define	  PCI_BRIDGE_PREFETCHMEM_64BITS(reg)	((reg) & 0xf)
 
 #define PCI_BRIDGE_PREFETCHBASE32_REG	0x28

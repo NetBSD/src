@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2003/04/16 19:16:42 dsl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.2.1 2004/08/03 10:43:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -106,7 +100,7 @@ struct btinfo_memmap {
 	struct bi_memmap_entry entry[1]; /* var len */
 };
 
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Structure describing disk info as seen by the BIOS.
@@ -139,7 +133,7 @@ struct bi_biosgeom_entry {
 	unsigned int	cksum;			/* MBR checksum */
 	int		res0, res1, res2, res3;	/* future expansion; 0 now */
 #endif
-	struct mbr_partition dosparts[NMBRPART]; /* MBR itself */
+	struct mbr_partition dosparts[MBR_PART_COUNT]; /* MBR itself */
 } __attribute__((packed));
 
 struct btinfo_biosgeom {
@@ -149,7 +143,7 @@ struct btinfo_biosgeom {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
 #endif /* _LOCORE */
 

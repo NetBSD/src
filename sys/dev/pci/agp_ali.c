@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.4 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.4.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Install the gatt. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_ALI_ATTBASE);
-	reg = (reg & 0xff) | gatt->ag_physical;
+	reg = (reg & 0xfff) | (gatt->ag_physical & ~0xfff);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_ALI_ATTBASE, reg);
 	
 	/* Enable the TLB. */
@@ -155,7 +155,7 @@ agp_ali_detach(struct agp_softc *sc)
 	/* Put the aperture back the way it started. */
 	AGP_SET_APERTURE(sc, asc->initial_aperture);
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE);
-	reg &= 0xff;
+	reg &= 0xf;
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE, reg);
 
 	agp_free_gatt(sc, asc->gatt);
@@ -189,7 +189,7 @@ agp_ali_get_aperture(struct agp_softc *sc)
 	 * The aperture size is derived from the low bits of attbase.
 	 * I'm not sure this is correct..
 	 */
-	i = (int)pci_conf_read(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE) & 0xff;
+	i = (int)pci_conf_read(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE) & 0xf;
 	if (i >= agp_ali_table_size)
 		return 0;
 	return agp_ali_table[i];
@@ -208,7 +208,7 @@ agp_ali_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 		return EINVAL;
 
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE);
-	reg &= ~0xff;
+	reg &= ~0xf;
 	reg |= i;
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_ALI_ATTBASE, reg);
 	return 0;

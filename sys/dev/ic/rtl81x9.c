@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.45 2003/02/21 17:14:07 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45.2.1 2004/08/03 10:46:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45 2003/02/21 17:14:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.1 2004/08/03 10:46:18 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -144,7 +144,6 @@ STATIC void rtk_shutdown	__P((void *));
 STATIC int rtk_ifmedia_upd	__P((struct ifnet *));
 STATIC void rtk_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-STATIC u_int16_t rtk_read_eeprom __P((struct rtk_softc *, int, int));
 STATIC void rtk_eeprom_putbyte	__P((struct rtk_softc *, int, int));
 STATIC void rtk_mii_sync	__P((struct rtk_softc *));
 STATIC void rtk_mii_send	__P((struct rtk_softc *, u_int32_t, int));
@@ -160,7 +159,6 @@ STATIC int rtk_enable		__P((struct rtk_softc *));
 STATIC void rtk_disable		__P((struct rtk_softc *));
 STATIC void rtk_power		__P((int, void *));
 
-STATIC void rtk_setmulti	__P((struct rtk_softc *));
 STATIC int rtk_list_tx_init	__P((struct rtk_softc *));
 
 #define EE_SET(x)					\
@@ -544,7 +542,7 @@ rtk_phy_statchg(v)
 /*
  * Program the 64-bit multicast hash filter.
  */
-STATIC void rtk_setmulti(sc)
+void rtk_setmulti(sc)
 	struct rtk_softc	*sc;
 {
 	struct ifnet		*ifp;

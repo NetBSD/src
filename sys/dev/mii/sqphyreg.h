@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphyreg.h,v 1.2 2001/06/19 20:10:55 thorpej Exp $	*/
+/*	$NetBSD: sqphyreg.h,v 1.2.22.1 2004/08/03 10:48:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 #define	MII_SQPHY_STATUS	0x12	/* Status Output Register */
 #define	STATUS_INT		0x8000	/* Interrupt Detect */
 #define	STATUS_LNK_FAIL		0x4000	/* Link Fail */
-#define	STATUS_LOSS_SYNC	0x2000	/* Descrabler lost synchronization */
+#define	STATUS_LOSS_SYNC	0x2000	/* Descrambler lost synchronization */
 #define	STATUS_CWRD		0x1000	/* Codeword Error */
 #define	STATUS_SSD		0x0800	/* Start of Stream Error */
 #define	STATUS_ESD		0x0400	/* End of Stream Error */

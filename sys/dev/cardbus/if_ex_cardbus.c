@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.27.6.1 2004/08/03 10:45:47 skrll Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.27.6.1 2004/08/03 10:45:47 skrll Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.27 2002/10/02 16:33:42 thorpej E
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/mii/miivar.h>
 
@@ -131,13 +131,13 @@ const struct ex_cardbus_product {
 	int		ecp_cardtype;	/* card type */
 	const char	*ecp_name;	/* device name */
 } ex_cardbus_products[] = {
-	{ CARDBUS_PRODUCT_3COM_3C575TX,
+	{ PCI_PRODUCT_3COM_3C575TX,
 	  EX_CONF_MII | EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
 	  EX_CB_BOOMERANG,
 	  "3c575-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C575BTX,
+	{ PCI_PRODUCT_3COM_3C575BTX,
 	  EX_CONF_90XB|EX_CONF_MII|EX_CONF_INV_LED_POLARITY |
 	    EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -145,13 +145,37 @@ const struct ex_cardbus_product {
 	  EX_CB_CYCLONE,
 	  "3c575B-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C575CTX,
+	{ PCI_PRODUCT_3COM_3C575CTX,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c575CT Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C656_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656-TX Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C656B_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656B-TX Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C656C_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656C-TX Ethernet" },
 
 	{ 0,
 	  0,
@@ -172,7 +196,7 @@ ex_cardbus_lookup(ca)
 {
 	const struct ex_cardbus_product *ecp;
 
-	if (CARDBUS_VENDOR(ca->ca_id) != CARDBUS_VENDOR_3COM)
+	if (CARDBUS_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
 		return (NULL);
 
 	for (ecp = ex_cardbus_products; ecp->ecp_name != NULL; ecp++)
@@ -400,51 +424,27 @@ ex_cardbus_setup(csc)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t  reg;
-	int pmreg;
 
-	/* Get it out of power save mode if needed (BIOS bugs). */
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
-	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
-#if 1 /* XXX Probably not right for CardBus. */
-		if (reg == 3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-#endif
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    pmreg + 4, 0);
-		}
-	}
+	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
+	    PCI_PWR_D0);
 
+	/* Program the BAR */
+	cardbus_conf_write(cc, cf, csc->sc_tag,
+		csc->sc_bar_reg, csc->sc_bar_val); 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	if (csc->sc_cardtype == EX_CB_CYCLONE) {
+		/* Program the BAR */
+		cardbus_conf_write(cc, cf, csc->sc_tag,
+			csc->sc_bar_reg1, csc->sc_bar_val1); 
 		/*
 		 * Make sure CardBus brigde can access memory space.  Usually
 		 * memory access is enabled by BIOS, but some BIOSes do not
 		 * enable it.
 		 */
 		(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-
-		/* Program the BAR */
-		cardbus_conf_write(cc, cf, csc->sc_tag,
-			csc->sc_bar_reg1, csc->sc_bar_val1); 
 	}
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
-
-	/* Program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag,
-		csc->sc_bar_reg, csc->sc_bar_val); 
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
@@ -454,7 +454,7 @@ ex_cardbus_setup(csc)
 	    reg);
   
  	/*
-	 * set latency timmer
+	 * set latency timer
 	 */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
 	if (CARDBUS_LATTIMER(reg) < 0x20) {

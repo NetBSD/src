@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.19 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ eni_get_macaddr(scp, pa)
   struct en_softc *sc = (struct en_softc *)scp;
   pci_chipset_tag_t id = scp->en_pc;
   pcitag_t tag = pa->pa_tag;
-  int i, j, address, status;
+  int i, j, address;
   u_int32_t data, t_data;
   u_int8_t tmp;
   
@@ -370,7 +370,6 @@ eni_get_macaddr(scp, pa)
     data |= EN_PROM_CLK ;
     pci_conf_write(id, tag, EN_TONGA, data);
     data = pci_conf_read(id, tag, EN_TONGA);
-    status = data & EN_PROM_DATA;
     data &= ~EN_PROM_CLK ;
     pci_conf_write(id, tag, EN_TONGA, data);
     data |= EN_PROM_DATA ;
@@ -397,7 +396,6 @@ eni_get_macaddr(scp, pa)
     data |= EN_PROM_CLK ;
     pci_conf_write(id, tag, EN_TONGA, data);
     data = pci_conf_read(id, tag, EN_TONGA);
-    status = data & EN_PROM_DATA;
     data &= ~EN_PROM_CLK ;
     pci_conf_write(id, tag, EN_TONGA, data);
     data |= EN_PROM_DATA ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.11 2002/10/23 09:12:34 jdolecek Exp $	*/
+/*	$NetBSD: qv.c,v 1.11.6.1 2004/08/03 10:42:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -126,6 +122,8 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.11.6.1 2004/08/03 10:42:35 skrll Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -312,7 +310,7 @@ qvprobe(reg, ctlr)
 	/*
 	 * Turn on the keyboard and vertical interrupt vectors.
 	 */
-	qvaddr->qv_intcsr = 0;		/* init the interrupt controler */
+	qvaddr->qv_intcsr = 0;		/* init the interrupt controller */
 	qvaddr->qv_intcsr = 0x40;	/* reset irr			*/
 	qvaddr->qv_intcsr = 0x80;	/* specify individual vectors	*/
 	qvaddr->qv_intcsr = 0xc0;	/* preset autoclear data	*/
@@ -1265,7 +1263,7 @@ qvcons_init()
 		return 0;
 
         /*
-         * Found an entry for this cpu. Because this device is Microvax specific
+         * Found an entry for this CPU. Because this device is Microvax specific
          * we assume that there is a single q-bus and don't have to worry about
          * multiple adapters.
          *
@@ -1314,7 +1312,7 @@ int probed;
                 return(0);
 
         /*
-         * Found an entry for this cpu. Because this device is Microvax specific
+         * Found an entry for this CPU. Because this device is Microvax specific
          * we assume that there is a single q-bus and don't have to worry about
          * multiple adapters.
          *

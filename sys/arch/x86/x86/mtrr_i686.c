@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.2 2003/03/03 22:23:22 fvdl Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2 2003/03/03 22:23:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.1 2004/08/03 10:43:05 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -543,7 +543,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 			}
 		}
 		if (lowp == NULL || highp == NULL)
-			panic("mtrr: fixed register fuckup");
+			panic("mtrr: fixed register screwup");
 		error = 0;
 		for (mp = lowp; mp < highp; mp++) {
 			if ((mp->flags & MTRR_PRIVATE) && p != NULL

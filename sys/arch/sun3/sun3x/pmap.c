@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2003/06/23 11:01:47 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82.2.1 2004/08/03 10:42:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * to four.  In this implementation, we use three, named 'A' through 'C'.
  *
  * The MMU translates virtual addresses into physical addresses by 
- * traversing these tables in a proccess called a 'table walk'.  The most 
+ * traversing these tables in a process called a 'table walk'.  The most 
  * significant 7 bits of the Virtual Address ('VA') being translated are 
  * used as an index into the level A table, whose base in physical memory 
  * is stored in a special MMU register, the 'CPU Root Pointer' or CRP.  The 
@@ -110,6 +110,9 @@
  * alias and a 22 entry cache.  So sadly (or happily), the first paragraph
  * of the previous note does not apply to the sun3x pmap.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82.2.1 2004/08/03 10:42:13 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1200,7 +1203,7 @@ get_a_table()
 	tbl = a_pool.tqh_first;
 	if (tbl == NULL) {
 		/*
-		 * XXX - Instead of panicing here and in other get_x_table
+		 * XXX - Instead of panicking here and in other get_x_table
 		 * functions, we do have the option of sleeping on the head of
 		 * the table pool.  Any function which updates the table pool
 		 * would then issue a wakeup() on the head, thus waking up any

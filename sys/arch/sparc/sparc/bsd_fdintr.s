@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.23 2003/01/31 01:26:39 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.23.2.1 2004/08/03 10:41:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -307,7 +307,7 @@ resultphase1:
 ssi:
 	! set software interrupt
 	! enter here with status in %l7
-	! SMP: consider which cpu to ping?
+	! SMP: consider which CPU to ping?
 	st	%l7, [R_fdc + FDC_ISTATUS]
 	FD_SET_SWINTR
 

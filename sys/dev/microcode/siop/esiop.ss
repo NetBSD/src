@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.14 2002/08/29 15:42:49 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.14.6.1 2004/08/03 10:48:49 skrll Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -14,9 +14,8 @@
 ; 3. All advertising materials mentioning features or use of this software
 ;    must display the following acknowledgement:
 ;	This product includes software developed by Manuel Bouyer.
-; 4. Neither the name of the University nor the names of its contributors
-;    may be used to endorse or promote products derived from this software
-;    without specific prior written permission.
+; 4. The name of the author may not be used to endorse or promote products
+;    derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
 ; ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -174,7 +173,7 @@ nextisn:
 	JUMP REL(waitphase), WHEN NOT MSG_IN;
 	MOVE 1, abs_msgin2, WHEN MSG_IN;
 	CLEAR ACK;
-	INT int_msgin, IF NOT 0x20; not a simple tag message, let host handle it
+	JUMP REL(handle_msgin), IF NOT 0x20; not a simple tag message
 	MOVE 1, abs_msgin2, WHEN MSG_IN; get tag
 	MOVE SFBR to SCRATCHA2;
 	MOVE SFBR to SCRATCHC3;
@@ -209,6 +208,7 @@ waitphase:
 
 handle_cmpl:
 	CALL REL(disconnect);
+	STORE NOFLUSH SCRATCHA0, 4, from tlq_offset; save current offset
 	MOVE SCRATCHE1 to SFBR;
 	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
 	MOVE SCRATCHF0 to SFBR; load pointer in done ring
@@ -342,10 +342,8 @@ handle_msgin:
 	JUMP REL(handle_extin), IF 0x01	; extended message
 	INT int_msgin, IF NOT 0x04;
 	CALL REL(disconnect)		; disconnect message
-; if we didn't get sdp, or if offset is 0, no need to interrupt
+; if we didn't get sdp, no need to interrupt
 	MOVE SCRATCHC0 & f_c_sdp TO SFBR;
-	JUMP REL(script_sched), if 0x00;
-	MOVE SCRATCHA1 TO SFBR;
 	JUMP REL(script_sched), if 0x00;
 ; Ok, we need to save data pointers
 	INT int_disc;

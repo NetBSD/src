@@ -37,7 +37,7 @@
  * iobase + 2 : isac read/write
  * iobase + 3 : hscx read/write ( offset 0-0x3f    hscx0 , 
  *                                offset 0x40-0x7f hscx1 )
- * iobase + 4 : offset for indirect adressing
+ * iobase + 4 : offset for indirect addressing
  *
  *---------------------------------------------------------------------------
  *
@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.4 2002/03/24 20:35:52 martin Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.4.10.1 2004/08/03 10:48:22 skrll Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4 2002/03/24 20:35:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4.10.1 2004/08/03 10:48:22 skrll Exp $");
 
 #include "opt_isicpnp.h"  
 #ifdef ISICPNP_SEDLBAUER

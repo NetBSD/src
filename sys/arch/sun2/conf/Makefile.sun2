@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.15 2002/11/26 18:51:17 thorpej Exp $
+# $NetBSD: Makefile.sun2,v 1.15.6.1 2004/08/03 10:41:48 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -100,3 +100,8 @@ stub.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.10 2003/06/25 20:33:59 ichiro Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.10.2.1 2004/08/03 10:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.10 2003/06/25 20:33:59 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.10.2.1 2004/08/03 10:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct agp_intel_softc {
 #define	CHIP_I840	0x2
 #define	CHIP_I845	0x3
 #define	CHIP_I850	0x4
+#define	CHIP_I865	0x5
 };
 
 static u_int32_t agp_intel_get_aperture(struct agp_softc *);
@@ -95,6 +96,8 @@ agp_intel_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82850_AGP:	/* i850/i860 */
 	case PCI_PRODUCT_INTEL_82845_AGP:
 	case PCI_PRODUCT_INTEL_82840_AGP:
+	case PCI_PRODUCT_INTEL_82865_AGP:
+	case PCI_PRODUCT_INTEL_82875P_AGP:
 		return (1);
 	}
 
@@ -122,6 +125,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0) {
 		aprint_normal(": using generic initialization for Intel AGP\n");
+		aprint_normal("%s", sc->as_dev.dv_xname);
 		isc->chiptype = CHIP_INTEL;
 	}
 
@@ -136,20 +140,24 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	switch (PCI_PRODUCT(isc->vga_pa.pa_id)) {
-	case PCI_PRODUCT_INTEL_82855PM_AGP:
-	case PCI_PRODUCT_INTEL_82845_AGP:
-		isc->chiptype = CHIP_I845;
-		break;
-	case PCI_PRODUCT_INTEL_82840_AGP:
-		isc->chiptype = CHIP_I840;
-		break;
-	case PCI_PRODUCT_INTEL_82850_AGP:
-		isc->chiptype = CHIP_I850;
-		break;
 	case PCI_PRODUCT_INTEL_82443LX_AGP:
 	case PCI_PRODUCT_INTEL_82443BX_AGP:
 	case PCI_PRODUCT_INTEL_82443GX_AGP:
 		isc->chiptype = CHIP_I443;
+		break;
+	case PCI_PRODUCT_INTEL_82840_AGP:
+		isc->chiptype = CHIP_I840;
+		break;
+	case PCI_PRODUCT_INTEL_82855PM_AGP:
+	case PCI_PRODUCT_INTEL_82845_AGP:
+		isc->chiptype = CHIP_I845;
+		break;
+	case PCI_PRODUCT_INTEL_82850_AGP:
+		isc->chiptype = CHIP_I850;
+		break;
+	case PCI_PRODUCT_INTEL_82865_AGP:
+	case PCI_PRODUCT_INTEL_82875P_AGP:
+		isc->chiptype = CHIP_I865;
 		break;
 	}
 
@@ -198,10 +206,11 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable things, clear errors etc. */
 	switch (isc->chiptype) {
 	case CHIP_I845:
+	case CHIP_I865:
 		{
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCMD,
-			AGPCMD_SBA | AGPCMD_AGPEN | AGPCMD_RATE_4X);
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I845_AGPMISC,					AGPMISC_AAGN);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_I840_MCHCFG);
+		reg |= MCHCFG_AAGN;
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I840_MCHCFG, reg);
 		break;
 		}
 	case CHIP_I840:
@@ -233,8 +242,9 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			AGP_INTEL_I8XX_ERRSTS, 0xc000);
 		break;
 
-	case CHIP_I850:
 	case CHIP_I845:
+	case CHIP_I850:
+	case CHIP_I865:
 		pci_conf_write(sc->as_pc, sc->as_tag,
 			AGP_INTEL_I8XX_ERRSTS, 0x00ff);
 		break;
@@ -346,13 +356,14 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	pcireg_t reg;
 
 	switch (isc->chiptype) {
-        case CHIP_I850:
-        case CHIP_I845:
-        case CHIP_I840:
+	case CHIP_I865:
+	case CHIP_I850:
+	case CHIP_I845:
+	case CHIP_I840:
 	case CHIP_I443:
 		{
 		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL);
-                reg &= ~AGPCTRL_GTLB;
+		reg &= ~AGPCTRL_GTLB;
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
 			reg);
 		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,

@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: dos.h,v 1.2 1999/11/22 01:14:55 itohy Exp $
+ *	$NetBSD: dos.h,v 1.2.28.1 2004/08/03 10:42:56 skrll Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -359,7 +359,7 @@ struct dos_prcptr {
 /* ff2d w ; e */	int DOS_SETTIME __P((int));
 /* ff2e w */		void DOS_VERIFY __P((int));
 /* ff2f w w ; e */	int DOS_DUP0 __P((int, int));
-/* ff30 */		int __const DOS_VERNUM __P((void));
+/* ff30 */		int __pure DOS_VERNUM __P((void));
 /* ff31 l w ; noret */	__dead void DOS_KEEPPR __P((int, int)) __attribute__((__noreturn__));
 /* ff32 w l ; e */	int DOS_GETDPB __P((int, struct dos_dpbptr *));
 /* ff33 w */		int DOS_BREAKCK __P((int));

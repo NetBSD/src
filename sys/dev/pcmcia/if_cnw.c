@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.24 2002/10/02 16:52:09 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.24.6.1 2004/08/03 10:50:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,11 +95,10 @@
  *
  * When this driver was developed, the Linux Netwave driver was used
  * as a hardware manual. That driver is Copyright (c) 1997 University
- * of Tromsø, Norway. It is part of the Linix pcmcia-cs package that
- * can be found at
- * http://hyper.stanford.edu/HyperNews/get/pcmcia/home.html. The most
- * recent version of the pcmcia-cs package when this driver was
- * written was 3.0.6.
+ * of Tromsø, Norway. It is part of the Linux pcmcia-cs package that
+ * can be found at http://pcmcia-cs.sourceforge.net/. The most recent
+ * version of the pcmcia-cs package when this driver was written was
+ * 3.0.6.
  *
  * Unfortunately, a lot of explicit numeric constants were used in the
  * Linux driver. I have tried to use symbolic names whenever possible,
@@ -113,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.24 2002/10/02 16:52:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.24.6.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

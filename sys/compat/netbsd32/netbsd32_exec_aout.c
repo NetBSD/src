@@ -1,8 +1,34 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.15.2.1 2003/07/02 15:25:50 darrenr Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.15.2.2 2004/08/03 10:44:21 skrll Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
  *
@@ -33,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.15.2.1 2003/07/02 15:25:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.15.2.2 2004/08/03 10:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.15.2.1 2003/07/02 15:25:50 
 
 int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
 			     void *, size_t, const void *, const void *));
-
-int netbsd32_exec_aout_setup_stack __P((struct proc *p,
-					struct exec_package *epp));
 
 /*
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
@@ -93,14 +116,17 @@ exec_netbsd32_makecmds(l, epp)
 
 	midmag = mid << 16 | magic;
 
+	/* this is already needed by setup_stack() */
+	epp->ep_flags |= EXEC_32;
+
 	switch (midmag) {
-	case (MID_SPARC << 16) | ZMAGIC:
+	case (NETBSD32_MID_MACHINE << 16) | ZMAGIC:
 		error = netbsd32_exec_aout_prep_zmagic(l->l_proc, epp);
 		break;
-	case (MID_SPARC << 16) | NMAGIC:
+	case (NETBSD32_MID_MACHINE << 16) | NMAGIC:
 		error = netbsd32_exec_aout_prep_nmagic(l->l_proc, epp);
 		break;
-	case (MID_SPARC << 16) | OMAGIC:
+	case (NETBSD32_MID_MACHINE << 16) | OMAGIC:
 		error = netbsd32_exec_aout_prep_omagic(l->l_proc, epp);
 		break;
 	default:
@@ -109,12 +135,10 @@ exec_netbsd32_makecmds(l, epp)
 		break;
 	}
 
-	if (error == 0) {
-		/* set up our emulation information */
-		epp->ep_flags |= EXEC_32;
-	} else
+	if (error) {
 		kill_vmcmds(&epp->ep_vmcmds);
-
+		epp->ep_flags &= ~EXEC_32;	
+	}
 	return error;
 }
 
@@ -159,11 +183,12 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		    epp->ep_daddr + execp->a_data, NULLVP, 0,
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return netbsd32_exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -204,7 +229,7 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return netbsd32_exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
 
 /*
@@ -251,46 +276,5 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text,
 							PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return netbsd32_exec_aout_setup_stack(p, epp);
-}
-
-/*
- * netbsd32_exec_aout_setup_stack(): Set up the stack segment for an a.out
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-int
-netbsd32_exec_aout_setup_stack(struct proc *p, struct exec_package *epp)
-{
-
-	epp->ep_maxsaddr = USRSTACK32 - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK32;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }

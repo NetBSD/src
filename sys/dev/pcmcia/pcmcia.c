@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.35 2003/01/01 00:10:24 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.35.2.1 2004/08/03 10:50:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35 2003/01/01 00:10:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -289,11 +289,12 @@ pcmcia_print(arg, pnp)
 	struct pcmcia_card *card = &sc->card;
 	char devinfo[256];
 
-	if (pnp) {
-		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
-		aprint_normal("%s at %s, ", devinfo, pnp);
-	}
-	aprint_normal(" function %d", pa->pf->number);
+	if (pnp)
+		aprint_normal("%s", pnp);
+
+	pcmcia_devinfo(card, !!pnp, devinfo, sizeof(devinfo));
+
+	aprint_normal(" function %d: %s", pa->pf->number, devinfo);
 
 	return (UNCONF);
 }
@@ -303,19 +304,34 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 	struct pcmcia_card *card;
 	int showhex;
 	char *cp;
-	int cplen;
+	size_t cplen;
 {
 	int i, n;
 
-	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 0; i++) {
+	if (cplen > 1) {
+		*cp++ = '<';
+		*cp = '\0';
+		cplen--;
+	}
+
+	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 1; i++) {
 		n = snprintf(cp, cplen, "%s%s", (i && i != 3) ? ", " : "",
 		        card->cis1_info[i]);
 		cp += n;
+		if (cplen < n)
+			return;
 		cplen -= n;
 	}
-	if (showhex && cplen > 0)
-		snprintf(cp, cplen, "%s(manufacturer 0x%04x, product 0x%04x)",
-		    i ? " " : "", card->manufacturer, card->product);
+
+	if (cplen > 1) {
+		*cp++ = '>';
+		*cp = '\0';
+		cplen--;
+	}
+
+	if (showhex && cplen > 1)
+		snprintf(cp, cplen, " (manufacturer 0x%04x, product 0x%04x)",
+		    card->manufacturer, card->product);
 }
 
 const struct pcmcia_product *
@@ -567,9 +583,9 @@ pcmcia_function_disable(pf)
 
 	if ((pf->pf_flags & PFF_ENABLED) == 0) {
 		/*
-		 * Don't do anything if we're already disabled.
+		 * Don't do anything but decrement if we're already disabled.
 		 */
-		return;
+		goto out;
 	}
 
 	/*
@@ -593,6 +609,7 @@ pcmcia_function_disable(pf)
 		pcmcia_mem_free(pf, &pf->pf_pcmh);
 	}
 
+out:
 	/*
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.

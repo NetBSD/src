@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.9 2001/09/21 23:44:21 ad Exp $	*/
+/*	$NetBSD: i2o.h,v 1.9.20.1 2004/08/03 10:46:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define	_I2O_I2O_H_
 
 /*
- * ================= Miscellenous definitions =================
+ * ================= Miscellaneous definitions =================
  */
 
 /* Organisation IDs */
@@ -838,8 +838,8 @@ struct i2o_param_rbs_device_info {
 #define	I2O_RBS_CAP_CACHING		0x00000001
 #define	I2O_RBS_CAP_MULTI_PATH		0x00000002
 #define	I2O_RBS_CAP_DYNAMIC_CAPACITY	0x00000004
-#define	I2O_RBS_CAP_REMOVEABLE_MEDIA	0x00000008
-#define	I2O_RBS_CAP_REMOVEABLE_DEVICE	0x00000010
+#define	I2O_RBS_CAP_REMOVABLE_MEDIA	0x00000008
+#define	I2O_RBS_CAP_REMOVABLE_DEVICE	0x00000010
 #define	I2O_RBS_CAP_READ_ONLY		0x00000020
 #define	I2O_RBS_CAP_LOCKOUT		0x00000040
 #define	I2O_RBS_CAP_BOOT_BYPASS		0x00000080

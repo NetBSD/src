@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.25 2003/04/29 22:12:51 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25.2.1 2004/08/03 10:44:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,18 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25 2003/04/29 22:12:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.1 2004/08/03 10:44:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/ktrace.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/sa.h>
+#include <sys/mount.h>
+#include <sys/ktrace.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -59,11 +65,17 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25 2003/04/29 22:12:51 manu Exp $");
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_task.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef COMPAT_DARWIN
 #include <compat/darwin/darwin_exec.h>
 #endif
+
+#define ISSET(t, f)     ((t) & (f))
+
+static void 
+update_exception_port(struct mach_emuldata *, int exc, struct mach_port *);
 
 int 
 mach_task_get_special_port(args)
@@ -73,11 +85,11 @@ mach_task_get_special_port(args)
 	mach_task_get_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
-	int error;
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -91,11 +103,6 @@ mach_task_get_special_port(args)
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
 		    l, MACH_PORT_TYPE_SEND, 0);
-#ifdef DEBUG_MACH
-		printf("*** get bootstrap right %p, port %p, recv %p [%p]\n",
-		    mr, mr->mr_port, mr->mr_port->mp_recv,
-		    mr->mr_port->mp_recv->mr_sethead);
-#endif
 		break;
 
 	case MACH_TASK_WIRED_LEDGER_PORT:
@@ -103,22 +110,15 @@ mach_task_get_special_port(args)
 	default:
 		uprintf("mach_task_get_special_port(): unimpl. port %d\n",
 		    req->req_which_port);
-		return mach_msg_error(args, error);
+		return mach_msg_error(args, EINVAL);
 		break;
 	}
 
-	rep->rep_msgh.msgh_bits = 
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_msgh_body.msgh_descriptor_count = 1;
-	rep->rep_special_port.name = (mach_port_t)mr->mr_name;
-	rep->rep_special_port.disposition = 0x11; /* XXX why? */
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_port_desc(rep, mr->mr_name);
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -129,65 +129,51 @@ mach_ports_lookup(args)
 	mach_ports_lookup_request_t *req = args->smsg;
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
-	struct mach_right *msp[7];
-	vaddr_t va;
+	struct mach_right *mr;
+	mach_port_name_t mnp[7];
+	void *uaddr;
 	int error;
+	int count;
 
 	/* 
-	 * This is some out of band data sent with the reply. In the 
-	 * encountered situation the out of band data has always been null
+	 * This is some out of band data sent with the reply. In the
+	 * encountered situation, the out of band data has always been null
 	 * filled. We have to see more of this in order to fully understand
 	 * how this trap works.
 	 */
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, PAGE_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
-	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
+	mnp[0] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[3] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[5] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[6] = (mach_port_name_t)MACH_PORT_DEAD;
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
-	msp[0] = MACH_PORT_DEAD;
-	msp[3] = MACH_PORT_DEAD;
-	msp[5] = MACH_PORT_DEAD;
-	msp[6] = MACH_PORT_DEAD;
+	mr = mach_right_get(med->med_kernel, tl, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_KERNEL_PORT] = mr->mr_name;
+	mr = mach_right_get(med->med_host, tl, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_HOST_PORT] = mr->mr_name;
+	mr = mach_right_get(med->med_bootstrap, tl, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_BOOTSTRAP_PORT] = mr->mr_name;
 
-	msp[MACH_TASK_KERNEL_PORT] = 
-	    mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-	msp[MACH_TASK_HOST_PORT] = 
-	    mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
-	msp[MACH_TASK_BOOTSTRAP_PORT] = 
-	    mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
-
-#ifdef DEBUG_MACH
-	printf("mach_ports_lookup: kernel %08x, host %08x, boostrap %08x\n",
-	    msp[MACH_TASK_KERNEL_PORT]->mr_name, 
-	    msp[MACH_TASK_HOST_PORT]->mr_name,
-	    msp[MACH_TASK_BOOTSTRAP_PORT]->mr_name);
-#endif
 	/*
 	 * On Darwin, the data seems always null...
 	 */
-	if ((error = copyout(&msp[0], (void *)va, sizeof(msp))) != 0)
+	uaddr = NULL;
+	if ((error = mach_ool_copyout(tl, &mnp[0], 
+	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
-	rep->rep_init_port_set.address = (void *)va;
-	rep->rep_init_port_set.count = 3; /* XXX why ? */
-	rep->rep_init_port_set.copy = 2; /* XXX why ? */
-	rep->rep_init_port_set.disposition = 0x11; /* XXX why? */
-	rep->rep_init_port_set.type = 2; /* XXX why? */
-	rep->rep_init_port_set_count = 3; /* XXX why? */
-	rep->rep_trailer.msgh_trailer_size = 8;
+	count = 3; /* XXX Shouldn't this be 7? */
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_ool_ports_desc(rep, uaddr, count);
+
+	rep->rep_init_port_set_count = count;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -199,6 +185,7 @@ mach_task_set_special_port(args)
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
@@ -207,7 +194,7 @@ mach_task_set_special_port(args)
 	mn = req->req_special_port.name;
 
 	/* Null port ? */
-	if (mn == NULL)
+	if (mn == 0)
 		return mach_msg_error(args, 0);
 
 	/* Does the inserted port exists? */
@@ -217,39 +204,39 @@ mach_task_set_special_port(args)
 	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
 		mp = med->med_kernel;
 		med->med_kernel = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 		break;
 
 	case MACH_TASK_HOST_PORT:
 		mp = med->med_host;
 		med->med_host = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mp = med->med_bootstrap;
 		med->med_bootstrap = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 #ifdef COMPAT_DARWIN
 		/*
-		 * mach_init sets the bootstrap port for any new process
+		 * mach_init sets the bootstrap port for any new process.
 		 */
 		{
 			struct darwin_emuldata *ded;
 
-			ded = l->l_proc->p_emuldata;
+			ded = tl->l_proc->p_emuldata;
 			if (ded->ded_fakepid == 1) {
 				mach_bootstrap_port = med->med_bootstrap;
 #ifdef DEBUG_DARWIN
@@ -269,14 +256,13 @@ mach_task_set_special_port(args)
 		    req->req_which_port);
 	}
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -288,52 +274,42 @@ mach_task_threads(args)
 	mach_task_threads_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
+	struct proc *tp = tl->l_proc;
+	struct lwp *cl;
 	struct mach_emuldata *med;
+	struct mach_lwp_emuldata *mle;
 	int error;
-	vaddr_t va;
+	void *uaddr;
 	size_t size;
-	int i;
+	int i = 0;
 	struct mach_right *mr;
-	mach_msg_port_descriptor_t *mpd;
+	mach_port_name_t *mnp;
 
-	med = l->l_proc->p_emuldata;
+	med = tp->p_emuldata;
+	size = tp->p_nlwps * sizeof(*mnp);
+	mnp = malloc(size, M_TEMP, M_WAITOK);
+	uaddr = NULL;
 
-	size = l->l_proc->p_nlwps * sizeof(*mpd);
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
-	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL, UVM_INH_COPY, 
-	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
-
-	mpd = malloc(size, M_TEMP, M_WAITOK);
-	for (i = 0; i < l->l_proc->p_nlwps; i++) {
-		/* XXX each thread should have a kernel port */
-		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-		mpd[i].name = mr->mr_name;
-		mpd[i].disposition = 0x11;
+	LIST_FOREACH(cl, &tp->p_lwps, l_sibling) {
+		mle = cl->l_emuldata;
+		mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
+		mnp[i++] = mr->mr_name;
 	}
-	if ((error = copyout(mpd, (void *)va, size)) != 0) {
-		free(mpd, M_TEMP);
-		return mach_msg_error(args, error);
-	}
-	free(mpd, M_TEMP);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_list.address = (void *)va;
-	rep->rep_list.count = l->l_proc->p_nlwps;
-	rep->rep_list.disposition = 0x11;
-	rep->rep_count = l->l_proc->p_nlwps;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	/* This will free mnp */
+	if ((error = mach_ool_copyout(l, mnp, &uaddr, 
+	    size, MACH_OOL_TRACE|MACH_OOL_FREE)) != 0)
+		return mach_msg_error(args, error);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	mach_add_ool_ports_desc(rep, uaddr, tp->p_nlwps);
+
+	rep->rep_count = tp->p_nlwps;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -344,21 +320,64 @@ mach_task_get_exception_ports(args)
 	mach_task_get_exception_ports_request_t *req = args->smsg;
 	mach_task_get_exception_ports_reply_t *rep = args->rmsg;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
+	struct mach_right *mr;
+	struct mach_exc_info *mei;
+	int i, j, count;
 
-	med = l->l_proc->p_emuldata;
+	med = tl->l_proc->p_emuldata;
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	/* It always returns an array of 32 ports even if only 9 can be used */
+	count = sizeof(rep->rep_old_handler) / sizeof(rep->rep_old_handler[0]);
+
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_masks_count = count;
+
+	j = 0;
+	for (i = 0; i <= MACH_EXC_MAX; i++) {
+		if (med->med_exc[i] == NULL)
+			continue;
+
+		if (med->med_exc[i]->mp_datatype != MACH_MP_EXC_INFO) {
+#ifdef DIAGNOSTIC
+			printf("Exception port without mach_exc_info\n");
+#endif
+			continue;
+		}
+		mei = med->med_exc[i]->mp_data;
+
+		mr = mach_right_get(med->med_exc[i], l, MACH_PORT_TYPE_SEND, 0);
+
+		mach_add_port_desc(rep, mr->mr_name);
+
+		rep->rep_masks[j] = 1 << i;
+		rep->rep_old_behaviors[j] = mei->mei_behavior;
+		rep->rep_old_flavors[j] = mei->mei_flavor;
+
+		j++;
+	}
 
 	*msglen = sizeof(*rep);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
+}
+
+static void 
+update_exception_port(med, exc, mp)
+	struct mach_emuldata *med;
+	int exc;
+	struct mach_port *mp;
+{
+	if (med->med_exc[exc] != NULL) 
+		MACH_PORT_UNREF(med->med_exc[exc]);
+	med->med_exc[exc] = mp;
+	MACH_PORT_REF(mp);
+
+	return;
 }
 
 int
@@ -368,21 +387,66 @@ mach_task_set_exception_ports(args)
 	mach_task_set_exception_ports_request_t *req = args->smsg;
 	mach_task_set_exception_ports_reply_t *rep = args->rmsg;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
+	mach_port_name_t mn;
+	struct mach_right *mr;
+	struct mach_port *mp;
+	struct mach_exc_info *mei;
 
-	med = l->l_proc->p_emuldata;
+	mn = req->req_new_port.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
+		return mach_msg_error(args, EPERM);
 
-	uprintf("mach_task_set_exception_ports\n");
+	mp = mr->mr_port;
+#ifdef DIAGNOSTIC
+	if ((mp->mp_datatype != MACH_MP_EXC_INFO) && 
+	    (mp->mp_datatype != MACH_MP_NONE))
+		printf("mach_task_set_exception_ports: data exists\n");
+#endif
+	mei = malloc(sizeof(*mei), M_EMULDATA, M_WAITOK);
+	mei->mei_flavor = req->req_flavor;
+	mei->mei_behavior = req->req_behavior;
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	mp->mp_data = mei;
+	mp->mp_flags |= MACH_MP_DATA_ALLOCATED;
+	mp->mp_datatype = MACH_MP_EXC_INFO;
+
+	med = tl->l_proc->p_emuldata;
+	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)
+		update_exception_port(med, MACH_EXC_BAD_ACCESS, mp);
+	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
+		update_exception_port(med, MACH_EXC_BAD_INSTRUCTION, mp);
+	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC) 
+		update_exception_port(med, MACH_EXC_ARITHMETIC, mp);
+	if (req->req_mask & MACH_EXC_MASK_EMULATION)
+		update_exception_port(med, MACH_EXC_EMULATION, mp);
+	if (req->req_mask & MACH_EXC_MASK_SOFTWARE)
+		update_exception_port(med, MACH_EXC_SOFTWARE, mp);
+	if (req->req_mask & MACH_EXC_MASK_BREAKPOINT)
+		update_exception_port(med, MACH_EXC_BREAKPOINT, mp);
+	if (req->req_mask & MACH_EXC_MASK_SYSCALL)
+		update_exception_port(med, MACH_EXC_SYSCALL, mp);
+	if (req->req_mask & MACH_EXC_MASK_MACH_SYSCALL)
+		update_exception_port(med, MACH_EXC_MACH_SYSCALL, mp);
+	if (req->req_mask & MACH_EXC_MASK_RPC_ALERT)
+		update_exception_port(med, MACH_EXC_RPC_ALERT, mp);
+
+#ifdef DEBUG_MACH
+	if (req->req_mask & (MACH_EXC_ARITHMETIC | 
+	    MACH_EXC_EMULATION | MACH_EXC_MASK_SYSCALL | 
+	    MACH_EXC_MASK_MACH_SYSCALL | MACH_EXC_RPC_ALERT)) 
+		printf("mach_set_exception_ports: some exceptions are "
+		    "not supported (mask %x)\n", req->req_mask);
+#endif
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -393,20 +457,21 @@ mach_task_info(args)
 {
 	mach_task_info_request_t *req = args->smsg;
 	mach_task_info_reply_t *rep = args->rmsg;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	size_t *msglen = args->rsize;
 	int count;
+	struct proc *tp = tl->l_proc;
 
 	switch(req->req_flavor) {
 	case MACH_TASK_BASIC_INFO: {	
 		struct mach_task_basic_info *mtbi;
 		struct rusage *ru;
 
-		count = sizeof(*mtbi) / sizeof(mach_integer_t);
+		count = sizeof(*mtbi) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 		mtbi = (struct mach_task_basic_info *)&rep->rep_info[0];
 
 		mtbi->mtbi_suspend_count = ru->ru_nvcsw + ru->ru_nivcsw;
@@ -418,7 +483,7 @@ mach_task_info(args)
 		mtbi->mtbi_system_time.microseconds = ru->ru_stime.tv_usec;
 		mtbi->mtbi_policy = 0;
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mtbi);
 		break;
 	}
 
@@ -427,11 +492,11 @@ mach_task_info(args)
 		struct mach_task_thread_times_info *mttti;
 		struct rusage *ru;
 
-		count = sizeof(*mttti) / sizeof(mach_integer_t);
+		count = sizeof(*mttti) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 		mttti = (struct mach_task_thread_times_info *)&rep->rep_info[0];
 
 		mttti->mttti_user_time.seconds = ru->ru_utime.tv_sec;
@@ -439,7 +504,7 @@ mach_task_info(args)
 		mttti->mttti_system_time.seconds = ru->ru_stime.tv_sec;
 		mttti->mttti_system_time.microseconds = ru->ru_stime.tv_usec;
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mttti);
 		break;
 	}
 
@@ -448,12 +513,12 @@ mach_task_info(args)
 		struct mach_task_events_info *mtei;
 		struct rusage *ru;
 
-		count = sizeof(*mtei) / sizeof(mach_integer_t);
+		count = sizeof(*mtei) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
 		mtei = (struct mach_task_events_info *)&rep->rep_info[0];
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 
 		mtei->mtei_faults = ru->ru_majflt;
 		mtei->mtei_pageins = ru->ru_minflt;
@@ -464,7 +529,7 @@ mach_task_info(args)
 		mtei->mtei_syscalls_unix = 0; /* XXX */
 		mtei->mtei_csw = 0; /* XXX */
 
-		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mtei);
 		break;
 	}
 
@@ -474,13 +539,11 @@ mach_task_info(args)
 		return mach_msg_error(args, EINVAL);
 	};
 	
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	mach_set_header(rep, req, *msglen);
+
 	rep->rep_count = count;
-	rep->rep_info[count + 1] = 8; /* Trailer */
+
+	mach_set_trailer(rep, *msglen);
  
 	return 0;
 }
@@ -492,57 +555,36 @@ mach_task_suspend(args)
 	mach_task_suspend_request_t *req = args->smsg;
 	mach_task_suspend_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	mach_port_t mn;
-	struct mach_right *mr;
-	struct lwp *l;
-	struct proc *p;
+	struct lwp *tl = args->tl;
+	struct lwp *lp;
 	struct mach_emuldata *med;
-	int s;
-
-	/*
-	 * XXX Two bugs when gdb calls this function:
-	 * - gdb uses a port it never allocated (apparently)
-	 * - this makes mach_right_check panic because of the lock operation
-	 *   on a draining lock.
-	 */
-	return mach_msg_error(args, 0);
-
-	/* XXX more permission checks nescessary here? */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return mach_msg_error(args, EINVAL);
-	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
-#ifdef DEBUG_MACH
-		printf("mach_task_suspend: port = %p, recv = %p\n",
-		    mr->mr_port, mr->mr_port->mp_recv);
-#endif
-		return mach_msg_error(args, EINVAL);
-	}
-
-	l = mr->mr_port->mp_recv->mr_lwp;
-	p = l->l_proc;
-	med = p->p_emuldata;
+	struct proc *tp = tl->l_proc;
+	
+	med = tp->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
 		
-	if (p->p_stat == SACTIVE) {
-		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
-		p->p_stat = SSTOP;
-		l->l_stat = LSSTOP;
-		p->p_nrlwps--;
-		mi_switch(l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
+	LIST_FOREACH(lp, &tp->p_lwps, l_sibling) {
+		switch(lp->l_stat) {
+		case LSONPROC:
+		case LSRUN:
+		case LSSLEEP:
+		case LSSUSPENDED:
+		case LSZOMB:
+		case LSDEAD:
+			break;
+		default:
+			return mach_msg_error(args, 0);	
+			break;
+		}
 	}
-
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
+	proc_stop(tp, 0);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -554,49 +596,55 @@ mach_task_resume(args)
 	mach_task_resume_request_t *req = args->smsg;
 	mach_task_resume_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	mach_port_t mn;
-	struct mach_right *mr;
-	struct lwp *l;
-	struct proc *p;
+	struct lwp *tl = args->tl;
 	struct mach_emuldata *med;
-	int s;
+	struct proc *tp = tl->l_proc;
 
-	/* XXX more permission checks nescessary here? */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return mach_msg_error(args, EINVAL);
-	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
-#ifdef DEBUG_MACH
-		printf("mach_task_resume: port = %p, recv = %p\n",
-		    mr->mr_port, mr->mr_port->mp_recv);
-#endif
-		return mach_msg_error(args, EINVAL);
-	}
-
-	l = mr->mr_port->mp_recv->mr_lwp;
-	p = l->l_proc;
-	med = p->p_emuldata;
+	med = tp->p_emuldata;
 	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
+#if 0
 	if (med->med_suspend > 0)
 		return mach_msg_error(args, 0); /* XXX error code */
+#endif
 		
 	/* XXX We should also wake up the stopped thread... */
-	if (p->p_stat == SSTOP) {
-		sigminusset(&stopsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
-		p->p_stat = SACTIVE;
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
-	}
-
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
+#ifdef DEBUG_MACH
+	printf("resuming pid %d\n", tp->p_pid);
+#endif
+	(void)proc_unstop(tp);
 
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_task_terminate(args)
+	struct mach_trap_args *args;
+{
+	mach_task_resume_request_t *req = args->smsg;
+	mach_task_resume_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+	struct sys_exit_args cup;
+	register_t retval;
+	int error;
+
+
+	SCARG(&cup, rval) = 0;
+	error = sys_exit(tl, &cup, &retval);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = native_to_mach_errno[error];
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -614,34 +662,41 @@ mach_sys_task_for_pid(l, v, retval)
 	} */ *uap = v;
 	struct mach_right *mr;
 	struct mach_emuldata *med;
-	struct lwp *tl;
-	struct proc *tp;
-	struct proc *p;
+	struct proc *p = l->l_proc;
+	struct proc *t;
 	int error;
 
+	/* 
+	 * target_tport is used because the task may be on
+	 * a different host. (target_tport, pid) is unique.
+	 * We don't support multiple-host configuration
+	 * yet, so this parameter should be useless.
+	 * However, we still validate it.
+	 */
 	if ((mr = mach_right_check(SCARG(uap, target_tport), 
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return EPERM;
 
-	if (mr->mr_port->mp_datatype != MACH_MP_PROC)	
-		return EINVAL;
-	tp = (struct proc *)mr->mr_port->mp_data;
-	tl = LIST_FIRST(&tp->p_lwps);
-
-	if ((p = pfind(SCARG(uap, pid))) == NULL)
+	if ((t = pfind(SCARG(uap, pid))) == NULL)
 		return ESRCH;
+	
+	/* Allowed only if the UID match, if setuid, or if superuser */
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||  
+		ISSET(t->p_flag, P_SUGID)) &&
+		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			    return (error);
 
 	/* This will only work on a Mach process */
-	if ((p->p_emul != &emul_mach) &&
+	if ((t->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
-	    (p->p_emul != &emul_darwin) &&
+	    (t->p_emul != &emul_darwin) &&
 #endif
 	    1)
 		return EINVAL;
 
-	med = p->p_emuldata;
+	med = t->p_emuldata;
 
-	if ((mr = mach_right_get(med->med_kernel, tl, 
+	if ((mr = mach_right_get(med->med_kernel, l, 
 	    MACH_PORT_TYPE_SEND, 0)) == NULL)
 		return EINVAL;
 
@@ -651,3 +706,4 @@ mach_sys_task_for_pid(l, v, retval)
 
 	return 0;
 }
+

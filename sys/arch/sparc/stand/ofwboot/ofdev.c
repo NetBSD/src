@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4 2003/01/01 06:33:29 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4.2.1 2004/08/03 10:41:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,11 +48,11 @@
 #include <lib/libkern/libkern.h>
 
 #include <dev/sun/disklabel.h>
+#include <dev/raidframe/raidframevar.h>
+
 #include "ofdev.h"
 
 extern char bootdev[];
-
-#define RF_PROTECTED_SECTORS 64		/* XXX */
 
 /*
  * This is ugly.  A path on a sparc machine is something like this:
@@ -105,12 +105,12 @@ filename(str, ppart)
 					     cp[1] == '-'))
 						break;
 				}
-				if (cp >= str && *cp == '-') {
-					/* found arguments, make firmware ignore them */
-					*cp = 0;
-					for (cp = lp; *--cp && *cp != ',';);
-					if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS)
-						*ppart = *cp;
+				if (cp >= str && *cp == '-')
+					*cp = 0;	/* found arguments, make firmware ignore them */
+				for (cp = lp; *--cp && *cp != ',' && *cp != ':';);
+				if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS) {
+					*ppart = *cp;
+					*--cp = '\0';
 				}
 			}
 #ifdef NOTDEF_DEBUG
@@ -428,10 +428,10 @@ devopen(of, name, file)
 		*cp++ = partition;
 		*cp = 0;
 	}
+	*file = opened_name + strlen(opened_name);
 	if (*buf != '/')
 		strcat(opened_name, "/");
 	strcat(opened_name, buf);
-	*file = opened_name + strlen(fname) + 1;
 #ifdef NOTDEF_DEBUG
 	printf("devopen: trying %s\n", fname);
 #endif
@@ -504,7 +504,7 @@ devopen(of, name, file)
 				ofdev.partoff += RF_PROTECTED_SECTORS;
 #ifdef NOTDEF_DEBUG
 				printf("devopen: found RAID partition, "
-				    "adjusting offset to %x", ofdev.partoff);
+				    "adjusting offset to %x\n", ofdev.partoff);
 #endif
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.8 2003/01/01 00:10:20 thorpej Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.8.2.1 2004/08/03 10:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -51,11 +51,11 @@
  * The addresses which are documented are 0x108, 0x1108, 0x1d08, and
  * 0x8508, for the base (port 0) address.
  *
- * --Michael <explorer@netbsd.org> -- April 21, 2000
+ * --Michael <explorer@NetBSD.org> -- April 21, 2000
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.8 2003/01/01 00:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.8.2.1 2004/08/03 10:47:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

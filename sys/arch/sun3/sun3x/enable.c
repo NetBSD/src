@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.3 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: enable.c,v 1.3.20.1 2004/08/03 10:42:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.3.20.1 2004/08/03 10:42:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/sun/fbio.h>

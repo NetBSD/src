@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.13 2002/12/26 22:59:51 itohy Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.13.2.1 2004/08/03 10:49:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.13 2002/12/26 22:59:51 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.13.2.1 2004/08/03 10:49:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.13 2002/12/26 22:59:51 itohy Exp $"
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/hmevar.h>
+#ifdef __sparc__
+#include <machine/promlib.h>
+#endif
 
 #ifndef HME_USE_LOCAL_MAC_ADDRESS
 #ifdef __sparc__
@@ -134,10 +137,6 @@ hmeattach_pci(parent, self, aux)
 		PCI_CLASS_NETWORK		/* class code */
 	};
 #endif	/* HME_USE_LOCAL_MAC_ADDRESS */
-#ifdef __sparc__
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
-#endif
 
 	printf(": Sun Happy Meal Ethernet, rev. %d\n",
 	    PCI_REVISION(pa->pa_class));
@@ -286,7 +285,7 @@ hmeattach_pci(parent, self, aux)
 	else
 #endif	/* HME_USE_LOCAL_MAC_ADDRESS */
 #ifdef __sparc__
-		myetheraddr(sc->sc_enaddr);
+		prom_getether(PCITAG_NODE(pa->pa_tag), sc->sc_enaddr);
 #else
 		printf("%s: no Ethernet address found\n", sc->sc_dev.dv_xname);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.4 2002/10/02 16:02:10 thorpej Exp $ */
+/*	$NetBSD: eeprom.c,v 1.4.6.1 2004/08/03 10:41:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,10 @@
  * On the 300/400 models, the eeprom will be dealt with when the clock
  * is attached.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.4.6.1 2004/08/03 10:41:06 skrll Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.1 2003/07/02 15:25:43 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.2 2004/08/03 10:43:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.1 2003/07/02 15:25:43 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.2 2004/08/03 10:43:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ int exec_ibcs2_coff_prep_nmagic __P((struct lwp *, struct exec_package *,
 int exec_ibcs2_coff_prep_zmagic __P((struct lwp *, struct exec_package *,
 				     struct coff_filehdr *, 
 				     struct coff_aouthdr *));
-int exec_ibcs2_coff_setup_stack __P((struct lwp *, struct exec_package *));
 void cpu_exec_ibcs2_coff_setup __P((int, struct proc *, struct exec_package *,
 				    void *));
 
@@ -133,58 +132,6 @@ exec_ibcs2_coff_makecmds(l, epp)
 }
 
 /*
- * exec_ibcs2_coff_setup_stack(): Set up the stack segment for a coff
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-
-int
-exec_ibcs2_coff_setup_stack(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
-{
-	struct proc *p = l->l_proc;
-	/* DPRINTF(("enter exec_ibcs2_coff_setup_stack\n")); */
-
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	/* DPRINTF(("VMCMD: addr %x size %d\n", epp->ep_maxsaddr,
-		 (epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr)); */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-		  ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-		  epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	/* DPRINTF(("VMCMD: addr %x size %d\n",
-		 epp->ep_minsaddr - epp->ep_ssize,
-		 epp->ep_ssize)); */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-		  (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
-}
-
-
-/*
  * exec_ibcs2_coff_prep_omagic(): Prepare a COFF OMAGIC binary's exec package
  */
 
@@ -232,7 +179,7 @@ exec_ibcs2_coff_prep_omagic(l, epp, fp, ap)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 	
-	return exec_ibcs2_coff_setup_stack(l, epp);
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 }
 
 /*
@@ -361,7 +308,7 @@ exec_ibcs2_coff_prep_nmagic(l, epp, fp, ap)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 
-	return exec_ibcs2_coff_setup_stack(l, epp);
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 }
 
 /*
@@ -499,13 +446,11 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 		size_t resid;
 		struct coff_slhdr *slhdr;
 		char *buf, *bufp;
-		int len = sh.s_size, path_index, entry_len;
+		size_t len = sh.s_size, path_index, entry_len;
 
-#if 0
-		if (len > COFF_SHLIBSEC_MAXSIZE) {
+		if (len > 64 * 1024)
 			return ENOEXEC;
-		}
-#endif
+
 		buf = (char *) malloc(len, M_TEMP, M_WAITOK);
 		if (buf == NULL)
 			return ENOEXEC;
@@ -525,6 +470,13 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 		bufp = buf;
 		while (len) {
 			slhdr = (struct coff_slhdr *)bufp;
+
+			if (slhdr->path_index > LONG_MAX / sizeof(long) ||
+			    slhdr->entry_len > LONG_MAX / sizeof(long)) {
+				free(buf, M_TEMP);
+				return ENOEXEC;
+			}
+
 			path_index = slhdr->path_index * sizeof(long);
 			entry_len = slhdr->entry_len * sizeof(long);
 
@@ -567,7 +519,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 	}
 
 	
-	return exec_ibcs2_coff_setup_stack(l, epp);
+	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
 }
 
 static int

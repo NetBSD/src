@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.13.2.1 2004/08/03 10:50:41 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.1 2004/08/03 10:50:41 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Ex
 #include "rf_debugMem.h"
 #include "rf_general.h"
 #include "rf_dagdegrd.h"
+#include "rf_map.h"
 
 
 /******************************************************************************
@@ -75,13 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13 2003/02/09 10:04:32 jdolecek Ex
  */
 
 void 
-rf_CreateRaidFiveDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t *raidPtr,
+				 RF_AccessStripeMap_t *asmap,
+				 RF_DagHeader_t *dag_h,
+				 void *bp,
+				 RF_RaidAccessFlags_t flags,
+				 RF_AllocListElem_t *allocList)
 {
 	rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    &rf_xorRecoveryFuncs);
@@ -111,26 +111,27 @@ rf_CreateRaidFiveDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateRaidOneDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
+				RF_AccessStripeMap_t *asmap,
+				RF_DagHeader_t *dag_h,
+				void *bp,
+				RF_RaidAccessFlags_t flags,
+				RF_AllocListElem_t *allocList)
 {
-	RF_DagNode_t *nodes, *rdNode, *blockNode, *commitNode, *termNode;
+	RF_DagNode_t *rdNode, *blockNode, *commitNode, *termNode;
 	RF_StripeNum_t parityStripeID;
 	RF_ReconUnitNum_t which_ru;
 	RF_PhysDiskAddr_t *pda;
-	int     useMirror, i;
+	int     useMirror;
 
 	useMirror = 0;
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID level 1 degraded read DAG]\n");
 	}
+#endif
 	dag_h->creator = "RaidOneDegradedReadDAG";
 	/* alloc the Wnd nodes and the Wmir node */
 	if (asmap->numDataFailed == 0)
@@ -139,16 +140,22 @@ rf_CreateRaidOneDegradedReadDAG(
 		useMirror = RF_TRUE;
 
 	/* total number of nodes = 1 + (block + commit + terminator) */
-	RF_CallocAndAdd(nodes, 4, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
-	i = 0;
-	rdNode = &nodes[i];
-	i++;
-	blockNode = &nodes[i];
-	i++;
-	commitNode = &nodes[i];
-	i++;
-	termNode = &nodes[i];
-	i++;
+
+	rdNode = rf_AllocDAGNode();
+	rdNode->list_next = dag_h->nodes;
+	dag_h->nodes = rdNode;
+
+	blockNode = rf_AllocDAGNode();
+	blockNode->list_next = dag_h->nodes;
+	dag_h->nodes = blockNode;
+
+	commitNode = rf_AllocDAGNode();
+	commitNode->list_next = dag_h->nodes;
+	dag_h->nodes = commitNode;
+
+	termNode = rf_AllocDAGNode();
+	termNode->list_next = dag_h->nodes;
+	dag_h->nodes = termNode;
 
 	/* this dag can not commit until the commit node is reached.   errors
 	 * prior to the commit point imply the dag has failed and must be
@@ -178,7 +185,8 @@ rf_CreateRaidOneDegradedReadDAG(
 		rdNode->params[0].p = pda;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
+						       which_ru);
 	} else {
 		/* read secondary copy of data */
 		rf_InitNode(rdNode, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc,
@@ -186,7 +194,8 @@ rf_CreateRaidOneDegradedReadDAG(
 		rdNode->params[0].p = asmap->parityInfo;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
+						       which_ru);
 	}
 
 	/* connect header to block node */
@@ -250,22 +259,20 @@ rf_CreateRaidOneDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    const RF_RedFuncs_t * recFunc)
+rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			 RF_DagHeader_t *dag_h, void *bp,
+			 RF_RaidAccessFlags_t flags,
+			 RF_AllocListElem_t *allocList,
+			 const RF_RedFuncs_t *recFunc)
 {
-	RF_DagNode_t *nodes, *rudNodes, *rrdNodes, *xorNode, *blockNode;
+	RF_DagNode_t *rudNodes, *rrdNodes, *xorNode, *blockNode;
 	RF_DagNode_t *commitNode, *rpNode, *termNode;
+	RF_DagNode_t *tmpNode, *tmprudNode, *tmprrdNode;
 	int     nNodes, nRrdNodes, nRudNodes, nXorBufs, i;
 	int     j, paramNum;
 	RF_SectorCount_t sectorsPerSU;
 	RF_ReconUnitNum_t which_ru;
-	char   *overlappingPDAs;/* a temporary array of flags */
+	char    overlappingPDAs[RF_MAXCOL];/* a temporary array of flags */
 	RF_AccessStripeMapHeader_t *new_asm_h[2];
 	RF_PhysDiskAddr_t *pda, *parityPDA;
 	RF_StripeNum_t parityStripeID;
@@ -281,9 +288,11 @@ rf_CreateDegradedReadDAG(
 	    asmap->raidAddress, &which_ru);
 	sectorsPerSU = layoutPtr->sectorsPerStripeUnit;
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating degraded read DAG]\n");
 	}
+#endif
 	RF_ASSERT(asmap->numDataFailed == 1);
 	dag_h->creator = "DegradedReadDAG";
 
@@ -293,7 +302,7 @@ rf_CreateDegradedReadDAG(
          */
 
 	/* overlappingPDAs array must be zero'd */
-	RF_Calloc(overlappingPDAs, asmap->numStripeUnitsAccessed, sizeof(char), (char *));
+	memset(overlappingPDAs, 0, RF_MAXCOL);
 	rf_GenerateFailedAccessASMs(raidPtr, asmap, failedPDA, dag_h, new_asm_h, &nXorBufs,
 	    &rpBuf, overlappingPDAs, allocList);
 
@@ -307,24 +316,40 @@ rf_CreateDegradedReadDAG(
 	    ((new_asm_h[1]) ? new_asm_h[1]->stripeMap->numStripeUnitsAccessed : 0);
 	nNodes = 5 + nRudNodes + nRrdNodes;	/* lock, unlock, xor, Rp, Rud,
 						 * Rrd */
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *),
-	    allocList);
-	i = 0;
-	blockNode = &nodes[i];
-	i++;
-	commitNode = &nodes[i];
-	i++;
-	xorNode = &nodes[i];
-	i++;
-	rpNode = &nodes[i];
-	i++;
-	termNode = &nodes[i];
-	i++;
-	rudNodes = &nodes[i];
-	i += nRudNodes;
-	rrdNodes = &nodes[i];
-	i += nRrdNodes;
-	RF_ASSERT(i == nNodes);
+
+	blockNode = rf_AllocDAGNode();
+	blockNode->list_next = dag_h->nodes;
+	dag_h->nodes = blockNode;
+
+	commitNode = rf_AllocDAGNode();
+	commitNode->list_next = dag_h->nodes;
+	dag_h->nodes = commitNode;
+
+	xorNode = rf_AllocDAGNode();
+	xorNode->list_next = dag_h->nodes;
+	dag_h->nodes = xorNode;
+
+	rpNode = rf_AllocDAGNode();
+	rpNode->list_next = dag_h->nodes;
+	dag_h->nodes = rpNode;
+
+	termNode = rf_AllocDAGNode();
+	termNode->list_next = dag_h->nodes;
+	dag_h->nodes = termNode;
+
+	for (i = 0; i < nRudNodes; i++) {
+		tmpNode = rf_AllocDAGNode();
+		tmpNode->list_next = dag_h->nodes;
+		dag_h->nodes = tmpNode;
+	}
+	rudNodes = dag_h->nodes;
+
+	for (i = 0; i < nRrdNodes; i++) {
+		tmpNode = rf_AllocDAGNode();
+		tmpNode->list_next = dag_h->nodes;
+		dag_h->nodes = tmpNode;
+	}
+	rrdNodes = dag_h->nodes;
 
 	/* initialize nodes */
 	dag_h->numCommitNodes = 1;
@@ -344,54 +369,62 @@ rf_CreateDegradedReadDAG(
 	    recFunc->SimpleName, allocList);
 
 	/* fill in the Rud nodes */
+	tmprudNode = rudNodes;
 	for (pda = asmap->physInfo, i = 0; i < nRudNodes; i++, pda = pda->next) {
 		if (pda == failedPDA) {
 			i--;
 			continue;
 		}
-		rf_InitNode(&rudNodes[i], rf_wait, RF_FALSE, rf_DiskReadFunc,
+		rf_InitNode(tmprudNode, rf_wait, RF_FALSE, rf_DiskReadFunc,
 		    rf_DiskReadUndoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h,
 		    "Rud", allocList);
 		RF_ASSERT(pda);
-		rudNodes[i].params[0].p = pda;
-		rudNodes[i].params[1].p = pda->bufPtr;
-		rudNodes[i].params[2].v = parityStripeID;
-		rudNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		tmprudNode->params[0].p = pda;
+		tmprudNode->params[1].p = pda->bufPtr;
+		tmprudNode->params[2].v = parityStripeID;
+		tmprudNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
+		tmprudNode = tmprudNode->list_next;
 	}
 
 	/* fill in the Rrd nodes */
 	i = 0;
+	tmprrdNode = rrdNodes;
 	if (new_asm_h[0]) {
 		for (pda = new_asm_h[0]->stripeMap->physInfo;
 		    i < new_asm_h[0]->stripeMap->numStripeUnitsAccessed;
 		    i++, pda = pda->next) {
-			rf_InitNode(&rrdNodes[i], rf_wait, RF_FALSE, rf_DiskReadFunc,
+			rf_InitNode(tmprrdNode, rf_wait, RF_FALSE, rf_DiskReadFunc,
 			    rf_DiskReadUndoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0,
 			    dag_h, "Rrd", allocList);
 			RF_ASSERT(pda);
-			rrdNodes[i].params[0].p = pda;
-			rrdNodes[i].params[1].p = pda->bufPtr;
-			rrdNodes[i].params[2].v = parityStripeID;
-			rrdNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			tmprrdNode->params[0].p = pda;
+			tmprrdNode->params[1].p = pda->bufPtr;
+			tmprrdNode->params[2].v = parityStripeID;
+			tmprrdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
+			tmprrdNode = tmprrdNode->list_next;
 		}
 	}
 	if (new_asm_h[1]) {
+		/* tmprrdNode = rrdNodes; */ /* don't set this here -- old code was using i+j, which means
+		   we need to just continue using tmprrdNode for the next 'j' elements. */
 		for (j = 0, pda = new_asm_h[1]->stripeMap->physInfo;
 		    j < new_asm_h[1]->stripeMap->numStripeUnitsAccessed;
 		    j++, pda = pda->next) {
-			rf_InitNode(&rrdNodes[i + j], rf_wait, RF_FALSE, rf_DiskReadFunc,
+			rf_InitNode(tmprrdNode, rf_wait, RF_FALSE, rf_DiskReadFunc,
 			    rf_DiskReadUndoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0,
 			    dag_h, "Rrd", allocList);
 			RF_ASSERT(pda);
-			rrdNodes[i + j].params[0].p = pda;
-			rrdNodes[i + j].params[1].p = pda->bufPtr;
-			rrdNodes[i + j].params[2].v = parityStripeID;
-			rrdNodes[i + j].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			tmprrdNode->params[0].p = pda;
+			tmprrdNode->params[1].p = pda->bufPtr;
+			tmprrdNode->params[2].v = parityStripeID;
+			tmprrdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
+			tmprrdNode = tmprrdNode->list_next;
 		}
 	}
 	/* make a PDA for the parity unit */
-	RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
-	parityPDA->row = asmap->parityInfo->row;
+	parityPDA = rf_AllocPhysDiskAddr();
+	parityPDA->next = dag_h->pda_cleanup_list;
+	dag_h->pda_cleanup_list = parityPDA;
 	parityPDA->col = asmap->parityInfo->col;
 	parityPDA->startSector = ((asmap->parityInfo->startSector / sectorsPerSU)
 	    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -403,30 +436,36 @@ rf_CreateDegradedReadDAG(
 	rpNode->params[0].p = parityPDA;
 	rpNode->params[1].p = rpBuf;
 	rpNode->params[2].v = parityStripeID;
-	rpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+	rpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
 	/*
          * the last and nastiest step is to assign all
          * the parameters of the Xor node
          */
 	paramNum = 0;
+	tmprrdNode = rrdNodes;
 	for (i = 0; i < nRrdNodes; i++) {
 		/* all the Rrd nodes need to be xored together */
-		xorNode->params[paramNum++] = rrdNodes[i].params[0];
-		xorNode->params[paramNum++] = rrdNodes[i].params[1];
+		xorNode->params[paramNum++] = tmprrdNode->params[0];
+		xorNode->params[paramNum++] = tmprrdNode->params[1];
+		tmprrdNode = tmprrdNode->list_next;
 	}
+	tmprudNode = rudNodes;
 	for (i = 0; i < nRudNodes; i++) {
 		/* any Rud nodes that overlap the failed access need to be
 		 * xored in */
 		if (overlappingPDAs[i]) {
-			RF_MallocAndAdd(pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
-			memcpy((char *) pda, (char *) rudNodes[i].params[0].p, sizeof(RF_PhysDiskAddr_t));
+			pda = rf_AllocPhysDiskAddr();
+			memcpy((char *) pda, (char *) tmprudNode->params[0].p, sizeof(RF_PhysDiskAddr_t));
+			/* add it into the pda_cleanup_list *after* the copy, TYVM */
+			pda->next = dag_h->pda_cleanup_list;
+			dag_h->pda_cleanup_list = pda;
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_DOBUFFER, 0);
 			xorNode->params[paramNum++].p = pda;
 			xorNode->params[paramNum++].p = pda->bufPtr;
 		}
+		tmprudNode = tmprudNode->list_next;
 	}
-	RF_Free(overlappingPDAs, asmap->numStripeUnitsAccessed * sizeof(char));
 
 	/* install parity pda as last set of params to be xor'd */
 	xorNode->params[paramNum++].p = parityPDA;
@@ -446,7 +485,7 @@ rf_CreateDegradedReadDAG(
          * may be a user buffer in which case we have to remap it.
          */
 	xorNode->results[0] = failedPDA->bufPtr;
-	RF_BZERO(bp, failedPDA->bufPtr, rf_RaidAddressToByte(raidPtr,
+	memset(failedPDA->bufPtr, 0, rf_RaidAddressToByte(raidPtr,
 		failedPDA->numSector));
 
 	/* connect nodes to form graph */
@@ -461,17 +500,21 @@ rf_CreateDegradedReadDAG(
 	blockNode->succedents[0] = rpNode;
 	rpNode->antecedents[0] = blockNode;
 	rpNode->antType[0] = rf_control;
+	tmprrdNode = rrdNodes;
 	for (i = 0; i < nRrdNodes; i++) {
-		RF_ASSERT(rrdNodes[i].numSuccedents == 1);
-		blockNode->succedents[1 + i] = &rrdNodes[i];
-		rrdNodes[i].antecedents[0] = blockNode;
-		rrdNodes[i].antType[0] = rf_control;
+		RF_ASSERT(tmprrdNode->numSuccedents == 1);
+		blockNode->succedents[1 + i] = tmprrdNode;
+		tmprrdNode->antecedents[0] = blockNode;
+		tmprrdNode->antType[0] = rf_control;
+		tmprrdNode = tmprrdNode->list_next;
 	}
+	tmprudNode = rudNodes;
 	for (i = 0; i < nRudNodes; i++) {
-		RF_ASSERT(rudNodes[i].numSuccedents == 1);
-		blockNode->succedents[1 + nRrdNodes + i] = &rudNodes[i];
-		rudNodes[i].antecedents[0] = blockNode;
-		rudNodes[i].antType[0] = rf_control;
+		RF_ASSERT(tmprudNode->numSuccedents == 1);
+		blockNode->succedents[1 + nRrdNodes + i] = tmprudNode;
+		tmprudNode->antecedents[0] = blockNode;
+		tmprudNode->antType[0] = rf_control;
+		tmprudNode = tmprudNode->list_next;
 	}
 
 	/* connect the read nodes to the xor node */
@@ -480,17 +523,21 @@ rf_CreateDegradedReadDAG(
 	rpNode->succedents[0] = xorNode;
 	xorNode->antecedents[0] = rpNode;
 	xorNode->antType[0] = rf_trueData;
+	tmprrdNode = rrdNodes;
 	for (i = 0; i < nRrdNodes; i++) {
-		RF_ASSERT(rrdNodes[i].numSuccedents == 1);
-		rrdNodes[i].succedents[0] = xorNode;
-		xorNode->antecedents[1 + i] = &rrdNodes[i];
+		RF_ASSERT(rrdNode->numSuccedents == 1);
+		tmprrdNode->succedents[0] = xorNode;
+		xorNode->antecedents[1 + i] = tmprrdNode;
 		xorNode->antType[1 + i] = rf_trueData;
+		tmprrdNode = tmprrdNode->list_next;
 	}
+	tmprudNode = rudNodes;
 	for (i = 0; i < nRudNodes; i++) {
-		RF_ASSERT(rudNodes[i].numSuccedents == 1);
-		rudNodes[i].succedents[0] = xorNode;
-		xorNode->antecedents[1 + nRrdNodes + i] = &rudNodes[i];
+		RF_ASSERT(tmprudNode->numSuccedents == 1);
+		tmprudNode->succedents[0] = xorNode;
+		xorNode->antecedents[1 + nRrdNodes + i] = tmprudNode;
 		xorNode->antType[1 + nRrdNodes + i] = rf_trueData;
+		tmprudNode = tmprudNode->list_next;
 	}
 
 	/* connect the xor node to the commit node */
@@ -527,13 +574,10 @@ rf_CreateDegradedReadDAG(
  *****************************************************************************/
 
 void 
-rf_CreateRaidCDegradedReadDAG(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList)
+rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			      RF_DagHeader_t *dag_h, void *bp,
+			      RF_RaidAccessFlags_t flags,
+			      RF_AllocListElem_t *allocList)
 {
 	RF_DagNode_t *nodes, *rdNode, *blockNode, *commitNode, *termNode;
 	RF_StripeNum_t parityStripeID;
@@ -550,9 +594,11 @@ rf_CreateRaidCDegradedReadDAG(
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID C degraded read DAG]\n");
 	}
+#endif
 	dag_h->creator = "RaidCDegradedReadDAG";
 	/* alloc the Wnd nodes and the Wmir node */
 	if (asmap->numDataFailed == 0)
@@ -561,7 +607,7 @@ rf_CreateRaidCDegradedReadDAG(
 		useMirror = RF_TRUE;
 
 	/* total number of nodes = 1 + (block + commit + terminator) */
-	RF_CallocAndAdd(nodes, 4, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, 4 * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	i = 0;
 	rdNode = &nodes[i];
 	i++;
@@ -603,13 +649,13 @@ rf_CreateRaidCDegradedReadDAG(
 			rdNode->params[0].p = asmap->parityInfo;
 			rdNode->params[1].p = pda->bufPtr;
 			rdNode->params[2].v = parityStripeID;
-			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		} else {
 			/* read primary copy */
 			rdNode->params[0].p = pda;
 			rdNode->params[1].p = pda->bufPtr;
 			rdNode->params[2].v = parityStripeID;
-			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	} else {
 		/* read secondary copy of data */
@@ -618,7 +664,7 @@ rf_CreateRaidCDegradedReadDAG(
 		rdNode->params[0].p = asmap->parityInfo;
 		rdNode->params[1].p = pda->bufPtr;
 		rdNode->params[2].v = parityStripeID;
-		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	}
 
 	/* connect header to block node */
@@ -655,14 +701,10 @@ rf_CreateRaidCDegradedReadDAG(
  * XXX move this elsewhere?
  */
 void 
-rf_DD_GenerateFailedAccessASMs(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_PhysDiskAddr_t ** pdap,
-    int *nNodep,
-    RF_PhysDiskAddr_t ** pqpdap,
-    int *nPQNodep,
-    RF_AllocListElem_t * allocList)
+rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+			       RF_PhysDiskAddr_t **pdap, int *nNodep,
+			       RF_PhysDiskAddr_t **pqpdap, int *nPQNodep,
+			       RF_AllocListElem_t *allocList)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	int     PDAPerDisk, i;
@@ -685,7 +727,7 @@ rf_DD_GenerateFailedAccessASMs(
 	fone_end = fone_start + fone->numSector;
 
 #define CONS_PDA(if,start,num) \
-  pda_p->row = asmap->if->row;    pda_p->col = asmap->if->col; \
+  pda_p->col = asmap->if->col; \
   pda_p->startSector = ((asmap->if->startSector / secPerSU) * secPerSU) + start; \
   pda_p->numSector = num; \
   pda_p->next = NULL; \
@@ -779,7 +821,8 @@ rf_DD_GenerateFailedAccessASMs(
 
 	/* allocate up our list of pda's */
 
-	RF_CallocAndAdd(pda_p, napdas, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t), 
+			(RF_PhysDiskAddr_t *), allocList);
 	*pdap = pda_p;
 
 	/* linkem together */
@@ -794,9 +837,9 @@ rf_DD_GenerateFailedAccessASMs(
 			continue;
 		pda_p->type = RF_PDA_TYPE_DATA;
 		pda_p->raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->row][pda_p->col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->col].status))
 			continue;
 		switch (state) {
 		case 1:	/* fone */
@@ -817,7 +860,7 @@ rf_DD_GenerateFailedAccessASMs(
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;
@@ -843,7 +886,7 @@ rf_DD_GenerateFailedAccessASMs(
 				 * access, snip off the begining */
 				pda_p->numSector = suoff - fone_start;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			}
@@ -853,7 +896,7 @@ rf_DD_GenerateFailedAccessASMs(
 				 * failed access, extend */
 				pda_p->numSector = fone_end - suend;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			}
@@ -864,14 +907,14 @@ rf_DD_GenerateFailedAccessASMs(
 						 * on */
 				pda_p->numSector = secPerSU - suend;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 				RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 				pda_p++;
 			} else
 				if (suoff > 0) {	/* short at front */
 					pda_p->numSector = suoff;
 					pda_p->raidAddress = sosAddr + (i * secPerSU);
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -885,7 +928,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * begining */
 					pda_p->numSector = suoff - fone_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -895,7 +938,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * of the failed access, extend */
 					pda_p->numSector = fone_end - suend;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -908,7 +951,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * begining */
 					pda_p->numSector = suoff - ftwo_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + ftwo_start;
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -918,7 +961,7 @@ rf_DD_GenerateFailedAccessASMs(
 					 * of the failed access, extend */
 					pda_p->numSector = ftwo_end - suend;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + suend;	/* off by one? */
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 					RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
 					pda_p++;
 				}
@@ -935,9 +978,9 @@ rf_DD_GenerateFailedAccessASMs(
 			continue;
 		pda_p->type = RF_PDA_TYPE_DATA;
 		pda_p->raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->row][pda_p->col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->col].status))
 			continue;
 		switch (state) {
 		case 1:	/* fone */
@@ -958,7 +1001,7 @@ rf_DD_GenerateFailedAccessASMs(
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;
@@ -984,19 +1027,14 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
   (_node_).params[0].p = _p_ ; \
   (_node_).params[1].p = (_p_)->bufPtr; \
   (_node_).params[2].v = parityStripeID; \
-  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
+  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
 void 
-rf_DoubleDegRead(
-    RF_Raid_t * raidPtr,
-    RF_AccessStripeMap_t * asmap,
-    RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
-    RF_AllocListElem_t * allocList,
-    char *redundantReadNodeName,
-    char *recoveryNodeName,
-    int (*recovFunc) (RF_DagNode_t *))
+rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
+		 RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
+		 RF_AllocListElem_t *allocList,
+		 char *redundantReadNodeName, char *recoveryNodeName,
+		 int (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DagNode_t *nodes, *rudNodes, *rrdNodes, *recoveryNode, *blockNode,
@@ -1010,15 +1048,17 @@ rf_DoubleDegRead(
 	RF_PhysDiskAddr_t *failedPDAtwo = asmap->failedPDAs[1];
 	RF_StripeNum_t parityStripeID = rf_RaidAddressToParityStripeID(layoutPtr, asmap->raidAddress, &which_ru);
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug)
 		printf("[Creating Double Degraded Read DAG]\n");
+#endif
 	rf_DD_GenerateFailedAccessASMs(raidPtr, asmap, &npdas, &nRrdNodes, &pqPDAs, &nPQNodes, allocList);
 
 	nRudNodes = asmap->numStripeUnitsAccessed - (asmap->numDataFailed);
 	nReadNodes = nRrdNodes + nRudNodes + 2 * nPQNodes;
 	nNodes = 4 /* block, unblock, recovery, term */ + nReadNodes;
 
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
 	i += 1;

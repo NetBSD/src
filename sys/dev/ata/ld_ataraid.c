@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.7.2.1 2003/07/02 15:26:02 darrenr Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.7.2.2 2004/08/03 10:45:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  * configuration data on the component disks, with the BIOS supporting
  * booting from the RAID volumes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.7.2.2 2004/08/03 10:45:46 skrll Exp $");
 
 #include "rnd.h"
 
@@ -144,21 +147,22 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case AAI_L_RAID0:
-		level = "RAID0";
+		level = "RAID-0";
 		ld->sc_start = ld_ataraid_start_raid0;
 		sc->sc_iodone = ld_ataraid_iodone_raid0;
 		break;
 
 	case AAI_L_RAID1:
-		level = "RAID1";
+		level = "RAID-1";
 		break;
 
 	case AAI_L_RAID0 | AAI_L_RAID1:
-		level = "RAID0+1";
+		level = "RAID-10";
 		break;
 
 	default:
-		sprintf(unklev, "<unknown level 0x%x>", aai->aai_level);
+		snprintf(unklev, sizeof(unklev), "<unknown level 0x%x>",
+		    aai->aai_level);
 		level = unklev;
 	}
 
@@ -236,7 +240,6 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_vp = sc->sc_vnodes[comp];
-	cbp->cb_buf.b_dev = sc->sc_vnodes[comp]->v_rdev;
 	cbp->cb_buf.b_blkno = bn + sc->sc_aai->aai_offset;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_bcount = bcount;
@@ -308,7 +311,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 
 	return (0);
@@ -373,7 +376,7 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 
 	return (0);

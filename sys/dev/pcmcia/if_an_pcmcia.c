@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.15 2003/01/20 05:30:08 simonb Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15 2003/01/20 05:30:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15 2003/01/20 05:30:08 simonb Exp
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -91,16 +93,13 @@ static struct an_pcmcia_product {
 	u_int32_t	app_vendor;	/* vendor ID */
 	u_int32_t	app_product;	/* product ID */
 	const char	*app_cisinfo[4]; /* CIS information */
-	const char	*app_name;	/* product name */
 } an_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4800,
-	  PCMCIA_CIS_AIRONET_PC4800,	PCMCIA_STR_AIRONET_PC4800 },
+	  PCMCIA_CIS_AIRONET_PC4800 },
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4500,
-	  PCMCIA_CIS_AIRONET_PC4500,	PCMCIA_STR_AIRONET_PC4500 },
+	  PCMCIA_CIS_AIRONET_PC4500 },
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_350,
-	  PCMCIA_CIS_AIRONET_350,	PCMCIA_STR_AIRONET_350 },
-	{ 0,				0,
-	  { NULL, NULL, NULL, NULL },	NULL }
+	  PCMCIA_CIS_AIRONET_350 },
 };
 
 static int
@@ -114,7 +113,7 @@ an_pcmcia_enable(sc)
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, an_intr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 
@@ -146,15 +145,11 @@ an_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct an_pcmcia_product *app;
+	int n;
 
-	for (app = an_pcmcia_products; app->app_name != NULL; app++) {
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == app->app_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == app->app_product)
-			return 1;
-
+	for (app = an_pcmcia_products,
+	    n = sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
+	    n; app++, n--) {
 		/* match by CIS information */
 		if (pa->card->cis1_info[0] != NULL &&
 		    app->app_cisinfo[0] != NULL &&
@@ -162,6 +157,13 @@ an_pcmcia_match(parent, match, aux)
 		    pa->card->cis1_info[1] != NULL &&
 		    app->app_cisinfo[1] != NULL &&
 		    strcmp(pa->card->cis1_info[1], app->app_cisinfo[1]) == 0)
+			return 1;
+
+		/* match by vendor/product id */
+		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
+		    pa->manufacturer == app->app_vendor &&
+		    pa->product != PCMCIA_PRODUCT_INVALID &&
+		    pa->product == app->app_product)
 			return 1;
 	}
 	return 0;
@@ -176,54 +178,51 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	char devinfo[256];
 
-	/* Print out what we are. */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
+	aprint_normal("\n");
 
 	psc->sc_pf = pa->pf;
 	if ((cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head)) == NULL) {
-		printf("%s: no suitable CIS info found\n", sc->an_dev.dv_xname);
+		printf("%s: no suitable CIS info found\n", sc->sc_dev.dv_xname);
 		goto fail1;
 	}
 
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
 	    cfe->iospace[0].length, AN_IOSIZ, &psc->sc_pcioh) != 0) {
 		printf("%s: failed to allocate io space\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		goto fail1;
 	}
 
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window) != 0) {
-		printf("%s: failed to map io space\n", sc->an_dev.dv_xname);
+		printf("%s: failed to map io space\n", sc->sc_dev.dv_xname);
 		goto fail2;
 	}
 
 	pcmcia_function_init(psc->sc_pf, cfe);
 
 	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf("%s: failed to enable pcmcia\n", sc->an_dev.dv_xname);
+		printf("%s: failed to enable pcmcia\n", sc->sc_dev.dv_xname);
 		goto fail3;
 	}
 
 	if ((psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr,
 	    sc)) == NULL) {
 		printf("%s: unable to establish interrupt\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		goto fail4;
 	}
 
-	sc->an_btag = psc->sc_pcioh.iot;
-	sc->an_bhandle = psc->sc_pcioh.ioh;
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
 	sc->sc_enabled = 1;
 	sc->sc_enable = an_pcmcia_enable;
 	sc->sc_disable = an_pcmcia_disable;
 
 	if (an_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
-		    sc->an_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		goto fail5;
 	}
 	psc->sc_powerhook = powerhook_establish(an_power, sc);

@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.7.2.1 2004/08/03 10:44:06 skrll Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.7.2.1 2004/08/03 10:44:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp 
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_bootstrap.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_services.h>
 
 int 
 mach_bootstrap_look_up(args)
@@ -62,27 +63,26 @@ mach_bootstrap_look_up(args)
 	const char service_name[] = "lookup\021"; /* XXX Why */
 	int service_name_len;
 	struct mach_right *mr;
+	size_t len;
 
 	/* The trailer is word aligned  */
 	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
-	*msglen = sizeof(rep->rep_msgh) + sizeof(rep->rep_count) + 
-	    sizeof(rep->rep_bootstrap_port) + service_name_len *
-	    sizeof(rep->rep_trailer);
+	len = sizeof(*rep) - sizeof(rep->rep_service_name) + service_name_len;
+
+	if (len > *msglen)
+		return mach_msg_error(args, EINVAL);
+	*msglen = len;
 
 	mr = mach_right_get(NULL, l, MACH_PORT_TYPE_DEAD_NAME, 0);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
-	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_count = 1; /* XXX Why? */
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_count = 1;
 	rep->rep_bootstrap_port = mr->mr_name;
-	strncpy((char *)&rep->rep_service_name, service_name,
-	    sizeof(rep->rep_service_name)); 
-	/* XXX This is the trailer. We should find something better */
-	rep->rep_service_name[service_name_len + 7] = 8;
+	strncpy((char *)rep->rep_service_name, service_name,
+	    service_name_len);
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }

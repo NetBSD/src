@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.11 2003/01/18 06:45:06 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.11.2.1 2004/08/03 10:41:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.11.2.1 2004/08/03 10:41:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,17 +68,15 @@ struct sunos_sigframe {
 	struct	sigcontext13 sf_sc;	/* actual sigcontext */
 };
 
-void
-sunos_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sunos_sigframe *fp;
 	struct trapframe *tf;
 	int addr, onstack, oldsp, newsp;
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_code;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
 

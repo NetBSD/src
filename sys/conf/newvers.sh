@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.32 2003/03/02 22:17:30 christos Exp $
+#	$NetBSD: newvers.sh,v 1.32.2.1 2004/08/03 10:44:45 skrll Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,25 +35,30 @@
 #
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
-if [ ! -r version ]
-then
+if [ ! -e version ]; then
 	echo 0 > version
 fi
 
-touch version
-v=$(cat version) u=${USER-root} d=$(pwd) h=$(hostname) t=$(date)
+v=$(cat version)
+t=$(date)
+u=${USER-root}
+h=$(hostname)
+d=$(pwd)
+cwd=$(dirname $0)
+copyright=$(awk '{ print "\""$0"\\n\""}' ${cwd}/copyright)
 
-if [ -f ident ]
-then
+if [ -f ident ]; then
 	id="$(cat ident)"
 else
 	id=$(basename ${d})
 fi
 
-osrelcmd=$(dirname $0)/osrelease.sh
+osrelcmd=${cwd}/osrelease.sh
 
 ost="NetBSD"
 osr=$(sh $osrelcmd)
+
+fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
 
 cat << _EOF > vers.c
 /*
@@ -68,12 +73,11 @@ cat << _EOF > vers.c
 
 const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
-const char sccs[] = 
-    "@(#)${ost} ${osr} (${id}) #${v}: ${t}\n"
-    "\t${u}@${h}:${d}\n";
-const char version[] = 
-    "${ost} ${osr} (${id}) #${v}: ${t}\n"
-    "\t${u}@${h}:${d}\n";
+const char sccs[] = "@(#)${fullversion}";
+const char version[] = "${fullversion}";
+const char copyright[] =
+${copyright}
+"\n";
 
 #ifdef notyet
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: aic79xx.reg,v 1.3.2.1 2004/08/03 10:48:23 skrll Exp $	*/
+
 /*
  * Aic79xx register and scratch ram definitions.
  *
@@ -37,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.10 2003/03/25 22:16:27 scottl Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.15 2003/06/10 03:25:24 gibbs Exp $
  */
-VERSION = "$NetBSD: aic79xx.reg,v 1.3 2003/05/14 12:57:46 wiz Exp $"
+VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#70 $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -194,7 +196,8 @@ register SEQINTCODE {
 		TRACEPOINT1,
 		TRACEPOINT2,
 		TRACEPOINT3,
-		SAW_HWERR
+		SAW_HWERR,
+		BAD_SCB_STATUS
 	}
 }
 
@@ -289,7 +292,7 @@ register HS_MAILBOX {
 }
 
 /*
- * Sequencer Interupt Status
+ * Sequencer Interrupt Status
  */
 register SEQINTSTAT {
 	address			0x00C
@@ -1376,7 +1379,10 @@ register LUNLEN {
 	address			0x030
 	access_mode	RW
 	modes		M_CFG
+	mask		ILUNLEN	0x0F
+	mask		TLUNLEN	0xF0
 }
+const LUNLEN_SINGLE_LEVEL_LUN 0xF
 
 /*
  * CDB Limit
@@ -3484,9 +3490,6 @@ scratch_ram {
 	LONGJMP_ADDR {
 		size		2
 	}
-	LONGJMP_SCB {
-		size		2
-	}
 	ACCUM_SAVE {
 		size		1
 	}
@@ -3800,39 +3803,8 @@ scb {
 		alias	SCB_NEXT_COMPLETE
 	}
 	SCB_TAG {
+		alias	SCB_FIFO_USE_COUNT
 		size	2
-	}
-	SCB_CDB_LEN {
-		size	1
-		field	SCB_CDB_LEN_PTR	0x80	/* CDB in host memory */
-	}
-	SCB_TASK_MANAGEMENT {
-		size	1
-	}
-	SCB_NEXT {
-		alias	SCB_NEXT_SCB_BUSADDR
-		size	2
-	}
-	SCB_NEXT2 {
-		size	2
-	}
-	SCB_DATAPTR {
-		size	8
-	}
-	SCB_DATACNT {
-		/*
-		 * The last byte is really the high address bits for
-		 * the data address.
-		 */
-		size	4
-		field	SG_LAST_SEG		0x80	/* In the fourth byte */
-		field	SG_HIGH_ADDR_BITS	0x7F	/* In the fourth byte */
-	}
-	SCB_SGPTR {
-		size	4
-		field	SG_STATUS_VALID	0x04	/* In the first byte */
-		field	SG_FULL_RESID	0x02	/* In the first byte */
-		field	SG_LIST_NULL	0x01	/* In the first byte */
 	}
 	SCB_CONTROL {
 		size	1
@@ -3851,13 +3823,50 @@ scb {
 	}
 	SCB_LUN {
 		size	1
-		field	LID				0xff
+		field	LID	0xff
 	}
 	SCB_TASK_ATTRIBUTE {
 		size	1
+		/*
+		 * Overloaded field for non-packetized
+		 * ignore wide residue message handling.
+		 */
+		field	SCB_XFERLEN_ODD	0x01
+	}
+	SCB_CDB_LEN {
+		size	1
+		field	SCB_CDB_LEN_PTR 0x80	/* CDB in host memory */
+	}
+	SCB_TASK_MANAGEMENT {
+		size	1
+	}
+	SCB_DATAPTR {
+		size	8
+	}
+	SCB_DATACNT {
+		/*
+		 * The last byte is really the high address bits for
+		 * the data address.
+		 */
+		size	4
+		field	SG_LAST_SEG		0x80	/* In the fourth byte */
+		field	SG_HIGH_ADDR_BITS	0x7F	/* In the fourth byte */
+	}
+	SCB_SGPTR {
+		size	4
+		field	SG_STATUS_VALID		0x04	/* In the first byte */
+		field	SG_FULL_RESID		0x02	/* In the first byte */
+		field	SG_LIST_NULL		0x01	/* In the first byte */
 	}
 	SCB_BUSADDR {
 		size	4
+	}
+	SCB_NEXT {
+		alias	SCB_NEXT_SCB_BUSADDR
+		size	2
+	}
+	SCB_NEXT2 {
+		size	2
 	}
 	SCB_SPARE {
 		size	8

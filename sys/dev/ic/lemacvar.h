@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.6 2001/06/13 10:46:03 wiz Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.6.22.1 2004/08/03 10:46:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -66,11 +66,11 @@ typedef struct {
     u_int16_t sc_mctbl[LEMAC_MCTBL_SIZE/sizeof(u_int16_t)];
 					/* local copy of multicast table */
     struct {
-	unsigned cntr_txnospc;		/* total # of no trnasmit memory */
-	unsigned cntr_txfull;		/* total # of tranmitter full */
-	unsigned cntr_tne_intrs;	/* total # of tranmit done intrs */
+	unsigned cntr_txnospc;		/* total # of no transmit memory */
+	unsigned cntr_txfull;		/* total # of transmitter full */
+	unsigned cntr_tne_intrs;	/* total # of transmit done intrs */
 	unsigned cntr_rne_intrs;	/* total # of receive done intrs */
-	unsigned cntr_txd_intrs;	/* total # of tranmit error intrs */
+	unsigned cntr_txd_intrs;	/* total # of transmit error intrs */
 	unsigned cntr_rxd_intrs;	/* total # of receive error intrs */
     } sc_cntrs;
     /*
@@ -133,15 +133,11 @@ typedef struct {
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[2] == 0xFFFFU)
 
-extern void lemac_ifattach(lemac_softc_t *sc);
-extern void lemac_info_get(const bus_space_tag_t iot,
-			   const bus_space_handle_t ioh,
-			   bus_addr_t *maddr_p,
-			   bus_size_t *msize_p,
-			   int *irq_p);
-extern int lemac_port_check(const bus_space_tag_t iot,
-			    const bus_space_handle_t ioh);
-extern int lemac_intr(void *arg);
-extern void lemac_shutdown(void *arg);
+extern void lemac_ifattach(lemac_softc_t *);
+extern void lemac_info_get(const bus_space_tag_t, const bus_space_handle_t,
+    bus_addr_t *, bus_size_t *, int *);
+extern int lemac_port_check(const bus_space_tag_t, const bus_space_handle_t);
+extern int lemac_intr(void *);
+extern void lemac_shutdown(void *);
 
 #endif /* _LEMACVAR_H */

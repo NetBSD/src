@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsload - namespace loading/expanding/contracting procedures
- *              xRevision: 64 $
+ *              xRevision: 67 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.6 2003/03/04 17:25:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
 
 #define __NSLOAD_C__
 
@@ -156,7 +156,7 @@ AcpiNsLoadTable (
 
     /* Check if table contains valid AML (must be DSDT, PSDT, SSDT, etc.) */
 
-    if (!(AcpiGbl_AcpiTableData[TableDesc->Type].Flags & ACPI_TABLE_EXECUTABLE))
+    if (!(AcpiGbl_TableData[TableDesc->Type].Flags & ACPI_TABLE_EXECUTABLE))
     {
         /* Just ignore this table */
 
@@ -266,7 +266,7 @@ AcpiNsLoadTableByType (
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Loading DSDT\n"));
 
-        TableDesc = &AcpiGbl_AcpiTables[ACPI_TABLE_DSDT];
+        TableDesc = AcpiGbl_TableLists[ACPI_TABLE_DSDT].Next;
 
         /* If table already loaded into namespace, just return */
 
@@ -274,8 +274,6 @@ AcpiNsLoadTableByType (
         {
             goto UnlockAndExit;
         }
-
-        TableDesc->TableId = TABLE_ID_DSDT;
 
         /* Now load the single DSDT */
 
@@ -291,13 +289,13 @@ AcpiNsLoadTableByType (
     case ACPI_TABLE_SSDT:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Loading %d SSDTs\n",
-            AcpiGbl_AcpiTables[ACPI_TABLE_SSDT].Count));
+            AcpiGbl_TableLists[ACPI_TABLE_SSDT].Count));
 
         /*
          * Traverse list of SSDT tables
          */
-        TableDesc = &AcpiGbl_AcpiTables[ACPI_TABLE_SSDT];
-        for (i = 0; i < AcpiGbl_AcpiTables[ACPI_TABLE_SSDT].Count; i++)
+        TableDesc = AcpiGbl_TableLists[ACPI_TABLE_SSDT].Next;
+        for (i = 0; i < AcpiGbl_TableLists[ACPI_TABLE_SSDT].Count; i++)
         {
             /*
              * Only attempt to load table if it is not
@@ -322,14 +320,14 @@ AcpiNsLoadTableByType (
     case ACPI_TABLE_PSDT:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Loading %d PSDTs\n",
-            AcpiGbl_AcpiTables[ACPI_TABLE_PSDT].Count));
+            AcpiGbl_TableLists[ACPI_TABLE_PSDT].Count));
 
         /*
          * Traverse list of PSDT tables
          */
-        TableDesc = &AcpiGbl_AcpiTables[ACPI_TABLE_PSDT];
+        TableDesc = AcpiGbl_TableLists[ACPI_TABLE_PSDT].Next;
 
-        for (i = 0; i < AcpiGbl_AcpiTables[ACPI_TABLE_PSDT].Count; i++)
+        for (i = 0; i < AcpiGbl_TableLists[ACPI_TABLE_PSDT].Count; i++)
         {
             /* Only attempt to load table if it is not already loaded! */
 

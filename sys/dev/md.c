@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.2.1 2003/07/02 15:26:00 darrenr Exp $	*/
+/*	$NetBSD: md.c,v 1.36.2.2 2004/08/03 10:44:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.1 2003/07/02 15:26:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.2 2004/08/03 10:44:54 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -151,7 +151,8 @@ mdattach(n)
 		}
 		ramdisk_devs[i] = sc;
 		sc->sc_dev.dv_unit = i;
-		sprintf(sc->sc_dev.dv_xname, "md%d", i);
+		snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
+		    "md%d", i);
 		md_attach(NULL, &sc->sc_dev, NULL);
 	}
 }

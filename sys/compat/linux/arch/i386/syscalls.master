@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65 2003/06/23 21:25:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.65.2.1 2004/08/03 10:43:54 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -289,7 +289,7 @@
 			gid_t *rgid, gid_t *egid, gid_t *sgid); }
 172	UNIMPL		prctl
 173	STD		{ int linux_sys_rt_sigreturn( \
-			    struct linux_rt_sigframe *sfp); }
+			    struct linux_ucontext *ucp); }
 174	STD		{ int linux_sys_rt_sigaction(int signum, \
 			    const struct linux_sigaction *nsa, \
 			    struct linux_sigaction *osa, \
@@ -330,7 +330,7 @@
 			    linux_off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
-194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+194	STD		{ int linux_sys_ftruncate64(unsigned int fd, \
 			    off_t length); }
 195	STD		{ int linux_sys_stat64(const char *path, \
 			    struct linux_stat64 *sp); }
@@ -365,8 +365,70 @@
 215	STD		{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		{ int linux_sys_getfsuid(void); }
 217	UNIMPL		pivot_root
-218	UNIMPL		mincore
-219	UNIMPL		madvise
+218	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
+219	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 220	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
+222	UNIMPL		/* unused */
+223	UNIMPL		/* unused */
+224	UNIMPL		gettid
+225	UNIMPL		readahead
+226	UNIMPL		setxattr
+227	UNIMPL		lsetxattr
+228	UNIMPL		fsetxattr
+229	UNIMPL		getxattr
+230	UNIMPL		lgetxattr
+231	UNIMPL		fgetxattr
+232	UNIMPL		listxattr
+233	UNIMPL		llistxattr
+234	UNIMPL		flistxattr
+235	UNIMPL		removexattr
+236	UNIMPL		lremovexattr
+237	UNIMPL		fremovexattr
+238	UNIMPL		tkill
+239	UNIMPL		sendfile64
+240	UNIMPL		futex
+241	UNIMPL		sched_setaffinity
+242	UNIMPL		sched_getaffinity
+243	UNIMPL		set_thread_area
+244	UNIMPL		get_thread_area
+245	UNIMPL		io_setup
+246	UNIMPL		io_destroy
+247	UNIMPL		io_getevents
+248	UNIMPL		io_submit
+249	UNIMPL		io_cancel
+250	UNIMPL		fadvise64
+251	UNIMPL		/* unused */
+252	UNIMPL		exit_group
+253	UNIMPL		lookup_dcookie
+254	UNIMPL		epoll_create
+255	UNIMPL		epoll_ctl
+256	UNIMPL		epoll_wait
+257	UNIMPL		remap_file_pages
+258	UNIMPL		set_tid_address
+259	UNIMPL		timer_create
+260	UNIMPL		timer_settime
+261	UNIMPL		timer_gettime
+262	UNIMPL		timer_getoverrun
+263	UNIMPL		timer_delete
+264	UNIMPL		clock_settime
+265	UNIMPL		clock_gettime
+266	UNIMPL		clock_getres
+267	UNIMPL		clock_nanosleep
+268	UNIMPL		statfs64
+269	UNIMPL		fstatfs64
+270	UNIMPL		tgkill
+271	UNIMPL		utimes
+272	UNIMPL		fadvise64_64
+273	UNIMPL		vserver
+274	UNIMPL		mbind
+275	UNIMPL		get_mempolicy
+276	UNIMPL		set_mempolicy
+277	UNIMPL		mq_open
+278	UNIMPL		mq_unlink
+279	UNIMPL		mq_timedsend
+280	UNIMPL		mq_timedreceive
+281	UNIMPL		mq_notify
+282	UNIMPL		mq_getsetattr
+283	UNIMPL		sys_kexec_load

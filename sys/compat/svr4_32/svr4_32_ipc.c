@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.6 2003/01/19 16:47:14 thorpej Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.6.2.1 2004/08/03 10:44:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.6 2003/01/19 16:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.6.2.1 2004/08/03 10:44:34 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -662,7 +662,7 @@ svr4_32_shmctl(l, v, retval)
 
 	SCARG(&ap, shmid) = SCARG(uap, shmid);
 
-	if (SCARG(uap, buf) != NULL) {
+	if (SCARG(uap, buf)) {
 		SCARG(&ap, buf) = stackgap_alloc(p, &sg, sizeof (struct shmid_ds));
 		switch (SCARG(uap, cmd)) {
 		case SVR4_IPC_SET:
@@ -683,7 +683,7 @@ svr4_32_shmctl(l, v, retval)
 		}
 	}
 	else
-		SCARG(&ap, buf) = NULL;
+		SCARG(&ap, buf) = 0;
 
 
 	switch (SCARG(uap, cmd)) {
@@ -691,7 +691,7 @@ svr4_32_shmctl(l, v, retval)
 		SCARG(&ap, cmd) = IPC_STAT;
 		if ((error = sys___shmctl13(l, &ap, retval)) != 0)
 			return error;
-		if (SCARG(uap, buf) == NULL)
+		if (!SCARG(uap, buf))
 			return 0;
 		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
 		if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.5 2003/03/05 23:00:57 christos Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.5.2.1 2004/08/03 10:45:03 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-     
+/*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
  * All rights reserved.
@@ -58,7 +58,7 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.5 2003/03/05 23:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.5.2.1 2004/08/03 10:45:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -92,6 +92,10 @@ struct acpi_semaphore {
 	struct simplelock as_slock;
 	UINT32 as_units;
 	UINT32 as_maxunits;
+};
+
+struct acpi_lock {
+	struct simplelock al_slock;
 };
 
 /*
@@ -145,7 +149,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 
 	free(as, M_ACPI);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed semaphre %p\n", as));
+	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed semaphore %p\n", as));
 
 	return_ACPI_STATUS(AE_OK);
 }
@@ -240,4 +244,94 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 	simple_unlock(&as->as_slock);
 
 	return_ACPI_STATUS(AE_OK);
+}
+
+/*
+ * AcpiOsCreateLock:
+ *
+ *	Create a lock.
+ */
+ACPI_STATUS
+AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
+{
+	struct acpi_lock *al;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
+
+	if (OutHandle == NULL)
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+
+	al = malloc(sizeof(*al), M_ACPI, M_NOWAIT);
+	if (al == NULL)
+		return_ACPI_STATUS(AE_NO_MEMORY);
+
+	simple_lock_init(&al->al_slock);
+
+	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
+	    "created lock %p\n", al));
+
+	*OutHandle = (ACPI_HANDLE) al;
+	return_ACPI_STATUS(AE_OK);
+}
+
+/*
+ * AcpiOsDeleteLock:
+ *
+ *	Delete a lock.
+ */
+void
+AcpiOsDeleteLock(ACPI_HANDLE Handle)
+{
+	struct acpi_lock *al = (void *) Handle;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
+
+	if (al == NULL)
+		return;
+
+	free(al, M_ACPI);
+
+	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed lock %p\n", al));
+
+	return;
+}
+
+/*
+ * AcpiOsAcquireLock:
+ *
+ *	Acquire a lock.
+ */
+void
+AcpiOsAcquireLock(ACPI_HANDLE Handle, UINT32 Flags)
+{
+	struct acpi_lock *al = (void *) Handle;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
+
+	if (al == NULL)
+		return;
+
+	simple_lock(&al->al_slock);
+
+	return;
+}
+
+/*
+ * AcpiOsReleaseLock:
+ *
+ *	Release a lock.
+ */
+void
+AcpiOsReleaseLock(ACPI_HANDLE Handle, UINT32 Flags)
+{
+	struct acpi_lock *al = (void *) Handle;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
+
+	if (al == NULL)
+		return;
+
+	simple_unlock(&al->al_slock);
+
+	return;
 }

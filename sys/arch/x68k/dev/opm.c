@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.10 2002/10/02 16:02:42 thorpej Exp $	*/
+/*	$NetBSD: opm.c,v 1.10.6.1 2004/08/03 10:42:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -36,6 +36,9 @@
  * Temporary implementation: not fully bus.h'fied.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.10.6.1 2004/08/03 10:42:47 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -43,7 +46,8 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
-#include <arch/x68k/dev/opmreg.h>
+#include <machine/opmreg.h>
+#include <arch/x68k/dev/opmvar.h>
 #include <arch/x68k/dev/intiovar.h>
 
 struct opm_softc {
