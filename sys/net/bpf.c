@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.78 2003/03/13 10:18:35 dsl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.79 2003/06/19 06:25:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.78 2003/03/13 10:18:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.79 2003/06/19 06:25:41 itojun Exp $");
 
 #include "bpfilter.h"
 
@@ -1278,8 +1278,14 @@ bpf_allocbufs(d)
 	struct bpf_d *d;
 {
 
-	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
-	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
+	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (!d->bd_fbuf)
+		return (ENOBUFS);
+	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (!d->bd_sbuf) {
+		free(d->bd_fbuf, M_DEVBUF);
+		return (ENOBUFS);
+	}
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
 	return (0);
