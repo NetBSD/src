@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.72 2003/06/28 14:21:54 darrenr Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.73 2003/06/29 09:59:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.72 2003/06/28 14:21:54 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.73 2003/06/29 09:59:59 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -720,7 +720,7 @@ ktrwrite(l, kth)
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
-	kth->ktr_buf = (caddr_t)l->l_lid;
+	kth->ktr_buf = (caddr_t)(intptr_t)l->l_lid;
 
 	simple_lock(&fp->f_slock);
 	FILE_USE(fp);
