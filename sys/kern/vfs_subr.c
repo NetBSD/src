@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.74 1997/10/05 18:39:52 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.75 1997/10/18 11:51:32 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -332,16 +332,26 @@ vattr_null(vap)
 {
 
 	vap->va_type = VNON;
-	/* XXX These next two used to be one line, but for a GCC bug. */
+
+	/*
+	 * Assign individually so that it is safe even if size and
+	 * sign of each member are varied.
+	 */
+	vap->va_mode = VNOVAL;
+	vap->va_nlink = VNOVAL;
+	vap->va_uid = VNOVAL;
+	vap->va_gid = VNOVAL;
+	vap->va_fsid = VNOVAL;
+	vap->va_fileid = VNOVAL;
 	vap->va_size = VNOVAL;
+	vap->va_blocksize = VNOVAL;
+	vap->va_atime.tv_sec = vap->va_atime.tv_nsec =
+	    vap->va_mtime.tv_sec = vap->va_mtime.tv_nsec =
+	    vap->va_ctime.tv_sec = vap->va_ctime.tv_nsec = VNOVAL;
+	vap->va_gen = VNOVAL;
+	vap->va_flags = VNOVAL;
+	vap->va_rdev = VNOVAL;
 	vap->va_bytes = VNOVAL;
-	vap->va_mode = vap->va_nlink = vap->va_uid = vap->va_gid =
-		vap->va_fsid = vap->va_fileid =
-		vap->va_blocksize = vap->va_rdev =
-		vap->va_atime.tv_sec = vap->va_atime.tv_nsec =
-		vap->va_mtime.tv_sec = vap->va_mtime.tv_nsec =
-		vap->va_ctime.tv_sec = vap->va_ctime.tv_nsec =
-		vap->va_flags = vap->va_gen = VNOVAL;
 	vap->va_vaflags = 0;
 }
 
