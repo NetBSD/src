@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1999/04/22 04:24:54 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.14 1999/05/26 19:16:33 thorpej Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -519,7 +519,7 @@ bogons:
 	 * Allocate the segment table map and the page table map
 	 */
 	s = maxproc * HP_STSIZE;
-	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 				 FALSE, &st_map_store);
 
 	addr = HP_PTBASE;
@@ -534,7 +534,7 @@ bogons:
 		maxproc = (HP_PTMAXSIZE / HP_MAX_PTSIZE);
 	} else
 		s = (maxproc * HP_MAX_PTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
 				 TRUE, &pt_map_store);
 
 #if defined(M68040)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.44 1999/05/26 00:36:53 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.45 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -206,11 +206,11 @@ uvm_mapent_alloc(map)
 	UVMHIST_FUNC("uvm_mapent_alloc");
 	UVMHIST_CALLED(maphist);
 
-	if (map->entries_pageable) {
+	if ((map->flags & VM_MAP_INTRSAFE) == 0 &&
+	    map != kernel_map && kernel_map != NULL /* XXX */) {
 		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
 		me->flags = 0;
 		/* me can't be null, wait ok */
-
 	} else {
 		s = splimp();	/* protect kentry_free list with splimp */
 		simple_lock(&uvm.kentry_lock);
@@ -219,14 +219,14 @@ uvm_mapent_alloc(map)
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 		if (!me)
-	panic("mapent_alloc: out of kernel map entries, check MAX_KMAPENT");
+	panic("mapent_alloc: out of static map entries, check MAX_KMAPENT");
 		me->flags = UVM_MAP_STATIC;
 	}
 
-	UVMHIST_LOG(maphist, "<- new entry=0x%x [pageable=%d]", 
-		me, map->entries_pageable, 0, 0);
+	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", 
+		me, ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map)
+		? TRUE : FALSE, 0, 0);
 	return(me);
-
 }
 
 /*
@@ -1979,6 +1979,11 @@ uvm_map_pageable(map, start, end, new_pageable)
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_pageable=0x%x)",
 	map, start, end, new_pageable);
 
+#ifdef DIAGNOSTIC
+	if ((map->flags & VM_MAP_PAGEABLE) == 0)
+		panic("uvm_map_pageable: map %p not pageable", map);
+#endif
+
 	vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
 
@@ -2377,7 +2382,7 @@ uvmspace_init(vm, pmap, min, max, pageable)
 
 	memset(vm, 0, sizeof(*vm));
 
-	uvm_map_setup(&vm->vm_map, min, max, pageable);
+	uvm_map_setup(&vm->vm_map, min, max, pageable ? VM_MAP_PAGEABLE : 0);
 
 	if (pmap)
 		pmap_reference(pmap);
@@ -2488,7 +2493,7 @@ uvmspace_exec(p)
 		 * for p
 		 */
 		nvm = uvmspace_alloc(map->min_offset, map->max_offset, 
-			 map->entries_pageable);
+			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
 
 #if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
 		/* 
@@ -2594,7 +2599,7 @@ uvmspace_fork(vm1)
 	vm_map_lock(old_map);
 
 	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
-		      old_map->entries_pageable);
+		      (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
