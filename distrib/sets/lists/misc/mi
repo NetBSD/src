@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.95 2004/01/04 00:54:19 lukem Exp $
+# $NetBSD: mi,v 1.96 2004/01/11 09:53:28 lukem Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -11,108 +11,108 @@
 ./usr/share/doc/html/bzip2/manual_4.html	misc-util-htmldoc
 ./usr/share/doc/html/bzip2/manual_toc.html	misc-util-htmldoc
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/accopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/assoc.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/audio.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/authopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/biblio.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/build.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/clockopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/config.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/confopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/copyright.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/debug.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver1.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver10.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver11.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver12.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver16.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver18.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver19.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver2.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver20.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver22.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver23.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver24.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver26.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver27.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver28.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver29.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver3.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver30.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver32.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver33.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver34.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver35.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver36.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver37.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver4.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver5.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver6.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver7.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver8.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/driver9.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/exec.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/extern.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/gadget.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/a-ux	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/aix	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/bsdi	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/changes	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/decosf1	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/decosf2	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/hpux	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/linux	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/accopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/assoc.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/audio.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/authopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/biblio.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/build.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/clockopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/config.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/confopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/copyright.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/debug.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver1.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver10.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver11.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver12.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver16.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver18.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver19.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver2.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver20.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver22.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver23.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver24.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver26.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver27.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver28.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver29.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver3.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver30.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver32.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver33.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver34.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver35.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver36.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver37.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver4.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver5.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver6.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver7.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver8.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/driver9.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/exec.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/extern.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/gadget.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/a-ux		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/aix		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/bsdi		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/changes		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/decosf1		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/decosf2		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/hpux		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/linux		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/notes-xntp-v3	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/parse	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/parse		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/refclocks	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/rs6000	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/sco.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/sgi	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/rs6000		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/sco.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/sgi		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/solaris-dosynctodr.html	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/solaris.html	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/solaris.html		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/solaris.xtra.4023118	misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/solaris.xtra.4095849	misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/solaris.xtra.S99ntpd	misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/solaris.xtra.patchfreq	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/sun4	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/sun4		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/svr4-dell	misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/svr4_package	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/hints/todo	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/hints/todo		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/vxworks.html	misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/ntp/hints/winnt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/howto.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/htmlprimer.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/index.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/kern.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/kernpps.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ldisc.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/measure.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/miscopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/monopt.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/mx4200data.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/notes.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntpd.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntpdate.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntpdc.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntpq.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntptime.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/ntptrace.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/parsedata.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/parsenew.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/patches.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/porting.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/pps.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/prefer.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/qth.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/quick.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/rdebug.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/refclock.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/release.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/tickadj.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/vxworks.htm	misc-ntp-htmldoc	obsolete
-./usr/share/doc/html/ntp/y2k.htm	misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/howto.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/htmlprimer.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/index.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/kern.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/kernpps.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ldisc.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/measure.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/miscopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/monopt.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/mx4200data.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/notes.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntpd.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntpdate.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntpdc.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntpq.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntptime.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/ntptrace.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/parsedata.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/parsenew.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/patches.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/porting.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/pps.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/prefer.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/qth.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/quick.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/rdebug.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/refclock.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/release.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/tickadj.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/vxworks.htm		misc-ntp-htmldoc	obsolete
+./usr/share/doc/html/ntp/y2k.htm		misc-ntp-htmldoc	obsolete
 ./usr/share/doc/html/postfix/access.5.html	misc-postfix-htmldoc	postfix
 ./usr/share/doc/html/postfix/aliases.5.html	misc-postfix-htmldoc	postfix
 ./usr/share/doc/html/postfix/architecture.html	misc-postfix-htmldoc	postfix
@@ -268,13 +268,13 @@
 ./usr/share/doc/smm/01.setup/5.t		misc-smm-doc
 ./usr/share/doc/smm/01.setup/6.t		misc-smm-doc
 ./usr/share/doc/smm/01.setup/Makefile		misc-smm-doc
-./usr/share/doc/smm/03.fsck			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/0.t			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/1.t			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/2.t			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/3.t			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/4.t			misc-smm-doc	obsolete
-./usr/share/doc/smm/03.fsck/Makefile		misc-smm-doc	obsolete
+./usr/share/doc/smm/03.fsck			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/0.t			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/1.t			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/2.t			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/3.t			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/4.t			misc-smm-doc		obsolete
+./usr/share/doc/smm/03.fsck/Makefile		misc-smm-doc		obsolete
 ./usr/share/doc/smm/03.fsck_ffs/0.t		misc-smm-doc
 ./usr/share/doc/smm/03.fsck_ffs/1.t		misc-smm-doc
 ./usr/share/doc/smm/03.fsck_ffs/2.t		misc-smm-doc
@@ -305,10 +305,10 @@
 ./usr/share/doc/smm/07.lpd/6.t			misc-smm-doc
 ./usr/share/doc/smm/07.lpd/7.t			misc-smm-doc
 ./usr/share/doc/smm/07.lpd/Makefile		misc-smm-doc
-./usr/share/doc/smm/08.sendmailop/Makefile	misc-smm-doc	sendmail
-./usr/share/doc/smm/08.sendmailop/op.me		misc-smm-doc	sendmail
-./usr/share/doc/smm/09.sendmail/Makefile	misc-smm-doc	obsolete
-./usr/share/doc/smm/09.sendmail/intro.me	misc-smm-doc	obsolete
+./usr/share/doc/smm/08.sendmailop/Makefile	misc-smm-doc		sendmail
+./usr/share/doc/smm/08.sendmailop/op.me		misc-smm-doc		sendmail
+./usr/share/doc/smm/09.sendmail/Makefile	misc-smm-doc		obsolete
+./usr/share/doc/smm/09.sendmail/intro.me	misc-smm-doc		obsolete
 ./usr/share/doc/smm/10.named/00macs.me		misc-smm-doc
 ./usr/share/doc/smm/10.named/00title.me		misc-smm-doc
 ./usr/share/doc/smm/10.named/Makefile		misc-smm-doc
@@ -317,8 +317,8 @@
 ./usr/share/doc/smm/10.named/files.me		misc-smm-doc
 ./usr/share/doc/smm/10.named/intro.me		misc-smm-doc
 ./usr/share/doc/smm/10.named/manage.me		misc-smm-doc
-./usr/share/doc/smm/10.named/named.boot.cache		misc-smm-doc
-./usr/share/doc/smm/10.named/named.boot.primary		misc-smm-doc
+./usr/share/doc/smm/10.named/named.boot.cache	misc-smm-doc
+./usr/share/doc/smm/10.named/named.boot.primary	misc-smm-doc
 ./usr/share/doc/smm/10.named/named.boot.secondary	misc-smm-doc
 ./usr/share/doc/smm/10.named/named.local	misc-smm-doc
 ./usr/share/doc/smm/10.named/ns.me		misc-smm-doc
@@ -373,22 +373,22 @@
 ./usr/share/doc/usd/07.mail/mail9.nr		misc-usd-doc
 ./usr/share/doc/usd/07.mail/maila.nr		misc-usd-doc
 ./usr/share/doc/usd/11.edit/Makefile		misc-usd-doc
-./usr/share/doc/usd/11.edit/edit.vindex		misc-usd-doc	obsolete
+./usr/share/doc/usd/11.edit/edit.vindex		misc-usd-doc		obsolete
 ./usr/share/doc/usd/11.edit/edittut.ms		misc-usd-doc
 ./usr/share/doc/usd/12.ex/Makefile		misc-usd-doc
 ./usr/share/doc/usd/12.ex/ex.rm			misc-usd-doc
 ./usr/share/doc/usd/12.ex/ex.summary		misc-usd-doc
 ./usr/share/doc/usd/12.vi/Makefile		misc-usd-doc
-./usr/share/doc/usd/12.vi/vi.apwh.ms		misc-usd-doc	obsolete
+./usr/share/doc/usd/12.vi/vi.apwh.ms		misc-usd-doc		obsolete
 ./usr/share/doc/usd/12.vi/vi.chars		misc-usd-doc
 ./usr/share/doc/usd/12.vi/vi.in			misc-usd-doc
-./usr/share/doc/usd/12.vi/vi.summary		misc-usd-doc	obsolete
+./usr/share/doc/usd/12.vi/vi.summary		misc-usd-doc		obsolete
 ./usr/share/doc/usd/13.viref/Makefile		misc-usd-doc
 ./usr/share/doc/usd/13.viref/ex.cmd.roff	misc-usd-doc
-./usr/share/doc/usd/13.viref/merge.awk		misc-usd-doc	obsolete
+./usr/share/doc/usd/13.viref/merge.awk		misc-usd-doc		obsolete
 ./usr/share/doc/usd/13.viref/ref.so		misc-usd-doc
 ./usr/share/doc/usd/13.viref/set.opt.roff	misc-usd-doc
-./usr/share/doc/usd/13.viref/spell.ok		misc-usd-doc	obsolete
+./usr/share/doc/usd/13.viref/spell.ok		misc-usd-doc		obsolete
 ./usr/share/doc/usd/13.viref/vi.cmd.roff	misc-usd-doc
 ./usr/share/doc/usd/13.viref/vi.ref		misc-usd-doc
 ./usr/share/doc/usd/18.msdiffs/Makefile		misc-usd-doc
@@ -403,18 +403,18 @@
 ./usr/share/doc/usd/31.trek/trek.me		misc-usd-doc
 ./usr/share/doc/usd/Makefile			misc-usd-doc
 ./usr/share/doc/usd/Title			misc-usd-doc
-./usr/share/doc/xntp					misc-ntp-doc		obsolete
+./usr/share/doc/xntp				misc-ntp-doc		obsolete
 ./usr/share/examples/amd/amd.conf		misc-amd-examples
 ./usr/share/examples/amd/cd			misc-amd-examples
-./usr/share/examples/amd/master				misc-amd-examples	obsolete
+./usr/share/examples/amd/master			misc-amd-examples	obsolete
 ./usr/share/examples/amd/net			misc-amd-examples
 ./usr/share/examples/apm/script			misc-amd-examples
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples
 ./usr/share/examples/disktab/disktab		misc-sys-examples
-./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV		misc-sys-examples
-./usr/share/examples/emul/svr4/etc/netconfig		misc-sys-examples
+./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-sys-examples
+./usr/share/examples/emul/svr4/etc/netconfig	misc-sys-examples
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples
-./usr/share/examples/emul/ultrix/etc/svc.conf		misc-sys-examples
+./usr/share/examples/emul/ultrix/etc/svc.conf	misc-sys-examples
 ./usr/share/examples/fstab/fstab.md		misc-fstab-examples
 ./usr/share/examples/fstab/fstab.nfs.1		misc-fstab-examples
 ./usr/share/examples/fstab/fstab.nfs.2		misc-fstab-examples
@@ -470,287 +470,287 @@
 ./usr/share/examples/mount_portal/cvs.1		misc-sys-examples
 ./usr/share/examples/mount_portal/cvs.conf	misc-sys-examples
 ./usr/share/examples/mount_portal/cvs.sh	misc-sys-examples
-./usr/share/examples/mount_portal/fing.c		misc-sys-examples
-./usr/share/examples/mount_portal/fs.1			misc-sys-examples
-./usr/share/examples/mount_portal/fs.1.conf		misc-sys-examples
-./usr/share/examples/mount_portal/overview		misc-sys-examples
-./usr/share/examples/mount_portal/rfilter.1		misc-sys-examples
-./usr/share/examples/mount_portal/rfilter.2		misc-sys-examples
+./usr/share/examples/mount_portal/fing.c	misc-sys-examples
+./usr/share/examples/mount_portal/fs.1		misc-sys-examples
+./usr/share/examples/mount_portal/fs.1.conf	misc-sys-examples
+./usr/share/examples/mount_portal/overview	misc-sys-examples
+./usr/share/examples/mount_portal/rfilter.1	misc-sys-examples
+./usr/share/examples/mount_portal/rfilter.2	misc-sys-examples
 ./usr/share/examples/mount_portal/rfilter.2.conf	misc-sys-examples
-./usr/share/examples/mount_portal/sysctlfs.sh		misc-sys-examples
-./usr/share/examples/mount_portal/tcp.1			misc-sys-examples
-./usr/share/examples/mount_portal/tcp.1.conf		misc-sys-examples
+./usr/share/examples/mount_portal/sysctlfs.sh	misc-sys-examples
+./usr/share/examples/mount_portal/tcp.1		misc-sys-examples
+./usr/share/examples/mount_portal/tcp.1.conf	misc-sys-examples
 ./usr/share/examples/named/named.conf		misc-bind-examples
-./usr/share/examples/openssl/CA.pl		misc-crypto-examples crypto
-./usr/share/examples/openssl/CA.sh		misc-crypto-examples crypto
-./usr/share/examples/openssl/der_chop		misc-crypto-examples crypto
-./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples crypto
+./usr/share/examples/openssl/CA.pl		misc-crypto-examples	crypto
+./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto
+./usr/share/examples/openssl/der_chop		misc-crypto-examples	crypto
+./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	crypto
 ./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples	postfix
-./usr/share/examples/postfix/DEBUG_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/ETRN_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/FILTER_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/LDAP_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/LICENSE			misc-postfix-examples	postfix
-./usr/share/examples/postfix/LMTP_README		misc-postfix-examples	postfix
+./usr/share/examples/postfix/DEBUG_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/ETRN_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/FILTER_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/LDAP_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/LICENSE		misc-postfix-examples	postfix
+./usr/share/examples/postfix/LMTP_README	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix
-./usr/share/examples/postfix/MAILDROP_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/MYSQL_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/NFS_README			misc-postfix-examples	postfix
-./usr/share/examples/postfix/PCRE_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/QMQP_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/RELEASE_NOTES		misc-postfix-examples	postfix
+./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix
+./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/QMQP_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples	postfix
-./usr/share/examples/postfix/SASL_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/UUCP_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/VERP_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/VIRTUAL_README		misc-postfix-examples	postfix
-./usr/share/examples/postfix/access			misc-postfix-examples	postfix
-./usr/share/examples/postfix/aliases			misc-postfix-examples	postfix
-./usr/share/examples/postfix/canonical			misc-postfix-examples	postfix
-./usr/share/examples/postfix/main.cf			misc-postfix-examples	postfix
-./usr/share/examples/postfix/master.cf			misc-postfix-examples	postfix
-./usr/share/examples/postfix/pcre_table			misc-postfix-examples	postfix
-./usr/share/examples/postfix/post-install		misc-postfix-examples	postfix
-./usr/share/examples/postfix/postfix-files		misc-postfix-examples	postfix
-./usr/share/examples/postfix/postfix-script		misc-postfix-examples	postfix
-./usr/share/examples/postfix/regexp_table		misc-postfix-examples	postfix
-./usr/share/examples/postfix/relocated			misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-aliases.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-auth.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/SASL_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/UUCP_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/VERP_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/VIRTUAL_README	misc-postfix-examples	postfix
+./usr/share/examples/postfix/access		misc-postfix-examples	postfix
+./usr/share/examples/postfix/aliases		misc-postfix-examples	postfix
+./usr/share/examples/postfix/canonical		misc-postfix-examples	postfix
+./usr/share/examples/postfix/main.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/master.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/pcre_table		misc-postfix-examples	postfix
+./usr/share/examples/postfix/post-install	misc-postfix-examples	postfix
+./usr/share/examples/postfix/postfix-files	misc-postfix-examples	postfix
+./usr/share/examples/postfix/postfix-script	misc-postfix-examples	postfix
+./usr/share/examples/postfix/regexp_table	misc-postfix-examples	postfix
+./usr/share/examples/postfix/relocated		misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-aliases.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-auth.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-canonical.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-compatibility.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-debug.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-filter.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-flush.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-ldap.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-lmtp.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-local.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-mime.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-misc.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-debug.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-filter.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-flush.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-ldap.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-lmtp.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-local.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-mime.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-misc.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-pcre-access.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-pcre-body.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-pcre-header.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-pcre.cf		misc-postfix-examples	obsolete
-./usr/share/examples/postfix/sample-qmqpd.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-rate.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-pcre.cf	misc-postfix-examples	obsolete
+./usr/share/examples/postfix/sample-qmqpd.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-rate.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-access.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-body.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-header.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-regexp.cf		misc-postfix-examples	obsolete
+./usr/share/examples/postfix/sample-regexp.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-relocated.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-resource.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-rewrite.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-smtp.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-smtpd.cf		misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-resource.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-rewrite.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-smtp.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/sample-smtpd.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-transport.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-virtual.cf		misc-postfix-examples	postfix
-./usr/share/examples/postfix/transport			misc-postfix-examples	postfix
-./usr/share/examples/postfix/virtual			misc-postfix-examples	postfix
-./usr/share/examples/racoon/README.certificate		misc-netutil-examples	crypto
-./usr/share/examples/racoon/README.gssapi		misc-netutil-examples	crypto
-./usr/share/examples/racoon/psk.txt.sample		misc-netutil-examples	crypto
-./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples	crypto
+./usr/share/examples/postfix/sample-virtual.cf	misc-postfix-examples	postfix
+./usr/share/examples/postfix/transport		misc-postfix-examples	postfix
+./usr/share/examples/postfix/virtual		misc-postfix-examples	postfix
+./usr/share/examples/racoon/README.certificate	misc-netutil-examples	crypto
+./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	crypto
+./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	crypto
+./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	crypto
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto
-./usr/share/examples/rtadvd/rtadvd.conf			misc-router-examples
-./usr/share/examples/smbfs/dot.nsmbrc			misc-sysutil-examples
-./usr/share/examples/supfiles/ftp.cs.umn.edu		misc-sysutil-examples	obsolete
+./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples
+./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples
+./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-sysutil-examples	obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-sysutil-examples	obsolete
-./usr/share/examples/supfiles/sup.au.netbsd.org		misc-sup-examples
-./usr/share/examples/supfiles/sup.de.netbsd.org		misc-sysutil-examples	obsolete
-./usr/share/examples/supfiles/sup.jp.netbsd.org		misc-sup-examples
-./usr/share/examples/supfiles/sup.netbsd.org		misc-sup-examples
-./usr/share/examples/supfiles/sup.no.netbsd.org		misc-sysutil-examples	obsolete
-./usr/share/examples/supfiles/sup.uk.netbsd.org		misc-sysutil-examples	obsolete
+./usr/share/examples/supfiles/sup.au.netbsd.org	misc-sup-examples
+./usr/share/examples/supfiles/sup.de.netbsd.org	misc-sysutil-examples	obsolete
+./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples
+./usr/share/examples/supfiles/sup.netbsd.org	misc-sup-examples
+./usr/share/examples/supfiles/sup.no.netbsd.org	misc-sysutil-examples	obsolete
+./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-sysutil-examples	obsolete
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples
-./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
-./usr/share/examples/syslogd/all.newsyslog.conf		misc-sysutil-examples
-./usr/share/examples/usermgmt		misc-sys-examples	obsolete
-./usr/share/examples/usermgmt/.cshrc	misc-sys-examples	obsolete
-./usr/share/examples/usermgmt/.login	misc-sys-examples	obsolete
-./usr/share/examples/usermgmt/.profile	misc-sys-examples	obsolete
-./usr/share/misc/airport				misc-reference-share
-./usr/share/misc/birthtoken				misc-reference-share
-./usr/share/misc/country				misc-reference-share
-./usr/share/misc/domains				misc-reference-share
-./usr/share/misc/flowers				misc-reference-share
-./usr/share/misc/inter.phone				misc-reference-share
-./usr/share/misc/language				misc-reference-share
-./usr/share/misc/na.phone				misc-reference-share
-./usr/share/misc/na.postal				misc-reference-share
-./usr/share/misc/sendmail.hf				misc-sendmail-share	obsolete
-./usr/share/misc/zipcodes				misc-reference-share
-./usr/share/postfix					misc-postfix-share	obsolete
-./usr/share/sendmail					misc-sendmail-share
-./usr/share/sendmail/LICENSE				misc-sendmail-share	sendmail
-./usr/share/sendmail/README				misc-sendmail-share	sendmail
-./usr/share/sendmail/README.milter			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf					misc-sendmail-share
-./usr/share/sendmail/cf/Makefile			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/boat-anchor.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/chimera.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/clientproto.mc			misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/ihack.net.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/minbar.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/netbsd-msp.cf			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/netbsd-msp.mc			misc-sendmail-share	sendmail
+./usr/share/examples/syslogd/all.debug		misc-sysutil-examples
+./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples
+./usr/share/examples/usermgmt			misc-sys-examples	obsolete
+./usr/share/examples/usermgmt/.cshrc		misc-sys-examples	obsolete
+./usr/share/examples/usermgmt/.login		misc-sys-examples	obsolete
+./usr/share/examples/usermgmt/.profile		misc-sys-examples	obsolete
+./usr/share/misc/airport			misc-reference-share
+./usr/share/misc/birthtoken			misc-reference-share
+./usr/share/misc/country			misc-reference-share
+./usr/share/misc/domains			misc-reference-share
+./usr/share/misc/flowers			misc-reference-share
+./usr/share/misc/inter.phone			misc-reference-share
+./usr/share/misc/language			misc-reference-share
+./usr/share/misc/na.phone			misc-reference-share
+./usr/share/misc/na.postal			misc-reference-share
+./usr/share/misc/sendmail.hf			misc-sendmail-share	obsolete
+./usr/share/misc/zipcodes			misc-reference-share
+./usr/share/postfix				misc-postfix-share	obsolete
+./usr/share/sendmail				misc-sendmail-share
+./usr/share/sendmail/LICENSE			misc-sendmail-share	sendmail
+./usr/share/sendmail/README			misc-sendmail-share	sendmail
+./usr/share/sendmail/README.milter		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf				misc-sendmail-share
+./usr/share/sendmail/cf/Makefile		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/boat-anchor.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/chimera.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/clientproto.mc		misc-sendmail-share	obsolete
+./usr/share/sendmail/cf/ihack.net.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/minbar.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/netbsd-msp.cf		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/netbsd-msp.mc		misc-sendmail-share	sendmail
 ./usr/share/sendmail/cf/netbsd-proto-IPv4only.mc	misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/netbsd-proto-IPv6.mc		misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/netbsd-proto.cf			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/netbsd-proto.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/submit.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/sun-lamp.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/cf/tcpproto.mc			misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/trinity.mc			misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/uucpproto.mc			misc-sendmail-share	obsolete
-./usr/share/sendmail/cf/zhadum.mc			misc-sendmail-share	sendmail
-./usr/share/sendmail/domain				misc-sendmail-share
-./usr/share/sendmail/domain/Berkeley.EDU.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/CS.Berkeley.EDU.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/netbsd-proto-IPv6.mc	misc-sendmail-share	obsolete
+./usr/share/sendmail/cf/netbsd-proto.cf		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/netbsd-proto.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/submit.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/sun-lamp.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/cf/tcpproto.mc		misc-sendmail-share	obsolete
+./usr/share/sendmail/cf/trinity.mc		misc-sendmail-share	obsolete
+./usr/share/sendmail/cf/uucpproto.mc		misc-sendmail-share	obsolete
+./usr/share/sendmail/cf/zhadum.mc		misc-sendmail-share	sendmail
+./usr/share/sendmail/domain			misc-sendmail-share
+./usr/share/sendmail/domain/Berkeley.EDU.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/CS.Berkeley.EDU.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/domain/EECS.Berkeley.EDU.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/Makefile.inc		misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/NetBSD.ORG.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/S2K.Berkeley.EDU.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/berkeley-only.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/generic.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/domain/ihack.net.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature				misc-sendmail-share
-./usr/share/sendmail/feature/Makefile.inc		misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/Makefile.inc	misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/NetBSD.ORG.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/S2K.Berkeley.EDU.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/berkeley-only.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/generic.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/domain/ihack.net.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature			misc-sendmail-share
+./usr/share/sendmail/feature/Makefile.inc	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/accept_unqualified_senders.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/accept_unresolvable_domains.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/access_db.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/allmasquerade.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/access_db.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/allmasquerade.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/always_add_domain.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/authinfo.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/bestmx_is_local.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/bitdomain.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/authinfo.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/bestmx_is_local.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/bitdomain.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/blacklist_recipients.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/compat_check.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/delay_checks.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/dnsbl.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/domaintable.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/enhdnsbl.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/compat_check.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/delay_checks.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/dnsbl.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/domaintable.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/enhdnsbl.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/generics_entire_domain.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/genericstable.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/ldap_routing.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/genericstable.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/ldap_routing.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/limited_masquerade.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/local_lmtp.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/local_lmtp.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/local_no_masquerade.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/local_procmail.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/lookupdotdomain.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/local_procmail.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/lookupdotdomain.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/loose_relay_check.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/mailertable.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/mailertable.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/masquerade_envelope.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/msp.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/no_default_msa.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/nocanonify.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/nodns.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/notsticky.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/nouucp.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/nullclient.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/msp.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/no_default_msa.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/nocanonify.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/nodns.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/notsticky.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/nouucp.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/nullclient.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/preserve_local_plus_detail.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/preserve_luser_host.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/promiscuous_relay.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/queuegroup.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/rbl.m4			misc-sendmail-share	obsolete
-./usr/share/sendmail/feature/redirect.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/queuegroup.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/rbl.m4		misc-sendmail-share	obsolete
+./usr/share/sendmail/feature/redirect.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/relay_based_on_MX.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/relay_entire_domain.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/relay_hosts_only.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/relay_local_from.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/relay_mail_from.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/smrsh.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/stickyhost.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/use_ct_file.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/use_cw_file.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/uucpdomain.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/relay_mail_from.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/smrsh.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/stickyhost.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/use_ct_file.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/use_cw_file.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/uucpdomain.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/feature/virtuser_entire_domain.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/feature/virtusertable.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/hack				misc-sendmail-share
-./usr/share/sendmail/hack/Makefile.inc			misc-sendmail-share	sendmail
-./usr/share/sendmail/hack/cssubdomain.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/m4			misc-sendmail-share
-./usr/share/sendmail/m4/Makefile.inc			misc-sendmail-share	sendmail
-./usr/share/sendmail/m4/cf.m4				misc-sendmail-share	sendmail
-./usr/share/sendmail/m4/cfhead.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/m4/nullrelay.m4			misc-sendmail-share	obsolete
-./usr/share/sendmail/m4/proto.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/m4/version.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer				misc-sendmail-share
-./usr/share/sendmail/mailer/Makefile.inc		misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/cyrus.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/cyrusv2.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/fax.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/local.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/mail11.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/phquery.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/pop.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/procmail.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/qpage.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/smtp.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/usenet.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/mailer/uucp.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype				misc-sendmail-share
-./usr/share/sendmail/ostype/Makefile.inc		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/a-ux.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/aix2.m4			misc-sendmail-share	obsolete
-./usr/share/sendmail/ostype/aix3.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/aix4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/aix5.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/altos.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/amdahl-uts.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/aux.m4			misc-sendmail-share	obsolete
-./usr/share/sendmail/ostype/bsd4.3.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/bsd4.4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/bsdi.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/bsdi1.0.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/bsdi2.0.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/darwin.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/dgux.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/domainos.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/dynix3.2.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/freebsd4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/freebsd5.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/gnu.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/gnuhurd.m4			misc-sendmail-share	obsolete
-./usr/share/sendmail/ostype/hpux10.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/hpux11.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/hpux9.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/irix4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/irix5.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/irix6.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/isc4.1.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/linux.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/maxion.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/mklinux.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/mpeix.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/nextstep.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/openbsd.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/osf1.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/powerux.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/ptx2.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/qnx.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/riscos4.5.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/sco-uw-2.1.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/sco3.2.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/sinix.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/solaris2.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/solaris2.ml.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/solaris2.pre5.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/solaris8.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/sunos3.5.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/sunos4.1.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/svr4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/ultrix4.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/unixware7.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/unknown.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/ostype/uxpds.m4			misc-sendmail-share	sendmail
-./usr/share/sendmail/sh					misc-sendmail-share
-./usr/share/sendmail/sh/Makefile.inc			misc-sendmail-share	sendmail
-./usr/share/sendmail/sh/makeinfo.sh			misc-sendmail-share	sendmail
-./usr/share/sendmail/siteconfig				misc-sendmail-share
-./usr/share/sendmail/siteconfig/Makefile.inc		misc-sendmail-share	sendmail
-./usr/share/sendmail/siteconfig/uucp.cogsci.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/feature/virtusertable.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/hack			misc-sendmail-share
+./usr/share/sendmail/hack/Makefile.inc		misc-sendmail-share	sendmail
+./usr/share/sendmail/hack/cssubdomain.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/m4				misc-sendmail-share
+./usr/share/sendmail/m4/Makefile.inc		misc-sendmail-share	sendmail
+./usr/share/sendmail/m4/cf.m4			misc-sendmail-share	sendmail
+./usr/share/sendmail/m4/cfhead.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/m4/nullrelay.m4		misc-sendmail-share	obsolete
+./usr/share/sendmail/m4/proto.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/m4/version.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer			misc-sendmail-share
+./usr/share/sendmail/mailer/Makefile.inc	misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/cyrus.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/cyrusv2.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/fax.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/local.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/mail11.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/phquery.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/pop.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/procmail.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/qpage.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/smtp.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/usenet.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/mailer/uucp.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype			misc-sendmail-share
+./usr/share/sendmail/ostype/Makefile.inc	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/a-ux.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/aix2.m4		misc-sendmail-share	obsolete
+./usr/share/sendmail/ostype/aix3.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/aix4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/aix5.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/altos.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/amdahl-uts.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/aux.m4		misc-sendmail-share	obsolete
+./usr/share/sendmail/ostype/bsd4.3.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/bsd4.4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/bsdi.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/bsdi1.0.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/bsdi2.0.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/darwin.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/dgux.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/domainos.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/dynix3.2.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/freebsd4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/freebsd5.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/gnu.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/gnuhurd.m4		misc-sendmail-share	obsolete
+./usr/share/sendmail/ostype/hpux10.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/hpux11.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/hpux9.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/irix4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/irix5.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/irix6.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/isc4.1.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/linux.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/maxion.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/mklinux.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/mpeix.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/nextstep.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/openbsd.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/osf1.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/powerux.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/ptx2.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/qnx.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/riscos4.5.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/sco-uw-2.1.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/sco3.2.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/sinix.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/solaris2.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/solaris2.ml.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/solaris2.pre5.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/solaris8.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/sunos3.5.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/sunos4.1.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/svr4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/ultrix4.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/unixware7.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/unknown.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/ostype/uxpds.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/sh				misc-sendmail-share
+./usr/share/sendmail/sh/Makefile.inc		misc-sendmail-share	sendmail
+./usr/share/sendmail/sh/makeinfo.sh		misc-sendmail-share	sendmail
+./usr/share/sendmail/siteconfig			misc-sendmail-share
+./usr/share/sendmail/siteconfig/Makefile.inc	misc-sendmail-share	sendmail
+./usr/share/sendmail/siteconfig/uucp.cogsci.m4	misc-sendmail-share	sendmail
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4	misc-sendmail-share	sendmail
-./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4		misc-sendmail-share	sendmail
-./usr/share/sendmail/siteconfig/uucp.ucbvax.m4		misc-sendmail-share	sendmail
+./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4	misc-sendmail-share	sendmail
+./usr/share/sendmail/siteconfig/uucp.ucbvax.m4	misc-sendmail-share	sendmail
