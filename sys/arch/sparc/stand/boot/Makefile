@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/09/22 03:34:20 tv Exp $
+#	$NetBSD: Makefile,v 1.27 2001/12/04 18:54:34 thorpej Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -7,6 +7,8 @@ NEWVERSWHAT=	"Secondary Boot"
 FILES=		boot.net ${RELOCS:S/^/boot./g}
 CLEANFILES:=	vers.c ${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
+
+CPPFLAGS+=	-DBOOT_AOUT -DBOOT_ELF32
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
