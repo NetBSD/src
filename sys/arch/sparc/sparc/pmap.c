@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141.2.3 1999/07/02 17:03:10 perry Exp $ */
+/*	$NetBSD: pmap.c,v 1.141.2.4 1999/12/04 19:16:01 he Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1718,8 +1718,9 @@ mmu_pagein(pm, va, prot)
 
 	rp = &pm->pm_regmap[vr];
 #ifdef DEBUG
-if (pm == pmap_kernel())
-printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
+	if (pm == pmap_kernel())
+	printf("mmu_pagein: kernel wants map at va 0x%lx, vr %d, vs %d\n",
+		(u_long)va, vr, vs);
 #endif
 #if 0
 #if defined(SUN4_MMU3L)
