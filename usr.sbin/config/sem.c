@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.35 2002/10/11 01:48:27 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.36 2003/01/23 15:05:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1116,7 +1116,7 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 {
 	struct devm *dm;
 
-	if (cmajor < 0 || cmajor >= 4096) {
+	if (cmajor < -1 || cmajor >= 4096) {
 		error("character major %d is invalid", cmajor);
 		nvfreel(options);
 		return;
@@ -1124,6 +1124,11 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 
 	if (bmajor < -1 || bmajor >= 4096) {
 		error("block major %d is invalid", bmajor);
+		nvfreel(options);
+		return;
+	}
+	if (cmajor == -1 && bmajor == -1) {
+		error("both character/block majors are not specified");
 		nvfreel(options);
 		return;
 	}

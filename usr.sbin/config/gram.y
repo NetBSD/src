@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.39 2002/11/17 23:36:19 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.40 2003/01/23 15:05:45 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,7 +205,8 @@ device_major_block:
 	/* empty */			{ $$ = -1; };
 
 device_major_char:
-	CHAR NUMBER			{ $$ = $2; };
+	CHAR NUMBER			{ $$ = $2; } |
+	/* empty */			{ $$ = -1; };
 
 /* order of options is important, must use right recursion */
 fopts:
