@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.86 2001/04/20 12:07:49 sato Exp $
+# 	$NetBSD: GENERIC,v 1.87 2001/04/20 12:08:45 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.86 $"
+#ident 		"GENERIC-$Revision: 1.87 $"
 
 maxusers	8
 
@@ -29,6 +29,7 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
+options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN
