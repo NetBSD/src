@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.34 1997/07/28 01:31:55 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.35 1997/07/28 20:56:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -85,6 +85,8 @@
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
+#include <vm/vm.h>
+
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 
@@ -1695,4 +1697,14 @@ ad1848_round(addr, size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
+}
+
+int
+ad1848_mappage(addr, mem, off, prot)
+	void *addr;
+        void *mem;
+        int off;
+	int prot;
+{
+	return isa_mappage(mem, off, prot);
 }

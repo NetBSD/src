@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.28 1997/07/27 23:52:03 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.29 1997/07/28 20:56:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -187,8 +187,8 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_malloc,
 	ad1848_free,
 	ad1848_round,
-	AUDIO_PROP_MMAP,
-	0
+        ad1848_mappage,
+	AUDIO_PROP_MMAP
 };
 
 int	wssprobe __P((struct device *, void *, void *));
