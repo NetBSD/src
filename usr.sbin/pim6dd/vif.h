@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.h,v 1.1 1999/07/17 14:06:26 itojun Exp $	*/
+/*	$NetBSD: vif.h,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: vif.h,v 1.5 1998/07/06 22:31:15 kurtw Exp
+ *  KAME Id: vif.h,v 1.1.1.1 1999/08/08 23:30:56 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -212,6 +212,7 @@ struct uvif {
 #define VIFF_POINT_TO_POINT     0x100000       /* point-to-point link       */
 #define VIFF_PIM_NBR            0x200000       /* PIM neighbor              */
 #define VIFF_DVMRP_NBR          0x400000       /* DVMRP neighbor            */
+#define VIFF_NOLISTENER         0x800000       /* no listener on the link   */
 
 struct phaddr {
     struct phaddr   *pa_next;

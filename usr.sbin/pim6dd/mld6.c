@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.1 1999/07/17 14:06:25 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.2 1999/08/19 17:31:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -65,7 +65,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: mld6.c,v 1.8 1998/11/06 13:05:02 jinmei Exp
+ *  KAME Id: mld6.c,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.

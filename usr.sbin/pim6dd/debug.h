@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 1999/07/17 14:06:25 itojun Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: debug.h,v 1.4 1998/05/29 21:58:22 kurtw Exp
+ *  KAME Id: debug.h,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.

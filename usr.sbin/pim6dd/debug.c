@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.2 1999/07/21 02:02:27 mjacob Exp $	*/
+/*	$NetBSD: debug.c,v 1.3 1999/08/19 17:31:06 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: debug.c,v 1.9 1998/06/02 19:46:54 kurtw Exp
+ *  KAME Id: debug.c,v 1.1.1.1 1999/08/08 23:30:51 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -263,6 +263,8 @@ dump_vifs(fp)
 		    width = 0;
 		    if (v->uv_flags & VIFF_DISABLED)
 			    fprintf(fp, " DISABLED");
+		    if (v->uv_flags & VIFF_NOLISTENER)
+			    fprintf(fp, " NOLISTENER");
 		    if (v->uv_flags & VIFF_DOWN)
 			    fprintf(fp, " DOWN");
 		    if (v->uv_flags & VIFF_DR) {
