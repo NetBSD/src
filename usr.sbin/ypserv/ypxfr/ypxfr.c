@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.5 1997/10/07 15:00:35 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.6 1997/10/13 03:15:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypxfr.c,v 1.6 1997/10/13 03:15:30 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
