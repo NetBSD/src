@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 2002/05/31 19:59:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.155 2002/06/09 20:02:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6040,10 +6040,10 @@ NOP_ON_4_4C_1:
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
 	bl,a	4f
-	 st	%o2, [%o0]			! (should be able to std here)
+	 st	%o2, [%o0]
 	add	%o2, 1, %o2			! overflow
 	sub	%o3, %g5, %o3
-	st	%o2, [%o0]			! (should be able to std here)
+	st	%o2, [%o0]
 4:
 	retl
 	 st	%o3, [%o0+4]
@@ -6079,17 +6079,16 @@ ENTRY(microtime)
 	bpos	3f				! if limit not reached yet
 	 clr	%g4				!  then use timer as is
 
-	sethi	%hi(0x80000000), %g5
+	set	0x80000000, %g5
 	sethi	%hi(_C_LABEL(tick)), %g4
-	andn	%o4, %g5, %o4			! cleat limit reached flag
+	bclr	%g5, %o4			! cleat limit reached flag
 	ld	[%g4+%lo(_C_LABEL(tick))], %g4
 
 	!! %g4 - either 0 or tick (if timer has hit the limit)
 3:
 	inc	-1, %o4				! timer is 1-based, adjust
-	!! divide by 25 magic stollen from a gcc output
-	sethi	%hi(1374389535), %g5
-	or	%g5, %lo(1374389535), %g5
+	!! divide by 25 magic stolen from a gcc output
+	set	1374389535, %g5
 	umul	%o4, %g5, %g0
 	rd	%y, %o4
 	srl	%o4, 3, %o4
@@ -6104,8 +6103,9 @@ ENTRY(microtime)
 	inc	%o2				! overflow into tv_sec
 	sub	%o3, %g5, %o3
 4:
+	st	%o2, [%o0]
 	retl
-	 std	%o2, [%o0]
+	 st	%o3, [%o0 + 4]
 #endif /* MSIIEP */
 
 /*
