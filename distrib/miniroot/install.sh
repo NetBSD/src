@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.17 1997/10/09 07:25:50 jtc Exp $
+#	$NetBSD: install.sh,v 1.17.2.1 1997/11/25 12:43:12 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -166,6 +166,22 @@ while [ "X$resp" != X"done" ]; do
 	esac
 done
 
+# configure swap
+resp=""		# force at least one iteration
+while [ "X${resp}" = X"" ]; do
+	echo -n	"Ok to configure ${ROOTDISK}b as a swap device? [] "
+	getresp ""
+	case "$resp" in
+	y*|Y*)
+		echo "${ROOTDISK}b	swap" >> ${FILESYSTEMS}
+		;;
+	n*|N*)
+		;;
+	*)	;;
+	esac
+done
+
+
 echo	""
 echo	"You have configured the following devices and mount points:"
 echo	""
@@ -185,9 +201,11 @@ esac
 # Loop though the file, place filesystems on each device.
 echo	"Creating filesystems..."
 (
-	while read _device_name _junk; do
-		newfs /dev/r${_device_name}
-		echo ""
+	while read _device_name _mp; do
+		if [ "$_mp" != "swap" ]; then
+			newfs /dev/r${_device_name}
+			echo ""
+		fi
 	done
 ) < ${FILESYSTEMS}
 
@@ -309,8 +327,10 @@ esac
 # fstab.
 (
 	while read _dev _mp; do
-		if [ "$mp" = "/" ]; then
+		if [ "$_mp" = "/" ]; then
 			echo /dev/$_dev $_mp ffs rw 1 1
+		elif [ "$_mp" = "swap" ]; then
+			echo /dev/$_dev none swap sw 0 0
 		else
 			echo /dev/$_dev $_mp ffs rw 1 2
 		fi
