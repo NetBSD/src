@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.11 2000/05/19 05:26:16 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.12 2000/05/21 14:36:15 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -684,7 +684,7 @@ consinit()
 	prom_cons_channel.cc_dev = NULL;
 	prom_cons_channel.cc_iopen = kd_rom_iopen;
 	prom_cons_channel.cc_iclose = kd_rom_iclose;
-	cons_attach_input(&prom_cons_channel);
+	cons_attach_input(&prom_cons_channel, cn_tab);
 
 #ifdef	KGDB
 	zs_kgdb_init();	/* XXX */
