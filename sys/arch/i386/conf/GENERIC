@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.235 1999/05/19 14:41:54 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.236 1999/06/06 17:37:03 dante Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -321,6 +321,7 @@ aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
+adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02]
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
