@@ -1,7 +1,7 @@
 /*
- *	aout2hux - convert a.out executable to Human68k .x format
+ *	aout2hux - convert a.out/ELF executable to Human68k .x format
  *
- *	Read two a.out format executables with different load addresses
+ *	Read two a.out/ELF format executables with different load addresses
  *	and generate Human68k .x format executable.
  *
  *	written by Yasha (ITOH Yasufumi)
@@ -10,17 +10,18 @@
  * usage:
  *	aout2hux [ -o output.x ] a.out1 loadaddr1 a.out2 loadaddr2
  *
- *	The input a.out files must be static OMAGIC/NMAGIC m68k executables.
- *	Two a.out files must have different loading addresses.
+ *	The input files must be static OMAGIC/NMAGIC m68k a.out executables
+ *	or m68k ELF executables.
+ *	Two executables must have different loading addresses.
  *	Each of the load address must be a hexadecimal number.
  *	Load address shall be multiple of 4 for as / ld of NetBSD/m68k.
  *
  * example:
- *	% cc -N -static -Wl,-T,0        -o aout1 *.o
- *	% cc -N -static -Wl,-T,10203040 -o aout2 *.o
+ *	% cc -N -static -Wl,-Ttext,0        -o aout1 *.o
+ *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.3 1999/03/16 16:30:21 minoura Exp $
+ *	$NetBSD: aout2hux.c,v 1.4 1999/11/16 00:48:12 itohy Exp $
  */
 
 #include <sys/types.h>
@@ -37,6 +38,9 @@
 #include "aout68k.h"
 #include "hux.h"
 
+/* fseek() offset type */
+typedef long	foff_t;
+
 #ifndef DEFAULT_OUTPUT_FILE
 # define DEFAULT_OUTPUT_FILE	"out.x"
 #endif
@@ -47,14 +51,28 @@
 # define DPRINTF(x)
 #endif
 
+struct exec_info {
+	foff_t		text_off;	/* file offset of text section */
+	foff_t		data_off;	/* file offset of data section */
+	u_int32_t	text_size;	/* size of text section */
+	u_int32_t	text_pad;	/* pad between text and data */
+	u_int32_t	data_size;	/* size of data section */
+	u_int32_t	bss_size;	/* size of bss */
+	u_int32_t	entry_addr;	/* entry point address */
+};
+
 unsigned get_uint16 PROTO((be_uint16_t *be));
 u_int32_t get_uint32 PROTO((be_uint32_t *be));
 void put_uint16 PROTO((be_uint16_t *be, unsigned v));
 void put_uint32 PROTO((be_uint32_t *be, u_int32_t v));
 void *do_realloc PROTO((void *p, size_t s));
 
-FILE *open_aout PROTO((const char *fn, struct aout_m68k *hdr));
-int check_2_aout_hdrs PROTO((struct aout_m68k *h1, struct aout_m68k *h2));
+static int open_aout __P((const char *fn, struct aout_m68k *hdr,
+		struct exec_info *inf));
+static int open_elf PROTO((const char *fn, FILE *fp, struct elf_m68k_hdr *hdr,
+		struct exec_info *inf));
+FILE *open_exec PROTO((const char *fn, struct exec_info *inf));
+int check_2_exec_inf PROTO((struct exec_info *inf1, struct exec_info *inf2));
 int aout2hux PROTO((const char *fn1, const char *fn2,
 		u_int32_t loadadr1, u_int32_t loadadr2, const char *fnx));
 int gethex PROTO((u_int32_t *pval, const char *str));
@@ -124,67 +142,328 @@ do_realloc(p, s)
 }
 
 /*
- * open an a.out and check the header
+ * check a.out header
  */
-FILE *
-open_aout(fn, hdr)
+static int
+open_aout(fn, hdr, inf)
 	const char *fn;
 	struct aout_m68k *hdr;
+	struct exec_info *inf;
 {
-	FILE *fp;
 	int i;
 
-	if (!(fp = fopen(fn, "r"))) {
-		perror(fn);
-		return (FILE *) NULL;
-	}
-	if (fread(hdr, sizeof(struct aout_m68k), 1, fp) != 1) {
-		fprintf(stderr, "%s: can't read a.out header\n", fn);
-		goto out;
-	}
-
-	if ((i = AOUT_GET_MAGIC(hdr)) != AOUT_OMAGIC && i != AOUT_NMAGIC) {
-		fprintf(stderr, "%s: not an OMAGIC or NMAGIC a.out\n", fn);
-		goto out;
-	}
+	DPRINTF(("%s: is an a.out\n", fn));
 
 	if ((i = AOUT_GET_MID(hdr)) != AOUT_MID_M68K && i != AOUT_MID_M68K4K) {
 		fprintf(stderr, "%s: wrong architecture (mid %d)\n", fn, i);
-		goto out;
+		return 1;
 	}
 
 	/* if unsolved relocations exist, not an executable but an object */
 	if (hdr->a_trsize.hostval || hdr->a_drsize.hostval) {
 		fprintf(stderr, "%s: not an executable (object file?)\n", fn);
-		goto out;
+		return 1;
 	}
 
 	if (AOUT_GET_FLAGS(hdr) & (AOUT_FLAG_PIC | AOUT_FLAG_DYNAMIC)) {
 		fprintf(stderr, "%s: PIC and DYNAMIC are not supported\n", fn);
+		return 1;
+	}
+
+	inf->text_size = get_uint32(&hdr->a_text);
+	inf->data_size = get_uint32(&hdr->a_data);
+	inf->bss_size = get_uint32(&hdr->a_bss);
+	inf->entry_addr = get_uint32(&hdr->a_entry);
+	inf->text_off = sizeof(struct aout_m68k);
+	inf->data_off = sizeof(struct aout_m68k) + inf->text_size;
+	inf->text_pad = -inf->text_size & (AOUT_PAGESIZE(hdr) - 1);
+
+	return 0;
+}
+
+/*
+ * digest ELF structure
+ */
+static int
+open_elf(fn, fp, hdr, inf)
+	const char *fn;
+	FILE *fp;
+	struct elf_m68k_hdr *hdr;
+	struct exec_info *inf;
+{
+	int i;
+	size_t nphdr;
+	struct elf_m68k_phdr phdr[2];
+
+	DPRINTF(("%s: is an ELF\n", fn));
+
+	if (hdr->e_ident[EI_VERSION] != EV_CURRENT ||
+	    get_uint32(&hdr->e_version) != EV_CURRENT) {
+		fprintf(stderr, "%s: unknown ELF version\n", fn);
+		return 1;
+	}
+
+	if (get_uint16(&hdr->e_type) != EL_EXEC) {
+		fprintf(stderr, "%s: not an executable\n", fn);
+		return 1;
+	}
+
+	if ((i = get_uint16(&hdr->e_machine)) != EM_68K) {
+		fprintf(stderr, "%s: wrong architecture (%d)\n", fn, i);
+		return 1;
+	}
+
+	if ((i = get_uint16(&hdr->e_shentsize)) != SIZE_ELF68K_SHDR) {
+		fprintf(stderr, "%s: size shdr %d should be %d\n", fn, i,
+			SIZE_ELF68K_SHDR);
+		return 1;
+	}
+
+	if ((i = get_uint16(&hdr->e_phentsize)) != SIZE_ELF68K_PHDR) {
+		fprintf(stderr, "%s: size phdr %d should be %d\n", fn, i,
+			SIZE_ELF68K_PHDR);
+		return 1;
+	}
+
+	if ((nphdr = get_uint16(&hdr->e_phnum)) != 1 && nphdr != 2) {
+		fprintf(stderr,
+			"%s: has %d loadable segments (should be 1 or 2)\n",
+			fn, nphdr);
+		return 1;
+	}
+
+	/* Read ELF program header table. */
+	if (fseek(fp, (foff_t) get_uint32(&hdr->e_phoff), SEEK_SET)) {
+		perror(fn);
+		return 1;
+	}
+	if (fread(phdr, sizeof phdr[0], nphdr, fp) != nphdr) {
+		fprintf(stderr, "%s: can't read ELF program header\n", fn);
+		return 1;
+	}
+
+	/* Just error checking. */
+	for (i = 0; i < (int) nphdr; i++) {
+		if (get_uint32(&phdr[i].p_type) != PT_LOAD) {
+			fprintf(stderr,
+				"%s: program header #%d is not loadable\n",
+				fn, i);
+			return 1;
+		}
+	}
+
+	if (nphdr == 1 && (get_uint32(&phdr[0].p_flags) & PF_W)) {
+		/*
+		 * Only one writable section --- probably "ld -N" executable.
+		 * Find out the start of data segment.
+		 */
+		struct elf_m68k_shdr shdr;
+		int nshdr;
+
+		nshdr = get_uint16(&hdr->e_shnum);
+
+		/* section #0 always exists and reserved --- skip */
+		if (nshdr > 1 &&
+		    fseek(fp,
+			  (foff_t) (get_uint32(&hdr->e_shoff) + sizeof shdr),
+			  SEEK_SET)) {
+			perror(fn);
+			return 1;
+		}
+		for (i = 1; i < nshdr; i++) {
+			if (fread(&shdr, sizeof shdr, 1, fp) != 1) {
+				fprintf(stderr,
+					"%s: can't read ELF section header\n",
+					fn);
+				return 1;
+			}
+
+			DPRINTF(("%s: section header #%d: flags 0x%x\n",
+				fn, i, get_uint32(&shdr.sh_flags)));
+
+			if (ELF68K_ISDATASEG(&shdr)) {
+				/*
+				 * data section is found.
+				 */
+				DPRINTF(("%s: one section, data found\n", fn));
+				inf->text_off = get_uint32(&phdr[0].p_offset);
+				inf->text_size = get_uint32(&shdr.sh_offset) -
+						 inf->text_off;
+				inf->text_pad = 0;
+				inf->data_off = inf->text_off + inf->text_size;
+				inf->data_size = get_uint32(&phdr[0].p_filesz) -
+						 inf->text_size;
+				inf->bss_size = get_uint32(&phdr[0].p_memsz) -
+						get_uint32(&phdr[0].p_filesz);
+				inf->entry_addr = get_uint32(&hdr->e_entry);
+				goto data_found;
+			}
+		}
+		/*
+		 * No data section found --- probably text + bss.
+		 */
+		DPRINTF(("%s: one section, no data section\n", fn));
+		inf->text_size = get_uint32(&phdr[0].p_filesz);
+		inf->data_size = 0;
+		inf->bss_size = get_uint32(&phdr[0].p_memsz) - inf->text_size;
+		inf->entry_addr = get_uint32(&hdr->e_entry);
+		inf->text_off = get_uint32(&phdr[0].p_offset);
+		inf->data_off = 0;
+		inf->text_pad = 0;
+data_found:;
+	} else if (nphdr == 1) {
+		/*
+		 * Only one non-writable section --- pure text program?
+		 */
+		DPRINTF(("%s: one RO section\n", fn));
+		inf->text_size = get_uint32(&phdr[0].p_filesz);
+		inf->data_size = 0;
+		inf->bss_size = 0;
+		inf->entry_addr = get_uint32(&hdr->e_entry);
+		inf->text_off = get_uint32(&phdr[0].p_offset);
+		inf->data_off = 0;
+		inf->text_pad = get_uint32(&phdr[0].p_memsz) - inf->text_size;
+	} else {
+		/*
+		 * two sections
+		 * text + data assumed.
+		 */
+		int t = 0, d = 1, tmp;	/* first guess */
+#define SWAP_T_D	tmp = t, t = d, d = tmp
+
+		DPRINTF(("%s: two sections\n", fn));
+
+		/* Find out text and data. */
+		if (get_uint32(&phdr[t].p_vaddr) > get_uint32(&phdr[d].p_vaddr))
+			SWAP_T_D;
+
+		if ((get_uint32(&phdr[t].p_flags) & PF_X) == 0 &&
+		    get_uint32(&phdr[d].p_flags) & PF_X)
+			SWAP_T_D;
+
+		if ((get_uint32(&phdr[d].p_flags) & PF_W) == 0 &&
+		    get_uint32(&phdr[t].p_flags) & PF_W)
+			SWAP_T_D;
+#undef SWAP_T_D
+
+		/* Are the text/data sections correctly detected? */
+		if (get_uint32(&phdr[t].p_vaddr) >
+		    get_uint32(&phdr[d].p_vaddr)) {
+			fprintf(stderr, "%s: program sections not in order\n",
+				fn);
+			return 1;
+		}
+
+		if ((get_uint32(&phdr[t].p_flags) & PF_X) == 0)
+			fprintf(stderr, "%s: warning: text is not executable\n",
+				fn);
+
+		if ((get_uint32(&phdr[d].p_flags) & PF_W) == 0)
+			fprintf(stderr, "%s: warning: data is not writable\n",
+				fn);
+
+		inf->text_size = get_uint32(&phdr[t].p_filesz);
+		inf->data_size = get_uint32(&phdr[d].p_filesz);
+		inf->bss_size = get_uint32(&phdr[d].p_memsz) - inf->data_size;
+		inf->entry_addr = get_uint32(&hdr->e_entry);
+		inf->text_off = get_uint32(&phdr[t].p_offset);
+		inf->data_off = get_uint32(&phdr[d].p_offset);
+		inf->text_pad = get_uint32(&phdr[d].p_vaddr) -
+			(get_uint32(&phdr[t].p_vaddr) + inf->text_size);
+	}
+
+	return 0;
+}
+
+/*
+ * open an executable
+ */
+FILE *
+open_exec(fn, inf)
+	const char *fn;
+	struct exec_info *inf;
+{
+	FILE *fp;
+	int i;
+	union {
+		struct aout_m68k	u_aout;
+		struct elf_m68k_hdr	u_elf;
+	} buf;
+#define hdra	(&buf.u_aout)
+#define hdre	(&buf.u_elf)
+
+	if (!(fp = fopen(fn, "r"))) {
+		perror(fn);
+		return (FILE *) NULL;
+	}
+
+	/*
+	 * Check for a.out.
+	 */
+
+	if (fread(hdra, sizeof(struct aout_m68k), 1, fp) != 1) {
+		fprintf(stderr, "%s: can't read a.out header\n", fn);
 		goto out;
 	}
+
+	if ((i = AOUT_GET_MAGIC(hdra)) != AOUT_OMAGIC && i != AOUT_NMAGIC)
+		goto notaout;
+
+	if (open_aout(fn, hdra, inf))
+		goto out;
+
+	/* OK! */
+	return fp;
+
+notaout:
+	/*
+	 * Check for ELF.
+	 */
+
+	if (hdre->e_ident[EI_MAG0] != ELFMAG0 ||
+	    hdre->e_ident[EI_MAG1] != ELFMAG1 ||
+	    hdre->e_ident[EI_MAG2] != ELFMAG2 ||
+	    hdre->e_ident[EI_MAG3] != ELFMAG3 ||
+	    hdre->e_ident[EI_CLASS] != ELFCLASS32 ||
+	    hdre->e_ident[EI_DATA] != ELFDATA2MSB) {
+		fprintf(stderr,
+		    "%s: not an OMAGIC or NMAGIC a.out, or a 32bit BE ELF\n",
+		    fn);
+		goto out;
+	}
+
+	/* ELF header is longer than a.out header.  Read the rest. */
+	if (fread(hdra + 1,
+		  sizeof(struct elf_m68k_hdr) - sizeof(struct aout_m68k),
+		  1, fp) != 1) {
+		fprintf(stderr, "%s: can't read ELF header\n", fn);
+		goto out;
+	}
+
+	if (open_elf(fn, fp, hdre, inf))
+		goto out;
 
 	/* OK! */
 	return fp;
 
 out:	fclose(fp);
 	return (FILE *) NULL;
+#undef hdra
+#undef hdre
 }
 
 /*
- * look at two a.out headers and check if they are compatible
+ * compare two executables and check if they are compatible
  */
 int
-check_2_aout_hdrs(h1, h2)
-	struct aout_m68k *h1, *h2;
+check_2_exec_inf(inf1, inf2)
+	struct exec_info *inf1, *inf2;
 {
 
-	if (/* compare magic */
-	    h1->a_magic.hostval != h2->a_magic.hostval ||
-	    /* compare section size */
-	    h1->a_text.hostval != h2->a_text.hostval ||
-	    h1->a_data.hostval != h2->a_data.hostval ||
-	    h1->a_bss.hostval != h2->a_bss.hostval)
+	if (inf1->text_size != inf2->text_size ||
+	    inf1->text_pad != inf2->text_pad ||
+	    inf1->data_size != inf2->data_size ||
+	    inf1->bss_size != inf2->bss_size)
 		return -1;
 
 	return 0;
@@ -225,7 +504,7 @@ check_2_aout_hdrs(h1, h2)
 		  goto out; }
 
 /*
- * read a.out files and output .x body
+ * read input executables and output .x body
  * and create relocation table
  */
 #define CREATE_RELOCATION(segsize)	\
@@ -282,10 +561,10 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 {
 	int status = 1;			/* the default is "failed" */
 	FILE *fpa1 = NULL, *fpa2 = NULL;
-	struct aout_m68k hdr1, hdr2;
+	struct exec_info inf1, inf2;
 	FILE *fpx = NULL;
 	struct huxhdr xhdr;
-	u_int32_t textsize, datasize, pagesize, paddingsize, execoff;
+	u_int32_t textsize, datasize, paddingsize, execoff;
 
 	/* for relocation */
 	be_uint32_t b1, b2;
@@ -307,39 +586,36 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	}
 
 	/*
-	 * open a.out files and check the headers
+	 * open input executables and check them
 	 */
-	if (!(fpa1 = open_aout(fn1, &hdr1)) || !(fpa2 = open_aout(fn2, &hdr2)))
+	if (!(fpa1 = open_exec(fn1, &inf1)) || !(fpa2 = open_exec(fn2, &inf2)))
 		goto out;
 
 	/*
 	 * check for consistency
 	 */
-	if (check_2_aout_hdrs(&hdr1, &hdr2)) {
+	if (check_2_exec_inf(&inf1, &inf2)) {
 		fprintf(stderr, "files %s and %s are incompatible\n",
 				fn1, fn2);
 		goto out;
 	}
 	/* check entry address */
-	if (get_uint32(&hdr1.a_entry) - loadadr1 !=
-					get_uint32(&hdr2.a_entry) - loadadr2) {
+	if (inf1.entry_addr - loadadr1 != inf2.entry_addr - loadadr2) {
 		fprintf(stderr, "address of %s or %s may be incorrect\n",
 				fn1, fn2);
 		goto out;
 	}
 
 	/*
-	 * get information from a.out header
+	 * get information of the executables
 	 */
-	textsize = get_uint32(&hdr1.a_text);
-	pagesize = AOUT_PAGESIZE(&hdr1);
-	paddingsize = ((textsize + pagesize - 1) & ~(pagesize - 1)) - textsize;
-	datasize = get_uint32(&hdr1.a_data);
-	execoff = get_uint32(&hdr1.a_entry) - loadadr1;
+	textsize = inf1.text_size;
+	paddingsize = inf1.text_pad;
+	datasize = inf1.data_size;
+	execoff = inf1.entry_addr - loadadr1;
 
-	DPRINTF(("text: %u, data: %u, page: %u, pad: %u, bss: %u, exec: %u\n", 
-		textsize, datasize, pagesize, paddingsize,
-		get_uint32(&hdr1.a_bss), execoff));
+	DPRINTF(("text: %u, data: %u, pad: %u, bss: %u, exec: %u\n", 
+		textsize, datasize, paddingsize, inf1.bss_size, execoff));
 
 	if (textsize & 1) {
 		fprintf(stderr, "text size is not even\n");
@@ -363,14 +639,14 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	put_uint16(&xhdr.x_magic, HUXMAGIC);
 	put_uint32(&xhdr.x_entry, execoff);
 	put_uint32(&xhdr.x_text, textsize + paddingsize);
-	xhdr.x_data.hostval = hdr1.a_data.hostval;
-	xhdr.x_bss.hostval = hdr1.a_bss.hostval;
+	put_uint32(&xhdr.x_data, inf1.data_size);
+	put_uint32(&xhdr.x_bss, inf1.bss_size);
 
 	/*
 	 * create output file
 	 */
 	if (!(fpx = fopen(fnx, "w")) ||
-	    fseek(fpx, (off_t) sizeof xhdr, SEEK_SET)) { /* skip header */
+	    fseek(fpx, (foff_t) sizeof xhdr, SEEK_SET)) { /* skip header */
 		perror(fnx);
 		goto out;
 	}
@@ -384,6 +660,14 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	/*
 	 * text segment
 	 */
+	if (fseek(fpa1, inf1.text_off, SEEK_SET)) {
+		perror(fn1);
+		goto out;
+	}
+	if (fseek(fpa2, inf2.text_off, SEEK_SET)) {
+		perror(fn2);
+		goto out;
+	}
 	CREATE_RELOCATION(textsize)
 
 	/*
@@ -396,6 +680,14 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	/*
 	 * data segment
 	 */
+	if (fseek(fpa1, inf1.data_off, SEEK_SET)) {
+		perror(fn1);
+		goto out;
+	}
+	if (fseek(fpa2, inf2.data_off, SEEK_SET)) {
+		perror(fn2);
+		goto out;
+	}
 	CREATE_RELOCATION(datasize)
 
 	/*
@@ -421,7 +713,7 @@ aout2hux(fn1, fn2, loadadr1, loadadr2, fnx)
 	 * write .x header at the top of the output file
 	 */
 	put_uint32(&xhdr.x_rsize, relsize);
-	if (fseek(fpx, (off_t) 0, SEEK_SET) ||
+	if (fseek(fpx, (foff_t) 0, SEEK_SET) ||
 	    fwrite(&xhdr, sizeof xhdr, 1, fpx) != 1) {
 		perror(fnx);
 		goto out;
@@ -475,6 +767,8 @@ bist()
 	    sizeof(u_int32_t) != 4 ||
 	    SIZE_16 != 2 || SIZE_32 != 4 || sizeof be32x2 != 8 ||
 	    sizeof(struct relinf_s) != 2 || sizeof(struct relinf_l) != 6 ||
+	    SIZE_ELF68K_HDR != 52 || SIZE_ELF68K_SHDR != 40 ||
+	    SIZE_ELF68K_PHDR != 32 ||
 	    get_uint16(&be16) != 0x1234 || get_uint32(&be32) != 0xfedcba98 ||
 	    get_uint16(&be32x2[0].half[1]) != 0x4567 ||
 	    get_uint32(&be32x2[1]) != 0xa9876543) {
@@ -517,7 +811,7 @@ gethex(pval, str)
 		default:
 			goto bad;
 		}
-		if (val >= 0x10000000 && !over)
+		if (val >= 0x10000000)
 			over = 1;
 		val = (val << 4) | digit;
 	}
@@ -543,8 +837,9 @@ usage(name)
 
 	fprintf(stderr, "\
 usage: %s [ -o output.x ] a.out1 loadaddr1 a.out2 loadaddr2\n\n\
-The input a.out files must be static OMAGIC/NMAGIC m68k executable.\n\
-Two a.out files must have different loading addresses.\n\
+The input files must be static OMAGIC/NMAGIC m68k a.out executables\n\
+or m68k ELF executables.\n\
+Two executables must have different loading addresses.\n\
 Each of the load address must be a hexadecimal number.\n\
 The default output filename is \"%s\".\n" ,name, DEFAULT_OUTPUT_FILE);
 
