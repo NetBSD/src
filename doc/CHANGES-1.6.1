@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.7 2002/10/03 03:39:04 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.8 2002/10/14 00:18:26 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -200,4 +200,95 @@ gnu/dist/sendmail/smrsh/smrsh.c			1.9
 	Refer to http://www.sendmail.org/smrsh.adv.txt.
 	Resolves PR#18516.
 	[itojun, ticket #898]
+
+gnu/dist/toolchain/gdb/i386nbsd-nat.c		1.7
+
+	Make sure to write back correct FP state.
+	Resolves PR#17927.
+	[toshii, ticket #841]
+
+sys/dev/pci/if_fxp_pci.c			1.25
+
+	Recognise the Intel PRO/100 VM Network Controller as seen in
+	the HP omnibook 6100.
+	[abs, ticket #844]
+
+gnu/dist/toolchain/gcc/config/arm/arm.h		1.9
+
+	Pull up patch from FSF GCC to fix aborts when compiling
+	large functions for ARMv4.
+	[rearnsha, ticket #847]
+
+sys/netinet6/ip6_output.c			1.58
+
+	The length field on the PADN option before the jumbo
+	payload option was wrong.
+	[itojun, ticket #855]
+
+sys/arch/i386/conf/INSTALL			1.204
+sys/arch/i386/conf/INSTALL_SMALL		1.90
+sys/arch/i386/conf/INSTALL_TINY			1.58
+
+	Change "ep0 at isa?" to "ep* at isa?", so ep instances
+	during install are consistent with GENERIC.
+	[grant, ticket #860]
+
+distrib/utils/sysinst/menus.mi.en		1.61 (via patch)
+distrib/utils/sysinst/menus.mi.fr		1.41 (via patch)
+distrib/utils/sysinst/menus.mi.pl		1.12 (via patch)
+
+	Use current values for start/size/bsize/fsize as defaults
+	when editing disklabel partitions.
+	[grant, ticket #853]
+
+distrib/utils/sysinst/msg.mi.pl			1.5-1.6
+
+	Language improvements.
+	[grant, ticket #864]
+
+distrib/utils/sysinst/menus.mi.en		1.59
+distrib/utils/sysinst/menus.mi.fr		1.39
+distrib/utils/sysinst/menus.mi.pl		1.10
+distrib/utils/sysinst/msg.mi.en			1.91
+distrib/utils/sysinst/msg.mi.fr			1.44
+distrib/utils/sysinst/msg.mi.pl			1.10
+
+	Allow unsetting of mountpoints in disklabel editor.
+	Partially addresses PR#17801.
+	[grant, ticket #865]
+
+usr.sbin/etcupdate/etcupdate			1.7-1.8
+
+	Fix typo, and don't execute /etc/postinstall if -b was used.
+	[martti, ticket #871]
+
+usr.bin/cdplay/cdplay.c				1.21
+
+	Fix to allow the first minute of a CD to be played
+	when using absolute msf addresses.
+	[is, ticket #872]
+
+sys/netinet/ip_nat.c				1.54
+
+	Relax overly-conservative TCP option parsing used by ipnat
+	when hunting for an MSS option to clamp.
+	[sommerfeld, ticket #884]
+
+distrib/utils/sysinst/util.c			1.74
+
+	During timezone selection, only update the clock once per minute.
+	Once per second is painful and annoying over a serial line.
+	[grant, ticket #902]
+
+bin/ksh/main.c					1.8
+
+	Remove (nonexistent) newgrp as a builtin alias.
+	This prevents the shell from unexpectedly dying if a
+	user enters the 'newgrp' command.
+	[jschauma, ticket #910]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.84
+
+	Correctly calculate file length for (e.g.) msgbuf.
+	[jdolecek, ticket #911]
 
