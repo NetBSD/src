@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.11 2001/04/20 07:10:40 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.12 2001/04/20 07:38:11 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.10 2001/04/20 07:10:12 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.11 2001/04/20 07:37:42 jdolecek Exp 
  */
 
 /*-
@@ -57,6 +57,7 @@
 #define	MCA_PRODUCT_3C529_TM	0x62DB	/* 3Com 3C529 Ethernet Adapter (test mode) */
 #define	MCA_PRODUCT_3C529_2T	0x62F6	/* 3Com 3C529 Ethernet Adapter (10base2/T) */
 #define	MCA_PRODUCT_3C529_T	0x62F7	/* 3Com 3C529 Ethernet Adapter (10baseT) */
+#define	MCA_PRODUCT_ARCOAE	0x6354	/* Arco Electronics AE/2 Ethernet Adapter */
 #define	MCA_PRODUCT_AT1720T	0x6410	/* ATI AT1720T */
 #define	MCA_PRODUCT_AT1720BT	0x6413	/* ATI AT1720BT */
 #define	MCA_PRODUCT_AT1720AT	0x6416	/* ATI AT1720AT */
@@ -72,6 +73,8 @@
 #define	MCA_PRODUCT_KINGRAM8	0x708F	/* Kingston KTM-8000/386 Memory Expansion */
 #define	MCA_PRODUCT_KINGRAM16	0x70D0	/* Kingston KTM-16000/386 Memory Expansion */
 #define	MCA_PRODUCT_KINGRAM609	0x70D4	/* Kingston KTM-609/16 Memory Expansion */
+#define	MCA_PRODUCT_CENET16	0x70DE	/* Compex Inc. PS/2 ENET16-MC/P Microchannel Ad. */
+#define	MCA_PRODUCT_NE2	0x7154	/* Novell NE/2 Ethernet Adapter */
 #define	MCA_PRODUCT_HYPRAM	0x72F3	/* HyperRAM MC 32/16 SIMM-MF Memory Expansion */
 #define	MCA_PRODUCT_QRAM1	0x76DA	/* Quadmeg PS/Q Memory Adapter */
 #define	MCA_PRODUCT_QRAM2	0x76DE	/* Quadmeg PS/Q Memory Adapter */
