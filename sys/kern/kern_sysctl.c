@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.6 2001/08/24 00:11:32 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.7 2001/09/10 22:48:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1610,6 +1610,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_forw = PTRTOINT64(l->l_forw);
 		ki->p_back = PTRTOINT64(l->l_back);
 		ki->p_addr = PTRTOINT64(l->l_addr);
+		ki->p_stat = l->l_stat;
+		ki->p_flag |= l->l_flag;
 		ki->p_swtime = l->l_swtime;
 		ki->p_slptime = l->l_slptime;
 		if (l->l_stat == LSONPROC) {
