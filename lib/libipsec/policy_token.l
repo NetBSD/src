@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.4 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.4.2.1 2002/09/04 04:18:44 itojun Exp $	*/
 /*	$KAME: policy_token.l,v 1.9 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -133,16 +133,24 @@ unique		{ yylval.num = IPSEC_LEVEL_UNIQUE; return(LEVEL); }
 %%
 
 void __policy__strbuffer__init__ __P((char *));
+void __policy__strbuffer__free__ __P((void));
+
+static YY_BUFFER_STATE strbuffer;
 
 void
 __policy__strbuffer__init__(msg)
 	char *msg;
 {
-	YY_BUFFER_STATE yyb;
-
-	yyb = (YY_BUFFER_STATE)yy_scan_string(msg);
-	yy_switch_to_buffer(yyb);
+	strbuffer = (YY_BUFFER_STATE)yy_scan_string(msg);
+	yy_switch_to_buffer(strbuffer);
 
 	return;
 }
 
+void
+__policy__strbuffer__free__()
+{
+	yy_delete_buffer(strbuffer);
+
+	return;
+}
