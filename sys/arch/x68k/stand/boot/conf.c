@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2002/03/17 15:43:10 minoura Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2003/02/23 23:23:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -54,8 +54,10 @@ const struct devspec devspec[] = {
 struct fs_ops file_system[] = {
     { ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
 	ufs_stat },
-    { lfs_open, lfs_close, lfs_read, lfs_write, lfs_seek,
-	lfs_stat },
+    { lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
+	lfsv1_stat },
+    { lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
+	lfsv2_stat },
     { cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	cd9660_stat },
     { ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
