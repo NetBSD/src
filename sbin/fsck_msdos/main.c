@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2001/09/24 13:22:31 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2002/05/25 23:45:13 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2001/09/24 13:22:31 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2002/05/25 23:45:13 wiz Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,11 +44,7 @@ __RCSID("$NetBSD: main.c,v 1.12 2001/09/24 13:22:31 wiz Exp $");
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "fsutil.h"
 #include "ext.h"
@@ -121,14 +117,7 @@ main(argc, argv)
 
 /*VARARGS*/
 int
-#if __STDC__
 ask(int def, const char *fmt, ...)
-#else
-ask(def, fmt, va_alist)
-	int def;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -143,11 +132,7 @@ ask(def, fmt, va_alist)
 		return def;
 	}
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsnprintf(prompt, sizeof(prompt), fmt, ap);
 	va_end(ap);
 	if (alwaysyes || rdonly) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: command.h,v 1.3 1997/09/15 01:29:30 lukem Exp $	*/
+/*	$NetBSD: command.h,v 1.4 2002/05/25 23:45:12 wiz Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -40,14 +40,7 @@
  *   by Bruce Culbertson.   (Thanks Bruce!)
  */
 
-/* Defines that depend on ANSI or not ANSI. */
-
-#ifdef __STDC__
 #define CMD_PROC(name) int name (int, char **, char *)
-#else
-#define CMD_PROC(name) name ();
-#endif
-
 
 /*  The commands are stored in a table that includes their name, a pointer
     to the function that processes the command and a help message.  */

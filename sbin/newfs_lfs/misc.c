@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2001/07/13 20:30:20 perseant Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2002/05/25 23:45:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.2 2001/07/13 20:30:20 perseant Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 2002/05/25 23:45:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "extern.h"
@@ -59,27 +60,12 @@ log2(u_int num)
         return (i);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#if __STDC__
 fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);

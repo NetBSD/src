@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.4 2001/11/02 05:44:46 lukem Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.5 2002/05/25 23:45:13 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.4 2001/11/02 05:44:46 lukem Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.5 2002/05/25 23:45:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,8 @@ __RCSID("$NetBSD: lfs_inode.c,v 1.4 2001/11/02 05:44:46 lukem Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "dump.h"
 

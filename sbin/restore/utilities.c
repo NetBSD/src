@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.15 2001/11/01 08:21:07 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.16 2002/05/25 23:45:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.15 2001/11/01 08:21:07 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.16 2002/05/25 23:45:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,28 +409,14 @@ reply(question)
 /*
  * handle unexpected inconsistencies
  */
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 void
-#if __STDC__
 panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (yflag)

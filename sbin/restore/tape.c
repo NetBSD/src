@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.45 2002/02/19 19:16:38 perseant Exp $	*/
+/*	$NetBSD: tape.c,v 1.46 2002/05/25 23:45:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.45 2002/02/19 19:16:38 perseant Exp $");
+__RCSID("$NetBSD: tape.c,v 1.46 2002/05/25 23:45:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1343,27 +1343,14 @@ checksum(buf)
 }
 
 #ifdef RRESTORE
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 void
-#if __STDC__
 msg(const char *fmt, ...)
-#else
-msg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 }
