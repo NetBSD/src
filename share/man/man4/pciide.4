@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.11 1999/10/16 20:17:29 kristerw Exp $
+.\"	$NetBSD: pciide.4,v 1.12 1999/11/14 17:02:20 augustss Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -38,7 +38,8 @@
 .Nm pciide
 .Nd PCI IDE controllers driver
 .Sh SYNOPSIS
-.Cd "pciide* at pci ? dev ? function ? flags 0x0000"
+.Cd "pciide* at pci? dev ? function ? flags 0x0000"
+.Cd "pciide* at pnpbios? index ?"
 .Cd "options PCIIDE_CMD064x_DISABLE"
 .Sh DESCRIPTION
 The
@@ -92,6 +93,8 @@ work properly on overclocked systems.
 
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr wd 4 ,
+.Xr pci 4 ,
+.Xr pnpbios 4 ,
 .Xr scsi 4 ,
+.Xr wd 4 ,
 .Xr wdc 4
