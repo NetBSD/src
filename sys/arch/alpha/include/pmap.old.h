@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.19 1998/02/27 03:59:59 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.20 1998/02/27 19:39:03 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,6 +43,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
+#include <sys/queue.h>
 #include <machine/pte.h>
 
 extern vm_offset_t       vtophys(vm_offset_t);
@@ -86,19 +87,29 @@ extern struct pmap	kernel_pmap_store;
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  */
 typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
+	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
 	pt_entry_t	*pv_ptpte;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptpte, pmap for PT page */
-	int		pv_flags;	/* flags */
 } *pv_entry_t;
 
-#define PV_PTPAGE	0x01	/* header: entry maps a page table page */
+/*
+ * The head of the list of pv_entry_t's, also contains page attributes.
+ */
+struct pv_head {
+	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
+	int pvh_attrs;				/* page attributes */
+};
+
+/* pvh_attrs */
+#define	PMAP_ATTR_MOD		0x01		/* modified */
+#define	PMAP_ATTR_REF		0x02		/* referenced */
+#define	PMAP_ATTR_PTPAGE	0x04		/* maps a PT page */
 
 struct pv_page_info {
 	TAILQ_ENTRY(pv_page) pgi_list;
-	struct pv_entry *pgi_freelist;
+	LIST_HEAD(, pv_entry) pgi_freelist;
 	int pgi_nfree;
 };
 
@@ -108,13 +119,6 @@ struct pv_page {
 	struct pv_page_info pvp_pgi;
 	struct pv_entry pvp_pv[NPVPPG];
 };
-
-/*
- * Physical page attributes.
- */
-typedef	int		pmap_attr_t;
-#define	PMAP_ATTR_MOD	0x01			/* modified */
-#define	PMAP_ATTR_REF	0x02			/* referenced */
 
 #ifdef _KERNEL
 

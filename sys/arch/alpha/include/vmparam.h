@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.8 1998/02/16 03:59:57 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.9 1998/02/27 19:39:03 thorpej Exp $ */
 #ifndef	_ALPHA_VMPARAM_H
 #define	_ALPHA_VMPARAM_H
 /*
@@ -166,8 +166,7 @@ extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
  * pmap-specific data stored in the vm_physmem[] array.
  */
 struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv table for this seg */
-	int *attrs;			/* page attributes for this seg */
+	struct pv_head *pvhead;		/* pv list of this seg */
 };
 
 #endif	/* !_ALPHA_VMPARAM_H */
