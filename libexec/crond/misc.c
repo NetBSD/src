@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.2 1993/03/28 17:24:47 glass Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -286,7 +286,6 @@ be_different()
 	 *  do an IOCTL to void tty association
 	 */
 
-	extern int	getpid(), setpgrp(), open(), ioctl(), close();
 	auto int	fd;
 
 	(void) setpgrp(0, getpid());

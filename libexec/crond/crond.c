@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/crond.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/crond.c,v 1.2 1993/03/28 17:24:43 glass Exp $";
 #endif
 
 /* Copyright 1988,1990 by Paul Vixie
@@ -262,7 +262,7 @@ sigchld_handler()
 
 	for (;;)
 	{
-		pid = wait3(&waiter, WNOHANG, (struct rusage *)0);
+		pid = wait3((int *) &waiter, WNOHANG, (struct rusage *)0);
 		switch (pid)
 		{
 		case -1:
