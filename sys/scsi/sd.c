@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.89 1996/03/17 00:59:50 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.90 1996/03/17 02:06:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -207,7 +207,7 @@ sdattach(parent, self, aux)
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf("drive offline\n");
 	else
-	        printf("%dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize);
 }
@@ -739,7 +739,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
 
 	case DIOCEJECT:
-		return ((sd->sc_link->flags & SDEV_REMOVABLE == 0) ? ENOTTY :
+		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
 		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
 	default:
@@ -1016,7 +1016,7 @@ sddump(dev, blkno, va, size)
 		return ENXIO;
 
 	/* Make sure it was initialized. */
-	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
