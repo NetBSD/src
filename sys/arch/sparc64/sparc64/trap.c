@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2000/12/06 01:47:51 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.58 2000/12/07 01:05:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -917,7 +917,7 @@ rwindow_save(p)
 			}
 #endif
 			rwdest += BIAS;
-			if (copyout((caddr_t)rw, (caddr_t)(u_long)rwdest,
+			if (copyout((caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
 				    sizeof(*rw))) {
 #ifdef DEBUG
 			if (rwindow_debug&(RW_ERR|RW_64))
@@ -925,6 +925,14 @@ rwindow_save(p)
 #endif
 				return (-1);
 			}
+#ifdef DEBUG
+			if (rwindow_debug&RW_64) {
+				printf("Finished copyout(%p, %p, %lx)\n",
+					(caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
+                                	sizeof(*rw));
+				Debugger();
+			}
+#endif
 #ifndef TRAPWIN
 			rwstack = (struct rwindow64 *)rwdest;
 			for (j=0; j<8; j++) { 
@@ -955,7 +963,6 @@ rwindow_save(p)
 				return (-1);
 			}
 		}
-/*		rw++; */
 	}
 	pcb->pcb_nsaved = 0;
 #ifdef DEBUG
@@ -996,7 +1003,7 @@ data_access_fault(type, addr, pc, tf)
 	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
-#if DEBUG
+#ifdef DEBUG
 	static int lastdouble;
 	extern struct pcb* cpcb;
 #endif
@@ -1225,7 +1232,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	static int lastdouble;
 #endif
 
-#if DEBUG
+#ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("data_access_error: tpc %lx == tnpc %lx\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
@@ -1474,7 +1481,7 @@ text_access_fault(type, pc, tf)
 	vm_prot_t access_type;
 	u_quad_t sticks;
 
-#if DEBUG
+#ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("text_access_fault: tpc %p == tnpc %p\n", (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
@@ -1608,12 +1615,12 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	register int rv;
 	vm_prot_t access_type;
 	u_quad_t sticks;
-#if DEBUG
+#ifdef DEBUG
 	static int lastdouble;
 #endif
 	char buf[768];
 	
-#if DEBUG
+#ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("text_access_error: tpc %p == tnpc %p\n",
 		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
