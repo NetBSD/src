@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1995/05/14 15:20:25 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1995/05/21 10:45:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -927,58 +927,6 @@ _sigcode:
 	trap	#0			|  exit(errno)		 (2 bytes)
 	.align	2
 _esigcode:
-
-/*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
- */
-	.globl	_icode,_szicode
-	.text
-_icode:
-	jra	st1
-init:
-	.asciz	"/sbin/init"
-	.byte	0			|  GNU ``as'' bug won't
-					|  allow an .even directive
-					|  here, says something about
-					|  non constant, which is crap.
-argv:
-	.long	init+6-_icode		|  argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode		|  argv[1] follows icode after copyout
-	.long	0
-
-st1:
-	clrl	sp@-
-	.set	argvrpc,argv-.-2	|  avoids PCREL bugs in ``as''
-					|  otherwise it assebles different
-					|  depending on your version of
-					|  GNU ``as''.  Markus' as has a 
-					|  nice one:
-					|  	a:	pea pc@(0)
-					| is equivelent to:
-					| 	a:	pea pc@(a-.)
-					| is equivelent to!:
-					| 	a:	pea pc@(b-.)
-					| 	b:	....
-					| ---
-					|  Mine (2.2.1) doesn't work right
-					|  for #3 mine puts out
-					| 	a:	pea pc@(2)
-					|  and it should be pc@(4).
-					|  cest la vie.
-	pea	pc@(argvrpc)
-	.set	initrpc,init-.-2	|  avoids PCREL bugs in ``as''
-					|  see above comment
-	pea	pc@(initrpc)
-	clrl	sp@-
-	moveq	#SYS_execve,d0
-	trap	#0
-	moveq	#SYS_exit,d0
-	trap	#0
-eicode:
-
-_szicode:
-	.long	_szicode-_icode
 
 /*
  * Primitives
