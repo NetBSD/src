@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.34 2002/09/25 03:52:06 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.35 2002/09/25 03:57:15 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -133,7 +133,8 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 		case R_TYPE(REL32):
 			assert(ELF_R_SYM(rel->r_info) < gotsym);
 			sym = symtab + ELF_R_SYM(rel->r_info);
-			assert(sym->st_info == STT_SECTION);
+			assert(sym->st_info ==
+			    ELF_ST_INFO(STB_LOCAL, STT_SECTION));
 			*where += (Elf_Addr)(sym->st_value + relocbase);
 			break;
 
@@ -282,14 +283,15 @@ _rtld_relocate_nonplt_objects(obj, self)
 				 */
 				tmp = *where;
 
-				if (def->st_info == STT_SECTION &&
+				if (def->st_info ==
+				    ELF_ST_INFO(STB_LOCAL, STT_SECTION) &&
 				    tmp < def->st_value)
 					tmp += (Elf_Addr)def->st_value;
 
 				tmp += (Elf_Addr)obj->relocbase;
 				*where = tmp;
 
-				rdbg(("REL32 %s in %s --> %p in %s",
+				rdbg(("REL32/L %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
 				    (void *)tmp, obj->path));
 			}
