@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ctime.c	5.26 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: ctime.c,v 1.5 1994/11/17 08:47:21 jtc Exp $";
+static char *rcsid = "$Id: ctime.c,v 1.6 1994/12/18 09:09:48 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -219,11 +219,9 @@ detzcode(codep)
 const char * const	codep;
 {
 	register long	result;
-	register int	i;
 
-	result = 0;
-	for (i = 0; i < 4; ++i)
-		result = (result << 8) | (codep[i] & 0xff);
+	result = (codep[0] << 24) | ((u_char)codep[1] << 16) |
+	    ((u_char)codep[2] << 8) | ((u_char)codep[3] << 0);
 	return result;
 }
 
