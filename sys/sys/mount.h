@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.59 1997/10/10 02:12:25 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.60 1997/10/19 01:37:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -356,6 +356,7 @@ struct nfs_args {
 #define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
 #define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
 #define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
+#define NFSMNT_XLATECOOKIE	0x00040000  /* 32<->64 dir cookie xlation */
 
 /*
  * NFS internal flags (nm_iflag) */
