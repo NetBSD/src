@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.28 2004/11/18 06:21:46 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.29 2004/11/18 15:30:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.28 2004/11/18 06:21:46 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.29 2004/11/18 15:30:55 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1744,6 +1744,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		logerror(
 		    "Error: `%s' log facility or log target missing",
 		    line);
+		return;
 	}
 	
 	/* q is at the end of the blank between the two fields */
