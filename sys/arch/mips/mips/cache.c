@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.18 2003/03/08 04:43:24 rafal Exp $	*/
+/*	$NetBSD: cache.c,v 1.19 2003/03/08 05:18:25 rafal Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -826,10 +826,15 @@ mips3_get_cache_config(int csizebase)
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 
-	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R5000 || 
-	    MIPS_PRID_IMPL(cpu_id) == MIPS_RM5200)
+	switch(MIPS_PRID_IMPL(cpu_id)) {
+#ifndef ENABLE_MIPS_R3NKK
+	case MIPS_R5000:
+#endif
+	case MIPS_RM5200:
 		has_sdcache_enable = 1;
-	
+		break;
+	}
+
 	/* 
  	 * If CPU has a software-enabled L2 cache, check both if it's
 	 * present and if it's enabled before making assumptions the
