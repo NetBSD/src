@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.8 1997/09/05 04:51:06 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9 1997/10/17 04:06:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,7 +47,6 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
 #include <machine/saio.h>
@@ -65,8 +64,6 @@
 int debug;
 int errno;
 
-static void _getether __P((u_char *));
-
 struct iodesc sockets[SOPEN_MAX];
 
 static struct netif prom_nif;
@@ -77,30 +74,8 @@ static struct devdata {
 	int tbuf_len;
 	char *tbuf;
 	u_short dd_opens;
-	char dd_myea[6];
+	u_char dd_myea[6];
 } prom_dd;
-
-static struct idprom _idprom;
-
-
-void
-_getether(ea)
-	u_char *ea;
-{
-	u_char *src, *dst;
-	int len, x;
-
-	if (_idprom.idp_format == 0) {
-		dst = (char*)&_idprom;
-		src = (char*)IDPROM_BASE;
-		len = IDPROM_SIZE;
-		do {
-			x = get_control_byte(src++);
-			*dst++ = x;
-		} while (--len > 0);
-	}
-	MACPY(_idprom.idp_etheraddr, ea);
-}
 
 
 /*
@@ -173,7 +148,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	_getether(dd->dd_myea);
+	idprom_etheraddr(dd->dd_myea);
 	dd->dd_opens = 0;
 
 	return(dd);
