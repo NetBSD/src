@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.6 1999/12/15 22:07:35 abs Exp $
+.\"     $NetBSD: wi.4,v 1.7 2000/01/16 12:22:56 abs Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.6 1999/12/15 22:07:35 abs Exp $
+.\"	$Id: wi.4,v 1.7 2000/01/16 12:22:56 abs Exp $
 .\"
 .Dd April 21, 1999
 .Dt WI 4 
@@ -74,6 +74,17 @@ utility.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
+.Sh HARDWARE
+Cards supported by the
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
+Lucent Wavelan/IEEE 2.0Mb Bronze
+.It
+Lucent Wavelan/IEEE 2.0Mb Silver
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
