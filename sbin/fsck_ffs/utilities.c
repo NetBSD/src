@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.19 1997/09/14 14:36:38 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.20 1997/09/16 16:45:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,22 +36,22 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.19 1997/09/14 14:36:38 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.20 1997/09/16 16:45:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include <ctype.h>
-#include <unistd.h>
+#include <err.h>
+#include <string.h>
 
 #include "fsutil.h"
 #include "fsck.h"
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: utilities.c,v 1.19 1997/09/14 14:36:38 lukem Exp $");
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror __P((char *, daddr_t));
+static void rwerror __P((char *, ufs_daddr_t));
 
 int
 ftypeok(dp)
@@ -129,7 +129,7 @@ bufinit()
 	pbp = pdirbp = (struct bufarea *)0;
 	bufp = malloc((unsigned int)sblock.fs_bsize);
 	if (bufp == 0)
-		errexit("cannot allocate buffer pool\n");
+		errx(EEXIT, "cannot allocate buffer pool");
 	cgblk.b_un.b_buf = bufp;
 	initbarea(&cgblk);
 	bufhead.b_next = bufhead.b_prev = &bufhead;
@@ -142,7 +142,7 @@ bufinit()
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS)
 				break;
-			errexit("cannot allocate buffer pool\n");
+			errx(EEXIT, "cannot allocate buffer pool");
 		}
 		bp->b_un.b_buf = bufp;
 		bp->b_prev = &bufhead;
@@ -159,7 +159,7 @@ bufinit()
  */
 struct bufarea *
 getdatablk(blkno, size)
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 	long size;
 {
 	struct bufarea *bp;
@@ -171,7 +171,7 @@ getdatablk(blkno, size)
 		if ((bp->b_flags & B_INUSE) == 0)
 			break;
 	if (bp == &bufhead)
-		errexit("deadlocked buffer pool\n");
+		errx(EEXIT, "deadlocked buffer pool");
 	getblk(bp, blkno, size);
 	/* fall through */
 foundit:
@@ -189,10 +189,10 @@ foundit:
 void
 getblk(bp, blk, size)
 	struct bufarea *bp;
-	daddr_t blk;
+	ufs_daddr_t blk;
 	long size;
 {
-	daddr_t dblk;
+	ufs_daddr_t dblk;
 
 	dblk = fsbtodb(&sblock, blk);
 	if (bp->b_bno != dblk) {
@@ -233,14 +233,14 @@ flush(fd, bp)
 static void
 rwerror(mesg, blk)
 	char *mesg;
-	daddr_t blk;
+	ufs_daddr_t blk;
 {
 
 	if (preen == 0)
 		printf("\n");
 	pfatal("CANNOT %s: BLK %d", mesg, blk);
 	if (reply("CONTINUE") == 0)
-		errexit("Program terminated\n");
+		exit(EEXIT);
 }
 
 void
@@ -248,7 +248,7 @@ ckfini(markclean)
 	int markclean;
 {
 	struct bufarea *bp, *nbp;
-	int cnt = 0;
+	int ofsmodified, cnt = 0;
 
 	if (fswritefd < 0) {
 		(void)close(fsreadfd);
@@ -271,7 +271,7 @@ ckfini(markclean)
 		free((char *)bp);
 	}
 	if (bufhead.b_size != cnt)
-		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
+		errx(EEXIT, "Panic: lost %d buffers", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
 	if (markclean && (sblock.fs_clean & FS_ISCLEAN) == 0) {
 		/*
@@ -284,7 +284,12 @@ ckfini(markclean)
 		if (markclean) {
 			sblock.fs_clean = FS_ISCLEAN;
 			sbdirty();
+			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
+			fsmodified = ofsmodified;
+			if (!preen)
+				printf(
+				    "\n***** FILE SYSTEM MARKED CLEAN *****\n");
 		}
 	}
 	if (debug)
@@ -298,7 +303,7 @@ int
 bread(fd, buf, blk, size)
 	int fd;
 	char *buf;
-	daddr_t blk;
+	ufs_daddr_t blk;
 	long size;
 {
 	char *cp;
@@ -337,7 +342,7 @@ void
 bwrite(fd, buf, blk, size)
 	int fd;
 	char *buf;
-	daddr_t blk;
+	ufs_daddr_t blk;
 	long size;
 {
 	int i;
@@ -370,7 +375,7 @@ bwrite(fd, buf, blk, size)
 /*
  * allocate a data block with the specified number of fragments
  */
-int
+ufs_daddr_t
 allocblk(frags)
 	long frags;
 {
@@ -403,7 +408,7 @@ allocblk(frags)
  */
 void
 freeblk(blkno, frags)
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 	long frags;
 {
 	struct inodesc idesc;
@@ -460,7 +465,7 @@ getpathname(namebuf, curdir, ino)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
-		memcpy(cp, namebuf, (size_t)len);
+		memmove(cp, namebuf, (size_t)len);
 		*--cp = '/';
 		if (cp < &namebuf[MAXNAMLEN])
 			break;
@@ -469,12 +474,12 @@ getpathname(namebuf, curdir, ino)
 	busy = 0;
 	if (ino != ROOTINO)
 		*--cp = '?';
-	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
+	memmove(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
 }
 
 void
-catch(n)
-	int n;
+catch(sig)
+	int sig;
 {
 	if (!doinglevel2)
 		ckfini(0);
@@ -487,8 +492,8 @@ catch(n)
  * so that reboot sequence may be interrupted.
  */
 void
-catchquit(n)
-	int n;
+catchquit(sig)
+	int sig;
 {
 	extern returntosingle;
 
@@ -502,8 +507,8 @@ catchquit(n)
  * Used by child processes in preen.
  */
 void
-voidquit(n)
-	int n;
+voidquit(sig)
+	int sig;
 {
 
 	sleep(1);
@@ -547,7 +552,8 @@ dofix(idesc, msg)
 		return (0);
 
 	default:
-		errexit("UNKNOWN INODESC FIX MODE %d\n", idesc->id_fix);
+		errx(EEXIT, "UNKNOWN INODESC FIX MODE %d", idesc->id_fix);
 	}
 	/* NOTREACHED */
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.9 1997/09/14 14:36:35 lukem Exp $	*/
+/*	$NetBSD: pass3.c,v 1.10 1997/09/16 16:45:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,16 +36,18 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.9 1997/09/14 14:36:35 lukem Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.10 1997/09/16 16:45:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
 #include "fsck.h"
 #include "extern.h"
 

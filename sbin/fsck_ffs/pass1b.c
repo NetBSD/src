@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.11 1997/09/14 14:36:33 lukem Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.12 1997/09/16 16:45:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,23 +36,25 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.11 1997/09/14 14:36:33 lukem Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.12 1997/09/16 16:45:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <string.h>
+
 #include "fsck.h"
 #include "extern.h"
 
-static int	pass1bcheck __P((struct inodesc *));
 static  struct dups *duphead;
+static int pass1bcheck __P((struct inodesc *));
 
 void
 pass1b()
@@ -88,7 +90,7 @@ pass1bcheck(idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
+	ufs_daddr_t blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1))
