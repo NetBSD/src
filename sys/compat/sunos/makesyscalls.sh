@@ -1,6 +1,6 @@
 #! /bin/sh -
 # from:	@(#)makesyscalls.sh	8.1 (Berkeley) 6/11/93
-# $Id: makesyscalls.sh,v 1.4 1993/11/22 22:54:48 deraadt Exp $
+# $Id: makesyscalls.sh,v 1.5 1994/04/04 10:04:00 deraadt Exp $
 
 set -e
 
@@ -107,7 +107,7 @@ awk < $1 "
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"%s\",\t\t\t/* %d = %s */\n", \
 		    $5, syscall, $5) > sysnames
-		printf("#define\tSYS_%s\t%d\n", \
+		printf("#define\tSUN_SYS_%s\t%d\n", \
 		    $5, syscall) > syshdr
 		syscall++
 		next
@@ -129,7 +129,7 @@ awk < $1 "
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"old.%s\",\t\t/* %d = old %s */\n", \
 		    $5, syscall, $5) > sysnames
-		printf("#define\tSYS_%s\t%d\t/* compatibility; still used by libc */\n", \
+		printf("#define\tSUN_SYS_%s\t%d\t/* compatibility; still used by libc */\n", \
 		    $5, syscall) > syshdr
 		syscall++
 		next
