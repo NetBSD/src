@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.49 1995/04/17 12:08:44 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.50 1995/04/19 18:59:27 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -67,6 +67,7 @@
 struct com_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	struct tty *sc_tty;
 
 	int sc_overflows;
 	int sc_iobase;
@@ -81,8 +82,6 @@ struct com_softc {
 #define	COM_SW_MDMBUF	0x08
 	u_char sc_msr, sc_mcr;
 };
-/* XXXX should be in com_softc, but not ready for that yet */
-struct	tty *com_tty[NCOM];
 
 int comprobe __P((struct device *, void *, void *));
 void comattach __P((struct device *, struct device *, void *));
@@ -267,10 +266,10 @@ comopen(dev, flag, mode, p)
 
 	s = spltty();
 
-	if (!com_tty[unit])
-		tp = com_tty[unit] = ttymalloc();
+	if (!sc->sc_tty)
+		tp = sc->sc_tty = ttymalloc();
 	else
-		tp = com_tty[unit];
+		tp = sc->sc_tty;
 
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
@@ -347,8 +346,8 @@ comclose(dev, flag, mode, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = comcd.cd_devs[unit];
+	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
-	struct tty *tp = com_tty[unit];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 #ifdef KGDB
@@ -367,7 +366,7 @@ comclose(dev, flag, mode, p)
 #ifdef notyet /* XXXX */
 	if (unit != comconsole) {
 		ttyfree(tp);
-		com_tty[unit] = (struct tty *)NULL;
+		sc->sc_tty = 0;
 	}
 #endif
 	return 0;
@@ -379,7 +378,7 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = com_tty[COMUNIT(dev)];
+	struct tty *tp = comcd.cd_devs[COMUNIT(dev)]->sc_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -390,9 +389,17 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = com_tty[COMUNIT(dev)];
+	struct tty *tp = comcd.cd_devs[COMUNIT(dev)]->sc_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+comtty(dev)
+	dev_t dev;
+{
+
+	return (comcd.cd_devs[COMUNIT(dev)]->sc_tty);
 }
  
 static u_char
@@ -418,8 +425,8 @@ comioctl(dev, cmd, data, flag, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = comcd.cd_devs[unit];
+	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
-	struct tty *tp = com_tty[unit];
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -690,9 +697,8 @@ comeint(sc, stat)
 	struct com_softc *sc;
 	int stat;
 {
+	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
-	int unit = sc->sc_dev.dv_unit;
-	struct tty *tp = com_tty[unit];
 	int c;
 
 	c = inb(iobase + com_data);
@@ -721,8 +727,8 @@ static inline void
 commint(sc)
 	struct com_softc *sc;
 {
+	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
-	struct tty *tp = com_tty[sc->sc_dev.dv_unit];
 	u_char msr, delta;
 
 	msr = inb(iobase + com_msr);
@@ -779,7 +785,7 @@ comintr(arg)
 
 	for (;;) {
 		if (code & IIR_RXRDY) {
-			tp = com_tty[sc->sc_dev.dv_unit];
+			tp = sc->sc_tty;
 			/* XXXX put in FIFO and process later */
 			while (code = (inb(iobase + com_lsr) & LSR_RCV_MASK)) {
 				if (code & LSR_RXRDY) {
@@ -797,7 +803,7 @@ comintr(arg)
 					comeint(sc, code);
 			}
 		} else if (code == IIR_TXRDY) {
-			tp = com_tty[sc->sc_dev.dv_unit];
+			tp = sc->sc_tty;
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
