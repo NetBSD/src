@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: pmax_trap.c,v 1.6 1994/06/15 05:18:53 glass Exp $
+ *      $Id: pmax_trap.c,v 1.7 1994/10/20 05:34:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -480,7 +480,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 				callp = &systab[SYS_syscall]; /* (illegal) */
 			else
 				callp = &systab[code];
-			i = callp->sy_narg;
+			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A1];
 			args.i[1] = locr0[A2];
 			args.i[2] = locr0[A3];
@@ -507,7 +507,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
 						ktrsyscall(p->p_tracep, code,
-							callp->sy_narg, args.i);
+							callp->sy_narg, 
+							callp->sy_argsize,
+							args.i);
 #endif
 					goto done;
 				}
@@ -524,7 +526,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 				callp = &systab[SYS_syscall]; /* (illegal) */
 			else
 				callp = &systab[code];
-			i = callp->sy_narg;
+			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A2];
 			args.i[1] = locr0[A3];
 			if (i > 2) {
@@ -550,7 +552,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
 						ktrsyscall(p->p_tracep, code,
-							callp->sy_narg, args.i);
+							callp->sy_narg,
+							callp->sy_argsize,
+							args.i);
 #endif
 					goto done;
 				}

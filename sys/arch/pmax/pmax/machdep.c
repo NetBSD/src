@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.13 1994/08/18 22:11:22 cgd Exp $
+ *      $Id: machdep.c,v 1.14 1994/10/20 05:34:08 cgd Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -62,6 +62,8 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -959,7 +961,7 @@ setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	extern struct proc *machFPCurProcPtr;
 
@@ -1099,21 +1101,20 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-struct sigreturn_args {
-	struct sigcontext *sigcntxp;
-};
 /* ARGSUSED */
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register int *regs;
 	struct sigcontext ksc;
 	int error;
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
