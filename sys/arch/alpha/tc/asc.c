@@ -1,12 +1,12 @@
-/* $NetBSD: asc.c,v 1.12 1998/08/15 05:16:41 mycroft Exp $ */
+/* $NetBSD: asc.c,v 1.13 1998/09/05 13:42:07 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center.
+ * by Charles M. Hannum; Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center;  Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,6 @@
 
 /*
  * Copyright (c) 1994 Peter Galbavy
- * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.12 1998/08/15 05:16:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.13 1998/09/05 13:42:07 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
