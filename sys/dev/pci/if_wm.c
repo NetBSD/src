@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.66 2004/02/19 02:13:23 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.67 2004/02/19 05:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.66 2004/02/19 02:13:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.67 2004/02/19 05:18:47 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1767,7 +1767,7 @@ wm_intr(void *arg)
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 		if (icr & ICR_TXDW) {
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: got TDXW interrupt\n",
+			    ("%s: TX: got TXDW interrupt\n",
 			    sc->sc_dev.dv_xname));
 			WM_EVCNT_INCR(&sc->sc_ev_txdw);
 		}
