@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.9 2002/10/01 02:58:08 thorpej Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.10 2002/10/02 15:45:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ STATIC int hd64465pcmcia_print(void *, const char *);
 STATIC int hd64465pcmcia_submatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(hd64465pcmcia, sizeof(struct hd64465pcmcia_softc),
-    hd64465pcmcia_match, hd64465pcmcia_attach, NULL, NULL)
+    hd64465pcmcia_match, hd64465pcmcia_attach, NULL, NULL);
 
 STATIC void hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *, int);
 /* hot plug */

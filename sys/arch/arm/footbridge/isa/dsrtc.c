@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.3 2002/10/01 04:26:54 thorpej Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.4 2002/10/02 15:45:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -195,7 +195,7 @@ dsrtc_read(arg, rtc)
 
 /* device and attach structures */
 CFATTACH_DECL(dsrtc, sizeof(struct dsrtc_softc),
-    dsrtcmatch, dsrtcattach, NULL, NULL)
+    dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*
  * dsrtcmatch()

@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.7 2002/10/02 09:49:38 itohy Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.8 2002/10/02 15:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -59,7 +59,7 @@ void	gaps_attach(struct device *, struct device *, void *);
 int	gaps_print(void *, const char *);
 
 CFATTACH_DECL(gapspci, sizeof(struct gaps_softc),
-    gaps_match, gaps_attach, NULL, NULL)
+    gaps_match, gaps_attach, NULL, NULL);
 
 int
 gaps_match(struct device *parent, struct cfdata *match, void *aux)

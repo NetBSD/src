@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2002/10/01 03:02:07 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2002/10/02 15:45:18 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@ static int	pchb_match(struct device *, struct cfdata *, void *);
 static void	pchb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pchb, sizeof(struct device),
-    pchb_match, pchb_attach, NULL, NULL)
+    pchb_match, pchb_attach, NULL, NULL);
 
 static int pcifound = 0;
 
