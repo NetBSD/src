@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.39 1999/03/22 17:54:39 sommerfe Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.39.2.1 1999/05/05 20:59:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1213,7 +1213,7 @@ unp_scan(m0, op, discard)
 					continue;
 				qfds = (cm->cmsg_len - ALIGN(sizeof(*cm)))
 						/ sizeof(struct file *);
-				rp = (struct file **)(cm + 1);
+				rp = (struct file **)ALIGN(cm + 1);
 				for (i = 0; i < qfds; i++) {
 					struct file *fp = *rp;
 					if (discard)
