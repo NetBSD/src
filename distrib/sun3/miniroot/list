@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.2 2002/05/18 13:26:14 lukem Exp $
+# $NetBSD: list,v 1.3 2002/05/22 00:26:10 nathanw Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -131,7 +131,7 @@ COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib/ld.elf_so
 COPY	${DESTDIR}/usr/lib/libc.so		usr/lib/libc.so
 LINK	usr/lib/libc.so				usr/lib/libc.so.12
 COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib/libcurses.so
-LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.4
+LINK	usr/lib/libcurses.so			usr/lib/libcurses.so.5
 COPY	${DESTDIR}/usr/lib/libedit.so		usr/lib/libedit.so
 LINK	usr/lib/libedit.so			usr/lib/libedit.so.2
 COPY	${DESTDIR}/usr/lib/libtermcap.so	usr/lib/libtermcap.so
