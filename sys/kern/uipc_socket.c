@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.46 1999/05/15 22:36:34 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.47 1999/05/15 22:37:22 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -492,15 +492,6 @@ nopages:
 					break;
 				}
 			} while (space > 0 && atomic);
-			
-#ifdef TEST_FOR_PANIC_UIPC_3_RACE_CONDITION
-			{
-				extern struct domain unixdomain;
-				
-				if (so->so_proto->pr_domain == &unixdomain)
-					sleep(&lbolt, PVFS);
-			}
-#endif
 			
 			s = splsoftnet();
 
