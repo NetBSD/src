@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.73 2001/12/20 07:26:36 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.74 2001/12/21 08:54:53 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.73 2001/12/20 07:26:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.74 2001/12/21 08:54:53 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -697,7 +697,7 @@ icmp6_input(mp, offp, proto)
 
 	case MLD6_MTRACE_RESP:
 	case MLD6_MTRACE:
-		/* XXX: these two are experimental.  not officially defind. */
+		/* XXX: these two are experimental.  not officially defined. */
 		/* XXX: per-interface statistics? */
 		break;		/* just pass it to applications */
 
@@ -767,7 +767,7 @@ icmp6_input(mp, offp, proto)
 			bzero(p, 4);
 			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
 			noff = sizeof(struct ip6_hdr);
-			M_COPY_PKTHDR(n, m); /* just for recvif */
+			M_COPY_PKTHDR(n, m); /* just for rcvif */
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
@@ -1455,7 +1455,7 @@ ni6_input(m, off)
 		m_freem(m);
 		return(NULL);
 	}
-	M_COPY_PKTHDR(n, m); /* just for recvif */
+	M_COPY_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*
@@ -2448,18 +2448,18 @@ icmp6_redirect_input(m, off)
 		}
 	}
 	/* finally update cached route in each socket via pfctlinput */
-    {
-	struct sockaddr_in6 sdst;
+	{
+		struct sockaddr_in6 sdst;
 
-	bzero(&sdst, sizeof(sdst));
-	sdst.sin6_family = AF_INET6;
-	sdst.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
-	pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
+		bzero(&sdst, sizeof(sdst));
+		sdst.sin6_family = AF_INET6;
+		sdst.sin6_len = sizeof(struct sockaddr_in6);
+		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
+		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
 #ifdef IPSEC
-	key_sa_routechange((struct sockaddr *)&sdst);
+		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
-    }
+	}
 
  freeit:
 	m_freem(m);
@@ -2531,6 +2531,7 @@ icmp6_redirect_output(m0, rt)
 		MCLGET(m, M_DONTWAIT);
 	if (!m)
 		goto fail;
+	m->m_pkthdr.rcvif = NULL;
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);

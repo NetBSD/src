@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.32 2001/11/17 18:55:11 perry Exp $	*/
+/*	$NetBSD: in6.h,v 1.33 2001/12/21 08:54:54 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ struct in6_pktinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
+/* 23: reserved */
 #define IPV6CTL_V6ONLY		24
 /* 25 to 27: reserved */
 #define IPV6CTL_ANONPORTMIN	28	/* minimum ephemeral port */
