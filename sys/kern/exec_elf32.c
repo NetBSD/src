@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.22 1996/12/17 22:04:20 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.23 1997/03/13 02:55:25 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -102,11 +102,11 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 
 int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *)) = {
-#if defined(COMPAT_SVR4) && (ELFSIZE == 32)
-	ELFNAME2(svr4,probe),			/* XXX not 64-bit safe */
-#endif
 #if defined(COMPAT_LINUX) && (ELFSIZE == 32)
 	ELFNAME2(linux,probe),			/* XXX not 64-bit safe */
+#endif
+#if defined(COMPAT_SVR4) && (ELFSIZE == 32)
+	ELFNAME2(svr4,probe),			/* XXX not 64-bit safe */
 #endif
 };
 
