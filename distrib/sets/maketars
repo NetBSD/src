@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.7 1997/11/09 20:47:32 chopps Exp $
+# $NetBSD: maketars,v 1.8 1997/11/27 11:05:25 jonathan Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-arch arch] [-setd setsdir] [-dest destdir] \
@@ -49,5 +49,5 @@ do
 	echo "making $out"
 	sh $setd/makeflist -arch $arch -setd $setd $setname |
 	  (cd $dest ; pax -w -d) |
-	  gzip -9 > ${tars}/$setname.tar.gz
+	  gzip -9 > ${tars}/$setname.tgz
 done
