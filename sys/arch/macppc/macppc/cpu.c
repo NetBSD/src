@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2000/09/05 15:29:28 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2000/09/12 14:47:38 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -50,7 +50,7 @@ void cpuattach(struct device *, struct device *, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
-static void display_l2cr(void);
+static void config_l2cr(void);
 int cpu_spinup(void);
 void cpu_hatch(void);
 
@@ -189,7 +189,7 @@ cpuattach(parent, self, aux)
 	 */
 	if (vers == MPC750 || vers == MPC7400) {
 		printf("%s", self->dv_xname);
-		display_l2cr();
+		config_l2cr();
 	} else if (OF_finddevice("/bandit/ohare") != -1) {
 		printf("%s", self->dv_xname);
 		ohare_init();
@@ -267,7 +267,13 @@ ohare_init()
 #define  L2SIZ_256K		0x10000000
 #define  L2SIZ_512K		0x20000000
 #define  L2SIZ_1M	0x30000000
-#define L2CR_L2CLK	0x0e000000 /* 4-6 */
+#define L2CR_L2CLK	0x0e000000 /* 4-6: L2 clock ratio */
+#define  L2CLK_DIS		0x00000000 /* disable L2 clock */
+#define  L2CLK_10		0x02000000 /* core clock / 1   */
+#define  L2CLK_15		0x04000000 /*            / 1.5 */
+#define  L2CLK_20		0x08000000 /*            / 2   */
+#define  L2CLK_25		0x0a000000 /*            / 2.5 */
+#define  L2CLK_30		0x0c000000 /*            / 3   */
 #define L2CR_L2RAM	0x01800000 /* 7-8: L2 RAM type */
 #define  L2RAM_FLOWTHRU_BURST	0x00000000
 #define  L2RAM_PIPELINE_BURST	0x01000000
@@ -287,13 +293,41 @@ ohare_init()
 #define L2CR_L2BYP	0x00002000 /* 18: L2 DLL bypass. */
 #define L2CR_L2IP	0x00000001 /* 31: L2 global invalidate in progress
 				      (read only). */
+#ifdef L2CR_CONFIG
+u_int l2cr_config = L2CR_CONFIG;
+#else
+u_int l2cr_config = 0;
+#endif
 
 void
-display_l2cr()
+config_l2cr()
 {
-	u_int l2cr;
+	u_int l2cr, x;
 
 	__asm __volatile ("mfspr %0, 1017" : "=r"(l2cr));
+
+	/*
+	 * Configure L2 cache if not enabled.
+	 */
+	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
+		l2cr = l2cr_config;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+
+		/* Wait for L2 clock to be stable (640 L2 clocks). */
+		delay(100);
+
+		/* Invalidate all L2 contents. */
+		l2cr |= L2CR_L2I;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+		do {
+			asm volatile ("mfspr %0, 1017" : "=r"(x));
+		} while (x & L2CR_L2IP);
+
+		/* Enable L2 cache. */
+		l2cr &= ~L2CR_L2I;
+		l2cr |= L2CR_L2E;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+	}
 
 	if (l2cr & L2CR_L2E) {
 		switch (l2cr & L2CR_L2SIZ) {
