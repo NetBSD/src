@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.31 1994/01/03 16:22:18 mycroft Exp $
+ *	$Id: wd.c,v 1.32 1994/01/03 16:23:06 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -71,6 +71,7 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
