@@ -32,7 +32,7 @@
  *
  * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: boot.c,v 1.4 1994/07/20 20:47:10 pk Exp $
+ * $Id: boot.c,v 1.5 1994/07/30 14:22:11 pk Exp $
  */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ int netif_debug;
  * Boot device is derived from ROM provided information.
  */
 #define LOADADDR	0x4000
+#define DEFAULT_KERNEL	"netbsd"
 extern char		*version;
 extern struct promvec	*promvec;
 char			kernel[100];
@@ -69,7 +70,7 @@ struct promvec *pp;
 		cp = (*promvec->pv_v0bootargs)->ba_kernel;
 
 	if (cp == 0 || *cp == 0) {
-		strcpy(kernel, "netbsd");
+		strcpy(kernel, DEFAULT_KERNEL);
 	} else {
 		char	*kp = kernel;
 
@@ -153,7 +154,6 @@ copyunix(io, addr)
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 	}
 
-	printf(" start 0x%x\n", (int)entry);
 #define DDB_MAGIC ( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
 	(*entry)(promvec, esym, DDB_MAGIC);
 	return;

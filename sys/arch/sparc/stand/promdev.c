@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: promdev.c,v 1.3 1994/07/20 20:47:22 pk Exp $
+ *	$Id: promdev.c,v 1.4 1994/07/30 14:22:13 pk Exp $
  */
 
 #include <sys/param.h>
@@ -36,16 +36,32 @@
 
 struct promvec	*promvec;
 
-int promopen __P((struct open_file *, ...));
-int promclose __P((struct open_file *));
-int promioctl __P((struct open_file *, int, void *));
-int promstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+int	promopen __P((struct open_file *, ...));
+int	promclose __P((struct open_file *));
+int	promioctl __P((struct open_file *, int, void *));
+int	promstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
+char	*dev_type __P((int, char *));
+int	getprop __P((int, char *, void *, int));
+char	*getpropstring __P((int, char *));
+int	getpropint __P((int, char *, int));
+int	findroot __P((void));
+int	findnode __P((int, char *));
+int	firstchild __P((int));
+int	nextsibling __P((int));
 
 struct devsw devsw[] = {
 	{ "prom", promstrategy, promopen, promclose, promioctl },
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+
+struct promdata {
+	int	fd;
+	int	devtype;
+#define BLOCK	1
+#define NET	2
+#define BYTE	3
+};
 
 int
 devopen(f, fname, file)
@@ -54,25 +70,32 @@ devopen(f, fname, file)
 	char **file;
 {
 	int	error, fd;
-	char	*dev, *cp;
+	char	*cp, *path, *dev;
+	struct	promdata *pdp;
 
 	if (promvec->pv_romvec_vers >= 2) {
-		dev = *promvec->pv_v2bootargs.v2_bootpath;
-		fd = (*promvec->pv_v2devops.v2_open)(dev);
+		path = *promvec->pv_v2bootargs.v2_bootpath;
+		fd = (*promvec->pv_v2devops.v2_open)(path);
+		cp = path + strlen(path) - 1;
+		while (cp >= path)
+			if (*cp == '/') {
+				++cp;
+				break;
+			}
+		dev = cp;
 	} else {
-		char *cp;
-		static char bdev[100];
+		static char pathbuf[100];
 
-		dev = bdev;
+		path = pathbuf;
 		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
 		while (*cp) {
-			*dev++ = *cp;
+			*path++ = *cp;
 			if (*cp++ == ')')
 				break;
 		}
-		*dev = '\0';
-		dev = bdev;
-		fd = (*promvec->pv_v0devops.v0_open)(dev);
+		*path = '\0';
+		dev = path = pathbuf;
+		fd = (*promvec->pv_v0devops.v0_open)(path);
 	}
 
 	if (fd == 0) {
@@ -80,22 +103,39 @@ devopen(f, fname, file)
 		return ENXIO;
 	}
 
+	pdp = (struct promdata *)alloc(sizeof *pdp);
+	pdp->fd = fd;
+
+	cp = dev_type(findroot(), dev);
+	if (cp == NULL)
+		printf("%s: bummer\n", dev);
+	else if (strcmp(cp, "block") == 0)
+		pdp->devtype = BLOCK;
+	else if (strcmp(cp, "network") == 0)
+		pdp->devtype = NET;
+	else if (strcmp(cp, "byte") == 0)
+		pdp->devtype = BYTE;
+#ifdef DEBUG
+	if (cp) printf("Boot device type: %s\n", cp);
+#endif
 	f->f_dev = devsw;
-	f->f_devdata = (void *)fd;
+	f->f_devdata = (void *)pdp;
 	*file = fname;
 	return 0;
 }
 
 int
 promstrategy(devdata, flag, dblk, size, buf, rsize)
-	void *devdata;
-	int flag;
-	daddr_t dblk;
-	u_int size;
-	char *buf;
-	u_int *rsize;
+	void	*devdata;
+	int	flag;
+	daddr_t	dblk;
+	u_int	size;
+	char	*buf;
+	u_int	*rsize;
 {
 	int	error = 0;
+	struct	promdata *pdp = (struct promdata *)devdata;
+	int	fd = pdp->fd;
 
 #ifdef DEBUG
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
@@ -103,17 +143,18 @@ promstrategy(devdata, flag, dblk, size, buf, rsize)
 	twiddle();
 
 	if (promvec->pv_romvec_vers >= 2) {
-		(*promvec->pv_v2devops.v2_seek)((int)devdata, 0, dbtob(dblk));
+		if (pdp->devtype == BLOCK)
+			(*promvec->pv_v2devops.v2_seek)(fd, 0, dbtob(dblk));
 
 		*rsize = (*((flag == F_READ)
 				? (u_int (*)())promvec->pv_v2devops.v2_read
 				: (u_int (*)())promvec->pv_v2devops.v2_write
-			 ))((int)devdata, buf, size);
+			 ))(fd, buf, size);
 	} else {
 		int n = (*((flag == F_READ)
 				? (u_int (*)())promvec->pv_v0devops.v0_rbdev
 				: (u_int (*)())promvec->pv_v0devops.v0_wbdev
-			))((int)devdata, btodb(size), dblk, buf);
+			))(fd, btodb(size), dblk, buf);
 		*rsize = dbtob(n);
 	}
 
@@ -202,3 +243,158 @@ putchar(c)
 #endif
 }
 
+char *
+dev_type(node, dev)
+	int	node;
+	char	*dev;
+{
+	char	*name, *type;
+	register int child;
+
+	for (; node; node = nextsibling(node)) {
+		name = getpropstring(node, "name");
+		if (strncmp(dev, name, strlen(name)) == 0)
+			return getpropstring(node, "device_type");
+
+		child = firstchild(node);
+		if (child)
+			if (type = dev_type(child, dev))
+				return type;
+	}
+	return NULL;
+}
+
+/*
+ * PROM nodes & property routines (from <sparc/autoconf.c>).
+ */
+
+static int rootnode;
+
+int
+findroot()
+{
+	register int node;
+
+	if ((node = rootnode) == 0 && (node = nextsibling(0)) == 0)
+		printf("no PROM root device");
+	rootnode = node;
+	return (node);
+}
+
+#if 0
+int
+shownodes(first)
+{
+	register int node, child;
+	char name[32], type[32];
+static	int indent;
+
+	for (node = first; node; node = nextsibling(node)) {
+		int i = indent;
+		strcpy(name, getpropstring(node, "name"));
+		strcpy(type, getpropstring(node, "device_type"));
+		while (i--) putchar(' ');
+		printf("node(%x) name `%s', type `%s'\n", node, name, type);
+		child = firstchild(node);
+		if (child) {
+			indent += 4;
+			shownodes(child);
+			indent -= 4;
+		}
+	}
+}
+#endif
+
+/*
+ * Given a `first child' node number, locate the node with the given name.
+ * Return the node number, or 0 if not found.
+ */
+int
+findnode(first, name)
+	int first;
+	register char *name;
+{
+	register int node;
+
+	for (node = first; node; node = nextsibling(node))
+		if (strcmp(getpropstring(node, "name"), name) == 0)
+			return (node);
+	return (0);
+}
+
+/*
+ * Internal form of getprop().  Returns the actual length.
+ */
+int
+getprop(node, name, buf, bufsiz)
+	int node;
+	char *name;
+	void *buf;
+	register int bufsiz;
+{
+	register struct nodeops *no;
+	register int len;
+
+	no = promvec->pv_nodeops;
+	len = no->no_proplen(node, name);
+	if (len > bufsiz) {
+		printf("node %x property %s length %d > %d\n",
+		    node, name, len, bufsiz);
+		return (0);
+	}
+	no->no_getprop(node, name, buf);
+	return (len);
+}
+
+/*
+ * Return a string property.  There is a (small) limit on the length;
+ * the string is fetched into a static buffer which is overwritten on
+ * subsequent calls.
+ */
+char *
+getpropstring(node, name)
+	int node;
+	char *name;
+{
+	register int len;
+	static char stringbuf[32];
+
+	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
+	stringbuf[len] = '\0';	/* usually unnecessary */
+	return (stringbuf);
+}
+
+/*
+ * Fetch an integer (or pointer) property.
+ * The return value is the property, or the default if there was none.
+ */
+int
+getpropint(node, name, deflt)
+	int node;
+	char *name;
+	int deflt;
+{
+	register int len;
+	char intbuf[16];
+
+	len = getprop(node, name, (void *)intbuf, sizeof intbuf);
+	if (len != 4)
+		return (deflt);
+	return (*(int *)intbuf);
+}
+
+int
+firstchild(node)
+	int node;
+{
+
+	return (promvec->pv_nodeops->no_child(node));
+}
+
+int
+nextsibling(node)
+	int node;
+{
+
+	return (promvec->pv_nodeops->no_nextnode(node));
+}
