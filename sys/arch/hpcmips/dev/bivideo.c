@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.10 2000/07/22 08:53:35 takemura Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.11 2000/09/10 15:33:48 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.10 2000/07/22 08:53:35 takemura Exp $";
+    "$Id: bivideo.c,v 1.11 2000/09/10 15:33:48 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,12 +300,14 @@ bivideo_power(why, arg)
 		break;
 	}
 
+#if 0
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
 			 CONFIG_HOOK_POWERCONTROL_LCD,
 			 (void*)sc->sc_powerstate);
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
 			 CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
 			 (void*)sc->sc_powerstate);
+#endif /* 0 */
 }
 
 int
