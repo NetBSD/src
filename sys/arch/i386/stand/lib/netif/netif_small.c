@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.6 2001/07/07 22:57:58 perry Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.7 2002/06/21 23:18:45 gmcgarry Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -130,7 +130,7 @@ netif_put(desc, pkt, len)
 	if (netif_debug) {
 		struct ether_header *eh;
 
-		printf("netif_put: desc=0x%x pkt=0x%x len=%d\n",
+		printf("netif_put: desc=%p pkt=%p len=%d\n",
 			   desc, pkt, len);
 		eh = pkt;
 		printf("dst: %s ", ether_sprintf(eh->ether_dhost));
@@ -157,7 +157,7 @@ netif_get(desc, pkt, maxlen, timo)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
+		printf("netif_get: pkt=%p, maxlen=%d, tmo=%ld\n",
 			   pkt, maxlen, timo);
 #endif
 
