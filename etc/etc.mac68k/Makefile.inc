@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/12/07 10:57:18 toddpw Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/11/29 22:45:56 thorpej Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -8,8 +8,10 @@
 # simply its corresponding config with "ncrscsi" commented out,
 # and "sbc" uncommented.
 #
-BUILD_KERNELS?=	INSTALL	INSTALLSBC
-EXTRA_KERNELS?=		GENERICSBC
+
+KERNEL_SETS=		GENERIC GENERICSBC
+
+BUILD_KERNELS=		INSTALL INSTALLSBC
 
 INSTALLATION_DIRS+=	installation/instkernel
 

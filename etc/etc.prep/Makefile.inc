@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/01/16 16:53:57 nonaka Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:59 thorpej Exp $
 #
 #	etc.prep/Makefile.inc -- prep-specific etc Makefile targets
 #
 
-BUILD_KERNELS+=		INSTALL
+KERNEL_SETS=		GENERIC
+
+BUILD_KERNELS=		INSTALL
+
 INSTALLATION_DIRS+=	installation
 
 # mkisofs arguments to generate bootable iso image

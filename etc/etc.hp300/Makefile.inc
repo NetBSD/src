@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/04/21 17:58:21 he Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2001/11/29 22:45:56 thorpej Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+= DISKLESS
+KERNEL_SETS=		GENERIC
+
+EXTRA_KERNELS=		DISKLESS
 
 # Build the boot media and install notes and install them
 snap_md_post:
