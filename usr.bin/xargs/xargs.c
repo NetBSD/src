@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.11 1998/12/20 15:06:53 christos Exp $	*/
+/*	$NetBSD: xargs.c,v 1.12 1999/12/22 14:41:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,27 +46,32 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.11 1998/12/20 15:06:53 christos Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.12 1999/12/22 14:41:01 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <err.h>
 #include <errno.h>
+#include <langinfo.h>
+#include <limits.h>
+#include <locale.h>
+#include <paths.h>
+#include <regex.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
-#include <locale.h>
-#include <signal.h>
-#include <err.h>
 #include "pathnames.h"
 
-int tflag, zflag, rval;
+static int pflag, tflag, zflag, rval;
+static FILE *promptfile;
+static regex_t yesexpr;
 
-void	run __P((char **));
-int	main __P((int, char **));
-void	usage __P((void));
+static void	run __P((char **));
+int		main __P((int, char **));
+static void	usage __P((void));
 
 int
 main(argc, argv)
@@ -96,7 +101,7 @@ main(argc, argv)
 	nargs = 5000;
 	nline = ARG_MAX - 4 * 1024;
 	nflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "0n:s:tx")) != -1)
+	while ((ch = getopt(argc, argv, "0n:ps:tx")) != -1)
 		switch(ch) {
 		case '0':
 			zflag = 1;
@@ -105,6 +110,9 @@ main(argc, argv)
 			nflag = 1;
 			if ((nargs = atoi(optarg)) <= 0)
 				errx(1, "illegal argument count");
+			break;
+		case 'p':
+			pflag = tflag = 1;
 			break;
 		case 's':
 			nline = atoi(optarg);
@@ -170,6 +178,20 @@ main(argc, argv)
 	if (!(bbp = malloc((u_int)nline + 1)))
 		err(1, "malloc");
 	ebp = (argp = p = bbp) + nline - 1;
+
+	if (pflag) {
+		int error;
+
+		if ((promptfile = fopen(_PATH_TTY, "r")) == NULL)
+			err(1, "prompt mode: cannot open input");
+		if ((error = regcomp(&yesexpr, nl_langinfo(YESEXPR), REG_NOSUB))
+		    != 0) {
+			char msg[NL_TEXTMAX];
+
+			(void)regerror(error, NULL, msg, sizeof (msg));
+			err(1, "cannot compile yesexpr: %s", msg);
+		}
+	}
 
 	for (insingle = indouble = 0;;)
 		switch(ch = getchar()) {
@@ -269,7 +291,7 @@ addch:			if (p < ebp) {
 	/* NOTREACHED */
 }
 
-void
+static void
 run(argv)
 	char **argv;
 {
@@ -282,8 +304,20 @@ run(argv)
 		(void)fprintf(stderr, "%s", *argv);
 		for (p = argv + 1; *p; ++p)
 			(void)fprintf(stderr, " %s", *p);
-		(void)fprintf(stderr, "\n");
-		(void)fflush(stderr);
+		if (pflag) {
+			char buf[LINE_MAX + 1];
+
+			(void)fprintf(stderr, "?...");
+			fflush(stderr);
+			if (fgets(buf, sizeof (buf), promptfile) == NULL) {
+				rval = 1;
+				return;
+			}
+			if (regexec(&yesexpr, buf, 0, NULL, 0) != 0)
+				return;
+		} else {
+			(void)fprintf(stderr, "\n");
+		}
 	}
 	noinvoke = 0;
 	switch(pid = vfork()) {
@@ -331,10 +365,10 @@ run(argv)
 	}
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: xargs [-0t] [-n number [-x]] [-s size] [utility [argument ...]]\n");
+"usage: xargs [-0pt] [-n number [-x]] [-s size] [utility [argument ...]]\n");
 	exit(1);
 }
