@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.30 2001/03/11 23:18:46 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.31 2001/03/13 21:31:03 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1799,3 +1799,90 @@ sys/dev/scsipi/sd.c				1.170
 
   Fix a problem with some Hitachi drives by only issuing the ``lock
   media'' and ``unlock media'' commands to removable media.
+
+sys/dev/pci/if_sip.c				1.25-1.26
+sys/dev/pci/if_sipreg.h				1.5
+
+  Fix support for the DP83815 so that it works properly with the
+  current crop of Netgear FA311 10/100 cards.
+
+sys/arch/x68k/conf/GENERIC			1.56
+sys/arch/x68k/conf/INSTALL			1.38
+
+  Turn off options JUPITER, as it may cause problems on some newer
+  accelerators.
+
+sys/dev/ic/dpt.c				1.27
+
+  Make this work on a PowerPC system:
+   - Load the DMA address a byte at a time
+   - Use bus_space_read_stream_2() instead of bus_space_read_2() when
+     reading the byte-stream of configuration data from the card
+
+sys/dev/ic/rtl81x9.c				1.28
+sys/dev/pci/if_ti.c				1.20
+sys/dev/pci/if_vr.c				1.45
+sys/dev/usb/if_aue.c				1.54 via patch
+sys/dev/usb/if_cue.c				1.33 via patch
+sys/dev/usb/if_kue.c				1.38 via patch
+
+  Handle allmulti case correctly as a NetBSD network driver;
+  if we are requested range of multicast address or too many
+  multicast address, program multicast filter to receive all
+  multicast address.   And set/clear IFF_ALLMULTI flag properly.
+
+sys/arch/news68k/include/cpu.h			1.9
+
+  Fix error on config without options news1700.
+
+bin/date/date.1					1.26
+
+  Document /etc/localtime symlink.
+
+sys/arch/hpcmips/conf/GENERIC			1.80
+
+  Enable Compact Flash card conftoller (wdc) on all models of
+  CASSIOPEIA E series, not only E-55.  Fixes PR#11791.
+
+etc/rc.d/ppp					1.5
+
+  Add ``stop'' and ``hup'' commands.
+
+sys/dev/pci/cs4280.c				patch
+
+  Correct checking of AC97 Input Slot Valid register bits.
+
+share/doc/papers/px/Makefile			1.5
+share/doc/psd/05.sysman/Makefile		1.5
+share/doc/smm/01.setup/4.t			1.6
+
+  Fixes to documents and build procedure so that ``make paper.ps''
+  works without errors or warnings.
+
+lib/libskey/skeysubr.c				1.19
+
+  Fix SHA1 calculation on big-endian machines.  Fixes PR#12045.
+
+usr.bin/mail/Makefile				1.16-1.17
+
+  Use ${COPY} instead of -c and pass ${INSTPRIV} to the ${INSTALL}
+  command.
+
+lib/libc/stdlib/hcreate.3			1.1-1.2 (new)
+lib/libc/stdlib/hcreate.c			1.1-1.3 (new)
+lib/libc/stdlib/Makefile.inc			1.50-1.51
+lib/libc/db/hash/Makefile.inc			1.7
+lib/libc/db/hash/hsearch.c			delete
+lib/libc/db/man/Makefile.inc			1.8
+lib/libc/db/man/hcreate.3			delete
+
+  Replace hcreate() / hsearch() / hdestroy() implementation with
+  one that actually works as it's supposed to.
+
+sys/dev/pci/pciide.c				1.108
+sys/dev/pci/pciide_pdc202xx_reg.h		1.4
+distrib/notes/i386/hardware			1.86
+share/man/man4/pciide.4				1.27
+
+  Support Ultra/100 speed on Promise Ultra/100, and fix ``bogus
+  intr'' messages generated under some conditions.
