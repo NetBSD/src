@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.35 1996/05/19 17:58:12 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.36 1996/06/15 07:11:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -219,14 +219,13 @@ kn01_intr(mask, pc, statusReg, causeReg)
 
 #if NLE_PMAX > 0
 	if (mask & MACH_INT_MASK_1) {
-
 		/* 
 		 * tty interrupts were disabled by the splx() call
 		 * that re-enables clock interrupts.  A slip or ppp driver
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MACH_INT_MASK_1.
 		 */
-		am7990_intr(le_cd.cd_devs[0]); /* XXX FIXME */
+		am7990_intr(tc_slot_info[1].sc);
 		intrcnt[LANCE_INTR]++;
 	}
 #endif /* NLE_PMAX */
