@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.6 2002/06/18 08:34:57 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.7 2002/08/25 18:39:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -269,7 +269,9 @@ netbsd32_syscall_fancy(frame)
 		break;
 	}
 
+#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(p, code, args64, rval, error);
+#endif
 
 	userret(p);
 }
