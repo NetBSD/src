@@ -1,0 +1,25 @@
+List of suggested new features:
+
++ Add "set searchdir" for a list of directories to look in for
+  files to edit.  The semantic is that ":e foo" is replaced with
+  the file name that is found, so there's no confusion as to
+  which file is written.
+
++ Change
+	:di[splay] tags		-> :tags
+	:di[splay] screens	-> :screens
+	:di[splay] buffers	-> :buffers
+
++ A macro record function.  Add the ability to record a sequence
+  of keystrokes into a named buffer for later use.  Handy when
+  you're trying to build a semi-complex macro.
+
++ Put multiple messages on a single line if they fit in their entirety,
+  so that ":n" with autowrite set doesn't force users to hit return to
+  get see both the "written" and "new file status" messages.
+
++ The semantics of :split, :bg, and :fg aren't right.  Someone needs to
+  rethink how they should interact.  The main problem arises when users
+  want to get a window into a new file.  Currently, the necessary sequence
+  is  ":split newfile|^W|:bg".  It would be nice if you could simply
+  background the current screen and edit a new one.
