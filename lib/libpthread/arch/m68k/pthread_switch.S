@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/11/20 19:26:09 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2001/11/25 10:41:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,15 +69,14 @@
  */
 
 ENTRY(pthread__switch)
-	link	%a6,#-CONTEXTSIZE	/* Allocate space for the ucontext_t */
-	movl	%a6@(8),%a0		/* a0 holds the current thread */
-	movl	%a6@(12),%a1		/* a1 holds the current to switch to */
+	movl	%sp@(4),%a0		/* a0 = self */
+	movl	%sp@(8),%a1		/* a1 = next */
+	lea	%sp@(-RND_CTXSIZE),%sp	/* Allocate space for the ucontext_t */
 	movl	%sp,%a0@(PT_UC)
 	movl	%a1@(PT_UC),%sp@-
 	movl	%a0@(PT_UC),%sp@-
 	jbsr	PIC_PLT(_C_LABEL(_swapcontext_u))
-	addq	#8,%sp			/* Not strictly necessary, because */
-	unlk	%a6			/* this `unlk' also resets sp */
+	lea	%sp@(RND_CTXSIZE+8),%sp	/* Pop ucontext_t and args */
 	rts
 
 /*
@@ -124,31 +123,35 @@ ENTRY(pthread__switch)
  */
 
 #define STACK_SWITCH(pt,tmp)			\
-	movl	%pt@(PT_UC), %tmp	;	\
-	lea	%tmp@(-STACKSPACE), %sp
-
+	movl	%pt@(PT_UC),%tmp	;	\
+	lea	%tmp@(-STACKSPACE),%sp
 
 /*
  * Helper switch code used by pthread__locked_switch() and 
  * pthread__upcall_switch() when they discover spinlock preemption.
+ *
+ * Call with:
+ *   a1 = from, a2 = to
  */
-Lpthread__switch_away:
-	STACK_SWITCH(a3,a0)
+Lpthread__switch_away_decrement:
+	STACK_SWITCH(a2,a0)		/* side effect: a0 = to->pt_uc */
 
 	/* If we're invoked from the switch-to-next provisions of
 	 * pthread__locked_switch or pthread__upcall_switch, there
-	 * may be a fake spinlock-count set. If so, they will set %d0
-	 * to let us know, and we decrement it once we're no longer using
-	 * the old stack.
+	 * may be a fake spinlock-count set. If so, we decrement it
+	 * once we're no longer using the old stack.
 	 */ 
-	tstl	%d0
-	bles	Lpthread__switch_no_decrement
-	subql	#1, %a2@(PT_SPINLOCKS)
-
-Lpthread__switch_no_decrement:	
-	pea	%a0@			/* ucontext_t *ucp */
+	subql	#1, %a1@(PT_SPINLOCKS)
+	pea	%a0@
 	jbsr	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
+
+Lpthread__switch_away_no_decrement:
+	STACK_SWITCH(a2,a0)		/* side effect: a0 = to->pt_uc */
+	pea	%a0@
+	jbsr	PIC_PLT(_C_LABEL(_setcontext_u))
+	NOTREACHED
+
 
 /*
  * void	pthread__locked_switch(pthread_t self, pthread_t next, 
@@ -158,16 +161,16 @@ Lpthread__switch_no_decrement:
  * prevent being removed from the queue before being switched away).
  */
 ENTRY(pthread__locked_switch)
-	link	%a6,#-CONTEXTSIZE
-	moveml	%d2/%a2-%a4,%sp@-
-	movl	%a6@(8),%a2		/* a2 holds the current thread */
-	movl	%a6@(12),%a3		/* a3 holds the thread to switch to */
-	movl	%a6@(16),%a4		/* a4 holds the spinlock pointer */
-	addql	#1,%a3@(PT_SPINLOCKS)	/* Make sure we get continued */
-	lea	%a6@(-CONTEXTSIZE),%a0
-	movl	%a0,%a2@(PT_UC)
-	movl	%a0,%d2
-	pea	%a0@
+	lea	%sp@(-RND_CTXSIZE),%sp	/* Space for ucontext_t */
+	movl	%sp@(RND_CTXSIZE+8),%a0	/* `next': Thread to switch to */
+	addql	#1,%a0@(PT_SPINLOCKS)	/* Make sure we get continued */
+	movl	%sp@(RND_CTXSIZE+4),%a0	/* `self': current thread */
+	movl	%sp,%a0@(PT_UC)		/* self->pt_uc = &context */
+
+	/*
+	 * Save `self's context
+	 */
+	movl	%sp,%sp@-
 	jbsr	PIC_PLT(_C_LABEL(_getcontext_u))
 	addql	#4,%sp
 
@@ -176,15 +179,26 @@ ENTRY(pthread__locked_switch)
 	 * the _setcontext_u below.  
 	 */
 	lea	%pc@(Llocked_return_point),%a0
-	movl	%a0,%a6@(-CONTEXTSIZE+UC_PC)
+	movl	%a0,%sp@(UC_PC)
 
-	STACK_SWITCH(a3,a1)
-	
+	/*
+	 * Fetch function parameters now that callee-saved registers
+	 * are available. (They're saved in the context)
+	 */
+	movl	%sp@(RND_CTXSIZE+4),%a2		/* a2 = self */
+	movl	%sp@(RND_CTXSIZE+8),%a1		/* a1 = next */
+	movl	%sp@(RND_CTXSIZE+12),%a0	/* a0 = lock */
+	movl	%sp,%a4				/* a4 = &context */
+
+	STACK_SWITCH(a1,a3)		/* side effect: a3 = next->pt_uc */
+
+	/* Now running on `next's stack. */
+
 	/* Check if the original thread was preempted while holding
 	 * its queue lock.
 	 */
-	tstl	%a2@(PT_NEXT)
-	beqs	Llocked_no_old_preempt
+	movl	%a2@(PT_NEXT),%d0		/* self->pt_next == 0? */
+	beqs	Llocked_no_old_preempt		/* Yup */
 
 	/* Yes, it was. Stash the thread we were going to
 	 * switch to, the lock the original thread was holding, 
@@ -195,49 +209,55 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	movl	%a3, %a2@(PT_SWITCHTO)
-	movl	%a0, %a2@(PT_SWITCHTOUC)
-	movl	%a4, %a2@(PT_HELDLOCK)
+	movl	%a1,%a2@(PT_SWITCHTO)
+	movl	%a3,%a2@(PT_SWITCHTOUC)
+	movl	%a0,%a2@(PT_HELDLOCK)
 	subql	#1,%a2@(PT_SPINLOCKS)
 
-	/* Save the context we previously stored in %a2@(PT_UC)
+	/* Save the context we previously stored in self->pt_uc
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere. 
 	 */
-	movl	%d2,%a2@(PT_SLEEPUC)
+	movl	%a4,%a2@(PT_SLEEPUC)
 
-	movl	%a2@(PT_NEXT),%d0
-	movl	%a3,%a2
-	movl	%d0,%a3
-	moveql	#1,%d0
-	bra	Lpthread__switch_away
+	/* a1 already == from */
+	movl	%d0,%a2			/* to = self->pt_next */
+	jbra	Lpthread__switch_away_decrement
+	/* NOTREACHED */
 
-Llocked_no_old_preempt:		
-	/* We've moved to the new stack, and the old context has been 
-	 * saved. The queue lock can be released. */
-	subql	#1,%a2@(PT_SPINLOCKS)
+Llocked_no_old_preempt:
+	/* a0 = lock, a1 = next, a2 = self, a3 = next->pt_uc */
+
+	/*
+	 * We've moved to the new stack, and the old context has been 
+	 * saved. The queue lock can be released.
+	 */
+	subql	#1,%a2@(PT_SPINLOCKS)	/* self->pt_spinlocks-- */
+
 	/* We happen to know that this is the right way to release a lock. */
-	clrl	%a4@
+	clrb	%a0@			/* *lock = 0 */
 
-	subql	#1,%a3@(PT_SPINLOCKS)
+	/* Remove the fake lock */
+	subql	#1,%a1@(PT_SPINLOCKS)	/* next->pt_spinlocks-- */
+
 	/* Check if we were preempted while holding the fake lock. */
-	tstl	%a3@(PT_NEXT)
-	beqs	Llocked_no_new_preempt
+	movl	%a1@(PT_NEXT),%d0	/* (%d0 = next->pt_next) == NULL? */
+	beqs	Llocked_no_new_preempt	/* Yup */
+
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%a3,%a3@(PT_SWITCHTO)
-	movl	%d2,%a3@(PT_SWITCHTOUC)
-	movl	%a3,%a2
-	movl	%a3@(PT_NEXT),%a3
-	moveql	#-2,%d0
-	bra	Lpthread__switch_away
+	movl	%a1,%a1@(PT_SWITCHTO)	/* next->pt_switchto = next */
+	movl	%a3,%a2@(PT_SWITCHTOUC)
+	movl	%d0,%a2
+	jbra	Lpthread__switch_away_no_decrement
 
 Llocked_no_new_preempt:		
-	movl	%d2,%sp@-			/* ucontext_t *ucp */
+	pea	%a3@			/* _setcontext_u(next->pt_uc) */
 	jbsr	PIC_PLT(_C_LABEL(_setcontext_u))
+	NOTREACHED
+
 Llocked_return_point:
 	/* We're back on the original stack. */
-	moveml	%sp@+,%d2/%a2-%a4
-	unlk	%a6
+	lea	%sp@(RND_CTXSIZE+4),%sp	/* Ditch the ucontext_t */
 	rts
 
 
@@ -246,52 +266,59 @@ Llocked_return_point:
  * void	pthread__upcall_switch(pthread_t self, pthread_t next);
  *
  * Quit an upcall, recycle it, and jump to the selected thread.
+ * Since this code never returns, we are free to use callee-saved
+ * registers.
  */
 ENTRY(pthread__upcall_switch)
-	link	%a6,#0
 	/* Save args into registers so we can stop using the old stack. */
-	/* No need to save callee saved registers, we never return */
-	movl	%a6@(8),%a2		/* a2 holds the upcall thread */
-	movl	%a6@(12),%a3		/* a3 holds the thread to switch to */
+	movl	%sp@(4),%a2		/* a2 = self (the upcall thread) */
+	movl	%sp@(8),%a3		/* a3 = next */
+
+	/* Create a `fake' lock count so we are `continued' */
 	addql	#1,%a3@(PT_SPINLOCKS)
 
-	STACK_SWITCH(a3,a0)
-	
+	STACK_SWITCH(a3,a4)		/* side effect: a4 = next->pt_uc */
+
 	/* Check if the upcall was preempted and continued. */
-	tstl	%a2@(PT_NEXT)
+	movl	%a2@(PT_NEXT),%d0
 	beqs	Lupcall_no_old_preempt
+
 	/* Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
 	movl	%a3,%a2@(PT_SWITCHTO)
-	movl	%a0,%a2@(PT_SWITCHTOUC)
-	movl	#PT_STATE_RECYCLABLE,%a2@(PT_STATE)
-	movl	%a2@(PT_NEXT),%d0
-	movl	%a3,%a2
-	movl	%d0,%a3
-	moveql	#1,%d0
-	bra	Lpthread__switch_away
-	NOTREACHED
+	movl	%a4,%a2@(PT_SWITCHTOUC)
+	moveql	#PT_STATE_RECYCLABLE,%d1
+	movl	%d1,%a2@(PT_STATE)
+	movl	%a3,%a1			/* from(a1) = next */
+	movl	%d0,%a2			/* to(a2)   = self->pt_next */
+	jbra	Lpthread__switch_away_decrement
+	/* NOTREACHED */
 
 Lupcall_no_old_preempt:		
-	pea	%a0@
-	pea     %a3@		/* pthread_t new */
-	pea     %a2@		/* pthread_t old */
+	/* pthread__sa_recycle(old, new) */
+	pea     %a3@		/* new = next(a3) */
+	pea     %a2@		/* old = self(a2) */
 	jbsr    PIC_PLT(_C_LABEL(pthread__sa_recycle))
 	addql	#8,%sp
+
+	/* Release the fake lock */
 	subql	#1,%a3@(PT_SPINLOCKS)
+
 	/* Check if we were preempted while holding the fake lock. */
-	tstl	%a3@(PT_NEXT)
+	movl	%a3@(PT_NEXT),%d0
 	beqs	Lupcall_no_new_preempt
+
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	movl	%a3,%a3@(PT_SWITCHTO)
-	movl	%sp@+,%a3@(PT_SWITCHTOUC)
-	movl	%a3,%a2
-	movl	%a3@(PT_NEXT),%a3
-	moveql	#-1,%d0
-	bra	Lpthread__switch_away
-	NOTREACHED
+	movl	%a4,%a3@(PT_SWITCHTOUC)
+	movl	%a3,%a1			/* from(a1) = next */
+	movl	%d0,%a2			/* to(a2)   = self->pt_next */
+	jbra	Lpthread__switch_away_no_decrement
+	/* NOTREACHED */
 
 Lupcall_no_new_preempt:		
+	pea	%a4@
 	jbsr	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
+
