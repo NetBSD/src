@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $	*/
+/*	$NetBSD: fsck.c,v 1.14 1997/10/29 18:36:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.13 1997/10/13 09:44:18 bouyer Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.14 1997/10/29 18:36:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -239,7 +239,9 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 
 	/* construct basename of executable and argv[0] simultaneously */
 	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
-	argv[0] = vfstype;
+
+	/* We set argv[0] to the real name for crunch'ed binaries */
+	argv[0] = execbase;	
 
 	if (options) {
 		if (extra != NULL)
