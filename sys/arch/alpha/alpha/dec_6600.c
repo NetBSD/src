@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.6 2000/06/09 04:58:32 soda Exp $ */
+/* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.6 2000/06/09 04:58:32 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ dec_6600_device_register(dev, aux)
 			return;
 		}
 	}
-	if (scsiboot &&
+	if ((ideboot || scsiboot) &&
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
