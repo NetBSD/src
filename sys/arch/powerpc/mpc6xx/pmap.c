@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2001/06/15 20:43:01 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2001/06/15 20:53:45 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1182,6 +1182,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * Compute the HTAB index.
 	 */
+	va &= ~ADDR_POFF;
 	sr = va_to_sr(pm->pm_sr, va);
 	ptegidx = va_to_pteg(sr, va);
 
