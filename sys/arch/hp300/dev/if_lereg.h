@@ -31,21 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
- *	$Id: if_lereg.h,v 1.5 1994/02/06 00:46:03 mycroft Exp $
+ *	$Id: if_lereg.h,v 1.6 1994/07/06 01:36:25 mycroft Exp $
  */
 
 #define	LEID		21
 
-#define	LEMTU		1518
-#define	LEMINSIZE	60	/* should be 64 if mode DTCR is set */
-#define	LERBUF		8
-#define	LERBUFLOG2	3
-#define	LE_RLEN		(LERBUFLOG2 << 13)
-#define	LETBUF		1
-#define	LETBUFLOG2	0
-#define	LE_TLEN		(LETBUFLOG2 << 13)
+#define	NTBUF	2
+#define	TLEN	1
+#define	NRBUF	8
+#define	RLEN	3
+#define	BUFSIZE	1518
 
 #define vu_char		volatile u_char
+#define vu_short	volatile u_short
 
 /*
  * LANCE registers.
@@ -55,43 +53,6 @@ struct lereg0 {
 	vu_char	ler0_id;	/* ID */
 	u_char	ler0_pad1;
 	vu_char	ler0_status;	/* interrupt enable/status */
-};
-
-struct lereg1 {
-	u_short	ler1_rdp;	/* data port */
-	u_short	ler1_rap;	/* register select port */
-};
-
-/*
- * Overlayed on 16K dual-port RAM.
- * Current size is 15,284 bytes with 8 x 1518 receive buffers and
- * 2 x 1518 transmit buffers.
- */
-struct lereg2 {
-	/* init block */
-	u_short	ler2_mode;		/* +0x0000 */
-	u_char	ler2_padr[6];		/* +0x0002 */
-	u_long	ler2_ladrf[2];		/* +0x0008 */
-	u_short	ler2_rdra;		/* +0x0010 */
-	u_short	ler2_rlen;		/* +0x0012 */
-	u_short	ler2_tdra;		/* +0x0014 */
-	u_short	ler2_tlen;		/* +0x0016 */
-	/* receive message descriptors */
-	struct	lermd {			/* +0x0018 */
-		u_short	rmd0;
-		u_short	rmd1;
-		short	rmd2;
-		u_short	rmd3;
-	} ler2_rmd[LERBUF];
-	/* transmit message descriptors */
-	struct	letmd {			/* +0x0058 */
-		u_short	tmd0;
-		u_short	tmd1;
-		short	tmd2;
-		u_short	tmd3;
-	} ler2_tmd[LETBUF];
-	char	ler2_rbuf[LERBUF][LEMTU]; /* +0x0068 */
-	char	ler2_tbuf[LETBUF][LEMTU]; /* +0x2FD8 */
 };
 
 /*
@@ -104,14 +65,14 @@ struct lereg2 {
 #define	LE_JAB		0x02		/* loss of tx clock (???) */
 #define LE_IPL(x)	((((x) >> 4) & 0x3) + 3)
 
+struct lereg1 {
+	vu_short	ler1_rdp;	/* data port */
+	vu_short	ler1_rap;	/* register select port */
+};
+
 /*
  * Control and status bits -- lereg1
  */
-#define	LE_CSR0		0
-#define	LE_CSR1		1
-#define	LE_CSR2		2
-#define	LE_CSR3		3
-
 #define	LE_SERR		0x8000
 #define	LE_BABL		0x4000
 #define	LE_CERR		0x2000
@@ -129,26 +90,72 @@ struct lereg2 {
 #define	LE_STRT		0x0002
 #define	LE_INIT		0x0001
 
-#define	LE_BSWP		0x4
-#define	LE_MODE		0x0
+#define	LE_BSWP		0x0004
+#define	LE_ACON		0x0002
+#define	LE_BCON		0x0001
 
 /*
- * Control and status bits -- lereg2
+ * Overlayed on 16K dual-port RAM.
+ * Current size is 15,284 bytes with 8 x 1518 receive buffers and
+ * 2 x 1518 transmit buffers.
  */
-#define	LE_OWN		0x8000
-#define	LE_ERR		0x4000
-#define	LE_STP		0x0200
-#define	LE_ENP		0x0100
 
-#define	LE_FRAM		0x2000
-#define	LE_OFLO		0x1000
-#define	LE_CRC		0x0800
-#define	LE_RBUFF	0x0400
-#define	LE_MORE		0x1000
-#define	LE_ONE		0x0800
-#define	LE_DEF		0x0400
-#define	LE_TBUFF	0x8000
-#define	LE_UFLO		0x4000
-#define	LE_LCOL		0x1000
-#define	LE_LCAR		0x0800
-#define	LE_RTRY		0x0400
+/*
+ * LANCE initialization block
+ */
+struct init_block {
+	u_short mode;		/* mode register */
+	u_char padr[6];		/* ethernet address */
+	u_long ladrf[2];	/* logical address filter (multicast) */
+        u_short rdra;           /* low order pointer to receive ring */
+        u_short rlen;           /* high order pointer and no. rings */
+        u_short tdra;           /* low order pointer to transmit ring */
+        u_short tlen;           /* high order pointer and no rings */
+};
+
+/*
+ * Mode bits -- init_block
+ */
+#define	LE_PROM		0x8000		/* promiscuous */
+#define	LE_INTL		0x0040		/* internal loopback */
+#define	LE_DRTY		0x0020		/* disable retry */
+#define	LE_COLL		0x0010		/* force collision */
+#define	LE_DTCR		0x0008		/* disable transmit crc */
+#define	LE_LOOP		0x0004		/* loopback */
+#define	LE_DTX		0x0002		/* disable transmitter */
+#define	LE_DRX		0x0001		/* disable receiver */
+#define	LE_NORMAL	0x0000
+
+/* 
+ * Message descriptor
+ */
+struct mds {
+	u_short addr;
+	u_short flags;
+	u_short bcnt;
+	u_short mcnt;
+};
+
+/* Message descriptor flags */
+#define LE_OWN		0x8000		/* owner bit, 0=host, 1=LANCE */
+#define LE_ERR		0x4000		/* error */
+#define	LE_STP		0x0200		/* start of packet */
+#define	LE_ENP		0x0100		/* end of packet */
+
+/* Receive ring status flags */
+#define LE_FRAM		0x2000		/* framing error error */
+#define LE_OFLO		0x1000		/* silo overflow */
+#define LE_CRC		0x0800		/* CRC error */
+#define LE_RBUFF	0x0400		/* buffer error */
+
+/* Transmit ring status flags */
+#define LE_MORE		0x1000		/* more than 1 retry */
+#define LE_ONE		0x0800		/* one retry */
+#define LE_DEF		0x0400		/* deferred transmit */
+
+/* Transmit errors */
+#define LE_TBUFF	0x8000		/* buffer error */
+#define LE_UFLO		0x4000		/* silo underflow */
+#define LE_LCOL		0x1000		/* late collision */
+#define LE_LCAR		0x0800		/* loss of carrier */
+#define LE_RTRY		0x0400		/* tried 16 times */
