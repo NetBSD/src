@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.18 2004/06/11 04:10:10 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.19 2004/12/15 04:25:21 thorpej Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.18 2004/06/11 04:10:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.19 2004/12/15 04:25:21 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -330,9 +330,15 @@ udp6_output(in6p, m, addr6, control, p)
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
 
-		if ((udp6->uh_sum = in6_cksum(m, IPPROTO_UDP,
-				sizeof(struct ip6_hdr), plen)) == 0) {
-			udp6->uh_sum = 0xffff;
+		/* Maybe skip checksum on loopback interfaces. */
+		if (__predict_true(in6p->in6p_route.ro_rt == NULL ||
+				   !(in6p->in6p_route.ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   udp_do_loopback_cksum)) {
+			if ((udp6->uh_sum = in6_cksum(m, IPPROTO_UDP,
+					sizeof(struct ip6_hdr), plen)) == 0) {
+				udp6->uh_sum = 0xffff;
+			}
 		}
 
 		if (in6p->in6p_flags & IN6P_MINMTU)
@@ -361,9 +367,16 @@ udp6_output(in6p, m, addr6, control, p)
 		flags = (in6p->in6p_socket->so_options &
 			 (SO_DONTROUTE | SO_BROADCAST));
 		bcopy(&faddr->s6_addr[12], &ui->ui_dst, sizeof(ui->ui_dst));
-		udp6->uh_sum = in_cksum(m, hlen + plen);
-		if (udp6->uh_sum == 0)
-			udp6->uh_sum = 0xffff;
+
+		/* Maybe skip checksum on loopback interfaces. */
+		if (__predict_true(in6p->in6p_route.ro_rt == NULL ||
+				   !(in6p->in6p_route.ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   udp_do_loopback_cksum)) {
+			udp6->uh_sum = in_cksum(m, hlen + plen);
+			if (udp6->uh_sum == 0)
+				udp6->uh_sum = 0xffff;
+		}
 
 		ip->ip_len = htons(hlen + plen);
 		ip->ip_ttl = in6_selecthlim(in6p, NULL); /* XXX */
