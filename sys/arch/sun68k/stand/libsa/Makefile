@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/15 23:02:34 fredette Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/22 00:30:06 fredette Exp $
 
 LIB=sa
 
@@ -32,7 +32,7 @@ CLEANFILES= SRT0.o SRT1.o vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
-SRC_sa = alloc.c bcopy.c close.c getfile.c loadfile.c loadfile_aout.c \
+SRC_sa = alloc.c bcopy.c close.c files.c getfile.c loadfile.c loadfile_aout.c \
 	loadfile_elf32.c lseek.c memcpy.c open.c printf.c read.c sprintf.c \
 	strerror.c subr_prf.c twiddle.c
 
