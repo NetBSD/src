@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassifyd.c,v 1.1 2004/01/15 19:43:45 kleink Exp $	*/
+/*	$NetBSD: fpclassifyd.c,v 1.2 2004/01/20 19:29:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassifyd.c,v 1.1 2004/01/15 19:43:45 kleink Exp $");
+__RCSID("$NetBSD: fpclassifyd.c,v 1.2 2004/01/20 19:29:43 matt Exp $");
 #endif
 
 #include <machine/vaxfp.h>
@@ -61,12 +61,12 @@ __fpclassifyd(double x)
 
 	u.dfltu_d = x;
 
-	if (u.dfltu_d.dflt_exp == 0) {
-		if (u.dfltu_d.dflt_sign != 0)
+	if (u.dfltu_dflt.dflt_exp == 0) {
+		if (u.dfltu_dflt.dflt_sign != 0)
 			return FP_ROP;
-		else if (u.dfltu_d.dflt_frach != 0 ||
-			 u.dfltu_d.dflt_fracm != 0 ||
-			 u.dfltu_d.dflt_fracl != 0 ||) 
+		else if (u.dfltu_dflt.dflt_frach != 0 ||
+			 u.dfltu_dflt.dflt_fracm != 0 ||
+			 u.dfltu_dflt.dflt_fracl != 0) 
 			return FP_DIRTYZERO;
 		else
 			return FP_ZERO;
