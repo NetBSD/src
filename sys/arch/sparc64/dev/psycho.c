@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.7 2000/04/22 17:06:03 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.8 2000/05/06 04:15:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -72,6 +72,8 @@ int psycho_debug = 0x0;
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
 #include <sparc64/sparc64/cache.h>
+
+#include "ioconf.h"
 
 static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
 						   pci_chipset_tag_t));
@@ -301,13 +303,12 @@ sabre_init(sc, pba)
 
 		if (simba_br[0] == 1) {		/* PCI B */
 			pp = sc->sc_simba_b;
-			pp->pp_pcictl = &sc->sc_regs->psy_pcictl[1];
 			who = 'b';
 		} else {			/* PCI A */
 			pp = sc->sc_simba_a;
-			pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 			who = 'a';
 		}
+		pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 		/* link us in .. */
 		pp->pp_sc = sc;
 		
@@ -381,9 +382,14 @@ psycho_init(sc, pba)
 	struct psycho_softc *sc;
 	struct pcibus_attach_args *pba;
 {
-#if 1
-	panic("can't do SUNW,psycho yet");
-#else
+	struct psycho_softc *osc = NULL;
+	struct psycho_pbm *pp;
+	bus_space_handle_t bh;
+	u_int64_t csr;
+	int psycho_br[2], n;
+	char who;
+
+	printf("psycho: ");
 
 	/*
 	 * OK, so the deal here is:
@@ -394,7 +400,8 @@ psycho_init(sc, pba)
 	 *	- otherwise, we are doing the hard slog.
 	 */
 	for (n = 0; n < psycho_cd.cd_ndevs; n++) {
-		psycho_softc *osc = &psycho_cd.cd_devs[n];
+
+		osc = (struct psycho_softc *)&psycho_cd.cd_devs[n];
 
 		/*
 		 * I am not myself.
@@ -404,16 +411,107 @@ psycho_init(sc, pba)
 
 		/*
 		 * OK, so we found a matching regs that wasn't me,
-		 * so that must make me partly attached.  Finish it.
+		 * so that means my IOMMU is setup.
 		 */
+
+		/* who? said a voice, incredulous */
+		sc->sc_mode = PSYCHO_MODE_PSYCHO_B;	/* XXX */
+		who = 'b';
+		break;
+	}
+
+	if (sc->sc_mode != PSYCHO_MODE_PSYCHO_B) {
+		sc->sc_mode = PSYCHO_MODE_PSYCHO_A;	/* XXX */
+		who = 'a';
 	}
 
 	/* Oh, dear.  OK, lets get started */
 
-	/* who? said a voice, incredulous */
-	sc->sc_mode = PSYCHO_MODE_PSYCHO_A;
-	printf("psycho: ");
-#endif
+	/* XXX: check this is OK for real psycho */
+	/* setup the PCI control register */
+	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
+	csr |= PCICTL_MRLM |
+	       PCICTL_ARB_PARK |
+	       PCICTL_ERRINTEN |
+	       PCICTL_4ENABLE;
+	csr &= ~(PCICTL_SERR |
+		 PCICTL_CPU_PRIO |
+		 PCICTL_ARB_PRIO |
+		 PCICTL_RTRYWAIT);
+	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
+
+	/* allocate our psycho_pbm */
+	sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_psycho_this == NULL)
+		panic("could not allocate psycho pbm");
+	if (osc) {
+		sc->sc_psycho_other = osc->sc_psycho_this;
+		osc->sc_psycho_other = sc->sc_psycho_this;
+	}
+
+	memset(sc->sc_psycho_this, 0, sizeof *pp);
+
+	/* grab the psycho ranges */
+	psycho_get_ranges(sc->sc_node, &sc->sc_psycho_this->pp_range,
+	    &sc->sc_psycho_this->pp_nrange);
+
+	/* get the bus-range for the psycho */
+	psycho_get_bus_range(sc->sc_node, psycho_br);
+
+	pba->pba_bus = psycho_br[0];
+
+	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
+	printf("; simba %c, PCI bus %d", who, psycho_br[0]);
+
+	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
+
+	/* grab the psycho registers, interrupt map and map mask */
+	psycho_get_registers(sc->sc_node, &pp->pp_regs, &pp->pp_nregs);
+	psycho_get_intmap(sc->sc_node, &pp->pp_intmap, &pp->pp_nintmap);
+	psycho_get_intmapmask(sc->sc_node, &pp->pp_intmapmask);
+
+	/* allocate our tags */
+	pp->pp_memt = psycho_alloc_mem_tag(pp);
+	pp->pp_iot = psycho_alloc_io_tag(pp);
+	pp->pp_dmat = psycho_alloc_dma_tag(pp);
+	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
+		       (pp->pp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+
+	/* allocate a chipset for this */
+	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
+
+	/* setup the rest of the psycho pbm */
+	pp->pp_sc = sc;
+	pba->pba_pc = psycho_alloc_chipset(pp, sc->sc_node,
+	    sc->sc_psycho_this->pp_pc);
+
+	printf("\n");
+
+	/*
+	 * and finally, if we a a psycho A, start up the IOMMU and
+	 * get us a config space tag, and punch in the physical address
+	 * of the PCI configuration space.  note that we use unmapped
+	 * access to PCI configuration space, relying on the bus space
+	 * macros to provide the proper ASI based on the bus tag.
+	 */
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO_A) {
+		psycho_iommu_init(sc);
+
+		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
+		if (bus_space_map2(sc->sc_bustag,
+				  PCI_CONFIG_BUS_SPACE,
+				  sc->sc_basepaddr + 0x01000000,
+				  0x0100000,
+				  0,
+				  0,
+				  &bh))
+			panic("could not map sabre PCI configuration space");
+		sc->sc_configaddr = (paddr_t)bh;
+	} else {
+		/* for psycho B, we just copy the config tag and address */
+		sc->sc_configtag = osc->sc_configtag;
+		sc->sc_configaddr = osc->sc_configaddr;
+	}
 }
 
 /*
