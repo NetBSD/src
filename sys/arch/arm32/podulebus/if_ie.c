@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.5 1996/03/27 21:49:36 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.6 1996/04/26 22:44:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -130,6 +130,8 @@ struct ie_softc {
 	int 		sc_podule_number;
 	podule_t	*sc_podule;
 	irqhandler_t 	sc_ih;
+	int		sc_flags;
+#define IE_BROKEN	1
 	int		sc_iobase;
 	int		sc_fastbase;
 	int		sc_rom;
@@ -155,26 +157,37 @@ struct ie_softc {
 
 /* Function and data prototypes */
 
-static void host2ie  ( struct ie_softc *sc, void *src, u_long dest, int size );
-static void ie2host  ( struct ie_softc *sc, u_long src, void *dest, int size );
-static void iezero   ( struct ie_softc *sc, u_long p, int size );
-void        iereset  ( struct ie_softc *sc );
-void        iewatchdog ( int unit );
-int         ieioctl  ( struct ifnet *ifp, u_long cmd, caddr_t data );
-void        iestart  ( struct ifnet *ifp );
-int 	    iestop   ( struct ie_softc *sc );
-int         ieinit   ( struct ie_softc *sc );
-int 	    ieintr   ( void *arg );
-void 	    ietint   ( struct ie_softc *sc );
+static void host2ie  __P(( struct ie_softc *sc, void *src, u_long dest, int size ));
+static void ie2host  __P(( struct ie_softc *sc, u_long src, void *dest, int size ));
+static void iezero   __P(( struct ie_softc *sc, u_long p, int size ));
+void        iereset  __P(( struct ie_softc *sc ));
+void        iewatchdog __P(( int unit ));
+int         ieioctl  __P(( struct ifnet *ifp, u_long cmd, caddr_t data ));
+void        iestart  __P(( struct ifnet *ifp ));
+int 	    iestop   __P(( struct ie_softc *sc ));
+int         ieinit   __P(( struct ie_softc *sc ));
+int 	    ieintr   __P(( void *arg ));
+void 	    ietint   __P(( struct ie_softc *sc ));
 
 /* A whopper of a function */
-static int command_and_wait ( struct ie_softc *sc, u_short cmd,
+static int command_and_wait __P(( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
-			      void *pcmd, int ocmd, int scmd, int mask );
+			      void *pcmd, int ocmd, int scmd, int mask ));
 
-struct cfattach ie_ca;
+int ieprobe __P((struct device *, void *, void *));
+void ieattach __P((struct device *, struct device *, void *));
 
-struct cfdriver ie_cd;
+/*
+ * Our cfdriver structure for the autoconfig system to chew on
+ */
+
+struct cfattach ie_ca = {
+	sizeof(struct ie_softc), ieprobe, ieattach
+};
+
+struct cfdriver ie_cd = {
+	NULL, "ie", DV_IFNET
+};
 
 /* Let's go! */
 
@@ -182,16 +195,20 @@ struct cfdriver ie_cd;
  * Clear all pending interrupts from the i82586 chip
  */
 
-static __inline void ie_cli ( struct ie_softc *sc )
+static __inline void
+ie_cli(sc)
+	struct ie_softc *sc;
 {
-    WriteByte ( sc->sc_fastbase + (IE_CONTROL<<2), IE_CONT_CLI );
+	WriteByte(sc->sc_fastbase + (IE_CONTROL<<2), IE_CONT_CLI);
 }
 
 /*
  * Cool down the i82586, like its namesake, it gets very hot
  */
 
-static __inline void ie_cooldown ( int temperature )
+static __inline void
+ie_cooldown(temperature)
+	int temperature;
 {
 }
 
@@ -199,109 +216,149 @@ static __inline void ie_cooldown ( int temperature )
  * Wake the i82586 chip up and get it to do something
  */
 
-static __inline void ieattn ( struct ie_softc *sc )
+static __inline void
+ieattn(sc)
+	struct ie_softc *sc;
 {
-    WriteByte ( sc->sc_control + (IE_CONTROL<<2), IE_CONT_ATTN );
+	WriteByte ( sc->sc_control + (IE_CONTROL<<2), IE_CONT_ATTN );
 }
 
 /*
  * Set the podule page register to bring a given address into view
  */
 
-static __inline void setpage ( struct ie_softc *sc, u_long off )
+static __inline void
+setpage(sc, off)
+	struct ie_softc *sc;
+	u_long off;
 {
-    WriteByte ( sc->sc_control + (IE_PAGE<<2), IE_COFF2PAGE(off) );
+	WriteByte ( sc->sc_control + (IE_PAGE<<2), IE_COFF2PAGE(off) );
 }
 
 /*
  * Ack the i82586
  */
 
-static void ie_ack ( struct ie_softc *sc, u_short mask )
+static void
+ie_ack(sc, mask)
+	struct ie_softc *sc;
+	u_short mask;
 {
-    u_short stat;
-    int i;
-    setpage(sc, IE_IBASE + IE_SCB_OFF );
+	u_short stat;
+	int i;
+	setpage(sc, IE_IBASE + IE_SCB_OFF );
 
-    stat = ReadShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
+	stat = ReadShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
 		(offsetof(struct ie_sys_ctl_block, ie_status)) );
 
-    PWriteShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
+	PWriteShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
 		(offsetof(struct ie_sys_ctl_block, ie_command)),
 		stat & mask );
 
-    ieattn(sc);
+	ieattn(sc);
 
-    for ( i=4000; --i>=0; ) {
-        if ( !ReadShort(sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
- 	    (offsetof(struct ie_sys_ctl_block, ie_command))) )
-		break;
-	    delay(100);
-    }
+	for ( i=4000; --i>=0; ) {
+		if ( !ReadShort(sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
+		    (offsetof(struct ie_sys_ctl_block, ie_command))) )
+			break;
+		delay(100);
+	}
 
-    if ( i<=0 )
-    {
-	printf ( "ie: command timed out\n" );
-    }
-    ie_cli(sc);
+	if ( i<=0 )
+		printf ( "ie: command timed out\n" );
+	ie_cli(sc);
 }
 
 /*
  * This routine does the checksumming for the idrom
  */
 
-static u_long crc32(u_char *p, int l)
+#ifndef IGNORE_ETHER1_IDROM_CHECKSUM
+static u_long
+crc32(p, l)
+	u_char *p;
+	int l;
 {
-    u_long crc=-1;
-    int i, b;
-    while ( --l >= 0 ) {
-	b = *p++;
-	for ( i=8; --i >= 0; b>>=1 )
-	    if ((b&1)^(crc>>31))
-		crc=(crc<<1)^0x4c11db7;
-	    else
-		crc<<=1;
-    }
-    return crc;
+	u_long crc=-1;
+	int i, b;
+	while ( --l >= 0 ) {
+		b = *p++;
+		for ( i=8; --i >= 0; b>>=1 )
+			if ((b&1)^(crc>>31))
+				crc=(crc<<1)^0x4c11db7;
+			else
+				crc<<=1;
+	}
+	return crc;
 }
+#endif
 
 /*
  * Probe for the ether1 card.  return 1 on success 0 on failure
  */
 
-int ieprobe ( struct device *parent, void *match, void *aux )
+int
+ieprobe(struct device *parent, void *match, void *aux)
 {
-	struct ie_softc *sc = (void *)match;
 	struct podule_attach_args *pa = (void *)aux;
-	int podule, i;
+
+/* Look for a network slot interface */
+
+	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+		return(0);
+
+	return(1);
+}
+
+/*
+ * Attach our driver to the interfaces it uses
+ */
+  
+void ieattach ( struct device *parent, struct device *self, void *aux )
+{
+	struct ie_softc *sc = (void *)self;
+	struct podule_attach_args *pa = (void *)aux;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int i;
 	char idrom[32];
 	u_char *hwaddr = sc->sc_arpcom.ac_enaddr;
 
-	/* Get the nice podulebus podule to find my podule in its table */
-	podule = findpodule(MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number);
+	/* Check a few things about the attach args */
 
-	if (podule == -1)
-		return(0);
+	if (pa->pa_podule_number == -1)
+		panic("Podule has disappeared !");
+
+	sc->sc_podule_number = pa->pa_podule_number;
+	sc->sc_podule = pa->pa_podule;
+	podules[sc->sc_podule_number].attached = 1;
+
+	/*
+	 * MESS MESS MESS
+	 *
+	 * This needs a serious clean up. Alot of this code was in the probe function
+	 * but required the softc structure. As a temporary measure until I rewrite it
+	 * I have just bolted in the probe code here.
+	 */
 
 	/* Index some podule areas */
-	sc->sc_iobase   = podules[podule].sync_base;	/* OBSOLETE */
-	sc->sc_fastbase = podules[podule].fast_base;	/* OBSOLETE */
-	sc->sc_rom      = podules[podule].sync_base;
-	sc->sc_control  = podules[podule].fast_base;
-	sc->sc_ram      = podules[podule].fast_base + IE_MEMOFF;
+	sc->sc_iobase   = sc->sc_podule->sync_base;	/* OBSOLETE */
+	sc->sc_fastbase = sc->sc_podule->fast_base;	/* OBSOLETE */
+	sc->sc_rom      = sc->sc_podule->sync_base;
+	sc->sc_control  = sc->sc_podule->fast_base;
+	sc->sc_ram      = sc->sc_podule->fast_base + IE_MEMOFF;
 
 	/* Set the page mask to something know and neutral */
 	setpage(sc, IE_SCB_OFF);
 
 	/* Fetch the first part of the idrom */
-	for ( i=0; i<16; i++ ) {
-	    idrom[i] = ReadByte ( sc->sc_rom + (i<<2) );
-	};
+	for ( i=0; i<16; i++ )
+		idrom[i] = ReadByte ( sc->sc_rom + (i<<2) );
 
 	/* Verify the podulebus probe incase RiscOS lied */
         if ( ReadByte ( sc->sc_rom + (3<<2) ) != 0x03 ) {
-	    panic ( "ie: Ether1 ROM probablly broken.  ECID corrupt" );
-	    return 0;
+		printf(": Ether1 ROM probablly broken.  ECID corrupt\n");
+		sc->sc_flags |= IE_BROKEN;
+		return;
 	}
 
 	/* Reset the 82586 */
@@ -315,20 +372,20 @@ int ieprobe ( struct device *parent, void *match, void *aux )
 
 	/* Setup SCP */
 	{
-	    struct ie_sys_conf_ptr scp;
-	    bzero (&scp, sizeof(scp) );
-	    scp.ie_iscp_ptr = (caddr_t)IE_ISCP_ADDR;
-	    host2ie(sc, &scp, IE_SCP_ADDR, sizeof (scp) );
+		struct ie_sys_conf_ptr scp;
+		bzero (&scp, sizeof(scp) );
+		scp.ie_iscp_ptr = (caddr_t)IE_ISCP_ADDR;
+		host2ie(sc, &scp, IE_SCP_ADDR, sizeof (scp) );
 	}
 
 	/* Setup ISCP */
 	{
-	    struct ie_int_sys_conf_ptr iscp;
-	    bzero ( &iscp, sizeof(iscp) );
-	    iscp.ie_busy = 1;
-	    iscp.ie_base = (caddr_t)IE_IBASE;
-	    iscp.ie_scb_offset = IE_SCB_OFF;
-	    host2ie(sc, &iscp, IE_ISCP_ADDR, sizeof(iscp) );
+		struct ie_int_sys_conf_ptr iscp;
+		bzero ( &iscp, sizeof(iscp) );
+		iscp.ie_busy = 1;
+		iscp.ie_base = (caddr_t)IE_IBASE;
+		iscp.ie_scb_offset = IE_SCB_OFF;
+		host2ie(sc, &iscp, IE_ISCP_ADDR, sizeof(iscp) );
 	}
 
 	/* Initialise the control block */
@@ -338,31 +395,31 @@ int ieprobe ( struct device *parent, void *match, void *aux )
 	/* Wait for not busy */
 	setpage ( sc, IE_ISCP_ADDR );
 	for ( i=10000; --i>=0; ) {
-	    if ( !ReadShort( sc->sc_ram + IE_COFF2POFF(IE_ISCP_ADDR) +
-		  ( offsetof(struct ie_int_sys_conf_ptr, ie_busy)) ) )
-	    	break;
-	    delay (10);
+		if ( !ReadShort( sc->sc_ram + IE_COFF2POFF(IE_ISCP_ADDR) +
+		    ( offsetof(struct ie_int_sys_conf_ptr, ie_busy)) ) )
+			break;
+		delay (10);
 	}
 
 	/* If the busy didn't go low, the i82586 is broken or too slow */
-        if ( i<=0 )
-	{
-	   printf ( "ie: ether1 chipset didn't respond\n" );
-	   return 0;
+        if ( i<=0 ) {
+		printf ( ": ether1 chipset didn't respond\n" );
+		sc->sc_flags |= IE_BROKEN;
+		return;
 	}
 
 	/* Ensure that the podule sends interrupts */
         for ( i=1000; --i>=0 ; ) {
-	    if ( ReadByte(sc->sc_rom + 0) & PODULE_IRQ_PENDING )
-		break;
-	    delay (10);
+		if ( ReadByte(sc->sc_rom + 0) & PODULE_IRQ_PENDING )
+			break;
+		delay (10);
 	}
 
 	/* If we didn't see the interrupt then the IRQ line is broken */
-	if ( i<=0 )
-	{
-	    printf ( "ie: interrupt from chipset didn't reach host\n" );
-	    return 0;
+	if ( i<=0 ) {
+		printf ( ": interrupt from chipset didn't reach host\n" );
+		sc->sc_flags |= IE_BROKEN;
+		return;
 	}
 
 	/* Ack our little test operation */
@@ -370,9 +427,8 @@ int ieprobe ( struct device *parent, void *match, void *aux )
         ie_cli (sc);
 
 	/* Get second part of idrom */
-	for ( i=16; i<32; i++ ) {
-	    idrom[i] = ReadByte ( sc->sc_rom + (i<<2) );
-	};
+	for ( i=16; i<32; i++ )
+		idrom[i] = ReadByte ( sc->sc_rom + (i<<2) );
 
 	/* This checksum always fails.  For some reason the first 16 */
 	/* bytes are duplicated in the second 16 bytes, the checksum */
@@ -397,31 +453,6 @@ int ieprobe ( struct device *parent, void *match, void *aux )
 	/* Get our ethernet address.  Do explicit copy */
 	for ( i=0; i<ETHER_ADDR_LEN; i++ )
 	    hwaddr[i] = idrom[9+i];
-
-	/* Tell the podule system about our successful probe */
-	pa->pa_podule_number = podule;
-	pa->pa_podule = &podules[podule];
-
-	return(1);
-}
-
-/*
- * Attach our driver to the interfaces it uses
- */
-  
-void ieattach ( struct device *parent, struct device *self, void *aux )
-{
-	struct ie_softc *sc = (void *)self;
-	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	/* Check a few things about the attach args */
-	sc->sc_podule_number = pa->pa_podule_number;
-	if (sc->sc_podule_number == -1)
-		panic("Podule has disappeared !");
-
-	sc->sc_podule = &podules[sc->sc_podule_number];
-	podules[sc->sc_podule_number].attached = 1;
 
 	/* Fill in my application form to attach to the inet system */
 
@@ -453,16 +484,13 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	sc->sc_ih.ih_level = IPL_NET;
 	sc->sc_ih.ih_name = "net: ie";
 
-	if (irq_claim(IRQ_PODULE, &sc->sc_ih))
-	{
-	    sc->sc_irqmode = 0;
-	    printf ( " POLLED" );
-	    panic("Cannot install IRQ handler\n");
-	}
-	else
-	{
-	    sc->sc_irqmode = 1;
-	    printf ( " IRQ" );
+	if (irq_claim(IRQ_PODULE, &sc->sc_ih)) {
+		sc->sc_irqmode = 0;
+		printf ( " POLLED" );
+		panic("Cannot install IRQ handler\n");
+	} else {
+		sc->sc_irqmode = 1;
+		printf ( " IRQ" );
 	}
 
 	printf ( "\n" );
@@ -470,22 +498,11 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
   
                   
 /*
- * Our cfdriver structure for the autoconfig system to chew on
- */
-
-struct cfattach ie_ca = {
-	sizeof(struct ie_softc), ieprobe, ieattach
-};
-
-struct cfdriver ie_cd = {
-	NULL, "ie", DV_IFNET
-};
-
-/*
  * Oh no!! Where's my shorts!!! I'm sure I put them on this morning
  */
 
-void PWriteShorts ( char *src, char *dest, int cnt )
+void
+PWriteShorts ( char *src, char *dest, int cnt )
 {
     for ( cnt/=2; --cnt>=0; ) {
 	PWriteShort ( dest, *(u_short *)src );
@@ -494,7 +511,8 @@ void PWriteShorts ( char *src, char *dest, int cnt )
     }
 }
 
-void ReadShorts ( char *src, char *dest, int cnt )
+void
+ReadShorts ( char *src, char *dest, int cnt )
 {
     for ( cnt/=2; --cnt>=0; ) {
 	*(u_short *)dest = ReadShort ( src );
@@ -508,7 +526,8 @@ void ReadShorts ( char *src, char *dest, int cnt )
  * so you dont have to worry about the ram windowing
  */
 
-static void host2ie ( struct ie_softc *sc, void *src, u_long dest, int size )
+static void
+host2ie ( struct ie_softc *sc, void *src, u_long dest, int size )
 {
     int cnt;
 
@@ -527,7 +546,8 @@ static void host2ie ( struct ie_softc *sc, void *src, u_long dest, int size )
     }
 }
 
-static void ie2host ( struct ie_softc *sc, u_long src, void *dest, int size )
+static void
+ie2host ( struct ie_softc *sc, u_long src, void *dest, int size )
 {
     int cnt;
 
@@ -551,7 +571,8 @@ static void ie2host ( struct ie_softc *sc, u_long src, void *dest, int size )
  * register so you dont have to worry about it
  */
 
-static void iezero ( struct ie_softc *sc, u_long p, int size )
+static void
+iezero ( struct ie_softc *sc, u_long p, int size )
 {
     int cnt;
     while ( size > 0 ) {
@@ -569,7 +590,8 @@ static void iezero ( struct ie_softc *sc, u_long p, int size )
  * I/O Control interface to the kernel, entry point here
  */
 
-int ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
+int
+ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
 {
     struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
     struct ifaddr *ifa = (struct ifaddr *)data;
@@ -633,7 +655,8 @@ int ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
  * Reset the card.  Completely.
  */
 
-void iereset( struct ie_softc *sc )
+void
+iereset( struct ie_softc *sc )
 {
     struct ie_sys_ctl_block scb;
     int s = splimp();
@@ -657,7 +680,8 @@ void iereset( struct ie_softc *sc )
  * Watchdog entry point.  This is the entry for the kernel to call us
  */
 
-void iewatchdog ( int unit )
+void
+iewatchdog ( int unit )
 {
     struct ie_softc *sc = ie_cd.cd_devs[unit];
 
@@ -671,7 +695,8 @@ void iewatchdog ( int unit )
  * Start the time-domain-refloctometer running
  */
 
-static void run_tdr ( struct ie_softc *sc )
+static void
+run_tdr ( struct ie_softc *sc )
 {
     struct ie_sys_ctl_block scb;
     u_long ptr = IE_IBASE + IE_SCB_OFF + sizeof scb;
@@ -735,7 +760,8 @@ static void run_tdr ( struct ie_softc *sc )
     }
 }
 
-u_long setup_rfa ( struct ie_softc *sc, u_long ptr )
+u_long
+setup_rfa ( struct ie_softc *sc, u_long ptr )
 {
     int i;
     {
@@ -793,7 +819,8 @@ u_long setup_rfa ( struct ie_softc *sc, u_long ptr )
     return ptr;
 }
 
-static void start_receiver ( struct ie_softc *sc )
+static void
+start_receiver ( struct ie_softc *sc )
 {
     struct ie_sys_ctl_block scb;
     ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
@@ -809,7 +836,8 @@ static void start_receiver ( struct ie_softc *sc )
  * CALL AT SPLIMP OR HIGHER
  */
 
-int ieinit ( struct ie_softc *sc )
+int
+ieinit ( struct ie_softc *sc )
 {
     struct ie_sys_ctl_block scb;
     struct ie_config_cmd cmd;
@@ -920,7 +948,8 @@ int ieinit ( struct ie_softc *sc )
     return 0;
 }
 
-int iestop ( struct ie_softc *sc )
+int
+iestop ( struct ie_softc *sc )
 {
     struct ie_sys_ctl_block scb;
     int s = splimp();
@@ -941,7 +970,8 @@ int iestop ( struct ie_softc *sc )
 
 /*CAW*/
 
-static int command_and_wait ( struct ie_softc *sc, u_short cmd,
+static int
+command_and_wait ( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
 			      void *pcmd, int ocmd, int scmd, int mask )
 {
@@ -1008,16 +1038,19 @@ static int command_and_wait ( struct ie_softc *sc, u_short cmd,
 	PWriteShort(sc->sc_ram + IE_COFF2POFF(ptr) +	\
 	       (offsetof(type, member)), dest );
 
-static inline int ie_buflen ( struct ie_softc *sc, int head )
+static inline int
+ie_buflen ( struct ie_softc *sc, int head )
 {
-   int actual;
-   READ_MEMBER(sc,struct ie_recv_buf_desc, ie_rbd_actual,
-		sc->rbuffs[head], actual );
+	int actual;
 
-   return ( actual & ( IE_RXBUF_SIZE | ( IE_RXBUF_SIZE-1 ) ) ) ;
+	READ_MEMBER(sc,struct ie_recv_buf_desc, ie_rbd_actual,
+	    sc->rbuffs[head], actual );
+
+	return ( actual & ( IE_RXBUF_SIZE | ( IE_RXBUF_SIZE-1 ) ) ) ;
 }
 
-static inline int ie_packet_len ( struct ie_softc *sc )
+static inline int
+ie_packet_len ( struct ie_softc *sc )
 {
     int i;
     int actual;
@@ -1043,7 +1076,8 @@ static inline int ie_packet_len ( struct ie_softc *sc )
     return acc;
 }
 
-struct mbuf *ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
+struct mbuf *
+ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
 {
     struct mbuf *top, **mp, *m;
     int head;
@@ -1151,7 +1185,8 @@ struct mbuf *ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
     return top;
 }
 
-void ie_drop_packet_buffer ( struct ie_softc *sc )
+void
+ie_drop_packet_buffer ( struct ie_softc *sc )
 {
     int i, actual, last;
 
@@ -1187,7 +1222,8 @@ void ie_drop_packet_buffer ( struct ie_softc *sc )
     } while (!i);
 }
 
-void ie_read_frame ( struct ie_softc *sc, int num )
+void
+ie_read_frame ( struct ie_softc *sc, int num )
 {
     int status;
     struct ie_recv_frame_desc rfd;
@@ -1243,7 +1279,8 @@ void ie_read_frame ( struct ie_softc *sc, int num )
     sc->sc_arpcom.ac_if.if_ipackets++;
 }
 
-void ierint ( struct ie_softc *sc )
+void
+ierint ( struct ie_softc *sc )
 {
     int i;
     int times_thru = 1024;
@@ -1297,7 +1334,8 @@ void ierint ( struct ie_softc *sc )
 
 static int in_intr = 0;
 
-int ieintr ( void *arg )
+int
+ieintr ( void *arg )
 {
     struct ie_softc *sc = arg;
     u_short status;
@@ -1373,7 +1411,8 @@ loop:
     goto loop;
 }
 
-void iexmit ( struct ie_softc *sc )
+void
+iexmit ( struct ie_softc *sc )
 {
 /*    int actual;*/
     struct ie_sys_ctl_block scb;
@@ -1407,7 +1446,8 @@ void iexmit ( struct ie_softc *sc )
  * Start sending all the queued buffers.
  */
 
-void iestart( struct ifnet *ifp )
+void
+iestart( struct ifnet *ifp )
 {
 	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
@@ -1475,7 +1515,8 @@ void iestart( struct ifnet *ifp )
 	}
 }
 
-void ietint ( struct ie_softc *sc )
+void
+ietint ( struct ie_softc *sc )
 {
     struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -1519,6 +1560,5 @@ void ietint ( struct ie_softc *sc )
 
     iestart(ifp);
 }
-
 
 /* End of if_ie.c */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.6 1996/03/27 21:49:34 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.7 1996/04/26 22:44:05 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -153,6 +153,7 @@ struct eh_softc {
 #define MODE_DEAD	(0)
 #define	MODE_PIO	(1)
 #define MODE_SHRAM	(2)
+#define EH_BROKEN	16
 
 /****************************************************************************/
 /* Function and data prototypes *********************************************/
@@ -211,21 +212,51 @@ ehprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct eh_softc *sc = (void *) match;
 	struct podule_attach_args *pa = (void *) aux;
+
+/* Look for a network slot interface */
+
+	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+		return(0);
+
+	return(1);
+}
+
+
+void
+ehattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct eh_softc *sc = (void *) self;
+	struct podule_attach_args *pa = (void *)aux;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int irq;
 	int counter;
 	int temp;
-	int podule;
 
-	podule = findpodule(MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number);
+	/* Check a few things about the attach args */
 
-	if (podule == -1)
-		return 0;
+	if (pa->pa_podule_number == -1)
+		panic("Podule has disappeared !");
+
+	sc->sc_podule_number = pa->pa_podule_number;
+	sc->sc_podule = pa->pa_podule;
+	podules[sc->sc_podule_number].attached = 1;
+
+	/*
+	 * MESS MESS MESS
+	 *
+	 * This needs a serious clean up. Alot of this code was in the probe function
+	 * but required the softc structure. As a temporary measure until I rewrite it
+	 * I have just bolted in the probe code here.
+	 */
 
 	/* Start to fill in the softc with the trivial variables */
 
 	sc->sc_flags = MODE_PIO;	/* Select pio mode until I get info from i^3 */
-	sc->sc_base = podules[podule].fast_base;
+	sc->sc_base = sc->sc_podule->fast_base;
 	sc->sc_reg = sc->sc_base + 0x800;
 
 	/* The probe could be tidied up a little */
@@ -284,15 +315,15 @@ ehprobe(parent, match, aux)
 	}
 
 	if (counter == 0) {
-		PRINTF("eh: card did not respond\n");
-		return 0;
+		printf(": card faulty\n");
+		sc->sc_flags |= EH_BROKEN;
+		return;
 	}
 
 	/* Let it sleep since we're not doing anything with it for now */
 
 	SetReg(EH_ISR, 0);
 	SetReg(EH_DCR, DCR_WTS|DCR_LS|DCR_LAS);
-
 
 	/* Test the board ram.  This code will change */
 
@@ -350,10 +381,27 @@ ehprobe(parent, match, aux)
 	sc->sc_physend   = 0x6000;
 
 	/* Get out ethernet address */
+
+	/* Ok this is how Nut set the ethernet address */
+	/*
 	sc->sc_arpcom.ac_enaddr[0] = 0x00;
 	sc->sc_arpcom.ac_enaddr[1] = 0x00;
 	sc->sc_arpcom.ac_enaddr[2] = 0xc0;
 	sc->sc_arpcom.ac_enaddr[3] = 0x41;
+	sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
+	sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
+	*/
+
+	/*
+	 * The machine id is a 24 bit number so two bytes worth is
+	 * not good enough for uniqueness.
+	 * Do what we do for the EtherB card as this card uses the same slot
+	 */
+
+	sc->sc_arpcom.ac_enaddr[0] = 0x00;
+	sc->sc_arpcom.ac_enaddr[1] = 0x00;
+	sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
+	sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
 	sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
 	sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
 
@@ -363,33 +411,6 @@ ehprobe(parent, match, aux)
 	for (counter=0; counter<6; counter++)
 		SetReg(((counter+1)<<2), sc->sc_arpcom.ac_enaddr[counter]);
 	PAGE(0);
-
-	/* Tell the podule system about our successful probe */
-	pa->pa_podule_number = podule;
-	pa->pa_podule = &podules[podule];
-
-	return 1;
-}
-
-void
-ehattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct eh_softc *sc = (void *) self;
-	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int irq;
-	int temp;
-
-	/* Check a few things about the attach args */
-	sc->sc_podule_number = pa->pa_podule_number;
-	if (sc->sc_podule_number == -1)
-		panic("Podule has disappeared !");
-
-	sc->sc_podule = &podules[sc->sc_podule_number];
-	podules[sc->sc_podule_number].attached = 1;
 
 	/* Fill in my application form to attach to the networking system */
 
