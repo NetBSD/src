@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.25 1997/06/24 02:32:38 lukem Exp $
+#	$NetBSD: security,v 1.26 1997/08/19 12:08:35 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -164,11 +164,13 @@ if [ "$check_rootdotfiles" = YES ]; then
 				{ print "Root umask is group writeable" }
 			     $2 % 10 < 2 \
 				{ print "Root umask is other writeable" }' >> $OUTPUT
+			SAVE_PATH=$PATH
+			unset PATH
 			/bin/csh -f -s << end-of-csh > /dev/null 2>&1
-				unset path
 				source $i
 				/bin/ls -ldgT \$path > $TMP1
 end-of-csh
+			PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
 					print "The root path includes .";
@@ -206,12 +208,15 @@ end-of-csh
 				{ print "Root umask is group writeable" } \
 			     $2 % 10 < 2 \
 				{ print "Root umask is other writeable" }' >> $OUTPUT
+			SAVE_PATH=$PATH
+			unset PATH
 			/bin/sh << end-of-sh > /dev/null 2>&1
-				PATH=
 				. $i
-				list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
+				list=\`echo \$PATH | /usr/bin/sed -e \
+				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g'\`
 				/bin/ls -ldgT \$list > $TMP1
 end-of-sh
+			PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
 					print "The root path includes .";
