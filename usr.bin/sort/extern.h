@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2000/10/16 21:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
  */
 
 void	 append  __P((const u_char **, int, int, FILE *,
-	    void (*)(RECHEADER *, FILE *), struct field *));
+	    void (*)(const RECHEADER *, FILE *), struct field *));
 void	 concat __P((FILE *, FILE *));
 length_t enterkey __P((struct recheader *,
 	    DBT *, int, struct field *));
@@ -48,7 +48,8 @@ void	 fldreset __P((struct field *));
 FILE	*ftmp __P((void));
 void	 fmerge __P((int, union f_handle, int,
 	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
-		struct field *), FILE *, void (*)(struct recheader *, FILE *),
+		struct field *), FILE *,
+		void (*)(const struct recheader *, FILE *),
 	    struct field *));
 void	 fsort __P((int, int, union f_handle, int, FILE *, struct field *));
 int	 geteasy __P((int, union f_handle,
@@ -61,7 +62,8 @@ int	 makeline __P((int, union f_handle,
 	    int, struct recheader *, u_char *, struct field *));
 void	 merge __P((int, int,
 	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
-		struct field *), FILE *, void (*)(struct recheader *, FILE *),
+		struct field *), FILE *,
+		void (*)(const struct recheader *, FILE *),
 	    struct field *));
 void	 num_init __P((void));
 void	 onepass __P((const u_char **, int, long, long *, u_char *, FILE *));
@@ -69,9 +71,8 @@ int	 optval __P((int, int));
 void	 order __P((union f_handle,
 	    int (*)(int, union f_handle, int, struct recheader *, u_char *,
 		struct field *), struct field *));
-void	 putline __P((struct recheader *, FILE *));
-void	 putrec __P((struct recheader *, FILE *));
+void	 putline __P((const struct recheader *, FILE *));
+void	 putrec __P((const struct recheader *, FILE *));
 void	 rd_append __P((int, union f_handle, int, FILE *, u_char *, u_char *));
-int	 seq __P((FILE *, DBT *, DBT *));
-int	 setfield __P((char *, struct field *, int));
+int	 setfield __P((const char *, struct field *, int));
 void	 settables __P((int));
