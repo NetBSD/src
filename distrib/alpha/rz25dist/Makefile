@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/04/25 13:20:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.13.4.1 1996/05/31 00:55:07 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -43,9 +43,8 @@ build-fs:
 	fi
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
-	ln -s \
-	../local/lib/gcc-lib/alpha-unknown-netbsd1.1B/2.7-95q4/cpp \
-	    ${DESTDIR}/usr/libexec
+	(cd ${DESTDIR}/usr/libexec && ln -s \
+	    ../local/lib/gcc-lib/alpha-unknown-netbsd*/*/cpp .)
 	ln -s ../local/bin/ar ${DESTDIR}/usr/bin
 	ln -s ../local/bin/as ${DESTDIR}/usr/bin
 	ln -s ../local/bin/cc ${DESTDIR}/usr/bin
