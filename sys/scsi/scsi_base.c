@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.41 1997/03/18 01:28:10 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.42 1997/03/20 07:13:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -270,21 +270,15 @@ scsi_inquire(sc_link, inqbuf, flags)
 	int flags;
 {
 	struct scsi_inquiry scsi_cmd;
-	union { struct scsi_inquiry_data i; char pad[255]; } inq;
-	int rv;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = INQUIRY;
-	scsi_cmd.length = sizeof(inq);
-	bzero(&inq, sizeof(inq));
+	scsi_cmd.length = sizeof(struct scsi_inquiry_data);
 
-	rv = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &inq, sizeof(inq),
-	    2, 10000, NULL, SCSI_DATA_IN | flags);
-
-	if (rv == 0)
-		bcopy(&inq.i, inqbuf, sizeof(inq.i));
-	return rv;
+	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
+			     sizeof(scsi_cmd), (u_char *) inqbuf,
+			     sizeof(struct scsi_inquiry_data), 2, 10000, NULL,
+			     SCSI_DATA_IN | flags);
 }
 
 /*
