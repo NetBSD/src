@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.8 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: post.c,v 1.9 2003/03/09 00:57:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: post.c,v 1.9 2003/03/09 00:57:19 lukem Exp $");
 
 #include "form.h"
 #include "internals.h"
