@@ -1,4 +1,4 @@
-/*	$NetBSD: userauth.c,v 1.1.1.1 1999/12/11 22:24:12 veego Exp $	*/
+/*	$NetBSD: userauth.c,v 1.1.1.2 2000/05/03 10:57:27 veego Exp $	*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,13 +17,14 @@ extern	int	errno;
 main()
 {
 	struct frauth fra;
+	struct frauth *frap = &fra;
 	fr_info_t *fin = &fra.fra_info;
 	fr_ip_t	*fi = &fin->fin_fi;
 	char yn[16];
 	int fd;
 
 	fd = open(IPL_NAME, O_RDWR);
-	while (ioctl(fd, SIOCAUTHW, &fra) == 0) {
+	while (ioctl(fd, SIOCAUTHW, &frap) == 0) {
 		if (fra.fra_info.fin_out)
 			fra.fra_pass = FR_OUTQUE;
 		else
@@ -51,7 +52,7 @@ main()
 			fra.fra_pass |= FR_NOMATCH;
 		printf("answer = %c (%x), id %d idx %d\n", yn[0],
 			fra.fra_pass, fra.fra_info.fin_id, fra.fra_index);
-		if (ioctl(fd, SIOCAUTHR, &fra) != 0)
+		if (ioctl(fd, SIOCAUTHR, &frap) != 0)
 			perror("SIOCAUTHR");
 	}
 	fprintf(stderr, "errno=%d \n", errno);
