@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2002/09/06 16:20:49 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2002/09/10 12:42:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -129,7 +129,8 @@
 #define pmap_debugger()	panic("")
 #else
 #include <machine/db_machdep.h>
-#define	pmap_debugger() cpu_Debugger();
+#define	pmap_debugger() asm volatile("trapa r63");
+int validate_kipt(int);
 #endif
 #endif
 
@@ -285,6 +286,7 @@ struct pvo_entry {
 
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & SH5_PTEH_EPN_MASK)
 #define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_ptel & SH5_PTEL_PR_X)
+#define	PVO_ISWIRED(pvo)	((pvo)->pvo_vaddr & PVO_WIRED)
 #define	PVO_ISMANAGED(pvo)	((pvo)->pvo_vaddr & PVO_MANAGED)
 #define	PVO_ISWRITABLE(pvo)	((pvo)->pvo_vaddr & PVO_WRITABLE)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
@@ -352,6 +354,11 @@ vaddr_t vmmap;
 
 int pmap_initialized;
 
+#ifdef PMAP_DIAG
+int pmap_pvo_enter_depth;
+int pmap_pvo_remove_depth;
+#endif
+
 
 /*
  * Returns non-zero if the given pmap is `current'.
@@ -373,8 +380,12 @@ pmap_is_curpmap(pmap_t pm)
 static __inline int
 kva_to_iptidx(vaddr_t kva)
 {
-	int idx = (int) sh5_btop(kva - SH5_KSEG1_BASE);
+	int idx;
 
+	if (kva < SH5_KSEG1_BASE)
+		return (-1);
+
+	idx = (int) sh5_btop(kva - SH5_KSEG1_BASE);
 	if (idx >= KERNEL_IPT_SIZE)
 		return (-1);
 
@@ -498,13 +509,14 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 	ptel &= ~ptebit;
 	pt->ptel = ptel;
 
-	if (pvo->pvo_pmap->pm_asidgen == pmap_asid_generation) {
+	if (pvo->pvo_pmap->pm_asid == PMAP_ASID_KERNEL ||
+	    pvo->pvo_pmap->pm_asidgen == pmap_asid_generation) {
 		/*
 		 * The mapping may be cached in the TLB. Call cpu-specific
 		 * code to check and invalidate if necessary.
 		 */
 		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
-		    pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT,
+		    (pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT),
 		    SH5_PTEH_TLB_COOKIE(pteh));
 	}
 
@@ -519,7 +531,7 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, u_int ptebit)
 	ptel = pmap_kernel_ipt[idx];
 	pmap_kernel_ipt[idx] &= ~ptebit;
 
-	__cpu_tlbinv((PVO_VADDR(pvo) & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+	__cpu_tlbinv(PVO_VADDR(pvo) | SH5_PTEH_SH,
 	    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 
 	pmap_pteg_synch(ptel, pvo);
@@ -559,13 +571,14 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	pt->pteh = 0;
 	ptel = pt->ptel;
 
-	if (pvo->pvo_pmap->pm_asidgen == pmap_asid_generation) {
+	if (pvo->pvo_pmap->pm_asid == PMAP_ASID_KERNEL ||
+	    pvo->pvo_pmap->pm_asidgen == pmap_asid_generation) {
 		/*
 		 * The mapping may be cached in the TLB. Call cpu-specific
 		 * code to check and invalidate if necessary.
 		 */
 		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
-		    pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT,
+		    (pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT),
 		    SH5_PTEH_TLB_COOKIE(pteh));
 	}
 
@@ -699,6 +712,8 @@ pmap_pte_spill(u_int ptegidx, vsid_t vsid, vaddr_t va)
 	/*
 	 * If we couldn't find the victim, however, then the pmap module
 	 * has become very confused...
+	 *
+	 * XXX: This panic is pointless; SR.BL is set ...
 	 */
 	if (victim_pvo == NULL)
 		panic("pmap_pte_spill: victim p-pte (%p) has no pvo entry!",pt);
@@ -923,11 +938,14 @@ pmap_init(void)
 
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
-	pmap_asid_next = 1;
-	pmap_asid_max = 255;
-	pmap_initialized = 1;
+	pmap_asid_next = PMAP_ASID_USER_START;
+	pmap_asid_max = SH5_PTEH_ASID_MASK;	/* XXX Should be cpu specific */
 
 	pmap_pinit(pmap_kernel());
+	pmap_kernel()->pm_asid = PMAP_ASID_KERNEL;
+	pmap_kernel()->pm_asidgen = 0;
+
+	pmap_initialized = 1;
 
 	splx(s);
 }
@@ -967,7 +985,7 @@ pmap_pinit(pmap_t pm)
 	int i;
 
 	pm->pm_refs = 1;
-	pm->pm_asid = PMAP_ASID_RESERVED;
+	pm->pm_asid = PMAP_ASID_UNASSIGNED;
 
 	for (i = 0; i < NPMAPS; i += VSID_NBPW) {
 		static u_int pmap_vsidcontext;
@@ -1277,12 +1295,24 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 
 #ifdef PMAP_DIAG
 	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
-		printf("pmap_pvo_enter: pmap_kernel() with va 0x%lx!!\n", va);
+		printf("pmap_pvo_enter: pmap_kernel() with va 0x%lx!\n", va);
 		pmap_debugger();
 	}
+
+	if (pmap_pvo_remove_depth > 0) {
+		printf("pmap_pvo_enter: pmap_pvo_remove active, for va 0x%lx\n",
+		    va);
+		pmap_debugger();
+	}
+	if (pmap_pvo_enter_depth) {
+		printf("pmap_pvo_enter: called recursively for va 0x%lx\n", va);
+		pmap_debugger();
+	}
+	pmap_pvo_enter_depth++;
 #endif
 
-	if (pm != pmap_kernel()) {
+	if (va < SH5_KSEG1_BASE) {
+		KDASSERT(va < SH5_KSEG0_BASE);
 		idx = va_to_pteg(pm->pm_vsid, va);
 		pvo_table_head = &pmap_upvo_table[idx];
 	} else {
@@ -1306,8 +1336,11 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 		 * protecton status. This can happen as part of tracking
 		 * page modification.
 		 */
+#if 0
+		KDASSERT(PVO_ISWIRED(pvo) == 0);
 		if (PVO_ISWRITABLE(pvo) && flags & VM_PROT_WRITE)
 			ptel |= SH5_PTEL_PR_W;
+#endif
 		pmap_pvo_remove(pvo, idx);
 	}
 
@@ -1318,14 +1351,17 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 	 */
 	pvo = pool_get(&pmap_mpvo_pool, poolflags);
 
+	s = splhigh();
+
 	if (pvo == NULL) {
 		if ((flags & PMAP_CANFAIL) == 0)
 			panic("pmap_pvo_enter: failed");
-
+#ifdef PMAP_DIAG
+		pmap_pvo_enter_depth--;
+#endif
+		splx(s);
 		return (ENOMEM);
 	}
-
-	s = splhigh();
 
 	ptel |= (ptel_t) (pa & SH5_PTEL_PPN_MASK);
 	pvo->pvo_vaddr = va;
@@ -1349,7 +1385,7 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 
 	pvo->pvo_pmap->pm_stats.resident_count++;
 
-	if (pm != pmap_kernel()) {
+	if (va < SH5_KSEG0_BASE) {
 		/*
 		 * We hope this succeeds but it isn't required.
 		 */
@@ -1366,6 +1402,9 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 		    va, (u_long)ptel, idx));
 	}
 
+#ifdef PMAP_DIAG
+	pmap_pvo_enter_depth--;
+#endif
 	splx(s);
 
 	return (0);
@@ -1375,8 +1414,19 @@ static void
 pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 {
 
-	if (pvo->pvo_pmap != pmap_kernel()) {
+#ifdef PMAP_DIAG
+	if (pmap_pvo_remove_depth > 0) {
+		printf("pmap_pvo_remove: called recusively, for va 0x%lx\n",
+		    PVO_VADDR(pvo));
+		pmap_debugger();
+	}
+	pmap_pvo_remove_depth++;
+#endif
+
+	if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
 		volatile pte_t *pt;
+
+		KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 
 		/* 
 		 * If there is an active pte entry, we need to deactivate it
@@ -1389,13 +1439,6 @@ pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 			PVO_PTEGIDX_CLR(pvo);
 		}
 	} else {
-#ifdef PMAP_DIAG
-		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
-			printf("pmap_pvo_remove: pmap_kernel() va 0x%lx!!\n",
-			    PVO_VADDR(pvo));
-			pmap_debugger();
-		}
-#endif
 		pvo->pvo_ptel |=
 		    pmap_pa_unmap_kva(pvo->pvo_vaddr) & PVO_REFMOD_MASK;
 	}
@@ -1404,7 +1447,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 	 * Update our statistics
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
-	if (pvo->pvo_vaddr & PVO_WIRED)
+	if (PVO_ISWIRED(pvo))
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
@@ -1432,6 +1475,10 @@ pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 	LIST_REMOVE(pvo, pvo_olink);
 
 	pool_put(&pmap_mpvo_pool, pvo);
+
+#ifdef PMAP_DIAG
+	pmap_pvo_remove_depth--;
+#endif
 }
 
 int
@@ -1441,6 +1488,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	ptel_t ptel;
 	int error;
+	int s;
 
 	PMPRINTF((
 	    "pmap_enter: %p: va=0x%lx, pa=0x%lx, prot=0x%x, flags=0x%x\n",
@@ -1480,23 +1528,22 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (va <= VM_MAXUSER_ADDRESS)
 			ptel |= SH5_PTEL_PR_U;
 
-		/* Pre-load mod/ref status according to the hint in `flags' */
-		if (flags & VM_PROT_WRITE) {
+		/*
+		 * Pre-load mod/ref status according to the hint in `flags'.
+		 *
+		 * Note that managed pages are initially read-only, unless
+		 * the hint indicates they are writable. This allows us to
+		 * track page modification status by taking a write-protect
+		 * fault later on.
+		 */
+		if (flags & VM_PROT_WRITE)
 			ptel |= SH5_PTEL_R | SH5_PTEL_M | SH5_PTEL_PR_W;
-			pmap_attr_save(pg, SH5_PTEL_R | SH5_PTEL_M);
-		} else
-		if (flags & VM_PROT_ALL) {
+		else
+		if (flags & VM_PROT_ALL)
 			ptel |= SH5_PTEL_R;
-			pmap_attr_save(pg, SH5_PTEL_R);
-		}
 	} else
 	if (prot & VM_PROT_WRITE) {
-		/*
-		 * Unmanaged pages are writeable from the start.
-		 * Managed and writable pages are initially read-only
-		 * so that the first write to them generates an exception
-		 * which we can use to track the page's Modified status.
-		 */
+		/* Unmanaged pages are writeable from the start.  */
 		ptel |= SH5_PTEL_PR_W;
 	}
 
@@ -1505,7 +1552,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	flags |= (prot & (VM_PROT_EXECUTE | VM_PROT_WRITE));
 
+	s = splvm();
+	if (pg)
+		pmap_attr_save(pg, ptel & (SH5_PTEL_R | SH5_PTEL_M));
 	error = pmap_pvo_enter(pm, pvo_head, va, pa, ptel, flags);
+
+	splx(s);
+
 	return (error);
 }
 
@@ -1531,8 +1584,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	ptel |= SH5_PTEL_PR_R | SH5_PTEL_PR_W | (pa & SH5_PTEL_PPN_MASK);
 
-	PMPRINTF(("pmap_kenter_pa: va 0x%lx, pa 0x%lx, prot 0x%x, idx %d\n",
-	    va, pa, (u_int)prot, idx));
+	PMPRINTF((
+	    "pmap_kenter_pa: va 0x%lx pa 0x%lx prot 0x%x ptel 0x%x idx %d\n",
+	    va, pa, (u_int)prot, ptel, idx));
 
 	KDASSERT(pmap_kernel_ipt[idx] == 0);
 
@@ -1544,22 +1598,13 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
-	ptel_t *ptelp;
 
 	if (va < pmap_kva_avail_start)
 		panic("pmap_kremove: Entering non-kernel VA: 0x%lx", va);
 
 	PMPRINTF(("pmap_kremove: va=0x%lx, len=0x%lx\n", va, len));
 
-	for (ptelp = &pmap_kernel_ipt[kva_to_iptidx(va)]; len;
-	    len -= NBPG, va += NBPG) {
-		if (*ptelp != 0) {
-			/* XXX: Cache */
-			*ptelp++ = 0;
-			__cpu_tlbinv((va & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
-			    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
-		}
-	}
+	pmap_remove(pmap_kernel(), va, va + len);
 }
 
 /*
@@ -1657,7 +1702,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
-	ptel_t clrbits;
+	ptel_t oldptel, clrbits;
 	int ptegidx;
 	int s;
 
@@ -1681,15 +1726,6 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		return;
 	}
 
-	/*
-	 * Making a previously read-only page writable is handled
-	 * by uvm_fault() when the pages are first written.
-	 */
-	if (prot & VM_PROT_WRITE) {
-		PMPRINTF(("pmap_protect: upgrading RO mapping to RW\n"));
-		return;
-	}
-
 	if ((prot & VM_PROT_EXECUTE) == 0)
 		clrbits = SH5_PTEL_PR_W | SH5_PTEL_PR_X;
 	else
@@ -1700,24 +1736,40 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	 */
 
 	for (; va < endva; va += NBPG) {
-		pvo = pmap_pvo_find_va(pm, va, &ptegidx);
-		if (pvo == NULL)
-			continue;
-
 		s = splhigh();
+		pvo = pmap_pvo_find_va(pm, va, &ptegidx);
+		if (pvo == NULL) {
+			splx(s);
+			continue;
+		}
 
 		/*
 		 * Change the protection of the page.
 		 */
+		oldptel = pvo->pvo_ptel;
 		pvo->pvo_ptel &= ~clrbits;
 		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
-		if (pm != pmap_kernel()) {
+		/*
+		 * If the PTEL already has the bits clear, there's nothing
+		 * more to do.
+		 */
+		if ((oldptel & clrbits) == 0) {
+			splx(s);
+			continue;
+		}
+
+		/*
+		 * Otherwise, propagate the change to the page-table/TLB
+		 */
+		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 			pt = pmap_pvo_to_pte(pvo, ptegidx);
 			if (pt != NULL)
 				pmap_pteg_change(pt, pvo);
 		} else {
-			if (ptegidx >=0 && pmap_kernel_ipt[ptegidx] & clrbits)
+			KDASSERT(ptegidx >= 0);
+			if (pmap_kernel_ipt[ptegidx] & clrbits)
 				pmap_kpte_clear_bit(ptegidx, pvo, clrbits);
 		}
 
@@ -1740,11 +1792,11 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	}
 #endif
 
-	s = splvm();
+	s = splhigh();
 
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
-		if (pvo->pvo_vaddr & PVO_WIRED) {
+		if (PVO_ISWIRED(pvo)) {
 			pvo->pvo_vaddr &= ~PVO_WIRED;
 			pm->pm_stats.wired_count--;
 		}
@@ -1765,7 +1817,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile pte_t *pt;
-	ptel_t clrbits;
+	ptel_t oldptel, clrbits;
 	int idx, s;
 
 	PMPRINTF(("pmap_page_protect: %p prot=%x: ", pg, prot));
@@ -1786,7 +1838,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	else
 		clrbits = SH5_PTEL_PR_W;
 
-	s = splvm();
+	s = splhigh();
 
 	pvo_head = vm_page_to_pvoh(pg);
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
@@ -1800,36 +1852,29 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			continue;
 		} 
 
-		pvo->pvo_vaddr &= ~PVO_WRITABLE;
+		oldptel = pvo->pvo_ptel;
 		pvo->pvo_ptel &= ~clrbits;
+		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
-#if 0
 		/*
-		 * If this entry is already RO, don't diddle with the
-		 * page table.
+		 * If this entry already has the bits cleared, there's
+		 * nothing more to do.
 		 */
-		if ((pvo->pvo_ptel & SH5_PTEL_PR_MASK) ==
-		    (execmask | SH5_PTEL_PR_R))
+		if ((oldptel & clrbits) == 0)
 			continue;
-#endif
 
-		if (pvo->pvo_pmap != pmap_kernel()) {
+		/*
+		 * Otherwise, propagate the change to the page-table/TLB
+		 */
+		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 			pt = pmap_pvo_to_pte(pvo, -1);
 			if (pt != NULL)
 				pmap_pteg_change(pt, pvo);
 		} else {
-
-#ifdef PMAP_DIAG
-			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
-				printf(
-				 "pmap_page_protect: pmap_kernel() va 0x%lx!\n",
-				    PVO_VADDR(pvo));
-				pmap_debugger();
-			}
-#endif
-
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
-			if (idx >= 0 && pmap_kernel_ipt[idx] & clrbits)
+			KDASSERT(idx >= 0);
+			if (pmap_kernel_ipt[idx] & clrbits)
 				pmap_kpte_clear_bit(idx, pvo, clrbits);
 		}
 	}
@@ -1902,12 +1947,13 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	 * to the PTEs.
 	 */
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
-		if (pvo->pvo_pmap != pmap_kernel()) {
+		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
 			/*
 			 * See if this pvo have a valid PTE.  If so, fetch the
 			 * REF/CHG bits from the valid PTE.  If the appropriate
 			 * ptebit is set, cache, it and return success.
 			 */
+			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 			pt = pmap_pvo_to_pte(pvo, -1);
 			if (pt != NULL) {
 				pmap_pteg_synch(pt->ptel, pvo);
@@ -1921,18 +1967,9 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				}
 			}
 		} else {
-
-#ifdef PMAP_DIAG
-			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
-				printf(
-				    "pmap_query_bit: pmap_kernel() va 0x%lx!\n",
-				    PVO_VADDR(pvo));
-				pmap_debugger();
-			}
-#endif
-
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
-			if (idx >= 0 && pmap_kernel_ipt[idx] & ptebit) {
+			KDASSERT(idx >= 0);
+			if (pmap_kernel_ipt[idx] & ptebit) {
 				pmap_pteg_synch(pmap_kernel_ipt[idx], pvo);
 				pmap_attr_save(pg, ptebit);
 				splx(s);
@@ -1982,33 +2019,28 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 * valid PTE.  If so, clear the ptebit from the valid PTE.
 	 */
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
-		if (pvo->pvo_pmap != pmap_kernel()) {
+		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+			KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 			pt = pmap_pvo_to_pte(pvo, -1);
 			if (pt != NULL) {
-				pmap_pteg_synch(pt->ptel, pvo);
+				if ((pvo->pvo_ptel & ptebit) == 0)
+					pmap_pteg_synch(pt->ptel, pvo);
 				if (pvo->pvo_ptel & ptebit)
 					pmap_pteg_clear_bit(pt, pvo, ptebit);
 			}
 		} else {
-
-#ifdef PMAP_DIAG
-			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
-				printf(
-				    "pmap_clear_bit: pmap_kernel() va 0x%lx!\n",
-				    PVO_VADDR(pvo));
-				pmap_debugger();
-			}
-#endif
-
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
-			if (idx >= 0 && pmap_kernel_ipt[idx] != 0) {
-				pmap_pteg_synch(pmap_kernel_ipt[idx], pvo);
+			KDASSERT(idx >= 0);
+			if (pmap_kernel_ipt[idx] != 0) {
+				if ((pvo->pvo_ptel & ptebit) == 0)
+					pmap_pteg_synch(pmap_kernel_ipt[idx],
+					    pvo);
 				if (pvo->pvo_ptel & ptebit)
 					pmap_kpte_clear_bit(idx, pvo, ptebit);
 			}
 		}
 
-		rv |= pvo->pvo_ptel;
+		rv |= pvo->pvo_ptel & ptebit;
 		pvo->pvo_ptel &= ~ptebit;
 	}
 
@@ -2023,17 +2055,24 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 static void
 pmap_asid_alloc(pmap_t pm)
 {
+	int s;
 
-	if (pm->pm_asid == PMAP_ASID_RESERVED ||
+	if (pm == pmap_kernel())
+		return;
+
+	if (pm->pm_asid == PMAP_ASID_UNASSIGNED ||
 	    pm->pm_asidgen != pmap_asid_generation) {
-		if (pmap_asid_next == pmap_asid_max) {
+		s = splhigh();
+		if (pmap_asid_next > pmap_asid_max) {
 			pmap_asid_generation++;
-			pmap_asid_next = 1;
+			pmap_asid_next = PMAP_ASID_USER_START;
+			PMPRINTF(("pmap_asid_alloc: wrapping ASIDs\n"));
 			__cpu_tlbinv_all();
 		}
 
 		pm->pm_asid = pmap_asid_next++;
 		pm->pm_asidgen = pmap_asid_generation;
+		splx(s);
 	}
 }
 
@@ -2050,6 +2089,7 @@ pmap_write_trap(int usermode, vaddr_t va)
 	volatile pte_t *pt;
 	pmap_t pm;
 	int ptegidx;
+	int s;
 
 	if (curproc)
 		pm = curproc->p_vmspace->vm_map.pmap;
@@ -2061,13 +2101,16 @@ pmap_write_trap(int usermode, vaddr_t va)
 	PMPRINTF(("pmap_write_trap: %p: %smode va 0x%lx - ",
 	    pm, usermode ? "user" : "kernel", va));
 
+	s = splhigh();
 	pvo = pmap_pvo_find_va(pm, va, &ptegidx);
 	if (pvo == NULL) {
+		splx(s);
 		PMPRINTF(("page has no pvo.\n"));
 		return (0);
 	}
 
 	if (!PVO_ISWRITABLE(pvo)) {
+		splx(s);
 		PMPRINTF(("page is read-only.\n"));
 		return (0);
 	}
@@ -2075,29 +2118,23 @@ pmap_write_trap(int usermode, vaddr_t va)
 	pvo->pvo_ptel |= SH5_PTEL_PR_W | SH5_PTEL_R | SH5_PTEL_M;
 	pvo->pvo_vaddr |= PVO_MODIFIED | PVO_REFERENCED;
 
-	if (pm != pmap_kernel()) {
+	if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+		KDASSERT(PVO_VADDR(pvo) < SH5_KSEG0_BASE);
 		pt = pmap_pvo_to_pte(pvo, ptegidx);
 		if (pt != NULL) {
 			pt->ptel = pvo->pvo_ptel;
-
 			__cpu_tlbinv_cookie((pt->pteh & SH5_PTEH_EPN_MASK) |
-			    pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT,
+			    (pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT),
 			    SH5_PTEH_TLB_COOKIE(pt->pteh));
 		}	
 	} else {
-
-#ifdef PMAP_DIAG
-		if (va < SH5_KSEG1_BASE) {
-			printf("pmap_write_trap: pmap_kernel() va 0x%lx!\n",
-			    va);
-			pmap_debugger();
-		}
-#endif
-
+		KDASSERT(ptegidx >= 0);
 		pmap_kernel_ipt[ptegidx] = pvo->pvo_ptel;
-		__cpu_tlbinv((PVO_VADDR(pvo) & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+		__cpu_tlbinv(PVO_VADDR(pvo) | SH5_PTEH_SH,
 		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 	}
+
+	splx(s);
 
 	PMPRINTF((" page made writable.\n"));
 
@@ -2136,8 +2173,10 @@ pmap_unmap_poolpage(vaddr_t va)
 			break;
 	}
 
-	if (mp->mr_size && mp->mr_kvastart < SH5_KSEG1_BASE)
+	if (mp->mr_size && mp->mr_kvastart < SH5_KSEG1_BASE) {
+		__cpu_cache_dpurge(va, NBPG);
 		return (mp->mr_start + (paddr_t)(va - mp->mr_kvastart));
+	}
 
 	/*
 	 * We should really be allowed to fail here
@@ -2151,7 +2190,7 @@ void dump_kipt(void);
 void
 dump_kipt(void)
 {
-	u_int va;
+	vaddr_t va;
 	ptel_t *pt;
 
 	printf("\nKernel KSEG1 mappings:\n\n");
@@ -2163,5 +2202,102 @@ dump_kipt(void)
 	}
 
 	printf("\n");
+}
+#endif
+
+#if defined(PMAP_DIAG) && defined(DDB)
+int
+validate_kipt(int cookie)
+{
+	ptel_t *ptp, pt;
+	vaddr_t va;
+	paddr_t pa;
+	int errors = 0;
+
+	for (ptp = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
+	    ptp != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; ptp++, va += NBPG) {
+		if ((pt = *ptp) == 0)
+			continue;
+
+		pa = (paddr_t)(pt & SH5_PTEL_PPN_MASK);
+
+		if (pt & 0x24) {
+			printf("kva 0x%lx has reserved bits set: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+		}
+
+		switch (pt & SH5_PTEL_CB_MASK) {
+		case SH5_PTEL_CB_NOCACHE:
+			if (pa < 0x80000000ul || pa >= 0x88000000) {
+				printf("kva 0x%lx has bad DRAM pa: 0x%lx\n",
+				    va, (u_long)pt);
+				errors++;
+			}
+			break;
+
+		case SH5_PTEL_CB_DEVICE:
+			if (pa >= 0x80000000) {
+				printf("kva 0x%lx has bad device pa: 0x%lx\n",
+				    va, (u_long)pt);
+				errors++;
+			}
+			break;
+
+		case SH5_PTEL_CB_WRITEBACK:
+		case SH5_PTEL_CB_WRITETHRU:
+			printf("kva 0x%lx has bad cache mode: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+			break;
+		}
+
+		if ((pt & SH5_PTEL_SZ_MASK) != SH5_PTEL_SZ_4KB) {
+			printf("kva 0x%lx has bad page size: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+		}
+
+		if (pt & SH5_PTEL_PR_U) {
+			printf("kva 0x%lx has usermode bit set: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+		}
+
+		switch (pt & (SH5_PTEL_PR_R|SH5_PTEL_PR_X|SH5_PTEL_PR_W)) {
+		case SH5_PTEL_PR_R:
+		case SH5_PTEL_PR_R|SH5_PTEL_PR_W:
+		case SH5_PTEL_PR_R|SH5_PTEL_PR_W|SH5_PTEL_PR_X:
+			break;
+
+		case SH5_PTEL_PR_W:
+			printf("kva 0x%lx has only write bit set: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+			break;
+
+		case SH5_PTEL_PR_X:
+			printf("kva 0x%lx has only execute bit set: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+			break;
+
+		case SH5_PTEL_PR_W|SH5_PTEL_PR_X:
+			printf("kva 0x%lx is not readable: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+			break;
+
+		default:
+			printf("kva 0x%lx has no protection bits set: 0x%lx\n",
+			    va, (u_long)pt);
+			errors++;
+			break;
+		}
+	}
+
+	if (errors)
+		printf("Reference cookie: 0x%x\n", cookie);
+	return (errors);
 }
 #endif
