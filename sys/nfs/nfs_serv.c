@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.66 2002/12/01 23:02:10 matt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.67 2003/02/26 06:31:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.66 2002/12/01 23:02:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.67 2003/02/26 06:31:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0, rdonly, cache = 0, getret;
 	char *cp2;
-	struct mbuf *mb, *mreq, *mb2;
+	struct mbuf *mb, *mreq;
 	struct vattr va;
 	u_long inmode, testmode, outmode;
 	u_quad_t frev;
@@ -188,7 +188,7 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0, rdonly, cache;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
@@ -236,7 +236,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, cache, preat_ret = 1, postat_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), gcheck = 0;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	u_quad_t frev;
 	struct timespec guard;
 
@@ -367,7 +367,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	int error = 0, cache, len, dirattr_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), pubflag;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vattr va, dirattr;
 	u_quad_t frev;
 
@@ -485,7 +485,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, cache, i, tlen, len, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
-	struct mbuf *mb, *mb2, *mp2 = NULL, *mp3 = NULL, *mreq;
+	struct mbuf *mb, *mp2 = NULL, *mp3 = NULL, *mreq;
 	struct vnode *vp;
 	struct vattr attr;
 	nfsfh_t nfh;
@@ -498,8 +498,9 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	len = 0;
 	i = 0;
 	while (len < NFS_MAXPATHLEN) {
-		MGET(mp, M_WAIT, MT_DATA);
-		MCLGET(mp, M_WAIT);
+		mp = m_get(M_WAIT, MT_DATA);
+		MCLAIM(mp, &nfs_mowner);
+		m_clget(mp, M_WAIT);
 		mp->m_len = NFSMSIZ(mp);
 		if (len == 0)
 			mp3 = mp2 = mp;
@@ -588,7 +589,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, cache, cnt, len, left, siz, tlen, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), reqlen;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct mbuf *m2;
 	struct vnode *vp;
 	nfsfh_t nfh;
@@ -666,8 +667,9 @@ nfsrv_read(nfsd, slp, procp, mrq)
 				i++;
 			}
 			if (left > 0) {
-				MGET(m, M_WAIT, MT_DATA);
-				MCLGET(m, M_WAIT);
+				m = m_get(M_WAIT, MT_DATA);
+				MCLAIM(m, &nfs_mowner);
+				m_clget(m, M_WAIT);
 				m->m_len = 0;
 				m2->m_next = m;
 				m2 = m;
@@ -756,7 +758,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	int stable = NFSV3WRITE_FILESYNC;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -940,7 +942,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	int error = 0, rdonly, cache, len = 0, forat_ret = 1;
 	int ioflags, aftat_ret = 1, s, adjust, v3, zeroing;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq, *mrep, *md;
+	struct mbuf *mb, *mreq, *mrep, *md;
 	struct vnode *vp;
 	struct uio io, *uiop = &io;
 	u_quad_t frev, cur_usec;
@@ -1302,7 +1304,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	int rdev = 0;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), how, exclusive_flag = 0;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp = NULL, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -1514,7 +1516,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	u_int32_t major, minor;
 	enum vtype vtyp;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp, *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -2042,7 +2044,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	struct iovec iv;
 	int error = 0, cache, len, len2, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
-	struct mbuf *mb, *mreq, *mb2;
+	struct mbuf *mb, *mreq;
 	struct vnode *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -2168,7 +2170,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp, *dirp = (struct vnode *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -2411,7 +2413,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	struct mbuf *mb, *mb2, *mreq, *mp2;
+	struct mbuf *mb, *mreq, *mp2;
 	char *cpos, *cend, *cp2, *rbuf;
 	struct vnode *vp;
 	struct vattr at;
@@ -2674,7 +2676,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	struct mbuf *mb, *mb2, *mreq, *mp2;
+	struct mbuf *mb, *mreq, *mp2;
 	char *cpos, *cend, *cp2, *rbuf;
 	struct vnode *vp, *nvp;
 	struct flrep fl;
@@ -2988,7 +2990,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	u_quad_t frev, off, end;
 
 #ifndef nolint
@@ -3048,7 +3050,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, cache, getret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp;
 	struct vattr at;
 	nfsfh_t nfh;
@@ -3121,7 +3123,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0, rdonly, cache, getret = 1, pref;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp;
 	struct vattr at;
 	nfsfh_t nfh;
@@ -3198,7 +3200,7 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, cache, getret = 1;
 	register_t linkmax, namemax, chownres, notrunc;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	struct vnode *vp;
 	struct vattr at;
 	nfsfh_t nfh;

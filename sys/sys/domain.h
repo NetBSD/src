@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.13 2002/05/27 02:53:49 itojun Exp $	*/
+/*	$NetBSD: domain.h,v 1.14 2003/02/26 06:31:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -41,6 +41,7 @@
 /*
  * Structure per communications domain.
  */
+#include <sys/mbuf.h>
 
 /*
  * Forward structure declarations for function prototypes [sic].
@@ -66,6 +67,7 @@ struct	domain {
 	void	*(*dom_ifattach) __P((struct ifnet *));
 	void	(*dom_ifdetach) __P((struct ifnet *, void *));
 					/* af-dependent data on ifnet */
+	struct	mowner dom_mowner;
 };
 
 #ifdef _KERNEL

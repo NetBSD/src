@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.103 2003/02/03 23:51:03 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.104 2003/02/26 06:31:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.103 2003/02/03 23:51:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.104 2003/02/26 06:31:12 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -212,6 +212,9 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif /* NETATALK */
 	short mflags;
 
+#ifdef MBUFTRACE
+	m_claim(m, ifp->if_mowner);
+#endif
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	if ((rt = rt0) != NULL) {
@@ -671,6 +674,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+#ifdef MBUFTRACE
+	m_claim(m, &ec->ec_rx_mowner);
+#endif
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 
@@ -1052,6 +1058,7 @@ ether_sprintf(const u_char *ap)
 void
 ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
+	struct ethercom *ec = (struct ethercom *)ifp;
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
@@ -1066,10 +1073,19 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	if_alloc_sadl(ifp);
 	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
 
-	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
+	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+#ifdef MBUFTRACE
+	strcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname);
+	strcpy(ec->ec_tx_mowner.mo_descr, "tx");
+	strcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname);
+	strcpy(ec->ec_rx_mowner.mo_descr, "rx");
+	MOWNER_ATTACH(&ec->ec_tx_mowner);
+	MOWNER_ATTACH(&ec->ec_rx_mowner);
+	ifp->if_mowner = &ec->ec_tx_mowner;
 #endif
 }
 
@@ -1098,6 +1114,9 @@ ether_ifdetach(struct ifnet *ifp)
 	splx(s);
 
 	if_free_sadl(ifp);
+
+	MOWNER_DETACH(&ec->ec_rx_mowner);
+	MOWNER_DETACH(&ec->ec_tx_mowner);
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.88 2002/11/24 10:51:56 scw Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.89 2003/02/26 06:31:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.88 2002/11/24 10:51:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.89 2003/02/26 06:31:16 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -421,6 +421,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (__predict_false(m == NULL))
 		return (ENOBUFS);
+	MCLAIM(m, &tcp_tx_mowner);
 
 	/*
 	 * XXX Because other code assumes headers will fit in
@@ -873,6 +874,7 @@ send:
 			error = ENOBUFS;
 			goto out;
 		}
+		MCLAIM(m, &tcp_tx_mowner);
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.46 2002/11/02 07:26:55 perry Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.47 2003/02/26 06:31:13 matt Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.46 2002/11/02 07:26:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.47 2003/02/26 06:31:13 matt Exp $");
 
 #include "strip.h"
 
@@ -380,8 +380,8 @@ stripinit(sc)
 	u_char *p;
 
 	if (sc->sc_mbuf == NULL) {
-		MGETHDR(sc->sc_mbuf, M_WAIT, MT_DATA);
-		MCLGET(sc->sc_mbuf, M_WAIT);
+		sc->sc_mbuf = m_get(M_WAIT, MT_DATA);
+		m_clget(sc->sc_mbuf, M_WAIT);
 	}
 	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    sc->sc_mbuf->m_ext.ext_size;

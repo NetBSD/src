@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.121 2003/02/01 06:23:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.122 2003/02/26 06:31:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.121 2003/02/01 06:23:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.122 2003/02/26 06:31:20 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -152,7 +152,7 @@ nfs_statfs(mp, sbp, p)
 #else
 	int v3 = (nmp->nm_flag & NFSMNT_NFSV3);
 #endif
-	struct mbuf *mreq, *mrep = NULL, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep = NULL, *md, *mb;
 	struct ucred *cred;
 	u_quad_t tquad;
 
@@ -232,7 +232,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	u_int32_t *tl, pref, max;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, retattr;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int64_t maxfsize;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
@@ -391,6 +391,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	m = m_get(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		panic("nfs_mountroot: mget soname for %s", mntname);
+	MCLAIM(m, &nfs_mowner);
 	memcpy(mtod(m, caddr_t), (caddr_t)ndmntp->ndm_args.addr,
 	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
@@ -646,6 +647,7 @@ nfs_mount(mp, path, data, ndp, p)
 	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
 	if (error)
 		goto free_hst;
+	MCLAIM(nam, &nfs_mowner);
 	args.fh = nfh;
 	error = mountnfs(&args, mp, nam, pth, hst, &vp, p);
 

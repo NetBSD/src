@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.76 2002/11/26 18:51:18 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.77 2003/02/26 06:31:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.76 2002/11/26 18:51:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.77 2003/02/26 06:31:12 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -221,13 +221,11 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 	if ((unsigned)len > MCLBYTES - align)
 		return (EIO);
 
-	MGETHDR(m, M_WAIT, MT_DATA);
-	if (m == 0)
-		return (ENOBUFS);
+	m = m_gethdr(M_WAIT, MT_DATA);
 	m->m_pkthdr.rcvif = 0;
 	m->m_pkthdr.len = len - hlen;
 	if (len > MHLEN - align) {
-		MCLGET(m, M_WAIT);
+		m_clget(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			error = ENOBUFS;
 			goto bad;

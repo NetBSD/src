@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.44 2003/02/01 06:23:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.45 2003/02/26 06:31:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.44 2003/02/01 06:23:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.45 2003/02/26 06:31:18 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -470,7 +470,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 	struct mbuf *m;
 	int siz;
 	struct nqm *lphnext = lp->lc_morehosts;
-	struct mbuf *mreq, *mb, *mb2, *nam2, *mheadend;
+	struct mbuf *mreq, *mb, *nam2, *mheadend;
 	struct socket *so;
 	struct sockaddr_in *saddr;
 	nfsfh_t nfh;
@@ -485,7 +485,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			lph->lph_flag |= LC_VACATED;
 		else if ((lph->lph_flag & (LC_LOCAL | LC_VACATED)) == 0) {
 			if (lph->lph_flag & LC_UDP) {
-				MGET(nam2, M_WAIT, MT_SONAME);
+				nam2 = m_get(M_WAIT, MT_SONAME);
+				MCLAIM(nam2, &nfs_mowner);
 				saddr = mtod(nam2, struct sockaddr_in *);
 				nam2->m_len = saddr->sin_len =
 					sizeof (struct sockaddr_in);
@@ -559,7 +560,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 					nfs_sndunlock(solockp);
 			}
 			if (lph->lph_flag & LC_UDP)
-				MFREE(nam2, m);
+				(void) m_free(nam2);
 		}
 nextone:
 		if (++i == len) {
@@ -632,7 +633,6 @@ nqnfs_serverd()
 	struct nqhost *lph;
 	struct nqlease *nextlp;
 	struct nqm *lphnext, *olphnext;
-	struct mbuf *n;
 	int i, len, ok;
 
 	for (lp = nqtimerhead.cqh_first; lp != (void *)&nqtimerhead;
@@ -677,7 +677,7 @@ nqnfs_serverd()
 			ok = 1;
 			while (ok && (lph->lph_flag & LC_VALID)) {
 				if (lph->lph_flag & (LC_CLTP | LC_UDP6))
-					MFREE(lph->lph_nam, n);
+					(void) m_free(lph->lph_nam);
 				if (lph->lph_flag & LC_SREF)
 					nfsrv_slpderef(lph->lph_slp);
 				if (++i == len) {
@@ -732,7 +732,7 @@ nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0;
 	char *cp2;
-	struct mbuf *mb, *mb2, *mreq;
+	struct mbuf *mb, *mreq;
 	int flags, rdonly, cache;
 
 	fhp = &nfh.fh_generic;
@@ -863,7 +863,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	caddr_t bpos, dpos, cp2;
 	time_t reqtime;
 	int error = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	int cachable;
 	u_quad_t frev;
 
@@ -906,7 +906,7 @@ nqnfs_vacated(vp, cred)
 	caddr_t bpos;
 	u_int32_t xid;
 	int error = 0;
-	struct mbuf *mreq, *mb, *mb2, *mheadend;
+	struct mbuf *mreq, *mb, *mheadend;
 	struct nfsmount *nmp;
 	struct nfsreq myrep;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.13 2001/11/13 01:10:48 lukem Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.14 2003/02/26 06:31:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.13 2001/11/13 01:10:48 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.14 2003/02/26 06:31:17 matt Exp $");
 
 #ifdef TPCONS
 #ifdef _KERNEL
@@ -595,7 +595,7 @@ make_partial_x25_packet(isop, lcp)
 		lcp->lcd_facilities = 0;
 		return 0;
 	}
-	MGETHDR(m, M_WAIT, MT_DATA);
+	m = m_gethdr(M_WAIT, MT_DATA);
 	buf = mtod(m, caddr_t);
 	ptr = buf;
 

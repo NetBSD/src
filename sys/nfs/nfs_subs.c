@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.108 2003/02/10 17:31:01 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.109 2003/02/26 06:31:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.108 2003/02/10 17:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.109 2003/02/26 06:31:19 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -603,13 +603,13 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	struct nfsmount *nmp;
 #ifndef NFS_V2_ONLY
 	u_int32_t *tl;
-	struct mbuf *mb2;
 	int nqflag;
 #endif
 
-	MGET(mb, M_WAIT, MT_DATA);
+	mb = m_get(M_WAIT, MT_DATA);
+	MCLAIM(mb, &nfs_mowner);
 	if (hsiz >= MINCLSIZE)
-		MCLGET(mb, M_WAIT);
+		m_clget(mb, M_WAIT);
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
 	
@@ -663,15 +663,16 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	u_int32_t *tl;
 	caddr_t bpos;
 	int i;
-	struct mbuf *mreq, *mb2;
+	struct mbuf *mreq;
 	int siz, grpsiz, authsiz;
 	struct timeval tv;
 	static u_int32_t base;
 
 	authsiz = nfsm_rndup(auth_len);
-	MGETHDR(mb, M_WAIT, MT_DATA);
+	mb = m_gethdr(M_WAIT, MT_DATA);
+	MCLAIM(mb, &nfs_mowner);
 	if ((authsiz + 10 * NFSX_UNSIGNED) >= MINCLSIZE) {
-		MCLGET(mb, M_WAIT);
+		m_clget(mb, M_WAIT);
 	} else if ((authsiz + 10 * NFSX_UNSIGNED) < MHLEN) {
 		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
 	} else {
@@ -740,9 +741,11 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 		siz = auth_len;
 		while (siz > 0) {
 			if (M_TRAILINGSPACE(mb) == 0) {
-				MGET(mb2, M_WAIT, MT_DATA);
+				struct mbuf *mb2;
+				mb2 = m_get(M_WAIT, MT_DATA);
+				MCLAIM(mb2, &nfs_mowner);
 				if (siz >= MINCLSIZE)
-					MCLGET(mb2, M_WAIT);
+					m_clget(mb2, M_WAIT);
 				mb->m_next = mb2;
 				mb = mb2;
 				mb->m_len = 0;
@@ -773,9 +776,11 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 		siz = verf_len;
 		while (siz > 0) {
 			if (M_TRAILINGSPACE(mb) == 0) {
-				MGET(mb2, M_WAIT, MT_DATA);
+				struct mbuf *mb2;
+				mb2 = m_get(M_WAIT, MT_DATA);
+				MCLAIM(mb2, &nfs_mowner);
 				if (siz >= MINCLSIZE)
-					MCLGET(mb2, M_WAIT);
+					m_clget(mb2, M_WAIT);
 				mb->m_next = mb2;
 				mb = mb2;
 				mb->m_len = 0;
@@ -917,9 +922,10 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 		while (left > 0) {
 			mlen = M_TRAILINGSPACE(mp);
 			if (mlen == 0) {
-				MGET(mp, M_WAIT, MT_DATA);
+				mp = m_get(M_WAIT, MT_DATA);
+				MCLAIM(mp, &nfs_mowner);
 				if (clflg)
-					MCLGET(mp, M_WAIT);
+					m_clget(mp, M_WAIT);
 				mp->m_len = 0;
 				mp2->m_next = mp;
 				mp2 = mp;
@@ -950,7 +956,8 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	}
 	if (rem > 0) {
 		if (rem > M_TRAILINGSPACE(mp)) {
-			MGET(mp, M_WAIT, MT_DATA);
+			mp = m_get(M_WAIT, MT_DATA);
+			MCLAIM(mp, &nfs_mowner);
 			mp->m_len = 0;
 			mp2->m_next = mp;
 		}
@@ -1139,9 +1146,10 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 	}
 	/* Loop around adding mbufs */
 	while (siz > 0) {
-		MGET(m1, M_WAIT, MT_DATA);
+		m1 = m_get(M_WAIT, MT_DATA);
+		MCLAIM(m1, &nfs_mowner);
 		if (siz > MLEN)
-			MCLGET(m1, M_WAIT);
+			m_clget(m1, M_WAIT);
 		m1->m_len = NFSMSIZ(m1);
 		m2->m_next = m1;
 		m2 = m1;
@@ -1488,6 +1496,7 @@ nfs_init()
 	 */
 	TAILQ_INIT(&nfs_reqq);
 	nfs_timer(NULL);
+	MOWNER_ATTACH(&nfs_mowner);
 
 #ifdef NFS
 	/* Initialize the kqueue structures */
@@ -2184,7 +2193,7 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
 	struct mbuf **mbp;
 	char **bposp;
 {
-	struct mbuf *mb = *mbp, *mb2;
+	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
 	u_int32_t *tl;
 
@@ -2213,7 +2222,7 @@ nfsm_srvpostopattr(nfsd, after_ret, after_vap, mbp, bposp)
 	struct mbuf **mbp;
 	char **bposp;
 {
-	struct mbuf *mb = *mbp, *mb2;
+	struct mbuf *mb = *mbp;
 	char *bpos = *bposp;
 	u_int32_t *tl;
 	struct nfs_fattr *fp;

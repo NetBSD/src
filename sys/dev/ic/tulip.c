@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.121 2002/10/08 15:05:35 minoura Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122 2003/02/26 06:31:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.121 2002/10/08 15:05:35 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122 2003/02/26 06:31:10 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -755,6 +755,7 @@ tlp_start(ifp)
 				    sc->sc_dev.dv_xname);
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -1324,6 +1325,7 @@ tlp_rxintr(sc)
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		if (len > (MHLEN - 2)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -2289,6 +2291,7 @@ tlp_add_rxbuf(sc, idx)
 	if (m == NULL)
 		return (ENOBUFS);
 
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);

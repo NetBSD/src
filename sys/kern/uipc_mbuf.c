@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.63 2003/02/01 06:23:44 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.64 2003/02/26 06:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.63 2003/02/01 06:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.64 2003/02/26 06:31:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,13 +120,27 @@ const char mclpool_warnmsg[] =
 
 MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 
+#ifdef MBUFTRACE
+struct mownerhead mowners = LIST_HEAD_INITIALIZER(mowners);
+struct mowner unknown_mowners[] = {
+	{ "unknown", "free" },
+	{ "unknown", "data" },
+	{ "unknown", "header" },
+	{ "unknown", "soname" },
+	{ "unknown", "soopts" },
+	{ "unknown", "ftable" },
+	{ "unknown", "control" },
+	{ "unknown", "oobdata" },
+};
+struct mowner revoked_mowner = { "revoked", "" };
+#endif
+
 /*
  * Initialize the mbuf allcator.
  */
 void
 mbinit(void)
 {
-
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
 
@@ -151,6 +165,19 @@ mbinit(void)
 	 */
 	pool_setlowat(&mbpool, mblowat);
 	pool_setlowat(&mclpool, mcllowat);
+
+#ifdef MBUFTRACE
+	{
+		/*
+		 * Attach the unknown mowners.
+		 */
+		int i;
+		MOWNER_ATTACH(&revoked_mowner);
+		for (i = sizeof(unknown_mowners)/sizeof(unknown_mowners[0]);
+		     i-- > 0; )
+			MOWNER_ATTACH(&unknown_mowners[i]);
+	}
+#endif
 }
 
 int
@@ -214,6 +241,33 @@ sysctl_dombuf(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 				error = EINVAL;
 		}
 		return (error);
+	case MBUF_STATS:
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    &mbstat, sizeof(mbstat)));
+#ifdef MBUFTRACE
+	case MBUF_MOWNERS: {
+		struct mowner *mo;
+		size_t len = 0;
+		if (newp != NULL)
+			return (EPERM);
+		error = 0;
+		LIST_FOREACH(mo, &mowners, mo_link) {
+			if (oldp != NULL) {
+				if (*oldlenp - len < sizeof(*mo)) {
+					error = ENOMEM;
+					break;
+				}
+				error = copyout(mo, (caddr_t) oldp + len,
+					sizeof(*mo));
+				if (error)
+					break;
+			}
+			len += sizeof(*mo);
+		}
+		*oldlenp = len;
+		return (error);
+	}
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -290,6 +344,12 @@ m_getclr(int nowait, int type)
 	return (m);
 }
 
+void
+m_clget(struct mbuf *m, int nowait)
+{
+	MCLGET(m, nowait);
+}
+
 struct mbuf *
 m_free(struct mbuf *m)
 {
@@ -311,6 +371,15 @@ m_freem(struct mbuf *m)
 		m = n;
 	} while (m);
 }
+
+#ifdef MBUFTRACE
+void
+m_claim(struct mbuf *m, struct mowner *mo)
+{
+	for (; m != NULL; m = m->m_next)
+		MCLAIM(m, mo);
+}
+#endif
 
 /*
  * Mbuffer utility routines.
@@ -334,6 +403,8 @@ m_prepend(struct mbuf *m, int len, int how)
 	if (m->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(mn, m);
 		m->m_flags &= ~M_PKTHDR;
+	} else {
+		MCLAIM(mn, m->m_owner);
 	}
 	mn->m_next = m;
 	m = mn;
@@ -394,6 +465,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		*np = n;
 		if (n == 0)
 			goto nospace;
+		MCLAIM(n, m->m_owner);
 		if (copyhdr) {
 			M_COPY_PKTHDR(n, m);
 			if (len == M_COPYALL)
@@ -460,6 +532,7 @@ m_copypacket(struct mbuf *m, int how)
 	if (!n)
 		goto nospace;
 
+	MCLAIM(n, m->m_owner);
 	M_COPY_PKTHDR(n, m);
 	n->m_len = m->m_len;
 	if (m->m_flags & M_EXT) {
@@ -476,6 +549,7 @@ m_copypacket(struct mbuf *m, int how)
 		if (!o)
 			goto nospace;
 
+		MCLAIM(o, m->m_owner);
 		n->m_next = o;
 		n = n->m_next;
 
@@ -660,6 +734,7 @@ m_pullup(struct mbuf *n, int len)
 		MGET(m, M_DONTWAIT, n->m_type);
 		if (m == 0)
 			goto bad;
+		MCLAIM(m, n->m_owner);
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
 			M_COPY_PKTHDR(m, n);
@@ -710,6 +785,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	MGET(m, M_DONTWAIT, n->m_type);
 	if (m == NULL)
 		goto bad;
+	MCLAIM(m, n->m_owner);
 	m->m_len = 0;
 	if (n->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(m, n);
@@ -762,6 +838,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 		MGETHDR(n, wait, m0->m_type);
 		if (n == 0)
 			return (0);
+		MCLAIM(m, m0->m_owner);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;
@@ -788,6 +865,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 		MGET(n, wait, m->m_type);
 		if (n == 0)
 			return (0);
+		MCLAIM(n, m->m_owner);
 		M_ALIGN(n, remain);
 	}
 extpacket:

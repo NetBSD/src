@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.78 2003/02/01 06:23:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.79 2003/02/26 06:31:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.78 2003/02/01 06:23:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.79 2003/02/26 06:31:19 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -83,6 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.78 2003/02/01 06:23:49 thorpej Exp 
 #include <nfs/nfs_var.h>
 
 MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
+#ifdef MBUFTRACE
+struct mowner nfs_mowner = { "nfs" };
+#endif
 
 #define	TRUE	1
 #define	FALSE	0
@@ -177,18 +180,25 @@ nfs_connect(nmp, rep)
 	if (error)
 		goto bad;
 	so = nmp->nm_so;
+#ifdef MBUFTRACE
+	so->so_mowner = &nfs_mowner;
+	so->so_rcv.sb_mowner = &nfs_mowner;
+	so->so_snd.sb_mowner = &nfs_mowner;
+#endif
 	nmp->nm_soflags = so->so_proto->pr_flags;
 
 	/*
 	 * Some servers require that the client port be a reserved port number.
 	 */
 	if (saddr->sa_family == AF_INET && (nmp->nm_flag & NFSMNT_RESVPORT)) {
-		MGET(m, M_WAIT, MT_SOOPTS);
+		m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(m, so->so_mowner);
 		*mtod(m, int32_t *) = IP_PORTRANGE_LOW;
 		m->m_len = sizeof(int32_t);
 		if ((error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, m)))
 			goto bad;
-		MGET(m, M_WAIT, MT_SONAME);
+		m = m_get(M_WAIT, MT_SONAME);
+		MCLAIM(m, so->so_mowner);
 		sin = mtod(m, struct sockaddr_in *);
 		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
 		sin->sin_family = AF_INET;
@@ -201,12 +211,14 @@ nfs_connect(nmp, rep)
 	}
 #ifdef INET6
 	if (saddr->sa_family == AF_INET6 && (nmp->nm_flag & NFSMNT_RESVPORT)) {
-		MGET(m, M_WAIT, MT_SOOPTS);
+		m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(m, so->so_mowner);
 		*mtod(m, int32_t *) = IPV6_PORTRANGE_LOW;
 		m->m_len = sizeof(int32_t);
 		if ((error = sosetopt(so, IPPROTO_IPV6, IPV6_PORTRANGE, m)))
 			goto bad;
-		MGET(m, M_WAIT, MT_SONAME);
+		m = m_get(M_WAIT, MT_SONAME);
+		MCLAIM(m, so->so_mowner);
 		sin6 = mtod(m, struct sockaddr_in6 *);
 		sin6->sin6_len = m->m_len = sizeof (struct sockaddr_in6);
 		sin6->sin6_family = AF_INET6;
@@ -277,13 +289,15 @@ nfs_connect(nmp, rep)
 		if (nmp->nm_sotype != SOCK_STREAM)
 			panic("nfscon sotype");
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-			MGET(m, M_WAIT, MT_SOOPTS);
+			m = m_get(M_WAIT, MT_SOOPTS);
+			MCLAIM(m, so->so_mowner);
 			*mtod(m, int32_t *) = 1;
 			m->m_len = sizeof(int32_t);
 			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
 		}
 		if (so->so_proto->pr_protocol == IPPROTO_TCP) {
-			MGET(m, M_WAIT, MT_SOOPTS);
+			m = m_get(M_WAIT, MT_SOOPTS);
+			MCLAIM(m, so->so_mowner);
 			*mtod(m, int32_t *) = 1;
 			m->m_len = sizeof(int32_t);
 			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
@@ -1203,9 +1217,10 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	u_int32_t *tl;
 	struct mbuf *mreq;
 	caddr_t bpos;
-	struct mbuf *mb, *mb2;
+	struct mbuf *mb;
 
-	MGETHDR(mreq, M_WAIT, MT_DATA);
+	mreq = m_gethdr(M_WAIT, MT_DATA);
+	MCLAIM(mreq, &nfs_mowner);
 	mb = mreq;
 	/*
 	 * If this is a big reply, use a cluster else
@@ -1213,7 +1228,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	 */
 	siz += RPC_REPLYSIZ;
 	if (siz >= max_datalen) {
-		MCLGET(mreq, M_WAIT);
+		m_clget(mreq, M_WAIT);
 	} else
 		mreq->m_data += max_hdr;
 	tl = mtod(mreq, u_int32_t *);
@@ -2117,6 +2132,7 @@ nfsrv_getstream(slp, waitflag)
 					slp->ns_flag &= ~SLP_GETSTREAM;
 					return (EWOULDBLOCK);
 				}
+				MCLAIM(m2, &nfs_mowner);
 				if (left > MHLEN) {
 					MCLGET(m2, waitflag);
 					if (!(m2->m_flags & M_EXT)) {

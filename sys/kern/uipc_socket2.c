@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.48 2002/10/23 09:14:29 jdolecek Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.49 2003/02/26 06:31:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.48 2002/10/23 09:14:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.49 2003/02/26 06:31:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,11 @@ sonewconn1(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uid = head->so_uid;
+#ifdef MBUFTRACE
+	so->so_mowner = head->so_mowner;
+	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
+	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
+#endif
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
@@ -494,6 +499,10 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 	if (m == 0)
 		return;
 
+#ifdef MBUFTRACE
+	m_claim(m, sb->sb_mowner);
+#endif
+
 	SBLASTRECORDCHK(sb, "sbappend 1");
 
 	if ((n = sb->sb_lastrecord) != NULL) {
@@ -532,6 +541,10 @@ sbappendstream(struct sockbuf *sb, struct mbuf *m)
 	KASSERT(sb->sb_mb == sb->sb_lastrecord);
 
 	SBLASTMBUFCHK(sb, __func__);
+
+#ifdef MBUFTRACE
+	m_claim(m, sb->sb_mowner);
+#endif
 
 	sbcompress(sb, m, sb->sb_mbtail);
 
@@ -576,6 +589,9 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 	if (m0 == 0)
 		return;
 
+#ifdef MBUFTRACE
+	m_claim(m0, sb->sb_mowner);
+#endif
 	/*
 	 * Put the first mbuf on the queue.
 	 * Note this permits zero length records.
@@ -657,12 +673,17 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 
 	space = asa->sa_len;
 
-	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
-		panic("sbappendaddr");
-	if (m0)
+	if (m0 != NULL) {
+		if ((m0->m_flags & M_PKTHDR) == 0)
+			panic("sbappendaddr");
 		space += m0->m_pkthdr.len;
+#ifdef MBUFTRACE
+		m_claim(m0, sb->sb_mowner);
+#endif
+	}
 	for (n = control; n; n = n->m_next) {
 		space += n->m_len;
+		MCLAIM(n, sb->sb_mowner);
 		if (n->m_next == 0)	/* keep pointer to last control buf */
 			break;
 	}
@@ -671,6 +692,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	MGET(m, M_DONTWAIT, MT_SONAME);
 	if (m == 0)
 		return (0);
+	MCLAIM(m, sb->sb_mowner);
 	if (asa->sa_len > MLEN) {
 		MEXTMALLOC(m, asa->sa_len, M_NOWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -713,12 +735,15 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
 		space += m->m_len;
+		MCLAIM(m, sb->sb_mowner);
 		if (m->m_next == 0)
 			break;
 	}
 	n = m;			/* save pointer to last control buffer */
-	for (m = m0; m; m = m->m_next)
+	for (m = m0; m; m = m->m_next) {
+		MCLAIM(m, sb->sb_mowner);
 		space += m->m_len;
+	}
 	if (space > sbspace(sb))
 		return (0);
 	n->m_next = m0;			/* concatenate data to control */

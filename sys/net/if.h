@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.84 2003/02/01 06:23:46 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.85 2003/02/26 06:31:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -288,6 +288,7 @@ struct ifnet {				/* and the entries */
 	int	if_csum_flags_rx;	/* M_CSUM_* flags for Rx */
 
 	void	*if_afdata[AF_MAX];
+	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

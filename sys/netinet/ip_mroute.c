@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.65 2003/01/19 23:57:01 simonb Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.66 2003/02/26 06:31:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.65 2003/01/19 23:57:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.66 2003/02/26 06:31:15 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -347,6 +347,7 @@ ip_mrouter_get(so, optname, m)
 		error = ENOPROTOOPT;
 	else {
 		*m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(*m, so->so_mowner);
 
 		switch (optname) {
 		case MRT_VERSION:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.75 2003/01/18 10:06:36 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.76 2003/02/26 06:31:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.75 2003/01/18 10:06:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.76 2003/02/26 06:31:11 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -100,6 +100,7 @@ sys_socket(struct lwp *l, void *v, register_t *retval)
 		fdremove(fdp, fd);
 		ffree(fp);
 	} else {
+		KASSERT(so->so_rcv.sb_mowner);
 		fp->f_data = (caddr_t)so;
 		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, p);
@@ -132,6 +133,7 @@ sys_bind(struct lwp *l, void *v, register_t *retval)
 		FILE_UNUSE(fp, p);
 		return (error);
 	}
+	MCLAIM(nam, ((struct socket *)fp->f_data)->so_mowner);
 	error = sobind((struct socket *)fp->f_data, nam, p);
 	m_freem(nam);
 	FILE_UNUSE(fp, p);
@@ -291,6 +293,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	    MT_SONAME);
 	if (error)
 		goto out;
+	MCLAIM(nam, so->so_mowner);
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
@@ -317,6 +320,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	if (error == ERESTART)
 		error = EINTR;
  out:
+	KASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -477,6 +481,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
+	so = (struct socket *)fp->f_data;
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
@@ -509,6 +514,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 				 MT_SONAME);
 		if (error)
 			goto out;
+		MCLAIM(to, so->so_mowner);
 	} else
 		to = 0;
 	if (mp->msg_control) {
@@ -520,6 +526,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 				 mp->msg_controllen, MT_CONTROL);
 		if (error)
 			goto bad;
+		MCLAIM(control, so->so_mowner);
 	} else
 		control = 0;
 #ifdef KTRACE
@@ -531,7 +538,6 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	so = (struct socket *)fp->f_data;
 	error = (*so->so_send)(so, to, &auio, NULL, control, flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
@@ -553,6 +559,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	if (to)
 		m_freem(to);
  out:
+	KASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -661,6 +668,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
+	so = (struct socket *)fp->f_data;
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
@@ -697,7 +705,6 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	}
 #endif
 	len = auio.uio_resid;
-	so = (struct socket *)fp->f_data;
 	error = (*so->so_receive)(so, &from, &auio, NULL,
 			  mp->msg_control ? &control : NULL, &mp->msg_flags);
 	if (error) {
@@ -767,6 +774,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	if (control)
 		m_freem(control);
  out1:
+	KASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -806,6 +814,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	struct proc	*p;
 	struct file	*fp;
 	struct mbuf	*m;
+	struct socket	*so;
 	int		error;
 	unsigned int	len;
 
@@ -814,6 +823,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	so = (struct socket *)fp->f_data;
 	len = SCARG(uap, valsize);
 	if (len > MCLBYTES) {
 		error = EINVAL;
@@ -821,8 +831,9 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(m, so->so_mowner);
 		if (len > MLEN)
-			MCLGET(m, M_WAIT);
+			m_clget(m, M_WAIT);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t), len);
 		if (error) {
 			(void) m_free(m);
@@ -830,9 +841,9 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-			 SCARG(uap, name), m);
+	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
  out:
+	KASSERT(so->so_rcv.sb_mowner);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -850,7 +861,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc	*p;
 	struct file	*fp;
-	struct mbuf	*m, *m0;
+	struct mbuf	*m;
 	unsigned int	op, i, valsize;
 	int		error;
 
@@ -875,8 +886,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 			error = copyout(mtod(m, caddr_t), SCARG(uap, val), i);
 			op += i;
 			SCARG(uap, val) = ((u_int8_t *)SCARG(uap, val)) + i;
-			m0 = m;
-			MFREE(m0, m);
+			m = m_free(m);
 		}
 		valsize = op;
 		if (error == 0)
@@ -884,7 +894,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 					SCARG(uap, avalsize), sizeof(valsize));
 	}
 	if (m != NULL)
-		(void) m_free(m);
+		(void) m_freem(m);
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -976,6 +986,7 @@ sys_getsockname(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	so = (struct socket *)fp->f_data;
 	m = m_getclr(M_WAIT, MT_SONAME);
+	MCLAIM(m, so->so_mowner);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, (struct mbuf *)0,
 	    m, (struct mbuf *)0, (struct proc *)0);
 	if (error)
@@ -1025,6 +1036,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		goto out;
 	m = m_getclr(M_WAIT, MT_SONAME);
+	MCLAIM(m, so->so_mowner);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, (struct mbuf *)0,
 	    m, (struct mbuf *)0, (struct proc *)0);
 	if (error)
@@ -1063,6 +1075,7 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
+	/* can't claim.  don't who to assign it to. */
 	if (buflen > MLEN) {
 		/*
 		 * Won't fit into a regular mbuf, so we allocate just

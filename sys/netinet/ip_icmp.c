@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.71 2002/09/23 05:51:12 simonb Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.72 2003/02/26 06:31:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.71 2002/09/23 05:51:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.72 2003/02/26 06:31:14 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -305,6 +305,7 @@ icmp_error(n, type, code, dest, destifp)
 	}
 	if (m == NULL)
 		goto freeit;
+	MCLAIM(m, n->m_owner);
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
@@ -773,6 +774,7 @@ icmp_reflect(m)
 		cp = (u_char *) (ip + 1);
 		if ((opts = ip_srcroute()) == 0 &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
+			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
 			*mtod(opts, struct in_addr *) = zeroin_addr;
 		}

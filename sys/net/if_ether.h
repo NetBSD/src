@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.28 2002/09/16 19:25:30 tron Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.29 2003/02/26 06:31:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _NET_IF_ETHER_H_
 #define _NET_IF_ETHER_H_
+
+#ifdef _KERNEL
+#include <sys/mbuf.h>
+#endif
 
 /*
  * Some basic Ethernet constants.
@@ -142,17 +146,21 @@ struct	ether_header {
  * begins with this structure.
  */
 struct	ethercom {
-	struct	 ifnet ec_if;			/* network-visible interface */
+	struct	ifnet ec_if;			/* network-visible interface */
 	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast
 						   addrs */
-	int	 ec_multicnt;			/* length of ec_multiaddrs
+	int	ec_multicnt;			/* length of ec_multiaddrs
 						   list */
-	int	 ec_capabilities;		/* capabilities, provided by
+	int	ec_capabilities;		/* capabilities, provided by
 						   driver */
-	int	 ec_capenable;			/* tells hardware which
+	int	ec_capenable;			/* tells hardware which
 						   capabilities to enable */
 
-	int	 ec_nvlans;			/* # VLANs on this interface */
+	int	ec_nvlans;			/* # VLANs on this interface */
+#ifdef MBUFTRACE
+	struct	mowner ec_rx_mowner;		/* mbufs received */
+	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
+#endif
 };
 
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */

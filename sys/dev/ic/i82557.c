@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.72 2003/02/04 17:50:53 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.73 2003/02/26 06:31:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.72 2003/02/04 17:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.73 2003/02/26 06:31:09 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -887,6 +887,7 @@ fxp_start(struct ifnet *ifp)
 				    sc->sc_dev.dv_xname);
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -1206,6 +1207,7 @@ fxp_rxintr(struct fxp_softc *sc)
 			MGETHDR(m0, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			memcpy(mtod(m0, caddr_t),
 			    mtod(m, caddr_t), len);
 			FXP_INIT_RFABUF(sc, m);
@@ -1830,6 +1832,7 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 	if (m == NULL)
 		return (ENOBUFS);
 
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);

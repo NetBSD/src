@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.25 2003/02/20 00:55:21 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.26 2003/02/26 06:31:09 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.25 2003/02/20 00:55:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.26 2003/02/26 06:31:09 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -1047,6 +1047,7 @@ gem_start(ifp)
 				    sc->sc_dev.dv_xname);
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -1503,6 +1504,7 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	if (m == NULL)
 		return (ENOBUFS);
 
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);

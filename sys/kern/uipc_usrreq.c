@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.58 2003/02/25 09:56:15 pk Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.59 2003/02/26 06:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.58 2003/02/25 09:56:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.59 2003/02/26 06:31:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,7 +951,7 @@ unp_internalize(control, p)
 			return (E2BIG);
 
 		/* allocate a cluster and try again */
-		MCLGET(control, M_WAIT);
+		m_clget(control, M_WAIT);
 		if ((control->m_flags & M_EXT) == 0)
 			return (ENOBUFS);	/* allocation failed */
 
@@ -1006,7 +1006,7 @@ unp_addsockcred(p, control)
 		if (space > MCLBYTES)
 			MEXTMALLOC(m, space, M_WAITOK);
 		else
-			MCLGET(m, M_WAIT);
+			m_clget(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
 			return (control);

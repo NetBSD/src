@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.102 2002/09/17 13:10:59 darrenr Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.103 2003/02/26 06:31:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.102 2002/09/17 13:10:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.103 2003/02/26 06:31:15 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -198,6 +198,7 @@ ip_output(m0, va_alist)
 		mtu_p = NULL;
 	va_end(ap);
 
+	MCLAIM(m, &ip_tx_mowner);
 #ifdef IPSEC
 	so = ipsec_getsocket(m);
 	(void)ipsec_setsocket(m, NULL);
@@ -686,6 +687,7 @@ skip_ipsec:
 			ipstat.ips_odropped++;
 			goto sendorfree;
 		}
+		MCLAIM(m, m0->m_owner);
 		*mnext = m;
 		mnext = &m->m_nextpkt;
 		m->m_data += max_linkhdr;
@@ -858,6 +860,7 @@ ip_insertoptions(m, opt, phlen)
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
 		if (n == 0)
 			return (m);
+		MCLAIM(n, m->m_owner);
 		M_COPY_PKTHDR(n, m);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= sizeof(struct ip);
@@ -1076,6 +1079,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_OPTIONS:
 		case IP_RETOPTS:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			MCLAIM(m, so->so_mowner);
 			if (inp->inp_options) {
 				m->m_len = inp->inp_options->m_len;
 				bcopy(mtod(inp->inp_options, caddr_t),
@@ -1092,6 +1096,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVIF:
 		case IP_ERRORMTU:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			MCLAIM(m, so->so_mowner);
 			m->m_len = sizeof(int);
 			switch (optname) {
 
@@ -1149,10 +1154,13 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
 			error = ip_getmoptions(optname, inp->inp_moptions, mp);
+			if (*mp)
+				MCLAIM(*mp, so->so_mowner);
 			break;
 
 		case IP_PORTRANGE:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			MCLAIM(m, so->so_mowner);
 			m->m_len = sizeof(int);
 
 			if (inp->inp_flags & INP_LOWPORT)

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.21 2003/01/15 22:05:38 bouyer Exp $ */
+/*      $NetBSD: sgec.c,v 1.22 2003/02/26 06:31:10 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.21 2003/01/15 22:05:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22 2003/02/26 06:31:10 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -563,6 +563,7 @@ ze_add_rxbuf(sc, i)
 	if (m == NULL)
 		return (ENOBUFS);
 
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);

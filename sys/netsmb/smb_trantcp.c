@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.8 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.9 2003/02/26 06:31:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.8 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.9 2003/02/26 06:31:18 matt Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct proc *p)
 #ifndef __NetBSD__
 	error = soconnect(so, (struct sockaddr*)to, p);
 #else
-	MGET(m, M_WAIT, MT_SONAME);
+	m = m_get(M_WAIT, MT_SONAME);
 	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
 	m->m_len = sizeof(struct sockaddr);
 	error = soconnect(so, m);

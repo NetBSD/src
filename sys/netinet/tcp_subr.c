@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.137 2002/11/24 10:52:47 scw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.138 2003/02/26 06:31:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.137 2002/11/24 10:52:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.138 2003/02/26 06:31:16 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -285,6 +285,12 @@ struct evcnt tcp_reass_fragdup = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 
 #endif /* TCP_REASS_COUNTERS */
 
+#ifdef MBUFTRACE
+struct mowner tcp_mowner = { "tcp" };
+struct mowner tcp_rx_mowner = { "tcp", "rx" };
+struct mowner tcp_tx_mowner = { "tcp", "tx" };
+#endif
+
 /*
  * Tcp initialization
  */
@@ -359,6 +365,10 @@ tcp_init()
 	evcnt_attach_static(&tcp_reass_segdup);
 	evcnt_attach_static(&tcp_reass_fragdup);
 #endif /* TCP_REASS_COUNTERS */
+
+	MOWNER_ATTACH(&tcp_tx_mowner);
+	MOWNER_ATTACH(&tcp_rx_mowner);
+	MOWNER_ATTACH(&tcp_mowner);
 }
 
 /*
@@ -427,6 +437,7 @@ tcp_template(tp)
 		}
 		if (m == NULL)
 			return NULL;
+		MCLAIM(m, &tcp_mowner);
 		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 
@@ -594,6 +605,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m) {
+			MCLAIM(m, &tcp_tx_mowner);
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
@@ -694,6 +706,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 				return ENOBUFS;
 			}
 
+			MCLAIM(n, &tcp_tx_mowner);
 			n->m_data += max_linkhdr;
 			n->m_len = hlen + tlen;
 			m_copyback(n, 0, hlen, mtod(m, caddr_t));

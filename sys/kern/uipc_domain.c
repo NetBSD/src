@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.37 2002/05/12 20:36:58 matt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.38 2003/02/26 06:31:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.37 2002/05/12 20:36:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.38 2003/02/26 06:31:11 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -128,6 +128,13 @@ domaininit()
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_init)
 			(*dp->dom_init)();
+#ifdef MBUFTRACE
+		if (dp->dom_mowner.mo_name[0] == '\0') {
+			strncpy(dp->dom_mowner.mo_name, dp->dom_name,
+			    sizeof(dp->dom_mowner.mo_name));
+			MOWNER_ATTACH(&dp->dom_mowner);
+		}
+#endif
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_init)
 				(*pr->pr_init)();

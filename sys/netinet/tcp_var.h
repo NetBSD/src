@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.94 2002/11/02 07:28:15 perry Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.95 2003/02/26 06:31:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -649,6 +649,12 @@ extern	int tcp_rst_ppslim;
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
+
+#ifdef MBUFTRACE
+extern	struct mowner tcp_rx_mowner;
+extern	struct mowner tcp_tx_mowner;
+extern	struct mowner tcp_mowner;
+#endif
 
 #define	TCPCTL_VARIABLES { \
 	{ 0 },					\

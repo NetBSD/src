@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.158 2003/02/18 14:37:08 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.159 2003/02/26 06:31:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.158 2003/02/18 14:37:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.159 2003/02/26 06:31:20 matt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -315,7 +315,7 @@ nfs_access(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, attrflag, cachevalid;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int32_t mode, rmode;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
@@ -613,7 +613,7 @@ nfs_getattr(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos;
 	int error = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
 	
 	/*
@@ -743,7 +743,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	caddr_t bpos, dpos, cp2;
 	u_int32_t *tl;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
 
 	nfsstats.rpccnt[NFSPROC_SETATTR]++;
@@ -810,7 +810,7 @@ nfs_lookup(v)
 	caddr_t cp;
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	long len;
 	nfsfh_t *fhp;
 	struct nfsnode *np;
@@ -1112,7 +1112,7 @@ nfs_readlinkrpc(vp, uiop, cred)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, len, attrflag;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
 
 	nfsstats.rpccnt[NFSPROC_READLINK]++;
@@ -1142,7 +1142,7 @@ nfs_readrpc(vp, uiop)
 	caddr_t cp;
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp;
 	int error = 0, len, retlen, tsiz, eof, attrflag;
 	const int v3 = NFS_ISV3(vp);
@@ -1207,7 +1207,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 	caddr_t cp;
 	int32_t t1, t2, backup;
 	caddr_t bpos, dpos, cp2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, len, tsiz, wccflag = NFSV3_WCCRATTR, rlen, commit;
 	const int v3 = NFS_ISV3(vp);
@@ -1334,7 +1334,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	char *cp2;
 	caddr_t bpos, dpos;
 	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int32_t rdev;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -1446,7 +1446,7 @@ nfs_create(v)
 	struct vnode *newvp = (struct vnode *)0;
 	caddr_t bpos, dpos, cp2;
 	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
 	/*
@@ -1635,7 +1635,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
@@ -1759,7 +1759,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, fwccflag = NFSV3_WCCRATTR, twccflag = NFSV3_WCCRATTR;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(fdvp);
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
@@ -1805,7 +1805,7 @@ nfs_link(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	/* XXX Should be const and initialised? */
 	int v3;
 
@@ -1885,7 +1885,7 @@ nfs_symlink(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int slen, error = 0, wccflag = NFSV3_WCCRATTR, gotvp;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -1969,7 +1969,7 @@ nfs_mkdir(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
 	len = cnp->cn_namelen;
@@ -2049,7 +2049,7 @@ nfs_rmdir(v)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
 	if (dvp == vp) {
@@ -2188,7 +2188,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	caddr_t cp;
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsnode *dnp = VTONFS(vp);
 	u_quad_t fileno;
@@ -2393,7 +2393,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	int32_t t1, t2;
 	struct vnode *newvp;
 	caddr_t bpos, dpos, cp2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nameidata nami, *ndp = &nami;
 	struct componentname *cnp = &ndp->ni_cnd;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -2698,7 +2698,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 	struct nfsnode *np, *dnp = VTONFS(dvp);
 	caddr_t bpos, dpos, cp2;
 	int error = 0, fhlen, attrflag;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	nfsfh_t *nfhp;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -2768,7 +2768,7 @@ nfs_commit(vp, offset, cnt, procp)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 
 #ifdef fvdl_debug
 	printf("commit %lu - %lu\n", (unsigned long)offset,
@@ -2930,7 +2930,7 @@ nfs_pathconf(v)
 	} */ *ap = v;
 	struct nfsv3_pathconf *pcp;
 	struct vnode *vp = ap->a_vp;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep, *md, *mb;
 	int32_t t1, t2;
 	u_int32_t *tl;
 	caddr_t bpos, dpos, cp, cp2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.20 2002/12/01 23:02:11 matt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.21 2003/02/26 06:31:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.20 2002/12/01 23:02:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.21 2003/02/26 06:31:19 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -250,7 +250,7 @@ loop:
 		if (rp->rc_flag & RC_REPMBUF)
 			m_freem(rp->rc_reply);
 		if (rp->rc_flag & RC_NAM)
-			MFREE(rp->rc_nam, mb);
+			(void) m_free(rp->rc_nam);
 		rp->rc_flag &= (RC_LOCKED | RC_WANTED);
 	}
 	TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.18 2002/12/14 11:12:24 martin Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.19 2003/02/26 06:31:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.18 2002/12/14 11:12:24 martin Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.19 2003/02/26 06:31:21 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +49,13 @@ __RCSID("$NetBSD: mbuf.c,v 1.18 2002/12/14 11:12:24 martin Exp $");
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/pool.h>
+#include <sys/sysctl.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <errno.h>
+#include <err.h>
 #include "netstat.h"
 
 #define	YES	1
@@ -76,8 +79,11 @@ static struct mbtypes {
 	{ 0, 0 }
 };
 
-int nmbtypes = sizeof(mbstat.m_mtypes) / sizeof(short);
+const int nmbtypes = sizeof(mbstat.m_mtypes) / sizeof(short);
 bool seen[256];			/* "have we seen this type yet?" */
+
+int mbstats_ctl[] = { CTL_KERN, KERN_MBUF, MBUF_STATS };
+int mowners_ctl[] = { CTL_KERN, KERN_MBUF, MBUF_MOWNERS };
 
 /*
  * Print mbuf statistics.
@@ -90,10 +96,12 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 {
 	u_long totmem, totused, totpct;
 	u_int totmbufs;
-	int i;
+	int i, lines;
 	struct mbtypes *mp;
-
-	int	mclbytes,	msize;
+	size_t len;
+	void *data;
+	struct mowner *mo;
+	int mclbytes, msize;
 
 	if (nmbtypes != 256) {
 		fprintf(stderr,
@@ -101,6 +109,18 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 		        getprogname());
 		return;
 	}
+
+	if (use_sysctl) {
+		size_t mbstatlen = sizeof(mbstat);
+		if (sysctl(mbstats_ctl,
+			    sizeof(mbstats_ctl) / sizeof(mbstats_ctl[0]),
+			    &mbstat, &mbstatlen, NULL, 0) < 0) {
+			warn("mbstat: sysctl failed");
+			return;
+		}
+		goto printit;
+	}
+
 	if (mbaddr == 0) {
 		fprintf(stderr, "%s: mbstat: symbol not in namelist\n",
 		    getprogname());
@@ -135,6 +155,7 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	if (kread(mclpooladdr, (char *)&mclpa, sizeof (mclpa)))
 		return;
 
+    printit:
 	totmbufs = 0;
 	for (mp = mbtypes; mp->mt_name; mp++)
 		totmbufs += mbstat.m_mtypes[mp->mt_type];
@@ -151,6 +172,9 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 			printf("\t%u mbufs allocated to <mbuf type %d>\n",
 			    mbstat.m_mtypes[i], i);
 		}
+
+	if (use_sysctl)		/* XXX */
+		goto dump_mowners;
 
 	printf("%lu/%lu mapped pages in use\n",
 	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
@@ -174,4 +198,73 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
+
+    dump_mowners:
+ 	if (sflag < 2)
+		return;
+
+	if (!use_sysctl)
+		return;
+
+	if (sysctl(mowners_ctl, sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
+		    NULL, &len, NULL, 0) < 0) {
+		if (errno == ENOPROTOOPT)
+			return;
+		warn("mowners: sysctl test");
+		return;
+	}
+	len += 10 * sizeof(mo);		/* add some slop */
+	data = malloc(len);
+	if (data == NULL) {
+		warn("malloc(%lu)", (u_long)len);
+		return;
+	}
+
+	if (sysctl(mowners_ctl, sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
+		    data, &len, NULL, 0) < 0) {
+		warn("mowners: sysctl get");
+		free(data);
+		return;
+	}
+
+	for (mo = (void *) data; len >= sizeof(*mo); len -= sizeof(*mo), mo++) {
+		char buf[32];
+		if (vflag == 1 &&
+		    mo->mo_claims == 0 &&
+		    mo->mo_ext_claims == 0 &&
+		    mo->mo_cluster_claims == 0)
+			continue;
+		if (vflag == 0 &&
+		    mo->mo_claims == mo->mo_releases &&
+		    mo->mo_ext_claims == mo->mo_ext_releases &&
+		    mo->mo_cluster_claims == mo->mo_cluster_releases)
+			continue;
+		snprintf(buf, sizeof(buf), "%16s %-13s",
+		    mo->mo_name, mo->mo_descr);
+		if ((lines % 24) == 0 || lines > 24) {
+			printf("%30s %-8s %10s %10s %10s\n",
+			    "", "", "small", "ext", "cluster");
+			lines = 1;
+		}
+		printf("%30s %-8s %10lu %10lu %10lu\n",
+		    buf, "inuse",
+		    mo->mo_claims - mo->mo_releases,
+		    mo->mo_ext_claims - mo->mo_ext_releases,
+		    mo->mo_cluster_claims - mo->mo_cluster_releases);
+		lines++;
+		if (vflag) {
+			printf("%30s %-8s %10lu %10lu %10lu\n",
+			    "", "claims",
+			    mo->mo_claims,
+			    mo->mo_ext_claims,
+			    mo->mo_cluster_claims);
+			printf("%30s %-8s %10lu %10lu %10lu\n",
+			    "", "releases",
+			    mo->mo_releases,
+			    mo->mo_ext_releases,
+			    mo->mo_cluster_releases);
+			lines += 2;
+		}
+	}
+	free(data);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.161 2003/02/25 22:12:24 he Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.162 2003/02/26 06:31:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.161 2003/02/25 22:12:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.162 2003/02/26 06:31:15 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -797,6 +797,7 @@ tcp_input(m, va_alist)
 	int af;		/* af on the wire */
 	struct mbuf *tcp_saveti = NULL;
 
+	MCLAIM(m, &tcp_rx_mowner);
 	va_start(ap, m);
 	toff = va_arg(ap, int);
 	(void)va_arg(ap, int);		/* ignore value, advance ap */
@@ -1262,6 +1263,7 @@ findpcb:
 				MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
 				if (!tcp_saveti)
 					goto nosave;
+				MCLAIM(m, &tcp_mowner);
 				tcp_saveti->m_len = iphlen;
 				m_copydata(m, 0, iphlen,
 				    mtod(tcp_saveti, caddr_t));
@@ -3298,6 +3300,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)
 		goto resetandabort;
+	MCLAIM(am, &tcp_mowner);
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, caddr_t), src->sa_len);
 	if (inp) {
@@ -3712,6 +3715,7 @@ syn_cache_respond(sc, m)
 	}
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &tcp_tx_mowner);
 
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
