@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.28.4.6 2000/10/16 21:36:08 tv Exp $
+.\"	$NetBSD: packages.7,v 1.28.4.7 2001/01/25 19:49:32 jhawk Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -300,8 +300,10 @@ If set to
 .Dq NO ,
 do not run 'check-shlibs' even if PKG_DEVELOPER is set. This prevents
 errors on emul/compat packages (e.g. Linux binaries, ...).
-.It NOCLEANDEPENDS
-Don't clean dependent packages
+.It MAKEFILE
+Name of the Makefile in ${WRKSRC}, used in the default build and
+install targets. Default: 
+.Dq Makefile .
 .It BROKEN	
 Package is broken.  Set this string to the reason why.
 .It RESTRICTED
