@@ -42,19 +42,12 @@ Jonathan:
 	needs to  skip getrawpartition() (and  c on i386).
 
 Somebody:
-    --  remove any possibl-stale ld.so.cache files from the target
+    --  remove any possibly-stale ld.so.cache files from the target
         /etc after unpacking sets. Maybe just don't copy ld.so.cache
         from /etc.old?
 
     --  set rc.configured, or just remind users to edit rc.conf?
 
-    --  pmax miniroots have tar in /bin.  Fix that, or get rid of 
-	hardcoded pathnames to /usr.    Maybe use stat() to do pathsearch
-	(/bin, /usr/bin) in current root  for tools (tar, gunzip, ...) 
-	not present on a `normal' root?
-
-    --  Do mkdir("/mnt2") before mounting sets, instead of relying
-	on the ramdisk/miniroot/  having /mnt2.
 
     --  If we're doing a fresh install and there's already a label
 	on the disk, maybe use that intsead  of the compiled-in default
