@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.5 2001/06/19 13:42:22 wiz Exp $	*/
+/*	$NetBSD: display.c,v 1.6 2002/03/23 01:28:10 thorpej Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -68,14 +68,17 @@ char *screenbuf = NULL;
 static char **procstate_names;
 static char **cpustate_names;
 static char **memory_names;
+static char **swap_names;
 
 static int num_procstates;
 static int num_cpustates;
 static int num_memory;
+static int num_swap;
 
 static int *lprocstates;
 static int *lcpustates;
 static int *lmemory;
+static int *lswap;
 
 static int *cpustate_columns;
 static int cpustate_total_length;
@@ -152,6 +155,10 @@ struct statics *statics;
 	memory_names = statics->memory_names;
 	num_memory = string_count(memory_names);
 	lmemory = (int *)malloc(num_memory * sizeof(int));
+
+	swap_names = statics->swap_names;
+	num_swap = string_count(swap_names);
+	lswap = (int *)malloc(num_swap * sizeof(int));
 
 	/* calculate starting columns where needed */
 	cpustate_total_length = 0;
@@ -544,6 +551,42 @@ int *stats;
     /* format the new line */
     summary_format(new, stats, memory_names);
     line_update(memory_buffer, new, x_mem, y_mem);
+}
+
+/*  
+ *  *_swap(stats) - print "Swap: " followed by the memory summary string
+ *  
+ *  Assumptions:  cursor is on "lastline"
+ *                for i_memory ONLY: cursor is on the previous line
+ */
+    
+char swap_buffer[MAX_COLS];
+
+void
+i_swap(stats)
+
+int *stats;
+
+{
+    fputs("\nSwap: ", stdout);
+    lastline++;
+
+    /* format and print the swap summary */
+    summary_format(swap_buffer, stats, swap_names);
+    fputs(swap_buffer, stdout);
+}
+
+void
+u_swap(stats)
+
+int *stats;
+
+{
+    static char new[MAX_COLS];
+
+    /* format the new line */
+    summary_format(new, stats, swap_names);
+    line_update(swap_buffer, new, x_swap, y_swap);
 }
 
 /*
