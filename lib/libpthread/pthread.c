@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.5 2001/07/17 20:22:41 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.6 2001/07/24 21:17:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <ucontext.h>
-#include <sys/queue.h>
 
 #include "sched.h"
 #include "pthread.h"
@@ -317,7 +316,7 @@ pthread_join(pthread_t thread, void **valptr)
 
 	/* All ours. */
 	thread->pt_state = PT_STATE_DEAD;
-	pthread_spinunlock(self, &self->pt_join_lock);
+	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
