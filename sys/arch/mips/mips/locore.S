@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55 1998/09/11 16:46:32 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.56 1998/09/13 10:29:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -249,7 +249,7 @@ _C_LABEL(kernel_text):
  */
 NLEAF(sigcode)
 	addu	a0, sp, 16		# address of sigcontext
-	li	v0, SYS_sigreturn	# sigreturn(scp)
+	li	v0, SYS___sigreturn14	# sigreturn(scp)
 	syscall
 	break	0			# just in case sigreturn fails
 ALEAF(esigcode)

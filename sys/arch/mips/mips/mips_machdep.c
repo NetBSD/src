@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.30 1998/09/11 16:46:33 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.31 1998/09/13 10:29:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.30 1998/09/11 16:46:33 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.31 1998/09/13 10:29:05 thorpej Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
@@ -755,59 +756,51 @@ int sigpid = 0;
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct sigframe *fp;
 	int *regs;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, fsize;
+	int onstack;
 	struct sigcontext ksc;
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in data space, the
-	 * call to grow() is a nop, and the copyout()
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
-	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+
+	/* Do we need to jump onto the signal stack? */
+	onstack = 
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		                                  psp->ps_sigstk.ss_size -
-		                                  fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sigframe *)(regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-#if defined(UVM)
-		(void)uvm_grow(p, (unsigned)fp);
-#else
-		(void)grow(p, (unsigned)fp);
-#endif
+						  psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)regs[SP];
+	fp--;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
+		       p->p_pid, sig, &onstack, fp, &fp->sf_sc);
 #endif
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	ksc.sc_onstack = oonstack;
-	ksc.sc_mask = mask;
+
+	/* Build stack frame for signal trampoline. */
 	ksc.sc_pc = regs[PC];
 	ksc.mullo = regs[MULLO];
 	ksc.mulhi = regs[MULHI];
+
+	/* Save register context. */
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
 	memcpy(&ksc.sc_regs[1], &regs[1],
-		sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
+	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
+
+	/* Save the floating-pointstate, if necessary, then copy it. */
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		extern struct proc *fpcurproc;
@@ -817,22 +810,39 @@ sendsig(catcher, sig, mask, code)
 			savefpregs(p);
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
+
+	/* Save signal stack. */
+	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	ksc.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	/*
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &ksc.__sc_mask13);
+#endif
+
 	if (copyout(&ksc, &fp->sf_sc, sizeof(ksc))) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+#ifdef DEBUG
+		if ((sigdebug & SDB_FOLLOW) ||
+		    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
+			printf("sendsig(%d): copyout failed on sig %d\n",
+			    p->p_pid, sig);
+#endif
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
+
+	/* Set up the registers to return to sigcode. */
 	regs[A0] = sig;
 	regs[A1] = code;
 	regs[A2] = (int)&fp->sf_sc;
@@ -841,9 +851,8 @@ sendsig(catcher, sig, mask, code)
 	regs[PC] = (int)catcher;
 	regs[T9] = (int)catcher;
 	regs[SP] = (int)fp;
-	/*
-	 * Signal trampoline code is at base of user stack.
-	 */
+
+	/* Signal trampoline code is at base of user stack. */
 	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -865,58 +874,53 @@ sendsig(catcher, sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp;
-	int *regs;
+	int error, *regs;
 	struct sigcontext ksc;
-	int error;
 
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
-	regs = p->p_md.md_regs;
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	error = copyin(scp, &ksc, sizeof(ksc));
-	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
-#ifdef DEBUG
-		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-		printf("  old sp %x ra %x pc %x\n",
-			regs[SP], regs[RA], regs[PC]);
-		printf("  new sp %x ra %x pc %x err %d z %x\n",
-			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
-			error, ksc.sc_regs[ZERO]);
-#endif
+	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
+		return (error);
+
+	if (ksc.sc.regs[ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);
-	}
-	scp = &ksc;
-	/*
-	 * Restore the user supplied information
-	 */
-	if (scp->sc_onstack & 01)
+
+	/* Resture the register context. */
+	regs = p->p_md.md_regs;
+	regs[PC] = ksc.sc_pc;
+	regs[MULLO] = ksc.mullo;
+	rege[MULHI] = ksc.mulhi;
+	memcpy(&regs[1], &scp->sc_regs[1],
+	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
+	if (scp->sc_fpused)
+		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+
+	/* Restore signal stack. */
+	if (ksc.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	regs[PC] = scp->sc_pc;
-	regs[MULLO] = scp->mullo;
-	regs[MULHI] = scp->mulhi;
-	memcpy(&regs[1], &scp->sc_regs[1],
-		sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
-	if (scp->sc_fpused)
-		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+
 	return (EJUSTRETURN);
 }
 
