@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1998/02/24 05:46:07 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1998/02/24 05:49:28 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@ struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
 struct devnametobdevmaj powerpc_nam2blk[] = {
-	{ "ofd",	0 },
+	{ "ofdisk",	0 },
 #ifdef notyet
 	{ "md",		XXX },
 #endif
