@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 1998/08/16 23:30:00 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4 1998/08/23 02:48:28 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,16 +36,21 @@
 
 #include <machine/cpu.h>
 
-typedef unsigned long vaddr_t;
-typedef unsigned long long paddr_t;
+/* All cells are 8 byte slots */
+typedef u_int64_t cell_t;
+/* 
+ * Zero extend -- We force zero extension in case someone else
+ *		  sign extended these values elsewhere.
+ */
+#define ZEX(x)	(cell_t)(u_int)(int)(x)
 
 vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
 vaddr_t OF_alloc_virt __P((int len, int align));
 int OF_free_virt __P((vaddr_t vaddr, int len));
 int OF_unmap_virt __P((vaddr_t vaddr, int len));
-int OF_map_phys __P((u_int64_t paddr, off_t size, vaddr_t vaddr, int mode));
-u_int64_t OF_alloc_phys __P((int len, int align));
-u_int64_t OF_claim_phys __P((paddr_t phys, int len));
+vaddr_t OF_map_phys __P((paddr_t paddr, off_t size, vaddr_t vaddr, int mode));
+paddr_t OF_alloc_phys __P((int len, int align));
+paddr_t OF_claim_phys __P((paddr_t phys, int len));
 int OF_free_phys __P((paddr_t paddr, int len));
 
 extern int openfirmware(void *);
@@ -81,88 +86,88 @@ __dead void
 _rtt()
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
 	} args = {
-		0, "exit",
-		0,
-		0
+		(cell_t)&"exit",
+		(cell_t)0,
+		(cell_t)0
 	};
 
 	openfirmware(&args);
 	while (1);			/* just in case */
 }
 
-int
+u_int
 OF_finddevice(name)
 	char *name;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *device;
-		int pad2; uint phandle;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t device;
+		cell_t phandle;
 	} args = {
-		0, "finddevice",
-		1,
-		1,
+		(cell_t)&"finddevice",
+		(cell_t)1,
+		(cell_t)1,
 	};	
 	
-	args.device = name;
+	args.device = (cell_t)name;
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
 }
 
-int
+u_int
 OF_instance_to_package(ihandle)
-	int ihandle;
+	u_int ihandle;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint ihandle;
-		int pad2; uint phandle;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t phandle;
 	} args = {
-		0, "instance-to-package",
-		1,
-		1,
+		(cell_t)&"instance-to-package",
+		(cell_t)1,
+		(cell_t)1,
 	};
 	
-	args.ihandle = ihandle;
+	args.ihandle = ZEX(ihandle);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
 }
 
-int
+u_int
 OF_getprop(handle, prop, buf, buflen)
-	int handle;
+	u_int handle;
 	char *prop;
 	void *buf;
 	int buflen;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint phandle;
-		int pad2; char *prop;
-		int pad3; void *buf;
-		int64_t buflen;
-		int64_t size;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prop;
+		cell_t buf;
+		cell_t buflen;
+		cell_t size;
 	} args = {
-		0, "getprop",
-		4,
-		1,
+		(cell_t)&"getprop",
+		(cell_t)4,
+		(cell_t)1,
 	};
 	
-	args.phandle = handle;
-	args.prop = prop;
-	args.buf = buf;
+	args.phandle = ZEX(handle);
+	args.prop = (cell_t)prop;
+	args.buf = (cell_t)buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -172,29 +177,29 @@ OF_getprop(handle, prop, buf, buflen)
 #ifdef	__notyet__	/* Has a bug on FirePower */
 int
 OF_setprop(handle, prop, buf, len)
-	int handle;
+	u_int handle;
 	char *prop;
 	void *buf;
 	int len;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad; uint phandle;
-		int pad1; char *prop;
-		int pad2; void *buf;
-		int64_t len;
-		int64_t size;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prop;
+		cell_t buf;
+		cell_t len;
+		cell_t size;
 	} args = {
-		0, "setprop",
-		4,
-		1,
+		(cell_t)&"setprop",
+		(cell_t)4,
+		(cell_t)1,
 	};
 	
-	args.phandle = handle;
-	args.prop = prop;
-	args.buf = buf;
+	args.phandle = ZEX(handle);
+	args.prop = (cell_t)prop;
+	args.buf = (cell_t)buf;
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -202,25 +207,25 @@ OF_setprop(handle, prop, buf, len)
 }
 #endif
 
-int
+u_int
 OF_open(dname)
 	char *dname;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *dname;
-		int pad2; uint handle;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t dname;
+		cell_t handle;
 	} args = {
-		0, "open",
-		1,
-		1,
-		0, NULL,
-		0, 0
+		(cell_t)&"open",
+		(cell_t)1,
+		(cell_t)1,
+		(cell_t)NULL,
+		(cell_t)0
 	};
 	
-	args.dname = dname;
+	args.dname = (cell_t)dname;
 	if (openfirmware(&args) == -1 ||
 	    args.handle == 0)
 		return -1;
@@ -229,45 +234,45 @@ OF_open(dname)
 
 void
 OF_close(handle)
-	int handle;
+	u_int handle;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint handle;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t handle;
 	} args = {
-		0, "close",
+		(cell_t)&"close",
 		1,
 		0,
 	};
 	
-	args.handle = handle;
+	args.handle = ZEX(handle);
 	openfirmware(&args);
 }
 
 int
 OF_write(handle, addr, len)
-	int handle;
+	u_int handle;
 	void *addr;
 	int len;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint ihandle;
-		int pad2; void *addr;
-		int64_t len;
-		int pad3; int actual;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t addr;
+		cell_t len;
+		cell_t actual;
 	} args = {
-		0, "write",
-		3,
-		1,
+		(cell_t)&"write",
+		(cell_t)3,
+		(cell_t)1,
 	};
 
-	args.ihandle = handle;
-	args.addr = addr;
+	args.ihandle = ZEX(handle);
+	args.addr = (cell_t)addr;
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -276,26 +281,26 @@ OF_write(handle, addr, len)
 
 int
 OF_read(handle, addr, len)
-	int handle;
+	u_int handle;
 	void *addr;
 	int len;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint ihandle;
-		int pad2; void *addr;
-		int64_t len;
-		int pad3; int actual;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t addr;
+		cell_t len;
+		cell_t actual;
 	} args = {
-		0, "read",
-		3,
-		1,
+		(cell_t)&"read",
+		(cell_t)3,
+		(cell_t)1,
 	};
 
-	args.ihandle = handle;
-	args.addr = addr;
+	args.ihandle = ZEX(handle);
+	args.addr = (cell_t)addr;
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -304,26 +309,26 @@ OF_read(handle, addr, len)
 
 int
 OF_seek(handle, pos)
-	int handle;
+	u_int handle;
 	u_quad_t pos;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; uint handle;
-		int64_t poshi;
-		int64_t poslo;
-		int pad3; int status;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t handle;
+		cell_t poshi;
+		cell_t poslo;
+		cell_t status;
 	} args = {
-		0, "seek",
-		3,
-		1,
+		(cell_t)&"seek",
+		(cell_t)3,
+		(cell_t)1,
 	};
 	
-	args.handle = handle;
-	args.poshi = (int)(pos >> 32);
-	args.poslo = (int)pos;
+	args.handle = ZEX(handle);
+	args.poshi = ZEX(pos >> 32);
+	args.poslo = ZEX(pos);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
@@ -335,18 +340,18 @@ OF_release(virt, size)
 	u_int size;
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; void *virt;
-		u_int64_t size;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t virt;
+		cell_t size;
 	} args = {
-		0, "release",
-		2,
-		0,
+		(cell_t)&"release",
+		(cell_t)2,
+		(cell_t)0,
 	};
 	
-	args.virt = virt;
+	args.virt = (cell_t)virt;
 	args.size = size;
 	openfirmware(&args);
 }
@@ -355,21 +360,20 @@ int
 OF_milliseconds()
 {
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int64_t ms;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ms;
 	} args = {
-		0, "milliseconds",
-		0,
-		1,
+		(cell_t)&"milliseconds",
+		(cell_t)0,
+		(cell_t)1,
 	};
 	
 	openfirmware(&args);
 	return args.ms;
 }
 
-#ifndef	__notyet__
 void
 OF_chain(virt, size, entry, arg, len)
 	void *virt;
@@ -380,62 +384,43 @@ OF_chain(virt, size, entry, arg, len)
 {
 	extern int64_t romp;
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; void *virt;
-		u_int64_t size;
-		int pad2; void (*entry)();
-		int pad3; void *arg;
-		int pad4; int len;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t virt;
+		cell_t size;
+		cell_t entry;
+		cell_t arg;
+		cell_t len;
 	} args = {
-		0, "chain",
-		5,
-		0,
+		(cell_t)&"chain",
+		(cell_t)5,
+		(cell_t)0,
 	};
 
-	args.virt = virt;
+	args.virt = (cell_t)virt;
 	args.size = size;
-	args.entry = entry;
-	args.arg = arg;
+	args.entry = (cell_t)entry;
+	args.arg = (cell_t)arg;
 	args.len = len;
 	openfirmware(&args);
 	printf("OF_chain: prom returned!\n");
 
 	/* OK, firmware failed us.  Try calling prog directly */
-	entry(0, arg, len, (int)romp, (int)romp);
+	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
 	panic("OF_chain: kernel returned!\n");
 	__asm("ta 2" : :);
 }
-#else
-void
-OF_chain(virt, size, entry, arg, len)
-	void *virt;
-	u_int size;
-	void (*entry)();
-	void *arg;
-	u_int len;
-{
-	extern int64_t romp;
 
-	/*
-	 * This is a REALLY dirty hack till the firmware gets this going
-	 */
-/*	OF_release(virt, size); */
-	entry(0, arg, len, (int)romp, (int)romp);
-	panic("OF_chain: kernel returned!\n");
-}
-#endif
-
-static int stdin;
-static int stdout;
-static int mmuh = -1;
-static int memh = -1;
+static u_int stdin;
+static u_int stdout;
+static u_int mmuh = -1;
+static u_int memh = -1;
 
 void
 setup()
 {
-	int chosen;
+	u_int chosen;
 	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		_rtt();
@@ -461,27 +446,27 @@ vaddr_t vaddr;
 int len;
 {
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int pad3; vaddr_t vaddr;
-		int64_t status;
-		int64_t retaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t vaddr;
+		cell_t status;
+		cell_t retaddr;
 	} args = {
-		0,"call-method",
-		5,
-		2,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0, NULL,
-		0,
-		0
+		(cell_t)&"call-method",
+		(cell_t)5,
+		(cell_t)2,
+		(cell_t)&"claim",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)0, 
+		(cell_t)NULL,
+		(cell_t)0,
+		(cell_t)0
 	};
 
 #ifdef	__notyet
@@ -491,7 +476,7 @@ int len;
 	}
 #endif
 	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.vaddr = (cell_t)vaddr;
 	args.len = len;
 	if(openfirmware(&args) != 0)
 		return -1LL;
@@ -510,25 +495,25 @@ int align;
 {
 	static int retaddr=-1;
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int64_t status;
-		int pad4; void* retaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t status;
+		cell_t retaddr;
 	} args = {
-		0,"call-method",
-		4,
-		2,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0,
-		0, &retaddr
+		(cell_t)&"call-method",
+		(cell_t)4,
+		(cell_t)2,
+		(cell_t)&"claim",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)0, 
+		(cell_t)0,
+		(cell_t)&retaddr
 	};
 
 #ifdef	__notyet
@@ -556,21 +541,21 @@ vaddr_t vaddr;
 int len;
 {
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		int pad3; vaddr_t vaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t vaddr;
 	} args = {
-		0,"call-method",
+		(cell_t)&"call-method",
 		4,
 		0,
-		0,"release",
-		0, 0,
+		(cell_t)&"release",
 		0,
-		0, NULL
+		0,
+		NULL
 	};
 
 #ifdef	__notyet
@@ -580,7 +565,7 @@ int len;
 	}
 #endif
 	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.vaddr = (cell_t)vaddr;
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -597,21 +582,21 @@ vaddr_t vaddr;
 int len;
 {
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		int pad3; vaddr_t vaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t vaddr;
 	} args = {
-		0,"call-method",
-		4,
-		0,
-		0,"unmap",
-		0, 0,
-		0,
-		0, NULL
+		(cell_t)&"call-method",
+		(cell_t)4,
+		(cell_t)0,
+		(cell_t)&"unmap",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)NULL
 	};
 
 #ifdef	__notyet
@@ -621,7 +606,7 @@ int len;
 	}
 #endif
 	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.vaddr = (cell_t)vaddr;
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -631,37 +616,37 @@ int len;
  *
  * Only works while the prom is actively mapping us.
  */
-int
+vaddr_t
 OF_map_phys(paddr, size, vaddr, mode)
-u_int64_t paddr;
+paddr_t paddr;
 off_t size;
 vaddr_t vaddr;
 int mode;
 {
-	int phys_hi, phys_lo;
+	u_int phys_hi, phys_lo;
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		int64_t mode;
-		u_int64_t size;
-		int pad3; vaddr_t vaddr;
-		paddr_t paddr_hi;
-		paddr_t paddr_lo;
-		int64_t status;
-		int64_t retaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t mode;
+		cell_t size;
+		cell_t vaddr;
+		cell_t paddr_hi;
+		cell_t paddr_lo;
+		cell_t status;
+		cell_t retaddr;
 	} args = {
-		0,"call-method",
-		7,
-		1,
-		0,"map",
-		0, 0,
-		0, 0,
-		0, NULL,
-		0, NULL,
-		0, NULL
+		(cell_t)&"call-method",
+		(cell_t)7,
+		(cell_t)1,
+		(cell_t)&"map",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)NULL,
+		(cell_t)NULL,
+		(cell_t)NULL
 	};
 
 #ifdef	__notyet
@@ -670,24 +655,20 @@ int mode;
 		return 0LL;
 	}
 #endif
-#ifdef INT_IS_64_BITS
-	phys_hi = paddr>>32; 
-#else
-	phys_hi = 0; /* This is what Solaris does.  We gotta fix this for 64-bits */
-#endif
-	phys_lo = paddr;
+	phys_hi = (cell_t)(paddr>>32);
+	phys_lo = (cell_t)(int)paddr;
 
-	args.ihandle = mmuh;
+	args.ihandle = ZEX(mmuh);
 	args.mode = mode;
 	args.size = size;
-	args.vaddr = vaddr;
+	args.vaddr = (cell_t)vaddr;
 	args.paddr_hi = phys_hi;
 	args.paddr_lo = phys_lo;
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.status)
 		return -1;
-	return args.retaddr;
+	return (vaddr_t)args.retaddr;
 }
 
 
@@ -696,31 +677,32 @@ int mode;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 OF_alloc_phys(len, align)
 int len;
 int align;
 {
+	paddr_t paddr;
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int64_t status;
-		u_int64_t phys_hi;
-		u_int64_t phys_lo;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t status;
+		cell_t phys_hi;
+		cell_t phys_lo;
 	} args = {
-		0,"call-method",
-		4,
-		3,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0,
+		(cell_t)&"call-method",
+		(cell_t)4,
+		(cell_t)3,
+		(cell_t)&"claim",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)0, 
+		(cell_t)0,
 	};
 
 #ifdef	__notyet
@@ -729,12 +711,13 @@ int align;
 		return -1LL;
 	}
 #endif
-	args.ihandle = memh;
+	args.ihandle = ZEX(memh);
 	args.align = align;
 	args.len = len;
 	if(openfirmware(&args) != 0)
 		return -1LL;
-	return args.phys_lo; /* Kluge till we go 64-bit */
+	paddr = (paddr_t)(args.phys_hi<<32)|((unsigned int)(args.phys_lo));
+	return paddr; /* Kluge till we go 64-bit */
 }
 
 /* 
@@ -742,36 +725,37 @@ int align;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 OF_claim_phys(phys, len)
 paddr_t phys;
 int len;
 {
+	paddr_t paddr;
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int pad4; unsigned int phys_hi;
-		int pad5; unsigned int phys_lo;
-		int64_t status;
-		int64_t res;
-		u_int64_t rphys_hi;
-		u_int64_t rphys_lo;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t phys_hi;
+		cell_t phys_lo;
+		cell_t status;
+		cell_t res;
+		cell_t rphys_hi;
+		cell_t rphys_lo;
 	} args = {
-		0,"call-method",
-		6,
-		4,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0, NULL,
-		0, NULL,
-		0
+		(cell_t)&"call-method",
+		(cell_t)6,
+		(cell_t)4,
+		(cell_t)&"claim",
+		(cell_t)0,
+		(cell_t)0,
+		(cell_t)0, 
+		(cell_t)NULL,
+		(cell_t)NULL,
+		(cell_t)0
 	};
 
 #ifdef	__notyet
@@ -780,13 +764,14 @@ int len;
 		return 0LL;
 	}
 #endif
-	args.ihandle = memh;
+	args.ihandle = ZEX(memh);
 	args.len = len;
-	args.phys_hi = (unsigned int)(phys>>32);
-	args.phys_lo = (unsigned int)phys;
+	args.phys_hi = ZEX(phys>>32);
+	args.phys_lo = ZEX(phys);
 	if(openfirmware(&args) != 0)
 		return 0LL;
-	return args.rphys_lo; /* Kluge till we go 64-bit */
+	paddr = (paddr_t)(args.phys_hi<<32)|((unsigned int)(args.phys_lo));
+	return paddr;
 }
 
 /* 
@@ -800,23 +785,23 @@ paddr_t phys;
 int len;
 {
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		int pad4; unsigned int phys_hi;
-		int pad5; unsigned int phys_lo;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t phys_hi;
+		cell_t phys_lo;
 	} args = {
-		0,"call-method",
-		5,
-		0,
-		0,"release",
-		0, 0,
-		0, 
-		0, NULL,
-		0, NULL,
+		(cell_t)&"call-method",
+		(cell_t)5,
+		(cell_t)0,
+		(cell_t)&"release",
+		(cell_t)0,
+		(cell_t)0, 
+		(cell_t)NULL,
+		(cell_t)NULL,
 	};
 
 #ifdef	__notyet
@@ -825,10 +810,10 @@ int len;
 		return -1;
 	}
 #endif
-	args.ihandle = memh;
+	args.ihandle = ZEX(memh);
 	args.len = len;
-	args.phys_hi = (unsigned int)(phys>>32);
-	args.phys_lo = (unsigned int)phys;
+	args.phys_hi = ZEX(phys>>32);
+	args.phys_lo = ZEX(phys);
 	return openfirmware(&args);
 }
 
@@ -846,17 +831,17 @@ OF_claim(virt, size, align)
 #define SUNVMOF
 #ifndef SUNVMOF
 	static struct {
-		int pad; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; void *virt;
-		u_int64_t size;
-		u_int64_t align;
-		int pad2; void *baseaddr;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t virt;
+		cell_t size;
+		cell_t align;
+		cell_t baseaddr;
 	} args = {
-		0, "claim",
-		3,
-		1,
+		(cell_t)&"claim",
+		(cell_t)3,
+		(cell_t)1,
 	};
 
 
@@ -873,7 +858,7 @@ OF_claim(virt, size, align)
  * virtual and physical memory.  Ugh.
  */
 
-	u_int64_t paddr;
+	paddr_t paddr;
 	void* newvirt = NULL;
 
 	if (virt == NULL) {
@@ -882,20 +867,20 @@ OF_claim(virt, size, align)
 			return (void *)-1;
 		}
 	} else {
-		if ((newvirt = (void*)OF_claim_virt((int)virt, size)) == (void*)-1) {
+		if ((newvirt = (void*)OF_claim_virt((vaddr_t)virt, size)) == (void*)-1) {
 			printf("OF_claim_virt(%x,%d) failed w/%x\n", virt, size, newvirt);
 			return (void *)-1;
 		}
 	}
 	if ((paddr = OF_alloc_phys(size, align)) == -1) {
 		printf("OF_alloc_phys(%d,%d) failed\n", size, align);
-		OF_free_virt((int)virt, size);
+		OF_free_virt((vaddr_t)virt, size);
 		return (void *)-1;
 	}
-	if (OF_map_phys(paddr, size, (int)virt, -1) == -1) {
+	if (OF_map_phys(paddr, size, (vaddr_t)virt, -1) == -1) {
 		printf("OF_map_phys(%x,%d,%x,%d) failed\n", paddr, size, virt, -1);
-		OF_free_phys(paddr, size);
-		OF_free_virt((int)virt, size);
+		OF_free_phys((paddr_t)paddr, size);
+		OF_free_virt((vaddr_t)virt, size);
 		return (void *)-1;
 	}
 	return (void *)virt;

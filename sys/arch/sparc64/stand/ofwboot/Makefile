@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/16 23:30:00 eeh Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/23 02:48:28 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -13,13 +13,17 @@ LORDER=lorder
 TSORT=tsort 
 NM=nm
 
-
 PROG=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c #net.c netif_of.c 
 .PATH:		${S}/arch/sparc64/sparc64
 #SRCS+=		ofwmagic.S
+
+.if CROSS
 CFLAGS+=	-DNETIF_DEBUG -D__ELF__ -nostdinc
-#	NB: For some stupid reason libz cannot be compiled w/-DDEBUG
+.else
+CFLAGS+=	-DNETIF_DEBUG -D__ELF__ -D_LP64 -dp # -Wa,-Av9a #-nostdinc
+.endif
+
 NOMAN=
 STRIPFLAG=
 BINMODE=	444
@@ -28,7 +32,11 @@ OBJCOPY?=	objcopy
 NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
+.if CROSS
 RELOC=		20000
+.else
+RELOC=		100000
+.endif
 
 ENTRY=		_start
 
@@ -61,20 +69,33 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
-#	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-#	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
 	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
-	    ${OBJS} vers.o -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern
+	    ${OBJS} vers.o -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
 	mv ${PROG} ${PROG}.elf
 #	${OBJCOPY} --input-target=elf32-sparc \
 #	    --output-target=a.out-sunos-big ${PROG}.elf ${PROG}.aout
+.else
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
+	${COMPILE.c} vers.c
+	${LD} -X -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
+	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
+	mv ${PROG} ${PROG}.elf
+#	${OBJCOPY} --input-target=elf32-sparc \
+#	    --output-target=a.out-sunos-big ${PROG}.elf ${PROG}.aout
+.endif
 
 .include <bsd.prog.mk>
 
+.if CROSS
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE -D__ELF__
+.else
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -Wa,-Av9 #-Wa,-Av8plusa
+.endif
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}

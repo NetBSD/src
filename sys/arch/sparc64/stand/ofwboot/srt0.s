@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,15 +66,24 @@ _start:
 	/*
 	 * Start by creating a stack for ourselves.
 	 */
-#if 0
-	set	ebootstack - CCFSZ - 80, %g1
-	save	%g1, 0, %sp
-#else
+#if 1
+	/* 64-bit stack */
 	btst	1, %sp
-	set	CC64FSZ, %g1
+	set	CC64FSZ, %g1	! Frame Size (negative)
+	bnz	1f
+	 set	BIAS, %g2	! Bias (negative)
+	andn	%sp, 0x0f, %sp	! 16 byte align, per ELF spec.
+	add	%g1, %g2, %g1	! Frame + Bias
+1:
+	sub	%sp, %g1, %g1
+	save	%g1, %g0, %sp
+#else
+	/* 32-bit stack */
+	btst	1, %sp
+	set	CC64FSZ, %g1	! Frame Size (negative)
 	bz	1f
-	set	BIAS, %g2
-	add	%g1, %g2, %g1
+	 set	BIAS, %g2
+	sub	%g1, %g2, %g1
 1:
 	sub	%sp, %g1, %g1	! This is so we properly sign-extend things
 	andn	%g1, 0x7, %g1
@@ -90,6 +99,10 @@ _start:
 	wrpr	%g0, 0, %pil	! So I lied
 	wrpr	%g0, PSTATE_PRIV+PSTATE_IE, %pstate
 
+	clr	%g4		! Point %g4 to start of data segment
+				! only problem is that apparently the
+				! start of the data segment is 0
+	
 	/*
 	 * XXXXXXXX Need to determine what params are passed
 	 */
@@ -133,10 +146,11 @@ _C_LABEL(syncicache):
 _C_LABEL(openfirmware):
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
-	 sethi	%hi(_C_LABEL(romp)), %l7
+	 sethi	%hi(_C_LABEL(romp)), %o1
 	
-	ldx	[%l7+%lo(_C_LABEL(romp))], %o4		! v9 stack, just load the addr and callit
+	ldx	[%o1+%lo(_C_LABEL(romp))], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
+	mov	%i0, %o0				! Copy over our parameter
 	mov	%g1, %l1
 	mov	%g2, %l2
 	mov	%g3, %l3
@@ -145,7 +159,7 @@ _C_LABEL(openfirmware):
 	mov	%g6, %l6
 	mov	%g7, %l7
 	rdpr	%pstate, %l0
-	jmpl	%o4, %o7
+	jmpl	%i4, %o7
 	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate
 	wrpr	%l0, %g0, %pstate
 	mov	%l1, %g1

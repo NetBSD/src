@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,17 +37,17 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-int OF_finddevice __P((char *name));
-int OF_instance_to_package __P((int ihandle));
-int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+u_int OF_finddevice __P((char *name));
+u_int OF_instance_to_package __P((u_int ihandle));
+u_int OF_getprop __P((u_int handle, char *prop, void *buf, int buflen));
 #ifdef	__notyet__
-int OF_setprop __P((int handle, char *prop, void *buf, int len));
+int OF_setprop __P((u_int handle, char *prop, void *buf, int len));
 #endif
-int OF_open __P((char *dname));
-void OF_close __P((int handle));
-int OF_write __P((int handle, void *addr, int len));
-int OF_read __P((int handle, void *addr, int len));
-int OF_seek __P((int handle, u_quad_t pos));
+u_int OF_open __P((char *dname));
+void OF_close __P((u_int handle));
+int OF_write __P((u_int handle, void *addr, int len));
+int OF_read __P((u_int handle, void *addr, int len));
+int OF_seek __P((u_int handle, u_int64_t pos));
 void *OF_claim __P((void *virt, u_int size, u_int align));
 void OF_release __P((void *virt, u_int size));
 int OF_milliseconds __P((void));
