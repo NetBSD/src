@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.30 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.31 2003/12/20 19:43:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.30 2003/12/18 01:10:20 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.31 2003/12/20 19:43:17 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -194,6 +194,8 @@ mach_thread_create_running(args)
 	struct lwp *l = args->l;
 	struct proc *p = l->l_proc;
 	struct mach_create_thread_child_args mctc;
+	struct mach_right *child_mr;
+	struct mach_lwp_emuldata *mle;
 	vaddr_t uaddr;
 	int flags;
 	int error;
@@ -236,6 +238,12 @@ mach_thread_create_running(args)
 	simple_unlock(&p->p_lock);
 
 	/* 
+	 * Get the child's kernel port 
+	 */
+	mle = mctc.mctc_lwp->l_emuldata;
+	child_mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	
+	/* 
 	 * The child relies on some values in mctc, so we should not
 	 * exit until it is finished with it. We catch signals so that
 	 * the process can be killed with kill -9, but we loop to avoid
@@ -247,9 +255,7 @@ mach_thread_create_running(args)
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
-
-	/* XXX do something for rep->rep_child_act */
-
+	mach_add_port_desc(rep, child_mr->mr_name);
 	mach_set_trailer(rep, *msglen);
 
 	return 0;

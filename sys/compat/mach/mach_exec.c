@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.47 2003/12/20 19:01:30 fvdl Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.48 2003/12/20 19:43:17 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.47 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.48 2003/12/20 19:43:17 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -106,13 +106,12 @@ const struct emul emul_mach = {
 	NULL,
 	NULL,
 #endif
-	NULL,
 	setregs,
 	mach_e_proc_exec,
 	mach_e_proc_fork,
 	mach_e_proc_exit,
-	NULL,
-	NULL,
+	mach_e_lwp_fork,
+	mach_e_lwp_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	mach_syscall_intern,
 #else
@@ -199,6 +198,9 @@ mach_e_proc_exec(p, epp)
 	struct exec_package *epp;
 {
 	mach_e_proc_init(p, p->p_vmspace);
+
+	if (p->p_emul != epp->ep_es->es_emul)
+		mach_e_lwp_fork(NULL, proc_representative_lwp(p));
 
 	return;
 }
@@ -360,6 +362,8 @@ mach_e_proc_exit(p)
 	struct mach_right *mr;
 	int i;
 
+	mach_e_lwp_exit(proc_representative_lwp(p));
+
 	mach_semaphore_cleanup(p);
 
 	med = (struct mach_emuldata *)p->p_emuldata;
@@ -398,6 +402,57 @@ mach_e_proc_exit(p)
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
+
+	return;
+}
+
+void
+mach_e_lwp_fork(l1, l2)
+	struct lwp *l1;
+	struct lwp *l2;
+{
+	struct mach_lwp_emuldata *mle;
+
+	mle = malloc(sizeof(*mle), M_EMULDATA, M_WAITOK);
+	l2->l_emuldata = mle;
+
+	mle->mle_kernel = mach_port_get();
+	mle->mle_kernel->mp_refcount++;
+
+	mle->mle_kernel->mp_flags |= MACH_MP_INKERNEL;
+	mle->mle_kernel->mp_datatype = MACH_MP_LWP;
+	mle->mle_kernel->mp_data = (void *)l2;
+
+#if 0
+	/* Nothing to copy from parent thread for now */
+	if (l1 != NULL);
+#endif
+
+	return;
+}
+
+void
+mach_e_lwp_exit(l)
+	struct lwp *l;
+{
+	struct mach_lwp_emuldata *mle;
+
+#ifdef DIAGNOSTIC
+	if (l->l_emuldata == NULL) {
+		printf("lwp_emuldata already freed\n");
+		return;
+	}
+#endif
+	mle = l->l_emuldata;
+
+	mle->mle_kernel->mp_data = NULL;
+	mle->mle_kernel->mp_datatype = MACH_MP_NONE;
+
+	if (--mle->mle_kernel->mp_refcount <= 0) 
+		mach_port_put(mle->mle_kernel);
+
+	free(mle, M_EMULDATA);
+	l->l_emuldata = NULL;
 
 	return;
 }
