@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.5 2001/04/30 09:05:59 scw Exp $
+#	$NetBSD: VME162,v 1.6 2001/06/10 13:16:07 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -55,6 +55,7 @@ pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	pty
 pseudo-device	vnd 2
+pseudo-device	rnd
 
 mainbus0	at root
 
