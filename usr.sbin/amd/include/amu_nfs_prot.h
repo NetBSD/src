@@ -1,4 +1,4 @@
-/* $NetBSD: amu_nfs_prot.h,v 1.8 2000/11/20 00:25:23 wiz Exp $ */
+/* $NetBSD: amu_nfs_prot.h,v 1.9 2000/11/20 00:27:23 wiz Exp $ */
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amu_nfs_prot.h,v 1.8 2000/11/20 00:25:23 wiz Exp $
+ * Id: nfs_prot_netbsd1_4.h,v 1.3 2000/01/12 16:44:49 ezk Exp
  *
  */
 
