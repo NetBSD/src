@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp $
+$NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -56,6 +56,7 @@ manufacturer	ALEPH1		0x0042	Aleph 1
 manufacturer	ICUBED		0x0046	I-Cubed
 manufacturer	BRINI		0x0050	Brini
 manufacturer	ANT		0x0053	ANT
+manufacturer	CASTLE		0x0055	Castle Technology
 manufacturer	ALSYSTEMS	0x005b	Alsystems
 manufacturer	SIMTEC		0x005f	Simtec Electronics
 manufacturer	YES		0x0060	Yellowstone Educational Solutions
@@ -86,9 +87,12 @@ podule	WILDVISION	MIDIMAX		0x0200	MIDI max
 
 podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
 
-podule	ATOMWIDE2	SERIAL		0x0090	serial interface
+podule	ATOMWIDE2	SERIAL		0x0090	multiport serial interface
 
 podule	LINGENUITY	SCSI		0x0095	16 bit SCSI interface
+podule	LINGENUITY	SCSISHARE	0x0096	16 bit SCSIShare interface
+podule	LINGENUITY	SCSI8		0x0040	8 bit SCSI interface
+podule	LINGENUITY	SCSI8SHARE	0x008c	8 bit SCSIShare interface
 
 podule	IRLAM		24I16		0x00e6	24i16 digitiser
 
@@ -125,6 +129,12 @@ podule	BRINI		LINK		0x00df	BriniLink transputer link adapter
 podule	ANT		ETHER3		0x00a4	ether 3/5 interface
 podule	ANT		ETHERB		0x00e4	ether B network slot interface
 podule	ANT		ETHERM		0x00d8	ether M dual interface NIC
+
+podule	CASTLE		SCSI16		0x00f6  8 or 16 bit SCSI2 interface
+podule	CASTLE		SCSI16SHARE	0x00f3  8 or 16 bit SCSI2Share interface
+podule	CASTLE		ETHERSCSI	0x00f5  8 or 16 bit SCSI2 interface, possibly with Ethernet 
+podule	CASTLE		ETHERSCSISHARE	0x00f4  8 or 16 bit SCSI2Share interface, possibly with Ethernet
+podule	CASTLE		SCSI32		0x012b  32 bit SCSI2 + DMA interface
 
 podule	ALSYSTEMS	SCSI		0x0107	SCSI II host adapter
 
