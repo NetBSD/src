@@ -1,16 +1,16 @@
 #!/bin/sh
-#	$NetBSD: makeconf,v 1.1 2001/04/05 12:22:10 leo Exp $
+#	$NetBSD: makeconf,v 1.2 2001/04/10 05:52:15 leo Exp $
 
 emit_file() {
 	echo "Generating $1"
 	echo '#
-# $NetBSD: makeconf,v 1.1 2001/04/05 12:22:10 leo Exp $
+# $NetBSD: makeconf,v 1.2 2001/04/10 05:52:15 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: ' > $1
-	grep -h '$NetBSD' $2 GENERIC | sed -e 's/\$NetBSD/	NetBSD/' >> $1
+	grep -h '$NetBSD' $2 GENERIC.in | sed -e 's/\$NetBSD/	NetBSD/' >> $1
 	cpp -undef -P $3 2>/dev/null < $2 |
 		sed -e '/\$NetBSD:/d' |
 		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $1
