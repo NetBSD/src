@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.130 2000/07/06 00:43:04 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.131 2000/07/19 13:44:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1803,7 +1803,7 @@ audio_mmap(sc, off, prot)
 	struct audio_ringbuffer *cb;
 	int s;
 
-	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 
 	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;
