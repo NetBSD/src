@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.3 2003/07/14 22:32:39 lukem Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.4 2004/07/04 00:21:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.3 2003/07/14 22:32:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.4 2004/07/04 00:21:55 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
 		printf("%s ", cai->cai_string);
 	} else {
 		format_bytes(cbuf, sizeof(cbuf), cai->cai_totalsize);
-		printf("%s %db/line ", cbuf, cai->cai_linesize);
+		printf("%s %dB/line ", cbuf, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
 	case    0:
