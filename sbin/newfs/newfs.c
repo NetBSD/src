@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.60 2002/09/21 18:43:39 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.61 2002/09/28 20:11:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.60 2002/09/21 18:43:39 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.61 2002/09/28 20:11:07 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,8 @@ int	needswap;		/* Filesystem not in native byte order */
 char	*disktype;
 int	unlabeled;
 #endif
+char *appleufs_volname = 0; /* Apple UFS volume name */
+int isappleufs = 0;
 
 char	device[MAXPATHLEN];
 
@@ -249,7 +251,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:g:h:i:m:o:p:s:u:" :
-	    "B:FINOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:x:";
+	    "B:FINOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:v:x:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -423,6 +425,14 @@ main(int argc, char *argv[])
 				    optarg, 1, INT_MAX);
 			}
 			break;
+		case 'v':
+			appleufs_volname = optarg;
+			if (strchr(appleufs_volname, ':') || strchr(appleufs_volname, '/'))
+				errx(1,"Apple UFS volume name cannot contain ':' or '/'");
+			if (appleufs_volname[0] == '\0')
+				errx(1,"Apple UFS volume name cannot be zero length");
+			isappleufs = 1;
+			break;
 		case 'x':
 			cylspares = strsuftoi("spare sectors per cylinder",
 			    optarg, 0, INT_MAX);
@@ -561,8 +571,15 @@ main(int argc, char *argv[])
 			pp = &lp->d_partitions[*cp - 'a'];
 		if (pp->p_size == 0)
 			errx(1, "`%c' partition is unavailable", *cp);
-		if (!Iflag && pp->p_fstype != FS_BSDFFS)
-			errx(1, "`%c' partition type is not `4.2BSD'", *cp);
+		if (pp->p_fstype == FS_APPLEUFS)
+			isappleufs = 1;
+		if (isappleufs) {
+			if (!Iflag && (pp->p_fstype != FS_APPLEUFS))
+				errx(1, "`%c' partition type is not `Apple UFS'", *cp);
+		} else {
+			if (!Iflag && (pp->p_fstype != FS_BSDFFS))
+				errx(1, "`%c' partition type is not `4.2BSD'", *cp);
+		}
 	}	/* !Fflag && !mfs */
 
 	if (fssize == 0)
@@ -927,6 +944,7 @@ struct help_strings {
 	{ NEWFS,	"-t ntracks\ttracks/cylinder" },
 	{ NEWFS,	"-u nsectors\tsectors/track" },
 	{ MFS_MOUNT,	"-u username\tuser name of mount point" },
+	{ NEWFS,	"-v volname\tApple UFS volume name" },
 	{ NEWFS,	"-x cylspares\tspare sectors per cylinder" },
 	{ 0, NULL }
 };

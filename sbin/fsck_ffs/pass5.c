@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.30 2002/06/30 22:57:30 dbj Exp $	*/
+/*	$NetBSD: pass5.c,v 1.31 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.30 2002/06/30 22:57:30 dbj Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.31 2002/09/28 20:11:06 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,13 @@ pass5()
 		if (fs->fs_contigsumsize > 0) {
 			newcg->cg_clustersumoff = newcg->cg_nextfreeoff -
 			    sizeof(int32_t);
+			if (isappleufs) {
+				/* Apple PR2216969 gives rationale for this change.
+				 * I believe they were mistaken, but we need to
+				 * duplicate it for compatibility.  -- dbj@netbsd.org
+				 */
+				newcg->cg_clustersumoff += sizeof(int32_t);
+			}
 			newcg->cg_clustersumoff =
 			    roundup(newcg->cg_clustersumoff, sizeof(int32_t));
 			newcg->cg_clusteroff = newcg->cg_clustersumoff +

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.28 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.29 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -70,6 +70,7 @@ struct bufarea {
 		ufs_daddr_t *b_indir;		/* indirect block */
 		struct fs *b_fs;		/* super block */
 		struct cg *b_cg;		/* cylinder group */
+		struct appleufslabel *b_appleufs;		/* Apple UFS volume label */
 	} b_un;
 	char b_dirty;
 };
@@ -81,6 +82,7 @@ struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
 struct bufarea asblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
+struct bufarea appleufsblk;		/* Apple UFS volume label */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
 
@@ -101,6 +103,14 @@ struct cg *cgrp;
 		sblk.b_dirty = 1; \
 	} while (0)
 #define	cgdirty()	do {copyback_cg(&cgblk); cgblk.b_dirty = 1;} while (0)
+
+#define appleufsdirty() \
+	do { \
+		appleufsblk.b_un.b_appleufs->ul_checksum = 0; \
+		appleufsblk.b_un.b_appleufs->ul_checksum =  \
+			ffs_appleufs_cksum(appleufsblk.b_un.b_appleufs); \
+		appleufsblk.b_dirty = 1; \
+	} while (0)
 
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
@@ -201,6 +211,7 @@ int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 char	resolved;		/* cleared if unresolved changes => not clean */
+int isappleufs;		/* filesystem is Apple UFS */
 
 ufs_daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
@@ -209,6 +220,8 @@ ino_t	lastino;		/* last inode in use */
 char	*statemap;		/* ptr to inode state table */
 u_char	*typemap;		/* ptr to inode type table */
 int16_t	*lncntp;		/* ptr to link count table */
+
+int	dirblksiz;
 
 extern ino_t	lfdir;		/* lost & found directory inode number */
 extern char	*lfname;	/* lost & found directory name */
@@ -262,3 +275,5 @@ static __inline u_int64_t iswap64(x)
 		return bswap64(x);
 	else return x;
 }
+
+

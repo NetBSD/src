@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.13 2001/07/27 01:24:54 lukem Exp $	*/
+/*	$NetBSD: dinode.h,v 1.14 2002/09/28 20:11:09 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -109,6 +109,12 @@ struct dinode {
 #define	di_rdev		di_db[0]
 #define	di_shortlink	di_db
 #define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(ufs_daddr_t))
+
+/* NeXT used to keep short symlinks in the inode even when using
+ * FS_42INODEFMT.  In that case fs->fs_maxsymlinklen is probably -1,
+ * but short symlinks were stored in inodes shorter than this:
+ */
+#define	APPLEUFS_MAXSYMLINKLEN 60
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */

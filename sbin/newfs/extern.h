@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2002/01/07 12:00:09 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2002/09/28 20:11:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -63,3 +63,5 @@ extern int	avgfpdir;	/* expected number of files per directory */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
 extern int	needswap;	/* Filesystem not in native byte order */
+extern int	isappleufs; /* Filesystem is Apple UFS */
+extern char	*appleufs_volname;	/* Apple UFS volume name */

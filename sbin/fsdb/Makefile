@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/08/19 10:16:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/09/28 20:11:07 dbj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ MAN=	fsdb.8
 SRCS=	fsdb.c fsdbutil.c
 SRCS+=	dir.c inode.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
 	pass5.c setup.c utilities.c
-SRCS+=	ffs_bswap.c ffs_subr.c ffs_tables.c
+SRCS+=	ffs_bswap.c ffs_subr.c ffs_tables.c ffs_appleufs.c
 SRCS+=	fsutil.c 
 
 FSCK=	${NETBSDSRCDIR}/sbin/fsck

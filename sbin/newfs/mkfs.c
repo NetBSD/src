@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.64 2002/04/10 17:28:13 mycroft Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.65 2002/09/28 20:11:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.64 2002/04/10 17:28:13 mycroft Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.65 2002/09/28 20:11:07 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,12 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	if (fssize <= 0)
 		printf("preposterous size %d\n", fssize), exit(13);
 	wtfs(fssize - 1, sectorsize, (char *)&sblock);
+
+	if (isappleufs) {
+		struct appleufslabel appleufs;
+		ffs_appleufs_set(&appleufs,appleufs_volname,utime);
+		wtfs(APPLEUFS_LABEL_OFFSET/sectorsize,APPLEUFS_LABEL_SIZE,&appleufs);
+	}
 
 	/*
 	 * collect and verify the sector and track info
@@ -658,7 +664,10 @@ next:
 	 * Update information about this partion in pack
 	 * label, to that it may be updated on disk.
 	 */
-	pp->p_fstype = FS_BSDFFS;
+	if (isappleufs)
+		pp->p_fstype = FS_APPLEUFS;
+	else
+		pp->p_fstype = FS_BSDFFS;
 	pp->p_fsize = sblock.fs_fsize;
 	pp->p_frag = sblock.fs_frag;
 	pp->p_cpg = sblock.fs_cpg;
@@ -712,6 +721,13 @@ initcg(int cylno, time_t utime)
 	} else {
 		acg.cg_clustersumoff = acg.cg_freeoff +
 		    howmany(sblock.fs_fpg, NBBY) - sizeof(int32_t);
+		if (isappleufs) {
+			/* Apple PR2216969 gives rationale for this change.
+			 * I believe they were mistaken, but we need to
+			 * duplicate it for compatibility.  -- dbj@netbsd.org
+			 */
+			acg.cg_clustersumoff += sizeof(int32_t);
+		}
 		acg.cg_clustersumoff =
 		    roundup(acg.cg_clustersumoff, sizeof(int32_t));
 		acg.cg_clusteroff = acg.cg_clustersumoff +
@@ -868,6 +884,9 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 #ifdef LOSTDIR
 	int i;
+	int dirblksiz = DIRBLKSIZ;
+	if (isappleufs)
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
 #endif
 
 	/*
@@ -884,12 +903,12 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 	 */
 	if (Oflag) {
 		(void)makedir((struct direct *)olost_found_dir, 2);
-		for (i = DIRBLKSIZ; i < sblock.fs_bsize; i += DIRBLKSIZ)
+		for (i = dirblksiz; i < sblock.fs_bsize; i += dirblksiz)
 			copy_dir((struct direct*)&olost_found_dir[2],
 				(struct direct*)&buf[i]);
 	} else {
 		(void)makedir(lost_found_dir, 2);
-		for (i = DIRBLKSIZ; i < sblock.fs_bsize; i += DIRBLKSIZ)
+		for (i = dirblksiz; i < sblock.fs_bsize; i += dirblksiz)
 			copy_dir(&lost_found_dir[2], (struct direct*)&buf[i]);
 	}
 	node.di_mode = IFDIR | UMASK;
@@ -937,8 +956,11 @@ makedir(struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
+	int dirblksiz = DIRBLKSIZ;
+	if (isappleufs)
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
-	spcleft = DIRBLKSIZ;
+	spcleft = dirblksiz;
 	for (cp = buf, i = 0; i < entries - 1; i++) {
 		protodir[i].d_reclen = DIRSIZ(Oflag, &protodir[i], 0);
 		copy_dir(&protodir[i], (struct direct*)cp);
@@ -947,7 +969,7 @@ makedir(struct direct *protodir, int entries)
 	}
 	protodir[i].d_reclen = spcleft;
 	copy_dir(&protodir[i], (struct direct*)cp);
-	return (DIRBLKSIZ);
+	return (dirblksiz);
 }
 
 /*

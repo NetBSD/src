@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2002/09/28 20:11:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.41 2002/05/06 03:17:43 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2002/09/28 20:11:06 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,13 @@ main(argc, argv)
 	markclean = 1;
 	forceimage = 0;
 	endian = 0;
-	while ((ch = getopt(argc, argv, "B:b:c:dFfm:npy")) != -1) {
+	isappleufs = 0;
+	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npy")) != -1) {
 		switch (ch) {
+		case 'a':
+			isappleufs = 1;
+			break;
+
 		case 'B':
 			if (strcmp(optarg, "be") == 0)
 				endian = BIG_ENDIAN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.75 2002/09/28 00:47:24 dbj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.76 2002/09/28 20:11:08 dbj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -396,7 +396,7 @@ static const char *const fscknames[] = {
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
 	NULL,		/* IBM JFS2 */
-	NULL,		/* Apple UFS */
+	"ffs",		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
@@ -428,7 +428,7 @@ static const char *const mountnames[] = {
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
 	NULL,		/* IBM JFS2 */
-	NULL,		/* Apple UFS */
+	"ffs",		/* Apple UFS */
 	NULL		/* NULL */
 };
 #define FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)

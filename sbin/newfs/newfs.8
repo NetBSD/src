@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.43 2002/08/20 16:07:45 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.44 2002/09/28 20:11:07 dbj Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,6 +64,7 @@
 .Op Fl s Ar size
 .Op Fl t Ar ntracks
 .Op Fl u Ar nsectors
+.Op Fl v Ar volname
 .Op Fl x Ar sectors
 .Ar special
 .Sh DESCRIPTION
@@ -108,7 +109,9 @@ The file system size needs to be specified with
 No attempts to use or update the disk label will be made.
 .It Fl I
 Do not require that the file system type listed in the disk label is
-.Ql 4.2BSD .
+.Ql 4.2BSD
+or
+.Ql Apple UFS .
 .It Fl N
 Causes the file system parameters to be printed out
 without really creating the file system.
@@ -254,6 +257,9 @@ except that the number is converted into sectors by dividing by the
 sector size (as specified by
 .Fl S Ar secsize )
 after suffix interpretation.
+.It Fl v Ar volname
+This specifies that a Apple UFS filesystem should be created
+with the given volume name.
 .El
 .Pp
 The following options override the standard sizes for the disk geometry.
@@ -330,7 +336,9 @@ For the
 command to succeed,
 the disk label should first be updated such that the fstype field for the
 partition is set to
-.Ql 4.2BSD ,
+.Ql 4.2BSD
+or
+.Ql Apple UFS ,
 unless
 .Fl F
 or
