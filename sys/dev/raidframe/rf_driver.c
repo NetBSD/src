@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.48 2002/07/13 20:51:54 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.49 2002/07/24 02:17:14 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.48 2002/07/13 20:51:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.49 2002/07/24 02:17:14 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,8 +356,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 			return (rc);
 		}
 		/* initialize globals */
-		printf("RAIDFRAME: protectedSectors is %ld\n", 
-		       rf_protectedSectors);
 
 		rf_clear_debug_print_buffer();
 
