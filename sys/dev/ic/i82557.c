@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.18 2000/02/09 22:15:57 joda Exp $	*/
+/*	$NetBSD: i82557.c,v 1.19 2000/02/12 03:55:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ fxp_attach(sc)
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
+	    RND_TYPE_NET, 0);
 #endif
 
 	/*
@@ -579,7 +579,7 @@ fxp_autosize_eeprom(sc)
 	for (x = 1; x <=  8; x++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
+		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
 		DELAY(1);
 		if((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & 
 		    FXP_EEPROM_EEDO) == 0)
@@ -644,7 +644,7 @@ fxp_read_eeprom(sc, data, offset, words)
 			}
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-				    reg | FXP_EEPROM_EESK);
+			    reg | FXP_EEPROM_EESK);
 			DELAY(1);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			DELAY(1);
@@ -1699,7 +1699,7 @@ fxp_ioctl(ifp, command, data)
 			fxp_stop(sc, 1);
 			fxp_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1791,7 +1791,7 @@ fxp_mc_setup(sc)
 		 */
 		if (nmcasts >= MAXMCADDR ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		           ETHER_ADDR_LEN) != 0) {
+		    ETHER_ADDR_LEN) != 0) {
 			/*
 			 * Callers of this function must do the
 			 * right thing with this.  If we're called
@@ -1848,27 +1848,25 @@ fxp_enable(sc)
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-			       sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			return (EIO);
 		}
 	}
 	
 	sc->sc_enabled = 1;
-
-	return 0;
+	return (0);
 }
 
 void
 fxp_disable(sc)
 	struct fxp_softc *sc;
 {
+
 	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
 }
-
-
 
 int
 fxp_detach(sc)
@@ -1907,11 +1905,10 @@ fxp_detach(sc)
 		bus_dmamap_destroy(sc->sc_dmat, FXP_DSTX(sc, i)->txs_dmamap);
 	}
 
-
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
-			 sizeof(struct fxp_control_data));
+	    sizeof(struct fxp_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
