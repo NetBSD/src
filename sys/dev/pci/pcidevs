@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.620 2004/04/22 11:27:19 skd Exp $
+$NetBSD: pcidevs,v 1.621 2004/05/07 13:01:49 sekiya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1165,6 +1165,7 @@ product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
 product CMDTECH 680		0x0680	SiI0680
 product CMDTECH 3112		0x3112	SiI3112 SATALink
+product CMDTECH 3512		0x3512	SiI3512 SATALink
 product CMDTECH 3114		0x3114	SiI3114 SATALink
 product CMDTECH 3124		0x3124	SiI3124 SATALink
 
