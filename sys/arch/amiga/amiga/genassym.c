@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.31 1997/02/02 18:37:16 mhitch Exp $	*/
+/*	$NetBSD: genassym.c,v 1.32 1997/05/13 18:00:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -105,7 +105,7 @@ main()
 	
 	printf("#define\tPM_STCHG %p\n", (void *)&pmap->pm_stchanged);
 
-	printf("#define\tVM_PMAP %p\n", (void *)&vms->vm_pmap);
+	printf("#define\tVM_PMAP %p\n", (void *)&vms->vm_map.pmap);
 	printf("#define\tV_INTR %p\n", (void *)&vm->v_intr);
 	
 	printf("#define\tUPAGES %d\n", UPAGES);
