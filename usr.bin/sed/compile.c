@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.15 1997/01/09 20:21:26 tls Exp $	*/
+/*	$NetBSD: compile.c,v 1.16 1997/10/19 05:23:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,8 +38,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: compile.c,v 1.15 1997/01/09 20:21:26 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
+#else
+static char *rcsid = "$NetBSD: compile.c,v 1.16 1997/10/19 05:23:48 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

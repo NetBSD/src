@@ -1,8 +1,8 @@
-/*	$NetBSD: process.c,v 1.18 1997/01/09 20:21:32 tls Exp $	*/
+/*	$NetBSD: process.c,v 1.19 1997/10/19 05:23:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -38,8 +38,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: process.c,v 1.18 1997/01/09 20:21:32 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
+#else
+static char *rcsid = "$NetBSD: process.c,v 1.19 1997/10/19 05:23:50 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -318,7 +321,7 @@ substitute(cp)
 	SPACE tspace;
 	regex_t *re;
 	size_t re_off, slen;
-	int n, lastempty;
+	int lastempty, n;
 	char *s;
 
 	s = ps;
@@ -357,11 +360,11 @@ substitute(cp)
 				lastempty = 0;
 			} else {
 				if (match[0].rm_so == 0)
-					cspace(&SS, s, match[0].rm_so + 1,
-					    APPEND);
+					cspace(&SS,
+					    s, match[0].rm_so + 1, APPEND);
 				else
-					cspace(&SS, s + match[0].rm_so, 1,
-					    APPEND);
+					cspace(&SS,
+					    s + match[0].rm_so, 1, APPEND);
 				s += match[0].rm_so + 1;
 				slen -= match[0].rm_so + 1;
 				lastempty = 1;
