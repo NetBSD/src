@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 2000/11/19 19:52:37 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 2002/11/03 22:36:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_PSL_H_
-#define	_MACHINE_PSL_H_
+#ifndef	_POWERPC_PSL_H_
+#define	_POWERPC_PSL_H_
 
 /*
  * Machine State Register (MSR)
@@ -80,4 +80,4 @@
 
 #define	PSL_USERSTATIC	(PSL_USERSET | PSL_IP | 0x87c0008c)
 
-#endif	/* _MACHINE_PSL_H_ */
+#endif	/* _POWERPC_PSL_H_ */

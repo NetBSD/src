@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2002/07/24 05:44:38 chs Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2002/11/03 22:36:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_FRAME_H_
-#define	_MACHINE_FRAME_H_
+#ifndef	_POWERPC_FRAME_H_
+#define	_POWERPC_FRAME_H_
 
 #include <machine/types.h>
 
@@ -137,4 +137,4 @@ struct spillframe {
 	register_t	r0;		/* 48 */
 };
 
-#endif	/* _MACHINE_FRAME_H_ */
+#endif	/* _POWERPC_FRAME_H_ */
