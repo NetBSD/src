@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.9 2003/05/10 15:25:19 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.10 2003/05/10 16:20:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.9 2003/05/10 15:25:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.10 2003/05/10 16:20:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static const struct wsdisplay_accessops igsfb_accessops = {
 static int	igsfb_init_video(struct igsfb_devconfig *);
 static void	igsfb_init_cmap(struct igsfb_devconfig *);
 static u_int16_t igsfb_spread_bits_8(u_int8_t);
-static void	igsfb_init_bit_tables(struct igsfb_devconfig *);
+static void	igsfb_init_bit_table(struct igsfb_devconfig *);
 static void	igsfb_init_wsdisplay(struct igsfb_devconfig *);
 
 static void	igsfb_blank_screen(struct igsfb_devconfig *, int);
@@ -303,8 +303,8 @@ igsfb_init_video(dc)
 	igs_ext_write(dc->dc_iot, dc->dc_ioh,
 		      IGS_EXT_SPRITE_DATA_HI, (croffset >> 8) & 0xf);
 
-	/* init bit expanders for cursor sprite data */
-	igsfb_init_bit_tables(dc);
+	/* init the bit expansion table for cursor sprite data conversion */
+	igsfb_init_bit_table(dc);
 
 	/* XXX: fill dc_cursor and use igsfb_update_cursor() instead? */
 	memset(&dc->dc_cursor, 0, sizeof(struct igs_hwcursor));
@@ -416,7 +416,7 @@ igsfb_init_wsdisplay(dc)
 
 /*
  * Spread a byte (abcd.efgh) into two (0a0b.0c0d 0e0f.0g0h).
- * Helper function for igsfb_init_bit_tables().
+ * Helper function for igsfb_init_bit_table().
  */
 static u_int16_t
 igsfb_spread_bits_8(b)
@@ -433,24 +433,20 @@ igsfb_spread_bits_8(b)
 
 /*
  * Cursor sprite data are in 2bpp.  Incoming image/mask are in 1bpp.
- * Prebuild tables to expand 1bpp->2bpp, with bswapping if neccessary.
+ * Prebuild the table to expand 1bpp->2bpp, with bswapping if neccessary.
  */
 static void
-igsfb_init_bit_tables(dc)
+igsfb_init_bit_table(dc)
 	struct igsfb_devconfig *dc;
 {
-	struct igs_bittab *tab = &dc->dc_bittab;
+	u_int16_t *expand = dc->dc_bexpand;
 	int need_bswap = IGSFB_HW_SOFT_BSWAP(dc);
+	u_int16_t s;
 	u_int i;
 
 	for (i = 0; i < 256; ++i) {
-		u_int16_t s = igsfb_spread_bits_8(i);
-
-		if (need_bswap)
-			s = bswap16(s);
-
-		tab->iexpand[i] = s;
-		tab->mexpand[i] = (s << 1) | s;	/* invariant over bswap16(s) */
+		s = igsfb_spread_bits_8(i);
+		expand[i] = need_bswap ? bswap16(s) : s;
 	}
 }
 
@@ -847,14 +843,14 @@ igsfb_set_cursor(dc, p)
  * Convert incoming 1bpp cursor image/mask into native 2bpp format.
  */
 static void
-igsfb_convert_cursor_data(dc, w, h)
+igsfb_convert_cursor_data(dc, width, height)
 	struct igsfb_devconfig *dc;
-	u_int w, h;
+	u_int width, height;
 {
 	struct igs_hwcursor *cc = &dc->dc_cursor;
-	struct igs_bittab *btab = &dc->dc_bittab;
+	u_int16_t *expand = dc->dc_bexpand;
 	u_int8_t *ip, *mp;
-	u_int16_t *dp;
+	u_int16_t is, ms, *dp;
 	u_int line, i;
 
 	/* init sprite to be all transparent */
@@ -865,20 +861,18 @@ igsfb_convert_cursor_data(dc, w, h)
 	mp = cc->cc_mask;
 	dp = cc->cc_sprite;
 
-	for (line = 0; line < h; ++line) {
-		for (i = 0; i < w; ++i) {
-			/* NB: tables are pre-bswapped if needed */
-			u_int16_t is = btab->iexpand[ip[i]];
-			u_int16_t ms = btab->iexpand[mp[i]]; /* NB: _I_ */
-
+	for (line = 0; line < height; ++line) {
+		for (i = 0; i < width; ++i) {
+			is = expand[ip[i]]; /* image: 0 -> 00, 1 -> 01 */
+			ms = expand[mp[i]]; /*  mask: 0 -> 00, 1 -> 11 */
 			ms |= (ms << 1);
 			dp[i] = (0xaaaa & ~ms) | (is & ms);
 		}
 
 		/* next scanline */
-		ip += w;
-		mp += w;
-		dp += 8;	/* 2bpp, 8 pixels per short = 8 shorts */
+		ip += width;
+		mp += width;
+		dp += 8; /* 64 pixels, 2bpp, 8 pixels per short = 8 shorts */
 	}
 }
 
