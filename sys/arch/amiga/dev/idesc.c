@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.44 2000/01/15 13:50:13 aymeric Exp $	*/
+/*	$NetBSD: idesc.c,v 1.45 2000/01/18 19:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -102,8 +102,6 @@
 
 #include "atapibus.h"
 #include "idesc.h"
-
-#define	b_cylin		b_resid
 
 /* defines */
 
