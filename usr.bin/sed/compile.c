@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compile.c	5.6 (Berkeley) 11/2/92";*/
-static char rcsid[] = "$Id: compile.c,v 1.4 1993/08/01 18:08:55 mycroft Exp $";
+static char rcsid[] = "$Id: compile.c,v 1.5 1993/08/13 02:26:39 alm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -405,13 +405,6 @@ compile_re(p, repp)
 		return (p);
 	}
 	*repp = xmalloc(sizeof(regex_t));
-#ifdef GNU_REGEX
-	/* initialize pattern buffer */
-	(*repp)->buffer = NULL;
-	(*repp)->allocated = 0L;
-	(*repp)->fastmap = 0;		/* fastmap not used by regex > 0.12 */
-	(*repp)->translate = 0;
-#endif
 	if (p && (eval = regcomp(*repp, re, 0)) != 0)
 		err(COMPILE, "RE error: %s", strregerror(eval, *repp));
 	if (maxnsub < (*repp)->re_nsub)

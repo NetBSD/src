@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 12/2/92";*/
-static char rcsid[] = "$Id: process.c,v 1.4 1993/08/01 18:08:51 mycroft Exp $";
+static char rcsid[] = "$Id: process.c,v 1.5 1993/08/13 02:26:40 alm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -318,8 +318,10 @@ substitute(cp)
 	size_t re_off;
 	int n;
 	char *s;
+	char *eos;
 
 	s = ps;
+	eos = s + strlen(s);
 	re = cp->u.s->re;
 	if (re == NULL) {
 		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
@@ -344,7 +346,9 @@ substitute(cp)
 			regsub(&SS, s, cp->u.s->new);
 			/* Move past this match. */
 			s += match[0].rm_eo;
-		} while(regexec_e(re, s, REG_NOTBOL, 0));
+		} while(*s && re_off && regexec_e(re, s, REG_NOTBOL, 0));
+		if (eos - s > 0 && !re_off)
+			err(FATAL, "infinite substitution loop");
 		/* Copy trailing retained string. */
 		cspace(&SS, s, strlen(s), APPEND);
 		break;
