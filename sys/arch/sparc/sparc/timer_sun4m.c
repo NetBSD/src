@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.1.2.4 2003/01/03 16:55:28 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.1.2.5 2003/01/03 17:36:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ statintr_4m(void *cap)
 	 * values we should compute a mask, approx.
 	 *	mask = round_power2(stathz / schedhz) - 1
 	 */
-	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
+	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
 		raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
 
 	return (1);

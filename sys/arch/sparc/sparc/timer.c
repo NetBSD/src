@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3.2.7 2003/01/03 16:55:28 thorpej Exp $ */
+/*	$NetBSD: timer.c,v 1.3.2.8 2003/01/03 17:36:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,10 +76,10 @@ static struct intrhand level14;
 
 void schedintr(void *v)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
-	if (p != NULL)
-		schedclock(p);
+	if (l != NULL)
+		schedclock(l);
 }
 
 /*
