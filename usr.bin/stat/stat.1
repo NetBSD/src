@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.14 2004/12/31 03:24:31 atatat Exp $
+.\"	$NetBSD: stat.1,v 1.15 2005/01/08 03:46:05 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -448,12 +448,12 @@ flag as follows:
 .Bd -literal -offset indent
 \*[Gt] csh
 % eval set `stat -s .cshrc`
-% echo $st_size $st_mtimespec
+% echo $st_size $st_mtime
 1148 1015432481
 
 \*[Gt] sh
 $ eval $(stat -s .profile)
-$ echo $st_size $st_mtimespec
+$ echo $st_size $st_mtime
 1148 1015432481
 .Ed
 .Pp
