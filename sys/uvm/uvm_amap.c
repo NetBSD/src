@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.14 1998/08/31 02:43:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.15 1998/10/08 19:47:50 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -848,6 +848,14 @@ amap_splitref(origref, splitref, offset)
 
 	if (origref->ar_amap->am_nslot - origref->ar_slotoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
+
+#ifdef VM_AMAP_PPREF
+        /*
+	 * establish ppref before we add a duplicate reference to the amap
+	 */
+	if (origref->ar_amap->am_ppref == NULL)
+		amap_pp_establish(origref->ar_amap);
+#endif
 
 	splitref->ar_amap = origref->ar_amap;
 	splitref->ar_amap->am_ref++;		/* not a share reference */
