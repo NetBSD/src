@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.19.16.1 2004/08/03 10:54:10 skrll Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.19.16.2 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.1 2004/08/03 10:54:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.2 2004/09/18 14:54:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

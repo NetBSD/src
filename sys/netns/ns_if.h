@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_if.h,v 1.9.46.1 2004/08/03 10:56:04 skrll Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.9.46.2 2004/09/18 14:56:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.2.2.2 2004/08/24 17:57:36 skrll Exp $	*/
+/*	$NetBSD: adutil.c,v 1.2.2.3 2004/09/18 14:52:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.2.2.2 2004/08/24 17:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.2.2.3 2004/09/18 14:52:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>

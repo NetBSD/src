@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.55.6.3 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.55.6.4 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55.6.3 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55.6.4 2004/09/18 14:51:24 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG

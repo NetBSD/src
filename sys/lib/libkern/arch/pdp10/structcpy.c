@@ -1,4 +1,4 @@
-/*	$NetBSD: structcpy.c,v 1.1.4.2 2004/08/03 10:53:49 skrll Exp $	*/
+/*	$NetBSD: structcpy.c,v 1.1.4.3 2004/09/18 14:53:54 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

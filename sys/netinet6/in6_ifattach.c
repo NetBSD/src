@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.54.6.1 2004/08/03 10:55:11 skrll Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.54.6.2 2004/09/18 14:55:14 skrll Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54.6.1 2004/08/03 10:55:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54.6.2 2004/09/18 14:55:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

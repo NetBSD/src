@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.64.2.1 2004/08/03 10:52:49 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.64.2.2 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.1 2004/08/03 10:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.2 2004/09/18 14:53:03 skrll Exp $");
 
 #include "opt_kstack.h"
 

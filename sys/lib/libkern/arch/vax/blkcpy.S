@@ -1,4 +1,4 @@
-/*	$NetBSD: blkcpy.S,v 1.2.20.1 2004/08/03 10:53:50 skrll Exp $	*/
+/*	$NetBSD: blkcpy.S,v 1.2.20.2 2004/09/18 14:54:01 skrll Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

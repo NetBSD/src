@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.9.6.1 2004/08/03 10:53:31 skrll Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.9.6.2 2004/09/18 14:53:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ arc4random(void)
 		arc4_randrekey();
 	}
 
-	for (i = 0, ret = 0; i < 24; ret |= arc4_randbyte() << i, i += 8)
+	for (i = 0, ret = 0; i <= 24; ret |= arc4_randbyte() << i, i += 8)
 		;
 	return ret;
 }
@@ -217,8 +217,9 @@ arc4randbytes(void *p, size_t len)
 
 	buf = (u_int8_t *)p;
 
-	for (i = 0; i < len; buf[i] = arc4_randbyte(), i++);
-		arc4_numruns += len / sizeof(u_int32_t);
+	for (i = 0; i < len; buf[i] = arc4_randbyte(), i++)
+		;
+	arc4_numruns += len / sizeof(u_int32_t);
 	if ((arc4_numruns > ARC4_MAXRUNS) ||
 	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
 		arc4_randrekey();

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.53.2.2 2004/08/03 10:52:57 skrll Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.53.2.3 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.53.2.2 2004/08/03 10:52:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.53.2.3 2004/09/18 14:53:04 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -185,7 +185,7 @@ sonewconn1(struct socket *head, int connstatus)
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct lwp *)0)) {
+	    (struct proc *)0)) {
 		(void) soqremque(so, soqueue);
 		pool_put(&socket_pool, so);
 		return (NULL);

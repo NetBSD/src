@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.11.2.1 2004/08/03 10:50:44 skrll Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.11.2.2 2004/09/18 14:50:54 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

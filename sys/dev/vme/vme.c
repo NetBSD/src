@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.10.2.1 2004/08/03 10:52:00 skrll Exp $ */
+/* $NetBSD: vme.c,v 1.10.2.2 2004/09/18 14:52:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.1 2004/08/03 10:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.2 2004/09/18 14:52:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.1 2004/08/03 10:52:00 skrll Exp $");
 
 static void vme_extractlocators __P((int*, struct vme_attach_args*));
 static int vmeprint __P((struct vme_attach_args*, char*));
-static int vmesubmatch1 __P((struct device*, struct cfdata*, void*));
-static int vmesubmatch __P((struct device*, struct cfdata*, void*));
+static int vmesubmatch1 __P((struct device*, struct cfdata*,
+			     const locdesc_t *, void*));
+static int vmesubmatch __P((struct device*, struct cfdata*,
+			    const locdesc_t *, void*));
 int vmematch __P((struct device *, struct cfdata *, void *));
 void vmeattach __P((struct device*, struct device*,void*));
 static struct extent *vme_select_map __P((struct vmebus_softc*, vme_am_t));
@@ -125,9 +127,10 @@ vmeprint(v, dummy)
  * devices are attached.
  */
 static int
-vmesubmatch1(bus, dev, aux)
+vmesubmatch1(bus, dev, ldesc, aux)
 	struct device *bus;
 	struct cfdata *dev;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
@@ -145,9 +148,10 @@ vmesubmatch1(bus, dev, aux)
 }
 
 static int
-vmesubmatch(bus, dev, aux)
+vmesubmatch(bus, dev, ldesc, aux)
 	struct device *bus;
 	struct cfdata *dev;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
@@ -224,9 +228,9 @@ vmeattach(parent, self, aux)
 	if (sc->slaveconfig) {
 		/* first get info about the bus master's slave side,
 		 if present */
-		config_search(vmesubmatch1, self, 0);
+		config_search_ia(vmesubmatch1, self, "vme", 0);
 	}
-	config_search(vmesubmatch, self, 0);
+	config_search_ia(vmesubmatch, self, "vme", 0);
 
 #ifdef VMEDEBUG
 	if (sc->vme32ext)

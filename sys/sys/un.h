@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.28.2.2 2004/08/03 10:56:33 skrll Exp $	*/
+/*	$NetBSD: un.h,v 1.28.2.3 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,12 +64,12 @@ struct unpcb;
 struct socket;
 
 int	uipc_usrreq(struct socket *, int, struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct lwp *);
+	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 
 int	unp_attach (struct socket *);
-int	unp_bind (struct unpcb *, struct mbuf *, struct lwp *);
-int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
+int	unp_bind (struct unpcb *, struct mbuf *, struct proc *);
+int	unp_connect (struct socket *, struct mbuf *, struct proc *);
 int	unp_connect2 (struct socket *, struct socket *, int);
 void	unp_detach (struct unpcb *);
 void	unp_discard (struct file *);
@@ -79,8 +79,8 @@ void	unp_gc (void);
 void	unp_mark (struct file *);
 void	unp_scan (struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown (struct unpcb *);
-int 	unp_externalize (struct mbuf *, struct lwp *);
-int	unp_internalize (struct mbuf *, struct lwp *);
+int 	unp_externalize (struct mbuf *, struct proc *);
+int	unp_internalize (struct mbuf *, struct proc *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
 	    struct proc *);

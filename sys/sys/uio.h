@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.28.2.2 2004/08/03 10:56:33 skrll Exp $	*/
+/*	$NetBSD: uio.h,v 1.28.2.3 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -83,7 +83,7 @@ struct uio {
 	size_t	uio_resid;	/* residual i/o count */
 	enum	uio_seg uio_segflg; /* see above */
 	enum	uio_rw uio_rw;	/* see above */
-	struct	lwp *uio_lwp;	/* LWP if UIO_USERSPACE */
+	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
 
 #endif /* __UIO_EXPOSE */

@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.13.2.1 2004/08/03 10:55:40 skrll Exp $
+ *	$Id: i4b_tel.c,v 1.13.2.2 2004/09/18 14:55:33 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13.2.1 2004/08/03 10:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13.2.2 2004/09/18 14:55:33 skrll Exp $");
 
 #include "isdntel.h"
 

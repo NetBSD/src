@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.30.2.1 2004/08/03 10:51:05 skrll Exp $	*/
+/*	$NetBSD: qe.c,v 1.30.2.2 2004/09/18 14:51:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.1 2004/08/03 10:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.2 2004/09/18 14:51:16 skrll Exp $");
 
 #define QEDEBUG
 

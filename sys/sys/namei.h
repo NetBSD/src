@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.29.2.2 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: namei.h,v 1.29.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -76,7 +76,7 @@ struct nameidata {
 		 */
 		u_long	cn_nameiop;	/* namei operation */
 		u_long	cn_flags;	/* flags to namei */
-		struct	lwp *cn_lwp;	/* lwp requesting lookup */
+		struct	proc *cn_proc;	/* process requesting lookup */
 		struct	ucred *cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
@@ -140,13 +140,13 @@ struct nameidata {
 /*
  * Initialization of an nameidata structure.
  */
-#define NDINIT(ndp, op, flags, segflg, namep, l) { \
+#define NDINIT(ndp, op, flags, segflg, namep, p) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
 	(ndp)->ni_segflg = segflg; \
 	(ndp)->ni_dirp = namep; \
-	(ndp)->ni_cnd.cn_lwp = l; \
-	(ndp)->ni_cnd.cn_cred = l->l_proc->p_ucred; \
+	(ndp)->ni_cnd.cn_proc = p; \
+	(ndp)->ni_cnd.cn_cred = p->p_ucred; \
 }
 #endif
 

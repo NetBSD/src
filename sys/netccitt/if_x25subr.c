@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.31.6.1 2004/08/03 10:54:35 skrll Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.31.6.2 2004/09/18 14:54:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31.6.1 2004/08/03 10:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31.6.2 2004/09/18 14:54:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

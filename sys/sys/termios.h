@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.25.2.1 2004/08/03 10:56:32 skrll Exp $	*/
+/*	$NetBSD: termios.h,v 1.25.2.2 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994

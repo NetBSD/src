@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.32.2.4 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.32.2.5 2004/09/18 14:54:14 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.32.2.4 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.32.2.5 2004/09/18 14:54:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

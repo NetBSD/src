@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.1.4.2 2004/08/03 10:56:25 skrll Exp $ */
+/*	$NetBSD: deflate.h,v 1.1.4.3 2004/09/18 14:56:20 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 

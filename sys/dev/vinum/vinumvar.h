@@ -37,7 +37,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumvar.h,v 1.1.1.1.4.2 2004/08/03 10:52:00 skrll Exp $
+ * $Id: vinumvar.h,v 1.1.1.1.4.3 2004/09/18 14:52:13 skrll Exp $
  * $FreeBSD$
  */
 
@@ -66,8 +66,8 @@ enum constants {
     MAXCONFIGLINE = 1024,				    /* maximum size of a single config line */
     MINVINUMSLICE = 1048576,				    /* minimum size of a slice */
 
-    VINUM_CDEV_MAJOR = 108,				    /* major number for character device */
-    VINUM_BDEV_MAJOR = 25,				    /* and legacy major number for block device */
+    VINUM_CDEV_MAJOR = 162,				    /* major number for character device */
+    VINUM_BDEV_MAJOR = 162,				    /* and legacy major number for block device */
 
     ROUND_ROBIN_READPOL = -1,				    /* round robin read policy */
 

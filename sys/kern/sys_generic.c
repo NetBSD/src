@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.76.2.2 2004/08/03 10:52:55 skrll Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.76.2.3 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.2 2004/08/03 10:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.3 2004/09/18 14:53:03 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.2 2004/08/03 10:52:55 skrll E
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
-int pollscan(struct lwp *, struct pollfd *, int, register_t *);
+int selscan(struct proc *, fd_mask *, fd_mask *, int, register_t *);
+int pollscan(struct proc *, struct pollfd *, int, register_t *);
 
 /*
  * Read system call.
@@ -97,23 +97,21 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofileread() will unuse the descriptor for us */
-	return (dofileread(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
+dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
 	off_t *offset, int flags, register_t *retval)
 {
-	struct iovec aiov;
-	struct uio auio;
-	struct proc *p;
-	size_t cnt;
-	int error;
+	struct uio	auio;
+	struct iovec	aiov;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov = {0};
 #endif
-	p = l->l_proc;
 	error = 0;
 
 	aiov.iov_base = (caddr_t)buf;
@@ -123,7 +121,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 
 	/*
 	 * Reads return ssize_t because -1 is returned on error.  Therefore
@@ -151,11 +149,11 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(l, fd, UIO_READ, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_READ, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -170,10 +168,10 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
+	int		fd;
+	struct file	*fp;
+	struct proc	*p;
 	struct filedesc	*fdp;
-	struct file *fp;
-	struct proc *p;
-	int fd;
 
 	fd = SCARG(uap, fd);
 	p = l->l_proc;
@@ -190,15 +188,14 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofilereadv() will unuse the descriptor for us */
-	return (dofilereadv(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
+dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	int iovcnt, off_t *offset, int flags, register_t *retval)
 {
-	struct proc *p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
 	int		i, error;
@@ -208,7 +205,6 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct iovec	*ktriov;
 #endif
 
-	p = l->l_proc;
 	error = 0;
 #ifdef KTRACE
 	ktriov = NULL;
@@ -234,7 +230,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -271,7 +267,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
-			ktrgenio(l, fd, UIO_READ, ktriov, cnt, error);
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -280,7 +276,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	if (needfree)
 		free(needfree, M_IOV);
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -315,24 +311,22 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofilewrite() will unuse the descriptor for us */
-	return (dofilewrite(l, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
+dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 	size_t nbyte, off_t *offset, int flags, register_t *retval)
 {
-	struct iovec aiov;
-	struct uio auio;
-	struct proc *p;
-	size_t cnt;
-	int error;
+	struct uio	auio;
+	struct iovec	aiov;
+	size_t		cnt;
+	int		error;
 #ifdef KTRACE
 	struct iovec	ktriov = {0};
 #endif
 
-	p = l->l_proc;
 	error = 0;
 	aiov.iov_base = (caddr_t)buf;		/* XXX kills const */
 	aiov.iov_len = nbyte;
@@ -341,7 +335,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 
 	/*
 	 * Writes return ssize_t because -1 is returned on error.  Therefore
@@ -372,11 +366,11 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(l, fd, UIO_WRITE, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_WRITE, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -411,15 +405,14 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	/* dofilewritev() will unuse the descriptor for us */
-	return (dofilewritev(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
 int
-dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
+dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	int iovcnt, off_t *offset, int flags, register_t *retval)
 {
-	struct proc	*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
 	int		i, error;
@@ -429,7 +422,6 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct iovec	*ktriov;
 #endif
 
-	p = l->l_proc;
 	error = 0;
 #ifdef KTRACE
 	ktriov = NULL;
@@ -455,7 +447,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -495,7 +487,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
-			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt, error);
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -504,7 +496,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	if (needfree)
 		free(needfree, M_IOV);
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -583,7 +575,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 				struct iovec iov;
 				iov.iov_base = SCARG(uap, data);
 				iov.iov_len = size;
-				ktrgenio(l, SCARG(uap, fd), UIO_WRITE, &iov,
+				ktrgenio(p, SCARG(uap, fd), UIO_WRITE, &iov,
 					size, 0);
 			}
 #endif
@@ -605,7 +597,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, p);
 		break;
 
 	case FIOASYNC:
@@ -613,11 +605,11 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, p);
 		break;
 
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data, p);
 		/*
 		 * Copy any data to user, size was
 		 * already set and checked above.
@@ -629,7 +621,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 				struct iovec iov;
 				iov.iov_base = SCARG(uap, data);
 				iov.iov_len = size;
-				ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov,
+				ktrgenio(p, SCARG(uap, fd), UIO_READ, &iov,
 					size, error);
 			}
 #endif
@@ -639,7 +631,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	if (memp)
 		free(memp, M_IOCTLOPS);
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	switch (error) {
 	case -1:
 		printf("sys_ioctl: _IO%s%s('%c', %lu, %lu) returned -1: "
@@ -723,7 +715,7 @@ sys_select(struct lwp *l, void *v, register_t *retval)
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
-	error = selscan(l, (fd_mask *)(bits + ni * 0),
+	error = selscan(p, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
@@ -772,17 +764,16 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-selscan(struct lwp *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
+selscan(struct proc *p, fd_mask *ibitp, fd_mask *obitp, int nfd,
 	register_t *retval)
 {
+	struct filedesc	*fdp;
+	int		msk, i, j, fd, n;
+	fd_mask		ibits, obits;
+	struct file	*fp;
 	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
 			       POLLWRNORM | POLLHUP | POLLERR,
 			       POLLRDBAND };
-	struct proc *p = l->l_proc;
-	struct filedesc	*fdp;
-	int msk, i, j, fd, n;
-	fd_mask ibits, obits;
-	struct file *fp;
 
 	fdp = p->p_fd;
 	n = 0;
@@ -795,11 +786,11 @@ selscan(struct lwp *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
 				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
 				FILE_USE(fp);
-				if ((*fp->f_ops->fo_poll)(fp, flag[msk], l)) {
+				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
 					obits |= (1 << j);
 					n++;
 				}
-				FILE_UNUSE(fp, l);
+				FILE_UNUSE(fp, p);
 			}
 			*obitp++ = obits;
 		}
@@ -858,7 +849,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
-	error = pollscan(l, (struct pollfd *)bits, SCARG(uap, nfds), retval);
+	error = pollscan(p, (struct pollfd *)bits, SCARG(uap, nfds), retval);
 	if (error || *retval)
 		goto done;
 	if (SCARG(uap, timeout) != INFTIM) {
@@ -898,9 +889,8 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
+pollscan(struct proc *p, struct pollfd *fds, int nfd, register_t *retval)
 {
-	struct proc	*p = l->l_proc;
 	struct filedesc	*fdp;
 	int		i, n;
 	struct file	*fp;
@@ -920,10 +910,10 @@ pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
 			} else {
 				FILE_USE(fp);
 				fds->revents = (*fp->f_ops->fo_poll)(fp,
-				    fds->events | POLLERR | POLLHUP, l);
+				    fds->events | POLLERR | POLLHUP, p);
 				if (fds->revents != 0)
 					n++;
-				FILE_UNUSE(fp, l);
+				FILE_UNUSE(fp, p);
 			}
 		}
 	}
@@ -933,7 +923,7 @@ pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
 
 /*ARGSUSED*/
 int
-seltrue(dev_t dev, int events, struct lwp *l)
+seltrue(dev_t dev, int events, struct proc *p)
 {
 
 	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
@@ -943,13 +933,13 @@ seltrue(dev_t dev, int events, struct lwp *l)
  * Record a select request.
  */
 void
-selrecord(struct lwp *selector, struct selinfo *sip)
+selrecord(struct proc *selector, struct selinfo *sip)
 {
 	struct lwp	*l;
 	struct proc	*p;
 	pid_t		mypid;
 
-	mypid = selector->l_proc->p_pid;
+	mypid = selector->p_pid;
 	if (sip->sel_pid == mypid)
 		return;
 	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {

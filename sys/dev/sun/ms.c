@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.26.2.2 2004/08/26 19:28:32 skrll Exp $	*/
+/*	$NetBSD: ms.c,v 1.26.2.3 2004/09/18 14:51:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26.2.2 2004/08/26 19:28:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26.2.3 2004/09/18 14:51:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,10 @@ const struct cdevsw ms_cdevsw = {
  ****************************************************************/
 
 int
-msopen(dev, flags, mode, l)
+msopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ms_softc *ms;
 	int unit;
@@ -126,7 +126,7 @@ msopen(dev, flags, mode, l)
 		if (err) 
 			return (err);
 	}
-	ms->ms_events.ev_io = l->l_proc;
+	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
 	ms->ms_ready = 1;		/* start accepting events */
@@ -134,10 +134,10 @@ msopen(dev, flags, mode, l)
 }
 
 int
-msclose(dev, flags, mode, l)
+msclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ms_softc *ms;
 
@@ -168,12 +168,12 @@ msread(dev, uio, flags)
 }
 
 int
-msioctl(dev, cmd, data, flag, l)
+msioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ms_softc *ms;
 
@@ -213,15 +213,15 @@ msioctl(dev, cmd, data, flag, l)
 }
 
 int
-mspoll(dev, events, l)
+mspoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ms_softc *ms;
 
 	ms = ms_cd.cd_devs[minor(dev)];
-	return (ev_poll(&ms->ms_events, events, l));
+	return (ev_poll(&ms->ms_events, events, p));
 }
 
 int

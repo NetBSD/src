@@ -1,4 +1,4 @@
-/*	$NetBSD: pcilkm.h,v 1.3.2.2 2004/08/03 10:53:58 skrll Exp $	*/
+/*	$NetBSD: pcilkm.h,v 1.3.2.3 2004/09/18 14:54:09 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.

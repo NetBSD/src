@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.c,v 1.4.28.1 2004/08/03 10:53:31 skrll Exp $	*/
+/*	$NetBSD: skpc.c,v 1.4.28.2 2004/09/18 14:53:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.

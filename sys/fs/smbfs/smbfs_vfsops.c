@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.3 2004/08/24 17:57:37 skrll Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.4 2004/09/18 14:52:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.3 2004/08/24 17:57:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.4 2004/09/18 14:52:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -96,14 +96,14 @@ SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
 
 int smbfs_mount(struct mount *, const char *, void *,
-		struct nameidata *, struct lwp *);
-int smbfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
+		struct nameidata *, struct proc *);
+int smbfs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
 int smbfs_root(struct mount *, struct vnode **);
 static int smbfs_setroot(struct mount *);
-int smbfs_start(struct mount *, int, struct lwp *);
-int smbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int smbfs_sync(struct mount *, int, struct ucred *, struct lwp *);
-int smbfs_unmount(struct mount *, int, struct lwp *);
+int smbfs_start(struct mount *, int, struct proc *);
+int smbfs_statvfs(struct mount *, struct statvfs *, struct proc *);
+int smbfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int smbfs_unmount(struct mount *, int, struct proc *);
 void smbfs_init(void);
 void smbfs_reinit(void);
 void smbfs_done(void);
@@ -146,17 +146,15 @@ struct vfsops smbfs_vfsops = {
 
 int
 smbfs_mount(struct mount *mp, const char *path, void *data,
-	struct nameidata *ndp, struct lwp *l)
+	struct nameidata *ndp, struct proc *p)
 {
 	struct smbfs_args args; 	  /* will hold data from mount request */
 	struct smbmount *smp = NULL;
 	struct smb_vc *vcp;
 	struct smb_share *ssp = NULL;
 	struct smb_cred scred;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		smp = VFSTOSMBFS(mp);
 		if (smp == NULL)
@@ -176,13 +174,15 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		    SMBFS_VERSION, args.version);
 		return EINVAL;
 	}
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, p, p->p_ucred);
 	error = smb_dev2share(args.dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
 	smb_share_unlock(ssp, 0);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
+	mp->mnt_stat.f_namemax =
+	    (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
 
 	MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
 	memset(smp, 0, sizeof(*smp));
@@ -202,10 +202,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp, l);
+	    mp, p);
 	if (error)
 		goto bad;
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
 	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
@@ -233,7 +232,7 @@ bad:
 
 /* Unmount the filesystem described by mp. */
 int
-smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_cred scred;
@@ -255,7 +254,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
 
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, p, p->p_ucred);
 	smb_share_lock(smp->sm_share, 0);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
@@ -279,14 +278,14 @@ smbfs_setroot(struct mount *mp)
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct vnode *vp;
 	struct smbfattr fattr;
-	struct lwp *l = curlwp;
-	struct ucred *cred = l->l_proc->p_ucred;
+	struct proc *p = curproc;
+	struct ucred *cred = p->p_ucred;
 	struct smb_cred scred;
 	int error;
 
 	KASSERT(smp->sm_root == NULL);
 
-	smb_makescred(&scred, l, cred);
+	smb_makescred(&scred, p, cred);
 	error = smbfs_smb_lookup(NULL, NULL, 0, &fattr, &scred);
 	if (error)
 		return error;
@@ -337,7 +336,10 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-smbfs_start(struct mount *mp, int flags, struct lwp *l)
+smbfs_start(mp, flags, p)
+	struct mount *mp;
+	int flags;
+	struct proc *p;
 {
 	SMBVDEBUG("flags=%04x\n", flags);
 	return 0;
@@ -348,12 +350,12 @@ smbfs_start(struct mount *mp, int flags, struct lwp *l)
  */
 /* ARGSUSED */
 int
-smbfs_quotactl(mp, cmd, uid, arg, l)
+smbfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct lwp *l;
+	struct proc *p;
 {
 	SMBVDEBUG("return EOPNOTSUPP\n");
 	return EOPNOTSUPP;
@@ -402,7 +404,7 @@ smbfs_done(void)
  * smbfs_statvfs call
  */
 int
-smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_share *ssp = smp->sm_share;
@@ -410,7 +412,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	int error = 0;
 
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, p, p->p_ucred);
 
 	error = smbfs_smb_statvfs(ssp, sbp, &scred);
 	if (error)
@@ -418,7 +420,6 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	sbp->f_flag = 0;		/* copy of mount exported flags */
 	sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
-	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return 0;
 }
@@ -427,7 +428,11 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Flush out the buffer cache
  */
 int
-smbfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
+smbfs_sync(mp, waitfor, cred, p)
+	struct mount *mp;
+	int waitfor;
+	struct ucred *cred;
+	struct proc *p;
 {
 	struct vnode *vp, *nvp;
 	struct smbnode *np;
@@ -462,7 +467,7 @@ loop:
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
 		if (error)
 			allerror = error;
 		vput(vp);

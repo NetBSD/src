@@ -1,7 +1,7 @@
-/*	$NetBSD: cd.c,v 1.185.2.4 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.185.2.5 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.4 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.5 2004/09/18 14:51:24 skrll Exp $");
 
 #include "rnd.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.4 2004/09/03 12:45:39 skrll Exp $");
 					/* from there */
 #include <dev/scsipi/scsi_disk.h>	/* rw comes from there */
 #include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/cdvar.h>
 
 #define	CDUNIT(z)			DISKUNIT(z)
@@ -106,14 +107,12 @@ struct cd_toc {
 						 /* leadout */
 };
 
-static int	cdlock(struct cd_softc *);
-static void	cdunlock(struct cd_softc *);
 static void	cdstart(struct scsipi_periph *);
 static void	cdrestart(void *);
 static void	cdminphys(struct buf *);
 static void	cdgetdefaultlabel(struct cd_softc *, struct disklabel *);
 static void	cdgetdisklabel(struct cd_softc *);
-static void	cddone(struct scsipi_xfer *);
+static void	cddone(struct scsipi_xfer *, int);
 static void	cdbounce(struct buf *);
 static int	cd_interpret_sense(struct scsipi_xfer *);
 static u_long	cd_size(struct cd_softc *, int);
@@ -224,6 +223,8 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
+	lockinit(&cd->sc_lock, PRIBIO | PCATCH, "cdlock", 0, 0);
+
 	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
 	    periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
@@ -294,6 +295,13 @@ cddetach(struct device *self, int flags)
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 
+	/* Nuke the vnodes for any open instances */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = CDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	/* kill any pending restart */
 	callout_stop(&cd->sc_callout);
 
@@ -314,12 +322,7 @@ cddetach(struct device *self, int flags)
 
 	splx(s);
 
-	/* Nuke the vnodes for any open instances */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = CDMINOR(self->dv_unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
+	lockmgr(&cd->sc_lock, LK_DRAIN, 0);
 
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
@@ -339,44 +342,10 @@ cddetach(struct device *self, int flags)
 }
 
 /*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-static int
-cdlock(struct cd_softc *cd)
-{
-	int error;
-
-	while ((cd->flags & CDF_LOCKED) != 0) {
-		cd->flags |= CDF_WANTED;
-		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdlck", 0)) != 0)
-			return (error);
-	}
-	cd->flags |= CDF_LOCKED;
-	return (0);
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-static void
-cdunlock(struct cd_softc *cd)
-{
-
-	cd->flags &= ~CDF_LOCKED;
-	if ((cd->flags & CDF_WANTED) != 0) {
-		cd->flags &= ~CDF_WANTED;
-		wakeup(cd);
-	}
-}
-
-/*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int 
-cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
+cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
@@ -407,7 +376,7 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	    (error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	if ((error = cdlock(cd)) != 0)
+	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		goto bad4;
 
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
@@ -507,7 +476,7 @@ out:	/* Insure only one open at a time. */
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 
 bad2:
@@ -521,7 +490,7 @@ bad:
 	}
 
 bad3:
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 bad4:
 	if (cd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
@@ -533,7 +502,7 @@ bad4:
  * occurence of an open device
  */
 static int 
-cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
+cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -541,7 +510,7 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	int part = CDPART(dev);
 	int error;
 
-	if ((error = cdlock(cd)) != 0)
+	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
 	switch (fmt) {
@@ -568,7 +537,7 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 	}
 
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -762,7 +731,7 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy and scsipi_done
+ * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
  */
 static void 
 cdstart(struct scsipi_periph *periph)
@@ -772,6 +741,7 @@ cdstart(struct scsipi_periph *periph)
 	struct scsipi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsipi_generic *cmdp;
+	struct scsipi_xfer *xs;
 	int flags, nblks, cmdlen, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdstart "));
@@ -866,15 +836,10 @@ cdstart(struct scsipi_periph *periph)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		error = scsipi_command(periph, cmdp, cmdlen,
+		xs = scsipi_make_xs(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
-		if (__predict_false(error)) {
-			disk_unbusy(&cd->sc_dk, 0, 0);
-			printf("%s: not queued, error %d\n",
-			    cd->sc_dev.dv_xname, error);
-		}
-		if (__predict_false(error == ENOMEM)) {
+		if (__predict_false(xs == NULL)) {
 			/*
 			 * out of memory. Keep this buffer in the queue, and
 			 * retry later.
@@ -883,12 +848,20 @@ cdstart(struct scsipi_periph *periph)
 			    periph);
 			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
 #ifdef DIAGNOSTIC
 		if (BUFQ_GET(&cd->buf_queue) != bp)
 			panic("cdstart(): dequeued wrong buf");
 #else
 		BUFQ_GET(&cd->buf_queue);
 #endif
+		error = scsipi_execute_xs(xs);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	}
 }
 
@@ -901,16 +874,24 @@ cdrestart(void *v)
 }
 
 static void
-cddone(struct scsipi_xfer *xs)
+cddone(struct scsipi_xfer *xs, int error)
 {
 	struct cd_softc *cd = (void *)xs->xs_periph->periph_dev;
+	struct buf *bp = xs->bp;
 
-	if (xs->bp != NULL) {
-		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
-		    (xs->bp->b_flags & B_READ));
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+
+		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ));
 #if NRND > 0
-		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
+		rnd_add_uint32(&cd->rnd_source, bp->b_rawblkno);
 #endif
+
+		biodone(bp);
 	}
 }
 
@@ -1143,7 +1124,7 @@ cdreadmsaddr(struct cd_softc *cd, int *addr)
  * Knows about the internals of this device
  */
 static int
-cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1246,7 +1227,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = cdlock(cd)) != 0)
+		if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
 		cd->flags |= CDF_LABELLING;
 
@@ -1258,7 +1239,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		}
 
 		cd->flags &= ~CDF_LABELLING;
-		cdunlock(cd);
+		lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
@@ -1483,7 +1464,7 @@ bad:
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, l));
+		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
 	}
 
 #ifdef DIAGNOSTIC
@@ -1592,8 +1573,8 @@ error:
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	struct scsipi_read_cd_cap_data rdcap;
-	struct scsipi_read_cd_capacity scsipi_cmd;
+	struct scsipi_read_cd_capacity cmd;
+	struct scsipi_read_cd_cap_data data;
 	int blksize;
 	u_long size;
 
@@ -1612,20 +1593,19 @@ cd_size(struct cd_softc *cd, int flags)
 	 * make up a scsi command and ask the scsi driver to do
 	 * it for you.
 	 */
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = READ_CD_CAPACITY;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_CD_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
+	if (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&data, sizeof(data), CDRETRIES, 30000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0)
 		return (0);
 
-	blksize = _4btol(rdcap.length);
+	blksize = _4btol(data.length);
 	if ((blksize < 512) || ((blksize & 511) != 0))
 		blksize = 2048;	/* some drives lie ! */
 	if (blksize != 2048) {
@@ -1634,7 +1614,7 @@ cd_size(struct cd_softc *cd, int flags)
 	}
 	cd->params.blksize = blksize;
 
-	size = _4btol(rdcap.addr) + 1;
+	size = _4btol(data.addr) + 1;
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
@@ -1651,15 +1631,15 @@ cd_size(struct cd_softc *cd, int flags)
 static int
 cd_play(struct cd_softc *cd, int blkno, int nblks)
 {
-	struct scsipi_play scsipi_cmd;
+	struct scsipi_play cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PLAY;
-	_lto4b(blkno, scsipi_cmd.blk_addr);
-	_lto2b(nblks, scsipi_cmd.xfer_len);
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PLAY;
+	_lto4b(blkno, cmd.blk_addr);
+	_lto2b(nblks, cmd.xfer_len);
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1703,19 +1683,19 @@ static int
 cd_play_msf(struct cd_softc *cd, int startm, int starts, int startf, int endm,
     int ends, int endf)
 {
-	struct scsipi_play_msf scsipi_cmd;
+	struct scsipi_play_msf cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PLAY_MSF;
-	scsipi_cmd.start_m = startm;
-	scsipi_cmd.start_s = starts;
-	scsipi_cmd.start_f = startf;
-	scsipi_cmd.end_m = endm;
-	scsipi_cmd.end_s = ends;
-	scsipi_cmd.end_f = endf;
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PLAY_MSF;
+	cmd.start_m = startm;
+	cmd.start_s = starts;
+	cmd.start_f = startf;
+	cmd.end_m = endm;
+	cmd.end_s = ends;
+	cmd.end_f = endf;
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1724,14 +1704,14 @@ cd_play_msf(struct cd_softc *cd, int startm, int starts, int startf, int endm,
 static int
 cd_pause(struct cd_softc *cd, int go)
 {
-	struct scsipi_pause scsipi_cmd;
+	struct scsipi_pause cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PAUSE;
-	scsipi_cmd.resume = go & 0xff;
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 30000, NULL, 0));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PAUSE;
+	cmd.resume = go & 0xff;
+
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1752,19 +1732,20 @@ static int
 cd_read_subchannel(struct cd_softc *cd, int mode, int format, int track,
     struct cd_sub_channel_info *data, int len, int flags)
 {
-	struct scsipi_read_subchannel scsipi_cmd;
+	struct scsipi_read_subchannel cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = READ_SUBCHANNEL;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
-		scsipi_cmd.byte2 |= CD_MSF;
-	scsipi_cmd.byte3 = SRS_SUBQ;
-	scsipi_cmd.subchan_format = format;
-	scsipi_cmd.track = track;
-	_lto2b(len, scsipi_cmd.data_len);
+		cmd.byte2 |= CD_MSF;
+	cmd.byte3 = SRS_SUBQ;
+	cmd.subchan_format = format;
+	cmd.track = track;
+	_lto2b(len, cmd.data_len);
+
 	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
+	    (void *)&cmd, sizeof(struct scsipi_read_subchannel),
+	    (void *)data, len,
 	    CDRETRIES, 30000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
 }
 
@@ -1775,10 +1756,10 @@ static int
 cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
     int flags, int control)
 {
-	struct scsipi_read_toc scsipi_cmd;
+	struct scsipi_read_toc cmd;
 	int ntoc;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
+	memset(&cmd, 0, sizeof(cmd));
 #if 0
 	if (len != sizeof(struct ioc_toc_header))
 		ntoc = ((len) - sizeof(struct ioc_toc_header)) /
@@ -1786,15 +1767,15 @@ cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
 	else
 #endif
 	ntoc = len;
-	scsipi_cmd.opcode = READ_TOC;
+	cmd.opcode = READ_TOC;
 	if (mode == CD_MSF_FORMAT)
-		scsipi_cmd.byte2 |= CD_MSF;
-	scsipi_cmd.from_track = start;
-	_lto2b(ntoc, scsipi_cmd.data_len);
-	scsipi_cmd.control = control;
+		cmd.byte2 |= CD_MSF;
+	cmd.from_track = start;
+	_lto2b(ntoc, cmd.data_len);
+	cmd.control = control;
+
 	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
+	    (void *)&cmd, sizeof(cmd), (void *)data, len, CDRETRIES,
 	    30000, NULL, flags | XS_CTL_DATA_IN));
 }
 
@@ -2395,16 +2376,15 @@ try_again:
 static int
 cd_load_unload(struct cd_softc *cd, struct ioc_load_unload *args)
 {
-	struct scsipi_load_unload scsipi_cmd;
+	struct scsipi_load_unload cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = LOAD_UNLOAD;
-	scsipi_cmd.options = args->options;    /* ioctl uses MMC values */
-	scsipi_cmd.slot = args->slot;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = LOAD_UNLOAD;
+	cmd.options = args->options;    /* ioctl uses MMC values */
+	cmd.slot = args->slot;
 
-	return (scsipi_command(cd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 200000, NULL, 0));
+	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CDRETRIES, 200000, NULL, 0));
 }
 
 static int

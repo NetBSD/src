@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.46.2.2 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.46.2.3 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46.2.2 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46.2.3 2004/09/18 14:51:24 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -278,9 +278,8 @@ scsistrategy(struct buf *bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= XS_CTL_ESCAPE;
 
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
-	    (u_char *)bp->b_data, screq->datalen,
+	error = scsipi_command(periph, (void *)screq->cmd, screq->cmdlen,
+	    (void *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | XS_CTL_USERCMD | XS_CTL_ASYNC);
 
@@ -311,7 +310,7 @@ bad:
  */
 int
 scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
-    caddr_t addr, int flag, struct lwp *l)
+    caddr_t addr, int flag, struct proc *p)
 {
 	int error;
 
@@ -352,7 +351,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_lwp = l;
+			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
@@ -363,7 +362,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_bp.b_data = 0;
 			si->si_bp.b_bcount = 0;
 			si->si_bp.b_dev = dev;
-			si->si_bp.b_proc = l->l_proc;
+			si->si_bp.b_proc = p;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.1.26.1 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: md4.h,v 1.1.26.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest 

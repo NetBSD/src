@@ -1,15 +1,15 @@
-/*	$NetBSD: krpc.h,v 1.6.2.1 2004/08/03 10:56:16 skrll Exp $	*/
+/*	$NetBSD: krpc.h,v 1.6.2.2 2004/09/18 14:56:20 skrll Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
 int krpc_call __P((struct sockaddr_in *sin,
 	u_int prog, u_int vers, u_int func,
-	struct mbuf **data, struct mbuf **from, struct lwp *l));
+	struct mbuf **data, struct mbuf **from, struct proc *p));
 
 int krpc_portmap __P((struct sockaddr_in *sin,
 	u_int prog, u_int vers, u_int proto, u_int16_t *portp,
-	struct lwp *l));
+	struct proc *p));
 
 struct mbuf *xdr_string_encode __P((char *str, int len));
 struct mbuf *xdr_string_decode __P((struct mbuf *m, char *str, int *len_p));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.10.48.1 2004/08/03 10:54:37 skrll Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.10.48.2 2004/09/18 14:54:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

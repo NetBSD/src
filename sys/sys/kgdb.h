@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.6.16.1 2004/08/03 10:56:28 skrll Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.6.16.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

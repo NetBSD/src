@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.24.2.1 2004/08/03 10:54:20 skrll Exp $   */
+/*	$NetBSD: slcompress.c,v 1.24.2.2 2004/09/18 14:54:16 skrll Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.24.2.1 2004/08/03 10:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.24.2.2 2004/09/18 14:54:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

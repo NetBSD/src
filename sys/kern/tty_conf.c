@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.42.2.3 2004/08/12 11:42:20 skrll Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.42.2.4 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.3 2004/08/12 11:42:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.4 2004/09/18 14:53:04 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -59,7 +59,7 @@ int	tbopen(dev_t dev, struct tty *tp);
 int	tbclose(struct tty *tp, int flags);
 int	tbread(struct tty *tp, struct uio *uio, int flags);
 int	tbtioctl(struct tty *tp, u_long cmd, caddr_t data,
-		 int flag, struct lwp *l);
+		 int flag, struct proc *p);
 int	tbinput(int c, struct tty *tp);
 #endif
 
@@ -68,7 +68,7 @@ int	tbinput(int c, struct tty *tp);
 int	slopen(dev_t dev, struct tty *tp);
 int	slclose(struct tty *tp, int flags);
 int	sltioctl(struct tty *tp, u_long cmd, caddr_t data,
-		 int flag, struct lwp *l);
+		 int flag, struct proc *p);
 int	slinput(int c, struct tty *tp);
 int	slstart(struct tty *tp);
 #endif
@@ -78,7 +78,7 @@ int	slstart(struct tty *tp);
 int	pppopen(dev_t dev, struct tty *tp);
 int	pppclose(struct tty *tp, int flags);
 int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data,
-		  int flag, struct lwp *l);
+		  int flag, struct proc *p);
 int	pppinput(int c, struct tty *tp);
 int	pppstart(struct tty *tp);
 int	pppread(struct tty *tp, struct uio *uio, int flag);
@@ -90,7 +90,7 @@ int	pppwrite(struct tty *tp, struct uio *uio, int flag);
 int	stripopen(dev_t dev, struct tty *tp);
 int	stripclose(struct tty *tp, int flags);
 int	striptioctl(struct tty *tp, u_long cmd, caddr_t data,
-		    int flag, struct lwp *l);
+		    int flag, struct proc *p);
 int	stripinput(int c, struct tty *tp);
 int	stripstart(struct tty *tp);
 #endif
@@ -100,12 +100,12 @@ int	stripstart(struct tty *tp);
 int	irframetopen(dev_t dev, struct tty *tp);
 int	irframetclose(struct tty *tp, int flags);
 int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data,
-		      int flag, struct lwp *l);
+		      int flag, struct proc *p);
 int	irframetinput(int c, struct tty *tp);
 int	irframetstart(struct tty *tp);
 int	irframetread(struct tty *tp, struct uio *uio, int flag);
 int	irframetwrite(struct tty *tp, struct uio *uio, int flag);
-int	irframetpoll(struct tty *tp, int events, struct lwp *l);
+int	irframetpoll(struct tty *tp, int events, struct proc *p);
 #endif
 
 
@@ -163,16 +163,16 @@ int	slinesw = 0;
  */
 /*ARGSUSED*/
 int
-ttynullioctl(tp, cmd, data, flags, l)
+ttynullioctl(tp, cmd, data, flags, p)
 	struct tty *tp;
 	u_long cmd;
 	char *data;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 #ifdef lint
-	tp = tp; data = data; flags = flags; l = l;
+	tp = tp; data = data; flags = flags; p = p;
 #endif
 	return (EPASSTHROUGH);
 }

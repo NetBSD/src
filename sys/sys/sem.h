@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.16.2.2 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: sem.h,v 1.16.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.10.2.2 2004/08/03 10:54:07 skrll Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.10.2.3 2004/09/18 14:54:15 skrll Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.2 2004/08/03 10:54:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.3 2004/09/18 14:54:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.2 2004/08/03 10:54:07 skrll 
  * mountflag is used.
  */
 int
-procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512];
@@ -110,12 +110,12 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
+procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512];
-	struct proc *p = curl->l_proc;
 	int len;
+	struct proc *p = l->l_proc;
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
@@ -212,7 +212,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 }
 
 int
-procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512];
@@ -229,7 +229,7 @@ procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 }
 
 int
-procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512];

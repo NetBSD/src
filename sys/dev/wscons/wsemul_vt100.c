@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.24.2.1 2004/08/03 10:52:11 skrll Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.24.2.2 2004/09/18 14:52:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.24.2.1 2004/08/03 10:52:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.24.2.2 2004/09/18 14:52:24 skrll Exp $");
 
 #include "opt_wsmsgattrs.h"
 

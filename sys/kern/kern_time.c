@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.70.2.1 2004/08/03 10:52:54 skrll Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.70.2.2 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70.2.1 2004/08/03 10:52:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70.2.2 2004/09/18 14:53:03 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.h,v 1.76.2.3 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.76.2.4 2004/09/18 14:51:25 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -171,7 +171,7 @@ struct scsipi_periphsw {
 	void	(*psw_start)(struct scsipi_periph *);
 	int	(*psw_async)(struct scsipi_periph *,
 		    scsipi_async_event_t, void *);
-	void	(*psw_done)(struct scsipi_xfer *);
+	void	(*psw_done)(struct scsipi_xfer *, int);
 };
 
 struct disk_parms;
@@ -237,9 +237,7 @@ struct scsipi_adapter {
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
 	
-	int	(*bustype_cmd)(struct scsipi_periph *,
-		    struct scsipi_generic *, int, void *, size_t, int,
-		    int, struct buf *, int);
+	void	(*bustype_cmd)(struct scsipi_xfer *);
 	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
 	void	(*bustype_printaddr)(struct scsipi_periph *);
 	void	(*bustype_kill_pending)(struct scsipi_periph *);
@@ -626,9 +624,8 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
-int	scsipi_command(struct scsipi_periph *,
-	    struct scsipi_generic *, int, u_char *, int,
-	    int, int, struct buf *, int);
+int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
+	    u_char *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
 caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *);
@@ -667,7 +664,7 @@ int	scsipi_thread_call_callback(struct scsipi_channel *,
 void	scsipi_async_event(struct scsipi_channel *,
 	    scsipi_async_event_t, void *);
 int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
-	    int, struct lwp *);
+	    int, struct proc *);
 
 void	scsipi_print_xfer_mode(struct scsipi_periph *);
 void	scsipi_set_xfer_mode(struct scsipi_channel *, int, int);

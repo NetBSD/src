@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.29.6.1 2004/08/03 10:51:38 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.29.6.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.29.6.1 2004/08/03 10:51:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.29.6.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,8 @@ USB_ATTACH(uplcom)
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

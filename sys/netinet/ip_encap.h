@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.3.2.2 2004/08/25 06:58:59 skrll Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.3.2.3 2004/09/18 14:54:54 skrll Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*

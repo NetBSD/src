@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.41.2.2 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.41.2.3 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.2 2004/08/03 10:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.3 2004/09/18 14:54:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,29 +147,28 @@ fifo_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
-	struct lwp	*l = ap->a_l;
 	struct proc	*p;
 	struct socket	*rso, *wso;
 	int		error;
 
 	vp = ap->a_vp;
-	p = ap->a_l->l_proc;
+	p = ap->a_p;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
-		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l);
+		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, p);
 		if (error != 0) {
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
-		error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l);
+		error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, p);
 		if (error != 0) {
 			(void)soclose(rso);
 			free(fip, M_VNODE);
@@ -234,7 +233,7 @@ fifo_open(void *v)
 	}
 	return (0);
  bad:
-	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, ap->a_l);
+	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, p);
 	return (error);
 }
 
@@ -310,7 +309,7 @@ fifo_write(void *v)
 		wso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp, 0);
 	error = (*wso->so_send)(wso, (struct mbuf *)0, ap->a_uio, 0,
-	    (struct mbuf *)0, 0, curlwp /*XXX*/);
+	    (struct mbuf *)0, 0, curproc /*XXX*/);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
@@ -330,7 +329,7 @@ fifo_ioctl(void *v)
 		void		*a_data;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct file	filetmp;
 	int		error;
@@ -339,13 +338,13 @@ fifo_ioctl(void *v)
 		return (0);
 	if (ap->a_fflag & FREAD) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
@@ -359,7 +358,7 @@ fifo_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode	*a_vp;
 		int		a_events;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct file	filetmp;
 	int		revents;
@@ -368,12 +367,12 @@ fifo_poll(void *v)
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
 
 	return (revents);
@@ -384,7 +383,7 @@ fifo_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode	*a_vp;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -425,7 +424,7 @@ fifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.20.6.1 2004/08/03 10:55:11 skrll Exp $	*/
+/*	$NetBSD: esp.h,v 1.20.6.2 2004/09/18 14:55:14 skrll Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*

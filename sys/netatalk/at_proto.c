@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.4.16.1 2004/08/03 10:54:34 skrll Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.4.16.2 2004/09/18 14:54:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.4.16.1 2004/08/03 10:54:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.4.16.2 2004/09/18 14:54:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

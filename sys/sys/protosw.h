@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.29.2.2 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: protosw.h,v 1.29.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,7 +62,6 @@ struct sockaddr;
 struct socket;
 struct domain;
 struct proc;
-struct lwp;
 
 struct protosw {
 	int 	pr_type;		/* socket type used for */
@@ -83,7 +82,7 @@ struct protosw {
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
 			(struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct lwp *);
+			     struct mbuf *, struct mbuf *, struct proc *);
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.4.28.1 2004/08/03 10:50:43 skrll Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.4.28.2 2004/09/18 14:50:54 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

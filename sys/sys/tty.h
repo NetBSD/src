@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.61.2.2 2004/08/03 10:56:33 skrll Exp $	*/
+/*	$NetBSD: tty.h,v 1.61.2.3 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -221,10 +221,10 @@ int	 unputc __P((struct clist *));
 
 int	 nullmodem __P((struct tty *, int));
 int	 tputchar __P((int, int, struct tty *));
-int	 ttioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
+int	 ttioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 int	 ttread __P((struct tty *, struct uio *, int));
 void	 ttrstrt __P((void *));
-int	 ttpoll __P((struct tty *, int, struct lwp *));
+int	 ttpoll __P((struct tty *, int, struct proc *));
 void	 ttsetwater __P((struct tty *));
 int	 ttspeedtab __P((int, const struct speedtab *));
 int	 ttstart __P((struct tty *));
@@ -271,7 +271,7 @@ void	clfree __P((struct clist *));
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
     defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
 # define COMPAT_OLDTTY
-int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct lwp *));
+int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.26.2.2 2004/08/03 10:57:07 skrll Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.26.2.3 2004/09/18 14:57:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26.2.2 2004/08/03 10:57:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26.2.3 2004/09/18 14:57:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

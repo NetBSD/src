@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.62.2.2 2004/08/03 10:56:30 skrll Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.62.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -63,6 +63,7 @@ struct sockbuf {
 					   socket buffer */
 	int	sb_flags;		/* flags, see below */
 	int	sb_timeo;		/* timeout for read/write */
+	u_long	sb_overflowed;		/* # of drops due to full buffer */
 };
 
 #ifndef SB_MAX
@@ -123,7 +124,7 @@ struct socket {
 	caddr_t		so_upcallarg;	/* Arg for above */
 	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
-					struct mbuf *, int, struct lwp *);
+					struct mbuf *, int, struct proc *);
 	int		(*so_receive) (struct socket *,
 					struct mbuf **,
 					struct uio *, struct mbuf **,
@@ -272,12 +273,12 @@ struct knote;
  */
 int	soo_read(struct file *, off_t *, struct uio *, struct ucred *, int);
 int	soo_write(struct file *, off_t *, struct uio *, struct ucred *, int);
-int	soo_fcntl(struct file *, u_int cmd, void *, struct lwp *);
-int	soo_ioctl(struct file *, u_long cmd, void *, struct lwp *);
-int	soo_poll(struct file *, int, struct lwp *);
+int	soo_fcntl(struct file *, u_int cmd, void *, struct proc *);
+int	soo_ioctl(struct file *, u_long cmd, void *, struct proc *);
+int	soo_poll(struct file *, int, struct proc *);
 int	soo_kqfilter(struct file *, struct knote *);
-int 	soo_close(struct file *, struct lwp *);
-int	soo_stat(struct file *, struct stat *, struct lwp *);
+int 	soo_close(struct file *, struct proc *);
+int	soo_stat(struct file *, struct stat *, struct proc *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
@@ -302,13 +303,13 @@ int	sb_max_set(u_long);
 void	soinit(void);
 int	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
-int	sobind(struct socket *, struct mbuf *, struct lwp *);
+int	sobind(struct socket *, struct mbuf *, struct proc *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
 int	soclose(struct socket *);
-int	soconnect(struct socket *, struct mbuf *, struct lwp *);
+int	soconnect(struct socket *, struct mbuf *, struct proc *);
 int	soconnect2(struct socket *, struct socket *);
-int	socreate(int, struct socket **, int, int, struct lwp *);
+int	socreate(int, struct socket **, int, int, struct proc *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, int, int, struct mbuf **);
@@ -327,14 +328,14 @@ int	soreceive(struct socket *, struct mbuf **, struct uio *,
 int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
 int	sosend(struct socket *, struct mbuf *, struct uio *,
-	    struct mbuf *, struct mbuf *, int, struct lwp *);
+	    struct mbuf *, struct mbuf *, int, struct proc *);
 int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
-int	sendit(struct lwp *, int, struct msghdr *, int, register_t *);
-int	recvit(struct lwp *, int, struct msghdr *, caddr_t, register_t *);
+int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
+int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
 
 #ifdef SOCKBUF_DEBUG
 /*

@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220koi8x10.h,v 1.1.4.2 2004/08/03 10:52:13 skrll Exp $	*/
+/* 	$NetBSD: vt220koi8x10.h,v 1.1.4.3 2004/09/18 14:52:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_compat.c,v 1.3.4.2 2004/08/03 10:54:21 skrll Exp $	*/
+/*	$NetBSD: ieee80211_compat.c,v 1.3.4.3 2004/09/18 14:54:39 skrll Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include <sys/systm.h>
 #include <machine/stdarg.h>
 #include <net80211/ieee80211_compat.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.3.4.2 2004/08/03 10:54:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.3.4.3 2004/09/18 14:54:39 skrll Exp $");
 
 #ifdef __NetBSD__
 void

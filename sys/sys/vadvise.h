@@ -1,4 +1,4 @@
-/*	$NetBSD: vadvise.h,v 1.7.60.1 2004/08/03 10:56:33 skrll Exp $	*/
+/*	$NetBSD: vadvise.h,v 1.7.60.2 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

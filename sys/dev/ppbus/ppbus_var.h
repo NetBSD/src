@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_var.h,v 1.3.4.2 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: ppbus_var.h,v 1.3.4.3 2004/09/18 14:50:40 skrll Exp $ */
 
 #ifndef __PPBUS_VAR_H
 #define __PPBUS_VAR_H

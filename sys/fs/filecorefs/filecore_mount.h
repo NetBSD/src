@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.1.4.1 2004/08/03 10:52:24 skrll Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.1.4.2 2004/09/18 14:52:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 The Regents of the University of California.

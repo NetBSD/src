@@ -1,4 +1,4 @@
-/* 	$NetBSD: qvss8x15.h,v 1.6.2.1 2004/08/03 10:52:13 skrll Exp $ */
+/* 	$NetBSD: qvss8x15.h,v 1.6.2.2 2004/09/18 14:52:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986

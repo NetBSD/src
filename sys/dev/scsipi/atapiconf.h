@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.14.16.2 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.14.16.3 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -57,7 +57,6 @@ void 	*atapi_probe_device(struct atapibus_softc *, int,
 int	atapiprint(void *, const char *);
 void	atapi_print_addr(struct scsipi_periph *);
 int	atapi_interpret_sense(struct scsipi_xfer *);
-int	atapi_scsipi_cmd(struct scsipi_periph *, struct scsipi_generic *,
-	    int, void *, size_t, int, int, struct buf *, int);
+void	atapi_scsipi_cmd(struct scsipi_xfer *);
 
 #endif /* _DEV_SCSIPI_ATAPICONF_H */

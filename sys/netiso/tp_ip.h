@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_ip.h,v 1.8.10.1 2004/08/03 10:55:43 skrll Exp $	*/
+/*	$NetBSD: tp_ip.h,v 1.8.10.2 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

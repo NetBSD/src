@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.7.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.7.2.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

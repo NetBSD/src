@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.26.2.1 2004/08/03 10:57:08 skrll Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.26.2.2 2004/09/18 14:57:12 skrll Exp $	*/
 
 /*
  *

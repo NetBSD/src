@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.37.2.4 2004/08/24 17:57:40 skrll Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.37.2.5 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.4 2004/08/24 17:57:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.5 2004/09/18 14:54:15 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,14 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.4 2004/08/24 17:57:40 skrll
 void	portal_init __P((void));
 void	portal_done __P((void));
 int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *));
-int	portal_start __P((struct mount *, int, struct lwp *));
-int	portal_unmount __P((struct mount *, int, struct lwp *));
+			  struct nameidata *, struct proc *));
+int	portal_start __P((struct mount *, int, struct proc *));
+int	portal_unmount __P((struct mount *, int, struct proc *));
 int	portal_root __P((struct mount *, struct vnode **));
 int	portal_quotactl __P((struct mount *, int, uid_t, void *,
-			     struct lwp *));
-int	portal_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int	portal_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+			     struct proc *));
+int	portal_statvfs __P((struct mount *, struct statvfs *, struct proc *));
+int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	portal_vget __P((struct mount *, ino_t, struct vnode **));
 int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
@@ -97,22 +97,20 @@ portal_done()
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-portal_mount(mp, path, data, ndp, l)
+portal_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct file *fp;
 	struct portal_args args;
 	struct portalmount *fmp;
 	struct socket *so;
 	struct vnode *rvp;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fmp = VFSTOPORTAL(mp);
 		if (fmp == NULL)
@@ -158,29 +156,30 @@ portal_mount(mp, path, data, ndp, l)
 	fp->f_count++;
 	simple_unlock(&fp->f_slock);
 
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, args.pa_config,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp, p);
 }
 
 int
-portal_start(mp, flags, l)
+portal_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
 }
 
 int
-portal_unmount(mp, mntflags, l)
+portal_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *rootvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
@@ -223,7 +222,7 @@ portal_unmount(mp, mntflags, l)
 	 * Discard reference to underlying file.  Must call closef because
 	 * this may be the last reference.
 	 */
-	closef(VFSTOPORTAL(mp)->pm_server, (struct lwp *) 0);
+	closef(VFSTOPORTAL(mp)->pm_server, (struct proc *) 0);
 	/*
 	 * Finally, throw away the portalmount structure
 	 */
@@ -250,22 +249,22 @@ portal_root(mp, vpp)
 }
 
 int
-portal_quotactl(mp, cmd, uid, arg, l)
+portal_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-portal_statvfs(mp, sbp, l)
+portal_statvfs(mp, sbp, p)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
@@ -279,18 +278,17 @@ portal_statvfs(mp, sbp, l)
 	sbp->f_ffree = 0;		/* See comments above */
 	sbp->f_favail = 0;		/* See comments above */
 	sbp->f_fresvd = 0;
-	sbp->f_namemax = MAXNAMLEN;
 	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
 /*ARGSUSED*/
 int
-portal_sync(mp, waitfor, uc, l)
+portal_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *uc;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);

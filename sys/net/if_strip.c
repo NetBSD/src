@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.48.2.2 2004/08/25 06:58:59 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.48.2.3 2004/09/18 14:54:16 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48.2.2 2004/08/25 06:58:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48.2.3 2004/09/18 14:54:16 skrll Exp $");
 
 #include "strip.h"
 

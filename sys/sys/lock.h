@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.48.2.1 2004/08/03 10:56:28 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.48.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.

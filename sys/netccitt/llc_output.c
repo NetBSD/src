@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.9.6.1 2004/08/03 10:54:35 skrll Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.9.6.2 2004/09/18 14:54:40 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.9.6.1 2004/08/03 10:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.9.6.2 2004/09/18 14:54:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

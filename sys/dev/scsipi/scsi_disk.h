@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.23.2.1 2004/08/03 10:51:14 skrll Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.23.2.2 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*
  * SCSI-specific interface description

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.140.2.1 2004/08/03 10:51:33 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.140.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.140.2.1 2004/08/03 10:51:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.140.2.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

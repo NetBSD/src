@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.28.2.1 2004/08/03 10:51:04 skrll Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.28.2.2 2004/09/18 14:51:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.28.2.1 2004/08/03 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.28.2.2 2004/09/18 14:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

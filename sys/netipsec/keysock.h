@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.2.4.2 2004/08/03 10:55:29 skrll Exp $	*/
+/*	$NetBSD: keysock.h,v 1.2.4.3 2004/09/18 14:55:32 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 

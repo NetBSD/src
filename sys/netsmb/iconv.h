@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.4.2.1 2004/08/03 10:56:05 skrll Exp $	*/
+/*	$NetBSD: iconv.h,v 1.4.2.2 2004/09/18 14:56:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov

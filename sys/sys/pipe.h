@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.13.2.1 2004/08/03 10:56:29 skrll Exp $ */
+/* $NetBSD: pipe.h,v 1.13.2.2 2004/09/18 14:56:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.30.28.1 2004/08/03 10:54:36 skrll Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.30.28.2 2004/09/18 14:54:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

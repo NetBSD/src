@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.18.2.2 2004/08/03 10:55:41 skrll Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.18.2.3 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.2 2004/08/03 10:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.3 2004/09/18 14:55:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.2 2004/08/03 10:55:41 skrll Exp 
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -288,13 +287,11 @@ rclnp_ctloutput(
 /* ARGSUSED */
 int
 clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-	struct mbuf *control, struct lwp *l)
+	struct mbuf *control, struct proc *p)
 {
 	int    error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 	rp = sotorawisopcb(so);
 	switch (req) {
 
@@ -371,7 +368,7 @@ clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			return (0);
 		}
 	}
-	error = raw_usrreq(so, req, m, nam, control, l);
+	error = raw_usrreq(so, req, m, nam, control, p);
 
 	if (error && req == PRU_ATTACH && so->so_pcb)
 		free((caddr_t) rp, M_PCB);

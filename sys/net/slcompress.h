@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.12.48.1 2004/08/03 10:54:20 skrll Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.12.48.2 2004/09/18 14:54:16 skrll Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*

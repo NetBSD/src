@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.82.2.2 2004/08/03 10:52:43 skrll Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.82.2.3 2004/09/18 14:53:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.2 2004/08/03 10:52:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.3 2004/09/18 14:53:02 skrll Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.2 2004/08/03 10:52:43 skrll Exp
 #include "opt_compat_darwin.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_compat_aout.h"
 #include "opt_compat_aout_m68k.h"
 #include "opt_compat_vax1k.h"
 #include "opt_compat_pecoff.h"
@@ -81,11 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.2 2004/08/03 10:52:43 skrll Exp
 #define	ELF64NAME(x)	CONCAT(elf,CONCAT(64,CONCAT(_,x)))
 #define	ELF64NAME2(x,y)	CONCAT(x,CONCAT(_elf64_,y))
 #ifdef EXEC_ELF32
-int ELF32NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
+int ELF32NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
 #ifdef EXEC_ELF64
-int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
+int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
 
@@ -179,9 +178,6 @@ int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
 #endif
 
 extern const struct emul emul_netbsd;
-#ifdef COMPAT_AOUT
-extern const struct emul emul_netbsd_aout;
-#endif
 #ifdef COMPAT_AOUT_M68K
 extern const struct emul emul_netbsd_aoutm68k;
 #endif
@@ -220,9 +216,7 @@ const struct execsw execsw_builtin[] = {
 	{ sizeof(struct exec),
 	  exec_aout_makecmds,
 	  { NULL },
-#ifdef COMPAT_AOUT
-	  &emul_netbsd_aout,
-#elif defined(COMPAT_AOUT_M68K)
+#if defined(COMPAT_AOUT_M68K)
 	  &emul_netbsd_aoutm68k,
 #else
 	  &emul_netbsd,

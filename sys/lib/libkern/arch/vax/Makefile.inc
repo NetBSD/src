@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16.6.1 2004/08/03 10:53:50 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.16.6.2 2004/09/18 14:54:01 skrll Exp $
 #
 #	The rest of the lib routines are in machine/macros.h
 #

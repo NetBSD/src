@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.11.24.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.11.24.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

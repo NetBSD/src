@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.16.6.1 2004/08/03 10:54:17 skrll Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.16.6.2 2004/09/18 14:54:16 skrll Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*

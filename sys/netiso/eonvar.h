@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.10.24.1 2004/08/03 10:55:41 skrll Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.10.24.2 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: setaddr.c,v 1.1.4.2 2004/08/03 10:53:59 skrll Exp $	*/
+/*	$NetBSD: setaddr.c,v 1.1.4.3 2004/09/18 14:54:13 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, Quentin Garnier.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.45.6.1 2004/08/03 10:51:38 skrll Exp $	*/
+/*	$NetBSD: umodem.c,v 1.45.6.2 2004/09/18 14:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.45.6.1 2004/08/03 10:51:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.45.6.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,8 @@ USB_ATTACH(umodem)
 			   USBDEV(sc->sc_dev));
 
 	DPRINTF(("umodem_attach: sc=%p\n", sc));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.2.6.1 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.2.6.2 2004/09/18 14:56:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.2.6.1 2004/08/03 10:56:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.2.6.2 2004/09/18 14:56:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

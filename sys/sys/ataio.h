@@ -1,4 +1,4 @@
-/*	$NetBSD: ataio.h,v 1.3.6.1 2004/08/03 10:56:25 skrll Exp $	*/
+/*	$NetBSD: ataio.h,v 1.3.6.2 2004/09/18 14:56:29 skrll Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
 #define _SYS_ATAIO_H_

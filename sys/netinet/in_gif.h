@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.h,v 1.8.6.1 2004/08/03 10:54:36 skrll Exp $	*/
+/*	$NetBSD: in_gif.h,v 1.8.6.2 2004/09/18 14:54:53 skrll Exp $	*/
 /*	$KAME: in_gif.h,v 1.6 2001/07/25 00:55:48 itojun Exp $	*/
 
 /*

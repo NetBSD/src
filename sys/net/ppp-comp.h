@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.9.2.1 2004/08/03 10:54:19 skrll Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.9.2.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.

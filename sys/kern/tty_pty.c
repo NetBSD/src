@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70.2.2 2004/08/03 10:52:56 skrll Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.70.2.3 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.2 2004/08/03 10:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.3 2004/09/18 14:53:04 skrll Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -122,9 +122,9 @@ static int pts_major;
 
 static dev_t pty_getfree(void);
 static char *pty_makename(char *, dev_t, char);
-static int pty_grant_slave(struct lwp *, dev_t);
-static int pty_alloc_master(struct lwp *, int *, dev_t *);
-static int pty_alloc_slave(struct lwp *, int *, dev_t);
+static int pty_grant_slave(struct proc *, dev_t);
+static int pty_alloc_master(struct proc *, int *, dev_t *);
+static int pty_alloc_slave(struct proc *, int *, dev_t);
 static void pty_fill_ptmget(dev_t, int, int, void *);
 
 void ptmattach(int);
@@ -342,12 +342,11 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, l)
+ptsopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -396,10 +395,10 @@ ptsopen(dev, flag, devtype, l)
 }
 
 int
-ptsclose(dev, flag, mode, l)
+ptsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -499,10 +498,10 @@ ptswrite(dev, uio, flag)
  * Poll pseudo-tty.
  */
 int
-ptspoll(dev, events, l)
+ptspoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -510,7 +509,7 @@ ptspoll(dev, events, l)
 	if (tp->t_oproc == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*
@@ -589,10 +588,10 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, l)
+ptcopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -626,10 +625,10 @@ ptcopen(dev, flag, devtype, l)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, l)
+ptcclose(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -872,10 +871,10 @@ out:
 }
 
 int
-ptcpoll(dev, events, l)
+ptcpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -903,10 +902,10 @@ ptcpoll(dev, events, l)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLHUP | POLLRDNORM))
-			selrecord(l, &pti->pt_selr);
+			selrecord(p, &pti->pt_selr);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(l, &pti->pt_selw);
+			selrecord(p, &pti->pt_selw);
 	}
 
 	splx(s);
@@ -1044,12 +1043,12 @@ ptytty(dev)
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag, l)
+ptyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -1090,7 +1089,7 @@ ptyioctl(dev, cmd, data, flag, l)
 		switch (cmd) {
 #ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
-			return pty_grant_slave(l, dev);
+			return pty_grant_slave(p, dev);
 
 		case TIOCPTSNAME:
 			pty_fill_ptmget(dev, -1, -1, data);
@@ -1163,9 +1162,9 @@ ptyioctl(dev, cmd, data, flag, l)
 			return(0);
 		}
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error == EPASSTHROUGH)
-		 error = ttioctl(tp, cmd, data, flag, l);
+		 error = ttioctl(tp, cmd, data, flag, p);
 	if (error == EPASSTHROUGH) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {
@@ -1289,7 +1288,7 @@ static int
 ptm_vn_open(struct nameidata *ndp)
 {
 	struct vnode *vp;
-	struct lwp *l = ndp->ni_cnd.cn_lwp;
+	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred;
 	int error;
 
@@ -1305,7 +1304,7 @@ ptm_vn_open(struct nameidata *ndp)
 	 * Get us a fresh cred with root privileges.
 	 */
 	cred = crget();
-	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
+	error = VOP_OPEN(vp, FREAD|FWRITE, cred, p);
 	crfree(cred);
 
 	if (error)
@@ -1320,13 +1319,12 @@ bad:
 }
 
 static int
-pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
+pty_alloc_master(struct proc *p, int *fd, dev_t *dev)
 {
 	int error;
 	struct nameidata nd;
 	struct pt_softc *pti;
 	struct file *fp;
-	struct proc *p = l->l_proc;
 	int md;
 	char name[TTY_NAMESIZE];
 
@@ -1344,7 +1342,7 @@ retry:
 	}
 	pti = pt_softc[md];
 	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
-	    pty_makename(name, *dev, 'p'), l);
+	    pty_makename(name, *dev, 'p'), p);
 	if ((error = ptm_vn_open(&nd)) != 0) {
 		/*
 		 * Check if the master open failed because we lost
@@ -1361,17 +1359,17 @@ retry:
 	fp->f_data = nd.ni_vp;
 	VOP_UNLOCK(nd.ni_vp, 0);
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return 0;
 bad:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	fdremove(p->p_fd, *fd);
 	ffree(fp);
 	return error;
 }
 
 static int
-pty_grant_slave(struct lwp *l, dev_t dev)
+pty_grant_slave(struct proc *p, dev_t dev)
 {
 	int error;
 	struct nameidata nd;
@@ -1387,7 +1385,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 	 * 3. open the slave.
 	 */
 	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
-	    pty_makename(name, dev, 't'), l);
+	    pty_makename(name, dev, 't'), p);
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return error;
@@ -1397,7 +1395,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 		struct ucred *cred;
 		gid_t gid = _TTY_GID;
 		/* get real uid */
-		uid_t uid = l->l_proc->p_cred->p_ruid;
+		uid_t uid = p->p_cred->p_ruid;
 
 		VATTR_NULL(&vattr);
 		vattr.va_uid = uid;
@@ -1405,7 +1403,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 		vattr.va_mode = (S_IRUSR|S_IWUSR|S_IWGRP) & ALLPERMS;
 		/* Get a fake cred to pretend we're root. */
 		cred = crget();
-		error = VOP_SETATTR(nd.ni_vp, &vattr, cred, l);
+		error = VOP_SETATTR(nd.ni_vp, &vattr, cred, p);
 		crfree(cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
@@ -1428,11 +1426,10 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 }
 
 static int
-pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
+pty_alloc_slave(struct proc *p, int *fd, dev_t dev)
 {
 	int error;
 	struct file *fp;
-	struct proc *p = l->l_proc;
 	struct nameidata nd;
 	char name[TTY_NAMESIZE];
 
@@ -1443,12 +1440,12 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	}
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
-	    pty_makename(name, dev, 't'), l);
+	    pty_makename(name, dev, 't'), p);
 
 	/* now open it */
 	if ((error = ptm_vn_open(&nd)) != 0) {
 		DPRINTF(("vn_open %d\n", error));
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		fdremove(p->p_fd, *fd);
 		ffree(fp);
 		return error;
@@ -1459,7 +1456,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	fp->f_data = nd.ni_vp;
 	VOP_UNLOCK(nd.ni_vp, 0);
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return 0;
 }
 
@@ -1484,14 +1481,14 @@ ptmattach(int n)
 
 int
 /*ARGSUSED*/
-ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
+ptmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error;
 	int fd;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
-		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
+		if ((error = pty_alloc_master(p, &fd, &dev)) != 0)
 			return error;
 		curlwp->l_dupfd = fd;
 		return ENXIO;
@@ -1505,31 +1502,30 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 int
 /*ARGSUSED*/
-ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
+ptmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
 /*ARGSUSED*/
-ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error;
 	dev_t newdev;
 	int cfd, sfd;
 	struct file *fp;
-	struct proc *p = l->l_proc;
 
 	error = 0;
 	switch (cmd) {
 	case TIOCPTMGET:
-		if ((error = pty_alloc_master(l, &cfd, &newdev)) != 0)
+		if ((error = pty_alloc_master(p, &cfd, &newdev)) != 0)
 			return error;
 
-		if ((error = pty_grant_slave(l, newdev)) != 0)
+		if ((error = pty_grant_slave(p, newdev)) != 0)
 			goto bad;
 
-		if ((error = pty_alloc_slave(l, &sfd, newdev)) != 0)
+		if ((error = pty_alloc_slave(p, &sfd, newdev)) != 0)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */

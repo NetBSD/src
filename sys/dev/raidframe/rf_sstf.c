@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.9.6.1 2004/08/03 10:50:48 skrll Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.9.6.2 2004/09/18 14:50:55 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.9.6.1 2004/08/03 10:50:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.9.6.2 2004/09/18 14:50:55 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.12.2.1 2003/07/02 15:26:58 darrenr Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.12.2.2 2004/09/18 14:54:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ void pk_timer __P((void));
 
 /* pk_usrreq.c */
 int pk_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		   struct mbuf *, struct lwp *));
+		   struct mbuf *, struct proc *));
 int pk_start __P((struct pklcd *));
 int pk_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 		    struct proc *));

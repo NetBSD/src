@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2.16.1 2004/08/03 10:53:42 skrll Exp $	*/
+/*	$NetBSD: memmove.S,v 1.2.16.2 2004/09/18 14:53:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

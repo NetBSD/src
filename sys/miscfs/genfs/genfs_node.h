@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.4.2.1 2004/08/03 10:54:05 skrll Exp $ */
+/* $NetBSD: genfs_node.h,v 1.4.2.2 2004/09/18 14:54:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.

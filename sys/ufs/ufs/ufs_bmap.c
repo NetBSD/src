@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.23.2.2 2004/08/25 06:59:14 skrll Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.23.2.3 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.2 2004/08/25 06:59:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.3 2004/09/18 14:56:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,6 @@ ufs_getlbns(vp, bn, ap, nump)
 			break;
 
 		lbc -= ump->um_lognindir;
-		blockcnt = (int64_t)1 << lbc;
 		off = (bn >> lbc) & (MNINDIR(ump) - 1);
 
 		++numlevels;
@@ -405,7 +404,7 @@ ufs_getlbns(vp, bn, ap, nump)
 		ap->in_exists = 0;
 		++ap;
 
-		metalbn -= -1 + (off << lbc);
+		metalbn -= -1 + ((int64_t)off << lbc);
 	}
 	if (nump)
 		*nump = numlevels;

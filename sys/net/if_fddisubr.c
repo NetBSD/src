@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.50.2.1 2004/08/03 10:54:13 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.50.2.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.50.2.1 2004/08/03 10:54:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.50.2.2 2004/09/18 14:54:16 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"

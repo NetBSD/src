@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.S,v 1.2.28.1 2004/08/03 10:53:42 skrll Exp $	*/
+/*	$NetBSD: memcmp.S,v 1.2.28.2 2004/09/18 14:53:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memcmp.S,v 1.2.28.1 2004/08/03 10:53:42 skrll Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.2.28.2 2004/09/18 14:53:54 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

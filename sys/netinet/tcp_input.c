@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.171.2.1 2004/08/03 10:54:44 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.171.2.2 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.1 2004/08/03 10:54:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.2 2004/09/18 14:54:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -347,6 +347,8 @@ static void tcp6_log_refused
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
 
+POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
+
 int
 tcp_reass(tp, th, m, tlen)
 	struct tcpcb *tp;
@@ -498,7 +500,7 @@ tcp_reass(tp, th, m, tlen)
 			tcpstat.tcps_rcvdupbyte += pkt_len;
 			m_freem(m);
 			if (tiqe != NULL)
-				pool_put(&ipqent_pool, tiqe);
+				pool_put(&tcpipqent_pool, tiqe);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_segdup);
 			return (0);
 		}
@@ -578,7 +580,7 @@ tcp_reass(tp, th, m, tlen)
 			if (tiqe == NULL)
 				tiqe = q;
 			else
-				pool_put(&ipqent_pool, q);
+				pool_put(&tcpipqent_pool, q);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
@@ -603,7 +605,7 @@ tcp_reass(tp, th, m, tlen)
 		if (tiqe == NULL)
 			tiqe = q;
 		else
-			pool_put(&ipqent_pool, q);
+			pool_put(&tcpipqent_pool, q);
 	}
 
 #ifdef TCP_REASS_COUNTERS
@@ -623,7 +625,7 @@ tcp_reass(tp, th, m, tlen)
 	 * XXX If we can't, just drop the packet.  XXX
 	 */
 	if (tiqe == NULL) {
-		tiqe = pool_get(&ipqent_pool, PR_NOWAIT);
+		tiqe = pool_get(&tcpipqent_pool, PR_NOWAIT);
 		if (tiqe == NULL) {
 			tcpstat.tcps_rcvmemdrop++;
 			m_freem(m);
@@ -692,7 +694,7 @@ present:
 		m_freem(q->ipqe_m);
 	else
 		sbappendstream(&so->so_rcv, q->ipqe_m);
-	pool_put(&ipqent_pool, q);
+	pool_put(&tcpipqent_pool, q);
 	sorwakeup(so);
 	return (pkt_flags);
 }

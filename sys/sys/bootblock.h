@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.13.2.2 2004/08/25 06:59:14 skrll Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.13.2.3 2004/09/18 14:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -224,16 +224,18 @@
 #define	MBR_PTYPE_FAT32L	0x0c	/* 32-bit FAT, LBA-mapped */
 #define	MBR_PTYPE_FAT16L	0x0e	/* 16-bit FAT, LBA-mapped */
 #define	MBR_PTYPE_EXT_LBA	0x0f	/* extended partition, LBA-mapped */
+#define	MBR_PTYPE_PREP		0x41	/* PReP */
 #define	MBR_PTYPE_ONTRACK	0x54
 #define	MBR_PTYPE_LNXSWAP	0x82	/* Linux swap or Solaris */
 #define	MBR_PTYPE_LNXEXT2	0x83	/* Linux native */
 #define	MBR_PTYPE_EXT_LNX	0x85	/* Linux extended partition */
 #define	MBR_PTYPE_NTFSVOL	0x87	/* NTFS volume set or HPFS mirrored */
-#define	MBR_PTYPE_PREP		0x41	/* PReP */
 #define	MBR_PTYPE_386BSD	0xa5	/* 386BSD partition type */
 #define	MBR_PTYPE_APPLEUFS 	0xa8	/* Apple UFS */
 #define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
 #define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
+#define	MBR_PTYPE_PMBR		0xee	/* GPT Protective MBR */
+#define	MBR_PTYPE_EFI		0xef	/* EFI system partition */
 
 #define	MBR_PSECT(s)		((s) & 0x3f)
 #define	MBR_PCYL(c, s)		((c) + (((s) & 0xc0) << 2))

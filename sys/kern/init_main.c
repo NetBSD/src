@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221.2.3 2004/08/24 17:57:37 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.4 2004/09/18 14:53:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.3 2004/08/24 17:57:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.4 2004/09/18 14:53:02 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -198,7 +198,7 @@ time_t	rootfstime;			/* recorded root fs time, if known */
 
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
-static void check_console(struct lwp *l);
+static void check_console(struct proc *p);
 static void start_init(void *);
 void main(void);
 
@@ -611,12 +611,12 @@ setrootfstime(time_t t)
 }
 
 static void
-check_console(struct lwp *l)
+check_console(struct proc *p)
 {
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
 	error = namei(&nd);
 	if (error == 0)
 		vrele(nd.ni_vp);
@@ -676,7 +676,7 @@ start_init(void *arg)
 	 * but that's a _lot_ more work, and the benefit from this easy
 	 * hack makes up for the "good is the enemy of the best" effect.
 	 */
-	check_console(l);
+	check_console(p);
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
@@ -782,7 +782,7 @@ start_init(void *arg)
 		 * Now try to exec the program.  If can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
-		error = sys_execve(l, &args, retval);
+		error = sys_execve(LIST_FIRST(&p->p_lwps), &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
 			KERNEL_PROC_UNLOCK(l);
 			return;

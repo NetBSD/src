@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.3.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.3.2.3 2004/09/18 14:52:37 skrll Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.47 2004/03/09 21:44:41 mcbride Exp $	*/
 
 /*
@@ -1550,7 +1550,7 @@ int
 pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
     int *nchange, int flags)
 {
-	struct pfr_ktable	*p;
+	struct pfr_ktable	*p, *q;
 	struct pfr_ktableworkq	 workq;
 	struct pf_ruleset	*rs;
 	int			 s = 0, xadd = 0, xchange = 0;
@@ -1576,8 +1576,10 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
-		SLIST_FOREACH(p, &workq, pfrkt_workq)
+		for (p = SLIST_FIRST(&workq); p != NULL; p = q) {
+			q = SLIST_NEXT(p, pfrkt_workq);
 			pfr_commit_ktable(p, tzero);
+		}
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 		rs->topen = 0;
@@ -1728,10 +1730,12 @@ pfr_insert_ktable(struct pfr_ktable *kt)
 void
 pfr_setflags_ktables(struct pfr_ktableworkq *workq)
 {
-	struct pfr_ktable	*p;
+	struct pfr_ktable	*p, *q;
 
-	SLIST_FOREACH(p, workq, pfrkt_workq)
+	for (p = SLIST_FIRST(workq); p; p = q) {
+		q = SLIST_NEXT(p, pfrkt_workq);
 		pfr_setflags_ktable(p, p->pfrkt_nflags);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.1.4.1 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.1.4.2 2004/09/18 14:52:37 skrll Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.8.2.2 2004/08/03 10:54:21 skrll Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.8.2.3 2004/09/18 14:54:39 skrll Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *

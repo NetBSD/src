@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.3 2004/08/12 11:42:23 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.4 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -209,7 +209,7 @@ struct proc {
 	u_quad_t 	p_iticks;	/* Statclock hits processing intr */
 
 	int		p_traceflag;	/* Kernel trace points */
-	struct file	*p_tracep;	/* Trace to file */
+	void		*p_tracep;	/* Trace private data */
 	void		*p_systrace;	/* Back pointer to systrace */
 
 	struct vnode 	*p_textvp;	/* Vnode of executable */
@@ -466,7 +466,7 @@ void	cpu_lwp_free(struct lwp *, int);
 
 void	child_return(void *);
 
-int	proc_isunder(struct proc *, struct lwp *);
+int	proc_isunder(struct proc *, struct proc *);
 void	proc_stop(struct proc *, int);
 
 void	proclist_lock_read(void);

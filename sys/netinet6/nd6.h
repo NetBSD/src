@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.35.2.1 2004/08/03 10:55:16 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.35.2.2 2004/09/18 14:55:15 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*

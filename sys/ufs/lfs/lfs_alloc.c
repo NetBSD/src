@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.69.2.4 2004/08/25 06:59:14 skrll Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.69.2.5 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.4 2004/08/25 06:59:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.5 2004/09/18 14:56:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -109,7 +109,7 @@ static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
  * Called with the Ifile inode locked.
  */
 int
-lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
+lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	      struct vnode **vpp)
 {
 	IFILE *ifp;
@@ -134,7 +134,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 		if (ip->i_gen == version)
 			return 0;
 		else if (ip->i_gen < version) {
-			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
+			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 			ip->i_gen = ip->i_ffs1_gen = version;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.5.4.2 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: if_plip.c,v 1.5.4.3 2004/09/18 14:50:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.5.4.2 2004/08/03 10:50:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.5.4.3 2004/09/18 14:50:39 skrll Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from

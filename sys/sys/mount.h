@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.109.2.5 2004/08/25 06:59:14 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.109.2.6 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -128,7 +128,7 @@ struct mount {
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
-	struct lwp	*mnt_unmounter;		/* who is unmounting */
+	struct proc	*mnt_unmounter;		/* who is unmounting */
 	int		mnt_writeopcountupper;	/* upper writeops in progress */
 	int		mnt_writeopcountlower;	/* lower writeops in progress */
 	struct simplelock mnt_slock;		/* mutex for wcnt and
@@ -223,16 +223,16 @@ struct vnodeopv_desc;
 struct vfsops {
 	const char *vfs_name;
 	int	(*vfs_mount)	__P((struct mount *, const char *, void *,
-				    struct nameidata *, struct lwp *));
-	int	(*vfs_start)	__P((struct mount *, int, struct lwp *));
-	int	(*vfs_unmount)	__P((struct mount *, int, struct lwp *));
+				    struct nameidata *, struct proc *));
+	int	(*vfs_start)	__P((struct mount *, int, struct proc *));
+	int	(*vfs_unmount)	__P((struct mount *, int, struct proc *));
 	int	(*vfs_root)	__P((struct mount *, struct vnode **));
 	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, void *,
-				    struct lwp *));
+				    struct proc *));
 	int	(*vfs_statvfs)	__P((struct mount *, struct statvfs *,
-				    struct lwp *));
+				    struct proc *));
 	int	(*vfs_sync)	__P((struct mount *, int, struct ucred *,
-				    struct lwp *));
+				    struct proc *));
 	int	(*vfs_vget)	__P((struct mount *, ino_t, struct vnode **));
 	int	(*vfs_fhtovp)	__P((struct mount *, struct fid *,
 				    struct vnode **));
@@ -251,15 +251,15 @@ struct vfsops {
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-#define VFS_MOUNT(MP, PATH, DATA, NDP, L) \
-	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, L)
-#define VFS_START(MP, FLAGS, L)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, L)
-#define VFS_UNMOUNT(MP, FORCE, L) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, L)
+#define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
+	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, P)
+#define VFS_START(MP, FLAGS, P)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, P)
+#define VFS_UNMOUNT(MP, FORCE, P) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, P)
 #define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
-#define VFS_QUOTACTL(MP,C,U,A,L)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, L)
-#define VFS_STATVFS(MP, SBP, L)	  (*(MP)->mnt_op->vfs_statvfs)(MP, SBP, L)
-#define VFS_SYNC(MP, WAIT, C, L)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, L)
-#define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_QUOTACTL(MP,C,U,A,P)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, P)
+#define VFS_STATVFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statvfs)(MP, SBP, P)
+#define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
+#define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
@@ -333,7 +333,7 @@ int	vfs_setpublicfs			    /* set publicly exported fs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unmountall __P((struct lwp *));	    /* unmount file systems */
+void	vfs_unmountall __P((struct proc *));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *, int, struct simplelock *));
 int	vfs_rootmountalloc __P((char *, char *, struct mount **));
 void	vfs_unbusy __P((struct mount *));
@@ -349,7 +349,7 @@ extern	struct nfs_public nfs_pub;
 extern	struct simplelock mountlist_slock;
 extern	struct simplelock spechash_slock;
 long	makefstype __P((const char *));
-int	dounmount __P((struct mount *, int, struct lwp *));
+int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
 void	vfs_opv_init __P((const struct vnodeopv_desc * const *));
 void	vfs_opv_free __P((const struct vnodeopv_desc * const *));

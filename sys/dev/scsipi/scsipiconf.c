@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.c,v 1.20.2.1 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.20.2.2 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.2.1 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.2.2 2004/09/18 14:51:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.2.1 2004/08/25 06:58:43 skrll Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
@@ -75,21 +74,14 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
     struct buf *bp, int flags)
 {
-	int error;
+	struct scsipi_xfer *xs;
  
-	if ((flags & XS_CTL_DATA_ONSTACK) != 0) {
-		/*
-		 * If the I/O buffer is allocated on stack, the
-		 * process must NOT be swapped out, as the device will
-		 * be accessing the stack.
-		 */
-		PHOLD(curlwp);
-	}
-	error = (*periph->periph_channel->chan_bustype->bustype_cmd)(periph,
-	    cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
-	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
-		PRELE(curlwp);
-	return (error);
+	xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr, datalen, retries,
+	    timeout, bp, flags);
+	if (!xs)
+		return (ENOMEM);
+
+	return (scsipi_execute_xs(xs));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.14.6.1 2004/08/03 10:50:43 skrll Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.14.6.2 2004/09/18 14:50:54 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.14.6.1 2004/08/03 10:50:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.14.6.2 2004/09/18 14:50:54 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.10.2.1 2004/08/03 10:56:32 skrll Exp $	*/
+/*	$NetBSD: systrace.h,v 1.10.2.2 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

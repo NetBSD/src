@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5.2.2 2004/08/03 10:55:29 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5.2.3 2004/09/18 14:55:32 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.2 2004/08/03 10:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.3 2004/09/18 14:55:32 skrll Exp $");
 
 #include "opt_ipsec.h"
 

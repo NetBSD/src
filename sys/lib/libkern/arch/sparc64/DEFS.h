@@ -1,4 +1,4 @@
-/*	$NetBSD: DEFS.h,v 1.1.1.1.48.1 2004/08/03 10:53:50 skrll Exp $	*/
+/*	$NetBSD: DEFS.h,v 1.1.1.1.48.2 2004/09/18 14:54:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

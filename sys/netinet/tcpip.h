@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.8.28.1 2004/08/03 10:54:46 skrll Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.8.28.2 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

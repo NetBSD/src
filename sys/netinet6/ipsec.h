@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.31.6.1 2004/08/03 10:55:14 skrll Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.31.6.2 2004/09/18 14:55:15 skrll Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.16.24.2 2004/08/24 17:57:39 skrll Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.16.24.3 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

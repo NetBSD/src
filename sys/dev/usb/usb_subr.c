@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.104.2.1 2004/08/03 10:51:39 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.104.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.1 2004/08/03 10:51:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -86,8 +86,9 @@ Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *,
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
-Static int usbd_print(void *aux, const char *pnp);
-Static int usbd_submatch(device_ptr_t, struct cfdata *cf, void *);
+Static int usbd_print(void *, const char *);
+Static int usbd_submatch(device_ptr_t, struct cfdata *,
+			 const locdesc_t *, void *);
 #elif defined(__OpenBSD__)
 Static int usbd_print(void *aux, const char *pnp);
 Static int usbd_submatch(device_ptr_t, void *, void *);
@@ -1217,7 +1218,8 @@ usbd_print(void *aux, const char *pnp)
 
 #if defined(__NetBSD__)
 int
-usbd_submatch(struct device *parent, struct cfdata *cf, void *aux)
+usbd_submatch(struct device *parent, struct cfdata *cf,
+	      const locdesc_t *ldesc, void *aux)
 {
 #elif defined(__OpenBSD__)
 int
@@ -1236,8 +1238,7 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	    uaa->product, cf->uhubcf_product,
 	    uaa->release, cf->uhubcf_release));
 	if (uaa->port != 0 &&	/* root hub has port 0, it should match */
-	    ((uaa->port != 0 &&
-	      cf->uhubcf_port != UHUB_UNK_PORT &&
+	    ((cf->uhubcf_port != UHUB_UNK_PORT &&
 	      cf->uhubcf_port != uaa->port) ||
 	     (uaa->configno != UHUB_UNK_CONFIGURATION &&
 	      cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.2.2.2 2004/08/12 16:17:15 skrll Exp $	*/
+/*	$NetBSD: rf.c,v 1.2.2.3 2004/09/18 14:50:40 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.2 2004/08/12 16:17:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.3 2004/09/18 14:50:40 skrll Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -956,7 +956,7 @@ rfsize(dev_t dev)
 
 
 int
-rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+rfopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	struct rf_softc *rf_sc;
 	struct rfc_softc *rfc_sc;
@@ -1049,7 +1049,7 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 
 
 int
-rfclose(dev_t dev, int fflag, int devtype, struct lwp *l)
+rfclose(dev_t dev, int fflag, int devtype, struct proc *p)
 {
 	struct rf_softc *rf_sc;
 	int unit;
@@ -1089,7 +1089,7 @@ rfwrite(dev_t dev, struct uio *uio, int ioflag)
 
 
 int
-rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
 	struct rf_softc *rf_sc;
 	int unit;

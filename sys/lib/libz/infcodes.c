@@ -1,4 +1,4 @@
-/* $NetBSD: infcodes.c,v 1.5.2.1 2004/08/03 10:53:58 skrll Exp $ */
+/* $NetBSD: infcodes.c,v 1.5.2.2 2004/09/18 14:54:08 skrll Exp $ */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-2002 Mark Adler

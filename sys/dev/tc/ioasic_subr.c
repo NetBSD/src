@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.4.2.2 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.4.2.3 2004/09/18 14:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.4.2.2 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.4.2.3 2004/09/18 14:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

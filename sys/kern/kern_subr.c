@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.3 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.4 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.3 2004/08/18 10:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.4 2004/09/18 14:53:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -145,9 +145,7 @@ uiomove(buf, n, uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-	struct proc *p;
-	struct lwp *l;
-
+	struct proc *p = uio->uio_procp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -167,10 +165,7 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			l = uio->uio_lwp;
-			p = l ? l->l_proc : NULL;
-			/* XXX - Should curlwp == uio->uio_lwp ?? */
-			if (curlwp->l_cpu->ci_schedstate.spc_flags &
+			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
 			if (__predict_true(p == curproc)) {
@@ -287,7 +282,7 @@ copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
-	uio.uio_lwp = NULL;
+	uio.uio_procp = NULL;
 
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
@@ -320,7 +315,7 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
-	uio.uio_lwp = NULL;
+	uio.uio_procp = NULL;
 
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
@@ -1321,7 +1316,7 @@ trace_enter(struct lwp *l, register_t code,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(l, code, realcode, callp, args);
+		ktrsyscall(p, code, realcode, callp, args);
 #endif /* KTRACE */
 
 #ifdef SYSTRACE
@@ -1353,7 +1348,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(l, code, error, rval);
+		ktrsysret(p, code, error, rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif /* KTRACE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.1 2004/08/03 10:52:54 skrll Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.2 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.1 2004/08/03 10:52:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.2 2004/09/18 14:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h> 
@@ -87,7 +87,7 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 			count = BUF_SIZE;
 
 		error = vn_rdwr(UIO_READ, vp, filebuf, count, j,
-                                UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
+                                UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
 
 		if (error) {
 			free(filebuf, M_TEMP);
@@ -123,7 +123,7 @@ sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 			count = BUF_SIZE;
 
 		error = vn_rdwr(UIO_READ, vp, filebuf, count, j,
-				UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
+				UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
 
 		if (error) {
 			free(filebuf, M_TEMP);

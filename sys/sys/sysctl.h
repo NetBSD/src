@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.95.2.3 2004/08/12 11:42:23 skrll Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.95.2.4 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.11.2.1 2004/08/03 10:50:49 skrll Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.11.2.2 2004/09/18 14:50:55 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11.2.1 2004/08/03 10:50:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11.2.2 2004/09/18 14:50:55 skrll Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"

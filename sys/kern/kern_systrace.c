@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.30.2.2 2004/08/03 10:52:53 skrll Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.30.2.3 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.30.2.2 2004/08/03 10:52:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.30.2.3 2004/09/18 14:53:03 skrll Exp $");
 
 #include "opt_systrace.h"
 
@@ -84,20 +84,17 @@ int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
-int	systracef_fcntl(struct file *, u_int, void *, struct lwp *);
-int	systracef_poll(struct file *, int, struct lwp *);
+int	systracef_fcntl(struct file *, u_int, void *, struct proc *);
+int	systracef_poll(struct file *, int, struct proc *);
 #else
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_select(struct file *, int, struct proc *);
-int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
-int	systracef_stat(struct file *, struct stat *, struct proc *);
-int	systracef_close(struct file *, struct proc *);
 #endif
 int	systracef_kqfilter(struct file *, struct knote *);
-int	systracef_ioctl(struct file *, u_long, void *, struct lwp *);
-int	systracef_stat(struct file *, struct stat *, struct lwp *);
-int	systracef_close(struct file *, struct lwp *);
+int	systracef_ioctl(struct file *, u_long, void *, struct proc *);
+int	systracef_stat(struct file *, struct stat *, struct proc *);
+int	systracef_close(struct file *, struct proc *);
 
 struct str_policy {
 	TAILQ_ENTRY(str_policy) next;
@@ -297,12 +294,11 @@ systracef_write(struct file *fp, off_t *poff, struct uio *uio,
 
 /* ARGSUSED */
 int
-systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
+systracef_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 {
 	int ret = 0;
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 #ifdef __NetBSD__
-	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdp;
 #else
 	struct filedesc *fdp;
@@ -439,7 +435,7 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 #ifdef __NetBSD__
 /* ARGSUSED */
 int
-systracef_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
+systracef_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 {
 
 	if (cmd == FNONBLOCK || cmd == FASYNC)
@@ -451,7 +447,7 @@ systracef_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 
 #ifdef __NetBSD__
 int
-systracef_poll(struct file *fp, int events, struct lwp *l)
+systracef_poll(struct file *fp, int events, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	int revents = 0;
@@ -460,13 +456,13 @@ systracef_poll(struct file *fp, int events, struct lwp *l)
 		return (revents);
 
 	systrace_lock();
-	SYSTRACE_LOCK(fst, l->l_proc);
+	SYSTRACE_LOCK(fst, p);
 	systrace_unlock();
 	if (!TAILQ_EMPTY(&fst->messages))
 		revents |= events & (POLLIN | POLLRDNORM);
 	if (revents == 0)
-		selrecord(l, &fst->si);
-	SYSTRACE_UNLOCK(fst, l->l_proc);
+		selrecord(p, &fst->si);
+	SYSTRACE_UNLOCK(fst, p);
 
 	return (revents);
 }
@@ -502,14 +498,14 @@ systracef_kqfilter(struct file *fp, struct knote *kn)
 
 /* ARGSUSED */
 int
-systracef_stat(struct file *fp, struct stat *sb, struct lwp *l)
+systracef_stat(struct file *fp, struct stat *sb, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
 int
-systracef_close(struct file *fp, struct lwp *l)
+systracef_close(struct file *fp, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_process *strp;
@@ -590,15 +586,14 @@ systrace_init(void)
 }
 
 int
-systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
+systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct proc *p = l->l_proc;
 	struct fsystrace *fst;
 	struct file *fp;
 	int error, fd;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+	if ((error = falloc(p, &fp, &fd)) != 0)
 		return (error);
 
 	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
@@ -622,7 +617,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	curlwp->l_dupfd = fd;	/* XXX */
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	return (ENXIO);
 }
@@ -1169,8 +1164,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 int
 systrace_io(struct str_process *strp, struct systrace_io *io)
 {
-	struct proc *t = strp->proc;
-	struct lwp *l = curlwp;
+	struct proc *p = curproc, *t = strp->proc;
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
@@ -1200,10 +1194,10 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_offset = (off_t)(unsigned long)io->strio_offs;
 	uio.uio_resid = io->strio_len;
 	uio.uio_segflg = UIO_USERSPACE;
-	uio.uio_lwp = l;
+	uio.uio_procp = p;
 
 #ifdef __NetBSD__
-	error = process_domem(l, proc_representative_lwp(t), &uio);
+	error = process_domem(p, t, &uio);
 #else
 	error = procfs_domem(p, t, NULL, &uio);
 #endif
@@ -1435,7 +1429,7 @@ systrace_namei(struct nameidata *ndp)
 	size_t i;
 
 	systrace_lock();
-	strp = cnp->cn_lwp->l_proc->p_systrace;
+	strp = cnp->cn_proc->p_systrace;
 	if (strp != NULL) {
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, curlwp);

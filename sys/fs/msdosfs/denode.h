@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.3.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: denode.h,v 1.3.2.3 2004/09/18 14:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -296,7 +296,7 @@ int	msdosfs_update		__P((void *));
 int createde __P((struct denode *, struct denode *, struct denode **, struct componentname *));
 int deextend __P((struct denode *, u_long, struct ucred *));
 int deget __P((struct msdosfsmount *, u_long, u_long, struct denode **));
-int detrunc __P((struct denode *, u_long, int, struct ucred *, struct lwp *));
+int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
 int deupdat __P((struct denode *, int));
 int doscheckpath __P((struct denode *, struct denode *));
 int dosdirempty __P((struct denode *));

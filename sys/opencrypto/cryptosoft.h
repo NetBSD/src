@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.2.4.2 2004/08/03 10:56:25 skrll Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.2.4.3 2004/09/18 14:56:20 skrll Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*

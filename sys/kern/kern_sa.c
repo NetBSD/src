@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.16.2.2 2004/08/03 10:52:51 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.16.2.3 2004/09/18 14:53:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.2 2004/08/03 10:52:51 skrll Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.3 2004/09/18 14:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.2 2004/08/03 10:52:51 skrll Exp $
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
-#include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1555,10 +1552,6 @@ sa_makeupcalls(struct lwp *l)
 	DPRINTFN(7,("sa_makeupcalls(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SAUPCALL))
-		ktrsaupcall(l, type, nevents, nint, sapp, ap);
-#endif
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 
 	l->l_flag &= ~L_SA_YIELD;

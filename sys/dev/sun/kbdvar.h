@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.11.6.1 2004/08/03 10:51:17 skrll Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.11.6.2 2004/09/18 14:51:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

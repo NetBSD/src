@@ -1,7 +1,7 @@
-/*	$NetBSD: st.c,v 1.163.2.3 2004/09/03 12:45:39 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.163.2.4 2004/09/18 14:51:25 skrll Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.3 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.4 2004/09/18 14:51:25 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -76,8 +76,11 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.3 2004/09/03 12:45:39 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 
+#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
+#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/stvar.h>
 
 /* Defines for device specific stuff */
@@ -322,7 +325,7 @@ static void	st_unmount(struct st_softc *, boolean);
 static int	st_decide_mode(struct st_softc *, boolean);
 static void	ststart(struct scsipi_periph *);
 static void	strestart(void *);
-static void	stdone(struct scsipi_xfer *);
+static void	stdone(struct scsipi_xfer *, int);
 static int	st_read(struct st_softc *, char *, int, int);
 static int	st_space(struct st_softc *, int, u_int, int);
 static int	st_write_filemarks(struct st_softc *, int, int);
@@ -535,7 +538,7 @@ st_loadquirks(struct st_softc *st)
  * open the device.
  */
 static int
-stopen(dev_t dev, int flags, int mode, struct lwp *l)
+stopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	u_int stmode, dsty;
 	int error, sflags, unit, tries, ntries;
@@ -722,7 +725,7 @@ bad:
  * occurence of an open device
  */
 static int
-stclose(dev_t dev, int flags, int mode, struct lwp *l)
+stclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int stxx, error = 0;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
@@ -1162,6 +1165,7 @@ ststart(struct scsipi_periph *periph)
 	struct st_softc *st = (void *)periph->periph_dev;
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
+	struct scsipi_xfer *xs;
 	int flags, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
@@ -1281,15 +1285,11 @@ ststart(struct scsipi_periph *periph)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		error = scsipi_command(periph,
+		xs = scsipi_make_xs(periph,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
-		if (__predict_false(error)) {
-			printf("%s: not queued, error %d\n",
-			    st->sc_dev.dv_xname, error);
-		}
-		if (__predict_false(error == ENOMEM)) {
+		if (__predict_false(xs == NULL)) {
 			/*
 			 * out of memory. Keep this buffer in the queue, and
 			 * retry later.
@@ -1298,12 +1298,20 @@ ststart(struct scsipi_periph *periph)
 			    periph);
 			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
 #ifdef DIAGNOSTIC
 		if (BUFQ_GET(&st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
 		BUFQ_GET(&st->buf_queue);
 #endif
+		error = scsipi_execute_xs(xs);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	} /* go back and see if we can cram more work in.. */
 }
 
@@ -1317,32 +1325,38 @@ strestart(void *v)
 
 
 static void
-stdone(struct scsipi_xfer *xs)
+stdone(struct scsipi_xfer *xs, int error)
 {
 	struct st_softc *st = (void *)xs->xs_periph->periph_dev;
+	struct buf *bp = xs->bp;
 
-	if (xs->bp != NULL) {
-		if ((xs->bp->b_flags & B_READ) == B_WRITE) {
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+
+		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
-		} else {
+		else
 			st->flags &= ~ST_WRITTEN;
-		}
 #if NRND > 0
-		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
+		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
 #endif
 
 		if ((st->flags & ST_POSUPDATED) == 0) {
-			if (xs->bp->b_flags & B_ERROR) {
+			if (error) {
 				st->fileno = st->blkno = -1;
 			} else if (st->blkno != -1) {
-				if (st->flags & ST_FIXEDBLOCKS) {
+				if (st->flags & ST_FIXEDBLOCKS)
 					st->blkno +=
-					    (xs->bp->b_bcount / st->blksize);
-				} else {
+					    (bp->b_bcount / st->blksize);
+				else
 					st->blkno++;
-				}
 			}
 		}
+
+		biodone(bp);
 	}
 }
 
@@ -1369,7 +1383,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
  * knows about the internals of this device
  */
 static int
-stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
+stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 {
 	int error = 0;
 	int unit;
@@ -1567,7 +1581,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 
 	default:
 		error = scsipi_do_ioctl(st->sc_periph, dev, cmd, arg,
-					flag, l);
+					flag, p);
 		break;
 	}
 	return (error);
@@ -1637,8 +1651,8 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	} else
 		_lto3b(size, cmd.len);
 	return (scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | XS_CTL_DATA_IN));
+	    (void *)&cmd, sizeof(cmd), (void *)buf, size, 0, ST_IO_TIME, NULL,
+	    flags | XS_CTL_DATA_IN));
 }
 
 /*
@@ -1672,9 +1686,8 @@ st_erase(struct st_softc *st, int full, int flags)
 	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
 		cmd.byte2 |= SE_IMMED;
 
-	return (scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, ST_RETRIES, tmo, NULL, flags));
+	return (scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    ST_RETRIES, tmo, NULL, flags));
 }
 
 /*
@@ -1758,9 +1771,8 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 
 	st->flags &= ~ST_POSUPDATED;
 	st->last_ctl_resid = 0;
-	error = scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, 0, ST_SPC_TIME, NULL, flags);
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    0, ST_SPC_TIME, NULL, flags);
 
 	if (error == 0 && (st->flags & ST_POSUPDATED) == 0) {
 		number = number - st->last_ctl_resid;
@@ -1828,9 +1840,8 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		_lto3b(number, cmd.number);
 
 	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
-	error = scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, 0, ST_IO_TIME * 4, NULL, flags);
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    0, ST_IO_TIME * 4, NULL, flags);
 	if (error == 0 && st->fileno != -1) {
 		st->fileno += number;
 	}
@@ -1902,9 +1913,8 @@ st_load(struct st_softc *st, u_int type, int flags)
 		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
-	error = scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    ST_RETRIES, ST_SPC_TIME, NULL, flags);
 	if (error) {
 		printf("%s: error %d in st_load (op %d)\n",
 		    st->sc_dev.dv_xname, error, type);
@@ -1940,9 +1950,8 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	error = scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), 0, 0, ST_RETRIES,
-	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    ST_RETRIES, immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 	if (error) {
 		printf("%s: error %d trying to rewind\n",
 		    st->sc_dev.dv_xname, error);
@@ -1991,9 +2000,8 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = scsipi_command(st->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
-	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&posdata, sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
 	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 
 	if (error == 0) {
@@ -2032,9 +2040,8 @@ st_setpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte2 = 1 << 2;
 	_lto4b(*blkptr, cmd.blkaddr);
-	error = scsipi_command(st->sc_periph,
-		(struct scsipi_generic *)&cmd, sizeof(cmd),
-		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
+	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*
 	 * Note file && block number position now unknown (if
 	 * these things ever start being maintained in this driver)

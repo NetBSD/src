@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.8.6.2 2004/08/25 06:58:43 skrll Exp $ */
+/* $NetBSD: dtide.c,v 1.8.6.3 2004/09/18 14:50:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.2 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.3 2004/09/18 14:50:39 skrll Exp $");
 
 #include <sys/param.h>
 

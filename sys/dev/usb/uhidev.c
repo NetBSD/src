@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.14.2.1 2004/08/03 10:51:36 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.14.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.1 2004/08/03 10:51:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.1 2004/08/03 10:51:36 skrll Exp $"
 /* Report descriptor for broken Wacom Graphire */
 #include <dev/usb/ugraphire_rdesc.h>
 
+#include "locators.h"
+
 #ifdef UHIDEV_DEBUG
 #define DPRINTF(x)	if (uhidevdebug) logprintf x
 #define DPRINTFN(n,x)	if (uhidevdebug>(n)) logprintf x
@@ -80,7 +82,8 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int uhidev_maxrepid(void *buf, int len);
 Static int uhidevprint(void *aux, const char *pnp);
-Static int uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux);
+Static int uhidevsubmatch(struct device *parent, struct cfdata *cf,
+			  const locdesc_t *, void *aux);
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -113,6 +116,8 @@ USB_ATTACH(uhidev)
 	const void *descptr;
 	usbd_status err;
 	char devinfo[1024];
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
@@ -249,8 +254,12 @@ USB_ATTACH(uhidev)
 			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
 			uha.reportid = repid;
-			dev = (struct uhidev *)config_found_sm(self, &uha,
-			                           uhidevprint, uhidevsubmatch);
+			ldesc->len = 1;
+			ldesc->locs[UHIDBUSCF_REPORTID] = repid;
+
+			dev = (struct uhidev *)config_found_sm_loc(self,
+				"uhidbus", ldesc, &uha,
+				uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
 				dev->sc_in_rep_size = repsizes[repid];
@@ -304,14 +313,16 @@ uhidevprint(void *aux, const char *pnp)
 }
 
 int
-uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux)
+uhidevsubmatch(struct device *parent, struct cfdata *cf,
+	       const locdesc_t *ldesc, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	if (cf->uhidevcf_reportid != UHIDEV_UNK_REPORTID &&
-	    cf->uhidevcf_reportid != uha->reportid)
+	if (cf->cf_loc[UHIDBUSCF_REPORTID] != UHIDBUSCF_REPORTID_DEFAULT &&
+	    cf->cf_loc[UHIDBUSCF_REPORTID] != ldesc->locs[UHIDBUSCF_REPORTID])
 		return (0);
-	if (cf->uhidevcf_reportid == uha->reportid)
+
+	if (cf->cf_loc[UHIDBUSCF_REPORTID] == ldesc->locs[UHIDBUSCF_REPORTID])
 		uha->matchlvl = UMATCH_VENDOR_PRODUCT;
 	else
 		uha->matchlvl = 0;

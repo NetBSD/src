@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.22.6.2 2004/09/03 12:45:55 skrll Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.22.6.3 2004/09/18 14:57:11 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.22.6.2 2004/09/03 12:45:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.22.6.3 2004/09/18 14:57:11 skrll Exp $");
 
 #include "opt_uvmhist.h"
 

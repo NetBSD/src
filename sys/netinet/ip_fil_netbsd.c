@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.12.2.4 2004/08/12 11:42:21 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.12.2.5 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -125,8 +125,21 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
+	struct ip *ip;
+	int rv, hlen;
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by ipf code.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 #if defined(M_CSUM_TCPv4)
 	/*
@@ -142,6 +155,9 @@ int dir;
 		}
 	}
 #endif /* M_CSUM_TCPv4 */
+
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
 	/*
 	 * We get the packet with all fields in network byte
@@ -177,7 +193,20 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
+	int error;
 	
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by ipf code.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
@@ -395,8 +424,8 @@ int ipldetach()
  */
 int iplioctl(dev, cmd, data, mode
 #if (NetBSD >= 199511)
-, l)
-struct lwp *l;
+, p)
+struct proc *p;
 #else
 )
 #endif
@@ -616,9 +645,9 @@ void *ifp;
  */
 int iplopen(dev, flags
 #if (NetBSD >= 199511)
-, devtype, l)
+, devtype, p)
 int devtype;
-struct lwp *l;
+struct proc *p;
 #else
 )
 #endif
@@ -637,9 +666,9 @@ int flags;
 
 int iplclose(dev, flags
 #if (NetBSD >= 199511)
-, devtype, l)
+, devtype, p)
 int devtype;
-struct lwp *l;
+struct proc *p;
 #else
 )
 #endif

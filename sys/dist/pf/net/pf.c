@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.3.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: pf.c,v 1.3.2.3 2004/09/18 14:52:37 skrll Exp $	*/
 /*	$OpenBSD: pf.c,v 1.433 2004/03/26 22:20:57 dhartmei Exp $ */
 
 /*
@@ -2620,7 +2620,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->log) {
 		if (rewrite)
-			m_copyback(m, off, sizeof(*th), (caddr_t)th);
+			m_copyback(m, off, sizeof(*th), th);
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
 	}
 
@@ -2846,7 +2846,7 @@ cleanup:
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), th);
 
 	return (PF_PASS);
 }
@@ -2971,7 +2971,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->log) {
 		if (rewrite)
-			m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
+			m_copyback(m, off, sizeof(*uh), uh);
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
 	}
 
@@ -3109,7 +3109,7 @@ cleanup:
 
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
+		m_copyback(m, off, sizeof(*uh), uh);
 
 	return (PF_PASS);
 }
@@ -3274,7 +3274,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET6
 		if (rewrite)
 			m_copyback(m, off, sizeof(struct icmp6_hdr),
-			    (caddr_t)pd->hdr.icmp6);
+			    pd->hdr.icmp6);
 #endif /* INET6 */
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
 	}
@@ -3386,7 +3386,7 @@ cleanup:
 	/* copy back packet headers if we performed IPv6 NAT operations */
 	if (rewrite)
 		m_copyback(m, off, sizeof(struct icmp6_hdr),
-		    (caddr_t)pd->hdr.icmp6);
+		    pd->hdr.icmp6);
 #endif /* INET6 */
 
 	return (PF_PASS);
@@ -4117,10 +4117,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_change_ap(pd->dst, &th->th_dport, pd->ip_sum,
 			    &th->th_sum, &(*state)->lan.addr,
 			    (*state)->lan.port, 0, pd->af);
-		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), th);
 	} else if (copyback) {
 		/* Copyback sequence modulation or stateful scrub changes */
-		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		m_copyback(m, off, sizeof(*th), th);
 	}
 
 	return (PF_PASS);
@@ -4181,7 +4181,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_change_ap(pd->dst, &uh->uh_dport, pd->ip_sum,
 			    &uh->uh_sum, &(*state)->lan.addr,
 			    (*state)->lan.port, 1, pd->af);
-		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
+		m_copyback(m, off, sizeof(*uh), uh);
 	}
 
 	return (PF_PASS);
@@ -4271,7 +4271,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    &(*state)->gwy.addr, 0);
 					m_copyback(m, off,
 					    sizeof(struct icmp6_hdr),
-					    (caddr_t)pd->hdr.icmp6);
+					    pd->hdr.icmp6);
 					break;
 #endif /* INET6 */
 				}
@@ -4291,7 +4291,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    &(*state)->lan.addr, 0);
 					m_copyback(m, off,
 					    sizeof(struct icmp6_hdr),
-					    (caddr_t)pd->hdr.icmp6);
+					    pd->hdr.icmp6);
 					break;
 #endif /* INET6 */
 				}
@@ -4497,22 +4497,22 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET
 				case AF_INET:
 					m_copyback(m, off, ICMP_MINLEN,
-					    (caddr_t)pd->hdr.icmp);
+					    pd->hdr.icmp);
 					m_copyback(m, ipoff2, sizeof(h2),
-					    (caddr_t)&h2);
+					    &h2);
 					break;
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
 					m_copyback(m, off,
 					    sizeof(struct icmp6_hdr),
-					    (caddr_t)pd->hdr.icmp6);
+					    pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
-					    (caddr_t)&h2_6);
+					    &h2_6);
 					break;
 #endif /* INET6 */
 				}
-				m_copyback(m, off2, 8, (caddr_t)&th);
+				m_copyback(m, off2, 8, &th);
 			}
 
 			return (PF_PASS);
@@ -4564,22 +4564,21 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET
 				case AF_INET:
 					m_copyback(m, off, ICMP_MINLEN,
-					    (caddr_t)pd->hdr.icmp);
-					m_copyback(m, ipoff2, sizeof(h2),
-					    (caddr_t)&h2);
+					    pd->hdr.icmp);
+					m_copyback(m, ipoff2, sizeof(h2), &h2);
 					break;
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
 					m_copyback(m, off,
 					    sizeof(struct icmp6_hdr),
-					    (caddr_t)pd->hdr.icmp6);
+					    pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
-					    (caddr_t)&h2_6);
+					    &h2_6);
 					break;
 #endif /* INET6 */
 				}
-				m_copyback(m, off2, sizeof(uh), (caddr_t)&uh);
+				m_copyback(m, off2, sizeof(uh), &uh);
 			}
 
 			return (PF_PASS);
@@ -4628,10 +4627,9 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, AF_INET);
 				}
-				m_copyback(m, off, ICMP_MINLEN,
-				    (caddr_t)pd->hdr.icmp);
-				m_copyback(m, ipoff2, sizeof(h2), (caddr_t)&h2);
-				m_copyback(m, off2, ICMP_MINLEN, (caddr_t)&iih);
+				m_copyback(m, off, ICMP_MINLEN, pd->hdr.icmp);
+				m_copyback(m, ipoff2, sizeof(h2), &h2);
+				m_copyback(m, off2, ICMP_MINLEN, &iih);
 			}
 
 			return (PF_PASS);
@@ -4682,11 +4680,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    pd->ip_sum, 0, AF_INET6);
 				}
 				m_copyback(m, off, sizeof(struct icmp6_hdr),
-				    (caddr_t)pd->hdr.icmp6);
-				m_copyback(m, ipoff2, sizeof(h2_6),
-				    (caddr_t)&h2_6);
+				    pd->hdr.icmp6);
+				m_copyback(m, ipoff2, sizeof(h2_6), &h2_6);
 				m_copyback(m, off2, sizeof(struct icmp6_hdr),
-				    (caddr_t)&iih);
+				    &iih);
 			}
 
 			return (PF_PASS);
@@ -4730,18 +4727,17 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET
 				case AF_INET:
 					m_copyback(m, off, ICMP_MINLEN,
-					    (caddr_t)pd->hdr.icmp);
-					m_copyback(m, ipoff2, sizeof(h2),
-					    (caddr_t)&h2);
+					    pd->hdr.icmp);
+					m_copyback(m, ipoff2, sizeof(h2), &h2);
 					break;
 #endif /* INET */
 #ifdef INET6
 				case AF_INET6:
 					m_copyback(m, off,
 					    sizeof(struct icmp6_hdr),
-					    (caddr_t)pd->hdr.icmp6);
+					    pd->hdr.icmp6);
 					m_copyback(m, ipoff2, sizeof(h2_6),
-					    (caddr_t)&h2_6);
+					    &h2_6);
 					break;
 #endif /* INET6 */
 				}
@@ -5051,9 +5047,9 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		}
 	}
 #else
-	m_copydata(m0, sizeof(*ip), sizeof(th), (caddr_t)&th);
+	m_copydata(m0, sizeof(*ip), sizeof(th), &th);
 	th.th_sum = 0;
-	m_copyback(m0, sizeof(*ip), sizeof(th), (caddr_t)&th);
+	m_copyback(m0, sizeof(*ip), sizeof(th), &th);
 	in4_cksum(m0, IPPROTO_TCP, sizeof(*ip), m0->m_pkthdr.len - sizeof(*ip));
 #endif
 

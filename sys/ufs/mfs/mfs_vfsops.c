@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.3 2004/08/03 10:56:59 skrll Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.4 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.3 2004/08/03 10:56:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.4 2004/09/18 14:56:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -171,7 +171,7 @@ mfs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
 	int error = 0;
@@ -199,7 +199,7 @@ mfs_mountroot()
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
-	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
+	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		bufq_free(&mfsp->mfs_buflist);
@@ -215,7 +215,7 @@ mfs_mountroot()
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statvfs(mp, &mp->mnt_stat, l);
+	(void)ffs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -249,22 +249,20 @@ mfs_initminiroot(base)
  */
 /* ARGSUSED */
 int
-mfs_mount(mp, path, data, ndp, l)
+mfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *devvp;
 	struct mfs_args args;
 	struct ufsmount *ump;
 	struct fs *fs;
 	struct mfsnode *mfsp;
-	struct proc *p;
 	int flags, error;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct vnode *vp;
 		struct mfsnode *mfsp;
@@ -313,7 +311,7 @@ mfs_mount(mp, path, data, ndp, l)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			error = ffs_flushfiles(mp, flags, l);
+			error = ffs_flushfiles(mp, flags, p);
 			if (error)
 				return (error);
 		}
@@ -338,7 +336,7 @@ mfs_mount(mp, path, data, ndp, l)
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
-	if ((error = ffs_mountfs(devvp, mp, l)) != 0) {
+	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
 		return (error);
@@ -346,7 +344,7 @@ mfs_mount(mp, path, data, ndp, l)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp, p);
 	if (error)
 		return error;
 	(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
@@ -368,17 +366,23 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(mp, flags, l)
+mfs_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
+	struct lwp *l; /* XXX NJWLWP */
 
+	/* XXX NJWLWP the vnode interface again gives us a proc in a
+	 * place where we want a execution context. Cheat.
+	 */
+	KASSERT(curproc == p);
+	l = curlwp; 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
@@ -400,8 +404,8 @@ mfs_start(mp, flags, l)
 			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
 				lockmgr(&syncer_lock, LK_RELEASE, NULL);
-			else if (dounmount(mp, 0, l) != 0)
-				CLRSIG(l->l_proc, CURSIG(l));
+			else if (dounmount(mp, 0, p) != 0)
+				CLRSIG(p, CURSIG(l));
 			sleepreturn = 0;
 			continue;
 		}
@@ -417,14 +421,14 @@ mfs_start(mp, flags, l)
  * Get file system statistics.
  */
 int
-mfs_statvfs(mp, sbp, l)
+mfs_statvfs(mp, sbp, p)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 
-	error = ffs_statvfs(mp, sbp, l);
+	error = ffs_statvfs(mp, sbp, p);
 	if (error)
 		return error;
 	(void)strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name,

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.39.2.1 2004/08/03 10:56:30 skrll Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.39.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

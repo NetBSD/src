@@ -1,4 +1,4 @@
-#	$NetBSD: files.kernfs,v 1.1.14.1 2004/08/03 10:54:05 skrll Exp $
+#	$NetBSD: files.kernfs,v 1.1.14.2 2004/09/18 14:54:15 skrll Exp $
 
 deffs	fs_kernfs.h			KERNFS		# XXX
 

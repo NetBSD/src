@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.5.2.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: dlt.h,v 1.5.2.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.3.2.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.3.2.2 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.3.2.1 2004/08/03 10:54:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.3.2.2 2004/09/18 14:54:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

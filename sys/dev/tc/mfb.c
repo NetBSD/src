@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.37.2.1 2004/08/03 10:51:29 skrll Exp $ */
+/* $NetBSD: mfb.c,v 1.37.2.2 2004/09/18 14:51:45 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37.2.1 2004/08/03 10:51:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37.2.2 2004/09/18 14:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

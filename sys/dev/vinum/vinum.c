@@ -35,7 +35,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinum.c,v 1.1.1.1.4.2 2004/08/03 10:51:59 skrll Exp $
+ * $Id: vinum.c,v 1.1.1.1.4.3 2004/09/18 14:52:13 skrll Exp $
  * $FreeBSD$
  */
 

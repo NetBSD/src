@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.c,v 1.88.2.4 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.88.2.5 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88.2.4 2004/09/03 12:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88.2.5 2004/09/18 14:51:24 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -1030,23 +1030,22 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 u_int64_t
 scsipi_size(struct scsipi_periph *periph, int flags)
 {
-	struct scsipi_read_cap_data rdcap;
-	struct scsipi_read_capacity scsipi_cmd;
+	struct scsipi_read_capacity cmd;
+	struct scsipi_read_cap_data data;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = READ_CAPACITY;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = READ_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-	    SCSIPIRETRIES, 20000, NULL,
+	if (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&data, sizeof(data), SCSIPIRETRIES, 20000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	return (_4btol(rdcap.addr) + 1);
+	return (_4btol(data.addr) + 1);
 }
 
 /*
@@ -1057,24 +1056,23 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 int
 scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 {
+	struct scsipi_test_unit_ready cmd;
 	int retries;
-	struct scsipi_test_unit_ready scsipi_cmd;
 
 	/* some ATAPI drives don't support TEST_UNIT_READY. Sigh */
 	if (periph->periph_quirks & PQUIRK_NOTUR)
 		return (0);
-
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = TEST_UNIT_READY;
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
 	else
 		retries = SCSIPIRETRIES;
 
-	return (scsipi_command(periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, retries, 10000, NULL, flags));
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = TEST_UNIT_READY;
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    retries, 10000, NULL, flags));
 }
 
 /*
@@ -1086,12 +1084,9 @@ int
 scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
     int flags)
 {
-	int retries;
-	struct scsipi_inquiry scsipi_cmd;
+	struct scsipi_inquiry cmd;
 	int error;
-
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = INQUIRY;
+	int retries;
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
@@ -1109,17 +1104,24 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * data iff the "additional length" field indicates there is more.
 	 * - mycroft, 2003/10/16
 	 */
-	scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2,
-	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
-	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
-		scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
-		error = scsipi_command(periph,
-		    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-		    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3,
-		    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = INQUIRY;
+	cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
+	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2, retries,
+	    10000, NULL, flags | XS_CTL_DATA_IN);
+	if (!error &&
+	    inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+#if 0
+printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
+#endif
+		cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
+		error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+		    (void *)inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3, retries,
+		    10000, NULL, flags | XS_CTL_DATA_IN);
+#if 0
+printf("inquire: error=%d\n", error);
+#endif
 	}
 	
 #ifdef SCSI_OLD_NOINQUIRY
@@ -1148,10 +1150,10 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * This board gives an empty response to an INQUIRY command.
 	 */
 	else if (error == 0 && 
-		 inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
-		 inqbuf->dev_qual2 == 0 &&
-		 inqbuf->version == 0 &&
-		 inqbuf->response_format == SID_FORMAT_SCSI1) {
+	    inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
+	    inqbuf->dev_qual2 == 0 &&
+	    inqbuf->version == 0 &&
+	    inqbuf->response_format == SID_FORMAT_SCSI1) {
 		/*
 		 * Fill out the INQUIRY response.
 		 */
@@ -1174,15 +1176,14 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 int
 scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 {
-	struct scsipi_prevent scsipi_cmd;
+	struct scsipi_prevent cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = PREVENT_ALLOW;
-	scsipi_cmd.how = type;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = PREVENT_ALLOW;
+	cmd.how = type;
 
-	return (scsipi_command(periph,
-	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, SCSIPIRETRIES, 5000, NULL, flags));
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    SCSIPIRETRIES, 5000, NULL, flags));
 }
 
 /*
@@ -1193,17 +1194,15 @@ scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 int
 scsipi_start(struct scsipi_periph *periph, int type, int flags)
 {
-	struct scsipi_start_stop scsipi_cmd;
+	struct scsipi_start_stop cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = START_STOP;
-	scsipi_cmd.byte2 = 0x00;
-	scsipi_cmd.how = type;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = START_STOP;
+	cmd.byte2 = 0x00;
+	cmd.how = type;
 
-	return (scsipi_command(periph,
-	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000,
-	    NULL, flags));
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000, NULL, flags));
 }
 
 /*
@@ -1216,20 +1215,16 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
     struct scsipi_mode_header *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_sense scsipi_cmd;
-	int error;
+	struct scsipi_mode_sense cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = MODE_SENSE;
-	scsipi_cmd.byte2 = byte2;
-	scsipi_cmd.page = page;
-	scsipi_cmd.length = len & 0xff;
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_IN);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_sense: error=%d\n", error));
-	return (error);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = MODE_SENSE;
+	cmd.byte2 = byte2;
+	cmd.page = page;
+	cmd.length = len & 0xff;
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1237,20 +1232,16 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
     struct scsipi_mode_header_big *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_sense_big scsipi_cmd;
-	int error;
+	struct scsipi_mode_sense_big cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = MODE_SENSE_BIG;
-	scsipi_cmd.byte2 = byte2;
-	scsipi_cmd.page = page;
-	_lto2b(len, scsipi_cmd.length);
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_IN);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_sense_big: error=%d\n", error));
-	return (error);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = MODE_SENSE_BIG;
+	cmd.byte2 = byte2;
+	cmd.page = page;
+	_lto2b(len, cmd.length);
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1258,19 +1249,15 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
     struct scsipi_mode_header *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_select scsipi_cmd;
-	int error;
+	struct scsipi_mode_select cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = MODE_SELECT;
-	scsipi_cmd.byte2 = byte2;
-	scsipi_cmd.length = len & 0xff;
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_select: error=%d\n", error));
-	return (error);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = MODE_SELECT;
+	cmd.byte2 = byte2;
+	cmd.length = len & 0xff;
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
 }
 
 int
@@ -1278,19 +1265,15 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
     struct scsipi_mode_header_big *data, int len, int flags, int retries,
     int timeout)
 {
-	struct scsipi_mode_select_big scsipi_cmd;
-	int error;
+	struct scsipi_mode_select_big cmd;
 
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = MODE_SELECT_BIG;
-	scsipi_cmd.byte2 = byte2;
-	_lto2b(len, scsipi_cmd.length);
-	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
-	    flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_select: error=%d\n", error));
-	return (error);
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = MODE_SELECT_BIG;
+	cmd.byte2 = byte2;
+	_lto2b(len, cmd.length);
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
 }
 
 /*
@@ -1440,7 +1423,6 @@ scsipi_complete(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	struct buf *bp;
 	int error, s;
 
 #ifdef DIAGNOSTIC
@@ -1634,26 +1616,8 @@ scsipi_complete(struct scsipi_xfer *xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
-	/*
-	 * Set buffer fields in case the periph
-	 * switch done func uses them
-	 */
-	if ((bp = xs->bp) != NULL) {
-		if (error) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-		} else {
-			bp->b_error = 0;
-			bp->b_resid = xs->resid;
-		}
-	}
-
 	if (periph->periph_switch->psw_done)
-		periph->periph_switch->psw_done(xs);
-
-	if (bp)
-		biodone(bp);
+		periph->periph_switch->psw_done(xs, error);
 
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);
@@ -1690,13 +1654,12 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 	cmd.opcode = REQUEST_SENSE;
 	cmd.length = sizeof(struct scsipi_sense_data);
 
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *) &cmd, sizeof(cmd),
-	    (u_char*)&xs->sense.scsi_sense, sizeof(struct scsipi_sense_data),
+	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&xs->sense.scsi_sense, sizeof(struct scsipi_sense_data),
 	    0, 1000, NULL, flags);
 	periph->periph_flags &= ~PERIPH_SENSE;
 	periph->periph_xscheck = NULL;
-	switch(error) {
+	switch (error) {
 	case 0:
 		/* we have a valid sense */
 		xs->error = XS_SENSE;
@@ -1911,6 +1874,21 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int oasync, async, poll, retries, error, s;
 
+	(chan->chan_bustype->bustype_cmd)(xs);
+
+	if (xs->xs_control & XS_CTL_DATA_ONSTACK) {
+#if 1
+		if (xs->xs_control & XS_CTL_ASYNC)
+			panic("scsipi_execute_xs: on stack and async");
+#endif
+		/*
+		 * If the I/O buffer is allocated on stack, the
+		 * process must NOT be swapped out, as the device will
+		 * be accessing the stack.
+		 */
+		PHOLD(curlwp);
+	}
+
 	xs->xs_status &= ~XS_STS_DONE;
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
@@ -2073,6 +2051,8 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 */
 	scsipi_run_queue(chan);
 
+	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
+		PRELE(curlwp);
 	return (error);
 }
 

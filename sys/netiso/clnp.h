@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.15.2.2 2004/08/03 10:55:41 skrll Exp $	*/
+/*	$NetBSD: clnp.h,v 1.15.2.3 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -514,7 +514,7 @@ void rclnp_input (struct mbuf *, ...);
 int rclnp_output (struct mbuf *, ...);
 int rclnp_ctloutput (int, struct socket *, int, int, struct mbuf **);
 int clnp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct lwp *);
+		     struct mbuf *, struct proc *);
 
 /* clnp_subr.c */
 struct mbuf    *clnp_data_ck (struct mbuf *, int);

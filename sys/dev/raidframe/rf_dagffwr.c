@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.11.2.2 2004/09/03 12:45:38 skrll Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.11.2.3 2004/09/18 14:50:54 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.11.2.2 2004/09/03 12:45:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.11.2.3 2004/09/18 14:50:54 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

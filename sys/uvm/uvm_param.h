@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.17.2.1 2004/08/03 10:57:08 skrll Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.17.2.2 2004/09/18 14:57:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

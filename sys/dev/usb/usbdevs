@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.332.2.1 2004/08/03 10:51:39 skrll Exp $
+$NetBSD: usbdevs,v 1.332.2.2 2004/09/18 14:51:46 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.

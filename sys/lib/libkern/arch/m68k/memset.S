@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3.20.1 2004/08/03 10:53:42 skrll Exp $	*/
+/*	$NetBSD: memset.S,v 1.3.20.2 2004/09/18 14:53:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.3.20.1 2004/08/03 10:53:42 skrll Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3.20.2 2004/09/18 14:53:54 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
