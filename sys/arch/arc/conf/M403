@@ -1,6 +1,6 @@
-#	$NetBSD: M403,v 1.1 2000/01/23 21:01:52 soda Exp $
+#	$NetBSD: M403,v 1.2 2000/01/26 12:48:44 soda Exp $
 #
-#	Generic configuration file for MIPS R4400 PICA system
+#	Generic configuration file for MIPS Magnum 4000 system
 #
 
 include		"arch/arc/conf/std.arc"
@@ -8,7 +8,7 @@ include		"arch/arc/conf/std.arc"
 maxusers	32
 
 # Need to set locally
-options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. Japan
 
 # Standard system options
 options 	KTRACE			# system call tracing support
@@ -16,9 +16,9 @@ options 	KTRACE			# system call tracing support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-#options	 KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB			# support for kernel gdb
+#options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
+#options 	KGDBDEV="15*256+0"	# device for kernel gdb
 
 # System V options
 options 	SYSVMSG		# System V-like message queues
@@ -53,7 +53,7 @@ file-system 	FDESC		# user file descriptor filesystem
 
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Pull in config fragments for kernel crypto.  This is required for
@@ -84,14 +84,12 @@ options 	GATEWAY		# IP packet forwarding
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Special options
-#options 	MACHINE_NONCONTIG # Support noncontigous memory.
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	COMCONSOLE
 
+# Kernel root file system and dump configuration.
 # XXX #options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
-
-# Specify storage configuration
 config		netbsd root on ? type ?
 
 #
