@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.3 1999/02/05 00:06:09 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.4 2000/01/08 23:02:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -67,7 +67,7 @@ struct RF_DiskQueueData_s {
 						 * completion of the first I/O
 						 * of a Read_Op_Write pair */
 	void   *argument;	/* argument to be passed to CompleteFunc */
-	void   *raidPtr;	/* needed for simulation */
+	RF_Raid_t *raidPtr;	/* needed for simulation */
 	RF_AccTraceEntry_t *tracerec;	/* perf mon only */
 	RF_Etimer_t qtime;	/* perf mon only - time request is in queue */
 	long    entryTime;
