@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.21 2002/12/27 09:59:26 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.22 2002/12/27 19:57:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.21 2002/12/27 09:59:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.22 2002/12/27 19:57:47 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,9 @@ static struct pool mach_port_pool;
 static struct pool mach_right_pool;
 static LIST_HEAD(mach_right_list, mach_right) mach_right_list;
 struct lock mach_right_list_lock;
+
+struct mach_port *mach_bootstrap_port;
+struct mach_port *mach_clock_port;
 
 int
 mach_sys_reply_port(p, v, retval)
@@ -361,6 +364,7 @@ mach_port_move_member(args)
 	struct mach_right *mrr = (struct mach_right *)req->req_member;
 	struct mach_right *mrs = (struct mach_right *)req->req_after;
 
+	/* XXX the target task may be another task */
 	if (mach_right_check(mrr, p, MACH_PORT_TYPE_RECEIVE) == 0)
 		return mach_msg_error(args, EPERM);
 
@@ -398,6 +402,10 @@ mach_port_init(void)
 	    0, 0, 128, "mach_right_pool", NULL);
 	LIST_INIT(&mach_right_list);
 	lockinit(&mach_right_list_lock, PZERO|PCATCH, "mach_right_list", 0, 0);
+
+	mach_bootstrap_port = mach_port_get();
+	mach_clock_port = mach_port_get();
+
 	return;
 }
 
@@ -481,7 +489,7 @@ mach_right_get(mp, p, type)
 		mp->mp_refcount++;
 
 	/* Insert the right in one of the process right lists */
-	if (type & MACH_PORT_TYPE_PORT_OR_DEAD) {
+	if (type & MACH_PORT_TYPE_ALL_RIGHTS) {
 		lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 		LIST_INSERT_HEAD(&med->med_right, mr, mr_list);
 		LIST_INSERT_HEAD(&mach_right_list, mr, mr_listall);
