@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)wall.c	5.14 (Berkeley) 3/2/91";
-static char rcsid[] = "$Header: /cvsroot/src/usr.bin/rwall/rwall.c,v 1.2 1993/04/26 14:43:24 mycroft Exp $";
+static char rcsid[] = "/b/source/CVS/src/usr.bin/rwall/rwall.c,v 1.2 1993/04/26 14:43:24 mycroft Exp";
 #endif /* not lint */
 
 /*
@@ -69,7 +69,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *wallhost;
+	char *wallhost, res;
 	CLIENT *cl;
 
 	if ((argc < 2) || (argc > 3)) {
@@ -96,7 +96,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	if (wallproc_wall_1(&mbuf, cl) == NULL) {
+	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, &mbuf, xdr_void, &res, NULL) != RPC_SUCCESS) {
 		/*
 		 * An error occurred while calling the server. 
 		 * Print error message and die.
