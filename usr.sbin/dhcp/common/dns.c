@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.8 2000/10/17 15:08:09 taca Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.2 2000/10/29 22:55:57 tron Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -401,7 +401,6 @@ void cache_found_zone (ns_class class,
 		       char *zname, struct in_addr *addrs, int naddrs)
 {
 	isc_result_t status = ISC_R_NOTFOUND;
-	const char *np;
 	struct dns_zone *zone = (struct dns_zone *)0;
 	struct data_string nsaddrs;
 	int ix = strlen (zname);
@@ -410,7 +409,7 @@ void cache_found_zone (ns_class class,
 		ix = 0;
 
 	/* See if there's already such a zone. */
-	if (dns_zone_lookup (&zone, np) == ISC_R_SUCCESS) {
+	if (dns_zone_lookup (&zone, zname) == ISC_R_SUCCESS) {
 		/* If it's not a dynamic zone, leave it alone. */
 		if (!zone -> timeout)
 			return;
