@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.128 2002/01/03 01:13:35 aymeric Exp $	*/
+/*	$NetBSD: locore.s,v 1.129 2002/01/12 11:45:26 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -922,10 +922,9 @@ Lstartnot040:
 	RELOC(start_c, %a0)
 	jbsr	%a0@
 	addl	#28,%sp
-	jmp	unshadow_fake_global
+	jmp	Lunshadow:l
 
-	.globl unshadow_fake_global
-unshadow_fake_global:
+Lunshadow:
 
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_cleanup)
