@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.10 2000/10/30 23:28:18 tv Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.11 2000/12/31 21:22:59 jhawk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.10 2000/10/30 23:27:35 tv Exp 
+ *	NetBSD
  */
 
 /*
@@ -595,7 +595,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
 	    0,
 	    "Alteon",
-	    "ACEnic Gigabit Ethernet",
+	    "ACEnic 1000baseSX Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC_COPPER,
+	    0,
+	    "Alteon",
+	    "ACEnic 1000baseT Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -2875,7 +2881,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
 	    0,
 	    "Netgear",
-	    "GA620 Gigabit Ethernet",
+	    "GA620 1000baseSX Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
+	    0,
+	    "Netgear",
+	    "GA620 1000baseT Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
