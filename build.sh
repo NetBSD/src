@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.19 2001/11/05 02:17:47 dillo Exp $
+#  $NetBSD: build.sh,v 1.20 2001/11/09 04:14:17 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -245,8 +245,8 @@ fi
 
 # Find DESTDIR and TOOLDIR.
 if [ "$runcmd" = "echo" ]; then
-	DESTDIR='$DESTDIR'
-	TOOLDIR='$TOOLDIR'
+	DESTDIR="$DESTDIR"
+	TOOLDIR="$TOOLDIR"
 else
 	DESTDIR=`getmakevar DESTDIR`; echo "===> DESTDIR path: $DESTDIR"
 	TOOLDIR=`getmakevar TOOLDIR`; echo "===> TOOLDIR path: $TOOLDIR"
@@ -309,13 +309,14 @@ if $do_rebuildmake || [ ! -f $makewrapper ] || [ $makewrapper -ot build.sh ]; th
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.19 2001/11/05 02:17:47 dillo Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.20 2001/11/09 04:14:17 thorpej Exp $
 #
 
 EOF
 	for f in $makeenv; do
 		eval echo "$f=\'\$`echo $f`\'\;\ export\ $f" $makewrapout
 	done
+	eval echo "USETOOLS=yes\; export USETOOLS" $makewrapout
 
 	eval cat <<EOF $makewrapout
 
@@ -329,7 +330,7 @@ if $do_buildsystem; then
 	${runcmd-exec} $makewrapper $buildtarget
 elif $do_buildonlytools; then
 	if [ "$MKOBJDIRS" != "no" ]; then
-		$makewrapper obj-tools || exit 1
+		$runcmd $makewrapper obj-tools || exit 1
 	fi
 	$runcmd cd tools
 	${runcmd-exec} $makewrapper MKTOOLS=always build
