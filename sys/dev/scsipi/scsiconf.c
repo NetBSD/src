@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.83 1997/04/24 00:49:14 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.84 1997/07/17 00:46:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -357,6 +357,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA", "CD-ROM CR-5XX   ", "1.0b"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},	  SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.3"},  SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", ""},     SDEV_NOLUNS},
@@ -401,6 +403,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IBM     ", "0663H",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "KZ-C",		 ""},	  SDEV_AUTOSAVE},
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
