@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.36 2001/03/17 01:54:17 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.37 2001/03/18 14:06:10 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -171,6 +171,7 @@ void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
 void db_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_simple_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
 void db_cpu_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_page_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -368,6 +369,31 @@ db_lock_cmd(addr, have_addr, count, modif)
 	    l->lk_recurselevel);
 }
 
+void
+db_simple_lock_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	simple_lock_t l;
+
+	if (!have_addr) {
+		db_printf("What lock address?\n");
+		return;
+	}
+
+	l = (simple_lock_t)addr;
+	db_printf("lock_data=%d", l->lock_data);
+#ifdef LOCKDEBUG
+	db_printf(" lock_file=%s unlock_file=%s\n lock_line=%d "
+	    "unlock_line=%d\n lock_holder=%ld\n",
+	    l->lock_file, l->unlock_file, l->lock_line, l->unlock_line,
+	    l->lock_holder);
+#endif
+	db_printf("\n");
+}
+
 #include <uvm/uvm.h>
 
 extern void uvmhist_dump __P((struct uvm_history *));
@@ -389,6 +415,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "proc",	db_proc_cmd,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
 	{ "lock",	db_lock_cmd,	0,	0 },
+	{ "slock",	db_simple_lock_cmd,	0,	0 },
 	{ "page",	db_page_cmd,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 #if 0
