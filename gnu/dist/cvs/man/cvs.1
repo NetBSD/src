@@ -192,8 +192,10 @@ Use
 .I editor
 to enter revision log information.
 Overrides the setting of the
-.SM CVSEDITOR
-and the
+.SM CVSEDITOR\c
+,
+.SM VISUAL\c
+, and
 .SM EDITOR
 environment variables.
 .TP
@@ -2039,12 +2041,13 @@ and
 Specifies the program to use for recording log messages during
 .BR commit .
 If not set, the
+.SM VISUAL
+and
 .SM EDITOR
-environment variable is used instead.
-If
-.SM EDITOR
-is not set either, the default is
-.BR /usr/ucb/vi .
+environment variables are tried (in that order).
+If neither is set, a system-dependent default editor (e.g.,
+.BR vi )
+is used.
 .TP
 .SM CVS_IGNORE_REMOTE_ROOT
 If this variable is set then

@@ -391,6 +391,7 @@ extern List *root_directories;
 extern char *current_root;
 
 extern char *emptydir_name PROTO ((void));
+extern int safe_location PROTO ((void));
 
 extern int trace;		/* Show all commands */
 extern int noexec;		/* Don't modify disk anywhere */
@@ -501,7 +502,7 @@ void *valloc PROTO((size_t bytes));
 time_t get_date PROTO((char *date, struct timeb *now));
 extern int Create_Admin PROTO ((char *dir, char *update_dir,
 				char *repository, char *tag, char *date,
-				int nonbranch, int warn));
+				int nonbranch, int warn, int dotemplate));
 extern int expand_at_signs PROTO ((char *, off_t, FILE *));
 
 /* Locking subsystem (implemented in lock.c).  */
@@ -580,7 +581,7 @@ void do_editor PROTO((char *dir, char **messagep,
 
 void do_verify PROTO((char *message, char *repository));
 
-typedef	int (*CALLBACKPROC)	PROTO((int *pargc, char *argv[], char *where,
+typedef	int (*CALLBACKPROC)	PROTO((int argc, char *argv[], char *where,
 	char *mwhere, char *mfile, int shorten, int local_specified,
 	char *omodule, char *msg));
 
@@ -639,6 +640,7 @@ int start_recursion PROTO((FILEPROC fileproc, FILESDONEPROC filesdoneproc,
 		     int dosrcs));
 void SIG_beginCrSect PROTO((void));
 void SIG_endCrSect PROTO((void));
+int SIG_inCrSect PROTO((void));
 void read_cvsrc PROTO((int *argc, char ***argv, char *cmdname));
 
 char *make_message_rcslegal PROTO((char *message));
@@ -856,6 +858,7 @@ extern int cvsremove PROTO((int argc, char **argv));
 extern int rtag PROTO((int argc, char **argv));
 extern int cvsstatus PROTO((int argc, char **argv));
 extern int cvstag PROTO((int argc, char **argv));
+extern int version PROTO((int argc, char **argv));
 
 extern unsigned long int lookup_command_attribute PROTO((char *));
 
@@ -872,6 +875,8 @@ extern void tag_check_valid PROTO ((char *, int, char **, int, int, char *));
 extern void tag_check_valid_join PROTO ((char *, int, char **, int, int,
 					 char *));
 
+#include "server.h"
+
 /* From server.c and documented there.  */
 extern void cvs_output PROTO ((const char *, size_t));
 extern void cvs_output_binary PROTO ((char *, size_t));
@@ -879,7 +884,3 @@ extern void cvs_outerr PROTO ((const char *, size_t));
 extern void cvs_flusherr PROTO ((void));
 extern void cvs_flushout PROTO ((void));
 extern void cvs_output_tagged PROTO ((char *, char *));
-
-#if defined(SERVER_SUPPORT) || defined(CLIENT_SUPPORT)
-#include "server.h"
-#endif

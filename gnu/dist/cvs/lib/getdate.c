@@ -4,7 +4,7 @@
 static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #else
 #if defined(__NetBSD__) && defined(__IDSTRING)
-__IDSTRING(yyrcsid, "$NetBSD: getdate.c,v 1.2 2000/09/04 22:25:29 christos Exp $");
+__IDSTRING(yyrcsid, "$NetBSD: getdate.c,v 1.3 2000/10/26 14:59:07 wiz Exp $");
 #endif /* __NetBSD__ && __IDSTRING */
 #endif /* 0 */
 #endif /* lint */
@@ -18,7 +18,7 @@ __IDSTRING(yyrcsid, "$NetBSD: getdate.c,v 1.2 2000/09/04 22:25:29 christos Exp $
 #define yyerrok (yyerrflag=0)
 #define YYRECOVERING (yyerrflag!=0)
 #define YYPREFIX "yy"
-#line 2 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 2 "getdate.y"
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -194,12 +194,12 @@ static MERIDIAN	yyMeridian;
 static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
 
-#line 179 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 179 "getdate.y"
 typedef union {
     time_t		Number;
     enum _MERIDIAN	Meridian;
 } YYSTYPE;
-#line 203 "y.tab.c"
+#line 203 "getdate.c"
 #define tAGO 257
 #define tDAY 258
 #define tDAYZONE 259
@@ -414,7 +414,7 @@ short *yyss;
 short *yysslim;
 YYSTYPE *yyvs;
 int yystacksize;
-#line 392 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 398 "getdate.y"
 
 /* Month and day table. */
 static TABLE const MonthDayTable[] = {
@@ -1058,7 +1058,7 @@ main(ac, av)
     /* NOTREACHED */
 }
 #endif	/* defined(TEST) */
-#line 1062 "y.tab.c"
+#line 1062 "getdate.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
 int yyparse __P((void));
 static int yygrowstack __P((void));
@@ -1225,37 +1225,37 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 197 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 197 "getdate.y"
 {
 	    yyHaveTime++;
 	}
 break;
 case 4:
-#line 200 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 200 "getdate.y"
 {
 	    yyHaveZone++;
 	}
 break;
 case 5:
-#line 203 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 203 "getdate.y"
 {
 	    yyHaveDate++;
 	}
 break;
 case 6:
-#line 206 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 206 "getdate.y"
 {
 	    yyHaveDay++;
 	}
 break;
 case 7:
-#line 209 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 209 "getdate.y"
 {
 	    yyHaveRel++;
 	}
 break;
 case 9:
-#line 215 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 215 "getdate.y"
 {
 	    yyHour = yyvsp[-1].Number;
 	    yyMinutes = 0;
@@ -1264,7 +1264,7 @@ case 9:
 	}
 break;
 case 10:
-#line 221 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 221 "getdate.y"
 {
 	    yyHour = yyvsp[-3].Number;
 	    yyMinutes = yyvsp[-1].Number;
@@ -1273,7 +1273,7 @@ case 10:
 	}
 break;
 case 11:
-#line 227 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 227 "getdate.y"
 {
 	    yyHour = yyvsp[-3].Number;
 	    yyMinutes = yyvsp[-1].Number;
@@ -1283,7 +1283,7 @@ case 11:
 	}
 break;
 case 12:
-#line 234 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 234 "getdate.y"
 {
 	    yyHour = yyvsp[-5].Number;
 	    yyMinutes = yyvsp[-3].Number;
@@ -1292,7 +1292,7 @@ case 12:
 	}
 break;
 case 13:
-#line 240 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 240 "getdate.y"
 {
 	    yyHour = yyvsp[-5].Number;
 	    yyMinutes = yyvsp[-3].Number;
@@ -1303,64 +1303,70 @@ case 13:
 	}
 break;
 case 14:
-#line 250 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 250 "getdate.y"
 {
 	    yyTimezone = yyvsp[0].Number;
 	    yyDSTmode = DSToff;
 	}
 break;
 case 15:
-#line 254 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 254 "getdate.y"
 {
 	    yyTimezone = yyvsp[0].Number;
 	    yyDSTmode = DSTon;
 	}
 break;
 case 16:
-#line 259 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 259 "getdate.y"
 {
 	    yyTimezone = yyvsp[-1].Number;
 	    yyDSTmode = DSTon;
 	}
 break;
 case 17:
-#line 265 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 265 "getdate.y"
 {
 	    yyDayOrdinal = 1;
 	    yyDayNumber = yyvsp[0].Number;
 	}
 break;
 case 18:
-#line 269 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 269 "getdate.y"
 {
 	    yyDayOrdinal = 1;
 	    yyDayNumber = yyvsp[-1].Number;
 	}
 break;
 case 19:
-#line 273 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 273 "getdate.y"
 {
 	    yyDayOrdinal = yyvsp[-1].Number;
 	    yyDayNumber = yyvsp[0].Number;
 	}
 break;
 case 20:
-#line 279 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 279 "getdate.y"
 {
 	    yyMonth = yyvsp[-2].Number;
 	    yyDay = yyvsp[0].Number;
 	}
 break;
 case 21:
-#line 283 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 283 "getdate.y"
 {
-	    yyMonth = yyvsp[-4].Number;
-	    yyDay = yyvsp[-2].Number;
-	    yyYear = yyvsp[0].Number;
+	    if (yyvsp[-4].Number >= 100) {
+		yyYear = yyvsp[-4].Number;
+		yyMonth = yyvsp[-2].Number;
+		yyDay = yyvsp[0].Number;
+	    } else {
+		yyMonth = yyvsp[-4].Number;
+		yyDay = yyvsp[-2].Number;
+		yyYear = yyvsp[0].Number;
+	    }
 	}
 break;
 case 22:
-#line 288 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 294 "getdate.y"
 {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */
 	    yyYear = yyvsp[-2].Number;
@@ -1369,7 +1375,7 @@ case 22:
 	}
 break;
 case 23:
-#line 294 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 300 "getdate.y"
 {
 	    /* e.g. 17-JUN-1992.  */
 	    yyDay = yyvsp[-2].Number;
@@ -1378,14 +1384,14 @@ case 23:
 	}
 break;
 case 24:
-#line 300 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 306 "getdate.y"
 {
 	    yyMonth = yyvsp[-1].Number;
 	    yyDay = yyvsp[0].Number;
 	}
 break;
 case 25:
-#line 304 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 310 "getdate.y"
 {
 	    yyMonth = yyvsp[-3].Number;
 	    yyDay = yyvsp[-2].Number;
@@ -1393,14 +1399,14 @@ case 25:
 	}
 break;
 case 26:
-#line 309 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 315 "getdate.y"
 {
 	    yyMonth = yyvsp[0].Number;
 	    yyDay = yyvsp[-1].Number;
 	}
 break;
 case 27:
-#line 313 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 319 "getdate.y"
 {
 	    yyMonth = yyvsp[-1].Number;
 	    yyDay = yyvsp[-2].Number;
@@ -1408,68 +1414,68 @@ case 27:
 	}
 break;
 case 28:
-#line 320 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 326 "getdate.y"
 {
 	    yyRelSeconds = -yyRelSeconds;
 	    yyRelMonth = -yyRelMonth;
 	}
 break;
 case 30:
-#line 327 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 333 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number * yyvsp[0].Number * 60L;
 	}
 break;
 case 31:
-#line 330 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 336 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number * yyvsp[0].Number * 60L;
 	}
 break;
 case 32:
-#line 333 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 339 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[0].Number * 60L;
 	}
 break;
 case 33:
-#line 336 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 342 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number;
 	}
 break;
 case 34:
-#line 339 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 345 "getdate.y"
 {
 	    yyRelSeconds += yyvsp[-1].Number;
 	}
 break;
 case 35:
-#line 342 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 348 "getdate.y"
 {
 	    yyRelSeconds++;
 	}
 break;
 case 36:
-#line 345 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 351 "getdate.y"
 {
 	    yyRelMonth += yyvsp[-1].Number * yyvsp[0].Number;
 	}
 break;
 case 37:
-#line 348 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 354 "getdate.y"
 {
 	    yyRelMonth += yyvsp[-1].Number * yyvsp[0].Number;
 	}
 break;
 case 38:
-#line 351 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 357 "getdate.y"
 {
 	    yyRelMonth += yyvsp[0].Number;
 	}
 break;
 case 39:
-#line 356 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 362 "getdate.y"
 {
 	    if (yyHaveTime && yyHaveDate && !yyHaveRel)
 		yyYear = yyvsp[0].Number;
@@ -1497,18 +1503,18 @@ case 39:
 	}
 break;
 case 40:
-#line 383 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 389 "getdate.y"
 {
 	    yyval.Meridian = MER24;
 	}
 break;
 case 41:
-#line 386 "/home/NetBSD/src/gnu/usr.bin/cvs/libcvs/../../../dist/cvs/lib/getdate.y"
+#line 392 "getdate.y"
 {
 	    yyval.Meridian = yyvsp[0].Meridian;
 	}
 break;
-#line 1512 "y.tab.c"
+#line 1518 "getdate.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

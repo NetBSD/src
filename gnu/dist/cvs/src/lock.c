@@ -759,8 +759,8 @@ set_lock (lock, will_wait)
 	if (errno != EEXIST)
 	{
 	    error (0, errno,
-		   "failed to create lock directory in repository `%s'",
-		   lock->repository);
+		   "failed to create lock directory for `%s' (%s)",
+		   lock->repository, masterlock);
 	    return (L_ERROR);
 	}
 
