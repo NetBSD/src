@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.73 2002/01/01 22:18:39 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.74 2002/01/02 01:10:36 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.73 2002/01/01 22:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.74 2002/01/02 01:10:36 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1800,22 +1800,21 @@ uvm_fault_unwire_locked(map, start, end)
 	/*
 	 * find the beginning map entry for the region.
 	 */
+
 	KASSERT(start >= vm_map_min(map) && end <= vm_map_max(map));
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
 		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap, va, &pa) == FALSE)
-			panic("uvm_fault_unwire_locked: unwiring "
-			    "non-wired memory");
+			continue;
 
 		/*
-		 * make sure the current entry is for the address we're
-		 * dealing with.  if not, grab the next entry.
+		 * find the map entry for the current address.
 		 */
 
 		KASSERT(va >= entry->start);
-		if (va >= entry->end) {
+		while (va >= entry->end) {
 			KASSERT(entry->next != &map->header &&
 				entry->next->start <= entry->end);
 			entry = entry->next;
@@ -1824,6 +1823,7 @@ uvm_fault_unwire_locked(map, start, end)
 		/*
 		 * if the entry is no longer wired, tell the pmap.
 		 */
+
 		if (VM_MAPENT_ISWIRED(entry) == 0)
 			pmap_unwire(pmap, va);
 
