@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.23 2000/10/03 11:45:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.23 2000/10/03 11:45:30 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,9 @@ int	lflag;				/* log requests flag */
 int	rflag;				/* allow of for remote printers */
 int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
+char	**blist;			/* list of addresses to bind(2) to */
+int	blist_size;
+int	blist_addrs;
 
 int               main __P((int, char **));
 static void       reapchild __P((int));
@@ -149,8 +152,20 @@ main(argc, argv)
 	name = argv[0];
 
 	errs = 0;
-	while ((i = getopt(argc, argv, "dln:srw:")) != -1)
+	while ((i = getopt(argc, argv, "b:dln:srw:")) != -1)
 		switch (i) {
+		case 'b':
+			if (blist_addrs >= blist_size) {
+				blist_size += sizeof(char *) * 4;
+				if (blist == NULL)
+					blist = malloc(blist_size);
+				else
+					blist = realloc(blist, blist_size);
+				if (blist == NULL)
+					err(1, "cant allocate bind addr list");
+			}
+			blist[blist_addrs++] = strdup(optarg);
+			break;
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -274,10 +289,13 @@ main(argc, argv)
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
-	if (!sflag)
+	if (!sflag || blist_addrs)
 		finet = socksetup(PF_UNSPEC, options);
 	else
 		finet = NULL;	/* pretend we couldn't open TCP socket. */
+
+	if (blist != NULL)
+		free(blist);
 
 	if (finet) {
 		for (i = 1; i <= *finet; i++) {
@@ -666,7 +684,7 @@ usage()
 {
 	extern char *__progname;	/* XXX */
 
-	fprintf(stderr, "usage: %s [-dlrs] [-n maxchild] [-w maxwait] [port]\n",
+	fprintf(stderr, "usage: %s [-dlrs] [-b bind-address] [-n maxchild] [-w maxwait] [port]\n",
 	    __progname);
 	exit(1);
 }
@@ -679,58 +697,72 @@ socksetup(af, options)
         int af, options;
 {
 	struct addrinfo hints, *res, *r;
-	int error, maxs, *s, *socks;
+	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
 	const int on = 1;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = AI_PASSIVE;
-	hints.ai_family = af;
-	hints.ai_socktype = SOCK_STREAM;
-	error = getaddrinfo(NULL, "printer", &hints, &res);
-	if (error) {
-		syslog(LOG_ERR, (gai_strerror(error)));
-		mcleanup(0);
-	}
-
-	/* Count max number of sockets we may open */
-	for (maxs = 0, r = res; r; r = r->ai_next, maxs++)
-		;
-	socks = malloc((maxs + 1) * sizeof(int));
-	if (!socks) {
-		syslog(LOG_ERR, "couldn't allocate memory for sockets");
-		mcleanup(0);
-	}
-
-	*socks = 0;   /* num of sockets counter at start of array */
-	s = socks + 1;
-	for (r = res; r; r = r->ai_next) {
-		*s = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-		if (*s < 0) {
-			syslog(LOG_DEBUG, "socket(): %m");
-			continue;
+	do {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_family = af;
+		hints.ai_socktype = SOCK_STREAM;
+		error = getaddrinfo((blist_addrs == 0) ? NULL : blist[blidx],
+		    "printer", &hints, &res);
+		if (error) {
+			if (blist_addrs)
+				syslog(LOG_ERR, "%s: %s", blist[blidx],
+				    (gai_strerror(error)));
+			else
+				syslog(LOG_ERR, (gai_strerror(error)));
+			mcleanup(0);
 		}
-		if (options & SO_DEBUG)
-			if (setsockopt(*s, SOL_SOCKET, SO_DEBUG,
-				       &on, sizeof(on)) < 0) {
-				syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
+
+		/* Count max number of sockets we may open */
+		for (r = res; r; r = r->ai_next, maxs++)
+			;
+		if (socks == NULL) {
+			socks = malloc((maxs + 1) * sizeof(int));
+			if (socks)
+				*socks = 0; /* num of sockets ctr at start */
+		} else
+			socks = realloc(socks, (maxs + 1) * sizeof(int));
+		if (!socks) {
+			syslog(LOG_ERR, "couldn't allocate memory for sockets");
+			mcleanup(0);
+		}
+
+		s = socks + *socks + 1;
+		for (r = res; r; r = r->ai_next) {
+			*s = socket(r->ai_family, r->ai_socktype,
+			            r->ai_protocol);
+			if (*s < 0) {
+				syslog(LOG_DEBUG, "socket(): %m");
+				continue;
+			}
+			if (options & SO_DEBUG)
+				if (setsockopt(*s, SOL_SOCKET, SO_DEBUG,
+					       &on, sizeof(on)) < 0) {
+					syslog(LOG_ERR,
+					       "setsockopt (SO_DEBUG): %m");
+					close (*s);
+					continue;
+				}
+			if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+				syslog(LOG_DEBUG, "bind(): %m");
 				close (*s);
 				continue;
 			}
-		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
-			syslog(LOG_DEBUG, "bind(): %m");
-			close (*s);
-			continue;
+			*socks = *socks + 1;
+			s++;
 		}
-		*socks = *socks + 1;
-		s++;
-	}
 
-	if (res)
-		freeaddrinfo(res);
+		if (res)
+			freeaddrinfo(res);
+	} while (++blidx < blist_addrs);
 
-	if (*socks == 0) {
+	if (socks == NULL || *socks == 0) {
 		syslog(LOG_ERR, "Couldn't bind to any socket");
-		free(socks);
+		if (socks != NULL)
+			free(socks);
 		mcleanup(0);
 	}
 	return(socks);

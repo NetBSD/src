@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.17 2000/04/10 08:09:33 mrg Exp $
+.\"	$NetBSD: lpd.8,v 1.18 2000/10/03 11:45:30 scw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd October 3, 2000
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl dlsr
+.Op Fl b Ar bind-address
 .Op Fl n Ar maxchild
 .Op Fl w Ar maxwait
 .Op port
@@ -66,6 +67,27 @@ can continue to listen for more requests.
 .Pp
 Available options:
 .Bl -tag -width Ds
+.It Fl b
+Normally, if the
+.Fl s
+option is not specified,
+.Nm lpd
+will listen on all network interfaces for incoming TCP connections.
+The
+.Fl b
+option, followed by a
+.Ar bind-address
+specifies that
+.Nm lpd
+should listen on that address instead of INADDR_ANY. Multiple
+.Fl b
+options are permitted, allowing a list of addresses to be specified.
+Use of this option silently overrides the
+.Fl s
+option if it is also present on the command line.
+.Ar bind-address
+can be a numeric host name in IPV4 or IPV6 notation, or a symbolic host
+name which will be looked up in the normal way.
 .It Fl d
 The
 .Fl d
