@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.196 2002/07/11 07:37:06 junyoung Exp $
+.\"	$NetBSD: main,v 1.197 2002/07/11 19:52:25 junyoung Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -522,9 +522,9 @@ and now supports Linux kernel version 2.4.18.
 .Ss2 Networking
 .
 .(bullet
-Hardware assisted IPv4 TCP and UDP checksumming and for caching of the
+Hardware assisted IPv4 TCP and UDP checksumming and caching of the
 IPv6 TCP pseudo header.
-Support checksum offloading on the DP83820 Gigabit Ethernet, 3Com 3c90xB,
+Support for checksum offloading on the DP83820 Gigabit Ethernet, 3Com 3c90xB,
 3Com 3c90xC, and Alteon Tigon/Tigon2 Gigabit Ethernet cards.
 .It
 Zero-Copy for TCP and UDP transmit path achieved through page
