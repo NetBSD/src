@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 1996/08/22 20:18:10 explorer Exp $
+$NetBSD: README,v 1.2 1999/08/25 00:59:08 ross Exp $
 
 Based on some examples in /usr/share/lkm, I have started adding
 loadable modules for some portions of NetBSD I don't think should
@@ -35,7 +35,7 @@ Notes
 -----
 
 Currently there is no symbol table management so the in-kernel debugger will
-loose.
+lose.
 
 The LKM interface will (hopefully) be changing into something more usable.
 If you use these files as a reference, you might have to change your
