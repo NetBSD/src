@@ -793,6 +793,7 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/wire-test.0
+./usr/share/man/cat8/wsconsctl.0
 ./usr/share/man/cat8/xntpd.0
 ./usr/share/man/cat8/xntpdc.0
 ./usr/share/man/cat8/yp.0
@@ -1630,6 +1631,7 @@
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amq.8
 ./usr/share/man/man8/arp.8
+./usr/share/man/man8/atactl.8
 ./usr/share/man/man8/atrun.8
 ./usr/share/man/man8/badsect.8
 ./usr/share/man/man8/bootparamd.8
@@ -1868,6 +1870,7 @@
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/wire-test.8
+./usr/share/man/man8/wsconsctl.8
 ./usr/share/man/man8/xntpd.8
 ./usr/share/man/man8/xntpdc.8
 ./usr/share/man/man8/yp.8

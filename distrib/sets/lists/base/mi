@@ -112,6 +112,7 @@
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
+./sbin/wsconsctl
 ./stand
 ./tmp
 ./usr
@@ -716,7 +717,6 @@
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle
-./usr/share/games/ching
 ./usr/share/games/fortune
 ./usr/share/games/larn
 ./usr/share/games/quiz.db

@@ -27,6 +27,7 @@
 ./etc/lkm.conf
 ./etc/localtime
 ./etc/mail.rc
+./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
 ./etc/monthly
