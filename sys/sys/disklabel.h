@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.11 1994/01/09 20:05:38 cgd Exp $
+ *	$Id: disklabel.h,v 1.12 1994/01/11 16:37:19 mycroft Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -367,17 +367,11 @@ int dkcksum __P((struct disklabel *));
 
 int setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	struct cpu_disklabel *));
-int cpu_setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
+
+char *readdisklabel __P((int, void (*)(), struct disklabel *,
 	struct cpu_disklabel *));
 
-char *readdisklabel __P((int, int (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-char *cpu_readdisklabel __P((int, int (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-
-int writedisklabel __P((int, int (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-int cpu_writedisklabel __P((int, int (*)(), struct disklabel *,
+int writedisklabel __P((int, void (*)(), struct disklabel *,
 	struct cpu_disklabel *));
 
 #endif
