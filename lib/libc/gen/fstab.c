@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.16 1998/10/16 11:24:30 kleink Exp $	*/
+/*	$NetBSD: fstab.c,v 1.17 1999/01/24 19:51:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.16 1998/10/16 11:24:30 kleink Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.17 1999/01/24 19:51:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
@@ -62,33 +61,51 @@ __weak_alias(setfsent,_setfsent);
 #endif
 
 static FILE *_fs_fp;
+static size_t _fs_lineno = 0;
+static const char *_fs_file = _PATH_FSTAB;
 static struct fstab _fs_fstab;
 
-static void error __P((int));
 static int fstabscan __P((void));
+
+static __inline char *nextfld __P((char **, const char *));
+
+
+static __inline char *
+nextfld(str, sep)
+	char **str;
+	const char *sep;
+{
+	char *ret;
+	while ((ret = strsep(str, sep)) != NULL && *ret == '\0')
+		continue;
+	return ret;
+}
+
 
 static int
 fstabscan()
 {
-	char *cp;
+	char *cp, *lp, *sp;
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
-	int typexx;
-	char *lastp;
 	static const char sep[] = ":\n";
 	static const char ws[] = " \t\n";
+	static char *fstab_type[] = {
+	    FSTAB_RW, FSTAB_RQ, FSTAB_RO, FSTAB_SW, FSTAB_XX, NULL 
+	};
 
 	for (;;) {
-		if (!(cp = fgets(line, sizeof(line), _fs_fp)))
-			return(0);
+		if (!(lp = fgets(line, sizeof(line), _fs_fp)))
+			return 0;
+		_fs_lineno++;
 /* OLD_STYLE_FSTAB */
-		if (!strpbrk(cp, " \t")) {
-			_fs_fstab.fs_spec = strtok_r(cp, sep, &lastp);
+		if (!strpbrk(lp, " \t")) {
+			_fs_fstab.fs_spec = nextfld(&lp, sep);
 			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 				continue;
-			_fs_fstab.fs_file = strtok_r(NULL, sep, &lastp);
-			_fs_fstab.fs_type = strtok_r(NULL, sep, &lastp);
+			_fs_fstab.fs_file = nextfld(&lp, sep);
+			_fs_fstab.fs_type = nextfld(&lp, sep);
 			if (_fs_fstab.fs_type) {
 				if (!strcmp(_fs_fstab.fs_type, FSTAB_XX))
 					continue;
@@ -96,68 +113,54 @@ fstabscan()
 				_fs_fstab.fs_vfstype =
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
-				if ((cp = strtok_r(NULL, sep, &lastp))
-				    != NULL) {
+				if ((cp = nextfld(&lp, sep)) != NULL) {
 					_fs_fstab.fs_freq = atoi(cp);
-					if ((cp = strtok_r(NULL, sep, &lastp))
-					    != NULL) {
+					if ((cp = nextfld(&lp, sep)) != NULL) {
 						_fs_fstab.fs_passno = atoi(cp);
-						return(1);
+						return 1;
 					}
 				}
 			}
 			goto bad;
 		}
 /* OLD_STYLE_FSTAB */
-		_fs_fstab.fs_spec = strtok_r(cp, ws, &lastp);
+		_fs_fstab.fs_spec = nextfld(&lp, ws);
 		if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 			continue;
-		_fs_fstab.fs_file = strtok_r(NULL, ws, &lastp);
-		_fs_fstab.fs_vfstype = strtok_r(NULL, ws, &lastp);
-		_fs_fstab.fs_mntops = strtok_r(NULL, ws, &lastp);
+		_fs_fstab.fs_file = nextfld(&lp, ws);
+		_fs_fstab.fs_vfstype = nextfld(&lp, ws);
+		_fs_fstab.fs_mntops = nextfld(&lp, ws);
 		if (_fs_fstab.fs_mntops == NULL)
 			goto bad;
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
-		if ((cp = strtok_r(NULL, ws, &lastp)) != NULL) {
+		if ((cp = nextfld(&lp, ws)) != NULL) {
 			_fs_fstab.fs_freq = atoi(cp);
-			if ((cp = strtok_r(NULL, ws, &lastp)) != NULL)
+			if ((cp = nextfld(&lp, ws)) != NULL)
 				_fs_fstab.fs_passno = atoi(cp);
 		}
-		(void)strncpy(subline, _fs_fstab.fs_mntops, sizeof(subline)-1);
-		for (typexx = 0, cp = strtok_r(subline, ",", &lastp); cp;
-		     cp = strtok_r((char *)NULL, ",", &lastp)) {
+		sp = strncpy(subline, _fs_fstab.fs_mntops, sizeof(subline)-1);
+		while ((cp = nextfld(&sp, ",")) != NULL) {
+			char **tp;
+
 			if (strlen(cp) != 2)
 				continue;
-			if (!strcmp(cp, FSTAB_RW)) {
-				_fs_fstab.fs_type = FSTAB_RW;
+
+			for (tp = fstab_type; *tp; tp++)
+				if (strcmp(cp, *tp) == 0) {
+					_fs_fstab.fs_type = *tp;
+					break;
+				}
+			if (*tp)
 				break;
-			}
-			if (!strcmp(cp, FSTAB_RQ)) {
-				_fs_fstab.fs_type = FSTAB_RQ;
-				break;
-			}
-			if (!strcmp(cp, FSTAB_RO)) {
-				_fs_fstab.fs_type = FSTAB_RO;
-				break;
-			}
-			if (!strcmp(cp, FSTAB_SW)) {
-				_fs_fstab.fs_type = FSTAB_SW;
-				break;
-			}
-			if (!strcmp(cp, FSTAB_XX)) {
-				_fs_fstab.fs_type = FSTAB_XX;
-				typexx++;
-				break;
-			}
 		}
-		if (typexx)
+		if (strcmp(_fs_fstab.fs_type, FSTAB_XX) == 0)
 			continue;
 		if (cp != NULL)
-			return(1);
+			return 1;
 
-bad:		/* no way to distinguish between EOF and syntax error */
-		error(EFTYPE);
+bad:
+		warnx("%s, %d: Missing fields", _fs_file, _fs_lineno);
 	}
 	/* NOTREACHED */
 }
@@ -166,8 +169,8 @@ struct fstab *
 getfsent()
 {
 	if ((!_fs_fp && !setfsent()) || !fstabscan())
-		return((struct fstab *)NULL);
-	return(&_fs_fstab);
+		return NULL;
+	return &_fs_fstab;
 }
 
 struct fstab *
@@ -177,8 +180,8 @@ getfsspec(name)
 	if (setfsent())
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_spec, name))
-				return(&_fs_fstab);
-	return((struct fstab *)NULL);
+				return &_fs_fstab;
+	return NULL;
 }
 
 struct fstab *
@@ -188,21 +191,23 @@ getfsfile(name)
 	if (setfsent())
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_file, name))
-				return(&_fs_fstab);
-	return((struct fstab *)NULL);
+				return &_fs_fstab;
+	return NULL;
 }
 
 int
 setfsent()
 {
+	_fs_lineno = 0;
 	if (_fs_fp) {
 		rewind(_fs_fp);
-		return(1);
+		return 1;
 	}
-	if ((_fs_fp = fopen(_PATH_FSTAB, "r")) != NULL)
-		return(1);
-	error(errno);
-	return(0);
+	if ((_fs_fp = fopen(_PATH_FSTAB, "r")) == NULL) {
+		warn("Cannot open `%s'", _PATH_FSTAB);
+		return 0;
+	}
+	return 1;
 }
 
 void
@@ -212,13 +217,4 @@ endfsent()
 		(void)fclose(_fs_fp);
 		_fs_fp = NULL;
 	}
-}
-
-static void
-error(err)
-	int err;
-{
-
-	errno = err;
-	warn(_PATH_FSTAB);
 }
