@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.1 2001/03/20 22:59:40 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.2 2001/03/20 23:29:07 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -117,8 +117,6 @@ int podloader_callloader(struct podulebus_attach_args *, u_int, u_int);
 
 /* XXX The arm32 version ignores "slot" too. */
 #define matchpodule(pa, man, prod, slot) IS_PODULE(pa, man, prod)
-
-#define mod_base
 
 /* end arm32 compatibility */
 
