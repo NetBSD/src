@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.5 2004/03/28 09:00:55 martti Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.6 2004/11/13 19:16:10 he Exp $	*/
 
 %{
 /*
@@ -767,7 +767,7 @@ char **arg;
 
 	while ((c = *s++)) {
 		if (todo) {
-			if (isdigit(c)) {
+			if (ISDIGIT(c)) {
 				todo--;
 				if (c > '7') {
 					fprintf(stderr, "octal with %c!\n", c);
@@ -776,7 +776,7 @@ char **arg;
 				val <<= 3;
 				val |= (c - '0');
 			}
-			if (!isdigit(c) || !todo) {
+			if (!ISDIGIT(c) || !todo) {
 				*t++ = (u_char)(val & 0xff);
 				todo = 0;
 			}
@@ -784,7 +784,7 @@ char **arg;
 				continue;
 		}
 		if (quote) {
-			if (isdigit(c)) {
+			if (ISDIGIT(c)) {
 				todo = 2;
 				if (c > '7') {
 					fprintf(stderr, "octal with %c!\n", c);
@@ -1320,7 +1320,7 @@ void packet_done()
 				sprintf((char *)t, "	");
 				t += 8;
 				for (k = 16; k; k--, s++)
-					*t++ = (isprint(*s) ? *s : '.');
+					*t++ = (ISPRINT(*s) ? *s : '.');
 				s--;
 			}
 
@@ -1338,7 +1338,7 @@ void packet_done()
 			t += 7;
 			s -= j & 0xf;
 			for (k = j & 0xf; k; k--, s++)
-				*t++ = (isprint(*s) ? *s : '.');
+				*t++ = (ISPRINT(*s) ? *s : '.');
 			*t++ = '\n';
 			*t = '\0';
 		}
