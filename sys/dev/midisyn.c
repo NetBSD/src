@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.3 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.4 1998/09/13 04:41:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,10 +112,18 @@ midisyn_close(addr)
 	void *addr;
 {
 	midisyn *ms = addr;
+	struct midisyn_methods *fs;
+	int v;
 
 	DPRINTF(("midisyn_close: ms=%p ms->mets=%p\n", ms, ms->mets));
-	if (ms->mets->close)
-		ms->mets->close(ms);
+	fs = ms->mets;
+	for (v = 0; v < ms->nvoice; v++)
+		if (ms->voices[v].inuse) {
+			fs->noteoff(ms, v, 0, 0);
+			midisyn_freevoice(ms, v);
+		}
+	if (fs->close)
+		fs->close(ms);
 }
 
 void
