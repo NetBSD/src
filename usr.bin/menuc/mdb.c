@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.22 2001/10/15 22:20:03 bjh21 Exp $	*/
+/*	$NetBSD: mdb.c,v 1.23 2002/03/07 20:43:29 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include "pathnames.h"
 
 /* Data */
+#undef MAX
 #define MAX 1000
 static int menu_no = 0;
 static id_rec *menus[MAX];
