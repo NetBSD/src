@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.4 2002/04/12 13:39:45 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.5 2002/04/13 17:27:07 thorpej Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -34,6 +34,9 @@ _KERNEL.${_K}:=	${_F}
 .endif
 
 KERNELS+=	${_KERNEL.${_K}}.gz
+.for suf in ${MDEXTRA_SUFFIXES.${_K}}
+KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
+.endfor
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
 
 ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
@@ -48,6 +51,11 @@ ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 .endif
 	gzip -9f netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
+
+.for suf in ${MDEXTRA_SUFFIXES.${_K}}
+${_KERNEL.${_K}}.${suf}.gz: .NOTMAIN ${_KERNEL.${_K}}.gz
+	mv netbsd.${suf}.gz ${.TARGET}
+.endfor
 
 .endfor							# }
 
