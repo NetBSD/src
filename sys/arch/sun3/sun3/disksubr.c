@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2000/11/20 08:24:22 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 2001/02/22 07:11:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -120,6 +120,22 @@ readdisklabel(dev, strat, lp, clp)
 	}
 
 	/* Check for a NetBSD disk label (PROM can not boot it). */
+	for (dlp = (struct disklabel *)clp->cd_block;
+	    dlp <= (struct disklabel *)((char *)clp->cd_block +
+	    DEV_BSIZE - sizeof(*dlp));
+	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+			continue;
+		}
+		if (dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp) != 0)
+			return("BSD disk label corrupted");
+		else {
+			*lp = *dlp;
+			return(NULL); 
+		}
+	}
+
+#if 0
 	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
@@ -127,6 +143,7 @@ readdisklabel(dev, strat, lp, clp)
 		*lp = *dlp; 	/* struct assignment */
 		return(NULL);
 	}
+#endif
 
 	bzero(clp->cd_block, sizeof(clp->cd_block));
 	return("no disk label");

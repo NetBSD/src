@@ -1,7 +1,7 @@
-/*	$NetBSD: panic.c,v 1.5 1998/02/05 04:57:13 gwr Exp $	*/
+/*	$NetBSD: panic.c,v 1.6 2001/02/22 07:11:10 chs Exp $	*/
 
 
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #include <stand.h>
 #include "libsa.h"
 

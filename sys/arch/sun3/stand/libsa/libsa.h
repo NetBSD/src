@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.6 2000/07/16 21:56:13 jdolecek Exp $	*/
+/*	$NetBSD: libsa.h,v 1.7 2001/02/22 07:11:10 chs Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -10,7 +10,7 @@
  * i.e. this is where the PROM loads
  * programs, like it or not!
  */
-#define LOADADDR	0x4000
+#define KERN_LOADADDR	0x4000
 
 /* SRT0.S */
 void	exit __P((void));

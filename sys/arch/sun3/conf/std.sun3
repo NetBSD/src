@@ -1,4 +1,4 @@
-# $NetBSD: std.sun3,v 1.28 2000/06/22 20:27:57 fvdl Exp $
+# $NetBSD: std.sun3,v 1.29 2001/02/22 07:11:09 chs Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k
@@ -13,4 +13,4 @@ options 	_SUN3_
 mainbus0 at root
 
 # Standard defines
-options 	EXEC_AOUT, EXEC_SCRIPT
+options 	EXEC_ELF32, EXEC_SCRIPT

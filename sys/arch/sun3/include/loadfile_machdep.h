@@ -1,11 +1,11 @@
-/*	$NetBSD: ctrlsp.S,v 1.5 2001/02/22 07:11:12 chs Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1 2001/02/22 07:11:09 chs Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Glass.
+ * by Christos Zoulas and Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,61 +36,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This is shared with stand/libsa
- * XXX - can not include cpu.h there...
- */
+#ifndef __MACHINE_LOADFILE_MACHDEP_H
+#define __MACHINE_LOADFILE_MACHDEP_H
 
-#include <machine/asm.h>
-#define FC_CONTROL 3	/* from cpu.h */
+#define BOOT_AOUT
+#define BOOT_ELF
+#define ELFSIZE 32
 
-/*	
- * unsigned char get_control_byte (char *addr)
- */	
-ENTRY(get_control_byte)
-	movc	%sfc,%d1		| save sfc
-	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
-	movec	%d0,%sfc
-	movl	%sp@(4),%a0		| src addr
-	moveq	#0,%d0			| get byte
-	movsb	%a0@,%d0
-	movc	%d1,%sfc		| restore sfc
-	rts
+#define LOAD_KERNEL	LOAD_ALL
+#define COUNT_KERNEL	COUNT_ALL
 
-/*
- * unsigned int get_control_word (char *addr)
- */	
-ENTRY(get_control_word)
-	movc	%sfc,%d1		| save sfc
-	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
-	movec	%d0,%sfc
-	movl	%sp@(4),%a0		| src addr
-	movsl	%a0@,%d0		| get long
-	movc	%d1,%sfc		| restore sfc
-	rts
+#define LOADADDR(a)		(((u_long)(a) & 0xffffff) + offset)
+#define ALIGNENTRY(a)		((u_long)(a) & 0xffffff)
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
 
-/*	
- * void set_control_byte (char *addr, int value)
- */
-ENTRY(set_control_byte)
-	movc	%dfc,%d1		| save dfc
-	moveq	#FC_CONTROL,%d0		| dfc = FC_CONTROL
-	movc	%d0,%dfc
-	movl	%sp@(4),%a0		| addr
-	movl	%sp@(8),%d0		| value
-	movsb	%d0,%a0@		| set byte
-	movc	%d1,%dfc		| restore dfc
-	rts
+#ifdef _STANDALONE
 
-/*
- * void set_control_word (char *addr, int value)
- */
-ENTRY(set_control_word)
-	movc	%dfc,%d1		| save dfc
-	moveq	#FC_CONTROL, %d0	| dfc = FC_CONTROL
-	movc	%d0,%dfc
-	movl	%sp@(4),%a0		| addr
-	movl	%sp@(8),%d0		| value
-	movsl	%d0,%a0@		| set long
-	movc	%d1,%dfc		| restore dfc
-	rts
+#define WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
+#define OKMAGIC(a)		((a) == OMAGIC)
+
+#else
+
+#define WARN(a)			warn a
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		malloc(a)
+#define FREE(a, b)		free(a)
+#define OKMAGIC(a)		((a) == OMAGIC)
+
+#endif
+
+
+#endif /* __MACHINE_LOADFILE_MACHDEP_H */
