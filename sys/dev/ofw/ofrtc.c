@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.6 1998/02/24 05:44:39 mycroft Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.7 1998/03/21 02:05:17 cgd Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/ofw/openfirm.h>
@@ -207,7 +208,7 @@ ofrtc_write(dev, uio, flag)
 	if (uio->uio_offset || (cnt != sizeof buf && cnt != sizeof buf - 1))
 		return EINVAL;
 	
-	if (error = uiomove((caddr_t)buf, sizeof buf, uio))
+	if ((error = uiomove((caddr_t)buf, sizeof buf, uio)) != 0)
 		return error;
 
 	if (cnt == sizeof buf && buf[sizeof buf - 1] != '\n')
