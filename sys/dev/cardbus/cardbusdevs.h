@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.8 2000/06/13 15:37:29 soren Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.8.2.1 2002/01/05 17:33:16 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.10 2000/06/06 17:21:42 soren Exp 
+ *	NetBSD: cardbusdevs,v 1.10.2.1 2002/01/05 17:32:32 he Exp 
  */
 
 /*
@@ -50,6 +50,9 @@
 #define	CARDBUS_VENDOR_DEC	0x1011		/* Digital Equipment */
 #define	CARDBUS_VENDOR_3COM	0x10B7		/* 3Com */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
+#define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link Systems */
+#define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
+#define	CARDBUS_VENDOR_ALLIEDTELESYN	0x1259		/* Allied Telesyn International */
 #define	CARDBUS_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
@@ -93,6 +96,12 @@
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 #define	CARDBUS_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
 
+/* D-Link products */
+#define	CARDBUS_PRODUCT_DLINK_DFE_690TXD	0x1340		/* DFE-690TXD 10/100 Ethernet */
+
+/* Corega products */
+#define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
+
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
-
+#define	CARDBUS_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 Ethernet */
