@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.21 2002/11/06 20:44:59 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.22 2002/11/06 21:29:49 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -863,4 +863,11 @@ libexec/fingerd/fingerd.c			1.16
 
 	typo in message.  PR 17528
 	[itojun, ticket #445]
+
+sys/net/if_gre.c				1.27
+
+	Change default MTU to 1476 (same value that Cisco uses).
+	Do not limit the MTU when set by the admin with ifconfig, per
+	discussion on tech-net. This fixes PR 16761 from Jasper Wallace.
+	[martin, ticket #226]
 
