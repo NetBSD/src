@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2000/02/29 04:55:54 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 2000/03/03 08:36:20 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2000/02/29 04:55:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2000/03/03 08:36:20 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -304,7 +304,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
 	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, USPACE);
+	memset(proc0.p_addr, 0, USPACE);
 
 	kernend += USPACE;
 
@@ -775,4 +775,4 @@ nullwork()
 {
 
 	return (0);
-}	
+}
