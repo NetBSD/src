@@ -260,11 +260,11 @@ int atppc_sc_detach(struct atppc_softc * lsc, int flag)
 		printf("%s not able to detach child device, ", dev->dv_xname);
 
 		if(!(flag & DETACH_FORCE)) {
-			printf("cannot detach", dev->dv_xname);
+			printf("cannot detach\n");
 			return 1;
 		}
 		else {
-			printf("continuing (DETACH_FORCE)\n", dev->dv_xname);
+			printf("continuing (DETACH_FORCE)\n");
 		}
 	}
 
