@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.4 2001/08/24 04:20:07 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.5 2001/11/29 01:22:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -487,4 +487,62 @@ lwp_exit2(struct lwp *l)
 	simple_unlock(&deadproc_slock);
 
 	wakeup(&deadproc);
+}
+
+/* 
+ * Pick a LWP to represent the process for those operations which 
+ * want information about a "process" that is actually associated 
+ * with a LWP.
+ */
+struct lwp *
+proc_representative_lwp(p)
+	struct proc *p;
+{
+	struct lwp *l = NULL;
+
+	/* Trivial case: only one LWP */
+	if (p->p_nrlwps == 1)
+		return (LIST_FIRST(&p->p_lwps));
+
+	switch (p->p_stat) {
+	case SSTOP: 
+		/* Pick the first stopped LWP */
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_stat == LSSTOP)
+				return (l);
+		}
+		/* NOTREACHED */
+		break;
+	case SACTIVE:
+		/* Pick the first live LWP */
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_stat == LSRUN ||
+			    l->l_stat == LSSLEEP ||
+			    l->l_stat == LSONPROC ||
+			    l->l_stat == LSSUSPENDED)
+				return (l);
+		}
+		break;
+	case SDEAD:
+	case SZOMB:
+		/* Doesn't really matter... */
+		l = LIST_FIRST(&p->p_lwps);
+		break;
+#ifdef DIAGNOSTIC
+	case SIDL:
+		/* We have more than one LWP and we're in SIDL?
+		 * How'd that happen?
+		 */
+		panic("Too many LWPs (%d) in SIDL process %d (%s)",
+		    p->p_nrlwps, p->p_pid, p->p_comm);
+	default:
+		panic("Process %d (%s) in unknown state %d",
+		    p->p_pid, p->p_comm, p->p_stat);
+#endif
+	}
+
+	panic("proc_representative_lwp: couldn't find a lwp for process"
+		" %d (%s)", p->p_pid, p->p_comm);
+	/* NOTREACHED */
+	return NULL;
 }
