@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.463 2001/09/18 09:09:57 onoe Exp $
+#	$NetBSD: files,v 1.464 2001/09/28 02:06:17 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -616,6 +616,7 @@ define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
 define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
+define	acpibus { }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:
