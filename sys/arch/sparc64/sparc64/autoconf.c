@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 2002/10/02 16:02:20 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.67 2002/11/02 13:49:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1313,7 +1313,8 @@ device_register(dev, aux)
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 
-		if (adev->adev_channel == bp->val[0]) {
+		if (adev->adev_channel == bp->val[1] &&
+		    adev->adev_drv_data->drive == bp->val[0]) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
 			    dev->dv_xname));
