@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_ntohl.c,v 1.2 1999/05/03 13:12:34 christos Exp $	*/
+/* $NetBSD: Lint_ntohl.c,v 1.3 2000/06/14 06:49:07 cgd Exp $ */
 
 /*
  * This file placed in the public domain.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.2 1999/04/30 00:58:31 ross Exp $	*/
+/* $NetBSD: fpgetsticky.c,v 1.3 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

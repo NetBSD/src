@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_stubs.c,v 1.1 2000/04/02 15:35:52 minoura Exp $	*/
+/* $NetBSD: dlfcn_stubs.c,v 1.2 2000/06/14 06:49:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

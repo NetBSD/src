@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.2 1998/12/02 19:29:56 thorpej Exp $	*/
+/* $NetBSD: Ovfork.S,v 1.3 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,6 +1,5 @@
 #!/bin/sh
-#
-#	$NetBSD: upgrade.sh,v 1.3 1999/04/07 06:47:50 cgd Exp $
+# $NetBSD: upgrade.sh,v 1.4 2000/06/14 06:48:48 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -32,7 +31,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.3 1996/10/17 03:08:11 cgd Exp $	*/
+/* $NetBSD: bcopy.S,v 1.4 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

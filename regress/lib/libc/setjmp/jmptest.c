@@ -1,4 +1,4 @@
-/*	$NetBSD: jmptest.c,v 1.3 1998/09/19 21:23:10 thorpej Exp $	*/
+/* $NetBSD: jmptest.c,v 1.4 2000/06/14 06:49:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
