@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.3 2001/04/01 20:08:18 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.4 2001/04/01 20:16:25 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.3 2001/04/01 20:08:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.4 2001/04/01 20:16:25 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,7 +842,6 @@ static void vv_copyrows(id, srcrow, dstrow, nrows)
 	int srcrow, dstrow, nrows;
 {
 	struct rasops_info *ri = id;
-	struct vidcvideo_softc *sc = ri->ri_hw;
 	int height, offset, size;
 	int scrollup, scrolldown;
 	unsigned char *src, *dst;
