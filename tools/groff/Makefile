@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/12/08 20:20:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 2003/02/07 01:52:53 lukem Exp $
 
 MODULE=		groff
 
@@ -50,7 +50,7 @@ ${TMACDIR}/tmac.${F}: ${F} _installtmac
 .endfor
 
 afterinstall: ${TMACDIR}/tmac.an.old
-${TMACDIR}/tmac.an.old: ${DIST}/tmac/tmac.an _installtmac
+${TMACDIR}/tmac.an.old: ${GNUHOSTDIST}/tmac/tmac.an _installtmac
 .ORDER: realinstall ${TMACDIR}/tmac.an.old
 
 afterinstall: ${TMACDIR}/tmac.an
