@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.62 2002/04/04 21:11:16 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.63 2002/04/04 23:15:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.62 2002/04/04 21:11:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.63 2002/04/04 23:15:43 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -195,6 +195,8 @@ void	fxp_statchg(struct device *);
 void	fxp_mdi_write(struct device *, int, int, int);
 void	fxp_autosize_eeprom(struct fxp_softc*);
 void	fxp_read_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_write_eeprom(struct fxp_softc *, u_int16_t *, int, int);
+void	fxp_eeprom_update_cksum(struct fxp_softc *);
 void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
@@ -577,6 +579,45 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	enaddr[3] = myea[1] >> 8;
 	enaddr[4] = myea[2] & 0xff;
 	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Systems based on the ICH2/ICH2-M chip from Intel, as well
+	 * as some i82559 designs, have a defect where the chip can
+	 * cause a PCI protocol violation if it receives a CU_RESUME
+	 * command when it is entering the IDLE state.
+	 *
+	 * The work-around is to disable Dynamic Standby Mode, so that
+	 * the chip never deasserts #CLKRUN, and always remains in the
+	 * active state.
+	 *
+	 * Unfortunately, the only way to disable Dynamic Standby is
+	 * to frob an EEPROM setting and reboot (the EEPROM setting
+	 * is only consulted when the PCI bus comes out of reset).
+	 *
+	 * See Intel 82801BA/82801BAM Specification Update, Errata #30.
+	 */
+	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
+		fxp_read_eeprom(sc, &data, 10, 1);
+		if (data & 0x02) {		/* STB enable */
+			printf("%s: disabling Dynamic Standby Mode in EEPROM\n",
+			    sc->sc_dev.dv_xname);
+			data &= ~0x02;
+			fxp_write_eeprom(sc, &data, 10, 1);
+			printf("%s: new EEPROM ID: 0x%04x\n",
+			    sc->sc_dev.dv_xname, data);
+			fxp_eeprom_update_cksum(sc);
+			printf("%s: PLEASE RESET YOUR SYSTEM FOR CHANGE TO "
+			    "TAKE EFFECT!\n", sc->sc_dev.dv_xname);
+		} else {
+#if 1
+			/*
+			 * If Dynamic Standby Mode is disabled, we don't
+			 * need to work around the Resume bug anymore.
+			 */
+			sc->sc_flags &= ~FXPF_HAS_RESUME_BUG;
+#endif
+		}
+	}
 }
 
 static void
@@ -701,6 +742,74 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
 	}
+}
+
+/*
+ * Write data to the serial EEPROM.
+ */
+void
+fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
+{
+	int i, j;
+
+	for (i = 0; i < words; i++) {
+		/* Erase/write enable. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_ERASE, 3);
+		fxp_eeprom_shiftin(sc, 0x3 << (sc->sc_eeprom_size - 2),
+		    sc->sc_eeprom_size);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Shift in write opcode, address, data. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
+		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, data[i], 16);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Wait for the EEPROM to finish up. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		DELAY(4);
+		for (j = 0; j < 1000; j++) {
+			if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
+			    FXP_EEPROM_EEDO)
+				break;
+			DELAY(50);
+		}
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+
+		/* Erase/write disable. */
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_ERASE, 3);
+		fxp_eeprom_shiftin(sc, 0, sc->sc_eeprom_size);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+		DELAY(4);
+	}
+}
+
+/*
+ * Update the checksum of the EEPROM.
+ */
+void
+fxp_eeprom_update_cksum(struct fxp_softc *sc)
+{
+	int i;
+	uint16_t data, cksum;
+
+	cksum = 0;
+	for (i = 0; i < (1 << sc->sc_eeprom_size) - 1; i++) {
+		fxp_read_eeprom(sc, &data, i, 1);
+		cksum += data;
+	}
+	i = (1 << sc->sc_eeprom_size) - 1;
+	cksum = 0xbaba - cksum;
+	fxp_read_eeprom(sc, &data, i, 1);
+	fxp_write_eeprom(sc, &cksum, i, 1);
+	printf("%s: EEPROM checksum @ 0x%x: 0x%04x -> 0x%04x\n",
+	    sc->sc_dev.dv_xname, i, data, cksum);
 }
 
 /*
