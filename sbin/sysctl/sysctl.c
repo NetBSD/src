@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.38 2000/06/26 15:37:26 mrg Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.39 2000/07/15 01:44:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.38 2000/06/26 15:37:26 mrg Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.39 2000/07/15 01:44:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ int	Aflag, aflag, nflag, wflag;
 
 int main __P((int, char *[]));
 
-static void listall __P((char *, struct list *));
+static void listall __P((const char *, struct list *));
 static void parse __P((char *, int));
 static void debuginit __P((void));
 static int sysctl_inet __P((char *, char **, int[], int, int *));
@@ -259,7 +259,7 @@ main(argc, argv)
  */
 static void
 listall(prefix, lp)
-	char *prefix;
+	const char *prefix;
 	struct list *lp;
 {
 	int lvl2;
