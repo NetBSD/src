@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.20 2005/02/27 00:27:21 perry Exp $
+# $NetBSD: files.mca,v 1.21 2005/04/03 11:21:44 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -62,3 +62,8 @@ file	dev/mca/if_le_mca.c		le_mca
 # NCR 53C90
 attach	esp at mca with esp_mca
 file	dev/mca/esp_mca.c		esp_mca
+
+# Tiara LANCard
+device	tra:  ether, ifnet, arp, mb86950
+attach	tra at mca with tra_mca
+file	dev/mca/if_tra_mca.c		tra_mca
