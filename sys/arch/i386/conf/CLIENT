@@ -8,7 +8,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"i387"
 options		XSERVER,UCONSOLE
-options		KERNFS,FDESC
+options		KERNFS,FDESC,DDB
 
 config		netbsd	root on wd0 swap on wd0 and as0
 
@@ -29,7 +29,7 @@ pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	4
-pseudo-device	ddb
+
 
 pseudo-device	swappager
 pseudo-device	vnodepager
