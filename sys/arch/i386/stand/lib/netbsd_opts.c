@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd_opts.c,v 1.2 1997/03/14 06:55:07 thorpej Exp $	*/
+/*	$NetBSD: netbsd_opts.c,v 1.3 2000/07/29 20:06:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,6 @@ static struct optent {
 } opttab[] = {
 	{'a', RB_ASKNAME},
 	{'s', RB_SINGLE},
-	{'r', RB_DFLTROOT},
 	{'d', RB_KDB},
 };
 

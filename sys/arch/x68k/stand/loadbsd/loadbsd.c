@@ -16,16 +16,15 @@
  *		-s	single user boot (default)
  *		-D	enter kernel debugger
  *		-b	ask root device
- *		-d	use compiled-in rootdev
  *		-r	specify root device
  *
- *	$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $
+ *	$NetBSD: loadbsd.c,v 1.5 2000/07/29 20:06:30 jdolecek Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $");
-#define VERSION	"$Revision: 1.4 $ $Date: 1999/09/23 15:14:59 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.5 2000/07/29 20:06:30 jdolecek Exp $");
+#define VERSION	"$Revision: 1.5 $ $Date: 2000/07/29 20:06:30 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -451,7 +450,6 @@ kernel options:\n\
 \t-s	single user boot (default)\n\
 \t-D	enter kernel debugger\n\
 \t-b	ask root device\n\
-\t-d	use compiled-in rootdev\n\
 \t-r	specify root device (default %s)\n\
 \t	format:  [/interface/]device@unit[,lun][:partition]\n\
 \t	    interface: one of  spc@0, spc@1, mha@0\n\
@@ -509,9 +507,6 @@ main(argc, argv)
 					usage(1, "-r requires device name");
 				else
 					rootdevname = *arg;
-				break;
-			case 'd':
-				boothowto |= RB_DFLTROOT;
 				break;
 			case 'b':
 				boothowto |= RB_ASKNAME;
