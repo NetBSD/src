@@ -1,5 +1,5 @@
 # Copyright 1993 Charles Hannum
-#	$Id: Makefile.i386,v 1.28.2.2 1993/10/09 08:55:41 mycroft Exp $
+#	$Id: Makefile.i386,v 1.28.2.3 1993/10/09 09:14:19 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -89,7 +89,7 @@ symbols.sort: ${I386}/i386/symbols.raw
 	grep -v '^#' ${I386}/i386/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${I386}/i386/locore.s assym.s
+locore.o: ${I386}/i386/locore.s ${I386}/isa/icu.s ${I386}/isa/vector.s assym.s
 	${NORMAL_S}
 
 # depend on maxusers
