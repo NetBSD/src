@@ -102,7 +102,11 @@ int	 setenv __P((const char *, const char *, int));
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-void	*alloca __P((size_t));	/* built-in for gcc */
+#if defined(alloca) && (alloca == __builtin_alloca) 
+void  *alloca __P((int));     /* built-in for gcc */ 
+#else 
+void  *alloca __P((size_t)); 
+#endif /* __GNUC__ */ 
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int optind;
 extern	 int opterr;
