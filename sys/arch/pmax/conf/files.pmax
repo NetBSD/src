@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.44 1997/06/22 09:34:34 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.44.2.1 1997/07/01 17:35:56 bouyer Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -58,7 +58,7 @@ file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
 # Machine-independent SCSI driver.
 #
 
-include "scsi/files.scsi"
+include "dev/scsipi/files.scsipi"
 #major { st = 10 }
 #major { cd = 3 }
 #major { sd = 21 }

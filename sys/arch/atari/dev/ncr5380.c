@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.29 1996/12/20 12:49:43 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.29.8.1 1997/07/01 17:33:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -64,7 +64,7 @@ u_char	ncr_will_link = 0x00;
  * This is the default sense-command we send.
  */
 static	u_char	sense_cmd[] = {
-		REQUEST_SENSE, 0, 0, 0, sizeof(struct scsi_sense_data), 0
+		REQUEST_SENSE, 0, 0, 0, sizeof(struct scsipi_sense_data), 0
 };
 
 /*
@@ -78,17 +78,17 @@ static volatile int	main_running = 0;
 static u_char	busy;
 
 static void	ncr5380_minphys __P((struct buf *bp));
-static int	ncr5380_scsi_cmd __P((struct scsi_xfer *xs));
-static void	ncr5380_show_scsi_cmd __P((struct scsi_xfer *xs));
+static int	ncr5380_scsi_cmd __P((struct scsipi_xfer *xs));
+static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
 
-struct scsi_adapter ncr5380_switch = {
+struct scsipi_adapter ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
 	ncr5380_minphys,		/* scsi_minphys()		*/
 	0,				/* open_target_lu()		*/
 	0				/* close_target_lu()		*/
 };
 
-struct scsi_device ncr5380_dev = {
+struct scsipi_device ncr5380_dev = {
 	NULL,		/* use default error handler		*/
 	NULL,		/* do not have a start functio		*/
 	NULL,		/* have no async handler		*/
@@ -166,7 +166,7 @@ extern __inline__ void nack_message(SC_REQ *reqp, u_char msg)
 extern __inline__ void finish_req(SC_REQ *reqp)
 {
 	int			sps;
-	struct scsi_xfer	*xs = reqp->xs;
+	struct scsipi_xfer	*xs = reqp->xs;
 
 #ifdef REAL_DMA
 	/*
@@ -193,7 +193,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 
 	xs->flags |= ITSDONE;
 	if (!(reqp->dr_flag & DRIVER_LINKCHK))
-		scsi_done(xs);
+		scsipi_done(xs);
 }
 
 /*
@@ -236,13 +236,14 @@ void		*auxp;
 
 	sc = (struct ncr_softc *)dp;
 
-	sc->sc_link.channel         = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel         = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc   = sc;
-	sc->sc_link.adapter_target  = 7;
+	sc->sc_link.scsipi_scsi.adapter_target  = 7;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
-	sc->sc_link.max_target      = 7;
+	sc->sc_link.scsipi_scsi.max_target      = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * bitmasks
@@ -289,7 +290,7 @@ void		*auxp;
  * Carry out a request from the high level driver.
  */
 static int
-ncr5380_scsi_cmd(struct scsi_xfer *xs)
+ncr5380_scsi_cmd(struct scsipi_xfer *xs)
 {
 	int	sps;
 	SC_REQ	*reqp, *link, *tmp;
@@ -326,8 +327,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->message   = 0xff;
 	reqp->link      = NULL;
 	reqp->xs        = xs;
-	reqp->targ_id   = xs->sc_link->target;
-	reqp->targ_lun  = xs->sc_link->lun;
+	reqp->targ_id   = xs->sc_link->scsipi_scsi.target;
+	reqp->targ_lun  = xs->sc_link->scsipi_scsi.lun;
 	reqp->xdata_ptr = (u_char*)xs->data;
 	reqp->xdata_len = xs->datalen;
 	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
@@ -403,8 +404,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		tmp->targ_id = reqp->targ_id;
 		tmp->targ_lun = reqp->targ_lun;
 		bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
-		tmp->xdata_ptr = (u_char *)&tmp->xs->sense;
-		tmp->xdata_len = sizeof(tmp->xs->sense);
+		tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
+		tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
 		ncr_test_link |= 1<<tmp->targ_id;
 		tmp->link = reqp;
 		tmp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
@@ -441,14 +442,15 @@ ncr5380_minphys(struct buf *bp)
 #undef MIN_PHYS
 
 static void
-ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
+ncr5380_show_scsi_cmd(struct scsipi_xfer *xs)
 {
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
 	if (!(xs->flags & SCSI_RESET)) {
-		printf("(%d:%d:%d,0x%x)-", xs->sc_link->scsibus,
-		    xs->sc_link->target, xs->sc_link->lun, xs->sc_link->flags);
+		printf("(%d:%d:%d,0x%x)-", xs->sc_link->scsipi_scsi.scsibus,
+		    xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun,
+			xs->sc_link->flags);
 		while (i < xs->cmdlen) {
 			if (i)
 				printf(",");
@@ -458,7 +460,8 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 	}
 	else {
 		printf("(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsibus,xs->sc_link->target, xs->sc_link->lun);
+		    xs->sc_link->scsipi_scsi.scsibus,xs->sc_link->scsipi_scsi.target,
+			xs->sc_link->scsipi_scsi.lun);
 	}
 }
 
@@ -1635,8 +1638,8 @@ int	linked;
 		switch (reqp->status & SCSMASK) {
 		    case SCSCHKC:
 			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
-			reqp->xdata_ptr = (u_char *)&reqp->xs->sense;
-			reqp->xdata_len = sizeof(reqp->xs->sense);
+			reqp->xdata_ptr = (u_char *)&reqp->xs->sense.scsi_sense;
+			reqp->xdata_len = sizeof(reqp->xs->sense.scsi_sense);
 			reqp->dr_flag  |= DRIVER_AUTOSEN;
 			reqp->dr_flag  &= ~DRIVER_DMAOK;
 			if (!linked) {
@@ -1954,7 +1957,7 @@ ncr_tprint(SC_REQ *reqp, char *fmt, ...)
 	va_list	ap;
 
 	va_start(ap, fmt);
-	sc_print_addr(reqp->xs->sc_link);
+	scsi_print_addr(reqp->xs->sc_link);
 	printf("%:", fmt, ap);
 	va_end(ap);
 }
@@ -1989,21 +1992,21 @@ int	phase;
 
 static void
 show_data_sense(xs)
-struct scsi_xfer	*xs;
+struct scsipi_xfer	*xs;
 {
 	u_char	*p1, *p2;
 	int	i;
 	int	sz;
 
 	p1 = (u_char *) xs->cmd;
-	p2 = (u_char *)&xs->sense;
+	p2 = (u_char *)&xs->sense.scsi_sense;
 	if(*p2 == 0)
 		return;	/* No(n)sense */
 	printf("cmd[%d,%d]: ", xs->cmdlen, sz = command_size(*p1));
 	for (i = 0; i < sz; i++)
 		printf("%x ", p1[i]);
 	printf("\nsense: ");
-	for (i = 0; i < sizeof(xs->sense); i++)
+	for (i = 0; i < sizeof(xs->sense.scsi_sense); i++)
 		printf("%x ", p2[i]);
 	printf("\n");
 }

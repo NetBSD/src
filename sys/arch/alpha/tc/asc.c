@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.4 1997/04/07 23:40:52 cgd Exp $ */
+/* $NetBSD: asc.c,v 1.4.4.1 1997/07/01 17:33:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -103,7 +103,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.4 1997/04/07 23:40:52 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.4.4.1 1997/07/01 17:33:06 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,9 +117,10 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.4 1997/04/07 23:40:52 cgd Exp $");
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-#include <scsi/scsi_message.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
 
 #include <machine/cpu.h>
 
@@ -142,14 +143,14 @@ struct cfdriver asc_cd = {
 	NULL, "asc", DV_DULL
 };
 
-struct scsi_adapter asc_switch = {
+struct scsipi_adapter asc_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
 
-struct scsi_device asc_dev = {
+struct scsipi_device asc_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */

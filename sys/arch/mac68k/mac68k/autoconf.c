@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1997/03/26 22:39:03 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41.2.1 1997/07/01 17:34:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,8 +67,9 @@
 #include <machine/adbsys.h>
 #include <machine/viareg.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include "ether.h"
 
@@ -166,7 +167,7 @@ target_to_unit(bus, target, lun)
 	u_long bus, target, lun;
 {
 	struct scsibus_softc	*scsi;
-	struct scsi_link	*sc_link;
+	struct scsipi_link	*sc_link;
 	struct device		*sc_dev;
 extern	struct cfdriver		scsibus_cd;
 

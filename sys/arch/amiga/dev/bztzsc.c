@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.3 1997/01/21 05:44:42 thorpej Exp $	*/
+/*	$NetBSD: bztzsc.c,v 1.3.6.1 1997/07/01 17:33:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -39,8 +39,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -58,14 +59,14 @@
 void bztzscattach __P((struct device *, struct device *, void *));
 int  bztzscmatch  __P((struct device *, struct cfdata *, void *));
 
-struct scsi_adapter bztzsc_scsiswitch = {
+struct scsipi_adapter bztzsc_scsiswitch = {
 	sfas_scsicmd,
 	sfas_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device bztzsc_scsidev = {
+struct scsipi_device bztzsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -184,11 +185,12 @@ bztzscattach(pdp, dp, auxp)
 	sfasinitialize((struct sfas_softc *)sc);
 
 	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
+	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
 	sc->sc_softc.sc_link.adapter	    = &bztzsc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &bztzsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.max_target     = 7;
+	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
+	sc->sc_softc.sc_link.type = BUS_SCSI;
 
 	sc->sc_softc.sc_isr.isr_intr = bztzsc_intr;
 	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;

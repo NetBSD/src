@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.28.8.1 1997/07/01 17:33:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,8 +50,9 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -85,8 +86,8 @@
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
 int  sbicicmd __P((struct sbic_softc *, int, int, void *, int, void *, int));
-int  sbicgo __P((struct sbic_softc *, struct scsi_xfer *));
-int  sbicdmaok __P((struct sbic_softc *, struct scsi_xfer *));
+int  sbicgo __P((struct sbic_softc *, struct scsipi_xfer *));
+int  sbicdmaok __P((struct sbic_softc *, struct scsipi_xfer *));
 int  sbicwait __P((sbic_regmap_p, char, int , int));
 int  sbiccheckdmap __P((void *, u_long, u_long));
 int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_p, u_char, u_char, u_char));
@@ -364,15 +365,15 @@ void sbic_load_ptrs(dev, regs, target, lun)
  *
  * it appears that the higher level code does nothing with LUN's
  * so I will too.  I could plug it in, however so could they
- * in scsi_scsi_cmd().
+ * in scsi_scsipi_cmd().
  */
 int
 sbic_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct sbic_acb *acb;
 	struct sbic_softc *dev;
-	struct scsi_link *slp;
+	struct scsipi_link *slp;
 	int flags, s, stat;
 
 	slp = xs->sc_link;
@@ -386,7 +387,7 @@ sbic_scsicmd(xs)
 	if (dev->sc_nexus && flags & SCSI_POLL)
 		panic("sbic_scsicmd: busy");
 
-	if (slp->target == slp->adapter_target)
+	if (slp->scsipi_scsi.target == slp->scsipi_scsi.adapter_target)
 		return ESCAPE_NOT_SUPPORTED;
 
 	s = splbio();
@@ -398,7 +399,7 @@ sbic_scsicmd(xs)
 	if (acb == NULL) {
 #ifdef DEBUG
 		printf("sbic_scsicmd: unable to queue request for target %d\n",
-		    slp->target);
+		    slp->scsipi_scsi.target);
 #ifdef DDB
 		Debugger();
 #endif
@@ -431,9 +432,9 @@ sbic_scsicmd(xs)
 			dev->sc_nexus = acb;
 			dev->sc_stat[0] = -1;
 			dev->sc_xs = xs;
-			dev->target = slp->target;
-			dev->lun = slp->lun;
-			stat = sbicicmd(dev, slp->target, slp->lun,
+			dev->target = slp->scsipi_scsi.target;
+			dev->lun = slp->scsipi_scsi.lun;
+			stat = sbicicmd(dev, slp->scsipi_scsi.target, slp->scsipi_scsi.lun,
 					&acb->cmd, acb->clen,
 					acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
 		} while (dev->sc_nexus != acb);
@@ -475,8 +476,8 @@ void
 sbic_sched(dev)
 	struct sbic_softc *dev;
 {
-	struct scsi_xfer *xs;
-	struct scsi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *slp;
 	struct sbic_acb *acb;
 	int flags, /*phase,*/ stat, i;
 
@@ -487,15 +488,15 @@ sbic_sched(dev)
 	SBIC_TRACE(dev);
 	for (acb = dev->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
 		slp = acb->xs->sc_link;
-		i = slp->target;
-		if (!(dev->sc_tinfo[i].lubusy & (1 << slp->lun))) {
+		i = slp->scsipi_scsi.target;
+		if (!(dev->sc_tinfo[i].lubusy & (1 << slp->scsipi_scsi.lun))) {
 			struct sbic_tinfo *ti = &dev->sc_tinfo[i];
 
 			TAILQ_REMOVE(&dev->ready_list, acb, chain);
 			dev->sc_nexus = acb;
 			slp = acb->xs->sc_link;
-			ti = &dev->sc_tinfo[slp->target];
-			ti->lubusy |= (1 << slp->lun);
+			ti = &dev->sc_tinfo[slp->scsipi_scsi.target];
+			ti->lubusy |= (1 << slp->scsipi_scsi.lun);
 			acb->sc_pa.dc_addr = acb->pa_addr;	/* XXXX check */
 			break;
 		}
@@ -514,15 +515,17 @@ sbic_sched(dev)
 
 #ifdef DEBUG
 	if( data_pointer_debug > 1 )
-		printf("sbic_sched(%d,%d)\n",slp->target,slp->lun);
+		printf("sbic_sched(%d,%d)\n",slp->scsipi_scsi.target,
+			slp->scsipi_scsi.lun);
 #endif
 	dev->sc_stat[0] = -1;
-	dev->target = slp->target;
-	dev->lun = slp->lun;
+	dev->target = slp->scsipi_scsi.target;
+	dev->lun = slp->scsipi_scsi.lun;
 	if ( flags & SCSI_POLL || ( !sbic_parallel_operations
 				   && (/*phase == STATUS_PHASE ||*/
 				       sbicdmaok(dev, xs) == 0) ) )
-		stat = sbicicmd(dev, slp->target, slp->lun, &acb->cmd,
+		stat = sbicicmd(dev, slp->scsipi_scsi.target,
+			slp->scsipi_scsi.lun, &acb->cmd,
 		    acb->clen, acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
 	else if (sbicgo(dev, xs) == 0) {
 		SBIC_TRACE(dev);
@@ -539,8 +542,8 @@ sbic_scsidone(acb, stat)
 	struct sbic_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs;
-	struct scsi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *slp;
 	struct sbic_softc *dev;
 	int dosched = 0;
 
@@ -566,34 +569,36 @@ sbic_scsidone(acb, stat)
 #ifdef DEBUG
 	if( data_pointer_debug > 1 )
 		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
-		       slp->target, slp->lun,
+		       slp->scsipi_scsi.target, slp->scsipi_scsi.lun,
 		       dev->target,  dev->lun,  stat);
-	if( xs->sc_link->target == dev->sc_link.adapter_target )
+	if( xs->sc_link->scsipi_scsi.target ==
+		dev->sc_link.scsipi_scsi.adapter_target )
 		panic("target == hostid");
 #endif
 
 	if (xs->error == XS_NOERROR && !(acb->flags & ACB_CHKSENSE)) {
 		if (stat == SCSI_CHECK) {
 			/* Schedule a REQUEST SENSE */
-			struct scsi_sense *ss = (void *)&acb->cmd;
+			struct scsipi_sense *ss = (void *)&acb->cmd;
 #ifdef DEBUG
 			if (report_sense)
 				printf("sbic_scsidone: autosense %02x targ %d lun %d",
-				    acb->cmd.opcode, slp->target, slp->lun);
+				    acb->cmd.opcode, slp->scsipi_scsi.target,
+					slp->scsipi_scsi.lun);
 #endif
 			bzero(ss, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
-			ss->byte2 = slp->lun << 5;
-			ss->length = sizeof(struct scsi_sense_data);
+			ss->byte2 = slp->scsipi_scsi.lun << 5;
+			ss->length = sizeof(struct scsipi_sense_data);
 			acb->clen = sizeof(*ss);
-			acb->sc_kv.dc_addr = (char *)&xs->sense;
-			acb->sc_kv.dc_count = sizeof(struct scsi_sense_data);
-			acb->pa_addr = (char *)kvtop((u_char *)&xs->sense); /* XXX check */
+			acb->sc_kv.dc_addr = (char *)&xs->sense.scsi_sense;
+			acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
+			acb->pa_addr = (char *)kvtop((u_char *)&xs->sense.scsi_sense); /* XXX check */
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
 			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
-			dev->sc_tinfo[slp->target].lubusy &=
-			    ~(1 << slp->lun);
-			dev->sc_tinfo[slp->target].senses++;
+			dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+			    ~(1 << slp->scsipi_scsi.lun);
+			dev->sc_tinfo[slp->scsipi_scsi.target].senses++;
 			if (dev->sc_nexus == acb) {
 				dev->sc_nexus = NULL;
 				dev->sc_xs = NULL;
@@ -607,8 +612,8 @@ sbic_scsidone(acb, stat)
 		xs->error = XS_SENSE;
 #ifdef DEBUG
 		if (report_sense)
-			printf(" => %02x %02x\n", xs->sense.flags,
-			    xs->sense.extra_bytes[3]);
+			printf(" => %02x %02x\n", xs->sense.scsi_sense.flags,
+			    xs->sense.scsi_sense.extra_bytes[3]);
 #endif
 	} else {
 		xs->resid = 0;		/* XXXX */
@@ -630,7 +635,8 @@ sbic_scsidone(acb, stat)
 	if (acb == dev->sc_nexus) {
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
-		dev->sc_tinfo[slp->target].lubusy &= ~(1<<slp->lun);
+		dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+			~(1<<slp->scsipi_scsi.lun);
 		if (dev->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 	} else if (dev->ready_list.tqh_last == &acb->chain.tqe_next) {
@@ -641,8 +647,8 @@ sbic_scsidone(acb, stat)
 		    acb2 = acb2->chain.tqe_next) {
 			if (acb2 == acb) {
 				TAILQ_REMOVE(&dev->nexus_list, acb, chain);
-				dev->sc_tinfo[slp->target].lubusy
-					&= ~(1<<slp->lun);
+				dev->sc_tinfo[slp->scsipi_scsi.target].lubusy
+					&= ~(1<<slp->scsipi_scsi.lun);
 				break;
 			}
 		}
@@ -662,9 +668,9 @@ sbic_scsidone(acb, stat)
 	acb->flags = ACB_FREE;
 	TAILQ_INSERT_HEAD(&dev->free_list, acb, chain);
 
-	dev->sc_tinfo[slp->target].cmds++;
+	dev->sc_tinfo[slp->scsipi_scsi.target].cmds++;
 
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	if (dosched)
 		sbic_sched(dev);
@@ -674,7 +680,7 @@ sbic_scsidone(acb, stat)
 int
 sbicdmaok(dev, xs)
 	struct sbic_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	if (sbic_no_dma || xs->datalen & 0x1 || (u_int)xs->data & 0x3)
 		return(0);
@@ -691,21 +697,21 @@ sbicdmaok(dev, xs)
 	/*
 	 * we have a bounce buffer?
 	 */
-	else if (dev->sc_tinfo[xs->sc_link->target].bounce)
+	else if (dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce)
 		return(1);
 	/*
 	 * try to get one
 	 */
-	else if ((dev->sc_tinfo[xs->sc_link->target].bounce
+	else if ((dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce
 		 = (char *)alloc_z2mem(MAXPHYS))) {
-		if (isztwomem(dev->sc_tinfo[xs->sc_link->target].bounce))
+		if (isztwomem(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce))
 			printf("alloc ZII target %d bounce pa 0x%x\n",
-			       xs->sc_link->target,
-			       kvtop(dev->sc_tinfo[xs->sc_link->target].bounce));
-		else if (dev->sc_tinfo[xs->sc_link->target].bounce)
+			       xs->sc_link->scsipi_scsi.target,
+			       kvtop(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce));
+		else if (dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce)
 			printf("alloc CHIP target %d bounce pa 0x%p\n",
-			       xs->sc_link->target,
-			       PREP_DMA_MEM(dev->sc_tinfo[xs->sc_link->target].bounce));
+			       xs->sc_link->scsipi_scsi.target,
+			       PREP_DMA_MEM(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce));
 		return(1);
 	}
 
@@ -898,7 +904,7 @@ sbicreset(dev)
 		WAIT_CIP(regs);
 #endif
 	s = splbio();
-	my_id = dev->sc_link.adapter_target & SBIC_ID_MASK;
+	my_id = dev->sc_link.scsipi_scsi.adapter_target & SBIC_ID_MASK;
 
 	/* Enable advanced mode */
 	my_id |= SBIC_ID_EAF /*| SBIC_ID_EHP*/ ;
@@ -974,7 +980,7 @@ sbicerror(dev, regs, csr)
 	sbic_regmap_p regs;
 	u_char csr;
 {
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 
 	xs = dev->sc_xs;
 
@@ -1641,7 +1647,7 @@ sbicxfdone(dev, regs, target)
 int
 sbicgo(dev, xs)
 	struct sbic_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	int i, dmaflags, count, usedma;
 	u_char csr, asr, *addr;
@@ -1649,8 +1655,8 @@ sbicgo(dev, xs)
 	struct sbic_acb *acb;
 
 	SBIC_TRACE(dev);
-	dev->target = xs->sc_link->target;
-	dev->lun = xs->sc_link->lun;
+	dev->target = xs->sc_link->scsipi_scsi.target;
+	dev->lun = xs->sc_link->scsipi_scsi.lun;
 	acb = dev->sc_nexus;
 	regs = dev->sc_sbicp;
 
@@ -1724,16 +1730,16 @@ sbicgo(dev, xs)
 				       dev->target);
 				printf("xfer: (%p->%p,%lx)\n", acb->sc_dmausrbuf,
 				       acb->sc_usrbufpa, acb->sc_dmausrlen);
-				dev->sc_tinfo[xs->sc_link->target].bounce
+				dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce
 					= (char *)alloc_z2mem(MAXPHYS);
-				if (isztwomem(dev->sc_tinfo[xs->sc_link->target].bounce))
+				if (isztwomem(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce))
 					printf("alloc ZII target %d bounce pa 0x%x\n",
-					       xs->sc_link->target,
-					       kvtop(dev->sc_tinfo[xs->sc_link->target].bounce));
-				else if (dev->sc_tinfo[xs->sc_link->target].bounce)
+					       xs->sc_link->scsipi_scsi.target,
+					       kvtop(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce));
+				else if (dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce)
 					printf("alloc CHIP target %d bounce pa 0x%p\n",
-					       xs->sc_link->target,
-					       PREP_DMA_MEM(dev->sc_tinfo[xs->sc_link->target].bounce));
+					       xs->sc_link->scsipi_scsi.target,
+					       PREP_DMA_MEM(dev->sc_tinfo[xs->sc_link->scsipi_scsi.target].bounce));
 
 				printf("Allocating %d bounce at %x\n",
 				       dev->target,
@@ -2513,8 +2519,8 @@ sbicnextstate(dev, csr, asr)
 			SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 		for (acb = dev->nexus_list.tqh_first; acb;
 		    acb = acb->chain.tqe_next) {
-			if (acb->xs->sc_link->target != newtarget ||
-			    acb->xs->sc_link->lun != newlun)
+			if (acb->xs->sc_link->scsipi_scsi.target != newtarget ||
+			    acb->xs->sc_link->scsipi_scsi.lun != newlun)
 				continue;
 			TAILQ_REMOVE(&dev->nexus_list, acb, chain);
 			dev->sc_nexus = acb;
@@ -2719,8 +2725,9 @@ sbic_dump_acb(acb)
 		printf("<unused>\n");
 		return;
 	}
-	printf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->target,
-	    acb->xs->sc_link->lun, acb->flags, acb->clen);
+	printf("(%d:%d) flags %2x clen %2d cmd ",
+		acb->xs->sc_link->scsipi_scsi.target,
+	    acb->xs->sc_link->scsipi_scsi.lun, acb->flags, acb->clen);
 	for (i = acb->clen; i; --i)
 		printf(" %02x", *b++);
 	printf("\n");

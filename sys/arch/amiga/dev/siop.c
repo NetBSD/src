@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.35 1996/10/13 03:07:34 christos Exp $	*/
+/*	$NetBSD: siop.c,v 1.35.8.1 1997/07/01 17:33:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,8 +50,9 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
@@ -185,11 +186,11 @@ siop_minphys(bp)
  */
 int
 siop_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct siop_acb *acb;
 	struct siop_softc *sc;
-	struct scsi_link *slp;
+	struct scsipi_link *slp;
 	int flags, s;
 
 	slp = xs->sc_link;
@@ -243,7 +244,7 @@ siop_poll(sc, acb)
 	struct siop_acb *acb;
 {
 	siop_regmap_p rp = sc->sc_siopp;
-	struct scsi_xfer *xs = acb->xs;
+	struct scsipi_xfer *xs = acb->xs;
 	int i;
 	int status;
 	u_char istat;
@@ -266,7 +267,7 @@ siop_poll(sc, acb)
 			if (--i <= 0) {
 #ifdef DEBUG
 				printf ("waiting: tgt %d cmd %02x sbcl %02x dsp %lx (+%lx) dcmd %lx ds %p timeout %d\n",
-				    xs->sc_link->target, acb->cmd.opcode,
+				    xs->sc_link->scsipi_scsi.target, acb->cmd.opcode,
 				    rp->siop_sbcl, rp->siop_dsp,
 				    rp->siop_dsp - sc->sc_scriptspa,
 				    *((long *)&rp->siop_dcmd), &acb->ds, acb->xs->timeout);
@@ -307,7 +308,7 @@ void
 siop_sched(sc)
 	struct siop_softc *sc;
 {
-	struct scsi_link *slp;
+	struct scsipi_link *slp;
 	struct siop_acb *acb;
 	int i;
 
@@ -315,23 +316,23 @@ siop_sched(sc)
 	if (sc->sc_nexus) {
 		printf("%s: siop_sched- nexus %p/%d ready %p/%d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nexus,
-		    sc->sc_nexus->xs->sc_link->target,
+		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target,
 		    sc->ready_list.tqh_first,
-		    sc->ready_list.tqh_first->xs->sc_link->target);
+		    sc->ready_list.tqh_first->xs->sc_link->scsipi_scsi.target);
 		return;
 	}
 #endif
 	for (acb = sc->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
 		slp = acb->xs->sc_link;
-		i = slp->target;
-		if(!(sc->sc_tinfo[i].lubusy & (1 << slp->lun))) {
+		i = slp->scsipi_scsi.target;
+		if(!(sc->sc_tinfo[i].lubusy & (1 << slp->scsipi_scsi.lun))) {
 			struct siop_tinfo *ti = &sc->sc_tinfo[i];
 
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			sc->sc_nexus = acb;
 			slp = acb->xs->sc_link;
-			ti = &sc->sc_tinfo[slp->target];
-			ti->lubusy |= (1 << slp->lun);
+			ti = &sc->sc_tinfo[slp->scsipi_scsi.target];
+			ti->lubusy |= (1 << slp->scsipi_scsi.lun);
 			break;
 		}
 	}
@@ -348,7 +349,7 @@ siop_sched(sc)
 		siopreset(sc);
 
 #if 0
-	acb->cmd.bytes[0] |= slp->lun << 5;	/* XXXX */
+	acb->cmd.bytes[0] |= slp->scsipi_scsi.lun << 5;	/* XXXX */
 #endif
 	++sc->sc_active;
 	siop_select(sc);
@@ -359,14 +360,14 @@ siop_scsidone(acb, stat)
 	struct siop_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs;
-	struct scsi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *slp;
 	struct siop_softc *sc;
 	int dosched = 0;
 
 	if (acb == NULL || (xs = acb->xs) == NULL) {
 #ifdef DIAGNOSTIC
-		printf("siop_scsidone: NULL acb or scsi_xfer\n");
+		printf("siop_scsidone: NULL acb or scsipi_xfer\n");
 #if defined(DEBUG) && defined(DDB)
 		Debugger();
 #endif
@@ -382,20 +383,20 @@ siop_scsidone(acb, stat)
 
 	if (xs->error == XS_NOERROR && !(acb->flags & ACB_CHKSENSE)) {
 		if (stat == SCSI_CHECK) {
-			struct scsi_sense *ss = (void *)&acb->cmd;
+			struct scsipi_sense *ss = (void *)&acb->cmd;
 			bzero(ss, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
-			ss->byte2 = slp->lun << 5;
-			ss->length = sizeof(struct scsi_sense_data);
+			ss->byte2 = slp->scsipi_scsi.lun << 5;
+			ss->length = sizeof(struct scsipi_sense_data);
 			acb->clen = sizeof(*ss);
-			acb->daddr = (char *)&xs->sense;
-			acb->dleft = sizeof(struct scsi_sense_data);
+			acb->daddr = (char *)&xs->sense.scsi_sense;
+			acb->dleft = sizeof(struct scsipi_sense_data);
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE;
 			TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
 			--sc->sc_active;
-			sc->sc_tinfo[slp->target].lubusy &=
-			    ~(1 << slp->lun);
-			sc->sc_tinfo[slp->target].senses++;
+			sc->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+			    ~(1 << slp->scsipi_scsi.lun);
+			sc->sc_tinfo[slp->scsipi_scsi.target].senses++;
 			if (sc->sc_nexus == acb) {
 				sc->sc_nexus = NULL;
 				siop_sched(sc);
@@ -425,7 +426,8 @@ siop_scsidone(acb, stat)
 	 */
 	if (acb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
-		sc->sc_tinfo[slp->target].lubusy &= ~(1<<slp->lun);
+		sc->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+			~(1<<slp->scsipi_scsi.lun);
 		if (sc->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 		--sc->sc_active;
@@ -439,8 +441,8 @@ siop_scsidone(acb, stat)
 		    acb2 = acb2->chain.tqe_next)
 			if (acb2 == acb) {
 				TAILQ_REMOVE(&sc->nexus_list, acb, chain);
-				sc->sc_tinfo[slp->target].lubusy
-					&= ~(1<<slp->lun);
+				sc->sc_tinfo[slp->scsipi_scsi.target].lubusy
+					&= ~(1<<slp->scsipi_scsi.lun);
 				--sc->sc_active;
 				break;
 			}
@@ -462,9 +464,9 @@ siop_scsidone(acb, stat)
 	acb->flags = ACB_FREE;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
 
-	sc->sc_tinfo[slp->target].cmds++;
+	sc->sc_tinfo[slp->scsipi_scsi.target].cmds++;
 
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	if (dosched && sc->sc_nexus == NULL)
 		siop_sched(sc);
@@ -628,7 +630,7 @@ siopreset(sc)
 	rp->siop_dmode = 0x80;	/* burst length = 4 */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = 1 << sc->sc_link.adapter_target;
+	rp->siop_scid = 1 << sc->sc_link.scsipi_scsi.adapter_target;
 	rp->siop_dwt = 0x00;
 	rp->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
 	rp->siop_ctest7 |= sc->sc_ctest7;
@@ -645,7 +647,7 @@ siopreset(sc)
 	splx (s);
 
 	delay (siop_reset_delay * 1000);
-	printf("siop id %d reset V%d\n", sc->sc_link.adapter_target,
+	printf("siop id %d reset V%d\n", sc->sc_link.scsipi_scsi.adapter_target,
 	    rp->siop_ctest8 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {
@@ -913,7 +915,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			panic("*** siop DSA invalid ***");
 		}
 #endif
-		target = acb->xs->sc_link->target;
+		target = acb->xs->sc_link->scsipi_scsi.target;
 		if (sc->sc_sync[target].state == SYNC_SENT) {
 #ifdef DEBUG
 			if (siopsync_debug)
@@ -1074,7 +1076,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		return 1;
 	}
 	if (acb)
-		target = acb->xs->sc_link->target;
+		target = acb->xs->sc_link->scsipi_scsi.target;
 	else
 		target = 7;
 	if (sstat0 & SIOP_SSTAT0_UDC) {
@@ -1239,8 +1241,8 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 				    sc->sc_dev.dv_xname, reselid);
 #endif
 			TAILQ_INSERT_HEAD(&sc->ready_list, sc->sc_nexus, chain);
-			sc->sc_tinfo[sc->sc_nexus->xs->sc_link->target].lubusy
-			    &= ~(1 << sc->sc_nexus->xs->sc_link->lun);
+			sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target].lubusy
+			    &= ~(1 << sc->sc_nexus->xs->sc_link->scsipi_scsi.lun);
 			--sc->sc_active;
 		}
 		/*
@@ -1258,8 +1260,10 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			acb->status = 0;
 			DCIAS(kvtop(&acb->stat[0]));
 			rp->siop_dsa = kvtop((caddr_t)&acb->ds);
-			rp->siop_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
-			rp->siop_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
+			rp->siop_sxfer =
+				sc->sc_sync[acb->xs->sc_link->scsipi_scsi.target].sxfer;
+			rp->siop_sbcl =
+				sc->sc_sync[acb->xs->sc_link->scsipi_scsi.target].sbcl;
 			break;
 		}
 		if (acb == NULL) {
@@ -1299,7 +1303,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
 			return(0);
 		}
-		target = sc->sc_nexus->xs->sc_link->target;
+		target = sc->sc_nexus->xs->sc_link->scsipi_scsi.target;
 		rp->siop_temp = 0;
 		rp->siop_dsa = kvtop((caddr_t)&sc->sc_nexus->ds);
 		rp->siop_sxfer = sc->sc_sync[target].sxfer;
@@ -1404,11 +1408,12 @@ siop_select(sc)
 #ifdef DEBUG
 	if (siop_debug & 1)
 		printf ("siop_select: target %x cmd %02x ds %p\n",
-		    acb->xs->sc_link->target, acb->cmd.opcode,
+		    acb->xs->sc_link->scsipi_scsi.target, acb->cmd.opcode,
 		    &sc->sc_nexus->ds);
 #endif
 
-	siop_start(sc, acb->xs->sc_link->target, acb->xs->sc_link->lun,
+	siop_start(sc, acb->xs->sc_link->scsipi_scsi.target,
+		acb->xs->sc_link->scsipi_scsi.lun,
 	    (u_char *)&acb->cmd, acb->clen, acb->daddr, acb->dleft);
 
 	return;
@@ -1476,7 +1481,7 @@ siopintr (sc)
 				printf ("%s: SCSI bus busy at completion",
 					sc->sc_dev.dv_xname);
 				printf(" targ %d sbcl %02x sfbr %x lcrc %02x dsp +%x\n",
-				    sc->sc_nexus->xs->sc_link->target,
+				    sc->sc_nexus->xs->sc_link->scsipi_scsi.target,
 				    rp->siop_sbcl, rp->siop_sfbr, rp->siop_lcrc,
 				    rp->siop_dsp - sc->sc_scriptspa);
 			}
@@ -1577,8 +1582,9 @@ siop_dump_acb(acb)
 		printf("<unused>\n");
 		return;
 	}
-	printf("(%d:%d) flags %2x clen %2d cmd ", acb->xs->sc_link->target,
-	    acb->xs->sc_link->lun, acb->flags, acb->clen);
+	printf("(%d:%d) flags %2x clen %2d cmd ",
+		acb->xs->sc_link->scsipi_scsi.target,
+	    acb->xs->sc_link->scsipi_scsi.lun, acb->flags, acb->clen);
 	for (i = acb->clen; i; --i)
 		printf(" %02x", *b++);
 	printf("\n");

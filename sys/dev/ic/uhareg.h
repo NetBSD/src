@@ -1,4 +1,4 @@
-/*	$NetBSD: uhareg.h,v 1.3 1997/06/06 23:31:06 thorpej Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.3.2.1 1997/07/01 17:35:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -253,12 +253,12 @@ struct uha_mscp {
 	physaddr sense_ptr;	/* if 0 no auto sense */
 
 	struct uha_dma_seg uha_dma[UHA_NSEG];
-	struct scsi_sense_data mscp_sense;
+	struct scsipi_sense_data mscp_sense;
 	/*-----------------end of hardware supported fields----------------*/
 	TAILQ_ENTRY(uha_mscp) chain;
 	struct uha_mscp *nexthash;
 	long hashkey;
-	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
+	struct scsipi_xfer *xs;	/* the scsipi_xfer for this cmd */
 	int flags;
 #define MSCP_ALLOC	0x01
 #define MSCP_ABORT	0x02

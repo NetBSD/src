@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.19 1997/05/08 01:33:49 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.19.2.1 1997/07/01 17:33:07 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -32,7 +32,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.19 1997/05/08 01:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.19.2.1 1997/07/01 17:33:07 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,8 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.19 1997/05/08 01:33:49 thorpej Exp $"
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

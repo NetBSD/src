@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.52.8.1 1997/07/01 17:35:19 bouyer Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -134,9 +134,10 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -446,13 +447,13 @@ struct aic_dma_seg {
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
  * with a request sense command.  Basicly, we refrain from fiddling with
- * the scsi_xfer struct (except do the expected updating of return values).
+ * the scsipi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
 struct aic_acb {
-	struct scsi_generic scsi_cmd;
-	int scsi_cmd_length;
+	struct scsi_generic scsipi_cmd;
+	int scsipi_cmd_length;
 	u_char *data_addr;		/* Saved data pointer */
 	int data_length;		/* Residue */
 
@@ -463,7 +464,7 @@ struct aic_acb {
 #endif
 
 	TAILQ_ENTRY(aic_acb) chain;
-	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
+	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
 #define ACB_ALLOC	0x01
 #define	ACB_NEXUS	0x02
@@ -501,7 +502,7 @@ struct aic_softc {
 	int sc_iobase;
 	int sc_irq, sc_drq;
 
-	struct scsi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_link sc_link;	/* prototype for subdevs */
 
 	TAILQ_HEAD(, aic_acb) free_list, ready_list, nexus_list;
 	struct aic_acb *sc_nexus;	/* current command */
@@ -590,8 +591,8 @@ int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
-int	aic_scsi_cmd	__P((struct scsi_xfer *));
-int	aic_poll	__P((struct aic_softc *, struct scsi_xfer *, int));
+int	aic_scsi_cmd	__P((struct scsipi_xfer *));
+int	aic_poll	__P((struct aic_softc *, struct scsipi_xfer *, int));
 integrate void	aic_sched_msgout __P((struct aic_softc *, u_char));
 integrate void	aic_setsync	__P((struct aic_softc *, struct aic_tinfo *));
 void	aic_select	__P((struct aic_softc *, struct aic_acb *));
@@ -625,14 +626,14 @@ struct cfdriver aic_cd = {
 	NULL, "aic", DV_DULL
 };
 
-struct scsi_adapter aic_switch = {
+struct scsipi_adapter aic_switch = {
 	aic_scsi_cmd,
 	aic_minphys,
 	0,
 	0,
 };
 
-struct scsi_device aic_dev = {
+struct scsipi_device aic_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -771,15 +772,16 @@ aicattach(parent, self, aux)
 	aic_init(sc);	/* Init chip and driver */
 
 	/*
-	 * Fill in the prototype scsi_link
+	 * Fill in the prototype scsipi_link
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_initiator;
+	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic_switch;
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	printf("\n");
 
@@ -984,16 +986,16 @@ aic_get_acb(sc, flags)
  */
 int
 aic_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct aic_softc *sc = sc_link->adapter_softc;
 	struct aic_acb *acb;
 	int s, flags;
 
 	AIC_TRACE(("aic_scsi_cmd  "));
 	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-	    sc_link->target));
+	    sc_link->scsipi_scsi.target));
 
 	flags = xs->flags;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
@@ -1007,11 +1009,11 @@ aic_scsi_cmd(xs)
 
 	if (xs->flags & SCSI_RESET) {
 		acb->flags |= ACB_RESET;
-		acb->scsi_cmd_length = 0;
+		acb->scsipi_cmd_length = 0;
 		acb->data_length = 0;
 	} else {
-		bcopy(xs->cmd, &acb->scsi_cmd, xs->cmdlen);
-		acb->scsi_cmd_length = xs->cmdlen;
+		bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+		acb->scsipi_cmd_length = xs->cmdlen;
 		acb->data_addr = xs->data;
 		acb->data_length = xs->datalen;
 	}
@@ -1057,7 +1059,7 @@ aic_minphys(bp)
 int
 aic_poll(sc, xs, count)
 	struct aic_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	int iobase = sc->sc_iobase;
@@ -1122,8 +1124,8 @@ aic_select(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
-	struct scsi_link *sc_link = acb->xs->sc_link;
-	int target = sc_link->target;
+	struct scsipi_link *sc_link = acb->xs->sc_link;
+	int target = sc_link->scsipi_scsi.target;
 	struct aic_tinfo *ti = &sc->sc_tinfo[target];
 	int iobase = sc->sc_iobase;
 
@@ -1146,7 +1148,7 @@ aic_reselect(sc, message)
 {
 	u_char selid, target, lun;
 	struct aic_acb *acb;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	struct aic_tinfo *ti;
 
 	/*
@@ -1172,7 +1174,7 @@ aic_reselect(sc, message)
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	     acb = acb->chain.tqe_next) {
 		sc_link = acb->xs->sc_link;
-		if (sc_link->target == target && sc_link->lun == lun)
+		if (sc_link->scsipi_scsi.target == target && sc_link->scsipi_scsi.lun == lun)
 			break;
 	}
 	if (acb == NULL) {
@@ -1198,8 +1200,8 @@ aic_reselect(sc, message)
 	/* Do an implicit RESTORE POINTERS. */
 	sc->sc_dp = acb->data_addr;
 	sc->sc_dleft = acb->data_length;
-	sc->sc_cp = (u_char *)&acb->scsi_cmd;
-	sc->sc_cleft = acb->scsi_cmd_length;
+	sc->sc_cp = (u_char *)&acb->scsipi_cmd;
+	sc->sc_cleft = acb->scsipi_cmd_length;
 
 	return (0);
 
@@ -1223,7 +1225,7 @@ aic_sched(sc)
 	register struct aic_softc *sc;
 {
 	struct aic_acb *acb;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	struct aic_tinfo *ti;
 	int iobase = sc->sc_iobase;
 
@@ -1235,17 +1237,17 @@ aic_sched(sc)
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next) {
 		sc_link = acb->xs->sc_link;
-		ti = &sc->sc_tinfo[sc_link->target];
-		if ((ti->lubusy & (1 << sc_link->lun)) == 0) {
+		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+		if ((ti->lubusy & (1 << sc_link->scsipi_scsi.lun)) == 0) {
 			AIC_MISC(("selecting %d:%d  ",
-			    sc_link->target, sc_link->lun));
+			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			sc->sc_nexus = acb;
 			aic_select(sc, acb);
 			return;
 		} else
 			AIC_MISC(("%d:%d busy\n",
-			    sc_link->target, sc_link->lun));
+			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
 	}
 	AIC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */
@@ -1259,24 +1261,24 @@ aic_sense(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	struct scsi_sense *ss = (void *)&acb->scsi_cmd;
+	struct scsipi_xfer *xs = acb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_sense *ss = (void *)&acb->scsipi_cmd;
 
 	AIC_MISC(("requesting sense  "));
 	/* Next, setup a request sense command block */
 	bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = sc_link->lun << 5;
-	ss->length = sizeof(struct scsi_sense_data);
-	acb->scsi_cmd_length = sizeof(*ss);
-	acb->data_addr = (char *)&xs->sense;
-	acb->data_length = sizeof(struct scsi_sense_data);
+	ss->byte2 = sc_link->scsipi_scsi.lun << 5;
+	ss->length = sizeof(struct scsipi_sense_data);
+	acb->scsipi_cmd_length = sizeof(*ss);
+	acb->data_addr = (char *)&xs->sense.scsi_sense;
+	acb->data_length = sizeof(struct scsipi_sense_data);
 	acb->flags |= ACB_SENSE;
 	ti->senses++;
 	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->lun);
+		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
 	if (acb == sc->sc_nexus) {
 		aic_select(sc, acb);
 	} else {
@@ -1295,9 +1297,9 @@ aic_done(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->target];
+	struct scsipi_xfer *xs = acb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 
 	AIC_TRACE(("aic_done  "));
 
@@ -1332,7 +1334,7 @@ aic_done(sc, acb)
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
 		else
 			printf("error=%d\n", xs->error);
 	}
@@ -1342,7 +1344,7 @@ aic_done(sc, acb)
 	 * Remove the ACB from whatever queue it happens to be on.
 	 */
 	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->lun);
+		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
 	if (acb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		sc->sc_state = AIC_IDLE;
@@ -1352,7 +1354,7 @@ aic_done(sc, acb)
 
 	aic_free_acb(sc, acb, xs->flags);
 	ti->cmds++;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 void
@@ -1476,13 +1478,13 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct aic_acb *acb;
-		struct scsi_link *sc_link;
+		struct scsipi_link *sc_link;
 		struct aic_tinfo *ti;
 
 	case AIC_CONNECTED:
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		ti = &sc->sc_tinfo[acb->xs->sc_link->target];
+		ti = &sc->sc_tinfo[acb->xs->sc_link->scsipi_scsi.target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
@@ -1490,7 +1492,7 @@ nextbyte:
 				sc_link = acb->xs->sc_link;
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
-				    sc_link->target, sc_link->lun);
+				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
 				acb->data_length = 0;
 			}
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
@@ -1548,8 +1550,8 @@ nextbyte:
 		case MSG_RESTOREPOINTERS:
 			sc->sc_dp = acb->data_addr;
 			sc->sc_dleft = acb->data_length;
-			sc->sc_cp = (u_char *)&acb->scsi_cmd;
-			sc->sc_cleft = acb->scsi_cmd_length;
+			sc->sc_cp = (u_char *)&acb->scsipi_cmd;
+			sc->sc_cleft = acb->scsipi_cmd_length;
 			break;
 
 		case MSG_EXTENDED:
@@ -1568,7 +1570,7 @@ nextbyte:
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(sc, SEND_SDTR);
 				} else {
-					sc_print_addr(acb->xs->sc_link);
+					scsi_print_addr(acb->xs->sc_link);
 					printf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
@@ -1587,7 +1589,7 @@ nextbyte:
 					ti->width = 0;
 					aic_sched_msgout(sc, SEND_WDTR);
 				} else {
-					sc_print_addr(acb->xs->sc_link);
+					scsi_print_addr(acb->xs->sc_link);
 					printf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
@@ -1715,14 +1717,14 @@ nextmsg:
 	case SEND_IDENTIFY:
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		sc->sc_omess[0] =
-		    MSG_IDENTIFY(sc->sc_nexus->xs->sc_link->lun, 1);
+		    MSG_IDENTIFY(sc->sc_nexus->xs->sc_link->scsipi_scsi.lun, 1);
 		n = 1;
 		break;
 
 #if AIC_USE_SYNCHRONOUS
 	case SEND_SDTR:
 		AIC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
 		sc->sc_omess[4] = MSG_EXTENDED;
 		sc->sc_omess[3] = 3;
 		sc->sc_omess[2] = MSG_EXT_SDTR;
@@ -1735,7 +1737,7 @@ nextmsg:
 #if AIC_USE_WIDE
 	case SEND_WDTR:
 		AIC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
 		sc->sc_omess[3] = MSG_EXTENDED;
 		sc->sc_omess[2] = 2;
 		sc->sc_omess[1] = MSG_EXT_WDTR;
@@ -2102,7 +2104,7 @@ aicintr(arg)
 	int iobase = sc->sc_iobase;
 	u_char sstat0, sstat1;
 	register struct aic_acb *acb;
-	register struct scsi_link *sc_link;
+	register struct scsipi_link *sc_link;
 	struct aic_tinfo *ti;
 	int n;
 
@@ -2200,7 +2202,7 @@ loop:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
 			sc_link = acb->xs->sc_link;
-			ti = &sc->sc_tinfo[sc_link->target];
+			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 
 			sc->sc_msgpriq = SEND_IDENTIFY;
 			if (acb->flags & ACB_RESET)
@@ -2219,13 +2221,13 @@ loop:
 			}
 
 			acb->flags |= ACB_NEXUS;
-			ti->lubusy |= (1 << sc_link->lun);
+			ti->lubusy |= (1 << sc_link->scsipi_scsi.lun);
 
 			/* Do an implicit RESTORE POINTERS. */
 			sc->sc_dp = acb->data_addr;
 			sc->sc_dleft = acb->data_length;
-			sc->sc_cp = (u_char *)&acb->scsi_cmd;
-			sc->sc_cleft = acb->scsi_cmd_length;
+			sc->sc_cp = (u_char *)&acb->scsipi_cmd;
+			sc->sc_cleft = acb->scsipi_cmd_length;
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->flags & SCSI_POLL) == 0)
@@ -2300,7 +2302,7 @@ loop:
 				 * message, disable negotiation.
 				 */
 				sc_link = acb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->target];
+				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 				switch (sc->sc_lastmsg) {
 #if AIC_USE_SYNCHRONOUS
 				case SEND_SDTR:
@@ -2391,7 +2393,7 @@ dophase:
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
 			printf("cmd=0x%02x+%d ",
-			    acb->scsi_cmd.opcode, acb->scsi_cmd_length-1);
+			    acb->scsipi_cmd.opcode, acb->scsipi_cmd_length-1);
 		}
 #endif
 		n = aic_dataout_pio(sc, sc->sc_cp, sc->sc_cleft);
@@ -2484,12 +2486,12 @@ aic_timeout(arg)
 	void *arg;
 {
 	struct aic_acb *acb = arg;
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = acb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct aic_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();
@@ -2518,13 +2520,13 @@ void
 aic_show_scsi_cmd(acb)
 	struct aic_acb *acb;
 {
-	u_char  *b = (u_char *)&acb->scsi_cmd;
-	struct scsi_link *sc_link = acb->xs->sc_link;
+	u_char  *b = (u_char *)&acb->scsipi_cmd;
+	struct scsipi_link *sc_link = acb->xs->sc_link;
 	int i;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	if ((acb->xs->flags & SCSI_RESET) == 0) {
-		for (i = 0; i < acb->scsi_cmd_length; i++) {
+		for (i = 0; i < acb->scsipi_cmd_length; i++) {
 			if (i)
 				printf(",");
 			printf("%x", b[i]);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.15 1997/04/09 20:26:43 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.15.2.1 1997/07/01 17:35:52 bouyer Exp $
 
 # config file for mvme68k
 
@@ -54,7 +54,7 @@ file arch/mvme68k/dev/md_root.c		memory_disk_hooks
 attach vmechip at pcc with vmechip_pcc
 file arch/mvme68k/dev/vme_pcc.c			vmechip_pcc
 
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 
 major { vnd = 6 }
 major { sd = 7 }

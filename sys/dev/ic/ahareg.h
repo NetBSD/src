@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.4 1997/06/25 13:30:59 hannken Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.4.2.1 1997/07/01 17:34:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -197,13 +197,13 @@ struct aha_ccb {
 	u_char target_stat;
 	u_char reserved[2];
 	struct scsi_generic scsi_cmd;
-	struct scsi_sense_data scsi_sense;
+	struct scsipi_sense_data scsi_sense;
 	struct aha_scat_gath scat_gath[AHA_NSEG];
 	/*----------------------------------------------------------------*/
 	TAILQ_ENTRY(aha_ccb) chain;
 	struct aha_ccb *nexthash;
 	long hashkey;
-	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
+	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
 	int flags;
 #define	CCB_ALLOC	0x01
 #define	CCB_ABORT	0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.11 1996/07/05 19:35:40 leo Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.11.8.1 1997/07/01 17:33:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -158,7 +158,7 @@
 
 struct	ncr_softc {
 	struct	device		sc_dev;
-	struct	scsi_link	sc_link;
+	struct	scsipi_link	sc_link;
 
 	/*
 	 * Some (pre-SCSI2) devices don't support select with ATN.
@@ -193,7 +193,7 @@ struct dma_chain {
 typedef struct	req_q {
     struct req_q	*next;	    /* next in free, issue or discon queue  */
     struct req_q	*link;	    /* next linked command to execute       */
-    struct scsi_xfer	*xs;	    /* request from high-level driver       */
+    struct scsipi_xfer	*xs;	    /* request from high-level driver       */
     u_short		dr_flag;    /* driver state			    */
     u_char		phase;	    /* current SCSI phase		    */
     u_char		msgout;	    /* message to send when requested       */
@@ -248,7 +248,7 @@ static int  scsi_dmaok __P((SC_REQ *));
 static void scsi_main __P((struct ncr_softc *));
 static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
 static int  scsi_select __P((SC_REQ *, int));
-static void show_data_sense __P((struct scsi_xfer *));
+static void show_data_sense __P((struct scsipi_xfer *));
 static void show_phase __P((SC_REQ *, int));
 static void show_request __P((SC_REQ *, char *));
 static void show_signals __P((u_char, u_char));

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.30 1997/05/17 20:58:47 pk Exp $
+#	$NetBSD: files.isa,v 1.30.2.1 1997/07/01 17:35:26 bouyer Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -117,11 +117,13 @@ attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers
-device	wdc {drive = -1}
-attach	wdc at isa
-device	wd: disk, isadma
-attach	wd at wdc
-file	dev/isa/wd.c			wdc needs-flag
+define ata {drive=-1}
+device  wdc: atapi, isadma, ata
+attach  wdc at isa
+device  wd: disk
+attach  wd at ata
+file    dev/isa/wdc.c           wdc needs-flag
+file    dev/isa/wd.c            wd needs-flag
 
 # Wangtek- and Archive-compatible tape controller boards
 device	wt: tape, isadma

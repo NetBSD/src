@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.19 1996/10/13 03:07:31 christos Exp $	*/
+/*	$NetBSD: sci.c,v 1.19.8.1 1997/07/01 17:33:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,8 +49,9 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -73,8 +74,8 @@
 #define	b_cylin		b_resid
 
 int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
-int  scigo __P((struct sci_softc *, struct scsi_xfer *));
-int  scigetsense __P((struct sci_softc *, struct scsi_xfer *));
+int  scigo __P((struct sci_softc *, struct scsipi_xfer *));
+int  scigetsense __P((struct sci_softc *, struct scsipi_xfer *));
 int  sciselectbus __P((struct sci_softc *, u_char, u_char));
 void sciabort __P((struct sci_softc *, char *));
 void scierror __P((struct sci_softc *, u_char));
@@ -116,15 +117,15 @@ sci_minphys(bp)
  *
  * it appears that the higher level code does nothing with LUN's
  * so I will too.  I could plug it in, however so could they
- * in scsi_scsi_cmd().
+ * in scsi_scsipi_cmd().
  */
 int
 sci_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct sci_pending *pendp;
 	struct sci_softc *dev;
-	struct scsi_link *slp;
+	struct scsipi_link *slp;
 	int flags, s;
 
 	slp = xs->sc_link;
@@ -138,7 +139,7 @@ sci_scsicmd(xs)
 		panic("sci_scsicmd: busy");
 
 	s = splbio();
-	pendp = &dev->sc_xsstore[slp->target][slp->lun];
+	pendp = &dev->sc_xsstore[slp->scsipi_scsi.target][slp->scsipi_scsi.lun];
 	if (pendp->xs) {
 		splx(s);
 		return(TRY_AGAIN_LATER);
@@ -171,8 +172,8 @@ void
 sci_donextcmd(dev)
 	struct sci_softc *dev;
 {
-	struct scsi_xfer *xs;
-	struct scsi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *slp;
 	int flags, phase, stat;
 
 	xs = dev->sc_xs;
@@ -190,9 +191,9 @@ sci_donextcmd(dev)
 		scireset(dev);
 
 	dev->sc_stat[0] = -1;
-	xs->cmd->bytes[0] |= slp->lun << 5;
+	xs->cmd->bytes[0] |= slp->scsipi_scsi.lun << 5;
 	if (phase == STATUS_PHASE || flags & SCSI_POLL)
-		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen,
+		stat = sciicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen, phase);
 	else if (scigo(dev, xs) == 0)
 		return;
@@ -208,7 +209,7 @@ sci_scsidone(dev, stat)
 	int stat;
 {
 	struct sci_pending *pendp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int s, donext;
 
 	xs = dev->sc_xs;
@@ -244,7 +245,7 @@ sci_scsidone(dev, stat)
 	xs->flags |= ITSDONE;
 
 	/*
-	 * grab next command before scsi_done()
+	 * grab next command before scsipi_done()
 	 * this way no single device can hog scsi resources.
 	 */
 	s = splbio();
@@ -259,7 +260,7 @@ sci_scsidone(dev, stat)
 		pendp->xs = NULL;
 	}
 	splx(s);
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	if (donext)
 		sci_donextcmd(dev);
@@ -268,25 +269,26 @@ sci_scsidone(dev, stat)
 int
 scigetsense(dev, xs)
 	struct sci_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_sense rqs;
-	struct scsi_link *slp;
+	struct scsipi_sense rqs;
+	struct scsipi_link *slp;
 
 	slp = xs->sc_link;
 
 	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = slp->lun << 5;
+	rqs.byte2 = slp->scsipi_scsi.lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length :
-	    sizeof(xs->sense);
+	    sizeof(xs->sense.scsi_sense);
 #else
-	rqs.length = sizeof(xs->sense);
+	rqs.length = sizeof(xs->sense.scsi_sense);
 #endif
 
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 
-	return(sciicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
+	return(sciicmd(dev, slp->scsipi_scsi.target, &rqs, sizeof(rqs),
+		&xs->sense.scsi_sense,
 	    rqs.length, DATA_IN_PHASE));
 }
 
@@ -381,7 +383,7 @@ scierror(dev, csr)
 	struct sci_softc *dev;
 	u_char csr;
 {
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 
 	xs = dev->sc_xs;
 
@@ -639,12 +641,12 @@ out:
 int
 scigo(dev, xs)
 	struct sci_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	int count, target;
 	u_char phase, *addr;
 
-	target = xs->sc_link->target;
+	target = xs->sc_link->scsipi_scsi.target;
 	count = xs->datalen;
 	addr = xs->data;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.14 1996/12/23 09:10:00 veego Exp $	*/
+/*	$NetBSD: flsc.c,v 1.14.8.1 1997/07/01 17:33:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -41,8 +41,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -60,14 +61,14 @@
 void flscattach __P((struct device *, struct device *, void *));
 int  flscmatch  __P((struct device *, struct cfdata *, void *));
 
-struct scsi_adapter flsc_scsiswitch = {
+struct scsipi_adapter flsc_scsiswitch = {
 	sfas_scsicmd,
 	sfas_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device flsc_scsidev = {
+struct scsipi_device flsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -173,13 +174,14 @@ flscattach(pdp, dp, auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
-	sc->sc_softc.sc_link.channel	    = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_softc.sc_link.scsipi_scsi.channel	    = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
+	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
 	sc->sc_softc.sc_link.adapter	    = &flsc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &flsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.max_target     = 7;
+	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
+	sc->sc_softc.sc_link.type = BUS_SCSI;
 
 	sc->sc_softc.sc_isr.isr_intr = flsc_intr;
 	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;

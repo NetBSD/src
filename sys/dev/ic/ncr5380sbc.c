@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.21 1997/04/07 16:28:26 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.21.2.1 1997/07/01 17:35:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -76,10 +76,11 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -110,7 +111,7 @@ void	ncr5380_cmd_timeout __P((void *));
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */
 #define ACT_DISCONNECT	0x01	/* Target is disconnecting */
-#define ACT_CMD_DONE	0x02	/* Need to call scsi_done() */
+#define ACT_CMD_DONE	0x02	/* Need to call scsipi_done() */
 #define ACT_RESET_BUS	0x04	/* Need bus reset (cmd timeout) */
 #define ACT_WAIT_DMA	0x10	/* Wait for DMA to complete */
 
@@ -130,8 +131,8 @@ void	ncr5380_cmd_timeout __P((void *));
 int ncr5380_debug = 0;
 #define	NCR_BREAK() \
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
-static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
-static void ncr5380_show_sense __P((struct scsi_xfer *));
+static void ncr5380_show_scsi_cmd __P((struct scsipi_xfer *));
+static void ncr5380_show_sense __P((struct scsipi_xfer *));
 #ifdef DDB
 void	ncr5380_clear_trace __P((void));
 void	ncr5380_show_trace __P((void));
@@ -361,7 +362,8 @@ ncr5380_init(sc)
 			sc->sc_matrix[i][j] = NULL;
 
 	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 
@@ -514,8 +516,8 @@ ncr5380_cmd_timeout(arg)
 	void *arg;
 {
 	struct sci_req *sr = arg;
-	struct scsi_xfer *xs;
-	struct scsi_link *sc_link;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *sc_link;
 	struct ncr5380_softc *sc;
 	int s;
 
@@ -524,7 +526,7 @@ ncr5380_cmd_timeout(arg)
 	/* Get all our variables... */
 	xs = sr->sr_xs;
 	if (xs == NULL) {
-		printf("ncr5380_cmd_timeout: no scsi_xfer\n");
+		printf("ncr5380_cmd_timeout: no scsipi_xfer\n");
 		goto out;
 	}
 	sc_link = xs->sc_link;
@@ -586,7 +588,7 @@ out:
  */
 int
 ncr5380_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct	ncr5380_softc *sc;
 	struct sci_req	*sr;
@@ -626,15 +628,15 @@ ncr5380_scsi_cmd(xs)
 			goto new;
 
 	rv = TRY_AGAIN_LATER;
-	NCR_TRACE("scsi_cmd: no openings, rv=%d\n", rv);
+	NCR_TRACE("scsipi_cmd: no openings, rv=%d\n", rv);
 	goto out;
 
 new:
 	/* Create queue entry */
 	sr = &sc->sc_ring[i];
 	sr->sr_xs = xs;
-	sr->sr_target = xs->sc_link->target;
-	sr->sr_lun = xs->sc_link->lun;
+	sr->sr_target = xs->sc_link->scsipi_scsi.target;
+	sr->sr_lun = xs->sc_link->scsipi_scsi.lun;
 	sr->sr_dma_hand = NULL;
 	sr->sr_dataptr = xs->data;
 	sr->sr_datalen = xs->datalen;
@@ -643,7 +645,7 @@ new:
 	sc->sc_ncmds++;
 	rv = SUCCESSFULLY_QUEUED;
 
-	NCR_TRACE("scsi_cmd: new sr=0x%x\n", (long)sr);
+	NCR_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
 
 	if (flags & SCSI_POLL) {
 		/* Force this new command to be next. */
@@ -654,10 +656,10 @@ new:
 	 * If we were idle, run some commands...
 	 */
 	if (sc->sc_state == NCR_IDLE) {
-		NCR_TRACE("scsi_cmd: call sched, cur=0x%x\n",
+		NCR_TRACE("scsipi_cmd: call sched, cur=0x%x\n",
 				  (long) sc->sc_current);
 		ncr5380_sched(sc);
-		NCR_TRACE("scsi_cmd: sched done, cur=0x%x\n",
+		NCR_TRACE("scsipi_cmd: sched done, cur=0x%x\n",
 				  (long) sc->sc_current);
 	}
 
@@ -683,7 +685,7 @@ ncr5380_done(sc)
 	struct ncr5380_softc *sc;
 {
 	struct	sci_req *sr;
-	struct	scsi_xfer *xs;
+	struct	scsipi_xfer *xs;
 
 #ifdef	DIAGNOSTIC
 	if (sc->sc_state == NCR_IDLE)
@@ -775,7 +777,7 @@ finish:
 
 	/*
 	 * Dequeue the finished command, but don't clear sc_state until
-	 * after the call to scsi_done(), because that may call back to
+	 * after the call to scsipi_done(), because that may call back to
 	 * ncr5380_scsi_cmd() - unwanted recursion!
 	 *
 	 * Keeping sc->sc_state != idle terminates the recursion.
@@ -796,7 +798,7 @@ finish:
 
 	/* Tell common SCSI code it is done. */
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	sc->sc_state = NCR_IDLE;
 	/* Now ncr5380_sched() may be called again. */
@@ -814,7 +816,7 @@ ncr5380_sched(sc)
 	struct	ncr5380_softc *sc;
 {
 	struct sci_req	*sr;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int	target = 0, lun = 0;
 	int	error, i;
 
@@ -976,7 +978,7 @@ next_job:
 #ifdef	NCR5380_DEBUG
 	if (ncr5380_debug & NCR_DBG_CMDS) {
 		printf("ncr5380_sched: begin, target=%d, LUN=%d\n",
-		    xs->sc_link->target, xs->sc_link->lun);
+		    xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun);
 		ncr5380_show_scsi_cmd(xs);
 	}
 #endif
@@ -1539,7 +1541,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	int n, phase;
 	int act_flags;
 	register u_char icmd;
@@ -1997,8 +1999,8 @@ ncr5380_command(sc)
 	struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
-	struct scsi_sense rqs;
+	struct scsipi_xfer *xs = sr->sr_xs;
+	struct scsipi_sense rqs;
 	int len;
 
 	/* acknowledge phase change */
@@ -2006,8 +2008,8 @@ ncr5380_command(sc)
 
 	if (sr->sr_flags & SR_SENSE) {
 		rqs.opcode = REQUEST_SENSE;
-		rqs.byte2 = xs->sc_link->lun << 5;
-		rqs.length = sizeof(xs->sense);
+		rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
+		rqs.length = sizeof(xs->sense.scsi_sense);
 
 		rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 		len = ncr5380_pio_out(sc, PHASE_COMMAND, sizeof(rqs),
@@ -2048,7 +2050,7 @@ ncr5380_data_xfer(sc, phase)
 	int phase;
 {
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	int expected_phase;
 	int len;
 
@@ -2060,8 +2062,8 @@ ncr5380_data_xfer(sc, phase)
 		}
 		/* acknowledge phase change */
 		*sc->sci_tcmd = PHASE_DATA_IN;
-		len = ncr5380_pio_in(sc, phase, sizeof(xs->sense),
-				(u_char *)&xs->sense);
+		len = ncr5380_pio_in(sc, phase, sizeof(xs->sense.scsi_sense),
+				(u_char *)&xs->sense.scsi_sense);
 		return ACT_CONTINUE;
 	}
 
@@ -2178,7 +2180,7 @@ ncr5380_machine(sc)
 	struct ncr5380_softc *sc;
 {
 	struct sci_req *sr;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int act_flags, phase, timo;
 
 #ifdef	DIAGNOSTIC
@@ -2349,7 +2351,7 @@ do_actions:
 
 	if (act_flags & ACT_CMD_DONE) {
 		act_flags |= ACT_DISCONNECT;
-		/* Need to call scsi_done() */
+		/* Need to call scsipi_done() */
 		/* XXX: from the aic6360 driver, but why? */
 		if (sc->sc_datalen < 0) {
 			printf("%s: %d extra bytes from %d:%d\n",
@@ -2422,15 +2424,15 @@ do_actions:
 
 static void
 ncr5380_show_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
 		printf("si(%d:%d:%d)-",
-		    xs->sc_link->scsibus, xs->sc_link->target,
-		    xs->sc_link->lun);
+		    xs->sc_link->scsibus, xs->sc_link->scsipi_scsi.target,
+		    xs->sc_link->scsipi_scsi.lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
@@ -2438,21 +2440,21 @@ ncr5380_show_scsi_cmd(xs)
 		printf("-\n");
 	} else {
 		printf("si(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsibus, xs->sc_link->target,
-		    xs->sc_link->lun);
+		    xs->sc_link->scsibus, xs->sc_link->scsipi_scsi.target,
+		    xs->sc_link->scsipi_scsi.lun);
 	}
 }
 
 
 static void
 ncr5380_show_sense(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	u_char	*b = (u_char *)&xs->sense;
+	u_char	*b = (u_char *)&xs->sense.scsi_sense;
 	int	i;
 
 	printf("sense:");
-	for (i = 0; i < sizeof(xs->sense); i++)
+	for (i = 0; i < sizeof(xs->sense.scsi_sense); i++)
 		printf(" %02x", b[i]);
 	printf("\n");
 }
@@ -2516,7 +2518,7 @@ void
 ncr5380_show_req(sr)
 	struct sci_req *sr;
 {
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 
 	db_printf("TID=%d ",	sr->sr_target);
 	db_printf("LUN=%d ",	sr->sr_lun);
@@ -2531,8 +2533,8 @@ ncr5380_show_req(sr)
 		return;
 	}
 	db_printf("\n");
-#ifdef	SCSIDEBUG
-	show_scsi_xs(xs);
+#ifdef	PIDEBUG
+	show_scsipi_xs(xs);
 #else
 	db_printf("xs=%p\n", xs);
 #endif

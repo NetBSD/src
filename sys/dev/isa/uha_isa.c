@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.8 1997/06/06 23:44:05 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.8.2.1 1997/07/01 17:35:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -40,8 +40,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -69,7 +70,7 @@ struct cfattach uha_isa_ca = {
 int	u14_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct uha_probe_data *));
 void	u14_start_mbox __P((struct uha_softc *, struct uha_mscp *));
-int	u14_poll __P((struct uha_softc *, struct scsi_xfer *, int));
+int	u14_poll __P((struct uha_softc *, struct scsipi_xfer *, int));
 int	u14_intr __P((void *));
 void	u14_init __P((struct uha_softc *));
 
@@ -298,7 +299,7 @@ u14_start_mbox(sc, mscp)
 int
 u14_poll(sc, xs, count)
 	struct uha_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	bus_space_tag_t iot = sc->sc_iot;

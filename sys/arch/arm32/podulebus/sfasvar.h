@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.4 1997/02/11 03:33:46 mark Exp $ */
+/* $NetBSD: sfasvar.h,v 1.4.4.1 1997/07/01 17:33:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -66,11 +66,11 @@ struct	sfas_dma_chain {
 
 /*
  * This struct contains the necessary info for a pending request. Pointer to
- * a scsi_xfer struct.
+ * a scsipi_xfer struct.
  */
 struct	sfas_pending {
 	TAILQ_ENTRY(sfas_pending) link;
-	struct scsi_xfer	 *xs;
+	struct scsipi_xfer	 *xs;
 };
 
 /*
@@ -78,7 +78,7 @@ struct	sfas_pending {
  * struct survives between scsi commands.
  */
 struct nexus {
-	struct	scsi_xfer 	*xs;		/* Pointer to request */
+	struct	scsipi_xfer 	*xs;		/* Pointer to request */
 
 	u_char			 ID;		/* ID message to be sent */
 	u_char			 clen;		/* scsi command length + */
@@ -155,7 +155,7 @@ struct nexus {
 
 struct	sfas_softc {
 	struct	device		 sc_dev;	/* System required struct */
-	struct	scsi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_link	 sc_link;	/* For sub devices */
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */
 
 	TAILQ_HEAD(,sfas_pending) sc_xs_pending;
@@ -262,7 +262,7 @@ struct	sfas_softc {
 
 void	sfasinitialize __P((struct sfas_softc *sc));
 void	sfas_minphys   __P((struct buf *bp));
-int	sfas_scsicmd   __P((struct scsi_xfer *));
+int	sfas_scsicmd   __P((struct scsipi_xfer *));
 void	sfasintr       __P((struct sfas_softc *dev));
 
 #endif /* _SFASVAR_H_ */

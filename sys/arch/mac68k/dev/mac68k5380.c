@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.32 1997/06/29 06:10:35 scottr Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.32.2.1 1997/07/01 17:34:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -40,9 +40,10 @@
 #include <sys/dkstat.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 /*
  * Include the driver definitions

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 1997/04/25 18:07:36 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48.2.1 1997/07/01 17:34:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,8 +49,9 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 #include <machine/machdep.h>
@@ -201,7 +202,7 @@ scsi_find(name, ctlr, unit)
 {
 	struct device *scsibus;
 	struct scsibus_softc *sbsc;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	int target, lun;
 	char tname[16];
 

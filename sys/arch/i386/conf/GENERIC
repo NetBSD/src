@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82 1997/06/25 04:41:16 mellon Exp $
+#	$NetBSD: GENERIC,v 1.82.2.1 1997/07/01 17:33:55 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -180,6 +180,8 @@ mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
+atapibus* at wdc?
+cd* at atapibus? drive ?
 
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't

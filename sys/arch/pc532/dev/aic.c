@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.7 1996/10/13 03:30:07 christos Exp $	*/
+/*	$NetBSD: aic.c,v 1.7.8.1 1997/07/01 17:34:15 bouyer Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -59,8 +59,9 @@
 #include <sys/user.h>
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <sys/device.h>
 
@@ -69,7 +70,7 @@
 
 int aicprobe(struct pc532_device *);
 int aicattach(struct pc532_device *);
-int aic_scsi_cmd(struct scsi_xfer *);
+int aic_scsi_cmd(struct scsipi_xfer *);
 void aicminphys(struct buf *);
 long int aic_adapter_info(int);
 
@@ -122,9 +123,9 @@ long int aic_adapter_info(int unit)
 
 /* Do a scsi command. */
 
-struct scsi_xfer *cur_xs;
+struct scsipi_xfer *cur_xs;
 
-int aic_scsi_cmd(struct scsi_xfer *xs)
+int aic_scsi_cmd(struct scsipi_xfer *xs)
 {
 printf ("aic_scsi_cmd: ... \n");
 	cur_xs = xs;

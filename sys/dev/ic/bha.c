@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.13 1997/06/06 23:31:01 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.13.2.1 1997/07/01 17:35:03 bouyer Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -103,8 +103,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/bhareg.h>
 #include <dev/ic/bhavar.h>
@@ -133,12 +134,12 @@ void bha_start_ccbs __P((struct bha_softc *));
 void bha_done __P((struct bha_softc *, struct bha_ccb *));
 void bha_init __P((struct bha_softc *));
 void bhaminphys __P((struct buf *));
-int bha_scsi_cmd __P((struct scsi_xfer *));
-int bha_poll __P((struct bha_softc *, struct scsi_xfer *, int));
+int bha_scsi_cmd __P((struct scsipi_xfer *));
+int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void bha_timeout __P((void *arg));
 int bha_create_ccbs __P((struct bha_softc *, void *, size_t));
 
-struct scsi_adapter bha_switch = {
+struct scsipi_adapter bha_switch = {
 	bha_scsi_cmd,
 	bhaminphys,
 	0,
@@ -146,7 +147,7 @@ struct scsi_adapter bha_switch = {
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device bha_dev = {
+struct scsipi_device bha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -310,15 +311,16 @@ bha_attach(sc, bpd)
 {
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = bpd->sc_scsi_dev;
+	sc->sc_link.scsipi_scsi.adapter_target = bpd->sc_scsi_dev;
 	sc->sc_link.adapter = &bha_switch;
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
-	sc->sc_link.max_target = bpd->sc_iswide ? 15 : 7;
+	sc->sc_link.scsipi_scsi.max_target = bpd->sc_iswide ? 15 : 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
@@ -772,8 +774,8 @@ bha_done(sc, ccb)
 	struct bha_ccb *ccb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = ccb->xs;
+	struct scsipi_sense_data *s1, *s2;
+	struct scsipi_xfer *xs = ccb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("bha_done\n"));
 
@@ -822,7 +824,7 @@ bha_done(sc, ccb)
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
 				s1 = &ccb->scsi_sense;
-				s2 = &xs->sense;
+				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -840,7 +842,7 @@ bha_done(sc, ccb)
 	}
 	bha_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 /*
@@ -1265,9 +1267,9 @@ bhaminphys(bp)
  */
 int
 bha_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct bha_softc *sc = sc_link->adapter_softc;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct bha_ccb *ccb;
@@ -1362,8 +1364,8 @@ bha_scsi_cmd(xs)
 
 	ccb->data_out = 0;
 	ccb->data_in = 0;
-	ccb->target = sc_link->target;
-	ccb->lun = sc_link->lun;
+	ccb->target = sc_link->scsipi_scsi.target;
+	ccb->lun = sc_link->scsipi_scsi.lun;
 	ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
 	    offsetof(struct bha_ccb, scsi_sense), ccb->sense_ptr);
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
@@ -1405,7 +1407,7 @@ bad:
 int
 bha_poll(sc, xs, count)
 	struct bha_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1433,12 +1435,12 @@ bha_timeout(arg)
 	void *arg;
 {
 	struct bha_ccb *ccb = arg;
-	struct scsi_xfer *xs = ccb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = ccb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct bha_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

@@ -141,7 +141,7 @@ file	arch/arm32/mainbus/rtc.c		rtc	needs-count
 # Machine-independent SCSI drivers
 #
 
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {st = 25}
 major   {cd = 26}

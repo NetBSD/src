@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.3 1997/06/06 23:43:48 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.3.2.1 1997/07/01 17:35:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -143,8 +143,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -165,14 +166,14 @@ struct cfdriver esp_cd = {
 	NULL, "esp", DV_DULL
 };
 
-struct scsi_adapter esp_switch = {
+struct scsipi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
 
-struct scsi_device esp_dev = {
+struct scsipi_device esp_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.12 1997/05/08 04:39:35 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.12.2.1 1997/07/01 17:34:52 bouyer Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -52,8 +52,9 @@
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #if defined(__FreeBSD__)
 

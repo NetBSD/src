@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.3 1996/05/08 05:55:09 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.3.10.1 1997/07/01 17:34:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,7 @@ struct  dma_chain {
  */
 struct sbic_acb {
     TAILQ_ENTRY(sbic_acb)   chain;
-    struct scsi_xfer        *xs;        /* SCSI xfer ctrl block from above */
+    struct scsipi_xfer        *xs;        /* SCSI xfer ctrl block from above */
     int                     flags;      /* Status */
 #define ACB_FREE        0x00
 #define ACB_ACTIVE      0x01
@@ -99,7 +99,7 @@ struct  sbic_softc {
     } sc_sync[8];
     u_char                  target;     /* Currently active target */
     u_char                  lun;
-    struct  scsi_link       sc_link;    /* proto for sub devices */
+    struct  scsipi_link       sc_link;    /* proto for sub devices */
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
     volatile void           *sc_cregs;  /* driver specific regs */
     int                     sc_ipl;
@@ -113,7 +113,7 @@ struct  sbic_softc {
     struct sbic_acb         sc_acb[8];  /* the real command blocks */
     struct sbic_tinfo       sc_tinfo[8];
 
-    struct  scsi_xfer       *sc_xs;     /* transfer from high level code */
+    struct  scsipi_xfer       *sc_xs;     /* transfer from high level code */
     u_char                  sc_flags;
     u_char                  sc_stat[2];
     u_char                  sc_msg[7];
@@ -197,9 +197,9 @@ struct  sbic_softc {
 
 
 struct buf;
-struct scsi_xfer;
+struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsi_xfer *));
+int sbic_scsicmd __P((struct scsipi_xfer *));
 
 #endif /* _SBICVAR_H_ */

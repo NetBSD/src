@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.7 1997/06/06 23:31:03 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.7.2.1 1997/07/01 17:35:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -221,14 +221,14 @@ struct bha_ccb {
 	/*------------------------------------longword boundary */
 	physaddr sense_ptr;
 /*-----end of HW fields-----------------------longword boundary */
-	struct scsi_sense_data scsi_sense;
+	struct scsipi_sense_data scsi_sense;
 	/*------------------------------------longword boundary */
 	struct bha_scat_gath scat_gath[BHA_NSEG];
 	/*------------------------------------longword boundary */
 	TAILQ_ENTRY(bha_ccb) chain;
 	struct bha_ccb *nexthash;
 	long hashkey;
-	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
+	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
 	int flags;
 #define	CCB_ALLOC	0x01
 #define	CCB_ABORT	0x02

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.40 1997/04/28 21:44:53 gwr Exp $
+#	$NetBSD: files.sun3,v 1.40.2.1 1997/07/01 17:35:59 bouyer Exp $
 
 #
 # sun3-specific configuration info
@@ -73,7 +73,7 @@ file arch/sun3/dev/vme.c		vmes | vmel
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 
 #
 # On-Board I/O (OBIO)

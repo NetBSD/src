@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.19 1996/12/23 09:10:30 veego Exp $	*/
+/*	$NetBSD: wesc.c,v 1.19.8.1 1997/07/01 17:33:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -40,8 +40,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
@@ -57,14 +58,14 @@ int wesc_dmaintr __P((void *));
 void wesc_dump __P((void));
 #endif
 
-struct scsi_adapter wesc_scsiswitch = {
+struct scsipi_adapter wesc_scsiswitch = {
 	siop_scsicmd,
 	siop_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device wesc_scsidev = {
+struct scsipi_device wesc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -123,13 +124,14 @@ wescattach(pdp, dp, auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_SC0 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter = &wesc_scsiswitch;
 	sc->sc_link.device = &wesc_scsidev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	siopinitialize(sc);
 

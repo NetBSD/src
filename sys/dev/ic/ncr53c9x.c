@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.11 1997/06/26 00:27:25 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.11.2.1 1997/07/01 17:35:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -81,9 +81,10 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-#include <scsi/scsi_message.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
 
 #include <machine/cpu.h>
 
@@ -99,7 +100,7 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 /*static*/ void	ncr53c9x_scsi_reset	__P((struct ncr53c9x_softc *));
 /*static*/ void	ncr53c9x_init		__P((struct ncr53c9x_softc *, int));
 /*static*/ int	ncr53c9x_poll		__P((struct ncr53c9x_softc *,
-					    struct scsi_xfer *, int));
+					    struct scsipi_xfer *, int));
 /*static*/ void	ncr53c9x_sched		__P((struct ncr53c9x_softc *));
 /*static*/ void	ncr53c9x_done		__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
@@ -141,8 +142,8 @@ const char *ncr53c9x_variant_names[] = {
 void
 ncr53c9x_attach(sc, adapter, dev)
 	struct ncr53c9x_softc *sc;
-	struct scsi_adapter *adapter;
-	struct scsi_device *dev;
+	struct scsipi_adapter *adapter;
+	struct scsipi_device *dev;
 {
 
 	/*
@@ -185,15 +186,16 @@ ncr53c9x_attach(sc, adapter, dev)
 	ncr53c9x_init(sc, 1);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_id;
+	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = adapter;
 	sc->sc_link.device = dev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -420,14 +422,14 @@ ncr53c9x_select(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
-	struct scsi_link *sc_link = ecb->xs->sc_link;
-	int target = sc_link->target;
+	struct scsipi_link *sc_link = ecb->xs->sc_link;
+	int target = sc_link->scsipi_scsi.target;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[target];
 	u_char *cmd;
 	int clen;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
-	    sc_link->target, sc_link->lun, ecb->cmd.cmd.opcode));
+	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, ecb->cmd.cmd.opcode));
 
 	/* new state NCR_SELECTING */
 	sc->sc_state = NCR_SELECTING;
@@ -453,7 +455,8 @@ ncr53c9x_select(sc, ecb)
 	if (ncr53c9x_dmaselect && (ti->flags & T_NEGOTIATE) == 0) {
 		size_t dmacl;
 		ecb->cmd.id = 
-		    MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1);
+		    MSG_IDENTIFY(sc_link->scsipi_scsi.lun,
+				(ti->flags & T_RSELECTOFF)?0:1);
 
 		/* setup DMA transfer for command */
 		clen = ecb->clen + 1;
@@ -478,7 +481,7 @@ ncr53c9x_select(sc, ecb)
 	 * happy for it to disconnect etc.
 	 */
 	NCR_WRITE_REG(sc, NCR_FIFO,
-		MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1));
+		MSG_IDENTIFY(sc_link->scsipi_scsi.lun, (ti->flags & T_RSELECTOFF)?0:1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -552,16 +555,16 @@ ncr53c9x_get_ecb(sc, flags)
  */
 int
 ncr53c9x_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
 	struct ncr53c9x_ecb *ecb;
 	int s, flags;
 
 	NCR_TRACE(("[ncr53c9x_scsi_cmd] "));
 	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-	    sc_link->target));
+	    sc_link->scsipi_scsi.target));
 
 	flags = xs->flags;
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
@@ -611,7 +614,7 @@ ncr53c9x_scsi_cmd(xs)
 int
 ncr53c9x_poll(sc, xs, count)
 	struct ncr53c9x_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 
@@ -652,7 +655,7 @@ ncr53c9x_sched(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct ncr53c9x_ecb *ecb;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
 
 	NCR_TRACE(("[ncr53c9x_sched] "));
@@ -665,15 +668,15 @@ ncr53c9x_sched(sc)
 	 */
 	for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
 		sc_link = ecb->xs->sc_link;
-		ti = &sc->sc_tinfo[sc_link->target];
-		if ((ti->lubusy & (1 << sc_link->lun)) == 0) {
+		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+		if ((ti->lubusy & (1 << sc_link->scsipi_scsi.lun)) == 0) {
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 			sc->sc_nexus = ecb;
 			ncr53c9x_select(sc, ecb);
 			break;
 		} else
 			NCR_MISC(("%d:%d busy\n",
-			    sc_link->target, sc_link->lun));
+			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
 	}
 }
 
@@ -682,25 +685,25 @@ ncr53c9x_sense(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
-	struct scsi_xfer *xs = ecb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	struct scsi_sense *ss = (void *)&ecb->cmd.cmd;
+	struct scsipi_xfer *xs = ecb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_sense *ss = (void *)&ecb->cmd.cmd;
 
 	NCR_MISC(("requesting sense "));
 	/* Next, setup a request sense command block */
 	bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = sc_link->lun << 5;
-	ss->length = sizeof(struct scsi_sense_data);
+	ss->byte2 = sc_link->scsipi_scsi.lun << 5;
+	ss->length = sizeof(struct scsipi_sense_data);
 	ecb->clen = sizeof(*ss);
-	ecb->daddr = (char *)&xs->sense;
-	ecb->dleft = sizeof(struct scsi_sense_data);
+	ecb->daddr = (char *)&xs->sense.scsi_sense;
+	ecb->dleft = sizeof(struct scsipi_sense_data);
 	ecb->flags |= ECB_SENSE;
 	ecb->timeout = NCR_SENSE_TIMEOUT;
 	ti->senses++;
 	if (ecb->flags & ECB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->lun);
+		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
 	if (ecb == sc->sc_nexus) {
 		ncr53c9x_select(sc, ecb);
 	} else {
@@ -719,9 +722,9 @@ ncr53c9x_done(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
-	struct scsi_xfer *xs = ecb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
+	struct scsipi_xfer *xs = ecb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
@@ -758,7 +761,7 @@ ncr53c9x_done(sc, ecb)
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
 		else
 			printf("error=%d\n", xs->error);
 	}
@@ -768,7 +771,7 @@ ncr53c9x_done(sc, ecb)
 	 * Remove the ECB from whatever queue it's on.
 	 */
 	if (ecb->flags & ECB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->lun);
+		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
 	if (ecb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		sc->sc_state = NCR_IDLE;
@@ -778,7 +781,7 @@ ncr53c9x_done(sc, ecb)
 		
 	ncr53c9x_free_ecb(sc, ecb, xs->flags);
 	ti->cmds++;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 void
@@ -818,7 +821,7 @@ ncr53c9x_reselect(sc, message)
 {
 	u_char selid, target, lun;
 	struct ncr53c9x_ecb *ecb;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
 
 	/*
@@ -844,7 +847,7 @@ ncr53c9x_reselect(sc, message)
 	for (ecb = sc->nexus_list.tqh_first; ecb != NULL;
 	     ecb = ecb->chain.tqe_next) {
 		sc_link = ecb->xs->sc_link;
-		if (sc_link->target == target && sc_link->lun == lun)
+		if (sc_link->scsipi_scsi.target == target && sc_link->scsipi_scsi.lun == lun)
 			break;
 	}
 	if (ecb == NULL) {
@@ -981,16 +984,16 @@ gotit:
 
 	case NCR_CONNECTED:
 		ecb = sc->sc_nexus;
-		ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+		ti = &sc->sc_tinfo[ecb->xs->sc_link->scsipi_scsi.target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
 			NCR_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
-				struct scsi_link *sc_link = ecb->xs->sc_link;
+				struct scsipi_link *sc_link = ecb->xs->sc_link;
 				printf("%s: %ld extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft,
-				    sc_link->target, sc_link->lun);
+				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
 				sc->sc_dleft = 0;
 			}
 			ecb->xs->resid = ecb->dleft = sc->sc_dleft;
@@ -1052,7 +1055,7 @@ gotit:
 				    ti->offset == 0 ||
 				    ti->period > 124) {
 					printf("%s:%d: async\n", "esp",
-						ecb->xs->sc_link->target);
+						ecb->xs->sc_link->scsipi_scsi.target);
 					if ((sc->sc_flags&NCR_SYNCHNEGO)
 					    == 0) {
 						/*
@@ -1074,7 +1077,7 @@ gotit:
 					p = ncr53c9x_stp2cpb(sc, ti->period);
 					ti->period = ncr53c9x_cpb2stp(sc, p);
 #ifdef NCR53C9X_DEBUG
-					sc_print_addr(ecb->xs->sc_link);
+					scsi_print_addr(ecb->xs->sc_link);
 					printf("max sync rate %d.%02dMb/s\n",
 						r, s);
 #endif
@@ -1190,7 +1193,7 @@ ncr53c9x_msgout(sc)
 		switch (sc->sc_msgout) {
 		case SEND_SDTR:
 			ecb = sc->sc_nexus;
-			ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+			ti = &sc->sc_tinfo[ecb->xs->sc_link->scsipi_scsi.target];
 			sc->sc_omess[0] = MSG_EXTENDED;
 			sc->sc_omess[1] = 3;
 			sc->sc_omess[2] = MSG_EXT_SDTR;
@@ -1209,13 +1212,13 @@ ncr53c9x_msgout(sc)
 			}
 			ecb = sc->sc_nexus;
 			sc->sc_omess[0] =
-			    MSG_IDENTIFY(ecb->xs->sc_link->lun, 0);
+			    MSG_IDENTIFY(ecb->xs->sc_link->scsipi_scsi.lun, 0);
 			break;
 		case SEND_DEV_RESET:
 			sc->sc_flags |= NCR_ABORTING;
 			sc->sc_omess[0] = MSG_BUS_DEV_RESET;
 			ecb = sc->sc_nexus;
-			ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+			ti = &sc->sc_tinfo[ecb->xs->sc_link->scsipi_scsi.target];
 			ti->flags &= ~T_SYNCMODE;
 			ti->flags |= T_NEGOTIATE;
 			break;
@@ -1279,7 +1282,7 @@ ncr53c9x_intr(sc)
 	register struct ncr53c9x_softc *sc;
 {
 	register struct ncr53c9x_ecb *ecb;
-	register struct scsi_link *sc_link;
+	register struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
 	int loop;
 	size_t size;
@@ -1485,10 +1488,10 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 				if ((sc->sc_flags & NCR_SYNCHNEGO)) {
 #ifdef NCR53C9X_DEBUG
 					if (ecb)
-						sc_print_addr(ecb->xs->sc_link);
+						scsi_print_addr(ecb->xs->sc_link);
 					printf("sync nego not completed!\n");
 #endif
-					ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+					ti = &sc->sc_tinfo[ecb->xs->sc_link->scsipi_scsi.target];
 					sc->sc_flags &= ~NCR_SYNCHNEGO;
 					ti->flags &=
 					    ~(T_NEGOTIATE | T_SYNCMODE);
@@ -1577,7 +1580,7 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					NCR_MISC(("backoff selector "));
 					untimeout(ncr53c9x_timeout, ecb);
 					sc_link = ecb->xs->sc_link;
-					ti = &sc->sc_tinfo[sc_link->target];
+					ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 					TAILQ_INSERT_HEAD(&sc->ready_list,
 					    ecb, chain);
 					ecb = sc->sc_nexus = NULL;
@@ -1646,7 +1649,7 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					panic("esp: not nexus at sc->sc_nexus");
 
 				sc_link = ecb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->target];
+				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 
 				switch (sc->sc_espstep) {
 				case 0:
@@ -1695,8 +1698,8 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 						" %d left in FIFO "
 						"[intr %x, stat %x, step %d]\n",
 						sc->sc_dev.dv_xname,
-						sc_link->target,
-						sc_link->lun,
+						sc_link->scsipi_scsi.target,
+						sc_link->scsipi_scsi.lun,
 						NCR_READ_REG(sc, NCR_FFLAG)
 						 & NCRFIFO_FF,
 						sc->sc_espintr, sc->sc_espstat,
@@ -1713,8 +1716,8 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 						printf("(%s:%d:%d): select; "
 						      "%d left in DMA buffer\n",
 							sc->sc_dev.dv_xname,
-							sc_link->target,
-							sc_link->lun,
+							sc_link->scsipi_scsi.target,
+							sc_link->scsipi_scsi.lun,
 							sc->sc_cmdlen);
 					/* So far, everything went fine */
 					break;
@@ -1730,7 +1733,7 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 #endif
 
 				ecb->flags |= ECB_NEXUS;
-				ti->lubusy |= (1 << sc_link->lun);
+				ti->lubusy |= (1 << sc_link->scsipi_scsi.lun);
 
 				sc->sc_prevphase = INVALID_PHASE; /* ?? */
 				/* Do an implicit RESTORE POINTERS. */
@@ -1985,12 +1988,12 @@ ncr53c9x_timeout(arg)
 	void *arg;
 {
 	struct ncr53c9x_ecb *ecb = arg;
-	struct scsi_xfer *xs = ecb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = ecb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %lx, "
 	       "msg(q %x,o %x) %s>",

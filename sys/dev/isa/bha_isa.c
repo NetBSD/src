@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.7 1997/06/06 23:43:48 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.7.2.1 1997/07/01 17:35:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -37,8 +37,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
+/*	$NetBSD: idesc.c,v 1.29.8.1 1997/07/01 17:33:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -87,9 +87,11 @@
 #include <sys/reboot.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_disk.h>
+#include <dev/scsipi/scsi_disk.h>
+#include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
@@ -203,7 +205,7 @@ struct ide_softc {
 
 struct	ide_pending {
 	TAILQ_ENTRY(ide_pending) link;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 };
 
 /*
@@ -214,12 +216,12 @@ struct idec_softc
 	struct device sc_dev;
 	struct isr sc_isr;
 
-	struct	scsi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_link sc_link;	/* proto for sub devices */
 	ide_regmap_p	sc_cregs;	/* driver specific regs */
 	volatile u_char *sc_a1200;	/* A1200 interrupt control */
 	TAILQ_HEAD(,ide_pending) sc_xslist;	/* LIFO */
 	struct	ide_pending sc_xsstore[8][8];	/* one for every unit */
-	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
+	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */
 	int	sc_flags;
 #define	IDECF_ALIVE	0x01	/* Controller is alive */
 #define	IDECF_ACTIVE	0x02
@@ -234,14 +236,14 @@ struct idec_softc
 	struct ide_softc	sc_ide[2];
 };
 
-int ide_scsicmd __P((struct scsi_xfer *));
+int ide_scsicmd __P((struct scsipi_xfer *));
 
 void idescattach __P((struct device *, struct device *, void *));
 int idescmatch __P((struct device *, struct cfdata *, void *));
 
 int  ideicmd __P((struct idec_softc *, int, void *, int, void *, int));
-int  idego __P((struct idec_softc *, struct scsi_xfer *));
-int  idegetsense __P((struct idec_softc *, struct scsi_xfer *));
+int  idego __P((struct idec_softc *, struct scsipi_xfer *));
+int  idegetsense __P((struct idec_softc *, struct scsipi_xfer *));
 void ideabort __P((struct idec_softc *, ide_regmap_p, char *));
 void ideerror __P((struct idec_softc *, ide_regmap_p, u_char));
 int idestart __P((struct idec_softc *));
@@ -251,14 +253,14 @@ void ide_scsidone __P((struct idec_softc *, int));
 void ide_donextcmd __P((struct idec_softc *));
 int  idesc_intr __P((void *));
 
-struct scsi_adapter idesc_scsiswitch = {
+struct scsipi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
 	minphys,		/* no max transfer len, at this level */
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device idesc_scsidev = {
+struct scsipi_device idesc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -405,13 +407,14 @@ idescattach(pdp, dp, auxp)
 
 	printf ("\n");
 
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter = &idesc_scsiswitch;
 	sc->sc_link.device = &idesc_scsidev;
 	sc->sc_link.openings = 1;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	sc->sc_isr.isr_intr = idesc_intr;
@@ -431,11 +434,11 @@ idescattach(pdp, dp, auxp)
  */
 int
 ide_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct ide_pending *pendp;
 	struct idec_softc *dev;
-	struct scsi_link *slp;
+	struct scsipi_link *slp;
 	int flags, s;
 
 	slp = xs->sc_link;
@@ -449,7 +452,7 @@ ide_scsicmd(xs)
 		panic("ide_scsicmd: busy");
 
 	s = splbio();
-	pendp = &dev->sc_xsstore[slp->target][slp->lun];
+	pendp = &dev->sc_xsstore[slp->scsipi_scsi.target][slp->scsipi_scsi.lun];
 	if (pendp->xs) {
 		splx(s);
 		return(TRY_AGAIN_LATER);
@@ -482,8 +485,8 @@ void
 ide_donextcmd(dev)
 	struct idec_softc *dev;
 {
-	struct scsi_xfer *xs;
-	struct scsi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_link *slp;
 	int flags, stat;
 
 	xs = dev->sc_xs;
@@ -495,12 +498,12 @@ ide_donextcmd(dev)
 
 	dev->sc_stat[0] = -1;
 	/* Weed out invalid targets & LUNs here */
-	if (slp->target > 1 || slp->lun != 0) {
+	if (slp->scsipi_scsi.target > 1 || slp->scsipi_scsi.lun != 0) {
 		ide_scsidone(dev, -1);
 		return;
 	}
 	if (flags & SCSI_POLL || ide_no_int)
-		stat = ideicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
+		stat = ideicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen);
 	else if (idego(dev, xs) == 0)
 		return;
@@ -516,7 +519,7 @@ ide_scsidone(dev, stat)
 	int stat;
 {
 	struct ide_pending *pendp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int s, donext;
 
 	xs = dev->sc_xs;
@@ -551,7 +554,7 @@ ide_scsidone(dev, stat)
 	xs->flags |= ITSDONE;
 
 	/*
-	 * grab next command before scsi_done()
+	 * grab next command before scsipi_done()
 	 * this way no single device can hog scsi resources.
 	 */
 	s = splbio();
@@ -566,7 +569,7 @@ ide_scsidone(dev, stat)
 		pendp->xs = NULL;
 	}
 	splx(s);
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	if (donext)
 		ide_donextcmd(dev);
@@ -575,26 +578,26 @@ ide_scsidone(dev, stat)
 int
 idegetsense(dev, xs)
 	struct idec_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_sense rqs;
-	struct scsi_link *slp;
+	struct scsipi_sense rqs;
+	struct scsipi_link *slp;
 
 	slp = xs->sc_link;
 	
 	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = slp->lun << 5;
+	rqs.byte2 = slp->scsipi_scsi.lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
-	    sizeof(xs->sense);
+	    sizeof(xs->sense.scsi_sense);
 #else
-	rqs.length = sizeof(xs->sense);
+	rqs.length = sizeof(xs->sense.scsi_sense);
 #endif
 	    
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 	
-	return(ideicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
-	    rqs.length));
+	return(ideicmd(dev, slp->scsipi_scsi.target, &rqs, sizeof(rqs),
+		&xs->sense.scsi_sense, rqs.length));
 }
 
 #ifdef DEBUG
@@ -823,11 +826,11 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 	int i;
 	int lba;
 	int nblks;
-	struct scsi_inquiry_data *inqbuf;
+	struct scsipi_inquiry_data *inqbuf;
 	struct {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		union disk_pages pages;
+		union scsi_disk_pages pages;
 	} *mdsnbuf;
 
 #ifdef DEBUG
@@ -881,7 +884,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		nblks = *((u_short *)(cbuf + 7));
 		return (ideiread(ide, lba, buf, nblks));
 
-	case READ_COMMAND:
+	case SCSI_READ_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)(cbuf + 4));
 		if (nblks == 0)
@@ -893,7 +896,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		nblks = *((u_short *)(cbuf + 7));
 		return (ideiwrite(ide, lba, buf, nblks));
 
-	case WRITE_COMMAND:
+	case SCSI_WRITE_COMMAND:
 		lba = *((long *)cbuf) & 0x001fffff;
 		nblks = *((u_char *)(cbuf + 4));
 		if (nblks == 0)
@@ -905,7 +908,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		dev->sc_stat[0] = 0;
 		return (0);
 
-	case MODE_SENSE:
+	case SCSI_MODE_SENSE:
 		mdsnbuf = (void*) buf;
 		bzero(buf, *((u_char *)cbuf + 4));
 		switch (*((u_char *)cbuf + 2) & 0x3f) {
@@ -948,10 +951,10 @@ printf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
 	case 0x01 /*REWIND*/:
 	case 0x04 /*CMD_FORMAT_UNIT*/:
 	case 0x05 /*READ_BLOCK_LIMITS*/:
-	case REASSIGN_BLOCKS:
+	case SCSI_REASSIGN_BLOCKS:
 	case 0x10 /*WRITE_FILEMARKS*/:
 	case 0x11 /*SPACE*/:
-	case MODE_SELECT:
+	case SCSI_MODE_SELECT:
 	default:
 		printf ("ide: unhandled SCSI command %02x\n", *((u_char *)cbuf));
 		ide->sc_error = 0x04;
@@ -963,9 +966,9 @@ printf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
 int
 idego(dev, xs)
 	struct idec_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct ide_softc *ide = &dev->sc_ide[xs->sc_link->target];
+	struct ide_softc *ide = &dev->sc_ide[xs->sc_link->scsipi_scsi.target];
 	long lba;
 	int nblks;
 
@@ -979,15 +982,15 @@ idego(dev, xs)
 	if (ide_debug > 1)
 		printf ("ide_go: %02x\n", xs->cmd->opcode);
 #endif
-	if (xs->cmd->opcode != READ_COMMAND && xs->cmd->opcode != READ_BIG &&
-	    xs->cmd->opcode != WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
-		ideicmd (dev, xs->sc_link->target, xs->cmd, xs->cmdlen,
+	if (xs->cmd->opcode != SCSI_READ_COMMAND && xs->cmd->opcode != READ_BIG &&
+	    xs->cmd->opcode != SCSI_WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
+		ideicmd (dev, xs->sc_link->scsipi_scsi.target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen);
 		return (1);
 	}
 	switch (xs->cmd->opcode) {
-	case READ_COMMAND:
-	case WRITE_COMMAND:
+	case SCSI_READ_COMMAND:
+	case SCSI_WRITE_COMMAND:
 		lba = *((long *)xs->cmd) & 0x001fffff;
 		nblks = xs->cmd->bytes[3];
 		if (nblks == 0)
@@ -1005,7 +1008,7 @@ idego(dev, xs)
 	ide->sc_blkcnt = nblks;
 	ide->sc_skip = ide->sc_mskip = 0;
 	dev->sc_flags &= ~IDECF_READ;
-	if (xs->cmd->opcode == READ_COMMAND || xs->cmd->opcode == READ_BIG)
+	if (xs->cmd->opcode == SCSI_READ_COMMAND || xs->cmd->opcode == READ_BIG)
 		dev->sc_flags |= IDECF_READ;
 	dev->sc_cur = ide;
 	return (idestart (dev));

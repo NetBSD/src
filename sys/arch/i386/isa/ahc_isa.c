@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.5.8.1 1997/07/01 17:34:00 bouyer Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -72,8 +72,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 

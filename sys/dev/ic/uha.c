@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.8 1997/06/06 23:31:05 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.8.2.1 1997/07/01 17:35:13 bouyer Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -110,8 +110,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/uhareg.h>
 #include <dev/ic/uhavar.h>
@@ -127,10 +128,10 @@ void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
 integrate void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
 struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
 void uhaminphys __P((struct buf *));
-int uha_scsi_cmd __P((struct scsi_xfer *));
+int uha_scsi_cmd __P((struct scsipi_xfer *));
 int uha_create_mscps __P((struct uha_softc *, void *, size_t));
 
-struct scsi_adapter uha_switch = {
+struct scsipi_adapter uha_switch = {
 	uha_scsi_cmd,
 	uhaminphys,
 	0,
@@ -138,7 +139,7 @@ struct scsi_adapter uha_switch = {
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device uha_dev = {
+struct scsipi_device uha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -168,15 +169,16 @@ uha_attach(sc, upd)
 	(sc->init)(sc);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = upd->sc_scsi_dev;
+	sc->sc_link.scsipi_scsi.adapter_target = upd->sc_scsi_dev;
 	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * ask the adapter what subunits are present
@@ -386,8 +388,8 @@ uha_done(sc, mscp)
 	struct uha_mscp *mscp;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = mscp->xs;
+	struct scsipi_sense_data *s1, *s2;
+	struct scsipi_xfer *xs = mscp->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_done\n"));
 
@@ -426,7 +428,7 @@ uha_done(sc, mscp)
 			switch (mscp->target_stat) {
 			case SCSI_CHECK:
 				s1 = &mscp->mscp_sense;
-				s2 = &xs->sense;
+				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -443,7 +445,7 @@ uha_done(sc, mscp)
 	}
 	uha_free_mscp(sc, mscp);
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 void
@@ -462,9 +464,9 @@ uhaminphys(bp)
  */
 int
 uha_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct uha_softc *sc = sc_link->adapter_softc;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct uha_mscp *mscp;
@@ -500,8 +502,8 @@ uha_scsi_cmd(xs)
 	mscp->xdir = UHA_SDET;
 	mscp->dcn = 0x00;
 	mscp->chan = 0x00;
-	mscp->target = sc_link->target;
-	mscp->lun = sc_link->lun;
+	mscp->target = sc_link->scsipi_scsi.target;
+	mscp->lun = sc_link->scsipi_scsi.lun;
 	mscp->scsi_cmd_length = xs->cmdlen;
 	mscp->sense_ptr = mscp->dmamap_self->dm_segs[0].ds_addr +
 	    offsetof(struct uha_mscp, mscp_sense);
@@ -600,12 +602,12 @@ uha_timeout(arg)
 	void *arg;
 {
 	struct uha_mscp *mscp = arg;
-	struct scsi_xfer *xs = mscp->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = mscp->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct uha_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

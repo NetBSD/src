@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.22 1996/12/23 09:09:52 veego Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.22.8.1 1997/07/01 17:33:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -39,8 +39,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
@@ -64,14 +65,14 @@ int atzsc_dmago __P((struct sbic_softc *, char *, int, int));
 void atzsc_dump __P((void));
 #endif
 
-struct scsi_adapter atzsc_scsiswitch = {
+struct scsipi_adapter atzsc_scsiswitch = {
 	sbic_scsicmd,
 	sbic_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device atzsc_scsidev = {
+struct scsipi_device atzsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -162,13 +163,14 @@ atzscattach(pdp, dp, auxp)
 	
 	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
 
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter = &atzsc_scsiswitch;
 	sc->sc_link.device = &atzsc_scsidev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	sbicinit(sc);
 

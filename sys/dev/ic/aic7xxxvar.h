@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.13 1997/04/10 02:48:41 cgd Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.13.2.1 1997/07/01 17:35:01 bouyer Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -198,11 +198,11 @@ struct scb {
 /*27*/	u_char prev;
 /*-----------------end of hardware supported fields----------------*/
 	STAILQ_ENTRY(scb)	links;	/* for chaining */
-	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
+	struct scsipi_xfer *xs;	/* the scsipi_xfer for this cmd */
 	scb_flag flags;
 	u_char	position;	/* Position in card's scbarray */
 	struct ahc_dma_seg ahc_dma[AHC_NSEG];
-	struct scsi_sense sense_cmd;	/* SCSI command block */
+	struct scsipi_sense sense_cmd;	/* SCSI command block */
 };
 
 struct ahc_data {
@@ -213,8 +213,8 @@ struct ahc_data {
 	void	*sc_ih;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
-	LIST_HEAD(, scsi_xfer) sc_xxxq;	/* XXX software request queue */
-	struct scsi_xfer *sc_xxxqlast;	/* last entry in queue */
+	LIST_HEAD(, scsipi_xfer) sc_xxxq;	/* XXX software request queue */
+	struct scsipi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -243,8 +243,13 @@ struct ahc_data {
 					 * now been assigned a slot by
 					 * ahc_free_scb.
 					 */
+#ifdef __NetBSD__
+	struct	scsipi_link sc_link;
+	struct	scsipi_link sc_link_b;	/* Second bus for Twin channel cards */
+#else
 	struct	scsi_link sc_link;
 	struct	scsi_link sc_link_b;	/* Second bus for Twin channel cards */
+#endif
 	u_short	needsdtr_orig;		/* Targets we initiate sync neg with */
 	u_short	needwdtr_orig;		/* Targets we initiate wide neg with */
 	u_short	needsdtr;		/* Current list of negotiated targets */
