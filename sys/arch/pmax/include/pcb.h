@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 1994/10/26 21:09:49 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 1995/01/18 06:39:43 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 struct pcb
 {
-	int	pcb_regs[69];	/* saved CPU and floating point registers */
+	int	pcb_regs[71];	/* saved CPU and floating point registers */
 	label_t	pcb_context;	/* kernel context for resume */
 	int	pcb_onfault;	/* for copyin/copyout faults */
 	void	*pcb_segtab;	/* copy of pmap pm_segtab */
