@@ -176,12 +176,15 @@ sacpcic* at sacc?
 pcmcia*	at sacpcic?
 
 sackbc0 at sacc0 addr 0x0a00 intr 21
-#sackbc1 at sacc0 addr 0x0c00 intr 18
+sackbc1 at sacc0 addr 0x0c00 intr 18
 
-pckbd* at sackbc0 slot 0         # slot is bogus but needed.
+# PS/2 controller of SA-1111 doesn't have "slot"; One device is attached
+# to one controller.  However, pckbd driver requires "slot 0" and pms driver 
+# requires "slot 1"
+pckbd*	at sackbc0 slot 0
 wskbd* 		at pckbd? # console ?
-#pms* at sackbc1 slot 0
-#wsmouse*	at pms? mux 0
+pms*	at sackbc1 slot 1
+wsmouse*	at pms? mux 0
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
