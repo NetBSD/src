@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.4 1998/01/31 14:40:30 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.4.10.1 2000/09/15 03:50:50 enami Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.4 1998/01/31 14:40:30 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.4.10.1 2000/09/15 03:50:50 enami Exp $");
 #endif
 #endif
 
@@ -156,7 +156,7 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
 		} else if (!strcmp("hourly", cmd)) {
 			bit_set(e->minute, 0);
-			bit_set(e->hour, (LAST_HOUR-FIRST_HOUR+1));
+			bit_nset(e->hour, 0, (LAST_HOUR-FIRST_HOUR+1));
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
