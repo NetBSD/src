@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.163 1999/09/29 00:20:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164 1999/10/11 17:33:52 hannken Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp 
  */
 
 /*
@@ -446,6 +446,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AHA-2944 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940UP,
+	    0,
+	    "Adaptec",
+	    "AHA-2940 Ultra Pro",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
