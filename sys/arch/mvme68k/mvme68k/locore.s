@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1998/02/21 19:03:26 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1998/05/23 20:51:12 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include "assym.h"

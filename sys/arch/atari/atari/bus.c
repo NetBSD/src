@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.4 1998/05/18 12:06:46 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.5 1998/05/23 20:51:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
