@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 1998/02/11 03:09:41 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 1998/02/12 01:19:04 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,12 +107,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
-
-#include <dev/cons.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -223,7 +217,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-		return (EINVAL); 
+		return (EINVAL);
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
@@ -250,14 +244,14 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m;
 
 	/*
-	 * Make sure that on error condition we return "no valid mappings".
+	 * Make sure that on error condition we return "no valid mappings."
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_dma_dmamap_load_mbuf: no packet header");
+		panic("_bus_dmamap_load_mbuf: no packet header");
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
@@ -273,7 +267,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
-		map->dm_nsegs = seg + 1; 
+		map->dm_nsegs = seg + 1;
 	}
 	return (error);
 }
@@ -356,12 +350,10 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
+	extern vm_offset_t avail_end;		/* XXX temporary */
 
-#if 0
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
-#endif 0
-	return 0;
 }
 
 /*
@@ -410,10 +402,13 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, s;
 
 	size = round_page(size);
-	va = kmem_alloc_pageable(kernel_map, size);
+	s = splimp();
+	va = kmem_alloc_pageable(kmem_map, size);
+	splx(s);
+
 	if (va == 0)
 		return (ENOMEM);
 
@@ -449,6 +444,7 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -456,7 +452,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	s = splimp();
+	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	splx(s);
 }
 
 /*
@@ -469,8 +467,28 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_segment_t *segs;
 	int nsegs, off, prot, flags;
 {
+	int i;
 
-	panic("_bus_dmamem_mmap: not implemented");
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (vtophys((caddr_t)segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
 
 /**********************************************************************

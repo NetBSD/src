@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.6 1998/02/11 01:41:14 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7 1998/02/12 01:19:16 sakamoto Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -97,10 +97,12 @@
 
 #include <vm/vm.h>
 
+extern vm_offset_t avail_end;		/* XXX temporary */
+
 /*
- * ISA can DMA to 0-4G.
+ * ISA can DMA to 0-2G.
  */
-#define	ISA_DMA_BOUNCE_THRESHOLD	0xffffffff
+#define	ISA_DMA_BOUNCE_THRESHOLD	0x7fffffff
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -228,14 +230,12 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
 	cookieflags = 0;
-#if 0
 	if ((avail_end > ISA_DMA_BOUNCE_THRESHOLD &&
 	    (flags & ISABUS_DMA_32BIT) == 0) ||
 	    ((map->_dm_size / NBPG) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
 	}
-#endif 0
 
 	/*
 	 * Allocate our cookie.
@@ -306,6 +306,12 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int error;
 
 	STAT_INCR(isa_dma_stats_loads);
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 
 	/*
 	 * Check to see if we might need to bounce the transfer.
@@ -447,10 +453,10 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 	struct bebox_isa_dma_cookie *cookie = map->_dm_cookie;
 
 	/*
-	 * Mixing of PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
-	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0) 
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_isa_bus_dmamap_sync: mix PRE and POST");
 
 #ifdef DIAGNOSTIC
@@ -510,13 +516,10 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 	vm_offset_t high;
 
-#if 0
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
 	else
 		high = trunc_page(avail_end);
-#endif
-
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));
 }
