@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.27 1997/05/12 04:11:43 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.28 1997/05/13 19:02:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -386,12 +386,8 @@ int	gusmax_get_out_port __P((void *));
 int	gusmax_set_in_port __P((void *, int));
 int	gusmax_get_in_port __P((void *));
 int	gus_getdev __P((void *, struct audio_device *));
-int	gus_set_io_params __P((struct gus_softc *, struct audio_params *));
 
 STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
-STATIC void	gus_expand __P((void *, u_char *, int));
-STATIC void	gusmax_expand __P((void *, u_char *, int));
-STATIC void	gus_compress __P((void *, u_char *, int));
 
 STATIC int	gus_mic_ctl __P((void *, int));
 STATIC int	gus_linein_ctl __P((void *, int));
@@ -993,44 +989,6 @@ gusopen(dev, flags)
 }
 
 STATIC void
-gusmax_expand(hdl, buf, count)
-	void *hdl;
-	u_char *buf;
-	int count;
-{
-	register struct ad1848_softc *ac = hdl;
-
-	gus_expand(ac->parent, buf, count);
-}
-
-STATIC void
-gus_expand(hdl, buf, count)
-	void *hdl;
-	u_char *buf;
-	int count;
-{
-	struct gus_softc *sc = hdl;
-
-	if (sc->sc_encoding == AUDIO_ENCODING_ULAW)
-		mulaw_to_ulinear8(buf, count);
-	/*
-	 * If we need stereo deinterleaving, do it now.
-	 */
-	if (sc->sc_channels == 2)
-		gus_deinterleave(sc, (void *)buf, count);
-}
-
-STATIC void
-gus_compress(hdl, buf, count)
-	void *hdl;
-	u_char *buf;
-	int count;
-{
-	
-	ulinear8_to_mulaw(buf, count);
-}
-
-STATIC void
 gus_deinterleave(sc, buf, size)
 	register struct gus_softc *sc;
 	void *buf;
@@ -1039,6 +997,13 @@ gus_deinterleave(sc, buf, size)
 	/* deinterleave the stereo data.  We can use sc->sc_deintr_buf
 	   for scratch space. */
 	register int i;
+
+	if (size > sc->sc_blocksize) {
+		printf("gus: deinterleave %d > %d\n", size, sc->sc_blocksize);
+		return;
+	} else if (size < sc->sc_blocksize) {
+		DPRINTF(("gus: deinterleave %d < %d\n", size, sc->sc_blocksize));
+	}
 
 	/*
 	 * size is in bytes.
@@ -1177,9 +1142,12 @@ gus_dma_output(addr, buf, size, intr, arg)
 		}
 		if (size == 0)
 			return 0;
+
+		gus_deinterleave(sc, (void *)buffer, size);
+
 		size >>= 1;
 
-		boarddma = size * sc->sc_dmabuf + GUS_MEM_OFFSET;
+ 		boarddma = size * sc->sc_dmabuf + GUS_MEM_OFFSET;
 
 		sc->sc_stereo.intr = intr;
 		sc->sc_stereo.arg = arg;
@@ -2116,7 +2084,6 @@ gusmax_set_params(addr, mode, p, q)
 	if (error)
 		return error;
 	error = gus_set_params(sc, mode, p, q);
-	p->sw_code = mode == AUMODE_RECORD ? gus_compress : gusmax_expand;
 	return error;
 }
 
@@ -2127,32 +2094,6 @@ gus_set_params(addr, mode, p, q)
 	struct audio_params *p, *q;
 {
 	register struct gus_softc *sc = addr;
-	int error;
-	
-	error = gus_set_io_params(sc, p);
-	if (error)
-		return error;
-	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
-		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
-	if (mode == AUMODE_RECORD)
-		sc->sc_irate = p->sample_rate;
-	else
-		sc->sc_orate = p->sample_rate;
-
-	p->sw_code = mode == AUMODE_RECORD ? gus_compress : gus_expand;
-
-	/* Update setting for the other mode. */
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
-	return 0;
-}
-
-int
-gus_set_io_params(sc, p)
-	struct gus_softc *sc;
-	struct audio_params *p;
-{
 	int s;
 
 	switch (p->encoding) {
@@ -2180,9 +2121,26 @@ gus_set_io_params(sc, p)
 
 	splx(s);
 
+	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
+		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
+	if (mode == AUMODE_RECORD)
+		sc->sc_irate = p->sample_rate;
+	else
+		sc->sc_orate = p->sample_rate;
+
+	if (p->encoding == AUDIO_ENCODING_ULAW)
+		p->sw_code = mode == AUMODE_PLAY ? 
+			mulaw_to_ulinear8 : ulinear8_to_mulaw;
+	else
+		p->sw_code = 0;
+
+	/* Update setting for the other mode. */
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
 	return 0;
 }
-  
+
 /*
  * Interface to the audio layer - set the blocksize to the correct number
  * of units
