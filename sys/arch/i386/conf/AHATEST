@@ -25,8 +25,8 @@ disk		fd1	at fdc0 drive 1
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
-device		com1	at isa? port "IO_COM1" tty irq 4 vector comintr
-device		com2	at isa? port "IO_COM2" tty irq 3 vector comintr
+device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
+device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 disk		sd0	at aha0 flags 0 drive ?
