@@ -43,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.6 1994/05/20 05:19:31 gwr Exp $
+ * $Id: zs.c,v 1.7 1994/05/30 06:22:36 glass Exp $
  */
 
 /*
@@ -986,8 +986,8 @@ again:
 				if (tp->t_state & TS_FLUSH)
 					tp->t_state &= ~TS_FLUSH;
 				else
-					ndflush(&tp->t_outq,
-					    cs->cs_tba - tp->t_outq.c_cf);
+					ndflush(&tp->t_outq, cs->cs_tba -
+						(caddr_t) tp->t_outq.c_cf);
 				line->l_start(tp);
 				break;
 
