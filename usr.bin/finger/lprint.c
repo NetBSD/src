@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.15 2002/08/11 03:59:31 kim Exp $	*/
+/*	$NetBSD: lprint.c,v 1.16 2002/08/20 00:27:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.15 2002/08/11 03:59:31 kim Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.16 2002/08/20 00:27:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ show_text(directory, file_name, header)
 		if (cnt <= 1) {
 			(void)printf("%s: ", header);
 			for (p = tbuf, cnt = nr; cnt--; ++p)
-				vputc(lastc = (unsigned char)*p);
+				vputc(lastc = *p);
 			if (lastc != '\n')
 				(void)putchar('\n');
 			(void)close(fd);
@@ -364,10 +364,6 @@ vputc(ch)
 {
 	char visout[5], *s2;
 
-	if ((isprint(ch)) || (isspace(ch))) {
-	    (void)putchar(ch);
-	    return;
-	}
 	ch = toascii(ch);
 	vis(visout, ch, VIS_SAFE|VIS_NOSLASH, 0);
 	for (s2 = visout; *s2; s2++)
