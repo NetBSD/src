@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.56 1997/03/04 21:42:34 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.57 1997/04/13 19:58:17 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -292,51 +292,25 @@
 
 #ifdef __NetBSD__
 
-#ifdef NCR_IOMAPPED
-
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
-    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
+    bus_space_read_1 (np->sc_st, np->sc_sh, (o))
 #define	INW(r) \
-    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
+    bus_space_read_2 (np->sc_st, np->sc_sh, offsetof(struct ncr_reg, r))
 #define	INL(r) \
     INL_OFF(offsetof(struct ncr_reg, r))
 #define	INL_OFF(o) \
-    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
+    bus_space_read_4 (np->sc_st, np->sc_sh, (o))
 
 #define	OUTB(r, val) \
-    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_1 (np->sc_st, np->sc_sh, offsetof(struct ncr_reg, r), (val))
 #define	OUTW(r, val) \
-    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_2 (np->sc_st, np->sc_sh, offsetof(struct ncr_reg, r), (val))
 #define	OUTL(r, val) \
     OUTL_OFF(offsetof(struct ncr_reg, r), (val))
 #define	OUTL_OFF(o, val) \
-    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
-
-#else
-
-#define	INB(r) \
-    INB_OFF(offsetof(struct ncr_reg, r))
-#define	INB_OFF(o) \
-    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
-#define	INW(r) \
-    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
-#define	INL(r) \
-    INL_OFF(offsetof(struct ncr_reg, r))
-#define	INL_OFF(o) \
-    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
-
-#define	OUTB(r, val) \
-    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
-#define	OUTW(r, val) \
-    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
-#define	OUTL(r, val) \
-    OUTL_OFF(offsetof(struct ncr_reg, r), (val))
-#define	OUTL_OFF(o, val) \
-    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
-
-#endif
+    bus_space_write_4 (np->sc_st, np->sc_sh, (o), (val))
 
 #else /* !__NetBSD__ */
 
@@ -1009,10 +983,11 @@ struct ccb {
 struct ncb {
 #ifdef __NetBSD__
 	struct device sc_dev;
-	void *sc_ih;
-	bus_space_tag_t sc_memt;
 	pci_chipset_tag_t sc_pc;
-	bus_space_handle_t sc_bah;
+	void *sc_ih;
+	bus_space_tag_t sc_st;
+	bus_space_handle_t sc_sh;
+	int sc_iomapped;
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
@@ -1351,7 +1326,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.56 1997/03/04 21:42:34 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.57 1997/04/13 19:58:17 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3381,15 +3356,17 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_space_tag_t memt = pa->pa_memt;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_size_t memsize;
-	int retval, cacheable;
+	int retval;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	ncb_p np = (void *)self;
 	int wide = 0;
 	u_char rev = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	bus_addr_t ioaddr, memaddr;
+	int ioh_valid, memh_valid;
 
 	printf(": NCR ");
 	switch (pa->pa_id) {
@@ -3413,7 +3390,6 @@ ncr_attach(parent, self, aux)
 	}
 	printf(" SCSI\n");
 
-	np->sc_memt = memt;
 	np->sc_pc = pc;
 
 	/*
@@ -3421,18 +3397,40 @@ ncr_attach(parent, self, aux)
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
-	    &memsize, &cacheable);
-	if (retval) {
-		printf("%s: couldn't find memory region\n", self->dv_xname);
-		return;
-	}
+	ioh_valid = (pci_map_register(pa, 0x10,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, &ioaddr, NULL) == 0);
+	memh_valid = (pci_map_register(pa, 0x14,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, &memaddr, NULL) == 0);
 
-	/* Map the memory.  Note that we never want it to be cacheable. */
-	retval = bus_space_map(pa->pa_memt, np->paddr, memsize, 0,
-	    &np->sc_bah);
-	if (retval) {
-		printf("%s: couldn't map memory region\n", self->dv_xname);
+#if defined(NCR_IOMAPPED)
+	if (ioh_valid) {
+		np->sc_st = iot;
+		np->sc_sh = ioh;
+		np->paddr = ioaddr;
+		np->sc_iomapped = 1;
+	} else if (memh_valid) {
+		np->sc_st = memt;
+		np->sc_sh = memh;
+		np->paddr = memaddr;
+		np->sc_iomapped = 0;
+	}
+#else /* defined(NCR_IOMAPPED) */
+	if (memh_valid) {
+		np->sc_st = memt;
+		np->sc_sh = memh;
+		np->paddr = memaddr;
+		np->sc_iomapped = 0;
+	} else if (ioh_valid) {
+		np->sc_st = iot;
+		np->sc_sh = ioh;
+		np->paddr = ioaddr;
+		np->sc_iomapped = 1;
+	}
+#endif /* defined(NCR_IOMAPPED) */
+	else {
+		printf("%s: unable to map device registers\n", self->dv_xname);
 		return;
 	}
 
@@ -6762,7 +6760,7 @@ static	int	ncr_scatter
 **==========================================================
 */
 
-#ifndef NCR_IOMAPPED
+#if !defined(NCR_IOMAPPED) || defined(__NetBSD__)
 static int ncr_regtest (struct ncb* np)
 {
 	register volatile u_long data;
@@ -6791,9 +6789,14 @@ static int ncr_snooptest (struct ncb* np)
 {
 	u_long	ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc, err=0;
 	int	i;
-#ifndef NCR_IOMAPPED
-	err |= ncr_regtest (np);
-	if (err) return (err);
+#if !defined(NCR_IOMAPPED) || defined(__NetBSD__)
+#ifdef __NetBSD__
+	if (!np->sc_iomapped)
+#endif
+	{
+		err |= ncr_regtest (np);
+		if (err) return (err);
+	}
 #endif
 	/*
 	**	init
