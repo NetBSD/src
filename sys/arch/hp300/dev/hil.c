@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.61 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.62 2004/04/09 11:55:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.61 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.62 2004/04/09 11:55:27 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
+#include "ite.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -994,8 +995,6 @@ hilint(v)
 #endif
 	return (1);
 }
-
-#include "ite.h"
 
 void
 hil_process_int(hilp, stat, c)
