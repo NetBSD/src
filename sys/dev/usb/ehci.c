@@ -1,7 +1,4 @@
-/* TODO
-Add intrinfo.
-*/
-/*	$NetBSD: ehci.c,v 1.18 2001/11/21 12:28:23 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.19 2001/11/21 13:04:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +47,7 @@ Add intrinfo.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.18 2001/11/21 12:28:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.19 2001/11/21 13:04:50 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,14 +94,13 @@ struct ehci_pipe {
 		struct {
 			usb_dma_t reqdma;
 			u_int length;
-			ehci_soft_qtd_t *setup, *data, *stat;
+			/*ehci_soft_qtd_t *setup, *data, *stat;*/
 		} ctl;
 		/* Interrupt pipe */
 		/* XXX */
 		/* Bulk pipe */
 		struct {
 			u_int length;
-			int isread;
 		} bulk;
 		/* Iso pipe */
 		/* XXX */
@@ -2290,7 +2286,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 	ehci_del_intr_list(ex);	/* remove from active list */
 
 	if (epipe->u.ctl.length != 0)
-		ehci_free_std_chain(sc, ex->sqtdstart, ex->sqtdend);
+		ehci_free_std_chain(sc, ex->sqtdstart, NULL);
 
 	DPRINTFN(5, ("uhci_ctrl_done: length=%d\n", xfer->actlen));
 }
@@ -2472,11 +2468,134 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 /************************/
 
-Static usbd_status	ehci_device_bulk_transfer(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static usbd_status	ehci_device_bulk_start(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static void		ehci_device_bulk_abort(usbd_xfer_handle xfer) { }
-Static void		ehci_device_bulk_close(usbd_pipe_handle pipe) { }
-Static void		ehci_device_bulk_done(usbd_xfer_handle xfer) { }
+Static usbd_status
+ehci_device_bulk_transfer(usbd_xfer_handle xfer)
+{
+	usbd_status err;
+
+	/* Insert last in queue. */
+	err = usb_insert_transfer(xfer);
+	if (err)
+		return (err);
+
+	/* Pipe isn't running, start first */
+	return (ehci_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+}
+
+usbd_status
+ehci_device_bulk_start(usbd_xfer_handle xfer)
+{
+#define exfer EXFER(xfer)
+	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
+	usbd_device_handle dev = epipe->pipe.device;
+	ehci_softc_t *sc = (ehci_softc_t *)dev->bus;
+	ehci_soft_qtd_t *data, *dataend;
+	ehci_soft_qh_t *sqh;
+	usbd_status err;
+	int len, isread, endpt;
+	int s;
+
+	DPRINTFN(3, ("ehci_device_bulk_transfer: xfer=%p len=%d flags=%d\n",
+		     xfer, xfer->length, xfer->flags));
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
+
+#ifdef DIAGNOSTIC
+	if (xfer->rqflags & URQ_REQUEST)
+		panic("ehci_device_bulk_transfer: a request\n");
+#endif
+
+	len = xfer->length;
+	endpt = epipe->pipe.endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	sqh = epipe->sqh;
+
+	epipe->u.bulk.length = len;
+
+	err = ehci_alloc_std_chain(epipe, sc, len, isread, xfer, &data,
+				   &dataend);
+	if (err)
+		return (err);
+
+#ifdef EHCI_DEBUG
+	if (ehcidebug > 8) {
+		DPRINTF(("ehci_device_bulk_transfer: data(1)\n"));
+		ehci_dump_sqtds(data);
+	}
+#endif
+
+	/* Set up interrupt info. */
+	exfer->sqtdstart = data;
+	exfer->sqtdend = dataend;
+#ifdef DIAGNOSTIC
+	if (!exfer->isdone) {
+		printf("ehci_device_bulk_transfer: not done, ex=%p\n", exfer);
+	}
+	exfer->isdone = 0;
+#endif
+
+	s = splusb();
+	sqh->qh.qh_curqtd = 0;
+	sqh->qh.qh_qtd.qtd_next = htole32(data->physaddr);
+	sqh->sqtd = data;
+	if (xfer->timeout && !sc->sc_bus.use_polling) {
+		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+			    ehci_timeout, xfer);
+	}
+	ehci_add_intr_list(sc, exfer);
+	xfer->status = USBD_IN_PROGRESS;
+	splx(s);
+
+#ifdef EHCI_DEBUG
+	if (ehcidebug > 10) {
+		DPRINTF(("ehci_device_bulk_transfer: data(2)\n"));
+		ehci_dump_sqtds(data);
+	}
+#endif
+
+	if (sc->sc_bus.use_polling)
+		ehci_waitintr(sc, xfer);
+
+	return (USBD_IN_PROGRESS);
+#undef exfer
+}
+
+Static void
+ehci_device_bulk_abort(usbd_xfer_handle xfer)
+{
+	DPRINTF(("ehci_device_bulk_abort: xfer=%p\n", xfer));
+	ehci_abort_xfer(xfer, USBD_CANCELLED);
+}
+
+/* 
+ * Close a device bulk pipe.
+ */
+Static void
+ehci_device_bulk_close(usbd_pipe_handle pipe)
+{
+	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
+
+	DPRINTF(("ehci_device_bulk_close: pipe=%p\n", pipe));
+	ehci_close_pipe(pipe, sc->sc_async_head);
+}
+
+void
+ehci_device_bulk_done(usbd_xfer_handle xfer)
+{
+	struct ehci_xfer *ex = EXFER(xfer);
+	ehci_softc_t *sc = (ehci_softc_t *)xfer->pipe->device->bus;
+	/*struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;*/
+
+	DPRINTFN(10,("ehci_bulk_done: xfer=%p, actlen=%d\n", 
+		     xfer, xfer->actlen));
+
+	ehci_del_intr_list(ex);	/* remove from active list */
+
+	ehci_free_std_chain(sc, ex->sqtdstart, 0);
+
+	DPRINTFN(5, ("ehci_bulk_done: length=%d\n", xfer->actlen));
+}
 
 /************************/
 
