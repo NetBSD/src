@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/04/14 22:46:23 kleink Exp $
+#	$NetBSD: Makefile,v 1.18 2001/04/15 15:29:08 kleink Exp $
 
 KDIR=	/sys/arch/mips/include
 INCSDIR= /usr/include/mips
@@ -9,7 +9,8 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	db_machdep.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
-	ieee.h ieeefp.h int_const.h int_mwgwtypes.h int_types.h \
+	ieee.h ieeefp.h \
+	int_const.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
 	math.h mips1_pte.h mips3_pte.h mips_opcode.h mips_param.h \
