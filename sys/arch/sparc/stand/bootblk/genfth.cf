@@ -1,4 +1,4 @@
-#	$NetBSD: genfth.cf,v 1.1 2000/08/20 14:58:46 mrg Exp $
+#	$NetBSD: genfth.cf,v 1.2 2003/04/03 22:10:12 christos Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,12 +89,13 @@ include <ufs/ffs/fs.h>
 #
 define	dev_bsize	DEV_BSIZE
 define	maxbsize	MAXBSIZE
-define	bbsize		BBSIZE		
-define	sbsize		SBSIZE		
-define	bboff		BBOFF		
-define	sboff		SBOFF		
-define	bblock		BBLOCK		
-define	sblock		SBLOCK		
+define	bbsize		BBSIZE
+define	sbsize		SBLOCKSIZE
+define	bboff		BBOFF
+define	sboff		SBOFF
+define	bblock		BBLOCK
+# XXX: Will not work for UFS2!
+define	sblock		SBLOCK_UFS1
 
 #
 # ufs superblock
