@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.92 2004/03/23 18:44:00 matt Exp $ */
+/* $NetBSD: trap.c,v 1.92.2.1 2004/05/22 15:20:48 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2004/03/23 18:44:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92.2.1 2004/05/22 15:20:48 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,6 +1263,7 @@ startlwp(arg)
 void
 upcallret(struct lwp *l)
 {
+	KERNEL_PROC_UNLOCK(l);
 
 	userret(l);
 }
