@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.7 1998/08/25 20:59:38 ross Exp $	*/
+/*	$NetBSD: lexi.c,v 1.8 1998/12/19 17:00:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.7 1998/08/25 20:59:38 ross Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.8 1998/12/19 17:00:08 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -150,7 +150,7 @@ lexi()
 
 	/* Scan an alphanumeric token */
 	if (chartype[(int) *buf_ptr] == alphanum ||
-	    (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
+	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
 		/*
 		 * we have a character or number
 		 */
@@ -159,13 +159,14 @@ lexi()
 				 * reserved words */
 		struct templ *p;
 
-		if (isdigit(*buf_ptr) || (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
+		if (isdigit((unsigned char)*buf_ptr) ||
+		    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
 			int     seendot = 0, seenexp = 0;
 			if (*buf_ptr == '0' &&
 			    (buf_ptr[1] == 'x' || buf_ptr[1] == 'X')) {
 				*e_token++ = *buf_ptr++;
 				*e_token++ = *buf_ptr++;
-				while (isxdigit(*buf_ptr)) {
+				while (isxdigit((unsigned char)*buf_ptr)) {
 					CHECK_SIZE_TOKEN;
 					*e_token++ = *buf_ptr++;
 				}
@@ -179,7 +180,7 @@ lexi()
 					}
 					CHECK_SIZE_TOKEN;
 					*e_token++ = *buf_ptr++;
-					if (!isdigit(*buf_ptr)
+					if (!isdigit((unsigned char)*buf_ptr)
 					&& *buf_ptr != '.') {
 						if ((*buf_ptr != 'E'
 						&& *buf_ptr != 'e') || seenexp)
@@ -297,7 +298,8 @@ lexi()
 		 * token is in fact a declaration keyword -- one that has been
 		 * typedefd
 		 */
-		if (((*buf_ptr == '*' && buf_ptr[1] != '=') || isalpha(*buf_ptr) || *buf_ptr == '_')
+		if (((*buf_ptr == '*' && buf_ptr[1] != '=') ||
+		    isalpha((unsigned char)*buf_ptr) || *buf_ptr == '_')
 		    && !ps.p_l_follow
 		    && !ps.block_init
 		    && (ps.last_token == rparen || ps.last_token == semicolon ||

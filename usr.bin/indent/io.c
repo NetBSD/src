@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.8 1998/08/25 20:59:37 ross Exp $	*/
+/*	$NetBSD: io.c,v 1.9 1998/12/19 17:00:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.8 1998/08/25 20:59:37 ross Exp $");
+__RCSID("$NetBSD: io.c,v 1.9 1998/12/19 17:00:08 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -246,7 +246,7 @@ dump_line()
 						++ps.out_lines;
 					}
 					while (e_com > com_st
-					&& isspace(e_com[-1]))
+					&& isspace((unsigned char)e_com[-1]))
 						e_com--;
 					cur_col = pad_output(cur_col, target);
 					if (!ps.box_com) {
@@ -311,7 +311,7 @@ compute_code_target()
 {
 	int     target_col = ps.ind_size * ps.ind_level + 1;
 
-	if (ps.paren_level)
+	if (ps.paren_level) {
 		if (!lineup_to_parens)
 			target_col += continuation_indent * ps.paren_level;
 		else {
@@ -326,7 +326,7 @@ compute_code_target()
 			} else
 				target_col = t;
 		}
-	else
+	} else
 		if (ps.ind_stmt)
 			target_col += continuation_indent;
 	return target_col;
@@ -647,15 +647,15 @@ parsefont(f, s0)
 	int     sizedelta = 0;
 	memset(f, 0, sizeof *f);
 	while (*s) {
-		if (isdigit(*s))
+		if (isdigit((unsigned char)*s))
 			f->size = f->size * 10 + *s - '0';
 		else
-			if (isupper(*s))
+			if (isupper((unsigned char)*s)) {
 				if (f->font[0])
 					f->font[1] = *s;
 				else
 					f->font[0] = *s;
-			else
+			} else
 				if (*s == 'c')
 					f->allcaps = 1;
 				else
