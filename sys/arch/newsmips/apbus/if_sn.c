@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.13.2.4 2004/11/02 07:50:46 skrll Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.13.2.5 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.13.2.4 2004/11/02 07:50:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.13.2.5 2005/02/06 08:59:22 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -63,30 +63,30 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.13.2.4 2004/11/02 07:50:46 skrll Exp $")
 # define DPRINTF while (0) printf
 #endif
 
-static void	snwatchdog __P((struct ifnet *));
-static int	sninit __P((struct sn_softc *sc));
-static int	snstop __P((struct sn_softc *sc));
-static int	snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
-static void	snstart __P((struct ifnet *ifp));
-static void	snreset __P((struct sn_softc *sc));
+static void	snwatchdog(struct ifnet *);
+static int	sninit(struct sn_softc *sc);
+static int	snstop(struct sn_softc *sc);
+static int	snioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+static void	snstart(struct ifnet *ifp);
+static void	snreset(struct sn_softc *sc);
 
-static void	caminitialise __P((struct sn_softc *));
-static void	camentry __P((struct sn_softc *, int, u_char *ea));
-static void	camprogram __P((struct sn_softc *));
-static void	initialise_tda __P((struct sn_softc *));
-static void	initialise_rda __P((struct sn_softc *));
-static void	initialise_rra __P((struct sn_softc *));
+static void	caminitialise(struct sn_softc *);
+static void	camentry(struct sn_softc *, int, u_char *ea);
+static void	camprogram(struct sn_softc *);
+static void	initialise_tda(struct sn_softc *);
+static void	initialise_rda(struct sn_softc *);
+static void	initialise_rra(struct sn_softc *);
 #ifdef SNDEBUG
-static void	camdump __P((struct sn_softc *sc));
+static void	camdump(struct sn_softc *sc);
 #endif
 
-static void	sonictxint __P((struct sn_softc *));
-static void	sonicrxint __P((struct sn_softc *));
+static void	sonictxint(struct sn_softc *);
+static void	sonicrxint(struct sn_softc *);
 
-static __inline__ u_int	sonicput __P((struct sn_softc *sc, struct mbuf *m0,
-			    int mtd_next));
-static __inline__ int	sonic_read __P((struct sn_softc *, caddr_t, int));
-static __inline__ struct mbuf *sonic_get __P((struct sn_softc *, caddr_t, int));
+static __inline__ u_int	sonicput(struct sn_softc *sc, struct mbuf *m0,
+    int mtd_next);
+static __inline__ int	sonic_read(struct sn_softc *, caddr_t, int);
+static __inline__ struct mbuf *sonic_get(struct sn_softc *, caddr_t, int);
 
 #undef assert
 #undef _assert
@@ -122,9 +122,7 @@ int sndebug = 0;
  * to accept packets.
  */
 int
-snsetup(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	u_char	*p;
@@ -134,7 +132,7 @@ snsetup(sc, lladdr)
 	if (sc->space == NULL) {
 		printf ("%s: memory allocation for descriptors failed\n",
 		    sc->sc_dev.dv_xname);
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -156,7 +154,7 @@ snsetup(sc, lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
+	pp = (u_char *)ROUNDUP((int)p, PAGE_SIZE);
 	p = pp;
 
 	for (i = 0; i < NRRA; i++) {
@@ -191,14 +189,14 @@ snsetup(sc, lladdr)
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
 		    PAGE_SIZE);
-		return(1);
+		return 1;
 	}
 
 	p = pp + PAGE_SIZE;
 	pp = p;
 
 	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
-	sc->p_rda = (caddr_t) p;
+	sc->p_rda = (caddr_t)p;
 	sc->v_rda = SONIC_GETDMA(p);
 
 	p = pp + PAGE_SIZE;
@@ -229,7 +227,7 @@ snsetup(sc, lladdr)
 	    sc->p_rda, sc->mtda[0].mtd_txp);
 #endif
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
@@ -239,14 +237,11 @@ snsetup(sc, lladdr)
 	if_attach(ifp);
 	ether_ifattach(ifp, lladdr);
 
-	return (0);
+	return 0;
 }
 
 static int
-snioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+snioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -325,15 +320,14 @@ snioctl(ifp, cmd, data)
 		err = EINVAL;
 	}
 	splx(s);
-	return (err);
+	return err;
 }
 
 /*
  * Encapsulate a packet of type family for the local net.
  */
 static void
-snstart(ifp)
-	struct ifnet *ifp;
+snstart(struct ifnet *ifp)
 {
 	struct sn_softc	*sc = ifp->if_softc;
 	struct mbuf	*m;
@@ -393,23 +387,22 @@ outloop:
  * hardware/software errors.
  */
 static void
-snreset(sc)
-	struct sn_softc *sc;
+snreset(struct sn_softc *sc)
 {
+
 	snstop(sc);
 	sninit(sc);
 }
 
 static int 
-sninit(sc)
-	struct sn_softc *sc;
+sninit(struct sn_softc *sc)
 {
 	u_long	s_rcr;
 	int	s;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		/* already running */
-		return (0);
+		return 0;
 
 	s = splnet();
 
@@ -471,7 +464,7 @@ sninit(sc)
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -480,8 +473,7 @@ sninit(sc)
  * part way through.
  */
 static int 
-snstop(sc)
-	struct sn_softc *sc;
+snstop(struct sn_softc *sc)
 {
 	struct mtd *mtd;
 	int	s = splnet();
@@ -504,7 +496,7 @@ snstop(sc)
 	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_UP);
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -513,8 +505,7 @@ snstop(sc)
  * will be handled by higher level protocol timeouts.
  */
 static void
-snwatchdog(ifp)
-	struct ifnet *ifp;
+snwatchdog(struct ifnet *ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	struct mtd *mtd;
@@ -539,10 +530,7 @@ snwatchdog(ifp)
  * stuff packet into sonic (at splnet)
  */
 static __inline__ u_int
-sonicput(sc, m0, mtd_next)
-	struct sn_softc *sc;
-	struct mbuf *m0;
-	int mtd_next;
+sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 {
 	struct mtd *mtdp;
 	struct mbuf *m;
@@ -553,7 +541,7 @@ sonicput(sc, m0, mtd_next)
 
 #ifdef whyonearthwouldyoudothis
 	if (NIC_GET(sc, SNR_CR) & CR_TXP)
-		return (0);
+		return 0;
 #endif
 
 	/* grab the replacement mtd */
@@ -578,7 +566,7 @@ sonicput(sc, m0, mtd_next)
 		u_char *data = mtod(m, u_char *);
 		len = m->m_len;
 		totlen += len;
-		bcopy(data, buff, len);
+		memcpy(buff, data, len);
 		buff += len;
 	}
 	if (totlen >= TXBSIZE) {
@@ -592,7 +580,7 @@ sonicput(sc, m0, mtd_next)
 
 	if (totlen < ETHERMIN + ETHER_HDR_LEN) {
 		int pad = ETHERMIN + ETHER_HDR_LEN - totlen;
-		bzero(mtdp->mtd_buf + totlen, pad);
+		memset(mtdp->mtd_buf + totlen, 0, pad);
 		totlen = ETHERMIN + ETHER_HDR_LEN;
 	}
 
@@ -619,7 +607,7 @@ sonicput(sc, m0, mtd_next)
 	wbflush();
 	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
 
-	return (totlen);
+	return totlen;
 }
 
 /*
@@ -630,8 +618,7 @@ sonicput(sc, m0, mtd_next)
  * CAM support
  */
 static void 
-caminitialise(sc)
-	struct sn_softc *sc;
+caminitialise(struct sn_softc *sc)
 {
 	void	*p_cda = sc->p_cda;
 	int	i;
@@ -648,10 +635,7 @@ caminitialise(sc)
 }
 
 static void 
-camentry(sc, entry, ea)
-	int entry;
-	u_char *ea;
-	struct sn_softc *sc;
+camentry(struct sn_softc *sc, int entry, u_char *ea)
 {
 	void	*p_cda = sc->p_cda;
 	int	camoffset = entry * CDA_CAMDESC;
@@ -665,8 +649,7 @@ camentry(sc, entry, ea)
 }
 
 static void 
-camprogram(sc)
-	struct sn_softc *sc;
+camprogram(struct sn_softc *sc)
 {
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -679,7 +662,7 @@ camprogram(sc)
 	ifp = &sc->sc_if;
 
 	/* Always load our own address first. */
-	camentry (sc, mcount, LLADDR(ifp->if_sadl));
+	camentry(sc, mcount, LLADDR(ifp->if_sadl));
 	mcount++;
 
 	/* Assume we won't need allmulti bit. */
@@ -693,7 +676,7 @@ camprogram(sc)
 			 break;
 		}
 
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * SONIC's CAM is programmed with specific
@@ -738,8 +721,7 @@ camprogram(sc)
 
 #ifdef SNDEBUG
 static void 
-camdump(sc)
-	struct sn_softc *sc;
+camdump(struct sn_softc *sc)
 {
 	int	i;
 
@@ -764,8 +746,7 @@ camdump(sc)
 #endif
 
 static void 
-initialise_tda(sc)
-	struct sn_softc *sc;
+initialise_tda(struct sn_softc *sc)
 {
 	struct mtd *mtd;
 	int	i;
@@ -786,12 +767,11 @@ initialise_tda(sc)
 }
 
 static void
-initialise_rda(sc)
-	struct sn_softc *sc;
+initialise_rda(struct sn_softc *sc)
 {
 	int		i;
 	caddr_t		p_rda = 0;
-	u_int32_t	v_rda = 0;
+	uint32_t	v_rda = 0;
 
 	/* link the RDA's together into a circular list */
 	for (i = 0; i < (sc->sc_nrda - 1); i++) {
@@ -815,8 +795,7 @@ initialise_rda(sc)
 }
 
 static void
-initialise_rra(sc)
-	struct sn_softc *sc;
+initialise_rra(struct sn_softc *sc)
 {
 	int	i;
 	u_int	v;
@@ -848,8 +827,7 @@ initialise_rra(sc)
 }
 
 int
-snintr(arg)
-	void	*arg;
+snintr(void *arg)
 {
 	struct sn_softc *sc = (struct sn_softc *)arg;
 	int handled = 0;
@@ -914,8 +892,7 @@ snintr(arg)
  * Transmit interrupt routine
  */
 static void 
-sonictxint(sc)
-	struct sn_softc *sc;
+sonictxint(struct sn_softc *sc)
 {
 	struct mtd	*mtd;
 	void		*txp;
@@ -990,15 +967,14 @@ sonictxint(sc)
  * Receive interrupt routine
  */
 static void 
-sonicrxint(sc)
-	struct sn_softc *sc;
+sonicrxint(struct sn_softc *sc)
 {
 	caddr_t	rda;
 	int	orra;
 	int	len;
 	int	rramark;
 	int	rdamark;
-	u_int16_t rxpkt_ptr;
+	uint16_t rxpkt_ptr;
 
 	rda = sc->p_rda + (sc->sc_rxmark * RXPKT_SIZE(sc));
 
@@ -1038,13 +1014,13 @@ sonicrxint(sc)
 			tmp1 = sc->p_rra[rramark];
 			tmp2 = sc->p_rra[orra];
 			SWO(bitmode, tmp1, RXRSRC_PTRLO,
-				SRO(bitmode, tmp2, RXRSRC_PTRLO));
+			    SRO(bitmode, tmp2, RXRSRC_PTRLO));
 			SWO(bitmode, tmp1, RXRSRC_PTRHI,
-				SRO(bitmode, tmp2, RXRSRC_PTRHI));
+			    SRO(bitmode, tmp2, RXRSRC_PTRHI));
 			SWO(bitmode, tmp1, RXRSRC_WCLO,
-				SRO(bitmode, tmp2, RXRSRC_WCLO));
+			    SRO(bitmode, tmp2, RXRSRC_WCLO));
 			SWO(bitmode, tmp1, RXRSRC_WCHI,
-				SRO(bitmode, tmp2, RXRSRC_WCHI));
+			    SRO(bitmode, tmp2, RXRSRC_WCHI));
 
 			/* zap old rra for fun */
 			SWO(bitmode, tmp2, RXRSRC_WCHI, 0);
@@ -1062,10 +1038,11 @@ sonicrxint(sc)
 		rdamark = sc->sc_rdamark;
 		SWO(bitmode, rda, RXPKT_INUSE, 1);
 		SWO(bitmode, rda, RXPKT_RLINK,
-			SRO(bitmode, rda, RXPKT_RLINK) | EOL);
-		SWO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))), RXPKT_RLINK,
-			SRO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
-			RXPKT_RLINK) & ~EOL);
+		    SRO(bitmode, rda, RXPKT_RLINK) | EOL);
+		SWO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
+		    RXPKT_RLINK,
+		    SRO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
+		    RXPKT_RLINK) & ~EOL);
 		sc->sc_rdamark = sc->sc_rxmark;
 
 		if (++sc->sc_rxmark >= sc->sc_nrda)
@@ -1079,10 +1056,7 @@ sonicrxint(sc)
  * appropriate protocol handler
  */
 static __inline__ int 
-sonic_read(sc, pkt, len)
-	struct sn_softc *sc;
-	caddr_t pkt;
-	int len;
+sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
@@ -1100,36 +1074,33 @@ sonic_read(sc, pkt, len)
 	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
 		    sc->sc_dev.dv_xname, len);
-		return (0);
+		return 0;
 	}
 
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
-		return (0);
+		return 0;
 #if NBPFILTER > 0
 	/* Pass the packet to any BPF listeners. */
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 	(*ifp->if_input)(ifp, m);
-	return (1);
+	return 1;
 }
 
 /*
  * munge the received packet into an mbuf chain
  */
 static __inline__ struct mbuf *
-sonic_get(sc, pkt, datalen)
-	struct sn_softc *sc;
-	caddr_t pkt;
-	int datalen;
+sonic_get(struct sn_softc *sc, caddr_t pkt, int datalen)
 {
 	struct	mbuf *m, *top, **mp;
 	int	len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
-		return (0);
+		return 0;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = datalen;
 	len = MHLEN;
@@ -1141,7 +1112,7 @@ sonic_get(sc, pkt, datalen)
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
-				return (0);
+				return 0;
 			}
 			len = MLEN;
 		}
@@ -1149,7 +1120,7 @@ sonic_get(sc, pkt, datalen)
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				if (top) m_freem(top);
-				return (0);
+				return 0;
 			}
 			len = MCLBYTES;
 		}
@@ -1164,12 +1135,12 @@ sonic_get(sc, pkt, datalen)
 
 		m->m_len = len = min(datalen, len);
 
-		bcopy(pkt, mtod(m, caddr_t), (unsigned) len);
+		memcpy(mtod(m, caddr_t), pkt, (unsigned) len);
 		pkt += len;
 		datalen -= len;
 		*mp = m;
 		mp = &m->m_next;
 	}
 
-	return (top);
+	return top;
 }

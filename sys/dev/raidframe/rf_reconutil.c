@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.14.2.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.14.2.4 2005/02/06 08:59:23 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14.2.3 2004/09/21 13:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14.2.4 2005/02/06 08:59:23 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -83,6 +83,8 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	reconCtrlPtr->spareCol = scol;
 	reconCtrlPtr->lastPSID = layoutPtr->numStripe / layoutPtr->SUsPerPU;
 	reconCtrlPtr->percentComplete = 0;
+	reconCtrlPtr->error = 0;
+	reconCtrlPtr->pending_writes = 0;
 
 	/* initialize each per-disk recon information structure */
 	for (i = 0; i < raidPtr->numCol; i++) {
@@ -161,12 +163,14 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 	for (i = 0; i < raidPtr->numCol; i++)
 		if (reconCtrlPtr->perDiskInfo[i].rbuf)
 			rf_FreeReconBuffer(reconCtrlPtr->perDiskInfo[i].rbuf);
-	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
-		t = reconCtrlPtr->floatingRbufs;
-		RF_ASSERT(t);
+
+	t = reconCtrlPtr->floatingRbufs;
+	while (t) {
 		reconCtrlPtr->floatingRbufs = t->next;
 		rf_FreeReconBuffer(t);
+		t = reconCtrlPtr->floatingRbufs;
 	}
+
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
 	RF_Free(reconCtrlPtr->perDiskInfo, 

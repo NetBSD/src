@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31.2.6 2005/02/04 11:48:05 skrll Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.31.2.7 2005/02/06 08:59:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -207,7 +207,9 @@ int	exec_aout_prep_oldomagic(struct lwp *, struct exec_package *);
 /*
  * MD portion
  */
+#ifndef cpu_exec_aout_makecmds
 int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
+#endif
 
 #endif /* _KERNEL */
 

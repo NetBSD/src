@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.5.2.3 2004/09/21 13:19:32 skrll Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.5.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.5.2.3 2004/09/21 13:19:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.5.2.4 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.5.2.3 2004/09/21 13:19:32 skrll Exp 
 #define	TLP_AP_RST	0x00100000	/* Board Reset */
 
 
-extern void tlp_idle __P((struct tulip_softc *, u_int32_t));
+extern void tlp_idle(struct tulip_softc *, uint32_t);
 
 struct tulip_ap_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -87,26 +87,23 @@ struct tulip_ap_softc {
 	bus_space_handle_t sc_cfsh;
 };
 
-static int	tlp_ap_match __P((struct device *, struct cfdata *, void *));
-static void	tlp_ap_attach __P((struct device *, struct device *, void *));
+static int	tlp_ap_match(struct device *, struct cfdata *, void *);
+static void	tlp_ap_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(tlp_ap, sizeof(struct tulip_ap_softc),
     tlp_ap_match, tlp_ap_attach, NULL, NULL);
 
-static void tlp_ap_preinit __P((struct tulip_softc *));
-static void tlp_ap_tmsw_init __P((struct tulip_softc *));
-static void tlp_ap_getmedia __P((struct tulip_softc *, struct ifmediareq *));
-static int tlp_ap_setmedia __P((struct tulip_softc *));
+static void tlp_ap_preinit(struct tulip_softc *);
+static void tlp_ap_tmsw_init(struct tulip_softc *);
+static void tlp_ap_getmedia(struct tulip_softc *, struct ifmediareq *);
+static int tlp_ap_setmedia(struct tulip_softc *);
 
 const struct tulip_mediasw tlp_ap_mediasw = {
 	tlp_ap_tmsw_init, tlp_ap_getmedia, tlp_ap_setmedia
 };
 
 static int
-tlp_ap_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tlp_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -120,14 +117,12 @@ tlp_ap_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-tlp_ap_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+tlp_ap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tulip_ap_softc *psc = (void *) self;
 	struct tulip_softc *sc = &psc->sc_tulip;
 	struct apbus_attach_args *apa = aux;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	u_int intrmask;
 	int i;
 
@@ -232,14 +227,13 @@ tlp_ap_attach(parent, self, aux)
 
 	intrmask = SLOTTOMASK(apa->apa_slotno);
 	apbus_intr_establish(0, /* interrupt level (0 or 1) */
-			     intrmask,
-			     0, /* priority */
-			     tlp_intr, sc, apa->apa_name, apa->apa_ctlnum);
+	    intrmask,
+	    0, /* priority */
+	    tlp_intr, sc, apa->apa_name, apa->apa_ctlnum);
 }
 
 static void
-tlp_ap_preinit(sc)
-	struct tulip_softc *sc;
+tlp_ap_preinit(struct tulip_softc *sc)
 {
 
 	sc->sc_opmode |= OPMODE_MBO | OPMODE_SCR | OPMODE_PCS | OPMODE_HBD |
@@ -248,8 +242,7 @@ tlp_ap_preinit(sc)
 }
 
 static void
-tlp_ap_tmsw_init(sc)
-	struct tulip_softc *sc;
+tlp_ap_tmsw_init(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -268,9 +261,7 @@ tlp_ap_tmsw_init(sc)
 }
 
 static void
-tlp_ap_getmedia(sc, ifmr)
-	struct tulip_softc *sc;
-	struct ifmediareq *ifmr;
+tlp_ap_getmedia(struct tulip_softc *sc, struct ifmediareq *ifmr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -281,8 +272,7 @@ tlp_ap_getmedia(sc, ifmr)
 }
 
 static int
-tlp_ap_setmedia(sc)
-	struct tulip_softc *sc;
+tlp_ap_setmedia(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -296,5 +286,5 @@ tlp_ap_setmedia(sc)
 		sc->sc_opmode &= ~OPMODE_FD;
 	if (ifp->if_flags & IFF_UP)
 		TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-	return (0);
+	return 0;
 }

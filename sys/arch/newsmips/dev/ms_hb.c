@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.7.2.4 2005/01/27 09:02:48 skrll Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.7.2.5 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.7.2.4 2005/01/27 09:02:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.7.2.5 2005/02/06 08:59:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,10 +73,7 @@ struct wsmouse_accessops ms_hb_accessops = {
 };
 
 int
-ms_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ms_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -87,9 +84,7 @@ ms_hb_match(parent, cf, aux)
 }
 
 void
-ms_hb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ms_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ms_hb_softc *sc = (void *)self;
 	struct hb_attach_args *ha = aux;
@@ -118,8 +113,7 @@ ms_hb_attach(parent, self, aux)
 }
 
 int
-ms_hb_intr(v)
-	void *v;
+ms_hb_intr(void *v)
 {
 	struct ms_hb_softc *sc = v;
 	volatile struct msreg *reg = sc->sc_reg;
@@ -185,8 +179,7 @@ ms_hb_intr(v)
 }
 
 int
-ms_hb_enable(v)
-	void *v;
+ms_hb_enable(void *v)
 {
 	volatile u_char *ien = (void *)INTEN0;
 
@@ -195,8 +188,7 @@ ms_hb_enable(v)
 }
 
 void
-ms_hb_disable(v)
-	void *v;
+ms_hb_disable(void *v)
 {
 	volatile u_char *ien = (void *)INTEN0;
 
@@ -204,12 +196,8 @@ ms_hb_disable(v)
 }
 
 int
-ms_hb_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+ms_hb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
+
 	return EPASSTHROUGH;
 }

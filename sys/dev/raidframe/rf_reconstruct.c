@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.56.2.7 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.56.2.8 2005/02/06 08:59:23 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.7 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.8 2005/02/06 08:59:23 skrll Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -93,6 +93,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.56.2.7 2005/01/24 08:35:36 skrl
 #define DDprintf2(s,a,b) {}
 
 #endif /* RF_DEBUG_RECON */
+
+#define RF_RECON_DONE_READS   1
+#define RF_RECON_READ_ERROR   2
+#define RF_RECON_WRITE_ERROR  3
+#define RF_RECON_READ_STOPPED 4
 
 #define RF_MAX_FREE_RECONBUFFER 32
 #define RF_MIN_FREE_RECONBUFFER 16
@@ -315,12 +320,20 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
                         raidPtr->raid_cinfo[scol].ci_dev,
 			raidPtr->raid_cinfo[scol].ci_vp,
 			&c_label);
-		
 
-		rf_update_component_labels(raidPtr, 
-					   RF_NORMAL_COMPONENT_UPDATE);
+	} else {
+		/* Reconstruct failed. */
+
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		/* Failed disk goes back to "failed" status */
+		raidPtr->Disks[col].status = rf_ds_failed;
+
+		/* Spare disk goes back to "spare" status. */
+		spareDiskPtr->status = rf_ds_spare;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	}
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	return (rc);
 }
 
@@ -496,10 +509,6 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	reconDesc->maxReconExecTicks = 0;
 	rc = rf_ContinueReconstructFailedDisk(reconDesc);
 	
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->reconInProgress--;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	
 	if (!rc) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		/* Need to set these here, as at this point it'll be claiming
@@ -534,10 +543,20 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 					  raidPtr->raid_cinfo[col].ci_vp,
 					  &c_label);
 
-		rf_update_component_labels(raidPtr, 
-					   RF_NORMAL_COMPONENT_UPDATE);
-
+	} else {
+		/* Reconstruct-in-place failed.  Disk goes back to
+		   "failed" status, regardless of what it was before.  */
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->Disks[col].status = rf_ds_failed;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	}
+
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
+
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	raidPtr->reconInProgress--;
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
 	return (rc);
 }
@@ -552,9 +571,12 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	RF_ReconMap_t *mapPtr;
 	RF_ReconCtrl_t *tmp_reconctrl;
 	RF_ReconEvent_t *event;
+	RF_CallbackDesc_t *p;
 	struct timeval etime, elpsd;
 	unsigned long xor_s, xor_resid_us;
 	int     i, ds;
+	int status;
+	int recon_error, write_error;
 
 	raidPtr->accumXorTimeUs = 0;
 #if RF_ACC_TRACE > 0
@@ -609,19 +631,63 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	 * they've completed all work */
 
 	mapPtr = raidPtr->reconControl->reconMap;
-	
+	recon_error = 0;
+	write_error = 0;
+
 	while (reconDesc->numDisksDone < raidPtr->numCol - 1) {
 		
 		event = rf_GetNextReconEvent(reconDesc);
-		RF_ASSERT(event);
-		
-		if (ProcessReconEvent(raidPtr, event))
+		status = ProcessReconEvent(raidPtr, event);
+
+		/* the normal case is that a read completes, and all is well. */
+		if (status == RF_RECON_DONE_READS) {
 			reconDesc->numDisksDone++;
+		} else if ((status == RF_RECON_READ_ERROR) ||
+			   (status == RF_RECON_WRITE_ERROR)) {
+			/* an error was encountered while reconstructing... 
+			   Pretend we've finished this disk. 
+			*/
+			recon_error = 1;
+			raidPtr->reconControl->error = 1;
+
+			/* bump the numDisksDone count for reads, 
+			   but not for writes */
+			if (status == RF_RECON_READ_ERROR)
+				reconDesc->numDisksDone++;
+
+			/* write errors are special -- when we are
+			   done dealing with the reads that are
+			   finished, we don't want to wait for any
+			   writes */
+			if (status == RF_RECON_WRITE_ERROR)
+				write_error = 1;
+
+		} else if (status == RF_RECON_READ_STOPPED) {
+			/* count this component as being "done" */
+			reconDesc->numDisksDone++;
+		}
+
+		if (recon_error) {
+
+			/* make sure any stragglers are woken up so that
+			   their theads will complete, and we can get out
+			   of here with all IO processed */
+
+			while (raidPtr->reconControl->headSepCBList) {
+				p = raidPtr->reconControl->headSepCBList;
+				raidPtr->reconControl->headSepCBList = p->next;
+				p->next = NULL;
+				rf_CauseReconEvent(raidPtr, p->col, NULL, RF_REVENT_HEADSEPCLEAR);
+				rf_FreeCallbackDesc(p);
+			}
+		}
+
 		raidPtr->reconControl->numRUsTotal = 
 			mapPtr->totalRUs;
 		raidPtr->reconControl->numRUsComplete = 
 			mapPtr->totalRUs - 
 			rf_UnitsLeftToReconstruct(mapPtr);
+
 #if RF_DEBUG_RECON
 		raidPtr->reconControl->percentComplete = 
 			(raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
@@ -637,19 +703,107 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	}
 	/* at this point all the reads have completed.  We now wait
 	 * for any pending writes to complete, and then we're done */
-	
-	while (rf_UnitsLeftToReconstruct(raidPtr->reconControl->reconMap) > 0) {
+
+	while (!recon_error && rf_UnitsLeftToReconstruct(raidPtr->reconControl->reconMap) > 0) {
 		
 		event = rf_GetNextReconEvent(reconDesc);
-		RF_ASSERT(event);
-		
-		(void) ProcessReconEvent(raidPtr, event);	/* ignore return code */
+		status = ProcessReconEvent(raidPtr, event);
+
+		if (status == RF_RECON_WRITE_ERROR) {
+			recon_error = 1;
+			raidPtr->reconControl->error = 1; 
+			/* an error was encountered at the very end... bail */
+		} else {
 #if RF_DEBUG_RECON
-		raidPtr->reconControl->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
-		if (rf_prReconSched) {
-			rf_PrintReconSchedule(raidPtr->reconControl->reconMap, &(raidPtr->reconControl->starttime));
-		}
+			raidPtr->reconControl->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+			if (rf_prReconSched) {
+				rf_PrintReconSchedule(raidPtr->reconControl->reconMap, &(raidPtr->reconControl->starttime));
+			}
 #endif
+		}
+	}
+
+	if (recon_error) {
+		/* we've encountered an error in reconstructing. */
+		printf("raid%d: reconstruction failed.\n", raidPtr->raidid);
+		
+		/* we start by blocking IO to the RAID set. */
+		rf_SuspendNewRequestsAndWait(raidPtr);
+	
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		/* mark set as being degraded, rather than
+		   rf_rs_reconstructing as we were before the problem.
+		   After this is done we can update status of the
+		   component disks without worrying about someone
+		   trying to read from a failed component.
+		*/
+		raidPtr->status = rf_rs_degraded;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		
+		/* resume IO */
+		rf_ResumeNewRequests(raidPtr);	
+	
+		/* At this point there are two cases:
+		   1) If we've experienced a read error, then we've
+		   already waited for all the reads we're going to get,
+		   and we just need to wait for the writes.
+
+		   2) If we've experienced a write error, we've also
+		   already waited for all the reads to complete,
+		   but there is little point in waiting for the writes --
+		   when they do complete, they will just be ignored.
+
+		   So we just wait for writes to complete if we didn't have a 
+		   write error.
+		*/
+
+		if (!write_error) {
+			/* wait for writes to complete */
+			while (raidPtr->reconControl->pending_writes > 0) {
+
+				event = rf_GetNextReconEvent(reconDesc);
+				status = ProcessReconEvent(raidPtr, event);
+
+				if (status == RF_RECON_WRITE_ERROR) {
+					raidPtr->reconControl->error = 1; 
+					/* an error was encountered at the very end... bail.
+					   This will be very bad news for the user, since
+					   at this point there will have been a read error
+					   on one component, and a write error on another!
+					*/
+					break;
+				}
+			}
+		}
+
+		
+		/* cleanup */
+
+		/* drain the event queue - after waiting for the writes above,
+		   there shouldn't be much (if anything!) left in the queue. */
+
+		rf_DrainReconEventQueue(reconDesc);
+		
+		/* XXX  As much as we'd like to free the recon control structure
+		   and the reconDesc, we have no way of knowing if/when those will
+		   be touched by IO that has yet to occur.  It is rather poor to be
+		   basically causing a 'memory leak' here, but there doesn't seem to be
+		   a cleaner alternative at this time.  Perhaps when the reconstruct code
+		   gets a makeover this problem will go away.
+		*/
+#if 0
+		rf_FreeReconControl(raidPtr);
+#endif
+
+#if RF_ACC_TRACE > 0
+		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
+#endif
+		/* XXX see comment above */
+#if 0
+		FreeReconDesc(reconDesc);
+#endif
+
+		return (1);
 	}
 
 	/* Success:  mark the dead disk as reconstructed.  We quiesce
@@ -683,7 +837,6 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	       (int) raidPtr->reconControl->starttime.tv_sec,
 	       (int) raidPtr->reconControl->starttime.tv_usec,
 	       (int) etime.tv_sec, (int) etime.tv_usec);
-	
 #if RF_RECON_STATS > 0
 	printf("raid%d: Total head-sep stall count was %d\n",
 	       raidPtr->raidid, (int) reconDesc->hsStallCount);
@@ -695,11 +848,10 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	FreeReconDesc(reconDesc);
 	
 	return (0);
+
 }
 /*****************************************************************************
  * do the right thing upon each reconstruction event.
- * returns nonzero if and only if there is nothing left unread on the 
- * indicated disk
  *****************************************************************************/
 static int 
 ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
@@ -707,6 +859,8 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 	int     retcode = 0, submitblocked;
 	RF_ReconBuffer_t *rbuf;
 	RF_SectorCount_t sectorsPerRU;
+
+	retcode = RF_RECON_READ_STOPPED;
 
 	Dprintf1("RECON: ProcessReconEvent type %d\n", event->type);
 	switch (event->type) {
@@ -720,10 +874,12 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		    rbuf->parityStripeID, rbuf->buffer, rbuf->buffer[0] & 0xff, rbuf->buffer[1] & 0xff,
 		    rbuf->buffer[2] & 0xff, rbuf->buffer[3] & 0xff, rbuf->buffer[4] & 0xff);
 		rf_FreeDiskQueueData((RF_DiskQueueData_t *) rbuf->arg);
-		submitblocked = rf_SubmitReconBuffer(rbuf, 0, 0);
-		Dprintf1("RECON: submitblocked=%d\n", submitblocked);
-		if (!submitblocked)
-			retcode = IssueNextReadRequest(raidPtr, event->col);
+		if (!raidPtr->reconControl->error) {
+			submitblocked = rf_SubmitReconBuffer(rbuf, 0, 0);
+			Dprintf1("RECON: submitblocked=%d\n", submitblocked);
+			if (!submitblocked)
+				retcode = IssueNextReadRequest(raidPtr, event->col);
+		}
 		break;
 
 		/* a write I/O has completed */
@@ -741,6 +897,10 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		rf_ReconMapUpdate(raidPtr, raidPtr->reconControl->reconMap,
 		    rbuf->failedDiskSectorOffset, rbuf->failedDiskSectorOffset + sectorsPerRU - 1);
 		rf_RemoveFromActiveReconTable(raidPtr, rbuf->parityStripeID, rbuf->which_ru);
+
+		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		raidPtr->reconControl->pending_writes--;
+		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
 
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING) {
 			RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
@@ -763,47 +923,59 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 				rf_FreeReconBuffer(rbuf);
 			else
 				RF_ASSERT(0);
+		retcode = 0;
 		break;
 
 	case RF_REVENT_BUFCLEAR:	/* A buffer-stall condition has been
 					 * cleared */
 		Dprintf1("RECON: BUFCLEAR EVENT: col %d\n", event->col);
-		submitblocked = rf_SubmitReconBuffer(raidPtr->reconControl->perDiskInfo[event->col].rbuf, 0, (int) (long) event->arg);
-		RF_ASSERT(!submitblocked);	/* we wouldn't have gotten the
-						 * BUFCLEAR event if we
-						 * couldn't submit */
-		retcode = IssueNextReadRequest(raidPtr, event->col);
+		if (!raidPtr->reconControl->error) {
+			submitblocked = rf_SubmitReconBuffer(raidPtr->reconControl->perDiskInfo[event->col].rbuf, 
+							     0, (int) (long) event->arg);
+			RF_ASSERT(!submitblocked);	/* we wouldn't have gotten the
+							 * BUFCLEAR event if we
+							 * couldn't submit */
+			retcode = IssueNextReadRequest(raidPtr, event->col);
+		}
 		break;
 
 	case RF_REVENT_BLOCKCLEAR:	/* A user-write reconstruction
 					 * blockage has been cleared */
 		DDprintf1("RECON: BLOCKCLEAR EVENT: col %d\n", event->col);
-		retcode = TryToRead(raidPtr, event->col);
+		if (!raidPtr->reconControl->error) {
+			retcode = TryToRead(raidPtr, event->col);
+		}
 		break;
 
 	case RF_REVENT_HEADSEPCLEAR:	/* A max-head-separation
 					 * reconstruction blockage has been
 					 * cleared */
 		Dprintf1("RECON: HEADSEPCLEAR EVENT: col %d\n", event->col);
-		retcode = TryToRead(raidPtr, event->col);
+		if (!raidPtr->reconControl->error) {
+			retcode = TryToRead(raidPtr, event->col);
+		}
 		break;
 
 		/* a buffer has become ready to write */
 	case RF_REVENT_BUFREADY:
 		Dprintf1("RECON: BUFREADY EVENT: col %d\n", event->col);
-		retcode = IssueNextWriteRequest(raidPtr);
+		if (!raidPtr->reconControl->error) {
+			retcode = IssueNextWriteRequest(raidPtr);
 #if RF_DEBUG_RECON
-		if (rf_floatingRbufDebug) {
-			rf_CheckFloatingRbufCount(raidPtr, 1);
-		}
+			if (rf_floatingRbufDebug) {
+				rf_CheckFloatingRbufCount(raidPtr, 1);
+			}
 #endif
+		}
 		break;
 
 		/* we need to skip the current RU entirely because it got
 		 * recon'd while we were waiting for something else to happen */
 	case RF_REVENT_SKIP:
 		DDprintf1("RECON: SKIP EVENT: col %d\n", event->col);
-		retcode = IssueNextReadRequest(raidPtr, event->col);
+		if (!raidPtr->reconControl->error) {		
+			retcode = IssueNextReadRequest(raidPtr, event->col);
+		}
 		break;
 
 		/* a forced-reconstruction read access has completed.  Just
@@ -812,21 +984,38 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		rbuf = (RF_ReconBuffer_t *) event->arg;
 		rf_FreeDiskQueueData((RF_DiskQueueData_t *) rbuf->arg);
 		DDprintf1("RECON: FORCEDREADDONE EVENT: col %d\n", event->col);
-		submitblocked = rf_SubmitReconBuffer(rbuf, 1, 0);
-		RF_ASSERT(!submitblocked);
+		if (!raidPtr->reconControl->error) {
+			submitblocked = rf_SubmitReconBuffer(rbuf, 1, 0);
+			RF_ASSERT(!submitblocked);
+		}
 		break;
 
 		/* A read I/O failed to complete */
 	case RF_REVENT_READ_FAILED:
-		/* fallthru to panic... */
+		retcode = RF_RECON_READ_ERROR;
+		break;
 
 		/* A write I/O failed to complete */
 	case RF_REVENT_WRITE_FAILED:
-		/* fallthru to panic... */
+		retcode = RF_RECON_WRITE_ERROR;
+
+		rbuf = (RF_ReconBuffer_t *) event->arg;
+
+		/* cleanup the disk queue data */
+		rf_FreeDiskQueueData((RF_DiskQueueData_t *) rbuf->arg);
+
+		/* At this point we're erroring out, badly, and floatingRbufs
+		   may not even be valid.  Rather than putting this back onto
+		   the floatingRbufs list, just arrange for its immediate
+		   destruction.
+		*/
+		rf_FreeReconBuffer(rbuf);
+		break;
 
 		/* a forced read I/O failed to complete */
 	case RF_REVENT_FORCEDREAD_FAILED:
-		/* fallthru to panic... */
+		retcode = RF_RECON_READ_ERROR;
+		break;
 
 	default:
 		RF_PANIC();
@@ -850,9 +1039,6 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
  * standard C idiom of having counters point to the next thing to be
  * accessed.  This allows us to easily retry when we're blocked by
  * head separation or reconstruction-blockage events.
- *
- * returns nonzero if and only if there is nothing left unread on the
- * indicated disk
  *
  *****************************************************************************/
 static int 
@@ -883,7 +1069,7 @@ IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t col)
 			 * parity stripe id */
 			if (ctrl->curPSID >= raidPtr->reconControl->lastPSID) {
 				CheckForNewMinHeadSep(raidPtr, ++(ctrl->headSepCounter));
-				return (1);	/* finito! */
+				return (RF_RECON_DONE_READS);	/* finito! */
 			}
 			/* find the disk offsets of the start of the parity
 			 * stripe on both the current disk and the failed
@@ -1199,6 +1385,9 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
 
 	rbuf->arg = (void *) req;
+	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	raidPtr->reconControl->pending_writes++;
+	RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
 	rf_DiskIOEnqueue(&raidPtr->Queues[rbuf->spCol], req, RF_IO_RECON_PRIORITY);
 
 	return (0);
@@ -1216,7 +1405,16 @@ static int
 ReconReadDoneProc(void *arg, int status)
 {
 	RF_PerDiskReconCtrl_t *ctrl = (RF_PerDiskReconCtrl_t *) arg;
-	RF_Raid_t *raidPtr = ctrl->reconCtrl->reconDesc->raidPtr;
+	RF_Raid_t *raidPtr;
+
+	/* Detect that reconCtrl is no longer valid, and if that
+	   is the case, bail without calling rf_CauseReconEvent().
+	   There won't be anyone listening for this event anyway */
+
+	if (ctrl->reconCtrl == NULL)
+		return(0);
+
+	raidPtr = ctrl->reconCtrl->reconDesc->raidPtr;
 
 	if (status) {
 		printf("raid%d: Recon read failed!\n", raidPtr->raidid);
@@ -1242,6 +1440,13 @@ static int
 ReconWriteDoneProc(void *arg, int status)
 {
 	RF_ReconBuffer_t *rbuf = (RF_ReconBuffer_t *) arg;
+
+	/* Detect that reconControl is no longer valid, and if that
+	   is the case, bail without calling rf_CauseReconEvent().
+	   There won't be anyone listening for this event anyway */
+
+	if (rbuf->raidPtr->reconControl == NULL)
+		return(0);
 
 	Dprintf2("Reconstruction completed on psid %ld ru %d\n", rbuf->parityStripeID, rbuf->which_ru);
 	if (status) {
@@ -1540,6 +1745,13 @@ static void
 ForceReconReadDoneProc(void *arg, int status)
 {
 	RF_ReconBuffer_t *rbuf = arg;
+
+	/* Detect that reconControl is no longer valid, and if that
+	   is the case, bail without calling rf_CauseReconEvent().
+	   There won't be anyone listening for this event anyway */
+
+	if (rbuf->raidPtr->reconControl == NULL)
+		return;
 
 	if (status) {
 		printf("raid%d: Forced recon read failed!\n", rbuf->raidPtr->raidid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.60.2.6 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: rd.c,v 1.60.2.7 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.60.2.6 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.60.2.7 2005/02/06 08:59:22 skrll Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -309,7 +309,7 @@ static void	rdintr(void *);
 static int	rdstatus(struct rd_softc *);
 static int	rderror(int);
 #ifdef DEBUG
-static void	rdprinterr(char *, short, char **);
+static void	rdprinterr(const char *, short, const char **);
 #endif
 
 static int	rdmatch(struct device *, struct cfdata *, void *);
@@ -700,7 +700,7 @@ rdstrategy(struct buf *bp)
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%p): dev %x, bn %x, bcount %lx, %c\n",
+		printf("rdstrategy(%p): dev %x, bn %llx, bcount %x, %c\n",
 		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
@@ -853,7 +853,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %lx blk %d len %d ecnt %d\n",
+		printf("%s: rdstart: cmd %x adr %lx blk %lld len %d ecnt %d\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rs->sc_errcnt);
 	rs->sc_stats.rdretries++;
@@ -1107,7 +1107,7 @@ rderror(int unit)
 		rdprinterr("fault", sp->c_fef, err_fault);
 		rdprinterr("access", sp->c_aef, err_access);
 		rdprinterr("info", sp->c_ief, err_info);
-		printf("    block: %d, P1-P10: ", hwbn);
+		printf("    block: %lld, P1-P10: ", hwbn);
 		printf("0x%x", *(u_int *)&sp->c_raw[0]);
 		printf("0x%x", *(u_int *)&sp->c_raw[4]);
 		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);

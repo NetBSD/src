@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.2.3 2004/09/21 13:19:33 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.4 2005/02/06 08:59:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,15 +75,15 @@
 
 #include <sys/device.h>
 
-extern const u_int32_t ipl_sr_bits[_IPL_N];
+extern const uint32_t ipl_sr_bits[_IPL_N];
 
-extern int _splraise __P((int));
-extern int _spllower __P((int));
-extern int _splset __P((int));
-extern int _splget __P((void));
-extern void _splnone __P((void));
-extern void _setsoftintr __P((int));
-extern void _clrsoftintr __P((int));
+extern int _splraise(int);
+extern int _spllower(int);
+extern int _splset(int);
+extern int _splget(void);
+extern void _splnone(void);
+extern void _setsoftintr(int);
+extern void _clrsoftintr(int);
 
 #define splhigh()	_splraise(ipl_sr_bits[IPL_HIGH])
 #define spl0()		(void)_spllower(0)
@@ -143,16 +143,16 @@ extern u_int intrcnt[];
 
 /* handle i/o device interrupts */
 #ifdef news3400
-void news3400_intr __P((u_int, u_int, u_int, u_int));
+void news3400_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 #endif
 #ifdef news5000
-void news5000_intr __P((u_int, u_int, u_int, u_int));
+void news5000_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 #endif
-extern void (*hardware_intr) __P((u_int, u_int, u_int, u_int));
+extern void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
 
-extern void (*enable_intr) __P((void));
-extern void (*disable_intr) __P((void));
-extern void (*enable_timer) __P((void));
+extern void (*enable_intr)(void);
+extern void (*disable_intr)(void);
+extern void (*enable_timer)(void);
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.9.6.4 2004/11/29 07:24:32 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.9.6.5 2005/02/06 08:59:23 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -129,6 +129,10 @@ struct RF_ReconCtrl_s {
 	int     percentComplete;/* percentage completion of reconstruction */
 	int     numRUsComplete; /* number of Reconstruction Units done */
 	int     numRUsTotal;    /* total number of Reconstruction Units */
+	int error;              /* non-0 indicates that an error has
+				   occured during reconstruction, and
+				   the reconstruction is in the process of
+				   bailing out. */
 
 	/* reconstruction event queue */
 	RF_ReconEvent_t *eventQueue;	/* queue of pending reconstruction
@@ -143,6 +147,8 @@ struct RF_ReconCtrl_s {
 	int rb_lock;                            /* 1 if someone is mucking
 						   with recon buffers,
 						   0 otherwise */
+	int pending_writes;			/* number of writes which
+						   have not completed */
 	RF_ReconBuffer_t *floatingRbufs;	/* available floating
 						 * reconstruction buffers */
 	RF_ReconBuffer_t *committedRbufs;	/* recon buffers that have
