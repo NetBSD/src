@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.3 2002/06/27 13:22:54 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.4 2002/07/02 16:16:33 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.3 2002/06/27 13:22:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.4 2002/07/02 16:16:33 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -75,12 +75,13 @@ int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
 int	systracef_fcntl(struct file *, u_int, caddr_t, struct proc *);
+int	systracef_poll(struct file *, int, struct proc *);
 #else
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
+int	systracef_select(struct file *, int, struct proc *);
 int	systracef_kqfilter(struct file *, struct knote *);
 #endif
-int	systracef_select(struct file *, int, struct proc *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
@@ -154,9 +155,9 @@ static struct fileops systracefops = {
 	systracef_ioctl,
 #ifdef __NetBSD__
 	systracef_fcntl,
-#endif
+	systracef_poll,
+#else
 	systracef_select,
-#ifndef __NetBSD__
 	systracef_kqfilter,
 #endif
 	systracef_stat,
@@ -384,18 +385,33 @@ systracef_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p)
 }
 #endif
 
-/* ARGSUSED */
+#ifdef __NetBSD__
+int
+systracef_poll(struct file *fp, int events, struct proc *p)
+{
+	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
+	int revents = 0;
+
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
+		return (revents);
+
+	SYSTRACE_LOCK(fst, p);
+	if (TAILQ_EMPTY(&fst->messages) == 0)
+		revents |= events & (POLLIN | POLLRDNORM);
+	else
+		selrecord(p, &fst->si);
+	SYSTRACE_UNLOCK(fst, p);
+
+	return (revents);
+}
+#else
 int
 systracef_select(struct file *fp, int which, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	int ready = 0;
 
-#ifdef __NetBSD__
-	if (!(which & (POLLIN | POLLRDNORM)))
-#else
 	if (which != FREAD)
-#endif
 		return (0);
 
 	SYSTRACE_LOCK(fst, p);
@@ -406,7 +422,7 @@ systracef_select(struct file *fp, int which, struct proc *p)
 
 	return (ready);
 }
-
+#endif /* __NetBSD__ */
 
 #ifndef __NetBSD__
 /* ARGSUSED */
