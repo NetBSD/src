@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock.c,v 1.1 2001/05/28 16:22:16 thorpej Exp $	*/
+/*	$NetBSD: mcclock.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.1 2001/05/28 16:22:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,10 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.1 2001/05/28 16:22:16 thorpej Exp $");
 void	mcclock_init(struct device *);
 void	mcclock_get(struct device *, time_t, struct clocktime *);
 void	mcclock_set(struct device *, struct clocktime *);
-void	mcclock_intrack(struct device *);
 
 const struct clockfns mcclock_clockfns = {
-	mcclock_init, mcclock_get, mcclock_set, mcclock_intrack,
+	mcclock_init, mcclock_get, mcclock_set,
 };
 
 #define	mc146818_write(dev, reg, datum)					\
@@ -78,13 +77,8 @@ mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 void
 mcclock_init(struct device *dev)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 
-	/* hz is initialized to 128 in cpu_initclocks(). */
-
-	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
-	mc146818_write(sc, MC_REGB,
-	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
+	/* We don't use the mcclock for the hardclock interrupt. */
 }
 
 /*
@@ -140,15 +134,4 @@ mcclock_set(struct device *dev, struct clocktime *ct)
 	s = splclock();
 	MC146818_PUTTOD(sc, &regs);
 	splx(s);
-}
-
-/*
- * ACK the clock interrupt.
- */
-void
-mcclock_intrack(struct device *dev)
-{
-	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
-
-	(void) mc146818_read(sc, MC_REGC);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/05/28 16:22:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ void
 cpu_configure(void)
 {
 
-	softintr_init();
+	intr_init();
 
 	(void) splhigh();
 	if (config_rootfound("mainbus", "mainbus") == 0)

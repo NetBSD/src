@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.1 2001/05/28 16:22:14 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,14 +42,6 @@
  * The Algorithmics P-5064 has an interrupt controller that is pretty
  * flexible -- it can take an interrupt source and route it to an
  * arbitrary MIPS CPU hardware interrupt pin.
- *
- * Unfortunately, there aren't enough source pins as inputs to the
- * controller.  It makes it difficult to share interrupts between
- * devices that have different logical levels (BIO, NET, etc.).
- *
- * As a result, this code needs a lot of work -- needs to have the
- * interrupts fully-virtualized -- I just wanted to get *something*
- * working quickly.  --thorpej@netbsd.org
  */
 
 #include "opt_ddb.h"
@@ -59,10 +51,15 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+
+#include <mips/locore.h>
+
+#include <dev/ic/mc146818reg.h>
 
 #include <algor/algor/algor_p5064reg.h>
 #include <algor/algor/algor_p5064var.h>
@@ -78,6 +75,20 @@
 
 #define	REGVAL(x)	*((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
+struct p5064_irqreg {
+	bus_addr_t	addr;
+	u_int32_t	val;
+};
+
+struct p5064_irqmap {
+	int		irqidx;
+	int		cpuintr;
+	int		irqreg;
+	int		irqbit;
+	int		xbarreg;
+	int		xbarshift;
+};
+
 #define	IRQREG_LOCINT		0
 #define	IRQREG_PANIC		1
 #define	IRQREG_PCIINT		2
@@ -85,20 +96,7 @@
 #define	IRQREG_KBDINT		4
 #define	NIRQREG			5
 
-struct irqreg {
-	bus_addr_t	addr;
-	u_int32_t	val;
-};
-
-struct irqmap {
-	struct evcnt	*irqcount;
-	int		irqreg;
-	u_int8_t	irqbit;
-	int		xbarreg;
-	int		xbarshift;
-};
-
-struct irqreg p5064_irqregs[NIRQREG] = {
+struct p5064_irqreg p5064_irqregs[NIRQREG] = {
 	{ P5064_LOCINT,		0 },
 	{ P5064_PANIC,		0 },
 	{ P5064_PCIINT,		0 },
@@ -108,7 +106,7 @@ struct irqreg p5064_irqregs[NIRQREG] = {
 
 #define	NSTEERREG		5
 
-struct irqreg p5064_irqsteer[NSTEERREG] = {
+struct p5064_irqreg p5064_irqsteer[NSTEERREG] = {
 	{ P5064_XBAR0,		0 },
 	{ P5064_XBAR1,		0 },
 	{ P5064_XBAR2,		0 },
@@ -116,187 +114,204 @@ struct irqreg p5064_irqsteer[NSTEERREG] = {
 	{ P5064_XBAR4,		0 },
 };
 
-struct intrhand {
-	LIST_ENTRY(intrhand) ih_q;
-	int (*ih_func)(void *);
-	void *ih_arg;
-	const struct irqmap *ih_irqmap;
-};
+#define	IRQ_ETHERNET		4
+#define	IRQ_SCSI		5
+#define	IRQ_USB			6
+#define	NPCIIRQS		7
 
-struct intrhead {
-	LIST_HEAD(, intrhand) intr_q;
-	struct evcnt intr_count;
-};
+#define	IRQ_MKBD		7
+#define	IRQ_COM1		8
+#define	IRQ_COM2		9
+#define	IRQ_FLOPPY		10
+#define	IRQ_CENTRONICS		11
+#define	IRQ_RTC			12
+#define	NLOCIRQS		6
 
-#define	NINTRS		4	/* MIPS INT0 - INT3 */
+#define	IRQ_ISABRIDGE		13
+#define	IRQ_IDE0		14
+#define	IRQ_IDE1		15
+#define	NISAIRQS		3
 
-struct intrhead p5064_intrtab[NINTRS];
-const char *p5064_intrnames[NINTRS] = {
-	"int 0",
-	"int 1",
-	"int 2",
-	"int 3 (clock)",
-};
+#define	IRQMAP_PCIBASE		0
+#define	IRQMAP_LOCBASE		NPCIIRQS
+#define	IRQMAP_ISABASE		(IRQMAP_LOCBASE + NLOCIRQS)
+#define	NIRQMAPS		(IRQMAP_ISABASE + NISAIRQS)
 
-#define	IRQ_ETHERNET	4
-#define	IRQ_SCSI	5
-#define	IRQ_USB		6
-#define	IRQ_MAX		6
-
-const char *p5064_pci_intrnames[IRQ_MAX + 1] = {
+const char *p5064_intrnames[NIRQMAPS] = {
+	/*
+	 * PCI INTERRUPTS
+	 */
 	"PCIIRQ 0",
 	"PCIIRQ 1",
 	"PCIIRQ 2",
 	"PCIIRQ 3",
-	"Ethernet",
-	"SCSI",
-	"USB",
+	"Ethernet IRQ",
+	"SCSI IRQ",
+	"USB IRQ",
+
+	/*
+	 * LOCAL INTERRUPTS
+	 */
+	"mkbd",
+	"com 1",
+	"com 2",
+	"floppy",
+	"centronics",
+	"mcclock",
+
+	/*
+	 * ISA interrupts.
+	 */
+	"bridge",
+	"IDE primary",
+	"IDE secondary",
 };
 
-struct evcnt p5064_pci_intrcount[IRQ_MAX + 1];
-
-const struct irqmap p5064_pci_irqmap[IRQ_MAX + 1] = {
+const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
+	/*
+	 * PCI INTERRUPTS
+	 */
 	/* PCIIRQ 0 */
-	{ &p5064_pci_intrcount[0],
+	{ 0,			1,
 	  IRQREG_PCIINT,	PCIINT_PCI0,
 	  2,			0 },
 
 	/* PCIIRQ 1 */
-	{ &p5064_pci_intrcount[1],
+	{ 1,			1,
 	  IRQREG_PCIINT,	PCIINT_PCI1,
 	  2,			2 },
 
 	/* PCIIRQ 2 */
-	{ &p5064_pci_intrcount[2],
+	{ 2,			1,
 	  IRQREG_PCIINT,	PCIINT_PCI2,
 	  2,			4 },
 
 	/* PCIIRQ 3 */
-	{ &p5064_pci_intrcount[3],
+	{ 3,			1,
 	  IRQREG_PCIINT,	PCIINT_PCI3,
 	  2,			6 },
 
 	/* Ethernet */
-	{ &p5064_pci_intrcount[4],
+	{ 4,			1,
 	  IRQREG_PCIINT,	PCIINT_ETH,
 	  4,			2 },
 
 	/* SCSI */
-	{ &p5064_pci_intrcount[5],
+	{ 5,			1,
 	  IRQREG_PCIINT,	PCIINT_SCSI,
 	  4,			4 },
 
 	/* USB */
-	{ &p5064_pci_intrcount[6],
+	{ 6,			1,
 	  IRQREG_PCIINT,	PCIINT_USB,
 	  4,			6 },
-};
 
-const char *p5064_isa_intrnames[16] = {
-	"irq 0",
-	"mkbd kbd",
-	"irq 2",
-	"com 2",
-	"com 1",
-	"irq 5",
-	"floppy",
-	"centronics",
-	"rtc",
-	"irq 9",
-	"irq 10",
-	"irq 11",
-	"mkbd mouse",
-	"irq 13",
-	"ide primary",
-	"ide secondary"
-};
-
-struct evcnt p5064_isa_intrcount[16];
-
-const struct irqmap p5064_isa_irqmap[16] = {
-	/* IRQ 0 */
-	{ &p5064_isa_intrcount[0],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 1 -- keyboard */
-	{ &p5064_isa_intrcount[1],
+	/*
+	 * LOCAL INTERRUPTS
+	 */
+	/* keyboard */
+	{ 7,			2,
 	  IRQREG_LOCINT,	LOCINT_MKBD,
 	  0,			4 },
 
-	/* IRQ 2 */
-	{ &p5064_isa_intrcount[2],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 3 -- COM2 */
-	{ &p5064_isa_intrcount[3],
-	  IRQREG_LOCINT,	LOCINT_COM2,
-	  1,			0 },
-
-	/* IRQ 4 -- COM1 */
-	{ &p5064_isa_intrcount[4],
+	/* COM1 */
+	{ 8,			2,
 	  IRQREG_LOCINT,	LOCINT_COM1,
 	  0,			6 },
 
-	/* IRQ 5 */
-	{ &p5064_isa_intrcount[5],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
+	/* COM2 */
+	{ 9,			2,
+	  IRQREG_LOCINT,	LOCINT_COM2,
+	  1,			0 },
 
-	/* IRQ 6 -- floppy controller */
-	{ &p5064_isa_intrcount[6],
+	/* floppy controller */
+	{ 10,			2,
 	  IRQREG_LOCINT,	LOCINT_FLP,
 	  0,			2 },
 
-	/* IRQ 7 -- parallel port */
-	{ &p5064_isa_intrcount[7],
+	/* parallel port */
+	{ 11,			2,
 	  IRQREG_LOCINT,	LOCINT_CENT,
 	  1,			2 },
 
-	/* IRQ 8 -- RTC */
-	{ &p5064_isa_intrcount[8],
+	/* RTC */
+	{ 12,			2,
 	  IRQREG_LOCINT,	LOCINT_RTC,
 	  1,			6 },
 
-	/* IRQ 9 */
-	{ &p5064_isa_intrcount[9],
+	/*
+	 * ISA INTERRUPTS
+	 */
+	/* ISA bridge */
+	{ 13,			0,
 	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 10 */
-	{ &p5064_isa_intrcount[10],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 11 */
-	{ &p5064_isa_intrcount[11],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 12 -- mouse */
-	{ &p5064_isa_intrcount[12],
-	  IRQREG_LOCINT,	LOCINT_MKBD,
 	  0,			4 },
 
-	/* IRQ 13 */
-	{ &p5064_isa_intrcount[13],
-	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  3,			0 },
-
-	/* IRQ 14 -- IDE 0 */
-	{ &p5064_isa_intrcount[14],
+	/* IDE 0 */
+	{ 14,			0,
 	  IRQREG_ISAINT,	ISAINT_IDE0,
 	  3,			2 },
 
-	/* IRQ 15 -- IDE 1 */
-	{ &p5064_isa_intrcount[15],
+	/* IDE 1 */
+	{ 15,			0,
 	  IRQREG_ISAINT,	ISAINT_IDE1,
 	  3,			4 },
 };
 
+const int p5064_isa_to_irqmap[16] = {
+	-1,			/* 0 */
+	IRQ_MKBD,		/* 1 */
+	-1,			/* 2 */
+	IRQ_COM2,		/* 3 */
+	IRQ_COM1,		/* 4 */
+	-1,			/* 5 */
+	IRQ_FLOPPY,		/* 6 */
+	IRQ_CENTRONICS,		/* 7 */
+	IRQ_RTC,		/* 8 */
+	-1,			/* 9 */
+	-1,			/* 10 */
+	-1,			/* 11 */
+	IRQ_MKBD,		/* 12 */
+	-1,			/* 13 */
+	IRQ_IDE0,		/* 14 */
+	IRQ_IDE1,		/* 15 */
+};
+
+struct p5064_intrhand {
+	LIST_ENTRY(p5064_intrhand) ih_q;
+	int (*ih_func)(void *);
+	void *ih_arg;   
+	const struct p5064_irqmap *ih_irqmap;
+};
+
+struct p5064_intrhead {
+	struct evcnt intr_count;
+	int intr_refcnt;
+};
+struct p5064_intrhead p5064_intrtab[NIRQMAPS];
+
+#define	NINTRS			3	/* MIPS INT0 - INT2 */
+
+struct p5064_cpuintr {
+	LIST_HEAD(, p5064_intrhand) cintr_list;
+	struct evcnt cintr_count;
+};
+
+struct p5064_cpuintr p5064_cpuintrs[NINTRS];
+const char *p5064_cpuintrnames[NINTRS] = {
+	"int 0 (isa)",
+	"int 1 (pci)",
+	"int 2 (local)",
+};
+
+const char *p5064_intrgroups[NINTRS] = {
+	"isa",
+	"pci",
+	"local",
+};
+
 void	algor_p5064_intr_disestablish(void *, void *);
-void	*algor_p5064_intr_establish(const struct irqmap *, int,
+void	*algor_p5064_intr_establish(const struct p5064_irqmap *,
 	    int (*)(void *), void *);
 
 int	algor_p5064_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -313,33 +328,37 @@ void	*algor_p5064_isa_intr_establish(void *, int, int, int,
 	    int (*)(void *), void *);
 int	algor_p5064_isa_intr_alloc(void *, int, int, int *);
 
-void	algor_p5064_init_clock_intr(void);
 void	algor_p5064_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 void
 algor_p5064_intr_init(struct p5064_config *acp)
 {
+	const struct p5064_irqmap *irqmap;
 	int i;
 
 	for (i = 0; i < NIRQREG; i++)
 		REGVAL(p5064_irqregs[i].addr) = p5064_irqregs[i].val;
 
-	for (i = 0; i < NSTEERREG; i++)
-		REGVAL(p5064_irqsteer[i].addr) = p5064_irqsteer[i].val;
-
 	for (i = 0; i < NINTRS; i++) {
-		LIST_INIT(&p5064_intrtab[i].intr_q);
+		LIST_INIT(&p5064_cpuintrs[i].cintr_list);
+		evcnt_attach_dynamic(&p5064_cpuintrs[i].cintr_count,
+		    EVCNT_TYPE_INTR, NULL, "mips", p5064_cpuintrnames[i]);
+	}
+	evcnt_attach_static(&mips_int5_evcnt);
+
+	for (i = 0; i < NIRQMAPS; i++) {
+		irqmap = &p5064_irqmap[i];
+
+		p5064_irqsteer[irqmap->xbarreg].val |=
+		    irqmap->cpuintr << irqmap->xbarshift;
+
 		evcnt_attach_dynamic(&p5064_intrtab[i].intr_count,
-		    EVCNT_TYPE_INTR, NULL, "mips", p5064_intrnames[i]);
+		    EVCNT_TYPE_INTR, NULL, p5064_intrgroups[irqmap->cpuintr],
+		    p5064_intrnames[i]);
 	}
 
-	for (i = 0; i <= IRQ_MAX; i++)
-		evcnt_attach_dynamic(&p5064_pci_intrcount[i],
-		    EVCNT_TYPE_INTR, NULL, "pci", p5064_pci_intrnames[i]);
-
-	for (i = 0; i < 16; i++)
-		evcnt_attach_dynamic(&p5064_isa_intrcount[i],
-		    EVCNT_TYPE_INTR, NULL, "isa", p5064_isa_intrnames[i]);
+	for (i = 0; i < NSTEERREG; i++)
+		REGVAL(p5064_irqsteer[i].addr) = p5064_irqsteer[i].val;
 
 	acp->ac_pc.pc_intr_v = NULL;
 	acp->ac_pc.pc_intr_map = algor_p5064_pci_intr_map;
@@ -358,53 +377,79 @@ algor_p5064_intr_init(struct p5064_config *acp)
 	acp->ac_ic.ic_intr_alloc = algor_p5064_isa_intr_alloc;
 
 	algor_iointr = algor_p5064_iointr;
-	algor_init_clock_intr = algor_p5064_init_clock_intr;
+}
+
+void
+algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
+{
+	u_long ctrdiff[4], startctr, endctr, cps;
+	u_int32_t irr;
+	int i;
+
+	/* Disable interrupts first. */
+	bus_space_write_1(st, sh, 0, MC_REGB);
+	bus_space_write_1(st, sh, 1, MC_REGB_SQWE | MC_REGB_BINARY |
+	    MC_REGB_24HR);
+
+	/* Initialize for 16Hz. */
+	bus_space_write_1(st, sh, 0, MC_REGA);
+	bus_space_write_1(st, sh, 1, MC_BASE_32_KHz | MC_RATE_16_Hz);
+
+	REGVAL(P5064_LOCINT) = LOCINT_RTC;
+
+	/* Run the loop an extra time to prime the cache. */
+	for (i = 0; i < 4; i++) {
+		led_display('h', 'z', '0' + i, ' ');
+
+		/* Enable the interrupt. */
+		bus_space_write_1(st, sh, 0, MC_REGB);
+		bus_space_write_1(st, sh, 1, MC_REGB_PIE | MC_REGB_SQWE |
+		    MC_REGB_BINARY | MC_REGB_24HR);
+
+		/* Wait for it to happen. */
+		startctr = mips3_cp0_count_read();
+		do {
+			irr = REGVAL(P5064_LOCINT);
+			endctr = mips3_cp0_count_read();
+		} while ((irr & LOCINT_RTC) == 0);
+
+		/* ACK. */
+		bus_space_write_1(st, sh, 0, MC_REGC);
+		(void) bus_space_read_1(st, sh, 1);
+
+		/* Disable. */
+		bus_space_write_1(st, sh, 0, MC_REGB);
+		bus_space_write_1(st, sh, 1, MC_REGB_SQWE | MC_REGB_BINARY |
+		    MC_REGB_24HR);
+
+		ctrdiff[i] = endctr - startctr;
+	}
+
+	REGVAL(P5064_LOCINT) = 0;
+
+	/* Compute the number of cycles per second. */
+	cps = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
+
+	/* Compute the number of ticks for hz. */
+	cycles_per_hz = cps / hz;
+
+	/* Compute the delay divisor. */
+	delay_divisor = (cps / 1000000) / 2;
+
+	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
+	    cps, ctrdiff[2], ctrdiff[3]);
+	printf("CPU clock speed = %lu.%02luMHz "
+	    "(hz cycles = %lu, delay divisor = %u)\n",
+	    cps / 1000000, (cps % 1000000) / 100,
+	    cycles_per_hz, delay_divisor);
 }
 
 void *
-algor_p5064_intr_establish(const struct irqmap *irqmap, int level,
+algor_p5064_intr_establish(const struct p5064_irqmap *irqmap,
     int (*func)(void *), void *arg)
 {
-	struct intrhand *ih;
+	struct p5064_intrhand *ih;
 	int s;
-
-	/*
-	 * XXX SHARING OF INTERRUPTS OF DIFFERENT LEVELS ON THE
-	 * XXX SAME PCIIRQ OR ISA BRIDGE IRQ IS COMPLETELY BROKEN.
-	 * XXX FIXME!!!!
-	 */
-
-	/*
-	 * XXX REFERENCE COUNTING OF PCIIRQS ISA BRIDGE IRQS
-	 * XXX IS COMPLETLY BROKEN, MAKING IT IMPOSSIBLE TO
-	 * XXX IMPLEMENT INTR_DISESTABLISH.
-	 * XXX FIXME!!!!
-	 */
-
-	switch (level) {
-	case IPL_BIO:
-		level = 0;
-		break;
-
-	case IPL_NET:
-		level = 1;
-		break;
-
-	case IPL_TTY:
-#if 0
-	case IPL_SERIAL:	/* same as IPL_TTY */
-#endif
-		level = 2;
-		break;
-
-	case IPL_CLOCK:
-		level = 3;
-		break;
-
-	default:
-		printf("algor_p5064_intr_establish: bad level %d\n", level);
-		return (NULL);
-	}
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -417,29 +462,19 @@ algor_p5064_intr_establish(const struct irqmap *irqmap, int level,
 	s = splhigh();
 
 	/*
-	 * First, link it into the interrupt table.
+	 * First, link it into the tables.
 	 */
-	LIST_INSERT_HEAD(&p5064_intrtab[level].intr_q, ih, ih_q);
-
-	/*
-	 * Then, steer the interrupt to the intended MIPS interrupt line.
-	 */
-	p5064_irqsteer[irqmap->xbarreg].val &= ~(3 << irqmap->xbarshift);
-	p5064_irqsteer[irqmap->xbarreg].val |= (level << irqmap->xbarshift);
-	REGVAL(p5064_irqsteer[irqmap->xbarreg].addr) =
-	    p5064_irqsteer[irqmap->xbarreg].val;
+	LIST_INSERT_HEAD(&p5064_cpuintrs[irqmap->cpuintr].cintr_list,
+	    ih, ih_q);
 
 	/*
 	 * Now enable it.
 	 */
-	/* XXX XXX XXX */
-	if (p5064_irqregs[irqmap->irqreg].val & irqmap->irqbit)
-		printf("WARNING: IRQREG %d BIT 0x%02x ALREADY IN USE!\n",
-		    irqmap->irqreg, irqmap->irqbit);
-	/* XXX XXX XXX */
-	p5064_irqregs[irqmap->irqreg].val |= irqmap->irqbit;
-	REGVAL(p5064_irqregs[irqmap->irqreg].addr) =
-	    p5064_irqregs[irqmap->irqreg].val;
+	if (p5064_intrtab[irqmap->irqidx].intr_refcnt++ == 0) {
+		p5064_irqregs[irqmap->irqreg].val |= irqmap->irqbit;
+		REGVAL(p5064_irqregs[irqmap->irqreg].addr) =
+		    p5064_irqregs[irqmap->irqreg].val;
+	}
 
 	splx(s);
 
@@ -449,29 +484,37 @@ algor_p5064_intr_establish(const struct irqmap *irqmap, int level,
 void
 algor_p5064_intr_disestablish(void *v, void *cookie)
 {
+	const struct p5064_irqmap *irqmap;
+	struct p5064_intrhand *ih = v;
+	int s;
 
-	panic("algor_p5064_intr_disestablish: I'm totally broken.");
-}
+	s = splhigh();
 
-void
-algor_p5064_init_clock_intr(void)
-{
+	/*
+	 * First, remove it from the table.
+	 */
+	LIST_REMOVE(ih, ih_q);
 
-	/* Steer the clock interrupt to MIPS INT3 */
-	p5064_irqsteer[1].val |= (3 << 6);
-	REGVAL(p5064_irqsteer[1].addr) = p5064_irqsteer[1].val;
+	/*
+	 * Now, disable it, if there is nothing remaining on the
+	 * list.
+	 */
+	if (p5064_intrtab[irqmap->irqidx].intr_refcnt-- == 1) {
+		p5064_irqregs[irqmap->irqreg].val &= ~irqmap->irqbit;
+		REGVAL(p5064_irqregs[irqmap->irqreg].addr) =
+		    p5064_irqregs[irqmap->irqreg].val;
+	}
 
-	/* Now enable it. */
-	p5064_irqregs[IRQREG_LOCINT].val |= LOCINT_RTC;
-	REGVAL(p5064_irqregs[IRQREG_LOCINT].addr) =
-	    p5064_irqregs[IRQREG_LOCINT].val;
+	splx(s);
+
+	free(ih, M_DEVBUF);
 }
 
 void
 algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
     u_int32_t ipending)
 {
-	struct intrhand *ih;
+	struct p5064_intrhand *ih;
 	int level, i;
 	u_int32_t irr[NIRQREG];
 
@@ -502,23 +545,6 @@ algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		REGVAL(p5064_irqregs[IRQREG_PANIC].addr) = irr[IRQREG_PANIC];
 	}
 
-	/* Do clock interrupts. */
-	if (ipending & MIPS_INT_MASK_3) {
-		struct clockframe cf;
-
-		(*clockfns->cf_intrack)(clockdev);
-
-		cf.pc = pc;
-		cf.sr = status;
-		hardclock(&cf);
-
-		p5064_intrtab[3].intr_count.ev_count++;
-
-		/* Re-enable clock interrupts. */
-		cause &= ~MIPS_INT_MASK_3;
-		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_3);
-	}
-
 	/*
 	 * Read the interrupt pending registers, mask them with the
 	 * ones we have enabled, and service them in order of decreasing
@@ -530,15 +556,16 @@ algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		irr[i] = REGVAL(p5064_irqregs[i].addr) & p5064_irqregs[i].val;
 	}
 
-	for (level = 2; level >= 0; level--) {
+	for (level = (NINTRS - 1); level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
 			continue;
-		p5064_intrtab[level].intr_count.ev_count++;
-		for (ih = LIST_FIRST(&p5064_intrtab[level].intr_q);
+		p5064_cpuintrs[level].cintr_count.ev_count++;
+		for (ih = LIST_FIRST(&p5064_cpuintrs[level].cintr_list);
 		     ih != NULL; ih = LIST_NEXT(ih, ih_q)) {
 			if (irr[ih->ih_irqmap->irqreg] &
 			    ih->ih_irqmap->irqbit) {
-				ih->ih_irqmap->irqcount->ev_count++;
+				p5064_intrtab[
+				  ih->ih_irqmap->irqidx].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
@@ -603,18 +630,17 @@ const char *
 algor_p5064_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 
-	if (ih > IRQ_MAX)
+	if (ih >= NPCIIRQS)
 		panic("algor_p5064_intr_string: bogus IRQ %ld\n", ih);
 
-	return (p5064_pci_intrnames[ih]);
+	return (p5064_intrnames[ih]);
 }
 
 const struct evcnt *
 algor_p5064_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
 
-	/* XXX */
-	return (NULL);
+	return (&p5064_intrtab[ih].intr_count);
 }
 
 void *
@@ -622,11 +648,10 @@ algor_p5064_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
-	if (ih > IRQ_MAX)
+	if (ih >= NPCIIRQS)
 		panic("algor_p5064_intr_establish: bogus IRQ %ld\n", ih);
 
-	return (algor_p5064_intr_establish(&p5064_pci_irqmap[ih],
-	    level, func, arg));
+	return (algor_p5064_intr_establish(&p5064_irqmap[ih], func, arg));
 }
 
 void
@@ -645,9 +670,10 @@ void *
 algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
+	const struct p5064_irqmap *irqmap;
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;
-	int bus, irq;
+	int bus;
 
 	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
@@ -657,13 +683,14 @@ algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
 	if (bus != 0)
 		return (NULL);
 
-	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = algor_p5064_isa_intr_establish(NULL /*XXX*/, irq, IST_EDGE,
-	    IPL_BIO, func, arg);
+	irqmap = &p5064_irqmap[IRQ_IDE0 + chan];
+
+	cookie = algor_p5064_intr_establish(irqmap, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at ISA IRQ %d\n", dev->dv_xname,
-	    PCIIDE_CHANNEL_NAME(chan), irq);
+	printf("%s: %s channel interrupting at on-board %s IRQ\n",
+	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan),
+	    p5064_intrnames[irqmap->irqidx]);
 	return (cookie);
 }
 
@@ -683,6 +710,7 @@ void *
 algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
     int (*func)(void *), void *arg)
 {
+	int irqidx;
 
 	if (iirq > 15 || type == IST_NONE)
 		panic("algor_p5064_isa_intr_establish: bad irq or type");
@@ -691,9 +719,10 @@ algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
 	 * XXX WE CURRENTLY DO NOT DO ANYTHING USEFUL AT ALL WITH
 	 * XXX REGULAR ISA INTERRUPTS.
 	 */
+	if ((irqidx = p5064_isa_to_irqmap[iirq]) == -1)
+		return (NULL);
 
-	return (algor_p5064_intr_establish(&p5064_isa_irqmap[iirq],
-	    level, func, arg));
+	return (algor_p5064_intr_establish(&p5064_irqmap[irqidx], func, arg));
 }
 
 int

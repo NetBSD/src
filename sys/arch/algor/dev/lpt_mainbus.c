@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ lpt_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	lpt_attach_subr(sc);
 
 #if defined(ALGOR_P4032)
-	sc->sc_ih = algor_p4032_intr_establish(&p4032_8bit_irqmap[ma->ma_irq],
-	    IPL_TTY, lptintr, sc);
+	sc->sc_ih = algor_p4032_intr_establish(&p4032_irqmap[ma->ma_irq],
+	    lptintr, sc);
 #endif
 
 	if (msc->sc_ih == NULL) {

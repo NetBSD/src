@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/05/28 16:22:18 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -162,6 +162,10 @@ do {									\
 extern struct algor_soft_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
+
+extern struct evcnt mips_int5_evcnt;
+
+void	intr_init(void);
 
 #endif /* _KERNEL */
 #endif /* ! _ALGOR_INTR_H_ */
