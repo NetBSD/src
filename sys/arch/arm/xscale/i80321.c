@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.10 2003/01/23 03:53:16 briggs Exp $	*/
+/*	$NetBSD: i80321.c,v 1.11 2003/01/23 03:56:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -290,9 +290,9 @@ i80321_pci_dma_init(struct i80321_softc *sc)
 	bus_dma_tag_t dmat = &sc->sc_pci_dmat;
 	struct arm32_dma_range *dr = &sc->sc_pci_dma_range;
 
-	dr->dr_sysbase = sc->sc_iwin[2].iwin_xlate;
-	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(sc->sc_iwin[2].iwin_base_lo);
-	dr->dr_len = sc->sc_iwin[2].iwin_size;
+	dr->dr_sysbase = sc->sc_iwin[3].iwin_xlate;
+	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(sc->sc_iwin[3].iwin_base_lo);
+	dr->dr_len = sc->sc_iwin[3].iwin_size;
 
 	dmat->_ranges = dr;
 	dmat->_nranges = 1;
