@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.11 2001/07/22 09:56:41 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.12 2001/07/31 10:50:06 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.11 2001/07/22 09:56:41 takemura Exp $";
+    "$NetBSD: hpcfb.c,v 1.12 2001/07/31 10:50:06 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,14 @@ struct hpcfb_devconfig {
 #define HPCFB_DC_SCRTHREAD		0x20	/* in scroll thread or callout */
 #define HPCFB_DC_UPDATEALL		0x40	/* need to redraw all */
 #define HPCFB_DC_ABORT			0x80	/* abort redrawing */
+#define	HPCFB_DC_SWITCHREQ		0x100	/* switch request exist */
 	int	dc_memsize;
 	u_char *dc_fbaddr;
 };
+
+#define IS_DRAWABLE(dc) \
+	(((dc)->dc_state&HPCFB_DC_CURRENT)&& \
+	 (((dc)->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_SWITCHREQ)) == 0))
 
 #define HPCFB_MAX_SCREEN 5
 #define HPCFB_MAX_JUMP 5
@@ -776,6 +781,11 @@ hpcfb_show_screen(void *v, void *cookie, int waitok,
 		hpcfb_refresh_screen(sc);
 		return (0);
 	}
+	odc->dc_state |= HPCFB_DC_SWITCHREQ;
+
+	if ((odc->dc_state&HPCFB_DC_DRAWING) != 0) {
+		odc->dc_state |= HPCFB_DC_ABORT;
+	}
 
 	sc->sc_wantedscreen = cookie;
 	sc->sc_switchcb = cb;
@@ -802,11 +812,14 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 
 	if (!dc) {
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, EIO, 0);
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 		return;
 	}
 
-	if (odc == dc)
+	if (odc == dc) {
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 		return;
+	}
 
 	if (odc) {
 #ifdef HPCFB_JUMP
@@ -824,6 +837,7 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 	}
 	/* switch screen to new one */
 	dc->dc_state |= HPCFB_DC_CURRENT;
+	dc->dc_state &= ~HPCFB_DC_ABORT;
 	dc->dc_rinfo.ri_bits = dc->dc_fbaddr;
 	sc->sc_dc = dc;
 
@@ -834,6 +848,8 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 	if (sc->sc_switchcb)
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, 0, 0);
 
+	odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
+	dc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 	return;
 }
 
@@ -892,8 +908,9 @@ hpcfb_cursor_raw(cookie, on, row, col)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -980,8 +997,10 @@ hpcfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	}
 #endif /* HPCFB_JUMP */
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1054,8 +1073,10 @@ hpcfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1124,8 +1145,10 @@ hpcfb_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1223,10 +1246,12 @@ hpcfb_redraw(cookie, row, num, all)
 
 	dc->dc_state &= ~HPCFB_DC_ABORT;
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
-		return;
 	if (vscn == 0)
 		return;
+
+	if (!IS_DRAWABLE(dc)) {
+		return;
+	}
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -1236,9 +1261,13 @@ hpcfb_redraw(cookie, row, num, all)
 	for (i = 0; i < num; i++) {
 		if (dc->dc_state&HPCFB_DC_ABORT)
 			break;
+		if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+			break;
 		cols = vscn[row+i].maxcol;
 		for (j = 0; j <= cols; j++) {
 			if (dc->dc_state&HPCFB_DC_ABORT)
+				continue;
+			if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
 				continue;
 			svc = &vscn[row+i].col[j];
 			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
@@ -1249,6 +1278,8 @@ hpcfb_redraw(cookie, row, num, all)
 			cols = vscn[row+i].spacecol;
 		for (; j <= cols; j++) {
 			if (dc->dc_state&HPCFB_DC_ABORT)
+				continue;
+			if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
 				continue;
 			rasops_emul.putchar(ri, row + i, j, ' ', 0);
 		}
@@ -1337,8 +1368,10 @@ hpcfb_copyrows(void *cookie, int src, int dst, int num)
 
 	hpcfb_tv_copyrows(cookie, src, dst, num);
 
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1440,8 +1473,10 @@ hpcfb_eraserows(void *cookie, int row, int nrow, long attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
-	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+	if (!IS_DRAWABLE(dc)) {
 		return;
+	}
+
 	if (ri->ri_bits == NULL)
 		return;
 
