@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.162 2000/09/19 22:01:41 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.163 2000/09/28 06:43:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,6 +66,7 @@
 #include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
+static int change_flags __P((struct vnode *, u_long, struct proc *));
 static int change_mode __P((struct vnode *, int, struct proc *p));
 static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *,
     int));
@@ -2061,7 +2062,6 @@ sys_chflags(p, v, retval)
 		syscallarg(u_long) flags;
 	} */ *uap = v;
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
@@ -2069,22 +2069,7 @@ sys_chflags(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/* Non-superusers cannot change the flags on devices, even if they
-	   own them. */
-	if (suser(p->p_ucred, &p->p_acflag)) {
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
-			goto out;
-		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
-			error = EINVAL;
-			goto out;
-		}
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_flags = SCARG(uap, flags);
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-out:
+	error = change_flags(vp, SCARG(uap, flags), p);
 	vput(vp);
 	return (error);
 }
@@ -2103,7 +2088,6 @@ sys_fchflags(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(u_long) flags;
 	} */ *uap = v;
-	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
 	int error;
@@ -2112,30 +2096,14 @@ sys_fchflags(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/* Non-superusers cannot change the flags on devices, even if they
-	   own them. */
-	if (suser(p->p_ucred, &p->p_acflag)) {
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
-		    != 0)
-			goto out;
-		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
-			error = EINVAL;
-			goto out;
-		}
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_flags = SCARG(uap, flags);
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-out:
+	error = change_flags(vp, SCARG(uap, flags), p);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
 
 /*
- * Change flags of a file given a file descriptor; this version does
+ * Change flags of a file given a path name; this version does
  * not follow links.
  */
 int
@@ -2144,12 +2112,11 @@ sys_lchflags(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_chflags_args /* {
+	struct sys_lchflags_args /* {
 		syscallarg(const char *) path;
 		syscallarg(u_long) flags;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct vattr vattr;
+	struct vnode *vp;
 	int error;
 	struct nameidata nd;
 
@@ -2157,11 +2124,30 @@ sys_lchflags(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+	error = change_flags(vp, SCARG(uap, flags), p);
+	vput(vp);
+	return (error);
+}
+
+/*
+ * Common routine to change flags of a file.
+ */
+int
+change_flags(vp, flags, p)
+	struct vnode *vp;
+	u_long flags;
+	struct proc *p;
+{
+	struct vattr vattr;
+	int error;
+
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/* Non-superusers cannot change the flags on devices, even if they
-	   own them. */
-	if (suser(p->p_ucred, &p->p_acflag)) {
+	/*
+	 * Non-superusers cannot change the flags on devices, even if they
+	 * own them.
+	 */
+	if (suser(p->p_ucred, &p->p_acflag) != 0) {
 		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 			goto out;
 		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
@@ -2170,10 +2156,9 @@ sys_lchflags(p, v, retval)
 		}
 	}
 	VATTR_NULL(&vattr);
-	vattr.va_flags = SCARG(uap, flags);
+	vattr.va_flags = flags;
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 out:
-	vput(vp);
 	return (error);
 }
 
