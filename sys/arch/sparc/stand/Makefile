@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 1996/10/18 06:08:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 1997/01/24 01:18:22 pk Exp $
 
 SUBDIR= boot bootxx installboot
 
 ### find out what to use for libkern and libsa
-SAREL=
-KERNREL=
 .include "Makefile.inc"
 .include "$S/lib/libsa/Makefile.inc"
 .include "$S/lib/libkern/Makefile.inc"
@@ -12,18 +10,18 @@ KERNREL=
 all: ${SALIB} ${KERNLIB} _SUBDIRUSE
 
 libdep:
-	@echo  ${.OBJDIR}/${SALIB} ${KERNLIB}
+	@echo  ${SALIB} ${KERNLIB}
 
 sadep:
-	@echo  ${.OBJDIR}/${SALIB}
+	@echo  ${SALIB}
 
 kernlibdir:
 	@echo  ${KERNDST}
 
 salibdir:
-	@echo  ${.OBJDIR}/${SADST}
+	@echo  ${SADST}
 
-clean:: _SUBDIRUSE
+clean: _SUBDIRUSE
 
 cleandir: _SUBDIRUSE
 
