@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.79 2004/03/28 19:35:13 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.79 2004/03/28 19:35:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80 2004/04/28 12:38:19 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -68,7 +68,7 @@ struct iommu_softc {
 	u_int		sc_range;
 	bus_addr_t	sc_dvmabase;
 	iopte_t		*sc_ptes;
-	int		sc_hasiocache;
+	int		sc_cachecoherent;
 /*
  * Note: operations on the extent map are being protected with
  * splhigh(), since we cannot predict at which interrupt priority
@@ -77,7 +77,6 @@ struct iommu_softc {
 	struct sparc_bus_dma_tag sc_dmatag;
 	struct extent *sc_dvmamap;
 };
-static int has_iocache;
 
 /* autoconfiguration driver */
 int	iommu_print __P((void *, const char *));
@@ -210,11 +209,10 @@ iommu_attach(parent, self, aux)
 	}
 	sc->sc_reg = (struct iommureg *)bh;
 
-	sc->sc_hasiocache = js1_implicit_iommu ? 0
+	sc->sc_cachecoherent = js1_implicit_iommu ? 0
 				: node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
-		sc->sc_hasiocache = 0;
-	has_iocache = sc->sc_hasiocache; /* Set global flag */
+		sc->sc_cachecoherent = 0;
 
 	sc->sc_pagesize = js1_implicit_iommu ? PAGE_SIZE
 				: prom_getpropint(node, "page-size", PAGE_SIZE),
@@ -412,7 +410,7 @@ iommu_enter(struct iommu_softc *sc, bus_addr_t dva, paddr_t pa)
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
 	pte &= IOPTE_PPN;
-	pte |= IOPTE_V | IOPTE_W | (has_iocache ? IOPTE_C : 0);
+	pte |= IOPTE_V | IOPTE_W | (sc->sc_cachecoherent ? IOPTE_C : 0);
 	sc->sc_ptes[atop(dva - sc->sc_dvmabase)] = pte;
 	IOMMU_FLUSHPAGE(sc, dva);
 }
@@ -603,7 +601,8 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 					&dva, &sgsize)) != 0)
 		return (error);
 
-	cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
+	if (sc->sc_cachecoherent == 0)
+		cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
 	 * We always use just one segment.
@@ -786,6 +785,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
+	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
 	vaddr_t va;
 	bus_addr_t addr;
@@ -797,7 +797,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
 
-	cbit = has_iocache ? 0 : PMAP_NC;
+	cbit = sc->sc_cachecoherent ? 0 : PMAP_NC;
 	align = dvma_cachealign ? dvma_cachealign : pagesz;
 
 	size = round_page(size);
