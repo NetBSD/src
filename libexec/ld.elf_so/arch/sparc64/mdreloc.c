@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.2 2000/07/18 22:33:56 eeh Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.3 2000/07/26 02:07:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -192,7 +192,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Word type, value = 0, mask;
+	Elf_Word type;
+	Elf_Addr value = 0, mask;
 	const Elf_Sym *def = NULL;
 	const Obj_Entry *defobj = NULL;
 
@@ -236,11 +237,11 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 			return (-1);
 
 		/* Add in the symbol's absolute address */
-		value += (Elf_Word)(defobj->relocbase + def->st_value);
+		value += (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
 
 	if (RELOC_PC_RELATIVE(type)) {
-		value -= (Elf_Word)where;
+		value -= (Elf_Addr)where;
 	}
 
 	if (RELOC_BASE_RELATIVE(type)) {
@@ -263,7 +264,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		}
 #endif
 		/* XXXX -- apparently we ignore the preexisting value */
-		value += (Elf_Word)(obj->relocbase);
+		value += (Elf_Addr)(obj->relocbase);
 	}
 
 	mask = RELOC_VALUE_BITMASK(type);
@@ -272,7 +273,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 	if (RELOC_UNALIGNED(type)) {
 		/* Handle unaligned relocations. */
-		Elf_Word tmp = 0;
+		Elf_Addr tmp = 0;
 		char *ptr = (char *)where;
 		int i, size = RELOC_TARGET_SIZE(type)/8;
 		
@@ -287,14 +288,14 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		for (i=0; i<size; i++)
 			ptr[i] = ((tmp >> (8*i)) & 0xff);
 #ifdef RTLD_DEBUG_RELOC
-		value = (Elf_Word)tmp;
+		value = (Elf_Addr)tmp;
 #endif
 
 	} else if (RELOC_TARGET_SIZE(type) > 32) {
 		*where &= ~mask;
 		*where |= value;
 #ifdef RTLD_DEBUG_RELOC
-		value = (Elf_Word)*where;
+		value = (Elf_Addr)*where;
 #endif
 	} else {
 		Elf32_Addr *where32 = (Elf32_Addr *)where;
@@ -302,7 +303,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		*where32 &= ~mask;
 		*where32 |= value;
 #ifdef RTLD_DEBUG_RELOC
-		value = (Elf_Word)*where32;
+		value = (Elf_Addr)*where32;
 #endif
 	}
 
@@ -352,7 +353,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf32_Word *where = (Elf32_Word *)((Elf_Addr)obj->pltgot + rela->r_offset);
+	Elf_Word *where = (Elf_Word *)((Elf_Addr)obj->relocbase + rela->r_offset);
 	Elf_Addr value, offset;
 
 	if (bind_now == 0 && obj->pltgot != NULL)
@@ -590,11 +591,11 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 #define	JMPL_l0_o0	0x93c42000
 #define	MOV_g1_o0	0x90100001
 
-void _rtld_install_plt __P((Elf32_Word *pltgot,	Elf_Addr proc));
+void _rtld_install_plt __P((Elf_Word *pltgot,	Elf_Addr proc));
 
 void
 _rtld_install_plt(pltgot, proc)
-	Elf32_Word *pltgot;
+	Elf_Word *pltgot;
 	Elf_Addr proc;
 {
 	pltgot[0] = SAVE;

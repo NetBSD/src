@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.30 2000/07/18 22:33:55 eeh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.31 2000/07/26 02:07:34 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -673,7 +673,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			_rtld_setup_powerpc_plt(obj);
 #endif
 #if defined(__sparc__)
-#if defined(__arch64__)
+#if defined(__arch64__) || defined(__sparc_v9__)
 			/*
 			 * On sparc64 we got troubles.
 			 *
@@ -692,8 +692,8 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			 * Oh, we need to fill out both PLT0 and PLT1.
 			 */
 			{
-				Elf32_Word *entry = (Elf32_Word *)obj->pltgot;
-				extern void _rtld_install_plt __P((Elf32_Word *,
+				Elf_Word *entry = (Elf_Word *)obj->pltgot;
+				extern void _rtld_install_plt __P((Elf_Word *,
 					Elf_Addr));
 				extern void _rtld_bind_start_0 __P((long,
 					long));
