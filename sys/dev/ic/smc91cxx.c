@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.3 1997/10/09 08:03:52 jtc Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.4 1997/10/14 21:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -173,6 +173,9 @@ void	smc91cxx_stop __P((struct smc91cxx_softc *));
 void	smc91cxx_watchdog __P((struct ifnet *));
 int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
 
+int	smc91cxx_enable __P((struct smc91cxx_softc *));
+void	smc91cxx_disable __P((struct smc91cxx_softc *));
+
 /* XXX Should be in a common header file. */
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_MIN_LEN	64
@@ -280,6 +283,14 @@ smc91cxx_set_media(sc, media)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
 
+	/*
+	 * If the interface is not currently powered on, just return.
+	 * When it is enabled later, smc91cxx_init() will properly set
+	 * up the media for us.
+	 */
+	if (sc->sc_enabled == 0)
+		return (0);
+
 	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
 
@@ -315,6 +326,12 @@ smc91cxx_mediastatus(ifp, ifmr)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
+
+	if (sc->sc_enabled == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 
 	SMC_SELECT_BANK(sc, 1);
 	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
@@ -638,6 +655,9 @@ smc91cxx_intr(arg)
 	u_int8_t mask, interrupts, status;
 	u_int16_t packetno, tx_status, card_stats;
 
+	if (sc->sc_enabled == 0)
+		return (0);
+
 	SMC_SELECT_BANK(sc, 2);
 
 	/*
@@ -957,6 +977,8 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = smc91cxx_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -995,6 +1017,8 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
+		if ((error = smc91cxx_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest;	/* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
@@ -1012,14 +1036,17 @@ smc91cxx_ioctl(ifp, cmd, data)
 			 */
 			smc91cxx_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			smc91cxx_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped,
 			 * start it.
 			 */
+			if ((error = smc91cxx_enable(sc)) != 0)
+				break;
 			smc91cxx_init(sc);
-		} else {
+		} else if (sc->sc_enabled) {
 			/*
 			 * Reset the interface to pick up changes in any
 			 * other flags that affect hardware registers.
@@ -1030,6 +1057,11 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ec) :
 		    ether_delmulti(ifr, &sc->sc_ec);
@@ -1113,4 +1145,38 @@ smc91cxx_stop(sc)
 	 * Cancel watchdog timer.
 	 */
 	sc->sc_ec.ec_if.if_timer = 0;
+}
+
+/*
+ * Enable power on the interface.
+ */
+int
+smc91cxx_enable(sc)
+	struct smc91cxx_softc *sc;
+{
+
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->sc_enabled = 1;
+	return (0);
+}
+
+/*
+ * Disable power on the interface.
+ */
+void
+smc91cxx_disable(sc)
+	struct smc91cxx_softc *sc;
+{
+
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 }
