@@ -1,9 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mkman,v 1.1 2001/06/24 02:34:49 hubertf Exp $
+#	$NetBSD: mkman,v 1.2 2001/06/24 02:39:14 hubertf Exp $
 
 #
-# Find all manpage sources
-# Todo: filter out known non-manpages like src/bin/csh/USD.doc/csh.*
+# Find all manpage sources - run before tocrc
 #
 
 echo Preparing data ...
