@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/10/15 09:44:55 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/10/17 16:24:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/10/15 09:44:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2003/10/17 16:24:31 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -588,7 +588,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf->tf_rdi = sig;
 	tf->tf_rsi = (uint64_t)&fp->sf_si;
-	tf->tf_rdx = (uint64_t)&fp->sf_uc;
+	tf->tf_rdx = tf->tf_r15 = (uint64_t)&fp->sf_uc;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
