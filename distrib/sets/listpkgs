@@ -1,7 +1,8 @@
 #!/bin/sh
 #
-# Print out the files in some or all lists.
-# Usage: makeflist [-a arch] [-m machine] [-s setsdir] setname
+# $NetBSD: listpkgs,v 1.2 2002/02/27 10:43:42 lukem Exp $
+#
+# List all packages in the given pkgset by parsing the list files.
 #
 
 # set defaults
@@ -82,4 +83,4 @@ fi
 			cat $setd/lists/$setname/shl.${shlib}
 		fi
 	fi
-)| egrep -v '^#' | awk -- '{print $2}' | sort -u
+)| awk -- '/^[^#]/ {print $2}' | sort -u
