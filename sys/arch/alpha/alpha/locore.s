@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.36 1997/09/16 01:52:00 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.37 1997/09/16 23:09:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.36 1997/09/16 01:52:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.37 1997/09/16 23:09:11 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -141,6 +141,17 @@ Lstart1: LDGP(pv)
  * Pull in the PALcode function stubs.
  */
 #include <alpha/alpha/pal.s>
+
+/**************************************************************************/
+
+/**************************************************************************/
+
+/*
+ * Pull in the BWX instruction stubs.
+ *
+ * XXX Eventually, we want to do these with inline __asm() statements.
+ */
+#include <alpha/alpha/bwx.s>
 
 /**************************************************************************/
 
