@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.3 1995/06/28 04:31:17 cgd Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.4 1995/07/19 19:50:16 brezak Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -49,7 +49,7 @@
 #include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 extern void Dprintf __P((const char *, ...));
 
 int     amd7930debug = 0;
@@ -631,7 +631,7 @@ amd7930_start_output(addr, p, cc, intr, arg)
 {
 	register struct amd7930_softc *sc = addr;
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (amd7930debug > 1)
 		Dprintf("sa_start_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
@@ -663,7 +663,7 @@ amd7930_start_input(addr, p, cc, intr, arg)
 {
 	register struct amd7930_softc *sc = addr;
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (amd7930debug > 1)
 		Dprintf("sa_start_input: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
@@ -891,7 +891,7 @@ amd7930hwintr(au0)
 		*d = amd->bbrb;
 		au->au_rdata++;
 		if (d == e) {
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 		        if (amd7930debug > 1)
                 		Dprintf("amd7930hwintr: swintr(r) requested");
 #endif
@@ -906,7 +906,7 @@ amd7930hwintr(au0)
 		amd->bbtb = *d;
 		au->au_pdata++;
 		if (d == e) {
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 		        if (amd7930debug > 1)
                 		Dprintf("amd7930hwintr: swintr(p) requested");
 #endif
@@ -926,7 +926,7 @@ amd7930swintr(sc0)
 	register struct auio *au;
 	register int s, ret = 0;
 
-#ifdef DEBUG
+#ifdef AUDIO_DEBUG
 	if (amd7930debug > 1)
 		Dprintf("audiointr: sc=0x%x\n",sc);
 #endif
