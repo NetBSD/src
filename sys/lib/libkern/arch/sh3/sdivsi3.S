@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.2 2000/01/03 02:40:04 msaitoh Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.2.4.1 2000/09/21 07:52:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sdivsi3.S,v 1.2 2000/01/03 02:40:04 msaitoh Exp $")
+	RCSID("$NetBSD: sdivsi3.S,v 1.2.4.1 2000/09/21 07:52:33 msaitoh Exp $")
 #endif
 
 /* r0 <= r4 / r5 */
@@ -69,7 +69,7 @@ ENTRY(__sdivsi3)
 	addc	r2, r0		/* delay slot */
 
 div_by_zero:
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	rts
 	mov	#0, r0		/* delay slot */
 #else
