@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 1998/08/12 06:55:24 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 1998/09/10 21:40:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -397,8 +397,8 @@ zsc_attach(parent, self, aux)
 	}
 
 	if (current_mac_model->class == MACH_CLASSAV) {
-		add_psc_lev4_intr(2, zshard, zsc);
-		add_psc_lev4_intr(3, zshard, zsc);
+		add_psc_lev4_intr(PSCINTR_SCCA, zshard, zsc);
+		add_psc_lev4_intr(PSCINTR_SCCB, zshard, zsc);
 	} else {
 		intr_establish(zshard, zsc, ZSHARD_PRI);
 	}
