@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.14 2001/04/20 12:56:08 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.15 2001/04/21 16:19:37 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -139,6 +139,7 @@ int	 __touchwin(WINDOW *win);
 char	*__tscroll(const char *cap, int n1, int n2);
 void	 __unsetattr(int);
 int	 __waddch(WINDOW *win, __LDATA *dp);
+int	 __wgetnstr(WINDOW *, char *, int);
 
 /* Private #defines. */
 #define	min(a,b)	(a < b ? a : b)
