@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188 2004/01/06 21:35:18 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.189 2004/01/08 13:34:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7683,8 +7683,7 @@ ENTRY(switchexit)
 	restore
 #endif
 	wrpr	%g0, PSTATE_KERN, %pstate ! Make sure we're on the right globals
-	mov	%o0, %l2		! save proc arg for exit2() call XXXXX
-	mov	%o1, %l3		! remember if we are a proc or lwp
+	mov	%o0, %l2		! save l arg for lwp_exit2() call
 
 #ifdef SCHED_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7743,7 +7742,7 @@ ENTRY(switchexit)
 #endif
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
-	call	_C_LABEL(lwp_exit2)		! lwp_exit2(p)
+	call	_C_LABEL(lwp_exit2)		! lwp_exit2(l)
 	 mov	%l2, %o0
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
