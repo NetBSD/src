@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.23 1998/04/29 21:37:54 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.24 1998/05/04 19:24:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -272,7 +272,6 @@ struct in_multistep {
 	IN_NEXT_MULTI((step), (inm)); \
 }
 
-struct	route;
 int	in_ifinit __P((struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int));
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
@@ -282,8 +281,6 @@ void	in_setmaxmtu __P ((void));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
 int	ipflow_fastforward __P((struct mbuf *));
-void	ipflow_create __P((const struct route *, struct mbuf *));
-void	ipflow_slowtimo __P((void));
 #endif
 
 #endif /* _NETINET_IN_VAR_H_ */

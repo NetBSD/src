@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.30 1998/04/30 17:47:26 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.31 1998/05/04 19:24:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -187,6 +187,9 @@ extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */
 extern int   anonportmax;		/* maximum ephemeral port */
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
+#ifdef GATEWAY
+extern int ip_maxflows;
+#endif
 struct	 inpcb;
 
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
@@ -221,6 +224,9 @@ void	 rip_input __P((struct mbuf *, ...));
 int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+struct	ipflow *ipflow_reap __P((int));
+void	ipflow_create __P((const struct route *, struct mbuf *));
+void	ipflow_slowtimo __P((void));
 #endif
 
 #endif /* _NETINET_IP_VAR_H_ */
