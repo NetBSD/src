@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.1 2000/05/26 04:01:17 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -18,6 +18,8 @@
  *	NetBSD-1.4Z
  * and should work for:
  *	NetBSD-1.5	(when released)
+ * -
+ * top does not need to be installed setuid or setgid with this module.
  *
  * LIBS: -lkvm
  *
@@ -32,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.1 2000/05/26 04:01:17 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $
  */
 
 #include <sys/param.h>
