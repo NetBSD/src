@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.29 2001/10/22 08:09:46 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.30 2002/03/15 07:06:24 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -115,9 +115,8 @@ int	ebus_find_node __P((struct pci_attach_args *));
  * here are our bus space and bus dma routines.
  */
 static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
-static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				bus_size_t, int, vaddr_t,
-				bus_space_handle_t *));
+static int _ebus_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int, 
+			      vaddr_t, bus_space_handle_t *));
 static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
 
@@ -411,9 +410,8 @@ ebus_alloc_bus_tag(sc, type)
 }
 
 static int
-_ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
+_ebus_bus_map(t, offset, size, flags, vaddr, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
@@ -465,8 +463,7 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx pciaddr %qx\n",
 		    ss, (unsigned long long)offset, (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
-		return (bus_space_map2(t, sc->sc_range[i].phys_hi, 
-			pciaddr, size, flags, vaddr, hp));
+		return (bus_space_map(t, pciaddr, size, flags, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
 	return (EINVAL);
