@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.183 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.184 2001/09/21 15:16:09 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -16,7 +16,7 @@ __initialized__:
 realinstall:	checkver libinstall
 clean:		cleanlib
 
-.if exists(${SHLIB_VERSION_FILE})
+.if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
 SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
