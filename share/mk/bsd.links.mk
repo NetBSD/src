@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.28 2004/05/16 09:44:38 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.29 2004/06/25 02:05:39 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -59,7 +59,7 @@ configlinksinstall::	.PHONY
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
-.if !empty(CONFIGLINKS)
+.if defined(CONFIGLINKS) && !empty(CONFIGLINKS)
 	@(set ${CONFIGLINKS}; \
 	 while test $$# -ge 2; do \
 		l=${DESTDIR}$$1; shift; \
