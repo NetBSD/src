@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ntfs.c,v 1.3 1999/06/25 19:28:37 perseant Exp $	*/
+/* $NetBSD: mount_ntfs.c,v 1.4 2000/06/14 06:49:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -31,11 +31,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp 
- *
  */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.3 1999/06/25 19:28:37 perseant Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.4 2000/06/14 06:49:15 cgd Exp $");
 #endif
 
 #include <sys/cdefs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.2 1997/07/18 00:30:30 thorpej Exp $	*/
+/* $NetBSD: flt_rounds.c,v 1.3 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

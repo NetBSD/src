@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1999/09/12 16:08:14 itojun Exp $	*/
+/* $NetBSD: extern.h,v 1.6 2000/06/14 06:49:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

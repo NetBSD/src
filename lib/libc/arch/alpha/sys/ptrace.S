@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.4 1996/11/08 00:51:24 cgd Exp $	*/
+/* $NetBSD: ptrace.S,v 1.5 2000/06/14 06:49:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
