@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.30 1994/10/26 07:14:29 deraadt Exp $
+ * $Id: machdep.c,v 1.31 1994/11/02 04:57:25 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -396,7 +396,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
