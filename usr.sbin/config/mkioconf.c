@@ -611,12 +611,13 @@ wnum(num)
 #endif
 
 #if MACHINE_I386
-char *sirq();
+char *shandler();
+char *sirq(int i);
 
 i386_ioconf()
 {
 	register struct device *dp, *mp, *np;
-	register int uba_n, slave, first;
+	register int uba_n, slave;
 	FILE *fp;
 
 	fp = fopen(path("ioconf.c"), "w");
@@ -632,7 +633,6 @@ i386_ioconf()
 	fprintf(fp, "#include \"sys/param.h\"\n");
 	fprintf(fp, "#include \"sys/buf.h\"\n");
 	fprintf(fp, "\n");
-	fprintf(fp, "#define V(s)	V##s\n");
 	fprintf(fp, "#define C (caddr_t)\n\n");
 	/*
 	 * First print the isa initialization structures
@@ -652,8 +652,7 @@ i386_ioconf()
 				continue;
 			fprintf(fp, "extern struct isa_driver %sdriver;\n",
 				dp->d_name, dp->d_unit);
-			fprintf(fp, "extern V(%s%d)();\n",
-				dp->d_name, dp->d_unit);
+			fprintf(fp, "extern %s();\n", shandler(dp));
 		}
 		fprintf(fp, "\nstruct isa_device isa_devtab_bio[] = {\n");
 		fprintf(fp, "\
@@ -672,33 +671,12 @@ i386_ioconf()
 				fprintf(fp, "{ &%sdriver,    0x%03x, ",
 					dp->d_name, dp->d_portn);
 			fprintf(fp,
-				"%5.5s, %2d, C 0x%05X, %5d, V(%s%d),  %2d, 0x%02x},\n",
+			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-				dp->d_flags);
+				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
-
-		first = 1;
-		for (dp = dtab; dp != 0; dp = dp->d_next) {
-			mp = dp->d_conn;
-			if (mp == 0 || mp == TO_NEXUS || eq(mp->d_name, "isa"))
-				continue;
-			if(first) {
-				first = 0;
-				fprintf(fp, "struct isa_device isa_biotab_dktp[] = {\n");
-				fprintf(fp, "\
-/* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
-			}
-			fprintf(fp, "{ &%sdriver,        0, ", mp->d_name);
-			/* KLUDGE: master unit in drq field */
-			fprintf(fp,
-			"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
-				"0", mp->d_unit, 0, 0, 0, dp->d_unit, dp->d_flags,
-				dp->d_drive, mp->d_unit);
-		}
-		if(!first)
-			fprintf(fp, "0\n};\n\n");
 
 		fprintf(fp, "struct isa_device isa_devtab_tty[] = {\n");
 		fprintf(fp, "\
@@ -717,10 +695,10 @@ i386_ioconf()
 				fprintf(fp, "{ &%sdriver,     0x%03x, ",
 					dp->d_name, dp->d_portn);
 			fprintf(fp,
-				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-				dp->d_flags);
+				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
 
@@ -741,10 +719,10 @@ i386_ioconf()
 				fprintf(fp, "{ &%sdriver,     0x%03x, ",
 					dp->d_name, dp->d_portn);
 			fprintf(fp,
-				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-				dp->d_flags);
+				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
 
@@ -765,24 +743,63 @@ i386_ioconf()
 				fprintf(fp, "{ &%sdriver,     0x%03x, ",
 					dp->d_name, dp->d_portn);
 			fprintf(fp,
-				"%5.5s, %2d,  C 0x%05X, %5d, V(%s%d),  %2d,  %#x },\n",
+			"%5.5s, %2d, C 0x%05X, %5d, %s,  %2d, 0x%02x, 0, %d},\n",
 				sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
-				dp->d_msize, dp->d_name, dp->d_unit, dp->d_unit,
-				dp->d_flags);
+				dp->d_msize, shandler(dp), dp->d_unit,
+				dp->d_flags, dp->d_type==CONTROLLER ? 0 : -1);
 		}
 		fprintf(fp, "0\n};\n\n");
+
+		fprintf(fp, "struct isa_device isa_subdev[] = {\n");
+		fprintf(fp, "\
+/* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
+		for (dp = dtab; dp != 0; dp = dp->d_next) {
+			mp = dp->d_conn;
+			if (mp == 0 || mp == TO_NEXUS || eq(mp->d_name, "isa"))
+				continue;
+			fprintf(fp, "{ &%sdriver,        0, ", mp->d_name);
+			fprintf(fp,
+			    "%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
+				"0", 0, 0, 0, 0, dp->d_unit, dp->d_flags,
+				dp->d_drive, mp->d_unit);
+		}
+		fprintf(fp, "0\n};\n\n");
+
 	}
 	(void) fclose(fp);
 }
 
 char *
-sirq(num)
+sirq(int i)
 {
+	static char buf[20];
 
-	if (num == -1)
-		return ("0");
-	sprintf(errbuf, "IRQ%d", num);
-	return (errbuf);
+#if 0
+	sprintf(buf, "%d", i);
+	return buf;
+#else
+	switch(i) {
+	case -2:
+		return "0";
+	case -1:
+		return "-1";
+	default:
+		sprintf(buf, "IRQ%d", i);
+		return buf;
+	}
+#endif
+}
+
+char *
+shandler(dp)
+struct device *dp;
+{
+	static char buf[32+20];
+
+	if(dp->d_irq==-1)
+		return "0";
+	sprintf(buf, "V%.32s%d", dp->d_name, dp->d_unit);
+	return buf;
 }
 #endif
 
