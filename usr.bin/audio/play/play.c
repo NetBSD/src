@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.15 1999/11/06 15:05:45 kleink Exp $	*/
+/*	$NetBSD: play.c,v 1.16 1999/11/08 10:21:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -416,5 +416,5 @@ usage()
 	    "-m monitor volume\n\t"
 	    "-p output port\n\t"
 	    "-v volume\n");
-	exit(0);
+	exit(EXIT_FAILURE);
 }
