@@ -182,7 +182,7 @@ $ ENOSR
 $ ENOSTR
 91 Not a STREAM
 $ ETIME
-91 STREAM ioctl timeout
+92 STREAM ioctl timeout
 $set 2
 $ SIGHUP
 1 Hangup
