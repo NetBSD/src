@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.1 2003/04/26 18:39:35 fvdl Exp $
+#	$NetBSD: files.amd64,v 1.2 2003/05/03 14:24:52 fvdl Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -26,6 +26,7 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 defflag			USER_LDT
 defflag			VM86
 defflag opt_mpacpi.h MPACPI
+defflag eisa.h EISA
 
 file	arch/amd64/amd64/autoconf.c
 file	arch/amd64/amd64/db_disasm.c		ddb
