@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.48 1994/10/24 05:32:19 deraadt Exp $	*/
+/*	$NetBSD: exec.h,v 1.49 1994/12/19 14:36:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -74,7 +74,7 @@ struct ps_strings {
 #define	STACKGAPLEN	0
 #endif
 #define	STACKGAPBASE \
-    ((caddr_t)ALIGN((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN))
+    ((caddr_t)(((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN) & ~ALIGNBYTES))
 
 /*
  * the following structures allow execve() to put together processes
