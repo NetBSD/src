@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 2003/04/14 06:32:02 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.25 2003/04/14 11:57:10 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,7 +101,7 @@
 #	kbdctl	keyboard control
 #	fd	file descriptors
 #	bpf*	packet filter
-#	beep	RiscPC speaker
+#	beep	Risc PC speaker
 #	ipl	IP Filter
 #	openfirm OpenFirmware accessor
 #	random	Random number generator
