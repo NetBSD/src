@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.12 2000/09/24 07:34:15 erh Exp $
+.\"	$NetBSD: ptrace.2,v 1.13 2000/09/27 22:31:43 nathanw Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -175,9 +175,15 @@ succeeds, the traced process is no longer traced and continues
 execution normally.
 .El
 .Pp
-Additionally, machine-specific requests can exist.  On the SPARC, these
-are:
+Additionally, the following requests exist but are 
+not avaliable on all machine architectures. The file
+.Aq Pa machine/ptrace.h
+lists which requests exist on a given machine.
 .Bl -tag -width 12n
+.It Dv PT_STEP
+Execution continues as in request PT_CONTINUE; however
+as soon as possible after execution of at least one
+instruction, execution stops again.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
 .Dq Li "struct reg"
@@ -328,7 +334,7 @@ on itself.
 .It
 The
 .Fa request
-was not one of the legal requests.
+was not a legal request on this machine architecture.
 .\" .It
 .\" The
 .\" .Fa addr
@@ -400,8 +406,6 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.Pp
-Single-stepping is not available.
 .\" .Pp
 .\" When using
 .\" .Dv PT_SYSCALL ,
