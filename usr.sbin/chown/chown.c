@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.13 1997/10/18 04:08:19 lukem Exp $");
+__RCSID("$NetBSD: chown.c,v 1.14 1997/12/21 18:34:30 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,10 +112,10 @@ main(argc, argv)
 			break;
 		case 'h':
 			/*
-			 * In System V (and probably POSIX.2) the -h option
-			 * causes chown/chgrp to change the owner/group of
-			 * the symbolic link.  4.4BSD's symbolic links didn't
-			 * have owners/groups, so it was an undocumented noop.
+			 * In System V the -h option causes chown/chgrp to
+			 * change the owner/group of the symbolic link.
+			 * 4.4BSD's symbolic links didn't have owners/groups,
+			 * so it was an undocumented noop.
 			 * In NetBSD 1.3, lchown(2) is introduced.
 			 */
 			hflag = 1;
