@@ -10,7 +10,8 @@ SRCS+=		xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 LDADD+=		-L/usr/X386/lib -lXaw -lXmu -lXt -lXext -lX11 -lm 
 
 afterinstall:
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 GXditview.ad \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+			${.CURDIR}/GXditview.ad \
 			$(DESTDIR)/usr/X386/lib/X11/app-defaults
 .endif
 
