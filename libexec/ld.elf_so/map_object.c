@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.11 2000/02/13 04:28:09 chs Exp $	 */
+/*	$NetBSD: map_object.c,v 1.11.4.1 2001/12/09 17:20:35 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -144,15 +144,8 @@ _rtld_map_object(path, fd, sb)
 			break;
 
 		case PT_LOAD:
-#ifdef __mips__
-			/* NetBSD/pmax 1.1 elf toolchain peculiarity */
-			if (nsegs >= 2) {
-				_rtld_error("%s: too many sections\n", path);
-				return NULL;
-			}
-#endif
-			assert(nsegs < 2);
-			segs[nsegs] = phdr;
+			if (nsegs < 2)
+				segs[nsegs] = phdr;
 			++nsegs;
 			break;
 
@@ -168,10 +161,14 @@ _rtld_map_object(path, fd, sb)
 		++phdr;
 	}
 	if (phdyn == NULL) {
-		_rtld_error("%s: not dynamically-linked", path);
+		_rtld_error("%s: not dynamically linked", path);
 		return NULL;
 	}
-	assert(nsegs == 2);
+	if (nsegs != 2) {
+		_rtld_error("%s: wrong number of segments (%d != 2)", path,
+		    nsegs);
+		return NULL;
+	}
 #ifdef __i386__
 	assert(segs[0]->p_align <= PAGESIZE);
 	assert(segs[1]->p_align <= PAGESIZE);
