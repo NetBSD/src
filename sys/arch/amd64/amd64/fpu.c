@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 2003/10/08 19:21:52 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 2003/10/08 19:55:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2003/10/08 19:21:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2003/10/08 19:55:39 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2003/10/08 19:21:52 thorpej Exp $");
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
 void fpudna(struct cpu_info *);
+static int x86fpflags_to_ksiginfo(u_int32_t);
 
 /*
  * Init the FPU.
@@ -178,9 +179,33 @@ fputrap(frame)
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
+	ksi.ksi_code = x86fpflags_to_ksiginfo(sfp->fp_ex_sw);
+	ksi.ksi_trap = (int)sfp->fp_ex_sw;
 	KERNEL_PROC_LOCK(l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
+}
+
+static int
+x86fpflags_to_ksiginfo(u_int32_t flags)
+{
+	int i;
+	static int x86fp_ksiginfo_table[] = {
+		FPE_FLTINV, /* bit 0 - invalid operation */
+		FPE_FLTRES, /* bit 1 - denormal operand */
+		FPE_FLTDIV, /* bit 2 - divide by zero	*/
+		FPE_FLTOVF, /* bit 3 - fp overflow	*/
+		FPE_FLTUND, /* bit 4 - fp underflow	*/ 
+		FPE_FLTRES, /* bit 5 - fp precision	*/
+		FPE_FLTINV, /* bit 6 - stack fault	*/
+	};
+					     
+	for(i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
+		if (flags & (1 << i))
+			return(x86fp_ksiginfo_table[i]);
+	}
+	/* punt if flags not set */
+	return(0);
 }
 
 /*
