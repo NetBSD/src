@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.4 1999/11/02 10:36:53 takemura Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.5 2000/03/05 08:49:06 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -47,13 +47,7 @@ struct fb_devconfig {
 	int		dc_rowbytes;	/* bytes in a FB scan line */
 	vaddr_t		dc_fbaddr;	/* base of flat frame buffer */
 
-#ifdef USE_RASTERCONS
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
-#else
 	struct rasops_info	dc_rinfo;	/* rasops infomation */
-#endif
-
 
 	int		dc_blanked;	/* currently had video disabled */
 };
