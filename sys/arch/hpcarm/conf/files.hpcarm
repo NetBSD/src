@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.14 2001/05/06 18:01:43 bjh21 Exp $
+#	$NetBSD: files.hpcarm,v 1.15 2001/05/06 18:31:15 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,9 +8,6 @@ maxusers 2 8 64
 
 # Maintain Interrupt statistics
 defopt	IRQSTATS
-
-# PMAP_DEBUG (heavily abused option)
-defopt	PMAP_DEBUG
 
 # X server support in console drivers
 defopt	XSERVER
