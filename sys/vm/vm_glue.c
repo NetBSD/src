@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.65 1997/01/03 18:03:25 mrg Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.66 1997/02/05 08:09:46 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -567,10 +567,11 @@ thread_block()
 }
 
 void
-thread_sleep(event, lock, ruptible)
+thread_sleep_msg(event, lock, ruptible, msg)
 	void *event;
 	simple_lock_t lock;
 	boolean_t ruptible;
+	char *msg;
 {
 	int s = splhigh();
 
@@ -580,7 +581,7 @@ thread_sleep(event, lock, ruptible)
 	curproc->p_thread = event;
 	simple_unlock(lock);
 	if (curproc->p_thread)
-		tsleep(event, PVM, "thrd_sleep", 0);
+		tsleep(event, PVM, msg, 0);
 	splx(s);
 }
 
