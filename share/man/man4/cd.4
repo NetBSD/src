@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.4,v 1.5 1998/04/30 08:50:05 fair Exp $
+.\"	$NetBSD: cd.4,v 1.6 1998/06/10 11:15:21 fair Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -30,17 +30,21 @@
 .Os NetBSD
 .Sh NAME
 .Nm cd
-.Nd SCSI CD-ROM driver
+.Nd SCSI and ATAPI CD-ROM driver
 .Sh SYNOPSIS
-.Cd cd* at scsibus? target ? lun ?
-.Cd cd1 at scsibus0 target 4 lun 0
+.Cd "cd* at scsibus? target ? lun ?"
+.Cd "cd1 at scsibus0 target 4 lun 0"
+.Cd "cd* at atapibus? drive ?"
 .Sh DESCRIPTION
 The
 .Nm cd
-driver provides support for a
-.Tn SCSI
-.Tn CD-ROM
-(Compact Disc-Read Only Memory) drive.
+driver provides support for a Small Computer Systems Interface
+.Pq Tn SCSI
+bus and Advanced Technology Attachment Packet Interface
+.Pq Tn ATAPI
+Compact Disc-Read Only Memory
+.Pq Tn CD-ROM
+drive.
 In an attempt to look like a regular disk, the
 .Nm
 driver synthesizes a partition table, with one partition covering the entire
@@ -59,7 +63,8 @@ As the
 .Tn SCSI
 adapter is probed during boot, the
 .Tn SCSI
-bus is scanned for devices. Any devices found which answer as `Read-only'
+bus is scanned for devices.
+Any devices found which answer as `Read-only'
 type devices will be `attached' to the
 .Nm
 driver.
@@ -94,15 +99,17 @@ and
 .It Dv DIOCSDINFO
 .Pq Li "struct disklabel"
 Read or write the in-core copy of the disklabel for the
-drive.  The disklabel is initialized with information
+drive.
+The disklabel is initialized with information
 read from the scsi inquiry commands, and should be the same as
-the information printed at boot.  This structure is defined in
+the information printed at boot.
+This structure is defined in
 .Xr disklabel 5 .
 
 .\".It Dv CDIOCCAPABILITY
 .\".Pq Li "struct ioc_capability"
-.\"Retrieve information from the drive on what features it supports.  The
-.\"information is returned in the following structure:
+.\"Retrieve information from the drive on what features it supports.
+.\"The information is returned in the following structure:
 .\".Bd -literal -offset indent
 .\"struct ioc_capability {
 .\"	u_long	play_function;
@@ -164,8 +171,8 @@ the information printed at boot.  This structure is defined in
 .\".Ed
 .It Dv CDIOCPLAYTRACKS	
 .Pq Li "struct ioc_play_track"
-Start audio playback given a track address and length.  The structure
-is defined as follows:
+Start audio playback given a track address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_track
 {
@@ -178,8 +185,8 @@ struct ioc_play_track
 
 .It Dv CDIOCPLAYBLOCKS
 .Pq Li "struct ioc_play_blocks"
-Start audio playback given a block address and length.  The structure
-is defined as follows:
+Start audio playback given a block address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_blocks
 {
@@ -190,8 +197,8 @@ struct ioc_play_blocks
 
 .It Dv CDIOCPLAYMSF	
 .Pq Li "struct ioc_play_msf"
-Start audio playback given a `minutes-seconds-frames' address and
-length.  The structure is defined as follows:
+Start audio playback given a `minutes-seconds-frames' address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_msf
 {
@@ -239,8 +246,9 @@ struct ioc_toc_header {
 
 .It Dv CDIOREADTOCENTRYS
 .Pq Li "struct ioc_read_toc_entry"
-Return information from the table of contents entries mentioned.  (Yes, this
-command name is misspelled.)  The argument structure is defined as follows:
+Return information from the table of contents entries mentioned.
+(Yes, this command name is misspelled).
+The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_read_toc_entry {
 	u_char	address_format;
@@ -256,8 +264,8 @@ and pointed to by
 
 .It Dv CDIOCSETPATCH
 .Pq Li "struct ioc_patch"
-Attach various audio channels to various output channels.  The
-argument structure is defined thusly:
+Attach various audio channels to various output channels.
+The argument structure is defined thusly:
 .Bd -literal -offset indent
 struct ioc_patch {
 	u_char	patch[4];
@@ -268,8 +276,8 @@ struct ioc_patch {
 .It Dv CDIOCGETVOL
 .It Dv CDIOCSETVOL
 .Pq Li "struct ioc_vol"
-Get (set) information about the volume settings of the output channels.  The
-argument structure is as follows:
+Get (set) information about the volume settings of the output channels.
+The argument structure is as follows:
 .Bd -literal -offset indent
 struct	ioc_vol
 {
@@ -312,25 +320,28 @@ Tell the drive to spin-up (-down) the
 .It Dv CDIOCPREVENT
 Tell the drive to allow (prevent) manual ejection of the
 .Tn CD-ROM
-disc.  Not all drives support this feature.
+disc.
+Not all drives support this feature.
 
 .It Dv CDIOCEJECT	
 Eject the
 .Tn CD-ROM .
 
 .\".It Dv CDIOCCLOSE
-.\"Tell the drive to close its door and load the media.  Not all drives
-.\"support this feature.
+.\"Tell the drive to close its door and load the media.
+.\"Not all drives support this feature.
 .\"
 .\".It Dv CDIOCPITCH
 .\".Pq Li "struct ioc_pitch"
 .\"For drives that support it, this command instructs the drive to play
-.\"the audio at a faster or slower rate than normal.  Values of
+.\"the audio at a faster or slower rate than normal.
+.\"Values of
 .\".Li speed
 .\"between -32767 and -1 result in slower playback; a zero value
-.\"indicates normal speed; and values from 1 to 32767 give faster
-.\"playback.  Drives with less than 16 bits of resolution will silently
-.\"ignore less-significant bits.  The structure is defined thusly:
+.\"indicates normal speed; and values from 1 to 32767 give faster playback.
+.\"Drives with less than 16 bits of resolution will silently
+.\"ignore less-significant bits.
+.\"The structure is defined thusly:
 .\".Bd -literal -offset indent
 .\"struct	ioc_pitch
 .\"{
@@ -351,12 +362,13 @@ When a
 is changed in a drive controlled by the
 .Nm
 driver, then the act of changing the media will invalidate the
-disklabel and information held within the kernel.  To stop corruption,
-all accesses to the device will be discarded until there are no more
-open file descriptors referencing the device.  During this period, all
-new open attempts will be rejected.  When no more open file descriptors
-reference the device, the first next open will load a new set of
-parameters (including disklabel) for the drive.
+disklabel and information held within the kernel.
+To stop corruption, all accesses to the device will be discarded
+until there are no more open file descriptors referencing the device.
+During this period, all new open attempts will be rejected.
+When no more open file descriptors reference the device, the first
+next open will load a new set of parameters (including disklabel)
+for the drive.
 .Pp
 The audio code in the
 .Nm
@@ -385,6 +397,7 @@ devices
 .Sh DIAGNOSTICS
 None.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr disklabel 5 ,
