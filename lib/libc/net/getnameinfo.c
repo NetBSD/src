@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.7 2000/01/05 04:54:54 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.8 2000/01/17 08:34:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,14 +39,6 @@
  *   modified).
  */
 
-#if 0
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif 
-#else
-#define HAVE_SA_LEN
-#endif
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -57,16 +49,6 @@
 #include <resolv.h>
 #include <string.h>
 #include <stddef.h>
-
-#if 0
-#ifndef HAVE_PORTABLE_PROTOTYPE
-#include "cdecl_ext.h"
-#endif 
-
-#ifndef HAVE_ADDRINFO
-#include "addrinfo.h"
-#endif
-#endif
 
 #define SUCCESS 0
 #define ANY 0
@@ -126,10 +108,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (sa == NULL)
 		return ENI_NOSOCKET;
 
-#ifdef HAVE_SA_LEN
 	if (sa->sa_len != salen)
 		return ENI_SALEN;
-#endif
 	
 	family = sa->sa_family;
 	for (i = 0; afdl[i].a_af; i++)
@@ -179,11 +159,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
-#if 0
-		if (v4a == 0 || v4a == IN_LOOPBACKNET)
-#else
 		if (v4a == 0)
-#endif
 			flags |= NI_NUMERICHOST;			
 		break;
 #ifdef INET6
