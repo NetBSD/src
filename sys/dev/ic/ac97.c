@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.18 2001/01/18 20:28:16 jdolecek Exp $ */
+/*      $NetBSD: ac97.c,v 1.19 2001/04/29 02:47:25 erh Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -101,9 +101,13 @@ static const struct audio_mixer_enum ac97_source = { 8,
 						 { { AudioNmixerout AudioNmono }, 6 },
 						 { { "phone" }, 7 }}};
 
+/*
+ * Due to different values for each source that uses these structures, 
+ * the ac97_query_devinfo function sets delta in mixer_devinfo_t using
+ * ac97_source_info.bits.
+ */
 static const struct audio_mixer_value ac97_volume_stereo = { { AudioNvolume }, 
 						       2 };
-
 
 static const struct audio_mixer_value ac97_volume_mono = { { AudioNvolume }, 
 						     1 };
@@ -676,6 +680,11 @@ ac97_query_devinfo(codec_if, dip)
 			strcpy(dip->label.name, name);
 
 		bcopy(si->info, &dip->un, si->info_size);
+
+		/* Set the delta for volume sources */
+		if (dip->type == AUDIO_MIXER_VALUE)
+			dip->un.v.delta = 1 << (8 - si->bits);
+
 		return (0);
 	}
 
