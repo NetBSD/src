@@ -1,6 +1,8 @@
+/*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +34,16 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pl_7.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pl_7.c,v 1.5 1993/11/10 15:59:04 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $";
+#endif
 #endif /* not lint */
 
+#include <sys/ttydefaults.h>
 #include "player.h"
+
 
 /*
  * Display interface
