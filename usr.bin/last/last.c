@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.17 2003/02/28 05:49:42 matt Exp $	*/
+/*	$NetBSD: last.c,v 1.18 2003/03/03 07:18:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.17 2003/02/28 05:49:42 matt Exp $");
+__RCSID("$NetBSD: last.c,v 1.18 2003/03/03 07:18:37 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,9 +133,10 @@ static void	 usage(void);
 static
 void usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-#%s] [-f file] [-t tty]"
-	    " [-h hostname] [-T] [user ...]\n", getprogname(),
-#ifdef SUPPORT_UTMPX
+	(void)fprintf(stderr, "Usage: %s [-#%s] [-T] [-f file]"
+	    " [-H hostsize] [-h host] [-L linesize]\n"
+	    "\t    [-N namesize] [-t tty] [user ...]\n", getprogname(),
+#ifdef NOTYET_SUPPORT_UTMPX
 	    "w"
 #else
 	    ""
@@ -156,7 +157,7 @@ main(int argc, char *argv[])
 
 	maxrec = -1;
 
-	while ((ch = getopt(argc, argv, "0123456789f:h:H:L:N:t:T")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789f:H:h:L:N:Tt:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -177,24 +178,24 @@ main(int argc, char *argv[])
 		case 'f':
 			file = optarg;
 			break;
+		case 'H':
+			hostsize = atoi(optarg);
+			break;
 		case 'h':
 			hostconv(optarg);
 			addarg(HOST_TYPE, optarg);
 			break;
-		case 't':
-			addarg(TTY_TYPE, ttyconv(optarg));
-			break;
-		case 'U':
-			namesize = atoi(optarg);
-			break;
 		case 'L':
 			linesize = atoi(optarg);
 			break;
-		case 'H':
-			hostsize = atoi(optarg);
+		case 'N':
+			namesize = atoi(optarg);
 			break;
 		case 'T':
 			fulltime = 1;
+			break;
+		case 't':
+			addarg(TTY_TYPE, ttyconv(optarg));
 			break;
 		case '?':
 		default:
