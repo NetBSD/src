@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.26 1997/01/11 05:15:01 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.27 1997/06/11 10:04:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -1030,7 +1030,7 @@ sogetopt(so, level, optname, mp)
 			m->m_len = sizeof(struct timeval);
 			mtod(m, struct timeval *)->tv_sec = val / hz;
 			mtod(m, struct timeval *)->tv_usec =
-			    (val % hz) / tick;
+			    (val % hz) * tick;
 			break;
 		    }
 
