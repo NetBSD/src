@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.129 2003/06/28 08:39:24 he Exp $
+#	$NetBSD: files.amiga,v 1.130 2003/07/14 15:53:46 aymeric Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -437,8 +437,8 @@ include	"arch/m68k/060sp/files.060sp"
 
 # list of standard files...
 
-file	dev/cons.c			ite | ser
-file	dev/cninit.c			ite | ser
+file	dev/cons.c
+file	dev/cninit.c
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
 file	arch/amiga/amiga/cia.c
