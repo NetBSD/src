@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.51 1999/05/05 01:51:33 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.52 1999/05/10 02:55:57 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -279,12 +279,15 @@ osf1_sys_usleep_thread(p, v, retval)
 	tv.tv_sec = otv.tv_sec;
 	tv.tv_usec = otv.tv_usec;
 
-	ticks = ((u_long)tv.tv_sec * 1000000 + tv.tv_usec) / tick;
+	ticks = howmany((u_long)tv.tv_sec * 1000000 + tv.tv_usec, tick);
+	if (ticks == 0)
+		ticks = 1;
+
 	s = splclock();
 	tv = time;
 	splx(s);
 
-	tsleep(p, PUSER|PCATCH, "OSF/1", ticks);	/* XXX */
+	tsleep(p, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
 
 	if (SCARG(uap, slept) != NULL) {
 		s = splclock();
