@@ -370,7 +370,9 @@ isc_result_t omapi_set_value_str (omapi_object_t *h,
 		return status;
 	memcpy (nds -> value, name, strlen (name));
 
-	return omapi_set_value (h, id, nds, value);
+	status = omapi_set_value (h, id, nds, value);
+	omapi_data_string_dereference (&nds, MDL);
+	return status;
 }
 
 isc_result_t omapi_set_boolean_value (omapi_object_t *h, omapi_object_t *id,
@@ -510,9 +512,12 @@ isc_result_t omapi_get_value_str (omapi_object_t *h,
 	for (outer = h; outer -> outer; outer = outer -> outer)
 		;
 	if (outer -> type -> get_value)
-		return (*(outer -> type -> get_value)) (outer,
-							id, nds, value);
-	return ISC_R_NOTFOUND;
+		status = (*(outer -> type -> get_value)) (outer,
+							  id, nds, value);
+	else
+		status = ISC_R_NOTFOUND;
+	omapi_data_string_dereference (&nds, MDL);
+	return status;
 }
 
 isc_result_t omapi_stuff_values (omapi_object_t *c,
@@ -618,6 +623,31 @@ int omapi_td_strcmp (omapi_typed_data_t *s1, const char *s2)
 	else
 		len = slen;
 	rv = memcmp (s1 -> u.buffer.value, s2, len);
+	if (rv)
+		return rv;
+	if (s1 -> u.buffer.len > slen)
+		return 1;
+	else if (s1 -> u.buffer.len < slen)
+		return -1;
+	return 0;
+}
+
+int omapi_td_strcasecmp (omapi_typed_data_t *s1, const char *s2)
+{
+	unsigned len, slen;
+	int rv;
+
+	/* If the data type is not compatible, never equal. */
+	if (s1 -> type != omapi_datatype_data &&
+	    s1 -> type != omapi_datatype_string)
+		return -1;
+
+	slen = strlen (s2);
+	if (slen > s1 -> u.buffer.len)
+		len = s1 -> u.buffer.len;
+	else
+		len = slen;
+	rv = casecmp (s1 -> u.buffer.value, s2, len);
 	if (rv)
 		return rv;
 	if (s1 -> u.buffer.len > slen)

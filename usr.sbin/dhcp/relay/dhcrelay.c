@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.10 2001/04/06 17:08:55 mellon Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.11 2001/06/18 19:01:58 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -175,13 +175,7 @@ int main (argc, argv, envp)
 				usage ();
 			}
 			strcpy (tmp -> name, argv [i]);
-			tmp -> flags = INTERFACE_REQUESTED;
-			if (interfaces) {
-				interface_reference (&tmp -> next, interfaces,
-						     MDL);
-				interface_dereference (&interfaces, MDL);
-			}
-			interface_reference (&interfaces, tmp, MDL);
+			interface_snorf (tmp, INTERFACE_REQUESTED);
 			interface_dereference (&tmp, MDL);
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
