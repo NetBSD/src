@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.16 1998/07/05 08:49:30 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.17 1998/07/28 21:40:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +181,8 @@ mips_elf_makecmds (p, epp)
 {
 	struct ehdr *ex = (struct ehdr *)epp -> ep_hdr;
 	struct phdr ph;
-	int i, error, resid;
+	int i, error;
+	size_t resid;
 
 	/* Make sure we got enough data to check magic numbers... */
 	if (epp -> ep_hdrvalid < sizeof (struct ehdr)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.15 1998/03/05 04:36:07 scottb Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.16 1998/07/28 21:39:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -419,8 +419,9 @@ coff_find_section(p, vp, fp, sh, s_type)
 	struct coff_scnhdr *sh;
 	int s_type;
 {
-	int i, pos, resid, siz, error;
-	
+	int i, pos, siz, error;
+	size_t resid;
+
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
@@ -549,7 +550,7 @@ n	 */
 	/* load any shared libraries */
 	error = coff_find_section(p, epp->ep_vp, fp, &sh, COFF_STYP_SHLIB);
 	if (!error) {
-		int resid;
+		size_t resid;
 		struct coff_slhdr *slhdr;
 		char buf[128], *bufp;	/* FIXME */
 		int len = sh.s_size, path_index, entry_len;
@@ -601,8 +602,9 @@ coff_load_shlib(p, path, epp)
 	char *path;
 	struct exec_package *epp;
 {
-	int error, siz, resid;
+	int error, siz;
 	int taddr, tsize, daddr, dsize, offset;
+	size_t resid;
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
@@ -737,9 +739,10 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	struct xexec *xp;
 	struct xext *xep;
 {
-	int error, resid, nseg, i;
+	int error, nseg, i;
 	long baddr, bsize;
 	struct xseg *xs;
+	size_t resid;
 
 	/* read in segment table */
 	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
