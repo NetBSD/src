@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.12 1996/03/04 03:29:20 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.13 1996/03/08 20:34:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,6 +45,7 @@ struct pci_softc {
 	struct device	sc_dev;
 
 	int		sc_bus;
+	bus_chipset_tag_t sc_bc;
 };
 
 int pcimatch __P((struct device *, void *, void *));
@@ -92,6 +93,7 @@ pciattach(parent, self, aux)
 {
 	struct pci_softc *sc = (struct pci_softc *)self;
 	struct pcibus_attach_args *pba = aux;
+	bus_chipset_tag_t bc;
 	int maxndevs, device, function, nfunctions;
 
 #ifdef i386 /* XXX */
@@ -101,6 +103,7 @@ pciattach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_bus = pba->pba_bus;
+	sc->sc_bc = bc = pba->pba_bc;
 
 	maxndevs = pba->pba_maxndevs;
 
@@ -125,6 +128,7 @@ pciattach(parent, self, aux)
 				continue;
 			class = pci_conf_read(tag, PCI_CLASS_REG);
 
+			pa.pa_bc = bc;
 			pa.pa_device = device;
 			pa.pa_function = function;
 			pa.pa_tag = tag;
