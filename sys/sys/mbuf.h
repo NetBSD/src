@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.68 2002/12/01 22:57:17 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.69 2003/01/17 08:12:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -95,6 +95,13 @@
 #define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
+/* Packet tags structure */
+struct m_tag {
+	SLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	u_int16_t		m_tag_id;	/* Tag ID */
+	u_int16_t		m_tag_len;	/* Length of data */
+};
+
 /*
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
@@ -127,10 +134,10 @@ struct m_hdr {
  */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
+	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
 	int	csum_flags;		/* checksum flags */
 	u_int32_t csum_data;		/* checksum data */
-	struct mbuf *aux;		/* extra data buffer; ipsec/others */
 };
 
 /*
@@ -279,7 +286,7 @@ do {									\
 		(m)->m_flags = M_PKTHDR;				\
 		(m)->m_pkthdr.csum_flags = 0;				\
 		(m)->m_pkthdr.csum_data = 0;				\
-		(m)->m_pkthdr.aux = (struct mbuf *)NULL;		\
+		SLIST_INIT(&(m)->m_pkthdr.tags);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -435,19 +442,12 @@ do {									\
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
- *
- * we do need to check non-first mbuf for m_aux, since some of existing
- * code does not call M_PREPEND properly.
- * (example: call to bpf_mtap from drivers)
  */
 #define	MFREE(m, n)							\
 	MBUFLOCK(							\
 		mbstat.m_mtypes[(m)->m_type]--;				\
-		if (((m)->m_flags & M_PKTHDR) != 0 &&			\
-		    (m)->m_pkthdr.aux != NULL) {			\
-			m_freem((m)->m_pkthdr.aux);			\
-			(m)->m_pkthdr.aux = NULL;			\
-		}							\
+		if ((m)->m_flags & M_PKTHDR)				\
+			m_tag_delete_chain((m), NULL);			\
 		(n) = (m)->m_next;					\
 		if ((m)->m_flags & M_EXT) {				\
 			if (MCLISREFERENCED(m)) {			\
@@ -478,13 +478,13 @@ do {									\
 /*
  * Copy mbuf pkthdr from `from' to `to'.
  * `from' must have M_PKTHDR set, and `to' must be empty.
- * aux pointer will be moved to `to'.
  */
 #define	M_COPY_PKTHDR(to, from)						\
 do {									\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
-	(from)->m_pkthdr.aux = (struct mbuf *)NULL;			\
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	SLIST_INIT(&(to)->m_pkthdr.tags);				\
+	m_tag_copy_chain((to), (from));					\
 	(to)->m_data = (to)->m_pktdat;					\
 } while (/* CONSTCOND */ 0)
 
@@ -577,14 +577,6 @@ do {									\
 #define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
 
 /*
- * pkthdr.aux type tags.
- */
-struct mauxtag {
-	int af;
-	int type;
-};
-
-/*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
  * pool headers (mbpool and mclpool).
@@ -662,9 +654,29 @@ void	m_freem __P((struct mbuf *));
 void	m_reclaim __P((void *, int));
 void	mbinit __P((void));
 
-struct mbuf *m_aux_add __P((struct mbuf *, int, int));
-struct mbuf *m_aux_find __P((struct mbuf *, int, int));
-void m_aux_delete __P((struct mbuf *, struct mbuf *));
+/* Packet tag routines */
+struct	m_tag *m_tag_get(int, int, int);
+void	m_tag_free(struct m_tag *);
+void	m_tag_prepend(struct mbuf *, struct m_tag *);
+void	m_tag_unlink(struct mbuf *, struct m_tag *);
+void	m_tag_delete(struct mbuf *, struct m_tag *);
+void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
+struct	m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
+struct	m_tag *m_tag_copy(struct m_tag *);
+int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
+void	m_tag_init(struct mbuf *);
+struct	m_tag *m_tag_first(struct mbuf *);
+struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
+
+/* Packet tag types */
+#define PACKET_TAG_NONE				0  /* Nothing */
+#define PACKET_TAG_VLAN				1  /* VLAN ID */
+#define PACKET_TAG_ENCAP			2  /* encapsulation data */
+#define PACKET_TAG_ESP				3  /* ESP information */
+#define PACKET_TAG_PF_GENERATED			11 /* PF generated, pass always */
+#define PACKET_TAG_PF_ROUTED			12 /* PF routed, no route loops */
+#define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
+#define PACKET_TAG_PF_QID			14 /* PF queue id */
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
 

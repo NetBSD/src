@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.11 2002/11/25 02:03:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.12 2003/01/17 08:11:56 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -931,12 +931,12 @@ encap_fillarg(m, ep)
 	struct mbuf *m;
 	const struct encaptab *ep;
 {
-	struct mbuf *n;
+	struct m_tag *mtag;
 
-	n = m_aux_add(m, AF_INET, IPPROTO_IPV4);
-	if (n) {
-		*mtod(n, void **) = ep->arg;
-		n->m_len = sizeof(void *);
+	mtag = m_tag_get(PACKET_TAG_ENCAP, sizeof(void *), M_NOWAIT);
+	if (mtag) {
+		*(void **)(mtag + 1) = ep->arg;
+		m_tag_prepend(m, mtag);
 	}
 }
 
@@ -945,14 +945,13 @@ encap_getarg(m)
 	struct mbuf *m;
 {
 	void *p;
-	struct mbuf *n;
+	struct m_tag *mtag;
 
 	p = NULL;
-	n = m_aux_find(m, AF_INET, IPPROTO_IPV4);
-	if (n) {
-		if (n->m_len == sizeof(void *))
-			p = *mtod(n, void **);
-		m_aux_delete(m, n);
+	mtag = m_tag_find(m, PACKET_TAG_ENCAP, NULL);
+	if (mtag != NULL) {
+		p = (void *)(mtag + 1);
+		m_tag_delete(m, mtag);
 	}
 	return p;
 }
