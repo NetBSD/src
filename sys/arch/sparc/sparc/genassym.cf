@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1998/09/07 23:13:07 pk Exp $
+#	$NetBSD: genassym.cf,v 1.10 1998/09/13 11:12:36 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
-include <sys/syscall.h>
 include <sys/user.h>
 include <sys/device.h>
 include <sys/disklabel.h>
@@ -172,11 +171,6 @@ define	FS_FSR		offsetof(struct fpstate, fs_fsr)
 define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
 define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
 define	FSR_QNE		FSR_QNE
-
-# system calls
-define	SYS_sigreturn	SYS_sigreturn
-define	SYS_execve	SYS_execve
-define	SYS_exit	SYS_exit
 
 # errno
 define	EFAULT		EFAULT
