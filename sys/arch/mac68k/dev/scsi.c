@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.9 1994/11/29 03:43:52 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.10 1994/12/03 14:16:58 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -128,8 +128,6 @@ static int		ncr5380_send_cmd(struct scsi_xfer *xs);
 
 extern void		ncr5380_intr(int adapter);
 extern void		spinwait(int);
-
-static void		delay(int);
 
 static int	scsi_gen(int adapter, int id, int lun,
 			 struct scsi_generic *cmd, int cmdlen,
@@ -364,18 +362,11 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
  * Actual chip control.
  */
 
-static void
-delay(int timeo)
-{
-	int	len;
-	for (len=0;len<timeo*2;len++);
-}
-
 extern void
 spinwait(int ms)
 {
 	while (ms--)
-		delay(500);
+		delay(1000);
 }
 
 extern void
@@ -416,7 +407,7 @@ ncr5380_reset_target(int adapter, int target)
 
 	regs->sci_icmd = SCI_ICMD_TEST;
 	regs->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
-	delay(2500);
+	spinwait(250);	/* 250 ms */
 	regs->sci_icmd = 0;
 
 	regs->sci_mode = 0;
@@ -500,7 +491,7 @@ select_target(register volatile sci_padded_regmap_t *regs,
 		goto lost;
 	}
 
-	spinwait(2);	/* 2.2us arb delay */
+	delay(3);	/* 2.4us arb delay */
 
 	if (regs->sci_icmd & SCI_ICMD_LST) {
 		goto lost;
@@ -530,7 +521,7 @@ select_target(register volatile sci_padded_regmap_t *regs,
 	/* XXX should put our id out, and after the delay check nothi XXX */
 	/* XXX ng else is out there.				      XXX */
 
-	delay(0);
+	delay(1);
 
 	regs->sci_tcmd = 0;
 	regs->sci_odata = myid | tid;
@@ -545,7 +536,7 @@ select_target(register volatile sci_padded_regmap_t *regs,
 	regs->sci_icmd = icmd;
 
 	/* bus settle delay, 400ns */
-	delay(2); /* too much (was 2) ? */
+	delay(1); /* 1us > 400ns ;-) */
 
 /*	regs->sci_mode |= SCI_MODE_PAR_CHK; */
 
