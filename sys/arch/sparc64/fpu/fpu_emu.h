@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.2 1998/09/22 02:48:42 eeh Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.3 1999/11/06 20:10:25 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ struct fpn {
  * Emulator state.
  */
 struct fpemu {
-	struct	fpstate *fe_fpstate;	/* registers, etc */
+	struct	fpstate64 *fe_fpstate;	/* registers, etc */
 	int	fe_fsr;			/* fsr copy (modified during op) */
 	int	fe_cx;			/* exceptions */
 	struct	fpn fe_f1;		/* operand 1 */
