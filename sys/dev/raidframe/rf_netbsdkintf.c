@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.110 2001/10/04 15:58:54 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,10 +135,11 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 
+#include <dev/raidframe/raidframevar.h>
+#include <dev/raidframe/raidframeio.h>
 #include "raid.h"
 #include "opt_raid_autoconfig.h"
 #include "rf_raid.h"
-#include "rf_raidframe.h"
 #include "rf_copyback.h"
 #include "rf_dag.h"
 #include "rf_dagflags.h"
@@ -154,7 +155,6 @@
 #include "rf_parityscan.h"
 #include "rf_debugprint.h"
 #include "rf_threadstuff.h"
-#include "rf_configure.h"
 
 int     rf_kdebug_level = 0;
 
@@ -239,7 +239,7 @@ int numraid = 0;
  * a single 64K write will typically require 64K for the old data, 
  * 64K for the old parity, and 64K for the new parity, for a total 
  * of 192K (if the parity buffer is not re-used immediately).
- * Even it if is used immedately, that's still 128K, which when multiplied
+ * Even it if is used immediately, that's still 128K, which when multiplied
  * by say 10 requests, is 1280K, *on top* of the 640K of incoming data.
  * 
  * Now in degraded mode, for example, a 64K read on the above setup may
@@ -2438,7 +2438,9 @@ rf_update_component_labels(raidPtr, final)
 
 	for( c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
-		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
+		/* Need to ensure that the reconstruct actually completed! */
+		if ((raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) &&
+		    (raidPtr->status[0] == rf_rs_optimal)) {
 			/* 
 			   
 			   we claim this disk is "optimal" if it's 

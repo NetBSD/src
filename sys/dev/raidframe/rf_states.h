@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_states.h,v 1.4 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +29,7 @@
 #ifndef _RF__RF_STATES_H_
 #define _RF__RF_STATES_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 void    rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc);
 void    rf_ContinueDagAccess(RF_DagList_t * dagList);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_freelist.h,v 1.4 2001/07/18 06:45:33 thorpej Exp $	*/
+/*	$NetBSD: rf_freelist.h,v 1.5 2001/10/04 15:58:53 oster Exp $	*/
 /*
  * rf_freelist.h
  */
@@ -41,7 +41,8 @@
 #ifndef _RF__RF_FREELIST_H_
 #define _RF__RF_FREELIST_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_debugMem.h"
 #include "rf_general.h"
 #include "rf_threadstuff.h"

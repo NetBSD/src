@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.h,v 1.6 2000/09/21 01:45:46 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.h,v 1.7 2001/10/04 15:58:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _RF__RF_MCPAIR_H_
 #define _RF__RF_MCPAIR_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 #include "rf_threadstuff.h"
 
 struct RF_MCPair_s {

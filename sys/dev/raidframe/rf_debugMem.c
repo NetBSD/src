@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.7 2000/01/07 03:40:59 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.8 2001/10/04 15:58:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * and to the allocation list stuff.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 #include "rf_threadstuff.h"
 #include "rf_options.h"

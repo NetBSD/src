@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
+/*	$NetBSD: rf_utils.h,v 1.5 2001/10/04 15:58:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #ifndef _RF__RF_UTILS_H_
 #define _RF__RF_UTILS_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
 #include "rf_threadstuff.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_copyback.h,v 1.4 2001/10/04 15:58:51 oster Exp $	*/
 /*
  * rf_copyback.h
  */
@@ -32,7 +32,7 @@
 #ifndef _RF__RF_COPYBACK_H_
 #define _RF__RF_COPYBACK_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 typedef struct RF_CopybackDesc_s {
 	RF_Raid_t *raidPtr;

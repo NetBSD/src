@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$NetBSD: rf_nwayxor.h,v 1.4 2001/10/04 15:58:54 oster Exp $	*/
 /*
  * rf_nwayxor.h
  */
@@ -35,7 +35,8 @@
 #ifndef _RF__RF_NWAYXOR_H_
 #define _RF__RF_NWAYXOR_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_reconstruct.h"
 

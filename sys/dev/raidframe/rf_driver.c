@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.41 2001/07/27 03:30:07 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.42 2001/10/04 15:58:53 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,6 @@
 #include "rf_utils.h"
 #include "rf_etimer.h"
 #include "rf_acctrace.h"
-#include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_desc.h"
 #include "rf_states.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.h,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.h,v 1.4 2001/10/04 15:58:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +29,8 @@
 #ifndef _RF__RF_PARITYSCAN_H_
 #define _RF__RF_PARITYSCAN_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_alloclist.h"
 
 int     rf_RewriteParity(RF_Raid_t * raidPtr);

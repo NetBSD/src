@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.34 2000/12/05 01:35:56 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.35 2001/10/04 15:58:53 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,11 +66,11 @@
  * rf_disks.c -- code to perform operations on the actual disks
  ***************************************************************/
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_alloclist.h"
 #include "rf_utils.h"
-#include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_options.h"
 #include "rf_kintf.h"

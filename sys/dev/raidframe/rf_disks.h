@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.9 2001/09/25 02:56:13 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.10 2001/10/04 15:58:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,53 +35,14 @@
 
 #include <sys/types.h>
 
+#include <dev/raidframe/raidframevar.h>
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_netbsd.h"
-
-/*
- * A physical disk can be in one of several states:
- * IF YOU ADD A STATE, CHECK TO SEE IF YOU NEED TO MODIFY RF_DEAD_DISK() BELOW.
- */
-enum RF_DiskStatus_e {
-	rf_ds_optimal,		/* no problems */
-	rf_ds_failed,		/* reconstruction ongoing */
-	rf_ds_reconstructing,	/* reconstruction complete to spare, dead disk
-				 * not yet replaced */
-	rf_ds_dist_spared,	/* reconstruction complete to distributed
-				 * spare space, dead disk not yet replaced */
-	rf_ds_spared,		/* reconstruction complete to distributed
-				 * spare space, dead disk not yet replaced */
-	rf_ds_spare,		/* an available spare disk */
-	rf_ds_used_spare	/* a spare which has been used, and hence is
-				 * not available */
-};
-typedef enum RF_DiskStatus_e RF_DiskStatus_t;
-
-struct RF_RaidDisk_s {
-	char    devname[56];	/* name of device file */
-	RF_DiskStatus_t status;	/* whether it is up or down */
-	RF_RowCol_t spareRow;	/* if in status "spared", this identifies the
-				 * spare disk */
-	RF_RowCol_t spareCol;	/* if in status "spared", this identifies the
-				 * spare disk */
-	RF_SectorCount_t numBlocks;	/* number of blocks, obtained via READ
-					 * CAPACITY */
-	int     blockSize;
-	RF_SectorCount_t partitionSize; /* The *actual* and *full* size of 
-					   the partition, from the disklabel */
-	int     auto_configured;/* 1 if this component was autoconfigured.
-				   0 otherwise. */
-	dev_t   dev;
-};
 
 /* if a disk is in any of these states, it is inaccessible */
 #define RF_DEAD_DISK(_dstat_) (((_dstat_) == rf_ds_spared) || \
 	((_dstat_) == rf_ds_reconstructing) || ((_dstat_) == rf_ds_failed) || \
 	((_dstat_) == rf_ds_dist_spared))
-
-#ifdef _KERNEL
-#include "rf_netbsd.h"
 
 int rf_ConfigureDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 		      RF_Config_t * cfgPtr);
@@ -97,5 +58,5 @@ int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 int rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component);
 int rf_incorporate_hot_spare(RF_Raid_t *raidPtr, 
 			     RF_SingleComponent_t *component);
-#endif /* _KERNEL */
+
 #endif				/* !_RF__RF_DISKS_H_ */
