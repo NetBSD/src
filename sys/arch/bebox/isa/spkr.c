@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.6 2000/03/23 06:36:44 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.7 2000/05/27 04:42:14 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -66,20 +66,15 @@ struct cfattach spkr_ca = {
 
 static void endtone __P((void *));
 static void tone __P((u_int, u_int));
-static void endrest __P((void *));
 static void rest __P((int));
 static void playinit __P((void));
 static void playtone __P((int, int, int));
 static void playstring __P((char *, int));
 
-static struct callout endtone_ch = CALLOUT_INITIALIZER;
-static struct callout endreset_ch = CALLOUT_INITIALIZER;
-
 static void
 endtone(v)
     void *v;
 {
-    wakeup(endtone);
     isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) & ~PIT_SPKR);
 }
 
@@ -106,21 +101,7 @@ void tone(hz, ticks)
     /* turn the speaker on */
     isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);
 
-    /*
-     * Set timeout to endtone function, then give up the timeslice.
-     * This is so other processes can execute while the tone is being
-     * emitted.
-     */
-    callout_reset(&endtone_ch, ticks, endtone, NULL);
-    sleep(endtone, PZERO - 1);
-}
-
-static void
-endrest(v)
-/* end a rest */
-	void *v;
-{
-    wakeup(endrest);
+    (void) tsleep(endtone, PZERO - 1, "spkrtone", ticks);
 }
 
 static void
@@ -128,16 +109,11 @@ rest(ticks)
 /* rest for given number of ticks */
     int	ticks;
 {
-    /*
-     * Set timeout to endrest function, then give up the timeslice.
-     * This is so other processes can execute while the rest is being
-     * waited out.
-     */
+
 #ifdef DEBUG
     printf("rest: %d\n", ticks);
 #endif /* DEBUG */
-    callout_reset(&endrest_ch, ticks, endrest, NULL);
-    sleep(endrest, PZERO - 1);
+    (void) tsleep(rest, PZERO - 1, "spkrrest", ticks);
 }
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************
