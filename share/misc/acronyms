@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.122 2003/08/21 12:57:14 jschauma Exp $
+$NetBSD: acronyms,v 1.123 2003/08/30 20:49:20 jmmv Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -124,6 +124,8 @@ NFC	no fucking clue
 NFI	no fucking idea
 NFW	no fucking way
 NIH	not invented here
+NOYB	none of your business
+NOYFB	none of your fucking business
 NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
