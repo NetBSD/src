@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.56 2001/02/18 06:15:49 tsutsui Exp $	*/
+/*	$NetBSD: mount.c,v 1.57 2001/12/20 20:10:37 soren Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.56 2001/02/18 06:15:49 tsutsui Exp $");
+__RCSID("$NetBSD: mount.c,v 1.57 2001/12/20 20:10:37 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,9 +647,9 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage: mount %s\n       mount %s\n       mount %s\n",
-	    "[-dfruvw] [-o options] [-t ffs | external_type] special node",
-	    "[-adfruvw] [-t ffs | external_type]",
-	    "[-dfruvw] special | node");
+	    "[-Aadfruvw] [-t type]",
+	    "[-dfruvw] special | node",
+	    "[-dfruvw] [-o options] [-t type] special node");
 	exit(1);
 	/* NOTREACHED */
 }

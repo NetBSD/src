@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.24 2001/02/19 22:56:23 cgd Exp $	*/
+/*	$NetBSD: slattach.c,v 1.25 2001/12/20 20:10:38 soren Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.24 2001/02/19 22:56:23 cgd Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.25 2001/12/20 20:10:38 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-t ldisc] [-hHlm] [-s baudrate] ttyname\n",
+	    "Usage: %s [-t ldisc] [-hHlmn] [-s baudrate] ttyname\n",
 		getprogname());
 	exit(1);
 }

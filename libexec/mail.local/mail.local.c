@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.18 2001/01/04 17:29:05 lukem Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.19 2001/12/20 20:10:35 soren Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.18 2001/01/04 17:29:05 lukem Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.19 2001/12/20 20:10:35 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ notifybiff(msg)
 void
 usage()
 {
-	err(FATAL, "usage: mail.local [-f from] user ...");
+	err(FATAL, "usage: mail.local [-l] [-f from] user ...");
 }
 
 #if __STDC__
