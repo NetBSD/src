@@ -48,8 +48,8 @@ main(int argc, char **argv)
 	extern int optind;
 	int isdndev;
 	int controller = -1;
-	int lflag, dflag, xflag, iflag, sflag, vflag, pthrou;
-	char *dnload = NULL, ch;
+	int lflag, dflag, xflag, iflag, sflag, vflag, pthrou, ch;
+	char *dnload = NULL;
 
 	pthrou = lflag = dflag = xflag = iflag = sflag = vflag = 0;
 	while ((ch = getopt(argc, argv, "d:xsvlp")) != -1)
