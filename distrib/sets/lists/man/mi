@@ -7,6 +7,7 @@
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
 ./usr/share/man/cat1/awk.0
+./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
 ./usr/share/man/cat1/batch.0
 ./usr/share/man/cat1/bc.0
@@ -370,6 +371,7 @@
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
+./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
