@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.9 1996/03/31 22:27:15 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.10 1996/04/22 02:35:03 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,11 @@ sbus_attach(parent, self, aux)
 	node = ra->ra_node;
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
+
+	/*
+	 * Get the SBus burst transfer size if burst transfers are supported
+	 */
+	sc->sc_burst = getpropint(node, "burst-sizes", 0);
 
 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
 		oca.ca_ra.ra_bp = ra->ra_bp + 1;
