@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.46 2001/04/16 10:47:15 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.46 2001/04/16 10:47:15 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1239,25 +1239,17 @@ int
 open_disk(int update)
 {
 	static char namebuf[MAXPATHLEN + 1];
-	struct stat st;
 
 	fd = opendisk(disk, update ? O_RDWR : O_RDONLY, namebuf,
 	    sizeof(namebuf), 0);
 	if (fd < 0) {
-		warn("%s", namebuf);
+		if (errno == ENODEV)
+			warnx("%s is not a character device", namebuf);
+		else
+			warn("%s", namebuf);
 		return (-1);
 	}
 	disk = namebuf;
-	if (fstat(fd, &st) == -1) {
-		close(fd);
-		warn("%s", disk);
-		return (-1);
-	}
-	if (!S_ISCHR(st.st_mode) && !S_ISREG(st.st_mode)) {
-		close(fd);
-		warnx("%s is not a character device or regular file", disk);
-		return (-1);
-	}
 	if (get_params() == -1) {
 		close(fd);
 		return (-1);
