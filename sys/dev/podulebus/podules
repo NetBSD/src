@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp $
+$NetBSD: podules,v 1.16 2004/01/07 22:00:51 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -271,7 +271,7 @@ podule	FAXPACKJUNIOR		0x008b	FaxPack Junior
 podule	LINGENUITY_SCSI8SHARE	0x008c	8 bit SCSIShare interface
 podule	VTI_SCSI		0x008d	SCSI interface
 podule	ATOMWIDE_PIA		0x008e	PIA
-podule	NEXUSNS			0x008f	Nexus interface (A3020 netslot)
+podule	NEXUSNS			0x008f	Nexus interface (A3020/RiscPC netslot)
 /* RISC iX: #define XCB_PRODUCT_XCB_DTSOFTWAREPCCONNECT 144 */
 podule	ATOMWIDE_SERIAL		0x0090	multiport serial interface
 podule	WATFORD_IDE		0x0091	IDE interface
