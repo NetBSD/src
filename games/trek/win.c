@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
+/*	$NetBSD: win.c,v 1.6 2001/02/05 01:12:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
+__RCSID("$NetBSD: win.c,v 1.6 2001/02/05 01:12:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,13 @@ __RCSID("$NetBSD: win.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 **	pretty off the wall.
 */
 
+extern jmp_buf env;
+
 void
 win()
 {
 	long		s;
 	const struct cvntab	*p = NULL;
-	extern jmp_buf env;
 
 	sleep(1);
 	printf("\nCongratulations, you have saved the Federation\n");
