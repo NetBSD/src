@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.16 1999/02/02 23:31:52 tv Exp $	*/
+/*	$NetBSD: options.c,v 1.17 1999/02/02 23:42:41 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.16 1999/02/02 23:31:52 tv Exp $");
+__RCSID("$NetBSD: options.c,v 1.17 1999/02/02 23:42:41 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -784,6 +784,12 @@ tar_options(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
+	 */
+	if (act == ARCHIVE && frmt == NULL)
+		frmt = &(fsub[F_USTAR]);
 
 	/*
 	 * process the args as they are interpreted by the operation mode
