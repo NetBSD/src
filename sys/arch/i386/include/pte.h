@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 2000/09/05 21:52:16 thorpej Exp $	*/
 
 /*
  *
@@ -173,6 +173,8 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define	PG_FRAME	0xfffff000	/* page frame mask */
+
+#define	PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
 
 /*
  * various short-hand protection codes
