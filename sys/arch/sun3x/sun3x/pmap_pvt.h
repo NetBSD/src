@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.5 1997/03/21 22:46:16 gwr Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.6 1997/07/02 03:23:58 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,6 +79,12 @@ struct b_tmgr_struct {
  * format page descriptors (a 'C' table), a pointer to the level B table
  * manager currently using it, and the number of wired and active pages
  * it currently contains.
+ *
+ * Additionally, the table manager contains a pointer to the pmap
+ * that is currently using it and the starting virtual address of the
+ * range that the MMU table manages.  These two items can be obtained
+ * through the traversal of other table manager structures, but having
+ * them close at hand helps speed up operations in the PV system.
  */
 struct c_tmgr_struct {
 	b_tmgr_t	*ct_parent; /* Parent 'B' table manager         */
@@ -89,6 +95,8 @@ struct c_tmgr_struct {
 	TAILQ_ENTRY(c_tmgr_struct) ct_link; /* list linker              */
 #define	MMU_SHORT_PTE_WIRED	MMU_SHORT_PTE_UN1
 #define MMU_PTE_WIRED		((*pte)->attr.raw & MMU_SHORT_PTE_WIRED)
+	pmap_t		ct_pmap;    /* pmap currently using this table  */
+	vm_offset_t	ct_va;      /* starting va that this table maps */
 };
 
 /* The Mach VM code requires that the pmap module be able to apply 
