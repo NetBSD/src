@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 1995/02/08 14:52:31 mycroft Exp $	*/
+/*	$NetBSD: Locore.c,v 1.8 1995/03/09 12:05:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -202,19 +202,19 @@ struct	ste Sysseg[NPTEPG];
 /*ARGSUSED*/
 ovbcopy(from, to, len) caddr_t from, to; unsigned len; { }
 copyinstr(udaddr, kaddr, maxlength, lencopied)
-    caddr_t udaddr, kaddr; u_int maxlength, *lencopied;
+    caddr_t udaddr, kaddr; size_t maxlength, *lencopied;
 { *kaddr = *udaddr; *lencopied = maxlength; return (0); }
 copyoutstr(kaddr, udaddr, maxlength, lencopied)
-    caddr_t kaddr, udaddr; u_int maxlength, *lencopied;
+    caddr_t kaddr, udaddr; size_t maxlength, *lencopied;
 { *udaddr = *kaddr; *lencopied = maxlength; return (0); }
 copystr(kfaddr, kdaddr, maxlength, lencopied)
-    caddr_t kfaddr, kdaddr; u_int maxlength, *lencopied;
+    caddr_t kfaddr, kdaddr; size_t maxlength, *lencopied;
 { *kdaddr = *kfaddr; *lencopied = maxlength; return (0); }
 
 /*ARGSUSED*/
-copyin(udaddr, kaddr, n) caddr_t udaddr, kaddr; u_int n; { return (0); }
+copyin(udaddr, kaddr, n) caddr_t udaddr, kaddr; size_t n; { return (0); }
 /*ARGSUSED*/
-copyout(kaddr, udaddr, n) caddr_t kaddr, udaddr; u_int n; { return (0); }
+copyout(kaddr, udaddr, n) caddr_t kaddr, udaddr; size_t n; { return (0); }
 
 /*ARGSUSED*/
 longjmp(lp) label_t *lp; { /*NOTREACHED*/ }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1995/01/18 08:14:33 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1995/03/09 12:05:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -919,7 +919,7 @@ vmunaccess() {printf ("vmunaccess!\n");}
 /*
  * Below written in C to allow access to debugging code
  */
-copyinstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
+copyinstr(fromaddr, toaddr, maxlength, lencopied) size_t *lencopied, maxlength;
 	void *toaddr, *fromaddr; {
 	int c,tally;
 
@@ -941,7 +941,7 @@ copyinstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
 	return(ENAMETOOLONG);
 }
 
-copyoutstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
+copyoutstr(fromaddr, toaddr, maxlength, lencopied) size_t *lencopied, maxlength;
 	void *fromaddr, *toaddr; {
 	int c;
 	int tally;
@@ -960,7 +960,7 @@ copyoutstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
 	return(ENAMETOOLONG);
 }
 
-copystr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
+copystr(fromaddr, toaddr, maxlength, lencopied) size_t *lencopied, maxlength;
 	void *fromaddr, *toaddr; {
 	u_int tally;
 

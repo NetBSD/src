@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.9 1995/01/18 06:45:29 mellon Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.10 1995/03/09 12:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -522,8 +522,8 @@ END(memcpy)
  *	copystr(fromaddr, toaddr, maxlength, &lencopied)
  *		caddr_t fromaddr;
  *		caddr_t toaddr;
- *		u_int maxlength;
- *		u_int *lencopied;
+ *		size_t maxlength;
+ *		size_t *lencopied;
  */
 LEAF(copystr)
 	move	t2, a2			# Save the number of bytes
@@ -551,8 +551,8 @@ END(copystr)
  *	copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *		caddr_t fromaddr;
  *		caddr_t toaddr;
- *		u_int maxlength;
- *		u_int *lencopied;
+ *		size_t maxlength;
+ *		size_t *lencopied;
  */
 NON_LEAF(copyinstr, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
@@ -576,8 +576,8 @@ END(copyinstr)
  *	copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
  *		caddr_t fromaddr;
  *		caddr_t toaddr;
- *		u_int maxlength;
- *		u_int *lencopied;
+ *		size_t maxlength;
+ *		size_t *lencopied;
  */
 NON_LEAF(copyoutstr, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE

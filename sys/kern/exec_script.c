@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.10 1994/12/04 03:10:40 mycroft Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.11 1995/03/09 12:05:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -202,7 +202,8 @@ check_shell:
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
 		/* normally can't fail, but check for it if diagnostic */
-		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN, 0);
+		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+		    (size_t *)0);
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			panic("exec_script: copyinstr couldn't fail\n");

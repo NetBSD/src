@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.22 1995/03/08 01:34:48 cgd Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.23 1995/03/09 12:05:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	int error = 0;
-	u_long size;
+	size_t size;
 	struct kernfs_mount *fmp;
 	struct vnode *rvp;
 

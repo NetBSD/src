@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.17 1995/03/08 01:33:20 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.18 1995/03/09 12:05:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -95,7 +95,7 @@ cd9660_mountroot()
 	struct proc *p = curproc;	/* XXX */
 	struct iso_mnt *imp;
 	register struct fs *fs;
-	u_long size;
+	size_t size;
 	int error;
 	struct iso_args args;
 	
@@ -149,7 +149,7 @@ cd9660_mount(mp, path, data, ndp, p)
 {
 	struct vnode *devvp;
 	struct iso_args args;
-	u_long size;
+	size_t size;
 	int error;
 	struct iso_mnt *imp;
 	
