@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.5 1998/05/06 19:21:45 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.6 1998/05/26 13:28:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -483,6 +483,26 @@ eap_intr(p)
 	sic = EREAD4(sc, EAP_SIC);
 	DPRINTFN(5, ("eap_intr: ICSS=0x%08x, SIC=0x%08x\n", intr, sic));
         if (intr & EAP_I_ADC) {
+        	/*
+                 * XXX This is a hack!
+                 * The EAP chip sometimes generates the recording interrupt
+                 * while it is still transferring the data.  To make sure
+                 * it has all arrived we busy wait until the count is right.
+                 * The transfer we are waiting for is 8 longwords.
+                 */
+        	int s, nw, n;
+                EWRITE4(sc, EAP_MEMPAGE, EAP_ADC_PAGE);
+                s = EREAD4(sc, EAP_ADC_CSR);
+                nw = ((s & 0xffff) + 1) / 4; /* # of words in DMA */
+                n = 0;
+                while (((EREAD4(sc, EAP_ADC_SIZE) >> 16) + 8) % nw == 0) {
+                	delay(10);
+                	if (++n > 100) {
+                		printf("eapintr: dma fix timeout");
+                                break;
+                        }
+                }
+                /* Continue with normal interrupt handling. */
 		EWRITE4(sc, EAP_SIC, sic & ~EAP_R1_INTR_EN);
 		EWRITE4(sc, EAP_SIC, sic);
                 if (sc->sc_rintr)
@@ -723,7 +743,7 @@ eap_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	return (blk & -16);	/* keep good alignment */
+	return (blk & -32);	/* keep good alignment */
 }
 
 int
