@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.21 2003/10/07 14:37:06 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.22 2003/10/07 16:03:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.21 2003/10/07 14:37:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22 2003/10/07 16:03:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,6 +314,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -460,6 +461,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -513,6 +515,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 	return error;
 }
@@ -571,6 +574,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return error;
 }
@@ -623,8 +627,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	bus_size_t minlen;
-	bus_addr_t addr;
-	int i;
+	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
+	int i, useindex;
 
 	/*
 	 * Mising PRE and POST operations is not allowed.
@@ -642,9 +646,36 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 
 	/*
+	 * Since we're dealing with a virtually-indexed, write-back
+	 * cache, we need to do the following things:
+	 *
+	 *      PREREAD -- Invalidate D-cache.  Note we might have
+	 *      to also write-back here if we have to use an Index
+	 *      op, or if the buffer start/end is not cache-line aligned.
+ 	 *
+	 *      PREWRITE -- Write-back the D-cache.  If we have to use
+	 *      an Index op, we also have to invalidate.  Note that if
+	 *      we are doing PREREAD|PREWRITE, we can collapse everything
+	 *      into a single op.
+	 *
+	 *      POSTREAD -- Nothing.
+	 *
+	 *      POSTWRITE -- Nothing.
+	 */
+
+	/*
 	 * Flush the write buffer.
+	 * XXX Is this always necessary?
 	 */
 	wbflush();
+
+	/*
+	 * No cache flushes are necessary if we're only doing
+	 * POSTREAD or POSTWRITE (i.e. not doing PREREAD or PREWRITE).
+	 */
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
 
 	/*
 	 * If the mapping is of COHERENT DMA-safe memory, no cache
@@ -654,23 +685,16 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		return;
 
 	/*
-	 * No cache flushes are necessary if we're only doing
-	 * POSTREAD or POSTWRITE (i.e. not doing PREREAD or PREWRITE).
-	 */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) == 0)
-		return;
-
-	/*
-	 * Flush data cache for PREREAD.  This has the side-effect
-	 * of invalidating the cache.  Done at PREREAD since it
-	 * causes the cache line(s) to be written back to memory.
+	 * If the mapping belongs to the kernel, or it belongs
+	 * to the currently-running process (XXX actually, vmspace),
+	 * then we can use Hit ops.  Otherwise, Index ops.
 	 *
-	 * Flush data cache for PREWRITE, so that the contents of
-	 * the data buffer in memory reflect reality.
-	 *
-	 * Given the test above, we know we're doing one of these
-	 * two operations, so no additional tests are necessary.
+	 * This should be true the vast majority of the time.
 	 */
+	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+		useindex = 0;
+	else
+		useindex = 1;
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
@@ -694,16 +718,48 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
 		    addr, offset, addr, offset + minlen - 1, len);
 #endif
-#if 0
-		MachFlushDCache(addr + offset, minlen);
-#endif
-#if 1
-		mips_dcache_wbinv_range(addr + offset, minlen);
-#endif
-#if 0
-		MachFlushCache();
-#endif
 
+		/*
+		 * If we are forced to use Index ops, it's always a
+		 * Write-back,Invalidate, so just do one test.
+		 */
+		if (__predict_false(useindex)) {
+			mips_dcache_wbinv_range_index(addr + offset, minlen);
+#ifdef BUS_DMA_DEBUG
+			printf("\n");
+#endif
+			offset = 0;
+			len -= minlen;
+			continue;
+ 		}
+
+		start = addr + offset;
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			mips_dcache_wbinv_range(start, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+			end = start + minlen;
+			preboundary = start & ~mips_dcache_align_mask;
+			firstboundary = (start + mips_dcache_align_mask)
+			    & ~mips_dcache_align_mask;
+			lastboundary = end & ~mips_dcache_align_mask;
+			if (preboundary < start && preboundary < lastboundary)
+				mips_dcache_wbinv_range(preboundary,
+				    mips_dcache_align);
+			if (firstboundary < lastboundary)
+				mips_dcache_inv_range(firstboundary,
+				    lastboundary - firstboundary);
+			if (lastboundary < end)
+				mips_dcache_wbinv_range(lastboundary,
+				    mips_dcache_align);
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			mips_dcache_wb_range(start, minlen);
+			break;
+		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
