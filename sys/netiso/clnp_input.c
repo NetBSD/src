@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_input.c	7.13 (Berkeley) 5/6/91
- *	$Id: clnp_input.c,v 1.4 1993/12/18 00:42:34 mycroft Exp $
+ *	$Id: clnp_input.c,v 1.5 1994/01/04 08:13:28 cgd Exp $
  */
 
 /***********************************************************
@@ -75,16 +75,15 @@ SOFTWARE.
 #include <net/if_types.h>
 #include <net/route.h>
 
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
-
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
 #include <netiso/iso_snpac.h>
 #include <netiso/clnp.h>
 #include <netiso/clnl.h>
 #include <netiso/esis.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #include <netiso/eonvar.h>
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
