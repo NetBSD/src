@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.33 2000/07/05 22:44:07 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.34 2000/07/06 10:44:22 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -499,13 +499,13 @@ usr.bin/ipcs/ipcs.1				1.9
 
   Finish an unfinished sentence.
 
-bin/test/test.c		1.21
+bin/test/test.c					1.21
 
   Fix operator precedence consistency.  Fixes PR#7015.
 
-bin/test/test.c		1.22
-bin/sh/builtins.def	1.15
-bin/sh/Makefile		1.50
+bin/test/test.c					1.22
+bin/sh/builtins.def				1.15
+bin/sh/Makefile					1.50
 
   Enable test as a shell builtin.  Fixes PR#9847.
 
@@ -753,25 +753,35 @@ lib/libterm/Makefile				1.24
   "teeny" number.  Replace explicit ${SHLIB_MAJOR}.${SHLIB_MINOR}
   with ${SHLIB_FULLVERSION}.
 
-lib/libc/string/strlcat.c		1.1-1.3
-lib/libc/string/strlcpy.3		1.1-1.2
-lib/libc/string/strlcpy.c		1.1-1.3
-lib/libc/string/Makefile.inc		1.49
-lib/libc/string/strcat.3		1.7
-lib/libc/string/strcpy.3		1.8
-lib/libc/shlib_version			patch
-include/string.h			1.19-1.20
-distrib/sets/lists/shl.mi		patch
-distrib/sets/lists/comp/mi		patch
+lib/libc/string/strlcat.c			1.1-1.3
+lib/libc/string/strlcpy.3			1.1-1.2
+lib/libc/string/strlcpy.c			1.1-1.3
+lib/libc/string/Makefile.inc			1.49
+lib/libc/string/strcat.3			1.7
+lib/libc/string/strcpy.3			1.8
+lib/libc/shlib_version				patch
+include/string.h				1.19-1.20
+distrib/sets/lists/shl.mi			patch
+distrib/sets/lists/comp/mi			patch
 
   Add strlcpy() and strlcat() to libc, bump its "teeny" version
   number.
 
-usr.sbin/user/user.c			patch
+usr.sbin/user/user.c				patch
 
   Make the ersatz strlcpy() conform to the official prototype.
 
-sys/arch/alpha/conf/GENERIC		patch
-sys/arch/i386/conf/GENERIC		patch
+sys/arch/alpha/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			patch
 
   Add entry for Alteon ACEnic gigabit Ethernet interface (ti).
+
+sys/arch/i386/stand/dosboot/Makefile		1.14
+
+  Enable "old partition ID" compatibility by default, just as in
+  biosboot.
+
+sys/dev/pci/if_ti.c				1.3
+
+  Make the ti(4) driver compile again after the wi(4) related
+  pullups of if_media.h changed IFM_1000_FX to IFM_1000_SX.
