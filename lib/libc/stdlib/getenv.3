@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getenv.3	6.11 (Berkeley) 6/29/91
-.\"	$Id: getenv.3,v 1.2 1993/08/01 07:44:27 mycroft Exp $
+.\"	$Id: getenv.3,v 1.3 1993/11/29 22:07:15 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt GETENV 3
@@ -121,7 +121,7 @@ return zero if successful; otherwise the global variable
 is set to indicate the error and a
 \-1 is returned.
 .Sh ERRORS
-.Bl -tag -width [ENOMEM]
+.Bl -tag -width Er
 .It Bq Er ENOMEM
 The function
 .Fn setenv

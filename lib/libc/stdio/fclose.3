@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fclose.3	6.7 (Berkeley) 6/29/91
-.\"	$Id: fclose.3,v 1.2 1993/08/01 07:45:09 mycroft Exp $
+.\"	$Id: fclose.3,v 1.3 1993/11/29 22:06:38 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt FCLOSE 3
@@ -65,7 +65,7 @@ is returned and the global variable
 is set to indicate the error.
 In either case no further access to the stream is possible.
 .Sh ERRORS
-.Bl -tag -width [EBADF]
+.Bl -tag -width Er
 .It Bq Er EBADF
 The argument
 .Fa stream

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fgetline.3	5.4 (Berkeley) 4/19/91
-.\"	$Id: fgetline.3,v 1.2 1993/08/01 07:45:05 mycroft Exp $
+.\"	$Id: fgetline.3,v 1.3 1993/11/29 22:06:46 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt FGETLINE 3
@@ -91,7 +91,7 @@ provided that no changes are made beyond the terminating
 .Dv NUL .
 These changes are lost as soon as the pointer becomes invalid.
 .Sh ERRORS
-.Bl -tag -width [EBADF]
+.Bl -tag -width Er
 .It Bq Er EBADF
 The argument
 .Fa stream

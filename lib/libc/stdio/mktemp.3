@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mktemp.3	6.10 (Berkeley) 4/19/91
-.\"	$Id: mktemp.3,v 1.2 1993/08/01 07:44:57 mycroft Exp $
+.\"	$Id: mktemp.3,v 1.3 1993/11/29 22:06:55 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt MKTEMP 3
@@ -101,7 +101,7 @@ functions
 may set
 .Va errno
 to one of the following values:
-.Bl -tag -width [ENOTDIR]
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 The pathname portion of the template is not an existing directory.
 .El

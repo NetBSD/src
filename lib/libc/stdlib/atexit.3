@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atexit.3	5.3 (Berkeley) 6/29/91
-.\"	$Id: atexit.3,v 1.2 1993/08/01 07:44:36 mycroft Exp $
+.\"	$Id: atexit.3,v 1.3 1993/11/29 22:07:08 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt ATEXIT 3
@@ -63,7 +63,7 @@ and more are allowed as long as sufficient memory can be allocated.
 .Sh RETURN VALUES
 .Rv -std atexit
 .Sh ERRORS
-.Bl -tag -width [ENOMEM]
+.Bl -tag -width Er
 .It Bq Er ENOMEM
 No memory was available to add the function to the list.
 The existing list of functions is unmodified.
