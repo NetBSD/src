@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.7 1996/12/05 02:39:37 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.7.4.1 1997/02/21 19:28:35 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -221,17 +222,17 @@ depca_isa_probe(lesc, ia)
 	goto bad;
 
 found:
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, port);
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
+		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, port);
 
 #if 0
 	sum =
-	    (sc->sc_arpcom.ac_enaddr[0] <<  2) +
-	    (sc->sc_arpcom.ac_enaddr[1] << 10) +
-	    (sc->sc_arpcom.ac_enaddr[2] <<  1) +
-	    (sc->sc_arpcom.ac_enaddr[3] <<  9) +
-	    (sc->sc_arpcom.ac_enaddr[4] <<  0) +
-	    (sc->sc_arpcom.ac_enaddr[5] <<  8);
+	    (sc->sc_enaddr[0] <<  2) +
+	    (sc->sc_enaddr[1] << 10) +
+	    (sc->sc_enaddr[2] <<  1) +
+	    (sc->sc_enaddr[3] <<  9) +
+	    (sc->sc_enaddr[4] <<  0) +
+	    (sc->sc_enaddr[5] <<  8);
 	sum = (sum & 0xffff) + (sum >> 16);
 	sum = (sum & 0xffff) + (sum >> 16);
 
@@ -290,8 +291,8 @@ ne2100_isa_probe(lesc, ia)
 	/*
 	 * Extract the physical MAC address from the ROM.
 	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
+		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
 	/*
 	 * XXX INDIRECT BROKENNESS!
@@ -331,8 +332,8 @@ bicc_isa_probe(lesc, ia)
 	/*
 	 * Extract the physical MAC address from the ROM.
 	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i * 2);
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
+		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, i * 2);
 
 	/*
 	 * XXX INDIRECT BROKENNESS!
