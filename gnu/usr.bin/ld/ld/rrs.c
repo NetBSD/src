@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.25 1998/09/05 13:08:40 pk Exp $	*/
+/*	$NetBSD: rrs.c,v 1.26 1998/10/19 03:09:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 
 		md_fix_jmpslot( rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				rrs_sdt.sdt_plt + sp->jmpslot_offset,
-				sp->value);
+				sp->value, 0);
 		if (rrs_section_type == RRS_PARTIAL || !JMPSLOT_NEEDS_RELOC) {
 			/* PLT is self-contained */
 			discarded_rrs_relocs++;
@@ -503,7 +503,7 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 	r->r_address = got_symbol->value + sp->gotslot_offset;
 	RELOC_SYMBOL(r) = sp->rrs_symbolnum;
 	RELOC_EXTERN_P(r) = !(reloc_type == RELTYPE_RELATIVE);
-	md_make_gotreloc(rp, r, reloc_type, GOTP(sp->gotslot_offset));
+	md_make_gotreloc(rp, r, reloc_type);
 
 	return sp->gotslot_offset;
 }
@@ -571,7 +571,7 @@ printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
 	r = rrs_next_reloc();
 	r->r_address = got_symbol->value + lsp->gotslot_offset;
 	RELOC_EXTERN_P(r) = 0;
-	md_make_gotreloc(rp, r, RELTYPE_RELATIVE, GOTP(lsp->gotslot_offset));
+	md_make_gotreloc(rp, r, RELTYPE_RELATIVE);
 	return lsp->gotslot_offset;
 }
 
@@ -748,7 +748,7 @@ consider_rrs_section_lengths()
 	bzero(rrs_plt, n);
 
 	/* Initialize first jmpslot */
-	md_fix_jmpslot(rrs_plt, 0, 0);
+	md_fix_jmpslot(rrs_plt, 0, 0, 1);
 
 	if (rrs_section_type == RRS_PARTIAL) {
 		rrs_data_size = number_of_gotslots * sizeof(got_t);
@@ -1134,7 +1134,7 @@ write_rrs_text()
 				 * linker to unambiguously resolve function
 				 * address references.
 				 */
-				if (sp->aux != AUX_FUNC)
+				if (sp->aux != AUX_FUNC && sp->aux != AUX_LABEL)
 					errx(1, "%s: non-function jmpslot",
 						sp->name);
 				nlp->nz_other = N_OTHER(bind, sp->aux);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1998/08/26 14:37:40 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1998/10/19 03:09:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -229,10 +229,11 @@ extern       void		binder_entry __P((void));
 #endif
 
 void
-md_fix_jmpslot(sp, offset, addr)
+md_fix_jmpslot(sp, offset, addr, first)
 jmpslot_t	*sp;
 long		offset;
 u_long		addr;
+int		first;
 {
 	/*
 	 * For jmpslot 0 (the binder)
@@ -293,10 +294,9 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type, gotp)
+md_make_gotreloc(rp, r, type)
 struct relocation_info	*rp, *r;
 int			type;
-got_t			*gotp;
 {
 	r->r_pcrel = 0;
 	r->r_length = 2;

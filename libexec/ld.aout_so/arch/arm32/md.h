@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 1997/10/17 21:25:54 mark Exp $	*/
+/*	$NetBSD: md.h,v 1.3 1998/10/19 03:09:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -70,8 +70,10 @@
 	 : (TEXT_START(ex) + (ex).a_text + __LDPGSZ - 1) & ~(__LDPGSZ - 1))
 #endif
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
-#define JMPSLOT_NEEDS_RELOC		(1)
+#define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
+#define JMPSLOT_NEEDS_RELOC			(1)
+#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
+#define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 #define md_got_reloc(r)			(-r->r_address)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1998/09/05 13:08:39 pk Exp $  */
+/*	$NetBSD: md.c,v 1.10 1998/10/19 03:09:32 matt Exp $  */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -320,10 +320,11 @@ long		index;
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
+md_fix_jmpslot(sp, offset, addr, first)
 jmpslot_t	*sp;
 long		offset;
 u_long		addr;
+int		first;
 {
 	put_num(sp->code, BR, 2);
 	put_disp(sp->code + 2, addr - offset - 1, 4);
@@ -366,10 +367,9 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type, gotp)
+md_make_gotreloc(rp, r, type)
 struct relocation_info	*rp, *r;
 int			type;
-got_t			*gotp;
 {
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
