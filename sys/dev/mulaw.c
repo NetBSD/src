@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.13 1999/11/01 18:12:19 augustss Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.14 2000/08/18 05:55:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -40,7 +40,7 @@
 
 /*
  * This table converts a (8 bit) mulaw value two a 16 bit value.
- * The 16 bits are represented as an array of two butes for easier access
+ * The 16 bits are represented as an array of two bytes for easier access
  * to the individual bytes.
  */
 static u_char mulawtolin16[256][2] = {
