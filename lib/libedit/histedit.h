@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.6 1997/10/14 15:05:53 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.7 1998/05/20 01:02:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ typedef struct lineinfo {
 /*
  * Initialization, cleanup, and resetting
  */
-EditLine	*el_init	__P((const char *, FILE *, FILE *));
+EditLine	*el_init	__P((const char *, FILE *, FILE *, FILE *));
 void		 el_reset	__P((EditLine *));
 void		 el_end		__P((EditLine *));
 
@@ -87,9 +87,14 @@ void		 el_end		__P((EditLine *));
 /*
  * Get a line, a character or push a string back in the input queue
  */
-const char    *el_gets	__P((EditLine *, int *));
+const char	*el_gets	__P((EditLine *, int *));
 int		 el_getc	__P((EditLine *, char *));
 void		 el_push	__P((EditLine *, const char *));
+
+/*
+ * Beep!
+ */
+void		 el_beep	__P((EditLine *));
 
 /*
  * High level function internals control
@@ -134,7 +139,7 @@ void		 el_resize	__P((EditLine *));
 /*
  * User-defined function interface.
  */
-const LineInfo *el_line	__P((EditLine *));
+const LineInfo	 *el_line	__P((EditLine *));
 int   		  el_insertstr	__P((EditLine *, char *));
 void		  el_deletestr	__P((EditLine *, int));
 
@@ -158,22 +163,23 @@ void 		history_end	__P((History *));
 int 		history		__P((History *, HistEvent *, int, ...));
 
 #define H_FUNC		 0	/* , UTSL		*/
-#define H_SETMAXSIZE	 1	/* , const int);	*/
-#define H_FIRST		 2	/* , void);		*/
-#define H_LAST		 3	/* , void);		*/
-#define H_PREV		 4	/* , void);		*/
-#define H_NEXT		 5	/* , void);		*/
-#define H_CURR		 6	/* , void);		*/
-#define H_ADD		 7	/* , const char*);	*/
-#define H_ENTER		 8	/* , const char*);	*/
-#define H_END		 9	/* , void);		*/
-#define H_NEXT_STR	10	/* , const char*);	*/
-#define H_PREV_STR	11	/* , const char*);	*/
-#define H_NEXT_EVENT	12	/* , const int);	*/
-#define H_PREV_EVENT	13	/* , const int);	*/
-#define H_LOAD		14	/* , const char *);	*/
-#define H_SAVE		15	/* , const char *);	*/
-#define H_CLEAR		16	/* , void);		*/
-#define H_GETSIZE	17	/* , void);		*/
+#define H_SETSIZE	 1	/* , const int);	*/
+#define H_GETSIZE	 2	/* , void);		*/
+#define H_FIRST		 3	/* , void);		*/
+#define H_LAST		 4	/* , void);		*/
+#define H_PREV		 5	/* , void);		*/
+#define H_NEXT		 6	/* , void);		*/
+#define H_CURR		 8	/* , const int);	*/
+#define H_SET		 7	/* , void);		*/
+#define H_ADD		 9	/* , const char *);	*/
+#define H_ENTER		10	/* , const char *);	*/
+#define H_END		11	/* , void);		*/
+#define H_NEXT_STR	12	/* , const char *);	*/
+#define H_PREV_STR	13	/* , const char *);	*/
+#define H_NEXT_EVENT	14	/* , const int);	*/
+#define H_PREV_EVENT	15	/* , const int);	*/
+#define H_LOAD		16	/* , const char *);	*/
+#define H_SAVE		17	/* , const char *);	*/
+#define H_CLEAR		18	/* , void);		*/
 
 #endif /* _h_editline */
