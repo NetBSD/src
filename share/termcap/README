@@ -37,7 +37,7 @@ back into the original source.  I will normally include anything unless
 there is a good reason not to, but I reserve the right to redo it differently.
 
 	uunet!ucbvax!termcap			(uucp)
-	termcap@berkeley.cs.edu			(Internet)
+	termcap@cs.berkeley.edu			(Internet)
 
 << 14 October 1987 >>
 It is probably easiest to make local termcap changes in separate
@@ -51,5 +51,9 @@ without consuming lots of disk or requiring re-integration of local
 changes when system termcap files change.
 
 	John Kunze
-	termcap@berkeley.cs.edu
+	termcap@cs.berkeley.edu
 
+<< 1 January 1997 >>
+
+Maintenance has been taken over by Eric Raymond <terminfo@ccil.org>.
+E-mail changes there. See http://www.ccil.org/terminfo/
