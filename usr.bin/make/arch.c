@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.12 1996/02/04 20:34:41 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.12 1996/02/04 20:34:41 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,7 @@ static char rcsid[] = "$NetBSD: arch.c,v 1.12 1996/02/04 20:34:41 christos Exp $
 #if !defined(__svr4__) && !defined(__SVR4) 
 #include    <ranlib.h>
 #endif
+#include    <utime.h>
 #include    <stdio.h>
 #include    <stdlib.h>
 #include    "make.h"
@@ -837,7 +838,7 @@ Arch_TouchLib (gn)
 #ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
     struct ar_hdr   arh;      	/* Header describing table of contents */
-    struct timeval  times[2];	/* Times for utimes() call */
+    struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember (gn->path, RANLIBMAG, &arh, "r+");
     sprintf(arh.ar_date, "%-12ld", (long) now);
@@ -846,9 +847,8 @@ Arch_TouchLib (gn)
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
 	fclose (arch);
 
-	times[0].tv_sec = times[1].tv_sec = now;
-	times[0].tv_usec = times[1].tv_usec = 0;
-	utimes(gn->path, times);
+	times.actime = times.modtime = now;
+	utime(gn->path, &times);
     }
 #endif
 }
@@ -991,7 +991,7 @@ Arch_FindLib (gn, path)
     Var_Set (TARGET, gn->name, gn);
 #else
     Var_Set (TARGET, gn->path == (char *) NULL ? gn->name : gn->path, gn);
-#endif LIBRARIES
+#endif /* LIBRARIES */
 }
 
 /*-
