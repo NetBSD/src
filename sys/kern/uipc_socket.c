@@ -31,24 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.6.2.1 1993/09/24 08:51:53 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.6.2.2 1993/11/06 00:07:55 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "file.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "kernel.h"
-#include "select.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "resourcevar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/kernel.h>
+#include <sys/select.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/resourcevar.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /*
  * Socket operation routines.
@@ -334,6 +334,15 @@ sosend(so, addr, uio, top, control, flags)
 		resid = uio->uio_resid;
 	else
 		resid = top->m_pkthdr.len;
+	/*
+	 * In theory resid should be unsigned.
+	 * However, space must be signed, as it might be less than 0
+	 * if we over-committed, and we must use a signed comparison
+	 * of space and resid.  On the other hand, a negative resid
+	 * causes us to loop sending 0-length segments to the protocol.
+	 */
+	if (resid < 0)
+		return (EINVAL);
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
@@ -402,21 +411,10 @@ restart:
 				if ((m->m_flags & M_EXT) == 0)
 					goto nopages;
 				mlen = MCLBYTES;
-#ifdef	MAPPED_MBUFS
-				len = min(MCLBYTES, resid);
-#else
-				if (top == 0) {
-					len = min(MCLBYTES - max_hdr, resid);
-					m->m_data += max_hdr;
-				} else
-					len = min(MCLBYTES, resid);
-#endif
-				len = min(len, space);
-				space -= len;
+				len = min(min(mlen, resid), space);
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
-				space -= len;
 				/*
 				 * For datagram protocols, leave room
 				 * for protocol headers in first mbuf.
@@ -424,6 +422,7 @@ nopages:
 				if (atomic && top == 0 && len < mlen)
 					MH_ALIGN(m, len);
 			}
+			space -= len;
 			error = uiomove(mtod(m, caddr_t), (int)len, uio);
 			resid = uio->uio_resid;
 			m->m_len = len;
@@ -721,8 +720,11 @@ dontblock:
 					so->so_state |= SS_RCVATMARK;
 					break;
 				}
-			} else
+			} else {
 				offset += len;
+				if (offset == so->so_oobmark)
+					break;
+			}
 		}
 		if (flags & MSG_EOR)
 			break;

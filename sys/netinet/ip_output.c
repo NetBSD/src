@@ -31,26 +31,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.3.4.1 1993/10/16 10:51:46 mycroft Exp $
+ *	$Id: ip_output.c,v 1.3.4.2 1993/11/06 00:10:44 mycroft Exp $
  */
 
-#include "param.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "errno.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/errno.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "in_var.h"
-#include "ip_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 
 struct mbuf *ip_insertoptions();
 
@@ -154,6 +154,17 @@ ip_output(m0, opt, ro, flags)
 	if (ip->ip_src.s_addr == INADDR_ANY)
 		ip->ip_src = IA_SIN(ia)->sin_addr;
 #endif
+
+	/*
+	 * Verify that we have any chance at all of being able to queue
+	 *	the packet or packet fragments
+	 */
+	if ((ifp->if_snd.ifq_len + ip->ip_len / ifp->if_mtu + 1) >=
+		ifp->if_snd.ifq_maxlen) {
+			error = ENOBUFS;
+			goto bad;
+	}
+
 	/*
 	 * Look for broadcast address and
 	 * and verify user is allowed to send
