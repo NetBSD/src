@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.3 1998/08/26 10:36:42 mrg Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.4 1998/09/05 16:50:37 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sparc64/dev/btreg.h>
 #include <sparc64/dev/bwtworeg.h>
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #if defined(SUN4)
 #include <sparc64/dev/pfourreg.h>
 #endif

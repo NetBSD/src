@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.2 1998/08/13 02:10:41 eeh Exp $ */
+/*	$NetBSD: cgsix.c,v 1.3 1998/09/05 16:50:37 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,9 +116,9 @@
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/btreg.h>
 #include <sparc64/dev/btvar.h>
-#include <sparc64/dev/sbusvar.h>
 #include <sparc64/dev/cgsixreg.h>
 #include <sparc64/dev/cgsixvar.h>
 #include <sparc64/dev/pfourreg.h>
