@@ -28,6 +28,7 @@
 #include "budbg.h"
 #include "filenames.h"
 #include <sys/stat.h>
+#include <ctype.h>
 
 /* A list of symbols to explicitly strip out, or to keep.  A linked
    list is good enough for a small number from the command line, but
@@ -105,7 +106,7 @@ static int copy_main
 static const char *lookup_sym_redefinition
   PARAMS((const char *));
 static void redefine_list_append
-  PARAMS ((const char *, const char *));
+  PARAMS ((const char *, const char *, const char *));
 static const char * find_section_rename
   PARAMS ((bfd *, sec_ptr, flagword *));
 static void add_section_rename
@@ -263,7 +264,8 @@ static char *prefix_alloc_sections_string = 0;
 #define OPTION_STRIP_UNNEEDED (OPTION_SET_START + 1)
 #define OPTION_WEAKEN (OPTION_STRIP_UNNEEDED + 1)
 #define OPTION_REDEFINE_SYM (OPTION_WEAKEN + 1)
-#define OPTION_SREC_LEN (OPTION_REDEFINE_SYM + 1)
+#define OPTION_REDEFINE_SYMS (OPTION_REDEFINE_SYM + 1)
+#define OPTION_SREC_LEN (OPTION_REDEFINE_SYMS + 1)
 #define OPTION_SREC_FORCES3 (OPTION_SREC_LEN + 1)
 #define OPTION_STRIP_SYMBOLS (OPTION_SREC_FORCES3 + 1)
 #define OPTION_KEEP_SYMBOLS (OPTION_STRIP_SYMBOLS + 1)
@@ -350,6 +352,7 @@ static struct option copy_options[] =
   {"prefix-alloc-sections", required_argument, 0, OPTION_PREFIX_ALLOC_SECTIONS},
   {"preserve-dates", no_argument, 0, 'p'},
   {"redefine-sym", required_argument, 0, OPTION_REDEFINE_SYM},
+  {"redefine-syms", required_argument, 0, OPTION_REDEFINE_SYMS},
   {"remove-leading-char", no_argument, 0, OPTION_REMOVE_LEADING_CHAR},
   {"remove-section", required_argument, 0, 'R'},
   {"rename-section", required_argument, 0, OPTION_RENAME_SECTION},
@@ -444,6 +447,8 @@ copy_usage (stream, exit_status)
      --change-leading-char         Force output format's leading character style\n\
      --remove-leading-char         Remove leading character from global symbols\n\
      --redefine-sym <old>=<new>    Redefine symbol name <old> to <new>\n\
+     --redefine-syms <file>        --redefine-sym for all symbol pairs \n\
+                                     listed in <file>\n\
      --srec-len <number>           Restrict the length of generated Srecords\n\
      --srec-forceS3                Restrict the type of generated Srecords to S3\n\
      --strip-symbols <file>        -N for all symbols listed in <file>\n\
@@ -940,7 +945,8 @@ lookup_sym_redefinition (source)
 /* Add a node to a symbol redefine list.  */
 
 static void
-redefine_list_append (source, target)
+redefine_list_append (cause, source, target)
+     const char *cause;
      const char *source;
      const char *target;
 {
@@ -952,13 +958,11 @@ redefine_list_append (source, target)
     {
       if (strcmp (source, list->source) == 0)
 	fatal (_("%s: Multiple redefinition of symbol \"%s\""),
-	       "--redefine-sym",
-	       source);
+	       cause, source);
 
       if (strcmp (target, list->target) == 0)
 	fatal (_("%s: Symbol \"%s\" is target of more than one redefinition"),
-	       "--redefine-sym",
-	       target);
+	       cause, target);
     }
 
   new_node = (struct redefine_node *) xmalloc (sizeof (struct redefine_node));
@@ -969,6 +973,93 @@ redefine_list_append (source, target)
 
   *p = new_node;
 }
+
+/* Handle the --redefine-syms option.  Read lines conataining "old new"
+   from the file, and add them to the symbol redefine list.  */
+void
+add_redefine_syms_file (filename)
+     const char *filename;
+{
+  FILE *file;
+  char *buf;
+  size_t bufsize, len, outsym_off;
+  int c, lineno;
+
+  file = fopen (filename, "r");
+  if (file == (FILE *) NULL)
+    fatal (_("couldn't open symbol redefinition file %s (error: %s)"),
+	   filename, strerror (errno));
+
+  bufsize = 100;
+  buf = (char *) xmalloc (bufsize);
+
+  lineno = 1;
+  c = getc (file);
+  len = 0;
+  while (c != EOF)
+    {
+      /* Collect the input symbol name.  */
+      while (! isspace (c) && c != EOF)
+	{
+	  buf[len++] = c;
+	  if (len >= bufsize)
+	    {
+	      bufsize *= 2;
+	      buf = xrealloc (buf, bufsize);
+	    }
+	  c = getc (file);
+	}
+      buf[len++] = '\0';
+      if (c == EOF)
+	break;
+
+      /* Eat white space between the symbol names.  */
+      while (isspace (c))
+	c = getc (file);
+      if (c == EOF)
+	break;
+
+      /* Collect the output symbol name.  */
+      outsym_off = len;
+      while (! isspace (c) && c != EOF)
+	{
+	  buf[len++] = c;
+	  if (len >= bufsize)
+	    {
+	      bufsize *= 2;
+	      buf = xrealloc (buf, bufsize);
+	    }
+	  c = getc (file);
+	}
+      buf[len++] = '\0';
+      if (c == EOF)
+	break;
+
+      /* Eat white space at end of line.  */
+      while (c != '\n' && isspace (c))
+	c = getc (file);
+      if (c == EOF)
+	break;
+      else if (c == '\n')
+	{
+	  /* Append the redefinition to the list.  */
+	  redefine_list_append (filename, &buf[0], &buf[outsym_off]);
+
+	  lineno++;	
+	  len = 0;
+	  c = getc (file);
+	  continue;
+	}
+      else
+	fatal (_("%s: garbage at end of line %d"), filename, lineno);
+    }
+
+  if (len != 0)
+    fatal (_("%s: premature end of file at line %d"), filename, lineno);
+
+  free (buf);
+}
+
 
 /* Keep only every `copy_byte'th byte in MEMHUNK, which is *SIZE bytes long.
    Adjust *SIZE.  */
@@ -2547,11 +2638,15 @@ copy_main (argc, argv)
 	    target = (char *) xmalloc (len + 1);
 	    strcpy (target, nextarg);
 
-	    redefine_list_append (source, target);
+	    redefine_list_append ("--redefine-sym", source, target);
 
 	    free (source);
 	    free (target);
 	  }
+	  break;
+
+	case OPTION_REDEFINE_SYMS:
+	  add_redefine_syms_file (optarg);
 	  break;
 
 	case OPTION_SET_SECTION_FLAGS:

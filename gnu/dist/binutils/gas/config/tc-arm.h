@@ -197,6 +197,9 @@ void armelf_frob_symbol PARAMS ((symbolS *, int *));
 #define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 #endif
 
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)\
+	parse_cons_expression_arm(EXP)
+     
 #ifdef OBJ_ELF
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
 #endif
