@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.27 2003/07/14 16:06:48 itojun Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.28 2003/08/07 07:01:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.27 2003/07/14 16:06:48 itojun Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.28 2003/08/07 07:01:09 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,8 @@ TerminalSpecialChars(int c)
 void
 TerminalFlushOutput(void)
 {
-    (void) ioctl(fileno(stdout), TIOCFLUSH, (char *) 0);
+    int com = 0;
+    (void) ioctl(fileno(stdout), TIOCFLUSH, &com);
 }
 
 void
