@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.9 2001/01/24 14:46:49 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.10 2001/01/28 03:44:46 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,13 +76,15 @@ int	uplcomdebug = 0xff;
 #define DPRINTF(x) DPRINTFN(0, x)
 
 #define	UPLCOM_CONFIG_INDEX	0
-#define UPLCOM_IFACE_INDEX	0
+#define	UPLCOM_IFACE_INDEX	0
+#define	UPLCOM_SECOND_IFACE_INDEX	1
 #define	UPLCOM_RESET		0
 
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	usbd_interface_handle	sc_iface;	/* first interface */
+	usbd_interface_handle	sc_sec_iface;	/* second interface */
 	int			sc_iface_number;	/* interface number */
 
 	usb_cdc_line_state_t	sc_line_state;	/* current line state */
@@ -129,6 +131,7 @@ static const struct uplcom_product {
 } uplcom_products [] = {
 	/* I/O DATA USB-RSAQ2 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 
 	{ 0, 0 }
 };
@@ -157,6 +160,7 @@ USB_ATTACH(uplcom)
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
+	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	
@@ -165,6 +169,12 @@ USB_ATTACH(uplcom)
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
+
+        usbd_devinfo(dev, 0, devinfo);
+        USB_ATTACH_SETUP;
+        printf("%s: %s\n", devname, devinfo);
+
+        sc->sc_udev = dev;
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
@@ -176,22 +186,42 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX, &iface);
+	/* get the config descriptor */
+	cdesc = usbd_get_config_descriptor(sc->sc_udev);
+
+	if (cdesc == NULL) {
+		printf("%s: failed to get configuration descriptor\n",
+			USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	/* get the (first) interface */
+	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX, 
+							&sc->sc_iface);
 	if (err) {
 		printf("\n%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
 		USB_ATTACH_ERROR_RETURN;
 	}
+	/*
+	 * check second of interface
+	 * USB-RSAQ has two interface
+	 */
+	if (cdesc->bNumInterface == 2) {
+		err = usbd_device2interface_handle(dev, 
+				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_sec_iface);
+		if (err) {
+			printf("\n%s: failed to get second interface, err=%s\n",
+							devname, usbd_errstr(err));
+			USB_ATTACH_ERROR_RETURN;
+		}
+		iface = sc->sc_sec_iface;
+	} else 
+		iface = sc->sc_iface;
 
-	usbd_devinfo(dev, 0, devinfo);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	/* Find the bulk endpoints */
 
 	id = usbd_get_interface_descriptor(iface);
-
-	sc->sc_udev = dev;
-	sc->sc_iface = iface;
-
 	sc->sc_iface_number = id->bInterfaceNumber;
 
 	uca.bulkin = uca.bulkout = -1;
