@@ -1,4 +1,4 @@
-/*	$NetBSD: lsu_twe.c,v 1.2 2000/10/20 15:14:25 ad Exp $	*/
+/*	$NetBSD: lsu_twe.c,v 1.3 2000/10/23 11:27:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ lsu_twe_start(struct lsu_softc *lsu, struct buf *bp)
 	if (bp != NULL) {
 		if (sc->sc_queuecnt == TWE_MAX_PU_QUEUECNT) {
 			BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
+			splx(s);
 			return (0);
 		}
 	} else {
@@ -211,11 +212,11 @@ lsu_twe_start(struct lsu_softc *lsu, struct buf *bp)
 
 	if ((rv = lsu_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
 	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx)) != 0) {
-	    	s = splbio();
-	    	sc->sc_queuecnt--;
 		bp->b_flags |= B_ERROR;
 		bp->b_error = rv;
 		bp->b_resid = bp->b_bcount;
+	    	s = splbio();
+	    	sc->sc_queuecnt--;
 		lsudone(lsu, bp);
 		splx(s);
 	}
