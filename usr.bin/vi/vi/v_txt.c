@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.7 2001/12/31 18:54:18 thorpej Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.8 2002/01/07 19:22:16 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1382,8 +1382,9 @@ ebuf_chk:	if (tp->cno >= tp->len) {
 #ifdef DEBUG
 	if (tp->cno + tp->insert + tp->owrite != tp->len) {
 		msgq(sp, M_ERR,
-		    "len %u != cno: %u ai: %u insert %u overwrite %u",
-		    tp->len, tp->cno, tp->ai, tp->insert, tp->owrite);
+		    "len %lu != cno: %lu ai: %lu insert %lu overwrite %lu",
+		    (u_long) tp->len, (u_long) tp->cno, (u_long) tp->ai,
+		    (u_long) tp->insert, (u_long) tp->owrite);
 		if (LF_ISSET(TXT_REPLAY))
 			goto done;
 		tp->len = tp->cno + tp->insert + tp->owrite;
