@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.70 1999/11/24 13:03:43 jdc Exp $
+# $NetBSD: md_share,v 1.71 1999/11/28 03:13:22 simonb Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -612,6 +612,7 @@
 ./usr/share/man/man8/pc532/makedev.8
 ./usr/share/man/man8/pmax/MAKEDEV.8
 ./usr/share/man/man8/pmax/boot.8
+./usr/share/man/man8/pmax/installboot.8
 ./usr/share/man/man8/pmax/makedev.8
 ./usr/share/man/man8/sparc/MAKEDEV.8
 ./usr/share/man/man8/sparc/boot.8
