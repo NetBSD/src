@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 2002/02/12 15:26:49 uch Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 2002/02/24 18:24:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -43,7 +43,7 @@
 # define DPRINTF while (0) printf
 #endif
 
-extern char _start[], etext[];
+extern char start[], etext[];
 void db_nextframe(db_addr_t, db_addr_t *, db_addr_t *);
 
 const struct db_variable db_regs[] = {
@@ -126,7 +126,7 @@ db_nextframe(
 	depth = 0;
 	prdepth = fpdepth = -1;
 
-	if (pc < (db_addr_t)_start || pc > (db_addr_t)etext)
+	if (pc < (db_addr_t)start || pc > (db_addr_t)etext)
 		goto out;
 
 	for (i = 0; i < 30; i++) {
