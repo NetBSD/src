@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2000/06/22 06:47:46 thorpej Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2003/07/14 08:36:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2000/06/22 06:47:46 thorpej Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2003/07/14 08:36:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ auth_encrypt_init(local, remote, name, server)
 {
 	RemoteHostName = remote;
 	LocalHostName = local;
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	auth_init(name, server);
 #endif
 #ifdef	ENCRYPTION
