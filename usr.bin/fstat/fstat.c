@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.29 1998/07/06 22:59:58 fair Exp $	*/
+/*	$NetBSD: fstat.c,v 1.30 1998/07/16 22:23:30 ross Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.29 1998/07/06 22:59:58 fair Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.30 1998/07/16 22:23:30 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,8 @@ int maxfiles;
 		free(ofiles); \
 		ofiles = malloc((d) * sizeof(struct file *)); \
 		if (ofiles == NULL) { \
-			err(1, "malloc(%u)", (d) * sizeof(struct file *)); \
+			err(1, "malloc(%u)", (d) *	\
+					(unsigned int)sizeof(struct file *)); \
 		} \
 		maxfiles = (d); \
 	}
@@ -606,7 +607,7 @@ getmnton(m)
 		return (NULL);
 	}
 	if ((mt = malloc(sizeof (struct mtab))) == NULL) {
-		err(1, "malloc(%u)", sizeof (struct mtab));
+		err(1, "malloc(%u)", (unsigned int)sizeof(struct mtab));
 	}
 	mt->m = m;
 	memmove(&mt->mntonname[0], &mount.mnt_stat.f_mntonname[0], MNAMELEN);
@@ -785,7 +786,7 @@ getfname(filename)
 		return(0);
 	}
 	if ((cur = malloc(sizeof(DEVS))) == NULL) {
-		err(1, "malloc(%u)", sizeof(DEVS));
+		err(1, "malloc(%u)", (unsigned int)sizeof(DEVS));
 	}
 	cur->next = devs;
 	devs = cur;
