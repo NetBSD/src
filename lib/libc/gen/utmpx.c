@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.5 2002/04/04 19:42:14 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.6 2002/04/15 16:47:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.5 2002/04/04 19:42:14 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.6 2002/04/15 16:47:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -91,8 +91,9 @@ getutxent()
 		struct stat st;
 
 		if ((fp = fopen(utfile, "r+")) == NULL)
-			if ((fp = fopen(utfile, "r")) == NULL)
-				goto fail;
+			if ((fp = fopen(utfile, "w+")) == NULL)
+				if ((fp = fopen(utfile, "r")) == NULL)
+					goto fail;
 
 		/* get file size in order to check if new file */
 		if (fstat(fileno(fp), &st) == -1)
@@ -103,11 +104,11 @@ getutxent()
 			(void)memset(&ut, 0, sizeof(ut));
 			ut.ut_type = SIGNATURE;
 			(void)memcpy(ut.ut_user, vers, sizeof(vers));
-			if (fwrite(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+			if (fwrite(&ut, sizeof(ut), 1, fp) != 1)
 				goto failclose;
 		} else {
 			/* old file, read signature record */
-			if (fread(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+			if (fread(&ut, sizeof(ut), 1, fp) != 1)
 				goto failclose;
 			if (memcmp(ut.ut_user, vers, sizeof(vers)) != 0 ||
 			    ut.ut_type != SIGNATURE)
@@ -115,7 +116,7 @@ getutxent()
 		}
 	}
 
-	if (fread(&ut, sizeof(ut), 1, fp) != sizeof(ut))
+	if (fread(&ut, sizeof(ut), 1, fp) != 1)
 		goto fail;
 
 	return &ut;
