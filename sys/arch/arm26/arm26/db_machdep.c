@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.5 2001/02/17 19:08:21 bjh21 Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.6 2001/06/12 20:16:22 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -95,23 +95,28 @@ db_bus_write_cmd(addr, have_addr, count, modif)
 	char            *modif;
 {
 	db_expr_t datum;
+	bus_space_tag_t iot = 2; /* XXX */
+	bus_space_handle_t ioh;
 
 	if (!have_addr)
 		db_error("target address must be specified");
 
+	bus_space_map(iot, addr, 1, 0, &ioh);
+
 	while (db_expression(&datum)) {
 		switch (*modif) {
 		case 'b':
-			bus_space_write_1(2, addr, 0, datum);
+			bus_space_write_1(2, ioh, 0, datum);
 			break;
 		case '\0':
 		case 'h':
-			bus_space_write_2(2, addr, 0, datum);
+			bus_space_write_2(2, ioh, 0, datum);
 			break;
 		default:
 			db_error("bad modifier");
 		}
 	}
+	bus_space_unmap(iot, ioh, 1);
 	db_skip_to_eol();
 }
 
