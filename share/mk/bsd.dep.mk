@@ -1,4 +1,4 @@
-#	$Id: bsd.dep.mk,v 1.5 1993/09/05 17:46:15 mycroft Exp $
+#	$Id: bsd.dep.mk,v 1.6 1993/12/05 02:42:42 cgd Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
@@ -6,8 +6,8 @@ depend: beforedepend .depend afterdepend
 .if defined(SRCS)
 .depend: ${SRCS}
 	rm -f .depend
-	files="${.ALLSRC:M*.s}"; \
-	if [ "$$files" != "" ]; then \
+	files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
+	if [ "$$files" != " " ]; then \
 	  mkdep -a ${MKDEP} ${CFLAGS:M-[ID]*} ${AINC} $$files; \
 	fi
 	files="${.ALLSRC:M*.c}"; \
