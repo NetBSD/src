@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 
 #include <stdio.h>
 #include <netdb.h>
+#include <string.h>
 #include <errno.h>
 
 extern	errno;
