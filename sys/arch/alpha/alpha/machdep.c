@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19.4.5 1996/06/15 03:56:33 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.4.6 1996/09/10 20:07:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1256,6 +1256,10 @@ setregs(p, pack, stack, retval)
 	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
 	tfp->tf_ps = PSL_USERSET;
 	tfp->tf_pc = pack->ep_entry & ~3;
+
+	tfp->tf_a0 = stack;
+	/* a1 and a2 already zeroed */
+	tfp->tf_regs[FRAME_T12] = tfp->tf_pc;		/* a.k.a. PV */
 
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (fpcurproc == p)
