@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2000/07/19 15:41:53 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.27 2000/07/26 12:39:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,8 @@
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
 
+#include <dev/clock_subr.h>
+
 #include <sparc64/sparc64/clockreg.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -101,10 +103,6 @@
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
-
-#include <dev/ic/intersil7170.h>
-
-extern struct idprom idprom;
 
 static long tick_increment;
 
@@ -685,14 +683,6 @@ statintr(cap)
 	return (1);
 }
 
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
 /*
  * should use something like
  * #define LEAPYEAR(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
