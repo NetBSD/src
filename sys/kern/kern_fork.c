@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.110 2003/08/07 16:31:45 agc Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.111 2003/09/16 12:06:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.110 2003/08/07 16:31:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.111 2003/09/16 12:06:07 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -274,6 +274,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
+	simple_lock_init(&p2->p_sigctx.ps_silock);
+	CIRCLEQ_INIT(&p2->p_sigctx.ps_siginfo);
 	simple_lock_init(&p2->p_lwplock);
 	LIST_INIT(&p2->p_lwps);
 
