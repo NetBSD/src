@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.39 1998/02/28 01:07:05 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.40 1998/03/01 08:17:36 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.39 1998/02/28 01:07:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.40 1998/03/01 08:17:36 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,8 +572,9 @@ pmap_uses_prom_console()
 {
 	extern int cputype;
 
-	return (cputype == ST_DEC_21000 || cputype == ST_AVALON_A12 ||
-	    cputype == ST_DEC_3000_300 || cputype == ST_DEC_3000_500);
+	return (cputype == ST_DEC_21000
+	     || cputype == ST_DEC_3000_300
+	     || cputype == ST_DEC_3000_500);
 }
 #endif _PMAP_MAY_USE_PROM_CONSOLE
 
