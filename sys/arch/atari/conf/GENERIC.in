@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.34 2004/06/16 15:07:39 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.35 2004/06/18 15:04:04 christos Exp $
 #
 # Generic atari
 #
@@ -218,7 +218,6 @@ pseudo-device	ppp			# ppp
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #endif
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		3	# Boot memory disk

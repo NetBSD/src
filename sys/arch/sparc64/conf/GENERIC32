@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.81 2004/06/09 20:25:54 martin Exp $
+# 	$NetBSD: GENERIC32,v 1.82 2004/06/18 15:04:06 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.82 $"
 
 maxusers	64
 
@@ -674,7 +674,6 @@ pseudo-device 	crypto			# opencrypto framework
 ## Pseudo ttys, required for network logins and programs like screen.
 
 pseudo-device	pty			# pseudo-ttys (for network, etc.)
-pseudo-device	ptm			# pseudo-terminal multiplexor
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

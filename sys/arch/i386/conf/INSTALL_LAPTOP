@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.57 2004/02/16 17:11:27 wiz Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.58 2004/06/18 15:04:40 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -528,6 +528,7 @@ pseudo-device	sl		2	# Serial Line IP
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+options	NO_DEV_PTM	
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

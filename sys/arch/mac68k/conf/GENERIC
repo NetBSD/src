@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2004/06/16 15:07:40 christos Exp $
+# $NetBSD: GENERIC,v 1.143 2004/06/18 15:04:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	16		# estimated number of users
 
@@ -311,7 +311,6 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	clockctl		# user control of clock subsystem
 

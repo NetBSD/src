@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 2004/06/16 15:07:40 christos Exp $
+#	$NetBSD: GENERIC,v 1.6 2004/06/18 15:04:04 christos Exp $
 #
 #
 
@@ -254,7 +254,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	ksyms

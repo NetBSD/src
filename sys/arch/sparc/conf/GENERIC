@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2004/06/16 15:07:41 christos Exp $
+# $NetBSD: GENERIC,v 1.154 2004/06/18 15:04:06 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 maxusers	32
 
@@ -639,7 +639,6 @@ tctrl0 at obio0
 ## Pseudo ttys, required for network logins and programs like screen.
 
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
