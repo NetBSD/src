@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.4.3 2003/08/18 04:58:07 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.4.4 2003/08/21 03:07:55 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -425,6 +425,8 @@ file
 (if the environment variable PKG_DBDIR is set, this overrides the
 .Pa /var/db/pkg/
 path shown above).
+.It
+If the package is a depoted package, then add it to the default view.
 .It
 The staging area is deleted and the program terminates.
 .It
