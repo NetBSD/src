@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1990 William Jolitz.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -32,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.6 1993/10/12 23:39:21 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.7 1993/10/13 01:14:13 mycroft Exp $
  */
 
 #include "param.h"
@@ -364,8 +365,6 @@ int
 npxintr(aux)
 	void *aux;
 {
-	struct	intrframe *frame = aux;
-	int	code;
 
 	if (npxproc == NULL || npxtype == NONE) {
 		/* XXX no %p in kern/subr_prf.c.  Cast to quiet gcc -Wall. */
