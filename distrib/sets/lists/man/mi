@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.640 2004/01/03 03:02:25 lukem Exp $
+# $NetBSD: mi,v 1.641 2004/01/03 12:40:26 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -305,17 +305,17 @@
 ./usr/share/man/cat1/pmap.0			man-util-catman
 ./usr/share/man/cat1/pmc.0			man-util-catman
 ./usr/share/man/cat1/popd.0			man-util-catman
-./usr/share/man/cat1/postalias.0		man-postfix-catman
-./usr/share/man/cat1/postcat.0			man-postfix-catman
-./usr/share/man/cat1/postconf.0			man-postfix-catman
-./usr/share/man/cat1/postdrop.0			man-postfix-catman
-./usr/share/man/cat1/postfix.0			man-postfix-catman
-./usr/share/man/cat1/postkick.0			man-postfix-catman
-./usr/share/man/cat1/postlock.0			man-postfix-catman
-./usr/share/man/cat1/postlog.0			man-postfix-catman
-./usr/share/man/cat1/postmap.0			man-postfix-catman
-./usr/share/man/cat1/postqueue.0		man-postfix-catman
-./usr/share/man/cat1/postsuper.0		man-postfix-catman
+./usr/share/man/cat1/postalias.0		man-postfix-catman	postfix
+./usr/share/man/cat1/postcat.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postconf.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postdrop.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postfix.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postkick.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postlock.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postlog.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postmap.0			man-postfix-catman	postfix
+./usr/share/man/cat1/postqueue.0		man-postfix-catman	postfix
+./usr/share/man/cat1/postsuper.0		man-postfix-catman	postfix
 ./usr/share/man/cat1/pr.0			man-util-catman
 ./usr/share/man/cat1/printenv.0			man-util-catman
 ./usr/share/man/cat1/printf.0			man-util-catman
@@ -1305,7 +1305,7 @@
 ./usr/share/man/cat4/zsc.0			man-sys-catman
 ./usr/share/man/cat4/zstty.0			man-sys-catman
 ./usr/share/man/cat5/a.out.0			man-sys-catman
-./usr/share/man/cat5/access.0			man-postfix-catman
+./usr/share/man/cat5/access.0			man-postfix-catman	postfix
 ./usr/share/man/cat5/acct.0			man-sys-catman
 ./usr/share/man/cat5/aliases.0			man-sendmail-catman	sendmail
 ./usr/share/man/cat5/altq.conf.0		man-router-catman
@@ -1313,7 +1313,7 @@
 ./usr/share/man/cat5/ar.0			man-sys-catman
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman
-./usr/share/man/cat5/canonical.0		man-postfix-catman
+./usr/share/man/cat5/canonical.0		man-postfix-catman	postfix
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman
 ./usr/share/man/cat5/core.0			man-sys-catman
 ./usr/share/man/cat5/crontab.0			man-cron-catman
@@ -1398,7 +1398,7 @@
 ./usr/share/man/cat5/passwd.0			man-sys-catman
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
 ./usr/share/man/cat5/pcfs.0			man-obsolete	obsolete
-./usr/share/man/cat5/pcre_table.0		man-postfix-catman
+./usr/share/man/cat5/pcre_table.0		man-postfix-catman	postfix
 ./usr/share/man/cat5/phones.0			man-uucp-catman
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete	obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete	obsolete
@@ -1408,8 +1408,8 @@
 ./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
 ./usr/share/man/cat5/rc.conf.0			man-sys-catman
 ./usr/share/man/cat5/rcsfile.0			man-rcs-catman
-./usr/share/man/cat5/regexp_table.0		man-postfix-catman
-./usr/share/man/cat5/relocated.0		man-postfix-catman
+./usr/share/man/cat5/regexp_table.0		man-postfix-catman	postfix
+./usr/share/man/cat5/relocated.0		man-postfix-catman	postfix
 ./usr/share/man/cat5/remote.0			man-uucp-catman
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman
@@ -1426,7 +1426,7 @@
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/termcap.0			man-sys-catman
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman
-./usr/share/man/cat5/transport.0		man-postfix-catman
+./usr/share/man/cat5/transport.0		man-postfix-catman	postfix
 ./usr/share/man/cat5/ttyaction.0		man-sys-catman
 ./usr/share/man/cat5/ttys.0			man-sys-catman
 ./usr/share/man/cat5/types.0			man-c-catman
@@ -1438,7 +1438,7 @@
 ./usr/share/man/cat5/uuencode.0			man-util-catman
 ./usr/share/man/cat5/uuencode.format.0		man-obsolete	obsolete
 ./usr/share/man/cat5/vgrindefs.0		man-groff-catman
-./usr/share/man/cat5/virtual.0			man-postfix-catman
+./usr/share/man/cat5/virtual.0			man-postfix-catman	postfix
 ./usr/share/man/cat5/weekly.conf.0		man-sys-catman
 ./usr/share/man/cat5/wscons.conf.0		man-sys-catman
 ./usr/share/man/cat5/wsmoused.conf.0		man-sys-catman
@@ -1527,7 +1527,7 @@
 ./usr/share/man/cat8/bootpgw.0			man-bootserver-catman
 ./usr/share/man/cat8/bootptest.0		man-bootserver-catman
 ./usr/share/man/cat8/bootselect.0		man-obsolete	obsolete
-./usr/share/man/cat8/bounce.0			man-postfix-catman
+./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman
 ./usr/share/man/cat8/catman.0			man-man-catman
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete	obsolete
@@ -1540,7 +1540,7 @@
 ./usr/share/man/cat8/chown.0			man-sysutil-catman
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman
 ./usr/share/man/cat8/chrtbl.0			man-sysutil-catman
-./usr/share/man/cat8/cleanup.0			man-postfix-catman
+./usr/share/man/cat8/cleanup.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/clri.0			man-sysutil-catman
 ./usr/share/man/cat8/cnwctl.0			man-sysutil-catman
 ./usr/share/man/cat8/cobalt/MAKEDEV.0		man-obsolete	obsolete
@@ -1562,7 +1562,7 @@
 ./usr/share/man/cat8/compat_xenix.0		man-sys-catman
 ./usr/share/man/cat8/comsat.0			man-man-catman
 ./usr/share/man/cat8/cron.0			man-cron-catman
-./usr/share/man/cat8/defer.0			man-postfix-catman
+./usr/share/man/cat8/defer.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman
 ./usr/share/man/cat8/dhclient.0			man-dhclient-catman
@@ -1585,7 +1585,7 @@
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman
 ./usr/share/man/cat8/envstat.0			man-sysutil-catman
-./usr/share/man/cat8/error.0			man-postfix-catman
+./usr/share/man/cat8/error.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/eshconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete	obsolete
@@ -1604,7 +1604,7 @@
 ./usr/share/man/cat8/fdisk.0			man-sysutil-catman
 ./usr/share/man/cat8/fingerd.0			man-sysutil-catman
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman
-./usr/share/man/cat8/flush.0			man-postfix-catman
+./usr/share/man/cat8/flush.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/fsck.0			man-sysutil-catman
 ./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman
 ./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman
@@ -1707,8 +1707,8 @@
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman
 ./usr/share/man/cat8/link.0			man-sysutil-catman
 ./usr/share/man/cat8/lmcctl.0			man-sysutil-catman
-./usr/share/man/cat8/lmtp.0			man-postfix-catman
-./usr/share/man/cat8/local.0			man-postfix-catman
+./usr/share/man/cat8/lmtp.0			man-postfix-catman	postfix
+./usr/share/man/cat8/local.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/lockd.0			man-nfsserver-catman
 ./usr/share/man/cat8/lpc.0			man-lpr-catman
 ./usr/share/man/cat8/lpd.0			man-lpr-catman
@@ -1733,7 +1733,7 @@
 ./usr/share/man/cat8/makemap.0			man-sendmail-catman	sendmail
 ./usr/share/man/cat8/makewhatis.0		man-man-catman
 ./usr/share/man/cat8/map-mbone.0		man-netutil-catman
-./usr/share/man/cat8/master.0			man-postfix-catman
+./usr/share/man/cat8/master.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/mbr.0			man-obsolete	obsolete
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman
@@ -1817,7 +1817,7 @@
 ./usr/share/man/cat8/nfsiod.0			man-obsolete	obsolete
 ./usr/share/man/cat8/nis.0			man-nis-catman
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman
-./usr/share/man/cat8/nqmgr.0			man-postfix-catman
+./usr/share/man/cat8/nqmgr.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman
@@ -1836,12 +1836,12 @@
 ./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman
 ./usr/share/man/cat8/pdisk.0			man-sysutil-catman
 ./usr/share/man/cat8/peace.0			man-sys-catman
-./usr/share/man/cat8/pickup.0			man-postfix-catman
+./usr/share/man/cat8/pickup.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/pim6dd.0			man-obsolete	obsolete
 ./usr/share/man/cat8/pim6sd.0			man-obsolete	obsolete
 ./usr/share/man/cat8/ping.0			man-netutil-catman
 ./usr/share/man/cat8/ping6.0			man-netutil-catman
-./usr/share/man/cat8/pipe.0			man-postfix-catman
+./usr/share/man/cat8/pipe.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/playstation2/MAKEDEV.0	man-obsolete	obsolete
 ./usr/share/man/cat8/playstation2/makedev.0	man-obsolete	obsolete
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-obsolete	obsolete
@@ -1862,12 +1862,12 @@
 ./usr/share/man/cat8/praliases.0		man-sendmail-catman	sendmail
 ./usr/share/man/cat8/prep/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/prep/makedev.0		man-obsolete	obsolete
-./usr/share/man/cat8/proxymap.0			man-postfix-catman
+./usr/share/man/cat8/proxymap.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/pstat.0			man-sysutil-catman
 ./usr/share/man/cat8/pvcsif.0			man-netutil-catman
 ./usr/share/man/cat8/pvctxctl.0			man-netutil-catman
 ./usr/share/man/cat8/pwd_mkdb.0			man-sysutil-catman
-./usr/share/man/cat8/qmgr.0			man-postfix-catman
+./usr/share/man/cat8/qmgr.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/quot.0			man-sysutil-catman
 ./usr/share/man/cat8/quotacheck.0		man-sysutil-catman
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman
@@ -1941,15 +1941,15 @@
 ./usr/share/man/cat8/shark/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/shark/makedev.0		man-obsolete	obsolete
 ./usr/share/man/cat8/showmount.0		man-nfsclient-catman
-./usr/share/man/cat8/showq.0			man-postfix-catman
+./usr/share/man/cat8/showq.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman
 ./usr/share/man/cat8/slattach.0			man-slip-catman
 ./usr/share/man/cat8/slip.0			man-slip-catman
 ./usr/share/man/cat8/sliplogin.0		man-slip-catman
 ./usr/share/man/cat8/slstats.0			man-slip-catman
 ./usr/share/man/cat8/smrsh.0			man-sendmail-catman	sendmail
-./usr/share/man/cat8/smtp.0			man-postfix-catman
-./usr/share/man/cat8/smtpd.0			man-postfix-catman
+./usr/share/man/cat8/smtp.0			man-postfix-catman	postfix
+./usr/share/man/cat8/smtpd.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/sparc/binstall.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/boot.0		man-sys-catman
@@ -1961,7 +1961,7 @@
 ./usr/share/man/cat8/sparc64/installboot.0	man-obsolete	obsolete
 ./usr/share/man/cat8/sparc64/makedev.0		man-obsolete	obsolete
 ./usr/share/man/cat8/sparc64/ofwboot.0		man-sys-catman
-./usr/share/man/cat8/spawn.0			man-postfix-catman
+./usr/share/man/cat8/spawn.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/spray.0			man-rpcutil-catman
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman
 ./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman
@@ -2005,7 +2005,7 @@
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman
-./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman
+./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix
 ./usr/share/man/cat8/trpt.0			man-netutil-catman
 ./usr/share/man/cat8/trsp.0			man-netutil-catman
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman
@@ -2037,7 +2037,7 @@
 ./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman	kerberos
 ./usr/share/man/cat8/vinum.0			man-sysutil-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
-./usr/share/man/cat8/virtual.0			man-sysutil-catman
+./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/vmstat.0			man-obsolete	obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete	obsolete
@@ -2352,17 +2352,17 @@
 ./usr/share/man/man1/pmap.1			man-util-man
 ./usr/share/man/man1/pmc.1			man-util-man
 ./usr/share/man/man1/popd.1			man-util-man
-./usr/share/man/man1/postalias.1		man-postfix-man
-./usr/share/man/man1/postcat.1			man-postfix-man
-./usr/share/man/man1/postconf.1			man-postfix-man
-./usr/share/man/man1/postdrop.1			man-postfix-man
-./usr/share/man/man1/postfix.1			man-postfix-man
-./usr/share/man/man1/postkick.1			man-postfix-man
-./usr/share/man/man1/postlock.1			man-postfix-man
-./usr/share/man/man1/postlog.1			man-postfix-man
-./usr/share/man/man1/postmap.1			man-postfix-man
-./usr/share/man/man1/postqueue.1		man-postfix-man
-./usr/share/man/man1/postsuper.1		man-postfix-man
+./usr/share/man/man1/postalias.1		man-postfix-man	postfix
+./usr/share/man/man1/postcat.1			man-postfix-man	postfix
+./usr/share/man/man1/postconf.1			man-postfix-man	postfix
+./usr/share/man/man1/postdrop.1			man-postfix-man	postfix
+./usr/share/man/man1/postfix.1			man-postfix-man	postfix
+./usr/share/man/man1/postkick.1			man-postfix-man	postfix
+./usr/share/man/man1/postlock.1			man-postfix-man	postfix
+./usr/share/man/man1/postlog.1			man-postfix-man	postfix
+./usr/share/man/man1/postmap.1			man-postfix-man	postfix
+./usr/share/man/man1/postqueue.1		man-postfix-man	postfix
+./usr/share/man/man1/postsuper.1		man-postfix-man	postfix
 ./usr/share/man/man1/pr.1			man-util-man
 ./usr/share/man/man1/printenv.1			man-util-man
 ./usr/share/man/man1/printf.1			man-util-man
@@ -3353,7 +3353,7 @@
 ./usr/share/man/man4/zsc.4			man-sys-man
 ./usr/share/man/man4/zstty.4			man-sys-man
 ./usr/share/man/man5/a.out.5			man-sys-man
-./usr/share/man/man5/access.5			man-postfix-man
+./usr/share/man/man5/access.5			man-postfix-man	postfix
 ./usr/share/man/man5/acct.5			man-sys-man
 ./usr/share/man/man5/aliases.5			man-sendmail-man	sendmail
 ./usr/share/man/man5/altq.conf.5		man-router-man
@@ -3361,7 +3361,7 @@
 ./usr/share/man/man5/ar.5			man-sys-man
 ./usr/share/man/man5/bootparams.5		man-bootserver-man
 ./usr/share/man/man5/bootptab.5			man-bootserver-man
-./usr/share/man/man5/canonical.5		man-postfix-man
+./usr/share/man/man5/canonical.5		man-postfix-man	postfix
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man
 ./usr/share/man/man5/core.5			man-sys-man
 ./usr/share/man/man5/crontab.5			man-cron-man
@@ -3446,7 +3446,7 @@
 ./usr/share/man/man5/passwd.5			man-sys-man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
 ./usr/share/man/man5/pcfs.5			man-obsolete	obsolete
-./usr/share/man/man5/pcre_table.5		man-postfix-man
+./usr/share/man/man5/pcre_table.5		man-postfix-man	postfix
 ./usr/share/man/man5/phones.5			man-uucp-man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete	obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete	obsolete
@@ -3456,8 +3456,8 @@
 ./usr/share/man/man5/racoon.conf.5		man-netutil-man
 ./usr/share/man/man5/rc.conf.5			man-sys-man
 ./usr/share/man/man5/rcsfile.5			man-rcs-man
-./usr/share/man/man5/regexp_table.5		man-postfix-man
-./usr/share/man/man5/relocated.5		man-postfix-man
+./usr/share/man/man5/regexp_table.5		man-postfix-man	postfix
+./usr/share/man/man5/relocated.5		man-postfix-man	postfix
 ./usr/share/man/man5/remote.5			man-uucp-man
 ./usr/share/man/man5/resolv.conf.5		man-net-man
 ./usr/share/man/man5/rhosts.5			man-netutil-man
@@ -3474,7 +3474,7 @@
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/termcap.5			man-sys-man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man
-./usr/share/man/man5/transport.5		man-postfix-man
+./usr/share/man/man5/transport.5		man-postfix-man	postfix
 ./usr/share/man/man5/ttyaction.5		man-sys-man
 ./usr/share/man/man5/ttys.5			man-sys-man
 ./usr/share/man/man5/types.5			man-c-man
@@ -3486,7 +3486,7 @@
 ./usr/share/man/man5/uuencode.5			man-util-man
 ./usr/share/man/man5/uuencode.format.5		man-obsolete	obsolete
 ./usr/share/man/man5/vgrindefs.5		man-groff-man
-./usr/share/man/man5/virtual.5			man-postfix-man
+./usr/share/man/man5/virtual.5			man-postfix-man	postfix
 ./usr/share/man/man5/weekly.conf.5		man-sys-man
 ./usr/share/man/man5/wscons.conf.5		man-sys-man
 ./usr/share/man/man5/wsmoused.conf.5		man-sys-man
@@ -3574,7 +3574,7 @@
 ./usr/share/man/man8/bootpgw.8			man-bootserver-man
 ./usr/share/man/man8/bootptest.8		man-bootserver-man
 ./usr/share/man/man8/bootselect.8		man-obsolete	obsolete
-./usr/share/man/man8/bounce.8			man-postfix-man
+./usr/share/man/man8/bounce.8			man-postfix-man	postfix
 ./usr/share/man/man8/brconfig.8			man-netutil-man
 ./usr/share/man/man8/catman.8			man-man-man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete	obsolete
@@ -3587,7 +3587,7 @@
 ./usr/share/man/man8/chown.8			man-sysutil-man
 ./usr/share/man/man8/chroot.8			man-sysutil-man
 ./usr/share/man/man8/chrtbl.8			man-sysutil-man
-./usr/share/man/man8/cleanup.8			man-postfix-man
+./usr/share/man/man8/cleanup.8			man-postfix-man	postfix
 ./usr/share/man/man8/clri.8			man-sysutil-man
 ./usr/share/man/man8/cnwctl.8			man-sysutil-man
 ./usr/share/man/man8/cobalt/MAKEDEV.8		man-obsolete	obsolete
@@ -3609,7 +3609,7 @@
 ./usr/share/man/man8/compat_xenix.8		man-sys-man
 ./usr/share/man/man8/comsat.8			man-man-man
 ./usr/share/man/man8/cron.8			man-cron-man
-./usr/share/man/man8/defer.8			man-postfix-man
+./usr/share/man/man8/defer.8			man-postfix-man	postfix
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man
 ./usr/share/man/man8/dhclient.8			man-dhclient-man
@@ -3632,7 +3632,7 @@
 ./usr/share/man/man8/edquota.8			man-sysutil-man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man
 ./usr/share/man/man8/envstat.8			man-sysutil-man
-./usr/share/man/man8/error.8			man-postfix-man
+./usr/share/man/man8/error.8			man-postfix-man	postfix
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man
 ./usr/share/man/man8/etcupdate.8		man-sysutil-man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-obsolete	obsolete
@@ -3651,7 +3651,7 @@
 ./usr/share/man/man8/fdisk.8			man-sysutil-man
 ./usr/share/man/man8/fingerd.8			man-sysutil-man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man
-./usr/share/man/man8/flush.8			man-postfix-man
+./usr/share/man/man8/flush.8			man-postfix-man	postfix
 ./usr/share/man/man8/fsck.8			man-sysutil-man
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man
@@ -3755,8 +3755,8 @@
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man
 ./usr/share/man/man8/link.8			man-sysutil-man
 ./usr/share/man/man8/lmcctl.8			man-sysutil-man
-./usr/share/man/man8/lmtp.8			man-postfix-man
-./usr/share/man/man8/local.8			man-postfix-man
+./usr/share/man/man8/lmtp.8			man-postfix-man	postfix
+./usr/share/man/man8/local.8			man-postfix-man	postfix
 ./usr/share/man/man8/lockd.8			man-nfsserver-man
 ./usr/share/man/man8/lpc.8			man-lpr-man
 ./usr/share/man/man8/lpd.8			man-lpr-man
@@ -3781,7 +3781,7 @@
 ./usr/share/man/man8/makemap.8			man-sendmail-man	sendmail
 ./usr/share/man/man8/makewhatis.8		man-man-man
 ./usr/share/man/man8/map-mbone.8		man-netutil-man
-./usr/share/man/man8/master.8			man-postfix-man
+./usr/share/man/man8/master.8			man-postfix-man	postfix
 ./usr/share/man/man8/mbr.8			man-obsolete	obsolete
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man
@@ -3865,7 +3865,7 @@
 ./usr/share/man/man8/nfsiod.8			man-obsolete	obsolete
 ./usr/share/man/man8/nis.8			man-nis-man
 ./usr/share/man/man8/nologin.8			man-sysutil-man
-./usr/share/man/man8/nqmgr.8			man-postfix-man
+./usr/share/man/man8/nqmgr.8			man-postfix-man	postfix
 ./usr/share/man/man8/nslookup.8			man-netutil-man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man
 ./usr/share/man/man8/ntpd.8			man-ntp-man
@@ -3884,12 +3884,12 @@
 ./usr/share/man/man8/pcnfsd.8			man-nfsserver-man
 ./usr/share/man/man8/pdisk.8			man-sysutil-man
 ./usr/share/man/man8/peace.8			man-sys-man
-./usr/share/man/man8/pickup.8			man-postfix-man
+./usr/share/man/man8/pickup.8			man-postfix-man	postfix
 ./usr/share/man/man8/pim6dd.8			man-obsolete	obsolete
 ./usr/share/man/man8/pim6sd.8			man-obsolete	obsolete
 ./usr/share/man/man8/ping.8			man-netutil-man
 ./usr/share/man/man8/ping6.8			man-netutil-man
-./usr/share/man/man8/pipe.8			man-postfix-man
+./usr/share/man/man8/pipe.8			man-postfix-man	postfix
 ./usr/share/man/man8/playstation2/MAKEDEV.8	man-obsolete	obsolete
 ./usr/share/man/man8/playstation2/makedev.8	man-obsolete	obsolete
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-obsolete	obsolete
@@ -3910,12 +3910,12 @@
 ./usr/share/man/man8/praliases.8		man-sendmail-man	sendmail
 ./usr/share/man/man8/prep/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/prep/makedev.8		man-obsolete	obsolete
-./usr/share/man/man8/proxymap.8			man-postfix-man
+./usr/share/man/man8/proxymap.8			man-postfix-man	postfix
 ./usr/share/man/man8/pstat.8			man-sysutil-man
 ./usr/share/man/man8/pvcsif.8			man-netutil-man
 ./usr/share/man/man8/pvctxctl.8			man-netutil-man
 ./usr/share/man/man8/pwd_mkdb.8			man-sysutil-man
-./usr/share/man/man8/qmgr.8			man-postfix-man
+./usr/share/man/man8/qmgr.8			man-postfix-man	postfix
 ./usr/share/man/man8/quot.8			man-sysutil-man
 ./usr/share/man/man8/quotacheck.8		man-sysutil-man
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man
@@ -3989,15 +3989,15 @@
 ./usr/share/man/man8/shark/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/shark/makedev.8		man-obsolete	obsolete
 ./usr/share/man/man8/showmount.8		man-nfsclient-man
-./usr/share/man/man8/showq.8			man-postfix-man
+./usr/share/man/man8/showq.8			man-postfix-man	postfix
 ./usr/share/man/man8/shutdown.8			man-sysutil-man
 ./usr/share/man/man8/slattach.8			man-slip-man
 ./usr/share/man/man8/slip.8			man-slip-man
 ./usr/share/man/man8/sliplogin.8		man-slip-man
 ./usr/share/man/man8/slstats.8			man-slip-man
 ./usr/share/man/man8/smrsh.8			man-sendmail-man	sendmail
-./usr/share/man/man8/smtp.8			man-postfix-man
-./usr/share/man/man8/smtpd.8			man-postfix-man
+./usr/share/man/man8/smtp.8			man-postfix-man	postfix
+./usr/share/man/man8/smtpd.8			man-postfix-man	postfix
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/sparc/binstall.8		man-sys-man
 ./usr/share/man/man8/sparc/boot.8		man-sys-man
@@ -4009,7 +4009,7 @@
 ./usr/share/man/man8/sparc64/installboot.8	man-obsolete	obsolete
 ./usr/share/man/man8/sparc64/makedev.8		man-obsolete	obsolete
 ./usr/share/man/man8/sparc64/ofwboot.8		man-sys-man
-./usr/share/man/man8/spawn.8			man-postfix-man
+./usr/share/man/man8/spawn.8			man-postfix-man	postfix
 ./usr/share/man/man8/spray.8			man-rpcutil-man
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man
 ./usr/share/man/man8/ssh-keysign.8		man-secsh-man
@@ -4053,7 +4053,7 @@
 ./usr/share/man/man8/tpctl.8			man-sysutil-man
 ./usr/share/man/man8/traceroute.8		man-netutil-man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man
-./usr/share/man/man8/trivial-rewrite.8		man-postfix-man
+./usr/share/man/man8/trivial-rewrite.8		man-postfix-man	postfix
 ./usr/share/man/man8/trpt.8			man-netutil-man
 ./usr/share/man/man8/trsp.8			man-netutil-man
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man
@@ -4085,7 +4085,7 @@
 ./usr/share/man/man8/verify_krb5_conf.8		man-krb5-man	kerberos
 ./usr/share/man/man8/vinum.8			man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
-./usr/share/man/man8/virtual.8			man-sysutil-man
+./usr/share/man/man8/virtual.8			man-postfix-man	postfix
 ./usr/share/man/man8/vmstat.8			man-obsolete	obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete	obsolete
