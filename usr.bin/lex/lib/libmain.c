@@ -1,15 +1,12 @@
 /* libmain - flex run-time support library "main" function */
 
-#ifndef lint
-static char rcsid[] = "$Id: libmain.c,v 1.3 1993/08/02 17:46:32 mycroft Exp $";
-#endif /* not lint */
+/* $Header: /cvsroot/src/usr.bin/lex/lib/Attic/libmain.c,v 1.4 1993/12/02 19:14:31 jtc Exp $ */
 
 extern int yylex();
 
 int main( argc, argv )
 int argc;
 char *argv[];
-
-    {
-    return yylex();
-    }
+	{
+	return yylex();
+	}
