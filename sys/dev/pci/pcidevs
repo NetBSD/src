@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp $
+$NetBSD: pcidevs,v 1.375 2001/12/16 21:59:47 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -568,6 +568,7 @@ vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
 vendor NETMOS		0x9710	Netmos
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
+vendor MIDDLE_DIGITAL	0xdeaf	Middle Digital, Inc.
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
 
@@ -1409,6 +1410,11 @@ product MATROX G100_AGP		0x1001	MGA G100 AGP
 
 /* MediaQ Inc. products */
 product MEDIAQ MQ200		0x0200	MQ200
+
+/* Middle Digital, Inc. products */
+product MIDDLE_DIGITAL WEASEL_VGA     0x9050	Weasel Virtual VGA
+product MIDDLE_DIGITAL WEASEL_SERIAL  0x9051	Weasel Serial Port
+product MIDDLE_DIGITAL WEASEL_CONTROL 0x9052	Weasel Control
 
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
