@@ -1,7 +1,7 @@
-/*	$NetBSD: spl.S,v 1.5 1998/04/01 23:02:32 mark Exp $	*/
+/*	$NetBSD: spl.S,v 1.6 1998/09/05 04:01:53 mark Exp $	*/
 
 /*
- * Copyright (c) 1996 Mark Brinicombe.
+ * Copyright (c) 1996-1998 Mark Brinicombe.
  * Copyright (c) Brini.
  * All rights reserved.
  *
@@ -15,15 +15,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,10 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * splasm.S
  *
  * spl routines
  *
@@ -64,7 +61,7 @@ ENTRY(raisespl)
 	cmp	r3, r0
 	movle	pc, lr
 
-	str	r3, [r1]		/* Store the new spl mask */
+	str	r3, [r1]		/* Store the new spl level */
 
 	ldr	r2, Lspl_masks		/* Get the spl mask */
 	ldr	r2, [r2, r3, lsl #2]
@@ -75,7 +72,6 @@ ENTRY(raisespl)
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_irq_setmasks		/* Update the actual masks */
 	ldmfd	sp!, {r0, pc}		/* Exit */
-
 
 ENTRY(lowerspl)
 	mov	r3, r0			/* Save the new value */
@@ -84,7 +80,7 @@ ENTRY(lowerspl)
 	cmp	r3, r0
 	movge	pc, lr
 
-	str	r3, [r1]		/* Store the new spl mask */
+	str	r3, [r1]		/* Store the new spl level */
 
 	ldr	r2, Lspl_masks		/* Get the spl mask */
 	ldr	r2, [r2, r3, lsl #2]
@@ -94,17 +90,8 @@ ENTRY(lowerspl)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_irq_setmasks		/* Update the actual masks */
+	bl	_dosoftints		/* Process any pending soft ints */
 	ldmfd	sp!, {r0, pc}		/* Exit */
-
-
-/*
- * For the sake of efficiency we will try and avoid making the dosoftints()
- * call unless necessary.
- * I am sure there are better optimisations ...
- */
-
-Lsoft_interrupts:
-	.word	_soft_interrupts
 
 ENTRY(splx)
 	mov	r3, r0			/* Save the new value */
@@ -113,19 +100,15 @@ ENTRY(splx)
 	cmp	r3, r0
 	moveq	pc, lr
 
-	str	r3, [r1]		/* Store the new spl mask */
-
-	stmfd	sp!, {r0, r4, lr}	/* Preserve registers */
+	str	r3, [r1]		/* Store the new spl level */
 
 	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r4, [r2, r3, lsl #2]	/* Use r4 so available later */
+	ldr	r2, [r2, r3, lsl #2]	/* Use r4 so available later */
 
 	ldr	r1, Lspl_mask		/* Store in the current spl mask */
-	str	r4, [r1]
+	str	r2, [r1]
 
+	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_irq_setmasks		/* Update the actual masks */
-	ldr	r0, Lsoft_interrupts	/* Get the pending soft ints */
-	ldr	r0, [r0]
-	ands	r0, r0, r4		/* any soft ints to deliver ? */
-	blne	_dosoftints		/* Process any pending soft ints */
-	ldmfd	sp!, {r0, r4, pc}	/* Exit */
+	bl	_dosoftints		/* Process any pending soft ints */
+	ldmfd	sp!, {r0, pc}		/* Exit */
