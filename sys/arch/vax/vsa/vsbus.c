@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.18 1999/08/07 10:36:51 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.19 1999/08/27 17:45:57 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,7 +97,12 @@ struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 
 struct	vsbus_softc {
 	struct	device sc_dev;
+#if 0
 	volatile struct vs_cpu *sc_cpu;
+#endif
+	u_char	*sc_intmsk;	/* Mask register */
+	u_char	*sc_intclr;	/* Clear interrupt register */
+	u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
 };
 
@@ -112,7 +117,7 @@ vsbus_print(aux, name)
 {
 	struct vsbus_attach_args *va = aux;
 
-	printf(" csr 0x%lx vec %o ipl %x maskbit %x", va->va_paddr,
+	printf(" csr 0x%lx vec %o ipl %x maskbit %d", va->va_paddr,
 	    va->va_cvec & 511, va->va_br, va->va_maskno - 1);
 	return(UNCONF); 
 }
@@ -134,10 +139,25 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
+	vaddr_t temp;
 
 	printf("\n");
 
-	sc->sc_cpu = (void *)vax_map_physmem(VS_REGS, 1);
+	switch (vax_boardtype) {
+	case VAX_BTYP_49:
+		temp = vax_map_physmem(0x25c00000, 1);
+		sc->sc_intreq = (char *)temp + 12;
+		sc->sc_intclr = (char *)temp + 12;
+		sc->sc_intmsk = (char *)temp + 8;
+		break;
+
+	default:
+		temp = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)temp + 15;
+		sc->sc_intclr = (char *)temp + 15;
+		sc->sc_intmsk = (char *)temp + 12;
+		break;
+	}
 
 	/*
 	 * First: find which interrupts we won't care about.
@@ -145,10 +165,10 @@ vsbus_attach(parent, self, aux)
 	 * that we don't want to interfere with the rest of the 
 	 * interrupt probing.
 	 */
-	sc->sc_cpu->vc_intmsk = 0;
-	sc->sc_cpu->vc_intclr = 0xff;
+	*sc->sc_intmsk = 0;
+	*sc->sc_intclr = 0xff;
 	DELAY(1000000); /* Wait a second */
-	sc->sc_mask = sc->sc_cpu->vc_intreq;
+	sc->sc_mask = *sc->sc_intreq;
 	printf("%s: interrupt mask %x\n", self->dv_xname, sc->sc_mask);
 	/*
 	 * now check for all possible devices on this "bus"
@@ -156,7 +176,7 @@ vsbus_attach(parent, self, aux)
 	config_search(vsbus_search, self, NULL);
 
 	/* Autoconfig finished, enable interrupts */
-	sc->sc_cpu->vc_intmsk = ~sc->sc_mask;
+	*sc->sc_intmsk = ~sc->sc_mask;
 }
 
 int
@@ -174,21 +194,23 @@ vsbus_search(parent, cf, aux)
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
 	va.va_dmat = &vsbus_bus_dma_tag;
 
-	sc->sc_cpu->vc_intmsk = 0;
-	sc->sc_cpu->vc_intclr = 0xff;
+	*sc->sc_intmsk = 0;
+	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
 	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
-	c = sc->sc_cpu->vc_intreq & ~sc->sc_mask;
+	c = *sc->sc_intreq & ~sc->sc_mask;
+	if (i == 0)
+		goto forgetit;
 	if (i > 10)
 		c = sc->sc_mask; /* Fooling interrupt */
-	if (c == 0 || i == 0)
+	else if (c == 0)
 		goto forgetit;
 
-	sc->sc_cpu->vc_intmsk = c;
+	*sc->sc_intmsk = c;
 	DELAY(100);
-	sc->sc_cpu->vc_intmsk = 0;
+	*sc->sc_intmsk = 0;
 	va.va_maskno = ffs((u_int)c);
 	i = scb_vecref(&vec, &br);
 	if (i == 0)
@@ -222,8 +244,8 @@ vsbus_setmask(mask)
 	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
 	unsigned char ch;
 
-	ch = sc->sc_cpu->vc_intmsk;
-	sc->sc_cpu->vc_intmsk = mask;
+	ch = *sc->sc_intmsk;
+	*sc->sc_intmsk = mask;
 	return ch;
 }
 
@@ -236,7 +258,7 @@ vsbus_clrintr(mask)
 {
 	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
 
-	sc->sc_cpu->vc_intclr = mask;
+	*sc->sc_intclr = mask;
 }
 
 #ifdef notyet
