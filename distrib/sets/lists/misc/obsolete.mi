@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.18 2002/04/03 15:59:49 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.18.2.1 2002/06/27 08:51:39 lukem Exp $
 /usr/share/doc/smm/03.fsck
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -11,9 +11,6 @@
 /usr/share/doc/usd/11.edit/edit.vindex
 /usr/share/doc/usd/12.vi/vi.apwh.ms
 /usr/share/doc/usd/12.vi/vi.summary
-/usr/share/doc/usd/13.ex/Makefile
-/usr/share/doc/usd/13.ex/ex.rm
-/usr/share/doc/usd/13.ex/ex.summary
 /usr/share/doc/usd/13.viref/merge.awk
 /usr/share/doc/usd/13.viref/spell.ok
 /usr/share/doc/xntp
