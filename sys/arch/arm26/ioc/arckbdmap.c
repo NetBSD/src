@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdmap.c,v 1.2 2000/05/13 12:17:50 bjh21 Exp $ */
+/* $NetBSD: arckbdmap.c,v 1.3 2000/05/13 14:40:11 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: arckbdmap.c,v 1.2 2000/05/13 12:17:50 bjh21 Exp $");
+__RCSID("$NetBSD: arckbdmap.c,v 1.3 2000/05/13 14:40:11 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <dev/wscons/wsksymdef.h>
@@ -216,8 +216,8 @@ static const keysym_t arckbd_keydesc_de[] = {
 static const struct wscons_keydesc arckbd_keydesctab[] = {
 	KBD_MAP(KB_UK,			0,	arckbd_keydesc_uk),
 	KBD_MAP(KB_NO,			KB_UK,	arckbd_keydesc_no),
-	KBD_MAP(KB_SE,			KB_NO,	arckbd_keydesc_se),
-	KBD_MAP(KB_DE,			KB_SE,	arckbd_keydesc_de),
+	KBD_MAP(KB_SV,			KB_NO,	arckbd_keydesc_se),
+	KBD_MAP(KB_DE,			KB_SV,	arckbd_keydesc_de),
 	{0},
 };
 
@@ -228,7 +228,7 @@ const struct wskbd_mapdata arckbd_mapdata_default = {
 const struct arckbd_kbidtab arckbd_kbidtab[] = {
 	{ ARCKBD_KBID_UK,	KB_UK },
 	{ ARCKBD_KBID_NO,	KB_NO },
-	{ ARCKBD_KBID_SE,	KB_SE },
+	{ ARCKBD_KBID_SE,	KB_SV },
 	{ ARCKBD_KBID_DE,	KB_DE },
 	{ -1 },
 };
