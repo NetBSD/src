@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2002/03/15 17:29:06 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)conf.c	8.2 (Berkeley) 11/14/93
  */
+
+#include "opt_compat_irix.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +100,8 @@ cdev_decl(arcbios_tty);
 
 #include "clockctl.h"
 cdev_decl(clockctl);
+
+cdev_decl(irix_kmem);
 
 struct bdevsw bdevsw[] =
 {
@@ -179,7 +183,7 @@ struct cdevsw cdevsw[] =
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 40: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 41: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 42: i4b phone device */
-	cdev_notdef(),			/* 43: */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 43: svr4 net pseudo-device */
 	cdev_notdef(),			/* 44: */
 	cdev_notdef(),			/* 45: */
 	cdev_notdef(),			/* 46: */
@@ -199,6 +203,11 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 58: */
 	cdev_notdef(),			/* 59: */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 60: clockctl pseudo device */
+#ifdef COMPAT_IRIX
+	cdev_irix_kmem_init(1,irix_kmem),	/* 61: IRIX kmem emulator */
+#else
+	cdev_notdef(),			/* 61: */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -281,6 +290,7 @@ static int chrtoblktbl[] = {
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
+	/* 61 */	NODEV,
 };
 
 dev_t
