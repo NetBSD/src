@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.22 2002/01/21 16:19:23 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2002/02/02 07:04:52 tls Exp $
 #
 ###########################################################################
 #
@@ -60,7 +60,8 @@
 #	wskbd*	wscons keyboard events
 # 
 # Pseudo terminals:
-#	pty*	set of 16 master and slave pseudo terminals
+#	pty*	set of 62 master and slave pseudo terminals
+#	opty	first 16 ptys, to save inodes on install media
 #
 # Graphics devices:
 #
@@ -85,7 +86,7 @@ do
 case $i in
 
 all)
-	sh $0 std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1 pty2 pty3
+	sh $0 std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -116,7 +117,7 @@ std)
 raminst)
 	sh $0 std
 	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh $0 tty0 tty1 pty0
+	sh $0 tty0 tty1 opty
 	;;
 
 wscons)
@@ -263,46 +264,53 @@ tty*)
 	chown uucp.wheel tty0$unit
 	;;
 
-pty*)
-	class=${i#pty}
-	case $class in
-	0)      name=p;;
-	1)      name=q;;
-	2)      name=r;;
-	3)      name=s;;
-	4)      name=t;;
-	5)      name=u;;
-	6)      name=v;;
-	7)      name=w;;
-	8)      name=x;;
-	9)      name=y;;
-	10)     name=z;;
-	11)     name=P;;
-	12)     name=Q;;
-	13)     name=R;;
-	14)     name=S;;
-	15)     name=T;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
-	esac
-	rm -f tty$name[0-9a-f] pty$name[0-9a-f]
+opty)
+	rm -f ttyp[0-9a-f] ptyp[0-9a-f]
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
 		esac
-		unit=$(($class * 16 + $jn))
+		mknod ttyp$j c 4 $jn
+		mknod ptyp$j c 5 $jn
+	done
+	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	;;
+
+		
+pty*)
+	class=${i#pty}
+	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
+	case $name in
+	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
+		continue;;
+	?)      ;;
+	*)      echo "$0: $i: pty unit must be between 0 and 15"
+	        continue ;;
+	esac
+	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	jn=0
+	while [ $jn -lt 62 ]
+	do
+		j=`echo 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ | dd bs=1 count=1 skip=$jn 2>/dev/null`
+		skip=0
+		if [ $jn -ge 16 ]; then
+			skip=$(($class * 30 + 256 - 16))
+		fi
+		unit=$(($class * 62 + $jn + $skip))
 		mknod tty$name$j c 4 $unit
 		mknod pty$name$j c 5 $unit
+		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name? pty$name?
-        chmod 666 tty$name? pty$name?
+        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 st*)

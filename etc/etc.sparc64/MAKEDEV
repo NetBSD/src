@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 2002/01/24 22:22:26 eeh Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2002/02/02 07:04:55 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,7 +62,8 @@
 #	tty*	Z88530 serial controllers
 #	ttyC*	NS16550 serial controllers
 # Pseudo terminals:
-#	pty*	set of 16 master and slave pseudo terminals
+#	pty*	set of 62 master and slave pseudo terminals
+#	opty	first 16 ptys, to save inodes on install media
 # ISDN devices:
 #	i4b	communication between userland isdnd and kernel
 #	i4bctl	control device
@@ -109,7 +110,7 @@ all)
 	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 ss0 ch0 uk0 uk1
 	sh -$- $0 wd0 wd1 wd2 wd3 cd0 st0 st1 fd0 md0 md1
 	sh -$- $0 audio0 audio1 audio2 audio3
-	sh -$- $0 pty0 pty1 pty2 pty3 vnd0 vnd1 vnd2 vnd3 audio
+	sh -$- $0 pty0 pty1 vnd0 vnd1 vnd2 vnd3 audio
 	sh -$- $0 tun0 tun1 tun2 tun3
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3 
 	sh -$- $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -123,7 +124,7 @@ all)
 	sh -$- $0 clockctl
 	;;
 floppy|ramdisk)
-	sh -$- $0 std ttya ttyb ttyc ttyd pty0
+	sh -$- $0 std ttya ttyb ttyc ttyd opty
 	sh -$- $0 sd0 sd1 sd2 sd3 sd4 sd5 md0
 	sh -$- $0 wd0 wd1 cd0 cd1 st0 st1 fd0
 	sh -$- $0 random
@@ -379,46 +380,53 @@ ipl)
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
-pty*)
-	class=${i#pty}
-	case $class in
-	0)      name=p;;
-	1)      name=q;;
-	2)      name=r;;
-	3)      name=s;;
-	4)      name=t;;
-	5)      name=u;;
-	6)      name=v;;
-	7)      name=w;;
-	8)      name=x;;
-	9)      name=y;;
-	10)     name=z;;
-	11)     name=P;;
-	12)     name=Q;;
-	13)     name=R;;
-	14)     name=S;;
-	15)     name=T;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
-	esac
-	rm -f tty$name[0-9a-f] pty$name[0-9a-f]
+opty)
+	rm -f ttyp[0-9a-f] ptyp[0-9a-f]
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
 		esac
-		unit=$(($class * 16 + $jn))
+		mknod ttyp$j c 20 $jn
+		mknod ptyp$j c 21 $jn
+	done
+	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	;;
+
+		
+pty*)
+	class=${i#pty}
+	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
+	case $name in
+	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
+		continue;;
+	?)      ;;
+	*)      echo "$0: $i: pty unit must be between 0 and 15"
+	        continue ;;
+	esac
+	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	jn=0
+	while [ $jn -lt 62 ]
+	do
+		j=`echo 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ | dd bs=1 count=1 skip=$jn 2>/dev/null`
+		skip=0
+		if [ $jn -ge 16 ]; then
+			skip=$(($class * 30 + 256 - 16))
+		fi
+		unit=$(($class * 62 + $jn + $skip))
 		mknod tty$name$j c 20 $unit
 		mknod pty$name$j c 21 $unit
+		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name? pty$name?
-        chmod 666 tty$name? pty$name?
+        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+        chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
 random)
