@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.6 2005/02/17 02:26:51 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.7 2005/02/17 03:12:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -45,6 +45,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:5
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#endif
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
@@ -133,14 +137,14 @@ int dir;
 {
 	struct ip *ip = mtod(*mp, struct ip *);
 	int rv, hlen = ip->ip_hl << 2;
-
 #if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
 	 * XXX inefficient
 	 */
-	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	int error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+
 	if (error) {
 		m_freem(*mp);
 		*mp = NULL;
@@ -1551,7 +1555,7 @@ fr_info_t *fin;
 	else if (fin->fin_v == 6)
 		asz = sizeof(fin->fin_src);
 	newiss = tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-			      fin->fin_sport, fin->fin_dport, asz);
+			      fin->fin_sport, fin->fin_dport, asz, 0);
 #else
 	static int iss_seq_off = 0;
 	u_char hash[16];
