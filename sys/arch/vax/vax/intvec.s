@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.49.2.3 2000/08/26 05:26:46 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.49.2.4 2001/06/25 15:31:18 he Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -206,7 +206,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	.globl	privinflt
 privinflt:
 #ifndef NO_INSN_EMULATE
-	jsb	unimemu	# do not return if insn emulated
+	jsb	_C_LABEL(unimemu) # do not return if insn emulated
 #endif
 	pushl $0
 	pushl $T_PRIVINFLT
