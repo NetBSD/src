@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.338 2003/09/08 16:06:57 tron Exp $
+$NetBSD: usbdevs,v 1.339 2003/09/10 06:52:27 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -938,6 +938,7 @@ product LACIE PKTDRV            0x0211  PocketDrive
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
+product LEXAR MCR		0xb018	Multi-Card Reader
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
@@ -967,6 +968,7 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
+product LOGITECH MUV55A		0xc016	M-UV55a
 product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
 product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
