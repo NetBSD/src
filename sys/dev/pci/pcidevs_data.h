@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.668 2004/11/30 05:02:58 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.669 2004/12/05 21:03:45 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.669 2004/11/30 05:02:37 grant Exp 
+ *	NetBSD: pcidevs,v 1.670 2004/12/05 21:01:43 bouyer Exp 
  */
 
 /*
@@ -9157,7 +9157,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
-	    "VT8363 KT133 System Controller",
+	    "VT8363 (Apollo KT133) Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
@@ -9165,7 +9165,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4,
-	    "VT8501 MVP4 System Controller",
+	    "VT8501 (Apollo MVP4) Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
@@ -9189,7 +9189,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA,
-	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	    "VT82C586 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
@@ -9197,7 +9197,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A,
-	    "VT82C596A (Apollo Pro) PCI-ISA Bridge",
+	    "VT82C596A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
@@ -9213,7 +9213,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
-	    "VT82C686A (Apollo KX133) PCI-ISA Bridge",
+	    "VT82C686A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
@@ -9237,7 +9237,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
-	    "VT82C586 (Apollo VP) IDE Controller",
+	    "VT82C586 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
@@ -9249,7 +9249,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
-	    "VT82C586 (Apollo VP) Power Management Controller",
+	    "VT82C586 Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
@@ -9341,7 +9341,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
-	    "VT8363 KT133 PCI to AGP Bridge",
+	    "VT8363 (Apollo KT133) PCI to AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
@@ -9349,7 +9349,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
-	    "VT8501 CPU-AGP Bridge",
+	    "VT8501 (Apollo MVP4) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
@@ -9369,7 +9369,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
-	    "VT8366 CPU-AGP Bridge",
+	    "VT8366 (Apollo KT266) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP,
