@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.100.2.1 2004/05/10 15:32:44 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.100.2.2 2004/05/10 15:42:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,8 +68,8 @@
  * SUCH DAMAGE.
  */
 
-#ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.100.2.1 2004/05/10 15:32:44 tron Exp $";
+#ifndef MAKE_NATIVE
+static char rcsid[] = "$NetBSD: main.c,v 1.100.2.2 2004/05/10 15:42:07 tron Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.100.2.1 2004/05/10 15:32:44 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.100.2.2 2004/05/10 15:42:07 tron Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -119,7 +119,7 @@ __RCSID("$NetBSD: main.c,v 1.100.2.1 2004/05/10 15:32:44 tron Exp $");
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
-#ifndef MAKE_BOOTSTRAP
+#ifdef MAKE_NATIVE
 #include <sys/utsname.h>
 #endif
 #include <sys/wait.h>
@@ -690,7 +690,7 @@ main(int argc, char **argv)
 	 * run-time.
 	 */
 	if (!machine) {
-#ifndef MAKE_BOOTSTRAP
+#ifdef MAKE_NATIVE
 	    struct utsname utsname;
 
 	    if (uname(&utsname) == -1) {
