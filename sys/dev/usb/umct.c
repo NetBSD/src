@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.5 2001/12/12 23:59:48 augustss Exp $	*/
+/*	$NetBSD: umct.c,v 1.6 2001/12/14 08:33:54 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,14 +36,13 @@
  */
 
 /*
- * This driver is for the device MCT USB-RS232 Interfact Controller.
+ * MCT USB-RS232 Interface Controller
  * http://www.mct.com.tw/p_u232.html
  * http://www.dlink.com/products/usb/dsbs25
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.5 2001/12/12 23:59:48 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.6 2001/12/14 08:33:54 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
