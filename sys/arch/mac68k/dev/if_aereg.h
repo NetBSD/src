@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.7 1995/04/13 03:58:30 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.8 1995/04/19 04:46:06 briggs Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -9,6 +9,19 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
+
+/*
+ * The following is a structure that we should be pulling from
+ * dev/ic/dp8390.h, but since we have the card in x86 mode and
+ * the std. include file assumes that big-endian processors will
+ * have the card in m68k mode, we're hosed for the moment.
+ * Fix this.  --  XXX
+ */
+struct ae_ring	{
+	u_char	rsr;			/* receiver status */
+	u_char	next_packet;		/* pointer to next packet */
+	u_short	count;			/* bytes in packet (length + 4) */
+};
 
 /*
  * Vendor types
