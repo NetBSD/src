@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.4 1999/09/06 09:37:29 kleink Exp $	*/
+/*	$NetBSD: nl.c,v 1.5 1999/09/06 21:50:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.4 1999/09/06 09:37:29 kleink Exp $");
+__RCSID("$NetBSD: nl.c,v 1.5 1999/09/06 21:50:39 kleink Exp $");
 #endif    
 
 #include <errno.h>
@@ -390,7 +390,7 @@ parse_numbering(argstr, section)
 	int section;
 {
 	int error;
-	char errorbuf[NL_MAX];
+	char errorbuf[NL_TEXTMAX];
 
 	switch (argstr[0]) {
 	case 'a':
