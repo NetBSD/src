@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.3 2003/01/27 20:57:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,11 +56,14 @@ int	pthread__cancel_stub_binder;
 #define __LIBC12_SOURCE__
 #include <signal.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+int	_sys_accept(int, struct sockaddr *, socklen_t *);
 int	_sys_close(int);
+int	_sys_connect(int, const struct sockaddr *, socklen_t);
 int	_sys_fcntl(int, int, ...);
 int	_sys_fsync(int);
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
@@ -80,6 +83,20 @@ ssize_t	_sys_writev(int, const struct iovec *, int);
 
 
 int
+accept(int s, struct sockaddr *addr, socklen_t *addrlen)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	pthread__testcancel(self);
+	retval = _sys_accept(s, addr, addrlen);
+	pthread__testcancel(self);
+	
+	return retval;
+}
+
+int
 close(int d)
 {
 	int retval;
@@ -88,6 +105,20 @@ close(int d)
 	self = pthread__self();
 	pthread__testcancel(self);
 	retval = _sys_close(d);
+	pthread__testcancel(self);
+	
+	return retval;
+}
+
+int
+connect(int s, const struct sockaddr *addr, socklen_t namelen)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	pthread__testcancel(self);
+	retval = _sys_connect(s, addr, namelen);
 	pthread__testcancel(self);
 	
 	return retval;
