@@ -56,13 +56,17 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
 AWK = @AWK@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
+CPP = @CPP@
 DATADIRNAME = @DATADIRNAME@
 EXEEXT = @EXEEXT@
 GENCAT = @GENCAT@
+GETCONF = @GETCONF@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
 GT_NO = @GT_NO@
@@ -82,6 +86,7 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 RANLIB = @RANLIB@
 SEP = @SEP@
+U = @U@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
@@ -92,7 +97,7 @@ AUTOMAKE_OPTIONS = no-dependencies
 LN = ln
 
 bin_PROGRAMS = grep egrep fgrep
-base_sources = grep.c grep.h                dfa.c dfa.h                kwset.c  kwset.h                obstack.c obstack.h 	       savedir.c savedir.h                getopt.c getopt1.c getopt.h                search.c getpagesize.h system.h
+base_sources = grep.c grep.h                dfa.c dfa.h                kwset.c  kwset.h                obstack.c obstack.h 	       regex.c regex.h 	       savedir.c savedir.h                getopt.c getopt1.c getopt.h                search.c getpagesize.h system.h
 
 egrep_SOURCES = $(base_sources) egrepmat.c
 fgrep_SOURCES = $(base_sources) fgrepmat.c
@@ -103,7 +108,7 @@ datadir = $(prefix)/@DATADIRNAME@
 localedir = $(datadir)/locale
 INCLUDES = -I../intl -DLOCALEDIR=\"$(localedir)\"
 
-EXTRA_DIST = regex.h regex.c              dosbuf.c              vms_fab.c vms_fab.h
+EXTRA_DIST =               dosbuf.c              vms_fab.c vms_fab.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -117,20 +122,20 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 grep_OBJECTS =  grep.$(OBJEXT) dfa.$(OBJEXT) kwset.$(OBJEXT) \
-obstack.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
-search.$(OBJEXT) grepmat.$(OBJEXT)
+obstack.$(OBJEXT) regex.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) \
+getopt1.$(OBJEXT) search.$(OBJEXT) grepmat.$(OBJEXT)
 grep_LDADD = $(LDADD)
 grep_DEPENDENCIES =  @ALLOCA@ @LIBOBJS@
 grep_LDFLAGS = 
 egrep_OBJECTS =  grep.$(OBJEXT) dfa.$(OBJEXT) kwset.$(OBJEXT) \
-obstack.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
-search.$(OBJEXT) egrepmat.$(OBJEXT)
+obstack.$(OBJEXT) regex.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) \
+getopt1.$(OBJEXT) search.$(OBJEXT) egrepmat.$(OBJEXT)
 egrep_LDADD = $(LDADD)
 egrep_DEPENDENCIES =  @ALLOCA@ @LIBOBJS@
 egrep_LDFLAGS = 
 fgrep_OBJECTS =  grep.$(OBJEXT) dfa.$(OBJEXT) kwset.$(OBJEXT) \
-obstack.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
-search.$(OBJEXT) fgrepmat.$(OBJEXT)
+obstack.$(OBJEXT) regex.$(OBJEXT) savedir.$(OBJEXT) getopt.$(OBJEXT) \
+getopt1.$(OBJEXT) search.$(OBJEXT) fgrepmat.$(OBJEXT)
 fgrep_LDADD = $(LDADD)
 fgrep_DEPENDENCIES =  @ALLOCA@ @LIBOBJS@
 fgrep_LDFLAGS = 
@@ -138,8 +143,7 @@ CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DIST_COMMON =  Makefile.am Makefile.in alloca.c btowc.c memchr.c \
-stpcpy.c
+DIST_COMMON =  Makefile.am Makefile.in alloca.c memchr.c stpcpy.c
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)

@@ -1,58 +1,56 @@
 # Локализация для grep.
-# Copyright (C) 1997, 1998 Free Software Foundation, Inc.
-# Denis Y. Pershin <dyp@siblug.org>, 1998.
+# Copyright (C) 1997, 1998, 1999 Free Software Foundation, Inc.
+# Denis Y. Pershin <dyp@siblug.org>, 1998, 1999.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU grep 2.1.1b\n"
-"POT-Creation-Date: 1999-02-14 12:08-0500\n"
-"PO-Revision-Date: 1998-05-23 15:26\n"
+"Project-Id-Version: GNU grep 2.2f\n"
+"POT-Creation-Date: 1999-11-13 11:33-0500\n"
+"PO-Revision-Date: 1999-04-15 15:26\n"
 "Last-Translator: Denis Y. Pershin <dyp@siblug.org>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#
-#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:861
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:921
 msgid "Memory exhausted"
 msgstr "Память исчерпана"
 
-#: src/dfa.c:452
+#: src/dfa.c:457
 msgid "Unfinished \\ escape"
 msgstr "Незавершенная \\ последовательность"
 
 #. Cases:
 #. {M} - exact count
 #. {M,} - minimum count, maximum is infinity
-#. {,M} - 0 through M
 #. {M,N} - M through N
-#: src/dfa.c:564 src/dfa.c:570 src/dfa.c:581 src/dfa.c:592
+#: src/dfa.c:590 src/dfa.c:596 src/dfa.c:606 src/dfa.c:614 src/dfa.c:629
 msgid "unfinished repeat count"
 msgstr "незавершенное количество повторений"
 
-#: src/dfa.c:577 src/dfa.c:591 src/dfa.c:595
+#: src/dfa.c:603 src/dfa.c:620 src/dfa.c:628 src/dfa.c:632
 msgid "malformed repeat count"
 msgstr "некорректно указано количество повторений"
 
-#: src/dfa.c:660 src/dfa.c:663 src/dfa.c:690 src/dfa.c:694 src/dfa.c:695
-#: src/dfa.c:698 src/dfa.c:711 src/dfa.c:712
+#: src/dfa.c:697 src/dfa.c:700 src/dfa.c:727 src/dfa.c:731 src/dfa.c:732
+#: src/dfa.c:735 src/dfa.c:748 src/dfa.c:749
 msgid "Unbalanced ["
 msgstr "Несбалансированная ["
 
-#: src/dfa.c:849
+#: src/dfa.c:886
 msgid "Unbalanced ("
 msgstr "Несбалансированная ("
 
-#: src/dfa.c:970
+#: src/dfa.c:1007
 msgid "No syntax specified"
 msgstr "Не указано синтаксиса"
 
-#: src/dfa.c:978
+#: src/dfa.c:1015
 msgid "Unbalanced )"
 msgstr "Несбалансированная )"
 
-#: src/dfa.c:1998
+#: src/dfa.c:2036
 msgid "out of memory"
 msgstr "закончилась память"
 
@@ -161,61 +159,73 @@ msgstr "?? gotopt вернул символ с кодом 0%o ??\n"
 msgid "non-option ARGV-elements: "
 msgstr "ARGV-элементы - не опции: "
 
-#: src/grep.c:172 src/grep.c:189 src/grep.c:291 src/grep.c:347 src/kwset.c:184
+#: src/grep.c:183 src/grep.c:200 src/grep.c:300 src/grep.c:408 src/kwset.c:184
 #: src/kwset.c:190
 msgid "memory exhausted"
 msgstr "память исчерпана"
 
-#: src/grep.c:375 src/grep.c:846
+#: src/grep.c:560 src/grep.c:1454
+msgid "writing output"
+msgstr "записываю выходные данные"
+
+#: src/grep.c:792
+#, c-format
+msgid "Binary file %s matches\n"
+msgstr "Бинарный файл %s совпадает\n"
+
+#: src/grep.c:808
+msgid "(standard input)"
+msgstr "(стандартный ввод)"
+
+#: src/grep.c:906
 #, c-format
 msgid "%s: warning: %s: %s\n"
 msgstr "%s: предупреждение: %s: %s\n"
 
-#: src/grep.c:500 src/grep.c:1321
-msgid "writing output"
-msgstr "записываю выходные данные"
-
-#: src/grep.c:729
-#, c-format
-msgid "Binary file %s matches\n"
-msgstr ""
-
-#: src/grep.c:745
-msgid "(standard input)"
-msgstr "(стандартный ввод)"
-
-#: src/grep.c:847
+#: src/grep.c:907
 msgid "recursive directory loop"
-msgstr ""
+msgstr "каталоги зациклены"
 
-#: src/grep.c:898
+#: src/grep.c:958
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
 msgstr "Использование: %s [OPTION]... PATTERN [FILE]...\n"
 
-#: src/grep.c:899
+#: src/grep.c:959
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Попробуйте `%s --help' для получения более подробного описания.\n"
 
-#: src/grep.c:903
+#: src/grep.c:963
 #, c-format
 msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
 msgstr "Использование: %s [OPTION]... PATTERN [FILE] ...\n"
 
-#: src/grep.c:904
+#: src/grep.c:964
+#, c-format
 msgid ""
 "Search for PATTERN in each FILE or standard input.\n"
+"Example: %s -i 'hello.*world' menu.h main.c\n"
 "\n"
 "Regexp selection and interpretation:\n"
+msgstr ""
+
+#: src/grep.c:969
+msgid ""
 "  -E, --extended-regexp     PATTERN is an extended regular expression\n"
-"  -F, --fixed-regexp        PATTERN is a fixed string separated by newlines\n"
+"  -F, --fixed-strings       PATTERN is a set of newline-separated strings\n"
 "  -G, --basic-regexp        PATTERN is a basic regular expression\n"
+msgstr ""
+
+#: src/grep.c:973
+#, fuzzy
+msgid ""
 "  -e, --regexp=PATTERN      use PATTERN as a regular expression\n"
 "  -f, --file=FILE           obtain PATTERN from FILE\n"
 "  -i, --ignore-case         ignore case distinctions\n"
 "  -w, --word-regexp         force PATTERN to match only whole words\n"
 "  -x, --line-regexp         force PATTERN to match only whole lines\n"
+"  -z, --null-data           a data line ends in 0 byte, not newline\n"
 msgstr ""
 "Ищет PATTERN в каждом FILE'е или стандартном вводе.\n"
 "\n"
@@ -230,14 +240,16 @@ msgstr ""
 "  -w, --word-regexp         PATTERN должен подходить ко всему слову\n"
 "  -x, --line-regexp         PATTERN должен подходить ко всей строке\n"
 
-#: src/grep.c:916
+#: src/grep.c:980
+#, fuzzy
 msgid ""
 "\n"
 "Miscellaneous:\n"
 "  -s, --no-messages         suppress error messages\n"
-"  -v, --revert-match        select non-matching lines\n"
+"  -v, --invert-match        select non-matching lines\n"
 "  -V, --version             print version information and exit\n"
 "      --help                display this help and exit\n"
+"      --mmap                use memory-mapped input if possible\n"
 msgstr ""
 "\n"
 "Разноообразные:\n"
@@ -246,7 +258,7 @@ msgstr ""
 "  -V, --version             напечатать информацию о версии и выйти\n"
 "      --help                показать помощь и выйти\n"
 
-#: src/grep.c:923
+#: src/grep.c:988
 #, fuzzy
 msgid ""
 "\n"
@@ -263,6 +275,7 @@ msgid ""
 "  -L, --files-without-match only print FILE names containing no match\n"
 "  -l, --files-with-matches  only print FILE names containing matches\n"
 "  -c, --count               only print a count of matching lines per FILE\n"
+"  -Z, --null                print 0 byte after FILE name\n"
 msgstr ""
 "\n"
 "Управление выводом:\n"
@@ -274,12 +287,18 @@ msgstr ""
 "  -H, --with-filename       печатать имя файла для каждого совпадения\n"
 "  -h, --no-filename         подавить вывод имени файла на выходе\n"
 "  -q, --quiet, --silent     подавить весь обычный вывод\n"
+"  -a, --text                не подавлять бинарный вывод\n"
+"  -d, --directories=ACTION  как обрабатывать каиалоги\n"
+"                            ACTION может быть 'read' (читать),\n"
+"                            'recurse' (рекурсивно), или 'skip' "
+"(пропускать).\n"
+"  -r, --recursive           аналогично --directories=recurse.\n"
 "  -L, --files-without-match печатать только имена файлов без совпадений\n"
 "  -l, --files-with-matches  печатать только имена файлов с совпадениями\n"
 "  -c, --count               печатать только количество совпадающих строк на "
 "файл\n"
 
-#: src/grep.c:938
+#: src/grep.c:1004
 #, fuzzy
 msgid ""
 "\n"
@@ -287,22 +306,23 @@ msgid ""
 "  -B, --before-context=NUM  print NUM lines of leading context\n"
 "  -A, --after-context=NUM   print NUM lines of trailing context\n"
 "  -C, --context[=NUM]       print NUM (default 2) lines of output context\n"
-"                            unless overriden by -A or -B\n"
+"                            unless overridden by -A or -B\n"
 "  -NUM                      same as --context=NUM\n"
 "  -U, --binary              do not strip CR characters at EOL (MSDOS)\n"
 "  -u, --unix-byte-offsets   report offsets as if CRs were not there (MSDOS)\n"
 "\n"
-"If no -[GEF], then `egrep' assumes -E, `fgrep' -F, else -G.\n"
-"With no FILE, or when FILE is -, read standard input. If less than\n"
-"two FILEs given, assume -h. Exit with 0 if matches, with 1 if none.\n"
-"Exit with 2 if syntax errors or system errors.\n"
+"`egrep' means `grep -E'.  `fgrep' means `grep -F'.\n"
+"With no FILE, or when FILE is -, read standard input.  If less than\n"
+"two FILEs given, assume -h.  Exit status is 0 if match, 1 if no match,\n"
+"and 2 if trouble.\n"
 msgstr ""
 "\n"
 "Управление контекстом:\n"
 "  -B, --before-context=NUM  печатать NUM строк предшествующего контекста\n"
 "  -A, --after-context=NUM   печатать NUM строк последующего контекста\n"
-"  -NUM                      то же, что -B NUM и -A NUM\n"
-"  -C, --context             то же, что и -2\n"
+"  -C, --context[=NUM]       печатать NUM строк контекста,\n"
+"                            если не перекрывается -A или -B\n"
+"  -NUM                      то же, что и --context=NUM\n"
 "  -U, --binary              не удалять сиволы CR в конце строки (MSDOS)\n"
 "  -u, --unix-byte-offsets   выдавать смещение, как-будто нет CR-ов (MSDOS)\n"
 "\n"
@@ -314,7 +334,7 @@ msgstr ""
 "совпадения,\n"
 "с 1, если нет. Выходит с 2, если есть синтаксическио или системные ошибки.\n"
 
-#: src/grep.c:953
+#: src/grep.c:1019
 msgid ""
 "\n"
 "Report bugs to <bug-gnu-utils@gnu.org>.\n"
@@ -322,32 +342,30 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте <bug-gnu-utils@gnu.org>.\n"
 
-#: src/grep.c:1096 src/grep.c:1103 src/grep.c:1112
-msgid "invalid context length argument"
-msgstr ""
-
-#: src/grep.c:1119 src/grep.c:1124 src/grep.c:1129
-msgid "you may specify only one of -E, -F, or -G"
-msgstr "вы должны указать только одну из -E, -F или -G"
-
-#: src/grep.c:1148
-msgid "matcher already specified"
+#: src/grep.c:1030
+#, fuzzy
+msgid "conflicting matchers specified"
 msgstr "образец уже задан"
 
-#: src/grep.c:1169
+#: src/grep.c:1229 src/grep.c:1236 src/grep.c:1245
+msgid "invalid context length argument"
+msgstr "неверный аргумент длины контекста"
+
+#: src/grep.c:1296
 msgid "unknown directories method"
-msgstr ""
+msgstr "неизвестный метод для каталогов"
 
-#: src/grep.c:1255
-#, c-format
-msgid "grep (GNU grep) %s\n"
-msgstr ""
+#: src/grep.c:1391
+#, fuzzy, c-format
+msgid "%s (GNU grep) %s\n"
+msgstr "grep (GNU grep) %s\n"
 
-#: src/grep.c:1257
+#: src/grep.c:1393
+#, fuzzy
 msgid "Copyright (C) 1988, 1992-1998, 1999 Free Software Foundation, Inc.\n"
-msgstr ""
+msgstr "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
 
-#: src/grep.c:1259
+#: src/grep.c:1395
 msgid ""
 "This is free software; see the source for copying conditions. There is NO\n"
 "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
@@ -356,10 +374,12 @@ msgstr ""
 "тексты для условий копирования. НЕ дается никакой гарантии, даже о\n"
 "ПОДХОДИМОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ.\n"
 
-#
 #: src/obstack.c:467
 msgid "memory exhausted\n"
 msgstr "память исчерпана\n"
+
+#~ msgid "you may specify only one of -E, -F, or -G"
+#~ msgstr "вы должны указать только одну из -E, -F или -G"
 
 #~ msgid ""
 #~ "\n"

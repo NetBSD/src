@@ -7,6 +7,9 @@
 /* Version number. */
 #undef VERSION
 
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef ssize_t
+
 /* Hack for Visual C++ suggested by irox. */
 #undef alloca
 
