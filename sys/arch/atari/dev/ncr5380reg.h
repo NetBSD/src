@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.8 1996/02/22 21:07:11 leo Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.9 1996/03/08 21:55:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -175,6 +175,8 @@ static void transfer_dma __P((struct req_q *, u_int, int));
 static int  check_autosense __P((struct req_q *, int));
 static int  reach_msg_out __P((struct ncr_softc *, u_long));
 static int  check_intr __P((struct ncr_softc *));
+       void finish_req __P((struct req_q *));
+       int  command_size __P((u_char));
        void scsi_reset __P((void));
 static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
 static int  scsi_dmaok __P((struct req_q *));
@@ -187,6 +189,7 @@ static void ncr_aprint __P((struct ncr_softc *, char *, ...));
 
        void scsi_show __P((void));
 static void show_request __P((struct req_q *, char *));
+static void show_data_sense __P((struct scsi_xfer *));
 /* static void show_phase __P((struct req_q *, int)); */
 static void show_signals __P((u_char, u_char));
 
