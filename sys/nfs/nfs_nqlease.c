@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.8 1995/01/18 06:15:17 mycroft Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.9 1995/05/23 06:22:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -677,7 +677,6 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 {
 	register struct nfsv2_fattr *fp;
 	struct vattr va;
-	register struct vattr *vap = &va;
 	struct vnode *vp;
 	nfsv2fh_t nfh;
 	fhandle_t *fhp;
@@ -704,7 +703,7 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 	}
 	(void) nqsrv_getlease(vp, &nfsd->nd_duration, flags, nfsd,
 		nam, &cache, &frev, cred);
-	error = VOP_GETATTR(vp, vap, cred, nfsd->nd_procp);
+	error = VOP_GETATTR(vp, &va, cred, nfsd->nd_procp);
 	vput(vp);
 	nfsm_reply(NFSX_NQFATTR + 4*NFSX_UNSIGNED);
 	nfsm_build(tl, u_long *, 4*NFSX_UNSIGNED);
