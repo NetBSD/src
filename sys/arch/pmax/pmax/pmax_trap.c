@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.30 1996/03/17 22:12:13 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.31 1996/03/25 03:18:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1605,7 +1605,7 @@ kn02_errintr()
 	if (!(erradr & KN02_ERR_WRITE))
 		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
 	physadr <<= 2;
-	printf("%s memory %s %s error at 0x%x\n",
+	printf("%s memory %s %s error at 0x%08x\n",
 		(erradr & KN02_ERR_CPU) ? "CPU" : "DMA",
 		(erradr & KN02_ERR_WRITE) ? "write" : "read",
 		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
@@ -1613,7 +1613,7 @@ kn02_errintr()
 	if (erradr & KN02_ERR_ECCERR) {
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
 		MachEmptyWriteBuffer();
-		printf("ECC 0x%x\n", chksyn);
+		printf("ECC 0x%08x\n", chksyn);
 
 		/* check for a corrected, single bit, read error */
 		if (!(erradr & KN02_ERR_WRITE)) {
@@ -1635,10 +1635,48 @@ kn02_errintr()
 static void
 kn03_errintr()
 {
+	u_int erradr, errsyn, physadr;
+	int i;
 
-	printf("erradr %x\n", *(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR));
-	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
+	erradr = *(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR);
+	errsyn = *(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRSYN);
+	*(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
 	MachEmptyWriteBuffer();
+
+	if (!(erradr & KN03_ERR_VALID))
+		return;
+	/* extract the physical word address and compensate for pipelining */
+	physadr = erradr & KN03_ERR_ADDRESS;
+	if (!(erradr & KN03_ERR_WRITE))
+		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
+	physadr <<= 2;
+	printf("%s memory %s %s error at 0x%08x",
+		(erradr & KN03_ERR_CPU) ? "CPU" : "DMA",
+		(erradr & KN03_ERR_WRITE) ? "write" : "read",
+		(erradr & KN03_ERR_ECCERR) ? "ECC" : "timeout",
+		physadr);
+	if (erradr & KN03_ERR_ECCERR) {
+		*(u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRSYN) = 0;
+		MachEmptyWriteBuffer();
+		printf("   ECC 0x%08x\n", errsyn);
+
+		/* check for a corrected, single bit, read error */
+		if (!(erradr & KN03_ERR_WRITE)) {
+			if (physadr & 0x4) {
+				/* check high word */
+				if (errsyn & KN03_ECC_SNGHI)
+					return;
+			} else {
+				/* check low word */
+				if (errsyn & KN03_ECC_SNGLO)
+					return;
+			}
+		}
+		printf("\n");
+	}
+	else
+		printf("\n");
+	printf("panic(\"Mem error interrupt\");\n");
 }
 #endif /* DS5000_240 */
 
