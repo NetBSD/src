@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22.4.1 1997/07/30 07:23:05 marc Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22.4.2 1997/08/11 09:41:44 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -354,7 +354,7 @@ fakeintr(arg)
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
-void
+int
 isa_intr_alloc(ic, mask, type, irq)
 	isa_chipset_tag_t ic;
 	int mask;
@@ -385,7 +385,7 @@ isa_intr_alloc(ic, mask, type, irq)
 		case IST_NONE:
 			/* if nothing's using the irq, just return it */
 			*irq = i;
-			return;
+			return (0);
 		case IST_EDGE:
 		case IST_LEVEL:
 			if (type != intrtype[i])
@@ -410,11 +410,11 @@ isa_intr_alloc(ic, mask, type, irq)
 	}
 
 	if (bestirq == -1)
-		panic("intr_alloc: no irqs available");
+		return (1);
 
 	*irq = bestirq;
 
-	return;
+	return (0);
 }
 
 /*
