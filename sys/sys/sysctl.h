@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.73 2002/01/31 00:32:47 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.74 2002/03/20 00:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,7 +92,8 @@ struct ctlname {
 #define	CTL_DDB		9		/* in-kernel debugger */
 #define	CTL_PROC	10		/* per-proc attr */
 #define	CTL_VENDOR	11		/* vendor-specific data */
-#define	CTL_MAXID	12		/* number of valid top-level ids */
+#define	CTL_EMUL	12		/* emulation-specific data */
+#define	CTL_MAXID	13		/* number of valid top-level ids */
 
 #define	CTL_NAMES { \
 	{ 0, 0 }, \
@@ -107,6 +108,7 @@ struct ctlname {
 	{ "ddb", CTLTYPE_NODE }, \
 	{ "proc", CTLTYPE_NODE }, \
 	{ "vendor", CTLTYPE_NODE }, \
+	{ "emul", CTLTYPE_NODE }, \
 }
 
 /*
@@ -626,6 +628,20 @@ struct kinfo_proc2 {
 	{ "hard", CTLTYPE_QUAD }, \
 }
 
+/*
+ * CTL_EMUL definitions
+ *
+ * Second level identifier specifies which emulation variable.
+ * Subsequent levels are specified in the emulations themselves.
+ */
+#define	EMUL_LINUX	1
+
+#define	EMUL_MAXID	2
+#define	CTL_EMUL_NAMES { \
+	{ 0, 0 }, \
+	{ "linux", CTLTYPE_NODE }, \
+}
+
 #ifdef	_KERNEL
 /*
  * CTL_DEBUG variables.
@@ -691,6 +707,7 @@ int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 #endif
 int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int emul_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /* ddb_sysctl() declared in ddb_var.h */
 
