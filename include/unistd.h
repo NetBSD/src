@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.23 1994/12/23 15:04:05 cgd Exp $	*/
+/*	$NetBSD: unistd.h,v 1.24 1994/12/28 04:40:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -169,6 +169,7 @@ int	 syscall __P((int, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
+int	 undelete __P((const char *));
 void	 usleep __P((u_int));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 pid_t	 vfork __P((void));
