@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.1.2.2 2002/05/30 07:14:40 gehenna Exp $
+#	$NetBSD: majors.algor,v 1.1.2.3 2002/07/09 05:17:56 gehenna Exp $
 #
 # Device majors for algor
 #
@@ -64,3 +64,4 @@ device-major	uscanner	char 63			uscanner
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
 device-major	clockctl	char 66			clockctl
+device-major	systrace	char 67			systrace
