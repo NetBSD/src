@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.230 2005/02/12 10:20:50 rearnsha Exp $
+#	$NetBSD: files.pci,v 1.231 2005/02/20 18:34:33 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -761,3 +761,8 @@ file	dev/pci/njs_pci.c		njs_pci
 device	iwi: ifnet, wlan
 attach	iwi at pci
 file	dev/pci/if_iwi.c		iwi
+
+# Via Velocity 612x 10/100/1000 Ethernet
+device	vge: ether, ifnet, arp, mii
+attach	vge at pci
+file	dev/pci/if_vge.c		vge
