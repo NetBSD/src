@@ -1,4 +1,4 @@
-/*  $NetBSD: generic_phy.h,v 1.2 1997/11/17 08:25:56 thorpej Exp $   */
+/*	$NetBSD: generic_phy.h,v 1.3 1997/11/17 08:28:09 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
