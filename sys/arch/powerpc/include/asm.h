@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 1996/11/30 02:49:04 jtc Exp $	*/
+/*	$NetBSD: asm.h,v 1.3 1997/04/16 22:52:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,12 +54,11 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
-#ifdef __STDC__
-# define _C_LABEL(x)	_ ## x
-#else
-# define _C_LABEL(x)	_/**/x
-#endif
+#define	_C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
+
+#define	_GLOBAL(x) \
+	.data; .align 2; .globl x; x:
 
 #define _ENTRY(x) \
 	.text; .align 2; .globl x; .type x,@function; x:
@@ -72,6 +71,7 @@
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	GLOBAL(y)	_GLOBAL(_C_LABEL(y))
 
 #define	ASMSTR		.asciz
 
