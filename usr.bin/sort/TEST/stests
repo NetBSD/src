@@ -190,7 +190,7 @@ xsort E -k 2,2.0
 
 xsort F -k 2,2 -k 1,1 -k 3
 
-sort -c -k 2 in 2>/dev/null && ${TEST}G failed
+sort -c -k 2 in 2>/dev/null && echo ${TEST}G failed
 
 #---------------------------------------------------------------
 TEST=06; echo $TEST	# -t
