@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.354.2.16 2001/10/25 18:05:28 he Exp $
+#	$NetBSD: GENERIC,v 1.354.2.17 2001/12/09 19:14:43 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.354.2.16 $"
+#ident 		"GENERIC-$Revision: 1.354.2.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -377,6 +377,7 @@ lpt2	at isa? port 0x3bc
 iop*	at pci? dev ? function ?	# I/O processors
 iopsp*	at iop? tid ?			# SCSI ports
 ld*	at iop? tid ?			# block devices
+dpti*	at iop? tid 0			# Adaptec/DPT control interface
 
 # SCSI Controllers and Devices
 

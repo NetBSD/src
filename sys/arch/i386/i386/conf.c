@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.127.2.3 2001/10/25 18:05:27 he Exp $	*/
+/*	$NetBSD: conf.c,v 1.127.2.4 2001/12/09 19:14:24 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,6 +299,8 @@ cdev_decl(vmegeneric);
 cdev_decl(iop);
 #include "mlx.h"
 cdev_decl(mlx);
+#include "dpti.h"
+cdev_decl(dpti);
 
 struct cdevsw	cdevsw[] =
 {
@@ -397,6 +399,12 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NIOP, iop),	/* 76: I2O IOP control interface */
 	cdev_notdef(),			/* 77: reserved */
 	cdev__oci_init(NMLX, mlx),	/* 78: Mylex DAC960 control interface */
+	cdev_notdef(),			/* 79: reserved */
+	cdev_notdef(),			/* 80: reserved */
+	cdev_notdef(),			/* 81: reserved */
+	cdev_notdef(),			/* 82: reserved */
+	cdev_notdef(),			/* 83: reserved */
+	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -517,6 +525,12 @@ static int chrtoblktbl[] = {
 	/* 76 */	NODEV,
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
+	/* 79 */	NODEV,
+	/* 80 */	NODEV,
+	/* 81 */	NODEV,
+	/* 82 */	NODEV,
+	/* 83 */	NODEV,
+	/* 84 */	NODEV,
 };
 
 /*
