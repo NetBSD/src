@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.1.2.12 1997/10/16 02:50:25 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.1.2.13 1997/10/16 09:18:09 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -854,8 +854,7 @@ static struct io_map_index_st {
 	int	stop_msb;
 	int	ioenable;
 	int	ioctlmask;
-	int	ioctl8;
-	int	ioctl16;
+	int	ioctlbits[3];		/* indexed by PCMCIA_WIDTH_* */
 }               io_map_index[] = {
 	{
 		PCIC_IOADDR0_START_LSB,
@@ -865,10 +864,13 @@ static struct io_map_index_st {
 		PCIC_ADDRWIN_ENABLE_IO0,
 		PCIC_IOCTL_IO0_WAITSTATE | PCIC_IOCTL_IO0_ZEROWAIT |
 		PCIC_IOCTL_IO0_IOCS16SRC_MASK | PCIC_IOCTL_IO0_DATASIZE_MASK,
-		PCIC_IOCTL_IO0_IOCS16SRC_DATASIZE |
-		    PCIC_IOCTL_IO0_DATASIZE_8BIT,
-		PCIC_IOCTL_IO0_IOCS16SRC_DATASIZE |
-		    PCIC_IOCTL_IO0_DATASIZE_16BIT,
+		{
+			PCIC_IOCTL_IO0_IOCS16SRC_CARD,
+			PCIC_IOCTL_IO0_IOCS16SRC_DATASIZE
+			    | PCIC_IOCTL_IO0_DATASIZE_8BIT,
+			PCIC_IOCTL_IO0_IOCS16SRC_DATASIZE
+			    | PCIC_IOCTL_IO0_DATASIZE_16BIT,
+		},
 	},
 	{
 		PCIC_IOADDR1_START_LSB,
@@ -878,10 +880,13 @@ static struct io_map_index_st {
 		PCIC_ADDRWIN_ENABLE_IO1,
 		PCIC_IOCTL_IO1_WAITSTATE | PCIC_IOCTL_IO1_ZEROWAIT |
 		PCIC_IOCTL_IO1_IOCS16SRC_MASK | PCIC_IOCTL_IO1_DATASIZE_MASK,
-		PCIC_IOCTL_IO1_IOCS16SRC_DATASIZE |
-		    PCIC_IOCTL_IO1_DATASIZE_8BIT,
-		PCIC_IOCTL_IO1_IOCS16SRC_DATASIZE |
-		    PCIC_IOCTL_IO1_DATASIZE_16BIT,
+		{
+			PCIC_IOCTL_IO1_IOCS16SRC_CARD,
+			PCIC_IOCTL_IO1_IOCS16SRC_DATASIZE |
+			    PCIC_IOCTL_IO1_DATASIZE_8BIT,
+			PCIC_IOCTL_IO1_IOCS16SRC_DATASIZE |
+			    PCIC_IOCTL_IO1_DATASIZE_16BIT,
+		},
 	},
 };
 
@@ -907,10 +912,7 @@ pcic_chip_do_io_map(h, win)
 
 	reg = pcic_read(h, PCIC_IOCTL);
 	reg &= ~io_map_index[win].ioctlmask;
-	if (h->io[win].width == PCMCIA_WIDTH_IO8)
-		reg |= io_map_index[win].ioctl8;
-	else
-		reg |= io_map_index[win].ioctl16;
+	reg |= io_map_index[win].ioctlbits[h->io[win].width];
 	pcic_write(h, PCIC_IOCTL, reg);
 
 	reg = pcic_read(h, PCIC_ADDRWIN_ENABLE);
@@ -929,6 +931,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	bus_addr_t ioaddr = pcihp->addr + offset;
+	static char *width_names[] = { "auto", "io8", "io16" };
 	int i, win;
 
 	/* XXX Sanity check offset/size. */
@@ -953,8 +956,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 		panic("pcic_chip_io_map iot is bogus");
 
 	DPRINTF(("pcic_chip_io_map window %d %s port %lx+%lx\n",
-		 win, (width == PCMCIA_WIDTH_IO8) ? "io8" : "io16",
-		 (u_long) ioaddr, (u_long) size));
+		 win, width_names[width], (u_long) ioaddr, (u_long) size));
 
 	/* XXX wtf is this doing here? */
 
