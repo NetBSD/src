@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.44 2002/10/14 15:04:41 soren Exp $	*/
+/*	$NetBSD: options.c,v 1.45 2002/10/15 14:51:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.44 2002/10/14 15:04:41 soren Exp $");
+__RCSID("$NetBSD: options.c,v 1.45 2002/10/15 14:51:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1206,6 +1206,55 @@ mkpath(path)
 	return (0);
 }
 
+
+struct option cpio_longopts[] = {
+	{ "reset-access-time",	no_argument,		0,	'a' },
+	{ "make-directories",	no_argument,		0, 	'd' },
+	{ "nonmatching",	no_argument,		0,	'f' },
+	{ "extract",		no_argument,		0,	'i' },
+	{ "link",		no_argument,		0,	'l' },
+	{ "preserve-modification-time", no_argument,	0,	'm' },
+	{ "create",		no_argument,		0,	'o' },
+	{ "pass-through",	no_argument,		0,	'p' },
+	{ "rename",		no_argument,		0,	'r' },
+	{ "list",		no_argument,		0,	't' },
+	{ "unconditional",	no_argument,		0,	'u' },
+	{ "verbose",		no_argument,		0,	'v' },
+	{ "append",		no_argument,		0,	'A' },
+	{ "pattern-file",	required_argument,	0,	'E' },
+	{ "file",		required_argument,	0,	'F' },
+	{ "force-local",	no_argument,		0,
+						    OPT_FORCE_LOCAL },
+	{ "format",		required_argument,	0,	'H' },
+	{ "dereference",	no_argument,		0,	'L' },
+	{ "swap-halfwords",	no_argument,		0,	'S' },
+
+#ifdef notyet
+/* Not implemented */
+	{ "null",		no_argument,		0,	'0' },
+	{ "swap",		no_argument,		0,	'b' },
+	{ "numeric-uid-gid",	no_argument,		0,	'n' },
+	{ "swap-bytes",		no_argument,		0,	's' },
+	{ "message",		required_argument,	0,	'M' },
+	{ "owner",		required_argument,	0	'R' },
+	{ "dot",		no_argument,		0,	'V' },
+	{ "block-size",		required_argument,	0,
+						    OPT_BLOCK_SIZE },
+	{ "no-absolute-pathnames", no_argument,		0,
+						    OPT_NO_ABSOLUTE_PATHNAMES },
+	{ "no-preserve-owner",	no_argument,		0,
+						    OPT_NO_PRESERVE_OWNER },
+	{ "only-verify-crc",	no_argument,		0,
+						    OPT_ONLY_VERIFY_CRC },
+	{ "rsh-command",	required_argument,	0,
+						    OPT_RSH_COMMAND },
+	{ "sparce",		no_argument,		0,
+						    OPT_SPARSE },
+	{ "version",		no_argument,		0,
+						    OPT_VERSION },
+#endif
+};
+
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -1235,7 +1284,8 @@ cpio_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "abcdfiklmoprstuvzABC:E:F:H:I:LM:O:R:SVZ6", NULL, NULL)) != -1)  {
+	    "abcdfiklmoprstuvzABC:E:F:H:I:LM:O:R:SVZ6",
+	    cpio_longopts, NULL)) != -1) {
 		switch(c) {
 		case 'a':
 			/*
@@ -1462,6 +1512,9 @@ cpio_options(int argc, char **argv)
 			 * process Version 6 cpio format
 			 */
 			frmt = &(fsub[F_BCPIO]);
+		case OPT_FORCE_LOCAL:
+			forcelocal = 1;
+			break;
 		default:
 			cpio_usage();
 			break;
