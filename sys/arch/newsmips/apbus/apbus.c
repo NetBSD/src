@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: apbus.c,v 1.3 2000/10/12 03:11:38 onoe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -28,10 +28,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/adrsmap.h>
 #include <machine/autoconf.h>
+#define _NEWSMIPS_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <newsmips/apbus/apbusvar.h>
 
 static int  apbusmatch __P((struct device *, struct cfdata *, void *));
@@ -52,19 +55,18 @@ struct cfattach ap_ca = {
 #define	APBUS_DEVNAMELEN	16
 
 struct ap_intrhand {
+	struct ap_intrhand *ai_next;
 	int ai_mask;
 	int ai_priority;
-	void (*ai_func) __P((void*));	/* function */
+	int (*ai_func) __P((void*));	/* function */
 	void *ai_aux;			/* softc */
 	char ai_name[APBUS_DEVNAMELEN];
 	int ai_ctlno;
 };
 
 #define	NLEVEL	2
-#define	NBIT	16
-#define	LEVELxBIT(l,b)	(((l)*NBIT)+(b))
 
-static struct ap_intrhand apintr[NLEVEL*NBIT];
+static struct ap_intrhand *apintr[NLEVEL];
 
 static int
 apbusmatch(parent, cfdata, aux)
@@ -181,16 +183,13 @@ apbus_intr_call(level, stat)
 	int level;
 	int stat;
 {
-	int i;
 	int nintr = 0;
-	struct ap_intrhand *aip = &apintr[LEVELxBIT(level,0)];
+	struct ap_intrhand *ai;
 
-	for(i = 0; i < NBIT; i++) {
-		if (aip->ai_mask & stat) {
-			(*aip->ai_func)(aip->ai_aux);
-			nintr++;
+	for (ai = apintr[level]; ai != NULL; ai = ai->ai_next) {
+		if (ai->ai_mask & stat) {
+			nintr += (*ai->ai_func)(ai->ai_aux);
 		}
-		aip++;
 	}
 	return nintr;
 }
@@ -203,32 +202,88 @@ apbus_intr_establish(level, mask, priority, func, aux, name, ctlno)
 	int level;
 	int mask;
 	int priority;
-	void (*func) __P((void *));
+	int (*func) __P((void *));
 	void *aux;
 	char *name;
 	int ctlno;
 {
-	int i;
-	int nbit = -1;
-	struct ap_intrhand *aip;
+	struct ap_intrhand *ai, **aip;
+	volatile unsigned int *inten0 = (volatile unsigned int *)NEWS5000_INTEN0;
+	volatile unsigned int *inten1 = (volatile unsigned int *)NEWS5000_INTEN1;
 
-	for (i = 0; i < NBIT; i++) {
-		if (mask & (1 << i)) {
-			nbit = i;
+	ai = malloc(sizeof(*ai), M_DEVBUF, M_NOWAIT);
+	if (ai == NULL)
+		panic("apbus_intr_establish: can't malloc handler info");
+	ai->ai_mask = mask;
+	ai->ai_priority = priority;
+	ai->ai_func = func;
+	ai->ai_aux = aux;
+	strncpy(ai->ai_name, name, APBUS_DEVNAMELEN-1);
+	ai->ai_ctlno = ctlno;
+
+	for (aip = &apintr[level]; *aip != NULL; aip = &(*aip)->ai_next) {
+		if ((*aip)->ai_priority < priority)
 			break;
-		}
+	}
+	ai->ai_next = *aip;
+	*aip = ai;
+	switch (level) {
+	case 0:
+		*inten0 |= mask;
+		break;
+	case 1:
+		*inten1 |= mask;
+		break;
 	}
 
-	if (nbit == -1)
-		panic("apbus_intr_establish");
+	return (void *)ai;
+}
 
-	aip = &apintr[LEVELxBIT(level,nbit)];
-	aip->ai_mask = 1 << nbit;
-	aip->ai_priority = priority;
-	aip->ai_func = func;
-	aip->ai_aux = aux;
-	strncpy(aip->ai_name, name, APBUS_DEVNAMELEN-1);
-	aip->ai_ctlno = ctlno;
+void
+apbus_dmamap_sync(t, map, offset, len, ops)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
+	int ops;
+{
 
-	return (void *)aip;
+	/*
+	 * Flush DMA cache by issueing IO read for the AProm of specified slot.
+	 */
+	bus_space_read_4(t->_slotbaset, t->_slotbaseh, 0);
+
+	_bus_dmamap_sync(t, map, offset, len, ops);
+}
+
+struct newsmips_bus_dma_tag apbus_dma_tag = {
+	_bus_dmamap_create, 
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	apbus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
+
+struct newsmips_bus_dma_tag *
+apbus_dmatag_init(apa)
+	struct apbus_attach_args *apa;
+{
+	struct newsmips_bus_dma_tag *dmat;
+
+	dmat = malloc(sizeof(*dmat), M_DEVBUF, M_NOWAIT);
+	if (dmat != NULL) {
+		memcpy(dmat, &apbus_dma_tag, sizeof(*dmat));
+		dmat->_slotno = apa->apa_slotno;
+		dmat->_slotbaset = 0;
+		dmat->_slotbaseh = apa->apa_hwbase;
+	}
+	return dmat;
 }
