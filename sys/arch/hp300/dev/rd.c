@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.37 2000/01/21 23:29:03 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.38 2000/01/31 19:04:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -758,7 +758,7 @@ rdfinish(rs, bp)
 	rs->sc_active = 0;
 	if (rs->sc_flags & RDF_WANTED) {
 		rs->sc_flags &= ~RDF_WANTED;
-		wakeup((caddr_t)dp);
+		wakeup((caddr_t)&rs->sc_tab);
 	}
 	return (NULL);
 }
