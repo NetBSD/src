@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.28 1998/08/04 04:03:19 perry Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.29 1999/04/07 05:47:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -164,7 +164,7 @@ namei(ndp)
 				cnp->cn_flags |= HASBUF;
 			return (0);
 		}
-		if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
+		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
