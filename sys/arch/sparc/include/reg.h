@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 1994/11/20 20:53:28 deraadt Exp $ */
+/*	$NetBSD: reg.h,v 1.5 1999/12/30 23:59:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,13 +114,13 @@ struct fpstate {
 };
 
 /*
- * Clone fpstate into an fpreg structure to satisfy <kern/sys_process.c>
+ * The actual FP registers are made accessable (c.f. ptrace(2)) through
+ * a `struct fpreg'; <arch/sparc/sparc/process_machdep.c> relies on the
+ * fact that `fpreg' is a prefix of `fpstate'.
  */
 struct fpreg {
 	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
 	int	fr_fsr;			/* %fsr */
-	int	fr_qsize;		/* actual queue depth */
-	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
 
 #endif /* _MACHINE_REG_H_ */
