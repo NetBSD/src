@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.107 2003/06/29 22:32:25 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.108 2003/06/30 21:22:26 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -154,7 +154,6 @@ struct mount {
  * one of the __MNT_UNUSED flags.
  */
 
-#define __MNT_UNUSED2	0x00400000
 #define __MNT_UNUSED3	0x00800000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
