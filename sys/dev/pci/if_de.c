@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.74 1998/08/18 18:23:07 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.75 1998/08/24 14:09:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3186,6 +3186,7 @@ tulip_reset(
 	sc->tulip_flags |= TULIP_INRESET;
 	sc->tulip_flags &= ~(TULIP_NEEDRESET|TULIP_RXBUFSLOW);
 	sc->tulip_if.if_flags &= ~IFF_OACTIVE;
+	sc->tulip_if.if_start = tulip_ifstart;
     }
 
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
@@ -4254,7 +4255,7 @@ tulip_txput(
 	    /*
 	     * See if there's any unclaimed space in the transmit ring.
 	     */
-	    || (free += tulip_tx_intr(sc)) <= 0) {
+	    && (free += tulip_tx_intr(sc)) <= 0) {
 	/*
 	 * There's no more room but since nothing
 	 * has been committed at this point, just
@@ -4424,6 +4425,7 @@ tulip_txput(
 
     if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
 	sc->tulip_if.if_flags |= IFF_OACTIVE;
+	sc->tulip_if.if_start = tulip_ifstart;
 	TULIP_PERFEND(txput);
 	return NULL;
     }
@@ -4453,7 +4455,7 @@ tulip_txput(
 	    sc->tulip_intrmask |= TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	}
-#if 0 /* this isn't working right yet */
+#if 1 /* this isn't working right yet */
     } else if ((sc->tulip_flags & TULIP_PROMISC) == 0) {
 	if (sc->tulip_intrmask & TULIP_STS_TXINTR) {
 	    sc->tulip_intrmask &= ~TULIP_STS_TXINTR;
