@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.30.2.3 2001/09/21 22:37:10 nathanw Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30.2.4 2001/09/25 16:32:38 nathanw Exp $	*/
 
 /*
  *
@@ -534,7 +534,7 @@ amap_wipeout(amap)
 		 * of swap space management is improved.
 		 */
 
-		if (curproc->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		if (curproc->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(NULL);
 	}
 
