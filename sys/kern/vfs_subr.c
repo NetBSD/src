@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.81 1998/03/01 09:51:29 ross Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.82 1998/03/03 02:22:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ struct simplelock mountlist_slock;
 static struct simplelock mntid_slock;
 struct simplelock mntvnode_slock;
 struct simplelock vnode_free_list_slock;
-static struct simplelock spechash_slock;
+struct simplelock spechash_slock;
 
 /*
  * These define the root filesystem and device.
