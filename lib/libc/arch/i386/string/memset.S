@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memset.S,v 1.3 1993/10/21 01:48:33 jtc Exp $
+ *	$Id: memset.S,v 1.4 1993/12/10 10:51:11 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: memset.S,v 1.3 1993/10/21 01:48:33 jtc Exp $"
+	.asciz "$Id: memset.S,v 1.4 1993/12/10 10:51:11 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -64,11 +64,9 @@ ENTRY(memset)
 	cmpl	$0x0f,%ecx
 	jle	L1
 
-	movl	%eax,%edx		/* copy value to all bytes in word */
-	sall	$8,%edx			/* XXX is there a better way? */
-	orl	%edx,%eax
+	movb	%al,%ah			/* copy char to all bytes in word */
 	movl	%eax,%edx
-	sall	$16,%edx
+	sall	$16,%eax
 	orl	%edx,%eax
 
 	movl	%edi,%edx		/* compute misalignment */
