@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.2 1996/03/06 22:43:11 mark Exp $ */
+/* $NetBSD: disksubr.c,v 1.3 1996/05/06 00:57:10 mark Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -561,12 +561,12 @@ done:
 }
 
 
-int
+void
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
-	return(-1);
+	return;
 }
 
 /* End of disksubr.c */
