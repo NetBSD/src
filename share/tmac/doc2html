@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.15 2000/02/10 22:02:09 kleink Exp $
+.\" $NetBSD: doc2html,v 1.16 2000/03/05 18:40:07 kleink Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1089,6 +1089,11 @@ AT&T UNIX\\$*
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.2'')
 .	       \}
+.	       if "\\$1"-isoC99" \{\
+.			ds std-tmp1 \&ISO/IEC 9899:1999
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C99'')
+.	       \}
 .	       if "\\$1"-ansiC" \{\
 .			ds std-tmp1 \&ANSI X3.159-1989
 .			as std-tmp1 " \"exactly one space
@@ -1103,7 +1108,7 @@ AT&T UNIX\\$*
 .			ds std-tmp1 \&IEEE Std754-1985
 .	       \}
 .	       if "\\$1"-iso8802-3" \{\
-.			ds std-tmp1 \&ISO 8802-3: 1989
+.			ds std-tmp1 \&ISO 8802-3:1989
 .	       \}
 .	       if "\\$1"-xpg3" \{\
 .			ds std-tmp1 X/Open Portability Guide Issue 3
