@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.26 1998/07/26 13:55:45 mycroft Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.27 1998/07/27 14:04:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.26 1998/07/26 13:55:45 mycroft Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.27 1998/07/27 14:04:01 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,10 +171,11 @@ vfprintf(fp, fmt0, ap)
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;
 {
-	char *fmt;	/* format string */
+	const char *fmt;/* format string */
 	int ch;	/* character from fmt */
 	int n, m;	/* handy integers (short term usage) */
-	char *cp;	/* handy char pointer (short term usage) */
+	const char *cp;	/* handy char pointer (short term usage) */
+	char *bp;	/* handy char pointer (short term usage) */
 	struct __siov *iovp;/* for PRINT macro */
 	int flags;	/* flags as above */
 	int ret;		/* return value accumulator */
@@ -276,7 +277,7 @@ vfprintf(fp, fmt0, ap)
 	    fp->_file >= 0)
 		return (__sbprintf(fp, fmt0, ap));
 
-	fmt = (char *)fmt0;
+	fmt = fmt0;
 	uio.uio_iov = iovp = iov;
 	uio.uio_resid = 0;
 	uio.uio_iovcnt = 0;
@@ -389,7 +390,8 @@ reswitch:	switch (ch) {
 			flags |= QUADINT;
 			goto rflag;
 		case 'c':
-			*(cp = buf) = va_arg(ap, int);
+			*buf = va_arg(ap, int);
+			cp = buf;
 			size = 1;
 			sign = '\0';
 			break;
@@ -557,7 +559,7 @@ number:			if ((dprec = prec) >= 0)
 			 * explicit precision of zero is no characters.''
 			 *	-- ANSI X3J11
 			 */
-			cp = buf + BUF;
+			bp = buf + BUF;
 			if (_uquad != 0 || prec != 0) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
@@ -567,26 +569,26 @@ number:			if ((dprec = prec) >= 0)
 				switch (base) {
 				case OCT:
 					do {
-						*--cp = to_char(_uquad & 7);
+						*--bp = to_char(_uquad & 7);
 						_uquad >>= 3;
 					} while (_uquad);
 					/* handle octal leading 0 */
-					if (flags & ALT && *cp != '0')
-						*--cp = '0';
+					if (flags & ALT && *bp != '0')
+						*--bp = '0';
 					break;
 
 				case DEC:
 					/* many numbers are 1 digit */
 					while (_uquad >= 10) {
-						*--cp = to_char(_uquad % 10);
+						*--bp = to_char(_uquad % 10);
 						_uquad /= 10;
 					}
-					*--cp = to_char(_uquad);
+					*--bp = to_char(_uquad);
 					break;
 
 				case HEX:
 					do {
-						*--cp = xdigs[_uquad & 15];
+						*--bp = xdigs[_uquad & 15];
 						_uquad >>= 4;
 					} while (_uquad);
 					break;
@@ -597,15 +599,16 @@ number:			if ((dprec = prec) >= 0)
 					goto skipsize;
 				}
 			}
-			size = buf + BUF - cp;
+			cp = bp;
+			size = buf + BUF - bp;
 		skipsize:
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */
 			if (ch == '\0')
 				goto done;
 			/* pretend it was %c with argument ch */
+			*buf = ch;
 			cp = buf;
-			*cp = ch;
 			size = 1;
 			sign = '\0';
 			break;
