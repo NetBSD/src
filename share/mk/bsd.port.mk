@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.13.2.10 1998/02/07 00:29:25 mellon Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.11 1998/02/24 05:28:13 mellon Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -188,10 +188,13 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # LIB_DEPENDS	- A list of "lib:dir" pairs of other ports this package
 #				  depends on.  "lib" is the name of a shared library.
 #				  make will use "ldconfig -r" to search for the
-#				  library.  Note that lib can be any regular expression,
-#				  and you need two backslashes in front of dots (.) to
-#				  supress its special meaning (e.g., use
-#				  "foo\\.2\\.:${PORTSDIR}/utils/foo" to match "libfoo.2.*").
+#				  library.  Note that lib can be any regular expression.
+#				  In older versions of this file, you need two backslashes
+#				  in front of dots (.) to supress its special meaning (e.g.,
+#				  use "foo\\.2\\.:${PORTSDIR}/utils/foo" to match "libfoo.2.*").
+#				  No special backslashes are needed to escape regular
+#				  expression metacharacters in NetBSD, and the old backslash
+#				  escapes are recognised for backwards compatibility.
 # DEPENDS		- A list of other ports this package depends on being
 #				  made first.  Use this for things that don't fall into
 #				  the above two categories.
@@ -281,6 +284,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # install		- Install the results of a build.
 # reinstall		- Install the results of a build, ignoring "already installed"
 #				  flag.
+# deinstall		- Remove the installation.
 # package		- Create a package from an _installed_ port.
 # describe		- Try to generate a one-line description for each port for
 #				  use in INDEX files and the like.
@@ -454,10 +458,6 @@ BUILD_COOKIE?=		${WRKDIR}/.build_done
 PATCH_COOKIE?=		${WRKDIR}/.patch_done
 PACKAGE_COOKIE?=	${WRKDIR}/.package_done
 
-# How to do nothing.  Override if you, for some strange reason, would rather
-# do something.
-DO_NADA?=		/usr/bin/true
-
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
 XMKMF?=			xmkmf -a
@@ -552,7 +552,7 @@ SHAREMODE = ${DOCMODE}
 
 # A few aliases for *-install targets
 INSTALL_PROGRAM= \
-	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
+	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
 INSTALL_SCRIPT= \
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}
 INSTALL_DATA= \
@@ -630,9 +630,14 @@ SED?=		/usr/bin/sed
 SETENV?=	/usr/bin/env
 SH?=		/bin/sh
 TR?=		/usr/bin/tr
+TRUE?=		/usr/bin/true
 
 # Used to print all the '===>' style prompts - override this to turn them off.
 ECHO_MSG?=		${ECHO}
+
+# How to do nothing.  Override if you, for some strange reason, would rather
+# do something.
+DO_NADA?=		${TRUE}
 
 ALL_TARGET?=		all
 INSTALL_TARGET?=	install
@@ -896,6 +901,8 @@ all:
 build:
 	@${IGNORECMD}
 install:
+	@${IGNORECMD}
+deinstall:
 	@${IGNORECMD}
 package:
 	@${IGNORECMD}
@@ -1236,7 +1243,7 @@ _PORT_USE: .USE
 .if !defined(NO_PKG_REGISTER) && !defined(FORCE_PKG_REGISTER)
 	@if [ -d ${PKG_DBDIR}/${PKGNAME} ]; then \
 		${ECHO_MSG} "===>  ${PKGNAME} is already installed - perhaps an older version?"; \
-		${ECHO_MSG} "      If so, you may wish to \`\`pkg_delete ${PKGNAME}'' and install"; \
+		${ECHO_MSG} "      If so, you may wish to \`\`make deinstall'' and install"; \
 		${ECHO_MSG} "      this port again by \`\`make reinstall'' to upgrade it properly."; \
 		${ECHO_MSG} "      If you really wish to overwrite the old port of ${PKGNAME}"; \
 		${ECHO_MSG} "      without deleting it first, set the variable \"FORCE_PKG_REGISTER\""; \
@@ -1403,6 +1410,17 @@ checkpatch:
 reinstall:
 	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
+.endif
+
+# Deinstall
+#
+# Special target to remove installation
+
+.if !target(deinstall)
+deinstall:
+	@${ECHO_MSG} "===> Deinstalling for ${PKGNAME}"
+	@pkg_delete -f ${PKGNAME}
+	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 .endif
 
 .endif # __ARCH_OK
@@ -1664,7 +1682,7 @@ lib-depends:
 .if defined(LIB_DEPENDS)
 .if !defined(NO_DEPENDS)
 	@for i in ${LIB_DEPENDS}; do \
-		lib=`${ECHO} $$i | ${SED} -e 's/:.*//'`; \
+		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
 		if expr "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
@@ -1672,23 +1690,27 @@ lib-depends:
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
-		if ${LDCONFIG} -r | ${GREP} -q -e "-l$$lib"; then \
-			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - found"; \
-		else \
-			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - not found"; \
-			${ECHO_MSG} "===>  Verifying $$target for $$lib in $$dir"; \
+		libname=`${ECHO} $$lib | ${SED} -e 's|\\\\||g'`; \
+		reallib=`${LDCONFIG} -r | ${GREP} -e "-l$$lib" | awk '{ print $$3 }'`; \
+		if [ "X$$reallib" = X"" ]; then \
+			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$libname - not found"; \
+			${ECHO_MSG} "===>  Verifying $$target for $$libname in $$dir"; \
 			if [ ! -d "$$dir" ]; then \
-				${ECHO_MSG} ">> No directory for $$lib.  Skipping.."; \
+				${ECHO_MSG} ">> No directory for $$libname.  Skipping.."; \
 			else \
 				(cd $$dir; ${MAKE} ${.MAKEFLAGS} $$target) ; \
 				${ECHO_MSG} "===>  Returning to build of ${PKGNAME}"; \
 			fi; \
+		else \
+			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$libname - $$reallib found"; \
 		fi; \
 	done
 .endif
 .else
 	@${DO_NADA}
 .endif
+
+
 
 misc-depends:
 .if defined(DEPENDS)
@@ -1864,7 +1886,7 @@ fake-pkg: ${PLIST}
 		if [ -f ${PKGDIR}/MESSAGE ]; then \
 			${CP} ${PKGDIR}/MESSAGE ${PKG_DBDIR}/${PKGNAME}/+DISPLAY; \
 		fi; \
-		for dep in `make package-depends ECHO_MSG=/usr/bin/true | sort -u`; do \
+		for dep in `make package-depends ECHO_MSG=${TRUE} | sort -u`; do \
 			if [ -d ${PKG_DBDIR}/$$dep ]; then \
 				if ! ${GREP} ^${PKGNAME}$$ ${PKG_DBDIR}/$$dep/+REQUIRED_BY \
 					>/dev/null 2>&1; then \
@@ -1921,8 +1943,8 @@ ${PLIST}: ${PLIST_SRC}
 .if defined(MANZ)
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
-			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
-			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
+			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/' \
+			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/' \
 			-e 's/<\$$ARCH>/'${ARCH}'/g' \
 			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
@@ -1930,8 +1952,8 @@ ${PLIST}: ${PLIST_SRC}
 .else   # !MANZ
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
-			-e '/man\/man/s/\.gz$$//g' \
-			-e '/man\/cat/s/\.gz$$//g' \
+			-e '/man\/man/s/\.gz$$//' \
+			-e '/man\/cat/s/\.gz$$//' \
 			-e 's/<\$$ARCH>/'${ARCH}'/g' \
 			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
