@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 1995/02/27 16:36:34 cgd Exp $
+#	$NetBSD: GENERIC,v 1.3 1995/03/03 01:33:03 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -13,7 +13,7 @@ maxusers 8
 options		GENERIC
 
 # CPU Support
-options		DEC_3000_500		# 3000/400, /500, /600, and /700
+options		DEC_3000_500		# 3000/[4-9]00
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
