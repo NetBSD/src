@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.43 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.44 2001/06/03 16:49:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -249,7 +249,9 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	}
 #ifdef QUOTA
 	if ((error = chkdq(ip, (long)btodb(nsize - osize), cred, 0)) != 0) {
-		brelse(bp);
+		if (bpp != NULL) {
+			brelse(bp);
+		}
 		return (error);
 	}
 #endif
