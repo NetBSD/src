@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.13 1996/10/13 04:11:12 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.14 1997/01/10 21:00:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -412,6 +412,12 @@ int	off, prot;
 	bm = vu->view->bitmap;
 	bmd_start = bm->hw_address; 
 	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
+
+	/* 
+	 * control registers
+	 */
+	if (off >= 0 && off < bm->reg_size)
+		return(((u_int)bm->hw_regs + off) >> PGSHIFT);
 
 	if (off >= 0 && off < bmd_size)
 		return(((u_int)bmd_start + off) >> PGSHIFT);

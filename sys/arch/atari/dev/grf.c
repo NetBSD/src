@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.17 1996/12/20 12:49:36 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.18 1997/01/10 21:00:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -292,6 +292,12 @@ int	off, prot;
 	
 	gp = grfsp[GRFUNIT(dev)];
 	gi = &gp->g_display;
+
+	/* 
+	 * control registers
+	 */
+	if (off >= 0 && off < gi->gd_regsize)
+		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
 
 	/*
 	 * frame buffer
