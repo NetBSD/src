@@ -36,8 +36,7 @@
 static char sccsid[] = "@(#)convtime.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
-# include <ctype.h>
-# include "useful.h"
+# include "sendmail.h"
 
 /*
 **  CONVTIME -- convert time
