@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.38 2003/04/08 09:16:19 fvdl Exp $	*/
+/*	$NetBSD: traverse.c,v 1.39 2003/04/08 10:02:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.38 2003/04/08 09:16:19 fvdl Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.39 2003/04/08 10:02:23 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,11 +407,12 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 	struct direct *dp;
 	union dinode *ip;
 	long loc, ret = 0;
-	static char *dblk;
+	char *dblk;
 	ino_t ino;
 
-	if (dblk == NULL && (dblk = malloc(size)) == NULL)
-		quit("searchdir: cannot allocate indirect memory.\n");
+	dblk = malloc(size);
+	if (dblk == NULL)
+		quit("searchdir: cannot allocate directory memory.\n");
 	bread(fsatoda(ufsib, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
@@ -459,6 +460,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 			}
 		}
 	}
+	free(dblk);
 	return (ret);
 }
 
