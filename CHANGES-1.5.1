@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.85 2001/06/18 17:02:07 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.86 2001/06/25 16:41:34 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5363,3 +5363,35 @@ sys/arch/macppc/dev/obio.c                      1.14
 distrib/notes/macppc/hardware                   1.15
 
   Support the new dual USB iBook.
+
+sys/arch/vax/vax/intvec.s			patch
+
+  Fix kernel linking problem.
+
+distrib/mvme68k/ramdisk/list			1.5
+distrib/mvme68k/ramdisk/rd.protocols		deleted
+distrib/mvme68k/ramdisk/rd.services		deleted
+
+  Fix problem so that NFS installs can work.
+
+sys/arch/i386/i386/machdep.c			1.446
+
+  Restore fs and gs from sigcontext in sigreturn; fixes oversight
+  in previous pull-up.
+
+crypto/dist/ssh/channels.c			1.12 via patch
+cropty/dist/ssh/channels.h			1.2
+crypto/dist/ssh/session.c			1.15 via patch
+cropty/dist/ssh/version.h			patch
+
+  Plug hole allowing users to delete files named ``cookies'' if
+  X11 forwarding is enabled (it is disabled by default).
+
+sys/dev/pci/tga.c				1.32
+
+  Fix problem that some systems would panic when XalphaNetBSD is
+  started.
+
+distrib/sets/lists/base/md.sparc64		1.5 via patch
+
+  Update for boot block changes.
