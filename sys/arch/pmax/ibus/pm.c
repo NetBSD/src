@@ -1,8 +1,38 @@
-/* $NetBSD: pm.c,v 1.1.2.3 1998/10/30 08:33:36 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.4 1998/11/24 02:01:55 nisimura Exp $ */
+
+/*
+ * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Tohru Nishimura
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.3 1998/10/30 08:33:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.4 1998/11/24 02:01:55 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +150,9 @@ struct pm_softc {
 	struct hwcursor sc_cursor;	/* software copy of cursor */
 	/* no sc_change field because pm does not emit interrupt */
 	int nscreens;
+	short magic_x, magic_y;		/* cursor location offset */
+#define	PCC_MAGIC_X 212
+#define	PCC_MAGIC_Y 34
 
 	struct pccreg *sc_pcc;
 	struct bt478reg *sc_vdac;
@@ -184,8 +217,7 @@ struct wsdisplay_accessops pm_accessops = {
 
 int  pm_cnattach __P((tc_addr_t));
 void pminit __P((struct fb_devconfig *));
-void pm_blank __P((struct pm_softc *));
-void pm_unblank __P((struct pm_softc *));
+void pm_screenblank __P((struct pm_softc *));
 
 static int  set_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
 static int  get_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
@@ -296,6 +328,8 @@ pmattach(parent, self, aux)
 	for (i = 1; i < CMAP_SIZE; i++) {
 		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
 	}
+	sc->magic_x = PCC_MAGIC_X;
+	sc->magic_y = PCC_MAGIC_Y;
 	sc->sc_pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
 	sc->sc_vdac = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_BT478);
 	sc->sc_pcccmdr = 0;
@@ -320,7 +354,7 @@ pmioctl(v, cmd, data, flag, p)
 {
 	struct pm_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
-	int error;
+	int turnoff, error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -347,10 +381,11 @@ pmioctl(v, cmd, data, flag, p)
 		return (error);
 
 	case WSDISPLAYIO_SVIDEO:
-		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
-			pm_blank(sc);
-		else
-			pm_unblank(sc);
+		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
+		if ((dc->dc_blanked == 0) ^ turnoff) {
+			dc->dc_blanked = turnoff;
+			pm_screenblank(sc);
+		}
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
@@ -493,33 +528,21 @@ pminit(dc)
 }
 
 void
-pm_blank(sc)
+pm_screenblank(sc)
 	struct pm_softc *sc;
 {
+#if 0 /* XXX later XXX */
 	struct fb_devconfig *dc = sc->sc_dc;
 
-	if (dc->dc_blanked)
-		return;
-	dc->dc_blanked = 1;
-
-	/* blank screen */
-
-	/* turnoff hardware cursor */
-}
-
-void
-pm_unblank(sc)
-	struct pm_softc *sc;
-{
-	struct fb_devconfig *dc = sc->sc_dc;
-
-	if (!dc->dc_blanked)
-		return;
-	dc->dc_blanked = 0;
-
-	/* restore current colormap */
-
-	/* turnon hardware cursor */
+	if (dc->dc_blanked) {
+		/* blank screen */
+		/* turnoff hardware cursor */
+	}
+	else {
+		/* restore current colormap */
+		/* turnon hardware cursor */
+	}
+#endif
 }
 
 static int
@@ -637,12 +660,12 @@ set_curpos(sc, curpos)
 
 	if (y < 0)
 		y = 0;
-	else if (y > dc->dc_ht - sc->sc_cursor.cc_size.y - 1)
-		y = dc->dc_ht - sc->sc_cursor.cc_size.y - 1;	
+	else if (y > dc->dc_ht)
+		y = dc->dc_ht;
 	if (x < 0)
 		x = 0;
-	else if (x > dc->dc_wid - sc->sc_cursor.cc_size.x - 1)
-		x = dc->dc_wid - sc->sc_cursor.cc_size.x - 1;
+	else if (x > dc->dc_wid)
+		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
 }
@@ -708,8 +731,8 @@ pcc_set_curpos(sc)
 {
 	volatile struct pccreg *pcc = sc->sc_pcc;
 
-	pcc->pcc_xpos = 212 + sc->sc_cursor.cc_pos.x;
-	pcc->pcc_ypos = 34 + sc->sc_cursor.cc_pos.y;
+	pcc->pcc_xpos = sc->sc_cursor.cc_pos.x + sc->magic_x;
+	pcc->pcc_ypos = sc->sc_cursor.cc_pos.y + sc->magic_y;
 }
 
 void
