@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_mroute.c,v 1.19 2001/03/08 10:48:40 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.42 2001/03/08 08:27:48 jinmei Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.20 2001/03/25 09:06:03 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -1485,28 +1485,25 @@ phyint_send(ip6, mifp, m)
 			log(LOG_DEBUG, "phyint_send on mif %d err %d\n",
 			    mifp - mif6table, error);
 #endif
-	}
-	else {
+	} else {
 #ifdef MULTICAST_PMTUD
 		icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
-		splx(s);
-		return;
 #else
 #ifdef MRT6DEBUG
-		if (mrt6debug & DEBUG_DEBUG_XMIT)
+		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG,
 			    "phyint_send: packet too big on %s o %s g %s"
 			    " size %d(discarded)\n",
-			    ifp->if_xname,
+			    if_name(ifp),
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    mb_copy->m_pkthdr.len);
 #endif /* MRT6DEBUG */
 		m_freem(mb_copy); /* simply discard the packet */
-		splx(s);
-		return;
 #endif
 	}
+
+	splx(s);
 }
 
 static int
