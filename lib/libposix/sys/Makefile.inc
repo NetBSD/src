@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/09/14 21:16:43 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2003/01/28 00:35:36 thorpej Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -9,7 +9,10 @@ PSEUDO=		chown.S fchown.S lchown.S rename.S
 SRCS+=		${PSEUDO}
 CLEANFILES+=	${PSEUDO}
 
-${PSEUDO}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
+		${DESTDIR}/usr/include/sys/syscall.h
+
+${PSEUDO}: ${ASMDEPS}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' \
 		>${.TARGET}
 
