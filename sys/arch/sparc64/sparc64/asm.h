@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1999/01/31 09:21:18 mrg Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1999/05/30 18:57:27 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,3 +187,11 @@
 })
 #endif
 
+/* atomic load/store of a byte in memory */
+#define	ldstub(loc) ({ \
+	int _v; \
+	__asm __volatile("ldstub [%1],%0" : "=r" (_v) : "r" (loc) : "memory"); \
+	_v; \
+})
+
+	
