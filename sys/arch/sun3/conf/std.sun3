@@ -1,4 +1,7 @@
-machine		"sun3"
+# $Id: std.sun3,v 1.4 1994/01/08 18:33:50 cgd Exp $
+# Standard information for sun3's.
+
+machine	sun3 m68k
 
 options NEWCONFIG
 
