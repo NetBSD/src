@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2000/06/29 08:44:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2000/08/16 04:44:36 thorpej Exp $	*/
 
 /*
  *
@@ -1948,9 +1948,9 @@ pmap_ldt_cleanup(p)
 #endif /* USER_LDT */
 
 /*
- * pmap_activate: activate a process' pmap (fill in %cr3 info)
+ * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
- * => called from cpu_fork()
+ * => called from cpu_switch()
  * => if proc is the curproc, then load it into the MMU
  */
 
