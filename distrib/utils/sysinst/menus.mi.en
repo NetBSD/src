@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.54 2002/07/27 10:02:05 grant Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.55 2002/07/29 02:51:07 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,7 +110,7 @@ menu layout, title  "Choose your installation";
 	option "Custom", 	  exit, action { layoutkind = 3; };
 	option "Use Existing", 	  exit, action { layoutkind = 4; };
 
-menu layoutparts, exit, title "Choose filesystems";
+menu layoutparts, exit, title "Choose file systems";
 	display action { show_cur_filesystems (); };
 	option "swap",		  action { layout_swap = (layout_swap & 1) - 1; };
 	option "/usr",		  action { layout_usr = (layout_usr & 1) - 1; };
@@ -353,7 +353,7 @@ menu localfssource, title "Change";
 		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
 	option "Device", action
 		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
-	option "Filesystem", action
+	option "File system", action
 		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
 	option "Directory", action
 		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };

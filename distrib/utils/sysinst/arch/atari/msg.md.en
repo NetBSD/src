@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 2002/04/25 20:16:08 leo Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 2002/07/29 02:51:09 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,7 +82,7 @@ the installation disk. Note that NetBSD can do without AHDI partitions,
 check the documentation.
 If you want to use an AHDI compatible partitioning, you have to assign some
 partitions to NetBSD before NetBSD is able to use the disk. Change the 'id'
-of all partitions you want to use for NetBSD filesystems to 'NBD'. Change
+of all partitions you want to use for NetBSD file systems to 'NBD'. Change
 the 'id' of the partition you wish to use for swap to 'SWP'.
 
 Do you want AHDI compatible partitioning? }
@@ -106,7 +106,7 @@ Standard with X requires at least %.2f Megabytes.
 
 message emulbackup
 {Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted filesystem. It has been given a '.old' extension.
+pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.88 2002/06/02 14:12:54 itojun Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.89 2002/07/29 02:51:07 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -325,7 +325,7 @@ message mountfail
 }
 
 message dotar
-{Populating filesystems with bootstrapping binaries and config files...\n}
+{Populating file systems with bootstrapping binaries and config files...\n}
 
 message dotarfail
 {The bootstrapping binaries and config file installation failed.
@@ -449,7 +449,7 @@ the distribution is located.  Remember, the directory should contain
 the .tgz files.
 
 device:		%s
-filesystem:	%s
+file system:	%s
 directory:	%s
 }
 
@@ -461,7 +461,7 @@ directory:	%s
 }
 
 message filesys
-{filesystem}
+{file system}
 
 message cdrombadmount
 {The CDROM could not be mounted on device %s.}
@@ -789,7 +789,7 @@ failed. I can't continue.}
 message aoutfail
 {The directory where the old a.out shared libraries should be moved to could
 not be created. Please try the upgrade procedure again and make sure you
-have mounted all filesystems.}
+have mounted all file systems.}
 
 message noactivepart
 {You have not marked a partition active. This may cause your system to not
