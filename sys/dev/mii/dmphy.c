@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.6 2000/03/06 20:56:56 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.7 2000/04/02 03:06:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,8 +107,9 @@ dmphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101)
+	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM ||
+	     MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM) &&
+	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101))
 		return (10);
 
 	return (0);
