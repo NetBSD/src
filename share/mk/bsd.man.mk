@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.72 2001/12/17 21:27:45 tv Exp $
+#	$NetBSD: bsd.man.mk,v 1.73 2002/01/06 01:27:25 mrg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -61,7 +61,7 @@ realall:	${MANPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
 
 ${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
-	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}
+	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif # !empty(MANSUFFIX)
 
 .for F in ${MANPAGES:S/${MANSUFFIX}$//:O:u}
@@ -107,9 +107,9 @@ realall:	${CATPAGES}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if defined(USETBL)
-	${TBL} ${.IMPSRC} | ${NROFF} -mandoc ${MANCOMPRESS} > ${.TARGET}
+	${TBL} ${.IMPSRC} | ${NROFF} -mandoc ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${NROFF} -mandoc ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}
+	${NROFF} -mandoc ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
 .for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
@@ -153,7 +153,7 @@ html:		${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${CATDEPS}			# build rule
-	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}
+	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 
 .for F in ${HTMLPAGES:O:u}
 _F:=		${HTMLDIR}/${F:T:E}/${F:R}.html		# installed path
