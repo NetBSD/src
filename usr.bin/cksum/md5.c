@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.4 2002/03/31 14:43:22 bjh21 Exp $	*/
+/*	$NetBSD: md5.c,v 1.4.4.1 2004/06/22 07:17:40 tron Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -17,9 +17,13 @@
  *  documentation and/or software.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.4 2002/03/31 14:43:22 bjh21 Exp $");
+__RCSID("$NetBSD: md5.c,v 1.4.4.1 2004/06/22 07:17:40 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
