@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.5 1999/09/08 21:17:49 jsm Exp $	*/
+/*	$NetBSD: makemove.c,v 1.6 2000/03/13 23:57:23 soren Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.5 1999/09/08 21:17:49 jsm Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.6 2000/03/13 23:57:23 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ const int	weight[5] = { 0, 1, 7, 22, 100 };
  *	MOVEOK	everything is OK.
  *	RESIGN	Player resigned.
  *	ILLEGAL	Illegal move.
- *	WIN	The the winning move was just played.
+ *	WIN	The winning move was just played.
  *	TIE	The game is a tie.
  */
 int
