@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.88 2000/08/26 03:34:37 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.89 2000/08/26 04:01:17 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -129,9 +129,9 @@ struct callout schedcpu_ch = CALLOUT_INITIALIZER;
  */
 /* ARGSUSED */
 void
-roundrobin()
+roundrobin(struct cpu_info *ci)
 {
-	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 
 	spc->spc_rrticks = rrticks;
 	
