@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.23.4.1 2001/03/20 18:01:22 he Exp $
+.\" $NetBSD: pkg_create.1,v 1.23.4.2 2001/05/01 10:55:25 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -31,7 +31,7 @@
 .Nm pkg_create
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl hlORVv
 .Bk -words
 .Op Fl B Ar build-info-file
@@ -187,15 +187,15 @@ any symbolic links which are targetted at full path names.
 .It Fl m Ar mtreefile
 Run
 .Xr mtree 8
-with input from mtreefile before the package is installed.  
+with input from mtreefile before the package is installed.
 Mtree is invoked as
 .Cm mtree
-.Fl u 
-.Fl f 
+.Fl u
+.Fl f
 .Ar mtreefile
 .Fl d
-.Fl e 
-.Fl p 
+.Fl e
+.Fl p
 .Pa prefix ,
 where
 .Pa prefix
@@ -232,21 +232,21 @@ at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
-.Xr pkg_info 1 
+.Xr pkg_info 1
 .Ar -S
 flag. The file is expected to contain the size (in bytes) of all files of
 this package plus any required packages added up and stored as a
 ASCII string, terminated by a newline.
 .It Fl s Ar size-pkg-file
 Store the given file for later querying with the
-.Xr pkg_info 1 
+.Xr pkg_info 1
 .Ar -s
 flag. The file is expected to contain the the size (in bytes) of all files of
 this package added up and stored as a ASCII string, terminated by a newline.
 .It Fl t Ar template
 Use
 .Ar template
-as the input to 
+as the input to
 .Xr mktemp 3 .
 By default, this is the string
 .Pa /tmp/instmp.XXXXXX ,
@@ -390,12 +390,12 @@ trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
-copy it anywhere), as it's used for some special purpose. 
+copy it anywhere), as it's used for some special purpose.
 .It Cm @ignore_inst
 Similar to
 .Cm @ignore ,
 but the ignoring of the next file is delayed one evaluation cycle.  This
-makes it possible to use this directive in the 
+makes it possible to use this directive in the
 .Ar packinglist
 file, so you can pack a
 specialized datafile in with a distribution for your install script (or
@@ -425,15 +425,15 @@ Declare
 .Pa name
 as an
 .Xr mtree 8
-input file to be used at install time (see 
+input file to be used at install time (see
 .Fl m
 above).  Only the first
 .Cm @mtree
-directive is honored. 
+directive is honored.
 .It Cm @display Ar name
 Declare
 .Pa name
-as the file to be displayed at install time (see 
+as the file to be displayed at install time (see
 .Fl D
 above).
 .It Cm @pkgdep Ar pkgname
@@ -473,7 +473,7 @@ refined it for
 .Nx
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, pkg size recording etc. 
+wildcard dependency processing, pkgdb, pkg size recording etc.
 .El
 .Sh BUGS
 Hard links between files in a distribution must be bracketed by
