@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.10.16.1 2001/01/18 20:28:27 jdolecek Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.10.16.2 2001/01/18 20:35:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -61,7 +61,7 @@
 #define	linux_sigismember(s, n)	(*(s) & linux_sigmask(n))
 #define	linux_sigaddset(s, n)	(*(s) |= linux_sigmask(n))
 
-const int bsd_to_linux_sig[] = {
+int bsd_to_linux_sig[] = {
 	0,
 	LINUX_SIGHUP,
 	LINUX_SIGINT,
@@ -96,7 +96,7 @@ const int bsd_to_linux_sig[] = {
 	LINUX_SIGUSR2,
 };
 
-const int linux_to_bsd_sig[] = {
+int linux_to_bsd_sig[] = {
 	0,
 	SIGHUP,
 	SIGINT,
