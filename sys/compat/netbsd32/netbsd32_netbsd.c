@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.28.2.2 2000/07/14 18:10:49 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.28.2.3 2000/08/26 01:09:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -3775,6 +3775,24 @@ netbsd32_ntp_adjtime(p, v, retval)
 			*retval = (register_t)time_state;
 	}
 	return error;
+}
+#else
+int
+netbsd32_ntp_gettime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return(ENOSYS);
+}
+
+int
+netbsd32_ntp_adjtime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (ENOSYS);
 }
 #endif
 
