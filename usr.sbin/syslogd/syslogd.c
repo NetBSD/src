@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.63 2003/10/17 01:39:25 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.64 2004/03/06 14:41:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.63 2003/10/17 01:39:25 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.64 2004/03/06 14:41:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,7 @@ int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
+int	gothup = 0;		/* got SIGHUP */
 
 void	cfline(char *, struct filed *);
 char   *cvthname(struct sockaddr_storage *);
@@ -207,11 +208,12 @@ void	domark(int);
 void	fprintlog(struct filed *, int, char *);
 int	getmsgbufsize(void);
 int*	socksetup(int);
-void	init(int);
+void	init(void);
 void	logerror(const char *, ...);
 void	logmsg(int, char *, char *, int);
 void	printline(char *, char *);
 void	printsys(char *);
+void	sighup(int);
 void	reapchild(int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
@@ -400,7 +402,7 @@ getgroup:
 		dprintf("Listening on unix dgram socket `%s'\n", *pp);
 	}
 
-	init(0);
+	init();
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("Can't open `%s' (%d)\n", _PATH_KLOG, errno);
@@ -410,7 +412,7 @@ getgroup:
 
 	dprintf("Off & running....\n");
 
-	(void)signal(SIGHUP, init);
+	(void)signal(SIGHUP, sighup);
 
 	/* setup pollfd set. */
 	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
@@ -481,6 +483,10 @@ getgroup:
 		if (rv < 0) {
 			if (errno != EINTR)
 				logerror("poll() failed");
+			if (gothup) {
+				init();
+				gothup = 0;
+			}
 			continue;
 		}
 		dprintf("Got a message (%d)\n", rv);
@@ -1016,6 +1022,13 @@ wallmsg(struct filed *f, struct iovec *iov)
 }
 
 void
+sighup(int signo)
+{
+
+	gothup = 1;
+}
+
+void
 reapchild(int signo)
 {
 	union wait status;
@@ -1140,7 +1153,7 @@ die(int signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init(int signo)
+init(void)
 {
 	int i;
 	FILE *cf;
