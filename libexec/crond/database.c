@@ -17,17 +17,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: database.c,v 1.3 1993/08/02 17:50:23 mycroft Exp $";
+static char rcsid[] = "$Id: database.c,v 1.4 1993/12/15 16:58:01 jtc Exp $";
 #endif
 
 
 #include "cron.h"
 #include <pwd.h>
-#if defined(BSD)
+#if defined(__NetBSD__)
+# include <sys/file.h>
+# include <dirent.h>
+# define direct dirent
+#elif defined(BSD)
 # include <sys/file.h>
 # include <sys/dir.h>
-#endif
-#if defined(ATT)
+#elif defined(ATT)
 # include <sys/file.h>
 # include <ndir.h>
 # include <fcntl.h>
