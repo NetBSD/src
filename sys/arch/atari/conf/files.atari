@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.14 1996/01/06 20:11:02 leo Exp $
+#	$NetBSD: files.atari,v 1.15 1996/03/06 14:47:44 leo Exp $
 #
 
 maxpartitions 16
@@ -64,37 +64,20 @@ file	arch/atari/dev/view.c		view grf needs-count
 pseudo-device	mouse
 file	arch/atari/dev/ms.c		mouse needs-count
 
-define	scsi {}
+#
+# XXX: Some scsi-devices must be at fixed major#
+major   {sd = 4}
+major   {st = 5}
+major   {cd = 6}
+include "../../../scsi/files.scsi"
 
 # ncr 5380 controller
 device	ncrscsi at mainbus: scsi
 file	arch/atari/dev/atari5380.c	ncrscsi
 
-device	scsibus at scsi	{target = -1, lun = -1}
-
-device	cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-major	{cd = 6}
-device	sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
-major	{sd = 4}
-device	st at scsibus: tape
-file	scsi/st.c			st needs-flag
-major	{st = 5}
-device	ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-device	uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
-device	su at scsibus: disk
-file	scsi/su.c			su needs-flag
-
-
 # list of standard files...
 file	dev/cons.c				ite
 file	dev/cninit.c				ite
-file	scsi/scsi_base.c			scsi
-file	scsi/scsi_ioctl.c			scsi
-file	scsi/scsiconf.c				scsi
 file	arch/atari/atari/atari_init.c
 file	arch/atari/atari/autoconf.c
 file	arch/atari/atari/conf.c
