@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.25 1997/04/18 00:08:04 cgd Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.26 1997/06/07 19:08:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.25 1997/04/18 00:08:04 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.26 1997/06/07 19:08:19 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.25 1997/04/18 00:08:04 cgd Exp $");
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-cpu_decl(dec_kn20aa);
 
 const char *
 dec_kn20aa_model_name()
