@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.49 2003/07/27 19:30:03 jdolecek Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.50 2003/10/25 18:38:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.49 2003/07/27 19:30:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.50 2003/10/25 18:38:42 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -665,8 +665,8 @@ linux_sys_recvmsg(l, v, retval)
 	int		error;
 	struct sys_recvmsg_args bsa;
 	int lflags;
-	u_int8_t *ocontrol;
-	socklen_t ocontrollen; 
+	u_int8_t *ocontrol = NULL; /* XXX: gcc */
+	socklen_t ocontrollen = 0;
 
 	/*
 	 * Data alignment is different on some architectures. If control
