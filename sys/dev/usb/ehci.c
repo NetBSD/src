@@ -1,9 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.51 2003/12/29 08:17:10 toshii Exp $	*/
-
-/*
- * TODO
- *  hold off explorations by companion controllers until ehci has started.
- */
+/*	$NetBSD: ehci.c,v 1.52 2004/01/07 09:17:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,8 +46,38 @@
  *
  */
 
+/*
+ * TODO:
+ * 1) hold off explorations by companion controllers until ehci has started.
+ *
+ * 2) The EHCI driver lacks support for interrupt isochronous transfers, so
+ *    devices using them don't work.
+ *    Interrupt transfers are not difficult, it's just not done. 
+ *
+ * 3) There might also be some issues with the data toggle, it was not
+ *    completely tested to work properly under all condistions. If wrong
+ *    toggle would be sent/recvd, bulk data transfers would stop working.
+ *
+ * 4) The meaty part to implement is the support for USB 2.0 hubs.
+ *    They are quite compolicated since the need to be able to do
+ *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
+ *    So the hub driver needs to handle and schedule these things, to
+ *    assign place in frame where different devices get to go. See chapter
+ *    on hubs in USB 2.0 for details. 
+ *
+ * 5) command failures are not recovered correctly
+ *
+ * 6) usb_frag_freelist gets corrupted and system panics at next allocation
+      with 
+
+ehci0 at pci0 dev 16 function 3: VIA Technologies product 0x3104 (rev. 0x82)
+umass0: Cypress Semiconductor USB2.0 Storage Device, rev 2.00/0.01, addr 2
+umass0: using SCSI over Bulk-Only
+
+*/
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.51 2003/12/29 08:17:10 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.52 2004/01/07 09:17:47 jdolecek Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
