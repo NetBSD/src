@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.80 2002/05/17 19:05:08 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.81 2002/06/15 00:11:36 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.80 2002/05/17 19:05:08 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.81 2002/06/15 00:11:36 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -581,6 +581,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	data |= PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
 	if (IS_2300(isp)) {	/* per QLogic errata */
 		data &= ~PCI_COMMAND_INVALIDATE_ENABLE;
+	}
+	if (IS_23XX(isp)) {
+		isp->isp_touched = 1;
 	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
