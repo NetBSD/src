@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.5 1994/01/26 04:17:23 cgd Exp $
+#	     $Id: Makefile,v 1.6 1994/01/30 20:02:56 mycroft Exp $
 
 DESTDIR=
 
@@ -125,8 +125,8 @@ dcopy:	copy.o srt0.o conf.o ${LIBS}
 mkboot: ${.CURDIR}/mkboot.c
 	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
 
-installboot: installboot.c
-	${CC} ${CFLAGS} -o installboot installboot.c
+installboot: ${.CURDIR}/installboot.c
+	${CC} ${CFLAGS} -o installboot ${.CURDIR}/installboot.c
 
 # utilities
 
