@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.13 2003/01/26 19:35:52 chris Exp $	*/
+/*	$NetBSD: podules.h,v 1.14 2004/01/07 22:02:23 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp 
+ *	NetBSD: podules,v 1.16 2004/01/07 22:00:51 bjh21 Exp 
  */
 
 /*
@@ -278,7 +278,7 @@
 #define	PODULE_LINGENUITY_SCSI8SHARE	0x008c		/* 8 bit SCSIShare interface */
 #define	PODULE_VTI_SCSI	0x008d		/* SCSI interface */
 #define	PODULE_ATOMWIDE_PIA	0x008e		/* PIA */
-#define	PODULE_NEXUSNS	0x008f		/* Nexus interface (A3020 netslot) */
+#define	PODULE_NEXUSNS	0x008f		/* Nexus interface (A3020/RiscPC netslot) */
 /* RISC iX: #define XCB_PRODUCT_XCB_DTSOFTWAREPCCONNECT 144 */
 #define	PODULE_ATOMWIDE_SERIAL	0x0090		/* multiport serial interface */
 #define	PODULE_WATFORD_IDE	0x0091		/* IDE interface */
