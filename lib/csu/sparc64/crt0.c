@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1998/09/11 03:36:23 eeh Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 1998/09/12 16:53:11 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -89,6 +89,29 @@ extern void	_mcleanup __P((void));
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
+/*
+ * _start needs to gather up argc, argv, env_p, ps_strings, the termination
+ * routine passed in %g1 and call __start to finish up the startup processing.
+ *
+ * NB: We are violating the ELF spec by passing a pointer to the ps strings in %g1
+ *	instead of a termination routine.
+ */
+
+__asm__("
+	.text
+	.align 4
+	.global start
+	.global _start
+start:
+_start:
+	clr	%fp
+	add	%sp, 8*16 + 0x7ff, %o0		! start of stack
+	mov	%g1, %o1			! Cleanup routine
+	clr	%o1				! XXXX
+	clr	%o2				! obj
+	mov	%g1, %o3			! ps_strings XXXX
+");
+
 void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 int main __P((int, char **, char **));
@@ -103,7 +126,7 @@ __start(sp, cleanup, obj, ps_strings)
 	long argc;
 	char **argv, *namep;
 
-	argc = *(long *)sp;
+	argc = *(int *)sp;
 	argv = sp + 1;
 	environ = sp + 2 + argc;		/* 2: argc + NULL ending argv */
 
@@ -130,16 +153,40 @@ __start(sp, cleanup, obj, ps_strings)
 
 	atexit(_fini);
 	_init();
-
 	exit(main(argc, argv, environ));
 }
 
 /*
- * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
+ * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 1998/09/11 03:36:23 eeh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 1998/09/12 16:53:11 eeh Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+/*
+ * The following allows linking w/o crtbegin.o and crtend.o
+ */
+
+extern void	__init __P((void));
+extern void	__fini __P((void));
+
+#ifdef __weak_alias
+__weak_alias(_init, __init);
+__weak_alias(_fini, __fini);
+#else
+asm (" .weak _init; _init = __init");
+asm (" .weak _fini; _fini = __fini");
+#endif
+
+void
+__init() 
+{
+}
+
+void
+__fini()
+{
+}
 
 static char *
 _strrchr(p, ch)
