@@ -1,3 +1,4 @@
+/*	$NetBSD: sdl.c,v 1.2 2004/06/22 16:04:40 itojun Exp $	*/
 /*	$OpenBSD: sdl.c,v 1.12 2004/02/26 08:18:56 deraadt Exp $ */
 
 /*
