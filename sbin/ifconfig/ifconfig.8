@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.58 2002/09/01 03:05:34 ross Exp $
+.\"	$NetBSD: ifconfig.8,v 1.59 2002/09/22 15:29:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,8 @@ addresses are
 .Ar net:a.b.c.d.e.f ,
 where
 .Ar net
-is the assigned network number (in decimal),
+is the assigned network number
+.Pq in decimal ,
 and each of the six bytes of the host number,
 .Ar a
 through
@@ -113,7 +114,8 @@ For the
 .Tn ISO
 family, addresses are specified as a long hexadecimal string,
 as in the Xerox family.  However, two consecutive dots imply a zero
-byte, and the dots are optional, if the user wishes to (carefully)
+byte, and the dots are optional, if the user wishes to
+.Pq carefully
 count out long strings of digits in network byte order.
 .It Ar address_family
 Specifies the
@@ -149,7 +151,8 @@ one wishes to accept packets addressed to the old interface.
 Remove the specified network address alias.
 .It Cm arp
 Enable the use of the Address Resolution Protocol in mapping
-between network level addresses and link level addresses (default).
+between network level addresses and link level addresses
+.Pq default .
 This is currently implemented for mapping between
 .Tn DARPA
 Internet
@@ -157,13 +160,13 @@ addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of the Address Resolution Protocol.
 .It Cm anycast
-(inet6 only)
+.Pq inet6 only
 Set the IPv6 anycast address bit.
 .It Fl anycast
-(inet6 only)
+.Pq inet6 only
 Clear the IPv6 anycast address bit.
 .It Cm broadcast Ar mask
-(Inet only)
+.Pq Inet only
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
@@ -233,7 +236,8 @@ Disable the specified media options on the interface.
 Set the media instance to
 .Ar minst .
 This is useful for devices which have multiple physical layer interfaces
-(PHYs).  Setting the instance on such devices may not be strictly required
+.Pq PHYs .
+Setting the instance on such devices may not be strictly required
 by the network interface driver as the driver may take care of this
 automatically; see the driver's manual page for more information.
 .It Cm metric Ar n
@@ -250,7 +254,7 @@ Set the maximum transmission unit of the interface to
 .Ar n .
 Most interfaces don't support this option.
 .It Cm netmask Ar mask
-(Inet, inet6 and ISO)
+.Pq inet, inet6 and ISO
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -267,7 +271,8 @@ and the subnet field should be contiguous with the network
 portion.
 .Pp
 For INET and INET6 addresses, the netmask can also be given with
-slash-notation after the address (e.g 192.168.17.3/24).
+slash-notation after the address
+.Pq e.g 192.168.17.3/24 .
 .\" see
 .\" Xr eon 5 .
 .It Cm nsellength Ar n
@@ -278,7 +283,7 @@ This specifies a trailing number of bytes for a received
 used for local identification, the remaining leading part of which is
 taken to be the
 .Tn NET
-(Network Entity Title).
+.Pq Network Entity Title .
 The default value is 1, which is conformant to US
 .Tn GOSIP .
 When an ISO address is set in an ifconfig command,
@@ -296,7 +301,7 @@ for
 .Tn AFI
 37 type addresses.
 .It Cm nwid Ar id
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Configure network ID for IEEE 802.11-based wireless network interfaces.
 The
 .Ar id
@@ -305,7 +310,7 @@ or a series of hexadecimal digits up to 64 digits.
 The empty string allows the interface to connect to any available
 access points.
 .It Cm nwkey Ar key
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Enable WEP encryption for IEEE 802.11-based wireless network interfaces
 with the
 .Ar key .
@@ -326,13 +331,15 @@ Note that the order must be match within same network if multiple keys
 are used.
 For IEEE 802.11 wireless network, the length of each key is restricted to
 40 bits, i.e. 5-character string or 10 hexadecimal digits,
-while the WaveLAN/IEEE Gold cards accept the 104 bits (13 characters) key.
+while the WaveLAN/IEEE Gold cards accept the 104 bits
+.Pq 13 characters
+key.
 .It Cm nwkey Cm persist
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Enable WEP encryption for IEEE 802.11-based wireless network interfaces
 with the persistent key written in the network card.
 .It Cm nwkey Cm persist: Ns Ar key
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Write the
 .Ar key
 to the persistent memory of the network card, and
@@ -340,19 +347,32 @@ enable WEP encryption for IEEE 802.11-based wireless network interfaces
 with the
 .Ar key .
 .It Fl nwkey
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
 .It Cm powersave
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Enable 802.11 power saving mode.
 .It Fl powersave
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Disable 802.11 power saving mode.
 .It Cm powersavesleep Ar duration
-(IEEE 802.11 devices only)
+.Pq IEEE 802.11 devices only
 Set the receiver sleep duration in milliseconds for 802.11 power saving mode.
+.It Cm bssid Ar bssid
+.Pq IEEE 802.11 devices only
+Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
+.It Fl bssid
+.Pq IEEE 802.11 devices only
+Unset the desired BSSID for IEEE 802.11-based wireless network interfaces.
+The interface will automatically selected a BSSID in this mode, which is
+the default.
+.It Cm channel Ar chan
+.Pq IEEE 802.11 devices only
+Select the channel
+.Pq radio frequency
+to be used for IEEE 802.11-based wireless network interfaces.
 .It Cm tunnel Ar src_addr Ar dest_addr
-(IP tunnel devices only)
+.Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including
 .Xr gif 4 .
@@ -371,27 +391,27 @@ Create the specified network pseudo-device.
 .It Cm destroy
 Destroy the specified network pseudo-device.
 .It Cm pltime Ar n
-(inet6 only)
+.Pq inet6 only
 Set preferred lifetime for the address.
 .It Cm prefixlen Ar n
-(inet and inet6 only)
+.Pq inet and inet6 only
 Effect is similar to
 .Cm netmask .
 but you can specify by prefix length by digits.
 .It Cm deprecated
-(inet6 only)
+.Pq inet6 only
 Set the IPv6 deprecated address bit.
 .It Fl deprecated
-(inet6 only)
+.Pq inet6 only
 Clear the IPv6 deprecated address bit.
 .It Cm tentative
-(inet6 only)
+.Pq inet6 only
 Set the IPv6 tentative address bit.
 .It Fl tentative
-(inet6 only)
+.Pq inet6 only
 Clear the IPv6 tentative address bit.
 .It Cm eui64
-(inet6 only)
+.Pq inet6 only
 Fill interface index
 .Pq lowermost 64bit of an IPv6 address
 automatically.
@@ -452,7 +472,7 @@ and
 .Cm vlan
 must be set at the same time.
 .It Cm vltime Ar n
-(inet6 only)
+.Pq inet6 only
 Set valid lifetime for the address.
 .It Cm ip4csum
 Enable hardware-assisted IPv4 header checksums on interfaces that
@@ -514,8 +534,12 @@ will attempt to query the interface for its media status.  If the
 interface supports reporting media status, and it reports that it does
 not appear to be connected to a network,
 .Nm
-will exit with status of 1 (false); otherwise, it will exit with a
-zero (true) exit status.  Not all interface drivers support media
+will exit with status of 1
+.Pq false ;
+otherwise, it will exit with a
+zero
+.Pq true
+exit status.  Not all interface drivers support media
 status reporting.
 .Pp
 If the
@@ -548,13 +572,13 @@ flag may be used to list all available interfaces on the system, with
 no other additional information.  Use of this flag is mutually exclusive
 with all other flags and commands, except for
 .Fl d
-(only list interfaces that are down),
+.Pq only list interfaces that are down ,
 .Fl u
-(only list interfaces that are up),
+.Pq only list interfaces that are up ,
 .Fl s
-(only list interfaces that may be connected),
+.Pq only list interfaces that may be connected ,
 .Fl b
-(only list broadcast interfaces).
+.Pq only list broadcast interfaces .
 .Pp
 The
 .Fl C
