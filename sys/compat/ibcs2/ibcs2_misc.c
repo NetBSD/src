@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.48 2000/06/28 15:39:28 mrg Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.49 2000/08/11 22:19:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -496,9 +496,10 @@ ibcs2_sys_read(p, v, retval)
 		ibcs2_ino_t ino;
 		char name[14];
 	} idb;
-	off_t off;			/* true file offset */
-	int buflen, error, eofflag, size;
+	int buflen, error, eofflag;
+	size_t size;
 	off_t *cookiebuf = NULL, *cookie;
+	off_t off;			/* true file offset */
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
@@ -802,7 +803,8 @@ ibcs2_sys_sysconf(p, v, retval)
 	struct ibcs2_sys_sysconf_args /* {
 		syscallarg(int) name;
 	} */ *uap = v;
-	int mib[2], value, len, error;
+	int mib[2], value, error;
+	size_t len;
 	struct sys___sysctl_args sa;
 	struct sys_getrlimit_args ga;
 
