@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2001/02/18 05:58:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2001/04/24 19:02:06 bjh21 Exp $
+
+.include <bsd.own.mk>
 
 PROG=	mdsetimage
 SRCS=	mdsetimage.c exec_aout.c exec_ecoff.c exec_elf32.c exec_elf64.c \
@@ -16,7 +18,8 @@ CPPFLAGS+=-DNLIST_AOUT
 CPPFLAGS+=-DNLIST_ELF32
 .elif	${MACHINE_ARCH} == "i386" || \
 	${MACHINE_ARCH} == "m68k" || \
-	${MACHINE_ARCH} == "sparc"
+	${MACHINE_ARCH} == "sparc" || \
+	${MACHINE_CPU} == "arm"
 CPPFLAGS+=-DNLIST_ELF32
 CPPFLAGS+=-DNLIST_AOUT
 .elif	${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
