@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.50 2000/12/22 17:07:13 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.51 2000/12/31 12:33:02 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -84,6 +84,118 @@ typedef	char	bool;
 
 /* Termcap capabilities. */
 extern char	PC;
+extern char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
+		__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
+		__tc_nc, __tc_ns, __tc_os, __tc_ul, __tc_ut,
+		__tc_xb, __tc_xn, __tc_xt, __tc_xs, __tc_xx;
+extern char	__CA;
+extern int	__tc_pa, __tc_Co, __tc_NC;
+extern char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
+		*__tc_al, *__tc_as, *__tc_bc, *__tc_bl, *__tc_bt,
+		*__tc_cd, *__tc_ce, *__tc_cl, *__tc_cm, *__tc_cr,
+		*__tc_cs, *__tc_dc, *__tc_DL, *__tc_dl, *__tc_dm,
+		*__tc_DO, *__tc_do, *__tc_eA, *__tc_ed, *__tc_ei,
+		*__tc_ho, *__tc_Ic, *__tc_ic, *__tc_im, *__tc_Ip,
+		*__tc_ip, *__tc_k0, *__tc_k1, *__tc_k2, *__tc_k3,
+		*__tc_k4, *__tc_k5, *__tc_k6, *__tc_k7, *__tc_k8,
+		*__tc_k9, *__tc_kd, *__tc_ke, *__tc_kh, *__tc_kl,
+		*__tc_kr, *__tc_ks, *__tc_ku, *__tc_LE, *__tc_ll,
+		*__tc_ma, *__tc_mb, *__tc_md, *__tc_me, *__tc_mh,
+		*__tc_mk, *__tc_mm, *__tc_mo, *__tc_mp, *__tc_mr,
+		*__tc_nd, *__tc_nl, *__tc_oc, *__tc_op,
+		*__tc_rc, *__tc_RI, *__tc_Sb, *__tc_sc, *__tc_se,
+		*__tc_SF, *__tc_Sf, *__tc_sf, *__tc_so, *__tc_sp,
+		*__tc_SR, *__tc_sr, *__tc_ta, *__tc_te, *__tc_ti,
+		*__tc_uc, *__tc_ue, *__tc_UP, *__tc_up, *__tc_us,
+		*__tc_vb, *__tc_ve, *__tc_vi, *__tc_vs;
+
+#ifdef _CURSES_TERMCAP_COMPAT
+#define	AM		__tc_am
+#define	BS		__tc_bs
+#define	CA		__tc_cc
+#define	DA		__tc_da
+#define	EO		__tc_eo
+#define	HC		__tc_hc
+#define	IN		__tc_in
+#define	MI		__tc_mi
+#define	MS		__tc_ms
+#define	NC		__tc_nc
+#define	NS		__tc_ns
+#define	OS		__tc_os
+#define	UL		__tc_ul
+#define	XB		__tc_xb
+#define	XN		__tc_xn
+#define	XT		__tc_xt
+#define	XS		__tc_xs
+#define	XX		__tc_xx
+#define	AL		__tc_AL
+#define	BC		__tc_bc
+#define	BT		__tc_bt
+#define	CD		__tc_cd
+#define	CE		__tc_ce
+#define	CL		__tc_cl
+#define	CM		__tc_cm
+#define	CR		__tc_cr
+#define	CS		__tc_cs
+#define	DC		__tc_dc
+#define	DL		__tc_DL
+#define	DM		__tc_dm
+#define	DO		__tc_do
+#define	ED		__tc_ed
+#define	EI		__tc_ei
+#define	K0		__tc_k0
+#define	K1		__tc_k1
+#define	K2		__tc_k2
+#define	K3		__tc_k3
+#define	K4		__tc_k4
+#define	K5		__tc_k5
+#define	K6		__tc_k6
+#define	K7		__tc_k7
+#define	K8		__tc_k8
+#define	K9		__tc_k9
+#define	HO		__tc_ho
+#define	IC		__tc_ic
+#define	IM		__tc_im
+#define	IP		__tc_ip
+#define	KD		__tc_kd
+#define	KE		__tc_ke
+#define	KH		__tc_kh
+#define	KL		__tc_kl
+#define	KR		__tc_kr
+#define	KS		__tc_ks
+#define	KU		__tc_ku
+#define	LL		__tc_ll
+#define	MA		__tc_ma
+#define	ND		__tc_nd
+#define	NL		__tc_nl
+#define	RC		__tc_rc
+#define	SC		__tc_sc
+#define	SE		__tc_se
+#define	SF		__tc_SF
+#define	SO		__tc_so
+#define	SR		__tc_SR
+#define	TA		__tc_ta
+#define	TE		__tc_te
+#define	TI		__tc_ti
+#define	UC		__tc_uc
+#define	UE		__tc_ue
+#define	UP		__tc_up
+#define	US		__tc_us
+#define	VB		__tc_vb
+#define	VS		__tc_vs
+#define	VE		__tc_ve
+#define	al		__tc_al
+#define	dl		__tc_dl
+#define	sf		__tc_sf
+#define	sr		__tc_sr
+#define	AL_PARM		__tc_AL
+#define	DL_PARM		__tc_DL
+#define	UP_PARM		__tc_UP
+#define	DOWN_PARM	__tc_DO
+#define	LEFT_PARM	__tc_LE
+#define	RIGHT_PARM	__tc_RI
+#endif /* _CURSES_TERMCAP_COMPAT */
+
 /* END BACKWARD COMPATIBILITY ONLY. */
 
 /* symbols for values returned by getch in keypad mode */
@@ -398,8 +510,8 @@ extern char	*ttytype;		/* Full name of current terminal. */
 	(wmove(w, y, x) == ERR ? ERR : winsch(w, c))
 
 #define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
-#define getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
-#define getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
+#define	getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
+#define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 
 #else
 /* Use functions not macros... */
