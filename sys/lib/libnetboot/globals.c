@@ -4,7 +4,7 @@
  *	global variables should be separate, so nothing else
  *	must be included extraneously.
  *
- *	$Id: globals.c,v 1.1 1993/10/13 16:33:56 cgd Exp $
+ *	$Id: globals.c,v 1.2 1993/10/13 21:22:28 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -24,9 +24,3 @@ n_long	smask;				/* subnet mask */
 n_long	nmask;				/* net mask */
 n_long	mask;				/* subnet or net mask */
 time_t	bot;				/* beginning of time in seconds */
-
-#ifdef DEBUG
-int debug = 1;
-#else
-int debug = 0;
-#endif

@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.2 1993/10/13 16:33:58 cgd Exp $
+ * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.3 1993/10/13 21:22:29 cgd Exp $
  */
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.2 1993/10/13 16:33:58 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.3 1993/10/13 21:22:29 cgd Exp $ (LBL)
  */
 
 #include <sys/param.h>
@@ -160,9 +160,7 @@ unsigned int nfs_boot(kernel_override, machdep_hint)
     netif_init();
     while (1) {
 	bzero(desc, sizeof(*desc));
-#ifdef COMMON_ETHERADDR
 	machdep_common_ether(desc->myea);
-#endif
 	nif = netif_select(machdep_hint);
 	if (!nif) 
 	    panic("netboot: no interfaces left untried");
