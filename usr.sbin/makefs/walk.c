@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.2 2001/10/28 13:14:05 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.3 2001/10/29 05:38:09 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.2 2001/10/28 13:14:05 lukem Exp $");
+__RCSID("$NetBSD: walk.c,v 1.3 2001/10/29 05:38:09 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -267,9 +267,11 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 			    curnode->name);
 		for (curfsnode = dirnode->next; curfsnode != NULL;
 		    curfsnode = curfsnode->next) {
+#if 0	/* too verbose for now */
 			if (debug & DEBUG_APPLY_SPECENTRY)
 				printf("apply_specdir:  dirent %s\n",
 				    curfsnode->name);
+#endif
 			if (strcmp(curnode->name, curfsnode->name) == 0)
 				break;
 		}
@@ -315,7 +317,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 				curfsnode->child->first = curfsnode->child;
 			}
 			if (curfsnode->type == S_IFLNK) {
-				assert(specnode->slink != NULL);
+				assert(curnode->slink != NULL);
 					/* for symlinks, copy the target */
 				if ((curfsnode->symlink =
 				    strdup(curnode->slink)) == NULL)
@@ -350,6 +352,16 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 
 	if (debug & DEBUG_APPLY_SPECENTRY)
 		printf("apply_specentry: %s/%s\n", dir, dirnode->name);
+
+			/*
+			 * if this is a duplicate (i.e, an existing hardlink),
+			 * change the actual settings.
+			 */
+	if (dirnode->dup != NULL) {
+		if (debug & DEBUG_APPLY_SPECENTRY)
+			printf("\t\t\thard-linked to %s\n", dirnode->dup->name);
+		dirnode = dirnode->dup;
+	}
 
 #define ASEPRINT(t, b, o, n) \
 		if (debug & DEBUG_APPLY_SPECENTRY) \
@@ -464,7 +476,7 @@ const char *
 inode_type(mode_t mode)
 {
 
-	if (mode & S_IFLNK)
+	if (S_ISLNK(mode))
 		return ("symlink");	/* inotype() returns "link"...  */
 	return (inotype(mode));
 }
