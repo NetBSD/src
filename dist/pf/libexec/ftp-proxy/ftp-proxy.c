@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.5 2004/07/09 08:27:38 enami Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.6 2004/11/11 09:50:00 yamt Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
@@ -1086,7 +1086,7 @@ main(int argc, char *argv[])
 	memset(&client_iob, 0, sizeof(client_iob));
 	memset(&server_iob, 0, sizeof(server_iob));
 
-	if (pf && pf_get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+	if (pf && get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
 		exit(EX_PROTOCOL);
 	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
 		exit(EX_PROTOCOL);
@@ -1101,7 +1101,7 @@ main(int argc, char *argv[])
 	drop_privs();
 
 	/*
-	 * We check_host after *_get_proxy_env so that checks are done
+	 * We check_host after get_proxy_env so that checks are done
 	 * against the original destination endpoint, not the endpoint
 	 * of our side of the rdr. This allows the use of tcpwrapper
 	 * rules to restrict destinations as well as sources of connections
