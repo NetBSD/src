@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.67 2002/09/18 02:43:54 lukem Exp $
+# $NetBSD: INSTALL,v 1.68 2002/09/24 13:30:41 ad Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -76,6 +76,7 @@ options 	INSECURE		# disable `kernel security level'
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+options		FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -125,12 +126,24 @@ tc*	at	tcasic?
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
-scc0	at	ioasic? offset ?
-scc1	at	ioasic? offset ?
+zsc0    at      ioasic? offset 0x100000   
+zsc1    at      ioasic? offset 0x180000
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+cfb*	at	tc? slot ? offset ?
+mfb*	at	tc? slot ? offset ?
+tfb*	at	tc? slot ? offset ?
+sfb*	at	tc? slot ? offset ?
+#sfbp*	at	tc? slot ? offset ?
+px*	at	tc? slot ? offset ?
+pxg*	at	tc? slot ? offset ?
+
+# TurboChannel serial attachments
+zstty*  at      zsc? channel ?                  # serial ports on B channels
+lkkbd0  at      zsc1 channel ?                  # keyboard port on A channels
+vsms0   at      zsc0 channel ?                  # mouse port on A channels
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -291,6 +304,15 @@ ld*	at	mlx? unit ?
 # Workstation Console attachments
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
+wsdisplay*	at	cfb?
+wsdisplay*	at	mfb?
+wsdisplay*	at	tfb?
+wsdisplay*	at	sfb?
+#wsdisplay*	at	sfbp?
+wsdisplay*	at	px?
+wsdisplay*	at	pxg?
+wskbd*          at	lkkbd? console ?
+wsmouse*        at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
