@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mbuf.c,v 1.5 1994/05/13 08:08:16 mycroft Exp $";
+static char *rcsid = "$Id: mbuf.c,v 1.6 1995/08/17 03:23:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,16 +57,10 @@ static struct mbtypes {
 	{ MT_OOBDATA,	"oob data" },
 	{ MT_CONTROL,	"ancillary data" },
 	{ MT_HEADER,	"packet headers" },
-	{ MT_SOCKET,	"socket structures" },			/* XXX */
-	{ MT_PCB,	"protocol control blocks" },		/* XXX */
-	{ MT_RTABLE,	"routing table entries" },		/* XXX */
-	{ MT_HTABLE,	"IMP host table entries" },		/* XXX */
-	{ MT_ATABLE,	"address resolution tables" },
 	{ MT_FTABLE,	"fragment reassembly queue headers" },	/* XXX */
 	{ MT_SONAME,	"socket names and addresses" },
 	{ MT_SOOPTS,	"socket options" },
 	{ MT_RIGHTS,	"access rights" },
-	{ MT_IFADDR,	"interface addresses" },		/* XXX */
 	{ 0, 0 }
 };
 
