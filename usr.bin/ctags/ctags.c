@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.10 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: ctags.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -80,16 +80,13 @@ char	*curfile;		/* current input file name */
 char	searchar = '/';		/* use /.../ searches by default */
 char	lbuf[LINE_MAX];
 
-void	init __P((void));
-int	main __P((int, char **));
-void	find_entries __P((char *));
+void	init(void);
+void	find_entries(char *);
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char **argv)
 {
-	static char	*outfile = "tags";	/* output file */
+	static const char	*outfile = "tags";	/* output file */
 	int	aflag;				/* -a: append to tags */
 	int	uflag;				/* -u: update tags */
 	int	exit_val;			/* exit value */
@@ -193,10 +190,10 @@ usage:		(void)fprintf(stderr,
  *	the string CWHITE, else NO.
  */
 void
-init()
+init(void)
 {
 	int		i;
-	unsigned char	*sp;
+	unsigned const char	*sp;
 
 	for (i = 0; i < 256; i++) {
 		_wht[i] = _etk[i] = _itk[i] = _btk[i] = NO;
@@ -225,8 +222,7 @@ init()
  *	which searches the file.
  */
 void
-find_entries(file)
-	char	*file;
+find_entries(char *file)
 {
 	char	*cp;
 
