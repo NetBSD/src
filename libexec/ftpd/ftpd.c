@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.96 2000/06/20 07:39:46 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.97 2000/07/05 22:15:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.96 2000/06/20 07:39:46 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.97 2000/07/05 22:15:04 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -963,7 +963,7 @@ pass(const char *passwd)
 		    "%s: anonymous/%.*s", remotehost,
 		    (int) (sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/")), passwd);
-		setproctitle(proctitle);
+		setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
@@ -975,7 +975,7 @@ pass(const char *passwd)
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
-		setproctitle(proctitle);
+		setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO,
@@ -1904,7 +1904,7 @@ dolog(struct sockaddr *who)
 	getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost), NULL,0,0);
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 	if (logging)
 		syslog(LOG_INFO, "connection from %s to %s",
