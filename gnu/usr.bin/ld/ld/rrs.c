@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.33 2000/10/27 01:05:30 mycroft Exp $	*/
+/*	$NetBSD: rrs.c,v 1.34 2002/01/07 14:48:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1214,7 +1214,7 @@ write_rrs_text()
 
 	if (i < number_of_shobjs)
 		errx(1, "internal error: "
-			"# of link objects less then expected %d",
+			"# of link objects less than expected %d",
 			number_of_shobjs);
 
 	md_swapout_sod(sodp, number_of_shobjs);
