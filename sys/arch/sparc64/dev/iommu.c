@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.11 2000/06/08 16:17:29 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.12 2000/06/12 05:27:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -641,7 +641,6 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	 */
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
-
 	
 	s = splhigh();
 	err = extent_alloc(is->is_dvmamap, sgsize, NBPG, boundary, 
