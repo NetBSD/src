@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.22 1993/10/06 09:31:30 andrew Exp $
+#	$Id: files.i386,v 1.23 1993/11/04 09:12:32 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
@@ -35,6 +35,7 @@ arch/i386/isa/isa.c		optional isa device-driver
 arch/i386/isa/lms.c		optional lms device-driver requires isa
 arch/i386/isa/lpt.c		optional lpt device-driver requires isa
 arch/i386/isa/lpa.c		optional lpa device-driver requires isa
+arch/i386/isa/mcd.c		optional mcd device-driver requires isa
 arch/i386/isa/mms.c		optional mms device-driver requires isa
 arch/i386/isa/npx.c		optional npx device-driver requires isa
 arch/i386/isa/pccons.c		optional pc device-driver requires isa
