@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.10 1994/08/21 15:15:43 pk Exp $
+ *	$Id: md.h,v 1.11 1994/11/30 18:25:29 pk Exp $
  */
 
 /*
@@ -118,6 +118,8 @@
 		((r)->r_type == RELOC_PC10 || (r)->r_type == RELOC_PC22)
 
 #define md_got_reloc(r)			(-(r)->r_address)
+
+#define RELOC_INIT_SEGMENT_RELOC(r)	((r)->r_type = RELOC_32)
 
 #ifdef SUN_COMPAT
 /*

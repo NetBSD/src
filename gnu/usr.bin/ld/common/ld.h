@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.14 1994/08/21 15:17:00 pk Exp $
+ *	$Id: ld.h,v 1.15 1994/11/30 18:25:00 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -154,6 +154,8 @@ extern int	netzmagic;
 #define RELOC_LAZY_P(r)			((r)->r_jmptable)
 
 #define CHECK_GOT_RELOC(r)		((r)->r_pcrel)
+
+#define RELOC_INIT_SEGMENT_RELOC(r)
 
 #endif
 
