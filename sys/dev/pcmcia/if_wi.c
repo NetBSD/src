@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.33 2000/08/26 00:08:43 jhawk Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.34 2000/08/28 13:25:22 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,6 +74,7 @@
 
 #include "opt_inet.h"
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,10 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/proc.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -451,6 +456,10 @@ wi_attach(parent, self, aux)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 
@@ -721,6 +730,9 @@ int wi_intr(arg)
 	if (ifp->if_snd.ifq_head != NULL)
 		wi_start(ifp);
 
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, status);
+#endif
 	return 1;
 }
 
@@ -1808,6 +1820,9 @@ wi_detach(self, flags)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
