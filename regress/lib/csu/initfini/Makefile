@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:24:12 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/23 19:29:11 junyoung Exp $
 
 NOMAN=		# defined
 
@@ -14,8 +14,8 @@ CLEANFILES+=	output
 
 .PATH:		${.CURDIR}/arch/${MACHINE_CPU}
 
-regress:
-	@./initfini > output
+regress: ${PROG}
+	@./${PROG} > output
 	@if ! cmp -s ${.CURDIR}/expected output; then \
 		echo "FAILED"; \
 	else \
