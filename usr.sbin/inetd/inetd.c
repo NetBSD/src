@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.38.2.2 1998/05/05 08:12:06 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.38.2.3 1998/09/27 23:36:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.38.2.2 1998/05/05 08:12:06 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.38.2.3 1998/09/27 23:36:23 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -520,6 +520,8 @@ main(argc, argv, envp)
 					syslog(LOG_ERR,
 			"%s/%s server failing (looping), service terminated\n",
 					    sep->se_service, sep->se_proto);
+					if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+					    close(ctrl);
 					close_sep(sep);
 					sigsetmask(0L);
 					if (!timingout) {
