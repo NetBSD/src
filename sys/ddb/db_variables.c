@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.30 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.31 2004/05/25 04:31:48 atatat Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.30 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.31 2004/05/25 04:31:48 atatat Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -109,37 +109,45 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "radix", NULL,
+		       CTLTYPE_INT, "radix",
+		       SYSCTL_DESCR("Input and output radix"),
 		       NULL, 0, &db_radix, 0,
 		       CTL_DDB, DDBCTL_RADIX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxoff", NULL,
+		       CTLTYPE_INT, "maxoff",
+		       SYSCTL_DESCR("Maximum symbol offset"),
 		       NULL, 0, &db_maxoff, 0,
 		       CTL_DDB, DDBCTL_MAXOFF, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxwidth", NULL,
+		       CTLTYPE_INT, "maxwidth",
+		       SYSCTL_DESCR("Maximum output line width"),
 		       NULL, 0, &db_max_width, 0,
 		       CTL_DDB, DDBCTL_MAXWIDTH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "lines", NULL,
+		       CTLTYPE_INT, "lines",
+		       SYSCTL_DESCR("Number of display lines"),
 		       NULL, 0, &db_max_line, 0,
 		       CTL_DDB, DDBCTL_LINES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "tabstops", NULL,
+		       CTLTYPE_INT, "tabstops",
+		       SYSCTL_DESCR("Output tab width"),
 		       NULL, 0, &db_tab_stop_width, 0,
 		       CTL_DDB, DDBCTL_TABSTOPS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "onpanic", NULL,
+		       CTLTYPE_INT, "onpanic",
+		       SYSCTL_DESCR("Whether to enter ddb on a kernel panic"),
 		       NULL, 0, &db_onpanic, 0,
 		       CTL_DDB, DDBCTL_ONPANIC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "fromconsole", NULL,
+		       CTLTYPE_INT, "fromconsole",
+		       SYSCTL_DESCR("Whether ddb can be entered from the "
+				    "console"),
 		       NULL, 0, &db_fromconsole, 0,
 		       CTL_DDB, DDBCTL_FROMCONSOLE, CTL_EOL);
 }
