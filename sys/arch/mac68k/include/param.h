@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.10 1994/05/06 17:39:22 briggs Exp $
+ *	$Id: param.h,v 1.11 1994/08/23 20:48:09 briggs Exp $
  */
 
 #ifndef _MACHINE_PARAM_H_
@@ -124,6 +124,12 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		3  		/* pages of u-area */
+
+/*
+ * Number of pages that UPAGES eats.  This is for the wierd sparcs of
+ * the world.
+ */
+#define USPACE		(UPAGES * NBPG)
 
 /*
  * Constants related to network buffer management.
