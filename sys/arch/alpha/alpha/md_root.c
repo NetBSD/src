@@ -1,6 +1,7 @@
-/*	$NetBSD: md_root.c,v 1.1 1996/09/15 17:17:56 cgd Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2 1996/10/03 05:32:49 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
@@ -43,9 +44,8 @@ extern int boothowto;
 
 /*
  * This array will be patched to contain a file-system image.
- * See the program:  src/distrib/sun3/common/rdsetroot.c
  */
-int rd_root_size = ROOTBYTES;
+u_int32_t rd_root_size = ROOTBYTES;
 char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
@@ -56,12 +56,14 @@ rd_attach_hook(unit, rd)
 	int unit;
 	struct rd_conf *rd;
 {
+
 	if (unit == 0) {
 		/* Setup root ramdisk */
-		rd->rd_addr = (caddr_t) rd_root_image;
-		rd->rd_size = (size_t)  rd_root_size;
+		rd->rd_addr = (caddr_t)rd_root_image;
+		rd->rd_size = (size_t)rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("rd%d: %dK file system image\n", unit,
+		    ROOTBYTES / 1024);
 	}
 }
 
@@ -73,6 +75,7 @@ rd_open_hook(unit, rd)
 	int unit;
 	struct rd_conf *rd;
 {
+
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
 		boothowto |= RB_SINGLE;
