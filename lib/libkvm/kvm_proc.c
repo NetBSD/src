@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.19 1997/08/15 02:22:02 mikel Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.20 1997/08/15 17:52:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.19 1997/08/15 02:22:02 mikel Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.20 1997/08/15 17:52:46 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,6 +82,8 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.19 1997/08/15 02:22:02 mikel Exp $");
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
 
+char		*_kvm_uread __P((kvm_t *, const struct proc *, u_long, u_long *));
+int		_kvm_coreinit __P((kvm_t *));
 int		_kvm_readfromcore __P((kvm_t *, u_long, u_long));
 int		_kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
 ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
@@ -282,11 +284,11 @@ _kvm_readfrompager(kd, vmop, offset)
 		printf("osize %lx bsize %x blocks %p nblocks %x\n",
 		    (u_long)swap.sw_osize, swap.sw_bsize, swap.sw_blocks,
 		    swap.sw_nblocks);
-		for (ix = 0; ix < swap.sw_nblocks; ix++) {
-			addr = (u_long)&swap.sw_blocks[ix];
+		for (i = 0; i < swap.sw_nblocks; i++) {
+			addr = (u_long)&swap.sw_blocks[i];
 			if (KREAD(kd, addr, &swb))
 				return (0);
-			printf("sw_blocks[%d]: block %x mask %x\n", ix,
+			printf("sw_blocks[%d]: block %x mask %x\n", i,
 			    swb.swb_block, swb.swb_mask);
 		}
 		return (-1);
@@ -344,7 +346,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)proc.p_cred, &eproc.e_pcred) == 0)
-			KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
+			(void)KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
 			      &eproc.e_ucred);
 
 		switch(what) {
