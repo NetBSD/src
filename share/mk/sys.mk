@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.20 1994/07/26 19:42:42 mycroft Exp $
+#	$NetBSD: sys.mk,v 1.21 1995/06/24 08:28:13 cgd Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -75,6 +75,8 @@ YACC.y=		${YACC} ${YFLAGS}
 	${COMPILE.c} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
 	rm -f $*.o
+.c.ln:
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 # C++
 .cc:

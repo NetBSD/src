@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.57 1995/04/21 20:29:40 jtc Exp $
+#	$NetBSD: bsd.lib.mk,v 1.58 1995/06/24 08:27:37 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -14,10 +14,10 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .MAIN: all
 
-# prefer .S to a .c, add .po, remove stuff not used in the BSD libraries
-# .so used for PIC object files
+# prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
+# .so used for PIC object files.  .ln used for lint output files.
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .m4
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
 
 .c.o:
 	${COMPILE.c} ${.IMPSRC} 
@@ -33,6 +33,9 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+.c.ln:
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o:
 	${COMPILE.cc} ${.IMPSRC} 
@@ -67,6 +70,10 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
+.if !defined(PICFLAG)
+PICFLAG=-fpic
+.endif
+
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
 .else
@@ -80,11 +87,11 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
 .endif
 
-.if !defined(PICFLAG)
-PICFLAG=-fpic
+.if !defined(NOLINT)
+_LIBS+=llib-l${LIB}.ln
 .endif
 
-all: ${_LIBS} _SUBDIRUSE # llib-l${LIB}.ln
+all: ${_LIBS} _SUBDIRUSE
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
@@ -114,8 +121,13 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 
-llib-l${LIB}.ln: ${SRCS}
-	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
+LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+# the following looks XXX to me... -- cgd
+LLIBS?=	-lc
+llib-l${LIB}.ln: ${LOBJS}
+	@echo building llib-l${LIB}.ln
+	@rm -f llib-l${LIB}.ln
+	@${LINT} -C${LIB} ${LOBJS} ${LLIBS}
 
 .if !target(clean)
 clean: _SUBDIRUSE
@@ -123,6 +135,7 @@ clean: _SUBDIRUSE
 	rm -f ${OBJS}
 	rm -f ${POBJS} profiled/*.o
 	rm -f ${SOBJS} shared/*.o
+	rm -f ${LOBJS}
 	rm -f lib${LIB}.a lib${LIB}_p.a lib${LIB}_pic.a llib-l${LIB}.ln
 	rm -f lib${LIB}.so.*.*
 .endif
@@ -132,7 +145,8 @@ cleandir: _SUBDIRUSE clean
 .if defined(SRCS)
 afterdepend:
 	@(TMP=/tmp/_depend$$$$; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so:/' < .depend > $$TMP; \
+	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so:/' \
+	      < .depend > $$TMP; \
 	    mv $$TMP .depend)
 .endif
 
@@ -165,8 +179,10 @@ realinstall:
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
-#	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-#	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
+.if !defined(NOLINT)
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
+.endif
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \

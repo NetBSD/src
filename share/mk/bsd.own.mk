@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.17 1995/06/02 02:52:04 brezak Exp $
+#	$NetBSD: bsd.own.mk,v 1.18 1995/06/24 08:28:00 cgd Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -63,3 +63,6 @@ STRIP=
 NOMAN=
 NOPROFILE=
 .endif
+
+# No lint, for now.
+NOLINT=
