@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.1 1995/02/10 17:50:40 cgd Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.2 1998/09/29 03:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,8 @@
 
 #include "SYS.h"
 
-SYSCALL(sigpending)
+LEAF(sigpending,0)			/* XXX # of args? */
+	CALLSYS_ERROR(compat_13_sigpending13)
 	stl	v0, 0(a0)
 	mov	zero, v0
 	RET
