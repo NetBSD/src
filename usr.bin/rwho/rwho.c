@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.6 1997/01/09 20:21:23 tls Exp $	*/
+/*	$NetBSD: rwho.c,v 1.7 1997/03/08 23:08:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: rwho.c,v 1.6 1997/01/09 20:21:23 tls Exp $";
+static char rcsid[] = "$NetBSD: rwho.c,v 1.7 1997/03/08 23:08:28 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 	register struct whod *w = &wd;
 	register struct whoent *we;
 	register struct myutmp *mp;
-	int f, n, i;
+	int f, n, i, nhosts;
 	time_t time();
 
 	while ((ch = getopt(argc, argv, "a")) != EOF)
@@ -103,6 +103,7 @@ main(argc, argv)
 		exit(1);
 	}
 	mp = myutmp;
+	nhosts = 0;
 	(void)time(&now);
 	while (dp = readdir(dirp)) {
 		if (dp->d_ino == 0 || strncmp(dp->d_name, "whod.", 5))
@@ -115,6 +116,7 @@ main(argc, argv)
 			(void) close(f);
 			continue;
 		}
+		nhosts++;
 		if (down(w,now)) {
 			(void) close(f);
 			continue;
@@ -136,6 +138,8 @@ main(argc, argv)
 		}
 		(void) close(f);
 	}
+	if (nhosts == 0)
+		errx(0, "no hosts in %s.", _PATH_RWHODIR);
 	qsort((char *)myutmp, nusers, sizeof (struct myutmp), utmpcmp);
 	mp = myutmp;
 	width = 0;
