@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.21 1997/08/25 19:31:57 kleink Exp $	*/
+/*	$NetBSD: arch.c,v 1.22 1997/09/23 21:15:07 fair Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.21 1997/08/25 19:31:57 kleink Exp $");
+__RCSID("$NetBSD: arch.c,v 1.22 1997/09/23 21:15:07 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -996,12 +996,12 @@ Arch_TouchLib (gn)
  *
  *-----------------------------------------------------------------------
  */
-int
+time_t
 Arch_MTime (gn)
     GNode	  *gn;	      /* Node describing archive member */
 {
     struct ar_hdr *arhPtr;    /* Header of desired member */
-    int		  modTime;    /* Modification time as an integer */
+    time_t	  modTime;    /* Modification time as an integer */
     char *p1, *p2;
 
     arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn, &p1),
@@ -1013,7 +1013,7 @@ Arch_MTime (gn)
 	free(p2);
 
     if (arhPtr != (struct ar_hdr *) NULL) {
-	modTime = (int) strtol(arhPtr->ar_date, NULL, 10);
+	modTime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
     } else {
 	modTime = 0;
     }
@@ -1036,7 +1036,7 @@ Arch_MTime (gn)
  *
  *-----------------------------------------------------------------------
  */
-int
+time_t
 Arch_MemMTime (gn)
     GNode   	  *gn;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.13 1997/05/02 14:24:29 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.14 1997/09/23 21:15:09 fair Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -44,8 +44,8 @@
 ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
 void Arch_Touch __P((GNode *));
 void Arch_TouchLib __P((GNode *));
-int Arch_MTime __P((GNode *));
-int Arch_MemMTime __P((GNode *));
+time_t Arch_MTime __P((GNode *));
+time_t Arch_MemMTime __P((GNode *));
 void Arch_FindLib __P((GNode *, Lst));
 Boolean Arch_LibOODate __P((GNode *));
 void Arch_Init __P((void));

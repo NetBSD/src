@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.17 1997/05/08 21:24:46 gwr Exp $	*/
+/*	$NetBSD: make.h,v 1.18 1997/09/23 21:15:08 fair Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -144,8 +144,8 @@ typedef struct GNode {
 				 * made */
     int             unmade;    	/* The number of unmade children */
 
-    int             mtime;     	/* Its modification time */
-    int        	    cmtime;    	/* The modification time of its youngest
+    time_t          mtime;     	/* Its modification time */
+    time_t     	    cmtime;    	/* The modification time of its youngest
 				 * child */
 
     Lst     	    iParents;  	/* Links to parents for which this is an
