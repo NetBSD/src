@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.1.1.1 2000/06/16 18:31:37 thorpej Exp $");
+RCSID("$Id: connect.c,v 1.1.1.1.2.1 2000/06/21 06:37:31 thorpej Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -305,7 +305,8 @@ init_sockets(struct descr **desc)
     parse_ports(port_str);
     d = malloc(addresses.len * num_ports * sizeof(*d));
     if (d == NULL)
-	krb5_errx(context, 1, "malloc(%u) failed", num_ports * sizeof(*d));
+	krb5_errx(context, 1, "malloc(%lu) failed",
+		  (unsigned long)num_ports * sizeof(*d));
 
     for (i = 0; i < num_ports; i++){
 	for (j = 0; j < addresses.len; ++j) {
@@ -330,7 +331,8 @@ init_sockets(struct descr **desc)
     krb5_free_addresses (context, &addresses);
     d = realloc(d, num * sizeof(*d));
     if (d == NULL && num != 0)
-	krb5_errx(context, 1, "realloc(%u) failed", num * sizeof(*d));
+	krb5_errx(context, 1, "realloc(%lu) failed",
+		  (unsigned long)num * sizeof(*d));
     reinit_descrs (d, num);
     *desc = d;
     return num;
