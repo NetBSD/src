@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.28 2001/01/07 13:10:54 martin Exp $
+#	$NetBSD: DEVNAMES,v 1.29 2001/01/11 06:01:18 augustss Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1012,9 +1012,11 @@ urio			MI
 usb			MI		
 usbus			MI		Attribute
 uscanner		MI
+usscanner		MI
 ut			vax
 uu			vax
 uvisor			MI		
+uyap			MI		
 va			vax
 vga			MI		
 viaenv			MI
