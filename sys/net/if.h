@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.4 1993/12/06 04:17:41 hpeyerl Exp $
+ *	$Id: if.h,v 1.5 1993/12/10 10:57:05 cgd Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -135,23 +135,15 @@ struct ifnet {
 #define	IFF_ALLMULTI	0x200		/* receive all multicast packets */
 #define	IFF_OACTIVE	0x400		/* transmission in progress */
 #define	IFF_SIMPLEX	0x800		/* can't hear own transmissions */
-#define	IFF_LLC0	0x1000		/* interface driver control/status */
-#define	IFF_LLC1	0x2000		/* interface driver control/status */
-#define	IFF_LLC2	0x4000		/* interface driver control/status */
-
-#ifdef MULTICAST
+#define	IFF_LINK0	0x1000		/* per link layer defined bit */
+#define	IFF_LINK1	0x2000		/* interface driver control/status */
+#define	IFF_LINK2	0x4000		/* interface driver control/status */
 #define IFF_MULTICAST	0x8000		/* supports multicast */
-#endif
 
 /* flags set internally only: */
-#ifdef MULTICAST
 #define IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE| \
 	IFF_SIMPLEX|IFF_MULTICAST)
-#else
-#define	IFF_CANTCHANGE \
-	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|IFF_SIMPLEX)
-#endif
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
