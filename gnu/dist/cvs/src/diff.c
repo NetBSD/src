@@ -650,11 +650,7 @@ diff_fileproc (callerdat, finfo)
     if (tocvsPath)
     {
 	/* Backup the current version of the file to CVS/,,filename */
-	fname = xmalloc (strlen (finfo->file)
-			 + sizeof CVSADM
-			 + sizeof CVSPREFIX
-			 + 10);
-	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
+	asprintf(&fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
 	if (unlink_file_dir (fname) < 0)
 	    if (! existence_error (errno))
 		error (1, errno, "cannot remove %s", fname);

@@ -435,8 +435,7 @@ ignore_files (ilist, entries, update_dir, proc)
 		   this directory if there is a CVS subdirectory.
 		   This will normally be the case, but the user may
 		   have messed up the working directory somehow.  */
-		p = xmalloc (strlen (file) + sizeof CVSADM + 10);
-		sprintf (p, "%s/%s", file, CVSADM);
+		asprintf (&p, "%s/%s", file, CVSADM);
 		dir = isdir (p);
 		free (p);
 		if (dir)
@@ -469,8 +468,7 @@ ignore_files (ilist, entries, update_dir, proc)
 		{
 		    char *temp;
 
-		    temp = xmalloc (strlen (file) + sizeof (CVSADM) + 10);
-		    (void) sprintf (temp, "%s/%s", file, CVSADM);
+		    (void) asprintf (&temp, "%s/%s", file, CVSADM);
 		    if (isdir (temp))
 		    {
 			free (temp);

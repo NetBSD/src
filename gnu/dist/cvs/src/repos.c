@@ -37,10 +37,7 @@ Name_Repository (dir, update_dir)
 	xupdate_dir = ".";
 
     if (dir != NULL)
-    {
-	tmp = xmalloc (strlen (dir) + sizeof (CVSADM_REP) + 10);
-	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
-    }
+	(void) asprintf (&tmp, "%s/%s", dir, CVSADM_REP);
     else
 	tmp = xstrdup (CVSADM_REP);
 
@@ -56,10 +53,7 @@ Name_Repository (dir, update_dir)
 	char *cvsadm;
 
 	if (dir != NULL)
-	{
-	    cvsadm = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
-	    (void) sprintf (cvsadm, "%s/%s", dir, CVSADM);
-	}
+	    (void) asprintf (&cvsadm, "%s/%s", dir, CVSADM);
 	else
 	    cvsadm = xstrdup (CVSADM);
 

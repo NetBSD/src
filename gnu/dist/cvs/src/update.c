@@ -1010,8 +1010,7 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	{
 	    char *tmp;
 
-	    tmp = xmalloc (strlen (dir) + sizeof (CVSADM_ENTSTAT) + 10);
-	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_ENTSTAT);
+	    (void) asprintf (&tmp, "%s/%s", dir, CVSADM_ENTSTAT);
 	    if (unlink_file (tmp) < 0 && ! existence_error (errno))
 		error (1, errno, "cannot remove file %s", tmp);
 #ifdef SERVER_SUPPORT
@@ -1305,11 +1304,7 @@ checkout_file (finfo, vers_ts, adding, merging, update_server)
 #endif
 	)
     {
-	backup = xmalloc (strlen (finfo->file)
-			  + sizeof (CVSADM)
-			  + sizeof (CVSPREFIX)
-			  + 10);
-	(void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
+	(void) asprintf (&backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
 	if (isfile (finfo->file))
 	    rename_file (finfo->file, backup);
 	else
@@ -1670,11 +1665,7 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	return 0;
     }
 
-    backup = xmalloc (strlen (finfo->file)
-		      + sizeof (CVSADM)
-		      + sizeof (CVSPREFIX)
-		      + 10);
-    (void) sprintf (backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
+    (void) asprintf (&backup, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
     if (isfile (finfo->file))
         rename_file (finfo->file, backup);
     else
@@ -1684,16 +1675,8 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	    error (0, errno, "cannot remove %s", backup);
     }
 
-    file1 = xmalloc (strlen (finfo->file)
-		     + sizeof (CVSADM)
-		     + sizeof (CVSPREFIX)
-		     + 10);
-    (void) sprintf (file1, "%s/%s%s-1", CVSADM, CVSPREFIX, finfo->file);
-    file2 = xmalloc (strlen (finfo->file)
-		     + sizeof (CVSADM)
-		     + sizeof (CVSPREFIX)
-		     + 10);
-    (void) sprintf (file2, "%s/%s%s-2", CVSADM, CVSPREFIX, finfo->file);
+    (void) asprintf (&file1, "%s/%s%s-1", CVSADM, CVSPREFIX, finfo->file);
+    (void) asprintf (&file2, "%s/%s%s-2", CVSADM, CVSPREFIX, finfo->file);
 
     fail = 0;
 

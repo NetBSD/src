@@ -1796,9 +1796,8 @@ finaladd (finfo, rev, tag, options)
     ret = Checkin ('A', finfo, rcs, rev, tag, options, saved_message);
     if (ret == 0)
     {
-	char *tmp = xmalloc (strlen (finfo->file) + sizeof (CVSADM)
-			     + sizeof (CVSEXT_LOG) + 10);
-	(void) sprintf (tmp, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
+	char *tmp;
+	(void) asprintf (&tmp, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
 	if (unlink_file (tmp) < 0
 	    && !existence_error (errno))
 	    error (0, errno, "cannot remove %s", tmp);
@@ -2005,9 +2004,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	desc = NULL;
 	descalloc = 0;
 	desclen = 0;
-	fname = xmalloc (strlen (file) + sizeof (CVSADM)
-			 + sizeof (CVSEXT_LOG) + 10);
-	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
+	(void) asprintf (&fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
 	/* If the file does not exist, no big deal.  In particular, the
 	   server does not (yet at least) create CVSEXT_LOG files.  */
 	if (isfile (fname))
@@ -2069,9 +2066,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    FILE *fp;
 
 	    /* move the new file out of the way. */
-	    fname = xmalloc (strlen (file) + sizeof (CVSADM)
-			     + sizeof (CVSPREFIX) + 10);
-	    (void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
+	    (void) asprintf (&fname, "%s/%s%s", CVSADM, CVSPREFIX, file);
 	    rename_file (file, fname);
 
 	    /* Create empty FILE.  Can't use copy_file with a DEVNULL
