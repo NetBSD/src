@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ls.h	5.18 (Berkeley) 6/28/92
- *	$Id: ls.h,v 1.5 1993/08/07 03:57:00 mycroft Exp $
+ *	from: @(#)ls.h	8.1 (Berkeley) 5/31/93
+ *	$Id: ls.h,v 1.6 1994/09/23 06:14:53 mycroft Exp $
  */
 
 #define NO_PRINT	1

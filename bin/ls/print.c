@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -35,24 +35,26 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.10 1994/04/04 19:29:43 chopps Exp $";
+/*static char sccsid[] = "from: @(#)print.c	8.4 (Berkeley) 4/17/94";*/
+static char *rcsid = "$Id: print.c,v 1.11 1994/09/23 06:14:55 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fts.h>
-#include <time.h>
+
+#include <err.h>
 #include <errno.h>
+#include <fts.h>
 #include <grp.h>
 #include <pwd.h>
-#include <utmp.h>
-#include <unistd.h>
-#include <tzfile.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <time.h>
+#include <tzfile.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #include "ls.h"
 #include "extern.h"
 
@@ -67,7 +69,7 @@ void
 printscol(dp)
 	DISPLAY *dp;
 {
-	register FTSENT *p;
+	FTSENT *p;
 
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
@@ -81,8 +83,8 @@ void
 printlong(dp)
 	DISPLAY *dp;
 {
-	register FTSENT *p;
-	register struct stat *sp;
+	struct stat *sp;
+	FTSENT *p;
 	NAMES *np;
 	char buf[20];
 
@@ -96,8 +98,8 @@ printlong(dp)
 		if (f_inode)
 			(void)printf("%*lu ", dp->s_inode, sp->st_ino);
 		if (f_size)
-			(void)printf("%*qd ", dp->s_block,
-			    howmany(sp->st_blocks, blocksize));
+			(void)printf("%*qd ",
+			    dp->s_block, howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
 		(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
@@ -137,8 +139,8 @@ printcol(dp)
 	extern int termwidth;
 	static FTSENT **array;
 	static int lastentries = -1;
-	register FTSENT *p;
-	register int base, chcnt, cnt, col, colwidth, num;
+	FTSENT *p;
+	int base, chcnt, cnt, col, colwidth, num;
 	int endcol, numcols, numrows, row;
 
 	/*
@@ -201,7 +203,7 @@ printcol(dp)
  */
 static int
 printaname(p, inodefield, sizefield)
-	register FTSENT *p;
+	FTSENT *p;
 	u_long sizefield, inodefield;
 {
 	struct stat *sp;
@@ -210,10 +212,10 @@ printaname(p, inodefield, sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*lu ", inodefield, sp->st_ino);
+		chcnt += printf("%*lu ", (int)inodefield, sp->st_ino);
 	if (f_size)
-		chcnt += printf("%*qd ", sizefield, 
-		    howmany(sp->st_blocks, blocksize));
+		chcnt += printf("%*qd ",
+		    (int)sizefield, howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
 	if (f_type)
 		chcnt += printtype(sp->st_mode);
@@ -250,18 +252,18 @@ static int
 printtype(mode)
 	u_int mode;
 {
-	switch(mode & S_IFMT) {
+	switch (mode & S_IFMT) {
 	case S_IFDIR:
 		(void)putchar('/');
+		return (1);
+	case S_IFIFO:
+		(void)putchar('|');
 		return (1);
 	case S_IFLNK:
 		(void)putchar('@');
 		return (1);
 	case S_IFSOCK:
 		(void)putchar('=');
-		return (1);
-	case S_IFIFO:
-		(void)putchar('|');
 		return (1);
 	}
 	if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
@@ -278,13 +280,12 @@ printlink(p)
 	int lnklen;
 	char name[MAXPATHLEN + 1], path[MAXPATHLEN + 1];
 
-
 	if (p->fts_level == FTS_ROOTLEVEL)
 		(void)snprintf(name, sizeof(name), "%s", p->fts_name);
 	else 
-		(void)snprintf(name, sizeof(name), "%s/%s",
-		    p->fts_parent->fts_accpath, p->fts_name);
-	if ((lnklen = readlink(name, path, sizeof(name) - 1)) == -1) {
+		(void)snprintf(name, sizeof(name),
+		    "%s/%s", p->fts_parent->fts_accpath, p->fts_name);
+	if ((lnklen = readlink(name, path, sizeof(path) - 1)) == -1) {
 		(void)fprintf(stderr, "\nls: %s: %s\n", name, strerror(errno));
 		return;
 	}
