@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2002/10/14 18:39:22 elric Exp $
+# $NetBSD: GENERIC,v 1.9 2002/10/18 15:11:08 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,6 +28,10 @@ maxusers 8
 options 	CPU_ARM2
 options 	CPU_ARM250
 options 	CPU_ARM3
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks

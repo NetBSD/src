@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2002/10/14 18:39:29 elric Exp $
+# $NetBSD: GENERIC,v 1.16 2002/10/18 15:11:10 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,6 +32,10 @@ options 	FPSP
 # Standard system options
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
