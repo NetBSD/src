@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.53 2003/04/25 08:04:14 mycroft Exp $	*/
+/*	$NetBSD: su.c,v 1.54 2003/04/27 08:46:26 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.53 2003/04/25 08:04:14 mycroft Exp $");
+__RCSID("$NetBSD: su.c,v 1.54 2003/04/27 08:46:26 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,12 +90,12 @@ static int kerberos5 __P((char *, char *, int));
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 
-#define	ARGSTRX	"-Kflm"
+#define	ARGSTRX	"-Kdflm"
 
 int use_kerberos = 1;
 
 #else
-#define	ARGSTRX	"-flm"
+#define	ARGSTRX	"-dflm"
 #endif
 
 #ifndef	SUGROUP
@@ -127,7 +127,7 @@ main(argc, argv)
 	struct timeval tp;
 #endif
 	uid_t ruid;
-	int asme, ch, asthem, fastlogin, prio;
+	int asme, ch, asthem, fastlogin, prio, gohome;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, **np;
 	char *userpass, *class;
@@ -138,6 +138,7 @@ main(argc, argv)
 #endif
 
 	asme = asthem = fastlogin = 0;
+	gohome = 1;
 	shell = class = NULL;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
@@ -151,6 +152,11 @@ main(argc, argv)
 			class = optarg;
 			break;
 #endif
+		case 'd':
+			asme = 0;
+			asthem = 1;
+			gohome = 0;
+			break;
 		case 'f':
 			fastlogin = 1;
 			break;
@@ -340,7 +346,7 @@ badlogin:
 #endif
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (chdir(pwd->pw_dir) < 0)
+			if (gohome && chdir(pwd->pw_dir) < 0)
 				errx(1, "no directory");
 		} 
 
