@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.49 2003/06/28 17:15:07 darrenr Exp $	*/
+/*	$NetBSD: kdump.c,v 1.50 2003/06/29 18:05:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.49 2003/06/28 17:15:07 darrenr Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.50 2003/06/29 18:05:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ dumpheader(kth)
 
 	(void)printf("%6d", kth->ktr_pid);
 	if (show_lwp)
-		(void)printf("/%d", (int)kth->ktr_buf);
+		(void)printf("/%" PRIdPTR, (intptr_t)kth->ktr_buf);
 	(void)printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
