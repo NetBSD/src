@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.4 2003/06/05 13:48:26 scw Exp $
+#	$NetBSD: files.pxa2x0,v 1.5 2003/06/06 19:56:59 scw Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -21,7 +21,7 @@ file	arch/arm/xscale/pxa2x0_dma.c
 device	pxaintc
 attach	pxaintc at pxaip
 file arch/arm/xscale/pxa2x0_intr.c		pxaintc needs-flag
-defopt  opt_pxa2x0_gpio.h		PXAGPIO_HAS_GPION_INTRS
+defflag  opt_pxa2x0_gpio.h		PXAGPIO_HAS_GPION_INTRS
 
 # GPIO controller
 device	pxagpio
