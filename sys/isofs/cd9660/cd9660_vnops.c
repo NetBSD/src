@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.6 1994/07/13 22:30:15 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.7 1994/07/14 01:43:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -418,7 +418,7 @@ struct isoreaddir {
 	int ncookies;
 };
 
-static int
+int
 iso_uiodir(idp,dp,off)
 	struct isoreaddir *idp;
 	struct dirent *dp;
@@ -450,7 +450,7 @@ iso_uiodir(idp,dp,off)
 	return (0);
 }
 
-static int
+int
 iso_shipdir(idp)
 	struct isoreaddir *idp;
 {
@@ -528,9 +528,14 @@ cd9660_readdir(ap)
 	ip = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
 
-	MALLOC(idp,struct isoreaddir *,sizeof(*idp),M_TEMP,M_WAITOK);
-	idp->saveent.d_namlen = 0;
-	idp->assocent.d_namlen = 0;
+	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
+	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
+	/*
+	 * XXX
+	 * Is it worth trying to figure out the type?
+	 */
+	idp->saveent.d_type = idp->assocent.d_type = idp->current.d_type =
+	    DT_UNKNOWN;
 	idp->uio = uio;
 	idp->eofflag = 1;
 	idp->cookies = ap->a_cookies;
