@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.22 1993/07/07 01:05:42 deraadt Exp $
+ *	$Id: wd.c,v 1.23 1993/07/07 05:50:35 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -75,9 +75,12 @@
 #include "vm/vm.h"
 
 #ifndef WDCNDELAY
-#define WDCNDELAY	200000	/* delay = 25us; so 5s for a controller state change */
+#define WDCNDELAY	200000	/* delay = 25us; so 2.5s for a controller state change */
 #endif
 #define WDCDELAY	25
+
+/* if you enable this, it will report any delays more than 25us * N long */
+/*#define WDCNDELAY_DEBUG	6 */
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
 
@@ -529,6 +532,10 @@ retry:
 			wdreset(ctrlr, wdc, 1);
 			break;
 		}
+#ifdef WDCNDELAY_DEBUG
+		if(timeout>WDCNDELAY_DEBUG)
+			printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
 	
 		/* stuff the task file */
 		outb(wdc+wd_precomp, lp->d_precompcyl / 4);
@@ -564,6 +571,10 @@ retry:
 			wdreset(ctrlr, wdc, 1);
 			goto retry;
 		}
+#ifdef WDCNDELAY_DEBUG
+		if(timeout>WDCNDELAY_DEBUG)
+			printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
 	
 		/* initiate command! */
 #ifdef	B_FORMAT
@@ -593,6 +604,10 @@ retry:
 		wdreset(ctrlr, wdc, 1);
 		goto retry;
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
     
 	/* then send it! */
 outagain:
@@ -953,6 +968,10 @@ tryagainrecal:
 			wdreset(ctrlr, wdc, 1);
 			goto tryagainrecal;
 		}
+#ifdef WDCNDELAY_DEBUG
+		if(timeout>WDCNDELAY_DEBUG)
+			printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
 #endif
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 		wdtab[ctrlr].b_active = 1;
@@ -965,6 +984,10 @@ tryagainrecal:
 			wdreset(ctrlr, wdc, 1);
 			goto tryagainrecal;
 		}
+#ifdef WDCNDELAY_DEBUG
+		if(timeout>WDCNDELAY_DEBUG)
+			printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
 #endif
 		du->dk_state = RECAL;
 		splx(s);
@@ -1026,6 +1049,10 @@ wdcommand(struct disk *du, int cmd)
 		if(++timeout > WDCNDELAY)
 			return -1;
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
     
 	/* send command, await results */
 	outb(wdc+wd_command, cmd);
@@ -1034,6 +1061,10 @@ wdcommand(struct disk *du, int cmd)
 		if(++timeout > WDCNDELAY)
 			return -1;
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
 	if (cmd != WDCC_READP)
 		return (stat);
     
@@ -1043,6 +1074,10 @@ wdcommand(struct disk *du, int cmd)
 		if(++timeout > WDCNDELAY)
 			return -1;
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
 	return (stat);
 }
 
@@ -1102,6 +1137,10 @@ wdgetctlr(int u, struct disk *du)
 			return -1;
 		}
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
 #endif
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
 	stat = wdcommand(du, WDCC_READP);
@@ -1113,6 +1152,10 @@ wdgetctlr(int u, struct disk *du)
 			return -1;
 		}
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
 #endif
     
 #ifndef TIHMODS
@@ -1652,4 +1695,8 @@ int ctrlr;
 			break;
 		}
 	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
+#endif
 }
