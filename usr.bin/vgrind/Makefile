@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/05/18 08:20:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/06/30 19:08:37 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ FILESNAME_vgrindefs.src=	vgrindefs
 FILESNAME_vgrindefs.src.db=	vgrindefs.db
 FILESDIR=			/usr/share/misc
 FILESDIR_tmac.vgrind=		/usr/share/tmac
+FILESNAME_tmac.vgrind=		vgrind.tmac
 .endif
 
 SCRIPTS=	vgrind.sh
