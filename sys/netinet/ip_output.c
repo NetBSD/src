@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.13 1994/01/10 20:14:23 mycroft Exp $
+ *	$Id: ip_output.c,v 1.14 1994/01/18 02:36:53 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -1064,7 +1064,7 @@ ip_mloopback(ifp, m, dst)
 		ip->ip_off = htons((u_short)ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
-		(void) looutput(ifp, copym, (struct sockaddr *)dst);
+		(void) looutput(ifp, copym, (struct sockaddr *)dst, 0);
 	}
 }
 #endif
