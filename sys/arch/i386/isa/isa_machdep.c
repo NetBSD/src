@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 1995/04/21 04:53:05 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 1995/06/04 08:32:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -163,7 +163,7 @@ intr_calculatemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 4; level++) {
+	for (level = 0; level < 5; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
@@ -175,9 +175,15 @@ intr_calculatemasks()
 #include "sl.h"
 #include "ppp.h"
 #if NSL > 0 || NPPP > 0
-	/* In the presence of SLIP or PPP, splimp > spltty. */
-	imask[IPL_NET] |= imask[IPL_TTY];
+	/* In the presence of SLIP or PPP, imp > tty. */
+	imask[IPL_IMP] |= imask[IPL_TTY];
 #endif
+
+	/*
+	 * There are network and disk drivers that use free() at interrupt
+	 * time, so imp > (net | bio).
+	 */
+	imask[IPL_IMP] |= imask[IPL_NET] | imask[IPL_BIO];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
