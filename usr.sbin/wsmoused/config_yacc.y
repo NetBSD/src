@@ -1,4 +1,4 @@
-/* $NetBSD: config_yacc.y,v 1.2 2003/08/06 18:07:53 jmmv Exp $ */
+/* $NetBSD: config_yacc.y,v 1.3 2003/08/06 22:11:49 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.2 2003/08/06 18:07:53 jmmv Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.3 2003/08/06 22:11:49 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -60,10 +60,10 @@ static struct block *Conf;
 
 %token TK_EOL
 %token TK_EQUAL TK_LBRACE TK_RBRACE
-%token TK_STRING TK_EVENT TK_EVENTPROP TK_MODE TK_MODEPROP
-%type <string> TK_STRING TK_EVENTPROP TK_MODEPROP
-%type <prop> eventprop modeprop
-%type <block> main outermode mode outerevent event
+%token TK_STRING TK_MODE TK_MODEPROP
+%type <string> TK_STRING TK_MODEPROP
+%type <prop> modeprop
+%type <block> main outermode mode
 %union {
 	char *string;
 	struct prop *prop;
@@ -91,7 +91,7 @@ main :
 	| error TK_EOL		{ yyerrok; }
 ;
 
-/* Defines the aspect of a mode definition. Returns the block given by the
+/* Defines the aspect of a mode definition.  Returns the block given by the
    mode definition itself. */
 outermode :
 	  TK_MODE TK_STRING TK_LBRACE mode TK_RBRACE
@@ -102,51 +102,18 @@ outermode :
 				  $$->b_name = strdup($2); }
 ;
 
-/* Matches a mode and returns a block defining it. Can contain properties
-   and event definitions. */
+/* Matches a mode and returns a block defining it.  Contains properties */
 mode :
 	  modeprop		{ struct block *b = block_new(BLOCK_MODE);
 				  block_add_prop(b, $1);
 				  $$ = b; }
 	| mode modeprop		{ block_add_prop($1, $2); }
-	| outerevent		{ struct block *b = block_new(BLOCK_MODE);
-				  block_add_child(b, $1);
-				  $$ = b; }
-	| mode outerevent	{ block_add_child($1, $2); }
 	| error TK_EOL		{ yyerrok; }
-;
-
-/* Defines the aspect of an event definition. Returns the block given by the
-   event definition itself. */
-outerevent :
-	  TK_EVENT TK_LBRACE event TK_RBRACE
-				{ $$ = $3; }
-	  TK_EVENT TK_LBRACE TK_RBRACE
-				{ $$ = block_new(BLOCK_EVENT); }
-;
-
-/* Matches an event and returns a block defining it. Contains properties. */
-event :
-	  eventprop		{ struct block *b = block_new(BLOCK_EVENT);
-				  block_add_prop(b, $1);
-				  $$ = b; }
-	| event eventprop	{ block_add_prop($1, $2); }
-	| error TK_EOL		{ yyerrok; }
-	| error			{ yyerrok; }
 ;
 
 /* Matches a mode property and returns a prop defining it. */
 modeprop :
 	TK_MODEPROP TK_EQUAL TK_STRING TK_EOL
-				{ struct prop *p = prop_new();
-				  p->p_name = strdup($1);
-				  p->p_value = strdup($3);
-				  $$ = p; }
-;
-
-/* Matches an event property and returns a prop defining it. */
-eventprop :
-	TK_EVENTPROP TK_EQUAL TK_STRING TK_EOL
 				{ struct prop *p = prop_new();
 				  p->p_name = strdup($1);
 				  p->p_value = strdup($3);

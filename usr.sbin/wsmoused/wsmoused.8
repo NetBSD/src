@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.12 2003/08/06 18:07:53 jmmv Exp $
+.\" $NetBSD: wsmoused.8,v 1.13 2003/08/06 22:11:50 jmmv Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm wsmoused
-.Nd mouse console daemon
+.Nd multipurpose mouse daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar device
@@ -76,6 +76,33 @@ Many other details can be tuned.
 See
 .Xr wsmoused.conf 5
 for more information.
+.Pp
+.Nm
+is designed to be a multipurpose mouse daemon.
+Functionality is provided though independant
+.Em modes ,
+enabled either though the
+.Fl m
+flag or though the
+.Sq modes
+property in the configuration file (the former takes precedence).
+.Ss The action mode
+The
+.Sq action
+mode executes commands upon receivement of mouse button events.
+Commands can be associated on a button basis, and can differenciate between
+push or release events.
+.Ss The selection mode
+The
+.Sq selection
+mode provides visual copy and paste support in text consoles when using
+the
+.Xr wscons 4
+device.
+A selection is created by clicking with the mouse primary button at any
+point on the screen and dragging it while clicked.
+When the button is released, the selected text is copied to an internal
+buffer for further pasting with the secondary button.
 .Sh FILES
 .Bl -tag -width /dev/wsmoused.conf -compact
 .It Pa /dev/ttyE[0-n]
@@ -88,44 +115,77 @@ mouse control device
 default configuration file
 .El
 .Sh SECURITY CONSIDERATIONS
-Be ABSOLUTELY sure that
+When using the
+.Sq action
+mode, commands specified in the configuration file are executed as the
+user who started the daemon.
+By default, this user is
+.Sq root
+when using the
+.Xr rc.subr 8
+framework.
+You should set
+.Sq wsmoused_user="<some_user>"
+in
+.Xr rc.conf 5
+to a safer user (and adjust file permissions accordingly) if the commands
+you want to execute do not require superuser privileges.
+An alternative is to use
+.Xr su 1
+as part of the command string in the configuration file.
+.Pp
+When enabling the kernel option
+.Cd options WSDISPLAY_CHARFUNCS ,
+only needed by the
+.Sq selection
+mode, be absolutely sure that
 .Pa /dev/ttyE*
-devices have restrictive permissions as the mouse uses some functions
+devices have restrictive permissions; the mouse uses some functions
 that could allow terminal snooping if improperly set.
 .Sh NOTES
-The mouse cursor is only visible for a short time.
-It will disappear
-when you stop moving it to avoid console corruption if there is any
-output while it is visible.
-.Pp
-.Cd options WSDISPLAY_CHARFUNCS
-is needed in your kernel configuration file in
-order to get mouse console support.
-.Pp
-When you return from the X screen to another terminal there is a small
-time delay until the mouse works again.
-The delay is needed to allow X
+The following notes apply to all work modes:
+.Bl -bullet
+.It
+When switching from the X screen to a text terminal, there is a small
+delay (five seconds) until the mouse works again.
+This time is used by X
 to close the mouse device properly.
+.El
 .Pp
-It's needed that you change the getty program which runs in the first
+The following notes apply to the
+.Sq selection
+mode only:
+.Bl -bullet
+.It
+The mouse cursor is only visible for a short period of time.
+It will disappear
+when you stop moving it to avoid console corruption (which happens if
+it is visible and there is text output).
+.It
+.Cd options WSDISPLAY_CHARFUNCS
+is needed in your kernel configuration file.
+.It
+You need to change the getty program which is run in the first
 virtual terminal to use
 .Pa /dev/ttyE0
 instead of
 .Pa /dev/console .
-If you do not change this, you may have problems.
-You need to edit
+To do this, edit
 .Pa /etc/ttys
 and
-.Pa /etc/wscons.conf
-to make this change.
+.Pa /etc/wscons.conf .
+.El
 .Sh SEE ALSO
+.Xr su 1 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
 .Xr wsmouse 4 ,
+.Xr rc.conf 5 ,
 .Xr ttys 5 ,
 .Xr wscons.conf 5 ,
 .Xr wsmoused.conf 5 ,
-.Xr moused 8
+.Xr moused 8 ,
+.Xr rc.subr 8
 .Sh HISTORY
 The
 .Nm

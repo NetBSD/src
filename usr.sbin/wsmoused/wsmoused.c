@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.11 2003/08/06 18:07:53 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.11 2003/08/06 18:07:53 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.12 2003/08/06 22:11:50 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -67,12 +67,18 @@ static char *Pid_File = NULL;
 static int X_Console = -1;
 
 #ifdef WSMOUSED_SELECTION_MODE
+extern struct mode_bootstrap Action_Mode;
+#endif
+#ifdef WSMOUSED_SELECTION_MODE
 extern struct mode_bootstrap Selection_Mode;
 #endif
 
-#define MAX_MODES 1
+#define MAX_MODES 2
 static struct mode_bootstrap *Modes[MAX_MODES];
 static struct mode_bootstrap *Avail_Modes[] = {
+#ifdef WSMOUSED_ACTION_MODE
+	&Action_Mode,
+#endif
 #ifdef WSMOUSED_SELECTION_MODE
 	&Selection_Mode,
 #endif
