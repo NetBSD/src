@@ -1,4 +1,4 @@
-# $NetBSD: std.evbsh3.eb,v 1.1 2001/01/03 23:49:22 itojun Exp $
+# $NetBSD: std.evbsh3.eb,v 1.2 2001/01/04 07:03:22 itojun Exp $
 #
 # standard, required NetBSD/evbsh3 'options'
  
@@ -8,3 +8,4 @@ options	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	ENDIAN="-EB"
 makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
+makeoptions 	MACHINE_ARCH=sh3eb
