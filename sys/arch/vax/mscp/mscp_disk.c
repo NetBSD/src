@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.5 1996/10/13 03:35:05 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.6 1996/11/15 03:19:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -816,7 +816,10 @@ udadumpwait(udaddr, bits)
 
 	while ((udaddr->udasa & bits) == 0) {
 		if (udaddr->udasa & UDA_ERR) {
-			printf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
+			char bits[64];
+			printf("udasa=%s\ndump ",
+			    bitmask_snprintf(udaddr->udasa, udasr_bits,
+			    bits, sizeof(bits)));
 			return (1);
 		}
 		if (todr() >= timo) {
@@ -848,7 +851,9 @@ udadumpcmd(op, ud, ui)
 	ud->uda1_ca.ca_rspdsc |= MSCP_OWN | MSCP_INT;
 	ud->uda1_ca.ca_cmddsc |= MSCP_OWN | MSCP_INT;
 	if (udaddr->udasa & UDA_ERR) {
-		printf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
+		char bits[64];
+		printf("udasa=%s\ndump ", bitmask_snprintf(udaddr->udasa,
+		    udasr_bits, bits, sizeof(bits)));
 		return (1);
 	}
 	n = udaddr->udaip;

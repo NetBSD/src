@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.24 1996/10/13 03:34:52 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.25 1996/11/15 03:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -451,10 +451,15 @@ deintr(unit)
 			if (rp->r_flags & XFLG_ERRS) {
 				/* output error */
 				ds->ds_if.if_oerrors++;
-				if (dedebug)
-			printf("de%d: oerror, flags=%b tdrerr=%b (len=%d)\n",
-				    unit, rp->r_flags, XFLG_BITS,
-				    rp->r_tdrerr, XERR_BITS, rp->r_slen);
+				if (dedebug) {
+					char bits[64];
+					printf("de%d: oerror, flags=%s ",
+					    unit, bitmask_snprintf(rp->r_flags,
+					    XFLG_BITS, bits, sizeof(bits)));
+					printf("tdrerr%s (len=%d)\n",
+					    rp->r_tdrerr, XERR_BITS,
+					    bits, sizeof(bits));
+				}
 			} else if (rp->r_flags & XFLG_ONE) {
 				/* one collision */
 				ds->ds_if.if_collisions++;
@@ -522,10 +527,16 @@ derecv(unit)
 		    (rp->r_lenerr & (RERR_BUFL|RERR_UBTO|RERR_NCHN)) ||
 		    len < ETHERMIN || len > ETHERMTU) {
 			ds->ds_if.if_ierrors++;
-			if (dedebug)
-			printf("de%d: ierror, flags=%b lenerr=%b (len=%d)\n",
-				unit, rp->r_flags, RFLG_BITS, rp->r_lenerr,
-				RERR_BITS, len);
+			if (dedebug) {
+				char bits[64];
+				printf("de%d: ierror, flags=%s ",
+				    unit, bitmask_snprintf(rp->r_flags,
+				    RFLG_BITS, bits, sizeof(bits)));
+				printf("lenerr=%s (len=%d)\n",
+				    bitmask_snprintf(rp->r_lenerr,
+				    RERR_BITS, bits, sizeof(bits)),
+				    len);
+			}
 		} else
 			deread(ds, &ds->ds_ifr[ds->ds_rindex], len);
 
@@ -670,10 +681,13 @@ dewait(ds, fn)
 		;
 	csr0 = addr->pcsr0;
 	addr->pchigh = csr0 >> 8;
-	if (csr0 & PCSR0_PCEI)
-		printf("de%d: %s failed, csr0=%b csr1=%b\n", 
-		    ds->ds_dev.dv_unit, fn, csr0, PCSR0_BITS, 
-		    addr->pcsr1, PCSR1_BITS);
+	if (csr0 & PCSR0_PCEI) {
+		char bits[64];
+		printf("de%d: %s failed, csr0=%s ", ds->ds_dev.dv_unit, fn,
+		    bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
+		printf("csr1=%s\n", bitmask_snprintf(addr->pcsr1, PCSR1_BITS,
+		    bits, sizeof(bits)));
+	}
 	return (csr0 & PCSR0_PCEI);
 }
 
