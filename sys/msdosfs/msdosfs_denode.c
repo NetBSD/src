@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.37 2000/02/01 10:33:18 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.38 2000/02/01 13:55:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -620,8 +620,9 @@ msdosfs_inactive(v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x, MNT_RDONLY %x\n",
-	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
+	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x %s",
+	       dep, dep->de_refcnt, vp->v_mount->mnt_flag,
+		(vp->v_mount->mnt_flag & MNT_RDONLY) ? "MNT_RDONLY" : "");
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
