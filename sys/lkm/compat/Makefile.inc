@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/12/12 11:44:43 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2001/12/12 12:06:46 lukem Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
-
-NOMAN=	# defined
 
 .include <bsd.own.mk>
 
