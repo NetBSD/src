@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xevar.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: if_xevar.h,v 1.2 1999/03/04 14:18:25 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -34,6 +34,3 @@ struct xe_softc {
   struct nextdma_config sc_rxdma;
   struct nextdma_config sc_txdma;
 };
-
-void nextdma_init __P((struct nextdma_config *));
-int nextdma_intr __P((struct nextdma_config *));
