@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2002/04/12 03:28:07 lukem Exp $
+#	$NetBSD: list,v 1.12 2002/04/13 13:39:26 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -32,7 +32,7 @@ PROG	sbin/mount_ffs
 PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
-PROG	sbin/newfs
+PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
@@ -52,12 +52,12 @@ PROG	usr/mdec/installboot
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
+# init invokes the shell as -sh
+ARGVLN	sh -sh
+
 SPECIAL	ping	srcdir	distrib/utils/x_ping
 
 LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
-
-# init invokes the shell as -sh
-ARGVLN	sh -sh
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
