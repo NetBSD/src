@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.1 1995/08/04 08:26:52 thorpej Exp $
+#	$NetBSD: BASALT,v 1.2 1995/09/21 07:27:52 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -40,6 +40,8 @@ options		MFS		# Memory-based filesystem
 # Networking options
 options		INET		# Internet protocols
 options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options		GATEWAY		# Packet forwarding + larger mb_map
+options		NMBCLUSTERS="1024"	# Crank this up
 
 # Options for HP hardware
 options		FPSP		# floating point interface for 68040
@@ -84,6 +86,7 @@ device		grf0	at scode?
 pseudo-device	pty		128	# pseudo ptys
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	bpfilter	4	# packet filter devices
+pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ite			# terminal emulation on grf
 pseudo-device	loop			# loopback network interface
 pseudo-device	ether			# basic ethernet support
