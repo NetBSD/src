@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 1996/11/09 22:27:22 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 1996/12/10 18:33:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1817,7 +1817,7 @@ _ectype:
 _protorp:
 	.long	0,0		| prototype root pointer
 _prototc:
-	.long	0,0		| prototype translation control
+	.long	0		| prototype translation control
 	.globl	_bootpart,_bootdevlun,_bootctrllun,_bootaddr,_boothowto
 _bootpart:
 	.long	0
