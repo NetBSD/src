@@ -1,3 +1,5 @@
+/*	$NetBSD: snmp.h,v 1.2 1995/10/09 03:52:00 thorpej Exp $	*/
+
 /*
  *    This file contains excepts from ISODE include files, and is 
  *    subject to the following notice:
