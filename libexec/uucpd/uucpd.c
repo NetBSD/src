@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.15 1999/09/24 17:59:27 sommerfeld Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.16 2001/11/15 14:23:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.15 1999/09/24 17:59:27 sommerfeld Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.16 2001/11/15 14:23:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,9 @@ int hisaddrlen = sizeof hisctladdr;
 struct	sockaddr_in myctladdr;
 int mypid;
 
-char Username[64];
+char Logname[64], Username[64];
 char *nenv[] = {
+	Logname,
 	Username,
 	NULL,
 };
@@ -190,6 +191,7 @@ doit(sinp)
 		return;
 	}
 	alarm(0);
+	sprintf(Logname, "LOGNAME=%s", user);
 	sprintf(Username, "USER=%s", user);
 	dologin(pw, sinp);
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0 ||
