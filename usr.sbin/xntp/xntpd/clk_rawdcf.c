@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.3 1998/04/01 15:01:20 christos Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.4 1998/04/09 17:17:28 thorpej Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_rawdcf.c,v 3.23 1997/01/19 12:44:39 kardel Exp
@@ -375,7 +375,7 @@ static u_long cvt_rawdcf(bp, size, vf, clock, vt)
 	}
       else
 	{
-	  parseprintf(DD_RAWDCF,("parse: cvt_rawdcf: character check for 0x%x@%d FAILED\n", *s, s - buffer));
+	  parseprintf(DD_RAWDCF,("parse: cvt_rawdcf: character check for 0x%x@%ld FAILED\n", *s, (long)(s - buffer)));
 	  *s = ~0;
 	  rtc = CVT_FAIL|CVT_BADFMT;
 	}
