@@ -33,29 +33,29 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.5 1994/06/26 16:13:06 jtc Exp $";
+static char *rcsid = "$Id: psignal.c,v 1.6 1994/10/06 18:07:45 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Print the name of the signal indicated
  * along with the supplied message.
  */
-#include <sys/signal.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
+
+extern char *__strsignal __P((int , char *));
 
 void
 psignal(sig, s)
 	unsigned int sig;
 	const char *s;
 {
+	static char buf[128];
 	register const char *c;
 	register int n;
 
-	if (sig < NSIG)
-		c = sys_siglist[sig];
-	else
-		c = "Unknown signal";
+	c = __strsignal(sig, buf);
 	if (s && *s) {
 		n = strlen(s);
 		(void)write(STDERR_FILENO, s, n);
