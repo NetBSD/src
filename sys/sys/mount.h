@@ -78,7 +78,9 @@ struct statfs {
 #define	MOUNT_MFS	3		/* Memory Filesystem */
 #define	MOUNT_MSDOS	4		/* MSDOS Filesystem */
 #define MOUNT_ISOFS	5		/* iso9660 cdrom */
-#define	MOUNT_MAXTYPE	5
+#define MOUNT_FDESC	6		/* /dev/fd filesystem */
+#define MOUNT_KERNFS	7		/* kernel variable filesystem */
+#define	MOUNT_MAXTYPE	7
 
 /*
  * Structure per mounted file system.
@@ -106,6 +108,7 @@ struct mount {
 #define	MNT_NOEXEC	0x00000004	/* can't exec from filesystem */
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
+#define	MNT_UNION	0x00000020	/* union with underlying filesysem */
 
 /*
  * exported mount flags.
