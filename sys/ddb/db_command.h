@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
+/*	$NetBSD: db_command.h,v 1.9 1997/09/11 06:55:57 scottr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,7 @@ void db_help_cmd __P((void));
 void db_command_loop __P((void));
 void db_error __P((char *));
 void db_fncall __P((db_expr_t, int, db_expr_t, char *));
+void db_reboot_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 db_addr_t	db_dot;		/* current location */
 db_addr_t	db_last_addr;	/* last explicit address typed */
