@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.12 1997/11/13 04:48:48 thorpej Exp $	*/
+/*	$NetBSD: term.c,v 1.13 1998/01/30 02:27:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
 #if 0
-static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.12 1997/11/13 04:48:48 thorpej Exp $");
+__RCSID("$NetBSD: term.c,v 1.13 1998/01/30 02:27:34 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
