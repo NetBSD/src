@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1997/03/13 15:58:55 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 1997/06/10 19:19:01 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -525,7 +525,7 @@ context_free(pmap)		/* :) */
 					panic("context_free: unknown sme at va=0x%x", va);
 				if (pmap_debug & PMD_SEGMAP)
 					printf("pmap: set_segmap ctx=%d v=%x old=%x new=ff (cf)\n",
-						   ctxnum, _trunc_seg(va), sme);
+						   ctxnum, m68k_trunc_seg(va), sme);
 #endif
 				/* Did cache flush above (whole context). */
 				set_segmap(va, SEGINV);
@@ -1550,7 +1550,7 @@ pmap_next_page(paddr)
 {
 	/* Is it time to skip over the hole? */
 	if (avail_next == hole_start)
-		avail_next += _round_page(hole_size);
+		avail_next += m68k_round_page(hole_size);
 
 	/* Any available memory remaining? */
 	if (avail_next >= avail_end)
@@ -1795,7 +1795,7 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	}
 #endif
 
-	va = _trunc_seg(sva);
+	va = m68k_trunc_seg(sva);
 	sme = get_segmap(va);
 #ifdef	DIAGNOSTIC
 	/* Make sure it is valid and known. */
@@ -1885,7 +1885,7 @@ pmap_remove_range_mmu(pmap, sva, eva)
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_SEGMAP) {
 				printf("pmap: set_segmap ctx=%d v=%x old=%x new=ff (rm2)\n",
-					   get_context(), _trunc_seg(sva),
+					   get_context(), m68k_trunc_seg(sva),
 					   pmegp->pmeg_index);
 			}
 #endif
@@ -1970,7 +1970,7 @@ pmap_remove_range(pmap, sva, eva)
 	PMAP_LOCK();
 
 #ifdef	DIAGNOSTIC
-	if (_trunc_seg(sva) != _trunc_seg(eva-NBPG))
+	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-NBPG))
 		panic("pmap_remove_range: bad range!");
 #endif
 
@@ -2054,7 +2054,7 @@ pmap_remove(pmap, sva, eva)
 
 	va = sva;
 	while (va < eva) {
-		neva = _trunc_seg(va) + NBSG;
+		neva = m68k_trunc_seg(va) + NBSG;
 		if (neva > eva)
 			neva = eva;
 		pmap_remove_range(pmap, va, neva);
@@ -2115,14 +2115,14 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 		new_pte |= PG_NC;
 	}
 
-	seg_va = _trunc_seg(va);
+	seg_va = m68k_trunc_seg(va);
 	do_pv = TRUE;
 
 	PMAP_LOCK();
 
 	sme = get_segmap(va);
 	if (sme == SEGINV) {
-		pmegp = pmeg_allocate(kernel_pmap, _trunc_seg(va));
+		pmegp = pmeg_allocate(kernel_pmap, m68k_trunc_seg(va));
 		sme = pmegp->pmeg_index;
 		set_segmap_allctx(va, sme);
 #ifdef PMAP_DEBUG
@@ -2130,7 +2130,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 			printf("pmap: set_segmap pmap=%p va=%x sme=%x (ek1)\n",
 				   kernel_pmap, seg_va, sme);
 		}
-		pmeg_verify_empty(_trunc_seg(va));
+		pmeg_verify_empty(m68k_trunc_seg(va));
 #endif
 		/* There are no existing mappings to deal with. */
 		old_pte = 0;
@@ -2255,7 +2255,7 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 #endif
 
 	segnum = VA_SEGNUM(va);
-	seg_va = _trunc_seg(va);
+	seg_va = m68k_trunc_seg(va);
 	do_pv = TRUE;
 
 	PMAP_LOCK();
@@ -2552,7 +2552,7 @@ int pmap_fault_reload(pmap, va, ftype)
 	}
 	if (va >= VM_MAXUSER_ADDRESS)
 		return (0);
-	seg_va = _trunc_seg(va);
+	seg_va = m68k_trunc_seg(va);
 
 	/* Make sure context is correct. */
 	ctx = get_context();
@@ -2901,7 +2901,7 @@ pmap_protect_range_mmu(pmap, sva, eva)
 	}
 #endif
 
-	va = _trunc_seg(sva);
+	va = m68k_trunc_seg(sva);
 	sme = get_segmap(va);
 #ifdef	DIAGNOSTIC
 	/* Make sure it is valid and known. */
@@ -3030,7 +3030,7 @@ pmap_protect_range(pmap, sva, eva)
 		printf("pmap_protect_range(%p, %x, %x)\n", pmap, sva, eva);
 #endif
 #ifdef	DIAGNOSTIC
-	if (_trunc_seg(sva) != _trunc_seg(eva-NBPG))
+	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-NBPG))
 		panic("pmap_protect_range: bad range!");
 #endif
 
@@ -3123,7 +3123,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 	va = sva;
 	while (va < eva) {
-		neva = _trunc_seg(va) + NBSG;
+		neva = m68k_trunc_seg(va) + NBSG;
 		if (neva > eva)
 			neva = eva;
 		pmap_protect_range(pmap, va, neva);
