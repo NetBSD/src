@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 1998/06/12 23:59:23 tv Exp $	*/
+/*	$NetBSD: conf.h,v 1.4 1998/08/20 06:28:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -62,6 +62,13 @@ cdev_decl(md);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+
+/* open, close, read, ioctl */
+#define	cdev_joy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
 
 /* open, close, write, ioctl */
 #define cdev_beep_init(c,n) { \
@@ -146,3 +153,4 @@ cdev_decl(prof);
 #define ofromread  ofromrw
 #define ofromwrite ofromrw
 cdev_decl(ofrom);
+cdev_decl(joy);
