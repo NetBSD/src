@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.23 2003/02/21 04:01:07 simonb Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.24 2003/02/23 04:32:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.23 2003/02/21 04:01:07 simonb Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.24 2003/02/23 04:32:07 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -560,10 +560,14 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	sumblock = malloc(lfsp->lfs_sumsize);
 
 	if (lfsp->lfs_version > 1 && segnum == 0) {
-		/* First segment eats the label as well as the superblock */
-		sum_offset += fragroundup(lfsp, LFS_LABELPAD);
-		addr += btofsb(lfsp, fragroundup(lfsp, LFS_LABELPAD));
-		printf("Disklabel at 0x0\n");
+		if (fsbtob(lfsp, lfsp->lfs_start) < LFS_LABELPAD) {
+			/* First segment eats the disklabel */
+			sum_offset += fragroundup(lfsp, LFS_LABELPAD) -
+				      fsbtob(lfsp, lfsp->lfs_start);
+			addr += btofsb(lfsp, fragroundup(lfsp, LFS_LABELPAD)) -
+				lfsp->lfs_start;
+			printf("Disklabel at 0x0\n");
+		}
 	}
 
 	sb = 0;
