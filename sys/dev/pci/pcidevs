@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.244 2000/07/20 14:46:51 ad Exp $
+$NetBSD: pcidevs,v 1.245 2000/07/23 00:14:15 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1654,7 +1654,10 @@ product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
 
 /* Yamaha products */
-product YAMAHA YMF724E_V 0x0004	724 Audio
+product YAMAHA YMF724	0x0004	724 Audio
+product YAMAHA YMF740	0x000A  740 Audio
+product YAMAHA YMF740C	0x000C  740C (DS-1) Audio
+product YAMAHA YMF724F	0x000D  724F (DS-1) Audio
 product YAMAHA YMF744B	0x0010	744 (DS-1S) Audio
 product YAMAHA YMF754	0x0012	754 (DS-1E) Audio
 
