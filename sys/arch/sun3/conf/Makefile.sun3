@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.74 1999/01/15 23:21:27 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.75 1999/07/09 09:53:00 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -71,6 +71,8 @@ APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
 AFLAGS=
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 ### find out what to use for libkern
 KERN_AS=	obj

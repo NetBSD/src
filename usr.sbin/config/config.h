@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.44 1999/07/09 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.45 1999/07/09 09:53:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -348,6 +348,7 @@ struct	files *allfiles;	/* list of all kernel source files */
 struct	objects *allobjects;	/* list of all kernel object and library
 				   files */
 struct prefix *prefixes;	/* prefix stack */
+struct prefix *allprefixes;	/* all prefixes used (after popped) */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */

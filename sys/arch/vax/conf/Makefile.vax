@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.47 1999/01/17 19:09:00 matt Exp $
+#	$NetBSD: Makefile.vax,v 1.48 1999/07/09 09:53:01 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -58,6 +58,8 @@ CFLAGS+=	-mno-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

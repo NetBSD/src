@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.68 1999/01/15 23:37:06 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.69 1999/07/09 09:52:57 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -54,6 +54,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
