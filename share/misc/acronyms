@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.10 1999/07/16 09:05:47 mycroft Exp $
+$NetBSD: acronyms,v 1.11 1999/07/16 09:07:52 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -19,6 +19,9 @@ ISTR	I seem to recall
 L8R	later
 OIC	oh, I see
 PPL	pretty please
+RTFB	read the fine book
+RTFM	read the fine manual
+RTFMP	read the fine man page
 SMOP	simple matter of programming
 SOL	shit out [of] luck
 UTSL	use the source, Luke
