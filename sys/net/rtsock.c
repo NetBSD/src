@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.7 1994/02/10 17:25:06 mycroft Exp $
+ *	$Id: rtsock.c,v 1.8 1994/05/07 04:26:58 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -493,6 +493,7 @@ struct sockaddr *gate, *mask, *src;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 }
 
+#ifdef notdef
 #include <sys/kinfo.h>
 struct walkarg {
 	int	w_op, w_arg;
@@ -636,6 +637,7 @@ rt_walk(rn, f, w)
 		rn = rn->rn_p->rn_r;		/* otherwise, go right*/
 	}
 }
+#endif
 
 /*
  * Definitions of protocols supported in the ROUTE domain.
