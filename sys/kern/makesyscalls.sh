@@ -1,6 +1,6 @@
 #! /bin/sh -
-#	from: @(#)makesyscalls.sh	7.6 (Berkeley) 4/20/91
-#	$Id: makesyscalls.sh,v 1.7 1994/05/17 00:01:00 cgd Exp $
+#	from: @(#)makesyscalls.sh	8.1 (Berkeley) 6/10/93
+#	$Id: makesyscalls.sh,v 1.8 1994/05/18 04:15:51 mycroft Exp $
 
 set -e
 
@@ -67,9 +67,6 @@ awk < $1 "
 		printf "char *syscallnames[] = {\n" > sysnames
 
 		printf " * created from: %s %s %s %s\n */\n\n",$2,$3,$4,$5 > syshdr
-		printf "#ifndef _SYS_SYSCALL_H\n" > syshdr
-		printf "#define _SYS_SYSCALL_H\n" > syshdr
-		printf "\n" > syshdr
 		next
 	}
 	NF == 0 || $1 ~ /^;/ {
@@ -113,7 +110,7 @@ awk < $1 "
 	}
 	$2 == "STD" || $2 == "NODEF" {
 		printf("int\t%s();\n", $4) > sysdcl
-		printf("\t%d, %s,\t\t\t/* %d = %s */\n", \
+		printf("\t{ %d, %s },\t\t\t/* %d = %s */\n", \
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"%s\",\t\t\t/* %d = %s */\n", \
 		    $5, syscall, $5) > sysnames
@@ -125,7 +122,7 @@ awk < $1 "
 	}
 	$2 == "COMPAT" {
 		printf("int\to%s();\n", $4) > syscompat
-		printf("\tcompat(%d,%s),\t\t/* %d = old %s */\n", \
+		printf("\t{ compat(%d,%s) },\t\t/* %d = old %s */\n", \
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"old.%s\",\t\t/* %d = old %s */\n", \
 		    $5, syscall, $5) > sysnames
@@ -136,7 +133,7 @@ awk < $1 "
 	}
 	$2 == "NCOMPAT" {
 		printf("int\to%s();\n", $4) > sysncompat
-		printf("\tncompat(%d,%s),\t\t/* %d = old %s */\n", \
+		printf("\t{ ncompat(%d,%s) },\t\t/* %d = old %s */\n", \
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"old.%s\",\t\t/* %d = old %s */\n", \
 		    $5, syscall, $5) > sysnames
@@ -147,7 +144,7 @@ awk < $1 "
 	}
 	$2 == "LIBCOMPAT" {
 		printf("int\to%s();\n", $4) > syscompat
-		printf("\tcompat(%d,%s),\t\t/* %d = old %s */\n", \
+		printf("\t{ compat(%d,%s) },\t\t/* %d = old %s */\n", \
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"old.%s\",\t\t/* %d = old %s */\n", \
 		    $5, syscall, $5) > sysnames
@@ -157,7 +154,7 @@ awk < $1 "
 		next
 	}
 	$2 == "OBSOL" {
-		printf("\t0, nosys,\t\t\t/* %d = obsolete %s */\n", \
+		printf("\t{ 0, nosys },\t\t\t/* %d = obsolete %s */\n", \
 		    syscall, comment) > sysent
 		printf("\t\"obs_%s\",\t\t\t/* %d = obsolete %s */\n", \
 		    $4, syscall, comment) > sysnames
@@ -167,7 +164,7 @@ awk < $1 "
 		next
 	}
 	$2 == "UNIMPL" {
-		printf("\t0, nosys,\t\t\t/* %d = %s */\n", \
+		printf("\t{ 0, nosys },\t\t\t/* %d = %s */\n", \
 		    syscall, comment) > sysent
 		printf("\t\"#%d\",\t\t\t/* %d = %s */\n", \
 		    syscall, syscall, comment) > sysnames
@@ -191,9 +188,6 @@ awk < $1 "
 		printf("int\tnsysent = sizeof(sysent) / sizeof(sysent[0]);\n") > sysent
 
 		printf("};\n") > sysnames
-
-		printf "\n" > syshdr
-		printf "#endif /* _SYS_SYSCALL_H */\n" > syshdr
 	} '
 
 cat $sysdcl $syscompat $sysncompat $sysent >$syssw
