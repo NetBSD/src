@@ -156,14 +156,19 @@ ipkdbread(kip)
 	while (len > 0) {
 		if (head) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0)
+			if (m == 0) {
+				m_freem(head);
 				goto bad;
+			}
 			l = MLEN;
 		}
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				m_freem(head);
 				goto bad;
+			}
 			l = MCLBYTES;
 		}
 		m->m_len = l = min(len, l);
@@ -207,10 +212,9 @@ ipkdbread(kip)
 
 	ether_input(ifp, eh, head);
 	return 1;
+
 bad:
 	ifp->if_ierrors++;
-	if (head)
-		m_freem(head);
 	/* flush buffer */
 	kip->got = kip->gotbuf;
 	kip->gotlen = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.29 1997/04/27 21:09:56 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.30 1997/04/28 17:04:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1285,6 +1285,7 @@ epget(sc, totlen)
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				splx(sh);
+				m_free(m);
 				m_freem(top);
 				return 0;
 			}
