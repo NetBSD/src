@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.20 1997/10/19 19:15:30 oki Exp $
+#	$NetBSD: Makefile,v 1.21 1997/10/22 23:51:27 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .if	(${MACHINE} != "i386")   && \
 	(${MACHINE} != "pica")   && \
 	(${MACHINE} != "pmax")
 LIB=	kvm
-CFLAGS+=-DLIBC_SCCS
+CPPFLAGS+=-DLIBC_SCCS
 
 SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
