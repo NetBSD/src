@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24 1999/03/23 08:42:39 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.25 1999/08/28 09:19:04 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -960,7 +960,7 @@ esp_dma_go(sc)
 	}
 
 	nextdma_start(&esc->sc_scsi_dma, 
-			(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+			(esc->sc_datain ? DMACSR_SETREAD : DMACSR_SETWRITE));
 
 	if (esc->sc_datain) { 
 		NCR_WRITE_REG(sc, ESP_DCTL,

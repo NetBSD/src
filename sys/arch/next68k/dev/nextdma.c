@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.18 1999/08/17 05:09:13 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.19 1999/08/28 09:19:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -646,7 +646,7 @@ nextdma_finished(nd)
 void
 nextdma_start(nd, dmadir)
 	struct nextdma_config *nd;
-	u_long dmadir;								/* 	DMACSR_READ or DMACSR_WRITE */
+	u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
 {
 
 #ifdef DIAGNOSTIC
@@ -671,8 +671,8 @@ nextdma_start(nd, dmadir)
 #endif
 
 #ifdef DIAGNOSTIC
-	if ((dmadir != DMACSR_READ) && (dmadir != DMACSR_WRITE)) {
-		panic("DMA: nextdma_start(), dmadir arg must be DMACSR_READ or DMACSR_WRITE\n");
+	if ((dmadir != DMACSR_SETREAD) && (dmadir != DMACSR_SETWRITE)) {
+		panic("DMA: nextdma_start(), dmadir arg must be DMACSR_SETREAD or DMACSR_SETWRITE\n");
 	}
 #endif
 
@@ -690,7 +690,7 @@ nextdma_start(nd, dmadir)
 	next_dma_rotate(nd);
 
 	DPRINTF(("DMA initiating DMA %s of %d segments on intr(0x%b)\n",
-			(nd->_nd_dmadir == DMACSR_READ ? "read" : "write"), nd->_nd_map->dm_nsegs,
+			(nd->_nd_dmadir == DMACSR_SETREAD ? "read" : "write"), nd->_nd_map->dm_nsegs,
 			NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
