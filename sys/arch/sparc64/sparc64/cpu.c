@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: cpu.c,v 1.36 2004/03/14 18:18:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,11 +52,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2004/03/14 18:18:54 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,16 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2004/02/13 11:36:18 wiz Exp $");
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
 
-/* Our exported CPU info; we have only one for now. */  
-struct cpu_info cpu_info_store;
-
 /* Linked list of all CPUs in system. */
 int ncpus = 0;
 struct cpu_info *cpus = NULL;
 
-struct cpu_bootargs *cpu_args;	/* allocated very earlt in pmap_bootstrap. */
+__volatile cpuset_t cpus_active;/* set of active cpus */
+struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
-static struct cpu_info * alloc_cpuinfo(u_int);
+static struct cpu_info *alloc_cpuinfo(u_int);
+void mp_main(void);
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -91,8 +91,8 @@ char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 /* The CPU configuration driver. */
-static void cpu_attach __P((struct device *, struct device *, void *));
-int  cpu_match __P((struct device *, struct cfdata *, void *));
+void cpu_attach(struct device *, struct device *, void *);
+int cpu_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
@@ -102,39 +102,13 @@ extern struct cfdriver cpu_cd;
 #define	IU_IMPL(v)	((((uint64_t)(v)) & VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((uint64_t)(v)) & VER_MASK) >> VER_MASK_SHIFT)
 
-#ifdef notdef
-/*
- * IU implementations are parceled out to vendors (with some slight
- * glitches).  Printing these is cute but takes too much space.
- */
-static char *iu_vendor[16] = {
-	"Fujitsu",	/* and also LSI Logic */
-	"ROSS",		/* ROSS (ex-Cypress) */
-	"BIT",
-	"LSIL",		/* LSI Logic finally got their own */
-	"TI",		/* Texas Instruments */
-	"Matsushita",
-	"Philips",
-	"Harvest",	/* Harvest VLSI Design Center */
-	"SPEC",		/* Systems and Processes Engineering Corporation */
-	"Weitek",
-	"vendor#10",
-	"vendor#11",
-	"vendor#12",
-	"vendor#13",
-	"vendor#14",
-	"vendor#15"
-};
-#endif
-
-
 struct cpu_info *
 alloc_cpuinfo(cpu_node)
 	u_int cpu_node;
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
-	vsize_t sz = 8*PAGE_SIZE;
+	vsize_t sz = 8 * PAGE_SIZE;
 	int portid;
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
@@ -150,19 +124,19 @@ alloc_cpuinfo(cpu_node)
 			return cpi;
 
 	/* Allocate the aligned VA and determine the size. */
-	va = uvm_km_valloc_align(kernel_map, 8 * PAGE_SIZE, 8 * PAGE_SIZE);
+	va = uvm_km_valloc_align(kernel_map, sz, sz);
 	if (!va)
 		panic("alloc_cpuinfo: no virtual space");
 	va0 = va;
 
 	pa0 = cpu0paddr;
-	cpu0paddr += 8*PAGE_SIZE;
+	cpu0paddr += sz;
 
 	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	cpi = (struct cpu_info*)(va0 + CPUINFO_VA - INTSTACK);
+	cpi = (struct cpu_info *)(va0 + CPUINFO_VA - INTSTACK);
 
 	memset((void *)va0, 0, sz);
 
@@ -173,16 +147,16 @@ alloc_cpuinfo(cpu_node)
 	 * way as is done for the boot CPU in locore.
 	 */
 	cpi->ci_next = NULL;
-	cpi->ci_curlwp = &lwp0;
+	cpi->ci_curlwp = NULL;
 	cpi->ci_number = portid;
 	cpi->ci_cpuid = portid;
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
 	cpi->ci_spinup = NULL;						/* XXX */
-	cpi->ci_eintstack = (void *)(EINTSTACK); 			/* XXX */
-	cpi->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2*PAGE_SIZE); 	/* XXX */
-	cpi->ci_cpcb = cpi->ci_idle_u /* (struct pcb *)va0 */;		/* XXX */
-	cpi->ci_initstack = (void *)((vaddr_t)cpi->ci_idle_u + 2*PAGE_SIZE); /* XXX */
+	cpi->ci_eintstack = (void *)EINTSTACK; 				/* XXX */
+	cpi->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE); 	/* XXX */
+	cpi->ci_cpcb = cpi->ci_idle_u;					/* XXX */
+	cpi->ci_initstack = (void *)((vaddr_t)cpi->ci_idle_u + 2 * PAGE_SIZE); /* XXX */
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
@@ -212,7 +186,7 @@ cpu_match(parent, cf, aux)
  * Discover interesting goop about the virtual address cache
  * (slightly funny place to do it, but this is where it is to be found).
  */
-static void
+void
 cpu_attach(parent, dev, aux)
 	struct device *parent;
 	struct device *dev;
@@ -387,6 +361,8 @@ cpu_boot_secondary_processors()
 	vaddr_t mp_start;
 	int     mp_start_size;
 
+	sparc64_ipi_init();
+
 	cpu_args->cb_ktext = ktext;
 	cpu_args->cb_ktextp = ktextp;
 	cpu_args->cb_ektext = ektext;
@@ -420,10 +396,9 @@ cpu_boot_secondary_processors()
 			continue;
 
 		cpu_args->cb_node = ci->ci_node;
-		cpu_args->cb_flags = 0;
 		cpu_args->cb_cpuinfo =  ci->ci_paddr;
 		cpu_args->cb_initstack = ci->ci_initstack;
-		membar_storeload();
+		membar_sync();
 
 #ifdef DEBUG
 		printf("node %x. cpuinfo %lx, initstack %p\n",
@@ -438,13 +413,14 @@ cpu_boot_secondary_processors()
 		prom_startcpu(ci->ci_node, (void *)mp_start, 0);
 
 		for (i = 0; i < 2000; i++) {
-			if (cpu_args->cb_flags == 1)
+			membar_sync();
+			if (CPUSET_HAS(cpus_active, ci->ci_number))
 				break;
 			delay(10000);
 		}
 		setpstate(pstate);
 
-		if (cpu_args->cb_flags == 0)
+		if (!CPUSET_HAS(cpus_active, ci->ci_number))
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
 		else
 			printf(" cpu%d now spinning idle (waited %d iterations)\n", ci->ci_upaid, i);
@@ -453,22 +429,12 @@ cpu_boot_secondary_processors()
 	printf("\n");
 }
 
-/* XXX */
-void mp_main(void);
 void
 mp_main()
 {
 
-	cpu_args->cb_flags = 1;
-	membar_storeload();
-
-#if 1
-	printf("mp_main: started\n");
-#endif
-
-	while (!cpu_go_smp)
-		;
-
-	printf("mp_main: ...\n");
+	CPUSET_ADD(cpus_active, cpu_number());
+	membar_sync();
+	spl0();
 }
 #endif /* MULTIPROCESSOR */

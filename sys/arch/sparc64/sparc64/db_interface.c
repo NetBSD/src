@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74 2004/01/06 20:41:23 petrov Exp $ */
+/*	$NetBSD: db_interface.c,v 1.75 2004/03/14 18:18:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2004/01/06 20:41:23 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2004/03/14 18:18:54 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -254,9 +254,10 @@ void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watch __P((db_expr_t, int, db_expr_t, char *));
 void db_pm_extract __P((db_expr_t, int, db_expr_t, char *));
+void db_cpus_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 #ifdef DDB
-static void db_dump_pmap __P((struct pmap*));
+static void db_dump_pmap __P((struct pmap *));
 static void db_print_trace_entry __P((struct traptrace *, int));
 
 /*
@@ -350,6 +351,7 @@ kdb_trap(type, tf)
 
 	s = splhigh();
 	db_active++;
+	sparc64_ipi_pause_cpus();
 	cnpollc(TRUE);
 	/* Need to do spl stuff till cnpollc works */
 	tl = ddb_regs.ddb_tl = savetstate(ts);
@@ -358,6 +360,7 @@ kdb_trap(type, tf)
 	restoretstate(tl,ts);
 	cnpollc(FALSE);
 	db_active--;
+	sparc64_ipi_resume_cpus();
 	splx(s);
 
 	if (fplwp) {	
@@ -1130,6 +1133,21 @@ db_watch(addr, have_addr, count, modif)
 	}
 }
 
+void
+db_cpus_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct cpu_info *ci;
+
+	for (ci = cpus; ci; ci = ci->ci_next) {
+		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
+			  ci->ci_number, (u_long)ci->ci_self,
+			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
+	}
+}
 
 #include <uvm/uvm.h>
 
@@ -1181,7 +1199,8 @@ const struct db_command db_machine_command_table[] = {
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
-	{ (char *)0, }
+	{ "cpus",	db_cpus_cmd,	0,	0 },
+	{ NULL, }
 };
 
 #endif	/* DDB */
