@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.4 2003/08/20 17:41:38 drochner Exp $ */
+/* $NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.4 2003/08/20 17:41:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.5 2003/10/27 16:52:01 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -342,6 +342,7 @@ txp_attach(parent, self, aux)
 
 	txp_capabilities(sc);
 
+	callout_init(&sc->sc_tick);
 	callout_setfunc(&sc->sc_tick, txp_tick, sc);
 
 	/*

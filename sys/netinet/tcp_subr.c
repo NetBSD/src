@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.158 2003/10/25 08:13:28 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.159 2003/10/27 16:52:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.158 2003/10/25 08:13:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.159 2003/10/27 16:52:01 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -894,6 +894,16 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
  * the new TCPCB instead.
  */
 static struct tcpcb tcpcb_template = {
+	/*
+	 * If TCP_NTIMERS ever changes, we'll need to update this
+	 * initializer.
+	 */
+	.t_timer = {
+		CALLOUT_INITIALIZER,
+		CALLOUT_INITIALIZER,
+		CALLOUT_INITIALIZER,
+		CALLOUT_INITIALIZER,
+	},
 	.t_delack_ch = CALLOUT_INITIALIZER,
 
 	.t_srtt = TCPTV_SRTTBASE,
@@ -962,7 +972,7 @@ tcp_newtcpcb(family, aux)
 	tp->t_family = family;		/* may be overridden later on */
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
-	/* XXX Figure out a way to make this a bit less painful. */
+	/* Don't sweat this loop; hopefully the compiler will unroll it. */
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_INIT(tp, i);
 
