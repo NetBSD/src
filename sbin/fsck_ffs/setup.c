@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.45 2001/08/17 02:18:47 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.46 2001/09/02 01:58:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.45 2001/08/17 02:18:47 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.46 2001/09/02 01:58:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ setup(dev)
 	struct fs proto;
 	int doskipclean;
 	u_int64_t maxfilesize;
+	struct csum *ccsp;
 
 	havesb = 0;
 	fswritefd = -1;
@@ -349,11 +350,12 @@ setup(dev)
 	 * read in the summary info.
 	 */
 	asked = 0;
+	sblock->fs_csp = (struct csum *)calloc(1, sblock->fs_cssize);
 	for (i = 0, j = 0; i < sblock->fs_cssize; i += sblock->fs_bsize, j++) {
 		size = sblock->fs_cssize - i < sblock->fs_bsize ?
 		    sblock->fs_cssize - i : sblock->fs_bsize;
-		sblock->fs_csp[j] = (struct csum *)calloc(1, (unsigned)size);
-		if (bread(fsreadfd, (char *)sblock->fs_csp[j],
+		ccsp = (struct csum *)((char *)sblock->fs_csp + i);
+		if (bread(fsreadfd, (char *)ccsp,
 		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
@@ -363,28 +365,15 @@ setup(dev)
 			}
 			asked++;
 		}
-		/*
-		 * The following assumes that struct csum is made of
-		 * u_int32_t
-		 */
 		if (doswap) {
-			int k;
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
-
-			for (k = 0; k < size / sizeof(u_int32_t); k++)
-				cd[k] = bswap32(cd[k]);
-			bwrite(fswritefd, (char *)sblock->fs_csp[j],
+			ffs_csum_swap(ccsp, ccsp, size);
+			bwrite(fswritefd, (char *)ccsp,
 			    fsbtodb(sblock,
 				sblock->fs_csaddr + j * sblock->fs_frag),
 			    size);
 		}
-		if (needswap) {
-			int k;
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
-
-			for (k = 0; k < size / sizeof(u_int32_t); k++)
-				cd[k] = bswap32(cd[k]);
-		}
+		if (needswap)
+			ffs_csum_swap(ccsp, ccsp, size);
 	}
 	/*
 	 * allocate and initialize the necessary maps
@@ -603,7 +592,8 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 	asb->fs_optim = sb->fs_optim;
 	asb->fs_rotdelay = sb->fs_rotdelay;
 	asb->fs_maxbpg = sb->fs_maxbpg;
-	memmove(asb->fs_csp, sb->fs_csp, sizeof sb->fs_csp);
+	memmove(asb->fs_ocsp, sb->fs_ocsp, sizeof sb->fs_ocsp);
+	asb->fs_csp = sb->fs_csp;
 	asb->fs_maxcluster = sb->fs_maxcluster;
 	memmove(asb->fs_fsmnt, sb->fs_fsmnt, sizeof sb->fs_fsmnt);
 	memmove(asb->fs_sparecon,
