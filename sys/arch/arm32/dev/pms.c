@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.13 1998/01/13 02:10:05 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.14 1998/01/18 04:13:53 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -184,7 +184,6 @@ pmsinit(sc)
 {
 	int i, j;
 	int mid;
-	int id;
 
 	/* Set up softc */
 	sc->sc_state = 0;
