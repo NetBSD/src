@@ -1,9 +1,13 @@
-#	$Id: Makefile,v 1.13 1995/10/22 00:13:46 christos Exp $
+#	$Id: Makefile,v 1.14 1996/06/09 16:09:56 jtk Exp $
 
 .include "../../Makefile.inc"
 
 CFLAGS += -I${.CURDIR} -I.
+.if !defined(EXPORTABLE_SYSTEM) && exists(${.CURDIR}/../../../domestic/lib/libtelnet)
+LDADD += -lcurses -ltermcap -ltelnet -lkrb -ldes -lcrypt
+.else
 LDADD += -lcurses -ltermcap -ltelnet -lcrypt
+.endif
 DPADD += ${LIBCURSES} ${LIBTERMCAP} /usr/lib/libtelnet.a ${LIBCRYPT}
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
