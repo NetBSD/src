@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.9 2001/10/20 15:31:25 mjl Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.10 2001/10/27 08:16:17 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -194,6 +194,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
 	  PCMCIA_CIS_GEMTEK_WLAN,
 	  PCMCIA_STR_GEMTEK_WLAN },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
+	  PCMCIA_CIS_ELSA_XI800_IEEE,
+	  PCMCIA_STR_ELSA_XI800_IEEE },
 
 	{ 0,
 	  0,
