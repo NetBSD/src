@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.17 1999/03/14 01:42:20 kleink Exp $	*/
+/*	$NetBSD: chown.c,v 1.18 1999/03/14 01:47:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.17 1999/03/14 01:42:20 kleink Exp $");
+__RCSID("$NetBSD: chown.c,v 1.18 1999/03/14 01:47:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,10 @@ static id_t	id __P((const char *, const char *));
 int	main __P((int, char **));
 static void	usage __P((void));
 
-uid_t uid;
-gid_t gid;
-int Rflag, ischown, fflag;
-char *myname;
+static uid_t uid;
+static gid_t gid;
+static int Rflag, ischown, fflag;
+static char *myname;
 
 int
 main(argc, argv)
