@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.16 2002/05/07 14:27:25 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.17 2002/05/09 09:21:25 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -37,6 +37,7 @@ WORKBUILT?=	work.built
 PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
 
+.if !target(${WORKBUILT})					# {
 ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 	@echo "Building tree into ${WORKDIR}"
 	-rm -rf ${WORKDIR} ${WORKBUILT}
@@ -45,6 +46,18 @@ ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 	${PARSELIST} -v mode=populate ${LISTS} | sh -e ${POPULATE_DEBUG} \
 	&& touch ${WORKBUILT}
 
+CLEANFILES+=	${WORKBUILT}
+
+clean cleandir distclean: cleanfsimage
+
+.PHONY: cleanfsimage
+
+cleanfsimage:
+	-rm -rf ${WORKDIR}
+
+.endif	# ! target (${WORKBUILT})				# }
+
+.if !target(${WORKSPEC})					# {
 ${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	( for i in ${MTREECONF}; do	\
@@ -54,7 +67,8 @@ ${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
 	${PARSELIST} -v mode=mtree ${LISTS} >> ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
-CLEANFILES+=	${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
+CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
+.endif	# ! target (${WORKSPEC})				# }
 
 .if defined(IMAGE)						# {
 ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
@@ -81,7 +95,7 @@ release:: check_RELEASEDIR .WAIT ${IMAGE}.gz
 .endif
 
 CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
-.endif	# IMAGE							# }
+.endif	# ! defined(IMAGE)					# }
 
 
 .if defined(IMAGETAR)						# {
@@ -100,12 +114,4 @@ release:: check_RELEASEDIR .WAIT ${IMAGETAR}
 	${RELEASE_INSTALL} ${IMAGETAR} ${RELEASEDIR}/${IMAGETAR_RELEASEDIR}
 .endif
 
-.endif	# IMAGETAR						# }
-
-
-clean cleandir distclean: cleanfsimage
-
-.PHONY: cleanfsimage
-
-cleanfsimage:
-	-rm -rf ${WORKDIR}
+.endif	# ! defined(IMAGETAR)					# }
