@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 1999/07/29 19:14:37 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -161,6 +161,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #endif
 
 #define smgcnputc wsdisplay_cnputc
+#define	smgcnpollc nullcnpollc
 
 cons_decl(gen);
 cons_decl(dz);
@@ -188,7 +189,7 @@ struct	consdev constab[]={
 	cons_init(qd),
 #endif
 #endif
-#if 0 /* NSMG XXX fails due to wscons */
+#if NSMG
 	cons_init(smg),
 #endif
 
