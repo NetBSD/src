@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.145 1999/08/16 21:36:39 mcr Exp $
+$NetBSD: pcidevs,v 1.146 1999/08/17 09:40:25 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,6 +39,7 @@ $NetBSD: pcidevs,v 1.145 1999/08/16 21:36:39 mcr Exp $
  * which replaces the database previously found at
  *
  *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *   or http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
  */
@@ -504,6 +505,7 @@ vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
+vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
@@ -639,6 +641,9 @@ product ADVSYS WIDE	0x2300	ABP-940UW
 
 /* Alliance products */
 product ALLIANCE AT24	0x6424	AT24
+
+/* Alteon products */
+product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
