@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.6 2001/07/18 06:45:34 thorpej Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.7 2001/07/18 06:46:46 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -435,7 +435,7 @@ rf_VerifyParityRAID1(
 			       raidPtr->raidid, nbytes, i, (long) buf1, 
 			       (long) buf2, (long) buf);
 		}
-		ret = bcmp(buf1, buf2, nbytes);
+		ret = memcmp(buf1, buf2, nbytes);
 		if (ret) {
 			if (rf_verifyParityDebug > 1) {
 				for (j = 0; j < nbytes; j++) {
