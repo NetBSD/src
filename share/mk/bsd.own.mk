@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.257 2002/01/26 23:53:00 reinoud Exp $
+#	$NetBSD: bsd.own.mk,v 1.258 2002/01/27 23:33:51 ross Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -369,7 +369,7 @@ MK${var}:=	no
 .endfor
 
 # MK* options which default to "yes".
-.for var in BFD CATPAGES CRYPTO DOC GCC GDB INFO KERBEROS LINKLIB LINT \
+.for var in BFD CATPAGES CRYPTO DOC GCC GDB IEEEFP INFO KERBEROS LINKLIB LINT \
 	    MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
 MK${var}?=	yes
 .endfor

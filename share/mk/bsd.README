@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.91 2002/01/04 19:07:18 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.92 2002/01/27 23:33:51 ross Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -92,6 +92,9 @@ MKGDB		If "no", don't build gdb.  Only meaningful if
 MKGCC		If "no", don't build gcc or any of the gcc-related
 		libraries (libg2c, libgcc, libobjc, libstdc++).
 		Only meaningful if USE_NEW_TOOLCHAIN is set.
+
+MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
+		Has no effect on most platforms.
 
 MKINFO		If "no", don't build or install Info documentation from
 		Texinfo source files.

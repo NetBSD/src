@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.69 2002/01/25 05:21:40 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.70 2002/01/27 23:33:51 ross Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -34,6 +34,13 @@ LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
+.endif
+
+.if defined(MKIEEEFP) && (${MKIEEEFP} != "no")
+.if ${MACHINE_ARCH} == "alpha"
+CFLAGS+=	-mieee
+FFLAGS+=	-mieee
+.endif
 .endif
 
 # Helpers for cross-compiling
