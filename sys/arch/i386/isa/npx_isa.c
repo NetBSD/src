@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.5 2002/09/27 20:33:00 thorpej Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.6 2002/10/01 12:57:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.5 2002/09/27 20:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.6 2002/10/01 12:57:13 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.5 2002/09/27 20:33:00 thorpej Exp $");
 int npx_isa_probe(struct device *, struct cfdata *, void *);
 void npx_isa_attach(struct device *, struct device *, void *);
 
-const struct cfattach npx_isa_ca = {
-	sizeof(struct npx_softc), npx_isa_probe, npx_isa_attach
-};
+CFATTACH_DECL(npx_isa, sizeof(struct npx_softc), npx_isa_probe, npx_isa_attach,
+    NULL, NULL)
 
 int
 npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)

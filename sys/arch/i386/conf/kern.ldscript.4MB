@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.4MB,v 1.2 2001/01/20 01:05:23 thorpej Exp $	*/
+/*	$NetBSD: kern.ldscript.4MB,v 1.3 2002/10/01 12:56:45 fvdl Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/i386 which generates a kernel
