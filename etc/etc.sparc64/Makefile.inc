@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.21 2003/01/03 15:34:40 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2003/02/08 18:39:56 martin Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
-
 # Specify whether or not to build 32-bit libs.
 MK32BITLIBS?=no
 
@@ -71,3 +70,14 @@ snap_md_post:
 .for dir in ${MD_INSTALLATION_DIRS}
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
 .endfor
+
+ISOBOOTFILEDIR!=cd ${.CURDIR}/../distrib/${MACHINE}/bootfs && ${PRINTOBJDIR}
+ISOBOOTFILE?=	${ISOBOOTFILEDIR}/boot.fs
+MKSUNBOOTCDDIR!=cd ${.CURDIR}/../distrib/utils/mksunbootcd && ${PRINTOBJDIR}
+MKSUNBOOTCD?=	${MKSUNBOOTCDDIR}/mksunbootcd
+
+${MKSUNBOOTCD}:
+	cd ${MKSUNBOOTCDDIR} && ${MAKE}
+
+iso-image_md_post:	${MKSUNBOOTCD}
+	${MKSUNBOOTCD} -c 640 ${CDROM.image} /dev/null /dev/null /dev/null /dev/null ${ISOBOOTFILE}
