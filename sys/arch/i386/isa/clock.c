@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 1998/06/27 02:55:10 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.50 1998/08/05 01:21:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -531,6 +531,25 @@ inittodr(base)
 	mon = hexdectodec(rtclk[MC_MONTH]);
 	yr = hexdectodec(rtclk[MC_YEAR]);
 	yr = (yr < 70) ? yr+100 : yr;
+ 
+	/*
+	 * If time_t is 32 bits, then the "End of Time" is 
+	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
+	 * This code copes with RTC's past the end of time if time_t
+	 * is an int32 or less. Needed because sometimes RTCs screw
+	 * up or are badly set, and that would cause the time to go
+	 * negative in the calculation below, which causes Very Bad
+	 * Mojo. This at least lets the user boot and fix the problem.
+	 * Note the code is self eliminating once time_t goes to 64 bits.
+	 */
+	if (sizeof(time_t) <= sizeof(int32_t)) {
+		if (yr >= 138) {
+			printf("WARNING: RTC time at or beyond 2038.\n");
+			yr = 137;
+			printf("WARNING: year set back to 2037.\n");
+			printf("WARNING: CHECK AND RESET THE DATE!\n");
+		}
+	}
 
 	n = sec + 60 * min + 3600 * hr;
 	n += (dom - 1) * 3600 * 24;
