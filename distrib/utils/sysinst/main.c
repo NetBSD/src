@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1999/06/19 06:52:22 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1999/06/20 04:17:57 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -118,6 +118,11 @@ main(argc, argv)
 	 * XXX window will be overwritten by menus.
 	 */
 	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
+	if (win == NULL) {
+		(void)fprintf(stderr,
+			 "sysinst: screen too small\n");
+		exit(1);
+	}
        	msg_window(win);
 
 	/* Watch for SIGINT and clean up */
