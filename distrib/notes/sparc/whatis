@@ -1,5 +1,5 @@
-.\" $NetBSD: whatis,v 1.9 1999/01/13 07:30:08 ross Exp $	
+.\" $NetBSD: whatis,v 1.10 1999/02/06 08:36:05 mrg Exp $	
 .
 .Nx \*V
-is the third release for the sparc. Many more sparc
+is the fourth release for the sparc. Many more sparc
 models and devices are now supported.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 1999/01/13 07:30:08 ross Exp $	
+.\"	$NetBSD: install,v 1.19 1999/02/06 08:36:05 mrg Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,9 @@ be booted off your local disk's swap partition. Alternatively, if your
 Sparcstation is hooked up in a network you can find a server and arrange
 for a diskless setup which is a convenient way to install on a machine
 whose disk does not currently hold a usable operating system (see the
-section `Installing NetBSD by using a diskless setup' below).
+section `Installing NetBSD by using a diskless setup' below).  There is
+also a bootable 1.4MB floppy available that contains a slightly less
+featureful miniroot environment.
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot.
 .
@@ -92,6 +94,20 @@ the partition number from which to boot (0=`a', 1=`b', etc).
 The monitor boot command will cause the NetBSD kernel contained in the
 miniroot image to be booted. After the initial probe messages you'll be
 asked to start the install or upgrade procedure. Proceed to the section
+.Sx Running the installation scripts
+below.
+.
+.Ss2 Installing NetBSD by using the bootable floppy.
+.
+The NetBSD install floppy works only on the sun4c and sun4m class
+machines.  From the OpenBOOT prompt, the following should boot the
+floppy.
+.Dl ok Ic "boot fd(,,1)                 # for version 1 OpenBOOT ROMs
+.Dl ok Ic "boot /fd                     # either of these for version
+.Dl ok Ic "boot floppy                  # 2 OpenBOOT ROMs
+.Pp
+After the initial probe messages you'll be asked to start
+the install or upgrade procedure. Proceed to the section
 .Sx Running the installation scripts
 below.
 .
