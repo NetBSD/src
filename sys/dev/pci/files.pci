@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.34 1998/03/04 06:38:44 cgd Exp $
+#	$NetBSD: files.pci,v 1.35 1998/04/15 20:17:17 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -91,3 +91,15 @@ file	dev/pci/if_ne_pci.c		ne_pci
 device  tl: ether, ifnet, arp, i2c, i2c_eeprom, miibus
 attach  tl at pci
 file    dev/pci/if_tl.c     tl
+
+# generic PCI VGA
+attach	vga at pci with vga_pci
+file	dev/pci/vga_pci.c	vga_pci	needs-flag
+
+# DEC TGA
+device	tga: wsemuldisplaydev, wsrasteremulops
+attach	tga at pci
+file	dev/pci/tga.c		tga		needs-flag
+file	dev/pci/tga_conf.c	tga
+file	dev/pci/tga_bt463.c	tga
+file	dev/pci/tga_bt485.c	tga
