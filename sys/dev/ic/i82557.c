@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.54 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.55 2001/06/15 22:16:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -181,6 +181,9 @@ int	fxp_ioctl(struct ifnet *, u_long, caddr_t);
 void	fxp_watchdog(struct ifnet *);
 int	fxp_init(struct ifnet *);
 void	fxp_stop(struct ifnet *, int);
+
+void	fxp_txintr(struct fxp_softc *);
+void	fxp_rxintr(struct fxp_softc *);
 
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
@@ -375,6 +378,15 @@ fxp_attach(struct fxp_softc *sc)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
+
+#ifdef FXP_EVENT_COUNTERS
+	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txstall");
+	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "rxintr");
+#endif /* FXP_EVENT_COUNTERS */
 
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
@@ -737,7 +749,7 @@ fxp_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while (sc->sc_txpending < FXP_NTXCB) {
+	for (;;) {
 		/*
 		 * Grab a packet off the queue.
 		 */
@@ -745,6 +757,11 @@ fxp_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 		m = NULL;
+
+		if (sc->sc_txpending == FXP_NTXCB) {
+			FXP_EVCNT_INCR(&sc->sc_ev_txstall);
+			break;
+		}
 
 		/*
 		 * Get the next available transmit descriptor.
@@ -889,15 +906,9 @@ int
 fxp_intr(void *arg)
 {
 	struct fxp_softc *sc = arg;
-	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct fxp_txdesc *txd;
-	struct fxp_txsoft *txs;
-	struct mbuf *m, *m0;
 	bus_dmamap_t rxmap;
-	struct fxp_rfa *rfa;
-	int i, claimed = 0;
-	u_int16_t len, rxstat, txstat;
+	int claimed = 0;
 	u_int8_t statack;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -929,101 +940,10 @@ fxp_intr(void *arg)
 		 * re-start the receiver.
 		 */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
- rcvloop:
-			m = sc->sc_rxq.ifq_head;
-			rfa = FXP_MTORFA(m);
-			rxmap = M_GETCTX(m, bus_dmamap_t);
-
-			FXP_RFASYNC(sc, m,
-			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-			rxstat = le16toh(rfa->rfa_status);
-
-			if ((rxstat & FXP_RFA_STATUS_C) == 0) {
-				/*
-				 * We have processed all of the
-				 * receive buffers.
-				 */
-				FXP_RFASYNC(sc, m, BUS_DMASYNC_PREREAD);
-				goto do_transmit;
-			}
-
-			IF_DEQUEUE(&sc->sc_rxq, m);
-
-			FXP_RXBUFSYNC(sc, m, BUS_DMASYNC_POSTREAD);
-
-			len = le16toh(rfa->actual_size) &
-			    (m->m_ext.ext_size - 1);
-
-			if (len < sizeof(struct ether_header)) {
-				/*
-				 * Runt packet; drop it now.
-				 */
-				FXP_INIT_RFABUF(sc, m);
-				goto rcvloop;
-			}
-
-			/*
-			 * If support for 802.1Q VLAN sized frames is
-			 * enabled, we need to do some additional error
-			 * checking (as we are saving bad frames, in
-			 * order to receive the larger ones).
-			 */
-			if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) != 0 &&
-			    (rxstat & (FXP_RFA_STATUS_OVERRUN|
-				       FXP_RFA_STATUS_RNR|
-				       FXP_RFA_STATUS_ALIGN|
-				       FXP_RFA_STATUS_CRC)) != 0) {
-				FXP_INIT_RFABUF(sc, m);
-				goto rcvloop;
-			}
-
-			/*
-			 * If the packet is small enough to fit in a
-			 * single header mbuf, allocate one and copy
-			 * the data into it.  This greatly reduces
-			 * memory consumption when we receive lots
-			 * of small packets.
-			 *
-			 * Otherwise, we add a new buffer to the receive
-			 * chain.  If this fails, we drop the packet and
-			 * recycle the old buffer.
-			 */
-			if (fxp_copy_small != 0 && len <= MHLEN) {
-				MGETHDR(m0, M_DONTWAIT, MT_DATA);
-				if (m == NULL)
-					goto dropit;
-				memcpy(mtod(m0, caddr_t),
-				    mtod(m, caddr_t), len);
-				FXP_INIT_RFABUF(sc, m);
-				m = m0;
-			} else {
-				if (fxp_add_rfabuf(sc, rxmap, 1) != 0) {
- dropit:
-					ifp->if_ierrors++;
-					FXP_INIT_RFABUF(sc, m);
-					goto rcvloop;
-				}
-			}
-
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = len;
-
-#if NBPFILTER > 0
-			/*
-			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack it its for us.
-			 */
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
-
-			/* Pass it on. */
-			(*ifp->if_input)(ifp, m);
-			goto rcvloop;
+			FXP_EVCNT_INCR(&sc->sc_ev_rxintr);
+			fxp_rxintr(sc);
 		}
 
- do_transmit:
 		if (statack & FXP_SCB_STATACK_RNR) {
 			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 			fxp_scb_wait(sc);
@@ -1037,49 +957,21 @@ fxp_intr(void *arg)
 		 * Free any finished transmit mbuf chains.
 		 */
 		if (statack & (FXP_SCB_STATACK_CXTNO|FXP_SCB_STATACK_CNA)) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-			for (i = sc->sc_txdirty; sc->sc_txpending != 0;
-			     i = FXP_NEXTTX(i), sc->sc_txpending--) {
-				txd = FXP_CDTX(sc, i);
-				txs = FXP_DSTX(sc, i);
-
-				FXP_CDTXSYNC(sc, i,
-				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-				txstat = le16toh(txd->txd_txcb.cb_status);
-
-				if ((txstat & FXP_CB_STATUS_C) == 0)
-					break;
-
-				bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
-				    0, txs->txs_dmamap->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
-				m_freem(txs->txs_mbuf);
-				txs->txs_mbuf = NULL;
-			}
-
-			/* Update the dirty transmit buffer pointer. */
-			sc->sc_txdirty = i;
+			FXP_EVCNT_INCR(&sc->sc_ev_txintr);
+			fxp_txintr(sc);
 
 			/*
-			 * Cancel the watchdog timer if there are no pending
-			 * transmissions.
+			 * Try to get more packets going.
 			 */
-			if (sc->sc_txpending == 0) {
-				ifp->if_timer = 0;
+			fxp_start(ifp);
 
+			if (sc->sc_txpending == 0) {
 				/*
 				 * If we want a re-init, do that now.
 				 */
 				if (sc->sc_flags & FXPF_WANTINIT)
 					(void) fxp_init(ifp);
 			}
-
-			/*
-			 * Try to get more packets going.
-			 */
-			fxp_start(ifp);
 		}
 	}
 
@@ -1088,6 +980,158 @@ fxp_intr(void *arg)
 		rnd_add_uint32(&sc->rnd_source, statack);
 #endif
 	return (claimed);
+}
+
+/*
+ * Handle transmit completion interrupts.
+ */
+void
+fxp_txintr(struct fxp_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct fxp_txdesc *txd;
+	struct fxp_txsoft *txs;
+	int i;
+	u_int16_t txstat;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
+	     i = FXP_NEXTTX(i), sc->sc_txpending--) {
+		txd = FXP_CDTX(sc, i);
+		txs = FXP_DSTX(sc, i);
+
+		FXP_CDTXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		txstat = le16toh(txd->txd_txcb.cb_status);
+
+		if ((txstat & FXP_CB_STATUS_C) == 0)
+			break;
+
+		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
+		    0, txs->txs_dmamap->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+		m_freem(txs->txs_mbuf);
+		txs->txs_mbuf = NULL;
+	}
+
+	/* Update the dirty transmit buffer pointer. */
+	sc->sc_txdirty = i;
+
+	/*
+	 * Cancel the watchdog timer if there are no pending
+	 * transmissions.
+	 */
+	if (sc->sc_txpending == 0)
+		ifp->if_timer = 0;
+}
+
+/*
+ * Handle receive interrupts.
+ */
+void
+fxp_rxintr(struct fxp_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mbuf *m, *m0;
+	bus_dmamap_t rxmap;
+	struct fxp_rfa *rfa;
+	u_int16_t len, rxstat;
+
+	for (;;) {
+		m = sc->sc_rxq.ifq_head;
+		rfa = FXP_MTORFA(m);
+		rxmap = M_GETCTX(m, bus_dmamap_t);
+
+		FXP_RFASYNC(sc, m,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		rxstat = le16toh(rfa->rfa_status);
+
+		if ((rxstat & FXP_RFA_STATUS_C) == 0) {
+			/*
+			 * We have processed all of the
+			 * receive buffers.
+			 */
+			FXP_RFASYNC(sc, m, BUS_DMASYNC_PREREAD);
+			return;
+		}
+
+		IF_DEQUEUE(&sc->sc_rxq, m);
+
+		FXP_RXBUFSYNC(sc, m, BUS_DMASYNC_POSTREAD);
+
+		len = le16toh(rfa->actual_size) &
+		    (m->m_ext.ext_size - 1);
+
+		if (len < sizeof(struct ether_header)) {
+			/*
+			 * Runt packet; drop it now.
+			 */
+			FXP_INIT_RFABUF(sc, m);
+			continue;
+		}
+
+		/*
+		 * If support for 802.1Q VLAN sized frames is
+		 * enabled, we need to do some additional error
+		 * checking (as we are saving bad frames, in
+		 * order to receive the larger ones).
+		 */
+		if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) != 0 &&
+		    (rxstat & (FXP_RFA_STATUS_OVERRUN|
+			       FXP_RFA_STATUS_RNR|
+			       FXP_RFA_STATUS_ALIGN|
+			       FXP_RFA_STATUS_CRC)) != 0) {
+			FXP_INIT_RFABUF(sc, m);
+			continue;
+		}
+
+		/*
+		 * If the packet is small enough to fit in a
+		 * single header mbuf, allocate one and copy
+		 * the data into it.  This greatly reduces
+		 * memory consumption when we receive lots
+		 * of small packets.
+		 *
+		 * Otherwise, we add a new buffer to the receive
+		 * chain.  If this fails, we drop the packet and
+		 * recycle the old buffer.
+		 */
+		if (fxp_copy_small != 0 && len <= MHLEN) {
+			MGETHDR(m0, M_DONTWAIT, MT_DATA);
+			if (m == NULL)
+				goto dropit;
+			memcpy(mtod(m0, caddr_t),
+			    mtod(m, caddr_t), len);
+			FXP_INIT_RFABUF(sc, m);
+			m = m0;
+		} else {
+			if (fxp_add_rfabuf(sc, rxmap, 1) != 0) {
+ dropit:
+				ifp->if_ierrors++;
+				FXP_INIT_RFABUF(sc, m);
+				continue;
+			}
+		}
+
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = len;
+
+#if NBPFILTER > 0
+		/*
+		 * Pass this up to any BPF listeners, but only
+		 * pass it up the stack it its for us.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		/* Pass it on. */
+		(*ifp->if_input)(ifp, m);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.25 2001/06/12 15:17:22 wiz Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.26 2001/06/15 22:16:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -188,6 +188,12 @@ struct fxp_softc {
 	 */
 	struct fxp_control_data *sc_control_data;
 
+#ifdef FXP_EVENT_COUNTERS
+	struct evcnt sc_ev_txstall;	/* Tx stalled */
+	struct evcnt sc_ev_txintr;	/* Tx interrupts */
+	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+#endif /* FXP_EVENT_COUNTERS */
+
 	bus_dma_segment_t sc_cdseg;	/* control dma segment */
 	int	sc_cdnseg;
 
@@ -221,6 +227,12 @@ struct fxp_softc {
 #endif
 	
 };
+
+#ifdef FXP_EVENT_COUNTERS
+#define	FXP_EVCNT_INCR(ev)	(ev)->ev_count++
+#else
+#define	FXP_EVCNT_INCR(ev)	/* nothing */
+#endif
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
 #define	FXP_RXMAP_PUT(sc, map)	(sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map)
