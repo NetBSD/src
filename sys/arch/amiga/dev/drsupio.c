@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.9 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: drsupio.c,v 1.10 2002/01/28 09:56:54 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.10 2002/01/28 09:56:54 aymeric Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff

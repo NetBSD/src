@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.19 2002/01/26 13:40:58 aymeric Exp $ */
+/*	$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $ */
 
 /*
  * based on:
@@ -47,6 +47,9 @@
  *
  * Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20 2002/01/28 09:57:01 aymeric Exp $");
 
 /*
  * Mouse driver.

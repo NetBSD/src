@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.7 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.8 2002/01/28 09:56:58 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.8 2002/01/28 09:56:58 aymeric Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.28 2002/01/26 13:40:52 aymeric Exp $ */
+/*	$NetBSD: afsc.c,v 1.29 2002/01/28 09:56:50 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,6 +35,9 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.29 2002/01/28 09:56:50 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

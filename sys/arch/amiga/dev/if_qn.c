@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.21 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_qn.c,v 1.22 2002/01/28 09:56:59 aymeric Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -64,6 +64,9 @@
  * TODO:
  * - add multicast support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.22 2002/01/28 09:56:59 aymeric Exp $");
 
 #include "qn.h"
 #if NQN > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2002/01/26 13:24:54 aymeric Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 2002/01/28 09:56:46 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,10 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2002/01/28 09:56:46 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>

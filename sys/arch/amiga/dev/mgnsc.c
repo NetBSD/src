@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.32 2002/01/26 13:40:58 aymeric Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.33 2002/01/28 09:57:01 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,6 +35,9 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.33 2002/01/28 09:57:01 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

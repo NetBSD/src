@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39 2002/01/26 13:40:54 aymeric Exp $ */
+/*	$NetBSD: grf.c,v 1.40 2002/01/28 09:56:55 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40 2002/01/28 09:56:55 aymeric Exp $");
 
 /*
  * Graphics display driver for the Amiga

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2002/01/26 13:24:54 aymeric Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2002/01/28 09:56:47 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -110,6 +110,9 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2002/01/28 09:56:47 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

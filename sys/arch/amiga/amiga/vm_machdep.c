@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62 2002/01/26 13:24:55 aymeric Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.63 2002/01/28 09:56:49 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2002/01/28 09:56:49 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

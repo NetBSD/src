@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.18 2002/01/27 14:52:51 is Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.19 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.19 2002/01/28 09:56:57 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>

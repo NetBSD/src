@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63 2002/01/26 13:24:53 aymeric Exp $	*/
+/*	$NetBSD: conf.c,v 1.64 2002/01/28 09:56:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,6 +36,9 @@
  */
 
 #include "opt_compat_svr4.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.64 2002/01/28 09:56:46 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

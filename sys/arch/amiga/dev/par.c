@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.24 2002/01/26 13:40:59 aymeric Exp $ */
+/*	$NetBSD: par.c,v 1.25 2002/01/28 09:57:01 aymeric Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)ppi.c	7.3 (Berkeley) 12/16/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.25 2002/01/28 09:57:01 aymeric Exp $");
 
 /*
  * parallel port interface

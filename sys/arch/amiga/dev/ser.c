@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.60 2002/01/27 19:25:35 aymeric Exp $ */
+/*	$NetBSD: ser.c,v 1.61 2002/01/28 09:57:02 aymeric Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -41,6 +41,9 @@
 
 #include "opt_amigacons.h"
 #include "opt_kgdb.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.61 2002/01/28 09:57:02 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

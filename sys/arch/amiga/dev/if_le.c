@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_le.c,v 1.36 2002/01/28 09:56:58 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,10 @@
  */
 
 #include "opt_inet.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.36 2002/01/28 09:56:58 aymeric Exp $");
+
 #include "bpfilter.h"
 
 #include <sys/param.h>

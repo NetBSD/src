@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.27 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_es.c,v 1.28 2002/01/28 09:56:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -36,6 +36,9 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.28 2002/01/28 09:56:58 aymeric Exp $");
 
 #include "bpfilter.h"
 

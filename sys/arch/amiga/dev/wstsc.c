@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.25 2002/01/26 13:41:01 aymeric Exp $ */
+/*	$NetBSD: wstsc.c,v 1.26 2002/01/28 09:57:04 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,6 +35,10 @@
  *
  *	@(#)supradma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.26 2002/01/28 09:57:04 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

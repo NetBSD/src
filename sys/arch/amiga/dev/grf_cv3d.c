@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.8 2002/01/26 13:40:54 aymeric Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.9 2002/01/28 09:56:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.9 2002/01/28 09:56:56 aymeric Exp $");
+
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
 

@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.1 2002/01/21 22:13:26 is Exp $ */
+/* $NetBSD: toccata.c,v 1.2 2002/01/28 09:57:03 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.2 2002/01/28 09:57:03 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

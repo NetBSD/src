@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.33 2002/01/27 14:32:21 is Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.34 2002/01/28 09:56:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -32,6 +32,10 @@
  */
 #include "opt_amigacons.h"
 #include "opt_retina.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.34 2002/01/28 09:56:56 aymeric Exp $");
+
 #include "grfrh.h"
 #if NGRFRH > 0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.7 2002/01/26 13:24:53 aymeric Exp $	*/
+/*	$NetBSD: cia.c,v 1.8 2002/01/28 09:56:45 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -43,8 +43,11 @@
  *  dispatch_cia_ints() afterwards with bits in the mask
  *  register your code didn't already deal with.
  */
-#include <sys/types.h>
+
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.8 2002/01/28 09:56:45 aymeric Exp $");
+
+#include <sys/types.h>
 #include <amiga/amiga/cia.h>
 #include "par.h"
 #include "kbd.h"

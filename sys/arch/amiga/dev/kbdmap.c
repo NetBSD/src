@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.c,v 1.11 2002/01/26 13:40:58 aymeric Exp $ */
+/*	$NetBSD: kbdmap.c,v 1.12 2002/01/28 09:57:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.12 2002/01/28 09:57:00 aymeric Exp $");
+
 #include <amiga/dev/kbdmap.h>
 
 /* define a default keymap. This can be changed by keyboard ioctl's

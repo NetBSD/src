@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.3 2002/01/26 13:24:53 aymeric Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.4 2002/01/28 09:56:44 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.4 2002/01/28 09:56:44 aymeric Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 4		/* 1 byte per long */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS

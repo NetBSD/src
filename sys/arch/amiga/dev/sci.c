@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.26 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: sci.c,v 1.27 2002/01/28 09:57:02 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,9 @@
 /*
  * AMIGA NCR 5380 scsi adaptor driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.27 2002/01/28 09:57:02 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

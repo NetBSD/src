@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: clock.c,v 1.38 2002/01/28 09:56:53 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2002/01/28 09:56:53 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.40 2002/01/26 13:40:55 aymeric Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.41 2002/01/28 09:56:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.41 2002/01/28 09:56:56 aymeric Exp $");
+
 #include "grfrt.h"
 #if NGRFRT > 0
 

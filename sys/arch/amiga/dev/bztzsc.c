@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.16 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.17 2002/01/28 09:56:52 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -40,6 +40,9 @@
  * Initial amiga Blizzard 2060 driver by Ingatios Souvatzis.  Conversion to
  * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.17 2002/01/28 09:56:52 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

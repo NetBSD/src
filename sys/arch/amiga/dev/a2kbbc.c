@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.11 2002/01/26 13:40:52 aymeric Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.12 2002/01/28 09:56:50 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.12 2002/01/28 09:56:50 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.10 2002/01/26 13:40:58 aymeric Exp $ */
+/*	$NetBSD: ite_ul.c,v 1.11 2002/01/28 09:57:00 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.11 2002/01/28 09:57:00 aymeric Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0

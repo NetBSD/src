@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.8 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_ne_zbus.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.9 2002/01/28 09:56:59 aymeric Exp $");
 
 /*
  * Thanks to Village Tronic for giving me a card.

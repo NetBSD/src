@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccglb.c,v 1.10 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: grfabs_ccglb.c,v 1.11 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,9 @@
  */
 
 #include "opt_amigaccgrf.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs_ccglb.c,v 1.11 2002/01/28 09:56:57 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>

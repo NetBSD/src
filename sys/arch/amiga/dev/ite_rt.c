@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.17 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.18 2002/01/28 09:57:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -30,6 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.18 2002/01/28 09:57:00 aymeric Exp $");
+
 #include "grfrt.h"
 #if NGRFRT > 0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.21 2002/01/26 13:40:55 aymeric Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.22 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,10 +37,12 @@
 
 #include "opt_amigaccgrf.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.22 2002/01/28 09:56:57 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/cdefs.h>
 #include <sys/queue.h>
 
 #include <amiga/amiga/custom.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.29 2002/01/26 13:40:54 aymeric Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.30 2002/01/28 09:56:55 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.30 2002/01/28 09:56:55 aymeric Exp $");
+
 #include "grfcc.h"
 #if NGRFCC > 0
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.45 2002/01/26 13:41:01 aymeric Exp $ */
+/*	$NetBSD: zbus.c,v 1.46 2002/01/28 09:57:04 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.46 2002/01/28 09:57:04 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>

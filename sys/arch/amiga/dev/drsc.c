@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.19 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: drsc.c,v 1.20 2002/01/28 09:56:54 aymeric Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -36,6 +36,9 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.20 2002/01/28 09:56:54 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
