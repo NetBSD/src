@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.74 2003/11/30 14:36:43 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.75 2004/03/26 17:28:55 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -196,6 +196,9 @@ find_disks(const char *doingwhat)
 
 	/* Get existing/default label */
 	incorelabel(diskdev, oldlabel);
+
+	/* Set 'target' label to current label in case we don't change it */
+	memcpy(&bsdlabel, &oldlabel, sizeof bsdlabel);
 
 	return numdisks;
 }
