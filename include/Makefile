@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 1995/04/16 19:03:55 mycroft Exp $
+#	$NetBSD: Makefile,v 1.55 1995/06/05 00:24:55 pk Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -10,13 +10,12 @@
 # Missing: mp.h
 
 FILES=	a.out.h ar.h assert.h bitstring.h bm.h ctype.h db.h dirent.h disktab.h \
-	err.h fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h iso646.h kvm.h \
-	langinfo.h limits.h locale.h math.h memory.h mpool.h ndbm.h netdb.h \
-	netgroup.h nlist.h nl_types.h paths.h pwd.h ranlib.h regex.h regexp.h \
-	resolv.h search.h setjmp.h sgtty.h signal.h stab.h stddef.h \
-	stdio.h stdlib.h string.h strings.h struct.h sysexits.h time.h \
-	ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h malloc.h \
-	link.h
+	dlfcn.h err.h fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h iso646.h \
+	kvm.h langinfo.h limits.h link.h locale.h malloc.h math.h memory.h \
+	mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h paths.h pwd.h \
+	ranlib.h regex.h regexp.h resolv.h search.h setjmp.h sgtty.h signal.h \
+	stab.h stddef.h stdio.h stdlib.h string.h strings.h struct.h \
+	sysexits.h time.h ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h
 
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
