@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.77 1998/12/11 23:21:11 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.78 1998/12/12 00:19:13 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1158,11 +1158,25 @@ struct ncb {
 	struct script	*script;
 	struct scripth	*scripth;
 
+#ifdef __NetBSD__
+	/*
+	**	DMA maps for the script instances.
+	*/
+	bus_dmamap_t	script_dmamap;
+	bus_dmamap_t	scripth_dmamap;
+
+	/*
+	**	Scripts instance physical address.
+	*/
+	bus_addr_t	p_script;
+	bus_addr_t	p_scripth;
+#else
 	/*
 	**	Scripts instance physical address.
 	*/
 	u_long		p_script;
 	u_long		p_scripth;
+#endif /* __NetBSD__ */
 
 	/*
 	**	The SCSI address of the host adapter.
@@ -1452,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.77 1998/12/11 23:21:11 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.78 1998/12/12 00:19:13 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4034,8 +4048,43 @@ static void ncr_attach (pcici_t config_id, int unit)
 		 * on-board RAM and has no virtual address.
 		 */
 	} else {
+#ifdef __NetBSD__
+		if ((error = bus_dmamem_alloc(np->sc_dmat,
+		    sizeof(struct script), NBPG, 0, &seg, 1, &rseg,
+		    BUS_DMA_NOWAIT)) != 0) {
+			printf("%s: unable to allocate script, error = %d\n",
+			    self->dv_xname, error);
+			return;
+		}
+
+		if ((error = bus_dmamem_map(np->sc_dmat, &seg, rseg,
+		    sizeof(struct script), (caddr_t *)&np->script,
+		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+			printf("%s: unable to map script, error = %d\n",
+			    self->dv_xname, error);
+			return;
+		}
+
+		if ((error = bus_dmamap_create(np->sc_dmat,
+		    sizeof(struct script), 1,
+		    sizeof(struct script), 0, BUS_DMA_NOWAIT,
+		    &np->script_dmamap)) != 0) {
+			printf("%s: unable to create script DMA map, "
+			    "error = %d\n", self->dv_xname, error);
+			return;
+		}
+
+		if ((error = bus_dmamap_load(np->sc_dmat,
+		    np->script_dmamap, np->script, sizeof(struct script),
+		    NULL, BUS_DMA_NOWAIT)) != 0) {
+			printf("%s: unable to load script DMA map, "
+			    "error = %d\n", self->dv_xname, error);
+			return;
+		}
+#else
 		np->script  = (struct script *)
 			malloc (sizeof (struct script), M_DEVBUF, M_WAITOK);
+#endif /* __NetBSD__ */
 	}
 
 #ifdef __FreeBSD__
@@ -4043,12 +4092,44 @@ static void ncr_attach (pcici_t config_id, int unit)
 		np->scripth = (struct scripth*) vm_page_alloc_contig 
 			(round_page(sizeof (struct scripth)), 
 			 0x100000, 0xffffffff, PAGE_SIZE);
-	} else 
-#endif /* __FreeBSD__ */
-		{
+	} else {
 		np->scripth = (struct scripth *)
 			malloc (sizeof (struct scripth), M_DEVBUF, M_WAITOK);
 	}
+#else
+	if ((error = bus_dmamem_alloc(np->sc_dmat,
+	    sizeof(struct scripth), NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate scripth, error = %d\n",
+		    self->dv_xname, error);
+		return;
+	}
+
+	if ((error = bus_dmamem_map(np->sc_dmat, &seg, rseg,
+	    sizeof(struct scripth), (caddr_t *)&np->scripth,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map scripth, error = %d\n",
+		    self->dv_xname, error);
+		return;
+	}
+
+	if ((error = bus_dmamap_create(np->sc_dmat,
+	    sizeof(struct scripth), 1,
+	    sizeof(struct scripth), 0, BUS_DMA_NOWAIT,
+	    &np->scripth_dmamap)) != 0) {
+		printf("%s: unable to create scripth DMA map, "
+		    "error = %d\n", self->dv_xname, error);
+		return;
+	}
+
+	if ((error = bus_dmamap_load(np->sc_dmat,
+	    np->scripth_dmamap, np->scripth, sizeof(struct scripth),
+	    NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load scripth DMA map, "
+		    "error = %d\n", self->dv_xname, error);
+		return;
+	}
+#endif /* __FreeBSD__ */
 
 #ifdef SCSI_NCR_PCI_CONFIG_FIXUP
 	/*
@@ -4102,10 +4183,17 @@ static void ncr_attach (pcici_t config_id, int unit)
 	*/
 	ncr_script_fill (&script0, &scripth0);
 
+#ifdef __NetBSD__
+	if (np->script)
+		np->p_script = np->script_dmamap->dm_segs[0].ds_addr;
+
+	np->p_scripth = np->scripth_dmamap->dm_segs[0].ds_addr;
+#else
 	if (np->script)
 		np->p_script = vtophys(np->script);
 
 	np->p_scripth	= vtophys(np->scripth);
+#endif /* __NetBSD__ */
 
 	ncr_script_copy_and_bind (np, (ncrcmd *) &script0,
 			(ncrcmd *) np->script, sizeof(struct script));
