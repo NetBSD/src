@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.7 2001/02/19 23:22:45 cgd Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.8 2003/04/20 00:18:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.7 2001/02/19 23:22:45 cgd Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.8 2003/04/20 00:18:33 christos Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: mopprobe.c,v 1.7 2001/02/19 23:22:45 cgd Exp $");
 #include "nmadef.h"
 #include "pf.h"
 #include "print.h"
+#include "log.h"
 
 /*
  * The list of all interfaces that are being listened to.  rarp_loop()
@@ -76,8 +77,7 @@ main(argc, argv)
 	int     op;
 	char   *interface;
 
-	/* All error reporting is done through syslogs. */
-	openlog("mopprobe", LOG_PID, LOG_DAEMON);
+	mopInteractive = 1;
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "ado")) != -1) {
