@@ -1,7 +1,7 @@
-.\" AWK Reference Card --- Arnold Robbins, arnold@gnu.ai.mit.edu
+.\" AWK Reference Card --- Arnold Robbins, arnold@gnu.org
 .\" This file sets the colors to use.
 .\"
-.\" Copyright (C) 1996,97 Free Software Foundation, Inc.
+.\" Copyright (C) 1996,97,99 Free Software Foundation, Inc.
 .\" 
 .\" Permission is granted to make and distribute verbatim copies of
 .\" this reference card provided the copyright notice and this permission
