@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.1 2003/06/02 03:45:42 gmcgarry Exp $	*/
+/*	$NetBSD: gpib.c,v 1.2 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.1 2003/06/02 03:45:42 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.2 2004/09/13 12:55:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,10 @@ void	gpibattach __P((struct device *, struct device *, void *));
 CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);
 
-static int	gpibsubmatch1(struct device *, struct cfdata *, void *);
-static int	gpibsubmatch2(struct device *, struct cfdata *, void *);
+static int	gpibsubmatch1(struct device *, struct cfdata *,
+			      const locdesc_t *, void *);
+static int	gpibsubmatch2(struct device *, struct cfdata *,
+			      const locdesc_t *, void *);
 static int	gpibprint(void *, const char *);
 
 dev_type_open(gpibopen);
@@ -139,18 +141,19 @@ gpibattach(parent, self, aux)
 	for (address=0; address<GPIB_NDEVS; address++) {
 		ga.ga_ic = sc->sc_ic;
 		ga.ga_address = address;
-		(void) config_search(gpibsubmatch1, &sc->sc_dev, &ga);
+		(void) config_search_ia(gpibsubmatch1, &sc->sc_dev, "gpib", &ga);
 	}
 
 	/* attach the wild-carded devices - probably protocol busses */
 	ga.ga_ic = sc->sc_ic;
-	(void) config_search(gpibsubmatch2,  &sc->sc_dev, &ga);
+	(void) config_search_ia(gpibsubmatch2,  &sc->sc_dev, "gpib", &ga);
 }
 
 int
-gpibsubmatch1(parent, cf, aux)
+gpibsubmatch1(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct gpib_softc *sc = (struct gpib_softc *)parent;
@@ -175,6 +178,7 @@ int
 gpibsubmatch2(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct gpib_attach_args *ga = aux;
