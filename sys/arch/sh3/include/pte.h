@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2000/02/24 23:32:27 msaitoh Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2002/02/11 18:06:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,39 +62,63 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PT_MASK		0x003ff000	/* page table address bits */
 #define	PTES_PER_PTP	(NBPD / NBPG)	/* # of PTEs in a PTP */
 
-#define	PG_AVAIL2	0x00000200	/* ignored by hardware */
-#define	PG_V		0x00000100	/* present */
-#define	PG_AVAIL1	0x00000080	/* ignored by hardware */
-#define	PG_RO		0x00000000	/* read-only by user */
-#define	PG_RW		0x00000020	/* read-write by user */
-#define	PG_u		0x00000040	/* accessible by user */
-#define	PG_PROT		0x00000060	/* all protection bits */
-#define	PG_N		0x00000008	/* 0=non-cacheable */
-#define	PG_M		0x00000004	/* has been modified */
-#define	PG_FRAME	0xfffff000	/* page frame mask */
+/*
+ *
+ * NetBSD/sh3 PTE format.
+ *
+ * SH3
+ *   PPN   V   PR  SZ C  D  SH
+ * [28:10][8][6:5][4][3][2][1]
+ *
+ * SH4
+ *         V  SZ  PR  SZ C  D  SH WT
+ * [28:10][8][7][6:5][4][3][2][1][0]
+ *
+ * + NetBSD/sh3 page size is 4KB. [11:10] and [7] can be used as SW bit.
+ * + [31:29] should be available for SW bit...
+ * + SH4 WT bit is not stored in PTE. U0 is always write-back. and
+ *   P3 is always write-thurogh. (see sh3/trap.c::__setup_pte_sh4())
+ *   We use WT bit as SW bit.
+ * 
+ * Software bit assign
+ *   [11:9] - SH4 PCMCIA Assistant bit. (space attribute bit only)
+ *   [7]    - Wired page bit.
+ *   [0]    - PVlist bit.
+ */
 
-#ifdef SH4_PCMCIA
-#define PG_PCMCIA_16    0x00000000      /* 16bit width */
-#define PG_PCMCIA_8     0x00000080      /* 8 bit width */
-#define PG_PCMCIA_NONE  0x00000000      /* Non PCMCIA space */
-#define PG_PCMCIA       0x00000a00      /* PCMCIA space */
-#define PG_PCMCIA_IO    0x00000200      /* PCMCIA IO space */
-#define PG_PCMCIA_MEM   0x00000800      /* PCMCIA Memory space */
-#define PG_PCMCIA_ATT   0x00000a00      /* PCMCIA Attribute space */
-#endif
+/*
+ * Hardware bits
+ */
+#define	PG_FRAME		0xfffff000	/* page frame mask XXX */
+#define	PG_V			0x00000100	/* present */
+#define	PG_UW			0x00000060	/* kernel/user read/write */
+#define	PG_URKR			0x00000040	/* kernel/user read only */
+#define	PG_KW			0x00000020	/* kernel read/write */
+#define	PG_KR			0x00000000	/* kernel read only */
+#define	PG_4K			0x00000010	/* page size 4KB */
+#define	PG_N			0x00000008	/* 0=non-cacheable */
+#define	PG_M			0x00000004	/* has been modified */
+#define	PG_G			0x00000002	/* share status */
+#define	PG_WT			0x00000001	/* write through (SH4) */
 
-#define	PG_KR		0x00000000
-#define	PG_KW		0x00000020
-#define	PG_URKR		0x00000040
-#define	PG_UW		0x00000060
+#define PG_HW_BITS		0x1ffff17e	/* [28:12][8][6:1] */
 
-#define	PG_W		0x00000400	/* page is wired */
-
-#define	PG_4K		0x00000010
-#define	PG_G		0x00000002	/* share status */
-
-#ifdef SH4
-#define	PG_WT		0x00000001	/* write through */
-#endif
+/*
+ * Software bits
+ */
+#define	PG_W			0x00000080	/* page is wired */
+#define	PG_PVLIST		0x00000001	/* mapping has entry on pvlist */
+/* SH4 PCMCIA MMU support bits */
+/* PTEA SA (Space Attribute bit) */
+#define _PG_PCMCIA		0x00000e00
+#define _PG_PCMCIA_SHIFT	9
+#define _PG_PCMCIA_NONE		0x00000000	/* Non PCMCIA space */
+#define _PG_PCMCIA_IO		0x00000200	/* IOIS16 signal */
+#define _PG_PCMCIA_IO8		0x00000400	/* 8 bit I/O  */
+#define _PG_PCMCIA_IO16		0x00000600	/* 16 bit I/O  */
+#define _PG_PCMCIA_MEM8		0x00000800	/* 8 bit common memory */
+#define _PG_PCMCIA_MEM16	0x00000a00	/* 16 bit common memory */
+#define _PG_PCMCIA_ATTR8	0x00000c00	/* 8 bit attribute */
+#define _PG_PCMCIA_ATTR16	0x00000e00	/* 16 bit attribute */
 
 #endif /* !_SH3_PTE_H_ */
