@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.57 2003/01/23 19:54:35 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.58 2003/01/23 22:33:41 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -441,6 +441,7 @@ extern int bootmid;			/* Module ID of boot CPU */
 #define CPU_MID2CPUNO(mid)		((mid) != 0 ? (mid) - 8 : 0)
 
 extern struct cpu_info **cpus;
+extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
