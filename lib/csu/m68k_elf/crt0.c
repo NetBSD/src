@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 1999/03/20 00:13:51 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 1999/08/23 09:23:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus Klein
@@ -34,14 +34,14 @@
 
 #include "common.h"
 
-static void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
+static void __start __P((int, char **, char **, void (*cleanup) __P((void)),
     const Obj_Entry *, struct ps_strings *));
 
 __asm("
 	.text
-	.align	2
-	.globl	__start
-__start:
+	.align	4
+	.globl	_start
+_start:
 	movl	(%sp),%d0
 	movl	%a2,-(%sp)		| ps_strings
 	movl	%a0,-(%sp)		| obj
@@ -49,11 +49,11 @@ __start:
 	pea	(16+4)(%sp,%d0.l*4)	| envp = &argv[argc + 1]
 	pea	20(%sp)			| argv
 	movl	%d0,-(%sp)		| argc
-	jsr	___start
+	jsr	__start
 ");
 
 static void
-___start(argc, argv, envp, cleanup, obj, ps_strings)
+__start(argc, argv, envp, cleanup, obj, ps_strings)
 	int argc;
 	char **argv;
 	char **envp;
@@ -93,7 +93,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.3 1999/03/20 00:13:51 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.4 1999/08/23 09:23:06 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
