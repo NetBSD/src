@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.8 1997/10/16 23:50:39 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.9 1998/02/19 00:35:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
+
+#include "fs_union.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
