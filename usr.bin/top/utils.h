@@ -11,13 +11,14 @@
 
 /* prototypes for functions found in utils.c */
 
-int atoiwi();
-char *itoa();
-char *itoa7();
-int digits();
-char *strecpy();
-char **argparse();
-long percentages();
-char *errmsg();
-char *format_time();
-char *format_k();
+int atoiwi __P((char *));
+char *itoa __P((int));
+char *itoa7 __P((int));
+int digits __P((int));
+char *strecpy __P((char *, char *));
+int string_index __P((char *, char **));
+char **argparse __P((char *, int *));
+long percentages __P((int, int *, long *, long *, long *));
+char *errmsg __P((int));
+char *format_time __P((long));
+char *format_k __P((int));

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/24 05:51:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/24 11:57:08 christos Exp $
 
 PROG=	top
 
-WARNS=	0	# XXX
 .PATH:	${.CURDIR}/machine
 
 CPPFLAGS+=-I${.CURDIR} -I. -DORDER -DHAVE_STRERROR
