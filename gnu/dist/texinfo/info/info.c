@@ -1,5 +1,5 @@
 /* info.c -- Display nodes of Info files in multiple windows.
-   $Id: info.c,v 1.4 2001/07/25 16:46:19 assar Exp $
+   $Id: info.c,v 1.5 2001/09/02 21:42:49 wiz Exp $
 
    Copyright (C) 1993, 96, 97, 98, 99 Free Software Foundation, Inc.
 
@@ -374,43 +374,6 @@ For more information about these matters, see the files named COPYING.\n"),
         begin_multiple_window_info_session (user_filename, user_nodenames);
 
       xexit (0);
-    }
-
-  /* If the user specified `--index-search=STRING', start the info
-     session in the node corresponding to the first match. */
-  if (index_search_p)
-    {
-      int status = 0;
-
-      initialize_info_session (initial_node, 0);
-
-      if (index_entry_exists (windows, index_search_string))
-        {
-          terminal_clear_screen ();
-          terminal_prep_terminal ();
-          display_update_display (windows);
-          info_last_executed_command = (VFunction *)NULL;
-
-          do_info_index_search (windows, 0, index_search_string);
-
-          info_read_and_dispatch ();
-
-          terminal_unprep_terminal ();
-
-          /* On program exit, leave the cursor at the bottom of the
-             window, and restore the terminal IO. */
-          terminal_goto_xy (0, screenheight - 1);
-          terminal_clear_to_eol ();
-          fflush (stdout);
-        }
-      else
-        {
-          fputs (_("no entries found\n"), stderr);
-          status = 2;
-        }
-
-      close_dribble_file (); 
-      exit (status);
     }
 
   /* If there are arguments remaining, they are the names of menu items
