@@ -6,4 +6,9 @@
 # systems.
 
 SUBDIR= common
+
+.if make(install)
+SUBDIR+=USD.doc/edit USD.doc/exref USD.doc/vi.ref USD.doc/vitut
+.endif
+
 .include <bsd.subdir.mk>
