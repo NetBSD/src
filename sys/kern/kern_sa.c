@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.19 2003/07/21 19:21:12 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.20 2003/08/11 21:18:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.19 2003/07/21 19:21:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.20 2003/08/11 21:18:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,8 +209,13 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	    sizeof(stack_t) * count);
 	if (error)
 		return (error);
+
+	if ((sa->sa_nstacks == 0) && (sa->sa_vp_wait_count != 0))
+	{
+		l->l_flag |= L_SA_UPCALL; 
+	}
+
 	sa->sa_nstacks += count;
-	wakeup((caddr_t)&sa->sa_nstacks);
 	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d\n",
 	    l->l_proc->p_pid, l->l_lid, count, sa->sa_nstacks));
 
@@ -701,15 +706,10 @@ sa_switch(struct lwp *l, int type)
 
 	/*
 	 * Okay, now we've been woken up. This means that it's time
-	 * for a SA_UNBLOCKED upcall when we get back to userlevel, provided
-	 * that the SA_BLOCKED upcall happened.
+	 * for a SA_UNBLOCKED upcall when we get back to userlevel
 	 */
-	if (l->l_flag & L_SA_BLOCKING)
-		l->l_flag |= L_SA_UPCALL;
-#if 0
-	else
-		sa_vp_repossess(l);
-#endif
+	l->l_flag |= L_SA_UPCALL;
+
 }
 
 void
@@ -885,66 +885,19 @@ sa_upcall_userret(struct lwp *l)
 		sau = sadata_upcall_alloc(1);
 		sau->sau_arg = NULL;
 
-		while (sa->sa_nstacks == 0) {
-			int status;
-
-			/*
-			 * This should be a transient condition, so we'll just
-			 * sleep until some stacks come in; presumably, some
-			 * userland LWP is busy and hasn't gotten to return
-			 * stacks yet.
-			 *
-			 * XXX There is a slight protocol breach here, in
-			 * that control is not handed back directly to the
-			 * LWP that was running before we were woken up from
-			 * the sleep that invoked the UNBLOCKED upcall.
-			 * If it was a running one, it is on the runqueue
-			 * and it will run again when the system gets to it,
-			 * just not this second. If it's idle, it will
-			 * remain idle, because we don't touch it.
-			 *
-			 * Ideally, tsleep() would have a variant that took
-			 * a LWP to switch to.
-			 */
-
-			if (p->p_flag & P_WEXIT)
-			{
-				sadata_upcall_free(sau);
-				lwp_exit(l);
-			}
-
-			DPRINTFN(7, ("sa_upcall_userret(%d.%d) sleeping"
-			    " for stacks\n", l->l_proc->p_pid, l->l_lid));
-			status = tsleep((caddr_t) &sa->sa_nstacks, PWAIT|PCATCH, 
-			    "sastacks", 0);
-			if(status)
-			{
-				if (p->p_flag & P_WEXIT)
-				{
-					sadata_upcall_free(sau);
-					lwp_exit(l);
-				}
-				/* Signal pending - can't sleep */
-				/* Wait a while .. things might get better */  
-				 tsleep((caddr_t) &lbolt, PWAIT, "lbolt: sastacks", 0);
-			}	
-
-			/* XXXUPSXXX NEED TO STOP THE LWP HERE ON REQUEST */
-
-		
-		}
-
 		if (p->p_flag & P_WEXIT) {
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 		}
 
-		KDASSERT(sa->sa_nstacks > 0);
-		st = sa->sa_stacks[--sa->sa_nstacks];
-
+	
 		SCHED_ASSERT_UNLOCKED();
 
 		l2 = sa_vp_repossess(l);
+
+		KDASSERT(sa->sa_nstacks > 0);
+		st = sa->sa_stacks[--sa->sa_nstacks];
+
 		
 		SCHED_ASSERT_UNLOCKED();
 			
@@ -1242,7 +1195,12 @@ sa_vp_donate(struct lwp *l)
 
 	SCHED_ASSERT_UNLOCKED();
 
+	/* Nobody wants the vp */
 	if (sa->sa_vp_wait_count == 0)
+		return;
+
+	/* No stack for an unblock call */
+	if (sa->sa_nstacks == 0)
 		return;
 
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
