@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.165 2004/01/01 17:18:53 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.166 2004/01/01 20:25:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.165 2004/01/01 17:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.166 2004/01/01 20:25:22 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -312,7 +312,7 @@ wdc_drvprobe(struct channel_softc *chp)
 				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 				    continue;
 			}
-			if (wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
+			if (wdc_wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
 				WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
 				    chp->wdc->sc_dev.dv_xname,
 				    chp->channel, i), DEBUG_PROBE);
@@ -322,7 +322,7 @@ wdc_drvprobe(struct channel_softc *chp)
 			bus_space_write_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_command], 0, WDCC_RECAL);
 			delay(10);	/* 400ns delay */
-			if (wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
+			if (wdc_wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
 				WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 				    chp->wdc->sc_dev.dv_xname,
 				    chp->channel, i), DEBUG_PROBE);
