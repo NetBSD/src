@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.299 2003/02/05 00:48:47 augustss Exp $
+$NetBSD: usbdevs,v 1.300 2003/02/07 18:06:23 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1072,7 +1072,10 @@ product PALM SERIAL		0x0080	USB Serial Adaptor
 product PALM M500		0x0001	Palm m500
 product PALM M505		0x0002	Palm m505
 product PALM M515		0x0003	Palm m515
+product PALM I705		0x0020	Palm i705
+product PALM TUNGSTEN_Z		0x0031	Palm Tungsten Z
 product PALM M125		0x0040	Palm m125
+product PALM M130		0x0050	Palm m130
 product PALM M550		0x0060	Palm m550
 product PALM ZIRE		0x0070	Palm Zire
 
@@ -1260,8 +1263,10 @@ product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
+product SONY CLIE_S360		0x0095	Sony Clie s360
 product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Sony Clie v4.1
+product SONY CLIE_NX60		0x00da	Sony Clie nx60
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
