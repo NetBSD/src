@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.1 2001/03/04 15:27:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_progmode.h"
+
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.1 2001/03/04 15:27:03 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
@@ -69,8 +74,14 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Make sure the processor mode has not been tampered with. */
+#ifdef PROG32
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE)
 		return (EINVAL);
+#else /* PROG26 */
+	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
+	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+		return EINVAL;
+#endif
 
 	/* Restore register context. */
 	tf = p->p_addr->u_pcb.pcb_tf;
