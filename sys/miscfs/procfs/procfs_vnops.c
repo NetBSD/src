@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.32 1995/02/03 16:18:55 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.33 1995/04/15 01:56:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -351,6 +351,7 @@ procfs_getattr(ap)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
 	struct proc *procp;
+	struct timeval tv;
 	int error;
 
 	/* first check the process still exists */
@@ -386,11 +387,9 @@ procfs_getattr(ap)
 	 * no "file creation" time stamp anyway, and the
 	 * p_stat structure is not addressible if u. gets
 	 * swapped out for that process.
-	 *
-	 * XXX
-	 * Note that microtime() returns a timeval, not a timespec.
 	 */
-	microtime(&vap->va_ctime);
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
 	/*
