@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.10 2002/04/18 15:31:51 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.11 2002/04/22 15:09:19 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -370,6 +370,12 @@ void *setmode(const char *);
 #define le16toh(x)	htole16(x)
 #define le32toh(x)	htole32(x)
 #define le64toh(x)	htole64(x)
+#endif
+
+/* <stdint.h> */
+
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffffU
 #endif
 
 /* <sys/mman.h> */
