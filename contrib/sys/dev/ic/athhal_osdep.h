@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting, Atheros
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting, Atheros
  * Communications, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -33,39 +33,102 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.h,v 1.10 2003/11/01 01:21:31 sam Exp $
+ * $Id: ah_osdep.h,v 1.1.1.7 2004/06/09 16:25:50 samleffler Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
 /*
  * Atheros Hardware Access Layer (HAL) OS Dependent Definitions.
  */
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/endian.h>
 
-#include <machine/bus.h>
+/*
+ * Starting with 2.6.4 the kernel supports a configuration option
+ * to pass parameters in registers.  If this is enabled we must
+ * mark all function interfaces in+out of the HAL to pass parameters
+ * on the stack as this is the convention used internally (for
+ * maximum portability).
+ */
+#ifdef CONFIG_REGPARM
+#define	__ahdecl	__attribute__((regparm(0)))
+#else
+#define	__ahdecl
+#endif
+
+/*
+ * When building the HAL proper we use no GPL-contaminated include
+ * files and must define these types ourself.  Beware of these being
+ * mismatched against the contents of <linux/types.h>
+ */
+#ifndef _LINUX_TYPES_H
+/* NB: arm defaults to unsigned so be explicit */
+typedef signed char int8_t;
+typedef short int16_t;
+typedef int int32_t;
+typedef long long int64_t;
+
+typedef unsigned char u_int8_t;
+typedef unsigned short u_int16_t;
+typedef unsigned int u_int32_t;
+typedef unsigned long long u_int64_t;
+
+typedef unsigned int size_t;
+typedef unsigned int u_int;
+typedef	void *va_list;
+#endif
+
+/*
+ * Linux/BSD gcc compatibility shims.
+ */
+#define	__printflike(_a,_b) \
+	__attribute__ ((__format__ (__printf__, _a, _b)))
+#define	__va_list	va_list 
+#define	OS_INLINE	__inline
 
 typedef void* HAL_SOFTC;
-typedef bus_space_tag_t HAL_BUS_TAG;
-typedef bus_space_handle_t HAL_BUS_HANDLE;
-typedef bus_addr_t HAL_BUS_ADDR;
+typedef int HAL_BUS_TAG;
+typedef void* HAL_BUS_HANDLE;
+typedef u_int32_t HAL_BUS_ADDR;			/* XXX architecture dependent */
 
 /*
  * Delay n microseconds.
  */
-extern	void ath_hal_delay(int);
+extern	void __ahdecl ath_hal_delay(int);
 #define	OS_DELAY(_n)	ath_hal_delay(_n)
 
-#define	OS_INLINE	__inline
-#define	OS_MEMZERO(_a, _size)		bzero((_a), (_size))
-#define	OS_MEMCPY(_dst, _src, _size)	bcopy((_src), (_dst), (_size))
-#define	OS_MACEQU(_a, _b) \
-	(bcmp((_a), (_b), IEEE80211_ADDR_LEN) == 0)
+#define	OS_MEMZERO(_a, _n)	__builtin_memset((_a), 0, (_n))
+#define	OS_MEMCPY(_d, _s, _n)	ath_hal_memcpy(_d,_s,_n)
+extern void * __ahdecl ath_hal_memcpy(void *, const void *, size_t);
+
+#define	abs(_a)		__builtin_abs(_a)
 
 struct ath_hal;
-extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
+extern	u_int32_t __ahdecl ath_hal_getuptime(struct ath_hal *);
 #define	OS_GETUPTIME(_ah)	ath_hal_getuptime(_ah)
+
+/*
+ * Byte order/swapping support.
+ */
+#define	AH_LITTLE_ENDIAN	1234
+#define	AH_BIG_ENDIAN		4321
+
+#if AH_BYTE_ORDER == AH_BIG_ENDIAN
+/*
+ * This could be optimized but since we only use it for
+ * a few registers there's little reason to do so.
+ */
+static inline u_int32_t
+__bswap32(u_int32_t _x)
+{
+ 	return ((u_int32_t)(
+	      (((const u_int8_t *)(&_x))[0]    ) |
+	      (((const u_int8_t *)(&_x))[1]<< 8) |
+	      (((const u_int8_t *)(&_x))[2]<<16) |
+	      (((const u_int8_t *)(&_x))[3]<<24))
+	);
+}
+#else
+#define __bswap32(_x)	(_x)
+#endif
 
 /*
  * Register read/write; we assume the registers will always
@@ -74,15 +137,7 @@ extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
  * (AH_DEBUG) or we are explicitly configured this way.  The
  * latter is used on some platforms where the full i/o space
  * cannot be directly mapped.
- */
-#if defined(AH_DEBUG) || defined(AH_REGOPS_FUNC) || defined(AH_DEBUG_ALQ)
-#define	OS_REG_WRITE(_ah, _reg, _val)	ath_hal_reg_write(_ah, _reg, _val)
-#define	OS_REG_READ(_ah, _reg)		ath_hal_reg_read(_ah, _reg)
-
-extern	void ath_hal_reg_write(struct ath_hal *ah, u_int reg, u_int32_t val);
-extern	u_int32_t ath_hal_reg_read(struct ath_hal *ah, u_int reg);
-#else
-/*
+ *
  * The hardware registers are native little-endian byte order.
  * Big-endian hosts are handled by enabling hardware byte-swap
  * of register reads and writes at reset.  But the PCI clock
@@ -91,35 +146,51 @@ extern	u_int32_t ath_hal_reg_read(struct ath_hal *ah, u_int reg);
  * Most of this code is collapsed at compile time because the
  * register values are constants.
  */
-#define	AH_LITTLE_ENDIAN	1234
-#define	AH_BIG_ENDIAN		4321
+#if defined(AH_DEBUG) || defined(AH_REGOPS_FUNC)
+/* use functions to do register operations */
+#define	OS_REG_WRITE(_ah, _reg, _val)	ath_hal_reg_write(_ah, _reg, _val)
+#define	OS_REG_READ(_ah, _reg)		ath_hal_reg_read(_ah, _reg)
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define OS_REG_WRITE(_ah, _reg, _val) do {				\
-	if ( (_reg) >= 0x4000 && (_reg) < 0x5000)			\
-		bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh,		\
-			(_reg), htole32(_val));			\
-	else								\
-		bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh,		\
-			(_reg), (_val));				\
-} while (0)
-#define OS_REG_READ(_ah, _reg)						\
-	(((_reg) >= 0x4000 && (_reg) < 0x5000) ?			\
-		le32toh(bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh,	\
-			(_reg))) :					\
-		bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
-#else /* _BYTE_ORDER == _LITTLE_ENDIAN */
-#define	OS_REG_WRITE(_ah, _reg, _val)					\
-	bus_space_write_4((_ah)->ah_st, (_ah)->ah_sh, (_reg), (_val))
-#define	OS_REG_READ(_ah, _reg)						\
-	((u_int32_t) bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
-#endif /* _BYTE_ORDER */
-#endif /* AH_DEBUG || AH_REGFUNC || AH_DEBUG_ALQ */
-
-#ifdef AH_DEBUG_ALQ
-extern	void OS_MARK(struct ath_hal *, u_int id, u_int32_t value);
+extern	void __ahdecl ath_hal_reg_write(struct ath_hal *ah,
+		u_int reg, u_int32_t val);
+extern	u_int32_t __ahdecl ath_hal_reg_read(struct ath_hal *ah, u_int reg);
 #else
+/* inline register operations */
+#if AH_BYTE_ORDER == AH_BIG_ENDIAN
+#define OS_REG_WRITE(_ah, _reg, _val) do {				    \
+	if ( (_reg) >= 0x4000 && (_reg) < 0x5000)			    \
+		*((volatile u_int32_t *)((_ah)->ah_sh + (_reg))) =	    \
+			__bswap32((_val));				    \
+	else								    \
+		*((volatile u_int32_t *)((_ah)->ah_sh + (_reg))) = (_val);  \
+} while (0)
+#define OS_REG_READ(_ah, _reg) \
+	(((_reg) >= 0x4000 && (_reg) < 0x5000) ? \
+		__bswap32(*((volatile u_int32_t *)((_ah)->ah_sh + (_reg)))) : \
+		*((volatile u_int32_t *)((_ah)->ah_sh + (_reg))))
+#else /* AH_LITTLE_ENDIAN */
+#define OS_REG_WRITE(_ah, _reg, _val) do { \
+	*((volatile u_int32_t *)((_ah)->ah_sh + (_reg))) = (_val); \
+} while (0)
+#define OS_REG_READ(_ah, _reg) \
+	*((volatile u_int32_t *)((_ah)->ah_sh + (_reg)))
+#endif /* AH_BYTE_ORDER */
+#endif /* AH_DEBUG || AH_REGFUNC */
 #define	OS_MARK(_ah, _id, _v)
-#endif
+
+/*
+ * Linux-specific attach/detach methods needed for module reference counting.
+ *
+ * XXX We can't use HAL_STATUS because the type isn't defined at this
+ *     point (circular dependency); we wack the type and patch things
+ *     up in the function.
+ *
+ * NB: These are intentionally not marked __ahdecl since they are
+ *     compiled with the default calling convetion and are not called
+ *     from within the HAL.
+ */
+extern	struct ath_hal *_ath_hal_attach(u_int16_t devid, HAL_SOFTC,
+		HAL_BUS_TAG, HAL_BUS_HANDLE, void* status);
+extern	void ath_hal_detach(struct ath_hal *);
 
 #endif /* _ATH_AH_OSDEP_H_ */
