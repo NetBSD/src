@@ -1,17 +1,19 @@
-#	$NetBSD: GENERIC,v 1.97 2001/05/16 10:56:42 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.98 2001/05/27 23:39:03 wiz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	32
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 
