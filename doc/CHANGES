@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.307 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.308 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -37,3 +37,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	kernel: Add a POOL_INIT macro to declare and automatically
 		initialise resource pools.  [simonb 20040425]
 	postfix: Postfix 2.1.0 imported.  [heas 20040427]
+	i386: Add support for Enhanced SpeedStep Technology, from
+		Michael Eriksson on port-i386.  [lukem 20040430]
