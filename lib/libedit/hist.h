@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.4 1997/10/14 15:05:52 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.5 2000/09/04 22:06:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,22 +42,22 @@
  * el.hist.c: History functions
  */
 #ifndef _h_el_hist
-#define _h_el_hist
+#define	_h_el_hist
 
 #include "histedit.h"
 
-typedef int (*hist_fun_t) __P((ptr_t, HistEvent *, int, ...));
+typedef int (*hist_fun_t)(ptr_t, HistEvent *, int, ...);
 
 typedef struct el_history_t {
-    char *buf;				/* The history buffer		*/
-    char *last;				/* The last character		*/
-    int eventno;			/* Event we are looking for	*/
-    ptr_t ref;				/* Argument for history fcns	*/
-    hist_fun_t fun;			/* Event access			*/
-    HistEvent ev;			/* Event cookie			*/
+	char		*buf;		/* The history buffer		*/
+	char		*last;		/* The last character		*/
+	int		 eventno;	/* Event we are looking for	*/
+	ptr_t		 ref;		/* Argument for history fcns	*/
+	hist_fun_t	 fun;		/* Event access			*/
+	HistEvent	 ev;		/* Event cookie			*/
 } el_history_t;
 
-#define HIST_FUN(el, fn, arg)	\
+#define	HIST_FUN(el, fn, arg)	\
     ((((*(el)->el_history.fun) ((el)->el_history.ref, &(el)->el_history.ev, \
 	fn, arg)) == -1) ? NULL : (el)->el_history.ev.str)
 
@@ -69,10 +69,10 @@ typedef struct el_history_t {
 #define	HIST_LOAD(el, fname)	HIST_FUN(el, H_LOAD fname)
 #define	HIST_SAVE(el, fname)	HIST_FUN(el, H_SAVE fname)
 
-protected int 		hist_init	__P((EditLine *));
-protected void 		hist_end	__P((EditLine *));
-protected el_action_t	hist_get	__P((EditLine *));
-protected int		hist_set	__P((EditLine *, hist_fun_t, ptr_t));
-protected int		hist_list	__P((EditLine *, int, char **));
+protected int		hist_init(EditLine *);
+protected void		hist_end(EditLine *);
+protected el_action_t	hist_get(EditLine *);
+protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
+protected int		hist_list(EditLine *, int, char **);
 
 #endif /* _h_el_hist */

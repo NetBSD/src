@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.2 1997/10/23 22:52:02 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.3 2000/09/04 22:06:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,74 +36,74 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef _READLINE_H_
-#define _READLINE_H_
+#define	_READLINE_H_
 
 #include <sys/types.h>
 
 /* list of readline stuff supported by editline library's readline wrapper */
 
 /* typedefs */
-typedef int Function __P((const char *, int));
-typedef void VFunction __P((void));
-typedef char   *CPFunction __P((const char *, int));
-typedef char  **CPPFunction __P((const char *, int, int));
+typedef int	  Function(const char *, int);
+typedef void	  VFunction(void);
+typedef char	 *CPFunction(const char *, int);
+typedef char	**CPPFunction(const char *, int, int);
 
 typedef struct _hist_entry {
-	const char     *line;
-	const char     *data;
-}               HIST_ENTRY;
+	const char	*line;
+	const char	*data;
+} HIST_ENTRY;
 
 /* global variables used by readline enabled applications */
 __BEGIN_DECLS
-extern const char  *rl_library_version;
-extern char 	   *rl_readline_name;
-extern FILE        *rl_instream;
-extern FILE        *rl_outstream;
-extern char	   *rl_line_buffer;
-extern int          rl_point, rl_end;
-extern int          history_base, history_length;
-extern int          max_input_history;
-extern char        *rl_basic_word_break_characters;
-extern char        *rl_completer_word_break_characters;
-extern char        *rl_completer_quote_characters;
-extern CPFunction  *rl_completion_entry_function;
-extern CPPFunction *rl_attempted_completion_function;
+extern const char	*rl_library_version;
+extern char		*rl_readline_name;
+extern FILE		*rl_instream;
+extern FILE		*rl_outstream;
+extern char		*rl_line_buffer;
+extern int		 rl_point, rl_end;
+extern int		 history_base, history_length;
+extern int		 max_input_history;
+extern char		*rl_basic_word_break_characters;
+extern char		*rl_completer_word_break_characters;
+extern char		*rl_completer_quote_characters;
+extern CPFunction	*rl_completion_entry_function;
+extern CPPFunction	*rl_attempted_completion_function;
 
 /* supported functions */
-char *readline __P((const char *));
-int rl_initialize __P((void));
+char		*readline(const char *);
+int		 rl_initialize(void);
 
-void using_history __P((void));
-int add_history __P((const char *));
-void clear_history __P((void));
-void stifle_history __P((int));
-int unstifle_history __P((void));
-int history_is_stifled __P((void));
-int where_history __P((void));
-HIST_ENTRY *current_history __P((void));
-HIST_ENTRY *history_get __P((int));
-int history_total_bytes __P((void));
-int history_set_pos __P((int));
-HIST_ENTRY *previous_history __P((void));
-HIST_ENTRY *next_history __P((void));
-int history_search __P((const char *, int));
-int history_search_prefix __P((const char *, int));
-int history_search_pos __P((const char *, int, int));
-int read_history __P((const char *));
-int write_history __P((const char *));
-int history_expand __P((char *, char **));
-char **history_tokenize __P((const char *));
+void		 using_history(void);
+int		 add_history(const char *);
+void		 clear_history(void);
+void		 stifle_history(int);
+int		 unstifle_history(void);
+int		 history_is_stifled(void);
+int		 where_history(void);
+HIST_ENTRY	*current_history(void);
+HIST_ENTRY	*history_get(int);
+int		 history_total_bytes(void);
+int		 history_set_pos(int);
+HIST_ENTRY	*previous_history(void);
+HIST_ENTRY	*next_history(void);
+int		 history_search(const char *, int);
+int		 history_search_prefix(const char *, int);
+int		 history_search_pos(const char *, int, int);
+int		 read_history(const char *);
+int		 write_history(const char *);
+int		 history_expand(char *, char **);
+char	       **history_tokenize(const char *);
 
-char *tilde_expand __P((char *));
-char *filename_completion_function __P((const char *, int));
-char *username_completion_function __P((const char *, int));
-int rl_complete __P((int, int));
-int rl_read_key __P((void));
-char **completion_matches __P((const char *, CPFunction *));
+char		*tilde_expand(char *);
+char		*filename_completion_function(const char *, int);
+char		*username_completion_function(const char *, int);
+int		 rl_complete(int, int);
+int		 rl_read_key(void);
+char	       **completion_matches(const char *, CPFunction *);
 
-int rl_insert   __P((int, int));
-void rl_reset_terminal __P((const char *));
-int rl_bind_key __P((int, int (*)(int, int)));
+int		 rl_insert(int, int);
+void		 rl_reset_terminal(const char *);
+int		 rl_bind_key(int, int (*)(int, int));
 __END_DECLS
 
 #endif /* _READLINE_H_ */
