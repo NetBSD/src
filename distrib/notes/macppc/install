@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.32 2004/08/27 16:53:13 wiz Exp $
+.\"	$NetBSD: install,v 1.33 2004/11/01 01:01:47 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -922,13 +922,35 @@ style boot scheme, you would type something like the following:
 Replace
 .Ic scsi/sd@0:0
 with the actual device you will be booting from.
+.It
+.To 2 "Additional Open Firmware tips"
+.Em "Additional Open Firmware tips"
+.br
 If you find that your system tries booting before your hard drive has
-spun up, you may need to also enter something like:
+spun up, try one of the two following
+.Sq Li boot-command
+settings:
 .Pp
 .(disp
+.No 0 \*> Ic "setenv boot-command catch 5000 ms boot"
 .No 0 \*> Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
 .disp)
 .Pp
+Also, you may be able to pause a system at the Open Firmware prompt
+if you have 
+.Sq Li auto-boot?
+set to
+.Sq Li true
+by holding down any key while the system is resetting.  Set the 
+following
+.Sq Li boot-command
+(this may not work on system with Open Firmware 1.0.5) (this method should
+interrupt booting, even when holding down any key while using a serial 
+console):
+.Pp
+.(disp
+.No 0 \*> Ic "setenv boot-command key? invert if boot then"
+.disp)
 .It
 .To 2 "Booting NetBSD and MacOS X or Darwin"
 .Em "Booting NetBSD and MacOS X or Darwin"
