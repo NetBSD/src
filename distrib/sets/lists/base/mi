@@ -640,6 +640,7 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/sparc
+./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/tahoe
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat5
@@ -653,6 +654,7 @@
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/sparc
+./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/tahoe
 ./usr/share/man/cat8/vax
 ./usr/share/man/makewhatis.sed
