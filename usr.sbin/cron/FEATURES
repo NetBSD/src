@@ -1,10 +1,10 @@
-$Id: FEATURES,v 1.1.1.1 1994/01/05 20:40:12 jtc Exp $
+$Id: FEATURES,v 1.1.1.2 1994/01/26 19:09:22 jtc Exp $
 
 Features of Vixie's cron relative to BSD 4.[23] and SysV crons:
 
 --	Environment variables can be set in each crontab.  SHELL, USER,
-	and HOME are set from the user's passwd entry; all except USER
-	can be changed in the crontab.  PATH is especially useful to
+	LOGNAME, and HOME are set from the user's passwd entry; all except
+	USER can be changed in the crontab.  PATH is especially useful to
 	set there.  TZ can be set, but cron ignores it other than passing
 	it on through to the commands it runs.  Format is
 
@@ -18,23 +18,16 @@ Features of Vixie's cron relative to BSD 4.[23] and SysV crons:
 		SHELL=/bin/sh
 		FOOBAR = this is a long blanky example
 
-	Above, FOOBAR would get `this is a long blanky example' as its value.
+	Above, FOOBAR would get "this is a long blanky example" as its value.
 
-	SHELL and HOME will be examined when it's time to run a command; if
-	you don't change them, they default to your /etc/passwd entry.
-
-	*DANGER*, WILL ROBINSON! This means that all 'uucp' logins should set
-	SHELL=/bin/sh or cron will try to use /usr/lib/uucp/uucico as the
-	shell.  This won't work.
+	SHELL and HOME will be used when it's time to run a command; if
+	you don't set them, HOME defaults to your /etc/passwd entry
+	and SHELL defaults to /bin/sh.
 
 	MAILTO, if set to the login name of a user on your system, will be the
 	person that cron mails the output of commands in that crontab.  This is
 	useful if you decide on BINMAIL when configuring cron.h, since binmail
 	doesn't know anything about aliasing.
-
-	Setting SHELL=/bin/sh will in general speed up your commands since it
-	is a much smaller shell than the one you probably use normally (csh
-	or ksh) and has enough features to work non-interactively.
 
 --	Weekdays can be specified by name.  Case is not significant, but only
 	the first three letters should be specified.
@@ -62,8 +55,8 @@ Features of Vixie's cron relative to BSD 4.[23] and SysV crons:
 	must be on a line by themselves; leading whitespace is ignored, and
 	a '#' introduces the comment.
 
---	(big win) If the `crontab' command changes anything in any crontab, it
-	tells the 'cron' daemon, who reloads all the tables before running the
+--	(big win) If the `crontab' command changes anything in any crontab,
+	the 'cron' daemon will reload all the tables before running the
 	next iteration.  In some crons, you have to kill and restart the
 	daemon whenever you change a crontab.  In other crons, the crontab
 	file is reread and reparsed every minute even if it didn't change.
@@ -85,4 +78,7 @@ Features of Vixie's cron relative to BSD 4.[23] and SysV crons:
 	on Sundays;  '* * 1,15 * *' will run *only* the 1st and 15th.  this
 	is why we keep 'e->dow_star' and 'e->dom_star'.  I didn't think up
 	this behaviour; it's how cron has always worked but the documentation
-	hasn't been very clear.
+	hasn't been very clear.  I have been told that some AT&T crons do not
+	act this way and do the more reasonable thing, which is (IMHO) to "or"
+	the various field-matches together.  In that sense this cron may not
+	be completely similar to some AT&T crons.
