@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.45 2003/09/07 11:59:40 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.46 2003/09/08 13:58:21 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.45 2003/09/07 11:59:40 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.46 2003/09/08 13:58:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1458,23 +1458,41 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
  * Codec-dependent initialization
  */
 
-#define AC97_AD_REG_MISC	0x76
-#define	AC97_AD_MISC_MBG	0x0001  /* 0 */
-#define AC97_AD_MISC_VREFD	0x0002  /* 1 */
-#define AC97_AD_MISC_VREFH	0x0004  /* 2 */
-#define AC97_AD_MISC_MADST	0x0008  /* 3 */
-#define AC97_AD_MISC_MADPD	0x0020  /* 5 */
-#define AC97_AD_MISC_FMXE	0x0100  /* 8 */
-#define AC97_AD_MISC_DAM	0x0400  /*10 */
-#define AC97_AD_MISC_MSPLT	0x1000  /*12 */
-#define AC97_AD_MISC_DACZ	0x4000  /*14 */
+#define	AD1980_REG_MISC	0x76
+#define		AD1980_MISC_MBG0	0x0001	/* 0 */
+#define		AD1980_MISC_MBG1	0x0002	/* 1 */
+#define		AD1980_MISC_VREFD	0x0004	/* 2 */
+#define		AD1980_MISC_VREFH	0x0008	/* 3 */
+#define		AD1980_MISC_SRU		0x0010	/* 4 */
+#define		AD1980_MISC_LOSEL	0x0020	/* 5 */
+#define		AD1980_MISC_2CMIC	0x0040	/* 6 */
+#define		AD1980_MISC_SPRD	0x0080	/* 7 */
+#define		AD1980_MISC_DMIX0	0x0100	/* 8 */
+#define		AD1980_MISC_DMIX1	0x0200	/* 9 */
+#define		AD1980_MISC_HPSEL	0x0400	/*10 */
+#define		AD1980_MISC_CLDIS	0x0800	/*11 */
+#define		AD1980_MISC_LODIS	0x1000	/*12 */
+#define		AD1980_MISC_MSPLT	0x2000	/*13 */
+#define		AD1980_MISC_AC97NC	0x4000	/*14 */
+#define		AD1980_MISC_DACZ	0x8000	/*15 */
+#define	AD1981_REG_MISC	0x76
+#define		AD1981_MISC_MBG		0x0001  /* 0 */
+#define		AD1981_MISC_VREFD	0x0002  /* 1 */
+#define		AD1981_MISC_VREFH	0x0004  /* 2 */
+#define		AD1981_MISC_MADST	0x0008  /* 3 */
+#define		AD1981_MISC_MADPD	0x0020  /* 5 */
+#define		AD1981_MISC_FMXE	0x0100  /* 8 */
+#define		AD1981_MISC_DAM		0x0400  /*10 */
+#define		AD1981_MISC_MSPLT	0x1000  /*12 */
+#define		AD1981_MISC_DACZ	0x4000  /*14 */
 static void
 ac97_ad1980_init(struct ac97_softc *as)
 {
 	unsigned short misc;
 
-	ac97_read(as, AC97_AD_REG_MISC, &misc);
-	ac97_write(as, AC97_AD_REG_MISC, misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
+	ac97_read(as, AD1980_REG_MISC, &misc);
+	ac97_write(as, AD1980_REG_MISC,
+		   misc | AD1980_MISC_LOSEL | AD1980_MISC_HPSEL);
 }
 
 #define ALC650_REG_MULTI_CHANNEL_CONTROL	0x6a
