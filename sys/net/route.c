@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.39 2001/01/17 04:05:42 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.40 2001/01/27 04:49:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ struct pool rtentry_pool;	/* pool for rtentry structures */
 struct pool rttimer_pool;	/* pool for rttimer structures */
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
+
+static int rtdeletemsg __P((struct rtentry *));
 
 void
 rtable_init(table)
@@ -370,6 +372,38 @@ out:
 }
 
 /*
+ * Delete a route and generate a message
+ */
+static int
+rtdeletemsg(rt)
+	struct rtentry *rt;
+{
+	int error;
+	struct rt_addrinfo info;
+
+	/*
+	 * Request the new route so that the entry is not actually
+	 * deleted.  That will allow the information being reported to
+	 * be accurate (and consistent with route_output()).
+	 */
+	bzero((caddr_t)&info, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_flags = rt->rt_flags;
+	error = rtrequest1(RTM_DELETE, &info, &rt);
+
+	rt_missmsg(RTM_DELETE, &info, info.rti_flags, error);
+
+	/* Adjust the refcount */
+	if (error == 0 && rt->rt_refcnt <= 0) {
+		rt->rt_refcnt++;
+		rtfree(rt);
+	}
+	return (error);
+}
+
+/*
  * Routing table ioctl interface.
  */
 int
@@ -500,7 +534,7 @@ rtrequest1(req, info, ret_nrt)
 	struct rtentry **ret_nrt;
 {
 	int s = splsoftnet(); int error = 0;
-	struct rtentry *rt;
+	struct rtentry *rt, *crt;
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
@@ -537,8 +571,11 @@ rtrequest1(req, info, ret_nrt)
 	case RTM_RESOLVE:
 		if (ret_nrt == 0 || (rt = *ret_nrt) == 0)
 			senderr(EINVAL);
+		if ((rt->rt_flags & RTF_CLONING) == 0)
+			senderr(EINVAL);
 		ifa = rt->rt_ifa;
-		flags = rt->rt_flags & ~RTF_CLONING;
+		flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
+		flags |= RTF_CLONED;
 		gateway = rt->rt_gateway;
 		if ((netmask = rt->rt_genmask) == 0)
 			flags |= RTF_HOST;
@@ -564,15 +601,6 @@ rtrequest1(req, info, ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
-		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
-					rnh, rt->rt_nodes);
-		if (rn == 0) {
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
-			Free(rt_key(rt));
-			pool_put(&rtentry_pool, rt);
-			senderr(EEXIST);
-		}
 		IFAREF(ifa);
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
@@ -585,6 +613,25 @@ rtrequest1(req, info, ret_nrt)
 			} else {
 				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
 			}
+		}
+		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
+		    rnh, rt->rt_nodes);
+		if (rn == NULL && (crt = rtalloc1(ndst, 0)) != NULL) {
+			/* overwrite cloned route */
+			if ((crt->rt_flags & RTF_CLONED) != 0) {
+				rtdeletemsg(crt);
+				rn = rnh->rnh_addaddr((caddr_t)ndst,
+				    (caddr_t)netmask, rnh, rt->rt_nodes);
+			}
+			RTFREE(crt);
+		}
+		if (rn == 0) {
+			IFAFREE(ifa);
+			if (rt->rt_gwroute)
+				rtfree(rt->rt_gwroute);
+			Free(rt_key(rt));
+			pool_put(&rtentry_pool, rt);
+			senderr(EEXIST);
 		}
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, info);
