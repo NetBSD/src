@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.1 1998/08/10 23:56:19 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.2 1998/11/03 05:02:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.1 1998/08/10 23:55:17 thorpej Exp 
+ *	NetBSD: miidevs,v 1.2 1998/11/03 05:01:49 thorpej Exp 
  */
 
 /*-
@@ -85,6 +85,8 @@
 /* Seeq PHYs */
 #define	MII_MODEL_SEEQ_80220	0x0003
 #define	MII_STR_SEEQ_80220	"Seeq 80220 10/100 media interface"
+#define	MII_MODEL_SEEQ_84220	0x0004
+#define	MII_STR_SEEQ_84220	"Seeq 84220 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
