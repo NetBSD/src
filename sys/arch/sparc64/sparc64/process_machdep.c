@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 1998/11/24 12:55:25 mrg Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.6 1999/10/11 01:57:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -79,9 +79,36 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+#ifdef __arch64__
+	struct trapframe* tf = p->p_md.md_tf;
+	int i;
+
+	/* 
+	 * Um, we should only do this conversion for 32-bit emulation
+	 * or when running 32-bit mode.  We really need to pass in a
+	 * 32-bit emulation flag!
+	 */
+
+	regs->r_tstate = tf->tf_tstate;
+	regs->r_pc = tf->tf_pc;
+	regs->r_npc = tf->tf_npc;
+	regs->r_y = tf->tf_y;
+	for (i = 0; i < 8; i++) {
+		regs->r_global[i] = tf->tf_global[i];
+		regs->r_out[i] = tf->tf_out[i];
+	}
+	/* We should also write out the ins and locals.  See signal stuff */
+	return (0);
+#else
 	struct reg32* regp = (struct reg32*)regs;
 	struct trapframe* tf = p->p_md.md_tf;
 	int i;
+
+	/* 
+	 * Um, we should only do this conversion for 32-bit emulation
+	 * or when running 32-bit mode.  We really need to pass in a
+	 * 32-bit emulation flag!
+	 */
 
 	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
 	regp->r_pc = tf->tf_pc;
@@ -93,6 +120,7 @@ process_read_regs(p, regs)
 	}
 	/* We should also write out the ins and locals.  See signal stuff */
 	return (0);
+#endif
 }
 
 int
@@ -100,6 +128,21 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+#ifdef __arch64__
+	struct trapframe* tf = p->p_md.md_tf;
+	int i;
+
+	tf->tf_pc = regs->r_pc;
+	tf->tf_npc = regs->r_npc;
+	tf->tf_y = regs->r_pc;
+	for (i = 0; i < 8; i++) {
+		tf->tf_global[i] = regs->r_global[i];
+		tf->tf_out[i] = regs->r_out[i];
+	}
+	/* We should also read in the ins and locals.  See signal stuff */
+	tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) | (regs->r_tstate & TSTATE_CCR);
+	return (0);
+#else
 	struct reg32* regp = (struct reg32*)regs;
 	struct trapframe* tf = p->p_md.md_tf;
 	int i;
@@ -114,6 +157,7 @@ process_write_regs(p, regs)
 	/* We should also read in the ins and locals.  See signal stuff */
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
 	return (0);
+#endif
 }
 
 int
@@ -141,6 +185,7 @@ process_read_fpregs(p, regs)
 struct proc	*p;
 struct fpreg	*regs;
 {
+#ifdef __arch64__
 	extern struct fpstate	initfpstate;
 	struct fpstate		*statep = &initfpstate;
 
@@ -149,6 +194,24 @@ struct fpreg	*regs;
 		statep = p->p_md.md_fpstate;
 	bcopy(statep, regs, sizeof(struct fpreg));
 	return 0;
+#else
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+	struct fpreg32		*regp = (struct fpreg32 *)regs;
+	int i;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	for (i=0; i<32; i++)
+		regp->fr_regs[i] = statep->fs_regs[i];
+	regp->fr_fsr = statep->fs_fsr;
+	regp->fr_qsize = statep->fs_qsize;
+	for (i=0; i<statep->fs_qsize; i++)
+		regp->fr_queue[i] = statep->fs_queue[i];
+
+	return 0;
+#endif
 }
 
 int
@@ -156,9 +219,28 @@ process_write_fpregs(p, regs)
 struct proc	*p;
 struct fpreg	*regs;
 {
+#ifdef __arch64__
 	if (p->p_md.md_fpstate == NULL)
 		return EINVAL;
 
 	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
 	return 0;
+#else
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+	struct fpreg32		*regp = (struct fpreg32 *)regs;
+	int i;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	for (i=0; i<32; i++)
+		statep->fs_regs[i] = regp->fr_regs[i];
+	statep->fs_fsr = regp->fr_fsr;
+	statep->fs_qsize = regp->fr_qsize;
+	for (i=0; i<regp->fr_qsize; i++)
+		statep->fs_queue[i] = regp->fr_queue[i];
+
+	return 0;
+#endif
 }
