@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.4 2002/08/15 01:38:16 briggs Exp $	*/
+/*	$NetBSD: copystr.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,13 +41,13 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.4 2002/08/15 01:38:16 briggs Exp $")
+RCSID("$NetBSD: copystr.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
-Lcurpcb:
+.Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
 /*
@@ -107,7 +107,7 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 #ifdef DIAGNOSTIC
@@ -154,7 +154,7 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 #ifdef DIAGNOSTIC
