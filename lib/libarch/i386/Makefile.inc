@@ -4,3 +4,6 @@
 
 SRCS+=	i386_get_ldt.c i386_set_ldt.c
 
+MAN2+=	i386_get_ldt.0
+
+MLINKS+=i386_get_ldt.2 i386_set_ldt.2
