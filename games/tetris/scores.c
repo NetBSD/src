@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.9 2000/01/21 00:54:53 jsm Exp $	*/
+/*	$NetBSD: scores.c,v 1.10 2000/01/21 02:10:56 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -204,7 +204,7 @@ savescore(level)
 		rewind(sf);
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != (size_t)nscores ||
 		    fflush(sf) == EOF)
-			warnx("error writing %s: %s -- %s\n",
+			warnx("error writing %s: %s -- %s",
 			    _PATH_SCOREFILE, strerror(errno),
 			    "high scores may be damaged");
 	}
