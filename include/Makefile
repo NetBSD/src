@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2002/02/04 08:51:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.102 2002/02/22 20:09:01 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -17,7 +17,7 @@ INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	resolv.h rmd160.h rmt.h sched.h search.h setjmp.h sgtty.h signal.h \
 	stab.h stddef.h stdio.h stdlib.h string.h strings.h \
 	stringlist.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h \
-	ulimit.h unistd.h util.h utime.h utmp.h vis.h wchar.h wctype.h
+	ulimit.h unistd.h util.h utime.h utmp.h utmpx.h vis.h wchar.h wctype.h
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/telnet.h arpa/tftp.h
 INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
 	protocols/talkd.h protocols/timed.h
