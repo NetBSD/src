@@ -300,7 +300,12 @@ changequote([,])dnl
       sparc-fujitsu-none)   fmt=aout ;;
       sparc-*-elf | sparc-*-sysv4* | sparc-*-solaris*)
 			    fmt=elf ;;
-      sparc-*-netbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
+      sparc-*-netbsd*)      em=nbsd bfd_gas=yes
+			    case ${cpu} in
+				sparc) fmt=aout ;;
+				sparc64) fmt=elf ;;
+			    esac
+			    ;;
       sparc-*-openbsd*)     fmt=aout em=nbsd bfd_gas=yes ;;
 
       vax-*-bsd* | vax-*-ultrix*)
@@ -361,7 +366,7 @@ changequote([,])dnl
     test -n "$want_sparc_v9" && AC_DEFINE(SPARC_V9)
 
     case ${cpu}-${vendor}-${os} in
-      sparc64-*-elf*) AC_DEFINE(SPARC_ARCH64) ;;
+      sparc64-*-elf*|sparc64-*-netbsd*) AC_DEFINE(SPARC_ARCH64) ;;
     esac
 
     case ${cpu_type} in
