@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsconscfg.8,v 1.8 2000/10/02 16:45:20 bjh21 Exp $
+.\"	$NetBSD: wsconscfg.8,v 1.9 2000/10/03 14:21:47 bjh21 Exp $
 .\"
 .Dd January 12, 1999
 .Os
@@ -48,19 +48,19 @@ option is applied. Terminals used by the operating system console or a
 graphics program (X server) cannot be deleted. With the
 .Fl k
 flag, the keyboard specified by
-.Dq index
+.Ql index
 will be detached from the wscons display.
 With the
 .Fl m
 flag, the multiplexor specified by
-.Dq index
+.Ar index
 will be detached from the wscons display.
 .It Fl F
 Force deleting of a terminal even if it is in use by a user space program.
 .It Fl k
 Do keyboard related operations instead of virtual screen configuration.
 Without other flags, a keyboard will be attached to the display device. The
-.Dq index
+.Ar index
 argument can be omitted, in this case the first free keyboard will be used.
 .It Fl m
 Do multiplexor related operations instead of virtual screen configuration.
@@ -88,12 +88,12 @@ configuration file.
 .Dl wsconscfg -t 80x50 -e vt100 1
 .Pp
 Configure screen 1 (i.e. the second), it will get the type
-.Dq 80x50
+.Ql 80x50
 and use the VT100 terminal emulation. (Note:
-.Dq 80x50
+.Ql 80x50
 is a screen type offered by the
 .Xr vga 4
-display driver. In this particular case, an 8x8-font must be loaded
+display driver. In this particular case, an 8\(mu8-font must be loaded
 before to make the screen useful. See
 .Xr wsfontload 8 .)
 .Pp
