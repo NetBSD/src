@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 1997/04/16 23:03:16 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.4 1997/11/05 04:36:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -43,7 +43,9 @@ typedef	short			int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			int32_t;
 typedef	unsigned int		u_int32_t;
+/* LONGLONG */
 typedef	long long		int64_t;
+/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 
 typedef	int32_t			register_t;
