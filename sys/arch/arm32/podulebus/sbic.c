@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.29 2001/08/15 20:08:46 rearnsha Exp $ */
+/* $NetBSD: sbic.c,v 1.30 2001/08/15 20:27:46 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -83,19 +83,23 @@
 
 #include "opt_ddb.h"
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/callout.h>
 #include <sys/kernel.h> /* For hz */
-#include <sys/disklabel.h>
-#include <sys/dkstat.h>
+#include <sys/device.h>
 #include <sys/buf.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
+
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 #include <arm32/podulebus/sbicreg.h>
 #include <arm32/podulebus/sbicvar.h>
 
