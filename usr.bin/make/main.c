@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.6 1993/08/23 05:29:31 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.7 1993/10/23 02:32:03 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -348,7 +348,7 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate; 	/* FALSE if all targets up to date */
 	struct stat sb;
-	char *p, *path, *getenv();
+	char mdpath[MAXPATHLEN + 1], *p, *path, *getenv();
 
 	/*
 	 * if the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -357,19 +357,32 @@ main(argc, argv)
 	 * and modify the paths for the Makefiles apropriately.  The
 	 * current directory is also placed as a variable for make scripts.
 	 */
-	if (!(path = getenv("MAKEOBJDIR")))
+	if (!(path = getenv("MAKEOBJDIR"))) {
 		path = _PATH_OBJDIR;
+		snprintf(mdpath, MAXPATHLEN + 1, "%s.%s", path, MACHINE);
+	} else {
+		strncpy(mdpath, path, MAXPATHLEN + 1);
+	}
+
 	curdir = emalloc((u_int)MAXPATHLEN + 1);
 	if (!getwd(curdir)) {
 		(void)fprintf(stderr, "make: %s.\n", curdir);
 		exit(2);
 	}
-	if (!lstat(path, &sb)) {
-		if (chdir(path))
+	if (!lstat(mdpath, &sb)) {
+		if (chdir(mdpath))
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
-			    path, strerror(errno));
+			    mdpath, strerror(errno));
 		else
 			obj_is_elsewhere = 1;
+	} else {
+		if (!lstat(path, &sb)) {
+			if (chdir(path))
+				(void)fprintf(stderr, "make warning: %s: %s.\n",
+				    path, strerror(errno));
+			else
+				obj_is_elsewhere = 1;
+		}
 	}
 
 	create = Lst_Init(FALSE);
