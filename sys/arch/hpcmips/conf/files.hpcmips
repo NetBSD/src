@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.59 2001/06/13 19:09:07 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.60 2001/09/05 15:46:10 sato Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -38,7 +38,7 @@ attach cpu at mainbus
 file arch/hpcmips/hpcmips/cpu.c		cpu
 
 # CPU support option headers
-defopt	opt_vr41xx.h	VR41XX VR4101 VR4102 VR4111 VR4121 VR4122 VR4181
+defopt	opt_vr41xx.h	VR41XX VR4101 VR4102 VR4111 VR4121 VR4122 VR4181 VR4131
 defopt	opt_tx39xx.h	TX39XX TX3911 TX3912 TX3922
 
 #
