@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.70 2004/02/29 23:51:05 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.71 2004/03/01 00:16:24 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -306,15 +306,22 @@ There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
-.It Cm nwid Ar id
+.It Cm ssid Ar id
 .Pq IEEE 802.11 devices only
-Configure network ID for IEEE 802.11-based wireless network interfaces.
+Configure the Service Set Identifier (a.k.a. the network name)
+for IEEE 802.11-based wireless network interfaces.
 The
 .Ar id
 can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-The empty string allows the interface to connect to any available
-access points.
+or a series of up to 64 hexadecimal digits preceded by
+.Dq 0x .
+Setting
+.Ar id
+to empty string allows the interface to connect to any available
+access point.
+.It Cm nwid Ar id
+Synonym for
+.Dq ssid .
 .It Cm nwkey Ar key
 .Pq IEEE 802.11 devices only
 Enable WEP encryption for IEEE 802.11-based wireless network interfaces
