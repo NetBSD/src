@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.12 1998/01/12 18:30:49 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.13 1998/07/01 22:46:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,14 @@ dioattach(parent, self, aux)
 		bzero(&da, sizeof(da));
 		da.da_bst = HP300_BUS_SPACE_DIO;
 		da.da_scode = scode;
-		da.da_id = DIO_ID(va);
+		/*
+		 * Internal HP-IB doesn't always return a device ID,
+		 * so we rely on the sysflags.
+		 */
+		if ((scode == 7) && internalhpib)
+			da.da_id = DIO_DEVICE_ID_IHPIB;
+		else
+			da.da_id = DIO_ID(va);
 
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
