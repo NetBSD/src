@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.20 2003/08/24 17:52:41 chs Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.21 2003/09/06 22:09:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.20 2003/08/24 17:52:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.21 2003/09/06 22:09:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.20 2003/08/24 17:52:41 chs Exp $"
 
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/freebsd/freebsd_exec.h>
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/common/compat_util.h>
 
 extern struct sysent freebsd_sysent[];
