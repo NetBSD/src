@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.58 2001/11/13 07:48:47 lukem Exp $	*/
+/*	$NetBSD: pci.c,v 1.59 2002/05/15 18:13:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.58 2001/11/13 07:48:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.59 2002/05/15 18:13:00 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -61,8 +61,6 @@ struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
 };
 
-int	pci_probe_bus(struct device *, int (*match)(struct pci_attach_args *),
-		      struct pci_attach_args *);
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
@@ -116,160 +114,11 @@ pcimatch(parent, cf, aux)
 	 * XXX check other (hardware?) indicators
 	 */
 
-	return 1;
+	return (1);
 }
 
-/* XXX
- * The __PCI_BUS_DEVORDER/__PCI_DEV_FUNCORDER macros should go away
- * and be implemented with device properties when they arrive.
- */
-int
-pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
-	      struct pci_attach_args *pap)
-{
-	struct pci_softc *sc = (struct pci_softc *)self;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function, nfunctions, ret;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int i;
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-	char funcs[8];
-	int j;
-#else
-	const struct pci_quirkdata *qd;
-#endif
-
-	iot = sc->sc_iot;
-	memt = sc->sc_memt;
-	pc = sc->sc_pc;
-	bus = sc->sc_bus;
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
-#else
-	for (device = 0; device < sc->sc_maxndevs; device++)
-#endif
-	{
-		pcitag_t tag;
-		pcireg_t id, class, intr, bhlcr, csr;
-		struct pci_attach_args pa;
-		int pin;
-
-#ifdef __PCI_DEV_FUNCORDER
-		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
-		nfunctions = 8;
-#else
-		tag = pci_make_tag(pc, bus, device, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
-		/* XXX Not invalid, but we've done this ~forever. */
-		if (PCI_VENDOR(id) == 0)
-			continue;
-
-		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
-
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
-		    (qd != NULL &&
-		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
-			nfunctions = 8;
-		else
-			nfunctions = 1;
-#endif /* __PCI_DEV_FUNCORDER */
-
-#ifdef __PCI_DEV_FUNCORDER
-		for (j = 0; (function = funcs[j]) < nfunctions &&
-		    function >= 0; j++)
-#else
-		for (function = 0; function < nfunctions; function++)
-#endif
-		{
-			tag = pci_make_tag(pc, bus, device, function);
-			id = pci_conf_read(pc, tag, PCI_ID_REG);
-			csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-
-			/* Invalid vendor ID value? */
-			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-				continue;
-			/* XXX Not invalid, but we've done this ~forever. */
-			if (PCI_VENDOR(id) == 0)
-				continue;
-
-			pa.pa_iot = iot;
-			pa.pa_memt = memt;
-			pa.pa_dmat = sc->sc_dmat;
-			pa.pa_pc = pc;
-			pa.pa_bus = bus;
-			pa.pa_device = device;
-			pa.pa_function = function;
-			pa.pa_tag = tag;
-			pa.pa_id = id;
-			pa.pa_class = class;
-
-			/*
-			 * Set up memory, I/O enable, and PCI command flags
-			 * as appropriate.
-			 */
-			pa.pa_flags = sc->sc_flags;
-			if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
-				pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
-			if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
-				pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
-
-			/*
-			 * If the cache line size is not configured, then
-			 * clear the MRL/MRM/MWI command-ok flags.
-			 */
-			if (PCI_CACHELINE(bhlcr) == 0)
-				pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
-				    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
-
-			if (bus == 0) {
-				pa.pa_intrswiz = 0;
-				pa.pa_intrtag = tag;
-			} else {
-				pa.pa_intrswiz = sc->sc_intrswiz + device;
-				pa.pa_intrtag = sc->sc_intrtag;
-			}
-			pin = PCI_INTERRUPT_PIN(intr);
-			if (pin == PCI_INTERRUPT_PIN_NONE) {
-				/* no interrupt */
-				pa.pa_intrpin = 0;
-			} else {
-				/*
-				 * swizzle it based on the number of
-				 * busses we're behind and our device
-				 * number.
-				 */
-				pa.pa_intrpin =			/* XXX */
-				    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
-			}
-			pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
-
-			if (match != NULL) {
-				ret = match(&pa);
-				if (ret != 0) {
-					if (pap != NULL)
-						*pap = pa;
-					return ret;
-				}
-			} else {
-				config_found_sm(self, &pa, pciprint,
-				    pcisubmatch);
-			}
-		}
-	}
-	return 0;
-}
+/* XXX Temporary */
+#define	pci_enumerate_bus	pci_enumerate_bus_generic
 
 void
 pciattach(parent, self, aux)
@@ -328,7 +177,7 @@ pciattach(parent, self, aux)
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
-	pci_probe_bus(self, NULL, NULL);
+	pci_enumerate_bus(sc, NULL, NULL);
 }
 
 int
@@ -387,11 +236,96 @@ pcisubmatch(parent, cf, aux)
 
 	if (cf->pcicf_dev != PCI_UNK_DEV &&
 	    cf->pcicf_dev != pa->pa_device)
-		return 0;
+		return (0);
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
-		return 0;
+		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+int
+pci_probe_device(struct pci_softc *sc, pcitag_t tag,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	struct pci_attach_args pa;
+	pcireg_t id, csr, class, intr, bhlcr;
+	int ret, pin, bus, device, function;
+
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+
+	/* Invalid vendor ID value? */
+	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+		return (NULL);
+	/* XXX Not invalid, but we've done this ~forever. */
+	if (PCI_VENDOR(id) == 0)
+		return (NULL);
+
+	pa.pa_iot = sc->sc_iot;
+	pa.pa_memt = sc->sc_memt;
+	pa.pa_dmat = sc->sc_dmat;
+	pa.pa_pc = pc;
+	pa.pa_device = device;
+	pa.pa_function = function;
+	pa.pa_tag = tag;
+	pa.pa_id = id;
+	pa.pa_class = class;
+
+	/*
+	 * Set up memory, I/O enable, and PCI command flags
+	 * as appropriate.
+	 */
+	pa.pa_flags = sc->sc_flags;
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+		pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+		pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
+
+	/*
+	 * If the cache line size is not configured, then
+	 * clear the MRL/MRM/MWI command-ok flags.
+	 */
+	if (PCI_CACHELINE(bhlcr) == 0)
+		pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
+		    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
+
+	if (bus == 0) {
+		pa.pa_intrswiz = 0;
+		pa.pa_intrtag = tag;
+	} else {
+		pa.pa_intrswiz = sc->sc_intrswiz + device;
+		pa.pa_intrtag = sc->sc_intrtag;
+	}
+	pin = PCI_INTERRUPT_PIN(intr);
+	if (pin == PCI_INTERRUPT_PIN_NONE) {
+		/* no interrupt */
+		pa.pa_intrpin = 0;
+	} else {
+		/*
+		 * swizzle it based on the number of busses we're
+		 * behind and our device number.
+		 */
+		pa.pa_intrpin = 	/* XXX */
+		    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
+	}
+	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
+
+	if (match != NULL) {
+		ret = (*match)(&pa);
+		if (ret != 0 && pap != NULL)
+			*pap = pa;
+	} else {
+		ret = config_found_sm(&sc->sc_dev, &pa, pciprint,
+		    pcisubmatch) != NULL;
+	}
+
+	return (ret);
 }
 
 int
@@ -446,14 +380,61 @@ int
 pci_find_device(struct pci_attach_args *pa,
 		int (*match)(struct pci_attach_args *))
 {
-	int i;
-	struct device *pcidev;
 	extern struct cfdriver pci_cd;
+	struct device *pcidev;
+	int i;
 
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
 		pcidev = pci_cd.cd_devs[i];
-		if (pcidev != NULL && pci_probe_bus(pcidev, match, pa) != 0)
-			return 1;
+		if (pcidev != NULL &&
+		    pci_enumerate_bus((struct pci_softc *) pcidev,
+		    		      match, pa) != 0)
+			return (1);
 	}
-	return 0;
+	return (0);
+}
+
+/*
+ * Generic PCI bus enumeration routine.  Used unless machine-dependent
+ * code needs to provide something else.
+ */
+int
+pci_enumerate_bus_generic(struct pci_softc *sc,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	int device, function, nfunctions, ret;
+	const struct pci_quirkdata *qd;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (device = 0; device < sc->sc_maxndevs; device++) {
+		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+		    (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfunctions = 8;
+		else
+			nfunctions = 1;
+
+		for (function = 0; function < nfunctions; function++) {
+			tag = pci_make_tag(pc, sc->sc_bus, device, function);
+			ret = pci_probe_device(sc, tag, match, pap);
+			if (match != NULL && ret != 0)
+				return (ret);
+		}
+	}
+	return (0);
 }
