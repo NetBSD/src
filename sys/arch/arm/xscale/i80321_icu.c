@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.2.6.1 2002/11/11 23:35:32 he Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.2.6.2 2002/11/18 01:45:19 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -340,13 +340,10 @@ i80321_do_pending(void)
 int
 _splraise(int ipl)
 {
-	int old, oldirqstate;
+	int old;
 
-	oldirqstate = disable_interrupts(I32_bit);
 	old = current_spl_level;
 	current_spl_level |= imask[ipl];
-
-	restore_interrupts(oldirqstate);
 
 	return (old);
 }
