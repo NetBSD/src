@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/06/05 01:04:22 fredette Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2003/04/01 20:47:25 thorpej Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -46,13 +46,9 @@
 #define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 #define	ALIGNED_POINTER(p,t) ((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
-#define	PAGE_SIZE	4096
-#define	PAGE_MASK	(PAGE_SIZE-1)
-#define	PAGE_SHIFT	12
-
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
+#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
 #define	SEGSHIFT	(PGSHIFT + (PGSHIFT-PTESHIFT))	/* LOG2(NBSEG) */
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment (quadrant) */
