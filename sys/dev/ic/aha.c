@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.33 2001/07/07 15:53:14 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.34 2001/07/07 16:13:45 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -520,7 +520,7 @@ aha_create_ccbs(sc, ccbstore, count)
 	struct aha_ccb *ccb;
 	int i, error;
 
-	bzero(ccbstore, sizeof(struct aha_ccb) * count);
+	memset(ccbstore, 0, sizeof(struct aha_ccb) * count);
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = aha_init_ccb(sc, ccb)) != 0) {
