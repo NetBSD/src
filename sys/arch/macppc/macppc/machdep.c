@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130.2.2 2004/06/22 09:27:31 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130.2.3 2004/07/04 12:43:49 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130.2.2 2004/06/22 09:27:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130.2.3 2004/07/04 12:43:49 he Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -526,7 +526,6 @@ cninit_kd()
 #if NAKBD > 0
 	memset(name, 0, sizeof(name));
 	OF_getprop(OF_parent(node), "name", name, sizeof(name));
-	printf("OF_getprop: name = %s\n", name);
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
 		akbd_cnattach();
@@ -573,17 +572,14 @@ cninit_kd()
 	/*
 	 * stdin is /pseudo-hid/keyboard.  There is no 
 	 * `adb-kbd-ihandle or `usb-kbd-ihandles methods
-	 * available. Try attaching anything.
+	 * available. Try attaching as ADB.
 	 *
 	 * XXX This must be called before pmap_bootstrap().
 	 */
 	if (strcmp(name, "pseudo-hid") == 0) {
-		printf("console keyboard type: unknown\n");
+		printf("console keyboard type: unknown, assuming ADB\n");
 #if NAKBD > 0
 		akbd_cnattach();
-#endif
-#if NUKBD > 0
-		ukbd_cnattach();
 #endif
 		goto kbd_found;
 	}
