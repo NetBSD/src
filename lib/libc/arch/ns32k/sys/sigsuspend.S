@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.3 1997/05/08 13:39:09 matthias Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,12 +24,12 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsuspend.S,v 1.3 1997/05/08 13:39:09 matthias Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
 #endif
 
 ENTRY(sigsuspend)
 	movd	0(S_ARG0),S_ARG0	/* indirect to mask arg */
-	SYSTRAP(sigsuspend)
+	SYSTRAP(compat_13_sigsuspend13)
 	bcs	_ASM_LABEL(cerror)
 	movqd	0,r0			/* shouldn t happen */
 	ret	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.7 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/29 20:24:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -30,7 +30,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigreturn.S,v 1.7 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/09/29 20:24:36 thorpej Exp $")
 #endif
 
-PSEUDO(sigreturn,compat_13_sigreturn13)
+RSYSCALL(__sigreturn14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.3 1997/05/08 13:39:07 matthias Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,10 +24,10 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigpending.S,v 1.3 1997/05/08 13:39:07 matthias Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.4 1998/09/29 20:24:36 thorpej Exp $")
 #endif
 
-SYSCALL(sigpending)
+_SYSCALL(sigpending,compat_13_sigpending13)
 	movd	r0,0(S_ARG1)		/* store old mask */
 	movqd	0,r0
 	ret	0
