@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.1.2.1 2001/03/05 23:33:26 nathanw Exp $	*/
+/*	$NetBSD: sa.h,v 1.1.2.2 2002/08/31 00:05:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 
 __BEGIN_DECLS
-int	sa_register(sa_upcall_t, sa_upcall_t *);
+int	sa_register(sa_upcall_t, sa_upcall_t *, int);
 int	sa_stacks(int, stack_t *);
 size_t	sa_getstacksize(void);
 int	sa_enable(void);
