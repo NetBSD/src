@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.143 2004/01/28 20:57:15 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.144 2004/02/26 22:56:55 oster Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.143 2004/01/28 20:57:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.144 2004/02/26 22:56:55 oster Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -277,6 +277,7 @@ lfs_done()
 {
 	ufs_done();
 	pool_destroy(&lfs_inode_pool);
+	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
 }
 
