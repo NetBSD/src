@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.35 2001/02/05 01:53:48 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.36 2001/09/14 08:19:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.35 2001/02/05 01:53:48 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.36 2001/09/14 08:19:25 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ f_exec(plan, entry)
 	fflush(stdout);
 	fflush(stderr);
 
-	switch (pid = vfork()) {
+	switch (pid = fork()) {
 	case -1:
 		err(1, "fork");
 		/* NOTREACHED */
