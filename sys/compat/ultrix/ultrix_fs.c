@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.9 1997/04/06 23:26:52 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.10 1997/05/24 09:56:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -336,7 +336,6 @@ ultrix_sys_mount(p, v, retval)
 
 	int error;
 	int otype = SCARG(uap, type);
-	extern char sigcode[], esigcode[];
 	char fsname[MFSNAMELEN];
 	char * fstype;
 	struct sys_mount_args nuap;
