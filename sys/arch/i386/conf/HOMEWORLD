@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.17.2.2 1997/10/14 09:09:28 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.17.2.3 1997/10/14 23:35:11 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -189,7 +189,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
+ne0	at isa? port 0x300 irq 9		# NE2000 ethernet
 #ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 #ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
