@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.20 1994/10/09 14:45:40 mycroft Exp $
+ *	$Id: vector.s,v 1.21 1994/10/09 18:10:55 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -264,8 +264,7 @@ IDTVEC(hold/**/irq_num)							;\
 
 #ifdef DDB
 #define	MAKE_FRAME \
-	movl	%esp,%ebp						;\
-	subl	$8,%ebp
+	leal	-8(%esp),%ebp
 #else /* !DDB */
 #define	MAKE_FRAME
 #endif /* DDB */
