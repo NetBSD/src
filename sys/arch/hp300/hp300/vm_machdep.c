@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1996/02/09 16:58:40 scottr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 1996/05/02 20:49:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,7 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void (*pc) __P((struct proc *));
 {
 
 	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
@@ -200,6 +200,7 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
