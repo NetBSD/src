@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.10.3 2002/07/12 01:39:53 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.10.4 2002/08/02 21:02:32 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -170,6 +170,3 @@ define	SVR4_SYS_context	SVR4_SYS_context
 define	SVR4_SYS_exit		SVR4_SYS_exit
 define	SVR4_SETCONTEXT		SVR4_SETCONTEXT
 endif
-
-# Upcall handler
-define SAF_UPCALL		offsetof(struct saframe, sa_upcall)
