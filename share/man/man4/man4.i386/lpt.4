@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: lpt.4,v 1.10 1999/04/06 20:24:42 pk Exp $
+.\"	$NetBSD: lpt.4,v 1.11 1999/11/14 17:02:21 augustss Exp $
 .\"
 .Dd August 6, 1993
 .Dt LPT 4 i386
@@ -40,6 +40,8 @@ Parallel port driver
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
 .Cd "lpt1 at isa? port" \&"IO_LPT2\&"
+.Cd "lpt* at pnpbios? index ?"
+.Cd "lpt* at puc? port ?"
 .Sh DESCRIPTION
 This driver provides access to parallel ports.  The bits in the minor
 number select various features of the driver.  If no IRQ is
@@ -58,3 +60,7 @@ first interrupt-driven parallel port device
 .It Pa /dev/lpa0
 first polled parallel port device
 .El
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr pnpbios 4 ,
+.Xr puc 4
