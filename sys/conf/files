@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130.2.7 1997/09/22 06:33:06 thorpej Exp $
+#	$NetBSD: files,v 1.130.2.8 1997/10/14 00:53:35 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -130,11 +130,10 @@ file	dev/ic/i82586.c			i82586
 device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
 
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-device	ed: ether, ifnet, arp
-# XXX this should be moved to dev/ic
-file	dev/isa/if_ed.c			ed
+# Novell NE2000-compatible Ethernet cards, based on the
+# National Semiconductor DS8390.
+device	ne: ether, ifnet, arp, dp8390nic
+file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
