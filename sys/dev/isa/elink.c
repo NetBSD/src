@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.9 1996/05/03 19:06:27 christos Exp $	*/
+/*	$NetBSD: elink.c,v 1.10 1996/10/21 22:40:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -61,12 +61,12 @@ static int elink_all_resets_initialized;
  * The "bus" argument here is the unit number of the ISA bus, e.g. "0"
  * if the bus is "isa0".
  *
- * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
+ * NOTE: the caller MUST provide an access handle for ELINK_ID_PORT!
  */
 void
-elink_reset(bc, ioh, bus)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+elink_reset(iot, ioh, bus)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int bus;
 {
 	struct elink_done_reset *er;
@@ -94,23 +94,23 @@ elink_reset(bc, ioh, bus)
 	LIST_INSERT_HEAD(&elink_all_resets, er, er_link);
 
 	/* Haven't reset the cards on this bus, yet. */
-	bus_io_write_1(bc, ioh, 0, ELINK_RESET);
+	bus_space_write_1(iot, ioh, 0, ELINK_RESET);
 
  out:
-	bus_io_write_1(bc, ioh, 0, 0x00);
-	bus_io_write_1(bc, ioh, 0, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x00);
 }
 
 /*
  * The `ID sequence' is really just snapshots of an 8-bit CRC register as 0
  * bits are shifted in.  Different board types use different polynomials.
  *
- * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
+ * NOTE: the caller MUST provide an access handle for ELINK_ID_PORT!
  */
 void
-elink_idseq(bc, ioh, p)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+elink_idseq(iot, ioh, p)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	register u_char p;
 {
 	register int i;
@@ -118,7 +118,7 @@ elink_idseq(bc, ioh, p)
 
 	c = 0xff;
 	for (i = 255; i; i--) {
-		bus_io_write_1(bc, ioh, 0, c);
+		bus_space_write_1(iot, ioh, 0, c);
 		if (c & 0x80) {
 			c <<= 1;
 			c ^= p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.5 1996/05/07 01:50:07 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.6 1996/10/21 22:41:06 thorpej Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -47,7 +47,8 @@ struct le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	void	*sc_ih;
-	bus_io_handle_t sc_ioh;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
 };

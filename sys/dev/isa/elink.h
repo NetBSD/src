@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.h,v 1.4 1996/04/30 22:16:31 thorpej Exp $	*/
+/*	$NetBSD: elink.h,v 1.5 1996/10/21 22:40:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -35,5 +35,5 @@
 #define	ELINK_507_POLY	0xe7
 #define	ELINK_509_POLY	0xcf
 
-void elink_reset __P((bus_chipset_tag_t, bus_io_handle_t, int));
-void elink_idseq __P((bus_chipset_tag_t, bus_io_handle_t, u_char p));
+void elink_reset __P((bus_space_tag_t, bus_space_handle_t, int));
+void elink_idseq __P((bus_space_tag_t, bus_space_handle_t, u_char p));

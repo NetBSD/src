@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.54 1996/10/13 01:37:50 christos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.55 1996/10/21 22:40:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -468,8 +468,8 @@ el_probe(sc, ia)
 	struct ie_softc *sc;
 	struct isa_attach_args *ia;
 {
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	u_char c;
 	int i, rval = 0;
 	u_char signature[] = "*3COM*";
@@ -483,7 +483,7 @@ el_probe(sc, ia)
 	/*
 	 * Map the Etherlink ID port for the probe sequence.
 	 */
-	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
+	if (bus_space_map(iot, ELINK_ID_PORT, 1, 0, &ioh)) {
 		printf("3c507 probe: can't map Etherlink ID port\n");
 		return 0;
 	}
@@ -492,9 +492,9 @@ el_probe(sc, ia)
 	 * Reset and put card in CONFIG state without changing address.
 	 * XXX Indirect brokenness here!
 	 */
-	elink_reset(bc, ioh, sc->sc_dev.dv_parent->dv_unit);
-	elink_idseq(bc, ioh, ELINK_507_POLY);
-	elink_idseq(bc, ioh, ELINK_507_POLY);
+	elink_reset(iot, ioh, sc->sc_dev.dv_parent->dv_unit);
+	elink_idseq(iot, ioh, ELINK_507_POLY);
+	elink_idseq(iot, ioh, ELINK_507_POLY);
 	outb(ELINK_ID_PORT, 0xff);
 
 	/* Check for 3COM signature before proceeding. */
@@ -512,7 +512,7 @@ el_probe(sc, ia)
 
 	/* Go to RUN state. */
 	outb(ELINK_ID_PORT, 0x00);
-	elink_idseq(bc, ioh, ELINK_507_POLY);
+	elink_idseq(iot, ioh, ELINK_507_POLY);
 	outb(ELINK_ID_PORT, 0x00);
 
 	/* Set bank 2 for version info and read BCD version byte. */
@@ -576,7 +576,7 @@ el_probe(sc, ia)
 	rval = 1;
 
  out:
-	bus_io_unmap(bc, ioh, 1);
+	bus_space_unmap(iot, ioh, 1);
 	return rval;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.4 1996/10/13 01:37:39 christos Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.5 1996/10/21 22:40:36 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -42,7 +42,7 @@ cy_probe_isa(parent, match, aux)
 
 	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
-	sc.sc_bc = ia->ia_bc;
+	sc.sc_memt = ia->ia_memt;
 	sc.sc_bustype = CY_BUSTYPE_ISA;
 
 	if (ia->ia_irq == IRQUNK) {
@@ -50,13 +50,13 @@ cy_probe_isa(parent, match, aux)
 		return 0;
 	}
 
-	if (bus_mem_map(ia->ia_bc, ia->ia_maddr, CY_MEMSIZE, 0,
-	    &sc.sc_memh) != 0)
+	if (bus_space_map(ia->ia_memt, ia->ia_maddr, CY_MEMSIZE, 0,
+	    &sc.sc_bsh) != 0)
 		return 0;
 
 	found = cy_find(&sc);
 
-	bus_mem_unmap(ia->ia_bc, sc.sc_memh, CY_MEMSIZE);
+	bus_space_unmap(ia->ia_memt, sc.sc_bsh, CY_MEMSIZE);
 
 	if (found) {
 		ia->ia_iosize = 0;
@@ -74,11 +74,11 @@ cy_attach_isa(parent, self, aux)
 	struct cy_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
 
-	sc->sc_bc = ia->ia_bc;
+	sc->sc_memt = ia->ia_memt;
 	sc->sc_bustype = CY_BUSTYPE_ISA;
 
-	if (bus_mem_map(ia->ia_bc, ia->ia_maddr, CY_MEMSIZE, 0,
-	    &sc->sc_memh) != 0)
+	if (bus_space_map(ia->ia_memt, ia->ia_maddr, CY_MEMSIZE, 0,
+	    &sc->sc_bsh) != 0)
 		panic("%s: Cannot map memory", sc->sc_dev.dv_xname);
 
 	if (cy_find(sc) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.31 1996/10/17 04:21:55 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.32 1996/10/21 22:40:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -104,8 +104,8 @@ struct eg_softc {
 	struct device sc_dev;
 	void *sc_ih;
 	struct arpcom sc_arpcom;	/* Ethernet common part */
-	bus_chipset_tag_t sc_bc;	/* bus chipset identifier */
-	bus_io_handle_t sc_ioh;		/* i/o handle */
+	bus_space_tag_t sc_iot;		/* bus space identifier */
+	bus_space_handle_t sc_ioh;	/* i/o handle */
 	u_int8_t eg_rom_major;		/* Cards ROM version (major number) */ 
 	u_int8_t eg_rom_minor;		/* Cards ROM version (minor number) */ 
 	short	 eg_ram;		/* Amount of RAM on the card */
@@ -179,13 +179,13 @@ egoutPCB(sc, b)
 	struct eg_softc *sc;
 	u_int8_t b;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	for (i=0; i < 4000; i++) {
-		if (bus_io_read_1(bc, ioh, EG_STATUS) & EG_STAT_HCRE) {
-			bus_io_write_1(bc, ioh, EG_COMMAND, b);
+		if (bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_HCRE) {
+			bus_space_write_1(iot, ioh, EG_COMMAND, b);
 			return 0;
 		}
 		delay(10);
@@ -199,17 +199,17 @@ egreadPCBstat(sc, statb)
 	struct eg_softc *sc;
 	u_int8_t statb;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	for (i=0; i < 5000; i++) {
-		if ((bus_io_read_1(bc, ioh, EG_STATUS) &
+		if ((bus_space_read_1(iot, ioh, EG_STATUS) &
 		    EG_PCB_STAT) != EG_PCB_NULL) 
 			break;
 		delay(10);
 	}
-	if ((bus_io_read_1(bc, ioh, EG_STATUS) & EG_PCB_STAT) == statb) 
+	if ((bus_space_read_1(iot, ioh, EG_STATUS) & EG_PCB_STAT) == statb) 
 		return 0;
 	return 1;
 }
@@ -218,12 +218,12 @@ static int
 egreadPCBready(sc)
 	struct eg_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	for (i=0; i < 10000; i++) {
-		if (bus_io_read_1(bc, ioh, EG_STATUS) & EG_STAT_ACRF)
+		if (bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_ACRF)
 			return 0;
 		delay(5);
 	}
@@ -235,26 +235,26 @@ static int
 egwritePCB(sc)
 	struct eg_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 	u_int8_t len;
 
-	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    (bus_io_read_1(bc, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
+	bus_space_write_1(iot, ioh, EG_CONTROL,
+	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
 	len = sc->eg_pcb[1] + 2;
 	for (i = 0; i < len; i++)
 		egoutPCB(sc, sc->eg_pcb[i]);
 
 	for (i=0; i < 4000; i++) {
-		if (bus_io_read_1(bc, ioh, EG_STATUS) & EG_STAT_HCRE)
+		if (bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_HCRE)
 			break;
 		delay(10);
 	}
 
-	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    (bus_io_read_1(bc, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_DONE);
+	bus_space_write_1(iot, ioh, EG_CONTROL,
+	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_DONE);
 
 	egoutPCB(sc, len);
 
@@ -267,25 +267,25 @@ static int
 egreadPCB(sc)
 	struct eg_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 	u_int8_t b;
 
-	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    (bus_io_read_1(bc, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
+	bus_space_write_1(iot, ioh, EG_CONTROL,
+	    (bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_PCB_STAT) | EG_PCB_NULL);
 
 	bzero(sc->eg_pcb, sizeof(sc->eg_pcb));
 
 	if (egreadPCBready(sc))
 		return 1;
 
-	sc->eg_pcb[0] = bus_io_read_1(bc, ioh, EG_COMMAND);
+	sc->eg_pcb[0] = bus_space_read_1(iot, ioh, EG_COMMAND);
 
 	if (egreadPCBready(sc))
 		return 1;
 
-	sc->eg_pcb[1] = bus_io_read_1(bc, ioh, EG_COMMAND);
+	sc->eg_pcb[1] = bus_space_read_1(iot, ioh, EG_COMMAND);
 
 	if (sc->eg_pcb[1] > 62) {
 		DPRINTF(("len %d too large\n", sc->eg_pcb[1]));
@@ -295,19 +295,19 @@ egreadPCB(sc)
 	for (i = 0; i < sc->eg_pcb[1]; i++) {
 		if (egreadPCBready(sc))
 			return 1;
-		sc->eg_pcb[2+i] = bus_io_read_1(bc, ioh, EG_COMMAND);
+		sc->eg_pcb[2+i] = bus_space_read_1(iot, ioh, EG_COMMAND);
 	}
 	if (egreadPCBready(sc))
 		return 1;
 	if (egreadPCBstat(sc, EG_PCB_DONE))
 		return 1;
-	if ((b = bus_io_read_1(bc, ioh, EG_COMMAND)) != sc->eg_pcb[1] + 2) {
+	if ((b = bus_space_read_1(iot, ioh, EG_COMMAND)) != sc->eg_pcb[1] + 2) {
 		DPRINTF(("%d != %d\n", b, sc->eg_pcb[1] + 2));
 		return 1;
 	}
 
-	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    (bus_io_read_1(bc, ioh, EG_CONTROL) &
+	bus_space_write_1(iot, ioh, EG_CONTROL,
+	    (bus_space_read_1(iot, ioh, EG_CONTROL) &
 	    ~EG_PCB_STAT) | EG_PCB_ACCEPT);
 
 	return 0;
@@ -324,8 +324,8 @@ egprobe(parent, match, aux)
 {
 	struct eg_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int i, rval;
 
 	rval = 0;
@@ -336,7 +336,7 @@ egprobe(parent, match, aux)
 	}
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, 0x08, &ioh)) {
+	if (bus_space_map(iot, ia->ia_iobase, 0x08, 0, &ioh)) {
 		DPRINTF(("egprobe: can't map i/o space in probe\n"));
 		return 0;
 	}
@@ -344,19 +344,19 @@ egprobe(parent, match, aux)
 	/*
 	 * XXX Indirect brokenness.
 	 */
-	sc->sc_bc = bc;			/* XXX */
+	sc->sc_iot = iot;			/* XXX */
 	sc->sc_ioh = ioh;		/* XXX */
 
 	/* hard reset card */
-	bus_io_write_1(bc, ioh, EG_CONTROL, EG_CTL_RESET); 
-	bus_io_write_1(bc, ioh, EG_CONTROL, 0);
+	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_RESET); 
+	bus_space_write_1(iot, ioh, EG_CONTROL, 0);
 	for (i = 0; i < 5000; i++) {
 		delay(1000);
-		if ((bus_io_read_1(bc, ioh, EG_STATUS) &
+		if ((bus_space_read_1(iot, ioh, EG_STATUS) &
 		    EG_PCB_STAT) == EG_PCB_NULL) 
 			break;
 	}
-	if ((bus_io_read_1(bc, ioh, EG_STATUS) & EG_PCB_STAT) != EG_PCB_NULL) {
+	if ((bus_space_read_1(iot, ioh, EG_STATUS) & EG_PCB_STAT) != EG_PCB_NULL) {
 		DPRINTF(("egprobe: Reset failed\n"));
 		goto out;
 	}
@@ -384,7 +384,7 @@ egprobe(parent, match, aux)
 	rval = 1;
 
  out:
-	bus_io_unmap(bc, ioh, 0x08);
+	bus_space_unmap(iot, ioh, 0x08);
 	return rval;
 }
 
@@ -395,19 +395,19 @@ egattach(parent, self, aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	printf("\n");
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 
 	egstop(sc);
@@ -481,15 +481,15 @@ eginit(sc)
 	register struct eg_softc *sc;
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* soft reset the board */
-	bus_io_write_1(bc, ioh, EG_CONTROL, EG_CTL_FLSH);
+	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_FLSH);
 	delay(100);
-	bus_io_write_1(bc, ioh, EG_CONTROL, EG_CTL_ATTN);
+	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_ATTN);
 	delay(100);
-	bus_io_write_1(bc, ioh, EG_CONTROL, 0);
+	bus_space_write_1(iot, ioh, EG_CONTROL, 0);
 	delay(200);
 
 	sc->eg_pcb[0] = EG_CMD_CONFIG82586; /* Configure 82586 */
@@ -527,7 +527,7 @@ eginit(sc)
 		}
 	}
 
-	bus_io_write_1(bc, ioh, EG_CONTROL, EG_CTL_CMDE);
+	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_CMDE);
 
 	sc->eg_incount = 0;
 	egrecv(sc);
@@ -567,8 +567,8 @@ egstart(ifp)
 	struct ifnet *ifp;
 {
 	register struct eg_softc *sc = ifp->if_softc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
@@ -622,12 +622,12 @@ loop:
 	}
 
 	/* set direction bit: host -> adapter */
-	bus_io_write_1(bc, ioh, EG_CONTROL,
-	    bus_io_read_1(bc, ioh, EG_CONTROL) & ~EG_CTL_DIR); 
+	bus_space_write_1(iot, ioh, EG_CONTROL,
+	    bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_CTL_DIR); 
 	
 	for (ptr = (u_int16_t *) sc->eg_outbuf; len > 0; len -= 2) {
-		bus_io_write_2(bc, ioh, EG_DATA, *ptr++);
-		while (!(bus_io_read_1(bc, ioh, EG_STATUS) & EG_STAT_HRDY))
+		bus_space_write_2(iot, ioh, EG_DATA, *ptr++);
+		while (!(bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_HRDY))
 			; /* XXX need timeout here */
 	}
 	
@@ -639,29 +639,29 @@ egintr(arg)
 	void *arg;
 {
 	register struct eg_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, len, serviced;
 	u_int16_t *ptr;
 
 	serviced = 0;
 
-	while (bus_io_read_1(bc, ioh, EG_STATUS) & EG_STAT_ACRF) {
+	while (bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_ACRF) {
 		egreadPCB(sc);
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
 			len = sc->eg_pcb[6] | (sc->eg_pcb[7] << 8);
 	
 			/* Set direction bit : Adapter -> host */
-			bus_io_write_1(bc, ioh, EG_CONTROL,
-			    bus_io_read_1(bc, ioh, EG_CONTROL) | EG_CTL_DIR); 
+			bus_space_write_1(iot, ioh, EG_CONTROL,
+			    bus_space_read_1(iot, ioh, EG_CONTROL) | EG_CTL_DIR); 
 
 			for (ptr = (u_int16_t *) sc->eg_inbuf;
 			    len > 0; len -= 2) {
-				while (!(bus_io_read_1(bc, ioh, EG_STATUS) &
+				while (!(bus_space_read_1(iot, ioh, EG_STATUS) &
 				    EG_STAT_HRDY))
 					;
-				*ptr++ = bus_io_read_2(bc, ioh, EG_DATA);
+				*ptr++ = bus_space_read_2(iot, ioh, EG_DATA);
 			}
 
 			len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
@@ -939,5 +939,5 @@ egstop(sc)
 	register struct eg_softc *sc;
 {
 	
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, EG_CONTROL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EG_CONTROL, 0);
 }

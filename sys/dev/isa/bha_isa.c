@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.4 1996/10/13 01:37:36 christos Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.5 1996/10/21 22:40:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -67,16 +67,16 @@ bha_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct bha_softc sc;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int rv;
 
-	if (bus_io_map(bc, ia->ia_iobase, BHA_ISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = bha_find(bc, ioh, &sc);
+	rv = bha_find(iot, ioh, &sc);
 
-	bus_io_unmap(bc, ioh, BHA_ISA_IOSIZE);
+	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
 	if (rv) {
 		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
@@ -101,18 +101,18 @@ bha_isa_attach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct bha_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
 
-	if (bus_io_map(bc, ia->ia_iobase, BHA_ISA_IOSIZE, &ioh))
-		panic("bha_attach: bus_io_map failed!");
+	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
+		panic("bha_attach: bus_space_map failed!");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!bha_find(bc, ioh, sc))
+	if (!bha_find(iot, ioh, sc))
 		panic("bha_attach: bha_find failed!");
 
 	if (sc->sc_drq != -1)

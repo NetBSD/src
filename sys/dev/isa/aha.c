@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.17 1996/10/13 01:37:33 christos Exp $	*/
+/*	$NetBSD: aha.c,v 1.18 1996/10/21 22:40:14 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -84,7 +84,7 @@
 int	aha_debug = 1;
 #endif /* AHADEBUG */
 
-int aha_cmd __P((bus_chipset_tag_t, bus_io_handle_t, struct aha_softc *, int,
+int aha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct aha_softc *, int,
     u_char *, int, u_char *));
 integrate void aha_finish_ccbs __P((struct aha_softc *));
 integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
@@ -135,7 +135,7 @@ struct cfdriver aha_cd = {
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 /*
- * aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
+ * aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes including opcode)
@@ -149,9 +149,9 @@ struct cfdriver aha_cd = {
  * tells it to read in a scsi command.
  */
 int
-aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct aha_softc *sc;
 	int icnt, ocnt;
 	u_char *ibuf, *obuf;
@@ -185,7 +185,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
 			if (sts & AHA_STAT_IDLE)
 				break;
 			delay(50);
@@ -201,8 +201,8 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((bus_io_read_1(bc, ioh, AHA_STAT_PORT)) & AHA_STAT_DF)
-			bus_io_read_1(bc, ioh, AHA_DATA_PORT);
+		while ((bus_space_read_1(iot, ioh, AHA_STAT_PORT)) & AHA_STAT_DF)
+			bus_space_read_1(iot, ioh, AHA_DATA_PORT);
 	}
 	/*
 	 * Output the command and the number of arguments given
@@ -210,7 +210,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (icnt--) {
 		for (i = wait; i; i--) {
-			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
 			if (!(sts & AHA_STAT_CDF))
 				break;
 			delay(50);
@@ -218,10 +218,10 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
 				printf("%s: aha_cmd, cmd/data port full\n", name);
-			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+			bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
 			return (1);
 		}
-		bus_io_write_1(bc, ioh, AHA_CMD_PORT, *ibuf++);
+		bus_space_write_1(iot, ioh, AHA_CMD_PORT, *ibuf++);
 	}
 	/*
 	 * If we expect input, loop that many times, each time,
@@ -229,7 +229,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	while (ocnt--) {
 		for (i = wait; i; i--) {
-			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
 			if (sts & AHA_STAT_DF)
 				break;
 			delay(50);
@@ -238,10 +238,10 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			if (opcode != AHA_INQUIRE_REVISION)
 				printf("%s: aha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
-			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+			bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
 			return (1);
 		}
-		*obuf++ = bus_io_read_1(bc, ioh, AHA_DATA_PORT);
+		*obuf++ = bus_space_read_1(iot, ioh, AHA_DATA_PORT);
 	}
 	/*
 	 * Wait for the board to report a finished instruction.
@@ -250,7 +250,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	if (opcode != AHA_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
-			sts = bus_io_read_1(bc, ioh, AHA_INTR_PORT);
+			sts = bus_space_read_1(iot, ioh, AHA_INTR_PORT);
 			/* XXX Need to save this in the interrupt handler? */
 			if (sts & AHA_INTR_HACC)
 				break;
@@ -262,7 +262,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			return (1);
 		}
 	}
-	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
+	bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
 	return (0);
 }
 
@@ -279,16 +279,16 @@ aha_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc sc;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int rv;
 
-	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = aha_find(bc, ioh, &sc);
+	rv = aha_find(iot, ioh, &sc);
 
-	bus_io_unmap(bc, ioh, AHA_ISA_IOSIZE);
+	bus_space_unmap(iot, ioh, AHA_ISA_IOSIZE);
 
 	if (rv) {
 		if (ia->ia_irq != -1 && ia->ia_irq != sc.sc_irq)
@@ -313,18 +313,18 @@ aha_isa_attach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *sc = (void *)self;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
 
-	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
-		panic("aha_attach: bus_io_map failed!");
+	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
+		panic("aha_attach: bus_space_map failed!");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!aha_find(bc, ioh, sc))
+	if (!aha_find(iot, ioh, sc))
 		panic("aha_attach: aha_find failed!");
 
 	if (sc->sc_drq != -1)
@@ -462,8 +462,8 @@ aha_intr(arg)
 	void *arg;
 {
 	struct aha_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sts;
 
 #ifdef AHADEBUG
@@ -474,10 +474,10 @@ aha_intr(arg)
 	 * First acknowlege the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
-	sts = bus_io_read_1(bc, ioh, AHA_INTR_PORT);
+	sts = bus_space_read_1(iot, ioh, AHA_INTR_PORT);
 	if ((sts & AHA_INTR_ANYINTR) == 0)
 		return (0);
-	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
+	bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_IRST);
 
 #ifdef AHADIAG
 	/* Make sure we clear CCB_SENDING before finishing a CCB. */
@@ -490,7 +490,7 @@ aha_intr(arg)
 
 		toggle.cmd.opcode = AHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		aha_cmd(bc, ioh, sc,
+		aha_cmd(iot, ioh, sc,
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, (u_char *)0);
 		aha_start_ccbs(sc);
@@ -675,8 +675,8 @@ void
 aha_start_ccbs(sc)
 	struct aha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct aha_ccb *ccb;
 
@@ -690,7 +690,7 @@ aha_start_ccbs(sc)
 
 				toggle.cmd.opcode = AHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
-				aha_cmd(bc, ioh, sc,
+				aha_cmd(iot, ioh, sc,
 				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 				    0, (u_char *)0);
 				break;
@@ -710,7 +710,7 @@ aha_start_ccbs(sc)
 			wmbo->cmd = AHA_MBO_START;
 
 		/* Tell the card to poll immediately. */
-		bus_io_write_1(bc, ioh, AHA_CMD_PORT, AHA_START_SCSI);
+		bus_space_write_1(iot, ioh, AHA_CMD_PORT, AHA_START_SCSI);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout(aha_timeout, ccb, (ccb->timeout * hz) / 1000);
@@ -794,9 +794,9 @@ aha_done(sc, ccb)
  * Find the board and find its irq/drq
  */
 int
-aha_find(bc, ioh, sc)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+aha_find(iot, ioh, sc)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct aha_softc *sc;
 {
 	int i;
@@ -809,11 +809,11 @@ aha_find(bc, ioh, sc)
 	 * that it's not there.. good for the probe
 	 */
 
-	bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_HRST | AHA_CTRL_SRST);
+	bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_HRST | AHA_CTRL_SRST);
 
 	delay(100);
 	for (i = AHA_RESET_TIMEOUT; i; i--) {
-		sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
+		sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
 		if (sts == (AHA_STAT_IDLE | AHA_STAT_INIT))
 			break;
 		delay(1000);	/* calibrated in msec */
@@ -832,7 +832,7 @@ aha_find(bc, ioh, sc)
 	 */
 	delay(1000);		/* for Bustek 545 */
 	config.cmd.opcode = AHA_INQUIRE_CONFIG;
-	aha_cmd(bc, ioh, sc,
+	aha_cmd(iot, ioh, sc,
 	    sizeof(config.cmd), (u_char *)&config.cmd,
 	    sizeof(config.reply), (u_char *)&config.reply);
 	switch (config.reply.chan) {
@@ -896,8 +896,8 @@ void
 aha_init(sc)
 	struct aha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
@@ -916,7 +916,7 @@ aha_init(sc)
 
 		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
 		extbios.cmd.opcode = AHA_EXT_BIOS;
-		aha_cmd(bc, ioh, sc,
+		aha_cmd(iot, ioh, sc,
 		    sizeof(extbios.cmd), (u_char *)&extbios.cmd,
 		    sizeof(extbios.reply), (u_char *)&extbios.reply);
 
@@ -929,7 +929,7 @@ aha_init(sc)
 		unlock.cmd.opcode = AHA_MBX_ENABLE;
 		unlock.cmd.junk = 0;
 		unlock.cmd.magic = extbios.reply.mailboxlock;
-		aha_cmd(bc, ioh, sc,
+		aha_cmd(iot, ioh, sc,
 		    sizeof(unlock.cmd), (u_char *)&unlock.cmd,
 		    0, (u_char *)0);
 	}
@@ -938,20 +938,20 @@ aha_init(sc)
 	/*
 	 * Change the bus on/off times to not clash with other dma users.
 	 */
-	aha_cmd(bc, ioh, 1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 7);
-	aha_cmd(bc, ioh, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
+	aha_cmd(iot, ioh, 1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 7);
+	aha_cmd(iot, ioh, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
 #endif
 
 	/* Inquire Installed Devices (to force synchronous negotiation). */
 	devices.cmd.opcode = AHA_INQUIRE_DEVICES;
-	aha_cmd(bc, ioh, sc,
+	aha_cmd(iot, ioh, sc,
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
 	setup.cmd.len = sizeof(setup.reply);
-	aha_cmd(bc, ioh, sc,
+	aha_cmd(iot, ioh, sc,
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
@@ -984,7 +984,7 @@ aha_init(sc)
 	mailbox.cmd.opcode = AHA_MBX_INIT;
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
 	ltophys(KVTOPHYS(wmbx), mailbox.cmd.addr);
-	aha_cmd(bc, ioh, sc,
+	aha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 }
@@ -993,8 +993,8 @@ void
 aha_inquire_setup_information(sc)
 	struct aha_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aha_revision revision;
 	u_char sts;
 	int i;
@@ -1009,7 +1009,7 @@ aha_inquire_setup_information(sc)
 	 * clone, and skip the board-specific stuff.
 	 */
 	revision.cmd.opcode = AHA_INQUIRE_REVISION;
-	if (aha_cmd(bc, ioh, sc,
+	if (aha_cmd(iot, ioh, sc,
 	    sizeof(revision.cmd), (u_char *)&revision.cmd,
 	    sizeof(revision.reply), (u_char *)&revision.reply)) {
 		/*
@@ -1017,7 +1017,7 @@ aha_inquire_setup_information(sc)
 		 * even need to bother here.
 		 */
 		for (i = AHA_RESET_TIMEOUT; i; i--) {
-			sts = bus_io_read_1(bc, ioh, AHA_STAT_PORT);
+			sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
 			if (sts == (AHA_STAT_IDLE | AHA_STAT_INIT))
 				break;
 			delay(1000);
@@ -1273,8 +1273,8 @@ aha_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1282,7 +1282,7 @@ aha_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, AHA_INTR_PORT) & AHA_INTR_ANYINTR)
+		if (bus_space_read_1(iot, ioh, AHA_INTR_PORT) & AHA_INTR_ANYINTR)
 			aha_intr(sc);
 		if (xs->flags & ITSDONE)
 			return (0);

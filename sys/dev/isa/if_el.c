@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.42 1996/10/13 01:37:45 christos Exp $	*/
+/*	$NetBSD: if_el.c,v 1.43 1996/10/21 22:40:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -77,8 +77,8 @@ struct el_softc {
 	void *sc_ih;
 
 	struct arpcom sc_arpcom;	/* ethernet common */
-	bus_chipset_tag_t sc_bc;	/* bus chipset identifier */
-	bus_io_handle_t sc_ioh;		/* i/o handle */
+	bus_space_tag_t sc_iot;		/* bus space identifier */
+	bus_space_handle_t sc_ioh;	/* i/o handle */
 };
 
 /*
@@ -119,8 +119,8 @@ elprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int iobase = ia->ia_iobase;
 	u_int8_t station_addr[ETHER_ADDR_LEN];
 	u_int8_t i;
@@ -133,7 +133,7 @@ elprobe(parent, match, aux)
 		return 0;
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, iobase, 4, &ioh))
+	if (bus_space_map(iot, iobase, 4, 0, &ioh))
 		return 0;
 
 	/*
@@ -144,15 +144,15 @@ elprobe(parent, match, aux)
 
 	/* Reset the board. */
 	DPRINTF(("Resetting board...\n"));
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_RESET);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_RESET);
 	delay(5);
-	bus_io_write_1(bc, ioh, EL_AC, 0);
+	bus_space_write_1(iot, ioh, EL_AC, 0);
 
 	/* Now read the address. */
 	DPRINTF(("Reading station address...\n"));
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		bus_io_write_1(bc, ioh, EL_GPBL, i);
-		station_addr[i] = bus_io_read_1(bc, ioh, EL_EAW);
+		bus_space_write_1(iot, ioh, EL_GPBL, i);
+		station_addr[i] = bus_space_read_1(iot, ioh, EL_EAW);
 	}
 	DPRINTF(("Address is %s\n", ether_sprintf(station_addr)));
 
@@ -172,7 +172,7 @@ elprobe(parent, match, aux)
 	rval = 1;
 
  out:
-	bus_io_unmap(bc, ioh, 4);
+	bus_space_unmap(iot, ioh, 4);
 	return rval;
 }
 
@@ -188,8 +188,8 @@ elattach(parent, self, aux)
 {
 	struct el_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t i;
 
@@ -198,23 +198,23 @@ elattach(parent, self, aux)
 	DPRINTF(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 
 	/* Reset the board. */
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_RESET);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_RESET);
 	delay(5);
-	bus_io_write_1(bc, ioh, EL_AC, 0);
+	bus_space_write_1(iot, ioh, EL_AC, 0);
 
 	/* Now read the address. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		bus_io_write_1(bc, ioh, EL_GPBL, i);
-		sc->sc_arpcom.ac_enaddr[i] = bus_io_read_1(bc, ioh, EL_EAW);
+		bus_space_write_1(iot, ioh, EL_GPBL, i);
+		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, EL_EAW);
 	}
 
 	/* Stop the board. */
@@ -273,7 +273,7 @@ elstop(sc)
 	struct el_softc *sc;
 {
 
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, EL_AC, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EL_AC, 0);
 }
 
 /*
@@ -284,16 +284,16 @@ static inline void
 el_hardreset(sc)
 	struct el_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_RESET);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_RESET);
 	delay(5);
-	bus_io_write_1(bc, ioh, EL_AC, 0);
+	bus_space_write_1(iot, ioh, EL_AC, 0);
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		bus_io_write_1(bc, ioh, i, sc->sc_arpcom.ac_enaddr[i]);
+		bus_space_write_1(iot, ioh, i, sc->sc_arpcom.ac_enaddr[i]);
 }
 
 /*
@@ -304,8 +304,8 @@ elinit(sc)
 	struct el_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* First, reset the board. */
 	el_hardreset(sc);
@@ -313,22 +313,22 @@ elinit(sc)
 	/* Configure rx. */
 	DPRINTF(("Configuring rx...\n"));
 	if (ifp->if_flags & IFF_PROMISC)
-		bus_io_write_1(bc, ioh, EL_RXC,
+		bus_space_write_1(iot, ioh, EL_RXC,
 		    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 		    EL_RXC_DOFLOW | EL_RXC_PROMISC);
 	else
-		bus_io_write_1(bc, ioh, EL_RXC,
+		bus_space_write_1(iot, ioh, EL_RXC,
 		    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 		    EL_RXC_DOFLOW | EL_RXC_ABROAD);
-	bus_io_write_1(bc, ioh, EL_RBC, 0);
+	bus_space_write_1(iot, ioh, EL_RBC, 0);
 
 	/* Configure TX. */
 	DPRINTF(("Configuring tx...\n"));
-	bus_io_write_1(bc, ioh, EL_TXC, 0);
+	bus_space_write_1(iot, ioh, EL_TXC, 0);
 
 	/* Start reception. */
 	DPRINTF(("Starting reception...\n"));
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -348,8 +348,8 @@ elstart(ifp)
 	struct ifnet *ifp;
 {
 	struct el_softc *sc = ifp->if_softc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
 
@@ -383,8 +383,8 @@ elstart(ifp)
 #endif
 
 		/* Disable the receiver. */
-		bus_io_write_1(bc, ioh, EL_AC, EL_AC_HOST);
-		bus_io_write_1(bc, ioh, EL_RBC, 0);
+		bus_space_write_1(iot, ioh, EL_AC, EL_AC_HOST);
+		bus_space_write_1(iot, ioh, EL_RBC, 0);
 
 		/* Transfer datagram to board. */
 		DPRINTF(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
@@ -394,12 +394,12 @@ elstart(ifp)
 			printf("%s: bogus off 0x%x\n",
 			    sc->sc_dev.dv_xname, off);
 #endif
-		bus_io_write_1(bc, ioh, EL_GPBL, off & 0xff);
-		bus_io_write_1(bc, ioh, EL_GPBH, (off >> 8) & 0xff);
+		bus_space_write_1(iot, ioh, EL_GPBL, off & 0xff);
+		bus_space_write_1(iot, ioh, EL_GPBH, (off >> 8) & 0xff);
 
 		/* Copy the datagram to the buffer. */
 		for (m = m0; m != 0; m = m->m_next)
-			bus_io_write_multi_1(bc, ioh, EL_BUF,
+			bus_space_write_multi_1(iot, ioh, EL_BUF,
 			    mtod(m, u_int8_t *), m->m_len);
 
 		m_freem(m0);
@@ -407,14 +407,14 @@ elstart(ifp)
 		/* Now transmit the datagram. */
 		retries = 0;
 		for (;;) {
-			bus_io_write_1(bc, ioh, EL_GPBL, off & 0xff);
-			bus_io_write_1(bc, ioh, EL_GPBH, (off >> 8) & 0xff);
+			bus_space_write_1(iot, ioh, EL_GPBL, off & 0xff);
+			bus_space_write_1(iot, ioh, EL_GPBH, (off >> 8) & 0xff);
 			if (el_xmit(sc)) {
 				ifp->if_oerrors++;
 				break;
 			}
 			/* Check out status. */
-			i = bus_io_read_1(bc, ioh, EL_TXS);
+			i = bus_space_read_1(iot, ioh, EL_TXS);
 			DPRINTF(("tx status=0x%x\n", i));
 			if ((i & EL_TXS_READY) == 0) {
 				DPRINTF(("el: err txs=%x\n", i));
@@ -423,7 +423,7 @@ elstart(ifp)
 					if ((i & EL_TXC_DCOLL16) == 0 &&
 					    retries < 15) {
 						retries++;
-						bus_io_write_1(bc, ioh,
+						bus_space_write_1(iot, ioh,
 						    EL_AC, EL_AC_HOST);
 					}
 				} else {
@@ -440,15 +440,15 @@ elstart(ifp)
 		 * Now give the card a chance to receive.
 		 * Gotta love 3c501s...
 		 */
-		(void)bus_io_read_1(bc, ioh, EL_AS);
-		bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
+		(void)bus_space_read_1(iot, ioh, EL_AS);
+		bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 		splx(s);
 		/* Interrupt here. */
 		s = splnet();
 	}
 
-	(void)bus_io_read_1(bc, ioh, EL_AS);
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
+	(void)bus_space_read_1(iot, ioh, EL_AS);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
 }
@@ -462,8 +462,8 @@ static int
 el_xmit(sc)
 	struct el_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	/*
@@ -473,9 +473,9 @@ el_xmit(sc)
 	 */
 
 	DPRINTF(("el: xmit..."));
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_TXFRX);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_TXFRX);
 	i = 20000;
-	while ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_TXBUSY) && (i > 0))
+	while ((bus_space_read_1(iot, ioh, EL_AS) & EL_AS_TXBUSY) && (i > 0))
 		i--;
 	if (i == 0) {
 		DPRINTF(("tx not ready\n"));
@@ -493,22 +493,22 @@ elintr(arg)
 	void *arg;
 {
 	register struct el_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t rxstat;
 	int len;
 
 	DPRINTF(("elintr: "));
 
 	/* Check board status. */
-	if ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_RXBUSY) != 0) {
-		(void)bus_io_read_1(bc, ioh, EL_RXC);
-		bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
+	if ((bus_space_read_1(iot, ioh, EL_AS) & EL_AS_RXBUSY) != 0) {
+		(void)bus_space_read_1(iot, ioh, EL_RXC);
+		bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 		return 0;
 	}
 
 	for (;;) {
-		rxstat = bus_io_read_1(bc, ioh, EL_RXS);
+		rxstat = bus_space_read_1(iot, ioh, EL_RXS);
 		if (rxstat & EL_RXS_STALE)
 			break;
 
@@ -518,36 +518,36 @@ elintr(arg)
 			el_hardreset(sc);
 			/* Put board back into receive mode. */
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
-				bus_io_write_1(bc, ioh, EL_RXC,
+				bus_space_write_1(iot, ioh, EL_RXC,
 				    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 				    EL_RXC_DOFLOW | EL_RXC_PROMISC);
 			else
-				bus_io_write_1(bc, ioh, EL_RXC,
+				bus_space_write_1(iot, ioh, EL_RXC,
 				    EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB |
 				    EL_RXC_DOFLOW | EL_RXC_ABROAD);
-			(void)bus_io_read_1(bc, ioh, EL_AS);
-			bus_io_write_1(bc, ioh, EL_RBC, 0);
+			(void)bus_space_read_1(iot, ioh, EL_AS);
+			bus_space_write_1(iot, ioh, EL_RBC, 0);
 			break;
 		}
 
 		/* Incoming packet. */
-		len = bus_io_read_1(bc, ioh, EL_RBL);
-		len |= bus_io_read_1(bc, ioh, EL_RBH) << 8;
+		len = bus_space_read_1(iot, ioh, EL_RBL);
+		len |= bus_space_read_1(iot, ioh, EL_RBH) << 8;
 		DPRINTF(("receive len=%d rxstat=%x ", len, rxstat));
-		bus_io_write_1(bc, ioh, EL_AC, EL_AC_HOST);
+		bus_space_write_1(iot, ioh, EL_AC, EL_AC_HOST);
 
 		/* Pass data up to upper levels. */
 		elread(sc, len);
 
 		/* Is there another packet? */
-		if ((bus_io_read_1(bc, ioh, EL_AS) & EL_AS_RXBUSY) != 0)
+		if ((bus_space_read_1(iot, ioh, EL_AS) & EL_AS_RXBUSY) != 0)
 			break;
 
 		DPRINTF(("<rescan> "));
 	}
 
-	(void)bus_io_read_1(bc, ioh, EL_RXC);
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
+	(void)bus_space_read_1(iot, ioh, EL_RXC);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_IRQE | EL_AC_RX);
 	return 1;
 }
 
@@ -622,8 +622,8 @@ elget(sc, totlen)
 	int totlen;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -636,8 +636,8 @@ elget(sc, totlen)
 	top = 0;
 	mp = &top;
 
-	bus_io_write_1(bc, ioh, EL_GPBL, 0);
-	bus_io_write_1(bc, ioh, EL_GPBH, 0);
+	bus_space_write_1(iot, ioh, EL_GPBL, 0);
+	bus_space_write_1(iot, ioh, EL_GPBH, 0);
 
 	while (totlen > 0) {
 		if (top) {
@@ -654,14 +654,14 @@ elget(sc, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bus_io_read_multi_1(bc, ioh, EL_BUF, mtod(m, u_int8_t *), len);
+		bus_space_read_multi_1(iot, ioh, EL_BUF, mtod(m, u_int8_t *), len);
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
 	}
 
-	bus_io_write_1(bc, ioh, EL_RBC, 0);
-	bus_io_write_1(bc, ioh, EL_AC, EL_AC_RX);
+	bus_space_write_1(iot, ioh, EL_RBC, 0);
+	bus_space_write_1(iot, ioh, EL_AC, EL_AC_RX);
 
 	return top;
 }
