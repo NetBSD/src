@@ -1,6 +1,8 @@
-/*	$NetBSD: elf2ecoff.c,v 1.7 1997/07/07 00:02:16 jonathan Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.8 1997/07/20 03:50:54 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone
+ *    All rights reserved.
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)
  *
@@ -64,23 +66,56 @@ struct sect {
   unsigned long len;
 };
 
+struct elf_syms {
+	int nsymbols;
+	Elf32_Sym *elf_syms;
+	off_t stringsize;
+	char *stringtab;
+};
+
+struct ecoff_syms {
+	int nsymbols;
+	struct ecoff_extsym *ecoff_syms;
+	off_t stringsize;
+	char *stringtab;
+};
+
 int debug = 0;
 
 int phcmp (Elf32_Phdr *h1, Elf32_Phdr *h2);
 
+
 char *saveRead (int file, off_t offset, off_t len, char *name);
+void safewrite(int outfile, void *buf, off_t len, const char *msg);
 void copy (int, int, off_t, off_t);
 void combine (struct sect *base, struct sect *new, int paddable);
-void translate_syms (int, int, off_t, off_t, off_t, off_t);
+void translate_syms (struct elf_syms *, struct ecoff_syms *);
+void elf_symbol_table_to_ecoff(int out, int in,
+	struct ecoff_exechdr *ep,
+	off_t symoff, off_t symsize,
+	off_t stroff, off_t strsize);
+
+
 int make_ecoff_section_hdrs(struct ecoff_exechdr *ep, 
 				 struct ecoff_scnhdr *esecs);
 
 void write_ecoff_symhdr(int outfile, struct ecoff_exechdr *ep,
 			struct ecoff_symhdr *symhdrp,
-			long nesyms, long extstroff);
+			long nesyms,  long extsymoff, long extstroff,
+			long strsize);
+
+void  pad16(int fd, int size, const char *msg);
 
 extern int errno;
 int *symTypeTable;
+
+
+
+
+void
+elf_read_syms(struct elf_syms *elfsymsp, int infile,
+	 off_t symoff, off_t symsize, off_t stroff, off_t strsize);
+
 
 int
 main (int argc, char **argv, char **envp)
@@ -96,6 +131,7 @@ main (int argc, char **argv, char **envp)
 
   struct ecoff_exechdr ep;
   struct ecoff_scnhdr esecs [6];
+  struct ecoff_symhdr symhdr;
 
   int infile, outfile;
   unsigned long cur_vma = ULONG_MAX;
@@ -113,7 +149,7 @@ main (int argc, char **argv, char **envp)
     {
     usage:
       fprintf (stderr,
-	       "usage: elf2aout <elf executable> <a.out executable> [-s]\n");
+	       "usage: elf2ecoff <elf executable> <ECOFF executable> [-s]\n");
       exit (1);
     }
   if (argc == 4)
@@ -209,7 +245,8 @@ main (int argc, char **argv, char **envp)
 	  nbss.len = ph [i].p_memsz - ph [i].p_filesz;
 
 	  if (debug) {
-	    printf("  combinining PH %d type %d flags 0x%x with data, ndata = %ld, nbss =%ld\n", i, ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
+	    fprintf(stderr,
+	"  combinining PH %d type %d flags 0x%x with data, ndata = %ld, nbss =%ld\n", i, ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
 	  }
 
 	  combine (&data, &ndata, 0);
@@ -223,7 +260,8 @@ main (int argc, char **argv, char **envp)
 	  ntxt.len = ph [i].p_filesz;
 	  if (debug) {
 
-	    printf("  combinining PH %d type %d flags 0x%x with text, len = %ld\n",
+	    fprintf(stderr,
+	       "  combinining PH %d type %d flags 0x%x with text, len = %ld\n",
 		 i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 	  }
 
@@ -298,49 +336,23 @@ main (int argc, char **argv, char **envp)
     }
 
   /* Write the headers... */
-  i = write (outfile, &ep.f, sizeof ep.f);
-  if (i != sizeof ep.f)
-    {
-      perror ("ep.f: write");
-      exit (1);
+  safewrite(outfile, &ep.f, sizeof (ep.f), "ep.f: write: %s\n");
+  fprintf (stderr, "wrote %d byte file header.\n", sizeof(ep.f));
 
-    for (i = 0; i < nsecs; i++)
-      {
-        printf ("Section %d: %s phys %lx  size %lx  file offset %lx\n",
-	        i, esecs [i].s_name, esecs [i].s_paddr,
-	        esecs [i].s_size, esecs [i].s_scnptr);
-      }
-    }
-  fprintf (stderr, "wrote %d byte file header.\n", i);
+  safewrite(outfile, &ep.a, sizeof(ep.a), "ep.a: write: %s\n");
+  fprintf (stderr, "wrote %d byte a.out header.\n", sizeof(ep.a));
 
-  i = write (outfile, &ep.a, sizeof ep.a);
-  if (i != sizeof ep.a)
-    {
-      perror ("ep.a: write");
-      exit (1);
-    }
-  fprintf (stderr, "wrote %d byte a.out header.\n", i);
-
-  i = write (outfile, &esecs, sizeof (esecs[0]) * nsecs);
-  if (i != sizeof (esecs[0]) * nsecs)
-    {
-      perror ("esecs: write");
-      exit (1);
-    }
-  fprintf (stderr, "wrote %d bytes of section headers.\n", i);
+  safewrite(outfile, &esecs, sizeof (esecs[0]) * nsecs,
+	 "esecs: write: %s\n");
+  fprintf (stderr, "wrote %d bytes of section headers.\n",
+	 sizeof(esecs[0])*nsecs);
 
 
   pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15);
-  if (pad)
-    {
+  if (pad) {
       pad = 16 - pad;
-      i = write (outfile, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", pad);
-      if (i < 0)
-	{
-	  perror ("ipad: write");
-	  exit (1);
-	}
-      fprintf (stderr, "wrote %d byte pad.\n", i);
+      pad16(outfile, pad, "ipad: write: %s\n");
+      fprintf (stderr, "wrote %d byte pad.\n", pad);
     }
 
   /* Copy the loadable sections.   Zero-fill any gaps less than 64k;
@@ -377,12 +389,21 @@ main (int argc, char **argv, char **envp)
 		  gap -= count;
 		}
 	    }
-fprintf (stderr, "writing %d bytes...\n", ph [i].p_filesz);
+       fprintf (stderr, "writing %d bytes...\n", ph [i].p_filesz);
 	  copy (outfile, infile, ph [i].p_offset, ph [i].p_filesz);
 	  cur_vma = ph [i].p_vaddr + ph [i].p_filesz;
 	}
     }
 
+
+  if (debug)
+       fprintf(stderr, "writing syms at offset 0x%lx\n",
+		 (u_long) ep.f.f_symptr + sizeof(symhdr));
+
+  /* Copy and translate the symbol table... */
+  elf_symbol_table_to_ecoff (outfile, infile, &ep,
+		  sh [symtabix].sh_offset, sh [symtabix].sh_size,
+		  sh [strtabix].sh_offset, sh [strtabix].sh_size);
 
   /*
    * Write a page of padding for boot PROMS that read entire pages.
@@ -431,11 +452,8 @@ copy (out, in, offset, size)
 		   count ? strerror (errno) : "premature end of file");
 	  exit (1);
 	}
-      if ((count = write (out, ibuf, cur)) != cur)
-	{
-	  perror ("copy: write");
-	  exit (1);
-	}
+
+      safewrite(out, ibuf, cur, "copy: write: %s\n");
     }
 }
 
@@ -477,7 +495,8 @@ phcmp (h1, h2)
     return 0;
 }
 
-char *saveRead (int file, off_t offset, off_t len, char *name)
+char
+*saveRead (int file, off_t offset, off_t len, char *name)
 {
   char *tmp;
   int count;
@@ -502,19 +521,21 @@ char *saveRead (int file, off_t offset, off_t len, char *name)
   return tmp;
 }
 
+void
+safewrite(int outfile, void *buf,  off_t len, const char *msg)
+{
+	int written;
+   	written = write (outfile, (char*)buf, len);
+	if (written != len) {
+		fprintf (stderr, msg, strerror (errno));
+		  exit (1);
+	}
+}
 
-/* 
- * Construct  ECOFF section headers for .text, .data, and .bss,
- *  with empty stubs for .rdata/.sdata/.sbss.  Follow the section ordering
- * guaranteed by the mipsco toolchain:
- *  .text, .rdata, .data.,  .sdata, .sbss, .bss.
- * 
- * The ELF kernel we are translating has no sections corresponding 
- * to .rdata, .sdata and  .sbss.  Output zero-length sections for each,
- * with no file contents and the correct ELF section flags.
- * Some DECstation proms will not boot without this.
- *
- * XXX scan the ELF sectoin headers and map ELF .rodata to ECOFF .rdata
+
+/*
+ * Output only three ECOFF sections, corresponding to ELF psecs
+ * for text, data, and bss.
  */
 int
 make_ecoff_section_hdrs(ep, esecs)
@@ -522,42 +543,241 @@ make_ecoff_section_hdrs(ep, esecs)
 	struct ecoff_scnhdr *esecs;
 
 {
-  ep->f.f_nscns = 6;	/* XXX */
+	ep->f.f_nscns = 6;	/* XXX */
 
-  strcpy (esecs [0].s_name, ".text");
-  strcpy (esecs [1].s_name, ".data");
-  strcpy (esecs [2].s_name, ".bss");
+	strcpy (esecs [0].s_name, ".text");
+	strcpy (esecs [1].s_name, ".data");
+	strcpy (esecs [2].s_name, ".bss");
 
-  esecs [0].s_paddr = esecs [0].s_vaddr = ep->a.text_start;
-  esecs [1].s_paddr = esecs [1].s_vaddr = ep->a.data_start;
-  esecs [2].s_paddr = esecs [2].s_vaddr = ep->a.bss_start;
-  esecs [0].s_size = ep->a.tsize;
-  esecs [1].s_size = ep->a.dsize;
-  esecs [2].s_size = ep->a.bsize;
+	esecs [0].s_paddr = esecs [0].s_vaddr = ep->a.text_start;
+	esecs [1].s_paddr = esecs [1].s_vaddr = ep->a.data_start;
+	esecs [2].s_paddr = esecs [2].s_vaddr = ep->a.bss_start;
+	esecs [0].s_size = ep->a.tsize;
+	esecs [1].s_size = ep->a.dsize;
+	esecs [2].s_size = ep->a.bsize;
 
-  esecs [0].s_scnptr = ECOFF_TXTOFF (ep);
-  esecs [1].s_scnptr = ECOFF_DATOFF (ep);
+	esecs [0].s_scnptr = ECOFF_TXTOFF (ep);
+	esecs [1].s_scnptr = ECOFF_DATOFF (ep);
 #if 0
-  esecs [2].s_scnptr = esecs [1].s_scnptr +
-	  ECOFF_ROUND (esecs [1].s_size, ECOFF_SEGMENT_ALIGNMENT (ep));
+	esecs [2].s_scnptr = esecs [1].s_scnptr +
+	      ECOFF_ROUND (esecs [1].s_size, ECOFF_SEGMENT_ALIGNMENT (ep));
 #endif
 
-  esecs [0].s_relptr = esecs [1].s_relptr
-	  = esecs [2].s_relptr = 0;
-  esecs [0].s_lnnoptr = esecs [1].s_lnnoptr
-	  = esecs [2].s_lnnoptr = 0;
-  esecs [0].s_nreloc = esecs [1].s_nreloc = esecs [2].s_nreloc = 0;
-  esecs [0].s_nlnno = esecs [1].s_nlnno = esecs [2].s_nlnno = 0;
+	esecs [0].s_relptr = esecs [1].s_relptr = esecs [2].s_relptr = 0;
+	esecs [0].s_lnnoptr = esecs [1].s_lnnoptr = esecs [2].s_lnnoptr = 0;
+	esecs [0].s_nreloc = esecs [1].s_nreloc = esecs [2].s_nreloc = 0;
+	esecs [0].s_nlnno = esecs [1].s_nlnno = esecs [2].s_nlnno = 0;
 
-  esecs[1].s_flags = 0x100;	/* ECOFF rdata */
-  esecs[3].s_flags = 0x200;	/* ECOFF sdata */
-  esecs[4].s_flags = 0x400;	/* ECOFF sbss */
+	esecs[1].s_flags = 0x100;	/* ECOFF rdata */
+	esecs[3].s_flags = 0x200;	/* ECOFF sdata */
+	esecs[4].s_flags = 0x400;	/* ECOFF sbss */
 
-  /*
-   * Set the symbol-table offset  to point at the end of any sections
-   * we loaded above, so later code can use it to write symbol table info..
-   */
-  ep->f.f_symptr = esecs[1].s_scnptr + esecs[1].s_size;
+	/*
+	 * Set the symbol-table offset  to point at the end of any
+	 * sections we loaded above, so later code can use it to write
+	 * symbol table info..
+	 */
+	ep->f.f_symptr = esecs[1].s_scnptr + esecs[1].s_size;
+	return(ep->f.f_nscns);
+}
 
-  return(ep->f.f_nscns);
+
+/*
+ * Write the ECOFF symbol header.
+ * Guess at how big the symbol table will be.
+ * Mark all symbols as EXTERN (for now).
+ */
+void
+write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
+	int out;
+	struct ecoff_exechdr *ep;
+	struct ecoff_symhdr *symhdrp;
+	long nesyms, extsymoff,  extstroff, strsize;
+{
+	if (debug)
+	  fprintf(stderr, "writing symhdr for %ld entries at offset 0x%lx\n",
+		 nesyms, (u_long) ep->f.f_symptr);
+
+	ep->f.f_nsyms = sizeof(struct ecoff_symhdr); 
+
+	bzero(symhdrp, sizeof(*symhdrp));
+	symhdrp->esymMax = nesyms;
+	symhdrp->magic = 0x7009;	/* XXX */
+	symhdrp->cbExtOffset = extsymoff;
+	symhdrp->cbSsExtOffset = extstroff;
+
+	symhdrp->issExtMax = strsize;
+	if (debug)
+		fprintf(stderr,
+		    "ECOFF symhdr: symhdr %x, strsize %lx, symsize %lx\n",
+		    sizeof(*symhdrp), strsize,
+		    (nesyms * sizeof(struct ecoff_extsym)));
+
+	safewrite(out, symhdrp, sizeof(*symhdrp),
+	    "writing symbol header: %s\n");
+}
+
+
+void
+elf_read_syms(elfsymsp, in, symoff, symsize, stroff, strsize)
+	struct elf_syms *elfsymsp;
+	int in;
+	off_t symoff, symsize;
+	off_t stroff, strsize;
+{
+	register int nsyms;
+	nsyms = symsize / sizeof (Elf32_Sym);
+
+	/* Suck in the ELF symbol list... */
+	elfsymsp->elf_syms = (Elf32_Sym *)
+	    saveRead(in, symoff, nsyms * sizeof (Elf32_Sym),
+		     "ELF symboltable");
+	elfsymsp->nsymbols = nsyms;
+
+	/* Suck in the ELF string table... */
+	elfsymsp->stringtab = (char *)
+	     saveRead (in, stroff, strsize, "ELF string table");
+	elfsymsp->stringsize = strsize;
+}
+
+
+/*
+ * 
+ */
+void
+elf_symbol_table_to_ecoff(out, in, ep, symoff, symsize, stroff, strsize)
+	int out, in;
+	struct ecoff_exechdr *ep;
+	off_t symoff, symsize;
+	off_t stroff, strsize;
+{
+
+	struct elf_syms elfsymtab;
+	struct ecoff_syms ecoffsymtab;
+	register u_long ecoff_symhdr_off, symtaboff, stringtaboff;
+	register u_long nextoff, symtabsize, ecoff_strsize;
+	int nsyms;
+	struct ecoff_symhdr symhdr;
+	int padding;
+	
+	/* Read in the ELF symbols. */
+	elf_read_syms(&elfsymtab, in, symoff, symsize, stroff, strsize);
+
+	/* Approximate translation to ECOFF. */
+	translate_syms(&elfsymtab, &ecoffsymtab);
+	nsyms = ecoffsymtab.nsymbols;
+
+    	/* Compute output ECOFF symbol- and string-table offsets. */
+	ecoff_symhdr_off = ep->f.f_symptr;
+
+	nextoff = ecoff_symhdr_off + sizeof(struct ecoff_symhdr);
+	stringtaboff = nextoff;
+	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize,
+		(ECOFF_SEGMENT_ALIGNMENT(ep)));
+
+
+	nextoff = stringtaboff + ecoff_strsize;
+	symtaboff = nextoff;
+	symtabsize = nsyms * sizeof(struct ecoff_extsym);
+	symtabsize = ECOFF_ROUND(symtabsize, ECOFF_SEGMENT_ALIGNMENT(ep));
+
+	/* Write out the symbol header ... */
+	write_ecoff_symhdr(out, ep,  &symhdr, nsyms, symtaboff,
+			 stringtaboff, ecoffsymtab.stringsize);
+
+	/* Write out the string table... */
+	padding = ecoff_strsize - ecoffsymtab.stringsize;
+    	safewrite(out, ecoffsymtab.stringtab, ecoffsymtab.stringsize,
+		   "string table: write: %s\n");
+	if (padding)
+		pad16(out, padding, "string table: padding: %s\n");
+
+
+	/* Write out the symbol table... */
+	padding = symtabsize  - (nsyms * sizeof(struct ecoff_extsym));
+    	safewrite (out, ecoffsymtab.ecoff_syms, 
+	    nsyms * sizeof(struct ecoff_extsym),
+	    "symbol table: write: %s\n");
+	if (padding)
+		pad16(out, padding, "symbols: padding: %s\n");
+}
+
+
+
+/*
+ * In-memory translation of ELF symbosl to ECOFF.
+ */
+void
+translate_syms (elfp, ecoffp)
+	struct elf_syms *elfp;
+	struct ecoff_syms *ecoffp;
+{
+
+  int i;
+  char *oldstringbase;
+  char *newstrings, *nsp;
+
+  int nsyms, idx;
+
+  nsyms = elfp->nsymbols;
+  oldstringbase = elfp->stringtab;
+
+  /* Allocate space for corresponding ECOFF symbols. */
+  bzero(ecoffp, sizeof(*ecoffp));
+
+  ecoffp->nsymbols = 0;
+  ecoffp->ecoff_syms = malloc(sizeof(struct ecoff_extsym) * nsyms);
+
+  /* we are going to be no bigger than the ELF symbol table. */
+  ecoffp->stringsize = elfp->stringsize;
+  ecoffp->stringtab = malloc(elfp->stringsize);
+
+  newstrings = (char *)ecoffp->stringtab;
+  nsp = (char *)ecoffp->stringtab;
+  if (!newstrings)
+    {
+      fprintf (stderr, "No memory for new string table!\n");
+      exit (1);
+    }
+
+  /* Copy and translate  symbols... */
+  idx = 0;
+  for (i = 0 ; i < nsyms; i++) {
+	  int binding, type;
+
+	  binding = ELF_SYM_BIND((elfp->elf_syms[i].st_info));
+	  type = ELF_SYM_TYPE((elfp->elf_syms[i].st_info));
+
+	/* skip strange symbols */
+	  if  (binding == 0) {
+	       continue;
+	  }
+
+	  /* Copy the symbol into the new table */
+	  strcpy (nsp, oldstringbase + elfp->elf_syms [i].st_name);
+	  ecoffp->ecoff_syms [idx].es_strindex = nsp - newstrings;
+	  nsp += strlen (nsp) + 1;
+
+	   /* translate symbol types to ECOFF XXX */
+	   ecoffp->ecoff_syms[idx].es_type = 1;
+	   ecoffp->ecoff_syms[idx].es_class = 5;
+
+	  /* Symbol values in executables should be compatible. */
+	  ecoffp->ecoff_syms [idx].es_value = elfp->elf_syms [i].st_value;
+	  ecoffp->ecoff_syms [idx].es_symauxindex = 0xfffff;
+
+	  idx++;
+	}
+
+    ecoffp->nsymbols = idx;
+    ecoffp->stringsize = nsp - newstrings;
+}
+
+/*
+ * pad to a 16-byte boundary
+ */
+void
+pad16(int fd, int size, const char *msg)
+{
+  	safewrite(fd, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", size,  msg);
 }
