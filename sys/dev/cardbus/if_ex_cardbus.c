@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.18 2000/09/19 01:10:12 fvdl Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.19 2001/01/30 19:27:39 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,11 +37,6 @@
  */
 
 /* #define EX_DEBUG 4 */	/* define to report infomation for debugging */
-
-#define EX_POWER_STATIC		/* do not use enable/disable functions */
-				/* I'm waiting elinkxl.c uses
-                                   sc->enable and sc->disable
-                                   functions. */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +85,9 @@ void ex_cardbus_attach __P((struct device *, struct device *,void *));
 int ex_cardbus_detach __P((struct device *, int));
 void ex_cardbus_intr_ack __P((struct ex_softc *));
 
-#if !defined EX_POWER_STATIC
-int ex_cardbus_enable __P((struct ex_softc *sc));
-void ex_cardbus_disable __P((struct ex_softc *sc));
-#endif /* !defined EX_POWER_STATIC */
+int ex_cardbus_enable __P((struct ex_softc *));
+void ex_cardbus_disable __P((struct ex_softc *));
+void ex_cardbus_power __P((struct ex_softc *, int));
 
 struct ex_cardbus_softc {
 	struct ex_softc sc_softc;
@@ -113,6 +107,15 @@ struct ex_cardbus_softc {
 	bus_size_t sc_funcsize;
 
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
+	
+	cardbustag_t sc_tag;
+
+	int	sc_csr;			/* CSR bits */
+	int	sc_bar_reg;		/* which BAR to use */
+	pcireg_t sc_bar_val;		/* value of the BAR */
+	int	sc_bar_reg1;		/* which BAR to use */
+	pcireg_t sc_bar_val1;		/* value of the BAR */
+	
 };
 
 struct cfattach ex_cardbus_ca = {
@@ -156,6 +159,9 @@ const struct ex_cardbus_product {
 	  NULL },
 };
 
+
+void ex_cardbus_setup __P((struct ex_cardbus_softc *));
+
 const struct ex_cardbus_product *ex_cardbus_lookup
     __P((const struct cardbus_attach_args *));
 
@@ -198,18 +204,18 @@ ex_cardbus_attach(parent, self, aux)
 	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
+#if rbus
+#else
 	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t iob, command, bhlc;
+#endif
 	const struct ex_cardbus_product *ecp;
-	bus_space_handle_t ioh;
-	bus_addr_t adr;
+	bus_addr_t adr, adr1;
 
-	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
-	    &sc->sc_iot, &ioh, &adr, &csc->sc_mapsize)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
+	sc->ex_bustype = EX_BUS_CARDBUS;
+	sc->sc_dmat = ca->ca_dmat;
+	csc->sc_ct = ca->ca_ct;
+	csc->sc_intrline = ca->ca_intrline;
+	csc->sc_tag = ca->ca_tag;
 
 	ecp = ex_cardbus_lookup(ca);
 	if (ecp == NULL) {
@@ -219,90 +225,57 @@ ex_cardbus_attach(parent, self, aux)
 
 	printf(": 3Com %s\n", ecp->ecp_name);
 
-#if !defined EX_POWER_STATIC
-	sc->enable = ex_cardbus_enable;
-	sc->disable = ex_cardbus_disable;
-#else
-	sc->enable = NULL;
-	sc->disable = NULL;
-#endif  
-	sc->enabled = 1;
-
-	sc->sc_dmat = ca->ca_dmat;
-
-	sc->ex_bustype = EX_BUS_CARDBUS;
 	sc->ex_conf = ecp->ecp_flags;
+	csc->sc_cardtype = ecp->ecp_cardtype;
+	csc->sc_csr = ecp->ecp_csr;
 
-	iob = adr;
-	sc->sc_ioh = ioh;
-
+	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
+		&sc->sc_iot, &sc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
-	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
+		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr + csc->sc_mapsize);
 #endif
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
+		csc->sc_bar_reg = CARDBUS_BASE0_REG;
+		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 
-	command = cardbus_conf_read(cc, cf, ca->ca_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	command |= ecp->ecp_csr;
-	csc->sc_cardtype = ecp->ecp_cardtype;
+		if (csc->sc_cardtype == EX_CB_CYCLONE) {
+			/* Map CardBus function status window. */
+			if (Cardbus_mapreg_map(ct, 
+				CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
+		    		CARDBUS_MAPREG_TYPE_MEM, 0,
+				 &csc->sc_funct, &csc->sc_funch,
+				 &adr1, &csc->sc_funcsize) == 0) {
 
-	if (csc->sc_cardtype == EX_CB_CYCLONE) {
-		/* Map CardBus function status window. */
-		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-		    CARDBUS_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
-		    &csc->sc_funch, 0, &csc->sc_funcsize)) {
-			printf("%s: unable to map function status window\n",
-			    self->dv_xname);
-			return;
+				csc->sc_bar_reg1 =
+					CARDBUS_3C575BTX_FUNCSTAT_PCIREG;
+				csc->sc_bar_val1 =
+					adr1 | CARDBUS_MAPREG_TYPE_MEM;
+
+			} else {
+				printf("%s: unable to map function 
+					status window\n", self->dv_xname);
+				return;
+			}
+
+			/* Setup interrupt acknowledge hook */
+			sc->intr_ack = ex_cardbus_intr_ack;
 		}
-
-		/*
-		 * Make sure CardBus brigde can access memory space.  Usually
-		 * memory access is enabled by BIOS, but some BIOSes do not
-		 * enable it.
-		 */
-		(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-
-		/* Setup interrupt acknowledge hook */
-		sc->intr_ack = ex_cardbus_intr_ack;
 	}
-
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
-	    command);
-  
- 	/*
-	 * set latency timmer
-	 */
-	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(bhlc) < 0x20) {
-		/* at least the value of latency timer should 0x20. */
-		DPRINTF(("if_ex_cardbus: lattimer 0x%x -> 0x20\n",
-		    CARDBUS_LATTIMER(bhlc)));
-		bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		bhlc |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, bhlc);
-	}
-
-	csc->sc_ct = ca->ca_ct;
-	csc->sc_intrline = ca->ca_intrline;
-
-#if defined EX_POWER_STATIC
-	/* Map and establish the interrupt. */
-
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_NET,
-	    ex_intr, csc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		printf(" at %d", ca->ca_intrline);
-		printf("\n");
+	else {
+		printf(": can't map i/o space\n");
 		return;
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
-	    ca->ca_intrline);
-#endif
+
+	/* Power management hooks. */
+	sc->enable = ex_cardbus_enable;
+	sc->disable = ex_cardbus_disable;
+	sc->power = ex_cardbus_power;
+
+	/*
+	 *  Handle power management nonsense and
+	 * Initialize th configuration register.
+	 */
+	ex_cardbus_setup(csc);
 
 	ex_config(sc);
 
@@ -310,10 +283,7 @@ ex_cardbus_attach(parent, self, aux)
 		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    EX_CB_INTR, EX_CB_INTR_ACK);
 
-#if !defined EX_POWER_STATIC
-	cardbus_function_disable(csc->sc_ct);  
-	sc->enabled = 0;
-#endif
+	Cardbus_function_disable(csc->sc_ct);  
 }
 
 void
@@ -361,7 +331,6 @@ ex_cardbus_detach(self, arg)
 	return (rv);
 }
 
-#if !defined EX_POWER_STATIC
 int
 ex_cardbus_enable(sc)
 	struct ex_softc *sc;
@@ -371,7 +340,7 @@ ex_cardbus_enable(sc)
 	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
 	Cardbus_function_enable(csc->sc_ct);
-	cardbus_restore_bar(csc->sc_ct);
+	ex_cardbus_setup(csc);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 	    IPL_NET, ex_intr, sc);
@@ -380,6 +349,8 @@ ex_cardbus_enable(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
+	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+		csc->sc_intrline);
 
 	return (0);
 }
@@ -392,10 +363,105 @@ ex_cardbus_disable(sc)
 	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
 	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
-	cardbus_save_bar(csc->sc_ct);
-  
+	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+	sc->sc_ih = NULL;
+
  	Cardbus_function_disable(csc->sc_ct);
 
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 }
-#endif /* EX_POWER_STATIC */
+
+void 
+ex_cardbus_power(sc, why)
+	struct ex_softc *sc;
+	int why;
+{
+	struct ex_cardbus_softc *csc = (void *) sc;
+
+	if (why == PWR_RESUME) {
+		/*
+		 * Give the PCI configuration registers a kick
+		 * in the head.
+		 */
+#ifdef DIAGNOSTIC
+		if (sc->enabled == 0)
+			panic("ex_cardbus_power");
+#endif
+		ex_cardbus_setup(csc);
+	}
+}
+
+void 
+ex_cardbus_setup(csc)
+	struct ex_cardbus_softc *csc;
+{
+	struct ex_softc *sc = &csc->sc_softc;
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	cardbusreg_t  reg;
+	int pmreg;
+
+	/* Get it out of power save mode if needed (BIOS bugs). */
+	if (cardbus_get_capability(cc, cf, csc->sc_tag,
+	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
+#if 1 /* XXX Probably not right for CardBus. */
+		if (reg == 3) {
+			/*
+			 * The card has lost all configuration data in
+			 * this state, so punt.
+			 */
+			printf("%s: unable to wake up from power state D3\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+#endif
+		if (reg != 0) {
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    pmreg + 4, 0);
+		}
+	}
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
+	if (csc->sc_cardtype == EX_CB_CYCLONE) {
+		/*
+		 * Make sure CardBus brigde can access memory space.  Usually
+		 * memory access is enabled by BIOS, but some BIOSes do not
+		 * enable it.
+		 */
+		(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
+
+		/* Program the BAR */
+		cardbus_conf_write(cc, cf, csc->sc_tag,
+			csc->sc_bar_reg1, csc->sc_bar_val1); 
+	}
+	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
+
+
+	/* Program the BAR */
+	cardbus_conf_write(cc, cf, csc->sc_tag,
+		csc->sc_bar_reg, csc->sc_bar_val); 
+
+	/* Enable the appropriate bits in the CARDBUS CSR. */
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	    CARDBUS_COMMAND_STATUS_REG);
+	reg |= csc->sc_csr;
+	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    reg);
+  
+ 	/*
+	 * set latency timmer
+	 */
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
+	if (CARDBUS_LATTIMER(reg) < 0x20) {
+		/* at least the value of latency timer should 0x20. */
+		DPRINTF(("if_ex_cardbus: lattimer 0x%x -> 0x20\n",
+		    CARDBUS_LATTIMER(reg)));
+		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
+	}
+}

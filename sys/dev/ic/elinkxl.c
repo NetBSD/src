@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.46 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47 2001/01/30 19:27:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,10 @@ void ex_set_mc __P((struct ex_softc *));
 void ex_getstats __P((struct ex_softc *));
 void ex_printstats __P((struct ex_softc *));
 void ex_tick __P((void *));
+
+int ex_enable __P((struct ex_softc *));
+void ex_disable __P((struct ex_softc *));
+void ex_power __P((int, void *));
 
 static int ex_eeprom_busy __P((struct ex_softc *));
 static int ex_add_rxbuf __P((struct ex_softc *, struct ex_rxdesc *));
@@ -459,6 +463,15 @@ ex_config(sc)
 
 	/*  Establish callback to reset card when we reboot. */
 	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+			sc->sc_dev.dv_xname);
+
+	/* Add a suspend hook to make sure we com back up after a resume. */
+	sc->sc_powerhook = powerhook_establish(ex_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
 
 	/* The attach is successful. */
 	sc->ex_flags |= EX_FLAGS_ATTACHED;
@@ -609,9 +622,11 @@ ex_init(ifp)
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int s, i;
+	int i;
+	int error = 0;
 
-	s = splnet();
+	if ((error = ex_enable(sc)) != 0)
+		goto out;
 
 	ex_waitcmd(sc);
 	ex_stop(ifp, 0);
@@ -688,11 +703,15 @@ ex_init(ifp)
 
 	GO_WINDOW(1);
 
-	splx(s);
-
 	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
 
-	return (0);
+ out:
+	if (error) {
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_timer = 0;
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	}
+	return (error);
 }
 
 #define	ex_mchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) & 0xff)
@@ -1091,7 +1110,7 @@ ex_intr(arg)
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (sc->enabled == 0 ||
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
@@ -1279,11 +1298,13 @@ ex_ioctl(ifp, cmd, data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
+			if (sc->enabled) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ex_set_mc(sc);
+				ex_set_mc(sc);
+			}
 			error = 0;
 		}
 		break;
@@ -1448,6 +1469,9 @@ ex_stop(ifp, disable)
 	if (sc->ex_conf & EX_CONF_MII)
 		mii_down(&sc->ex_mii);
 
+	if (disable) 
+		ex_disable(sc);
+
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 }
@@ -1563,7 +1587,7 @@ ex_shutdown(arg)
 {
 	struct ex_softc *sc = arg;
 
-	ex_stop(&sc->sc_ethercom.ec_if, 0);
+	ex_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 /*
@@ -1771,4 +1795,51 @@ ex_mii_statchg(v)
 		mctl &= ~MAC_CONTROL_FDX;
 	bus_space_write_2(iot, ioh, ELINK_W3_MAC_CONTROL, mctl);
 	GO_WINDOW(1);   /* back to operating window */
+}
+
+int 
+ex_enable(sc)
+	struct ex_softc *sc;
+{
+	if (sc->enabled == 0 && sc->enable != NULL) {
+		if ((*sc->enable)(sc) != 0) {
+			printf("%s: de/vice enable failed\n",
+				sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+		sc->enabled = 1;
+	}
+	return (0);
+}
+
+void 
+ex_disable(sc)
+	struct ex_softc *sc;
+{
+	if (sc->enabled == 1 && sc->disable != NULL) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+}
+
+void 
+ex_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct ex_softc *sc = (void *)arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	if (why != PWR_RESUME) {
+		ex_stop(ifp, 0);
+		if (sc->power != NULL)
+			(*sc->power)(sc, why);
+	} else if (ifp->if_flags & IFF_UP) {
+		if (sc->power != NULL)
+			(*sc->power)(sc, why);
+		ex_init(ifp);
+	}
+	splx(s);
 }
