@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.62 1999/07/07 21:04:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.63 1999/07/07 21:51:35 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2460,6 +2460,12 @@ uvm_map_clean(map, start, end, flags)
 
 			simple_lock(&anon->an_lock);
 
+			pg = anon->u.an_page;
+			if (pg == NULL) {
+				simple_unlock(&anon->an_lock);
+				continue;
+			}
+
 			switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
 			/*
 			 * XXX In these first 3 cases, we always just
@@ -2470,12 +2476,6 @@ uvm_map_clean(map, start, end, flags)
 			case PGO_CLEANIT|PGO_FREE:
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
-				pg = anon->u.an_page;
-				if (pg == NULL) {
-					simple_unlock(&anon->an_lock);
-					continue;
-				}
-
 				/* skip the page if it's loaned or wired */
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
