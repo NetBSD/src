@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.13 2002/03/28 10:53:48 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.1 2002/05/24 21:55:23 perry Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -202,7 +202,7 @@ _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
 	}
 
 	state = *psenc;
-	err = _FUNCNAME(mbrtowc_priv)(ei, pwc, &s, n, psenc, &nr);
+	err = _FUNCNAME(mbrtowc_priv)(ei, pwc, (const char **)&s, n, psenc, &nr);
 	if (err) {
 		*nresult = -1;
 		return (err);
@@ -445,7 +445,7 @@ _FUNCNAME(ctype_mbrlen)(void * __restrict cl, const char * __restrict s,
 		*nresult = 0;
 	} else {
 		err = _FUNCNAME(mbrtowc_priv)(
-			cl, NULL, &s, n, (void *)psenc, nresult);
+			cl, NULL, (const char **)&s, n, (void *)psenc, nresult);
 	}
 	_RESTART_END(mbrlen, _TO_CEI(cl), pspriv, psenc);
 
@@ -468,7 +468,7 @@ _FUNCNAME(ctype_mbrtowc)(void * __restrict cl, wchar_t * __restrict pwc,
 		*nresult = 0;
 	} else {
 		err = _FUNCNAME(mbrtowc_priv)(
-			cl, pwc, &s, n, (void *)psenc, nresult);
+			cl, pwc, (const char **)&s, n, (void *)psenc, nresult);
 	}
 	_RESTART_END(mbrtowc, _TO_CEI(cl), pspriv, psenc);
 
@@ -523,7 +523,7 @@ _FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 	_DIAGASSERT(cl != NULL);
 
 	_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), &state);
-	err = _FUNCNAME(mbsrtowcs_priv)(cl, pwcs, &s, n, &state, nresult);
+	err = _FUNCNAME(mbsrtowcs_priv)(cl, pwcs, (const char **)&s, n, &state, nresult);
 	if (*nresult == (size_t)-2) {
 		err = EILSEQ;
 		*nresult = (size_t)-1;
@@ -594,7 +594,7 @@ _FUNCNAME(ctype_wcstombs)(void * __restrict cl, char * __restrict s,
 	_DIAGASSERT(cl != NULL);
 
 	_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), &state);
-	err = _FUNCNAME(wcsrtombs_priv)(cl, s, &pwcs, n,
+	err = _FUNCNAME(wcsrtombs_priv)(cl, s, (const wchar_t **)&pwcs, n,
 					&state, nresult);
 
 	return err;
