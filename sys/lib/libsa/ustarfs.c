@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.1 1998/09/24 05:23:33 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.2 1998/10/05 04:56:36 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -59,7 +59,33 @@
 #include "stand.h"
 #include "ustarfs.h"
 
+#define	BBSIZE	8192
 #define	USTAR_NAME_BLOCK 512
+
+/*
+ * Virtual offset: relative to start of ustar archive
+ * Logical offset: volume-relative
+ * Physical offset: the usual meaning
+ */
+
+/* virtual offset to volume number */
+ 
+#define	vda2vn(_v,_volsize) ((_v) / (_volsize))	
+
+/* conversions between the three different levels of disk addresses */
+
+#define	vda2lda(_v,_volsize) ((_v) % (_volsize))
+#define	lda2vda(_v,_volsize,_volnumber) ((_v) + (_volsize) * (_volnumber))
+
+#define	lda2pda(_lda) ((_lda) + ustarfs_mode_offset)
+#define	pda2lda(_pda) ((_pda) - ustarfs_mode_offset)
+/*
+ * Change this to off_t if you want to support big volumes. If we only use
+ * ustarfs on floppies it can stay int for libsa code density.
+ *
+ * It needs to be signed.
+ */
+typedef	int ustoffs;
 
 typedef struct ustar_struct {
 	char	ust_name[100],
@@ -81,23 +107,27 @@ typedef struct ustar_struct {
 typedef struct ust_active_struct {
 	ustar_t	uas_active;
 	char	uas_1cyl[18 * 2 * 512];
-	off_t	uas_volsize;		/* XXX this is hardwired now */
-	off_t	uas_windowbase;		/* relative to volume 0 */
-	off_t	uas_filestart;		/* relative to volume 0 */
-	off_t	uas_fseek;		/* relative to file */
+	ustoffs	uas_volsize;		/* XXX this is hardwired now */
+	ustoffs	uas_windowbase;		/* relative to volume 0 */
+	ustoffs	uas_filestart;		/* relative to volume 0 */
+	ustoffs	uas_fseek;		/* relative to file */
+	ustoffs	uas_filesize;		/* relative to volume 0 */
 	int	uas_init_window;	/* data present in window */
 	int	uas_init_fs;		/* ust FS actually found */
-	off_t	uas_filesize;		/* relative to volume 0 */
+	int	uas_volzerosig;		/* ID volume 0 by signature */
+	int	uas_offset;		/* amount of cylinder below lba 0 */
 } ust_active_t;
 
-#define	BBSIZE	8192
+static const char formatid[] = "USTARFS";
 
 static int ustarfs_mode_offset = BBSIZE;
 
-static int ustarfs_cylinder_read __P((struct open_file *, off_t));
-static int read512block __P((struct open_file *, off_t, char block[512]));
-static void ustarfs_sscanf __P((const char *, const char *, int *));
+static int checksig __P((ust_active_t *));
+static int get_volume __P((struct open_file *, int));
 static int convert __P((const char *, int, int));
+static int ustarfs_cylinder_read __P((struct open_file *, ustoffs));
+static void ustarfs_sscanf __P((const char *, const char *, int *));
+static int read512block __P((struct open_file *, ustoffs, char block[512]));
 
 static int
 convert(f, base, fw)
@@ -131,61 +161,143 @@ ustarfs_sscanf(s,f,xi)
 static int
 ustarfs_cylinder_read(f, seek2)
 	struct open_file *f;
-	off_t seek2;
+	ustoffs seek2;
 {
 	int e;
 	size_t	xfercount;
 	ust_active_t *ustf;
 
 	ustf = f->f_fsdata;
-	e = f->f_dev->dv_strategy(f->f_devdata, F_READ, seek2/512,
+	e = f->f_dev->dv_strategy(f->f_devdata, F_READ, seek2 / 512,
 		sizeof ustf->uas_1cyl, ustf->uas_1cyl, &xfercount);
-	if (e == 0 && xfercount != sizeof ustf->uas_1cyl)
+	if (e == 0 && xfercount != sizeof ustf->uas_1cyl) {
 		printf("Warning, unexpected short transfer %d/%d\n",
 			(int)xfercount, (int) sizeof ustf->uas_1cyl);
+		return EIO;
+	}
 	return e;
 }
 
 static int
-read512block(f, offset, block)
-	struct open_file *f;
-	off_t offset;
-	char block[512];
+checksig(ustf)
+	ust_active_t *ustf;
 {
-	ssize_t	e;
-	int	needvolume, havevolume, dienow = 0;
-	off_t	lastbase, seek2;
+	int	i, rcs;
+
+	for(i = rcs = 0; i < sizeof ustf->uas_1cyl; ++i)
+		rcs += ustf->uas_1cyl[i];
+	return rcs;
+}
+
+static int
+get_volume (f, vn)
+	struct open_file *f;
+	int vn;
+{
+	int	e, needvolume, havevolume;
 	ust_active_t *ustf;
 
 	ustf = f->f_fsdata;
+	havevolume = vda2vn(ustf->uas_windowbase, ustf->uas_volsize);
+	needvolume = vn;
+	while(havevolume != needvolume) {
+		printf("\nPlease ");
+		if (havevolume >= 0)
+			printf("remove disk %d, ", havevolume + 1);
+		printf("insert disk %d, and type return...",
+			needvolume + 1);
+		getchar();
+		printf("\n");
+		e = ustarfs_cylinder_read(f, 0);
+		if (e)
+			return e;
+		if(strncmp(formatid, ustf->uas_1cyl, strlen(formatid))) {
+			/* no magic, might be OK if we want volume 0 */
+			if (ustf->uas_volzerosig == checksig(ustf)) {
+				havevolume = 0;
+				continue;
+			}
+			printf("Disk is not from the volume set?!\n");
+			havevolume = -2;
+			continue;
+		}
+		ustarfs_sscanf(ustf->uas_1cyl + strlen(formatid), "%9o",
+			&havevolume);
+		--havevolume;
+	}
+	return 0;
+}
+
+static int
+read512block(f, vda, block)
+	struct open_file *f;
+	ustoffs vda;
+	char block[512];
+{
+	ustoffs pda, lda;
+	ssize_t	e;
+	int	dienow;
+	ust_active_t *ustf;
+
+	dienow = 0;
+	ustf = f->f_fsdata;
+
+	if (!ustf->uas_init_window
+	&&   ustf->uas_windowbase == 0) {
+		/*
+		 * The algorithm doesn't require this, but without it we would
+		 * need some trick to get the cylinder zero signature computed.
+		 * That signature is used to identify volume zero, which we
+		 * don't give a USTARFS label to. (It's platform-dependent.)
+		 */
+		e = ustarfs_cylinder_read(f, 0);
+		if (e)
+			return e;
+		ustf->uas_volzerosig = checksig(ustf);
+		ustf->uas_windowbase = lda2vda(pda2lda(0), ustf->uas_volsize, 0);
+		ustf->uas_init_window = 1;
+	}
+	/*
+	 * if (vda in window)
+	 * 	copy out and return data
+	 * if (vda is on some other disk)
+	 * 	do disk swap
+	 * get physical disk address
+	 * round down to cylinder boundary
+	 * read cylindar
+	 * set window (in vda space) and try again
+	 * [ there is an implicit assumption that windowbase always identifies
+	 *    the current volume, even if initwindow == 0. This way, a
+	 *    windowbase of 0 causes the initial volume to be disk 0 ]
+	 */
 tryagain:
 	if(ustf->uas_init_window
-	&& ustf->uas_windowbase <= offset
-	&& offset - ustf->uas_windowbase < sizeof ustf->uas_1cyl) {
-		memcpy(block, ustf->uas_1cyl + offset - ustf->uas_windowbase,
-			512);
+	&& ustf->uas_windowbase <= vda && vda <
+	   ustf->uas_windowbase + sizeof ustf->uas_1cyl - ustf->uas_offset) {
+		memcpy(block, ustf->uas_1cyl
+				+ (vda - ustf->uas_windowbase)
+				+ ustf->uas_offset, 512);
 		return 0;
 	}
 	if (dienow++)
 		panic("ustarfs read512block");
-	lastbase = ustf->uas_windowbase;
-	seek2 = ustf->uas_windowbase = offset - offset % sizeof ustf->uas_1cyl;
-	if(ustf->uas_volsize) {
-		havevolume = lastbase / ustf->uas_volsize;
-		needvolume = ustf->uas_windowbase / ustf->uas_volsize;
-		if (havevolume != needvolume) {
-			if (needvolume != havevolume + 1)
-				printf("Caution: the disk required is not the"
-				" next disk in ascending sequence.\n");
-			printf("Please insert disk number %d"
-				" and type return...", needvolume + 1);
-			getchar();
-		}
-		seek2 %= ustf->uas_volsize;
-	}
-	e = ustarfs_cylinder_read(f, seek2);
+	ustf->uas_init_window = 0;
+	e = get_volume(f, vda2vn(vda, ustf->uas_volsize));
 	if (e)
 		return e;
+	pda = lda2pda(vda2lda(vda, ustf->uas_volsize));
+	pda-= pda % sizeof ustf->uas_1cyl;
+	e = ustarfs_cylinder_read(f, pda);
+	if (e)
+		return e;
+	lda = pda2lda(pda);
+	if (lda < 0) {
+		ustf->uas_offset = -lda;
+		lda = 0;
+	} else
+		ustf->uas_offset = 0;
+	ustf->uas_windowbase = lda2vda(lda, ustf->uas_volsize,
+					vda2vn(vda, ustf->uas_volsize));
 	ustf->uas_init_window = 1;
 	goto tryagain;
 }
@@ -197,7 +309,7 @@ ustarfs_open(path, f)
 
 {
 	ust_active_t *ustf;
-	off_t offset;
+	ustoffs offset;
 	char	block[512];
 	int	filesize;
 	int	e, e2;
@@ -207,7 +319,9 @@ ustarfs_open(path, f)
 	e = EINVAL;
 	f->f_fsdata = ustf = alloc(sizeof *ustf);
 	memset(ustf, 0, sizeof *ustf);
-	offset = ustarfs_mode_offset;
+	offset = 0;
+	/* XXX -- hardwired for floppy */
+	ustf->uas_volsize = 80 * 2 * 18 * 512 - ustarfs_mode_offset;
 	ustf->uas_fseek = 0;
 	for(;;) {
 		ustf->uas_filestart = offset;
@@ -221,13 +335,6 @@ ustarfs_open(path, f)
 			break;
 		e = ENOENT;	/* it must be an actual ustarfs */
 		ustf->uas_init_fs = 1;
-		/*
-		 * XXX - the right way to store FS metadata on ustarfs
-		 * is to embed the data within a file. For now, we
-		 * will avoid complexity by hardwiring metadata for
-		 * a floppy.
-		 */
-		ustf->uas_volsize = 80 * 2 * 18 * 512;	/* XXX */
 		ustarfs_sscanf(ustf->uas_active.ust_size,"%12o",&filesize);
 		if(strncmp(ustf->uas_active.ust_name, path,
 		    sizeof ustf->uas_active.ust_name) == 0) {
