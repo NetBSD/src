@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.8 1996/02/05 01:57:22 christos Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -162,7 +162,7 @@ db_list_watchpoints()
 	for (watch = db_watchpoint_list;
 	     watch != 0;
 	     watch = watch->link)
-	    db_printf("%s%8x  %8x  %x\n",
+	    db_printf("%s%p  %8lx  %lx\n",
 		      db_map_current(watch->map) ? "*" : " ",
 		      watch->map, watch->loaddr,
 		      watch->hiaddr - watch->loaddr);
