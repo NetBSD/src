@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.2 2000/12/18 14:50:04 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.3 2001/02/02 07:08:18 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -54,12 +54,6 @@
 int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
 			     void *, size_t, const void *, const void *));
 
-static int netbsd32_exec_aout_prep_zmagic __P((struct proc *,
-					       struct exec_package *));
-static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
-					       struct exec_package *));
-static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
-					       struct exec_package *));
 int netbsd32_exec_aout_setup_stack __P((struct proc *p,
 					struct exec_package *epp));
 

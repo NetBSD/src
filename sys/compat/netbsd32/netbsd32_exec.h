@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.7 2000/12/01 22:05:18 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.8 2001/02/02 07:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -53,6 +53,9 @@ struct netbsd32_exec {
 extern const struct emul emul_netbsd32;
 
 #ifdef EXEC_AOUT
+int netbsd32_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
+int netbsd32_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
+int netbsd32_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 #endif
 #ifdef EXEC_ELF32
