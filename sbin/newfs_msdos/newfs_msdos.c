@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.4 1999/07/26 00:28:57 cgd Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.5 2001/02/04 21:53:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_msdos.c,v 1.4 1999/07/26 00:28:57 cgd Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.5 2001/02/04 21:53:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -115,12 +115,11 @@ static size_t findformat __P((int));
 static void setup_boot_sector_from_template __P((union bootsector *,
     struct descrip *));
 
+extern char *__progname;
 
 static void
 usage()
 {
-	extern char *__progname;
-
 	(void) fprintf(stderr,
 	    "Usage: %s [-f <kbytes>] [-L <label>] <device>\n", __progname);
 	exit(1);
