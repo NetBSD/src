@@ -1,4 +1,4 @@
-/*	$NetBSD: autrivar.h,v 1.1 2001/11/18 03:16:02 someya Exp $	*/
+/*	$NetBSD: autrivar.h,v 1.2 2001/11/18 17:15:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -85,6 +85,8 @@ struct autri_softc {
 
 	u_int32_t		sc_class;
 	int			sc_revision;
+
+	int			sc_old_power;
 
 	/*
 	 * Play/record status
