@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.2.1 1999/05/16 22:38:12 scottr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.2.2 1999/06/15 04:32:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -296,12 +296,9 @@ kvtop(addr)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.
- *
- * XXX we allocate KVA space by using kmem_alloc_wait which we know
- * allocates space without backing physical memory.  This implementation
- * is a total crock, the multiple mappings of these physical pages should
- * be reflected in the higher-level VM structures to avoid problems.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
@@ -337,7 +334,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
