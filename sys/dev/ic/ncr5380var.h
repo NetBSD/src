@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.25 2004/08/07 20:01:48 mycroft Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.26 2004/08/13 10:52:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -47,7 +47,7 @@
  */
 #if defined(acorn26) || defined(__i386__) || defined(__vax__) || \
 	defined(__mips__) || defined(__sparc__) || defined(sun2) || \
-	defined(__alpha__)
+	defined(__alpha__) || defined(__amd64__)
 # define NCR5380_USE_BUS_SPACE
 #endif
 
