@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.1 1995/08/17 16:37:19 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.2 1995/08/23 01:06:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -204,7 +204,7 @@ do_single(argc, argv, action)
 				i = 1;
 			else
 				if (verbose)
-					printf("%s unconfigured", cp);
+					printf("%s unconfigured\n", cp);
 		}
 		return (i);
 	}
