@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2002/12/10 05:14:33 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.33 2003/02/13 09:53:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,13 +117,32 @@
 #endif
 #endif /* _LKM */
 
-#define	__HAVE_PMAP_PHYSSEG
+#define __HAVE_VM_PAGE_MD
 
 /*
- * pmap specific data stored in the vm_physmem[] array
+ * For each managed physical page, there is a list of all currently
+ * valid virtual mappings of that page.  Since there is usually one
+ * (or zero) mapping per page, the table begins with an initial entry,
+ * rather than a pointer; this head entry is empty iff its pv_pmap
+ * field is NULL.
  */
-struct pvlist;
-struct pmap_physseg {
-	struct pvlist *pvhead;
+struct vm_page_md {
+	struct pvlist {
+		struct	pvlist *pv_next;	/* next pvlist, if any */
+		struct	pmap *pv_pmap;		/* pmap of this va */
+		vaddr_t	pv_va;			/* virtual address */
+		int	pv_flags;		/* flags (below) */
+	} pvlisthead;
+	struct		simplelock pv_slock;
 };
+#define VM_MDPAGE_PVHEAD(pg)	(&(pg)->mdpage.pvlisthead)
+
+#define VM_MDPAGE_INIT(pg) do {				\
+	(pg)->mdpage.pvlisthead.pv_next = NULL;		\
+	(pg)->mdpage.pvlisthead.pv_pmap = NULL;		\
+	(pg)->mdpage.pvlisthead.pv_va = 0;		\
+	(pg)->mdpage.pvlisthead.pv_flags = 0;		\
+	simple_lock_init(&(pg)->mdpage.pv_slock);	\
+} while(/*CONSTCOND*/0)
+
 #endif /* _SPARC_VMPARAM_H_ */
