@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.19 2002/02/07 02:14:02 ross Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.20 2002/05/21 01:39:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.19 2002/02/07 02:14:02 ross Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.20 2002/05/21 01:39:56 yamt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -299,7 +299,8 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	if ((sd = opendisk(argv[0], O_RDWR, name, (size_t)MAXPATHLEN, 0)) < 0) {
+	if ((sd = opendisk(argv[0], write_it ? O_RDWR : O_RDONLY, name,
+	    (size_t)MAXPATHLEN, 0)) < 0) {
 		perror(argv[0]);
 		exit(1);
 	}
