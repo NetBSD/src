@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.20 2000/10/11 21:02:05 he Exp $	*/
+/*	$NetBSD: lfs.c,v 1.21 2000/11/23 23:09:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.20 2000/10/11 21:02:05 he Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.21 2000/11/23 23:09:57 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -773,6 +773,7 @@ make_dinode(ino, dip, nfrags, saddr, lfsp)
 	dip->di_atime = dip->di_mtime = dip->di_ctime = lfsp->lfs_tstamp;
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
+	dip->di_gen = 1;
 
 	db_per_fb = 1 << lfsp->lfs_fsbtodb;
 #if 0
