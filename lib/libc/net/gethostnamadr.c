@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.22 1997/04/14 01:38:26 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.23 1997/04/26 04:12:08 mrg Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.20 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.22 1997/04/14 01:38:26 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.23 1997/04/26 04:12:08 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -509,7 +509,8 @@ gethostbyname2(name, af)
 			if (!isdigit(*cp) && *cp != '.') 
 				break;
 		}
-	if (isxdigit(name[0]) || name[0] == ':')
+	if ((isxdigit(name[0]) && strchr(name, ':') != NULL) ||
+	    name[0] == ':')
 		for (cp = name;; ++cp) {
 			if (!*cp) {
 				if (*--cp == '.')
