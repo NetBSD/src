@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.4 1994/10/26 05:44:44 cgd Exp $	*/
+/*	$NetBSD: exit.c,v 1.5 1995/04/22 13:51:19 cgd Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -35,7 +35,7 @@
 
 #include "stand.h"
 
-void
+__dead void
 #ifdef __STDC__
 panic(const char *fmt, ...)
 #else
@@ -44,7 +44,7 @@ panic(fmt /*, va_alist */)
 #endif
 {
     extern void closeall __P((void));
-    extern void _rtt __P((void));
+    extern __dead void _rtt __P((void)) __attribute__((noreturn));
     va_list ap;
     static int paniced;
     
@@ -65,7 +65,8 @@ panic(fmt /*, va_alist */)
     /*NOTREACHED*/
 }
 
-void volatile exit()
+void volatile
+exit()
 {
     panic("exit");
     /*NOTREACHED*/
