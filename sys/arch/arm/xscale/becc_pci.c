@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.1 2003/01/25 01:57:19 thorpej Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.2 2003/01/29 20:08:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -331,7 +331,18 @@ becc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		switch (pa->pa_device) {
 		case 1: irq = ICU_PCI_INTB; break; /* Ethernet #0 */
 		case 2: irq = ICU_PCI_INTC; break; /* Ethernet #1 */
-		case 3: irq = ICU_PCI_INTA; break; /* Card slot? */
+		case 3:				   /* Card slot */
+			switch (pa->pa_intrpin) {
+			case 1:		irq = ICU_PCI_INTA; break;
+			case 2:		irq = ICU_PCI_INTB; break;
+			case 3:		irq = ICU_PCI_INTC; break;
+			case 4:		irq = ICU_PCI_INTD; break;
+			default:
+				printf("becc_pci_intr_map: bogus pin: %d\n",
+				    pa->pa_intrpin);
+				return (1);
+			}
+			break;
 		default:
 			break;
 		}
