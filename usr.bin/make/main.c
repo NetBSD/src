@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.106 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.106 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.106 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -895,7 +895,7 @@ main(int argc, char **argv)
 	if (!noBuiltins) {
 		LstNode ln;
 
-		sysMkPath = Lst_Init (FALSE);
+		sysMkPath = Lst_Init(FALSE);
 		Dir_Expand(_PATH_DEFSYSMK,
 			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
 			   sysMkPath);
@@ -1395,7 +1395,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	 */
 	(void) close(fds[1]);
 
-	buf = Buf_Init (MAKE_BSIZE);
+	buf = Buf_Init(MAKE_BSIZE);
 
 	do {
 	    char   result[BUFSIZ];
@@ -1417,7 +1417,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	    continue;
 
 	res = (char *)Buf_GetAll (buf, &cc);
-	Buf_Destroy (buf, FALSE);
+	Buf_Destroy(buf, FALSE);
 
 	if (cc == 0)
 	    *err = "Couldn't read shell's output for \"%s\"";
