@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.26 2003/04/23 17:40:25 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.27 2003/04/24 16:55:30 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -83,9 +83,11 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 {
 	const Elf_Sym *symp;
 	const Elf_Sym *def;
+	const Obj_Entry *defobj;
 	const Objlist_Entry *elm;
 	
 	def = NULL;
+	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
 		rdbg(("search object %p (%s)", elm->obj, elm->obj->path));
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
@@ -93,12 +95,14 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 			if ((def == NULL) ||
 			    (ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 				def = symp;
-				*defobj_out = elm->obj;
+				defobj = elm->obj;
 				if (ELF_ST_BIND(def->st_info) != STB_WEAK)
 					break;
 			}
 		}
 	}
+	if (def != NULL)
+		*defobj_out = defobj;
 	return def;
 }
 
@@ -162,26 +166,33 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
  * defining object via the reference parameter DEFOBJ_OUT.
  */
 const Elf_Sym *
-_rtld_find_symname(name, refobj, defobj_out, in_plt)
-	const char *name;
+_rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
+	unsigned long symnum;
 	const Obj_Entry *refobj;
 	const Obj_Entry **defobj_out;
 	bool in_plt;
 {
+	const Elf_Sym  *ref;
 	const Elf_Sym  *def;
 	const Elf_Sym  *symp;
 	const Obj_Entry *obj;
+	const Obj_Entry *defobj;
 	const Objlist_Entry *elm;
+	const char     *name;
 	unsigned long   hash;
+
+	ref = refobj->symtab + symnum;
+	name = refobj->strtab + ref->st_name;
 
 	hash = _rtld_elf_hash(name);
 	def = NULL;
+	defobj = NULL;
 	
 	if (refobj->symbolic) {	/* Look first in the referencing object */
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
 			def = symp;
-			*defobj_out = refobj;
+			defobj = refobj;
 		}
 	}
 	
@@ -192,7 +203,7 @@ _rtld_find_symname(name, refobj, defobj_out, in_plt)
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
-			*defobj_out = obj;
+			defobj = obj;
 		}
 	}
 	
@@ -205,7 +216,7 @@ _rtld_find_symname(name, refobj, defobj_out, in_plt)
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
-			*defobj_out = obj;
+			defobj = obj;
 		}
 	}
 	
@@ -216,41 +227,26 @@ _rtld_find_symname(name, refobj, defobj_out, in_plt)
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
-			*defobj_out = obj;
+			defobj = obj;
 		}
 	}
 	
-	return def;
-}
-
-const Elf_Sym *
-_rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
-	unsigned long symnum;
-	const Obj_Entry *refobj;
-	const Obj_Entry **defobj_out;
-	bool in_plt;
-{
-	const Elf_Sym  *ref, *def;
-	const char     *name;
-
-	ref = refobj->symtab + symnum;
-	name = refobj->strtab + ref->st_name;
-
-	def = _rtld_find_symname(name, refobj, defobj_out, in_plt);
-	if (def == NULL) {
-		if (ELF_ST_BIND(ref->st_info) == STB_WEAK) {
-			/*
-			 * If we found no definition and the reference is weak,
-			 * treat the symbol as having the value zero.
-			 */
-			rdbg(("  returning _rtld_sym_zero@_rtld_objmain"));
-			def = &_rtld_sym_zero;
-			*defobj_out = _rtld_objmain;
-		} else {
-			rdbg(("lookup failed"));
-			_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
-			    refobj->path, in_plt ? "PLT " : "", name, symnum);
-		}
+	/*
+	 * If we found no definition and the reference is weak, treat the
+	 * symbol as having the value zero.
+	 */
+	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
+		rdbg(("  returning _rtld_sym_zero@_rtld_objmain"));
+		def = &_rtld_sym_zero;
+		defobj = _rtld_objmain;
 	}
-	return (def);
+	
+	if (def != NULL)
+		*defobj_out = defobj;
+	else {
+		rdbg(("lookup failed"));
+		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
+		    refobj->path, in_plt ? "PLT " : "", name, symnum);
+	}
+	return def;
 }
