@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/12/29 00:47:56 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 2005/03/03 22:40:49 he Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -56,6 +56,7 @@ SRCS=	openpam_borrow_cred.c \
 	openpam_dynamic.c \
 	openpam_findenv.c \
 	openpam_free_data.c \
+	openpam_free_envlist.c \
 	openpam_get_option.c \
 	openpam_load.c \
 	openpam_log.c \
@@ -95,6 +96,7 @@ SRCS+=	pam_debug_log.c
 MAN=	openpam.3 \
 	openpam_borrow_cred.3 \
 	openpam_free_data.3 \
+	openpam_free_envlist.3 \
 	openpam_get_option.3 \
 	openpam_log.3 \
 	openpam_nullconv.3 \

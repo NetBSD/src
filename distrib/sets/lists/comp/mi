@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.767 2005/02/26 18:06:27 matt Exp $
+#	$NetBSD: mi,v 1.768 2005/03/03 22:40:49 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3844,6 +3844,7 @@
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openpam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_borrow_cred.0	comp-c-catman		.cat,pam
+./usr/share/man/cat3/openpam_free_envlist.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_free_data.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_get_option.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_log.0		comp-c-catman		.cat,pam
@@ -7683,6 +7684,7 @@
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
 ./usr/share/man/man3/openpam.3			comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_borrow_cred.3	comp-c-man		.man,pam
+./usr/share/man/man3/openpam_free_envlist.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_free_data.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_get_option.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_log.3		comp-c-man		.man,pam
