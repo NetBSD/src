@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.32 1998/01/12 09:49:12 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.33 1998/07/03 19:11:25 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -626,6 +626,7 @@ int
 ch_ielem(sc)
 	struct ch_softc *sc;
 {
+	int tmo;
 	struct scsi_initialize_element_status cmd;
 
 	/*
@@ -636,10 +637,26 @@ ch_ielem(sc)
 
 	/*
 	 * Send command to changer.
+	 *
+	 * The problem is, how long to allow for the command?
+	 * It can take a *really* long time, and also depends
+	 * on unknowable factors such as whether there are
+	 * *almost* readable labels on tapes that a barcode
+	 * reader is trying to decipher.
+	 *
+	 * I'm going to make this long enough to allow 5 minutes
+	 * per element plus an initial 10 minute wait.
 	 */
+	tmo =	sc->sc_counts[CHET_MT] +
+		sc->sc_counts[CHET_ST] +
+		sc->sc_counts[CHET_IE] +
+		sc->sc_counts[CHET_DT];
+	tmo *= 5 * 1000;
+	tmo += (10 * 60 * 1000);
+
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    NULL, 0, CHRETRIES, 100000, NULL, 0));
+	    NULL, 0, CHRETRIES, tmo, NULL, 0));
 }
 
 /*
