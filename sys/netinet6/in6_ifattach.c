@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.52 2002/09/11 03:23:24 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.53 2002/09/15 01:18:59 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.52 2002/09/11 03:23:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.53 2002/09/15 01:18:59 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +684,6 @@ in6_ifdetach(ifp)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
 	{
 		next = ifa->ifa_list.tqe_next;
-
 
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
