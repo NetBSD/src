@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.2 2004/12/16 16:37:52 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.3 2004/12/16 17:01:02 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -653,6 +653,8 @@ int mode;
 	 */
 	if ((cmd == (ioctlcmd_t)SIOCADNAT) || (cmd == (ioctlcmd_t)SIOCRMNAT)) {
 		nat = &natd;
+		if (nat->in_v == 0)	/* For backward compat. */
+			nat->in_v = 4;
 		nat->in_flags &= IPN_USERFLAGS;
 		if ((nat->in_redir & NAT_MAPBLK) == 0) {
 			if ((nat->in_flags & IPN_SPLIT) == 0)
@@ -3567,6 +3569,8 @@ maskloop:
 		{
 			if ((np->in_ifps[0] && (np->in_ifps[0] != ifp)))
 				continue;
+			if (np->in_v != fin->fin_v)
+				continue;
 			if ((np->in_flags & IPN_RF) && !(np->in_flags & nflags))
 				continue;
 			if (np->in_flags & IPN_FILTER) {
@@ -3846,6 +3850,8 @@ maskloop:
 		hv = NAT_HASH_FN(iph, 0, ipf_rdrrules_sz);
 		for (np = rdr_rules[hv]; np; np = np->in_rnext) {
 			if (np->in_ifps[0] && (np->in_ifps[0] != ifp))
+				continue;
+			if (np->in_v != fin->fin_v)
 				continue;
 			if (np->in_p && (np->in_p != fin->fin_p))
 				continue;
