@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.283 2000/11/08 11:11:28 wiz Exp $
+# $NetBSD: mi,v 1.284 2000/11/08 12:03:06 wiz Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -896,6 +896,7 @@
 ./usr/share/man/cat5/access.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
+./usr/share/man/cat5/amd.conf.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
@@ -2315,6 +2316,7 @@
 ./usr/share/man/man5/access.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
+./usr/share/man/man5/amd.conf.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bootptab.5
