@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16.4.2 1999/06/21 01:47:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.3 1999/07/04 02:02:32 chs Exp $	*/
 
 /*
  *
@@ -45,6 +45,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/vnode.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -104,9 +105,6 @@ uvm_pager_init()
 	 */
 	
 	TAILQ_INIT(&uvm.aio_done);
-	uvm_aiobuf_pool = pool_create(sizeof(struct uvm_aiobuf),
-				      0, 0, 0, "aiobuf", 0, NULL, NULL, 0);
-
 
 	/*
 	 * call pager init functions
@@ -129,42 +127,29 @@ uvm_pager_init()
  */
 
 vaddr_t
-uvm_pagermapin(pps, npages, aiop, waitf)
+uvm_pagermapin(pps, npages, waitf)
 	struct vm_page **pps;
 	int npages;
-	struct uvm_aiodesc **aiop;	/* OUT */
 	int waitf;
 {
 	vsize_t size;
 	vaddr_t kva;
-	struct uvm_aiodesc *aio;
 	vaddr_t cva;
 	struct vm_page *pp;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, waitf=%d)",
-	      pps, npages, aiop, waitf);
+	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, waitf=%d)",
+	      pps, npages, waitf, 0);
 
 ReStart:
-	if (aiop) {
-		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP, waitf);
-		if (aio == NULL)
-			return(0);
-		*aiop = aio;
-	} else {
-		aio = NULL;
-	}
-
 	size = npages << PAGE_SHIFT;
 	kva = NULL;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
 	      UVM_UNKNOWN_OFFSET, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
 		if (waitf == M_NOWAIT) {
-			if (aio)
-				FREE(aio, M_TEMP);
 			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
-			return(NULL);
+			return(0);
 		}
 		simple_lock(&pager_map_wanted_lock);
 		pager_map_wanted = TRUE; 
@@ -288,7 +273,8 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	}
 	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
 #ifdef DIAGNOSTIC
-	    printf("uvm_mk_pcluster: provided page array too small (fixed)\n");
+		printf("uvm_mk_pcluster uobj %p npages %d lo 0x%lx hi 0x%lx flags 0x%x\n",
+		       uobj, *npages, lo, hi, flags);
 #endif
 		pps[0] = center;
 		*npages = 1;
@@ -349,9 +335,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0) {
 				break;	/* page is already clean or is busy */
 			}
-
-			/* XXX for now, disable putpage clustering */
-			break;
 
 			/* yes!   enroll the page in our array */
 			pclust->flags |= PG_BUSY;		/* busy! */
@@ -772,32 +755,51 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 }
 
 void
-uvm_aio_biodone(bp)
+uvm_aio_biodone1(bp)
 	struct buf *bp;
 {
-	struct uvm_aiobuf *abp = (void *)bp;
-	int s;
+	struct buf *mbp = bp->b_private;
 
-	s = splbio();
-	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
-	TAILQ_INSERT_TAIL(&uvm.aio_done, &abp->aio, aioq);
-	wakeup(&uvm.aiodoned);
-	simple_unlock(&uvm.aiodoned_lock);
-	splx(s);
+	if (mbp == bp) {
+		panic("uvm_aio_biodone1: mbp == bp %p", bp);
+	}
+
+	if (bp->b_flags & B_ERROR) {
+		mbp->b_flags |= B_ERROR;
+		mbp->b_error = bp->b_error;
+	}
+	mbp->b_bcount -= bp->b_bcount;
+	pool_put(&bufpool, bp);
+	if (mbp->b_bcount == 0) {
+		biodone(mbp);
+	}
 }
 
 void
-uvm_aio_aiodone(aio)
-	struct uvm_aiodesc *aio;
+uvm_aio_biodone(bp)
+	struct buf *bp;
 {
-	struct uvm_aiobuf *abp = aio->pd_ptr;
-	struct vm_page *pgs[aio->npages];
+	/* XXX for single-buf aios */
+	bp->b_iodone = uvm_aio_aiodone;
+
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
+	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
+	wakeup(&uvm.aiodoned);
+	simple_unlock(&uvm.aiodoned_lock);
+}
+
+void
+uvm_aio_aiodone(bp)
+	struct buf *bp;
+{
+	int pages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vm_page *pgs[pages];
 	int s, i;
 	boolean_t release;
 
-	release = (abp->buf.b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
-	for (i = 0; i < aio->npages; i++) {
-		pgs[i] = uvm_pageratop(aio->kva + (i << PAGE_SHIFT));
+	release = (bp->b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
+	for (i = 0; i < pages; i++) {
+		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
 
 		/*
 		 * if this is an async read and we got an error,
@@ -809,11 +811,11 @@ uvm_aio_aiodone(aio)
 			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
-	uvm_pagermapout(aio->kva, aio->npages);
-	uvm_pager_dropcluster((struct uvm_object *)abp->buf.b_vp, NULL, pgs,
-			      &aio->npages, PGO_PDFREECLUST, 0);
+	uvm_pagermapout((vaddr_t)bp->b_data, pages);
+	uvm_pager_dropcluster((struct uvm_object *)bp->b_vp, NULL, pgs,
+			      &pages, PGO_PDFREECLUST, 0);
 
 	s = splbio();
-	pool_put(uvm_aiobuf_pool, abp);
+	pool_put(&bufpool, bp);
 	splx(s);
 }
