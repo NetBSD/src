@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.42 1998/08/18 06:30:09 thorpej Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.43 1998/10/02 00:21:39 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -373,16 +373,22 @@ spec_write(v)
 				bp = getblk(vp, bn, bsize, 0, 0);
 			else
 				error = bread(vp, bn, bsize, NOCRED, &bp);
-			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
 				return (error);
 			}
+			n = min(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			if (n + on == bsize)
-				bawrite(bp);
-			else
-				bdwrite(bp);
+			if (error)
+				brelse(bp);
+			else {
+				if (n + on == bsize)
+					bawrite(bp);
+				else
+					bdwrite(bp);
+				if (bp->b_flags & B_ERROR)
+					error = bp->b_error;
+			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
 
