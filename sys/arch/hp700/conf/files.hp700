@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.4 2002/11/28 05:53:23 chs Exp $
+#	$NetBSD: files.hp700,v 1.5 2003/04/06 10:06:14 tsutsui Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -138,11 +138,14 @@ device	ie: ifnet, ether, arp, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hp700/gsc/if_ie_gsc.c	ie_gsc
 
-attach	siop at gsc
-file	arch/hp700/gsc/siop_gsc.c	siop
+attach	siop at gsc with siop_gsc
+file	arch/hp700/gsc/siop_gsc.c	siop_gsc
 
 attach	osiop at gsc with osiop_gsc
-file	arch/hp700/gsc/osiop_gsc.c	osiop
+file	arch/hp700/gsc/osiop_gsc.c	osiop_gsc
+
+attach	oosiop at gsc with oosiop_gsc
+file	arch/hp700/gsc/oosiop_gsc.c	oosiop_gsc
 
 device	hil: tty
 attach	hil at gsc
