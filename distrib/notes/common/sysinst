@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.21 2001/04/16 20:42:43 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.22 2001/05/13 23:25:37 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,7 +261,9 @@ the default answer will be displayed in brackets
 after the question. If you wish to stop the installation, you may press
 .Key CONTROL-C
 at any time, but if you do, you'll have to begin the installation
-process again from scratch.
+process again from scratch, by running the 
+.Pa /sysinst
+program from the command prompt, you do not need to reboot.
 .It
 .Em Quick install
 .Pp
@@ -389,12 +391,24 @@ Type
 .\}
 The main menu will be displayed.
 .\} \" ! r_pmax
+.(disp
+  .***********************************************.
+  * NetBSD-1.5.1 Install System                   *
+  *                                               *
+  *>a: Install NetBSD to hard disk                *
+  * b: Upgrade NetBSD on a hard disk              *
+  * c: Re-install sets or install additional sets *
+  * d: Reboot the computer                        *
+  * e: Utility menu                               *
+  * x: Exit Install System                        *
+  .***********************************************.
+.disp)
 .It
 If you wish, you can configure some network settings
 immediately by choosing the
-.Me utilities
-menu and then
-.Me configure network .
+.Me Utility menu
+and then
+.Me Configure network .
 It isn't actually required at this point, but
 it may be more convenient. Go back to the main menu.
 .It
@@ -443,6 +457,10 @@ For configuring the X window system, if installed, see the files in
 Further information can be found on
 .Lk http://www.xfree86.org/ .
 .\}
+.if \n[macppc] \{\
+Further information can be found on
+.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.\}
 .bullet)
 .bullet)
 .It
@@ -462,7 +480,7 @@ devices, so that they won't be found by
 Boot the system as described in the previous section.
 .Pp
 You may want to read the
-boot messages, to notice your disk's name and geometry. Its name
+boot messages, to notice your disk's name and capacity. Its name
 will be something like
 .Li sd0
 .if r_macppc \{\
@@ -581,8 +599,11 @@ from floppy in the first part of the install.
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
-it is installed, you should first go to the utilities menu, and select
-.Ic Configure network option .
+it is installed, you should first go to the 
+.Me Utility menu
+, and select the
+.Me Configure network 
+option.
 If you only want to temporarily
 use networking during the installation, you can specify these
 parameters later. If you are not using the Domain Name System (DNS),
@@ -591,8 +612,8 @@ this.
 .It
 .Em Installation drive selection and parameters
 .Pp
-To start the installation, select the menu option to install
-.Nx
+To start the installation, select 
+.Me Install NetBSD to hard disk
 from the main menu.
 .Pp
 The first thing is to identify the disk on which you want to
@@ -723,7 +744,9 @@ uses the Apple Partition Map on your disk.  See
 .Sx Partitioning your hard drive for NetBSD
 to determine whether or not you should use the
 .Nx
-installer to partition your disk.
+installer to partition your disk.  If you are to leave your current
+partitioning in place, skip two sections to 
+.Em Getting the distribution sets
 .Pp
 .\}
 .if r_sparc \{\
@@ -1000,6 +1023,11 @@ and the directory on the specified file system where the sets are located.
 .Ic sysinst
 will then check if it
 can indeed access the sets at that location.
+.if r_macppc \{\
+Remember, 
+.Nx*M
+doesn't grok HFS or HFS+ partitions
+.\}
 .It
 .Em Installation from a local directory
 .Pp

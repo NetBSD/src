@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.9 2001/05/12 07:32:17 mbw Exp $
+.\"$NetBSD: hardware,v 1.10 2001/05/13 23:25:38 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -149,7 +149,7 @@ Systems with a Motorola 68k microprocessor (these systems are supported by
 Systems upgraded from any of the above (unless the motherboard is replaced as
 part of the upgrade)
 .It
-Systems released during the year 2000 (future releases of
+Systems released in the second half of 2001 and later (future releases of
 .Nx*M
 will support these systems)
 .bullet)

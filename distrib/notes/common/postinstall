@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.23 2001/04/10 01:39:06 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.24 2001/05/13 23:25:37 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,6 +217,13 @@ The X Window System
 If you have installed the X Window System, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
+.if \n[macppc] \{\
+Also, you may want to read through the 
+.Nx*M
+X11R6 HOW-TO.
+.br
+.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.\}
 .if \n[arm32]:\n[i386] \{\
 .Pp
 You will need to set up a configuration file, see

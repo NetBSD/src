@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.17 2001/04/16 20:42:43 mbw Exp $
+.\"	$NetBSD: xfer,v 1.18 2001/05/13 23:25:37 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,10 +106,10 @@ is also available that runs under
 .\} \" r_i386
 .
 .if r_macppc \{\
-You will need to have the correct bootable media prepared.
-See the section on
-.Sx Creating the Bootable Media
-for details.
+You should wait to decide where to put the
+.Nx
+distribution sets until you have figured out how you are going to boot
+your system.  Refer back to this section after you have done so.
 .Pp
 .(Note
 Some
