@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.19 2000/01/08 23:12:37 itojun Exp $
+.\"	$NetBSD: systat.1,v 1.20 2000/07/05 11:04:51 ad Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -428,22 +428,6 @@ over the time interval.
 The rest of the column breaks down the total on a device
 by device basis.
 Only devices that have interrupted at least once since boot time are shown.
-.Pp
-The following commands are specific to the
-.Ic vmstat
-display; the minimum unambiguous prefix may be supplied.
-.Pp
-.Bl -tag -width Ar -compact
-.It Cm boot
-Display cumulative statistics since the system was booted.
-.It Cm run
-Display statistics as a running total from the point this
-command is given.
-.It Cm time
-Display statistics averaged over the refresh interval (the default).
-.It Cm zero
-Reset running statistics to zero.
-.El
 .El
 .Pp
 Commands to switch between displays may be abbreviated to the
@@ -469,6 +453,26 @@ drives may be specified, separated by spaces.
 .It Cm display Op Ar drives
 Display information about the drives indicated.  Multiple drives
 may be specified, separated by spaces.
+.El
+.Pp
+The following commands are specific to the
+.Ic inet.* ,
+.Ic inet6.* ,
+.Ic ipsec
+and
+.Ic vmstat
+displays; the minimum unambiguous prefix may be supplied.
+.Pp
+.Bl -tag -width Ar -compact
+.It Cm boot
+Display cumulative statistics since the system was booted.
+.It Cm run
+Display statistics as a running total from the point this
+command is given.
+.It Cm time
+Display statistics averaged over the refresh interval (the default).
+.It Cm zero
+Reset running statistics to zero.
 .El
 .Pp
 .Sh FILES
@@ -505,7 +509,7 @@ The
 program appeared in
 .Bx 4.3 .
 .Sh BUGS
-Takes 2-10 percent of the cpu.
+Consumes CPU resources and thus may skew statistics.
 Certain displays presume a minimum of 80 characters per line.
 The
 .Ic vmstat
