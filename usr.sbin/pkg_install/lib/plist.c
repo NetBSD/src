@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.32.2.1 2002/06/28 12:42:32 lukem Exp $	*/
+/*	$NetBSD: plist.c,v 1.32.2.2 2002/07/21 04:43:11 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.32.2.1 2002/06/28 12:42:32 lukem Exp $");
+__RCSID("$NetBSD: plist.c,v 1.32.2.2 2002/07/21 04:43:11 lukem Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ static const cmd_t cmdv[] = {
  * Add an item to the end of a packing list
  */
 void
-add_plist(package_t *p, pl_ent_t type, char *arg)
+add_plist(package_t *p, pl_ent_t type, const char *arg)
 {
 	plist_t *tmp;
 
@@ -90,7 +90,7 @@ add_plist(package_t *p, pl_ent_t type, char *arg)
  * Add an item to the start of a packing list
  */
 void
-add_plist_top(package_t *p, pl_ent_t type, char *arg)
+add_plist_top(package_t *p, pl_ent_t type, const char *arg)
 {
 	plist_t *tmp;
 
