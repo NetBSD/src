@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 1999/12/12 11:20:03 itojun Exp $
+# $NetBSD: mi,v 1.174 1999/12/15 11:30:45 augustss Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -2611,6 +2611,7 @@
 ./usr/share/man/cat9/untimeout.0
 ./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/useracc.0
+./usr/share/man/cat9/usbdi.0
 ./usr/share/man/cat9/uvm.0
 ./usr/share/man/cat9/uvm_chgkprot.0
 ./usr/share/man/cat9/uvm_coredump.0
@@ -4063,6 +4064,7 @@
 ./usr/share/man/man9/uiomove.9
 ./usr/share/man/man9/untimeout.9
 ./usr/share/man/man9/uprintf.9
+./usr/share/man/man9/usbdi.9
 ./usr/share/man/man9/useracc.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9
