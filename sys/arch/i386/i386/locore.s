@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.58 1994/04/06 01:31:33 mycroft Exp $
+ *	$Id: locore.s,v 1.59 1994/04/06 04:22:40 mycroft Exp $
  */
 
 /*
@@ -60,6 +60,7 @@
 
 #include <i386/isa/debug.h>
 
+#define	KCSEL		0x08
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
 
@@ -68,11 +69,6 @@
 #define	IOM_END		0x100000		/* End of I/O Memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
 
-/*
- * Note: This version greatly munged to avoid various assembler errors
- * that may be fixed in newer versions of gas. Perhaps newer versions
- * will have more pleasant appearance.
- */
 
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
@@ -87,6 +83,7 @@
 #define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
 #define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
 #endif
+
 
 /*
  * PTmap is recursive pagemap at top of virtual address space.
@@ -108,9 +105,8 @@
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
 /*
- * Access to each processes kernel stack is via a region of
- * per-process address space (at the beginning), immediatly above
- * the user process stack.
+ * Access to each processes kernel stack is via a region of per-process address
+ * space (at the beginning), immediatly above the user process stack.
  */
 	.set	_kstack,USRSTACK
 	.globl	_kstack
@@ -138,17 +134,19 @@ _KPTphys:	.long	0
 
 	.space 512
 tmpstk:
+
 	.text
 	.globl	start
-start:	movw	$0x1234,0x472	# warm boot
+start:	movw	$0x1234,0x472			# warm boot
+	/* Skip over BIOS variables. */
 	jmp	1f
 	.org	0x500
 1:
 
 	/*
-	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
+	 * Load parameters from stack (howto, bootdev, unit, cyloffset, esym).
 	 * note: (%esp) is return address of boot
-	 * ( if we want to hold onto /boot, it's physical %esp up to _end)
+	 * (If we want to hold onto /boot, it's physical %esp up to _end.)
 	 */
 	movl	4(%esp),%eax
 	movl	%eax,_boothowto-KERNBASE
@@ -160,53 +158,54 @@ start:	movw	$0x1234,0x472	# warm boot
  	addl	$(KERNBASE),%eax
  	movl	%eax,_esym-KERNBASE
 
-	/* find out our CPU type. */
-	/* first, clear the alignment check and identification flags */
+	/* Find out our CPU type. */
+
+	/* First, clear the alignment check and identification flags. */
 	pushfl
 	popl	%eax
 	andl	$~(PSL_AC|PSL_ID),%eax
 	pushl	%eax
 	popfl
 
-	/* try to frob alignment check flag; does not exist on 386 */
+	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
-	orl	$(PSL_AC),%eax
+	orl	$PSL_AC,%eax
 	pushl	%eax
 	popfl
 	pushfl
 	popl	%eax
 	xorl	%ecx,%eax
-	andl	$(PSL_AC),%eax
+	andl	$PSL_AC,%eax
 	pushl	%ecx
 	popfl
 
 	testl	%eax,%eax
 	jnz	1f
-	movl	$(CPU_386),_cpu-KERNBASE
+	movl	$CPU_386,_cpu-KERNBASE
 	jmp	2f
 
-1:	/* try to frob identification flag; does not exist on early 486s */
+1:	/* Try to toggle identification flag; does not exist on early 486s. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
-	xorl	$(PSL_ID),%eax
+	xorl	$PSL_ID,%eax
 	pushl	%eax
 	popfl
 	pushfl
 	popl	%eax
 	xorl	%ecx,%eax
-	andl	$(PSL_ID),%eax
+	andl	$PSL_ID,%eax
 	pushl	%ecx
 	popfl
 
 	testl	%eax,%eax
 	jnz	1f
-	movl	$(CPU_486),_cpu-KERNBASE
+	movl	$CPU_486,_cpu-KERNBASE
 	jmp	2f
 
-1:	/* use the `cpuid' instruction */
+1:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	.byte	0x0f,0xa2		/* cpuid 0 */
 	movl	%ebx,_cpu_vendor	/* store vendor string */
@@ -222,21 +221,19 @@ start:	movw	$0x1234,0x472	# warm boot
 	jae	1f
 
 	/* less than Pentium; must be 486 */
-	movl	$(CPU_486),_cpu-KERNBASE
+	movl	$CPU_486,_cpu-KERNBASE
 	jmp	2f
 
-1:	movl	$(CPU_586),_cpu-KERNBASE
+1:	movl	$CPU_586,_cpu-KERNBASE
 2:
 
 	/*
-	 * Finished with old stack; load new %esp now instead of later so
-	 * we can trace this code without having to worry about the trace
-	 * trap clobbering the memory test or the zeroing of the bss+bootstrap
-	 * page tables.
+	 * Finished with old stack; load new %esp now instead of later so we
+	 * can trace this code without having to worry about the trace trap
+	 * clobbering the memory test or the zeroing of the bss+bootstrap page
+	 * tables.
 	 *
-	 * XXX - wdboot clears the bss after testing that this is safe.
-	 * This is too wasteful - memory below 640K is scarce.  The boot
-	 * program should check:
+	 * The boot program should check:
 	 *	text+data <= &stack_variable - more_space_for_stack
 	 *	text+data+bss+pad+space_for_page_tables <= end_of_memory
 	 * Oops, the gdt is in the carcass of the boot program so clearing
@@ -247,10 +244,10 @@ start:	movw	$0x1234,0x472	# warm boot
 /*
  * Virtual address space of kernel:
  *
- *	text | data | bss | [syms] | page dir | usr stk map | proc0 kernel stack | Sysmap
- *			           0          1             2          3         4
+ * text | data | bss | [syms] | page dir | usr stk map | proc0 kstack | Sysmap
+ *			      0          1             2       3      4
  */
-/* clear bss */
+	/* Clear the BSS. */
 	movl	$(_edata-KERNBASE),%edi
 	movl	$(((_end-_edata)+3)>>2),%ecx
 	xorl	%eax,%eax
@@ -258,32 +255,32 @@ start:	movw	$0x1234,0x472	# warm boot
 	rep
 	stosl
 
-/* find end of kernel image */
+	/* Find end of kernel image. */
 	movl	$(_end-KERNBASE),%ecx
-#if	defined(DDB) && !defined(SYMTAB_SPACE)
-/* save the symbols (if loaded) */
+#if defined(DDB) && !defined(SYMTAB_SPACE)
+	/* Save the symbols (if loaded). */
 	movl	_esym-KERNBASE,%eax
 	testl	%eax,%eax
 	jz	1f
 	movl	%eax,%ecx
-	subl	$(KERNBASE),%ecx
+	subl	$KERNBASE,%ecx
 1:
 #endif
-	movl	%ecx,%edi	# edi= end || esym
-	addl	$(PGOFSET),%ecx	# page align up
+	movl	%ecx,%edi			# edi = esym ?: end
+	addl	$PGOFSET,%ecx			# page align up
 	andl	$(~PGOFSET),%ecx
-	movl	%ecx,%esi	# esi = start of tables
+	movl	%ecx,%esi			# esi = start of tables
 	subl	%edi,%ecx
 	addl	$((NKPDE+UPAGES+2)*NBPG),%ecx	# size of tables
 	
-/* clear memory for bootstrap tables */
-	xorl	%eax,%eax	# pattern
+	/* Clear memory for bootstrap tables. */
+	shrl	$2,%ecx
+	xorl	%eax,%eax
 	cld
 	rep
-	stosb
+	stosl
 
-/* physical address of Idle Address space */
-	movl	%esi,_IdlePTD-KERNBASE
+	movl	%esi,_IdlePTD-KERNBASE		# physaddr of proc0 stack
 
 /*
  * fillkpt
@@ -293,73 +290,67 @@ start:	movw	$0x1234,0x472	# warm boot
  */
 #define	fillkpt		\
 1:	movl	%eax,(%ebx)	; \
-	addl	$(NBPG),%eax	; /* increment physical address */ \
+	addl	$NBPG,%eax	; /* increment physical address */ \
 	addl	$4,%ebx		; /* next pte */ \
 	loop	1b		;
 
 /*
- * Map Kernel
- * N.B. don't bother with making kernel text RO, as 386
- * ignores R/W AND U/S bits on kernel access (only v works) !
- *
- * First step - build page tables
+ * Build initial page tables.
  */
+	/* First, map the kernel text, data, and BSS. */
 	movl	%esi,%ecx		# this much memory,
-	shrl	$(PGSHIFT),%ecx		# for this many pte s
+	shrl	$PGSHIFT,%ecx		# for this many pte s
 	addl	$(NKPDE+UPAGES+2),%ecx	# including our early context
 	movl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	lea	((UPAGES+2)*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
+	leal	((UPAGES+2)*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
 	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
 	fillkpt
 
-/* map I/O memory */
-
+	/* Map ISA I/O memory. */
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
 	movl	$(IOM_BEGIN|PG_V|PG_UW/*|PG_N*/),%eax	# having these bits set
 	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
 	fillkpt
 
-/* map proc 0's kernel stack into user page table page */
-
-	movl	$(UPAGES),%ecx		# for this many pte s,
-	lea	(2*NBPG)(%esi),%eax	# physical address in proc 0
-	lea	(KERNBASE)(%eax),%edx
+	/* Map proc 0's kernel stack into user page table page. */
+	movl	$UPAGES,%ecx		# for this many pte s,
+	leal	(2*NBPG)(%esi),%eax	# physical address in proc 0
+	leal	(KERNBASE)(%eax),%edx
 	movl	%edx,_proc0paddr-KERNBASE	# remember VA for 0th process init
 	orl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	lea	(1*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
+	leal	(1*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
 	addl	$((NPTEPD-UPAGES)*4),%ebx
 	fillkpt
 
 /*
- * Construct a page table directory
- * (of page directory elements - pde's)
+ * Construct a page table directory.
  */
-	/* install a pde for temporary double map of kernel text */
+	/* Install a PDE for temporary double map of kernel text. */
 	movl	_KPTphys-KERNBASE,%eax	# physical address of kernel page tables
 	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(%esi)		# which is where temp maps!
 
-	/* kernel pde's */
-	movl	$(NKPDE),%ecx		# for this many pde s,
-	lea	(KPTDI*4)(%esi),%ebx	# offset of pde for kernel
+	/* Map kernel PDEs. */
+	movl	$NKPDE,%ecx		# for this many pde s,
+	leal	(KPTDI*4)(%esi),%ebx	# offset of pde for kernel
 	fillkpt
 
-	/* install a pde recursively mapping page directory as a page table! */
+	/* Install a PDE recursively mapping page directory as a page table! */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	orl	$(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(PTDPTDI*4)(%esi)	# which is where PTmap maps!
 
-	/* install a pde to map kernel stack for proc 0 */
-	lea	(1*NBPG)(%esi),%eax	# physical address of pt in proc 0
+	/* Install a PDE to map kernel stack for proc 0. */
+	leal	(1*NBPG)(%esi),%eax	# physical address of pt in proc 0
 	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
 	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
 
-	/* copy and convert stuff from old gdt and idt for debugger */
 #ifdef BDB
+	/* Copy and convert stuff from old GDT and IDT for debugger. */
 	cmpl	$0x0375c339,0x96104	# XXX - debugger signature
 	jne	1f
 	movb	$1,_bdb_exists-KERNBASE
-1:
+
 	pushal
 	subl	$2*6,%esp
 
@@ -397,9 +388,11 @@ start:	movw	$0x1234,0x472	# warm boot
 
 	addl	$2*6,%esp
 	popal
+
+1:
 #endif
 
-	/* load base of page directory and enable mapping */
+	/* Load base of page directory and enable mapping. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
@@ -409,9 +402,10 @@ start:	movw	$0x1234,0x472	# warm boot
 	pushl	$begin			# jump to high mem
 	ret
 
-begin: /* now running relocated at KERNBASE where the system is linked to run */
+begin:	/* Now running relocated at KERNBASE. */
 
-	.globl _Crtat
+	/* Relocate atdevbase. */
+	.globl	_Crtat
 	movl	_Crtat,%eax
 	subl	$(KERNBASE|IOM_BEGIN),%eax
 	movl	_atdevphys,%edx		# get pte PA
@@ -422,7 +416,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	addl	%eax,%edx
 	movl	%edx,_Crtat
 
-	/* set up bootstrap stack */
+	/* Set up bootstrap stack. */
 	movl	$(_kstack+UPAGES*NBPG-4*12),%esp # bootstrap stack end location
 	xorl	%eax,%eax		# mark end of frames
 	movl	%eax,%ebp
@@ -456,7 +450,7 @@ reloc_gdt:
 	movl	%cx,%fs
 	movl	%cx,%gs
 
-	lea	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
+	leal	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
 	call	_init386		# wire 386 chip for unix operation
 	
@@ -466,23 +460,26 @@ reloc_gdt:
 
 #if defined(I486_CPU) || defined(I586_CPU)
 	/*
-	 * now we've run main() and determined what cpu-type we are, we can
-	 * enable WP mode on i486 cpus and above.
+	 * Now we've run main() and determined what CPU type we are, so we can
+	 * enable WP mode on i486 CPUs and above.
 	 */
-	cmpl	$(CPUCLASS_386),_cpu_class
+	cmpl	$CPUCLASS_386,_cpu_class
 	je	1f			# 386s can't handle WP mode
 	movl	%cr0,%eax		# get control word
-	orl	$(CR0_WP),%eax		# enable ring 0 Write Protection
+	orl	$CR0_WP,%eax		# enable ring 0 Write Protection
 	movl	%eax,%cr0
 1:
 #endif
 
+	/*
+	 * Prepare for initial return to user space.
+	 */
 	.globl	__ucodesel,__udatasel
 	movl	__ucodesel,%eax
 	movl	__udatasel,%ecx
 	# build outer stack frame
 	pushl	%ecx		# user ss
-	pushl	$(USRSTACK)	# user esp
+	pushl	$USRSTACK	# user esp
 	pushl	%eax		# user cs
 	pushl	$0		# user ip
 	movl	%cx,%ds
@@ -490,19 +487,15 @@ reloc_gdt:
 	movl	%ax,%fs		# double map cs to fs
 	movl	%cx,%gs		# and ds to gs
 	lret			# goto user!
+	/* NOTREACHED */
 
-#ifdef DIAGNOSTIC
-	pushl	$lretmsg1	/* "should never get here!" */
-	call	_panic
-lretmsg1:
-	.asciz	"lret: toinit\n"
-#endif
-
+/*****************************************************************************/
 
 #define	LCALL(x,y)	.byte 0x9a ; .long y ; .word x
+
 /*
- * Icode is copied out to process 1 to exec /etc/init.
- * If the exec fails, process 1 exits.
+ * This is the initial process used to start init(8).  It's copied out to
+ * offset 0 in process 1's address space.
  */
 ENTRY(icode)
 	pushl	$0		/* envp for execve() */
@@ -517,17 +510,15 @@ ENTRY(icode)
 	subl	$(_icode),%eax
 	pushl	%eax		/* fname for execve() */
 	pushl	%eax		/* dummy return address */
-	movl	$(SYS_execve),%eax
+	movl	$SYS_execve,%eax
 	LCALL(7,0)
 	/* exit if something botches up in the above exec */
-	movl	$(SYS_exit),%eax
+	movl	$SYS_exit,%eax
 	LCALL(7,0)
 
-init:
-	.asciz	"/sbin/init"
+init:	.asciz	"/sbin/init"
 	ALIGN_DATA
-argv:
-	.long	init+6-_icode		# argv[0] = "init" ("/sbin/init" + 6)
+argv:	.long	init+6-_icode		# argv[0] = "init" ("/sbin/init" + 6)
 	.long	eicode-_icode		# argv[1] follows icode after copyout
 	.long	0
 eicode:
@@ -536,31 +527,32 @@ eicode:
 _szicode:
 	.long	eicode-_icode
 
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
 ENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
-	lea	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
+	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax
 	pushl	%eax			# junk to fake return address
-	movl	$(SYS_sigreturn),%eax
+	movl	$SYS_sigreturn,%eax
 	LCALL(7,0)			# enter kernel with args on stack
-	movl	$(SYS_exit),%eax
+	movl	$SYS_exit,%eax
 	LCALL(7,0)			# exit if sigreturn fails
-
 	.globl	_esigcode
 _esigcode:
 
+/*****************************************************************************/
 
-ENTRY(rtcin)
-	movl	4(%esp),%eax
-	outb	%al,$0x70
-	subl	%eax,%eax	# clr eax
-	inb	$0x71,%al
-	ret
+/*
+ * The following primitives are used to fill and copy regions of memory.
+ */
 
-	/*
-	 * fillw (pat,base,cnt)
-	 */
+/*
+ * fillw(short pattern, caddr_t addr, size_t len);
+ * Write len copies of pattern at addr.
+ */
 ENTRY(fillw)
 	pushl	%edi
 	movl	8(%esp),%eax
@@ -570,25 +562,29 @@ ENTRY(fillw)
 	movw	%cx,%ax
 	cld
 	movl	16(%esp),%ecx
-	shrl	%ecx
+	shrl	%ecx			# do longwords
 	rep
 	stosl
 	movl	16(%esp),%ecx
-	andl	$1,%ecx
+	andl	$1,%ecx			# do remainder
 	rep
 	stosw
 	popl	%edi
 	ret
 
+/*
+ * bcopyb(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes, one byte at a time.
+ */
 ENTRY(bcopyb)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi	/* potentially overlapping? */
+	cmpl	%esi,%edi		# potentially overlapping?
 	jnb	1f
-	cld			/* nope, copy forwards */
+	cld				# no; copy forward
 	rep
 	movsb
 	popl	%edi
@@ -596,7 +592,7 @@ ENTRY(bcopyb)
 	ret
 
 	ALIGN_TEXT
-1:	addl	%ecx,%edi	/* copy backwards. */
+1:	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
 	decl	%edi
@@ -608,19 +604,23 @@ ENTRY(bcopyb)
 	cld
 	ret
 
+/*
+ * bcopyw(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes, two bytes at a time.
+ */
 ENTRY(bcopyw)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi	/* potentially overlapping? */
+	cmpl	%esi,%edi		# potentially overlapping?
 	jnb	1f
-	cld			/* nope, copy forwards */
-	shrl	$1,%ecx		/* copy by 16-bit words */
+	cld				# no; copy forward
+	shrl	$1,%ecx			# copy by 16-bit words
 	rep
 	movsw
-	adc	%ecx,%ecx	/* any bytes left? */
+	adc	%ecx,%ecx		# any bytes left?
 	rep
 	movsb
 	popl	%edi
@@ -628,15 +628,15 @@ ENTRY(bcopyw)
 	ret
 
 	ALIGN_TEXT
-1:	addl	%ecx,%edi	/* copy backwards */
+1:	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
-	andl	$1,%ecx		/* any fractional bytes? */
+	andl	$1,%ecx			# any fractional bytes?
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	20(%esp),%ecx	/* copy remainder by 16-bit words */
+	movl	20(%esp),%ecx		# copy remainder by 16-bit words
 	shrl	$1,%ecx
 	decl	%esi
 	decl	%edi
@@ -647,25 +647,25 @@ ENTRY(bcopyw)
 	cld
 	ret
 
-	/*
-	 * (ov)bcopy (src,dst,cnt)
-	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
-	 */
-ENTRY(ovbcopy)
-ALTENTRY(bcopy)
+/*
+ * bcopy(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes.
+ */
+ENTRY(bcopy)
+ALTENTRY(ovbcopy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi	/* potentially overlapping? */
+	cmpl	%esi,%edi		# potentially overlapping? */
 	jnb	1f
-	cld			/* nope, copy forwards */
-	shrl	$2,%ecx		/* copy by 32-bit words */
+	cld				# nope, copy forward
+	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
 	movl	20(%esp),%ecx
-	andl	$3,%ecx		/* any bytes left? */
+	andl	$3,%ecx			# any bytes left?
 	rep
 	movsb
 	popl	%edi
@@ -673,15 +673,15 @@ ALTENTRY(bcopy)
 	ret
 
 	ALIGN_TEXT
-1:	addl	%ecx,%edi	/* copy backwards */
+1:	addl	%ecx,%edi		# copy backward
 	addl	%ecx,%esi
 	std
-	andl	$3,%ecx		/* any fractional bytes? */
+	andl	$3,%ecx			# any fractional bytes?
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	20(%esp),%ecx	/* copy remainder by 32-bit words */
+	movl	20(%esp),%ecx		# copy remainder by 32-bit words
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
@@ -692,7 +692,17 @@ ALTENTRY(bcopy)
 	cld
 	ret
 
-/* copyout(kernel addr, user addr, len) */
+/*****************************************************************************/
+
+/*
+ * The following primitives are used to copy data in and out of the user's
+ * address space.
+ */
+
+/*
+ * copyout(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes into the user's address space.
+ */
 ENTRY(copyout)
 	movl	_curpcb,%eax
 	movl	$_copyout_fault,PCB_ONFAULT(%eax)
@@ -721,12 +731,15 @@ ENTRY(copyout)
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
-	jne	3f	/* fine, we're not a 386 so don't need this stuff */
+	jne	3f
 #endif	/* I486_CPU || I586_CPU */
 
-	/* we have to check each PTE for (write) permission */
+	/*
+	 * We have to check each PTE for (write) permission, since the CPU
+	 * doesn't do it for us.
+	 */
 
-	/* compute number of pages */
+	/* Compute number of pages. */
 	movl	%edi,%ecx
 	andl	$PGOFSET,%ecx
 	addl	%ebx,%ecx
@@ -734,35 +747,35 @@ ENTRY(copyout)
 	shrl	$PGSHIFT,%ecx
 	incl	%ecx
 
-	/* compute PTE offset for start address */
+	/* Compute PTE offset for start address. */
 	movl	%edi,%edx
 	shrl	$PGSHIFT,%edx
 
-1:	/* check PTE for each page */
+1:	/* Check PTE for each page. */
 	movb	_PTmap(,%edx,4),%al
-	andb	$0x07,%al	/* Pages must be VALID + USERACC + WRITABLE */
+	andb	$0x07,%al		# must be valid/user/write
 	cmpb	$0x07,%al
 	je	2f
 				
-	/* simulate a trap */
+	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%ecx
 	shll	$PGSHIFT,%edx
 	pushl	%edx
-	call	_trapwrite	/* trapwrite(addr) */
-	addl	$4,%esp		/* pop argument */
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# pop argument
 	popl	%ecx
 	popl	%edx
 
-	testl	%eax,%eax	/* if not ok, return EFAULT */
+	testl	%eax,%eax		# if not ok, return EFAULT
 	jnz	_copyout_fault
 
 2:	incl	%edx
 	decl	%ecx
-	jnz	1b		/* check next page */
+	jnz	1b			# check next page
 #endif /* I386_CPU */
 
-3:	/* bcopy (%esi, %edi, %ebx) */
+3:	/* bcopy(%esi, %edi, %ebx); */
 	cld
 	movl	%ebx,%ecx
 	shrl	$2,%ecx
@@ -791,7 +804,10 @@ ENTRY(copyout_fault)
 	movl	$EFAULT,%eax
 	ret
 
-/* copyin(user addr, kernel addr, len) */
+/*
+ * copyin(caddr_t from, caddr_t to, size_t len);
+ * Copy len bytes from the user's address space.
+ */
 ENTRY(copyin)
 	movl	_curpcb,%eax
 	movl	$_copyin_fault,PCB_ONFAULT(%eax)
@@ -802,13 +818,13 @@ ENTRY(copyin)
 	movl	20(%esp),%ecx
 
 	movb	%cl,%dl
-	shrl	$2,%ecx			/* copy longwords */
+	shrl	$2,%ecx			# copy longwords
 	cld
 	gs
 	rep
 	movsl
 	movb	%dl,%cl
-	andb	$3,%cl			/* copy remainder */
+	andb	$3,%cl			# copy remainder
 	gs
 	rep
 	movsb
@@ -829,11 +845,11 @@ ENTRY(copyin_fault)
 	ret
 
 /*
- * copyoutstr(from, to, maxlen, int *lencopied)
- *	copy a string from from to to, stop when a 0 character is reached.
- *	return ENAMETOOLONG if string is longer than maxlen, and
- *	EFAULT on protection violations. If lencopied is non-zero,
- *	return the actual length in *lencopied.
+ * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long, into the
+ * user's address space.  Return the number of characters copied (including the
+ * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
+ * return 0 or EFAULT.
  */
 ENTRY(copyoutstr)
 	pushl	%esi
@@ -841,18 +857,19 @@ ENTRY(copyoutstr)
 	movl	_curpcb,%ecx
 	movl	$_copystr_fault,PCB_ONFAULT(%ecx)
 
-	movl	12(%esp),%esi			/* %esi = from */
-	movl	16(%esp),%edi			/* %edi = to */
-	movl	20(%esp),%edx			/* %edx = maxlen */
+	movl	12(%esp),%esi		# esi = from
+	movl	16(%esp),%edi		# edi = to
+	movl	20(%esp),%edx		# edx = maxlen
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
-	jne	5f	/* fine, we're not a 386 so don't need this stuff */
+	jne	5f
 #endif	/* I486_CPU || I586_CPU */
 
 1:	/*
-	 * Only need to check this once per page.
+	 * Once per page, check that we are still within the bounds of user
+	 * space.
 	 */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_copyout_fault
@@ -864,25 +881,25 @@ ENTRY(copyoutstr)
 	cmpb	$7,%al
 	je	2f
 
-	/* simulate trap */
+	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edi
-	call	_trapwrite	/* trapwrite(addr) */
-	addl	$4,%esp		/* clear argument from stack */
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# clear argument from stack
 	popl	%edx
 	testl	%eax,%eax
 	jnz	_copystr_fault
 
-2:	/* copy up to end of this page */
+2:	/* Copy up to end of this page. */
 	movl	%edi,%eax
 	andl	$PGOFSET,%eax
 	movl	$NBPG,%ecx
-	subl	%eax,%ecx	/* ecx = NBPG - (src % NBPG) */
+	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
 	cmpl	%ecx,%edx
 	jae	3f
-	movl	%edx,%ecx	/* ecx = min (ecx, edx) */
+	movl	%edx,%ecx		# ecx = min (ecx, edx)
 
-3:	subl	%ecx,%edx	/* predecrement total count */
+3:	subl	%ecx,%edx		# predecrement total count
 	incl	%ecx
 
 3:	decl	%ecx
@@ -892,17 +909,17 @@ ENTRY(copyoutstr)
 	testb	%al,%al
 	jnz	3b
 
-	/* Success -- 0 byte reached */
+	/* Success -- 0 byte reached. */
 	decl	%ecx
-	addl	%ecx,%edx	/* add back in the residual for this page */
+	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-4:	/* next page */
+4:	/* Go to next page, if any. */
 	testl	%edx,%edx
 	jnz	1b
 
-	/* edx is zero -- return ENAMETOOLONG */
+	/* edx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 #endif /* I386_CPU */
@@ -928,28 +945,28 @@ ENTRY(copyoutstr)
 	testb	%al,%al
 	jnz	1b
 
-	/* Success -- 0 byte reached */
+	/* Success -- 0 byte reached. */
 	decl	%edx
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-2:	/* edx is zero */
+2:	/* edx is zero. */
 	testb	%cl,%cl
 	jnz	1f
-	/* edx is zero -- hit end of user space */
+	/* edx is zero -- hit end of user space. */
 	movl	$EFAULT,%eax
 	jmp	copystr_return
-1:	/* edx is zero -- return ENAMETOOLONG */
+1:	/* edx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 #endif	/* I486_CPU || I586_CPU */
 
 /*
- * copyinstr(from, to, maxlen, int *lencopied)
- *	copy a string from from to to, stop when a 0 character is reached.
- *	return ENAMETOOLONG if string is longer than maxlen, and
- *	EFAULT on protection violations. If lencopied is non-zero,
- *	return the actual length in *lencopied.
+ * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long, from the
+ * user's address space.  Return the number of characters copied (including the
+ * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
+ * return 0 or EFAULT.
  */
 ENTRY(copyinstr)
 	pushl	%esi
@@ -981,18 +998,18 @@ ENTRY(copyinstr)
 	testb	%al,%al
 	jnz	1b
 
-	/* Success -- 0 byte reached */
+	/* Success -- 0 byte reached. */
 	decl	%edx
 	xorl	%eax,%eax
 	jmp	copystr_return
 
-4:	/* edx is zero */
+4:	/* edx is zero. */
 	testb	%cl,%cl
 	jnz	1f
-	/* edx is zero -- hit end of user space */
+	/* edx is zero -- hit end of user space. */
 	movl	$EFAULT,%eax
 	jmp	copystr_return
-1:	/* edx is zero -- return ENAMETOOLONG */
+1:	/* edx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
@@ -1000,7 +1017,7 @@ ENTRY(copystr_fault)
 	movl	$EFAULT,%eax
 
 copystr_return:	
-	/* set *lencopied and return %eax */
+	/* Set *lencopied and return %eax. */
 	movl	_curpcb,%ecx
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	20(%esp),%ecx
@@ -1015,9 +1032,10 @@ copystr_return:
 	ret
 
 /*
- * copystr(from, to, maxlen, int *lencopied)
- *
- *	by Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
+ * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * Copy a NUL-terminated string, at most maxlen characters long.  Return the
+ * number of characters copied (including the NUL) in *lencopied.  If the
+ * string is too long, return ENAMETOOLONG; else return 0.
  */
 ENTRY(copystr)
 	pushl	%esi
@@ -1035,15 +1053,15 @@ ENTRY(copystr)
 	testb	%al,%al
 	jnz	1b
 
-	/* Success -- 0 byte reached */
+	/* Success -- 0 byte reached. */
 	decl	%edx
 	xorl	%eax,%eax
 	jmp	6f
 
-4:	/* edx is zero -- return ENAMETOOLONG */
+4:	/* edx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 
-6:	/* set *lencopied and return %eax */
+6:	/* Set *lencopied and return %eax. */
 	movl	20(%esp),%ecx
 	subl	%edx,%ecx
 	movl	24(%esp),%edx
@@ -1056,7 +1074,8 @@ ENTRY(copystr)
 	ret
 
 /*
- * {fu,su},{byte,word,sword,wintr}
+ * fuword(caddr_t uaddr);
+ * Fetch an int from the user's address space.
  */
 ENTRY(fuword)
 ALTENTRY(fuiword)
@@ -1068,6 +1087,10 @@ ALTENTRY(fuiword)
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
 	
+/*
+ * fusword(caddr_t uaddr);
+ * Fetch a short from the user's address space.
+ */
 ENTRY(fusword)
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
@@ -1078,12 +1101,24 @@ fusword1:
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
 	
-/* just like fusword, except it uses fusubail rather than fusufault */
+/*
+ * fuswintr(caddr_t uaddr);
+ * Fetch a short from the user's address space.  Can be called during an
+ * interrupt.
+ */
 ENTRY(fuswintr)
 	movl	_curpcb,%ecx
+	/*
+	 * Use a different fault handler than fusword() to signal trap() not to
+	 * try to page fault.
+	 */
 	movl	$_fusubail,PCB_ONFAULT(%ecx)
 	jmp	fusword1
 	
+/*
+ * fubyte(caddr_t uaddr);
+ * Fetch a byte from the user's address space.
+ */
 ENTRY(fubyte)
 ALTENTRY(fuibyte)
 	movl	_curpcb,%ecx
@@ -1093,7 +1128,10 @@ ALTENTRY(fuibyte)
 	movzbl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
-	
+
+/*
+ * Handle faults from [fs]u*().  Clean up and return -1.
+ */
 ENTRY(fusufault)
 	movl	_curpcb,%ecx
 	xorl	%eax,%eax
@@ -1101,7 +1139,11 @@ ENTRY(fusufault)
 	decl	%eax
 	ret
 
-/* used by trap() */
+/*
+ * Handle faults from [fs]u*().  Clean up and return -1.  This differs from
+ * fusufault() in that trap() will recognize it and return immediately rather
+ * than trying to page fault.
+ */
 ENTRY(fusubail)
 	movl	_curpcb,%ecx
 	xorl	%eax,%eax
@@ -1109,29 +1151,33 @@ ENTRY(fusubail)
 	decl	%eax
 	ret
 
+/*
+ * suword(caddr_t uaddr, int x);
+ * Store an int in the user's address space.
+ */
 ENTRY(suword)
 ALTENTRY(suiword)
 	movl	_curpcb,%ecx
-	movl	$_fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	4(%esp),%edx
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
-	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+	jne	2f
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx	/* fetch pte associated with address */
+	shrl	$PGSHIFT,%edx		# fetch pte associated with address
 	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl
-	cmpb	$7,%dl		/* must be valid/user/write */
+	cmpb	$7,%dl			# must be valid/user/write
 	je	1f
 
-	/* simulate a trap */
+	/* Simulate a trap. */
 	pushl	%eax
-	call	_trapwrite	/* trapwrite(addr) */
-	addl	$4,%esp		/* clear parameter from the stack */
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# clear parameter from the stack
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
@@ -1147,6 +1193,10 @@ ALTENTRY(suiword)
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
 	
+/*
+ * susword(caddr_t uaddr, short x);
+ * Store a short in the user's address space.
+ */
 ENTRY(susword)
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
@@ -1156,20 +1206,20 @@ susword1:
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
-	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+	jne	2f
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx	/* calculate pte address */
+	shrl	$PGSHIFT,%edx		# calculate pte address
 	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl
-	cmpb	$7,%dl		/* must be valid/user/write */
+	cmpb	$7,%dl			# must be valid/user/write
 	je	1f
 
-	/* simulate a trap */
+	/* Simulate a trap. */
 	pushl	%eax
-	call	_trapwrite	/* trapwrite(addr) */
-	addl	$4,%esp		/* clear parameter from the stack */
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# clear parameter from the stack
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
@@ -1182,15 +1232,27 @@ susword1:
 	gs
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
 
-/* same as susword, but uses fusubail rather than _fusufault */
+/*
+ * suswintr(caddr_t uaddr, short x);
+ * Store a short in the user's address space.  Can be called during an
+ * interrupt.
+ */
 ENTRY(suswintr)
 	movl	_curpcb,%ecx
-	movl	$_fusubail,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	/*
+	 * Use a different fault handler than susword() to signal trap() not to
+	 * try to page fault.
+	 */
+	movl	$_fusubail,PCB_ONFAULT(%ecx)
 	jmp	susword1
 
+/*
+ * subyte(caddr_t uaddr, char x);
+ * Store a byte in the user's address space.
+ */
 ENTRY(subyte)
 ALTENTRY(suibyte)
 	movl	_curpcb,%ecx
@@ -1200,20 +1262,20 @@ ALTENTRY(suibyte)
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
-	jne	2f	/* fine, we're not a 386 so don't need this stuff */
+	jne	2f
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$PGSHIFT,%edx	/* calculate pte address */
+	shrl	$PGSHIFT,%edx		# calculate pte address
 	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl
-	cmpb	$7,%dl		/* must be valid/user/write */
+	cmpb	$7,%dl			# must be valid/user/write
 	je	1f
 
-	/* simulate a trap */
+	/* Simulate a trap. */
 	pushl	%eax
-	call	_trapwrite	/* trapwrite(addr) */
-	addl	$4,%esp		/* clear parameter from the stack */
+	call	_trapwrite		# trapwrite(addr)
+	addl	$4,%esp			# clear parameter from the stack
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
 	jnz	_fusufault
@@ -1228,29 +1290,40 @@ ALTENTRY(suibyte)
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
 
-	/*
-	 * void lgdt(struct region_descriptor *rdp);
-	 */
+/*****************************************************************************/
+
+/*
+ * The following is i386-specific nonsense.
+ */
+
+/*
+ * void lgdt(struct region_descriptor *rdp);
+ * Change the global descriptor table.
+ */
 ENTRY(lgdt)
-	/* reload the descriptor table */
+	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
-	/* flush the prefetch q */
+	/* Flush the prefetch q. */
 	jmp	1f
 	nop
-
-1:	/* reload "stale" selectors */
-	movl	$(KDSEL),%eax
+1:	/* Reload "stale" selectors. */
+	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
 	movl	%ax,%ss
-
-	/* reload code selector by turning return into intersegmental return */
+	/* Reload code selector by doing intersegment return. */
 	movl	(%esp),%eax
 	pushl	%eax
-	# movl	$(KCSEL),4(%esp)
-	movl	$8,4(%esp)
+	movl	$KCSEL,4(%esp)
 	lret
+
+ENTRY(rtcin)
+	movl	4(%esp),%eax
+	outb	%al,$0x70
+	xorl	%eax,%eax		# clear eax
+	inb	$0x71,%al
+	ret
 
 	# ssdtosd(*ssdp,*sdp)
 ENTRY(ssdtosd)
@@ -1298,6 +1371,7 @@ ENTRY(longjmp)
 	incl	%eax
 	ret
 
+/*****************************************************************************/
 
 /*
  * The following primitives manipulate the run queues.
@@ -1311,14 +1385,17 @@ ENTRY(longjmp)
 	.globl	_whichqs,_qs,_cnt,_panic
 
 /*
- * Setrq(p)
- *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * setrq(struct proc *p);
+ * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 ENTRY(setrq)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
 	cmpl	$0,P_RLINK(%eax)	# should not be on q already
+	jne	1f
+	cmpl	$0,P_WCHAN(%eax)
+	jne	1f
+	cmpb	$SRUN,P_STAT(%eax)
 	jne	1f
 #endif
 	movzbl	P_PRI(%eax),%edx
@@ -1339,9 +1416,8 @@ ENTRY(setrq)
 #endif
 
 /*
- * Remrq(p)
- *
- * Call should be made at spl6().
+ * remrq(struct proc *p);
+ * Remove a process from its queue.  Should be called at splclock().
  */
 ENTRY(remrq)
 	pushl	%esi
@@ -1370,8 +1446,8 @@ ENTRY(remrq)
 #endif
 
 /*
- * When no processes are on the runq, Swtch branches to idle
- * to wait for something to come ready.
+ * When no processes are on the runq, swtch() branches to here to wait for
+ * something to come ready.
  */
 ENTRY(idle)
 	sti
@@ -1386,8 +1462,7 @@ ENTRY(idle)
 	jmp	1b
 
 #ifdef DIAGNOSTIC
-	ALIGN_TEXT
-badsw:
+ENTRY(swtch_error)
 	pushl	$1f
 	call	_panic
 	/*NOTREACHED*/
@@ -1395,9 +1470,11 @@ badsw:
 #endif
 
 /*
- * Swtch()
+ * swtch(void);
+ * Find a runnable process and switch to it.  Wait if necessary.  If the new
+ * process is the same as the old one, we short-circuit the context save and
+ * restore.
  */
-	SUPERALIGN_TEXT	/* so profiling doesn't lump Idle with cpu_swtch */
 ENTRY(swtch)
 	pushl	%ebx
 	pushl	%esi
@@ -1430,12 +1507,12 @@ swtch_search:
 sw1:	bsfl	%ecx,%ebx		# find a full q
 	jz	_idle			# if none, idle
 
-	lea	_qs(,%ebx,8),%eax	# select q
+	leal	_qs(,%ebx,8),%eax	# select q
 
 	movl	P_LINK(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
-	je	badsw			# not possible
+	je	_swtch_error		# not possible
 #endif
 	movl	P_LINK(%edi),%edx
 	movl	%edx,P_LINK(%eax)
@@ -1455,9 +1532,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 #ifdef	DIAGNOSTIC
 	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
-	jne	badsw			# Yes; shouldn't be queued.
+	jne	_swtch_error		# Yes; shouldn't be queued.
 	cmpb	$SRUN,P_STAT(%edi)	# In run state?
-	jne	badsw			# No; shouldn't be queued.
+	jne	_swtch_error		# No; shouldn't be queued.
 #endif
 
 	/* Isolate process.  XXX Is this necessary? */
@@ -1569,14 +1646,9 @@ swtch_return:
 	ret
 
 /*
- * Used by cpu_exit() to switch to a safe stack and clean up the old process.
- * This works by switching to proc0's context (which presumably can't exit, and
- * is always stopped in swtch()), deallocating some resources for the old
- * process, and then jumping into swtch() to resume proc0.  We make the state
- * look exactly like we had swtch()ed back into proc0, so that swtch() can do
- * the normal short-circuiting if possible.  The exception is we don't bother
- * checking for a user-set LDT, and we set %fs and %gs to null selectors since
- * we don't need them and it's faster.
+ * swtch_exit(struct proc *p);
+ * Switch to proc0's saved context and deallocate the address space and kernel
+ * stack for p.  Then jump into swtch(), as if we were in proc0 all along.
  */
 	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free
 ENTRY(swtch_exit)
@@ -1598,7 +1670,7 @@ ENTRY(swtch_exit)
 	/* Restore stack and segments. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-	xorl	%ecx,%ecx
+	xorl	%ecx,%ecx		# always null in proc0
 	movl	%cx,%fs
 	movl	%cx,%gs
 
@@ -1623,9 +1695,9 @@ ENTRY(swtch_exit)
 	jmp	swtch_search
 
 /*
- * savectx(pcb, altreturn)
- * Update pcb, saving current processor state and arranging
- * for alternate return ala longjmp in swtch if altreturn is true.
+ * savectx(struct pcb *pcb, int altreturn);
+ * Update pcb, saving current processor state and arranging for alternate
+ * return in swtch() if altreturn is true.
  */
 ENTRY(savectx)
 	pushl	%ebx
@@ -1690,22 +1762,27 @@ ENTRY(savectx)
 	call	_bcopy
 	addl	$12,%esp
 	
-1:	xorl	%eax,%eax		# return 0
+1:	/* This is the parent.  The child will return from swtch(). */
+	xorl	%eax,%eax		# return 0
 	addl	$4,%esp			# drop saved _cpl on the floor
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
 
+/*****************************************************************************/
+
+/*
+ * This is used for profiling.
+ */
+
 /*
  * addupc(int pc, struct uprof *up, int ticks):
- * update profiling information for the user process.
+ * Update profiling information for the user process.
  */
 ENTRY(addupc)
-	pushl	%ebp
-	movl	%esp,%ebp
-	movl	12(%ebp),%edx		/* up */
-	movl	8(%ebp),%eax		/* pc */
+	movl	4(%esp),%eax		/* pc */
+	movl	8(%esp),%edx		/* up */
 
 	subl	PR_OFF(%edx),%eax	/* pc -= up->pr_off */
 	jc	1f			/* if (pc < 0) return */
@@ -1720,25 +1797,23 @@ ENTRY(addupc)
 
 /*	addl	%eax,%eax		 * praddr -> word offset */
 	addl	PR_BASE(%edx),%eax	/* praddr += up-> pr_base */
-	movl	16(%ebp),%ecx		/* ticks */
+	movl	12(%esp),%ecx		/* ticks */
 
 	movl	_curpcb,%edx
 	movl	$_proffault,PCB_ONFAULT(%edx)
 	addl	%ecx,(%eax)		/* storage location += ticks */
 	movl	$0,PCB_ONFAULT(%edx)
 
-1:	leave
-	ret
+1:	ret
 
 ENTRY(proffault)
 	/* If we get a fault, then kill profiling all together. */
 	movl $0,PCB_ONFAULT(%edx)	/* squish the fault handler */
-	movl 12(%ebp),%ecx
+	movl 8(%esp),%ecx
 	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
-
-	leave
 	ret
 
+/*****************************************************************************/
 
 /*
  * Trap and fault vector routines
@@ -1872,8 +1947,7 @@ IDTVEC(rsvd13)
 IDTVEC(rsvd14)
 	ZTRAP(T_RESERVED)
 
-	SUPERALIGN_TEXT
-_alltraps:
+ENTRY(alltraps)
 	INTRENTRY
 calltrap:
 	call	_trap
@@ -1886,16 +1960,14 @@ calltrap:
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
-1:
-	INTRFASTEXIT
+1:	INTRFASTEXIT
 
 #ifdef KGDB
 /*
  * This code checks for a kgdb trap, then falls through
  * to the regular trap code.
  */
-	ALIGN_TEXT
-_bpttraps:
+ENTRY(bpttraps)
 	INTRENTRY
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 	jne	calltrap
@@ -1906,7 +1978,6 @@ _bpttraps:
 /*
  * Call gate entry for syscall
  */
-	SUPERALIGN_TEXT
 IDTVEC(syscall)
 	pushl	$0	# Room for tf_err
 	pushfl		# Room for tf_trapno
@@ -1925,8 +1996,7 @@ IDTVEC(syscall)
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
-1:
-	INTRFASTEXIT
+1:	INTRFASTEXIT
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
