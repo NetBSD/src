@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.26 1994/10/20 04:22:45 cgd Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.27 1994/10/20 22:54:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -210,9 +210,7 @@ exit1(p, rv)
 		wakeup((caddr_t) initproc);
 	for (; q != 0; q = nq) {
 		nq = q->p_sibling.le_next;
-		LIST_REMOVE(q, p_sibling);
-		LIST_INSERT_HEAD(&initproc->p_children, q, p_sibling);
-		q->p_pptr = initproc;
+		proc_reparent(q, initproc);
 		/*
 		 * Traced processes are killed
 		 * since their existence means someone is screwing up.
