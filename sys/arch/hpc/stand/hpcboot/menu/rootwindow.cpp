@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.15 2004/02/27 03:53:33 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.16 2004/02/27 04:20:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -231,8 +231,11 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 
 	_button_height = cmdbar_height;
 	_button_width = BOOT_BUTTON_WIDTH;
-	if (GetDeviceCaps(GetDC(w), HORZRES) > 320)
+
+	HDC hdc = GetDC(0);
+	if (GetDeviceCaps(hdc, HORZRES) > 320)
 	    _button_width += _button_width/2;
+	ReleaseDC(0, hdc);
 
 	RECT rect;
 	GetClientRect(w, &rect);
