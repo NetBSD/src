@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227.2.1 1999/04/16 16:19:01 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227.2.2 1999/07/01 15:37:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2204,11 +2204,17 @@ setmachdep()
 		mac68k_machine.zs_chip = 0;
 		/* Disable everything but PM; we need it. */
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
+
+		/* The following two may be overridden. */
 		/* Are we disabling something important? */
+		SCSIBase = base + 0xf000;
+
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		if (cputype == CPU_68040)
 			mac68k_machine.sonic = 1;
 		break;
+			sccA = (volatile u_char *)base + 0xc020;
+			break;
 	case MACH_CLASSDUO:
 		/*
 		 * The Duo definitely does not use a VIA2, but it looks
@@ -2329,7 +2335,6 @@ mac68k_set_io_offsets(base)
 		case MACH_MACQ950:
 			mac68k_machine.scsi96_2 = 1;
 		case MACH_MACQ700:
-			SCSIBase = base + 0xf000;
 			break;
 		default:
 			SCSIBase = base + 0x10000;
