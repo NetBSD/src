@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)radix.c	7.9 (Berkeley) 2/4/91
- *	$Id: radix.c,v 1.2 1993/05/20 03:06:06 cgd Exp $
+ *	$Id: radix.c,v 1.3 1993/09/04 00:00:19 jtc Exp $
  */
 
 /*
@@ -39,6 +39,7 @@
  */
 #ifndef RNF_NORMAL
 #include "param.h"
+#include "systm.h"
 #include "radix.h"
 #include "malloc.h"
 #define	M_DONTWAIT M_NOWAIT
