@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/09/09 18:10:20 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/09/11 19:46:04 mycroft Exp $
 
 SRCS+=	rtld_start.S mdreloc.c
 
@@ -8,4 +8,3 @@ CPPFLAGS+= -fpic
 CPPFLAGS+= -DELFSIZE=32 -DVARPSZ
 
 LDFLAGS+= -Bshareable -Bsymbolic -e _rtld_start
-LDFLAGS+= --script ${.CURDIR}/arch/sparc/ld.so.script
