@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.22 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: machfb.c,v 1.23 2005/03/07 21:45:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.22 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.23 2005/03/07 21:45:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_console_screen.ri.ri_width = default_mode.hdisplay;
 	mach64_console_screen.ri.ri_height = default_mode.vdisplay;
 	mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
-	mach64_console_screen.ri.ri_bits=(void *)sc->sc_aperbase;
+	mach64_console_screen.ri.ri_bits=(void *)(uintptr_t)sc->sc_aperbase;
 	mach64_console_screen.ri.ri_flg = RI_CENTER;
 	mach64_console_screen.active=1;
 	sc->active=&mach64_console_screen;
