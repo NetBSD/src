@@ -1,13 +1,19 @@
-# $NetBSD: DISKLESS3X,v 1.11 1997/12/01 16:11:39 kleink Exp $
+# $NetBSD: DISKLESS3X,v 1.11.4.1 1998/01/27 19:13:01 gwr Exp $
 
-# DISKLESS Sun3x (3/80, 3/470)
+# DISKLESS Sun3X (3/80, 3/470)
 # Root and swap on NFS
 # Includes devices needed to run as an X-terminal
 
-include "arch/sun3x/conf/std.sun3x"
+include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
-# options 	FPU_EMULATE	# XXX - Ever needed?
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3x
+options 	_SUN3X_
+
+# options 	FPU_EMULATE	# Every Sun3X has an FPU, right?
+# options 	HAVE_IOCACHE	# XXX - Not yet supported.
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	2
@@ -73,6 +79,13 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on ? type nfs
+
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3x"
+
+# On-board memory (optional)
+# See frame-buffers
+obmem0 at mainbus?
 
 #
 # Serial ports
