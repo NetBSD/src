@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.5 1999/01/02 13:42:17 dbj Exp $        */
+/*	$NetBSD: pmap.c,v 1.6 1999/01/13 09:25:59 abs Exp $        */
 
 /*
- * This file was taken from from mvme68k/mvme68k/pmap.c
+ * This file was taken from mvme68k/mvme68k/pmap.c
  * should probably be re-synced when needed.
  * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
  * original cvs id:

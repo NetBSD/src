@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.c,v 1.3 1998/11/19 15:38:23 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.4 1999/01/13 09:25:59 abs Exp $ */
 
 /*
- * This file was taken from from mvme68k/mvme68k/mem.c
+ * This file was taken from mvme68k/mvme68k/mem.c
  * should probably be re-synced when needed.
  * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
  * original cvs id: NetBSD: mem.c,v 1.5 1998/08/22 10:55:35 scw Exp

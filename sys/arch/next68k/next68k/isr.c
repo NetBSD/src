@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.c,v 1.6 1998/11/10 22:45:45 dbj Exp $ */
+/*	$NetBSD: isr.c,v 1.7 1999/01/13 09:25:59 abs Exp $ */
 
 /*
- * This file was taken from from mvme68k/mvme68k/isr.c
+ * This file was taken from mvme68k/mvme68k/isr.c
  * should probably be re-synced when needed.
  * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
  * original cvs id: NetBSD: isr.c,v 1.12 1998/07/05 06:49:07 jonathan Exp
