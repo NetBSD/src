@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1998/06/09 05:41:19 sakamoto Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 1998/08/24 01:40:29 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -83,10 +83,10 @@
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work
  */
-#define	VM_MIN_ADDRESS		((vm_offset_t)0)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xfffff000)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH - 1)
 
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
@@ -103,5 +103,8 @@ struct pmap_physseg {
 #define VM_PHYSSEG_MAX		32
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+#define VM_NFREELIST		1
+#define VM_FREELIST_DEFAULT	0
 
 #endif /* _MACHINE_VMPARAM_H_ */

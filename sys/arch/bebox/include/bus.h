@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 1998/06/09 05:53:30 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 1998/08/24 01:40:28 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -1101,6 +1101,6 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high));
+	    paddr_t low, paddr_t high));
 #endif /* _BEBOX_BUS_DMA_PRIVATE */
 #endif /* _BEBOX_BUS_H_ */
