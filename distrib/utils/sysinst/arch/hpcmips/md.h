@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2003/04/06 16:12:40 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2003/05/07 02:13:32 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,24 +140,8 @@ extern struct biosdisk_info *biosdisk;
 #define _PATH_MBR	"/usr/mdec/mbr"
 #define _PATH_BOOTSEL	"/usr/mdec/mbr_bootsel"
 
-struct mbr_bootsel {
-	u_int8_t defkey;
-	u_int8_t flags;
-	u_int16_t timeo;
-	char nametab[4][9];
-	u_int16_t magic;
-} __attribute__((packed));
- 
 extern struct mbr_bootsel *mbs;
  
-#define BFL_SELACTIVE   0x01
-#define BFL_EXTINT13    0x02
- 
-#define SCAN_ENTER      0x1c
-#define SCAN_F1         0x3b
- 
-#define MBR_BOOTSELOFF  (MBR_PARTOFF - sizeof (struct mbr_bootsel))
-
 extern int defbootselpart, defbootseldisk;
 
 void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
