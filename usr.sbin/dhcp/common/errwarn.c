@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.2 1997/06/03 02:49:26 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.2 1998/07/26 15:34:18 mycroft Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -176,7 +176,7 @@ static void do_percentm (obuf, ibuf)
 	char *s = ibuf;
 	char *p = obuf;
 	int infmt = 0;
-	char *m;
+	const char *m;
 
 	while (*s)
 	{
