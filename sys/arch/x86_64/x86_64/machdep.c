@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2003/03/25 00:09:47 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2003/04/01 15:08:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ x86_64_proc0_tss_ldt_init(void)
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + NBPG;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -1210,12 +1210,6 @@ init_x86_64(first_avail)
 	uvm_setpagesize();
 
 	uvmexp.ncolors = 2;
-
-	/*
-	 * A quick sanity check.
-	 */
-	if (PAGE_SIZE != NBPG)
-		panic("init386: PAGE_SIZE != NBPG");
 
 	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
 				 /* and VM system doesn't work with phys 0 */

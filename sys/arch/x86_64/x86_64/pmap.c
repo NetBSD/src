@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2003/03/05 23:56:12 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2003/04/01 15:08:29 thorpej Exp $	*/
 
 /*
  *
@@ -451,7 +451,7 @@ struct pool pmap_pmap_pool;
 
 #ifdef MULTIPROCESSOR
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((va)+(id)*NPTECL*NBPG)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
 #else
 #define PTESLEW(pte, id) (pte)
 #define VASLEW(va,id) (va)
@@ -963,7 +963,7 @@ pmap_bootstrap(kva_start)
 #if KERNBASE == VM_MIN_KERNEL_ADDRESS
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
 #else
-		kva_end = roundup((vaddr_t)&end, NBPG);
+		kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
 		for (kva = KERNBASE; kva < kva_end ;
 #endif
 		     kva += PAGE_SIZE) {
@@ -1728,12 +1728,13 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		opde = pmap_pte_set(&pdes[level - 1][index], 0);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
-		pmap_tlb_shootdown(curpcb->pcb_pmap, invaladdr + index * NBPG,
+		pmap_tlb_shootdown(curpcb->pcb_pmap,
+		    invaladdr + index * PAGE_SIZE,
 		    opde, cpumaskp);
 #if defined(MULTIPROCESSOR)
 		invaladdr = level == 1 ? (vaddr_t)PTE_BASE :
 		    (vaddr_t)normal_pdes[level - 2];
-		pmap_tlb_shootdown(pmap, invaladdr + index * NBPG, opde,
+		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE, opde,
 		    cpumaskp);
 #endif
 		if (level < PTP_LEVELS - 1) {

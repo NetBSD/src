@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.9 2003/01/18 21:21:40 thorpej Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.10 2003/04/01 15:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.9 2003/01/18 21:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.10 2003/04/01 15:05:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ linux_sys_uselib(l, v, retval)
 		return ENOEXEC;
 
 	magic = LINUX_N_MAGIC(&hdr);
-	taddr = hdr.a_entry & (~(NBPG - 1));
+	taddr = hdr.a_entry & (~(PAGE_SIZE - 1));
 	tsize = hdr.a_text;
 	daddr = taddr + tsize;
 	dsize = hdr.a_data + hdr.a_bss;
@@ -151,7 +151,7 @@ linux_sys_uselib(l, v, retval)
 		  vp, LINUX_N_TXTOFF(hdr, magic),
 		  VM_PROT_READ|VM_PROT_EXECUTE|VM_PROT_WRITE);
 
-	baddr = roundup(daddr + hdr.a_data, NBPG);
+	baddr = roundup(daddr + hdr.a_data, PAGE_SIZE);
 	bsize = daddr + dsize - baddr;
         if (bsize > 0) {
                 NEW_VMCMD(&vcset, vmcmd_map_zero, bsize, baddr,
