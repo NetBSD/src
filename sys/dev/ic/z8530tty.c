@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.35 1997/11/03 06:16:43 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.36 1997/11/03 06:56:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -119,7 +119,7 @@
  * Note: must be a power of two!
  */
 #ifndef	ZSTTY_RING_SIZE
-#define	ZSTTY_RING_SIZE	512
+#define	ZSTTY_RING_SIZE	2048
 #endif
 
 /*
