@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.25 1994/07/31 08:22:31 lkestel Exp $
+ *	$Id: machdep.c,v 1.26 1994/07/31 14:50:27 briggs Exp $
  */
 
 #include <param.h>
@@ -2242,6 +2242,7 @@ getenvvars (void)
   mac68k_machine.mach_memsize = getenv("MEMSIZE");
   mac68k_machine.do_graybars = getenv("GRAYBARS");
   mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
+  mac68k_machine.serial_console = getenv("SERIALCONSOLE");
 		/* Should probably check this and fail if old */
   mac68k_machine.booter_version = getenv("BOOTERVER");
 
