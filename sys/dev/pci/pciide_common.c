@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.24 2005/02/15 03:18:22 briggs Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.25 2005/02/15 12:20:37 briggs Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.24 2005/02/15 03:18:22 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.25 2005/02/15 12:20:37 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -523,7 +523,7 @@ pciide_channel_dma_setup(cp)
 }
 
 #define NIDEDMA_TABLES(sc)	\
-	(IDEDMA_BYTE_COUNT_MAX/(min((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
+	(MAXPHYS/(min((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
 
 int
 pciide_dma_table_setup(sc, channel, drive)
@@ -580,7 +580,7 @@ pciide_dma_table_setup(sc, channel, drive)
 	    (unsigned long)dma_maps->dmamap_table->dm_segs[0].ds_addr),
 	    DEBUG_PROBE);
 	/* Create a xfer DMA map for this drive */
-	if ((error = bus_dmamap_create(sc->sc_dmat, IDEDMA_BYTE_COUNT_MAX,
+	if ((error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
 	    NIDEDMA_TABLES(sc), sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &dma_maps->dmamap_xfer)) != 0) {
