@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.15 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.16 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.15 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.16 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,13 +64,13 @@ shell(void *v)
 	char *shellcmd;
 	char cmd[BUFSIZ];
 
-	(void) strcpy(cmd, str);
+	(void)strcpy(cmd, str);
 	if (bangexp(cmd) < 0)
 		return 1;
 	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	(void) run_command(shellcmd, 0, -1, -1, "-c", cmd, NULL);
-	(void) signal(SIGINT, sigint);
+	(void)run_command(shellcmd, 0, -1, -1, "-c", cmd, NULL);
+	(void)signal(SIGINT, sigint);
 	printf("!\n");
 	return 0;
 }
@@ -87,8 +87,8 @@ dosh(void *v)
 
 	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	(void) run_command(shellcmd, 0, -1, -1, NULL, NULL, NULL);
-	(void) signal(SIGINT, sigint);
+	(void)run_command(shellcmd, 0, -1, -1, NULL, NULL, NULL);
+	(void)signal(SIGINT, sigint);
 	putchar('\n');
 	return 0;
 }

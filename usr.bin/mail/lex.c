@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.20 2002/03/05 20:26:59 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.21 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.20 2002/03/05 20:26:59 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.21 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ commands(void)
 	char linebuf[LINESIZE];
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &eofloop;
+	(void)&eofloop;
 #endif
 
 	if (!sourcing) {
