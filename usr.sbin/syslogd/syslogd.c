@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.11 2004/11/16 22:20:56 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.12 2004/11/17 01:27:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.11 2004/11/16 22:20:56 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.12 2004/11/17 01:27:26 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,8 @@ void	init(void);
 void	logerror(const char *, ...);
 void	logmsg(int, char *, char *, int);
 void	log_deadchild(pid_t, int, const char *);
+int	matches_spec(const char *, const char *,
+		     char *(*)(const char *, const char *));
 void	printline(char *, char *);
 void	printsys(char *);
 int	p_open(char *, pid_t *);
@@ -773,6 +775,28 @@ printsys(char *msg)
 time_t	now;
 
 /*
+ * Check to see if `name' matches the provided specification, using the
+ * specified strstr function.
+ */
+int
+matches_spec(const char *name, const char *spec,
+    char *(*check)(const char *, const char *))
+{
+	const char *s;
+	char prev, next;
+
+	if ((s = (*check)(spec, name)) != NULL) {
+		prev = s == spec ? ',' : *(s - 1);
+		next = *(s + strlen(name));
+
+		if (prev == ',' && (next == '\0' || next == ','))
+			return (1);
+	}
+
+	return (0);
+}
+
+/*
  * Log a message to the appropriate log files, users, etc. based on
  * the priority.
  */
@@ -851,11 +875,13 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if (f->f_host != NULL) {
 			switch (f->f_host[0]) {
 			case '+':
-				if (strcasecmp(from, f->f_host + 1) != 0)
+				if (! matches_spec(from, f->f_host + 1,
+						   strcasestr))
 					continue;
 				break;
 			case '-':
-				if (strcasecmp(from, f->f_host + 1) == 0)
+				if (matches_spec(from, f->f_host + 1,
+						 strcasestr))
 					continue;
 				break;
 			}
@@ -865,15 +891,18 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if (f->f_program != NULL) {
 			switch (f->f_program[0]) {
 			case '+':
-				if (strcmp(prog, f->f_program + 1) != 0)
+				if (! matches_spec(prog, f->f_program + 1,
+						   strstr))
 					continue;
 				break;
 			case '-':
-				if (strcmp(prog, f->f_program + 1) == 0)
+				if (matches_spec(prog, f->f_program + 1,
+						 strstr))
 					continue;
 				break;
 			default:
-				if (strcmp(prog, f->f_program) != 0)
+				if (! matches_spec(prog, f->f_program,
+						   strstr))
 					continue;
 				break;
 			}
@@ -1476,7 +1505,7 @@ init(void)
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
-				if (!isalnum((unsigned char)p[i]))
+				if (!isprint((unsigned char)p[i]))
 					break;
 				prog[i] = p[i];
 			}
