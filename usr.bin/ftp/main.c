@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 1999/07/11 20:37:39 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.48 1999/07/12 13:20:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.47 1999/07/11 20:37:39 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 1999/07/12 13:20:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,7 @@ main(argc, argv)
 #endif
 
 	if (argc > 0) {
-		if (isurl(argv[0])) {
+		if (strchr(argv[0], ':') != NULL && ! isipv6addr(argv[0])) {
 			rval = auto_fetch(argc, argv);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);

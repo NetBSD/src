@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.45 1999/07/11 20:37:39 itojun Exp $
+.\" 	$NetBSD: ftp.1,v 1.46 1999/07/12 13:20:34 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd June 29, 1999
+.Dd July 12, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -408,14 +408,18 @@ This is automatically enabled if input is from a terminal, and
 disabled otherwise.
 .It Ic epsv4
 Toggle the use of 
-.Li EPSV/EPRT
-command on IPv4 connections.
+.Dv EPSV
+and
+.Dv EPRT
+commands on IPv4 connections.
 This is enabled by default
 .Po
 first try
-.Li EPSV/EPRT ,
-then
-.Li PASV/PORT
+.Dv EPSV /
+.Dv EPRT ,
+and then
+.Dv PASV /
+.Dv PORT
 .Pc .
 .It Ic exit
 A synonym for
@@ -1275,7 +1279,7 @@ if supplied, otherwise prompt the user for one.
 In order to be compliant with
 .Cm RFC 1738 ,
 .Nm
-strips any leading
+strips the leading
 .Sq /
 from
 .Ar path ,
@@ -1350,12 +1354,12 @@ instead of
 If WWW or proxy WWW authentication is required, you will be prompted
 to enter a username and password to authenticate with.
 .Pp
-When specifying IPv6 numeric address into URL, one need to follow
-.Li draft-ietf-ipngwg-url-literal-01.txt
-and put the address into square bracket, like
-.Li ftp://[::1]:21/ .
+When specifying IPv6 numeric addresses in a URL, you need to
+surround the address in square brackets.
+E.g.:
+.Dq ftp://[::1]:21/ .
 This is because colons are used in IPv6 numeric address as well as
-separator for port number.
+being the separator for the port number.
 .Sh ABORTING A FILE TRANSFER
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
@@ -1691,6 +1695,9 @@ attempts to be compliant with
 .Cm RFC 2068 ,
 and
 .Cm RFC 2428 .
+.Pp
+The following IETF draft proposals are also implemented:
+.Cm draft-ietf-ipngwg-url-literal-01.txt
 .Sh HISTORY
 The
 .Nm
@@ -1707,7 +1714,7 @@ were implemented in
 by Luke Mewburn,
 with the original code for HTTP retrieval supplied by Jason Thorpe.
 .Pp
-IPv6 support is added by WIDE/KAME project.
+IPv6 support was added by the WIDE/KAME project.
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.54 1999/07/02 08:07:42 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.55 1999/07/12 13:20:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.54 1999/07/02 08:07:42 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.55 1999/07/12 13:20:35 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1302,6 +1302,26 @@ ftpvis(dst, dstlen, src, srclen)
 	}
 	dst[di] = '\0';
 }
+
+/*
+ * Determine if given string is an IPv6 address or not.
+ * Return 1 for yes, 0 for no
+ */
+int
+isipv6addr(addr)
+	const char *addr;
+{
+	int rv = 0;
+#ifdef INET6
+	u_char buf[16];		/* XXX: sizeof(struct in_addr6) */
+
+	rv = inet_pton(AF_INET6, addr, &buf);
+	if (debug)
+		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
+#endif
+	return rv;
+}
+
 
 /*
  * Internal version of connect(2); sets socket buffer sizes first.
