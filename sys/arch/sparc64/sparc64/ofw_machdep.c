@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.7 1999/01/10 14:41:45 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.8 1999/05/22 20:30:54 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -555,7 +555,7 @@ OF_stdin()
 		u_int chosen;
 		
 		chosen = OF_finddevice("/chosen");
-		OF_getprop(chosen, "stdout", &stdin, sizeof(stdin));
+		OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
 	}
 	return stdin;
 }
