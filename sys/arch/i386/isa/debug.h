@@ -1,6 +1,6 @@
 /* debug.h */
 
-#define	SHOW_A_LOT_NOT
+/* #define	SHOW_A_LOT */
 
 #define	BDBTRAP(name) \
 	ss ; \
