@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.311 2005/03/28 10:43:16 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.312 2005/03/30 18:42:22 aymeric Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -440,15 +440,16 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	nvi
-Version:	1.79nb10
+Version:	1.79
 Current Vers:	1.79
 Maintainer:	Keith Bostic <bostic@bsdi.com>
 Archive Site:	ftp://ftp.bostic.com/pub/
 Mailing List:
 Responsible:	aymeric
 Notes:
-1.79 is probably the last version we will import. Nvi is now moving towards
-X11 support and other things we don't want.
+We have lots of local bug fixes, and the point of importing 1.81.x would
+be to get multibyte characters support. For now this means waiting for
+additions in our libcurses.
 
 Package:	ntp
 Version:	4.2.0
