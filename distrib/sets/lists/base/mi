@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.185 2000/10/16 13:48:20 simonb Exp $
+# $NetBSD: mi,v 1.186 2000/10/25 00:01:05 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -307,6 +307,7 @@
 ./usr/bin/paste
 ./usr/bin/patch
 ./usr/bin/pawd
+./usr/bin/pmc
 ./usr/bin/pr
 ./usr/bin/printenv
 ./usr/bin/printf
