@@ -1,3 +1,5 @@
+/*	$NetBSD: tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -31,6 +33,9 @@
 /*
  * HISTORY
  * $Log: tropicreg.h,v $
+ * Revision 1.2  1999/03/22 23:01:37  bad
+ * Oops. RcsID police.
+ *
  * Revision 1.1  1999/03/22 22:21:26  bad
  * Chipset driver for TROPIC based Token-Ring cards.
  * Frontends for IBM and 3COM ISA cards.
@@ -43,11 +48,11 @@
  * 
  */
 
-/* $Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.1 1999/03/22 22:21:26 bad Exp $ */
+/* $Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $ */
 /* $ACIS:if_lanreg.h 12.0$ */
 
 #if !defined(lint) && !defined(LOCORE)  && defined(RCS_HDRS)
-static char *rcsidif_lanreg = "$Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.1 1999/03/22 22:21:26 bad Exp $";
+static char *rcsidif_lanreg = "$Header: /cvsroot/src/sys/dev/ic/tropicreg.h,v 1.2 1999/03/22 23:01:37 bad Exp $";
 #endif
 
 #define TR_SWITCH 0
