@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.11 2000/01/31 13:39:08 agc Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.12 2000/02/01 10:46:55 agc Exp $	*/
 /*	 Id: foo2.c,v 1.12 1999/12/17 02:31:57 feyrer Exp feyrer 	*/
 
 /*
@@ -283,6 +283,9 @@ sigpipe_handler(int n)
 void 
 ftp_stop(void)
 {
+#if defined(__svr4__) && defined(__sun__)
+	char	env[BUFSIZ];
+#endif
 	char *tmp1, *tmp2;
 	
 	if (!ftp_started)
@@ -300,7 +303,12 @@ ftp_stop(void)
 		(void) close(ftpio.answer);
 	}
 
-#if !(defined(__svr4__) && defined(__sun__))
+#if defined(__svr4__) && defined(__sun__)
+	(void) snprintf(env, sizeof(env), "%s=", PKG_FTPIO_COMMAND);
+	putenv(env);
+	(void) snprintf(env, sizeof(env), "%s=", PKG_FTPIO_ANSWER);
+	putenv(env);
+#else
 	unsetenv(PKG_FTPIO_COMMAND); 
 	unsetenv(PKG_FTPIO_ANSWER);
 #endif
