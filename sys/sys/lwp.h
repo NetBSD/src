@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.1.2.21 2002/12/29 21:07:37 thorpej Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.1.2.22 2002/12/30 18:28:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -158,7 +158,9 @@ void	unsleep (struct lwp *);
 #ifndef cpu_switch
 int	cpu_switch (struct lwp *, struct lwp *);
 #endif
+#ifndef cpu_preempt
 void	cpu_preempt (struct lwp *, struct lwp *);
+#endif
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
