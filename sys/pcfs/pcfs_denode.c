@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Id: pcfs_denode.c,v 1.4 1993/05/20 03:34:10 cgd Exp $
+ *	$Id: pcfs_denode.c,v 1.5 1993/08/07 08:11:58 cgd Exp $
  */
 
 #include "param.h"
@@ -146,7 +146,7 @@ loop:
  *  a vnode and copy it from the passed disk buffer.
  */
 	/* getnewvnode() does a VREF() on the vnode */
-	if (error = getnewvnode(VT_PCFS, mntp, &pcfs_vnodeops, &nvp)) {
+	if (error = getnewvnode(VT_MSDOSFS, mntp, &pcfs_vnodeops, &nvp)) {
 		*depp = 0;
 		return error;
 	}

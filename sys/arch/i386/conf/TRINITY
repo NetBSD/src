@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.17 1993/08/01 00:32:27 mycroft Exp $
+#	$Id: TRINITY,v 1.18 1993/08/07 08:03:55 cgd Exp $
 #
 
 machine		"i386"
@@ -14,7 +14,9 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"COMPAT_NOMID"
 options		XSERVER,UCONSOLE
-options		PCFS,ISOFS,KERNFS
+options		ISOFS
+options		MSDOSFS
+options		KERNFS
 options		SCSI
 options		DDB
 options		"DUMMY_NOPS"

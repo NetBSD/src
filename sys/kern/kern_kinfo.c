@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.7 1993/08/01 19:26:00 mycroft Exp $
+ *	$Id: kern_kinfo.c,v 1.8 1993/08/07 08:03:29 cgd Exp $
  */
 
 #include "param.h"
@@ -157,6 +157,11 @@ kinfo_doproc(op, where, acopysize, arg, aneeded)
 	doingzomb = 0;
 again:
 	for (; p != NULL; p = p->p_nxt) {
+		/*
+		 * If process not yet fully-formed, skip it.
+		 */
+		if (p->p_stat == SIDL)
+			continue;
 		/* 
 		 * TODO - make more efficient (see notes below).
 		 * do by session. 
@@ -233,7 +238,10 @@ fill_eproc(p, ep)
 	ep->e_sess = p->p_pgrp->pg_session;
 	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
-	ep->e_vm = *p->p_vmspace;
+	if (p->p_stat == SIDL || p->p_stat == SZOMB)
+		bzero(&ep->e_vm, sizeof(ep->e_vm));
+	else
+		ep->e_vm = *p->p_vmspace;
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
 	else

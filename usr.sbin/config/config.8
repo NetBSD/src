@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)config.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: config.8,v 1.5 1993/08/01 07:25:20 mycroft Exp $
+.\"	$Id: config.8,v 1.6 1993/08/07 07:53:27 cgd Exp $
 .\"
 .Dd March 16, 1991
 .Dt CONFIG 8
@@ -94,10 +94,10 @@ and other system parameters for one system configuration.
 should be run from the
 .Pa conf
 subdirectory of the system source (usually
-.Pa /sys/conf ) .
+.Pa /sys/arch/ARCH/conf ) .
 .Nm Config
 assumes the directory
-.Pa ../arch/SYSTEM_NAME
+.Pa ../compile/SYSTEM_NAME
 exists and places all output files there.  
 The output of
 .Nm config
