@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.1 1999/01/19 17:02:02 hubertf Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.2 1999/01/29 13:29:34 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.1 1999/01/19 17:02:02 hubertf Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.2 1999/01/29 13:29:34 hubertf Exp $");
 #endif
 
 /*
@@ -44,11 +44,6 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1 1999/01/19 17:02:02 hubertf Exp $");
 
 #define PKGDB_FILE	"pkgdb.byfile.db"	/* indexed by filename */
 
-typedef struct {
-	char	*dptr;
-	int	dsize;
-} datum;
-
 static DB *pkgdbp;
 static int pkgdb_iter_flag;
 
@@ -58,7 +53,8 @@ static int pkgdb_iter_flag;
  *   0: everything ok
  *  -1: error, see errno
  */
-int pkgdb_open(int ro)
+int
+pkgdb_open(int ro)
 {
     BTREEINFO info;
     
@@ -82,7 +78,8 @@ int pkgdb_open(int ro)
 /*
  * Close the pkg database
  */
-void pkgdb_close(void)
+void
+pkgdb_close(void)
 {
     if (pkgdbp != NULL)
 	(void)(pkgdbp->close)(pkgdbp);
@@ -95,21 +92,23 @@ void pkgdb_close(void)
  *  1: key already present
  * -1: some other error, see errno
  */
-int pkgdb_store(const char *key, const char *val)
+int
+pkgdb_store(const char *key, const char *val)
 {
-    datum keyd, vald;
+    DBT keyd, vald;
     
     if (pkgdbp == NULL)
 	return -1;
     
-    keyd.dptr=(char *)key; keyd.dsize=strlen(key)+1;
-    vald.dptr=(char *)val; vald.dsize=strlen(val)+1;
+    keyd.data = (void *) key;
+    keyd.size = strlen(key) + 1;
+    vald.data = (void *) val;
+    vald.size = strlen(val) + 1;
 
-    if (keyd.dsize > FILENAME_MAX || vald.dsize > FILENAME_MAX)
+    if (keyd.size > FILENAME_MAX || vald.size > FILENAME_MAX)
 	return -1;
 
-    return (pkgdbp->put)(pkgdbp, (DBT *)&keyd, (DBT *)&vald,
-			  R_NOOVERWRITE);
+    return (pkgdbp->put)(pkgdbp, &keyd, &vald, R_NOOVERWRITE);
 }
 
 /*
@@ -118,24 +117,25 @@ int pkgdb_store(const char *key, const char *val)
  *  NULL if some error occurred or value for key not found (check errno!)
  *  String for "value" else
  */
-char *pkgdb_retrieve(const char *key)
+char *
+pkgdb_retrieve(const char *key)
 {
-    datum keyd, vald;
+    DBT keyd, vald;
     int status;
     
     if (pkgdbp == NULL)
 	return NULL;
     
-    keyd.dptr=(char *)key; keyd.dsize=strlen(key)+1;
+    keyd.data=(void *)key; keyd.size=strlen(key)+1;
     errno=0; /* to be sure it's 0 if the key doesn't match anything */
 
-    status = (pkgdbp->get)(pkgdbp, (DBT *)&keyd, (DBT *)&vald, 0);
+    status = (pkgdbp->get)(pkgdbp, &keyd, &vald, 0);
     if (status) {
-	vald.dptr = NULL;
-	vald.dsize = 0;
+	vald.data = NULL;
+	vald.size = 0;
     }
     
-    return vald.dptr;
+    return vald.data;
 }
 
 /*
@@ -145,20 +145,22 @@ char *pkgdb_retrieve(const char *key)
  *   1: key not present
  *  -1: some error occured (see errno)
  */
-int pkgdb_remove(const char *key)
+int
+pkgdb_remove(const char *key)
 {
-    datum keyd;
+    DBT keyd;
     int status;
     
     if (pkgdbp == NULL)
 	return -1;
 
-    keyd.dptr=(char *)key; keyd.dsize=strlen(key)+1;
-    if (keyd.dsize > FILENAME_MAX)
+    keyd.data=(char *)key;
+    keyd.size=strlen(key)+1;
+    if (keyd.size > FILENAME_MAX)
 	return -1;
     
     errno=0;
-    status = (pkgdbp->del)(pkgdbp, (DBT *)&keyd, 0);
+    status = (pkgdbp->del)(pkgdbp, &keyd, 0);
     if (status) {
 	if (errno) 
 	    return -1;    /* error */
@@ -174,28 +176,30 @@ int pkgdb_remove(const char *key)
  *    NULL if no more data is available
  *   !NULL else
  */
-char *pkgdb_iter(void)
+char *
+pkgdb_iter(void)
 {
-    datum key, val;    
+    DBT key, val;    
     int status;
     
     if (pkgdb_iter_flag == 0) {
   	pkgdb_iter_flag = 1;
 
-	status = (pkgdbp->seq)(pkgdbp, (DBT *)&key, (DBT *)&val, R_FIRST);
+	status = (pkgdbp->seq)(pkgdbp, &key, &val, R_FIRST);
     } else 
-	status = (pkgdbp->seq)(pkgdbp, (DBT *)&key, (DBT *)&val, R_NEXT);
+	status = (pkgdbp->seq)(pkgdbp, &key, &val, R_NEXT);
     
     if (status)
-	key.dptr = NULL;
+	key.data = NULL;
     
-    return key.dptr;
+    return (char *) key.data;
 }
 
 /*
  *  return filename as string that can be passed to free(3)
  */
-char *_pkgdb_getPKGDB_FILE(void)
+char *
+_pkgdb_getPKGDB_FILE(void)
 {
     char *tmp;
 
@@ -210,7 +214,8 @@ char *_pkgdb_getPKGDB_FILE(void)
  *  return directory where pkgdb is stored
  *  as string that can be passed to free(3)
  */
-char *_pkgdb_getPKGDB_DIR(void)
+char *
+_pkgdb_getPKGDB_DIR(void)
 {
     char *tmp;
     static char *cache=NULL;
