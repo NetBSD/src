@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.15 1999/07/05 20:31:36 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.16 1999/09/30 23:06:18 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
@@ -179,7 +179,9 @@ ispcmd(xs)
 	 * majority of cases will have to do some pointer deferences
 	 * to find out that things don't need to be updated.
 	 */
-	if ((xs->flags & SCSI_AUTOCONF) == 0 && (isp->isp_type & ISP_HA_SCSI)) {
+#if 0 /* XXX THORPEJ */
+	if ((xs->xs_control & XS_CTL_DISCOVERY) == 0 &&
+	    (isp->isp_type & ISP_HA_SCSI)) {
 		sdparam *sdp = isp->isp_param;
 		sdp += XS_CHANNEL(xs);
 		if (sdp->isp_devparam[XS_TGT(xs)].dev_flags !=
@@ -198,6 +200,7 @@ ispcmd(xs)
 			isp->isp_update |= (1 << XS_CHANNEL(xs));
 		}
 	}
+#endif /* XXX THORPEJ */
 
 	if (isp->isp_state < ISP_RUNSTATE) {
 		DISABLE_INTS(isp);
@@ -217,7 +220,7 @@ ispcmd(xs)
 	 */
 
 	if (isp->isp_osinfo.blocked) {
-		if (xs->flags & SCSI_POLL) {
+		if (xs->xs_control & XS_CTL_POLL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return (TRY_AGAIN_LATER);
@@ -230,7 +233,7 @@ ispcmd(xs)
 	DISABLE_INTS(isp);
 	result = ispscsicmd(xs);
 	ENABLE_INTS(isp);
-	if (result != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
+	if (result != CMD_QUEUED || (xs->xs_control & XS_CTL_POLL) == 0) {
 		(void) splx(s);
 		return (result);
 	}
@@ -373,7 +376,7 @@ isp_internal_restart(arg)
 			if (result != CMD_QUEUED) {
 				printf("%s: botched command restart (0x%x)\n",
 				    isp->isp_name, result);
-				xs->flags |= ITSDONE;
+				xs->xs_status |= XS_STS_DONE;
 				if (xs->error == XS_NOERROR)
 					xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
