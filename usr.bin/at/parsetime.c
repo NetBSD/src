@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.4 1997/07/18 01:09:48 phil Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.5 1997/10/18 12:04:18 lukem Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -50,6 +50,7 @@
 
 #include "at.h"
 #include "panic.h"
+#include "parsetime.h"
 
 
 /* Structures and unions */
@@ -119,10 +120,21 @@ static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: parsetime.c,v 1.4 1997/07/18 01:09:48 phil Exp $";
+__RCSID("$NetBSD: parsetime.c,v 1.5 1997/10/18 12:04:18 lukem Exp $");
 #endif
 
 /* Local functions */
+
+static void	assign_date __P((struct tm *, long, long, long));
+static void	dateadd __P((int, struct tm *));
+static void	expect __P((int));
+static void	init_scanner __P((int, char **));
+static void	month __P((struct tm *));
+static int	parse_token __P((char *));
+static void	plonk __P((int));
+static void	plus __P((struct tm *));
+static void	tod __P((struct tm *));
+static int	token __P((void));
 
 /*
  * parse a token, checking if it's something special to us
@@ -429,6 +441,7 @@ month(tm)
     long mday, mon;
     int tlen;
 
+    mday = 0;
     switch (sc_tokid) {
     case PLUS:
 	    plus(tm);

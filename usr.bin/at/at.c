@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.5 1997/02/11 08:18:32 mrg Exp $	*/
+/*	$NetBSD: at.c,v 1.6 1997/10/18 12:04:07 lukem Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,7 +64,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$NetBSD: at.c,v 1.5 1997/02/11 08:18:32 mrg Exp $";
+__RCSID("$NetBSD: at.c,v 1.6 1997/10/18 12:04:07 lukem Exp $");
 #endif
 
 char *no_export[] =
@@ -84,11 +84,13 @@ char atqueue = 0;		/* which queue to examine for jobs (atq) */
 char atverify = 0;		/* verify time instead of queuing job */
 
 /* Function declarations */
-static void sigc	__P((int signo));
 static void alarmc	__P((int signo));
 static char *cwdname	__P((void));
-static void writefile	__P((time_t runtimer, char queue));
+static void delete_jobs __P((int, char **));
 static void list_jobs	__P((void));
+static void sigc	__P((int signo));
+static void writefile	__P((time_t runtimer, char queue));
+int main __P((int, char **));
 
 /* Signal catching functions */
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: at.1,v 1.6 1995/03/25 18:13:29 glass Exp $
+.\"	$NetBSD: at.1,v 1.7 1997/10/18 12:04:01 lukem Exp $
 .\"
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -34,30 +34,30 @@
 .Dt "AT" 1
 .Os NetBSD 0.9a
 .Sh NAME
-.Nm at, batch, atq, atrm
+.Nm at ,
+.Nm batch ,
+.Nm atq ,
+.Nm atrm
 .Nd queue, examine, or delete jobs for later execution
 .\"
 .Sh SYNOPSIS
-.Nm at
+.Nm
 .Op Fl q Ar queue
 .Op Fl f Ar file
 .Op Fl m
 .Ar time
-.Pp
 .Nm atq
 .Op Fl q Ar queue
 .Op Fl v
-.Pp
 .Nm atrm
 .Ar job
 .Op Ar job ...
-.Pp
 .Nm batch
 .Op Fl f Ar file
 .Op Fl m
 .Sh DESCRIPTION
 The
-.Nm at
+.Nm
 and
 .Nm batch
 utilities read commands from the standard input or a specified file
@@ -81,19 +81,19 @@ average drops below a specified level.
 .El
 .Pp
 For both
-.Nm at
+.Nm
 and
 .Nm batch ,
 the working directory, environment (except for the variables
-.Nm TERM ,
-.Nm TERMCAP ,
-.Nm DISPLAY ,
+.Ev TERM ,
+.Ev TERMCAP ,
+.Ev DISPLAY ,
 and
-.Nm _ )
+.Ev _ )
 and the umask are retained from the time of invocation.  The user
 will be mailed the standard output and standard error from
 his commands if any output is generated.  If
-.Nm at
+.Nm
 is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
@@ -125,56 +125,60 @@ rather than the standard input.
 .It Fl v
 Shows completed but not yet deleted jobs in the queue.
 .Sh TIME SPECIFICATION
-.Nm At
+.Nm
 allows some moderately complex time specifications.
 It accepts times of the form
-.Ar HHMM
+.Sq HHMM
 or
-.Ar HH:MM
+.Sq HH:MM
 to run a job at a specific time of day.  If
 that time is already passed, the next day is assumed.
 You may also specify
-.Nm midnight ,
-.Nm noon ,
+.Sq midnight ,
+.Sq noon ,
 or
-.Nm teatime
+.Sq teatime
 (4PM) and you can give a time of day suffixed with
-.Nm AM
+.Sq AM
 or
-.Nm PM
+.Sq PM
 for running in the morning or the evening.  You can
 also specify the date on which the job will be run
 by giving a date in the form
-.Ar month-name day
+.Sq "month-name day"
 with an optional
-.Ar year ,
+.Sq year ,
 or giving a date of the form
-.Ar MMDDYY ,
-.Ar MM/DD/YY
+.Sq MMDDYY ,
+.Sq MM/DD/YY
 or
-.Ar DD.MM.YY .
+.Sq DD.MM.YY .
 You can also give times like
-.Nm now +
-.Ar count time-units ,
+.Sq now
++
+.Sq count
+time-units ,
 where the time units can be
-.Nm minutes, hours, days,
+.Sq minutes ,
+.Sq hours ,
+.Sq days ,
 or
-.Nm weeks
+.Sq weeks
 You can suffix the time with
-.Nm today
+.Sq today
 to run the job today, or
-.Nm tomorrow
+.Sq tomorrow
 to run the job tomorrow.
 .Pp
 For example, to run a job at 4PM three days from now, you
 would specify a time of
-.Nm 4PM + 3 days .
+.Dq "4PM + 3 days" .
 To run a job at 10:00AM on on July 31, you would specify
 a time of
-.Nm 10AM Jul 31 .
+.Dq "10AM Jul 31" .
 Finally, to run a job at 1AM tomorrow, you would specify
 a time of
-.Nm 1AM tomorrow .
+.Dq "1AM tomorrow" .
 .Sh FILES
 .Bl -tag -width /var/at/lockfile -compact
 .It Pa /var/at/jobs
@@ -196,7 +200,7 @@ Thomas Koenig, ig25@rz.uni-karlsruhe.de
 .El
 .Sh BUGS
 Traditional access control to
-.Nm at
+.Nm
 and
 .Nm batch
 via the files
@@ -209,8 +213,8 @@ If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not
 logged in at the time
-.Nm at
+.Nm
 is invoked, the mail is sent to the userid found in the
 environment variable
-.Nm LOGNAME .
+.Ev LOGNAME .
 If that is undefined or empty, the current userid is assumed.

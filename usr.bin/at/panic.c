@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.3 1996/06/28 17:07:39 christos Exp $	*/
+/*	$NetBSD: panic.c,v 1.4 1997/10/18 12:04:11 lukem Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -41,7 +41,7 @@
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: panic.c,v 1.3 1996/06/28 17:07:39 christos Exp $";
+__RCSID("$NetBSD: panic.c,v 1.4 1997/10/18 12:04:11 lukem Exp $");
 #endif
 
 /* External variables */
