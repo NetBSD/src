@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.1 1999/09/13 10:31:37 itojun Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2 2000/07/21 11:19:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,11 +27,20 @@
  */
 
 #include <machine/asm.h>
+#include <machine/endian.h>
 
 ENTRY(bswap32)
+#if BYTE_ORDER == LITTLE_ENDIAN
 ALTENTRY(ntohl)
 ALTENTRY(htonl)
+#endif
 	swap.b	r4,r0	
 	swap.w	r0,r0
 	rts
 	swap.b	r0,r0
+#if BYTE_ORDER == BIG_ENDIAN
+ALTENTRY(ntohl)
+ALTENTRY(htonl)
+#endif
+	rts
+	mov	r4, r0
