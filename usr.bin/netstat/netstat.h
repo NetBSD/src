@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.8 1997/04/03 04:46:51 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.8.4.1 1999/01/19 07:32:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,9 @@
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */
 int	dflag;		/* show i/f dropped packets */
+#ifndef SMALL
 int	gflag;		/* show group (multicast) routing or stats */
+#endif
 int	iflag;		/* show interfaces */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */
