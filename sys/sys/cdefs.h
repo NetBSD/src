@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.22 1997/10/24 15:32:48 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.23 1997/11/04 23:22:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,6 +86,9 @@
 #define	__volatile
 #endif	/* !__GNUC__ */
 
+#define	___STRING(x)	__STRING(x)
+#define	___CONCAT(x)	__CONCAT(x)
+
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
  * deleted from the program and old programs will want them left alone.
@@ -142,8 +145,8 @@
 
 /* This is defined in <machine/cdefs.h> */
 #ifndef __RENAME
-#ifdef __lint
-#define __RENAME(a)
+#ifdef __lint__
+#define __RENAME(a)	__symbolrename(a)
 #else
 #error "No function renaming possible"
 #endif
