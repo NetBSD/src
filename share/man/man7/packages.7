@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.65 2002/01/04 12:07:02 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.66 2002/01/05 06:49:42 tron Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -359,11 +359,7 @@ This can be used to point perl scripts to the proper interpreter that pkgsrc ins
 Note: it looks for the listed files in ${WRKSRC}.
 .It UNLIMIT_RESOURCES
 List of process limits which need to be raised to hard limits for building
-this package. Use a list of single letters which are understood by the
-.Ic ulimit
-command in
-.Xr sh 1 .
-A value of "d s" will e.g. increase datasize and stacksize.
+this package. So far "datasize" and "stacksize" are supported.
 .It USE_LIBTOOL
 Says that the package uses
 .Pa libtool
