@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1995/08/29 22:40:55 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 1995/09/22 23:19:30 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,16 +60,6 @@
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
 #define	PSL_USERSTATIC	(PSL_USER | PSL_US | PSL_I)
 
-/*
- * Structure of the software interrupt table
- */
-struct iv {
-	void (*iv_vec)();
-	void *iv_arg;
-	int iv_cnt;
-	char *iv_use;
-};
-
 #ifdef _KERNEL
 #include <machine/icu.h>
 
@@ -98,6 +88,16 @@ extern void intr_init();
 extern void check_sir();
 extern int intr_establish(int, void (*)(), void *, char *, int, int);
 extern struct iv ivt[];
+
+/*
+ * Structure of the software interrupt table
+ */
+struct iv {
+	void (*iv_vec)();
+	void *iv_arg;
+	int iv_cnt;
+	char *iv_use;
+};
 
 /*
  * Disable/Enable CPU-Interrupts
