@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.7 1993/06/27 06:02:49 andrew Exp $
+ *	$Id: cons.c,v 1.8 1993/07/07 11:00:23 deraadt Exp $
  */
 
 
@@ -75,7 +75,6 @@ struct	consdev constab[] = {
 
 struct	tty *constty = 0;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
-struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
 
 void
 consinit()
@@ -105,7 +104,6 @@ cninit()
 	/*
 	 * Turn on console
 	 */
-	cn_tty = cp->cn_tp;
 	(*cp->cn_init)(cp);
 }
 

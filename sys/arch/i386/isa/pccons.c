@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.22 1993/07/06 06:06:32 deraadt Exp $
+ *	$Id: pccons.c,v 1.23 1993/07/07 11:01:03 deraadt Exp $
  */
 
 /*
@@ -48,6 +48,7 @@
 #include "select.h"
 #include "tty.h"
 #include "uio.h"
+#include "malloc.h"
 #include "i386/isa/isa_device.h"
 #include "callout.h"
 #include "systm.h"
@@ -76,8 +77,7 @@ extern u_short *Crtat;
 int pc_xmode;
 #endif /* XSERVER */
 
-struct	tty pccons;
-struct	tty *pc_tty[] = { &pccons };
+struct	tty *pc_tty[1];
 
 struct	pcconsoftc {
 	char	cs_flags;
@@ -299,7 +299,13 @@ pcopen(dev, flag, mode, p)
 
 	if (minor(dev) != 0)
 		return (ENXIO);
-	tp = &pccons;
+	if(!pc_tty[0]) {
+		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+		bzero(tp, sizeof(struct tty));
+		pc_tty[0] = tp;
+	} else {
+		tp = pc_tty[0];
+	}
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
@@ -325,8 +331,10 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	(*linesw[pccons.t_line].l_close)(&pccons, flag);
-	ttyclose(&pccons);
+	register struct tty *tp = pc_tty[0];
+
+	(*linesw[tp->t_line].l_close)(tp, flag);
+	ttyclose(tp);
 	return(0);
 }
 
@@ -335,7 +343,9 @@ pcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	return ((*linesw[pccons.t_line].l_read)(&pccons, uio, flag));
+	register struct tty *tp = pc_tty[0];
+
+	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
 /*ARGSUSED*/
@@ -343,7 +353,9 @@ pcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	return ((*linesw[pccons.t_line].l_write)(&pccons, uio, flag));
+	register struct tty *tp = pc_tty[0];
+
+	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
 /*
@@ -354,6 +366,8 @@ pcwrite(dev, uio, flag)
 pcrint(dev, irq, cpl)
 	dev_t dev;
 {
+	register struct tty *tp = pc_tty[0];
+
 	int c;
 	char *cp;
 
@@ -363,7 +377,7 @@ pcrint(dev, irq, cpl)
 	if (pcconsoftc.cs_flags & CSF_POLLING)
 		return;
 #ifdef KDB
-	if (kdbrintr(c, &pccons))
+	if (kdbrintr(c, tp))
 		return;
 #endif
 	if (!openf)
@@ -371,11 +385,11 @@ pcrint(dev, irq, cpl)
 
 #ifdef XSERVER						/* 15 Aug 92*/
 	/* send at least one character, because cntl-space is a null */
-	(*linesw[pccons.t_line].l_rint)(*cp++ & 0xff, &pccons);
+	(*linesw[tp->t_line].l_rint)(*cp++ & 0xff, tp);
 #endif /* XSERVER */
 
 	while (*cp)
-		(*linesw[pccons.t_line].l_rint)(*cp++ & 0xff, &pccons);
+		(*linesw[tp->t_line].l_rint)(*cp++ & 0xff, tp);
 }
 
 #ifdef XSERVER						/* 15 Aug 92*/
@@ -388,7 +402,7 @@ pcioctl(dev, cmd, data, flag)
 	dev_t dev;
 	caddr_t data;
 {
-	register struct tty *tp = &pccons;
+	register struct tty *tp = pc_tty[0];
 	register error;
 
 #ifdef XSERVER						/* 15 Aug 92*/
@@ -429,17 +443,17 @@ int	pcconsintr = 1;
 pcxint(dev)
 	dev_t dev;
 {
-	register struct tty *tp;
+	register struct tty *tp = pc_tty[0];
 	register int unit;
 
 	if (!pcconsintr)
 		return;
-	pccons.t_state &= ~TS_BUSY;
+	tp->t_state &= ~TS_BUSY;
 	pcconsoftc.cs_timo = 0;
-	if (pccons.t_line)
-		(*linesw[pccons.t_line].l_start)(&pccons);
+	if (tp->t_line)
+		(*linesw[tp->t_line].l_start)(tp);
 	else
-		pcstart(&pccons);
+		pcstart(tp);
 }
 
 pcstart(tp)
@@ -489,7 +503,6 @@ pccnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_tp = &pccons;
 	cp->cn_pri = CN_INTERNAL;
 }
 
