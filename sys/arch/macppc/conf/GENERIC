@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.103 2001/07/08 16:32:19 abs Exp $
+#	$NetBSD: GENERIC,v 1.104 2001/08/03 12:56:55 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	32
 
@@ -19,10 +19,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -69,7 +69,7 @@ file-system 	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -160,6 +160,7 @@ gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
+bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
