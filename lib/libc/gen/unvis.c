@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.4 1995/02/25 15:39:44 cgd Exp $	*/
+/*	$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: unvis.c,v 1.4 1995/02/25 15:39:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,8 @@ static char rcsid[] = "$NetBSD: unvis.c,v 1.4 1995/02/25 15:39:44 cgd Exp $";
 int
 unvis(cp, c, astate, flag)
 	char *cp;
-	int c, *astate, flag;
+	char c;
+	int *astate, flag;
 {
 
 	if (flag & UNVIS_END) {
