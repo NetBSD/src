@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.235 2004/09/22 11:47:23 lukem Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.236 2004/11/14 00:36:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.235 2004/09/22 11:47:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.236 2004/11/14 00:36:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -180,7 +180,6 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
  */
 void insmntque(struct vnode *, struct mount *);
 int getdevvp(dev_t, struct vnode **, enum vtype);
-void vgoneall(struct vnode *);
 
 void vclean(struct vnode *, int, struct proc *);
 
