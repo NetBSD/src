@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.27 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.27 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.28 2000/01/22 22:40:58 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,7 +76,6 @@ __weak_alias(setnetgrent,_setnetgrent)
 #define _NG_ISSPACE(p)	(isspace((unsigned char) (p)) || (p) == '\n')
 
 static const char _ngstar[] = "*";
-static const char _ngoomem[] = "netgroup: %m";
 static struct netgroup *_nghead = (struct netgroup *)NULL;
 static struct netgroup *_nglist = (struct netgroup *)NULL;
 static DB *_ng_db;

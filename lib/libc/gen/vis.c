@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.18 2000/01/22 22:19:13 mycroft Exp $	*/
+/*	$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.18 2000/01/22 22:19:13 mycroft Exp $");
+__RCSID("$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $");
 #endif /* not lint */
 
 #include "namespace.h"
@@ -81,7 +81,7 @@ do {									      \
 	if (flag & VIS_NL) *pextra++ = '\n';				      \
 	if ((flag & VIS_NOSLASH) == 0) *pextra++ = '\\';		      \
 	*pextra = '\0';							      \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * This is SVIS, the central macro of vis.
@@ -157,7 +157,7 @@ do {									      \
 			*dst++ = '-'; *dst++ = c;			      \
 		}							      \
 	}								      \
-} while(0)
+} while (/*CONSTCOND*/0)
 
 
 /*

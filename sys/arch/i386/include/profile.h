@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.13 1999/09/28 09:57:35 enami Exp $	*/
+/*	$NetBSD: profile.h,v 1.14 2000/01/22 22:46:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 
 #ifdef __ELF__
 #define MCOUNT_ENTRY	"__mcount"
-#define MCOUNT_COMPAT	__weak_alias(mcount, __mcount);
+#define MCOUNT_COMPAT	__weak_alias(mcount, __mcount)
 #else
 #define MCOUNT_ENTRY	"mcount"
 #define MCOUNT_COMPAT	/* nothing */
