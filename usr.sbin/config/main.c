@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1998/02/19 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.30 1998/02/19 06:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -442,6 +442,12 @@ addoption(name, value)
 	char *p, c;
 	char low[500];
 
+	/* Make sure this is not a defined file system. */
+	if (ht_lookup(deffstab, name) != NULL) {
+		error("`%s' is a defined file system", name);
+		return;
+	}
+
 	if (do_option(opttab, &nextopt, name, value, "options"))
 		return;
 
@@ -464,7 +470,7 @@ addfsoption(name)
 {
 	const char *n; 
 	char *p, c;
-	char buf[500];
+	char low[500];
 
 	/* Make sure this is a defined file system. */
 	if (ht_lookup(deffstab, name) == NULL) {
@@ -472,24 +478,20 @@ addfsoption(name)
 		return;
 	}
 
-	/* Convert to lowercase. */
-	for (n = name, p = buf; (c = *n) != '\0'; n++)
+	/*
+	 * Convert to lower case.  This will be used in the select
+	 * table and when the vfs_list_initial[] table is created.
+	 */
+	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
 	*p = 0;
+	n = intern(low);
 
-	n = intern(buf);
-
-	if (do_option(fsopttab, &nextfsopt, n, NULL, "file-system"))
+	if (do_option(fsopttab, &nextfsopt, name, n, "file-system"))
 		return;
 
-	/* Convert to uppercase. */
-	for (n = name, p = buf; (c = *n) != '\0'; n++)
-		*p++ = islower(c) ? toupper(c) : c;
-	*p = 0;
-
-	n = intern(buf);
-
-	addoption(n, NULL);
+	/* Add to select table. */
+	(void)ht_insert(selecttab, n, (void *)n);
 }
 
 /*
@@ -526,7 +528,7 @@ do_option(ht, nppp, name, value, type)
 	nvfree(nv);
 	if ((nv = ht_lookup(ht, name)) == NULL)
 		panic("do_option");
-	if (nv->nv_str != NULL)
+	if (nv->nv_str != NULL && ht != fsopttab)
 		error("already have %s `%s=%s'", type, name, nv->nv_str);
 	else
 		error("already have %s `%s'", type, name);
