@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.11 2001/02/10 04:14:26 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.12 2001/02/11 05:05:27 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.28 2000/12/12 10:54:06 itojun Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ struct	ip6q ip6q;	/* ip6 reassemble queue */
 
 #ifndef offsetof		/* XXX */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif 
+#endif
 
 /*
  * Initialise reassembly queue and fragment identifier.
@@ -206,6 +206,8 @@ frag6_input(mp, offp, proto)
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
+	frag6_doing_reass = 1;
+
 	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
 		if (ip6f->ip6f_ident == q6->ip6q_ident &&
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &q6->ip6q_src) &&
@@ -274,6 +276,7 @@ frag6_input(mp, offp, proto)
 			icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 				    offset - sizeof(struct ip6_frag) +
 					offsetof(struct ip6_frag, ip6f_offlg));
+			frag6_doing_reass = 0;
 			return(IPPROTO_DONE);
 		}
 	}
@@ -281,6 +284,7 @@ frag6_input(mp, offp, proto)
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
+		frag6_doing_reass = 0;
 		return(IPPROTO_DONE);
 	}
 	/*
@@ -525,6 +529,7 @@ insert:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	ip6stat.ip6s_fragdropped++;
 	m_freem(m);
+	frag6_doing_reass = 0;
 	return IPPROTO_DONE;
 }
 
