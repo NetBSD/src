@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-#	Version 9.13.19
+#	Version 9.13.25
 #	termcap syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -27,6 +27,8 @@
 # be found at <http://www.ccil.org/terminfo>.
 #
 # INTERNATIONALIZATION:
+#
+# This file uses only the US-ASCII character set (no ISO8859 characters).
 #
 # This file assumes a US-ASCII character set. If you need to fix this, start
 # by global-replacing \E(B and \E)B with the appropriate ISO 6429 enablers
@@ -267,7 +269,7 @@ dumb|80-column dumb tty:\
 unknown|unknown terminal type:\
 	:gn:tc=dumb:
 lpr|printer|line printer:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:li#66:\
 	:bl=^G:cr=^M:do=^J:ff=^L:le=^H:sf=^J:
 glasstty|classic glass tty interpreting ASCII control characters:\
@@ -394,7 +396,7 @@ ansi-mini|any ansi terminal with pessimistic assumptions:\
 # USENET {akgua,msdc,sb1,sb6,gatech}!emory!mlhhh.
 #
 ansi77|ansi 3.64 standard 1977 version:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#80:it#8:li#24:\
 	:al=5*\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[;H\E[2J:\
 	:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=5*\E[M:\
@@ -469,7 +471,7 @@ ansi|ansi/pc-term compatible with color:\
 # keys F1-F10 (%p1 values outside this range will yield unpredictable results).
 # From: Eric S. Raymond <esr@snark.thyrsus.com> Nov 7 1995
 ansi.sys-old|ANSI.SYS under PC-DOS 2.1:\
-	:am:mi:ms:xo:\
+	:am:bs:mi:ms:xo:\
 	:co#80:li#25:\
 	:RA=\E[?7l:SA=\E[?7h:ce=\E[k:cl=\E[2J:cm=\E[%i%d;%dH:\
 	:do=\E[B:ho=\E[H:is=\E[m\E[?7h:kd=^J:kh=^^:kl=^H:kr=^L:\
@@ -541,7 +543,7 @@ nansi.sysk|nansisysk|PC-DOS Public Domain NANSI.SYS with keypad redefined for vi
 # 1.9.9. All linux kernels since 1.2.13 (at least) set the screen size
 # themselves; this entry assumes that capability.
 #
-# From: Eric S. Raymond <esr@snark.thyrsus.com> 15 Dec 1995
+# From: Eric S. Raymond <esr@snark.thyrsus.com> 20 Jun 1997
 linux|linux console:\
 	:am:eo:mi:ms:ut:xn:xo:\
 	:it#8:\
@@ -569,7 +571,7 @@ linux-c-nc|linux console 1.3.x hack for ncurses only:\
 	:cc:\
 	:..Ic=\E]P%p1%x%p2%02x%p3%02x%p4%02x:oc=\E]R:tc=linux:
 # From: Dennis Henriksen <opus@osrl.dk>, 9 July 1996
-linux-c|linux console 1.3.6+, with private palette for each virtual console:\
+linux-c|linux console 1.3.6+ with private palette for each virtual console:\
 	:cc:\
 	:Co#8:pa#64:\
 	:..Ic=\E]P%?%p1%{9}%>%t%p1%{10}%-%p'a'%+%c%e%p1%d%p2%{255}%&%Pr%gr%{16}%/%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;%gr%{15}%&%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;%p3%{255}%&%Pr%gr%{16}%/%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;%gr%{15}%&%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;%p4%{255}%&%Pr%gr%{16}%/%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;%gr%{15}%&%Px%?%gx%{9}%>%t%gx%{10}%-%'A'%+%c%e%gx%d%;:\
@@ -630,7 +632,7 @@ att6386|at386|386at|AT&T WGS 6386 console:\
 	:tc=klone+color:
 # (pc6300plus: removed ":KM=/usr/lib/ua/kmap.s5:"; renamed BO/EE/CI/CV -- esr)
 pc6300plus|AT&T 6300 plus:\
-	:am:xo:\
+	:am:bs:xo:\
 	:co#80:li#24:\
 	:al=\E[1L:bl=^G:cd=\E[0J:ce=\E[0K:cl=\E[2J\E[H:\
 	:cm=\E[%i%2;%2H:cr=^M:ct=\E[3g:dc=\E[1P:dl=\E[1M:do=\E[B:\
@@ -707,26 +709,26 @@ att7300|unixpc|pc7300|3b1|s4|AT&T UNIX PC Model 7300:\
 	:mh=\E[2m:mr=\E[7m:nd=\E[C:nw=\EE:se=\E[m:sf=^J:so=\E[7m:\
 	:sr=\EM:ue=\E[m:up=\E[A:us=\E[4m:ve=\E[=1C:vi=\E[=C:
 
-# From: davis@unidata.ucar.edu
+# From: Stefan Stapelberg <stefan@rent-a-guru.de>, 24 Feb 1997
 # (iris-ansi: added rmam/smam based on init string -- esr)
-iris-ansi|iris-ansi-net|IRIS emulating ANSI terminal:\
-	:am:pt:\
-	:co#80:it#8:kn#4:li#40:\
+iris-ansi|IRIS emulating 40 line ANSI terminal (almost VT100):\
+	:am:\
+	:co#80:it#8:li#40:\
 	:!2=\E[218q:#2=\E[143q:#4=\E[158q:%9=\E[209q:%f=\E[210q:\
 	:%i=\E[167q:&7=\E[217q:*4=\E[P:*7=\E[147q:@7=\E[146q:\
 	:@8=^M:AL=\E[%dL:DL=\E[%dM:DO=\E[%dB:F1=\EOR:F2=\EOS:\
 	:LE=\E[%dD:RA=\E[?7l:RI=\E[%dC:SA=\E[?7h:UP=\E[%dA:\
-	:al=\E[L:bc=\ED:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:\
-	:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:ct=\E[3g:dl=\E[M:do=^J:\
-	:ho=\E[H:is=\E[?1l\E>\E[?7h\E[100g\E[0m\E7\E[r\E8:\
-	:k1=\E[001q:k2=\E[002q:k3=\E[003q:k4=\E[004q:k5=\E[005q:\
-	:k6=\E[006q:k7=\E[007q:k8=\E[008q:k9=\EOP:k;=\EOQ:kB=\E[Z:\
-	:kD=\177:kI=\E[139q:kM=\E[146q:kN=\E[154q:kP=\E[150q:\
-	:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=\E[D:\
-	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:\
-	:pk=\EP101;%d.y%s\E\:rc=\E8:sc=\E7:se=\E[m:sf=\ED:\
-	:so=\E[1;7m:sr=\EM:st=\EH:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:\
-	:ve=\E[9/y\E[12/y\E[=6l:vs=\E[10/y\E[=1h\E[=2l\E[=6h:
+	:al=\E[L:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:\
+	:cm=\E[%i%d;%dH:cr=^M:ct=\E[3g:dl=\E[M:do=^J:ho=\E[H:\
+	:is=\E[?1l\E>\E[?7h\E[100g\E[0m\E7\E[r\E8:k1=\E[001q:\
+	:k2=\E[002q:k3=\E[003q:k4=\E[004q:k5=\E[005q:k6=\E[006q:\
+	:k7=\E[007q:k8=\E[008q:k9=\EOP:k;=\EOQ:kB=\E[Z:kD=\177:\
+	:kI=\E[139q:kM=\E[146q:kN=\E[154q:kP=\E[150q:kb=^H:\
+	:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=\E[D:md=\E[1m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:pk=\EP101;%d.y%s\E\:\
+	:rc=\E8:sc=\E7:se=\E[m:sf=\ED:so=\E[1;7m:sr=\EM:st=\EH:\
+	:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:ve=\E[9/y\E[12/y\E[=6l:\
+	:vs=\E[10/y\E[=1h\E[=2l\E[=6h:
 iris-ansi-ap|IRIS ANSI in application-keypad mode:\
 	:F1=\E[011q:F2=\E[012q:is=\E[?1l\E>\E[?7h:k;=\E[010q:\
 	:ke=\E>:ks=\E=:\
@@ -758,7 +760,7 @@ pcix|PC/IX console:\
 # ":kh=\E[Y:".  Added IBM-PC forms characters and highlights, they match
 # what was there before. -- esr)
 ibmpcx|xenix|ibmx|IBM PC xenix console display:\
-	:am:ms:\
+	:am:bs:ms:\
 	:co#80:li#25:\
 	:@7=\E[d:al=\E[L:cd=\E[J:ce=\E[K:cl=^L:cm=\E[%d;%dH:\
 	:dc=\E[P:dl=\E[M:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:k1=\E[K:\
@@ -888,7 +890,9 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 # I have seen FreeBSD-2.1.5R... The old el1 bug changed, but it is still there.
 # Now el1 clears not only to the line beginning, but also a large chunk
 # of previous line. But there is another bug - ech does not work at all.
+# (Accordingly, :ec:=\E[%p1%dX and <el1>=\E[1K have been removed.)
 #
+
 
 # for syscons
 # common entry without semigraphics
@@ -899,13 +903,13 @@ cons25w|ansiw|ansi80x25-raw|freebsd console (25-line raw mode):\
 	:@7=\E[F:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:F1=\E[W:\
 	:F2=\E[X:IC=\E[%d@:K2=\E[E:LE=\E[%dD:RI=\E[%dC:SF=\E[%dS:\
 	:SR=\E[%dT:Sb=\E[4%dm:Sf=\E[3%dm:UP=\E[%dA:al=\E[L:bl=^G:\
-	:bt=\E[Z:cb=\E[1K:cd=\E[J:ce=\E[K:ch=\E[%i%d`:cl=\E[H\E[J:\
+	:bt=\E[Z:cd=\E[J:ce=\E[K:ch=\E[%i%d`:cl=\E[H\E[J:\
 	:cm=\E[%i%d;%dH:cr=^M:cv=\E[%i%dd:dc=\E[P:dl=\E[M:do=\E[B:\
-	:ec=\E[%dX:ei=:ho=\E[H:ic=\E[@:im=:k1=\E[M:k2=\E[N:k3=\E[O:\
-	:k4=\E[P:k5=\E[Q:k6=\E[R:k7=\E[S:k8=\E[T:k9=\E[U:k;=\E[V:\
-	:kB=\E[Z:kD=\177:kI=\E[L:kN=\E[G:kP=\E[I:kb=^H:kd=\E[B:\
-	:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:\
-	:me=\E[m:mh=\E[30;1m:mr=\E[7m:nd=\E[C:nw=\E[E:op=\E[x:\
+	:ei=:ho=\E[H:ic=\E[@:im=:k1=\E[M:k2=\E[N:k3=\E[O:k4=\E[P:\
+	:k5=\E[Q:k6=\E[R:k7=\E[S:k8=\E[T:k9=\E[U:k;=\E[V:kB=\E[Z:\
+	:kD=\177:kI=\E[L:kN=\E[G:kP=\E[I:kb=^H:kd=\E[B:kh=\E[H:\
+	:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
+	:mh=\E[30;1m:mr=\E[7m:nd=\E[C:nw=\E[E:op=\E[x:\
 	:r1=\E[x\E[m\Ec:se=\E[m:sf=\E[S:so=\E[7m:sr=\E[T:ta=^I:\
 	:up=\E[A:
 cons25|ansis|ansi80x25|freebsd console (25-line ansi mode):\
@@ -967,7 +971,7 @@ cons60l1-m|cons60-iso-m|freebsd console w/iso 8859-1 chars (60-line mono):\
 # Some places it's named oldpc3|oldibmpc3.
 # From: Alex R.N. Wetmore <aw2t@andrew.cmu.edu>
 origpc3|origibmpc3|IBM PC 386BSD Console:\
-	:am:bw:eo:xo:\
+	:am:bs:bw:eo:xo:\
 	:co#80:li#25:\
 	:ac=l\332q\304k\277x\263j\331m\300w\302u\264v\301t\303n\305:\
 	:cd=\E[J:ce=\E[K:cl=\Ec:cm=\E[%i%2;%2H:do=\E[B:ho=\E[H:\
@@ -978,7 +982,7 @@ origpc3|origibmpc3|IBM PC 386BSD Console:\
 
 # description of BSD/386 console emulator in version 1.0 (supplied by BSDI)
 oldpc3|oldibmpc3|old IBM PC BSD/386 Console:\
-	:km:\
+	:bs:km:\
 	:li#25:\
 	:al=\E[L:bl=^G:cr=^M:dl=\E[M:do=^J:kH=\E[F:kI=\E[L:kN=\E[G:\
 	:kP=\E[I:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:\
@@ -993,7 +997,7 @@ oldpc3|oldibmpc3|old IBM PC BSD/386 Console:\
 # (Color support from Kevin Rosenberg <kevin@cyberport.com>, 2 May 1996) 
 # Bug: The <op> capability resets attributes.
 bsdos|BSD/OS console:\
-	:am:bw:eo:km:xo:\
+	:am:bs:bw:eo:km:xo:\
 	:Co#8:co#80:it#8:li#25:pa#64:\
 	:AL=\E[%dL:DL=\E[%dM:DO=\E[%dB:LE=\E[%dD:RI=\E[%dC:\
 	:Sb=\E[4%dm:Sf=\E[3%dm:UP=\E[%dA:al=\E[L:bl=^G:cd=\E[J:\
@@ -1028,12 +1032,14 @@ ibmpc3|pc3-bold|IBM PC BSD/386 Console with bold instead of underline:\
 # are kept available at ftp://gatekeeper.dec.com/pub/DEC/termcaps.
 #
 # In October 1995 DEC sold its terminals business, including the VT and Dorio
-# line and trademark, to SunRiver Data Systems.
+# line and trademark, to SunRiver Data Systems.  SunRiver has since changed
+# its name to Boundless Technologies; see http://www.boundless.com.
 #
+
 # (The <acsc>, :ae:, and :as: capabilities aren't in DEC's official
 # entry -- esr)
-
 vt52|dec vt52:\
+	:bs:\
 	:co#80:it#8:li#24:\
 	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
 	:ae=\EG:as=\EF:bl=^G:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :\
@@ -1185,7 +1191,7 @@ vt102|dec vt102:\
 	:mi:\
 	:al=\E[L:dc=\E[P:dl=\E[M:ei=\E[4l:im=\E[4h:tc=vt100:
 vt102-w|dec vt102 in wide mode:\
-	:li#132:\
+	:co#132:\
 	:r3=\E[?3h:tc=vt102:
 
 # Many brain-dead PC comm programs that pretend to be `vt100-compatible'
@@ -1298,6 +1304,33 @@ vt220-8|dec vt220 8 bit terminal:\
 #vt320|DEC VT320 in vt100 emulation mode,
 #	use=vt220,
 
+# vt220 termcap written Tue Oct 25 20:41:10 1988 by Alex Latzko
+# (not an official DEC entry!)
+# The problem with real vt220 terminals is they don't send escapes when in
+# in vt220 mode.  This can be gotten around two ways.  1> don't send
+# escapes or 2> put the vt220 into vt100 mode and use all the nifty
+# features of vt100 advanced video which it then has.
+#
+# This entry takes the view of putting a vt220 into vt100 mode so
+# you can use the escape key in emacs and everything else which needs it.
+#
+# You probably don't want to use this on a VMS machine since VMS will think
+# it has a vt220 and will get fouled up coming out of emacs
+#
+# From: Alexander Latzko <latzko@marsenius.rutgers.edu>, 30 Dec 1996
+vt200-js|vt220-js|dec vt200 series with jump scroll:\
+	:am:\
+	:co#80:\
+	:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
+	:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:dm=:do=^J:ed=:\
+	:ei=\E[4l:ho=\E[H:im=\E[4h:\
+	:is=\E[61"p\E[H\E[?3l\E[?4l\E[?1l\E[?5l\E[?6l\E[?7h\E[?8h\E[?25h\E>\E[m:\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:kb=^H:kd=\EOB:\
+	:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:\
+	:nw=^M\ED:r1=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
+	:rf=/usr/lib/tabset/vt100:se=5\E[27m:sf=\ED:so=5\E[7m:\
+	:sr=\EM:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:
+ 
 #
 # Use v320n for SCO's LYRIX.  Otherwise, use Adam Thompson's vt320-nam.
 #
@@ -1568,11 +1601,14 @@ vt525|DEC VT525:\
 
 # John Hawkinson <jhawk@MIT.EDU> tells us that the EWAN telnet for Windows
 # (the best Windows telnet as of September 1995) presents the name `dec-vt100'
-# to telnetd.  We'll guess that it's vt102-like but doesn't grok ^N/^O.
-# Following a report that this doesn't play well with Emacs, we'll try 
-# shutting off automargins.
+# to telnetd.   Michael Deutschmann <ldeutsch@mail.netshop.net> informs us
+# that this works best with a stock vt100 entry.
 dec-vt100|EWAN telnet's vt100 emulation:\
-	:am@:tc=vt102-nsgr:
+	:tc=vt100:
+
+# From: Adrian Garside <94ajg2@eng.cam.ac.uk>, 19 Nov 1996
+dec-vt220|DOS tnvt200 terminal emulator:\
+	:am@:tc=vt220:
 
 # Zstem340 is an (IMHO) excellent VT emulator for PC's.  I recommend it to
 # anyone who needs PC VT340 emulation. (or anything below that level, for
@@ -1610,7 +1646,7 @@ z340-nam|zstem vt340 terminal emulator 132col 42line:\
 # removed (hs, eslok, tsl=\E[?E\E[?%i%dT, fsl=\E[?F, dsl=\E[?E)
 # as these seem not to work -- esr)
 x10term|vs100-x10|xterm terminal emulator (X10 window system):\
-	:am:km:mi:ms:xn:xo:\
+	:am:bs:km:mi:ms:xn:xo:\
 	:co#80:it#8:li#65:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:RA=\E[?7l:SA=\E[?7h:\
 	:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:\
@@ -1621,9 +1657,10 @@ x10term|vs100-x10|xterm terminal emulator (X10 window system):\
 	:mr=\E[7m:nd=\E[C:\
 	:rs=\E[r\E<\E[m\E[H\E[2J\E[?7h\E[?1;3;4;6l:se=\E[m:\
 	:sf=^J:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
-# Compatible with the R5 xterm (straight from the XFree86 3.2 distribution)
+# Compatible with the R5 xterm 
+# (from the XFree86 3.2 distribution, <blink=@> removed)
 xterm-r5|xterm R5 version:\
-	:am:km:ms:xn:\
+	:am:bs:km:ms:xn:\
 	:co#80:it#8:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:F1=\E[23~:\
 	:F2=\E[24~:IC=\E[%d@:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:\
@@ -1634,27 +1671,29 @@ xterm-r5|xterm R5 version:\
 	:k7=\E[18~:k8=\E[19~:k9=\E[20~:k;=\E[21~:kA=\E[30~:\
 	:kD=\E[3~:kE=\E[8~:kI=\E[2~:kL=\E[31~:kN=\E[6~:kP=\E[5~:\
 	:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\E[7~:kl=\EOD:kr=\EOC:\
-	:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=@:md=\E[1m:me=\E[m:mr=\E[7m:\
+	:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:me=\E[m:mr=\E[7m:\
 	:nd=\E[C:r1=\E>\E[1;3;4;5;6l\E[?7h\E[m\E[r\E[2J\E[H:\
 	:rc=\E8:\
 	:..sa=\E[%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;m:\
 	:sc=\E7:se=\E[m:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:up=\E[A:
-# Compatible with the R6 xterm (straight from the XFree86 3.2 distribution)
+# Compatible with the R6 xterm
+# (from XFree86 3.2 distribution, <acsc> and :it: added, <blink@> removed)
 xterm-r6|xterm-old|xterm X11R6 version:\
-	:am:km:mi:ms:xn:\
-	:co#80:li#24:\
+	:am:bs:km:mi:ms:xn:\
+	:co#80:it#8:li#24:\
 	:*6=\E[4~:@0=\E[1~:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:\
 	:DO=\E[%dB:F1=\E[23~:F2=\E[24~:F3=\E[25~:F4=\E[26~:\
 	:F5=\E[28~:F6=\E[29~:F7=\E[31~:F8=\E[32~:F9=\E[33~:\
-	:FA=\E[34~:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:\
-	:as=^N:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:\
-	:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:\
-	:eA=\E)0:ei=\E[4l:ho=\E[H:im=\E[4h:\
+	:FA=\E[34~:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:\
+	:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:\
+	:dl=\E[M:do=^J:eA=\E)0:ei=\E[4l:ho=\E[H:im=\E[4h:\
 	:is=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:k1=\EOP:\
 	:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\E[15~:k6=\E[17~:k7=\E[18~:\
 	:k8=\E[19~:k9=\E[20~:k;=\E[21~:kD=\E[3~:kI=\E[2~:kN=\E[6~:\
 	:kP=\E[5~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:\
-	:ks=\E[?1h\E=:ku=\EOA:le=^H:mb@:md=\E[1m:me=\E[m:ml=\El:\
+	:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:me=\E[m:ml=\El:\
 	:mr=\E[7m:mu=\Em:nd=\E[C:\
 	:r2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:rc=\E8:\
 	:sc=\E7:se=\E[m:sf=^J:so=\E[7m:sr=\EM:ta=^I:\
@@ -1666,7 +1705,7 @@ xterm-r6|xterm-old|xterm X11R6 version:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 xterm-xf86-v32|xterm terminal emulator (X Window System):\
-	:am:km:mi:ms:xn:\
+	:am:bs:km:mi:ms:xn:\
 	:co#80:it#8:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOy:K3=\EOu:K4=\EOq:K5=\EOs:LE=\E[%dD:\
@@ -1683,13 +1722,25 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 	:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:te=\E[2J\E[?47l\E8:\
 	:ti=\E7\E[?47h:ue=\E[24m:up=\E[A:us=\E[4m:\
 	:vb=\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
+# This is the stock xterm entry supplied with XFree86 3.3, which uses VT100
+# codes for F1-F4 except while in VT220 mode.
+xterm-xf86-v33|xterm terminal emulator (X Window System):\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
+	:tc=xterm-xf86-v32:
+# This is one of the variants from XFree86 3.3 (T.Dickey)
+xterm-16color|xterm with 16 colors like aixterm:\
+	:Co#16:NC#32:pa#256:\
+	:AB@:AF@:\
+	:..Sb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m:\
+	:..Sf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m:\
+	:tc=xterm-xf86-v33:
 
 # This is xterm for ncurses. It mainly adds mappings for more high-half
 # characters.  Note that these will only work for fixed-width fonts.
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
 	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~..--++\054\054II00:\
 	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
-	:tc=xterm-xf86-v32:
+	:tc=xterm-xf86-v33:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
 # Note that twm (and possibly window managers descended from it such as tvtwm, 
@@ -1705,7 +1756,7 @@ xterm+sl-twm|access X title line (pacify twm-descended window managers):\
 	:ds=\E]2;\007:fs=^G:ts=\E]2;:
 
 #
-# The following xterm varients don't depend on your base version
+# The following xterm variants don't depend on your base version
 #
 xterm-bold|xterm terminal emulator (X11R6 Window System) standout w/bold:\
 	:so=\E[1m:\
@@ -1726,6 +1777,29 @@ xterm-nic|xterm with ich/ich1 suppressed for non-curses programs:\
 xterm1|xterm terminal emulator ignoring the alternate screen buffer:\
 	:te@:ti@:\
 	:tc=xterm:
+
+# This describes the capabilities of color_xterm, an xterm variant from
+# before ECMA-64 color support was folded into the main-line xterm release.
+# This entry is straight from color_xterm's maintainer.
+# From: Jacob Mandelson <jlm@ugcs.caltech.edu>, 09 Nov 1996
+# (untranslatable capabilities removed to fit entry within 1023 bytes)
+# (sgr removed to fit entry within 1023 bytes)
+# (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
+color_xterm|cx|cx100|color_xterm color terminal emulator for X:\
+	:am:km:mi:ms:xn:\
+	:co#80:it#8:li#65:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+	:K1=\EOw:K2=\EOu:K3=\EOy:K4=\EOq:K5=\EOs:LE=\E[%dD:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:\
+	:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:\
+	:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:do=^J:ei=\E[4l:ho=\E[H:\
+	:i1=\E[r\E[m\E[?7h\E[?4;6l\E[4l:im=\E[4h:k1=\E[11~:\
+	:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:k6=\E[17~:\
+	:k7=\E[18~:k8=\E[19~:k9=\E[20~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
+	:kb=^H:kd=\EOB:kh=\E[7~:kl=\EOD:kr=\EOC:ku=\EOA:le=^H:\
+	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
+	:sf=^J:so=\E[7m:sr=\EM:ta=^I:te=\E>\E[?41;1r:\
+	:ti=\E[?1;41s\E[?1;41h\E=:ue=\E[24m:up=\E[A:us=\E[4m:
 
 # From: Mark Olesen & Thomas Dickey <dickey@clark.net> 13 Jul 1996
 # (untranslatable capabilities removed to fit entry within 1023 bytes)
@@ -1804,14 +1878,13 @@ xterms-sun|small (80x24) xterm with sunFunctionKeys true:\
 	:co#80:li#24:tc=xterm-sun:
 
 # This is for the extensible terminal emulator on the X11R6 contrib tape.
-# (emu: I changed <setab>/<setaf> to <setb>/<setf> -- esr)
 emu|emu native mode:\
 	:mi:ms:xo:\
 	:Co#15:co#80:it#8:li#24:pa#64:vt#200:\
 	:*6=\Esel:@0=\Efind:@8=^M:AL=\EQ%d;:DC=\EI%d;:DL=\ER%d;:\
 	:DO=\Ep%d;:F1=\EF11:F2=\EF12:F3=\EF13:F4=\EF14:F5=\EF15:\
 	:F6=\EF16:F7=\EF17:F8=\EF18:F9=\EF19:FA=\EF20:LE=\Eq-%d;:\
-	:RI=\Eq%d;:Sb=\Es%i%d; setf=\Er%i%d;:UP=\Ep-%d;:\
+	:RI=\Eq%d;:Sb=\Es%i%d;:Sf=\Er%i%d;:UP=\Ep-%d;:\
 	:ac=a\202f\260g261j\213k\214l\215m\216n\217o\220q\222s\224t\225u\226v\227w\230x\231~\244:\
 	:ae=\200:al=\EQ1;:as=\200:bl=^G:cb=\EL:cd=\EN:ce=\EK:\
 	:cl=\EP\EE0;0;:cm=\EE%d;%d;:cr=^M:cs=\Ek%d;%d;:ct=\Ej:\
@@ -1825,14 +1898,44 @@ emu|emu native mode:\
 	:sr=\EF:st=\Eh:ta=^I:ue=\ES:up=\EA:us=\ES\EV:ve=\Ea:vi=\EZ:\
 	:vs=\Ea:
 
-######## UNIX VIRTUAL TERMINALS AND VIRTUAL CONSOLES
+######## MGR
+#
+# MGR is a Bell Labs window system lighter-weight than X.
+# These entries describe MGR's xterm-equivalent. 
+# They are courtesy of Vincent Broman <broman@nosc.mil> 14 Jan 1997 
+#
+
+mgr|Bellcore MGR (non X) window system terminal emulation:\
+	:am:km:\
+	:AL=\E%da:DC=\E%dE:DL=\E%dd:IC=\E%dA:RA=\E5S:SA=\E5s:\
+	:al=\Ea:bl=^G:cd=\EC:ce=\Ec:cl=^L:cm=\E%r%d;%dM:cr=^M:\
+	:cs=\E%d;%dt:dc=\EE:dl=\Ed:do=\Ef:ei=:hd=\E1;2f:hu=\E1;2u:\
+	:ic=\EA:im=:kb=^H:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:\
+	:md=\E2n:me=\E0n:mr=\E1n:nd=\Er:nw=^M^J:se=\E0n:sf=^J:\
+	:so=\E1n:ta=^I:ue=\E0n:up=\Eu:us=\E4n:ve=\Eh:vi=\E9h:\
+	:vs=\E0h:
+mgr-sun|Mgr window with Sun keyboard:\
+	:%1=\E[207z:%6=\E[198z:&8=\E[195z:@0=\E[200z:@5=\E197z:\
+	:@7=\E[220z:@8=\E[250z:F1=\E[234z:F2=\E[235z:K1=\E[214z:\
+	:K2=\E[218z:K3=\E[216z:K4=\E[220z:K5=\E[222z:k1=\E[224z:\
+	:k2=\E[225z:k3=\E[226z:k4=\E[227z:k5=\E[228z:k6=\E[229z:\
+	:k7=\E[230z:k8=\E[231z:k9=\E[232z:k;=\E[233z:kN=\E[222z:\
+	:kP=\E[216z:kh=\E[214z:\
+	:tc=mgr:
+mgr-linux|Mgr window with Linux keyboard:\
+	:@7=\E[4~:F1=\E[23~:F2=\E[24~:K1=\E[H:K2=\E[G:K3=\E[5~:\
+	:K4=\E[Y:K5=\E[6~:k0=\E[[J:k1=\E[[A:k2=\E[[B:k3=\E[[C:\
+	:k4=\E[[D:k5=\E[[E:k6=\E[17~:k7=\E[18~:k8=\E[19~:\
+	:k9=\E[20~:k;=\E[21~:kD=\E[3~:kN=\E[6~:kP=\E[5~:kh=\E[1~:tc=mgr:
+
+######## UNIX VIRTUAL TERMINALS, VIRTUAL CONSOLES, AND TELNET CLIENTS
 #
 
 # Columbus UNIX virtual terminal. This terminal also appears in 
 # UNIX 4.0 and successors as line discipline 1 (?), but is 
 # undocumented and does not really work quite right.
 cbunix|cb unix virtual terminal:\
-	:am:da:db:\
+	:am:bs:da:db:\
 	:co#80:li#24:lm#0:\
 	:al=\EP:bl=^G:cd=\EL:ce=\EK:cl=\EL:cm=\EG%r%.%.:cr=^M:\
 	:dc=\EM:dl=\EN:do=^J:ei=:ic=\EO:im=:kd=\EB:kh=\EE:kl=\ED:\
@@ -1909,6 +2012,15 @@ screen3|VT 100/ANSI X3.64 virtual terminal:\
 	:rc=\E8:sc=\E7:se=\E[23m:sf=^J:so=\E[3m:sr=\EM:st=\EH:ta=^I:\
 	:ue=\E[24m:up=\EM:us=\E[4m:
 
+#### Pilot Pro Palm-Top
+#
+# From: Jason Downs <downsj@downsj.com>, 15 Jun 1997 (Top Gun Telnet's author)
+pilot|tgtelnet|Top Gun Telnet on the Palm Pilot Professional:\
+	:am:xn:\
+	:co#39:li#16:\
+	:bl=^G:cl=\Ec:cm=\Em%+ %+ :cr=^M:do=^J:ho=\Em  :kN=^L:kP=^K:\
+	:kb=^H:kd=^J:kl=^H:le=^H:nw=\Em~ :se=\EB:sf=^J:so=\Eb:ta=^I:
+
 ######## WORKSTATION CONSOLES
 #
 
@@ -1917,7 +2029,7 @@ screen3|VT 100/ANSI X3.64 virtual terminal:\
 
 # :is1: resets scrolling region in case a previous user had used "tset vt100"
 oldsun|Sun Microsystems Workstation console:\
-	:am:km:mi:ms:\
+	:am:bs:km:mi:ms:\
 	:co#80:it#8:li#34:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:IC=\E[%d@:al=\E[L:bl=^G:\
 	:cd=\E[J:ce=\E[K:cl=^L:cm=\E[%i%d;%dH:cr=^M:dc=\E[P:\
@@ -2049,7 +2161,7 @@ nextshell|NeXT Shell application:\
 	:co#80:\
 	:bl=^G:cr=^M:do=^J:kb=^H:kd=^J:kl=^H:le=^H:nw=^M^J:ta=^I:
 
-### Common Desktop Environment
+#### Common Desktop Environment
 #
 
 # This ships with Sun's CDE in Solaris 2.5
@@ -2072,6 +2184,29 @@ dtterm|CDE desktop terminal:\
 	:rc=\E8:sc=\E7:se=\E[22;27m:sf=\ED:so=\E[2;7m:sr=\EM:\
 	:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:vb=\E[?5h\E[?5l:\
 	:ve=\E[?25h:vi=\E[?25l:
+
+### Non-Unix Consoles
+#
+
+# This entry fits the Windows NT console when the _POSIX_TERM environment
+# variable is set to 'on'. While the Windows NT POSIX console is seldom used,
+# the obnoxious Telnet client supplied with both the Windows for WorkGroup
+# 3.11 TCP/IP stack and the Win32 (i.e., Windows 95 and Windows NT 3.1 or
+# later) operating systems is not, and (surprise!) they match very well.
+#
+# This was adapted from MS Knowledge Base item Q108581, dated 13-MAY-1997,
+# titled "Setting Up VI POSIX Editor for Windows NT 3.1".  True to Microsoft
+# form, not are the installation instructions a pile of mind-numbing
+# bureaucratese, but the termcap entry is actually broken and unusable as
+# given; the :do: capability is misspelled "d".
+#
+ansi-nt|psx_ansi|Microsoft Windows NT console POSIX ANSI mode:\
+	:am:bw:ms:\
+	:co#80:it#8:li#25:\
+	:bl=^G:cd=\E[J:ce=\E[K:cl=\E[2J:cm=\E[%i%d;%dH:cr=^M:do=^J:\
+	:ho=\E[H:kb=^H:kd=\E[V:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:\
+	:me=\E[0m:mr=\E[7m:nd=\E[C:nw=\r\E[S:rc=\E[u:sc=\E[s:\
+	:se=\E[m:sf=\E[S:so=\E[7m:sr=\E[T:ta=^I:up=\E[A:
 
 ######## COMMON TERMINAL TYPES
 #
@@ -2419,7 +2554,7 @@ hp2648|hp2648a|HP 2648a graphics terminal:\
 # clreol standout problem. It also has graphics capabilities and 
 # a touch screen, which we don't describe here.
 hp150|hewlett packard Model 150:\
-	:tc=hp2622:
+	:bs:tc=hp2622:
 
 # HP 2382a terminals, "the little ones." They don't have any 
 # alternate character set support and sending out ^N/^O will 
@@ -2633,7 +2768,7 @@ hp2|hpex2|hewlett-packard extended capabilities newer version:\
 # HP 236 console
 # From: <ddavis@ic.berkeley.edu>
 hp236|hp236 internal terminal emulator:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EG:ce=\EK:cl=\EF:cm=\EE%+ %+ :dc=\EJ:dl=\EH:ei=:ic=\EI:\
 	:im=:le=^H:me=\ECI:se=\ECI:so=\EBI:up=^K:ve=\EDE:vs=\EDB:
@@ -2641,7 +2776,7 @@ hp236|hp236 internal terminal emulator:\
 # This works on a hp300 console running Utah 4.3 BSD
 # From: Craig Leres <leres@okeeffe.berkeley.edu>
 hp300h|HP Catseye console:\
-	:am:da:db:mi:xs:\
+	:am:bs:da:db:mi:xs:\
 	:co#128:li#51:lm#0:sg#0:\
 	:al=\EL:bl=^G:bt=\Ei:cd=\EJ:ce=\EK:ch=\E&a%dC:\
 	:cl=\E&a0y0C\EJ:cm=\E&a%dy%dC:cr=^M:ct=\E3:cv=\E&a%dY:\
@@ -2651,7 +2786,7 @@ hp300h|HP Catseye console:\
 	:so=\E&dB:ta=^I:ue=\E&d@:up=\EA:us=\E&dD:
 # From: Greg Couch <gregc@ernie.berkeley.edu>
 hp9837|hp98720|hp98721|HP 9000/300 workstations:\
-	:am:da:db:mi:xs:\
+	:am:bs:da:db:mi:xs:\
 	:co#128:it#8:li#46:lm#0:\
 	:al=\EL:bl=^G:bt=\Ei:cd=\EJ:ce=\EK:ch=\E&a%dC:\
 	:cl=\E&a0y0C\EJ:cm=\E&a%dy%dC:ct=\E3:cv=\E&a%dY:dc=\EP:\
@@ -2672,7 +2807,7 @@ hp9845|HP 9845:\
 # (hp98550: replaced /usr/share/tabset/9837 with std because :it#8:,:st=\E1:;
 # added empty <acsc> to avoid warnings re :as:/:ae: --esr)
 hp98550|hp98550a|HP 9000 Series 300 color console:\
-	:am:da:db:mi:xs:\
+	:am:bs:da:db:mi:xs:\
 	:co#128:it#8:li#49:lm#0:\
 	:ac=:ae=^O:al=\EL:as=^N:bl=^G:bt=\Ei:cd=\EJ:ce=\EK:\
 	:ch=\E&a%dC:cl=\EH\EJ:cm=\E&a%dy%dC:cr=^M:ct=\E3:\
@@ -2689,7 +2824,7 @@ hp98550|hp98550a|HP 9000 Series 300 color console:\
 # (hp700-wy: removed obsolete ":nl=^J:";
 # replaced /usr/share/tabset/hp700-wy with std because :it#8:,:st=\E1: -- esr)
 hp700-wy|HP700/41 emulating wyse30:\
-	:am:bw:mi:ms:\
+	:am:bs:bw:mi:ms:\
 	:co#80:it#8:li#24:sg#1:ug#1:\
 	:al=0.7*\EE:bt=\EI:cd=\EY:ce=10\ET:cl=^Z:cm=\E=%+ %+ :\
 	:cr=^M:ct=\E0:cv=\E[%+ :dc=\EW:dl=\ER:do=^V:ei=\Er:ho=^^:\
@@ -2765,13 +2900,11 @@ dku7003|Honeywell Bull DKU 7003 all features described:\
 # emulations (usually their stupidest, and usually labeled adm3, though
 # these `adm3' emulations normally have adm3a+ capabilities).
 #
-# WARNING: Some early ADM terminals (including the ADM3 and ADM5) are 
-# reputed to have had the weird `feature' that sending them a ^G would trigger
-# a diagnostic dump to screen if one of the more obscure RS-232 pins
-# (variously reported as 22 or as `Ring Indicator') was being held high during
-# receipt of the ^G.  If you have a real ADM and think you've run into this,
-# check it out with a breakout box and tell us if this rumor is correct!
-# A quick fix might be to drop back to a cheesy 4-wire cable.
+# WARNING: Some early ADM terminals (including the ADM3 and ADM5) had a 
+# `diagnostic feature' that sending them a ^G while pin 22 (`Ring Indicator')
+# was being held to ground would trigger a send of the top line on the screen.
+# A quick fix might be to drop back to a cheesy 4-wire cable with pin 22
+# hanging in the air.
 #
 
 adm1a|adm1|lsi adm1a:\
@@ -2780,14 +2913,14 @@ adm1a|adm1|lsi adm1a:\
 	:bl=^G:cl=\E;:cm=\E=%+ %+ :cr=^M:do=^J:ho=^^:le=^H:nd=^L:\
 	:sf=^J:up=^K:
 adm2|lsi adm2:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EE:bl=^G:cd=\EY:ce=\ET:cl=\E;:cm=\E=%+ %+ :cr=^M:\
 	:dc=\EW:dl=\ER:do=^J:ei=:ho=^^:ic=\EQ:im=:kd=^J:kh=^^:kl=^H:\
 	:kr=^L:ku=^K:le=^H:nd=^L:sf=^J:up=^K:
 # (adm3: removed obsolete ":ma=^K^P:" -- esr)
 adm3|lsi adm3:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cl=^Z:cr=^M:do=^J:le=^H:sf=^J:
 # The following ADM-3A switch settings are assumed for normal operation:
@@ -2854,7 +2987,7 @@ adm12|lsi adm12:\
 	:tc=adm+sgr:
 # (adm20: removed obsolete ":kn#7:" -- esr)
 adm20|lear siegler adm20:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:al=\EE:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=^Z:\
 	:cm=\E=%i%r%+^_%+^_:cr=^M:dc=\EW:dl=\ER:ei=:ho=^^:ic=\EQ:\
@@ -2869,7 +3002,7 @@ adm21|lear siegler adm21:\
 # removed obsolete ":kn#7:ma=j^Jk^P^K^Pl ^R^L^L :";
 # removed bogus-looking \200 from before :cm:. -- esr)
 adm22|lsi adm22:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EE:bl=^G:bt=\EI:cd=\Ey:ce=\Et:cl=\E+:cm=\E=%+ %+ :\
 	:cr=^M:dc=\EW:dl=\ER:do=^J:ei=:ho=^^:ic=\EQ:im=:\
@@ -3022,7 +3155,7 @@ adm22|lsi adm22:\
 # OFF.  If there is no such switch, you have an old adm31 and must use oadm31.
 # (adm31: removed obsolete ":ma=j^Jk^P^K^Pl ^R^L^L :" -- esr)
 adm31|lsi adm31 with sw6 set for underline mode:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#80:li#24:\
 	:al=\EE:bl=^G:cd=\EY:ce=\ET:cl=\E*:cm=\E=%+ %+ :cr=^M:\
 	:dc=\EW:dl=\ER:do=^J:ei=\Er:ho=^^:im=\Eq:is=\Eu\E0:k0=^A0\r:\
@@ -3624,7 +3757,7 @@ tvi924|televideo tvi924:\
 #
 # (tvi925: BSD has :cl=\E*:.  I got :is: and :sr: from there -- esr)
 tvi925|televideo 925:\
-	:am:bw:hs:ul:\
+	:am:bs:bw:hs:ul:\
 	:co#80:li#24:sg#1:\
 	:al=\EE:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=^Z:cm=\E=%+ %+ :cr=^M:\
 	:ct=\E3:dc=\EW:dl=\ER:do=^V:ds=\Eh:ei=:fs=^M\Eg:ho=^^:ic=\EQ:\
@@ -3738,7 +3871,7 @@ tvi925-hi|TeleVideo Model 925 with half intensity standout mode:\
 # should be present and all tvi native modes use the same string for this.
 # Finally, note that BSD has cud1=^V. -- esr) 
 tvi950|televideo 950:\
-	:am:hs:mi:ms:xn:xo:\
+	:am:bs:hs:mi:ms:xn:xo:\
 	:co#80:it#8:li#24:sg#1:\
 	:ac=d\rc\014e\nb\011i\013:ae=^X:al=\EE:as=^U:bl=^G:bt=\EI:\
 	:cd=\Ey:ce=\Et:cl=\E*:cm=\E=%+ %+ :cr=^M:ct=\E3:dc=\EW:\
@@ -3814,7 +3947,7 @@ tvi950-rv-4p|televideo950 rev video w/4 pages:\
 # If the BSD termcap file was right, :cm=\E=%p1%{32}%+%c%p2%{32}%+%c: would
 # also work.
 tvi955|televideo 955:\
-	:5i:ms@:\
+	:5i:bs:ms@:\
 	:it#8:sg@:\
 	:RA=\E[=7l:RX=^N:SA=\E[=7h:SX=^O:\
 	:ac=0_`RjHkGlFmEnIoPqKsQtMuLvOwNxJ:ae=\E%:as=\E$:\
@@ -3936,7 +4069,7 @@ vi50adm|visual 50 in adm3a mode:\
 	:nd=^L:se=\ET:sf=^J:so=\EU:ta=^I:up=^K:
 # From: Jeff Siegal <jbs@athena.mit.edu>
 vi55|Visual 55:\
-	:am:mi:ms:\
+	:am:bs:mi:ms:\
 	:co#80:it#8:li#24:\
 	:al=\EL:cd=\EJ:ce=\EK:cl=\Ev:cm=\EY%+ %+ :cs=\E_%+A%+A:\
 	:dc=\Ew:dl=\EM:do=^J:ei=\Eb:ho=\EH:im=\Ea:\
@@ -4077,7 +4210,7 @@ vi603|visual603|visual 603:\
 #	should be used.
 #
 wy30|wyse30|Wyse 30:\
-	:5i:am:bw:hs:mi:ms:xo:\
+	:5i:am:bs:bw:hs:mi:ms:xo:\
 	:Nl#8:co#80:lh#1:li#24:lw#8:ma#1:ws#45:\
 	:#2=\E{:&3=\Er:@8=\E7:LF=\EA11:LO=\EA10:\
 	:ac=0wa_h[jukslrmqnxqzttuyv]wpxv:ae=\EH^C:al=\EE:\
@@ -4122,7 +4255,7 @@ wy30-vb|wyse30-vb|wyse 30 visible bell:\
 #	to correctly handle multiple attributes on a screen.
 #
 wy50|wyse50|Wyse 50:\
-	:5i:am:bw:hs:mi:ms:xo:\
+	:5i:am:bs:bw:hs:mi:ms:xo:\
 	:Nl#8:co#80:lh#1:li#24:lw#8:ma#1:ws#45:\
 	:#2=\E{:%9=\EP:&3=\Er:@8=\E7:F1=^AJ\r:F2=^AK\r:F3=^AL\r:\
 	:F4=^AM\r:F5=^AN\r:F6=^AO\r:LF=\EA11:LO=\EA10:\
@@ -4306,7 +4439,7 @@ wy120-w-vb|wy120-wvb|wyse120-wvb|wy150-w-vb|wyse150-w-vb|Wyse 120/150 132-column
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 wy60|wyse60|Wyse 60:\
-	:am:bw:hs:km:mi:ms:\
+	:am:bs:bw:hs:km:mi:ms:\
 	:co#80:li#24:ws#45:\
 	:ae=\EcD:al=\EE:as=\EcE:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=\E+:\
 	:cm=\E=%+ %+ :cr=^M:ct=\E0:dc=\EW:dl=\ER:do=^J:ds=\EF\r:\
@@ -4480,7 +4613,7 @@ wy160-w-vb|wy160-wvb|wyse160-wvb|Wyse 160 132-column visible bell:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 wy75|wyse75|wyse 75:\
-	:am:hs:mi:ms:xn:xo:\
+	:am:bs:hs:mi:ms:xn:xo:\
 	:co#80:li#24:ma#1:pb#1201:ws#78:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOu:K3=\EOy:K4=\EOq:K5=\EOs:LE=\E[%dD:\
@@ -4536,7 +4669,7 @@ wy75-wvb|wyse75-wvb|wyse 75 with visible bell 132 columns:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 wy85|wyse85|wyse 85:\
-	:am:hs:mi:ms:xn:xo:\
+	:am:bs:hs:mi:ms:xn:xo:\
 	:co#80:it#8:li#24:ws#80:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOu:K3=\EOy:K4=\EOq:K5=\EOs:LE=\E[%dD:\
@@ -4998,7 +5131,7 @@ wy520-48wpc|wyse520-48wpc|wyse 520 with 48 data lines:\
 # (wyse-vp: removed :if=/usr/share/tabset/wyse-adds:, there's no such
 # file and we don't know what :st: is -- esr)
 wyse-vp|wyse|Wyse 50 in ADDS Viewpoint emulation mode with "enhance" on:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:al=\EM:bl=^G:cd=\Ek:ce=\EK:cl=^L:cm=\EY%+ %+ :cr=^M:dc=\EW:\
 	:dl=\El:do=^J:ei=\Er:ho=^A:im=\Eq:is=\E`\072\E`9\017\Er:\
@@ -5013,6 +5146,7 @@ wy75ap|wyse75ap|wy-75ap|wyse-75ap|Wyse WY-75 Applications and Cursor keypad:\
 
 # From: Eric Freudenthal <freudent@eric.ultra.nyu.edu>
 wy100q|Wyse 100 for Quotron:\
+	:bs:\
 	:co#80:li#24:sg#1:\
 	:al=\EE:bt=\EI:cd=\EY:ce=\ET:cl=^Z:cm=\E=%+ %+ :dc=\EW:\
 	:dl=\ER:do=^J:ei=\Er:ho=^^:im=\Eq:\
@@ -5031,6 +5165,7 @@ wy100q|Wyse 100 for Quotron:\
 # (kermit: removed obsolete ":ma=^Hh^Jj^Kk^Ll^^H:" -- esr)
 # From: greg small <gts@populi.berkeley.edu> 9-25-84
 kermit|standard kermit:\
+	:bs:\
 	:co#80:li#24:\
 	:cd=\EJ:ce=\EK:cl=\EE:cm=\EY%+ %+ :ho=\EH:\
 	:is=K0 Standard Kermit  9-25-84\n:kd=^J:kh=^^:kl=^H:\
@@ -5069,7 +5204,7 @@ pckermit120|UCB IBMPC Kermit 1.20:\
 # (msk227: removed obsolete ":ma=^Hh^Jj^Kk^Ll^^H:" -- esr)
 # From: greg small <gts@populi.berkeley.edu> 3-17-85
 msk227|mskermit227|MS-DOS Kermit 2.27 for the IBMPC:\
-	:am@:\
+	:am@:bs:\
 	:co#80:it#8:li#24:\
 	:al=\EL:cd=\EJ:ce=\EK:cl=\EE:cm=\EY%+ %+ :dc=\EN:dl=\EM:\
 	:do=\EB:ei=\EO:ho=\EH:im=\E@:\
@@ -5182,6 +5317,37 @@ avatar|avatar1|avatar terminal emulator level 1:\
 	:vs=^V^C:\
 	:tc=avatar0+:
 
+#### RBcomm
+#
+# RBComm is a lean and mean terminal emulator written by the Interrupt List
+# mantainer, Ralf Brown. It was fairly popular in the late DOS years (early
+# '90s), especially in the BBS world, and still has some loyal users due to
+# its very small memory footprint and to a cute macro language.
+rbcomm|IBM PC with RBcomm and EMACS keybindings:\
+	:am:bw:mi:ms:xn:\
+	:co#80:it#8:li#25:\
+	:AL=\E[%dL:DL=\E[%dM:al=^K:bl=^G:bt=\E[Z:cd=^F5:ce=^P^P:\
+	:cl=^L:cm=\037%r%+ %+ :cr=^M:cs=\E[%i%d;%dr:dc=^W:dl=^Z:\
+	:dm=:do=^C:ec=\E[%dX:ed=:ei=^]:im=^\:\
+	:is=\017\035\E(B\E)0\E[?7h\E[?3l\E[>8g:kb=^H:kd=^N:\
+	:ke=\E>:kh=^A:kl=^B:kr=^F:ks=\E=:ku=^P:le=^H:mb=\E[5m:\
+	:md=\E[1m:me=\E[m:mk=\E[8m:mr=^R:nd=^B:nw=^M\ED:\
+	:r1=\017\E(B\E)0\025\E[?3l\E[>8g:rc=\E8:rp=\030%.%.:\
+	:sc=\E7:se=^U:sf=\ED:so=^R:sr=\EM:ta=^I:te=:ti=:ue=^U:up=^^:\
+	:us=^T:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
+rbcomm-nam|IBM PC with RBcomm, no autowrap:\
+	:am@:\
+	:bl=^G:cr=^M:do=^J:\
+	:is=\017\035\E(B\E)0\E[?7l\E[?3l\E[>8g:kb=^H:kd=^J:\
+	:kl=^H:nw=^M^J:sf=^J:ta=^I:\
+	:tc=rbcomm:
+rbcomm-w|IBM PC with RBcomm, 132 column mode:\
+	:co#132:\
+	:bl=^G:cr=^M:do=^J:\
+	:is=\017\035\E(B\E)0\E[?7h\E[?3h\E[>8g:kb=^H:kd=^J:\
+	:kl=^H:nw=^M^J:sf=^J:ta=^I:\
+	:tc=rbcomm:
+
 ######## OLDER TERMINAL TYPES
 #
 # This section is devoted to older commercial terminal brands that are now
@@ -5192,8 +5358,9 @@ avatar|avatar1|avatar terminal emulator level 1:\
 #
 # This section also includes Teletype-branded VDTs.
 #
-# The AT&T/Teletype terminals group was sold to SunRiver Data Systems; for
-# details, see the header comment on the ADDS section.
+# The AT&T/Teletype terminals group was sold to SunRiver Data Systems (now
+# Boundless Technologies); for details, see the header comment on the ADDS
+# section.
 #
 # These are AT&T's official terminfo entries.  All-caps aliases have been
 # removed.
@@ -5249,8 +5416,8 @@ att4410v1-w|att5410v1-w|tty5410v1-w|AT&T 4410/5410 132 columns - version 1:\
 	:i1=\E[?3h\E)0:r2=\Ec\E[?3h\E[2;0y:tc=att5410v1:
 
 att4410|att5410|tty5410|AT&T 4410/5410 80 columns - version 2:\
-	:..px=\E[%p1%d;%p2%l%02dq   f%p1%d           %p2%s:\
-	:tc=att5410v1:
+	:bs:\
+	:..px=\E[%p1%d;%p2%l%02dq   f%p1%d           %p2%s:tc=att5410v1:
 
 att5410-w|att4410-w|4410-w|tty5410-w|5410-w|AT&T 4410/5410 in 132 column mode:\
 	:co#132:ws#132:\
@@ -5315,7 +5482,7 @@ v5410|att5410 in terms of a vt100:\
 # (att4415: I added <rmam>/<smam> based on the init string -- esr)
 # (untranslatable capabilities removed to fit entry within 1023 bytes)
 att4415|tty5420|att5420|AT&T 4415/5420 80 cols:\
-	:db:mi:xo:\
+	:bs:db:mi:xo:\
 	:Nl#8:lh#2:lm#78:lw#8:ws#55:\
 	:@1=\Et:@7=\Ez:@8=\Eent:AL=\E[%dL:CM=\E[%i%p1%d;%p2%dt:\
 	:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:LF=\E|:\
@@ -5415,7 +5582,7 @@ att4418-w|att5418-w|AT&T 5418 132 cols:\
 	:i1=\E[?3h:tc=att5418:
 
 att4420|tty4420|teletype 4420:\
-	:da:db:eo:ms:ul:xo:\
+	:bs:da:db:eo:ms:ul:xo:\
 	:co#80:li#24:lm#72:\
 	:al=\EL:bl=^G:cd=\EJ:ce=\Ez:cl=\EH\EJ:cm=\EY%+ %+ :cr=\EG:\
 	:dc=\EP:dl=\EM:dm@:do=\EB:ed@:ho=\EH:k0=\EU:k3=\E@:kA=\EL:\
@@ -5440,7 +5607,7 @@ att4420|tty4420|teletype 4420:\
 #
 # (att4424: commented out :ti:=\E[1m, we don't need bright locked on -- esr)
 att4424|tty4424|teletype 4424:\
-	:am:xo:\
+	:am:bs:xo:\
 	:co#80:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:\
@@ -5657,7 +5824,7 @@ att5620-1|tty5620-1|dmd1|Teletype 5620 with old ROMs:\
 # also has :ll:=\E[70H commented out and marked unsafe.
 # For more, see the 5620 FAQ maintained by David Breneman <daveb@dgtl.com>.
 att5620|dmd|tty5620|ttydmd|5620|5620 terminal 88 columns:\
-	:NL:NP:am:ms:xo:\
+	:NL:NP:am:bs:ms:xo:\
 	:co#88:it#8:li#70:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:IC=\E[%d@:SF=\E[%dS:\
 	:SR=\E[%dT:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
@@ -5829,7 +5996,7 @@ att620-103k-w|AT&T 620; 132 column; 103key keyboard:\
 # delays are specified; use "stty ixon -ixany" to enable DC3/DC1 flow control!
 # (att630: added :ic:, :mb: and :mh: from a BSD termcap file -- esr)
 att630|AT&T 630 windowing terminal:\
-	:NP:am:da:db:mi:ms:xo:\
+	:NP:am:bs:da:db:mi:ms:xo:\
 	:co#80:it#8:li#60:lm#0:\
 	:@8=^M:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:F1=\ENq:\
 	:F2=\ENr:F3=\ENs:F4=\ENt:F5=\ENu:F6=\ENv:F7=\ENw:F8=\ENx:\
@@ -6099,7 +6266,7 @@ tt505-22|pt505-22|gs5430-22|AT&T PT505 or 5430 GETSET version 1 22 lines:\
 # From: <cbosg!ucbvax!SRC:george> Fri Sep 11 22:38:32 1981
 # (ampex80: some capabilities merged in from SCO's entry -- esr)
 ampex80|a80|d80|dialogue|dialogue80|ampex dialogue 80:\
-	:am:bw:ul:\
+	:am:bs:bw:ul:\
 	:co#80:it#8:li#24:\
 	:al=\EE:bl=^G:bt=\EI:cd=\Ey:ce=\Et:cl=\E*:cm=\E=%+ %+ :\
 	:cr=^M:ct=\E3:dc=\EW:dl=\ER:do=^J:ei=:ic=\EQ:im=:is=\EA:le=^H:\
@@ -6125,7 +6292,7 @@ ampex175-b|ampex d175 using left arrow for erase:\
 # From: Richard Bascove <atd!dsd!rcb@ucbvax.berkeley.edu>
 # (ampex210: removed obsolete ":kn#10:" -- esr)
 ampex210|a210|ampex a210:\
-	:am:hs:xn:\
+	:am:bs:hs:xn:\
 	:co#80:it#8:li#24:sg#1:\
 	:al=\EE:bt=\EI:cd=\Ey:ce=\Et:cl=\E*:cm=\E=%+ %+ :dc=\EW:\
 	:dl=\ER:ei=:fs=\E.2:ho=^^:ic=\EQ:if=/usr/share/tabset/std:\
@@ -6299,7 +6466,7 @@ ampex232w|Ampex Model 232 / 132 columns:\
 #
 
 annarbor4080|aa4080|ann arbor 4080:\
-	:am:\
+	:am:bs:\
 	:co#80:li#40:\
 	:bl=^G:cl=\014:\
 	:..cm=\017%p2%{10}%/%{16}%*%p2%{10}%m%+%c%p1%?%p1%{19}%>%t%{12}%+%;%'@'%+%c:\
@@ -6326,7 +6493,7 @@ aas1901|Ann Arbor K4080 w/S1901 mod:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 aaa+unk|aaa-unk|ann arbor ambassador (internal - don't use this directly):\
-	:am:km:mi:xo:\
+	:am:bs:km:mi:xo:\
 	:co#80:it#8:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:bl=^G:bt=\E[Z:\
@@ -6453,8 +6620,8 @@ aaa-60|ann arbor ambassador/60 lines:\
 aaa-60-rv|ann arbor ambassador/60 lines+reverse video:\
 	:tc=aaa+rv:tc=aaa-60:
 aaa-db|ann arbor ambassador 30/destructive backspace:\
-	:i2=\E[1Q\E[m\E[>20l\E[>30h:le=\E[D:\
-	:tc=aaa-30:
+	:bs@:\
+	:i2=\E[1Q\E[m\E[>20l\E[>30h:le=\E[D:tc=aaa-30:
 
 guru|guru-33|guru+unk|ann arbor guru/33 lines 80 cols:\
 	:li#33:\
@@ -6522,17 +6689,18 @@ aaa-rv-unk|ann arbor unknown type:\
 # ADDS itself is long gone.  ADDS was bought by NCR, and the same group made
 # ADDS and NCR terminals.  When AT&T and NCR merged, the engineering for
 # terminals was merged again.  Then AT&T sold the terminal business to
-# SunRiver.  The engineers from Teletype, AT&T terminals, ADDS,
-# and NCR (who are still there as of early 1995) are at:
+# SunRiver, which later changed its  name to Boundless Technologies.  The
+# engineers from Teletype, AT&T terminals, ADDS, and NCR (who are still there
+# as of early 1995) are at:
 #
-#	SunRiver Data Systems
+#	Boundless Technologies
 #	100 Marcus Boulevard
 #	Hauppauge, NY 11788-3762
 #	Vox: (800)-231-5445
 #	Fax: (516)-342-7378
 #
 # Their voice mail used to describe the place as "SunRiver (formerly ADDS)". 
-# In 1995 SunRiver acquired DEC's terminals business.
+# In 1995 Boundless acquired DEC's terminals business.  
 #
 
 # Regent: lowest common denominator, works on all regents.
@@ -6571,7 +6739,7 @@ regent60|regent200|Adds Regent 60:\
 # From: <edward@onyx.berkeley.edu> Thu Jul  9 09:27:33 1981
 # (viewpoint: added :kr:, function key, and :dl: capabilities -- esr)
 viewpoint|addsviewpoint|adds viewpoint:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cd=\Ek:ce=\EK:cl=^L:cm=\EY%+ %+ :cr=^M:dl=\El:do=^J:\
 	:is=\017\E0`:k0=^B1:k2=^B2:k3=^B\041:k4=^B":k5=^B#:kd=^J:\
@@ -6608,7 +6776,7 @@ vp60|viewpoint60|addsvp60|adds viewpoint60:\
 #               the status line
 # Function key and label capabilities merged in from SCO.
 vp90|viewpoint90|adds viewpoint 90:\
-	:bw:ms:xs:\
+	:bs:bw:ms:xs:\
 	:co#80:li#24:\
 	:cd=\Ek:ce=\EK:cl=\EG\Ek:cm=\EY%+ %+ :dc=\EE:dl=\El:do=^J:\
 	:ei=:ho=\EY  :ic=\EF \EF\025:im=:k0=^B1\r:k1=^B2\r:\
@@ -6621,7 +6789,7 @@ vp90|viewpoint90|adds viewpoint 90:\
 # Note: if return acts weird on a980, check internal switch #2
 # on the top chip on the CONTROL pc board.
 adds980|a980|adds consul 980:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\E\016:bl=^G:cl=\014\013@:cm=\013%+@\E\005%2:cr=^M:\
 	:dl=\E\017:do=^J:k0=\E0:k1=\E1:k2=\E2:k3=\E3:k4=\E4:k5=\E5:\
@@ -6639,7 +6807,7 @@ adds980|a980|adds consul 980:\
 #           the delay times and do an auto tab set rather than the indirect
 #           file used in vt100.
 cit80|cit-80|citoh 80:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:cd=\EJ:ce=\EK:cl=\E[H\EJ:cm=\E[%i%2;%2H:cr=^M:ff=^L:\
 	:is=\E>:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:\
@@ -6647,7 +6815,7 @@ cit80|cit-80|citoh 80:\
 # From: Tim Wood <mtxinu!sybase!tim> Fri Sep 27 09:39:12 PDT 1985
 # (cit101: added <rmam>/<smam> based on init string, merged this with c101 -- esr)
 cit101|citc|C.itoh fast vt100:\
-	:am:xn:\
+	:am:bs:xn:\
 	:co#80:li#24:\
 	:RA=\E[?7l:SA=\E[?7h:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:\
 	:cl=\E[H\E[2J:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:ei=:ic=\E[@:\
@@ -6743,7 +6911,7 @@ citoh-8lpi|citoh in 8 lines per inch mode:\
 #
 
 cdc456|cdc 456 terminal:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EL:bl=^G:cd=^X:ce=^V:cl=^Y^X:cm=\E1%+ %+ :cr=^M:dl=\EJ:\
 	:do=^J:ho=^Y:le=^H:nd=^L:sf=^J:up=^Z:
@@ -6902,7 +7070,7 @@ c108|concept108|c108-8p|concept108-8p|concept 108 w/8 pages:\
 	:te=\Ev  \001\177p\Ep\r\n:\
 	:tc=c108-4p:
 c108-4p|concept108-4p|concept 108 w/4 pages:\
-	:es:hs:xo:\
+	:bs:es:hs:xo:\
 	:pb@:\
 	:ac=l\qLkTxUmMjE:ae=\Ej :as=\Ej\041:\
 	:..cm=\Ea%p1%?%p1%{95}%>%t\001%{96}%-%;%{32}%+%c%p2%?%p2%{95}%>%t\001%{96}%-%;%{32}%+%c:\
@@ -6961,7 +7129,7 @@ c108-w|c108-w-8p|concept108-w-8|concept108-w8p|concept 108 w/8 pages in wide mod
 # cannot be # in is2 because it will hang a c100 with no printer 
 # if sent twice.
 c100|concept100|concept|c104|c100-4p|hds concept 100:\
-	:am:eo:mi:ul:xn:\
+	:am:bs:eo:mi:ul:xn:\
 	:co#80:li#24:pb#9600:vt#8:\
 	:al=\E\022:bl=^G:cd=\E\005:ce=\E\025:cl=\E?\E\005:\
 	:cm=\Ea%+ %+ :cr=\r:dc=\E\021:dl=\E\002:do=^J:ei=\E  :\
@@ -6988,7 +7156,7 @@ oc100|oconcept|c100-1p|old 1 page concept 100:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 avt-ns|concept avt no status line:\
-	:am:eo:mi:ul:xn:xo:\
+	:am:bs:eo:mi:ul:xn:xo:\
 	:co#80:it#8:li#24:lm#192:\
 	:AL=\E[%dL:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:\
 	:RI=\E[%dC:UP=\E[%dA:ae=\016:al=\E[L:as=\017:bl=^G:bt=\E[Z:\
@@ -7069,7 +7237,7 @@ contel301|contel321|c301|c321|Contel Business Systems C-301 or C-321:\
 # notation that's "^P%r%+\200%+\200").  Those \200s are suspicious,
 # maybe they were originally nuls (which would fit).
 dg200|data general dasher 200:\
-	:NL:am:bw:\
+	:NL:am:bs:bw:\
 	:co#80:li#24:\
 	:bl=^G:ce=^K:cl=^L:cm=\020%r%.%.:cr=^M:do=^Z:ho=^H:k0=^^z:\
 	:k1=^^q:k2=^^r:k3=^^s:k4=^^t:k5=^^u:k6=^^v:k7=^^w:k8=^^x:\
@@ -7105,7 +7273,7 @@ dg450|dg6134|data general 6134:\
 # grounds that there is no matching ":ml:"
 # fixed garbled ":k9=\E[00\:z:" capability -- esr)
 dg460-ansi|Data General Dasher 460 in ANSI-mode:\
-	:am:ms:ul:\
+	:am:bs:ms:ul:\
 	:co#80:it#8:li#24:\
 	:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[2J:cm=\E[%i%2;%2H:dc=\E[P:\
 	:dl=\E[M:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:is=^^F@:k0=\E[001z:\
@@ -7166,12 +7334,12 @@ cs10-w|Datamedia Color Scan 10 with 132 columns:\
 
 # (dm1520: removed obsolete ":ma=^\ ^_^P^YH:" -- esr)
 dm1520|dm1521|datamedia 1520:\
-	:am:xn:\
+	:am:bs:xn:\
 	:co#80:it#8:li#24:\
 	:bl=^G:cd=^K:ce=^]:cl=^L:cm=\036%r%+ %+ :cr=^M:do=^J:ho=^Y:\
 	:kd=^J:kh=^Y:kl=^H:kr=^\:ku=^_:le=^H:nd=^\:sf=^J:ta=^I:up=^_:
 dm2500|datamedia2500|datamedia 2500:\
-	:nc:\
+	:bs:nc:\
 	:co#80:li#24:\
 	:al=\020\n\030\035\030\035:bl=^G:ce=^W:cl=^^^^\177:\
 	:cm=\014%r%n%.%.:dc=\020\010\030\035:\
@@ -7187,14 +7355,14 @@ dmchat|dmchat version of datamedia 2500:\
 	:al=1*\020\n\030\035\030\035:dl=2\020\032\030\035:tc=dm2500:
 # (dm3025: ":MT:" changed to ":km:" -- esr)
 dm3025|datamedia 3025a:\
-	:km:\
+	:bs:km:\
 	:co#80:it#8:li#24:\
 	:al=\EP\n\EQ:bl=^G:cd=\EJ:ce=\EK:cl=\EM:cm=\EY%r%+ %+ :\
 	:cr=^M:dc=\010:dl=\EP\EA\EQ:dm=\EP:do=^J:ed=\EQ:ei=\EQ:\
 	:ho=\EH:im=\EP:ip=:is=\EQ\EU\EV:le=^H:nd=\EC:se=\EO0:sf=^J:\
 	:so=\EO1:ta=^I:up=\EA:
 dm3045|datamedia 3045a:\
-	:am:eo:km@:ul:xn:\
+	:am:bs:eo:km@:ul:xn:\
 	:al@:dc=\EB:dl@:dm@:ed@:ei=\EP:is=\EU\EV:k0=\Ey\r:k1=\Ep\r:\
 	:k2=\Eq\r:k3=\Er\r:k4=\Es\r:k5=\Et\r:k6=\Eu\r:k7=\Ev\r:\
 	:k8=\Ew\r:k9=\Ex\r:kh=\EH:kr=\EC:ku=\EA:pc=\177:se@:so@:\
@@ -7295,14 +7463,14 @@ excel62-rv|excel64-rv|datamedia Excel 62 in reverse video mode:\
 # This terminal was released around 1983 and was discontinued long ago.
 # The standout and underline highlights are the same.
 falco|ts1|ts-1|falco ts-1:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:al=\EE:bl=^G:cd=\EY:ce=\ET\EG0\010:cl=\E*:cm=\E=%+ %+ :\
 	:cr=^M:dc=\EW:dl=\ER:do=^J:ei=\Er:ho=^^:im=\Eq:is=\Eu\E3:\
 	:k0=^A0\r:kd=^J:kl=^H:kr=^L:ku=^K:le=^H:me=\Eg0:nd=^L:\
 	:se=\Eg0:sf=^J:so=\Eg1:ta=^I:ue=\Eg0:up=^K:us=\Eg1:
 falco-p|ts1p|ts-1p|falco ts-1 with paging option:\
-	:am:da:db:mi:ms:ul:\
+	:am:bs:da:db:mi:ms:ul:\
 	:co#80:it#8:li#24:\
 	:al=\EE:bl=^G:bt=\EI:cd=\EY:ce=\ET\EG0\010\Eg0:cl=\E*:\
 	:cm=\E=%+ %+ :cr=^M:dc=\EW:dl=\ER:do=\E[B:ei=\Er:im=\Eq:\
@@ -7379,7 +7547,7 @@ f1720|f1720a|fluke 1720A:\
 # made this relative to adm+sgr -- note that <invis> isn't
 # known to work for f100 but does on the f110. --esr)
 f100|freedom|freedom100|freedom model 100:\
-	:am:bw:hs:mi:ms:xo:\
+	:am:bs:bw:hs:mi:ms:xo:\
 	:co#80:li#24:\
 	:ac=:ae=\E$:al=\EE:as=\E%:bl=^G:bt=\EI:cd=\EY:ce=\ET:\
 	:ch=\E]%+ :cl=^Z:cm=\E=%+ %+ :cr=^M:ct=\E3:cv=\E[%+ :\
@@ -7419,7 +7587,7 @@ f110-14w|Liberty Freedom 110 14in/132 cols:\
 	:dc@:tc=f110:
 # (f200: added <acsc> to suppress tic warnings re :as:/:ae: --esr)
 f200|freedom200|Liberty Freedom 200:\
-	:am:es:hs:mi:ms:xo:\
+	:am:bs:es:hs:mi:ms:xo:\
 	:co#80:it#8:li#24:ws#80:\
 	:ac=:ae=\E%%:al=\EE:as=\E$:bl=^G:bt=\EI:cd=\EY:ce=\ET:\
 	:ch=\E]%+ :cl=^Z:cm=\E=%+ %+ :cr=^M:cs=\Em0%+ %+ :ct=\E3:\
@@ -7457,6 +7625,7 @@ f200vi-w|Liberty Freedom 200 - 132 cols for vi:\
 # line) by an escape sequence.  No info on this beast yet.
 # (go140: I added <rmam>/<smam> based on the init string -- esr)
 go140|graphon go-140:\
+	:bs:\
 	:co#80:it#8:li#24:\
 	:RA=\E[?7l:SA=\E[?7h:al=\E[L:cd=10\E[J:ce=\E[K:\
 	:cl=10\E[H\E[2J:cm=\E[%i%2;%2H:dc=\E[P:dl=\E[M:ei=\E[4l:\
@@ -7474,7 +7643,7 @@ go140w|graphon go-140 in 132 column mode:\
 # From: <edm@nwnexus.WA.COM>
 # (go225: I added <rmam>/<smam> based on the init string -- esr)
 go225|go-225|Graphon 225:\
-	:am:mi:xn:\
+	:am:bs:mi:xn:\
 	:co#80:it#8:li#25:vt#3:\
 	:RA=\E[?7l:SA=\E[?7h:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
 	:cm=\E[%i%d;%dH:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:do=^J:\
@@ -7553,7 +7722,7 @@ go225|go-225|Graphon 225:\
 # not AEP!
 #
 sb1|beehive superbee:\
-	:am:bw:da:db:mi:ul:xb:\
+	:am:bs:bw:da:db:mi:ul:xb:\
 	:co#80:li#25:sg#1:ug#1:\
 	:al=\EN\EL\EQ                                                                                \EP \EO\ER\EA:\
 	:bl=^G:bt=\E`:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EF%r%03%03:cr=\r:\
@@ -7597,7 +7766,7 @@ sb2|sb3|fixed superbee:\
 
 # (bee: :ic: was empty, which is obviously bogus -- esr)
 beehive|bee|harris beehive:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#80:li#24:\
 	:al=\EL:bt=\E>:cd=\EJ:ce=\EK:cl=\EE:cm=\EF%+ %+ :dc=\EP:\
 	:dl=\EM:do=\EB:ei=\E@:ho=\EH:im=\EQ:kA=\EL:kB=\E>:kC=\EE:\
@@ -7610,7 +7779,7 @@ beehive|bee|harris beehive:\
 # (beehive: :if=/usr/share/tabset/beehive: removed, no such file.  If you
 # really care, cook up one using ^F -- esr)
 beehive3|bh3m|beehiveIIIm|harris beehive 3m:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#20:\
 	:al=\023:bl=^G:cd=^R:ce=^P:cl=^E^R:cr=^M:dl=\021:do=^J:ho=^E:\
 	:le=^H:ll=^E^K:nd=^L:se= ^_:sf=^J:so=^] :st=^F:ta=^I:up=^K:
@@ -7620,7 +7789,7 @@ beehive4|bh4|beehive 4:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=\EE:cr=^M:do=^J:ho=\EH:le=\ED:nd=\EC:\
 	:sf=^J:up=\EA:
 microb|microbee|micro bee series:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=\EE:cm=\EF%+ %+ :cr=^M:do=^J:k1=\Ep:\
 	:k2=\Eq:k3=\Er:k4=\Es:k5=\Et:k6=\Eu:k7=\Ev:k8=\Ew:k9=\Ex:\
@@ -7668,11 +7837,12 @@ ha8686|harris 8686:\
 # vi - this terminal is too dumb for even vi.  (The code is
 # there but it isn't debugged for this case.)
 hz1000|hazeltine 1000:\
+	:bs:\
 	:co#80:li#12:\
 	:bl=^G:cl=^L:cr=^M:do=^J:ho=^K:le=^H:nd= :sf=^J:
 # From: <cbosg!ucbvax!pur-ee!cincy!chris> Thu Aug 20 09:09:18 1981
 hz1420|hazeltine 1420:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\E^Z:bl=^G:cd=\E^X:ce=\E^O:cl=\E^\:cm=\E\021%r%.%+ :\
 	:cr=^M:dl=\E^S:do=^J:le=^H:nd=^P:se=\E^Y:sf=^J:so=\E^_:ta=^N:\
@@ -7681,7 +7851,7 @@ hz1420|hazeltine 1420:\
 # freakout with out-of-range args and tn3270.  No hz since it needs to
 # receive tildes.
 hz1500|hazeltine 1500:\
-	:am:hz:\
+	:am:bs:hz:\
 	:co#80:li#24:\
 	:al=~\032:bl=^G:cd=~\030:ce=~^O:cl=~^\:\
 	:cm=~\021%r%>^^ %+`%+`:cr=^M:dl=~\023:do=~^K:ho=~^R:kd=^J:\
@@ -7692,7 +7862,7 @@ hz1500|hazeltine 1500:\
 # :so=\E^Y:, but these caps were commented out in 8.3; also,
 # removed incorrect and overridden ":do=^J:" -- esr)
 hz1510|hazeltine 1510:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\E^Z:bl=^G:cd=\E^X:ce=\E^O:cl=\E^\:cm=\E\021%r%.%.:\
 	:cr=^M:dl=\E^S:do=\E^K:le=^H:nd=^P:sf=^J:up=\E^L:
@@ -7721,6 +7891,7 @@ hz1520-noesc|hazeltine 1520:\
 # is not braindamaged.  It has tildes and backprimes and everything!
 # Be sure the auto lf/cr switch is set to cr.
 hz1552|hazeltine 1552:\
+	:bs:\
 	:al=\EE:dl=\EO:do=^J:k1=\EP:k2=\EQ:k3=\ER:l1=blue:l2=red:\
 	:l3=green:\
 	:tc=vt52:
@@ -7728,7 +7899,7 @@ hz1552-rv|hazeltine 1552 reverse video:\
 	:do=^J:se=\ET:so=\ES:tc=hz1552:
 # Note: h2000 won't work well because of a clash between upper case and ~'s.
 hz2000|hazeltine 2000:\
-	:am:nc:\
+	:am:bs:nc:\
 	:co#74:li#27:\
 	:al=~\032:bl=^G:cl=~\034:cm=~\021%r%.%.:dl=~\023:do=^J:\
 	:ho=~^R:le=^H:pc=\177:sf=^J:
@@ -7741,7 +7912,7 @@ hz2000|hazeltine 2000:\
 # char as a built in function. Vi has to delete to end of line and then 
 # redraw the rest of the line.
 esprit|Hazeltine Esprit I:\
-	:am:bw:\
+	:am:bs:bw:\
 	:co#80:li#24:\
 	:al=\E^Z:bl=^G:bt=\E^T:cd=\E^W:ce=\E^O:cl=\E^\:\
 	:cm=\E\021%r%.%.:cr=^M:dl=\E^S:do=\E^K:ho=\E^R:is=\E?:\
@@ -7789,7 +7960,7 @@ ibm327x|line mode IBM 3270 style:\
 # From: J.B. Nicholson-Owens <jeffo@uiuc.edu> 8 Mar 94
 # (ibm3101: :if=/usr/share/tabset/ibm3101: removed, no such file -- esr)
 ibm3101|i3101|IBM 3101-10:\
-	:am:xo:\
+	:am:bs:xo:\
 	:co#80:li#24:\
 	:bl=^G:cd=\EJ:ce=\EI:cl=\EK:cm=\EY%+ %+ :cr=^M:ct=\E1:do=^J:\
 	:ho=\EH:kb=^H:kd=\EB:kl=\ED:kr=\EC:ku=\EA:le=^H:nd=\EC:\
@@ -7804,7 +7975,7 @@ ibm3151|i3151|IBM 3151:\
 # From: Mark Easter <marke@fsi-ssd.csg.ssd.fsi.com> 29 Oct 1992 
 # I've commented out or translated some IBM extensions.
 ibm3161|ibm3163|wy60-316X|wyse60-316X|IBM 3161/3163 display:\
-	:am:mi:ms:\
+	:am:bs:mi:ms:\
 	:co#80:it#8:li#24:\
 	:F1=\Ek\r:F2=\El\r:F3=\E\041a\r:F4=\E\041b\r:\
 	:F5=\E\041c\r:F6=\E\041d\r:F7=\E\041e\r:F8=\E\041f\r:\
@@ -7837,7 +8008,7 @@ ibm3164|i3164|IBM 3164:\
 	:..sa=\E4%{32}%?%p2%t%{1}%|%;%?%p3%t%{4}%|%;%?%p4%t%{2}%|%;%c%{39}%p1%-%c%{64}%c:tc=ibm3163:
 
 ibmaed|IBM Experimental display:\
-	:am:eo:ms:\
+	:am:bs:eo:ms:\
 	:co#80:it#8:li#52:\
 	:al=\EN:cd=\EJ:ce=\EI:cl=\EH\EK:cm=\EY%+ %+ :dc=\EQ:dl=\EO:\
 	:do=\EB:ei=:ho=\EH:ic=\EP:im=:kb=^H:kd=\EB:kl=\ED:kr=\EC:\
@@ -7961,13 +8132,13 @@ jaixterm-m|IBM Kanji AIXterm Monochrome Terminal Emulator:\
 
 # gt100 sounds like something DEC would come out with.  Let's hope they don't.
 i100|gt100|gt100a|General Terminal 100A (formerly Infoton 100):\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EL:bl=^G:cd=\EJ:ce=\EK:cl=^L:cm=\Ef%r%+ %+ :cr=^M:\
 	:dl=\EM:do=^J:ho=\EH:le=^H:nd=\EC:se=\Ea:sf=^J:so=\Eb:up=\EA:\
 	:vb=\Eb\Ea:
 i400|infoton 400:\
-	:am:\
+	:am:bs:\
 	:co#80:li#25:\
 	:al=\E[L:bl=^G:ce=\E[N:cl=\E[2J:cm=%i\E[%3;%3H:cr=^M:\
 	:dc=\E[4h\E[2Q\E[P\E[4l\E[0Q:dl=\E[M:do=^J:\
@@ -7996,7 +8167,7 @@ infoton:\
 # (intext: removed obsolete ":ma=^K^P^R^L^L ::bc=^_:", also the
 # ":le=^_:" later overridden -- esr)
 intext|Interactive Systems Corporation modified owl 1200:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:sg#1:\
 	:al=\020:bl=^G:bt=^Y:cd=\026J:ce=^Kp^R:cl=\014:\
 	:cm=\017%+ %+ :cr=^M:dc=\022:dl=\021:do=^J:ei=^V<:im=^V;:\
@@ -8027,7 +8198,7 @@ intext2|intextii|INTERACTIVE modified owl 1251:\
 # Kimtron ABM 85 added by Dual Systems
 # (abm85: removed duplicated ":kd=^J:" -- esr)
 abm85|Kimtron ABM 85:\
-	:am:bw:ms:\
+	:am:bs:bw:ms:\
 	:co#80:it#8:li#24:sg#1:ug#1:\
 	:al=\EE:bt=\EI:cd=\Ey:ce=\Et:cl=\E*:cm=\E=%+ %+ :dc=\EW:\
 	:dl=\ER:do=^J:ei=\Er:if=/usr/share/tabset/stdcrt:im=\EQ:\
@@ -8078,7 +8249,7 @@ abm85h-old|oabm85h|o85h|Kimtron ABM 85H with old firmware rev.:\
 # From: <malman@bbn-vax.arpa>
 # (kt7: removed obsolete :ma=^V^J^L :" -- esr)
 kt7|kimtron model kt-7:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:al=\EE:bt=\EI:cd=\EY:ce=\ET:cl=^Z:cm=\E=%+ %+ :dc=\EW:\
 	:dl=\ER:do=^V:ei=:fs=\Eg:ho=^^:ic=\EQ:\
@@ -8175,7 +8346,7 @@ kt7ix|kimtron model kt-7 or 70 in IX mode:\
 #  Horizontal cursor qualifiers of NUL, XON and XOFF are mapped to the next
 #  value up, followed by backspace.
 #
-P2|prism2|MDC Prism-2:\
+P2|MDC Prism-2:\
 	:am:bw:ms:\
 	:co#80:li#24:\
 	:bl=^G:cd=\EJ:ce=\EK:\
@@ -8421,7 +8592,7 @@ p8gl|prism8gl|McDonnell-Douglas Prism-8 alternate definition:\
 # since Sytek insists ^S means xoff.
 # (act4: found ":ic=2^S:ei=:im=:ip=.1*^V:" commented out in 8.3 -- esr)
 act4|microterm|microterm act iv:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=2.3*\001<2.3*/>:bl=^G:cd=2.2*\037:ce=.1*\036:\
 	:cl=12\014:cm=\024%+^X%>/0%+P:cr=^M:dc=.1*\004:\
@@ -8442,7 +8613,7 @@ mime-hb|half bright mime1:\
 # the more plausible ":do=^J:" -- esr)
 # uc was at one time disabled to get around a curses bug, be wary of it
 mime|mime1|mime2|mimei|mimeii|microterm mime1:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:vt#9:\
 	:al=\001:bl=^G:cd=^_:ce=^^:cl=^]^C:cm=\024%+^X%> 0%+P:\
 	:cr=^M:dl=\027:do=^J:ho=^]:is=^S\E^Q:kd=^K:kl=^H:kr=^X:ku=^Z:\
@@ -8450,7 +8621,7 @@ mime|mime1|mime2|mimei|mimeii|microterm mime1:\
 # These termcaps (for mime2a) put the terminal in low intensity mode
 # since high intensity mode is so obnoxious.
 mime2a-s|microterm mime2a (emulating an enhanced soroc iq120):\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\001:bl=^G:cd=\EJ:ce=\EK:cl=\EL:cm=\E=%+ %+ :cr=^M:\
 	:dc=\ED:dl=\027:do=^J:ei=^Z:ho=^^:im=\EE:ip=:is=\E):kd=^J:\
@@ -8458,6 +8629,7 @@ mime2a-s|microterm mime2a (emulating an enhanced soroc iq120):\
 	:ue=\E7:up=\EI:us=\E6:
 # This is the preferred mode (but ^X can't be used as a kill character)
 mime2a|mime2a-v|microterm mime2a (emulating an enhanced vt52):\
+	:bs:\
 	:co#80:it#8:li#24:\
 	:al=\001:bl=^G:cd=\EQ:ce=\EP:cl=\EL:cm=\EY%+ %+ :cr=^M:\
 	:dc=^N:dl=\027:do=^J:ei=^Z:ho=\EH:im=^O:ip=:is=^Y:kd=\EB:\
@@ -8609,17 +8781,18 @@ ncr7901|ncr 7901 model:\
 #
 
 bantam|pe550|pe6100|perkin elmer 550:\
+	:bs:\
 	:co#80:li#24:\
 	:bl=^G:ce=\EI:cl=\EK:cm=\EX%+ \EY%+ :cr=^M:do=^J:ho=\EH:\
 	:le=^H:ll=\EH\EA:nd=\EC:sf=^J:up=\EA:
 fox|pe1100|perkin elmer 1100:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cd=\EJ:ce=\EI:cl=\EH\EJ:cm=\EX%+ \EY%+ :cr=^M:\
 	:ct=\E3:do=^J:ho=\EH:le=^H:ll=\EH\EA:nd=\EC:sf=^J:st=\E1:\
 	:up=\EA:vb=\020\002\020\003:
 owl|pe1200|perkin elmer 1200:\
-	:am:in:\
+	:am:bs:in:\
 	:co#80:li#24:\
 	:al=\EL:bl=^G:cd=\EJ:ce=\EI:cl=\EH\EJ:cm=\EX%+ \EY%+ :\
 	:cr=^M:ct=\E3:dc=\EO:dl=\EM:do=^J:ei=:ho=\EH:ic=\EN:im=:ip=:\
@@ -8695,7 +8868,7 @@ tandem6510|adm3a repackaged by Tandem:\
 # (tandem653: had ":sb=\ES:", probably someone's mistake for sf; also,
 # removed :if=/usr/share/tabset/tandem653:, no such file -- esr)
 tandem653|t653x|Tandem 653x multipage terminal:\
-	:am:da:db:hs:\
+	:am:bs:da:db:hs:\
 	:co#80:li#24:sg#1:ug#1:ws#64:\
 	:cd=\EJ:ce=\EK:cl=\EI:cm=\023%+ %+ :do=^J:ds=\Eo\r:fs=^M:\
 	:ho=\EH:le=^H:me=\E6 :nd=\EC:se=\E6 :sf=\ES:so=\E6$:sr=\ET:\
@@ -8757,7 +8930,7 @@ pt210|TRS-80 PT-210 printing terminal:\
 #
 
 tek|tek4012|tektronix 4012:\
-	:os:\
+	:bs:os:\
 	:co#75:li#35:\
 	:bl=^G:cl=\E\014:cr=^M:do=^J:ff=\014:is=\E^O:le=^H:
 # (tek4013: added <acsc> to suppress tic warnings re :as:/:ae: --esr)
@@ -8805,7 +8978,7 @@ tek4023|tektronix 4023:\
 # and didn't seem necessary.
 #
 tek4024|tek4025|tek4027|tektronix 4024/4025/4027:\
-	:am:da:db:\
+	:am:bs:da:db:\
 	:co#80:it#8:li#34:lm#0:\
 	:AL=\037up\r\037ili %d\r:CC=^_:DL=\037dli %d\r\006:\
 	:DO=\037dow %d\r:LE=\037lef %d\r:RI=\037rig %d\r:\
@@ -8865,7 +9038,7 @@ tek4025a|Tektronix 4025A:\
 # see the cursor.)
 # (This "learns" the arrow keys for rogue. I have adapted it for termcap - mrh)
 tek4025-cr|tek 4025 for curses and rogue:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#33:\
 	:cl=\037era;:cm=\037jum%i%d\054%d;:do=^F^J:\
 	:is=\041com 31\r\n\037sto 9 17 25 33 41 49 57 65 73\r:\
@@ -8879,7 +9052,7 @@ tek4025ex|4025ex|4027ex|tek 4025 w/!:\
 	:te=\037com 33\r:ti=\041com 31\r:\
 	:tc=tek4025:
 tek4105|tektronix 4105:\
-	:am:mi:ms:ul:xn:xt:\
+	:am:bs:mi:ms:ul:xn:xt:\
 	:co#79:it#8:li#29:\
 	:ac=:ae=\E[m:al=\E[1L:as=\E[1m:bl=^G:bt=\E[Z:cd=\E[J:\
 	:ce=\E[K:cl=\E[2J\E[H:cm=\E[%i%2;%2H:cr=^M:ct=\E[1g:\
@@ -8991,7 +9164,7 @@ tek4106brl|tek4107brl|tek4109brl|Tektronix 4106, 4107, or 4109:\
 	:vs=\E%!0\ETD70\E%!1:
 
 tek4107|tek4109|tektronix terminals 4107 4109:\
-	:am:mi:ms:ul:xn:xt:\
+	:am:bs:mi:ms:ul:xn:xt:\
 	:co#79:it#8:li#29:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=\ELZ:cm=\EY%+ %+ :cr=^M:do=^J:kb=^H:\
 	:kd=\EB:kl=\ED:kr=\EC:ku=\EA:le=^H:mb=\E%!1\E[5m\E%!0:\
@@ -9031,7 +9204,7 @@ otek4112|o4112-nd|otek4113|otek4114|old tektronix 4110 series:\
 	:ti=\EKA0\ELV0\EMG0:up=^K:
 # The 4112 with the ANSI compatibility enhancement
 tek4112|tek4114|tektronix 4110 series:\
-	:am:db:\
+	:am:bs:db:\
 	:co#80:li#34:\
 	:al=\E[L:bt=\E[Z:cd=\E[0J:ce=\E[0K:cl=\E[2J\E[0;0H:\
 	:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:ei=:ic=\E[@:im=:\
@@ -9049,7 +9222,7 @@ tek4112-5|4112 in 5 line dialog area:\
 # previously \0410 and \0411 sequences...I don't *think* they were supposed
 # to be 4-digit octal -- esr)
 tek4113|tektronix 4113 color graphics with 5 line dialog area:\
-	:am:da:eo:\
+	:am:bs:da:eo:\
 	:co#80:li#5:\
 	:cl=\ELZ:do=^J:is=\EKA1\ELL5\ELV0\ELV1:le=^H:\
 	:nd=\ELM1 \ELM0:uc=\010\ELM1_\ELM0:\
@@ -9061,7 +9234,7 @@ tek4113-34|tektronix 4113 color graphics with 34 line dialog area:\
 # supported here. :uc: is slow, but looks nice. Suggest setenv MORE -up .
 # :vb: needs enough delay to let you see the background color being toggled.
 tek4113-nd|tektronix 4113 color graphics with no dialog area:\
-	:am:eo:\
+	:am:bs:eo:\
 	:co#80:it#8:li#34:\
 	:cl=\E^L:do=^J:ho=\ELF7l\177 @:is=\ELZ\EKA0\ELF7l\177 @:\
 	:le=^H:ll=\ELF hl @:nd=^I:se=\EMT1:so=\EMT2:ta=^I:\
@@ -9131,6 +9304,7 @@ tek4207|Tektronix 4207 graphics terminal with memory:\
 # (tek4404: There was a "\!" in :ti: that I replaced with "\E!".
 # Tab had been given as \E2I,that must be the tab-set capability -- esr)
 tek4404|tektronix 4404:\
+	:bs:\
 	:co#80:it#8:li#32:\
 	:al=\E[1L:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:\
 	:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[1M:do=^J:ei=\E[4l:ho=\E[H:\
@@ -9202,7 +9376,7 @@ tty33|tty35|model 33 or 35 teletype:\
 	:co#72:\
 	:bl=^G:cr=^M:do=^J:sf=^J:
 tty37|model 37 teletype:\
-	:hc:os:xo:\
+	:bs:hc:os:xo:\
 	:bl=^G:cr=^M:do=^J:hd=\E9:hu=\E8:le=^H:sf=^J:up=\E7:
 
 # There are known to be at least three flavors of the tty40, all seem more
@@ -9217,14 +9391,14 @@ tty37|model 37 teletype:\
 # to get crlf, even if :cr: is not ^M.)
 # (tty40: removed obsolete ":nl=\EG\EB:", it's just do+cr -- esr)
 tty40|ds40|ds40-2|dataspeed40|teletype dataspeed 40/2:\
-	:xo:\
+	:bs:xo:\
 	:co#80:li#24:\
 	:al=\EL:cd=\EJ:cl=\EH\EJ:cr=\EG:ct=\EH\E2:dc=\EP:dl=\EM:\
 	:do=\EB:ei=:ho=\EH:ic=\E\136:im=:kb=^]:kl=^H:le=^H:nd=\EC:\
 	:pf=^T:po=\022:r2=\023\ER:se=\E4:sf=\ES:so=\E3:sr=\ET:\
 	:st=\E1:ta=\E@:up=\E7:
 tty43|model 43 teletype:\
-	:am:hc:os:xo:\
+	:am:bs:hc:os:xo:\
 	:co#132:\
 	:bl=^G:cr=^M:do=^J:kb=^H:le=^H:sf=^J:
 
@@ -9252,7 +9426,7 @@ scanset|sc410|sc415|Tymshare Scan Set:\
 # Missing in vc303a and vc303 descriptions:  they scroll 2 lines at a time
 # every other linefeed.
 vc303|vc103|vc203|volker-craig 303:\
-	:am:ns:\
+	:am:bs:ns:\
 	:co#80:li#24:\
 	:bl=^G:cl=\014:cr=^M:do=^J:ho=\013:kd=^J:kl=^H:kr=^I:ku=^N:\
 	:le=^H:ll=\017W:nd=^I:up=^N:
@@ -9260,7 +9434,7 @@ vc303a|vc403a|volker-craig 303a:\
 	:ce=\026:cl=\030:ho=\031:kr=^U:ku=^Z:ll=^P:nd=^U:up=^Z:tc=vc303:
 # (vc404: removed obsolete ":ma=^Z^P^U :" -- esr)
 vc404|volker-craig 404:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cd=\027:ce=\026:cl=\030:cm=\020%+ %+ :cr=^M:do=^J:\
 	:ho=\031:kd=^J:kl=^H:kr=^U:ku=^Z:le=^H:nd=^U:sf=^J:up=^Z:
@@ -9301,7 +9475,7 @@ pcplot|pc-plot terminal emulation program:\
 # I have noticed a couple of minor glitches, but nothing I can't work
 # around. (I added two capabilities from the BRL entry -- esr)
 kaypro|kaypro2|kaypro II:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\EE:bl=^G:cd=^W:ce=^X:cl=1\032:cm=\E=%+ %+ :cr=^M:\
 	:dl=\ER:do=^J:ho=^^:kd=^J:kr=^L:ku=^K:nd=^L:sf=^J:up=^K:
@@ -9309,7 +9483,7 @@ kaypro|kaypro2|kaypro II:\
 # From IBM, Thu May  5 19:35:27 1983
 # (ibmpc: commented out :im:=\200R because we don't know :ei: -- esr)
 ibmpc|ibm-pc|ibm5051|5051|IBM Personal Computer (no ANSI.SYS):\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cl=^L^K:cr=^M^^:do=^J:ho=^K:kd=^_:le=^]:nd=^\:sf=\n:\
 	:up=^^:
@@ -9367,7 +9541,7 @@ appleII|apple ii plus:\
 # Originally by Gary Ford 21NOV83
 # From: <ee178aci%sdcc7@SDCSVAX.ARPA>  Fri Oct 11 21:27:00 1985
 apple-80|apple II with smarterm 80 col:\
-	:am:bw:\
+	:am:bs:bw:\
 	:co#80:li#24:\
 	:bt=^R:cd=10*\013:ce=10\035:cl=10*\014:cm=\036%r%+ %+ :\
 	:cr=10*\r:do=^J:ho=^Y:le=^H:nd=^\:up=^_:
@@ -9383,7 +9557,7 @@ apple-soroc|apple emulating soroc 120:\
 # Apple with videx then remove the :so: and :se: fields."
 # (apple-videx: this used to be called DaleApple -- esr)
 apple-videx|Apple with videx videoterm 80 column board with inverse video:\
-	:am:xn:\
+	:am:bs:xn:\
 	:co#80:it#8:li#24:\
 	:cd=^K:ce=^]:cl=300\014:cm=\036%r%+ %+ :do=^J:ho=^Y:kd=^J:\
 	:kh=^Y:kl=^H:kr=^U:le=^H:me=^Z2:nd=^\:se=^Z2:so=^Z3:ta=^I:\
@@ -9462,7 +9636,7 @@ apple-vm80|ap-vm80|apple with viewmax-80:\
 
 # (lisa: changed :vs: to :ve: -- esr)
 lisa|apple lisa console display (black on white):\
-	:am:eo:ms:\
+	:am:bs:eo:ms:\
 	:co#88:it#8:li#32:\
 	:ac=lfmekcjdttuvvuwsqax`nb:ae=\E[10m:al=\E[L:as=\E[11m:\
 	:cd=\E[J:ce=\E[K:cl=^L:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:\
@@ -9522,7 +9696,7 @@ mac-w|macterminal-w|Apple Macintosh with Macterminal in 132 column mode:\
 # I read these as mistakes for ":it#8:" and ":bl=\007:" respectively -- esr)
 # From: <{pbrown,ctl}@ocf.berkeley.edu> 12 Mar 90
 coco3|os9LII|Tandy CoCo3 24*80 OS9 Level II:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:al=^_0:bl=^G:cd=^K:ce=^D:cl=5*\014:cm=2\002%r%+ %+ :\
 	:dl=^_1:do=^J:ho=^A:kd=^J:kl=^H:kr=^I:ku=^L:le=^H:mb=^_":\
@@ -9530,7 +9704,7 @@ coco3|os9LII|Tandy CoCo3 24*80 OS9 Level II:\
 	:se=^_\041:so=^_ :ue=^_#:up=^I:us=^_":ve=^E\041:vi=^E :
 # (trs2: removed obsolete ":nl=^_:" -- esr)
 trs2|trsII|trs80II|Radio Shack Model II using P&T CP/M:\
-	:am:ms:\
+	:am:bs:ms:\
 	:co#80:it#8:li#24:\
 	:al=^D:bl=^G:cd=^B:ce=^A:cl=^L:cm=\EY%+ %+ :cr=^M:dl=^K:\
 	:do=^_:ho=^F:kb=^H:kd=^_:kl=^\:kr=^]:ku=^^:le=^H:me=^O:nd=^]:\
@@ -9541,7 +9715,7 @@ trs2|trsII|trs80II|Radio Shack Model II using P&T CP/M:\
 #	:CN=\ERC:CF=\ERc:NR=\ERD:NM=\ER@:
 # I also deleted the unnecessary ":kn#2:", ":sg#0:" -- esr)
 trs16|trs-80 model 16 console:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:ac=l_mbk`javewcquxs:ae=\ERg:al=\EL:as=\ERG:bl=^G:cd=\EJ:\
 	:ce=\EK:cl=^L:cm=\EY%+ %+ :cr=^M:dc=\EQ:dl=\EM:do=\EB:ei=:\
@@ -9556,7 +9730,7 @@ trs16|trs-80 model 16 console:\
 
 # From: Simson L. Garfinkel <simsong@media-lab.mit.edu>
 atari|atari st:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#25:\
 	:al=\EL:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :dl=\EM:do=\EB:\
 	:kd=\EB:kl=\ED:kr=\EC:ku=\EA:le=\ED:me=\Eq:nd=\EC:se=\Eq:\
@@ -9626,7 +9800,7 @@ amiga-old|Amiga ANSI:\
 # From: Hans Verkuil <hans@wyst.hobby.nl>, 4 Dec 1995
 # (amiga: added empty <acsc> to suppress a warning --esr)
 amiga|Amiga ANSI:\
-	:bw:ms:\
+	:bs:bw:ms:\
 	:co#80:li#24:\
 	:DC=\233%dP:DO=\233%dB:IC=\233%d@:LE=\233%dD:RI=\233%dC:\
 	:SF=\233%dS:SR=\233%dT:UP=\233%dA:ac=:ae=^O:as=^N:bl=^G:\
@@ -9738,16 +9912,22 @@ minix|minix console (v1.7):\
 	:l3=Num +:l4=Num -:l5=Num 5:le=^H:mb=\E[5m:md=\E[1m:\
 	:me=\E[0m:mr=\E[7m:nd=\E[C:nw=^M^J:se=\E[0m:sf=^J:so=\E[7m:\
 	:sr=\EM:ta=^I:ue=\E[0m:up=\E[A:us=\E[4m:
+# Corrected Jan 14, 1997 by Vincent Broman <broman@nosc.mil>
 minix-old|minix console (v1.5):\
+	:xo:\
 	:co#80:it#8:li#25:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
-	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:cd=\E[0J:ce=\E[K:\
-	:cl=\E[H\E[0J:cm=\E[%i%d;%dH:cr=^M:dc=\E[P:dl=\E[M:\
-	:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:k0=\E[Y:k1=\E[V:k2=\E[U:\
-	:k3=\E[T:k4=\E[S:k5=\E[G:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:\
-	:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[0m:mr=\E[7m:\
-	:nd=\E[C:nw=^M^J:se=\E[0m:sf=^J:so=\E[7m:sr=\EM:ta=^I:\
-	:ue=\E[0m:up=\E[A:us=\E[4m:
+	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:bl=^G:cd=\E[0J:\
+	:ce=\E[K:cl=\E[H\E[0J:cm=\E[%i%d;%dH:cr=^M:dc=\E[P:\
+	:dl=\E[M:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:k0=\E[Y:k1=\E[V:\
+	:k2=\E[U:k3=\E[T:k4=\E[S:k5=\E[G:kb=^H:kd=\E[B:kh=\E[H:\
+	:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[0m:\
+	:mr=\E[7m:nd=\E[C:nw=^M^J:se=\E[0m:sf=^J:so=\E[7m:sr=\EM:\
+	:ta=^I:ue=\E[0m:up=\E[A:us=\E[4m:
+# The linewrap option can be specified by editing /usr/include/minix/config.h
+# before recompiling the minix 1.5 kernel.
+minix-old-am|minix console with linewrap:\
+	:am:tc=minix-old:
 
 pc-minix|minix console on an Intel box:\
 	:tc=klone+acs:tc=minix:
@@ -9805,18 +9985,33 @@ xerox820|x820|Xerox 820:\
 #### Videotex and teletext
 #
 
-# standard-issue France Telecom minitel terminal (made by Philips)
-# (m2-nam: had unknown :zd=\E[1m:zb=\E[5m:zc=lkmjqxtuwvn:; also deleted
-# unnecessary :ug#0:sg#0: and added <acsc> to quiet tic. -- esr)
-m2-nam|minitel|minitel-2|minitel-2-nam|France Telecom Minitel:\
-	:xn:\
-	:co#80:it#8:li#24:\
-	:ac=:ae=\E(B:al=\E[L:as=\E(0:cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
-	:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:ei=\E[4l:ho=\E[H:im=\E[4h:\
-	:ip=7:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
-	:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:me=\E[m:\
-	:nd=\E[C:se=\E[m:sf=^J:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:\
-	:up=\E[A:us=\E[4m:
+# \E\:1}	switch to te'le'informatique mode (ascii terminal/ISO 6429)
+# \E[?3l	80 columns
+# \E[?4l	scrolling on
+# \E[12h	local echo off
+# \Ec		reset: G0 U.S. charset (to get #,@,{,},...), 80 cols, clear screen
+# \E)0		G1 DEC set (line graphics)
+#
+# From: Igor Tamitegama <igor@ppp1493-ft.teaser.fr>, 18 Jan 1997
+m2-nam|minitel|minitel-2|minitel-2-nam|France Telecom Minitel 2 mode te'le'informatique:\
+	:bs:es:hs:xn:\
+	:co#80:it#8:li#24:sg#0:ws#72:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:LE=\E[%dD:\
+	:RI=\E[%dC:SF=^J:SR=\EM:UP=\E[%dA:\
+	:ac=aaffggjjkkllmmnnooqqssttuuvvwwxx:ae=^O:al=\E[L:\
+	:as=^N:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
+	:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:\
+	:fs=^J:ho=\E[H:i1=\E\0721}\Ec\E[?4l\E[12h:\
+	:i2=\E[?3l kbs=\010:im=\E[4h:ip=7:is=\Ec\E[12h\E)0:\
+	:k0=\EOp:k1=\EOq:k2=\EOr:k3=\EOs:k4=\EOt:k5=\EOu:k6=\EOv:\
+	:k7=\EOw:k8=\EOx:k9=\EOy:k;=\EOp:kA=\E[4l:kC=\E[2J:kD=\E[P:\
+	:kI=\E[4h:kL=\E[M:kN=\EOn:kP=\EOR:kd=\E[B:kh=\E[H:kl=\E[D:\
+	:kr=\E[C:ku=\E[A:le=\E[D:ll=\E[24;80H:mb=\E[5m:md=\E[1m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:nw=^M^J:ps=\E[i:\
+	:r1=\Ec\E[?4l\E[12h:r2=\Ec\E)0:rc=\E8:sc=\E7:se=\E[27m:\
+	:sf=^J:so=\E[7m:sr=\EM:ta=^I:ts=^_@A:u6=\E[%i%d;%dR:\
+	:u7=\E[6n:ue=\E[24m:up=\E[A:us=\E[4m:vb=^G:ve=\E[<1l:\
+	:vi=\E[<1h:
 
 ######## OBSOLETE VDT TYPES
 #
@@ -9830,7 +10025,7 @@ m2-nam|minitel|minitel-2|minitel-2-nam|France Telecom Minitel:\
 # but these caps were commented out in 8.3; also, removed overridden
 # ":do=^J:" -- esr)
 abm80|amtek business machines 80:\
-	:am:bw:\
+	:am:bs:bw:\
 	:co#80:li#24:\
 	:al=\E^Z:bt=^T:cd=\E^X:ce=\E^O:cl=\E^\:cm=\E\021%r%+ %+ :\
 	:dl=\E^S:do=\E^K:ho=\E^R:le=^H:nd=^P:up=\E^L:
@@ -9904,7 +10099,7 @@ bitgraph|bg2.0nv|bg3.10nv|bbn bitgraph 2.0 or later (normal video):\
 bg2.0rv|bg3.10rv|bbn bitgraph 2.0 (reverse video):\
 	:is=\E>\E[?5h\E[?7h:vb=\E[?5l\E[?5h:tc=bg2.0:
 bg2.0|bg3.10|bbn bitgraph 2.0 or later (no init):\
-	:xn:\
+	:bs:xn:\
 	:co#85:li#64:\
 	:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=%i\E[%d;%dH:\
 	:cr=^M:cs=\E[%i%d;%dr:dl=\E[M:do=\E[B:k1=\EOP:k2=\EOQ:\
@@ -9960,13 +10155,13 @@ ca22851|computer automation 22851:\
 
 # This entry has correct padding and the undocumented "ri" capability
 cyb83|xl83|cybernex xl-83:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cd=\020:ce=\017:cl=\014:cm=\027%+ %+ :cr=^M:do=^J:\
 	:ho=^K:kd=^J:kl=^H:kr=^I:ku=^N:le=^H:nd=^I:sf=^J:sr=^N:up=^N:
 # (mdl110: removed obsolete ":ma=^Z^P:" and overridden ":cd=145^NA^W:" -- esr)
 cyb110|mdl110|cybernex mdl-110:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:al=\016A\016\035:bl=^G:cd=\016@\026:ce=\016@\026:\
 	:cl=\030:cm=\020%+ %+ :cr=^M:dc=\016A\036:\
@@ -9982,10 +10177,51 @@ cyb110|mdl110|cybernex mdl-110:\
 #
 
 dp3360|datapoint|datapoint 3360:\
-	:am:\
+	:am:bs:\
 	:co#82:li#25:\
 	:bl=^G:cd=^_:ce=^^:cl=^]^_:cr=^M:do=^J:ho=^]:le=^H:nd=^X:\
 	:sf=^J:up=^Z:
+
+# From: Jan Willem Stumpel <jw.stumpel@inter.nl.net>, 11 May 1997
+# The Datapoint 8242 Workstation was sold at least between 1985 
+# and 1989. To make the terminal work with this entry, press 
+# CONTROL-INT-INT to take the terminal off-line, and type (opt). 
+# Set the options AUTO ROLL, ROLL DN, and ESC KBD on, and AUTO 
+# CR/LF off. Use control-shift-[] as escape key, control-I as tab, 
+# shift-F1 to shift-F5 as F6 to F10 (unshifted F1 to F5 are in
+# fact unusable because the strings sent by the terminal conflict
+# with other keys).
+# The terminal is capable of displaying "box draw" characters.
+# For each graphic character you must send 2 ESC's (\E\E) followed 
+# by a control character as follows: 
+#         character        meaning
+#         =========        =======
+#         ctrl-E           top tee
+#         ctrl-F           right tee
+#         ctrl-G           bottom tee
+#         ctrl-H           left tee
+#         ctrl-I           cross
+#         ctrl-J           top left corner
+#         ctrl-K           top right corner
+#         ctrl-L           bottom left corner
+#         ctrl-M           bottom right corner
+#         ctrl-N           horizontal line
+#         ctrl-O           vertical line
+# Unfortunately this cannot be fitted into the termcap/terminfo 
+# description scheme. 
+dp8242|datapoint 8242:\
+	:ms:\
+	:co#80:li#25:\
+	:al=\E^T:bl=^G:cd=^W:ce=^V:cl=\025\E\004\027\030:\
+	:cm=\011%r%+\%+\:cr=^M:dl=\E^Z:do=^J:ho=^U:\
+	:i1=\E\014\E\016\200\230\200\317\025\027\030\E\004:\
+	:k1=^G\Ee:k2=^I\Ed:k3=^J\Ec:k4=^J\Eb:k5=^S\Ea:k6=\EO\Ee:\
+	:k7=\EN\Ed:k8=\EM\Ec:k9=\EL\Eb:k;=\EK\Ea:kb=^H:kd=^B:kl=^D:\
+	:kr=^F:ku=^E:le=^H:nw=^M^J:\
+	:r1=\E\014\E\016\200\230\200\317\025\027\030\E\004:\
+	:rp=\E\023%.%.:se=\E^D:sf=^C:so=\E^E:sr=^K:ta=^I:ue=\E^D:\
+	:us=\E^F:ve=^X:vi=^Y:\
+	:..wi=\E\014\E\016%p1%'\200'%+%c%p2%'\200'%+%c%p3%'\200'%+%c%p4%'\200'%+%c\025:
 
 #### DEC terminals (Obsolete types: DECwriter and vt40/42/50)
 #
@@ -9996,18 +10232,20 @@ dp3360|datapoint|datapoint 3360:\
 #
 
 gt40|dec gt40:\
-	:os:\
+	:bs:os:\
 	:co#72:li#30:\
 	:bl=^G:cr=^M:do=^J:le=^H:
 gt42|dec gt42:\
-	:os:\
+	:bs:os:\
 	:co#72:li#40:\
 	:bl=^G:cr=^M:do=^J:le=^H:
 vt50|dec vt50:\
+	:bs:\
 	:co#80:li#12:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=\EH\EJ:cr=^M:do=^J:le=^H:nd=\EC:\
 	:sf=^J:ta=^I:up=\EA:
 vt50h|dec vt50h:\
+	:bs:\
 	:co#80:li#12:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :cr=^M:do=^J:\
 	:le=^H:nd=\EC:sf=^J:sr=\EI:ta=^I:up=\EA:
@@ -10021,7 +10259,7 @@ vt61|vt-61|vt61.5|dec vt61:\
 # The gigi does standout with red!
 # (gigi: I added <rmam>/<smam> based on the init string, corrected cub1 -- esr)
 gigi|vk100|dec gigi graphics terminal:\
-	:am:xn:\
+	:am:bs:xn:\
 	:co#84:li#24:\
 	:DO=\E[%dB:LE=\E[%dD:RA=\E[?7l:RI=\E[%dC:SA=\E[?7h:\
 	:UP=\E[%dA:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:\
@@ -10038,6 +10276,7 @@ gigi|vk100|dec gigi graphics terminal:\
 # a format program, so you had to buy pre-formatted floppies from DEC at
 # a hefty premium!).
 pro350|decpro|dec pro console:\
+	:bs:\
 	:co#80:it#8:li#24:\
 	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
 	:ae=\EG:as=\EF:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :do=\EB:\
@@ -10046,14 +10285,13 @@ pro350|decpro|dec pro console:\
 	:se=\E^N:so=\E^H:sr=\EI:ta=^I:ue=\E^C:up=\EA:us=\E^D:
 
 dw1|decwriter I:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#72:\
 	:bl=^G:cr=^M:do=^J:le=^H:sf=^J:
 dw2|decwriter|dw|decwriter II:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:\
 	:bl=^G:cr=^M:do=^J:kb=^H:le=^H:sf=^J:
-
 # \E(B		Use U.S. character set (otherwise # => british pound !)
 # \E[20l	Disable "linefeed newline" mode (else puts \r after \n,\f,\v)
 # \E[w   	10 char/in pitch
@@ -10071,14 +10309,14 @@ dw2|decwriter|dw|decwriter II:\
 #       The dw3 does standout with wide characters.
 #
 dw3|la120|decwriter III:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:\
 	:bl=^G:cr=^M:do=^J:\
 	:i1=\E(B\E[20l\E[w\E[0;132s\E[2g\E[z\E[66t\E[1;66r\E[4g\E>:\
 	:is=\E[9;17;25;33;41;49;57;65;73;81;89;97;105;113;121;129u\r:\
 	:kb=^H:le=^H:me=\E[w:se=\E[w:sf=^J:so=\E[6w:ta=^I:
 dw4|decwriter IV:\
-	:am:hc:os:\
+	:am:bs:hc:os:\
 	:co#132:\
 	:bl=^G:cr=^M:do=^J:is=\Ec:k0=\EOP:k1=\EOQ:k2=\EOR:k3=\EOS:\
 	:kb=^H:le=^H:sf=^J:ta=^I:
@@ -10101,7 +10339,7 @@ ln03-w|dec ln03 laser printer 132 cols:\
 # There are BSD-derived termcap entries floating around for this puppy
 # that are *certainly* wrong.
 delta|dd5000|delta data 5000:\
-	:am:\
+	:am:bs:\
 	:co#80:li#27:\
 	:bl=^G:ce=^NU:cl=^NR:cm=\017%+^P%+^P:dc=^NV:do=^J:ho=^NQ:\
 	:le=^H:nd=^Y:sf=^J:up=^Z:
@@ -10111,7 +10349,7 @@ delta|dd5000|delta data 5000:\
 
 # (ddr: I added <rmam>/<smam> based on the init string -- esr)
 ddr|rebus3180|ddr3180|Rebus/DDR 3180 vt100 emulator:\
-	:am:xn:\
+	:am:bs:xn:\
 	:co#80:it#8:li#24:vt#3:\
 	:RA=\E[7l:SA=\E[7l:cd=50\E[J:ce=3\E[K:cl=50\E[H\E[2J:\
 	:cm=5\E[%i%d;%dH:cs=\E[%i%d;%dr:do=^J:ho=\E[H:\
@@ -10145,7 +10383,7 @@ ps300|Picture System 300:\
 #
 
 terminet1200|terminet300|tn1200|tn300|terminet|GE terminet 1200:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#120:\
 	:bl=^G:cr=^M:do=^J:sf=^J:
 
@@ -10188,7 +10426,7 @@ terminet1200|terminet300|tn1200|tn300|terminet|GE terminet 1200:\
 # (h19: I added <rmam>/<smam> based on the init string;
 # also added empty <acsc> to suppress a tic warning -- esr)
 h19-a|h19a|heath-ansi|heathkit-a|heathkit h19 ansi mode:\
-	:am:mi:ms:\
+	:am:bs:mi:ms:\
 	:co#80:it#8:li#24:\
 	:RA=\E[?7l:SA=\E[?7h:ac=:ae=\E[11m:al=\E[1L:as=\E[10m:\
 	:bl=^G:cd=\E[J:ce=\E[K:cl=\E[2J:cm=\E[%i%d;%dH:cr=^M:\
@@ -10206,7 +10444,7 @@ h19-smul|heathkit w/keypad shifted/underscore cursor:\
 # (h19: merged in :ip: from BSDI hp19-e entry>;
 # also added empty <acsc> to suppress a tic warning --esr)
 h19|heath|h19-b|heathkit|heath-19|z19|zenith|heathkit h19:\
-	:am:es:hs:mi:ms:\
+	:am:bs:es:hs:mi:ms:\
 	:co#80:it#8:li#24:\
 	:ac=:ae=\EG:al=\EL:as=\EF:bl=^G:cd=\EJ:ce=\EK:cl=\EE:\
 	:cm=\EY%+ %+ :cr=^M:dc=\EN:dl=\EM:do=\EB:ei=\EO:fs=\Ek\Ey5:\
@@ -10350,7 +10588,7 @@ p19|h19-b with il1/dl1:\
 # From: <ucscc!B.fiatlux@ucbvax.berkeley.edu>
 # (ztx: removed duplicate :sr: -- esr)
 ztx|ztx11|zt-1|htx11|ztx-1-a|ztx-10 or 11:\
-	:am:es:hs:\
+	:am:bs:es:hs:\
 	:co#80:it#8:li#24:\
 	:al=\EL:cd=\EJ:ce=\EK:cl=\EE:cm=\EY%+ %+ :dl=\EM:do=^J:\
 	:ds=\Ey1:fs=\Ek\Ey5:ho=\EH:\
@@ -10379,7 +10617,7 @@ ims950-rv|ims tvi950 rev video:\
 	:xn@:\
 	:k0@:k1@:k2@:k3@:k4@:k5@:k6@:k7@:k8@:k9@:kb@:kd@:kh@:kl@:kr@:ku@:vb@:tc=tvi950-rv:
 ims-ansi|ultima2|ultimaII|IMS Ultima II:\
-	:am:\
+	:am:bs:\
 	:co#80:it#8:li#24:\
 	:cd=\E[0J:ce=\E[0K:cl=\E[H\E[2J:cm=\E[%i%2;%2H:do=\ED:\
 	:if=/usr/share/tabset/vt100:\
@@ -10412,6 +10650,7 @@ intertube|intertec|Intertec InterTube:\
 # are typing and a command comes in, the keystrokes you type get interspersed
 # with the command and it messes up
 intertube2|intertec data systems intertube 2:\
+	:bs:\
 	:ce=\EK:ch=\020%+^J:cm=\016%.\020%+^J:cv=\013%.:\
 	:ll=^K^X\r:\
 	:tc=intertube:
@@ -10462,7 +10701,13 @@ graphos-30|graphos III with 30 lines:\
 #	Vox: (617)-890-5796.
 #
 # However, if you call that number today you'll get an insurance company.
-# I think Modgraph is long gone.
+# I have mail from "Michael Berman, V.P. Sales, Modgraph" dated 
+# 26 Feb 1997 that says:
+#
+# Modgraph GX-1000, replaced by GX-2000.  Both are out of production, have been
+# for ~7 years.  Modgraph still in business.  Products are rugged laptop and
+# portable PC's and specialized CRT and LCD monitors (rugged, rack-mount
+# panel-mount etc).  I can be emailed at sonfour@aol.com
 #
 
 modgraph|mod24|modgraph terminal emulating vt100:\
@@ -10552,7 +10797,7 @@ ex155|Motorola Exorterm 155:\
 # This company is still around in 1995, manufacturing point-of-sale systems.
 
 omron|Omron 8025AG:\
-	:am:da:db:\
+	:am:bs:da:db:\
 	:co#80:li#24:\
 	:al=\EL:bl=^G:cd=\ER:ce=\EK:cl=\EJ:cr=^M:dc=\EP:dl=\EM:do=^J:\
 	:ho=\EH:le=^H:nd=\EC:se=\E4:sf=\ES:so=\Ef:sr=\ET:up=\EA:\
@@ -10672,7 +10917,7 @@ vsc|Signetics Vsc Video driver by RMC:\
 soroc120|iq120|soroc|soroc iq120:\
 	:cd=\EY:ce=\ET:cl=\E*:do=^J:kd=^J:kl=^H:kr=^L:ku=^K:tc=adm3a:
 soroc140|iq140|soroc iq140:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#80:li#24:\
 	:al=\Ee:bl=^G:bt=\EI:cd=\Ey:ce=\Et:cl=\E+:cm=\E=%+ %+ :\
 	:cr=^M:dc=\Ew:dl=\Er:do=^J:ei=\E8:ho=^^:im=\E9:k0=^A0\r:\
@@ -10793,14 +11038,16 @@ tab132-w-rv|tab132 in reverse-video/wide mode:\
 #
 
 t3700|dumb teleray 3700:\
+	:bs:\
 	:co#80:li#24:\
 	:bl=^G:cl=^L:cr=^M:do=^J:le=^H:sf=^J:
 t3800|teleray 3800 series:\
+	:bs:\
 	:co#80:it#8:li#24:\
 	:bl=^G:cd=\EJ:ce=\EK:cl=^L:cm=\EY%+ %+ :cr=^M:do=^J:ho=\EH:\
 	:le=^H:ll=\EY7 :nd=\EC:sf=^J:ta=^I:up=^K:
 t1061|teleray|teleray 1061:\
-	:am:km:xs:xt:\
+	:am:bs:km:xs:xt:\
 	:co#80:it#8:li#24:sg#1:ug#1:\
 	:al=\EL:bl=^G:cd=\EJ:ce=\EK:cl=\014:cm=\EY%+ %+ :cr=^M:\
 	:ct=\EG:dc=\EQ:dl=\EM:do=^J:ei=:ho=\EH:ic=\EP:im=:ip=:\
@@ -10821,7 +11068,7 @@ t1061f|teleray 1061 with fast PROMs:\
 # From: J. Lepreau <lepreau@utah-cs> Tue Feb  1 06:39:37 1983, Univ of Utah
 # (t10: removed overridden ":so@:se@:us@:ue@:" -- esr)
 t10|teleray 10 special:\
-	:km:xs:xt:\
+	:bs:km:xs:xt:\
 	:co#80:it#8:li#24:sg#2:ug#2:\
 	:al=\EL:cd=\EJ:ce=\EK:cl=30\Ej:cm=\EY%+ %+ :dc=\EQ:dl=\EM:\
 	:ei=:ho=\EH:ic=\EP:im=:le=^H:nd=\EC:pc=\200:se=\ER@:sf=\Eq:\
@@ -10848,7 +11095,7 @@ t16|teleray 16:\
 # printer.  It was portable, equipped with an acoustic coupler, and pretty
 # neat for its day.
 ti700|ti733|ti735|ti745|ti800|ti silent 700/733/735/745 or omni 800:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#80:\
 	:bl=^G:cr=\r:do=^J:le=^H:sf=^J:
 
@@ -10889,7 +11136,7 @@ ti916-132|Texas Instruments 916 VDT vt220 132 column:\
 ti916-8-132|Texas Instruments 916 VDT vt220 132 column:\
 	:co#132:tc=ti916-8:
 ti924|Texas Instruments 924 VDT 8859/1 7 bit CTRL:\
-	:am:xo:\
+	:am:bs:xo:\
 	:co#80:it#8:li#24:\
 	:al=\E[L:bl=^G:cd=\E[J:ce=\E[K:cl=\E[2J\E[H:\
 	:cm=%i\E[%d;%dH:cr=^M:cs=%i\E[%d;%dr:ct=\E[3g:dl=\E[M:\
@@ -10916,7 +11163,7 @@ ti924w|Texas Instruments 924 VDT 7 bit - 132 column mode:\
 ti924-8w|Texas Instruments 924 VDT 8 bit - 132 column mode:\
 	:co#132:tc=ti924-8:
 ti931|Texas Instruments 931 VDT:\
-	:am:xo:\
+	:am:bs:xo:\
 	:co#80:li#24:\
 	:al=\EN:bl=^G:cd=\EJ:ce=\EI:cl=\EL:cm=\EY%+ %+ :cr=^M:\
 	:dc=\EQ:dl=\EO:do=\EB:ei=:ho=\EH:ic=\ER\EP\EM:im=:\
@@ -10970,7 +11217,7 @@ ti928-8|Texas Instruments 928 VDT 8859/1 8 bit CTRL:\
 # dim-reverse using ADM12-style attributes. ADM12 :us:/:ue: and
 # <invis> might work-- esr)
 zen30|z30|zentec 30:\
-	:am:mi:ul:\
+	:am:bs:mi:ul:\
 	:co#80:li#24:\
 	:al=\EE:bl=^G:cd=\EY:ce=\ET:cl=\E*:cm=\E=%+ %+ :cr=^M:\
 	:dc=\EW:dl=\ER:do=^J:ei=\Er:ho=^^:im=\Eq:le=^H:mh=\EG2:nd=^L:\
@@ -10982,7 +11229,7 @@ zen30|z30|zentec 30:\
 # which were also in the original entry -- esr)
 # (zen50: removed obsolete ":ma=^Hh^Ll^Jj^Kk:" -- esr)
 zen50|z50|zentec zephyr:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:sg#1:\
 	:al=\EE:cd=\EY:ce=\ET:cl=\E+:cm=\E=%+ %+ :dc=\EW:dl=\ER:ei=:\
 	:ic=\EQ:im=:kd=^J:kh=^^:kl=^H:kr=^L:ku=^K:le=^H:mk@:ue@:up=^K:\
@@ -11010,7 +11257,7 @@ cci|cci1|z8001|zen8001|CCI Custom Zentec 8001:\
 
 # From: Gary Darland <goodmanc@garnet.berkeley.edu>
 apollo|apollo console:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#88:li#53:\
 	:al=\EI:cd=\EJ:ce=\EK:ch=\EN%d:cl=^L:cm=\EM%+ %d):cv=\EO+ :\
 	:dc=\EP:dl=\EL:do=\EB:ei=\ER:im=\EQ:le=^H:nd=\EC:se=\ET:\
@@ -11063,7 +11310,7 @@ awsc|Convergent Technologies AWS workstation under CTOS:\
 # within it.  And that is what your termcap entry is for.  In graphics
 # mode the screen size is 1024x864 pixels.
 qdss|qdcons|qdss glass tty:\
-	:am:\
+	:am:bs:\
 	:co#128:li#57:\
 	:cl=1\032:cm=\E=%.%.:do=^J:le=^H:nd=^L:up=^K:
 
@@ -11091,7 +11338,7 @@ qdss|qdcons|qdss glass tty:\
 # "reverse-video-glitch" capability; I have put :rv: and :re: in with standard
 # names below.  I've removed obsolete ":nl=5^J:" as there is a :do: -- esr)
 fos|fortune|Fortune system:\
-	:am:bw:\
+	:am:bs:bw:\
 	:co#80:li#25:\
 	:@7=^Ak\r:@8=^Aq:ac=l m"k(j*v%w#q&x-:ae=^O:al=\034E:\
 	:as=\Eo:bl=^G:cd=\034Y:ce=^\Z:cl=\014:cm=\034C%+ %+ :cr=^M:\
@@ -11111,7 +11358,7 @@ fos|fortune|Fortune system:\
 
 # (masscomp: ":MT:" changed to ":km:";  -- esr)
 masscomp|masscomp workstation console:\
-	:km:mi:\
+	:bs:km:mi:\
 	:co#80:it#8:li#24:\
 	:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[2J:cm=\E[%i%d;%dH:dc=\E[P:\
 	:dl=\E[M:do=\E[B:ei=\E[4l:im=\E[4h:is=\EGc\EGb\EGw:kb=^H:\
@@ -11256,7 +11503,7 @@ simterm|attpc running simterm:\
 
 # (diablo1620: removed :if=/usr/share/tabset/xerox1720:, no such file -- esr)
 diablo1620|diablo1720|diablo450|ipsi|diablo 1620:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:it#8:\
 	:ch=\E\011%i%.:ct=\E2:do=^J:hd=\ED:hu=\EU:kb=^H:le=^H:\
 	:st=\E1:ta=^I:up=\E^J:
@@ -11288,27 +11535,27 @@ diablo1740-lm|630-lm|1730-lm|x1700-lm|diablo 1740 printer:\
 # it completely weirds out.
 # (dtc382: change :te: to :ti: -- it  just does a clear --esr)
 dtc382|DTC 382:\
-	:am:da:db:xs:\
+	:am:bs:da:db:xs:\
 	:co#80:li#24:lm#96:\
 	:al=^P^Z:bl=^G:cd=\020\025\020\023\020\023:ce=^P^U:\
 	:cl=\020\035:cm=\020\021%r%.%.:cr=^P^M:dc=^X:dl=^P^S:\
 	:ei=^Pi:ho=^P^R:im=^PI:le=^H:nd=^PR:pc=\177:sf=^J:te=:\
 	:ti=\020\035:ue=^P \200:up=^P^L:us=^P ^P:ve=^Pb:vs=^PB:
 dtc300s|DTC 300s:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:\
 	:bl=^G:cr=^M:ct=\E3:do=^J:ff=^L:hd=\Eh:hu=\EH:kb=^H:le=^H:\
 	:sf=^J:st=\E1:ta=^I:up=^Z:
 gsi|mystery gsi terminal:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:\
 	:bl=^G:cr=^M:do=^J:hd=\Eh:hu=\EH:le=^H:sf=^J:ta=^I:up=^Z:
 aj830|aj832|aj|anderson jacobson:\
-	:hc:os:\
+	:bs:hc:os:\
 	:bl=^G:cr=^M:do=^J:hd=\E9:hu=\E8:le=^H:sf=^J:up=\E7:
 # From: Chris Torek <chris@gyre.umd.edu> Thu, 7 Nov 85 18:21:58 EST
 aj510|Anderson-Jacobson model 510:\
-	:am:mi:\
+	:am:bs:mi:\
 	:co#80:li#24:\
 	:al=2*\E&I:cd=\E'P:ce=\E'L:cl=^L:cm=\E#%+ %+ :dc=.1*\E'D:\
 	:dl=2*\E&D:ei=\E'J:ic=:im=\E'I:ip=.1*:kd=\EZ:kl=\EW:kr=\EX:\
@@ -11317,18 +11564,18 @@ aj510|Anderson-Jacobson model 510:\
 # From: <cbosg!ucbvax!pur-ee!cincy!chris> Thu Aug 20 09:09:18 1981
 # This is incomplete, but it's a start.
 nec5520|nec|spinwriter|nec 5520:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:it#8:\
 	:bl=^G:cr=^M:ct=\E3:do=^J:ff=^L:hd=\E]s\n\E]W:\
 	:hu=\E]s\E9\E]W:kb=^H:le=^H:sf=^J:st=\E1:ta=^I:up=\E9:
 qume5|qume|Qume Sprint 5:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#80:it#8:\
 	:bl=^G:cr=^M:ct=\E3:do=^J:ff=^L:hd=\Eh:hu=\EH:kb=^H:le=^H:\
 	:sf=^J:st=\E1:ta=^I:up=^Z:
 # I suspect the xerox 1720 is the same as the diablo 1620.
 xerox1720|x1720|x1750|xerox 1720:\
-	:hc:os:\
+	:bs:hc:os:\
 	:co#132:it#8:\
 	:bl=^G:cr=^M:ct=\E2:do=^J:ff=^L:le=^H:sf=^J:st=\E1:ta=^I:
 
@@ -11338,11 +11585,11 @@ xerox1720|x1720|x1750|xerox 1720:\
 # and a date on the serial-number plate) please send it!
 
 cad68-3|cgc3|cad68 basic monitor transparent mode size 3 chars:\
-	:am:\
+	:am:bs:\
 	:co#73:li#36:\
 	:cl=^Z:ho=^^:le=^H:nd=^L:up=^K:
 cad68-2|cgc2|cad68 basic monitor transparent mode size 2 chars:\
-	:am:\
+	:am:bs:\
 	:co#85:li#39:\
 	:cl=^Z:ho=^^:k1=\E5:k2=\E6:k3=\E7:k4=\E8:kd=\E2:kl=\E3:\
 	:kr=\E4:ku=\E1:le=^H:nd=^L:se=\Em^C:so=\Em^L:up=^K:
@@ -11364,7 +11611,7 @@ d132|datagraphix|datagraphix 132a:\
 # mode (which is what this entry looks like) and several other lesser-known
 # emulations.
 d800|Direct 800/A:\
-	:am:da:db:ms:xs:\
+	:am:bs:da:db:ms:xs:\
 	:co#80:it#8:li#24:\
 	:ac=``a1fxgqh0jYk?lZm@nEooppqDrrsstCu4vAwBx3yyzz{{||}}~~:\
 	:ae=\E[m:as=\E[1m:bl=^G:cd=\E[J:ce=\E[K:cl=\E[1;1H\E[2J:\
@@ -11374,6 +11621,7 @@ d800|Direct 800/A:\
 	:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:ve=\E[>12h:\
 	:vs=\E[>12l:
 digilog|digilog 333:\
+	:bs:\
 	:co#80:li#16:\
 	:bl=^G:ce=^X:cr=^M:do=^J:ho=^N:le=^H:nd=^I:sf=^J:up=^O:
 # The DWK was a terminal manufactured in the Soviet Union c.1986
@@ -11395,7 +11643,7 @@ env230|envision230|envision 230 graphics terminal:\
 # coupler attached, the whole rig fitting in a suitcase and more or less
 # portable.  Hot stuff for c.1977 :-) -- esr
 ep48|ep4080|execuport 4080:\
-	:am:os:\
+	:am:bs:os:\
 	:co#80:\
 	:bl=^G:cr=^M:do=^J:hd=^\:hu=^^:le=^H:sf=^J:
 ep40|ep4000|execuport 4000:\
@@ -11413,7 +11661,7 @@ ep40|ep4000|execuport 4000:\
 # color terminals built for IBM bisync protocols.
 # From: Paul Leondis <unllab@amber.berkeley.edu>
 ifmr|Informer D304:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:cd=\E/:ce=\EQ:cl=\EZ:cm=\EY%r%+ %+ :dc=\E\:do=^J:ei=:\
 	:ho=\EH:ic=\E[:im=:le=^H:me=\EK:nd=\EC:se=\EK:so=\EJ:sr=\En:\
@@ -11438,7 +11686,7 @@ opus3n1+|Esprit Opus3n1+ in wy60 mode with ANSI arrow keys:\
 	:ts=\Ez(:uc=\EG8%p1%c\EG0:up=^K:ve=\E`1:vi=\E`0:\
 	:tc=adm+sgr:
 teletec|Teletec Datascreen:\
-	:am:\
+	:am:bs:\
 	:co#80:li#24:\
 	:bl=^G:cl=^L:cr=^M:do=^J:ho=^^:le=^H:nd=^_:sf=^J:up=^K:
 # From: Mark Dornfeld <romwa@ucbvax.berkeley.edu>
@@ -11450,7 +11698,7 @@ teletec|Teletec Datascreen:\
 # (v3220: removed obsolete ":kn#10:",
 # I added <rmam>/<smam> based on the init string -- esr)
 v3220|LANPAR Vision II model 3220/3221/3222:\
-	:am:mi:xn:\
+	:am:bs:mi:xn:\
 	:co#80:it#8:li#24:\
 	:RA=\E[?7l:SA=\E[?7h:al=\E[L:cd=\E[J:ce=\E[K:cl=\E[H\E[J:\
 	:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:ei=\E[4l:im=\E[4h:\
@@ -11908,7 +12156,8 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 # 
 # Here is a description of the color and attribute controls supported in the
 # the ANSI.SYS driver under MS-DOS.  Most console drivers and ANSI
-# terminal emulators for Intel boxes obey these.
+# terminal emulators for Intel boxes obey these.  They are a proper subset
+# of the ECMA-48 escapes.
 #
 # 0	all attributes off
 # 1	foreground bright
@@ -11936,11 +12185,8 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 #   braindamage (this is required by iBCS2).
 #
 # * Some older versions of ANSI.SYS have a bug that causes thems to require
-#   ESC [ Pn k as EL rather than the ANSI ESC [ Pn K.
-#
-# The entries following are not standalone.  They are meant to be included
-# via use= in other entries.
-#
+#   ESC [ Pn k as EL rather than the ANSI ESC [ Pn K.  (This is not ECMA-48
+#   compatible.)
 
 #### Intel Binary Compatibility Standard
 #
@@ -12172,6 +12418,8 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 # the purpose.  Unless the ncurses tic implementation and the Lisp code were
 # making perfectly synchronized mistakes which I then failed to catch by
 # eyeball, the translation was correct and perfectly information-preserving.
+#
+# Major version number bumps correspond to major version changes in ncurses.
 #
 # Here is a log of the changes since then:
 #
@@ -12605,33 +12853,25 @@ v3220|LANPAR Vision II model 3220/3221/3222:\
 #	* Added rmso=\E[27m in Linux entry.
 #	* Added koi8-r support for Linux console.
 #	* Replace xterm entries with canonical ones from XFree86 3.2.
-#
-
-######## REORDER
-#
-# Older termcap distributions featured a kluge called `reorder' intended to
-# time-optimize access to selected terminals by moving them to the front of
-# the file.  This is obsolete under terminfo, but for completeness's sake
-# we give a reorder script generator here (strip off the leading #s to use).
-#
-#: mkreorder --  generate script to optimize access to given terminal types
-#:
-#: entries named on command line will be sorted to the front in reverse order
-#echo "ed -- termcap <<EOF"
-#for x in $*
-#do
-#	echo "/^$x[|:]/;.,/^[a-z#]/-1m0"
-#done
-#echo "0a"
-#echo "."
-#echo "w termcap.sorted"
-#echo "q"
-#echo "EOF"
-#:end of script
-#
-# Invoke this script like this:
-#
-#	mkreorder h19 wy60 vt100 >reorder
+# 9.13.20 (Sun Nov 17 23:02:51 EST 1996):
+#	* Added color_xterm from Jacob Mandelson
+# 9.13.21 (Mon Nov 18 12:43:42 EST 1996):
+#	* Back off the xterm entry to use r6 as a base.
+# 9.13.22 (Sat Nov 30 11:51:31 EST 1996):
+#	* Added dec-vt220 at Adrian Garside's request.
+# 9.13.23 (Fri Feb 21 16:36:06 EST 1997):
+#	* Replaced minitel-2 entry.
+#	* Added MGR, ansi-nt.
+#	* Minor corrections to xterm entries.
+#	* Replaced EWAN telnet entry.
+#	* Dropped the reorder script generator.  It was a fossil.
+# 9.13.24 (Sun Feb 23 20:55:23 EST 1997):
+#	* Thorsten Lockert added termcap `bs' to a lot of types, working from
+#	  the 4.4BSD Lite2 file.
+# 9.13.25 (Fri Jun 20 12:33:36 EDT 1997):
+#	* Added Datapoint 8242, pilot, ansi_psx, rbcomm, vt220js.
+#	* Updated iris-ansi; corrected vt102-w.
+#	* Switch base xterm entry to 3.3 level.
 #
 # The following sets edit modes for GNU EMACS
 # Local Variables:
