@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.56 2000/09/22 05:37:57 phil Exp $
+#	$NetBSD: bsd.man.mk,v 1.57 2000/09/26 15:33:28 phil Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -28,6 +28,7 @@ CATDEPS?=	${TMACDIR}/tmac.andoc \
 		${TMACDIR}/tmac.doc-syms
 MANTARGET?=	cat
 NROFF?=		nroff -Tascii
+GROFF?=		groff -Tascii
 TBL?=		tbl
 
 
@@ -50,12 +51,12 @@ TBL?=		tbl
 .9.html9 .8.html8 .7.html7 .6.html6 .5.html5 .4.html4 .3.html3 .2.html2 .1.html1: \
     ${CATDEPS}
 .if !defined(USETBL)
-	@echo "${NROFF} -mdoc2html ${.IMPSRC} > ${.TARGET}"
-	@${NROFF} -mdoc2html ${.IMPSRC} > ${.TARGET} || \
+	@echo "${GROFF} -mdoc2html -P-b -P-u -P-o ${.IMPSRC} > ${.TARGET}"
+	@${GROFF} -mdoc2html -P-b -P-u -P-o ${.IMPSRC} > ${.TARGET} || \
 	 (rm -f ${.TARGET}; false)
 .else
-	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mdoc2html > ${.TARGET}"
-	@${TBL} ${.IMPSRC} | ${NROFF} -mdoc2html > ${.TARGET} || \
+	@echo "${TBL} ${.IMPSRC} | ${GROFF} -mdoc2html -P-b -P-u -P-o > ${.TARGET}"
+	@cat ${.IMPSRC} | ${GROFF} -mdoc2html -P-b -P-u -P-o > ${.TARGET} || \
 	 (rm -f ${.TARGET}; false)
 .endif
 
