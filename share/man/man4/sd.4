@@ -1,4 +1,4 @@
-.\"	$NetBSD: sd.4,v 1.8 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: sd.4,v 1.9 1999/12/23 21:24:03 leo Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -175,6 +175,8 @@ The driver
 .Em will not
 write the new
 disklabel to the disk.
+.It Dv DIOCKLABEL
+Keep or drop the in-core disklabel on the last close.
 .It Dv DIOCWLABEL
 Enable or disable the driver's software
 write protect of the disklabel on the disk.
