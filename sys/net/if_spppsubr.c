@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.24 2001/07/17 19:12:02 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.25 2001/07/18 16:43:09 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -945,8 +945,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_cpq.ifq_maxlen = 20;
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
-	bzero(&sp->pp_seq[0], sizeof(sp->pp_seq));
-	bzero(&sp->pp_rseq[0], sizeof(sp->pp_rseq));
+	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
+	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
 	sp->pp_phase = PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
@@ -3361,7 +3361,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			continue;
 #endif
 		case IPV6CP_OPT_IFID:
-			bzero(&desiredaddr, sizeof(desiredaddr));
+			memset(&desiredaddr, 0, sizeof(desiredaddr));
 			bcopy(&p[2], &desiredaddr.s6_addr[8], 8);
 			collision = (bcmp(&desiredaddr.s6_addr[8],
 					&myaddr.s6_addr[8], 8) == 0);
@@ -3382,11 +3382,11 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				continue;
 			}
 
-			bzero(&suggestaddr, sizeof(&suggestaddr));
+			memset(&suggestaddr, 0, sizeof(&suggestaddr));
 			if (collision && nohisaddr) {
 				/* collision, hisaddr unknown - Conf-Rej */
 				type = CONF_REJ;
-				bzero(&p[2], 8);
+				memset(&p[2], 0, 8);
 			} else {
 				/*
 				 * - no collision, hisaddr unknown, or
@@ -3509,7 +3509,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			 */
 			if (len < 10 || p[1] != 10)
 				break;
-			bzero(&suggestaddr, sizeof(suggestaddr));
+			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			suggestaddr.s6_addr16[0] = htons(0xfe80);
 			suggestaddr.s6_addr16[1] = htons(sp->pp_if.if_index);
 			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
@@ -4841,8 +4841,8 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	struct in6_addr ssrc, ddst;
 
 	sm = NULL;
-	bzero(&ssrc, sizeof(ssrc));
-	bzero(&ddst, sizeof(ddst));
+	memset(&ssrc, 0, sizeof(ssrc));
+	memset(&ddst, 0, sizeof(ddst));
 	/*
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
@@ -5004,10 +5004,10 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		 * CHAP secrets back to userland anyway.
 		 */
 		bcopy(sp, &spr.defs, sizeof(struct sppp));
-		bzero(spr.defs.myauth.secret, AUTHKEYLEN);
-		bzero(spr.defs.myauth.challenge, AUTHKEYLEN);
-		bzero(spr.defs.hisauth.secret, AUTHKEYLEN);
-		bzero(spr.defs.hisauth.challenge, AUTHKEYLEN);
+		memset(spr.defs.myauth.secret, 0, AUTHKEYLEN);
+		memset(spr.defs.myauth.challenge, 0, AUTHKEYLEN);
+		memset(spr.defs.hisauth.secret, 0, AUTHKEYLEN);
+		memset(spr.defs.hisauth.challenge, 0, AUTHKEYLEN);
 		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
 
 	case SPPPIOSDEFS:
@@ -5048,7 +5048,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 
 		if (spr.defs.myauth.proto == 0)
 			/* resetting myauth */
-			bzero(&sp->myauth, sizeof sp->myauth);
+			memset(&sp->myauth, 0, sizeof sp->myauth);
 		else {
 			/* setting/changing myauth */
 			sp->myauth.proto = spr.defs.myauth.proto;
@@ -5059,7 +5059,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		}
 		if (spr.defs.hisauth.proto == 0)
 			/* resetting hisauth */
-			bzero(&sp->hisauth, sizeof sp->hisauth);
+			memset(&sp->hisauth, 0, sizeof sp->hisauth);
 		else {
 			/* setting/changing hisauth */
 			sp->hisauth.proto = spr.defs.hisauth.proto;
