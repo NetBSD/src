@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.7 2003/02/23 19:35:14 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.8 2003/02/24 09:30:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -237,10 +237,9 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	struct proc *p;
 	int error = 0;
 
-	if (vp->v_type != VREG) {
-		SMBERROR("vn types other than VREG unsupported !\n");
-		return EIO;
-	}
+	/* vn types other than VREG unsupported */
+	KASSERT(vp->v_type == VREG);
+
 	SMBVDEBUG("ofs=%d,resid=%d\n",(int)uiop->uio_offset, uiop->uio_resid);
 	if (uiop->uio_offset < 0)
 		return EINVAL;

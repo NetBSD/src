@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.14 2003/02/23 22:31:17 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.15 2003/02/24 09:30:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -186,9 +186,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	VOP_UNLOCK(vp, 0);
 	SMBVDEBUG("root.v_usecount = %d\n", vp->v_usecount);
 
-#ifdef DIAGNOSTICS
-	SMBERROR("mp=%p\n", mp);
-#endif
 	return (0);
 
 bad:

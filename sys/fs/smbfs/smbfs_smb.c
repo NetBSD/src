@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.8 2003/02/23 22:03:11 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.9 2003/02/24 09:30:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -283,7 +283,6 @@ smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr, struct timespec *mtime,
 		mb_put_uint8(mbp, 0);
 		smb_rq_bend(rqp);
 		error = smb_rq_simple(rqp);
-		SMBERROR("%d\n", error);
 		if (error)
 			break;
 	} while(0);
@@ -1113,9 +1112,11 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		fxsz = 64;
 		recsz = next ? next : fxsz + size;
 		break;
+#ifdef DIAGNOSTIC
 	default:
-		SMBERROR("unexpected info level %d\n", ctx->f_infolevel);
-		return EINVAL;
+		panic("smbfs_findnextLM2: unexpected info level %d\n",
+		    ctx->f_infolevel);
+#endif
 	}
 	nmlen = min(size, SMB_MAXFNAMELEN);
 	cp = ctx->f_name;
@@ -1126,10 +1127,10 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		cnt = next - nmlen - fxsz;
 		if (cnt > 0)
 			md_get_mem(mbp, NULL, cnt, MB_MSYSTEM);
-		else if (cnt < 0) {
-			SMBERROR("out of sync\n");
-			return EBADRPC;
-		}
+#ifdef DIAGNOSTIC
+		else if (cnt < 0)
+			panic("smbfs_findnextLM2: out of sync");
+#endif
 	}
 	if (nmlen && cp[nmlen - 1] == 0)
 		nmlen--;
