@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.8 1998/11/23 05:24:16 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.9 1998/11/23 05:34:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2102,7 +2102,6 @@ struct {
 	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACC610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACC650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACP580,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
