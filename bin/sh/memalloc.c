@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.15 1995/03/21 09:09:29 cgd Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.16 1995/05/11 21:29:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)memalloc.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.15 1995/03/21 09:09:29 cgd Exp $";
+static char rcsid[] = "$NetBSD: memalloc.c,v 1.16 1995/05/11 21:29:29 christos Exp $";
 #endif
 #endif /* not lint */
 

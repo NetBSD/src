@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.h,v 1.7 1995/03/21 09:09:23 cgd Exp $	*/
+/*	$NetBSD: mail.h,v 1.8 1995/05/11 21:29:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,11 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mail.h	8.1 (Berkeley) 5/31/93
+ *	@(#)mail.h	8.2 (Berkeley) 5/4/95
  */
 
-#ifdef __STDC__
-void chkmail(int);
-#else
-void chkmail();
-#endif
+void chkmail __P((int));

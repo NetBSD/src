@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.17 1995/03/21 09:09:04 cgd Exp $	*/
+/*	$NetBSD: expand.c,v 1.18 1995/05/11 21:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,20 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)expand.c	8.2 (Berkeley) 10/22/93";
+static char sccsid[] = "@(#)expand.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.17 1995/03/21 09:09:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.18 1995/05/11 21:29:06 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <stdlib.h>
 
 /*
  * Routines to expand arguments to commands.  We have to deal with
@@ -64,13 +73,8 @@ static char rcsid[] = "$NetBSD: expand.c,v 1.17 1995/03/21 09:09:04 cgd Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <pwd.h>
+#include "arith.h"
+#include "show.h"
 
 /*
  * Structure specifying which parts of the string should be searched
@@ -91,43 +95,22 @@ struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
 struct ifsregion *ifslastp;	/* last struct in list */
 struct arglist exparg;		/* holds expanded arg list */
 
-#ifdef __STDC__
-STATIC void argstr(char *, int);
-STATIC void expbackq(union node *, int, int);
-STATIC int  subevalvar(char *, char *, int, int, int);
-STATIC char *evalvar(char *, int);
-STATIC int varisset(int);
-STATIC void varvalue(int, int, int);
-STATIC void recordregion(int, int, int);
-STATIC void ifsbreakup(char *, struct arglist *);
-STATIC void expandmeta(struct strlist *, int);
-STATIC void expmeta(char *, char *);
-STATIC void expari(int);
-STATIC void addfname(char *);
-STATIC struct strlist *expsort(struct strlist *);
-STATIC struct strlist *msort(struct strlist *, int);
-STATIC int pmatch(char *, char *);
-STATIC char *exptilde(char *, int);
-STATIC char *cvtnum(int, char *);
-#else
-STATIC void argstr();
-STATIC void expbackq();
-STATIC int subevalvar();
-STATIC char *evalvar();
-STATIC int varisset();
-STATIC void varvalue();
-STATIC void recordregion();
-STATIC void ifsbreakup();
-STATIC void expandmeta();
-STATIC void expmeta();
-STATIC void expari();
-STATIC void addfname();
-STATIC struct strlist *expsort();
-STATIC struct strlist *msort();
-STATIC int pmatch();
-STATIC char *exptilde();
-STATIC char *cvtnum();
-#endif
+STATIC void argstr __P((char *, int));
+STATIC char *exptilde __P((char *, int));
+STATIC void expbackq __P((union node *, int, int));
+STATIC int subevalvar __P((char *, char *, int, int, int));
+STATIC char *evalvar __P((char *, int));
+STATIC int varisset __P((int));
+STATIC void varvalue __P((int, int, int));
+STATIC void recordregion __P((int, int, int));
+STATIC void ifsbreakup __P((char *, struct arglist *));
+STATIC void expandmeta __P((struct strlist *, int));
+STATIC void expmeta __P((char *, char *));
+STATIC void addfname __P((char *));
+STATIC struct strlist *expsort __P((struct strlist *));
+STATIC struct strlist *msort __P((struct strlist *, int));
+STATIC int pmatch __P((char *, char *));
+STATIC char *cvtnum __P((int, char *));
 
 /*
  * Expand shell variables and backquotes inside a here document.
@@ -277,7 +260,7 @@ exptilde(p, flag)
 	char *home;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
-	while (c = *p) {
+	while ((c = *p) != '\0') {
 		switch(c) {
 		case CTLESC:
 			return (startp);
@@ -303,7 +286,7 @@ done:
 	if (*home == '\0')
 		goto lose;
 	*p = c;
-	while (c = *home++) {
+	while ((c = *home++) != '\0') {
 		if (quotes && SQSYNTAX[c] == CCTL)
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
@@ -571,7 +554,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		val = NULL;
 	} else {
 		val = lookupvar(var);
-		if (val == NULL || (varflags & VSNUL) && val[0] == '\0') {
+		if (val == NULL || ((varflags & VSNUL) && val[0] == '\0')) {
 			val = NULL;
 			set = 0;
 		} else
@@ -1055,7 +1038,7 @@ expmeta(enddir, name)
 		*endname++ = '\0';
 	}
 	matchdot = 0;
-	if (start[0] == '.' || start[0] == CTLESC && start[1] == '.')
+	if (start[0] == '.' || (start[0] == CTLESC && start[1] == '.'))
 		matchdot++;
 	while (! int_pending() && (dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.' && ! matchdot)
@@ -1066,7 +1049,9 @@ expmeta(enddir, name)
 				addfname(expdir);
 			} else {
 				char *q;
-				for (p = enddir, q = dp->d_name ; *p++ = *q++ ;);
+				for (p = enddir, q = dp->d_name;
+				     (*p++ = *q++) != '\0';)
+					continue;
 				p[-1] = '/';
 				expmeta(p, endname);
 			}

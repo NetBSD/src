@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.7 1995/03/21 09:08:52 cgd Exp $	*/
+/*	$NetBSD: error.h,v 1.8 1995/05/11 21:28:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)error.h	8.1 (Berkeley) 5/31/93
+ *	@(#)error.h	8.2 (Berkeley) 5/4/95
  */
 
 /*
@@ -84,24 +84,16 @@ extern volatile int intpending;
 extern char *commandname;	/* name of command--printed on error */
 
 #define INTOFF suppressint++
-#define INTON if (--suppressint == 0 && intpending) onint(); else
+#define INTON { if (--suppressint == 0 && intpending) onint(); }
 #define FORCEINTON {suppressint = 0; if (intpending) onint();}
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
-#ifdef __STDC__
-void exraise(int);
-void onint(void);
-void error2(char *, char *);
-void error(char *, ...);
-char *errmsg(int, int);
-#else
-void exraise();
-void onint();
-void error2();
-void error();
-char *errmsg();
-#endif
+void exraise __P((int));
+void onint __P((void));
+void error2 __P((char *, char *));
+void error __P((char *, ...));
+char *errmsg __P((int, int));
 
 
 /*

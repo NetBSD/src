@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.h,v 1.3 1995/03/21 09:08:41 cgd Exp $	*/
+/*	$NetBSD: alias.h,v 1.4 1995/05/11 21:28:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)alias.h	8.1 (Berkeley) 5/31/93
+ *	@(#)alias.h	8.2 (Berkeley) 5/4/95
  */
 
 #define ALIASINUSE	1
@@ -47,4 +47,7 @@ struct alias {
 	int flag;
 };
 
-struct alias *lookupalias();
+struct alias *lookupalias __P((char *, int));
+int aliascmd __P((int, char **));
+int unaliascmd __P((int, char **));
+void rmaliases __P((void));

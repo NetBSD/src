@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.13 1995/03/26 17:25:10 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.14 1995/05/11 21:29:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)options.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.13 1995/03/26 17:25:10 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.14 1995/05/11 21:29:46 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "shell.h"
 #define DEFINE_OPTIONS
@@ -58,8 +62,9 @@ static char rcsid[] = "$NetBSD: options.c,v 1.13 1995/03/26 17:25:10 christos Ex
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include "extern.h"
-#include <unistd.h>
+#ifndef NO_HISTORY
+#include "myhistedit.h"
+#endif
 
 char *arg0;			/* value of $0 */
 struct shparam shellparam;	/* current positional parameters */
@@ -70,16 +75,9 @@ char *optptr;			/* used by nextopt */
 char *minusc;			/* argument to -c option */
 
 
-#ifdef __STDC__
-STATIC void options(int);
-STATIC void setoption(int, int);
-STATIC void minus_o(char *, int);
-#else
-STATIC void options();
-STATIC void setoption();
-STATIC void minus_o();
-#endif
-
+STATIC void options __P((int));
+STATIC void minus_o __P((char *, int));
+STATIC void setoption __P((int, int));
 
 
 /*
@@ -152,7 +150,7 @@ options(cmdline)
 		argptr++;
 		if ((c = *p++) == '-') {
 			val = 1;
-                        if (p[0] == '\0' || p[0] == '-' && p[1] == '\0') {
+                        if (p[0] == '\0' || (p[0] == '-' && p[1] == '\0')) {
                                 if (!cmdline) {
                                         /* "-" means turn off -x and -v */
                                         if (p[0] == '\0')
@@ -242,7 +240,6 @@ setoption(flag, val)
 
 #ifdef mkinit
 INCLUDE "options.h"
-INCLUDE "extern.h"
 
 SHELLPROC {
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.h,v 1.7 1995/03/21 09:09:11 cgd Exp $	*/
+/*	$NetBSD: init.h,v 1.8 1995/05/11 21:29:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,15 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)init.h	8.1 (Berkeley) 5/31/93
+ *	@(#)init.h	8.2 (Berkeley) 5/4/95
  */
 
-#ifdef __STDC__
-void init(void);
-void reset(void);
-void initshellproc(void);
-#else
-void init();
-void reset();
-void initshellproc();
-#endif
+void init __P((void));
+void reset __P((void));
+void initshellproc __P((void));

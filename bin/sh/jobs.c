@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.15 1995/03/21 09:09:17 cgd Exp $	*/
+/*	$NetBSD: jobs.c,v 1.16 1995/05/11 21:29:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,17 +38,32 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)jobs.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.15 1995/03/21 09:09:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.16 1995/05/11 21:29:18 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <fcntl.h>
+#include <signal.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef BSD
+#include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "shell.h"
 #if JOBS
 #include "sgtty.h"
 #undef CEOF			/* syntax.h redefines this */
 #endif
+#include "redir.h"
+#include "show.h"
 #include "main.h"
 #include "parser.h"
 #include "nodes.h"
@@ -61,18 +76,6 @@ static char rcsid[] = "$NetBSD: jobs.c,v 1.15 1995/03/21 09:09:17 cgd Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include "extern.h"
-#include <fcntl.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#ifdef BSD
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-
 
 
 struct job *jobtab;		/* array of jobs */
@@ -83,22 +86,14 @@ int initialpgrp;		/* pgrp of shell on invocation */
 short curjob;			/* current job */
 #endif
 
-#ifdef __STDC__
-STATIC void restartjob(struct job *);
-STATIC struct job *getjob(char *);
-STATIC void freejob(struct job *);
-STATIC int procrunning(int);
-STATIC int dowait(int, struct job *);
-STATIC int waitproc(int, int *);
-#else
-STATIC void restartjob();
-STATIC struct job *getjob();
-STATIC void freejob();
-STATIC int procrunning();
-STATIC int dowait();
-STATIC int waitproc();
-#endif
-
+STATIC void restartjob __P((struct job *));
+STATIC void freejob __P((struct job *));
+STATIC struct job *getjob __P((char *));
+STATIC int dowait __P((int, struct job *));
+STATIC int onsigchild __P((void));
+STATIC int waitproc __P((int, int *));
+STATIC void cmdtxt __P((union node *));
+STATIC void cmdputs __P((char *));
 
 
 /*
@@ -159,6 +154,7 @@ setjobctl(on)
 
 
 #ifdef mkinit
+INCLUDE <stdlib.h>
 
 SHELLPROC {
 	backgndpid = -1;
@@ -465,6 +461,8 @@ currentjob:
 		}
 	}
 	error("No such job: %s", name);
+	/*NOTREACHED*/
+	return NULL;
 }
 
 
