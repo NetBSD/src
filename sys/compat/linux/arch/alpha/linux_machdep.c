@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.10 2000/06/29 02:40:37 mrg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.11 2000/11/27 22:23:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -312,6 +312,7 @@ linux_sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_tf;
+#ifdef notyet
 	struct linux_emuldata *edp;
 
 	/* Setup the signal frame (and part of the trapframe) */
@@ -326,6 +327,7 @@ linux_sendsig(catcher, sig, mask, code)
 	if (edp && sigismember(&edp->ps_siginfo, sig))
 		setup_linux_rt_sigframe(tf, sig, mask);
 	else
+#endif /* notyet */
 		setup_linux_sigframe(tf, sig, mask);
 
 	/* Signal handler for trampoline code */
