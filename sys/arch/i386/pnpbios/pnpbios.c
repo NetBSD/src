@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.39 2003/11/02 11:32:03 jdolecek Exp $ */
+/* $NetBSD: pnpbios.c,v 1.40 2003/11/25 20:47:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.39 2003/11/02 11:32:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.40 2003/11/25 20:47:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,6 +511,9 @@ pnpbios_update_dock_status(sc)
 			case PNP_DI_DOCK_STYLE_VCR:
 				style = "controlled";
 				break;
+			default:
+				style = "<style unknown>";
+				break;
 			}
 			switch (di.di_cap & PNP_DI_DOCK_WHEN_MASK) {
 			case PNP_DI_DOCK_WHEN_NO_POWER:
@@ -525,6 +528,9 @@ pnpbios_update_dock_status(sc)
 			case PNP_DI_DOCK_WHEN_RESERVED:
 				when = "<reserved>";
 				break;
+			default:
+				when = "<dock type unknown>";
+					break;
 			}
 			printf(", %s %s docking\n", style, when);
 		}
