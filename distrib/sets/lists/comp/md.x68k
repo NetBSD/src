@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.33 2001/02/17 11:40:59 ragge Exp $
+# $NetBSD: md.x68k,v 1.34 2001/03/21 15:03:56 tsutsui Exp $
 ./usr/include/x68k	comp-c-include
 ./usr/include/x68k/_G_config.h	comp-c-include
 ./usr/include/x68k/ansi.h	comp-c-include
@@ -55,3 +55,5 @@
 ./usr/include/x68k/vmparam.h	comp-c-include
 ./usr/include/x68k/vuid_event.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
+./usr/lib/c++rt0.o		comp-cxx-lib
+./usr/lib/scrt0.o		comp-c-lib
