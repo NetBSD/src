@@ -13,8 +13,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_j0f.c,v 1.4 1995/05/10 20:45:25 jtc Exp $";
+__RCSID("$NetBSD: e_j0f.c,v 1.5 1997/10/09 11:29:11 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -295,6 +296,8 @@ static float pS2[5] = {
 #endif
 	float z,r,s;
 	int32_t ix;
+
+	p = q = 0;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x41000000)     {p = pR8; q= pS8;}
@@ -431,6 +434,8 @@ static float qS2[6] = {
 #endif
 	float s,r,z;
 	int32_t ix;
+
+	p = q = 0;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x41000000)     {p = qR8; q= qS8;}

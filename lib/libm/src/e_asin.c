@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_asin.c,v 1.9 1995/05/12 04:57:22 jtc Exp $";
+__RCSID("$NetBSD: e_asin.c,v 1.10 1997/10/09 11:28:35 lukem Exp $");
 #endif
 
 /* __ieee754_asin(x)
@@ -79,6 +80,8 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 {
 	double t,w,p,q,c,r,s;
 	int32_t hx,ix;
+
+	t = 0;
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>= 0x3ff00000) {		/* |x|>= 1 */
