@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.127 2001/01/19 01:58:06 manu Exp $
+.\"	$NetBSD: options.4,v 1.128 2001/02/07 11:40:16 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1025,6 +1025,12 @@ enables multicast routing code as well.
 This option requires
 .Em INET
 at this moment, but it should not.
+.It Cd options ND6_DEBUG
+The option sets the default value of net.inet6.icmp6.nd6_debug to 1,
+for debugging IPV6 neighbor discovery protocol handling.
+See
+.Xr sysctl 3
+for details.
 .It Cd options IPSEC
 Includes support for the
 .Tn IPsec
