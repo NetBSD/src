@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.22 2001/04/25 17:53:26 bouyer Exp $	*/
+/*	$NetBSD: mha.c,v 1.23 2001/11/04 12:04:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -1034,10 +1034,6 @@ mha_dequeue(sc, acb)
 		sc->sc_msgpriq |= (m);	\
 	} while (0)
 
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
-
 /*
  * Precondition:
  * The SCSI bus is already in the MSGI phase and there is a message byte
@@ -1094,11 +1090,11 @@ mha_msgin(sc)
 		 * it should not effect performance
 		 * significantly.
 		 */
-		if (sc->sc_imlen == 1 && IS1BYTEMSG(sc->sc_imess[0]))
+		if (sc->sc_imlen == 1 && MSG_IS1BYTE(sc->sc_imess[0]))
 			goto gotit;
-		if (sc->sc_imlen == 2 && IS2BYTEMSG(sc->sc_imess[0]))
+		if (sc->sc_imlen == 2 && MSG_IS2BYTE(sc->sc_imess[0]))
 			goto gotit;
-		if (sc->sc_imlen >= 3 && ISEXTMSG(sc->sc_imess[0]) &&
+		if (sc->sc_imlen >= 3 && MSG_ISEXTENDED(sc->sc_imess[0]) &&
 		    sc->sc_imlen == sc->sc_imess[1] + 2)
 			goto gotit;
 	}
