@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.128 2000/01/11 13:01:53 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.129 2000/01/11 20:53:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1495,14 +1495,18 @@ getdevunit(name, unit)
 #include <dev/scsipi/scsiconf.h>
 #include <sparc/sparc/iommuvar.h>
 
-#define BUSCLASS_GENERIC	0
+#define BUSCLASS_NONE		0
 #define BUSCLASS_MAINBUS	1
 #define BUSCLASS_IOMMU		2
 #define BUSCLASS_OBIO		3
 #define BUSCLASS_SBUS		4
 #define BUSCLASS_VME		5
+#define BUSCLASS_XDC		6
+#define BUSCLASS_XYC		7
+#define BUSCLASS_FDC		8
 
 static int bus_class __P((struct device *));
+static char *bus_compatible __P((char *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
 static void nail_bootdev __P((struct device *, struct bootpath *));
 
@@ -1521,18 +1525,53 @@ static struct {
 	{ "isp",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "lebuffer",	BUSCLASS_SBUS },
-	{ "vme",	BUSCLASS_VME }
+	{ "vme",	BUSCLASS_VME },
+	{ "xdc",	BUSCLASS_XDC },
+	{ "xyc",	BUSCLASS_XYC },
+	{ "fdc",	BUSCLASS_FDC },
 };
+
+/*
+ * A list of PROM device names that differ from our NetBSD
+ * device names.
+ */
+static struct {
+	char	*bpname;
+	char	*cfname;
+} dev_compat_tab[] = {
+	{ "espdma",	"dma" },
+	{ "QLGC,isp",	"isp" },
+	{ "PTI,isp",	"isp" },
+	{ "ptisp",	"isp" },
+	{ "SUNW,fdtwo",	"fdc" },
+};
+
+static char *
+bus_compatible(bpname)
+	char *bpname;
+{
+	int i;
+
+	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
+		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0)
+			return (dev_compat_tab[i].cfname);
+	}
+
+	return (bpname);
+}
 
 static int
 bus_class(dev)
 	struct device *dev;
 {
-	struct device *parent = dev->dv_parent;
-	char *name = parent->dv_cfdata->cf_driver->cd_name;
+	char *name;
 	int i, class;
 
-	class = BUSCLASS_GENERIC;
+	class = BUSCLASS_NONE;
+	if (dev == NULL)
+		return (class);
+
+	name = dev->dv_cfdata->cf_driver->cd_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
 		if (strcmp(name, bus_class_tab[i].name) == 0) {
 			class = bus_class_tab[i].class;
@@ -1558,16 +1597,19 @@ instance_match(dev, aux, bp)
 	struct iommu_attach_args *iom;
 
 	/*
-	 * Several Sbus devices are represented on bootpaths in one of
-	 * two formats:
+	 * Several devices are represented on bootpaths in one of
+	 * two formats, e.g.:
 	 *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..  (PROM v3 style)
 	 *	(2) /sbus0/esp0/sd@..                      (PROM v2 style)
 	 *
-	 * hence we fall back on a `unit number' check if the Sbus-specific
+	 * hence we fall back on a `unit number' check if the bus-specific
 	 * instance parameter check does not produce a match.
 	 */
 
-	switch (bus_class(dev)) {
+	/*
+	 * Rank parent bus so we know which locators to check.
+	 */
+	switch (bus_class(dev->dv_parent)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		if (bp->val[0] == ma->ma_iospace && bp->val[1] == ma->ma_paddr)
@@ -1584,6 +1626,19 @@ instance_match(dev, aux, bp)
 		    bp->val[1] == iom->iom_reg[0].ior_pa)
 			return (1);
 		break;
+	case BUSCLASS_XDC:
+	case BUSCLASS_XYC:
+		{
+		/*
+		 * XXX - x[dy]c attach args are not exported right now..
+		 * XXX   we happen to know they look like this:
+		 */
+		struct xxxx_attach_args { int driveno; } *aap = aux;
+
+		if (aap->driveno == bp->val[0])
+			return (1);
+
+		}
 	default:
 		break;
 	}
@@ -1624,7 +1679,7 @@ device_register(dev, aux)
 	void *aux;
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	char *dvname = dev->dv_cfdata->cf_driver->cd_name;
+	char *dvname, *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1633,27 +1688,18 @@ device_register(dev, aux)
 	if (bp == NULL)
 		return;
 
-	if (strcmp(bp->name, "espdma") == 0) {
-		/* espdma special case */
-		if (strcmp(dvname, "dma") != 0)
-			return;
-	} else if (strcmp(dvname, bp->name) != 0)
+	/*
+	 * Translate PROM name in case our drivers are named differently
+	 */
+	bpname = bus_compatible(bp->name);
+
+	/* First, match by name */
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
+	if (strcmp(dvname, bpname) != 0)
 		return;
 
-	if (strcmp(dvname, "obio") == 0 ||
-	    strcmp(dvname, "vme") == 0 ||
-	    strcmp(dvname, "iommu") == 0 ||
-	    strcmp(dvname, "sbus") == 0 ||
-	    strcmp(dvname, "xbox") == 0 ||
-	    strcmp(dvname, "dma") == 0 ||
-	    strcmp(dvname, "ledma") == 0 ||
-	    strcmp(dvname, "lebuffer") == 0 ||
-	    strcmp(dvname, "espdma") == 0 ||
-	    strcmp(dvname, "esp") == 0 ||
-	    strcmp(dvname, "isp") == 0 ||
-	    strcmp(dvname, "fdc") == 0 ||
-	    strcmp(dvname, "xdc") == 0 ||
-	    strcmp(dvname, "xyc") == 0 ) {
+
+	if (bus_class(dev) != BUSCLASS_NONE) {
 		/*
 		 * A bus or controller device of sorts. Check instance
 		 * parameters and advance boot path on match.
@@ -1724,19 +1770,15 @@ device_register(dev, aux)
 			nail_bootdev(dev, bp);
 			return;
 		}
+
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
-		/*
-		 * XXX - x[dy]c attach args are not exported right now..
-		 * XXX   we happen to know they look like this:
-		 */
-		struct xxxx_attach_args { int driveno; } *aap = aux;
-
-		if (aap->driveno == bp->val[0]) {
-			/* We've found the boot device */
+		/* A Xylogic disk */
+		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
 			return;
 		}
+
 	} else if (strcmp("fd", dvname) == 0) {
 		/*
 		 * Sun PROMs don't really seem to support multiple
