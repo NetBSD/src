@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.22 2004/03/03 00:45:20 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.23 2004/03/03 01:02:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.22 2004/03/03 00:45:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.23 2004/03/03 01:02:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -136,13 +136,14 @@ rf_FreeParityStripeStatusTable(RF_Raid_t *raidPtr,
 
 
 /* looks up the status structure for a parity stripe.
- * if the create_flag is on, creates and returns the status structure it it doesn't exist
+ * if the create_flag is on, uses (and returns) newpssPtr if
+ * a parity status structure doesn't exist
  * otherwise returns NULL if the status structure does not exist
  *
  * ASSUMES THE PSS DESCRIPTOR IS LOCKED UPON ENTRY
  * 
- * flags - whether or not to create it if it doesn't exist and what flags
- *         to set it to initially
+ * flags - whether or not to use newpssPtr if the needed PSS
+ *         doesn't exist and what flags to set it to initially
  */
 RF_ReconParityStripeStatus_t *
 rf_LookupRUStatus(RF_Raid_t *raidPtr, RF_PSStatusHeader_t *pssTable,
