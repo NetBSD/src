@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.58 2003/10/09 16:23:29 dbj Exp $
+.\"	$NetBSD: newfs.8,v 1.59 2003/10/10 03:27:10 grog Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@
 .Op Fl S Ar sector-size
 .Op Fl s Ar size
 .Op Fl T Ar disk-type
+.Op Fl V
 .Op Fl v Ar volname
 .Ar special
 .Sh DESCRIPTION
@@ -246,6 +247,15 @@ specified in the disklabel.
 Uses information for the specified disk from
 .Pa /etc/disktab
 instead of trying to get the information from the disk label.
+.It Fl V
+Tell
+.Nm
+not to interpret the name of the device in any special manner.  This
+is intended for synthetic devices like Vinum volumes, which are not
+subpartitioned.  Without this option,
+.Nm
+may succeed or fail depending on the last character of the device
+name.
 .It Fl v Ar volname
 This specifies that an Apple UFS filesystem should be created
 with the given volume name.
@@ -313,7 +323,8 @@ utility.
 .Xr mount 8 ,
 .Xr mount_mfs 8 ,
 .Xr newfs_lfs 8 ,
-.Xr tunefs 8
+.Xr tunefs 8 ,
+.Xr vinum 8
 .Rs
 .%A M. McKusick
 .%A W. Joy
