@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.12 1997/01/23 14:01:51 mrg Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.13 1997/02/14 08:30:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.12 1997/01/23 14:01:51 mrg Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.13 1997/02/14 08:30:32 scottr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,11 +121,11 @@ getdiskbyname(name)
 	getnumdflt(dp->d_trkseek, "ts", 0);
 	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
 	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
-	(void)strncpy(psize, "px", sizeof(psize) - 1);
-	(void)strncpy(pbsize, "bx", sizeof(pbsize) - 1);
-	(void)strncpy(pfsize, "fx", sizeof(pfsize) - 1);
-	(void)strncpy(poffset, "ox", sizeof(poffset) - 1);
-	(void)strncpy(ptype, "tx", sizeof(ptype) - 1);
+	strcpy(psize, "px");	/* XXX: strcpy is safe */
+	strcpy(pbsize, "bx");	/* XXX: strcpy is safe */
+	strcpy(pfsize, "fx");	/* XXX: strcpy is safe */
+	strcpy(poffset, "ox");	/* XXX: strcpy is safe */
+	strcpy(ptype, "tx");	/* XXX: strcpy is safe */
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
@@ -153,7 +153,7 @@ getdiskbyname(name)
 		}
 	}
 	dp->d_npartitions = max + 1 - 'a';
-	(void)strncpy(psize, "dx", sizeof(psize) - 1);
+	strcpy(psize, "dx");	/* XXX: strcpy is safe */
 	dx = dp->d_drivedata;
 	for (p = '0'; p < '0' + NDDATA; p++, dx++) {
 		psize[1] = p;
