@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.134 2001/01/22 08:37:54 toshii Exp $	*/
+/*	$NetBSD: audio.c,v 1.135 2001/01/25 15:25:34 toshii Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1006,6 +1006,8 @@ audio_open(dev, sc, flags, ifmt, p)
 	error = audiosetinfo(sc, &ai);
 	if (error)
 		goto bad;
+	/* audio_close() decreases sc_pr.usedlow, recalculate here */
+	audio_calcwater(sc);
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", sc->sc_mode));
 	
