@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.13 1997/06/12 17:15:00 mrg Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.14 1998/02/18 07:05:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -67,6 +67,14 @@ extern int (**mfs_vnodeop_p) __P((void *));
 /*
  * mfs vfs operations.
  */
+
+extern struct vnodeopv_desc mfs_vnodeop_opv_desc;  
+
+struct vnodeopv_desc *mfs_vnodeopv_descs[] = {
+	&mfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops mfs_vfsops = {
 	MOUNT_MFS,
 	mfs_mount,
@@ -80,6 +88,8 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
+	NULL,				/* vfs_mountroot */
+	mfs_vnodeopv_descs,
 };
 
 /*

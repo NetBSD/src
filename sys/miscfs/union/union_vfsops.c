@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.17 1997/09/10 13:44:30 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.18 1998/02/18 07:05:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -535,6 +535,13 @@ union_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+extern struct vnodeopv_desc union_vnodeop_opv_desc;
+
+struct vnodeopv_desc *union_vnodeopv_descs[] = {
+	&union_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops union_vfsops = {
 	MOUNT_UNION,
 	union_mount,
@@ -548,4 +555,6 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
+	NULL,				/* vfs_mountroot */
+	union_vnodeopv_descs,
 };
