@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.20 2000/01/08 01:02:38 simonb Exp $ */
+/* $NetBSD: dec_3100.c,v 1.21 2000/01/09 03:55:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -85,6 +85,7 @@
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/kn01.h>
 
@@ -94,14 +95,14 @@
 #include "le_pmax.h"
 #include "sii.h"
 
-void		dec_3100_init __P((void));
-void		dec_3100_bus_reset __P((void));
+void		dec_3100_init __P((void));		/* XXX */
+static void	dec_3100_bus_reset __P((void));
 
-void		dec_3100_enable_intr __P((unsigned slotno,
+static void	dec_3100_enable_intr __P((unsigned slotno,
 		    int (*handler)(void *), void *sc, int onoff));
-int		dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3100_cons_init __P((void));
-void		dec_3100_device_register __P((struct device *, void *));
+static int	dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3100_cons_init __P((void));
+static void	dec_3100_device_register __P((struct device *, void *));
 
 static void	dec_3100_errintr __P((void));
 
@@ -110,8 +111,6 @@ static void	dec_3100_errintr __P((void));
 void
 dec_3100_init()
 {
-	extern char cpu_model[];
-
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
@@ -139,20 +138,20 @@ dec_3100_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3100_bus_reset()
 {
 	/* nothing to do */
 	kn01_wbflush();
 }
 
-void
+static void
 dec_3100_cons_init()
 {
 }
 
 
-void
+static void
 dec_3100_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -168,7 +167,7 @@ dec_3100_device_register(dev, aux)
  * bits to particular device interrupt handlers.  We may choose to store
  * function and softc pointers at some future point.
  */
-void
+static void
 dec_3100_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
 	int (*handler) __P((void* softc));
@@ -189,7 +188,7 @@ dec_3100_enable_intr(slotno, handler, sc, on)
 /*
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
-int
+static int
 dec_3100_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;

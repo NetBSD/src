@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.10 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.11 2000/01/09 03:55:47 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -24,6 +24,7 @@
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/locore.h>
 
 #include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
 #include <pmax/dev/siireg.h>
@@ -33,32 +34,30 @@
 #include <pmax/pmax/kn01.h>		/* kn01 (ds3100) address constants */
 #include <pmax/pmax/pmaxtype.h>
 
+
+static void	kn230_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
+		    volatile u_short *dst, int length));
+static void	kn230_copyfrombuf __P((volatile u_short *src, char *dst,
+		    int length));
+
+static void	kn01_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
+		    volatile u_short *dst, int length));
+static void	kn01_copyfrombuf __P((volatile u_short *src, char *dst,
+		    int length));
+
 /*
  * Autoconfig definition of driver front-end
  */
-int	sii_ds_match __P((struct device* parent, struct cfdata *match,
-	    void *aux));
-void	sii_ds_attach __P((struct device *parent, struct device *self, void *aux));
+static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
+		    void *aux));
+static void	sii_ds_attach __P((struct device *parent, struct device *self,
+		    void *aux));
 
 
 extern struct cfattach sii_ds_ca;
 struct cfattach sii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
-
-void	CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
-	     volatile u_short *dst, int length));
-void	CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
-
-void	kn230_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-	    volatile u_short *dst, int length));
-void	kn230_copyfrombuf __P((volatile u_short *src, char *dst, int length));
-
-
-void	kn01_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-	    volatile u_short *dst, int length));
-void	kn01_copyfrombuf __P((volatile u_short *src, char *dst, int length));
-
 
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
@@ -68,7 +67,7 @@ void	kn01_copyfrombuf __P((volatile u_short *src, char *dst, int length));
 /*
  * Match driver on Decstation (2100, 3100, 5100) based on name and probe.
  */
-int
+static int
 sii_ds_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -85,7 +84,7 @@ sii_ds_match(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 sii_ds_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -129,7 +128,7 @@ sii_ds_attach(parent, self, aux)
  * XXX assumes src is always 32-bit aligned.
  * currently safe on sii driver, but API and casts should be changed.
  */
-void
+static void
 kn230_copytobuf(src, dst, len)
 	u_short *src;
 	volatile u_short *dst;
@@ -166,7 +165,7 @@ kn230_copytobuf(src, dst, len)
  * XXX assumes dst is always 32-bit aligned.
  * currently safe on sii driver, but API and casts should be changed.
  */
-void
+static void
 kn230_copyfrombuf(src, dst, len)
 	volatile u_short *src;
 	char *dst;		/* XXX assume 32-bit aligned? */
@@ -207,7 +206,7 @@ kn230_copyfrombuf(src, dst, len)
 }
 
 
-void
+static void
 kn01_copytobuf(src, dst, len)
 	u_short *src;
 	volatile u_short *dst;
@@ -225,7 +224,7 @@ kn01_copytobuf(src, dst, len)
 	CopyToBuffer(src, dst, len);
 }
 
-void
+static void
 kn01_copyfrombuf(src, dst, len)
 	volatile u_short *src;
 	char *dst;		/* XXX assume 32-bit aligned? */

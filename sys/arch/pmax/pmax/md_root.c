@@ -1,4 +1,4 @@
-/* $NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $ */
+/* $NetBSD: md_root.c,v 1.3 2000/01/09 03:56:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.3 2000/01/09 03:56:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $")
 #include <dev/md.h>
 
 #include "opt_mdsize.h"
-
-extern int boothowto;
 
 #ifndef MINIROOTSIZE
 #define MINIROOTSIZE 512

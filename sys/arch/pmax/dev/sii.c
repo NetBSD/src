@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.37 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.38 2000/01/09 03:55:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,13 +73,7 @@
 #include <pmax/pmax/pmaxtype.h>		/* Definition of DS_PMAX */
 #include <pmax/pmax/machdep.h>		/* prom_scsiid prototype */
 
-/* Machine-indepedent back-end attach entry point */
-void	siiattach __P((struct siisoftc *sc));
-
-
 extern struct cfdriver sii_cd;
-
-int	siiintr __P((void *sc));
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
@@ -147,7 +141,7 @@ struct sii_log {
 } sii_log[NLOG], *sii_logp = sii_log;
 #endif
 
-u_char	sii_buf[256];	/* used for extended messages */
+static u_char	sii_buf[256];	/* used for extended messages */
 
 #define NORESET	0
 #define RESET	1
@@ -162,7 +156,7 @@ u_char	sii_buf[256];	/* used for extended messages */
 #define SII_BUF_ADDR(sc)	((sc)->sc_buf + SII_MAX_DMA_XFER_LENGTH * 14)
 
 /*
- * Other forward references
+ * Forward references
  */
 
 static void	sii_Reset __P((register struct siisoftc *sc, int resetbus));
@@ -175,9 +169,11 @@ static int	sii_GetByte __P((register SIIRegs *regs, int phase, int ack));
 static void	sii_DoSync __P((register SIIRegs *regs, register State *state));
 static void	sii_StartDMA __P((register SIIRegs *regs, int phase,
 		    u_short *dmaAddr, int size));
+static void	siistart __P((register ScsiCmd *scsicmd));
 
-void		siistart __P((register ScsiCmd *scsicmd));
-void		sii_DumpLog __P((void));
+#ifdef DEBUG
+static void	sii_DumpLog __P((void));
+#endif
 
 
 /*
@@ -229,7 +225,7 @@ siiattach(sc)
  * We maintain information on each device separately since devices can
  * connect/disconnect during an operation.
  */
-void
+static void
 siistart(scsicmd)
 	ScsiCmd *scsicmd;	/* command to start */
 {
@@ -1789,7 +1785,7 @@ sii_CmdDone(sc, target, error)
 }
 
 #ifdef DEBUG
-void
+static void
 sii_DumpLog()
 {
 	struct sii_log *lp;

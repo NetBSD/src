@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.59 2000/01/08 01:02:40 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.60 2000/01/09 03:56:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59 2000/01/08 01:02:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.60 2000/01/09 03:56:06 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -139,12 +139,6 @@ void	ttrstrt __P((void *));
 #define	SCCUNIT(dev)	((minor(dev) & 0x7ffff) >> 1)
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
 #define	SCCDIALOUT(x)	(minor(x) & 0x80000)
-
-
-/* QVSS-compatible in-kernel X input event parser, pointer tracker */
-void	(*sccDivertXInput) __P((int cc)); /* X windows keyboard input routine */
-void	(*sccMouseEvent) __P((int));	/* X windows mouse motion event routine */
-void	(*sccMouseButtons) __P((int));	/* X windows mouse buttons event routine */
 
 #ifdef DEBUG
 int	debugChar;
@@ -229,12 +223,15 @@ struct cfattach scc_ca = {
 
 extern struct cfdriver scc_cd;
 
-int		sccGetc __P((dev_t));
-void		sccPutc __P((dev_t, int));
-void		sccPollc __P((dev_t, int));
-int		sccparam __P((struct tty *, struct termios *));
-void		sccstart __P((struct tty *));
-int		sccmctl __P((dev_t, int, int));
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*sccDivertXInput) __P((int));
+void	(*sccMouseEvent) __P((void *));
+void	(*sccMouseButtons) __P((void *));
+
+static void	sccPollc __P((dev_t, int));
+static int	sccparam __P((struct tty *, struct termios *));
+static void	sccstart __P((struct tty *));
+static int	sccmctl __P((dev_t, int, int));
 static int	cold_sccparam __P((struct tty *, struct termios *,
 		    struct scc_softc *sc));
 
@@ -244,15 +241,14 @@ static void	rr __P((char *, scc_regmap_t *));
 static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
-void		scc_kbd_init __P((struct scc_softc *sc, dev_t dev));
-void		scc_mouse_init __P((struct scc_softc *sc, dev_t dev));
-void		scc_tty_init __P((struct scc_softc *sc, dev_t dev));
+static void	scc_kbd_init __P((struct scc_softc *sc, dev_t dev));
+static void	scc_mouse_init __P((struct scc_softc *sc, dev_t dev));
+static void	scc_tty_init __P((struct scc_softc *sc, dev_t dev));
 
 static void	scc_txintr __P((struct scc_softc *, int, scc_regmap_t *));
 static void	scc_rxintr __P((struct scc_softc *, int, scc_regmap_t *, int));
-inline
 static void	scc_stintr __P((struct scc_softc *, int, scc_regmap_t *, int));
-int	sccintr __P((void *));
+static int	sccintr __P((void *));
 
 /*
  * console variables, for using serial console while still cold and
@@ -263,7 +259,6 @@ static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
-void	scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 
 /*
@@ -309,7 +304,7 @@ scc_consinit(dev, sccaddr)
  * Test to see if device is present.
  * Return true if found.
  */
-int
+static int
 sccmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -350,7 +345,7 @@ sccmatch(parent, cf, aux)
 	return (1);
 }
 
-void
+static void
 sccattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -367,7 +362,6 @@ sccattach(parent, self, aux)
 	struct tty ctty;
 	int s;
 #endif
-	extern int systype;
 	int unit;
 
 	unit = sc->sc_dv.dv_unit;
@@ -394,7 +388,7 @@ sccattach(parent, self, aux)
 		if (systype == DS_MAXINE || cntr == 0)
 			tty_attach(tp);	/* XXX */
 		pdp->p_arg = (long)tp;
-		pdp->p_fcn = (void (*)__P((struct tty*)))0;
+		pdp->p_fcn = NULL;
 		tp->t_dev = (dev_t)((unit << 1) | cntr);
 		pdp++;
 	}
@@ -445,7 +439,7 @@ sccattach(parent, self, aux)
 /*
  * Initialize line parameters for a serial console.
  */
-void
+static void
 scc_tty_init(sc, dev)
 	struct scc_softc *sc;
 	dev_t dev;
@@ -466,7 +460,7 @@ scc_tty_init(sc, dev)
 	splx(s);
 }
 
-void
+static void
 scc_kbd_init(sc, dev)
 	struct scc_softc *sc;
 	dev_t dev;
@@ -496,7 +490,7 @@ scc_kbd_init(sc, dev)
 
 }
 
-void
+static void
 scc_mouse_init(sc, dev)
 	struct scc_softc *sc;
 	dev_t dev;
@@ -815,7 +809,7 @@ sccioctl(dev, cmd, data, flag, p)
 /*
  * Set line parameters --  tty t_param entry point.
  */
-int
+static int
 sccparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -1093,7 +1087,7 @@ scc_rxintr(sc, chan, regs, unit)
 /*
  * Modem status interrupts
  */
-static void inline
+static void
 scc_stintr(sc, chan, regs, unit)
 	struct scc_softc *sc;
 	int chan;
@@ -1109,7 +1103,7 @@ scc_stintr(sc, chan, regs, unit)
 /*
  * Check for interrupts from all devices.
  */
-int
+static int
 sccintr(xxxsc)
 	void *xxxsc;
 {
@@ -1172,7 +1166,7 @@ sccintr(xxxsc)
 	return 1;
 }
 
-void
+static void
 sccstart(tp)
 	struct tty *tp;
 {
@@ -1255,7 +1249,7 @@ sccstop(tp, flag)
 	splx(s);
 }
 
-int
+static int
 sccmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -1467,7 +1461,7 @@ sccPutc(dev, c)
 /*
  * Enable/disable polling mode
  */
-void
+static void
 sccPollc(dev, on)
 	dev_t dev;
 	int on;

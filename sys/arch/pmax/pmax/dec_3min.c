@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.30 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: dec_3min.c,v 1.31 2000/01/09 03:55:58 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.30 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.31 2000/01/09 03:55:58 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.30 2000/01/08 01:02:39 simonb Exp $")
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/locore.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/sysconf.h>
@@ -103,35 +104,32 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.30 2000/01/08 01:02:39 simonb Exp $")
 /*
  * forward declarations
  */
-void		dec_3min_init __P((void));
-void		dec_3min_bus_reset __P((void));
-
-void		dec_3min_enable_intr __P((unsigned slotno,
+void		dec_3min_init __P((void));		/* XXX */
+static void	dec_3min_bus_reset __P((void));
+static void	dec_3min_enable_intr __P((unsigned slotno,
 		    int (*handler)(void *), void *sc, int onoff));
-int		dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3min_device_register __P((struct device *, void *));
-void		dec_3min_cons_init __P((void));
+static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3min_device_register __P((struct device *, void *));
+static void	dec_3min_cons_init __P((void));
+
+static void	kn02ba_wbflush __P((void));
+static unsigned	kn02ba_clkread __P((void));
 
 
 /*
  * Local declarations.
  */
-void kn02ba_wbflush __P((void));
-unsigned kn02ba_clkread __P((void));
-
 static u_int32_t kmin_tc3_imask;
 
 #ifdef MIPS3
-static unsigned	latched_cycle_cnt;
-u_int32_t	mips3_cycle_count __P((void));
+static unsigned latched_cycle_cnt;
 #endif
 
 
 void
 dec_3min_init()
 {
-	extern char cpu_model[];
-	extern int physmem_boardmax;
+	int physmem_boardmax;
 
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
@@ -199,7 +197,7 @@ dec_3min_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3min_bus_reset()
 {
 
@@ -214,14 +212,14 @@ dec_3min_bus_reset()
 	kn02ba_wbflush();
 }
 
-void
+static void
 dec_3min_cons_init()
 {
 	/* notyet */
 }
 
 
-void
+static void
 dec_3min_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -230,7 +228,7 @@ dec_3min_device_register(dev, aux)
 }
 
 
-void
+static void
 dec_3min_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
 	int (*handler) __P((void *));
@@ -324,7 +322,7 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 /*
  * 3min hardware interrupts. (DECstation 5000/1xx)
  */
-int
+static int
 dec_3min_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -483,7 +481,7 @@ done:
  ************************************************************************
  */
 
-void
+static void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_IMSK */
@@ -491,7 +489,7 @@ kn02ba_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 
-unsigned
+static unsigned
 kn02ba_clkread()
 {
 #ifdef MIPS3

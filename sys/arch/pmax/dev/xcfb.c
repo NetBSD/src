@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.31 2000/01/08 01:02:36 simonb Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.32 2000/01/09 03:55:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,13 +123,13 @@ xcfb needs dtop device
 /*
  * These need to be mapped into user space.
  */
-struct fbuaccess xcfbu;
+static struct fbuaccess xcfbu;
 
 
 /*
  * rcons methods and globals.
  */
-struct pmax_fbtty xcfbfb;
+static struct pmax_fbtty xcfbfb;
 
 #define XCFB_FB_SIZE 0x100000	/* size of raster (mapped into userspace) */
 
@@ -151,14 +151,14 @@ struct fbdriver xcfb_driver = {
  * code is completely gone.
  */
 
-int	xcfbmatch __P((struct device *, struct cfdata *, void *));
-void	xcfbattach __P((struct device *, struct device *, void *));
+static int	xcfbmatch __P((struct device *, struct cfdata *, void *));
+static void	xcfbattach __P((struct device *, struct device *, void *));
 
 struct cfattach xcfb_ca = {
 	sizeof(struct device), xcfbmatch, xcfbattach
 };
 
-int
+static int
 xcfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -174,7 +174,7 @@ xcfbmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 xcfbattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;

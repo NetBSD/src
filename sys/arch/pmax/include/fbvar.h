@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.8 2000/01/08 01:02:38 simonb Exp $ */
+/*	$NetBSD: fbvar.h,v 1.9 2000/01/09 03:55:52 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -107,7 +107,9 @@ struct fbdriver {
 #define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
 #define romgetcursoraddr(xp, yp)	0
 
-void	fbconnect __P((char *name, struct fbinfo *info, int silent));
 int	fballoc __P((caddr_t base, struct fbinfo **fip));
+void	fbattach __P((int n));
+void	fbconnect __P((char *name, struct fbinfo *info, int silent));
+int	tcfb_cnattach __P((int prom_slot));
 
 #endif /* _KERNEL */

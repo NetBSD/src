@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.20 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: dec_3max.c,v 1.21 2000/01/09 03:55:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.20 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.21 2000/01/09 03:55:57 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.20 2000/01/08 01:02:39 simonb Exp $")
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
@@ -95,14 +96,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.20 2000/01/08 01:02:39 simonb Exp $")
 /*
  * forward declarations
  */
-void		dec_3max_init __P((void));
-void		dec_3max_bus_reset __P((void));
+void		dec_3max_init __P((void));		/* XXX */
+static void	dec_3max_bus_reset __P((void));
 
-void		dec_3max_enable_intr __P((unsigned slotno,
+static void	dec_3max_enable_intr __P((unsigned slotno,
 		    int (*handler)(void *), void *sc, int onoff));
-int		dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_3max_cons_init __P((void));
-void		dec_3max_device_register __P((struct device *, void *));
+static int	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3max_cons_init __P((void));
+static void	dec_3max_device_register __P((struct device *, void *));
 
 static void	dec_3max_errintr __P((void));
 
@@ -112,7 +113,6 @@ void
 dec_3max_init()
 {
 	u_int32_t csr;
-	extern char cpu_model[];
 
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
@@ -154,7 +154,7 @@ dec_3max_init()
 /*
  * Initalize the memory system and I/O buses.
  */
-void
+static void
 dec_3max_bus_reset()
 {
 	/*
@@ -168,12 +168,12 @@ dec_3max_bus_reset()
 	kn02_wbflush();
 }
 
-void
+static void
 dec_3max_cons_init()
 {
 }
 
-void
+static void
 dec_3max_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -185,7 +185,7 @@ dec_3max_device_register(dev, aux)
 /*
  * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
  */
-void
+static void
 dec_3max_enable_intr(slotno, handler, sc, on)
 	u_int slotno;
 	int (*handler) __P((void *));
@@ -229,7 +229,7 @@ dec_3max_enable_intr(slotno, handler, sc, on)
  * Handle hardware interrupts for the KN02. (DECstation 5000/200)
  * Returns spl value.
  */
-int
+static int
 dec_3max_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;

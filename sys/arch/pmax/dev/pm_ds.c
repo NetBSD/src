@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.12 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.13 2000/01/09 03:55:40 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -32,6 +32,7 @@
 #include <machine/fbvar.h>
 
 #include <pmax/dev/fbreg.h>
+#include <pmax/dev/dcvar.h>
 #include <machine/dc7085cons.h>		/* XXX */
 #include <pmax/dev/pmvar.h>		/* XXX move */
 
@@ -39,9 +40,12 @@
 #include "pm.h"
 #include "dc.h"
 
-int	ds_pm_init __P((struct fbinfo *fi, int unti, int cold_console_flag));
-int	pm_ds_match __P((struct device *, struct cfdata *, void *));
-void	pm_ds_attach __P((struct device *, struct device *, void *));
+#if 0	/* XXX not used */
+static int	ds_pm_init __P((struct fbinfo *fi, int unit,
+		    int cold_console_flag));
+#endif
+static int	pm_ds_match __P((struct device *, struct cfdata *, void *));
+static void	pm_ds_attach __P((struct device *, struct device *, void *));
 
 /*
  * Define decstation pm front-end driver for autoconfig
@@ -51,29 +55,11 @@ struct cfattach pm_ds_ca = {
 	sizeof(struct device), pm_ds_match, pm_ds_attach
 };
 
-/* XXX pmvar.h */
-extern struct fbuacces pmu;
-
-/*
- * rcons methods and globals.
- */
-extern struct pmax_fbtty pmfb;
-
-/*
- * XXX
- * pmax raster-console infrastructure needs to reset the mouse, so
- * we need a driver callback.
- * pm framebuffers are only found in {dec,vax}station 3100s with dc7085s..
- * we hardcode an entry point.
- * XXX
- */
-void	dcPutc __P((dev_t, int));		/* XXX */
-
-
+#if 0	/* XXX not used */
 /*
  * Intialize pm framebuffer as console while cold
  */
-int
+static int
 ds_pm_init (fi, unit, cold_console_flag)
 	struct fbinfo *fi;
 	int unit;
@@ -86,8 +72,9 @@ ds_pm_init (fi, unit, cold_console_flag)
 	/* only have one pm, address &c hardcoded in pminit() */
 	return (pminit(fi, base, unit, cold_console_flag));
 }
+#endif
 
-int
+static int
 pm_ds_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -106,7 +93,7 @@ pm_ds_match(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 pm_ds_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -180,6 +167,15 @@ pminit(fi, base, unit, cold_console_flag)
 	/*
 	 * set putc/getc entry point
 	 */
+	/*
+	 * XXX
+	 * pmax raster-console infrastructure needs to reset the mouse, so
+	 * we need a driver callback.
+	 * pm framebuffers are only found in {dec,vax}station 3100s with
+	 * dc7085s we hardcode an entry point to dcPutc();
+	 * XXX
+	 */
+
 	fi->fi_glasstty->KBDPutc = dcPutc;	/* XXX */
 	fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 

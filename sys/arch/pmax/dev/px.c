@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.24 2000/01/05 18:44:27 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.25 2000/01/09 03:55:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24 2000/01/05 18:44:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.25 2000/01/09 03:55:41 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24 2000/01/05 18:44:27 ad Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/ioctl.h>
@@ -76,8 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.24 2000/01/05 18:44:27 ad Exp $");
 
 #include <mips/cpuregs.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
@@ -93,15 +95,9 @@ struct px_softc {
 	struct	px_info *px_info;
 };
 
-int	px_match __P((struct device *, struct cfdata *, void *));
-void	px_attach __P((struct device *, struct device *, void *));
-int	px_intr __P((void *xxx_sc));
-
-int	pxopen __P((dev_t, int, int, struct proc *));
-int	pxclose __P((dev_t, int, int, struct proc *));
-int	pxioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	pxpoll __P((dev_t, int, struct proc *));
-int	pxmmap __P((dev_t, int, int));
+static int	px_match __P((struct device *, struct cfdata *, void *));
+static void	px_attach __P((struct device *, struct device *, void *));
+static int	px_intr __P((void *xxx_sc));
 
 static int32_t *px_alloc_pbuf __P((struct px_info *));
 static int	px_send_packet __P((struct px_info *, int *buf));
@@ -225,10 +221,10 @@ static const u_char px_shuffle[256] = {
 #define PXMAP_RBUF_SIZE	(4096 * 16 + 8192 * 2)
 
 /* Need alignment to 8KB here... */
-static u_char	px_cons_rbuf[PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE + 8192];
-static u_int	px_cons_rbuf_use;
-struct px_info *px_cons_info;
-struct px_info *px_unit[NPX];
+static u_char		 px_cons_rbuf[PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE + 8192];
+static u_int		 px_cons_rbuf_use;
+static struct px_info	*px_cons_info;
+static struct px_info	*px_unit[NPX];
 
 /* bt459 gunk. XXX should be done with driver independant interface */
 struct bt459_regs {
@@ -262,7 +258,7 @@ struct bt459_regs {
 /*
  * Match a supported board.
  */
-int
+static int
 px_match(parent, match, aux)
 	struct	device *parent;
 	struct	cfdata *match;
@@ -282,7 +278,7 @@ px_match(parent, match, aux)
 /*
  * Attach the graphics board.
  */
-void
+static void
 px_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -596,7 +592,7 @@ px_probe_sram(pxi)
 /*
  * Initialize the STIC (STamp Interface Chip) and stamp
  */
-void
+static void
 px_init_stic(pxi, probe)
 	struct px_info *pxi;
 	int probe;
@@ -937,7 +933,7 @@ px_bt459_flush(pxi)
  * at a time (i.e. packet+vertical retrace) so we don't return after
  * handling each case.
  */
-int
+static int
 px_intr(xxx_sc)
 	void	*xxx_sc;
 {
@@ -1671,7 +1667,7 @@ pxopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	extern struct fbinfo *firstfi;
+	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
@@ -1712,7 +1708,7 @@ pxclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	extern struct fbinfo *firstfi;
+	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;

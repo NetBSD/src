@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.23 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: findcons.c,v 1.24 2000/01/09 03:55:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.23 2000/01/08 01:02:35 simonb Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.24 2000/01/09 03:55:36 simonb Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,12 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.23 2000/01/08 01:02:35 simonb Exp $$"
  * Default consdev, for errors or warnings before
  * consinit runs: use the PROM.
  */
-struct consdev cd;
-
-#ifndef integrate
-#define integrate static inline
-#endif
-
+static struct consdev cd;
 
 /*
  * Kernel configuration dependencies.
@@ -92,8 +87,7 @@ struct consdev cd;
 /* pmax serial interface */
 #if NDC > 0
 #include <machine/dc7085cons.h>
-#include <pmax/dev/dc_cons.h>
-#include <pmax/dev/dc_ds_cons.h>
+#include <pmax/dev/dcvar.h>
 #endif
 
 /* MAXINE desktop bus keyboard */
@@ -134,29 +128,26 @@ struct consdev cd;
  * to pick a console early in boot before autoconfig or
  * malloc are up.
  */
-integrate int	dc_ds_kbd __P((int prom_slot));
-integrate int	scc_kbd __P((int prom_slot));
-integrate int	dtop_kbd __P((int prom_slot));
+static int	dc_ds_kbd __P((int prom_slot));
+static int	scc_kbd __P((int prom_slot));
+static int	dtop_kbd __P((int prom_slot));
 
-integrate int	pm_screen __P((int prom_slot));
-integrate int	xcfb_screen __P((int prom_slot));
-#if NRASTERCONSOLE > 0
-int		tcfb_cnattach __P((int prom_slot));
-#endif
+static int	pm_screen __P((int prom_slot));
+static int	xcfb_screen __P((int prom_slot));
 
-integrate int	dc_ds_serial __P((int prom_slot));
-integrate int	scc_serial __P((int prom_slot));
+static int	dc_ds_serial __P((int prom_slot));
+static int	scc_serial __P((int prom_slot));
 
-int	find_kbd __P((int prom_slot));
-int	find_screen __P((int prom_slot));
-int	find_serial __P((int prom_slot));
+static int	find_kbd __P((int prom_slot));
+static int	find_screen __P((int prom_slot));
+static int	find_serial __P((int prom_slot));
 
-extern struct consdev promcd;
+extern struct consdev promcd;		/* XXX */
 
 /*
  * Keyboard physically present and driver configured on 3100?
  */
-int
+static int
 dc_ds_kbd(kbd_slot)
 	int kbd_slot;
 {
@@ -180,7 +171,7 @@ dc_ds_kbd(kbd_slot)
 /*
  *  Keyboard configured and physically presnt on 3min, 3maxplus?
  */
-int
+static int
 scc_kbd(kbd_slot)
 	int kbd_slot;
 {
@@ -199,7 +190,7 @@ scc_kbd(kbd_slot)
 /*
  *  Keyboard physically present and driver configured on MAXINE?
  */
-int
+static int
 dtop_kbd(kbd_slot)
 	int kbd_slot;
 {
@@ -219,7 +210,7 @@ dtop_kbd(kbd_slot)
 /*
  * Select appropriate  keyboard.
  */
-int
+static int
 find_kbd(kbd)
 	int kbd;
 {
@@ -251,7 +242,7 @@ find_kbd(kbd)
  * Test if screens configured.
  */
 
-int
+static int
 pm_screen(crtslot)
 	int crtslot;
 {
@@ -277,7 +268,7 @@ pm_screen(crtslot)
  * Look for MAXINE baseboard video.
  * If selected as console, take it.
  */
-int
+static int
 xcfb_screen(crtslot)
 	int crtslot;
 {
@@ -305,7 +296,7 @@ xcfb_screen(crtslot)
 /*
  * Look for screen.
  */
-int
+static int
 find_screen(crtslot)
 	int crtslot;
 {
@@ -338,7 +329,7 @@ find_screen(crtslot)
 	return (0);
 }
 
-int
+static int
 dc_ds_serial(comslot)
 	int comslot;
 {
@@ -355,7 +346,7 @@ dc_ds_serial(comslot)
 	return 0;
 }
 
-int
+static int
 scc_serial(comslot)
 	int comslot;
 {
@@ -400,7 +391,7 @@ scc_serial(comslot)
 /*
  * find a serial console.
  */
-int
+static int
 find_serial(comslot)
 	int comslot;
 {

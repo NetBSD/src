@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 1996/04/14 00:56:59 jonathan Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 2000/01/09 03:55:52 simonb Exp $	*/
 
 
 /*
@@ -33,3 +33,4 @@ cdev_decl(tz);
 cdev_decl(dtop);	/* Personal Decstation (MAXINE) desktop bus */
 cdev_decl(fb);		/* generic framebuffer pseudo-device */
 cdev_decl(rcons);	/* framebuffer-based raster console pseudo-device */
+cdev_decl(px);		/* PixelStamp framebuffers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.5 2000/01/08 01:02:39 simonb Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.6 2000/01/09 03:56:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/sysconf.h>
+#include <pmax/pmax/pmaxtype.h>
 
 
 #include "opt_dec_3100.h"
@@ -124,8 +125,6 @@ int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
 void
 platform_not_configured()
 {
-	extern int systype;
-
 	printf("\n");
 	printf("Support for system type %d is not present in this kernel.\n",
 	    systype);
@@ -138,7 +137,6 @@ platform_not_configured()
 void
 platform_not_supported()
 {
-	extern int systype;
 	const char *typestr;
 
 	if (systype >= nsysinit)

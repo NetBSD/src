@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.6 1999/12/01 08:37:25 nisimura Exp $ */
+/* $NetBSD: machdep.h,v 1.7 2000/01/09 03:56:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,10 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
 /* the following is used externally (sysctl_hw) */
-extern char machine[], machine_arch[], cpu_model[];
-#endif
+extern	char machine[], machine_arch[], cpu_model[];
+/* max memory for a model */
+extern	int physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 
 /* PROM callback routines - see pmax/promcall.c */
 void	 prom_findcons __P((int *, int *, int *));
@@ -42,6 +42,3 @@ void	 prom_haltbutton __P((void));
 int	 prom_scsiid __P((int));
 char	*prom_getenv __P((char *));
 int	 prom_systype __P((void));
-
-/* XXX max memory */
-int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */

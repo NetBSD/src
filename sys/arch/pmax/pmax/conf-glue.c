@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.21 2000/01/08 01:02:38 simonb Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.22 2000/01/09 03:55:55 simonb Exp $	*/
 
 /*
  * conf-glue.c:
@@ -38,16 +38,16 @@
 
 /* declarations for glue to 4.4bsd pmax port SCSI drivers and autoconfig */
 #if NASC > 0
-extern struct pmax_driver ascdriver;
+extern struct pmax_driver ascdriver;	/* XXX */
 #endif
 #if NSII > 0
-extern struct pmax_driver siidriver;
+extern struct pmax_driver siidriver;	/* XXX */
 #endif
 #if NRZ > 0
-extern struct pmax_driver rzdriver;
+extern struct pmax_driver rzdriver;	/* XXX */
 #endif
 #if NTZ > 0
-extern struct pmax_driver tzdriver;
+extern struct pmax_driver tzdriver;	/* XXX */
 #endif
 
 
@@ -117,8 +117,10 @@ struct pmax_scsi_device scsi_dinit[] = {
 };
 
 
-int	nomatch __P((struct device *parent, struct cfdata *cf, void *aux));
-void	noattach __P((struct device *parent, struct device *self, void *aux));
+static int	nomatch __P((struct device *parent, struct cfdata *cf,
+		    void *aux));
+static void	noattach __P((struct device *parent, struct device *self,
+		    void *aux));
 
 
 /* placeholder definitions for new-style scsi bus/disk/tape drivers */
@@ -197,7 +199,7 @@ configure_scsi()
 /*
  * Match function in struct cfattach of old-conf drivers: never matches.
  */
-int
+static int
 nomatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -215,7 +217,7 @@ nomatch(parent, cf, aux)
 /*
  * Attach function in struct cfattach of old-conf drivers: never called.
  */
-void
+static void
 noattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;

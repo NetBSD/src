@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.35 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.36 2000/01/09 03:55:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,9 +108,8 @@
 /*
  * These need to be mapped into user space.
  */
-struct fbuaccess cfbu;
-struct pmax_fbtty cfbfb;
-struct fbinfo	cfbfi;	/*XXX*/ /* should be softc */
+static struct fbuaccess		cfbu;
+static struct pmax_fbtty	cfbfb;
 
 /*
  * Method table for standard framebuffer operations on a CFB.
@@ -127,8 +126,6 @@ struct fbdriver cfb_driver = {
 	bt459CursorColor
 };
 
-int	cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
-
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */
 #define CFB_OFFSET_BT459	0x200000	/* Bt459 registers */
 #define CFB_OFFSET_IREQ		0x300000	/* Interrupt req. control */
@@ -142,15 +139,15 @@ int	cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
  * code is completely gone.
  */
 
-int	cfbmatch __P((struct device *, struct cfdata *, void *));
-void	cfbattach __P((struct device *, struct device *, void *));
-int	cfb_intr __P((void *sc));
+static int	cfbmatch __P((struct device *, struct cfdata *, void *));
+static void	cfbattach __P((struct device *, struct device *, void *));
+static int	cfb_intr __P((void *sc));
 
 struct cfattach cfb_ca = {
 	sizeof(struct fbsoftc), cfbmatch, cfbattach
 };
 
-int
+static int
 cfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -175,7 +172,7 @@ cfbmatch(parent, match, aux)
  * so console-config code can attach cfb devices very early in boot,
  * to use as system console.
  */
-void
+static void
 cfbattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -290,7 +287,7 @@ cfbinit(fi, cfbaddr, unit, silent)
  * This function simply dismisses CFB interrupts, or the interrupt
  * request from the card will still be active.
  */
-int
+static int
 cfb_intr(sc)
 	void *sc;
 {

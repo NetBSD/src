@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.57 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.58 2000/01/09 03:55:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.57 2000/01/08 01:02:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.58 2000/01/09 03:55:30 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.57 2000/01/08 01:02:35 simonb Exp $");
 #include <pmax/dev/lk201var.h>		/* XXX KbdReset and friends */
 
 #include <pmax/dev/dcvar.h>
-#include <pmax/dev/dc_cons.h>
 #include <pmax/dev/rconsvar.h>
 #include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
 
@@ -119,36 +118,29 @@ extern struct cfdriver dc_cd;
  * Forward declarations
  */
 struct tty	*dctty __P((dev_t  dev));
-void		 dcstart __P((struct tty *));
-void		 dcrint __P((struct dc_softc *sc));
-void		 dcxint __P((struct tty *));
-int		 dcmctl __P((dev_t dev, int bits, int how));
-void		 dcscan __P((void *));
-int		 dcparam __P((struct tty *tp, struct termios *t));
+static void	 dcstart __P((struct tty *));
+static void	 dcrint __P((struct dc_softc *sc));
+static void	 dcxint __P((struct tty *));
+static int	 dcmctl __P((dev_t dev, int bits, int how));
+static void	 dcscan __P((void *));
+static int	 dcparam __P((struct tty *tp, struct termios *t));
 static int	 cold_dcparam __P((struct tty *tp, struct termios *t,
 		    struct dc_softc *sc));
-void		 dc_reset __P((dcregs *dcaddr));
+static void	 dc_reset __P((dcregs *dcaddr));
 
 void		 ttrstrt __P((void *));
 
 
 /* console I/O */
-int	dcGetc __P((dev_t));
-void	dcPutc __P((dev_t, int));
-void	dcPollc __P((dev_t, int));
-void	dc_consinit __P((dev_t dev, dcregs *dcaddr));
+static void	dcPollc __P((dev_t, int));
 
-void	dc_tty_init __P((struct dc_softc *sc, dev_t dev));
+static void	dc_tty_init __P((struct dc_softc *sc, dev_t dev));
 #if NRASTERCONSOLE > 0
-void	dc_kbd_init __P((struct dc_softc *sc, dev_t dev));
-void	dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
+static void	dc_kbd_init __P((struct dc_softc *sc, dev_t dev));
+static void	dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
 #endif
 
 
-/* QVSS-compatible in-kernel X input event parser, pointer tracker */
-void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */
-void	(*dcMouseEvent) __P((int));	/* X windows mouse motion event routine */
-void	(*dcMouseButtons) __P((int));	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;
 #endif
@@ -158,7 +150,7 @@ int	debugChar;
  * The DC7085 doesn't interrupt on carrier transitions, so
  * we have to use a timer to watch it.
  */
-int	dc_timer;		/* true if timer started */
+static int	dc_timer;		/* true if timer started */
 
 /*
  * Pdma structures for fast output code
@@ -193,6 +185,11 @@ struct speedtab dcspeedtab[] = {
 #define	LFLAG	(TTYDEF_LFLAG & ~ECHO)
 #endif
 
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*dcDivertXInput) __P((int));
+void	(*dcMouseEvent) __P((void *));
+void	(*dcMouseButtons) __P((void *));
+
 /*
  * Console line variables, for use when cold
  */
@@ -221,26 +218,27 @@ static struct consdev dccons = {
 void
 dc_consinit(dev, dcaddr)
 	dev_t dev;
-	dcregs *dcaddr;
+	void *dcaddr;
 {
 	struct dc_softc *sc;
+	dcregs *addr = (dcregs *)dcaddr;
 
 	/* save address in case we're cold */
 	if (cold && dc_cons_addr == 0) {
 		/* called while very cold to initalize console output */
-		dc_cons_addr = dcaddr;
+		dc_cons_addr = addr;
 		sc = &coldcons_softc;
-		sc->dc_pdma[0].p_addr = (void*)dcaddr;
-		sc->dc_pdma[1].p_addr = (void*)dcaddr;
-		sc->dc_pdma[2].p_addr = (void*)dcaddr;
-		sc->dc_pdma[3].p_addr = (void*)dcaddr;
+		sc->dc_pdma[0].p_addr = (void*)addr;
+		sc->dc_pdma[1].p_addr = (void*)addr;
+		sc->dc_pdma[2].p_addr = (void*)addr;
+		sc->dc_pdma[3].p_addr = (void*)addr;
 	} else {
 		/* being called from dcattach() to reset console */
 		sc = dc_cd.cd_devs[DCUNIT(dev)];
 	}
 
 	/* reset chip */
-	dc_reset(dcaddr);
+	dc_reset(addr);
 
 	dccons.cn_dev = dev;
 	*cn_tab = dccons;
@@ -343,7 +341,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
  * Does not enable interrupts; caller must explicitly or
  * TIE and RIE on if desired (XXX not true yet)
  */
-void
+static void
 dc_reset(dcaddr)
 	dcregs *dcaddr;
 {
@@ -364,7 +362,7 @@ dc_reset(dcaddr)
 /*
  * Initialize line parameters for a serial console.
  */
-void
+static void
 dc_tty_init(sc, dev)
 	struct dc_softc *sc;
 	dev_t dev;
@@ -383,7 +381,7 @@ dc_tty_init(sc, dev)
 }
 
 #if NRASTERCONSOLE > 0
-void
+static void
 dc_kbd_init(sc, dev)
 	struct dc_softc *sc;
 	dev_t dev;
@@ -406,7 +404,7 @@ dc_kbd_init(sc, dev)
 	splx(s);
 }
 
-void
+static void
 dc_mouse_init(sc, dev)
 	struct dc_softc *sc;
 	dev_t dev;
@@ -660,7 +658,7 @@ dcioctl(dev, cmd, data, flag, p)
  * Set line parameters
  */
 
-int
+static int
 dcparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -682,7 +680,7 @@ dcparam(tp, t)
 /*
  * ttyparam entry point, but callable when very cold.
  */
-int
+static int
 cold_dcparam(tp, t, sc)
 	struct tty *tp;
 	struct termios *t;
@@ -757,7 +755,7 @@ dcintr(xxxunit)
 	return 0;
 }
 
-void
+static void
 dcrint(sc)
 	struct dc_softc * sc;
 {
@@ -845,7 +843,7 @@ dcrint(sc)
 	DELAY(10);
 }
 
-void
+static void
 dcxint(tp)
 	struct tty *tp;
 {
@@ -914,7 +912,7 @@ dcxint(tp)
 	}
 }
 
-void
+static void
 dcstart(tp)
 	struct tty *tp;
 {
@@ -976,7 +974,7 @@ dcstop(tp, flag)
 	splx(s);
 }
 
-int
+static int
 dcmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -1105,7 +1103,7 @@ dcmctl(dev, bits, how)
  * This is called by timeout() periodically.
  * Check to see if modem status bits have changed.
  */
-void
+static void
 dcscan(arg)
 	void *arg;
 {
@@ -1311,7 +1309,7 @@ dcPutc(dev, c)
 /*
  * Enable/disable polling mode
  */
-void
+static void
 dcPollc(dev, on)
 	dev_t dev;
 	int on;

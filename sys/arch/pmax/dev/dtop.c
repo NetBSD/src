@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.43 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: dtop.c,v 1.44 2000/01/09 03:55:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.43 2000/01/08 01:02:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.44 2000/01/09 03:55:35 simonb Exp $");
 
 #include "rasterconsole.h"
 
@@ -178,14 +178,14 @@ typedef struct dtop_softc *dtop_softc_t;
 /*
  * Forward/prototyped declarations
  */
-int	dtop_get_packet __P((dtop_softc_t dtop, dtop_message_t pkt));
-int	dtop_escape __P((int c));
-void	dtop_keyboard_repeat __P((void *));
-int	dtop_null_device_handler __P((dtop_device_t, dtop_message_t, int, int));
-int	dtop_locator_handler __P((dtop_device_t, dtop_message_t, int, int));
-int	dtop_keyboard_handler __P((dtop_device_t, dtop_message_t, int, int));
-int	dtopparam __P((struct tty *, struct termios *));
-void	dtopstart __P((struct tty *));
+static int	dtop_get_packet __P((dtop_softc_t dtop, dtop_message_t pkt));
+static int	dtop_escape __P((int c));
+static void	dtop_keyboard_repeat __P((void *));
+static int	dtop_null_device_handler __P((dtop_device_t, dtop_message_t, int, int));
+static int	dtop_locator_handler __P((dtop_device_t, dtop_message_t, int, int));
+static int	dtop_keyboard_handler __P((dtop_device_t, dtop_message_t, int, int));
+static int	dtopparam __P((struct tty *, struct termios *));
+static void	dtopstart __P((struct tty *));
 
 /*
  * lk201 keyboard divisions and up/down mode key bitmap.
@@ -210,18 +210,15 @@ static u_char divend[NUMDIVS] = {0xff, 0xa5, 0xbc, 0xbe, 0xb2, 0xaf, 0xa8,
  */
 static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e800, 0, 0};
 
-
-
-
 /*
  * Autoconfiguration data for config.new.
  * Use the statically-allocated softc until old autoconfig code and
  * config.old are completely gone.
  *
  */
-int	dtopmatch __P((struct device * parent, struct cfdata *match, void *aux));
-void	dtopattach __P((struct device *parent, struct device *self, void *aux));
-int	dtopintr __P((void *sc));
+static int	dtopmatch __P((struct device * parent, struct cfdata *match, void *aux));
+static void	dtopattach __P((struct device *parent, struct device *self, void *aux));
+static int	dtopintr __P((void *sc));
 
 struct cfattach dtop_ca = {
 	sizeof(struct dtop_softc), dtopmatch, dtopattach
@@ -229,10 +226,16 @@ struct cfattach dtop_ca = {
 
 extern struct cfdriver dtop_cd;
 
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*dtopDivertXInput) __P((int));
+void	(*dtopMouseEvent) __P((void *));
+void	(*dtopMouseButtons) __P((void *));
+
+
 /*
  * Match driver based on name
  */
-int
+static int
 dtopmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -249,7 +252,7 @@ dtopmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 dtopattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -334,7 +337,6 @@ dtopopen(dev, flag, mode, p)
 #if (RASTERCONSOLE > 0) && defined(RCONS_BRAINDAMAGE)
 	/* handle raster console specially */
 	if (tp == DTOP_TTY(0) && firstopen) {
-	  	extern struct tty *fbconstty;
 		tp->t_winsize = fbconstty->t_winsize;
 	}
 #endif /* HAVE_RCONS */
@@ -432,7 +434,7 @@ dtopioctl(dev, cmd, data, flag, p)
 /*
  * Interrupt routine
  */
-int
+static int
 dtopintr(sc)
 	void *sc;
 {
@@ -477,7 +479,7 @@ out:
 	return(0);
 }
 
-void
+static void
 dtopstart(tp)
 	struct tty *tp;
 {
@@ -574,7 +576,7 @@ dtopKBDPutc(dev, c)
  * A packet MUST be there, this is not checked for.
  */
 #define	DTOP_ESC_CHAR		0xf8
-int
+static int
 dtop_escape(c)
 	int c;
 {
@@ -589,7 +591,7 @@ dtop_escape(c)
 	}
 }
 
-int
+static int
 dtop_get_packet(dtop, pkt)
 	dtop_softc_t	dtop;
 	dtop_message_t	pkt;
@@ -709,7 +711,7 @@ again:
 	return c;
 }
 
-int
+static int
 dtopparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -744,7 +746,7 @@ dtopstop(tp, flag)
 /*
  * Default handler function
  */
-int
+static int
 dtop_null_device_handler(dev, msg, event, outc)
 	 dtop_device_t	dev;
 	 dtop_message_t	msg;
@@ -762,7 +764,7 @@ dtop_null_device_handler(dev, msg, event, outc)
 /*
  * Handler for locator devices (mice)
  */
-int
+static int
 dtop_locator_handler(dev, msg, event, outc)
 	 dtop_device_t	dev;
 	 dtop_message_t	msg;
@@ -817,7 +819,7 @@ dtop_locator_handler(dev, msg, event, outc)
  * Special case: outc set for recv packet means
  * we are inside the kernel debugger
  */
-int
+static int
 dtop_keyboard_handler(dev, msg, event, outc)
 	dtop_device_t dev;
 	dtop_message_t msg;
@@ -963,7 +965,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 /*
  * Do an autorepeat as required.
  */
-void
+static void
 dtop_keyboard_repeat(arg)
 	void *arg;
 {

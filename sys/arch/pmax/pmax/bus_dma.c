@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2000/01/08 01:02:38 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2000/01/09 03:55:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, vaddr_t *,
-	    int *, int));
+static int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
+		    void *, bus_size_t, struct proc *, int, vaddr_t *,
+		    int *, int));
 
 paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
@@ -151,7 +151,7 @@ _bus_dmamap_destroy(t, map)
  * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
-int
+static int
 _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
     lastaddrp, segp, first)
 	bus_dmamap_t map;
@@ -549,7 +549,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern paddr_t avail_start, avail_end;
+	extern paddr_t avail_start, avail_end;		/* XXX */
 	vaddr_t curaddr, lastaddr;
 	psize_t high;
 	vm_page_t m;
