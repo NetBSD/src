@@ -344,7 +344,7 @@ rc_getstring(struct rcfile *rcp, const char *section, const char *key,
 	if (error)
 		return error;
 	if (strlen(value) >= maxlen) {
-		warnx("line too long for key '%s' in section '%s', max = %d\n", key, section, maxlen);
+		warnx("line too long for key '%s' in section '%s', max = %ld\n", key, section, (long)maxlen);
 		return EINVAL;
 	}
 	strcpy(dest, value);
