@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.2 1996/02/02 18:08:36 mycroft Exp $ */
+/*      $NetBSD: ts.c,v 1.3 1996/02/02 18:59:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -157,7 +157,7 @@ int tstrace = 1;
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-#include "tsreg.h"
+#include <vax/uba/tsreg.h>
 
 int	ts_match __P((struct device *, void *, void *));
 void	ts_attach __P((struct device *, struct device *, void *));

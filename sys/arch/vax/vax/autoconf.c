@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.6 1996/02/02 18:08:48 mycroft Exp $      */
+/*      $NetBSD: autoconf.c,v 1.7 1996/02/02 18:59:36 mycroft Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,17 +34,19 @@
 		
 
 #include <sys/param.h>
-#include <machine/cpu.h>
-#include <machine/sid.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+
+#include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/nexus.h>
 #include <machine/ka750.h>
-#include <machine/../vax/gencons.h"
+#include <machine/../vax/gencons.h>
+
 #include <vm/vm.h>
 
 #define	BACKPLANE	0

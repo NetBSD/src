@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.8 1996/02/02 18:08:17 mycroft Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.9 1996/02/02 18:59:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,7 +50,8 @@
 #include <machine/mtpr.h>
 #include <machine/vmparam.h>
 #include <machine/macros.h>
-#include "if_uba.h"
+
+#include <vax/if/if_uba.h>
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.7 1996/02/02 18:09:00 mycroft Exp $	*/
+/*	$NetBSD: mscp.c,v 1.8 1996/02/02 18:59:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -52,8 +52,8 @@
 
 #include <vax/uba/ubavar.h>
 
-#include "mscp.h"
-#include "mscpvar.h"
+#include <vax/vax/mscp.h>
+#include <vax/vax/mscpvar.h>
 
 #define	PCMD	PSWP		/* priority for command packet waits */
 

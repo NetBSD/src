@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.9 1996/02/02 18:08:14 mycroft Exp $ */
+/*	$NetBSD: if_qe.c,v 1.10 1996/02/02 18:59:20 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -176,8 +176,9 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
-#include "if_qereg.h"
-#include "if_uba.h"
+
+#include <vax/if/if_qereg.h>
+#include <vax/if/if_uba.h>
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
