@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.51.2.2 2002/12/06 23:40:26 he Exp $ */
+/* $NetBSD: user.c,v 1.51.2.3 2002/12/26 07:28:50 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.51.2.2 2002/12/06 23:40:26 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.51.2.3 2002/12/26 07:28:50 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -868,6 +868,46 @@ getnextuid(int sync_uid_gid, int *uid, int low_uid, int high_uid)
 	return 0;
 }
 
+/* structure which defines a password type */
+typedef struct passwd_type_t {
+	const char     *type;		/* optional type descriptor */
+	int		desc_length;	/* length of type descriptor */
+	int		length;		/* length of password */
+	const char     *regex;		/* regexp to output the password */
+	int		re_sub;		/* subscript of regexp to use */
+} passwd_type_t;
+
+static passwd_type_t	passwd_types[] = {
+	{ "$2a",	3,	54,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
+	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
+	{ "",		0,	13,	NULL,				0 },	/* standard DES */
+	{ NULL,		-1,	-1,	NULL,				0 }	/* none - terminate search */
+};
+
+/* return non-zero if it's a valid password - check length for cipher type */
+static int
+valid_password_length(char *newpasswd)
+{
+	passwd_type_t  *pwtp;
+	regmatch_t	matchv[10];
+	regex_t		r;
+
+	for (pwtp = passwd_types ; pwtp->desc_length >= 0 ; pwtp++) {
+		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
+			if (pwtp->regex == NULL) {
+				return strlen(newpasswd) == pwtp->length;
+			}
+			(void) regcomp(&r, pwtp->regex, REG_EXTENDED);
+			if (regexec(&r, newpasswd, 10, matchv, 0) == 0) {
+				regfree(&r);
+				return (int)(matchv[pwtp->re_sub].rm_eo - matchv[pwtp->re_sub].rm_so + 1) == pwtp->length;
+			}
+			regfree(&r);
+		}
+	}
+	return 0;
+}
+
 /* add a user */
 static int
 adduser(char *login, user_t *up)
@@ -1006,10 +1046,7 @@ adduser(char *login, user_t *up)
 		    home);
 	}
 	password[sizeof(password) - 1] = '\0';
-	if (up->u_password != NULL &&
-	    (strlen(up->u_password) == 13 ||
-	     strncmp(up->u_password, "$1", 2) == 0 ||
-	     strncmp(up->u_password, "$2", 2) == 0)) {
+	if (up->u_password != NULL && valid_password_length(up->u_password)) {
 		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
 		(void) memset(password, '\0', sizeof(password));
@@ -1141,10 +1178,13 @@ moduser(char *login, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_PASSWORD) {
-			if (up->u_password != NULL &&
-			    (strlen(up->u_password) == 13 ||
-			     strncmp(up->u_password, "$1", 2) == 0 ||
-			     strncmp(up->u_password, "$2", 2) == 0)) {
+			if (up->u_password != NULL) {
+				if (!valid_password_length(up->u_password) > 0) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "Invalid password: `%s'",
+						up->u_password);
+				}
 				pwp->pw_passwd = up->u_password;
 			}
 		}
