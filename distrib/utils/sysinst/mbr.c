@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.32 2003/05/07 10:20:18 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.33 2003/05/07 19:02:52 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -242,7 +242,7 @@ edit_mbr(mbr)
 		ask_sizemult(bcylsize);
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
-		for (i = 0; i<4; i++)
+		for (i = 0; i < NMBRPART; i++)
 			if (part[i].mbrp_flag != 0) {
 				activepart = i;
 				part[i].mbrp_flag = 0;
@@ -255,7 +255,7 @@ edit_mbr(mbr)
 			numfreebsd = 0;
 			overlap = 0;
 			yesno = 0;
-			for (i=0; i<4; i++) {
+			for (i=0; i < NMBRPART; i++) {
 				/* Count 386bsd/FreeBSD/NetBSD(old) partitions */
 				if (part[i].mbrp_typ == MBR_PTYPE_386BSD) {
 					freebsdpart = i;
@@ -263,11 +263,12 @@ edit_mbr(mbr)
 				}
 				/* Count NetBSD-only partitions */
 				if (part[i].mbrp_typ == MBR_PTYPE_NETBSD) {
-					bsdpart = i;
+					if (bsdpart == -1)
+						bsdpart = i;
 					numbsd++;
 				}
-				for (j = i+1; j<4; j++)
-				       if (partsoverlap(part, i,j))
+				for (j = i + 1; j < NMBRPART; j++)
+				       if (partsoverlap(part, i, j))
 					       overlap = 1;
 			}
 
@@ -328,6 +329,54 @@ edit_mbr(mbr)
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
 
 	return 1;
+}
+
+void
+edit_ptn_bounds(void)
+{
+	char buf[40]; int start, size, inp, partn;
+
+	msg_table_add(MSG_mbrpart_start_special);
+	msg_prompt_add(MSG_start, NULL, buf, sizeof buf);
+	inp = atoi(buf);
+	/*
+	 * -0, -1, -2, -3: start at end of part # given
+	 * 0: start of disk.
+	 */
+	if ((inp == 0 && buf[0] == '-') || (inp < 0 && inp >= -3)) {
+		partn = -inp;
+		start = part[partn].mbrp_start + part[partn].mbrp_size;
+	} else if (inp == 0)
+		start = bsec;
+	else
+		start = NUMSEC(inp, sizemult, dlcylsize);
+
+	if (sizemult > 1 && start < bsec)
+		start = bsec;
+	msg_table_add(MSG_mbrpart_size_special);
+	msg_prompt_add (MSG_size, NULL, buf, 40);
+	inp = atoi(buf);
+	/*
+	 * -0, -1, -2, -3: until start of part # given
+	 * 0: end of disk
+	 */
+	if ((inp == 0 && buf[0] == '-') || (inp < 0 && inp >= -3)) {
+		partn = -inp;
+		size = part[partn].mbrp_start - start;
+	} else if (inp == 0)
+		size = dlsize - start;
+	else
+		size = NUMSEC(inp, sizemult, dlcylsize);
+	if (sizemult > 1 && start == bsec)
+		size -= bsec;
+	if (start + size > bsize)
+		size = bsize - start;
+	if (size < 0) {
+		size = 0;
+		start = 0;
+	}
+	part[editpart].mbrp_start = start;
+	part[editpart].mbrp_size = size;
 }
 
 int
@@ -642,3 +691,74 @@ get_mapping(parts, i, cylinder, head, sector, absolute)
 	}
 	return 0;
 }
+
+#ifdef BOOTSEL
+
+void
+disp_bootsel(void)
+{
+	int i;
+
+	msg_display(MSG_configbootsel);
+	msg_table_add(MSG_bootsel_header);
+	for (i = 0; i < 4; i++) {
+		msg_table_add(MSG_bootsel_row, i, get_partname(i),
+			mbs->mbrb_nametab[i]);
+	}
+	msg_display_add(MSG_newline);
+
+	msg_display_add(MSG_bootseltimeout, (10 * mbs->mbrb_timeo + 9) / 182);
+	msg_display_add(MSG_defbootselopt);
+	if (mbs->mbrb_defkey == SCAN_ENTER)
+		msg_display_add(MSG_defbootseloptactive);
+	else if (mbs->mbrb_defkey < (SCAN_F1 + 4))
+		msg_display_add(MSG_defbootseloptpart, defbootselpart);
+	else
+		msg_display_add(MSG_defbootseloptdisk, defbootseldisk);
+}
+
+void
+edit_bootsel_entry(int ptn)
+{
+	if (part[ptn].mbrp_typ != 0)
+		msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[ptn],
+			    mbs->mbrb_nametab[ptn], 8);
+}
+
+void
+edit_bootsel_timeout(void)
+{
+	char tstr[8];
+	unsigned timo;
+
+	do {
+		snprintf(tstr, 8, "%u", (10 * mbs->mbrb_timeo + 9) / 182);
+		msg_prompt(MSG_bootseltimeoutval, tstr, tstr, 8);
+		timo = (unsigned)atoi(tstr);
+	} while (timo > 3600);
+	mbs->mbrb_timeo = (u_int16_t)((timo * 182) / 10);
+}
+
+void
+edit_bootsel_default_ptn(int ptn)
+{
+	int i;
+	int key = SCAN_1;
+
+	if (mbs->mbrb_nametab[ptn][0] == 0 || part[ptn].mbrp_typ == 0)
+		return;
+	for (i = 0; i < ptn; i++)
+		if (mbs->mbrb_nametab[i][0] != 0 && part[i].mbrp_typ != 0)
+			key++;
+	mbs->mbrb_defkey = key;
+	defbootselpart = ptn;
+}
+
+void
+edit_bootsel_default_disk(int disk)
+{
+
+	mbs->mbrb_defkey = SCAN_F1 + disk;
+	defbootseldisk = disk;
+}
+#endif
