@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.27 1998/06/26 00:07:45 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.27.2.1 1998/08/08 03:06:53 eeh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -128,5 +128,5 @@ struct execsw execsw[] = {
 	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
 #endif
 };
-int nexecs = (sizeof execsw / sizeof(*execsw));
+int nexecs = (sizeof(execsw) / sizeof(*execsw));
 int exec_maxhdrsz;

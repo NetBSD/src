@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.76 1998/07/28 18:17:34 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.76.2.1 1998/08/08 03:06:55 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -133,12 +133,12 @@ sys_sigaction(p, v, retval)
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
-		error = copyout(sa, SCARG(uap, osa), sizeof (vec));
+		error = copyout(sa, SCARG(uap, osa), sizeof(vec));
 		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsa)) {
-		error = copyin(SCARG(uap, nsa), sa, sizeof (vec));
+		error = copyin(SCARG(uap, nsa), sa, sizeof(vec));
 		if (error)
 			return (error);
 		setsigvec(p, signum, sa);
@@ -370,11 +370,11 @@ sys___sigaltstack14(p, v, retval)
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
 		psp->ps_sigstk.ss_flags |= SS_DISABLE;
 	if (SCARG(uap, oss) && (error = copyout(&psp->ps_sigstk,
-	    SCARG(uap, oss), sizeof (struct sigaltstack))))
+	    SCARG(uap, oss), sizeof(struct sigaltstack))))
 		return (error);
 	if (SCARG(uap, nss) == 0)
 		return (0);
-	error = copyin(SCARG(uap, nss), &ss, sizeof (ss));
+	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {

@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.1 $ (SHARK) $Date: 1998/06/29 20:56:21 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.1.2.1 $ (SHARK) $Date: 1998/08/08 03:06:47 $
 **
 **++
 **
@@ -111,7 +111,18 @@
 #define	  ESS_PREAMP_CTRL_ENABLE	0x04
 
 #define ESS_XCMD_IRQ_CTRL	0xB1	/* legacy audio interrupt control */
+#define   ESS_IRQ_CTRL_INTRA	0x00
+#define   ESS_IRQ_CTRL_INTRB	0x04
+#define   ESS_IRQ_CTRL_INTRC	0x08
+#define   ESS_IRQ_CTRL_INTRD	0x0C
+#define   ESS_IRQ_CTRL_MASK	0x10
+#define   ESS_IRQ_CTRL_EXT	0x40
 #define ESS_XCMD_DRQ_CTRL	0xB2	/* audio DRQ control */
+#define   ESS_DRQ_CTRL_DRQA	0x04
+#define   ESS_DRQ_CTRL_DRQB	0x08
+#define   ESS_DRQ_CTRL_DRQC	0x0C
+#define   ESS_DRQ_CTRL_PU	0x10
+#define   ESS_DRQ_CTRL_EXT	0x40
 #define ESS_XCMD_VOLIN_CTRL	0xB4	/* stereo input volume control */
 #define ESS_XCMD_AUDIO1_CTRL1	0xB7	/* */
 #define	  ESS_AUDIO1_CTRL1_FIFO_SIGNED	0x20	/* 0=unsigned/1=signed */
@@ -141,17 +152,17 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
-#define ESS_IRQ1_VALID(irq, model)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10 || ((model) == ESS_1887 && (irq) == 15))
+#define ESS_IRQ1_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10)
 
-#define ESS_IRQ2_VALID(irq, model)  (((model) != ESS_1887) ? ((irq) == 15) : ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10) || (irq) == 15)
+#define ESS_IRQ2_VALID(irq)  ((irq) == 15)
 
-#define ESS_DRQ1_VALID(chan, model) ((chan) == 0 || (chan) == 1 || (chan) == 3 || ((model) == ESS_1887 && (chan) == 5))
+#define ESS_IRQ12_VALID(irq) ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10 || (irq) == 15)
+
+#define ESS_DRQ1_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 
 #define ESS_DRQ2_VALID(chan, model) (((model) != ESS_1887) ? ((chan) == 5) : ((chan) == 0 || (chan) == 1 || (chan) == 3 || (chan) == 5))
 
 #define ESS_BASE_VALID(base) ((base) == 0x220 || (base) == 0x230 || (base) == 0x240 || (base) == 0x250)
-
-#define ESS_DMA_SIZE(chan) ((chan & 4) ? ESS_MODE_16BIT: ESS_MODE_8BIT)
 
 /*
  * Macros to manipulate gain values
@@ -194,14 +205,14 @@
 /*****************************************************************************/
 /*  DSP Timeout Definitions                                                  */
 /*****************************************************************************/
-#define	ESS_RESET_TIMEOUT	5000	/* ??? */
-#define	ESS_READ_TIMEOUT  	5000	/* number of times to try a read */
-#define	ESS_WRITE_TIMEOUT  	5000	/* number of times to try a write */
+#define	ESS_READ_TIMEOUT  	5000 /* number of times to try a read, 5ms*/
+#define	ESS_WRITE_TIMEOUT  	5000 /* number of times to try a write, 5ms */
 
 
 #define ESS_NPORT		16
 #define ESS_DSP_RESET		0x06
-#define		ESS_MAGIC	0xAA 	/* response to successful reset */
+#define		ESS_RESET_EXT	0x03 /* reset and use second DMA */
+#define		ESS_MAGIC	0xAA /* response to successful reset */
 
 #define ESS_DSP_READ		0x0A
 #define ESS_DSP_WRITE		0x0C
@@ -239,3 +250,19 @@
 #define	  ESS_AUDIO2_CTRL2_CHANNELS	0x02	/* 0=mono/1=stereo */
 #define	  ESS_AUDIO2_CTRL2_FIFO_SIGNED	0x04	/* 0=unsigned/1=signed */
 #define	  ESS_AUDIO2_CTRL2_DMA_ENABLE	0x20	/* 0=disable/1=enable */
+#define   ESS_AUDIO2_CTRL2_IRQ2_ENABLE	0x40
+#define   ESS_AUDIO2_CTRL2_IRQ_LATCH	0x80
+#define ESS_MREG_AUDIO2_CTRL3	0x7D
+#define   ESS_AUDIO2_CTRL3_DRQA		0x00
+#define   ESS_AUDIO2_CTRL3_DRQB		0x01
+#define   ESS_AUDIO2_CTRL3_DRQC		0x02
+#define   ESS_AUDIO2_CTRL3_DRQD		0x03
+#define   ESS_AUDIO2_CTRL3_DRQ_PD	0x04
+#define ESS_MREG_INTR_ST	0x7F
+#define   ESS_IS_SELECT_IRQ		0x01
+#define   ESS_IS_ES1888			0x00
+#define   ESS_IS_INTRA			0x02
+#define   ESS_IS_INTRB			0x04
+#define   ESS_IS_INTRC			0x06
+#define   ESS_IS_INTRD			0x08
+#define   ESS_IS_INTRE			0x0A

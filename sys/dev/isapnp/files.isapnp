@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.15 1998/07/23 19:30:44 christos Exp $
+#	$NetBSD: files.isapnp,v 1.15.2.1 1998/08/08 03:06:48 eeh Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -9,7 +9,7 @@ device	isapnp {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	isapnp at isa
-file	dev/isapnp/isapnp.c			isapnp
+file	dev/isapnp/isapnp.c			isapnp needs-flag
 file	dev/isapnp/isapnpdebug.c		isapnp
 file	dev/isapnp/isapnpres.c			isapnp
 file	dev/isapnp/isapnpdevs.c			isapnp

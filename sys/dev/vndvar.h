@@ -1,7 +1,7 @@
-/*	$NetBSD: vndvar.h,v 1.3 1997/12/02 13:54:48 pk Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.3.2.1 1998/08/08 03:06:46 eeh Exp $	*/
 
 /*-     
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,8 @@
  *	@(#)vnioctl.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/pool.h>
+
 /*
  * Vnode disk pseudo-geometry information.
  */
@@ -118,6 +120,8 @@ struct vnd_softc {
 	char		 sc_xname[8];	/* XXX external name */
 	struct disk	 sc_dkdev;	/* generic disk device info */
 	struct vndgeom	 sc_geom;	/* virtual geometry */
+	struct pool	 sc_vxpool;	/* vndxfer pool */
+	struct pool	 sc_vbpool;	/* vndbuf pool */
 };
 
 /* sc_flags */

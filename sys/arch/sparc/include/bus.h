@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1998/04/07 20:07:23 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.10.2.1 1998/08/08 03:06:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -525,6 +525,9 @@ int bus_space_probe __P((
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
+/* For devices that have a 24-bit address space */
+#define BUS_DMA_24BIT		BUS_DMA_BUS1
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -653,8 +656,6 @@ struct sparc_bus_dmamap {
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
 int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int));
 int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
@@ -665,13 +666,11 @@ void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc_common __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+void	_bus_dmamem_free_common __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
 int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,

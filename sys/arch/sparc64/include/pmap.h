@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.2.2 1998/08/02 00:06:49 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.3 1998/08/08 03:06:44 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -136,7 +136,7 @@ int pmap_is_referenced __P((paddr_t pa));
 int pmap_count_res __P((pmap_t pmap));
 /* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
 #define pmap_resident_count(pm)		pmap_count_res((pm))
-#define	pmap_phys_address(x)		(((x)))
+#define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend, u_int numctx));
 

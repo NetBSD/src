@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.53.2.1 1998/07/30 14:04:05 eeh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.53.2.2 1998/08/08 03:06:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -144,7 +144,7 @@ bufinit()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 		bp = &buf[i];
-		bzero((char *)bp, sizeof *bp);
+		bzero((char *)bp, sizeof(*bp));
 		bp->b_dev = NODEV;
 		bp->b_rcred = NOCRED;
 		bp->b_wcred = NOCRED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.9 1998/07/23 19:30:46 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.9.2.1 1998/08/08 03:06:49 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -42,8 +42,20 @@
  */
 struct isapnp_softc;
 
-#if (i386 != 1)
+#if (alpha + arm32 + atari + bebox + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if alpha
+#include <alpha/isa/isapnp_machdep.h>
+#endif
+#if arm32
+#include <arm32/isa/isapnp_machdep.h>
+#endif
+#if atari
+#include <atari/isa/isapnp_machdep.h>
+#endif
+#if bebox
+#include <bebox/isa/isapnp_machdep.h>
 #endif
 #if i386
 #include <i386/isa/isapnp_machdep.h>
@@ -94,6 +106,7 @@ struct isapnp_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;
 	isa_chipset_tag_t	sc_ic;
+	bus_dma_tag_t		sc_dmat;
 	bus_space_handle_t	sc_addr_ioh;
 	bus_space_handle_t	sc_wrdata_ioh;
 	bus_space_handle_t	sc_read_ioh;
@@ -184,6 +197,7 @@ void isapnp_unconfig __P((bus_space_tag_t, bus_space_tag_t,
 struct isapnp_devinfo;
 int isapnp_devmatch __P((const struct isapnp_attach_args *,
     const struct isapnp_devinfo *));
+void isapnp_isa_attach_hook __P((struct isa_softc *));
 #endif
 
 #ifdef DEBUG_ISAPNP

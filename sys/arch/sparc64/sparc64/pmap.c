@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.3.2.2 1998/08/02 00:06:49 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.2.3 1998/08/08 03:06:44 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
-#define HWREF
+#define HWREF 
 /* #define BOOT_DEBUG */
 /* #define BOOT1_DEBUG */
 /* #define printf	db_printf */
@@ -1462,6 +1462,12 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 			entry = (tte.data.data&TLB_PA_MASK);
 			pmap_remove_pv(pm, va, entry);
 		}		
+#ifndef HWREF
+		/* If we don't have the traphandler do it set the ref/mod bits now */
+		pv->pv_va |= PV_REF;
+		if (VM_PROT_WRITE & prot)
+			pv->pv_va |= PV_MOD;
+#endif
 	} else {
 		aliased = 0;
 	}
@@ -1470,17 +1476,11 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	aliased = 1; /* Disable D$ */
 #endif
 	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
-#if 0
-#ifdef HWREF
+#ifndef HWREF
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 				 (VM_PROT_WRITE & prot),
 				 (!(pa & PMAP_NC)),aliased,1);
 	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
-#else
-	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 (VM_PROT_WRITE & prot),
-				 (!(pa & PMAP_NC)),aliased,1);
-#endif
 #else
 	/* Force dmmu_write_fault to be executed */
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
@@ -1521,7 +1521,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	}
 
 	if (pv) {
-#if 0
+#ifndef HWREF
 		/* Don't touch the attributes now -- leave that to the trap handler */
 #ifdef ATTR
 		/* Munch on attributes */
@@ -1818,25 +1818,6 @@ pmap_protect(pm, sva, eva, prot)
 		if (pmapdebug & PDB_CHANGEPROT)
 			printf("pmap_protect: va %p\n", sva);
 #endif
-#ifndef HWREF
-		i = ptelookup_va(sva);
-		if (tsb[i].tag.tag > 0 
-		    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,sva))
-		{
-			int s;
-
-			/*
-			 * We could remove the splimp if we read and wrote the
-			 * the data field atomically.
-			 */
-			s = splimp();
-			tsb[i].data.data &= ~TLB_W;
-			ASSERT((tsb[i].data.data & TLB_NFO) == 0);
-			splx(s);
-			/* Flush the TLB */
-		}
-		tlb_flush_pte(sva, pm->pm_ctx);
-#else
 		if (((data = pseg_get(pm, sva))&TLB_V) /*&& ((data&TLB_TSB_LOCK) == 0)*/) {
 			pa = data&TLB_PA_MASK;
 #ifdef DEBUG
@@ -1868,7 +1849,6 @@ pmap_protect(pm, sva, eva, prot)
 			}
 			tlb_flush_pte(sva, pm->pm_ctx);
 		}
-#endif
 		sva += NBPG;
 	}
 	pv_check();
@@ -1961,7 +1941,11 @@ int size;
 	}
 		
 	if (prot & VM_PROT_WRITE) {
+#ifdef HWREF
 		set = TLB_REAL_W/*|TLB_W|TLB_MODIFY*/;
+#else
+		set = TLB_REAL_W|TLB_W|TLB_MODIFY;
+#endif
 		clr = 0LL;
 	} else {
 		set = 0LL;
@@ -1986,29 +1970,6 @@ int size;
 #endif
 		/* First flush the TSB */
 		i = ptelookup_va(sva);
-#ifndef HWREF 
-		if (tsb[i].tag.tag > 0 
-		    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,sva))
-		{
-			/*
-			 * We could remove the splimp if we read and wrote the
-			 * the data field atomically.
-			 */
-			s = splimp();
-#if 0
-			tsb[i].data.f.data_w = ((VM_PROT_WRITE & prot) != 0);
-			tsb[i].data.f.data_exec = ((VM_PROT_EXECUTE & prot) != 0);
-			tsb[i].data.f.data_onlyexec = (VM_PROT_EXECUTE == prot);
-#else
-			if((VM_PROT_WRITE & prot) != 0) 
-				tsb[i].data.data |= (TLB_W|TLB_REAL_W);
-			ASSERT((tsb[i].data.data & TLB_NFO) == 0);
-#endif
-			splx(s);
-			/* Flush the TLB */
-		}
-		tlb_flush_pte(sva, pm->pm_ctx);
-#else /* HWREF */
 		/* Then update the page table */
 		s = splimp();
 		if (pm->pm_segs[va_to_seg(sva)]) {
@@ -2028,7 +1989,6 @@ int size;
 		    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,sva)) 
 			tsb[i].tag.tag = tsb[i].data.data = 0LL;
 		splx(s);
-#endif /* HWREF */
 		sva += NBPG;
 	}
 	pv_check();
@@ -2275,7 +2235,6 @@ pmap_clear_modify(pa)
 	s = splimp();
 	pv = pa_to_pvh(pa);
 	pv->pv_va &= ~(PV_MOD);
-#ifdef HWREF
 	if (pv->pv_pmap != NULL)
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2295,24 +2254,6 @@ pmap_clear_modify(pa)
 				tsb[i].data.data = 0LL;
 			tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 		}
-#else
-	if((i = ptelookup_pa(pa)) == -1) {
-		splx(s);
-		pv_check();
-		return; /* Not currently mapped */
-	}
-
-	/*
-	 * First modify bits in TSB.
-	 */
-	
-#if 1
-	tsb[i].data.data &= ~(TLB_MODIFY|TLB_W);
-	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
-	/* Load the H/W */
-	tlb_flush_pte(TSBVA(i),TSB_TAG_CTX(tsb[i].tag.tag));
-#endif
-#endif
 	splx(s);
 	pv_check();
 }
@@ -2340,7 +2281,6 @@ pmap_clear_reference(pa)
 	s = splimp();
 	pv = pa_to_pvh(pa);
 	pv->pv_va &= ~(PV_REF);
-#ifdef HWREF
 	if (pv->pv_pmap != NULL)
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2365,24 +2305,6 @@ pmap_clear_reference(pa)
 			tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 			}
 	blast_vcache();
-#else
-	
-	if((i = ptelookup_pa(pa)) == -1) {
-		splx(s);
-		pv_check();
-		return; /* Not currently mapped */
-	}
-	/*
-	 * First modify bits in TSB.
-	 */
-	
-#if 1
-	tsb[i].data.data &= ~(TLB_ACCESS|TLB_V);
-	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
-	/* Load the H/W */
-	tlb_flush_pte(TSBVA(i),TSB_TAG_CTX(tsb[i].tag.tag));
-#endif
-#endif
 	splx(s);
 	pv_check();
 }

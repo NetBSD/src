@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.6 1998/04/22 07:08:11 jonathan Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.6.2.1 1998/08/08 03:06:54 eeh Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -144,7 +144,7 @@ sys_ntp_gettime(p, v, retval)
 		(void) splx(s);
 
 		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, ntvp),
-		    sizeof (ntv));
+		    sizeof(ntv));
 	}
 	if (!error) {
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: vnd.c,v 1.58 1998/03/12 16:51:41 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.58.2.1 1998/08/08 03:06:46 eeh Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -151,14 +151,11 @@ struct vndbuf {
 	struct vndxfer	*vb_xfer;
 };
 
-#define	getvndxfer()	\
-	((struct vndxfer *)malloc(sizeof(struct vndxfer), M_DEVBUF, M_WAITOK))
-#define putvndxfer(vnx)	\
-	free((caddr_t)(vnx), M_DEVBUF)
-#define	getvndbuf()	\
-	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
-#define putvndbuf(vbp)	\
-	free((caddr_t)(vbp), M_DEVBUF)
+#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
+#define	VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
+
+#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
+#define	VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
@@ -380,7 +377,7 @@ vndstrategy(bp)
 	flags = bp->b_flags | B_CALL;
 
 	/* Allocate a header for this transfer and link it to the buffer */
-	vnx = getvndxfer();
+	vnx = VND_GETXFER(vnd);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -432,7 +429,7 @@ vndstrategy(bp)
 			    vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
-		nbp = getvndbuf();
+		nbp = VND_GETBUF(vnd);
 		nbp->vb_buf.b_flags = flags;
 		nbp->vb_buf.b_bcount = sz;
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
@@ -473,7 +470,7 @@ vndstrategy(bp)
 		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
 		if (vnx->vx_error != 0) {
-			putvndbuf(nbp);
+			VND_PUTBUF(vnd, nbp);
 			goto out;
 		}
 		vnx->vx_pending++;
@@ -494,7 +491,7 @@ out: /* Arrive here at splbio */
 			bp->b_error = vnx->vx_error;
 			bp->b_flags |= B_ERROR;
 		}
-		putvndxfer(vnx);
+		VND_PUTXFER(vnd, vnx);
 		biodone(bp);
 	}
 	splx(s);
@@ -585,7 +582,7 @@ vndiodone(bp)
 	if (vbp->vb_buf.b_vp != NULLVP)
 		brelvp(&vbp->vb_buf);
 
-	putvndbuf(vbp);
+	VND_PUTBUF(vnd, vbp);
 
 	/*
 	 * Wrap up this transaction if it has run to completion or, in
@@ -601,7 +598,7 @@ vndiodone(bp)
 				printf("vndiodone: pbp %p iodone: error %d\n",
 					pbp, vnx->vx_error);
 #endif
-			putvndxfer(vnx);
+			VND_PUTXFER(vnd, vnx);
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
@@ -616,7 +613,7 @@ vndiodone(bp)
 			if (vnddebug & VDB_IO)
 				printf("vndiodone: pbp %p iodone\n", pbp);
 #endif
-			putvndxfer(vnx);
+			VND_PUTXFER(vnd, vnx);
 			biodone(pbp);
 		}
 	}
@@ -854,6 +851,12 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 
+		/* Initialize the xfer and buffer pools. */
+		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
+		    0, 0, "vndxpl", 0, NULL, NULL, M_DEVBUF);
+		pool_init(&vnd->sc_vbpool, sizeof(struct vndbuf), 0,
+		    0, 0, "vndbpl", 0, NULL, NULL, M_DEVBUF);
+
 		/* Try and read the disklabel. */
 		vndgetdisklabel(dev);
 
@@ -884,6 +887,10 @@ vndioctl(dev, cmd, data, flag, p)
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: CLRed\n");
 #endif
+
+		/* Destroy the xfer and buffer pools. */
+		pool_destroy(&vnd->sc_vxpool);
+		pool_destroy(&vnd->sc_vbpool);
 
 		/* Detatch the disk. */
 		disk_detach(&vnd->sc_dkdev);

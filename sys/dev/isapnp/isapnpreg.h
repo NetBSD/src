@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.5 1997/08/12 07:34:34 mikel Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.5.6.1 1998/08/08 03:06:49 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_ISAPNP_ISAPNPREG_H_
+#define _DEV_ISAPNP_ISAPNPREG_H_
 /*
  * ISA Plug and Play register definitions;
  * From Plug and Play ISA Specification V1.0a, May 5 1994
@@ -170,3 +172,5 @@
 #define ISAPNP_TAG_VENDOR_DEFINED			0x84
 #define ISAPNP_TAG_MEM32_RANGE_DESC			0x85
 #define ISAPNP_TAG_FIXED_MEM32_RANGE_DESC		0x86
+
+#endif /* ! _DEV_ISAPNP_ISAPNPREG_H_ */

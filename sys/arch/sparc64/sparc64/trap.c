@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5.2.1 1998/07/30 14:03:57 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.5.2.2 1998/08/08 03:06:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1261,8 +1261,13 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 #else
 		printf("data memory error type %x sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
-		DEBUGGER(type, tf);
-		panic("trap: memory error");
+		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+			/* User fault -- Berr */
+			trapsignal(p, SIGBUS, (u_int)sfva);
+		} else {
+			DEBUGGER(type, tf);
+			panic("trap: memory error");
+		}
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.22 1998/06/25 22:50:02 thorpej Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.22.2.1 1998/08/08 03:06:57 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -149,7 +149,7 @@ struct	linesw linesw[] =
 #endif
 };
 
-int	nlinesw = sizeof (linesw) / sizeof (linesw[0]);
+int	nlinesw = sizeof(linesw) / sizeof(linesw[0]);
 
 /*
  * Do nothing specific version of line

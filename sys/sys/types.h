@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: types.h,v 1.34.2.1 1998/08/08 03:07:02 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -116,6 +116,7 @@ typedef	_BSD_CLOCK_T_		clock_t;
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_		size_t;
+#define _SIZE_T
 #undef	_BSD_SIZE_T_
 #endif
 

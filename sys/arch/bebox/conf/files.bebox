@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.11 1998/05/28 08:44:59 sakamoto Exp $
+#	$NetBSD: files.bebox,v 1.11.2.1 1998/08/08 03:06:38 eeh Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -132,3 +132,6 @@ file	arch/bebox/isa/joy.c		joy needs-flag
 
 attach	joy at isa with joy_isa
 file	arch/bebox/isa/joy_isa.c		joy_isa
+
+# ISA Plug 'n Play support
+file	arch/bebox/isa/isapnp_machdep.c		isapnp

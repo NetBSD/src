@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.47 1998/07/04 22:18:38 jonathan Exp $	*/
+/*	$NetBSD: si.c,v 1.47.2.1 1998/08/08 03:06:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -164,8 +164,9 @@ struct si_dma_handle {
 #define	SIDH_OUT	0x02		/* DMA does data out (write) */
 	u_char *	dh_addr;	/* KVA of start of buffer */
 	int 		dh_maplen;	/* Original data length */
-	long		dh_dvma;	/* VA of buffer in DVMA space */
 	long		dh_startingpa;	/* PA of buffer; for "sw" */
+	bus_dmamap_t	dh_dmamap;
+#define dh_dvma	dh_dmamap->dm_segs[0].ds_addr /* VA of buffer in DVMA space */
 };
 
 /*
@@ -174,8 +175,9 @@ struct si_dma_handle {
  */
 struct si_softc {
 	struct ncr5380_softc	ncr_sc;
+	bus_space_tag_t	sc_bustag;		/* bus tags */
+	bus_dma_tag_t	sc_dmatag;
 	volatile struct si_regs	*sc_regs;
-	struct intrhand	sc_ih;
 	int		sc_adapter_type;
 #define BOARD_ID_SI	0
 #define BOARD_ID_SW	1
@@ -340,6 +342,8 @@ si_attach(parent, self, aux)
 	vme_intr_handle_t	ih;
 	vme_mod_t		mod;
 
+	sc->sc_dmatag = va->vma_dmatag;
+
 	mod = VMEMOD_A24 | VMEMOD_D | VMEMOD_S;
 
 	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct si_regs),
@@ -388,6 +392,8 @@ sw_attach(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_handle_t bh;
 	struct bootpath *bp;
+
+	sc->sc_dmatag = oba->oba_dmatag;
 
 	/* Map the controller registers. */
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
@@ -504,9 +510,23 @@ si_attach_common(parent, sc)
 	sc->sc_dma = (struct si_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
 		panic("si: dma handle malloc failed\n");
-	for (i = 0; i < SCI_OPENINGS; i++)
+	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
 
+		/* Allocate a DMA handle */
+		if (bus_dmamap_create(
+				sc->sc_dmatag,
+				MAXPHYS,	/* size */
+				1,		/* nsegments */
+				MAXPHYS,	/* maxsegsz */
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&sc->sc_dma[i].dh_dmamap) != 0) {
+			printf("%s: DMA buffer map create error\n",
+				ncr_sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	if (sc->sc_options) {
 		printf("%s: options=%s\n", ncr_sc->sc_dev.dv_xname,
@@ -714,7 +734,6 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 	dh->dh_addr = (u_char*) addr;
 	dh->dh_maplen  = xlen;
-	dh->dh_dvma = 0;
 
 	/* Copy the "write" flag for convenience. */
 	if (xs->flags & SCSI_DATA_OUT)
@@ -726,14 +745,18 @@ found:
 	 *
 	 * NOTE: it is not safe to sleep here!
 	 */
-	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
-	if (dh->dh_dvma == 0) {
+	if (bus_dmamap_load(sc->sc_dmatag, dh->dh_dmamap,
+			    (caddr_t)addr, xlen, NULL, BUS_DMA_NOWAIT) != 0) {
 		/* Can't remap segment */
 		printf("si_dma_alloc: can't remap %p/0x%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
 	}
+	bus_dmamap_sync(sc->sc_dmatag, dh->dh_dmamap, addr, xlen,
+			(dh->dh_flags & SIDH_OUT)
+				? BUS_DMASYNC_PREWRITE
+				: BUS_DMASYNC_PREREAD);
 
 	/* success */
 	sr->sr_dma_hand = dh;
@@ -746,6 +769,7 @@ void
 si_dma_free(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 
@@ -758,13 +782,13 @@ si_dma_free(ncr_sc)
 		panic("si_dma_free: free while in progress");
 
 	if (dh->dh_flags & SIDH_BUSY) {
-		/* XXX - Should separate allocation and mapping. */
-
 		/* Give back the DVMA space. */
-		dvma_mapout((vm_offset_t)dh->dh_dvma,
-		    (vm_offset_t)dh->dh_addr, dh->dh_maplen);
-
-		dh->dh_dvma = 0;
+		bus_dmamap_sync(sc->sc_dmatag, dh->dh_dmamap,
+				dh->dh_dvma, dh->dh_maplen,
+				(dh->dh_flags & SIDH_OUT)
+					? BUS_DMASYNC_POSTWRITE
+					: BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmatag, dh->dh_dmamap);
 		dh->dh_flags = 0;
 	}
 	sr->sr_dma_hand = NULL;
@@ -909,9 +933,8 @@ si_vme_dma_start(ncr_sc)
 
 	/*
 	 * Get the DVMA mapping for this segment.
-	 * XXX - Should separate allocation and mapin.
 	 */
-	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
+	data_pa = (u_long)(dh->dh_dvma);
 	if (data_pa & 1)
 		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
@@ -1210,9 +1233,8 @@ si_obio_dma_start(ncr_sc)
 
 	/*
 	 * Get the DVMA mapping for this segment.
-	 * XXX - Should separate allocation and mapin.
 	 */
-	data_pa = (u_long)(dh->dh_dvma - DVMA_BASE);
+	data_pa = (u_long)(dh->dh_dvma);
 	if (data_pa & 1)
 		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;

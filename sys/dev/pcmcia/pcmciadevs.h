@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.4 1998/07/22 11:48:58 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.4.2.1 1998/08/08 03:06:50 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.3 1998/07/22 11:47:13 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.4 1998/07/30 20:44:25 thorpej Exp 
  */
 
 /*
@@ -52,6 +52,7 @@
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
+#define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 
@@ -120,6 +121,11 @@
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
 #define	PCMCIA_STR_USROBOTICS_WORLDPORT144	"US Robotics WorldPort 14.4 Modem"
+
+/* Simple Technology Products */
+#define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288	0x0100
+#define	PCMCIA_STR_SIMPLETECH_COMMUNICATOR288	"Simple Technology 28.8 Communicator"
 
 /* Socket Communications Products */
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.89.2.1 1998/07/30 14:04:06 eeh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.89.2.2 1998/08/08 03:07:00 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -399,9 +399,9 @@ getnewvnode(tag, mp, vops, vpp)
 	     numvnodes < 2 * desiredvnodes) ||
 	    numvnodes < desiredvnodes) {
 		simple_unlock(&vnode_free_list_slock);
-		vp = (struct vnode *)malloc((u_long)sizeof *vp,
+		vp = (struct vnode *)malloc((u_long)sizeof(*vp),
 		    M_VNODE, M_WAITOK);
-		bzero((char *)vp, sizeof *vp);
+		bzero((char *)vp, sizeof(*vp));
 		numvnodes++;
 	} else {
 		for (vp = vnode_free_list.tqh_first;
@@ -964,8 +964,11 @@ holdrele(vp)
 {
 
 	simple_lock(&vp->v_interlock);
-	if (vp->v_holdcnt <= 0)
-		panic("holdrele: holdcnt");
+	if (vp->v_holdcnt <= 0) {
+		vprint("holdrele: holdcnt", vp);
+		Debugger();
+	}
+		
 	vp->v_holdcnt--;
 	simple_unlock(&vp->v_interlock);
 }
@@ -979,8 +982,10 @@ vref(vp)
 {
 
 	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount <= 0)
-		panic("vref used where vget required");
+	if (vp->v_usecount <= 0) {
+		vprint("vref used where vget required", vp);
+		Debugger();
+	}
 	vp->v_usecount++;
 	simple_unlock(&vp->v_interlock);
 }
@@ -1532,8 +1537,8 @@ sysctl_vnode(where, sizep, p)
 	char *ewhere;
 	int error;
 
-#define VPTRSZ	sizeof (struct vnode *)
-#define VNODESZ	sizeof (struct vnode)
+#define VPTRSZ	sizeof(struct vnode *)
+#define VNODESZ	sizeof(struct vnode)
 	if (where == NULL) {
 		*sizep = (numvnodes + KINFO_VNODESLOP) * (VPTRSZ + VNODESZ);
 		return (0);

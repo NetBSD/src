@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.2.1 1998/08/07 12:39:48 drochner Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.2.2 1998/08/08 03:06:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,7 +212,7 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-paddr_t
+int
 mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
