@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.51 2003/07/15 02:43:21 lukem Exp $	*/
+/*	$NetBSD: macrom.c,v 1.52 2003/09/28 22:56:58 cl Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.51 2003/07/15 02:43:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.52 2003/09/28 22:56:58 cl Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -957,7 +957,7 @@ mrg_init()
 	jDTInstall = (caddr_t)mrg_DTInstall;
 
 	/* AV ROMs want this low memory vector to point to a jump table */
-	InitEgretJTVec = (u_int32_t **)&mrg_AVInitEgretJT;
+	InitEgretJTVec = (u_int32_t **)(void *)&mrg_AVInitEgretJT;
 
 	switch (mach_cputype()) {
 		case MACH_68020:	CPUFlag = 2;	break;
