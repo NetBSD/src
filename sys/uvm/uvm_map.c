@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.74 2000/05/19 17:43:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.75 2000/06/02 12:02:43 pk Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1158,7 +1158,7 @@ uvm_map_reserve(map, size, offset, raddr)
 	vm_map_t map;
 	vsize_t size;
 	vaddr_t offset;    /* hint for pmap_prefer */
-	vaddr_t *raddr;	/* OUT: reserved VA */
+	vaddr_t *raddr;	/* IN:hint, OUT: reserved VA */
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
  
@@ -1350,7 +1350,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = *dstaddrp;
+	dstaddr = VM_MIN_KERNEL_ADDRESS;
 	if (uvm_map_reserve(dstmap, len, start, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */
