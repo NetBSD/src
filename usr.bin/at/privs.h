@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: privs.h,v 1.1 1993/12/05 11:37:29 cgd Exp $
+ *	$Id: privs.h,v 1.2 1994/04/16 03:41:59 cgd Exp $
  */
 
 #ifndef _PRIVS_H
@@ -46,7 +46,7 @@
  * later.
  *
  * If you no longer need root privileges, but those of some other
- * userid/groupid, you can call REDUCE_PRIV(a) when your effective
+ * userid, you can call REDUCE_PRIV(a) when your effective
  * is the user's.
  *
  * Problems: Do not use return between PRIV_START and PRIV_END; this
@@ -68,25 +68,25 @@ uid_t real_uid, effective_uid;
 #define RELINQUISH_PRIVS { \
 	real_uid = getuid(); \
 	effective_uid = geteuid(); \
-	setreuid(effective_uid,real_uid); \
+	seteuid(real_uid); \
 }
 
 #define RELINQUISH_PRIVS_ROOT(a) { \
 	real_uid = (a); \
 	effective_uid = geteuid(); \
-	setreuid(effective_uid,real_uid); \
+	seteuid(real_uid); \
 }
 
 #define PRIV_START { \
-	setreuid(real_uid,effective_uid);
+	seteuid(effective_uid);
 
 #define PRIV_END \
-	setreuid(effective_uid,real_uid); \
+	seteuid(real_uid); \
 }
 
 #define REDUCE_PRIV(a) { \
-	setreuid(real_uid,effective_uid); \
-	effective_uid = (a); \
-	setreuid(effective_uid,real_uid); \
+	seteuid(effective_uid); \
+	real_uid = effective_uid = (a); \
+	setuid(real_uid); \
 }
 #endif
