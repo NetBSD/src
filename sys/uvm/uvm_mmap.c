@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.17 1999/03/09 12:18:23 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.18 1999/03/24 03:52:41 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -904,7 +904,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ?
-			    maxprot : (maxprot & ~VM_PROT_WRITE));
+			    maxprot : (maxprot & ~VM_PROT_WRITE), foff, size);
 			advice = UVM_ADV_RANDOM;
 		}
 		
