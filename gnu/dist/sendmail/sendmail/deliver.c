@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: deliver.c,v 8.600 2000/04/06 00:50:14 gshapiro Exp";
+static char id[] = "@(#)Id: deliver.c,v 8.600.4.3 2000/05/28 17:47:08 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1860,8 +1860,11 @@ tryhost:
 						u = ctladdr->q_user;
 
 					if (initgroups(u, ctladdr->q_gid) == -1 && suidwarn)
+					{
 						syserr("openmailer: initgroups(%s, %d) failed",
 							u, ctladdr->q_gid);
+						exit(EX_TEMPFAIL);
+					}
 				}
 				else
 				{
@@ -1869,7 +1872,10 @@ tryhost:
 
 					gidset[0] = ctladdr->q_gid;
 					if (setgroups(1, gidset) == -1 && suidwarn)
+					{
 						syserr("openmailer: setgroups() failed");
+						exit(EX_TEMPFAIL);
+					}
 				}
 				new_gid = ctladdr->q_gid;
 			}
@@ -1878,8 +1884,11 @@ tryhost:
 				if (!DontInitGroups)
 				{
 					if (initgroups(DefUser, DefGid) == -1 && suidwarn)
+					{
 						syserr("openmailer: initgroups(%s, %d) failed",
 							DefUser, DefGid);
+						exit(EX_TEMPFAIL);
+					}
 				}
 				else
 				{
@@ -1887,16 +1896,34 @@ tryhost:
 
 					gidset[0] = DefGid;
 					if (setgroups(1, gidset) == -1 && suidwarn)
+					{
 						syserr("openmailer: setgroups() failed");
+						exit(EX_TEMPFAIL);
+					}
 				}
 				if (m->m_gid == 0)
 					new_gid = DefGid;
 				else
 					new_gid = m->m_gid;
 			}
-			if (new_gid != NO_GID && setgid(new_gid) < 0 && suidwarn)
-				syserr("openmailer: setgid(%ld) failed",
-					(long) new_gid);
+			if (new_gid != NO_GID)
+			{
+				if (RunAsUid != 0 &&
+				    (RealGid != getgid() ||
+				     RealGid != getegid()))
+				{
+					/* Only root can change the gid */
+					syserr("openmailer: insufficient privileges to change gid");
+					exit(EX_TEMPFAIL);
+				}
+
+				if (setgid(new_gid) < 0 && suidwarn)
+				{
+					syserr("openmailer: setgid(%ld) failed",
+					       (long) new_gid);
+					exit(EX_TEMPFAIL);
+				}
+			}
 
 			/* change root to some "safe" directory */
 			if (m->m_rootdir != NULL)
@@ -1906,10 +1933,16 @@ tryhost:
 					dprintf("openmailer: chroot %s\n",
 						buf);
 				if (chroot(buf) < 0)
+				{
 					syserr("openmailer: Cannot chroot(%s)",
 					       buf);
+					exit(EX_TEMPFAIL);
+				}
 				if (chdir("/") < 0)
+				{
 					syserr("openmailer: cannot chdir(/)");
+					exit(EX_TEMPFAIL);
+				}
 			}
 
 			/* reset user id */
@@ -1926,29 +1959,48 @@ tryhost:
 				new_ruid = DefUid;
 			if (new_euid != NO_UID)
 			{
+				if (RunAsUid != 0 && new_euid != RunAsUid)
+				{
+					/* Only root can change the uid */
+					syserr("openmailer: insufficient privileges to change uid");
+					exit(EX_TEMPFAIL);
+				}
+
 				vendor_set_uid(new_euid);
 #if MAILER_SETUID_METHOD == USE_SETEUID
 				if (seteuid(new_euid) < 0 && suidwarn)
+				{
 					syserr("openmailer: seteuid(%ld) failed",
 						(long) new_euid);
+					exit(EX_TEMPFAIL);
+				}
 #endif /* MAILER_SETUID_METHOD == USE_SETEUID */
 #if MAILER_SETUID_METHOD == USE_SETREUID
 				if (setreuid(new_ruid, new_euid) < 0 && suidwarn)
+				{
 					syserr("openmailer: setreuid(%ld, %ld) failed",
 						(long) new_ruid, (long) new_euid);
+					exit(EX_TEMPFAIL);
+				}
 #endif /* MAILER_SETUID_METHOD == USE_SETREUID */
 #if MAILER_SETUID_METHOD == USE_SETUID
 				if (new_euid != geteuid() && setuid(new_euid) < 0 && suidwarn)
+				{
 					syserr("openmailer: setuid(%ld) failed",
 						(long) new_euid);
+					exit(EX_TEMPFAIL);
+				}
 #endif /* MAILER_SETUID_METHOD == USE_SETUID */
 			}
 			else if (new_ruid != NO_UID)
 			{
 				vendor_set_uid(new_ruid);
 				if (setuid(new_ruid) < 0 && suidwarn)
+				{
 					syserr("openmailer: setuid(%ld) failed",
 						(long) new_ruid);
+					exit(EX_TEMPFAIL);
+				}
 			}
 
 			if (tTd(11, 2))
@@ -3884,6 +3936,12 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			{
 				RealUserName = NULL;
 				RealUid = mailer->m_uid;
+				if (RunAsUid != 0 && RealUid != RunAsUid)
+				{
+					/* Only root can change the uid */
+					syserr("mailfile: insufficient privileges to change uid");
+					exit(EX_TEMPFAIL);
+				}
 			}
 			else if (bitset(S_ISUID, mode))
 			{
@@ -3911,7 +3969,17 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 
 			/* select a new group to run as */
 			if (bitnset(M_SPECIFIC_UID, mailer->m_flags))
+			{
 				RealGid = mailer->m_gid;
+				if (RunAsUid != 0 &&
+				    (RealGid != getgid() ||
+				     RealGid != getegid()))
+				{
+					/* Only root can change the gid */
+					syserr("mailfile: insufficient privileges to change gid");
+					exit(EX_TEMPFAIL);
+				}
+			}
 			else if (bitset(S_ISGID, mode))
 				RealGid = stb.st_gid;
 			else if (ctladdr != NULL && ctladdr->q_uid != 0)
@@ -3939,8 +4007,11 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 		if (RealUserName != NULL && !DontInitGroups)
 		{
 			if (initgroups(RealUserName, RealGid) == -1 && suidwarn)
+			{
 				syserr("mailfile: initgroups(%s, %d) failed",
 					RealUserName, RealGid);
+				exit(EX_TEMPFAIL);
+			}
 		}
 		else
 		{
@@ -3948,7 +4019,10 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 
 			gidset[0] = RealGid;
 			if (setgroups(1, gidset) == -1 && suidwarn)
+			{
 				syserr("mailfile: setgroups() failed");
+				exit(EX_TEMPFAIL);
+			}
 		}
 
 		/*
@@ -3973,15 +4047,24 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			dprintf("mailfile: deliver to %s\n", realfile);
 
 		if (chdir("/") < 0)
+		{
 			syserr("mailfile: cannot chdir(/)");
+			exit(EX_CANTCREAT);
+		}
 
 		/* now reset the group and user ids */
 		endpwent();
 		if (setgid(RealGid) < 0 && suidwarn)
+		{
 			syserr("mailfile: setgid(%ld) failed", (long) RealGid);
+			exit(EX_TEMPFAIL);
+		}
 		vendor_set_uid(RealUid);
 		if (setuid(RealUid) < 0 && suidwarn)
+		{
 			syserr("mailfile: setuid(%ld) failed", (long) RealUid);
+			exit(EX_TEMPFAIL);
+		}
 
 		if (tTd(11, 2))
 			dprintf("mailfile: running as r/euid=%d/%d, r/egid=%d/%d\n",

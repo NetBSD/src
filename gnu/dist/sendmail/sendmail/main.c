@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: main.c,v 8.485 2000/03/11 19:53:01 ca Exp";
+static char id[] = "@(#)Id: main.c,v 8.485.6.2 2000/05/28 18:00:12 gshapiro Exp";
 #endif /* ! lint */
 
 #define	_DEFINE
@@ -113,6 +113,7 @@ main(argc, argv, envp)
 	STAB *st;
 	register int i;
 	int j;
+	int dp;
 	bool safecf = TRUE;
 	BITMAP256 *p_flags = NULL;	/* daemon flags */
 	bool warn_C_flag = FALSE;
@@ -229,7 +230,8 @@ main(argc, argv, envp)
 #endif /* NGROUPS_MAX */
 
 	/* drop group id privileges (RunAsUser not yet set) */
-	(void) drop_privileges(FALSE);
+	dp = drop_privileges(FALSE);
+	setstat(dp);
 
 #ifdef SIGUSR1
 	/* arrange to dump state on user-1 signal */
@@ -687,7 +689,8 @@ main(argc, argv, envp)
 			if (RealUid != 0)
 				warn_C_flag = TRUE;
 			ConfFile = optarg;
-			(void) drop_privileges(TRUE);
+			dp = drop_privileges(TRUE);
+			setstat(dp);
 			safecf = FALSE;
 			break;
 
@@ -885,7 +888,8 @@ main(argc, argv, envp)
 			break;
 
 		  case 'X':	/* traffic log file */
-			(void) drop_privileges(TRUE);
+			dp = drop_privileges(TRUE);
+			setstat(dp);
 			if (stat(optarg, &traf_st) == 0 &&
 			    S_ISFIFO(traf_st.st_mode))
 				TrafficLogFile = fopen(optarg, "w");
@@ -1014,7 +1018,8 @@ main(argc, argv, envp)
 	if (OpMode != MD_DAEMON && OpMode != MD_FGDAEMON)
 	{
 		/* drop privileges -- daemon mode done after socket/bind */
-		(void) drop_privileges(FALSE);
+		dp = drop_privileges(FALSE);
+		setstat(dp);
 	}
 
 #if NAMED_BIND
@@ -2555,7 +2560,8 @@ drop_privileges(to_real_uid)
 
 	if (tTd(47, 1))
 		dprintf("drop_privileges(%d): Real[UG]id=%d:%d, RunAs[UG]id=%d:%d\n",
-			(int)to_real_uid, (int)RealUid, (int)RealGid, (int)RunAsUid, (int)RunAsGid);
+			(int)to_real_uid, (int)RealUid,
+			(int)RealGid, (int)RunAsUid, (int)RunAsGid);
 
 	if (to_real_uid)
 	{
@@ -2570,19 +2576,48 @@ drop_privileges(to_real_uid)
 	/* reset group permissions; these can be set later */
 	emptygidset[0] = (to_real_uid || RunAsGid != 0) ? RunAsGid : getegid();
 	if (setgroups(1, emptygidset) == -1 && geteuid() == 0)
+	{
+		syserr("drop_privileges: setgroups(1, %d) failed",
+		       (int)emptygidset[0]);
 		rval = EX_OSERR;
+	}
 
 	/* reset primary group and user id */
 	if ((to_real_uid || RunAsGid != 0) && setgid(RunAsGid) < 0)
+	{
+		syserr("drop_privileges: setgid(%d) failed", (int)RunAsGid);
 		rval = EX_OSERR;
-	if ((to_real_uid || RunAsUid != 0) && setuid(RunAsUid) < 0)
-		rval = EX_OSERR;
+	}
+	if (to_real_uid || RunAsUid != 0)
+	{
+		if (setuid(RunAsUid) < 0)
+		{
+			syserr("drop_privileges: setuid(%d) failed",
+			       (int)RunAsUid);
+			rval = EX_OSERR;
+		}
+		else if (RunAsUid != 0 && setuid(0) == 0)
+		{
+			/*
+			**  Believe it or not, the Linux capability model
+			**  allows a non-root process to override setuid()
+			**  on a process running as root and prevent that
+			**  process from dropping privileges.
+			*/
+
+			syserr("drop_privileges: setuid(0) succeeded (when it should not)");
+			rval = EX_OSERR;
+		}
+	}
 	if (tTd(47, 5))
 	{
 		dprintf("drop_privileges: e/ruid = %d/%d e/rgid = %d/%d\n",
-			(int)geteuid(), (int)getuid(), (int)getegid(), (int)getgid());
+			(int)geteuid(), (int)getuid(),
+			(int)getegid(), (int)getgid());
 		dprintf("drop_privileges: RunAsUser = %d:%d\n",
 			(int)RunAsUid, (int)RunAsGid);
+		if (tTd(47, 10))
+			dprintf("drop_privileges: rval = %d\n", rval);
 	}
 	return rval;
 }

@@ -17,7 +17,7 @@ divert(-1)
 
 
 divert(0)
-VERSIONID(`Id: solaris2.pre5.m4,v 1.1 1999/09/25 01:17:44 ca Exp')
+VERSIONID(`Id: solaris2.pre5.m4,v 8.1 1999/09/25 08:17:44 ca Exp')
 divert(-1)
 
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `SnE9')
