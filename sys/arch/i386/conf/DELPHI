@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.19 2002/06/25 03:12:05 lukem Exp $
+#	$NetBSD: DELPHI,v 1.20 2002/07/22 11:06:00 wiz Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.19 $"
+ident 		"DELPHI-$Revision: 1.20 $"
 
 maxusers	64		# estimated number of users
 
@@ -59,7 +59,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 

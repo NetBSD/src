@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.61 2002/06/25 03:12:04 lukem Exp $
+#	$NetBSD: CARDBUS,v 1.62 2002/07/22 11:05:59 wiz Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.61 $"
+#ident		"CARDBUS-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -70,7 +70,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
