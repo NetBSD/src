@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.95 2001/07/07 16:13:47 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.96 2001/07/20 05:44:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -1896,27 +1896,38 @@ epbusyeeprom(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_addr_t eecmd;
 	int i = 100, j;
+	uint16_t busybit;
 
 	if (sc->bustype == ELINK_BUS_PCMCIA) {
 		delay(1000);
 		return 0;
 	}
 
+	if (sc->ep_chipset == ELINK_CHIPSET_CORKSCREW) {
+		eecmd = CORK_ASIC_EEPROM_COMMAND;
+		busybit = CORK_EEPROM_BUSY;
+	} else {
+		eecmd = ELINK_W0_EEPROM_COMMAND;
+		busybit = EEPROM_BUSY;
+	}
+
 	j = 0;		/* bad GCC flow analysis */
 	while (i--) {
-		j = bus_space_read_2(iot, ioh, ELINK_W0_EEPROM_COMMAND);
-		if (j & EEPROM_BUSY)
+		j = bus_space_read_2(iot, ioh, eecmd);
+		if (j & busybit)
 			delay(100);
 		else
 			break;
 	}
-	if (!i) {
+	if (i == 0) {
 		printf("\n%s: eeprom failed to come ready\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-	if (j & EEPROM_TST_MODE) {
+	if (sc->ep_chipset != ELINK_CHIPSET_CORKSCREW &&
+	    (j & EEPROM_TST_MODE) != 0) {
 		/* XXX PnP mode? */
 		printf("\n%s: erase pencil mark!\n", sc->sc_dev.dv_xname);
 		return (1);
@@ -1929,7 +1940,16 @@ ep_read_eeprom(sc, offset)
 	struct ep_softc *sc;
 	u_int16_t offset;
 {
+	bus_addr_t eecmd, eedata;
 	u_int16_t readcmd;
+
+	if (sc->ep_chipset == ELINK_CHIPSET_CORKSCREW) {
+		eecmd = CORK_ASIC_EEPROM_COMMAND;
+		eedata = CORK_ASIC_EEPROM_DATA;
+	} else {
+		eecmd = ELINK_W0_EEPROM_COMMAND;
+		eedata = ELINK_W0_EEPROM_DATA;
+	}
 
 	/*
 	 * RoadRunner has a larger EEPROM, so a different read command
@@ -1942,11 +1962,13 @@ ep_read_eeprom(sc, offset)
 
 	if (epbusyeeprom(sc))
 		return (0);		/* XXX why is eeprom busy? */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W0_EEPROM_COMMAND,
-	    readcmd | offset);
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, eecmd, readcmd | offset);
+
 	if (epbusyeeprom(sc))
 		return (0);		/* XXX why is eeprom busy? */
-	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W0_EEPROM_DATA));
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, eedata));
 }
 
 void
