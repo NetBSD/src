@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.3 2000/05/19 13:42:30 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.3.4.1 2001/06/11 19:34:39 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -167,6 +167,9 @@ static const struct rtk_type rtk_pci_devs[] = {
 		RTK_8139 },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 		"Addtron Technology 8139 10/100BaseTX",
+		RTK_8139 },
+	{	PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
+		"D-Link Systems DFE 530TX+",
 		RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
