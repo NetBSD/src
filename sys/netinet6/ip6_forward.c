@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.20 2001/06/12 15:12:33 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.21 2001/06/12 17:55:52 matt Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.72 2001/06/11 13:29:26 itojun Exp $	*/
 
 /*
@@ -501,7 +501,9 @@ ip6_forward(m, srcrt)
 		}
 	}
 
+#ifdef PFIL_HOOKS
  senderr:
+#endif
 	if (mcopy == NULL)
 		return;
 	switch (error) {
