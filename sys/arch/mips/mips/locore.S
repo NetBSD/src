@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.63 1999/01/16 08:45:53 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.64 1999/02/28 20:36:31 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,14 +358,13 @@ END(cpu_switch)
  * released by the reaper thread.  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(switch_exit)
-	la	v0, _C_LABEL(proc0)
-	lw	v0, P_ADDR(v0)			# v0 = proc0.p_addr
+	lw	v0, _C_LABEL(proc0paddr)	# get proc0 p_addr
 	nop
-	sw	v0, _C_LABEL(curpcb)
-	addu	sp, v0, USPACE - FRAME_SIZ - CALLFRAME_SIZ
+	sw	v0, _C_LABEL(curpcb)		# set current pcb
+	lw	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	la	ra, sw1				# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
-	nop
+	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
 
 /*
