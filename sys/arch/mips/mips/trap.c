@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.182 2003/09/20 22:50:52 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.183 2003/10/21 15:05:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2003/09/20 22:50:52 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.183 2003/10/21 15:05:56 tsutsui Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -706,7 +706,7 @@ kdbpeek(addr)
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
-	} else if (addr == NULL) {
+	} else if (addr == 0) {
 		printf("kdbpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
@@ -725,7 +725,7 @@ kdbrpeek(addr)
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
-	} else if (addr == NULL) {
+	} else if (addr == 0) {
 		printf("kdbrpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
