@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.10 2003/02/01 14:48:17 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.11 2003/02/05 21:41:51 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -54,9 +54,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* extracted from netbsd:sys/arch/i386/boot/bios.S */
 
 #include <machine/asm.h>
-
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
 
 /*
 # BIOS call "INT 0x13 Function 0x0" to reset the disk subsystem
