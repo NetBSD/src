@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.33 2001/02/13 16:07:59 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.34 2001/02/13 19:37:13 mason Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.33 2001/02/13 16:07:59 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.34 2001/02/13 19:37:13 mason Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,6 +182,7 @@ main(argc, argv)
 				if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
 				    err(2, "%s", tape);
 			}
+
 		} else {
 			mt_com.mt_op = comp->c_code;
 			mt_com.mt_count = count;
