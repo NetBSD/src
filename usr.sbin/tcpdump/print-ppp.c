@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.8 1999/07/26 06:11:57 itojun Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.9 2000/04/10 15:24:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.8 1999/07/26 06:11:57 itojun Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.9 2000/04/10 15:24:36 itojun Exp $");
 #endif
 #endif
 
@@ -373,6 +373,12 @@ ppp_netbsd_common_print(const u_char *p, u_int length, u_int caplen,
 	case PPP_IP:
 		ip_print(p, length);
 		break;
+
+#ifdef INET6
+	case PPP_IPV6:
+		ip6_print(p, length);
+		break;
+#endif
 
 	case PPP_IPX:
 		ipx_print(p, length);
