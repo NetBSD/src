@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.23 2000/07/18 15:27:44 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.24 2000/11/14 18:21:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.23 2000/07/18 15:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.24 2000/11/14 18:21:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.23 2000/07/18 15:27:44 ad Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/endian.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bswap.h>
 #include <machine/bus.h>
@@ -217,8 +219,8 @@ dpt_init(sc, intrstr)
 	sc->sc_dmamapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) + 
 	    sc->sc_scrlen + sizeof(struct eata_sp);
 		
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmamapsize, NBPG, 0, 
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmamapsize,
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return;

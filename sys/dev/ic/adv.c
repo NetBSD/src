@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.19 2000/08/11 21:31:19 tls Exp $	*/
+/*	$NetBSD: adv.c,v 1.20 2000/11/14 18:21:00 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -124,7 +124,8 @@ adv_alloc_control_data(sc)
          * Allocate the control blocks.
          */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
-			   NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+			   PAGE_SIZE, 0, &seg, 1, &rseg,
+			   BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.38 2000/10/03 14:07:36 simonb Exp $	*/
+/*	$NetBSD: bha.c,v 1.39 2000/11/14 18:21:01 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -1135,7 +1135,7 @@ bha_init(sc)
 	 * Allocate the mailbox and control blocks.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct bha_control),
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control structures, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);

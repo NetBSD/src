@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.13 2000/10/31 08:06:14 eeh Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.14 2000/11/14 18:21:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -304,7 +306,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 		long bcnt = sc->sc_dmasize;
 		long eaddr = bcnt + (long)*sc->sc_dmaaddr;
 		if ((eaddr & PGOFSET) != 0)
-			bcnt = roundup(bcnt, NBPG);
+			bcnt = roundup(bcnt, PAGE_SIZE);
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT,
 				  bcnt);
 	}

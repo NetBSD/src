@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.45 2000/06/28 16:27:55 mrg Exp $	*/
+/*	$NetBSD: isadma.c,v 1.46 2000/11/14 18:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -631,7 +631,7 @@ _isa_dmamem_alloc(ids, chan, size, addrp, flags)
 
 	size = round_page(size);
 
-	error = bus_dmamem_alloc(ids->ids_dmat, size, NBPG, boundary,
+	error = bus_dmamem_alloc(ids->ids_dmat, size, PAGE_SIZE, boundary,
 	    &seg, 1, &rsegs, flags);
 	if (error)
 		return (error);

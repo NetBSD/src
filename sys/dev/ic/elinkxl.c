@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.43 2000/10/17 16:16:52 bouyer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.44 2000/11/14 18:21:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -232,7 +234,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NUPD * sizeof (struct ex_upd), NBPG, 0, &sc->sc_useg, 1, 
+	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1, 
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -277,7 +279,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), NBPG, 0, &sc->sc_dseg, 1, 
+	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1, 
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

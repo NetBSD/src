@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.40 2000/03/23 07:01:36 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.41 2000/11/14 18:28:16 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -106,6 +106,8 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -619,9 +621,9 @@ wds_create_scbs(sc, mem, size)
 	if ((scb = mem) != NULL)
 		goto have_mem;
 
-	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
+	size = PAGE_SIZE;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
+	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't allocate memory for scbs\n",
 		    sc->sc_dev.dv_xname);
@@ -1037,9 +1039,9 @@ wds_init(sc, isreset)
 	/*
 	 * Allocate the mailbox.
 	 */
-	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
+	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
 	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		panic("wds_init: can't create or map mailbox");
 
@@ -1049,7 +1051,7 @@ wds_init(sc, isreset)
 	 */
 	if (wds_create_scbs(sc, ((caddr_t)wmbx) +
 	    ALIGN(sizeof(struct wds_mbx)),
-	    NBPG - ALIGN(sizeof(struct wds_mbx))))
+	    PAGE_SIZE - ALIGN(sizeof(struct wds_mbx))))
 		panic("wds_init: can't create scbs");
 
 	/*

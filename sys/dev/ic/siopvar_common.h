@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.8 2000/10/23 23:18:11 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.9 2000/11/14 18:21:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -43,7 +43,7 @@ typedef struct scr_table {
 } scr_table_t ;
 
 /* Number of scatter/gather entries */
-#define SIOP_NSG	(MAXPHYS/NBPG + 1)
+#define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
 
 /* Number of tag */
 #define SIOP_NTAG 16
