@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2000/03/20 20:30:34 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2000/04/19 14:31:48 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,6 +143,8 @@ struct user *proc0paddr;
 
 extern int boothowto;
 extern paddr_t avail_start, avail_end;
+
+#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
