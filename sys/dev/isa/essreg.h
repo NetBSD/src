@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.9 1999/03/16 13:06:35 mycroft Exp $	*/
+/*	$NetBSD: essreg.h,v 1.10 1999/03/18 07:11:21 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.9 $ (SHARK) $Date: 1999/03/16 13:06:35 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.10 $ (SHARK) $Date: 1999/03/18 07:11:21 $
 **
 **++
 **
@@ -157,8 +157,8 @@
 #define ESS_ACMD_VERSION	0xE1	/* get version number */
 #define ESS_ACMD_LEGACY_ID	0xE7	/* get legacy ES688/ES1688 ID bytes */
 
-#define ESS_MINRATE 5000	/* XXX */
-#define ESS_MAXRATE 50000	/* XXX */
+#define ESS_MINRATE 4000
+#define ESS_MAXRATE 44100
 
 /*
  * Macros to detect valid hardware configuration data.
