@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.152 2004/10/26 20:46:16 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.153 2004/12/21 16:41:24 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.152 2004/10/26 20:46:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.153 2004/12/21 16:41:24 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.152 2004/10/26 20:46:16 augustss Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/select.h>
+#include <uvm/uvm_extern.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
@@ -679,6 +680,11 @@ ohci_init(ohci_softc_t *sc)
 
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
+#ifdef __NetBSD__
+	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	    USB_MEM_RESERVE);
+#endif
+
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
 	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,
@@ -899,8 +905,14 @@ ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
 #endif
+	usbd_status status;
 
-	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
+	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
+#ifdef __NetBSD__
+	if (status == USBD_NOMEM)
+		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
+#endif
+	return status;
 }
 
 void
@@ -909,7 +921,13 @@ ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
 #endif
-
+#ifdef __NetBSD__
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&((struct ohci_softc *)bus)->sc_dma_reserve,
+		    dma);
+		return;
+	}
+#endif
 	usb_freemem(&sc->sc_bus, dma);
 }
 
