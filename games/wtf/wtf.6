@@ -1,8 +1,8 @@
-.\"	$NetBSD: wtf.6,v 1.5 2002/09/26 16:12:44 wiz Exp $
+.\"	$NetBSD: wtf.6,v 1.6 2003/04/10 09:18:24 jmmv Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd July 21, 1999
+.Dd April 9, 2003
 .Dt WTF 6
 .Os
 .Sh NAME
@@ -10,6 +10,7 @@
 .Nd translates acronyms for you
 .Sh SYNOPSIS
 .Nm
+.Op Fl f Ar dbfile
 .Op Ar is
 .Ar acronym Ar ...
 .Sh DESCRIPTION
@@ -29,6 +30,14 @@ is specified on the command line, it will be ignored, allowing the
 fairly natural
 .Dq wtf is WTF
 usage.
+.Pp
+The following options are available:
+.Bl -tag -width flag
+.It Fl f Ar dbfile
+Overrides the default acronym database, bypassing the value of the
+.Ev ACRONYMDB
+variable.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width ACRONYMDB
 .It Ev ACRONYMDB
