@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.9 1998/05/11 20:43:43 thomas Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.10 1998/11/20 12:56:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -50,11 +50,15 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
 /*
  * For PCI probing...
  */
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <machine/iomap.h>
 #include <machine/video.h>
@@ -76,10 +80,17 @@
 #define	FRAME_MAPPABLE	(4 * 1024 * 1024)
 
 /*
+ * Where we map the PCI registers in the io-space (et6000)
+ * XXX: 0x400 would probably work too...
+ */
+#define PCI_IOBASE	0x800
+
+/*
  * Function decls
  */
 static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
 static colormap_t *alloc_colormap __P((dmode_t *));
+static void	  et6000_init __P((void));
 static void	  et_display_view __P((view_t *));
 static view_t	  *et_alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void	  et_boardinit __P((void));
@@ -145,7 +156,14 @@ struct grfabs_et_priv {
 	volatile caddr_t	memkva;
 	int			regsz;
 	int			memsz;
+	int			board_type;
 } et_priv;
+
+/*
+ * Board types:
+ */
+#define	BT_ET4000		1
+#define	BT_ET6000		2
 
 /*
  * XXX: called from ite console init routine.
@@ -386,39 +404,52 @@ dmode_t		*dm;
 /*
  * Go look for a VGA card on the PCI-bus. This search is a
  * stripped down version of the PCI-probe. It only looks on
- * bus0 for simple cards.
+ * bus0 for et4000/et6000 cards. The first card found is used.
  */
 int
 et_probe_card()
 {
 	pci_chipset_tag_t	pc = NULL; /* XXX */
-	pcitag_t		tag;
-	int			class, device, found, id, maxndevs;
+	pcitag_t		tag, csr;
+	int			device, found, id, maxndevs;
 
 	found    = 0;
 	tag      = 0;
+	id       = 0;
 	maxndevs = pci_bus_maxdevs(pc, 0);
 
-	for (device = 0; device < maxndevs; device++) {
+	for (device = 0; !found && (device < maxndevs); device++) {
 
 		tag = pci_make_tag(pc, 0, device, 0);
 		id  = pci_conf_read(pc, tag, PCI_ID_REG);
 		if (id == 0 || id == 0xffffffff)
 			continue;
-		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-		if (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC
-		    && PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA) {
-			found = 1;
-			break;
-		}
-		if (PCI_CLASS(class) == PCI_CLASS_DISPLAY
-		    && PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) {
-			found = 1;
-			break;
+		switch (PCI_PRODUCT(id)) {
+			case PCI_PRODUCT_TSENG_ET6000:
+			case PCI_PRODUCT_TSENG_ET4000_W32P_A:
+			case PCI_PRODUCT_TSENG_ET4000_W32P_B:
+			case PCI_PRODUCT_TSENG_ET4000_W32P_C:
+			case PCI_PRODUCT_TSENG_ET4000_W32P_D:
+				found = 1;
+				break;
+			default:
+				break;
 		}
 	}
 	if (!found)
 		return (0);
+
+	if (PCI_PRODUCT(id) ==  PCI_PRODUCT_TSENG_ET6000)
+		et_priv.board_type = BT_ET6000;
+	else et_priv.board_type = BT_ET4000;
+
+		/* Turn on the card */
+        pci_conf_write(pc, tag, PCI_MAPREG_START+4,
+					PCI_IOBASE | PCI_MAPREG_TYPE_IO);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	et_priv.pci_tag = tag;
 
@@ -427,7 +458,7 @@ et_probe_card()
 	 */
 	et_priv.regkva  = (volatile caddr_t)pci_io_addr;
 	et_priv.memkva  = (volatile caddr_t)pci_mem_addr;
-	et_priv.memsz   = PCI_MEM_SIZE;
+	et_priv.memsz   = 32*PCI_MEM_SIZE;
 	et_priv.regsz   = PCI_IO_SIZE;
 
 	if (found && !atari_realconfig) {
@@ -644,6 +675,8 @@ et_boardinit()
 	WCrt(ba, CRT_ID_6845_COMPAT,      0x08);
 	WCrt(ba, CRT_ID_VIDEO_CONFIG1,    0x73);
 	WCrt(ba, CRT_ID_VIDEO_CONFIG2,    0x09);
+	if (et_priv.board_type == BT_ET6000)
+		et6000_init();
 	
 	WCrt(ba, CRT_ID_HOR_OVERFLOW,     0x00);
 
@@ -652,8 +685,8 @@ et_boardinit()
 	WGfx(ba, GCT_ID_COLOR_COMPARE,    0x00);
 	WGfx(ba, GCT_ID_DATA_ROTATE,      0x00);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT,  0x00);
-	WGfx(ba, GCT_ID_GRAPHICS_MODE,    0x00);
-	WGfx(ba, GCT_ID_MISC,             0x01);
+	WGfx(ba, GCT_ID_GRAPHICS_MODE,    0x40);
+	WGfx(ba, GCT_ID_MISC,             0x05);
 	WGfx(ba, GCT_ID_COLOR_XCARE,      0x0f);
 	WGfx(ba, GCT_ID_BITMASK,          0xff);
 
@@ -686,6 +719,44 @@ et_boardinit()
 		vgaw(ba, VDAC_DATA, i);
 		vgaw(ba, VDAC_DATA, i);
 	}
+}
+
+/*
+ * Initialize the et6000 specific (PCI) registers. Try to do it like the
+ * video-bios would have done it, so things like Xservers get what they
+ * expect. Most info was kindly provided by Koen Gadeyne.
+ *
+ * XXX: not fit for programming beauty contest...
+ */
+static void
+et6000_init()
+{
+
+	volatile u_char *ba;
+	int		i;
+	u_char		dac_tab[] = { 0x7d,0x67, 0x5d,0x64, 0x56,0x63,
+				      0x28,0x22, 0x79,0x49, 0x6f,0x47,
+				      0x28,0x41, 0x6b,0x44, 0xfe,0xff,
+				      0x00,0x00, 0x3d,0x23, 0x79,0x2e,
+				      0xa8,0x00, 0x00,0x84 };
+
+	ba = et_priv.regkva + PCI_IOBASE;
+
+	ba[0x40] = 0x03;	/* XXX: or 0 as Thomas would like?	*/
+	ba[0x41] = 0x2a;	/* Performance control			*/
+	ba[0x43] = 0x02;	/* XCLK/SCLK config			*/
+	ba[0x44] = 0x11;	/* RAS/CAS config			*/
+	ba[0x46] = 0x00;	/* CRT display feature			*/
+	ba[0x58] = 0x00;	/* Video Control 1			*/
+	ba[0x59] = 0x04;	/* Video Control 2			*/
+	
+	/*
+	 * Setup a 'standard' CLKDAC
+	 */
+	ba[0x42] = 0x00;	/* MCLK == CLK0 */
+	ba[0x67] = 0x00;	/* Start filling from dac-reg 0 and up... */
+	for (i = 0; i < 0x0b; i++)
+		ba[0x69] = dac_tab[i];
 }
 
 void
