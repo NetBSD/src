@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.10 2003/07/26 19:24:50 salo Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.11 2004/02/16 02:39:36 lukem Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
 .Dd April 17, 2003
@@ -198,6 +198,8 @@
 .Fn svcfd_create "int fd" "u_int sendsize" "u_int recvsize"
 .Ft SVCXPRT *
 .Fn svcudp_bufcreate "int sock" "u_int sendsize" "u_int recosize"
+.Ft SVCXPRT *
+.Fn svcudp_create "int sock"
 .Ft int
 .Fn xdr_accepted_reply "XDR *xdrs" "struct accepted_reply *ar"
 .Ft int
@@ -736,7 +738,7 @@ otherwise.
 .Pp
 Warning: remote procedures registered in this form
 are accessed using the UDP/IP transport; see
-.Fn svcudp_create
+.Fn svcudp_bufcreate
 for restrictions.
 .It struct rpc_createerr rpc_createerr ;
 A global variable whose value is set by any RPC
@@ -973,6 +975,10 @@ if it fails.
 .Pp
 This allows the user to specify the maximum packet size for sending and
 receiving UDP-based RPC messages.
+.It Fn svcudp_create
+This acts as
+.Fn svcudp_bufcreate with
+predefined sizes for the maximum packet sizes.
 .It Fn xdr_accepted_reply
 Used for encoding RPC reply messages.
 This routine is useful for users who wish to generate RPC-style
