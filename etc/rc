@@ -98,7 +98,7 @@ fi
 
 # build ps databases
 echo 'building databases...'
-kvm_mkdb /386bsd
+kvm_mkdb /bsd
 dev_mkdb
 
 chmod 666 /dev/tty[pqrs]*
