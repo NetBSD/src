@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.2 2001/04/25 17:53:18 bouyer Exp $	*/
+/*	$NetBSD: spifi.c,v 1.3 2001/04/26 15:52:00 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -215,7 +215,6 @@ spifi_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
 	scsipi_adapter_req_t req;
 	void *arg;
-	
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
