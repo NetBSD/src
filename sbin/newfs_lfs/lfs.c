@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.12.4.1 2000/07/03 22:09:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.12.4.1 2000/07/03 22:09:15 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ static struct lfs lfs_default =  {
 	/* lfs_flags */		0
 };
 
+#define	UMASK	0755
 
 struct direct lfs_root_dir[] = {
 	{ ROOTINO, sizeof(struct direct), DT_DIR, 1, "."},
@@ -471,7 +472,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 
 	/* Initialize the ROOT Directory */
 	sb_addr = make_dinode(ROOTINO, ++dip, howmany(DIRBLKSIZ,lfsp->lfs_fsize), sb_addr, lfsp);
-	dip->di_mode = IFDIR|IREAD|IWRITE|IEXEC;
+	dip->di_mode = IFDIR | UMASK;
 	dip->di_size = DIRBLKSIZ;
 	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
 	dip->di_nlink = 3;
@@ -481,7 +482,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 
 	/* Initialize the lost+found Directory */
 	sb_addr = make_dinode(LOSTFOUNDINO, ++dip, howmany(DIRBLKSIZ,lfsp->lfs_fsize), sb_addr, lfsp);
-	dip->di_mode = IFDIR|IREAD|IWRITE|IEXEC;
+	dip->di_mode = IFDIR | UMASK;
 	dip->di_size = DIRBLKSIZ;
 	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
 	dip->di_nlink = 2;
