@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1996/02/05 01:59:12 christos Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.20 1996/02/27 13:17:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,6 +108,7 @@ dvma_malloc(len, kaddr, flags)
 	vm_offset_t	kva;
 	vm_offset_t	dva;
 
+	len = round_page(len);
 	kva = (vm_offset_t)malloc(len, M_DEVBUF, flags);
 	if (kva == NULL)
 		return (NULL);
@@ -129,7 +130,7 @@ dvma_free(dva, len, kaddr)
 {
 	vm_offset_t	kva = *(vm_offset_t *)kaddr;
 
-	dvma_mapout((vm_offset_t)dva, kva, len);
+	dvma_mapout((vm_offset_t)dva, kva, round_page(len));
 	free((void *)kva, M_DEVBUF);
 }
 
