@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sh.1	5.1 (Berkeley) 3/7/91
-.\"	$Id: sh.1,v 1.7 1994/01/27 17:53:28 jtc Exp $
+.\"	$Id: sh.1,v 1.8 1994/02/03 17:47:48 jtc Exp $
 .\"
 .TH SH 1 "March 7, 1991"
 .UC 7
@@ -294,7 +294,7 @@ The command is normally a list enclosed between ``{'' and ``}''.
 .PP
 Variables may be declared to be local to a function by using a
 .I local
-command.  This should appear as the first staement of a function,
+command.  This should appear as the first statement of a function,
 and looks like
 .d
 \fBlocal\fR [ variable | \fB-\fR ] ...
@@ -500,7 +500,7 @@ equivalent to "$1" "$2" ... "$\fIn\fR", where \fIn\fR is the number of
 positional parameters.  (Note that this differs from the System V shell.
 The System V documentation claims that "$@" behaves this way; in fact
 on the System V shell "$@" is equivalent to "" when there are no
-positional paramteters.)
+positional parameters.)
 .h "File Name Generation"
 Unless the
 .B -f
@@ -538,7 +538,7 @@ Two exclamation points at the beginning of a pattern function as a ``not''
 operator, causing the pattern to match any string that the remainder of
 the pattern does
 .I not
-match.  Other occurances of exclamation points in a pattern match
+match.  Other occurrences of exclamation points in a pattern match
 exclamation points.  Two exclamation points are required rather than one
 to decrease the incompatibility with the System V shell (which does not
 treat exclamation points specially).
@@ -674,7 +674,7 @@ syntax.
 .br
 Continue the specified jobs (or the current job if no jobs are given)
 in the background.
-This command is only available on systems with Bekeley job control.
+This command is only available on systems with Berkeley job control.
 .b bltin
 .IR "command arg" ...
 .br
@@ -745,7 +745,7 @@ With no arguments the export command lists the names of all exported variables.
 ]
 .br
 Move the specified job or the current job to the foreground.
-This command is only available on systems with Bekeley job control.
+This command is only available on systems with Berkeley job control.
 .b getopts
 .I optstring
 .I var
