@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.23 2004/03/13 22:40:51 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.24 2004/03/22 07:11:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -147,14 +147,14 @@
  *	Byte range	Use	Description
  *	----------	---	-----------
  *
- *	000 - 002	FMP	JMP xxx, NOP
- *	003 - 010	FP	OEM Name
+ *	0 - 2		FMP	JMP xxx, NOP
+ *	3 - 10		FP	OEM Name
  *
- *	011 - 061	FMP	FAT12/16 BPB
+ *	11 - 61		FMP	FAT12/16 BPB
  *				Whilst not strictly necessary for MBR,
  *				GRUB reserves this area
  *
- *	011 - 089	P	FAT32 BPB
+ *	11 - 89		P	FAT32 BPB
  *				(are we ever going to boot off this?)
  *
  *
@@ -172,10 +172,13 @@
  *		http://www.geocities.com/thestarman3/asm/mbr/Win2kmbr.htm
  *				not needed by us
  *
+ *	400 - 439	MP	NetBSD: mbr_bootsel
+ *
  *	440 - 443	M	WinNT/2K/XP Drive Serial Number (NT DSN)
  *		http://www.geocities.com/thestarman3/asm/mbr/Win2kmbr.htm
  *
  *	444 - 445	FMP	bootcode or unused
+ *				NetBSD: mbr_bootsel_magic
  *
  *	446 - 509	M	partition table
  *
@@ -195,10 +198,13 @@
 #define	MBR_BBSECTOR		0	/* MBR relative sector # */
 #define	MBR_BPB_OFFSET		11	/* offsetof(mbr_sector, mbr_bpb) */
 #define	MBR_BOOTCODE_OFFSET	90	/* offsetof(mbr_sector, mbr_bootcode) */
-#define	MBR_BOOTSEL_OFFSET	404	/* offsetof(mbr_sector, mbr_bootsel) */
+#define	MBR_BS_OFFSET		400	/* offsetof(mbr_sector, mbr_bootsel) */
+#define	MBR_DSN_OFFSET		440	/* offsetof(mbr_sector, mbr_dsn) */
+#define	MBR_BS_MAGIC_OFFSET	444	/* offsetof(mbr_sector, mbr_bootsel_magic) */
 #define	MBR_PART_OFFSET		446	/* offsetof(mbr_sector, mbr_part[0]) */
 #define	MBR_MAGIC_OFFSET	510	/* offsetof(mbr_sector, mbr_magic) */
 #define	MBR_MAGIC		0xaa55	/* MBR magic number */
+#define	MBR_BS_MAGIC		0xb5e1	/* mbr_bootsel magic number */
 #define	MBR_PART_COUNT		4	/* Number of partitions in MBR */
 #define	MBR_BS_PARTNAMESIZE	8	/* Size of name mbr_bootsel nametab */
 					/* (excluding trailing NUL) */
@@ -239,7 +245,7 @@
 #define	MBR_BS_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
 #define	MBR_BS_READ_LBA	0x04	/* Force LBA reads - even for low numbers */
 #define	MBR_BS_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
-#define	MBR_BS_NEWMBR	0x80	/* New code: menu uses 1..9 for ptns */
+#define	MBR_BS_NEWMBR	0x80	/* New bootsel at offset 440 */
 
 #if !defined(__ASSEMBLER__)					/* { */
 
@@ -327,7 +333,6 @@ struct mbr_bootsel {
 	uint8_t		mbrbs_flags;
 	uint16_t	mbrbs_timeo;
 	uint8_t		mbrbs_nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
-	uint16_t	mbrbs_magic;
 } __attribute__((__packed__));
 
 /*
@@ -365,9 +370,13 @@ struct mbr_sector {
 		struct mbr_bpbFAT32	bpb32;
 	} mbr_bpb;
 					/* Boot code */
-	uint8_t			mbr_bootcode[314];
+	uint8_t			mbr_bootcode[310];
 					/* Config for /usr/mdec/mbr_bootsel */
 	struct mbr_bootsel	mbr_bootsel;
+					/* NT Drive Serial Number */
+	uint32_t		mbr_dsn;
+					/* mbr_bootsel magic */
+	uint16_t		mbr_bootsel_magic;
 					/* MBR partition table */
 	struct mbr_partition	mbr_parts[MBR_PART_COUNT];
 					/* MBR magic (0xaa55) */
