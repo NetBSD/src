@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.27 1999/03/30 16:07:47 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.27.4.1 1999/06/07 04:25:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -171,7 +171,6 @@ struct swappri {
 struct swapbuf {
 	struct buf sw_buf;		/* a buffer structure */
 	struct uvm_aiodesc sw_aio;	/* aiodesc structure, used if ASYNC */
-	SIMPLEQ_ENTRY(swapbuf) sw_sq;	/* free list pointer */
 };
 
 /*
@@ -251,9 +250,7 @@ static void		 swaplist_insert __P((struct swapdev *,
 static void		 swaplist_trim __P((void));
 
 static int swap_on __P((struct proc *, struct swapdev *));
-#ifdef SWAP_OFF_WORKS
 static int swap_off __P((struct proc *, struct swapdev *));
-#endif
 
 #ifdef SWAP_TO_FILES
 static void sw_reg_strategy __P((struct swapdev *, struct buf *, int));
@@ -750,8 +747,7 @@ sys_swapctl(p, v, retval)
 		break;
 
 	case SWAP_OFF:
-		UVMHIST_LOG(pdhist, "someone is using SWAP_OFF...??", 0,0,0,0);
-#ifdef SWAP_OFF_WORKS
+#if 1
 		/*
 		 * find the entry of interest and ensure it is enabled.
 		 */
@@ -770,10 +766,14 @@ sys_swapctl(p, v, retval)
 			error = EBUSY;
 			break;
 		}
+
+		/*
+		 * do the real work.
+		 */
 		/* XXXCDC: should we call with list locked or unlocked? */
 		if ((error = swap_off(p, sdp)) != 0)
-			break;
 		/* XXXCDC: might need relock here */
+			goto out;
 
 		/*
 		 * now we can kill the entry.
@@ -790,8 +790,6 @@ sys_swapctl(p, v, retval)
 		break;
 
 	default:
-		UVMHIST_LOG(pdhist, "unhandled command: %#x",
-		    SCARG(uap, cmd), 0, 0, 0);
 		error = EINVAL;
 	}
 
@@ -990,25 +988,26 @@ swap_on(p, sdp)
 		uvmexp.swpgonly += (rootpages - addr);
 		simple_unlock(&uvm.swap_data_lock);
 
+		size -= rootpages;
 		printf("Preserved %d pages of miniroot ", rootpages);
-		printf("leaving %d pages of swap\n", size - rootpages);
+		printf("leaving %d pages of swap\n", size);
 	}
+
+  	/*
+	 * add anons to reflect the new swap space
+	 */
+	uvm_anon_add(size);
 
 	/*
 	 * now add the new swapdev to the drum and enable.
 	 */
 	simple_lock(&uvm.swap_data_lock);
 	swapdrum_add(sdp, npages);
-	sdp->swd_npages = npages;
+	sdp->swd_npages = size;
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
 	simple_unlock(&uvm.swap_data_lock);
 	uvmexp.swpages += npages;
-
-	/*
-	 * add anon's to reflect the swap space we added
-	 */
-	uvm_anon_add(size);
 
 #if 0
 	/*
@@ -1054,59 +1053,18 @@ bad:
 	return (error);
 }
 
-#ifdef SWAP_OFF_WORKS
 /*
  * swap_off: stop swapping on swapdev
  *
- * XXXCDC: what conditions go here?
+ * => swap data should be locked, we will unlock.
  */
 static int
 swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
-	char	*name;
-	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
-
-	/* turn off the enable flag */
-	sdp->swd_flags &= ~SWF_ENABLE;
-
-	UVMHIST_LOG(pdhist, "  dev=%x", sdp->swd_dev);
-
-	/*
-	 * XXX write me
-	 *
-	 * the idea is to find out which processes are using this swap
-	 * device, and page them all in.
-	 *
-	 * eventually, we should try to move them out to other swap areas
-	 * if available.
-	 *
-	 * The alternative is to create a redirection map for this swap
-	 * device.  This should work by moving all the pages of data from
-	 * the ex-swap device to another one, and making an entry in the
-	 * redirection map for it.  locking is going to be important for
-	 * this!
-	 *
-	 * XXXCDC: also need to shrink anon pool
-	 */
-
-	/* until the above code is written, we must ENODEV */
-	return ENODEV;
-
-	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
-	name = sdp->swd_ex->ex_name;
-	extent_destroy(sdp->swd_ex);
-	free(name, M_VMSWAP);
-	free((caddr_t)sdp->swd_ex, M_VMSWAP);
-	if (sdp->swp_vp != rootvp)
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
-	if (sdp->swd_vp)
-		vrele(sdp->swd_vp);
-	free((caddr_t)sdp, M_VMSWAP);
-	return (0);
+	return 0;
 }
-#endif
 
 /*
  * /dev/drum interface and i/o functions
@@ -1179,17 +1137,16 @@ swstrategy(bp)
 	 * convert drum page number to block number on this swapdev.
 	 */
 
-	pageno = pageno - sdp->swd_drumoffset;	/* page # on swapdev */
+	pageno -= sdp->swd_drumoffset;		/* page # on swapdev */
 	bn = btodb(pageno << PAGE_SHIFT);	/* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld\n",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
 		sdp->swd_drumoffset, bn, bp->b_bcount);
 
-
 	/*
 	 * for block devices we finish up here.
-	 * for regular files we have to do more work which we deligate
+	 * for regular files we have to do more work which we delegate
 	 * to sw_reg_strategy().
 	 */
 
@@ -1831,6 +1788,9 @@ uvm_swap_io(pps, startslot, npages, flags)
 		sbp->sw_aio.kva = kva;
 		sbp->sw_aio.npages = npages;
 		sbp->sw_aio.pd_ptr = sbp;	/* backpointer */
+		/* XXX pagedaemon */
+		sbp->sw_aio.flags = (curproc == uvm.pagedaemon_proc) ?
+			UVM_AIO_PAGEDAEMON : 0;
 		bp->b_flags |= B_CALL;		/* set callback */
 		bp->b_iodone = uvm_swap_bufdone;/* "buf" iodone function */
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
@@ -1904,11 +1864,11 @@ uvm_swap_bufdone(bp)
 	 * now put the aio on the uvm.aio_done list and wake the
 	 * pagedaemon (which will finish up our job in its context).
 	 */
-	simple_lock(&uvm.pagedaemon_lock);	/* locks uvm.aio_done */
+	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
 	TAILQ_INSERT_TAIL(&uvm.aio_done, &sbp->sw_aio, aioq);
-	simple_unlock(&uvm.pagedaemon_lock);
+	simple_unlock(&uvm.aiodoned_lock);
 
-	thread_wakeup(&uvm.pagedaemon);
+	wakeup(&uvm.aiodoned);
 	splx(s);
 }
 

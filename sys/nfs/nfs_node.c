@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.28 1998/09/01 03:11:36 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.28.8.1 1999/06/07 04:25:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -160,7 +160,17 @@ loop:
 	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
 	np->n_fhsize = fhsize;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
-	memset(np->n_vattr, 0, sizeof (struct vattr));
+
+	/*
+	 * XXX doing this while holding the nfs_hashlock is bad,
+	 * but there's no alternative at the moment.
+	 */
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
+	if (error) {
+		return error;
+	}
+	uvm_vnp_setsize(vp, np->n_vattr->va_size);
+
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);

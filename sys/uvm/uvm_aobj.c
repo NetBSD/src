@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.18.2.1 1999/04/16 16:27:13 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.18.2.1.2.1 1999/06/07 04:25:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 
 #include <vm/vm.h>
@@ -172,7 +173,6 @@ struct pool uvm_aobj_pool;
  * local functions
  */
 
-static void			 uao_init __P((void));
 static struct uao_swhash_elt	*uao_find_swhash_elt __P((struct uvm_aobj *,
 							  int, boolean_t));
 static int			 uao_find_swslot __P((struct uvm_aobj *, 
@@ -187,8 +187,6 @@ static int			 uao_get __P((struct uvm_object *, vaddr_t,
 static boolean_t		 uao_releasepg __P((struct vm_page *, 
 						    struct vm_page **));
 
-
-
 /*
  * aobj_pager
  * 
@@ -196,7 +194,7 @@ static boolean_t		 uao_releasepg __P((struct vm_page *,
  */
 
 struct uvm_pagerops aobj_pager = {
-	uao_init,		/* init */
+	NULL,			/* init */
 	uao_reference,		/* reference */
 	uao_detach,		/* detach */
 	NULL,			/* fault */
@@ -382,7 +380,6 @@ uao_set_swslot(uobj, pageidx, slot)
 				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
-
 	} else { 
 		/* we are using an array */
 		oldslot = aobj->u_swslots[pageidx];
@@ -487,14 +484,14 @@ uao_create(size, flags)
 	vsize_t size;
 	int flags;
 {
-	static struct uvm_aobj kernel_object_store;	/* home of kernel_object */
+	static struct uvm_aobj kernel_object_store; /* home of kernel_object */
 	static int kobj_alloced = 0;			/* not allocated yet */
 	int pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 
 	/*
- 	* malloc a new aobj unless we are asked for the kernel object
- 	*/
+	 * malloc a new aobj unless we are asked for the kernel object
+	 */
 	if (flags & UAO_FLAG_KERNOBJ) {		/* want kernel object? */
 		if (kobj_alloced)
 			panic("uao_create: kernel object already allocated");
@@ -534,7 +531,7 @@ uao_create(size, flags)
 		    M_NOWAIT : M_WAITOK;
 
 		/* allocate hash table or array depending on object size */
-			if (UAO_USES_SWHASH(aobj)) {
+		if (UAO_USES_SWHASH(aobj)) {
 			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
 			    M_UVMAOBJ, mflags, &aobj->u_swhashmask);
 			if (aobj->u_swhash == NULL)
@@ -564,8 +561,6 @@ uao_create(size, flags)
 
 	/*
  	 * now that aobj is ready, add it to the global list
- 	 * XXXCHS: uao_init hasn't been called'd in the KERNOBJ case,
-	 * do we really need the kernel object on this list anyway?
  	 */
 	simple_lock(&uao_list_lock);
 	LIST_INSERT_HEAD(&uao_list, aobj, u_list);
@@ -584,7 +579,7 @@ uao_create(size, flags)
  *
  * => called at boot time from uvm_pager_init()
  */
-static void
+void
 uao_init()
 {
 	static int uao_initialized;
@@ -612,9 +607,24 @@ uao_init()
  * uao_reference: add a ref to an aobj
  *
  * => aobj must be unlocked (we will lock it)
+ * just lock and call the locked version
  */
 void
 uao_reference(uobj)
+	struct uvm_object *uobj;
+{
+	simple_lock(&uobj->vmobjlock);
+	uao_reference_locked(uobj);
+	simple_unlock(&uobj->vmobjlock);
+}
+
+/*
+ * uao_reference_locked: add a ref to an aobj that is already locked
+ *
+ * => aobj must be locked
+ */
+void
+uao_reference_locked(uobj)
 	struct uvm_object *uobj;
 {
 	UVMHIST_FUNC("uao_reference"); UVMHIST_CALLED(maphist);
@@ -626,20 +636,33 @@ uao_reference(uobj)
 	if (uobj->uo_refs == UVM_OBJ_KERN)
 		return;
 
-	simple_lock(&uobj->vmobjlock);
 	uobj->uo_refs++;		/* bump! */
 	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
 	uobj, uobj->uo_refs,0,0);
-	simple_unlock(&uobj->vmobjlock);
 }
+
 
 /*
  * uao_detach: drop a reference to an aobj
  *
- * => aobj must be unlocked, we will lock it
+ * => aobj must be unlocked
  */
 void
 uao_detach(uobj)
+	struct uvm_object *uobj;
+{
+	simple_lock(&uobj->vmobjlock);
+	uao_detach_locked(uobj);
+}
+
+
+/*
+ * uao_detach_locked: drop a reference to an aobj
+ *
+ * => aobj must be locked, and is unlocked (or freed) upon return.
+ */
+void
+uao_detach_locked(uobj)
 	struct uvm_object *uobj;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
@@ -650,10 +673,10 @@ uao_detach(uobj)
 	/*
  	 * detaching from kernel_object is a noop.
  	 */
-	if (uobj->uo_refs == UVM_OBJ_KERN)
+	if (uobj->uo_refs == UVM_OBJ_KERN) {
+		simple_unlock(&uobj->vmobjlock);
 		return;
-
-	simple_lock(&uobj->vmobjlock);
+	}
 
 	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
 	uobj->uo_refs--;				/* drop ref! */
@@ -671,9 +694,9 @@ uao_detach(uobj)
 	simple_unlock(&uao_list_lock);
 
 	/*
- 	 * free all the pages that aren't PG_BUSY, mark for release any that are.
+ 	 * free all the pages that aren't PG_BUSY,
+	 * mark for release any that are.
  	 */
-
 	busybody = FALSE;
 	for (pg = uobj->memq.tqh_first ; pg != NULL ; pg = pg->listq.tqe_next) {
 
@@ -763,12 +786,12 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	boolean_t done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d", aobj, offset, flags,0);
+	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d",
+		    aobj, offset, flags,0);
 	
 	/*
  	 * get number of pages
  	 */
-
 	maxpages = *npagesp;
 
 	/*
@@ -776,7 +799,6 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  	 */
 
 	if (flags & PGO_LOCKED) {
-
 		/*
  		 * step 1a: get pages that are already resident.   only do
 		 * this if the data structures are locked (i.e. the first
@@ -986,12 +1008,13 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				    rv,0,0,0);
 				if (ptmp->flags & PG_WANTED)
 					/* object lock still held */
-					thread_wakeup(ptmp);
+					wakeup(ptmp);
 				ptmp->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
 				uvm_lock_pageq();
 				uvm_pagefree(ptmp);
 				uvm_unlock_pageq();
+
 				simple_unlock(&uobj->vmobjlock);
 				return (rv);
 			}
@@ -1039,7 +1062,8 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  * => we kill the aobj if it is not referenced and we are suppose to
  *      kill it ("KILLME").
  */
-static boolean_t uao_releasepg(pg, nextpgp)
+static boolean_t
+uao_releasepg(pg, nextpgp)
 	struct vm_page *pg;
 	struct vm_page **nextpgp;	/* OUT */
 {
@@ -1049,7 +1073,7 @@ static boolean_t uao_releasepg(pg, nextpgp)
 	if ((pg->flags & PG_RELEASED) == 0)
 		panic("uao_releasepg: page not released!");
 #endif
-	
+
 	/*
  	 * dispose of the page [caller handles PG_WANTED] and swap slot.
  	 */
@@ -1060,7 +1084,7 @@ static boolean_t uao_releasepg(pg, nextpgp)
 		*nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
 	uvm_pagefree(pg);
 	if (!nextpgp)
-		uvm_unlock_pageq();			/* keep locked for daemon */
+		uvm_unlock_pageq();		/* keep locked for daemon */
 
 	/*
  	 * if we're not killing the object, we're done.

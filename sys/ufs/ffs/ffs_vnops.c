@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.18 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.18.4.1 1999/06/07 04:25:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,10 @@
  *	@(#)ffs_vnops.c	8.15 (Berkeley) 5/14/95
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvmhist.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -48,9 +52,9 @@
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -114,7 +118,9 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
+	{ &vop_putpages_desc, ffs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
@@ -221,8 +227,8 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
 
-int doclusterread = 1;
-int doclusterwrite = 1;
+int doclusterread = 0;
+int doclusterwrite = 0;
 
 #include <ufs/ufs/ufs_readwrite.c>
 
@@ -242,6 +248,7 @@ ffs_reclaim(v)
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
+
 	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
@@ -249,4 +256,313 @@ ffs_reclaim(v)
 	pool_put(&ffs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+#include <uvm/uvm.h>
+
+int
+ffs_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		vaddr_t a_offset;
+		vm_page_t *a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	int error, npages, cidx, i;
+	struct buf tmpbuf, *bp;
+	struct vnode *vp = ap->a_vp;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	struct vm_page *pg, *pgs[16];  /* XXX 16 */
+	struct ucred *cred = curproc->p_ucred;
+	off_t offset;
+	UVMHIST_FUNC("ffs_getpages"); UVMHIST_CALLED(ubchist);
+
+#ifdef DIAGNOSTIC
+	if (ap->a_centeridx < 0 || ap->a_centeridx > *ap->a_count) {
+		panic("ffs_getpages: centeridx %d out of range",
+		      ap->a_centeridx);
+	}
+#endif
+
+	if (ap->a_flags & PGO_LOCKED) {
+		uvn_findpages(uobj, ap->a_offset, ap->a_count, ap->a_m,
+			      UFP_NOWAIT|UFP_NOALLOC|UFP_NORDONLY);
+
+		/* XXX PGO_ALLPAGES? */
+		return ap->a_m[ap->a_centeridx] == NULL ?
+			VM_PAGER_UNLOCK : VM_PAGER_OK;
+	}
+
+	/* vnode is VOP_LOCKed, uobj is locked */
+
+
+	/*
+	 * XXX do the findpages for our 1 page first,
+	 * change asyncget to take the one page as an arg and
+	 * pretend that its findpages found it.
+	 */
+
+	/*
+	 * kick off a big read first to get some readahead, then
+	 * get the one page we wanted.
+	 */
+
+	if ((ap->a_flags & PGO_OVERWRITE) == 0 &&
+	    (ap->a_offset & (MAXBSIZE - 1)) == 0) {
+		/*
+		 * XXX pretty sure unlocking here is wrong.
+		 */
+		simple_unlock(&uobj->vmobjlock);
+		uvm_vnp_asyncget(vp, ap->a_offset, MAXBSIZE, fs->fs_bsize);
+		simple_lock(&uobj->vmobjlock);
+	}
+
+	/*
+	 * the desired page isn't resident, we'll have to read it.
+	 */
+
+	offset = ap->a_offset + (ap->a_centeridx << PAGE_SHIFT);
+	npages = 1;
+	pg = NULL;
+	uvn_findpages(uobj, offset, &npages, &pg, 0);
+	simple_unlock(&uobj->vmobjlock);
+
+	/*
+	 * if the page is already resident, just return it.
+	 */
+
+	if ((pg->flags & PG_FAKE) == 0 &&
+	    !((ap->a_access_type & VM_PROT_WRITE) && (pg->flags & PG_RDONLY))) {
+		ap->a_m[ap->a_centeridx] = pg;
+		return VM_PAGER_OK;
+	}
+
+	UVMHIST_LOG(ubchist, "pg %p flags 0x%x access_type 0x%x",
+		    pg, (int)pg->flags, (int)ap->a_access_type, 0);
+
+	/*
+	 * ok, really read the desired page.
+	 */
+
+	bp = &tmpbuf;
+	bzero(bp, sizeof *bp);
+	bp->b_lblkno = lblkno(fs, offset);
+	error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
+	if (error) {
+		UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
+			    bp->b_lblkno, error,0,0);
+		goto out;
+	}
+	if (bp->b_blkno == (daddr_t)-1) {
+		UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", bp->b_lblkno,0,0,0);
+
+		/*
+		 * for read faults, we can skip the block allocation
+		 * by marking the page PG_RDONLY and PG_CLEAN.
+		 */
+
+		if ((ap->a_access_type & VM_PROT_WRITE) == 0) {
+			uvm_pagezero(pg);
+			pg->flags |= PG_CLEAN|PG_RDONLY;
+			UVMHIST_LOG(ubchist, "setting PG_RDONLY", 0,0,0,0);
+			goto out;
+		}
+
+		/*
+		 * for write faults, we must now allocate the backing store
+		 * and make sure the block is zeroed.
+		 */
+
+		error = ffs_balloc(ip, bp->b_lblkno,
+				   blksize(fs, ip, bp->b_lblkno),
+				   cred, NULL, &bp->b_blkno, 0);
+		if (error) {
+			UVMHIST_LOG(ubchist, "ffs_balloc lbn 0x%x -> %d",
+				    bp->b_lblkno, error,0,0);
+			goto out;
+		}
+
+		simple_lock(&uobj->vmobjlock);
+		uvm_pager_dropcluster(uobj, NULL, &pg, &npages, 0, 0);
+		npages = fs->fs_bsize >> PAGE_SHIFT;
+		uvn_findpages(uobj, offset & ~((off_t)fs->fs_bsize - 1),
+			      &npages, pgs, 0);
+		for (i = 0; i < npages; i++) {
+			uvm_pagezero(pgs[i]);
+			uvm_pageactivate(pgs[i]);
+
+			/*
+			 * don't bother clearing mod/ref, the block is
+			 * being modified anyways.
+			 */
+			 
+			pgs[i]->flags &= ~(PG_FAKE|PG_RDONLY);
+		}
+		cidx = (offset >> PAGE_SHIFT) - (pgs[0]->offset >> PAGE_SHIFT);
+		pg = pgs[cidx];
+		pgs[cidx] = NULL;
+		uvm_pager_dropcluster(uobj, NULL, pgs, &npages, 0, 0);
+		simple_unlock(&uobj->vmobjlock);
+		UVMHIST_LOG(ubchist, "cleared pages",0,0,0,0);
+		goto out;
+	}
+
+	/* adjust physical blkno for partial blocks */
+	bp->b_blkno += (offset - lblktosize(fs, bp->b_lblkno)) >> DEV_BSHIFT;
+	UVMHIST_LOG(ubchist, "vp %p bp %p lblkno 0x%x blkno 0x%x",
+		    vp, bp, bp->b_lblkno, bp->b_blkno);
+
+	/*
+	 * don't bother reading the pages if we're just going to
+	 * overwrite them.
+	 */
+	if (ap->a_flags & PGO_OVERWRITE) {
+		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
+
+		/* XXX for now, zero the page */
+		if (pg->flags & PG_FAKE) {
+			uvm_pagezero(pg);
+		}
+
+		goto out;
+	}
+
+	bp->b_bufsize = PAGE_SIZE;
+	bp->b_data = (void *)uvm_pagermapin(&pg, 1, NULL, M_WAITOK);
+	bp->b_bcount = bp->b_lblkno < 0 ? bp->b_bufsize :
+		min(bp->b_bufsize, fragroundup(fs, vp->v_uvm.u_size - offset));
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY|B_READ;
+	VOP_STRATEGY(bp);
+	error = biowait(bp);
+	uvm_pagermapout((vaddr_t)bp->b_data, *ap->a_count);
+
+out:
+	if (error) {
+		simple_lock(&uobj->vmobjlock);
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+		UVM_PAGE_OWN(pg, NULL);
+		uvm_lock_pageq();
+		uvm_pagefree(pg);
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
+	} else { 
+		pg->flags &= ~(PG_FAKE);
+		pmap_clear_modify(PMAP_PGARG(pg));
+		pmap_clear_reference(PMAP_PGARG(pg));
+		uvm_pageactivate(pg);
+		ap->a_m[ap->a_centeridx] = pg;
+	}
+	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+}
+
+/*
+ * Vnode op for VM putpages.
+ */
+int
+ffs_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		struct vm_page **a_m;
+		int a_count;
+		int a_sync;
+		int *a_rtvals;
+	} */ *ap = v;
+
+	int s, error;
+	int bsize;
+	vaddr_t kva, offset;
+	struct vm_page *pg;
+	struct buf tmpbuf, *bp;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	UVMHIST_FUNC("ffs_putpages"); UVMHIST_CALLED(ubchist);
+
+	pg = ap->a_m[0];
+
+#ifdef DEBUG
+	/* XXX verify that pages given are in fact physically contiguous. */
+#endif
+
+	kva = uvm_pagermapin(ap->a_m, ap->a_count, NULL, M_WAITOK);
+	if (kva == 0) {
+		return VM_PAGER_AGAIN;
+	}
+
+	if (ap->a_sync) {
+		bp = &tmpbuf;
+		bzero(bp, sizeof *bp);
+	}
+	else {
+		struct uvm_aiobuf *abp = pool_get(uvm_aiobuf_pool, PR_WAITOK);
+		abp->aio.aiodone = uvm_aio_aiodone;
+		abp->aio.kva = kva;
+		abp->aio.npages = ap->a_count;
+		abp->aio.pd_ptr = abp;
+		/* XXX pagedaemon */
+		abp->aio.flags = (curproc == uvm.pagedaemon_proc) ?
+			UVM_AIO_PAGEDAEMON : 0;
+		bp = &abp->buf;
+		bzero(bp, sizeof *bp);
+		bp->b_flags = B_CALL|B_ASYNC;
+		bp->b_iodone = uvm_aio_biodone;
+	}
+
+	offset = pg->offset;
+	bp->b_bufsize = ap->a_count << PAGE_SHIFT;
+	bp->b_data = (void *)kva;
+	bp->b_lblkno = lblkno(fs, offset);
+	bp->b_bcount = min(bp->b_bufsize,
+			   fragroundup(fs, vp->v_uvm.u_size - offset));
+	bp->b_flags |= B_BUSY|B_WRITE;
+	bp->b_vp = vp;
+
+
+	bsize = blksize(fs, ip, bp->b_lblkno);
+	error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
+	if (error) {
+		UVMHIST_LOG(ubchist, "ffs_balloc -> %d", error, 0,0,0);
+		goto out;
+	}
+
+	/* this could be ifdef DIAGNOSTIC, but it's really important */
+	if (bp->b_blkno == (daddr_t)-1) {
+		panic("ffs_putpages: no backing store vp %p lbn 0x%x",
+		      vp, bp->b_lblkno);
+	}
+
+	/* adjust physical blkno for partial blocks */
+	bp->b_blkno += (offset - lblktosize(fs, bp->b_lblkno)) >> DEV_BSHIFT;
+	UVMHIST_LOG(ubchist, "pg %p vp %p lblkno 0x%x blkno 0x%x",
+		    pg, vp, bp->b_lblkno, bp->b_blkno);
+
+	s = splbio();
+	vp->v_numoutput++;
+	splx(s);
+	VOP_STRATEGY(bp);
+	if (!ap->a_sync) {
+		return VM_PAGER_PEND;
+	}
+	error = biowait(bp);
+
+out:
+	uvm_pagermapout(kva, ap->a_count);
+	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
+
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
 }

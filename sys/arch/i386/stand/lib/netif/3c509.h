@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.2.2.2 1999/04/14 12:56:34 hpeyerl Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.2 1999/04/14 12:56:33 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl

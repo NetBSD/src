@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.285.2.1 1999/05/06 00:13:52 perry Exp $
+#	$NetBSD: files,v 1.285.2.1.2.1 1999/06/07 04:25:28 chs Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -588,7 +588,6 @@ file kern/uipc_syscalls.c
 file kern/uipc_usrreq.c
 file kern/vfs_bio.c
 file kern/vfs_cache.c
-file kern/vfs_cluster.c
 file kern/vfs_getcwd.c
 file kern/vfs_init.c
 file kern/vfs_lockf.c
@@ -829,6 +828,7 @@ file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c
+file uvm/uvm_bio.c
 file uvm/uvm_device.c
 file uvm/uvm_fault.c
 file uvm/uvm_glue.c

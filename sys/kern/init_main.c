@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145 1999/04/01 00:22:45 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145.4.1 1999/06/07 04:25:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -137,6 +137,7 @@ static void check_console __P((struct proc *p));
 static void start_init __P((void *));
 static void start_pagedaemon __P((void *));
 static void start_reaper __P((void *));
+static void start_aiodoned __P((void *));
 void main __P((void));
 
 extern char sigcode[], esigcode[];
@@ -413,6 +414,10 @@ main()
 	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
+	/* Create process 4, the aiodone daemon kernel thread. */
+	if (kthread_create(start_aiodoned, NULL, NULL, "aiodoned"))
+		panic("fork aiodoned");
+
 	/* Create any other deferred kernel threads. */
 	kthread_run_deferred_queue();
 
@@ -589,5 +594,15 @@ start_reaper(arg)
 {
 
 	reaper();
+	/* NOTREACHED */
+}
+
+/* ARGSUSED */
+static void
+start_aiodoned(arg)
+	void *arg;
+{
+
+	uvm_aiodone_daemon();
 	/* NOTREACHED */
 }

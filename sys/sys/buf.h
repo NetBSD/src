@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.33 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: buf.h,v 1.33.4.1 1999/06/07 04:25:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -188,6 +188,9 @@ int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
 void  bgetvp __P((struct vnode *, struct buf *));
+#ifdef DDB
+void	vfs_buf_print __P((struct buf *, int, void (*)(const char *, ...)));
+#endif
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */
