@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.21 1998/06/09 07:46:32 scottr Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.22 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -180,7 +180,7 @@ ffs_truncate(v)
 		if (length != 0)
 			panic("ffs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&oip->i_ffs_shortlink, (u_int)oip->i_ffs_size);
+		memset((char *)&oip->i_ffs_shortlink, 0, (u_int)oip->i_ffs_size);
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, &ts, &ts, 1));
@@ -253,7 +253,7 @@ ffs_truncate(v)
 #else
 		(void) vnode_pager_uncache(ovp);
 #endif
-		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
+		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);
@@ -282,7 +282,7 @@ ffs_truncate(v)
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
-	bcopy((caddr_t)&oip->i_ffs_db[0], (caddr_t)oldblks, sizeof oldblks);
+	memcpy((caddr_t)oldblks, (caddr_t)&oip->i_ffs_db[0], sizeof oldblks);
 	for (level = TRIPLE; level >= SINGLE; level--)
 		if (lastiblock[level] < 0) {
 			oip->i_ffs_ib[level] = 0;
@@ -299,8 +299,8 @@ ffs_truncate(v)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-	bcopy((caddr_t)&oip->i_ffs_db[0], (caddr_t)newblks, sizeof newblks);
-	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_ffs_db[0], sizeof oldblks);
+	memcpy((caddr_t)newblks, (caddr_t)&oip->i_ffs_db[0], sizeof newblks);
+	memcpy((caddr_t)&oip->i_ffs_db[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_ffs_size = osize;
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
 	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
@@ -471,8 +471,8 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	bap = (ufs_daddr_t *)bp->b_data;
 	if (lastbn != -1) {
 		MALLOC(copy, ufs_daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->fs_bsize);
-		bzero((caddr_t)&bap[last + 1],
+		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->fs_bsize);
+		memset((caddr_t)&bap[last + 1], 0,
 		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (ufs_daddr_t));
 		error = bwrite(bp);
 		if (error)

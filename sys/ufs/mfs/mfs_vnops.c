@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.13 1998/03/01 02:23:29 fvdl Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.14 1998/08/09 20:15:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -178,9 +178,9 @@ mfs_strategy(v)
 
 		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
 		if (bp->b_flags & B_READ)
-			bcopy(base, bp->b_data, bp->b_bcount);
+			memcpy(bp->b_data, base, bp->b_bcount);
 		else
-			bcopy(bp->b_data, base, bp->b_bcount);
+			memcpy(base, bp->b_data, bp->b_bcount);
 		biodone(bp);
 	} else if (mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(bp, mfsp->mfs_baseoff);

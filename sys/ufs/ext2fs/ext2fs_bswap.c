@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.1 1997/10/09 15:42:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.2 1998/08/09 20:15:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -105,7 +105,7 @@ void e2fs_i_bswap(old, new)
 	new->e2di_facl		=	bswap32(old->e2di_facl);
 	new->e2di_dacl		=	bswap32(old->e2di_dacl);
 	new->e2di_faddr		=	bswap32(old->e2di_faddr);
-	bcopy(&old->e2di_blocks[0], &new->e2di_blocks[0],
+	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
 		(NDADDR+NIADDR) * sizeof(int));
 }
 #endif
