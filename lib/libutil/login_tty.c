@@ -32,15 +32,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: login_tty.c,v 1.4 1995/06/05 19:43:57 pk Exp $";
+#if 0
+static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: login_tty.c,v 1.5 1996/05/15 21:42:27 jtc Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-
-int login_tty __P((int));
+#include <util.h>
 
 int
 login_tty(fd)
