@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.14 1997/09/20 06:16:32 lukem Exp $	*/
+/*	$NetBSD: pass4.c,v 1.15 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.14 1997/09/20 06:16:32 lukem Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.15 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,13 @@ pass4()
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 	for (inumber = ROOTINO; inumber <= lastino; inumber++) {
+		if (got_siginfo) {
+			fprintf(stderr,
+			    "%s: phase 4: cyl group %d of %d (%d%%)\n",
+			    cdevname(), inumber, lastino,
+			    inumber * 100 / lastino);
+			got_siginfo = 0;
+		}
 		idesc.id_number = inumber;
 		switch (statemap[inumber]) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $	*/
+/*	$NetBSD: pass2.c,v 1.30 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.30 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,13 @@ pass2()
 	curino.id_func = pass2check;
 	inpend = &inpsort[inplast];
 	for (inpp = inpsort; inpp < inpend; inpp++) {
+		if (got_siginfo) {
+			fprintf(stderr,
+			    "%s: phase 2: dir %d of %d (%d%%)\n", cdevname(),
+			    inpp - inpsort, (int)inplast, 
+			    (int)((inpp - inpsort) * 100 / inplast));
+			got_siginfo = 0;
+		}
 		inp = *inpp;
 		if (inp->i_isize == 0)
 			continue;
