@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 1996/11/26 15:54:23 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 1996/12/17 07:32:52 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,10 +126,11 @@ _addrerr:
 	btst	#2,d0			| branch prediction error?
 	jeq	Lnobpe			
 	movc	cacr,d2
-	orl	#0x00400000,d2		| clear all branch cache entries
+	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
 	movl	d0,d1
 	andl	#0x7ffd,d1
+	addql	#1,L60bpe
 	jeq	Lbpedone
 Lnobpe:
 	movl	d0,sp@			| code is FSLW now.
@@ -958,7 +959,7 @@ Lsetcpu040:
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	btst	#7,sp@(3)		| XXX
 	jeq	Lstartnot040
-	orl	#0x400000,d0		| XXX and clear all 060 branch cache 
+	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#Lvectab,a0
@@ -1005,6 +1006,11 @@ Lunshadow:
 | is this needed? MLH
 	.word	0xf4f8		| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
+#ifdef M68060
+	btst	#7,_machineid+3
+	jeq	Lcacheon
+	movl	#CACHE60_ON,d0
+#endif
 Lcacheon:
 	movc	d0,cacr			| clear cache(s)
 /* final setup for C code */
@@ -1047,7 +1053,7 @@ Lcacheon:
 	btst	#7,_machineid+3
 	jeq	Lnoflush
 	movc	cacr,d0
-	orl	#200000,d0
+	orl	#IC60_CUBC,d0
 	movc	d0,cacr
 Lnoflush:
 	movl	sp@(FR_SP),a0		| grab and load
@@ -1488,7 +1494,7 @@ Lres2:
 	btst	#7,_machineid+3
 	jeq	Lres3
 	movc	cacr,d2
-	orl	#0x00200000,d2		| clear user branch cache entries
+	orl	#IC60_CUBC,d2		| clear user branch cache entries
 	movc	d2,cacr
 #endif
 Lres3:
@@ -1687,7 +1693,7 @@ Ltbia040:
 	btst	#7,_machineid+3
 	jeq	Ltbiano60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0	| and clear all branch cache entries
 	movc	d0,cacr
 #endif
 Ltbiano60:
@@ -1724,7 +1730,7 @@ Ltbis040:
 	btst	#7,_machineid+3
 	jeq	Ltbisno60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0	| and clear all branch cache entries
 	movc	d0,cacr
 Ltbisno60:
 #endif
@@ -1756,7 +1762,7 @@ Ltbias040:
 	btst	#7,_machineid+3
 	jeq	Ltbiasno60
 	movc	cacr,d0
-	orl	#0x400000,d0	| and clear all branch cache entries
+	orl	#IC60_CABC,d0	| and clear all branch cache entries
 	movc	d0,cacr
 Ltbiasno60:
 #endif
@@ -1788,7 +1794,7 @@ Ltbiau040:
 	btst	#7,_machineid+3
 	jeq	Ltbiauno60
 	movc	cacr,d0
-	orl	#0x200000,d0	| but only user branch cache entries
+	orl	#IC60_CUBC,d0	| but only user branch cache entries
 	movc	d0,cacr
 Ltbiauno60:
 #endif
@@ -1966,7 +1972,7 @@ ENTRY(loadustp)
 #ifdef M68060
 Lldustp060:
 	movc	cacr,d1
-	orl	#0x200000,d1	| clear user branch cache entries
+	orl	#IC60_CUBC,d1	| clear user branch cache entries
 	movc	d1,cacr
 #endif
 Lldustp040:
@@ -1997,7 +2003,7 @@ Lnot68851:
 #ifdef M68060
 Lflustp060:
 	movc	cacr,d1
-	orl	#0x200000,d1	| clear user branch cache entries
+	orl	#IC60_CUBC,d1	| clear user branch cache entries
 	movc	d1,cacr
 	rts
 #endif
@@ -2321,6 +2327,22 @@ Ldelay:				| longword aligned again.
 	jcc Ldelay
 	rts
 
+#ifdef M68060
+	.globl _intemu60, _fpiemu60, _fpdemu60, _fpeaemu60
+_intemu60:
+	addql	#1,L60iem
+	jra	_I_CALL_TOP+128+0x00
+_fpiemu60:
+	addql	#1,L60fpiem
+	jra	_FP_CALL_TOP+128+0x30
+_fpdemu60:
+	addql	#1,L60fpdem
+	jra	_I_CALL_TOP+128+0x38
+_fpeaemu60:
+	addql	#1,L60fpeaem
+	jra	_I_CALL_TOP+128+0x40
+#endif
+
 	.data
 	.space	NBPG
 tmpstk:
@@ -2375,6 +2397,13 @@ _intrnames:
 	.asciz	"lcl/zbus"	| 6: lcl/zorro lev6
 	.asciz	"buserr"	| 7: nmi: bus timeout
 #endif
+#ifdef M68060
+	.asciz	"60intemu"
+	.asciz	"60fpiemu"
+	.asciz	"60fpdemu"
+	.asciz	"60fpeaemu"
+	.asciz	"60bpe"
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
@@ -2382,5 +2411,12 @@ _intrcnt:
 #ifdef DRACO
 Drintrcnt:
 	.long	0,0,0,0,0,0,0
+#endif
+#ifdef M68060
+L60iem:		.long	0
+L60fpiem:	.long	0
+L60fpdem:	.long	0
+L60fpeaem:	.long	0
+L60bpe:	.long	0
 #endif
 _eintrcnt:
