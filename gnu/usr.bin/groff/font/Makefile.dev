@@ -1,0 +1,11 @@
+# $FreeBSD: src/gnu/usr.bin/groff/font/Makefile.dev,v 2.12 2003/05/01 13:22:18 ru Exp $
+
+FILES=		${DEVFILES}
+FILESDIR?=	${fontdir}/dev${DEV}
+SCRIPTS=	${DEVSCRIPTS}
+SCRIPTSDIR?=	${fontdir}/dev${DEV}
+.for script in ${SCRIPTS}
+SCRIPTSNAME_${script:T}= ${script:T}
+.endfor
+
+.include <bsd.prog.mk>
