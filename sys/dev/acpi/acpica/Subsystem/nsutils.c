@@ -2,7 +2,7 @@
  *
  * Module Name: nsutils - Utilities for accessing ACPI namespace, accessing
  *                        parents and siblings and Scope manipulation
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -1053,7 +1053,7 @@ AcpiNsGetNodeByPath (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        goto Cleanup;
+        return_ACPI_STATUS (Status);
     }
 
     /* Setup lookup scope (search starting point) */
@@ -1072,11 +1072,9 @@ AcpiNsGetNodeByPath (
                 InternalPath, AcpiFormatException (Status)));
     }
 
-    (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
-
-Cleanup:
-
     /* Cleanup */
+
+    (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 
     if (InternalPath)
     {

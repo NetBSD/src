@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1.1.3 $
+ *       $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -124,7 +124,7 @@
  */
 #define ACPI_OS_NAME                "NetBSD"
 #else
-#define	ACPI_OS_NAME                "Microsoft Windows NT"
+#define ACPI_OS_NAME                "Microsoft Windows NT"
 #endif
 
 /* NetBSD uses GCC */
@@ -132,16 +132,16 @@
 #include "acgcc.h"
 
 #ifdef _LP64
-#define	ACPI_MACHINE_WIDTH	64
+#define ACPI_MACHINE_WIDTH      64
 #else
-#define	ACPI_MACHINE_WIDTH	32
+#define ACPI_MACHINE_WIDTH      32
 #endif
 
-#define	COMPILER_DEPENDENT_INT64  int64_t
-#define	COMPILER_DEPENDENT_UINT64 uint64_t
+#define COMPILER_DEPENDENT_INT64  int64_t
+#define COMPILER_DEPENDENT_UINT64 uint64_t
 
 #ifdef _KERNEL
-#include "opt_acpi.h"		/* collect build-time options here */
+#include "opt_acpi.h"           /* collect build-time options here */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,14 +150,15 @@
 
 #define asm         __asm
 
-#define	ACPI_USE_NATIVE_DIVIDE
+#define ACPI_USE_NATIVE_DIVIDE
 
-#define ACPI_ASM_MACROS		/* tell acenv.h */
+#define ACPI_ASM_MACROS         /* tell acenv.h */
 
-#define	ACPI_SYSTEM_XFACE       
-#define	ACPI_EXTERNAL_XFACE     
-#define	ACPI_INTERNAL_XFACE
-#define	ACPI_INTERNAL_VAR_XFACE
+#define ACPI_SYSTEM_XFACE
+#define ACPI_EXTERNAL_XFACE
+#define ACPI_INTERNAL_XFACE
+#define ACPI_INTERNAL_VAR_XFACE
+#define ACPI_DISASSEMBLER
 
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
@@ -165,10 +166,9 @@
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */
-#define DEBUGGER_THREADING 0	/* integrated with DDB */
+#define DEBUGGER_THREADING 0    /* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
-#define ACPI_DISASSEMBLER
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
@@ -176,7 +176,7 @@
 static __inline int
 isprint(int ch)
 {
-	return(isspace(ch) || isascii(ch));
+        return(isspace(ch) || isascii(ch));
 }
 
 #else /* _KERNEL */
@@ -186,8 +186,8 @@ isprint(int ch)
 /* Not building kernel code, so use libc */
 #define ACPI_USE_STANDARD_HEADERS
 
-#define	__cli()
-#define	__sti()
+#define __cli()
+#define __sti()
 
 /* XXX */
 #define __inline inline
@@ -204,8 +204,8 @@ strupr(char *str)
 {
     char *c = str;
     while(*c) {
-	*c = toupper(*c);
-	c++;
+        *c = toupper(*c);
+        c++;
     }
     return(str);
 }
