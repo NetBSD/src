@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.77 2001/01/22 06:42:31 oki Exp $	*/
+/*	$NetBSD: exec.h,v 1.78 2001/02/14 18:21:42 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -154,6 +154,8 @@ struct exec_package {
 	u_long	ep_minsaddr;		/* proc's min stack addr ("bottom") */
 	u_long	ep_ssize;		/* size of process's stack */
 	u_long	ep_entry;		/* process's entry point */
+	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
+	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
