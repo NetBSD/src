@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1999/11/21 07:04:33 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2000/04/03 03:37:25 sato Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -55,14 +55,15 @@
 #ifndef _LOCORE
 
 #include <mips/cpuregs.h>
+#include <mips/intr.h>
 
-extern int _splraise __P((int));
-extern int _spllower __P((int));
-extern int _splset __P((int));
-extern int _splget __P((void));
-extern void _splnone __P((void));
-extern void _setsoftintr __P((int));
-extern void _clrsoftintr __P((int));
+int	_splraise __P((int));
+int	_spllower __P((int));
+int	_splset __P((int));
+int	_splget __P((void));
+void	_splnone __P((void));
+void	_setsoftintr __P((int));
+void	_clrsoftintr __P((int));
 
 #define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
 #define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
@@ -129,9 +130,6 @@ extern u_long intrcnt[];
 #define	ISDN_INTR	14
 #define	FLOPPY_INTR	15
 #define	STRAY_INTR	16
-
-/* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
