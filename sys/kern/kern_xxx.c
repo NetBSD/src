@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.35 1996/08/11 04:05:33 mrg Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.36 1996/08/20 22:00:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -100,7 +100,7 @@ scdebug_call(p, code, args)
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	     sy->sy_call == nosys))
+	     sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
@@ -136,7 +136,7 @@ scdebug_ret(p, code, error, retval)
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	    sy->sy_call == nosys))
+	    sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
