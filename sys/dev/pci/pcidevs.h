@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.686 2005/01/15 13:23:31 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.687 2005/01/18 06:24:18 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp 
+ *	NetBSD: pcidevs,v 1.686 2005/01/18 06:23:01 tsubai Exp 
  */
 
 /*
@@ -932,6 +932,18 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_KAUAI	0x003b		/* Kauai ATA Controller */
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid I/O Controller */
+#define	PCI_PRODUCT_APPLE_INTREPID_USB	0x003f		/* Intrepid USB Controller */
+#define	PCI_PRODUCT_APPLE_K2_USB	0x0040		/* K2 USB Controller */
+#define	PCI_PRODUCT_APPLE_K2	0x0041		/* K2 MAC-IO Controller */
+#define	PCI_PRODUCT_APPLE_K2_FW	0x0042		/* K2 Firewire */
+#define	PCI_PRODUCT_APPLE_K2_UATA	0x0043		/* K2 UATA Controller */
+#define	PCI_PRODUCT_APPLE_U3_PPB1	0x0045		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB2	0x0046		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB3	0x0047		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB4	0x0048		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
+#define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
+#define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
