@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 2000/05/19 18:54:25 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8.4.1 2000/08/28 16:16:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -187,8 +187,10 @@ whichType(part)
 	if (strcmp(PART_TYPE_DRIVER, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVER43, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVERATA, typestr) == 0 ||
+	    strcmp(PART_TYPE_DRIVERIOKIT, typestr) == 0 ||
 	    strcmp(PART_TYPE_FWB_COMPONENT, typestr) == 0 ||
-	    strcmp(PART_TYPE_PARTMAP, typestr) == 0)
+	    strcmp(PART_TYPE_PARTMAP, typestr) == 0 ||
+	    strcmp(PART_TYPE_PATCHES, typestr) == 0)
 		type = 0;
 	else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
 		/* unix part, swap, root, usr */
@@ -197,7 +199,7 @@ whichType(part)
 			type = 0;
 		else if (bzb->bzbFlags & BZB_ROOTFS)
 			type = ROOT_PART;
-		else if (bzb->bzbFlags & BZB_USRFS)
+		else if (bzb->bzbFlags & (BZB_USRFS | BZB_USRFS_NEW))
 			type = UFS_PART;
 		else if (bzb->bzbType == BZB_TYPESWAP)
 			type = SWAP_PART;
