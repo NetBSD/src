@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52 1999/06/26 08:25:25 augustss Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.53 2000/01/25 01:15:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -452,6 +452,72 @@ domountroothook()
 			(*mrd->mrd_func)(root_device);
 			return;
 		}
+	}
+}
+
+/*
+ * Exec hook code.
+ */
+
+struct exechook_desc {
+	LIST_ENTRY(exechook_desc) ehk_list;
+	void	(*ehk_fn) __P((struct proc *, void *));
+	void	*ehk_arg;
+};
+
+LIST_HEAD(, exechook_desc) exechook_list;
+
+void *
+exechook_establish(fn, arg)
+	void (*fn) __P((struct proc *, void *));
+	void *arg;
+{
+	struct exechook_desc *edp;
+
+	edp = (struct exechook_desc *)
+	    malloc(sizeof(*edp), M_DEVBUF, M_NOWAIT);
+	if (edp == NULL)
+		return NULL;
+
+	edp->ehk_fn = fn;
+	edp->ehk_arg = arg;
+	LIST_INSERT_HEAD(&exechook_list, edp, ehk_list);
+
+	return (edp);
+}
+
+void
+exechook_disestablish(vhook)
+	void *vhook;
+{
+#ifdef DIAGNOSTIC
+	struct exechook_desc *edp;
+
+	for (edp = exechook_list.lh_first; edp != NULL;
+	    edp = edp->ehk_list.le_next)
+                if (edp == vhook)
+			break;
+	if (edp == NULL)
+		panic("exechook_disestablish: hook not established");
+#endif
+
+	LIST_REMOVE((struct exechook_desc *)vhook, ehk_list);
+	free(vhook, M_DEVBUF);
+}
+
+/*
+ * Run exec hooks.
+ */
+void
+doexechooks(p)
+	struct proc *p;
+{
+	struct exechook_desc *edp;
+
+	for (edp = LIST_FIRST(&exechook_list); 
+	     edp != NULL; 
+	     edp = LIST_NEXT(edp, ehk_list)) {
+		(*edp->ehk_fn)(p, edp->ehk_arg);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.106 2000/01/05 08:11:31 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.107 2000/01/25 01:15:14 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -471,6 +471,8 @@ sys_execve(p, v, retval)
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+
+	doexechooks(p);
 
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
