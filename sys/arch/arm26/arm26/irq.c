@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.3 2000/06/29 08:32:34 mrg Exp $ */
+/* $NetBSD: irq.c,v 1.4 2000/08/18 12:50:00 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.3 2000/06/29 08:32:34 mrg Exp $");
+__RCSID("$NetBSD: irq.c,v 1.4 2000/08/18 12:50:00 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -53,7 +53,16 @@ __RCSID("$NetBSD: irq.c,v 1.3 2000/06/29 08:32:34 mrg Exp $");
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
 
+#include "ioeb.h"
+
+#if NIOEB > 0
+#include <arch/arm26/ioc/ioebvar.h>
+#endif
+
 extern struct cfdriver ioc_cd;
+#if NIOEB > 0
+extern struct cfdriver ioeb_cd;
+#endif
 
 #define NIRQ 16
 extern char *irqnames[];
@@ -132,7 +141,11 @@ irq_handler(struct irqframe *irqf)
 #endif
 			if (h->mask & IOC_IRQ_CLEARABLE_MASK)
 				ioc_irq_clear(ioc_cd.cd_devs[0], h->mask);
-			/* XXX IOEB support needed */
+#if NIOEB > 0
+			else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) &&
+			    ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL)
+				ioeb_irq_clear(ioeb_cd.cd_devs[0], h->mask);
+#endif
 			if (h->arg == NULL)
 				result = (h->func)(irqf);
 			else
