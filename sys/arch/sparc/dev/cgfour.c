@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.31 2002/10/23 09:12:06 jdolecek Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.32 2003/06/29 09:56:24 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -311,10 +311,10 @@ cgfourattach(parent, self, aux)
 }
 
 int
-cgfouropen(dev, flags, mode, p)
+cgfouropen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -324,12 +324,12 @@ cgfouropen(dev, flags, mode, p)
 }
 
 int
-cgfourioctl(dev, cmd, data, flags, p)
+cgfourioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 #if defined(SUN4)
 	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];

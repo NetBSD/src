@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.23 2002/10/23 09:12:09 jdolecek Exp $	*/
+/*	$NetBSD: kd.c,v 1.24 2003/06/29 09:56:25 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -190,10 +190,10 @@ kdtty(dev)
 }
 
 int
-kdopen(dev, flag, mode, p)
+kdopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kd_softc *kd;
 	int error, s, unit;
@@ -215,7 +215,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (p->p_ucred->cr_uid != 0) )
+	    && (l->l_proc->p_ucred->cr_uid != 0) )
 	{
 		return (EBUSY);
 	}
@@ -252,10 +252,10 @@ static	int firstopen = 1;
 }
 
 int
-kdclose(dev, flag, mode, p)
+kdclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -308,10 +308,10 @@ kdwrite(dev, uio, flag)
 }
 
 int
-kdpoll(dev, events, p)
+kdpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -319,16 +319,16 @@ kdpoll(dev, events, p)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-kdioctl(dev, cmd, data, flag, p)
+kdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct kd_softc *kd;
 	struct tty *tp;
@@ -337,11 +337,11 @@ kdioctl(dev, cmd, data, flag, p)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
