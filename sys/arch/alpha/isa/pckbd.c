@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.13.2.3 1996/12/08 00:31:26 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.13.2.4 1997/01/31 02:24:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -462,8 +462,9 @@ pckbdintr(arg)
 				type = WSCONS_EVENT_KEY_OTHER;
 				break;
 			default:
-				type = (data & 0x80) ? WSCONS_EVENT_KEY_DOWN :
-				    WSCONS_EVENT_KEY_UP;
+				type = (data & 0x80) ? WSCONS_EVENT_KEY_UP :
+				    WSCONS_EVENT_KEY_DOWN;
+				data &= ~0x80;
 				break;
 			}
 			wskbd_input(pckbd_wskbddev, type, data);
@@ -754,7 +755,7 @@ pckbd_translate(v, type, value)
 	static u_char extended = 0, shift_state = 0;
 	static u_char capchar[2];
 
-	if (dt == KBR_EXTENDED) {
+	if (type == WSCONS_EVENT_KEY_OTHER && dt == KBR_EXTENDED) {
 		extended = 1;
 		return NULL;
 	}
@@ -762,7 +763,7 @@ pckbd_translate(v, type, value)
 	/*
 	 * Check for make/break.
 	 */
-	if (dt & 0x80) {
+	if (type == WSCONS_EVENT_KEY_UP) {
 		/*
 		 * break
 		 */
@@ -787,10 +788,11 @@ pckbd_translate(v, type, value)
 			shift_state &= ~CTL;
 			break;
 		}
-	} else {
+	} else if (type == WSCONS_EVENT_KEY_DOWN) {
 		/*
 		 * make
 		 */
+		dt &= 0x7f;
 		switch (scan_codes[dt].type) {
 		/*
 		 * locking keys
