@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.9 2003/10/08 04:25:46 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.10 2003/10/10 01:50:47 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.9 2003/10/08 04:25:46 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.10 2003/10/10 01:50:47 lukem Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -99,7 +99,7 @@ i386_setboot(ib_params *params)
 		warnx("Reading `%s': short read", params->filesystem);
 		goto done;
 	}
-	if (mbr.mbr_magic != le32toh(MBR_MAGIC)) {
+	if (mbr.mbr_magic != le16toh(MBR_MAGIC)) {
 		if (params->flags & IB_VERBOSE) {
 			printf(
 		    "Ignoring MBR with invalid magic in sector 0 of `%s'\n",
