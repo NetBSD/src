@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.4 1996/05/17 01:07:47 jtc Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.5 1997/07/20 20:32:34 christos Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -9,13 +9,17 @@
  * in the Public Domain for your edification and enjoyment.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: getoldopt.c,v 1.4 1996/05/17 01:07:47 jtc Exp $";
+__RCSID("$NetBSD: getoldopt.c,v 1.5 1997/07/20 20:32:34 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include "pax.h"
+#include "extern.h"
 
 int
 getoldopt(argc, argv, optstring)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/07/20 20:32:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -115,7 +115,7 @@ int gid_name __P((char *, gid_t *));
  * cpio.c
  */
 int cpio_strd __P((void));
-int cpio_trail __P((register ARCHD *));
+int cpio_subtrail __P((register ARCHD *));
 int cpio_endwr __P((void));
 int cpio_id __P((char *, int));
 int cpio_rd __P((register ARCHD *, register char *));
@@ -288,7 +288,10 @@ int ustar_wr __P((register ARCHD *));
  * tty_subs.c
  */
 int tty_init __P((void));
-void tty_prnt __P((char *, ...));
+void tty_prnt __P((char *, ...))
+    __attribute__((format (printf, 1, 2)));
 int tty_read __P((char *, int));
-void warn __P((int, char *, ...));
-void syswarn __P((int, int, char *, ...));
+void tty_warn __P((int, char *, ...))
+    __attribute__((format (printf, 2, 3)));
+void syswarn __P((int, int, char *, ...))
+    __attribute__((format (printf, 3, 4)));

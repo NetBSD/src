@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.5 1997/01/11 02:06:36 tls Exp $	*/
+/*	$NetBSD: cache.c,v 1.6 1997/07/20 20:32:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cache.c,v 1.5 1997/01/11 02:06:36 tls Exp $";
+__RCSID("$NetBSD: cache.c,v 1.6 1997/07/20 20:32:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +98,8 @@ uidtb_start()
 		return(-1);
 	if ((uidtb = (UIDC **)calloc(UID_SZ, sizeof(UIDC *))) == NULL) {
 		++fail;
-		warn(1, "Unable to allocate memory for user id cache table");
+		tty_warn(1,
+		    "Unable to allocate memory for user id cache table");
 		return(-1);
 	}
 	return(0);
@@ -126,7 +128,8 @@ gidtb_start()
 		return(-1);
 	if ((gidtb = (GIDC **)calloc(GID_SZ, sizeof(GIDC *))) == NULL) {
 		++fail;
-		warn(1, "Unable to allocate memory for group id cache table");
+		tty_warn(1,
+		    "Unable to allocate memory for group id cache table");
 		return(-1);
 	}
 	return(0);
@@ -155,7 +158,8 @@ usrtb_start()
 		return(-1);
 	if ((usrtb = (UIDC **)calloc(UNM_SZ, sizeof(UIDC *))) == NULL) {
 		++fail;
-		warn(1, "Unable to allocate memory for user name cache table");
+		tty_warn(1,
+		    "Unable to allocate memory for user name cache table");
 		return(-1);
 	}
 	return(0);
@@ -184,7 +188,8 @@ grptb_start()
 		return(-1);
 	if ((grptb = (GIDC **)calloc(GNM_SZ, sizeof(GIDC *))) == NULL) {
 		++fail;
-		warn(1,"Unable to allocate memory for group name cache table");
+		tty_warn(1,
+		    "Unable to allocate memory for group name cache table");
 		return(-1);
 	}
 	return(0);
@@ -249,7 +254,7 @@ name_uid(uid, frc)
 #		ifdef NET2_STAT
 		(void)sprintf(ptr->name, "%u", uid);
 #		else
-		(void)sprintf(ptr->name, "%lu", uid);
+		(void)sprintf(ptr->name, "%lu", (long) uid);
 #		endif
 		if (frc == 0)
 			return("");
@@ -326,7 +331,7 @@ name_gid(gid, frc)
 #		ifdef NET2_STAT
 		(void)sprintf(ptr->name, "%u", gid);
 #		else
-		(void)sprintf(ptr->name, "%lu", gid);
+		(void)sprintf(ptr->name, "%lu", (long) gid);
 #		endif
 		if (frc == 0)
 			return("");
