@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.3 1994/05/18 12:43:13 pk Exp $
+	$Id: i386b-nat.c,v 1.4 1994/12/06 03:30:59 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -298,29 +298,27 @@ void
 fetch_kcore_registers (pcb)
 struct pcb *pcb;
 {
-	int	i;
-	int	*pcb_regs = (int *)pcb;
-	int	eip;
+	int	i, regno, regs[3];
 
         /*
          * get the register values out of the sys pcb and
          * store them where `read_register' will find them.
          */
-	for (i = 0; i < 8; ++i)
-		supply_register(i, &pcb_regs[i+10]);
-	supply_register(8, &pcb_regs[8]);	/* eip */
-	supply_register(9, &pcb_regs[9]);	/* eflags */
-	for (i = 10; i < 13; ++i)		/* cs, ss, ds */
-		supply_register(i, &pcb_regs[i+9]);
-	supply_register(13, &pcb_regs[18]);	/* es */
-	for (i = 14; i < 16; ++i)		/* fs, gs */
-		supply_register(i, &pcb_regs[i+8]);
-
-	/* Hmm... */
-	if (target_read_memory(pcb_regs[5+10]+4, &eip, sizeof eip, 0))
-		error("Cannot read PC.");
-	supply_register(8, &eip);	/* eip */
-
+	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs, 0))
+		error("Cannot read ebx, esi, and edi.");
+	for (i = 0, regno = 0; regno < 3; regno++)
+		supply_register(regno, &i);
+	supply_register(3, &regs[2]);
+	supply_register(4, &pcb->pcb_tss.tss_esp);
+	supply_register(5, &pcb->pcb_tss.tss_ebp);
+	supply_register(6, &regs[1]);
+	supply_register(7, &regs[0]);
+	for (i = 0, regno = 8; regno < 10; regno++)
+		supply_register(regno, &i);
+	i = 0x08;
+	supply_register(10, &i);
+	i = 0x10;
+	supply_register(11, &i);
 	/* XXX 80387 registers? */
 }
 
