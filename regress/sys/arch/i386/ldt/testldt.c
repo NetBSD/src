@@ -1,9 +1,10 @@
-/*	$NetBSD: testldt.c,v 1.6 2001/06/10 16:27:21 sommerfeld Exp $	*/
+/*	$NetBSD: testldt.c,v 1.7 2001/12/31 20:19:14 thorpej Exp $	*/
 
 #include <err.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <sys/types.h>
