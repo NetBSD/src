@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.6 2003/04/28 23:16:23 bjh21 Exp $ */
+/* $NetBSD: stdarg.h,v 1.7 2005/01/05 23:39:51 uwe Exp $ */
 
 #ifndef _SH3_STDARG_H_
 #define	_SH3_STDARG_H_
@@ -9,7 +9,7 @@
 
 typedef	_BSD_VA_LIST_		va_list;	/* XXX */
 
-#define	va_start(a, l)		((a) = ((l) ? 0 : 0))
+#define	va_start(a, l)		((a) = ((l) ? (va_list)0 : (va_list)0))
 #define	va_arg(a, t)		((a) ? (t)0 : (t)0)
 #define	va_end(a)		/* nothing */
 #define	__va_copy(d, s)		((d) = (s))
