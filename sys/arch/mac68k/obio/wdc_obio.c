@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.10 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,8 @@ static u_long	IDEBase = 0x50f1a000;
 
 struct wdc_obio_softc {
 	struct  wdc_softc sc_wdcdev;
-	struct  channel_softc wdc_chanlist[1];
-	struct  channel_softc wdc_channel;
+	struct  wdc_channel wdc_chanlist[1];
+	struct  wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	void    *sc_ih;
 };
@@ -86,7 +86,7 @@ wdc_obio_match(parent, match, aux)
 	void *aux;
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	static int wdc_matched = 0;
 	int i, result = 0;
 
@@ -132,7 +132,7 @@ wdc_obio_match(parent, match, aux)
 
 static bus_space_tag_t		wdc_obio_isr_tag;
 static bus_space_handle_t	wdc_obio_isr_hdl;
-static struct channel_softc	*ch_sc = NULL;
+static struct wdc_channel	*ch_sc = NULL;
 
 void
 wdc_obio_intr(arg)
@@ -157,7 +157,7 @@ wdc_obio_attach(parent, self, aux)
 {
 	struct wdc_obio_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	int i;
 
 	oa->oa_addr = IDEBase;

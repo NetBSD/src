@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.12 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.13 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.12 2004/01/01 17:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.13 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.12 2004/01/01 17:18:53 thorpej 
 
 static int	pciide_pnpbios_match(struct device *, struct cfdata *, void *);
 static void	pciide_pnpbios_attach(struct device *, struct device *, void *);
-void		pciide_pnpbios_setup_channel(struct channel_softc *);
+void		pciide_pnpbios_setup_channel(struct wdc_channel *);
 
 extern void	pciide_channel_dma_setup(struct pciide_channel *);
 extern int	pciide_dma_init(void *, int, int, void *, size_t, int);
@@ -87,7 +87,7 @@ pciide_pnpbios_attach(parent, self, aux)
 	struct pciide_softc *sc = (void *)self;
 	struct pnpbiosdev_attach_args *aa = aux;
 	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
+	struct wdc_channel *wdc_cp;
 	bus_space_tag_t compat_iot;
 	bus_space_handle_t cmd_baseioh, ctl_ioh;
 	int i;
@@ -170,7 +170,7 @@ pciide_pnpbios_attach(parent, self, aux)
 
 void
 pciide_pnpbios_setup_channel(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 

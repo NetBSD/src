@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.16 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.17 2004/01/03 01:50:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.16 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.17 2004/01/03 01:50:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.16 2004/01/01 17:18:54 thorpej Exp $");
 
 struct simide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct channel_softc	*wdc_chanarray[2]; /* channels definition */
+	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_ctl_reg;		/* Global ctl reg */
@@ -88,7 +88,7 @@ struct simide_softc {
 	bus_space_handle_t	sc_ctlioh;		/* control handle */
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct simide_channel {
-		struct channel_softc wdc_channel;	/* generic part */
+		struct wdc_channel wdc_channel;	/* generic part */
 		struct ata_queue wdc_chqueue;		/* channel queue */
 		irqhandler_t	sc_ih;			/* interrupt handler */
 		int		sc_irqmask;	/* IRQ mask for this channel */
@@ -164,7 +164,7 @@ simide_attach(parent, self, aux)
 	u_int iobase;
 	int channel, i;
 	struct simide_channel *scp;
-	struct channel_softc *cp;
+	struct wdc_channel *cp;
 	irqhandler_t *ihp;
 
 	/* Note the podule number and validate */

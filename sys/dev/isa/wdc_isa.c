@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.38 2004/01/01 17:18:53 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.39 2004/01/03 01:50:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.38 2004/01/01 17:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.39 2004/01/03 01:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.38 2004/01/01 17:18:53 thorpej Exp $")
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanlist[1];
-	struct	channel_softc wdc_channel;
+	struct	wdc_channel *wdc_chanlist[1];
+	struct	wdc_channel wdc_channel;
 	struct	ata_queue wdc_chqueue;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
@@ -92,7 +92,7 @@ wdc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	struct isa_attach_args *ia = aux;
 	int result = 0, i;
 
