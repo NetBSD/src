@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.9 1995/03/31 03:06:26 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.10 1995/05/01 04:51:51 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -369,8 +369,7 @@ svr4_signal(p, uap, retval)
 		/*
 		 * sigset is identical to signal() except
 		 * that SIG_HOLD is allowed as
-		 * an action and we don't set the bit
-		 * in the ibcs_sigflags field.
+		 * an action.
 		 */
 		if (SCARG(uap, handler) == SVR4_SIG_HOLD) {
 			struct sigprocmask_args sa;
@@ -416,12 +415,6 @@ svr4_signal(p, uap, retval)
 				return error;
 
 			*retval = (int) sa.sa_handler;
-#ifdef i386
-			/* XXX: Fix the rest? */
-			if (SVR4_SIGCALL(SCARG(uap, signum)) ==
-			    SVR4_SIGNAL_MASK)
-				p->p_md.ibcs_sigflags |= sigmask(nsig);
-#endif
 			return 0;
 		}
 

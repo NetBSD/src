@@ -191,7 +191,7 @@ ibcs2_sigsys(p, uap, retval)
 	switch (IBCS2_SIGCALL(SCARG(uap, sig))) {
 	/*
 	 * sigset is identical to signal() except that SIG_HOLD is allowed as
-	 * an action and we don't set the bit in the ibcs_sigflags field.
+	 * an action.
 	 */
 	case IBCS2_SIGSET_MASK:
 		if (SCARG(uap, fp) == IBCS2_SIG_HOLD) {
@@ -228,8 +228,6 @@ ibcs2_sigsys(p, uap, retval)
 				return error;
 			}
 			*retval = (int)SCARG(&sa_args, osa)->sa_handler;
-			if (IBCS2_SIGCALL(SCARG(uap, sig)) == IBCS2_SIGNAL_MASK)
-				p->p_md.ibcs_sigflags |= sigmask(nsig);
 			return 0;
 		}
 		

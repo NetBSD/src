@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 1995/05/01 04:48:39 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 1995/05/01 04:50:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -98,7 +98,6 @@ cpu_fork(p1, p2)
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
 	p2->p_md.md_regs = p1->p_md.md_regs;
-	p2->p_md.ibcs_sigflags = p1->p_md.ibcs_sigflags;
 
 	/* Fix up the TSS, etc. */
 	pcb->pcb_cr0 |= CR0_TS;
