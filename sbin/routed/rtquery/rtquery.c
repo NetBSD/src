@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.6 1998/03/30 02:15:16 mrg Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.7 1998/06/02 10:48:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@ char copyright[] =
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.6 1998/03/30 02:15:16 mrg Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.7 1998/06/02 10:48:49 kleink Exp $");
 #endif
 
 #include <sys/param.h>
@@ -255,7 +255,7 @@ main(int argc,
 	argv += optind;
 	argc -= optind;
 	if ((not_trace && trace) || argc == 0) {
-usage:		fprintf(stderr, "%s: [-np1v] [-r tgt_rt] [-w wtime]"
+usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
 			" [-a type=passwd] host1 [host2 ...]\n"
 			"or\t-t {on=filename|more|off|dump}"
 			" host1 [host2 ...]\n",
