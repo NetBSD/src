@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.5 1993/06/27 06:01:36 andrew Exp $
+ *	$Id: kern_kinfo.c,v 1.6 1993/07/13 22:13:21 cgd Exp $
  */
 
 #include "param.h"
@@ -52,15 +52,17 @@ extern int kinfo_doproc(), kinfo_rtable(), kinfo_vnode(), kinfo_file();
 struct kinfo_lock kinfo_lock;
 
 /* ARGSUSED */
+struct getkerninfo_args {
+	int	op;
+	char	*where;
+	int	*size;
+	int	arg;
+};
+
 int
 getkerninfo(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int	op;
-		char	*where;
-		int	*size;
-		int	arg;
-	} *uap;
+	register struct getkerninfo_args *uap;
 	int *retval;
 {
 

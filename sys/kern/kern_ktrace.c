@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
- *	$Id: kern_ktrace.c,v 1.4 1993/06/27 06:01:37 andrew Exp $
+ *	$Id: kern_ktrace.c,v 1.5 1993/07/13 22:13:22 cgd Exp $
  */
 
 #include "param.h"
@@ -181,16 +181,19 @@ ktrpsig(vp, sig, action, mask, code)
 /*
  * ktrace system call
  */
+
+struct ktrace_args {
+	char	*fname;
+	int	ops;
+	int	facs;
+	int	pid;
+};
+
 /* ARGSUSED */
 int
 ktrace(curp, uap, retval)
 	struct proc *curp;
-	register struct args {
-		char	*fname;
-		int	ops;
-		int	facs;
-		int	pid;
-	} *uap;
+	register struct ktrace_args *uap;
 	int *retval;
 {
 	register struct vnode *vp = NULL;

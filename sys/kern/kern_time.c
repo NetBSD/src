@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_time.c	7.15 (Berkeley) 3/17/91
- *	$Id: kern_time.c,v 1.3 1993/06/27 06:01:48 andrew Exp $
+ *	$Id: kern_time.c,v 1.4 1993/07/13 22:13:28 cgd Exp $
  */
 
 #include "param.h"
@@ -52,14 +52,16 @@
  * timers when they expire.
  */
 
+struct gettimeofday_args {
+	struct	timeval *tp;
+	struct	timezone *tzp;
+};
+
 /* ARGSUSED */
 int
 gettimeofday(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		struct	timeval *tp;
-		struct	timezone *tzp;
-	} *uap;
+	register struct gettimeofday_args *uap;
 	int *retval;
 {
 	struct timeval atv;
@@ -77,14 +79,16 @@ gettimeofday(p, uap, retval)
 	return (error);
 }
 
+struct settimeofday_args {
+	struct	timeval *tv;
+	struct	timezone *tzp;
+};
+
 /* ARGSUSED */
 int
 settimeofday(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct	timeval *tv;
-		struct	timezone *tzp;
-	} *uap;
+	struct settimeofday_args *uap;
 	int *retval;
 {
 	struct timeval atv;
@@ -113,14 +117,16 @@ int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
+struct adjtime_args {
+	struct timeval *delta;
+	struct timeval *olddelta;
+};
+
 /* ARGSUSED */
 int
 adjtime(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		struct timeval *delta;
-		struct timeval *olddelta;
-	} *uap;
+	register struct adjtime_args *uap;
 	int *retval;
 {
 	struct timeval atv, oatv;
@@ -176,14 +182,17 @@ adjtime(p, uap, retval)
  * real time timers .it_interval.  Rather, we compute the next time in
  * absolute time the timer should go off.
  */
+
+struct getitimer_args {
+	u_int	which;
+	struct	itimerval *itv;
+};
+
 /* ARGSUSED */
 int
 getitimer(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		u_int	which;
-		struct	itimerval *itv;
-	} *uap;
+	register struct getitimer_args *uap;
 	int *retval;
 {
 	struct itimerval aitv;
@@ -212,14 +221,16 @@ getitimer(p, uap, retval)
 	    sizeof (struct itimerval)));
 }
 
+struct setitimer_args {
+	u_int	which;
+	struct	itimerval *itv, *oitv;
+};
+
 /* ARGSUSED */
 int
 setitimer(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		u_int	which;
-		struct	itimerval *itv, *oitv;
-	} *uap;
+	register struct setitimer_args *uap;
 	int *retval;
 {
 	struct itimerval aitv;
