@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.38 1995/03/08 01:46:53 cgd Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.39 1995/03/09 17:32:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,7 @@ compat_43_mmap(p, uap, retval)
 	struct proc *p;
 	register struct compat_43_mmap_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
@@ -333,7 +333,7 @@ msync(p, uap, retval)
 	struct proc *p;
 	struct msync_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 	} */ *uap;
 	register_t *retval;
 {
@@ -422,7 +422,7 @@ munmap(p, uap, retval)
 	register struct proc *p;
 	register struct munmap_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 	} */ *uap;
 	register_t *retval;
 {
@@ -536,7 +536,7 @@ madvise(p, uap, retval)
 	struct proc *p;
 	struct madvise_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 		syscallarg(int) behav;
 	} */ *uap;
 	register_t *retval;
@@ -552,7 +552,7 @@ mincore(p, uap, retval)
 	struct proc *p;
 	struct mincore_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap;
 	register_t *retval;
