@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.3 1999/03/13 19:08:44 sommerfe Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.3.10.1 2002/06/06 17:04:48 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,10 +35,30 @@
  * Needed by programs like: rsh, rlogin
  */
 
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define endpwent		_endpwent
+#define getpwent		_getpwent
+#define getpwnam		_getpwnam
+#define getpwuid		_getpwuid
+#define setpassent		_setpassent
+#define setpwent		_setpwent
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
+
+#ifdef __weak_alias
+__weak_alias(endpwent,_endpwent)
+__weak_alias(getpwent,_getpwent)
+__weak_alias(getpwnam,_getpwnam)
+__weak_alias(getpwuid,_getpwuid)
+__weak_alias(setpassent,_setpassent)
+__weak_alias(setpwent,_setpwent)
+#endif
 
 #define	PWNULL	(struct passwd *)0
 #define MAXFIELD 8
@@ -92,6 +112,7 @@ readnext:
 	pw_ent.pw_passwd = fv[1];
 	pw_ent.pw_uid = atoi(fv[2]);
 	pw_ent.pw_gid = atoi(fv[3]);
+	pw_ent.pw_class = "";
 	pw_ent.pw_gecos = fv[4];
 	pw_ent.pw_dir   = fv[5];
 	pw_ent.pw_shell = fv[6];
