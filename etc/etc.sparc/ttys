@@ -5,7 +5,7 @@
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console "/usr/libexec/getty Pc"	pc3	unknown on secure
+console "/usr/libexec/getty Pc"		pc3	on secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
