@@ -1,4 +1,4 @@
-/*	$NetBSD: firepowerreg.h,v 1.1 2001/10/24 20:36:44 thorpej Exp $	*/
+/*	$NetBSD: firepowerreg.h,v 1.2 2001/10/29 04:48:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,20 +48,20 @@
  * Note: This pretty much corresponds to the PReP Contiguous Memory Map.
  */
 
-#define	FP_MAP_SYSMEM_BASE	0x00000000	/* system memory base */
-#define	FP_MAP_SYSMEM_SIZE	0x80000000	/* system memory size */
+#define	FP_MAP_SYSMEM_BASE	0x00000000UL	/* system memory base */
+#define	FP_MAP_SYSMEM_SIZE	0x80000000UL	/* system memory size */
 
-#define	FP_MAP_ISAIO_BASE	0x80000000	/* ISA I/O base */
-#define	FP_MAP_ISAIO_SIZE	0x00010000	/* ISA I/O size */
+#define	FP_MAP_ISAIO_BASE	0x80000000UL	/* ISA I/O base */
+#define	FP_MAP_ISAIO_SIZE	0x00010000UL	/* ISA I/O size */
 
-#define	FP_MAP_PCICFG_BASE	0x80800000	/* PCI config base */
-#define	FP_MAP_PCICFG_SIZE	0x00a00000	/* PCI config size */
+#define	FP_MAP_PCICFG_BASE	0x80800000UL	/* PCI config base */
+#define	FP_MAP_PCICFG_SIZE	0x00a00000UL	/* PCI config size */
 
-#define	FP_MAP_PCIIO_BASE	0x81200000	/* PCI I/O base */
-#define	FP_MAP_PCIIO_SIZE	0x3e800000	/* PCI I/O size */
+#define	FP_MAP_PCIIO_BASE	0x81200000UL	/* PCI I/O base */
+#define	FP_MAP_PCIIO_SIZE	0x3e800000UL	/* PCI I/O size */
 
-#define	FP_MAP_PCIMEM_BASE	0xc0000000	/* PCI memory base */
-#define	FP_MAP_PCIMEM_SIZE	0x3f000000	/* PCI memory size */
+#define	FP_MAP_PCIMEM_BASE	0xc0000000UL	/* PCI memory base */
+#define	FP_MAP_PCIMEM_SIZE	0x3f000000UL	/* PCI memory size */
 
 /*****************************************************************************
  * SYSTEM REGISTERS
@@ -221,7 +221,7 @@
 #define	FPR_DMA_PENDING_CNT	0xff101300	/* DMA pending count */
 #define	DMA_PENDING_CNT(x)	((x) & 0xff)
 
-#deifne	FPR_PCI_VENDOR_ID	0xff400100	/* PCI vendor ID */
+#define	FPR_PCI_VENDOR_ID	0xff400100	/* PCI vendor ID */
 
 #define	FPR_PCI_DEVICE_ID	0xff400108	/* PCI device ID */
 
