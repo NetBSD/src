@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.1 2003/05/23 00:57:26 ichiro Exp $
+#	$NetBSD: files.ixdp425,v 1.2 2003/05/24 01:59:32 ichiro Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
@@ -13,6 +13,8 @@ include "arch/arm/xscale/files.ixp425"
 # XXX: Not yet ready for prime-time
 #file	arch/evbarm/evbarm/initarm_common.c
 file	arch/evbarm/ixdp425/ixdp425_machdep.c
+
+file	arch/evbarm/ixdp425/ixdp425_pci.c
 
 # IXP425 PCI bus support
 attach	ixpio at mainbus with ixpio_mainbus

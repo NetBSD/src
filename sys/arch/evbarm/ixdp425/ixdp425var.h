@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425reg.h,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425var.h,v 1.1 2003/05/24 01:59:32 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -32,40 +32,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_IXDP425REG_H_
-#define	_IXDP425REG_H_
+#ifndef _IXDP425VAR_H_
+#define _IXDP425VAR_H_
 
-/*
- * GPIO  
- */
+#include <dev/pci/pcivar.h>
 
-#if BOARDTYPE == ixdp425
-#define	PCI_CLK		14
-#define	PCI_RESET	13
-#define	PCI_INT_D	IXP425_INT_GPIO_11
-#define	PCI_INT_C	IXP425_INT_GPIO_10
-#define	PCI_INT_B	IXP425_INT_GPIO_9
-#define	PCI_INT_A	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
-#endif /* BOARDTYPE == ixdp425 */
+void	ixdp425_pci_init(pci_chipset_tag_t, void *);
 
-#if BOARDTYPE == zao425		/* conf/ZAO425 */
-#define	PCI_CLK		14
-#define	PCI_RESET	13
-#define	MPCI_GPIO0	IXP425_INT_GPIO_12
-#define	PCI_INT_D	IXP425_INT_GPIO_11
-#define	PCI_INT_C	IXP425_INT_GPIO_10
-#define	PCI_INT_B	IXP425_INT_GPIO_9
-#define	PCI_INT_A	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
-#define	MPCI_GPIO3	IXP425_INT_GPIO_5
-#define	HSS0_INT	IXP425_INT_GPIO_4
-#define	HSS0_SCLK	IXP425_INT_GPIO_3
-#define	HSS0_SDI	IXP425_INT_GPIO_2
-#define	HSS0_SDO	IXP425_INT_GPIO_1
-#define	HSS0_CS		IXP425_INT_GPIO_0
-#endif /* BOARDTYPE == zao425 */
-
-#endif	/* _IXDP425REG_H_ */
+#endif /* _IXDP425VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.1 2003/05/23 00:57:26 ichiro Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -82,7 +82,7 @@ struct intrhand {
 	int ih_irq;			/* IRQ number */
 };
 
-#define	IRQNAMESIZE	sizeof("ixp425 irq xxx")
+#define	IRQNAMESIZE	sizeof("ixp425 irq xx")
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
