@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.12 2001/02/19 19:31:29 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.13 2002/12/24 13:20:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -50,7 +50,6 @@
 #include <string.h>
 
 #define NBINS		256
-#define MAXMERGE	16
 
 /* values for masks, weights, and other flags. */
 #define I 1		/* mask out non-printable characters */
@@ -145,5 +144,7 @@ extern int REC_D;
 extern const char *tmpdir;
 extern int stable_sort;
 extern u_char gweights[NBINS];
+extern struct coldesc clist[(ND+1)*2];
+extern int ncols;
 
 #include "extern.h"
