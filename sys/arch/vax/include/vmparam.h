@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2000/03/04 07:27:49 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,5 +129,8 @@ struct pmap_physseg {
 #define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0xC0000000))
+
+#define	USRIOSIZE		(8 * VAX_NPTEPG)	/* 512MB */
+#define	VM_PHYS_SIZE		(USRIOSIZE*VAX_NBPG)
 
 #endif

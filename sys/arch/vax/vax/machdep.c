@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.94 2000/03/04 07:27:49 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.95 2000/03/07 00:05:59 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -133,6 +133,7 @@ static	struct map iomap[IOMAPSZ];
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
@@ -233,6 +234,13 @@ cpu_startup()
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
+	/*
+	 * Allocate a submap for physio.  This map effectively limits the
+	 * number of processes doing physio at any one time.
+	 */
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

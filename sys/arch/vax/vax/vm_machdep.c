@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.56 2000/01/20 22:19:00 sommerfeld Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.57 2000/03/07 00:05:59 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -307,4 +307,60 @@ iounaccess(vaddr, npgs)
 	for (i = 0; i < npgs; i++)
 		pte[i] = 0;
 	mtpr(0, PR_TBIA);
+}
+
+extern vm_map_t phys_map;
+
+/*
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
+ */
+void
+vmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+	p = bp->b_proc;
+	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
+	bp->b_data = (caddr_t)(taddr + off);
+	len = atop(len);
+	while (len--) {
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
+		    &pa) == FALSE)
+			panic("vmapbuf: null page frame");
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
+}
+
+/*
+ * Unmap a previously-mapped user I/O request.
+ */
+void
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+	vaddr_t addr, off;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vunmapbuf");
+	addr = trunc_page(bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
+	len = round_page(off + len);
+	uvm_km_free_wakeup(phys_map, addr, len);
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = NULL;
 }
