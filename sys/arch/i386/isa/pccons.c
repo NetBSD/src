@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.28 1993/11/11 08:18:59 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.29 1993/11/25 20:16:11 mycroft Exp $
  */
 
 /*
@@ -543,15 +543,19 @@ pcintr(sc)
 	struct tty *tp = pc_tty[unit];
 	u_char *cp;
 
+	if ((inb(KBSTATP) & KBS_DIB) == 0)
+		return 0;
 	if (polling)
 		return 1;
-	cp = sget(&pc_state[unit], 1);
-	if (!tp || (tp->t_state & TS_ISOPEN) == 0)
-		return 1;
-	if (cp)
-		do
-			(*linesw[tp->t_line].l_rint)(*cp++, tp);
-		while (*cp);
+	do {
+		cp = sget(&pc_state[unit], 1);
+		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
+			return 1;
+		if (cp)
+			do
+				(*linesw[tp->t_line].l_rint)(*cp++, tp);
+			while (*cp);
+	} while (inb(KBSTATP) & KBS_DIB);
 	return 1;
 }
 
