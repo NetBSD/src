@@ -1,15 +1,20 @@
-#	$NetBSD: Makefile.inc,v 1.20 2003/03/18 20:03:30 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2003/05/16 19:25:24 dsl Exp $
 #
-# Makefile for install
+# Makefile for sysinst
 
 PROG=		sysinst
 NOMAN=		# defined
+
+MSG_MD?=	msg.md.${SYSINSTLANG}
+MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.own.mk>		# for mk.conf
 
 DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
 LDSTATIC?=	-static
+
+UNIF_AWK=	${.CURDIR}/../../unif.awk
 
 VERDEP=		${NETBSDSRCDIR}/sys/conf/osrelease.sh
 VER!=		sh ${VERDEP}
@@ -68,11 +73,13 @@ msg_defs.c msg_defs.h: msg.def
 msgtouch: ${VERDEP}
 	touch ${.TARGET}
 
-msg.def: msg.mi.${SYSINSTLANG} msg.md.${SYSINSTLANG} msgtouch
-	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
+msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
+	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
+	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-menus.def: menus.mi.${SYSINSTLANG} menus.md.${SYSINSTLANG} msgtouch
-	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
+menus.def: menus.mi menus.mi.${SYSINSTLANG} ${MENUS_MD} msgtouch
+	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
+	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 menu_defs.c: msg_defs.h
 
