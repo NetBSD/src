@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2003/08/07 16:29:52 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2003/10/30 06:22:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,6 +107,7 @@
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 
 #define	MAXBSIZE	0x2000		/* max FS block size */
+#define	MAXPHYS		0xe000
 
 /*
  * XXX fredette - we force a small number of mbuf clusters and cluster
