@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.14 1998/07/05 00:51:14 jonathan Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.15 1998/10/01 20:05:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ ie_obio_attach(parent, self, args)
 	sc->reset_586 = ie_obreset;
 	sc->chan_attn = ie_obattend;
 	sc->run_586 = ie_obrun;
-	sc->sc_bcopy = bcopy;
-	sc->sc_bzero = bzero;
+	sc->sc_memcpy = memcpy;
+	sc->sc_memset = memset;
 
 	/* Map in the control registers. */
 	sc->sc_reg = bus_mapin(ca->ca_bustype,
