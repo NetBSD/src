@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2001/06/10 15:32:57 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,10 +62,10 @@
 #include <ddb/db_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bat.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
-#include <powerpc/mpc6xx/bat.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>

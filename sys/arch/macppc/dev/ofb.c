@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.22 2001/06/10 11:38:21 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.23 2001/06/10 15:32:57 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -49,9 +49,9 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
+#include <machine/bat.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <powerpc/mpc6xx/bat.h>
 #include <machine/grfioctl.h>
 
 #include <macppc/dev/ofbvar.h>
