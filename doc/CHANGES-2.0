@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.441 2004/09/11 18:09:36 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.442 2004/09/11 18:34:12 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7293,3 +7293,11 @@ sys/sys/mbuf.h					1.92
 	Add m_length().  Needed to make the tree compile again after
 	ticket #831.
 	[bouyer, ticket #839]
+
+sys/dev/ic/wdc.c				patch
+
+	If we are not going to handle a reset request because one is
+	already pending, decrease queue_freeze that we just increased.
+	Otherwise, the queue stays frozen after the reset.
+	Should fix PR#26873 and PR#26910.
+	[bouyer, ticket #840]
