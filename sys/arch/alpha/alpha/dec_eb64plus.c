@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.2.2.4 1997/07/22 06:14:41 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.4 1997/07/22 06:14:41 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp
 #include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
+#include <alpha/isa/pcppivar.h>
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
@@ -54,7 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-/* XXX CGD SOMETHING MISSING? */
+#include <alpha/wscons/wsdisplayvar.h>
+#include <alpha/wscons/wskbdvar.h>
 
 const char *
 dec_eb64plus_model_name()
@@ -115,13 +117,25 @@ dec_eb64plus_cons_init()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		if ((ctb->ctb_turboslot & 0xffff) == 0)
-			isa_display_console(acp->ac_iot, acp->ac_memt);
-		else
-			pci_display_console(acp->ac_iot, acp->ac_memt,
-			    &acp->ac_pc, (ctb->ctb_turboslot >> 8) & 0xff,
-			    ctb->ctb_turboslot & 0xff, 0);
-		break;
+		{
+			static struct consdev wscons = { NULL, NULL,
+			    wskbd_cngetc, wsdisplay_cnputc, wskbd_cnpollc,
+			    NODEV, 1 };
+
+			pcppi_attach_console(acp->ac_iot);
+
+			if ((ctb->ctb_turboslot & 0xffff) == 0)
+				isa_display_console(acp->ac_iot, acp->ac_memt);
+			else
+				pci_display_console(acp->ac_iot, acp->ac_memt,
+				    &acp->ac_pc,
+				    (ctb->ctb_turboslot >> 8) & 0xff,
+				    ctb->ctb_turboslot & 0xff, 0);
+		
+			wscons.cn_dev = makedev(25, 0);	/* XXX */
+			cn_tab = &wscons;
+			break;
+		}
 
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
