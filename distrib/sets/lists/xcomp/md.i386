@@ -1,17 +1,12 @@
-# $NetBSD: md.i386,v 1.9 2004/01/08 05:12:32 rtr Exp $
+# $NetBSD: md.i386,v 1.10 2004/01/08 09:33:34 lukem Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
-./usr/X11R6/include/X11/extensions/xf86dga.h
-./usr/X11R6/include/X11/extensions/xf86dga1.h
-./usr/X11R6/include/X11/extensions/xf86dga1str.h
-./usr/X11R6/include/X11/extensions/xf86dgastr.h
 ./usr/X11R6/include/X11/extensions/xf86misc.h
 ./usr/X11R6/include/X11/extensions/xf86mscstr.h
 ./usr/X11R6/include/X11/extensions/xf86vmode.h
 ./usr/X11R6/include/X11/extensions/xf86vmstr.h
 ./usr/X11R6/include/xf86Optrec.h
 ./usr/X11R6/include/xf86Parser.h
-./usr/X11R6/lib/libXxf86dga.a
 ./usr/X11R6/lib/libXxf86misc.a
 ./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/man/cat3/XF86VidMode.0
