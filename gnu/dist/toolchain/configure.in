@@ -607,6 +607,10 @@ case "${target}" in
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
     ;;
+  arm-*-netbsdelf*) ;;
+  arm-*-netbsd*) # (a.out)
+    noconfigdirs="$noconfigdirs ld"
+    ;;
   arm-*-oabi*)
     noconfigdirs="$noconfigdirs target-libgloss"
     ;;
@@ -728,6 +732,10 @@ case "${target}" in
   i[3456]86-*-beos*)
      noconfigdirs="$noconfigdirs gdb target-newlib target-libgloss"
      ;;
+  i[3456]86-*-netbsdelf*) ;;
+  i[3456]86-*-netbsd*) # (a.out)
+    noconfigdirs="$noconfigdirs ld"
+    ;;
   m68k-*-elf*)
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
@@ -737,6 +745,10 @@ case "${target}" in
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
+    ;;
+  m68k-*-netbsdelf*) ;;
+  m68k-*-netbsd*) # (a.out)
+    noconfigdirs="$noconfigdirs gas ld"
     ;;
   mn10200-*-*)
     noconfigdirs="$noconfigdirs"
@@ -749,6 +761,9 @@ case "${target}" in
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-bsp target-libstub target-cygmon"
     fi
+    ;;
+  ns32k-*-netbsd*)
+    noconfigdirs="$noconfigdirs gas ld"
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
@@ -855,6 +870,10 @@ case "${target}" in
            use_gnu_ld=no
     fi
     ;;
+  sparc-*-netbsdelf*) ;;
+  sparc-*-netbsd*) # (a.out)
+    noconfigdirs="$noconfigdirs ld"
+    ;;
   v810-*-*)
     noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libio target-libg++ target-libstdc++ opcodes target-libgloss"
     ;;
@@ -869,6 +888,12 @@ case "${target}" in
     ;;
   vax-*-vms)
     noconfigdirs="$noconfigdirs bfd binutils gdb ld target-newlib opcodes target-libgloss"
+    ;;
+  vax-*-netbsdelf*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  vax-*-netbsd*) # (a.out)
+    noconfigdirs="$noconfigdirs ld target-newlib target-libgloss"
     ;;
   vax-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
