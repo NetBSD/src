@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 1999/10/28 06:56:31 lukem Exp $ */
+/*	$NetBSD: db_interface.c,v 1.24 1999/11/06 20:18:13 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -108,7 +108,7 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap __P((struct trapframe *));
+void kdb_kbd_trap __P((struct trapframe64 *));
 void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_ctx_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -136,7 +136,7 @@ static void db_dump_pmap __P((struct pmap*));
  */
 void
 kdb_kbd_trap(tf)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
@@ -153,7 +153,7 @@ int traptrace_enabled = 0;
 int
 kdb_trap(type, tf)
 	int	type;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	int i, s, tl;
 	struct trapstate {
@@ -294,7 +294,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-cpu_Debugger()
+Debugger()
 {
 	/* We use the breakpoint to trap into DDB */
 	asm("ta 1; nop");
