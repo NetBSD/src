@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 1997/01/16 15:41:40 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 1997/01/27 17:19:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,8 +66,9 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
+#include <sun3/sun3/sunmon.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -80,11 +81,12 @@ extern char fubail[], subail[];
 /* These are called from locore.s */
 void syscall __P((register_t code, struct frame));
 void trap __P((int type, u_int code, u_int v, struct frame));
-int  nodb_trap __P((int type, struct frame *));
-
+int _nodb_trap __P((int type, struct frame *));
 
 int astpending;
 int want_resched;
+
+static void userret __P((struct proc *, struct frame *, u_quad_t));
 
 char	*trap_type[] = {
 	"Bus error",
@@ -112,12 +114,13 @@ u_int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
 short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	-1,		/* type 3 - FP post-instruction (68040) */
-	-1, -1, -1,	/* type 4-6 - undefined */
-	-1,		/* type 7 - access error (68040) */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1, 	/* type 5-6 - undefined */
+	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
 	FMTASIZE,	/* type A - short bus fault (68020/030) */
@@ -139,9 +142,6 @@ int mmupid = -1;
 #define MDB_WBFAILED	4
 #define MDB_CPFAULT 	8
 #endif
-
-static void userret __P((struct proc *, struct frame *, u_quad_t));
-
 
 /*
  * trap and syscall both need the following work done before
@@ -185,7 +185,7 @@ userret(p, fp, oticks)
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 		addupc_task(p, fp->f_pc,
-					(int)(p->p_sticks - oticks) * psratio);
+		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curpriority = p->p_priority;
@@ -204,7 +204,7 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	register struct proc *p;
-	register int sig;
+	register int sig, tmp;
 	u_int ucode;
 	u_quad_t sticks;
 
@@ -237,7 +237,7 @@ trap(type, code, v, frame)
 		 * caused us to panic.  This is a convenience so
 		 * one can see registers at the point of failure.
 		 */
-		sig = splhigh();
+		tmp = splhigh();
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
 		if (kgdb_trap(type, &frame))
@@ -249,10 +249,14 @@ trap(type, code, v, frame)
 #ifdef KGDB
 	kgdb_cont:
 #endif
-		splx(sig);
+		splx(tmp);
 		if (panicstr) {
-			printf("trap during panic!\n");
-			sun3_mon_abort();
+			/*
+			 * Note: panic is smart enough to do:
+			 *   boot(RB_AUTOBOOT | RB_NOSYNC, NULL)
+			 * if we call it again.
+			 */
+			panic("trap during panic!");
 		}
 		regdump(&frame, 128);
 		type &= ~T_USER;
@@ -294,12 +298,11 @@ trap(type, code, v, frame)
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
-		/* temporary use of sig as mask */
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch  &= ~sig;
-		p->p_sigmask   &= ~sig;
-		sig = SIGILL;	/* back to normal */
+		tmp = sigmask(SIGILL);
+		p->p_sigignore &= ~tmp;
+		p->p_sigcatch  &= ~tmp;
+		p->p_sigmask   &= ~tmp;
+		sig = SIGILL;
 		ucode = frame.f_format;
 		break;
 
@@ -359,9 +362,10 @@ trap(type, code, v, frame)
 	 *	HP-UX uses trap #1 for breakpoints,
 	 *	NetBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
-	 *	KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
+	 *	DDB and KGDB uses trap #15 (for kernel breakpoints;
+	 *	handled elsewhere).
 	 *
-	 * HPBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
+	 * NetBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
@@ -382,7 +386,7 @@ trap(type, code, v, frame)
 		 * (i.e. do not deliver a signal for it)
 		 */
 		if (p->p_emul == &emul_sunos)
-		    break;
+			goto douret;
 #endif
 		frame.f_sr &= ~PSL_T;
 		sig = SIGTRAP;
@@ -401,6 +405,11 @@ trap(type, code, v, frame)
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+#ifdef	DDB
+		/* Hack to avoid calling VM code from DDB. */
+		if (db_recover != 0)
+			goto dopanic;
+#endif
 		/*
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
@@ -454,51 +463,26 @@ trap(type, code, v, frame)
 		va = trunc_page((vm_offset_t)v);
 
 		/*
-		 * Need to resolve the fault.  For user maps, we
-		 * can often resolve the fault with a shortcut
-		 * into the pmap module to just reload a PMEG.
-		 * If that does not prodce a valid mapping,
-		 * call the VM code as usual.
+		 * Need to resolve the fault.
+		 *
+		 * We give the pmap code a chance to resolve faults by
+		 * reloading translations that it was forced to unload.
+		 * This function does that, and calls vm_fault if it
+		 * could not resolve the fault by reloading the MMU.
+		 * This function may also, for example, disallow any
+		 * faults in the kernel text segment, etc.
 		 */
-		if (map == kernel_map) {
-			/* Do not allow faults outside the "managed" space. */
-			if (va < virtual_avail) {
-				if (p->p_addr->u_pcb.pcb_onfault) {
-					/* XXX - Can this happen? -gwr */
-#ifdef	DEBUG
-					if (mmudebug & MDB_CPFAULT) {
-						printf("trap: copyfault kernel_map va < avail\n");
-						Debugger();
-					}
-#endif
-					goto copyfault;
-				}
-				goto dopanic;
-			}
-		} else {
-			/* User map.  Try shortcut. */
-			if (pmap_fault_reload(&vm->vm_pmap, va, ftype))
-				goto finish;
-		}
+		rv = _pmap_fault(map, va, ftype);
 
-		/* OK, let the VM code handle the fault. */
-		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
-#ifdef	DDB
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
-#endif	/* DDB */
 		}
 #endif	/* DEBUG */
-#ifdef VMFAULT_TRACE
-		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-		       map, va, ftype, rv);
-		printf("  type=%x, code=%x, pc=%x\n",
-		       type, code, ((int *) frame.f_regs)[PC]);
-#endif
+
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -506,7 +490,7 @@ trap(type, code, v, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((map != kernel_map) && ((caddr_t)va >= vm->vm_maxsaddr)) {
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
@@ -537,7 +521,7 @@ trap(type, code, v, frame)
 		ucode = v;
 		sig = SIGSEGV;
 		break;
-	} /* T_MMUFLT */
+		} /* T_MMUFLT */
 	} /* switch */
 
 finish:
@@ -664,12 +648,6 @@ syscall(code, frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 * XXX - Still needed?  Not in hp300... -gwr
-		 */
-		p = curproc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
 		frame.f_sr &= ~PSL_C;	/* carry bit */
@@ -743,7 +721,7 @@ child_return(p)
  * Drop into the PROM temporarily...
  */
 int
-nodb_trap(type, fp)
+_nodb_trap(type, fp)
 	int type;
 	struct frame *fp;
 {
@@ -754,7 +732,7 @@ nodb_trap(type, fp)
 		printf("\r\nKernel trap 0x%x,", type);
 	printf(" frame=%p\r\n", fp);
 	printf("\r\n*No debugger. Doing PROM abort...\r\n");
-	sun3_mon_abort();
+	sunmon_abort();
 	/* OK then, just resume... */
 	fp->f_sr &= ~PSL_T;
 	return(1);
