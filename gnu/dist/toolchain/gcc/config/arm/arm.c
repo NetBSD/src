@@ -100,10 +100,12 @@ int    arm_structure_size_boundary = 32; /* Used to be 8 */
 #define FL_MODE26     0x04            /* 26-bit mode support */
 #define FL_MODE32     0x08            /* 32-bit mode support */
 #define FL_ARCH4      0x10            /* Architecture rel 4 */
-#define FL_THUMB      0x20            /* Thumb aware */
-#define FL_LDSCHED    0x40	      /* Load scheduling necessary */
-#define FL_STRONG     0x80	      /* StrongARM */
-#define FL_XSCALE     0x100           /* XScale */
+#define FL_ARCH5      0x20            /* Architecture rel 5 */
+#define FL_THUMB      0x40            /* Thumb aware */
+#define FL_LDSCHED    0x80	      /* Load scheduling necessary */
+#define FL_STRONG     0x100	      /* StrongARM */
+#define FL_ARCH5E     0x200           /* DSP extensions to v5 */
+#define FL_XSCALE     0x400           /* XScale */
 
 /* The bits in this mask specify which instructions we are allowed to generate.  */
 static int insn_flags = 0;
@@ -121,6 +123,12 @@ int arm_fast_multiply = 0;
 
 /* Nonzero if this chip supports the ARM Architecture 4 extensions */
 int arm_arch4 = 0;
+
+/* Nonzero if this chip supports the ARM Architecture 5 extensions.  */
+int arm_arch5 = 0;
+
+/* Nonzero if this chip supports the ARM Architecture 5E extensions.  */
+int arm_arch5e = 0;
 
 /* Nonzero if this chip can benefit from load scheduling.  */
 int arm_ld_sched = 0;
@@ -224,22 +232,9 @@ static struct processors all_cores[] =
   {"strongarm",	             FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm110",           FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
   {"strongarm1100",          FL_MODE26 | FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG },
-
-  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
-     have been added to the NetBSD in-tree 2.95.3 in order to provide for
-     command-line compatibility with gcc 3.x.
-
-     We treat them like other CPUs that 2.95.3 already supports:
-
-     arm10tdmi -> arm9tdmi
-     arm1020t -> arm9tdmi
-
-     xscame -> strongarm
-
-     --thorpej@netbsd.org  */
-  {"arm10tdmi",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
-  {"arm1020t",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED },
-  {"xscale",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG | FL_XSCALE },
+  {"arm10tdmi",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED             | FL_ARCH5 },
+  {"arm1020t",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_LDSCHED             | FL_ARCH5 },
+  {"xscale",	                         FL_MODE32 | FL_FAST_MULT | FL_ARCH4 |            FL_LDSCHED | FL_STRONG | FL_ARCH5 | FL_ARCH5E | FL_XSCALE },
   
   {NULL, 0}
 };
@@ -256,20 +251,9 @@ static struct processors all_architectures[] =
   /* Strictly, FL_MODE26 is a permitted option for v4t, but there are no
      implementations that support it, so we will leave it out for now.  */
   {"armv4t",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
-  /* Local NetBSD additions.  These switches also appear in gcc 3.x.  They
-     have been added to the NetBSD in-tree 2.95.3 in order to provide for
-     command-line compatibility with gcc 3.x.
-
-     We treat them like other ARCHs that 2.95.3 already supports:
-
-     armv5 -> armv4t
-     armv5t -> armv4t
-     armv5te -> armv4t
-
-     --thorpej@netbsd.org  */
-  {"armv5",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
-  {"armv5t",   FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
-  {"armv5te",  FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB },
+  {"armv5",    FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 },
+  {"armv5t",   FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 },
+  {"armv5te",  FL_CO_PROC |             FL_MODE32 | FL_FAST_MULT | FL_ARCH4 | FL_THUMB | FL_ARCH5 | FL_ARCH5E },
   {NULL, 0}
 };
 
@@ -527,6 +511,8 @@ arm_override_options ()
   /* Initialise boolean versions of the flags, for use in the arm.md file.  */
   arm_fast_multiply = (insn_flags & FL_FAST_MULT) != 0;
   arm_arch4         = (insn_flags & FL_ARCH4) != 0;
+  arm_arch5         = (insn_flags & FL_ARCH5) != 0;
+  arm_arch5e        = (insn_flags & FL_ARCH5E) != 0;
   arm_is_xscale     = (insn_flags & FL_XSCALE) != 0;
   
   arm_ld_sched      = (tune_flags & FL_LDSCHED) != 0;

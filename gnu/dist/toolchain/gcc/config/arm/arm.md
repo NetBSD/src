@@ -6379,3 +6379,31 @@
   assemble_align (32);
   return \"\";
 ")
+
+;; V5 instructions
+
+(define_insn "clz"
+  [(set (match_operand:SI             0 "s_register_operand" "=r")
+        (unspec:SI [(match_operand:SI 1 "s_register_operand" "r")] 128))]
+  "arm_arch5"
+  "clz\\t%0, %1")
+
+(define_expand "ffssi2"
+  [(set (match_operand:SI 0 "s_register_operand" "")
+	(ffs:SI (match_operand:SI 1 "s_register_operand" "")))]
+  "arm_arch5"
+  "
+  {
+    rtx t1, t2, t3;
+
+    t1 = gen_reg_rtx (SImode);
+    t2 = gen_reg_rtx (SImode);
+    t3 = gen_reg_rtx (SImode);
+
+    emit_insn (gen_negsi2 (t1, operands[1]));
+    emit_insn (gen_andsi3 (t2, operands[1], t1));
+    emit_insn (gen_clz (t3, t2));
+    emit_insn (gen_subsi3 (operands[0], GEN_INT (32), t3));
+    DONE;
+  }"
+)
