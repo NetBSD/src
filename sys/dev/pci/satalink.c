@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.11 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.12 2004/01/07 22:06:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -742,6 +742,13 @@ sii3112_drv_probe(struct wdc_channel *chp)
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
+	int i;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
 
 	/*
 	 * The 3112 is a 2-port part, and only has one drive per channel
