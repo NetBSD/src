@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.2 1996/08/27 21:37:29 thorpej Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.3 1996/09/18 00:56:41 chuck Exp $	*/
 
 /*
  *
@@ -68,6 +68,8 @@ struct protosw natmsw[] = {
 },
 { SOCK_DGRAM,	&natmdomain,	PROTO_NATMAAL5,	PR_CONNREQUIRED | PR_ATOMIC,
   0,	0,	0,	0,
+  natm_usrreq,
+  0,	0,	0,	0,	
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	natm5_sysctl
 #endif
