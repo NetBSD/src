@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getguess.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: getguess.c,v 1.3 1993/08/10 16:50:01 mycroft Exp $";
+static char rcsid[] = "$Id: getguess.c,v 1.4 1993/11/10 15:28:25 cgd Exp $";
 #endif /* not lint */
 
 # include	<termios.h>
@@ -62,7 +62,7 @@ getguess()
 			else
 				break;
 		}
-		else if (ch == origtermio.c_cc[VEOF])
+		else if (ch == CTRL('D'))
 			die();
 		else
 			mvprintw(MESGY, MESGX, "Not a valid guess: '%s'",
@@ -99,12 +99,10 @@ readch()
 			if (++cnt > 100)
 				die();
 		}
-#ifdef VREPRINT
-		else if (ch == origtermio.c_cc[VREPRINT]) {
+		else if (ch == CTRL('L')) {
 			wrefresh(curscr);
-			mvcur(0, 0, curscr->_cury, curscr->_curx);
+			mvcur(0, 0, curscr->cury, curscr->curx);
 		} else
-#endif
 			return ch;
 	}
 }
