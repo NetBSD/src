@@ -281,8 +281,8 @@ wdattach(struct isa_device *dvp)
 		}
 		printf(">\n");
 	} else {
-		printf("wd%d at wdc%d slave %d -- error\n",
-			lunit, dvp->id_masunit, unit);
+		/*printf("wd%d at wdc%d slave %d -- error\n",
+			lunit, dvp->id_masunit, unit); */
 		wddrives[lunit] = 0;
 		free(du, M_TEMP);
 		return 0;
