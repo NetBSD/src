@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1998/07/24 22:03:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1998/07/26 10:15:36 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -140,7 +140,7 @@ void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
 #define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
-#define	PMAP_UNMAP_POOLPAGE(pa)	MIPS_KSEG0_TO_PHYS((va))
+#define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
 
 /*
  * Kernel cache operations for the user-space API 
