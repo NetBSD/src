@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.17 1998/11/04 18:14:15 christos Exp $	*/
+/*	$NetBSD: kill.c,v 1.18 2001/07/29 22:46:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.17 1998/11/04 18:14:15 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.18 2001/07/29 22:46:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,16 +55,14 @@ __RCSID("$NetBSD: kill.c,v 1.17 1998/11/04 18:14:15 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-void nosig __P((char *));
-void printsignals __P((FILE *));
-int signame_to_signum __P((char *));
-void usage __P((void));
-int main __P((int, char *[]));
+void nosig(char *);
+void printsignals(FILE *);
+int signame_to_signum(char *);
+void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int errors, numsig, pid;
 	char *ep;
@@ -75,15 +73,15 @@ main(argc, argv)
 	numsig = SIGTERM;
 
 	argc--, argv++;
-	if (!strcmp(*argv, "-l")) {
+	if (strcmp(*argv, "-l") == 0) {
 		argc--, argv++;
 		if (argc > 1)
 			usage();
 		if (argc == 1) {
-			if (!isdigit((unsigned char)**argv))
+			if (isdigit((unsigned char)**argv) == 0)
 				usage();
 			numsig = strtol(*argv, &ep, 10);
-			if (*ep)
+			if (*ep != '\0')
 				errx(1, "illegal signal number: %s", *argv);
 			if (numsig >= 128)
 				numsig -= 128;
@@ -143,12 +141,11 @@ main(argc, argv)
 }
 
 int
-signame_to_signum(sig)
-	char *sig;
+signame_to_signum(char *sig)
 {
 	int n;
 
-	if (!strncasecmp(sig, "sig", 3))
+	if (strncasecmp(sig, "sig", 3) == 0)
 		sig += 3;
 	for (n = 1; n < NSIG; n++) {
 		if (!strcasecmp(sys_signame[n], sig))
@@ -158,8 +155,7 @@ signame_to_signum(sig)
 }
 
 void
-nosig(name)
-	char *name;
+nosig(char *name)
 {
 
 	warnx("unknown signal %s; valid signals:", name);
@@ -169,8 +165,7 @@ nosig(name)
 }
 
 void
-printsignals(fp)
-	FILE *fp;
+printsignals(FILE *fp)
 {
 	int n;
 
@@ -184,7 +179,7 @@ printsignals(fp)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: kill [-s signal_name] pid ...\n");
