@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.4 1996/12/06 20:10:51 thorpej Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.5 1996/12/22 06:23:40 cgd Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -110,14 +110,14 @@ sys_ntp_gettime(p, v, retval)
 
 {
 	struct sys_ntp_gettime_args /* {
-		syscallarg(struct timex *) tp;
+		syscallarg(struct ntptimeval *) ntvp;
 	} */ *uap = v;
 	struct timeval atv;
 	struct ntptimeval ntv;
 	int error = 0;
 	int s;
 
-	if (SCARG(uap, tp)) {
+	if (SCARG(uap, ntvp)) {
 		s = splclock();
 #ifdef EXT_CLOCK
 		/*
@@ -141,7 +141,7 @@ sys_ntp_gettime(p, v, retval)
 		ntv.esterror = time_esterror;
 		(void) splx(s);
 
-		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp),
+		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, ntvp),
 		    sizeof (ntv));
 	}
 	if (!error) {
