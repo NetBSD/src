@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 1997/10/10 19:57:03 christos Exp $
+#	$NetBSD: Makefile,v 1.36 1998/01/20 22:43:34 pk Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -15,6 +15,7 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+CPPFLAGS+=-DBSD4_4
 
 # XXX
 .if (${MACHINE_ARCH} == "powerpc")
