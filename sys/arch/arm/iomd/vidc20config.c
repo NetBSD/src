@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.9 2002/03/15 13:33:19 reinoud Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.9.6.1 2002/06/21 14:50:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.9 2002/03/15 13:33:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.9.6.1 2002/06/21 14:50:47 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -291,29 +291,6 @@ vidcvideo_getmode(mode)
 	struct vidc_mode *mode;
 {
 	*mode = *vidc_currentmode;
-}
-
-
-void
-vidcvideo_stdpalette()
-{
-        WriteWord(vidc_base, VIDC_PALREG  | 0x00000000);
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0,   0,   0));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255,   0,   0));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0, 255,   0));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255,   0));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0,   0, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255,   0, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0, 255, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 128, 128));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 128, 128));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 255, 128));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 128));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 128, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 128, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 255, 255));
-        WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 255));
 }
 
 
@@ -566,7 +543,7 @@ vidcvideo_init(void)
 	vidcvideo_setmode(vidc_currentmode);
 	vidcvideo_blank(0);			/* display on */
 
-	vidcvideo_textpalette();
+	vidcvideo_stdpalette();
 
 	if (cold_init == 0) {
 		vidcvideo_write(VIDC_CP1, 0x0);
@@ -683,27 +660,64 @@ vidcvideo_enablecursor(on)
 }
 
 
-int         
-vidcvideo_textpalette()
+void
+vidcvideo_stdpalette()
 {
-	vidcvideo_write(VIDC_PALREG, 0x00000000);
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0,   0));  
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0,   0));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255,   0));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255,   0));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 128));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 128));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 255, 128));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 128));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 255));
-	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+	int i;
 
-	return 0;
+	switch (vidc_currentmode->log2_bpp) {
+	case 0: /* 1 bpp */
+	case 1: /* 2 bpp */
+	case 2: /* 4 bpp */
+	case 3: /* 8 bpp */
+		vidcvideo_write(VIDC_PALREG, 0x00000000);
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0,   0));  
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0,   0));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255,   0));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255,   0));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 128));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 128));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 255, 128));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 128));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 255));
+		vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+		break;
+	case 4: /* 16 bpp */
+		/*
+		 * The use of the palette in 16-bit modes is quite
+		 * fun.  Comments in linux/drivers/video/acornfb.c
+		 * imply that it goes something like this:
+		 *
+		 * red   = LUT[pixel[7:0]].red
+		 * green = LUT[pixel[11:4]].green
+		 * blue  = LUT[pixel[15:8]].blue
+		 *
+		 * We just want 5:5:5 R:G:B.
+		 */
+		vidcvideo_write(VIDC_PALREG, 0x00000000);
+		for (i = 0; i < 256; i++) {
+			int r5, g5, b5;
+
+			r5 = i & 0x1f;
+			g5 = (i >> 1) & 0x1f;
+			b5 = (i >> 2) & 0x1f;
+			vidcvideo_write(VIDC_PALETTE,
+			    VIDC_COL(r5 << 3 | r5 >> 2, g5 << 3 | g5 >> 2,
+				b5 << 3 | b5 >> 2));  
+		}
+		break;			
+	case 5: /* 32 bpp */
+		vidcvideo_write(VIDC_PALREG, 0x00000000);
+		for (i = 0; i < 256; i++)
+			vidcvideo_write(VIDC_PALETTE, VIDC_COL(i, i, i));  
+		break;
+	}
+			
 }
 
 int
