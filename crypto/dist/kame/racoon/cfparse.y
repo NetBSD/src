@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.84 2001/01/26 06:23:56 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.85 2001/01/29 11:26:50 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -93,7 +93,6 @@ static int cur_algclass;
 
 static struct proposalspec *prhead;	/* the head is always current. */
 
-static struct addrinfo *parse_addr __P((char *, char *, int));
 #if 0
 static struct policyindex * parse_spidx __P((caddr_t, int, int,
 		caddr_t, int, int, int, int));
@@ -122,7 +121,6 @@ static int expand_isakmpspec __P((int, int, int *,
 %union {
 	unsigned long num;
 	vchar_t *val;
-	struct addrinfo *res;
 	struct policyindex *spidx;
 	struct remoteconf *rmconf;
 	struct sockaddr *saddr;
@@ -187,9 +185,8 @@ static int expand_isakmpspec __P((int, int, int *,
 %type <num> CERTTYPE CERT_X509 PROPOSAL_CHECK_LEVEL
 %type <val> QUOTEDSTRING HEXSTRING ADDRSTRING STATICSA_STATEMENT sainfo_id
 %type <val> identifierstring
-%type <res> ike_addrinfo_port
 %type <spidx> policy_index
-%type <saddr> remote_index
+%type <saddr> remote_index ike_addrinfo_port
 %type <alg> algorithm
 
 %%
@@ -328,8 +325,7 @@ listen_stmt
 				yyerror("failed to allocate myaddrs");
 				return -1;
 			}
-			p->addr = dupsaddr($2->ai_addr);
-			freeaddrinfo($2);
+			p->addr = $2;
 			if (p->addr == NULL) {
 				yyerror("failed to copy sockaddr ");
 				delmyaddr(p);
@@ -352,7 +348,7 @@ ike_addrinfo_port
 			char portbuf[10];
 
 			snprintf(portbuf, sizeof(portbuf), "%ld", $2);
-			$$ = parse_addr($1->v, portbuf, AI_NUMERICHOST);
+			$$ = str2saddr($1->v, portbuf);
 			vfree($1);
 			if (!$$)
 				return -1;
@@ -665,7 +661,7 @@ secmode
 			prhead->spspec->remote = NULL;
 		}
 	|	SECMODETYPE ADDRSTRING {
-			struct addrinfo *res;
+			struct sockaddr *saddr;
 
 			if ($1 != IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
 				yyerror("should not specify peer's address");
@@ -673,16 +669,11 @@ secmode
 			}
 			prhead->spspec->encmode = $1;
 
-			res = parse_addr($2->v, NULL, AI_NUMERICHOST);
+			saddr = str2saddr($2->v, NULL);
 			vfree($2);
-			if (res == NULL)
+			if (saddr == NULL)
 				return -1;
-			prhead->spspec->remote = dupsaddr(res->ai_addr);
-			if (prhead->spspec->remote == NULL) {
-				yyerror("failed to copy sockaddr ");
-				return -1;
-			}
-			freeaddrinfo(res);
+			prhead->spspec->remote = saddr;
 		}
 	;
 keylength
@@ -748,7 +739,7 @@ sainfo_id
 	:	IDENTIFIERTYPE ADDRSTRING prefix port ul_proto
 		{
 			char portbuf[10];
-			struct addrinfo *res;
+			struct sockaddr *saddr;
 
 			if (($5 == IPPROTO_ICMP || $5 == IPPROTO_ICMPV6)
 			 && ($4 != IPSEC_PORT_ANY || $4 != IPSEC_PORT_ANY)) {
@@ -757,19 +748,19 @@ sainfo_id
 			}
 
 			snprintf(portbuf, sizeof(portbuf), "%lu", $4);
-			res = parse_addr($2->v, portbuf, AI_NUMERICHOST);
+			saddr = str2saddr($2->v, portbuf);
 			vfree($2);
-			if (!res)
+			if (saddr == NULL)
 				return -1;
 
-			switch (res->ai_family) {
+			switch (saddr->sa_family) {
 			case AF_INET:
 				if ($5 == IPPROTO_ICMPV6) {
 					yyerror("upper layer protocol mismatched.\n");
-					freeaddrinfo(res);
+					free(saddr);
 					return -1;
 				}
-				$$ = ipsecdoi_sockaddr2id(res->ai_addr,
+				$$ = ipsecdoi_sockaddr2id(saddr,
 					$3 == ~0 ? (sizeof(struct in_addr) << 3): $3,
 					$5);
 				break;
@@ -777,19 +768,19 @@ sainfo_id
 			case AF_INET6:
 				if ($5 == IPPROTO_ICMP) {
 					yyerror("upper layer protocol mismatched.\n");
-					freeaddrinfo(res);
+					free(saddr);
 					return -1;
 				}
-				$$ = ipsecdoi_sockaddr2id(res->ai_addr,
+				$$ = ipsecdoi_sockaddr2id(saddr,
 					$3 == ~0 ? (sizeof(struct in6_addr) << 3) : $3,
 					$5);
 				break;
 #endif
 			default:
-				yyerror("invalid family: %d", res->ai_family);
+				yyerror("invalid family: %d", saddr->sa_family);
 				break;
 			}
-			freeaddrinfo(res);
+			free(saddr);
 			if ($$ == NULL)
 				return -1;
 		}
@@ -1028,8 +1019,7 @@ remote_index
 		}
 	|	ike_addrinfo_port
 		{
-			$$ = dupsaddr($1->ai_addr);
-			freeaddrinfo($1);
+			$$ = $1;
 			if ($$ == NULL) {
 				yyerror("failed to allocate sockaddr");
 				return -1;
@@ -1294,35 +1284,6 @@ staticsa_statement
 
 %%
 
-static struct addrinfo *
-parse_addr(host, port, flag)
-	char *host;
-	char *port;
-	int flag;
-{
-	struct addrinfo hints, *res;
-	int error;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = flag;
-	error = getaddrinfo(host, port, &hints, &res);
-	if (error != 0) {
-		yyerror("getaddrinfo(%s%s%s): %s",
-			host, port ? "," : "", port ? port : "",
-			gai_strerror(error));
-		return NULL;
-	}
-	if (res->ai_next != NULL) {
-		yyerror("getaddrinfo(%s%s%s): "
-			"resolved to multiple address, "
-			"taking the first one",
-			host, port ? "," : "", port ? port : "");
-	}
-	return res;
-}
-
 #if 0
 static struct policyindex *
 parse_spidx(src, prefs, ports, dst, prefd, portd, ul_proto, dir)
@@ -1331,7 +1292,7 @@ parse_spidx(src, prefs, ports, dst, prefd, portd, ul_proto, dir)
 {
 	struct policyindex *spidx;
 	char portbuf[10];
-	struct addrinfo *res;
+	struct sockaddr *saddr;
 
 	if ((ul_proto == IPPROTO_ICMP || ul_proto == IPPROTO_ICMPV6)
 	 && (ports != IPSEC_PORT_ANY || portd != IPSEC_PORT_ANY)) {
@@ -1349,12 +1310,12 @@ parse_spidx(src, prefs, ports, dst, prefd, portd, ul_proto, dir)
 	spidx->ul_proto = ul_proto;
 
 	snprintf(portbuf, sizeof(portbuf), "%d", ports);
-	res = parse_addr(src, portbuf, AI_NUMERICHOST);
-	if (res == NULL) {
+	saddr = str2saddr(src, portbuf);
+	if (saddr == NULL) {
 		delspidx(spidx);
 		return NULL;
 	}
-	switch (res->ai_family) {
+	switch (saddr->sa_family) {
 	case AF_INET:
 		spidx->prefs = prefs == ~0
 			? (sizeof(struct in_addr) << 3)
@@ -1368,20 +1329,20 @@ parse_spidx(src, prefs, ports, dst, prefd, portd, ul_proto, dir)
 		break;
 #endif
 	default:
-		yyerror("invalid family: %d", res->ai_family);
+		yyerror("invalid family: %d", saddr->sa_family);
 		return NULL;
 		break;
 	}
-	memcpy(&spidx->src, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
+	memcpy(&spidx->src, saddr, saddr->sa_len);
+	free(saddr);
 
 	snprintf(portbuf, sizeof(portbuf), "%d", portd);
-	res = parse_addr(dst, portbuf, AI_NUMERICHOST);
-	if (res == NULL) {
+	saddr = str2saddr(dst, portbuf);
+	if (saddr == NULL) {
 		delspidx(spidx);
 		return NULL;
 	}
-	switch (res->ai_family) {
+	switch (saddr->sa_family) {
 	case AF_INET:
 		spidx->prefd = prefd == ~0
 			? (sizeof(struct in_addr) << 3)
@@ -1395,12 +1356,12 @@ parse_spidx(src, prefs, ports, dst, prefd, portd, ul_proto, dir)
 		break;
 #endif
 	default:
-		yyerror("invalid family: %d", res->ai_family);
+		yyerror("invalid family: %d", saddr->sa_family);
 		return NULL;
 		break;
 	}
-	memcpy(&spidx->dst, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
+	memcpy(&spidx->dst, saddr, saddr->sa_addrlen);
+	free(saddr);
 
 	return spidx;
 }
