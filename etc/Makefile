@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 1999/09/16 00:30:06 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.126 1999/09/26 21:40:13 mjl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -128,7 +128,6 @@ distribution: distrib-dirs
 	    ${DESTDIR}/etc
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
 	    ${DESTDIR}/etc
-	/usr/libexec/sendmail/sendmail -O AliasFile=${DESTDIR}/etc/aliases -bi
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 master.passwd \
@@ -220,6 +219,7 @@ distribution: distrib-dirs
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 .ifndef NO_SENDMAIL
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/sendmail.cf -O AliasFile=${DESTDIR}/etc/aliases -bi
 .endif
 .ifdef BUILD_POSTFIX
 	(cd ../usr.sbin/postfix/etc; ${MAKE} distribution)
