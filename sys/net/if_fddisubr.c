@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.45 2002/09/11 05:36:26 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.46 2003/02/26 06:31:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.45 2002/09/11 05:36:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.46 2003/02/26 06:31:13 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -224,6 +224,7 @@ fddi_output(ifp, m0, dst, rt0)
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	short mflags;
 
+	MCLAIM(m, ifp->if_owner);
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
@@ -624,6 +625,7 @@ fddi_input(ifp, m)
 	struct fddi_header *fh;
 	int s;
 
+	MCLAIM(m, &((struct ethercom *)ifp)->ec_rx_mowner);
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
@@ -861,6 +863,7 @@ fddi_ifattach(ifp, lla)
 	struct ifnet *ifp;
 	caddr_t lla;
 {
+	struct ethercom *ec = (struct ethercom *)ifp;
 
 	ifp->if_type = IFT_FDDI;
 	ifp->if_addrlen = 6;
@@ -880,6 +883,7 @@ fddi_ifattach(ifp, lla)
 	if (ALIGN(ifp->if_hdrlen) > max_linkhdr)
 		max_linkhdr = ALIGN(ifp->if_hdrlen);
 
+	LIST_INIT(&ec->ec_multiaddrs);
 	if_alloc_sadl(ifp);
 	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
 
@@ -887,4 +891,13 @@ fddi_ifattach(ifp, lla)
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_FDDI, sizeof(struct fddi_header));
 #endif /* NBPFILTER > 0 */
+#ifdef MBUFTRACE
+	strcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname);
+	strcpy(ec->ec_tx_mowner.mo_descr, "tx");
+	strcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname);
+	strcpy(ec->ec_rx_mowner.mo_descr, "rx");
+	MOWNER_ATTACH(&ec->ec_tx_mowner);
+	MOWNER_ATTACH(&ec->ec_rx_mowner);
+	ifp->if_mowner = &ec->ec_tx_mowner;
+#endif
 }

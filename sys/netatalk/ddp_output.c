@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.5 2003/02/26 06:31:14 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.4 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.5 2003/02/26 06:31:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,12 +168,7 @@ ddp_route(m, ro)
          * packets end up poorly aligned due to the three byte elap header.
          */
 	if (!(aa->aa_flags & AFA_PHASE2)) {
-		MGET(m0, M_WAIT, MT_HEADER);
-		if (m0 == 0) {
-			m_freem(m);
-			printf("ddp_route: no buffers\n");
-			return (ENOBUFS);
-		}
+		m0 = m_get(M_WAIT, MT_HEADER);
 		m0->m_next = m;
 		/* XXX perhaps we ought to align the header? */
 		m0->m_len = SZ_ELAPHDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.57 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.58 2003/02/26 06:31:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,6 +48,39 @@ struct uio;
 TAILQ_HEAD(soqhead, socket);
 
 /*
+ * Variables for socket buffering.
+ */
+struct sockbuf {
+	u_long	sb_cc;			/* actual chars in buffer */
+	u_long	sb_hiwat;		/* max actual char count */
+	u_long	sb_mbcnt;		/* chars of mbufs used */
+	u_long	sb_mbmax;		/* max chars of mbufs to use */
+	long	sb_lowat;		/* low water mark */
+	struct mbuf *sb_mb;		/* the mbuf chain */
+	struct mbuf *sb_mbtail;		/* the last mbuf in the chain */
+	struct mbuf *sb_lastrecord;	/* first mbuf of last record in
+					   socket buffer */
+	struct mowner *sb_mowner;	/* who owns data for this sockbuf */
+	struct selinfo sb_sel;		/* process selecting read/write */
+	short	sb_flags;		/* flags, see below */
+	short	sb_timeo;		/* timeout for read/write */
+};
+
+#ifndef SB_MAX
+#define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
+#endif
+
+#define	SB_LOCK		0x01		/* lock on data queue */
+#define	SB_WANT		0x02		/* someone is waiting to lock */
+#define	SB_WAIT		0x04		/* someone is waiting for data/space */
+#define	SB_SEL		0x08		/* someone is selecting */
+#define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
+#define	SB_UPCALL	0x20		/* someone wants an upcall */
+#define	SB_NOINTR	0x40		/* operations not interruptible */
+    	/* XXXLUKEM: 0x80 left for FreeBSD's SB_AIO */
+#define	SB_KNOTE	0x100		/* kernel note attached */
+
+/*
  * Kernel structure per socket.
  * Contains send and receive buffer queues,
  * handle on protocol and pointer to protocol
@@ -83,37 +116,8 @@ struct socket {
 	u_short		so_error;	/* error affecting connection */
 	pid_t		so_pgid;	/* pgid for signals */
 	u_long		so_oobmark;	/* chars to oob mark */
-/*
- * Variables for socket buffering.
- */
-	struct sockbuf {
-		u_long	sb_cc;		/* actual chars in buffer */
-		u_long	sb_hiwat;	/* max actual char count */
-		u_long	sb_mbcnt;	/* chars of mbufs used */
-		u_long	sb_mbmax;	/* max chars of mbufs to use */
-		long	sb_lowat;	/* low water mark */
-		struct mbuf *sb_mb;	/* the mbuf chain */
-		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
-		struct mbuf *sb_lastrecord;/* first mbuf of last record in
-					      socket buffer */
-		struct selinfo sb_sel;	/* process selecting read/write */
-		short	sb_flags;	/* flags, see below */
-		short	sb_timeo;	/* timeout for read/write */
-	} so_rcv, so_snd;
-
-#ifndef SB_MAX
-#define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
-#endif
-
-#define	SB_LOCK		0x01		/* lock on data queue */
-#define	SB_WANT		0x02		/* someone is waiting to lock */
-#define	SB_WAIT		0x04		/* someone is waiting for data/space */
-#define	SB_SEL		0x08		/* someone is selecting */
-#define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
-#define	SB_UPCALL	0x20		/* someone wants an upcall */
-#define	SB_NOINTR	0x40		/* operations not interruptible */
-    	/* XXXLUKEM: 0x80 left for FreeBSD's SB_AIO */
-#define	SB_KNOTE	0x100		/* kernel note attached */
+	struct sockbuf	so_snd;		/* send buffer */
+	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
 	void		(*so_upcall) __P((struct socket *so, caddr_t arg,
@@ -126,6 +130,7 @@ struct socket {
 					struct mbuf **paddr,
 					struct uio *uio, struct mbuf **mp0,
 					struct mbuf **controlp, int *flagsp));
+	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	uid_t		so_uid;		/* who opened the socket */
 	struct mbuf	*so_pendfree;	/* loaned-page mbufs w/ frees pending */
 };
@@ -248,9 +253,6 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_SONAME);
-
 extern u_long		sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.21 2002/06/10 17:45:54 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.22 2003/02/26 06:31:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.21 2002/06/10 17:45:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.22 2003/02/26 06:31:18 matt Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -557,7 +557,7 @@ bootpc_call(nd, procp)
 	 * Allocate buffer used for request
 	 */
 	m = m_gethdr(M_WAIT, MT_DATA);
-	MCLGET(m, M_WAIT);
+	m_clget(m, M_WAIT);
 	bootp = mtod(m, struct bootp*);
 	m->m_pkthdr.len = m->m_len = BOOTP_SIZE_MAX;
 	m->m_pkthdr.rcvif = NULL;

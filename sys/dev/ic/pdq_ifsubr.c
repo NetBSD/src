@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.39 2002/03/05 04:12:58 itojun Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.40 2003/02/26 06:31:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.39 2002/03/05 04:12:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.40 2003/02/26 06:31:10 matt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -792,6 +792,7 @@ pdq_os_databuf_alloc(
         m_free(m);
 	return NULL;
     }
+    MCLAIM(m, &PDQ_FDDICOM(sc)->ec_rx_mowner);
     m->m_pkthdr.len = m->m_len = PDQ_OS_DATABUF_SIZE;
 
     if (bus_dmamap_create(sc->sc_dmatag, PDQ_OS_DATABUF_SIZE,

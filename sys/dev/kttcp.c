@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.8 2003/02/25 23:29:14 briggs Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.9 2003/02/26 06:31:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -288,16 +288,16 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		do {
 			do {
 				if (top == 0) {
-					MGETHDR(m, M_WAIT, MT_DATA);
+					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
 					m->m_pkthdr.rcvif = (struct ifnet *)0;
 				} else {
-					MGET(m, M_WAIT, MT_DATA);
+					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;
 				}
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
-					MCLGET(m, M_WAIT);
+					m_clget(m, M_WAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;

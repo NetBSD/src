@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.18 2001/11/21 19:14:29 wiz Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.19 2003/02/26 06:31:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.18 2001/11/21 19:14:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.19 2003/02/26 06:31:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ tp_sendoob(tpcb, so, xdata, outflags)
 	}
 	if (xdata == (struct mbuf *) 0) {
 		/* empty xpd packet */
-		MGETHDR(xdata, M_WAIT, MT_OOBDATA);
+		xdata = m_gethdr(M_WAIT, MT_OOBDATA);
 		xdata->m_len = 0;
 		xdata->m_pkthdr.len = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.41 2002/09/26 16:07:03 darrenr Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.42 2003/02/26 06:31:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.41 2002/09/26 16:07:03 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.42 2003/02/26 06:31:13 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -141,6 +141,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.41 2002/09/26 16:07:03 darrenr Exp $")
 #endif
 
 struct	ifnet loif[NLOOP];
+#ifdef MBUFTRACE
+struct	mowner lomowner[NLOOP];
+#endif
 
 #ifdef ALTQ
 void	lostart(struct ifnet *);
@@ -174,6 +177,11 @@ loopattach(n)
 #if NBPFILTER > 0
 		bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #endif
+#ifdef MBUFTRACE
+		ifp->if_mowner = &lomowner[i];
+		strcpy(ifp->if_mowner->mo_name, ifp->if_xname);
+		MOWNER_ATTACH(&lomowner[i]);
+#endif
 	}
 }
 
@@ -187,6 +195,7 @@ looutput(ifp, m, dst, rt)
 	int s, isr;
 	struct ifqueue *ifq = 0;
 
+	MCLAIM(m, ifp->if_mowner);
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
 #if NBPFILTER > 0

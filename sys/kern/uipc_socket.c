@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.77 2003/02/01 06:23:44 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.78 2003/02/26 06:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.77 2003/02/01 06:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.78 2003/02/26 06:31:11 matt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -345,6 +345,11 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_proto = prp;
 	so->so_send = sosend;
 	so->so_receive = soreceive;
+#ifdef MBUFTRACE
+	so->so_rcv.sb_mowner = &prp->pr_domain->dom_mowner;
+	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
+	so->so_mowner = &prp->pr_domain->dom_mowner;
+#endif
 	if (p != 0)
 		so->so_uid = p->p_ucred->cr_uid;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
@@ -681,14 +686,15 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					top->m_flags |= M_EOR;
 			} else do {
 				if (top == 0) {
-					MGETHDR(m, M_WAIT, MT_DATA);
+					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
 					m->m_pkthdr.rcvif = (struct ifnet *)0;
 				} else {
-					MGET(m, M_WAIT, MT_DATA);
+					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;
 				}
+				MCLAIM(m, so->so_snd.sb_mowner);
 				if (use_sosend_loan &&
 				    uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
 				    space >= SOCK_LOAN_THRESH &&
@@ -700,7 +706,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				}
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
 					SOSEND_COUNTER_INCR(&sosend_copy_big);
-					MCLGET(m, M_WAIT);
+					m_clget(m, M_WAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;

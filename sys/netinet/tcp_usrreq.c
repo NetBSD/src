@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.74 2002/10/22 03:14:16 simonb Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.75 2003/02/26 06:31:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.74 2002/10/22 03:14:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.75 2003/02/26 06:31:16 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -719,6 +719,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 	case PRCO_GETOPT:
 		*mp = m = m_get(M_WAIT, MT_SOOPTS);
 		m->m_len = sizeof(int);
+		MCLAIM(m, so->so_mowner);
 
 		switch (optname) {
 		case TCP_NODELAY:
@@ -765,6 +766,11 @@ tcp_attach(so)
 
 	family = so->so_proto->pr_domain->dom_family;
 
+#ifdef MBUFTRACE
+	so->so_mowner = &tcp_mowner;
+	so->so_rcv.sb_mowner = &tcp_rx_mowner;
+	so->so_snd.sb_mowner = &tcp_tx_mowner;
+#endif
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		error = soreserve(so, tcp_sendspace, tcp_recvspace);
 		if (error)

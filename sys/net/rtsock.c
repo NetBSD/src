@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.57 2002/11/24 11:38:51 scw Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.58 2003/02/26 06:31:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.57 2002/11/24 11:38:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.58 2003/02/26 06:31:13 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.57 2002/11/24 11:38:51 scw Exp $");
 #include <net/raw_cb.h>
 
 #include <machine/stdarg.h>
+
+extern	struct domain routedomain;		/* or at least forward */
 
 struct	sockaddr route_dst = { 2, PF_ROUTE, };
 struct	sockaddr route_src = { 2, PF_ROUTE, };
@@ -519,6 +521,7 @@ rt_msg1(type, rtinfo, data, datalen)
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (m);
+	MCLAIM(m, &routedomain.dom_mowner);
 	switch (type) {
 
 	case RTM_DELADDR:
@@ -551,6 +554,7 @@ rt_msg1(type, rtinfo, data, datalen)
 			m_freem(m);
 			return (NULL);
 		}
+		MCLAIM(m->m_next, m->m_owner);
 		m->m_pkthdr.len = len;
 		m->m_len = MHLEN;
 		m->m_next->m_len = len - MHLEN;
@@ -1109,8 +1113,6 @@ again:
 /*
  * Definitions of protocols supported in the ROUTE domain.
  */
-
-extern	struct domain routedomain;		/* or at least forward */
 
 struct protosw routesw[] = {
 { SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,

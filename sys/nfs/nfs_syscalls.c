@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.54 2003/02/01 06:23:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.55 2003/02/26 06:31:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.54 2003/02/01 06:23:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.55 2003/02/26 06:31:19 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -405,7 +405,8 @@ nfssvc_addsock(fp, mynam)
 	 * repeatedly for the same socket, but that isn't harmful.
 	 */
 	if (so->so_type == SOCK_STREAM) {
-		MGET(m, M_WAIT, MT_SOOPTS);
+		m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(m, &nfs_mowner);
 		*mtod(m, int32_t *) = 1;
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
@@ -416,7 +417,8 @@ nfssvc_addsock(fp, mynam)
 #endif
 	    ) &&
 	    so->so_proto->pr_protocol == IPPROTO_TCP) {
-		MGET(m, M_WAIT, MT_SOOPTS);
+		m = m_get(M_WAIT, MT_SOOPTS);
+		MCLAIM(m, &nfs_mowner);
 		*mtod(m, int32_t *) = 1;
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
@@ -710,7 +712,7 @@ nfssvc_nfsd(nsd, argp, l)
 			if (nfsrtton)
 				nfsd_rt(sotype, nd, cacherep);
 			if (nd->nd_nam2)
-				MFREE(nd->nd_nam2, m);
+				m_free(nd->nd_nam2);
 			if (nd->nd_mrep)
 				m_freem(nd->nd_mrep);
 			if (error == EPIPE)
@@ -784,7 +786,6 @@ nfsrv_zapsock(slp)
 	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
 	struct file *fp;
-	struct mbuf *m;
 	int s;
 
 	slp->ns_flag &= ~SLP_ALLFLAGS;
@@ -799,7 +800,7 @@ nfsrv_zapsock(slp)
 		soshutdown(so, 2);
 		closef(fp, (struct proc *)0);
 		if (slp->ns_nam)
-			MFREE(slp->ns_nam, m);
+			m_free(slp->ns_nam);
 		m_freem(slp->ns_raw);
 		m_freem(slp->ns_rec);
 		for (nuidp = slp->ns_uidlruhead.tqh_first; nuidp != 0;
