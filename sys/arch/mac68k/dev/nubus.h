@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.35 1997/12/03 03:05:05 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.36 1998/04/24 01:58:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -59,6 +59,7 @@
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
 #define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
+#define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146
 #define    NUBUS_DRHW_SPECTRM8	0x017b	/* SuperMac Spectrum/8  Series III */
@@ -68,6 +69,7 @@
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
+#define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
 #define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
 #define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */
 #define	   NUBUS_DRHW_FIISXDSP	0x042F	/* Futura II SX/DSP */
