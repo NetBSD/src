@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.228 2005/01/12 00:05:43 reinoud Exp $
+#	$NetBSD: files.pci,v 1.229 2005/01/21 12:32:18 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -743,9 +743,9 @@ device	dge: ether, ifnet, arp
 attach	dge at pci
 file	dev/pci/if_dge.c		dge
 
-# Realtek 8129/8139 Ethernet controllers
-attach	re at pci
-file	dev/pci/if_re.c			re
+# Realtek 8169 Ethernet controllers
+attach	re at pci with re_pci
+file	dev/pci/if_re_pci.c		re_pci
 
 # Intel PRO/Wireless 2100
 device	ipw: ifnet, wlan
