@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.13 1994/06/10 14:33:11 pk Exp $
+ * $Id: pmap.c,v 1.14 1994/07/13 07:52:01 pk Exp $
  */
 
 /*
@@ -773,16 +773,6 @@ mmu_pagein(pm, va, bits)
 	return (1);
 }
 
-PMPID(pm)
-struct pmap *pm;
-{
-	struct proc *p;
-
-	for (p = allproc; p; p = p->p_next)
-		if (&p->p_vmspace->vm_pmap == pm)
-			return p->p_pid;
-	return -1;
-}
 /*
  * Allocate a context.  If necessary, steal one from someone else.
  * Changes hardware context number and loads segment map.
@@ -813,11 +803,6 @@ ctx_alloc(pm)
 		ctx_freelist = c->c_nextfree;
 		cnum = c - ctxinfo;
 		setcontext(cnum);
-#if 0
-		for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
-			if (getsegmap(va) != seginval)
-			 printf("free ctx %d: segmap(%x) = %x\n", cnum, va, getsegmap(va));
-#endif
 	} else {
 		if ((ctx_kick += ctx_kickdir) >= ncontext) {
 			ctx_kick = ncontext - 1;
@@ -849,16 +834,6 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-#if 0
-	/*
-	 * XXX	loop below makes 3584 iterations ... could reduce
-	 *	by remembering valid ranges per context: two ranges
-	 *	should suffice (for text/data/bss and for stack).
-	 */
-	segp = pm->pm_segmap;
-	for (va = 0, i = NUSEG; --i >= 0; va += NBPSG)
-		setsegmap(va, *segp++);
-#else
 	/*
 	 * Write pmap's segment table into the MMU.
 	 *
@@ -888,7 +863,6 @@ ctx_alloc(pm)
 		}
 		setsegmap(va, *segp++);
 	}
-#endif
 }
 
 /*
