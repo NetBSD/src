@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.11 1996/10/11 00:45:00 christos Exp $	*/
+/*	$NetBSD: tz.c,v 1.12 1996/10/12 15:59:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,9 @@ tzprobe(xxxsd)
 	register struct tz_softc *sc = &tz_softc[sd->sd_unit];
 	register int i;
 	ScsiInquiryData inqbuf;
+
+	if (sd->sd_unit >= NTZ)
+		return (0);
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
