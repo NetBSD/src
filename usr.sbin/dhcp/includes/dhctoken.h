@@ -57,6 +57,9 @@ enum dhcp_token {
  	PLUS = '+',
 	MINUS = '-',
 	ASTERISK = '*',
+	AMPERSAND = '&',
+	PIPE = '|',
+	CARET = '^',
 
 	HOST = 256,
 	FIRST_TOKEN = HOST,
@@ -263,7 +266,7 @@ enum dhcp_token {
 	TOKEN_MAX = 462,
 	SECONDS = 463,
 	ADDRESS = 464,
-	POTENTIAL_CONFLICT_NIC = 465,
+	RESOLUTION_INTERRUPTED = 465,
 	STATE = 466,
 	UNKNOWN_STATE = 567,
 	CLTT = 568,
@@ -278,7 +281,17 @@ enum dhcp_token {
 	TOKEN_RESERVED = 577,
 	TOKEN_BOOTP = 578,
 	TOKEN_NEXT = 579,
-	OMAPI = 580
+	OMAPI = 580,
+	LOG = 581,
+	FATAL = 582,
+	ERROR = 583,
+	TOKEN_DEBUG = 584,
+	INFO = 585,
+	RETURN = 586,
+	PAUSED = 587,
+	RECOVER_DONE = 588,
+	SHUTDOWN = 589,
+	STARTUP = 590
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.3 2000/07/08 20:41:12 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.4 2000/09/04 23:10:52 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -144,9 +144,9 @@ u_int32_t fto_allowed [] = {
 	(FTB_SERVER_ADDR | FTB_MAX_UNACKED | FTB_RECEIVE_TIMER |
 	 FTB_VENDOR_CLASS | FTB_PROTOCOL_VERSION | FTB_TLS_REPLY |
 	 FTB_REJECT_REASON | FTB_MESSAGE), /* CONNECTACK */
-	0,	/* 7 UPDREQ */
-	0,	/* 8 UPDDONE */
-	0,	/* 9 UPDREQALL */
+	0, /* 7 UPDREQ */
+	0, /* 8 UPDDONE */
+	0, /* 9 UPDREQALL */
 	(FTB_SERVER_STATE | FTB_SERVER_FLAGS | FTB_STOS), /* 10 STATE */
 	0,	/* 11 CONTACT */
 	(FTB_REJECT_REASON | FTB_MESSAGE) /* 12 DISCONNECT */
@@ -481,7 +481,7 @@ struct option server_options [256] = {
 	{ "limited-broadcast-address", "I",	&server_universe, 33 },
 	{ "remote-port", "S",			&server_universe, 34 },
 	{ "local-address", "I",			&server_universe, 35 },
-	{ "option-36", "X",			&server_universe, 36 },
+	{ "omapi-key", "t",			&server_universe, 36 },
 	{ "option-37", "X",			&server_universe, 37 },
 	{ "option-38", "X",			&server_universe, 38 },
 	{ "option-39", "X",			&server_universe, 39 },

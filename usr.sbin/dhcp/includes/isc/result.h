@@ -74,8 +74,9 @@ ISC_LANG_BEGINDECLS
 #define ISC_R_NOKEYS			46
 #define ISC_R_KEY_UNKNOWN		47
 #define ISC_R_INVALIDKEY		48
+#define ISC_R_INCOMPLETE		49
 
-#define ISC_R_NRESULTS 			49	/* Number of results */
+#define ISC_R_NRESULTS 			50	/* Number of results */
 
 const char *		isc_result_totext(isc_result_t);
 isc_result_t		isc_result_register(unsigned int base,

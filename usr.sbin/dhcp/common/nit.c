@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.8 2000/06/10 18:04:49 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.9 2000/09/04 23:10:12 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -299,11 +299,12 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
-	unsigned bufp;
-	unsigned char buf [1536 + sizeof (struct sockaddr)];
+	unsigned hbufp, ibufp;
+	double hh [16];
+	double ih [1536 / sizeof (double)];
+	unsigned char *buf = (unsigned char *)ih;
 	struct sockaddr *junk;
 	struct strbuf ctl, data;
-	int hw_end;
 	struct sockaddr_in foo;
 	int result;
 
@@ -312,34 +313,30 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 				      len, from, to, hto);
 
 	/* Start with the sockaddr struct... */
-	junk = (struct sockaddr *)&buf [0];
-	bufp = ((unsigned char *)&junk -> sa_data [0]) - &buf [0];
+	junk = (struct sockaddr *)&hh [0];
+	hbufp = ((unsigned char *)&junk -> sa_data [0]) - &buf [0];
+	ibufp = 0;
 
 	/* Assemble the headers... */
-	assemble_hw_header (interface, buf, &bufp, hto);
-	hw_end = bufp;
-	assemble_udp_ip_header (interface, buf, &bufp, from.s_addr,
-				to -> sin_addr.s_addr, to -> sin_port,
-				raw, len);
+	assemble_hw_header (interface, (unsigned char *)junk, &hbufp, hto);
+	assemble_udp_ip_header (interface, buf, &ibufp,
+				from.s_addr, to -> sin_addr.s_addr,
+				to -> sin_port, raw, len);
 
 	/* Copy the data into the buffer (yuk). */
 	memcpy (buf + bufp, raw, len);
 
 	/* Set up the sockaddr structure... */
 #if USE_SIN_LEN
-	junk -> sa_len = hw_end - 2; /* XXX */
+	junk -> sa_len = hbufp - 2; /* XXX */
 #endif
 	junk -> sa_family = AF_UNSPEC;
 
-#if 0 /* Already done. */
-	memcpy (junk.sa_data, buf, hw_len);
-#endif
-
 	/* Set up the msg_buf structure... */
-	ctl.buf = (char *)&buf [0];
-	ctl.maxlen = ctl.len = hw_end;
-	data.buf = (char *)&buf [hw_end];
-	data.maxlen = data.len = bufp + len - hw_end;
+	ctl.buf = (char *)&hh [0];
+	ctl.maxlen = ctl.len = hbufp;
+	data.buf = (char *)&ih [0];
+	data.maxlen = data.len = ibufp + len;
 
 	result = putmsg (interface -> wfdesc, &ctl, &data, 0);
 	if (result < 0)
@@ -402,6 +399,12 @@ int can_unicast_without_arp (ip)
 }
 
 int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
+int supports_multiple_interfaces (ip)
 	struct interface_info *ip;
 {
 	return 1;
