@@ -1,4 +1,4 @@
-$Id: PORTING,v 1.1 1994/11/28 10:37:10 pk Exp $
+$Id: PORTING,v 1.2 1995/03/06 23:58:04 pk Exp $
 
 This document describes some of the machine dependent parts in ld(1) and rtld(?)
 Most of the machine dependencies are a result of different ways in which
@@ -91,6 +91,8 @@ RELOC_BASEREL_P(r)		- relocation is for a GOT entry
 RELOC_RELATIVE_P(r)		- relocation is load address relative
 RELOC_COPY_P(r)			- relocation involves an initialization
 RELOC_LAZY_P(r)			- (run-time) resolution can be lazy.
+RELOC_INIT_SEGMENT_RELOC(r)	- initialize a relocation record pertaining to
+				  a segment; traditional archs can use bzero().
 CHECK_GOT_RELOC(r)		- consistency check on relocations involving
 				  the "_GLOBAL_OFFSET_TABLE" symbol
 
