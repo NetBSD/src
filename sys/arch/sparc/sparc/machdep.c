@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2000/05/09 22:39:35 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.162 2000/05/10 11:17:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1311,6 +1311,16 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	 *	- `size' must be smaller than `boundary'
 	 */
 
+#ifdef DIAGNOSTIC
+	if ((size & PAGE_MASK) != 0)
+		panic("_bus_dma_valloc_skewed: invalid size %lx", size);
+	if ((align & PAGE_MASK) != 0)
+		panic("_bus_dma_valloc_skewed: invalid alignment %lx", align);
+	if (align < skew)
+		panic("_bus_dma_valloc_skewed: align %lx < skew %lx",
+			align, skew);
+#endif
+
 	/* XXX - Implement this! */
 	if (boundary)
 		panic("_bus_dma_valloc_skewed: not implemented");
@@ -1327,7 +1337,7 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	 * Compute start of aligned region
 	 */
 	va = sva;
-	va += (skew + align - va) & -align;
+	va += (skew + align - va) & (align - 1);
 
 	/*
 	 * Return excess virtual addresses
