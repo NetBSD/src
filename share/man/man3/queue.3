@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
+.\"	$NetBSD: queue.3,v 1.5 1996/10/01 22:45:07 cgd Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Sh NAME
 .Nm LIST_ENTRY ,
 .Nm LIST_HEAD ,
+.Nm LIST_HEAD_INITIALIZER ,
 .Nm LIST_INIT ,
 .Nm LIST_INSERT_AFTER ,
 .Nm LIST_INSERT_BEFORE ,
@@ -46,6 +47,7 @@
 .Nm LIST_REMOVE ,
 .Nm TAILQ_ENTRY ,
 .Nm TAILQ_HEAD ,
+.Nm TAILQ_HEAD_INITIALIZER ,
 .Nm TAILQ_INIT ,
 .Nm TAILQ_INSERT_AFTER ,
 .Nm TAILQ_INSERT_BEFORE ,
@@ -54,6 +56,7 @@
 .Nm TAILQ_REMOVE ,
 .Nm CIRCLEQ_ENTRY ,
 .Nm CIRCLEQ_HEAD ,
+.Nm CIRCLEQ_HEAD_INITIALIZER ,
 .Nm CIRCLEQ_INIT ,
 .Nm CIRCLEQ_INSERT_AFTER ,
 .Nm CIRCLEQ_INSERT_BEFORE ,
@@ -66,6 +69,7 @@
 .sp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
+.Fn LIST_HEAD_INITIALIZER "head"
 .Fn LIST_INIT "LIST_HEAD *head"
 .Fn LIST_INSERT_AFTER "TYPE *listelm" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_INSERT_BEFORE "TYPE *listelm" "TYPE *elm" "LIST_ENTRY NAME"
@@ -74,6 +78,7 @@
 .sp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
+.Fn TAILQ_HEAD_INITIALIZER "head"
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Fn TAILQ_INSERT_AFTER "TAILQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_INSERT_BEFORE "TYPE *listelm" "TYPE *elm" "TAILQ_ENTRY NAME"
@@ -83,6 +88,7 @@
 .sp
 .Fn CIRCLEQ_ENTRY "TYPE"
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
+.Fn CIRCLEQ_HEAD_INITIALIZER "head"
 .Fn CIRCLEQ_INIT "CIRCLEQ_HEAD *head"
 .Fn CIRCLEQ_INSERT_AFTER "CIRCLEQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Fn CIRCLEQ_INSERT_BEFORE "CIRCLEQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
@@ -203,6 +209,15 @@ declares a structure that connects the elements in
 the list.
 .Pp
 The macro
+.Nm LIST_HEAD_INITIALIZER
+provides a value which can be used to initialize a list head at
+compile time, and is used at the point that the list head
+variable is declared, like:
+.Bd -literal -offset indent
+struct HEADNAME head = LIST_HEAD_INITIALIZER(head);
+.Ed
+.Pp
+The macro
 .Nm LIST_INIT
 initializes the list referenced by
 .Fa head .
@@ -298,6 +313,15 @@ The macro
 .Nm TAILQ_ENTRY
 declares a structure that connects the elements in
 the tail queue.
+.Pp
+The macro
+.Nm TAILQ_HEAD_INITIALIZER
+provides a value which can be used to initialize a tail queue head at
+compile time, and is used at the point that the tail queue head
+variable is declared, like:
+.Bd -literal -offset indent
+struct HEADNAME head = TAILQ_HEAD_INITIALIZER(head);
+.Ed
 .Pp
 The macro
 .Nm TAILQ_INIT
@@ -404,6 +428,15 @@ The macro
 .Nm CIRCLEQ_ENTRY
 declares a structure that connects the elements in
 the circular queue.
+.Pp
+The macro
+.Nm CIRCLEQ_HEAD_INITIALIZER
+provides a value which can be used to initialize a circular queue head at
+compile time, and is used at the point that the circular queue head
+variable is declared, like:
+.Bd -literal -offset indent
+struct HEADNAME head = CIRCLEQ_HEAD_INITIALIZER(head);
+.Ed
 .Pp
 The macro
 .Nm CIRCLEQ_INIT

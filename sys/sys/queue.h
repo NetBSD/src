@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
+/*	$NetBSD: queue.h,v 1.12 1996/10/01 22:45:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,6 +82,9 @@ struct name {								\
 	struct type *lh_first;	/* first element */			\
 }
 
+#define LIST_HEAD_INITIALIZER(head)					\
+	{ NULL }
+
 #define LIST_ENTRY(type)						\
 struct {								\
 	struct type *le_next;	/* next element */			\
@@ -127,11 +130,14 @@ struct {								\
 /*
  * Simple queue definitions.
  */
-#define SIMPLEQ_HEAD(name, type)						\
+#define SIMPLEQ_HEAD(name, type)					\
 struct name {								\
 	struct type *sqh_first;	/* first element */			\
 	struct type **sqh_last;	/* addr of last next element */		\
 }
+
+#define SIMPLEQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).sqh_first }
 
 #define SIMPLEQ_ENTRY(type)						\
 struct {								\
@@ -177,6 +183,9 @@ struct name {								\
 	struct type *tqh_first;	/* first element */			\
 	struct type **tqh_last;	/* addr of last next element */		\
 }
+
+#define TAILQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).tqh_first }
 
 #define TAILQ_ENTRY(type)						\
 struct {								\
@@ -243,6 +252,9 @@ struct name {								\
 	struct type *cqh_first;		/* first element */		\
 	struct type *cqh_last;		/* last element */		\
 }
+
+#define CIRCLEQ_HEAD_INITIALIZER(head)					\
+	{ (void *)&head, (void *)&head }
 
 #define CIRCLEQ_ENTRY(type)						\
 struct {								\
