@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.7 2002/05/12 21:43:23 matt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.8 2003/02/26 07:53:05 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.7 2002/05/12 21:43:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.8 2003/02/26 07:53:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -63,6 +63,11 @@ struct ddpstat	ddpstat;
 struct at_ifaddrhead at_ifaddr;		/* Here as inited in this file */
 u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
 u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
+
+#ifdef MBUFTRACE
+struct mowner atalk_rx_mowner = { "atalk", "rx" };
+struct mowner atalk_tx_mowner = { "atalk", "tx" };
+#endif
 
 /* ARGSUSED */
 int
@@ -450,6 +455,10 @@ at_pcballoc(so)
 
 	ddp->ddp_socket = so;
 	so->so_pcb = (caddr_t) ddp;
+#ifdef MBUFTRACE
+	so->so_rcv.sb_mowner = &atalk_rx_mowner;
+	so->so_snd.sb_mowner = &atalk_tx_mowner;
+#endif
 	return (0);
 }
 
@@ -549,6 +558,9 @@ ddp_init()
 	TAILQ_INIT(&at_ifaddr);
 	atintrq1.ifq_maxlen = IFQ_MAXLEN;
 	atintrq2.ifq_maxlen = IFQ_MAXLEN;
+
+	MOWNER_ATTACH(&atalk_tx_mowner);
+	MOWNER_ATTACH(&atalk_rx_mowner);
 }
 
 #if 0

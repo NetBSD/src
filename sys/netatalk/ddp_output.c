@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.5 2003/02/26 06:31:14 matt Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.6 2003/02/26 07:53:04 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.5 2003/02/26 06:31:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.6 2003/02/26 07:53:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ ddp_route(m, ro)
          */
 	if (!(aa->aa_flags & AFA_PHASE2)) {
 		m0 = m_get(M_WAIT, MT_HEADER);
+		MCLAIM(m0, m->m_owner);
 		m0->m_next = m;
 		/* XXX perhaps we ought to align the header? */
 		m0->m_len = SZ_ELAPHDR;
