@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sysconfig.h,v 1.3 2000/04/09 05:33:04 christos Exp $	 */
+/*	$NetBSD: svr4_sysconfig.h,v 1.4 2000/04/09 22:40:11 christos Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -77,9 +77,9 @@
 #define	SVR4_CONFIG_DCACHETBLKSZ	0x24
 #define	SVR4_CONFIG_ICACHE_ASSOC	0x25
 #define	SVR4_CONFIG_DCACHE_ASSOC	0x26
-#define	SVR4_CONFIG_UNUSED_2		0x27
-#define	SVR4_CONFIG_UNUSED_3		0x28
-#define	SVR4_CONFIG_UNUSED_4		0x29
+#define	SVR4_CONFIG_UNUSED_27		0x27
+#define	SVR4_CONFIG_UNUSED_28		0x28
+#define	SVR4_CONFIG_UNUSED_29		0x29
 #define	SVR4_CONFIG_MAXPID		0x2a
 #define	SVR4_CONFIG_STACK_PROT		0x2b
 
