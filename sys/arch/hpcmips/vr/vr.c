@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.10 1999/12/16 13:09:02 shin Exp $	*/
+/*	$NetBSD: vr.c,v 1.11 2000/01/28 15:08:38 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -52,6 +52,7 @@
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
