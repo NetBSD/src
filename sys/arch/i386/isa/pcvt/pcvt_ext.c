@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.10 1995/08/27 20:59:00 fvdl Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.11 1995/08/30 00:29:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2193,6 +2193,27 @@ pcvt_x_hook(int tografx)
 	}
 }
 
+void
+kbd_setmode(mode)
+	int mode;
+{
+#if PCVT_SCANSET == 2
+	unsigned char cmd;
+
+#if PCVT_USEKBDSEC
+	cmd = COMMAND_SYSFLG | COMMAND_IRQEN;
+#else
+	cmd = COMMAND_INHOVR | COMMAND_SYSFLG | COMMAND_IRQEN;
+#endif /* PCVT_USEKBDSEC */
+	if (mode == K_RAW)
+		cmd |= COMMAND_PCSCAN;
+	kbc_8042cmd(CONTR_WRITE); 
+	outb(CONTROLLER_DATA, cmd);
+#endif /* PCVT_SCANSET == 2 */
+	if (mode == K_RAW)
+		shift_down = meta_down = altgr_down = ctrl_down = 0;
+}
+
 /*---------------------------------------------------------------------------*
  *	switch to virtual screen n (0 ... PCVT_NSCREENS-1), VT_USL version
  *	(the name vgapage() stands for historical reasons)
@@ -2284,7 +2305,8 @@ vgapage(int new_screen)
 int
 usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int i, j, error;
+	int i, j, error, mode;
+	struct video_state *vsx = &vs[minor(dev)];
 
 	switch(cmd)
 	{
@@ -2456,7 +2478,6 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case KDSETMODE:
 	{
-		struct video_state *vsx = &vs[minor(dev)];
 		int haschanged = 0;
 			
 		if(adaptor_type != VGA_ADAPTOR
@@ -2490,37 +2511,14 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return kbdioctl(dev, KBDSTPMAT, data, flag);
 
 	case KDSKBMODE:
-		switch(*(int *)data)
+		mode = *(int *)data;
+		switch(mode)
 		{
 		case K_RAW:
-
-#if PCVT_SCANSET == 2
-			/* put keyboard to return ancient PC scan codes */
-			kbc_8042cmd(CONTR_WRITE); 
-			outb(CONTROLLER_DATA,
-#if PCVT_USEKBDSEC		/* security enabled */
-		(COMMAND_SYSFLG|COMMAND_IRQEN|COMMAND_PCSCAN));
-#else				/* no security */
-		(COMMAND_INHOVR|COMMAND_SYSFLG|COMMAND_IRQEN|COMMAND_PCSCAN));
-#endif /* PCVT_USEKBDSEC */
-#endif /* PCVT_SCANSET == 2 */
-
-			pcvt_kbd_raw = 1;
-			shift_down = meta_down = altgr_down = ctrl_down = 0;
-			return 0;
-
 		case K_XLATE:
-#if PCVT_SCANSET == 2
-			kbc_8042cmd(CONTR_WRITE); 
-			outb(CONTROLLER_DATA,
-#if PCVT_USEKBDSEC		/* security enabled */
-			     (COMMAND_SYSFLG|COMMAND_IRQEN));
-#else				/* no security */
-			     (COMMAND_INHOVR|COMMAND_SYSFLG|COMMAND_IRQEN));
-#endif /* PCVT_USEKBDSEC */
-#endif /* PCVT_SCANSET == 2 */
-
-			pcvt_kbd_raw = 0;
+			if (vsx == vsp && vsx->kbd_state != mode)
+				kbd_setmode(mode);
+			vsx->kbd_state = mode;
 			return 0;
 		}
 		return EINVAL;	/* end KDSKBMODE */

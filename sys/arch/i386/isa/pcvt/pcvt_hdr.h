@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.18 1995/06/28 04:31:01 cgd Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.19 1995/08/30 00:29:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1177,6 +1177,7 @@ typedef struct video_state {
 	struct proc *proc;
 	pid_t pid;
 	unsigned vt_status;
+	int kbd_state;
 #define	VT_WAIT_REL 1			/* wait till process released vt */
 #define VT_WAIT_ACK 2			/* wait till process ack vt acquire */
 #define VT_GRAFX    4			/* vt runs graphics mode */
@@ -1500,6 +1501,7 @@ void	switch_screen ( int n, int dontsave );
 int	usl_vt_ioctl (Dev_t dev, u_long cmd, caddr_t data, int flag,
 		      struct proc *);
 int	vt_activate ( int newscreen );
+void	kbd_setmode(int mode);
 int	vgapage ( int n );
 void	get_usl_keymap( keymap_t *map );
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_out.c,v 1.7 1995/06/02 02:48:46 brezak Exp $	*/
+/*	$NetBSD: pcvt_out.c,v 1.8 1995/08/30 00:29:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1172,6 +1172,7 @@ vt_coldinit(void)
 		svsp->smode.relsig = svsp->smode.acqsig =
 			svsp->smode.frsig = 0;
 		svsp->proc = 0;
+		svsp->kbd_state = K_XLATE;
 		svsp->pid = svsp->vt_status = 0;
 #endif /* PCVT_USL_VT_COMPAT */
 

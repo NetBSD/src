@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.7 1995/06/02 02:48:44 brezak Exp $	*/
+/*	$NetBSD: pcvt_kbd.c,v 1.8 1995/08/30 00:29:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -1106,7 +1106,11 @@ loop:
 		 * been fixed. We need not care about any keys here, since
 		 * there are ioctls that deal with the lock key / LED stuff.
 		 */
+#if PCVT_USL_VT_COMPAT
+		if (vsp->kbd_state == K_RAW)
+#else
 		if (pcvt_kbd_raw)
+#endif
 		{
 			keybuf[0] = dt;
 #if !PCVT_USL_VT_COMPAT
@@ -1115,7 +1119,8 @@ loop:
 				switch(dt)
 				{
 				case 0x45:
-					/* XXX on which virt screen? */					vsp->num_lock ^= 1;
+					/* XXX on which virt screen? */
+					vsp->num_lock ^= 1;
 					update_led();
 					break;
 
