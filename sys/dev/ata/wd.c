@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.283 2004/08/03 22:03:46 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.284 2004/08/03 22:37:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.283 2004/08/03 22:03:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.284 2004/08/03 22:37:19 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -461,6 +461,7 @@ wddetach(struct device *self, int flags)
 #endif
 
 	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
+	sc->drvp->drive_flags = 0; /* no drive any more here */
 
 	return (0);
 }
