@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132.2.1 2000/07/26 22:46:37 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.132.2.2 2001/04/22 17:59:57 he Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4866,6 +4866,15 @@ ENTRY(snapshot)
  * and when returning a child to user mode after a fork(2).
  */
 ENTRY(proc_trampoline)
+
+	/* Reset interrupt level */
+	rd	%psr, %o0
+	andn	%o0, PSR_PIL, %o0	! psr &= ~PSR_PIL;
+	wr	%o0, 0, %psr		! (void) spl0();
+	 nop				! psr delay; the next 2 instructions
+					! can safely be made part of the
+					! required 3 instructions psr delay
+
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
 
