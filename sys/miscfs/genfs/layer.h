@@ -1,10 +1,10 @@
-/*	$NetBSD: null.h,v 1.10 1999/07/08 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: layer.h,v 1.1 1999/07/08 01:18:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
- * This software was written by William Studnemund of the
+ * This software was written by William Studenmund of the
  * Numerical Aerospace Similation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,57 +72,96 @@
  *	@(#)null.h	8.2 (Berkeley) 1/21/94
  */
 
-#include <miscfs/genfs/layer.h>
+#ifndef _MISCFS_GENFS_LAYER_H_
+#define _MISCFS_GENFS_LAYER_H_
 
-struct null_args {
-	struct	layer_args	la;	/* generic layerfs args */
+struct layer_args {
+	char	*target;		/* Target of loopback  */
+	struct	export_args	export;	/* network export info */
 };
-#define	nulla_target	la.target
-#define	nulla_export	la.export
 
 #ifdef _KERNEL
-struct null_mount {
-	struct	layer_mount	lm;	/* generic layerfs mount stuff */
+
+struct layer_node;
+
+LIST_HEAD(layer_node_hashhead, layer_node);
+
+struct layer_mount {
+	struct mount		*layerm_vfs;
+	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
+	struct netexport	layerm_export;	/* export info */
+	u_int			layerm_flags;	/* mount point layer flags */
+	u_int			layerm_size;	/* size of fs's struct node */
+	enum vtype		layerm_tag;	/* vtag of our vnodes */
+	int				/* bypass routine for this mount */
+				(*layerm_bypass) __P((void *));
+	int			(*layerm_alloc)	/* alloc a new layer node */
+				__P((struct mount *, struct vnode *,
+						struct vnode **));
+	int			(**layerm_vnodeop_p)	/* ops for our nodes */
+				__P((void *));
+	struct layer_node_hashhead	/* head of hash list for layer_nodes */
+				*layerm_node_hashtbl;
+	u_long			layerm_node_hash; /* hash mask for hash chain */
+	struct simplelock	layerm_hashlock; /* interlock for hash chain. */
 };
-#define	nullm_vfs		lm.layerm_vfs
-#define	nullm_rootvp		lm.layerm_rootvp
-#define	nullm_export		lm.layerm_export
-#define	nullm_flags		lm.layerm_flags
-#define	nullm_size		lm.layerm_size
-#define	nullm_tag		lm.layerm_tag
-#define	nullm_bypass		lm.layerm_bypass
-#define	nullm_alloc		lm.layerm_alloc
-#define	nullm_vnodeop_p		lm.layerm_vnodeop_p
-#define	nullm_node_hashtbl	lm.layerm_node_hashtbl
-#define	nullm_node_hash		lm.layerm_node_hash
-#define	nullm_hashlock		lm.layerm_hashlock
+
+#define	LAYERFS_MFLAGS		0x00000fff	/* reserved layer mount flags */
+#define	LAYERFS_MBYPASSDEBUG	0x00000001
 
 /*
  * A cache of vnode references
  */
-struct null_node {
-	struct	layer_node	ln;
+struct layer_node {
+	LIST_ENTRY(layer_node)	layer_hash;	/* Hash list */
+	struct vnode	        *layer_lowervp;	/* VREFed once */
+	struct vnode		*layer_vnode;	/* Back pointer */
+	unsigned int		layer_flags;	/* locking, etc. */
 };
-#define	null_hash	ln.layer_hash
-#define	null_lowervp	ln.layer_lowervp
-#define	null_vnode	ln.layer_vnode
-#define	null_flags	ln.layer_flags
 
-int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
+#define	LAYERFS_RESFLAGS	0x00000fff	/* flags reserved for layerfs */
 
-#define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
-#define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
-#define	NULLTOV(xp) ((xp)->null_vnode)
-#ifdef NULLFS_DIAGNOSTIC
+/*
+ * The following macros handle upperfs-specific locking. They are needed
+ * when the lowerfs does not export a struct lock for locking use by the
+ * upper layers. These macros are inteded for adjusting the upperfs
+ * struct lock to reflect changes in the underlying vnode's lock state.
+ */
+#define	LAYERFS_UPPERLOCK(v, f, r)	do { \
+	if ((v)->v_vnlock == NULL) \
+		r = lockmgr(&(v)->v_lock, (f), &(v)->v_interlock); \
+	else \
+		r = 0; \
+	} while (0)
+
+#define	LAYERFS_UPPERUNLOCK(v, f, r)	do { \
+	if ((v)->v_vnlock == NULL) \
+	    r = lockmgr(&(v)->v_lock, (f) | LK_RELEASE, &(v)->v_interlock); \
+	else \
+		r = 0; \
+	} while (0)
+
+#define	LAYERFS_UPPERISLOCKED(v, r)	do { \
+	if ((v)->v_vnlock == NULL) \
+		r = lockstatus(&(v)->v_lock); \
+	else \
+		r = -1; \
+	} while (0)
+
+#define	LAYERFS_DO_BYPASS(vp, ap)	\
+	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))
+
+extern int layer_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
 extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
-#define	NULLVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
+
+#define	MOUNTTOLAYERMOUNT(mp) ((struct layer_mount *)((mp)->mnt_data))
+#define	VTOLAYER(vp) ((struct layer_node *)(vp)->v_data)
+#define	LAYERTOV(xp) ((xp)->layer_vnode)
+#ifdef LAYERFS_DIAGNOSTIC
+#define	LAYERVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
-#define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
+#define	LAYERVPTOLOWERVP(vp) (VTOLAYER(vp)->layer_lowervp)
 #endif
 
-extern int (**null_vnodeop_p) __P((void *));
-extern struct vfsops nullfs_vfsops;
-
-void nullfs_init __P((void));
-
 #endif /* _KERNEL */
+#endif /* _MISCFS_GENFS_LAYER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.14 1999/05/17 20:29:05 wrstuden Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.15 1999/07/08 01:19:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,22 +53,13 @@
 #include <sys/buf.h>
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/layer_extern.h>
 
 
-int umap_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
-
-int	umap_bypass	__P((void *));
+int	umap_lookup	__P((void *));
 int	umap_getattr	__P((void *));
-int	umap_inactive	__P((void *));
-int	umap_reclaim	__P((void *));
 int	umap_print	__P((void *));
 int	umap_rename	__P((void *));
-int	umap_strategy	__P((void *));
-int	umap_bwrite	__P((void *));
-int	umap_lock	__P((void *));
-int	umap_unlock	__P((void *));
-int	umap_open	__P((void *));
-int	umap_fsync	__P((void *));
 
 /*
  * Global vfs data structures
@@ -80,22 +71,26 @@ int	umap_fsync	__P((void *));
  */
 int (**umap_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
-	{ &vop_default_desc, umap_bypass },
+	{ &vop_default_desc,	umap_bypass },
 
-	{ &vop_getattr_desc, umap_getattr },
-	{ &vop_lock_desc, umap_lock },
-	{ &vop_unlock_desc, umap_unlock },
-	{ &vop_fsync_desc, umap_fsync },
-	{ &vop_inactive_desc, umap_inactive },
-	{ &vop_reclaim_desc, umap_reclaim },
-	{ &vop_print_desc, umap_print },
+	{ &vop_lookup_desc,	umap_lookup },
+	{ &vop_getattr_desc,	umap_getattr },
+	{ &vop_print_desc,	umap_print },
+	{ &vop_rename_desc,	umap_rename },
 
-	{ &vop_open_desc, umap_open }, /* mount option handling */
+	{ &vop_lock_desc,	layer_lock },
+	{ &vop_unlock_desc,	layer_unlock },
+	{ &vop_islocked_desc,	layer_islocked },
+	{ &vop_fsync_desc,	layer_fsync },
+	{ &vop_inactive_desc,	layer_inactive },
+	{ &vop_reclaim_desc,	layer_reclaim },
+	{ &vop_open_desc,	layer_open },
+	{ &vop_setattr_desc,	layer_setattr },
+	{ &vop_access_desc,	layer_access },
 
-	{ &vop_rename_desc, umap_rename },
-
-	{ &vop_strategy_desc, umap_strategy },
-	{ &vop_bwrite_desc, umap_bwrite },
+	{ &vop_strategy_desc,	layer_strategy },
+	{ &vop_bwrite_desc,	layer_bwrite },
+	{ &vop_bmap_desc,	layer_bmap },
 
 	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
 };
@@ -103,8 +98,8 @@ struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };
 
 /*
- * This is the 10-Apr-92 bypass routine.
- * See null_vnops.c:null_bypass for more details.
+ * This is the 08-June-1999 bypass routine.
+ * See layer_vnops.c:layer_bypass for more details.
  */ 
 int
 umap_bypass(v)
@@ -118,17 +113,14 @@ umap_bypass(v)
 	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;
 	struct vnode **this_vp_p;
-	int error;
-	struct vnode *old_vps[VDESC_MAX_VPS];
-	struct vnode *vp1 = 0;
+	int error, error1;
+	int (**our_vnodeop_p) __P((void *));
+	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
 	struct vnode ***vppp;
 	struct vnodeop_desc *descp = ap->a_desc;
-	int reles, i;
+	int reles, i, flags;
 	struct componentname **compnamepp = 0;
-
-	if (umap_bug_bypass)
-		printf("umap_bypass: %s\n", descp->vdesc_name);
 
 #ifdef SAFETY
 	/*
@@ -138,6 +130,14 @@ umap_bypass(v)
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
 		panic ("umap_bypass: no vp's in map.\n");
 #endif
+	vps_p[0] = VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[0],
+				ap);
+	vp0 = *vps_p[0];
+	flags = MOUNTTOUMAPMOUNT(vp0->v_mount)->umapm_flags;
+	our_vnodeop_p = vp0->v_op;
+
+	if (flags & LAYERFS_MBYPASSDEBUG)
+		printf("umap_bypass: %s\n", descp->vdesc_name);
 
 	/*
 	 * Map the vnodes going in.
@@ -151,17 +151,14 @@ umap_bypass(v)
 		vps_p[i] = this_vp_p = 
 			VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[i], ap);
 
-		if (i == 0) {
-			vp1 = *vps_p[0];
-		}
-
 		/*
 		 * We're not guaranteed that any but the first vnode
 		 * are of our type.  Check for and don't map any
 		 * that aren't.  (Must map first vp or vclean fails.)
 		 */
 
-		if (i && ((*this_vp_p)==NULL || (*this_vp_p)->v_op != umap_vnodeop_p)) {
+		if (i && ((*this_vp_p)==NULL ||
+		    (*this_vp_p)->v_op != our_vnodeop_p)) {
 			old_vps[i] = NULL;
 		} else {
 			old_vps[i] = *this_vp_p;
@@ -188,15 +185,15 @@ umap_bypass(v)
 			*credpp = crdup(savecredp);
 		credp = *credpp;
 
-		if (umap_bug_bypass && credp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && credp->cr_uid != 0)
 			printf("umap_bypass: user was %d, group %d\n", 
 			    credp->cr_uid, credp->cr_gid);
 
 		/* Map all ids in the credential structure. */
 
-		umap_mapids(vp1->v_mount, credp);
+		umap_mapids(vp0->v_mount, credp);
 
-		if (umap_bug_bypass && credp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && credp->cr_uid != 0)
 			printf("umap_bypass: user now %d, group %d\n", 
 			    credp->cr_uid, credp->cr_gid);
 	}
@@ -215,15 +212,15 @@ umap_bypass(v)
 			(*compnamepp)->cn_cred = crdup(savecompcredp);
 		compcredp = (*compnamepp)->cn_cred;
 
-		if (umap_bug_bypass && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
 			printf("umap_bypass: component credit user was %d, group %d\n", 
 			    compcredp->cr_uid, compcredp->cr_gid);
 
 		/* Map all ids in the credential structure. */
 
-		umap_mapids(vp1->v_mount, compcredp);
+		umap_mapids(vp0->v_mount, compcredp);
 
-		if (umap_bug_bypass && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
 			printf("umap_bypass: component credit user now %d, group %d\n", 
 			    compcredp->cr_uid, compcredp->cr_gid);
 	}
@@ -245,7 +242,9 @@ umap_bypass(v)
 			break;   /* bail out at end of list */
 		if (old_vps[i]) {
 			*(vps_p[i]) = old_vps[i];
-			if (reles & 1)
+			if (reles & VDESC_VP0_WILLUNLOCK)
+				LAYERFS_UPPERUNLOCK(*(vps_p[i]), 0, error1);
+			if (reles & VDESC_VP0_WILLRELE)
 				vrele(*(vps_p[i]));
 		};
 	};
@@ -262,7 +261,7 @@ umap_bypass(v)
 			goto out;
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
-		error = umap_node_create(old_vps[0]->v_mount, **vppp, *vppp);
+		error = layer_node_create(old_vps[0]->v_mount, **vppp, *vppp);
 	};
 
  out:
@@ -270,28 +269,32 @@ umap_bypass(v)
 	 * Free duplicate cred structure and restore old one.
 	 */
 	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
-		if (umap_bug_bypass && credp && credp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && credp &&
+					credp->cr_uid != 0)
 			printf("umap_bypass: returning-user was %d\n",
 			    credp->cr_uid);
 
 		if (savecredp != NOCRED) {
 			crfree(credp);
 			*credpp = savecredp;
-			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
+					(*credpp)->cr_uid != 0)
 			 	printf("umap_bypass: returning-user now %d\n\n", 
 				    savecredp->cr_uid);
 		}
 	}
 
 	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
-		if (umap_bug_bypass && compcredp && compcredp->cr_uid != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
+					compcredp->cr_uid != 0)
 			printf("umap_bypass: returning-component-user was %d\n", 
 			    compcredp->cr_uid);
 
 		if (savecompcredp != NOCRED) {
 			crfree(compcredp);
 			(*compnamepp)->cn_cred = savecompcredp;
-			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+			if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
+					savecompcredp->cr_uid != 0)
 			 	printf("umap_bypass: returning-component-user now %d\n", 
 				    savecompcredp->cr_uid);
 		}
@@ -301,69 +304,101 @@ umap_bypass(v)
 }
 
 /*
- * We need to process our own vnode lock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
+ * This is based on the 08-June-1999 bypass routine.
+ * See layer_vnops.c:layer_bypass for more details.
+ */ 
 int
-umap_lock(v)
+umap_lookup(v)
 	void *v;
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
+	struct vop_lookup_args /* {
+		struct vnodeop_desc *a_desc;
+		struct vnode * a_dvp;
+		struct vnode ** a_vpp;
+		struct componentname * a_cnp;
 	} */ *ap = v;
+	struct componentname *cnp = ap->a_cnp;
+	struct ucred *savecompcredp = NULL;
+	struct ucred *compcredp = NULL;
+	struct vnode *dvp, *vp, *ldvp;
+	struct mount *mp;
+	int error;
+	int i, flags, cnf = cnp->cn_flags;
 
-	genfs_nolock(ap);
-	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
-		return (0);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (umap_bypass(ap));
-}
+	dvp = ap->a_dvp;
+	mp = dvp->v_mount;
 
-/*
- * We need to process our own vnode unlock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
-int
-umap_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
+	if ((cnf & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+		(cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
 
-	genfs_nounlock(ap);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (umap_bypass(ap));
-}
+	flags = MOUNTTOUMAPMOUNT(mp)->umapm_flags;
+	ldvp = UMAPVPTOLOWERVP(dvp);
 
-/*
- * If vinvalbuf is calling us, it's a "shallow fsync" -- don't bother
- * syncing the underlying vnodes, since (a) they'll be fsync'ed when
- * reclaimed and (b) we could deadlock if they're locked; otherwise,
- * pass it through to the underlying layer.
- */
+	if (flags & LAYERFS_MBYPASSDEBUG)
+		printf("umap_lookup\n");
 
-int
-umap_fsync(v)
-	void *v;
-{
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int  a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
+	/*
+	 * Fix the credentials.  (That's the purpose of this layer.)
+	 *
+	 * BSD often keeps a credential in the componentname structure
+	 * for speed.  If there is one, it better get mapped, too. 
+	 */
 
-	if (ap->a_flags & FSYNC_RECLAIM)
-		return 0;
+	if ((savecompcredp = cnp->cn_cred)) {
+		compcredp = crdup(savecompcredp);
+		cnp->cn_cred = compcredp;
 
-	return (umap_bypass(ap));
+		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+			printf("umap_lookup: component credit user was %d, group %d\n", 
+			    compcredp->cr_uid, compcredp->cr_gid);
+
+		/* Map all ids in the credential structure. */
+		umap_mapids(mp, compcredp);
+	}
+
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+		printf("umap_lookup: component credit user now %d, group %d\n", 
+		    compcredp->cr_uid, compcredp->cr_gid);
+
+	ap->a_dvp = ldvp;
+	error = VCALL(ldvp, ap->a_desc->vdesc_offset, ap);
+
+	if (error == EJUSTRETURN && (cnf & ISLASTCN) &&
+	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME))
+		error = EROFS;
+
+	/* Do locking fixup as appropriate. See layer_lookup() for info */
+	if ((cnp->cn_flags & PDIRUNLOCK)) {
+		LAYERFS_UPPERUNLOCK(dvp, 0, i);
+	}
+	if (ldvp == vp) {
+		*ap->a_vpp = dvp;
+		VREF(dvp);
+		vrele(vp);
+	} else if (vp != NULL) {
+		error = layer_node_create(mp, vp, ap->a_vpp);
+	}
+
+	/* 
+	 * Free duplicate cred structure and restore old one.
+	 */
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
+					compcredp->cr_uid != 0)
+		printf("umap_lookup: returning-component-user was %d\n", 
+			    compcredp->cr_uid);
+
+	if (savecompcredp != NOCRED) {
+		crfree(compcredp);
+		cnp->cn_cred = savecompcredp;
+		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
+				savecompcredp->cr_uid != 0)
+		 	printf("umap_lookup: returning-component-user now %d\n", 
+			    savecompcredp->cr_uid);
+	}
+
+	return (error);
 }
 
 /*
@@ -381,7 +416,7 @@ umap_getattr(v)
 	} */ *ap = v;
 	uid_t uid;
 	gid_t gid;
-	int error, tmpid, nentries, gnentries;
+	int error, tmpid, nentries, gnentries, flags;
 	u_long (*mapdata)[2];
 	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
@@ -392,6 +427,7 @@ umap_getattr(v)
 	/* Requires that arguments be restored. */
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
 
+	flags = MOUNTTOUMAPMOUNT(ap->a_vp->v_mount)->umapm_flags;
 	/*
 	 * Umap needs to map the uid and gid returned by a stat
 	 * into the proper values for this site.  This involves
@@ -407,7 +443,7 @@ umap_getattr(v)
 
 	uid = ap->a_vap->va_uid;
 	gid = ap->a_vap->va_gid;
-	if (umap_bug_bypass)
+	if ((flags & LAYERFS_MBYPASSDEBUG))
 		printf("umap_getattr: mapped uid = %d, mapped gid = %d\n", uid, 
 		    gid);
 
@@ -424,7 +460,7 @@ umap_getattr(v)
 
 	if (tmpid != -1) {
 		ap->a_vap->va_uid = (uid_t) tmpid;
-		if (umap_bug_bypass)
+		if ((flags & LAYERFS_MBYPASSDEBUG))
 			printf("umap_getattr: original uid = %d\n", uid);
 	} else 
 		ap->a_vap->va_uid = (uid_t) NOBODY;
@@ -435,115 +471,13 @@ umap_getattr(v)
 
 	if (tmpid != -1) {
 		ap->a_vap->va_gid = (gid_t) tmpid;
-		if (umap_bug_bypass)
+		if ((flags & LAYERFS_MBYPASSDEBUG))
 			printf("umap_getattr: original gid = %d\n", gid);
 	} else
 		ap->a_vap->va_gid = (gid_t) NULLGROUP;
 	
 	return (0);
 }
-
-/* 
- * We must handle open to be able to catch MNT_NODEV and friends.
- */   
-int
-umap_open(v)
-        void *v;
-{
-        struct vop_open_args *ap = v;
-        struct vnode *vp = ap->a_vp;
-        enum vtype lower_type = UMAPVPTOLOWERVP(vp)->v_type;
-
-
-        if (((lower_type == VBLK) || (lower_type == VCHR)) &&
-            (vp->v_mount->mnt_flag & MNT_NODEV))
-                return ENXIO;
-
-        return umap_bypass(ap);
-}
-
-/*ARGSUSED*/
-int
-umap_inactive(v)
-	void *v;
-{
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
-	/*
-	 * Do nothing (and _don't_ bypass).
-	 * Wait to vrele lowervp until reclaim,
-	 * so that until then our umap_node is in the
-	 * cache and reusable.
-	 *
-	 */
-	VOP_UNLOCK(ap->a_vp, 0);
-	return (0);
-}
-
-int
-umap_reclaim(v)
-	void *v;
-{
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct umap_node *xp = VTOUMAP(vp);
-	struct vnode *lowervp = xp->umap_lowervp;
-	
-	/* After this assignment, this node will not be re-used. */
-	xp->umap_lowervp = NULL;
-	LIST_REMOVE(xp, umap_hash);
-	FREE(vp->v_data, M_TEMP);
-	vp->v_data = NULL;
-	vrele(lowervp);
-	return (0);
-}
-
-int
-umap_strategy(v)
-	void *v;
-{
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = UMAPVPTOLOWERVP(bp->b_vp);
-
-	error = VOP_STRATEGY(ap->a_bp);
-
-	bp->b_vp = savedvp;
-
-	return (error);
-}
-
-int
-umap_bwrite(v)
-	void *v;
-{
-	struct vop_bwrite_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = UMAPVPTOLOWERVP(bp->b_vp);
-
-	error = VOP_BWRITE(ap->a_bp);
-
-	bp->b_vp = savedvp;
-
-	return (error);
-}
-
 
 int
 umap_print(v)
@@ -570,7 +504,7 @@ umap_rename(v)
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
 	} */ *ap = v;
-	int error;
+	int error, flags;
 	struct componentname *compnamep;
 	struct ucred *compcredp, *savecompcredp;
 	struct vnode *vp;
@@ -582,13 +516,14 @@ umap_rename(v)
 	 */
 
 	vp = ap->a_fdvp;
+	flags = MOUNTTOUMAPMOUNT(vp->v_mount)->umapm_flags;
 	compnamep = ap->a_tcnp;
 	compcredp = compnamep->cn_cred;
 
 	savecompcredp = compcredp;
 	compcredp = compnamep->cn_cred = crdup(savecompcredp);
 
-	if (umap_bug_bypass && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
 		printf("umap_rename: rename component credit user was %d, group %d\n", 
 		    compcredp->cr_uid, compcredp->cr_gid);
 
@@ -596,7 +531,7 @@ umap_rename(v)
 
 	umap_mapids(vp->v_mount, compcredp);
 
-	if (umap_bug_bypass && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
 		printf("umap_rename: rename component credit user now %d, group %d\n", 
 		    compcredp->cr_uid, compcredp->cr_gid);
 
