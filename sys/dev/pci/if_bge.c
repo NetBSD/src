@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.54 2003/11/11 22:28:58 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.55 2003/12/08 17:09:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.54 2003/11/11 22:28:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.55 2003/12/08 17:09:39 pooka Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1740,6 +1740,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A2" },
 
+	{ BGE_CHIPID_BCM5703_A3,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5703 A3" },
+
 	{ BGE_CHIPID_BCM5704_A0,
   	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
 	  "BCM5704 A0" },
@@ -1880,6 +1884,10 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5703X,
 	  "Broadcom BCM5703X Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5703A3,
+	  "Broadcom BCM5703A3 Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2164,7 +2172,7 @@ bge_attach(parent, self, aux)
 		aprint_normal("unknown ASIC 0x%08x", sc->bge_chipid);
 		sc->bge_quirks = 0;
 	} else {
-		aprint_normal("ASIC %s", br->br_name);
+		aprint_normal("ASIC %s (0x%x)", br->br_name, sc->bge_chipid);
 		sc->bge_quirks |= br->br_quirks;
 	}
 	aprint_normal(", Ethernet address %s\n", ether_sprintf(eaddr));
