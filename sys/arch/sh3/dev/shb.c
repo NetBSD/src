@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.4 2002/09/27 20:35:25 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.5 2002/10/01 21:24:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,9 +44,8 @@ void shb_attach(struct device *, struct device *, void *);
 int shb_print(void *, const char *);
 int shb_search(struct device *, struct cfdata *, void *);
 
-const struct cfattach shb_ca = {
-	sizeof(struct device), shb_match, shb_attach
-};
+CFATTACH_DECL(shb, sizeof(struct device),
+    shb_match, shb_attach, NULL, NULL)
 
 int
 shb_match(struct device *parent, struct cfdata *cf, void *aux)
