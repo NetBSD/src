@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.84 2004/04/17 08:24:37 grant Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.85 2004/04/20 06:22:39 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -588,3 +588,30 @@ sys/arch/i386/i386/pmc.c			patch
 
 	fix local panic DoS when running pmc(1) on a P4. PR#25014.
 	[mrg, ticket #1672]
+
+usr.sbin/pkg_install/add/verify.c		1.5
+
+	Fix signature verification after pkg_add and friends were changed to
+	use fexec() - trying to exec "gpg --verify %s" won't work with fexec,
+	so split up the command into separate words.
+	[agc, ticket #1673]
+
+sys/arch/macppc/conf/INSTALL			1.67
+
+	Add gem and brgphy so we have ethernet on the PowerBook G4 DVI.
+	[kristerw, ticket #1674]
+
+sys/arch/macppc/conf/INSTALL			1.75
+
+	Add the wsmux pseudo-device.  This will make the adb keyboard work
+	even if the heuristics in the console attachment code fail to
+	identify the keyboard type.
+	This should fix PR 22317 and part of PR 24778.
+	[kristerw, ticket #1676]
+
+sys/sys/cdefs.h					1.50
+
+	Trim leading whitespace from an #error, shuts up warning from
+	makedepend.
+	[kleink, ticket #1677]
+
