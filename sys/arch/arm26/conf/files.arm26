@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.21 2001/02/25 18:28:27 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.22 2001/03/04 14:38:29 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -206,7 +206,7 @@ major	{ md = 1 }
 # Other files
 #
 
-file	dev/cons.c
+#file	dev/cons.c
 file	dev/cninit.c
 
 file	arch/arm26/arm26/db_interface.c		ddb
