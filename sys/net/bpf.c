@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.32.4.1 1997/02/07 18:06:53 is Exp $	*/
+/*	$NetBSD: bpf.c,v 1.32.4.2 1997/03/09 20:58:59 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -75,7 +75,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_arc.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 /*
  * Older BSDs don't have kernel malloc.

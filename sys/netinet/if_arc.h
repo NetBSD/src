@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.5.8.1 1997/02/08 16:17:47 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.5.8.2 1997/03/09 20:54:05 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -97,7 +97,6 @@ struct	arc_header {
 
 struct	arccom {
 	struct 	  ifnet ac_if;		/* network-visible interface */
-	struct	  in_addr ac_ipaddr;	/* copy of ip address- XXX */
 
 	u_int16_t ac_seqid;		/* seq. id used by PHDS encap. */
 

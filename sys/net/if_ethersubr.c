@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.21.4.4 1997/02/18 13:27:42 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.21.4.5 1997/03/09 20:59:03 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -61,7 +61,7 @@
 #ifdef INET
 #include <netinet/in_var.h>
 #endif
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #ifdef NS
 #include <netns/ns.h>
