@@ -199,7 +199,9 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 "
 
 /* Default is hard float, which doesn't define anything */
+#ifndef CPP_FLOAT_DEFAULT_SPEC
 #define CPP_FLOAT_DEFAULT_SPEC ""
+#endif
 
 #define CPP_ENDIAN_SPEC "\
 %{mbig-endian: \
@@ -210,7 +212,9 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 "
 
 /* Default is little endian, which doesn't define anything. */
+#ifndef CPP_ENDIAN_DEFAULT_SPEC
 #define CPP_ENDIAN_DEFAULT_SPEC ""
+#endif
 
 #define CC1_SPEC ""
 

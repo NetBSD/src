@@ -163,6 +163,15 @@ do {									 \
 #define TARGET_DEFAULT (ARM_FLAG_SOFT_FLOAT | ARM_FLAG_APCS_32)
 #endif
 
+/* Set CPP macros to reflect TARGET_DEFAULT */
+#ifndef CPP_FLOAT_DEFAULT_SPEC
+#define CPP_FLOAT_DEFAULT_SPEC "-D__SOFTFP__"
+#endif
+
+#ifndef CPP_APCS_PC_DEFAULT_SPEC
+#define CPP_APCS_PC_DEFAULT_SPEC "-D__APCS_32__"
+#endif
+
 #ifndef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS { "mlittle-endian", "msoft-float", "mapcs-32", "mno-thumb-interwork" }
 #endif
@@ -350,5 +359,51 @@ do {						\
 /* Align output to a power of two.  */
 #define ASM_OUTPUT_ALIGN(STREAM, POWER)  \
    fprintf (STREAM, "\t.align\t%d\n", POWER)
+
+/* following ripped from elfos.h */
+/* Switch into a generic section.
+   This is currently only used to support section attributes.  */
+
+#define ASM_OUTPUT_SECTION_NAME(FILE, DECL, NAME, RELOC)		\
+do {									\
+  static struct section_info						\
+    {									\
+      struct section_info *next;				        \
+      char *name;						        \
+      enum sect_enum {SECT_RW, SECT_RO, SECT_EXEC} type;		\
+    } *sections;							\
+  struct section_info *s;						\
+  char *mode;								\
+  enum sect_enum type;							\
+									\
+  for (s = sections; s; s = s->next)					\
+    if (!strcmp (NAME, s->name))					\
+      break;								\
+									\
+  if (DECL && TREE_CODE (DECL) == FUNCTION_DECL)			\
+    type = SECT_EXEC, mode = "ax";					\
+  else if (DECL && DECL_READONLY_SECTION (DECL, RELOC))			\
+    type = SECT_RO, mode = "a";						\
+  else									\
+    type = SECT_RW, mode = "aw";					\
+									\
+  if (s == 0)								\
+    {									\
+      s = (struct section_info *) xmalloc (sizeof (struct section_info));  \
+      s->name = xmalloc ((strlen (NAME) + 1) * sizeof (*NAME));		\
+      strcpy (s->name, NAME);						\
+      s->type = type;							\
+      s->next = sections;						\
+      sections = s;							\
+      fprintf (FILE, ".section\t%s,\"%s\",@progbits\n", NAME, mode);	\
+    }									\
+  else									\
+    {									\
+      if (DECL && s->type != type)					\
+	error_with_decl (DECL, "%s causes a section type conflict");	\
+									\
+      fprintf (FILE, ".section\t%s\n", NAME);				\
+    }									\
+} while (0)
 
 #include "arm/aout.h"
