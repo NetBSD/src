@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 1999/07/20 22:25:19 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 1999/08/10 21:08:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,7 @@
  * referenced in generic code
  */
 #define	cpu_swapin(p)			/* nothing */
+#define	cpu_number()			0
 
 /*
  * Arguments to hardclock, softclock and statclock
