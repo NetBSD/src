@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.2 2000/03/04 00:22:37 matt Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.3 2000/03/07 00:07:16 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ vsbus_dma_init(sc)
 	}
 	printf("%s: 32K entry DMA SGMAP at PA 0x%lx (VA %p)\n",
 		sc->sc_dev.dv_xname, segs->ds_addr, pte);
+	memset(pte, 0, 0x20000);
 	vs_regs = vax_map_physmem(VS_REGS, 1);
 	*(int *) (vs_regs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
 	vax_unmap_physmem(vs_regs, 1);
