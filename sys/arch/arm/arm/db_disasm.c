@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1 2001/01/12 21:31:51 bjh21 Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2 2001/01/13 16:53:27 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -48,7 +48,7 @@
 static u_int db_disasm_read_word(u_int);
 static void db_disasm_printaddr(u_int);
 
-static disasm_interface_t db_disasm_interface = {
+static const disasm_interface_t db_disasm_interface = {
 	db_disasm_read_word, db_disasm_printaddr, db_printf
 };
 
