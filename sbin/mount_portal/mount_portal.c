@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.15 1999/08/16 06:34:50 bgrayson Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.16 2000/01/17 07:21:25 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.15 1999/08/16 06:34:50 bgrayson Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.16 2000/01/17 07:21:25 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,6 @@ main(argc, argv)
 			break;
 		}
 	}
-	syslog(LOG_INFO, "%s unmounted", mountpt);
 	exit(0);
 }
 
