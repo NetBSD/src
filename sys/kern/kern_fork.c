@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.73 2000/09/06 14:06:42 sommerfeld Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.74 2000/11/07 12:31:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -409,6 +409,12 @@ again:
 		retval[0] = p2->p_pid;
 		retval[1] = 0;
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(p2, KTR_EMUL))
+		ktremul(p2);
+#endif
+
 	return (0);
 }
 
