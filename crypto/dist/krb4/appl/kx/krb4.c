@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: krb4.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
+RCSID("$Id: krb4.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
 
 #ifdef KRB4
 
@@ -87,7 +87,7 @@ krb4_authenticate (kx_context *kc, int s)
 			   getpid(), &msg, &cred, c->schedule,
 			   &kc->thisaddr, &kc->thataddr, KX_VERSION);
     if (status != KSUCCESS) {
-	warnx ("%s: %s\n", host, krb_get_err_text(status));
+	warnx ("%s: %s", host, krb_get_err_text(status));
 	return -1;
     }
     memcpy (c->key, cred.session, sizeof(des_cblock));

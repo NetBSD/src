@@ -14,7 +14,7 @@ main(argc, argv)
 	int     n;
 
 	if (argc > 2)
-		errx(1, "Error:  usage:  %s [name]\n", argv[0]);
+		errx(1, "Error:  usage:  %s [name]", argv[0]);
 	fp = fopen(fingerpath, "r+");
 	if (!fp)
 		err(1, "open of %s", fingerpath);

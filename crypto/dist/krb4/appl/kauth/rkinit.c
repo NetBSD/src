@@ -33,7 +33,7 @@
 
 #include "kauth.h"
 
-RCSID("$Id: rkinit.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
+RCSID("$Id: rkinit.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
 
 static struct in_addr *
 getalladdrs (char *hostname, unsigned *count)
@@ -46,7 +46,7 @@ getalladdrs (char *hostname, unsigned *count)
 
     hostent = gethostbyname (hostname);
     if (hostent == NULL) {
-	warnx ("gethostbyname '%s' failed: %s\n",
+	warnx ("gethostbyname '%s' failed: %s",
 	       hostname,
 	       hstrerror(h_errno));
 	return NULL;
@@ -122,7 +122,7 @@ doit_host (krb_principal *princ, int lifetime, char *locuser,
 			   getpid(), &msg, &cred, schedule,
 			   &thisaddr, &thataddr, KAUTH_VERSION);
     if (status != KSUCCESS) {
-	warnx ("%s: %s\n", hostname, krb_get_err_text(status));
+	warnx ("%s: %s", hostname, krb_get_err_text(status));
 	return 1;
     }
     inlen = pack_args (buf, sizeof(buf),
@@ -146,7 +146,7 @@ doit_host (krb_principal *princ, int lifetime, char *locuser,
     }
 
     if (strncmp(ret, "ok", inlen) != 0) {
-	warnx ("error from %s: %.*s\n",
+	warnx ("error from %s: %.*s",
 	       hostname, inlen, (char *)ret);
 	return 1;
     }
@@ -176,7 +176,7 @@ doit_host (krb_principal *princ, int lifetime, char *locuser,
     }
 
     if (strncmp(ret, "ok", inlen) != 0) {
-	warnx ("error from %s: %.*s\n",
+	warnx ("error from %s: %.*s",
 	       hostname, inlen, (char *)ret);
 	return 1;
     }

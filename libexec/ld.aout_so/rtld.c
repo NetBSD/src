@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.83 2002/05/26 00:02:07 wiz Exp $	*/
+/*	$NetBSD: rtld.c,v 1.84 2002/07/20 08:36:24 grant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -895,7 +895,7 @@ reloc_map(smp)
 #endif
 			np = lookup(sym, smp, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
-				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
+				errx(1, "Undefined symbol \"%s\" in %s:%s",
 					sym, main_progname, smp->som_path);
 
 			/*
@@ -1399,7 +1399,7 @@ binder(jsp)
 	}
 
 	if (smp == NULL)
-		errx(1, "Call to binder from unknown location: %p\n", jsp);
+		errx(1, "Call to binder from unknown location: %p", jsp);
 
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
@@ -1527,11 +1527,11 @@ findhint(name, major, minor, prefered_path)
 	while (1) {
 		/* Sanity check */
 		if (bp->hi_namex >= hheader->hh_strtab_sz) {
-			warnx("Bad name index: %#x\n", bp->hi_namex);
+			warnx("Bad name index: %#x", bp->hi_namex);
 			break;
 		}
 		if (bp->hi_pathx >= hheader->hh_strtab_sz) {
-			warnx("Bad path index: %#x\n", bp->hi_pathx);
+			warnx("Bad path index: %#x", bp->hi_pathx);
 			break;
 		}
 

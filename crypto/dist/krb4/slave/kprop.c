@@ -19,7 +19,7 @@ provided "as is" without express or implied warranty.
 
 #include "slav_locl.h"
 
-RCSID("$Id: kprop.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
+RCSID("$Id: kprop.c,v 1.2 2002/07/20 08:36:23 grant Exp $");
 
 #include "kprop.h"
 
@@ -226,7 +226,7 @@ prop_to_slaves(struct slave_host *sl,
 						 96,
 						 KPROP_SRVTAB);
 		    if (kerror != INTK_OK) {
-			warnx ("%s: %s.  While getting initial ticket\n",
+			warnx ("%s: %s.  While getting initial ticket",
 			       cs->name, krb_get_err_text(kerror));
 			close (s);
 			goto punt;
