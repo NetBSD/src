@@ -1,7 +1,7 @@
-# $NetBSD: ad.mips,v 1.16 2000/02/03 05:27:57 jwise Exp $
+# $NetBSD: ad.mips,v 1.17 2000/02/28 16:31:08 jwise Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
-./usr/include/mips
+./usr/include/mips			comp-c-include
 ./usr/include/mips/ansi.h		comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-c-include
 ./usr/include/mips/asm.h		comp-c-include
