@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.8.12.4 2002/08/27 23:49:43 nathanw Exp $
+.\"	$NetBSD: strptime.3,v 1.8.12.5 2002/10/18 02:17:23 nathanw Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,13 +62,15 @@ The
 string consists of zero or more conversion specifications, whitespace
 characters as defined by
 .Fn isspace ,
-and ordinary characters.  All ordinary characters in
+and ordinary characters.
+All ordinary characters in
 .Fa format
 are compared directly against the corresponding characters in
 .Fa buf ;
 comparisons which fail will cause
 .Fn strptime
-to fail.  Whitespace characters in
+to fail.
+Whitespace characters in
 .Fa format
 match any number of whitespace characters in
 .Fa buf ,
@@ -82,13 +84,14 @@ There must be white-space or other non-alphanumeric characters between any
 two conversion specifications.
 .Pp
 Conversion of alphanumeric strings (such as month and weekday names) is
-done without regard to case.  Conversion specifications which cannot be
-matched will cause
+done without regard to case.
+Conversion specifications which cannot be matched will cause
 .Fn strptime
 to fail.
 .Pp
 The LC_TIME category defines the locale values for the conversion
-specifications.  The following conversion specifications are supported:
+specifications.
+The following conversion specifications are supported:
 .Bl -tag -width "xxxx"
 .It Cm \&%a
 the day of week, using the locale's weekday names;
@@ -106,8 +109,8 @@ the same as
 the date and time, using the locale's date and time format.
 .It Cm \&%C
 the century number [0,99];
-leading zeros are permitted but not required.  This conversion
-should be used in conjunction with the \&%y conversion.
+leading zeros are permitted but not required.
+This conversion should be used in conjunction with the \&%y conversion.
 .It Cm \&%d
 the day of month [1,31];
 leading zeros are permitted but not required.
@@ -143,7 +146,7 @@ leading zeros are permitted but not required.
 .It Cm \&%n
 any white-space, including none.
 .It Cm \&%p
-the locale's equivalent of a.m. or p.m..
+the locale's equivalent of a.m. or p.m.
 .It Cm \&%r
 the time (12-hour clock) with %p, using the locale's time format.
 .It Cm \&%R
@@ -174,12 +177,14 @@ the date, using the locale's date format.
 the time, using the locale's time format.
 .It Cm \&%y
 the year within the 20th century [69,99] or the 21st century [0,68];
-leading zeros are permitted but not required.  If specified in conjunction
+leading zeros are permitted but not required.
+If specified in conjunction
 with \&%C, specifies the year [0,99] within that century.
 .It Cm \&%Y
 the year, including the century (i.e., 1996).
 .It Cm \&%%
-A `%' is written. No argument is converted.
+A `%' is written.
+No argument is converted.
 .El
 .Ss Modified conversion specifications
 For compatibility, certain conversion specifications can be modified
@@ -189,7 +194,8 @@ and
 .Cm O
 modifier characters to indicate that an alternative format or specification
 should be used rather than the one normally used by the unmodified
-conversion specification.  As there are currently neither alternative formats
+conversion specification.
+As there are currently neither alternative formats
 nor specifications supported by the system, the behavior will be as if the
 unmodified conversion specification were used.
 .Pp
@@ -200,7 +206,8 @@ such as month and weekday names.
 If successful, the
 .Fn strptime
 function returns a pointer to the character following the last character
-parsed.  Otherwise, a null pointer is returned.
+parsed.
+Otherwise, a null pointer is returned.
 .Sh SEE ALSO
 .Xr ctime 3 ,
 .Xr isspace 3 ,

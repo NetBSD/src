@@ -1,4 +1,4 @@
-.\"	$NetBSD: daemon.3,v 1.8.10.4 2002/08/01 03:28:09 nathanw Exp $
+.\"	$NetBSD: daemon.3,v 1.8.10.5 2002/10/18 02:15:44 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,9 +56,7 @@ Unless the argument
 is non-zero,
 .Fn daemon
 changes the current working directory to the root
-.Po
-.Pa /
-.Pc .
+.Pq Pa / .
 .Pp
 Unless the argument
 .Fa noclose
@@ -68,7 +66,7 @@ will redirect standard input, standard output and standard error
 to
 .Pa /dev/null .
 .Sh RETURN VALUES
-On return 0 indicates success with -1 indicating error.
+On return 0 indicates success with \-1 indicating error.
 .Sh ERRORS
 The function
 .Fn daemon
@@ -109,12 +107,12 @@ any file descriptors obtained have a value greater than 2.
 .Fn daemon
 uses
 .Fn fork
-as part of its tty detachment mechanism. Consequently the process id changes
-when
+as part of its tty detachment mechanism.
+Consequently the process id changes when
 .Fn daemon
-is invoked. Processes employing
+is invoked.
+Processes employing
 .Fn daemon
-can not be reliably waited
-upon until
+can not be reliably waited upon until
 .Fn daemon
 has been invoked.

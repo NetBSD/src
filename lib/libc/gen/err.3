@@ -1,4 +1,4 @@
-.\" $NetBSD: err.3,v 1.11.2.4 2002/08/01 03:28:09 nathanw Exp $
+.\" $NetBSD: err.3,v 1.11.2.5 2002/10/18 02:15:46 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,9 @@ In all cases, the last component of the program name, a colon character,
 and a space are output.
 If the
 .Fa fmt
-argument is not NULL, the formatted error message is output.
+argument is not
+.Dv NULL ,
+the formatted error message is output.
 In the case of the
 .Fn err ,
 .Fn verr ,
@@ -89,7 +91,8 @@ the global variable
 .Va errno
 is output next, preceded by a colon character and a space if
 .Fa fmt
-is not NULL.
+is not
+.Dv NULL .
 In all cases, the output is followed by a newline character.
 .Pp
 The

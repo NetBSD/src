@@ -1,4 +1,4 @@
-.\" $NetBSD: tsearch.3,v 1.1.12.3 2002/03/22 20:42:32 nathanw Exp $
+.\" $NetBSD: tsearch.3,v 1.1.12.4 2002/10/18 02:16:42 nathanw Exp $
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
@@ -50,7 +50,8 @@ The
 and
 .Fn twalk
 functions manage binary search trees based on algorithms T and D
-from Knuth (6.2.2).  The comparison function passed in by
+from Knuth (6.2.2).
+The comparison function passed in by
 the user has the same style of return values as
 .Xr strcmp 3 .
 .Pp
@@ -67,7 +68,8 @@ is identical to
 .Fn tfind
 except that if no match is found,
 .Fa key
-is inserted into the tree and a pointer to it is returned.  If
+is inserted into the tree and a pointer to it is returned.
+If
 .Fa rootp
 points to a NULL value a new binary search tree is created.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fmtmsg.3,v 1.1.10.3 2002/03/22 20:42:06 nathanw Exp $
+.\"	$NetBSD: fmtmsg.3,v 1.1.10.4 2002/10/18 02:15:47 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,11 +69,13 @@ The
 argument consists of a major classification and several sub-classifications.
 It has no effect on the content of the message displayed.
 With the exception of the display sub-classification, only a single identifier
-may be specified for each (sub-)classification.  The following classifications
+may be specified for each (sub-)classification.
+The following classifications
 are available:
 .Bl -tag -width MessageXSourceXSub-classificationsXX
 .It Major Classifications
-The source of the condition.  Available identifiers are:
+The source of the condition.
+Available identifiers are:
 .Dv MM_HARD
 (hardware),
 .Dv MM_SOFT
@@ -81,7 +83,8 @@ The source of the condition.  Available identifiers are:
 .Dv MM_FIRM
 (firmware).
 .It Message Source Sub-classifications
-The type of software detecting the condition.  Available identifiers are:
+The type of software detecting the condition.
+Available identifiers are:
 .Dv MM_APPL
 (application),
 .Dv MM_UTIL
@@ -112,9 +115,9 @@ must be specified.
 .Ss label
 The
 .Fa label
-argument identifies the source of the message.  It consists of two fields
-separated by a colon (:).  The first field is up to 10 characters, the second
-is up to 14 characters.
+argument identifies the source of the message.
+It consists of two fields separated by a colon (:).
+The first field is up to 10 characters, the second is up to 14 characters.
 .Pp
 If no
 .Fa label
@@ -143,7 +146,8 @@ level is to be supplied,
 .Dv MM_NOSEV
 must be specified.
 .Ss text
-The description of the condition the software encountered.  The character
+The description of the condition the software encountered.
+The character
 string is not limited to a specific size.
 .Pp
 If no
@@ -179,8 +183,8 @@ standard error stream (but not on the system console!) may be taken by
 setting the
 .Ev MSGVERB
 environment variable, which selects the subset of message components
-to be printed.  It consists of a colon-separated list of the optional
-keywords
+to be printed.
+It consists of a colon-separated list of the optional keywords
 .Fa label ,
 .Fa severity ,
 .Fa text ,

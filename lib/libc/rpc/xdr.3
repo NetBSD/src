@@ -1,5 +1,5 @@
 .\"	@(#)xdr.3n	2.2 88/08/03 4.0 RPCSRC; from 1.16 88/03/14 SMI
-.\"	$NetBSD: xdr.3,v 1.5.6.1 2001/10/08 20:20:41 nathanw Exp $
+.\"	$NetBSD: xdr.3,v 1.5.6.2 2002/10/18 02:16:29 nathanw Exp $
 .\"
 .TH XDR 3 "16 February 1988"
 .SH NAME
@@ -59,9 +59,8 @@ xdrproc_t elproc;
 .ft R
 .IP
 A filter primitive that translates between variable-length
-arrays
-and their corresponding external representations. The
-parameter
+arrays and their corresponding external representations.
+The parameter
 .I arrp
 is the address of the pointer to the array, while
 .I sizep
@@ -77,8 +76,7 @@ each of the array's elements, and
 is an
 .SM XDR
 filter that translates between
-the array elements' C form, and their external
-representation.
+the array elements' C form, and their external representation.
 This routine returns one if it succeeds, zero otherwise.
 .br
 .if t .ne 8
@@ -94,7 +92,8 @@ bool_t *bp;
 .IP
 A filter primitive that translates between booleans (C
 integers)
-and their external representations. When encoding data, this
+and their external representations.
+When encoding data, this
 filter produces values of either one or zero.
 This routine returns one if it succeeds, zero otherwise.
 .br
@@ -114,8 +113,8 @@ A filter primitive that translates between counted byte
 strings and their external representations.
 The parameter
 .I sp
-is the address of the string pointer. The length of the
-string is located at address
+is the address of the string pointer.
+The length of the string is located at address
 .IR sizep ;
 strings cannot be longer than
 .IR maxsize .
@@ -135,9 +134,8 @@ char *cp;
 A filter primitive that translates between C characters
 and their external representations.
 This routine returns one if it succeeds, zero otherwise.
-Note: encoded characters are not packed, and occupy 4 bytes
-each. For arrays of characters, it is worthwhile to
-consider
+Note: encoded characters are not packed, and occupy 4 bytes each.
+For arrays of characters, it is worthwhile to consider
 .BR xdr_bytes(\|) ,
 .B xdr_opaque(\|)
 or
@@ -159,7 +157,8 @@ A macro that invokes the destroy routine associated with the
 stream,
 .IR xdrs .
 Destruction usually involves freeing private data structures
-associated with the stream.  Using
+associated with the stream.
+Using
 .I xdrs
 after invoking
 .B xdr_destroy(\|)
@@ -225,11 +224,12 @@ char *objp;
 .fi
 .ft R
 .IP
-Generic freeing routine. The first argument is the
+Generic freeing routine.
+The first argument is the
 .SM XDR
-routine for the object being freed. The second argument
-is a pointer to the object itself. Note: the pointer passed
-to this routine is
+routine for the object being freed.
+The second argument is a pointer to the object itself.
+Note: the pointer passed to this routine is
 .I not
 freed, but what it points to
 .I is
@@ -379,7 +379,8 @@ a chunk of memory at location
 .I addr
 whose length is no more than
 .I size
-bytes long.  The
+bytes long.
+The
 .I op
 determines the direction of the
 .SM XDR
@@ -431,7 +432,8 @@ execpt that it serializes
 .SM NULL
 pointers, whereas
 .B xdr_reference(\|)
-does not.  Thus,
+does not.
+Thus,
 .B xdr_pointer(\|)
 can represent
 recursive data structures, such as binary trees or
@@ -458,17 +460,19 @@ stream object pointed to by
 The stream's data is written to a buffer of size
 .IR sendsize ;
 a value of zero indicates the system should use a suitable
-default. The stream's data is read from a buffer of size
+default.
+The stream's data is read from a buffer of size
 .IR recvsize ;
 it too can be set to a suitable default by passing a zero
 value.
 When a stream's output buffer is full,
 .I writeit
-is called.  Similarly, when a stream's input buffer is empty,
+is called.
+Similarly, when a stream's input buffer is empty,
 .I readit
-is called.  The behavior of these two routines is similar to
-the
-system calls
+is called.
+The behavior of these two routines is similar to
+the system calls
 .B read
 and
 .BR write ,
@@ -505,8 +509,8 @@ The data in the output buffer is marked as a completed
 record,
 and the output buffer is optionally written out if
 .I sendnow
-is non-zero. This routine returns one if it succeeds, zero
-otherwise.
+is non-zero.
+This routine returns one if it succeeds, zero otherwise.
 .br
 .if t .ne 8
 .LP
@@ -519,8 +523,7 @@ int empty;
 .fi
 .ft R
 .IP
-This routine can be invoked only on
-streams created by
+This routine can be invoked only on streams created by
 .BR xdrrec_create(\|) .
 After consuming the rest of the current record in the stream,
 this routine returns one if the stream has no more input,
@@ -536,8 +539,7 @@ xdrrec_skiprecord(xdrs)
 .fi
 .ft R
 .IP
-This routine can be invoked only on
-streams created by
+This routine can be invoked only on streams created by
 .BR xdrrec_create(\|) .
 It tells the
 .SM XDR
@@ -577,7 +579,8 @@ This routine returns one if it succeeds, zero otherwise.
 .IP
 Warning: this routine does not understand
 .SM NULL
-pointers. Use
+pointers.
+Use
 .B xdr_pointer(\|)
 instead.
 .br
@@ -683,8 +686,7 @@ u_int maxsize;
 .ft R
 .IP
 A filter primitive that translates between C strings and
-their
-corresponding external representations.
+their corresponding external representations.
 Strings cannot be longer than
 .IR maxsize .
 Note:
@@ -802,24 +804,27 @@ bool_t (*defaultarm) (\|);  /* may equal \s-1NULL\s0 */
 .IP
 A filter primitive that translates between a discriminated C
 .B union
-and its corresponding external representation. It first
-translates the discriminant of the union located at
+and its corresponding external representation.
+It first translates the discriminant of the union located at
 .IR dscmp .
 This discriminant is always an
 .BR enum_t .
 Next the union located at
 .I unp
-is translated.  The parameter
+is translated.
+The parameter
 .I choices
 is a pointer to an array of
 .B xdr_discrim(\|)
-structures. Each structure contains an ordered pair of
+structures.
+Each structure contains an ordered pair of
 .RI [ value , proc ].
 If the union's discriminant is equal to the associated
 .IR value ,
 then the
 .I proc
-is called to translate the union.  The end of the
+is called to translate the union.
+The end of the
 .B xdr_discrim(\|)
 structure array is denoted by a routine of value
 .SM NULL\s0.
@@ -845,13 +850,13 @@ xdrproc_t elproc;
 .ft R
 .IP
 A filter primitive that translates between fixed-length
-arrays
-and their corresponding external representations.  The
-parameter
+arrays and their corresponding external representations.
+The parameter
 .I arrp
 is the address of the pointer to the array, while
 .I size
-is the element count of the array.  The parameter
+is the element count of the array.
+The parameter
 .I elsize
 is the
 .I sizeof

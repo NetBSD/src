@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.9.6.3 2002/03/22 20:42:39 nathanw Exp $
+.\"	$NetBSD: msgsnd.2,v 1.9.6.4 2002/10/18 02:17:06 nathanw Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -47,12 +47,13 @@ The
 function sends a message from the message queue specified in
 .Fa msqid .
 .Fa msgp
-points to a user-defined structure containing the message.  This structure
-must contain a first field of type
+points to a user-defined structure containing the message.
+This structure must contain a first field of type
 .Sy long
-that will indicate the user-defined type of the message.  The remaining
-fields will contain the contents of the message.  The following is
-an example of what this user-defined structure might look like:
+that will indicate the user-defined type of the message.
+The remaining fields will contain the contents of the message.
+The following is an example of what this user-defined
+structure might look like:
 .Bd -literal
 struct mymsg {
     long mtype;    /* message type */
@@ -82,7 +83,8 @@ If
 .Fa msgflg
 has
 .Dv IPC_NOWAIT
-mask set in it, the call will return immediately. If
+mask set in it, the call will return immediately.
+If
 .Fa msgflg
 does not have
 .Dv IPC_NOWAIT
@@ -97,7 +99,8 @@ The message queue is removed, in which case -1 will be returned and
 set to
 .Er EINVAL .
 .It
-The caller catches a signal. The call returns with
+The caller catches a signal.
+The call returns with
 .Va errno
 set to
 .Er EINTR .
@@ -117,7 +120,8 @@ is set to the pid of the calling process.
 is set to the current time.
 .El
 .Sh RETURN VALUES
-Upon successful completion, 0 is returned. Otherwise, -1 is returned and
+Upon successful completion, 0 is returned.
+Otherwise, -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

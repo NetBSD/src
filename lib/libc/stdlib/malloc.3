@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.3,v 1.12.6.6 2002/08/27 23:49:38 nathanw Exp $
+.\"	$NetBSD: malloc.3,v 1.12.6.7 2002/10/18 02:16:39 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -214,8 +214,8 @@ option.
 This is intended for debugging and will impact performance negatively.
 .It H
 Pass a hint to the kernel about pages unused by the allocation functions.
-This will help performance if the system is paging excessively.  This
-option is off by default.
+This will help performance if the system is paging excessively.
+This option is off by default.
 .It R
 Causes the
 .Fn realloc
@@ -356,8 +356,8 @@ done by a process.
 .Ed
 .Pp
 A side effect of this architecture is that many minor transgressions on
-the interface which would traditionally not be detected are in fact
-detected.  As a result, programs that have been running happily for
+the interface which would traditionally not be detected are in fact detected.
+As a result, programs that have been running happily for
 years may suddenly start to complain loudly, when linked with this
 allocation implementation.
 .Pp
@@ -371,9 +371,9 @@ It is probably also a good idea to recompile the program with suitable
 options and symbols for debugger support.
 .Pp
 If the program starts to give unusual results, coredump or generally behave
-differently without emitting any of the messages listed in the next
-section, it is likely because it depends on the storage being filled with
-nul bytes.  Try running it with
+differently without emitting any of the messages listed in the next section,
+it is likely because it depends on the storage being filled with nul bytes.
+Try running it with
 .Dq Z
 option set;
 if that improves the situation, this diagnosis has been confirmed.
@@ -459,8 +459,8 @@ or
 is trying to free does not reference a possible page.
 .It "recursive call
 A process has attempted to call an allocation function recursively.
-This is not permitted.  In particular, signal handlers should not
-attempt to allocate memory.
+This is not permitted.
+In particular, signal handlers should not attempt to allocate memory.
 .It "out of memory
 The
 .Dq X
@@ -489,8 +489,8 @@ functions conform to
 .Sh HISTORY
 The present allocation implementation started out as a filesystem for a
 drum attached to a 20bit binary challenged computer which was built
-with discrete germanium transistors.  It has since graduated to
-handle primary storage rather than secondary.
+with discrete germanium transistors.
+It has since graduated to handle primary storage rather than secondary.
 It first appeared in its new shape and ability in
 .Fx 2.2 , and then in
 .Nx 1.5 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fnmatch.3,v 1.14.2.3 2002/03/22 20:42:06 nathanw Exp $
+.\"	$NetBSD: fnmatch.3,v 1.14.2.4 2002/10/18 02:15:48 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)fnmatch.3	8.3 (Berkeley) 4/28/95
 .\"
-.Dd April 28, 1995
+.Dd October 7, 2002
 .Dt FNMATCH 3
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ is the bitwise inclusive
 of any of the following
 constants, which are defined in the include file
 .Pa fnmatch.h .
-.Bl -tag -width FNM_PATHNAME
+.Bl -tag -width FNM_LEADING_DIRXX
 .It Dv FNM_NOESCAPE
 Normally, every occurrence of a backslash
 .Pq Ql \e
@@ -98,6 +98,12 @@ Additionally, if
 .Dv FNM_PATHNAME
 is set,
 a period is ``leading'' if it immediately follows a slash.
+.It Dv FNM_LEADING_DIR
+Ignore
+.Dq /*
+rest after successful
+.Fa pattern
+matching.
 .It Dv FNM_CASEFOLD
 The pattern is matched in a case-insensitive fashion.
 .El

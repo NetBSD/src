@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.12.6.4 2002/04/25 04:01:42 nathanw Exp $
+.\"	$NetBSD: vis.3,v 1.12.6.5 2002/10/18 02:16:11 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,9 +70,10 @@ a string which represents the character
 .Fa c .
 If
 .Fa c
-needs no encoding, it is copied in unaltered.  The string is
-null terminated, and a pointer to the end of the string is
-returned.  The maximum length of any encoding is four
+needs no encoding, it is copied in unaltered.
+The string is null terminated, and a pointer to the end of the string is
+returned.
+The maximum length of any encoding is four
 characters (not including the trailing
 .Dv NUL ) ;
 thus, when
@@ -143,10 +144,10 @@ but have an additional argument
 .Fa extra ,
 pointing to a
 .Dv NUL
-terminated list of characters. These characters will be copied encoded or
-backslash-escaped into
+terminated list of characters.
+These characters will be copied encoded or backslash-escaped into
 .Fa dst .
-These functions are useful e. g. to remove the special meaning
+These functions are useful e.g. to remove the special meaning
 of certain characters to shells.
 .Pp
 The encoding is a unique, invertible representation composed entirely of
@@ -185,11 +186,11 @@ Synonym for
 \&|
 .Dv VIS_NL .
 .It Dv VIS_SAFE
-Only encode "unsafe" characters.  Unsafe means control
-characters which may cause common terminals to perform
-unexpected functions.  Currently this form allows space,
-tab, newline, backspace, bell, and return - in addition
-to all graphic characters - unencoded.
+Only encode "unsafe" characters.
+Unsafe means control characters which may cause common terminals to perform
+unexpected functions.
+Currently this form allows space, tab, newline, backspace, bell, and
+return - in addition to all graphic characters - unencoded.
 .El
 .Pp
 (The above flags have no effect for
@@ -292,7 +293,8 @@ If
 is an octal digit, the latter representation is used to
 avoid ambiguity.
 .It Dv VIS_OCTAL
-Use a three digit octal sequence.  The form is
+Use a three digit octal sequence.
+The form is
 .Ql \eddd
 where
 .Em d

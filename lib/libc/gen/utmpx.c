@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.3.2.5 2002/08/02 23:30:35 thorpej Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3.2.6 2002/10/18 02:16:11 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.3.2.5 2002/08/02 23:30:35 thorpej Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3.2.6 2002/10/18 02:16:11 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -283,6 +283,9 @@ utmp_update(const struct utmpx *utx)
 
 }
 
+/*
+ * The following are extensions and not part of the X/Open spec.
+ */
 int
 updwtmpx(const char *file, const struct utmpx *utx)
 {
@@ -294,17 +297,17 @@ updwtmpx(const char *file, const struct utmpx *utx)
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
-		(void)write(fd, &ut, sizeof(ut));
+		if (write(fd, &ut, sizeof(ut)) == -1)
+			return -1;
 	}
-	(void)write(fd, utx, sizeof(*utx));
-	(void)close(fd);
+	if (write(fd, utx, sizeof(*utx)) == -1)
+		return -1;
+	if (close(fd) == -1)
+		return -1;
 	return 0;
 }
 
 
-/*
- * The following are extensions and not part of the X/Open spec
- */
 int
 utmpxname(const char *fname)
 {

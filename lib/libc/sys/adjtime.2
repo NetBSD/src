@@ -1,4 +1,4 @@
-.\"	$NetBSD: adjtime.2,v 1.9.6.5 2002/06/21 18:18:24 nathanw Exp $
+.\"	$NetBSD: adjtime.2,v 1.9.6.6 2002/10/18 02:16:45 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,8 @@ If the calling user is not the super user, then the
 function in the standard C library will try to use the
 .Xr clockctl 4
 device if present, thus making possible for non privileged users to
-adjust the system time. If
+adjust the system time.
+If
 .Xr clockctl 4
 is not present or not accessible, then
 .Fn adjust

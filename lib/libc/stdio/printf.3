@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.15.2.6 2002/08/01 03:28:16 nathanw Exp $
+.\"	$NetBSD: printf.3,v 1.15.2.7 2002/10/18 02:16:33 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -286,14 +286,13 @@ overrides a space if both are used.
 An optional decimal digit string specifying a minimum field width.
 If the converted value has fewer characters than the field width, it will
 be padded with spaces on the left (or right, if the left-adjustment
-flag has been given) to fill out
-the field width.
+flag has been given) to fill out the field width.
 .It
 An optional precision, in the form of a period
 .Sq Cm \&.
-followed by an
-optional digit string.  If the digit string is omitted, the precision
-is taken as zero.  This gives the minimum number of digits to appear for
+followed by an optional digit string.
+If the digit string is omitted, the precision is taken as zero.
+This gives the minimum number of digits to appear for
 .Cm d ,
 .Cm i ,
 .Cm o ,
@@ -460,8 +459,7 @@ A character that specifies the type of conversion to be applied.
 A field width or precision, or both, may be indicated by
 an asterisk
 .Ql *
-instead of a
-digit string.
+instead of a digit string.
 In this case, an
 .Em int
 argument supplies the field width or precision.
@@ -486,7 +484,8 @@ or unsigned hexadecimal
 .Pf ( Cm x
 and
 .Cm X )
-notation.  The letters
+notation.
+The letters
 .Cm abcdef
 are used for
 .Cm x
@@ -632,8 +631,9 @@ No argument is converted.
 .It Cm %
 A
 .Ql %
-is written. No argument is converted. The complete conversion specification
-is
+is written.
+No argument is converted.
+The complete conversion specification is
 .Ql %% .
 .El
 .Pp

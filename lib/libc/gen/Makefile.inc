@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.106.2.7 2002/08/27 23:49:30 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.106.2.8 2002/10/18 02:15:43 nathanw Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -37,8 +37,9 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 .include "${ARCHDIR}/gen/Makefile.inc"
 
-MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
-	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 fmtcheck.3 \
+MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
+	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
+	endutxent.3 err.3 exec.3 fmtcheck.3 \
 	fmtmsg.3 fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 getbsize.3 \
 	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
@@ -54,22 +55,22 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
-MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
-	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
-	fpgetmask.3 fpsetsticky.3
-MLINKS+=bswap.3 bswap16.3
-MLINKS+=bswap.3 bswap32.3
-MLINKS+=bswap.3 bswap64.3
+MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
 	directory.3 telldir.3
+MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
+	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
+	endutxent.3 setutxent.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3 exec.3 exect.3
+MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
+	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
+	fpgetmask.3 fpsetsticky.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3 
-MLINKS+=isinf.3 isnan.3
 MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
 	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
@@ -91,6 +92,7 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
+MLINKS+=isinf.3 isnan.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3

@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.h,v 1.7.2.1 2001/11/14 19:32:34 nathanw Exp $	*/
+/*	$NetBSD: fnmatch.h,v 1.7.2.2 2002/10/18 02:14:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 #define	FNM_PERIOD	0x04	/* Period must be matched by period. */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	FNM_CASEFOLD	0x08	/* Pattern is matched case-insensitive */
+#define	FNM_LEADING_DIR	0x10	/* Ignore /<tail> after Imatch. */
 #endif
 
 #include <sys/cdefs.h>

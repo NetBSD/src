@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strmode.3	8.3 (Berkeley) 7/28/94
-.\"	$NetBSD: strmode.3,v 1.11.2.3 2002/03/22 20:42:34 nathanw Exp $
+.\"	$NetBSD: strmode.3,v 1.11.2.4 2002/10/18 02:16:43 nathanw Exp $
 .\"
 .Dd July 28, 1994
 .Dt STRMODE 3
@@ -141,12 +141,13 @@ or additional access control methods associated with the inode, otherwise
 it will be a space.
 .Pp
 Archive state 1 and archive state 2 represent file system dependent
-archive state for a file. Most file systems do not retain file archive
+archive state for a file.
+Most file systems do not retain file archive
 state, and so will not report files in either archive state.
 msdosfs will report a file in archive state 1 if it has been
-archived more recently than modified. Hierarchical storage systems
-may have multiple archive states for a file and may define archive
-states 1 and 2 as appropriate.
+archived more recently than modified.
+Hierarchical storage systems may have multiple archive states for a
+file and may define archive states 1 and 2 as appropriate.
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr find 1 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19.2.7 2002/09/20 22:01:49 thorpej Exp $	*/
+/*	$NetBSD: util.h,v 1.19.2.8 2002/10/18 02:14:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -63,6 +63,7 @@
 #define	HN_AUTOSCALE		0x20
 
 __BEGIN_DECLS
+struct disklabel;
 struct iovec;
 struct passwd;
 struct termios;
@@ -105,6 +106,9 @@ int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);
 int		ttyunlock(const char *);
+
+u_short		disklabel_dkcksum(struct disklabel *);
+int		disklabel_scan(struct disklabel *, char *, size_t);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */

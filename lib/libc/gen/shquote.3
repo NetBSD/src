@@ -1,4 +1,4 @@
-.\" $NetBSD: shquote.3,v 1.2.2.4 2002/03/22 20:42:12 nathanw Exp $
+.\" $NetBSD: shquote.3,v 1.2.2.5 2002/10/18 02:16:01 nathanw Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -53,7 +53,8 @@ The
 and
 .Fn shquotev
 functions copy strings and transform the copies by adding shell
-escape and quoting characters.  They are used to encapsulate
+escape and quoting characters.
+They are used to encapsulate
 arguments to be included in command strings passed to the
 .Fn system
 and
@@ -97,11 +98,11 @@ function transforms each of the
 .Fa argc
 strings specified by the array
 .Fa argv
-independently.  The transformed strings are
-placed in the memory pointed to by
+independently.
+The transformed strings are placed in the memory pointed to by
 .Fa buf ,
-separated by spaces.  It does not modify the pointer array
-specified by
+separated by spaces.
+It does not modify the pointer array specified by
 .Fa argv
 or the strings pointed to by the pointers in the arrary.
 .Pp
@@ -111,7 +112,8 @@ Both functions write up to
 .Fa buf ,
 then add a
 .Li NUL
-character to terminate the output string.  If
+character to terminate the output string.
+If
 .Fa bufsize
 is given as zero, the
 .Fa buf
@@ -137,9 +139,10 @@ The following code fragment demonstrates how you might use
 to construct a command string to be used with
 .Fn system .
 The command uses an environment variable (which will be expanded by
-the shell) to determine the actual program to run.  Note that
-the environment variable may be expanded by the shell into multiple
-words.  The first word of the expansion will be used by the shell
+the shell) to determine the actual program to run.
+Note that the environment variable may be expanded by
+the shell into multiple words.
+The first word of the expansion will be used by the shell
 as the name of the program to run,
 and the rest will be passed as arguments to the program.
 .Bd -literal -offset indent
@@ -227,7 +230,8 @@ cmd[--len] = '\0';
 .Xr system 3
 .Sh BUGS
 This implementation does not currently handle strings containing multibyte
-characters properly.  To address this issue,
+characters properly.
+To address this issue,
 .Pa /bin/sh
 .Po
 the shell used by
@@ -235,5 +239,6 @@ the shell used by
 and
 .Fn popen
 .Pc
-must first be fixed to handle multibyte characters.  When that has been
-done, these functions can have multibyte character support enabled.
+must first be fixed to handle multibyte characters.
+When that has been done,
+these functions can have multibyte character support enabled.

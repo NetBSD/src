@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_xdr.new 1.1 89/04/06 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\" $NetBSD: rpc_xdr.3,v 1.1.6.3 2002/03/22 20:42:24 nathanw Exp $
+.\" $NetBSD: rpc_xdr.3,v 1.1.6.4 2002/10/18 02:16:28 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_XDR 3
 .Os
@@ -90,7 +90,8 @@ number mis-match or because of authentication errors.
 .Pp
 .It Fn xdr_replymsg
 Used for describing RPC
-reply messages.  It translates between the
+reply messages.
+It translates between the
 RPC reply message and its external representation.
 This reply could be either an acceptance,
 rejection or

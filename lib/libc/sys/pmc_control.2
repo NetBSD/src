@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc_control.2,v 1.1.2.2 2002/08/13 01:00:00 nathanw Exp $
+.\" $NetBSD: pmc_control.2,v 1.1.2.3 2002/10/18 02:17:07 nathanw Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -93,18 +93,21 @@ all exited subprocesses of the current process.
 .Fn pmc_control
 manipulates the specified counter
 .Fa ctr
-in one of several fashions.  The
+in one of several fashions.
+The
 .Fa op
 parameter determines the action taken by the kernel and also the interpretation of the
 .Fa argp
-parameter.  The possible values for
+parameter.
+The possible values for
 .Fa op
 are:
 .Bl -tag -width width
 .It PMC_OP_START
 Starts the specified
 .Fa ctr
-running.  It must be preceded by a call with
+running.
+It must be preceded by a call with
 .Em PMC_OP_CONFIGURE .
 .Fa argp
 is ignored in this case and may be
@@ -135,11 +138,13 @@ is a pointer to a
 is the event ID to be counted.
 .It Dv reset_value
 is a value to which the counter should be reset on overflow (if supported
-by the implementation).  This is most useful when profiling (see
+by the implementation).
+This is most useful when profiling (see
 .Em PMC_OP_PROFSTART ,
-below).  This value is defined to be the number of counter ticks before
-the next overflow.  So, to get a profiling tick on every hundredth data
-cache miss, set the
+below).
+This value is defined to be the number of counter ticks before
+the next overflow.
+So, to get a profiling tick on every hundredth data cache miss, set the
 .Dv event_id
 to the proper value for
 .Dq dcache-miss
@@ -158,7 +163,8 @@ is a pointer to a
 .Em struct pmc_counter_cfg
 as in
 .Em PMC_OP_CONFIGURE ,
-above.  This request allocates a kernel counter, which will fail if any
+above.
+This request allocates a kernel counter, which will fail if any
 process is using the requested counter.
 Not all implementations or counters may support this option.
 .It PMC_OP_PROFSTOP
@@ -170,8 +176,8 @@ is ignored in this case and may be
 .Dv NULL .
 .El
 .Sh RETURN VALUES
-A return value of 0 indicates that the call succeeded.  Otherwise, -1 is
-returned and the global variable
+A return value of 0 indicates that the call succeeded.
+Otherwise, -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

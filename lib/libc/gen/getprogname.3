@@ -1,4 +1,4 @@
-.\" $NetBSD: getprogname.3,v 1.1.2.3 2002/03/22 20:42:08 nathanw Exp $
+.\" $NetBSD: getprogname.3,v 1.1.2.4 2002/10/18 02:15:53 nathanw Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -54,8 +54,8 @@ as used by various error-reporting functions.
 .Fn getprogname
 returns the name of the current program.
 This function is typically useful when generating error messages
-or other diagnostic output.  If the program name has not been
-set,
+or other diagnostic output.
+If the program name has not been set,
 .Fn getprogname
 will return
 .Dv NULL .
@@ -64,14 +64,16 @@ will return
 sets the name of the current program to be the last pathname
 component of the
 .Fa name
-argument.  It should be invoked at the start of the program, using the
+argument.
+It should be invoked at the start of the program, using the
 .Fa argv[0]
 passed into the program's
 .Fn main
-function.  A pointer into the string pointed to by the
+function.
+A pointer into the string pointed to by the
 .Fa name
-argument is kept as the program name.  Therefore, the string pointed
-to by
+argument is kept as the program name.
+Therefore, the string pointed to by
 .Fa name
 should not be modified during the rest of the program's operation.
 .Pp
@@ -80,14 +82,15 @@ A program's name can only be set once, and in
 that is actually
 done by program start-up code that is run before
 .Fn main
-is called.  Therefore, in
+is called.
+Therefore, in
 .Nx ,
 calling
 .Fn setprogname
 from
 .Fn main
-has no effect.  However, it does
-serve to increase the portability of the program:
+has no effect.
+However, it does serve to increase the portability of the program:
 on other operating systems,
 .Fn getprogname
 and

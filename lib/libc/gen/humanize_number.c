@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.1.2.2 2002/08/27 23:49:31 nathanw Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.1.2.3 2002/10/18 02:15:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.1.2.2 2002/08/27 23:49:31 nathanw Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.1.2.3 2002/10/18 02:15:56 nathanw Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -55,8 +55,7 @@ int
 humanize_number(char *buf, size_t len, int64_t bytes,
     const char *suffix, int scale, int flags)
 {
-	static const char prefixes[] = " KMGTPE";
-
+	const char *prefixes;
 	int	i, r;
 	int64_t	divisor, max, s1, s2, sign;
 	size_t	baselen, suffixlen;
@@ -64,7 +63,20 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(suffix != NULL);
 
-	if (scale >= sizeof(prefixes) && scale != HN_AUTOSCALE &&
+	if (flags & HN_DIVISOR_1000) {
+		/* SI for decimal multiplies */
+		divisor = 1000;
+		prefixes = " kMGTPE";
+	} else {
+		/*
+		 * binary multiplies
+		 * XXX IEC 60027-2 recommends Ki, Mi, Gi...
+		 */
+		divisor = 1024;
+		prefixes = " KMGTPE";
+	}
+
+	if (scale >= strlen(prefixes) && scale != HN_AUTOSCALE &&
 	    scale != HN_GETSCALE)
 		return (-1);
 
@@ -100,10 +112,10 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		max *= 10;
 
 	if ((scale & HN_AUTOSCALE) || (scale & HN_GETSCALE)) {
-		for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
+		for (i = 0; bytes >= max && prefixes[i + 1]; i++)
 			bytes /= divisor;
 	} else {
-		for (i = 0; i < scale && i < sizeof(prefixes); i++)
+		for (i = 0; i < scale && prefixes[i + 1]; i++)
 			bytes /= divisor;
 	}
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: putc.3,v 1.5.12.3 2002/03/22 20:42:27 nathanw Exp $
+.\"	$NetBSD: putc.3,v 1.5.12.4 2002/10/18 02:16:34 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,8 @@ to the output stream pointed to by
 .Fn putc
 acts essentially identically to
 .Fn fputc ,
-but is a macro that expands in-line. It may evaluate
+but is a macro that expands in-line.
+It may evaluate
 .Fa stream
 more than once, so arguments given to
 .Fn putc

@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.8.6.3 2002/03/22 20:42:42 nathanw Exp $
+.\"	$NetBSD: semctl.2,v 1.8.6.4 2002/10/18 02:17:12 nathanw Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -52,7 +52,7 @@ and
 The operation to be performed is specified in
 .Fa cmd
 (see below).
-The fourth argument is optional and depends upon the opration requested.
+The fourth argument is optional and depends upon the operation requested.
 If required, it is a union of the following fields:
 .Bd -literal
     int     val;            /* value for SETVAL */
@@ -101,7 +101,7 @@ Set the value of the semaphore to
 .Fa arg.val ,
 where
 .Fa arg
-is the fourth arument to
+is the fourth argument to
 .Fn semctl .
 .It Dv GETPID
 Return the pid of the last process that did an operation on this semaphore.
@@ -154,8 +154,8 @@ in the data structure associated with the message queue.
 .It Dv IPC_RMID
 Remove the semaphores associated with
 .Fa semid
-from the system and destroy the data structures associated with it. Only the
-super-user or a process with an effective uid equal to the
+from the system and destroy the data structures associated with it.
+Only the super-user or a process with an effective uid equal to the
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
@@ -187,10 +187,11 @@ and
 .Dv GETZCNT
 operations,
 .Fn semctl
-returns one of the values described above if successful. All other operations
-will make
+returns one of the values described above if successful.
+All other operations will make
 .Fn semctl
-return 0 if no errors occur. Otherwise -1 is returned and
+return 0 if no errors occur.
+Otherwise -1 is returned and
 .Va errno
 set to reflect the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzfile.5,v 1.8.12.3 2002/03/22 20:42:46 nathanw Exp $
+.\"	$NetBSD: tzfile.5,v 1.8.12.4 2002/10/18 02:17:24 nathanw Exp $
 .\"
 .\" @(#)tzfile.5	7.11
 .\" This file is in the public domain, so clarified as of
@@ -51,7 +51,8 @@ four-byte values of type
 sorted in ascending order.
 These values are written in
 .Dq standard
-byte order.  Each is used as a transition time (as returned by
+byte order.
+Each is used as a transition time (as returned by
 .Xr time 3 )
 at which the rules for computing local time change.
 Next come
@@ -61,7 +62,8 @@ one-byte values of type
 each one tells which of the different types of
 .Dq local time
 types described in the file is associated with the same-indexed
-transition time.  These values serve as indices into an array of
+transition time.
+These values serve as indices into an array of
 .Fa ttinfo
 structures that appears next in the file;
 these structures are defined as follows:

@@ -1,5 +1,5 @@
 .\"	@(#)getnetpath.3n 1.26 93/05/07 SMI; from SVr4
-.\"	$NetBSD: getnetpath.3,v 1.1.6.3 2002/03/22 20:42:23 nathanw Exp $
+.\"	$NetBSD: getnetpath.3,v 1.1.6.4 2002/10/18 02:16:24 nathanw Exp $
 .\" Copyright 1989 AT&T
 .Dd April 22, 2000
 .Dt GETNETPATH 3
@@ -59,7 +59,8 @@ NETPATH.
 .Fn setnetpath
 must be called before the first call to
 .Fn getnetpath
-and may be called at any other time. It returns a handle that is used by
+and may be called at any other time.
+It returns a handle that is used by
 .Fn getnetpath .
 .Pp
 .Fn getnetpath
@@ -113,7 +114,8 @@ See
 When first called,
 .Fn getnetpath
 returns a pointer to the netconfig database entry corresponding to the first
-valid NETPATH component. When NETPATH has been exhausted,
+valid NETPATH component.
+When NETPATH has been exhausted,
 .Fn getnetpath
 returns NULL.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlockall.2,v 1.6.2.3 2002/03/22 20:42:38 nathanw Exp $
+.\"	$NetBSD: mlockall.2,v 1.6.2.4 2002/10/18 02:17:03 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,9 +64,9 @@ The following flags affect the behavior of
 Lock all pages currently mapped into the process's address space.
 .It Dv MCL_FUTURE
 Lock all pages mapped into the process's address space in the future,
-at the time the mapping is established.  Note that this may cause
-future mappings to fail if those mappings cause resource limits to
-be exceeded.
+at the time the mapping is established.
+Note that this may cause future mappings to fail if those mappings
+cause resource limits to be exceeded.
 .El
 .Pp
 Since physical memory is a potentially scarce resource, processes are

@@ -1,4 +1,4 @@
-.\"	$NetBSD: syscall.2,v 1.9.6.3 2002/03/22 20:42:44 nathanw Exp $
+.\"	$NetBSD: syscall.2,v 1.9.6.4 2002/10/18 02:17:18 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,8 +82,9 @@ such as
 Due to ABI implementation differences in passing struct or union
 type arguments to system calls between different processors, all
 system calls pass instead pointers to such structs or unions, even
-when the documentation of the system call mentions otherwise. The
-conversion between passing structs and unions is handled normally
-via userland stubs. The correct arguments for the kernel entry
+when the documentation of the system call mentions otherwise.
+The conversion between passing structs and unions is handled normally
+via userland stubs.
+The correct arguments for the kernel entry
 points for each system call can be found in the header file
 .Ao Pa sys/syscallargs.h Ac

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ulimit.3,v 1.2.8.3 2002/03/22 20:42:14 nathanw Exp $
+.\"	$NetBSD: ulimit.3,v 1.2.8.4 2002/10/18 02:16:08 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@
 The
 .Fn ulimit
 function provides a method to query or alter resource limits of the calling
-process.  The method to be performed is specified by the
+process.
+The method to be performed is specified by the
 .Fa cmd
 argument; possible values are:
 .Bl -tag -width UL_GETFSIZEXX
@@ -86,14 +87,14 @@ instead.
 If successful, the
 .Fn ulimit
 function returns the value of the requested limit.
-Otherwise, it returns -1, sets
+Otherwise, it returns \-1, sets
 .Va errno
 to indicate an error, and the limit is not changed.
 Therefore, to detect an error condition applications should set
 .Va errno
 to 0, call
 .Fn ulimit ,
-and check if -1 is returned and
+and check if \-1 is returned and
 .Va errno
 is non-zero.
 .Sh ERRORS

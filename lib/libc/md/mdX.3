@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdX.3,v 1.4.10.3 2002/03/22 20:42:19 nathanw Exp $
+.\"	$NetBSD: mdX.3,v 1.4.10.4 2002/10/18 02:16:18 nathanw Exp $
 .\"
 .\" ----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
@@ -41,23 +41,27 @@ message digest
 .Fn MDXData "unsigned char *data" "unsigned int len" "char *buf"
 .Sh DESCRIPTION
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
-for any number of input bytes.  A cryptographic checksum is a one-way
+for any number of input bytes.
+A cryptographic checksum is a one-way
 hash-function, that is, you cannot find (except by exhaustive search)
-the input corresponding to a particular output.  This net result is
+the input corresponding to a particular output.
+This net result is
 a ``fingerprint'' of the input-data, which doesn't disclose the actual
 input.
 .Pp
 MD2 is the slowest, MD4 is the fastest and MD5 is somewhere in the middle.
 MD2 can only be used for Privacy-Enhanced Mail.
 MD4 has been criticized for being too weak, so MD5 was developed in
-response as ``MD4 with safety-belts''.  When in doubt, use MD5.
+response as ``MD4 with safety-belts''.
+When in doubt, use MD5.
 .Pp
 The
 .Fn MDXInit ,
 .Fn MDXUpdate ,
 and
 .Fn MDXFinal
-functions are the core functions.  Allocate an MDX_CTX, initialize it with
+functions are the core functions.
+Allocate an MDX_CTX, initialize it with
 .Fn MDXInit ,
 run over the data with
 .Fn MDXUpdate ,
