@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.19 1993/07/05 03:20:57 deraadt Exp $
+ *	$Id: wd.c,v 1.20 1993/07/05 04:44:48 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -768,9 +768,10 @@ outt:
 			/* see if more to transfer */
 			if (du->dk_bc > 0 && (du->dk_flags & DKFL_ERROR) == 0) {
 				if( (du->dk_flags & DKFL_SINGLE)
-				    || (du->dk_flags & B_READ) == 0)
+				    || (du->dk_flags & B_READ) == 0) {
 					wdstart(ctrlr);
 					return;		/* next chunk is started */
+				}
 			} else if ((du->dk_flags & (DKFL_SINGLE|DKFL_ERROR)) == DKFL_ERROR) {
 				du->dk_skip = 0;
 				du->dk_skipm = 0;
