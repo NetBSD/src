@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.29 2000/03/29 03:07:52 simonb Exp $	*/
+/*	$NetBSD: libkern.h,v 1.30 2000/05/08 23:33:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,10 +117,10 @@ abs(j)
 #define	assert(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 :				    \
+#define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, #e))
 #else
-#define	assert(e)	((e) ? (void)0 :				    \
+#define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, "e"))
 #endif
 #endif
@@ -129,10 +129,10 @@ abs(j)
 #define	KASSERT(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	KASSERT(e)	((e) ? (void)0 :				    \
+#define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, #e))
 #else
-#define	KASSERT(e)	((e) ? (void)0 :				    \
+#define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, "e"))
 #endif
 #endif
@@ -141,10 +141,10 @@ abs(j)
 #define	KDASSERT(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	KDASSERT(e)	((e) ? (void)0 :				    \
+#define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("debugging ", __FILE__, __LINE__, #e))
 #else
-#define	KDASSERT(e)	((e) ? (void)0 :				    \
+#define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
