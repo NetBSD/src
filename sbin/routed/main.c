@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1997/02/03 22:02:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1997/09/15 10:38:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,8 @@ char copyright[] =
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: main.c,v 1.16 1997/02/03 22:02:58 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.17 1997/09/15 10:38:15 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -125,7 +126,7 @@ main(int argc,
 	(void)gethostname(myname, sizeof(myname)-1);
 	(void)gethost(myname, &myaddr);
 
-	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != EOF) {
+	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != -1) {
 		switch (n) {
 		case 's':
 			supplier = 1;
@@ -142,7 +143,7 @@ main(int argc,
 			break;
 
 		case 'g':
-			bzero(&parm, sizeof(parm));
+			memset(&parm, 0, sizeof(parm));
 			parm.parm_d_metric = 1;
 			p = check_parms(&parm);
 			if (p != 0)
@@ -189,7 +190,7 @@ main(int argc,
 				       optarg);
 				break;
 			}
-			bzero(&parm, sizeof(parm));
+			memset(&parm, 0, sizeof(parm));
 			parm.parm_net = p_net;
 			parm.parm_mask = p_mask;
 			parm.parm_d_metric = n;
@@ -604,7 +605,7 @@ get_rip_sock(naddr addr,
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		BADERR(1,"rip_sock = socket()");
 
-	bzero(&sin,sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 #ifdef _HAVE_SIN_LEN
 	sin.sin_len = sizeof(sin);
 #endif
@@ -632,7 +633,7 @@ void
 rip_off(void)
 {
 	struct interface *ifp;
-	register naddr addr;
+	naddr addr;
 
 
 	if (rip_sock >= 0 && !mhome) {

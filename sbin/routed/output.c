@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.12 1997/02/03 22:03:01 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.13 1997/09/15 10:38:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: output.c,v 1.12 1997/02/03 22:03:01 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: output.c,v 1.13 1997/09/15 10:38:16 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -261,7 +262,7 @@ clr_ws_buf(struct ws_buf *wb,
 
 	wb->lim = wb->base + NETS_LEN;
 	wb->n = wb->base;
-	bzero(wb->n, NETS_LEN*sizeof(*wb->n));
+	memset(wb->n, 0, NETS_LEN*sizeof(*wb->n));
 
 	/* install authentication if appropriate
 	 */
@@ -909,7 +910,7 @@ rip_query(void)
 	if (rip_sock < 0)
 		return;
 
-	bzero(&buf, sizeof(buf));
+	memset(&buf, 0, sizeof(buf));
 
 	for (ifp = ifnet; ifp; ifp = ifp->int_next) {
 		/* Skip interfaces those already queried.
