@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.62 2002/11/23 11:11:16 blymn Exp $
+# $NetBSD: obsolete.mi,v 1.63 2002/12/17 14:49:19 jdolecek Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -104,6 +104,20 @@
 ./usr/share/doc/usd/13.ex/Makefile
 ./usr/share/doc/usd/13.ex/ex.rm
 ./usr/share/doc/usd/13.ex/ex.summary
+./usr/share/examples/fstab/fstab.md
+./usr/share/examples/fstab/fstab.nfs.1
+./usr/share/examples/fstab/fstab.nfs.2
+./usr/share/examples/fstab/fstab.nfs.3
+./usr/share/examples/fstab/fstab.ra
+./usr/share/examples/fstab/fstab.rd
+./usr/share/examples/fstab/fstab.sd0.1
+./usr/share/examples/fstab/fstab.sd0.2
+./usr/share/examples/fstab/fstab.sd0.amiga
+./usr/share/examples/fstab/fstab.sd0.atari
+./usr/share/examples/fstab/fstab.wd0.1
+./usr/share/examples/fstab/fstab.wd0.2
+./usr/share/examples/fstab/fstab.wd0.3
+./usr/share/examples/fstab/fstab.wd0.cobalt
 ./usr/share/examples/verifiedexec_load
 ./usr/share/examples/verifiedexec_load/gen_md5
 ./usr/share/examples/verifiedexec_load/gen_sha1
