@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.6 1997/07/13 19:57:53 christos Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.7 1997/07/18 04:55:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.6 1997/07/13 19:57:53 christos Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.7 1997/07/18 04:55:57 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: ns_addr.c,v 1.6 1997/07/13 19:57:53 christos Exp $");
 #include <string.h>
 
 static struct ns_addr addr, zero_addr;
-static void Field __P((char *, u_char *, int));
-static void cvtbase __P((long, int, int[], int, unsigned char[], int));
+static void Field __P((char *, u_int8_t *, int));
+static void cvtbase __P((long, int, int[], int, u_int8_t[], int));
 
 struct ns_addr 
 ns_addr(name)
@@ -93,7 +93,7 @@ ns_addr(name)
 	socketname = strchr(hostname, separator);
 	if (socketname) {
 		*socketname++ = 0;
-		Field(socketname, (u_char *)&addr.x_port, 2);
+		Field(socketname, (u_int8_t *)&addr.x_port, 2);
 	}
 
 	Field(hostname, addr.x_host.c_host, 6);
@@ -104,7 +104,7 @@ ns_addr(name)
 static void
 Field(buf, out, len)
 	char *buf;
-	u_char *out;
+	u_int8_t *out;
 	int len;
 {
 	register char *bp = buf;
