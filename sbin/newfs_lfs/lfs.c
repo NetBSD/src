@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.13 2000/06/27 21:06:25 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.14 2000/07/03 01:49:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.13 2000/06/27 21:06:25 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.14 2000/07/03 01:49:12 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_fsmnt */        { 0 },
 		/* dlfs_clean */        0,
 		/* dlfs_dmeta */	0,
+		/* dlfs_minfreeseg */   0,
 
 		/* dlfs_pad */ 		{ 0 },
 		/* dlfs_cksum */	0
@@ -313,8 +314,11 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
 	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
+	lfsp->lfs_minfreeseg = lfsp->lfs_nseg / DFL_MIN_FREE_SEGS;
+	if (lfsp->lfs_minfreeseg < MIN_FREE_SEGS)
+		lfsp->lfs_minfreeseg = MIN_FREE_SEGS;
 
-	if(lfsp->lfs_nseg < MIN_FREE_SEGS + 1
+	if(lfsp->lfs_nseg < lfsp->lfs_minfreeseg + 1
 	   || lfsp->lfs_nseg < LFS_MIN_SBINTERVAL + 1)
 	{
 		if(seg_size == 0 && ssize > (bsize<<1)) {
@@ -333,12 +337,17 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 
 	/* 
 	 * The number of free blocks is set from the number of segments
-	 * times the segment size - MIN_FREE_SEGS (that we never write
+	 * times the segment size - lfs_minfreesegs (that we never write
 	 * because we need to make sure the cleaner can run).  Then
 	 * we'll subtract off the room for the superblocks ifile entries
-	 * and segment usage table.
+	 * and segment usage table, and half a block per segment that can't
+	 * be written due to fragmentation.
 	 */
-	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg - MIN_FREE_SEGS) * lfsp->lfs_ssize);
+	lfsp->lfs_dsize = fsbtodb(lfsp, (lfsp->lfs_nseg -
+					 lfsp->lfs_minfreeseg) *
+				  lfsp->lfs_ssize);
+	lfsp->lfs_dsize -= fsbtodb(lfsp, lfsp->lfs_nseg / 2);
+
 	lfsp->lfs_bfree = lfsp->lfs_dsize;
 	lfsp->lfs_segtabsz = SEGTABSIZE_SU(lfsp);
 	lfsp->lfs_cleansz = CLEANSIZE_SU(lfsp);
@@ -406,8 +415,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	segp->su_flags = SEGUSE_SUPERBLOCK | SEGUSE_DIRTY;
 	lfsp->lfs_bfree -= LFS_SUMMARY_SIZE / lp->d_secsize;
 	lfsp->lfs_bfree -=
-	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4 +
-		     MIN_FREE_SEGS * lfsp->lfs_ssize);
+	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4);
 
 	/* 
 	 * Now figure out the address of the ifile inode. The inode block
