@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.40 1996/10/22 11:27:05 veego Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.41 1996/10/25 06:30:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -559,10 +559,16 @@ insert:
 		return (0);
 
 	/*
-	 * Reassembly is complete; concatenate fragments.
+	 * Reassembly is complete.  Check for a bogus message size and
+	 * concatenate fragments.
 	 */
 	q = fp->ipq_fragq.lh_first;
 	ip = q->ipqe_ip;
+	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
+		ipstat.ips_toolong++;
+		ip_freef(fp);
+		return (0);
+	}
 	m = dtom(q->ipqe_ip);
 	t = m->m_next;
 	m->m_next = 0;
