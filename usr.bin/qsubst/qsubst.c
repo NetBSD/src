@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.3 1999/09/04 18:02:58 perry Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.4 2001/04/22 05:35:35 simonb Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -201,9 +201,9 @@ static int foundit(void)
   }
 }
 
-static void putcharf(int c)
+static int putcharf(int c)
 {
- putchar(c);
+ return(putchar(c));
 }
 
 static void put_ul(char *s)
@@ -380,7 +380,7 @@ static void process_file(char *fn)
     rahead = s1l;
   }
  if (debugging)
-  { printf("[rahead = %d, bufp0-buf = %d]\n",rahead,bufp0-&buf[0]);
+  { printf("[rahead = %d, bufp0-buf = %ld]\n",rahead,(long)(bufp0-&buf[0]));
   }
  n = 0;
  bufp = bufp0;
@@ -407,7 +407,7 @@ static void process_file(char *fn)
     *bufp++ = c;
     n ++;
     if (debugging)
-     { printf("[got %c, n now %ld, bufp-buf %d]\n",c,n,bufp-bufp0);
+     { printf("[got %c, n now %ld, bufp-buf %ld]\n",c,n,(long)(bufp-bufp0));
      }
     if ((n >= rahead) && foundit() && doit())
      { int wbehind;
