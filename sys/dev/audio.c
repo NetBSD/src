@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.49 1997/05/20 12:51:43 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.50 1997/05/27 23:24:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -112,12 +112,12 @@ int	audiodebug = 0;
 #define DPRINTF(x)
 #endif
 
-int naudio;	/* Count of attached hardware drivers */
 
-int audio_blk_ms = AUDIO_BLK_MS;
-int audio_backlog = AUDIO_BACKLOG;
+int	audio_blk_ms = AUDIO_BLK_MS;
+int	audio_backlog = AUDIO_BACKLOG;
 
-struct audio_softc *audio_softc[NAUDIO];
+struct	audio_softc **audio_softc;
+int	naudio = 0;             /* Current size of audio_softc */
 
 int	audiosetinfo __P((struct audio_softc *, struct audio_info *));
 int	audiogetinfo __P((struct audio_softc *, struct audio_info *));
@@ -195,19 +195,28 @@ audio_hardware_attach(hwp, hdlp)
 	void *hdlp;
 {
 	struct audio_softc *sc;
+        int n;
 
-	if (naudio >= NAUDIO) {
-	    DPRINTF(("audio_hardware_attach: not enough audio devices: %d > %d\n",
-		     naudio, NAUDIO));
-	    return(EINVAL);
+        /* Find a free slot. */
+        for(n = 0; n < naudio && audio_softc[n]; n++)
+        	;
+	if (n >= naudio) {
+          	/* No free slots, allocate one */
+        	struct audio_softc **new;
+
+                naudio++;
+                new = malloc(naudio * sizeof(struct audio_softc *),
+                             M_DEVBUF, M_WAITOK);
+                bcopy(audio_softc, new,
+                       n * sizeof(struct audio_softc *));
+                if (audio_softc)
+                	free(audio_softc, M_DEVBUF);
+                audio_softc = new;
+                audio_softc[n] = 0;
 	}
 
-	/*
-	 * Malloc a softc for the device
-	 */
-	/* XXX Find the first free slot */
-	audio_softc[naudio] = malloc(sizeof(struct audio_softc), M_DEVBUF, M_WAITOK);
-	sc = audio_softc[naudio];	
+	/* Malloc a softc for the device. */
+	sc = malloc(sizeof(struct audio_softc), M_DEVBUF, M_WAITOK);
 	bzero(sc, sizeof(struct audio_softc));
 
 	/* XXX too paranoid? */
@@ -230,8 +239,10 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->getdev == 0 ||
 	    hwp->set_port == 0 ||
 	    hwp->get_port == 0 ||
-	    hwp->query_devinfo == 0)
+	    hwp->query_devinfo == 0) {
+        	free(sc, M_DEVBUF);
 		return(EINVAL);
+        }
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
@@ -241,13 +252,17 @@ audio_hardware_attach(hwp, hdlp)
 	 */
 	sc->rr.bp = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
 	if (sc->rr.bp == 0) {
+        	free(sc, M_DEVBUF);
 		return (ENOMEM);
 	}
 	sc->pr.bp = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
 	if (sc->pr.bp == 0) {
 		free(sc->rr.bp, M_DEVBUF);
+        	free(sc, M_DEVBUF);
 		return (ENOMEM);
 	}
+
+	audio_softc[n] = sc;
 
 	/*
 	 * Set default softc params
@@ -258,7 +273,7 @@ audio_hardware_attach(hwp, hdlp)
 	/*
 	 * Return the audio unit number
 	 */
-	hwp->audio_unit = naudio++;
+	hwp->audio_unit = n;
 
 #ifdef AUDIO_DEBUG
 	printf("audio: unit %d attached\n", hwp->audio_unit);
@@ -507,7 +522,7 @@ audio_open(dev, flags, ifmt, p)
 	int s, error;
 	struct audio_hw_if *hw;
 
-	if (unit >= NAUDIO || !audio_softc[unit]) {
+	if (unit >= naudio || !audio_softc[unit]) {
 	    DPRINTF(("audio_open: invalid device unit - %d\n", unit));
 	    return (ENODEV);
 	}
@@ -1799,7 +1814,7 @@ mixer_open(dev, flags, ifmt, p)
 	struct audio_softc *sc;
 	struct audio_hw_if *hw;
 
-	if (unit >= NAUDIO || !audio_softc[unit]) {
+	if (unit >= naudio || !audio_softc[unit]) {
 	    DPRINTF(("mixer_open: invalid device unit - %d\n", unit));
 	    return (ENODEV);
 	}
