@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.23 1999/11/30 00:02:51 tron Exp $ */
+/* $NetBSD: if_eb.c,v 1.24 1999/11/30 17:02:39 tron Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1341,6 +1341,8 @@ ebread(sc, buf, len)
 	if (m == 0)
 		return;
 
+	ifp->if_ipackets++;
+
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -1364,7 +1366,6 @@ ebread(sc, buf, len)
 	}
 #endif
 
-	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);
 }
 
