@@ -6,4 +6,4 @@
 
 tc*		at	mainbus0	# All but PMAXes have a turbochannel
 
-include "tc.options"
+include "arch/pmax/conf/tc.options"
