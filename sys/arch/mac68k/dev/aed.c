@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.7.2.1 1999/03/05 08:24:24 scottr Exp $	*/
+/*	$NetBSD: aed.c,v 1.7.2.2 1999/03/11 18:31:05 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,10 +48,7 @@
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/aedvar.h>
-#include <mac68k/dev/itevar.h>
 #include <mac68k/dev/akbdvar.h>
-
-#include "ite.h"
 
 /*
  * Function declarations.
@@ -369,12 +366,6 @@ aed_handoff(event)
 {
 	if (aed_sc->sc_open && !adb_polling)
 		aed_enqevent(event);
-#if NITE > 0
-	else {
-		if (event->def_addr == 2)
-			ite_intr(event);
-	}
-#endif
 }
 
 /*

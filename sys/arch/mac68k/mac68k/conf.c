@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.1 1999/03/05 08:24:25 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.2 1999/03/11 18:31:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,9 +101,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "asc.h"
 #include "bpfilter.h"
 #include "ch.h"
-#include "grf.h"
 #include "ipfilter.h"
-#include "ite.h"
 #include "pty.h"
 #include "rnd.h"
 #include "se.h"
@@ -125,9 +123,7 @@ cdev_decl(ch);
 cdev_decl(cn);
 cdev_decl(ctty);
 cdev_decl(fd);
-cdev_decl(grf);
 cdev_decl(ipl);
-cdev_decl(ite);
 cdev_decl(kbd);
 cdev_decl(log);
 cdev_decl(md);
@@ -171,8 +167,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_fb_init(NGRF,grf),		/* 10: frame buffer */
-	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
+	cdev_notdef(),			/* 10: (formerly grf frame buffer) */
+	cdev_notdef(),			/* 11: (formerly ite console) */
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
@@ -307,15 +303,10 @@ chrtoblk(dev)
 	return (makedev(blkmaj, minor(dev)));
 }
 
-#define itecnpollc	nullcnpollc
-cons_decl(ite);
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
 struct	consdev constab[] = {
-#if NITE > 0
-	cons_init(ite),
-#endif
 #if NZSTTY > 0
 	cons_init(zs),
 #endif
