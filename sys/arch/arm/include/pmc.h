@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.2 2002/08/07 21:11:36 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.3 2002/08/09 05:27:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _ARM_PMC_H_
 #define	_ARM_PMC_H_
 
-#define	PMC_TYPE_I80200		0x10000		/* i80200-compatible */
+#define	PMC_CLASS_I80200	0x10000		/* i80200-compatible */
 #define	PMC_TYPE_I80200_CCNT	0x10001		/* cycle counter */
 #define	PMC_TYPE_I80200_PMCx	0x10002		/* performance counter */
 
