@@ -65,6 +65,7 @@ SUBDIR+=base-locale-pl
 SUBDIR+=base-locale-pt
 SUBDIR+=base-locale-ru
 SUBDIR+=base-locale-share
+SUBDIR+=base-locale-sk
 SUBDIR+=base-locale-sl
 SUBDIR+=base-locale-sv
 SUBDIR+=base-locale-uk
