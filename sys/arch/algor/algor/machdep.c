@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2001/05/31 07:24:23 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2001/06/01 16:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -224,18 +224,26 @@ mach_init(int argc, char *argv[], char *envp[])
 
 		strcpy(cpu_model, "Algorithmics P-4032");
 
-		vt->vt_addr = MIPS_PHYS_TO_KSEG1(XXX);
-		vt->vt_cfgbase = MIPS_PHYS_TO_KSEG1(XXX);
+		vt->vt_addr = MIPS_PHYS_TO_KSEG1(P4032_V962PBC);
+		vt->vt_cfgbase = MIPS_PHYS_TO_KSEG1(P4032_PCICFG);
 		vt->vt_adbase = 11;
 
+		led_display('v', '9', '6', '2');
 		vtpbc_init(&acp->ac_pc, vt);
 
-		algor_p4032loc_bus_mem_init(&acp->ac_locmemt, acp);
-		algor_p4032pci_bus_io_init(&acp->ac_iot, acp);
-		algor_p4032pci_bus_mem_init(&acp->ac_memt, acp);
+		led_display('l', 'i', 'o', ' ');
+		algor_p4032loc_bus_io_init(&acp->ac_lociot, acp);
 
+		led_display('i', 'o', ' ', ' ');
+		algor_p4032_bus_io_init(&acp->ac_iot, acp);
+
+		led_display('m', 'e', 'm', ' ');
+		algor_p4032_bus_mem_init(&acp->ac_memt, acp);
+
+		led_display('d', 'm', 'a', ' ');
 		algor_p4032_dma_init(acp);
 
+		led_display('i', 'n', 't', 'r');
 		algor_p4032_intr_init(acp);
 #if NCOM > 0
 		/*
@@ -243,8 +251,9 @@ mach_init(int argc, char *argv[], char *envp[])
 		 * FIFO depth * character time.
 		 * character time = (1000000 / (defaultrate / 10))
 		 */
+		led_display('c', 'o', 'n', 's');
 		DELAY(160000000 / comcnrate);
-		if (comcnattach(&acp->ac_locmemt, XXX, comcnrate,
+		if (comcnattach(&acp->ac_lociot, P4032_COM1, comcnrate,
 		    COM_FREQ,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 			panic("p4032: unable to initialize serial console");
@@ -729,7 +738,10 @@ int
 algor_get_ethaddr(struct pci_attach_args *pa, u_int8_t *buf)
 {
 
-#if defined(ALGOR_P5064)
+#if defined(ALGOR_P4032)
+	if (pa->pa_bus != 0 || pa->pa_device != 5 || pa->pa_function != 0)
+		return (0);
+#elif defined(ALGOR_P5064)
 	if (pa->pa_bus != 0 || pa->pa_device != 0 || pa->pa_function != 0)
 		return (0);
 #endif

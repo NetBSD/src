@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.1 2001/05/28 16:22:16 thorpej Exp $
+#	$NetBSD: files.algor,v 1.2 2001/06/01 16:00:04 thorpej Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -13,6 +13,12 @@ defopt	ALGOR_P5064	# Algorithmics P-5064
 defopt	ALGOR_P6032	# Algorithmics P-6032
 
 # Platform support files
+file	arch/algor/algor/algor_p4032_bus_io.c	algor_p4032
+file	arch/algor/algor/algor_p4032_bus_locio.c algor_p4032
+file	arch/algor/algor/algor_p4032_bus_mem.c	algor_p4032
+file	arch/algor/algor/algor_p4032_dma.c	algor_p4032
+file	arch/algor/algor/algor_p4032_intr.c	algor_p4032
+
 file	arch/algor/algor/algor_p5064_bus_io.c	algor_p5064
 file	arch/algor/algor/algor_p5064_bus_mem.c	algor_p5064
 file	arch/algor/algor/algor_p5064_dma.c	algor_p5064
@@ -110,7 +116,7 @@ file	arch/algor/dev/vtpbc_mainbus.c		vtpbc_mainbus
 
 device	pcib: isabus
 attach	pcib at pci
-file	arch/algor/pci/pcib.c			pcib
+file	arch/algor/pci/pcib.c			pcib & algor_p5064
 
 file	arch/algor/pci/pciide_machdep.c		pciide
 
@@ -139,3 +145,15 @@ major	{ fd = 0 }
 
 # ISA Plug and Play devices
 file	arch/algor/isa/isapnp_machdep.c		isapnp
+
+#
+# Devices on the P-4032 local I/O bus.
+#
+attach	mcclock at mainbus with mcclock_mainbus
+file	arch/algor/dev/mcclock_mainbus.c	mcclock_mainbus & algor_p4032
+
+attach	com at mainbus with com_mainbus
+file	arch/algor/dev/com_mainbus.c		com_mainbus & algor_p4032
+
+attach	lpt at mainbus with lpt_mainbus
+file	arch/algor/dev/lpt_mainbus.c		lpt_mainbus & algor_p4032

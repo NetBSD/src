@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.2 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,49 +36,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+#include <machine/bus.h>
+#include <dev/pci/pcivar.h>
 
-#include <sys/param.h>
+struct p4032_config {
+	struct algor_bus_space ac_lociot;
+	struct algor_bus_space ac_iot;
+	struct algor_bus_space ac_memt;
 
-#include <machine/autoconf.h>
+	struct algor_bus_dma_tag ac_pci_dmat;
 
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h>
-#endif
+	struct algor_pci_chipset ac_pc;
 
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
-#include <algor/algor/algor_p6032reg.h>
-#endif
+	struct extent *ac_io_ex;
+	struct extent *ac_mem_ex;
 
-#if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(XXX)
-#define	LED(x)		XXX
-#endif
+	int	ac_mallocsafe;
+};
 
+#ifdef _KERNEL
 /*
- * led_display:
- *
- *	Set the LED display to the characters provided.
+ * These are indexes into the interrupt mapping table for the
+ * on-board devices.
  */
-void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
-{
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
+#define	P4032_IRQ_PCICTLR	0
+#define	P4032_IRQ_FLOPPY	1
+#define	P4032_IRQ_PCKBC		2
+#define	P4032_IRQ_COM1		3
+#define	P4032_IRQ_COM2		4
+#define	P4032_IRQ_LPT		5
+#define	P4032_IRQ_GPIO		6
+#define	P4032_IRQ_RTC		7
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
-}
+struct p4032_irqmap {
+	struct evcnt	*irqcount;
+	int		irqreg;
+	u_int8_t	irqbit;
+	int		xbarreg;
+	int		xbarshift;
+};
+
+void	algor_p4032_intr_disestablish(void *, void *);
+void	*algor_p4032_intr_establish(const struct p4032_irqmap *, int,
+	    int (*)(void *), void *);
+
+extern struct p4032_config p4032_configuration;
+extern const struct p4032_irqmap p4032_8bit_irqmap[];
+
+void	algor_p4032loc_bus_io_init(bus_space_tag_t, void *);
+void	algor_p4032_bus_io_init(bus_space_tag_t, void *);
+void	algor_p4032_bus_mem_init(bus_space_tag_t, void *);
+
+void	algor_p4032_dma_init(struct p4032_config *);
+
+void	algor_p4032_intr_init(struct p4032_config *);
+
+void	algor_p4032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+#endif /* _KERNEL */

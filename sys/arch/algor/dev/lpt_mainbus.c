@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.2 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,49 +36,90 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
-#include "opt_algor_p6032.h"
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/types.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
+#include <machine/bus.h>
 
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h>
-#endif
-
-#ifdef ALGOR_P5064
-#include <algor/algor/algor_p5064reg.h>
-#endif 
- 
-#ifdef ALGOR_P6032
-#include <algor/algor/algor_p6032reg.h>
-#endif
+#include <dev/ic/lptreg.h>
+#include <dev/ic/lptvar.h>
 
 #if defined(ALGOR_P4032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P4032_LED)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P5064)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(P5064_LED1)
-#define	LED(x)		((3 - (x)) * 4)
-#elif defined(ALGOR_P6032)
-#define	LEDBASE		MIPS_PHYS_TO_KSEG1(XXX)
-#define	LED(x)		XXX
+#include <algor/algor/algor_p4032var.h>
 #endif
 
-/*
- * led_display:
- *
- *	Set the LED display to the characters provided.
- */
-void
-led_display(u_int8_t a, u_int8_t b, u_int8_t c, u_int8_t d)
-{
-	u_int8_t *leds = (u_int8_t *) LEDBASE;
+struct lpt_mainbus_softc {
+	struct lpt_softc sc_lpt;	/* real "lpt" softc */
 
-	leds[LED(0)] = a;
-	leds[LED(1)] = b;
-	leds[LED(2)] = c;
-	leds[LED(3)] = d;
+	/* mainbus-specific goo. */
+	void	*sc_ih;			/* interrupt handler */
+};
+
+int	lpt_mainbus_match(struct device *, struct cfdata *, void *);
+void	lpt_mainbus_attach(struct device *, struct device *, void *);
+
+struct cfattach lpt_mainbus_ca = {
+	sizeof(struct lpt_mainbus_softc), lpt_mainbus_match,
+	    lpt_mainbus_attach
+};
+
+int
+lpt_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+
+	/* Always present. */
+	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
+}
+
+void
+lpt_mainbus_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct lpt_mainbus_softc *msc = (void *)self;
+	struct lpt_softc *sc = &msc->sc_lpt;
+	struct mainbus_attach_args *ma = aux;
+
+	sc->sc_iot = ma->ma_st;
+
+	if (bus_space_map(sc->sc_iot, ma->ma_addr, LPT_NPORTS, 0,
+	    &sc->sc_ioh) != 0) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
+	printf("\n");
+
+	lpt_attach_subr(sc);
+
+#if defined(ALGOR_P4032)
+	sc->sc_ih = algor_p4032_intr_establish(&p4032_8bit_irqmap[ma->ma_irq],
+	    IPL_TTY, lptintr, sc);
+#endif
+
+	if (msc->sc_ih == NULL) {
+		printf("%s: unable to establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 }
