@@ -1,10 +1,11 @@
-#       $NetBSD: Makefile,v 1.2 2000/07/24 00:00:21 mycroft Exp $
+#       $NetBSD: Makefile,v 1.3 2000/07/27 00:25:05 cgd Exp $
 
 PROG=   skeytest
 NOMAN=  t
 
 .PATH:  ${.CURDIR}/..
 
+DPADD+=	${LIBSKEY}
 LDADD+=	-lskey
 
 regress: skeytest
