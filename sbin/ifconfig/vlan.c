@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $	*/
+/*	$NetBSD: vlan.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -53,18 +53,18 @@ __RCSID("$NetBSD: vlan.c,v 1.2 2005/03/19 03:56:06 thorpej Exp $");
 static u_int vlan_tag = (u_int)-1;
 
 static int
-checkifname(const char *name)
+checkifname(const char *ifname)
 {
 
-	return strncmp(name, "vlan", 4) != 0 ||
-	    !isdigit((unsigned char)name[4]);
+	return strncmp(ifname, "vlan", 4) != 0 ||
+	    !isdigit((unsigned char)ifname[4]);
 }
 
 static void
-assertifname(const char *name)
+assertifname(const char *ifname)
 {
 
-	if (checkifname(name)) {
+	if (checkifname(ifname)) {
 		errx(EXIT_FAILURE, "valid only with vlan(4) interfaces");
 	}
 }
