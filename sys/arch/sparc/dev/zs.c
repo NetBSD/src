@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.96 2003/01/22 22:00:39 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.97 2003/01/28 12:35:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -445,6 +445,7 @@ zs_attach(zsc, zsd, pri)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
+		simple_lock_init(&cs->cs_lock);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;

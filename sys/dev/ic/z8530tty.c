@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.88 2003/01/24 20:46:45 pk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.89 2003/01/28 12:35:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.88 2003/01/24 20:46:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.89 2003/01/28 12:35:38 pk Exp $");
 
 #include "opt_kgdb.h"
 
@@ -292,6 +292,8 @@ zstty_attach(parent, self, aux)
 	int channel, s, tty_unit;
 	dev_t dev;
 	char *i, *o;
+	int dtr_on;
+	int resetbit;
 
 	callout_init(&zst->zst_diag_ch);
 	cn_init_magic(&zstty_cnm_state);
@@ -377,6 +379,8 @@ zstty_attach(parent, self, aux)
 	/*
 	 * Hardware init
 	 */
+	dtr_on = 0;
+	resetbit = 0;
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
@@ -389,8 +393,6 @@ zstty_attach(parent, self, aux)
 		t.c_ospeed = cs->cs_defspeed;
 		t.c_cflag = cs->cs_defcflag;
 
-		s = splzs();
-
 		/*
 		 * Turn on receiver and status interrupts.
 		 * We defer the actual write of the register to zsparam(),
@@ -399,33 +401,25 @@ zstty_attach(parent, self, aux)
 		 */
 		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
 
-		splx(s);
-
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
 		(void) zsparam(tp, &t);
 
-		s = splzs();
-
 		/* Make sure DTR is on now. */
-		zs_modem(zst, 1);
+		dtr_on = 1;
 
-		splx(s);
 	} else if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_NORESET)) {
 		/* Not the console; may need reset. */
-		int reset;
-
-		reset = (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET;
-
-		s = splzs();
-
-		zs_write_reg(cs, 9, reset);
-
-		/* Will raise DTR in open. */
-		zs_modem(zst, 0);
-
-		splx(s);
+		resetbit = (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET;
 	}
+
+	s = splzs();
+	simple_lock(&cs->cs_lock);
+	if (resetbit)
+		zs_write_reg(cs, 9, resetbit);
+	zs_modem(zst, dtr_on);
+	simple_unlock(&cs->cs_lock);
+	splx(s);
 }
 
 
@@ -451,6 +445,7 @@ zs_shutdown(zst)
 	int s;
 
 	s = splzs();
+	simple_lock(&cs->cs_lock);
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
@@ -469,20 +464,20 @@ zs_shutdown(zst)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		zs_modem(zst, 0);
+		simple_unlock(&cs->cs_lock);
 		splx(s);
 		/*
 		 * XXX -    another process is not prevented from opening
 		 *	    the device during our sleep.
-		 * XXXSMP - another process isn't prevented from opening
-		 *	    at even if it was waiting for t_wopen.
 		 */
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
-		s = splzs();
-	}
+		/* Re-check state in case we were opened during our sleep */
+		if (ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen != 0)
+			return;
 
-	/* Re-check state in case we were opened during our sleep */
-	if (ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen != 0)
-		goto out;
+		s = splzs();
+		simple_lock(&cs->cs_lock);
+	}
 
 	/* Turn off interrupts if not the console. */
 	if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
@@ -500,7 +495,7 @@ zs_shutdown(zst)
 		(*cs->disable)(zst->zst_cs);
 	}
 
-out:
+	simple_unlock(&cs->cs_lock);
 	splx(s);
 }
 
@@ -573,6 +568,7 @@ zsopen(dev, flags, mode, p)
 			SET(t.c_cflag, MDMBUF);
 
 		s2 = splzs();
+		simple_lock(&cs->cs_lock);
 
 		/*
 		 * Turn on receiver and status interrupts.
@@ -586,6 +582,7 @@ zsopen(dev, flags, mode, p)
 		zst->zst_ppsmask = 0;
 		zst->ppsparam.mode = 0;
 
+		simple_unlock(&cs->cs_lock);
 		splx(s2);
 
 		/* Make sure zsparam will see changes. */
@@ -610,6 +607,7 @@ zsopen(dev, flags, mode, p)
 		ttsetwater(tp);
 
 		s2 = splzs();
+		simple_lock(&cs->cs_lock);
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -627,6 +625,7 @@ zsopen(dev, flags, mode, p)
 		CLR(zst->zst_rx_flags, RX_ANY_BLOCK);
 		zs_hwiflow(zst);
 
+		simple_unlock(&cs->cs_lock);
 		splx(s2);
 	}
 
@@ -756,6 +755,7 @@ zsioctl(dev, cmd, data, flag, p)
 	error = 0;
 
 	s = splzs();
+	simple_lock(&cs->cs_lock);
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -940,6 +940,7 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
+	simple_unlock(&cs->cs_lock);
 	splx(s);
 
 	return (error);
@@ -981,6 +982,7 @@ zsstart(tp)
 		tbc = ndqb(&tp->t_outq, 0);
 	
 		(void) splzs();
+		simple_lock(&cs->cs_lock);
 
 		zst->zst_tba = tba;
 		zst->zst_tbc = tbc;
@@ -1002,6 +1004,7 @@ zsstart(tp)
 		zst->zst_tbc--;
 		zst->zst_tba++;
 	}
+	simple_unlock(&cs->cs_lock);
 out:
 	splx(s);
 	return;
@@ -1096,6 +1099,7 @@ zsparam(tp, t)
 	 *
 	 */
 	s = splzs();
+	simple_lock(&cs->cs_lock);
 
 	/*
 	 * Recalculate which status ints to enable.
@@ -1191,6 +1195,7 @@ zsparam(tp, t)
 	 */
 	zstty_stint(cs, 1);
 
+	simple_unlock(&cs->cs_lock);
 	splx(s);
 
 	/*
@@ -1240,6 +1245,7 @@ zs_maskintr(zst)
 /*
  * Raise or lower modem control (DTR/RTS) signals.  If a character is
  * in transmission, the change is deferred.
+ * Called at splzs() and with the channel lock held.
  */
 static void
 zs_modem(zst, onoff)
@@ -1268,6 +1274,10 @@ zs_modem(zst, onoff)
 	}
 }
 
+/*
+ * Set modem bits.
+ * Called at splzs() and with the channel lock held.
+ */
 static void
 tiocm_to_zs(zst, how, ttybits)
 	struct zstty_softc *zst;
@@ -1310,6 +1320,10 @@ tiocm_to_zs(zst, how, ttybits)
 	}
 }
 
+/*
+ * Get modem bits.
+ * Called at splzs() and with the channel lock held.
+ */
 static int
 zs_to_tiocm(zst)
 	struct zstty_softc *zst;
@@ -1354,6 +1368,7 @@ zshwiflow(tp, block)
 		return (0);
 
 	s = splzs();
+	simple_lock(&cs->cs_lock);
 	if (block) {
 		if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
 			SET(zst->zst_rx_flags, RX_TTY_BLOCKED);
@@ -1370,13 +1385,14 @@ zshwiflow(tp, block)
 			zs_hwiflow(zst);
 		}
 	}
+	simple_unlock(&cs->cs_lock);
 	splx(s);
 	return (1);
 }
 
 /*
  * Internal version of zshwiflow
- * called at splzs
+ * Called at splzs() and with the channel lock held.
  */
 static void
 zs_hwiflow(zst)
@@ -1411,8 +1427,8 @@ integrate void zstty_stsoft __P((struct zstty_softc *, struct tty *));
 static void zstty_diag __P((void *));
 
 /*
- * receiver ready interrupt.
- * called at splzs
+ * Receiver Ready interrupt.
+ * Called at splzs() and with the channel lock held.
  */
 static void
 zstty_rxint(cs)
@@ -1493,7 +1509,8 @@ zstty_rxint(cs)
 }
 
 /*
- * transmitter ready interrupt.  (splzs)
+ * Transmitter Ready interrupt.
+ * Called at splzs() and with the channel lock held.
  */
 static void
 zstty_txint(cs)
@@ -1533,7 +1550,8 @@ zstty_txint(cs)
 }
 
 /*
- * status change interrupt.  (splzs)
+ * Status Change interrupt.
+ * Called at splzs() and with the channel lock held.
  */
 static void
 zstty_stint(cs, force)
@@ -1724,6 +1742,7 @@ zstty_rxsoft(zst, tp)
 	if (cc != scc) {
 		zst->zst_rbget = get;
 		s = splzs();
+		simple_lock(&cs->cs_lock);
 		cc = zst->zst_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= zst->zst_r_lowat) {
@@ -1738,6 +1757,7 @@ zstty_rxsoft(zst, tp)
 				zs_hwiflow(zst);
 			}
 		}
+		simple_unlock(&cs->cs_lock);
 		splx(s);
 	}
 
@@ -1751,12 +1771,18 @@ zstty_txsoft(zst, tp)
 	struct zstty_softc *zst;
 	struct tty *tp;
 {
+	struct zs_chanstate *cs = zst->zst_cs;
+	int s;
 
+	s = splzs();
+	simple_lock(&cs->cs_lock);
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
+	simple_unlock(&cs->cs_lock);
+	splx(s);
 	(*tp->t_linesw->l_start)(tp);
 }
 
@@ -1770,9 +1796,11 @@ zstty_stsoft(zst, tp)
 	int s;
 
 	s = splzs();
+	simple_lock(&cs->cs_lock);
 	rr0 = cs->cs_rr0;
 	delta = cs->cs_rr0_delta;
 	cs->cs_rr0_delta = 0;
+	simple_unlock(&cs->cs_lock);
 	splx(s);
 
 	if (ISSET(delta, cs->cs_rr0_dcd)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 2003/01/11 16:00:48 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 2003/01/28 12:35:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,6 +215,8 @@ zs_attach(parent, self, aux)
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
+		simple_lock_init(&cs->cs_lock);
+
 		zsc->zsc_cs[channel] = cs;
 		zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
 

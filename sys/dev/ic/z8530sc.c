@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.17 2002/09/24 13:23:31 ad Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.18 2003/01/28 12:35:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.17 2002/09/24 13:23:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.18 2003/01/28 12:35:39 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,10 @@ zsc_intr_hard(arg)
 
 	/* First look at channel A. */
 	cs = zsc->zsc_cs[0];
+
+	/* Lock both channels */
+	simple_lock(&cs->cs_lock);
+	simple_lock(&zsc->zsc_cs[1]->cs_lock);
 	/* Note: only channel A has an RR3 */
 	rr3 = zs_read_reg(cs, 3);
 
@@ -276,6 +280,9 @@ zsc_intr_hard(arg)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
 
+	/* Done with channel A */
+	simple_unlock(&cs->cs_lock);
+
 	/* Now look at channel B. */
 	cs = zsc->zsc_cs[1];
 	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
@@ -287,6 +294,8 @@ zsc_intr_hard(arg)
 		if (rr3 & ZSRR3_IP_B_TX)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
+
+	simple_unlock(&cs->cs_lock);
 
 	/* Note: caller will check cs_x->cs_softreq and DTRT. */
 	return (rr3);
