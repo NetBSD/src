@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2000/06/29 08:10:45 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.5 2000/07/04 22:25:06 tsubai Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@ include <sys/param.h>
 include <sys/time.h>
 include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+include <uvm/uvm_extern.h>
 
 include <machine/pcb.h>
 include <machine/pmap.h>
