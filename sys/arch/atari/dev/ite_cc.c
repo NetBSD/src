@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.12 1996/12/20 12:49:39 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.13 1997/07/15 06:48:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -473,9 +473,6 @@ struct proc		*p;
 	struct itewinsize	*is;
 	int			error = 0;
 	view_t			*view = viewview(ip->grf->g_viewdev);
-#if 0 /* LWP: notyet */
-	struct itebell		*ib;
-#endif
 
 	switch (cmd) {
 	case ITEIOCSWINSZ:
@@ -496,31 +493,6 @@ struct proc		*p;
 			 */
 			iteioctl(ip->grf->g_itedev,TIOCSWINSZ,(caddr_t)&ws,0,p);
 		}
-		break;
-	case ITEIOCGBELL:
-#if 0 /* LWP */
-		/* XXX This won't work now			*/
-		/* XXX Should the bell be device dependent?	*/
-		ib         = (struct itebell *)addr;
-		ib->volume = bvolume;
-		ib->pitch  = bpitch;
-		ib->msec   = bmsec;
-#endif
-		break;
-	case ITEIOCSBELL:
-#if 0 /* LWP */
-		/* XXX See above				*/
-		ib = (struct itebell *)addr;
-		/* bounds check */
-		if(ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
-		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
-			error = EINVAL;
-		else {
-			bvolume = ib->volume;
-			bpitch  = ib->pitch;
-			bmsec   = ib->msec;
-		}
-#endif
 		break;
 	case VIOCSCMAP:
 	case VIOCGCMAP:
