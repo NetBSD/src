@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.8 1997/08/12 16:27:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,8 @@ struct __kvm {
 	int	swfd;		/* swap file (e.g., /dev/drum) */
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
 	struct kinfo_proc *procbase;
+	u_long	usrstack;		/* address of end of user stack */
+	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
@@ -93,6 +95,7 @@ void	 _kvm_err __P((kvm_t *kd, const char *program, const char *fmt, ...));
 int	 _kvm_dump_mkheader __P((kvm_t *kd_live, kvm_t *kd_dump));
 void	 _kvm_freeprocs __P((kvm_t *kd));
 void	 _kvm_freevtop __P((kvm_t *));
+int	 _kvm_mdopen __P((kvm_t *));
 int	 _kvm_initvtop __P((kvm_t *));
 int	 _kvm_kvatop __P((kvm_t *, u_long, u_long *));
 void	*_kvm_malloc __P((kvm_t *kd, size_t));
