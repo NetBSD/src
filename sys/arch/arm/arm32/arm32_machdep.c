@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.30 2003/04/18 10:51:35 scw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.31 2003/04/18 11:08:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -73,7 +73,7 @@ struct vm_map *phys_map = NULL;
 
 extern int physmem;
 
-#ifndef PMAP_STATIC_L1S
+#if !defined(PMAP_STATIC_L1S) && !defined(ARM32_PMAP_NEW)
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
@@ -211,14 +211,19 @@ cpu_startup()
 	u_int loop, base, residual;
 	char pbuf[9];
 
+#ifndef ARM32_PMAP_NEW
+	/* This has moved to initarm() */
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	lwp0.l_addr = proc0paddr;
+#endif
 
 	/* Set the cpu control register */
 	cpu_setup(boot_args);
 
+#ifndef ARM32_PMAP_NEW
 	/* All domains MUST be clients, permissions are VERY important */
 	cpu_domains(DOMAIN_CLIENT);
+#endif
 
 	/* Lock down zero page */
 	vector_page_setprot(VM_PROT_READ);
@@ -342,8 +347,12 @@ cpu_startup()
 	    USPACE_UNDEF_STACK_TOP;
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
+#ifndef ARM32_PMAP_NEW
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
 	    &curpcb->pcb_pagedir);
+#else
+	pmap_set_pcb_pagedir(pmap_kernel(), curpcb);
+#endif
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
@@ -446,7 +455,7 @@ parse_mi_bootargs(args)
 /*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
 		bufpages = integer;*/
 
-#ifndef PMAP_STATIC_L1S
+#if !defined(PMAP_STATIC_L1S) && !defined(ARM32_PMAP_NEW)
 	if (get_bootconf_option(args, "maxproc", BOOTOPT_TYPE_INT, &integer)) {
 		max_processes = integer;
 		if (max_processes < 16)
@@ -455,7 +464,7 @@ parse_mi_bootargs(args)
 		if (max_processes > 255)
 			max_processes = 255;
 	}
-#endif	/* !PMAP_STATUC_L1S */
+#endif	/* !PMAP_STATUC_L1S && !ARM32_PMAP_NEW */
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
