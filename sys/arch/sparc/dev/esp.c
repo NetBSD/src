@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.48 1996/05/30 22:19:10 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.49 1996/06/11 22:26:16 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -230,7 +230,7 @@ espattach(parent, self, aux)
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
-		sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_FE;
+		sc->sc_cfg2 = ESPCFG2_SCSI2;
 		ESP_WRITE_REG(sc, ESP_CFG2, sc->sc_cfg2);
 		sc->sc_cfg3 = 0;
 		ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
@@ -240,6 +240,7 @@ espattach(parent, self, aux)
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
+			sc->sc_cfg2 |= ESPCFG2_FE;
 			sc->sc_cfg3 = 0;
 			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
 			printf(": ESP200");
