@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.6 2000/05/08 13:49:48 augustss Exp $
+#	$NetBSD: GENERIC,v 1.7 2000/06/08 13:16:55 nonaka Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.6 $"
+#ident		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -53,12 +53,12 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
@@ -96,10 +96,11 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -201,6 +202,14 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# IDE and related devices
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+#cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
 # Network Interfaces
 
 # PCI network interfaces
@@ -211,9 +220,87 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # MII/PHY support
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+# USB Controller and Devices
+
+# PCI USB controllers
+uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
+ohci*	at pci? dev ? function ?	# Open Host Controller
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse* at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass? channel ?
+#atapibus* at umass? channel ?
+
+# USB audio
+uaudio* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+#uftdi*	at uhub? port ?
+#ucom*	at uftdi? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor* at uhub? port ?
+ucom*	at uvisor?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
 # Audio device
+
+# Audio support
+audio*  at uaudio?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -251,13 +338,13 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
+pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM			# use "com" randomness as well
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
