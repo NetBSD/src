@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.184 2003/12/24 22:53:59 manu Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.185 2004/03/04 00:05:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.184 2003/12/24 22:53:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.185 2004/03/04 00:05:58 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2166,12 +2166,20 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 	if ((error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags)) != 0)
 		return (error);
 	l->l_ctxlink = ucp->uc_link;
-	/*
-	 * We might want to take care of the stack portion here but currently
-	 * don't; see the comment in getucontext().
-	 */
+
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0)
 		sigprocmask1(p, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+
+	/*
+	 * If there was stack information, update whether or not we are
+	 * still running on an alternate signal stack.
+	 */
+	if ((ucp->uc_flags & _UC_STACK) != 0) {
+		if (ucp->uc_stack.ss_flags & SS_ONSTACK)
+			p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		else
+			p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	}
 
 	return 0;
 }
