@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.9 1998/02/03 01:48:31 mycroft Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.10 1998/11/15 17:13:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.9 1998/02/03 01:48:31 mycroft Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.10 1998/11/15 17:13:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,7 @@ _strtouq(nptr, endptr, base)
 		base = c == '0' ? 8 : 10;
 
 	cutoff = UQUAD_MAX / (u_quad_t)base;
-	cutlim = UQUAD_MAX % (u_quad_t)base;
+	cutlim = (int)(UQUAD_MAX % (u_quad_t)base);
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -122,6 +122,7 @@ _strtouq(nptr, endptr, base)
 	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
+		/* LINTED interface specification */
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: srand48.c,v 1.4 1998/01/09 03:15:41 perry Exp $	*/
+/*	$NetBSD: srand48.c,v 1.5 1998/11/15 17:13:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -25,7 +25,7 @@ srand48(long seed)
 {
 	__rand48_seed[0] = RAND48_SEED_0;
 	__rand48_seed[1] = (unsigned short) seed;
-	__rand48_seed[2] = (unsigned short) (seed >> 16);
+	__rand48_seed[2] = (unsigned short) ((unsigned long)seed >> 16);
 	__rand48_mult[0] = RAND48_MULT_0;
 	__rand48_mult[1] = RAND48_MULT_1;
 	__rand48_mult[2] = RAND48_MULT_2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.28 1998/10/19 03:32:27 matt Exp $	*/
+/*	$NetBSD: strtod.c,v 1.29 1998/11/15 17:13:52 christos Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.28 1998/10/19 03:32:27 matt Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.29 1998/11/15 17:13:52 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -227,11 +227,11 @@ IBM should be defined.
 #endif
 
 #ifdef IEEE_LITTLE_ENDIAN
-#define word0(x) ((ULong *)&x)[1]
-#define word1(x) ((ULong *)&x)[0]
+#define word0(x) ((ULong *)(void *)&x)[1]
+#define word1(x) ((ULong *)(void *)&x)[0]
 #else
-#define word0(x) ((ULong *)&x)[0]
-#define word1(x) ((ULong *)&x)[1]
+#define word0(x) ((ULong *)(void *)&x)[0]
+#define word1(x) ((ULong *)(void *)&x)[1]
 #endif
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
@@ -239,11 +239,13 @@ IBM should be defined.
  * #define Storeinc(a,b,c) (*a++ = b << 16 | c & 0xffff)
  */
 #if defined(IEEE_LITTLE_ENDIAN) + defined(VAX) + defined(__arm32__)
-#define Storeinc(a,b,c) (((unsigned short *)a)[1] = (unsigned short)b, \
-((unsigned short *)a)[0] = (unsigned short)c, a++)
+#define Storeinc(a,b,c) \
+    (((u_short *)(void *)a)[1] = \
+	(u_short)b, ((u_short *)(void *)a)[0] = (u_short)c, a++)
 #else
-#define Storeinc(a,b,c) (((unsigned short *)a)[0] = (unsigned short)b, \
-((unsigned short *)a)[1] = (unsigned short)c, a++)
+#define Storeinc(a,b,c) \
+    (((u_short *)(void *)a)[0] = \
+	(u_short)b, ((u_short *)(void *)a)[1] = (u_short)c, a++)
 #endif
 
 /* #define P DBL_MANT_DIG */
@@ -421,8 +423,8 @@ Bfree
 		}
 	}
 
-#define Bcopy(x,y) memcpy((char *)&x->sign, (char *)&y->sign, \
-y->wds*sizeof(Long) + 2*sizeof(int))
+#define Bcopy(x,y) memcpy(&x->sign, &y->sign, \
+    y->wds*sizeof(Long) + 2*sizeof(int))
 
  static Bigint *
 multadd
@@ -710,7 +712,7 @@ pow5mult
 	if ((i = k & 3) != 0)
 		b = multadd(b, p05[i-1], 0);
 
-	if (!(k >>= 2))
+	if (!(k = (unsigned int) k >> 2))
 		return b;
 	if (!(p5 = p5s)) {
 		/* first time */
@@ -723,7 +725,7 @@ pow5mult
 			Bfree(b);
 			b = b1;
 			}
-		if (!(k >>= 1))
+		if (!(k = (unsigned int) k >> 1))
 			break;
 		if (!(p51 = p5->next)) {
 			p51 = p5->next = mult(p5,p5);
@@ -747,9 +749,9 @@ lshift
 	ULong *x, *x1, *xe, z;
 
 #ifdef Pack_32
-	n = k >> 5;
+	n = (unsigned int)k >> 5;
 #else
-	n = k >> 4;
+	n = (unsigned int)k >> 4;
 #endif
 	k1 = b->k;
 	n1 = n + b->wds + 1;
@@ -872,20 +874,20 @@ diff
 #ifdef Pack_32
 	do {
 		y = (*xa & 0xffff) - (*xb & 0xffff) + borrow;
-		borrow = y >> 16;
+		borrow = (ULong)y >> 16;
 		Sign_Extend(borrow, y);
 		z = (*xa++ >> 16) - (*xb++ >> 16) + borrow;
-		borrow = z >> 16;
+		borrow = (ULong)z >> 16;
 		Sign_Extend(borrow, z);
 		Storeinc(xc, z, y);
 		}
 		while(xb < xbe);
 	while(xa < xae) {
 		y = (*xa & 0xffff) + borrow;
-		borrow = y >> 16;
+		borrow = (ULong)y >> 16;
 		Sign_Extend(borrow, y);
 		z = (*xa++ >> 16) + borrow;
-		borrow = z >> 16;
+		borrow = (ULong)z >> 16;
 		Sign_Extend(borrow, z);
 		Storeinc(xc, z, y);
 		}
@@ -933,7 +935,7 @@ ulp
 #ifndef Sudden_Underflow
 		}
 	else {
-		L = -L >> Exp_shift;
+		L = (ULong)-L >> Exp_shift;
 		if (L < Exp_shift) {
 			word0(a) = 0x80000 >> L;
 			word1(a) = 0;
@@ -1313,6 +1315,7 @@ strtod
 		switch(c = *++s) {
 			case '-':
 				esign = 1;
+				/* FALLTHROUGH */
 			case '+':
 				c = *++s;
 			}
@@ -1433,8 +1436,9 @@ strtod
 					goto retfree;
 				goto ret;
 				}
-			if (e1 >>= 4) {
-				for(j = 0; e1 > 1; j++, e1 >>= 1)
+			if ((e1 = (unsigned int)e1 >> 4) != 0) {
+				for(j = 0; e1 > 1; j++,
+				    e1 = (unsigned int)e1 >> 1)
 					if (e1 & 1)
 						rv *= bigtens[j];
 			/* The last multiplication could overflow. */
@@ -1460,10 +1464,11 @@ strtod
 		if ((i = e1 & 15) != 0)
 			rv /= tens[i];
 		if (e1 &= ~15) {
-			e1 >>= 4;
+			e1 = (unsigned int)e1 >> 4;
 			if (e1 >= 1 << n_bigtens)
 				goto undfl;
-			for(j = 0; e1 > 1; j++, e1 >>= 1)
+			for(j = 0; e1 > 1; j++,
+			    e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					rv *= tinytens[j];
 			/* The last multiplication could underflow. */
@@ -1752,6 +1757,7 @@ strtod
 	Bfree(delta);
  ret:
 	if (se)
+		/* LINTED interface specification */
 		*se = (char *)s;
 	return sign ? -rv : rv;
 	}
@@ -1799,10 +1805,10 @@ quorem
 			zs = (si >> 16) * q + (ys >> 16);
 			carry = zs >> 16;
 			y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
-			borrow = y >> 16;
+			borrow = (ULong)y >> 16;
 			Sign_Extend(borrow, y);
 			z = (*bx >> 16) - (zs & 0xffff) + borrow;
-			borrow = z >> 16;
+			borrow = (ULong)z >> 16;
 			Sign_Extend(borrow, z);
 			Storeinc(bx, z, y);
 #else
@@ -1835,10 +1841,10 @@ quorem
 			zs = (si >> 16) + (ys >> 16);
 			carry = zs >> 16;
 			y = (*bx & 0xffff) - (ys & 0xffff) + borrow;
-			borrow = y >> 16;
+			borrow = (ULong)y >> 16;
 			Sign_Extend(borrow, y);
 			z = (*bx >> 16) - (zs & 0xffff) + borrow;
-			borrow = z >> 16;
+			borrow = (ULong)z >> 16;
 			Sign_Extend(borrow, z);
 			Storeinc(bx, z, y);
 #else
@@ -1940,7 +1946,7 @@ __dtoa
 	*/
 
 	int bbits, b2, b5, be, dig, i, ieps, ilim0,
-		j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
+		j, jj1, k, k0, k_check, leftright, m2, m5, s2, s5,
 		try_quick;
 	int ilim = 0, ilim1 = 0, spec_case = 0;	/* pacify gcc */
 	Long L;
@@ -2106,7 +2112,7 @@ __dtoa
 			break;
 		case 2:
 			leftright = 0;
-			/* no break */
+			/* FALLTHROUGH */
 		case 4:
 			if (ndigits <= 0)
 				ndigits = 1;
@@ -2114,7 +2120,7 @@ __dtoa
 			break;
 		case 3:
 			leftright = 0;
-			/* no break */
+			/* FALLTHROUGH */
 		case 5:
 			i = ndigits + k + 1;
 			ilim = i;
@@ -2126,7 +2132,7 @@ __dtoa
 	for(result_k = 0; sizeof(Bigint) - sizeof(ULong) + j <= i;
 		j <<= 1) result_k++;
 	result = Balloc(result_k);
-	s = s0 = (char *)result;
+	s = s0 = (char *)(void *)result;
 
 	if (ilim >= 0 && ilim <= Quick_max && try_quick) {
 
@@ -2139,23 +2145,24 @@ __dtoa
 		ieps = 2; /* conservative */
 		if (k > 0) {
 			ds = tens[k&0xf];
-			j = k >> 4;
+			j = (unsigned int)k >> 4;
 			if (j & Bletch) {
 				/* prevent overflows */
 				j &= Bletch - 1;
 				d /= bigtens[n_bigtens-1];
 				ieps++;
 				}
-			for(; j; j >>= 1, i++)
+			for(; j; j = (unsigned int)j >> 1, i++)
 				if (j & 1) {
 					ieps++;
 					ds *= bigtens[i];
 					}
 			d /= ds;
 			}
-		else if ((j1 = -k) != 0) {
-			d *= tens[j1 & 0xf];
-			for(j = j1 >> 4; j; j >>= 1, i++)
+		else if ((jj1 = -k) != 0) {
+			d *= tens[jj1 & 0xf];
+			for(j = (unsigned int)jj1 >> 4; j;
+			    j = (unsigned int)j >> 1, i++)
 				if (j & 1) {
 					ieps++;
 					d *= bigtens[i];
@@ -2418,10 +2425,10 @@ __dtoa
 			 */
 			j = cmp(b, mlo);
 			delta = diff(S, mhi);
-			j1 = delta->sign ? 1 : cmp(b, delta);
+			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
-			if (j1 == 0 && !mode && !(word1(d) & 1)) {
+			if (jj1 == 0 && !mode && !(word1(d) & 1)) {
 				if (dig == '9')
 					goto round_9_up;
 				if (j > 0)
@@ -2435,17 +2442,17 @@ __dtoa
 							&& !(word1(d) & 1)
 #endif
 					)) {
-				if (j1 > 0) {
+				if (jj1 > 0) {
 					b = lshift(b, 1);
-					j1 = cmp(b, S);
-					if ((j1 > 0 || (j1 == 0 && dig & 1))
+					jj1 = cmp(b, S);
+					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 					&& dig++ == '9')
 						goto round_9_up;
 					}
 				*s++ = dig;
 				goto ret;
 				}
-			if (j1 > 0) {
+			if (jj1 > 0) {
 				if (dig == '9') { /* possible if i == 1 */
  round_9_up:
 					*s++ = '9';

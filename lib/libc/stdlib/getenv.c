@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.11 1998/09/11 21:03:18 kleink Exp $	*/
+/*	$NetBSD: getenv.c,v 1.12 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.11 1998/09/11 21:03:18 kleink Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.12 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __findenv(name, offset)
 	int *offset;
 {
 	extern char **environ;
-	int len;
+	size_t len;
 	const char *np;
 	char **p, *c;
 

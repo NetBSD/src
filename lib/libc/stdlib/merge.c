@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.6 1998/02/03 18:44:17 perry Exp $	*/
+/*	$NetBSD: merge.c,v 1.7 1998/11/15 17:13:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.6 1998/02/03 18:44:17 perry Exp $");
+__RCSID("$NetBSD: merge.c,v 1.7 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,11 +79,13 @@ static void insertionsort __P((u_char *, size_t, size_t,
 #define PSIZE sizeof(u_char *)
 #define ICOPY_LIST(src, dst, last)				\
 	do							\
-	*(int*)dst = *(int*)src, src += ISIZE, dst += ISIZE;	\
+	*(int*)(void *)dst = *(int*)(void *)src,		\
+		src += ISIZE, dst += ISIZE;			\
 	while(src < last)
 #define ICOPY_ELT(src, dst, i)					\
 	do							\
-	*(int*) dst = *(int*) src, src += ISIZE, dst += ISIZE;	\
+	*(int*)(void *)dst = *(int*)(void *)src,		\
+	src += ISIZE, dst += ISIZE;				\
 	while (i -= ISIZE)
 
 #define CCOPY_LIST(src, dst, last)		\
@@ -101,9 +103,9 @@ static void insertionsort __P((u_char *, size_t, size_t,
  * boundaries.
  */
 /* Assumption: PSIZE is a power of 2. */
-#define EVAL(p) (u_char **)						\
-	((u_char *)0 +							\
-	    (((u_char *)p + PSIZE - 1 - (u_char *) 0) & ~(PSIZE - 1)))
+#define EVAL(p) ((u_char **)(void *)					\
+    ((u_char *)0 +							\
+    (((u_char *)(void *)(p) + PSIZE - 1 - (u_char *) 0) & ~(PSIZE - 1))))
 
 /*
  * Arguments are as for qsort.
@@ -198,7 +200,8 @@ SLOWCASE:
 	    			goto COPY;
 FASTCASE:	    		while (i > size)
 	    				if ((*cmp)(q,
-	    					p = b + (i >>= 1)) <= sense)
+	    					p = b +
+						    (i = (unsigned int) i >> 1)) <= sense)
 	    					t = p;
 	    				else
 	    					b = p;
@@ -286,7 +289,7 @@ setup(list1, list2, n, size, cmp)
 	size2 = size*2;
 	if (n <= 5) {
 		insertionsort(list1, n, size, cmp);
-		*EVAL(list2) = (u_char*) list2 + n*size;
+		*EVAL(list2) = list2 + n*size;
 		return;
 	}
 	/*
@@ -294,7 +297,7 @@ setup(list1, list2, n, size, cmp)
 	 * for simplicity.
 	 */
 	i = 4 + (n & 1);
-	insertionsort(list1 + (n - i) * size, i, size, cmp);
+	insertionsort(list1 + (n - i) * size, (size_t)i, size, cmp);
 	last = list1 + size * (n - i);
 	*EVAL(list2 + (last - list1)) = list2 + n * size;
 

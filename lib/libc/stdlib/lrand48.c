@@ -1,4 +1,4 @@
-/*	$NetBSD: lrand48.c,v 1.5 1998/01/09 03:15:38 perry Exp $	*/
+/*	$NetBSD: lrand48.c,v 1.6 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -24,5 +24,6 @@ long
 lrand48(void)
 {
 	__dorand48(__rand48_seed);
-	return ((long) __rand48_seed[2] << 15) + ((long) __rand48_seed[1] >> 1);
+	return (long)((unsigned long) __rand48_seed[2] << 15) +
+	    ((unsigned long) __rand48_seed[1] >> 1);
 }

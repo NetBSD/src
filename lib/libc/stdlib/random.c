@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.15 1998/10/19 15:52:37 kleink Exp $	*/
+/*	$NetBSD: random.c,v 1.16 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.15 1998/10/19 15:52:37 kleink Exp $");
+__RCSID("$NetBSD: random.c,v 1.16 1998/11/15 17:13:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -293,7 +293,7 @@ initstate(seed, arg_state, n)
 	size_t n;			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
-	long *long_arg_state = (long *) arg_state;
+	long *long_arg_state = (long *)(void *)arg_state;
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
@@ -358,7 +358,7 @@ char *
 setstate(arg_state)
 	char *arg_state;		/* pointer to state array */
 {
-	long *new_state = (long *) arg_state;
+	long *new_state = (long *)(void *)arg_state;
 	int type = (int)(new_state[0] % MAX_TYPES);
 	int rear = (int)(new_state[0] / MAX_TYPES);
 	void *ostate = (void *)(&state[-1]);
@@ -424,7 +424,8 @@ random_unlocked()
 		 */
 		f = fptr; r = rptr;
 		*f += *r;
-		i = (*f >> 1) & 0x7fffffff;	/* chucking least random bit */
+		/* chucking least random bit */
+		i = ((unsigned long)*f >> 1) & 0x7fffffff;
 		if (++f >= end_ptr) {
 			f = state;
 			++r;

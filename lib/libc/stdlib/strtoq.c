@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoq.c,v 1.10 1998/02/03 01:46:28 mycroft Exp $	*/
+/*	$NetBSD: strtoq.c,v 1.11 1998/11/15 17:13:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoq.c,v 1.10 1998/02/03 01:46:28 mycroft Exp $");
+__RCSID("$NetBSD: strtoq.c,v 1.11 1998/11/15 17:13:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,7 @@ _strtoq(nptr, endptr, base)
 	 * overflow.
 	 */
 	cutoff = neg ? QUAD_MIN : QUAD_MAX;
-	cutlim = cutoff % base;
+	cutlim = (int)(cutoff % base);
 	cutoff /= base;
 	if (neg) {
 		if (cutlim > 0) {
@@ -160,6 +160,7 @@ _strtoq(nptr, endptr, base)
 		}
 	}
 	if (endptr != 0)
+		/* LINTED interface specification */
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }

@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.7 1998/06/14 17:28:15 kleink Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.8 1998/11/15 17:13:51 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -23,12 +23,13 @@ l64a (value)
 	char *s = buf;
 	int digit;
 	int i;
+	unsigned long v = value;
 
 	if (!value) 
 		goto out;
 
-	for (i = 0; value != 0 && i < 6; i++) {
-		digit = value & 0x3f;
+	for (i = 0; v != 0 && i < 6; i++) {
+		digit = (int)(v & 0x3f);
 
 		if (digit < 2) 
 			*s = digit + '.';
@@ -38,8 +39,7 @@ l64a (value)
 			*s = digit + 'A' - 12;
 		else
 			*s = digit + 'a' - 38;
-
-		value >>= 6;
+		v >>= 6;
 		s++;
 	}
 
