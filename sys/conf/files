@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.266 1999/01/23 07:51:10 mycroft Exp $
+#	$NetBSD: files,v 1.267 1999/01/23 07:56:34 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -680,7 +680,6 @@ file netinet/ip_nat.c			ipfilter
 file netinet/ip_frag.c			ipfilter
 file netinet/ip_log.c			ipfilter & ipfilter_log
 file netinet/ip_proxy.c			ipfilter
-file netinet/ip_ftp_pxy.c		ipfilter & ipf_ftp_proxy
 file netinet/ip_state.c			ipfilter
 file netatalk/aarp.c			netatalk
 file netatalk/at_control.c		netatalk
