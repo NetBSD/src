@@ -1,8 +1,7 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.20 1997/10/28 12:06:56 kleink Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.21 1997/10/28 18:55:56 christos Exp $	 */
 
 /*
- * Copyright (c) 1994 Christos Zoulas
- * All rights reserved.
+ * Copyright (c) 1994, 1997 Christos Zoulas.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,8 +11,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Christos Zoulas.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -38,6 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <sys/syscallargs.h>
 
@@ -52,6 +54,10 @@ static int svr4_to_bsd_flags __P((int));
 static int bsd_to_svr4_flags __P((int));
 static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
 static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
+static void bsd_to_svr4_flock64 __P((struct flock *, struct svr4_flock64 *));
+static void svr4_to_bsd_flock64 __P((struct svr4_flock64 *, struct flock *));
+static int fd_revoke __P((struct proc *, int, register_t *));
+static int fd_truncate __P((struct proc *, int, struct flock *, register_t *));
 
 static u_long
 svr4_to_bsd_cmd(cmd)
@@ -121,6 +127,7 @@ bsd_to_svr4_flags(l)
 	return r;
 }
 
+
 static void
 bsd_to_svr4_flock(iflp, oflp)
 	struct flock		*iflp;
@@ -175,6 +182,172 @@ svr4_to_bsd_flock(iflp, oflp)
 	oflp->l_pid = (pid_t) iflp->l_pid;
 
 }
+
+static void
+bsd_to_svr4_flock64(iflp, oflp)
+	struct flock		*iflp;
+	struct svr4_flock64	*oflp;
+{
+	switch (iflp->l_type) {
+	case F_RDLCK:
+		oflp->l_type = SVR4_F_RDLCK;
+		break;
+	case F_WRLCK:
+		oflp->l_type = SVR4_F_WRLCK;
+		break;
+	case F_UNLCK:
+		oflp->l_type = SVR4_F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = (short) iflp->l_whence;
+	oflp->l_start = (svr4_off64_t) iflp->l_start;
+	oflp->l_len = (svr4_off64_t) iflp->l_len;
+	oflp->l_sysid = 0;
+	oflp->l_pid = (svr4_pid_t) iflp->l_pid;
+}
+
+
+static void
+svr4_to_bsd_flock64(iflp, oflp)
+	struct svr4_flock64	*iflp;
+	struct flock		*oflp;
+{
+	switch (iflp->l_type) {
+	case SVR4_F_RDLCK:
+		oflp->l_type = F_RDLCK;
+		break;
+	case SVR4_F_WRLCK:
+		oflp->l_type = F_WRLCK;
+		break;
+	case SVR4_F_UNLCK:
+		oflp->l_type = F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = iflp->l_whence;
+	oflp->l_start = (off_t) iflp->l_start;
+	oflp->l_len = (off_t) iflp->l_len;
+	oflp->l_pid = (pid_t) iflp->l_pid;
+
+}
+
+
+static int
+fd_revoke(p, fd, retval)
+	struct proc *p;
+	int fd;
+	register_t *retval;
+{
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	struct vattr vattr;
+	int error;
+
+	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+		return EBADF;
+
+	switch (fp->f_type) {
+	case DTYPE_VNODE:
+		vp = (struct vnode *) fp->f_data;
+
+	case DTYPE_SOCKET:
+		return EINVAL;
+
+	default:
+		panic("svr4_fcntl(F_REVOKE)");
+		/*NOTREACHED*/
+	}
+
+	if (vp->v_type != VCHR && vp->v_type != VBLK) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+		goto out;
+
+	if (p->p_ucred->cr_uid != vattr.va_uid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		goto out;
+
+	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+		vgoneall(vp);
+out:
+	vrele(vp);
+	return error;
+}
+
+
+static int
+fd_truncate(p, fd, flp, retval)
+	struct proc *p;
+	int fd;
+	struct flock *flp;
+	register_t *retval;
+{
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	off_t start, length;
+	struct vnode *vp;
+	struct vattr vattr;
+	int error;
+	struct sys_ftruncate_args ft;
+
+	/*
+	 * We only support truncating the file.
+	 */
+	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+		return EBADF;
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+#ifdef FIFO
+	    || vp->v_type == VFIFO
+#endif
+	)
+		return ESPIPE;
+
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+		return error;
+
+	length = vattr.va_size;
+
+	switch (flp->l_whence) {
+	case SEEK_CUR:
+		start = fp->f_offset + flp->l_start;
+		break;
+
+	case SEEK_END:
+		start = flp->l_start + length;
+		break;
+
+	case SEEK_SET:
+		start = flp->l_start;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	if (start + flp->l_len < length) {
+		/* We don't support free'ing in the middle of the file */
+		return EINVAL;
+	}
+
+	SCARG(&ft, fd) = fd;
+	SCARG(&ft, length) = start;
+
+	return sys_ftruncate(p, &ft, retval);
+}
+
 
 int
 svr4_sys_open(p, v, retval)
@@ -549,6 +722,95 @@ svr4_sys_fcntl(p, v, retval)
 
 			return copyout(&ifl, SCARG(uap, arg), sizeof ifl);
 		}
+	case -1:
+		switch (SCARG(uap, cmd)) {
+		case SVR4_F_DUP2FD:
+			{
+				struct sys_dup2_args du;
+
+				SCARG(&du, from) = SCARG(uap, fd);
+				error = copyin(SCARG(uap, arg),
+				    &SCARG(&du, to), sizeof SCARG(&du, to));
+				if (error)
+					return error;
+				error = sys_dup2(p, &du, retval);
+				if (error)
+					return error;
+				*retval = SCARG(&du, to);
+				return 0;
+			}
+
+		case SVR4_F_FREESP:
+			{
+				struct svr4_flock	 ifl;
+				struct flock		 fl;
+
+				error = copyin(SCARG(uap, arg), &ifl,
+				    sizeof ifl);
+				if (error)
+					return error;
+				svr4_to_bsd_flock(&ifl, &fl);
+				return fd_truncate(p, SCARG(uap, fd), &fl,
+				    retval);
+			}
+
+		case SVR4_F_GETLK64:
+		case SVR4_F_SETLK64:
+		case SVR4_F_SETLKW64:
+			{
+				struct svr4_flock64	 ifl;
+				struct flock		*flp, fl;
+				caddr_t sg = stackgap_init(p->p_emul);
+
+				flp = stackgap_alloc(&sg, sizeof(struct flock));
+				SCARG(&fa, arg) = (void *) flp;
+
+				error = copyin(SCARG(uap, arg), &ifl,
+				    sizeof ifl);
+				if (error)
+					return error;
+
+				svr4_to_bsd_flock64(&ifl, &fl);
+
+				error = copyout(&fl, flp, sizeof fl);
+				if (error)
+					return error;
+
+				error = sys_fcntl(p, &fa, retval);
+				if (error || SCARG(&fa, cmd) != F_GETLK)
+					return error;
+
+				error = copyin(flp, &fl, sizeof fl);
+				if (error)
+					return error;
+
+				bsd_to_svr4_flock64(&fl, &ifl);
+
+				return copyout(&ifl, SCARG(uap, arg),
+				    sizeof ifl);
+			}
+
+		case SVR4_F_FREESP64:
+			{
+				struct svr4_flock64	 ifl;
+				struct flock		 fl;
+
+				error = copyin(SCARG(uap, arg), &ifl,
+				    sizeof ifl);
+				if (error)
+					return error;
+				svr4_to_bsd_flock64(&ifl, &fl);
+				return fd_truncate(p, SCARG(uap, fd), &fl,
+				    retval);
+			}
+
+		case SVR4_F_REVOKE:
+			return fd_revoke(p, SCARG(uap, fd), retval);
+
+		default:
+			return ENOSYS;
+		}
+
 	default:
 		return ENOSYS;
 	}
