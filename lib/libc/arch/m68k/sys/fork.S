@@ -38,14 +38,12 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)fork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: fork.S,v 1.1 1993/11/25 23:39:27 paulus Exp $"
+	.asciz "$Id: fork.S,v 1.2 1994/01/27 15:00:50 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 SYSCALL(fork)
-	tstl	d1
-	jeq	parent	/* parent, since d1 == 0 in parent, 1 in child */
-	clrl	d0
-parent:
+	subql	#1,d1	/* from 1 to 0 in child, 0 to -1 in parent */
+	andl	d1,d0
 	rts		/* pid = fork() */
