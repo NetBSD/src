@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.1 1999/01/06 23:23:33 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.2 1999/01/08 19:55:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -640,7 +640,7 @@ pcscp_dma_go(sc)
 			BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
-	WRITE_DMAREG(esc, DMA_SMDLA, esc->sc_mdldmap->dm_segs[0].ds_addr);
+	WRITE_DMAREG(esc, DMA_SMDLA, mdldmap->dm_segs[0].ds_addr);
 
 	/* set DMA command register bits */
 	/* XXX DMA Transfer Interrupt Enable bit is broken? */
