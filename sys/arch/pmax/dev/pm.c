@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.31 2000/01/09 03:55:37 simonb Exp $	*/
+/*	$NetBSD: pm.c,v 1.32 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,30 +56,24 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.31 2000/01/09 03:55:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.32 2000/01/10 03:24:33 simonb Exp $");
 
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/errno.h>
-#include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>		/* XXX wbflush() */
-
-#include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/locore.h>		/* wbflush() */
+#include <machine/pmioctl.h>
 
+#include <pmax/dev/bt478var.h>
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/pmvar.h>
-
 #include <pmax/dev/pmreg.h>
-#include <pmax/dev/bt478var.h>
 
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15 2000/01/09 03:55:56 simonb Exp $ */
+/* $NetBSD: cpu.c,v 1.16 2000/01/10 03:24:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,7 +31,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
 
 static int	cpumatch __P((struct device *, struct cfdata *, void *));

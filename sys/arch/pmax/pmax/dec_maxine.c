@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.23 2000/01/09 03:56:00 simonb Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,15 +73,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.23 2000/01/09 03:56:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
@@ -94,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.23 2000/01/09 03:56:00 simonb Exp $
 
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
-
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
 

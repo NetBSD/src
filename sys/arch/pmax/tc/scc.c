@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.60 2000/01/09 03:56:06 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.61 2000/01/10 03:24:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.60 2000/01/09 03:56:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.61 2000/01/10 03:24:41 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -83,37 +83,27 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.60 2000/01/09 03:56:06 simonb Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <dev/cons.h>
-
 #include <dev/dec/lk201.h>
 #include <dev/ic/z8530reg.h>
-#include <pmax/dev/pdma.h>		/* XXXXXX */
 
+#include <machine/conf.h>
+#include <machine/pmioctl.h>		/* XXX for pmEventQueue typedef */
 
-#include <mips/cpuregs.h>		/* phys to uncached */
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/dev/rconsvar.h>
-#include <pmax/tc/sccvar.h>		/* XXX */
+#include <pmax/dev/pdma.h>		/* XXXXXX */
 #include <pmax/dev/lk201var.h>
-#include <machine/pmioctl.h>		/* XXX for pmEventQueue typedef */
 #include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
-
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/conf.h>
+#include <pmax/tc/sccvar.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
