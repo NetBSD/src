@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclone_boot.h,v 1.1 1998/09/06 02:23:36 mark Exp $	*/
+/*	$NetBSD: cyclone_boot.h,v 1.2 1998/10/05 02:36:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -54,6 +54,7 @@ struct ebsaboot {
 	u_int32_t	bt_fclk;	/* fclk frequency */
 };
 
-#define BT_MAGIC_NUMBER	0x45425341
+#define BT_MAGIC_NUMBER_EBSA	0x45425341
+#define BT_MAGIC_NUMBER_CATS	0x43415453
 
 /* End of cyclone_boot.h */
