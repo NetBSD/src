@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.23 2000/04/14 05:58:02 simonb Exp $	*/
+/*	$NetBSD: fortune.c,v 1.24 2000/10/31 13:27:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.23 2000/04/14 05:58:02 simonb Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.24 2000/10/31 13:27:56 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ main(ac, av)
 #endif
 
 	init_prob();
-	srandom((int)(time((time_t *) NULL) + getpid()));
+	srandom((int)(time((time_t *) NULL) ^ getpid()));
 	do {
 		get_fort();
 	} while ((Short_only && fortlen() > SLEN) ||
