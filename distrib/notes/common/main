@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278 2005/03/15 17:56:45 kurahone Exp $
+.\"	$NetBSD: main,v 1.279 2005/04/02 08:21:36 mlelstv Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1519,6 +1519,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Jun Ebihara Ta Mt jun@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
 .It Ta Stoned Elipot Ta Mt seb@NetBSD.org
+.It Ta Michael van Elst Ta Mt mlelstv@NetBSD.org
 .It Ta Enami Tsugutomo Ta Mt enami@NetBSD.org
 .It Ta Bernd Ernesti Ta Mt veego@NetBSD.org
 .It Ta Erik Fair Ta Mt fair@NetBSD.org
