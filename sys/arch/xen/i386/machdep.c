@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2004/04/26 22:05:04 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2004/05/07 13:48:32 cl Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2004/04/26 22:05:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2004/05/07 13:48:32 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -449,9 +449,13 @@ void
 i386_switch_context(struct pcb *new)
 {
 	dom0_op_t op;
+	struct cpu_info *ci;
 
-	if (new->pcb_cr0 & CR0_TS)
+	ci = curcpu();
+	if (ci->ci_fpused) {
 		HYPERVISOR_fpu_taskswitch();
+		ci->ci_fpused = 0;
+	}
 
 	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
 
