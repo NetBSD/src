@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.24 1998/07/13 19:10:14 ross Exp $ */
+/* $NetBSD: cpu.h,v 1.25 1998/09/24 23:28:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,6 +184,15 @@ void	switch_trampoline __P((void));				/* MAGIC */
 void	syscall __P((u_int64_t, struct trapframe *));
 void	trap __P((unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *));
+void	trap_init __P((void));
+
+/* Multiprocessor glue; cpu.c */
+struct cpu_softc;
+int	cpu_iccb_send __P((long, const char *));
+void	cpu_iccb_receive __P((void));
+void	cpu_hatch __P((struct cpu_softc *));
+void	cpu_run_spinup_queue __P((void));
+void	cpu_spinup_trampoline __P((void));			/* MAGIC */
 
 #endif /* _KERNEL */
 

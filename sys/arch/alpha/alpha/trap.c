@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.35 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.36 1998/09/24 23:28:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 1998/08/14 16:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 1998/09/24 23:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,32 @@ int		unaligned_fixup __P((unsigned long, unsigned long,
 
 static void printtrap __P((const unsigned long, const unsigned long,
       const unsigned long, const unsigned long, struct trapframe *, int, int));
+
+/*
+ * Initialize the trap vectors for the current processor.
+ */
+void
+trap_init()
+{
+
+	/*
+	 * Point interrupt/exception vectors to our own.
+	 */
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT); 
+	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
+	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
+	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA); 
+	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
+
+	/*
+	 * Clear pending machine checks and error reports, and enable
+	 * system- and processor-correctable error reporting.
+	 */
+	alpha_pal_wrmces(alpha_pal_rdmces() & 
+	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+}
+
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.28 1998/07/13 18:50:36 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.29 1998/09/24 23:28:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,11 +32,12 @@
  * notice.
  */
 
+#include "opt_multiprocessor.h"
 #include "opt_uvm.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.28 1998/07/13 18:50:36 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.29 1998/09/24 23:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.28 1998/07/13 18:50:36 ross Exp $");
 #endif
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/rpb.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
 
@@ -68,7 +71,17 @@ interrupt(a0, a1, a2, framep)
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
-		printf("interprocessor interrupt!\n");
+#if defined(MULTIPROCESSOR)
+		/*
+		 * Handle inter-console messages if we're the primary
+		 * CPU.
+		 */
+		if (alpha_pal_whami() == hwrpb->rpb_primary_cpu_id &&
+		    hwrpb->rpb_txrdy != 0)
+			cpu_iccb_receive();
+#else
+		printf("WARNING: received interprocessor interrupt!\n");
+#endif /* MULTIPROCESSOR */
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
@@ -86,7 +99,7 @@ interrupt(a0, a1, a2, framep)
 			(*platform.clockintr)(framep);
 		break;
 
-	case  ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
+	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
@@ -104,19 +117,21 @@ interrupt(a0, a1, a2, framep)
 			(*platform.iointr)(framep, a1);
 		break;
 
-	case ALPHA_INTR_PERF:	/* interprocessor interrupt */
-		printf("performance interrupt!\n");
+	case ALPHA_INTR_PERF:	/* performance counter interrupt */
+		printf("WARNING: received performance counter interrupt!\n");
 		break;
 
 	case ALPHA_INTR_PASSIVE:
-#if	0
-		printf("passive release interrupt vec 0x%lx (ignoring)\n", a1);
+#if 0
+		printf("WARNING: received passive release interrupt vec "
+		    "0x%lx\n", a1);
 #endif
 		break;
 
 	default:
-		panic("unexpected interrupt: type 0x%lx vec 0x%lx a2 0x%lx\n",
+		printf("unexpected interrupt: type 0x%lx vec 0x%lx a2 0x%lx\n",
 		    a0, a1, a2);
+		panic("interrupt");
 		/* NOTREACHED */
 	}
 }

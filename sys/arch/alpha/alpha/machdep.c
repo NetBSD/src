@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.146 1998/09/23 22:02:21 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.147 1998/09/24 23:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_dec_3000_300.h"
@@ -80,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 1998/09/23 22:02:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 1998/09/24 23:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,22 +413,8 @@ nobootinfo:
 		printf("WARNING: %s (0x%lx, 0x%lx, 0x%lx)\n",
 		    bootinfo_msg, bim, bip, biv);
 
-	/*
-	 * Point interrupt/exception vectors to our own.
-	 */
-	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT);
-	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
-	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
-	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
-	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA);
-	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
-
-	/*
-	 * Clear pending machine checks and error reports, and enable
-	 * system- and processor-correctable error reporting.
-	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() &
-	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+	/* Initialize the trap vectors on the primary processor. */
+	trap_init();
 
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
@@ -1200,6 +1187,13 @@ cpu_startup()
 	 * to do restarts.
 	 */
 	hwrpb_restart_setup();
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Spin up any secondary CPUs.
+	 */
+	cpu_run_spinup_queue();
+#endif /* MULTIPROCESSOR */
 }
 
 /*
