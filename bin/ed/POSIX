@@ -40,3 +40,7 @@ The vi editor's bang command syntax is supported, i.e.,
 If ed is invoked with a name argument prefixed by a bang, then the
 remainder of the argument is interpreted as a shell command.  To invoke
 ed on a file whose name starts with bang, prefix the name with a backslash.
+
+A restricted version of ed is supported when invoked as red.  This limits
+editing of files in the local directory only and prohibits !<shell-cmd>
+commands.

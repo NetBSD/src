@@ -114,6 +114,7 @@ int des = 0;			/* if set, use crypt(3) for i/o */
 int mutex = 0;			/* if set, signals set "sigflags" */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
+int red = 0;			/* if set, restrict shell/directory access */
 
 char dfn[MAXFNAME + 1] = "";	/* default filename */
 long curln;			/* current address */
@@ -136,6 +137,7 @@ main(argc, argv)
 	int c, n;
 	long status = 0;
 
+	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 	while ((c = getopt(argc, argv, "p:sx")) != EOF)
 		switch(c) {
 		case 'p':				/* set prompt */
@@ -182,10 +184,16 @@ main(argc, argv)
 	} else {
 		init_buf();
 		sigactive = 1;			/* enable signal handlers */
-		if (argc) {
-			if (**argv != '!')
-				strcpy(dfn, *argv);
+		if (argc && **argv && ckfn(*argv)) {
 			if (doread(0, *argv) < 0 && !isatty(0))
+				quit(2);
+			else if (**argv != '!')
+				strcpy(dfn, *argv);
+		} else if (argc) {
+			fputs("?\n", stderr);
+			if (**argv == '\0')
+				sprintf(errmsg, "invalid filename");
+			if (!isatty(0))
 				quit(2);
 		}
 	}
@@ -638,7 +646,7 @@ docmd(glob)
 		}
 		VRFYCMD();
 		if (*fnp) strcpy(dfn, fnp);
-		printf("%s\n", dfn);
+		printf("%s\n", esctos(dfn));
 		break;
 	case 'g':
 	case 'G':
@@ -1065,8 +1073,9 @@ getfn()
 	for (n = 0; *ibufp != '\n';)
 		file[n++] = *ibufp++;
 	file[n] = '\0';
-	return  file;
+	return ckfn(file);
 }
+
 
 /* getrhs: extract substitution template from the command buffer */
 getrhs(glob)
@@ -1142,11 +1151,14 @@ getshcmd()
 	static char *buf = NULL;
 	static int n = 0;
 
-	char *ip;
+	char *s;			/* substitution char pointer */
 	int i = 0;
 	int j = 0;
 
-	if ((ip = ibufp = getcmdv(&j, 1)) == NULL)
+	if (red) {
+		sprintf(errmsg, "shell access restricted");
+		return ERR;
+	} else if ((s = ibufp = getcmdv(&j, 1)) == NULL)
 		return ERR;
 	CKBUF(buf, n, j + 1, ERR);
 	buf[i++] = '!';			/* prefix command w/ bang */
@@ -1159,7 +1171,7 @@ getshcmd()
 				buf[i++] = *ibufp++;
 			break;
 		case '!':
-			if (ip != ibufp) {
+			if (s != ibufp) {
 				CKBUF(buf, n, i + 1, ERR);
 				buf[i++] = *ibufp++;
 			}
@@ -1173,9 +1185,9 @@ getshcmd()
 				return ERR;
 			} else {
 				CKBUF(buf, n, i + shcmdi, ERR);
-				for (ip = shcmd + 1; ip < shcmd + shcmdi;)
-					buf[i++] = *ip++;
-				ip = ibufp++;
+				for (s = shcmd + 1; s < shcmd + shcmdi;)
+					buf[i++] = *s++;
+				s = ibufp++;
 			}
 			break;
 		case '%':
@@ -1183,17 +1195,17 @@ getshcmd()
 				sprintf(errmsg, "no current filename");
 				return ERR;
 			}
-			j = strlen(dfn);
+			j = strlen(s = esctos(dfn));
 			CKBUF(buf, n, i + j, ERR);
-			for (ip = dfn; ip < dfn + j;)
-				buf[i++] = *ip++;
-			ip = ibufp++;
+			while (j--)
+				buf[i++] = *s++;
+			s = ibufp++;
 			break;
 		}
 	CKBUF(shcmd, shcmdsz, i + 1, ERR);
 	memcpy(shcmd, buf, i);
 	shcmd[shcmdi = i] = '\0';
-	return *ip == '!' || *ip == '%';
+	return *s == '!' || *s == '%';
 }
 
 
@@ -2181,4 +2193,17 @@ init_buf()
 	requeue(&line0, &line0);
 	for (i = 0; i < 256; i++)
 		ctab[i] = i;
+}
+
+
+/* ckfn: return a legal filename */
+char *
+ckfn(s)
+	char *s;
+{
+	if (red && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
+		sprintf(errmsg, "shell access restricted");
+		return NULL;
+	}
+	return s;
 }
