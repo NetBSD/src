@@ -97,9 +97,7 @@ distribution tree, and are as follows:
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
 For other platform, there is a security distribution named "secr12"
-provided.  It contains the files which cannot be exported outside
-the United States and Canada.  Since all the developers of the NetBSD/x68k
-live in Japan, the x68k security distribution is not provided in the
+provided.  The x68k security distribution is not provided in the
 binary form.
 
 The x68k binary distribution sets are distributed in the same form as

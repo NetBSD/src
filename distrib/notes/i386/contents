@@ -142,8 +142,8 @@ The security distribution includes a version of the Kerberos IV
 network security system, and a Kerberized version of the "telnet" program.
 The "secr12G" distribution set can be found only on those sites which
 carry the complete NetBSD distribution and which can legally obtain it.
-(Remember, because of United States law, this distribution set may not be
-exported to locations outside of the United States and Canada.)
+(Remember, because of United States law, it may not be legal to distribute
+this set to locations outside of the United States and Canada.)
 	[ 154K gzipped, 358K uncompressed ]
 
 The i386 binary distribution sets are distributed in the same form as

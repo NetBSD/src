@@ -105,7 +105,7 @@ in the "vax/security" subdirectory of the NetBSD _VER distribution
 tree.  It contains executables which are built in the "src/domestic" portion
 if the NetBSD source tree.  It can only be found on those sites which carry
 the complete NetBSD distribution and that can legally obtain it.  (Remember,
-because of United States law, this distribution set may not be exported to
+because of United States law, it may not be legal to distribute this set to
 locations outside of the United States and Canada.)
 [ 128K gzipped, 275K uncompressed ]
 

@@ -156,9 +156,9 @@ directory per architecture, for each of the architectures for which
 NetBSD _VER has a binary distribution.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
-distribution (e.g. those containing crypt(3)) that should not be
-exported from the United States, and that if you do export them, it's
-your fault, not ours.
+distribution (i.e. the `domestic' portion) that may be subject to
+export regulations of the United States, and that it is your
+responsibility should you choose to export these portions.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
@@ -166,8 +166,8 @@ complete sources to the system.  The source distribution sets
 are as follows:
 
 	dsrc12	This set contains the "domestic" sources.  These
-		sources contain export-restricted encryption code
-		and should not be exported from the U.S.
+		sources may be subject to United States export
+		regulations.
 		[ 140K gzipped, 655K uncompressed ]
 
 	gsrc12	This set contains the "gnu" sources, including
