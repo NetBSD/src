@@ -1,4 +1,5 @@
 	SUMMARY OF CHANGES BETWEEN SENDMAIL V5 and V8
+		@(#)CHANGES-R5-R8	8.1 (Berkeley) 2/26/94
 
 The following is a summary of the changes between the last commonly
 available version of sendmail from Berkeley (5.67) and the latest

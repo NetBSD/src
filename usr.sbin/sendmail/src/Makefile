@@ -1,8 +1,9 @@
 #
 #  NetBSD Makefile
 #
-#	$Id: Makefile,v 1.19 1994/02/02 07:22:49 glass Exp $
-#	@(#)Makefile	8.2 (Berkeley) 8/15/93
+#	@(#)Makefile.NetBSD	8.1 (Berkeley) 2/26/94
+#	@Id: Makefile.NetBSD,v 1.3 1994/02/01 05:33:44 glass Exp $
+#
 
 PROG=	sendmail
 
@@ -16,19 +17,16 @@ PROG=	sendmail
 # spiral snail, but it will work.
 DBMDEF=	-DNEWDB -DNIS
 
-#nasty warning about gcc 2.4.x caused bugs 
-CFLAGS=-I${.CURDIR} ${DBMDEF} -DNETISO
-#CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
+CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
-MAN1=	newaliases.0
+MAN1=	mailq.0 newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
-MLINKS= sendmail.8 mailq.8
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin
