@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.42 2004/02/10 12:30:22 jdolecek Exp $	*/
+/*	$NetBSD: modload.c,v 1.43 2004/02/11 18:42:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.42 2004/02/10 12:30:22 jdolecek Exp $");
+__RCSID("$NetBSD: modload.c,v 1.43 2004/02/11 18:42:37 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,16 +85,16 @@ prelink(const char *kernel,
 	const char *object,
 	const char *ldscript)
 {
-	char cmdbuf[MAXPATHLEN+1];
+	char *cmd;
 	int error = 0;
 
-	linkcmd(cmdbuf, sizeof(cmdbuf), kernel, entry, outfile, address,
+	linkcmd(&cmd, kernel, entry, outfile, address,
 	    object, ldscript);
 
 	if (debug)
-		fprintf(stderr, "%s\n", cmdbuf);
+		fprintf(stderr, "%s\n", cmd);
 
-	switch (system(cmdbuf)) {
+	switch (system(cmd)) {
 	case 0:				/* SUCCESS! */
 		break;
 	case 1:				/* uninformitive error */
@@ -113,6 +113,8 @@ prelink(const char *kernel,
 		error = 1;
 		break;
 	}
+
+	free(cmd);
 
 	return error;
 }
