@@ -1,3 +1,5 @@
+/*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 07:20:42 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1999
  *     TSUBAI Masanari.  All rights reserved.
@@ -24,8 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* $Id: rbus_machdep.h,v 1.1 1999/10/15 06:12:16 haya Exp $ */
 
 #ifndef _MACHINE_RBUS_MACHDEP_H_
 #define _MACHINE_RBUS_MACHDEP_H_
