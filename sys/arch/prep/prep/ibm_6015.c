@@ -1,11 +1,11 @@
-/*	$NetBSD: platform.h,v 1.8 2004/06/26 21:51:04 kleink Exp $	*/
+/*	$NetBSD: ibm_6015.c,v 1.1 2004/06/26 21:51:04 kleink Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by NONAKA Kimihiro.
+ * by Klaus J. Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,53 +36,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_PREP_PLATFORM_H_
-#define	_PREP_PLATFORM_H_
-
 #include <sys/param.h>
-#include <sys/device.h>
 
-#include <dev/pci/pcivar.h>
+#include <machine/intr.h>
+#include <machine/platform.h>
 
-struct platform {
-	const char	*model;
-	int		(*match)(struct platform *);
-	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int *);
-	void		(*init_intr)(void);
-	void		(*cpu_setup)(struct device *);
-	void		(*reset)(void);
-	const char	**obiodevs;
+void pci_intr_fixup_ibm_6015(int, int, int *);
+
+struct platform platform_ibm_6015 = {
+	"IBM PPS Model 6015",			/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_direct,	/* pci_get_chipset_tag */
+	pci_intr_fixup_ibm_6015,		/* pci_intr_fixup */
+	init_intr_ivr,				/* init_intr */
+	cpu_setup_ibm_generic,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
-struct plattab {
-	struct platform **platform;
-	int num;
-};
+void
+pci_intr_fixup_ibm_6015(int bus, int dev, int *line)
+{
+	if (bus != 0)
+		return;
 
-extern struct platform *platform;
-extern const char *obiodevs_nodev[];
-
-int ident_platform(void);
-int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int *);
-void cpu_setup_unknown(struct device *);
-void reset_unknown(void);
-void reset_prep_generic(void);
-
-/* IBM */
-extern struct plattab plattab_ibm;
-extern struct platform platform_ibm_6015;
-extern struct platform platform_ibm_6040;
-extern struct platform platform_ibm_6050;
-extern struct platform platform_ibm_7248;
-extern struct platform platform_ibm_7043_140;
-
-void cpu_setup_ibm_generic(struct device *);
-
-/* Motorola */
-extern struct plattab plattab_mot;
-
-extern struct platform platform_mot_ulmb60xa;
-
-#endif /* !_PREP_PLATFORM_H_ */
+	switch (dev) {
+	case 12:		/* NCR 53c810 */
+		*line = 13;
+		break;
+	case 13:		/* PCI slots */
+	case 14:
+	case 15:
+	case 16:
+	case 17:
+	case 18:
+	case 19:
+		*line = 15;
+		break;
+	}
+}
