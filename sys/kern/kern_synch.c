@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.139 2003/11/02 16:26:10 cl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.140 2004/01/04 13:27:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.139 2003/11/02 16:26:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.140 2004/01/04 13:27:53 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -494,7 +494,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 
 #if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
-	__asm(".globl bpendtsleep ; bpendtsleep:");
+	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
 	/*
 	 * p->p_nrlwps is incremented by whoever made us runnable again,
