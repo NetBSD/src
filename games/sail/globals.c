@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.7 1999/09/08 21:17:58 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.8 1999/12/28 18:05:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.7 1999/09/08 21:17:58 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.8 1999/12/28 18:05:24 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -544,3 +544,24 @@ const char loadname[] = { '-', 'G', 'C', 'R', 'D', 'E' };
 
 const char dr[] = { 0, 1, 1, 0, -1, -1, -1, 0, 1 };
 const char dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };
+
+int mode;
+jmp_buf restart;
+
+char debug;				/* -D */
+char randomize;				/* -x, give first available ship */
+char longfmt;				/* -l, print score in long format */
+char nobells;				/* -b, don't ring bell before Signal */
+
+char issetuid;
+
+struct scenario *cc;		/* the current scenario */
+struct ship *ls;		/* &cc->ship[cc->vessels] */
+
+int winddir;
+int windspeed;
+int turn;
+int game;
+int alive;
+int people;
+char hasdriver;
