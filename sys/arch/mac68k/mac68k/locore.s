@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 1996/10/15 06:31:07 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 1996/10/17 06:32:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -977,9 +977,11 @@ Lloaddone:
 
 /* init mem sizes */
 
-/* set kernel stack, user SP, and initial pcb */
+/* set kernel stack, user SP, proc0, and initial pcb */
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
+	lea	_proc0,a2		| initialize proc0.p_addr so that
+	movl	a1,a2@(P_ADDR)		|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a1,_curpcb		| proc0 is running
@@ -1009,6 +1011,13 @@ Lnocache0:
 	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
 
 	jra	_main
+
+	pea     Lmainreturned           | Yow!  Main returned!
+	jbsr    _panic
+	/* NOTREACHED */
+Lmainreturned:
+	.asciz  "main() returned"
+	.even
 
 /*
  * proc_trampoline
