@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.7 2001/04/24 09:15:06 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.8 2001/04/25 02:33:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -765,7 +765,7 @@ static const char * const edc_dev_errors[] = {
 	"Bad Format",
 	"Volume Overflow",
 	"No Data AM Found",
-	"Block not found (No ID AM or ID CRC error occured)",
+	"Block not found (No ID AM or ID CRC error occurred)",
 	"Reserved",
 	"Reserved",
 	"No ID found on track (ID search)",
