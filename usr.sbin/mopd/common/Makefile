@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/04/20 00:17:22 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2003/10/19 06:12:07 lukem Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -10,6 +10,8 @@ SRCS=	cmp.c device.c dl.c file.c get.c log.c loop-bsd.c mopdef.c nma.c pf.c \
 CLEANFILES= version.c
 
 version.c: VERSION
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	rm -f version.c; \
 	sed 's/.*/char version[] = "&";/' ${.ALLSRC} > version.c
 
