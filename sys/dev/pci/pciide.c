@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.131 2001/10/16 08:22:50 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.132 2001/10/21 18:55:14 thorpej Exp $	*/
 
 
 /*
@@ -538,7 +538,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 };
 
 /* options passed via the 'flags' config keyword */
-#define PCIIDE_OPTIONS_DMA	0x01
+#define	PCIIDE_OPTIONS_DMA	0x01
+#define	PCIIDE_OPTIONS_NODMA	0x02
 
 int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
@@ -823,7 +824,8 @@ pciide_mapreg_dma(sc, pa)
 		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
 		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
-			printf(", but unused (registers at unsafe address %#lx)", (unsigned long)addr);
+			printf(", but unused (registers at unsafe address "
+			    "%#lx)", (unsigned long)addr);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -840,6 +842,12 @@ pciide_mapreg_dma(sc, pa)
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
 			sc->sc_wdcdev.dma_start = pciide_dma_start;
 			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+		}
+
+		if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
+		    PCIIDE_OPTIONS_NODMA) {
+			printf(", but unused (forced off by config file)");
+			sc->sc_dma_ok = 0;
 		}
 		break;
 
@@ -1305,9 +1313,9 @@ default_chip_map(sc, pa)
 			sc->sc_dma_ok = 0;
 		} else {
 			pciide_mapreg_dma(sc, pa);
-		if (sc->sc_dma_ok != 0)
-			printf(", used without full driver "
-			    "support");
+			if (sc->sc_dma_ok != 0)
+				printf(", used without full driver "
+				    "support");
 		}
 	} else {
 		printf("%s: hardware does not support DMA",
