@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.11 1999/06/17 21:09:48 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.12 2002/11/12 14:26:10 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static int		_strncmp __P((char *, char *, int));
 #endif
 
 #define _FATAL(str) \
-	write(2, str, sizeof(str)), \
+	write(2, str, sizeof(str) - 1), \
 	_exit(1);
 
 #endif /* DYNAMIC */
