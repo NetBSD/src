@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 1997/05/12 11:41:13 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1997/06/10 22:00:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.8 1997/05/12 11:41:13 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.9 1997/06/10 22:00:01 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -210,7 +210,7 @@ login(host, user, pass)
 		    user, hp->h_name);
 #endif
 		pass = anonpass;
-		user = "anonymous";
+		user = "anonymous";	/* as per RFC 1635 */
 	}
 
 	while (user == NULL) {
@@ -497,8 +497,18 @@ remotemodtime(file, noisy)
 void
 updateprogressmeter()
 {
+	static pid_t pgrp = -1;
+	int ctty_pgrp;
 
-	progressmeter(0);
+	if (pgrp == -1)
+		pgrp = getpgrp();
+
+	/*
+	 * print progress bar only if we are foreground process.
+	 */
+	if (ioctl(STDOUT_FILENO, TIOCGPGRP, &ctty_pgrp) != -1 &&
+	    ctty_pgrp == (int)pgrp)
+		progressmeter(0);
 }
 
 /*
