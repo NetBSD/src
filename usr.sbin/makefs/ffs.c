@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.7 2002/01/07 16:27:22 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.8 2002/01/07 16:56:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.7 2002/01/07 16:27:22 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.8 2002/01/07 16:56:26 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -92,9 +92,9 @@ __RCSID("$NetBSD: ffs.c,v 1.7 2002/01/07 16:27:22 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 
+#include "ffs/ufs_inode.h"
 #include "ffs/newfs_extern.h"
 #include "ffs/ffs_extern.h"
 
