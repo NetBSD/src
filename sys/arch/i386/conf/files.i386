@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.166 2000/09/07 17:20:58 thorpej Exp $
+#	$NetBSD: files.i386,v 1.167 2000/09/13 04:47:00 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -30,6 +30,9 @@ defopt	USER_LDT
 
 # Speed hack; make NOPs dummies (might break on some machines)
 defopt	DUMMY_NOPS
+
+# Performance counter support
+defopt	PERFCTRS
 
 # X server support in console drivers
 defopt	opt_xserver.h XSERVER XSERVER_DDB
@@ -72,6 +75,8 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
+
+file	arch/i386/i386/pmc.c		perfctrs
 
 #
 # Machine-independent SCSI drivers
