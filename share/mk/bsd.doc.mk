@@ -1,5 +1,5 @@
 #	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-#	$Id: bsd.doc.mk,v 1.14 1993/08/15 20:42:40 mycroft Exp $
+#	$Id: bsd.doc.mk,v 1.15 1993/08/23 16:44:18 mycroft Exp $
 
 PRINTER?=	ps
 
@@ -37,5 +37,7 @@ install:
 spell: ${SRCS}
 	(cd ${.CURDIR}; spell ${SRCS}) | sort | \
 		comm -23 - ${.CURDIR}/spell.ok > ${DOC}.spell
+
+depend tags lint:
 
 .include <bsd.obj.mk>
