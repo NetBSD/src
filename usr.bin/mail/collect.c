@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.23 2002/03/02 15:27:51 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.24 2002/03/04 03:07:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.23 2002/03/02 15:27:51 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.24 2002/03/04 03:07:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,14 +133,14 @@ collect(struct header *hp, int printheaders)
 	 */
 	t = GTO|GSUBJECT|GCC|GNL;
 	getsub = 0;
-	if (hp->h_subject == NOSTR && value("interactive") != NOSTR &&
-	    (value("ask") != NOSTR || value("asksub") != NOSTR))
+	if (hp->h_subject == NULL && value("interactive") != NULL &&
+	    (value("ask") != NULL || value("asksub") != NULL))
 		t &= ~GNL, getsub++;
 	if (printheaders) {
 		puthead(hp, stdout, t);
 		fflush(stdout);
 	}
-	if ((cp = value("escape")) != NOSTR)
+	if ((cp = value("escape")) != NULL)
 		escape = *cp;
 	else
 		escape = ESCAPE;
@@ -173,8 +173,8 @@ cont:
 		c = readline(stdin, linebuf, LINESIZE);
 		colljmp_p = 0;
 		if (c < 0) {
-			if (value("interactive") != NOSTR &&
-			    value("ignoreeof") != NOSTR && ++eofcount < 25) {
+			if (value("interactive") != NULL &&
+			    value("ignoreeof") != NULL && ++eofcount < 25) {
 				printf("Use \".\" to terminate letter\n");
 				continue;
 			}
@@ -185,10 +185,10 @@ cont:
 		eofcount = 0;
 		hadintr = 0;
 		if (linebuf[0] == '.' && linebuf[1] == '\0' &&
-		    value("interactive") != NOSTR && !lastlong &&
-		    (value("dot") != NOSTR || value("ignoreeof") != NOSTR))
+		    value("interactive") != NULL && !lastlong &&
+		    (value("dot") != NULL || value("ignoreeof") != NULL))
 			break;
-		if (linebuf[0] != escape || value("interactive") == NOSTR ||
+		if (linebuf[0] != escape || value("interactive") == NULL ||
 		    lastlong) {
 			if (putline(collf, linebuf, !longline) < 0)
 				goto err;
@@ -303,7 +303,7 @@ cont:
 					goto err;
 			}
 
-			if(*cp && (cp = value(cp)) != NOSTR) {
+			if(*cp && (cp = value(cp)) != NULL) {
 				printf("%s\n", cp);			
 				if(putline(collf, cp, 1) < 0)
 					goto err;
@@ -330,7 +330,7 @@ cont:
 			}
 
 			cp = expand(cp);
-			if (cp == NOSTR)
+			if (cp == NULL)
 				break;
 
 			if (*cp == '!') {	/* insert stdout of command */
@@ -349,10 +349,10 @@ cont:
 				}
 				(void) unlink(tempEdit);
 
-				if ((shellcmd = value("SHELL")) == NOSTR)
+				if ((shellcmd = value("SHELL")) == NULL)
 					shellcmd = _PATH_CSHELL;
 
-				rc2 = run_command(shellcmd, 0, nullfd, fileno(fbuf), "-c", cp+1, NOSTR);
+				rc2 = run_command(shellcmd, 0, nullfd, fileno(fbuf), "-c", cp+1, NULL);
 
 				close(nullfd);
 
@@ -404,7 +404,7 @@ cont:
 				fprintf(stderr, "Write what file!?\n");
 				break;
 			}
-			if ((cp = expand(cp)) == NOSTR)
+			if ((cp = expand(cp)) == NULL)
 				break;
 			rewind(collf);
 			exwrite(cp, collf, 1);
@@ -567,10 +567,10 @@ mespipe(FILE *fp, char cmd[])
 	 * stdin = current message.
 	 * stdout = new message.
 	 */
-	if ((shellcmd = value("SHELL")) == NOSTR)
+	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
 	if (run_command(shellcmd,
-	    0, fileno(fp), fileno(nf), "-c", cmd, NOSTR) < 0) {
+	    0, fileno(fp), fileno(nf), "-c", cmd, NULL) < 0) {
 		(void) Fclose(nf);
 		goto out;
 	}
@@ -605,7 +605,7 @@ forward(char ms[], FILE *fp, int f)
 	char *tabst;
 
 	msgvec = (int *) salloc((msgCount+1) * sizeof *msgvec);
-	if (msgvec == (int *) NOSTR)
+	if (msgvec == (int *) NULL)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
 		return(0);
@@ -618,8 +618,8 @@ forward(char ms[], FILE *fp, int f)
 		msgvec[1] = 0;
 	}
 	if (f == 'f' || f == 'F')
-		tabst = NOSTR;
-	else if ((tabst = value("indentprefix")) == NOSTR)
+		tabst = NULL;
+	else if ((tabst = value("indentprefix")) == NULL)
 		tabst = "\t";
 	ig = isupper(f) ? NULL : ignore;
 	printf("Interpolating:");
@@ -672,7 +672,7 @@ collint(int s)
 	 * the control flow is subtle, because we can be called from ~q.
 	 */
 	if (!hadintr) {
-		if (value("ignore") != NOSTR) {
+		if (value("ignore") != NULL) {
 			puts("@");
 			fflush(stdout);
 			clearerr(stdin);
@@ -682,7 +682,7 @@ collint(int s)
 		longjmp(colljmp, 1);
 	}
 	rewind(collf);
-	if (value("nosave") == NOSTR)
+	if (value("nosave") == NULL)
 		savedeadletter(collf);
 	longjmp(collabort, 1);
 }

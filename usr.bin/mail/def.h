@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.12 2002/03/02 14:59:38 wiz Exp $	*/
+/*	$NetBSD: def.h,v 1.13 2002/03/04 03:07:25 wiz Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.12 2002/03/02 14:59:38 wiz Exp $
+ *	$NetBSD: def.h,v 1.13 2002/03/04 03:07:25 wiz Exp $
  */
 
 /*
@@ -73,7 +73,6 @@
 #define	LINESIZE	BUFSIZ		/* max readable line width */
 #define	STRINGSIZE	((unsigned) 128)/* Dynamic allocation units */
 #define	MAXARGC		1024		/* Maximum list of raw strings */
-#define	NOSTR		((char *) 0)	/* Null string pointer */
 #define	MAXEXP		25		/* Maximum expansion of aliases */
 
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */

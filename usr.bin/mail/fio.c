@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.16 2002/03/02 15:27:51 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.17 2002/03/04 03:07:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.16 2002/03/02 15:27:51 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.17 2002/03/04 03:07:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,11 +351,11 @@ expand(char *name)
 			break;
 		if (prevfile[0] == 0) {
 			printf("No previous file\n");
-			return NOSTR;
+			return NULL;
 		}
 		return savestr(prevfile);
 	case '&':
-		if (name[1] == 0 && (name = value("MBOX")) == NOSTR)
+		if (name[1] == 0 && (name = value("MBOX")) == NULL)
 			name = "~/mbox";
 		/* fall through */
 	}
@@ -375,32 +375,32 @@ expand(char *name)
 		return name;
 	}
 	snprintf(cmdbuf, PATHSIZE, "echo %s", name);
-	if ((shellcmd = value("SHELL")) == NOSTR)
+	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	pid = start_command(shellcmd, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
+	pid = start_command(shellcmd, 0, -1, pivec[1], "-c", cmdbuf, NULL);
 	if (pid < 0) {
 		close(pivec[0]);
 		close(pivec[1]);
-		return NOSTR;
+		return NULL;
 	}
 	close(pivec[1]);
 	l = read(pivec[0], xname, PATHSIZE);
 	close(pivec[0]);
 	if (wait_child(pid) < 0 && WTERMSIG(wait_status) != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
-		return NOSTR;
+		return NULL;
 	}
 	if (l < 0) {
 		perror("read");
-		return NOSTR;
+		return NULL;
 	}
 	if (l == 0) {
 		fprintf(stderr, "\"%s\": No match.\n", name);
-		return NOSTR;
+		return NULL;
 	}
 	if (l == PATHSIZE) {
 		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
-		return NOSTR;
+		return NULL;
 	}
 	xname[l] = '\0';
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
@@ -408,7 +408,7 @@ expand(char *name)
 	cp[1] = '\0';
 	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
 		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
-		return NOSTR;
+		return NULL;
 	}
 	return savestr(xname);
 }
@@ -421,7 +421,7 @@ getfold(char *name)
 {
 	char *folder;
 
-	if ((folder = value("folder")) == NOSTR)
+	if ((folder = value("folder")) == NULL)
 		return (-1);
 	if (*folder == '/') {
 		strncpy(name, folder, PATHSIZE - 1);
@@ -440,7 +440,7 @@ getdeadletter(void)
 {
 	char *cp;
 
-	if ((cp = value("DEAD")) == NOSTR || (cp = expand(cp)) == NOSTR)
+	if ((cp = value("DEAD")) == NULL || (cp = expand(cp)) == NULL)
 		cp = expand("~/dead.letter");
 	else if (*cp != '/') {
 		char buf[PATHSIZE];

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.13 2002/03/02 15:27:51 wiz Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.14 2002/03/04 03:07:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.13 2002/03/02 15:27:51 wiz Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.14 2002/03/04 03:07:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 	FILE *obuf;
 
 	msgvec = (int *) salloc((msgCount + 2) * sizeof *msgvec);
-	if ((fn = snarf(str, &f)) == NOSTR)
+	if ((fn = snarf(str, &f)) == NULL)
 		return(1);
 	if (!f) {
 		*msgvec = first(0, MMNORM);
@@ -182,7 +182,7 @@ save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 	}
 	if (f && getmsglist(str, msgvec, 0) < 0)
 		return(1);
-	if ((fn = expand(fn)) == NOSTR)
+	if ((fn = expand(fn)) == NULL)
 		return(1);
 	printf("\"%s\" ", fn);
 	fflush(stdout);
@@ -191,13 +191,13 @@ save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 	else
 		disp = "[New file]";
 	if ((obuf = Fopen(fn, "a")) == NULL) {
-		perror(NOSTR);
+		perror(NULL);
 		return(1);
 	}
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
-		if (sendmessage(mp, obuf, ignoretabs, NOSTR) < 0) {
+		if (sendmessage(mp, obuf, ignoretabs, NULL) < 0) {
 			perror(fn);
 			Fclose(obuf);
 			return(1);
@@ -228,7 +228,7 @@ swrite(void *v)
 /*
  * Snarf the file from the end of the command line and
  * return a pointer to it.  If there is no file attached,
- * just return NOSTR.  Put a null in front of the file
+ * just return NULL.  Put a null in front of the file
  * name so that the message list processing won't see it,
  * unless the file name is the only thing on the line, in
  * which case, return 0 in the reference flag variable.
@@ -258,7 +258,7 @@ snarf(char linebuf[], int *flag)
 		cp--;
 	if (*cp == '\0') {
 		printf("No file specified.\n");
-		return(NOSTR);
+		return(NULL);
 	}
 	if (isspace((unsigned char)*cp))
 		*cp++ = 0;
@@ -468,7 +468,7 @@ ignore1(char *list[], struct ignoretab *tab, char *which)
 	struct ignore *igp;
 	char **ap;
 
-	if (*list == NOSTR)
+	if (*list == NULL)
 		return igshow(tab, which);
 	for (ap = list; *ap != 0; ap++) {
 		istrcpy(field, *ap);
