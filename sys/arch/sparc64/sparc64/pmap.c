@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2000/12/30 07:42:42 mjacob Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2001/01/03 23:05:22 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3576,7 +3576,7 @@ pmap_enter_pv(pmap, va, pa)
 		npv = pool_get(&pv_pool, PR_NOWAIT);
 		if (npv == NULL)
 			panic("pmap_enter: new pv malloc() failed");
-		PV_SETVA(npv, va);
+		npv->pv_va = va&PV_VAMASK;
 		npv->pv_pmap = pmap;
 		npv->pv_next = pv->pv_next;
 		pv->pv_next = npv;
