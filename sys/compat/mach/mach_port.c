@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.26 2002/12/30 19:32:16 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.27 2002/12/31 09:32:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.26 2002/12/30 19:32:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.27 2002/12/31 09:32:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -397,7 +397,6 @@ mach_port_move_member(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
-	mach_debug_port();
 	*msglen = sizeof(*rep);
 	return 0;
 }
