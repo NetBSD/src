@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.2 1997/01/29 01:49:27 mark Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.3 1997/03/29 04:31:25 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,47 +9,52 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <sys/errno.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/uio.h>
+#include <fcntl.h>
+#include <errno.h>
 #if !defined(__SVR4) && !defined(__svr4__)
+#include <strings.h>
 #include <sys/dir.h>
-#include <sys/mbuf.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/protosw.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <sys/socket.h>
-#include <sys/user.h>
-
-#include <net/if.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <net/if.h>
 #include <netinet/ip.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+
+#include <sys/uio.h>
+#include <sys/protosw.h>
+#include <sys/user.h>
+
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+
 #include <ctype.h>
-
-#include "pathnames.h"
-#define IPL_NAME _PATH_IPL
-
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipmon.c,v 1.2 1997/01/29 01:49:27 mark Exp $";
-#endif
+#include <syslog.h>
 
 #include <netinet/ip_fil.h>
+#include <netinet/ip_compat.h>
+
+#if !defined(lint) && defined(LIBC_SCCS)
+static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
+static	char	rcsid[] = "Id: ipmon.c,v 2.0.2.4 1997/03/29 02:49:44 darrenr Exp ";
+#endif
+
 
 struct	flags {
 	int	value;
@@ -68,17 +73,29 @@ struct	flags	tcpfl[] = {
 
 
 static	char	line[2048];
-static	void	printpacket(), dumphex();
 static	int	opts = 0;
+static	void	usage __P((char *));
+static	void	printpacket __P((FILE *, char *, int));
+static	void	dumphex __P((FILE *, u_char *, int));
+static	void	printiplci __P((struct ipl_ci *));
+static	void	resynclog __P((int, struct ipl_ci *, FILE *));
+static	int	readlogentry __P((int, int *, char *, int, FILE *));
+char	*hostname __P((int, struct in_addr));
+char	*portname __P((int, char *, u_short));
+int	main __P((int, char *[]));
 
 #define	OPT_SYSLOG	0x01
 #define	OPT_RESOLVE	0x02
 #define	OPT_HEXBODY	0x04
 #define	OPT_VERBOSE	0x08
 #define	OPT_HEXHDR	0x10
+#define	OPT_TAIL	0x20
 
+#ifndef	LOGFAC
+#define	LOGFAC	LOG_LOCAL0
+#endif
 
-void printiplci(icp)
+static void printiplci(icp)
 struct ipl_ci *icp;
 {
 	printf("sec %ld usec %ld hlen %d plen %d\n", icp->sec, icp->usec,
@@ -162,7 +179,7 @@ FILE *log;
 }
 
 
-int readlogentry(fd, lenp, buf, bufsize, log)
+static int readlogentry(fd, lenp, buf, bufsize, log)
 int fd, bufsize, *lenp;
 char *buf;
 FILE *log;
@@ -178,8 +195,12 @@ FILE *log;
 		nr = read(fd, s, tr);
 		if (nr > 0)
 			tr -= nr;
-		else
-			return -1;
+		else {
+			if (!nr && (opts & OPT_TAIL))
+				sleep(1);
+			else
+				return -1;
+		}
 	}
 
 	now = time(NULL);
@@ -484,9 +505,19 @@ int	blen;
 	if (opts & OPT_HEXHDR)
 		dumphex(log, buf, sizeof(struct ipl_ci));
 	if (opts & OPT_HEXBODY)
-		dumphex(log, ip, lp->plen + lp->hlen);
-	fflush(log);
+		dumphex(log, (u_char *)ip, lp->plen + lp->hlen);
+	if (!(opts & OPT_SYSLOG))
+		fflush(log);
 }
+
+
+void static usage(prog)
+char *prog;
+{
+	fprintf(stderr, "%s: [-NFhstvxX] [-f <logfile>]\n", prog);
+	exit(1);
+}
+
 
 int main(argc, argv)
 int argc;
@@ -499,7 +530,7 @@ char *argv[];
 	extern	int	optind;
 	extern	char	*optarg;
 
-	while ((c = getopt(argc, argv, "Nf:FsvxX")) != -1)
+	while ((c = getopt(argc, argv, "?Nf:FhstvxX")) != -1)
 		switch (c)
 		{
 		case 'f' :
@@ -526,6 +557,9 @@ char *argv[];
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
 			opts |= OPT_SYSLOG;
 			break;
+		case 't' :
+			opts |= OPT_TAIL;
+			break;
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
@@ -535,6 +569,10 @@ char *argv[];
 		case 'X' :
 			opts |= OPT_HEXHDR;
 			break;
+		default :
+		case 'h' :
+		case '?' :
+			usage(argv[0]);
 		}
 
 	if ((fd == -1) && (fd = open(iplfile, O_RDONLY)) == -1) {
@@ -576,7 +614,7 @@ char *argv[];
 		case 2 :
 			break;
 		case 0 :
-			printpacket(log, buf, n, opts);
+			printpacket(log, buf, n);
 			break;
 		}
 	exit(0);
