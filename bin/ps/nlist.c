@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.12 1997/07/20 20:37:55 christos Exp $	*/
+/*	$NetBSD: nlist.c,v 1.13 1998/02/06 04:47:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.12 1997/07/20 20:37:55 christos Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.13 1998/02/06 04:47:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,25 +57,16 @@ __RCSID("$NetBSD: nlist.c,v 1.12 1997/07/20 20:37:55 christos Exp $");
 
 #include "ps.h"
 
-#ifdef P_PPWAIT
-#define NEWVM
-#endif
-
 struct	nlist psnl[] = {
-	{"_fscale"},
+	{ "_fscale" },
 #define	X_FSCALE	0
-	{"_ccpu"},
+	{ "_ccpu" },
 #define	X_CCPU		1
-#ifdef NEWVM
-	{"_avail_start"},
+	{ "_avail_start" },
 #define	X_AVAILSTART	2
-	{"_avail_end"},
+	{ "_avail_end" },
 #define	X_AVAILEND	3
-#else
-	{"_ecmx"},
-#define	X_ECMX		2
-#endif
-	{NULL}
+	{ NULL }
 };
 
 fixpt_t	ccpu;				/* kernel _ccpu variable */
@@ -92,9 +83,7 @@ int
 donlist()
 {
 	int rval;
-#ifdef NEWVM
 	int tmp;
-#endif
 
 	rval = 0;
 	nlistread = 1;
@@ -107,7 +96,6 @@ donlist()
 		warnx("fscale: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
-#ifdef NEWVM
 	if (kread(X_AVAILEND, mempages)) {
 		warnx("avail_start: %s", kvm_geterr(kd));
 		eval = rval = 1;
@@ -118,12 +106,6 @@ donlist()
 	}
 	mempages -= tmp;
 	mempages /= getpagesize();
-#else
-	if (kread(X_ECMX, mempages)) {
-		warnx("ecmx: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-#endif
 	if (kread(X_CCPU, ccpu)) {
 		warnx("ccpu: %s", kvm_geterr(kd));
 		eval = rval = 1;
