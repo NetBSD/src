@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 1997/03/15 05:39:47 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 1997/04/13 05:12:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,11 @@
 #define	M68K_MMU_MOTOROLA
 
 /*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -130,24 +135,6 @@ struct clockframe {
 
 int	astpending;	/* need to trap before returning to user mode */
 int	want_resched;	/* resched() was called */
-
-/*
- * simulated software interrupt register
- */
-extern volatile u_int8_t ssir;
-
-#define	SIR_NET		0x01
-#define	SIR_CLOCK	0x02
-#define	SIR_SERIAL	0x04
-
-#define	siroff(mask)	\
-	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask)));
-#define	setsoftnet()	\
-	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_NET))
-#define	setsoftclock()	\
-	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_CLOCK))
-#define	setsoftserial()	\
-	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_SERIAL))
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
