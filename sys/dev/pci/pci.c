@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.64 2002/05/18 18:14:11 sommerfeld Exp $	*/
+/*	$NetBSD: pci.c,v 1.65 2002/05/18 21:40:41 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.64 2002/05/18 18:14:11 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.65 2002/05/18 21:40:41 sommerfeld Exp $");
 
 #include "opt_pci.h"
 
@@ -302,6 +302,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		pa.pa_intrtag = sc->sc_intrtag;
 	}
 	pin = PCI_INTERRUPT_PIN(intr);
+	pa.pa_rawintrpin = pin;
 	if (pin == PCI_INTERRUPT_PIN_NONE) {
 		/* no interrupt */
 		pa.pa_intrpin = 0;
