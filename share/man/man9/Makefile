@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.120 2002/08/07 04:48:55 briggs Exp $
+#       $NetBSD: Makefile,v 1.121 2002/08/07 11:01:20 tron Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -273,22 +273,22 @@ MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_head_unregister.9 \
 	pfil.9 pfil_get_head.9 \
 	pfil.9 pfil_run_hooks.9
-MLINKS+=pmc.9 pmc_get_num_counters \
-	pmc.9 pmc_get_counter_type \
-	pmc.9 pmc_save_context \
-	pmc.9 pmc_restore_context \
-	pmc.9 pmc_enable_counter \
-	pmc.9 pmc_disable_counter \
-	pmc.9 pmc_counter_isrunning \
-	pmc.9 pmc_counter_isconfigured \
-	pmc.9 pmc_configure_counter \
-	pmc.9 pmc_get_counter_value \
-	pmc.9 pmc_accumulate \
-	pmc.9 pmc_alloc_kernel_counter \
-	pmc.9 pmc_free_kernel_counter \
-	pmc.9 pmc_start_profiling \
-	pmc.9 pmc_stop_profiling \
-	pmc.9 PMC_ENABLED
+MLINKS+=pmc.9 pmc_get_num_counters.9 \
+	pmc.9 pmc_get_counter_type.9 \
+	pmc.9 pmc_save_context.9 \
+	pmc.9 pmc_restore_context.9 \
+	pmc.9 pmc_enable_counter.9 \
+	pmc.9 pmc_disable_counter.9 \
+	pmc.9 pmc_counter_isrunning.9 \
+	pmc.9 pmc_counter_isconfigured.9 \
+	pmc.9 pmc_configure_counter.9 \
+	pmc.9 pmc_get_counter_value.9 \
+	pmc.9 pmc_accumulate.9 \
+	pmc.9 pmc_alloc_kernel_counter.9 \
+	pmc.9 pmc_free_kernel_counter.9 \
+	pmc.9 pmc_start_profiling.9 \
+	pmc.9 pmc_stop_profiling.9 \
+	pmc.9 PMC_ENABLED.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
