@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.66 2000/05/25 16:37:33 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.67 2000/05/25 18:46:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -258,6 +258,21 @@ tlp_attach(sc, enaddr)
 		 */
 		sc->sc_statchg = tlp_mii_statchg;
 		break;
+	}
+
+	/*
+	 * Default to no FS|LS in setup packet descriptors.  They're
+	 * supposed to be zero according to the 21040 and 21143
+	 * manuals, and some chips fall over badly if they're
+	 * included.  Yet, other chips seem to require them.  Sigh.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_X3201_3:
+		sc->sc_setup_fsls = TDCTL_Tx_FS|TDCTL_Tx_LS;
+		break;
+
+	default:
+		sc->sc_setup_fsls = 0;
 	}
 
 	/*
@@ -2645,7 +2660,8 @@ tlp_filter_setup(sc)
 	    htole32(TULIP_CDSPADDR(sc));
 	sc->sc_txdescs[sc->sc_txnext].td_ctl =
 	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
-	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_IC | sc->sc_tdctl_ch |
+	    sc->sc_filtmode | TDCTL_Tx_SET | sc->sc_setup_fsls |
+	    TDCTL_Tx_IC | sc->sc_tdctl_ch |
 	    (sc->sc_txnext == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
 	sc->sc_txdescs[sc->sc_txnext].td_status = htole32(TDSTAT_OWN);
 	TULIP_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndescs,
