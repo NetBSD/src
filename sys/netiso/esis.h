@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.6 1994/06/29 06:39:33 cgd Exp $	*/
+/*	$NetBSD: esis.h,v 1.7 1995/03/26 20:35:20 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -116,4 +116,4 @@ struct esis_stat {
 
 #ifdef	KERNEL
 struct esis_stat esis_stat;
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

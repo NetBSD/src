@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.5 1994/06/29 06:39:47 cgd Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.6 1995/03/26 20:35:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -108,6 +108,6 @@ struct rawisopcb {
 #define	sotoisopcb(so)	((struct isopcb *)(so)->so_pcb)
 #define	sotorawisopcb(so)	((struct rawisopcb *)(so)->so_pcb)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	isopcb *iso_pcblookup();
 #endif

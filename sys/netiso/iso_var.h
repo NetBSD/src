@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.5 1994/06/29 06:39:54 cgd Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.6 1995/03/26 20:35:28 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -129,8 +129,8 @@ struct snpa_hdr {
 	char	snh_shost[6];
 	short	snh_flags;
 };
-#ifdef KERNEL
+#ifdef _KERNEL
 struct iso_ifaddr	*iso_ifaddr;	/* linked list of iso address ifaces */
 struct iso_ifaddr	*iso_localifa();	/* linked list of iso address ifaces */
 struct ifqueue 		clnlintrq;		/* clnl packet input queue */
-#endif /* KERNEL */
+#endif /* _KERNEL */

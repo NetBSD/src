@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.5 1994/06/29 06:39:27 cgd Exp $	*/
+/*	$NetBSD: cons.h,v 1.6 1995/03/26 20:35:17 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,4 +88,4 @@ struct dte_addr {
 
 #define PRC_CONS_SEND_DONE 2 /* something unused in protosw.h */
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

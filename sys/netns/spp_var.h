@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.4 1994/06/29 06:41:59 cgd Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.5 1995/03/26 20:36:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -184,7 +184,7 @@ struct	spp_istat {
 	struct sppstat newstats;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct spp_istat spp_istat;
 
 /* Following was struct sppstat sppstat; */

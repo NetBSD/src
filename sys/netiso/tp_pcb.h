@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.6 1994/09/20 06:41:37 cgd Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.7 1995/03/26 20:35:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -334,7 +334,7 @@ u_int	tp_start_win;
         CONG_INIT_SAMPLE(pcb); \
     }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct tp_refinfo 	tp_refinfo;
 extern struct tp_ref	*tp_ref;
 extern struct tp_param	tp_param;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.10 1994/06/29 06:48:08 cgd Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -180,7 +180,7 @@ typedef struct {
 #define MAX_KMAP	10
 #define	MAX_KMAPENT	500
 
-#ifdef KERNEL
+#ifdef _KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t));
 int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_timer.h,v 1.5 1994/06/29 06:41:56 cgd Exp $	*/
+/*	$NetBSD: spp_timer.h,v 1.6 1995/03/26 20:36:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -119,6 +119,6 @@ char *spptimers[] =
 		(tv) = (tvmax); \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int spp_backoff[];
 #endif

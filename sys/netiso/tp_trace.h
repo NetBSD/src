@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.h,v 1.5 1994/06/29 06:40:46 cgd Exp $	*/
+/*	$NetBSD: tp_trace.h,v 1.6 1995/03/26 20:35:33 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -89,7 +89,7 @@ SOFTWARE.
 
 /* this #if is to avoid lint */
 
-#if  defined(TP_TRACEFILE)||!defined(KERNEL)
+#if  defined(TP_TRACEFILE)||!defined(_KERNEL)
 
 #include <netiso/tp_tpdu.h>
 
@@ -145,7 +145,7 @@ struct	tp_Trace {
 #define tpt_window tpt_stuff.tpt_Time.tptv_window
 #define tpt_size tpt_stuff.tpt_Time.tptv_size
 
-#endif /* defined(TP_TRACEFILE)||!defined(KERNEL) */
+#endif /* defined(TP_TRACEFILE)||!defined(_KERNEL) */
 
 
 #ifdef TPPT

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.5 1994/06/29 06:39:41 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.6 1995/03/26 20:35:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -167,7 +167,7 @@ struct sockaddr_iso {
 #define AFI_RFC986	0x47	/* bcd of "47" */
 #define	AFI_SNA		0x00	/* SubNetwork Address; invalid really...*/
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 extern int iso_netmatch();
 extern int iso_hash(); 
@@ -189,7 +189,7 @@ char *iso_ntoa __P((const struct iso_addr *));
 struct hostent *iso_gethostbyname(), *iso_gethostbyaddr();
 __END_DECLS
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
 #endif /* _NETISO_ISO_H_ */

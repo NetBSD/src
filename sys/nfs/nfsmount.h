@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.7 1994/12/13 17:17:04 mycroft Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.8 1995/03/26 20:37:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,12 +73,12 @@ struct	nfsmount {
 	char	*nm_authstr;		/* Authenticator string */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Convert mount ptr to nfsmount ptr.
  */
 #define VFSTONFS(mp)	((struct nfsmount *)((mp)->mnt_data))
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*
  * Prototypes for NFS mount operations

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.5 1994/06/29 06:41:31 cgd Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.6 1995/03/26 20:36:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -46,6 +46,6 @@ struct	idpstat {
 	int	idps_badlen;		/* ip length < ip header length */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	idpstat	idpstat;
 #endif

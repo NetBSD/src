@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.h,v 1.5 1994/06/29 06:39:53 cgd Exp $	*/
+/*	$NetBSD: iso_snpac.h,v 1.6 1995/03/26 20:35:25 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -111,4 +111,4 @@ struct llinfo_llc {
 
 #ifdef	KERNEL
 struct llinfo_llc llinfo_llc;	/* head for linked lists */
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

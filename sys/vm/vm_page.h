@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.17 1995/01/09 02:46:43 cgd Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.18 1995/03/26 20:39:13 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -158,7 +158,7 @@ struct vm_page {
 #define	VM_PAGE_CHECK(mem)
 #endif /* VM_PAGE_DEBUG */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  *	Each pageable resident page falls into one of three lists:
  *
@@ -293,5 +293,5 @@ void		 vm_page_unwire __P((vm_page_t));
 void		 vm_page_wire __P((vm_page_t));
 boolean_t	 vm_page_zero_fill __P((vm_page_t));
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* !_VM_PAGE_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.11 1995/01/09 02:47:23 cgd Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ typedef int	boolean_t;
 #define	PAGE_SIZE	cnt.v_page_size		/* size of page */
 #define	PAGE_MASK	page_mask		/* size of page - 1 */
 #define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
-#ifdef KERNEL
+#ifdef _KERNEL
 extern vm_size_t	page_mask;
 extern int		page_shift;
 #endif
@@ -130,7 +130,7 @@ extern int		page_shift;
  *	Convert addresses to pages and vice versa.
  *	No rounding is used.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
 #define	ptoa(x)		((vm_offset_t)((x) << PAGE_SHIFT))
 
@@ -157,6 +157,6 @@ extern vm_offset_t	last_addr;	/* last physical page */
 #define	trunc_page(x) \
 	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* ASSEMBLER */
 #endif /* _VM_PARAM_ */

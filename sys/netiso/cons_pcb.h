@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_pcb.h,v 1.5 1994/06/29 06:39:28 cgd Exp $	*/
+/*	$NetBSD: cons_pcb.h,v 1.6 1995/03/26 20:35:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -188,6 +188,6 @@ struct e_clear_data 				{
 	u_char ecd_diagnostic;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define IncStat(XYZ) cons_stat.XYZ++
-#endif /* KERNEL */
+#endif /* _KERNEL */

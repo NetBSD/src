@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.7 1994/08/18 22:47:43 mycroft Exp $	*/
+/*	$NetBSD: nfs.h,v 1.8 1995/03/26 20:37:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -157,7 +157,7 @@ struct nfsstats {
  * such as SIGALRM will not expect file I/O system calls to be interrupted
  * by them and break.
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	NFSINT_SIGMASK	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGKILL)| \
 			 sigmask(SIGHUP)|sigmask(SIGQUIT))
 
@@ -305,4 +305,4 @@ TAILQ_HEAD(, nfsd) nfsd_head;
 int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
