@@ -1,4 +1,4 @@
-/*	$NetBSD: smallnet.c,v 1.1 1999/05/13 08:38:05 simonb Exp $	*/
+/*	$NetBSD: smallnet.c,v 1.2 1999/11/12 01:37:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <sys/exec_elf.h>
 #include <machine/dec_prom.h>
 #include <lib/libz/zlib.h>
-#include <lib/libkern/libkern.h>
 
 #include "common.h"
 #include "bootinfo.h"

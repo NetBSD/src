@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.24 1999/07/21 13:34:34 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.25 1999/11/12 01:37:42 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -35,7 +35,7 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_INCLUDE_NET=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-# We don't need libkern/libz for the first stage bootblocks
+# We don't need libz for the first stage bootblocks
 .if ${PROG} != "bootxx"
 
 ### find out what to use for libz
@@ -44,11 +44,6 @@ Z_AS=		library
 LIBZ=		${ZLIB}
 # and use compressed read in libsa
 SAMISCMAKEFLAGS+=SA_USE_CREAD=yes
-
-### find out what to use for libkern
-KERN_AS=	library
-.include "${S}/lib/libkern/Makefile.inc"
-LIBKERN=	${KERNLIB}
 
 .else	# ${PROG} == "bootxx"
 LIBZ=
@@ -60,7 +55,7 @@ PMAXDIR= ${PMAX_STAND_DIR}/lib
 .include "${PMAXDIR}/Makefile.inc"
 LIBPMAX=		${PMAXLIB}
 
-LIBS=	${LIBPMAX} ${LIBKERN} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBPMAX}
+LIBS=	${LIBPMAX} ${LIBSA} ${LIBZ} ${LIBPMAX}
 VERS_O?=vers.o
 
 ${PROG}: ${OBJS} ${LIBS}
