@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.30 2003/10/25 03:46:09 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.31 2003/10/26 02:17:46 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1115,19 +1115,10 @@ values will result:
 .It Fl N Ar noiselevel
 Set the
 .Dq noisyness
-level of the build
-Supported values of
-.Ar noiselevel
-are:
-.Bl -tag -width xxx
-.It 0
-Quiet build.
-.It 1
-Operations are described, command lines are suppressed.
-.It 2
-Noisy build.
-This is the default.
-.El
+level of the build, by setting
+.Sy MAKEVERBOSE
+to
+.Ar noiselevel .
 .
 .It Fl n
 Show the commands that would be executed by

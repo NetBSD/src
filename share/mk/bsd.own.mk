@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.379 2003/10/26 01:29:34 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.380 2003/10/26 02:17:46 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -718,9 +718,9 @@ X11USRLIBDIR?=		${X11ROOTDIR}/lib
 
 #
 # MAKEVERBOSE support.  Levels are:
-#	0	No messages (use with make -s)
-#	1	Enable info messages, suppress command output (use with make -s)
-#	2	Enable all messages including info messages.
+#	0	No messages
+#	1	Enable info messages, suppress command output
+#	2	Enable info messages and command output
 #		
 MAKEVERBOSE?=		2
 
@@ -728,14 +728,17 @@ MAKEVERBOSE?=		2
 _MKMSG?=	@\#
 _MKSHMSG?=	: echo
 _MKSHECHO?=	: echo
+.SILENT:
 .elif ${MAKEVERBOSE} == 1
 _MKMSG?=	@echo '   '
 _MKSHMSG?=	echo '   '
 _MKSHECHO?=	: echo
+.SILENT:
 .else	# MAKEVERBOSE == 2 ?
 _MKMSG?=	@echo '\#  '
 _MKSHMSG?=	echo '\#  '
 _MKSHECHO?=	echo
+.SILENT: __makeverbose_dummy_target__
 .endif
 
 _MKMSG_BUILD?=		${_MKMSG} "  build "
