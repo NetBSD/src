@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.5 1997/01/09 20:20:22 tls Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.6 1997/09/09 11:06:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -30,11 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: ipcrm.c,v 1.5 1997/01/09 20:20:22 tls Exp $
+ * $NetBSD: ipcrm.c,v 1.6 1997/09/09 11:06:31 drochner Exp $
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <err.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -48,6 +50,13 @@
 	(x == 'M' ? "shared memory segment" : "semaphore"))
 
 int signaled;
+
+void usage __P((void));
+int msgrm __P((key_t, int));
+int shmrm __P((key_t, int));
+int semrm __P((key_t, int));
+void not_configured __P((void));
+int main __P((int, char *[]));
 
 void usage()
 {
@@ -108,7 +117,7 @@ int main(argc, argv)
     key_t target_key;
 
     errflg = 0;
-    signal(SIGSYS, not_configured);
+    signal(SIGSYS, (void (*) __P((int)))not_configured);
     while ((c = getopt(argc, argv, ":q:m:s:Q:M:S:")) != -1) {
 
 	signaled = 0;
@@ -149,7 +158,7 @@ int main(argc, argv)
 	    if (result < 0) {
 		errflg++;
 		if (!signaled)
-		    warn("%key(%ld): ", IPC_TO_STR(c), target_key);
+		    warn("%skey(%ld): ", IPC_TO_STR(c), target_key);
 		else
 		    warnx("%ss are not configured in the running kernel",
 			  IPC_TO_STRING(c));
