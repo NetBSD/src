@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.117 1999/05/07 15:38:40 drochner Exp $
+$NetBSD: pcidevs,v 1.118 1999/05/07 21:09:31 hwr Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1098,6 +1098,7 @@ product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-pcmcia Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
 product TI	PCI1250		0xac16	PCI1250 PCI-CardBus Bridge
+product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI1220		0xac17	PCI1220 PCI-CardBus Bridge
 product TI	PCI1221		0xac19	PCI1221 PCI-CardBus Bridge
 product TI	PCI1225		0xac1C	PCI1225 PCI-CardBus Bridge
