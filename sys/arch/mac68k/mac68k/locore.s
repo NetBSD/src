@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 1995/02/22 01:42:45 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 1995/03/29 07:38:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,16 +282,15 @@ Lstkadj:
 _fpfline:
 	clrl	sp@-		| pad SR to longword
 	moveml	#0xFFFF,sp@-	| save user registers
-	movl	usp, a0		| save the user SP
-	movl	a0, sp@(FR_SP)	|   in the save area
-	jbsr	_FPUemul	| handle it
-	movl	sp@(FR_SP), a0	| grab and restore
-	movl	a0, usp		|   user SP
-	moveml	sp@+, #0x7FFF	| restore most registers
-	addql	#8, sp		| pop ssp and align word
-	jra	rei		| all done
+	moveq	#T_FPEMULI,d0	| denote it as an FP emulation trap.
+	jra	fault		| do it.
 
 _fpunsupp:
+	clrl	sp@-		| pad SR to longword
+	moveml	#0xFFFF,sp@-	| save user registers
+	moveq	#T_FPEMULD,d0	| denote it as an FP emulation trap.
+	jra	fault		| do it.
+#if 0
 	tstl	_cpu040
 	jne	_illinst
 #ifdef FPSP
@@ -299,6 +298,7 @@ _fpunsupp:
 	jmp	fpsp_unsupp
 #endif
 	jra	_illinst
+#endif
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -307,7 +307,6 @@ _fpunsupp:
  * after the trap call.
  */
 _fpfault:
-#ifdef FPCOPROC
 	clrl	sp@-		| pad SR to longword
 	moveml	#0xFFFF,sp@-	| save user registers
 	movl	usp,a0		| and save
@@ -326,9 +325,6 @@ Lfptnull:
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
 	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
-#else
-	jra	_badtrap	| treat as an unexpected trap
-#endif
 
 /*
  * Coprocessor and format errors can generate mid-instruction stack
@@ -1411,15 +1407,6 @@ Ldoproc0:				| The 040 comes back here...
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
-#ifdef FPCOPROC
-	debug_mark("DEBUG: ensuring NULL FPU context...\n")
-	clrl	a1@(PCB_FPCTX)		| ensure null FP context
-|WRONG!	movl	a1,sp@-			| commented according to amiga.
-	pea	a1@(PCB_FPCTX)
-	jbsr	_m68881_restore		| restore it (does not kill a1)
-	addql	#4,sp
-	debug_mark("DEBUG: done...\n")
-#endif
 /* flush TLB and turn on caches */
 	debug_mark("DEBUG: invalidating TLB.\n")
 	jbsr	_TBIA			| invalidate TLB
@@ -1759,7 +1746,9 @@ Lsw2:
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
-#ifdef FPCOPROC
+
+	tstl	_fpu_type		| Do we have an fpu?
+	jeq	Lswnofpsave		| No?  Then don't attempt save.
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
 	tstb	a2@			| null state frame?
@@ -1767,7 +1756,6 @@ Lsw2:
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
 Lswnofpsave:
-#endif /* FPCOPROC */
 
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
@@ -1841,7 +1829,9 @@ Lres5:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#ifdef FPCOPROC
+
+	tstl	_fpu_type		| If we don't have an fpu,
+	jeq	Lresfprest		|  don't try to restore it.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
@@ -1849,7 +1839,7 @@ Lres5:
 	fmovem	a0@(216),fp0-fp7	| restore FP general registers
 Lresfprest:
 	frestore a0@			| restore state
-#endif /* FPCOPROC */
+
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
@@ -1866,7 +1856,9 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
-#ifdef FPCOPROC
+
+	tstl	_fpu_type		| Do we have FPU?
+	jeq	Lsvnofpsave		| No?  Then don't save state.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
 	tstb	a0@			| null state frame?
@@ -1874,7 +1866,6 @@ ENTRY(savectx)
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lsvnofpsave:
-#endif
 	tstl	sp@(8)			| altreturn?
 	jeq	Lsavedone
 	movl	sp,d0			| relocate current sp relative to a1
@@ -2496,7 +2487,6 @@ Lffsdone:
 	addql	#1,d0
 	rts
 
-#ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
  * Pretty awful looking since our assembler does not
@@ -2521,7 +2511,6 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
-#endif
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

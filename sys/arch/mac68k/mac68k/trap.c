@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1995/03/26 08:04:00 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1995/03/29 07:39:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -458,7 +458,7 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;
 		i = SIGFPE;
 		break;
-#ifdef FPCOPROC
+
 	/* 
 	 * User coprocessor violation
 	 */
@@ -483,12 +483,37 @@ trap(type, code, v, frame)
 		ucode = code;
 		i = SIGFPE;
 		break;
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_FPEMULI:
+	case T_FPEMULD: {
+		extern int	*nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp((label_t *) nofault);
+		panictrap(type, code, v, &frame);
+	}
+	/*
+	 * Unimplemented FPU instructions/datatypes.
+	 */
+	case T_FPEMULI|T_USER:
+	case T_FPEMULD|T_USER:
+#ifdef FPU_EMULATE
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+#else
+		uprintf("pid %d killed: no floating point support.\n",
+			p->p_pid);
+		i = SIGILL;
+#endif
+		break;
 	/* 
 	 * Kernel coprocessor violation
 	 */
 	case T_COPERR:
 		/*FALLTHROUGH*/
-#endif
+
 	/*
 	 * Kernel format error
 	 */
