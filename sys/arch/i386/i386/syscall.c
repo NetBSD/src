@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2000/12/13 01:24:46 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9 2000/12/18 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ syscall_plain(frame)
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
@@ -221,7 +221,7 @@ syscall_fancy(frame)
 #endif /* KTRACE */
 
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
