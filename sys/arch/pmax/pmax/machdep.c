@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 1997/05/26 06:21:20 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 1997/05/31 20:33:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,6 +114,7 @@
 #include "asc.h"
 
 
+#if defined(DS5000_25) || defined(DS5000_100) || defined(DS5000_240)
 /* Will scan from max to min, inclusive */
 static int tc_max_slot = KN02_TC_MAX;
 static int tc_min_slot = KN02_TC_MIN;
@@ -124,6 +125,7 @@ static u_int tc_slot_phys_base [TC_MAX_SLOTS] = {
 	KN02_PHYS_TC_4_START, KN02_PHYS_TC_5_START,
 	KN02_PHYS_TC_6_START, KN02_PHYS_TC_7_START
 };
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "pmax";	/* cpu "architecture" */
@@ -203,19 +205,20 @@ u_long	kmin_tc3_imask, xine_tc3_imask;
 int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
 
 
-#ifdef DS5000_240
-#endif
-
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
 /*
  *  Local functions.
  */
-static	void asic_init __P((int is_a_maxine));
+#ifdef DS5000_240	/* XXX */
+static	void asic_init __P((int isa_maxine));
+#endif
 extern	int	atoi __P((const char *cp));
 int	initcpu __P((void));
+#ifdef DS5000_240
 static	u_long	clkread __P((void));	/* get usec-resolution clock */
+#endif
 void	dumpsys __P((void));		/* do a dump */
 
 /* initialize bss, etc. from kernel start, before main() is called. */
@@ -1887,6 +1890,7 @@ done:
 #endif /* DS5000_240 */
 
 
+#ifdef DS5000_240	/* XXX */
 /*
  * Initialize the I/O asic
  */
@@ -1904,3 +1908,4 @@ asic_init(isa_maxine)
 	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
 	(*decoder) = 0x00000000e;
 }
+#endif /* DS5000_240 XXX */
