@@ -1,7 +1,7 @@
-/*	$NetBSD: zs.c,v 1.20 1998/05/05 06:48:51 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 1998/06/30 18:13:21 wrstuden Exp $	*/
 
 /*
- * Copyright (c) 1996 Bill Studenmund
+ * Copyright (c) 1996-1998 Bill Studenmund
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
@@ -139,6 +139,9 @@ int	zs_cons_canabort = 0;
 dev_t	mac68k_zsdev;
 /* Mac stuff */
 volatile unsigned char *sccA = 0;
+int	nzsc_attached = 0;	/* needed as long as we have spurious
+				 * interupt problems.
+				 */
 
 int	zs_cn_check_speed __P((int bps));
 
@@ -289,6 +292,9 @@ zsc_attach(parent, self, aux)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
+		if (channel == 0) /* Double check interupts are off */
+			zs_write_reg(cs, 9, 0);
+
 		bcopy(zs_init_reg, cs->cs_creg, 16);
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 
@@ -405,6 +411,7 @@ zsc_attach(parent, self, aux)
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
+	nzsc_attached++;
 	splx(s);
 }
 
@@ -467,7 +474,7 @@ zshard(arg)
 	int unit, rval;
 
 	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
+	for (unit = 0; unit < nzsc_attached; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
@@ -900,8 +907,10 @@ zscnsetup()
 	 * signal sources, and it's not worth it for now 
 	 */
 
-	cs->cs_preg[9] &= ~ZSWR9_MASTER_IE;
-		/* no interrupts until later, after attach. */
+	/*
+	 * As zs_loadchannelregs doesn't touch reg 9 (interupt control),
+	 * we won't accidentally turn on interupts below
+	 */
 	s = splhigh();
 	zs_loadchannelregs(cs);
 	splx(s);
@@ -973,9 +982,13 @@ zscnprobe(struct consdev * cp)
 	 * Now turn off interrupts for the chip. Note: this code piece is the
 	 * only vestage of the NetBSD 1.0 ser driver. :-)
 	 */
-	sccA[2] = 9; sccA[2] = 0;	/* write 0 to register 9, clearing MIE */
+	unit = sccA[2];			/* reset reg. access */
+	unit = sccA[0];
+	sccA[2] = 9; sccA[2] = 0;	/* write 0 to reg. 9, clearing MIE */
+	sccA[2] = ZSWR0_CLR_INTR; unit = sccA[2]; /* reset any pending ints. */
+	sccA[0] = ZSWR0_CLR_INTR; unit = sccA[0];
 
-	if (mac68k_machine.serial_boot_echo) 
+	if (mac68k_machine.serial_boot_echo)
 		zscnsetup();
 	return;
 }
