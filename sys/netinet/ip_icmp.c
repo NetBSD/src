@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.82.2.1 2004/05/28 07:24:03 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82.2.1 2004/05/28 07:24:03 tron Exp $");
 
 #include "opt_ipsec.h"
 
@@ -970,38 +970,47 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       CTL_NET, PF_INET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "icmp", NULL,
+		       CTLTYPE_NODE, "icmp",
+		       SYSCTL_DESCR("ICMPv4 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maskrepl", NULL,
+		       CTLTYPE_INT, "maskrepl",
+		       SYSCTL_DESCR("Respond to ICMP_MASKREQ messages"),
 		       NULL, 0, &icmpmaskrepl, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_MASKREPL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "returndatabytes", NULL,
+		       CTLTYPE_INT, "returndatabytes",
+		       SYSCTL_DESCR("Number of bytes to return in an ICMP "
+				    "error message"),
 		       sysctl_net_inet_icmp_returndatabytes, 0,
 		       &icmpreturndatabytes, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_RETURNDATABYTES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "errppslimit", NULL,
+		       CTLTYPE_INT, "errppslimit",
+		       SYSCTL_DESCR("Maximum number of outgoing ICMP error "
+				    "messages per second"),
 		       NULL, 0, &icmperrppslim, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_ERRPPSLIMIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "rediraccept", NULL,
+		       CTLTYPE_INT, "rediraccept",
+		       SYSCTL_DESCR("Accept ICMP_REDIRECT messages"),
 		       NULL, 0, &icmp_rediraccept, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_REDIRACCEPT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "redirtimeout", NULL,
+		       CTLTYPE_INT, "redirtimeout",
+		       SYSCTL_DESCR("Lifetime of ICMP_REDIRECT generated "
+				    "routes"),
 		       sysctl_net_inet_icmp_redirtimeout, 0,
 		       &icmp_redirtimeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
