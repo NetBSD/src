@@ -1,10 +1,10 @@
-/* $Id: memcpy.c,v 1.1.2.1 1998/10/15 02:10:24 nisimura Exp $ */
+/* $Id: memcpy.c,v 1.1.2.2 1999/01/18 20:18:26 drochner Exp $ */
 
 #include <sys/types.h>
 
 void *memcpy __P((void *, const void *, size_t));
 
-#define WORD(x, y)	*(u_int32_t *)((x) + (y))
+#define WORD(x, y)	*(u_int32_t *)((char *)(x) + (y))
 #define	FRACTION(x)	((0 - (int)(x)) & 3)
 #define	CHUNKCNT(x, y)	((x) & -(y))
 #define	GOODCASE(x, y)	(0 == (0x3 & ((unsigned)(x) ^ (unsigned)(y))))
@@ -33,8 +33,8 @@ memcpy(dst, src, len)
 				    "swr $1,0(%1)\n\t"
 				    ".set at"
 				    :: "r"(src), "r"(dst) : "$1");
-				dst = dst + v1;
-				src = src + v1;
+				dst = (char *)dst + v1;
+				src = (char *)src + v1;
 			}
 			v1 = CHUNKCNT(len, 64);
 			if (v1 > 0) {
@@ -87,8 +87,8 @@ memcpy(dst, src, len)
 					WORD(dst, 56) = t8;
 					WORD(dst, 60) = t9;
 					
-					dst = dst + 64;
-					src = src + 64;
+					dst = (char *)dst + 64;
+					src = (char *)src + 64;
 				} while (dst != (void *)v1);
 			}
 			v1 = CHUNKCNT(len, 4);
@@ -97,8 +97,8 @@ memcpy(dst, src, len)
 				v1 = (unsigned)dst + v1;
 				do {
 					WORD(dst, 0) = WORD(src, 0);
-					dst = dst + 4;
-					src = src + 4;
+					dst = (char *)dst + 4;
+					src = (char *)src + 4;
 				} while (dst != (void *)v1);
 			}
 		}
@@ -113,8 +113,8 @@ memcpy(dst, src, len)
 				    "swr $1,0(%1)\n\t"
 				    ".set at"
 				    :: "r"(src), "r"(dst) : "$1");
-				dst = dst + v1;
-				src = src + v1;
+				dst = (char *)dst + v1;
+				src = (char *)src + v1;
 			}
 			v1 = CHUNKCNT(len, 4);
 			len -= v1;
@@ -127,8 +127,8 @@ memcpy(dst, src, len)
 				    "sw	 $1,0(%1)\n\t"
 				    ".set at"
 				    :: "r"(src), "r"(dst) : "$1");
-				dst = dst + 4;
-				src = src + 4;
+				dst = (char *)dst + 4;
+				src = (char *)src + 4;
 			} while (dst != (void *)v1);
 		}
 	}
@@ -136,8 +136,8 @@ memcpy(dst, src, len)
 		v1 = (unsigned)dst + len;
 		do {
 			*(u_int8_t *)dst = *(u_int8_t *)src;
-			dst = dst + 1;
-			src = src + 1;
+			dst = (char *)dst + 1;
+			src = (char *)src + 1;
 		} while (dst != (void *)v1);
 	}
 	return v0;

@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.2 1998/12/06 21:09:53 drochner Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.2 1998/12/06 21:09:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.3 1999/01/18 20:18:26 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,13 +96,15 @@ asc_ioasic_attach(parent, self, aux)
 	asc->sc_base = (void *)ioasic_base; /* XXX */ /* TC slot 3 */	
 	asc->sc_cookie = d->iada_cookie;
 
-	asc->sc_reg =		(void *)asc->sc_base + IOASIC_SLOT_12_START;
-	asc->sc_ssr =		(void *)asc->sc_base + IOASIC_CSR;
-	asc->sc_scsi_dmaptr =	(void *)asc->sc_base + IOASIC_SCSI_DMAPTR;
-	asc->sc_scsi_nextptr =	(void *)asc->sc_base + IOASIC_SCSI_NEXTPTR;
-	asc->sc_scsi_scr =	(void *)asc->sc_base + IOASIC_SCSI_SCR;
-	asc->sc_scsi_sdr0 =	(void *)asc->sc_base + IOASIC_SCSI_SDR0;
-	asc->sc_scsi_sdr1 =	(void *)asc->sc_base + IOASIC_SCSI_SDR1;
+	asc->sc_reg = (char *)asc->sc_base + IOASIC_SLOT_12_START;
+	asc->sc_ssr = (void *)((char *)asc->sc_base + IOASIC_CSR);
+	asc->sc_scsi_dmaptr = (void *)((char *)asc->sc_base
+				       + IOASIC_SCSI_DMAPTR);
+	asc->sc_scsi_nextptr = (void *)((char *)asc->sc_base
+					+ IOASIC_SCSI_NEXTPTR);
+	asc->sc_scsi_scr = (void *)((char *)asc->sc_base + IOASIC_SCSI_SCR);
+	asc->sc_scsi_sdr0 = (void *)((char *)asc->sc_base + IOASIC_SCSI_SDR0);
+	asc->sc_scsi_sdr1 = (void *)((char *)asc->sc_base + IOASIC_SCSI_SDR1);
 
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
