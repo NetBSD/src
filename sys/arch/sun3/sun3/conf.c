@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1995/04/10 17:20:21 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1995/04/13 22:01:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -87,28 +87,27 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, mmap */
-#define	cdev_fb_init(c, n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
-	seltrue, dev_init(c,n,mmap), 0 }
-
 cdev_decl(cn);
-cdev_decl(kd);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+
+/* XXX - prom driver is dead code! */
 #include "prom.h"
 cdev_decl(prom);
+
 #include "zs.h"
 cdev_decl(zs);
+cdev_decl(kd);
 cdev_decl(ms);
-cdev_decl(log);
+cdev_decl(kbd);
+
+/* scsi */
 cdev_decl(sd);
 cdev_decl(st);
-cdev_decl(vnd);
+cdev_decl(cd);
+
 #include "pty.h"
 #define	pts_tty		pt_tty
 #define	ptsioctl	ptyioctl
@@ -116,25 +115,30 @@ cdev_decl(pts);
 #define	ptc_tty		pt_tty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
+
+/* frame-buffer devices */
 cdev_decl(fb);
-cdev_decl(fd);
-#include "tun.h"
-cdev_decl(tun);
 #include "bwtwo.h"
 cdev_decl(bw2);
-cdev_decl(kbd);
 #include "cgtwo.h"
 cdev_decl(cg2);
-#include "bpfilter.h"
-cdev_decl(bpf);
 #include "cgfour.h"
 cdev_decl(cg4);
-cdev_devl(cd);
+
+cdev_decl(log);
+cdev_decl(vnd);
+cdev_decl(fd);
+
+#include "bpfilter.h"
+cdev_decl(bpf);
+#include "tun.h"
+cdev_decl(tun);
+
 
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NZS-1,kd),	/* 1: Sun keyboard */
+	cdev_tty_init(NZS-1,kd),	/* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_tty_init(NPROM,prom),	/* 4: PROM console */
@@ -155,16 +159,16 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fd_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
 	cdev_fd_init(1,fd),		/* 23: file descriptor pseudo-device */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_notdef(),			/* 25: sun pi? */
 	cdev_notdef(),			/* 26: bwone */
-	cdev_fb_init(BWTWO,bw2),	/* 27: bwtwo */
+	cdev_fb_init(NBWTWO,bw2),	/* 27: bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
 	cdev_mouse_init(NZS-1,kbd),	/* 29: Sun keyboard */
 	cdev_notdef(),			/* 30: Xylogics tape */
-	cdev_fb_init(CGTWO,cg2),	/* 31: cgtwo */
+	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34: floating point accelerator */
@@ -172,10 +176,10 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 36: Berkeley packet filter */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
-	cdev_fb_init(CGFOUR,cg4),	/* 39: cgfour */
+	cdev_fb_init(NCGFOUR,cg4),	/* 39: cgfour */
 	cdev_notdef(),			/* 40: (sni) */
 	cdev_notdef(),			/* 41: (sun dump) */
-	cdev_notdef(),			/* 43: SMD disk on Xylogics 7053 */
+	cdev_notdef(),			/* 42: SMD disk on Xylogics 7053 */
 	cdev_notdef(),			/* 43: (sun hrc) */
 	cdev_notdef(),			/* 44: (mcp) */
 	cdev_notdef(),			/* 45: (sun ifd) */
