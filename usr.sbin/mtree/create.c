@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.20 1998/12/19 15:38:45 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.20 1998/12/19 15:38:45 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,10 +190,16 @@ statf(p)
 	(void)putchar('\n');
 }
 
+/* XXX
+ * FLAGS2INDEX will fail once the user and system settable bits need more
+ * than one byte, respectively.
+ */
+#define FLAGS2INDEX(x)  (((x >> 8) & 0x0000ff00) | (x & 0x000000ff))
+
 #define	MTREE_MAXGID	5000
 #define	MTREE_MAXUID	5000
-#define	MTREE_MAXMODE	MBITS + 1
-#define	MTREE_MAXFLAGS 256
+#define	MTREE_MAXMODE	(MBITS + 1)
+#define	MTREE_MAXFLAGS  (FLAGS2INDEX(CH_MASK) + 1)   /* 1808 */
 #define	MTREE_MAXS 16
 
 static int
@@ -252,18 +258,11 @@ statd(t, parent, puid, pgid, pmode, pflags)
 			saveuid = suid;
 			maxuid = u[suid];
 		}
-/*
- * XXX
- * note that the below will break when file flags are extended
- * beyond the first 4 bytes of each half word of the flags
- */
-#define FLAGS2IDX(f) ((f & 0xf) | ((f >> 12) & 0xf0))
 
-		sflags = p->fts_statp->st_flags;
-		if (FLAGS2IDX(sflags) < MTREE_MAXFLAGS &&
-		    ++f[FLAGS2IDX(sflags)] > maxflags) {
-			saveflags = sflags;
-			maxflags = u[FLAGS2IDX(sflags)];
+		sflags = FLAGS2INDEX(p->fts_statp->st_flags);
+		if (sflags < MTREE_MAXFLAGS && ++f[sflags] > maxflags) {
+			saveflags = p->fts_statp->st_flags;
+			maxflags = f[sflags];
 		}
 	}
 	(void)printf("/set type=file");
@@ -287,7 +286,7 @@ statd(t, parent, puid, pgid, pmode, pflags)
 		(void)printf(" mode=%#lo", (u_long)savemode);
 	if (keys & F_NLINK)
 		(void)printf(" nlink=1");
-	if (keys & F_FLAGS && saveflags)
+	if (keys & F_FLAGS)
 		(void)printf(" flags=%s",
 		    flags_to_string(saveflags, "none"));
 	(void)printf("\n");

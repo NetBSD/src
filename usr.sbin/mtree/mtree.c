@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.13 1998/12/05 03:29:25 itohy Exp $	*/
+/*	$NetBSD: mtree.c,v 1.14 1999/02/11 15:32:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.13 1998/12/05 03:29:25 itohy Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.14 1999/02/11 15:32:24 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mtree.c,v 1.13 1998/12/05 03:29:25 itohy Exp $");
 extern int crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, rflag, sflag, tflag, uflag, Uflag;
+int cflag, dflag, eflag, iflag, mflag, rflag, sflag, tflag, uflag, Uflag;
 int keys;
 char fullpath[MAXPATHLEN];
 
@@ -77,7 +77,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:mp:rs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -92,6 +92,9 @@ main(argc, argv)
 			if (!(freopen(optarg, "r", stdin)))
 				mtree_err("%s: %s", optarg, strerror(errno));
 			break;
+		case 'i':
+			iflag = 1;
+			break;
 		case 'K':
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
@@ -102,6 +105,9 @@ main(argc, argv)
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
 					keys |= parsekey(p, NULL);
+			break;
+		case 'm':
+			mflag = 1;
 			break;
 		case 'p':
 			dir = optarg;
@@ -143,6 +149,9 @@ main(argc, argv)
 	if ((cflag || sflag) && !getcwd(fullpath, MAXPATHLEN))
 		mtree_err("%s", strerror(errno));
 
+	if (iflag == 1 && mflag == 1)
+		mtree_err("-i and -m flags are mutually exclusive");
+
 	if (cflag) {
 		cwalk();
 		exit(0);
@@ -157,6 +166,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: mtree [-cderUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
+"usage: mtree [-cderUux] [-i|-m] [-f spec] [-K key] [-k key] [-p path]"
+    " [-s seed]\n");
 	exit(1);
 }
