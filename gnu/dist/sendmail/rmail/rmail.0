@@ -5,10 +5,10 @@ RMAIL(8)                                                 RMAIL(8)
 
 
 NNAAMMEE
-       rrmmaaiill - handle remote mail received via uucp
+       rmail - handle remote mail received via uucp
 
 SSYYNNOOPPSSIISS
-       rrmmaaiill _u_s_e_r _._._.
+       rrmmaaiill [--DD _d_o_m_a_i_n] [--TT] _u_s_e_r _._._.
 
 DDEESSCCRRIIPPTTIIOONN
        RRmmaaiill  interprets incoming mail received via uucp(1), col-
@@ -19,6 +19,12 @@ DDEESSCCRRIIPPTTIIOONN
 
        RRmmaaiill  is  explicitly designed for use with uucp and send-
        mail.
+
+   FFllaaggss
+       --DD     Use the specified _d_o_m_a_i_n  instead  of  the  default
+              domain of ``UUCP''.
+
+       --TT     Turn on debugging.
 
 SSEEEE AALLSSOO
        uucp(1), mail.local(8), sendmail(8)
@@ -55,12 +61,6 @@ BBUUGGSS
 
 
 
-
-
-
-
-
-
-                   Date: 1999/06/22 20:41:33                 1
+                   Date: 2000/12/29 18:12:22                 1
 
 

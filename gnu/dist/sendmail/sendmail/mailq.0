@@ -5,7 +5,7 @@ MAILQ(1)                                                 MAILQ(1)
 
 
 NNAAMMEE
-       mmaaiillqq - print the mail queue
+       mailq - print the mail queue
 
 SSYYNNOOPPSSIISS
        mmaaiillqq [--vv]
@@ -61,6 +61,6 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/09/17 17:04:27                 1
+                   Date: 2000/12/14 23:08:15                 1
 
 

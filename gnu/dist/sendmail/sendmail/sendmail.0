@@ -5,7 +5,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 NNAAMMEE
-       sseennddmmaaiill - an electronic mail transport agent
+       sendmail - an electronic mail transport agent
 
 SSYYNNOOPPSSIISS
        sseennddmmaaiill [_f_l_a_g_s] [_a_d_d_r_e_s_s _._._.]
@@ -61,7 +61,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                   Date: 2000/09/07 21:14:00                 1
+                   Date: 2000/12/14 23:08:15                 1
 
 
 
@@ -127,7 +127,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 2
+                   Date: 2000/12/14 23:08:15                 2
 
 
 
@@ -193,7 +193,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 3
+                   Date: 2000/12/14 23:08:15                 3
 
 
 
@@ -259,7 +259,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 4
+                   Date: 2000/12/14 23:08:15                 4
 
 
 
@@ -325,7 +325,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 5
+                   Date: 2000/12/14 23:08:15                 5
 
 
 
@@ -391,7 +391,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 6
+                   Date: 2000/12/14 23:08:15                 6
 
 
 
@@ -457,7 +457,7 @@ SENDMAIL(8)                                           SENDMAIL(8)
 
 
 
-                   Date: 2000/09/07 21:14:00                 7
+                   Date: 2000/12/14 23:08:15                 7
 
 
 
@@ -523,7 +523,7 @@ FFIILLEESS
 
 
 
-                   Date: 2000/09/07 21:14:00                 8
+                   Date: 2000/12/14 23:08:15                 8
 
 
 
@@ -589,6 +589,6 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/09/07 21:14:00                 9
+                   Date: 2000/12/14 23:08:15                 9
 
 
