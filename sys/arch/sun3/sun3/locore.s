@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.17 1994/05/04 05:40:17 gwr Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.18 1994/05/29 05:16:56 gwr Exp $
  */
 #include "assym.s"
 #include <machine/asm.h>
@@ -123,47 +123,33 @@ final_before_main:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
-	movw #PSL_LOWIPL, sr		| nothing blocked
-	jsr _main
-/* proc[1] == init now running here;
- * create a null exception frame and return to user mode in icode
- */
-post_main:
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| return to icode location 0
-	movw	#PSL_USER,sp@-		| in user mode
-	rte				|should get here :)
-.text
+/* final setup for C code */
+	movw #PSL_LOWIPL, sr		| lower SPL (nothing blocked)
 /*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
+ * Create a fake exception frame that returns to user mode,
+ * make space for the rest of a fake saved register set, and
+ * pass the first available RAM and a pointer to the register
+ * set to "main()".  "main()" will call "icode()", which fakes
+ * an "execve()" system call, which is why we need to do that
+ * ("main()" sets "u.u_ar0" to point to the register set).
+ * When "main()" returns, we're running in process 1 and have
+ * successfully faked the "execve()".  We load up the registers from
+ * that set; the "rte" loads the PC and PSR, which jumps to "init".
  */
-	.globl	_icode,_szicode
-	.text
-_icode:
-	clrl	sp@-
-|	pea	pc@((argv-.)+2)
-       .word   0x487a  | pea <short>
-       .word   argv-.
-|	pea	pc@((init-.)+2)
-       .word   0x487a  | pea <short>
-       .word   init-.
-	clrl	sp@-
-	moveq	#SYS_execve,d0
-	trap	#0
-	moveq	#SYS_exit,d0
-	trap	#0
-init:
-	.asciz	"/sbin/init"
-	.even
-argv:
-	.long	init+6-_icode		| argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode		| argv[1] follows icode after copyout
-	.long	0
-eicode:
+  	clrw	sp@-			| vector offset/frame type
+	clrl	sp@-			| PC - filled in by "execve"
+  	movw	#PSL_USER,sp@-		| in user mode
+	clrl	sp@-			| stack adjust count and padding
+	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
+	pea	sp@			| addr of space for D0
+	jbsr	_main			| main(firstaddr, r0)
+	addql	#4,sp			| pop args
+	movl	sp@(FR_SP),a0		| grab and load
+	movl	a0,usp			|   user SP
+	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
+	addql	#8,sp			| pop SSP and align word
+  	rte
 
-_szicode:
-	.long	_szicode-_icode
 #include "lib.s"
 #include "m68k.s"
 #include "signal.s"
