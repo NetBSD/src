@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.7 1996/06/13 18:35:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -56,12 +56,12 @@
 #endif
 
 int (*elf_probe_funcs[]) __P((struct proc *, struct exec_package *,
-			      char *, u_long *)) = {
+			      Elf32_Ehdr *, char *, u_long *)) = {
+#ifdef COMPAT_LINUX
+	linux_elf_probe,
+#endif
 #ifdef COMPAT_SVR4
 	svr4_elf_probe,
-#endif
-#ifdef COMPAT_LINUX
-	linux_elf_probe
 #endif
 };
 
@@ -69,8 +69,6 @@ int elf_check_header __P((Elf32_Ehdr *, int));
 int elf_load_file __P((struct proc *, char *, struct exec_vmcmd_set *,
 		       u_long *, struct elf_args *, u_long *));
 
-static int elf_read_from __P((struct proc *, struct vnode *, u_long,
-	caddr_t, int));
 static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
@@ -243,7 +241,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
  *
  *	Read from vnode into buffer at offset.
  */
-static int
+int
 elf_read_from(p, vp, off, buf, size)
 	struct vnode *vp;
 	u_long off;
@@ -435,7 +433,7 @@ exec_elf_makecmds(p, epp)
 	if ((n = sizeof elf_probe_funcs / sizeof elf_probe_funcs[0])) {
 		error = ENOEXEC;
 		for (i = 0; i < n && error; i++)
-			error = elf_probe_funcs[i](p, epp, interp, &pos);
+			error = elf_probe_funcs[i](p, epp, eh, interp, &pos);
 
 		if (error)
 			goto bad;
@@ -486,7 +484,7 @@ exec_elf_makecmds(p, epp)
 		case Elf32_pt_phdr:
 			/* Note address of program headers (in text segment) */
 			phdr = pp->p_vaddr;
-		break;
+			break;
 
 		default:
 			/*
