@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
-.\"	$Id: math.3,v 1.4 1994/02/25 19:43:56 jtc Exp $
+.\"	$Id: math.3,v 1.5 1996/03/30 01:28:55 jtc Exp $
 .\"
-.TH MATH 3M "May 6, 1991"
+.TH MATH 3 "May 6, 1991"
 .UC 4
 .ds up \fIulp\fR
 .ds nn \fINaN\fR
@@ -54,51 +54,51 @@ The Fortran math library is described in ``man 3f intro''.
 .SH "LIST OF FUNCTIONS"
 .sp 2
 .nf
-.ta \w'copysign'u+2n +\w'infnan.3m'u+10n +\w'inverse trigonometric func'u
+.ta \w'copysign'u+2n +\w'infnan.3'u+10n +\w'inverse trigonometric func'u
 \fIName\fP	\fIAppears on Page\fP	\fIDescription\fP	\fIError Bound (ULPs)\fP
-.ta \w'copysign'u+4n +\w'infnan.3m'u+4n +\w'inverse trigonometric function'u+6nC
+.ta \w'copysign'u+4n +\w'infnan.3'u+4n +\w'inverse trigonometric function'u+6nC
 .sp 5p
-acos	sin.3m	inverse trigonometric function	3
-acosh	asinh.3m	inverse hyperbolic function	3
-asin	sin.3m	inverse trigonometric function	3
-asinh	asinh.3m	inverse hyperbolic function	3
-atan	sin.3m	inverse trigonometric function	1
-atanh	asinh.3m	inverse hyperbolic function	3
-atan2	sin.3m	inverse trigonometric function	2
-cabs	hypot.3m	complex absolute value	1
-cbrt	sqrt.3m	cube root	1
-ceil	floor.3m	integer no less than	0
-copysign	ieee.3m	copy sign bit	0
-cos	sin.3m	trigonometric function	1
-cosh	sinh.3m	hyperbolic function	3
-erf	erf.3m	error function	???
-erfc	erf.3m	complementary error function	???
-exp	exp.3m	exponential	1
-expm1	exp.3m	exp(x)\-1	1
-fabs	floor.3m	absolute value	0
-floor	floor.3m	integer no greater than	0
-hypot	hypot.3m	Euclidean distance	1
-ilogb	ieee.3m	exponent extraction	0
-infnan	infnan.3m	signals exceptions
-j0	j0.3m	bessel function	???
-j1	j0.3m	bessel function	???
-jn	j0.3m	bessel function	???
-lgamma	lgamma.3m	log gamma function; (formerly gamma.3m)
-log	exp.3m	natural logarithm	1
-log10	exp.3m	logarithm to base 10	3
-log1p	exp.3m	log(1+x)	1
-pow	exp.3m	exponential x**y	60\-500
-remainder	ieee.3m	remainder	0
-rint	floor.3m	round to nearest integer	0
-scalbn	ieee.3m	exponent adjustment	0
-sin	sin.3m	trigonometric function	1
-sinh	sinh.3m	hyperbolic function	3
-sqrt	sqrt.3m	square root	1
-tan	sin.3m	trigonometric function	3
-tanh	sinh.3m	hyperbolic function	3
-y0	j0.3m	bessel function	???
-y1	j0.3m	bessel function	???
-yn	j0.3m	bessel function	???
+acos	sin.3	inverse trigonometric function	3
+acosh	asinh.3	inverse hyperbolic function	3
+asin	sin.3	inverse trigonometric function	3
+asinh	asinh.3	inverse hyperbolic function	3
+atan	sin.3	inverse trigonometric function	1
+atanh	asinh.3	inverse hyperbolic function	3
+atan2	sin.3	inverse trigonometric function	2
+cabs	hypot.3	complex absolute value	1
+cbrt	sqrt.3	cube root	1
+ceil	floor.3	integer no less than	0
+copysign	ieee.3	copy sign bit	0
+cos	sin.3	trigonometric function	1
+cosh	sinh.3	hyperbolic function	3
+erf	erf.3	error function	???
+erfc	erf.3	complementary error function	???
+exp	exp.3	exponential	1
+expm1	exp.3	exp(x)\-1	1
+fabs	floor.3	absolute value	0
+floor	floor.3	integer no greater than	0
+hypot	hypot.3	Euclidean distance	1
+ilogb	ieee.3	exponent extraction	0
+infnan	infnan.3	signals exceptions
+j0	j0.3	bessel function	???
+j1	j0.3	bessel function	???
+jn	j0.3	bessel function	???
+lgamma	lgamma.3	log gamma function
+log	exp.3	natural logarithm	1
+log10	exp.3	logarithm to base 10	3
+log1p	exp.3	log(1+x)	1
+pow	exp.3	exponential x**y	60\-500
+remainder	ieee.3	remainder	0
+rint	floor.3	round to nearest integer	0
+scalbn	ieee.3	exponent adjustment	0
+sin	sin.3	trigonometric function	1
+sinh	sinh.3	hyperbolic function	3
+sqrt	sqrt.3	square root	1
+tan	sin.3	trigonometric function	3
+tanh	sinh.3	hyperbolic function	3
+y0	j0.3	bessel function	???
+y1	j0.3	bessel function	???
+yn	j0.3	bessel function	???
 .ta
 .fi
 .SH NOTES
@@ -241,7 +241,7 @@ The situation is described in more detail in manual pages.
 to be replaced at some time in the foreseeable future by a
 more flexible but still uniform scheme being developed to
 handle all floating\-point arithmetic exceptions neatly.
-See infnan(3M) for the present state of affairs.\fR
+See infnan(3) for the present state of affairs.\fR
 .ll +0.5i
 .RE
 .PP
