@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.55 1999/09/15 21:12:29 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.56 1999/09/18 11:25:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -421,7 +421,7 @@ uhci_activate(self, act)
 	device_ptr_t self;
 	enum devact act;
 {
-	/*struct uhci_softc *sc = (struct uhci_softc *)self;*/
+	struct uhci_softc *sc = (struct uhci_softc *)self;
 	int rv = 0;
 
 	switch (act) {
@@ -430,6 +430,8 @@ uhci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
 		break;
 	}
 	return (rv);
