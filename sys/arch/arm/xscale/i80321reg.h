@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.13 2003/12/16 00:04:09 gavan Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.14 2003/12/19 10:08:11 gavan Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -214,8 +214,8 @@
 #define	PCIXSR_SCD		(1U << 18)
 #define	PCIXSR_133_CAP		(1U << 17)
 #define	PCIXSR_32PCI		(1U << 16)	/* 0 = 32, 1 = 64 */
-#define	PCIXSR_BUSNO(x)		(((x) & 0xff) >> 8)
-#define	PCIXSR_DEVNO(x)		(((x) & 0x1f) >> 3)
+#define	PCIXSR_BUSNO(x)		(((x) & 0xff00) >> 8)
+#define	PCIXSR_DEVNO(x)		(((x) & 0xf8) >> 3)
 #define	PCIXSR_FUNCNO(x)	((x) & 0x7)
 
 /*
