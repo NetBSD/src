@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.13 1997/07/20 17:36:22 christos Exp $	*/
+/*	$NetBSD: kill.c,v 1.14 1998/07/28 05:15:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.13 1997/07/20 17:36:22 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.14 1998/07/28 05:15:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ main(argc, argv)
 				numsig -= 128;
 			if (numsig <= 0 || numsig >= NSIG)
 				nosig(*argv);
-			printf("%s\n", sys_signame[numsig]);
+			(void)printf("%s\n", sys_signame[numsig]);
 			exit(0);
 		}
 		printsignals(stdout);
@@ -139,6 +139,7 @@ main(argc, argv)
 	}
 
 	exit(errors);
+	/* NOTREACHED */
 }
 
 int

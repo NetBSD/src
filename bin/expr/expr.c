@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.7 1998/07/27 17:55:17 mycroft Exp $	*/
+/*	$NetBSD: expr.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -284,7 +284,7 @@ eval5()
 
 		/* compile regular expression */
 		if ((eval = regcomp(&rp, r->u.s, 0)) != 0) {
-			regerror(eval, &rp, errbuf, sizeof(errbuf));
+			(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
 			errx(2, "%s", errbuf);
 		}
 
@@ -544,9 +544,10 @@ main(argc, argv)
 	}
 
 	if (vp->type == integer)
-		printf("%d\n", vp->u.i);
+		(void)printf("%d\n", vp->u.i);
 	else
-		printf("%s\n", vp->u.s);
+		(void)printf("%s\n", vp->u.s);
 
 	exit(is_zero_or_null(vp));
+	/* NOTREACHED */
 }

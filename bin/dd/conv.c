@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.7 1997/07/20 21:58:37 christos Exp $	*/
+/*	$NetBSD: conv.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.7 1997/07/20 21:58:37 christos Exp $");
+__RCSID("$NetBSD: conv.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ block()
 		 * input block.
 		 */
 		if (ch != '\n' && in.dbcnt < cbsz) {
-			memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
+			(void)memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
 			break;
 		}
 
@@ -212,7 +212,7 @@ block_close()
 	 */
 	if (in.dbcnt) {
 		++st.trunc;
-		memmove(out.dbp, in.dbp - in.dbcnt, in.dbcnt);
+		(void)memmove(out.dbp, in.dbp - in.dbcnt, in.dbcnt);
 		(void)memset(out.dbp + in.dbcnt,
 		    ctab ? ctab[' '] : ' ', cbsz - in.dbcnt);
 		out.dbcnt += cbsz;
@@ -246,7 +246,7 @@ unblock()
 		for (t = inp + cbsz - 1; t >= inp && *t == ' '; --t);
 		if (t >= inp) {
 			cnt = t - inp + 1;
-			memmove(out.dbp, inp, cnt);
+			(void)memmove(out.dbp, inp, cnt);
 			out.dbp += cnt;
 			out.dbcnt += cnt;
 		}
@@ -256,7 +256,7 @@ unblock()
 			dd_out(0);
 	}
 	if (in.dbcnt)
-		memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
+		(void)memmove(in.db, in.dbp - in.dbcnt, in.dbcnt);
 	in.dbp = in.db + in.dbcnt;
 }
 
@@ -271,7 +271,7 @@ unblock_close()
 		for (t = in.db + in.dbcnt - 1; t >= in.db && *t == ' '; --t);
 		if (t >= in.db) {
 			cnt = t - in.db + 1;
-			memmove(out.dbp, in.db, cnt);
+			(void)memmove(out.dbp, in.db, cnt);
 			out.dbp += cnt;
 			out.dbcnt += cnt;
 		}
