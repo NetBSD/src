@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.10 1999/04/29 16:58:58 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.11 1999/06/06 19:10:49 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,8 +43,8 @@
 
 #include <machine/vsbus.h>
 
-#include <vax/uba/dzreg.h>
-#include <vax/uba/dzvar.h>
+#include <dev/qbus/dzreg.h>
+#include <dev/qbus/dzvar.h>
 
 #include "ioconf.h"
 
@@ -82,7 +82,7 @@ lkc_attach(parent, self, aux)
 
 	printf("\n");
 	dz->sc_catch = lkc_catch; /* Catch keyb & mouse chars fast */
-	*dz->sc_dr.dr_lpr = 0x1c18; /* XXX */
+	bus_space_write_2(dz->sc_iot, dz->sc_ioh, 4, 0x1c18);
 }
 
 extern	char *q_special[];
