@@ -1,4 +1,4 @@
-#	$NetBSD: HAYDON,v 1.8 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: HAYDON,v 1.9 1999/07/31 20:19:31 thorpej Exp $
 #
 # HAYDON
 #
@@ -6,7 +6,8 @@
 # carrel@NetBSD.org
 #
 include		"arch/hp300/conf/std.hp300"
-options 	HP380		# includes 425t, 425s, 433s
+options 	HP380
+options 	HP385
 options 	FPSP		# floating point emulation for MC68040
 makeoptions	COPTS="-O2 -m68040"
 

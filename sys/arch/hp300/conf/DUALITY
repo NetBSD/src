@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.35 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: DUALITY,v 1.36 1999/07/31 20:19:31 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -16,6 +16,7 @@ include "arch/hp300/conf/std.hp300"
 #options 	HP370
 #options 	HP375
 options 	HP380
+options 	HP385
 #options 	HP400
 #options 	HP425
 #options 	HP433
