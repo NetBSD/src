@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.2 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.3 2001/05/02 01:22:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ struct pgflbucket {
 };
 
 struct pgfreelist {
-	struct pgflbucket pgfl_buckets[VM_PGCOLOR_BUCKETS];
+	struct pgflbucket *pgfl_buckets;
 };
 
 #endif /* _PGLIST_H_ */

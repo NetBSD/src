@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.59 2001/05/01 19:36:57 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.60 2001/05/02 01:22:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -126,6 +126,16 @@ static vaddr_t      virtual_space_end;
 static struct pglist uvm_bootbucket;
 
 /*
+ * we allocate an initial number of page colors in uvm_page_init(),
+ * and remember them.  We may re-color pages as cache sizes are
+ * discovered during the autoconfiguration phase.  But we can never
+ * free the initial set of buckets, since they are allocated using
+ * uvm_pageboot_alloc().
+ */
+
+static boolean_t have_recolored_pages /* = FALSE */;
+
+/*
  * local prototypes
  */
 
@@ -202,6 +212,19 @@ uvm_pageremove(pg)
 	pg->version++;
 }
 
+static void
+uvm_page_init_buckets(struct pgfreelist *pgfl)
+{
+	int color, i;
+
+	for (color = 0; color < uvmexp.ncolors; color++) {
+		for (i = 0; i < PGFL_NQUEUES; i++) {
+			TAILQ_INIT(&pgfl->pgfl_buckets[
+			    color].pgfl_queues[i]);
+		}
+	}
+}
+
 /*
  * uvm_page_init: init the page system.   called from uvm_init().
  * 
@@ -212,24 +235,18 @@ void
 uvm_page_init(kvm_startp, kvm_endp)
 	vaddr_t *kvm_startp, *kvm_endp;
 {
-	vsize_t freepages, pagecount, n;
+	vsize_t freepages, pagecount, bucketcount, n;
+	struct pgflbucket *bucketarray;
 	vm_page_t pagearray;
-	int lcv, color, i;
+	int lcv, i;
 	paddr_t paddr;
 
 	/*
-	 * init the page queues and page queue locks
+	 * init the page queues and page queue locks, except the free
+	 * list; we allocate that later (with the initial vm_page
+	 * structures).
 	 */
 
-	uvmexp.ncolors = VM_PGCOLOR_BUCKETS;
-	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-		for (color = 0; color < VM_PGCOLOR_BUCKETS; color++) {
-			for (i = 0; i < PGFL_NQUEUES; i++) {
-				TAILQ_INIT(&uvm.page_free[lcv].pgfl_buckets[
-				    color].pgfl_queues[i]);
-			}
-		}
-	}
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive_swp);
 	TAILQ_INIT(&uvm.page_inactive_obj);
@@ -275,6 +292,14 @@ uvm_page_init(kvm_startp, kvm_endp)
 		freepages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 
 	/*
+	 * Let MD code initialize the number of colors, or default
+	 * to 1 color if MD code doesn't care.
+	 */
+	if (uvmexp.ncolors == 0)
+		uvmexp.ncolors = 1;
+	uvmexp.colormask = uvmexp.ncolors - 1;
+
+	/*
 	 * we now know we have (PAGE_SIZE * freepages) bytes of memory we can
 	 * use.   for each page of memory we use we need a vm_page structure.
 	 * thus, the total number of pages we can use is the total size of
@@ -284,10 +309,21 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * pages).
 	 */
 	 
+	bucketcount = uvmexp.ncolors * VM_NFREELIST;
 	pagecount = ((freepages + 1) << PAGE_SHIFT) /
 	    (PAGE_SIZE + sizeof(struct vm_page));
-	pagearray = (vm_page_t)uvm_pageboot_alloc(pagecount *
-	    sizeof(struct vm_page));
+
+	bucketarray = (void *) uvm_pageboot_alloc((bucketcount *
+	    sizeof(struct pgflbucket)) + (pagecount *
+	    sizeof(struct vm_page)));
+	pagearray = (struct vm_page *)(bucketarray + bucketcount);
+
+	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
+		uvm.page_free[lcv].pgfl_buckets =
+		    (bucketarray + (lcv * uvmexp.ncolors));
+		uvm_page_init_buckets(&uvm.page_free[lcv]);
+	}
+
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 					 
 	/*
@@ -841,6 +877,76 @@ uvm_page_rehash()
 	return;
 }
 
+/*
+ * uvm_page_recolor: Recolor the pages if the new bucket count is
+ * larger than the old one.
+ */
+
+void
+uvm_page_recolor(int newncolors)
+{
+	struct pgflbucket *bucketarray, *oldbucketarray;
+	struct pgfreelist pgfl;
+	vm_page_t pg;
+	vsize_t bucketcount;
+	int s, lcv, color, i, ocolors;
+
+	if (newncolors <= uvmexp.ncolors)
+		return;
+
+	bucketcount = newncolors * VM_NFREELIST;
+	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
+	    M_VMPAGE, M_NOWAIT);
+	if (bucketarray == NULL) {
+		printf("WARNING: unable to allocate %ld page color buckets\n",
+		    (long) bucketcount);
+		return;
+	}
+
+	s = uvm_lock_fpageq();
+
+	/* Make sure we should still do this. */
+	if (newncolors <= uvmexp.ncolors) {
+		uvm_unlock_fpageq(s);
+		free(bucketarray, M_VMPAGE);
+		return;
+	}
+
+	oldbucketarray = uvm.page_free[0].pgfl_buckets;
+	ocolors = uvmexp.ncolors;
+
+	uvmexp.ncolors = newncolors;
+	uvmexp.colormask = uvmexp.ncolors - 1;
+
+	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
+		pgfl.pgfl_buckets = (bucketarray + (lcv * newncolors));
+		uvm_page_init_buckets(&pgfl);
+		for (color = 0; color < ocolors; color++) {
+			for (i = 0; i < PGFL_NQUEUES; i++) {
+				while ((pg = TAILQ_FIRST(&uvm.page_free[
+				    lcv].pgfl_buckets[color].pgfl_queues[i]))
+				    != NULL) {
+					TAILQ_REMOVE(&uvm.page_free[
+					    lcv].pgfl_buckets[
+					    color].pgfl_queues[i], pg, pageq);
+					TAILQ_INSERT_TAIL(&pgfl.pgfl_buckets[
+					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
+					    i], pg, pageq);
+				}
+			}
+		}
+		uvm.page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
+	}
+
+	if (have_recolored_pages) {
+		uvm_unlock_fpageq(s);
+		free(oldbucketarray, M_VMPAGE);
+		return;
+	}
+
+	have_recolored_pages = TRUE;
+	uvm_unlock_fpageq(s);
+}
 
 #if 1 /* XXXCDC: TMP TMP TMP DEBUG DEBUG DEBUG */
 
@@ -891,7 +997,7 @@ uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
 		if ((pg = TAILQ_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL)
 			goto gotit;
-		color = (color + 1) & VM_PGCOLOR_MASK;
+		color = (color + 1) & uvmexp.colormask;
 	} while (color != trycolor);
 
 	return (NULL);
@@ -1046,7 +1152,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * We now know which color we actually allocated from; set
 	 * the next color accordingly.
 	 */
-	uvm.page_free_nextcolor = (color + 1) & VM_PGCOLOR_MASK;
+	uvm.page_free_nextcolor = (color + 1) & uvmexp.colormask;
 
 	/*
 	 * update allocation statistics and remember if we have to
@@ -1420,7 +1526,7 @@ uvm_pageidlezero()
 			}
 		}
 
-		nextbucket = (nextbucket + 1) & VM_PGCOLOR_MASK;
+		nextbucket = (nextbucket + 1) & uvmexp.colormask;
 	} while (nextbucket != firstbucket);
 
 	uvm_unlock_fpageq(s);
