@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 1996/03/14 19:44:59 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.17 1996/03/31 22:30:57 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -401,7 +401,7 @@ fbrcons_init(fb)
 
 #if defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT)
 	rc->rc_maxcol = rc->rc_width / rc->rc_font->width;
-	rc->rc_maxrow = rc->rc_height / rc->rc_font->height; 
+	rc->rc_maxrow = rc->rc_height / rc->rc_font->height;
 #else
 #if defined(SUN4)
 	if (CPU_ISSUN4) {

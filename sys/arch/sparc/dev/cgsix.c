@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.23 1996/03/17 02:00:49 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.24 1996/03/31 22:30:53 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -292,7 +292,7 @@ cgsixattach(parent, self, args)
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
 		    EE_CONS_COLOR;
-		/* 
+		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
@@ -303,7 +303,7 @@ cgsixattach(parent, self, args)
 	}
 #endif
 
-#if defined(SUN4C) || defined(SUN4M)  
+#if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M)
 		isconsole = node == fbnode && fbconstty != NULL;
 #endif

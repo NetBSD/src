@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.5 1996/03/17 02:00:44 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.6 1996/03/31 22:30:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -93,7 +93,9 @@ int		cgeightopen __P((dev_t, int, int, struct proc *));
 int		cgeightclose __P((dev_t, int, int, struct proc *));
 int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgeightmmap __P((dev_t, int, int));
+#if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
+#endif
 
 struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
@@ -103,6 +105,7 @@ struct cfdriver cgeight_cd = {
 	NULL, "cgeight", DV_DULL
 };
 
+#if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
 	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, cgeightmmap
@@ -114,6 +117,7 @@ extern struct tty *fbconstty;
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
 static int cgeight_get_video __P((struct cgeight_softc *));
 static void cgeight_set_video __P((struct cgeight_softc *, int));
+#endif
 
 /*
  * Match a cgeight.
@@ -174,6 +178,7 @@ cgeightattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+#if defined(SUN4)
 	register struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	register struct confargs *ca = args;
 	register int node = 0, ramsize, i;
@@ -211,7 +216,6 @@ cgeightattach(parent, self, args)
 
 	isconsole = 0;
 
-#if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
@@ -222,7 +226,6 @@ cgeightattach(parent, self, args)
 		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
 			isconsole = (fbconstty != NULL);
 	}
-#endif
 
 #if 0
 	/*
@@ -283,6 +286,7 @@ cgeightattach(parent, self, args)
 	 * to notice if we're the console framebuffer.
 	 */
 	fb_attach(&sc->sc_fb, isconsole);
+#endif
 }
 
 int
@@ -316,6 +320,7 @@ cgeightioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
+#if defined(SUN4)
 	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
@@ -364,38 +369,8 @@ cgeightioctl(dev, cmd, data, flags, p)
 	default:
 		return (ENOTTY);
 	}
+#endif
 	return (0);
-}
-
-/*
- * Undo the effect of an FBIOSVIDEO that turns the video off.
- */
-static void
-cgeightunblank(dev)
-	struct device *dev;
-{
-
-	cgeight_set_video((struct cgeight_softc *)dev, 1);
-}
-
-/*
- * Load a subset of the current (new) colormap into the Brooktree DAC.
- */
-static void
-cgeightloadcmap(sc, start, ncolors)
-	register struct cgeight_softc *sc;
-	register int start, ncolors;
-{
-	register volatile struct bt_regs *bt;
-	register u_int *ip;
-	register int count;
-
-	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
-	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
-	bt = &sc->sc_fbc->fbc_dac;
-	bt->bt_addr = BT_D4M4(start);
-	while (--count >= 0)
-		bt->bt_cmap = *ip++;
 }
 
 /*
@@ -452,7 +427,7 @@ cgeightmmap(dev, off, prot)
 	} else if ((u_int)off < END_COLOR) {
 		/*
 		 * in colour plane
-		 */ 
+		 */
 		poff = (off - START_COLOR) + PFOUR_COLOR_OFF_COLOR;
 	} else if ((u_int)off < START_SPECIAL) {
 		/*
@@ -484,6 +459,18 @@ cgeightmmap(dev, off, prot)
 	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
 }
 
+#if defined(SUN4)
+/*
+ * Undo the effect of an FBIOSVIDEO that turns the video off.
+ */
+static void
+cgeightunblank(dev)
+	struct device *dev;
+{
+
+	cgeight_set_video((struct cgeight_softc *)dev, 1);
+}
+
 static int
 cgeight_get_video(sc)
 	struct cgeight_softc *sc;
@@ -500,3 +487,24 @@ cgeight_set_video(sc, enable)
 
 	fb_pfour_set_video(&sc->sc_fb, enable);
 }
+
+/*
+ * Load a subset of the current (new) colormap into the Brooktree DAC.
+ */
+static void
+cgeightloadcmap(sc, start, ncolors)
+	register struct cgeight_softc *sc;
+	register int start, ncolors;
+{
+	register volatile struct bt_regs *bt;
+	register u_int *ip;
+	register int count;
+
+	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+	bt = &sc->sc_fbc->fbc_dac;
+	bt->bt_addr = BT_D4M4(start);
+	while (--count >= 0)
+		bt->bt_cmap = *ip++;
+}
+#endif
