@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.2 1994/10/26 05:44:43 cgd Exp $	*/
+/*	$NetBSD: ether.c,v 1.3 1995/02/19 17:04:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -53,10 +53,6 @@
 #include "stand.h"
 #include "net.h"
 #include "netif.h"
-
-const u_char bcea[6] = {
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-};
 
 /* Caller must leave room for ethernet header in front!! */
 int
