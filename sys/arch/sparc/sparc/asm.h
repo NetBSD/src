@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1996/07/01 18:01:26 abrown Exp $ */
+/*	$NetBSD: asm.h,v 1.5 1998/09/14 22:43:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,4 +115,9 @@
 #define	stda(loc, asi, value) ({ \
 	__asm __volatile("stda %0,[%1]%2" : : \
 	    "r" ((long long)(value)), "r" ((int)(loc)), "n" (asi)); \
+})
+
+/* atomic swap of a word between a register and memory */
+#define	swap(loc, val) ({ \
+	__asm __volatile("swap [%2],%0" : "=&r" (val) : "0" (val), "r" (loc)); \
 })
