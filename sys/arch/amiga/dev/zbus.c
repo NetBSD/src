@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.52 2003/12/19 22:33:30 is Exp $ */
+/*	$NetBSD: zbus.c,v 1.53 2004/01/04 16:19:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.52 2003/12/19 22:33:30 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.53 2004/01/04 16:19:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ static struct aconfdata aconftab[] = {
 	/* Village Tronic Ariadne II */
 	{ "ne",		2167,	202},
 	/* bsc/Alf Data */
-	{ "Tandem", 2092,    6 },	/* Tandem AT disk controler */
+	{ "Tandem", 2092,    6 },	/* Tandem AT disk controller */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
 	{ "mfc",	2092,	18 },

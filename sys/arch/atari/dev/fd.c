@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2003/07/15 01:19:48 lukem Exp $	*/
+/*	$NetBSD: fd.c,v 1.48 2004/01/04 16:19:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2003/07/15 01:19:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2004/01/04 16:19:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,7 +687,7 @@ struct fd_softc	*sc;
 
 /*
  * Called through the DMA-dispatcher. So we know we are the only ones
- * messing with the floppy-controler.
+ * messing with the floppy-controller.
  * Initialize some fields in the fdsoftc for the state-machine and get
  * it going.
  */
