@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.110 2000/10/11 14:46:03 is Exp $	*/
+/*	$NetBSD: ftp.c,v 1.111 2000/11/15 04:09:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.110 2000/10/11 14:46:03 is Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.111 2000/11/15 04:09:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1609,10 +1609,8 @@ initconn(void)
 		warn("listen");
 
 	if (sendport) {
-#ifdef INET6
-		char hname[INET6_ADDRSTRLEN];
+		char hname[NI_MAXHOST];
 		int af;
-#endif
 
 		switch (data_addr.su_family) {
 		case AF_INET:
@@ -1623,6 +1621,7 @@ initconn(void)
 			/* FALLTHROUGH */
 #ifdef INET6
 		case AF_INET6:
+#endif
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&data_addr.si_su,
 			    data_addr.su_len, hname, sizeof(hname), NULL, 0,
@@ -1642,7 +1641,6 @@ initconn(void)
 				}
 			}
 			break;
-#endif
 		default:
 			result = COMPLETE + 1;
 			break;
