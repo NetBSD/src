@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.41 2003/07/02 13:40:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.41 2003/07/02 13:40:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,4 +544,44 @@ lfs_segunlock(struct lfs *fs)
 		--fs->lfs_seglock;
 		simple_unlock(&fs->lfs_interlock);
 	}
+}
+
+/*
+ * drain dirops and start writer.
+ */
+int
+lfs_writer_enter(struct lfs *fs, const char *wmesg)
+{
+	int error = 0;
+
+	simple_lock(&fs->lfs_interlock);
+
+	/* disallow dirops during flush */
+	fs->lfs_writer++;
+
+	while (fs->lfs_dirops > 0) {
+		++fs->lfs_diropwait;  
+		error = ltsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
+		    &fs->lfs_interlock);
+		--fs->lfs_diropwait; 
+	}
+
+	if (error)
+		fs->lfs_writer--;
+
+	simple_unlock(&fs->lfs_interlock);
+
+	return error;
+}
+
+void
+lfs_writer_leave(struct lfs *fs)
+{
+	boolean_t dowakeup;
+
+	simple_lock(&fs->lfs_interlock);
+	dowakeup = !(--fs->lfs_writer);
+	simple_unlock(&fs->lfs_interlock);
+	if (dowakeup)
+		wakeup(&fs->lfs_dirops);
 }
