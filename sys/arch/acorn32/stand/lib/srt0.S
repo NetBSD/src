@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 2002/12/28 23:57:39 reinoud Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1.6.1 2004/05/22 17:00:30 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -38,12 +38,20 @@
 #include <riscoscalls.h>
 
 ENTRY(_start)
+#ifdef BOOT_MAXIMISE_MEMORY
+	mvn	r0, #0
+	mvn	r1, #0
+	swi	Wimp_SlotSize
+	add	r0, r0, r2
+	mvn	r1, #0
+	swi	Wimp_SlotSize
+#endif
 	swi	OS_GetEnv
 	ldr	r6, Lhimem
 	str	r1, [r6]
 	mov	sp, r1
 	mov	fp, #0
-	bl	__start
+	b	__start
 
 Lhimem:
 	.word	HIMEM
