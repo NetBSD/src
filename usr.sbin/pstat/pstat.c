@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.30 1997/06/12 07:45:35 bouyer Exp $	*/
+/*	$NetBSD: pstat.c,v 1.31 1997/06/12 15:03:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.30 1997/06/12 07:45:35 bouyer Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.31 1997/06/12 15:03:44 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,36 +80,22 @@ static char *rcsid = "$NetBSD: pstat.c,v 1.30 1997/06/12 07:45:35 bouyer Exp $";
 #include <string.h>
 #include <unistd.h>
 
+#include "swapctl.h"
+
 struct nlist nl[] = {
-#define VM_SWAPMAP	0
-	{ "_swapmap" },	/* list of free swap areas */
-#define VM_NSWAPMAP	1
-	{ "_nswapmap" },/* size of the swap map */
-#define VM_SWDEVT	2
-	{ "_swdevt" },	/* list of swap devices and sizes */
-#define VM_NSWAP	3
-	{ "_nswap" },	/* size of largest swap device */
-#define VM_NSWDEV	4
-	{ "_nswdev" },	/* number of swap devices */
-#define VM_DMMAX	5
-	{ "_dmmax" },	/* maximum size of a swap block */
-#define	V_MOUNTLIST	6
+#define	V_MOUNTLIST	0
 	{ "_mountlist" },	/* address of head of mount list. */
-#define V_NUMV		7
+#define V_NUMV		1
 	{ "_numvnodes" },
-#define	FNL_NFILE	8
+#define	FNL_NFILE	2
 	{"_nfiles"},
-#define FNL_MAXFILE	9
+#define FNL_MAXFILE	3
 	{"_maxfiles"},
-#define TTY_NTTY	10
+#define TTY_NTTY	4
 	{"_tty_count"},
-#define TTY_TTYLIST	11
+#define TTY_TTYLIST	5
 	{"_ttylist"},
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
-#define VM_NISWAP	NLMANDATORY + 1
-	{ "_niswap" },
-#define VM_NISWDEV	NLMANDATORY + 2
-	{ "_niswdev" },
 	{ "" }
 };
 
@@ -145,7 +131,6 @@ struct e_vnode *
 void	mount_print __P((struct mount *));
 void	nfs_header __P((void));
 int	nfs_print __P((struct vnode *));
-void	swapmode __P((void));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *));
 void	ufs_getflags __P((struct vnode *, struct inode *, char *));
@@ -234,7 +219,7 @@ main(argc, argv)
 	if (ttyflag)
 		ttymode();
 	if (swapflag || totalflag)
-		swapmode();
+		list_swap(0, 0, kflag, totalflag, 1);
 	exit (0);
 }
 
@@ -924,162 +909,6 @@ getfiles(abuf, alen)
 	*abuf = buf;
 	*alen = len;
 	return (0);
-}
-
-/*
- * swapmode is based on a program called swapinfo written
- * by Kevin Lahey <kml@rokkaku.atl.ga.us>.
- */
-void
-swapmode()
-{
-	char *header;
-	int hlen, nswap, nswdev, dmmax, nswapmap, niswap, niswdev;
-	int s, e, div, i, l, avail, nfree, npfree, used;
-	struct swdevt *sw;
-	long blocksize, *perdev;
-	struct map *swapmap, *kswapmap;
-	struct mapent *mp;
-
-	KGET(VM_NSWAP, nswap);
-	KGET(VM_NSWDEV, nswdev);
-	KGET(VM_DMMAX, dmmax);
-	KGET(VM_NSWAPMAP, nswapmap);
-	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
-	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
-	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
-	    (mp = malloc(nswapmap * sizeof(*mp))) == NULL)
-		err(1, "malloc");
-	KGET1(VM_SWDEVT, sw, nswdev * sizeof(*sw), "swdevt");
-	KGET2((long)kswapmap, mp, nswapmap * sizeof(*mp), "swapmap");
-
-	/* Supports sequential swap */
-	if (nl[VM_NISWAP].n_value != 0) {
-		KGET(VM_NISWAP, niswap);
-		KGET(VM_NISWDEV, niswdev);
-	} else {
-		niswap = nswap;
-		niswdev = nswdev;
-	}
-
-	/* First entry in map is `struct map'; rest are mapent's. */
-	swapmap = (struct map *)mp;
-	if (nswapmap != swapmap->m_limit - (struct mapent *)kswapmap)
-		errx(1, "panic: nswapmap goof");
-
-	/* Count up swap space. */
-	nfree = 0;
-	memset(perdev, 0, nswdev * sizeof(*perdev));
-	for (mp++; mp->m_addr != 0; mp++) {
-		s = mp->m_addr;			/* start of swap region */
-		e = mp->m_addr + mp->m_size;	/* end of region */
-		nfree += mp->m_size;
-
-		/*
-		 * Swap space is split up among the configured disks.
-		 *
-		 * For interleaved swap devices, the first dmmax blocks
-		 * of swap space some from the first disk, the next dmmax
-		 * blocks from the next, and so on up to niswap blocks.
-		 *
-		 * Sequential swap devices follow the interleaved devices
-		 * (i.e. blocks starting at niswap) in the order in which
-		 * they appear in the swdev table.  The size of each device
-		 * will be a multiple of dmmax.
-		 *
-		 * The list of free space joins adjacent free blocks,
-		 * ignoring device boundries.  If we want to keep track
-		 * of this information per device, we'll just have to
-		 * extract it ourselves.  We know that dmmax-sized chunks
-		 * cannot span device boundaries (interleaved or sequential)
-		 * so we loop over such chunks assigning them to devices.
-		 */
-		i = -1;
-		while (s < e) {		/* XXX this is inefficient */
-			int bound = roundup(s+1, dmmax);
-
-			if (bound > e)
-				bound = e;
-			if (bound <= niswap) {
-				/* Interleaved swap chunk. */
-				if (i == -1)
-					i = (s / dmmax) % niswdev;
-				perdev[i] += bound - s;
-				if (++i >= niswdev)
-					i = 0;
-			} else {
-				/* Sequential swap chunk. */
-				if (i < niswdev) {
-					i = niswdev;
-					l = niswap + sw[i].sw_nblks;
-				}
-				while (s >= l) {
-					/* XXX don't die on bogus blocks */
-					if (i == nswdev-1)
-						break;
-					l += sw[++i].sw_nblks;
-				}
-				perdev[i] += bound - s;
-			}
-			s = bound;
-		}
-	}
-
-	if (kflag) {
-		header = "1K-blocks";
-		blocksize = 1024;
-		hlen = strlen(header);
-	} else
-		header = getbsize(&hlen, &blocksize);
-	if (!totalflag)
-		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
-		    "Device", hlen, header,
-		    "Used", "Avail", "Capacity", "Type");
-	div = blocksize / 512;
-	avail = npfree = 0;
-	for (i = 0; i < nswdev; i++) {
-		int xsize, xfree;
-
-		/*
-		 * Don't report statistics for partitions which have not
-		 * yet been activated via swapon(8).
-		 */
-		if (!(sw[i].sw_flags & SW_FREED))
-			continue;
-
-		if (!totalflag)
-			(void)printf("/dev/%-6s %*d ",
-			    devname(sw[i].sw_dev, S_IFBLK),
-			    hlen, sw[i].sw_nblks / div);
-
-		xsize = sw[i].sw_nblks;
-		xfree = perdev[i];
-		used = xsize - xfree;
-		npfree++;
-		avail += xsize;
-		if (totalflag)
-			continue;
-		(void)printf("%8d %8d %5.0f%%    %s\n", 
-		    used / div, xfree / div,
-		    (double)used / (double)xsize * 100.0,
-		    (sw[i].sw_flags & SW_SEQUENTIAL) ?
-			     "Sequential" : "Interleaved");
-	}
-
-	/* 
-	 * If only one partition has been set up via swapon(8), we don't
-	 * need to bother with totals.
-	 */
-	used = avail - nfree;
-	if (totalflag) {
-		(void)printf("%dM/%dM swap space\n", used / 2048, avail / 2048);
-		return;
-	}
-	if (npfree > 1) {
-		(void)printf("%-11s %*d %8d %8d %5.0f%%\n",
-		    "Total", hlen, avail / div, used / div, nfree / div,
-		    (double)used / (double)avail * 100.0);
-	}
 }
 
 void
