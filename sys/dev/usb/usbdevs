@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.13 1998/12/29 15:57:46 augustss Exp $
+$NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ vendor PERACOM		0x0565	Peracom
 vendor EIZO		0x056d	EIZO
 vendor AGILER		0x056e	Agiler
 vendor BELKIN		0x05ab	Belkin
+vendor LOGITECH		0x05ac	Logitech
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor ADS		0x06e1	ADS Technologies
@@ -75,6 +76,7 @@ vendor INTEL		0x8086	Intel
 
 /* NEC products */
 product NEC HUB			0x55aa	hub
+product NEC HUB_B		0x55ab	hub
 
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
@@ -134,6 +136,10 @@ product AGILER MOUSE29UO	0x0002	mouse 29UO
 
 /* Belkin products */
 product BELKIN F5U002		0x0002	Parallel printer adapter
+
+/* Logitech products */
+product LOGITECH M2452		0x0203	M2452 keyboard
+product LOGITECH M4848		0x0301	M4848 mouse
 
 /* EIZO Nanao products */
 product EIZONANAO HUB		0x0000	hub
