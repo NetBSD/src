@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.55 1996/12/22 10:10:35 cgd Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.56 1997/01/31 03:00:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -44,6 +44,7 @@
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
+#include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -92,6 +93,7 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
+	nfs_mountroot,
 #ifdef notyet
 	nfs_sysctl
 #endif
@@ -271,6 +273,9 @@ nfs_mountroot()
 
 	procp = curproc; /* XXX */
 
+	if (root_device->dv_class != DV_IFNET)
+		return (ENODEV);
+
 	/*
 	 * XXX time must be non-zero when we init the interface or else
 	 * the arp code will wedge.  [Fixed now in if_ether.c]
@@ -285,7 +290,9 @@ nfs_mountroot()
 	 * Side effect:  Finds and configures a network interface.
 	 */
 	bzero((caddr_t) &nd, sizeof(nd));
-	nfs_boot_init(&nd, procp);
+	error = nfs_boot_init(&nd, procp);
+	if (error)
+		return (error);
 
 	/*
 	 * Create the root mount point.
