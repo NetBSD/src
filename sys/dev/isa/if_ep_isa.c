@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.16 1997/10/05 18:37:02 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.17 1997/10/14 21:32:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -337,17 +337,21 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
+	sc->enable = NULL;
+	sc->disable = NULL;
+	sc->enabled = 1;
+
 	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {
 		printf(": 3Com 3C509 Ethernet\n");
-		epconfig(sc, EP_CHIPSET_3C509);
+		epconfig(sc, EP_CHIPSET_3C509, NULL);
 	} else {
 		/*
 		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
 		 * at the moment only for a 3c509.
 		 */
 		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
-		epconfig(sc, EP_CHIPSET_UNKNOWN);
+		epconfig(sc, EP_CHIPSET_UNKNOWN, NULL);
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
