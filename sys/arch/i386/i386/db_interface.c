@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 1996/03/08 06:49:45 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 1996/03/15 00:07:18 chuck Exp $	*/
 
 /* 
  * Mach Operating System
@@ -193,7 +193,7 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-int
+void
 Debugger()
 {
 	asm("int $3");
