@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysv_ipc.c,v 1.1 1999/05/04 04:59:21 cgd Exp $ */
+/* $NetBSD: osf1_sysv_ipc.c,v 1.2 1999/05/04 05:11:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -49,6 +49,7 @@ osf1_sys_shmat(p, v, retval)
 	register_t *retval;
 {
 
+	/* XXX */
 	return (ENOSYS);
 }
 
@@ -59,6 +60,7 @@ osf1_sys_shmctl(p, v, retval)
 	register_t *retval;
 {
 
+	/* XXX */
 	return (ENOSYS);
 }
 
@@ -69,6 +71,7 @@ osf1_sys_shmdt(p, v, retval)
 	register_t *retval;
 {
 
+	/* XXX */
 	return (ENOSYS);
 }
 
@@ -79,5 +82,6 @@ osf1_sys_shmget(p, v, retval)
 	register_t *retval;
 {
 
+	/* XXX */
 	return (ENOSYS);
 }
