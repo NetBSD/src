@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.263 2002/07/09 23:30:23 wiz Exp $
+#	$NetBSD: Makefile,v 1.264 2002/08/02 00:43:12 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
@@ -7,9 +7,9 @@ MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
 	auvia.4 awi.4 bba.4 bha.4 bktr.4 bpf.4 bmtphy.4 brgphy.4 \
 	bridge.4 cac.4 cardbus.4 ccd.4 cd.4 cfb.4 ch.4 clcs.4 clct.4 \
 	clnp.4 clockctl.4 cltp.4 \
-	cmpci.4 cms.4 cnw.4 com.4 ddb.4 de.4 dmphy.4 dpt.4 dpti.4 drum.4 eap.4 \
-	ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 esa.4 \
-	esiop.4 esl.4 esm.4 eso.4 exphy.4 \
+	cmpci.4 cms.4 cnw.4 com.4 ddb.4 de.4 dmoverio.4 dmphy.4 dpt.4 dpti.4 \
+	drum.4 eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 \
+	esis.4 esa.4 esiop.4 esl.4 esm.4 eso.4 exphy.4 \
 	fd.4 fpa.4 fms.4 fxp.4 \
 	gem.4 gentbi.4 glxtphy.4 gre.4 gphyter.4 gsip.4 hme.4 \
 	icmp.4 icp.4 icsphy.4 idp.4 ifmedia.4 iha.4 inet.4 \
