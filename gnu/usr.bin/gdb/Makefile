@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 1998/07/25 11:19:24 mycroft Exp $
+# $NetBSD: Makefile,v 1.18 1998/07/27 02:35:13 tv Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -6,12 +6,12 @@ srcdir= $(dist)/gdb
 
 .PATH:	$(srcdir)
 
-.if	(${MACHINE_ARCH} != "powerpc")
+.if	(${MACHINE_ARCH} != "powerpc") && (${MACHINE_ARCH} != "mipseb")
 
 PROG=	gdb
 
 # Override this to build a cross-debugger.
-TARGET_ARCH?=$(MACHINE_ARCH)
+TARGET_ARCH?=$(MACHINE_ARCH:S/^mips$/mipsel/)
 
 # Debugging?
 # CPPFLAGS=-g

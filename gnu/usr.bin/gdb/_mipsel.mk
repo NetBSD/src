@@ -1,4 +1,4 @@
-# $NetBSD: _mips.mk,v 1.6 1997/10/20 16:05:29 gwr Exp $
+# $NetBSD: _mipsel.mk,v 1.1 1998/07/27 02:35:13 tv Exp $
 
 # From gdb/config/mips/nbsd.mh
 NM_FILE= config/mips/nm-nbsd.h
