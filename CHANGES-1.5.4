@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.58 2002/09/27 07:24:39 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.59 2002/09/27 15:30:38 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1544,3 +1544,8 @@ usr.bin/openssl/Makefile			1.16-1.17
 
   MDC2 is a patented algorithm; don't ship it in default libcrypto.
   MKCRYPTO_MDC2 will build a separate library, libcrypto_mdc2.
+
+gnu/usr.bin/groff/pic/pic.y			1.2
+
+  Change argument handling to be like in groff-1.18, thus avoiding
+  a possible buffer overflow.
