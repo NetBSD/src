@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.8 2005/01/10 10:04:31 lukem Exp $
+# $NetBSD: rescue.mi,v 1.9 2005/01/10 10:47:36 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -111,12 +111,15 @@
 ./rescue/rrestore				base-rescue-root
 ./rescue/rtsol					base-rescue-root	inet6
 ./rescue/savecore				base-rescue-root
+./rescue/scp					base-rescue-root	crypto
 ./rescue/scsictl				base-rescue-root
 ./rescue/setkey					base-rescue-root
 ./rescue/sh					base-rescue-root
 ./rescue/shutdown				base-rescue-root
 ./rescue/slattach				base-rescue-root
 ./rescue/sleep					base-rescue-root
+./rescue/slogin					base-rescue-root	crypto
+./rescue/ssh					base-rescue-root	crypto
 ./rescue/stty					base-rescue-root
 ./rescue/swapctl				base-rescue-root
 ./rescue/swapon					base-rescue-root
