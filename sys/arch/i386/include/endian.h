@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.21 1997/10/09 15:42:22 bouyer Exp $	*/
+/*	$NetBSD: endian.h,v 1.22 1998/01/15 19:47:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -75,7 +75,11 @@ __END_DECLS
 
 #ifdef __GNUC__
 
-#if defined(_KERNEL) && !defined(I386_CPU)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_cputype.h"
+#endif
+
+#if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
 #define	__byte_swap_long_variable(x) \
 ({ register in_addr_t __x = (x); \
    __asm ("bswap %1" \

@@ -1,5 +1,4 @@
-
-/*	$NetBSD: locore.s,v 1.179 1997/11/19 11:11:22 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.180 1998/01/15 19:47:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -40,6 +39,8 @@
  *
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
+
+#include "opt_cputype.h"
 
 #include "npx.h"
 #include "assym.h"
