@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.13 1998/05/17 17:16:32 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.14 1998/05/29 20:46:46 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.6 1998/05/01 13:18:49 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.9 1998/05/23 14:29:45 darrenr Exp ";
 #endif
 
 #include <stdio.h>
@@ -20,6 +20,7 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.6 1998/05/01 13:18:49 
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
+#include <signal.h>
 #include <sys/dir.h>
 #else
 #include <sys/filio.h>
@@ -71,8 +72,6 @@ extern	char	*sys_errlist[];
 #endif
 
 
-#define LEN (sizeof(line) - (t - line))
-
 struct	flags {
 	int	value;
 	char	flag;
@@ -95,11 +94,8 @@ static	FILE	*newlog = NULL;
 static	char	*logfile = NULL;
 static	int	donehup = 0;
 static	void	usage __P((char *));
-#if 0	/* XXX unused */
 static	void	handlehup __P((void));
-#endif
 static	void	flushlogs __P((char *, FILE *));
-static	void	logopts __P((int, char *));
 static	void	print_log __P((int, FILE *, char *, int));
 static	void	print_ipflog __P((FILE *, char *, int));
 static	void	print_natlog __P((FILE *, char *, int));
@@ -109,6 +105,8 @@ static	int	read_log __P((int, int *, char *, int, FILE *));
 char	*hostname __P((int, struct in_addr));
 char	*portname __P((int, char *, u_short));
 int	main __P((int, char *[]));
+
+static	void	logopts __P((int, char *));
 
 
 #define	OPT_SYSLOG	0x001
@@ -128,16 +126,15 @@ int	main __P((int, char *[]));
 #endif
 
 
-#if 0	/* XXX unused */
 static void handlehup()
 {
 	FILE	*fp;
 
-	donehup = 1;
+	signal(SIGHUP, handlehup);
 	if (logfile && (fp = fopen(logfile, "a")))
 		newlog = fp;
+	donehup = 1;
 }
-#endif
 
 
 static int read_log(fd, lenp, buf, bufsize, log)
@@ -204,7 +201,7 @@ int	len;
 			*t++ = '\n';
 			*t = '\0';
 			if (!(opts & OPT_SYSLOG))
-				fputs(line, stdout);
+				fputs(line, log);
 			else
 				syslog(LOG_INFO, "%s", line);
 			t = (u_char *)line;
@@ -240,8 +237,8 @@ int	len;
 		*t = '\0';
 	}
 	if (!(opts & OPT_SYSLOG)) {
-		fputs(line, stdout);
-		fflush(stdout);
+		fputs(line, log);
+		fflush(log);
 	} else
 		syslog(LOG_INFO, "%s", line);
 }
@@ -255,16 +252,19 @@ int	blen;
 	iplog_t	*ipl = (iplog_t *)buf;
 	char	*t = line;
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) strftime(t, LEN, "%T", tm);
+	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
 	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
 	t += strlen(t);
@@ -319,16 +319,19 @@ int	blen;
 	struct	protoent *pr;
 	char	*t = line, *proto, pname[6];
 	struct	tm	*tm;
-	int	res;
+	int	res, i, len;
 
 	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) strftime(t, LEN, "%T", tm);
+	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
 	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
@@ -428,7 +431,6 @@ int	logtype, blen;
 		blen -= psize;
 		buf += psize;
 	}
-
 	if (bp)
 		free(bp);
 	return;
@@ -464,11 +466,14 @@ int	blen;
 	ip->ip_len = ntohs(ip->ip_len);
 #endif
 
+	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
-		(void) strftime(t, LEN, "%d/%m/%Y ", tm);
-		t += strlen(t);
+		(void) strftime(t, len, "%d/%m/%Y ", tm);
+		i = strlen(t);
+		len -= i;
+		t += i;
 	}
-	(void) strftime(t, LEN, "%T", tm);
+	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
 	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
 	t += strlen(t);
@@ -833,6 +838,8 @@ char *argv[];
 		close(2);
 		setsid();
 	}
+
+	signal(SIGHUP, handlehup);
 
 	for (doread = 1; doread; ) {
 		nr = 0;
