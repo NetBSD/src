@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)paths.h	8.1 (Berkeley) 6/2/93
- *	$Id: paths.h,v 1.5 1994/05/07 03:55:55 cgd Exp $
+ *	$Id: paths.h,v 1.6 1994/09/30 02:17:51 jtc Exp $
  */
 
 #ifndef _PATHS_H_
@@ -50,6 +50,7 @@
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_KMEM	"/dev/kmem"
+#define	_PATH_LOCALE	"/usr/share/locale"
 #define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MEM	"/dev/mem"
