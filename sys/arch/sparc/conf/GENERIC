@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.89 1999/07/29 10:37:22 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.90 1999/10/04 19:02:55 hubertf Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -415,12 +415,13 @@ ie2	at vme0 addr 0x31ff02 irq 3 vect 0x76		# VME
 ie3	at vme0 addr 0x35ff02 irq 3 vect 0x77		# VME
 ie4	at vme0 addr 0x2dff02 irq 3 vect 0x7c		# VME
 
-## qec/be, qec/hme
-qec*	at sbus? slot ? offset ?
-be*	at qec?
-qe*	at qec?
+## Quad Ethernet Controller with BigMac (be, 10/100MBd) and Mace Ethernet
+## (qe, 10MBd) attached.
+qec*	at sbus? slot ? offset ?		# Quad Ethernet Controller
+be*	at qec?					# BigMac Ethernet (10/100MBd)
+qe*	at qec?					# Mace Ethernet (10MBd)
 
-## hme (driver not quite ready yet)
+## Happy Meal Ethernet (hme) (driver not quite ready yet)
 #hme*	at sbus? slot ? offset ?
 
 # midway ATM
