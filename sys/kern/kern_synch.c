@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.23 2002/10/18 04:14:59 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.24 2002/10/18 05:22:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.23 2002/10/18 04:14:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.24 2002/10/18 05:22:13 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -832,7 +832,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * The scheduler lock is still held until cpu_switch()
 	 * selects a new process and removes it from the run queue.
 	 */
-	if (p->p_flag & P_BIGLOCK)
+	if (l->l_flag & L_BIGLOCK)
 		hold_count = spinlock_release_all(&kernel_lock);
 #endif
 
@@ -950,7 +950,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * released the scheduler lock to avoid deadlock, and before
 	 * we reacquire the interlock.
 	 */
-	if (p->p_flag & P_BIGLOCK)
+	if (l->l_flag & L_BIGLOCK)
 		spinlock_acquire_count(&kernel_lock, hold_count);
 #endif
 
