@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/04/14 22:46:19 kleink Exp $
+#	$NetBSD: Makefile,v 1.12 2001/04/15 15:29:03 kleink Exp $
 
 KDIR=	/sys/arch/amiga/include
 INCSDIR= /usr/include/amiga
@@ -9,7 +9,8 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	fbio.h float.h frame.h \
-	ieee.h ieeefp.h int_const.h int_mwgwtypes.h int_types.h intr.h \
+	ieee.h ieeefp.h \
+	int_const.h int_limits.h int_mwgwtypes.h int_types.h intr.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mtpr.h \
