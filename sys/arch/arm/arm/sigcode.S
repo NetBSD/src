@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1 2001/01/13 00:06:50 bjh21 Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.2 2002/06/23 00:16:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.1 2001/01/13 00:06:50 bjh21 Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.2 2002/06/23 00:16:20 thorpej Exp $")
 
 #include "assym.h"
 #include <sys/syscall.h>
@@ -46,16 +46,20 @@ ENTRY_NP(sigcode)
 /*
  * r0-r2 are our signal handler parameters
  * r3 is the handler address
+ *
+ * The stack pointer points to the saved sigcontext.
  */
 
 	add	lr, pc, #0			/* Set return address */
 	mov	pc, r3				/* Call the handler */
 
 /*
- * Call sig_return with address of the signal context
- * Note: Don't use SIG_SCP as this make have been trashed by the program
+ * Call sig_return with address of the signal context.  Note the
+ * pointer to this may have been clobbered by the handler, so
+ * we need to recompute from the stack pointer (which, thankfully,
+ * is quite easy).
  */
-	add	r0, sp, #SIGF_SC
+	mov	r0, sp
 	swi	SYS___sigreturn14
 
 /* Well if that failed we better exit quick ! */
