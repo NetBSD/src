@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.32 2003/01/24 21:55:04 fvdl Exp $	*/
+/*	$NetBSD: library.c,v 1.33 2003/02/10 21:17:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.32 2003/01/24 21:55:04 fvdl Exp $");
+__RCSID("$NetBSD: library.c,v 1.33 2003/02/10 21:17:53 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 			fip = (FINFO *)(sp + 1);
 		for (i = 0; i < sp->ss_nfinfo; ++i) {
 			sumsize += sizeof(FINFO) +
-			    (fip->fi_nblocks - 1) * sizeof(daddr_t);
+			    (fip->fi_nblocks - 1) * sizeof(int32_t);
 			fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks]);
 		}
 		if (sumsize > lfsp->lfs_sumsize) {
@@ -621,7 +621,7 @@ add_inodes(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
 	struct lfs *lfsp;
 	IFILE *ifp;
 	BLOCK_INFO_15 *bp;
-	daddr_t	*daddrp;
+	int32_t	*daddrp;
 	ino_t inum;
 	int i;
 
@@ -634,7 +634,7 @@ add_inodes(FS_INFO *fsp, BLOCK_INFO_15 *bip, int *countp, SEGSUM *sp,
         if(debug > 1)
             syslog(LOG_DEBUG, "INODES:");
 
-	daddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
+	daddrp = (int32_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
