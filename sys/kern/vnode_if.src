@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.19 1999/08/03 18:19:08 wrstuden Exp $
+#	$NetBSD: vnode_if.src,v 1.20 1999/08/11 00:20:50 wrstuden Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -60,17 +60,30 @@
 #     especially that *vpp may equal dvp and both may be locked.
 #
 #    More details:
-#     On success, adds a reference to *vpp so it doesn't evaporate.
-#     On failure, *vpp is NULL, and *dvp is left locked.
-#     If LOCKPARENT is set in cnp, dvp is returned locked even on success.
-#     otherwise it is unlocked (unless *vpp == dvp on return)
+#     There are three types of lookups: ".", ".." (ISDOTDOT), and other.
+#     On successful lookup of ".", a reference is added to dvp, and it
+#          is returned in *vpp.
+#     To look up ISDOTDOT, dvp is unlocked, the ".." node is locked, and
+#          then dvp is relocked iff LOCKPARENT is set and this is the last
+#          component name (ISLASTCN set). This preserves the
+#          protocol of always locking nodes from root ("/") downward and
+#          prevents deadlock.
+#     Other lookups find the named node (creating the vnode if needed) and
+#          return it, locked, in *vpp.
+#     For non-"." lookups, if LOCKPARENT is not set or this was not the
+#          last component name, dvp is returned unlocked on a successful
+#          lookup.
+#     On failure, *vpp is NULL, and *dvp is left locked. If there was
+#          an error re-locking dvp in the ISDOTDOT case, an error is
+#          returned with PDIRUNLOCK set.
 #	
 #     *vpp is always locked on return if the operation succeeds.
 #     typically, if *vpp == dvp, you need to release twice, but unlock once.
 #
-#     If ISDOTDOT is set, dvp is unlocked before *vpp is 
-#     locked; dvp is then relocked.  this is done to avoid deadlocking 
-#     another process concurrently scanning downwards.
+#     The PDIRUNLOCK flag is set when dvp is unlocked in the lookup routine.
+#          It signals the caller that dvp's lock state changed. It will
+#          be set on exit if either a successful lookup unlocked the
+#          parrent, or there was an error re-locking dvp in the ISDOTDOT case.
 #
 vop_lookup {
 	IN struct vnode *dvp;
