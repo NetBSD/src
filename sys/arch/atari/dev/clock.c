@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 1997/02/26 12:26:44 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 1998/01/12 18:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,9 +101,7 @@ struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL, NULL, 0
-};
+extern struct cfdriver clock_cd;
 
 void statintr __P((struct clockframe));
 

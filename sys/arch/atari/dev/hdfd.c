@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.8 1997/07/17 01:54:53 jtk Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.9 1998/01/12 18:04:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -169,10 +169,6 @@ struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
 };
 
-struct cfdriver fdc_cd = {
-	NULL, "fdc", DV_DULL
-};
-
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
  * we tell them apart.
@@ -245,9 +241,7 @@ struct cfattach hdfd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach
 };
 
-struct cfdriver hdfd_cd = {
-	NULL, "hdfd", DV_DISK
-};
+extern struct cfdriver hdfd_cd;
 
 void	fdstrategy __P((struct buf *));
 void	fdstart __P((struct fd_softc *));
