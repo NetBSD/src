@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.488 2002/11/15 13:49:28 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.489 2002/11/15 22:20:02 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.485 2002/11/15 13:41:27 ad Exp 
+ *	NetBSD: pcidevs,v 1.486 2002/11/15 22:13:11 tsutsui Exp 
  */
 
 /*
@@ -787,7 +787,6 @@
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
-#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* PCnet-PCI Ethernet & SCSI */
 #define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-to-PCI Bridge */
