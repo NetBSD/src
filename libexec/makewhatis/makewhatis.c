@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.14 2001/04/08 14:27:50 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.15 2001/04/08 14:49:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.14 2001/04/08 14:27:50 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.15 2001/04/08 14:49:32 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -688,6 +688,10 @@ parsemanpage(gzFile *in, int defaultsection)
 				if (*ptr == '.') {
 					char	*space;
 
+					if (strncasecmp(ptr, ".Nd", 3) != 0) {
+						free(section);
+						return NULL;
+					}
 					space = findwhitespace(ptr);
 					if (space == NULL)
 						ptr = "";
