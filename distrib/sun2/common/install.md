@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.1 2001/05/18 00:16:38 fredette Exp $
+#	$NetBSD: install.md,v 1.2 2001/12/17 20:27:39 fredette Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ md_makerootwritable() {
 	if [ ! -e /tmp/root_writable ]; then
 		echo "Remounting root read-write..."
 		__mount_kernfs
-		mount -u /kern/rootdev /
+		mount -u -t ffs /kern/rootdev /
 		swapctl -a /kern/rootdev
 		cp /dev/null /tmp/root_writable
 	fi
@@ -155,9 +155,9 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	set -- `sysctl -n hw.model`
-	echo -n "Copying $1 kernel..."
-	cp -p /netbsd.$1 /mnt/netbsd
+	echo -n "Copying kernel..."
+	cp -p /netbsd /mnt/netbsd
+	ln /mnt/netbsd /mnt/vmunix
 	echo "done."
 }
 
