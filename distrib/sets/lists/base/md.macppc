@@ -1,12 +1,12 @@
-# $NetBSD: md.macppc,v 1.21 2003/12/29 03:13:25 lukem Exp $
-./sbin/fdisk			base-sysutil-root
-./sbin/pdisk			base-sysutil-root
-./usr/mdec/bootxx		base-sysutil-bin
-./usr/mdec/installboot			base-obsolete	obsolete
-./usr/mdec/mbr			base-sysutil-bin
-./usr/mdec/ofwboot		base-sysutil-bin
-./usr/mdec/ofwboot.elf		base-sysutil-bin
-./usr/mdec/ofwboot.xcf		base-sysutil-bin
-./usr/sbin/apm			base-sysutil-bin
-./usr/sbin/apmd			base-sysutil-bin
-./usr/sbin/zzz			base-sysutil-bin
+# $NetBSD: md.macppc,v 1.22 2004/01/11 10:24:58 lukem Exp $
+./sbin/fdisk					base-sysutil-root
+./sbin/pdisk					base-sysutil-root
+./usr/mdec/bootxx				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/mbr					base-sysutil-bin
+./usr/mdec/ofwboot				base-sysutil-bin
+./usr/mdec/ofwboot.elf				base-sysutil-bin
+./usr/mdec/ofwboot.xcf				base-sysutil-bin
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

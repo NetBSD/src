@@ -1,2 +1,2 @@
-# $NetBSD: md.sandpoint,v 1.3 2003/12/29 03:13:26 lukem Exp $
-./dev/pms0				base-obsolete	obsolete
+# $NetBSD: md.sandpoint,v 1.4 2004/01/11 10:24:58 lukem Exp $
+./dev/pms0					base-obsolete		obsolete

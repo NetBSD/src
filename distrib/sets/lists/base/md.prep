@@ -1,6 +1,6 @@
-# $NetBSD: md.prep,v 1.7 2002/10/09 01:22:39 thorpej Exp $
-./sbin/fdisk			base-sysutil-root
-./usr/mdec/boot			base-sysutil-bin
-./usr/mdec/boot_com0		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
-./usr/mdec/mkbootimage		base-sysutil-bin
+# $NetBSD: md.prep,v 1.8 2004/01/11 10:24:58 lukem Exp $
+./sbin/fdisk					base-sysutil-root
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot_com0				base-sysutil-bin
+./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/mkbootimage				base-sysutil-bin

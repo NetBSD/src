@@ -1,10 +1,10 @@
-# $NetBSD: md.pmax,v 1.40 2003/12/29 03:13:26 lukem Exp $
-./boot.pmax			base-sysutil-bin
-./etc/ld.so.conf			base-obsolete	obsolete
-./sbin/ldconfig				base-obsolete	obsolete
-./usr/mdec/boot.pmax		base-sysutil-bin
-./usr/mdec/bootxx_cd9660	base-sysutil-bin
-./usr/mdec/bootxx_ffs		base-sysutil-bin
-./usr/mdec/bootxx_lfs		base-sysutil-bin
-./usr/mdec/installboot			base-obsolete	obsolete
-./usr/mdec/netboot		base-sysutil-bin
+# $NetBSD: md.pmax,v 1.41 2004/01/11 10:24:58 lukem Exp $
+./boot.pmax					base-sysutil-bin
+./etc/ld.so.conf				base-obsolete		obsolete
+./sbin/ldconfig					base-obsolete		obsolete
+./usr/mdec/boot.pmax				base-sysutil-bin
+./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_lfs				base-sysutil-bin
+./usr/mdec/installboot				base-obsolete		obsolete
+./usr/mdec/netboot				base-sysutil-bin

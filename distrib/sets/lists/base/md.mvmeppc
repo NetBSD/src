@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.4 2003/10/24 06:49:37 matt Exp $
-./sbin/fdisk			base-sysutil-root
-./usr/mdec/boot			base-sysutil-bin
-./usr/mdec/boot.elf		base-sysutil-bin
+# $NetBSD: md.mvmeppc,v 1.5 2004/01/11 10:24:58 lukem Exp $
+./sbin/fdisk					base-sysutil-root
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/boot.elf				base-sysutil-bin

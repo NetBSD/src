@@ -1,5 +1,5 @@
-# $NetBSD: md.sgimips,v 1.5 2003/11/13 08:03:03 sekiya Exp $
-./usr/mdec/aoutboot		base-sysutil-bin
-./usr/mdec/ip2xboot		base-sysutil-bin
-./usr/mdec/ip3xboot		base-sysutil-bin
-./usr/mdec/sgivol		base-sysutil-bin
+# $NetBSD: md.sgimips,v 1.6 2004/01/11 10:24:58 lukem Exp $
+./usr/mdec/aoutboot				base-sysutil-bin
+./usr/mdec/ip2xboot				base-sysutil-bin
+./usr/mdec/ip3xboot				base-sysutil-bin
+./usr/mdec/sgivol				base-sysutil-bin
