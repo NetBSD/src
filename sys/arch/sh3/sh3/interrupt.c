@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2003/11/04 03:13:48 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 2003/11/20 01:22:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2003/11/04 03:13:48 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2003/11/20 01:22:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -271,10 +271,12 @@ intc_intr_priority(int evtcode, int level)
 			break;
 		}
 
-#ifdef DIAGNOSTIC
+	/*
+	 * XXX: This functions gets called even for interrupts which
+	 * don't have their priority defined by IPR registers.
+	 */
 	if (pos < 0)
-		panic("intc_intr_priority: unknown EVTCODE %x", evtcode);
-#endif
+		return;
 
 	r = _reg_read_2(iprreg);
 	r = (r & ~(0xf << (pos))) | (level << (pos));
