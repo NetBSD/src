@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.37 2001/06/14 20:32:45 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.38 2001/11/13 02:09:22 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.38 2001/11/13 02:09:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.13 2001/05/30 11:37:23 mrg Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.14 2001/11/13 02:08:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,6 +34,9 @@
 /*
  * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.14 2001/11/13 02:08:09 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.2 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.3 2001/11/13 02:08:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.3 2001/11/13 02:08:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

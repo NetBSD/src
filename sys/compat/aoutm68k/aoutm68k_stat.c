@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.4 2001/05/30 11:37:22 mrg Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.5 2001/11/13 02:07:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.5 2001/11/13 02:07:56 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

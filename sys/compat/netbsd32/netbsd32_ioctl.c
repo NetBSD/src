@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.12 2001/09/19 18:10:32 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.13 2001/11/13 02:09:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,6 +31,9 @@
 /*
  * handle ioctl conversions from netbsd32 -> sparc64
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.13 2001/11/13 02:09:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

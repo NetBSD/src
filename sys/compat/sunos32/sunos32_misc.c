@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.9 2001/06/14 20:32:45 thorpej Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.10 2001/11/13 02:09:20 lukem Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -81,6 +81,9 @@
  * SunOS system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.10 2001/11/13 02:09:20 lukem Exp $");
 
 #define COMPAT_SUNOS 1
 
