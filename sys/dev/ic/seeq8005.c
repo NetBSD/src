@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.32 2001/11/15 09:48:07 lukem Exp $ */
+/* $NetBSD: seeq8005.c,v 1.33 2002/06/07 00:01:19 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.32 2001/11/15 09:48:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.33 2002/06/07 00:01:19 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,10 +595,6 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
 #endif
 
-	/* Assume that copying too much is safe. */
-	if (len % 2 != 0)
-		len++;
-
 	if (addr != -1) {
 		ea_await_fifo_empty(sc);
 
@@ -615,6 +611,10 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		else
 			bus_space_write_multi_2(iot, ioh, SEEQ_BUFWIN,
 			    (u_int16_t *)buf, len / 2);
+	}
+	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
+		/* Write the last byte */
+		bus_space_write_2(iot, ioh, SEEQ_BUFWIN, buf[len - 1]);
 	}
 	/* Leave FIFO to empty in the background */
 }
@@ -646,10 +646,6 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
 		panic("%s: readbuf out of range", sc->sc_dev.dv_xname);
 #endif
-
-	/* Assume that copying too much is safe. */
-	if (len % 2 != 0)
-		len++;
 
 	if (addr != -1) {
 		/*
@@ -695,6 +691,10 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		else
 			bus_space_read_multi_2(iot, ioh, SEEQ_BUFWIN,
 			    (u_int16_t *)buf, len / 2);
+	}
+	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
+		/* Read the last byte */
+		buf[len - 1] = bus_space_read_2(iot, ioh, SEEQ_BUFWIN);
 	}
 }
 
