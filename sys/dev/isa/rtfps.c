@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.15 1996/03/09 00:09:07 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.16 1996/03/09 01:04:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -39,6 +39,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 
 #define	NSLAVES	4
 
@@ -76,10 +77,6 @@ rtfpsprobe(parent, self, aux)
 	return (comprobe1(ia->ia_iobase));
 }
 
-struct rtfps_attach_args {
-	int ra_slave;
-};
-
 int
 rtfpssubmatch(parent, match, aux)
 	struct device *parent;
@@ -88,9 +85,9 @@ rtfpssubmatch(parent, match, aux)
 	struct rtfps_softc *sc = (void *)parent;
 	struct cfdata *cf = match;
 	struct isa_attach_args *ia = aux;
-	struct rtfps_attach_args *ra = ia->ia_aux;
+	struct commulti_attach_args *ca = ia->ia_aux;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ra->ra_slave)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
 		return (0);
 	return ((*cf->cf_driver->cd_match)(parent, match, ia));
 }
@@ -101,9 +98,9 @@ rtfpsprint(aux, rtfps)
 	char *rtfps;
 {
 	struct isa_attach_args *ia = aux;
-	struct rtfps_attach_args *ra = ia->ia_aux;
+	struct commulti_attach_args *ca = ia->ia_aux;
 
-	printf(" slave %d", ra->ra_slave);
+	printf(" slave %d", ca->ca_slave);
 }
 
 void
@@ -113,7 +110,7 @@ rtfpsattach(parent, self, aux)
 {
 	struct rtfps_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct rtfps_attach_args ra;
+	struct commulti_attach_args ca;
 	struct isa_attach_args isa;
 	static int irqport[] = {
 		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK,
@@ -133,10 +130,10 @@ rtfpsattach(parent, self, aux)
 
 	printf("\n");
 
-	isa.ia_aux = &ra;
-	for (ra.ra_slave = 0; ra.ra_slave < NSLAVES; ra.ra_slave++) {
+	isa.ia_aux = &ca;
+	for (ca.ca_slave = 0; ca.ca_slave < NSLAVES; ca.ca_slave++) {
 		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ra.ra_slave;
+		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ca.ca_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
@@ -144,9 +141,9 @@ rtfpsattach(parent, self, aux)
 		if ((cf = config_search(rtfpssubmatch, self, &isa)) != 0) {
 			subunit = cf->cf_unit;	/* can change if unit == * */
 			config_attach(self, cf, &isa, rtfpsprint);
-			sc->sc_slaves[ra.ra_slave] =
+			sc->sc_slaves[ca.ca_slave] =
 			    cf->cf_driver->cd_devs[subunit];
-			sc->sc_alive |= 1 << ra.ra_slave;
+			sc->sc_alive |= 1 << ca.ca_slave;
 		}
 	}
 
