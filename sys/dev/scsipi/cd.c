@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.108 1997/12/02 03:57:54 mikel Exp $	*/
+/*	$NetBSD: cd.c,v 1.109 1998/01/12 09:49:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -116,10 +116,6 @@ int	cd_read_toc __P((struct cd_softc *, int, int, void *, int));
 int	cd_get_parms __P((struct cd_softc *, int));
 int	cd_load_toc __P((struct cd_softc *, struct cd_toc *));
 
-struct cfdriver cd_cd = {
-	NULL, "cd", DV_DISK
-};
-
 struct dkdriver cddkdriver = { cdstrategy };
 
 struct scsipi_device cd_switch = {
@@ -128,6 +124,8 @@ struct scsipi_device cd_switch = {
 	NULL,			/* we do not have an async handler */
 	cddone,			/* deal with stats at interrupt time */
 };
+
+extern struct cfdriver cd_cd;
 
 /*
  * The routine called by the low level scsi routine when it discovers
