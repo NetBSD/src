@@ -1,7 +1,7 @@
-/* $NetBSD: mfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.12 1999/06/23 01:58:22 nisimura Exp $ */
 
 /*
- * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.12 1999/06/23 01:58:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,8 +310,8 @@ mfb_getdevconfig(dense_addr, dc)
 
 	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
-	dc->dc_depth = 1;
-	dc->dc_rowbytes = 2048 / 8;
+	dc->dc_depth = 8;
+	dc->dc_rowbytes = 2048;
 	dc->dc_videobase = dc->dc_vaddr + MX_FB_OFFSET;
 	dc->dc_blanked = 0;
 
