@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.15 1997/03/08 13:51:55 mouse Exp $
+.\"	$NetBSD: newfs.8,v 1.16 1997/09/15 06:23:03 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nm mount_mfs
 .Nd construct a new file system
 .Sh SYNOPSIS
-.Nm newfs
+.Nm
 .Op Fl NO
 .Op Fl S Ar sector-size
 .Op Fl a Ar maxcontig
@@ -77,27 +77,27 @@
 .Op Fl s Ar size
 .Ar special node
 .Sh DESCRIPTION
-.Nm Newfs
+.Nm
 replaces the more obtuse
 mkfs
 program.
 Before running 
-.Nm newfs
+.Nm
 or
 .Nm mount_mfs ,
 the disk must be labeled using 
 .Xr disklabel 8 .
-.Nm Newfs
+.Nm
 builds a file system on the specified special device
 basing its defaults on the information in the disk label.
 Typically the defaults are reasonable, however
-.Nm newfs
+.Nm
 has numerous options to allow the defaults to be selectively overridden.
 .Pp
-.Nm Mount_mfs
+.Nm mount_mfs
 is used to build a file system in virtual memory and then mount it
 on a specified node.
-.Nm Mount_mfs
+.Nm mount_mfs
 exits and the contents of the file system are lost
 when the file system is unmounted.
 If
@@ -109,7 +109,7 @@ corresponding file system.
 The parameters to
 .Nm mount_mfs
 are the same as those to
-.Nm newfs .
+.Nm "" .
 The special file is only used to read the disk label which provides
 a set of configuration parameters for the memory based file system.
 The special file is typically that of the primary swap area,
@@ -193,7 +193,7 @@ The size of the file system in sectors.
 The following options override the standard sizes for the disk geometry. 
 Their default values are taken from the disk label.
 Changing these defaults is useful only when using
-.Nm newfs
+.Nm
 to build a file system whose raw image will eventually be used on a
 different type of disk than the one on which it is initially created
 (for example on a write-once disk).
@@ -247,7 +247,7 @@ system for data allocation.
 The options to the
 .Nm mount_mfs
 command are as described for the
-.Nm newfs
+.Nm
 command, except for the
 .Fl o
 option.
