@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.6 2003/08/01 01:43:18 tsutsui Exp $
+#	$NetBSD: majors.hp300,v 1.7 2003/08/01 01:52:51 tsutsui Exp $
 #
 # Device majors for hp300
 #
@@ -45,3 +45,7 @@ device-major	systrace	char 43			systrace
 device-major	cgd		char 44  block 16	cgd
 device-major	ksyms		char 45			ksyms
 device-major	pf		char 46			pf
+device-major	cd		char 47  block 17	cd
+device-major	ch		char 48			ch
+device-major	ss		char 49			ss
+device-major	uk		char 50			uk
