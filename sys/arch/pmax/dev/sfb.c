@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.3 1995/09/11 07:45:38 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.4 1995/09/12 07:30:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.3 1995/09/11 07:45:38 jonathan Exp $
+ *      $Id: sfb.c,v 1.4 1995/09/12 07:30:45 jonathan Exp $
  */
 
 /*
@@ -156,7 +156,7 @@ sfbmatch(parent, match, aux)
 
 	/* make sure that we're looking for this type of device. */
 	/*if (!sfbprobe(sfbaddr)) return 0;*/
-	if (!BUS_MATCHNAME(ca, "PMAG-BA "))
+	if (!BUS_MATCHNAME(ca, "PMAGB-BA"))
 		return (0);
 
 
