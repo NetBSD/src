@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.22 2000/12/19 00:12:47 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.23 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -453,8 +453,7 @@ sip_attach(parent, self, aux)
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

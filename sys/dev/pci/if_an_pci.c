@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.1 2000/12/14 04:11:25 onoe Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.2 2000/12/28 22:59:12 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -160,8 +160,7 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
                        csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
         	printf("%s: unable to map interrupt\n", self->dv_xname);
 		return;
 	}

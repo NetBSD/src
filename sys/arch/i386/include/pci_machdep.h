@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.15 2000/07/18 11:00:35 soda Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.16 2000/12/28 22:59:09 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -78,6 +78,7 @@ typedef int pci_intr_handle_t;
 extern int pci_mode;
 int		pci_mode_detect(void);
 int		pci_bus_flags(void);
+struct		pci_attach_args;
 
 /*
  * Functions provided to machine-independent PCI code.
@@ -91,8 +92,7 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t);
-int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
-		    pci_intr_handle_t *);
+int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,

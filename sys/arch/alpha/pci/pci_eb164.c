@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.28 2000/06/29 08:58:48 mrg Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.29 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.28 2000/06/29 08:58:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.29 2000/12/28 22:59:07 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,8 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.28 2000/06/29 08:58:48 mrg Exp $");
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_eb164_intr_map __P((void *, pcitag_t, int, int,
-	    pci_intr_handle_t *));
+int	dec_eb164_intr_map __P((struct pci_attach_args *, pci_intr_handle_t *));
 const char *dec_eb164_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_eb164_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
@@ -173,14 +172,13 @@ pci_eb164_pickintr(ccp)
 }
 
 int     
-dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
-        void *ccv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_eb164_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct cia_config *ccp = ccv;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
+        pcitag_t bustag = pa->pa_intrtag; 
+        int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 	u_int64_t variation;
 

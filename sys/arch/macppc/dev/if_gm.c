@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.9 2000/11/15 01:02:13 thorpej Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.10 2000/12/28 22:59:09 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -167,8 +167,7 @@ gmac_attach(parent, self, aux)
 	bcopy(laddr, sc->sc_laddr, sizeof laddr);
 	sc->sc_reg = reg[2];
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": unable to map interrupt\n");
 		return;
 	}

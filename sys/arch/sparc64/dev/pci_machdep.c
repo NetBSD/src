@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 2000/07/26 17:46:56 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16 2000/12/28 22:59:10 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -365,13 +365,16 @@ pci_conf_write(pc, tag, reg, data)
  * interrupt mapping foo.
  */
 int
-pci_intr_map(pc, tag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int pin;
-	int line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+#if 0
+	pci_chipset_tag_t pc = pa->pa_pc;
+#endif
+	pcitag_t tag = pa->pa_intrtag;
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
 	int rv;
 
 	/*

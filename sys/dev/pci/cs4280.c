@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.8 2000/11/26 11:08:59 takemura Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.9 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -599,8 +599,7 @@ cs4280_attach(parent, self, aux)
 	}
 	
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.8 2000/07/29 17:49:08 jhawk Exp $	*/
+/*	$NetBSD: puc.c,v 1.9 2000/12/28 22:59:15 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -233,8 +233,7 @@ puc_attach(parent, self, aux)
 	}
 
 	/* Map interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.28 2000/06/29 08:58:48 mrg Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.29 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.28 2000/06/29 08:58:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.29 2000/12/28 22:59:07 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.28 2000/06/29 08:58:48 mrg Exp $"
 
 #include "sio.h"
 
-int	dec_2100_a50_intr_map __P((void *, pcitag_t, int, int,
-	    pci_intr_handle_t *));
+int	dec_2100_a50_intr_map __P((struct pci_attach_args *, pci_intr_handle_t *));
 const char *dec_2100_a50_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_2100_a50_intr_evcnt __P((void *, pci_intr_handle_t));
 void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
@@ -101,14 +100,13 @@ pci_2100_a50_pickintr(acp)
 }
 
 int
-dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
-	void *acv;
-        pcitag_t bustag;
-	int buspin, line;
+dec_2100_a50_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	struct apecs_config *acp = acv;
-	pci_chipset_tag_t pc = &acp->ac_pc;
+        pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int device, pirq;
 	pcireg_t pirqreg;
 	u_int8_t pirqline;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.14 2000/07/17 18:12:00 tron Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.15 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -229,8 +229,7 @@ epic_pci_attach(parent, self, aux)
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

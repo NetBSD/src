@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.50 2000/12/08 21:51:02 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.51 2000/12/28 22:59:14 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -498,9 +498,7 @@ pccbbattach(parent, self, aux)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_function = pa->pa_function;
 
-	sc->sc_intrline = pa->pa_intrline;
-	sc->sc_intrtag = pa->pa_intrtag;
-	sc->sc_intrpin = pa->pa_intrpin;
+	memcpy(&sc->sc_pa, pa, sizeof(*pa));
 
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
 
@@ -613,8 +611,7 @@ pccbb_pci_callback(self)
 	sc->sc_pil_intr_enable = 1;
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
-	    sc->sc_intrline, &ih)) {
+	if (pci_intr_map(&sc->sc_pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -661,7 +658,7 @@ pccbb_pci_callback(self)
 		cba.cba_bus = (busreg >> 8) & 0x0ff;
 		cba.cba_cc = (void *)sc;
 		cba.cba_cf = &pccbb_funcs;
-		cba.cba_intrline = sc->sc_intrline;
+		cba.cba_intrline = sc->sc_pa.pa_intrline;
 
 #if rbus
 		cba.cba_rbus_iot = sc->sc_rbus_iot;
@@ -839,7 +836,7 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	ph->sock = sc->sc_function;
 	ph->flags = 0;
 	ph->shutdown = 0;
-	ph->ih_irq = sc->sc_intrline;
+	ph->ih_irq = sc->sc_pa.pa_intrline;
 	ph->ph_bus_t = sc->sc_base_memt;
 	ph->ph_bus_h = sc->sc_base_memh;
 	ph->ph_read = pccbb_pcmcia_read;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.11 2000/09/27 10:54:55 ad Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.12 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -369,8 +369,7 @@ fxp_pci_attach(parent, self, aux)
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

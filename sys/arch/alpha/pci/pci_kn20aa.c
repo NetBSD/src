@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.40 2000/06/29 08:58:49 mrg Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.41 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.40 2000/06/29 08:58:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.41 2000/12/28 22:59:07 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.40 2000/06/29 08:58:49 mrg Exp $");
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn20aa_intr_map __P((void *, pcitag_t, int, int,
+int	dec_kn20aa_intr_map __P((struct pci_attach_args *,
 	    pci_intr_handle_t *));
 const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_kn20aa_intr_evcnt __P((void *, pci_intr_handle_t));
@@ -117,14 +117,13 @@ pci_kn20aa_pickintr(ccp)
 }
 
 int     
-dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
-        void *ccv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_kn20aa_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct cia_config *ccp = ccv;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int device;
 	int kn20aa_irq;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.32 1999/02/19 06:57:56 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.33 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -245,8 +245,7 @@ ep_pci_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

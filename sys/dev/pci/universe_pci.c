@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.2 2000/03/12 11:21:02 drochner Exp $ */
+/* $NetBSD: universe_pci.c,v 1.3 2000/12/28 22:59:15 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -138,8 +138,7 @@ univ_pci_attach(d, pa, name, inthdl, intcookie)
 	printf("requesting at VME bus level %d\n", (reg >> 22) & 3);
 
 	/* Map and establish the PCI interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", name);
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.63 2000/12/28 22:23:41 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.64 2000/12/28 22:59:14 sommerfeld Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -519,8 +519,7 @@ isp_pci_attach(parent, self, aux)
 	data &= ~1;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", isp->isp_name);
 		free(isp->isp_param, M_DEVBUF);
 		return;
