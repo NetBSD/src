@@ -1,4 +1,4 @@
-/*	$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $	*/
+/*	$NetBSD: setdomainname.c,v 1.5 1997/07/13 19:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $";
+__RCSID("$NetBSD: setdomainname.c,v 1.5 1997/07/13 19:17:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 #if __STDC__
 int
