@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1994/05/24 06:47:42 deraadt Exp $
+# $Id: Makefile,v 1.2 1994/05/31 08:46:10 deraadt Exp $
 
 PROG= skey
 CFLAGS+= -I${.CURDIR}/../../lib/libskey
@@ -7,7 +7,7 @@ DPADD=	${LIBSKEY}
 LDADD=	-lskey
 
 beforeinstall:
-	install -c -m 755 ${.CURDIR}/keyaudit ${BINDIR}
-	install -c -m 755 ${.CURDIR}/keyinfo ${BINDIR}
+	install -c -m 755 ${.CURDIR}/keyaudit.sh ${BINDIR}/keyaudit
+	install -c -m 755 ${.CURDIR}/keyinfo.sh ${BINDIR}/keyinfo
 
 .include <bsd.prog.mk>
