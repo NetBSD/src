@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.4 1999/02/11 16:09:21 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.5 1999/02/11 16:50:46 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -14,13 +14,13 @@ MAKEINFO?=	makeinfo
 INFOFLAGS?=	
 INSTALL_INFO?=	install-info
 
-.SUFFIXES: .txi .texi .info
+.SUFFIXES: .txi .texi .texinfo .info
 
-.txi.info .texi.info:
+.txi.info .texi.info .texinfo.info:
 	@${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
 
 .if defined(TEXINFO) && !empty(TEXINFO) && !defined(NOSHARE)
-INFOFILES=	${TEXINFO:C/\.te?xi$/.info/}
+INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
 FILES+=		${INFOFILES}
 
 infoinstall:
