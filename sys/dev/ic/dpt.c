@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.13 1999/11/29 15:04:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.13 1999/11/29 15:04:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bswap.h>
 #include <machine/bus.h>
 
@@ -99,13 +99,6 @@ static struct scsipi_device dpt_dev = {
 };
 
 static char *dpt_cname[] = {
-#ifdef notdef
-	"PM3755", "SmartRAID V",
-	"PM3754", "SmartRAID V",
-	"PM2654", "SmartRAID V",
-	"PM2554", "SmartRAID V",
-	"PM1554", "SmartRAID V",
-#endif
 	"PM3334", "SmartRAID IV",
 	"PM3332", "SmartRAID IV",
 	"PM2144", "SmartCache IV",
@@ -246,7 +239,7 @@ dpt_init(sc, intrstr)
 	ec = &sc->sc_ec;
 	
 	/* Allocate the CCB/status packet/scratch DMA map and load */
-	sc->sc_nccbs = min(SWAP16(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
+	sc->sc_nccbs = min(be16toh(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
 	sc->sc_spoff = sc->sc_nccbs * sizeof(struct dpt_ccb);
 	sc->sc_scroff = sc->sc_spoff + sizeof(struct eata_sp);
 	sc->sc_scrlen = 256; /* XXX */
@@ -411,10 +404,7 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 	if (cp == NULL)
 		addr = 0;
 
-	dpt_outb(sc, HA_DMA_BASE + 0, (u_int32_t)addr);
-	dpt_outb(sc, HA_DMA_BASE + 1, (u_int32_t)addr >> 8);
-	dpt_outb(sc, HA_DMA_BASE + 2, (u_int32_t)addr >> 16);
-	dpt_outb(sc, HA_DMA_BASE + 3, (u_int32_t)addr >> 24);
+	dpt_outl(sc, HA_DMA_BASE, (u_int32_t)addr);
 
 	if (eatacmd == CP_IMMEDIATE) {
 		if (cp == NULL) {
@@ -907,7 +897,7 @@ dpt_scsi_cmd(xs)
 	cp->cp_lun = sc_link->scsipi_scsi.lun;
 	cp->cp_channel = sc_link->scsipi_scsi.channel;
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
-	cp->cp_stataddr = SWAP32(sc->sc_sppa);
+	cp->cp_stataddr = htobe32(sc->sc_sppa);
 	cp->cp_dispri = 1;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
@@ -922,10 +912,10 @@ dpt_scsi_cmd(xs)
 	else
 		cp->cp_nocache = 0;
 
-	cp->cp_senseaddr = SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+	cp->cp_senseaddr = htobe32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
 	    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
 	    
-	if (xs->datalen) {
+	if (xs->datalen != 0) {
 		xfer = ccb->ccb_dmamap_xfer;
 #ifdef	TFS
 		if ((flags & XS_CTL_DATA_UIO) != 0) {
@@ -958,8 +948,8 @@ dpt_scsi_cmd(xs)
 
 		/* Don't bother using scatter/gather for just 1 segment */
 		if (xfer->dm_nsegs == 1) {
-			cp->cp_dataaddr = SWAP32(xfer->dm_segs[0].ds_addr);
-			cp->cp_datalen = SWAP32(xfer->dm_segs[0].ds_len);
+			cp->cp_dataaddr = htobe32(xfer->dm_segs[0].ds_addr);
+			cp->cp_datalen = htobe32(xfer->dm_segs[0].ds_len);
 			cp->cp_scatter = 0;
 		} else {
 			/*
@@ -968,13 +958,13 @@ dpt_scsi_cmd(xs)
 			 */
 			sg = ccb->ccb_sg;
 			for (i = 0; i < xfer->dm_nsegs; i++, sg++) {
-				sg->sg_addr = SWAP32(xfer->dm_segs[i].ds_addr);
-				sg->sg_len = SWAP32(xfer->dm_segs[i].ds_len);
+				sg->sg_addr = htobe32(xfer->dm_segs[i].ds_addr);
+				sg->sg_len = htobe32(xfer->dm_segs[i].ds_len);
 			}
-			cp->cp_dataaddr = SWAP32(CCB_OFF(sc, ccb) + 
+			cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
 			    sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
 			    offsetof(struct dpt_ccb, ccb_sg));
-			cp->cp_datalen = SWAP32(i * sizeof(struct eata_sg));
+			cp->cp_datalen = htobe32(i * sizeof(struct eata_sg));
 			cp->cp_scatter = 1;
 		}
 	} else {
@@ -1118,7 +1108,7 @@ dpt_hba_inquire(sc, ei)
 	cp->cp_lun = 0;
 	cp->cp_channel = 0;
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
-	cp->cp_stataddr = SWAP32(sc->sc_sppa);
+	cp->cp_stataddr = htobe32(sc->sc_sppa);
 	cp->cp_dispri = 1;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 0;
@@ -1127,8 +1117,8 @@ dpt_hba_inquire(sc, ei)
 	cp->cp_datain = 1;
 	cp->cp_dataout = 0;
 	cp->cp_senseaddr = 0;
-	cp->cp_dataaddr = SWAP32(sc->sc_scrpa);
-	cp->cp_datalen = SWAP32(sizeof(struct eata_inquiry_data));
+	cp->cp_dataaddr = htobe32(sc->sc_scrpa);
+	cp->cp_datalen = htobe32(sizeof(struct eata_inquiry_data));
 	cp->cp_scatter = 0;
 	
 	/* Put together the SCSI inquiry command */
