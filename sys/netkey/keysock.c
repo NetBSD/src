@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.36 2004/06/01 03:05:26 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.37 2004/07/08 10:42:41 yamt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.36 2004/06/01 03:05:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.37 2004/07/08 10:42:41 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -282,8 +282,10 @@ key_sendup0(rp, m, promisc, canwait)
 			pfkeystat.in_nomem++;
 			error = ENOBUFS;
 			goto recovery;
-		} else
+		} else {
+			sorwakeup(rp->rcb_socket);
 			error = 0;
+		}
 	}
 	return (error);
 
