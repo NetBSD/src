@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.2 2001/04/26 16:25:24 kleink Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.3 2002/11/03 22:23:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,19 +49,31 @@
 #define	INT8_MIN	(-0x7f-1)			/* int8_t	  */
 #define	INT16_MIN	(-0x7fff-1)			/* int16_t	  */
 #define	INT32_MIN	(-0x7fffffff-1)			/* int32_t	  */
+#ifdef _LP64
+#define	INT64_MIN	(-0x7fffffffffffffffL-1)	/* int64_t	  */
+#else
 #define	INT64_MIN	(-0x7fffffffffffffffLL-1)	/* int64_t	  */
+#endif
 
 /* maximum values of exact-width signed integer types */
 #define	INT8_MAX	0x7f				/* int8_t	  */
 #define	INT16_MAX	0x7fff				/* int16_t	  */
 #define	INT32_MAX	0x7fffffff			/* int32_t	  */
+#ifdef _LP64
+#define	INT64_MAX	0x7fffffffffffffffL		/* int64_t	  */
+#else
 #define	INT64_MAX	0x7fffffffffffffffLL		/* int64_t	  */
+#endif
 
 /* maximum values of exact-width unsigned integer types */
 #define	UINT8_MAX	0xffU				/* uint8_t	  */
 #define	UINT16_MAX	0xffffU				/* uint16_t	  */
 #define	UINT32_MAX	0xffffffffU			/* uint32_t	  */
+#ifdef _LP64
+#define	UINT64_MAX	0xffffffffffffffffUL		/* uint64_t	  */
+#else
 #define	UINT64_MAX	0xffffffffffffffffULL		/* uint64_t	  */
+#endif
 
 /* 7.18.2.2 Limits of minimum-width integer types */
 
@@ -69,19 +81,31 @@
 #define	INT_LEAST8_MIN	(-0x7f-1)			/* int_least8_t	  */
 #define	INT_LEAST16_MIN	(-0x7fff-1)			/* int_least16_t  */
 #define	INT_LEAST32_MIN	(-0x7fffffff-1)			/* int_least32_t  */
+#ifdef _LP64
+#define	INT_LEAST64_MIN	(-0x7fffffffffffffffL-1)	/* int_least64_t  */
+#else
 #define	INT_LEAST64_MIN	(-0x7fffffffffffffffLL-1)	/* int_least64_t  */
+#endif
 
 /* maximum values of minimum-width signed integer types */
 #define	INT_LEAST8_MAX	0x7f				/* int_least8_t	  */
 #define	INT_LEAST16_MAX	0x7fff				/* int_least16_t  */
 #define	INT_LEAST32_MAX	0x7fffffff			/* int_least32_t  */
+#ifdef _LP64
+#define	INT_LEAST64_MAX	0x7fffffffffffffffL		/* int_least64_t  */
+#else
 #define	INT_LEAST64_MAX	0x7fffffffffffffffLL		/* int_least64_t  */
+#endif
 
 /* maximum values of minimum-width unsigned integer types */
 #define	UINT_LEAST8_MAX	 0xffU				/* uint_least8_t  */
 #define	UINT_LEAST16_MAX 0xffffU			/* uint_least16_t */
 #define	UINT_LEAST32_MAX 0xffffffffU			/* uint_least32_t */
+#ifdef _LP64
+#define	UINT_LEAST64_MAX 0xffffffffffffffffUL		/* uint_least64_t */
+#else
 #define	UINT_LEAST64_MAX 0xffffffffffffffffULL		/* uint_least64_t */
+#endif
 
 /* 7.18.2.3 Limits of fastest minimum-width integer types */
  
@@ -89,31 +113,55 @@
 #define	INT_FAST8_MIN	(-0x7fffffff-1)			/* int_fast8_t	  */
 #define	INT_FAST16_MIN	(-0x7fffffff-1)			/* int_fast16_t	  */
 #define	INT_FAST32_MIN	(-0x7fffffff-1)			/* int_fast32_t	  */
+#ifdef _LP64
+#define	INT_FAST64_MIN	(-0x7fffffffffffffffL-1)	/* int_fast64_t	  */
+#else
 #define	INT_FAST64_MIN	(-0x7fffffffffffffffLL-1)	/* int_fast64_t	  */
+#endif
 
 /* maximum values of fastest minimum-width signed integer types */
 #define	INT_FAST8_MAX	0x7fffffff			/* int_fast8_t	  */
 #define	INT_FAST16_MAX	0x7fffffff			/* int_fast16_t	  */
 #define	INT_FAST32_MAX	0x7fffffff			/* int_fast32_t	  */
+#ifdef _LP64
+#define	INT_FAST64_MAX	0x7fffffffffffffffL		/* int_fast64_t	  */
+#else
 #define	INT_FAST64_MAX	0x7fffffffffffffffLL		/* int_fast64_t	  */
+#endif
 
 /* maximum values of fastest minimum-width unsigned integer types */
 #define	UINT_FAST8_MAX	0xffffffffU			/* uint_fast8_t	  */
 #define	UINT_FAST16_MAX	0xffffffffU			/* uint_fast16_t  */
 #define	UINT_FAST32_MAX	0xffffffffU			/* uint_fast32_t  */
+#ifdef _LP64
+#define	UINT_FAST64_MAX	0xffffffffffffffffUL		/* uint_fast64_t  */
+#else
 #define	UINT_FAST64_MAX	0xffffffffffffffffULL		/* uint_fast64_t  */
+#endif
 
 /* 7.18.2.4 Limits of integer types capable of holding object pointers */
 
+#ifdef _LP64
+#define	INTPTR_MIN	(-0x7fffffffffffffffL-1)	/* intptr_t	  */
+#define	INTPTR_MAX	0x7fffffffffffffffL		/* intptr_t	  */
+#define	UINTPTR_MAX	0xffffffffffffffffUL		/* uintptr_t	  */
+#else
 #define	INTPTR_MIN	(-0x7fffffff-1)			/* intptr_t	  */
 #define	INTPTR_MAX	0x7fffffff			/* intptr_t	  */
 #define	UINTPTR_MAX	0xffffffffU			/* uintptr_t	  */
+#endif
 
 /* 7.18.2.5 Limits of greatest-width integer types */
 
+#ifdef _LP64
+#define	INTMAX_MIN	(-0x7fffffffffffffffL-1)	/* intmax_t	  */
+#define	INTMAX_MAX	0x7fffffffffffffffL		/* intmax_t	  */
+#define	UINTMAX_MAX	0xffffffffffffffffUL		/* uintmax_t	  */
+#else
 #define	INTMAX_MIN	(-0x7fffffffffffffffLL-1)	/* intmax_t	  */
 #define	INTMAX_MAX	0x7fffffffffffffffLL		/* intmax_t	  */
 #define	UINTMAX_MAX	0xffffffffffffffffULL		/* uintmax_t	  */
+#endif
 
 
 /*
@@ -121,15 +169,24 @@
  */
 
 /* limits of ptrdiff_t */
+#ifdef _LP64
+#define	PTRDIFF_MIN	(-0x7fffffffffffffffL-1)	/* ptrdiff_t	  */
+#define	PTRDIFF_MAX	0x7fffffffffffffffL		/* ptrdiff_t	  */
+#else
 #define	PTRDIFF_MIN	(-0x7fffffff-1)			/* ptrdiff_t	  */
 #define	PTRDIFF_MAX	0x7fffffff			/* ptrdiff_t	  */
+#endif
 
 /* limits of sig_atomic_t */
 #define	SIG_ATOMIC_MIN	(-0x7fffffff-1)			/* sig_atomic_t	  */
 #define	SIG_ATOMIC_MAX	0x7fffffff			/* sig_atomic_t	  */
 
 /* limit of size_t */
+#ifdef _LP64
+#define	SIZE_MAX	0xffffffffffffffffUL		/* size_t	  */
+#else
 #define	SIZE_MAX	0xffffffffU			/* size_t	  */
+#endif
 
 #ifndef WCHAR_MIN /* also possibly defined in <wchar.h> */
 /* limits of wchar_t */
