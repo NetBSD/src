@@ -507,9 +507,10 @@ object_headers *headers;
 			 * If symbol has a known size, output an extra symbol
 			 * of type N_SIZE and with the same name.
 			 */
-			if (0/*DISABLED*/ && symbolP->sy_size && flagseen['k']) {
+			if (symbolP->sy_size && flagseen['k']) {
 				symbolS	*addme;
-/*XXX*/				char	buf[BUFSIZ];
+#ifdef USE_NSIZE_PREFIX /*XXX*/
+				char	buf[BUFSIZ];
 
 				/*
 				 * Changed my mind, make name: "=symbol"
@@ -517,6 +518,9 @@ object_headers *headers;
 				buf[0] = '=';
 				strncpy(buf+1, S_GET_NAME(symbolP), BUFSIZ-2);
 				addme = symbol_make(buf);
+#else
+				addme = symbol_make(S_GET_NAME(symbolP));
+#endif
 #if 0
 				S_SET_SEGMENT(addme, SEG_SIZE);
 #endif
