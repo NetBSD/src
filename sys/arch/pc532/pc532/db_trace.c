@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1994/10/26 08:24:58 cgd Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 1996/10/09 07:45:03 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,15 +36,18 @@
  */
 
 
-#include <mach/boolean.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>
-#include <machine/pic.h>
+#include <machine/cpufunc.h>
 
-#include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_access.h>
 #include <ddb/db_variables.h>
-
-#include <kern/thread.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 
 int db_spec_regs();
 int db_ns532_reg_value();
@@ -54,34 +57,34 @@ int db_ns532_kreg_value();
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "r0",	(int *)&ddb_regs.r0,  db_ns532_reg_value },
-	{ "r1",	(int *)&ddb_regs.r1,  db_ns532_reg_value },
-	{ "r2",	(int *)&ddb_regs.r2,  db_ns532_reg_value },
-	{ "r3",	(int *)&ddb_regs.r3,  db_ns532_reg_value },
-	{ "r4",	(int *)&ddb_regs.r4,  db_ns532_reg_value },
-	{ "r5",	(int *)&ddb_regs.r5,  db_ns532_reg_value },
-	{ "r6",	(int *)&ddb_regs.r6,  db_ns532_reg_value },
-	{ "r7",	(int *)&ddb_regs.r7,  db_ns532_reg_value },
-	{ "sp",	(int *)&ddb_regs.usp, db_ns532_reg_value },
-	{ "fp",	(int *)&ddb_regs.fp,  db_ns532_reg_value },
-	{ "sb", (int *)&ddb_regs.sb,  db_ns532_reg_value },
-	{ "pc", (int *)&ddb_regs.pc,  db_ns532_reg_value },
-	{ "psr",(int *)&ddb_regs.psr, db_ns532_reg_value },
-	{ "tear",(int *)&ddb_regs.tear,db_ns532_reg_value },
-	{ "msr",(int *)&ddb_regs.msr, db_ns532_reg_value },
-	{ "ipl",(int *)&db_active_ipl,db_ns532_reg_value },
+	{ "r0",	(int *)&ddb_regs.tf_regs.r_r0,	FCN_NULL },
+	{ "r1",	(int *)&ddb_regs.tf_regs.r_r1,	FCN_NULL },
+	{ "r2",	(int *)&ddb_regs.tf_regs.r_r2,	FCN_NULL },
+	{ "r3",	(int *)&ddb_regs.tf_regs.r_r3,	FCN_NULL },
+	{ "r4",	(int *)&ddb_regs.tf_regs.r_r4,	FCN_NULL },
+	{ "r5",	(int *)&ddb_regs.tf_regs.r_r5,	FCN_NULL },
+	{ "r6",	(int *)&ddb_regs.tf_regs.r_r6,	FCN_NULL },
+	{ "r7",	(int *)&ddb_regs.tf_regs.r_r7,	FCN_NULL },
+	{ "sp",	(int *)&ddb_regs.tf_regs.r_sp,	FCN_NULL },
+	{ "fp",	(int *)&ddb_regs.tf_regs.r_fp,	FCN_NULL },
+	{ "sb", (int *)&ddb_regs.tf_regs.r_sb,	FCN_NULL },
+	{ "pc", (int *)&ddb_regs.tf_regs.r_pc,	FCN_NULL },
+	{ "psr",(int *)&ddb_regs.tf_regs.r_psr,	FCN_NULL },
+	{ "tear",(int *)&ddb_regs.tf_tear,	FCN_NULL },
+	{ "msr",(int *)&ddb_regs.tf_msr, 	FCN_NULL },
+	{ "ipl",(int *)&db_active_ipl,		FCN_NULL },
+
 #ifdef FLOATS_SAVED
-	{ "f0",	(int *)&ddb_regs.l0a, db_ns532_reg_value },
-	{ "f1",	(int *)&ddb_regs.l0b, db_ns532_reg_value },
-	{ "f2",	(int *)&ddb_regs.l1a, db_ns532_reg_value },
-	{ "f3",	(int *)&ddb_regs.l1b, db_ns532_reg_value },
-	{ "f4",	(int *)&ddb_regs.l2a, db_ns532_reg_value },
-	{ "f5",	(int *)&ddb_regs.l2b, db_ns532_reg_value },
-	{ "f6",	(int *)&ddb_regs.l3a, db_ns532_reg_value },
-	{ "f7",	(int *)&ddb_regs.l3b, db_ns532_reg_value },
-	{ "fsr",(int *)&ddb_regs.fsr, db_ns532_reg_value },
+	{ "f0",	(int *)&ddb_regs.r_l0a, db_ns532_reg_value },
+	{ "f1",	(int *)&ddb_regs.r_l0b, db_ns532_reg_value },
+	{ "f2",	(int *)&ddb_regs.r_l1a, db_ns532_reg_value },
+	{ "f3",	(int *)&ddb_regs.r_l1b, db_ns532_reg_value },
+	{ "f4",	(int *)&ddb_regs.r_l2a, db_ns532_reg_value },
+	{ "f5",	(int *)&ddb_regs.r_l2b, db_ns532_reg_value },
+	{ "f6",	(int *)&ddb_regs.r_l3a, db_ns532_reg_value },
+	{ "f7",	(int *)&ddb_regs.r_l3b, db_ns532_reg_value },
+	{ "fsr",(int *)&ddb_regs.r_fsr, db_ns532_reg_value },
 #endif FLOATS_SAVED
-	{ "ksp",	(int *) 0,	db_spec_regs },
 	{ "intbase",	(int *) 0,	db_spec_regs },
 	{ "ptb",	(int *) 0,	db_spec_regs },
 	{ "ivar",	(int *) 0,	db_spec_regs },
@@ -92,45 +95,10 @@ struct db_variable db_regs[] = {
 	{ "dsr",	(int *) 0,	db_spec_regs },
 	{ "car",	(int *) 0,	db_spec_regs },
 	{ "bpc",	(int *) 0,	db_spec_regs },
-	{ "cfg",	(int *) 0,	db_spec_regs }
+	{ "cfg",	(int *) 0,	db_spec_regs },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]) - 1;
 
-struct db_regs_bits_s {
-	char *name;
-	char *bitfld;
-};
-
-struct db_regs_bits_s db_regs_bits[] = {
-	"psr", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,i,p,s,u,n,z,f,v,0,l,t,c",
-	"fsr", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,rmb,s5,s4,s3,s2,s1,s0,@roundm,if,ien,uf,uen,@trapt",
-	"mcr", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,ao,ds,ts,tu",
-	"msr", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0 :,0,0,0,0: ,@sst,ust,ddt,@tex",
-	"rmsr", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0 :,0,0,0,0: ,@sst,ust,ddt,@tex",
-	"dcr", "0,0,0,0: ,0,0,0,0: ,den,sd,ud,pce,tr,bcp,si,0: ,0,0,0,0: ,0,0,0,bf,cae,crd,cwr,vnp,cbe3,cbe2,cbe1,cbe0",
-	"dsr", "rd,bpc,bex,bca,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0",
-	"cfg", "0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,0,0: ,0,0,pf,lic,ic,ldc,dc,de,1,1,1,1,c,m,f,i"
-    };
-
-struct db_regs_bits_s *db_eregs_bits = db_regs_bits +
-    sizeof(db_regs_bits)/sizeof(db_regs_bits[0]);
-
-struct db_regs_fields_s {
-	char *name;
-	int bits;
-	char *values;
-};
-
-struct db_regs_fields_s db_regs_fields[] = {
-	"trapt", 3, "None,Underflow,Overflow,Div by 0,Ill inst,Invalid oper,Inexact res,Reserved",
-	"roundm", 2, "Nearest,Zero,Pos inf,Neg inf",
-	"tex", 2, "None,1st PTE inv,2nd PTE inv,Prot",
-	"sst", 4, "0000,0001,0010,0011,0100,0101,0110,0111,Seq.ins.fetch,Non.seq.ins.fetch,Data transfer,Read-modify-write,Read eff.addr,1101,1110,1111"
-};
-
-struct db_regs_fields_s *db_eregs_fields = db_regs_fields +
-    sizeof(db_regs_fields)/sizeof(db_regs_fields[0]);
-  
 /*
  * Stack trace.
  */
@@ -142,105 +110,17 @@ struct ns532_frame {
 	int			f_arg0;
 };
 
-#define	TRAP		1
-#define	INTERRUPT	2
-#define SYSCALL		3
-
-struct ns532_kregs {
-	char	*name;
-	int	offset;
-} ns532_kregs[] = {
-	{ "r3", (int)(&((struct ns532_kernel_state *)0)->k_r3) },
-	{ "r4", (int)(&((struct ns532_kernel_state *)0)->k_r4) },
-	{ "r5", (int)(&((struct ns532_kernel_state *)0)->k_r5) },
-	{ "r6", (int)(&((struct ns532_kernel_state *)0)->k_r6) },
-	{ "r7", (int)(&((struct ns532_kernel_state *)0)->k_r7) },
-	{ "sp", (int)(&((struct ns532_kernel_state *)0)->k_sp) },
-	{ "fp", (int)(&((struct ns532_kernel_state *)0)->k_fp) },
-	{ "pc", (int)(&((struct ns532_kernel_state *)0)->k_pc) },
-	{ 0 },
-};
-
-int *
-db_lookup_ns532_kreg(name, kregp)
-	char *name;
-	int *kregp;
-{
-	register struct ns532_kregs *kp;
-	
-	for (kp = ns532_kregs; kp->name; kp++) {
-		if (strcmp(name, kp->name) == 0)
-		    return((int *)((int)kregp + kp->offset));
-	}
-	return(0);
-}
-	
-int
-db_ns532_reg_value(vp, valuep, flag, ap)
-	struct	db_variable	*vp;
-	db_expr_t		*valuep;
-	int			flag;
-	db_var_aux_param_t	ap;
-{
-	int			*dp = 0;
-	db_expr_t		null_reg = 0;
-	register thread_t	thread = ap->thread;
-	
-	if (db_option(ap->modif, 'u')) {
-		if (thread == THREAD_NULL) {
-			if ((thread = current_thread()) == THREAD_NULL)
-			    db_error("no user registers\n");
-		}
-		if (thread == current_thread()) {
-			if ((ddb_regs.psr & PSR_U) == 0)
-			    dp = vp->valuep;
-		}
-	} else {
-		if (thread == THREAD_NULL || thread == current_thread()) {
-			dp = vp->valuep;
-		} else if ((thread->state & TH_SWAPPED) == 0 && 
-			   thread->kernel_stack) {
-			dp = db_lookup_ns532_kreg(vp->name,
-				   (int *)(STACK_IKS(thread->kernel_stack)));
-			if (dp == 0)
-			    dp = &null_reg;
-		} else if ((thread->state & TH_SWAPPED) &&
-			   thread->swap_func != thread_exception_return) {
-			/* only pc is valid */
-			if (vp->valuep == (int *) &ddb_regs.pc) {
-				dp = (int *)(&thread->swap_func);
-			} else {
-				dp = &null_reg;
-			}
-		}
-	}
-	if (dp == 0) {
-		if (thread->pcb == 0)
-		    db_error("no pcb\n");
-		dp = (int *)((int)(&thread->pcb->iss) + 
-			     ((int)vp->valuep - (int)&ddb_regs));
-	}
-	if (flag == DB_VAR_SET)
-	    *dp = *valuep;
-	else
-	    *valuep = *dp;
-	return(0);
-}
+enum { NONE, TRAP, INTERRUPT, SYSCALL };
 
 db_addr_t	db_trap_symbol_value = 0;
+db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_intr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
 
-void
-db_find_trace_symbols()
-{
-	db_expr_t	value;
-	if (db_value_of_name("_trap", &value))
-	    db_trap_symbol_value = (db_addr_t) value;
-	if (db_value_of_name("_interrupt", &value))
-	    db_intr_symbol_value = (db_addr_t) value;
-	db_trace_symbols_found = TRUE;
-}
+int db_numargs __P((struct ns532_frame *));
+void db_nextframe __P((struct ns532_frame **, db_addr_t *, int *, int));
+struct insn;
+int db_dasm_ns32k(struct insn *insn, db_addr_t loc);
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
@@ -248,23 +128,75 @@ db_find_trace_symbols()
 int db_numargs_default = 5;
 
 int
-db_numargs(fp, task)
+db_numargs(fp)
 	struct ns532_frame *fp;
-	task_t	task;
 {
-	int a;
-	char *nextaddr;
-	
-	nextaddr = (char *) db_get_task_value((int) &fp->f_frame, 4,
-					      FALSE, task);
-	a = nextaddr-(char *)fp-8;
-	a /= 4;
-	if (a < 0 || a > 16)
-	    a = db_numargs_default;
-	return a;
-}
+	db_addr_t	argp;
+	int		inst;
+	int		args;
+	int		i;
+	extern char	etext[];
 
-extern int (*ivect[])();
+	argp = (db_addr_t) db_get_value((db_addr_t)&fp->f_retaddr, 4, FALSE);
+	if (argp < (db_addr_t)VM_MIN_KERNEL_ADDRESS || argp > (db_addr_t)etext)
+		return(db_numargs_default);
+
+	for (i = 0; i < 5; i++) {
+		/*
+		 * After a bsr gcc may emit the following instructions
+		 * to remove the arguments from the stack:
+		 *   cmpqd 0,tos 	- to remove 4 bytes from the stack
+		 *   cmpd tos,tos	- to remove 8 bytes from the stack
+		 *   adjsp[bwd] -n	- to remove n bytes from the stack
+		 * Gcc sometimes delays emitting these instructions and
+		 * may even throw a branch between our feet.
+		 */		 
+		inst = db_get_value((db_addr_t) argp	, 4, FALSE);
+		args = db_get_value((db_addr_t) argp + 2, 4, FALSE);
+		if ((inst & 0xff) == 0xea) {		/* br */
+			args = ((inst >> 8) & 0xffffff) | (args << 24);
+			if (args & 0x80) {
+				if (args & 0x40) {
+					args = ntohl(args);
+				} else {
+					args = ntohs(args & 0xffff);
+					if (args & 0x2000)
+						args |= 0xc000;
+				}
+			} else {
+				args = args & 0xff;
+				if (args & 0x40)
+					args |= 0x80;
+			}
+			argp += args;
+			continue;
+		}
+		if ((inst & 0xffff) == 0xb81f)		/* cmpqd 0,tos */
+			return(1);
+		else if ((inst & 0xffff) == 0xbdc7)	/* cmpd tos,tos */
+			return(2);
+		else if ((inst & 0xfffc) == 0xa57c) {	/* adjsp[bwd] */
+			switch (inst & 3) {
+			case 0:
+				args = ((args & 0xff) + 0x80);
+				break;
+			case 1:
+				args = ((ntohs(args) & 0xffff) + 0x8000);
+				break;
+			case 3:
+				args = -ntohl(args);
+				break;
+			default:
+				return(db_numargs_default);
+			}
+			if (args / 4 > 10 || (args & 3) != 0)
+				continue;
+			return(args / 4);
+		}
+		argp += db_dasm_ns32k(NULL, argp);
+	}
+	return(db_numargs_default);
+}
 
 /* 
  * Figure out the next frame up in the call stack.  
@@ -277,66 +209,40 @@ extern int (*ivect[])();
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(fp, ip, frame_type, thread)
+db_nextframe(fp, ip, argp, is_trap)
 	struct ns532_frame	**fp;		/* in/out */
 	db_addr_t		*ip;		/* out */
-	int			frame_type;	/* in */
-	thread_t		thread;		/* in */
+	int			*argp;		/* in */
+	int			is_trap;	/* in */
 {
 	extern char *	trap_type[];
 	extern int	TRAP_TYPES;
+	struct trapframe *tf;
+	struct syscframe *sf;
 	
-	struct ns532_saved_state *saved_regs;
-	int vector;
-	task_t task = (thread != THREAD_NULL)? thread->task: TASK_NULL;
-	
-	switch(frame_type) {
-	      case TRAP:
-		/*
-		 * We know that trap() has 1 argument and we know that
-		 * it is an (int *).
-		 */
-		saved_regs = (struct ns532_saved_state *)
-		    db_get_value((int) &((*fp)->f_arg0), 4, FALSE);
-		if (saved_regs->trapno >= 0 &&
-		    saved_regs->trapno < TRAP_TYPES) {
-			db_printf(">>>>>> %s trap at ",
-				  trap_type[saved_regs->trapno]);
-		} else {
-			db_printf(">>>>>> trap (number %d) at ",
-				  saved_regs->trapno & 0xffff);
-		}
-		db_task_printsym(saved_regs->pc, DB_STGY_PROC, task);
-		db_printf(" <<<<<<\n");
-		*fp = (struct ns532_frame *)saved_regs->fp;
-		*ip = (db_addr_t)saved_regs->pc;
-		break;
-	      case INTERRUPT:
-		/*
-		 * We know that interrupt() has 3 argument.
-		 */
-		
-		vector = db_get_value((int) &((*fp)->f_arg0), 4, FALSE);
-		saved_regs = (struct ns532_saved_state *)
-		    db_get_value((int) &((*fp)->f_arg0) + 8, 4, FALSE);
-		db_printf(">>>>>> ");
-		if (vector >=0 && vector < NINTR) {
-			db_task_printsym((int) ivect[vector],
-					 DB_STGY_PROC, task);
-			db_printf(" interrupt at ");
-		} else {
-			db_printf("interrupt vector %d at ", vector);
-		}
-		db_task_printsym(saved_regs->pc, DB_STGY_PROC, task);
-		db_printf(" <<<<<<\n");
-		*fp = (struct ns532_frame *)saved_regs->fp;
-		*ip = (db_addr_t)saved_regs->pc;
-		break;
-	      default:
+	switch (is_trap) {
+	case INTERRUPT:	
+		db_printf("--- interrupt ---\n");
+	case NONE:
 		*ip = (db_addr_t)
-		    db_get_task_value((int) &(*fp)->f_retaddr, 4, FALSE, task);
+		    db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
 		*fp = (struct ns532_frame *)
-		    db_get_task_value((int) &(*fp)->f_frame, 4, FALSE, task);
+		    db_get_value((int) &(*fp)->f_frame, 4, FALSE);
+		break;
+
+	/* The only argument to trap() or syscall() is the trapframe. */
+	case TRAP:
+		tf = (struct trapframe *)argp;
+		db_printf("--- trap (number %d) ---\n", tf->tf_trapno);
+		*fp = (struct ns532_frame *)tf->tf_regs.r_fp;
+		*ip = (db_addr_t)tf->tf_regs.r_pc;
+		break;
+
+	case SYSCALL:
+		sf = (struct syscframe *)argp;
+		db_printf("--- syscall (number %d) ---\n", sf->sf_regs.r_r0);
+		*fp = (struct ns532_frame *)sf->sf_regs.r_fp;
+		*ip = (db_addr_t)sf->sf_regs.r_pc;
 		break;
 	}
 }
@@ -351,182 +257,139 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	struct ns532_frame *frame, *lastframe;
 	int		*argp;
 	db_addr_t	callpc;
-	int		frame_type;
+	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
-	char		*filename;
-	int		linenum;
-	task_t		task;
-	thread_t	th;
-	int		user_frame = 0;
-	extern unsigned	db_maxoff;
-	
-	
-	if (!db_trace_symbols_found)
-	    db_find_trace_symbols();
-	
+
 	{
 		register char *cp = modif;
 		register char c;
 		
 		while ((c = *cp++) != 0) {
 			if (c == 't')
-			    trace_thread = TRUE;
+				trace_thread = TRUE;
 			if (c == 'u')
-			    kernel_only = FALSE;
+				kernel_only = FALSE;
 		}
 	}
 	
 	if (count == -1)
-	    count = 65535;
-	
-	if (!have_addr && !trace_thread) {
-		frame = (struct ns532_frame *)ddb_regs.fp;
-		callpc = (db_addr_t)ddb_regs.pc;
-		th = current_thread();
-		task = (th != THREAD_NULL) ? th->task : TASK_NULL;
+		count = 65535;
+
+	if (!have_addr) {
+		frame = (struct ns532_frame *)ddb_regs.tf_regs.r_fp;
+		callpc = (db_addr_t)ddb_regs.tf_regs.r_pc;
 	} else if (trace_thread) {
-		if (have_addr) {
-			th = (thread_t) addr;
-			if (!db_check_thread_address_valid(th))
-			    return;
-		} else {
-			th = db_default_thread;
-			if (th = THREAD_NULL)
-			    current_thread();
-			if (th == THREAD_NULL) {
-				db_printf("no active thread\n");
-				return;
-			}
-		}
-		task = th->task;
-		if (th == current_thread()) {
-			frame = (struct ns532_frame *)ddb_regs.fp;
-			callpc = (db_addr_t)ddb_regs.pc;
-		} else {
-			if (th->pcb == 0) {
-				db_printf("thread has no pcb\n");
-				return;
-			}
-			if ((th->state & TH_SWAPPED) ||
-			    th->kernel_stack == 0) {
-				register struct ns532_saved_state *iss =
-				    &th->pcb->iss;
-				
-				db_printf("Continuation ");
-				db_task_printsym(th->swap_func, DB_STGY_PROC,
-						 task);
-				db_printf("\n");
-				
-				frame = (struct ns532_frame *) (iss->fp);
-				callpc = (db_addr_t) (iss->pc);
-			} else {
-				register struct ns532_kernel_state *iks;
-				iks = STACK_IKS(th->kernel_stack);
-				frame = (struct ns532_frame *) (iks->k_fp);
-				callpc = (db_addr_t) (iks->k_pc);
-			}
-		}
+		db_printf ("db_trace.c: can't trace thread\n");
 	} else {
 		frame = (struct ns532_frame *)addr;
-		th = (db_default_thread)? db_default_thread: current_thread();
-		task = (th != THREAD_NULL)? th->task: TASK_NULL;
-		callpc = (db_addr_t)db_get_task_value((int)&frame->f_retaddr,
-						      4, FALSE, task);
+		callpc = (db_addr_t)
+			db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	}
-	
-	if (!INKERNEL(callpc) && !INKERNEL(frame)) {
-		db_printf(">>>>>> user space <<<<<<\n");
-		user_frame++;
-	}
-	
-	while (count-- && frame != 0) {
-		register int narg;
+
+	lastframe = 0;
+	while (count && frame != 0) {
+		int		narg;
 		char *	name;
 		db_expr_t	offset;
-		
-		if (INKERNEL(callpc) && user_frame == 0) {
-			db_addr_t call_func = 0;
-			
-			db_symbol_values(db_search_task_symbol(callpc, 
-							       DB_STGY_XTRN,
-							       &offset,
-							       TASK_NULL),
-					 &name, &call_func);
-			if (call_func == db_trap_symbol_value) {
-				frame_type = TRAP;
-				narg = 1;
-			} else if (call_func == db_intr_symbol_value) {
-				frame_type = INTERRUPT;
-				narg = 3;
-#ifdef SYSCALL_FRAME_IMPLEMENTED
-			} else if (call_func == db_syscall_symbol_value) {
-				frame_type = SYSCALL;
-				goto next_frame;
-#endif
-			} else {
-				frame_type = 0;
-				narg = db_numargs(frame, task);
-			}
-		} else if ((INKERNEL(callpc) == 0) != (INKERNEL(frame) == 0)) {
-			frame_type = 0;
-			narg = -1;
-		} else {
-			frame_type = 0;
-			narg = db_numargs(frame, task);
+		db_sym_t	sym;
+#define MAXNARG	16
+		char	*argnames[MAXNARG], **argnp = NULL;
+
+		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+		db_symbol_values(sym, &name, NULL);
+
+		if (lastframe == 0 && sym == NULL) {
+			/* Symbol not found, peek at code */
+			int	instr = db_get_value(callpc, 1, FALSE);
+
+			offset = 1;
+			if ((instr & 0xff) == 0x82) /* enter [],c */
+				offset = 0;
 		}
-		
-		db_find_task_sym_and_offset(callpc, &name, &offset, task);
-		if (name == 0 || offset > db_maxoff) {
-			db_printf("0x%x(", callpc);
-			offset = 0;
-		} else
-		    db_printf("%s(", name);
-		
-		argp = &frame->f_arg0;
-		while (narg > 0) {
-			db_printf("%x",
-				  db_get_task_value((int)argp,4,FALSE,task));
+		if (INKERNEL((int)frame) && name) {
+			if (!strcmp(name, "_trap")) {
+				is_trap = TRAP;
+			} else if (!strcmp(name, "_syscall")) {
+				is_trap = SYSCALL;
+			} else if (!strcmp(name, "_interrupt")) {
+				is_trap = INTERRUPT;
+			} else
+				goto normal;
+			narg = 0;
+		} else {
+		normal:
+			is_trap = NONE;
+			narg = MAXNARG;
+			if (db_sym_numargs(sym, &narg, argnames))
+				argnp = argnames;
+			else
+				narg = db_numargs(frame);
+		}
+
+		db_printf("%s(", name);
+
+		if (lastframe == 0 && offset == 0 && !have_addr) {
+			/*
+			 * We have a breakpoint before the frame is set up
+			 * Use sp instead
+			 */
+			argp = &((struct ns532_frame *)(ddb_regs.tf_regs.r_sp-4))->f_arg0;
+		} else {
+			argp = &frame->f_arg0;
+		}
+
+		while (narg) {
+			if (argnp)
+				db_printf("%s=", *argnp++);
+			db_printf("%x", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
-			    db_printf(",");
+				db_printf(",");
 		}
-		if (narg < 0)
-		    db_printf("...");
-		db_printf(")");
-		if (offset) {
-			db_printf("+%x", offset);
-		}
-		if (db_line_at_pc(0, &filename, &linenum, callpc)) {
-			db_printf(" [%s", filename);
-			if (linenum > 0)
-			    db_printf(":%d", linenum);
-			printf("]");
-		}
-		
+		db_printf(") at ");
+		db_printsym(callpc, DB_STGY_PROC);
 		db_printf("\n");
-	      next_frame:
+
+		if (lastframe == 0 && offset == 0 && !have_addr) {
+			/* Frame really belongs to next callpc */
+			lastframe = (struct ns532_frame *)(ddb_regs.tf_regs.r_sp-4);
+			callpc = (db_addr_t)
+				 db_get_value((int)&lastframe->f_retaddr, 4, FALSE);
+			continue;
+		}
+
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, frame_type, th);
-		
+		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap);
+
 		if (frame == 0) {
 			/* end of chain */
 			break;
 		}
-		if (!INKERNEL(lastframe) ||
-		    (!INKERNEL(callpc) && !INKERNEL(frame)))
-		    user_frame++;
-		if (user_frame == 1) {
-			db_printf(">>>>>> user space <<<<<<\n");
+		if (INKERNEL((int)frame)) {
+			/* staying in kernel */
+			if (frame <= lastframe) {
+				db_printf("Bad frame pointer: %p\n", frame);
+				break;
+			}
+		} else if (INKERNEL((int)lastframe)) {
+			/* switch from user to kernel */
 			if (kernel_only)
-			    break;
+				break;	/* kernel stack only */
+		} else {
+			/* in user */
+			if (frame <= lastframe) {
+				db_printf("Bad user frame pointer: %p\n",
+					  frame);
+				break;
+			}
 		}
-		if (frame <= lastframe) {
-			if (INKERNEL(lastframe) && !INKERNEL(frame))
-			    continue;
-			db_printf("Bad frame pointer: 0x%x\n", frame);
-			break;
-		}
+		--count;
+	}
+
+	if (count && is_trap != NONE) {
+		db_printsym(callpc, DB_STGY_XTRN);
+		db_printf(":\n");
 	}
 }
 
@@ -543,139 +406,69 @@ int db_spec_regs(vp, valp, what)
 {
 	if (strcmp(vp->name, "intbase") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_intbase();
+		sprd(intbase, *valp);
 	    else
-		_set_intbase(*valp);
+		lprd(intbase, *valp);
 	else if (strcmp(vp->name, "ptb") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_ptb();
+		smr(ptb0, *valp);
 	    else
-		_set_ptb(*valp);
+		load_ptb(*valp);
 	else if (strcmp(vp->name, "ivar") == 0)
 	    if (what == DB_VAR_GET)
 		*valp = 0;
-	    else
-		_invalidate_page(*valp);
+	    else {
+		lmr(ivar0, *valp);
+		lmr(ivar1, *valp);
+	    }
 	else if (strcmp(vp->name, "rtear") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_tear();
+		smr(tear, *valp);
 	    else
-		_set_tear(*valp);
+		lmr(tear, *valp);
 	else if (strcmp(vp->name, "mcr") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_mcr();
+		smr(mcr, *valp);
 	    else
-		_set_mcr(*valp);
+		lmr(mcr, *valp);
 	else if (strcmp(vp->name, "rmsr") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_msr();
+		smr(msr, *valp);
 	    else
-		_set_msr(*valp);
+		lmr(msr, *valp);
 	else if (strcmp(vp->name, "dcr") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_dcr();
+		sprd(dcr, *valp);
 	    else
-		_set_dcr(*valp);
+		lprd(dcr, *valp);
 	else if (strcmp(vp->name, "dsr") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_dsr();
+		sprd(dsr, *valp);
 	    else
-		_set_dsr(*valp);
+		lprd(dsr, *valp);
 	else if (strcmp(vp->name, "car") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_car();
+		sprd(car, *valp);
 	    else
-		_set_car(*valp);
+		lprd(car, *valp);
 	else if (strcmp(vp->name, "bpc") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_bpc();
+		sprd(bpc, *valp);
 	    else
-		_set_bpc(*valp);
+		lprd(bpc, *valp);
 	else if (strcmp(vp->name, "cfg") == 0)
 	    if (what == DB_VAR_GET)
-		*valp = _get_cfg();
+		sprd(cfg, *valp);
 	    else
-		_set_cfg(*valp);
-	else if (strcmp(vp->name, "ksp") == 0)
-	    if (what == DB_VAR_GET)
-		*valp = _get_ksp();
-	    else
-		_set_ksp(*valp);
+		lprd(cfg, *valp);
 	else
 	    db_printf("Internal error, unknown register in db_spec_regs");
 }
 
-/***************************************************
-
-  Print special bit mask registers in bitmask format
-
-  **************************************************/
-
-int db_print_spec_reg(vp, valuep)
-	struct db_variable *vp;
-	db_expr_t valuep;
+#ifndef DDB
+void
+Debugger()
 {
-	struct db_regs_bits_s *dbrb;
-	int i;
-	char *p, buf[256];
-	
-	for (dbrb = db_regs_bits; dbrb < db_eregs_bits; dbrb++)
-	    if (strcmp(dbrb->name, vp->name) == 0)
-		break;
-	if (dbrb == db_eregs_bits)
-	    return 1;
-	db_printf("\t<");
-	p = dbrb->bitfld;
-	for (i = 31 ; i >= 0 && *p ; i--) {		/* All bits */
-		if (*p >= '0' && *p <= '9') {		/* is number */
-			for (; *p != ',' && *p; p++)	/* Skip number */
-			    ;
-			if (*p == ',')
-			    p++;
-		} else {				/* Is text */
-			char *q;
-			strcpy(buf, p);
-			for(q = buf; *q != ',' && *q; q++, p++) /* Find end */
-			    ;
-			if (*p == ',')
-			    p++;
-			*q='\0';
-			if (buf[0] == '@') {		/* Is bitfield */
-				struct db_regs_fields_s *df;
-				q=buf+1;		/* Find field */
-				for (df = db_regs_fields;
-				     df < db_eregs_fields; df++)
-				    if (strcmp(df->name, q) == 0)
-					break;
-				if (df == db_eregs_fields)
-				    db_printf("Internal error in print_spec_regs [%s]\n", buf);
-				else {
-					unsigned int ff;
-					db_printf("%s=", q); /* Print field */
-					ff = (~(0xffffffff << df->bits)) &
-					    (valuep>>(i-(df->bits-1)));
-					i += df->bits;	/* Find value */
-					for (q = df->values;
-					     ff > 0 && *q; ff--, q++)
-					    for (;*q != ',' && *q; q++)
-						;
-					if (*q != '\0') {
-						strcpy(buf, q);
-						for(q = buf; *q != ',' && *q;
-						    q++)
-						    ;
-						*q='\0';
-						db_printf("%s "); /* Print value */
-					} else
-					    db_printf(" ");
-				}
-			} else {			/* Normal bit */
-				if ((1<<i) & valuep) {
-					db_printf("%s ", buf);
-				}
-			}
-		}
-	}
-	db_printf(">");
-	return 0;
+	asm("bpt");
 }
+#endif
