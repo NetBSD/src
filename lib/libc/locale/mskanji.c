@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.4 2000/12/30 05:05:57 itojun Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.3 2000/12/28 05:22:27 itojun Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.4 2000/12/30 05:05:57 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,6 +62,7 @@ void _MSKanji_packstate __P((_RuneLocale *, mbstate_t *, void *));
 void _MSKanji_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
 typedef struct {
+	void *runelocale;	/* reserved for future thread-safeness */
 	char ch[2];
 	int chlen;
 } _MSKanjiState;
