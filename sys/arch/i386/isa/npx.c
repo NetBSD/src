@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.8 2002/02/28 04:10:21 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.9 2002/03/04 21:47:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.8 2002/02/28 04:10:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.9 2002/03/04 21:47:31 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -570,7 +570,17 @@ npxsave(void)
 {
 
 #ifdef DIAGNOSTIC
+#if 0 /* XXX NATHANW_SA 
+       * XXX The cpl != 0 test causes a problem for upcalls, because
+       * XXX getmcontext() is called at splsched(), from inside tsleep().
+       * XXX I haven't yet figured out what problem the cpl != 0 test
+       * XXX avoids, so I'm disabling it to let FP apps work until I figure
+       * XXX out this NPX nonsense for real.
+       */
 	if (cpl != 0 || npx_nointr != 0)
+		panic("npxsave: masked");
+#else
+	if (npx_nointr != 0)
 		panic("npxsave: masked");
 #endif
 	IPRINTF(("Fork"));
