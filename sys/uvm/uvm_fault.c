@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.19 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.20 1999/01/31 09:27:18 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1451,7 +1451,8 @@ Case2:
 					uvmfault_unlockall(&ufi, amap, uobj,
 					  NULL);
 					UVMHIST_LOG(maphist,
-					  "  out of RAM breaking loan, waiting",					  0,0,0,0);
+					  "  out of RAM breaking loan, waiting",
+					  0,0,0,0);
 					uvmexp.fltnoram++;
 					uvm_wait("flt_noram4");
 					goto ReFault;
