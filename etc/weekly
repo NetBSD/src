@@ -1,14 +1,20 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.5 1996/05/08 17:19:49 thorpej Exp $
+#	$NetBSD: weekly,v 1.6 1997/01/05 11:21:10 mrg Exp $
 #	@(#)weekly	5.14 (Berkeley) 6/23/91
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
 export PATH
 
+umask 077
+
 host=`hostname -s`
 echo "Subject: $host weekly run output"
+
+if [ -s /etc/weekly.conf ]; then
+	. /etc/weekly.conf
+fi
 
 #echo ""
 #echo "Removing old .o files:"
@@ -37,17 +43,15 @@ echo "Subject: $host weekly run output"
 #	rm -rf $TDIR
 #fi
 
-if [ -f /usr/lib/uucp/clean.weekly ]; then
+if [ X"$clean_uucp" != XNO -a -f /usr/lib/uucp/clean.weekly ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	echo /usr/lib/uucp/clean.weekly | su daemon
 fi
 echo ""
 
-# Rotation of message log now handled automatically by cron and 'newsyslog'
-
 echo ""
-if [ -f /var/db/locate.database ]; then
+if [ X"$rebuild_locatedb" != XNO -a -f /var/db/locate.database ]; then
 	echo "Rebuilding locate database:"
 	chmod 644 /var/db/locate.database
 	chown nobody.nobody /var/db/locate.database
