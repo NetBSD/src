@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.40 2001/11/28 11:58:22 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.41 2001/12/02 20:12:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.40 2001/11/28 11:58:22 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.41 2001/12/02 20:12:03 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -469,6 +469,7 @@ reswitch:	switch (ch) {
 		case 'e':
 		case 'E':
 		case 'f':
+		case 'F':
 		case 'g':
 		case 'G':
 			if (prec == -1) {
@@ -487,12 +488,18 @@ reswitch:	switch (ch) {
 			if (isinf(_double)) {
 				if (_double < 0)
 					sign = '-';
-				cp = "Inf";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "INF";
+				else
+					cp = "inf";
 				size = 3;
 				break;
 			}
 			if (isnan(_double)) {
-				cp = "NaN";
+				if (ch == 'E' || ch == 'F' || ch == 'G')
+					cp = "NAN";
+				else
+					cp = "nan";
 				size = 3;
 				break;
 			}
@@ -506,13 +513,13 @@ reswitch:	switch (ch) {
 				else
 					ch = 'g';
 			} 
-			if (ch <= 'e') {	/* 'e' or 'E' fmt */
+			if (ch == 'e' || ch == 'E') {
 				--expt;
 				expsize = exponent(expstr, expt, ch);
 				size = expsize + ndig;
 				if (ndig > 1 || flags & ALT)
 					++size;
-			} else if (ch == 'f') {		/* f fmt */
+			} else if (ch == 'f' || ch == 'F') {
 				if (expt > 0) {
 					size = expt;
 					if (prec || flags & ALT)
