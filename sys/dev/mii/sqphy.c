@@ -1,7 +1,7 @@
-/*	$NetBSD: sqphy.c,v 1.22 2001/06/02 21:39:41 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.23 2001/06/19 20:10:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 /*
- * driver for Seeq 80220/80221 and 80223 10/100 ethernet PHYs
+ * driver for Seeq 80220/80221, 80223, and 80225 10/100 ethernet PHYs
  * datasheet from www.seeq.com
  */
 
@@ -106,6 +106,9 @@ const struct mii_phy_funcs sqphy_funcs = {
 const struct mii_phydesc sqphys[] = {
 	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80220,
 	  MII_STR_SEEQ_80220 },
+
+	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80225,
+	  MII_STR_SEEQ_80225 },
 
 	{ 0,				0,
 	  NULL },
@@ -254,6 +257,11 @@ sqphy_status(sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+		/*
+		 * Note: don't get fancy here -- the 80225 only
+		 * supports the SPD_DET and DPLX_DET bits in
+		 * the STATUS register.
+		 */
 		status = PHY_READ(sc, MII_SQPHY_STATUS);
 		if (status & STATUS_SPD_DET)
 			mii->mii_media_active |= IFM_100_TX;
