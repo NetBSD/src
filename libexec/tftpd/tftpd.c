@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.7 1995/06/04 20:48:22 jtc Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.8 1997/04/22 10:33:07 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -142,6 +142,11 @@ main(argc, argv)
 
 	if (setgid(GID_NOBODY)) {
 		syslog(LOG_ERR, "setgid: %m");
+		exit(1);
+	}
+
+	if (setgroups(0, NULL)) {
+		syslog(LOG_ERR, "setgroups: %m");
 		exit(1);
 	}
 
