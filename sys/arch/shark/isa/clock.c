@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/10/05 17:01:49 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2003/02/02 10:24:40 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -320,7 +320,7 @@ void gettimer0count(pcount)
 
 	/*
 	 * Latch the current value of the timer and then read it.
-	 * This guarentees an atomic reading of the time.
+	 * This guarantees an atomic reading of the time.
 	 */
 
 	current = gettick();

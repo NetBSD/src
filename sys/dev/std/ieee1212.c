@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.4 2003/02/01 06:50:42 ichiro Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.5 2003/02/02 10:24:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ int     p1212debug = 1;
  * return -1 on error, or 0 on success and possibly reset *size to a larger
  * value.
  *
- * NOTE: Rom's are guarentee'd per the ISO spec to be contiguous but only the
+ * NOTE: Rom's are guaranteed per the ISO spec to be contiguous but only the
  * first 1k is directly mapped. Anything past 1k is supposed to use a loop
  * around the indirect registers to read in the rom. This code only assumes the
  * buffer passed in represents a total rom regardless of end size. It is the
