@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1996/07/15 06:31:55 leo Exp $
+#	$NetBSD: list,v 1.6 1997/08/03 20:12:17 leo Exp $
 
 # Atari extra's
 LINK	instbin			sbin/edahdi
@@ -37,6 +37,9 @@ COPY	${ARCHDIR}/dot.profile		.profile
 
 # and the keyboard maps
 COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
+
+# mount-point for kernfs
+SPECIAL	mkdir kern
 
 # remove the /usr/share/zoneinfo directory, so the installation script
 # can determine that the atari install does not support it.
