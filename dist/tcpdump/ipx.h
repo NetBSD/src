@@ -1,9 +1,9 @@
-/*	$NetBSD: ipx.h,v 1.1.1.2 2002/05/31 09:28:27 itojun Exp $	*/
+/*	$NetBSD: ipx.h,v 1.1.1.3 2004/09/27 17:06:48 dyoung Exp $	*/
 
 /*
- * IPX protocol formats 
+ * IPX protocol formats
  *
- * @(#) Header: /tcpdump/master/tcpdump/ipx.h,v 1.5 2002/03/05 11:35:45 guy Exp
+ * @(#) Header: /tcpdump/master/tcpdump/ipx.h,v 1.8 2002/12/11 07:13:54 guy Exp
  */
 
 /* well-known sockets */
