@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/08/02 18:49:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/08/03 09:23:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,7 @@ CPPFLAGS+=-DOPENSSL_cleanse=bzero -DOPENSSL_malloc=malloc
 INCS=	des.h
 INCSDIR=/usr/include
 
-SYMLINKS=../des.h ${INCSDIR}/kerberosIV/des.h
-incinstall:: linksinstall
+INCSYMLINKS=../des.h ${INCSDIR}/kerberosIV/des.h
 
 # pod2man --section=3 --center=libdes --release=0.9.6j des.pod > des.3
 # pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod > des_modes.7

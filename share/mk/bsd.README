@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.133 2003/08/02 00:34:25 lukem Exp $
+#	$NetBSD: bsd.README,v 1.134 2003/08/03 09:23:15 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -66,7 +66,7 @@ MKxxx		Can be set to "no" to disable functionality, or
 		Usually defaults to "yes", although some variables
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
-		command-line override of a mk.conf or bsd.own.mk setting
+		command-line override of a mk.conf or <bsd.own.mk> setting
 		is required whilst still honouring a particular
 		Makefile's setting of MKxxx, use
 			env MKxxx=value make
@@ -82,7 +82,7 @@ NOxxx		If defined, disables a feature.
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
-the user to define in MAKECONF (see bsd.own.mk, below) or on the make(1)
+the user to define in MAKECONF (see <bsd.own.mk>, below) or on the make(1)
 command line:
 
 BUILD 		If defined, 'make install' checks that the targets in the
@@ -269,12 +269,12 @@ a few global "feature configuration" parameters.
 
 It has no targets.
 
-To get system-specific configuration parameters, bsd.own.mk will try to
+To get system-specific configuration parameters, <bsd.own.mk> will try to
 include the file specified by the "MAKECONF" variable.  If MAKECONF is not
 set, or no such file exists, the system make configuration file, /etc/mk.conf
 is included.  These files may define any of the variables described below.
 
-bsd.own.mk sets the following variables, if they are not already defined
+<bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
 
 NETBSDSRCDIR	Top of the NetBSD source tree.
@@ -358,10 +358,10 @@ COPY		The flag passed to the install program to cause the binary
 		can either be installed with copies, or with moves using
 		a single knob.  [-c]
 
-Additionally, the following variables may be set by bsd.own.mk or in a
+Additionally, the following variables may be set by <bsd.own.mk> or in a
 make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
-bsd.own.mk):
+<bsd.own.mk>):
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently if ${MACHINE_ARCH} is "alpha",
@@ -401,7 +401,7 @@ EXTERNAL_TOOLCHAIN
 		to change in the short term as parts of the cross-compile
 		framework continue to be cleaned up.
 
-bsd.own.mk is generally useful when building your own Makefiles so that
+<bsd.own.mk> is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
 
 
@@ -424,7 +424,7 @@ DPSRCS		List of source files which are needed for generating
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
 
 The include file <bsd.files.mk> handles the FILES variables and is included
-from bsd.lib.mk and bsd.prog.mk, and uses the following variables:
+from <bsd.lib.mk> and <bsd.prog.mk>, and uses the following variables:
 
 FILES		The list of files to install.
 
@@ -447,17 +447,17 @@ FILESNAME.<fn>	Optional name to install <fn> as.
 
 The include file <bsd.gcc.mk> computes various parameters related to GCC
 support libraries.  It defines no targets.  <bsd.own.mk> MUST be included
-before bsd.gcc.mk.
+before <bsd.gcc.mk>.
 
-The primary users of bsd.gcc.mk are <bsd.prog.mk> and <bsd.lib.mk>, each
+The primary users of <bsd.gcc.mk> are <bsd.prog.mk> and <bsd.lib.mk>, each
 of which need to know where to find certain GCC support libraries.
 
-The behavior of bsd.gcc.mk is influenced by the EXTERNAL_TOOLCHAIN variable,
+The behavior of <bsd.gcc.mk> is influenced by the EXTERNAL_TOOLCHAIN variable,
 which is generally set by the user.  If EXTERNAL_TOOLCHAIN it set, then
 the compiler is asked where to find the support libraries, otherwise the
 support libraries are found in ${DESTDIR}/usr/lib.
 
-bsd.gcc.mk sets the following variables:
+<bsd.gcc.mk> sets the following variables:
 
 _GCC_CRTBEGIN	The full path name to crtbegin.o.
 
@@ -472,7 +472,7 @@ _GCC_LIBGCCDIR	The directory where libgcc.a is located.
 
 =-=-=-=-=   bsd.inc.mk   =-=-=-=-=
 
-The include file <bsd.inc.mk> defines the includes target and uses two
+The include file <bsd.inc.mk> defines the includes target and uses the
 variables:
 
 INCS		The list of include files.
@@ -481,6 +481,10 @@ INCSDIR		The location to install the include files.
 
 INCSNAME	Target name of the include file, if only one; same as
 		FILESNAME, but for include files.
+
+INCSYMLINKS	Similar to SYMLINKS in <bsd.links.mk>, except that these
+		are installed in the 'includes' target and not the
+		(much later) 'install' target.
 
 INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
 		same as FILESNAME_<file>, but for include files.
@@ -523,7 +527,7 @@ KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
 		${KERNSRCDIR}/${KERNARCHDIR}/compile.
 
 It is important that Makefiles (such as those under src/distrib) that
-wish to find compiled kernels use bsd.kernobj.mk and ${KERNOBJDIR}
+wish to find compiled kernels use <bsd.kernobj.mk> and ${KERNOBJDIR}
 rather than make assumptions about the location of the compiled kernel.
 
 
@@ -532,8 +536,9 @@ rather than make assumptions about the location of the compiled kernel.
 The include file <bsd.kinc.mk> defines the many targets (includes,
 subdirectories, etc.), and is used by kernel makefiles to handle
 include file installation.  It is intended to be included alone, by
-kernel Makefiles.  Please see bsd.kinc.mk for more details, and keep
-the documentation in that file up to date.
+kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
+Please see <bsd.kinc.mk> for more details, and keep the documentation
+in that file up to date.
 
 
 =-=-=-=-=   bsd.lib.mk   =-=-=-=-=
@@ -543,7 +548,7 @@ the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
 includes, install, lint, and tags.  Additionally, it has a checkver target
 which checks for installed shared object libraries whose version is greater
 that the version of the source. It has a limited number of suffixes,
-consistent with the current needs of the BSD tree.  bsd.lib.mk includes
+consistent with the current needs of the BSD tree.  <bsd.lib.mk> includes
 <bsd.shlib.mk> to get shared library parameters.
 
 It sets/uses the following variables:
@@ -596,7 +601,20 @@ Libraries are ranlib'd when made.
 =-=-=-=-=   bsd.links.mk   =-=-=-=-=
 
 The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
-and is included from from bsd.lib.mk and bsd.prog.mk.
+and is included from from <bsd.lib.mk> and <bsd.prog.mk>.
+
+LINKS		The list of hard links, consisting of pairs of paths:
+			source-file target-file
+		${DESTDIR} is prepended to both paths before linking.
+		For example, to link /bin/test and /bin/[, use:
+			LINKS=/bin/test /bin/[
+
+SYMLINKS	The list of symbolic links, consisting of pairs of paths:
+			source-file target-file
+		${DESTDIR} is only prepended to target-file before linking.
+		For example, to symlink /usr/bin/tar to /bin/tar resulting
+		in ${DESTDIR}/usr/bin/tar -> /bin/tar:
+			SYMLINKS=/bin/tar /usr/bin/tar
 
 
 =-=-=-=-=   bsd.man.mk   =-=-=-=-=
@@ -683,8 +701,8 @@ BUILDID		If set, the contents of this variable are appended
 
 The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
-of suffixes, consistent with the current needs of the BSD tree.  bsd.prog.mk
-includes <bsd.shlib.mk> to get shared library parameters.
+of suffixes, consistent with the current needs of the BSD tree. 
+<bsd.prog.mk> includes <bsd.shlib.mk> to get shared library parameters.
 
 It has eight targets:
 
@@ -755,16 +773,9 @@ LDADD		Additional loader objects.  Usually used for libraries.
 
 LDFLAGS		Additional loader flags.
 
-LINKS		The list of binary links; should be full pathnames, the
-		linked-to file coming first, followed by the linked
-		file.  The files are hard-linked.  For example, to link
-		/bin/test and /bin/[, use:
+LINKS		See <bsd.links.mk>
 
-			LINKS=	${DESTDIR}/bin/test ${DESTDIR}/bin/[
-
-SYMLINKS	The list of symbolic links; should be full pathnames.
-                Syntax is identical to LINKS. Note that DESTDIR is not
-		automatically included in the link.
+SYMLINKS	See <bsd.links.mk>
 
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
@@ -933,9 +944,9 @@ RPC_XDIR:	Directory containing .x/.h files
 
 The include file <bsd.shlib.mk> computes parameters for shared library
 installation and use.  It defines no targets.  <bsd.own.mk> MUST be
-included before bsd.shlib.mk.
+included before <bsd.shlib.mk>.
 
-bsd.own.mk sets the following variables, if they are not already defined
+<bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
 
 SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBINSTALLDIR} instead of

@@ -1,10 +1,13 @@
-#	$NetBSD: bsd.inc.mk,v 1.24 2003/07/18 08:26:07 lukem Exp $
+#	$NetBSD: bsd.inc.mk,v 1.25 2003/08/03 09:23:16 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		incinstall
-includes:	${INCS} incinstall
+includes:	${INCS} incinstall inclinkinstall
+
+##### Default values
+INCSYMLINKS?=
 
 ##### Install rules
 incinstall::	# ensure existence
@@ -35,3 +38,18 @@ incinstall::	${_F}
 .undef _FDIR
 .undef _FNAME
 .undef _F
+
+inclinkinstall::
+.if !empty(INCSYMLINKS)
+	@(set ${INCSYMLINKS}; \
+	 while test $$# -ge 2; do \
+		l=$$1; shift; \
+		t=${DESTDIR}$$1; shift; \
+		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		    [ "$$l" = "$$ttarg" ]; then \
+			continue ; \
+		fi ; \
+		echo "$$t -> $$l"; \
+		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
+	 done; )
+.endif
