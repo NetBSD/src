@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.11 2001/11/14 06:16:09 tv Exp $
+.\"	$NetBSD: m4.1,v 1.12 2001/11/14 14:49:38 tv Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
@@ -9,7 +9,7 @@
 .Nm m4
 .Nd macro language processor
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl Pg
 .Oo
 .Fl D Ns Ar name Ns Op Ar =value
@@ -17,6 +17,7 @@
 .Op Fl I Ar dirname
 .Op Fl U Ns Ar name
 .Op Fl d Ar flags
+.Op Fl o Ar trfile
 .Op Fl t Ar name
 .Sh DESCRIPTION
 The
@@ -115,6 +116,11 @@ In this mode, changequote with
 two empty parameters deactivates quotes, translit handles simple character
 ranges (e.g., a-z), regular expressions mimic emacs behavior,
 and the number of diversions is unlimited.
+.It Fl o Ar trfile
+Specify the tracing output file for
+.Fl t ;
+tracing defaults to printing to
+.Ql stderr .
 .It Fl t Ar macro
 Turn tracing on for 
 .Ar macro .
