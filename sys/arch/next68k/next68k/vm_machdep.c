@@ -1,7 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1998/11/11 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 1999/01/13 09:26:00 abs Exp $	*/
 
 /*
- * This file was taken from from mvme68k/mvme68k/vm_machdep.c
+ * This file was taken from mvme68k/mvme68k/vm_machdep.c
  * should probably be re-synced when needed.
  * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
  * original cvs id:
