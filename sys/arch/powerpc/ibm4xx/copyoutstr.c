@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.2 2002/07/11 01:38:48 simonb Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.3 2003/02/02 20:43:22 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,16 +39,14 @@
 #include <uvm/uvm_extern.h>
 #include <machine/pcb.h>
 
-int setfault(faultbuf);		/* defined in locore.S */
-
 int
 copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
-	faultbuf env;
+	struct faultbuf env;
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
 		/* XXXX -- len may be lost on a fault */
 		if (done)

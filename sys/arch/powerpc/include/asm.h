@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2003/01/18 21:36:44 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,6 +91,46 @@
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
+
+#ifdef _KERNEL
+/*
+ * Get cpu_info pointer for current processor.  Always in SPRG0. *ALWAYS*
+ */
+#define	GET_CPUINFO(r)		mfsprg r,0
+/*
+ * IN:
+ *	R4[er] = first free byte beyond end/esym.
+ *
+ * OUT:
+ *	R1[sp] = new kernel stack
+ *	R4[er] = kernelend
+ */
+
+#define	INIT_CPUINFO(er,sp,tmp1,tmp2) 					\
+	li	tmp1,PGOFSET;						\
+	add	er,er,tmp1;						\
+	andc	er,er,tmp1;		/* page align */		\
+	lis	tmp1,_C_LABEL(cpu_info)@ha;				\
+	addi	tmp1,tmp1,_C_LABEL(cpu_info)@l;				\
+	mtsprg	0,tmp1;			/* save for later use */	\
+	addi	er,er,INTSTK;						\
+	stw	er,CI_INTSTK(tmp1);					\
+	addi	er,er,SPILLSTK;						\
+	stw	er,CI_SPILLSTK(tmp1);					\
+	stw	er,CI_IDLE_PCB(tmp1);					\
+	addi	er,er,USPACE;		/* space for idle_u */		\
+	li	tmp2,-1;						\
+	stw	tmp2,CI_INTRDEPTH(tmp1);				\
+	li	tmp2,0;							\
+	stw	tmp2,-16(er);		/* terminate idle stack chain */\
+	lis	tmp1,_C_LABEL(proc0paddr)@ha;				\
+	stw	er,_C_LABEL(proc0paddr)@l(tmp1);			\
+	addi	er,er,USPACE;		/* stackpointer for proc0 */	\
+	addi	sp,er,-FRAMELEN;	/* stackpointer for proc0 */	\
+		/* er = end of mem reserved for kernel */		\
+	stwu	tmp2,-16(sp)		/* end of stack chain */
+
+#endif
 
 /* Condition Register Bit Fields */
 

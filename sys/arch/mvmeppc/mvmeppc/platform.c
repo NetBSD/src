@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.1 2002/02/27 21:02:25 scw Exp $	*/
+/*	$NetBSD: platform.c,v 1.2 2003/02/02 20:43:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct platform *platform;
 extern struct platform platform_160x;
 #endif
 
-struct platform	*all_platforms[] = {
+struct platform	* const all_platforms[] = {
 #ifdef SUPPORT_MVME160X
 	&platform_160x,
 #endif
@@ -61,7 +61,7 @@ struct platform	*all_platforms[] = {
 void
 ident_platform(void)
 {
-	struct platform **p;
+	struct platform * const *p;
 
 	for (p = &all_platforms[0]; *p != NULL; p++)
 		if ((*(*p)->match)(*p) != 0)
@@ -69,4 +69,3 @@ ident_platform(void)
 
 	platform = *p;
 }
-

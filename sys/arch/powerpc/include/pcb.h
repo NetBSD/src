@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.12 2003/01/19 02:43:11 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.13 2003/02/02 20:43:23 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,14 @@
 
 #include <powerpc/reg.h>
 
-typedef int faultbuf[23];
+struct faultbuf {
+	register_t fb_pc;		/* PC */
+	register_t fb_sp;		/* R1 */
+	register_t fb_r2;		/* R2 (why?) */
+	register_t fb_cr;		/* CR */
+	register_t fb_fixreg[19];	/* R13-R31 */
+};
+
 struct fpu {
 	double fpr[32];
 	double fpscr;	/* FPSCR stored as double for easier access */
@@ -51,7 +58,7 @@ struct pcb {
 #define	PCB_ALTIVEC	2	/* Process had AltiVec initialized */
 	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
 	struct cpu_info * __volatile pcb_veccpu;/* CPU with our VECTOR state */
-	faultbuf *pcb_onfault;	/* For use during copyin/copyout */
+	struct faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	vaddr_t pcb_kmapsr;	/* where to map user segment in kernel */
 	vaddr_t pcb_umapsr;	/* the user segment mapped in kernel */
 	struct fpu pcb_fpu;	/* Floating point processor */
@@ -64,9 +71,8 @@ struct md_coredump {
 	struct vreg vstate;
 };
 
-#if defined(_KERNEL) && !defined(MULTIPROCESSOR)
-extern struct pcb *curpcb;
-extern struct pmap *curpm;
+#ifdef _KERNEL
+int setfault(struct faultbuf *);
 #endif
 
 #endif	/* _POWERPC_PCB_H_ */
