@@ -1,3 +1,5 @@
+/*	$NetBSD: names.c,v 1.16 1995/05/07 22:16:23 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)names.c	8.1 (Berkeley) 6/6/93
- *	$Id: names.c,v 1.15 1995/04/24 07:43:17 cgd Exp $
+ *	@(#)names.c	8.1 (Berkeley) 6/6/93
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(luna68k) && !defined(mips)
