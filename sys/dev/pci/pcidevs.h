@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.674 2004/12/11 01:56:03 reinoud Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.675 2004/12/16 00:30:31 heas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.673 2004/12/11 01:55:01 reinoud Exp 
+ *	NetBSD: pcidevs,v 1.674 2004/12/16 00:29:06 heas Exp 
  */
 
 /*
@@ -996,6 +996,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500	0x4e44		/* Radeon 9700/9500 Series */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_2	0x4e45		/* Radeon 9700/9500 Series */
 #define	PCI_PRODUCT_ATI_RADEON_9600	0x4e46		/* Radeon 9600TX */
+#define	PCI_PRODUCT_ATI_RADEON_MOB_T2	0x4e54		/* Radeon Mobility T2 (M10) NT */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_S	0x4e64		/* Radeon 9700/9500 Series Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_9700_9500_S2	0x4e65		/* Radeon 9700/9500 Series Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_9600_2	0x4e66		/* Radeon 9600TX Secondary */
