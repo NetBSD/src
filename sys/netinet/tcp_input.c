@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.2 1997/05/14 18:11:28 mellon Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.3 1997/05/28 21:46:08 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1771,7 +1771,7 @@ syn_cache_insert(sc, prevp, headp)
 	if (syn_cache_count == 0) {
 		struct timeval tv;
 		microtime(&tv);
-		syn_hash1 = random() ^ (u_int32_t)&sc;
+		syn_hash1 = random() ^ (u_int32_t)(u_int64_t)&sc;
 		syn_hash2 = random() ^ tv.tv_usec;
 	}
 
