@@ -44,18 +44,19 @@
  * so that the entire packet being decompressed doesn't have
  * to be in contiguous memory (just the compressed header).
  *
- *	$Id: slcompress.c,v 1.4 1993/08/14 06:38:40 deraadt Exp $
+ *	$Id: slcompress.c,v 1.4.2.1 1993/11/14 20:20:27 mycroft Exp $
  */
   
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
-#include "slcompress.h"
+#include <net/slcompress.h>
 
 #ifndef SL_NO_STATS
 #define INCR(counter) ++comp->counter;

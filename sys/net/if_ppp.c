@@ -69,44 +69,44 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.3.2.3 1993/10/27 01:42:19 mycroft Exp $ */
+/* $Id: if_ppp.c,v 1.3.2.4 1993/11/14 20:19:58 mycroft Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
+#include "bpfilter.h"
 #include "ppp.h"
-#if NPPP > 0
 
 #define VJC
 
-#include "param.h"
-#include "proc.h"
-#include "mbuf.h"
-#include "buf.h"
-#include "dkstat.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "file.h"
-#include "tty.h"
-#include "kernel.h"
-#include "conf.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/tty.h>
+#include <sys/kernel.h>
+#include <sys/conf.h>
 
-#include "machine/cpu.h"
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
-#include "if.h"
-#include "if_types.h"
-#include "netisr.h"
-#include "route.h"
 #if INET
-#include "../netinet/in.h"
-#include "../netinet/in_systm.h"
-#include "../netinet/in_var.h"
-#include "../netinet/ip.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
 #endif
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
-#include "time.h"
-#include "bpf.h"
+#include <sys/time.h>
+#include <net/bpf.h>
 #endif
+
+#include <machine/cpu.h>
 
 /*
  * Here we try to tell whether we are in a 386BSD kernel, or
@@ -1430,6 +1430,3 @@ pppdumpb(b, l)
     *bp = 0;
     printf("%s\n", buf);
 }
-
-
-#endif	/* NPPP > 0 */
