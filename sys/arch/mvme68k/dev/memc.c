@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.5 2001/07/27 20:33:35 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.6 2001/07/27 20:48:58 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -485,18 +485,18 @@ memecc_attach(struct memc_softc *sc)
 	 * Clear any error currently in the logs
 	 */
 	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER);
-/* #ifdef DIAGNOSTIC */
+#ifdef DIAGNOSTIC
 	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0)
 		memecc_log_error(sc, rv, 0, 0);
-/* #endif */
+#endif
 	memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER,
 		    MEMECC_ERROR_LOGGER_ERRLOG);
 
 	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 3);
-/* #ifdef DIAGNOSTIC */
+#ifdef DIAGNOSTIC
 	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0)
 		memecc_log_error(sc, rv, 3, 0);
-/* #endif */
+#endif
 	memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 3,
 		    MEMECC_ERROR_LOGGER_ERRLOG);
 
