@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2000/09/13 13:48:25 tsutsui Exp $
+#	$NetBSD: list,v 1.6 2001/06/15 19:26:42 tsutsui Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -81,6 +81,7 @@ COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
 COPY	${CURDIR}/../../../../etc/services	etc/services
 SPECIAL	pwd_mkdb -p -d . etc/master.passwd
+SPECIAL /bin/rm etc/spwd.db etc/pwd.db
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
