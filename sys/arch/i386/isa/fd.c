@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.65 1995/01/03 01:46:35 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.66 1995/01/13 07:57:01 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -123,6 +123,8 @@ struct cfdriver fdccd = {
  */
 struct fd_type {
 	int	sectrac;	/* sectors per track */
+	int	heads;		/* number of heads */
+	int	seccyl;		/* sectors per cylinder */
 	int	secsize;	/* size code for sectors */
 	int	datalen;	/* data len when secsize = 0 */
 	int	steprate;	/* step rate and head unload time */
@@ -132,19 +134,18 @@ struct fd_type {
 	int	size;		/* size of disk in sectors */
 	int	step;		/* steps per cylinder */
 	int	rate;		/* transfer speed code */
-	int	heads;		/* number of heads */
 	char	*name;
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-        { 18,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,2,"1.44MB"    }, /* 1.44MB diskette */
-        { 15,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,2, "1.2MB"    }, /* 1.2 MB AT-diskettes */
-        {  9,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,2, "360KB/AT" }, /* 360kB in 1.2MB drive */
-        {  9,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,2, "360KB/PC" }, /* 360kB PC diskettes */
-        {  9,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,2, "720KB"    }, /* 3.5" 720kB diskette */
-        {  9,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,2, "720KB/x"  }, /* 720kB in 1.2MB drive */
-        {  9,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,2, "360KB/x"  }, /* 360kB in 720kB drive */
+        { 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,"1.44MB"    }, /* 1.44MB diskette */
+        { 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS, "1.2MB"    }, /* 1.2 MB AT-diskettes */
+        {  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS, "360KB/AT" }, /* 360kB in 1.2MB drive */
+        {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS, "360KB/PC" }, /* 360kB PC diskettes */
+        {  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    }, /* 3.5" 720kB diskette */
+        {  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS, "720KB/x"  }, /* 720kB in 1.2MB drive */
+        {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  }, /* 360kB in 720kB drive */
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -161,7 +162,7 @@ struct fd_softc {
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_skip;			/* bytes transferred so far */
-	int sc_track;			/* where we think the head is */
+	int sc_cylin;			/* where we think the head is */
 	int sc_nblks;			/* number of blocks tranferring */
 	int sc_ops;			/* I/O operations completed */
 	daddr_t	sc_blkno;		/* starting block number */
@@ -170,15 +171,19 @@ struct fd_softc {
 /* floppy driver configuration */
 int fdprobe __P((struct device *, void *, void *));
 void fdattach __P((struct device *, struct device *, void *));
-void fdstrategy __P((struct buf *));
 
 struct cfdriver fdcd = {
 	NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc)
 };
+
+void fdgetdisklabel __P((struct fd_softc *));
+int fd_get_parms __P((struct wd_softc *));
+void fdstrategy __P((struct buf *));
+void fdstart __P((struct fd_softc *));
+
 struct dkdriver fddkdriver = { fdstrategy };
 
 struct fd_type *fd_nvtotype __P((char *, int, int));
-void fdstart __P((struct fd_softc *fd));
 void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
 void fd_motor_on __P((void *arg));
@@ -381,20 +386,21 @@ fdattach(parent, self, aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	/* XXXX should allow `flags' to override device type */
+	/* XXX Allow `flags' to override device type? */
 
 	if (type)
 		printf(": %s %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
-	fd->sc_track = -1;
+
+	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
 	fd->sc_dk.dk_driver = &fddkdriver;
 #ifdef NEWCONFIG
-	/* XXX need to do some more fiddling with sc_dk */
+	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
 #endif
 }
@@ -459,59 +465,72 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	int fdu = FDUNIT(bp->b_dev);
-	struct fd_softc *fd = fdcd.cd_devs[fdu];
-	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
-	struct fd_type *type = fd_dev_to_type(fd, bp->b_dev);
-	struct buf *dp;
+	struct fd_softc *fd;
+	int unit = FDUNIT(bp->b_dev);
+	struct fd_type *type;
 	int nblks;
 	daddr_t blkno;
  	int s;
 
-#ifdef DIAGNOSTIC
-	if (bp->b_blkno < 0 || fdu < 0 || fdu >= fdcd.cd_ndevs) {
-		printf("fdstrategy: fdu=%d, blkno=%d, bcount=%d\n", fdu,
-		    bp->b_blkno, bp->b_bcount);
-		bp->b_flags |= B_ERROR;
+	/* Valid unit, controller, and request? */
+	if (unit >= fdcd.cd_ndevs ||
+	    (fd = fdcd.cd_devs[unit]) == 0 ||
+	    bp->b_blkno < 0 ||
+	    (bp->b_bcount & DEV_BSIZE) != 0) {
+		bp->b_error = EINVAL;
 		goto bad;
 	}
-#endif
+
+	/* If it's a null transfer, return immediately. */
+	if (bp->b_bcount == 0)
+		goto done;
 
 	blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
  	nblks = type->size;
 	if (blkno + (bp->b_bcount / FDC_BSIZE) > nblks) {
 		if (blkno == nblks) {
-			/* if we try to read past end of disk, return count of 0 */
+			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-		} else {
-			bp->b_error = ENOSPC;
-			bp->b_flags |= B_ERROR;
+			goto done;
+		} else if (blkno > nblks) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			goto bad;
 		}
-		goto bad;
+		/* Otherwise, truncate request. */
+		bp->b_bcount = (nblks - blkno) * FDC_BSIZE;
 	}
- 	bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
-#ifdef notyet
-	bp->b_type = type;
-#endif
+
+	type = fd_dev_to_type(fd, bp->b_dev);
+ 	bp->b_cylin = blkno / type->seccyl;
+
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
 #endif
+
+	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort(&fd->sc_q, bp);
 	untimeout(fd_motor_off, fd); /* a good idea */
 	if (!fd->sc_q.b_active)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
-	else if (fdc->sc_state == DEVIDLE) {
-		printf("fdstrategy: controller inactive\n");
-		fdcstart(fdc);
+	else {
+		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+		if (fdc->sc_state == DEVIDLE) {
+			printf("fdstrategy: controller inactive\n");
+			fdcstart(fdc);
+		}
 	}
 #endif
 	splx(s);
 	return;
 
 bad:
+	bp->b_flags |= B_ERROR;
+done:
+	/* Toss transfer; we're done early. */
 	biodone(bp);
 }
 
@@ -529,6 +548,36 @@ fdstart(fd)
 	/* If controller not already active, start it. */
 	if (!active)
 		fdcstart(fdc);
+}
+
+void
+fdfinish(fd, bp)
+	struct fd_softc *fd;
+	struct buf *bp;
+{
+	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+
+	/*
+	 * Move this drive to the end of the queue to give others a `fair'
+	 * chance.  We only force a switch if N operations are completed while
+	 * another drive is waiting to be serviced, since there is a long motor
+	 * startup delay whenever we switch.
+	 */
+	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+		fd->sc_ops = 0;
+		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
+		if (bp->b_actf) {
+			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+		} else
+			fd->sc_q.b_active = 0;
+	}
+	bp->b_resid = bp->b_bcount - fd->sc_skip;
+	fd->sc_skip = 0;
+	fd->sc_q.b_actf = bp->b_actf;
+	biodone(bp);
+	/* turn off motor 5s from now */
+	timeout(fd_motor_off, fd, 5 * hz);
+	fdc->sc_state = DEVIDLE;
 }
 
 void
@@ -556,10 +605,8 @@ void
 fd_motor_off(arg)
 	void *arg;
 {
+	struct fd_softc *fd = arg;
 	int s;
-	struct fd_softc *fd;
-
-	fd = (struct fd_softc *)arg;
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
@@ -571,12 +618,9 @@ void
 fd_motor_on(arg)
 	void *arg;
 {
-	struct fd_softc *fd;
-	struct fdc_softc *fdc;
+	struct fd_softc *fd = arg;
+	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 	int s;
-
-	fd = (struct fd_softc *)arg;
-	fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
@@ -632,20 +676,21 @@ Fdopen(dev, flags)
 	dev_t dev;
 	int flags;
 {
- 	int fdu = FDUNIT(dev);
- 	int type = FDTYPE(dev);
+ 	int unit, type;
 	struct fd_softc *fd;
 
-	if (fdu >= fdcd.cd_ndevs)
+	unit = FDUNIT(dev);
+	if (unit >= fdcd.cd_ndevs)
 		return ENXIO;
-	fd = fdcd.cd_devs[fdu];
-	if (!fd)
+	fd = fdcd.cd_devs[unit];
+	if (fd == 0)
 		return ENXIO;
 
+	type = FDTYPE(dev);
 	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
 		return EINVAL;
 
-	fd->sc_track = -1;
+	fd->sc_cylin = -1;
 	/* XXX disallow multiple opens? */
 	fd->sc_flags |= FD_OPEN;
 
@@ -657,8 +702,7 @@ Fdclose(dev, flags)
 	dev_t dev;
 	int flags;
 {
- 	int fdu = FDUNIT(dev);
-	struct fd_softc *fd = fdcd.cd_devs[fdu];
+	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
@@ -725,12 +769,9 @@ void
 fdctimeout(arg)
 	void *arg;
 {
-	struct fdc_softc *fdc;
-	struct fd_softc *fd;
+	struct fdc_softc *fdc = arg;
+	struct fd_softc *fd = fdc->sc_drive.tqh_first;
 	int s;
-
-	fdc = (struct fdc_softc *)arg;
-	fd = fdc->sc_drives.tqh_first;
 
 	s = splbio();
 	fdcstatus(&fd->sc_dev, 0, "timeout");
@@ -748,12 +789,10 @@ void
 fdcpseudointr(arg)
 	void *arg;
 {
-	struct fdc_softc *fdc;
+	struct fdc_softc *fdc = arg;
 	int s;
 
-	fdc = (struct fdc_softc *)arg;
-
-	/* just ensure it has the right spl */
+	/* Just ensure it has the right spl. */
 	s = splbio();
 	(void) fdcintr(fdc);
 	splx(s);
@@ -768,23 +807,24 @@ fdcintr(fdc)
 	struct fd_softc *fd;
 	struct buf *bp;
 	int iobase = fdc->sc_iobase;
-	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
+	int read, head, trac, sec, i, s, blkno, nblks;
 	struct fd_type *type;
 
-again:
+loop:
+	* Is there a drive for the controller to do a transfer with? */
 	fd = fdc->sc_drives.tqh_first;
-	if (!fd) {
-		/* no drives waiting; end */
+	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
  		return 1;
 	}
+
+	/* Is there a transfer to this drive?  If not, deactivate drive. */
 	bp = fd->sc_q.b_actf;
-	if (!bp) {
-		/* nothing queued on this drive; try next */
+	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		fd->sc_q.b_active = 0;
-		goto again;
+		goto loop;
 	}
 
 	switch (fdc->sc_state) {
@@ -793,12 +833,12 @@ again:
 		fd->sc_skip = 0;
 		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
 		untimeout(fd_motor_off, fd);
-		if (fd->sc_flags & FD_MOTOR_WAIT) {
+		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return 1;
 		}
-		if (!(fd->sc_flags & FD_MOTOR)) {
-			/* lame controller */
+		if ((fd->sc_flags & FD_MOTOR) == 0) {
+			/* Turn on the motor, being careful about pairing. */
 			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
 				untimeout(fd_motor_off, ofd);
@@ -807,55 +847,47 @@ again:
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
-			/* allow .25s for motor to stabilize */
+			/* Allow .25s for motor to stabilize. */
 			timeout(fd_motor_on, fd, hz / 4);
 			return 1;
 		}
-		/* at least make sure we are selected */
+		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc, 0);
 
 		/* fall through */
 	case DOSEEK:
 	doseek:
-		if (fd->sc_track == bp->b_cylin)
+		if (fd->sc_cylin == bp->b_cylin)
 			goto doio;
 
-#ifdef notyet
-		type = bp->b_type;
-#else
 		type = fd_dev_to_type(fd, bp->b_dev);
-#endif
+
 		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
 		out_fdc(iobase, type->steprate);
 		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
 
 		out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
 		out_fdc(iobase, fd->sc_drive);	/* drive number */
-		out_fdc(iobase, bp->b_cylin);
-		fd->sc_track = -1;
+		out_fdc(iobase, bp->b_cylin * type->step);
+
+		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 		timeout(fdctimeout, fdc, 4 * hz);
 		return 1;
 
 	case DOIO:
 	doio:
-#ifdef notyet
-		type = bp->b_type;
-#else
 		type = fd_dev_to_type(fd, bp->b_dev);
-#endif
-		sectrac = type->sectrac;
-		sec = fd->sc_blkno % (sectrac * type->heads);
-		nblks = (sectrac * type->heads) - sec;
-		nblks = min(nblks,
-		    (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
+		sec = fd->sc_blkno % type->seccyl;
+		nblks = type->seccyl - sec;
+		nblks = min(nblks, (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
-		head = sec / sectrac;
-		sec %= sectrac;
+		head = sec / type->sectrac;
+		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
 		{int block;
-		 block = (fd->sc_track * type->heads / type->step + head) * sectrac + sec;
+		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
 			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
@@ -874,7 +906,7 @@ again:
 		outb(iobase + fdctl, type->rate);
 #ifdef DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
-		    read ? "read" : "write", fd->sc_drive, fd->sc_track, head,
+		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
 #endif
 		if (read)
@@ -882,11 +914,11 @@ again:
 		else
 			out_fdc(iobase, NE7CMD_WRITE);	/* WRITE */
 		out_fdc(iobase, (head << 2) | fd->sc_drive);
-		out_fdc(iobase, fd->sc_track / type->step);	/* track */
+		out_fdc(iobase, fd->sc_cylin);		/* track */
 		out_fdc(iobase, head);
 		out_fdc(iobase, sec + 1);		/* sector +1 */
 		out_fdc(iobase, type->secsize);		/* sector size */
-		out_fdc(iobase, sectrac);		/* sectors/track */
+		out_fdc(iobase, type->sectrac);		/* sectors/track */
 		out_fdc(iobase, type->gap1);		/* gap1 size */
 		out_fdc(iobase, type->datalen);		/* data length */
 		fdc->sc_state = IOCOMPLETE;
@@ -902,16 +934,18 @@ again:
 		return 1;
 		
 	case SEEKCOMPLETE:
+		type = fd_dev_to_type(fd, bp->b_dev);
 		/* make sure seek really happened */
 		out_fdc(iobase, NE7CMD_SENSEI);
-		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != bp->b_cylin) {
+		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
+		    cyl != bp->b_cylin * type->step) {
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
-			goto again;
+			goto loop;
 		}
-		fd->sc_track = bp->b_cylin;
+		fd->sc_cylin = bp->b_cylin;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -924,7 +958,7 @@ again:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
 		fdcretry(fdc);
-		goto again;
+		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout(fdctimeout, fdc);
@@ -941,7 +975,7 @@ again:
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
-			goto again;
+			goto loop;
 		}
 		nblks = fd->sc_nblks;
 #ifdef NEWCONFIG
@@ -960,16 +994,12 @@ again:
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
 			blkno = fd->sc_blkno += nblks;
-#ifdef notyet
-			type = bp->b_type;
-#else
 			type = fd_dev_to_type(fd, bp->b_dev);
-#endif
-			bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
+			bp->b_cylin = blkno / type->seccyl;
 			goto doseek;
 		} else {
 			fdfinish(fd, bp);
-			goto again;
+			goto loop;
 		}
 
 	case DORESET:
@@ -1011,9 +1041,9 @@ again:
 			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
-			goto again;
+			goto loop;
 		}
-		fd->sc_track = 0;
+		fd->sc_cylin = 0;
 		goto doseek;
 
 	case MOTORWAIT:
@@ -1072,36 +1102,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-void
-fdfinish(fd, bp)
-	struct fd_softc *fd;
-	struct buf *bp;
-{
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-
-	/*
-	 * Move this drive to the end of the queue to give others a `fair'
-	 * chance.  We only force a switch if N operations are completed while
-	 * another drive is waiting to be serviced, since there is a long motor
-	 * startup delay whenever we switch.
-	 */
-	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
-		fd->sc_ops = 0;
-		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		if (bp->b_actf) {
-			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
-		} else
-			fd->sc_q.b_active = 0;
-	}
-	bp->b_resid = bp->b_bcount - fd->sc_skip;
-	fd->sc_skip = 0;
-	fd->sc_q.b_actf = bp->b_actf;
-	biodone(bp);
-	/* turn off motor 5s from now */
-	timeout(fd_motor_off, fd, 5 * hz);
-	fdc->sc_state = DEVIDLE;
 }
 
 int
