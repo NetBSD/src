@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.14 1993/11/13 20:08:24 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.15 1993/11/13 22:36:51 mycroft Exp $
  */
 
 /*
@@ -145,10 +145,10 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register int i;
-	register struct proc *p = curproc;
+	register struct proc *p;
+	register struct pcb *pcb;
+	int type, code;
 	u_quad_t sticks;
-	int ucode, type, code, eva;
 	extern char fusubail[];
 
 	cnt.v_trap++;
@@ -157,42 +157,36 @@ trap(frame)
 	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 	       frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 	       frame.tf_eflags, rcr2(), cpl);
-	printf("curpcb %x curproc %x\n", curpcb, curproc);
+	printf("curproc %x\n", curproc);
 #endif
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
 
-	if (curpcb == 0)
-		goto we_re_toast;
+	if ((p = curproc) == 0)
+		p = &proc0;
+	/* can't use curpcb, as it might be NULL; and we have p in a register
+	   anyway */
+	pcb = (struct pcb *)p->p_addr;
 
-#ifdef DDB
-	if (curpcb->pcb_onfault)
-		if (type == T_BPTFLT || type == T_TRCTRAP)
-			if (kdb_trap (type, 0, &frame))
-				return;
-#endif
-
-	if (curproc == 0)
+	if (pcb == 0)
 		goto we_re_toast;
 
 	/* fusubail is used by [fs]uswintr to avoid page faulting */
-	if (curpcb->pcb_onfault &&
-	    (type != T_PAGEFLT || curpcb->pcb_onfault == fusubail)) {
+	if (pcb->pcb_onfault &&
+	    (type != T_PAGEFLT || pcb->pcb_onfault == fusubail)) {
 	    copyfault:
-		frame.tf_eip = (int)curpcb->pcb_onfault;
+		frame.tf_eip = (int)pcb->pcb_onfault;
 		return;
 	}
 
 	sticks = p->p_sticks;
 
-	if (ISPL(frame.tf_cs) == SEL_UPL) {
+	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
 		p->p_regs = (int *)&frame;
 	}
 
-	ucode = 0;
-	eva = rcr2();
 	code = frame.tf_err;
 
 	switch (type) {
@@ -215,7 +209,7 @@ trap(frame)
 			printf("unknown trap %s", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		       type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
+		       type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -224,14 +218,12 @@ trap(frame)
 	    case T_STKFLT|T_USER:
 	    case T_PROTFLT|T_USER:		/* protection fault */
 	    case T_ALIGNFLT|T_USER:
-		ucode = type &~ T_USER;
-		i = SIGBUS;
+		trapsignal(p, SIGBUS, type &~ T_USER);
 		break;
 
 	    case T_PRIVINFLT|T_USER:		/* privileged instruction fault */
 	    case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		ucode = type &~ T_USER;
-		i = SIGILL;
+		trapsignal(p, SIGILL, type &~ T_USER);
 		break;
 
 	    case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -242,15 +234,16 @@ trap(frame)
 		}
 		goto out;
 
-	    case T_DNA|T_USER:
+	    case T_DNA|T_USER: {
+		int rv;
 #if NNPX > 0
 		/* if a transparent fault (due to context switch "late") */
 		if (npxdna())
 			return;
 #endif
 #if NFPE > 0
-		i = math_emulate(&frame);
-		if (i == 0) {
+		rv = math_emulate(&frame);
+		if (rv == 0) {
 #ifdef		TRACE_EMU
 			if (frame.tf_eflags & PSL_T)
 				goto trace;
@@ -260,21 +253,20 @@ trap(frame)
 #else
 		printf("pid %d killed due to lack of fpu and fpe\n",
 		       p->p_pid);
-		i = SIGKILL;
+		rv = SIGKILL;
 #endif
-		ucode = type &~ T_USER;
+		trapsignal(p, rv, type &~ T_USER);
 		break;
+	    }
 
 	    case T_BOUND|T_USER:
 	    case T_OFLOW|T_USER:
 	    case T_DIVIDE|T_USER:
-		ucode = type &~ T_USER;
-		i = SIGFPE;
+		trapsignal(p, SIGFPE, type &~ T_USER);
 		break;
 
 	    case T_ARITHTRAP|T_USER:
-		ucode = code;
-		i = SIGFPE;
+		trapsignal(p, SIGFPE, code);
 		break;
 
 	    case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -294,7 +286,7 @@ trap(frame)
 		extern vm_map_t kernel_map;
 		unsigned nss, v;
 
-		va = trunc_page((vm_offset_t)eva);
+		va = trunc_page((vm_offset_t)rcr2());
 		/*
 		 * It is only a kernel address space fault iff:
 		 * 	1. (type & T_USER) == 0  and
@@ -356,13 +348,14 @@ trap(frame)
 		}
 	    nogo:
 		if (type == T_PAGEFLT) {
-			if (curpcb->pcb_onfault)
+			if (pcb->pcb_onfault)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		trapsignal(p, (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV,
+			   T_PAGEFLT);
 		break;
 	    }
 
@@ -378,7 +371,7 @@ trap(frame)
 	    case T_TRCTRAP|T_USER:		/* trace trap */
 	    trace:
 		frame.tf_eflags &= ~PSL_T;
-		i = SIGTRAP;
+		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
 #include "isa.h"
@@ -399,7 +392,6 @@ trap(frame)
 #endif
 	}
 
-	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
     out:
