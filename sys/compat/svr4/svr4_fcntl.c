@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.9 1995/06/24 20:29:21 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.10 1995/09/19 22:10:11 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -47,7 +47,6 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_poll.h>
-
 
 static int
 svr4_to_bsd_cmd(cmd)
@@ -175,11 +174,12 @@ svr4_to_bsd_flock(iflp, oflp)
 }
 
 int
-svr4_open(p, uap, retval)
+svr4_open(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_open_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_open_args	*uap = v;
 	int			error;
 	struct open_args	cup;
 
@@ -208,11 +208,12 @@ svr4_open(p, uap, retval)
 
 
 int
-svr4_creat(p, uap, retval)
+svr4_creat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_creat_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_creat_args *uap = v;
 	struct open_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -227,11 +228,12 @@ svr4_creat(p, uap, retval)
 
 
 int
-svr4_access(p, uap, retval)
+svr4_access(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_access_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_access_args *uap = v;
 	struct access_args cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -245,11 +247,12 @@ svr4_access(p, uap, retval)
 
 
 int
-svr4_fcntl(p, uap, retval)
+svr4_fcntl(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_fcntl_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_fcntl_args	*uap;
 	int			error;
 	struct fcntl_args	fa;
 
@@ -359,11 +362,12 @@ svr4_pollscan(p, pl, nfd, retval)
  * differently.
  */
 int
-svr4_poll(p, uap, retval)
+svr4_poll(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_poll_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_poll_args *uap = v;
 	int i, s;
 	int error, error2;
 	size_t sz = sizeof(struct svr4_pollfd) * SCARG(uap, nfds);

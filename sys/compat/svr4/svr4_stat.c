@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.11 1995/06/27 22:12:54 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.12 1995/09/19 22:10:18 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -110,11 +110,12 @@ bsd_to_svr4_xstat(st, st4)
 
 
 int
-svr4_stat(p, uap, retval)
+svr4_stat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_stat_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_stat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_xstat_args cup;
 
@@ -151,11 +152,12 @@ svr4_stat(p, uap, retval)
 }
 
 int
-svr4_lstat(p, uap, retval)
+svr4_lstat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_lstat_args *uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_lstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_lxstat_args cup;
 
@@ -191,11 +193,12 @@ svr4_lstat(p, uap, retval)
 }
 
 int
-svr4_fstat(p, uap, retval)
+svr4_fstat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_fstat_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_fstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_fxstat_args cup;
 
@@ -231,11 +234,12 @@ svr4_fstat(p, uap, retval)
 
 
 int
-svr4_xstat(p, uap, retval)
+svr4_xstat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_xstat_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_xstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
 	struct stat_args	cup;
@@ -262,11 +266,12 @@ svr4_xstat(p, uap, retval)
 }
 
 int
-svr4_lxstat(p, uap, retval)
+svr4_lxstat(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_lxstat_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_lxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
 	struct lstat_args	cup;
@@ -293,11 +298,12 @@ svr4_lxstat(p, uap, retval)
 }
 
 int
-svr4_fxstat(p, uap, retval)
+svr4_fxstat(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_fxstat_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_fxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
 	struct fstat_args	cup;
@@ -328,11 +334,12 @@ struct svr4_ustat_args {
 };
 
 int
-svr4_ustat(p, uap, retval)
+svr4_ustat(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_ustat_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_ustat_args *uap = v;
 	struct svr4_ustat	us;
 	int			error;
 
@@ -351,11 +358,12 @@ svr4_ustat(p, uap, retval)
 
 
 int
-svr4_uname(p, uap, retval)
+svr4_uname(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_uname_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_uname_args *uap = v;
 	struct svr4_utsname	sut;
 	extern char ostype[], hostname[], osrelease[], version[], machine[];
 
@@ -382,11 +390,12 @@ svr4_uname(p, uap, retval)
 }
 
 int
-svr4_systeminfo(p, uap, retval)
+svr4_systeminfo(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_systeminfo_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_systeminfo_args *uap = v;
 	char *str;
 	int name;
 	int error;
@@ -459,11 +468,13 @@ svr4_systeminfo(p, uap, retval)
 
 
 int
-svr4_utssys(p, uap, retval)
+svr4_utssys(p, v, retval)
 	register struct proc 			*p;
-	register struct svr4_utssys_args	*uap;
+	void					*v;
 	register_t 				*retval;
 {
+	struct svr4_utssys_args *uap = v;
+
 	switch (SCARG(uap, sel)) {
 	case 0:		/* uname(2)  */
 		{
