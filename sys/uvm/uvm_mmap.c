@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.80 2004/02/14 12:20:14 jdolecek Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.81 2004/02/14 16:40:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.80 2004/02/14 12:20:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.81 2004/02/14 16:40:22 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.80 2004/02/14 12:20:14 jdolecek Exp $
 #include <uvm/uvm_device.h>
 
 #ifndef COMPAT_ZERODEV
-#define COMPAT_ZERODEV	(0)
+#define COMPAT_ZERODEV(dev)	(0)
 #endif
 
 /*
