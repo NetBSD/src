@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1997/01/17 16:27:20 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1997/01/27 22:33:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,9 +125,9 @@
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 
-#include "machdep.h"
 #include "pmap_pvt.h"
 
 /* XXX - What headers declare these? */
