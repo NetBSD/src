@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.15 2003/03/14 14:08:44 yamt Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.16 2003/03/14 14:10:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -192,7 +192,7 @@ getlock(lckarg, rqstp, flags)
 	memcpy(newfl->client_cookie.n_bytes, lckarg->cookie.n_bytes,
 	    lckarg->cookie.n_len);
 	strlcpy(newfl->client_name, lckarg->alock.caller_name,
-	    sizeof(newfl->client_name);
+	    sizeof(newfl->client_name));
 	newfl->nsm_status = lckarg->state;
 	newfl->status = 0;
 	newfl->flags = flags;
