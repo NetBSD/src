@@ -81,7 +81,7 @@
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#undef DWARF2_UNWIND_INFO
+#define DWARF2_UNWIND_INFO 0
 
 
 /* Put relocations in the constant pool in the writable data section.  */
