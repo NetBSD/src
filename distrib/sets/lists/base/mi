@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.121 1999/07/28 01:56:03 enami Exp $
+# $NetBSD: mi,v 1.122 1999/09/02 20:50:29 tron Exp $
 .
 ./altroot
 ./bin
@@ -259,6 +259,7 @@
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
+./usr/bin/mktemp
 ./usr/bin/modstat
 ./usr/bin/more
 ./usr/bin/mset
