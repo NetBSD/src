@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.25 2000/02/07 21:40:41 scottb Exp $	 */
+/*	$NetBSD: reloc.c,v 1.26 2000/05/01 11:41:08 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -387,6 +387,33 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where));
 		break;
 #endif /* __powerpc__ || __vax__ */
+
+#if defined(__powerpc__)
+	case R_TYPE(16_LO):	/* #lo(S + A) */
+		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		if (*(Elf32_Half *)where != tmp)
+			*(Elf32_Half *)where = tmp;
+		rdbg(dodebug, ("16_LO in %s --> %p", obj->path,
+		    (void *)*where));
+		break;
+
+	case R_TYPE(16_HI):	/* #hi(S + A) */
+		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend) >> 16;
+		if (*(Elf32_Half *)where != tmp)
+			*(Elf32_Half *)where = tmp;
+		rdbg(dodebug, ("16_HI in %s --> %p", obj->path,
+		    (void *)*where));
+		break;
+
+	case R_TYPE(16_HA):	/* #ha(S + A) */
+		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend + 0x8000)
+		    >> 16;
+		if (*(Elf32_Half *)where != tmp)
+			*(Elf32_Half *)where = tmp;
+		rdbg(dodebug, ("16_HA in %s --> %p", obj->path,
+		    (void *)*where));
+		break;
+#endif /* __powerpc__ */
 
 #if defined(__vax__)
 	case R_TYPE(REL32):
