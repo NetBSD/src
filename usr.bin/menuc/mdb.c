@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.35 2003/07/07 12:20:56 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.36 2003/07/17 08:33:44 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,8 +40,8 @@
 
 #include <sys/cdefs.h>
 
-#ifndef lint
-__RCSID("$NetBSD: mdb.c,v 1.35 2003/07/07 12:20:56 dsl Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: mdb.c,v 1.36 2003/07/17 08:33:44 lukem Exp $");
 #endif
 
 
