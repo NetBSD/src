@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.106 1999/01/16 11:28:20 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.107 1999/01/28 04:34:32 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.101 1999/01/16 11:27:40 drochner Exp 
+ *	NetBSD: pcidevs,v 1.102 1999/01/28 04:31:33 augustss Exp 
  */
 
 /*
@@ -1868,6 +1868,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "Trio64V2/DX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D,
+	    0,
+	    "S3",
+	    "86C365 Trio3D",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_DX,
