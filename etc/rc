@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.145 2000/01/31 12:47:29 jdc Exp $
+#	$NetBSD: rc,v 1.146 2000/02/05 17:02:42 itojun Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -503,11 +503,12 @@ if checkyesno route6d; then
 fi
 
 if checkyesno rtsold; then
-	if checkyesno ip6forwarding; then
-		echo
-		logger -s "WARNING: rtsold cannot be used on IPv6 router."
-	else
+	if test "x$ip6mode" = "xautohost"; then
 		echo -n ' rtsold';	rtsold $rtsold_flags
+	else
+		echo
+		logger -s "WARNING: ip6mode must be set to autohost" \
+		    "to use rtsold."
 	fi
 fi
 
