@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.233 2000/06/12 21:25:01 bouyer Exp $
+$NetBSD: pcidevs,v 1.234 2000/06/12 22:33:06 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -677,6 +677,7 @@ product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
+product AMD PCNET_HOME	0x2001	79c978 PCnet-PCI Home
 product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
 product AMD SC751_SC	0x7006	AMD751 System Controller
