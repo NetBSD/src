@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.8 2003/10/26 13:40:46 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.9 2003/10/28 11:34:14 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ BEGIN {
 
 	# file with major definitions
 	majors[0] = "conf/majors"
-	if (maarch == "arm" && system("test -f '" top "arch/" machine "/conf/majors." machine "'") != 0)
+	if ((maarch == "arm" || maarch == "armeb") && system("test -f '" top "arch/" machine "/conf/majors." machine "'") != 0)
 		majors[1] = "arch/arm/conf/majors.arm32";
 	else if (machine == "evbsh5") {
 		majors[1] = "arch/evbsh5/conf/majors.evbsh5";
