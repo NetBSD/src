@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.195 2001/09/15 01:10:10 thorpej Exp $
+#	$NetBSD: files.i386,v 1.196 2001/09/15 01:32:11 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -169,7 +169,8 @@ file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus
+device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
+	      agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
