@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.67 2000/04/14 20:33:48 pk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.67.4.1 2001/03/16 19:46:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -360,6 +360,9 @@ zstty_attach(parent, self, aux)
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
+
+		/* Wait a while for previous console output to complete */
+		DELAY(10000);
 
 		/* Setup the "new" parameters in t. */
 		t.c_ispeed = 0;
