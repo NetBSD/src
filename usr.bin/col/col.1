@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Michael Rendell.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)col.1	6.8 (Berkeley) 6/17/91
+.\"     @(#)col.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd June 17, 1991
+.Dd June 29, 1993
 .Dt COL 1
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Op Fl l Ar num
 .Sh DESCRIPTION
 .Nm Col
-filters out reverse (and half reverse) line feeds so the output is
+filters out reverse (and half reverse) line feeds so that the output is
 in the correct order with only forward and half forward line
 feeds, and replaces white-space characters with tabs where possible.
 This can be useful in processing the output of
@@ -55,10 +55,10 @@ and
 .Xr tbl  1 .
 .Pp
 .Nm Col
-reads from standard input and writes to standard output.
+reads from the standard input and writes to the standard output.
 .Pp
 The options are as follows:
-.Bl -tag -width "-lnum"
+.Bl -tag -width "-l num  "
 .It Fl b
 Do not output any backspaces, printing only the last character
 written to each column position.
@@ -68,7 +68,7 @@ Normally characters printed on a half line boundary are printed
 on the following line.
 .It Fl x
 Output multiple spaces instead of tabs.
-.It Fl l Ns Ar num
+.It Fl l Ar num
 Buffer at least
 .Ar num
 lines in memory.
