@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.41.2.1 2001/11/16 02:56:15 thorpej Exp $	*/
+/*	$NetBSD: stdio.h,v 1.41.2.2 2002/01/14 21:37:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -123,8 +123,10 @@ typedef	struct __sFILE {
 	fpos_t	(*_seek)  __P((void *, fpos_t, int));
 	int	(*_write) __P((void *, const char *, int));
 
+	/* file extension */
+	struct	__sbuf _ext;
+
 	/* separate buffer for long sequences of ungetc() */
-	struct	__sbuf _ub;	/* ungetc buffer */
 	unsigned char *_up;	/* saved _p when _p is doing ungetc data */
 	int	_ur;		/* saved _r when _r is counting ungetc data */
 
