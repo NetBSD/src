@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 1994/10/26 21:09:57 cgd Exp $	*/
+/*	$NetBSD: reg.h,v 1.5 1995/01/18 06:40:12 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,51 +79,55 @@
 #define SP	29
 #define S8	30
 #define RA	31
-#define MULLO	32
-#define MULHI	33
-#define	PC	34
-#define	SR	35
-#define	PS	35	/* alias for SR */
-#define	F0	36
-#define	F1	37
-#define	F2	38
-#define	F3	39
-#define	F4	40
-#define	F5	41
-#define	F6	42
-#define	F7	43
-#define	F8	44
-#define	F9	45
-#define	F10	46
-#define	F11	47
-#define	F12	48
-#define	F13	49
-#define	F14	50
-#define	F15	51
-#define	F16	52
-#define	F17	53
-#define	F18	54
-#define	F19	55
-#define	F20	56
-#define	F21	57
-#define	F22	58
-#define	F23	59
-#define	F24	60
-#define	F25	61
-#define	F26	62
-#define	F27	63
-#define	F28	64
-#define	F29	65
-#define	F30	66
-#define	F31	67
-#define	FSR	68
+#define	SR	32
+#define	PS	SR	/* alias for SR */
+#define MULLO	33
+#define MULHI	34
+#define BADVADDR 35
+#define CAUSE	36
+#define	PC	37
+
+#define FPBASE	38
+#define F0	(FPBASE+0)
+#define F1	(FPBASE+1)
+#define F2	(FPBASE+2)
+#define F3	(FPBASE+3)
+#define F4	(FPBASE+4)
+#define F5	(FPBASE+5)
+#define F6	(FPBASE+6)
+#define F7	(FPBASE+7)
+#define F8	(FPBASE+8)
+#define F9	(FPBASE+9)
+#define F10	(FPBASE+10)
+#define F11	(FPBASE+11)
+#define F12	(FPBASE+12)
+#define F13	(FPBASE+13)
+#define F14	(FPBASE+14)
+#define F15	(FPBASE+15)
+#define F16	(FPBASE+16)
+#define F17	(FPBASE+17)
+#define F18	(FPBASE+18)
+#define F19	(FPBASE+19)
+#define F20	(FPBASE+20)
+#define F21	(FPBASE+21)
+#define F22	(FPBASE+22)
+#define F23	(FPBASE+23)
+#define F24	(FPBASE+24)
+#define F25	(FPBASE+25)
+#define F26	(FPBASE+26)
+#define F27	(FPBASE+27)
+#define F28	(FPBASE+28)
+#define F29	(FPBASE+29)
+#define F30	(FPBASE+30)
+#define F31	(FPBASE+31)
+#define	FSR	(FPBASE+32)
 
 #ifdef IPCREG
-#define	NIPCREG 69
+#define	NIPCREG (FSR + 1)
 int ipcreg[NIPCREG] = {
 	ZERO, AST, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7,
 	S0, S1, S2, S3, S4, S5, S6, S7, T8, T9, K0, K1, GP, SP, S8, RA,
-	MULLO, MULHI, PC,
+	SR, MULLO, MULHI, BADVADDR, CAUSE, PC,
 	F0, F1, F2, F3, F4, F5, F6, F7,
 	F8, F9, F10, F11, F12, F13, F14, F15,
 	F16, F17, F18, F19, F20, F21, F22, F23,
@@ -136,6 +140,6 @@ int ipcreg[NIPCREG] = {
  * Register set accessible via /proc/$pid/reg
  */
 struct reg {
-        int     r_regs[69];	/* numbered as above */
+        int     r_regs[71];	/* numbered as above */
 };
 #endif /* LANGUAGE_C */
