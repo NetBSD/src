@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.4 2005/03/16 11:25:03 bouyer Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -104,7 +104,7 @@ IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
 #else /* defined(DDB) || defined(GPROF) */
-	movl	16(%esp),%ebx
+	movl	20(%esp),%ebx
 #endif /* defined(DDB) || defined(GPROF) */
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
