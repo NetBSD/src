@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $	*/
+/*	$NetBSD: dpt.c,v 1.26 2001/03/07 23:07:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.26 2001/03/07 23:07:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,14 +902,16 @@ dpt_scsi_cmd(xs)
 #ifdef TFS
 		if ((flags & XS_CTL_DATA_UIO) != 0) {
 			error = bus_dmamap_load_uio(dmat, xfer, 
-			    (struct uio *)xs->data, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    (struct uio *)xs->data, ((flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING);
 		} else
 #endif	/* TFS */
 		{
 			error = bus_dmamap_load(dmat, xfer, xs->data, 
-			    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    xs->datalen, NULL, ((flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING);
 		}
 
 		if (error) {
