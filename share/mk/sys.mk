@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.21 1995/06/24 08:28:13 cgd Exp $
+#	$NetBSD: sys.mk,v 1.22 1995/09/24 23:49:09 christos Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -7,64 +7,64 @@ unix=		We run NetBSD.
 
 .LIBS:		.a
 
-AR=		ar
-ARFLAGS=	rl
-RANLIB=		ranlib
+AR?=		ar
+ARFLAGS?=	rl
+RANLIB?=	ranlib
 
-AS=		as
-AFLAGS=
-COMPILE.s=	${AS} ${AFLAGS}
-LINK.s=		${CC} ${AFLAGS} ${LDFLAGS}
-COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-LINK.S=		${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
+AS?=		as
+AFLAGS?=
+COMPILE.s?=	${AS} ${AFLAGS}
+LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
+COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
+LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-CC=		cc
-CFLAGS=		-O
-COMPILE.c=	${CC} ${CFLAGS} ${CPPFLAGS} -c
-LINK.c=		${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
+CC?=		cc
+CFLAGS?=	-O
+COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
+LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-CXX=		g++
-CXXFLAGS=	${CFLAGS}
-COMPILE.cc=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
-LINK.cc=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
+CXX?=		g++
+CXXFLAGS?=	${CFLAGS}
+COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
+LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-CPP=		cpp
+CPP?=		cpp
 .if defined(DESTDIR)
 CPPFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 
-FC=		f77
-FFLAGS=		-O
-RFLAGS=
-COMPILE.f=	${FC} ${FFLAGS} -c
-LINK.f=		${FC} ${FFLAGS} ${LDFLAGS}
-COMPILE.F=	${FC} ${FFLAGS} ${CPPFLAGS} -c
-LINK.F=		${FC} ${FFLAGS} ${CPPFLAGS} ${LDFLAGS}
-COMPILE.r=	${FC} ${FFLAGS} ${RFLAGS} -c
-LINK.r=		${FC} ${FFLAGS} ${RFLAGS} ${LDFLAGS}
+FC?=		f77
+FFLAGS?=		-O
+RFLAGS?=
+COMPILE.f?=	${FC} ${FFLAGS} -c
+LINK.f?=	${FC} ${FFLAGS} ${LDFLAGS}
+COMPILE.F?=	${FC} ${FFLAGS} ${CPPFLAGS} -c
+LINK.F?=	${FC} ${FFLAGS} ${CPPFLAGS} ${LDFLAGS}
+COMPILE.r?=	${FC} ${FFLAGS} ${RFLAGS} -c
+LINK.r?=	${FC} ${FFLAGS} ${RFLAGS} ${LDFLAGS}
 
-LEX=		lex
-LFLAGS=
-LEX.l=		${LEX} ${LFLAGS}
+LEX?=		lex
+LFLAGS?=
+LEX.l?=		${LEX} ${LFLAGS}
 
-LD=		ld
-LDFLAGS=
+LD?=		ld
+LDFLAGS?=
 
-LINT=		lint
-LINTFLAGS=	-chapbx
+LINT?=		lint
+LINTFLAGS?=	-chapbx
 
-MAKE=		make
+MAKE?=		make
 
-PC=		pc
-PFLAGS=
-COMPILE.p=	${PC} ${PFLAGS} ${CPPFLAGS} -c
-LINK.p=		${PC} ${PFLAGS} ${CPPFLAGS} ${LDFLAGS}
+PC?=		pc
+PFLAGS?=
+COMPILE.p?=	${PC} ${PFLAGS} ${CPPFLAGS} -c
+LINK.p?=	${PC} ${PFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-SHELL=		sh
+SHELL?=		sh
 
-YACC=		yacc
-YFLAGS=		-d
-YACC.y=		${YACC} ${YFLAGS}
+YACC?=		yacc
+YFLAGS?=	-d
+YACC.y?=	${YACC} ${YFLAGS}
 
 # C
 .c:
