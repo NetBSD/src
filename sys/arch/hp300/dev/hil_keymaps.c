@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_keymaps.c,v 1.7 1997/03/31 07:34:22 scottr Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.8 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,10 @@
  * space.  Having keymaps for all 18 or so HP supported layouts would be bad
  * news.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.8 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
+
 #include <sys/param.h>
 #include <hp300/dev/kbdmap.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.19 2001/12/14 08:34:28 gmcgarry Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.20 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /*
  * Graphics routines for the Renaissance, HP98720 Graphics system.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.20 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
