@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 2000/03/10 19:06:43 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 2000/04/07 12:09:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,10 +216,6 @@ Lnot1200:
 	movl	#NEWS1700,%a0@
 	RELOC(ectype, %a0)
 	movl	#EC_PHYS,%a0@		| news1700 have a phisical address cache
-	RELOC(cache_ctl, %a0)
-	movl	#0xe1300000,%a0@
-	RELOC(cache_clr, %a0)
-	movl	#0xe1900000,%a0@
 
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
@@ -367,7 +363,7 @@ Lstploaddone:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-#if 1 /* use %tt0 register to map I/O space */
+#if 0 /* use %tt0 register to map I/O space */
 	RELOC(protott0, %a0)
 	movl	#0xe0018550,%a0@	| use %tt0 (0xe0000000-0xe1ffffff)
 	.long	0xf0100800		| pmove %a0@,%tt0

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.2 2000/02/08 16:17:30 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.3 2000/04/07 12:09:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@ clock_hb_attach(parent, self, aux)
 	if (ha->ha_ipl != CLOCK_LEVEL)
 		panic("clock_hb_attach: wrong interrupt level");
 
-	nvram = (caddr_t)(ha->ha_address - 0x7f8); /* XXX */
-	clockregs = (caddr_t)ha->ha_address;
+	nvram = (caddr_t)(IIOV(ha->ha_address) - 0x7f8); /* XXX */
+	clockregs = (caddr_t)IIOV(ha->ha_address);
 
         clock_config(self, clockregs, nvram, MK48T02_SIZE,
 		clock_hb_initclocks);
