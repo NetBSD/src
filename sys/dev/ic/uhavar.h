@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.4 1997/03/29 02:32:32 mycroft Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.5 1997/06/06 23:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -39,7 +39,10 @@ struct uha_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t	sc_dmat;
 	void *sc_ih;
+
+	int sc_dmaflags;	/* bus-specific DMA map creation flags */
 
 	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
 	int (*poll) __P((struct uha_softc *, struct scsi_xfer *, int));

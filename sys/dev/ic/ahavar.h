@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.3 1997/03/28 23:47:10 mycroft Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.4 1997/06/06 23:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -59,10 +59,12 @@ struct aha_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap_mbox;	/* maps the mailbox */
 	void *sc_ih;
 
-	struct aha_mbx sc_mbx;		/* all our mailboxes */
-#define	wmbx	(&sc->sc_mbx)
+	struct aha_mbx *sc_mbx;		/* all our mailboxes */
+#define	wmbx	(sc->sc_mbx)
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;

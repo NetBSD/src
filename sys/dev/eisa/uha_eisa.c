@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.7 1997/03/29 02:32:30 mycroft Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.8 1997/06/06 23:30:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -52,7 +52,11 @@
 #define	UHA_EISA_SLOT_OFFSET	0xc80
 #define	UHA_EISA_IOSIZE		0x020
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	uha_eisa_match __P((struct device *, void *, void *));
+#else
+int	uha_eisa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	uha_eisa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uha_eisa_ca = {
@@ -62,7 +66,6 @@ struct cfattach uha_eisa_ca = {
 #ifndef	DDB
 #define Debugger() panic("should call debugger here (uha_eisa.c)")
 #endif /* ! DDB */
-#define KVTOPHYS(x)	vtophys(x)
 
 int	u24_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct uha_probe_data *));
@@ -79,7 +82,12 @@ void	u24_init __P((struct uha_softc *));
 int
 uha_eisa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -112,6 +120,7 @@ uha_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ea->ea_iot;
+	bus_dma_tag_t dmat = ea->ea_dmat;
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
@@ -130,8 +139,11 @@ uha_eisa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = dmat;
 	if (!u24_find(iot, ioh, &upd))
 		panic("uha_eisa_attach: u24_find failed!");
+
+	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, upd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
@@ -239,7 +251,8 @@ u24_start_mbox(sc, mscp)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, U24_OGMPTR, KVTOPHYS(mscp));
+	bus_space_write_4(iot, ioh, U24_OGMPTR,
+	    mscp->dmamap_self->dm_segs[0].ds_addr);
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x80);
 	else
