@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45 2002/07/09 19:21:03 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.46 2002/07/14 20:56:13 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,6 +118,8 @@ GLOBAL(eintrcnt)
 idle_u:
 	.long	0			/* fake uarea during idle after exit */
 #endif
+OF_buffer:
+	.space	NBPG
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -157,9 +159,6 @@ __start:
 	li	9,PGOFSET
 	add	8,8,9
 	andc	8,8,9
-	lis	9,_C_LABEL(OF_buf)@ha
-	stw	8,_C_LABEL(OF_buf)@l(9)
-	addi	8,8,NBPG
 #if defined(MULTIPROCESSOR)
 	lis	9,_C_LABEL(cpu_info)@ha
 	addi	9,9,_C_LABEL(cpu_info)@l
@@ -179,6 +178,11 @@ __start:
 	mr	4,1			/* end of mem reserved for kernel */
 	xor	0,0,0
 	stwu	0,-16(1)		/* end of stack chain */
+
+	lis	8,OF_buffer@ha
+	addi	8,8,OF_buffer@l
+	lis	9,_C_LABEL(OF_buf)@ha
+	stw	8,_C_LABEL(OF_buf)@l(9)
 
 	lis	3,__start@ha
 	addi	3,3,__start@l
