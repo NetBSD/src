@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ipfilter,v 1.3 2000/04/30 13:23:33 lukem Exp $
+# $NetBSD: ipfilter,v 1.4 2000/05/13 08:45:07 lukem Exp $
 #
 
 # PROVIDE: ipfilter
 # REQUIRE: root beforenetlkm mountcritlocal tty
 
 . /etc/rc.subr
-. /etc/rc.conf
 
 name="ipfilter"
 start_cmd="ipfilter_start"
@@ -50,4 +49,5 @@ ipfilter_reload()
 	fi
 }
 
+load_rc_config $name
 run_rc_command "$1"
