@@ -1,6 +1,8 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	@(#)Makefile	5.1 (Berkeley) 8/24/92
 
 PROG=	sed
+CFLAGS+=-DGNU_REGEX
 SRCS=	compile.c main.c misc.c process.c
+LDADD=-lgnuregex
 
 .include <bsd.prog.mk>

@@ -1,7 +1,0 @@
-#!/bin/sh -
-../ed - <<\EOT
-r \j.d
-1,1j
-2,3j
-w \j.o
-EOT

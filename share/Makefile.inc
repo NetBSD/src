@@ -1,3 +1,3 @@
-#	@(#)Makefile.inc	8.1 (Berkeley) 6/5/93
+#	@(#)Makefile.inc	5.1 (Berkeley) 5/11/90
 
 BINDIR?=	/usr/share
