@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.20 2004/05/03 14:02:56 kochi Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.21 2004/05/05 04:51:28 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.20 2004/05/03 14:02:56 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.21 2004/05/05 04:51:28 kochi Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -493,7 +493,7 @@ static struct mp_bus nmi_bus = {
  *	cpu_apic_address (common to all CPUs)
  *	ioapic_address[N]
  *	mp_naps
- *	mp_nbusses
+ *	mp_nbus
  *	mp_napics
  *	nintrs
  */
