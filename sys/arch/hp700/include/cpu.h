@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2004/07/18 23:31:26 chs Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -208,21 +208,21 @@ kvtop (const caddr_t va)
 	return ret;
 }
 
-extern int (*cpu_desidhash) __P((void));
+extern int (*cpu_desidhash)(void);
 
-void	delay __P((u_int));
-void	hppa_init __P((paddr_t));
-void	trap __P((int, struct trapframe *));
-int	dma_cachectl __P((caddr_t, int));
-int	spcopy __P((pa_space_t, const void *,
-		    pa_space_t, void *, size_t));
-int	spstrcpy __P((pa_space_t, const void *,
-		      pa_space_t, void *, size_t, size_t *));
-int	copy_on_fault __P((void));
-void	switch_trampoline __P((void));
-void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((void));
+void	delay(u_int);
+void	hppa_init(paddr_t);
+void	trap(int, struct trapframe *);
+void	hppa_ras(struct lwp *);
+int	dma_cachectl(caddr_t, int);
+int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
+int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
+		 size_t *);
+int	copy_on_fault(void);
+void	switch_trampoline(void);
+void	switch_exit(struct lwp *, void (*)(struct lwp *));
+int	cpu_dumpsize(void);
+int	cpu_dump(void);
 #endif
 
 /*
