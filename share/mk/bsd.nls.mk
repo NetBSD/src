@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.24 2000/06/06 09:53:30 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.25 2000/06/07 17:28:52 matt Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -60,6 +60,7 @@ nlsinstall:: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .endif
 
 __nlsinstall: .USE
+	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
 	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
 
