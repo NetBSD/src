@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.95 2003/11/01 03:02:59 grant Exp $
+.\"	$NetBSD: contents,v 1.96 2003/12/15 16:10:58 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,6 +183,12 @@ A kernel for MVME177 boards.
 .			It Pa netbsd-GENERIC_SCSI3.gz
 A kernel with SCSI ID 3 explicitly mapped to 
 .Li sd0 .
+.			It Pa netbsd-KRUPS.gz
+A kernel for JavaStation-NC (Krups) machines.
+.			It Pa netbsd-MRCOFFEE.gz
+A kernel for JavaStation-1 (Mr. Coffee) machines using Open Boot Prom firmware.
+.			It Pa netbsd-MRCOFFEE_OFW.gz
+A kernel for JavaStation-1 (Mr. Coffee) machines using OpenFirmware.
 .			It Pa netbsd-GENERIC_SUN4U.gz
 A kernel which supports sparc64 hardware in 32-bit mode only.  See the 
 sparc64 INSTALL notes for help installing this kernel on your sparc64 
