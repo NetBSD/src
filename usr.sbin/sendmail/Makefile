@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.13 1998/01/09 08:10:14 perry Exp $
+#	$NetBSD: Makefile,v 1.14 1998/09/29 07:03:37 lukem Exp $
 #
 #       @(#)Makefile	8.15 (Berkeley) 9/21/96
 
-SUBDIR= src mailstats makemap praliases smrsh cf/cf
+SUBDIR= src mailstats makemap praliases smrsh
+
+.if !defined(NOSHARE)
+SUBDIR+= cf/cf
 .if make(install)
 SUBDIR+= doc/intro doc/op cf
+.endif
 .endif
 
 .include <bsd.subdir.mk>
