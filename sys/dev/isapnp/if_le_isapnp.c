@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.8 1998/02/04 00:39:23 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.9 1998/04/18 10:35:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and 
- * Mattias Drochner. All rights reserved.
+ * Matthias Drochner. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,11 +115,7 @@
 #include <dev/ic/am7990var.h>
 #include <dev/isapnp/if_levar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int le_isapnp_match __P((struct device *, void *, void *));
-#else
 int le_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void le_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_isapnp_ca = {
@@ -172,11 +168,7 @@ le_isapnp_rdcsr(sc, port)
 int
 le_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
