@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.44 2001/09/22 05:01:26 tv Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.45 2001/10/04 16:29:54 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -34,6 +34,7 @@ __recurse: .USE
 
 .if make(cleandir)
 __RECURSETARG=	${TARGETS:Nclean}
+clean:
 .else
 __RECURSETARG=	${TARGETS}
 .endif
