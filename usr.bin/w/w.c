@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.54 2002/10/21 10:18:23 enami Exp $	*/
+/*	$NetBSD: w.c,v 1.55 2003/02/26 15:01:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.54 2002/10/21 10:18:23 enami Exp $");
+__RCSID("$NetBSD: w.c,v 1.55 2003/02/26 15:01:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,9 +119,7 @@ struct	entry {
 	dev_t	tdev;			/* dev_t of terminal */
 	time_t	idle;			/* idle time of terminal in seconds */
 	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
-#ifdef SUPPORT_FTPD_UTMP
-	pid_t	ftpd_pid;		/* pid as extracted from ftpd's entry */
-#endif
+	pid_t	pid;			/* pid or ~0 if not known */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
 static void	 pr_args(struct kinfo_proc2 *);
@@ -231,6 +229,7 @@ main(int argc, char **argv)
 			ep->host[sizeof(utx->ut_host)] = '\0';
 		}
 		ep->tv = utx->ut_tv;
+		ep->pid = utx->ut_pid;
 		*nextp = ep;
 		nextp = &(ep->next);
 		if (wcmd != 0)
@@ -266,7 +265,6 @@ main(int argc, char **argv)
 		ep->line[sizeof(ut->ut_line)] = '\0';
 		ep->host[sizeof(ut->ut_host)] = '\0';
 		ep->tv.tv_sec = ut->ut_time;
-		ep->tv.tv_usec = 0;
 		*nextp = ep;
 		nextp = &(ep->next);
 		if (wcmd != 0)
@@ -298,25 +296,22 @@ main(int argc, char **argv)
 			continue;
 
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev == kp->p_tdev &&
-			    kp->p__pgid == kp->p_tpgid) {
-				/*
-				 * Proc is in foreground of this terminal
-				 */
-				if (proc_compare(ep->kp, kp)) {
-					ep->kp = kp;
+			if (ep->tdev != 0) {
+				if (ep->tdev == kp->p_tdev &&
+				    kp->p__pgid == kp->p_tpgid) {
+					/*
+					 * Proc is in foreground of this
+					 * terminal
+					 */
+					if (proc_compare(ep->kp, kp)) {
+						ep->kp = kp;
+					}
+					break;
 				}
+			} else if (ep->pid != 0 && ep->pid == kp->p_pid) {
+				ep->kp = kp;
 				break;
 			}
-#ifdef SUPPORT_FTPD_UTMP
-			/*
-			 * Hack to match process to ftp utmp entry.
-			 */
-			else if (ep->tdev == 0 && kp->p_tdev == NODEV &&
-			    ep->ftpd_pid == kp->p_pid) {
-				ep->kp = kp;
-			}
-#endif /* SUPPORT_FTPD_UTMP */
 		}
 	}
 
@@ -552,23 +547,24 @@ process(struct entry *ep)
 	if ((max = strlen(ep->host)) > maxhost)
 		maxhost = max;
 
-	if ((stp = ttystat(ep->line)) == NULL)
-		return;
 
-#ifdef SUPPORT_FTPD_UTMP
+#ifdef SUPPORT_UTMP
 	/*
 	 * Hack to recognize and correctly parse
 	 * ut entry made by ftpd. The "tty" used
 	 * by ftpd is not a real tty, just identifier in
 	 * form ftpSUPPORT_ID. Pid parsed from the "tty name"
 	 * is used later to match corresponding process.
+	 * NB: This is only used for utmp entries. For utmpx,
+	 * we already have the pid.
 	 */
-	if (strncmp(ep->line, "ftp", 3) == 0) {
-		ep->ftpd_pid = strtol(ep->line + 3, NULL, 10);
-
+	if (ep->pid == 0 && strncmp(ep->line, "ftp", 3) == 0) {
+		ep->pid = strtol(ep->line + 3, NULL, 10);
 		return;
 	}
-#endif /* SUPPORT_FTPD_UTMP */
+#endif
+	if ((stp = ttystat(ep->line)) == NULL)
+		return;
 
 	ep->tdev = stp->st_rdev;
 	/*
