@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.102 2000/03/31 05:58:57 tsarna Exp $
+.\"	$NetBSD: options.4,v 1.103 2000/04/13 19:40:02 jhawk Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 26, 1998
+.Dd April 13, 2000
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1446,6 +1446,18 @@ is known to have problems in certain motherboard implementations. In order
 for this option to take effect, option
 .Em CYRIX_CACHE_WORKS must also be specified.
 .El
+.Ss isa-specific Options
+Options specific to
+.Xr isa 4
+busses.
+.Bl -ohang
+.It Cd options PCIC_ISA_ALLOC_IOBASE=address, PCIC_ISA_ALLOC_IOSIZE=size
+Control the section of IO bus space used for PCMCIA bus space mapping.
+Ideally the probed defaults are satisfactory, however in practice
+that is not always the case. See
+.Xr pcmcia 4
+for details.
+.El
 .Ss m68k-specific Options
 .Bl -ohang
 .It Cd options FPU_EMULATE
@@ -1574,6 +1586,7 @@ bolded
 .Xr lkm 4 ,
 .Xr inet 4 ,
 .Xr ns 4 ,
+.Xr pcmcia 4 ,
 .Xr iso 4 ,
 .Xr mrouted 8 ,
 .Xr mount_lfs 8 ,
