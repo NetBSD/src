@@ -36,12 +36,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: net.c,v 1.4 1994/12/24 16:33:53 cgd Exp $";
+static char rcsid[] = "$Id: net.c,v 1.5 1995/05/21 15:03:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,38 +54,31 @@ netfinger(name)
 	extern int lflag;
 	register FILE *fp;
 	register int c, lastc;
-	struct in_addr defaddr;
 	struct hostent *hp, def;
 	struct servent *sp;
 	struct sockaddr_in sin;
 	int s;
 	char *alist[1], *host, *rindex();
-	u_long inet_addr();
 
 	if (!(host = rindex(name, '@')))
 		return;
 	*host++ = NULL;
-	if (!(hp = gethostbyname(host))) {
-		defaddr.s_addr = inet_addr(host);
-		if (defaddr.s_addr == -1) {
+	if (inet_aton(host, &sin.sin_addr) == 0) {
+		hp = gethostbyname(host);
+		if (hp == 0) {
 			(void)fprintf(stderr,
 			    "finger: unknown host: %s\n", host);
 			return;
 		}
-		def.h_name = host;
-		def.h_addr_list = alist;
-		def.h_addr = (char *)&defaddr;
-		def.h_length = sizeof(struct in_addr);
-		def.h_addrtype = AF_INET;
-		def.h_aliases = 0;
-		hp = &def;
-	}
+		sin.sin_family = hp->h_addrtype;
+		bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+		host = hp->h_name;
+	} else
+		sin.sin_family = AF_INET;
 	if (!(sp = getservbyname("finger", "tcp"))) {
 		(void)fprintf(stderr, "finger: tcp/finger: unknown service\n");
 		return;
 	}
-	sin.sin_family = hp->h_addrtype;
-	bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
 	sin.sin_port = sp->s_port;
 	if ((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) {
 		perror("finger: socket");
@@ -92,7 +86,7 @@ netfinger(name)
 	}
 
 	/* have network connection; identify the host connected with */
-	(void)printf("[%s]\n", hp->h_name);
+	(void)printf("[%s]\n", host);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		perror("finger: connect");
 		(void)close(s);
