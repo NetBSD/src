@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.10 2004/03/25 04:04:28 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.11 2004/03/27 02:01:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.10 2004/03/25 04:04:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.11 2004/03/27 02:01:07 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -678,7 +678,7 @@ kloader_bootinfo_dump()
 	PRINT(bi_cnuse, %d);
 	PRINT(platid_cpu, 0x%08lx);
 	PRINT(platid_machine, 0x%08lx);
-	PRINT(timezone, 0x%08lx);
+	PRINT(timezone, %ld);
 #undef PRINT
 
 	printf("[args: %d at %p]\n", kbi->argc, kbi->argv);
