@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 1994/11/20 20:53:32 deraadt Exp $ */
+/*	$NetBSD: signal.h,v 1.3 1995/01/10 19:01:46 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,15 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef	_SPARC_SIGNAL_H_
+#define _SPARC_SIGNAL_H_
+
 #ifndef LOCORE
 typedef int sig_atomic_t;
+#endif
+
+#ifndef _ANSI_SOURCE
+#ifndef LOCORE
 
 /*
  * Information pushed on stack when a signal is delivered.
@@ -88,3 +95,6 @@ struct sigcontext {
 #define	FPE_FLTUND_TRAP		0xcc	/* underflow */
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
+
+#endif	/* !_ANSI_SOURCE */
+#endif	/* !_SPARC_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1994/10/26 21:10:01 cgd Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 1995/01/10 19:01:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
 
 typedef int sig_atomic_t;
 
+#ifndef _ANSI_SOURCE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -60,3 +61,5 @@ struct	sigcontext {
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
 };
+
+#endif	/* !_ANSI_SOURCE */
