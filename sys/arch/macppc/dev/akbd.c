@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.14 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: akbd.c,v 1.15 2001/07/12 04:16:58 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -219,6 +219,9 @@ akbdattach(parent, self, aux)
 		break;
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
+		break;
+	case ADB_TIBKBD:
+		printf("PowerBook G4/iBook (dual USB) keyboard\n");
 		break;
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
