@@ -1,4 +1,4 @@
-/*	$NetBSD: modunload.c,v 1.10 1997/09/15 04:03:59 lukem Exp $	*/
+/*	$NetBSD: modunload.c,v 1.11 1999/07/22 02:04:13 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modunload.c,v 1.10 1997/09/15 04:03:59 lukem Exp $");
+__RCSID("$NetBSD: modunload.c,v 1.11 1999/07/22 02:04:13 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,12 +82,15 @@ main(argc, argv)
 	int c;
 	int modnum = -1;
 	char *modname = NULL;
+	char *endptr;
 	struct lmc_unload ulbuf;
 
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
-			modnum = atoi(optarg);
+			modnum = strtol(optarg, &endptr, 0);
+			if (*endptr != '\0')
+				errx(1, "not a valid number");
 			break;	/* number */
 		case 'n':
 			modname = optarg;
