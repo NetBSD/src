@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.64 2002/11/08 11:44:37 agc Exp $ */
+/* $NetBSD: user.c,v 1.65 2002/11/08 11:53:20 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.64 2002/11/08 11:44:37 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.65 2002/11/08 11:53:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,6 +168,8 @@ enum {
 	MaxCommandLen = 2048,
 	MaxEntryLen = 2048,
 	PasswordLength = 2048,
+
+	DES_Len = 13,
 
 	LowGid = DEF_LOWUID,
 	HighGid = DEF_HIGHUID
@@ -888,7 +890,7 @@ typedef struct passwd_type_t {
 static passwd_type_t	passwd_types[] = {
 	{ "$2a",	3,	54,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
 	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
-	{ "",		0,	13,	NULL,				0 },	/* standard DES */
+	{ "",		0,	DES_Len,NULL,				0 },	/* standard DES */
 	{ NULL,		-1,	-1,	NULL,				0 }	/* none - terminate search */
 };
 
@@ -1058,8 +1060,8 @@ adduser(char *login_name, user_t *up)
 	if (up->u_password != NULL && valid_password_length(up->u_password)) {
 		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
-		(void) memset(password, '\0', sizeof(password));
-		password[0] = '*';
+		(void) memset(password, '*', DES_Len);
+		password[DES_Len] = 0;
 		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
@@ -1842,8 +1844,8 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) memset(password, '\0', sizeof(password));
-		password[0] = '*';
+		(void) memset(password, '*', DES_Len);
+		password[DES_Len] = 0;
 		memsave(&u.u_password, password, strlen(password));
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
