@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.23 1996/10/02 22:20:55 mycroft Exp $
+#	$NetBSD: INSTOTHER,v 1.24 1996/10/02 23:56:48 mycroft Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -28,6 +28,7 @@ options		MACHINE_NONCONTIG
 maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by
 options		DST=0		# daylight savings time used by RTC
+#options	NTP		# NTP phase/frequency locked loop
 
 options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
@@ -84,6 +85,7 @@ options		KERNFS		# /kern
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
+#options	MROUTING	# IP multicast routing
 #options	NS		# XNS
 #options	NSIP		# XNS tunneling over IP
 #options	ISO,TPIP	# OSI
@@ -92,6 +94,7 @@ options		INET		# IP + ICMP + TCP + UDP
 
 config		netbsd	swap generic
 options		GENERIC
+#options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 mainbus0 at root
 

@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.9 1996/10/02 23:14:05 mycroft Exp $
+#	$NetBSD: WARPED,v 1.10 1996/10/02 23:56:49 mycroft Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -28,6 +28,7 @@ options		MACHINE_NONCONTIG
 maxusers	64		# estimated number of users
 options		TIMEZONE=480	# time zone to adjust RTC time by
 options		DST=1		# daylight savings time used by RTC
+#options	NTP		# NTP phase/frequency locked loop
 
 options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
@@ -84,6 +85,7 @@ options		FIFO		# FIFOs; RECOMMENDED
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
+#options	MROUTING	# IP multicast routing
 #options	NS		# XNS
 #options	NSIP		# XNS tunneling over IP
 #options	ISO,TPIP	# OSI
@@ -94,6 +96,7 @@ options         NMBCLUSTERS=2048
 
 config		netbsd	root on sd0a swap on sd0b and sd1b
 #options	GENERIC
+#options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 mainbus0 at root
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.30 1996/10/02 22:20:51 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.31 1996/10/02 23:56:43 mycroft Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -26,6 +26,7 @@ options		MACHINE_NONCONTIG
 maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by
 options		DST=0		# daylight savings time used by RTC
+#options	NTP		# NTP phase/frequency locked loop
 
 options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
@@ -82,6 +83,7 @@ options		UNION		# union file system
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
+#options	MROUTING	# IP multicast routing
 options		NS		# XNS
 #options	NSIP		# XNS tunneling over IP
 options		ISO,TPIP	# OSI
@@ -90,6 +92,7 @@ options		CCITT,LLC,HDLC	# X.25
 
 config		netbsd	root on nfs swap on nfs
 #options	GENERIC
+#options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 mainbus0 at root
 
