@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.16 2002/12/02 14:05:11 junyoung Exp $	*/
+/*	$NetBSD: ldd.c,v 1.17 2003/02/06 12:40:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ static int ldd_aout(char *, int);
 int
 main(int argc, char **argv)
 {
+	struct stat st;
+
 #ifdef DEBUG
 	debug = 1;
 #endif
@@ -126,7 +128,12 @@ main(int argc, char **argv)
 			warn("%s", *argv);
 			continue;
 		}
-		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, NULL);
+		if (fstat(fd, &st) < 0) {
+			warn("%s", *argv);
+			close(fd);
+			continue;
+		}
+		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, &st);
 		if (_rtld_objmain == NULL) {
 			if (ldd_aout(*argv, fd) < 0)
 				warnx("%s", error_message);
