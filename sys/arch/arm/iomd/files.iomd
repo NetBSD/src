@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.5 2004/01/01 19:12:13 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.6 2004/01/03 14:46:17 chris Exp $
 #
 # IOMD-specific configuration data
 #
@@ -30,11 +30,6 @@ file	arch/arm/iomd/iomd_clock.c		iomd
 #
 # wscons
 #
-
-# Include MI WSCONS stuff
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 # wscons quadmouse device
 device	wsqms : wsmousedev
