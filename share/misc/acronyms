@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.75 2000/12/31 13:39:02 ad Exp $
+$NetBSD: acronyms,v 1.76 2001/02/11 00:23:12 lukem Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -7,6 +7,7 @@ AFAIR	as far as I recall
 AFK	away from keyboard
 AKA	also known as
 ASAP	as soon as possible
+AWOL	absent without leave
 BBL	[I'll] be back later
 BBS	be back soon
 BBT	be back tomorrow
