@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.696 2004/11/11 19:21:46 jdolecek Exp $
+#	$NetBSD: files,v 1.697 2004/11/13 07:58:14 kent Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -229,7 +229,6 @@ define	pckbport_machdep_cnattach
 define	mulaw
 define	auconv
 define	aurateconv
-file	dev/aurateconv.c	aurateconv	needs-flag
 
 # audio and midi devices, attaches to audio hardware driver
 #
@@ -1143,6 +1142,7 @@ file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
+file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1158,7 +1158,7 @@ file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
 file	dev/mm.c
-file	dev/mulaw.c			mulaw
+file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rnd.c			rnd			needs-flag
