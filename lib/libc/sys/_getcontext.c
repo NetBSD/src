@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.6.12.1 2001/03/05 23:34:38 nathanw Exp $	*/
+/*	$NetBSD: _getcontext.c,v 1.1.2.1 2001/03/05 23:34:39 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
+ * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,14 +28,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
 
-__BEGIN_DECLS
-extern char *__minbrk;
-int __getcwd __P((char *, size_t));
-int __getlogin __P((char *, size_t));
-void _resumecontext __P((void));
-const char *__strerror __P((int , char *, size_t));
-const char *__strsignal __P((int , char *, size_t));
-char *__dtoa __P((double, int, int, int *, int *, char **));
-int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
-__END_DECLS
+#ifdef __indr_reference
+__indr_reference(_getcontext, getcontext)
+#else
+
+#include <ucontext.h>
+int	_getcontext __P((ucontext_t *));	/* XXX */
+
+int
+getcontext(ucp)
+	ucontext_t *ucp;
+{
+
+	return _getcontext(ucp);
+}
+#endif
