@@ -42,7 +42,7 @@
  *	@(#)bsd_audio.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bsd_audio.c,v 1.18 93/04/24 16:20:35 leres Exp  (LBL)
- * $Id: bsd_audio.c,v 1.2 1994/09/17 23:57:27 deraadt Exp $
+ * $Id: bsd_audio.c,v 1.3 1994/10/02 22:00:11 deraadt Exp $
  */
 #include "bsdaudio.h"
 #if NBSDAUDIO > 0
@@ -268,11 +268,26 @@ audioattach(dev)
 
 /* autoconfiguration driver */
 void	audioattach(struct device *, struct device *, void *);
+int	audiomatch(struct device *, struct cfdata *, void *);
 struct	cfdriver audiocd =
-    { NULL, "audio", matchbyname, audioattach,
+    { NULL, "audio", audiomatch, audioattach,
       DV_DULL, sizeof(struct audio_softc) };
 #define SOFTC(dev) audiocd.cd_devs[minor(dev)]
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
+
+int
+audiomatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (cputyp==CPU_SUN4)
+		return (0);
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+}
 
 /*
  * Audio chip found.

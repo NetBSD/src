@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.13 1994/09/18 00:02:02 deraadt Exp $
+ * $Id: autoconf.c,v 1.14 1994/10/02 22:00:39 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@
 #ifdef SUN4
 #include <machine/oldmon.h>
 #include <machine/idprom.h>
+#include <sparc/sparc/memreg.h>
 #endif
 #include <machine/cpu.h>
 
@@ -101,6 +102,11 @@ matchbyname(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
+	if (cputyp==CPU_SUN4) {
+		printf("WARNING: matchbyname not valid on sun4!");
+		printf("%s\n", cf->cf_driver->cd_name);
+		return (0);
+	}
 	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
 }
 
@@ -158,6 +164,8 @@ bootstrap()
 #endif
 
 #ifdef SUN4
+	extern void oldmon_w_cmd();
+
 	if (cputyp == CPU_SUN4) {
 		/*
 		 * XXX:
@@ -173,21 +181,19 @@ bootstrap()
 		promvec->pv_putstr = oldpvec->fbWriteStr;
 		promvec->pv_nbgetchar = oldpvec->mayGet;
 		promvec->pv_getchar = oldpvec->getChar;
-		promvec->pv_romvec_vers = -1;		/* eek! */
+		promvec->pv_romvec_vers = 0;		/* eek! */
 		promvec->pv_reboot = oldpvec->reBoot;
 		promvec->pv_abort = oldpvec->abortEntry;
 		promvec->pv_setctxt = oldpvec->setcxsegmap;
-		promvec->pv_v0bootargs = (struct v0bootargs **)oldpvec->bootParam;
+		promvec->pv_v0bootargs = (struct v0bootargs **)(oldpvec->bootParam);
 		promvec->pv_halt = oldpvec->exitToMon;
 
 		/*
 		 * Discover parts of the machine memory organization
 		 * that we need this early.
 		 */
-#if 0
 		if (oldpvec->romvecVersion >= 2)
-			*oldpvec->vector_cmd = prom_w_cmd;
-#endif
+			*oldpvec->vector_cmd = oldmon_w_cmd;
 		getidprom(&idprom, sizeof(idprom));
 		switch (idprom.id_machine) {
 		case SUN4_100:
@@ -350,10 +356,31 @@ bootstrap()
 configure()
 {
 	struct confargs oca;
-	register int node;
+	register int node = 0;
 	register char *cp;
 	void sync_crash();
 
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		extern struct cfdata cfdata[];
+		extern struct cfdriver memregcd, obiocd;
+		struct cfdata *cf, *memregcf = NULL;
+		register short *p;
+
+		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
+			if (cf->cf_driver != &memregcd)
+				continue;
+			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
+				if (cfdata[*p].cf_driver == &obiocd)
+					memregcf = cf;
+		}
+		if (memregcf==NULL)
+			panic("configure: no memreg found!");
+		par_err_reg = (int *)obio_map(memregcf->cf_loc[0], NBPG);
+		if (par_err_reg == NULL)
+			panic("configure: ROM hasn't mapped memreg!");
+	}
+#endif
 #if defined(SUN4C) || defined(SUN4M)
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
 		node = findroot();
@@ -365,11 +392,7 @@ configure()
 		*promvec->pv_synchook = sync_crash;
 	}
 #endif
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
-		node = 0;
-	}
-#endif
+
 	oca.ca_ra.ra_node = node;
 	oca.ca_ra.ra_name = cp = "mainbus";
 	if (!config_rootfound(cp, (void *)&oca))
@@ -507,6 +530,18 @@ romprop(rp, cp, node)
 	return (1);
 }
 
+int
+mainbus_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+}
+
 /*
  * Attach the mainbus.
  *
@@ -526,7 +561,14 @@ mainbus_attach(parent, dev, aux)
 #ifdef L1A_HACK
 	int nzs = 0, audio = 0;
 #endif
-	static const char *const special[] = {
+	static const char *const oldmon_special[] = {
+		"obio",
+		"",
+
+		NULL
+	};
+
+	static const char *const openboot_special[] = {
 		/* find these first (end with empty string) */
 		"memory-error",	/* as early as convenient, in case of error */
 		"eeprom",
@@ -553,62 +595,76 @@ mainbus_attach(parent, dev, aux)
 	oca.ca_ra.ra_paddr = 0;
 	config_found(dev, (void *)&oca, mbprint);
 
-	/* remember which frame buffer, if any, is to be /dev/fb */
-	fbnode = getpropint(node, "fb", 0);
-
-	/* Find the "options" node */
-	node0 = firstchild(node);
-	optionsnode = findnode(node0, "options");
-	if (optionsnode == 0)
-		panic("no options in OPENPROM");
-
-	/* Start at the beginning of the bootpath */
-	oca.ca_ra.ra_bp = bootpath;
-
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
 	 * configured before we can do the rest.  For instance, the
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
-	for (ssp = special; *(sp = *ssp) != 0; ssp++) {
-		if ((node = findnode(node0, sp)) == 0) {
-			printf("could not find %s in OPENPROM\n", sp);
-			panic(sp);
-		}
-		oca.ca_bustype = BUS_MAIN;
-		if (!romprop(&oca.ca_ra, sp, node) ||
-		    !config_found(dev, (void *)&oca, mbprint))
-			panic(sp);
-	}
+	if (cputyp==CPU_SUN4) {
 
-	/*
-	 * Configure the rest of the devices, in PROM order.  Skip
-	 * PROM entries that are not for devices, or which must be
-	 * done before we get here.
-	 */
-	for (node = node0; node; node = nextsibling(node)) {
-		cp = getpropstring(node, "name");
-		for (ssp = special; (sp = *ssp) != NULL; ssp++)
-			if (strcmp(cp, sp) == 0)
-				break;
-		if (sp == NULL && romprop(&oca.ca_ra, cp, node)) {
-#ifdef L1A_HACK
-			if (strcmp(cp, "audio") == 0)
-				audio = 1;
-			if (strcmp(cp, "zs") == 0)
-				nzs++;
-			if (audio && nzs >= 2)
-				(void) splx(11 << 8);	/* XXX */
-#endif
+		/* Start at the beginning of the bootpath */
+		oca.ca_ra.ra_bp = bootpath;
+
+		for (ssp = oldmon_special; *(sp = *ssp) != 0; ssp++) {
 			oca.ca_bustype = BUS_MAIN;
-			(void) config_found(dev, (void *)&oca, mbprint);
+			oca.ca_ra.ra_name = sp;
+			if (!config_found(dev, (void *)&oca, mbprint))
+				panic(sp);
+		}
+	} else {
+
+		/* remember which frame buffer, if any, is to be /dev/fb */
+		fbnode = getpropint(node, "fb", 0);
+
+		/* Find the "options" node */
+		node0 = firstchild(node);
+		optionsnode = findnode(node0, "options");
+		if (optionsnode == 0)
+			panic("no options in OPENPROM");
+
+		/* Start at the beginning of the bootpath */
+		oca.ca_ra.ra_bp = bootpath;
+
+		for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
+			if ((node = findnode(node0, sp)) == 0) {
+				printf("could not find %s in OPENPROM\n", sp);
+				panic(sp);
+			}
+			oca.ca_bustype = BUS_MAIN;
+			if (!romprop(&oca.ca_ra, sp, node) ||
+			    !config_found(dev, (void *)&oca, mbprint))
+				panic(sp);
+		}
+
+		/*
+		 * Configure the rest of the devices, in PROM order.  Skip
+		 * PROM entries that are not for devices, or which must be
+		 * done before we get here.
+		 */
+		for (node = node0; node; node = nextsibling(node)) {
+			cp = getpropstring(node, "name");
+			for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
+				if (strcmp(cp, sp) == 0)
+					break;
+			if (sp == NULL && romprop(&oca.ca_ra, cp, node)) {
+#ifdef L1A_HACK
+				if (strcmp(cp, "audio") == 0)
+					audio = 1;
+				if (strcmp(cp, "zs") == 0)
+					nzs++;
+				if (audio && nzs >= 2)
+					(void) splx(11 << 8);	/* XXX */
+#endif
+				oca.ca_bustype = BUS_MAIN;
+				(void) config_found(dev, (void *)&oca, mbprint);
+			}
 		}
 	}
 }
 
 struct cfdriver mainbuscd =
-    { NULL, "mainbus", matchbyname, mainbus_attach,
+    { NULL, "mainbus", mainbus_match, mainbus_attach,
       DV_DULL, sizeof(struct device) };
 
 /*
@@ -627,6 +683,7 @@ findzs(zs)
 #ifdef SUN4
 #define ZS0_PHYS	0xf1000000
 #define ZS1_PHYS	0xf0000000
+#define ZS2_PHYS	0xe0000000
 
 	if (cputyp == CPU_SUN4) {
 		void *paddr;
@@ -638,25 +695,29 @@ findzs(zs)
 		case 1:
 			paddr = (void *)ZS1_PHYS;
 			break;
+		case 2:
+			paddr = (void *)ZS2_PHYS;
+			break;
 		default:
-			panic("findzs not on known unit");
+			panic("findzs: unknown zs device %d", zs);
 		}
 
 		addr = obio_map(paddr, NBPG);
 		if (addr)
 			return ((void *)addr);
-		goto bail;
 	}
 #endif
 #if defined(SUN4C) || defined(SUN4M)
-	node = firstchild(findroot());
-	while ((node = findnode(node, "zs")) != 0) {
-		if (getpropint(node, "slave", -1) == zs) {
-			if ((addr = getpropint(node, "address", 0)) == 0)
-				panic("findzs: zs%d not mapped by PROM", zs);
-			return ((void *)addr);
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		node = firstchild(findroot());
+		while ((node = findnode(node, "zs")) != 0) {
+			if (getpropint(node, "slave", -1) == zs) {
+				if ((addr = getpropint(node, "address", 0)) == 0)
+					panic("findzs: zs%d not mapped by PROM", zs);
+				return ((void *)addr);
+			}
+			node = nextsibling(node);
 		}
-		node = nextsibling(node);
 	}
 #endif
 bail:
@@ -681,7 +742,7 @@ makememarr(ap, max, which)
 	char *prop;
 #endif
 
-#ifdef SUN4
+#if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		switch(which) {
 		case MEMARR_AVAILPHYS:
@@ -799,6 +860,10 @@ getprop(node, name, buf, bufsiz)
 	register struct nodeops *no;
 	register int len;
 
+	if (cputyp==CPU_SUN4) {
+		printf("WARNING: getprop not valid on sun4! %s\n", name);
+		return (0);
+	}
 	no = promvec->pv_nodeops;
 	len = no->no_proplen(node, name);
 	if (len > bufsiz) {
@@ -933,7 +998,7 @@ romboot(str)
 callrom()
 {
 
-#ifdef SUN4		/* sun4c FORTH PROMs do this for us */
+#if 0			/* sun4c FORTH PROMs do this for us */
 	if (cputyp == CPU_SUN4)
 		fb_unblank();
 #endif
@@ -1207,4 +1272,33 @@ getstr(cp, size)
 			*lp++ = c;
 		}
 	}
+}
+
+
+/* 
+ * find a device matching "name" and unit number
+ */
+struct device *
+getdevunit(name, unit)
+	char *name;
+	int unit;
+{
+	struct device *dev = alldevs;
+	char num[10], fullname[16];
+	int lunit;
+
+	/* compute length of name and decimal expansion of unit number */
+	sprintf(num, "%d", unit);
+	lunit = strlen(num);
+	if (strlen(name) + lunit >= sizeof(fullname) - 1)
+		panic("config_attach: device name too long");
+
+	strcpy(fullname, name);
+	strcat(fullname, num);
+
+	while (strcmp(dev->dv_xname, fullname) != 0) {
+		if ((dev = dev->dv_next) == NULL)
+			return NULL;
+	}
+	return dev;
 }

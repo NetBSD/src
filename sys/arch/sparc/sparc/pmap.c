@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.18 1994/08/20 09:16:11 deraadt Exp $
+ * $Id: pmap.c,v 1.19 1994/10/02 22:00:55 deraadt Exp $
  */
 
 /*
@@ -63,6 +63,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
+#include <machine/oldmon.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 
@@ -316,7 +317,6 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 /*----------------------------------------------------------------*/
 
-#if defined(SUN4C)
 /*
  * Translations from dense (contiguous) pseudo physical addresses
  * (fed to the VM code, to keep it happy) to sparse (real, hardware)
@@ -460,7 +460,7 @@ init_translations()
 	return (pages);
 }
 
-#else /* SUN4 machine only! */
+#if 0
 /*
  * Pages are physically contiguous, and hardware PFN == software PFN.
  *
@@ -491,8 +491,13 @@ mmu_reservemon(nmmu)
 	register u_int va, eva;
 	register int mmuseg, i;
 
-	va = OPENPROM_STARTVADDR;
-	eva = OPENPROM_ENDVADDR;
+	if (cputyp==CPU_SUN4) {
+		va = OLDMON_STARTVADDR;
+		eva = OLDMON_ENDVADDR;
+	} else {
+		va = OPENPROM_STARTVADDR;
+		eva = OPENPROM_ENDVADDR;
+	}
 	while (va < eva) {
 		mmuseg = getsegmap(va);
 		if (mmuseg < nmmu)
@@ -1232,6 +1237,9 @@ pmap_bootstrap(nmmu, nctx)
 #endif
 	extern caddr_t reserve_dumppages(caddr_t);
 
+	cnt.v_page_size = NBPG;
+	vm_set_page_size();
+
 	kernel_pmap = (pmap_t)&kernel_pmap_store;
 
 	ncontext = nctx;
@@ -1239,9 +1247,6 @@ pmap_bootstrap(nmmu, nctx)
 #if defined(SUN4) && defined(SUN4C)
 	/* In this case NPTESG is not a #define */
 	nptesg = (NBPSG >> pgshift);
-
-	printf("nbpg %d pgshift %d pgofset %d nptesg %d\n", 
-	    nbpg, pgshift, pgofset, nptesg);
 #endif
 
 
@@ -1409,14 +1414,14 @@ pmap_bootstrap(nmmu, nctx)
 	 * set red zone at kernel base; enable cache on message buffer.
 	 */
 	{
-		extern char etext[];
+		extern char etext[], msgbuf[];
 #ifdef KGDB
 		register int mask = ~PG_NC;	/* XXX chgkprot is busted */
 #else
 		register int mask = ~(PG_W | PG_NC);
 #endif
 
-		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
+		for (p = (caddr_t)roundup((int)msgbuf+1, NBPG); p < etext; p += NBPG)
 			setpte(p, getpte(p) & mask);
 		p = (caddr_t)KERNBASE;
 		setpte(p, 0);
@@ -2219,8 +2224,7 @@ pmap_changeprot(pm, va, prot, wired)
 				goto useless;
 			}
 			if (vactype == VAC_WRITEBACK &&
-			    (newprot & PG_W) == 0 &&
-			    (tpte & (PG_W | PG_NC)) == PG_W)
+			    (tpte & (PG_U | PG_NC)) == PG_U)
 				cache_flush_page((int)va);
 		} else {
 			setcontext(0);

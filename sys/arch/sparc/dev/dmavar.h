@@ -25,14 +25,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dmavar.h,v 1.1 1994/09/17 23:48:35 deraadt Exp $
+ *	$Id: dmavar.h,v 1.2 1994/10/02 22:00:19 deraadt Exp $
  */
 
 struct dma_softc {
 	struct device sc_dev;			/* us as a device */
 	struct sbusdev sc_sd;			/* sbus device */
 	struct esp_softc *sc_esp;		/* my scsi */
-	volatile u_long *sc_reg;		/* the registers */
+	struct dma_regs *sc_regs;		/* the registers */
 	int	sc_active;			/* DMA active ? */
 	int	sc_rev;				/* revision */
 	int	sc_node;			/* PROM node ID */
@@ -50,9 +50,9 @@ struct dma_softc {
  * We are not allowed to touch the DMA "flush" and "drain" bits
  * while it is still thinking about a request (DMA_RP).
  */
-#define DMAWAIT(dma)    while ((dma)[DMA_D_CSR] & D_R_PEND) DELAY(1)
-#define DMAWAIT1(dma)   while ((dma)[DMA_D_CSR] & D_DRAINING) DELAY(1)
-#define DMAREADY(dma)	while (!((dma)[DMA_D_CSR] & D_DMA_ON)) DELAY(1)
+#define DMAWAIT(sc)	while (sc->sc_regs->csr & D_R_PEND) DELAY(1)
+#define DMAWAIT1(sc)	while (sc->sc_regs->csr & D_DRAINING) DELAY(1)
+#define DMAREADY(sc)	while (!(sc->sc_regs->csr & D_DMA_ON)) DELAY(1)
 
-#define DMACSR(r)	r->sc_reg[DMA_D_CSR]
-#define DMADDR(r)	r->sc_reg[DMA_D_ADDR]
+#define DMACSR(sc)	(sc->sc_regs->csr)
+#define DMADDR(sc)	(sc->sc_regs->addr)

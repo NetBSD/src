@@ -42,7 +42,7 @@
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vmparam.h,v 1.8 93/05/25 09:52:16 torek Exp 
- * $Id: vmparam.h,v 1.3 1994/04/18 07:17:45 deraadt Exp $
+ * $Id: vmparam.h,v 1.4 1994/10/02 22:00:35 deraadt Exp $
  */
 
 /*
@@ -83,7 +83,7 @@
  * vminit() insures this.
  */
 #define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
+#define	DMMAX	NBPG			/* largest potential swap allocation */
 #define	DMTEXT	1024			/* swap allocation for text */
 
 /*
