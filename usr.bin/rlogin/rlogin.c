@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.31 2004/10/16 02:03:54 christos Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.32 2004/12/02 21:46:52 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.31 2004/10/16 02:03:54 christos Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.32 2004/12/02 21:46:52 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 	 * We set SIGURG and SIGUSR1 below so that an
 	 * incoming signal will be held pending rather than being
 	 * discarded. Note that these routines will be ready to get
-	 * a signal by the time that they are unblocked below.;
+	 * a signal by the time that they are unblocked below.
 	 */
 	sa.sa_handler = copytochild;
 	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
