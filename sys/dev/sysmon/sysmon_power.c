@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.3 2003/04/20 20:48:28 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.4 2003/05/11 18:52:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -410,7 +410,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		rv = sysmon_queue_power_event(&pev);
 		simple_unlock(&sysmon_power_event_queue_slock);
 		if (rv == 0)
-			printf("%s: WARNING: state change event lost; "
+			printf("%s: WARNING: state change event %d lost; "
 			    "queue full\n", smpsw->smpsw_name,
 			    pev.pev_type);
 		return;
