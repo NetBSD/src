@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/08/04 17:02:16 tv Exp $
+#	$NetBSD: Makefile,v 1.14 1998/08/13 18:16:43 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -22,8 +22,10 @@ CPPFLAGS+= -DDEBUG -DRTLD_LOADER
 LDADD+=	-L${DESTDIR}/${LIBDIR} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
 
+.if (${OBJECT_FMT} == "ELF")
 # to be installed
 HDRS=	link.h
+.endif
 
 STRIPFLAG=
 
