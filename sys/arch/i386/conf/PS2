@@ -1,22 +1,16 @@
-#	$NetBSD: PS2,v 1.18 2001/04/21 21:10:43 fvdl Exp $
+#	$NetBSD: PS2,v 1.19 2001/04/22 19:15:05 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
 #	WARNING: DO NOT USE UNLESS YOU ARE PREPARED TO DEAL WITH PROBLEMS.
 #
 #	BEWARE:
-#	 MCA support in NetBSD is still very experimental at this
-#	 stage and should be used with extreme caution. MCA-enabled
-#	 kernels won't currently work on non-MCA machines and it's
-#	 not wise to try even try it unless you are prepared to deal
-#	 with strange hardware failures. Please note that MCA
-#	 support doesn't yet reach standard NetBSD quality,
-#	 should be really used only for experimentation and is provided
-#	 specially and only to make access to the code easier for people
-#	 who wish to help with PS/2 development.
+#	 MCA support in NetBSD is still experimental at this
+#	 stage and should be used with caution. MCA-enabled
+#	 kernels won't currently work on non-MCA machines.
+*
 #	 See also sys/dev/mca/TODO for list of problems and current list of
-#	 projects. If you try this out and encounter any problems, please
-#	 let us know via send-pr(1) or ask on port-i386@NetBSD.org.
+#	 projects.
 
 include "arch/i386/conf/std.i386"
 
@@ -117,7 +111,7 @@ we*	at mca? slot ?			# WD/SMC Ethernet
 ate*	at mca? slot ?			# Allied Telesis AT1720
 ne*	at mca? slot ?			# Novell NE/2 and clones
 
-# MCA ESDI controllers & disks - EXPERIMENTAL
+# MCA ESDI controllers & disks
 edc*	at mca? slot ?			# IBM ESDI Disk Controllers
 ed*	at edc?
 
