@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.6 2003/11/18 11:20:34 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.7 2003/11/20 07:12:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.6 2003/11/18 11:20:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.7 2003/11/20 07:12:34 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -194,11 +194,11 @@ mach_notify_port_dead_name(l, mr)
  * Mach does not use signals, so mach_trapsignal will not try to send
  * any signal. But systems based on Mach (e.g.: Darwin), can use both 
  * Mach exceptions and UNIX signals. In order to allow the Mach layer 
- * to intercept the  exception and inhiubit UNIX signals, we have 
+ * to intercept the exception and inhibit UNIX signals, we have 
  * mach_trapsignal1 returning an error. If it returns 0, then the 
  * exception was intercepted at the Mach level, and no signal should 
  * be produced. Else, a signal might be sent. darwin_trapinfo calls
- * mach_trapinfo1 and handle signls if it gets a non zero return value.
+ * mach_trapinfo1 and handle signals if it gets a non zero return value.
  */
 void
 mach_trapsignal(l, ksi)
@@ -216,16 +216,10 @@ mach_trapsignal1(l, ksi)
 {
 	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
-	struct mach_port *exc_port;
-	struct mach_right *task;
-	struct mach_right *thread;
 	int exc_no;
+	int code[2];
 
 	med = (struct mach_emuldata *)p->p_emuldata;
-
-	/* XXX Thread and task should have different ports */
-	task = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-	thread = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 
 	switch (ksi->ksi_signo) {
 	case SIGILL:
@@ -246,20 +240,16 @@ mach_trapsignal1(l, ksi)
 		break;
 	}
 
-	if ((exc_port = med->med_exc[exc_no]) == NULL)
-		return EINVAL;
-	else
-		return mach_exception(l, ksi, exc_port, exc_no, task, thread);
+	mach_siginfo_to_exception(ksi, code);
+
+	return mach_exception(l, exc_no, code);
 }
 
 int
-mach_exception(l, ksi, exc_port, exc, task, thread)
+mach_exception(l, exc, code)
 	struct lwp *l;
-	const struct ksiginfo *ksi;
-	struct mach_port *exc_port;
 	int exc;
-	struct mach_right *task;
-	struct mach_right *thread;
+	int *code;
 {
 	int behavior, flavor;
 	mach_msg_header_t *msgh;
@@ -268,7 +258,17 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 	struct mach_emuldata *med;
 	struct mach_right *kernel_mr;
 	struct lwp *catcher_lwp;
+	struct mach_right *task;
+	struct mach_right *thread;
+	struct mach_port *exc_port;
 	int error;
+
+	if ((exc_port = med->med_exc[exc]) == NULL)
+		return EINVAL;
+
+	/* XXX Thread and task should have different ports */
+	task = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	thread = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 
 #ifdef DIAGNOSTIC
 	if (exc_port->mp_datatype != MACH_MP_EXC_FLAGS)
@@ -312,7 +312,7 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		req->req_task.type = 0; /* XXX */
 		req->req_exc = exc;
 		req->req_codecount = 2;
-		mach_siginfo_to_exception(ksi, &req->req_code[0]);
+		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_trailer.msgh_trailer_size = 8;
 		break;
 	}
@@ -335,7 +335,7 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		req->req_msgh.msgh_id = MACH_EXCEPTION_STATE;
 		req->req_exc = exc;
 		req->req_codecount = 2;
-		mach_siginfo_to_exception(ksi, &req->req_code[0]);
+		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
 		mach_thread_get_state_machdep(l, flavor, req->req_state, &dc);
 		/* Trailer */
@@ -372,7 +372,7 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		req->req_task.type = 0; /* XXX */
 		req->req_exc = exc;
 		req->req_codecount = 2;
-		mach_siginfo_to_exception(ksi, &req->req_code[0]);
+		memcpy(&req->req_code[0], code, sizeof(req->req_code));
 		req->req_flavor = flavor;
 		mach_thread_get_state_machdep(l, flavor, req->req_state, &dc);
 		/* Trailer */
