@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20.2.12 2002/02/23 18:13:26 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.13 2002/06/26 16:49:59 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20.2.12 2002/02/23 18:13:26 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.13 2002/06/26 16:49:59 he Exp $");
 #endif
 
 /*
@@ -102,7 +102,7 @@ expect(int fd, const char *str, int *ftprc)
     int done;
     struct timeval timeout;
     int retval;
-    regmatch_t pmatch;
+    regmatch_t match;
     int verbose_expect=0;
 
 #if EXPECT_DEBUG
@@ -179,15 +179,15 @@ expect(int fd, const char *str, int *ftprc)
 	    }
 #endif /* EXPECT_DEBUG */
 
-	    if (regexec(&rstr, buf, 1, &pmatch, 0) == 0) {
+	    if (regexec(&rstr, buf, 1, &match, 0) == 0) {
 #if EXPECT_DEBUG
 		if (expect_debug)
-		    printf("Gotcha -> %s!\n", buf+pmatch.rm_so+1);
+		    printf("Gotcha -> %s!\n", buf+match.rm_so+1);
 		fflush(stdout);
 #endif /* EXPECT_DEBUG */
 
-		if (ftprc && isdigit(buf[pmatch.rm_so+1])) 
-		    *ftprc = atoi(buf+pmatch.rm_so+1);
+		if (ftprc && isdigit(buf[match.rm_so+1])) 
+		    *ftprc = atoi(buf+match.rm_so+1);
 
 		done=1;
 		retval=0;
@@ -261,6 +261,12 @@ setupCoproc(const char *base)
 	return -1;
     }
 
+    if (command_pipe[0] == -1 || command_pipe[1] == -1 ||
+	answer_pipe[0] == -1  || answer_pipe[1] == -1 ) {
+	warn("setupCoproc: pipe() returned bogus descriptor");
+	return -1;
+    }
+
     rc1 = fork();
     switch (rc1) {
     case -1:
@@ -274,11 +280,17 @@ setupCoproc(const char *base)
 	    /* Child */
 	    
 	    (void) close(command_pipe[1]);
-	    dup2(command_pipe[0], 0);
+	    rc1 = dup2(command_pipe[0], 0);
+            if (rc1 == -1) {
+                    err(1, "setupCoproc: dup2 failed (command_pipe[0])");
+            }
 	    (void) close(command_pipe[0]);
 	    
 	    (void) close(answer_pipe[0]);
-	    dup2(answer_pipe[1], 1);
+	    rc1 = dup2(answer_pipe[1], 1);
+            if (rc1 == -1) {
+                    err(1, "setupCoproc: dup2 failed (answer_pipe[1])");
+            }
 	    (void) close(answer_pipe[1]);
 	    
 	    setbuf(stdout, NULL);
@@ -349,7 +361,7 @@ ftp_stop(void)
 #if defined(__svr4__) && defined(__sun__)
 	char	env[BUFSIZ];
 #endif
-	char *tmp1, *tmp2;
+	const char *tmp1, *tmp2;
 	
 	if (!ftp_started)
 		return;
@@ -386,15 +398,19 @@ ftp_stop(void)
 int
 ftp_start(char *base)
 {
-	char *tmp1, *tmp2;
+	const char *tmp1, *tmp2;
 	int rc;
-	char newHost[256];
-	char newDir[1024];
-	char *currentHost=getenv(PKG_FTPIO_CURRENTHOST);
-	char *currentDir=getenv(PKG_FTPIO_CURRENTDIR);
+	char newHost[MAXHOSTNAMELEN];
+	const char *newDir;
+	const char *currentHost=getenv(PKG_FTPIO_CURRENTHOST);
+	const char *currentDir=getenv(PKG_FTPIO_CURRENTDIR);
+	int urllen;
 	
 	fileURLHost(base, newHost, sizeof(newHost));
-	strcpy(newDir, strchr(base+URLlength(base), '/') + 1);
+	urllen = URLlength(base);
+	if (urllen < 0 || !(newDir = strchr(base + URLlength(base), '/')))
+		errx(1, "ftp_start: bad URL '%s'", base);
+	newDir++;
 	if (currentHost
 	    && currentDir
 	    && ( strcmp(newHost, currentHost) != 0
@@ -456,7 +472,15 @@ ftp_start(char *base)
 		/* get FDs of our coprocess */
 		
 		ftpio.command = dup(atoi(tmp1));
+		if (ftpio.command == -1 ) {
+			warnx("command dup() failed, increase 'descriptors' limit");
+			return -1;
+		}
 		ftpio.answer  = dup(atoi(tmp2));
+		if (ftpio.answer == -1 ) {
+			warnx("answer dup() failed, increase 'descriptors' limit");
+			return -1;
+		}
 		
 		if (Verbose)
 			printf("Reusing FDs %s/%s for communication to FTP coprocess\n", tmp1, tmp2);
@@ -613,7 +637,6 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		/* Verify if the url is really ok */
-		int rc;
 		char exp[FILENAME_MAX];
 
 		rc=expandURL(exp, url);
