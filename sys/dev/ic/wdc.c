@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.148 2003/10/29 22:05:15 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.149 2003/10/29 22:09:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.148 2003/10/29 22:05:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.149 2003/10/29 22:09:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1136,7 +1136,7 @@ __wdcwait_reset(chp, drv_mask, poll)
 	int drv_mask;
 {
 	int timeout, nloop;
-	u_int8_t st0 = 0, er0 = 0, st1 = 0, er1 = 0;
+	u_int8_t st0 = 0, st1 = 0;
 #ifdef WDCDEBUG
 	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
 	u_int8_t sc1 = 0, sn1 = 0, cl1 = 0, ch1 = 0;
@@ -1154,7 +1154,6 @@ __wdcwait_reset(chp, drv_mask, poll)
 		    WDSD_IBM); /* master */
 		delay(10);
 		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		er0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 #ifdef WDCDEBUG
 		sc0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
 		sn0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
@@ -1167,7 +1166,6 @@ __wdcwait_reset(chp, drv_mask, poll)
 		    WDSD_IBM | 0x10); /* slave */
 		delay(10);
 		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		er1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 #ifdef WDCDEBUG
 		sc1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
 		sn1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
@@ -1204,8 +1202,6 @@ __wdcwait_reset(chp, drv_mask, poll)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	if (er0 != 0x01 && er0 != 0x81)
-		drv_mask &= ~0x01;
 	WDCDEBUG_PRINT(("%s:%d:0: after reset, sc=0x%x sn=0x%x "
 	    "cl=0x%x ch=0x%x\n",
 	     chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
@@ -1215,10 +1211,9 @@ end:
 	     chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	     chp->channel, sc1, sn1, cl1, ch1), DEBUG_PROBE);
 
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, "
-	    "st0=0x%x er0=0x%x, st1=0x%x er1=0x%x\n",
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x st1=0x%x\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, er0, st1, er1), DEBUG_PROBE);
+	    st0, st1), DEBUG_PROBE);
 
 	return drv_mask;
 }
