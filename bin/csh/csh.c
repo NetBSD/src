@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.28 2001/09/16 12:20:33 wiz Exp $ */
+/* $NetBSD: csh.c,v 1.29 2002/03/08 17:15:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.28 2001/09/16 12:20:33 wiz Exp $");
+__RCSID("$NetBSD: csh.c,v 1.29 2002/03/08 17:15:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1075,7 +1075,12 @@ process(bool catch)
 	 * is a lexical error then we forego history echo.
 	 */
 	if ((lex(&paraml) && !seterr && intty) || adrof(STRverbose)) {
+	    int odidfds = didfds;
+	    fflush(csherr);
+	    didfds = 0;
 	    prlex(csherr, &paraml);
+	    fflush(csherr);
+	    didfds = odidfds;
 	}
 
 	/*

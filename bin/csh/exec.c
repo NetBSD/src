@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.17 2001/11/03 13:35:39 lukem Exp $ */
+/* $NetBSD: exec.c,v 1.18 2002/03/08 17:15:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.17 2001/11/03 13:35:39 lukem Exp $");
+__RCSID("$NetBSD: exec.c,v 1.18 2002/03/08 17:15:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,9 +430,14 @@ void
 xechoit(Char **t)
 {
     if (adrof(STRecho)) {
+	int odidfds = didfds;
 	(void)fflush(csherr);
+	odidfds = didfds;
+	didfds = 0;
 	blkpr(csherr, t);
 	(void)fputc('\n', csherr);
+	(void)fflush(csherr);
+	didfds = odidfds;
     }
 }
 
