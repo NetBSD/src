@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.14 2001/02/04 20:36:33 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.15 2001/04/12 18:34:56 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -446,7 +446,7 @@ rdstrategy(struct buf *bp)
 	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
-	s = splimp();
+	s = splbio();
 	disksort_cylinder(&sc->sc_q, bp);
 	if (inq == 0) {
 		inq = 1;
