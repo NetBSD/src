@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.93 2002/04/07 07:05:37 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.94 2002/04/27 02:38:47 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.93 2002/04/07 07:05:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.94 2002/04/27 02:38:47 enami Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1039,7 +1039,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
+	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
