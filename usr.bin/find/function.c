@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.30 1999/02/04 16:41:17 kleink Exp $	*/
+/*	$NetBSD: function.c,v 1.31 1999/07/20 01:28:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.30 1999/02/04 16:41:17 kleink Exp $");
+__RCSID("$NetBSD: function.c,v 1.31 1999/07/20 01:28:41 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,11 +104,13 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_print0 __P((PLAN *, FTSENT *));
 	int	f_printx __P((PLAN *, FTSENT *));
 	int	f_prune __P((PLAN *, FTSENT *));
+	int	f_regex __P((PLAN *, FTSENT *));
 	int	f_size __P((PLAN *, FTSENT *));
 	int	f_type __P((PLAN *, FTSENT *));
 	int	f_user __P((PLAN *, FTSENT *));
 	int	f_not __P((PLAN *, FTSENT *));
 	int	f_or __P((PLAN *, FTSENT *));
+static	PLAN   *c_regex_common __P((char ***, int, enum ntype, int));
 static	PLAN   *palloc __P((enum ntype, int (*) __P((PLAN *, FTSENT *))));
 
 /*
@@ -1069,7 +1071,71 @@ c_prune(argvp, isok)
 {
 	return (palloc(N_PRUNE, f_prune));
 }
+
+/*
+ * -regex regexp (and related) functions --
+ *
+ *	True if the complete file path matches the regular expression regexp.
+ *	For -regex, regexp is a case-sensitive (basic) regular expression.
+ *	For -iregex, regexp is a case-insensitive (basic) regular expression.
+ */
+int
+f_regex(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	return (regexec(&plan->regexp_data, entry->fts_path, 0, NULL, 0) == 0);
+}
  
+static PLAN *
+c_regex_common(argvp, isok, type, regcomp_flags)
+	char ***argvp;
+	int isok, regcomp_flags;
+	enum ntype type;
+{
+	char errbuf[LINE_MAX];
+	regex_t reg;
+	char *regexp = **argvp;
+	char *lineregexp;
+	PLAN *new;
+	int rv;
+
+	(*argvp)++;
+
+	lineregexp = alloca(strlen(regexp) + 1 + 6);	/* max needed */
+	sprintf(lineregexp, "^%s(%s%s)$",
+	    (regcomp_flags & REG_EXTENDED) ? "" : "\\", regexp,
+	    (regcomp_flags & REG_EXTENDED) ? "" : "\\");
+	rv = regcomp(&reg, lineregexp, REG_NOSUB|regcomp_flags);
+	if (rv != 0) {
+		regerror(rv, &reg, errbuf, sizeof errbuf);
+		errx(1, "regexp %s: %s", regexp, errbuf);
+	}
+	
+	new = palloc(type, f_regex);
+	new->regexp_data = reg;
+	return (new);
+}
+
+PLAN *
+c_regex(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+
+	return (c_regex_common(argvp, isok, N_REGEX, REG_BASIC));
+}
+
+PLAN *
+c_iregex(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+
+	return (c_regex_common(argvp, isok, N_IREGEX, REG_BASIC|REG_ICASE));
+}
+
 /*
  * -size n[c] functions --
  *
