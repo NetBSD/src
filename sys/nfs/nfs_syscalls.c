@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.46 2000/10/24 07:08:48 matt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.47 2000/11/24 23:30:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,7 +96,10 @@ extern int nqsrv_writeslack;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
-struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+struct nfssvc_sock *nfs_udpsock;
+#ifdef ISO
+struct nfssvc_sock *nfs_cltpsock;
+#endif
 #ifdef INET6
 struct nfssvc_sock *nfs_udp6sock;
 #endif
@@ -868,11 +871,13 @@ nfsrv_init(terminating)
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_udp6sock, ns_chain);
 #endif
 
+#ifdef ISO
 	nfs_cltpsock = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
 	memset((caddr_t)nfs_cltpsock, 0, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_cltpsock->ns_uidlruhead);
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_cltpsock, ns_chain);
+#endif
 }
 
 /*
