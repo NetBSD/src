@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.15 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.16 2004/02/22 08:18:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.15 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.16 2004/02/22 08:18:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ ntfs_calccfree(
 	struct vnode *vp;
 	u_int8_t *tmp;
 	int j, error;
-	long cfree = 0;
+	cn_t cfree = 0;
 	size_t bmsize, i;
 
 	vp = ntmp->ntm_sysvn[NTFS_BITMAPINO];
