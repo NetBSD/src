@@ -1,5 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5 1998/10/07 04:58:23 tsubai Exp $	*/
-/*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
+/*	$NetBSD: extintr.c,v 1.6 1999/01/12 12:06:46 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -62,10 +61,27 @@ int fakeintr __P((void *));
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
-#define INT_STATE_REG  (interrupt_reg + 0x20)
-#define INT_ENABLE_REG (interrupt_reg + 0x24)
-#define INT_CLEAR_REG  (interrupt_reg + 0x28)
-#define INT_LEVEL_REG  (interrupt_reg + 0x2c)
+extern u_int *heathrow_FCR;
+
+static __inline int cntlzw __P((int));
+static int read_irq __P((void));
+static void enable_irq __P((int));
+static int mapirq __P((int));
+
+static int hwirq[ICU_LEN], virq[64];
+static int virq_max = 0;
+
+#define HWIRQ_MAX 27
+#define HWIRQ_MASK 0x0fffffff
+
+#define INT_STATE_REG0  (interrupt_reg + 0x20)
+#define INT_ENABLE_REG0 (interrupt_reg + 0x24)
+#define INT_CLEAR_REG0  (interrupt_reg + 0x28)
+#define INT_LEVEL_REG0  (interrupt_reg + 0x2c)
+#define INT_STATE_REG1  (INT_STATE_REG0  - 0x10)
+#define INT_ENABLE_REG1 (INT_ENABLE_REG0 - 0x10)
+#define INT_CLEAR_REG1  (INT_CLEAR_REG0  - 0x10)
+#define INT_LEVEL_REG1  (INT_LEVEL_REG0  - 0x10)
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -166,7 +182,7 @@ intr_calculatemasks()
 			if (intrhand[irq])
 				irqs |= 1 << irq;
 		imen = ~irqs;
-		out32rb(INT_ENABLE_REG, ~imen);
+		enable_irq(~imen);
 	}
 }
 
@@ -216,6 +232,8 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 	extern int cold;
+
+	irq = mapirq(irq);
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -306,6 +324,20 @@ intr_disestablish(arg)
 }
 
 /*
+ * Count leading zeros.
+ */
+static __inline int
+cntlzw(x)
+	int x;
+{
+	int a;
+
+	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
+
+	return a;
+}
+
+/*
  * external interrupt handler
  */
 void
@@ -316,48 +348,34 @@ ext_intr()
 	int pcpl;
 	struct intrhand *ih;
 	volatile unsigned long int_state;
-	extern long intrcnt[];
-	extern int cold;
 
 	pcpl = splhigh();	/* Turn off all */
 
-	int_state = in32rb(INT_STATE_REG);
+	int_state = read_irq();
 	if (int_state == 0)
 		goto out;
 
-	out32rb(INT_CLEAR_REG, int_state);
-
 start:
-	for (i = 0; i < 32; i++) {
-		if (int_state & (1 << i)) {
-			irq = i;
-			break;
-		}
-	}
+	irq = 31 - cntlzw(int_state);
 
 	o_imen = imen;
 	r_imen = 1 << irq;
-	imen |= r_imen;
-
-	/*out32rb(INT_ENABLE_REG, ~imen);*/
 
 	if ((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
-		out32rb(INT_ENABLE_REG, ~imen);
+		imen |= r_imen;
+		enable_irq(~imen);
 	} else {
 		ih = intrhand[irq];
 		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		imen = o_imen;
-
-		/*out32rb(INT_ENABLE_REG, ~imen);*/
 
 #if defined(UVM)
 		uvmexp.intrs++;
 #endif
-		intrcnt[irq]++;
+		intrcnt[hwirq[irq]]++;
 	}
 	int_state &= ~r_imen;
 	if (int_state)
@@ -376,7 +394,6 @@ do_pending_int()
 	int hwpend;
 	int emsr, dmsr;
 	static int processing;
-	extern long intrcnt[];
 
 	if (processing)
 		return;
@@ -389,9 +406,9 @@ do_pending_int()
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
-	out32rb(INT_ENABLE_REG, ~imen);
+	enable_irq(~imen);
 	while (hwpend) {
-		irq = ffs(hwpend) - 1;
+		irq = 31 - cntlzw(hwpend);
 		hwpend &= ~(1L << irq);
 		ih = intrhand[irq];
 		while(ih) {
@@ -399,7 +416,7 @@ do_pending_int()
 			ih = ih->ih_next;
 		}
 
-		intrcnt[irq]++;
+		intrcnt[hwirq[irq]]++;
 	}
 
 	/*out32rb(INT_ENABLE_REG, ~imen);*/
@@ -407,20 +424,99 @@ do_pending_int()
 	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
 		ipending &= ~(1 << SIR_CLOCK);
 		softclock();
-		intrcnt[SIR_CLOCK]++;
+		intrcnt[CNT_SOFTCLOCK]++;
 	}
 	if ((ipending & ~pcpl) & (1 << SIR_NET)) {
 		ipending &= ~(1 << SIR_NET);
 		softnet();
-		intrcnt[SIR_NET]++;
+		intrcnt[CNT_SOFTNET]++;
 	}
 	if ((ipending & ~pcpl) & (1 << SIR_SERIAL)) {
 		ipending &= ~(1 << SIR_SERIAL);
 		softserial();
-		intrcnt[SIR_SERIAL]++;
+		intrcnt[CNT_SOFTSERIAL]++;
 	}
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
+}
+
+/*
+ * Map 64 irqs into 32 (bits).
+ */
+int
+mapirq(irq)
+	int irq;
+{
+	int v;
+
+	if (irq < 0 || irq >= 64)
+		panic("invalid irq");
+	virq_max++;
+	v = virq_max;
+	if (v > HWIRQ_MAX)
+		panic("virq overflow");
+
+	hwirq[v] = irq;
+	virq[irq] = v;
+
+	return v;
+}
+
+int
+read_irq()
+{
+	int rv = 0;
+	int state0, state1, p;
+
+	state0 = in32rb(INT_STATE_REG0);
+	if (state0)
+		out32rb(INT_CLEAR_REG0, state0);
+	while (state0) {
+		p = 31 - cntlzw(state0);
+		rv |= 1 << virq[p];
+		state0 &= ~(1 << p);
+	}
+
+	if (heathrow_FCR)			/* has heathrow? */
+		state1 = in32rb(INT_STATE_REG1);
+	else
+		state1 = 0;
+
+	if (state1)
+		out32rb(INT_CLEAR_REG1, state1);
+	while (state1) {
+		p = 31 - cntlzw(state1);
+		rv |= 1 << virq[p + 32];
+		state1 &= ~(1 << p);
+	}
+
+	/* 1 << 0 is invalid. */
+	return rv & ~1;
+}
+
+void
+enable_irq(x)
+	int x;
+{
+	int state0, state1, v;
+	int irq;
+
+	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
+
+	state0 = state1 = 0;
+	while (x) {
+		v = 31 - cntlzw(x);
+		irq = hwirq[v];
+		if (irq < 32)
+			state0 |= 1 << irq;
+		else
+			state1 |= 1 << (irq - 32);
+		x &= ~(1 << v);
+	}
+
+	out32rb(INT_ENABLE_REG0, state0);
+	if (heathrow_FCR)
+		out32rb(INT_ENABLE_REG1, state1);
 }
