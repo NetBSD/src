@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 2001/06/30 19:09:38 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.121 2001/07/01 09:25:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -9858,7 +9858,7 @@ Lbcopy_block_aligned64:
  * store.
  *
  */
-#if 1
+#if 0
 	/* XXXX DEBUG -- return which routine we used instead of *src */
 	and	%o0, BLOCK_ALIGN, %o3
 	set	Lbcopy_blocknames, %g1
