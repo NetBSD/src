@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.209 2003/10/22 04:19:46 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.210 2003/10/22 04:22:25 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2597,3 +2597,10 @@ src/sys/compat/linux/common/linux_misc.c	1.119
 
 	Implement MAP_TRYFIXED for linux emulation.
 	[tv, ticket #1428]
+
+sys/compat/linux/common/linux_socket.c		1.41-1.42
+
+	setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0) for AF_INET6 sockets,
+	to meet with the default behavior of linux.
+	[tv, ticket #1429]
+
