@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.4 2001/04/19 17:46:38 drochner Exp $
+#	$NetBSD: ntp2netbsd,v 1.5 2003/10/23 02:23:26 simonb Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ntp2netbsd:  convert a ntp source tree into a
-# netbsd ntp source tree, under basesrc/dist,
+# netbsd ntp source tree, under src/dist,
 # based on bind2netbsd by Bernd Ernesti
 #
 # Rough instructions for importing new NTP release:
@@ -42,14 +42,14 @@
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/ntp/release/tar/file
 #	$ sh /usr/src/dist/ntp/ntp2netbsd ntp-4.x.y `pwd`
-#	$ cd basesrc/dist/ntp
-#	$ cvs import -m "Import ntp 4.x.y" basesrc/dist/ntp UDEL ntp-4-x-y
+#	$ cd src/dist/ntp
+#	$ cvs import -m "Import ntp 4.x.y" src/dist/ntp UDEL ntp-4-x-y
 #	$ cd ../../../ntp-4.x.y
 #	$ run ./configure  --enable-all-clocks --enable-parse-clocks
 #	$ cp config.h /usr/src/usr.sbin/ntp/include
 #	$ cp scripts/mkver /usr/src/usr.sbin/ntp/scripts
 #	$ cd ..
-#	$ rm -r basesrc ntp-4.x.y
+#	$ rm -r src ntp-4.x.y
 #	$ cd /usr/src/usr.sbin/ntp
 #	$ cvs commit -m "Updated autoconf generated files for ntp 4.x.y."
 #
@@ -61,7 +61,7 @@
 if [ $# -ne 2 ]; then echo "ntp2netbsd src dest"; exit 1; fi
 
 r=$1
-d=$2/basesrc/dist/ntp
+d=$2/src/dist/ntp
 
 case "$d" in
 	/*)
