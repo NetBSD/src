@@ -1,7 +1,6 @@
-#	$Id: files.i386,v 1.32 1994/01/29 02:43:54 cgd Exp $
+#	$Id: files.i386,v 1.33 1994/02/01 03:33:43 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
-arch/i386/i386/cons.c		standard
 arch/i386/i386/db_disasm.c	optional ddb
 arch/i386/i386/db_interface.c	optional ddb
 arch/i386/i386/db_trace.c	optional ddb
@@ -47,6 +46,7 @@ arch/i386/isa/ultra14f.c	optional uha device-driver requires isa scsi
 arch/i386/isa/wd.c		optional wd device-driver requires isa
 arch/i386/isa/wd7000.c		optional wds device-driver requires isa scsi
 arch/i386/isa/wt.c		optional wt device-driver requires isa
+dev/cons.c			standard
 scsi/cd.c			optional cd device-driver requires scsi
 scsi/ch.c			optional ch device-driver requires scsi
 scsi/scsiconf.c			optional scsi
