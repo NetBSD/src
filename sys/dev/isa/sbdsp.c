@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.102 1999/11/01 18:12:20 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.103 2000/01/20 19:27:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -215,7 +216,6 @@ static struct sbmode sbrmodes[] = {
 void	sbversion __P((struct sbdsp_softc *));
 void	sbdsp_jazz16_probe __P((struct sbdsp_softc *));
 void	sbdsp_set_mixer_gain __P((struct sbdsp_softc *sc, int port));
-void	sbdsp_to __P((void *));
 void	sbdsp_pause __P((struct sbdsp_softc *));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
 int	sbdsp16_set_rate __P((struct sbdsp_softc *, int, int));
@@ -1044,25 +1044,12 @@ sbdsp_rdsp(sc)
 	return -1;
 }
 
-/*
- * Doing certain things (like toggling the speaker) make
- * the SB hardware go away for a while, so pause a little.
- */
-void
-sbdsp_to(arg)
-	void *arg;
-{
-	wakeup(arg);
-}
-
 void
 sbdsp_pause(sc)
 	struct sbdsp_softc *sc;
 {
-	extern int hz;
 
-	timeout(sbdsp_to, sbdsp_to, hz/8);
-	(void)tsleep(sbdsp_to, PWAIT, "sbpause", 0);
+	(void) tsleep(sbdsp_pause, PWAIT, "sbpause", hz / 8);
 }
 
 /*
