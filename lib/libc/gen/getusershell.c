@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.5.10.4 1997/05/27 07:56:15 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.5.10.5 1998/11/02 03:33:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -35,14 +35,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.4 1997/05/27 07:56:15 lukem Exp $";
+__RCSID("$NetBSD: getusershell.c,v 1.5.10.5 1998/11/02 03:33:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdio.h>
@@ -62,28 +64,34 @@ static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.4 1997/05/27 07:56:15 lu
 #include <rpcsvc/yp_prot.h>
 #endif
 
+#ifdef __weak_alias
+__weak_alias(endusershell,_endusershell);
+__weak_alias(getusershell,_getusershell);
+__weak_alias(setusershell,_setusershell);
+#endif
+
 /*
  * Local shells should NOT be added here.  They should be added in
  * /etc/shells.
  */
 
-static char *okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
-
-static char		**curshell;
-static char		**initshells __P((void));
+static const char *const okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
+static const char *const *curshell;
 static StringList	 *sl;
+
+static const char *const *initshells __P((void));
 
 /*
  * Get a list of shells from "shells" nsswitch database
  */
-char *
+__aconst char *
 getusershell()
 {
-	char *ret;
+	__aconst char *ret;
 
 	if (curshell == NULL)
 		curshell = initshells();
-	ret = *curshell;
+	ret = (__aconst char *)*curshell;
 	if (ret != NULL)
 		curshell++;
 	return (ret);
@@ -104,6 +112,9 @@ setusershell()
 
 	curshell = initshells();
 }
+
+
+static int	_local_initshells __P((void *, void *, va_list));
 
 static int
 _local_initshells(rv, cb_data, ap)
@@ -139,6 +150,8 @@ _local_initshells(rv, cb_data, ap)
 }
 
 #ifdef HESIOD
+static int	_dns_initshells __P((void *, void *, va_list));
+
 static int
 _dns_initshells(rv, cb_data, ap)
 	void	*rv;
@@ -178,6 +191,8 @@ _dns_initshells(rv, cb_data, ap)
 #endif /* HESIOD */
 
 #ifdef YP
+static int	_nis_initshells __P((void *, void *, va_list));
+
 static int
 _nis_initshells(rv, cb_data, ap)
 	void	*rv;
@@ -241,7 +256,7 @@ _nis_initshells(rv, cb_data, ap)
 }
 #endif /* YP */
 
-static char **
+static const char *const *
 initshells()
 {
 	static ns_dtab dtab;
@@ -264,5 +279,5 @@ initshells()
 	}
 	sl_add(sl, NULL);
 
-	return (sl->sl_str);
+	return (const char *const *)(sl->sl_str);
 }

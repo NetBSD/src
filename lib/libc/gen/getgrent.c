@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.19.2.3 1997/06/02 04:57:37 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19.2.4 1998/11/02 03:33:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,14 +35,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.3 1997/06/02 04:57:37 lukem Exp $";
+__RCSID("$NetBSD: getgrent.c,v 1.19.2.4 1998/11/02 03:33:13 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <grp.h>
 #include <limits.h>
@@ -60,6 +62,15 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.3 1997/06/02 04:57:37 lukem 
 #include <rpcsvc/ypclnt.h>
 #endif
 
+#ifdef __weak_alias
+__weak_alias(endgrent,_endgrent);
+__weak_alias(getgrent,_getgrent);
+__weak_alias(getgrgid,_getgrgid);
+__weak_alias(getgrnam,_getgrnam);
+__weak_alias(setgrent,_setgrent);
+__weak_alias(setgroupent,_setgroupent);
+#endif
+
 static FILE		*_gr_fp;
 static struct group	_gr_group;
 static int		_gr_stayopen;
@@ -72,8 +83,8 @@ static int start_gr	__P((void));
 #define	MAXGRP		200
 #define	MAXLINELENGTH	1024
 
-static char	*members[MAXGRP];
-static char	line[MAXLINELENGTH];
+static __aconst char	*members[MAXGRP];
+static char		line[MAXLINELENGTH];
 
 #ifdef YP
 enum _grmode { GRMODE_NONE, GRMODE_FULL, GRMODE_NAME };
@@ -91,7 +102,7 @@ getgrent()
 {
 	_gr_nomore = 0;
 	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL) || _gr_nomore)
-		return NULL;
+ 		return(NULL);
 	return &_gr_group;
 }
 
@@ -176,6 +187,9 @@ endgrent()
 	}
 }
 
+
+static int _local_grscan __P((void *, void *, va_list));
+
 static int
 _local_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -209,6 +223,8 @@ _local_grscan(rv, cb_data, ap)
 }
 
 #ifdef HESIOD
+static int _dns_grscan __P((void *, void *, va_list));
+
 static int
 _dns_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -263,6 +279,8 @@ _dns_grscan(rv, cb_data, ap)
 #endif
 
 #ifdef YP
+static int _nis_grscan __P((void *, void *, va_list));
+
 static int
 _nis_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -297,7 +315,7 @@ _nis_grscan(rv, cb_data, ap)
 		data = NULL;
 		r = yp_match(__ypdomain,
 				(name) ? "group.byname" : "group.bygid",
-				line, strlen(line), &data, &datalen);
+				line, (int)strlen(line), &data, &datalen);
 		switch (r) {
 		case 0:
 			break;
@@ -372,6 +390,8 @@ _nis_grscan(rv, cb_data, ap)
 /*
  * log an error if "files" or "compat" is specified in group_compat database
  */
+static int _bad_grscan __P((void *, void *, va_list));
+
 static int
 _bad_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -379,6 +399,7 @@ _bad_grscan(rv, cb_data, ap)
 	va_list	 ap;
 {
 	static int warned;
+
 	if (!warned) {
 		syslog(LOG_ERR,
 			"nsswitch.conf group_compat database can't use '%s'",
@@ -393,6 +414,9 @@ _bad_grscan(rv, cb_data, ap)
  * nsswitch database. only Hesiod and NIS is supported - it doesn't make
  * sense to lookup compat names from 'files' or 'compat'
  */
+
+static int __grscancompat __P((int, gid_t, const char *));
+
 static int
 __grscancompat(search, gid, name)
 	int		 search;
@@ -411,6 +435,8 @@ __grscancompat(search, gid, name)
 	return nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, search, gid, name);
 }
 
+
+static int _compat_grscan __P((void *, void *, va_list));
 
 static int
 _compat_grscan(rv, cb_data, ap)
@@ -524,8 +550,8 @@ matchline(search, gid, name)
 	const char	*name;
 {
 	unsigned long	id;
-	char		*cp, **m;
-	char		*bp, *ep;
+	__aconst char	**m;
+	char		*cp, *bp, *ep;
 
 	if (line[0] == '+')
 		return 0;	/* sanity check to prevent recursion */
@@ -545,7 +571,7 @@ matchline(search, gid, name)
 	cp = NULL;
 	if (bp == NULL)
 		return 0;
-	for (m = _gr_group.gr_mem = members;; bp++) {
+	for (_gr_group.gr_mem = m = members;; bp++) {
 		if (m == &members[MAXGRP - 1])
 			break;
 		if (*bp == ',') {
