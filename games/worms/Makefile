@@ -2,7 +2,7 @@
 
 PROG=	worms
 MAN6=	worms.0
-DPADD=	${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
-LDADD=	-lcurses -ltermcap -lcompat
+DPADD=	${LIBCURSES} ${LIBTERM}
+LDADD=	-lcurses -ltermcap
 
 .include <bsd.prog.mk>

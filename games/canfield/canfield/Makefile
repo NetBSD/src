@@ -2,8 +2,8 @@
 
 PROG=	canfield
 MAN6=	canfield.0
-DPADD=	${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
-LDADD=	-lcurses -ltermcap -lcompat
+DPADD=	${LIBCURSES} ${LIBTERM}
+LDADD=	-lcurses -ltermcap
 HIDEGAME=hidegame
 
 
