@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.13 2004/12/28 22:30:07 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.14 2004/12/29 00:21:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -168,10 +168,20 @@ struct rtw_txctl {
 
 #define RTW_RXQLEN	64
 
+struct rtw_rxdesc_blk {
+	struct rtw_rxdesc	*hrc_desc;
+	u_int			hrc_next;
+	u_int			hrc_ndesc;
+	bus_dma_tag_t		hrc_dmat;
+	bus_dmamap_t		hrc_dmamap;
+};
+
 struct rtw_txdesc_blk {
 	u_int			htc_ndesc;
 	u_int			htc_next;
 	u_int			htc_nfree;
+	bus_dma_tag_t		htc_dmat;
+	bus_dmamap_t		htc_dmamap;
 	bus_addr_t		htc_physbase;
 	bus_addr_t		htc_ofs;
 	struct rtw_txdesc	*htc_desc;
@@ -387,12 +397,10 @@ struct rtw_softc {
 	struct rtw_txctl_blk	sc_txctl_blk[RTW_NTXPRI];
 	u_int			sc_txq;
 	u_int			sc_txnext;
-
 	struct rtw_txdesc_blk	sc_txdesc_blk[RTW_NTXPRI];
-	struct rtw_rxdesc	*sc_rxdesc;
+
 	struct rtw_rxctl	sc_rxctl[RTW_RXQLEN];
-	u_int			sc_rxnext;
-	u_int			sc_nrxdesc;
+	struct rtw_rxdesc_blk	sc_rxdesc_blk;
 
 	struct rtw_descs	*sc_descs;
 

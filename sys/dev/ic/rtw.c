@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.32 2004/12/28 22:30:07 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.33 2004/12/29 00:21:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.32 2004/12/28 22:30:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.33 2004/12/29 00:21:37 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1034,36 +1034,34 @@ rtw_txctl_blk_init_all(struct rtw_txctl_blk *stcs)
 }
 
 static __inline void
-rtw_rxdescs_sync(bus_dma_tag_t dmat, bus_dmamap_t dmap, int desc0, int nsync,
-    int ndesc, int ops)
+rtw_rxdescs_sync(struct rtw_rxdesc_blk *hrc, int desc0, int nsync, int ops)
 {
-	KASSERT(nsync <= ndesc);
+	KASSERT(nsync <= hrc->hrc_ndesc);
 	/* sync to end of ring */
-	if (desc0 + nsync > ndesc) {
-		bus_dmamap_sync(dmat, dmap,
+	if (desc0 + nsync > hrc->hrc_ndesc) {
+		bus_dmamap_sync(hrc->hrc_dmat, hrc->hrc_dmamap,
 		    offsetof(struct rtw_descs, hd_rx[desc0]),
-		    sizeof(struct rtw_rxdesc) * (ndesc - desc0), ops);
-		nsync -= (ndesc - desc0);
+		    sizeof(struct rtw_rxdesc) * (hrc->hrc_ndesc - desc0), ops);
+		nsync -= (hrc->hrc_ndesc - desc0);
 		desc0 = 0;
 	}
 
-	KASSERT(desc0 < ndesc);
-	KASSERT(nsync <= ndesc);
-	KASSERT(desc0 + nsync <= ndesc);
+	KASSERT(desc0 < hrc->hrc_ndesc);
+	KASSERT(nsync <= hrc->hrc_ndesc);
+	KASSERT(desc0 + nsync <= hrc->hrc_ndesc);
 
 	/* sync what remains */
-	bus_dmamap_sync(dmat, dmap,
+	bus_dmamap_sync(hrc->hrc_dmat, hrc->hrc_dmamap,
 	    offsetof(struct rtw_descs, hd_rx[desc0]),
 	    sizeof(struct rtw_rxdesc) * nsync, ops);
 }
 
 static void
-rtw_txdescs_sync(bus_dma_tag_t dmat, bus_dmamap_t dmap,
-    struct rtw_txdesc_blk *htc, u_int desc0, u_int nsync, int ops)
+rtw_txdescs_sync(struct rtw_txdesc_blk *htc, u_int desc0, u_int nsync, int ops)
 {
 	/* sync to end of ring */
 	if (desc0 + nsync > htc->htc_ndesc) {
-		bus_dmamap_sync(dmat, dmap,
+		bus_dmamap_sync(htc->htc_dmat, htc->htc_dmamap,
 		    htc->htc_ofs + sizeof(struct rtw_txdesc) * desc0,
 		    sizeof(struct rtw_txdesc) * (htc->htc_ndesc - desc0),
 		    ops);
@@ -1072,19 +1070,17 @@ rtw_txdescs_sync(bus_dma_tag_t dmat, bus_dmamap_t dmap,
 	}
 
 	/* sync what remains */
-	bus_dmamap_sync(dmat, dmap,
+	bus_dmamap_sync(htc->htc_dmat, htc->htc_dmamap,
 	    htc->htc_ofs + sizeof(struct rtw_txdesc) * desc0,
 	    sizeof(struct rtw_txdesc) * nsync, ops);
 }
 
 static void
-rtw_txdescs_sync_all(bus_dma_tag_t dmat, bus_dmamap_t dmap,
-    struct rtw_txdesc_blk *htcs)
+rtw_txdescs_sync_all(struct rtw_txdesc_blk *htcs)
 {
 	int pri;
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		rtw_txdescs_sync(dmat, dmap,
-		    &htcs[pri], 0, htcs[pri].htc_ndesc,
+		rtw_txdescs_sync(&htcs[pri], 0, htcs[pri].htc_ndesc,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 }
@@ -1170,11 +1166,12 @@ rtw_rxctl_init_all(bus_dma_tag_t dmat, struct rtw_rxctl *desc,
 }
 
 static __inline void
-rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx, int ndesc, int kick)
+rtw_rxdesc_init(struct rtw_rxdesc_blk *hrc, struct rtw_rxctl *srx,
+    int idx, int kick)
 {
-	int is_last = (idx == ndesc - 1);
+	int is_last = (idx == hrc->hrc_ndesc - 1);
 	uint32_t ctl, octl, obuf;
+	struct rtw_rxdesc *hrx = &hrc->hrc_desc[idx];
 
 	obuf = hrx->hrx_buf;
 	hrx->hrx_buf = htole32(srx->srx_dmamap->dm_segs[0].ds_addr);
@@ -1196,28 +1193,28 @@ rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 	     le32toh(hrx->hrx_ctl)));
 
 	/* sync the mbuf */
-	bus_dmamap_sync(dmat, srx->srx_dmamap, 0, srx->srx_dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(hrc->hrc_dmat, srx->srx_dmamap, 0,
+	    srx->srx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* sync the descriptor */
-	bus_dmamap_sync(dmat, dmam, RTW_DESC_OFFSET(hd_rx, idx),
-	    sizeof(struct rtw_rxdesc),
+	bus_dmamap_sync(hrc->hrc_dmat, hrc->hrc_dmamap,
+	    RTW_DESC_OFFSET(hd_rx, idx), sizeof(struct rtw_rxdesc),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
 
 static void
-rtw_rxdesc_init_all(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *desc, struct rtw_rxctl *ctl, int ndesc, int kick)
+rtw_rxdesc_init_all(struct rtw_rxdesc_blk *hrc, struct rtw_rxctl *ctl, int kick)
 {
 	int i;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
 
-	for (i = 0; i < ndesc; i++) {
-		hrx = &desc[i];
+	for (i = 0; i < hrc->hrc_ndesc; i++) {
+		hrx = &hrc->hrc_desc[i];
 		srx = &ctl[i];
-		rtw_rxdesc_init(dmat, dmam, hrx, srx, i, ndesc, kick);
+		rtw_rxdesc_init(hrc, srx, i, kick);
 	}
+	hrc->hrc_next = 0;
 }
 
 static void
@@ -1256,18 +1253,20 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 	u_int32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
+	struct rtw_rxdesc_blk *hrc;
 	struct mbuf *m;
 
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 
-	KASSERT(sc->sc_rxnext < sc->sc_nrxdesc);
+	hrc = &sc->sc_rxdesc_blk;
 
-	for (next = sc->sc_rxnext; ; next = (next + 1) % sc->sc_nrxdesc) {
-		rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-		    next, 1, sc->sc_nrxdesc,
+	KASSERT(hrc->hrc_next < hrc->hrc_ndesc);
+
+	for (next = hrc->hrc_next; ; next = (next + 1) % hrc->hrc_ndesc) {
+		rtw_rxdescs_sync(hrc, next, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		hrx = &sc->sc_rxdesc[next];
+		hrx = &hrc->hrc_desc[next];
 		srx = &sc->sc_rxctl[next];
 
 		hstat = le32toh(hrx->hrx_stat);
@@ -1290,10 +1289,9 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 				break;
 
 			/* sometimes the NIC skips to the 0th descriptor */
-			rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-			    0, 1, sc->sc_nrxdesc,
+			rtw_rxdescs_sync(hrc, 0, 1,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-			hrx = &sc->sc_rxdesc[0];
+			hrx = &hrc->hrc_desc[0];
 			if ((hrx->hrx_stat & htole32(RTW_RXSTAT_OWN)) != 0)
 				break;
 			RTW_DPRINTF(RTW_DEBUG_BUGS,
@@ -1443,12 +1441,11 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
-		rtw_rxdesc_init(sc->sc_dmat, sc->sc_desc_dmamap,
-		    hrx, srx, next, sc->sc_nrxdesc, 0);
+		rtw_rxdesc_init(hrc, srx, next, 0);
 	}
-	sc->sc_rxnext = next;
+	hrc->hrc_next = next;
 
-	KASSERT(sc->sc_rxnext < sc->sc_nrxdesc);
+	KASSERT(hrc->hrc_next < hrc->hrc_ndesc);
 
 	return;
 }
@@ -1475,8 +1472,8 @@ rtw_txbuf_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 }
 
 static void
-rtw_txbufs_release(bus_dma_tag_t dmat, bus_dmamap_t desc_dmamap,
-    struct ieee80211com *ic, struct rtw_txctl_blk *stc)
+rtw_txbufs_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
+    struct rtw_txctl_blk *stc)
 {
 	struct rtw_txctl *stx;
 
@@ -1536,8 +1533,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
 
 		KASSERT(ndesc > 0);
 
-		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap, htc,
-		    stx->stx_first, ndesc,
+		rtw_txdescs_sync(htc, stx->stx_first, ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		if ((htc->htc_desc[stx->stx_last].htx_stat &
@@ -1594,6 +1590,7 @@ rtw_dump_rings(struct rtw_softc *sc)
 {
 	struct rtw_txdesc_blk *htc;
 	struct rtw_rxdesc *hrx;
+	struct rtw_rxdesc_blk *hrc;
 	int desc, pri;
 
 	if ((rtw_debug & RTW_DEBUG_IO_KICK) == 0)
@@ -1607,11 +1604,13 @@ rtw_dump_rings(struct rtw_softc *sc)
 			rtw_print_txdesc(sc, ".", NULL, htc, desc);
 	}
 
+	hrc = &sc->sc_rxdesc_blk;
+
 	for (desc = 0; desc < RTW_RXQLEN; desc++) {
-		hrx = &sc->sc_rxdesc[desc];
+		hrx = &hrc->hrc_desc[desc];
 		printf("%s: %sctl %08x rsvd0/rssi %08x buf/tsftl %08x "
 		    "rsvd1/tsfth %08x\n", __func__,
-		    (desc >= sc->sc_nrxdesc) ? "UNUSED " : "",
+		    (desc >= hrc->hrc_ndesc) ? "UNUSED " : "",
 		    le32toh(hrx->hrx_ctl), le32toh(hrx->hrx_rssi),
 		    le32toh(hrx->hrx_buf), le32toh(hrx->hrx_tsfth));
 	}
@@ -1649,25 +1648,26 @@ static int
 rtw_swring_setup(struct rtw_softc *sc)
 {
 	int rc;
+	struct rtw_rxdesc_blk *hrc;
+
 	rtw_txdesc_blk_init_all(&sc->sc_txdesc_blk[0]);
 
 	rtw_txctl_blk_init_all(&sc->sc_txctl_blk[0]);
 
-	if ((rc = rtw_rxctl_init_all(sc->sc_dmat, sc->sc_rxctl, &sc->sc_nrxdesc,
-	    sc->sc_dev.dv_xname)) != 0 && sc->sc_nrxdesc == 0) {
+	hrc = &sc->sc_rxdesc_blk;
+	if ((rc = rtw_rxctl_init_all(sc->sc_dmat, sc->sc_rxctl, &hrc->hrc_ndesc,
+	     sc->sc_dev.dv_xname)) != 0 && hrc->hrc_ndesc == 0) {
 		printf("%s: could not allocate rx buffers\n",
 		    sc->sc_dev.dv_xname);
 		return rc;
 	}
-	rtw_rxdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-	    0, sc->sc_nrxdesc, sc->sc_nrxdesc,
+	
+	hrc = &sc->sc_rxdesc_blk;
+	rtw_rxdescs_sync(hrc, 0, hrc->hrc_ndesc,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	sc->sc_rxnext = 0;
-	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap,
-	    sc->sc_rxdesc, sc->sc_rxctl, sc->sc_nrxdesc, 1);
+	rtw_rxdesc_init_all(hrc, sc->sc_rxctl, 1);
 
-	rtw_txdescs_sync_all(sc->sc_dmat, sc->sc_desc_dmamap,
-	    &sc->sc_txdesc_blk[0]);
+	rtw_txdescs_sync_all(&sc->sc_txdesc_blk[0]);
 	return 0;
 }
 
@@ -1692,11 +1692,10 @@ rtw_txdescs_reset(struct rtw_softc *sc)
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		htc = &sc->sc_txdesc_blk[pri];
-		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
+		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
 		    &sc->sc_txctl_blk[pri]);
 		rtw_txdesc_blk_reset(htc);
-		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap, htc,
-		    0, htc->htc_ndesc,
+		rtw_txdescs_sync(htc, 0, htc->htc_ndesc,
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	}
 }
@@ -1704,12 +1703,7 @@ rtw_txdescs_reset(struct rtw_softc *sc)
 static void
 rtw_rxdescs_reset(struct rtw_softc *sc)
 {
-	/* Re-initialize descriptors, just in case. */
-	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap, sc->sc_rxdesc,
-	    &sc->sc_rxctl[0], sc->sc_nrxdesc, 1);
-
-	/* Reset to start of ring. */
-	sc->sc_rxnext = 0;
+	rtw_rxdesc_init_all(&sc->sc_rxdesc_blk, &sc->sc_rxctl[0], 1);
 }
 
 static void
@@ -1909,7 +1903,7 @@ rtw_stop(struct ifnet *ifp, int disable)
 	}
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
+		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
 		    &sc->sc_txctl_blk[pri]);
 	}
 
@@ -2765,8 +2759,7 @@ rtw_start(struct ifnet *ifp)
 
 		stx->stx_first = htc->htc_next;
 
-		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-		    htc, stx->stx_first, dmamap->dm_nsegs,
+		rtw_txdescs_sync(htc, stx->stx_first, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREWRITE);
 
 		KASSERT(stx->stx_first < htc->htc_ndesc);
@@ -2828,8 +2821,7 @@ rtw_start(struct ifnet *ifp)
 		htc->htc_nfree -= dmamap->dm_nsegs;
 		htc->htc_next = desc;
 
-		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-		    htc, stx->stx_first, dmamap->dm_nsegs,
+		rtw_txdescs_sync(htc, stx->stx_first, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		htc->htc_desc[stx->stx_first].htx_ctl0 |=
@@ -2839,8 +2831,7 @@ rtw_start(struct ifnet *ifp)
 		rtw_print_txdesc(sc, "OWN on", stx, htc, stx->stx_first);
 #endif /* RTW_DEBUG */
 
-		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
-		    htc, stx->stx_first, 1,
+		rtw_txdescs_sync(htc, stx->stx_first, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_freeq, stx_q);
@@ -3462,6 +3453,14 @@ rtw_attach(struct rtw_softc *sc)
 	}
 	NEXT_ATTACH_STATE(sc, FINISH_DESCMAP_CREATE);
 
+	sc->sc_rxdesc_blk.hrc_dmat = sc->sc_dmat;
+	sc->sc_rxdesc_blk.hrc_dmamap = sc->sc_desc_dmamap;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		sc->sc_txdesc_blk[pri].htc_dmat = sc->sc_dmat;
+		sc->sc_txdesc_blk[pri].htc_dmamap = sc->sc_desc_dmamap;
+	}
+
 	rc = bus_dmamap_load(sc->sc_dmat, sc->sc_desc_dmamap, sc->sc_descs,
 	    sizeof(struct rtw_descs), NULL, 0);
 
@@ -3480,7 +3479,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISH_TXDESCBLK_SETUP);
 
-	sc->sc_rxdesc = &sc->sc_descs->hd_rx[0];
+	sc->sc_rxdesc_blk.hrc_desc = &sc->sc_descs->hd_rx[0];
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		stc = &sc->sc_txctl_blk[pri];
