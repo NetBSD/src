@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.51 1999/12/06 21:07:00 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.52 2000/01/16 09:37:18 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -681,10 +681,12 @@ ukbd_cnpollc(v, on)
         int on;
 {
 	struct ukbd_softc *sc = v;
+	usbd_device_handle dev;
 
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
-	usbd_set_polling(sc->sc_iface, on);
+	(void)usbd_interface2device_handle(sc->sc_iface,&dev);
+	usbd_set_polling(dev, on);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.34 1999/11/18 23:32:34 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.35 2000/01/16 09:37:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ usb_endpoint_descriptor_t *usbd_find_edesc
 	     int endptidx));
 
 void usbd_dopoll __P((usbd_interface_handle));
-void usbd_set_polling __P((usbd_interface_handle iface, int on));
+void usbd_set_polling __P((usbd_device_handle iface, int on));
 
 const char *usbd_errstr __P((usbd_status err));
 
@@ -240,8 +240,13 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 int usbd_driver_load    __P((module_t mod, int what, void *arg));
 #endif
 
+/*
+ * XXX
+ * splusb MUST be the lowest level interrupt so that within USB callbacks
+ * the level can be raised the appropriate level.
+ * XXX Should probably use a softsplusb.
+ */
 /* XXX */
 #define splusb splbio
 #define IPL_USB IPL_BIO
 /* XXX */
-
