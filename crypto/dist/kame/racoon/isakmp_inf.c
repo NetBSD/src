@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_inf.c,v 1.67 2001/03/08 22:07:44 thorpej Exp $	*/
+/*	$KAME: isakmp_inf.c,v 1.70 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -800,7 +800,7 @@ isakmp_info_recv_n(iph1, msg)
 		type, s_isakmp_notify_msg(type),
 		ntohl(n->doi), n->proto_id, spi, n->spi_size);
 
-	free(spi);
+	racoon_free(spi);
 
 	return(0);
 }
@@ -820,7 +820,7 @@ purge_isakmp_spi(proto, spi, n)
 			continue;
 
 		plog(LLV_INFO, LOCATION, NULL,
-			"proto_id %s purging spi:%s.\n",
+			"proto_id %s purging spi=%s.\n",
 			s_ipsecdoi_proto(proto),
 			isakmp_pindex(&spi[i], 0));
 
@@ -899,7 +899,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 
 		for (i = 0; i < n; i++) {
 			plog(LLV_DEBUG, LOCATION, NULL,
-				"check spi: packet %u against SA %u.\n",
+				"check spi(packet)=%u spi(db)=%u.\n",
 				ntohl(spi[i]), ntohl(sa->sadb_sa_spi));
 			if (spi[i] != sa->sadb_sa_spi)
 				continue;
@@ -922,7 +922,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			}
 
 			plog(LLV_INFO, LOCATION, NULL,
-				"proto_id %s purging spi:%d.\n",
+				"proto_id %s purging spi=%u.\n",
 				s_ipsecdoi_proto(proto),
 				ntohl(spi[i]));
 		}
@@ -998,13 +998,13 @@ info_recv_initialcontact(iph1)
 		deleteallph2(iph1->remote, iph1->local, proto_id);
 	}
 
-	free(loc);
-	free(rem);
+	racoon_free(loc);
+	racoon_free(rem);
 	return;
 
  the_hard_way:
-	free(loc);
-	free(rem);
+	racoon_free(loc);
+	racoon_free(rem);
 #endif
 
 	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);

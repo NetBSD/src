@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.45 2001/03/06 20:41:02 thorpej Exp $	*/
+/*	$KAME: handler.c,v 1.47 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,7 @@
 #include "oakley.h"
 #include "remoteconf.h"
 #include "handler.h"
+#include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
 #include "gssapi.h"
@@ -180,7 +181,7 @@ newph1()
 	struct ph1handle *iph1;
 
 	/* create new iph1 */
-	iph1 = CALLOC(sizeof(*iph1), struct ph1handle *);
+	iph1 = racoon_calloc(1, sizeof(*iph1));
 	if (iph1 == NULL)
 		return NULL;
 
@@ -197,11 +198,11 @@ delph1(iph1)
 	struct ph1handle *iph1;
 {
 	if (iph1->remote) {
-		free(iph1->remote);
+		racoon_free(iph1->remote);
 		iph1->remote = NULL;
 	}
 	if (iph1->local) {
-		free(iph1->local);
+		racoon_free(iph1->local);
 		iph1->local = NULL;
 	}
 
@@ -256,7 +257,7 @@ delph1(iph1)
 	gssapi_free_state(iph1);
 #endif
 
-	free(iph1);
+	racoon_free(iph1);
 }
 
 /*
@@ -438,7 +439,7 @@ newph2()
 	struct ph2handle *iph2 = NULL;
 
 	/* create new iph2 */
-	iph2 = CALLOC(sizeof(*iph2), struct ph2handle *);
+	iph2 = racoon_calloc(1, sizeof(*iph2));
 	if (iph2 == NULL)
 		return NULL;
 
@@ -512,19 +513,19 @@ delph2(iph2)
 	initph2(iph2);
 
 	if (iph2->src) {
-		free(iph2->src);
+		racoon_free(iph2->src);
 		iph2->src = NULL;
 	}
 	if (iph2->dst) {
-		free(iph2->dst);
+		racoon_free(iph2->dst);
 		iph2->dst = NULL;
 	}
 	if (iph2->src_id) {
-	      free(iph2->src_id);
+	      racoon_free(iph2->src_id);
 	      iph2->src_id = NULL;
 	}
 	if (iph2->dst_id) {
-	      free(iph2->dst_id);
+	      racoon_free(iph2->dst_id);
 	      iph2->dst_id = NULL;
 	}
 
@@ -533,7 +534,7 @@ delph2(iph2)
 		iph2->proposal = NULL;
 	}
 
-	free(iph2);
+	racoon_free(iph2);
 }
 
 /*
@@ -648,7 +649,7 @@ getcontacted(remote)
 	struct contacted *p;
 
 	LIST_FOREACH(p, &ctdtree, chain) {
-		if (cmpsaddr(remote, p->remote) == 0)
+		if (cmpsaddrwild(remote, p->remote) == 0)
 			return p;
 	}
 
@@ -665,7 +666,7 @@ inscontacted(remote)
 	struct contacted *new;
 
 	/* create new iph2 */
-	new = CALLOC(sizeof(*new), struct contacted *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return -1;
 
@@ -726,7 +727,7 @@ add_recvedpkt(msg, list)
 {
 	struct recvedpkt *new;
 
-	new = CALLOC(sizeof(*new), struct recvedpkt *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (!new) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer.\n");
@@ -736,7 +737,7 @@ add_recvedpkt(msg, list)
 	if (!new->hash) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer.\n");
-		free(new);
+		racoon_free(new);
 		return -1;
 	}
 
@@ -755,6 +756,6 @@ flush_recvedpkt(list)
 	for (n = list; n; n = next) {
 		next = n->next;
 		vfree(n->hash);
-		free(n);
+		racoon_free(n);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.h,v 1.10 2001/01/31 05:45:23 sakane Exp $	*/
+/*	$KAME: cfparse.h,v 1.11 2001/03/15 11:44:08 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define CF_LIFETYPE_TIME	0
-#define CF_LIFETYPE_BYTE	1
-
-#define CF_UNITTYPE_B	1
-#define CF_UNITTYPE_KB	1024
-#define CF_UNITTYPE_MB	(1024*1024)
-#define CF_UNITTYPE_TB	(1024*1024*1024)
-#define CF_UNITTYPE_S	1
-#define CF_UNITTYPE_M	60
-#define CF_UNITTYPE_H	(60*60)
 
 /* cfparse.y */
 extern int yyparse __P((void));
