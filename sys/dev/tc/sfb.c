@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.19 1999/10/05 09:13:30 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.20 1999/10/08 02:08:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.19 1999/10/05 09:13:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.20 1999/10/08 02:08:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,9 +980,11 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	*(u_int32_t *)(sfb + SFB_ASIC_PIXELSHIFT) = alignd - aligns;
 
 	if (width <= SFBSTIPPLEBITS) {
+		lmasks = lmasks & rmasks;
+		lmaskd = lmaskd & rmaskd;
 		while (height > 0) {
-			*(u_int32_t *)sp = lmasks & rmasks;
-			*(u_int32_t *)dp = lmaskd & rmaskd;
+			*(u_int32_t *)sp = lmasks;
+			*(u_int32_t *)dp = lmaskd;
 			sp += scanspan;
 			dp += scanspan;
 			height--;
@@ -1075,11 +1077,12 @@ sfb_erasecols(id, row, startcol, ncols, fillattr)
 	sfb = rap->data;
 	*(u_int32_t *)(sfb + SFB_ASIC_MODE) = MODE_TRANSPARENTSTIPPLE;
 	*(u_int32_t *)(sfb + SFB_ASIC_PLANEMASK) = ~0;
-	*(u_int32_t *)(sfb + SFB_ASIC_FG) = 0;
+	*(u_int32_t *)(sfb + SFB_ASIC_FG) = (fillattr == 0) ? 0 : 0x01010101;
 	if (width <= SFBSTIPPLEBITS) {
+		lmask = lmask & rmask;
 		while (height > 0) {
 			*(u_int32_t *)(sfb + SFB_ASIC_ADDRESS) = (long)p;
-			*(u_int32_t *)(sfb + SFB_ASIC_START) = lmask & rmask;
+			*(u_int32_t *)(sfb + SFB_ASIC_START) = lmask;
 			p += scanspan;
 			height--;
 		}
@@ -1167,7 +1170,7 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
 }
 
 /*
- * Erase characters in a line.
+ * Erase lines.
  */
 void
 sfb_eraserows(id, startrow, nrows, fillattr)
@@ -1195,7 +1198,7 @@ sfb_eraserows(id, startrow, nrows, fillattr)
 	sfb = rap->data;
 	*(u_int32_t *)(sfb + SFB_ASIC_MODE) = MODE_TRANSPARENTSTIPPLE;
 	*(u_int32_t *)(sfb + SFB_ASIC_PLANEMASK) = ~0;
-	*(u_int32_t *)(sfb + SFB_ASIC_FG) = 0;
+	*(u_int32_t *)(sfb + SFB_ASIC_FG) = (fillattr == 0) ? 0 : 0x01010101;
 	if (width <= SFBSTIPPLEBITS) {
 		/* never happens */;
 	}
