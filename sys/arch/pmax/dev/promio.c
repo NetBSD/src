@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.22 1998/03/24 08:31:34 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.23 1998/03/25 07:30:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.22 1998/03/24 08:31:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.23 1998/03/25 07:30:28 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.22 1998/03/24 08:31:34 jonathan Exp $")
 
 #include <pmax/stand/dec_prom.h>
 #include <pmax/dev/promiovar.h>
+#include <pmax/pmax/pmaxtype.h>
 
 
 static int  romgetc	__P ((dev_t));
@@ -146,4 +147,24 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 			}
 		}
 	}
+
+	/*
+	 * compensate for discrepancies in PROM syntax.
+	 * XXX use cons_init vector instead?
+	*/
+	if (systype == DS_PMAX && *kbdslot == 1)
+		*prom_using_screen = 1;
+
+	/*
+	 * On a 5000/200, The boot program uses the old, pre-rex PROM
+	 * entrypoints, so the ROM sets osconsole to '1' like the PMAX.
+	 * our parser loses. fix it by hand.
+	 */
+	if (systype == DS_3MAX && *crtslot == -1 && *kbdslot == 1) {
+		/* Try to use pmax onboard framebuffer */
+		*prom_using_screen = 1;
+		*crtslot = 0;
+		*kbdslot = 7;
+	}
+
 }
