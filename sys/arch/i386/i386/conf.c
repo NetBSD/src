@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.127 2000/06/11 02:46:29 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.127.2.1 2000/07/30 17:56:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,19 +133,8 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl */
-#define cdev_lm78_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-#define cdev_viaenv_init(c,n) cdev_lm78_init(c,n)
-
-#include "lm.h"
-cdev_decl(lm);
-
-#include "viaenv.h"
-cdev_decl(viaenv_);
+#include "sysmon.h"
+cdev_decl(sysmon);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -393,12 +382,12 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 64: USB generic driver */
 	cdev_mouse_init(NWSMUX,	wsmux), /* 65: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 66: USB tty */
-	cdev_lm78_init(NLM, lm),	/* 67: LM7[89] */
+	cdev_sysmon_init(NSYSMON, sysmon),/* 67: System Monitor */
 	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68: generic VME access */
 	cdev_disk_init(NCA, ca),	/* 69: Compaq array */
 	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
 	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
-	cdev_viaenv_init(NVIAENV, viaenv_),/* 72: VIA VT82C686A hwmon */
+	cdev_notdef(),			/* 72 */
 	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 };
