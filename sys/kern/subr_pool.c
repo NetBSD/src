@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.36 2000/05/31 15:29:42 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.37 2000/06/10 18:44:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -594,7 +594,8 @@ _pool_get(pp, flags, file, line)
 	}
 #endif
 
-	if (__predict_false(curproc == NULL && (flags & PR_WAITOK) != 0))
+	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
+			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
 
 	simple_lock(&pp->pr_slock);
