@@ -1,3 +1,5 @@
+/*	$NetBSD: linux_termios.h,v 1.2 1998/01/05 17:51:32 perry Exp $	*/
+
 #define LINUX_TCGETS		_LINUX_IO('T', 1)
 #define LINUX_TCSETS		_LINUX_IO('T', 2)
 #define LINUX_TCSETSW		_LINUX_IO('T', 3)
