@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.29 1994/06/29 06:36:22 cgd Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.30 1994/07/15 22:27:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -184,8 +184,6 @@ struct sl_softc sl_softc[NSL];
 #define FRAME_ESCAPE		0xdb		/* Frame Esc */
 #define TRANS_FRAME_END	 	0xdc		/* transposed frame end */
 #define TRANS_FRAME_ESCAPE 	0xdd		/* transposed frame esc */
-
-extern struct timeval time;
 
 static int slinit __P((struct sl_softc *));
 static struct mbuf *sl_btom __P((struct sl_softc *, int));
