@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 1995/08/12 20:30:59 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.11 1995/10/14 20:17:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -469,10 +469,11 @@ void
 fdstrategy(bp)
 struct buf	*bp;
 {
-	struct fd_softc	*sc;
-	int		sps, nblocks;
+	struct fd_softc	 *sc;
+	struct disklabel *lp;
+	int		 sps, nblocks;
 
-	sc   = getsoftc(fdcd, DISKUNIT(bp->b_dev));
+	sc = getsoftc(fdcd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
 	printf("fdstrategy: 0x%x\n", bp);
@@ -481,42 +482,24 @@ struct buf	*bp;
 	/*
 	 * check for valid partition and bounds
 	 */
-	nblocks = (bp->b_bcount + SECTOR_SIZE - 1) / SECTOR_SIZE;
-	if((bp->b_blkno < 0) || ((bp->b_blkno + nblocks) >= sc->nblocks)) {
-		if((bp->b_blkno == sc->nblocks) && (bp->b_flags & B_READ)) {
-			/*
-			 * Read 1 block beyond, return EOF
-			 */
-			bp->b_resid = bp->b_bcount;
-			goto done;
-		}
-		/*
-		 * Try to limit the size of the transaction, adjust count
-		 * if we succeed.
-		 */
-		nblocks = sc->nblocks - bp->b_blkno;
-		if((nblocks <= 0) || (bp->b_blkno < 0)) {
-			bp->b_error  = EINVAL;
-			bp->b_flags |= B_ERROR;
-			goto done;
-		}
-		bp->b_bcount = nblocks * SECTOR_SIZE;
+	lp = &sc->dkdev.dk_label;
+	if ((sc->flags & FLPF_HAVELAB) == 0) {
+		bp->b_error = EIO;
+		goto bad;
 	}
-	if(bp->b_bcount == 0)
+	if (bounds_check_with_label(bp, lp, 0) <= 0)
 		goto done;
 
-	/*
-	 * Set order info for disksort
-	 */
-	bp->b_block = bp->b_blkno / (sc->nsectors * sc->nheads);
+	if (bp->b_bcount == 0)
+		goto done;
 
 	/*
 	 * queue the buf and kick the low level code
 	 */
 	sps = splbio();
 	disksort(&sc->bufq, bp);
-	if(!lock_stat) {
-		if(fd_state & FLP_MON)
+	if (!lock_stat) {
+		if (fd_state & FLP_MON)
 			untimeout((FPV)fdmotoroff, (void*)sc);
 		fd_state = FLP_IDLE;
 		st_dmagrab(fdcint, fdstart, sc, &lock_stat, 0);
@@ -524,6 +507,8 @@ struct buf	*bp;
 	splx(sps);
 
 	return;
+bad:
+	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
