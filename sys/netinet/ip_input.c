@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.146 2002/03/08 20:48:43 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.147 2002/04/18 22:33:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.146 2002/03/08 20:48:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.147 2002/04/18 22:33:21 matt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -616,7 +616,7 @@ ip_input(struct mbuf *m)
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
-		if (m->m_flags & M_EXT) {
+		if (M_READONLY(m)) {
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
 				return;
