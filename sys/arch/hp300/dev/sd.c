@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.37 2000/01/21 23:29:04 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.38 2000/01/31 19:04:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -871,7 +871,7 @@ sdfinish(sc, bp)
 		sc->sc_active = 0;
 		if (sc->sc_flags & SDF_WANTED) {
 			sc->sc_flags &= ~SDF_WANTED;
-			wakeup((caddr_t)dp);
+			wakeup((caddr_t)&sc->sc_tab);
 		}
 	}
 }
