@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.49 2004/08/09 00:33:17 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.50 2004/08/09 18:11:01 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.49 2004/08/09 00:33:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.50 2004/08/09 18:11:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,6 @@ struct wi_pcmcia_softc {
 	void *sc_sdhook;			/* shutdown hook */
 	int sc_symbol_cf;			/* Spectrum24t CF card */
 };
-
-static int wi_pcmcia_find __P((struct wi_pcmcia_softc *,
-	struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
 CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
     wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
@@ -321,47 +318,6 @@ wi_pcmcia_disable(sc)
 	pcmcia_function_disable(psc->sc_pf);
 }
 
-static int
-wi_pcmcia_find(psc, pa, cfe)
-	struct wi_pcmcia_softc *psc;
-	struct pcmcia_attach_args *pa;
-	struct pcmcia_config_entry *cfe;
-{
-	struct wi_softc *sc = &psc->sc_wi;
-
-	/* Allocate/map I/O space. */
-	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, WI_IOSIZE, &psc->sc_pcioh) != 0) {
-		printf("%s: can't allocate i/o space\n", sc->sc_dev.dv_xname);
-		goto fail1;
-	}
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
-	    &psc->sc_io_window) != 0) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		goto fail2;
-	}
-	/* Enable the card */
-	pcmcia_function_init(psc->sc_pf, cfe);
-	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-	
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
-
-	DELAY(1000);
-	return(0);
-
-fail3:
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-fail2:
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-fail1:
-	psc->sc_io_window = -1;
-	return(1);
-}
-
 static void
 wi_pcmcia_attach(parent, self, aux)
 	struct device  *parent, *self;
@@ -375,7 +331,6 @@ wi_pcmcia_attach(parent, self, aux)
 	int haveaddr;
 
 	aprint_normal("\n");
-
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
@@ -383,22 +338,22 @@ wi_pcmcia_attach(parent, self, aux)
 			continue;
 		if (cfe->iospace[0].length < WI_IOSIZE)
 			continue;
-		if (wi_pcmcia_find(psc, pa, cfe) == 0)
+		if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
+		    cfe->iospace[0].length, WI_IOSIZE, &psc->sc_pcioh) == 0)
 			break;
 	}
 	if (cfe == NULL) {
 		aprint_error("%s: no suitable CIS info found\n", self->dv_xname);
-		goto no_config_entry;
+		goto fail1;
 	}
+
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
 
 	pp = wi_pcmcia_lookup(pa);
 	if (pp == NULL)
 		panic("wi_pcmcia_attach: impossible");
 
-	sc->sc_pci = 0;
-	sc->sc_enabled = 1;
-	sc->sc_enable = wi_pcmcia_enable;
-	sc->sc_disable = wi_pcmcia_disable;
 	if (pp->pp_vendor == PCMCIA_VENDOR_SYMBOL &&
 	    pp->pp_product == PCMCIA_PRODUCT_SYMBOL_LA4100)
 		psc->sc_symbol_cf = 1;
@@ -412,29 +367,32 @@ wi_pcmcia_attach(parent, self, aux)
 	    CSR_READ_2(sc, WI_COR) == WI_COR_IOMODE)
 		psc->sc_symbol_cf = 1;
 
-	if (psc->sc_symbol_cf) {
-		if (wi_pcmcia_load_firm(sc,
-		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
-		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
-			aprint_error("%s: couldn't load firmware\n",
-			    self->dv_xname);
-			goto no_interrupt;
-		}
+	/* Enable the card */
+	pcmcia_function_init(psc->sc_pf, cfe);
+
+	/* Allocate/map I/O space. */
+	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
+	    &psc->sc_io_window) != 0) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		goto fail2;
 	}
 
-	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, wi_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt\n", self->dv_xname);
-		goto no_interrupt;
+	if (wi_pcmcia_enable(sc)) {
+		printf("%s: enable failed\n", sc->sc_dev.dv_xname);
+		goto fail3;
 	}
+	
+	sc->sc_pci = 0;
+	sc->sc_enabled = 1;
+	sc->sc_enable = wi_pcmcia_enable;
+	sc->sc_disable = wi_pcmcia_disable;
 
 	printf("%s:", self->dv_xname);
 
 	haveaddr = pa->pf->pf_funce_lan_nidlen == IEEE80211_ADDR_LEN;
 	if (wi_attach(sc, haveaddr ? pa->pf->pf_funce_lan_nid : 0) != 0) {
 		aprint_error("%s: failed to attach controller\n", self->dv_xname);
-		goto attach_failed;
+		goto fail4;
 	}
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
@@ -443,16 +401,16 @@ wi_pcmcia_attach(parent, self, aux)
 	/* disable the card */
 	sc->sc_enabled = 0;
 	wi_pcmcia_disable(sc);
-
 	return;
 
-attach_failed:
-	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-no_interrupt:
-	pcmcia_function_disable(psc->sc_pf);
+fail4:
+	sc->sc_enabled = 0;
+	wi_pcmcia_disable(sc);
+fail3:
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+fail2:
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-no_config_entry:
+fail1:
 	psc->sc_io_window = -1;
 }
 

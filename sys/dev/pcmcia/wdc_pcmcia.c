@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.70 2004/08/08 23:17:13 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.71 2004/08/09 18:11:01 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.70 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.71 2004/08/09 18:11:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -273,16 +273,6 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
-
-	wpp = wdc_pcmcia_lookup(pa);
-	if (wpp != NULL)
-		quirks = wpp->wpp_quirk_flag;
-	else
-		quirks = 0;
 
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
 		if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_COMMON, 0,
@@ -320,6 +310,17 @@ wdc_pcmcia_attach(parent, self, aux)
 		    self->dv_xname);
 		goto mapaux_failed;
 	}
+
+	if (wdc_pcmcia_enable(self, 1)) {
+		aprint_error("%s: enable failed\n", self->dv_xname);
+		goto enable_failed;
+	}
+
+	wpp = wdc_pcmcia_lookup(pa);
+	if (wpp != NULL)
+		quirks = wpp->wpp_quirk_flag;
+	else
+		quirks = 0;
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
@@ -365,21 +366,16 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
-
 	return;
 
- mapaux_failed:
+ enable_failed:
 	/* Unmap our i/o window. */
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE)
 		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwindow);
 	else
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
 
- map_failed:
-	/* Disable the function */
-	pcmcia_function_disable(sc->sc_pf);
-
- enable_failed:
+ mapaux_failed:
 	/* Unmap our i/o space. */
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_pmembaseh);
@@ -388,6 +384,7 @@ wdc_pcmcia_attach(parent, self, aux)
 		if (cfe->num_iospace == 2)
 		    pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
 	}
+ map_failed:
  no_config_entry:
 	sc->sc_iowindow = -1;
 }
@@ -441,15 +438,6 @@ wdc_pcmcia_enable(self, onoff)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
-		/* Establish the interrupt handler. */
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-		    wdcintr, &sc->wdc_channel);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			return (EIO);
-		}
-
 		/*
 		 * If the WDC_PCMCIA_ATTACH flag is set, we've already
 		 * enabled the card in the attach routine, so don't
@@ -460,6 +448,15 @@ wdc_pcmcia_enable(self, onoff)
 		if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
 			sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 		} else {
+			/* Establish the interrupt handler. */
+			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+			    wdcintr, &sc->wdc_channel);
+			if (sc->sc_ih == NULL) {
+				printf("%s: couldn't establish interrupt handler\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				return (EIO);
+			}
+
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname);
