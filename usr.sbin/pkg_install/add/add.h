@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.5 2000/06/17 11:30:49 tron Exp $ */
+/* $NetBSD: add.h,v 1.6 2003/09/02 07:34:49 jlam Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -30,6 +30,9 @@ typedef enum {
 }       add_mode_t;
 
 extern char *Prefix;
+extern char *View;
+extern char *Viewbase;
+extern Boolean NoView;
 extern Boolean NoInstall;
 extern Boolean NoRecord;
 extern Boolean Force;

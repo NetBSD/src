@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.54 2003/08/25 10:23:41 tron Exp $ */
+/* $NetBSD: lib.h,v 1.55 2003/09/02 07:35:02 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -89,14 +89,6 @@
 #define CHGRP_CMD "chgrp"
 #endif
 
-/* Where we put logging information by default, else ${PKG_DBDIR} if set */
-#ifndef DEF_LOG_DIR
-#define DEF_LOG_DIR		"/var/db/pkg"
-#endif
-
-/* just in case we change the environment variable name */
-#define PKG_DBDIR		"PKG_DBDIR"
-
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"
 #define COMMENT_FNAME		"+COMMENT"
@@ -112,6 +104,8 @@
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
 #define PRESERVE_FNAME		"+PRESERVE"
+#define VIEWS_FNAME		"+VIEWS"
+#define DEPOT_FNAME		"+DEPOT"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
@@ -292,6 +286,7 @@ int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
 char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
+void	_pkgdb_setPKGDB_DIR(const char *);
 
 /* List of packages functions */
 lpkg_t *alloc_lpkg(const char *);

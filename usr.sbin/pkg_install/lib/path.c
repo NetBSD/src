@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.5 2003/01/05 21:27:32 agc Exp $	*/
+/*	$NetBSD: path.c,v 1.6 2003/09/02 07:35:03 jlam Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.5 2003/01/05 21:27:32 agc Exp $");
+__RCSID("$NetBSD: path.c,v 1.6 2003/09/02 07:35:03 jlam Exp $");
 #endif
 
 #include <err.h>
