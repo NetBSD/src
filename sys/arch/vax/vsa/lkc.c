@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.1 1998/06/04 15:51:12 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.2 1998/06/05 22:02:57 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -115,6 +115,22 @@ lkc_catch(line, ch)
 	case KEY_REPEAT:
 		ch = ls->ls_lastchar;
 		break;
+
+	case 86:
+	case 87:
+	case 88:
+	case 89:
+	case 90:
+	case 100:
+	case 101:
+	case 102:
+		if ((ls->ls_shifted & ls->ls_ctrl) == 0)
+			break;
+		ch -= 86;
+		if (ch > 10)
+			ch -= 9;
+		wsdisplay_switch(wsdisplay_cd.cd_devs[0], ch);
+		return 1;
 
 	default:
 		break;
