@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.s,v 1.1 2001/07/14 02:04:25 christos Exp $	*/
+/*	$NetBSD: mach_sigcode.s,v 1.2 2001/10/28 01:38:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,12 +124,12 @@
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es		; \
+	movl	%eax,%ds	; \
+	movl	%eax,%es	; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movl	%ax,%fs		; \
-	movl	%ax,%gs		; \
+	movl	%eax,%fs	; \
+	movl	%eax,%gs	; \
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
