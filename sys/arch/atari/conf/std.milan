@@ -1,0 +1,15 @@
+#	$NetBSD: std.milan,v 1.1 2001/04/05 12:21:30 leo Exp $
+#
+# standard atari information
+#
+machine		atari m68k
+
+options		_MILANHW_
+
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
+
+mainbus0	at root
+
+clock0		at mainbus0		# system clock
+

@@ -1,14 +1,18 @@
 #
-#	$NetBSD: GENERIC,v 1.75 2000/12/19 15:51:48 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.76 2001/04/05 12:21:30 leo Exp $
 #
 # Generic atari
 #
-# This configuration file is for a multiple disk/multiple tape ATARI-TT/Falcon
-# with network (through ppp or slip).
 
+#if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 include "arch/atari/conf/std.atari"
+#elif defined (HADES_KERNEL)
+include "arch/atari/conf/std.hades"
+#elif defined (MILAN_KERNEL)
+include "arch/atari/conf/std.milan"
+#endif
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -16,70 +20,87 @@ include "arch/atari/conf/std.atari"
 #
 maxusers	16
 
-#
-# processors this kernel should support
-#
-options 	M68030		# support for 030
-#options 	M68040		# support for 040
-#options 	M68060		# support for 060
-
 options 	HZ=64		# Set the clock-rate (48/64/96)
 
+#if !defined(INSTALL_KERNEL) || defined(INSTALLX_KERNEL)
 #
 # X11R6 related options
 #
 options 	UCONSOLE	# Allow xconsole to work
+#endif
 
 # Standard system options
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 
 #
-# Floating-point options
+# (Co)processors this kernel should support
 #
+#if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
+options 	M68030		# support for 030
 options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
-#options 	FPSP		# 68040 Floatingpoint support
+#if !defined(INSTALL_KERNEL)
+options 	M68040		# support for 040
+options 	FPSP		# 68040 Floatingpoint support
+#endif
+#else /* for the Hades & Milan: */
+options 	M68040		# support for 040
+options 	M68060		# support for 060
+options 	FPSP		# 68040 Floatingpoint support
+options 	M060SP		# MC68060 software support (Required for 060)
+#endif
 
 #
 # Networking options
 #
-#options 	GATEWAY         # packet forwarding
 options 	INET            # IP + ICMP + TCP + UDP
+
+#ifndef INSTALL_KERNEL
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-options 	MROUTING        # IP multicast routing
-#options 	NS              # XNS
+#options 	GATEWAY         # packet forwarding
+#options 	MROUTING        # IP multicast routing
+options 	NS              # XNS
 #options 	NSIP            # XNS tunneling over IP
-#options 	ISO,TPIP        # OSI
+options 	ISO,TPIP        # OSI
 #options 	EON             # OSI tunneling over IP
-#options 	CCITT,LLC,HDLC  # X.25
+options 	CCITT,LLC,HDLC  # X.25
 options 	NETATALK        # AppleTalk networking protocols
+#endif
+
 options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
 options 	PPP_DEFLATE     # Deflate compression support for PPP
 options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+
+#ifndef INSTALL_KERNEL
 options 	PFIL_HOOKS      # pfil(9) packet filter hooks
 options 	IPFILTER_LOG    # ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#endif
 
 # File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
+file-system 	KERNFS		# Kernel parameter filesystem
+file-system 	MSDOSFS		# MSDOS filesystem
+file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
+
+#ifndef INSTALL_KERNEL
 file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
-file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	FDESC		# /dev/fd
 file-system 	NULLFS		# Loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
-file-system 	MSDOSFS		# MSDOS filesystem
-file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
 file-system 	PORTAL		# portal file system
 file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
+#endif
 
+#ifndef INSTALL_KERNEL
 # File system options
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
@@ -87,14 +108,17 @@ options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+#endif
 
 #
 # Misc. debugging options
 #
 options 	PANICWAIT	# Require keystroke to dump/reboot
 options 	DDB		# Kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#ifndef INSTALL_KERNEL
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DEBUG		# expensive debugging checks/support
+#endif
 
 #
 # Compatability options for various existing systems
@@ -105,63 +129,83 @@ options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
 options 	COMPAT_14	# Compatibility to NetBSD1.4
+#ifndef INSTALL_KERNEL
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#endif
 
+#ifndef INSTALL_KERNEL
 #
 # Support for System V IPC facilities.
 #
 options 	SYSVSHM			# System V shared memory
 options 	SYSVMSG			# System V messages
 options 	SYSVSEM			# System V semaphores
+#endif
 
+#ifndef INSTALL_KERNEL
 #
 # Support for various kernel options
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#endif
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
+#ifndef INSTALL_KERNEL
+options 	SCSIVERBOSE		# human readable SCSI error messages
+#endif
+#if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
-options 	SCSIVERBOSE		# human readable SCSI error messages
+#endif
 
 #
 # Atari specific options
 #
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
 options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
+#ifdef TT030_KERNEL
 options 	TT_SCSI			# SCSI-support for TT
-options 	FALCON_SCSI		# SCSI-support for Falcon
 options 	TT_VIDEO		# Graphics support for TT
+#endif
+#ifdef FALCON_KERNEL
+options 	FALCON_SCSI		# SCSI-support for Falcon
 options 	FALCON_VIDEO		# Graphics support for FALCON
-options 	STATCLOCK		# Separate {stat,prof}clock
+#endif
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
+#ifndef INSTALL_KERNEL
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
+options 	STATCLOCK		# Separate {stat,prof}clock
+#endif
 
+#ifndef INSTALL_KERNEL
 # Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
+#endif
 
 #
 # Build one kernel that can boot from any disk.
 #
 config		netbsd root on ? type ?
 
-pseudo-device	mouse		1	# mouse
-pseudo-device	view		2	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+pseudo-device	md		2	# Boot memory disk
+
+#ifndef INSTALL_KERNEL
+pseudo-device	mouse		1	# mouse
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel
@@ -172,47 +216,10 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-pseudo-device	md		2	# Boot memory disk
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+#endif
 
 #
-# The following sections describe various hardware options.
+# Hardware options for GENERIC are in the various machine type specific files
 #
-fd0	at fdc0 unit 0			# builtin floppy drive
-fd1	at fdc0 unit 1			# external floppy drive
-ser0	at mainbus0			# Serial support through 68901 (modem1)
-zs0	at mainbus0			# Serial support through 8530
-grfbus0	at mainbus0		# bitmapped display's
-grfcc0	at grfbus0			# Frambuffer graphics driver
-ite*	at grfcc0			# Frambuffer console
-grfet0	at grfbus0			# Tseng graphics driver
-ite*	at grfet0			# et4000/et6000/et6100 console
-nvr0	at mainbus0			# nvram driver
-lp0	at mainbus0			# centronics printer
-
-# SCSI devices
-sd* 	at scsibus? target ? lun ?	# SCSI disk drives
-st* 	at scsibus? target ? lun ?	# SCSI tape drives
-cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch* 	at scsibus? target ? lun ?	# SCSI autochangers
-ss* 	at scsibus? target ? lun ?	# SCSI scanners
-se* 	at scsibus? target ? lun ?	# SCSI ethernet
-uk* 	at scsibus? target ? lun ?	# SCSI unknown
-
-pcibus0	at mainbus0			# PCI-bus
-pci0	at pcibus0
-ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
-avmebus0 at mainbus0			# VME bus
-vme0	at avmebus0
-le0	at vme0	irq 5			# Lance ethernet (Riebl/PAM).
-le0	at vme0 irq 4			# Lance ethernet (BVME410).
-et0	at vme0				# Crazy Dots II
-
-isabus0	at mainbus0			# ISA-bus
-isa0	at isabus0
-wdc0	at mainbus0			# IDE-bus
-wd*	at wdc? drive ?			#    ... and drives
-atapibus* at wdc? channel ?		# ATAPI-bus
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
-sd*	at atapibus? drive ?		# ATAPI disk drives
