@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.575 2002/10/25 21:03:47 leo Exp $
+#	$NetBSD: files,v 1.576 2002/10/29 12:31:21 blymn Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -945,6 +945,11 @@ defpseudo ippp:		isdndev, sppp, ifnet
 # KTTCP network throughput testing pseudo-device
 defpseudo kttcp
 file	dev/kttcp.c			kttcp		needs-flag
+
+# Verified exec fingerprint loader pseudo-device
+defpseudo verifiedexec
+file	kern/kern_verifiedexec.c	verifiedexec		needs-flag
+file	dev/verified_exec.c		verifiedexec		needs-flag
 
 #
 # File systems
