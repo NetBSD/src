@@ -1,0 +1,14 @@
+#	$NetBSD: fstab.sd,v 1.1 2002/04/01 23:32:17 thorpej Exp $
+#
+# Sample fstab for SCSI disk based system
+# see fstab(5) for details on what the fields mean
+# Notes:
+# All swap devices are now configured by swapctl(8), so a swap entry
+# is now needed for all swap partitions so that the "swapctl -A" in
+# /etc/rc will find them, or you will have no swap space.
+#
+/dev/sd0a	/	ffs	rw		1 1
+/dev/sd0b	none	swap	sw		0 0
+/dev/sd0e	/usr	ffs	rw		1 2
+kernfs		/kern	kernfs	rw		0 0
+procfs		/proc	procfs	rw		0 0
