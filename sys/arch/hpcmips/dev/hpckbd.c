@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.2 2000/10/01 03:45:33 takemura Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.3 2000/10/21 07:27:42 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <machine/platid_mask.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_pckbd_layout.h"
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -132,7 +133,11 @@ const struct wskbd_consops hpckbd_consops = {
 
 struct wskbd_mapdata hpckbd_keymapdata = {
 	pckbd_keydesctab,
+#ifdef PCKBD_LAYOUT
+	PCKBD_LAYOUT
+#else
 	KB_US
+#endif
 };
 
 int
@@ -304,9 +309,7 @@ hpckbd_keymap_lookup(hc)
 				hpckbd_keymapdata.layout |= KB_MACHDEP;
 #endif
 			} else {
-#if defined(PCKBD_LAYOUT)
 				hpckbd_keymapdata.layout &= ~KB_MACHDEP;
-#endif
 			}
 			return;
 		}
