@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.7 1999/12/17 03:21:10 tsubai Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.8 1999/12/18 06:54:05 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,8 +64,6 @@
 #include <newsmips/dev/scc.h>
 
 #include "sc.h"
-#include "kb.h"
-#include "ms.h"
 /*#include "lp.h"*/
 /*#include "fd.h"*/
 /*#include "sb.h"*/
@@ -78,7 +76,6 @@ void print_int_stat __P((char *));
 void news3400_errintr __P((u_int));
 
 int sc_intr __P((void));
-void kbm_rint __P((int));
 void hb_intr_dispatch __P((int));
 
 static int badaddr_flag;
@@ -100,10 +97,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		register int stat;
 
 		stat = *(volatile u_char *)INTST0;
+		stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
+		*(volatile u_char *)INTCLR0 = stat;
+
 		if (stat & INTST0_TIMINT) {	/* timer */
 			static int led_count = 0;
 
-			*(volatile u_char *)INTCLR0 = INTCLR0_TIMINT;
 			cf.pc = pc;
 			cf.sr = statusReg;
 			hardclock(&cf);
@@ -112,15 +111,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 				led_count = 0;
 				*(volatile u_char *)DEBUG_PORT ^= DP_LED1;
 			}
+			stat &= ~INTST0_TIMINT;
 		}
-#if NKB > 0
-		if (stat & INTST0_KBDINT)	/* keyboard */
-			kbm_rint(SCC_KEYBOARD);
-#endif
-#if NMS > 0
-		if (stat & INTST0_MSINT)	/* mouse */
-			kbm_rint(SCC_MOUSE);
-#endif
+
+		if (stat)
+			hb_intr_dispatch(2);
+
 		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MIPS_INT_MASK_2;
 	}
