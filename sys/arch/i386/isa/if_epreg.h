@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.2 1994/01/28 23:44:41 jtc Exp $
+ *	$Id: if_epreg.h,v 1.3 1994/03/29 04:35:56 mycroft Exp $
  */
 /**************************************************************************
  *										  *
@@ -277,7 +277,7 @@
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID 				0x6d50
 #define PROD_ID 			0x9150
-#define BASE 				sc->ep_io_addr
+#define BASE 				sc->ep_iobase
 #define GO_WINDOW(x) 			outw(BASE+EP_COMMAND, WINDOW_SELECT|x)
 #define AUI 				0x1
 #define BNC 				0x2

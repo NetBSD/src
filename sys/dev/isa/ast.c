@@ -5,90 +5,129 @@
  *
  * Modified by: Charles Hannum, 3/22/94
  *
- *	$Id: ast.c,v 1.4 1994/03/23 03:55:24 cgd Exp $
+ *	$Id: ast.c,v 1.5 1994/03/29 04:35:37 mycroft Exp $
  */
 
-#include "ast.h"
-
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/device.h>
 
 #include <machine/pio.h>
+
+#ifndef NEWCONFIG
 #include <i386/isa/isa_device.h>
-
-int astprobe __P((struct isa_device *));
-int astattach __P((struct isa_device *));
-
-struct	isa_driver astdriver = {
-	astprobe, astattach, "ast"
-};
+#endif
+#include <i386/isa/isavar.h>
 
 struct ast_softc {
 	struct device sc_dev;
 	u_short sc_iobase;
-	int sc_alive;		/* Mask of slave units attached. */
-	int sc_slaves[8];	/* com device unit numbers. XXX - softc ptrs */
-} ast_softc[NAST];
+	int sc_alive;		/* mask of slave units attached */
+	int sc_slaves[8];	/* com device unit numbers */
+};
+
+int astprobe();
+void astattach();
+
+struct cfdriver astcd = {
+	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
+};
 
 int
-astprobe(dev)
-	struct isa_device *dev;
+astprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct isa_attach_args *ia = aux;
 
 	/*
 	 * Do the normal com probe for the first UART and assume
 	 * its presence means there is a multiport board there.
-	 * XXX needs more robustness.
+	 * XXX Needs more robustness.
 	 */
-	return comprobe1(dev->id_iobase);
+	return comprobe1(ia->ia_iobase);
 }
 
+struct ast_attach_args {
+	u_short aa_iobase;
+	int aa_slave;
+};
+
 int
-astattach(dev)
-	struct isa_device *dev;
+astsubmatch(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ast_softc *sc = &ast_softc[dev->id_unit];
-  	u_short iobase = dev->id_iobase;
-	unsigned int x;
+	struct ast_softc *sc = (void *)parent;
+	struct ast_attach_args *aa = aux;
+	struct cfdata *cf = self->dv_cfdata;
+	int found, frobbed = 0;
+#ifdef NEWCONFIG
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", astdriver.name, dev->id_unit);
-	sc->sc_dev.dv_unit = dev->id_unit;
+#define cf_slave cf_loc[6]
+	if (cf->cf_slave != -1 && cf->cf_slave != aa->aa_slave)
+		return 0;
+	if (cf->cf_iobase == IOBASEUNK) {
+		frobbed = 1;
+		cf->cf_iobase = aa->aa_iobase;
+	}
+#undef cf_slave
+#else
+	struct isa_device *id = (void *)cf->cf_loc;
 
-	sc->sc_iobase = iobase;
+	if (id->id_physid != -1 && id->id_physid != aa->aa_slave)
+		return 0;
+	if (id->id_iobase == 0) {
+		frobbed = 1;
+		id->id_iobase = aa->aa_iobase;
+	}
+#endif
+	found = isasubmatch(parent, self, aux);
+	if (found) {
+		sc->sc_slaves[aa->aa_slave] = cf->cf_unit;
+		sc->sc_alive |= 1 << aa->aa_slave;
+	}
+	/*
+	 * If we changed the iobase, we have to set it back now, because it
+	 * might be a clone device, and the iobase wouldn't get set properly on
+	 * the next iteration.
+	 */
+#ifdef NEWCONFIG
+	if (frobbed)
+		cf->cf_iobase = IOBASEUNK;
+#else
+	if (frobbed)
+		id->id_iobase = 0;
+#endif
+	return found;
+}
+
+void
+astattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ast_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	struct ast_attach_args aa;
 
 	/*
 	 * Enable the master interrupt.
 	 */
-	outb(iobase | 0x1f, 0x80);
-	x = inb(iobase | 0x1f);
-	/*
-	 * My guess is this bitmask tells you how many ports are there.
-	 * I only have a 4-port board to try (returns 0xf). --roland
-	 *
-	 * It's also not clear that it would be correct to rely on this, since
-	 * there might be an interrupt pending on one of the ports, and thus
-	 * its bit wouldn't be set.  I think the AST protocol simply does not
-	 * support more than 4 ports.  - mycroft
-	 */
-	printf("%s: 0x%x\n", sc->sc_dev.dv_xname, x);
-}
+	sc->sc_iobase = ia->ia_iobase;
+	outb(sc->sc_iobase | 0x1f, 0x80);
+	printf("\n");
 
-void
-astslave(dev)
-	struct isa_device *dev;
-{
-	struct ast_softc *sc = &ast_softc[dev->id_parent->id_unit];
-
-	sc->sc_slaves[dev->id_physid] = dev->id_unit;
-	sc->sc_alive |= 1 << dev->id_physid;
+	for (aa.aa_slave = 0, aa.aa_iobase = sc->sc_iobase;
+	    aa.aa_slave < 4;
+	    aa.aa_slave++, aa.aa_iobase += 8)
+		config_search(astsubmatch, self, &aa);
 }
 
 int
 astintr(unit)
 	int unit;
 {
-	struct ast_softc *sc = &ast_softc[unit];
+	struct ast_softc *sc = astcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 	int bits;
@@ -100,17 +139,12 @@ astintr(unit)
 	do {
 #define	TRY(n) \
 		if ((bits & (1 << (n))) == 0) \
-			comintr(sc->sc_slaves[n]);	/* XXX softc ptr */
+			comintr(sc->sc_slaves[n]);
 		TRY(0);
 		TRY(1);
 		TRY(2);
 		TRY(3);
-#ifdef notdef
-		TRY(4);
-		TRY(5);
-		TRY(6);
-		TRY(7);
-#endif
+#undef TRY
 		bits = inb(iobase | 0x1f) & alive;
  	} while (bits != alive);
 

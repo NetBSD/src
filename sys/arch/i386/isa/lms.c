@@ -20,10 +20,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.9 1994/03/06 17:19:10 mycroft Exp $
+ *	$Id: lms.c,v 1.10 1994/03/29 04:36:06 mycroft Exp $
  */
-
-#include "lms.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,7 +40,7 @@
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 
 #define	LMS_DATA	0       /* offset for data port, read-only */
 #define	LMS_SIGN	1       /* offset for signature port, read-write */
@@ -65,21 +63,25 @@ struct lms_softc {		/* driver status information */
 #define	LMS_ASLP	0x02	/* waiting for mouse data */
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
-} lms_softc[NLMS];
+};
 
-int lmsprobe __P((struct isa_device *));
-int lmsattach __P((struct isa_device *));
+int lmsprobe();
+void lmsattach();
 int lmsintr __P((int));
 
-struct isa_driver lmsdriver = { lmsprobe, lmsattach, "lms" };
+struct cfdriver lmscd = {
+	NULL, "lms", lmsprobe, lmsattach, DV_TTY, sizeof(struct lms_softc)
+};
 
 #define	LMSUNIT(dev)	(minor(dev))
 
 int
-lmsprobe(isa_dev)
-	struct isa_device *isa_dev;
+lmsprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	u_short iobase = isa_dev->id_iobase;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 
 	/* Configure and check for port present. */
 	outb(iobase + LMS_CONFIG, 0x91);
@@ -96,23 +98,23 @@ lmsprobe(isa_dev)
 	/* Disable interrupts. */
 	outb(iobase + LMS_CNTRL, 0x10);
 
-	return LMS_NPORTS;
+	ia->ia_iosize = LMS_NPORTS;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int
-lmsattach(isa_dev)
-	struct isa_device *isa_dev;
+void
+lmsattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct lms_softc *sc = &lms_softc[isa_dev->id_unit];
-	u_short iobase = isa_dev->id_iobase;
+	struct lms_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 
 	/* Other initialization was done by lmsprobe. */
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
-
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", lmsdriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
 }
 
 int
@@ -123,10 +125,10 @@ lmsopen(dev, flag)
 	int unit = LMSUNIT(dev);
 	struct lms_softc *sc;
 
-	if (unit >= NLMS)
+	if (unit >= lmscd.cd_ndevs)
 		return ENXIO;
-	sc = &lms_softc[unit];
-	if (!sc->sc_iobase)
+	sc = lmscd.cd_devs[unit];
+	if (!sc)
 		return ENXIO;
 
 	if (sc->sc_state & LMS_OPEN)
@@ -150,7 +152,7 @@ lmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct lms_softc *sc = &lms_softc[LMSUNIT(dev)];
+	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
@@ -168,7 +170,7 @@ lmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct lms_softc *sc = &lms_softc[LMSUNIT(dev)];
+	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -216,7 +218,7 @@ lmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct lms_softc *sc = &lms_softc[LMSUNIT(dev)];
+	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -265,7 +267,7 @@ int
 lmsintr(unit)
 	int unit;
 {
-	struct lms_softc *sc = &lms_softc[unit];
+	struct lms_softc *sc = lmscd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	u_char hi, lo, buttons, changed;
 	char dx, dy;
@@ -324,7 +326,7 @@ lmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct lms_softc *sc = &lms_softc[LMSUNIT(dev)];
+	struct lms_softc *sc = lmscd.cd_devs[LMSUNIT(dev)];
 	int s;
 	int ret;
 

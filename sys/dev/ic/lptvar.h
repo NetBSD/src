@@ -46,14 +46,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.14 1994/03/06 17:19:11 mycroft Exp $
+ *	$Id: lptvar.h,v 1.15 1994/03/29 04:36:08 mycroft Exp $
  */
 
 /*
  * Device Driver for AT parallel printer port
  */
-
-#include "lpt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +68,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/lptreg.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
@@ -104,14 +102,14 @@ struct lpt_softc {
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 	u_char sc_control;
-} lpt_softc[NLPT];
+};
 
-int lptprobe __P((struct isa_device *));
-int lptattach __P((struct isa_device *));
+int lptprobe();
+void lptattach();
 int lptintr __P((int));
 
-struct isa_driver lptdriver = {
-	lptprobe, lptattach, "lpt"
+struct cfdriver lptcd = {
+	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -174,10 +172,12 @@ lpt_port_test(port, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 int
-lptprobe(isa_dev)
-	struct isa_device *isa_dev;
+lptprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	u_short iobase = isa_dev->id_iobase;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 	u_short port;
 	u_char mask, data;
 	int i;
@@ -226,23 +226,25 @@ lptprobe(isa_dev)
 	outb(iobase + lpt_data, 0);
 	outb(iobase + lpt_control, 0);
 
-	return LPT_NPORTS;
+	ia->ia_iosize = LPT_NPORTS;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int
-lptattach(isa_dev)
-	struct isa_device *isa_dev;
+void
+lptattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct lpt_softc *sc = &lpt_softc[isa_dev->id_unit];
-	u_short iobase = isa_dev->id_iobase;
-	u_short irq = isa_dev->id_irq;
+	struct lpt_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
+	u_short irq = ia->ia_irq;
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", lptdriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
-
-	if (!irq)
-		printf("%s: polled\n", sc->sc_dev.dv_xname);
+	if (irq)
+		printf("\n");
+	else
+		printf(": polled\n");
 
 	sc->sc_iobase = iobase;
 	sc->sc_irq = irq;
@@ -266,10 +268,10 @@ lptopen(dev, flag)
 	int error;
 	int spin;
 
-	if (unit >= NLPT)
+	if (unit >= lptcd.cd_ndevs)
 		return ENXIO;
-	sc = &lpt_softc[unit];
-	if (!sc->sc_iobase)
+	sc = lptcd.cd_devs[unit];
+	if (!sc)
 		return ENXIO;
 
 	if (sc->sc_irq == 0 && (flags & LPT_NOINTR) == 0)
@@ -372,7 +374,7 @@ lptclose(dev, flag)
 	int flag;
 {
 	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = &lpt_softc[unit];
+	struct lpt_softc *sc = lptcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 
 	if (sc->sc_count)
@@ -454,7 +456,7 @@ lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	struct lpt_softc *sc = &lpt_softc[LPTUNIT(dev)];
+	struct lpt_softc *sc = lptcd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
@@ -483,7 +485,7 @@ int
 lptintr(unit)
 	int unit;
 {
-	struct lpt_softc *sc = &lpt_softc[unit];
+	struct lpt_softc *sc = lptcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 
 #if 0

@@ -35,12 +35,10 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.7 1994/03/06 17:19:13 mycroft Exp $
+ *	$Id: mcd.c,v 1.8 1994/03/29 04:36:11 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
-
-#include "mcd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +61,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
@@ -80,13 +78,12 @@
 /* flags */
 #define MCDOPEN		0x0001	/* device opened */
 #define MCDVALID	0x0002	/* parameters loaded */
-#define MCDINIT		0x0004	/* device is init'd */
-#define MCDWAIT		0x0008	/* waiting for something */
-#define MCDLABEL	0x0010	/* label is read */
-#define	MCDREADRAW	0x0020	/* read raw mode (2352 bytes) */
-#define	MCDVOLINFO	0x0040	/* already read volinfo */
-#define	MCDTOC		0x0080	/* already read toc */
-#define	MCDMBXBSY	0x0100	/* local mbx is busy */
+#define MCDWAIT		0x0004	/* waiting for something */
+#define MCDLABEL	0x0008	/* label is read */
+#define	MCDREADRAW	0x0010	/* read raw mode (2352 bytes) */
+#define	MCDVOLINFO	0x0020	/* already read volinfo */
+#define	MCDTOC		0x0040	/* already read toc */
+#define	MCDMBXBSY	0x0080	/* local mbx is busy */
 
 /* status */
 #define	MCDAUDIOBSY	MCD_ST_AUDIOBSY		/* playing audio */
@@ -129,11 +126,9 @@ struct mcd_softc {
 	short	debug;
 	struct	buf head;	/* head of buf queue */
 	struct	mcd_mbx mbx;
-} mcd_softc[NMCD];
+};
 
 /* prototypes */
-int mcdprobe __P((struct isa_device *));
-int mcdattach __P((struct isa_device *));
 int mcdopen __P((dev_t));
 int mcdclose __P((dev_t));
 int mcd_start __P((struct mcd_softc *));
@@ -166,8 +161,11 @@ int mcd_play __P((struct mcd_softc *, struct mcd_read2 *));
 int mcd_pause __P((struct mcd_softc *));
 int mcd_resume __P((struct mcd_softc *));
 
-struct isa_driver mcddriver = {
-	mcdprobe, mcdattach, "mcd"
+int mcdprobe();
+void mcdattach();
+
+struct cfdriver mcdcd = {
+	NULL, "mcd", mcdprobe, mcdattach, DV_DISK, sizeof(struct mcd_softc)
 };
 
 #define mcd_put(port,byte)	outb(port,byte)
@@ -194,18 +192,20 @@ struct isa_driver mcddriver = {
 #define MCD_S_WAITMODE	3
 #define MCD_S_WAITREAD	4
 
-int
-mcdattach(isa_dev)
-	struct isa_device *isa_dev;
+void
+mcdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct mcd_softc *sc = &mcd_softc[isa_dev->id_unit];
+	struct mcd_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 
 #ifdef notyet
 	/* Wire controller for interrupts and DMA. */
-	mcd_configure(cd);
+	mcd_configure(sc);
 #endif
 	
-	sc->flags = MCDINIT;
+	sc->flags = 0;
 }
 
 int
@@ -216,10 +216,10 @@ mcdopen(dev)
 	struct mcd_softc *sc;
 	
 	unit = MCDUNIT(dev);
-	if (unit >= NMCD)
+	if (unit >= mcdcd.cd_ndevs)
 		return ENXIO;
-	sc = &mcd_softc[unit];
-	if (!sc->iobase || !(sc->flags & MCDINIT))
+	sc = mcdcd.cd_devs[unit];
+	if (!sc)
 		return ENXIO;
 
 	part = MCDPART(dev);
@@ -265,7 +265,7 @@ mcdclose(dev)
 	
 	unit = MCDUNIT(dev);
 	part = MCDPART(dev);
-	sc = &mcd_softc[unit];
+	sc = mcdcd.cd_devs[unit];
 
 	/* Get status. */
 	mcd_getstat(sc, 1);
@@ -282,7 +282,7 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = &mcd_softc[MCDUNIT(bp->b_dev)];
+	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(bp->b_dev)];
 	struct buf *qp;
 	int s;
 	
@@ -393,7 +393,7 @@ mcdioctl(dev, cmd, addr, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct mcd_softc *sc = &mcd_softc[MCDUNIT(dev)];
+	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
 	
 	if (!(sc->flags & MCDVALID))
 		return EIO;
@@ -494,7 +494,7 @@ mcdsize(dev)
 	dev_t dev;
 {
 	int size;
-	struct mcd_softc *sc = &mcd_softc[MCDUNIT(dev)];
+	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
 
 	if (mcd_volinfo(sc) >= 0) {
 		sc->blksize = MCDBLK;
@@ -529,22 +529,19 @@ mcd_configure(sc)
 }
 
 int
-mcdprobe(isa_dev)
-	struct isa_device *isa_dev;
+mcdprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int unit = isa_dev->id_unit;
-	struct mcd_softc *sc = &mcd_softc[unit];
-	u_short iobase = isa_dev->id_iobase;
+	struct mcd_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 	int i;
 	int st, check;
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", mcddriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
-
 #ifdef notyet
 	/* Get irq/drq configuration word. */
-	sc->config = irqs[isa_dev->id_irq];
+	sc->config = irqs[ia->ia_irq];
 #endif
 	sc->iobase = iobase;
 
@@ -576,7 +573,7 @@ mcdprobe(isa_dev)
  * driven routines mcd_getreply etc. rather than arbitrary delays.
  */
 
-	delay (2000);
+	delay(2000);
 	outb(iobase + mcd_command, MCD_CMDCONTINFO);
 	i = mcd_getreply(sc, DELAY_GETREPLY);
 
@@ -614,7 +611,9 @@ mcdprobe(isa_dev)
 #ifdef DEBUG
 	printf("Mitsumi drive detected\n");
 #endif
-	return 4;
+	ia->ia_iosize = 4;
+	ia->ia_msize = 0;
+	return 1;
 }
 
 int
@@ -812,7 +811,7 @@ int
 mcdintr(unit)
 	int unit;
 {
-	struct mcd_softc *sc = &mcd_softc[unit];
+	struct mcd_softc *sc = mcdcd.cd_devs[unit];
 	u_short iobase = sc->iobase;
 	
 	MCD_TRACE("stray interrupt xfer=0x%x\n", inb(iobase + mcd_xfer),
@@ -838,7 +837,7 @@ mcd_doread(state, mbxin)
 	struct mcd_mbx *mbxin;
 {
 	struct mcd_mbx *mbx = (state != MCD_S_BEGIN) ? mbxsave : mbxin;
-	struct mcd_softc *sc = &mcd_softc[mbx->unit];
+	struct mcd_softc *sc = mcdcd.cd_devs[mbx->unit];
 	u_short iobase = mbx->iobase;
 	struct buf *bp = mbx->bp;
 
