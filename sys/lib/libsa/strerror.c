@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.8 1995/09/17 00:49:47 pk Exp $	*/
+/*	$NetBSD: strerror.c,v 1.9 1996/01/13 22:25:43 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,9 +36,6 @@
 #include <sys/types.h>
 #include "saerrno.h"
 #include "stand.h"
-
-size_t	strlen __P((const char *));				/* XXX */
-char	*strcpy __P((char *, const char *));			/* XXX */
 
 char *
 strerror(err)

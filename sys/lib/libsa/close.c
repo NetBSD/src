@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.5 1995/09/06 19:53:29 pk Exp $	*/
+/*	$NetBSD: close.c,v 1.6 1996/01/13 22:25:35 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -91,15 +91,4 @@ close(fd)
 		return (-1);
 	}
 	return (0);
-}
-
-
-void
-closeall()
-{
-	int i;
-
-        for (i = 0; i < SOPEN_MAX; i++)
-            if (files[i].f_flags != 0)
-                (void)close(i);
 }

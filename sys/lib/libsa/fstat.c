@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.4 1996/01/13 22:25:43 leo Exp $	*/
+/*	$NetBSD: fstat.c,v 1.1 1996/01/13 22:25:38 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,16 +38,23 @@
 #include "stand.h"
 
 int
-stat(str, sb)
-	const char *str;
+fstat(fd, sb)
+	int fd;
 	struct stat *sb;
 {
-	int fd, rv;
+	register struct open_file *f = &files[fd];
 
-	fd = open(str, 0);
-	if (fd < 0)
+	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+		errno = EBADF;
 		return (-1);
-	rv = fstat(fd, sb);
-	(void)close(fd);
-	return (rv);
+	}
+
+	/* operation not defined on raw devices */
+	if (f->f_flags & F_RAW) {
+		errno = EOPNOTSUPP;
+		return (-1);
+	}
+
+	errno = (f->f_ops->stat)(f, sb);
+	return (0);
 }

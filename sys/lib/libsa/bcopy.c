@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.6 1996/01/13 22:25:34 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,6 +36,7 @@
  */
 
 #include <sys/types.h>
+#include "stand.h"
 
 /*
  * This is designed to be small, not fast.
@@ -57,14 +58,4 @@ bcopy(s1, s2, n)
 	} else
 		while (n-- > 0)
 			*t++ = *f++;
-}
-
-void *
-memcpy(s1, s2, n)
-	void *s1;
-	const void *s2;
-	size_t n;
-{
-	bcopy(s2, s1, n);
-	return s1;
 }

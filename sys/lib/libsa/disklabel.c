@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.3 1994/10/26 05:44:42 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.4 1996/01/13 22:25:36 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,9 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include "stand.h"
 
-int dkcksum __P((struct disklabel *));
-    
 char *
 getdisklabel(buf, lp)
 	const char *buf;
@@ -64,21 +63,4 @@ getdisklabel(buf, lp)
 		}
 	}
 	return (msg);
-}
-
-/*
- * Compute checksum for disk label.
- */
-int
-dkcksum(lp)
-	register struct disklabel *lp;
-{
-	register u_short *start, *end;
-	register u_short sum = 0;
-
-	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
-	while (start < end)
-		sum ^= *start++;
-	return (sum);
 }

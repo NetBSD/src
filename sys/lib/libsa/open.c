@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
+/*	$NetBSD: open.c,v 1.10 1996/01/13 22:25:41 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,6 +65,7 @@
  */
 
 #include "stand.h"
+
 struct open_file files[SOPEN_MAX];
 
 /*
@@ -123,42 +124,3 @@ err:
 	errno = error;
 	return (-1);
 }
-
-/*
- * Null filesystem
- */
-int	null_open (char *path, struct open_file *f)
-{
-	errno  = EIO;
-	return -1;
-}
-
-int	null_close(struct open_file *f)
-{
-	return 0;
-}
-
-ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
-{
-	errno = EIO;
-	return -1;
-}
-
-ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
-{
-	errno = EIO;
-	return -1;
-}
-
-off_t	null_seek (struct open_file *f, off_t offset, int where)
-{
-	errno = EIO;
-	return -1;
-}
-
-int	null_stat (struct open_file *f, struct stat *sb)
-{
-	errno = EIO;
-	return -1;
-}
-

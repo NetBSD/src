@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1995/10/01 06:00:32 phil Exp $
+#	$NetBSD: Makefile,v 1.11 1996/01/13 22:25:32 leo Exp $
 
 LIB=	sa
 
@@ -12,11 +12,11 @@ CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
-	printf.c strerror.c
+	memcpy.c printf.c strerror.c
 
 # io routines
-SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
-	stat.c write.c
+SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
+	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
 
 .if !defined(NO_NET)
 # network routines
