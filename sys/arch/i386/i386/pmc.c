@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.1 2000/09/13 04:47:01 thorpej Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2 2000/10/24 22:03:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -66,21 +66,24 @@ pmc_init(void)
 	if (pmc_initialized)
 		return;
 
+	pmc_type = PMC_TYPE_NONE;
+
 	switch (cpu_class) {
 	case CPUCLASS_586:
-		pmc_type = PMC_TYPE_I586;
-		pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
-		pmc_state[1].pmcs_ctrmsr = MSR_CTR1;
-		break;
+		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			pmc_type = PMC_TYPE_I586;
+			pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
+			pmc_state[1].pmcs_ctrmsr = MSR_CTR1;
+			break;
+		}
 
 	case CPUCLASS_686:
-		pmc_type = PMC_TYPE_I686;
-		pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
-		pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
+		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			pmc_type = PMC_TYPE_I686;
+			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
+			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
+		}
 		break;
-
-	default:
-		pmc_type = PMC_TYPE_NONE;
 	}
 
 	if (pmc_type != PMC_TYPE_NONE && (cpu_feature & CPUID_TSC) != 0)
