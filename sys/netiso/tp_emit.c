@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.7 1996/02/13 22:10:54 christos Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.8 1996/03/16 23:13:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -184,7 +184,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
 		printf(
-		       "tp_emit dutype 0x%x, tpcb 0x%x, eot 0x%x, seq 0x%x, data 0x%x",
+		       "tp_emit dutype 0x%x, tpcb %p, eot 0x%x, seq 0x%x, data %p",
 		       dutype, tpcb, eot, seq, data);
 	}
 #endif
@@ -455,7 +455,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			} else if (tpcb->tp_class == TP_CLASS_0) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_EMIT]) {
-					printf("DT tpdu: class 0 m 0x%x hdr 0x%x\n", m, hdr);
+					printf("DT tpdu: class 0 m %p hdr %p\n", m, hdr);
 					dump_buf(hdr, hdr->tpdu_li + 1);
 				}
 #endif
@@ -463,7 +463,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 				((struct tp0du *) hdr)->tp0du_mbz = 0;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_EMIT]) {
-					printf("DT 2 tpdu: class 0 m 0x%x hdr 0x%x\n", m, hdr);
+					printf("DT 2 tpdu: class 0 m %p hdr %p\n", m, hdr);
 					dump_buf(hdr, hdr->tpdu_li + 1);
 				}
 #endif
@@ -667,7 +667,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKSEND]) {
-					printf("Calling ADDOPTION 0x%x, 0x%x, 0x%x,0x%x\n",
+					printf("Calling ADDOPTION 0x%x, %p, 0x%x,0x%x\n",
 					       TPP_flow_cntl_conf,
 					       hdr, sizeof(bogus), bogus[0]);
 				}
@@ -675,7 +675,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 				ADDOPTION(TPP_flow_cntl_conf, hdr, sizeof(bogus), bogus[0]);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKSEND]) {
-					printf("after ADDOPTION hdr 0x%x hdr->tpdu_li 0x%x\n",
+					printf("after ADDOPTION hdr %p hdr->tpdu_li 0x%x\n",
 					       hdr, hdr->tpdu_li);
 					printf(
 					       "after ADDOPTION csum_offset 0x%x, hdr->tpdu_li 0x%x\n",
@@ -754,7 +754,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		printf("tp_emit before tpxxx_output tpcb 0x%x, dutype 0x%x, datalen 0x%x\n",
+		printf("tp_emit before tpxxx_output tpcb %p, dutype 0x%x, datalen 0x%x\n",
 		       tpcb, dutype, datalen);
 		dump_buf(mtod(m, caddr_t), datalen);
 	}
@@ -778,7 +778,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 #endif
 #ifdef ARGO_DEBUG
 	    if (argo_debug[D_EMIT]) {
-		printf("OUTPUT: tpcb 0x%x, isop 0x%x, so 0x%x\n",
+		printf("OUTPUT: tpcb %p, isop %p, so %p\n",
 		       tpcb, tpcb->tp_npcb, tpcb->tp_sock);
 	}
 #endif
@@ -871,7 +871,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ERROR_EMIT]) {
 		printf(
-		       "tp_error_emit error 0x%x sref 0x%x tpcb 0x%x erlen 0x%x chan 0x%x\n",
+		       "tp_error_emit error 0x%x sref %lx tpcb %p erlen 0x%x chan %p\n",
 		       error, sref, tpcb, erlen, cons_channel);
 	}
 #endif
@@ -999,7 +999,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			printf("error_emit DR error tpduli 0x%x\n", error, hdr->tpdu_li);
+			printf("error_emit DR error %d tpduli %x\n", error, hdr->tpdu_li);
 			dump_buf((char *) hdr, hdr->tpdu_li);
 		}
 #endif
@@ -1033,7 +1033,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			printf("OUTPUT: tpcb 0x%x, isop 0x%x, so 0x%x\n",
+			printf("OUTPUT: tpcb %p, isop %p, so %p\n",
 			       tpcb, tpcb->tp_npcb, tpcb->tp_sock);
 		}
 #endif
@@ -1061,7 +1061,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		}
 #endif
 #else
-		printf("TP panic! cons channel 0x%x but not cons configured\n",
+		printf("TP panic! cons channel %p but not cons configured\n",
 		       cons_channel);
 #endif
 		return 0;
@@ -1093,7 +1093,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			printf("tp_error_emit DROPPING \n", m);
+			printf("tp_error_emit DROPPING %p\n", m);
 		}
 #endif
 		IncStat(ts_send_drop);
