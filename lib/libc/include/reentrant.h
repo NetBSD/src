@@ -108,18 +108,16 @@
 #define FLOCKFILE(fp)		flockfile(fp)
 #define FUNLOCKFILE(fp)		funlockfile(fp)
 
-#define
-
 #else
 
-#define mutex_lock(m)		do { } while(0)
-#define mutex_unlock(m)		do { } while(0)
+#define mutex_lock(m)		
+#define mutex_unlock(m)		
 
-#define rwlock_rdlock(l)	do { } while(0)
-#define rwlock_wrlock(l)	do { } while(0)
-#define rwlock_unlock(l)	do { } while(0)
+#define rwlock_rdlock(l)	
+#define rwlock_wrlock(l)	
+#define rwlock_unlock(l)	
 
-#define FLOCKFILE(fp)		do { } while(0)
-#define FUNLOCKFILE(fp)		do { } while(0)
+#define FLOCKFILE(fp)		
+#define FUNLOCKFILE(fp)		
 
 #endif
