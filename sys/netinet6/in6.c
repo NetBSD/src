@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.62 2002/06/07 04:18:11 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.63 2002/06/08 00:01:30 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.62 2002/06/07 04:18:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.63 2002/06/08 00:01:30 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -479,7 +479,12 @@ in6_control(so, cmd, data, ifp, p)
 			return(EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
-		if (ifra->ifra_addr.sin6_family != AF_INET6)
+		/*
+		 * We always require users to specify a valid IPv6 address for
+		 * the corresponding operation.
+		 */
+		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
+		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6))
 			return(EAFNOSUPPORT);
 		if (!privileged)
 			return(EPERM);
