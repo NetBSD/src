@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.7 1996/11/08 14:12:27 leo Exp $
+#	$NetBSD: BOOTX,v 1.8 1996/11/17 13:33:38 leo Exp $
 #
 # BOOTX
 #
@@ -49,11 +49,6 @@ options		MSDOSFS		# MSDOS filesystem
 options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
 options		FIFO		# FIFO operations on vnodes
-
-options		SWAPPAGER	# Pager for swap device
-options		VNODEPAGER	# Pager for vnodes
-options		DEVPAGER	# Pager
-
 
 #
 # Misc. debuging options
