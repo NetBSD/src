@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 1998/09/30 23:01:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 1998/09/30 23:47:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -373,18 +373,6 @@ Ltrap1:
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
 	rte
-
-/*
- * Trap 1 - sigreturn
- */
-ENTRY_NOPROFILE(trap1)
-	jra	_ASM_LABEL(sigreturn)
-
-/*
- * Trap 2 - trace trap
- */
-ENTRY_NOPROFILE(trap2)
-	jra	_C_LABEL(trace)
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
