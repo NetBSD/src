@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1996/02/01 22:29:25 mycroft Exp $
+# $NetBSD: Makefile,v 1.3 1996/06/12 19:24:19 mark Exp $
 
 # Copyright (c) 1994,1995 Mark Brinicombe.
 # Copyright (c) 1994 Brini.
@@ -40,9 +40,6 @@
 # Makefile for RiscBSD bootloader for RISCOS
 #
 # Created      : 14/01/96
-# Last updated : 14/01/96
-#
-#	$Id: Makefile,v 1.2 1996/02/01 22:29:25 mycroft Exp $
 #
 
 S=	../../..
