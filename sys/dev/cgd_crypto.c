@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.3 2004/03/18 10:42:08 dan Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.4 2005/03/19 21:39:17 dan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.3 2004/03/18 10:42:08 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.4 2005/03/19 21:39:17 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,7 @@ cgd_cipher_aes_destroy(caddr_t data)
 {
 	struct aes_privdata *apd = (void *)data;
 
+	memset(apd, 0, sizeof(*apd));
 	free(apd, M_DEVBUF);
 }
 
@@ -300,6 +301,7 @@ cgd_cipher_3des_init(int keylen, caddr_t key, int *blocksize)
 	error |= des_key_sched((des_cblock *)key + 1, cp->cp_key2);
 	error |= des_key_sched((des_cblock *)key + 2, cp->cp_key3);
 	if (error) {
+		memset(cp, 0, sizeof(*cp));
 		free(cp, M_DEVBUF);
 		return NULL;
 	}
@@ -311,6 +313,7 @@ cgd_cipher_3des_destroy(caddr_t data)
 {
 	struct c3des_privdata *cp = (void *)data;
 
+	memset(cp, 0, sizeof(*cp));
 	free(cp, M_DEVBUF);
 }
 
@@ -410,6 +413,7 @@ cgd_cipher_bf_destroy(caddr_t data)
 {
 	struct	bf_privdata *bp = (void *)data;
 
+	memset(bp, 0, sizeof(*bp));
 	free(bp, M_DEVBUF);
 }
 
