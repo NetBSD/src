@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.40 2003/05/17 21:00:57 itojun Exp $	*/
+/*	$NetBSD: options.c,v 1.41 2004/05/13 17:02:32 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.40 2003/05/17 21:00:57 itojun Exp $");
+__RCSID("$NetBSD: options.c,v 1.41 2004/05/13 17:02:32 christos Exp $");
 #endif
 #endif
 
@@ -1161,7 +1161,7 @@ getword(f, word, newlinep, filename)
 	/*
 	 * A non-whitespace character is the start of a word.
 	 */
-	if (!isspace(c))
+	if (!isspace((unsigned char)c))
 	    break;
     }
 
@@ -1215,12 +1215,12 @@ getword(f, word, newlinep, filename)
 		break;
 
 	    default:
-		if (isoctal(c)) {
+		if (isoctal((unsigned char)c)) {
 		    /*
 		     * \ddd octal sequence
 		     */
 		    value = 0;
-		    for (n = 0; n < 3 && isoctal(c); ++n) {
+		    for (n = 0; n < 3 && isoctal((unsigned char)c); ++n) {
 			value = (value << 3) + (c & 07);
 			c = getc(f);
 		    }
@@ -1234,7 +1234,7 @@ getword(f, word, newlinep, filename)
 		     */
 		    value = 0;
 		    c = getc(f);
-		    for (n = 0; n < 2 && isxdigit(c); ++n) {
+		    for (n = 0; n < 2 && isxdigit((unsigned char)c); ++n) {
 			digit = toupper(c) - '0';
 			if (digit > 10)
 			    digit += '0' + 10 - 'A';
@@ -1272,7 +1272,7 @@ getword(f, word, newlinep, filename)
 	    if (c == quoted)
 		break;
 	} else {
-	    if (isspace(c) || c == '#') {
+	    if (isspace((unsigned char)c) || c == '#') {
 		ungetc (c, f);
 		break;
 	    }
