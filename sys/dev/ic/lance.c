@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.26 2001/11/13 13:14:40 lukem Exp $	*/
+/*	$NetBSD: lance.c,v 1.27 2002/09/03 14:48:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.26 2001/11/13 13:14:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.27 2002/09/03 14:48:16 itojun Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -462,9 +462,7 @@ lance_read(sc, boff, len)
 {
 	struct mbuf *m;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-#ifdef LANCE_REVC_BUG
 	struct ether_header *eh;
-#endif
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
@@ -487,14 +485,7 @@ lance_read(sc, boff, len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+	eh = mtod(m, struct ether_header *);
 
 #ifdef LANCE_REVC_BUG
 	/*
@@ -504,12 +495,29 @@ lance_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
-	eh = mtod(m, struct ether_header *);
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_enaddr) &&
 	    ETHER_CMP(eh->ether_dhost, bcast_enaddr)) {
 		m_freem(m);
 		return;
 	}
+#endif
+
+	/*
+	 * Some lance device does not present IFF_SIMPLEX behavior on multicast
+	 * packets.  Make sure to drop it if it is from ourselves.
+	 */
+	if (!ETHER_CMP(eh->ether_shost, sc->sc_enaddr)) {
+		m_freem(m);
+		return;
+	}
+
+#if NBPFILTER > 0
+	/*
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to BPF.
+	 */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	/* Pass the packet up. */
