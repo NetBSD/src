@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2000/03/26 20:42:24 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2000/04/03 15:07:07 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1390,7 +1390,7 @@ validate:
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel()) {
 		va -= PAGE_SIZE;
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter", trunc_page((vaddr_t) pmap_pte(pmap, va)));
 	}
 #endif
 	return (KERN_SUCCESS);
@@ -2169,7 +2169,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 					ptpmap->pm_stab,
 					ptpmap->pm_sref - 1);
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab != (st_entry_t *)trunc_page((vaddr_t) ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {
