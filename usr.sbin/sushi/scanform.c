@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.6 2001/01/24 07:17:10 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.7 2001/01/24 07:23:51 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ my_driver(FORM * form, int c, char *path)
 		entry = newCDKEntry(cdkscreen, BOTTOM, CENTER,
 		    catgets(catalog, 4, 6, "Enter the field data "
 		    "below, and hit enter to return to the form."),
-		    catgets(catalog, 4, 7, "Data Entry:"),
+		    catgets(catalog, 4, 7, "Data Entry: "),
 		    A_REVERSE, field_pad(curfield), vMIXED, ws.ws_col-20,
 		    0, dmax, TRUE, FALSE);
 		if (field_buffer(curfield, 0) == NULL)

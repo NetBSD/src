@@ -52,6 +52,6 @@ $set 4 menu titles and stuff
 4 Script started at
 5 <C></5>Sushi\n\n
 6 Enter the field data below, and hit enter to return to the form.
-7 Data Entry
+7 Data Entry: 
 8 Form Page:
 9 PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do.
