@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.7 1994/06/29 06:44:39 cgd Exp $	*/
+/*	$NetBSD: mman.h,v 1.8 1994/07/18 07:22:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -86,6 +86,7 @@ int	munmap __P((caddr_t, size_t));
 int	msync __P((caddr_t, size_t));
 int	mlock __P((caddr_t, size_t));
 int	munlock __P((caddr_t, size_t));
+int	madvise __P((caddr_t, size_t, int));
 __END_DECLS
 
 #endif /* !KERNEL */
