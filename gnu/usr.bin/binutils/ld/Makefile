@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/11/27 15:02:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2003/12/04 09:29:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,19 +68,11 @@ CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
-.if ${HAVE_BINUTILS214} == "no"
-	unset MACHINE || true; \
-	LIB_PATH=/usr/lib srcdir=${DIST}/ld \
-		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
-		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} ${f}
-.else
 	unset MACHINE || true; \
 	LIB_PATH=/usr/lib
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} no ${f} "${G_target_alias}"
-.endif
 
 #FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
