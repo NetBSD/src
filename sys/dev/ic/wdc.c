@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.209 2004/08/20 22:02:40 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.210 2004/08/20 22:17:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.209 2004/08/20 22:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.210 2004/08/20 22:17:06 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -645,9 +645,6 @@ wdcattach(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 
-	if (chp->ch_flags & ATACH_DISABLED)
-		return;
-
 	/*
 	 * Start out assuming 2 drives.  This may change as we probe
 	 * drives.
@@ -655,13 +652,12 @@ wdcattach(struct ata_channel *chp)
 	chp->ch_ndrive = 2;
 
 	/* default data transfer methods */
-	if (!wdc->datain_pio)
+	if (wdc->datain_pio == NULL)
 		wdc->datain_pio = wdc_datain_pio;
-	if (!wdc->dataout_pio)
+	if (wdc->dataout_pio == NULL)
 		wdc->dataout_pio = wdc_dataout_pio;
 
 	/* initialise global data */
-	callout_init(&chp->ch_callout);
 	if (atac->atac_bustype_ata == NULL)
 		atac->atac_bustype_ata = &wdc_ata_bustype;
 	if (atac->atac_probe == NULL)
@@ -671,11 +667,7 @@ wdcattach(struct ata_channel *chp)
 		atac->atac_atapibus_attach = wdc_atapibus_attach;
 #endif
 
-	TAILQ_INIT(&chp->ch_queue->queue_xfer);
-	chp->ch_queue->queue_freeze = 0;
-	chp->ch_queue->active_xfer = NULL;
-
-	chp->atabus = config_found(&atac->atac_dev, chp, atabusprint);
+	ata_channel_attach(chp);
 }
 
 int
