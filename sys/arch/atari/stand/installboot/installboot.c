@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 2000/07/08 14:41:04 jdolecek Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10 2000/09/30 20:40:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -50,6 +50,7 @@
 #define	FSTYPENAMES
 #include <sys/disklabel.h>
 #include <machine/ahdilabel.h>
+#include <machine/asm.h>
 
 #include "installboot.h"
 
