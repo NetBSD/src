@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2002/04/09 22:37:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2002/04/09 23:44:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2002/04/09 22:37:01 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2002/04/09 23:44:01 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3711,4 +3711,38 @@ pmap_pte_init_i80200(void)
 	pte_l2_s_cache_mode = L2_C;
 }
 #endif /* CPU_XSCALE_80200 */
+
+/*
+ * xscale_setup_minidata:
+ *
+ *	Set up the mini-data cache clean area.  We require the
+ *	caller to allocate the right amount of physically and
+ *	virtually contiguous space.
+ */
+void
+xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
+{
+	extern vaddr_t xscale_minidata_clean_addr;
+	extern vsize_t xscale_minidata_clean_size; /* already initialized */
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
+	pt_entry_t *pte;
+	vsize_t size;
+
+	xscale_minidata_clean_addr = va;
+
+	/* Round it to page size. */
+	size = (xscale_minidata_clean_size + L2_S_OFFSET) & L2_S_FRAME;
+
+	for (; size != 0;
+	     va += L2_S_SIZE, pa += L2_S_SIZE, size -= L2_S_SIZE) {
+		pte = (pt_entry_t *)
+		    kernel_pt_lookup(pde[va >> L1_S_SHIFT] & L2_S_FRAME);
+		if (pte == NULL)
+			panic("xscale_setup_minidata: can't find L2 table for "
+			    "VA 0x%08lx", va);
+		pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa |
+		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
+		    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);
+	}
+}
 #endif /* ARM_MMU_XSCALE == 1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.12 2002/03/19 19:41:57 briggs Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.13 2002/04/09 23:44:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -309,21 +309,6 @@ ENTRY(xscale_cache_cleanD)
 	subs	r1, r1, #32
 	bne	1b
 
-#ifdef CACHE_CLEAN_MINIDATA
-	/*
-	 * Clean the mini-data cache.
-	 *
-	 * It's expected that we only use the mini-data cache for
-	 * kernel addresses, so there is no need to purge it on
-	 * context switch.
-	 */
-	ldr	r2, Lxscale_minidata_clean_addr
-	ldmia	r2, {r0, r1}
-1:	ldr	r3, [r0], #32
-	subs	r1, r1, #32
-	bne	1b
-#endif
-
 	CPWAIT(r0)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
@@ -331,6 +316,22 @@ ENTRY(xscale_cache_cleanD)
 	CPWAIT(r0)
 
 	XSCALE_CACHE_CLEAN_EPILOGUE
+	mov	pc, lr
+
+/*
+ * Clean the mini-data cache.
+ *
+ * It's expected that we only use the mini-data cache for
+ * kernel addresses, so there is no need to purge it on
+ * context switch, and no need to prevent userspace access
+ * while we clean it.
+ */
+ENTRY(xscale_cache_clean_minidata)
+	ldr	r2, Lxscale_minidata_clean_addr
+	ldmia	r2, {r0, r1}
+1:	ldr	r3, [r0], #32
+	subs	r1, r1, #32
+	bne	1b
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeID_E)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.19 2002/03/26 19:29:45 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.20 2002/04/09 23:44:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -354,6 +354,8 @@ void	xscale_cache_flushD_SE	__P((u_int entry));
 void	xscale_cache_cleanID	__P((void));
 void	xscale_cache_cleanD	__P((void));
 void	xscale_cache_cleanD_E	__P((u_int entry));
+
+void	xscale_cache_clean_minidata __P((void));
 
 void	xscale_cache_purgeID	__P((void));
 void	xscale_cache_purgeID_E	__P((u_int entry));
