@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.49 1998/02/07 20:05:25 augustss Exp $
+$NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -773,6 +773,9 @@ product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
+
+/* Macronix */
+product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
 
 /* Madge Networks products */
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
