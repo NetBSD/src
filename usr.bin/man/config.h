@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 1995/09/28 06:05:28 tls Exp $	*/
+/*	$NetBSD: config.h,v 1.2.8.1 2000/04/30 11:29:46 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -57,3 +57,5 @@ TAG	*addlist __P((char *));
 void	 config __P((char *));
 void	 debug __P((char *));
 TAG	*getlist __P((char *));
+void	removelist __P((char *));
+TAG	*renamelist __P((char *, char *));
