@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.106 1997/05/17 16:43:31 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.107 1997/05/24 01:42:38 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -34,8 +34,11 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 #   			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
 # SHLIB_LDSTARTFILE:	???
 # SHLIB_LDENDTILE:	??
-# CPICFLAGS:	flags to compile .c files for .so objects.
-# APICFLAGS:	flags to assemble .S files for .so objects.
+# CPPICFLAGS:	flags for ${CPP} to preprocess  .[sS]  files for ${AS}
+# CPICFLAGS:	flags for ${CC} to compile  .[cC] files to .so objects.
+# CAPICFLAGS	flags for {$CC} to compiling .[Ss] files
+#		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
+# APICFLAGS:	flags for ${AS} to assemble .[sS]  to .so objects.
 
 .if (${MACHINE_ARCH} == "alpha")
 
@@ -44,7 +47,9 @@ SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
 SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 CPICFLAGS ?= -fpic -DPIC
-APICFLAGS ?= -DPIC
+CPPPICFLAGS?= -DPIC 
+CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
+APICFLAGS ?=
 
 .elif (${MACHINE_ARCH} == "mips")
 
@@ -72,8 +77,10 @@ SHLIB_TYPE=a.out
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-CPICFLAGS?= -fpic -DPIC
-APICFLAGS?= -fpic -DPIC
+CPICFLAGS?= -fpic
+CPPPICFLAGS?= -DPIC 
+CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
+APICFLAGS?= -k
 
 .endif
 
@@ -132,8 +139,8 @@ CFLAGS+=	${COPTS}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo ${COMPILE.S:Q} ${APICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} ${APICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.S:Q} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
