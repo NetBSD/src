@@ -1,5 +1,5 @@
-#	$Id: Makefile,v 1.1 1993/05/18 07:49:06 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/05/18 10:08:43 cgd Exp $
 
-SUBDIR=	csu.${MACHINE}
+SUBDIR=	${MACHINE}
 
 .include <bsd.subdir.mk>
