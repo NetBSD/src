@@ -2,22 +2,22 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.2 2001/06/05 13:24:41 wiz Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.3 2001/09/16 18:51:10 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
 .Sh NAME
-.Nm svc_dg_enablecache,
-.Nm svc_exit,
-.Nm svc_fdset,
-.Nm svc_freeargs,
-.Nm svc_getargs,
-.Nm svc_getreq_common,
-.Nm svc_getreq_poll,
-.Nm svc_getreqset,
-.Nm svc_getrpccaller,
-.Nm svc_pollset,
-.Nm svc_run,
+.Nm svc_dg_enablecache ,
+.Nm svc_exit ,
+.Nm svc_fdset ,
+.Nm svc_freeargs ,
+.Nm svc_getargs ,
+.Nm svc_getreq_common ,
+.Nm svc_getreq_poll ,
+.Nm svc_getreqset ,
+.Nm svc_getrpccaller ,
+.Nm svc_pollset ,
+.Nm svc_run ,
 .Nm svc_sendreply
 .Nd library routines for RPC servers
 .Sh LIBRARY
@@ -47,7 +47,6 @@
 .Fn svc_run "void"
 .Ft bool_t
 .Fn svc_sendreply "const SVCXPRT *xprt" "const xdrproc_t outproc" "const caddr_t *out"
-
 .Sh DESCRIPTION
 These routines are part of the
 RPC
@@ -68,7 +67,7 @@ are called when the server is initiated.
 .\" Therefore, this structure cannot be freely shared between threads that call
 .\" functions that do this.  Routines on this page that are affected by this
 .\" restriction are marked as unsafe for MT applications.
-.Sh Routines
+.Sh ROUTINES
 See
 .Xr rpc 3
 for the definition of the
@@ -115,7 +114,7 @@ if service implementors do not call
 .Fn svc_run ,
 but rather do their own asynchronous event processing.
 This variable is read-only (do not pass its address to
-.Xr select 2 !,
+.Xr select 2 ! ) ,
 yet it may change after calls to
 .Fn svc_getreqset
 or any creation routines.
@@ -258,4 +257,4 @@ otherwise.
 .Xr rpc 3 ,
 .Xr rpc_svc_create 3 ,
 .Xr rpc_svc_err 3 ,
-.Xr rpc_svc_reg 3 ,
+.Xr rpc_svc_reg 3
