@@ -1,10 +1,20 @@
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
+./usr/share/man/cat1/i386/cursor.0
+./usr/share/man/cat1/i386/fed.0
+./usr/share/man/cat1/i386/fontedit.0
+./usr/share/man/cat1/i386/kcon.0
+./usr/share/man/cat1/i386/loadfont.0
+./usr/share/man/cat1/i386/mcon.0
+./usr/share/man/cat1/i386/scon.0
+./usr/share/man/cat1/i386/vt220keys.0
+./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/x68k/bellctrl.0
 ./usr/share/man/cat1/x68k/loadfont.0
 ./usr/share/man/cat1/x68k/loadkmap.0
 ./usr/share/man/cat1/x68k/palette.0
 ./usr/share/man/cat1/x68k/tvctrl.0
+./usr/share/man/cat3/i386/keycap.0
 ./usr/share/man/cat4/amiga/afsc.0
 ./usr/share/man/cat4/amiga/ahsc.0
 ./usr/share/man/cat4/amiga/atzsc.0
@@ -86,6 +96,7 @@
 ./usr/share/man/cat4/i386/mem.0
 ./usr/share/man/cat4/i386/mms.0
 ./usr/share/man/cat4/i386/npx.0
+./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/wd.0
@@ -181,6 +192,7 @@
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat4/x68k/pow.0
+./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/installboot_cd9660.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
@@ -205,7 +217,10 @@
 ./usr/share/man/cat8/i386/MAKEDEV.0
 ./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/installboot.0
+./usr/share/man/cat8/i386/ispcvt.0
+./usr/share/man/cat8/i386/kbdio.0
 ./usr/share/man/cat8/i386/makedev.0
+./usr/share/man/cat8/i386/vgaio.0
 ./usr/share/man/cat8/mac68k/boot.0
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/pmax/boot.0
