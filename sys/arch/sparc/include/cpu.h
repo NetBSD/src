@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2003/11/08 15:19:20 tsutsui Exp $ */
+/*	$NetBSD: cpu.h,v 1.66 2004/01/04 11:33:31 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,6 @@
 
 #define	cpu_swapin(p)		/* nothing */
 #define	cpu_swapout(p)		/* nothing */
-#define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 

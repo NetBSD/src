@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2004/01/04 11:33:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,14 +227,18 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
-	(void) splsched();
-	uvmexp.swtch++;
 
 	/* Flush the LWP out of the FPU. */
 	hppa_fpu_flush(l);
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+}
+
+void
+cpu_exit(struct lwp *l)
+{
+	(void) splsched();
+	switch_exit(l, lwp_exit2);
 }
 
 /*

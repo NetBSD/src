@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2003/11/21 18:07:29 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2004/01/04 11:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -268,7 +268,6 @@ mfpvr(void)
 #define	LWP_PC(l)		(trapframe(l)->srr0)
 
 #define	cpu_swapout(p)
-#define cpu_wait(p)
 #define	cpu_proc_fork(p1, p2)
 
 extern int powersave;

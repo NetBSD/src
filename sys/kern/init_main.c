@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.229 2004/01/01 00:00:05 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.230 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.229 2004/01/01 00:00:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.230 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -568,10 +568,6 @@ main(void)
 	uvm_swap_init();
 	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
-
-	/* Create the process reaper kernel thread. */
-	if (kthread_create1(reaper, NULL, NULL, "reaper"))
-		panic("fork reaper");
 
 	/* Create the filesystem syncer kernel thread. */
 	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
