@@ -1,3 +1,5 @@
+/*	$NetBSD: idprom.h,v 1.3 1994/11/20 20:53:09 deraadt Exp $ */
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: idprom.h,v 1.2 1994/08/20 01:20:28 deraadt Exp $
  */
 
 /*

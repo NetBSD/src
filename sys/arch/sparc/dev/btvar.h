@@ -1,6 +1,8 @@
+/*	$NetBSD: btvar.h,v 1.2 1994/11/20 20:51:56 deraadt Exp $ */
+
 /*
- * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * from: Header: btvar.h,v 1.1 93/10/12 15:29:01 torek Exp 
- * $Id: btvar.h,v 1.1 1993/11/11 03:36:51 deraadt Exp $
+ *	@(#)btvar.h	8.2 (Berkeley) 1/21/94
  */
 
 /*

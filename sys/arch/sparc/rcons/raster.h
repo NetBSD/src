@@ -1,3 +1,5 @@
+/*	$NetBSD: raster.h,v 1.2 1994/11/20 20:53:44 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,9 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)raster.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: raster.h,v 1.14 92/06/17 08:14:43 torek Exp 
- * $Id: raster.h,v 1.1 1993/10/02 10:23:37 deraadt Exp $
  */
 
 /*

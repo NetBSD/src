@@ -1,5 +1,6 @@
-# from:	@(#)std.sparc	8.1 (Berkeley) 6/11/93
-# $Id: std.sparc,v 1.4 1994/10/15 06:01:23 deraadt Exp $
+#	$NetBSD: std.sparc,v 1.5 1994/11/20 20:51:47 deraadt Exp $
+
+# @(#)std.sparc	8.1 (Berkeley) 6/11/93
 # standard SPARCstation information.
 
 machine	sparc

@@ -1,3 +1,5 @@
+/*	$NetBSD: memreg.c,v 1.5 1994/11/20 20:54:32 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: memreg.c,v 1.7 92/11/26 03:05:04 torek Exp  (LBL)
- * $Id: memreg.c,v 1.4 1994/10/15 05:51:23 deraadt Exp $
  */
 
 #include <sys/param.h>

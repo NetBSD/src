@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.3 1994/11/20 20:53:55 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)asm.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: asm.h,v 1.5 92/11/26 03:04:42 torek Exp 
- * $Id: asm.h,v 1.2 1994/08/12 09:52:40 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: cache.h,v 1.2 1994/11/20 20:54:04 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)cache.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: cache.h,v 1.7 93/04/27 14:31:16 torek Exp 
- * $Id: cache.h,v 1.1 1993/10/02 10:24:06 deraadt Exp $
  */
 
 /*

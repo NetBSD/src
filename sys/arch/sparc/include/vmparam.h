@@ -1,3 +1,5 @@
+/*	$NetBSD: vmparam.h,v 1.5 1994/11/20 20:53:38 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: vmparam.h,v 1.8 93/05/25 09:52:16 torek Exp 
- * $Id: vmparam.h,v 1.4 1994/10/02 22:00:35 deraadt Exp $
  */
 
 /*

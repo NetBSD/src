@@ -1,3 +1,5 @@
+/*	$NetBSD: auxreg.c,v 1.5 1994/11/20 20:53:58 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)auxreg.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: auxreg.c,v 1.11 92/11/26 03:04:44 torek Exp  (LBL)
- * $Id: auxreg.c,v 1.4 1994/10/15 05:52:09 deraadt Exp $
  */
 
 #include <sys/param.h>

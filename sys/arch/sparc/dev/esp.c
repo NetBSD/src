@@ -1,3 +1,5 @@
+/*	$NetBSD: esp.c,v 1.12 1994/11/20 20:52:09 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Peter Galbavy
  * All rights reserved.
@@ -30,8 +32,6 @@
  */
 
 /*
- * $Id: esp.c,v 1.11 1994/11/05 09:35:54 deraadt Exp $
- *
  * Based on aic6360 by Jarle Greipsland
  *
  * Acknowledgements: Many of the algorithms used in this driver are

@@ -1,3 +1,5 @@
+/*	$NetBSD: kgdb_proto.h,v 1.2 1994/11/20 20:54:21 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: kgdb_proto.h,v 1.5 92/11/26 03:04:54 torek Exp  (LBL)
- * $Id: kgdb_proto.h,v 1.1 1993/10/02 10:24:15 deraadt Exp $
  */
 
 /*

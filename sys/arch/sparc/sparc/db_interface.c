@@ -1,3 +1,5 @@
+/*	$NetBSD: db_interface.c,v 1.2 1994/11/20 20:54:12 deraadt Exp $ */
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -24,7 +26,6 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.1 1994/03/24 08:44:23 pk Exp $
  */
 
 /*
@@ -133,7 +134,7 @@ db_write_bytes(addr, size, data)
 int
 Debugger()
 {
-	asm ("ta 0x81");
+	asm("ta 0x81");
 }
 
 void
@@ -153,4 +154,3 @@ db_machine_init()
 {
 	db_machine_commands_install(sparc_db_command_table);
 }
-

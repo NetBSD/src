@@ -1,5 +1,5 @@
-# $Id: SS5,v 1.5 1994/08/12 01:16:29 deraadt Exp $
-# 
+#	$NetBSD: SS5,v 1.6 1994/11/20 20:51:39 deraadt Exp $
+
 # Kernel for Theo's (mythical) SS5. NOTE: NetBSD 1.0 DOES NOT SUPPORT
 # sun4m MACHINES -- THIS IS UNDER DEVELOPMENT AND INCOMPLETE
 

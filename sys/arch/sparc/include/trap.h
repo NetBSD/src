@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.h,v 1.4 1994/11/20 20:53:35 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: trap.h,v 1.9 92/11/26 02:04:47 torek Exp 
- * $Id: trap.h,v 1.3 1994/03/22 08:08:44 deraadt Exp $
  */
 
 #ifndef	_MACHINE_TRAP_H

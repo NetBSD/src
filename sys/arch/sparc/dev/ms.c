@@ -1,3 +1,5 @@
+/*	$NetBSD: ms.c,v 1.4 1994/11/20 20:52:24 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- * $Id: ms.c,v 1.3 1994/11/02 04:56:07 deraadt Exp $
  */
 
 /*

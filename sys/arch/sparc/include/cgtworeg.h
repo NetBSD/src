@@ -1,3 +1,5 @@
+/*	$NetBSD: cgtworeg.h,v 1.2 1994/11/20 20:52:56 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Dennis Ferguson
  * All rights reserved.
@@ -21,8 +23,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: cgtworeg.h,v 1.1 1994/08/14 00:13:20 deraadt Exp $
  */
 
 /* cgtworeg.h - CG2 colour frame buffer definitions

@@ -1,6 +1,8 @@
+/*	$NetBSD: cgsix.c,v 1.10 1994/11/20 20:51:59 deraadt Exp $ */
+
 /*
- * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.9 1994/11/02 04:55:51 deraadt Exp $
+ *	@(#)cgsix.c	8.4 (Berkeley) 1/21/94
  */
 
 /*

@@ -40,9 +40,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)bsd_audiointr.s	8.1 (Berkeley) 6/11/93
- *
- * from: Header: bsd_audiointr.s,v 1.6 93/04/20 21:15:08 torek Exp  (LBL)
- * $Id: bsd_audiointr.s,v 1.1 1993/10/02 10:24:04 deraadt Exp $
  */
 
 #ifndef AUDIO_C_HANDLER

@@ -1,3 +1,5 @@
+/*	$NetBSD: zsvar.h,v 1.3 1994/11/20 20:52:31 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: zsvar.h,v 1.7 92/11/26 01:28:04 torek Exp  (LBL)
- * $Id: zsvar.h,v 1.2 1994/08/20 09:11:08 deraadt Exp $
  */
 
 /*

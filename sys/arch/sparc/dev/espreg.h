@@ -1,3 +1,5 @@
+/*	$NetBSD: espreg.h,v 1.4 1994/11/20 20:52:11 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -24,8 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: espreg.h,v 1.3 1994/09/17 23:48:38 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: boot.c,v 1.6 1994/11/20 20:54:52 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
- *
- * $Id: boot.c,v 1.5 1994/07/30 14:22:11 pk Exp $
+ * 	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

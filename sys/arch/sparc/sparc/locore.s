@@ -40,9 +40,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
- *
- * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.22 1994/11/14 04:16:15 deraadt Exp $
  */
 
 #define	LOCORE

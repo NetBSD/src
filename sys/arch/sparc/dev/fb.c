@@ -1,3 +1,5 @@
+/*	$NetBSD: fb.c,v 1.4 1994/11/20 20:52:16 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fb.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: fb.c,v 1.7 92/11/26 01:12:48 torek Exp 
- * $Id: fb.c,v 1.3 1994/11/02 04:55:56 deraadt Exp $
  */
 
 /*
@@ -86,7 +85,7 @@ fbopen(dev, flags, mode, p)
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p));
+	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p, NULL));
 }
 
 int

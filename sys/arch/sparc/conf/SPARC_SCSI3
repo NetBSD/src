@@ -1,5 +1,6 @@
+# 	$NetBSD: SPARC_SCSI3,v 1.4 1994/11/20 20:51:38 deraadt Exp $
+
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC_SCSI3,v 1.3 1994/08/20 09:08:35 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"

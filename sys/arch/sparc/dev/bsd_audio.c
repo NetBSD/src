@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audio.c,v 1.6 1994/11/20 20:51:52 deraadt Exp $ */
+
 /*
  * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)bsd_audio.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: bsd_audio.c,v 1.18 93/04/24 16:20:35 leres Exp  (LBL)
- * $Id: bsd_audio.c,v 1.5 1994/11/02 04:55:47 deraadt Exp $
  */
 #include "bsdaudio.h"
 #if NBSDAUDIO > 0

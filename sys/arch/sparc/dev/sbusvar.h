@@ -1,3 +1,5 @@
+/*	$NetBSD: sbusvar.h,v 1.2 1994/11/20 20:52:27 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)sbusvar.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: sbusvar.h,v 1.6 92/11/26 02:28:14 torek Exp  (LBL)
- * $Id: sbusvar.h,v 1.1 1993/10/02 10:23:57 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: vm_machdep.c,v 1.9 1994/11/20 20:54:46 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.8 1994/09/27 01:34:01 deraadt Exp $
+ *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
 
 #include <sys/param.h>

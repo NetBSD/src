@@ -1,3 +1,5 @@
+/*	$NetBSD: profile.h,v 1.2 1994/11/20 20:53:24 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: profile.h,v 1.8 92/11/26 02:04:41 torek Exp 
- * $Id: profile.h,v 1.1 1993/10/02 10:23:21 deraadt Exp $
  */
 
 #define MCOUNT \

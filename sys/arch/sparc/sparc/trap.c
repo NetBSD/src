@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.24 1994/11/20 20:54:43 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trap.c	8.1 (Berkeley) 6/16/93
- *
- * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.23 1994/10/26 07:13:56 deraadt Exp $
+ *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
 
 #include <sys/param.h>

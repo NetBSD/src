@@ -1,3 +1,5 @@
+/*	$NetBSD: db_trace.c,v 1.2 1994/11/20 20:54:13 deraadt Exp $ */
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -22,9 +24,8 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: db_trace.c,v 1.1 1994/03/24 08:44:24 pk Exp $
  */
+
 #include "param.h"
 #include "proc.h"
 #include <machine/db_machdep.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: intr.c,v 1.6 1994/11/20 20:54:19 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
- *
- * from: Header: intr.c,v 1.22 93/09/26 19:48:06 torek Exp (LBL)
- * $Id: intr.c,v 1.5 1994/05/19 07:12:52 deraadt Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: openprom.c,v 1.4 1994/11/20 20:54:34 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: openprom.c,v 1.3 93/04/27 08:56:09 torek Exp 
- * $Id: openprom.c,v 1.3 1994/11/02 04:57:53 deraadt Exp $
  */
 
 #include <sys/param.h>

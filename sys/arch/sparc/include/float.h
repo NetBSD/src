@@ -1,3 +1,5 @@
+/*	$NetBSD: float.h,v 1.2 1994/11/20 20:53:06 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)float.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: float.h,v 1.3 92/11/26 02:04:35 torek Exp 
- * $Id: float.h,v 1.1 1993/10/02 10:23:10 deraadt Exp $
  */
 
 #define FLT_RADIX	2		/* b */

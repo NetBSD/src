@@ -1,3 +1,5 @@
+/*	$NetBSD: rcons_font.c,v 1.3 1994/11/20 20:53:49 deraadt Exp $ */
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: rcons_font.c,v 1.10 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_font.c,v 1.2 1993/11/29 06:14:55 deraadt Exp $
  */
 
 #ifdef KERNEL

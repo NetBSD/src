@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.7 1994/11/20 20:53:26 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: pte.h,v 1.5 92/11/26 02:04:43 torek Exp 
- * $Id: pte.h,v 1.6 1994/11/03 04:29:53 deraadt Exp $
  */
 
 /*

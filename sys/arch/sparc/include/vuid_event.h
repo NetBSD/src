@@ -1,3 +1,5 @@
+/*	$NetBSD: vuid_event.h,v 1.2 1994/11/20 20:53:39 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: vuid_event.h,v 1.4 92/11/26 01:20:27 torek Exp  (LBL)
- * $Id: vuid_event.h,v 1.1 1994/07/21 22:06:20 deraadt Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: stdarg.h,v 1.5 1994/11/20 20:53:33 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdarg.h	8.2 (Berkeley) 9/27/93
- *		from: Header: stdarg.h,v 1.9 93/09/27 21:12:38 torek Exp
- *
- *	$Id: stdarg.h,v 1.4 1994/10/15 04:58:07 cgd Exp $
  */
 
 /*

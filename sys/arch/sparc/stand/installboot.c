@@ -1,3 +1,5 @@
+/*	$NetBSD: installboot.c,v 1.3 1994/11/20 20:54:58 deraadt Exp $ */
+
 /*
  * Copyright (c) 1994 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: installboot.c,v 1.2 1994/08/13 08:33:08 pk Exp $
  */
 
 #include <sys/param.h>

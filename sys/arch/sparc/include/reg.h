@@ -1,3 +1,5 @@
+/*	$NetBSD: reg.h,v 1.4 1994/11/20 20:53:28 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)reg.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: reg.h,v 1.8 92/11/26 02:04:44 torek Exp 
- * $Id: reg.h,v 1.3 1994/02/11 16:51:35 pk Exp $
  */
 
 #ifndef _MACHINE_REG_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: rcons_kern.c,v 1.6 1994/11/20 20:53:51 deraadt Exp $ */
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: rcons_kern.c,v 1.28 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_kern.c,v 1.5 1994/07/21 22:06:27 deraadt Exp $
  */
 
 #include <sys/param.h>
