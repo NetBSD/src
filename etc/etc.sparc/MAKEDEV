@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.64 2001/12/19 18:30:11 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.65 2002/01/01 07:55:26 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -87,6 +87,8 @@
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
 #	pci*	PCI bus access devices
+#	magma*  Magma multiport serial/parallel cards
+#	clcd*   CL18xx-based multiport serial cards
 
 dialin=0
 dialout=524288		# high bit of the minor number
@@ -457,6 +459,24 @@ magma*)
 
 	mknod bpp${unit}0 c 101 $(($unit * 64 + 0))
 	mknod bpp${unit}1 c 101 $(($unit * 64 + 1))
+	;;
+
+clcd*)
+	unit=${i#clcd}
+	if [ 0$unit -gt 7 ]
+	then
+		echo "bad unit for $i: $unit"
+		break
+	fi
+
+	rm -f ttyA$unit[0-7] dtyA$unit[0-7]
+	for j in 0 1 2 3 4 5 6 7
+	do
+		mknod ttyA$unit$j c 124 $(($unit * 8 + $j + $dialin))
+		mknod dtyA$unit$j c 124 $(($unit * 8 + $j + $dialout))
+	done
+	chown uucp.wheel ttyA$unit[0-9a-f] dtyA$unit[0-9a-f]
+
 	;;
 
 scsibus*)
