@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.26 2001/09/15 16:13:05 chs Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.27 2001/12/18 07:51:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -224,9 +224,12 @@ int lfs_inactive(void *);
 int lfs_reclaim	(void *);
 int lfs_write	(void *);
 int lfs_whiteout(void *);
+int lfs_getpages(void *);
+int lfs_putpages(void *);
 
 __END_DECLS
 extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p)(void *);
 extern int (**lfs_specop_p)(void *);
 extern int (**lfs_fifoop_p)(void *);
+extern struct genfs_ops lfs_genfsops;

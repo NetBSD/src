@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.62 2001/11/23 21:44:28 chs Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.63 2001/12/18 07:51:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.62 2001/11/23 21:44:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.63 2001/12/18 07:51:17 chs Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -1222,6 +1222,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &lfs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
