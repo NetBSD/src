@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/08/27 01:55:16 tv Exp $
+#	$NetBSD: Makefile,v 1.16 1998/09/13 03:50:32 mrg Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -6,7 +6,8 @@
 PROG=	ld.elf_so
 .endif
 
-.if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "sparc")
+.if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") || \
+    (${MACHINE} == "sparc64")
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
 .if exists(${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysident.h,v 1.1 1997/03/21 05:39:43 cgd Exp $	*/
+/*	$NetBSD: sysident.h,v 1.2 1998/09/13 03:50:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,22 +30,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Here we define the NetBSD OS Version and emulation name in two
+ * NetBSD ELF .note sections, which are structured like:
+ *	long		name size
+ *	long		description size
+ *	long		OS type
+ *	string		OS name
+ *	string		OS description
+ * these are (not yet!) used by the kernel to determine if this binary
+ * is really a NetBSD binary, or some other OS's.  Note we pad the
+ * strings as necessary.
+ */
+
 #define	__S(x)	__STRING(x)
 __asm("
 	.section \".note.netbsd.ident\", \"a\"
 	.p2align 2
 
-	# NetBSD note: OS version
-	.long	7				# name size
-	.long	4				# desc size
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_OSVERSION) " # type
-	.ascii \"NetBSD\\0\\0\"			# name (padded to % 4 == 0)
-	.long	" __S(NetBSD) "			# desc (padded to % 4 == 0)
+	.long	7
+	.long	4
+	.long	" __S(ELF_NOTE_NETBSD_TYPE_OSVERSION) "
+	.ascii \"NetBSD\\0\\0\"	
+	.long	" __S(NetBSD) "
 
-	# NetBSD note: emulation name
-	.long	7				# name size
-	.long	7				# desc size
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_EMULNAME) " # type
-	.ascii	\"NetBSD\\0\\0\"		# name (padded to % 4 == 0)
-	.ascii	\"netbsd\\0\\0\"		# desc (padded to % 4 == 0)
+	.long	7
+	.long	7
+	.long	" __S(ELF_NOTE_NETBSD_TYPE_EMULNAME) "
+	.ascii	\"NetBSD\\0\\0\"
+	.ascii	\"netbsd\\0\\0\"
 ");
