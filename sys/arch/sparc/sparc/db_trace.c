@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 1999/04/12 20:38:20 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.13 1999/07/04 06:45:26 chs Exp $ */
 
 /*
  * Mach Operating System
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -46,12 +47,14 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 {
 	struct frame	*frame;
 	boolean_t	kernel_only = TRUE;
+	boolean_t	trace_thread = FALSE;
+	char		c, *cp = modif;
 
-	{
-		register char c, *cp = modif;
-		while ((c = *cp++) != 0)
-			if (c == 'u')
-				kernel_only = FALSE;
+	while ((c = *cp++) != 0) {
+		if (c == 't')
+			trace_thread = TRUE;
+		if (c == 'u')
+			kernel_only = FALSE;
 	}
 
 	if (count == -1)
@@ -59,8 +62,27 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 	if (!have_addr)
 		frame = (struct frame *)DDB_TF->tf_out[6];
-	else
-		frame = (struct frame *)addr;
+	else {
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			db_printf ("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				db_printf("not found\n");
+				return;
+			}	
+			if ((p->p_flag & P_INMEM) == 0) {
+				db_printf("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (struct frame *)u->u_pcb.pcb_sp;
+			db_printf("at %p\n", frame);
+		} else {
+			frame = (struct frame *)addr;
+		}
+	}
 
 	while (count--) {
 		int		i;
