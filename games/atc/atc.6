@@ -1,4 +1,4 @@
-.\"	$NetBSD: atc.6,v 1.13 2002/09/26 16:12:39 wiz Exp $
+.\"	$NetBSD: atc.6,v 1.14 2002/09/26 16:33:53 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ Suspending a game is not permitted.
 If you get a talk message, tough.
 When was the last time an Air Traffic Controller got called away to
 the phone?
-.Sh "THE DISPLAY"
+.Sh THE DISPLAY
 .Pp
 Depending on the terminal you run
 .Nm
@@ -167,7 +167,7 @@ For a plane to successfully depart through an entry/exit point,
 it must be flying at 9000 feet.
 It is not necessary for the planes to be flying in any particular
 direction when they leave the arena (yet).
-.Ss "INFORMATION AREA"
+.Ss INFORMATION AREA
 The second area of the display is the information area, which lists
 the time (number of updates since start), and the number of planes you
 have directed safely out of the arena.
@@ -192,11 +192,11 @@ The next command it expects to do is circle when it reaches Beacon #1.
 The second example shows a jet named `g' at 7000 feet, destined for
 Exit #4.
 It is just now executing a turn to 225 degrees (South-West).
-.Ss "INPUT AREA"
+.Ss INPUT AREA
 The third area of the display is the input area.
 It is here that your input is reflected.
 See the INPUT heading of this manual for more details.
-.Ss "AUTHOR AREA"
+.Ss AUTHOR AREA
 This area is used simply to give credit where credit is due. :-)
 .Sh INPUT
 A command completion interface is built into the game.
@@ -237,7 +237,7 @@ All commands start with a plane letter.
 This indicates the recipient
 of the command.
 Case is ignored.
-.Ss "IMMEDIATE ONLY COMMANDS"
+.Ss IMMEDIATE ONLY COMMANDS
 .Bl -tag -width "aaaa"
 .It "a [ cd+- ]" Em number
 Altitude: Change a plane's altitude, possibly requesting takeoff.
@@ -265,7 +265,7 @@ This is useful if you want
 to forget about a plane during part, but not all, of its
 journey.
 .El
-.Ss "DELAYABLE COMMANDS"
+.Ss DELAYABLE COMMANDS
 .Bl -tag -width "aaaa"
 .It "c [ lr ]"
 Circle: Have the plane circle.
@@ -329,7 +329,7 @@ beacon.
 The `b' for ``beacon'' is redundant to allow for expansion.
 `@' can be used instead of `a'.
 .El
-.Ss "MARKING, UNMARKING AND IGNORING"
+.Ss MARKING, UNMARKING AND IGNORING
 Planes are
 .Em marked
 by default when they enter the arena.
@@ -375,7 +375,7 @@ Plane S: turn to 315
 .It xi
 Plane X: ignore
 .El
-.Sh "OTHER INFORMATION"
+.Sh OTHER INFORMATION
 .Bl -bullet
 .It
 Jets move every update; prop planes move every other update.
@@ -388,7 +388,7 @@ Planes flying at an altitude of 0 crash if they are not over an airport.
 .It
 Planes waiting at airports can only be told to take off (climb in altitude).
 .El
-.Sh "NEW GAMES"
+.Sh NEW GAMES
 The
 .Pa Game_List
 file lists the currently available play fields.
@@ -456,7 +456,7 @@ Line endpoints may be anywhere within the field, so long as
 the lines are horizontal, vertical or
 .Em exactly
 diagonal.
-.Ss "FIELD FILE EXAMPLE"
+.Ss FIELD FILE EXAMPLE
 .Bd -literal -unfilled
 # This is the default game.
 
