@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.19 2000/06/04 18:29:13 mycroft Exp $	*/
+/*	$NetBSD: pigs.c,v 1.20 2000/07/05 11:03:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.19 2000/06/04 18:29:13 mycroft Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.20 2000/07/05 11:03:23 ad Exp $");
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: pigs.c,v 1.19 2000/06/04 18:29:13 mycroft Exp $");
 #include "systat.h"
 #include "ps.h"
 
-int compare_pctcpu __P((const void *, const void *));
+int compare_pctcpu(const void *, const void *);
 
 int nproc;
 struct p_times *pt;
@@ -79,15 +79,14 @@ double  lccpu;
 #endif
 
 WINDOW *
-openpigs()
+openpigs(void)
 {
 
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closepigs(w)
-	WINDOW *w;
+closepigs(WINDOW *w)
 {
 
 	if (w == NULL)
@@ -99,7 +98,7 @@ closepigs(w)
 
 
 void
-showpigs()
+showpigs(void)
 {
 	int i, y, k;
 	struct	eproc *ep;
@@ -161,7 +160,7 @@ static struct nlist namelist[] = {
 };
 
 int
-initpigs()
+initpigs(void)
 {
 	fixpt_t ccpu;
 
@@ -185,7 +184,7 @@ initpigs()
 }
 
 void
-fetchpigs()
+fetchpigs(void)
 {
 	int i;
 	float time;
@@ -244,7 +243,7 @@ fetchpigs()
 }
 
 void
-labelpigs()
+labelpigs(void)
 {
 	wmove(wnd, 0, 0);
 	wclrtoeol(wnd);
@@ -252,8 +251,7 @@ labelpigs()
 }
 
 int
-compare_pctcpu(a, b)
-	const void *a, *b;
+compare_pctcpu(const void *a, const void *b)
 {
 	return (((struct p_times *) a)->pt_pctcpu >
 		((struct p_times *) b)->pt_pctcpu)? -1: 1;

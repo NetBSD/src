@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp.c,v 1.6 2000/06/13 13:37:13 ad Exp $	*/
+/*	$NetBSD: tcp.c,v 1.7 2000/07/05 11:03:23 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.6 2000/06/13 13:37:13 ad Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.7 2000/07/05 11:03:23 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,9 +58,19 @@ __RCSID("$NetBSD: tcp.c,v 1.6 2000/06/13 13:37:13 ad Exp $");
 
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str)
-#define SHOW(row, col, stat)	mvwprintw(wnd, row, col, "%9llu", (unsigned long long) curstat.stat)
+#define SHOW(row, col, stat) \
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
 
-static struct tcpstat curstat, oldstat;
+enum update {
+	UPDATE_TIME,
+	UPDATE_BOOT,
+	UPDATE_RUN,
+};
+
+static enum update update = UPDATE_TIME;
+static struct tcpstat curstat;
+static struct tcpstat newstat;
+static struct tcpstat oldstat;
 
 static struct nlist namelist[] = {
 	{ "_tcpstat" },
@@ -75,8 +85,7 @@ opentcp(void)
 }
 
 void
-closetcp(w)
-	WINDOW *w;
+closetcp(WINDOW *w)
 {
 
 	if (w != NULL) {
@@ -231,6 +240,77 @@ void
 fetchtcp(void)
 {
 
-	oldstat = curstat;
-	KREAD((void *)namelist[0].n_value, &curstat, sizeof(curstat));
+	KREAD((void *)namelist[0].n_value, &newstat, sizeof(newstat));
+
+	ADJINETCTR(curstat, oldstat, newstat, tcps_connattempt);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_accepts);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_connects);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_drops);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_conndrops);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_timeoutdrop);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_keepdrops);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_persistdrops);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_segstimed);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rttupdated);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_delack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rexmttimeo);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_persisttimeo);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_keepprobe);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_keeptimeo);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndtotal);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndpack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndrexmitpack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndacks);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndprobe);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndwinup);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndurg);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_sndctrl);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvtotal);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvpack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvduppack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvpartduppack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvoopack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvdupack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvackpack);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvwinprobe);
+	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvwinupd);
+
+	if (update == UPDATE_TIME)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+}
+
+void
+tcp_boot(char *args)
+{
+
+	memset(&oldstat, 0, sizeof(oldstat));
+	update = UPDATE_BOOT;
+}
+
+void
+tcp_run(char *args)
+{
+
+	if (update != UPDATE_RUN) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_RUN;
+	}
+}
+
+void
+tcp_time(char *args)
+{
+
+	if (update != UPDATE_TIME) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_TIME;
+	}
+}
+
+void
+tcp_zero(char *args)
+{
+
+	if (update == UPDATE_RUN)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
 }
