@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.4 2003/04/03 15:37:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.4 2003/04/03 15:37:55 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -361,7 +361,7 @@ iso_mountfs(devvp, mp, p, argp)
 		if (error)
 			sess = 0;	/* never mind */
 	}
-#ifdef DEBUG
+#ifdef ISO_DEBUG
 	printf("isofs: session offset (part %d) %d\n", DISKPART(dev), sess);
 #endif
 
