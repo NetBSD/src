@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2003/07/07 12:30:20 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2003/07/09 20:02:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,6 +151,9 @@ main(int argc, char **argv)
 	/* redraw screen */
 	touchwin(stdscr);
 	refresh();
+
+	/* Ensure we have mountpoint for target filesystems */
+	mkdir(targetroot_mnt, S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 
 	select_language();
 
