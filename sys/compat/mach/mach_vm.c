@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.44 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.45 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.44 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.45 2003/12/18 01:10:20 grant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ mach_vm_allocate(args)
 #endif
 
 	/* 
-	 * Avoid mappings at address zero: it should 
+	 * Avoid mappings at address zero: it should
 	 * be a "red zone" with nothing mapped on it.
 	 */
 	if (addr == 0) {
@@ -263,8 +263,8 @@ mach_vm_deallocate(args)
 }
 
 /*
- * XXX This server message Id clashes with bootstrap_look_up
- * Is there a wway to resolve this easily?
+ * XXX This server message Id clashes with bootstrap_look_up.
+ * Is there a way to resolve this easily?
  */
 #if 0
 int
@@ -289,7 +289,7 @@ mach_vm_wire(args)
 		return mach_msg_error(args, EINVAL);
 
 	/* 
-	 * Mach maitains a count of how many times a page is wired
+	 * Mach maintains a count of how many times a page is wired
 	 * and unwire it once the count is zero. We cannot do that yet.
 	 */
 	if (req->req_access == 0) {
@@ -551,7 +551,7 @@ mach_vm_region(args)
 		return mach_msg_error(args, EINVAL);
 
 	/* 
-	 * MACH_VM_REGION_BASIC_INFO is the only 
+	 * MACH_VM_REGION_BASIC_INFO is the only
 	 * supported flavor in Darwin.
 	 */
 	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO) 
@@ -758,7 +758,7 @@ mach_vm_read(args)
 
 	/* 
 	 * Copy the data from the target process to the current process
-	 * This is reasonnable for small chunk of data, but we should 
+	 * This is reasonable for small chunk of data, but we should
 	 * remap COW for areas bigger than a page.
 	 */
 	buf = malloc(size, M_EMULDATA, M_WAITOK);
@@ -815,7 +815,7 @@ mach_vm_write(args)
 
 	/* 
 	 * Copy the data from the current process to the target process
-	 * This is reasonnable for small chunk of data, but we should 
+	 * This is reasonable for small chunk of data, but we should
 	 * remap COW for areas bigger than a page.
 	 */
 	size = req->req_data.size;

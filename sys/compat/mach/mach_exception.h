@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.1 2003/12/09 12:13:44 manu Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.2 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
 #define MACH_EXC_MASK_RPC_ALERT		(1 << MACH_EXC_RPC_ALERT)
 
 /* 
- * Exceptions codes. Values < 0x10000 are machine dependent, and
- * are defined in sys/<arch>/include/mach_machdep.h
+ * Exception codes. Values < 0x10000 are machine dependent, and
+ * are defined in sys/<arch>/include/mach_machdep.h.
  */
 #define MACH_EXC_UNIX_BAD_SYSCALL	0x10000	/* unused ? */
 #define MACH_EXC_UNIX_BAD_PIPE		0x10001	/* unused ? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.46 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.47 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.46 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.47 2003/12/18 01:10:20 grant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -861,7 +861,7 @@ mach_right_put_exclocked(mr, right)
 }
 
 /* 
- * Check that a process do have a given right
+ * Check that a process has a given right.
  */
 struct mach_right *
 mach_right_check(mn, l, type)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.29 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.30 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.29 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.30 2003/12/18 01:10:20 grant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ mach_sys_syscall_thread_switch(l, v, retval)
 	timeout = SCARG(uap, option_time) * hz / 1000;
 
 	/*
-	 * The day we will be able to find out the struct proc from 
+	 * The day we will be able to find out the struct proc from
 	 * the port number, try to use preempt() to call the right thread.
 	 * [- but preempt() is for _involuntary_ context switches.]
 	 */
@@ -125,8 +125,8 @@ mach_sys_swtch_pri(l, v, retval)
 	int s;
 
 	/* 
-	 * Copied from preempt(9). We cannot just call preempt 
-	 * because we want  to return mi_switch(9) return value.
+	 * Copied from preempt(9). We cannot just call preempt
+	 * because we want to return mi_switch(9) return value.
 	 */
 	SCHED_LOCK(s);
 	l->l_priority = l->l_usrpri;
@@ -207,7 +207,7 @@ mach_thread_create_running(args)
 		return mach_msg_error(args, EINVAL);
 
 	/* 
-	 * Prepare the data we want to transmit to the child
+	 * Prepare the data we want to transmit to the child.
 	 */
 	mctc.mctc_flavor = req->req_flavor;
 	mctc.mctc_oldlwp = l;
@@ -224,7 +224,7 @@ mach_thread_create_running(args)
 		return mach_msg_error(args, error);
 		
 	/*
-	 * Make the child runnable
+	 * Make the child runnable.
 	 */
 	SCHED_LOCK(s);
 	mctc.mctc_lwp->l_private = 0;
@@ -237,7 +237,7 @@ mach_thread_create_running(args)
 
 	/* 
 	 * The child relies on some values in mctc, so we should not
-	 * exit until it is finished with it. We catch signals so that 
+	 * exit until it is finished with it. We catch signals so that
 	 * the process can be killed with kill -9, but we loop to avoid
 	 * spurious wakeups due to other signals.
 	 */

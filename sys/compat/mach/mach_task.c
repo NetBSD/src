@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.49 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.50 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.49 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.50 2003/12/18 01:10:20 grant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,8 +140,8 @@ mach_ports_lookup(args)
 	int count;
 
 	/* 
-	 * This is some out of band data sent with the reply. In the 
-	 * encountered situation the out of band data has always been null
+	 * This is some out of band data sent with the reply. In the
+	 * encountered situation, the out of band data has always been null
 	 * filled. We have to see more of this in order to fully understand
 	 * how this trap works.
 	 */
@@ -233,7 +233,7 @@ mach_task_set_special_port(args)
 			mach_port_put(mp);
 #ifdef COMPAT_DARWIN
 		/*
-		 * mach_init sets the bootstrap port for any new process
+		 * mach_init sets the bootstrap port for any new process.
 		 */
 		{
 			struct darwin_emuldata *ded;
@@ -328,7 +328,7 @@ mach_task_get_exception_ports(args)
 
 	med = tl->l_proc->p_emuldata;
 
-	/* It always return an array of 32 ports even if only 9 can be used */
+	/* It always returns an array of 32 ports even if only 9 can be used */
 	count = sizeof(rep->rep_old_handler) / sizeof(rep->rep_old_handler[0]);
 
 	mach_set_header(rep, req, *msglen);
@@ -657,8 +657,8 @@ mach_sys_task_for_pid(l, v, retval)
 	/* 
 	 * target_tport is used because the task may be on
 	 * a different host. (target_tport, pid) is unique.
-	 * We don't support multiple-host configuration 
-	 * yet, so this parameter should be useless. 
+	 * We don't support multiple-host configuration
+	 * yet, so this parameter should be useless.
 	 * However, we still validate it.
 	 */
 	if ((mr = mach_right_check(SCARG(uap, target_tport), 

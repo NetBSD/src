@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.44 2003/12/06 17:04:50 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.45 2003/12/18 01:10:20 grant Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.44 2003/12/06 17:04:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.45 2003/12/18 01:10:20 grant Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -226,7 +226,7 @@ mach_e_proc_fork1(p, parent, allocate)
 	if (allocate)
 		p->p_emuldata = NULL;
 
-	/* Use parent's vmspace because our vmspace may not be setup yet */
+	/* Use parent's vmspace because our vmspace may not be set up yet */
 	mach_e_proc_init(p, parent->p_vmspace);
 
 	med1 = p->p_emuldata;
@@ -257,13 +257,13 @@ mach_e_proc_init(p, vmspace)
 
 	/* 
 	 * Initialize various things if needed. 
-	 * XXX Not the best place for that. 
+	 * XXX Not the best place for this. 
 	 */
 	if (mach_cold == 1)
 		mach_init();
 
 	/*
-	 * For Darwin binaries, p->p_emuldata is aways allocated:
+	 * For Darwin binaries, p->p_emuldata is always allocated:
 	 * from the previous program if it had the same emulation,
 	 * or from darwin_e_proc_exec(). In the latter situation, 
 	 * everything has been set to zero.
@@ -293,11 +293,11 @@ mach_e_proc_init(p, vmspace)
 		/*
 		 * Do not touch special ports. Some other process (eg: gdb)
 		 * might have grabbed them to control the process, and the
-		 * controler intend to keep in control even after exec().
+		 * controller intend to keep in control even after exec().
 		 */
 	} else {
 		/* 
-		 * p->p_emuldata is uninitialized. Go ahaead and initialize it.
+		 * p->p_emuldata is uninitialized. Go ahead and initialize it.
 		 */
 		LIST_INIT(&med->med_right);
 		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.23 2003/12/09 11:29:01 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.24 2003/12/18 01:10:20 grant Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ struct mach_complex_msg {
 
 struct mach_trap_args {
 	struct lwp *l;	/* Current task (doing the Mach system call) */
-	struct lwp *tl; /* Target task  */
+	struct lwp *tl; /* Target task */
 	void *smsg;	/* Sent message */
 	void *rmsg;	/* Reply message */
 	size_t ssize;	/* Sent message size */
