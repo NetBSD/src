@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.38 2003/07/13 12:36:49 itojun Exp $	*/
+/*	$NetBSD: sem.c,v 1.39 2003/07/15 12:33:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,11 +232,12 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 		a->a_locs = NULL;
 	}
 	if (devclass) {
-		char *classenum = alloca(strlen(name) + 4), *cp;
+		size_t l = strlen(name) + 4;
+		char *classenum = alloca(l), *cp;
 		int errored = 0;
 
-		strcpy(classenum, "DV_");
-		strcat(classenum, name);
+		strlcpy(classenum, "DV_", l);
+		strlcat(classenum, name, l);
 		for (cp = classenum + 3; *cp; cp++) {
 			if (!errored &&
 			    (!isalnum(*cp) ||

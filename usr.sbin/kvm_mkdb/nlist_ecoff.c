@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.8 2001/07/22 13:34:17 wiz Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.9 2003/07/15 12:37:35 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.8 2001/07/22 13:34:17 wiz Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.9 2003/07/15 12:37:35 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,8 +192,8 @@ create_knlist_ecoff(name, db)
 				punt();
 			}
 		}
-		strcpy(symname, "_");
-		strcat(symname, fsymname);
+		strlcpy(symname, "_", symnamesize);
+		strlcat(symname, fsymname, symnamesize);
 
 		key.data = symname;
 		key.size = strlen((char *)key.data);
