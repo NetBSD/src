@@ -1,4 +1,4 @@
-#	$NetBSD: files.osf1,v 1.13 1999/05/01 05:41:56 cgd Exp $
+#	$NetBSD: files.osf1,v 1.14 1999/05/01 05:43:52 cgd Exp $
 #
 # Config file description for machine-independent OSF/1 compat code.
 # Included by ports that need it.
@@ -8,9 +8,16 @@
 
 # XXX COMPAT_OSF1 requires ECOFF
 
+# syscall table-related files
+file	compat/osf1/osf1_syscalls.c	compat_osf1
+file	compat/osf1/osf1_sysent.c	compat_osf1
+
+# OSF/1 <-> NetBSD structure, flag, and value conversion files
 file	compat/osf1/osf1_cvt.c		compat_osf1
 file	compat/osf1/osf1_cvt_errno.c	compat_osf1
 file	compat/osf1/osf1_cvt_signal.c	compat_osf1
+
+# functionality emulation files
 file	compat/osf1/osf1_descrip.c	compat_osf1
 file	compat/osf1/osf1_exec.c		compat_osf1
 file	compat/osf1/osf1_file.c		compat_osf1
@@ -22,6 +29,4 @@ file	compat/osf1/osf1_mount.c	compat_osf1
 file	compat/osf1/osf1_resource.c	compat_osf1
 file	compat/osf1/osf1_signal.c	compat_osf1
 file	compat/osf1/osf1_socket.c	compat_osf1
-file	compat/osf1/osf1_syscalls.c	compat_osf1
-file	compat/osf1/osf1_sysent.c	compat_osf1
 file	compat/osf1/osf1_time.c		compat_osf1
