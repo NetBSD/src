@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.48 2000/06/29 07:40:10 mrg Exp $ */
+/*	$NetBSD: iommu.c,v 1.49 2000/07/04 14:05:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -542,17 +542,6 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 	align = dvma_cachealign ? dvma_cachealign : map->_dm_align;
 
 	s = splhigh();
-
-#if 0
-	/* Check `24 address bits' in the map's attributes */
-	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
-		ex_start = D24_DVMA_BASE;
-		ex_end = D24_DVMA_END;
-	} else {
-		ex_start = iommu_dvmamap->ex_start;
-		ex_end = iommu_dvmamap->ex_end;
-	}
-#endif
 	error = extent_alloc_subregion1(iommu_dvmamap,
 					map->_dm_ex_start, map->_dm_ex_end,
 					sgsize, align, va & (align-1),
