@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.40 2004/07/07 22:04:27 christos Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.41 2004/07/21 23:43:25 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.40 2004/07/07 22:04:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.41 2004/07/21 23:43:25 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -96,14 +96,14 @@ struct sysent darwin_sysent[] = {
 	    sys_recvmsg },			/* 27 = recvmsg */
 	{ 3, s(struct sys_sendmsg_args), 0,
 	    sys_sendmsg },			/* 28 = sendmsg */
-	{ 6, s(struct sys_recvfrom_args), 0,
-	    sys_recvfrom },			/* 29 = recvfrom */
-	{ 3, s(struct sys_accept_args), 0,
-	    sys_accept },			/* 30 = accept */
-	{ 3, s(struct sys_getpeername_args), 0,
-	    sys_getpeername },			/* 31 = getpeername */
-	{ 3, s(struct sys_getsockname_args), 0,
-	    sys_getsockname },			/* 32 = getsockname */
+	{ 6, s(struct darwin_sys_recvfrom_args), 0,
+	    darwin_sys_recvfrom },		/* 29 = recvfrom */
+	{ 3, s(struct darwin_sys_accept_args), 0,
+	    darwin_sys_accept },		/* 30 = accept */
+	{ 3, s(struct darwin_sys_getpeername_args), 0,
+	    darwin_sys_getpeername },		/* 31 = getpeername */
+	{ 3, s(struct darwin_sys_getsockname_args), 0,
+	    darwin_sys_getsockname },		/* 32 = getsockname */
 	{ 2, s(struct bsd_sys_access_args), 0,
 	    bsd_sys_access },			/* 33 = access */
 	{ 2, s(struct bsd_sys_chflags_args), 0,
@@ -242,10 +242,10 @@ struct sysent darwin_sysent[] = {
 	    sys_fsync },			/* 95 = fsync */
 	{ 3, s(struct sys_setpriority_args), 0,
 	    sys_setpriority },			/* 96 = setpriority */
-	{ 3, s(struct sys_socket_args), 0,
-	    sys_socket },			/* 97 = socket */
-	{ 3, s(struct sys_connect_args), 0,
-	    sys_connect },			/* 98 = connect */
+	{ 3, s(struct darwin_sys_socket_args), 0,
+	    darwin_sys_socket },		/* 97 = socket */
+	{ 3, s(struct darwin_sys_connect_args), 0,
+	    darwin_sys_connect },		/* 98 = connect */
 	{ 3, s(struct compat_43_sys_accept_args), 0,
 	    compat_43_sys_accept },		/* 99 = oaccept */
 	{ 2, s(struct sys_getpriority_args), 0,
@@ -256,8 +256,8 @@ struct sysent darwin_sysent[] = {
 	    compat_43_sys_recv },		/* 102 = orecv */
 	{ 1, s(struct darwin_sys_sigreturn_x2_args), 0,
 	    darwin_sys_sigreturn_x2 },		/* 103 = sigreturn_x2 */
-	{ 3, s(struct bsd_sys_bind_args), 0,
-	    bsd_sys_bind },			/* 104 = bind */
+	{ 3, s(struct darwin_sys_bind_args), 0,
+	    darwin_sys_bind },			/* 104 = bind */
 	{ 5, s(struct sys_setsockopt_args), 0,
 	    sys_setsockopt },			/* 105 = setsockopt */
 	{ 2, s(struct sys_listen_args), 0,
@@ -314,8 +314,8 @@ struct sysent darwin_sysent[] = {
 	    sys_flock },			/* 131 = flock */
 	{ 2, s(struct bsd_sys_mkfifo_args), 0,
 	    bsd_sys_mkfifo },			/* 132 = mkfifo */
-	{ 6, s(struct sys_sendto_args), 0,
-	    sys_sendto },			/* 133 = sendto */
+	{ 6, s(struct darwin_sys_sendto_args), 0,
+	    darwin_sys_sendto },		/* 133 = sendto */
 	{ 2, s(struct sys_shutdown_args), 0,
 	    sys_shutdown },			/* 134 = shutdown */
 	{ 4, s(struct sys_socketpair_args), 0,
