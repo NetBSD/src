@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.20 2002/12/19 00:38:02 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.21 2002/12/20 15:33:32 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -783,9 +783,9 @@ cpu_getmcontext(l, mcp, flags)
 	unsigned int *flags;
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
-	__greg_t *r = mcp->__greg;
+	__greg_t *r = mcp->__gregs;
 #ifdef FPU_CONTEXT
-	__fregset_t *f = &mcp->__freg;
+	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
 #endif
 
@@ -865,9 +865,9 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct trapframe *tf;
-	__greg_t *r = mcp->__greg;
+	__greg_t *r = mcp->__gregs;
 #ifdef FPU_CONTEXT
-	__fregset_t *f = &mcp->__freg;
+	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
 #endif
 
