@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.7 1999/02/23 20:18:16 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.8 1999/03/04 20:15:53 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -394,7 +394,7 @@ adw_init(sc)
 			AdvResetSCSIBus(sc);
 	}
 
-	sc->isr_callback = (ulong) adw_wide_isr_callback;
+	sc->isr_callback = (ADW_CALLBACK) adw_wide_isr_callback;
 
 	return (0);
 }
