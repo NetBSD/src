@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:56 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1998/09/02 19:17:21 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -192,11 +192,11 @@ cpu_exit(arg)
 #if defined(UVM)
 	uvmspace_free(p->p_vmspace);
 	(void) splhigh();
-	uvm_km_free(kernel_map, (vm_offset_t)p->p_addr, USPACE);
+	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 #else
 	vmspace_free(p->p_vmspace);
 	(void) splhigh();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, USPACE);
+	kmem_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 #endif
 
 	/* Don't update pcb in cpu_switch. */
@@ -302,9 +302,9 @@ pagemove(from, to, size)
 			*tpte++ = *fpte;
 			*fpte++ = 0;
 			if (otpte & PG_V)
-				tlbflush_entry((vm_offset_t) to);
+				tlbflush_entry((vaddr_t) to);
 			if (ofpte & PG_V)
-				tlbflush_entry((vm_offset_t) from);
+				tlbflush_entry((vaddr_t) from);
 			from += NBPG;
 			to += NBPG;
 			size -= NBPG;
@@ -328,9 +328,9 @@ int
 kvtop(addr)
 	register caddr_t addr;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
@@ -360,15 +360,16 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off, fpa;
+	vaddr_t faddr, taddr, off;
+	paddr_t fpa;
 	pt_entry_t *tpte;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -404,16 +405,16 @@ vmapbuf(bp, len)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -441,14 +442,14 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 #if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);

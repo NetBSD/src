@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 1998/07/06 09:42:56 matthias Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9 1998/09/02 19:17:13 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -57,8 +57,8 @@
 
 #include <ddb/db_access.h>
 
-static void	set_pte __P((vm_offset_t, pt_entry_t));
-static void	db_write_text __P((vm_offset_t, size_t, char *));
+static void	set_pte __P((vaddr_t, pt_entry_t));
+static void	db_write_text __P((vaddr_t, size_t, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -67,11 +67,11 @@ static void	db_write_text __P((vm_offset_t, size_t, char *));
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
-	register char	*src = (char*)addr;
+	char	*src = (char*)addr;
 
 	if (size == 4) {
 		*((int*)data) = *((int*)src);
@@ -91,7 +91,7 @@ db_read_bytes(addr, size, data)
 
 static void
 set_pte(addr, pte)
-	vm_offset_t addr;
+	vaddr_t addr;
 	pt_entry_t pte;
 {
 	*kvtopte(addr) = pte;
@@ -104,13 +104,13 @@ set_pte(addr, pte)
  */
 static void
 db_write_text(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t	addr;
+	size_t size;
+	char *data;
 {
-	register char 	*dst;
-	pt_entry_t	oldpte, tmppte;
-	vm_offset_t	pgva, prevpg;
+	char *dst;
+	pt_entry_t oldpte, tmppte;
+	vaddr_t	pgva, prevpg;
 
 	/* Prevent restoring a garbage PTE. */
 	if (size <= 0)
@@ -163,16 +163,16 @@ db_write_text(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	vaddr_t addr;
+	size_t size;
+	char *data;
 {
-	register char	*dst = (char *)addr;
-	extern char	kernel_text[], etext[];
+	char *dst = (char *)addr;
+	extern char kernel_text[], etext[];
 
 	/* If any part is in kernel text, use db_write_text() */
 	if ((dst < etext) && ((dst + size) > kernel_text)) {
-		db_write_text((vm_offset_t)dst, size, data);
+		db_write_text((vaddr_t)dst, size, data);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.8 1998/01/28 02:26:07 thorpej Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.9 1998/09/02 19:17:12 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -59,7 +59,7 @@
 #  include <setjmp.h>
 #  define setjmp _setjmp
 #  define longjmp _longjmp
-#  define AT	vm_offset_t
+#  define AT	vaddr_t
 # elif defined(__NetBSD__)	/* MACH */
 #  include <machine/param.h>
 #  include <sys/systm.h>
@@ -67,18 +67,18 @@
 #  define setjmp(x) setjmp(&x)
 #  define AT	void *
 # endif
-# define get_dword(addr) ({long _t; COPYIN((addr), (vm_offset_t) &_t, sizeof(long)); _t;})
+# define get_dword(addr) ({long _t; COPYIN((addr), (vaddr_t) &_t, sizeof(long)); _t;})
 #else /* KERNEL */
 # include <stddef.h>
 # include <machine/param.h>
 # include <setjmp.h>
-# define AT	vm_offset_t
+# define AT	vaddr_t
 # ifdef DEBUG
 # include <stdio.h>
 # endif
 
-# define copyin(u,k,n) ({vm_offset_t _u = (u), _k = (k); memcpy((char *) _k, (char *) _u,n);0;})
-# define copyout(k,u,n) ({vm_offset_t _u = (u), _k = (k); memcpy((char *) _u, (char *) _k,n);0;})
+# define copyin(u,k,n) ({vaddr_t _u = (u), _k = (k); memcpy((char *) _k, (char *) _u,n);0;})
+# define copyout(k,u,n) ({vaddr_t _u = (u), _k = (k); memcpy((char *) _u, (char *) _k,n);0;})
 # define get_dword(addr) (* (unsigned int *) addr)
 
 #ifdef MACH
@@ -117,7 +117,7 @@ static void set_fstate(state *state) {
 int ieee_sig(int sig, int code, struct sigcontext *scp)
 {
   int ret;
-  vm_offset_t orig_pc;
+  vaddr_t orig_pc;
   state state;
   get_fstate(&state);
   state.scp = scp;
@@ -214,23 +214,23 @@ static const int regoffsets[] = {REGOFFSET(0), REGOFFSET(1), REGOFFSET(2),
 				REGOFFSET(6), REGOFFSET(7)};
 
 static inline void read_reg(int regno, struct operand *op, state *state) {
-  vm_offset_t addr = REGBASE(state) + regoffsets[regno];
+  vaddr_t addr = REGBASE(state) + regoffsets[regno];
   switch(op->size) {
   case 1: *(char *) &op->data = *(char *) addr; break;
   case 2: *(short *) &op->data = *(short *) addr; break;
   default: *(int *) &op->data = *(int *) addr; break;
   }
   op->where.tag = op_where_register;
-  op->where.addr = (vm_offset_t) &op->data;
+  op->where.addr = (vaddr_t) &op->data;
 }
 
-static inline vm_offset_t reg_addr(int regno, state *state) {
+static inline vaddr_t reg_addr(int regno, state *state) {
   return REGBASE(state) + regoffsets[regno];
 }
 
 
 static void read_freg(int regno, struct operand *op, state *state) {
-  vm_offset_t addr;
+  vaddr_t addr;
   if (op->size == sizeof(float)) {
     static const int offsets[] = {
       FREGOFFSET(0), FREGOFFSET(1), FREGOFFSET(2), FREGOFFSET(3),
@@ -335,7 +335,7 @@ static void canonicalise_op(struct operand *op) {
 #define MAX_LEN 21		/* The longest an instruction can be */
 
 static struct {
-  vm_offset_t base;
+  vaddr_t base;
   char *max;
   char buf[MAX_LEN];
 #if defined(_KERNEL) && defined(__NetBSD__) && !defined(MACH)
@@ -374,9 +374,9 @@ static void store_result(struct operand *op)
  * be mapped.
  */
 static int fetch_data (char *addr) {
-  vm_offset_t u_addr = copyin_buffer.base + copyin_buffer.max - copyin_buffer.buf;
-  vm_offset_t u_end_addr = copyin_buffer.base + addr - copyin_buffer.buf;
-  vm_offset_t k_addr = (vm_offset_t) copyin_buffer.max;
+  vaddr_t u_addr = copyin_buffer.base + copyin_buffer.max - copyin_buffer.buf;
+  vaddr_t u_end_addr = copyin_buffer.base + addr - copyin_buffer.buf;
+  vaddr_t k_addr = (vaddr_t) copyin_buffer.max;
   int n;
   int n_page = ns532_round_page(u_end_addr) - copyin_buffer.base + copyin_buffer.buf - copyin_buffer.max;
   int n_max = MAX_LEN + copyin_buffer.buf - copyin_buffer.max;
@@ -424,7 +424,7 @@ static int get_displacement (char **buffer)
 static int get_operand(char **buf, unsigned char gen, unsigned char index, struct operand *op, state *state)
 {
   int ret = FPC_TT_NONE;
-  vm_offset_t addr = 0;
+  vaddr_t addr = 0;
   int disp1, disp2;
   DP(1,"gen = 0x%x\n", gen);
 
@@ -456,7 +456,7 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     disp1 = get_displacement (buf);
     disp2 = get_displacement (buf);
     addr =  (disp1
-	     + (vm_offset_t) (gen == 0x10? state->FP: (gen == 0x11? state->SP:
+	     + (vaddr_t) (gen == 0x10? state->FP: (gen == 0x11? state->SP:
 						       state->SB)));
     addr =  disp2 + get_dword(addr);
     break;
@@ -505,22 +505,22 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
   case 0x18:
     /* Memory space disp(FP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vm_offset_t) state->FP);
+    addr =  (disp1 + (vaddr_t) state->FP);
     break;
   case 0x19:
     /* Memory space disp(SP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vm_offset_t) state->SP);
+    addr =  (disp1 + (vaddr_t) state->SP);
     break;
   case 0x1a:
     /* Memory space disp(SB) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (vm_offset_t) state->SB);
+    addr =  (disp1 + (vaddr_t) state->SB);
     break;
   case 0x1b:
     /* Memory space disp(PC) */
     disp1 = get_displacement (buf);
-    addr = disp1 + (vm_offset_t) state->PC;
+    addr = disp1 + (vaddr_t) state->PC;
     break;
   case 0x1c:
   case 0x1d:
@@ -538,7 +538,7 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     }
   }
   if (op->class == op_class_read || op->class == op_class_rmw) {
-    COPYIN(addr, (vm_offset_t)&op->data, op->size);
+    COPYIN(addr, (vaddr_t)&op->data, op->size);
   }
   op->where.tag = op_where_memory;
   op->where.addr = addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.6 1998/07/08 04:43:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.7 1998/09/02 19:17:20 matthias Exp $	*/
 
 /*
  *
@@ -63,6 +63,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -293,11 +294,11 @@ int nkpde = NKPTP;
 
 /*
  * pc532 physical memory comes in a big contig chunk. The following 2
- * vm_offset_t's (shared with machdep.c) describe the physical address
+ * paddr_t's (shared with machdep.c) describe the physical address
  * space of this machine.
  */
-vm_offset_t avail_start;/* PA of first available physical page */
-vm_offset_t avail_end;	/* PA of last available physical page */
+paddr_t avail_start;	/* PA of first available physical page */
+paddr_t avail_end;	/* PA of last available physical page */
 
 /*
  * other data structures
@@ -307,14 +308,14 @@ static pt_entry_t protection_codes[8];     /* maps MI prot to ns532 prot code */
 static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
 
 /*
- * the following two vm_offset_t's are used during system startup
+ * the following two vaddr_t's are used during system startup
  * to keep track of how much of the kernel's VM space we have used.
  * once the system is started, the management of the remaining kernel
  * VM space is turned over to the kernel_map vm_map.
  */
 
-static vm_offset_t virtual_avail;	/* VA of first free KVA */
-static vm_offset_t virtual_end;		/* VA of last free KVA */
+static vaddr_t virtual_avail;	/* VA of first free KVA */
+static vaddr_t virtual_end;	/* VA of last free KVA */
 
 
 /*
@@ -326,7 +327,7 @@ static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
 static int pv_nfpvents;			/* # of free pv entries */
 static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
-static vm_offset_t pv_cachedva;		/* cached VA for later use */
+static vaddr_t pv_cachedva;		/* cached VA for later use */
 
 #define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
 #define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
@@ -340,6 +341,12 @@ static struct pmap_head pmaps;
 static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
 
 /*
+ * pool that pmap structures are allocated from
+ */
+
+struct pool pmap_pmap_pool;
+
+/*
  * special VAs and the PTEs that map them
  */
 
@@ -347,7 +354,8 @@ static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
 static caddr_t csrcp, cdstp, zerop, ptpp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
-extern vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+extern vaddr_t msgbuf_vaddr;
+extern paddr_t msgbuf_paddr;
 
 /*
  * local prototypes
@@ -362,26 +370,26 @@ static struct pv_entry	*pmap_alloc_pv __P((int)); /* see codes below */
 static struct pv_entry	*pmap_alloc_pvpage __P((int));
 static void		 pmap_enter_pv __P((struct pv_head *, 
 					    struct pv_entry *, struct pmap *, 
-					    vm_offset_t, struct vm_page *));
+					    vaddr_t, struct vm_page *));
 static void		 pmap_free_pv __P((struct pv_entry *));
 static void		 pmap_free_pvs __P((struct pv_entry *));
 static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
 static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static void		 pmap_kremove1 __P((vm_offset_t));
+static void		 pmap_kremove1 __P((vaddr_t));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
-					     vm_offset_t));
+					     vaddr_t));
 static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *, 
-					      pt_entry_t *, vm_offset_t));
+					      pt_entry_t *, vaddr_t));
 static void		 pmap_remove_ptes __P((struct pmap *, 
 					       struct pmap_remove_record *,
-					       struct vm_page *, vm_offset_t, 
-					       vm_offset_t, vm_offset_t));
+					       struct vm_page *, vaddr_t, 
+					       vaddr_t, vaddr_t));
 static struct vm_page	*pmap_steal_ptp __P((struct uvm_object *, 
-					     vm_offset_t));
-static vm_offset_t	 pmap_tmpmap_pa __P((vm_offset_t));
+					     vaddr_t));
+static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
 static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
@@ -412,7 +420,7 @@ __inline static boolean_t pmap_is_curpmap(pmap)
 struct pmap *pmap;
 
 {
-  vm_offset_t ptb;
+  paddr_t ptb;
   if (pmap == pmap_kernel())
     return(1);
   smr(ptb0, ptb);
@@ -427,9 +435,9 @@ struct pmap *pmap;
  * => returns with pmap_tmpptp_lock held
  */
 
-__inline static vm_offset_t pmap_tmpmap_pa(pa)
+__inline static vaddr_t pmap_tmpmap_pa(pa)
 
-vm_offset_t pa;
+paddr_t pa;
 
 {
   simple_lock(&pmap_tmpptp_lock);
@@ -438,7 +446,7 @@ vm_offset_t pa;
     panic("pmap_tmpmap_pa: ptp_pte in use?");
 #endif
   *ptp_pte = PG_V | PG_RW | pa;		/* always a new mapping */
-  return((vm_offset_t)ptpp);
+  return((vaddr_t)ptpp);
 }
 
 /*
@@ -455,7 +463,7 @@ __inline static void pmap_tmpunmap_pa()
     panic("pmap_tmpunmap_pa: our pte invalid?");
 #endif
   *ptp_pte = 0;		/* zap! */
-  pmap_update_pg((vm_offset_t)ptpp);
+  pmap_update_pg((vaddr_t)ptpp);
   simple_unlock(&pmap_tmpptp_lock);
   return;
 }
@@ -594,8 +602,8 @@ struct pmap *pmap;
 
 void pmap_kremove(va, len)
 
-vm_offset_t va;
-vm_size_t len;
+vaddr_t va;
+vsize_t len;
 
 {
   pt_entry_t *pte;
@@ -630,7 +638,7 @@ vm_size_t len;
 
 __inline static void pmap_kremove1(va)
 
-vm_offset_t va;
+vaddr_t va;
 
 {
   pt_entry_t *pte;
@@ -645,14 +653,14 @@ vm_offset_t va;
 
 void pmap_kenter_pgs(va, pgs, npgs)
 
-vm_offset_t va;
+vaddr_t va;
 struct vm_page **pgs;
 int npgs;
 
 {
   pt_entry_t *pte, opte;
   int lcv;
-  vm_offset_t tva;
+  vaddr_t tva;
 
   for (lcv = 0 ; lcv < npgs ; lcv++) {
     tva = va + lcv * NBPG;
@@ -687,7 +695,7 @@ int npgs;
 
 void pmap_bootstrap(kva_start)
 
-vm_offset_t kva_start;
+vaddr_t kva_start;
 
 {
   struct pmap *kpm;
@@ -753,7 +761,7 @@ vm_offset_t kva_start;
   TAILQ_INIT(&kpm->pm_obj.memq);
   kpm->pm_obj.uo_npages = 0;
   kpm->pm_obj.uo_refs = 1;
-  bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
+  memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
   kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_ptb + KERNBASE);
   kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_ptb;
   kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
@@ -813,6 +821,13 @@ vm_offset_t kva_start;
   LIST_INIT(&pmaps);
   TAILQ_INIT(&pv_freepages);
   TAILQ_INIT(&pv_unusedpgs);
+
+  /*
+   * initialize the pmap pool.
+   */
+
+  pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
   
   /*
    * we must call uvm_page_physload() after we are done playing with
@@ -846,8 +861,8 @@ void pmap_init()
 
 {
   int npages, lcv;
-  vm_offset_t addr;
-  vm_size_t s;
+  vaddr_t addr;
+  vsize_t s;
 
   /*
    * compute the number of pages we have and then allocate RAM
@@ -857,28 +872,28 @@ void pmap_init()
   npages = 0;
   for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) 
     npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
-  s = (vm_size_t) (sizeof(struct pv_head) * npages +
+  s = (vsize_t) (sizeof(struct pv_head) * npages +
                    sizeof(*(vm_physmem[0].pmseg.attrs)) * npages);
   s = round_page(s); /* round up */
-  addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
+  addr = (vaddr_t) uvm_km_zalloc(kernel_map, s);
   if (addr == NULL)
     panic("pmap_init: unable to allocate pv_heads");
 
   /*
-   * init all pv_head's and attrs in one bzero
+   * init all pv_head's and attrs in one memset
    */
 
   /* allocate pv_head stuff first */
   for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
     vm_physmem[lcv].pmseg.pvhead = (struct pv_head *) addr;
-    addr = (vm_offset_t)(vm_physmem[lcv].pmseg.pvhead +
+    addr = (vaddr_t)(vm_physmem[lcv].pmseg.pvhead +
 			 (vm_physmem[lcv].end - vm_physmem[lcv].start));
   }
 
   /* now allocate attrs */
   for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
     vm_physmem[lcv].pmseg.attrs = (short *) addr;
-    addr = (vm_offset_t)(vm_physmem[lcv].pmseg.attrs +
+    addr = (vaddr_t)(vm_physmem[lcv].pmseg.attrs +
 			 (vm_physmem[lcv].end - vm_physmem[lcv].start));
   }
 
@@ -1353,8 +1368,8 @@ static void pmap_free_pvpage()
 
     /* unmap the page */
     dead_entries = NULL;
-    (void)uvm_unmap_remove(map, (vm_offset_t) pvp,
-			   ((vm_offset_t) pvp) + NBPG, TRUE, &dead_entries);
+    (void)uvm_unmap_remove(map, (vaddr_t) pvp,
+			   ((vaddr_t) pvp) + NBPG, TRUE, &dead_entries);
     vm_map_unlock(map);
 
     if (dead_entries != NULL)
@@ -1394,7 +1409,7 @@ __inline static void pmap_enter_pv(pvh, pve, pmap, va, ptp)
 struct pv_head *pvh;
 struct pv_entry *pve;	/* preallocated pve for us to use */
 struct pmap *pmap;
-vm_offset_t va;
+vaddr_t va;
 struct vm_page *ptp;	/* PTP in pmap that maps this VA */
 
 {
@@ -1421,7 +1436,7 @@ __inline static struct pv_entry *pmap_remove_pv(pvh, pmap, va)
 
 struct pv_head *pvh;
 struct pmap *pmap;
-vm_offset_t va;
+vaddr_t va;
 
 {
   struct pv_entry *pve, **prevptr;
@@ -1499,7 +1514,7 @@ boolean_t just_try;
 static struct vm_page *pmap_steal_ptp(obj, offset)
 
 struct uvm_object *obj;
-vm_offset_t offset;
+vaddr_t offset;
 
 {
   struct vm_page *ptp = NULL;
@@ -1536,7 +1551,7 @@ vm_offset_t offset;
 	  if ((ptes[lcv] & (PG_V|PG_W)) == (PG_V|PG_W))
 	    break;
 	if (lcv == PTES_PER_PTP)
-	  pmap_remove_ptes(pmaps_hand, NULL, ptp, (vm_offset_t)ptes, 
+	  pmap_remove_ptes(pmaps_hand, NULL, ptp, (vaddr_t)ptes, 
 			 ptp_i2v(idx), ptp_i2v(idx+1));
 	pmap_tmpunmap_pa();
 
@@ -1553,7 +1568,7 @@ vm_offset_t offset;
 	  pmap_update();
 	else if (pmap_valid_entry(*APDP_PDE) &&
 		 (*APDP_PDE & PG_FRAME) == pmaps_hand->pm_pdirpa) {
-	  pmap_update_pg( ((vm_offset_t) APTE_BASE) + ptp->offset);
+	  pmap_update_pg( ((vaddr_t) APTE_BASE) + ptp->offset);
 	}
 	uvm_pagerealloc(ptp, obj, offset);	/* put it in our pmap! */
 	break;	/* break out of "for" loop */
@@ -1628,7 +1643,7 @@ struct pmap *pmap_create()
 {
   struct pmap *pmap;
 
-  MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
+  pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
   pmap_pinit(pmap);
   return(pmap);
 }
@@ -1657,11 +1672,11 @@ struct pmap *pmap;
   if (pmap->pm_pdir == NULL)
     panic("pmap_pinit: kernel_map out of virtual space!");
   pmap->pm_pdirpa = (u_int32_t) 
-    pmap_extract(pmap_kernel(), (vm_offset_t) pmap->pm_pdir);
+    pmap_extract(pmap_kernel(), (vaddr_t) pmap->pm_pdir);
 
   /* init PDP */
   /* zero init area */
-  bzero(pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
+  memset(pmap->pm_pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
   /* put in recursive PDE to map the PTEs */
   pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
 	
@@ -1677,7 +1692,7 @@ struct pmap *pmap;
   movsdnu(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
 	nkpde * sizeof(pd_entry_t) / 4);
   /* zero the rest */
-  bzero(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 
+  memset(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 0,
 	NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
   /* wire in i/o page */
   pmap->pm_pdir[PDSLOT_APTE + 1] = PDP_BASE[PDSLOT_APTE + 1];
@@ -1715,7 +1730,7 @@ struct pmap *pmap;
    * reference count is zero, free pmap resources and then free pmap.
    */
   pmap_release(pmap);
-  free((caddr_t)pmap, M_VMPMAP);
+  pool_put(&pmap_pmap_pool, pmap);
 
   /*
    * done: pmap is gone!
@@ -1756,12 +1771,14 @@ struct pmap *pmap;
     if (pg->flags & PG_BUSY)
       panic("pmap_release: busy page table page");
     /* pmap_page_protect?  currently no need for it. */
+
+    pg->wire_count = 0;
     uvm_pagefree(pg);
   }
 
   /* XXX: need to flush it out of other processor's APTE space? */
 
-  uvm_km_free(kernel_map, (vm_offset_t)pmap->pm_pdir, NBPG);
+  uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, NBPG);
 }
 
 /*
@@ -1830,18 +1847,18 @@ struct proc *p;
  *	physical page 0!)
  */
 
-vm_offset_t pmap_extract(pmap, va)
+paddr_t pmap_extract(pmap, va)
 
 struct pmap *pmap;
-vm_offset_t va;
+vaddr_t va;
 
 {
-  vm_offset_t retval;
+  paddr_t retval;
   pt_entry_t *ptes;
 
   if (pmap->pm_pdir[pdei(va)]) {
     ptes = pmap_map_ptes(pmap);
-    retval = (vm_offset_t) (ptes[ns532_btop(va)] & PG_FRAME);
+    retval = (paddr_t) (ptes[ns532_btop(va)] & PG_FRAME);
     pmap_unmap_ptes(pmap);
     return(retval | (va & ~PG_FRAME));
   }
@@ -1856,8 +1873,8 @@ vm_offset_t va;
 
 void pmap_virtual_space(startp, endp)
 
-vm_offset_t *startp;
-vm_offset_t *endp;
+vaddr_t *startp;
+vaddr_t *endp;
 
 {
   *startp = virtual_avail;
@@ -1871,9 +1888,10 @@ vm_offset_t *endp;
  * => XXX: pmap_map() should be phased out?
  */
 
-vm_offset_t pmap_map(va, spa, epa, prot)
+vaddr_t pmap_map(va, spa, epa, prot)
 
-vm_offset_t va, spa, epa;
+vaddr_t va;
+paddr_t spa, epa;
 int prot;
 
 {
@@ -1891,7 +1909,7 @@ int prot;
 
 void pmap_zero_page(pa)
 
-vm_offset_t pa;
+paddr_t pa;
 
 {
   simple_lock(&pmap_zero_page_lock);
@@ -1901,9 +1919,9 @@ vm_offset_t pa;
 #endif
 
   *zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
-  bzero(zerop, NBPG);				/* zero */
+  memset(zerop, 0, NBPG);				/* zero */
   *zero_pte = 0;				/* zap! */
-  pmap_update_pg((vm_offset_t)zerop);		/* flush TLB */
+  pmap_update_pg((vaddr_t)zerop);		/* flush TLB */
   simple_unlock(&pmap_zero_page_lock);
 }
 
@@ -1913,7 +1931,7 @@ vm_offset_t pa;
 
 void pmap_copy_page(srcpa, dstpa)
 
-vm_offset_t srcpa, dstpa;
+paddr_t srcpa, dstpa;
 
 {
   simple_lock(&pmap_copy_page_lock);
@@ -1926,7 +1944,7 @@ vm_offset_t srcpa, dstpa;
   *cdst_pte = (dstpa & PG_FRAME) | PG_V | PG_RW;
   movsdnu(csrcp, cdstp, NBPG / 4);
   *csrc_pte = *cdst_pte = 0;			/* zap! */
-  pmap_update_2pg((vm_offset_t)csrcp, (vm_offset_t)cdstp);
+  pmap_update_2pg((vaddr_t)csrcp, (vaddr_t)cdstp);
   simple_unlock(&pmap_copy_page_lock);
 }
 
@@ -1950,8 +1968,8 @@ static void pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 struct pmap *pmap;
 struct pmap_remove_record *pmap_rr;
 struct vm_page *ptp;
-vm_offset_t ptpva;
-vm_offset_t startva, endva;
+vaddr_t ptpva;
+vaddr_t startva, endva;
 
 {
   struct pv_entry *pv_tofree = NULL;		/* list of pv_entrys to free */
@@ -2045,7 +2063,7 @@ static boolean_t pmap_remove_pte(pmap, ptp, pte, va)
 struct pmap *pmap;
 struct vm_page *ptp;
 pt_entry_t *pte;
-vm_offset_t va;
+vaddr_t va;
 
 {
   pt_entry_t opte;
@@ -2106,12 +2124,13 @@ vm_offset_t va;
 void pmap_remove(pmap, sva, eva)
 
 struct pmap *pmap;
-vm_offset_t sva, eva;
+vaddr_t sva, eva;
 
 {
   pt_entry_t *ptes;
   boolean_t result;
-  vm_offset_t ptppa, blkendva;
+  paddr_t ptppa;
+  vaddr_t blkendva;
   struct vm_page *ptp;
   struct pmap_remove_record pmap_rr, *prr;
   
@@ -2160,10 +2179,11 @@ vm_offset_t sva, eva;
       /* if mapping removed and the PTP is no longer being used, free it! */
       if (result && ptp && ptp->wire_count <= 1) {
 	pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
-        pmap_update_pg( ((vm_offset_t) ptes) + ptp->offset );
+        pmap_update_pg( ((vaddr_t) ptes) + ptp->offset );
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
+	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
       }
 
@@ -2237,16 +2257,17 @@ vm_offset_t sva, eva;
 	}
     }
     
-    pmap_remove_ptes(pmap, prr, ptp, (vm_offset_t)&ptes[ns532_btop(sva)], 
+    pmap_remove_ptes(pmap, prr, ptp, (vaddr_t)&ptes[ns532_btop(sva)], 
 		     sva, blkendva);
     
       /* if PTP is no longer being used, free it! */
       if (ptp && ptp->wire_count <= 1) {
 	pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
-	pmap_update_pg( ((vm_offset_t) ptes) + ptp->offset);
+	pmap_update_pg( ((vaddr_t) ptes) + ptp->offset);
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
+	ptp->wire_count = 0;
 	uvm_pagefree(ptp);
       }
   }
@@ -2342,10 +2363,11 @@ struct vm_page *pg;
       pve->pv_ptp->wire_count--;
       if (pve->pv_ptp->wire_count <= 1) {
         pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] = 0;   /* zap! */
-	pmap_update_pg( ((vm_offset_t) ptes) + pve->pv_ptp->offset);
+	pmap_update_pg( ((vaddr_t) ptes) + pve->pv_ptp->offset);
         pve->pv_pmap->pm_stats.resident_count--;
 	if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)	/* update hint? */
 	  pve->pv_pmap->pm_ptphint = pve->pv_pmap->pm_obj.memq.tqh_first;
+	pve->pv_ptp->wire_count = 0;
         uvm_pagefree(pve->pv_ptp);
       }
     }
@@ -2522,13 +2544,13 @@ int setbits, clearbits;
 void pmap_write_protect(pmap, sva, eva, prot)
 
 struct pmap *pmap;
-vm_offset_t sva, eva;
+vaddr_t sva, eva;
 vm_prot_t prot;
 
 {
   pt_entry_t *ptes, *spte, *epte, npte;
   struct pmap_remove_record pmap_rr, *prr;
-  vm_offset_t blockend, va;
+  vaddr_t blockend, va;
   u_int32_t md_prot;
 
   ptes = pmap_map_ptes(pmap);		/* locks pmap */
@@ -2638,7 +2660,7 @@ vm_prot_t prot;
 void pmap_change_wiring(pmap, va, wired)
 
 struct pmap *pmap;
-vm_offset_t va;
+vaddr_t va;
 boolean_t wired;
 
 
@@ -2695,7 +2717,7 @@ struct pmap *pmap;
 void pmap_pageable(pmap, sva, eva, pageable)
 
 struct pmap *pmap;
-vm_offset_t sva, eva;
+vaddr_t sva, eva;
 boolean_t pageable;
 
 {
@@ -2717,8 +2739,8 @@ boolean_t pageable;
 void pmap_transfer(dstpmap, srcpmap, daddr, len, saddr, move)
 
 struct pmap *dstpmap, *srcpmap;
-vm_offset_t daddr, saddr;
-vm_size_t len;
+vaddr_t daddr, saddr;
+vsize_t len;
 boolean_t move;
 
 {
@@ -2729,7 +2751,7 @@ boolean_t move;
   struct pmap_transfer_location srcl, dstl;
   int dstvalid;			  /* # of PTEs left in dst's current PTP */
   struct pmap *mapped_pmap;	  /* the pmap we passed to pmap_map_ptes */
-  vm_size_t blklen;
+  vsize_t blklen;
   int blkpgs, toxfer;
   boolean_t ok;
 
@@ -3161,7 +3183,8 @@ boolean_t move;
 void pmap_enter(pmap, va, pa, prot, wired)
 
 struct pmap *pmap;
-vm_offset_t va, pa;
+vaddr_t va;
+paddr_t pa;
 vm_prot_t prot;
 boolean_t wired;
 
@@ -3177,7 +3200,7 @@ boolean_t wired;
   if (va >= VM_MAX_KERNEL_ADDRESS)
     panic("pmap_enter: too big");
 
-  if (va == (vm_offset_t) PDP_BASE || va == (vm_offset_t) APDP_BASE)
+  if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
     panic("pmap_enter: trying to map over PDP/APDP!");
 
   /* sanity check: kernel PTPs should already have been pre-allocated */
@@ -3343,14 +3366,14 @@ enter_now:
 
 void pmap_growkernel(maxkvaddr)
 
-vm_offset_t maxkvaddr;
+vaddr_t maxkvaddr;
 
 {
   struct pmap *kpm = pmap_kernel(), *pm;
-  vm_offset_t needed_kpde;   /* needed number of kernel PTPs */
+  int needed_kpde;   /* needed number of kernel PTPs */
   int s;
 
-  needed_kpde = (maxkvaddr - VM_MIN_KERNEL_ADDRESS + (NBPD-1)) / NBPD;
+  needed_kpde = (int)(maxkvaddr - VM_MIN_KERNEL_ADDRESS + (NBPD-1)) / NBPD;
   if (needed_kpde <= nkpde)
     return;		/* we are OK */
 
@@ -3379,7 +3402,7 @@ vm_offset_t maxkvaddr;
 }
 
 #ifdef DEBUG
-void pmap_dump __P((struct pmap *, vm_offset_t, vm_offset_t));
+void pmap_dump __P((struct pmap *, vaddr_t, vaddr_t));
 
 /*
  * pmap_dump: dump all the mappings from a pmap
@@ -3390,11 +3413,11 @@ void pmap_dump __P((struct pmap *, vm_offset_t, vm_offset_t));
 void pmap_dump(pmap, sva, eva)
 
 struct pmap *pmap;
-vm_offset_t sva, eva;
+vaddr_t sva, eva;
 
 {
   pt_entry_t *ptes, *pte;
-  vm_offset_t blkendva;
+  vaddr_t blkendva;
   
   /*
    * if end is out of range truncate.  

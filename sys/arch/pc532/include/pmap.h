@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1998/08/15 10:18:16 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1998/09/02 19:17:22 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,9 +133,9 @@ extern pt_entry_t	PTmap[], APTmap[];
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde;
 extern pt_entry_t	*Sysmap;
 
-void pmap_bootstrap __P((vm_offset_t start));
-boolean_t pmap_testbit __P((vm_offset_t, int));
-void pmap_changebit __P((vm_offset_t, int, int));
+void pmap_bootstrap __P((vaddr_t start));
+boolean_t pmap_testbit __P((paddr_t, int));
+void pmap_changebit __P((paddr_t, int, int));
 #endif
 
 /*
@@ -180,7 +180,7 @@ typedef struct pmap {
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	pmap_t		pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 };
 
 struct pv_page;
@@ -206,50 +206,50 @@ struct pv_page {
 extern int		nkpde;		/* number of kernel page dir. ents */
 extern struct pmap	kernel_pmap_store;
 
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
-vm_offset_t reserve_dumppages __P((vm_offset_t));
+vaddr_t reserve_dumppages __P((vaddr_t));
 
 static __inline void
-pmap_clear_modify(vm_offset_t pa)
+pmap_clear_modify(paddr_t pa)
 {
 	pmap_changebit(pa, 0, ~PG_M);
 }
 
 static __inline void
-pmap_clear_reference(vm_offset_t pa)
+pmap_clear_reference(paddr_t pa)
 {
 	pmap_changebit(pa, 0, ~PG_U);
 }
 
 static __inline void
-pmap_copy_on_write(vm_offset_t pa)
+pmap_copy_on_write(paddr_t pa)
 {
 	pmap_changebit(pa, PG_RO, ~PG_RW);
 }
 
 static __inline boolean_t
-pmap_is_modified(vm_offset_t pa)
+pmap_is_modified(paddr_t pa)
 {
 	return pmap_testbit(pa, PG_M);
 }
 
 static __inline boolean_t
-pmap_is_referenced(vm_offset_t pa)
+pmap_is_referenced(paddr_t pa)
 {
 	return pmap_testbit(pa, PG_U);
 }
 
-static __inline vm_offset_t
+static __inline paddr_t
 pmap_phys_address(int ppn)
 {
 	return ns532_ptob(ppn);
 }
 
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif	/* _KERNEL */
 

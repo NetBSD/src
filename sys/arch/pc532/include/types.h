@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 1998/08/13 02:10:39 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.21 1998/09/02 19:17:23 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,13 +48,10 @@ typedef struct label_t {
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
-typedef vm_offset_t	paddr_t;
-typedef vm_size_t	psize_t;
-typedef vm_offset_t	vaddr_t;
-typedef vm_size_t	vsize_t;
+typedef unsigned long	paddr_t;
+typedef unsigned long	psize_t;
+typedef unsigned long	vaddr_t;
+typedef unsigned long	vsize_t;
 #endif
 
 /*
