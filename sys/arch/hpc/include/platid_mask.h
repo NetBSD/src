@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.4 2001/03/03 12:56:39 takemura Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -326,6 +326,14 @@ extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E500;
 extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E507;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define CASIO_CASSIOPEIAE_E507 ((int)&platid_mask_MACH_CASIO_CASSIOPEIAE_E507)
+#endif
+extern platid_t platid_mask_MACH_CASIO_POCKETPOSTPET;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_POCKETPOSTPET ((int)&platid_mask_MACH_CASIO_POCKETPOSTPET)
+#endif
+extern platid_t platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_POCKETPOSTPET_POCKETPOSTPET ((int)&platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET)
 #endif
 #endif /* hpcmips */
 #ifdef hpcmips
