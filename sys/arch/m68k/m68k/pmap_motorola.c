@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.9 2003/10/28 20:43:00 mycroft Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.10 2003/11/01 15:32:47 he Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.9 2003/10/28 20:43:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.10 2003/11/01 15:32:47 he Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -912,7 +912,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 	pt_entry_t *pte;
 	int flags;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
+	boolean_t firstpage, needcflush = FALSE;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
