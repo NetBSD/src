@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/07/25 16:32:24 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/09/28 22:20:58 thorpej Exp $
 
-#SSHDIST=${.CURDIR}/../../../crypto/dist/ssh
+SSHDIST?= ${.CURDIR}/../../../crypto/dist/ssh
 
 CPPFLAGS+=-I${SSHDIST}
 .PATH: ${SSHDIST}
