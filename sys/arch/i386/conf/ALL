@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.20 1993/09/06 18:37:56 mycroft Exp $
+#	$Id: ALL,v 1.21 1993/09/06 21:15:56 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -18,7 +18,7 @@ options FIFO
 options QUOTA
 options ACCOUNTING
 options MFS
-options NFS
+options NFSSERVER,NFSCLIENT
 #options IMP	 
 options INET
 options NS
