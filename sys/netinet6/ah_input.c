@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.35 2002/08/14 00:23:37 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.36 2002/09/11 02:41:22 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.35 2002/08/14 00:23:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.36 2002/09/11 02:41:22 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -919,7 +919,7 @@ ah6_input(mp, offp, proto)
 		/*
 		 * strip off AH.
 		 */
-		char *prvnxtp;
+		u_int8_t *prvnxtp;
 
 		/*
 		 * Copy the value of the next header field of AH to the

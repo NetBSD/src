@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.154 2002/09/05 23:02:18 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.155 2002/09/11 02:41:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.154 2002/09/05 23:02:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.155 2002/09/11 02:41:21 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -780,7 +780,7 @@ tcp_input(m, va_alist)
 	struct ip6_hdr *ip6;
 	struct in6pcb *in6p;
 #endif
-	caddr_t optp = NULL;
+	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int len, tlen, toff, hdroptlen = 0;
 	struct tcpcb *tp = 0;
@@ -986,7 +986,7 @@ tcp_input(m, va_alist)
 #endif
 		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
-		optp = ((caddr_t)th) + sizeof(struct tcphdr);
+		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 		/*
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's

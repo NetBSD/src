@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.65 2002/08/14 00:23:39 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.66 2002/09/11 02:41:27 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.65 2002/08/14 00:23:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.66 2002/09/11 02:41:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2237,7 +2237,7 @@ ipsec_chkreplay(seq, sav)
 		fr = frlast - diff / 8;
 
 		/* this packet already seen ? */
-		if ((replay->bitmap)[fr] & (1 << (diff % 8)))
+		if (replay->bitmap[fr] & (1 << (diff % 8)))
 			return 0;
 
 		/* out of order but good */
@@ -2282,7 +2282,7 @@ ipsec_updatereplay(seq, sav)
 	if (replay->count == 0) {
 		replay->lastseq = seq;
 		bzero(replay->bitmap, replay->wsize);
-		(replay->bitmap)[frlast] = 1;
+		replay->bitmap[frlast] = 1;
 		goto ok;
 	}
 
@@ -2295,11 +2295,11 @@ ipsec_updatereplay(seq, sav)
 			/* In window */
 			/* set bit for this packet */
 			vshiftl(replay->bitmap, diff, replay->wsize);
-			(replay->bitmap)[frlast] |= 1;
+			replay->bitmap[frlast] |= 1;
 		} else {
 			/* this packet has a "way larger" */
 			bzero(replay->bitmap, replay->wsize);
-			(replay->bitmap)[frlast] = 1;
+			replay->bitmap[frlast] = 1;
 		}
 		replay->lastseq = seq;
 
@@ -2315,11 +2315,11 @@ ipsec_updatereplay(seq, sav)
 		fr = frlast - diff / 8;
 
 		/* this packet already seen ? */
-		if ((replay->bitmap)[fr] & (1 << (diff % 8)))
+		if (replay->bitmap[fr] & (1 << (diff % 8)))
 			return 1;
 
 		/* mark as seen */
-		(replay->bitmap)[fr] |= (1 << (diff % 8));
+		replay->bitmap[fr] |= (1 << (diff % 8));
 
 		/* out of order but good */
 	}
@@ -2363,7 +2363,7 @@ vshiftl(bitmap, nbit, wsize)
 		for (i = 1; i < wsize; i++) {
 			over = (bitmap[i] >> (8 - s));
 			bitmap[i] <<= s;
-			bitmap[i-1] |= over;
+			bitmap[i - 1] |= over;
 		}
 	}
 
@@ -3606,39 +3606,39 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case IPSECCTL_STATS:
 		return sysctl_struct(oldp, oldlenp, newp, newlen,
-				     &ipsecstat, sizeof(ipsecstat));
+		    &ipsecstat, sizeof(ipsecstat));
 	case IPSECCTL_DEF_POLICY:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_def_policy->policy);
+		    &ip4_def_policy->policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_esp_trans_deflev);
+		    &ip4_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_esp_net_deflev);
+		    &ip4_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_ah_trans_deflev);
+		    &ip4_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_ah_net_deflev);
+		    &ip4_ah_net_deflev);
 	case IPSECCTL_AH_CLEARTOS:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_ah_cleartos);
+		    &ip4_ah_cleartos);
 	case IPSECCTL_AH_OFFSETMASK:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_ah_offsetmask);
+		    &ip4_ah_offsetmask);
 	case IPSECCTL_DFBIT:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_ipsec_dfbit);
+		    &ip4_ipsec_dfbit);
 	case IPSECCTL_ECN:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip4_ipsec_ecn);
 	case IPSECCTL_DEBUG:
@@ -3708,30 +3708,30 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case IPSECCTL_STATS:
 		return sysctl_struct(oldp, oldlenp, newp, newlen,
-				     &ipsec6stat, sizeof(ipsec6stat));
+		    &ipsec6stat, sizeof(ipsec6stat));
 	case IPSECCTL_DEF_POLICY:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_def_policy->policy);
+		    &ip6_def_policy->policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_trans_deflev);
+		    &ip6_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_esp_net_deflev);
+		    &ip6_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_trans_deflev);
+		    &ip6_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_ah_net_deflev);
+		    &ip6_ah_net_deflev);
 	case IPSECCTL_ECN:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_ipsec_ecn);
 	case IPSECCTL_DEBUG:

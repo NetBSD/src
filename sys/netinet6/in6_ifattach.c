@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.49 2002/06/11 07:28:06 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.50 2002/09/11 02:41:24 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.49 2002/06/11 07:28:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.50 2002/09/11 02:41:24 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ get_rand_ifid(ifp, in6)
 	/* generate 8 bytes of pseudo-random value. */
 	bzero(&ctxt, sizeof(ctxt));
 	MD5Init(&ctxt);
-	MD5Update(&ctxt, hostname, hostnamelen);
+	MD5Update(&ctxt, (u_char *)hostname, hostnamelen);
 	MD5Final(digest, &ctxt);
 
 	/* assumes sizeof(digest) > sizeof(ifid) */
@@ -130,7 +130,7 @@ get_hw_ifid(ifp, in6)
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
-	u_int8_t *addr;
+	char *addr;
 	size_t addrlen;
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
@@ -525,8 +525,8 @@ in6_nigroup(ifp, name, namelen, sa6)
 	u_char *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
-	char l;
-	char n[64];	/* a single label must not exceed 63 chars */
+	u_int8_t l;
+	u_int8_t n[64];	/* a single label must not exceed 63 chars */
 
 	if (!namelen || !name)
 		return -1;
@@ -537,7 +537,7 @@ in6_nigroup(ifp, name, namelen, sa6)
 	if (p - name > sizeof(n) - 1)
 		return -1;	/* label too long */
 	l = p - name;
-	strncpy(n, name, l);
+	strncpy((char *)n, name, l);
 	n[(int)l] = '\0';
 	for (q = n; *q; q++) {
 		if ('A' <= *q && *q <= 'Z')
