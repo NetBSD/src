@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: xutil.c,v 1.1.1.1 1997/07/24 21:20:09 christos Exp $
+ * $Id: xutil.c,v 1.1.1.2 1997/09/22 21:11:20 christos Exp $
  *
  */
 
@@ -55,6 +55,7 @@ int syslogging;
 #endif /* HAVE_SYSLOG */
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS;
 int xlog_level_init = ~0;
+static int amd_program_number = AMQ_PROGRAM;
 
 time_t clock_valid = 0;
 time_t xclock_valid = 0;
@@ -558,12 +559,10 @@ unregister_amq(void)
 #ifdef DEBUG
   amuDebug(D_AMQ)
 #endif /* DEBUG */
-    /*
-     * If pmap_unset fails, then try out the TLI version.
-    (void) rpcb_unset(AMQ_PROGRAM, AMQ_VERSION, (struct netconfig *) NULL);
-    */
-    (void) pmap_unset(AMQ_PROGRAM, AMQ_VERSION);
+    /* find which instance of amd to unregister */
+    pmap_unset(get_amd_program_number(), AMQ_VERSION);
 }
+
 
 void
 going_down(int rc)
@@ -584,4 +583,20 @@ going_down(int rc)
   }
 
   exit(rc);
+}
+
+
+/* return the rpc program number under which amd was used */
+int
+get_amd_program_number(void)
+{
+  return amd_program_number;
+}
+
+
+/* set the rpc program number used for amd */
+void
+set_amd_program_number(int program)
+{
+  amd_program_number = program;
 }
