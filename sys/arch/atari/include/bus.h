@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1996/11/08 14:21:09 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.2.1 1997/01/30 05:36:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -34,11 +34,6 @@
 #define _ATARI_BUS_H_
 
 /*
- * This file currently contains only the bare minimum of definitions
- * to make the et4000-pci console work.
- */
-
-/*
  * I/O addresses (in bus space)
  */
 typedef u_long bus_io_addr_t;
@@ -53,12 +48,132 @@ typedef u_long	bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef int	bus_space_tag_t;
+typedef u_long	bus_space_tag_t;
 typedef caddr_t	bus_space_handle_t;
 
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
 void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
+void	bus_space_read_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_read_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_read_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_read_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_write_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_write_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_write_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+void	bus_space_write_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
 
+#define	bus_space_read_1(t, h, o)					\
+    ((void) t, (*(volatile u_int8_t *)((h) + (o))))
+#define	bus_space_read_2(t, h, o)					\
+    ((void) t, (*(volatile u_int16_t *)((h) + (o))))
+#define	bus_space_read_4(t, h, o)					\
+    ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+#define	bus_space_read_8(t, h, o)					\
+    ((void) t, (*(volatile u_int64_t *)((h) + (o))))
+#define	bus_space_write_1(t, h, o, v)					\
+    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)) = (v))))
+#define	bus_space_write_2(t, h, o, v)					\
+    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)) = (v))))
+#define	bus_space_write_4(t, h, o, v)					\
+    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
+#define	bus_space_write_8(t, h, o, v)					\
+    ((void) t, ((void)(*(volatile u_int64_t *)((h) + (o)) = (v))))
+
+extern __inline__ void
+bus_space_read_multi_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a++, c--)
+		*(u_int8_t *)a = bus_space_read_1(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_multi_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 2, c--)
+		*(u_int16_t *)a = bus_space_read_2(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_multi_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 4, c--)
+		*(u_int32_t *)a = bus_space_read_4(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_multi_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 8, c--)
+		*(u_int64_t *)a = bus_space_read_8(t, h, o);
+}
+
+extern __inline__ void
+bus_space_write_multi_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a++, c--)
+		bus_space_write_1(t, h, o, *(u_int8_t *)a);
+}
+
+extern __inline__ void
+bus_space_write_multi_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 2, c--)
+		bus_space_write_2(t, h, o, *(u_int16_t *)a);
+}
+
+extern __inline__ void
+bus_space_write_multi_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 4, c--)
+		bus_space_write_4(t, h, o, *(u_int32_t *)a);
+}
+
+extern __inline__ void
+bus_space_write_multi_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a += 8, c--)
+		bus_space_write_8(t, h, o, *(u_int64_t *)a);
+}
 #endif /* _ATARI_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1997/01/03 22:54:36 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.16.2.1 1997/01/30 05:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,8 +99,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
-#define	MCLSHIFT	10
+#define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY

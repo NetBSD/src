@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 1996/12/26 23:25:03 leo Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.2.1 1997/01/30 05:34:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ intr_init()
  *				- 'ih_fun' must save registers
  *				- 'ih_fun' must do it's own interrupt accounting
  *				- The argument to 'ih_fun' is a standard
- *				  clockframe.
+ *				  interrupt frame.
  *		- ARG_CLOCKRAME
  *			The 'ih_fun' function will be called with
  *			a standard clock-frame instead of 'ih_arg'.

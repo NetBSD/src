@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.1 1996/10/15 00:05:07 mark Exp $ */
+/* $NetBSD: escvar.h,v 1.1.2.1 1997/01/30 05:33:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -149,6 +149,8 @@ struct nexus {
 
 #define ESC_NF_RESET		0x0100	/* Reset this nexus */
 #define ESC_NF_IMMEDIATE	0x0200	/* We are operating from escicmd */
+
+#define ESC_NF_RETRY_SELECT	0x1000	/* Selection needs retrying */
 
 #define ESC_NF_DEBUG		0x8000	/* As it says: DEBUG */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.13 1997/01/12 15:44:45 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.13.2.1 1997/01/30 05:36:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -54,6 +54,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <machine/cpu.h>
@@ -136,6 +137,13 @@ int		rcaller;
 	TAILQ_INSERT_TAIL(&dma_active, req, entries);
 
 	if(dma_active.tqh_first != req) {
+		if (call_func == NULL) {
+			do {
+				tsleep(&dma_active, PRIBIO, "dmalck", 0);
+			} while (*req->lock_stat != DMA_LOCK_GRANT);
+			splx(sps);
+			return(1);
+		}
 		splx(sps);
 		return(0);
 	}
@@ -146,7 +154,7 @@ int		rcaller;
 	 */
 	*lock_stat = DMA_LOCK_GRANT;
 
-	if(rcaller) {
+	if(rcaller || (call_func == NULL)) {
 		/*
 		 * Just return to caller immediately without going
 		 * through 'call_func' first.
@@ -184,12 +192,17 @@ int	*lock_stat;
 	TAILQ_INSERT_HEAD(&dma_free, req, entries);
 
 	if((req = dma_active.tqh_first) != NULL) {
-		/*
-		 * Call next request through softint handler. This avoids
-		 * spl-conflicts.
-		 */
 		*req->lock_stat = DMA_LOCK_GRANT;
-		add_sicallback((si_farg)req->call_func, req->softc, 0);
+
+		if (req->call_func == NULL)
+			wakeup((caddr_t)&dma_active);
+		else {
+		    /*
+		     * Call next request through softint handler. This avoids
+		     * spl-conflicts.
+		     */
+		    add_sicallback((si_farg)req->call_func, req->softc, 0);
+		}
 	}
 	splx(sps);
 	return;

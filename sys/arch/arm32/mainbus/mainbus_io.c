@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.1 1997/01/13 00:37:51 mark Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.1.2.1 1997/01/30 05:29:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -59,13 +59,16 @@ struct bus_space mainbus_bs_tag = {
 	mainbus_alloc,
 	mainbus_free,
 
+	/* barrier */
+	mainbus_barrier,
+
 	/* read (single) */
 	mainbus_r_1,
 	mainbus_r_2,
 	mainbus_r_4,
 	mainbus_r_8,
 
-	/* read multi */
+	/* read multiple */
 	mainbus_rm_1,
 	mainbus_rm_2,
 	mainbus_rm_4,
@@ -83,7 +86,7 @@ struct bus_space mainbus_bs_tag = {
 	mainbus_w_4,
 	mainbus_w_8,
 
-	/* write multi */
+	/* write multiple */
 	mainbus_wm_1,
 	mainbus_wm_2,
 	mainbus_wm_4,
@@ -95,17 +98,23 @@ struct bus_space mainbus_bs_tag = {
 	mainbus_wr_4,
 	mainbus_wr_8,
 
-	/* set multi */
-	/* XXX IMPLEMENT */
+	/* set multiple */
+	mainbus_sm_1,
+	mainbus_sm_2,
+	mainbus_sm_4,
+	mainbus_sm_8,
 
 	/* set region */
-	/* XXX IMPLEMENT */
+	mainbus_sr_1,
+	mainbus_sr_2,
+	mainbus_sr_4,
+	mainbus_sr_8,
 
 	/* copy */
-	/* XXX IMPLEMENT */
-
-	/* barrier */
-	mainbus_barrier
+	mainbus_c_1,
+	mainbus_c_2,
+	mainbus_c_4,
+	mainbus_c_8,
 };
 
 /* bus space functions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 1996/12/20 12:49:45 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.25.2.1 1997/01/30 05:36:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -346,7 +346,7 @@ struct proc	*p;
 	 * the port is enabled.
 	 */
 	if((machineid & ATARI_TT) && !(unit & 1))
-		ym2149_ser2_select();
+		ym2149_ser2(1);
 
 	if (cs->cs_rbuf == NULL) {
 		cs->cs_rbuf = malloc(ZLRB_RING_SIZE * sizeof(int), M_DEVBUF,

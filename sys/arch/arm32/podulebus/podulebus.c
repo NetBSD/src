@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.18.2.1 1997/01/18 04:09:25 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.18.2.2 1997/01/30 05:33:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -68,7 +68,7 @@ extern struct bus_space podulebus_bs_tag;
 /* Declare prototypes */
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t));
-int poduleirqhandler __P((void));
+int poduleirqhandler __P((void *arg));
 u_int poduleread __P((u_int address, int offset, int slottype));
 
 
@@ -569,7 +569,8 @@ podulebusattach(parent, self, aux)
  */
 
 int
-poduleirqhandler()
+poduleirqhandler(arg)
+	void *arg;
 {
 	int loop;
 	irqhandler_t *handler;

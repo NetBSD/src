@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.c,v 1.5 1996/11/23 03:45:52 mark Exp $ */
+/*	$NetBSD: iomd.c,v 1.5.2.1 1997/01/30 05:29:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -57,6 +57,9 @@
 #if NIOMD != 1
 #error Need at 1 IOMD device configured
 #endif
+
+int iomdmatch __P((struct device *parent, void *match, void *aux));
+void iomdattach __P((struct device *parent, struct device *self, void *aux));
 
 /* Declare prototypes */
 
