@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/02/10 02:18:08 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/08/22 19:54:44 pk Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -20,7 +20,7 @@ afterinstall:
 		$(.CURDIR)/tmac.m $(DESTDIR)$(TMACDIR)/tmac.mse
 
 	for f in $(FILES); do \
-		rm -f $(TMACDIR)/mm/$$f; \
+		rm -f $(DESTDIR)$(TMACDIR)/mm/$$f; \
 		install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
 			$(.CURDIR)/mm/$$f $(DESTDIR)$(TMACDIR)/mm/$$f; \
 	done
