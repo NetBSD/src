@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.2 1993/12/23 07:04:31 cgd Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 11:45:40 cgd Exp $
 
 PROG=		vnconfig
-MAN8=		vnconfig.0
+MAN=		vnconfig.8
 
 .include <bsd.prog.mk>
