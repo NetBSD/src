@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.1 1997/03/17 02:55:17 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.2 1997/03/24 06:57:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -113,6 +113,8 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
  *	16-19	RFU
  *	20-27	Shared (global) options
  *	28-31	Instance
+ *
+ * NOTE: If you add a media subtype, always add it to the end!
  */
 
 /*
@@ -127,6 +129,7 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_100_T4	8		/* 100BaseT4 - 4 pair cat 3 */
 #define	IFM_100_VG	9		/* 100VG-AnyLAN */
 #define	IFM_100_T2	10		/* 100BaseT2 */
+#define	IFM_10_EXT	11		/* misc. "external" port */
 
 /*
  * Token ring
@@ -217,6 +220,7 @@ struct ifmedia_description {
 	{ IFM_100_T4,	"100baseT4" },					\
 	{ IFM_100_VG,	"100baseVG" },					\
 	{ IFM_100_T2,	"100baseT2" },					\
+	{ IFM_10_EXT,	"external" },					\
 	{ 0, NULL },							\
 }
 
@@ -232,6 +236,7 @@ struct ifmedia_description {
 	{ IFM_100_T4,	"100T4" },					\
 	{ IFM_100_VG,	"100VG" },					\
 	{ IFM_100_T2,	"100T2" },					\
+	{ IFM_10_EXT,	"ext" },					\
 	{ 0, NULL },							\
 }
 
