@@ -1,5 +1,7 @@
 #!/bin/sh -e
-
+#
+# $NetBSD: mk-toolchain-install-cmds,v 1.2 1998/12/09 00:22:03 ross Exp $
+#
 # XXX this is evil.
 
 if [ "${NETBSDSRCDIR}" = "" ]; then
