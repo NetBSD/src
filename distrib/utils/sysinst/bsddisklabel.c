@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.2 2000/03/14 22:42:48 fvdl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.3 2000/12/22 10:12:12 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 
 /* For the current state of this file blame abs@netbsd.org */
 
-int	make_bsd_partitions __P((void));
+int	make_bsd_partitions (void);
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.

@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.5 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.6 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,10 +56,10 @@
 
 /* prototypes */
 
-static void process __P((struct lookfor, char *));
-static void match __P((char *, struct lookfor *, int));
-static int finddata __P((struct lookfor, char *, struct data *, int *));
-static char *strndup __P((char *, int));
+static void process (struct lookfor, char *);
+static void match (char *, struct lookfor *, int);
+static int finddata (struct lookfor, char *, struct data *, int *);
+static char *strndup (char *, int);
 
 /*
  * Walk the buffer, call match for each line.

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.63 2000/10/11 23:47:55 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.64 2000/12/22 10:12:12 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -256,118 +256,118 @@ EXTERN char fs_mount[MAXFS][STRSIZE];
 /* needed prototypes */
 
 /* Machine dependent functions .... */
-int	md_check_partitions __P((void));
-void	md_cleanup_install __P((void));
-int	md_copy_filesystem __P((void));
-int	md_get_info __P((void));
-int	md_make_bsd_partitions __P((void));
-int	md_post_disklabel __P((void));
-int	md_post_newfs __P((void));
-int	md_pre_disklabel __P((void));
-int	md_pre_update __P((void));
-int	md_update __P((void));
-void	md_init __P((void));
+int	md_check_partitions (void);
+void	md_cleanup_install (void);
+int	md_copy_filesystem (void);
+int	md_get_info (void);
+int	md_make_bsd_partitions (void);
+int	md_post_disklabel (void);
+int	md_post_newfs (void);
+int	md_pre_disklabel (void);
+int	md_pre_update (void);
+int	md_update (void);
+void	md_init (void);
 
 /* from main.c */
-void toplevel __P((void));
+void	toplevel (void);
 
 /* from disks.c */
-int	find_disks __P((void));
-void	disp_cur_fspart __P((int, int));
-int	write_disklabel __P((void));
-int	make_filesystems __P((void));
-int	make_fstab __P((void));
-int	fsck_disks __P((void));
-int	set_swap __P((const char *, partinfo *, int));
+int	find_disks (void);
+void	disp_cur_fspart (int, int);
+int	write_disklabel (void);
+int	make_filesystems (void);
+int	make_fstab (void);
+int	fsck_disks (void);
+int	set_swap (const char *, partinfo *, int);
 
 /* from label.c */
 
-void	emptylabel __P((partinfo *lp));
-int	savenewlabel __P((partinfo *lp, int nparts));
-int	incorelabel __P((const char *dkname, partinfo *lp));
-int	edit_and_check_label __P((partinfo *lp, int nparts,
-				  int rawpart, int bsdpart));
-int	getpartoff __P((msg msg_no, int partstart));
-int	getpartsize __P((msg msg_no, int partstart, int defpartsize));
+void	emptylabel (partinfo *lp);
+int	savenewlabel (partinfo *lp, int nparts);
+int	incorelabel (const char *dkname, partinfo *lp);
+int	edit_and_check_label (partinfo *lp, int nparts,
+				  int rawpart, int bsdpart);
+int	getpartoff (msg msg_no, int partstart);
+int	getpartsize (msg msg_no, int partstart, int defpartsize);
 
 /* from install.c */
-void	do_install __P((void));
+void	do_install (void);
 
 /* from factor.c */
-void	factor __P((long, long *, int, int *));
+void	factor (long, long *, int, int *);
 
 /* from fdisk.c */
-void	get_disk_info __P((char *));
-void	set_disk_info __P((char *));
+void	get_disk_info (char *);
+void	set_disk_info (char *);
 
 /* from geom.c */
-int	get_geom __P((char *, struct disklabel *));
+int	get_geom (char *, struct disklabel *);
 
 /* from net.c */
-int	get_via_ftp __P((void));
-int	get_via_nfs __P((void));
-int	config_network __P((void));
-void	mnt_net_config __P((void));
+int	get_via_ftp (void);
+int	get_via_nfs (void);
+int	config_network (void);
+void	mnt_net_config (void);
 
 /* From run.c */
-int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, msg, const char *, ...));
-void	do_logging __P((void));
-int	do_system __P((const char *));
+int	collect (int kind, char **buffer, const char *name, ...);
+int	run_prog (int, msg, const char *, ...);
+void	do_logging (void);
+int	do_system (const char *);
 
 /* from upgrade.c */
-void	do_upgrade __P((void));
-void	do_reinstall_sets __P((void));
+void	do_upgrade (void);
+void	do_reinstall_sets (void);
 
 /* from util.c */
-int	askyesno __P((int reverse));
+int	askyesno (int reverse);
 int	dir_exists_p(const char *path);
 int	file_exists_p(const char *path);
 int	file_mode_match(const char *path, unsigned int mode);
-int	distribution_sets_exist_p __P((const char *path));
-void	get_ramsize __P((void));
-void	ask_sizemult __P((int));
-void	reask_sizemult __P((int));
-void	run_makedev __P((void));
-int	get_via_floppy __P((void));
-int	get_via_cdrom __P((void));
-int	get_via_localfs __P((void));
-int	get_via_localdir __P((void));
-void	cd_dist_dir __P((char *));
-void	toggle_getit __P((int));
-void	show_cur_distsets __P((void));
-void	make_ramdisk_dir __P((const char *path));
-void	ask_verbose_dist __P((void));
+int	distribution_sets_exist_p (const char *path);
+void	get_ramsize (void);
+void	ask_sizemult (int);
+void	reask_sizemult (int);
+void	run_makedev (void);
+int	get_via_floppy (void);
+int	get_via_cdrom (void);
+int	get_via_localfs (void);
+int	get_via_localdir (void);
+void	cd_dist_dir (char *);
+void	toggle_getit (int);
+void	show_cur_distsets (void);
+void	make_ramdisk_dir (const char *path);
+void	ask_verbose_dist (void);
 int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
-int	sanity_check __P((void));
-int	set_timezone __P((void));
-int	set_root_password __P((void));
+int	sanity_check (void);
+int	set_timezone (void);
+int	set_root_password (void);
 
 /* from target.c */
-int	must_mount_root __P((void));
-const	char* concat_paths __P((const char *prefix, const char *suffix));
-char	*target_realpath __P((const char *path, char *resolved));
-const	char * target_expand __P((const char *pathname));
-void	make_target_dir __P((const char *path));
-void	append_to_target_file __P((const char *path, const char *string));
-void	echo_to_target_file __P(( const char *path, const char *string));
-void	sprintf_to_target_file __P(( const char *path, const char *fmt, ...));
-void	trunc_target_file __P((const char *path));
-const	char* target_prefix __P((void));
-int	target_chdir __P(( const char *path));
-void	target_chdir_or_die __P((const char *dir));
-int	target_already_root __P((void));
-FILE*	target_fopen __P((const char *filename, const char *type));
-int	target_collect_file __P((int kind, char **buffer, char *name));
-int	is_active_rootpart __P((const char *partname));
-int	cp_to_target __P((const char *src, const char *tgt_dst));
-void	dup_file_into_target __P((const char *filename));
-void	mv_within_target_or_die __P((const char *from, const char *to));
-int	cp_within_target __P((const char *frompath, const char *topath));
-int	target_mount __P((const char *fstype, const char *from, const char* on));
-int	target_test __P((unsigned int, const char*));
-int	target_dir_exists_p __P((const char *path));
-int	target_file_exists_p __P((const char *path));
-int	target_symlink_exists_p __P((const char *path));
-void	unwind_mounts __P((void));
+int	must_mount_root (void);
+const	char* concat_paths (const char *prefix, const char *suffix);
+char	*target_realpath (const char *path, char *resolved);
+const	char * target_expand (const char *pathname);
+void	make_target_dir (const char *path);
+void	append_to_target_file (const char *path, const char *string);
+void	echo_to_target_file ( const char *path, const char *string);
+void	sprintf_to_target_file ( const char *path, const char *fmt, ...);
+void	trunc_target_file (const char *path);
+const	char* target_prefix (void);
+int	target_chdir (const char *path);
+void	target_chdir_or_die (const char *dir);
+int	target_already_root (void);
+FILE*	target_fopen (const char *filename, const char *type);
+int	target_collect_file (int kind, char **buffer, char *name);
+int	is_active_rootpart (const char *partname);
+int	cp_to_target (const char *src, const char *tgt_dst);
+void	dup_file_into_target (const char *filename);
+void	mv_within_target_or_die (const char *from, const char *to);
+int	cp_within_target (const char *frompath, const char *topath);
+int	target_mount (const char *fstype, const char *from, const char* on);
+int	target_test (unsigned int, const char*);
+int	target_dir_exists_p (const char *path);
+int	target_file_exists_p (const char *path);
+int	target_symlink_exists_p (const char *path);
+void	unwind_mounts (void);
 

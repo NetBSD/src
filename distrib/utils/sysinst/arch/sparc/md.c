@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2000/12/21 21:42:02 jdc Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2000/12/22 10:12:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,10 +59,10 @@
 #include "menu_defs.h"
 #include "bsddisklabel.c"
 
-static int move_aout_libs __P((void));
-static int handle_aout_libs(const char *dir, int op, const void *arg);
-static int is_aout_shared_lib __P((const char *));
-static void handle_aout_x_libs __P((const char *, const char *));
+static int move_aout_libs (void);
+static int handle_aout_libs (const char *dir, int op, const void *arg);
+static int is_aout_shared_lib (const char *);
+static void handle_aout_x_libs (const char *, const char *);
 
 int
 md_get_info(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.66 2000/12/21 21:42:02 jdc Exp $	*/
+/*	$NetBSD: net.c,v 1.67 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,27 +62,27 @@ int network_up = 0;
 
 /* URL encode unsafe characters.  */
 
-static char *url_encode __P((char *dst, const char *src, size_t len,
+static char *url_encode (char *dst, const char *src, size_t len,
 				const char *safe_chars,
-				int encode_leading_slash));
+				int encode_leading_slash);
 
 /* Get the list of network interfaces. */
 
-static void get_ifconfig_info __P((void));
-static void get_ifinterface_info __P((void));
+static void get_ifconfig_info (void);
+static void get_ifinterface_info (void);
 
 static void write_etc_hosts(FILE *f);
 
 #define DHCLIENT_EX "/sbin/dhclient"
 #include <signal.h>
-static int config_dhcp __P((char *));
-static void get_command_out __P((char *, int, char *, char *));
-static void get_dhcp_value __P(( char *, char *));
+static int config_dhcp (char *);
+static void get_command_out (char *, int, char *, char *);
+static void get_dhcp_value (char *, char *);
 
 #ifdef INET6
-static int is_v6kernel __P((void));
-static void init_v6kernel __P((int));
-static int get_v6wait __P((void));
+static int is_v6kernel (void);
+static void init_v6kernel (int);
+static int get_v6wait (void);
 #endif
 
 /*

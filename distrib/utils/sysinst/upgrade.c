@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.27 2000/12/21 21:42:03 jdc Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.28 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,11 +48,11 @@
 /*
  * local prototypes
  */
-void 	check_prereqs __P((void));
-int	save_etc __P((void));
-int	merge_etc __P((void));
-int	save_X __P((void));
-int	merge_X __P((void));
+void 	check_prereqs (void);
+int	save_etc (void);
+int	merge_etc (void);
+int	save_X (void);
+int	merge_X (void);
 
 /*
  * Do the system upgrade.

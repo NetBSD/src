@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.29 2000/12/04 22:47:02 wiz Exp $	*/
+/*	$NetBSD: target.c,v 1.30 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.29 2000/12/04 22:47:02 wiz Exp $");
+__RCSID("$NetBSD: target.c,v 1.30 2000/12/22 10:12:13 mrg Exp $");
 #endif
 
 /*
@@ -107,22 +107,22 @@ __RCSID("$NetBSD: target.c,v 1.29 2000/12/04 22:47:02 wiz Exp $");
 /*
  * local  prototypes 
  */
-static const char*	get_rootdev __P((void));
-static const char* mounted_rootpart __P((void));
-int target_on_current_disk __P((void));
-int must_mount_root __P((void));
+static const char* get_rootdev (void);
+static const char* mounted_rootpart (void);
+int target_on_current_disk (void);
+int must_mount_root (void);
 
-static void make_prefixed_dir __P((const char *prefix, const char *path));
-static int do_target_chdir __P((const char *dir, int flag));
+static void make_prefixed_dir (const char *prefix, const char *path);
+static int do_target_chdir (const char *dir, int flag);
 int	target_test(unsigned int mode, const char *path);
-int	target_test_dir __P((const char *path));	/* deprecated */
-int	target_test_file __P((const char *path));	/* deprecated */
-int	target_test_symlink __P((const char *path));	/* deprecated */
+int	target_test_dir (const char *path);	/* deprecated */
+int	target_test_file (const char *path);	/* deprecated */
+int	target_test_symlink (const char *path);	/* deprecated */
 
 void backtowin(void);
 
-void unwind_mounts __P((void));
-int mount_with_unwind(const char *fstype, const char *from, const char *on);
+void unwind_mounts (void);
+int mount_with_unwind (const char *fstype, const char *from, const char *on);
 
 /* Record a mount for later unwinding of target mounts. */
 struct unwind_mount {

@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.17 2000/10/17 19:44:28 fvdl Exp $	*/
+/*	$NetBSD: label.c,v 1.18 2000/12/22 10:12:12 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.17 2000/10/17 19:44:28 fvdl Exp $");
+__RCSID("$NetBSD: label.c,v 1.18 2000/12/22 10:12:12 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: label.c,v 1.17 2000/10/17 19:44:28 fvdl Exp $");
 /*
  * local prototypes
  */
-static int boringpart __P((partinfo *lp, int i, int rawpart, int bsdpart));
+static int boringpart (partinfo *lp, int i, int rawpart, int bsdpart);
 
-int	checklabel __P((partinfo *lp, int nparts, int rawpart, int bsdpart,
-		    int *bad1, int *bad2));
-void	translate_partinfo __P((partinfo *lp, struct partition *pp));
-void	atofsb __P((const char *, int *, int *));
+int	checklabel (partinfo *lp, int nparts, int rawpart, int bsdpart,
+		    int *bad1, int *bad2);
+void	translate_partinfo (partinfo *lp, struct partition *pp);
+void	atofsb (const char *, int *, int *);
 
 
 /*
