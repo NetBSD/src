@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.14 1993/07/12 12:07:46 mycroft Exp $
+#	$Id: TRINITY,v 1.15 1993/07/17 16:54:16 mycroft Exp $
 #
 
 machine		"i386"
@@ -9,12 +9,12 @@ cpu		"I386_CPU"
 ident		TRINITY
 timezone	5 dst
 maxusers	16
-options		INET,NFSCLIENT
+options		INET,NFSCLIENT,NFSSERVER
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"COMPAT_NOMID"
 options		XSERVER,UCONSOLE
-options		KERNFS
+options		PCFS,KERNFS
 options		SCSI
 options		DDB
 
@@ -24,6 +24,8 @@ controller	isa0
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 disk		sd0	at aha0 flags 0 drive ?
 disk		sd1	at aha0 flags 0 drive ?
+disk		sd2	at aha0 flags 0 drive ?
+disk		sd3	at aha0 flags 0 drive ?
 tape		st0	at aha0 flags 1 drive ?
 tape		st1	at aha0 flags 1 drive ?
 
