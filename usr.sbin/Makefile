@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.29 1994/02/18 03:02:09 cgd Exp $
+#	$Id: Makefile,v 1.30 1994/03/24 18:42:49 cgd Exp $
 
 # not yet done: catman
 
@@ -7,7 +7,7 @@ SUBDIR=	accton amd arp chown chroot config config.new cron dev_mkdb \
 	diskpart edquota gettable htable inetd iostat kgmon \
 	kvm_mkdb lpr mrouted mtree named portmap pppd pwd_mkdb quot quotaon \
 	rarpd rbootd repquota rmt rpc.bootparamd rwhod \
-	sendmail sliplogin slstats spray swapinfo \
+	sa sendmail sliplogin slstats spray swapinfo \
 	syslogd tcpdump timed traceroute trpt trsp update vipw vnconfig \
 	ypbind yppoll ypset
 
