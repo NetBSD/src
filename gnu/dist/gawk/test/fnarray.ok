@@ -1,0 +1,3 @@
+gawk: fnarray.awk:5:   Num = foo[c]
+gawk: fnarray.awk:5:              ^ use of non-array as array
+EXIT CODE: 1
