@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.3 1993/10/10 08:47:13 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.4 1993/10/12 23:21:46 mycroft Exp $
  */
 
 /*
@@ -197,12 +197,7 @@ copyfault:
 		break;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
-		astoff();
 		cnt.v_soft++;
-		if ((p->p_flag & (SOWEUPC|SPROFIL)) == (SOWEUPC|SPROFIL)) {
-			addupc(frame.tf_eip, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
-		}
 		goto out;
 
 	case T_DNA|T_USER:
