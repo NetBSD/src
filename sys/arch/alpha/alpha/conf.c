@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1997/03/18 04:52:12 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1997/03/18 05:19:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -144,6 +144,7 @@ cdev_decl(wd);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
+#include "se.h"
 
 struct cdevsw	cdevsw[] =
 {
