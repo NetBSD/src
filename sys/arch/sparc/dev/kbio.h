@@ -42,7 +42,7 @@
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
- * $Id: kbio.h,v 1.1 1993/10/02 10:22:42 deraadt Exp $
+ * $Id: kbio.h,v 1.2 1994/02/27 09:09:52 deraadt Exp $
  */
 
 /*
@@ -83,5 +83,6 @@ struct kiockey {
 #define	KIOCCMD		_IOW('k', 8, int)	/* X uses this to ring bell */
 #define	KIOCTYPE	_IOR('k', 9, int)	/* get keyboard type */
 #define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
+#define KIOCLAYOUT	_IOR('k', 20, int)	/* get keyboard layout */
 
 #define	TR_UNTRANS_EVENT	3
