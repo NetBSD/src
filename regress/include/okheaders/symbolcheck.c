@@ -57,7 +57,6 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/filio.h>
-#include <sys/float_ieee754.h>
 #include <sys/gmon.h>
 #include <sys/hash.h>
 #include <sys/inttypes.h>
@@ -244,7 +243,9 @@
 #include <hesiod.h>
 #include <histedit.h>
 #include <iconv.h>
+#ifndef __vax__
 #include <ieeefp.h>
+#endif
 #include <ifaddrs.h>
 #include <inttypes.h>
 #include <iso646.h>
