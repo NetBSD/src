@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.62 2003/04/12 10:33:17 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.63 2003/04/17 09:32:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.62 2003/04/12 10:33:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.63 2003/04/17 09:32:43 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -690,7 +690,7 @@ ffs_valloc(v)
 	 * in a same cg without intervening by files.
 	 */
 	if ((mode & IFMT) == IFDIR) {
-		if (fs->fs_contigdirs[cg] < 65535)
+		if (fs->fs_contigdirs[cg] < 255)
 			fs->fs_contigdirs[cg]++;
 	} else {
 		if (fs->fs_contigdirs[cg] > 0)
