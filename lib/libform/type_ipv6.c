@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.4 2001/05/11 13:59:43 blymn Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.5 2001/05/12 14:46:24 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <ctype.h>
 #include <netdb.h>
+#include <string.h> 
 #include "form.h"
 #include "internals.h"
 
