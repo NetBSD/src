@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.24 2003/01/18 11:29:04 thorpej Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.25 2004/12/30 05:08:37 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.24 2003/01/18 11:29:04 thorpej Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.25 2004/12/30 05:08:37 christos Exp $");
 #endif
 #endif
 
@@ -109,14 +109,14 @@ clnt_raw_create(prog, vers)
 
 	mutex_lock(&clntraw_lock);
 	if (clp == NULL) {
-		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
+		clp = calloc((size_t)1, sizeof (*clp));
 		if (clp == NULL) {
 			mutex_unlock(&clntraw_lock);
 			return NULL;
 		}
 		if (__rpc_rawcombuf == NULL)
 			__rpc_rawcombuf =
-			    (char *)calloc(UDPMSGSIZE, sizeof (char));
+			    calloc((size_t)UDPMSGSIZE, sizeof (char));
 		clp->_raw_buf = __rpc_rawcombuf;
 		clntraw_private = clp;
 	}
