@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.42 2002/08/29 17:17:54 he Exp $
+# $NetBSD: mi,v 1.253.2.43 2002/09/11 00:07:41 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -154,7 +154,6 @@
 ./usr/share/man/cat1/jot.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
-./usr/share/man/cat1/kf.0
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
@@ -1173,7 +1172,6 @@
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0
 ./usr/share/man/cat8/kerberos.0
-./usr/share/man/cat8/kfd.0
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/ktutil.0
@@ -1590,7 +1588,6 @@
 ./usr/share/man/man1/jot.1
 ./usr/share/man/man1/kdestroy.1
 ./usr/share/man/man1/kdump.1
-./usr/share/man/man1/kf.1
 ./usr/share/man/man1/kill.1
 ./usr/share/man/man1/kinit.1
 ./usr/share/man/man1/klist.1
@@ -2609,7 +2606,6 @@
 ./usr/share/man/man8/kadmind.8
 ./usr/share/man/man8/kdc.8
 ./usr/share/man/man8/kerberos.8
-./usr/share/man/man8/kfd.8
 ./usr/share/man/man8/kpasswdd.8
 ./usr/share/man/man8/kstash.8
 ./usr/share/man/man8/ktutil.8

@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.13.2.7 2001/10/25 18:05:32 he Exp $
+# $NetBSD: obsolete.mi,v 1.13.2.8 2002/09/11 00:07:42 itojun Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/i386
 /usr/share/man/cat1/i386/cursor.0
@@ -10,6 +10,7 @@
 /usr/share/man/cat1/i386/scon.0
 /usr/share/man/cat1/i386/vt220keys.0
 /usr/share/man/cat1/i386/vttest.0
+/usr/share/man/cat1/kf.0
 /usr/share/man/cat1/pim6stat.0
 /usr/share/man/cat1/pstat.0
 /usr/share/man/cat1/rcorder.0
@@ -57,6 +58,7 @@
 /usr/share/man/cat8/i386/reboot.0
 /usr/share/man/cat8/i386/reboot_i386.0
 /usr/share/man/cat8/i386/vgaio.0
+/usr/share/man/cat8/kfd.0
 /usr/share/man/cat8/mtrace6.0
 /usr/share/man/cat8/newlfs.0
 /usr/share/man/cat8/nfsiod.0
@@ -85,6 +87,7 @@
 /usr/share/man/man1/i386/scon.1
 /usr/share/man/man1/i386/vt220keys.1
 /usr/share/man/man1/i386/vttest.1
+/usr/share/man/man1/kf.1
 /usr/share/man/man1/pim6stat.1
 /usr/share/man/man1/pstat.1
 /usr/share/man/man1/rcorder.1
@@ -131,6 +134,7 @@
 /usr/share/man/man8/i386/reboot.8
 /usr/share/man/man8/i386/reboot_i386.8
 /usr/share/man/man8/i386/vgaio.8
+/usr/share/man/man8/kfd.8
 /usr/share/man/man8/mtrace6.8
 /usr/share/man/man8/newlfs.8
 /usr/share/man/man8/nfsiod.8
