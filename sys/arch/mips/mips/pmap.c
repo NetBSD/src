@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1998/11/29 03:18:32 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1998/12/05 07:50:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 1998/11/29 03:18:32 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 1998/12/05 07:50:12 jonathan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -251,12 +251,26 @@ pmap_bootstrap()
 
 	/*
 	 * Allocate a PTE table for the kernel.
-	 * The '1024' comes from PAGER_MAP_SIZE in vm_pager_init().
-	 * This should be kept in sync.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
 	Sysmapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
-		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 1024 + 256;
+		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG;
+	/*
+	 * Allocate PTE space space for u-areas (XXX)
+	 */
+	Sysmapsize += (maxproc * UPAGES);
+
+	/*
+	 * Allocate kernel virtual-address space for swap maps.
+	 * (This should be kept in sync with vm).
+	 */
+#if defined(UVM)
+	Sysmapsize += 2048;
+#else
+	/* the '1024' comes from PAGER_MAP_SIZE in vm_pager_init(). */
+	Sysmapsize += 1024;
+#endif
+
 #ifdef SYSVSHM
 	Sysmapsize += shminfo.shmall;
 #endif
