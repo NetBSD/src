@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.269 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.270 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -610,3 +610,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		/etc/locate.conf.  [itohy 20040206]
 	kernel: add underlying support needed to support multiple mbuf cluster
 		sizes.  [matt 20040209]
+	sh3:	switch to gcc3. [uwe 20040222]
