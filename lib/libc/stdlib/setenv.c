@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.23 2003/08/07 16:43:44 agc Exp $	*/
+/*	$NetBSD: setenv.c,v 1.24 2005/02/17 02:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.23 2003/08/07 16:43:44 agc Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.24 2005/02/17 02:17:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ setenv(name, value, rewrite)
 	const char *value;
 	int rewrite;
 {
-	static int alloced;			/* if allocated space before */
+	static char **saveenv;	/* copy of previously allocated space */
 	char *c;
 	const char *cc;
 	size_t l_value;
@@ -83,50 +83,45 @@ setenv(name, value, rewrite)
 	rwlock_wrlock(&__environ_lock);
 	/* find if already exists */
 	if ((c = __findenv(name, &offset)) != NULL) {
-		if (!rewrite) {
-			rwlock_unlock(&__environ_lock);
-			return (0);
-		}
+		if (!rewrite)
+			goto good;
 		if (strlen(c) >= l_value) {	/* old larger; copy over */
-			while ((*c++ = *value++) != '\0');
-			rwlock_unlock(&__environ_lock);
-			return (0);
+			while ((*c++ = *value++) != '\0')
+				continue;
+			goto good;
 		}
 	} else {					/* create new slot */
-		int cnt;
-		char **p;
+		size_t cnt, siz;
 
-		for (p = environ, cnt = 0; *p; ++p, ++cnt);
-		if (alloced) {			/* just increase size */
-			environ = realloc(environ,
-			    (size_t)(sizeof(char *) * (cnt + 2)));
-			if (!environ) {
-				rwlock_unlock(&__environ_lock);
-				return (-1);
-			}
+		for (cnt = 0; *environ[cnt]; ++cnt)
+			continue;
+		siz = (size_t)(sizeof(char *) * (cnt + 2));
+		if (saveenv == environ) {		/* just increase size */
+			if ((saveenv = realloc(environ, siz)) == NULL)
+				goto bad;
 		}
-		else {				/* get new space */
-			alloced = 1;		/* copy old entries into it */
-			p = malloc((size_t)(sizeof(char *) * (cnt + 2)));
-			if (!p) {
-				rwlock_unlock(&__environ_lock);
-				return (-1);
-			}
-			memcpy(p, environ, cnt * sizeof(char *));
-			environ = p;
+		else {					/* get new space */
+			if ((saveenv = malloc(siz)) == NULL)
+				goto bad;
+			(void)memcpy(saveenv, environ, cnt * sizeof(char *));
 		}
+		environ = saveenv;
 		environ[cnt + 1] = NULL;
 		offset = cnt;
 	}
-	for (cc = name; *cc && *cc != '='; ++cc)/* no `=' in name */
+	for (cc = name; *cc && *cc != '='; ++cc)	/* no `=' in name */
 		continue;
 	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(cc - name) + l_value + 2)))) {
-		rwlock_unlock(&__environ_lock);
-		return (-1);
-	}
-	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c);
-	for (*c++ = '='; (*c++ = *value++) != '\0'; );
+	    malloc((size_t)((int)(cc - name) + l_value + 2))))
+		goto bad;
+	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c)
+		continue;
+	for (*c++ = '='; (*c++ = *value++) != '\0'; )
+		continue;
+good:
 	rwlock_unlock(&__environ_lock);
-	return (0);
+	return 0;
+bad:
+	rwlock_unlock(&__environ_lock);
+	return -1;
 }
