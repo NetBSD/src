@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.5 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.6 2000/03/16 18:08:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -100,9 +100,19 @@
 void
 layerfs_init()
 {
-
 #ifdef LAYERFS_DIAGNOSTIC
 	printf("layerfs_init\n");		/* printed during system boot */
+#endif
+}
+
+/*
+ * Free global resources of layerfs.
+ */
+void
+layerfs_done()
+{
+#ifdef LAYERFS_DIAGNOSTIC
+	printf("layerfs_done\n");		/* printed on layerfs detach */
 #endif
 }
 

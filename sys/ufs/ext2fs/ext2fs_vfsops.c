@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.33 2000/01/31 11:34:55 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.34 2000/03/16 18:08:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -100,6 +100,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_fhtovp,
 	ext2fs_vptofh,
 	ext2fs_init,
+	ext2fs_done,
 	ext2fs_sysctl,
 	ext2fs_mountroot,
 	ufs_check_export,
@@ -123,6 +124,12 @@ ext2fs_init()
 	    M_EXT2FSNODE);
 }
 
+void
+ext2fs_done()
+{
+	ufs_done();
+	pool_destroy(&ext2fs_inode_pool);
+}
 
 /*
  * Called by main() when ext2fs is going to be mounted as root.
