@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.27 2001/04/06 14:18:56 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.28 2001/05/26 01:03:07 wiz Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -24,11 +24,13 @@
 /usr/libexec/uucp/uuchk
 /usr/sbin/dig
 /usr/sbin/dnsquery
+/usr/sbin/eaytest
 /usr/sbin/flush
 /usr/sbin/gettable
 /usr/sbin/gifconfig
 /usr/sbin/host
 /usr/sbin/htable
+/usr/sbin/kmpstat
 /usr/sbin/lmtp
 /usr/sbin/mbrlabel
 /usr/sbin/nfsiod
