@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.8 2003/12/18 12:19:49 uwe Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.9 2003/12/23 04:59:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,8 +150,8 @@ ElfLoader::load()
 //   ELF header
 //   section header
 //   shstrtab
-//   strtab
 //   symtab
+//   strtab
 //
 size_t
 ElfLoader::symbol_block_size()
@@ -217,18 +217,18 @@ ElfLoader::symbol_block_size()
 	}
 
 	// set Section Headers for symbol/string table
-	_sym_blk.shstr->sh_offset = shstrtab_offset + shstrsize;
-	_sym_blk.shsym->sh_offset = shstrtab_offset + shstrsize +
-	    ROUND4(_sym_blk.shstr->sh_size);
+	_sym_blk.shsym->sh_offset = shstrtab_offset + shstrsize;
+	_sym_blk.shstr->sh_offset = shstrtab_offset + shstrsize +
+	    ROUND4(_sym_blk.shsym->sh_size);
 	_sym_blk.enable = TRUE;
 
-	DPRINTF((TEXT("+[(symbol block: header %d string %d symbol %d byte)"),
-	    _sym_blk.header_size,_sym_blk.shstr->sh_size, 
-	    _sym_blk.shsym->sh_size));
+	DPRINTF((TEXT("+[(symbol block: header %d symbol %d string %d byte)"),
+	    _sym_blk.header_size,_sym_blk.shsym->sh_size,
+	    _sym_blk.shstr->sh_size));
 
 	// return total amount of symbol block
-	return (_sym_blk.header_size + ROUND4(_sym_blk.shstr->sh_size) +
-	    _sym_blk.shsym->sh_size);
+	return (_sym_blk.header_size + ROUND4(_sym_blk.shsym->sh_size) +
+	    _sym_blk.shstr->sh_size);
 }
 
 void
@@ -243,14 +243,14 @@ ElfLoader::load_symbol_block(vaddr_t kv)
 	_load_memory(kv, _sym_blk.header_size, _sym_blk.header);
 	kv += _sym_blk.header_size;
 
-	// load string table
-	sz = _sym_blk.shstr->sh_size;
-	_load_segment(kv, sz, _sym_blk.stroff, sz);
-	kv += ROUND4(sz);
-
 	// load symbol table
 	sz = _sym_blk.shsym->sh_size;
 	_load_segment(kv, sz, _sym_blk.symoff, sz);
+	kv += ROUND4(sz);
+
+	// load string table
+	sz = _sym_blk.shstr->sh_size;
+	_load_segment(kv, sz, _sym_blk.stroff, sz);
 }
 
 BOOL
