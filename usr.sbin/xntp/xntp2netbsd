@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.8 1997/07/07 19:12:29 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.9 1997/07/08 05:07:47 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -1565,7 +1565,7 @@ discarded due
 to high stratum and/or failed sanity checks; 
 .Cd "x"
 designated
-falsticker by the intersection algorithm; 
+falseticker by the intersection algorithm; 
 .Cd "."
 culled from
 the end of the candidate list; 
