@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.37 1997/10/20 22:08:46 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.38 1997/10/22 01:45:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -356,6 +356,14 @@ diragain:
 			    error = EINVAL;
 			}
 			return (error);
+		    }
+		    /*
+		     * Just return if we hit EOF right away with this
+		     * block.
+		     */
+		    if (ndp->dc_blkcookie == np->n_direofoffset) {
+			brelse(bp);
+			return (0);
 		    }
 		}
 
