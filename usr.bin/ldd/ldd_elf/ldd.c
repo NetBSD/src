@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.7 1999/11/07 00:30:18 mycroft Exp $	*/
+/*	$NetBSD: ldd.c,v 1.8 1999/12/13 09:10:16 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -61,6 +61,7 @@ int _rtld_pagesz = 8192;	/* XXX fake variable page size */
 
 Search_Path *_rtld_default_paths;
 Search_Path *_rtld_paths;
+Library_Xform *_rtld_xforms;
 
 static void print_needed(Obj_Entry *);
 
@@ -80,6 +81,8 @@ main(
     if (_rtld_trust) {
 	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
     }
+
+    _rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
 
     for (argc--, argv++; argc != 0; argc--, argv++) {
 	int fd = open(*argv, O_RDONLY);
@@ -103,7 +106,7 @@ main(
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
 
-	(void) _rtld_load_needed_objects(_rtld_objmain);
+	(void) _rtld_load_needed_objects(_rtld_objmain, true);
 
 	printf("%s:\n", _rtld_objmain->path);
 	print_needed(_rtld_objmain);
