@@ -1,17 +1,13 @@
-#	$NetBSD: README,v 1.2 1994/06/29 06:46:43 cgd Exp $
+#	$NetBSD: README,v 1.3 1999/03/15 00:46:47 perseant Exp $
 
 #	@(#)README	8.1 (Berkeley) 6/11/93
 
-The file system is reasonably stable, but incomplete.  There are
-places where cleaning performance can be improved dramatically (see
-comments in lfs_syscalls.c).  For details on the implementation,
-performance and why garbage collection always wins, see Dr. Margo
-Seltzer's thesis available for anonymous ftp from toe.cs.berkeley.edu,
-in the directory pub/personal/margo/thesis.ps.Z, or the January 1993
-USENIX paper.
+The file system is reasonably stable...I think.
 
-Missing Functionality:
-	Multiple block sizes and/or fragments are not yet implemented.
+For details on the implementation, performance and why garbage
+collection always wins, see Dr. Margo Seltzer's thesis available for
+anonymous ftp from toe.cs.berkeley.edu, in the directory
+pub/personal/margo/thesis.ps.Z, or the January 1993 USENIX paper.
 
 ----------
 The disk is laid out in segments.  The first segment starts 8K into the
