@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)popen.c	5.15 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: popen.c,v 1.2 1993/07/30 08:23:01 mycroft Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.3 1993/08/21 00:11:47 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -52,15 +52,17 @@ static char rcsid[] = "$Id: popen.c,v 1.2 1993/07/30 08:23:01 mycroft Exp $";
 static pid_t *pids;
 
 FILE *
-popen(program, type)
-	const char *program;
+popen(command, type)
+	const char *command;
 	const char *type;
 {
 	FILE *iop;
 	int pdes[2], fds, pid;
 
-	if (*type != 'r' && *type != 'w' || type[1])
+	if (*type != 'r' && *type != 'w' || type[1]) {
+		errno = EINVAL;
 		return (NULL);
+	}
 
 	if (pids == NULL) {
 		if ((fds = getdtablesize()) <= 0)
@@ -91,7 +93,7 @@ popen(program, type)
 			}
 			(void) close(pdes[1]);
 		}
-		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
+		execl(_PATH_BSHELL, "sh", "-c", command, (char *) 0);
 		_exit(127);
 		/* NOTREACHED */
 	}
@@ -113,7 +115,7 @@ pclose(iop)
 {
 	register int fdes;
 	int omask;
-	union wait pstat;
+	int pstat;
 	pid_t pid;
 
 	/*
@@ -126,9 +128,9 @@ pclose(iop)
 	(void) fclose(iop);
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
 	do {
-		pid = waitpid(pids[fdes], (int *) &pstat, 0);
+		pid = waitpid(pids[fdes], &pstat, 0);
 	} while (pid == -1 && errno == EINTR);
 	(void) sigsetmask(omask);
 	pids[fdes] = 0;
-	return (pid == -1 ? -1 : pstat.w_status);
+	return (pid == -1 ? -1 : pstat);
 }
