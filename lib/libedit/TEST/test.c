@@ -1,3 +1,5 @@
+/*	$NetBSD	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*

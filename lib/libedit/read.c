@@ -1,3 +1,5 @@
+/*	$NetBSD: read.c,v 1.2 1997/01/11 06:48:06 lukem Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,9 +37,13 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
-
+#else
+static char rcsid[] = "$NetBSD: read.c,v 1.2 1997/01/11 06:48:06 lukem Exp $";
+#endif
 #endif /* not lint && not SCCSID */
+
 /*
  * read.c: Clean this junk up! This is horrible code.
  *	   Terminal read functions

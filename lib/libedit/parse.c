@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.c,v 1.4 1997/01/11 06:48:02 lukem Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: parse.c,v 1.4 1997/01/11 06:48:02 lukem Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*
@@ -45,8 +51,10 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
  *
  *	bind
  *	echotc
- *	settc
  *	gettc
+ *	history
+ *	settc
+ *	setty
  */
 #include "sys.h"
 #include "el.h"
