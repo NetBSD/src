@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.60 2002/02/06 16:26:12 pk Exp $
+.\"	$NetBSD: make.1,v 1.61 2002/02/07 03:15:11 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -554,7 +554,7 @@ Each modifier begins with a colon and one of the following
 special characters.
 The colon may be escaped with a backslash
 .Pq Ql \e .
-.Bl -tag -width Cm E\&
+.Bl -tag -width EEE
 .It Cm E
 Replaces each word in the variable with its suffix.
 .It Cm H
@@ -924,7 +924,7 @@ It is of higher precedence than
 The value of
 .Ar expression
 may be any of the following:
-.Bl -tag -width Ic defined
+.Bl -tag -width defined
 .It Ic defined
 Takes a variable name as an argument and evaluates to true if the variable
 has been defined.
@@ -1029,7 +1029,7 @@ Comments begin with a hash
 character, anywhere but in a shell
 command line, and continue to the end of the line.
 .Sh SPECIAL SOURCES
-.Bl -tag -width Ic .IGNORE
+.Bl -tag -width .IGNOREx
 .It Ic .IGNORE
 Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
@@ -1093,7 +1093,7 @@ detected and targets that form loops will be silently ignored.
 .Sh SPECIAL TARGETS
 Special targets may not be included with other targets, i.e. they must be
 the only target specified.
-.Bl -tag -width Ic .BEGIN
+.Bl -tag -width .BEGINx
 .It Ic .BEGIN
 Any command lines attached to this target are executed before anything
 else is done.

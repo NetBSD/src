@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.31 2002/02/02 01:30:39 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.32 2002/02/07 03:15:12 ross Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -245,7 +245,7 @@ extracts each package's "packing list"
 into a special staging directory in /tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
-.Bl -enum -indent indent
+.Bl -enum -offset indent
 .It
 A check is made to determine if the package or another version of it
 is already recorded as installed.
