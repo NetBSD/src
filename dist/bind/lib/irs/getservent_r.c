@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.1.1.1.10.1 2002/06/28 11:49:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getservent_r.c,v 8.3 1999/01/08 19:24:36 vixie Exp";
+static const char rcsid[] = "Id: getservent_r.c,v 8.5 2001/11/01 08:02:16 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -28,6 +28,7 @@ static const char rcsid[] = "Id: getservent_r.c,v 8.3 1999/01/08 19:24:36 vixie 
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/param.h>
@@ -42,22 +43,42 @@ SERV_R_RETURN
 getservbyname_r(const char *name, const char *proto,
 		struct servent *sptr, SERV_R_ARGS) {
 	struct servent *se = getservbyname(name, proto);
+#ifdef SERV_R_SETANSWER
+	int n = 0;
+	
+	if (se == NULL || (n = copy_servent(se, sptr, SERV_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = sptr;
 
+	return (n);
+#else
 	if (se == NULL)
 		return (SERV_R_BAD);
 
 	return (copy_servent(se, sptr, SERV_R_COPY));
+#endif
 }
 
 SERV_R_RETURN
 getservbyport_r(int port, const char *proto,
 		struct servent *sptr, SERV_R_ARGS) {
 	struct servent *se = getservbyport(port, proto);
+#ifdef SERV_R_SETANSWER
+	int n = 0;
+	
+	if (se == NULL || (n = copy_servent(se, sptr, SERV_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = sptr;
 
+	return (n);
+#else
 	if (se == NULL)
 		return (SERV_R_BAD);
 
 	return (copy_servent(se, sptr, SERV_R_COPY));
+#endif
 }
 
 /*
@@ -69,11 +90,21 @@ getservbyport_r(int port, const char *proto,
 SERV_R_RETURN
 getservent_r(struct servent *sptr, SERV_R_ARGS) {
 	struct servent *se = getservent();
+#ifdef SERV_R_SETANSWER
+	int n = 0;
+	
+	if (se == NULL || (n = copy_servent(se, sptr, SERV_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = sptr;
 
+	return (n);
+#else
 	if (se == NULL)
 		return (SERV_R_BAD);
 
 	return (copy_servent(se, sptr, SERV_R_COPY));
+#endif
 }
 
 SERV_R_SET_RETURN
@@ -121,7 +152,7 @@ copy_servent(struct servent *se, struct servent *sptr, SERV_R_COPY_ARGS) {
 	len += strlen(se->s_proto) + 1;
 	len += numptr * sizeof(char*);
 	
-	if (len > buflen) {
+	if (len > (int)buflen) {
 		errno = ERANGE;
 		return (SERV_R_BAD);
 	}
@@ -203,6 +234,6 @@ copy_servent(struct servent *se, struct servent *sptr, SERV_R_COPY_ARGS) {
 }
 #endif /* !SERVENT_DATA */
 #else /*SERV_R_RETURN */
-	static int getservent_r_unknown_systemm = 0;
+	static int getservent_r_unknown_system = 0;
 #endif /*SERV_R_RETURN */
 #endif /* !defined(_REENTRANT) || !defined(DO_PTHREADS) */
