@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.2 1999/02/12 11:32:50 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.3 1999/02/12 15:49:43 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -303,9 +303,10 @@ pcdisplay_mapchar(id, uni, index)
 {
 	int i;
 
-	if (uni < 128)
-		return (uni);
-	else if ((uni < 256) && (isomappings[uni - 128] != NOTPRINTABLE)) {
+	if (uni < 128) {
+		*index = uni;
+		return (5);
+	} else if ((uni < 256) && (isomappings[uni - 128] != NOTPRINTABLE)) {
 		*index = isomappings[uni - 128];
 		return (5);
 	}
