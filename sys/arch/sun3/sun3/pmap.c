@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.32 1994/07/14 01:24:19 gwr Exp $
+ *	$Id: pmap.c,v 1.33 1994/07/18 15:07:18 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1951,8 +1951,11 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
 	    panic("pmap_enter_kernel: MMU has bad pmeg %x", sme);
 #endif
 	/* Don't try to unlink if in DVMA map. */
-	if (va >= VM_MAX_KERNEL_ADDRESS)
-	    goto add_pte;
+	if (va >= VM_MAX_KERNEL_ADDRESS) {
+		/* also make sure it is non-cached :) *
+		pte_proto |= PG_NC;
+		goto add_pte;
+	}
 	/* Make sure we own it. */
 	if (pmegp->pmeg_owner != kernel_pmap)
 	    panic("pmap_enter_kernel: found unknown pmeg");
@@ -2636,12 +2639,10 @@ void pmap_zero_page(pa)
 	printf("pmap_zero_page: %x\n", pa);
 #endif
     PMAP_LOCK();
-    PMAP_DB_LOCK();
     pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| PA_PGNUM(pa);
     set_pte(tmp_vpages[0], pte);
     bzero((char *) tmp_vpages[0], NBPG);
     set_pte(tmp_vpages[0], PG_INVAL);
-    PMAP_DB_UNLK();
     PMAP_UNLOCK();
 }
 
