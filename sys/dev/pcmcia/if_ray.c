@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.12 2000/02/07 09:36:27 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.13 2000/02/22 08:23:22 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1154,7 +1154,8 @@ ray_intr_start(sc)
 		pktlen = m0->m_pkthdr.len;
 		if (pktlen > ETHER_MAX_LEN - ETHER_CRC_LEN) {
 			RAY_DPRINTF((
-			    "%s: mbuf too long %d\n", ifp->if_xname, pktlen));
+			    "%s: mbuf too long %ld\n", ifp->if_xname,
+			    (u_long)pktlen));
 			ifp->if_oerrors++;
 			m_freem(m0);
 			continue;
@@ -1302,8 +1303,8 @@ ray_intr_start(sc)
 	SRAM_WRITE_1(sc, RAY_SCB_CCSI, firsti);
 	RAY_ECF_START_CMD(sc);
 
-	RAY_DPRINTF_XMIT(("%s: sent packet: len %d\n", sc->sc_xname,
-	    pktlen));
+	RAY_DPRINTF_XMIT(("%s: sent packet: len %ld\n", sc->sc_xname,
+	    (u_long)pktlen));
 
 	ifp->if_opackets += pcount;
 }
@@ -1340,10 +1341,10 @@ ray_recv(sc, ccs)
 	first = RAY_GET_INDEX(ccs);
 	pktlen = SRAM_READ_FIELD_2(sc, ccs, ray_cmd_rx, c_pktlen);
 
-	RAY_DPRINTF(("%s: recv pktlen %d nofrag %d\n", sc->sc_xname,
-	    pktlen, nofrag));
-	RAY_DPRINTF_XMIT(("%s: received packet: len %d\n", sc->sc_xname,
-	    pktlen));
+	RAY_DPRINTF(("%s: recv pktlen %ld nofrag %d\n", sc->sc_xname,
+	    (u_long)pktlen, nofrag));
+	RAY_DPRINTF_XMIT(("%s: received packet: len %ld\n", sc->sc_xname,
+	    (u_long)pktlen));
 	if (pktlen > MCLBYTES
 	    || pktlen < (sizeof(*frame) + sizeof(struct llc))) {
 		RAY_DPRINTF(("%s: PKTLEN TOO BIG OR TOO SMALL\n",
@@ -1388,11 +1389,12 @@ ray_recv(sc, ccs)
 			len -= 4;
 #endif
 		ni = SRAM_READ_FIELD_1(sc, ccs, ray_cmd_rx, c_nextfrag);
-		RAY_DPRINTF(("%s: recv frag index %d len %d bufp 0x%x ni %d\n",
-		    sc->sc_xname, i, len, (int)bufp, ni));
+		RAY_DPRINTF(("%s: recv frag index %d len %ld bufp 0x%x ni %d\n",
+		    sc->sc_xname, i, (u_long)len, (int)bufp, ni));
 		if (len + lenread > pktlen) {
-			RAY_DPRINTF(("%s: BAD LEN current 0x%x pktlen 0x%x\n",
-			    sc->sc_xname, len + lenread, pktlen));
+			RAY_DPRINTF(("%s: BAD LEN current 0x%lx pktlen 0x%lx\n",
+			    sc->sc_xname, (u_long)(len + lenread),
+			    (u_long)pktlen));
 			ifp->if_ierrors++;
 			m_freem(m);
 			m = 0;
@@ -1432,8 +1434,8 @@ done:
 	if (!m)
 		return;
 
-	RAY_DPRINTF(("%s: recv got packet pktlen %d actual %d\n",
-	    sc->sc_xname, pktlen, lenread));
+	RAY_DPRINTF(("%s: recv got packet pktlen %ld actual %ld\n",
+	    sc->sc_xname, (u_long)pktlen, (u_long)lenread));
 #ifdef RAY_DEBUG
 	if (ray_debug && ray_debug_dump_rx)
 		ray_dump_mbuf(sc, m);
