@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.16 1997/12/05 14:01:01 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.17 1998/10/25 19:15:04 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -363,8 +363,8 @@ void make_fstab (void)
 
 
 static struct lookfor fstabbuf[] = {
-	{"/dev/", "/dev/%s %s ffs", "c", NULL, foundffs},
-	{"/dev/", "/dev/%s %s ufs", "c", NULL, foundffs},
+	{"/dev/", "/dev/%s %s ffs", "c", NULL, 0, 0, foundffs},
+	{"/dev/", "/dev/%s %s ufs", "c", NULL, 0, 0, foundffs},
 };
 static int numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.3 1998/09/17 05:57:28 phil Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.4 1998/10/25 19:15:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,8 +166,10 @@ process(this, line)
 						= found[i].u.i_val;
 					break;
 				case STR:
-					strcpy(*((char **)this.var+j),
-					       found[i].u.s_val);
+					strncpy(*((char **)this.var+j),
+					        found[i].u.s_val,
+						this.size-1);
+					found[i].u.s_val[this.size-1] = 0;
 					break;
 				}
 				while (isdigit(*p))
@@ -177,6 +179,8 @@ process(this, line)
 				if (*p)
 					p++;
 				j++;
+				if (j >= this.nument)
+					break;
 			}
 			break;
 		case 'c':  /* Call a function with data. */
