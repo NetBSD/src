@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.3 1994/01/28 03:40:18 deraadt Exp $
+ *	$Id: sb.c,v 1.4 1994/03/02 16:23:10 hpeyerl Exp $
  */
 
 #include "sb.h"
@@ -154,7 +154,7 @@ sbprobe(struct device *parent, struct cfdata *cf,  void *aux)
 		int irq = ffs(ia->ia_irq) - 1;
 		printf("sb: configured irq %d invalid\n", irq);
 	}
-	return (1);
+	return (15);
 }
 
 void
@@ -258,7 +258,7 @@ sbprobe(struct isa_device *dev)
 		printf("sb: configured irq %d invalid\n", irq);
 		return (0);
 	}
-	return (1);
+	return (15);
 }
 
 #define	UNIT(x)		(minor(x) & 0xf)
