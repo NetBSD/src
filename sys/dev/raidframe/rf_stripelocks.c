@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.11 2002/01/19 01:51:51 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.12 2002/01/19 22:20:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.11 2002/01/19 01:51:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.12 2002/01/19 22:20:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -249,7 +249,7 @@ rf_AcquireStripeLock(
 	RF_StripeLockDesc_t *lockDesc;
 	RF_LockReqDesc_t *p;
 #ifdef DEBUG
-	int     tid = 0
+	int     tid = 0;
 #endif
 	int     hashval = HASH_STRIPEID(stripeID);
 	int     retcode = 0;
@@ -359,7 +359,7 @@ rf_ReleaseStripeLock(
 	RF_StripeLockDesc_t *lockDesc, *ld_t;
 	RF_LockReqDesc_t *lr, *lr_t, *callbacklist, *t;
 #ifdef DEBUG
-	int     tid = 0
+	int     tid = 0;
 #endif
 	int     hashval = HASH_STRIPEID(stripeID);
 	int     release_it, consider_it;
