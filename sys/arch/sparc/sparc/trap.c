@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1996/03/26 01:30:17 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.39 1996/03/30 21:10:37 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -300,7 +300,7 @@ trap(type, psr, pc, tf)
 		if (type < 0x80) {
 dopanic:
 			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
-			       type, pc, tf->tf_npc, (u_int)psr, PSR_BITS);
+			       type, pc, tf->tf_npc, psr, PSR_BITS);
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
@@ -613,7 +613,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 			printf("text fault: pc=%x ser=%b\n", pc,
-				(u_int)ser, SER_BITS);
+			    ser, SER_BITS);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -692,7 +692,7 @@ kfault:
 			if (!onfault) {
 				(void) splhigh();
 				printf("data fault: pc=%x addr=%x ser=%b\n",
-					pc, v, (u_int)ser, SER_BITS);
+					pc, v, ser, SER_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
