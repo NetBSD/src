@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.49 2000/08/04 15:21:50 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.50 2000/08/14 14:29:18 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1123,3 +1123,41 @@ sys/netinet/ip_fil.c				1.56 via patch
 lib/libc/net/gethnamaddr.c			1.36
 
   Prevent host_addrs overrun, possibly provoked by rogue NIS server.
+
+share/mk/bsd.lib.mk				1.173 via patch
+
+  Make shared library support work if shlib_version file is missing.
+  Fixes PR#10556.
+
+lib/checkver					1.12
+lib/checkvers					1.5
+
+  Output ignorable error messages to /dev/null.
+
+sys/dev/scsipi/atapi_wdc.c			1.38
+
+  If SET_FEATURE for piomode is rejected, fall back to mode 0
+  instead of giving up.  Works around "piomode error (0x4)" problem
+  with some ATAPI ZIP drives.
+
+sys/dev/pci/pciide.c				1.82-1.83
+sys/dev/pci/pciide_cmd_reg.h			1.8-1.9
+
+  Add UltraDMA support for the CMD PCI0646U and PCI0646U2 controllers;
+  normally disabled on PCI0646U due to a chip bug, but can be
+  enabled with a kernel option.
+
+sys/dev/pci/pciide.c				1.84 via patch
+sys/dev/pci/files.pci				1.101 via patch
+
+  Change PCIIDE_CMD0646U_UDMA to PCIIDE_CMD0646U_ENABLEUDMA
+  for consistency with PCIIDE_AMD756_ENABLEDMA.
+
+share/man/man4/pciide.4				1.24
+
+  Document PCIIDE_CMD0646U_ENABLEUDMA.
+
+sys/arch/hp300/dev/ite.c			1.44
+
+  Fix keyboard related panic when ite device is configured
+  but not attached.  Fixes PR#10750.
