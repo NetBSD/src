@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.14 2004/07/08 00:54:21 rumble Exp $	*/
+/*	$NetBSD: umct.c,v 1.15 2004/09/13 12:55:49 drochner Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.14 2004/07/08 00:54:21 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.15 2004/09/13 12:55:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,8 @@ USB_ATTACH(umct)
 
 	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

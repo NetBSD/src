@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.65 2004/08/21 21:30:29 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.66 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.65 2004/08/21 21:30:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.66 2004/09/13 12:55:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,8 @@ static void	atapibusattach(struct device *, struct device *, void *);
 static int	atapibusactivate(struct device *, enum devact);
 static int	atapibusdetach(struct device *, int flags);
 
-static int	atapibussubmatch(struct device *, struct cfdata *, void *);
+static int	atapibussubmatch(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
 
 static int	atapi_probe_bus(struct atapibus_softc *, int);
 
@@ -128,7 +129,8 @@ atapibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-atapibussubmatch(struct device *parent, struct cfdata *cf, void *aux)
+atapibussubmatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
@@ -273,8 +275,8 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 	 */
 	periph->periph_quirks |= quirks;
 
-	if ((cf = config_search(atapibussubmatch, &sc->sc_dev,
-	    sa)) != 0) {
+	if ((cf = config_search_ia(atapibussubmatch, &sc->sc_dev,
+	    "atapibus", sa)) != 0) {
 		scsipi_insert_periph(chan, periph);
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
