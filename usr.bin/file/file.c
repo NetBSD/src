@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.25 2002/05/18 07:00:45 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.26 2002/05/30 17:36:57 thorpej Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -66,7 +66,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.62 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.25 2002/05/18 07:00:45 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.26 2002/05/30 17:36:57 thorpej Exp $");
 #endif
 #endif	/* lint */
 
@@ -557,25 +557,25 @@ static void
 help()
 {
 	puts(
-"Usage: file [OPTION]... [FILE]...
-Determine file type of FILEs.
-
-  -m, --magic-file LIST      use LIST as a colon-separated list of magic
-                               number files
-  -z, --uncompress           try to look inside compressed files
-  -b, --brief                do not prepend filenames to output lines
-  -c, --checking-printout    print the parsed form of the magic file, use in
-                               conjunction with -m to debug a new magic file
-                               before installing it
-  -f, --files-from FILE      read the filenames to be examined from FILE
-  -i, --mime                 output mime type strings
-  -k, --keep-going           don't stop at the first match
-  -L, --dereference          causes symlinks to be followed
-  -n, --no-buffer            do not buffer output
-  -s, --special-files        treat special (block/char devices) files as
-                             ordinary ones
-      --help                 display this help and exit
-      --version              output version information and exit"
+"Usage: file [OPTION]... [FILE]...\n"
+"Determine file type of FILEs.\n"
+"\n"
+"  -m, --magic-file LIST      use LIST as a colon-separated list of magic\n"
+"                               number files\n"
+"  -z, --uncompress           try to look inside compressed files\n"
+"  -b, --brief                do not prepend filenames to output lines\n"
+"  -c, --checking-printout    print the parsed form of the magic file, use in\n"
+"                               conjunction with -m to debug a new magic file\n"
+"                               before installing it\n"
+"  -f, --files-from FILE      read the filenames to be examined from FILE\n"
+"  -i, --mime                 output mime type strings\n"
+"  -k, --keep-going           don't stop at the first match\n"
+"  -L, --dereference          causes symlinks to be followed\n"
+"  -n, --no-buffer            do not buffer output\n"
+"  -s, --special-files        treat special (block/char devices) files as\n"
+"                             ordinary ones\n"
+"      --help                 display this help and exit\n"
+"      --version              output version information and exit\n"
 );
 	exit(0);
 }
