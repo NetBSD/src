@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.3 1999/04/24 08:01:10 simonb Exp $ */
+/*	$NetBSD: fbio.h,v 1.4 2000/01/09 15:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -38,6 +38,9 @@
  *
  * 	@(#)fbio.h	7.2 (Berkeley) 4/1/92
  */
+
+#ifndef _PMAX_FBIO_H_
+#define _PMAX_FBIO_H_
 
 /* Frame buffer board types... */
 #define PMAX_FBTYPE_PM_MONO	1
@@ -164,3 +167,5 @@ struct fbcursor {
 
 /* get max cursor size */
 #define FBIOGCURMAX	_IOR('F', 28, struct fbcurpos)
+
+#endif	/* !_PMAX_FBIO_H_ */

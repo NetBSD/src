@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.15 2000/01/09 13:24:16 simonb Exp $ */
+/*	$NetBSD: tc_machdep.h,v 1.16 2000/01/09 15:34:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,8 +57,8 @@
  *			region that is not cached.
  */
 
-#ifndef __MACHINE_TC_MACHDEP_H__
-#define __MACHINE_TC_MACHDEP_H__
+#ifndef _PMAX_TC_MACHDEP_H_
+#define _PMAX_TC_MACHDEP_H_
 
 #include <mips/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
@@ -85,4 +85,4 @@ typedef int32_t		tc_offset_t;
 #define TC_KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 #define TC_C(x)	 ((void *)(u_long)(x))
 
-#endif /* __MACHINE_TC_MACHDEP_H__*/
+#endif	/* !_PMAX_TC_MACHDEP_H_ */
