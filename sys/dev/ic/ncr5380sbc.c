@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.6 1996/02/28 01:44:17 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.7 1996/03/01 01:42:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -81,10 +81,6 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
-#ifndef DEBUG
-#define DEBUG XXX
-#endif
-
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
@@ -121,7 +117,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
 #define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
 
-#ifdef DEBUG
+#ifdef	NCR5380_DEBUG
 
 #define	NCR_DBG_BREAK	1
 #define	NCR_DBG_CMDS	2
@@ -130,11 +126,14 @@ int ncr5380_debug = 0;
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
 static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
 static void ncr5380_show_sense __P((struct scsi_xfer *));
-#else	/* DEBUG */
+
+#else	/* NCR5380_DEBUG */
+
 #define	NCR_BREAK() 		/* nada */
 #define ncr5380_show_scsi_cmd(xs) /* nada */
 #define ncr5380_show_sense(xs) /* nada */
-#endif	/* DEBUG */
+
+#endif	/* NCR5380_DEBUG */
 
 static char *
 phase_names[8] = {
@@ -330,7 +329,7 @@ ncr5380_init(sc)
 {
 	int i, j;
 
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 	ncr5380_debug_sc = sc;
 #endif
 
@@ -715,9 +714,11 @@ ncr5380_done(sc)
 	switch (sr->sr_status) {
 	case SCSI_OK:	/* 0 */
 		if (sr->sr_flags & SR_SENSE) {
+#ifdef	NCR5380_DEBUG
 			if (ncr5380_debug & NCR_DBG_CMDS) {
 				ncr5380_show_sense(xs);
 			}
+#endif
 			xs->error = XS_SENSE;
 		}
 		break;
@@ -959,11 +960,13 @@ next_job:
 	 * Normal commands start in MSG_OUT phase where we will
 	 * send and IDENDIFY message, and then expect CMD phase.
 	 */
+#ifdef	NCR5380_DEBUG
 	if (ncr5380_debug & NCR_DBG_CMDS) {
 		printf("ncr5380_sched: begin, target=%d, LUN=%d\n",
 			   xs->sc_link->target, xs->sc_link->lun);
 		ncr5380_show_scsi_cmd(xs);
 	}
+#endif
 	if (xs->flags & SCSI_RESET) {
 		NCR_TRACE("sched: cmd=reset, sr=0x%x\n", (long)sr);
 		/* Not an error, so do not set NCR_ABORTING */
@@ -1980,7 +1983,7 @@ ncr5380_command(sc)
 	}
 
 	if (len != xs->cmdlen) {
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 		printf("ncr5380_command: short transfer: wanted %d got %d.\n",
 			   xs->cmdlen, len);
 		ncr5380_show_scsi_cmd(xs);
@@ -2355,7 +2358,7 @@ do_actions:
 }
 
 
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 
 static void
 ncr5380_show_scsi_cmd(xs)
@@ -2524,4 +2527,4 @@ ncr5380_show_state()
 }
 
 #endif	/* DDB */
-#endif	/* DEBUG */
+#endif	/* NCR5380_DEBUG */
