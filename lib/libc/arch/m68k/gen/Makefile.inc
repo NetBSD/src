@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/02 21:47:50 is Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/11/04 15:23:23 is Exp $
 
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c infinity.c isinf.c modf.S \
 	setjmp.S sigsetjmp.S
@@ -12,7 +12,7 @@ SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
 
 .ifdef(M68040)
 SRCS+=	ldexp.c
-.elseifdef(M68060)
+.elifdef(M68060)
 SRCS+=	ldexp.c
 .else
 SRCS+=	ldexp.S 
