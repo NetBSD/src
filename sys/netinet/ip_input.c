@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.118 2000/08/26 10:41:29 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.119 2000/10/13 01:50:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1398,8 +1398,11 @@ ip_forward(m, srcrt)
 	/*
 	 * Save at most 68 bytes of the packet in case
 	 * we need to generate an ICMP message to the src.
+	 * Pullup to avoid sharing mbuf cluster between m and mcopy.
 	 */
-	mcopy = m_copy(m, 0, imin((int)ip->ip_len, 68));
+	mcopy = m_copym(m, 0, imin((int)ip->ip_len, 68), M_DONTWAIT);
+	if (mcopy)
+		mcopy = m_pullup(mcopy, ip->ip_hl << 2);
 
 	/*
 	 * If forwarding packet using same interface that it came in on,
