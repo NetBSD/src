@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.5 2001/10/25 14:46:42 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.6 2001/10/27 00:39:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,10 @@ struct wssrcops {
 	int (*dsetdisplay)(struct device *, struct wsevsrc *);
 };
 
+#define wsevsrc_open(me, evp) \
+	((me)->me_ops->dopen((me), evp))
+#define wsevsrc_close(me) \
+	((me)->me_ops->dclose((me)))
 #define wsevsrc_ioctl(me, cmd, data, flag, p) \
 	((me)->me_ops->dioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, p))
 #define wsevsrc_display_ioctl(me, cmd, data, flag, p) \
