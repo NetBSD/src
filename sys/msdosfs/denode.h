@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.6 1994/07/18 21:38:08 cgd Exp $	*/
+/*	$NetBSD: denode.h,v 1.7 1994/07/19 04:29:55 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -163,9 +163,9 @@ struct denode {
  * Values for the de_flag field of the denode.
  */
 #define	DE_LOCKED	0x0001	/* directory entry is locked */
-#define	DE_WANT		0x0002	/* someone wants this de */
-#define	DE_UPD		0x0004	/* file has been modified */
-#define	DE_MOD		0x0080	/* denode wants to be written back to disk */
+#define	DE_WANTED	0x0002	/* someone wants this de */
+#define	DE_UPDATE	0x0004	/* file has been modified */
+#define	DE_MODIFIED	0x0080	/* denode wants to be written back to disk */
 
 /*
  * Transfer directory entries between internal and external form.
@@ -197,14 +197,14 @@ struct denode {
 #define	DETOV(de)	((de)->de_vnode)
 
 #define	DE_UPDAT(dep, t, waitfor) \
-	if (dep->de_flag & DE_UPD) \
+	if (dep->de_flag & DE_UPDATE) \
 		(void) deupdat(dep, t, waitfor);
 
 #define	DE_TIMES(dep, t) \
-	if (dep->de_flag & DE_UPD) { \
-		(dep)->de_flag |= DE_MOD; \
+	if (dep->de_flag & DE_UPDATE) { \
+		(dep)->de_flag |= DE_MODIFIED; \
 		unix2dostime(t, &dep->de_Date, &dep->de_Time); \
-		(dep)->de_flag &= ~DE_UPD; \
+		(dep)->de_flag &= ~DE_UPDATE; \
 	}
 
 /*

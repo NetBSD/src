@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.16 1994/07/18 21:38:20 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.17 1994/07/19 04:30:06 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -384,7 +384,7 @@ msdosfs_setattr(ap)
 			return error;
 	}
 	if (vap->va_mtime.ts_sec != VNOVAL) {
-		dep->de_flag |= DE_UPD;
+		dep->de_flag |= DE_UPDATE;
 		if (error = deupdat(dep, &vap->va_mtime, 1))
 			return error;
 	}
@@ -400,7 +400,7 @@ msdosfs_setattr(ap)
 			dep->de_Attributes &= ~ATTR_READONLY;
 		else
 			dep->de_Attributes |= ATTR_READONLY;
-		dep->de_flag |= DE_UPD;
+		dep->de_flag |= DE_UPDATE;
 	}
 
 	if (vap->va_flags != VNOVAL) {
@@ -412,7 +412,7 @@ msdosfs_setattr(ap)
 			dep->de_flag &= 0xffff0000;
 			dep->de_flag |= (vap->va_flags & 0xffff);
 		}
-		dep->de_flag |= DE_UPD;
+		dep->de_flag |= DE_UPDATE;
 	}
 	return error;
 }
@@ -695,7 +695,7 @@ msdosfs_write(ap)
 			bawrite(bp);
 		} else
 			bdwrite(bp);
-		dep->de_flag |= DE_UPD;
+		dep->de_flag |= DE_UPDATE;
 	} while (error == 0 && uio->uio_resid > 0);
 
 	/*
@@ -1678,7 +1678,7 @@ msdosfs_lock(ap)
 	struct denode *dep = VTODE(ap->a_vp);
 
 	while (dep->de_flag & DE_LOCKED) {
-		dep->de_flag |= DE_WANT;
+		dep->de_flag |= DE_WANTED;
 		if (dep->de_lockholder == curproc->p_pid)
 			panic("msdosfs_lock: locking against myself");
 		dep->de_lockwaiter = curproc->p_pid;
@@ -1702,8 +1702,8 @@ msdosfs_unlock(ap)
 		panic("msdosfs_unlock: denode not locked");
 	dep->de_lockholder = 0;
 	dep->de_flag &= ~DE_LOCKED;
-	if (dep->de_flag & DE_WANT) {
-		dep->de_flag &= ~DE_WANT;
+	if (dep->de_flag & DE_WANTED) {
+		dep->de_flag &= ~DE_WANTED;
 		wakeup((caddr_t) dep);
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.8 1994/07/18 21:38:14 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.9 1994/07/19 04:29:58 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -867,8 +867,8 @@ fillinusemap(pmp)
  *	   If this pointer is 0, do not return the cluster number.
  * flags - see fat.h
  *
- * NOTE: This function is not responsible for turning on the DE_UPD bit of the
- * de_flag field of the denode and it does not change the de_FileSize
+ * NOTE: This function is not responsible for turning on the DE_UPDATE bit of
+ * the de_flag field of the denode and it does not change the de_FileSize
  * field.  This is left for the caller to do.
  */
 int
