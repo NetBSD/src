@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/05/02 16:06:51 sjg Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2001/06/25 18:41:00 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,11 +20,11 @@ VND?=           vnd0
 VND_CDEV=       /dev/${VND}c
 VND_CRDEV=      /dev/r${VND}c
 
-# These are all the parameters for the root fs: (384K)
+# These are all the parameters for the root fs: (512K)
 # NOTE: If you change NBLKS, you *must* also edit the
 #       rdroot entry in /etc/disktab
 DISKTYPE=	rdroot
-NBLKS=		768
+NBLKS=		1024
 
 CLEANFILES=	netbsd-rd ${IMAGE}
 
