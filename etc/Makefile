@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2000/02/20 03:32:37 mycroft Exp $
+#	$NetBSD: Makefile,v 1.137 2000/02/26 18:42:31 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -184,6 +184,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/log/messages
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/secure
+	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+		${DESTDIR}/var/log/sendmail.st
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
