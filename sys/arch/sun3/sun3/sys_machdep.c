@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 1999/01/19 18:18:45 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.9 1999/02/26 22:03:29 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -121,10 +121,11 @@ vdoualarm(arg)
 
 /*ARGSUSED1*/
 int
-cachectl(req, addr, len)
-	int req;
+cachectl1(req, addr, len, p)
+	unsigned long req;
 	caddr_t	addr;
 	int len;
+	struct proc *p;
 {
 	int error = 0;
 
