@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.8 1998/01/12 09:51:32 thorpej Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.9 1998/04/19 13:04:24 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -41,8 +41,8 @@
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
+#include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn01var.h>
 
 extern void le_dec_copytobuf_gap2 __P((struct am7990_softc *, void *,
 	    int, int));
@@ -65,14 +65,18 @@ le_pmax_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	extern struct cfdriver mainbus_cd;
+  	struct ibus_attach_args *d = aux;
 
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-	  	struct confargs *d = aux;
-		if (strcmp("lance", d->ca_name) == 0)
-			return (1);
-	}
-	return (0);
+#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
+
+	if (strcmp(CFNAME(parent), "ibus") != 0)
+		return (0);
+
+#undef CFNAME
+
+	if (strcmp("lance", d->ia_name) != 0)
+		return (0);
+	return (1);
 }
 
 void
@@ -83,12 +87,12 @@ le_pmax_attach(parent, self, aux)
 	register struct le_softc *lesc = (void *)self;
 	register struct am7990_softc *sc = &lesc->sc_am7990;
 	register u_char *cp;
-	register struct confargs *ca = aux;
+	register struct ibus_attach_args *ia = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
-	lesc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
+	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
 /*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
 /*XXX*/	cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
@@ -99,8 +103,9 @@ le_pmax_attach(parent, self, aux)
 	sc->sc_zerobuf = le_dec_zerobuf_gap2;
 
 	dec_le_common_attach(sc, cp);
-	/* XXX more thought about ca->slotpri */
-	kn01_intr_establish(parent, (void*)ca->ca_slotpri, TC_IPL_NET,
+
+	/* XXX more thought about ia->ia_cookie */
+	ibus_intr_establish((void*)ia->ia_cookie, TC_IPL_NET,
 			  am7990_intr, sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.11 1998/01/19 02:51:40 thorpej Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.12 1998/04/19 13:04:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -51,15 +51,13 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 
 /*
- * In the long run, the following block will go completely away
- * (i.e. both parts of the #if, including the #include, etc.).
- * For now, the MI TC code still uses the old definitions provided
- * by the pmax port, and not the new definitions provided by the
- * alpha port.
+ * In the long run, the following block will go completely away.
+ * For now, the MI TC code still uses the old TC_IPL_ names
+ * and not the new IPL_ names.
  */
-#ifdef __alpha__
+#if 1
 /*
- * On the alpha, map the new definitions to the old.
+ * Map the new definitions to the old.
  */
 #include <machine/intr.h>
 
@@ -70,19 +68,8 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #define	TC_IPL_NET	IPL_NET
 #define	TC_IPL_TTY	IPL_TTY
 #define	TC_IPL_CLOCK	IPL_CLOCK
+#endif /* 1 */
 
-#else
-/*
- * On the pmax, we still need the old definitions.
- */
-typedef enum {
-	TC_IPL_NONE,			/* block only this interrupt */
-	TC_IPL_BIO,			/* block disk interrupts */
-	TC_IPL_NET,			/* block network interrupts */
-	TC_IPL_TTY,			/* block terminal interrupts */
-	TC_IPL_CLOCK,			/* block clock interrupts */
-} tc_intrlevel_t;
-#endif
 
 /*
  * Arguments used to attach TurboChannel busses.
