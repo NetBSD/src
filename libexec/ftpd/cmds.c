@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.5 2004/08/26 04:59:59 jmc Exp $	*/
 
 /*
- * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -101,7 +97,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.5 2004/08/26 04:59:59 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +107,6 @@ __RCSID("$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $");
 
 #include <dirent.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -125,12 +120,17 @@ __RCSID("$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $");
 
 #include "extern.h"
 
+typedef enum {
+	FE_MLSD		= 1<<0,		/* if op is MLSD (MLST otherwise ) */
+	FE_ISCURDIR	= 1<<1,		/* if name is the current directory */
+} factflag_t;
+
 typedef struct {
 	const char	*path;		/* full pathname */
 	const char	*display;	/* name to display */
 	struct stat	*stat;		/* stat of path */
 	struct stat	*pdirstat;	/* stat of path's parent dir */
-	int		 iscurdir;	/* nonzero if name is the current dir */
+	factflag_t	 flags;		/* flags */
 } factelem;
 
 static void	ack(const char *);
@@ -166,6 +166,8 @@ struct ftpfact facttab[] = {
 
 #define FACTTABSIZE	(sizeof(facttab) / sizeof(struct ftpfact))
 
+static char cached_path[MAXPATHLEN + 1] = "/";
+static void discover_path(char *, const char *);
 
 void
 cwd(const char *path)
@@ -176,6 +178,9 @@ cwd(const char *path)
 	else {
 		show_chdir_messages(250);
 		ack("CWD");
+		if (getcwd(cached_path, MAXPATHLEN) == NULL) {
+			discover_path(cached_path, path);
+		}
 	}
 }
 
@@ -247,13 +252,16 @@ mlsd(const char *path)
 		perror_reply(501, path);
 		return;
 	}
+	if ((dirp = opendir(path)) == NULL)
+		goto mlsdperror;
+
 	dout = dataconn("MLSD", (off_t)-1, "w");
 	if (dout == NULL)
 		return;
 
-	if ((dirp = opendir(path)) == NULL)
-		goto mlsdperror;
+	memset(&f, 0, sizeof(f));
 	f.stat = &sb;
+	f.flags |= FE_MLSD;
 	while ((dp = readdir(dirp)) != NULL) {
 		snprintf(name, sizeof(name), "%s/%s", path, dp->d_name);
 		if (ISDOTDIR(dp->d_name)) {	/* special case curdir: */
@@ -261,7 +269,7 @@ mlsd(const char *path)
 				continue;
 			f.pdirstat = NULL;	/*   require stat of parent */
 			f.display = path;	/*   set name to real name */
-			f.iscurdir = 1;		/*   flag name is curdir */
+			f.flags |= FE_ISCURDIR; /*   flag name is curdir */
 		} else {
 			if (ISDOTDOTDIR(dp->d_name)) {
 				if (! hastypefact)
@@ -270,7 +278,7 @@ mlsd(const char *path)
 			} else
 				f.pdirstat = &pdirstat;	/* cache parent stat */
 			f.display = dp->d_name;
-			f.iscurdir = 0;
+			f.flags &= ~FE_ISCURDIR;
 		}
 		if (stat(name, &sb) == -1)
 			continue;
@@ -301,11 +309,11 @@ mlst(const char *path)
 		return;
 	}
 	reply(-250, "MLST %s", path);
+	memset(&f, 0, sizeof(f));
 	f.path = path;
 	f.display = path;
 	f.stat = &sb;
 	f.pdirstat = NULL;
-	f.iscurdir = 0;
 	CPUTC(' ', stdout);
 	mlsname(stdout, &f);
 	reply(250, "End");
@@ -322,11 +330,11 @@ opts(const char *command)
 		*ep++ = '\0';
 	c = lookup(cmdtab, command);
 	if (c == NULL) {
-		reply(502, "Unknown command %s.", command);
+		reply(502, "Unknown command '%s'.", command);
 		return;
 	}
 	if (! CMD_IMPLEMENTED(c)) {
-		reply(501, "%s command not implemented.", c->name);
+		reply(502, "%s command not implemented.", c->name);
 		return;
 	}
 	if (! CMD_HAS_OPTIONS(c)) {
@@ -396,11 +404,15 @@ pwd(void)
 {
 	char path[MAXPATHLEN];
 
-	if (getcwd(path, sizeof(path) - 1) == NULL)
-		reply(550, "Can't get the current directory: %s.",
-		    strerror(errno));
-	else
-		replydirname(path, "is the current directory.");
+	if (getcwd(path, sizeof(path) - 1) == NULL) {
+		if (chdir(cached_path) < 0) {
+			reply(550, "Can't get the current directory: %s.",
+			    strerror(errno));
+			return;
+		}
+		(void)strlcpy(path, cached_path, MAXPATHLEN);
+	}
+	replydirname(path, "is the current directory.");
 }
 
 void
@@ -472,9 +484,14 @@ sizecmd(const char *filename)
 			(void) fclose(fin);
 			return;
 		}
+		if (stbuf.st_size > 10240) {
+			reply(550, "%s: file too large for SIZE.", filename);
+			(void) fclose(fin);
+			return;
+		}
 
 		count = 0;
-		while((c=getc(fin)) != EOF) {
+		while((c = getc(fin)) != EOF) {
 			if (c == '\n')	/* will get expanded to \r\n */
 				count++;
 			count++;
@@ -725,12 +742,16 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 	cprintf(fd, "%s=", fact);
 	switch (fe->stat->st_mode & S_IFMT) {
 	case S_IFDIR:
-		if (fe->iscurdir || ISDOTDIR(fe->display))
-			cprintf(fd, "cdir");
-		else if (ISDOTDOTDIR(fe->display))
-			cprintf(fd, "pdir");
-		else
+		if (fe->flags & FE_MLSD) {
+			if ((fe->flags & FE_ISCURDIR) || ISDOTDIR(fe->display))
+				cprintf(fd, "cdir");
+			else if (ISDOTDOTDIR(fe->display))
+				cprintf(fd, "pdir");
+			else
+				cprintf(fd, "dir");
+		} else {
 			cprintf(fd, "dir");
+		}
 		break;
 	case S_IFREG:
 		cprintf(fd, "file");
@@ -785,13 +806,23 @@ matchgroup(gid_t gid)
 static void
 mlsname(FILE *fp, factelem *fe)
 {
-	int i;
+	char realfile[MAXPATHLEN];
+	int i, userf = 0;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
 			(facttab[i].display)(facttab[i].name, fp, fe);
 	}
-	cprintf(fp, " %s\r\n", fe->display);
+	if ((fe->flags & FE_MLSD) &&
+	    !(fe->flags & FE_ISCURDIR) && !ISDOTDIR(fe->display)) {
+			/* if MLSD and not "." entry, display as-is */
+		userf = 0;
+	} else {
+			/* if MLST, or MLSD and "." entry, realpath(3) it */
+		if (realpath(fe->display, realfile) != NULL)
+			userf = 1;
+	}
+	cprintf(fp, " %s\r\n", userf ? realfile : fe->display);
 }
 
 static void
@@ -817,3 +848,126 @@ replydirname(const char *name, const char *message)
 	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
 }
+
+static void
+discover_path(last_path, new_path) 
+	char *last_path;
+	const char *new_path;
+{
+	char tp[MAXPATHLEN + 1] = "";
+	char tq[MAXPATHLEN + 1] = "";
+	char *cp;
+	char *cq; 
+	int sz1, sz2;
+	int nomorelink;
+	struct stat st1, st2;
+	
+	if (new_path[0] != '/') {
+		(void)strlcpy(tp, last_path, MAXPATHLEN);
+		(void)strlcat(tp, "/", MAXPATHLEN);
+	}
+	(void)strlcat(tp, new_path, MAXPATHLEN);
+	(void)strlcat(tp, "/", MAXPATHLEN);
+
+	/* 
+	 * resolve symlinks. A symlink may introduce another symlink, so we
+	 * loop trying to resolve symlinks until we don't find any of them.
+	 */
+	do {
+		/* Collapse any // into / */
+		while ((cp = strstr(tp, "//")) != NULL)
+			(void)memmove(cp, cp + 1, strlen(cp) - 1 + 1);
+
+		/* Collapse any /./ into / */
+		while ((cp = strstr(tp, "/./")) != NULL)
+			(void)memmove(cp, cp + 2, strlen(cp) - 2 + 1);
+
+		cp = tp;
+		nomorelink = 1;
+		
+		while ((cp = strstr(++cp, "/")) != NULL) {
+			sz1 = (u_long)cp - (u_long)tp;
+			if (sz1 > MAXPATHLEN)
+				goto bad;
+			*cp = 0;
+			sz2 = readlink(tp, tq, MAXPATHLEN); 
+			*cp = '/';
+
+			/* If this is not a symlink, move to next / */
+			if (sz2 <= 0)
+				continue;
+
+			/*
+			 * We found a symlink, so we will have to 
+			 * do one more pass to check there is no 
+			 * more symlink in the path
+			 */
+			nomorelink = 0;
+
+			/* 
+			 * Null terminate the string and remove trailing /
+			 */
+			tq[sz2] = 0;
+			sz2 = strlen(tq);
+			if (tq[sz2 - 1] == '/') 
+				tq[--sz2] = 0;
+
+			/* 
+			 * Is this an absolute link or a relative link? 
+			 */
+			if (tq[0] == '/') {
+				/* absolute link */
+				if (strlen(cp) + sz2 > MAXPATHLEN)
+					goto bad;
+				memmove(tp + sz2, cp, strlen(cp) + 1);
+				memcpy(tp, tq, sz2);
+			} else {			
+				/* relative link */
+				for (cq = cp - 1; *cq != '/'; cq--);
+				if (strlen(tp) - ((u_long)cq - (u_long)cp)
+				    + 1 + sz2 > MAXPATHLEN)
+					goto bad;
+				(void)memmove(cq + 1 + sz2, 
+				    cp, strlen(cp) + 1);
+				(void)memcpy(cq + 1, tq, sz2);
+			}
+
+			/* 
+			 * start over, looking for new symlinks 
+			 */
+			break;
+		}
+	} while (nomorelink == 0);
+
+	/* Collapse any /foo/../ into /foo/ */
+	while ((cp = strstr(tp, "/../")) != NULL) {
+		/* ^/../foo/ becomes ^/foo/ */
+		if (cp == tp) {
+			(void)memmove(cp, cp + 3,
+			    strlen(cp) - 3 + 1);
+		} else {
+			for (cq = cp - 1; *cq != '/'; cq--);
+			(void)memmove(cq, cp + 3,
+			    strlen(cp) - 3 + 1);
+		}
+	}
+
+	/* strip strailing / */
+	if (strlen(tp) != 1)
+		tp[strlen(tp) - 1] = '\0';
+
+	/* check that the path is correct */
+	stat(tp, &st1);
+	stat(".", &st2);
+	if ((st1.st_dev != st2.st_dev) || (st1.st_ino != st2.st_ino))
+		goto bad;
+
+	(void)strlcpy(last_path, tp, MAXPATHLEN);
+	return;
+
+bad:
+	(void)strlcat(last_path, "/", MAXPATHLEN);
+	(void)strlcat(last_path, new_path, MAXPATHLEN);
+	return;
+}
+
