@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.20 2001/06/25 16:40:50 mrg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.21 2002/06/08 23:43:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.20 2001/06/25 16:40:50 mrg Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.21 2002/06/08 23:43:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ main(argc, argv)
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
 	(void)snprintf(buf, sizeof buf, "%s/%s", SD, LO);
-	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
+	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & S_IXGRP))
 		fatal2("Printer queue is disabled");
 	/*
 	 * Initialize the control file.
