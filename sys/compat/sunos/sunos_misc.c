@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.111 2001/11/13 02:09:18 lukem Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.112 2001/12/02 00:35:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,9 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.111 2001/11/13 02:09:18 lukem Exp $");
-
-#define COMPAT_SUNOS 1
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.112 2001/12/02 00:35:25 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
