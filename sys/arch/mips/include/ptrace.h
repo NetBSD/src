@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.6 1995/12/21 09:28:36 jonathan Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.7 1997/10/19 21:02:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,11 +40,26 @@
  *
  */
 
+#ifndef _MIPS_PTRACE_H_
+#define _MIPS_PTRACE_H_
+
 /*#define	PT_STEP		(PT_FIRSTMACH + 0)*/
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
-#ifdef notyet
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+
+/*
+ * Glue for gdb: map NetBSD register names to legacy ptrace register names
+ */
+#define GPR_BASE 0
+
+#ifndef JB_PC
+#define JB_PC	2	/* pc is at ((long *)jmp_buf)[2] */
 #endif
+
+#include <machine/reg.h>	/* Historically in sys/ptrace.h */
+#include <machine/regnum.h>	/* real register names */
+
+#endif	 /* _MIPS_PTRACE_H_ */
