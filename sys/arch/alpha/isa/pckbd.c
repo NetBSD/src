@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.6 1996/04/23 13:57:55 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.7 1996/05/05 01:41:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -293,9 +293,10 @@ pckbdprobe(parent, match, aux)
 	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
 	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
 	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
-	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh) ||
-	    bus_io_map(pckbd_bc, 0x84, 1, &pckbd_delay_ioh))
+	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
 		return 0;
+
+	pckbd_delay_ioh = ia->ia_delayioh;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -387,10 +388,11 @@ pckbdattach(parent, self, aux)
 	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
 	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
 	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
-	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh) ||
-	    bus_io_map(pckbd_bc, 0x84, 1, &pckbd_delay_ioh))
+	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
                 panic("pckbdattach couldn't map");
-	
+
+	pckbd_delay_ioh = ia->ia_delayioh;
+
 	sc->sc_ih = isa_intr_establish(pckbd_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pckbdintr, sc);
 
