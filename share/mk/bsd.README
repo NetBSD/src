@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.107 2002/11/26 23:15:53 lukem Exp $
+#	$NetBSD: bsd.README,v 1.108 2002/12/20 16:05:16 jwise Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -506,6 +506,9 @@ PROGNAME	The name that the above program will be installed as, if
 
 SRCS		List of source files to build the program.  If SRCS is not
 		defined, it's assumed to be ${PROG}.c.
+
+DPSRCS		List of source files which are needed for generating
+		dependencies, but are not needed in ${SRCS}.
 
 DPADD		Additional dependencies for the program.  Usually used for
 		libraries.  For example, to depend on the compatibility and
