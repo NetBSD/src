@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2004/04/26 22:27:43 uwe Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /* Windows CE architecture */
 
@@ -12,7 +12,7 @@
 #if !defined(__GNUC__)
 #include <sys/cdefs.h>		/* force <sys/cdefs.h> to be read */
 #undef __packed			/* so that we can undo the damage */
-#define __packed
+#define	__packed
 #pragma pack(push, _sys_bootblock_h, 1)
 #endif
 

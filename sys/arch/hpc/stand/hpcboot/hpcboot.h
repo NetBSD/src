@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.h,v 1.5 2004/08/06 17:21:28 uch Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.6 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_H_
-#define _HPCBOOT_H_
+#define	_HPCBOOT_H_
 
 #include <hpcdefs.h>
 #include <res/resource.h>
@@ -122,9 +122,9 @@ struct BootArgs {
 	struct bootinfo bi;
 };
 
-#define VOLATILE_REF(x)			(*(volatile u_int32_t *)(x))
-#define VOLATILE_REF16(x)		(*(volatile u_int16_t *)(x))
-#define VOLATILE_REF8(x)		(*(volatile u_int8_t *)(x))
+#define	VOLATILE_REF(x)			(*(volatile u_int32_t *)(x))
+#define	VOLATILE_REF16(x)		(*(volatile u_int16_t *)(x))
+#define	VOLATILE_REF8(x)		(*(volatile u_int8_t *)(x))
 #define	_reg_read_1(a)		(*(volatile u_int8_t *)(a))
 #define	_reg_read_2(a)		(*(volatile u_int16_t *)(a))
 #define	_reg_read_4(a)		(*(volatile u_int32_t *)(a))
@@ -133,11 +133,11 @@ struct BootArgs {
 #define	_reg_write_4(a, v)	(*(volatile u_int32_t *)(a) = (v))
 
 #ifdef ARM
-#define ptokv(x)	(x)			/* UNCACHED FLAT */
+#define	ptokv(x)	(x)			/* UNCACHED FLAT */
 #elif defined SHx
-#define ptokv(x)	((x) | 0x80000000)	/* CACHED P1 */
+#define	ptokv(x)	((x) | 0x80000000)	/* CACHED P1 */
 #elif defined MIPS
-#define ptokv(x)	((x) | 0x80000000)	/* CACHED kseg0 */
+#define	ptokv(x)	((x) | 0x80000000)	/* CACHED kseg0 */
 #else
 #error "physical address to kernel virtual macro not defined."
 #endif
@@ -149,16 +149,16 @@ BOOL SetKMode(BOOL);
 BOOL LockPages(LPVOID, DWORD, PDWORD, int);
 BOOL UnlockPages(LPVOID, DWORD);
 void CacheSync(int);
-#define CACHE_D_WBINV	1
-#define CACHE_I_INV	2
+#define	CACHE_D_WBINV	1
+#define	CACHE_I_INV	2
 /* ExtEscape */
-#define GETVFRAMEPHYSICAL	6144
-#define GETVFRAMELEN		6145
+#define	GETVFRAMEPHYSICAL	6144
+#define	GETVFRAMELEN		6145
 
 /* debug utility */
 void _bitdisp(u_int32_t, int, int, int, int);
 void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
-#define bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
+#define	bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 __END_DECLS
 
 /* Runtime Windows CE version */

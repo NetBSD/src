@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_mmu.h,v 1.1 2001/02/09 18:34:55 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_mmu.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,45 +37,45 @@
  */
 
 #ifndef _HPCBOOT_ARM_MMU_H_
-#define _HPCBOOT_ARM_MMU_H_
+#define	_HPCBOOT_ARM_MMU_H_
 
 #include <arm/arm_arch.h>
 #include <memory.h>
 
-#define ARM_MMU_TABLEBASE_MASK				0xffffc000
-#define ARM_MMU_TABLEINDEX_MASK				0x00003ffc
-#define ARM_MMU_VADDR_TABLE_INDEX_MASK			0xfff00000
-#define ARM_MMU_TABLEINDEX_SHIFT			18
-#define ARM_MMU_TABLEINDEX(x)						\
+#define	ARM_MMU_TABLEBASE_MASK				0xffffc000
+#define	ARM_MMU_TABLEINDEX_MASK				0x00003ffc
+#define	ARM_MMU_VADDR_TABLE_INDEX_MASK			0xfff00000
+#define	ARM_MMU_TABLEINDEX_SHIFT			18
+#define	ARM_MMU_TABLEINDEX(x)						\
 	((((x) & ARM_MMU_VADDR_TABLE_INDEX_MASK) >>			\
 	 ARM_MMU_TABLEINDEX_SHIFT) & ARM_MMU_TABLEINDEX_MASK)
 
 /*
  * 1st level descriptor
  */
-#define ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE_MASK		0x3
-#define ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE(x)				\
+#define	ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE_MASK		0x3
+#define	ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE(x)				\
 	((x) & ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE_MASK)
-#define ARM_MMU_LEVEL1DESC_TRANSLATE_SECTION		0x2
-#define ARM_MMU_LEVEL1DESC_TRANSLATE_PAGE		0x1
+#define	ARM_MMU_LEVEL1DESC_TRANSLATE_SECTION		0x2
+#define	ARM_MMU_LEVEL1DESC_TRANSLATE_PAGE		0x1
 
 /*
  * Section translation
  */
-#define ARM_MMU_SECTION_BASE_MASK			0xfff00000
-#define ARM_MMU_SECTION_BASE(x)						\
+#define	ARM_MMU_SECTION_BASE_MASK			0xfff00000
+#define	ARM_MMU_SECTION_BASE(x)						\
 	((x) & ARM_MMU_SECTION_BASE_MASK)
-#define ARM_MMU_VADDR_SECTION_INDEX_MASK		0x000fffff
-#define ARM_MMU_VADDR_SECTION_INDEX(x)					\
+#define	ARM_MMU_VADDR_SECTION_INDEX_MASK		0x000fffff
+#define	ARM_MMU_VADDR_SECTION_INDEX(x)					\
 	((x) & ARM_MMU_VADDR_SECTION_INDEX_MASK)
 /*
  * Page translation
  */
-#define ARM_MMU_PTE_BASE_MASK				0xfffffc00
-#define ARM_MMU_PTE_BASE(x)	((x) & ARM_MMU_PTE_BASE_MASK)
-#define ARM_MMU_VADDR_PTE_INDEX_MASK			0x000003fc
-#define ARM_MMU_VADDR_PTE_INDEX_SHIFT			10
-#define ARM_MMU_VADDR_PTE_INDEX(x)					\
+#define	ARM_MMU_PTE_BASE_MASK				0xfffffc00
+#define	ARM_MMU_PTE_BASE(x)	((x) & ARM_MMU_PTE_BASE_MASK)
+#define	ARM_MMU_VADDR_PTE_INDEX_MASK			0x000003fc
+#define	ARM_MMU_VADDR_PTE_INDEX_SHIFT			10
+#define	ARM_MMU_VADDR_PTE_INDEX(x)					\
 	(((x) >> ARM_MMU_VADDR_PTE_INDEX_SHIFT) &			\
 	ARM_MMU_VADDR_PTE_INDEX_MASK)
 

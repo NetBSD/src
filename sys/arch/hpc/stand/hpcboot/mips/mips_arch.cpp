@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.3 2001/05/16 08:19:42 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ MIPSArchitecture::setupLoader()
 	vaddr_t v;
 
 #ifdef DEBUG_KERNADDR_ACCESS // kernel address access test
-#define TEST_MAGIC		0xac1dcafe
+#define	TEST_MAGIC		0xac1dcafe
 	paddr_t p;
 	u_int32_t r0;
 
