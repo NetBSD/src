@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.4 2000/02/04 10:13:54 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.5 2000/02/04 10:35:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.4 2000/02/04 10:13:54 jdolecek Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.5 2000/02/04 10:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -64,7 +64,6 @@ ntfs_filestat(vp, fsp)
 	struct ntnode ntnode;
 	struct fnode fn;
 	struct ntfsmount ntm;
-	mode_t mode;
 
 	/* to get the ntnode, we have to go in two steps - firstly
 	 * to read appropriate struct fnode and then getting the address
@@ -85,18 +84,7 @@ ntfs_filestat(vp, fsp)
 
 	fsp->fsid = ntnode.i_dev & 0xffff;
 	fsp->fileid = (long)ntnode.i_number;
-	mode = (mode_t)ntm.ntm_mode;
-	switch (vp->v_type) {
-	case VREG:
-		mode |= S_IFREG;
-		break;
-	case VDIR:
-		mode |= S_IFDIR;
-		break;
-	default:
-		break;
-	}
-	fsp->mode = mode;
+	fsp->mode = (mode_t)ntm.ntm_mode | getftype(vp->v_type);
 	fsp->size = fn.f_size;
 	fsp->rdev = 0;  /* XXX */
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.39 2000/02/04 09:43:45 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.40 2000/02/04 10:35:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.39 2000/02/04 09:43:45 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.40 2000/02/04 10:35:46 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -533,7 +533,6 @@ nfs_filestat(vp, fsp)
 {
 	struct nfsnode nfsnode;
 	struct vattr va;
-	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
 		dprintf("can't read nfsnode at %p for pid %d", VTONFS(vp),
@@ -549,33 +548,7 @@ nfs_filestat(vp, fsp)
 	fsp->fileid = va.va_fileid;
 	fsp->size = nfsnode.n_size;
 	fsp->rdev = va.va_rdev;
-	mode = (mode_t)va.va_mode;
-	switch (vp->v_type) {
-	case VREG:
-		mode |= S_IFREG;
-		break;
-	case VDIR:
-		mode |= S_IFDIR;
-		break;
-	case VBLK:
-		mode |= S_IFBLK;
-		break;
-	case VCHR:
-		mode |= S_IFCHR;
-		break;
-	case VLNK:
-		mode |= S_IFLNK;
-		break;
-	case VSOCK:
-		mode |= S_IFSOCK;
-		break;
-	case VFIFO:
-		mode |= S_IFIFO;
-		break;
-	default:
-		break;
-	};
-	fsp->mode = mode;
+	fsp->mode = (mode_t)va.va_mode | getftype(vp->v_type);
 
 	return 1;
 }
@@ -901,6 +874,42 @@ getfname(filename)
 	cur->fsid = statbuf.st_dev & 0xffff;
 	cur->name = filename;
 	return(1);
+}
+
+mode_t
+getftype(v_type)
+	enum vtype v_type;
+{
+	mode_t ftype;
+
+	switch (v_type) {
+	case VREG:
+		ftype = S_IFREG;
+		break;
+	case VDIR:
+		ftype = S_IFDIR;
+		break;
+	case VBLK:
+		ftype = S_IFBLK;
+		break;
+	case VCHR:
+		ftype = S_IFCHR;
+		break;
+	case VLNK:
+		ftype = S_IFLNK;
+		break;
+	case VSOCK:
+		ftype = S_IFSOCK;
+		break;
+	case VFIFO:
+		ftype = S_IFIFO;
+		break;
+	default:
+		ftype = 0;
+		break;
+	};
+
+	return ftype;
 }
 
 void
