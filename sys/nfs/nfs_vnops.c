@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.68 1996/10/25 23:14:12 cgd Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.69 1996/12/02 22:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -259,6 +259,7 @@ extern u_int32_t nfs_xdrneg1;
 extern struct nfsstats nfsstats;
 extern nfstype nfsv3_type[9];
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
+struct nfsmount *nfs_iodmount[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
 #define	DIRHDSIZ	(sizeof (struct dirent) - (MAXNAMLEN + 1))
 

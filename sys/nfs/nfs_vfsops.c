@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.52 1996/10/20 13:13:26 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.53 1996/12/02 22:55:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -627,6 +627,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 		bzero((caddr_t)nmp, sizeof (struct nfsmount));
 		mp->mnt_data = (qaddr_t)nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
+		TAILQ_INIT(&nmp->nm_bufq);
 	}
 #ifdef Lite2_integrated
 	vfs_getnewfsid(mp, makefstype(MOUNT_NFS));

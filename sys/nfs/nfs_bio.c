@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.29 1996/10/13 01:39:04 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.30 1996/12/02 22:55:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,6 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern struct nfsstats nfsstats;
 
@@ -701,11 +700,70 @@ nfs_asyncio(bp, cred)
 	struct ucred *cred;
 {
 	register int i;
+	register struct nfsmount *nmp;
+	int gotiod, slpflag = 0, slptimeo = 0, error;
 
 	if (nfs_numasync == 0)
 		return (EIO);
+
+       
+	nmp = VFSTONFS(bp->b_vp->v_mount);
+again:
+	if (nmp->nm_flag & NFSMNT_INT)
+		slpflag = PCATCH;
+	gotiod = FALSE;
+ 
+	/*
+	 * Find a free iod to process this request.
+	 */
+
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-	    if (nfs_iodwant[i]) {
+		if (nfs_iodwant[i]) {
+			/*
+			 * Found one, so wake it up and tell it which
+			 * mount to process.
+			 */
+			nfs_iodwant[i] = (struct proc *)0;
+			nfs_iodmount[i] = nmp;
+			nmp->nm_bufqiods++;
+			wakeup((caddr_t)&nfs_iodwant[i]);
+			gotiod = TRUE;
+		}
+	/*
+	 * If none are free, we may already have an iod working on this mount
+	 * point.  If so, it will process our request.
+	 */
+	if (!gotiod && nmp->nm_bufqiods > 0)
+		gotiod = TRUE;
+
+	/*
+	 * If we have an iod which can process the request, then queue
+	 * the buffer.
+	 */
+	if (gotiod) {
+		/*
+		 * Ensure that the queue never grows too large.
+		 */
+		while (nmp->nm_bufqlen >= 2*nfs_numasync) {
+			nmp->nm_bufqwant = TRUE;
+			error = tsleep(&nmp->nm_bufq, slpflag | PRIBIO,
+				"nfsaio", slptimeo);
+			if (error) {
+				if (nfs_sigintr(nmp, NULL, bp->b_proc))
+					return (EINTR);
+				if (slpflag == PCATCH) {
+					slpflag = 0;
+					slptimeo = 2 * hz;
+				}
+			}
+			/*
+			 * We might have lost our iod while sleeping,
+			 * so check and loop if nescessary.
+			 */
+			if (nmp->nm_bufqiods == 0)
+				goto again;
+		}
+
 		if (bp->b_flags & B_READ) {
 			if (bp->b_rcred == NOCRED && cred != NOCRED) {
 				crhold(cred);
@@ -719,30 +777,16 @@ nfs_asyncio(bp, cred)
 			}
 		}
 	
-		TAILQ_INSERT_TAIL(&nfs_bufq, bp, b_freelist);
-		nfs_iodwant[i] = (struct proc *)0;
-		wakeup((caddr_t)&nfs_iodwant[i]);
+		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
+		nmp->nm_bufqlen++;
 		return (0);
 	    }
 
 	/*
-	 * If it is a read or a write already marked B_WRITEINPROG or B_NOCACHE
-	 * return EIO so the process will call nfs_doio() and do it
-	 * synchronously.
+	 * All the iods are busy on other mounts, so return EIO to
+	 * force the caller to process the i/o synchronously.
 	 */
-	if (bp->b_flags & (B_READ | B_WRITEINPROG | B_NOCACHE))
-		return (EIO);
-
-	/*
-	 * Just turn the async write into a delayed write, instead of
-	 * doing in synchronously. Hopefully, at least one of the nfsiods
-	 * is currently doing a write for this file and will pick up the
-	 * delayed writes before going back to sleep.
-	 */
-	bp->b_flags |= B_DELWRI;
-	reassignbuf(bp, bp->b_vp);
-	biodone(bp);
-	return (0);
+	return (EIO);
 }
 
 /*
