@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.16 1997/05/10 14:30:38 mycroft Exp $
-#	@(#)Makefile	5.4 (Berkeley) 5/11/90
+#	$NetBSD: Makefile,v 1.17 1997/10/18 15:04:56 mrg Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	strip
 
