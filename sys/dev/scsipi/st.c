@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.84 1997/10/18 19:51:14 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.84.2.1 1997/11/07 23:19:16 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1996,7 +1996,9 @@ st_interpret_sense(xs)
 		info = _4btol(sense->info);
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70)
+	if ((sc_link->flags & SDEV_OPEN) == 0)
+		return (-1);		/* not open yet, let generic handle */
+	else if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return (-1);		/* let the generic code handle it */
 #ifdef SCSIVERBOSE
 	else if ((xs->flags & SCSI_SILENT) == 0)
@@ -2035,9 +2037,9 @@ st_interpret_sense(xs)
 				st->blksize -= 512;
 		}
 		/*
-		 * If no data was tranfered, do it immediatly
+		 * If data wanted and no data was tranfered, do it immediatly
 		 */
-		if (xs->resid >= xs->datalen) {
+		if (xs->datalen && xs->resid >= xs->datalen) {
 			if (st->flags & ST_EIO_PENDING)
 				return (EIO);
 			if (st->flags & ST_AT_FILEMARK) {
