@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_delete.c,v 1.10 1997/07/21 14:06:43 jtc Exp $	*/
+/*	$NetBSD: rec_delete.c,v 1.11 1998/12/09 12:42:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_delete.c,v 1.10 1997/07/21 14:06:43 jtc Exp $");
+__RCSID("$NetBSD: rec_delete.c,v 1.11 1998/12/09 12:42:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,7 +139,7 @@ rec_rdelete(t, nrec)
 
 	/* Delete the record. */
 	h = e->page;
-	status = __rec_dleaf(t, h, e->index);
+	status = __rec_dleaf(t, h, (u_int32_t)e->index);
 	if (status != RET_SUCCESS) {
 		mpool_put(t->bt_mp, h, 0);
 		return (status);
@@ -189,8 +189,8 @@ __rec_dleaf(t, h, index)
 	 * Compress the key/data pairs.  Compress and adjust the [BR]LEAF
 	 * offsets.  Reset the headers.
 	 */
-	from = (char *)h + h->upper;
-	memmove(from + nbytes, from, (char *)to - from);
+	from = (char *)(void *)h + h->upper;
+	memmove(from + nbytes, from, (size_t)((char *)to - from));
 	h->upper += nbytes;
 
 	offset = h->linp[index];

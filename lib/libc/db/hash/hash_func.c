@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_func.c,v 1.7 1997/07/13 18:52:05 christos Exp $	*/
+/*	$NetBSD: hash_func.c,v 1.8 1998/12/09 12:42:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: hash_func.c,v 1.7 1997/07/13 18:52:05 christos Exp $");
+__RCSID("$NetBSD: hash_func.c,v 1.8 1998/12/09 12:42:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,14 +52,16 @@ __RCSID("$NetBSD: hash_func.c,v 1.7 1997/07/13 18:52:05 christos Exp $");
 #include "page.h"
 #include "extern.h"
 
+#if 0
 static u_int32_t hash1 __P((const void *, size_t)) __attribute__((__unused__));
 static u_int32_t hash2 __P((const void *, size_t)) __attribute__((__unused__));
 static u_int32_t hash3 __P((const void *, size_t)) __attribute__((__unused__));
+#endif
 static u_int32_t hash4 __P((const void *, size_t)) __attribute__((__unused__));
 
 /* Global default hash function */
 u_int32_t (*__default_hash) __P((const void *, size_t)) = hash4;
-
+#if 0
 /*
  * HASH FUNCTIONS
  *
@@ -167,6 +169,7 @@ hash3(keyarg, len)
 	}
 	return (h);
 }
+#endif
 
 /* Hash function from Chris Torek. */
 static u_int32_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.12 1998/05/07 19:24:20 kleink Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.12 1998/05/07 19:24:20 kleink Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.13 1998/12/09 12:42:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -421,7 +421,7 @@ byteorder()
 	u_char *p;
 
 	x = 0x01020304;
-	p = (u_char *)&x;
+	p = (u_char *)(void *)&x;
 	switch (*p) {
 	case 1:
 		return (BIG_ENDIAN);

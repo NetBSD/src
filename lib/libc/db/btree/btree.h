@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.10 1998/11/06 19:42:43 christos Exp $	*/
+/*	$NetBSD: btree.h,v 1.11 1998/12/09 12:42:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -130,7 +130,7 @@ typedef struct _binternal {
 
 /* Get the page's BINTERNAL structure at index indx. */
 #define	GETBINTERNAL(pg, indx)						\
-	((BINTERNAL *)((char *)(pg) + (pg)->linp[indx]))
+	((BINTERNAL *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 /* Get the number of bytes in the entry. */
 #define NBINTERNAL(len)							\
@@ -138,11 +138,11 @@ typedef struct _binternal {
 
 /* Copy a BINTERNAL entry to the page. */
 #define	WR_BINTERNAL(p, size, pgno, flags) {				\
-	*(u_int32_t *)p = size;						\
+	*(u_int32_t *)(void *)p = size;					\
 	p += sizeof(u_int32_t);						\
-	*(pgno_t *)p = pgno;						\
+	*(pgno_t *)(void *)p = pgno;					\
 	p += sizeof(pgno_t);						\
-	*(u_char *)p = flags;						\
+	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
 }
 
@@ -157,7 +157,7 @@ typedef struct _rinternal {
 
 /* Get the page's RINTERNAL structure at index indx. */
 #define	GETRINTERNAL(pg, indx)						\
-	((RINTERNAL *)((char *)(pg) + (pg)->linp[indx]))
+	((RINTERNAL *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 /* Get the number of bytes in the entry. */
 #define NRINTERNAL							\
@@ -165,9 +165,9 @@ typedef struct _rinternal {
 
 /* Copy a RINTERAL entry to the page. */
 #define	WR_RINTERNAL(p, nrecs, pgno) {					\
-	*(recno_t *)p = nrecs;						\
+	*(recno_t *)(void *)p = nrecs;					\
 	p += sizeof(recno_t);						\
-	*(pgno_t *)p = pgno;						\
+	*(pgno_t *)(void *)p = pgno;					\
 }
 
 /* For the btree leaf pages, the item is a key and data pair. */
@@ -180,7 +180,7 @@ typedef struct _bleaf {
 
 /* Get the page's BLEAF structure at index indx. */
 #define	GETBLEAF(pg, indx)						\
-	((BLEAF *)((char *)(pg) + (pg)->linp[indx]))
+	((BLEAF *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 /* Get the number of bytes in the entry. */
 #define NBLEAF(p)	NBLEAFDBT((p)->ksize, (p)->dsize)
@@ -192,11 +192,11 @@ typedef struct _bleaf {
 
 /* Copy a BLEAF entry to the page. */
 #define	WR_BLEAF(p, key, data, flags) {					\
-	*(u_int32_t *)p = key->size;					\
+	*(u_int32_t *)(void *)p = key->size;				\
 	p += sizeof(u_int32_t);						\
-	*(u_int32_t *)p = data->size;					\
+	*(u_int32_t *)(void *)p = data->size;				\
 	p += sizeof(u_int32_t);						\
-	*(u_char *)p = flags;						\
+	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
 	memmove(p, key->data, key->size);				\
 	p += key->size;							\
@@ -212,7 +212,7 @@ typedef struct _rleaf {
 
 /* Get the page's RLEAF structure at index indx. */
 #define	GETRLEAF(pg, indx)						\
-	((RLEAF *)((char *)(pg) + (pg)->linp[indx]))
+	((RLEAF *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 /* Get the number of bytes in the entry. */
 #define NRLEAF(p)	NRLEAFDBT((p)->dsize)
@@ -223,9 +223,9 @@ typedef struct _rleaf {
 
 /* Copy a RLEAF entry to the page. */
 #define	WR_RLEAF(p, data, flags) {					\
-	*(u_int32_t *)p = data->size;					\
+	*(u_int32_t *)(void *)p = data->size;				\
 	p += sizeof(u_int32_t);						\
-	*(u_char *)p = flags;						\
+	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
 	memmove(p, data->data, data->size);				\
 }

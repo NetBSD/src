@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.8 1997/07/21 14:06:33 jtc Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.9 1998/12/09 12:42:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_overflow.c	8.5 (Berkeley) 7/16/94";
 #else
-__RCSID("$NetBSD: bt_overflow.c,v 1.8 1997/07/21 14:06:33 jtc Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.9 1998/12/09 12:42:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,7 +123,7 @@ __ovfl_get(t, p, ssz, buf, bufsz)
 			return (RET_ERROR);
 
 		nb = MIN(sz, plen);
-		memmove(p, (char *)h + BTDATAOFF, nb);
+		memmove(p, (char *)(void *)h + BTDATAOFF, nb);
 		mpool_put(t->bt_mp, h, 0);
 
 		if ((sz -= nb) == 0)
@@ -171,7 +171,7 @@ __ovfl_put(t, dbt, pg)
 		h->lower = h->upper = 0;
 
 		nb = MIN(sz, plen);
-		memmove((char *)h + BTDATAOFF, p, nb);
+		memmove((char *)(void *)h + BTDATAOFF, p, nb);
 
 		if (last) {
 			last->nextpg = h->pgno;

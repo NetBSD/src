@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.7 1997/07/13 18:52:04 christos Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.8 1998/12/09 12:42:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.7 1997/07/13 18:52:04 christos Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.8 1998/12/09 12:42:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,7 +149,7 @@ __get_buf(hashp, addr, prev_bp, newpage)
 			return (NULL);
 		if (!prev_bp)
 			segp[segment_ndx] =
-			    (BUFHEAD *)((ptrdiff_t)bp | is_disk_mask);
+			    (BUFHEAD *)(void *)((u_long)bp | is_disk_mask);
 	} else {
 		BUF_REMOVE(bp);
 		MRU_INSERT(bp);
@@ -189,7 +189,7 @@ newbuf(hashp, addr, prev_bp)
 #ifdef PURIFY
 		memset(bp, 0xff, sizeof(BUFHEAD));
 #endif
-		if ((bp->page = (char *)malloc(hashp->BSIZE)) == NULL) {
+		if ((bp->page = (char *)malloc((size_t)hashp->BSIZE)) == NULL) {
 			free(bp);
 			return (NULL);
 		}
@@ -210,7 +210,7 @@ newbuf(hashp, addr, prev_bp)
 			 * Set oaddr before __put_page so that you get it
 			 * before bytes are swapped.
 			 */
-			shortp = (u_int16_t *)bp->page;
+			shortp = (u_int16_t *)(void *)bp->page;
 			if (shortp[0])
 				oaddr = shortp[shortp[0] - 1];
 			if ((bp->flags & BUF_MOD) && __put_page(hashp, bp->page,
@@ -253,7 +253,7 @@ newbuf(hashp, addr, prev_bp)
 				    (oaddr != xbp->addr))
 					break;
 
-				shortp = (u_int16_t *)xbp->page;
+				shortp = (u_int16_t *)(void *)xbp->page;
 				if (shortp[0])
 					/* set before __put_page */
 					oaddr = shortp[shortp[0] - 1];
@@ -296,13 +296,13 @@ newbuf(hashp, addr, prev_bp)
 extern void
 __buf_init(hashp, nbytes)
 	HTAB *hashp;
-	int nbytes;
+	u_int nbytes;
 {
 	BUFHEAD *bfp;
 	int npages;
 
 	bfp = &(hashp->bufhead);
-	npages = (nbytes + hashp->BSIZE - 1) >> hashp->BSHIFT;
+	npages = (unsigned int)(nbytes + hashp->BSIZE - 1) >> hashp->BSHIFT;
 	npages = MAX(npages, MIN_BUFFERS);
 
 	hashp->nbufs = npages;

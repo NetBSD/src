@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.9 1997/10/10 21:08:55 is Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.10 1998/12/09 12:42:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_split.c,v 1.9 1997/10/10 21:08:55 is Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.10 1998/12/09 12:42:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,7 @@ __bt_split(t, sp, key, data, flags, ilen, argskip)
 	 * always cause a leaf page to split first.)
 	 */
 	h->linp[skip] = h->upper -= ilen;
-	dest = (char *)h + h->upper;
+	dest = (char *)(void *)h + h->upper;
 	if (F_ISSET(t, R_RECNO))
 		WR_RLEAF(dest, data, flags)
 	else
@@ -243,18 +243,19 @@ __bt_split(t, sp, key, data, flags, ilen, argskip)
 		switch (rchild->flags & P_TYPE) {
 		case P_BINTERNAL:
 			h->linp[skip] = h->upper -= nbytes;
-			dest = (char *)h + h->linp[skip];
+			dest = (char *)(void *)h + h->linp[skip];
 			memmove(dest, bi, nbytes);
-			((BINTERNAL *)dest)->pgno = rchild->pgno;
+			((BINTERNAL *)(void *)dest)->pgno = rchild->pgno;
 			break;
 		case P_BLEAF:
 			h->linp[skip] = h->upper -= nbytes;
-			dest = (char *)h + h->linp[skip];
+			dest = (char *)(void *)h + h->linp[skip];
 			WR_BINTERNAL(dest, nksize ? nksize : bl->ksize,
 			    rchild->pgno, bl->flags & P_BIGKEY);
 			memmove(dest, bl->bytes, nksize ? nksize : bl->ksize);
 			if (bl->flags & P_BIGKEY &&
-			    bt_preserve(t, *(pgno_t *)bl->bytes) == RET_ERROR)
+			    bt_preserve(t, *(pgno_t *)(void *)bl->bytes) ==
+			    RET_ERROR)
 				goto err1;
 			break;
 		case P_RINTERNAL:
@@ -263,17 +264,17 @@ __bt_split(t, sp, key, data, flags, ilen, argskip)
 			 * added at index 0, fix the correct page.
 			 */
 			if (skip > 0)
-				dest = (char *)h + h->linp[skip - 1];
+				dest = (char *)(void *)h + h->linp[skip - 1];
 			else
-				dest = (char *)l + l->linp[NEXTINDEX(l) - 1];
-			((RINTERNAL *)dest)->nrecs = rec_total(lchild);
-			((RINTERNAL *)dest)->pgno = lchild->pgno;
+				dest = (char *)(void *)l + l->linp[NEXTINDEX(l) - 1];
+			((RINTERNAL *)(void *)dest)->nrecs = rec_total(lchild);
+			((RINTERNAL *)(void *)dest)->pgno = lchild->pgno;
 
 			/* Update the right page count. */
 			h->linp[skip] = h->upper -= nbytes;
-			dest = (char *)h + h->linp[skip];
-			((RINTERNAL *)dest)->nrecs = rec_total(rchild);
-			((RINTERNAL *)dest)->pgno = rchild->pgno;
+			dest = (char *)(void *)h + h->linp[skip];
+			((RINTERNAL *)(void *)dest)->nrecs = rec_total(rchild);
+			((RINTERNAL *)(void *)dest)->pgno = rchild->pgno;
 			break;
 		case P_RLEAF:
 			/*
@@ -281,17 +282,17 @@ __bt_split(t, sp, key, data, flags, ilen, argskip)
 			 * added at index 0, fix the correct page.
 			 */
 			if (skip > 0)
-				dest = (char *)h + h->linp[skip - 1];
+				dest = (char *)(void *)h + h->linp[skip - 1];
 			else
-				dest = (char *)l + l->linp[NEXTINDEX(l) - 1];
-			((RINTERNAL *)dest)->nrecs = NEXTINDEX(lchild);
-			((RINTERNAL *)dest)->pgno = lchild->pgno;
+				dest = (char *)(void *)l + l->linp[NEXTINDEX(l) - 1];
+			((RINTERNAL *)(void *)dest)->nrecs = NEXTINDEX(lchild);
+			((RINTERNAL *)(void *)dest)->pgno = lchild->pgno;
 
 			/* Update the right page count. */
 			h->linp[skip] = h->upper -= nbytes;
-			dest = (char *)h + h->linp[skip];
-			((RINTERNAL *)dest)->nrecs = NEXTINDEX(rchild);
-			((RINTERNAL *)dest)->pgno = rchild->pgno;
+			dest = (char *)(void *)h + h->linp[skip];
+			((RINTERNAL *)(void *)dest)->nrecs = NEXTINDEX(rchild);
+			((RINTERNAL *)(void *)dest)->pgno = rchild->pgno;
 			break;
 		default:
 			abort();
@@ -509,12 +510,12 @@ bt_rroot(t, h, l, r)
 
 	/* Insert the left and right keys, set the header information. */
 	h->linp[0] = h->upper = t->bt_psize - NRINTERNAL;
-	dest = (char *)h + h->upper;
+	dest = (char *)(void *)h + h->upper;
 	WR_RINTERNAL(dest,
 	    l->flags & P_RLEAF ? NEXTINDEX(l) : rec_total(l), l->pgno);
 
 	h->linp[1] = h->upper -= NRINTERNAL;
-	dest = (char *)h + h->upper;
+	dest = (char *)(void *)h + h->upper;
 	WR_RINTERNAL(dest,
 	    r->flags & P_RLEAF ? NEXTINDEX(r) : rec_total(r), r->pgno);
 
@@ -560,7 +561,7 @@ bt_broot(t, h, l, r)
 	 */
 	nbytes = NBINTERNAL(0);
 	h->linp[0] = h->upper = t->bt_psize - nbytes;
-	dest = (char *)h + h->upper;
+	dest = (char *)(void *)h + h->upper;
 	WR_BINTERNAL(dest, 0, l->pgno, 0);
 
 	switch (h->flags & P_TYPE) {
@@ -568,7 +569,7 @@ bt_broot(t, h, l, r)
 		bl = GETBLEAF(r, 0);
 		nbytes = NBINTERNAL(bl->ksize);
 		h->linp[1] = h->upper -= nbytes;
-		dest = (char *)h + h->upper;
+		dest = (char *)(void *)h + h->upper;
 		WR_BINTERNAL(dest, bl->ksize, r->pgno, 0);
 		memmove(dest, bl->bytes, bl->ksize);
 
@@ -577,16 +578,16 @@ bt_broot(t, h, l, r)
 		 * so it isn't deleted when the leaf copy of the key is deleted.
 		 */
 		if (bl->flags & P_BIGKEY &&
-		    bt_preserve(t, *(pgno_t *)bl->bytes) == RET_ERROR)
+		    bt_preserve(t, *(pgno_t *)(void *)bl->bytes) == RET_ERROR)
 			return (RET_ERROR);
 		break;
 	case P_BINTERNAL:
 		bi = GETBINTERNAL(r, 0);
 		nbytes = NBINTERNAL(bi->ksize);
 		h->linp[1] = h->upper -= nbytes;
-		dest = (char *)h + h->upper;
+		dest = (char *)(void *)h + h->upper;
 		memmove(dest, bi, nbytes);
-		((BINTERNAL *)dest)->pgno = r->pgno;
+		((BINTERNAL *)(void *)dest)->pgno = r->pgno;
 		break;
 	default:
 		abort();
@@ -692,7 +693,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 			++nxt;
 
 			l->linp[off] = l->upper -= nbytes;
-			memmove((char *)l + l->upper, src, nbytes);
+			memmove((char *)(void *)l + l->upper, src, nbytes);
 		}
 
 		used += nbytes + sizeof(indx_t);
@@ -769,7 +770,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 		}
 		++nxt;
 		r->linp[off] = r->upper -= nbytes;
-		memmove((char *)r + r->upper, src, nbytes);
+		memmove((char *)(void *)r + r->upper, src, nbytes);
 	}
 	r->lower += off * sizeof(indx_t);
 

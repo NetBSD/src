@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.9 1998/06/30 21:30:52 thorpej Exp $	*/
+/*	$NetBSD: mpool.c,v 1.10 1998/12/09 12:42:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: mpool.c,v 1.9 1998/06/30 21:30:52 thorpej Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.10 1998/12/09 12:42:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,6 +76,7 @@ static int  mpool_write __P((MPOOL *, BKT *));
  * mpool_open --
  *	Initialize a memory pool.
  */
+/*ARGSUSED*/
 MPOOL *
 mpool_open(key, fd, pagesize, maxcache)
 	void *key;
@@ -106,7 +107,7 @@ mpool_open(key, fd, pagesize, maxcache)
 	for (entry = 0; entry < HASHSIZE; ++entry)
 		CIRCLEQ_INIT(&mp->hqh[entry]);
 	mp->maxcache = maxcache;
-	mp->npages = sb.st_size / pagesize;
+	mp->npages = (pgno_t)(sb.st_size / pagesize);
 	mp->pagesize = pagesize;
 	mp->fd = fd;
 	return (mp);
@@ -167,6 +168,7 @@ mpool_new(mp, pgnoaddr)
  * mpool_get
  *	Get a page.
  */
+/*ARGSUSED*/
 void *
 mpool_get(mp, pgno, flags)
 	MPOOL *mp;
@@ -221,7 +223,7 @@ mpool_get(mp, pgno, flags)
 	++mp->pageread;
 #endif
 	off = mp->pagesize * pgno;
-	if ((nr = pread(mp->fd, bp->page, mp->pagesize, off)) != mp->pagesize) {
+	if ((nr = pread(mp->fd, bp->page, (size_t)mp->pagesize, off)) != (int)mp->pagesize) {
 		if (nr >= 0)
 			errno = EFTYPE;
 		return (NULL);
@@ -250,6 +252,7 @@ mpool_get(mp, pgno, flags)
  * mpool_put
  *	Return a page.
  */
+/*ARGSUSED*/
 int
 mpool_put(mp, page, flags)
 	MPOOL *mp;
@@ -261,7 +264,7 @@ mpool_put(mp, page, flags)
 #ifdef STATISTICS
 	++mp->pageput;
 #endif
-	bp = (BKT *)((char *)page - sizeof(BKT));
+	bp = (BKT *)(void *)((char *)page - sizeof(BKT));
 #ifdef DEBUG
 	if (!(bp->flags & MPOOL_PINNED)) {
 		(void)fprintf(stderr,
@@ -361,7 +364,7 @@ mpool_bkt(mp)
 			return (bp);
 		}
 
-new:	if ((bp = (BKT *)malloc(sizeof(BKT) + mp->pagesize)) == NULL)
+new:	if ((bp = (BKT *)malloc((size_t)(sizeof(BKT) + mp->pagesize))) == NULL)
 		return (NULL);
 #ifdef STATISTICS
 	++mp->pagealloc;
@@ -369,7 +372,7 @@ new:	if ((bp = (BKT *)malloc(sizeof(BKT) + mp->pagesize)) == NULL)
 #if defined(DEBUG) || defined(PURIFY)
 	memset(bp, 0xff, sizeof(BKT) + mp->pagesize);
 #endif
-	bp->page = (char *)bp + sizeof(BKT);
+	bp->page = (char *)(void *)bp + sizeof(BKT);
 	++mp->curcache;
 	return (bp);
 }
@@ -394,7 +397,7 @@ mpool_write(mp, bp)
 		(mp->pgout)(mp->pgcookie, bp->pgno, bp->page);
 
 	off = mp->pagesize * bp->pgno;
-	if (pwrite(mp->fd, bp->page, mp->pagesize, off) != mp->pagesize)
+	if (pwrite(mp->fd, bp->page, (size_t)mp->pagesize, off) != (int)mp->pagesize)
 		return (RET_ERROR);
 
 	bp->flags &= ~MPOOL_DIRTY;
