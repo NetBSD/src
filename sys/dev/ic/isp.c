@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.72 2001/02/23 05:38:27 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.73 2001/03/14 04:54:13 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -31,7 +31,7 @@
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997, 1998, 1999 by Matthew Jacob
+ * Copyright (c) 1997, 1998, 1999, 2000, 2001 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
  *
@@ -136,7 +136,7 @@ static int isp_handle_other_response
 __P((struct ispsoftc *, ispstatusreq_t *, u_int16_t *));
 static void isp_parse_status
 __P((struct ispsoftc *, ispstatusreq_t *, XS_T *));
-static void isp_fastpost_complete __P((struct ispsoftc *, u_int32_t));
+static void isp_fastpost_complete __P((struct ispsoftc *, u_int16_t));
 static void isp_scsi_init __P((struct ispsoftc *));
 static void isp_scsi_channel_init __P((struct ispsoftc *, int));
 static void isp_fibre_init __P((struct ispsoftc *));
@@ -171,8 +171,7 @@ static void isp_parse_nvram_2100 __P((struct ispsoftc *, u_int8_t *));
  * Locking done elsewhere.
  */
 void
-isp_reset(isp)
-	struct ispsoftc *isp;
+isp_reset(struct ispsoftc *isp)
 {
 	mbreg_t mbs;
 	int loops, i, touched, dodnld = 1;
@@ -758,8 +757,7 @@ again:
  */
 
 void
-isp_init(isp)
-	struct ispsoftc *isp;
+isp_init(struct ispsoftc *isp)
 {
 	/*
 	 * Must do this first to get defaults established.
@@ -776,8 +774,7 @@ isp_init(isp)
 }
 
 static void
-isp_scsi_init(isp)
-	struct ispsoftc *isp;
+isp_scsi_init(struct ispsoftc *isp)
 {
 	sdparam *sdp_chan0, *sdp_chan1;
 	mbreg_t mbs;
@@ -941,9 +938,7 @@ isp_scsi_init(isp)
 }
 
 static void
-isp_scsi_channel_init(isp, channel)
-	struct ispsoftc *isp;
-	int channel;
+isp_scsi_channel_init(struct ispsoftc *isp, int channel)
 {
 	sdparam *sdp;
 	mbreg_t mbs;
@@ -961,7 +956,8 @@ isp_scsi_channel_init(isp, channel)
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		return;
 	}
-	isp_prt(isp, ISP_LOGINFO, "Initiator ID is %d", sdp->isp_initiator_id);
+	isp_prt(isp, ISP_LOGINFO, "Initiator ID is %d on Channel %d",
+	    sdp->isp_initiator_id, channel);
 
 
 	/*
@@ -1045,8 +1041,7 @@ isp_scsi_channel_init(isp, channel)
  * Locks are held before coming here.
  */
 static void
-isp_fibre_init(isp)
-	struct ispsoftc *isp;
+isp_fibre_init(struct ispsoftc *isp)
 {
 	fcparam *fcp;
 	isp_icb_t *icbp;
@@ -1228,9 +1223,7 @@ isp_fibre_init(isp)
  */
 
 static int
-isp_getmap(isp, map)
-	struct ispsoftc *isp;
-	fcpos_map_t *map;
+isp_getmap(struct ispsoftc *isp, fcpos_map_t *map)
 {
 	fcparam *fcp = (fcparam *) isp->isp_param;
 	mbreg_t mbs;
@@ -1258,8 +1251,7 @@ isp_getmap(isp, map)
 }
 
 static void
-isp_mark_getpdb_all(isp)
-	struct ispsoftc *isp;
+isp_mark_getpdb_all(struct ispsoftc *isp)
 {
 	fcparam *fcp = (fcparam *) isp->isp_param;
 	int i;
@@ -1269,10 +1261,7 @@ isp_mark_getpdb_all(isp)
 }
 
 static int
-isp_getpdb(isp, id, pdbp)
-	struct ispsoftc *isp;
-	int id;
-	isp_pdb_t *pdbp;
+isp_getpdb(struct ispsoftc *isp, int id, isp_pdb_t *pdbp)
 {
 	fcparam *fcp = (fcparam *) isp->isp_param;
 	mbreg_t mbs;
@@ -1299,10 +1288,7 @@ isp_getpdb(isp, id, pdbp)
 }
 
 static u_int64_t
-isp_get_portname(isp, loopid, nodename)
-	struct ispsoftc *isp;
-	int loopid;
-	int nodename;
+isp_get_portname(struct ispsoftc *isp, int loopid, int nodename)
 {
 	u_int64_t wwn = 0;
 	mbreg_t mbs;
@@ -1331,9 +1317,7 @@ isp_get_portname(isp, loopid, nodename)
  */
 
 static int
-isp_fclink_test(isp, usdelay)
-	struct ispsoftc *isp;
-	int usdelay;
+isp_fclink_test(struct ispsoftc *isp, int usdelay)
 {
 	static char *toponames[] = {
 		"Private Loop",
@@ -1384,10 +1368,10 @@ isp_fclink_test(isp, usdelay)
 		 */
 		enano = NANOTIME_SUB(&hrb, &hra);
 
-		isp_prt(isp, ISP_LOGDEBUG3, "usec%d: 0x%lx->0x%lx enano %lu",
+		isp_prt(isp, ISP_LOGDEBUG1,
+		    "usec%d: 0x%lx->0x%lx enano 0x%x%08x",
 		    count, (long) GET_NANOSEC(&hra), (long) GET_NANOSEC(&hrb),
-		    (enano > ((u_int64_t)0xffffffff))? 0xffffffff :
-		    (unsigned long) (enano & 0xffffffff));
+		    (u_int32_t)(enano >> 32), (u_int32_t)(enano & 0xffffffff));
 
 		/*
 		 * If the elapsed time is less than 1 millisecond,
@@ -1406,7 +1390,8 @@ isp_fclink_test(isp, usdelay)
 				enano -= (u_int64_t) 4000000000U;
 			}
 			wrk = enano;
-			USEC_SLEEP(isp, wrk/1000);
+			wrk /= 1000;
+			USEC_SLEEP(isp, wrk);
 		} else {
 			while (enano > (u_int64_t) 4000000000U) {
 				count += 4000000;
@@ -1555,8 +1540,7 @@ not_on_fabric:
 }
 
 static char *
-isp2100_fw_statename(state)
-	int state;
+isp2100_fw_statename(int state)
 {
 	switch(state) {
 	case FW_CONFIG_WAIT:	return "Config Wait";
@@ -1577,8 +1561,7 @@ isp2100_fw_statename(state)
  */
 
 static int
-isp_pdb_sync(isp)
-	struct ispsoftc *isp;
+isp_pdb_sync(struct ispsoftc *isp)
 {
 	struct lportdb *lp;
 	fcparam *fcp = isp->isp_param;
@@ -1888,8 +1871,7 @@ dump_em:
 }
 
 static int
-isp_scan_loop(isp)
-	struct ispsoftc *isp;
+isp_scan_loop(struct ispsoftc *isp)
 {
 	struct lportdb *lp;
 	fcparam *fcp = isp->isp_param;
@@ -2158,8 +2140,7 @@ isp_scan_loop(isp)
 }
 
 static int
-isp_scan_fabric(isp)
-	struct ispsoftc *isp;
+isp_scan_fabric(struct ispsoftc *isp)
 {
 	fcparam *fcp = isp->isp_param;
 	u_int32_t portid, first_portid;
@@ -2269,11 +2250,10 @@ isp_register_fc4_type(struct ispsoftc *isp)
  */
 
 int
-isp_start(xs)
-	XS_T *xs;
+isp_start(XS_T *xs)
 {
 	struct ispsoftc *isp;
-	u_int16_t iptr, optr;
+	u_int16_t iptr, optr, handle;
 	union {
 		ispreq_t *_reqp;
 		ispreqt2_t *_t2reqp;
@@ -2328,6 +2308,39 @@ isp_start(xs)
 	if (IS_FC(isp)) {
 		fcparam *fcp = isp->isp_param;
 		struct lportdb *lp;
+#ifdef	HANDLE_LOOPSTATE_IN_OUTER_LAYERS
+		if (fcp->isp_fwstate != FW_READY ||
+		    fcp->isp_loopstate != LOOP_READY) {
+			return (CMD_RQLATER);
+		}
+
+		/*
+		 * If we're not on a Fabric, we can't have a target
+		 * above FL_PORT_ID-1.
+		 *
+		 * If we're on a fabric and *not* connected as an F-port,
+		 * we can't have a target less than FC_SNS_ID+1. This
+		 * keeps us from having to sort out the difference between
+		 * local public loop devices and those which we might get
+		 * from a switch's database.
+		 */
+		if (fcp->isp_onfabric == 0) {
+			if (target >= FL_PORT_ID) {
+				XS_SETERR(xs, HBA_SELTIMEOUT);
+				return (CMD_COMPLETE);
+			}
+		} else {
+			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
+				XS_SETERR(xs, HBA_SELTIMEOUT);
+				return (CMD_COMPLETE);
+			}
+			if (fcp->isp_topo != TOPO_F_PORT &&
+			    target < FL_PORT_ID) {
+				XS_SETERR(xs, HBA_SELTIMEOUT);
+				return (CMD_COMPLETE);
+			}
+		}
+#else
 		/*
 		 * Check for f/w being in ready state. If the f/w
 		 * isn't in ready state, then we don't know our
@@ -2444,6 +2457,7 @@ isp_start(xs)
 		 * XXX: Here's were we would cancel any loop_dead flag
 		 * XXX: also cancel in dead_loop timeout that's running
 		 */
+#endif
 
 		/*
 		 * Now check whether we should even think about pursuing this.
@@ -2575,18 +2589,19 @@ isp_start(xs)
 	if (isp->isp_sendmarker && reqp->req_time < 5) {
 		reqp->req_time = 5;
 	}
-	if (isp_save_xs(isp, xs, &reqp->req_handle)) {
+	if (isp_save_xs(isp, xs, &handle)) {
 		isp_prt(isp, ISP_LOGDEBUG1, "out of xflist pointers");
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_EAGAIN);
 	}
+	reqp->req_handle = handle;
 	/*
 	 * Set up DMA and/or do any bus swizzling of the request entry
 	 * so that the Qlogic F/W understands what is being asked of it.
  	*/
 	i = ISP_DMASETUP(isp, xs, reqp, &iptr, optr);
 	if (i != CMD_QUEUED) {
-		isp_destroy_handle(isp, reqp->req_handle);
+		isp_destroy_handle(isp, handle);
 		/*
 		 * dmasetup sets actual error in packet, and
 		 * return what we were given to return.
@@ -2613,15 +2628,12 @@ isp_start(xs)
  */
 
 int
-isp_control(isp, ctl, arg)
-	struct ispsoftc *isp;
-	ispctl_t ctl;
-	void *arg;
+isp_control(struct ispsoftc *isp, ispctl_t ctl, void *arg)
 {
 	XS_T *xs;
 	mbreg_t mbs;
 	int bus, tgt;
-	u_int32_t handle;
+	u_int16_t handle;
 
 	switch (ctl) {
 	default:
@@ -2694,8 +2706,8 @@ isp_control(isp, ctl, arg)
 			mbs.param[1] =
 			    (bus << 15) | (XS_TGT(xs) << 8) | XS_LUN(xs);
 		}
-		mbs.param[3] = handle >> 16;
-		mbs.param[2] = handle & 0xffff;
+		mbs.param[3] = 0;
+		mbs.param[2] = handle;
 		isp_mboxcmd(isp, &mbs, MBLOGALL & ~MBOX_COMMAND_ERROR);
 		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
 			return (0);
@@ -2801,8 +2813,7 @@ isp_control(isp, ctl, arg)
 #define	MAX_REQUESTQ_COMPLETIONS	32
 
 int
-isp_intr(arg)
-	void *arg;
+isp_intr(void *arg)
 {
 	struct ispsoftc *isp = arg;
 	XS_T *complist[MAX_REQUESTQ_COMPLETIONS], *xs;
@@ -2878,10 +2889,10 @@ isp_intr(arg)
 				    mbox);
 			}
 		} else {
-			u_int32_t fhandle = isp_parse_async(isp, (int) mbox);
+			int fhandle = isp_parse_async(isp, (int) mbox);
 			isp_prt(isp, ISP_LOGDEBUG2, "Async Mbox 0x%x", mbox);
 			if (fhandle > 0) {
-				isp_fastpost_complete(isp, fhandle);
+				isp_fastpost_complete(isp, (u_int16_t) fhandle);
 			}
 		}
 		if (IS_FC(isp) || isp->isp_state != ISP_RUNSTATE) {
@@ -3185,12 +3196,10 @@ isp_intr(arg)
  */
 
 static int
-isp_parse_async(isp, mbox)
-	struct ispsoftc *isp;
-	int mbox;
+isp_parse_async(struct ispsoftc *isp, int mbox)
 {
 	int bus;
-	u_int32_t fast_post_handle = 0;
+	u_int16_t fast_post_handle = 0;
 
 	if (IS_DUALBUS(isp)) {
 		bus = ISP_READ(isp, OUTMAILBOX6);
@@ -3237,7 +3246,7 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_TIMEOUT_RESET:
 		isp_prt(isp, ISP_LOGWARN,
-		    "timeout initiated SCSI bus reset of bus %d\n", bus);
+		    "timeout initiated SCSI bus reset of bus %d", bus);
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
 		isp_target_async(isp, bus, mbox);
@@ -3306,8 +3315,7 @@ isp_parse_async(isp, mbox)
 		break;
 
 	case ASYNC_CMD_CMPLT:
-		fast_post_handle = (ISP_READ(isp, OUTMAILBOX2) << 16) |
-		    ISP_READ(isp, OUTMAILBOX1);
+		fast_post_handle = ISP_READ(isp, OUTMAILBOX1);
 		isp_prt(isp, ISP_LOGDEBUG3, "fast post completion of %u",
 		    fast_post_handle);
 		break;
@@ -3457,10 +3465,8 @@ isp_parse_async(isp, mbox)
  */
 
 static int
-isp_handle_other_response(isp, sp, optrp)
-	struct ispsoftc *isp;
-	ispstatusreq_t *sp;
-	u_int16_t *optrp;
+isp_handle_other_response(struct ispsoftc *isp,
+    ispstatusreq_t *sp, u_int16_t *optrp)
 {
 	switch (sp->req_header.rqs_entry_type) {
 	case RQSTYPE_STATUS_CONT:
@@ -3494,10 +3500,7 @@ isp_handle_other_response(isp, sp, optrp)
 }
 
 static void
-isp_parse_status(isp, sp, xs)
-	struct ispsoftc *isp;
-	ispstatusreq_t *sp;
-	XS_T *xs;
+isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 {
 	switch (sp->req_completion_status & 0xff) {
 	case RQCS_COMPLETE:
@@ -3829,13 +3832,11 @@ isp_parse_status(isp, sp, xs)
 }
 
 static void
-isp_fastpost_complete(isp, fph)
-	struct ispsoftc *isp;
-	u_int32_t fph;
+isp_fastpost_complete(struct ispsoftc *isp, u_int16_t fph)
 {
 	XS_T *xs;
 
-	if (fph < 1) {
+	if (fph == 0) {
 		return;
 	}
 	xs = isp_find_xs(isp, fph);
@@ -3962,7 +3963,7 @@ static u_int16_t mbpscsi[] = {
 	ISPOPMAP(0x01, 0x01)	/* 0x5d: GET NOST DATA */
 };
 
-#ifndef	ISP_STRIPEED
+#ifndef	ISP_STRIPPED
 static char *scsi_mbcmd_names[] = {
 	"NO-OP",
 	"LOAD RAM",
@@ -4324,10 +4325,7 @@ static char *fc_mbcmd_names[] = {
 #endif
 
 static void
-isp_mboxcmd(isp, mbp, logmask)
-	struct ispsoftc *isp;
-	mbreg_t *mbp;
-	int logmask;
+isp_mboxcmd(struct ispsoftc *isp, mbreg_t *mbp, int logmask)
 {
 	char *cname, *xname, tname[16], mname[16];
 	unsigned int lim, ibits, obits, box, opcode;
@@ -4461,8 +4459,7 @@ isp_mboxcmd(isp, mbp, logmask)
 }
 
 static void
-isp_fw_state(isp)
-	struct ispsoftc *isp;
+isp_fw_state(struct ispsoftc *isp)
 {
 	if (IS_FC(isp)) {
 		mbreg_t mbs;
@@ -4477,8 +4474,7 @@ isp_fw_state(isp)
 }
 
 static void
-isp_update(isp)
-	struct ispsoftc *isp;
+isp_update(struct ispsoftc *isp)
 {
 	int bus, upmask;
 
@@ -4491,9 +4487,7 @@ isp_update(isp)
 }
 
 static void
-isp_update_bus(isp, bus)
-	struct ispsoftc *isp;
-	int bus;
+isp_update_bus(struct ispsoftc *isp, int bus)
 {
 	int tgt;
 	mbreg_t mbs;
@@ -4611,9 +4605,7 @@ isp_update_bus(isp, bus)
 }
 
 static void
-isp_setdfltparm(isp, channel)
-	struct ispsoftc *isp;
-	int channel;
+isp_setdfltparm(struct ispsoftc *isp, int channel)
 {
 	int tgt;
 	mbreg_t mbs;
@@ -4873,11 +4865,10 @@ isp_setdfltparm(isp, channel)
  */
 
 void
-isp_reinit(isp)
-	struct ispsoftc *isp;
+isp_reinit(struct ispsoftc *isp)
 {
 	XS_T *xs;
-	u_int32_t handle;
+	u_int16_t handle;
 
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
@@ -4918,8 +4909,7 @@ skip:
  * NVRAM Routines
  */
 static int
-isp_read_nvram(isp)
-	struct ispsoftc *isp;
+isp_read_nvram(struct ispsoftc *isp)
 {
 	int i, amt;
 	u_int8_t csum, minversion;
@@ -4992,10 +4982,7 @@ isp_read_nvram(isp)
 }
 
 static void
-isp_rdnvram_word(isp, wo, rp)
-	struct ispsoftc *isp;
-	int wo;
-	u_int16_t *rp;
+isp_rdnvram_word(struct ispsoftc *isp, int wo, u_int16_t *rp)
 {
 	int i, cbits;
 	u_int16_t bit, rqst;
@@ -5058,9 +5045,7 @@ isp_rdnvram_word(isp, wo, rp)
 }
 
 static void
-isp_parse_nvram_1020(isp, nvram_data)
-	struct ispsoftc *isp;
-	u_int8_t *nvram_data;
+isp_parse_nvram_1020(struct ispsoftc *isp, u_int8_t *nvram_data)
 {
 	int i;
 	sdparam *sdp = (sdparam *) isp->isp_param;
@@ -5161,10 +5146,7 @@ isp_parse_nvram_1020(isp, nvram_data)
 }
 
 static void
-isp_parse_nvram_1080(isp, bus, nvram_data)
-	struct ispsoftc *isp;
-	int bus;
-	u_int8_t *nvram_data;
+isp_parse_nvram_1080(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 {
 	int i;
 	sdparam *sdp = (sdparam *) isp->isp_param;
@@ -5237,10 +5219,7 @@ isp_parse_nvram_1080(isp, bus, nvram_data)
 }
 
 static void
-isp_parse_nvram_12160(isp, bus, nvram_data)
-	struct ispsoftc *isp;
-	int bus;
-	u_int8_t *nvram_data;
+isp_parse_nvram_12160(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 {
 	sdparam *sdp = (sdparam *) isp->isp_param;
 	int i;
@@ -5314,9 +5293,7 @@ isp_parse_nvram_12160(isp, bus, nvram_data)
 }
 
 static void
-isp_parse_nvram_2100(isp, nvram_data)
-	struct ispsoftc *isp;
-	u_int8_t *nvram_data;
+isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 {
 	fcparam *fcp = (fcparam *) isp->isp_param;
 	u_int64_t wwn;
