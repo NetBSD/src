@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.27 2000/05/27 22:49:45 mycroft Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.28 2000/09/21 10:20:51 ad Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,6 +157,10 @@ outlined as follows:
 .Bl -tag -width flag -compact -offset indent
 .It "AT&T Macro" .
 .It "BSD Macro" .
+.It "BSD/OS Macro" .
+.It "FreeBSD Macro" .
+.It "NetBSD Macro" .
+.It "OpenBSD Macro" .
 .It "UNIX Macro" .
 .It "Emphasis Macro" .
 .It "Enclosure/Quoting Macros"
@@ -1403,17 +1407,17 @@ callable. It accepts at most two arguments.
 The
 .Ql \&.Bx
 macro is parsed and is callable.
-.Ss NetBSD Macro
-.Dl Usage: .Nx [Version/release] ... \*(Pu
-.Bl -tag -width ".Nx 1.4 ) ," -compact -offset 14n
-.It Li ".Nx"
-.Nx
-.It Li ".Nx 1.4 ."
-.Nx 1.4 .
+.Ss BSD/OS Macro
+.Dl Usage: .Bsx [Version/release] ... \*(Pu
+.Bl -tag -width ".Bsx 4.1 ) ," -compact -offset 14n
+.It Li ".Bsx"
+.Bsx
+.It Li ".Bsx 4.1 ."
+.Bsx 4.1 .
 .El
 .Pp
 The
-.Ql \&.Nx
+.Ql \&.Bsx
 macro is parsed and is callable.
 .Ss FreeBSD Macro
 .Dl Usage: .Fx [Version/release] ... \*(Pu
@@ -1426,6 +1430,30 @@ macro is parsed and is callable.
 .Pp
 The
 .Ql \&.Fx
+macro is parsed and is callable.
+.Ss NetBSD Macro
+.Dl Usage: .Nx [Version/release] ... \*(Pu
+.Bl -tag -width ".Nx 1.4 ) ," -compact -offset 14n
+.It Li ".Nx"
+.Nx
+.It Li ".Nx 1.4 ."
+.Nx 1.4 .
+.El
+.Pp
+The
+.Ql \&.Nx
+macro is parsed and is callable.
+.Ss OpenBSD Macro
+.Dl Usage: .Ox [Version/release] ... \*(Pu
+.Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
+.It Li ".Ox"
+.Ox
+.It Li ".Ox 2.7 ."
+.Ox 2.7 .
+.El
+.Pp
+The
+.Ql \&.Ox
 macro is parsed and is callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
