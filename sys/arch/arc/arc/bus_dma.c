@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2000/06/09 05:14:44 soda Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2000/06/20 08:26:52 soda Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -50,11 +50,13 @@
 #define _ARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-extern	paddr_t	kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
 static int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t,
 		    void *, bus_size_t, struct proc *, int, paddr_t *,
 		    int *, int));
+
+extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
 void
 _bus_dma_tag_init(t)
@@ -541,7 +543,7 @@ _mips3_bus_dmamap_sync(t, map, offset, len, ops)
 	int i;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
@@ -651,9 +653,28 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern paddr_t avail_start, avail_end;		/* XXX */
+
+	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, avail_start, trunc_page(avail_end)));
+}
+
+/*
+ * Allocate physical memory from the given physical address range.
+ * Called by DMA-safe memory allocation methods.
+ */
+int
+_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
+    flags, low, high)
+	bus_dma_tag_t t; 
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags; 
+	paddr_t low;
+	paddr_t high;
+{
 	paddr_t curaddr, lastaddr;
-	psize_t high;
 	vm_page_t m;
 	struct pglist mlist;
 	int curseg, error;
@@ -667,7 +688,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -687,9 +708,9 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < avail_start || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", (long)curaddr);
-			panic("_bus_dmamem_alloc");
+			printf("uvm_pglistalloc returned non-sensical"
+			    " address 0x%llx\n", (long long)curaddr);
+			panic("_bus_dmamem_alloc_range");
 		}
 #endif
 		if (curaddr == (lastaddr + PAGE_SIZE))
