@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.131 2004/12/02 00:00:11 wiz Exp $
+$NetBSD: UPDATING,v 1.132 2005/01/04 19:14:00 jmmv Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -653,7 +653,7 @@ Recent changes:
 Hints for a more successful build:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     Use build.sh, but do not use its "expert mode":
-	This will will automatically build the tools in the
+	This will automatically build the tools in the
 	   correct order, and it will keep the tools and the
 	   new build products from interfering with the running
 	   system.  This will allow you to ignore most of the
