@@ -1,3 +1,4 @@
+/* NetBSD $Id: scsiio.h,v 1.2 1994/06/27 19:31:55 cgd Exp $ */
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_

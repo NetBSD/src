@@ -1,3 +1,4 @@
+/* NetBSD $Id: socket.h,v 1.9 1994/06/27 19:32:03 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)socket.h	8.4 (Berkeley) 2/21/94
- *	$Id: socket.h,v 1.8 1994/05/13 06:12:10 mycroft Exp $
+ *	@(#)socket.h	8.4 (Berkeley) 2/21/94
  */
 
 #ifndef _SYS_SOCKET_H_

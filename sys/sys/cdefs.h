@@ -1,3 +1,4 @@
+/* NetBSD $Id: cdefs.h,v 1.9 1994/06/27 19:30:43 cgd Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cdefs.h	8.7 (Berkeley) 1/21/94
- *	$Id: cdefs.h,v 1.8 1994/05/24 00:52:57 cgd Exp $
+ *	@(#)cdefs.h	8.7 (Berkeley) 1/21/94
  */
 
 #ifndef	_CDEFS_H_

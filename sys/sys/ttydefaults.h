@@ -1,3 +1,4 @@
+/* NetBSD $Id: ttydefaults.h,v 1.6 1994/06/27 19:32:30 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ttydefaults.h	8.4 (Berkeley) 1/21/94
- *	$Id: ttydefaults.h,v 1.5 1994/05/21 03:52:15 cgd Exp $
+ *	@(#)ttydefaults.h	8.4 (Berkeley) 1/21/94
  */
 
 /*

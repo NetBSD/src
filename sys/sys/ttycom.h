@@ -1,3 +1,4 @@
+/* NetBSD $Id: ttycom.h,v 1.2 1994/06/27 19:32:28 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ttycom.h	8.1 (Berkeley) 3/28/94
- *	$Id: ttycom.h,v 1.1 1994/05/21 05:20:03 cgd Exp $
+ *	@(#)ttycom.h	8.1 (Berkeley) 3/28/94
  */
 
 #ifndef	_SYS_TTYCOM_H_

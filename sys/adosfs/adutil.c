@@ -1,3 +1,4 @@
+/* NetBSD $Id: adutil.c,v 1.4 1994/06/27 19:27:42 cgd Exp $ */
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: adutil.c,v 1.3 1994/06/17 20:06:09 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>

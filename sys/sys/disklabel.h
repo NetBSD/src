@@ -1,3 +1,4 @@
+/* NetBSD $Id: disklabel.h,v 1.24 1994/06/27 19:30:57 cgd Exp $ */
 /*
  * Copyright (c) 1987, 1988 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.23 1994/05/25 06:31:18 glass Exp $
+ *	@(#)disklabel.h	7.19 (Berkeley) 5/7/91
  */
 
 #ifndef _SYS_DISKLABEL_H_

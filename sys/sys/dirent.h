@@ -1,3 +1,4 @@
+/* NetBSD $Id: dirent.h,v 1.7 1994/06/27 19:30:55 cgd Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	8.1 (Berkeley) 6/2/93
- *	$Id: dirent.h,v 1.6 1994/06/08 11:38:34 mycroft Exp $
+ *	@(#)dir.h	8.1 (Berkeley) 6/2/93
  */
 
 /*

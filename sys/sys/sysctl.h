@@ -1,3 +1,4 @@
+/* NetBSD $Id: sysctl.h,v 1.3 1994/06/27 19:32:10 cgd Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sysctl.h	8.1 (Berkeley) 6/2/93
- *	$Id: sysctl.h,v 1.2 1994/05/06 22:43:52 cgd Exp $
+ *	@(#)sysctl.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _SYS_SYSCTL_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: advnops.c,v 1.7 1994/06/27 19:27:46 cgd Exp $ */
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: advnops.c,v 1.6 1994/06/17 20:06:14 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
