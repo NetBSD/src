@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.3 1999/11/15 23:39:33 simonb Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.4 1999/11/27 05:58:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.3 1999/11/15 23:39:33 simonb Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.4 1999/11/27 05:58:04 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ static struct nlist namelist[] = {
 static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
-static int nbuf, bufpages;
+static int nbuf, bufpages, bufbytes;
 static void *bufaddr;
 static struct buf *buf = NULL;
 static TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
@@ -136,12 +136,12 @@ void
 labelbufcache()
 {
 	mvwprintw(wnd, 0, 0, "There are %d buffers using %d kBytes of memory.",
-	    nbuf, bufpages * CLSIZE * sysconf(_SC_PAGESIZE) / 1024);
+	    nbuf, bufbytes / 1024);
 	wclrtoeol(wnd);
 	wmove(wnd, 1, 0);
 	wclrtoeol(wnd);
 	mvwaddstr(wnd, 2, 0,
-	    "File System          Bufs used   kB in use  Bufsize kB");
+"File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %");
 	wclrtoeol(wnd);
 }
 
@@ -161,8 +161,15 @@ showbufcache()
 		if (i < getmaxy(wnd) - 2) {
 			mvwprintw(wnd, i, 0, "%-20.20s", ml->ml_addr == NULL ?
 			    "NULL" : ml->ml_mount.mnt_stat.f_mntonname);
-			wprintw(wnd, "    %6d    %8ld    %8ld", ml->ml_count,
-			    ml->ml_valid / 1024, ml->ml_size / 1024);
+			wprintw(wnd,
+			    "    %6d %3d    %8ld %3d    %8ld %3d     %3d",
+			    ml->ml_count,
+			    (100 * ml->ml_count) / nbuf,
+			    ml->ml_valid / 1024,
+			    (100 * ml->ml_valid) / bufbytes,
+			    ml->ml_size / 1024,
+			    (100 * ml->ml_size) / bufbytes,
+			    (100 * ml->ml_valid) / ml->ml_size);
 			wclrtoeol(wnd);
 			lastrow = i;
 		}
@@ -174,8 +181,11 @@ showbufcache()
 	}
 
 	wclrtobot(wnd);
-	mvwprintw(wnd, lastrow + 2, 0, "%-20s    %6d    %8d    %8d",
-	    "Total:", tbuf, tvalid, tsize);
+	mvwprintw(wnd, lastrow + 2, 0,
+	    "%-20s    %6d %3d    %8d %3d    %8d %3d     %3d",
+	    "Total:", tbuf, (100 * tbuf) / nbuf,
+	    tvalid, (100 * tvalid * 1024) / bufbytes,
+	    tsize, (100 * tsize * 1024) / bufbytes, (100 * tvalid) / tsize); 
 }
 
 int
@@ -194,6 +204,7 @@ initbufcache()
 
 	NREAD(X_NBUF, &nbuf, sizeof(nbuf));
 	NREAD(X_BUFPAGES, &bufpages, sizeof(bufpages));
+	bufbytes = bufpages * sysconf(_SC_PAGESIZE);
 
 	buf = (struct buf *)malloc(nbuf * sizeof(struct buf));
 	if (buf == NULL)
