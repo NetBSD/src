@@ -409,8 +409,8 @@ noswap:
 }
 
 #define	swappable(p)							\
-	(((p)->p_flag &							\
-	    (P_SYSTEM | P_INMEM | P_NOSWAP | P_WEXIT | P_PHYSIO)) == P_INMEM)
+	(((p)->p_flag & (P_SYSTEM | P_INMEM | P_WEXIT)) == P_INMEM &&	\
+	 (p)->p_holdcnt == 0)
 
 /*
  * Swapout is driven by the pageout daemon.  Very simple, we find eligible
