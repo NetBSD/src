@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.18 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.19 2003/10/23 22:30:47 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -663,7 +663,7 @@ The argument
 is a set of flags modifying the operation of
 .Fn vflush .
 If FORCECLOSE is not specified, there should not be any active vnodes and
-an error is returned if any are found (this is a user error, not a
+an error EBUSY is returned if any are found (this is a user error, not a
 system error).
 If FORCECLOSE is specified, active vnodes that are found are detached.
 If WRITECLOSE is set, only flush out regular file vnodes open for
