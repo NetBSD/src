@@ -1,4 +1,4 @@
-/*      $NetBSD: nodelay.c,v 1.5 2001/06/13 10:45:58 wiz Exp $  */
+/*      $NetBSD: nodelay.c,v 1.6 2003/12/04 21:24:36 jdc Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nodelay.c,v 1.5 2001/06/13 10:45:58 wiz Exp $");
+__RCSID("$NetBSD: nodelay.c,v 1.6 2003/12/04 21:24:36 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -39,11 +39,12 @@ __RCSID("$NetBSD: nodelay.c,v 1.5 2001/06/13 10:45:58 wiz Exp $");
  *	Turn on and off blocking reads in getch for a
  *	given window.
  */
-void
+int
 nodelay(WINDOW *win, bool bf)
 {
 	if (bf)
 		win->delay = 0;
 	else
 		win->delay = -1;
+	return(OK);
 }
