@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fts.c	8.2 (Berkeley) 1/2/94"; */
-static char *rcsid = "$Id: fts.c,v 1.6 1994/04/12 03:21:39 cgd Exp $";
+static char *rcsid = "$Id: fts.c,v 1.7 1994/04/12 04:35:04 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -737,10 +737,19 @@ mem1:				saved_errno = errno;
 	 * fts_read and didn't find anything, get back.  If can't get
 	 * back, done.
 	 */
-	if (descend && (!nitems || type == BCHILD) && CHDIR(sp, "..")) {
-		cur->fts_info = FTS_ERR;
-		SET(FTS_STOP);
-		return (NULL);
+	if (descend && (!nitems || type == BCHILD)) {
+		int error;
+
+		if (cur->fts_level == FTS_ROOTLEVEL)
+			error = FCHDIR(sp, sp->fts_rfd);
+		else
+			error = CHDIR(sp, "..");
+
+		if (error) {
+			cur->fts_info = FTS_ERR;
+			SET(FTS_STOP);
+			return (NULL);
+		}
 	}
 
 	/* If didn't find anything, return NULL. */
