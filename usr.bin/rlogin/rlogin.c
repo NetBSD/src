@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.11 1996/06/19 08:17:49 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.12 1996/06/23 11:09:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.11 1996/06/19 08:17:49 mrg Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.12 1996/06/23 11:09:32 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,9 @@ main(argc, argv)
 	struct termios tty;
 	long omask;
 	int argoff, ch, dflag, one, uid;
-	char *host, *p, *user, term[1024];
+	int i, len, len2;
+	char *host, *p, *user, term[1024] = "network";
+	speed_t ospeed;
 
 	argoff = dflag = 0;
 	one = 1;
@@ -260,13 +262,18 @@ main(argc, argv)
 		exit(1);
 	}
 
-	(void)strncpy(term, (p = getenv("TERM")) ? p : "network",
-	    sizeof(term) - 1);
-	term[sizeof(term) - 1] = '\0';
-	if (tcgetattr(0, &tty) == 0) {
-		(void)strncat(term, "/", sizeof(term) - strlen(term));
-		(void)snprintf(term + strlen(term),
-		    sizeof(term) - strlen(term) - 1, "%d", cfgetospeed(&tty));
+	if (p = getenv("TERM")) {
+		(void)strncpy(term, p, sizeof(term) - 1);
+		term[sizeof(term) - 1] = '\0';
+	}
+	len = strlen(term);
+	if (len < (sizeof(term) - 1) && tcgetattr(0, &tty) == 0) {
+		/* start at 2 to include the / */
+		while (ospeed = i = cfgetospeed(&tty), len2 = 2; i > 9; len2++)
+			i /= 10;
+
+		if (len + len2 < sizeof(term) - 1)
+			(void)snprintf(term + len, len2, "/%d", ospeed);
 	}
 
 	(void)get_window_size(0, &winsize);
