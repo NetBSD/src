@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.2.2 1998/01/27 19:51:22 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.3 1998/01/27 22:40:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -443,7 +443,7 @@ int delay_divisor = 62;		/* assume the fastest (33 MHz) */
 void
 identifycpu()
 {
-	unsigned char machtype;
+	u_char machtype;
 
 	machtype = identity_prom.idp_machtype;
 	if ((machtype & IDM_ARCH_MASK) != IDM_ARCH_SUN3X) {
@@ -472,9 +472,9 @@ identifycpu()
 	}
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
-	sprintf(cpu_model, "Sun 3/%s", cpu_string);
+	sprintf(cpu_model, "Sun-3X (3/%s)", cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
+	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -752,7 +752,8 @@ dumpsys()
 	kseg_p->c_size = sizeof(*chdr_p);
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
+	/* Can NOT use machine[] as the name! */
+	strncpy(chdr_p->name, "sun3x", sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
 
