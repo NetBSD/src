@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.26 2003/03/05 22:39:48 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.27 2003/04/19 21:41:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.26 2003/03/05 22:39:48 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.27 2003/04/19 21:41:15 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -332,7 +332,6 @@ mach_vm_protect(args)
 	return 0;
 }
 
-/* XXX The findspace argument is not handled correctly */
 int
 mach_sys_map_fd(l, v, retval)
 	struct lwp *l;
@@ -352,11 +351,20 @@ mach_sys_map_fd(l, v, retval)
 	struct exec_vmcmd evc;
 	struct vm_map_entry *ret;
 	struct proc *p = l->l_proc;
+	register_t dontcare;
+	struct sys_munmap_args cup;
 	void *va;
 	int error;
 
 	if ((error = copyin(SCARG(uap, va), (void *)&va, sizeof(va))) != 0)
 		return error;
+
+	if (SCARG(uap, findspace) == 0) {
+		/* Make some free space XXX probably not The Right Way */
+		SCARG(&cup, addr) = va;
+		SCARG(&cup, len) = SCARG(uap, size);
+		(void)sys_munmap(l, &cup, &dontcare);
+	}
 
 	fdp = p->p_fd;
 	fp = fd_getfile(fdp, SCARG(uap, fd));
@@ -372,7 +380,7 @@ mach_sys_map_fd(l, v, retval)
 	evc.ev_addr = (u_long)va;
 	evc.ev_len = SCARG(uap, size);
 	evc.ev_prot = VM_PROT_ALL;
-	evc.ev_flags = 0;
+	evc.ev_flags = SCARG(uap, findspace) ? 0 : VMCMD_FIXED;
 	evc.ev_proc = vmcmd_map_readvn;
 	evc.ev_offset = SCARG(uap, offset);
 	evc.ev_vp = vp;
