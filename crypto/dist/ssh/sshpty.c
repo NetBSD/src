@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.6 2002/06/26 14:08:34 itojun Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.7 2002/10/15 15:19:02 manu Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -289,7 +289,8 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
 		if (chmod(ttyname, mode) < 0) {
 			if (errno == EROFS &&
-			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
+			    ((st.st_mode & (S_IRGRP | S_IROTH) == 0) ||
+			    st.st_uid == pw->pw_uid || st.st_uid == 0))
 				error("chmod(%.100s, 0%o) failed: %.100s",
 				    ttyname, mode, strerror(errno));
 			else
