@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2002/03/23 02:22:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2002/03/23 19:21:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2002/03/23 02:22:57 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2002/03/23 19:21:58 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -195,10 +195,10 @@ static struct pmap_head pmaps;
 
 struct pool pmap_pmap_pool;
 
-pagehook_t page_hook0;
-pagehook_t page_hook1;
+static pt_entry_t *csrc_pte, *cdst_pte;
+static vaddr_t csrcp, cdstp;
+
 char *memhook;
-pt_entry_t msgbufpte;
 extern caddr_t msgbufaddr;
 
 boolean_t pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -286,7 +286,7 @@ extern paddr_t physical_freeend;
 extern unsigned int free_pages;
 extern int max_processes;
 
-vaddr_t virtual_start;
+vaddr_t virtual_avail;
 vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
@@ -294,11 +294,6 @@ vaddr_t avail_start;
 vaddr_t avail_end;
 
 extern pv_addr_t systempage;
-
-#define ALLOC_PAGE_HOOK(x, s) \
-	x.va = virtual_start; \
-	x.pte = (pt_entry_t *)pmap_pte(pmap_kernel(), virtual_start); \
-	virtual_start += s; 
 
 /* Variables used by the L1 page table queue code */
 SIMPLEQ_HEAD(l1pt_queue, l1pt);
@@ -1021,6 +1016,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pd_entry_t *kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 {
+	pt_entry_t *pte;
 	int loop;
 	paddr_t start, end;
 #if NISADMA > 0
@@ -1118,22 +1114,31 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	printf("npages = %ld\n", npages);
 #endif
 
-	virtual_start = KERNEL_VM_BASE;
+	virtual_avail = KERNEL_VM_BASE;
 	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE - 1;
 
-	ALLOC_PAGE_HOOK(page_hook0, NBPG);
-	ALLOC_PAGE_HOOK(page_hook1, NBPG);
-
 	/*
-	 * The mem special device needs a virtual hook but we don't
-	 * need a pte
+	 * now we allocate the "special" VAs which are used for tmp mappings
+	 * by the pmap (and other modules).  we allocate the VAs by advancing
+	 * virtual_avail (note that there are no pages mapped at these VAs).
+	 * we find the PTE that maps the allocated VA via the linear PTE
+	 * mapping.
 	 */
-	memhook = (char *)virtual_start;
-	virtual_start += NBPG;
 
-	msgbufaddr = (caddr_t)virtual_start;
-	msgbufpte = (pt_entry_t)pmap_pte(pmap_kernel(), virtual_start);
-	virtual_start += round_page(MSGBUFSIZE);
+	pte = ((pt_entry_t *) PTE_BASE) + atop(virtual_avail);
+
+	csrcp = virtual_avail; csrc_pte = pte;
+	virtual_avail += PAGE_SIZE; pte++;
+
+	cdstp = virtual_avail; cdst_pte = pte;
+	virtual_avail += PAGE_SIZE; pte++;
+
+	memhook = (char *) virtual_avail;	/* don't need pte */
+	virtual_avail += PAGE_SIZE; pte++;
+
+	msgbufaddr = (caddr_t) virtual_avail;	/* don't need pte */
+	virtual_avail += round_page(MSGBUFSIZE);
+	pte += atop(round_page(MSGBUFSIZE));
 
 	/*
 	 * init the static-global locks and global lists.
@@ -1649,7 +1654,7 @@ pmap_virtual_space(start, end)
 	vaddr_t *start;
 	vaddr_t *end;
 {
-	*start = virtual_start;
+	*start = virtual_avail;
 	*end = virtual_end;
 }
 
@@ -1813,11 +1818,11 @@ pmap_zero_page(phys)
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
-	cpu_tlb_flushD_SE(page_hook0.va);
+	*cdst_pte = L2_PTE(phys & PG_FRAME, AP_KRW);
+	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
-	bzero_page(page_hook0.va);
-	cpu_dcache_wbinv_range(page_hook0.va, NBPG);
+	bzero_page(cdstp);
+	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
 
 /* pmap_pageidlezero()
@@ -1845,11 +1850,11 @@ pmap_pageidlezero(phys)
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
-	cpu_tlb_flushD_SE(page_hook0.va);
+	*cdst_pte = L2_PTE(phys & PG_FRAME, AP_KRW);
+	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 
-	for (i = 0, ptr = (int *)page_hook0.va;
+	for (i = 0, ptr = (int *)cdstp;
 			i < (NBPG / sizeof(int)); i++) {
 		if (sched_whichqs != 0) {
 			/*
@@ -1869,7 +1874,7 @@ pmap_pageidlezero(phys)
 		 * if we aborted we'll rezero this page again later so don't
 		 * purge it unless we finished it
 		 */
-		cpu_dcache_wbinv_range(page_hook0.va, NBPG);
+		cpu_dcache_wbinv_range(cdstp, NBPG);
 	return (rv);
 }
  
@@ -1906,14 +1911,14 @@ pmap_copy_page(src, dest)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*page_hook0.pte = L2_PTE(src & PG_FRAME, AP_KRW);
-	*page_hook1.pte = L2_PTE(dest & PG_FRAME, AP_KRW);
-	cpu_tlb_flushD_SE(page_hook0.va);
-	cpu_tlb_flushD_SE(page_hook1.va);
+	*csrc_pte = L2_PTE(src & PG_FRAME, AP_KRW);
+	*cdst_pte = L2_PTE(dest & PG_FRAME, AP_KRW);
+	cpu_tlb_flushD_SE(csrcp);
+	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
-	bcopy_page(page_hook0.va, page_hook1.va);
-	cpu_dcache_wbinv_range(page_hook0.va, NBPG);
-	cpu_dcache_wbinv_range(page_hook1.va, NBPG);
+	bcopy_page(csrcp, cdstp);
+	cpu_dcache_wbinv_range(csrcp, NBPG);
+	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
 
 #if 0
