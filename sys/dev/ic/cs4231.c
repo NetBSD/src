@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.4 2000/06/16 11:47:35 pk Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.5 2001/10/03 00:04:49 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -161,7 +161,8 @@ struct audio_hw_if audiocs_hw_if = {
         0,
 	cs4231_get_props,
 	cs4231_trigger_output,
-	cs4231_trigger_input
+	cs4231_trigger_input,
+	NULL,
 };
 
 
