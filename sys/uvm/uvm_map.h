@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.26 2001/05/25 04:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.27 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,17 +214,17 @@ struct vm_map_entry {
  */
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
-	lock_data_t		lock;		/* Lock for map data */
+	struct lock		lock;		/* Lock for map data */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* Reference count */
-	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
+	struct simplelock	ref_lock;	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
-	simple_lock_data_t	hint_lock;	/* lock for hint storage */
+	struct simplelock	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
 	int			flags;		/* flags */
-	simple_lock_data_t	flags_lock;	/* Lock for flags field */
+	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
@@ -267,7 +267,7 @@ struct vm_map_intrsafe {
 
 LIST_HEAD(vmi_list, vm_map_intrsafe);
 #ifdef _KERNEL
-extern simple_lock_data_t vmi_list_slock;
+extern struct simplelock vmi_list_slock;
 extern struct vmi_list vmi_list;
 
 static __inline int vmi_list_lock __P((void));

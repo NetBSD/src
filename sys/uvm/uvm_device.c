@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.34 2001/05/25 04:06:12 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.35 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  *
@@ -58,7 +58,7 @@
 
 LIST_HEAD(udv_list_struct, uvm_device);
 static struct udv_list_struct udv_list;
-static simple_lock_data_t udv_lock;
+static struct simplelock udv_lock;
 
 /*
  * functions

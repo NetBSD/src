@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2001/05/18 21:00:47 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.58 2001/05/26 16:32:45 chs Exp $ */
 
 /*
  * Mach Operating System
@@ -589,14 +589,14 @@ db_lock(addr, have_addr, count, modif)
 	char *modif;
 {
 #if 0
-	lock_t l;
+	struct lock *l;
 
 	if (!have_addr) {
 		db_printf("What lock address?\n");
 		return;
 	}
 
-	l = (lock_t)addr;
+	l = (struct lock *)addr;
 	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
 	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
 	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,

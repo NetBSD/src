@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.41 2001/05/25 04:06:12 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.42 2001/05/26 16:32:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -208,7 +208,7 @@ struct uvm_pagerops aobj_pager = {
  */
 
 static LIST_HEAD(aobjlist, uvm_aobj) uao_list;
-static simple_lock_data_t uao_list_lock;
+static struct simplelock uao_list_lock;
 
 
 /*

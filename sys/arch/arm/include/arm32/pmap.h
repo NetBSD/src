@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2001/04/22 23:19:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2001/05/26 16:32:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -65,7 +65,7 @@ struct pmap {
 	vaddr_t			pm_vptpt;	/* VA of pt's page table */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
+	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 

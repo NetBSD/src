@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2001/05/25 23:34:45 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2001/05/26 16:32:43 chs Exp $	*/
 
 /*
  *
@@ -231,11 +231,11 @@
  */
 
 static struct lock pmap_main_lock;
-static simple_lock_data_t pvalloc_lock;
-static simple_lock_data_t pmaps_lock;
-static simple_lock_data_t pmap_copy_page_lock;
-static simple_lock_data_t pmap_zero_page_lock;
-static simple_lock_data_t pmap_tmpptp_lock;
+static struct simplelock pvalloc_lock;
+static struct simplelock pmaps_lock;
+static struct simplelock pmap_copy_page_lock;
+static struct simplelock pmap_zero_page_lock;
+static struct simplelock pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)

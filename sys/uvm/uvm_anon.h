@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.14 2001/05/25 04:06:12 chs Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.15 2001/05/26 16:32:46 chs Exp $	*/
 
 /*
  *
@@ -49,7 +49,7 @@
 
 struct vm_anon {
 	int an_ref;			/* reference count [an_lock] */
-	simple_lock_data_t an_lock;	/* lock for an_ref */
+	struct simplelock an_lock;	/* lock for an_ref */
 	union {
 		struct vm_anon *an_nxt;	/* if on free list [afreelock] */
 		struct vm_page *an_page;/* if in RAM [an_lock] */
