@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.5 2002/03/19 20:10:45 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.6 2002/03/22 09:54:18 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.5 2002/03/19 20:10:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.6 2002/03/22 09:54:18 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -108,10 +108,8 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 			ctrl_desc[nctrl].N_CONNECT_RESPONSE = n_connect_response;
 			ctrl_desc[nctrl].N_DISCONNECT_REQUEST = n_disconnect_request;
 			ctrl_desc[nctrl].N_ALERT_REQUEST = n_alert_request;
-#if 0
 			ctrl_desc[nctrl].N_DOWNLOAD = NULL;	/* only used by active cards */
 			ctrl_desc[nctrl].N_DIAGNOSTICS = NULL;	/* only used by active cards */
-#endif
 			ctrl_desc[nctrl].N_MGMT_COMMAND = n_mgmt_command;
 		
 			/* init type and unit */
