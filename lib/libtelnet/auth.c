@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.9 1998/07/27 01:45:09 mycroft Exp $	*/
+/*	$NetBSD: auth.c,v 1.10 2000/02/01 22:29:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.9 1998/07/27 01:45:09 mycroft Exp $");
+__RCSID("$NetBSD: auth.c,v 1.10 2000/02/01 22:29:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ auth_request()
 		}
 		*e++ = IAC;
 		*e++ = SE;
-		net_write(str_request, e - str_request);
+		telnet_net_write(str_request, e - str_request);
 		printsub('>', &str_request[2], e - str_request - 2);
 	}
 }
@@ -449,7 +449,7 @@ auth_send(data, cnt)
 		}
 		auth_send_data += 2;
 	}
-	net_write(str_none, sizeof(str_none));
+	telnet_net_write(str_none, sizeof(str_none));
 	printsub('>', &str_none[2], sizeof(str_none) - 2);
 	if (auth_debug_mode)
 		printf(">>>%s: Sent failure message\r\n", Name);
@@ -559,7 +559,7 @@ auth_sendname(cp, len)
 	}
 	*e++ = IAC;
 	*e++ = SE;
-	net_write(str_request, e - str_request);
+	telnet_net_write(str_request, e - str_request);
 	printsub('>', &str_request[2], e - &str_request[2]);
 	return(1);
 }
