@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.4 2001/11/15 08:16:26 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.5 2001/12/08 08:22:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -190,6 +190,7 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
+#define	cpu_proc_fork(p1, p2)
 
 
 /*

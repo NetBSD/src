@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.2 2001/11/20 16:20:50 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.3 2001/12/08 08:22:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,10 +81,11 @@
 #define	curproc			(curcpu()->ci_curproc)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	(cpuinfo.ci_cpuid)
+#define	cpu_swapin(p)		/* nothing */
+#define	cpu_swapout(p)		/* nothing */
+#define	cpu_wait(p)		/* nothing */
+#define	cpu_number()		(cpuinfo.ci_cpuid)
+#define	cpu_proc_fork(p1, p2)	/* nothing */
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));

@@ -1,9 +1,11 @@
-/* $NetBSD: cpu.h,v 1.5.8.3 2001/12/08 08:22:41 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.2.8.2 2001/12/08 08:22:44 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1982, 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -37,23 +39,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cpu.h 1.16 91/03/25$
- *
- *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
+ *	from: Utah Hdr: cpu.h 1.16 91/03/25
+ *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
-#ifndef _MACHINE_CPU_H
-#define _MACHINE_CPU_H
+#ifndef _CPU_H_
+#define _CPU_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
+#include <m68k/m68k.h>
+
+#ifdef _KERNEL
+
 /*
- * Get common m68k CPU definitions.
+ * External definitions unique to sun68k cpu support.
+ * These are the "public" declarations - those needed in
+ * machine-independent source code.  The "private" ones
+ * are in machdep.h (used only inside sys/arch/sun{2,3,68k}).
+ *
+ * Note that the name of this file is NOT meant to imply
+ * that it has anything to do with Motorola CPU stuff.
+ * The name "cpu" is historical, and used in the common
+ * code to identify machine-dependent functions, etc.
  */
-#include <m68k/cpu.h>
-#define M68K_MMU_MOTOROLA
 
 #include <sys/sched.h>
 struct cpu_info {
@@ -64,7 +76,6 @@ struct cpu_info {
 #endif
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
@@ -73,127 +84,75 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define cpu_swapin(p)			/* nothing */
-#define cpu_wait(p)			/* nothing */
-#define cpu_swapout(p)			/* nothing */
-#define cpu_number()			0
+#define	cpu_wait(p)			/* nothing */
+#define	cpu_number()			0
 #define	cpu_proc_fork(p1, p2)		/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the luna68k, we use
- * what the hardware pushes on an interrupt (frame format 0).
+ * machine state in an opaque clockframe.  On the sun68k, we use
+ * what the locore.s glue puts on the stack before calling C-code.
  */
 struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
-};
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+	u_short	cf_sr;		/* sr at time of interrupt */
+	u_long	cf_pc;		/* pc at time of interrupt */
+	u_short	cf_vo;		/* vector offset (4-word frame) */
+} __attribute__((packed));
 
-#define CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
-#define CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->cf_sr & PSL_IPL) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_pc)
 #if 0
 /* We would like to do it this way... */
-#define CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
-#define CLKF_INTR(framep)	(0)	/* XXX */
+#define	CLKF_INTR(framep)	(0)	/* XXX */
 #endif
 
+extern int astpending;	 /* need to trap before returning to user mode */
+#define aston() (astpending = 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define need_resched(ci)	{ want_resched = 1; aston(); }
+extern int want_resched;	 /* resched() was called */
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the hp300, request an ast to send us
+ * buffer pages are invalid.  On the sun68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define signotify(p)	aston()
+#define	signotify(p)	aston()
 
-#define aston()		(astpending = 1)
-
-extern int	astpending;	/* need to trap before returning to user mode */
-extern int	want_resched;	/* resched() was called */
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siron(x)	\
-	__asm __volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
-#define siroff(x)	\
-	__asm __volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
-
-#define setsoftnet()	siron(SIR_NET)
-#define setsoftclock()	siron(SIR_CLOCK)
-
-#endif /* _KERNEL */
+#include <machine/intr.h>
+extern void *softnet_cookie;
+#define setsoftnet()	softintr_schedule(softnet_cookie)
 
 /*
- * CTL_MACHDEP definitions.
+ * For some reason the sparc has this prototype in its machine/cpu.h,
+ * so for now we do the same.
  */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_MAXID		2	/* number of valid machdep ids */
+void	fb_unblank __P((void));
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
-/*
- * Values for machtype
- */
-#define LUNA_I		1
-#define LUNA_II		2
-
-#ifdef _KERNEL
-extern	int machtype;
-extern	char *intiobase, *intiolimit;		/* XXX */
-extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
-
-/* machdep.c functions */
-void	dumpconf __P((void));
-void	dumpsys __P((void));
-
-/* locore.s functions */
-struct pcb;
-struct fpframe;
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-
-/* machdep.c functions */
-int	badaddr __P((caddr_t, int));
-
-/* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
 
-/* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+/*
+ * This is needed by sun68k/isr.c.  It's here for lack of a 
+ * better place.
+ */
+void	netintr __P((void));
 
-#endif
+#endif	/* _KERNEL */
 
-#endif /* _MACHINE_CPU_H */
+#include <m68k/sysctl.h>
+#endif /* _CPU_H_ */

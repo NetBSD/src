@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.4 2001/12/08 04:22:20 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.5 2001/12/08 08:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -75,6 +75,14 @@ extern struct lwp *npxproc;
 #endif
 
 void	setredzone __P((u_short *, caddr_t));
+
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
+}
 
 /*
  * Finish a new thread operation, with LWP l2 nearly set up.

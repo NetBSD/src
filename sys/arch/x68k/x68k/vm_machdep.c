@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37.4.3 2001/12/08 04:22:24 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.4.4 2001/12/08 08:22:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,14 @@
 #include <machine/reg.h>
 
 #include <uvm/uvm_extern.h>
+
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_md.md_flags = p1->p_md.md_flags;
+}
 
 /*
  * Finish a fork operation, with process l2 nearly set up.

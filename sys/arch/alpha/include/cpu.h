@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.58.4.2 2001/08/30 23:43:43 nathanw Exp $ */
+/* $NetBSD: cpu.h,v 1.58.4.3 2001/12/08 08:22:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ void	cpu_pause_resume_all(int);
  */
 #define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		alpha_pal_whami()
+#define	cpu_proc_fork(p1, p2)	/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

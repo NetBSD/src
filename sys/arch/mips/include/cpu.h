@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57.2.2 2001/11/17 23:43:41 wdk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.3 2001/12/08 08:22:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,6 +91,7 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
 #define	cpu_number()	(0)
+#define	cpu_proc_fork(p1, p2)
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
