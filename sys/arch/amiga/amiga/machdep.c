@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.24 1994/05/11 19:02:59 chopps Exp $
+ *	$Id: machdep.c,v 1.25 1994/05/12 05:56:34 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -90,6 +90,7 @@
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zthreebusvar.h>
 /* 
  * most of these can be killed by adding a server chain for 
  * int2 (PORTS)
@@ -102,10 +103,12 @@
 #include "gtsc.h"
 #include "zssc.h"
 #include "mgnsc.h"
+#include "wesc.h"
 #include "otgsc.h"
 #include "wstsc.h"
 #include "ivsc.h"
 #include "ser.h"
+#include "idesc.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -381,6 +384,9 @@ again:
 			printf ("memory segment %d at %08lx size %08lx\n", i,
 				mem_list->mem_seg[i].mem_start,
 				mem_list->mem_seg[i].mem_size);
+	if (ZTHREEAVAIL)
+	  	printf ("Found %d bytes within Zorro III space\n",
+			ZTHREEAVAIL);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -1413,7 +1419,11 @@ intrhand(sr)
 			goto intports_done;
 #endif
 #if NMGNSC > 0
-		if (siopintr2())
+		if (mgnsc_dmaintr())
+			goto intports_done;
+#endif
+#if NWESC > 0
+		if (wesc_dmaintr())
 			goto intports_done;
 #endif
 #if (NOTGSC + NWSTSC + NIVSC) > 0
@@ -1422,6 +1432,10 @@ intrhand(sr)
 #endif
 #if NLE > 0
 		if (leintr (0))
+			goto intports_done;
+#endif
+#if NIDESC > 0
+		if (idesc_intr ())
 			goto intports_done;
 #endif
 		ciaa_intr ();

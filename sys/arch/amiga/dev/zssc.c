@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,19 +32,161 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: zssc.c,v 1.1 1994/05/08 05:53:51 chopps Exp $
+ *	$Id: zssc.c,v 1.2 1994/05/12 05:57:26 chopps Exp $
  */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cc.h>
+#include <amiga/amiga/device.h>
+#include <amiga/dev/siopreg.h>
+#include <amiga/dev/siopvar.h>
+#include <amiga/dev/ztwobusvar.h>
+
+int zsscprint __P((void *auxp, char *));
+void zsscattach __P((struct device *, struct device *, void *));
+int zsscmatch __P((struct device *, struct cfdata *, void *));
+int siopintr __P((struct siop_softc *));
+
+struct scsi_adapter zssc_scsiswitch = {
+	siop_scsicmd,
+	siop_minphys,
+	0,			/* no lun support */
+	0,			/* no lun support */
+	siop_adinfo,
+	"zssc",
+};
+
+struct scsi_device zssc_scsidev = {
+	NULL,		/* use default error handler */
+	NULL,		/* do not have a start functio */
+	NULL,		/* have no async handler */
+	NULL,		/* Use default done routine */
+	"zssc",
+	0,
+};
+
+
+#ifdef DEBUG
+#endif
+
+struct cfdriver zssccd = {
+	NULL, "zssc", zsscmatch, zsscattach, 
+	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*
- * dummy PPI Zeus DMA driver
+ * if we are an PPI Zeus
  */
+int
+zsscmatch(pdp, cdp, auxp)
+	struct device *pdp;
+	struct cfdata *cdp;
+	void *auxp;
+{
+	struct ztwobus_args *zap;
 
-#include "zeusscsi.h"
-
-#if NZEUSSCSI > 0
+	zap = auxp;
+	if (zap->manid == 2026 && zap->prodid == 150)
+		return(1);
+	return(0);
+}
 
 void
-zeusdmainit ()
+zsscattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
 {
-}
+	struct siop_softc *sc;
+	struct ztwobus_args *zap;
+	siop_regmap_p rp;
+
+	zap = auxp;
+	
+	sc = (struct siop_softc *)dp;
+	sc->sc_siopp = rp = zap->va + 0x4000;
+
+	/*
+	 * DCNTL = 50.01->66MHZ / SCLK/3
+	 * CTEST7 = 00
+	 */
+	sc->sc_clock_freq = 0xc0;
+
+	
+	siopreset(sc);
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter = &zssc_scsiswitch;
+	sc->sc_link.device = &zssc_scsidev;
+	TAILQ_INIT(&sc->sc_xslist);
+
+#if 0
+	custom.intreq = INTF_EXTER;
+	custom.intena = INTF_SETCLR | INTF_EXTER;
 #endif
+
+	/*
+	 * attach all scsi units on us
+	 */
+	config_found(dp, &sc->sc_link, zsscprint);
+}
+
+/*
+ * print diag if pnp is NULL else just extra
+ */
+int
+zsscprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	if (pnp == NULL)
+		return(UNCONF);
+	return(QUIET);
+}
+
+
+/*
+ * Level 6 interrupt processing for the Progressive Peripherals Inc
+ * Zeus SCSI.  Because the level 6 interrupt is above splbio, the
+ * interrupt status is saved and an sicallback to the level 2 interrupt
+ * handler scheduled.  This way, the actual processing of the interrupt
+ * can be deferred until splbio is unblocked.
+ */
+
+#if 0
+int
+zssc_dmaintr()
+#else
+int
+siopintr6 ()
+#endif
+{
+	siop_regmap_p rp;
+	struct siop_softc *dev;
+	int i, istat, found;
+
+	found = 0;
+	for (i = 0; i < zssccd.cd_ndevs; i++) {
+		dev = zssccd.cd_devs[i];
+		if (dev == NULL)
+			continue;
+		rp = dev->sc_siopp;
+		istat = rp->siop_istat;
+		if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+			continue;
+		if ((dev->sc_flags & (SIOP_DMA | SIOP_SELECTED)) == SIOP_SELECTED)
+			continue;	/* doing non-interrupt I/O */
+		found++;
+		dev->sc_istat = istat;
+		dev->sc_dstat = rp->siop_dstat;
+		dev->sc_sstat0 = rp->siop_sstat0;
+		custom.intreq = INTF_EXTER;
+		add_sicallback (siopintr, dev, NULL);
+	}
+	return(found);
+}
