@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.8 1998/07/27 16:43:25 mycroft Exp $	*/
+/*	$NetBSD: cache.c,v 1.9 1998/07/27 17:55:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cache.c,v 1.8 1998/07/27 16:43:25 mycroft Exp $");
+__RCSID("$NetBSD: cache.c,v 1.9 1998/07/27 17:55:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,6 @@ name_uid(uid, frc)
 #		else
 		(void)snprintf(ptr->name, UNMLEN, "%lu", (long) uid);
 #		endif
-		ptr->name[UNMLEN-1] = '\0';
 		ptr->valid = INVALID;
 		if (frc == 0)
 			return("");
@@ -333,7 +332,6 @@ name_gid(gid, frc)
 #		else
 		(void)snprintf(ptr->name, GNMLEN, "%lu", (long) gid);
 #		endif
-		ptr->name[GNMLEN-1] = '\0';
 		ptr->valid = INVALID;
 		if (frc == 0)
 			return("");
