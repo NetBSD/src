@@ -1,5 +1,8 @@
-#	$NetBSD: files.mips,v 1.15 1998/04/19 08:24:19 jonathan Exp $
+#	$NetBSD: files.mips,v 1.16 1998/07/15 23:57:04 jonathan Exp $
 #
+
+defopt 	opt_cputype.h	NOTHING_YET	# reserved for  CPU level
+
 file	arch/mips/mips/db_disasm.c	ddb
 file	arch/mips/mips/db_interface.c	ddb
 file	arch/mips/mips/db_trace.c	ddb
