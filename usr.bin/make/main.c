@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.82 2002/01/27 01:50:54 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.83 2002/03/14 16:08:39 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1576,12 +1576,13 @@ eunlink(file)
  *	Print why exec failed, avoiding stdio.
  */
 void
-execError(av)
+execError(af, av)
+	const char *af;
 	const char *av;
 {
 #ifdef USE_IOVEC
 	int i = 0;
-	struct iovec iov[6];
+	struct iovec iov[8];
 #define IOADD(s) \
 	(void)(iov[i].iov_base = (s), \
 	    iov[i].iov_len = strlen(iov[i].iov_base), \
@@ -1591,14 +1592,16 @@ execError(av)
 #endif
 
 	IOADD(progname);
-	IOADD(": Exec of `");
+	IOADD(": ");
+	IOADD((char *)af);
+	IOADD("(");
 	IOADD((char *)av);
-	IOADD("' failed (");
+	IOADD(") failed (");
 	IOADD(strerror(errno));
 	IOADD(")\n");
 
 #ifdef USE_IOVEC
-	(void)writev(2, iov, 6);
+	(void)writev(2, iov, 8);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.63 2002/03/14 08:07:55 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.63 2002/03/14 08:07:55 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.63 2002/03/14 08:07:55 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.64 2002/03/14 16:08:38 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1329,8 +1329,10 @@ JobExec(job, argv)
 	 * reset it to the beginning (again). Since the stream was marked
 	 * close-on-exec, we must clear that bit in the new input.
 	 */
-	if (dup2(FILENO(job->cmdFILE), 0) == -1)
-	    Punt("Cannot dup2: %s", strerror(errno));
+	if (dup2(FILENO(job->cmdFILE), 0) == -1) {
+	    execError("dup2", "job->cmdFILE");
+	    _exit(1);
+	}
 	(void) fcntl(0, F_SETFD, 0);
 	(void) lseek(0, (off_t)0, SEEK_SET);
 
@@ -1347,16 +1349,20 @@ JobExec(job, argv)
 	     * Set up the child's output to be routed through the pipe
 	     * we've created for it.
 	     */
-	    if (dup2(job->outPipe, 1) == -1)
-		Punt("Cannot dup2: %s", strerror(errno));
+	    if (dup2(job->outPipe, 1) == -1) {
+		execError("dup2", "job->outPipe");
+		_exit(1);
+	    }
 	} else {
 	    /*
 	     * We're capturing output in a file, so we duplicate the
 	     * descriptor to the temporary file into the standard
 	     * output.
 	     */
-	    if (dup2(job->outFd, 1) == -1)
-		Punt("Cannot dup2: %s", strerror(errno));
+	    if (dup2(job->outFd, 1) == -1) {
+		execError("dup2", "job->outFd");
+		_exit(1);
+	    }
 	}
 	/*
 	 * The output channels are marked close on exec. This bit was
@@ -1365,8 +1371,10 @@ JobExec(job, argv)
 	 * its standard output.
 	 */
 	(void) fcntl(1, F_SETFD, 0);
-	if (dup2(1, 2) == -1)
-	    Punt("Cannot dup2: %s", strerror(errno));
+	if (dup2(1, 2) == -1) {
+	    execError("dup2", "1, 2");
+	    _exit(1);
+	}
 
 #ifdef USE_PGRP
 	/*
@@ -1388,7 +1396,7 @@ JobExec(job, argv)
 #endif /* REMOTE */
 	{
 	   (void) execv(shellPath, argv);
-	   execError(shellPath);
+	   execError("exec", shellPath);
 	}
 	_exit(1);
     } else {
