@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.281 2004/06/18 10:08:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.282 2004/06/18 10:15:00 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4047,3 +4047,14 @@ usr.sbin/racoon/libpfkey/Makefile		patched by hand
 	the set list.
 	[seb, ticket #509]
 
+src/sys/netinet/ip_fil_netbsd.c			1.11
+
+	Don't leak mbuf if ipfr_fastroute6() fails.
+	[tron, ticket #501]
+
+src/sys/netinet/fil.c				1.66
+
+	Make sure that "pass" is always initialized.
+	Make sure the code doesn't use a stale mbuf pointer after
+	fr_makefrip() has been called.
+	[tron, ticket #502]
