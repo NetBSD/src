@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.183 2002/10/25 21:03:49 leo Exp $
+#	$NetBSD: files.pci,v 1.184 2002/11/07 21:57:00 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -72,6 +72,10 @@ file	dev/pci/mlx_pci.c		mlx_pci
 device	mly: scsi
 attach	mly at pci
 file	dev/pci/mly.c			mly			needs-flag
+
+# Myson-Century Technology MTD803 3-in-1 Fast Ethernet Controller
+attach	mtd at pci with mtd_pci
+file	dev/pci/if_mtd_pci.c		mtd_pci
 
 # ICP-Vortex/Intel RAID controllers
 attach	icp at pci with icp_pci
