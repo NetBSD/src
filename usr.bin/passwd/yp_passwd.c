@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.15 1997/10/19 12:30:07 lukem Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.16 1997/11/21 20:28:35 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.15 1997/10/19 12:30:07 lukem Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.16 1997/11/21 20:28:35 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static	char		*getnewpasswd __P((struct passwd *, char **));
 static	struct passwd	*interpret __P((struct passwd *, char *));
 static	struct passwd	*ypgetpwnam __P((char *));
 static	void		 pw_error __P((char *, int, int));
+static	void		 test_local __P((char *));
 
 static uid_t uid;
 char *domain;
@@ -89,6 +90,21 @@ pw_error(name, err, eval)
 	if (err)
 		warn("%s", name ? name : "");
 	errx(eval, "YP passwd database unchanged");
+}
+
+static void
+test_local(username)
+	char *username;
+{
+	/*
+	 * Something failed recoverably stating that the YP system couldn't
+	 * find this user.  Look for a local passwd entry, and change that
+	 * if and only if we weren't run as yppasswd or with the -y option.
+	 * This function does not return if a local entry is found.
+	 */
+	if (yppwd == 0 && yflag == 0)
+		if ((getpwnam(username) != NULL) && !local_passwd(username))
+			exit(0);
 }
 
 int
@@ -115,25 +131,18 @@ yp_passwd(username)
 	 * Find the host for the passwd map; it should be running
 	 * the daemon.
 	 */
-	if ((r = yp_master(domain, "passwd.byname", &master)) != 0)
+	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
+		test_local(username);
 		errx(1, "can't find the master YP server.  Reason: %s",
 		    yperr_string(r));
+	}
 
 	/*
 	 * Ask the portmapper for the port of the daemon.
 	 */
 	if ((rpcport = getrpcport(master, YPPASSWDPROG,
 	    YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
-		/*
-		 * Master server isn't running rpc.yppasswdd.  Check to see
-		 * if there's a local passwd entry, and if there is, use
-		 * it iff:
-		 *	- we were not invoked as "yppasswd"
-		 *	- we were not passed "-y", and defaulted to YP
-		 */
-		if (yppwd == 0 && yflag == 0)
-			if (getpwnam(username) != NULL)
-				exit(local_passwd(username));
+		test_local(username);
 		errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
 		    "Can't change password.");
 	}
@@ -145,8 +154,10 @@ yp_passwd(username)
 		errx(1, "yppasswd daemon is on an invalid port.");
 
 	/* Get user's login identity */
-	if (!(pw = ypgetpwnam(username)))
+	if (!(pw = ypgetpwnam(username))) {
+		test_local(username);
 		errx(1, "unknown user %s", username);
+	}
 
 	if (uid && uid != pw->pw_uid)
 		errx(1, "you may only change your own password: %s",
@@ -162,7 +173,7 @@ yp_passwd(username)
 	yppasswd.newpw.pw_gecos = pw->pw_gecos;
 	yppasswd.newpw.pw_dir	= pw->pw_dir;
 	yppasswd.newpw.pw_shell	= pw->pw_shell;
-	
+
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client==NULL) {
 		warnx("cannot contact yppasswdd on %s:  Reason: %s",
