@@ -70,6 +70,7 @@
 ./usr/share/man/cat4/arm32/ptsc.0
 ./usr/share/man/cat4/arm32/quadmouse.0
 ./usr/share/man/cat4/arm32/wd.0
+./usr/share/man/cat4/atari/et.0
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/intro.0
 ./usr/share/man/cat4/atari/ms.0
@@ -362,6 +363,7 @@
 ./usr/share/man/man4/arm32/ptsc.4
 ./usr/share/man/man4/arm32/quadmouse.4
 ./usr/share/man/man4/arm32/wd.4
+./usr/share/man/man4/atari/et.4
 ./usr/share/man/man4/atari/floppy.4
 ./usr/share/man/man4/atari/intro.4
 ./usr/share/man/man4/atari/ms.4
