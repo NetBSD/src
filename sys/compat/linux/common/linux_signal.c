@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.28 2000/07/28 21:49:09 tron Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.29 2000/08/09 20:20:49 tv Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -344,10 +344,17 @@ linux_sys_rt_sigaction(p, v, retval)
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
-	error = sigaction1(p, linux_to_native_sig[sig],
-	    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
-	if (error)
-		return (error);
+	if (sig > 0 && !linux_to_native_sig[sig]) {
+		/* Pretend that we did something useful for unknown signals. */
+		obsa.sa_handler = SIG_IGN;
+		sigemptyset(&obsa.sa_mask);
+		obsa.sa_flags = 0;
+	} else {
+		error = sigaction1(p, linux_to_native_sig[sig],
+		    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
+		if (error)
+			return (error);
+	}
 	if (SCARG(uap, osa)) {
 		native_to_linux_sigaction(&obsa, &olsa);
 		error = copyout(&olsa, SCARG(uap, osa), sizeof(olsa));
