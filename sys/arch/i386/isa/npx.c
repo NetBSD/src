@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.72.2.1 2001/03/30 21:32:17 he Exp $	*/
+/*	$NetBSD: npx.c,v 1.72.2.2 2002/02/23 16:00:55 he Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -342,7 +342,7 @@ npxintr(void *arg)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		p->p_md.md_regs = (struct trapframe *)&frame->if_es;
+		p->p_md.md_regs = (struct trapframe *)&frame->if_gs;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
