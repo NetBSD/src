@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.20 1995/06/18 10:58:06 cgd Exp $	*/
+/*	$NetBSD: df.c,v 1.21 1995/08/11 00:38:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: df.c,v 1.20 1995/06/18 10:58:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: df.c,v 1.21 1995/08/11 00:38:15 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct stat stbuf;
-	struct statfs statfsbuf, *mntbuf;
+	struct statfs *mntbuf;
 	long mntsize;
 	int ch, i, maxwidth, width;
 	char *mntpt;
