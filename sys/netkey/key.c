@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.102 2003/10/13 08:55:59 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.103 2003/10/25 08:27:12 christos Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.102 2003/10/13 08:55:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.103 2003/10/25 08:27:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1680,6 +1680,9 @@ key_spdadd(so, m, mhp)
 		/* tag refcnt++ */
 		newsp = key_getspbytag(tagvalue, xpl0->sadb_x_policy_dir);
 	}
+#else
+	else
+		newsp = NULL;
 #endif
 
 	if (newsp && (newsp->readonly || newsp->persist)) {
