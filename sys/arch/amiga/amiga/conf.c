@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1994/12/13 21:20:59 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1994/12/14 19:13:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -53,8 +53,7 @@ int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
-					   struct file *))
+#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
