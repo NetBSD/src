@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.29 1995/07/23 20:37:11 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30 1995/07/23 21:37:51 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -680,8 +680,7 @@ lestart(ifp)
 	u_char *buffer;
 	int len;
 
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
-	    IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	tmd = sc->sc_last_td;
@@ -689,7 +688,7 @@ lestart(ifp)
 
 	for (;;) {
 		if (sc->sc_no_td >= NTBUF) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+			ifp->if_flags |= IFF_OACTIVE;
 #ifdef LEDEBUG
 			if (sc->sc_debug)
 				printf("no_td = %d, last_td = %d\n", sc->sc_no_td,
@@ -700,13 +699,13 @@ lestart(ifp)
 
 #ifdef LEDEBUG
 		if (cdm->flags & LE_OWN) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+			ifp->if_flags |= IFF_OACTIVE;
 			printf("missing buffer, no_td = %d, last_td = %d\n",
 			    sc->sc_no_td, sc->sc_last_td);
 		}
 #endif
 
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (!m)
 			break;
 
@@ -729,8 +728,8 @@ lestart(ifp)
 #endif
 
 #if NBPFILTER > 0
-		if (sc->sc_arpcom.ac_if.if_bpf)
-			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 		m_freem(m0);
@@ -762,6 +761,7 @@ letint(sc)
 {
 	register int tmd = (sc->sc_last_td - sc->sc_no_td + NTBUF) % NTBUF;
 	struct mds *cdm = &sc->sc_td[tmd];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
@@ -772,7 +772,7 @@ letint(sc)
 		return;
 	}
 
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	do {
 		if (sc->sc_no_td <= 0)
@@ -781,7 +781,7 @@ letint(sc)
 		if (sc->sc_debug)
 			printf("trans cdm = %x\n", cdm);
 #endif
-		sc->sc_arpcom.ac_if.if_opackets++;
+		ifp->if_opackets++;
 		--sc->sc_no_td;
 		if (cdm->mcnt & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
 			if (cdm->mcnt & LE_TBUFF)
@@ -795,25 +795,25 @@ letint(sc)
 #if 0
 			if (cdm->mcnt & LE_LCOL) {
 				printf("%s: late collision\n", sc->sc_dev.dv_xname);
-				sc->sc_arpcom.ac_if.if_collisions++;
+				ifp->if_collisions++;
 			}
 			if (cdm->mcnt & LE_LCAR)
 				printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
 			if (cdm->mcnt & LE_RTRY) {
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname, cdm->flags & 0x1ff);
-				sc->sc_arpcom.ac_if.if_collisions += 16;
+				ifp->if_collisions += 16;
 			}
 #endif
 		} else if (cdm->flags & LE_ONE)
-			sc->sc_arpcom.ac_if.if_collisions++;
+			ifp->if_collisions++;
 		else if (cdm->flags & LE_MORE)
 			/* Real number is unknown. */
-			sc->sc_arpcom.ac_if.if_collisions += 2;
+			ifp->if_collisions += 2;
 		NEXTTDS;
 	} while ((cdm->flags & LE_OWN) == 0);
 
-	lestart(&sc->sc_arpcom.ac_if);
+	lestart(ifp);
 }
 
 #define NEXTRDS \
@@ -826,6 +826,7 @@ lerint(sc)
 {
 	register int rmd = sc->sc_last_rd;
 	struct mds *cdm = &sc->sc_rd[rmd];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
@@ -866,7 +867,7 @@ lerint(sc)
 #endif
 			leread(sc, sc->sc_rbuf + (BUFSIZE * rmd),
 			    (int)cdm->mcnt);
-			sc->sc_arpcom.ac_if.if_ipackets++;
+			ifp->if_ipackets++;
 		}
 
 		cdm->bcnt = -BUFSIZE;
