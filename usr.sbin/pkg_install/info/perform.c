@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.37.2.3 2003/02/08 07:51:18 jmc Exp $	*/
+/*	$NetBSD: perform.c,v 1.37.2.4 2003/09/21 10:32:46 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.37.2.3 2003/02/08 07:51:18 jmc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37.2.4 2003/09/21 10:32:46 tron Exp $");
 #endif
 #endif
 
@@ -54,7 +54,7 @@ pkg_do(char *pkg)
 
 	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(pkg)) != NULL) {
-			strcpy(fname, cp);
+			strlcpy(fname, cp, sizeof(fname));
 			isTMP = TRUE;
 		}
 	} else if (fexists(pkg) && isfile(pkg)) {
@@ -68,7 +68,7 @@ pkg_do(char *pkg)
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
 		} else {
-			strcpy(fname, pkg);
+			strlcpy(fname, pkg, sizeof(fname));
 		}
 		cp = fname;
 	} else {
@@ -89,7 +89,7 @@ pkg_do(char *pkg)
 				char *cp2;
 
 				if ((cp2 = fileGetURL(cp)) != NULL) {
-					strcpy(fname, cp2);
+					strlcpy(fname, cp2, sizeof(fname));
 					isTMP = TRUE;
 				}
 				strcpy(PlayPen, cp2);
@@ -118,19 +118,16 @@ pkg_do(char *pkg)
 	         * It's not an uninstalled package, try and find it among the
 	         * installed
 	         */
-		char   *tmp;
-
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
-		    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-		    pkg);
-		if (!fexists(log_dir) || !isdir(log_dir)) {
+		    _pkgdb_getPKGDB_DIR(), pkg);
+		if (!fexists(log_dir) || !(isdir(log_dir) || islinktodir(log_dir))) {
 			{
 				/* Check if the given package name matches
 				 * something with 'pkg-[0-9]*' */
 				char    try[FILENAME_MAX];
 				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-					add_to_list_fn, &pkgs) != 0) {
+					add_to_list_fn, &pkgs) > 0) {
 					return 0;	/* we've just appended some names to the pkgs list,
 							 * they will be processed after this package. */
 				}
@@ -184,6 +181,9 @@ pkg_do(char *pkg)
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
+		}
+		if (Flags & SHOW_BLD_DEPENDS) {
+			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);
@@ -253,7 +253,7 @@ foundpkg(const char *found, void *vp)
 
 	/* we only want to display this if it really is a directory */
 	snprintf(buf, sizeof(buf), "%s/%s", data, found);
-	if (!isdir(buf)) {
+	if (!(isdir(buf) || islinktodir(buf))) {
 		/* return value seems to be ignored for now */
 		return -1;
 	}
@@ -278,11 +278,15 @@ CheckForPkg(char *pkgspec, char *dbdir)
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
 		/* expensive (pattern) match */
-		return !findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
+		error = findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
+		if (error == -1)
+			return 1;
+		else
+			return !error;
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = !isdir(buf);
+	error = !(isdir(buf) || islinktodir(buf));
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
 	}
@@ -291,7 +295,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		
 		char    try[FILENAME_MAX];
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
-		if (findmatchingname(dbdir, try, foundpkg, dbdir) != 0) {
+		if (findmatchingname(dbdir, try, foundpkg, dbdir) > 0) {
 			error = 0;
 		}
 	}
@@ -309,37 +313,29 @@ int
 pkg_perform(lpkg_head_t *pkghead)
 {
 	struct dirent *dp;
-	char   *tmp;
+	char   *dbdir;
 	DIR    *dirp;
 	int     err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
-	tmp = _pkgdb_getPKGDB_DIR();
+	dbdir = _pkgdb_getPKGDB_DIR();
 
 	/* Overriding action? */
 	if (CheckPkg) {
-		err_cnt += CheckForPkg(CheckPkg, tmp);
+		err_cnt += CheckForPkg(CheckPkg, dbdir);
 	} else if (AllInstalled) {
-		if (!(isdir(tmp) || islinktodir(tmp)))
+		if (!(isdir(dbdir) || islinktodir(dbdir)))
 			return 1;
 
 		if (File2Pkg) {
-			/* Show all files with the package they belong to */
-			char   *file, *pkg;
 
-			/* pkg_info -Fa => Dump pkgdb */
-			if (!pkgdb_open(ReadOnly)) {
-				err(EXIT_FAILURE, "cannot open pkgdb");
-			}
-			while ((file = pkgdb_iter())) {
-				pkg = pkgdb_retrieve(file);
-				printf("%-50s %s\n", file, pkg);
-			}
-			pkgdb_close();
+			/* Show all files with the package they belong to */
+			pkgdb_dump();
+
 		} else {
 			/* Show all packges with description */
-			if ((dirp = opendir(tmp)) != (DIR *) NULL) {
+			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
 				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 					char    tmp2[FILENAME_MAX];
 
@@ -348,7 +344,7 @@ pkg_perform(lpkg_head_t *pkghead)
 						continue;
 
 					(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
-					    tmp, dp->d_name);
+					    dbdir, dp->d_name);
 					if (isfile(tmp2))
 						continue;
 

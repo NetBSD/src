@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.24.2.5 2003/02/08 07:47:53 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.24.2.6 2003/09/21 10:32:44 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24.2.5 2003/02/08 07:47:53 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.24.2.6 2003/09/21 10:32:44 tron Exp $");
 #endif
 
 /*
@@ -47,12 +47,36 @@ __RCSID("$NetBSD: main.c,v 1.24.2.5 2003/02/08 07:47:53 jmc Exp $");
 
 #include "lib.h"
 
-void    usage(void);
+#define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
+
+static const char Options[] = "K:SVbd:s:";
 
 int     filecnt;
 int     pkgcnt;
 
 static int checkpattern_fn(const char *, void *);
+
+/* print usage message and exit */
+static void 
+usage(const char *prog)
+{
+	(void) fprintf(stderr, "usage: %s [-b] [-d lsdir] [-V] [-s sfx] command args ...\n"
+	    "Where 'commands' and 'args' are:\n"
+	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
+	    " check [pkg ...]             - check md5 checksum of installed files\n"
+	    " add pkg ...                 - add pkg files to database\n"
+	    " delete pkg ...              - delete file entries for pkg in database\n"
+#ifdef PKGDB_DEBUG
+	    " addkey key value            - add key and value\n"
+	    " delkey key                  - delete reference to key\n"
+#endif
+	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
+	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
+	    " dump                        - dump database\n"
+	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n",
+	    prog);
+	exit(EXIT_FAILURE);
+}
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -146,25 +170,121 @@ check1pkg(const char *pkgdir)
 	pkgcnt++;
 }
 
+/*
+ * add1pkg(<pkg>)
+ *	adds the files listed in the +CONTENTS of <pkg> into the
+ *	pkgdb.byfile.db database file in the current package dbdir.  It
+ *	returns the number of files added to the database file.
+ */
+static int
+add1pkg(const char *pkgdir)
+{
+	FILE	       *f;
+	plist_t	       *p;
+	package_t	Plist;
+	char 		contents[FILENAME_MAX];
+	char	       *PkgDBDir, *PkgName, *dirp;
+	char 		file[FILENAME_MAX];
+	char		dir[FILENAME_MAX];
+	int		cnt = 0;
+
+	if (!pkgdb_open(ReadWrite))
+		err(EXIT_FAILURE, "cannot open pkgdb");
+
+	PkgDBDir = _pkgdb_getPKGDB_DIR();
+	(void) snprintf(contents, sizeof(contents), "%s/%s", PkgDBDir, pkgdir);
+	if (!(isdir(contents) || islinktodir(contents)))
+		errx(EXIT_FAILURE, "`%s' does not exist.", contents);
+
+	(void) strlcat(contents, "/", sizeof(contents));
+	(void) strlcat(contents, CONTENTS_FNAME, sizeof(contents));
+	if ((f = fopen(contents, "r")) == NULL)
+		errx(EXIT_FAILURE, "%s: can't open `%s'", pkgdir, CONTENTS_FNAME);
+
+	Plist.head = Plist.tail = NULL;
+	read_plist(&Plist, f);
+	if ((p = find_plist(&Plist, PLIST_NAME)) == NULL) {
+		errx(EXIT_FAILURE, "Package `%s' has no @name, aborting.", pkgdir);
+	}
+
+	PkgName = p->name;
+	dirp = NULL;
+	for (p = Plist.head; p; p = p->next) {
+		switch(p->type) {
+		case PLIST_FILE:
+			if (dirp == NULL) {
+				errx(EXIT_FAILURE, "@cwd not yet found, please send-pr!");
+			}
+			(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
+			if (!(isfile(file) || islinktodir(file))) {
+				warnx("%s: File `%s' is in %s but not on filesystem!",
+					PkgName, file, CONTENTS_FNAME);
+			} else {
+				pkgdb_store(file, PkgName);
+				cnt++;
+			}
+			break;
+		case PLIST_CWD:
+			if (strcmp(p->name, ".") != 0) {
+				dirp = p->name;
+			} else {
+				(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, pkgdir);
+				dirp = dir;
+			}
+			break;
+		case PLIST_IGNORE:
+			p = p->next;
+			break;
+		case PLIST_SHOW_ALL:
+		case PLIST_SRC:
+		case PLIST_CMD:
+		case PLIST_CHMOD:
+		case PLIST_CHOWN:
+		case PLIST_CHGRP:
+		case PLIST_COMMENT:
+		case PLIST_NAME:
+		case PLIST_UNEXEC:
+		case PLIST_DISPLAY:
+		case PLIST_PKGDEP:
+		case PLIST_MTREE:
+		case PLIST_DIR_RM:
+		case PLIST_IGNORE_INST:
+		case PLIST_OPTION:
+		case PLIST_PKGCFL:
+		case PLIST_BLDDEP:
+			break;
+		}
+	}
+	free_plist(&Plist);
+	fclose(f);
+	pkgdb_close();
+
+	return cnt;
+}
+
+static void
+delete1pkg(const char *pkgdir)
+{
+	if (!pkgdb_open(ReadWrite))
+		err(EXIT_FAILURE, "cannot open pkgdb");
+	(void) pkgdb_remove_pkg(pkgdir);
+	pkgdb_close();
+}
+
 static void 
 rebuild(void)
 {
-	DIR    *dp;
-	struct dirent *de;
-	FILE   *f;
-	plist_t *p;
-	char   *PkgName, dir[FILENAME_MAX], *dirp = NULL;
-	char   *PkgDBDir = NULL, file[FILENAME_MAX];
-	char	cachename[FILENAME_MAX];
+	DIR	       *dp;
+	struct dirent  *de;
+	char	       *PkgDBDir;
+	char		cachename[FILENAME_MAX];
 
 	pkgcnt = 0;
 	filecnt = 0;
 
-	if (unlink(_pkgdb_getPKGDB_FILE(cachename, sizeof(cachename))) != 0 && errno != ENOENT)
+	(void) _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename));
+	if (unlink(cachename) != 0 && errno != ENOENT)
 		err(EXIT_FAILURE, "unlink %s", cachename);
-
-	if (!pkgdb_open(ReadWrite))
-		err(EXIT_FAILURE, "cannot open pkgdb");
 
 	setbuf(stdout, NULL);
 	PkgDBDir = _pkgdb_getPKGDB_DIR();
@@ -176,9 +296,7 @@ rebuild(void)
 	if (dp == NULL)
 		err(EXIT_FAILURE, "opendir failed");
 	while ((de = readdir(dp))) {
-		package_t Plist;
-
-		if (!isdir(de->d_name))
+		if (!(isdir(de->d_name) || islinktodir(de->d_name)))
 			continue;
 
 		if (strcmp(de->d_name, ".") == 0 ||
@@ -191,76 +309,11 @@ rebuild(void)
 		printf(".");
 #endif
 
-		chdir(de->d_name);
-
-		f = fopen(CONTENTS_FNAME, "r");
-		if (f == NULL)
-			err(EXIT_FAILURE, "can't open %s/%s", de->d_name, CONTENTS_FNAME);
-
-		Plist.head = Plist.tail = NULL;
-		read_plist(&Plist, f);
-		p = find_plist(&Plist, PLIST_NAME);
-		if (p == NULL)
-			errx(EXIT_FAILURE, "Package %s has no @name, aborting.",
-			    de->d_name);
-		PkgName = p->name;
-		for (p = Plist.head; p; p = p->next) {
-			switch (p->type) {
-			case PLIST_FILE:
-				if (dirp == NULL) {
-					warnx("dirp not initialized, please send-pr!");
-					abort();
-				}
-
-				(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
-
-				if (!(isfile(file) || islinktodir(file)))
-					warnx("%s: File %s is in %s but not on filesystem!",
-					    PkgName, file, CONTENTS_FNAME);
-				else {
-					pkgdb_store(file, PkgName);
-					filecnt++;
-				}
-				break;
-			case PLIST_CWD:
-				if (strcmp(p->name, ".") != 0)
-					dirp = p->name;
-				else {
-					(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, de->d_name);
-					dirp = dir;
-				}
-				break;
-			case PLIST_IGNORE:
-				p = p->next;
-				break;
-			case PLIST_SHOW_ALL:
-			case PLIST_SRC:
-			case PLIST_CMD:
-			case PLIST_CHMOD:
-			case PLIST_CHOWN:
-			case PLIST_CHGRP:
-			case PLIST_COMMENT:
-			case PLIST_NAME:
-			case PLIST_UNEXEC:
-			case PLIST_DISPLAY:
-			case PLIST_PKGDEP:
-			case PLIST_MTREE:
-			case PLIST_DIR_RM:
-			case PLIST_IGNORE_INST:
-			case PLIST_OPTION:
-			case PLIST_PKGCFL:
-			case PLIST_BLDDEP:
-				break;
-			}
-		}
-		free_plist(&Plist);
-		fclose(f);
+		filecnt += add1pkg(de->d_name);
 		pkgcnt++;
-
-		chdir("..");
 	}
+	chdir("..");
 	closedir(dp);
-	pkgdb_close();
 
 	printf("\n");
 	printf("Stored %d file%s from %d package%s in %s.\n",
@@ -285,7 +338,7 @@ checkall(void)
 	if (dp == NULL)
 		err(EXIT_FAILURE, "opendir failed");
 	while ((de = readdir(dp))) {
-		if (!isdir(de->d_name))
+		if (!(isdir(de->d_name) || islinktodir(de->d_name)))
 			continue;
 
 		if (strcmp(de->d_name, ".") == 0 ||
@@ -331,33 +384,87 @@ lspattern_fn(const char *pkg, void *vp)
 {
 	char *data = vp;
 	printf("%s/%s\n", data, pkg);
-	
+	return 0;
+}
+
+static int
+lsbasepattern_fn(const char *pkg, void *vp)
+{
+	printf("%s\n", pkg);
 	return 0;
 }
 
 int 
 main(int argc, char *argv[])
 {
+	const char	*prog;
+	Boolean		 use_default_sfx = TRUE;
+	Boolean 	 show_basename_only = FALSE;
+	char		 lsdir[FILENAME_MAX];
+	char		 sfx[FILENAME_MAX];
+	char		*lsdirp = NULL;
+	int		 ch;
+
+	setprogname(prog = argv[0]);
+
 	if (argc < 2)
-		usage();
+		usage(prog);
 
-	if (strcmp(argv[1], "-V") == 0) {
+	while ((ch = getopt(argc, argv, Options)) != -1)
+		switch (ch) {
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
 
-		show_version();
-		/* NOTREACHED */
+		case 'S':
+			sfx[0] = 0x0;
+			use_default_sfx = FALSE;
+			break;
 
-	} else if (strcasecmp(argv[1], "pmatch") == 0) {
+		case 'V':
+			show_version();
+			/* NOTREACHED */
+
+		case 'b':
+			show_basename_only = TRUE;
+			break;
+
+		case 'd':
+			(void) strlcpy(lsdir, optarg, sizeof(lsdir));
+			lsdirp = lsdir;
+			break;
+
+		case 's':
+			(void) strlcpy(sfx, optarg, sizeof(sfx));
+			use_default_sfx = FALSE;
+			break;
+
+		default:
+			usage(prog);
+			/* NOTREACHED */
+		}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc <= 0) {
+		usage(prog);
+	}
+
+	if (use_default_sfx)
+		(void) snprintf(sfx, sizeof(sfx), "%s", DEFAULT_SFX);
+
+	if (strcasecmp(argv[0], "pmatch") == 0) {
 
 		char *pattern, *pkg;
 		
-		argv++;		/* argv[0] */
 		argv++;		/* "pmatch" */
 
 		pattern = argv[0];
 		pkg = argv[1];
 
 		if (pattern == NULL || pkg == NULL) {
-			usage();
+			usage(prog);
 		}
 
 		if (pmatch(pattern, pkg)){
@@ -366,14 +473,13 @@ main(int argc, char *argv[])
 			return 1;
 		}
 	  
-	} else if (strcasecmp(argv[1], "rebuild") == 0) {
+	} else if (strcasecmp(argv[0], "rebuild") == 0) {
 
 		rebuild();
 		printf("Done.\n");
 
-	} else if (strcasecmp(argv[1], "check") == 0) {
+	} else if (strcasecmp(argv[0], "check") == 0) {
 
-		argv++;		/* argv[0] */
 		argv++;		/* "check" */
 
 		if (*argv != NULL) {
@@ -390,7 +496,7 @@ main(int argc, char *argv[])
 
 			while (*argv != NULL) {
 				if (ispkgpattern(*argv)) {
-					if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) == 0)
+					if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) <= 0)
 						errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 				} else {
 					rc = chdir(*argv);
@@ -427,11 +533,10 @@ main(int argc, char *argv[])
 		}
 		printf("Done.\n");
 
-	} else if (strcasecmp(argv[1], "lsall") == 0) {
+	} else if (strcasecmp(argv[0], "lsall") == 0) {
 		int saved_wd;
 
-		argv++;		/* argv[0] */
-		argv++;		/* "check" */
+		argv++;		/* "lsall" */
 
 		/* preserve cwd */
 		saved_wd=open(".", O_RDONLY);
@@ -442,34 +547,38 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char *cwd;
+			char cwd[MAXPATHLEN];
 			char base[FILENAME_MAX];
 
-			dir = dirname_of(*argv);
+			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
+			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
 			if (rc == -1)
 				err(EXIT_FAILURE, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getcwd(NULL, 0);
-			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
+			if (getcwd(cwd, sizeof(cwd)) == NULL)
+				err(EXIT_FAILURE, "getcwd");
+
+			if (show_basename_only)
+				rc = findmatchingname(cwd, base, lsbasepattern_fn, cwd);
+			else
+				rc = findmatchingname(cwd, base, lspattern_fn, cwd);
+			if (rc == -1)
 				errx(EXIT_FAILURE, "Error in findmatchingname(\"%s\", \"%s\", ...)",
 				     cwd, base);
-			free(cwd);
-			
+
 			argv++;
 		}
 
 		close(saved_wd);
 
-	} else if (strcasecmp(argv[1], "lsbest") == 0) {
+	} else if (strcasecmp(argv[0], "lsbest") == 0) {
 		int saved_wd;
 
-		argv++;		/* argv[0] */
-		argv++;		/* "check" */
+		argv++;		/* "lsbest" */
 
 		/* preserve cwd */
 		saved_wd=open(".", O_RDONLY);
@@ -480,56 +589,55 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char *cwd;
+			char cwd[MAXPATHLEN];
 			char base[FILENAME_MAX];
 			char *p;
 
-			dir = dirname_of(*argv);
+			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s.t[bg]z", basep);
+			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
 			if (rc == -1)
 				err(EXIT_FAILURE, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getcwd(NULL, 0);
+			if (getcwd(cwd, sizeof(cwd)) == NULL)
+				err(EXIT_FAILURE, "getcwd");
 			p = findbestmatchingname(cwd, base);
 			if (p) {
-				printf("%s/%s\n", cwd, p);
+				if (show_basename_only)
+					printf("%s\n", p);
+				else
+					printf("%s/%s\n", cwd, p);
 				free(p);
 			}
-			free(cwd);
 			
 			argv++;
 		}
 
 		close(saved_wd);
 
-	} else if (strcasecmp(argv[1], "list") == 0 ||
-	    strcasecmp(argv[1], "dump") == 0) {
+	} else if (strcasecmp(argv[0], "list") == 0 ||
+	    strcasecmp(argv[0], "dump") == 0) {
 
-		char   *key, *val;
-		char	cachename[FILENAME_MAX];
+		pkgdb_dump();
 
-
-		printf("Dumping pkgdb %s:\n", _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)));
-
-		if (!pkgdb_open(ReadOnly)) {
-			err(EXIT_FAILURE, "cannot open %s", cachename);
+	} else if (strcasecmp(argv[0], "add") == 0) {
+		argv++;		/* "add" */
+		while (*argv != NULL) {
+			add1pkg(*argv);
+			argv++;
 		}
-		while ((key = pkgdb_iter())) {
-			val = pkgdb_retrieve(key);
-
-			printf("file: %-50s pkg: %s\n", key, val);
+	} else if (strcasecmp(argv[0], "delete") == 0) {
+		argv++;		/* "delete" */
+		while (*argv != NULL) {
+			delete1pkg(*argv);
+			argv++;
 		}
-		pkgdb_close();
-
 	}
 #ifdef PKGDB_DEBUG
-	else if (strcasecmp(argv[1], "del") == 0 ||
-	    strcasecmp(argv[1], "delete") == 0) {
-
+	else if (strcasecmp(argv[0], "delkey") == 0) {
 		int     rc;
 
 		if (!pkgdb_open(ReadWrite))
@@ -545,7 +653,7 @@ main(int argc, char *argv[])
 		
 		pkgdb_close();
 
-	} else if (strcasecmp(argv[1], "add") == 0) {
+	} else if (strcasecmp(argv[0], "addkey") == 0) {
 
 		int     rc;
 
@@ -571,32 +679,13 @@ main(int argc, char *argv[])
 	}
 #endif
 	else {
-		usage();
+		usage(prog);
 	}
 
 	return 0;
 }
 
-void 
-usage(void)
-{
-	printf("usage: pkg_admin [-V] command args ...\n"
-	    "Where 'commands' and 'args' are:\n"
-	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
-	    " check [pkg ...]             - check md5 checksum of installed files\n"
-#ifdef PKGDB_DEBUG
-	    " add key value               - add key and value\n"
-	    " delete key                  - delete reference to key\n"
-#endif
-	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
-	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
-	    " dump                        - dump database\n"
-	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n");
-	exit(EXIT_FAILURE);
-}
-
 void
 cleanup(int signo)
 {
-	;
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.32.2.3 2003/02/08 07:54:07 jmc Exp $	*/
+/*	$NetBSD: plist.c,v 1.32.2.4 2003/09/21 10:32:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.32.2.3 2003/02/08 07:54:07 jmc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.32.2.4 2003/09/21 10:32:47 tron Exp $");
 #endif
 #endif
 
@@ -235,7 +235,7 @@ plist_cmd(char *s, char **arg)
 	char   *cp;
 	char   *sp;
 
-	(void) strcpy(cmd, s);
+	(void) strlcpy(cmd, s, sizeof(cmd));
 	str_lowercase(cmd);
 	for (cp = cmd, sp = s; *cp; cp++, sp++) {
 		if (isspace((unsigned char) *cp)) {
@@ -377,10 +377,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 					if ((cp = MD5File(tmp, buf)) != NULL) {
 						/* Mismatch? */
 						if (strcmp(cp, p->next->name + ChecksumHeaderLen) != 0) {
-							if (Verbose) {
-								printf("%s fails original MD5 checksum - %s\n",
-								    tmp, Force ? "deleted anyway." : "not deleted.");
-							}
+							printf("original MD5 checksum failed, %s: %s\n",
+							    Force ? "deleting anyway" : "not deleting", tmp);
 							if (!Force) {
 								fail = FAIL;
 								continue;

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.18.2.3 2003/02/08 07:49:39 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.18.2.4 2003/09/21 10:32:45 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.18.2.3 2003/02/08 07:49:39 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.18.2.4 2003/09/21 10:32:45 tron Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.18.2.3 2003/02/08 07:49:39 jmc Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "DFORVdfhnp:rv";
+static char Options[] = "DFK:ORVdfhnp:rv";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
@@ -61,26 +61,12 @@ main(int argc, char **argv)
 	int	ex;
 	int     ch;
 
+	setprogname(argv[0]);
+
 	ProgramPath = argv[0];
 
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
-		case 'v':
-			Verbose = TRUE;
-			break;
-
-		case 'f':
-			Force = TRUE;
-			break;
-
-		case 'F':
-			File2Pkg = TRUE;
-			break;
-
-		case 'p':
-			Prefix = optarg;
-			break;
-
 		case 'D':
 			NoDeInstall = TRUE;
 			break;
@@ -89,26 +75,46 @@ main(int argc, char **argv)
 			CleanDirs = TRUE;
 			break;
 
+		case 'F':
+			File2Pkg = TRUE;
+			break;
+
+		case 'f':
+			Force += 1;
+			break;
+
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
 		case 'n':
 			Fake = TRUE;
 			Verbose = TRUE;
-			break;
-
-		case 'r':
-			Recurse_up = TRUE;
-			break;
-
-		case 'R':
-			Recurse_down = TRUE;
 			break;
 
 		case 'O':
 			OnlyDeleteFromPkgDB = TRUE;
 			break;
 
+		case 'p':
+			Prefix = optarg;
+			break;
+
+		case 'R':
+			Recurse_down = TRUE;
+			break;
+
+		case 'r':
+			Recurse_up = TRUE;
+			break;
+
 		case 'V':
 			show_version();
 			/* NOTREACHED */
+
+		case 'v':
+			Verbose = TRUE;
+			break;
 
 		case 'h':
 		case '?':
@@ -148,6 +154,15 @@ main(int argc, char **argv)
 				errx(EXIT_FAILURE, "error expanding '%s' ('%s' nonexistent?)", *argv, _pkgdb_getPKGDB_DIR());
 			}
 		} else {
+			char   *dbdir;
+
+			dbdir = _pkgdb_getPKGDB_DIR();
+			if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
+				*argv += strlen(dbdir) + 1;
+				if ((*argv)[strlen(*argv) - 1] == '/') {
+					(*argv)[strlen(*argv) - 1] = 0;
+				}
+			}
 			lpp = alloc_lpkg(*argv);
 			TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 		}
@@ -163,7 +178,7 @@ main(int argc, char **argv)
 		usage();
 	}
 	if (!Fake && getuid() != 0) {
-		errx(EXIT_FAILURE, "you must be root to delete packages");
+		warnx("not running as root - trying to delete anyways");
 	}
 	if (OnlyDeleteFromPkgDB) {
 		/* Only delete the given packages' files from pkgdb, do not

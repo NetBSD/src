@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.16.2.4 2002/11/24 22:32:30 tron Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.16.2.5 2003/09/21 10:32:44 tron Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 4, 2002
+.Dd September 8, 2003
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -37,16 +37,68 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl V
+.Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
+.Bk -words
+.Op Fl s Ar sfx_pattern
+.Ek
 .Ar command Op args ...
 .Sh DESCRIPTION
 This command performs various administrative tasks around the
 .Nx
 Packages System.
-Available commands are:
-.Pp
-.Bl -tag -width check
+.Sh OPTIONS
+The following command-line options are supported:
+.Bl -tag -width indent
+.It Fl b
+Print only the basenames when matching package names for
+.Cm lsall
+and
+.Cm lsbest .
+.It Fl d Ar lsdir
+Set
+.Ar lsdir
+as the path to the directory in which to find matching package names for
+.Cm lsall
+and
+.Cm lsbest .
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
+.It Fl S
+Set the shell glob pattern for package suffices when matching package
+names for
+.Cm lsall
+and
+.Cm lsbest
+to be the null suffix.
+The default pattern is ".t[bg]z".
+.It Fl s Ar sfx_pattern
+Set the shell glob pattern for package suffices when matching package
+names for
+.Cm lsall
+and
+.Cm lsbest .
+The default pattern is ".t[bg]z".
 .It Fl V
 Print version number and exit.
+.El
+.Pp
+The following commands are supported:
+.Bl -tag -width indent
+.It Cm add Ar pkg ...
+For each listed package, write the absolute pathnames of the files listed in
+its +CONTENTS file together with the package they belong to into the package
+database.
+This should be used only by
+.Xr pkg_view 1 .
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
@@ -60,20 +112,29 @@ The packages' +CONTENTS files will be parsed and the MD5
 checksum will be checked for every file found.
 A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.
-.Pp
+.It Cm delete Ar pkg ...
+For each listed package, remove all file entries in the package database that
+belong to the package.
+This should be used only by
+.Xr pkg_view 1 .
 .It Cm dump
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
 Columns are printed for the keyfield used in the pkgdb - the filename -,
 and the data field - the package the file belongs to.
-.It Cm lsall /dir/pkgpattern
-.It Cm lsbest /dir/pkgpattern
-List all/best package matching pattern in the given directory.
+.It Cm lsall Ar /dir/pkgpattern
+.It Cm lsbest Ar /dir/pkgpattern
+List all/best package matching pattern in the given directory
+.Pa /dir .
+If the
+.Fl d
+flag is given, then that directory path overrides
+.Pa /dir .
 Can be used to work around limitations of /bin/sh and other
 filename globbing mechanisms.
 This option implements matching of
-pkg-wildcards against arbitrary files, useful mainly in the build
-system itself.
+pkg-wildcards against arbitrary files and directories, useful mainly in
+the build system itself.
 See
 .Xr pkg_info 1
 for a description of the pattern.
@@ -84,21 +145,25 @@ yui# cd /usr/pkgsrc/packages/i386ELF/All/
 yui# ls unzip*
 unzip-5.40.tgz  unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip*'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.40'
-unzip-5.40.tgz
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.40.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip\*[Ge]5.41'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsbest 'unzip\*[Ge]5.40'
-unzip-5.41.tgz
+/usr/pkgsrc/packages/i386ELF/All/unzip-5.41.tgz
 yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
 .Ed
-.It Cm pmatch pattern pkg
-Returns true if pkg matches pattern, false else.
+.It Cm pmatch Ar pattern Ar pkg
+Returns true if
+.Ar pkg
+matches
+.Ar pattern ,
+otherwise returns false.
 .It Cm rebuild
 Rebuild the package database mapping from scratch, scanning
 subdirectories in
@@ -120,9 +185,14 @@ Needs to be run as root.
 .Pp
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_DBDIR -compact
+.Bl -tag -width indent -compact
 .It Ev PKG_DBDIR
-Where to register packages instead of
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+is the location of the package database directory.
+The default package database directory is
 .Pa /var/db/pkg .
 .El
 .Sh FILES
@@ -135,6 +205,7 @@ Where to register packages instead of
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
+.Xr pkg_view 1 ,
 .Xr packages 7
 .Sh HISTORY
 The
