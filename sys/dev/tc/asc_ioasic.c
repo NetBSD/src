@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.20 2000/03/04 05:43:51 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.21 2000/03/06 03:08:32 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -77,14 +77,6 @@ asc_ioasic_attach(parent, self, aux)
 {
 	asc_softc_t asc = (asc_softc_t)self;
 	struct ioasicdev_attach_args *d = aux;
-/* XXX Hook for dk_establish() to determine boot device */
-	extern int booted_slot;
-	extern struct device *booted_controller;
-
-	/* Is this the controller we booted from? */
-	if (booted_slot == 3)
-		booted_controller = self;
-/* XXX */
 
 	asc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
 	asc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
