@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.13 2002/11/09 19:34:39 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.14 2002/11/24 07:41:30 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -932,35 +932,15 @@ mips_config_cache_modern(void)
 		mips_cache_ops.mco_icache_sync_all = mipsNN_icache_sync_all_16;
 		mips_cache_ops.mco_icache_sync_range =
 		    mipsNN_icache_sync_range_16;
-		switch (mips_picache_ways) {
-		case 2:
-			mips_cache_ops.mco_icache_sync_range_index =
-			    mipsNN_icache_sync_range_index_16_2way;
-			break;
-		case 4:
-			mips_cache_ops.mco_icache_sync_range_index =
-			    mipsNN_icache_sync_range_index_16_4way;
-			break;
-		default:
-			panic("no %d-way Icache ops", mips_picache_ways);
-		}
+		mips_cache_ops.mco_icache_sync_range_index =
+		    mipsNN_icache_sync_range_index_16;
 		break;
 	case 32:
 		mips_cache_ops.mco_icache_sync_all = mipsNN_icache_sync_all_32;
 		mips_cache_ops.mco_icache_sync_range =
 		    mipsNN_icache_sync_range_32;
-		switch (mips_picache_ways) {
-		case 2:
-			mips_cache_ops.mco_icache_sync_range_index =
-			    mipsNN_icache_sync_range_index_32_2way;
-			break;
-		case 4:
-			mips_cache_ops.mco_icache_sync_range_index =
-			    mipsNN_icache_sync_range_index_32_4way;
-			break;
-		default:
-			panic("no %d-way Icache ops", mips_picache_ways);
-		}
+		mips_cache_ops.mco_icache_sync_range_index =
+		    mipsNN_icache_sync_range_index_32;
 		break;
 #ifdef MIPS_DISABLE_L1_CACHE
 	case 0:
@@ -980,18 +960,8 @@ mips_config_cache_modern(void)
 		    mipsNN_pdcache_wbinv_all_16;
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_16;
-		switch (mips_pdcache_ways) {
-		case 2:
-			mips_cache_ops.mco_pdcache_wbinv_range_index =
-			    mipsNN_pdcache_wbinv_range_index_16_2way;
-			break;
-		case 4:
-			mips_cache_ops.mco_pdcache_wbinv_range_index =
-			    mipsNN_pdcache_wbinv_range_index_16_4way;
-			break;
-		default:
-			panic("no %d-way Dcache ops", mips_pdcache_ways);
-		}
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    mipsNN_pdcache_wbinv_range_index_16;
 		mips_cache_ops.mco_pdcache_inv_range =
 		    mipsNN_pdcache_inv_range_16;
 		mips_cache_ops.mco_pdcache_wb_range =
@@ -1002,18 +972,8 @@ mips_config_cache_modern(void)
 		    mipsNN_pdcache_wbinv_all_32;
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_32;
-		switch (mips_pdcache_ways) {
-		case 2:
-			mips_cache_ops.mco_pdcache_wbinv_range_index =
-			    mipsNN_pdcache_wbinv_range_index_32_2way;
-			break;
-		case 4:
-			mips_cache_ops.mco_pdcache_wbinv_range_index =
-			    mipsNN_pdcache_wbinv_range_index_32_4way;
-			break;
-		default:
-			panic("no %d-way Dcache ops", mips_pdcache_ways);
-		}
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    mipsNN_pdcache_wbinv_range_index_32;
 		mips_cache_ops.mco_pdcache_inv_range =
 		    mipsNN_pdcache_inv_range_32;
 		mips_cache_ops.mco_pdcache_wb_range =
@@ -1033,5 +993,7 @@ mips_config_cache_modern(void)
 		panic("no Dcache ops for %d byte lines",
 		    mips_pdcache_line_size);
 	}
+
+	mipsNN_cache_init(cfg, cfg1);
 }
 #endif /* MIPS32 || MIPS64 */
