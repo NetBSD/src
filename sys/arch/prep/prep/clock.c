@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2003/11/01 22:54:46 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2004/06/23 17:50:42 kleink Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2003/11/01 22:54:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/06/23 17:50:42 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2003/11/01 22:54:46 tsutsui Exp $");
 #include <sys/device.h>
 
 #include <dev/clock_subr.h>
+
+#include <powerpc/spr.h>
 
 #define	MINYEAR	1990
 
@@ -80,7 +82,10 @@ cpu_initclocks()
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
-	asm volatile ("mftb %0" : "=r"(lasttb));
+	if ((mfpvr() >> 16) == MPC601)
+		asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
+	else
+		asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
@@ -183,7 +188,12 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
+	if ((mfpvr() >> 16) == MPC601) {
+		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	} else {
+		asm volatile ("mftb %0" : "=r"(tb));
+	}
+	asm ("mfdec %0" : "=r"(tick));
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(tick));
@@ -235,7 +245,10 @@ microtime(tvp)
 	
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	if ((mfpvr() >> 16) == MPC601)
+		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	else
+		asm volatile ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
 	asm volatile ("mtmsr %0" :: "r"(msr));
@@ -256,12 +269,33 @@ delay(n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
-	
-	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+
+	if ((mfpvr() >> 16) == MPC601) {
+		u_int32_t rtc[2];
+
+		mfrtc(rtc);
+		while (n >= 1000000) {
+			rtc[0]++;
+			n -= 1000000;
+		}
+		rtc[1] += (n * 1000);
+		if (rtc[1] >= 1000000000) {
+			rtc[0]++;
+			rtc[1] -= 1000000000;
+		}
+		asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
+		    : "=r"(scratch)
+		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
+		    : "cr0");
+	} else {
+		tb = mftb();
+		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+		tbh = tb >> 32;
+		tbl = tb;
+		asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+			      : "=r"(scratch) : "r"(tbh), "r"(tbl)
+			      : "cr0");
+	}
 }
