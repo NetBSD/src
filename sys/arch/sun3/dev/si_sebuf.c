@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.4 1997/11/08 05:42:07 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.5 1997/12/09 22:29:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <machine/autoconf.h>
 
-#define DEBUG XXX
+/* #define DEBUG XXX */
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
