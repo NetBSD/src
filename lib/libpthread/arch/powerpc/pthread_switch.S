@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2001/11/20 18:31:21 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2001/11/21 05:56:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -188,7 +188,7 @@ ENTRY(pthread__locked_switch)
 	stw	r4, (RND_CTXSIZE + 20)(r1)	/* next */
 	stw	r3, (RND_CTXSIZE + 16)(r1)	/* self */
 	stw	r0, (RND_CTXSIZE + 36)(r1)	/* Save return address */
-	addi	r31, r1, 8			/* r31 = ucontext */
+	addi	r31, r1, 16			/* r31 = ucontext */
 	
 	/* increment spinlock to make sure that next gets continued */
 	lwz	r6, PT_SPINLOCKS(r4)
@@ -209,7 +209,7 @@ ENTRY(pthread__locked_switch)
 	 */
 	lis	r6, locked_return@ha
 	addi	r6, r6, locked_return@l
-	stw	r6, (_REG_PC + 8)(r1)
+	stw	r6, (_REG_PC + 16)(r1)
 
 	STACK_SWITCH(r4, r7)
 
