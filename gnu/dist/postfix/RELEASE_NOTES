@@ -1,3 +1,11 @@
+Incompatible changes with postfix-19991231-pl07:
+================================================
+
+As required by RFC 822, Postfix now inserts a generic destination
+message header when no destination header is present.  The text is
+specified via the undisclosed_recipients_header configuration
+parameter (default:  "To: undisclosed-recipients:;").
+
 Incompatible changes with postfix-19991231-pl06:
 ================================================
 
