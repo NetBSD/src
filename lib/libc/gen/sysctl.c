@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.17 2004/03/24 16:29:10 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.18 2004/03/24 16:34:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.17 2004/03/24 16:29:10 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.18 2004/03/24 16:34:34 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +57,12 @@ __weak_alias(sysctl,_sysctl)
  * handles requests off the user subtree
  */
 static int user_sysctl(int *, u_int, void *, size_t *, const void *, size_t);
+
+/*
+ * copies out individual nodes taking target version into account
+ */
+static size_t __cvt_node_out(uint, const struct sysctlnode *, void **,
+			     size_t *);
 
 #include <stdlib.h>
 
@@ -129,7 +135,7 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			.sysctl_size = sizeof(_PATH_STDPATH),
 			.sysctl_name = "cs_path",
 			.sysctl_num = USER_CS_PATH,
-			.sysctl_un = { .scu_data = _PATH_STDPATH, },
+			.sysctl_data = _PATH_STDPATH,
 		},
 		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX),
 		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX),
@@ -198,20 +204,35 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	/*
 	 * none of these nodes are writable and they're all terminal (for now)
 	 */
-	if (newp != NULL || newlen != 0)
-		return (EPERM);
 	if (namelen != 1)
 		return (EINVAL);
 
 	l = *oldlenp;
 	if (name[0] == CTL_QUERY) {
-		sz = clen * sizeof(struct sysctlnode);
-		l = MIN(l, sz);
-		if (oldp != NULL)
-			memcpy(oldp, &sysctl_usermib[0], l);
+		uint v;
+		node = newp;
+		if (node == NULL) {
+			v = SYSCTL_VERS_0;
+			newlen = sizeof(struct sysctlnode);
+		}
+		else if (SYSCTL_VERS(node->sysctl_flags) == SYSCTL_VERS_0 &&
+			 newlen == sizeof(struct sysctlnode))
+			v = SYSCTL_VERS_0;
+		else
+			return (EINVAL);
+
+		sz = 0;
+		for (ni = 0; ni < clen; ni++)
+			sz += __cvt_node_out(v, &sysctl_usermib[ni], &oldp, &l);
 		*oldlenp = sz;
 		return (0);
 	}
+
+	/*
+	 * none of these nodes are writable
+	 */
+	if (newp != NULL || newlen != 0)
+		return (EPERM);
 	
 	node = &sysctl_usermib[0];
 	for (ni = 0; ni	< clen; ni++)
@@ -242,4 +263,28 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	*oldlenp = node->sysctl_size;
 
 	return (0);
+}
+
+static size_t
+__cvt_node_out(uint v, const struct sysctlnode *n, void **o, size_t *l)
+{
+	const void *src = n;
+	size_t sz;
+
+	switch (v) {
+	case SYSCTL_VERSION:
+		sz = sizeof(struct sysctlnode);
+		break;
+	default:
+		sz = 0;
+		break;
+	}
+
+	if (sz > 0 && *o != NULL && *l >= sz) {
+		memcpy(*o, src, sz);
+		*o = sz + (caddr_t)*o;
+		*l -= sz;
+	}
+
+	return(sz);
 }

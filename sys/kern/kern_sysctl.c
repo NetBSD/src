@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.161 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.162 2004/03/24 16:34:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.161 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.162 2004/03/24 16:34:34 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -98,6 +98,11 @@ MALLOC_DEFINE(M_SYSCTLDATA, "sysctldata", "misc sysctl data");
 static int sysctl_mmap(SYSCTLFN_RWPROTO);
 static int sysctl_alloc(struct sysctlnode *, int);
 static int sysctl_realloc(struct sysctlnode *);
+
+static int sysctl_cvt_in(struct lwp *, int *, const void *, size_t,
+			 struct sysctlnode *);
+static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
+			  void *, size_t, size_t *);
 
 /*
  * the "root" of the new sysctl tree
@@ -565,17 +570,15 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 int
 sysctl_query(SYSCTLFN_ARGS)
 {
-	int error, ni, elim;
+	int error, ni, elim, v;
 	size_t out, left, t;
-	struct sysctlnode *enode, *onode;
+	struct sysctlnode *enode, *onode, qnode;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_query: rnode %p wrong version\n", rnode);
 		return (EINVAL);
 	}
 
-	if (newp != NULL)
-		return (EPERM);
 	if (SYSCTL_TYPE(rnode->sysctl_flags) != CTLTYPE_NODE)
 		return (ENOTDIR);
 	if (namelen != 1 || name[0] != CTL_QUERY)
@@ -586,6 +589,23 @@ sysctl_query(SYSCTLFN_ARGS)
 	left = *oldlenp;
 	elim = 0;
 	enode = NULL;
+
+	/*
+	 * translate the given request to a current node
+	 */
+	error = sysctl_cvt_in(l, &v, newp, newlen, &qnode);
+	if (error)
+		return (error);
+
+	/*
+	 * if the request specifies a version, check it
+	 */
+	if (qnode.sysctl_ver != 0) {
+		enode = (struct sysctlnode *)rnode; /* discard const */
+		if (qnode.sysctl_ver != enode->sysctl_ver &&
+		    qnode.sysctl_ver != sysctl_rootof(enode)->sysctl_ver)
+			return (EINVAL);
+	}
 
 	/*
 	 * process has overlay tree
@@ -607,7 +627,6 @@ sysctl_query(SYSCTLFN_ARGS)
 	}
 
 	for (ni = 0; ni < rnode->sysctl_clen; ni++) {
-		t = MIN(left, sizeof(struct sysctlnode));
 		onode = &rnode->sysctl_child[ni];
 		if (enode && enode->sysctl_num == onode->sysctl_num) {
 			if (SYSCTL_TYPE(enode->sysctl_flags) != CTLTYPE_NODE)
@@ -617,12 +636,13 @@ sysctl_query(SYSCTLFN_ARGS)
 			else
 				enode = NULL;
 		}
-		if (oldp != NULL && t > 0)
-			error = sysctl_copyout(l, onode, (char*)oldp + out, t);
+		error = sysctl_cvt_out(l, v, onode, oldp, left, &t);
 		if (error)
 			return (error);
-		out += sizeof(struct sysctlnode);
-		left -= t;
+		if (oldp != NULL)
+			oldp = (char*)oldp + t;
+		out += t;
+		left -= MIN(left, t);
 	}
 
 	/*
@@ -651,7 +671,7 @@ int
 sysctl_create(SYSCTLFN_RWARGS)
 {
 	struct sysctlnode nnode, *node, *pnode;
-	int error, ni, at, nm, type, sz, flags, rw, anum;
+	int error, ni, at, nm, type, sz, flags, rw, anum, v;
 	void *own;
 
 	error = 0;
@@ -704,9 +724,9 @@ sysctl_create(SYSCTLFN_RWARGS)
 		return (ENOTDIR);
 	pnode = rnode;
 
-	if (newp == NULL || newlen != sizeof(struct sysctlnode))
+	if (newp == NULL)
 		return (EINVAL);
-	error = sysctl_copyin(l, newp, &nnode, MIN(sizeof(nnode), newlen));
+	error = sysctl_cvt_in(l, &v, newp, newlen, &nnode);
 	if (error)
 		return (error);
 
@@ -775,15 +795,12 @@ sysctl_create(SYSCTLFN_RWARGS)
 	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
 		if (nm == node[ni].sysctl_num ||
 		    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
-			if (oldp != NULL) {
-				/*
-				 * ignore error here, since we
-				 * are already fixed on EEXIST
-				 */
-				(void)sysctl_copyout(l, &node[ni], oldp,
-				     MIN(*oldlenp, sizeof(struct sysctlnode)));
-			}
-			*oldlenp = sizeof(struct sysctlnode);
+			/*
+			 * ignore error here, since we
+			 * are already fixed on EEXIST
+			 */
+			(void)sysctl_cvt_out(l, v, &node[ni], oldp,
+					     *oldlenp, oldlenp);
 			return (EEXIST);
 		}
 		if (nm > node[ni].sysctl_num)
@@ -1126,10 +1143,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = nm;
 
-	if (oldp != NULL)
-		error = sysctl_copyout(l, node, oldp,
-		    MIN(*oldlenp, sizeof(struct sysctlnode)));
-	*oldlenp = sizeof(struct sysctlnode);
+	error = sysctl_cvt_out(l, v, node, oldp, *oldlenp, oldlenp);
 
 	return (error);
 }
@@ -1183,7 +1197,7 @@ int
 sysctl_destroy(SYSCTLFN_RWARGS)
 {
 	struct sysctlnode *node, *pnode, onode, nnode;
-	int ni, error;
+	int ni, error, v;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_destroy: rnode %p wrong version\n", rnode);
@@ -1224,7 +1238,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 
 	if (newp == NULL)
 		return (EINVAL);
-	error = sysctl_copyin(l, newp, &nnode, MIN(sizeof(nnode), newlen));
+	error = sysctl_cvt_in(l, &v, newp, newlen, &nnode);
 	if (error)
 		return (error);
 	memset(&onode, 0, sizeof(struct sysctlnode));
@@ -1326,10 +1340,7 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = ni;
 
-	if (oldp != NULL)
-		error = sysctl_copyout(l, &onode, oldp,
-		    MIN(*oldlenp, sizeof(struct sysctlnode)));
-	*oldlenp = sizeof(struct sysctlnode);
+	error = sysctl_cvt_out(l, v, &onode, oldp, *oldlenp, oldlenp);
 
 	return (error);
 }
@@ -2212,6 +2223,68 @@ sysctl_realloc(struct sysctlnode *p)
 	 */
 	FREE(p->sysctl_child, M_SYSCTLNODE);
 	p->sysctl_child = n;
+
+	return (0);
+}
+
+/*
+ * ********************************************************************
+ * Section 6: Conversion between API versions wrt the sysctlnode
+ * ********************************************************************
+ */
+static int
+sysctl_cvt_in(struct lwp *l, int *vp, const void *i, size_t sz,
+	      struct sysctlnode *node)
+{
+	int error, flags;
+
+	if (i == NULL) {
+		memset(node, 0, sizeof(*node));
+		*vp = SYSCTL_VERS_0;
+		return (0);
+	}
+
+	if (sz < sizeof(flags))
+		return (EINVAL);
+
+	error = sysctl_copyin(l, i, &flags, sizeof(flags));
+	if (error)
+		return (error);
+
+	if (sz == sizeof(*node) &&
+	    SYSCTL_VERS(flags) == SYSCTL_VERSION) {
+		error = sysctl_copyin(l, i, node, sizeof(*node));
+		if (error)
+			return (error);
+		*vp = SYSCTL_VERSION;
+		return (0);
+	}
+
+	return (EINVAL);
+}
+
+static int
+sysctl_cvt_out(struct lwp *l, int v, const struct sysctlnode *i,
+	       void *ovp, size_t left, size_t *szp)
+{
+	size_t sz = sizeof(*i);
+	const void *src = i;
+	int error;
+
+	switch (v) {
+	case SYSCTL_VERSION:
+		/* nothing more to do here */
+		break;
+	}
+
+	if (ovp != NULL && left >= sz) {
+		error = sysctl_copyout(l, src, ovp, sz);
+		if (error)
+			return (error);
+	}
+
+	if (szp != NULL)
+		*szp = sz;
 
 	return (0);
 }
