@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.3 1993/06/15 20:54:06 mycroft Exp $
+ *	$Id: microtime.s,v 1.4 1993/06/16 21:42:43 mycroft Exp $
  */
 
-#include "asm.h"
+#include "../include/asm.h"
 #include "../isa/isa.h"
 #include "../isa/timerreg.h"
 

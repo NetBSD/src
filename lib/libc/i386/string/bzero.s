@@ -38,7 +38,7 @@
 	.asciz "@(#)bzero.s	5.1 (Berkeley) 4/23/90"
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/asm.h>
+#include "DEFS.h"
 
 /* bzero (base,cnt) */
 

@@ -1,1 +1,1 @@
-#include <sys/asm.h>
+#include <machine/asm.h>
