@@ -1,10 +1,12 @@
-# $NetBSD: _i386.mk,v 1.1.1.1 1997/09/26 02:38:49 gwr Exp $
+# $NetBSD: _i386.mk,v 1.2 1997/10/17 20:07:07 gwr Exp $
 
-BFD_BACKENDS =	i386netbsd.c aout32.c
 BFD_MACHINES =	cpu-i386.c
+BFD_BACKENDS =	i386netbsd.c aout32.c
+
+ARCH_DEFS = -DARCH_i386 \
+ -DSELECT_ARCHITECTURES='&bfd_i386_arch'
 
 TDEFAULTS = \
- -DSELECT_ARCHITECTURES='&bfd_i386_arch' \
  -DDEFAULT_VECTOR=i386netbsd_vec \
  -DSELECT_VECS=' &i386netbsd_vec ' \
  -DHAVE_i386netbsd_vec \
