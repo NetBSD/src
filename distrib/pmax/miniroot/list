@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 1999/12/28 10:46:55 simonb Exp $
+#	$NetBSD: list,v 1.11 2000/01/03 22:03:36 simonb Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -67,8 +67,8 @@ SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-# and /boot
-COPY	${DESTDIR}/boot		boot
+# and /boot.pmax
+COPY	${DESTDIR}/boot.pmax	boot.pmax
 
 
 # the zoneinfo (dont use)
