@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.9 1998/01/19 07:38:42 jtc Exp $	*/
+/*	$NetBSD: fflush.c,v 1.10 1998/01/22 08:21:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.9 1998/01/19 07:38:42 jtc Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.10 1998/01/22 08:21:45 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,10 @@ __RCSID("$NetBSD: fflush.c,v 1.9 1998/01/19 07:38:42 jtc Exp $");
 #include "local.h"
 #include "reentrant.h"
 
+#ifdef _REENT
+extern rwlock_t __sfp_lock;
+#endif
+
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
 fflush(fp)
@@ -57,8 +61,12 @@ fflush(fp)
 {
 	int r;
 
-	if (fp == NULL)
-		return (_fwalk(__sflush));
+	if (fp == NULL) {
+		rwlock_rdlock(&__sfp_lock);
+		r = _fwalk(__sflush);
+		rwlock_unlock(&__sfp_lock);
+		return r;
+	}
 
 	FLOCKFILE(fp);
 	if ((fp->_flags & (__SWR | __SRW)) == 0) {
