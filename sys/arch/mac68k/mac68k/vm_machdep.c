@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1996/05/05 16:50:34 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1996/09/16 18:00:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,8 +61,6 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
-
-extern int fpu_type;
 
 void savectx __P((struct pcb *));
 
@@ -194,7 +192,7 @@ cpu_coredump(p, vp, cred, chdr)
 		md_core.intreg.r_sr = f->f_sr;
 		md_core.intreg.r_pc = f->f_pc;
 	}
-	if (fpu_type) {
+	if (fputype) {
 		register struct fpframe *f;
 
 		f = &up->u_pcb.pcb_fpregs;
