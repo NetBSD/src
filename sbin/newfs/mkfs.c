@@ -33,10 +33,9 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	8.3 (Berkeley) 2/3/94";*/
-static char *rcsid = "$Id: mkfs.c,v 1.13 1994/10/31 04:22:12 cgd Exp $";
+static char *rcsid = "$Id: mkfs.c,v 1.14 1994/12/18 05:09:39 cgd Exp $";
 #endif /* not lint */
 
-#include <unistd.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -45,6 +44,9 @@ static char *rcsid = "$Id: mkfs.c,v 1.13 1994/10/31 04:22:12 cgd Exp $";
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
+
+#include <string.h>
+#include <unistd.h>
 
 #ifndef STANDALONE
 #include <a.out.h>
@@ -674,7 +676,7 @@ initcg(cylno, utime)
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
 	acg.cg_btotoff = &acg.cg_space[0] - (u_char *)(&acg.cg_unused_1);
-	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(long);
+	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(int32_t);
 	acg.cg_iusedoff = acg.cg_boff + 
 		sblock.fs_cpg * sblock.fs_nrpos * sizeof(short);
 	acg.cg_freeoff = acg.cg_iusedoff + howmany(sblock.fs_ipg, NBBY);
@@ -684,11 +686,11 @@ initcg(cylno, utime)
 	} else {
 		acg.cg_clustersumoff = acg.cg_freeoff + howmany
 		    (sblock.fs_cpg * sblock.fs_spc / NSPF(&sblock), NBBY) -
-		    sizeof(long);
+		    sizeof(int32_t);
 		acg.cg_clustersumoff =
-		    roundup(acg.cg_clustersumoff, sizeof(long));
+		    roundup(acg.cg_clustersumoff, sizeof(int32_t));
 		acg.cg_clusteroff = acg.cg_clustersumoff +
-		    (sblock.fs_contigsumsize + 1) * sizeof(long);
+		    (sblock.fs_contigsumsize + 1) * sizeof(int32_t);
 		acg.cg_nextfreeoff = acg.cg_clusteroff + howmany
 		    (sblock.fs_cpg * sblock.fs_spc / NSPB(&sblock), NBBY);
 	}
@@ -805,9 +807,9 @@ struct direct root_dir[] = {
 #endif
 };
 struct odirect {
-	u_long	d_ino;
-	u_short	d_reclen;
-	u_short	d_namlen;
+	u_int32_t d_ino;
+	u_int16_t d_reclen;
+	u_int16_t d_namlen;
 	u_char	d_name[MAXNAMLEN + 1];
 } oroot_dir[] = {
 	{ ROOTINO, sizeof(struct direct), 1, "." },
