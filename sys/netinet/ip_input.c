@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.78 1999/01/19 21:58:40 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.79 1999/01/19 23:03:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -572,12 +572,12 @@ found:
 			ipstat.ips_reassembled++;
 			ip = mtod(m, struct ip *);
 			hlen = ip->ip_hl << 2;
+			ip->ip_len += hlen;
 		} else
 			if (fp)
 				ip_freef(fp);
 		IPQ_UNLOCK();
-	} else
-		ip->ip_len -= hlen;
+	}
 
 	/*
 	 * Switch out to protocol's input routine.
@@ -1021,7 +1021,6 @@ ip_dooptions(m)
 	}
 	return (0);
 bad:
-	ip->ip_len -= ip->ip_hl << 2;   /* XXX icmp_error adds in hdr length */
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);
@@ -1164,14 +1163,15 @@ ip_stripoptions(m, mopt)
 	register caddr_t opts;
 	int olen;
 
-	olen = (ip->ip_hl<<2) - sizeof (struct ip);
+	olen = (ip->ip_hl << 2) - sizeof (struct ip);
 	opts = (caddr_t)(ip + 1);
 	i = m->m_len - (sizeof (struct ip) + olen);
 	bcopy(opts  + olen, opts, (unsigned)i);
 	m->m_len -= olen;
 	if (m->m_flags & M_PKTHDR)
 		m->m_pkthdr.len -= olen;
-	ip->ip_hl = sizeof(struct ip) >> 2;
+	ip->ip_len -= olen;
+	ip->ip_hl = sizeof (struct ip) >> 2;
 }
 
 int inetctlerrmap[PRC_NCMDS] = {

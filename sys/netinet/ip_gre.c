@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.7 1999/01/11 21:32:13 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.8 1999/01/19 23:03:21 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -274,7 +274,6 @@ gre_mobile_input(m, va_alist)
 		m->m_len-msiz-(ip->ip_hl<<2));
 	m->m_len-=msiz;
 	ip->ip_len-=msiz;
-	ip->ip_len+=ip->ip_hl<<2;	/* ip input "stripped" this off */
 	HTONS(ip->ip_len);
 	m->m_pkthdr.len-=msiz;
 

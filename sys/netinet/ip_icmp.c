@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.33 1999/01/19 22:10:42 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.34 1999/01/19 23:03:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,6 @@ icmp_error(n, type, code, dest, destifp)
 	icp->icmp_code = code;
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
-	nip->ip_len = htons(ntohs(nip->ip_len) + oiplen);
 
 	/*
 	 * Now, copy old ip header (without options)
@@ -232,7 +231,7 @@ icmp_input(m, va_alist)
 {
 	register struct icmp *icp;
 	register struct ip *ip = mtod(m, struct ip *);
-	int icmplen = ip->ip_len;
+	int icmplen;
 	register int i;
 	struct in_ifaddr *ia;
 	void *(*ctlfunc) __P((int, struct sockaddr *, void *));
@@ -249,6 +248,7 @@ icmp_input(m, va_alist)
 	 * Locate icmp structure in mbuf, and check
 	 * that not corrupted and of at least minimum length.
 	 */
+	icmplen = ip->ip_len - hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_input from %x to %x, len %d\n",
@@ -410,7 +410,6 @@ icmp_input(m, va_alist)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
-		ip->ip_len += hlen;	/* since ip_input deducts this */
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
 		icmp_reflect(m);
