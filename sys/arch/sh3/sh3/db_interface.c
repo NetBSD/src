@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 2002/05/09 12:29:16 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 2002/05/10 15:28:45 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -64,16 +64,13 @@ extern int exp_types;
 #include <ddb/ddbvar.h>
 
 void kdb_printtrap(u_int, int);
+
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
-
 void __db_tlbdump_page_size_sh4(u_int32_t);
-
 void __db_tlbdump_pfn(u_int32_t);
 void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
 
 void __db_cachedump_sh3(vaddr_t);
-
-
 void __db_cachedump_sh4(vaddr_t);
 
 void db_stackcheck_cmd(db_expr_t, int, db_expr_t, char *);
