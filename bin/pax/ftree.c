@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.20.2.1 2002/06/28 13:01:16 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.20.2.2 2004/04/07 06:57:42 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,12 +69,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.20.2.1 2002/06/28 13:01:16 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.20.2.2 2004/04/07 06:57:42 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: ftree.c,v 1.20.2.1 2002/06/28 13:01:16 lukem Exp $");
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
+#include "options.h"
 #ifndef SMALL
 #include "mtree.h"
 #endif	/* SMALL */
@@ -232,7 +233,7 @@ ftree_add(char *str, int isdir)
 	 * simple check for bad args
 	 */
 	if ((str == NULL) || (*str == '\0')) {
-		tty_warn(0, "Invalid file name arguement");
+		tty_warn(0, "Invalid file name argument");
 		return(-1);
 	}
 
@@ -529,7 +530,7 @@ next_file(ARCHD *arcn)
 		if (ftnode->type == F_DIR && ftnode->child != NULL) {
 					/* directory with unseen child */
 			ftnode = ftnode->child;
-			curdirlen = l_strncpy(curdir, curpath, sizeof(curdir));
+			curdirlen = strlcpy(curdir, curpath, sizeof(curdir));
 		} else do {
 			if (ftnode->next != NULL) {
 					/* next node at current level */
@@ -572,6 +573,8 @@ next_file(ARCHD *arcn)
 			return(-1);
 	}
 
+	if (ftsp == NULL)
+		return -1;
 	/*
 	 * loop until we get a valid file to process
 	 */
@@ -591,15 +594,6 @@ next_file(ARCHD *arcn)
 		 */
 		switch(ftent->fts_info) {
 		case FTS_D:
-			/*
-			 * cpio does *not* decend directories listed in the
-			 * arguments, unlike pax/tar, so needs special handling
-			 * here.  failure to do so results in massive amounts
-			 * of duplicated files in the output.
-			 */
-			if (cpio_mode)
-				continue;
-			/* FALLTHROUGH */
 		case FTS_DEFAULT:
 		case FTS_F:
 		case FTS_SL:
@@ -704,14 +698,14 @@ next_file(ARCHD *arcn)
 		case S_IFLNK:
 			arcn->type = PAX_SLK;
 			if (curlink != NULL) {
-				cnt = l_strncpy(arcn->ln_name, curlink,
+				cnt = strlcpy(arcn->ln_name, curlink,
 				    sizeof(arcn->ln_name));
 			/*
 			 * have to read the symlink path from the file
 			 */
 			} else if ((cnt =
 			    readlink(ftent->fts_path, arcn->ln_name,
-			    PAXPATHLEN)) < 0) {
+			    sizeof(arcn->ln_name) - 1)) < 0) {
 				syswarn(1, errno, "Unable to read symlink %s",
 				    ftent->fts_path);
 				continue;
@@ -741,8 +735,18 @@ next_file(ARCHD *arcn)
 	/*
 	 * copy file name, set file name length
 	 */
-	arcn->nlen = l_strncpy(arcn->name, ftent->fts_path, PAXPATHLEN+1);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
 	arcn->org_name = ftent->fts_path;
+	if (strcmp(NM_CPIO, argv0) == 0) {
+		/*
+		 * cpio does *not* descend directories listed in the
+		 * arguments, unlike pax/tar, so needs special handling
+		 * here.  failure to do so results in massive amounts
+		 * of duplicated files in the output. We kill fts after
+		 * the first name is extracted, what a waste.
+		 */
+		ftcur->refcnt = 1;
+		(void)ftree_arg();
+	}
 	return(0);
 }
