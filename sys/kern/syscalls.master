@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.144 2005/02/19 22:15:51 matt Exp $
+	$NetBSD: syscalls.master,v 1.145 2005/02/25 19:53:56 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -746,5 +746,8 @@
 			    int attrnamespace, void *data, size_t nbytes); }
 372	STD		{ int sys_extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
-373	UNIMPL		sys_pselect
-374	UNIMPL		sys_pollts
+373	STD		{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, const struct timespec *ts, \
+			    const sigset_t *mask); }
+374	STD		{ int sys_pollts(struct pollfd *fds, u_int nfds, \
+			    const struct timespec *ts, const sigset_t *mask); }
