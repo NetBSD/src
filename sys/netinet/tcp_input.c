@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.128 2001/09/10 15:23:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.129 2001/09/10 22:14:26 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -140,6 +140,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/domain.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
