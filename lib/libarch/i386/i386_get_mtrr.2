@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.5 2002/02/08 01:28:13 ross Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.6 2002/02/20 20:40:48 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,15 @@
 .Fn i386_set_mtrr "struct mtrr *mtrrp" "int *n"
 .Sh DESCRIPTION
 These functions provide an interface to the MTRR registers found on
-686-class processors.
+686-class processors for controlling processor access to memory ranges.
+This is most useful for accessing devices such as video accelerators
+on
+.Xr pci 4
+and
+.Xr agp 4
+busses.  For example, enabling write-combining allows bus-write transfers
+to be combined into a larger transfer before bursting over the bus.  This
+can increase performance of write operations 2.5 times or more. 
 .Pp
 .Fa mtrrp
 is a pointer to one or more mtrr structures, as described below. The
@@ -103,15 +111,15 @@ are:
 .Pp
 .Bl -tag -offset indent -width MTRR_TYPE_UNDEF1 -compact
 .It MTRR_TYPE_UC
-uncached memory.
+uncached memory
 .It MTRR_TYPE_WC
-use write-combining.
+use write-combining
 .It MTRR_TYPE_WT
-use write-through caching.
+use write-through caching
 .It MTRR_TYPE_WP
-write-protected memory.
+write-protected memory
 .It MTRR_TYPE_WB
-use write-back caching.
+use write-back caching
 .El
 .Pp
 Valid values for
@@ -120,11 +128,11 @@ are:
 .Pp
 .Bl -tag -offset indent -width MTRR_PRIVATE -compact
 .It MTRR_PRIVATE
-own range, reset the MTRR when the current process exits.
+own range, reset the MTRR when the current process exits
 .It MTRR_FIXED
-use fixed range MTRR.
+use fixed range MTRR
 .It MTRR_VALID
-entry is valid.
+entry is valid
 .El
 .Pp
 The
@@ -155,3 +163,10 @@ is invalid.
 .It Bq Er EBUSY
 No unused MTRRs are available.
 .El
+.Sh HISTORY
+The
+.Fn i386_get_mtrr
+and
+.Fn i386_set_mtrr
+functions appeared in
+.Nx 1.6 .
