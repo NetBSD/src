@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1996/06/12 01:36:01 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 1996/06/12 01:38:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -581,9 +581,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_SINGLE;
-#ifdef GENERIC
-	boothowto |= RB_ASKNAME;
-#endif
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
