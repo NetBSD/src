@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)w.c	5.29 (Berkeley) 4/23/91"; */
-static char rcsid[] = "$Id: w.c,v 1.6 1993/07/07 18:58:23 deraadt Exp $";
+static char rcsid[] = "$Id: w.c,v 1.7 1993/07/15 17:55:48 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static char rcsid[] = "$Id: w.c,v 1.6 1993/07/07 18:58:23 deraadt Exp $";
 #include <paths.h>
 #include <string.h>
 #include <stdio.h>
+#include <vis.h>
 
 #ifdef SPPWAIT
 #define NEWVM
@@ -118,6 +119,7 @@ main(argc, argv)
 	struct stat *stp, *ttystat();
 	FILE *ut;
 	char *cp;
+	char *vis_args;
 	int ch;
 	extern char *optarg;
 	extern int optind;
@@ -290,7 +292,11 @@ main(argc, argv)
 			*nextp = save;
 		}
 	}
-			
+	
+	if ((vis_args = (char *)malloc(argwidth * 4 + 1)) == NULL) {
+		error("out of memory");
+		exit(1);
+	}
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		printf("%-*.*s %-2.2s %-*.*s %s",
 			UT_NAMESIZE, UT_NAMESIZE, ep->utmp.ut_name,
@@ -305,8 +311,15 @@ main(argc, argv)
 			printf("       ");
 		else
 			prttime(ep->idle, " ");
-		printf("%.*s\n", argwidth, ep->args ?: "-");
+		if (ep->args)
+	        	strvisx(vis_args, ep->args,
+				(strlen(ep->args) > argwidth) ?
+					argwidth : strlen(ep->args),
+				VIS_TAB|VIS_NL|VIS_NOSLASH);
+		printf("%.*s\n", argwidth, ep->args ? vis_args : "-");
 	}
+	free(vis_args);
+
 	exit(0);
 }
 
