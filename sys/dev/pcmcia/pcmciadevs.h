@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.52 1999/10/11 17:51:45 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.53 1999/10/27 19:10:58 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.49 1999/10/11 17:51:24 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.50 1999/10/27 19:10:02 is Exp 
  */
 
 /*-
@@ -143,6 +143,9 @@
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
 #define	PCMCIA_STR_FUJITSU_LA501	"Fujitsu Towa LA501 Ethernet"
+#define	PCMCIA_CIS_FUJITSU_LA10S	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_LA10S	0x1003
+#define	PCMCIA_STR_FUJITSU_LA10S	"Fujitsu Compact Flash Ethernet"
 
 /* IBM Products */
 #define	PCMCIA_CIS_IBM_INFOMOVER	{ NULL, NULL, NULL, NULL }
