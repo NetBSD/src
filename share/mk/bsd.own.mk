@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.169 2001/08/14 05:55:27 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.170 2001/08/14 06:47:24 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -64,15 +64,9 @@ LOCALEOWN?=	root
 LOCALEMODE?=	${NONBINMODE}
 
 COPY?=		-c
-.if defined(UPDATE)
-PRESERVE?=	-p
-.else
-PRESERVE?=
-.endif
+PRESERVE?=	${UPDATE:D-p}
 RENAME?=	-r
-.if defined(UNPRIVILEGED)
-INSTPRIV?=	-U
-.endif
+INSTPRIV?=	${UNPRIVILEGED:D-U}
 STRIPFLAG?=	-s
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
