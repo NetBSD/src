@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.52 2003/08/08 20:18:19 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.53 2003/08/08 20:19:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.52 2003/08/08 20:18:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.53 2003/08/08 20:19:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -163,13 +163,14 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		return (-1);
 	}
 
-	simple_lock(&namecache_slock);
 	if (cnp->cn_namelen > NCHNAMLEN) {
+		/* XXXSMP - updating stats without lock; do we care? */
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
-		goto fail_wlock;
+		goto fail;
 	}
 	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
+	simple_lock(&namecache_slock);
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
 		    ncp->nc_nlen == cnp->cn_namelen &&
@@ -217,6 +218,9 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	}
 
+	if (vp != dvp)
+		simple_lock(&vp->v_interlock);
+
 	/* Release the name cache mutex while we acquire vnode locks */
 	simple_unlock(&namecache_slock);
 
@@ -228,13 +232,22 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	ncp = NULL;
 #endif /* DEBUG */
 
+	if (vp != dvp && __predict_false(vp->v_flag & VXLOCK)) {
+		/*
+		 * this vnode is being cleaned out.
+		 */
+		simple_unlock(&vp->v_interlock);
+		nchstats.ncs_falsehits++; /* XXX badhits? */
+		goto fail;
+	}
+
 	if (vp == dvp) {	/* lookup on "." */
 		VREF(dvp);
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0);
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = vget(vp, LK_EXCLUSIVE);
+		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		/*
 		 * If the above vget() succeeded and both LOCKPARENT and
 		 * ISLASTCN is set, lock the directory vnode as well.
@@ -247,7 +260,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = vget(vp, LK_EXCLUSIVE);
+		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		/*
 		 * If the above vget() failed or either of LOCKPARENT or
 		 * ISLASTCN is set, unlock the directory vnode.
@@ -264,11 +277,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 	if (error) {
 		/* XXXSMP - updating stats without lock; do we care? */
-		if (!error) {
-			vput(vp);
-			nchstats.ncs_falsehits++;
-		} else
-			nchstats.ncs_badhits++;
+		nchstats.ncs_badhits++;
 
 		/*
 		 * The parent needs to be locked when we return to VOP_LOOKUP().
@@ -307,6 +316,7 @@ remove:
 
 fail_wlock:
 	simple_unlock(&namecache_slock);
+fail:
 	*vpp = NULL;
 	return (-1);
 }
