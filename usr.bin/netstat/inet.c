@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.48 2001/09/10 22:17:28 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.49 2001/09/10 22:19:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.48 2001/09/10 22:17:28 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.49 2001/09/10 22:19:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -678,8 +678,8 @@ tcp_dump(pcbaddr)
 		printf("State: %d", tcpcb.t_state);
 	else
 		printf("State: %s", tcpstates[tcpcb.t_state]);
-	printf(", flags 0x%x, inpcb 0x%lx\n\n", tcpcb.t_flags,
-	    (u_long)tcpcb.t_inpcb);
+	printf(", flags 0x%x, inpcb 0x%lx, in6pcb 0x%lx\n\n", tcpcb.t_flags,
+	    (u_long)tcpcb.t_inpcb, (u_long)tcpcb.t_in6pcb);
 
 	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcpcb.t_rxtshift,
 	    tcpcb.t_rxtcur, tcpcb.t_dupacks);
