@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.17 2004/08/21 10:09:21 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.17 2004/08/21 10:09:21 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,6 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	struct spd_attach_args *spa = aux;
 	struct wdc_spd_softc *sc = (void *)self;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
-	struct wdc_regs *wdr;
 	struct ata_channel *ch = &sc->sc_channel;
 
 	printf(": %s\n", spa->spa_product_name);
@@ -241,7 +240,7 @@ __wdc_spd_bus_space(struct ata_channel *ch)
 	wdc_init_shadow_regs(ch);
 	wdr->ctl_iot = &_wdc_spd_space;
 	wdr->ctl_ioh = SPD_HDD_IO_BASE + WDC_SPD_HDD_AUXREG_OFFSET;
-	wdr->data32iot = ch->cmd_iot;
+	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = SPD_HDD_IO_BASE;
 }
 
