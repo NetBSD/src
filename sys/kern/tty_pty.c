@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.47 2000/09/09 16:42:04 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.48 2000/09/10 17:26:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,7 +58,7 @@
 #include <sys/malloc.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
-#define DEFAULT_MAXPTYS		512	/* default maximum number of ptys */
+#define DEFAULT_MAXPTYS		256	/* default maximum number of ptys */
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -79,10 +79,13 @@ struct	pt_softc {
 	u_char	pt_ucntl;
 };
 
-struct pt_softc **pt_softc = NULL;	/* pty array */
-int	npty = 0;			/* for pstat -t */
-int	maxptys = DEFAULT_MAXPTYS;	/* maximum number of ptys (sysctable) */
-struct lock pt_softc_lock;
+static struct pt_softc **pt_softc = NULL;	/* pty array */
+static int npty = 0;			/* for pstat -t */
+static int maxptys = DEFAULT_MAXPTYS;	/* maximum number of ptys (sysctable) */
+
+#if defined(MULTIPROCESSOR)
+static struct simplelock pt_softc_mutex = SIMPLELOCK_INITIALIZER;
+#endif
 
 #define	PF_PKT		0x08		/* packet mode */
 #define	PF_STOPPED	0x10		/* user told stopped */
@@ -92,15 +95,16 @@ struct lock pt_softc_lock;
 
 void	ptyattach __P((int));
 void	ptcwakeup __P((struct tty *, int));
-int ptcopen __P((dev_t, int, int, struct proc *));
+int	ptcopen __P((dev_t, int, int, struct proc *));
 struct tty *ptytty __P((dev_t));
 void	ptsstart __P((struct tty *));
+int	pty_maxptys __P((int, int));
 
 static struct pt_softc **ptyarralloc __P((int));
 static int check_pty __P((dev_t));
 
 /*
- * Allocate array of nelem elements.
+ * Allocate and zero array of nelem elements.
  */
 static struct pt_softc **
 ptyarralloc(nelem)
@@ -122,84 +126,127 @@ check_pty(dev)
 	dev_t dev;
 {
 	struct pt_softc *pti;
-	int locked = 0;
-
-	if (minor(dev) >= maxptys) {
-		tablefull("pty", "increase kern.maxptys");
-		return (ENXIO);
-	}
 
 	if (minor(dev) >= npty) {
 		struct pt_softc **newpt;
-		int newnpty = npty;
+		int newnpty;
 
-		while(newnpty <= minor(dev))
-			newnpty *= 2;
-		if (newnpty > maxptys)
-			newnpty = maxptys;
-
-		newpt = ptyarralloc(newnpty);
+		/* check if the requested pty can be granted */
+		if (minor(dev) >= maxptys) {
+	    limit_reached:
+			tablefull("pty", "increase kern.maxptys");
+			simple_unlock(&pt_softc_mutex);
+			return (ENXIO);
+		}
 
 		/*
-		 * Now grab the pty array lock. We need to ensure
+		 * Now grab the pty array mutex - we need to ensure
 		 * that the pty array is consistent while copying it's
-		 * content to newly allocated, larger space.
+		 * content to newly allocated, larger space; we also
+		 * need to be safe against pty_maxptys().
 		 */
-		lockmgr(&pt_softc_lock, LK_EXCLUSIVE, NULL);
-		locked = 1;
+		simple_lock(&pt_softc_mutex);
+
+		do {
+			for(newnpty = npty; newnpty <= minor(dev);
+				newnpty *= 2);
+
+			if (newnpty > maxptys)
+				newnpty = maxptys;
+
+			simple_unlock(&pt_softc_mutex);
+			newpt = ptyarralloc(newnpty);
+			simple_lock(&pt_softc_mutex);
+
+			if (maxptys == npty) {
+				/* we hold the mutex here */
+				goto limit_reached;
+			}
+		} while(newnpty > maxptys);
 
 		/*
-		 * If the number of ptys is still not enough, replace
-		 * the old array with the newly allocated one.
+		 * If the pty array was not enlarged while we were waiting
+		 * for mutex, copy current contents of pt_softc[] to newly
+		 * allocated array and start using the new bigger array.
 		 */
 		if (minor(dev) >= npty) {
-			/*
-			 * Copy old pt_softc[] contents over, free old
-			 * array and start using new array.
-			 */
 			memcpy(newpt, pt_softc, npty*sizeof(struct pt_softc *));
 			free(pt_softc, M_DEVBUF);
 
 			pt_softc = newpt;
 			npty = newnpty;
 		} else {
-			/* has been enlarged while we slept, free space */
+			/* was enlarged when waited fot lock, free new space */
 			free(newpt, M_DEVBUF);
 		}
+
+		simple_unlock(&pt_softc_mutex);
 	}
 		
 	/*
-	 * If the entry is not yet allocated, allocate one. The lock is
-	 * needed so that the state of pt_softc[] arrat is consistant
-	 * should it be longened above. Though we might use shared lock
-	 * here and use
-	 * 
+	 * If the entry is not yet allocated, allocate one. The mutex is
+	 * needed so that the state of pt_softc[] array is consistant
+	 * in case it has been longened above.
 	 */
 	if (!pt_softc[minor(dev)]) {
-		if (!locked) {
-			lockmgr(&pt_softc_lock, LK_EXCLUSIVE, NULL);
-			locked = 1;
-		}
+		MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
+			M_DEVBUF, M_WAITOK);
+
+	 	pti->pt_tty = ttymalloc();
+
+		simple_lock(&pt_softc_mutex);
 
 		/*
-		 * Check the entry again - the entry might have been
-		 * added while we were waiting for lock.
+		 * Check the entry again - it might have been
+		 * added while we were waiting for mutex.
 		 */
 		if (!pt_softc[minor(dev)]) {
-			MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
-				M_DEVBUF, M_WAITOK);
-
-		 	pti->pt_tty = ttymalloc();
 			tty_attach(pti->pt_tty);
-
 			pt_softc[minor(dev)] = pti;
+		} else {
+			ttyfree(pti->pt_tty);
+			FREE(pti, M_DEVBUF);
 		}
+
+		simple_unlock(&pt_softc_mutex);
 	}
 
-	if (locked)
-		lockmgr(&pt_softc_lock, LK_RELEASE, NULL);
-
 	return (0);
+}
+
+/*
+ * Set maxpty in thread-safe way. Returns 0 in case of error, otherwise
+ * new value of maxptys.
+ */
+int
+pty_maxptys(newmax, set)
+	int newmax, set;
+{
+	if (!set)
+		return (maxptys);
+
+	/* the value cannot be set to value lower than current number of ptys */
+	if (newmax < npty)
+		return (0);
+
+	/* can proceed immediatelly if bigger than current maximum */
+	if (newmax > maxptys) {
+		maxptys = newmax;
+		return (maxptys);
+	}
+
+	/*
+	 * We have to grab the pt_softc lock, so that we would pick correct
+	 * value of npty (might be modified in check_pty()).
+	 */
+	simple_lock(&pt_softc_mutex);
+
+	if (newmax > npty)
+		maxptys = newmax;
+
+	simple_unlock(&pt_softc_mutex);
+
+	return (maxptys);
 }
 
 /*
@@ -214,8 +261,6 @@ ptyattach(n)
 		n = DEFAULT_NPTYS;
 	pt_softc = ptyarralloc(n);
 	npty = n;
-
-	lockinit(&pt_softc_lock, PWAIT, "ptyarrlk", 0, 0);
 }
 
 /*ARGSUSED*/
