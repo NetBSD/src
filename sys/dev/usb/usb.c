@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.45 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.46 2000/06/07 00:33:51 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -293,12 +293,13 @@ usb_event_thread(void *arg)
 			config_pending_decr();
 			first = 0;
 		}
-		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
 #ifdef USB_DEBUG
-			     usb_noexplore ? 0 :
+		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
+		    usb_noexplore ? 0 : hz * 60);
+#else
+		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
+		    hz * 60);
 #endif
-			     hz*60
-			);
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = 0;
