@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.12 2002/01/27 13:23:10 jdolecek Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.13 2002/02/10 17:36:53 wiz Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.12 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.13 $"
 
 maxusers 64
 
@@ -230,7 +230,7 @@ vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
