@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 1994/12/05 05:45:38 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.55 1994/12/14 18:55:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -48,8 +48,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 int	lkmenodev();
 #endif
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
-					   struct file *))
+#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
