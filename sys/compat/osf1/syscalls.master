@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 1998/12/10 17:03:20 christos Exp $
+	$NetBSD: syscalls.master,v 1.13 1999/02/09 20:34:17 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -94,7 +94,8 @@
 45	STD		{ int osf1_sys_open(char *path, int flags, int mode); }
 46	OBSOL		sigaction
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	NOARGS		{ int sys_sigprocmask(int how, sigset_t mask); }
+48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
+			    sigset13_t mask); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
 50	NOARGS		{ int sys_setlogin(char *namebuf); }
 51	NOARGS		{ int sys_acct(char *path); }
@@ -105,7 +106,7 @@
 56	NOARGS		{ int sys_revoke(char *path); }
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
 58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	STD		{ int osf1_sys_execve(char *path, char **argp, \
+59	STD		{ int osf1_sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
@@ -162,7 +163,8 @@
 			    int flags); }
 102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); }
-103	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+103	NOARGS		{ int compat_13_sys_sigreturn(\
+			    struct sigcontext *sigcntxp); }
 104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
                             caddr_t val, int valsize); }
@@ -171,7 +173,7 @@
 108	UNIMPL		old sigvec
 109	UNIMPL		old sigblock
 110	UNIMPL		old sigsetmask
-111	NOARGS		{ int sys_sigsuspend(int mask); }
+111	NOARGS		{ int compat_13_sys_sigsuspend(int mask); }
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
 113	UNIMPL		old recvmsg

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.14 1998/05/20 16:34:29 chs Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.15 1999/02/09 20:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -933,7 +933,7 @@ osf1_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
