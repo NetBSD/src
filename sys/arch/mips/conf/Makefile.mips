@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.28 2002/11/09 07:31:08 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.29 2002/11/09 18:12:09 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -20,17 +20,6 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
-
-AR?=		${CROSSDIR}ar
-AS?=		${CROSSDIR}as
-CC?=		${CROSSDIR}cc
-LD?=		${CROSSDIR}ld
-NM?=		${CROSSDIR}nm
-RANLIB?=	${CROSSDIR}ranlib
-SIZE?=		${CROSSDIR}size
-STRIP?=		${CROSSDIR}strip
-TSORT?=		${CROSSDIR}tsort -q
-OBJCOPY?=	${CROSSDIR}objcopy
 
 ##
 ## (1) port identification
