@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.5 1999/02/18 21:48:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.6 1999/03/26 17:49:26 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -75,8 +75,12 @@ int readconf ()
 	root_group.allow_booting = 1;
 	root_group.authoritative = 1;
 
-	if ((cfile = fopen (path_dhcpd_conf, "r")) == NULL)
-		error ("Can't open %s: %m", path_dhcpd_conf);
+	if ((cfile = fopen (path_dhcpd_conf, "r")) == NULL) {
+		warn ("Can't open %s: %m", path_dhcpd_conf);
+		warn ("Please read the dhcpd.leases manual page if you.");
+		error ("don't know what to do about this.");
+	}
+
 	do {
 		token = peek_token (&val, cfile);
 		if (token == EOF)
