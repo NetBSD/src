@@ -146,15 +146,18 @@ extern int ofw_handleticks;
 /*
  *  Imported routines
  */
-extern void map_section	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+extern void map_section	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa, int cacheable));
 extern void map_pagetable   __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry	    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+extern void map_entry_nc    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void map_entry_ro    __P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 extern void pmap_bootstrap  __P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
-extern char *strstr	    __P((char *s1, char *s2));
+#ifdef SHARK
+extern void shark_screen_cleanup __P((int));
+#endif
 
 #define WriteWord(a, b) \
 *((volatile unsigned int *)(a)) = (b)
@@ -270,7 +273,9 @@ static void ofw_discardmappings __P ((vm_offset_t, vm_offset_t, vm_size_t));
 static int ofw_mem_ihandle  __P((void));
 static int ofw_mmu_ihandle  __P((void));
 static vm_offset_t ofw_claimphys __P((vm_offset_t, vm_size_t, vm_offset_t));
+#if 0
 static vm_offset_t ofw_releasephys __P((vm_offset_t, vm_size_t));
+#endif
 static vm_offset_t ofw_claimvirt __P((vm_offset_t, vm_size_t, vm_offset_t));
 static void ofw_settranslation __P ((vm_offset_t, vm_offset_t, vm_size_t, int));
 static void ofw_initallocator(void);
@@ -1415,14 +1420,14 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 		    default:
 			/* illegal */
-			panic("illegal ofw translation (addr) %x", va);
+			panic("illegal ofw translation (addr) %#lx", va);
 		}
 
 		/* Sanity.  The current entry should be null. */
 		{
 		    pt_entry_t pte = ReadWord(L2pagetable + ((va >> 10) & 0x00000FFC));
 		    if (pte != 0)
-			panic("illegal ofw translation (%x, %x, %x, %x)",
+			panic("illegal ofw translation (%#lx, %#lx, %#lx, %x)",
 			      L2pagetable, va, pa, pte);
 		}
 
@@ -1537,7 +1542,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	    int nsections  = tp->size / NBPD;
 
 	    while (nsections--) {
-	      map_section(L1pagetable, va, pa);
+	      map_section(L1pagetable, va, pa, 0);
 
 	      /* even grosser hack: blast B & C bits if necessary */
 	      if ((tp->mode & 0xC) == 0xC)
@@ -1740,7 +1745,7 @@ ofw_map(vm_offset_t pa, vm_size_t size, int cb_bits)
   vm_offset_t va;
 
   if ((va = ofw_valloc(size, size)) == -1)
-    panic("cannot alloc virtual memory for %08x", pa);
+    panic("cannot alloc virtual memory for %#lx", pa);
 
   ofw_claimvirt(va, size, 0); /* make sure OFW knows about the memory */
 
@@ -1810,6 +1815,7 @@ ofw_claimphys(pa, size, align)
 }
 
 
+#if 0
 /* Return -1 on failure. */
 static vm_offset_t
 ofw_releasephys(pa, size)
@@ -1823,7 +1829,7 @@ ofw_releasephys(pa, size)
     return (OF_call_method_1("release", mem_ihandle, 2, pa, size));
 
 }
-
+#endif
 
 /* Return -1 on failure. */
 static vm_offset_t

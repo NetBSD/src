@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_machdep.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $	*/
+/*	$NetBSD: com_ofisa_machdep.c,v 1.2 1998/05/01 21:13:54 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -59,10 +59,10 @@ com_ofisa_md_match(parent, cf, aux)
 	if (1) {		/* XXX old firmware compat enabled */
 		/* match type and name properties */
 		/* At a minimum, must match type and name properties. */
-		if (OF_getprop(aa->ofp.phandle, "device_type",
+		if (OF_getprop(aa->oba.oba_phandle, "device_type",
 		      type, sizeof(type)) > 0 &&
 		    strcmp(type, "serial") == 0 &&
-		    OF_getprop(aa->ofp.phandle, "name", name,
+		    OF_getprop(aa->oba.oba_phandle, "name", name,
 		      sizeof(name)) > 0 &&
 		    strcmp(name, "serial") == 0)
 			rv = 4;

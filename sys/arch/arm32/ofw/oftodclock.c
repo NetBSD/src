@@ -243,7 +243,6 @@ resettodr()
 {
 	time_t n;
 	int diff, i, j;
-	int s;
 	int sec, min, hr, dom, mon, yr;
 
 	/* old version of the firmware? */
