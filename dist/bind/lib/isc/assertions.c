@@ -1,73 +1,74 @@
-/*	$NetBSD: assertions.c,v 1.1.1.2 2002/06/20 10:30:34 itojun Exp $	*/
+/*	$NetBSD: assertions.c,v 1.1.1.3 2004/05/17 23:45:01 christos Exp $	*/
 
 /*
- * Copyright (c) 1997,1999 by Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: assertions.c,v 8.4 2001/05/29 05:49:22 marka Exp";
-#endif
+/* Id: assertions.c,v 1.16.206.1 2004/03/06 08:14:27 marka Exp */
 
-#include "port_before.h"
+#include <config.h>
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/assertions.h>
-
-#include "port_after.h"
+#include <isc/msgs.h>
 
 /*
  * Forward.
  */
 
-static void default_assertion_failed(const char *, int, assertion_type,
-				     const char *, int);
+static void
+default_callback(const char *, int, isc_assertiontype_t, const char *);
 
 /*
  * Public.
  */
 
-assertion_failure_callback __assertion_failed = default_assertion_failed;
+LIBISC_EXTERNAL_DATA isc_assertioncallback_t isc_assertion_failed =
+					     default_callback;
 
 void
-set_assertion_failure_callback(assertion_failure_callback f) {
-	if (f == NULL)
-		__assertion_failed = default_assertion_failed;
+isc_assertion_setcallback(isc_assertioncallback_t cb) {
+	if (cb == NULL)
+		isc_assertion_failed = default_callback;
 	else
-		__assertion_failed = f;
+		isc_assertion_failed = cb;
 }
 
 const char *
-assertion_type_to_text(assertion_type type) {
+isc_assertion_typetotext(isc_assertiontype_t type) {
 	const char *result;
 
+	/*
+	 * These strings have purposefully not been internationalized
+	 * because they are considered to essentially be keywords of
+	 * the ISC development environment.
+	 */
 	switch (type) {
-	case assert_require:
+	case isc_assertiontype_require:
 		result = "REQUIRE";
 		break;
-	case assert_ensure:
+	case isc_assertiontype_ensure:
 		result = "ENSURE";
 		break;
-	case assert_insist:
+	case isc_assertiontype_insist:
 		result = "INSIST";
 		break;
-	case assert_invariant:
+	case isc_assertiontype_invariant:
 		result = "INVARIANT";
 		break;
 	default:
@@ -81,13 +82,14 @@ assertion_type_to_text(assertion_type type) {
  */
 
 static void
-default_assertion_failed(const char *file, int line, assertion_type type,
-			 const char *cond, int print_errno)
+default_callback(const char *file, int line, isc_assertiontype_t type,
+		 const char *cond)
 {
-	fprintf(stderr, "%s:%d: %s(%s)%s%s failed.\n",
-		file, line, assertion_type_to_text(type), cond,
-		(print_errno) ? ": " : "",
-		(print_errno) ? strerror(errno) : "");
+	fprintf(stderr, "%s:%d: %s(%s) %s.\n",
+		file, line, isc_assertion_typetotext(type), cond,
+		isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+			       ISC_MSG_FAILED, "failed"));
+	fflush(stderr);
 	abort();
 	/* NOTREACHED */
 }
