@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2001/11/07 00:33:25 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -114,9 +114,9 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	 * Yes, we're using knowledge of the obio bus space internals,
 	 * here.
 	 */
-	board_rev = bus_space_read_1(&obio_bs_tag, IQ80310_BOARD_REV, 0);
-	cpld_rev = bus_space_read_1(&obio_bs_tag, IQ80310_CPLD_REV, 0);
-	backplane = bus_space_read_1(&obio_bs_tag, IQ80310_BACKPLANE_DET, 0);
+	board_rev = CPLD_READ(IQ80310_BOARD_REV);
+	cpld_rev = CPLD_READ(IQ80310_CPLD_REV);
+	backplane = CPLD_READ(IQ80310_BACKPLANE_DET);
 
 	printf(": board rev. %c, CPLD rev. %c, backplane %spresent\n",
 	    BOARD_REV(board_rev), CPLD_REV(cpld_rev),

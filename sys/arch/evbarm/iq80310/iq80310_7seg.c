@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_7seg.c,v 1.1 2001/11/07 00:33:23 thorpej Exp $	*/
+/*	$NetBSD: iq80310_7seg.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -187,6 +187,6 @@ iq80310_7seg(char a, char b)
 	else
 		lsb = asciimap[b - ASCIIMAP_START] | SEG_DP;
 
-	bus_space_write_1(&obio_bs_tag, IQ80310_7SEG_MSB, 0, msb);
-	bus_space_write_1(&obio_bs_tag, IQ80310_7SEG_LSB, 0, lsb);
+	CPLD_WRITE(IQ80310_7SEG_MSB, msb);
+	CPLD_WRITE(IQ80310_7SEG_LSB, lsb);
 }

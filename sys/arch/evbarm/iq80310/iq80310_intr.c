@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.2 2001/11/07 02:06:37 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.3 2001/11/07 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -115,11 +115,9 @@ iq80310_intstat_read(void)
 {
 	uint32_t intstat;
 
-	intstat = bus_space_read_1(&obio_bs_tag, IQ80310_XINT3_STATUS,
-	    0) & 0x1f;
+	intstat = CPLD_READ(IQ80310_XINT3_STATUS) & 0x1f;
 	if (1/*rev F or later board*/)
-		intstat |= (bus_space_read_1(&obio_bs_tag,
-		    IQ80310_XINT0_STATUS, 0) & 0x7) << 5;
+		intstat |= (CPLD_READ(IQ80310_XINT0_STATUS) & 0x7) << 5;
 
 	return (intstat);
 }
@@ -141,7 +139,7 @@ irq_setmasks_nointr(void)
 	if (disabled >> 5)
 		disabled |= XINT3_SINTD;
 
-	bus_space_write_1(&obio_bs_tag, IQ80310_XINT_MASK, 0, disabled & 0x1f);
+	CPLD_WRITE(IQ80310_XINT_MASK, disabled & 0x1f);
 }
 
 void
