@@ -1,5 +1,7 @@
 #:%s/ \(number = [0-9]*\) \(type = [a-z]*\)/ \2 \1/g
 
+table role = ipf type = tree number = 1
+	{; };
 table role = ipf type = tree number = 100
 	{ 1.2.3.4/32; !2.2.0.0/16; 2.2.2.0/24; };
 table role = nat type = tree number = 110
@@ -9,6 +11,8 @@ table role = auth type = tree number = 120
 table role = count type = tree number = 130
 	{ 1.2.3.4; !2.2.0.0/16; 2.2.2.0/24; };
 
+table role = ipf type = hash number = 2
+	{; };
 table role = ipf type = hash number = 200
 	{ 0/0; 1/32; 1.2.3.4/32; };
 table role = nat type = hash number = 210

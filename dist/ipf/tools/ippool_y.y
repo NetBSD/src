@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool_y.y,v 1.1.1.1 2004/03/28 08:56:35 martti Exp $	*/
+/*	$NetBSD: ippool_y.y,v 1.1.1.2 2005/02/19 21:27:05 martti Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -148,7 +148,7 @@ role:
 	;
 
 ipftree:
-	IPT_TYPE '=' IPT_TREE number '{' addrlist '}'
+	IPT_TYPE '=' IPT_TREE number start addrlist end
 					{ strncpy(iplo.ipo_name, $4,
 						  sizeof(iplo.ipo_name));
 					  $$ = $6;
@@ -156,7 +156,7 @@ ipftree:
 	;
 
 ipfhash:
-	IPT_TYPE '=' IPT_HASH number hashopts '{' hashlist '}'
+	IPT_TYPE '=' IPT_HASH number hashopts start hashlist end
 					{ strncpy(ipht.iph_name, $4,
 						  sizeof(ipht.iph_name));
 					  $$ = $7;
@@ -164,7 +164,7 @@ ipfhash:
 	;
 
 ipfgroup:
-	setgroup hashopts '{' grouplist '}'
+	setgroup hashopts start grouplist end
 					{ iphtent_t *e;
 					  for (e = $4; e != NULL;
 					       e = e->ipe_next)
@@ -174,7 +174,7 @@ ipfgroup:
 								FR_GROUPLEN);
 					  $$ = $4;
 					}
-	| hashopts '{' setgrouplist '}'		{ $$ = $3; }
+	| hashopts start setgrouplist end		{ $$ = $3; }
 	;
 
 number:	IPT_NUM '=' YY_NUMBER			{ sprintf(poolname, "%u", $3);
@@ -202,13 +202,15 @@ hashopts:
 	;
 
 addrlist:
-	range ';' addrlist		{ $1->ipn_next = $3; $$ = $1; }
-	| range ';'			{ $$ = $1; }
+	next				{ $$ = NULL; }
+	| range next addrlist		{ $1->ipn_next = $3; $$ = $1; }
+	| range next			{ $$ = $1; }
 	;
 
 grouplist:
-	groupentry ';' grouplist	{ $$ = $1; $1->ipe_next = $3; }
-	| addrmask ';' grouplist	{ $$ = calloc(1, sizeof(iphtent_t));
+	next				{ $$ = NULL; }
+	| groupentry next grouplist	{ $$ = $1; $1->ipe_next = $3; }
+	| addrmask next grouplist	{ $$ = calloc(1, sizeof(iphtent_t));
 					  bcopy((char *)&($1[0]),
 						(char *)&($$->ipe_addr),
 						sizeof($$->ipe_addr));
@@ -217,8 +219,8 @@ grouplist:
 						sizeof($$->ipe_mask));
 					  $$->ipe_next = $3;
 					}
-	| groupentry ';'		{ $$ = $1; }
-	| addrmask ';'			{ $$ = calloc(1, sizeof(iphtent_t));
+	| groupentry next		{ $$ = $1; }
+	| addrmask next			{ $$ = calloc(1, sizeof(iphtent_t));
 					  bcopy((char *)&($1[0]),
 						(char *)&($$->ipe_addr),
 						sizeof($$->ipe_addr));
@@ -229,8 +231,9 @@ grouplist:
 	;
 
 setgrouplist:
-	groupentry ';'			{ $$ = $1; }
-	| groupentry ';' setgrouplist	{ $1->ipe_next = $3; $$ = $1; }
+	next				{ $$ = NULL; }
+	| groupentry next		{ $$ = $1; }
+	| groupentry next setgrouplist	{ $1->ipe_next = $3; $$ = $1; }
 	;
 
 groupentry:
@@ -263,8 +266,9 @@ range:	addrmask	{ $$ = calloc(1, sizeof(*$$));
 			}
 
 hashlist:
-	hashentry ';'			{ $$ = $1; }
-	| hashentry ';' hashlist	{ $1->ipe_next = $3; $$ = $1; }
+	next				{ $$ = NULL; }
+	| hashentry next		{ $$ = $1; }
+	| hashentry next hashlist	{ $1->ipe_next = $3; $$ = $1; }
 	;
 
 hashentry:
@@ -279,16 +283,32 @@ hashentry:
 	;
 
 addrmask:
-	ipaddr '/' mask		{ $$[0] = $1; $$[1].s_addr = $3.s_addr; }
-	| ipaddr		{ $$[0] = $1; $$[1].s_addr = 0xffffffff; }
+	ipaddr '/' mask		{ $$[0] = $1; $$[1].s_addr = $3.s_addr;
+				  yyexpectaddr = 0;
+				}
+	| ipaddr		{ $$[0] = $1; $$[1].s_addr = 0xffffffff;
+				  yyexpectaddr = 0;
+				}
 	;
 
 ipaddr:	ipv4			{ $$ = $1; }
 	| YY_NUMBER		{ $$.s_addr = htonl($1); }
+	| YY_STR		{ if (gethost($1, &($$.s_addr)) == -1)
+					yyerror("Unknown hostname");
+				}
 	;
 
 mask:	YY_NUMBER		{ ntomask(4, $1, (u_32_t *)&$$.s_addr); }
 	| ipv4			{ $$ = $1; }
+	;
+
+start:	'{'			{ yyexpectaddr = 1; }
+	;
+
+end:	'}'			{ yyexpectaddr = 0; }
+	;
+
+next:	';'			{ yyexpectaddr = 1; }
 	;
 
 size:	IPT_SIZE '=' YY_NUMBER	{ ipht.iph_size = $3; }

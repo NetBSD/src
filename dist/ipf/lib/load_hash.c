@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hash.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.1.1.2 2005/02/19 21:26:47 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_hash.c,v 1.11.2.1 2004/03/06 14:33:28 darrenr Exp
+ * Id: load_hash.c,v 1.11.2.2 2005/02/01 02:44:05 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -32,8 +32,6 @@ ioctlfunc_t iocfunc;
 		hashfd = open(IPLOOKUP_NAME, O_RDWR);
 	if ((hashfd == -1) && ((opts & OPT_DONOTHING) == 0))
 		return -1;
-	if (list == NULL)
-		return 0;
 
 	for (n = 0, a = list; a != NULL; a = a->ipe_next)
 		n++;
@@ -50,10 +48,17 @@ ioctlfunc_t iocfunc;
 	iph.iph_type = iphp->iph_type;
 	strncpy(iph.iph_name, iphp->iph_name, sizeof(iph.iph_name));
 	iph.iph_flags = iphp->iph_flags;
+	if (n <= 0)
+		n = 1;
 	if (iphp->iph_size == 0)
 		size = n * 2 - 1;
 	else
 		size = iphp->iph_size;
+	if ((list == NULL) && (size == 1)) {
+		fprintf(stderr,
+			"WARNING: empty hash table %s, recommend setting %s\n",
+			iphp->iph_name, "size to match expected use");
+	}
 	iph.iph_size = size;
 	iph.iph_seed = iphp->iph_seed;
 	iph.iph_table = NULL;
@@ -81,7 +86,7 @@ ioctlfunc_t iocfunc;
 			return -1;
 		}
 		iph.iph_table[0] = list;
-		printhash(&iph, bcopywrap, opts);
+		printhash(&iph, bcopywrap, iph.iph_name, opts);
 		free(iph.iph_table);
 
 		for (a = list; a != NULL; a = a->ipe_next) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.3 2005/02/08 06:53:17 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.4 2005/02/19 21:26:49 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,9 +13,10 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.6 2004/10/17 06:45:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.8 2005/01/12 03:39:04 darrenr Exp";
 #endif
 
+static void printproto __P((ipnat_t *, struct protoent *));
 
 /*
  * Print out a NAT rule
@@ -107,18 +108,7 @@ int opts;
 			else
 				printf(" port %d", ntohs(np->in_pnext));
 		}
-		if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
-			printf(" tcp/udp");
-		else if ((np->in_flags & IPN_TCP) == IPN_TCP)
-			printf(" tcp");
-		else if ((np->in_flags & IPN_UDP) == IPN_UDP)
-			printf(" udp");
-		else if (np->in_p == 0)
-			printf(" ip");
-		else if (pr != NULL)
-			printf(" %s", pr->p_name);
-		else
-			printf(" %d", np->in_p);
+		printproto(np, pr);
 		if (np->in_flags & IPN_ROUNDR)
 			printf(" round-robin");
 		if (np->in_flags & IPN_FRAG)
@@ -192,14 +182,7 @@ int opts;
 			} else {
 				printf(" portmap");
 			}
-			if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
-				printf(" tcp/udp");
-			else if (np->in_flags & IPN_TCP)
-				printf(" tcp");
-			else if (np->in_flags & IPN_UDP)
-				printf(" udp");
-			else if (np->in_flags & IPN_ICMPQUERY)
-				printf(" icmp");
+			printproto(np, pr);
 			if (np->in_flags & IPN_AUTOPORTMAP) {
 				printf(" auto");
 				if (opts & OPT_DEBUG)
@@ -211,7 +194,9 @@ int opts;
 				printf(" %d:%d", ntohs(np->in_pmin),
 				       ntohs(np->in_pmax));
 			}
-		}
+		} else if (np->in_flags & IPN_TCPUDP || np->in_p)
+			printproto(np, pr);
+
 		if (np->in_flags & IPN_FRAG)
 			printf(" frag");
 		if (np->in_age[0] != 0 || np->in_age[1] != 0) {
@@ -241,4 +226,22 @@ int opts;
 		printf("\ttqehead %p/%p comment %p\n",
 			np->in_tqehead[0], np->in_tqehead[1], np->in_comment);
 	}
+}
+
+static void printproto(np, pr)
+ipnat_t *np;
+struct protoent *pr;
+{
+	if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
+		printf(" tcp/udp");
+	else if (np->in_flags & IPN_TCP)
+		printf(" tcp");
+	else if (np->in_flags & IPN_UDP)
+		printf(" udp");
+	else if (np->in_flags & IPN_ICMPQUERY)
+		printf(" icmp");
+	else if (pr != NULL)
+		printf(" %s", pr->p_name);
+	else
+		printf(" %d", np->in_p);
 }
