@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc.c,v 1.5 1995/01/04 02:58:45 mycroft Exp $";
+static char *rcsid = "$Id: svc.c,v 1.6 1995/01/06 13:05:16 pk Exp $";
 #endif
 
 /*
@@ -389,6 +389,9 @@ svc_getreqset(readfds)
 	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		xprt = xports[sock + bit - 1];
+		if (xprt == NULL)
+			/* But do we control sock? */
+			continue;
 		/* now receive msgs from xprtprt (support batch calls) */
 		do {
 			if (SVC_RECV(xprt, &msg)) {
