@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.18 2001/06/18 02:00:51 christos Exp $
+#	$NetBSD: files.prep,v 1.19 2001/06/18 14:04:39 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -14,6 +14,10 @@ file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
 file	arch/prep/prep/procfs_machdep.c		procfs
+
+file	arch/powerpc/powerpc/bus_dma.c
+
+# General files
 file	dev/clock_subr.c
 file	dev/cons.c
 
