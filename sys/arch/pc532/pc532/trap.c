@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2003/06/23 13:06:58 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 2003/06/24 02:48:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -49,7 +49,7 @@
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_math_emulate.h"
+#include "opt_ns381.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ trap(frame)
 #ifndef NS381
 		extern int _have_fpu;
 		if (!_have_fpu) {
-# ifdef MATH_EMULATE
+# if 0 /* XXX Glue in softfloat here */
 			int rv;
 			if ((rv = math_emulate(&frame)) == 0) {
 				if (frame.tf_psr & PSL_T) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.48 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.pc532,v 1.49 2003/06/24 02:48:56 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -39,6 +39,7 @@ file	arch/pc532/dev/ncr.c		ncr needs-flag
 #attach	aic at mainbus
 #file	arch/pc532/dev/aic.c		aic needs-flag
 
+defflag	NS381
 file	arch/pc532/fpu/ieee_dze.c
 file	arch/pc532/fpu/ieee_handler.c
 file	arch/pc532/fpu/ieee_invop.c
