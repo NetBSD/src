@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.13 2002/06/22 20:16:31 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.14 2002/08/20 16:56:05 christos Exp $
 .Dd June 22, 2002
 .Os
 .Dt WSDISPLAY 4
@@ -24,6 +24,7 @@
 (VAXstation small monochrome display)
 .Cd wsdisplay* at ... kbdmux N
 .Cd options WSDISPLAY_DEFAULTSCREENS=N
+.Cd options WSDISPLAY_CHARFUNCS
 .Sh DESCRIPTION
 The
 .Nm
@@ -358,6 +359,9 @@ Terminal devices (per screen).
 .It
 .Pa /dev/ttyEcfg
 Control device.
+.It
+.Pa /dev/ttyEstat
+Status device.
 .It
 .Pa /usr/include/dev/wscons/wsconsio.h
 .El
