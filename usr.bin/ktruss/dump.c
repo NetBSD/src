@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.16 2003/09/23 18:46:33 matt Exp $	*/
+/*	$NetBSD: dump.c,v 1.17 2003/11/19 05:20:50 gson Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.16 2003/09/23 18:46:33 matt Exp $");
+__RCSID("$NetBSD: dump.c,v 1.17 2003/11/19 05:20:50 gson Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,11 +296,11 @@ ktrsyscall(ktr, nohdr, buff, bufsz, lenp)
 		bzero(bp, BLEFT);
 	}
 	if (!nohdr) {
-		if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
+		if (ktr->ktr_code >= cur_emul->nsysnames || ktr->ktr_code < 0)
 			(void)snprintf(bp, BLEFT, "[%d]", ktr->ktr_code);
 		else
 			(void)snprintf(bp, BLEFT,
-				       "%s", current->sysnames[ktr->ktr_code]);
+				       "%s", cur_emul->sysnames[ktr->ktr_code]);
 		bp += strlen(bp);
 	}
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
