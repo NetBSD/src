@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.57 2001/05/30 15:24:28 lukem Exp $	*/
+/*	$NetBSD: ser.c,v 1.58 2001/11/05 21:30:16 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
  * XXX unit.
  */
 
+#include "opt_amigacons.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -110,7 +111,7 @@ void	sercnpollc __P((dev_t, int));
 
 int	nser = NSER;
 #ifdef SERCONSOLE
-int	serconsole = SERCONSOLE;
+int	serconsole = 0;
 #else
 int	serconsole = -1;
 #endif
