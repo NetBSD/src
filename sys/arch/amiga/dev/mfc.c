@@ -1,3 +1,5 @@
+/*	$NetBSD: mfc.c,v 1.3 1995/03/02 02:23:59 chopps Exp $ */
+
 /*
  * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -30,9 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)mfc.c
- *	$Id: mfc.c,v 1.2 1995/02/12 19:19:16 chopps Exp $
  */
 
 #include <sys/param.h>
