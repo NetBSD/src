@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.14 2000/01/31 11:08:53 jsm Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.15 2000/07/03 03:57:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.14 2000/01/31 11:08:53 jsm Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.15 2000/07/03 03:57:44 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: pl_7.c,v 1.14 2000/01/31 11:08:53 jsm Exp $");
 #else
 #include <varargs.h>
 #endif
+#include <stdlib.h>
 #include <unistd.h>
 
 

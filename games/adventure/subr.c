@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.8 1998/09/14 09:29:08 hubertf Exp $	*/
+/*	$NetBSD: subr.c,v 1.9 2000/07/03 03:57:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,13 +43,14 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.8 1998/09/14 09:29:08 hubertf Exp $");
+__RCSID("$NetBSD: subr.c,v 1.9 2000/07/03 03:57:39 matt Exp $");
 #endif
 #endif				/* not lint */
 
 /*      Re-coding of advent in C: subroutines from main                 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "hdr.h"
 #include "extern.h"
 

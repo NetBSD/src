@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.7 1999/07/21 13:19:10 hubertf Exp $	*/
+/*	$NetBSD: getpar.c,v 1.8 2000/07/03 03:57:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.7 1999/07/21 13:19:10 hubertf Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.8 2000/07/03 03:57:44 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "getpar.h"
 #include "trek.h"
