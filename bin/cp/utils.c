@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.3 1995/03/21 09:02:17 cgd Exp $	*/
+/*	$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: utils.c,v 1.3 1995/03/21 09:02:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,9 +147,7 @@ copy_file(entp, dne)
 		}
 	}
 
-	/* If the copy went bad, lose the file. */
 	if (rval == 1) {
-		(void)unlink(to.p_path);
 		(void)close(from_fd);
 		(void)close(to_fd);
 		return (1);
