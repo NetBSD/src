@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.3 2000/11/20 12:12:19 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.4 2000/12/12 18:00:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -655,6 +655,9 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	baddr->iha_maxrec = 512 << baddr->iha_speed;
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
 	LIST_INIT(&ic->ic_reassq);
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_EN10MB, 14);	/* XXX */
+#endif
 }
 
 void
@@ -668,6 +671,9 @@ ieee1394_ifdetach(struct ifnet *ifp)
 	memset(LLADDR(sdl), 0, sizeof(struct ieee1394_hwaddr));
 	sdl->sdl_alen = 0;
 	sdl->sdl_type = 0;
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 }
 
 int
