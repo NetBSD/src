@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.14.10.4 2002/03/16 03:46:38 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.14.10.5 2002/03/16 20:57:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ void	turnstile_init(void);
 struct turnstile *turnstile_lookup(void *);
 void	turnstile_exit(void *);
 int	turnstile_block(struct turnstile *, int, int, void *);
-void	turnstile_wakeup(struct turnstile *, int, int);
+void	turnstile_wakeup(struct turnstile *, int, int, struct proc *);
 
 extern struct pool_cache turnstile_cache;
 

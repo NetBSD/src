@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.6 2002/03/16 03:46:38 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.7 2002/03/16 20:57:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.6 2002/03/16 03:46:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.7 2002/03/16 20:57:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/simplelock.h>
@@ -381,7 +381,8 @@ turnstile_block(struct turnstile *ts, int rw, int pri, void *lp)
  *	in a turnstile.
  */
 void
-turnstile_wakeup(struct turnstile *ts, int rw, int count)
+turnstile_wakeup(struct turnstile *ts, int rw, int count,
+    struct proc *nextproc)
 {
 	struct turnstile_chain *tc = TURNSTILE_CHAIN(ts->ts_obj);
 	struct turnstile_sleepq *tsq;
@@ -391,20 +392,45 @@ turnstile_wakeup(struct turnstile *ts, int rw, int count)
 
 	tsq = &ts->ts_sleepq[rw];
 
+	/*
+	 * If nextproc != NULL, then we're being asked to do direct
+	 * handoff to a pre-select waiter.  Therefore, the count must
+	 * be 1.
+	 */
+	KASSERT(nextproc == NULL || count == 1);
+
 	/* XXX We currently interlock with sched_lock. */
 	_SCHED_LOCK;
 
-	while (count-- > 0) {
-		p = tsq->tsq_q.sq_head;
+	if (nextproc != NULL) {
+#ifdef DEBUG
+		for (p = tsq->tsq_q.sq_head; p != NULL;
+		     p = p->p_forw) {
+			if (p == nextproc)
+				break;
+		}
+		if (p == NULL)
+			panic("turnstile_wakeup: nextproc not on sleepq");
+#endif
+		turnstile_remque(ts, nextproc, tsq);
 
-		KASSERT(p != NULL);
+		nextproc->p_wchan = NULL;
 
-		turnstile_remque(ts, p, tsq);
+		if (nextproc->p_stat == SSLEEP)
+			awaken(nextproc);
+	} else {
+		while (count-- > 0) {
+			p = tsq->tsq_q.sq_head;
 
-		p->p_wchan = NULL;
+			KASSERT(p != NULL);
 
-		if (p->p_stat == SSLEEP)
-			awaken(p);
+			turnstile_remque(ts, p, tsq);
+
+			p->p_wchan = NULL;
+
+			if (p->p_stat == SSLEEP)
+				awaken(p);
+		}
 	}
 
 	_SCHED_UNLOCK;
