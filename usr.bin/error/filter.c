@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.8 2002/05/26 22:41:20 wiz Exp $	*/
+/*	$NetBSD: filter.c,v 1.9 2003/07/14 11:09:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.8 2002/05/26 22:41:20 wiz Exp $");
+__RCSID("$NetBSD: filter.c,v 1.9 2003/07/14 11:09:19 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ getignored(char *auxname)
 	}
 	for (i=0; i < nignored &&
 	          (fgets (inbuffer, sizeof(inbuffer)-1, fyle) != NULL); i++){
-		names_ignored[i] = strsave(inbuffer);
+		names_ignored[i] = strdup(inbuffer);
 		(void)substitute(names_ignored[i], '\n', '\0');
 	}
 	qsort(names_ignored, nignored, sizeof *names_ignored, lexsort);
