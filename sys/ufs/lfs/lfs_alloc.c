@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.1 1999/04/13 21:33:55 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.2 1999/04/16 23:10:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -292,15 +292,18 @@ lfs_vfree(v)
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
+	int already_locked;
 	
 	/* Get the inode number and file system. */
 	ip = VTOI(ap->a_pvp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 	
+	/* If we already hold ufs_hashlock, don't panic, just do it anyway */
+	already_locked = lockstatus(&ufs_hashlock) && ufs_hashlock.lk_lockholder == curproc->p_pid;
 	while(WRITEINPROG(ap->a_pvp)
 	      || fs->lfs_seglock
-	      || lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
+	      || (!already_locked && lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)))
 	{
 		if (WRITEINPROG(ap->a_pvp)) {
 			tsleep(ap->a_pvp, (PRIBIO+1), "lfs_vfree", 0);
@@ -357,7 +360,8 @@ lfs_vfree(v)
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	if(!already_locked)
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 	
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
