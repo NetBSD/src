@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2002/04/10 15:56:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2002/04/10 17:08:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2002/04/10 15:56:21 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2002/04/10 17:08:13 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -284,6 +284,9 @@ static void pmap_free_l1pt __P((struct l1pt *));
 static int pmap_allocpagedir __P((struct pmap *));
 static int pmap_clean_page __P((struct pv_entry *, boolean_t));
 static void pmap_remove_all __P((struct vm_page *));
+
+static int pmap_alloc_ptpt(struct pmap *);
+static void pmap_free_ptpt(struct pmap *);
 
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
@@ -1330,20 +1333,74 @@ pmap_free_l1pt(struct l1pt *pt)
 }
 
 /*
+ * pmap_alloc_ptpt:
+ *
+ *	Allocate the page table that maps the PTE array.
+ */
+static int
+pmap_alloc_ptpt(struct pmap *pmap)
+{
+	struct vm_page *pg;
+	pt_entry_t *pte;
+
+	KASSERT(pmap->pm_vptpt == 0);
+
+	pmap->pm_vptpt = uvm_km_valloc(kernel_map, L2_TABLE_SIZE);
+	if (pmap->pm_vptpt == 0) {
+		PDEBUG(0,
+		    printf("pmap_alloc_ptpt: no KVA for PTPT\n"));
+		return (ENOMEM);
+	}
+
+	for (;;) {
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+		if (pg != NULL)
+			break;
+		uvm_wait("pmap_ptpt");
+	}
+
+	pmap->pm_pptpt = VM_PAGE_TO_PHYS(pg);
+
+	pte = vtopte(pmap->pm_vptpt);
+
+	KDASSERT(pmap_pte_v(pte) == 0);
+
+	*pte = L2_S_PROTO | pmap->pm_pptpt |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+
+	return (0);
+}
+
+/*
+ * pmap_free_ptpt:
+ *
+ *	Free the page table that maps the PTE array.
+ */
+static void
+pmap_free_ptpt(struct pmap *pmap)
+{
+
+	pmap_kremove(pmap->pm_vptpt, L2_TABLE_SIZE);
+	pmap_update(pmap_kernel());
+
+	uvm_pagefree(PHYS_TO_VM_PAGE(pmap->pm_pptpt));
+
+	uvm_km_free(kernel_map, pmap->pm_vptpt, L2_TABLE_SIZE);
+}
+
+/*
  * Allocate a page directory.
  * This routine will either allocate a new page directory from the pool
  * of L1 page tables currently held by the kernel or it will allocate
  * a new one via pmap_alloc_l1pt().
  * It will then initialise the l1 page table for use.
- *
- * XXX must tidy up and fix this code, not happy about how it does the pmaps_locking
  */
 static int
 pmap_allocpagedir(struct pmap *pmap)
 {
 	paddr_t pa;
 	struct l1pt *pt;
-	pt_entry_t *pte;
+	int error;
 
 	PDEBUG(0, printf("pmap_allocpagedir(%p)\n", pmap));
 
@@ -1378,34 +1435,18 @@ pmap_allocpagedir(struct pmap *pmap)
 		bzero((void *)pmap->pm_pdir, (L1_TABLE_SIZE - KERNEL_PD_SIZE));
 
 	/* Allocate a page table to map all the page tables for this pmap */
-
-#ifdef DIAGNOSTIC
-	if (pmap->pm_vptpt) {
-		/* XXX What if we have one already ? */
-		panic("pmap_allocpagedir: have pt already\n");
-	}
-#endif	/* DIAGNOSTIC */
-	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
-	if (pmap->pm_vptpt == 0) {
-	    pmap_freepagedir(pmap);
-    	    return(ENOMEM);
+	if ((error = pmap_alloc_ptpt(pmap)) != 0) {
+		pmap_freepagedir(pmap);
+		return (error);
 	}
 
-	/* need to lock this all up  for growkernel */
+	/* need to lock this all up for growkernel */
 	simple_lock(&pmaps_lock);
-	/* wish we didn't have to keep this locked... */
 
 	/* Duplicate the kernel mappings. */
 	bcopy((char *)pmap_kernel()->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
 		(char *)pmap->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
 		KERNEL_PD_SIZE);
-
-	pte = vtopte(pmap->pm_vptpt);
-	pmap->pm_pptpt = l2pte_pa(*pte);
-
-	/* Revoke cacheability and bufferability */
-	/* XXX should be done better than this */
-	*pte &= ~L2_S_CACHE_MASK;
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
@@ -1486,7 +1527,7 @@ pmap_freepagedir(struct pmap *pmap)
 {
 	/* Free the memory used for the page table mapping */
 	if (pmap->pm_vptpt != 0)
-		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_vptpt, NBPG);
+		pmap_free_ptpt(pmap);
 
 	/* junk the L1 page table */
 	if (pmap->pm_l1pt->pt_flags & PTFLAG_STATIC) {
