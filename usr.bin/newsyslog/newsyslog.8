@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.19 2000/11/07 06:43:35 lukem Exp $
+.\"	$NetBSD: newsyslog.8,v 1.20 2001/12/01 16:43:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" This file contains changes from the Open Software Foundation.
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
-.\" 
+.\"
 .\" Permission to use, copy, modify, and distribute this software
 .\" and its documentation for any purpose and without fee is
 .\" hereby granted, provided that the above copyright notice
@@ -56,7 +56,7 @@
 is a program that should be scheduled to run periodically by
 .Xr cron 8 .
 When it is executed it archives log files if necessary.  If a log file
-is determined to require archiving, 
+is determined to require archiving,
 .Nm
 rearranges the files so that
 .Dq Va logfile
@@ -68,7 +68,7 @@ the last period's logs in it,
 has the next to last
 period's logs in it and so on, up to a user-specified number of
 archived logs.  Optionally the archived logs can be compressed to save
-space.  
+space.
 .Pp
 A log can be archived for three reasons:
 .Bl -enum -offset indent
@@ -90,11 +90,11 @@ It is recommended that
 .Nm
 be run once hourly.
 .Pp
-When starting up, 
+When starting up,
 .Nm
 reads in a configuration file to determine which logs may potentially
 be archived.
-By default, this configuration file is 
+By default, this configuration file is
 .Pa /etc/newsyslog.conf .
 Each line of the file contains information about a particular log file
 that should be handled by
@@ -102,7 +102,7 @@ that should be handled by
 Each line has six mandatory fields and three optional fields, with
 whitespace separating each field.  Blank lines or lines beginning with
 ``#'' are ignored.  The fields of the configuration file are as
-follows: 
+follows:
 .Pp
 .Bl -tag -width indent
 .It Ar logfile_name
@@ -113,14 +113,14 @@ The ":" is essential, even if the
 .Ar owner
 or
 .Ar group
-field is left blank.  The field may be numeric, or a name which is 
+field is left blank.  The field may be numeric, or a name which is
 present in
 .Pa /etc/passwd
 or
 .Pa /etc/group .
 For backward compatibility, "." is useable in lieu of ":", however use of
 this feature is discouraged.
-.It Ar mode 
+.It Ar mode
 Specify the mode of the log file and archives.
 .It Ar count
 Specify the number of archive files to be kept
@@ -151,14 +151,14 @@ by an
 .So Li \&@ Sc Ns No -sign
 and a time in a restricted
 .Tn ISO 8601
-format or by an 
+format or by an
 .So Li \&$ Sc Ns No -sign
-and a time specification for logfile rotation at a fixed time once 
+and a time specification for logfile rotation at a fixed time once
 per day, per week or per month.
 .Pp
 If a time is specified, the log file will only be trimmed if
 .Nm
-is run within one hour of the specified time.  If an 
+is run within one hour of the specified time.  If an
 interval is specified, the log file will be trimmed if that many hours have
 passed since the last rotation.  When both a time and an interval are
 specified, the log will be trimmed if either condition is met.
@@ -248,7 +248,7 @@ The particular format of day, week and month specification is:
 .Oo
 .Va D\&hh
 .Oc
-.Oc 
+.Oc
 and
 .Oo
 .Va M\&dd
@@ -258,7 +258,7 @@ and
 .Oc
 .Sm on
 respectively.
-Optional time fields default to midnight. 
+Optional time fields default to midnight.
 The ranges for day and hour secifications are:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
@@ -292,7 +292,7 @@ rotate on every 5th day of month at 6:00 hr
 .El
 .Pp
 .It Ar flags
-This field specifies any special processing that is required.  Individual 
+This field specifies any special processing that is required.  Individual
 flags and their meanings:
 .Bl -tag -width indent
 .It Sy -
@@ -327,7 +327,7 @@ is sent the process id contained in this
 file.  This field must start with "/" in order to be recognized
 properly.
 .It Ar sigtype
-This optional field specifies the type of signal to be sent to the daemon 
+This optional field specifies the type of signal to be sent to the daemon
 process.  This may be a numeric or symbolic value.  By default
 a SIGHUP (hang-up) will be sent.
 .El
@@ -335,14 +335,14 @@ a SIGHUP (hang-up) will be sent.
 The following options can be used with newsyslog:
 .Bl -tag -width indent
 .It Fl f Ar config_file
-Use 
+Use
 .Ar config_file
 instead of
 .Pa /etc/newsyslog.conf
 as the configuration file.
 .It Fl n
-Do not trim the logs, but print out would be done if this option were not 
-specified: 
+Do not trim the logs, but print out would be done if this option were not
+specified:
 .Fl n
 implies
 .Fl v .
@@ -360,7 +360,7 @@ Do not signal daemon processes.
 .It Fl v
 Run in verbose mode.  In this mode each action that is taken will be printed.
 .It Fl F
-Force trimming of the logs, even if the trim conditions have not been met.  
+Force trimming of the logs, even if the trim conditions have not been met.
 This option is useful for diagnosing system problems by providing you with
 fresh logs.
 .El

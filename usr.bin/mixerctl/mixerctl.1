@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.11 2000/12/29 13:30:26 augustss Exp $
+.\" $NetBSD: mixerctl.1,v 1.12 2001/12/01 16:43:19 wiz Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -65,13 +65,13 @@
 .Fl w
 .Ar name-- ...
 .Sh DESCRIPTION
-The 
+The
 .Nm
 command displays or sets various audio system mixing variables.
 If a list of variables is present on the command line, then
 .Nm
 prints the current value of those variables for the specified device.
-If the 
+If the
 .Fl a
 flag is specified, all variables for the device are printed.
 If the
@@ -108,7 +108,7 @@ can have values like
 or
 .Li outputs
 indicating that the control affects the input resp. output to the
-mixer.  The 
+mixer.  The
 .Va name
 indicates what part of the mixer the control affects.
 Continous mixer values, e.g., volume, have numeric values

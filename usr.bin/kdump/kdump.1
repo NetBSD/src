@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.9 2001/02/04 20:44:53 jdolecek Exp $
+.\"	$NetBSD: kdump.1,v 1.10 2001/12/01 16:43:16 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,16 +60,16 @@ The options are as follows:
 .It Fl d
 Display all numbers in decimal.
 .It Fl e Ar emulation
-If an emulation of a process is unknown, 
+If an emulation of a process is unknown,
 interpret system call maps assuming the named emulation instead of
 default "netbsd".
-.It Fl f Ar file 
+.It Fl f Ar file
 Display the specified file instead of
 .Pa ktrace.out .
 .It Fl l
 Loop reading the trace file, once the end-of-file is reached, waiting for
 more data.
-.It Fl m Ar maxdata 
+.It Fl m Ar maxdata
 Display at most
 .Ar maxdata
 bytes when decoding

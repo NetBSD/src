@@ -1,4 +1,4 @@
-.\"	$NetBSD: units.1,v 1.8 1999/03/09 03:31:43 ross Exp $
+.\"	$NetBSD: units.1,v 1.9 2001/12/01 16:43:26 wiz Exp $
 .TH UNITS 1  "14 July 1993"
 .SH NAME
 units - conversion program
@@ -11,12 +11,12 @@ units - conversion program
 Specifies the name of the units data file to load.
 .LP
 .TP 4
-.B -q 
+.B -q
 Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
 .LP
 .TP 4
-.B -v 
+.B -v
 Prints the version number.
 .LP
 .TP 4
@@ -26,7 +26,7 @@ line.  No prompting will occur.  The units program will print out
 only the result of this single conversion.
 
 .SH DESCRIPTION
-The units program converts quantities expression in various scales to 
+The units program converts quantities expression in various scales to
 their equivalents in other scales.  The units program can only
 handle multiplicative scale changes.  It cannot convert Centigrade
 to Fahrenheit, for example.  It works interactively by prompting
@@ -47,8 +47,8 @@ the user for input:
 Powers of units can be specified using the '^' character as shown in
 the example, or by simple concatenation: 'cm3' is equivalent to 'cm^3'.
 Multiplication of units can be specified by using spaces, a dash or
-an asterisk.  Division of units is indicated by the slash ('/').  
-Note that multiplication has a higher precedence than division, 
+an asterisk.  Division of units is indicated by the slash ('/').
+Note that multiplication has a higher precedence than division,
 so 'm/s/s' is the same as 'm/s^2' or 'm/s s'.
 If the user enters incompatible unit types, the units program will
 print a message indicating that the units are not conformable and
@@ -56,7 +56,7 @@ it will display the reduced form for each unit:
 .nf
 
     You have: ergs/hour
-    You want: fathoms kg^2 / day 
+    You want: fathoms kg^2 / day
     conformability error
             2.7777778e-11 kg m^2 / sec^3
             2.1166667e-05 kg^2 m / sec
@@ -89,18 +89,18 @@ US counterparts are prefixed with 'br', and currency is prefixed with
 its country name: 'belgiumfranc', 'britainpound'.  When searching for
 a unit, if the specified string does not appear exactly as a unit
 name, then the units program will try to remove a trailing 's' or
-a trailing 'es' and check again for a match.  
+a trailing 'es' and check again for a match.
 .LP
 All of these definitions can be read in the standard units file, or you
 can supply your own file.  A unit is specified on a single line by
 giving its name and an equivalence.  One should be careful to define
 new units in terms of old ones so that a reduction leads to the
-primitive units which are marked with '!' characters.  
+primitive units which are marked with '!' characters.
 The units program will not detect infinite loops that could be caused
 by careless unit definitions.
 .LP
-Prefixes are defined in the same was as standard units, but with 
-a trailing dash at the end of the prefix name.  
+Prefixes are defined in the same was as standard units, but with
+a trailing dash at the end of the prefix name.
 .SH BUGS
 .LP
 The effect of including a '/' in a prefix is surprising.
@@ -117,7 +117,7 @@ of the units converted and on the length of the data file.
 .LP
 The program should use a hash table to store units so that
 it doesn't take so long to load the units list and check
-for duplication.  
+for duplication.
 .SH FILES
 /usr/share/misc/units.lib - the standard units library
 .SH AUTHOR

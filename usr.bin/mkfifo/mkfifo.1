@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.1,v 1.7 1999/03/22 18:16:40 garbled Exp $
+.\"	$NetBSD: mkfifo.1,v 1.8 2001/12/01 16:43:20 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Nm
 creates the fifos requested, in the order specified,
 using mode
-.Li \&0666 
+.Li \&0666
 modified by the current
 .Xr umask 2 .
 .Pp
@@ -59,13 +59,13 @@ The options are as follows:
 .It Fl m
 Set the file permission bits of newly-created directories to
 .Ar mode .
-The mode is specified as in 
+The mode is specified as in
 .Xr chmod 1 .
-In symbolic mode strings, the 
-.Dq + 
-and 
+In symbolic mode strings, the
+.Dq +
+and
 .Dq -
-operators are interpreted relative to an assumed initial mode of 
+operators are interpreted relative to an assumed initial mode of
 .Dq a=rw
 .El
 .Pp

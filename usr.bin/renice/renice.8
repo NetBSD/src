@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.8 1999/08/20 18:09:48 ross Exp $
+.\"	$NetBSD: renice.8,v 1.9 2001/12/01 16:43:23 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.8 1999/08/20 18:09:48 ross Exp $
+.\"	$NetBSD: renice.8,v 1.9 2001/12/01 16:43:23 wiz Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -72,7 +72,7 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-alters the 
+alters the
 scheduling priority of one or more running processes.
 The following
 .Ar who
@@ -80,7 +80,7 @@ parameters are interpreted as process ID's, process group
 ID's, or user names.
 .Nm "" Ns 'ing
 a process group causes all processes in the process group
-to have their scheduling priority altered.  
+to have their scheduling priority altered.
 .Nm "" Ns 'ing
 a user causes all processes owned by the user to have
 their scheduling priority altered.
@@ -91,7 +91,7 @@ Options supported by
 .Nm "" :
 .Bl -tag -width Ds
 .It Fl g
-Force 
+Force
 .Ar who
 parameters to be interpreted as process group ID's.
 .It Fl n
@@ -134,7 +134,7 @@ to
 Useful priorities are:
 0, the ``base'' scheduling priority;
 20, the affected processes will run only when nothing at the base priority
-wants to; 
+wants to;
 anything negative, the processes will receive a scheduling preference.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact

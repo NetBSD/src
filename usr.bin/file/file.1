@@ -1,7 +1,7 @@
-.\" $NetBSD: file.1,v 1.23 2001/09/09 10:46:36 pooka Exp $
+.\" $NetBSD: file.1,v 1.24 2001/12/01 16:43:13 wiz Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.39 2001/04/27 22:48:33 christos Exp 
+.\" Id: file.man,v 1.39 2001/04/27 22:48:33 christos Exp
 .SH NAME
 file
 \- determine file type
@@ -15,7 +15,7 @@ file
 .I namefile
 ]
 [
-.B \-m 
+.B \-m
 .I magicfiles
 ]
 .I file
@@ -24,7 +24,7 @@ file
 .B file
 .B -C
 [
-.B \-m 
+.B \-m
 magicfile ]
 .SH DESCRIPTION
 This manual page documents version 3.37 of the
@@ -56,7 +56,7 @@ Exceptions are well-known file formats (core files, tar archives)
 that are known to contain binary data.
 When modifying the file
 .I /usr/share/misc/magic
-or the program itself, 
+or the program itself,
 .B "preserve these keywords" .
 People depend on knowing that all the readable files in a directory
 have the word ``text'' printed.
@@ -85,7 +85,7 @@ The magic number tests are used to check for files with data in
 particular fixed formats.
 The canonical example of this is a binary executable (compiled program)
 .I a.out
-file, whose format is defined in 
+file, whose format is defined in
 .I a.out.h
 and possibly
 .I exec.h
@@ -99,7 +99,7 @@ offset into the file can usually be described in this way.
 The information identifying these files is read from the compiled
 magic file
 .I /usr/share/misc/magic.mgc ,
-or 
+or
 .I /usr/share/misc/magic
 if the compile file does not exist.
 .PP
@@ -137,13 +137,13 @@ For example, the keyword
 .B .br
 indicates that the file is most likely a
 .BR troff (1)
-input file, just as the keyword 
+input file, just as the keyword
 .B struct
 indicates a C program.
 These tests are less reliable than the previous
 two groups, so they are performed last.
 The language test routines also test for some miscellany
-(such as 
+(such as
 .BR tar (1)
 archives).
 .PP
@@ -156,7 +156,7 @@ Do not prepend filenames to output lines (brief mode).
 .TP 8
 .B \-c
 Cause a checking printout of the parsed form of the magic file.
-This is usually used in conjunction with 
+This is usually used in conjunction with
 .B \-m
 to debug a new magic file before installing it.
 .TP 8
@@ -165,11 +165,11 @@ Write a magic.mgc output file that contains a pre-parsed version of
 file.
 .TP 8
 .BI \-f " namefile"
-Read the names of the files to be examined from 
+Read the names of the files to be examined from
 .I namefile
-(one per line) 
+(one per line)
 before the argument list.
-Either 
+Either
 .I namefile
 or at least one filename argument must be present;
 to test the standard input, use ``\-'' as a filename argument.
@@ -252,12 +252,12 @@ can be used to set the default magic number files.
 .SH STANDARDS CONFORMANCE
 This program is believed to exceed the System V Interface Definition
 of FILE(CMD), as near as one can determine from the vague language
-contained therein. 
+contained therein.
 Its behaviour is mostly compatible with the System V program of the same name.
 This version knows more magic, however, so it will produce
-different (albeit more accurate) output in many cases. 
+different (albeit more accurate) output in many cases.
 .PP
-The one significant difference 
+The one significant difference
 between this version and System V
 is that this version treats any white space
 as a delimiter, so that spaces in pattern strings must be escaped.
@@ -292,7 +292,7 @@ The magic file entries have been collected from various sources,
 mainly USENET, and contributed by various authors.
 Christos Zoulas (address below) will collect additional
 or corrected magic file entries.
-A consolidation of magic file entries 
+A consolidation of magic file entries
 will be distributed periodically.
 .PP
 The order of entries in the magic file is significant.
@@ -302,7 +302,7 @@ If your old
 .B file
 command uses a magic file,
 keep the old magic file around for comparison purposes
-(rename it to 
+(rename it to
 .IR /usr/share/misc/magic.orig ).
 .SH EXAMPLES
 .nf
@@ -332,7 +332,7 @@ file:        application/x-executable, dynamically linked (uses shared libs), no
 
 .fi
 .SH HISTORY
-There has been a 
+There has been a
 .B file
 command in every \s-1UNIX\s0 since at least Research Version 6
 (man page dated January 16, 1975).
@@ -415,11 +415,11 @@ commands vs man page macros.
 Regular expression support would make this easy.
 .PP
 The program doesn't grok \s-2FORTRAN\s0.
-It should be able to figure \s-2FORTRAN\s0 by seeing some keywords which 
+It should be able to figure \s-2FORTRAN\s0 by seeing some keywords which
 appear indented at the start of line.
 Regular expression support would make this easy.
 .PP
-The list of keywords in 
+The list of keywords in
 .I ascmagic
 probably belongs in the Magic file.
 This could be done by using some keyword like `*' for the offset value.
@@ -431,12 +431,12 @@ have fetched it.  Complain about conflicts in the magic file entries.
 Make a rule that the magic entries sort based on file offset rather
 than position within the magic file?
 .PP
-The program should provide a way to give an estimate 
+The program should provide a way to give an estimate
 of ``how good'' a guess is.
 We end up removing guesses (e.g. ``From '' as first 5 chars of file) because
 they are not as good as other guesses (e.g. ``Newsgroups:'' versus
 ``Return-Path:'').  Still, if the others don't pan out, it should be
-possible to use the first guess.  
+possible to use the first guess.
 .PP
 This program is slower than some vendors' file commands.
 The new support for multiple character codes makes it even slower.

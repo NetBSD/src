@@ -1,4 +1,4 @@
-.\"	$NetBSD: bdes.1,v 1.5 2000/06/16 16:53:21 thorpej Exp $
+.\"	$NetBSD: bdes.1,v 1.6 2001/12/01 16:43:08 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ bdes [ \-abdp ] [ \-F N ] [ \-f N ] [ \-k key ]
 .fi
 .SH DESCRIPTION
 .I Bdes
-implements all DES modes of operation described in FIPS PUB 81, 
+implements all DES modes of operation described in FIPS PUB 81,
 including alternative cipher feedback mode and both authentication
 modes.
 .I Bdes
@@ -164,7 +164,7 @@ According to the DES standard, the low-order bit of each character in the
 key string is deleted.
 Since most ASCII representations set the high-order bit to 0, simply
 deleting the low-order bit effectively reduces the size of the key space
-from 
+from
 .x2 56
 to
 .x2 48
@@ -184,11 +184,11 @@ Hellman's time-memory tradeoff (all of which are very expensive and
 time-consuming), no practical cryptanalytic methods for breaking the
 DES are known in the open literature.  As of this writing, the best
 known cryptanalytic method is linear cryptanalysis, which requires an
-average of 
+average of
 .x2 43
 known plaintext-ciphertext pairs to succeed.
-Unfortunately for the DES, key search attacks (requiring only 
-a single known plaintext-ciphertext pair and trying 
+Unfortunately for the DES, key search attacks (requiring only
+a single known plaintext-ciphertext pair and trying
 .x2 55
 keys on average) are becoming practical.
 .PP

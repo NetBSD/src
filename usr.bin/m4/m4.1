@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.12 2001/11/14 14:49:38 tv Exp $
+.\"	$NetBSD: m4.1,v 1.13 2001/12/01 16:43:19 wiz Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
@@ -85,7 +85,7 @@ Undefine the symbol
 .Ar name .
 .It Fl d Ar "flags"
 Set trace flags.
-.Ar flags 
+.Ar flags
 may hold the following:
 .Bl -tag -width Ds
 .It Ar a
@@ -108,7 +108,7 @@ number macro expansions.
 turn on all options.
 .El
 .Pp
-By default, trace is set to 
+By default, trace is set to
 .Qq eq .
 .It Fl g
 Activate GNU-m4 compatibility mode.
@@ -122,7 +122,7 @@ Specify the tracing output file for
 tracing defaults to printing to
 .Ql stderr .
 .It Fl t Ar macro
-Turn tracing on for 
+Turn tracing on for
 .Ar macro .
 .El
 .Sh SYNTAX
@@ -369,14 +369,14 @@ Flags
 .Fl t
 are non-standard.
 .Pp
-The output format of tracing and of 
-.Ic dumpdef 
-are not specified in any standard, 
+The output format of tracing and of
+.Ic dumpdef
+are not specified in any standard,
 are likely to change and should not be relied upon.
 The current format of tracing is closely modelled on GNU
-.Nm "" , 
+.Nm "" ,
 to allow
-.Nm autoconf 
+.Nm autoconf
 to work.
 .Pp
 For portability, one should not use the macros
@@ -392,7 +392,7 @@ For portability, one should not use the macros
 .Ic __line__ ,
 .Ic __file__ .
 .Pp
-All builtins do expand without arguments in many other 
+All builtins do expand without arguments in many other
 .Nm "" .
 .Sh AUTHORS
 Ozan Yigit <oz@sis.yorku.ca> and Richard A. O'Keefe (ok@cs.rmit.edu.au).
