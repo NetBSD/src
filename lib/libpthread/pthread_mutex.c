@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.3 2003/01/18 18:45:55 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.4 2003/01/19 20:46:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@ __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
 __strong_alias(__libc_mutex_trylock,pthread_mutex_trylock)
 __strong_alias(__libc_mutex_unlock,pthread_mutex_unlock)
 __strong_alias(__libc_mutex_destroy,pthread_mutex_destroy)
+
+__strong_alias(__libc_mutexattr_init,pthread_mutexattr_init)
+__strong_alias(__libc_mutexattr_destroy,pthread_mutexattr_destroy)
+__string_alias(__libc_mutexattr_settype,pthread_mutexattr_settype)
 
 __strong_alias(__libc_thr_once,pthread_once)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: threadlib.h,v 1.1 2003/01/19 19:24:39 thorpej Exp $	*/
+/*	$NetBSD: threadlib.h,v 1.2 2003/01/19 20:46:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,6 +54,10 @@
 
 #define	mutexattr_t		pthread_mutexattr_t
 
+#define	MUTEX_TYPE_NORMAL	PTHREAD_MUTEX_NORMAL
+#define	MUTEX_TYPE_ERRORCHECK	PTHREAD_MUTEX_ERRORCHECK
+#define	MUTEX_TYPE_RECURSIVE	PTHREAD_MUTEX_RECURSIVE
+
 #define	cond_t			pthread_cond_t
 #define	COND_INITIALIZER	PTHREAD_COND_INITIALIZER
 
@@ -79,11 +83,19 @@ int	__libc_mutex_trylock(mutex_t *);
 int	__libc_mutex_unlock(mutex_t *);
 int	__libc_mutex_destroy(mutex_t *);
 
+int	__libc_mutexattr_init(mutexattr_t *);
+int	__libc_mutexattr_settype(mutexattr_t *, int);
+int	__libc_mutexattr_destroy(mutexattr_t *);
+
 #define	mutex_init(m, a)	__libc_mutex_init((m), (a))
 #define	mutex_lock(m)		__libc_mutex_lock((m))
 #define	mutex_trylock(m)	__libc_mutex_trylock((m))
 #define	mutex_unlock(m)		__libc_mutex_unlock((m))
 #define	mutex_destroy(m)	__libc_mutex_destroy((m))
+
+#define	mutexattr_init(ma)	__libc_mutexattr_init((ma))
+#define	mutexattr_settype(ma, t) __libc_mutexattr_settype((ma), (t))
+#define	mutexattr_destroy(ma)	__libc_mutexattr_destroy((ma))
 
 int	__libc_cond_init(cond_t *, const condattr_t *);
 int	__libc_cond_signal(cond_t *);
