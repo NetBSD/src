@@ -29,7 +29,7 @@
 
 #include <unistd.h>
 #include <errno.h>
-#if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
+#if defined(BSD) && BSD >= 199103 || defined(__NetBSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
 #include <regex.h>
