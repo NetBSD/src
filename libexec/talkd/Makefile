@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/19 03:17:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2004/03/24 05:20:12 fair Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -13,3 +13,5 @@ LDADD+=-lutil
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
 
 .include <bsd.prog.mk>
+
+MLINKS+=talkd.8 ntalkd.8

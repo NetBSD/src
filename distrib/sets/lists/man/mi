@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.668 2004/03/22 00:48:04 groo Exp $
+# $NetBSD: mi,v 1.669 2004/03/24 05:20:12 fair Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1560,8 +1560,8 @@
 ./usr/share/man/cat8/cleanup.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/clri.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cnwctl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_hpux.0		man-sys-catman		.cat
@@ -1838,6 +1838,7 @@
 ./usr/share/man/cat8/nqmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
+./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdate.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdc.0			man-ntp-catman		.cat
@@ -3624,8 +3625,8 @@
 ./usr/share/man/man8/cleanup.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/clri.8			man-sysutil-man		.man
 ./usr/share/man/man8/cnwctl.8			man-sysutil-man		.man
-./usr/share/man/man8/cobalt/boot.8		man-sys-man		.man
 ./usr/share/man/man8/cobalt/MAKEDEV.8		man-obsolete		obsolete
+./usr/share/man/man8/cobalt/boot.8		man-sys-man		.man
 ./usr/share/man/man8/cobalt/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man		.man
 ./usr/share/man/man8/compat_hpux.8		man-sys-man		.man
@@ -3903,6 +3904,7 @@
 ./usr/share/man/man8/nqmgr.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
+./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdate.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdc.8			man-ntp-man		.man
