@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.29 1999/03/22 18:30:45 garbled Exp $
+.\"	$NetBSD: ps.1,v 1.30 1999/03/26 22:36:02 bgrayson Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -183,8 +183,28 @@ option is specified more than once,
 .Nm
 will use as many columns as necessary without regard for your window size.
 .It Fl x
-Display information about processes without controlling terminals.
+Also display information about processes without controlling terminals.
 .El
+.Pp
+If
+.Nm
+is unable to extract process information directly from the
+kernel (e.g., due to incorrect 
+.Fl M
+or
+.Fl N
+options or kvm-based reasons), it currently uses an experimental
+fallback method to gather as much information as possible through the
+limited
+.Dq Pa /proc
+interface, if the 
+.Dq Pa /proc
+filesystem is mounted.  See 
+.Xr mount_procfs 8
+for more details.  Note that this will only produce correct
+results if the /proc filesystem is secure (for example, no intruder
+has mounted something else on top of it).  This experimental
+fallback method will change in future releases.
 .Pp
 A complete list of the available keywords are listed below.
 Some of these keywords are further specified as follows:
@@ -494,6 +514,8 @@ default kernel memory
 system namelist database
 .It Pa /netbsd
 default system namelist
+.It Pa /proc
+filesystem for obtaining process information
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
@@ -501,6 +523,7 @@ default system namelist
 .Xr w 1 ,
 .Xr kvm 3 ,
 .Xr strftime 3 ,
+.Xr mount_procfs 8 ,
 .Xr pstat 8
 .Sh BUGS
 Since

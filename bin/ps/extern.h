@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1998/02/06 04:47:30 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 1999/03/26 22:36:02 bgrayson Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -68,6 +68,7 @@ void	 pmem __P((KINFO *, VARENT *));
 void	 pnice __P((KINFO *, VARENT *));
 void	 pri __P((KINFO *, VARENT *));
 void	 printheader __P((void));
+struct kinfo_proc *	 procfs_getprocs __P((int, int, int*));
 void	 pvar __P((KINFO *, VARENT *));
 void	 rssize __P((KINFO *, VARENT *));
 void	 runame __P((KINFO *, VARENT *));
