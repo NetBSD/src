@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.25.2.1 2000/10/10 22:24:52 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.25.2.1 2000/10/10 22:24:52 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -556,7 +556,7 @@ dofix(idesc, msg)
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else
-			pwarn(msg);
+			pwarn("%s", msg);
 		if (preen) {
 			printf(" (SALVAGED)\n");
 			idesc->id_fix = FIX;
