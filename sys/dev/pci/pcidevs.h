@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433 2002/05/19 16:02:44 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.1 2002/06/10 17:06:21 tv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428 2002/05/19 16:00:19 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.428.2.1 2002/06/10 17:03:06 tv Exp 
  */
 
 /*
@@ -2083,6 +2083,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8366	0x3099		/* VT8366 (Apollo KT266) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT8231	0x8231		/* VT8231 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_PPB	0x8305		/* VT8363 KT133 PCI to AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501AGP	0x8501		/* VT8501 CPU-AGP Bridge */
