@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.2 1999/11/18 12:20:45 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.3 1999/11/23 23:52:57 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -3709,10 +3709,12 @@ softdep_fsync_mountdev(vp)
 {
 	struct buf *bp, *nbp;
 	struct worklist *wk;
+	int s;
 	
 	if (vp->v_type != VBLK)
 		panic("softdep_fsync_mountdev: vnode not VBLK");
 	ACQUIRE_LOCK(&lk);
+	s = splbio();
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
 		/* 
@@ -3731,15 +3733,18 @@ softdep_fsync_mountdev(vp)
 			continue;
 		bremfree(bp);
 		bp->b_flags |= B_BUSY;
+		splx(s);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
 		ACQUIRE_LOCK(&lk);
+		s = splbio();
 		/*
 		 * Since we may have slept during the I/O, we need 
 		 * to start from a known point.
 		 */
 		nbp = vp->v_dirtyblkhd.lh_first;
 	}
+	splx(s);
 	drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }

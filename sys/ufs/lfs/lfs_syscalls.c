@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.36 1999/11/21 19:25:31 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.37 1999/11/23 23:52:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -475,10 +475,10 @@ sys_lfs_markv(p, v, retval)
 	lfs_vunref(vp);
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
+	s = splbio();
 	for(bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp=nbp) {
 		nbp = bp->b_freelist.tqe_next;
 		if(bp->b_flags & B_CALL) {
-			s = splbio();
 			if(bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;
 				tsleep(bp, PRIBIO+1, "markv", 0);
@@ -488,8 +488,10 @@ sys_lfs_markv(p, v, retval)
 			bremfree(bp);
 			splx(s);
 			brelse(bp);
+			s = splbio();
 		}
 	}
+	splx(s);
 	free(start, M_SEGMENT);
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp);

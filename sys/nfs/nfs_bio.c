@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.46 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.47 1999/11/23 23:52:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -931,7 +931,7 @@ again:
 				bp->b_wcred = cred;
 			}
 		}
-	
+
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
 		return (0);
@@ -1084,6 +1084,7 @@ nfs_doio(bp, cr, p)
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
 	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
+	    s = splbio();
 	    if (!error && iomode == NFSV3WRITE_UNSTABLE)
 		bp->b_flags |= B_NEEDCOMMIT;
 	    else
@@ -1111,9 +1112,7 @@ nfs_doio(bp, cr, p)
 		 * dirty one. Ugh.
 		 */
 		if (bp->b_flags & B_ASYNC) {
-		    s = splbio();
 		    reassignbuf(bp, vp);
-		    splx(s);
 		} else if (error)
 		    bp->b_flags |= B_EINTR;
 	    } else {
@@ -1124,6 +1123,7 @@ nfs_doio(bp, cr, p)
 		}
 		bp->b_dirtyoff = bp->b_dirtyend = 0;
 	    }
+	    splx(s);
 	}
 	bp->b_resid = uiop->uio_resid;
 	if (must_commit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.59 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.60 1999/11/23 23:52:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -110,6 +110,8 @@ void
 bremfree(bp)
 	struct buf *bp;
 {
+	int s = splbio();
+
 	struct bqueues *dp = NULL;
 
 	/*
@@ -127,6 +129,8 @@ bremfree(bp)
 			panic("bremfree: lost tail");
 	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
+
+	splx(s);
 }
 
 /*
@@ -340,9 +344,10 @@ bwrite(bp)
 	}
 
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
-	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
 	s = splbio();
+
+	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
 	/*
 	 * Pay for the I/O operation and make sure the buf is on the correct
@@ -399,8 +404,8 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	int s;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	int s;
 
 	/* If this is a tape block, write the block now. */
 	/* XXX NOTE: the memory filesystem usurpes major device */
@@ -418,16 +423,18 @@ bdwrite(bp)
 	 *	(2) Charge for the write,
 	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
+	s = splbio();
+
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		p->p_stats->p_ru.ru_oublock++;
-		s = splbio();
 		reassignbuf(bp, bp->b_vp);
-		splx(s);
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
 	CLR(bp->b_flags, B_NEEDCOMMIT|B_DONE);
+	splx(s);
+
 	brelse(bp);
 }
 
@@ -453,13 +460,15 @@ bdirty(bp)
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 	int s;
 
+	s = splbio();
+
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		p->p_stats->p_ru.ru_oublock++;
-		s = splbio();
 		reassignbuf(bp, bp->b_vp);
-		splx(s);
 	}
+
+	splx(s);
 }
 
 /*
@@ -479,14 +488,14 @@ brelse(bp)
 		wakeup(&needbuffer);
 	}
 
+	/* Block disk interrupts. */
+	s = splbio();
+
 	/* Wake up any proceeses waiting for _this_ buffer to become free. */
 	if (ISSET(bp->b_flags, B_WANTED)) {
 		CLR(bp->b_flags, B_WANTED|B_AGE);
 		wakeup(bp);
 	}
-
-	/* Block disk interrupts. */
-	s = splbio();
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
@@ -895,6 +904,8 @@ void
 biodone(bp)
 	struct buf *bp;
 {
+	int s = splbio();
+
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
@@ -916,6 +927,8 @@ biodone(bp)
 			wakeup(bp);
 		}
 	}
+
+	splx(s);
 }
 
 /*
