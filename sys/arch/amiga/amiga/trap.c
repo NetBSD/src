@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1995/05/11 23:05:22 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 1995/05/13 05:57:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -806,12 +806,10 @@ syscall(code, frame)
  * Process the tail end of a fork() for the child
  */
 void
-finish_child(frame)
+child_return(p, frame)
+	struct proc *p;
 	struct frame frame;
 {
-	struct proc *p;
-
-	p = curproc;
 	frame.f_regs[D0] = 0;
 	frame.f_sr &= ~PSL_C;	/* carry bit */
 
