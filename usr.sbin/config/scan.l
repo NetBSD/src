@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.36 2002/11/17 23:36:20 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.37 2003/04/11 10:53:52 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,7 +204,11 @@ int
 firstfile(const char *fname)
 {
 
+#if defined(__NetBSD__)
+	if ((yyin = fopen(fname, "rf")) == NULL)
+#else
 	if ((yyin = fopen(fname, "r")) == NULL)
+#endif
 		return (-1);
 	yyfile = conffile = fname;
 	yyline = 1;
