@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.52 2002/06/12 00:24:39 wiz Exp $
+.\" $NetBSD: usb.4,v 1.53 2002/07/25 21:30:34 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -122,8 +122,6 @@ driver for ADMtek AN986 Pegasus USB Ethernet.
 driver for CATC USB-EL1201A USB Ethernet.
 .It kue
 driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
-.It url
-driver for Realtek RTL8150L USB Ethernet.
 .It uaudio
 driver for audio devices.
 .It udsbr
@@ -134,10 +132,10 @@ driver for FTDI based serial adapters.
 generic driver for
 .Tn USB
 devices.
-.It uhidev
-top level HID driver.
 .It uhid
 generic driver for Human Interface Devices.
+.It uhidev
+top level HID driver.
 .It uirda
 driver for USB-IrDA bridges.
 .It ukbd
@@ -146,6 +144,8 @@ keyboard driver.
 printer driver.
 .It umass
 driver for mass storage devices, such as disks.
+.It umct
+driver for MCT USB-RS232 serial adapter.
 .It umidi
 driver for MIDI devices.
 .It umodem
@@ -158,12 +158,12 @@ driver for
 host-to-host adapter.
 .It uplcom
 driver for Prolific 2303 serial adapter.
-.It umct
-driver for MCT USB-RS232 serial adapter.
 .It urio
 driver for the
 .Tn Diamond
 Rio 500 MP3 player.
+.It url
+driver for Realtek RTL8150L USB Ethernet.
 .It uscanner
 driver for some USB scanners.
 .It usscanner
