@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.5 1998/02/08 14:19:21 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.6 1998/02/10 02:35:03 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,10 @@
  *
  * from: Id: uvm_stat.h,v 1.1.2.4 1998/02/07 01:16:56 chs Exp
  */
+
+#ifndef _UVM_UVM_STAT_H_
+#define _UVM_UVM_STAT_H_
+
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
  */
@@ -185,3 +189,5 @@ struct uvm_history_ent *e;
 }
 
 #endif /* UVMHIST */
+
+#endif /* _UVM_UVM_STAT_H_ */
