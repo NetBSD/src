@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.58 1998/01/25 19:56:31 pk Exp $
+# 	$NetBSD: GENERIC,v 1.59 1998/02/04 21:49:12 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -13,7 +13,7 @@ options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options 	MMU_3L		# 3-level MMU on sun4/400; (incomplete)
+#options 	SUN4_MMU3L	# 3-level MMU on sun4/400; (incomplete)
 
 ## System options specific to the sparc machine type
 
@@ -51,6 +51,10 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+## NFS boot options; default on sparc is the bootparam protocol
+options 	NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTP
+#options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -306,16 +310,16 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-xdc0	at vme0 addr 0xffee80 pri 3 vec 0x44
-xdc1	at vme0 addr 0xffee90 pri 3 vec 0x45
-xdc2	at vme0 addr 0xffeea0 pri 3 vec 0x46
-xdc3	at vme0 addr 0xffeeb0 pri 3 vec 0x47
+xdc0	at vme0 addr 0xee80 pri 3 vec 0x44
+xdc1	at vme0 addr 0xee90 pri 3 vec 0x45
+xdc2	at vme0 addr 0xeea0 pri 3 vec 0x46
+xdc3	at vme0 addr 0xeeb0 pri 3 vec 0x47
 xd*	at xdc? drive ?
 
 ## Xylogics 451 or 451 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-xyc0	at vme0 addr 0xffee40 pri 3 vec 0x48
-xyc1	at vme0 addr 0xffee48 pri 3 vec 0x49
+xyc0	at vme0 addr 0xee40 pri 3 vec 0x48
+xyc1	at vme0 addr 0xee48 pri 3 vec 0x49
 xy*	at xyc? drive ?
 
 
