@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.29 2004/02/24 15:16:04 wiz Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.30 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.29 2004/02/24 15:16:04 wiz Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.30 2004/03/14 01:19:42 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -65,8 +65,7 @@ __RCSID("$NetBSD: pthread_sa.c,v 1.29 2004/02/24 15:16:04 wiz Exp $");
 #define PUC(t)  ((t)->pt_trapuc ? 'T':'U') , UC(t)
 
 extern struct pthread_queue_t pthread__allqueue;
-extern pthread_spin_t pthread__deadqueue_lock;
-extern struct pthread_queue_t pthread__reidlequeue;
+extern int pthread__concurrency, pthread__maxconcurrency;
 
 #define	PTHREAD_RRTIMER_INTERVAL_DEFAULT	100
 static pthread_mutex_t rrtimer_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -101,6 +100,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	if (sas[0]->sa_id > pthread__maxlwps)
 		pthread__maxlwps = sas[0]->sa_id;
 
+	self->pt_vpid = sas[0]->sa_cpu;
+
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev, intr));
 
@@ -128,6 +129,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		t = pthread__sa_id(sas[1]);
 		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self,
 			     sas[1]->sa_id, t, t->pt_type));
+		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
 		t->pt_blockuc = sas[1]->sa_context;
 		t->pt_blockedlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
@@ -611,7 +613,7 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 	old->pt_state = PT_STATE_RUNNABLE;
 
 #ifdef PTHREAD__DEBUG
-	if (pthread__debug_newline == 1)
+	if (pthread__debuglog_newline())
 		SDPRINTF(("(recycle %p) recycling %p\n", new, old));
 	else
 		SDPRINTF((" (recycling %p)", old));
@@ -733,6 +735,12 @@ pthread__sa_start(void)
 	/* Start the round-robin timer. */
 	if (rr != 0 && pthread__setrrtimer(rr, 1) != 0)
 		abort();
+
+	pthread__concurrency = 1;
+	if (pthread__maxconcurrency > pthread__concurrency) {
+		pthread__concurrency += sa_setconcurrency(pthread__maxconcurrency);
+	}
+		
 }
 
 /*
@@ -764,4 +772,29 @@ pthread_setrrtimer_np(int msec)
 	pthread_mutex_unlock(&rrtimer_mutex);
 
 	return (ret);
+}
+
+void
+pthread__setconcurrency(int concurrency)
+{
+	pthread_t self;
+	int ret;
+
+	self = pthread__self();
+	SDPRINTF(("(setconcurrency %p) requested delta %d, current %d\n",
+		     self, concurrency, pthread__concurrency));
+
+	concurrency += pthread__concurrency;
+	if (concurrency > pthread__maxconcurrency)
+		concurrency = pthread__maxconcurrency;
+
+	if (concurrency > pthread__concurrency) {
+		ret = sa_setconcurrency(concurrency);
+		/* pthread__concurrency += ret; */
+
+		SDPRINTF(("(setconcurrency %p) requested %d, now %d, ret %d\n",
+			     self, concurrency, pthread__concurrency, ret));
+	}
+	SDPRINTF(("(set %p concurrency) now %d\n",
+		     self, pthread__concurrency));
 }
