@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2001/06/24 01:15:41 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2001/10/29 01:37:29 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pckbc.h"
 #include "pci.h"
 #include "opt_pci.h"
 
@@ -100,7 +101,7 @@ const struct ppc405gp_dev {
 	{ "gpio",	GPIO0_BASE,	-1 },
 	{ "i2c",	IIC0_BASE,	-1 },
 	{ "wdog",	-1,        	-1 },
-	{ "pckbc",	KEY_MOUSE_BASE,	-1 }, /* XXX: really irq x..x+1 */
+	{ "pckbc",	KEY_MOUSE_BASE,	16 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
 
@@ -148,7 +149,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 	int i;
-
+#if NPCKBC > 0
+	bus_space_handle_t ioh_fpga;
+	bus_space_tag_t iot_fpga = galaxy_make_bus_space_tag(0, 0);
+	uint8_t fpga_reg;
+#endif
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
 #ifdef PCI_CONFIGURE_VERBOSE
@@ -175,6 +180,36 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		(void) config_found_sm(self, &mba, mainbus_print,
 		    mainbus_submatch);
 	}
+
+#if NPCKBC > 0
+	/* Configure FPGA */
+	if (bus_space_map(iot_fpga, FPGA_BASE, FPGA_SIZE, 0, &ioh_fpga)) {
+		printf("mainbus_attach: can't map FPGA\n");
+		/* XXX - disable keyboard probe? */
+	} else {
+		/* Use separate interrupts for keyboard and mouse */
+		fpga_reg = bus_space_read_1(iot_fpga, ioh_fpga, FPGA_BRDC);
+		fpga_reg |= FPGA_BRDC_INT;
+		bus_space_write_1(iot_fpga, ioh_fpga, FPGA_BRDC, fpga_reg);
+
+		/* Set interrupts to active high */
+		fpga_reg = bus_space_read_1(iot_fpga, ioh_fpga, FPGA_INT_POL);
+		fpga_reg |= (FPGA_IRQ_KYBD | FPGA_IRQ_MOUSE);
+		bus_space_write_1(iot_fpga, ioh_fpga, FPGA_INT_POL, fpga_reg);
+
+		/* Set interrupts to level triggered */
+		fpga_reg = bus_space_read_1(iot_fpga, ioh_fpga, FPGA_INT_TRIG);
+		fpga_reg |= (FPGA_IRQ_KYBD | FPGA_IRQ_MOUSE);
+		bus_space_write_1(iot_fpga, ioh_fpga, FPGA_INT_TRIG, fpga_reg);
+
+		/* Enable interrupts */
+		fpga_reg = bus_space_read_1(iot_fpga, ioh_fpga, FPGA_INT_ENABLE);
+		fpga_reg |= (FPGA_IRQ_KYBD | FPGA_IRQ_MOUSE);
+		bus_space_write_1(iot_fpga, ioh_fpga, FPGA_INT_ENABLE, fpga_reg);
+
+		bus_space_unmap(&iot_fpga, ioh_fpga, 2);
+	}
+#endif
 
 #if NPCI > 0
 	pci_machdep_init();
