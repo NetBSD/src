@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.17 2002/08/15 10:37:02 christos Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.18 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -230,21 +230,19 @@ struct pcmcia_product {
 	int		pp_expfunc;
 };
 
-typedef int (*pcmcia_product_match_fn) __P((struct pcmcia_attach_args *pa,
-    const struct pcmcia_product *ent, int vpfmatch));
+typedef int (*pcmcia_product_match_fn) __P((struct pcmcia_attach_args *,
+    const struct pcmcia_product *, int));
 
 const struct pcmcia_product
-	*pcmcia_product_lookup __P((struct pcmcia_attach_args *pa,
-	    const struct pcmcia_product *tab, size_t ent_size,
-	    pcmcia_product_match_fn matchfn));
+	*pcmcia_product_lookup __P((struct pcmcia_attach_args *,
+	    const struct pcmcia_product *, size_t, pcmcia_product_match_fn));
 
-void	pcmcia_devinfo __P((struct pcmcia_card *card, int showhex, char *cp, 
-	    int cplen));
+void	pcmcia_devinfo __P((struct pcmcia_card *, int, char *, int));
 
 void	pcmcia_read_cis __P((struct pcmcia_softc *));
 void	pcmcia_check_cis_quirks __P((struct pcmcia_softc *));
 void	pcmcia_print_cis __P((struct pcmcia_softc *));
-int	pcmcia_scan_cis __P((struct device * dev,
+int	pcmcia_scan_cis __P((struct device *,
 	    int (*) (struct pcmcia_tuple *, void *), void *));
 
 #define	pcmcia_cis_read_1(tuple, idx0)					\

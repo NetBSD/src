@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicvar.h,v 1.1 2002/09/24 22:05:20 pooka Exp $	*/
+/*	$NetBSD: iwicvar.h,v 1.2 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -187,14 +187,14 @@ extern void iwic_next_state(struct iwic_softc *, int);
 extern void iwic_dchan_init(struct iwic_softc *);
 extern void iwic_dchan_xirq(struct iwic_softc *);
 extern void iwic_dchan_xfer_irq(struct iwic_softc *, int);
-extern void iwic_dchan_disable(struct iwic_softc * sc);
-extern int iwic_dchan_data_req(struct iwic_softc * sc, struct mbuf * m, int freeflag);
-extern void iwic_dchan_transmit(struct iwic_softc * sc);
+extern void iwic_dchan_disable(struct iwic_softc *);
+extern int iwic_dchan_data_req(struct iwic_softc *, struct mbuf *, int);
+extern void iwic_dchan_transmit(struct iwic_softc *);
 
-char *iwic_printstate(struct iwic_softc * sc);
+char *iwic_printstate(struct iwic_softc *);
 
-void iwic_init_linktab(struct iwic_softc * sc);
+void iwic_init_linktab(struct iwic_softc *);
 void iwic_bchan_xirq(struct iwic_softc *, int);
-void iwic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate);
+void iwic_bchannel_setup(isdn_layer1token, int, int, int);
 
 #endif /* _IWICVAR_H_ */

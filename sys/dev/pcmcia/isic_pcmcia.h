@@ -44,10 +44,14 @@ struct pcmcia_isic_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-typedef int (*isic_pcmcia_attach_func)(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+typedef int (*isic_pcmcia_attach_func)(struct pcmcia_isic_softc *,
+    struct pcmcia_config_entry *, struct pcmcia_attach_args *);
 
-extern int isic_attach_fritzpcmcia(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_elsaisdnmc(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_elsamcall(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_sbspeedstar2(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-
+extern int isic_attach_fritzpcmcia(struct pcmcia_isic_softc *,
+    struct pcmcia_config_entry *, struct pcmcia_attach_args *);
+extern int isic_attach_elsaisdnmc(struct pcmcia_isic_softc *,
+    struct pcmcia_config_entry *, struct pcmcia_attach_args *);
+extern int isic_attach_elsamcall(struct pcmcia_isic_softc *,
+    struct pcmcia_config_entry *, struct pcmcia_attach_args *);
+extern int isic_attach_sbspeedstar2(struct pcmcia_isic_softc *,
+    struct pcmcia_config_entry *, struct pcmcia_attach_args *);

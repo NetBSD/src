@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.5 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.6 2003/07/08 10:06:30 itojun Exp $	*/
 
 /*
  * Copyright 1997
@@ -272,10 +272,9 @@ do {									\
 
 #define MAXLOOP            0x8888
 
-int	cs_attach(struct cs_softc *sc, u_int8_t *enaddr,
-		  int *media, int nmedia, int defmedia);
-int	cs_detach(struct cs_softc *sc);
-int	cs_verify_eeprom(struct cs_softc *sc);
+int	cs_attach(struct cs_softc *, u_int8_t *, int *, int, int);
+int	cs_detach(struct cs_softc *);
+int	cs_verify_eeprom(struct cs_softc *);
 int	cs_read_eeprom(struct cs_softc *, int, u_int16_t *);
 int	cs_intr(void *);
 int	cs_activate(struct device *, enum devact);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.20 2002/12/13 07:47:53 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.21 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -209,11 +209,14 @@ struct fwohci_it_dmabuf {
 	u_int32_t itd_savedbranch;
 
 #if 0
-	int fwohci_itd_construct(struct fwohci_it_ctx *, struct fwohci_it_dmabuf *, int no, struct fwohci_desc *desc, int descsize, int maxsize, paddr_t scratch);
+	int fwohci_itd_construct(struct fwohci_it_ctx *,
+	    struct fwohci_it_dmabuf *, int, struct fwohci_desc *, int,
+	    int, paddr_t);
 	void fwohci_itd_destruct(struct fwohci_it_dmabuf *);
-	int fwohci_itd_writedata(struct fwohci_it_dmabuf *, int ndata,
+	int fwohci_itd_writedata(struct fwohci_it_dmabuf *, int,
 	    struct ieee1394_it_datalist *);
-	int fwohci_itd_link(struct fwohci_it_dmabuf *, struct fwohci_it_dmabuf *);
+	int fwohci_itd_link(struct fwohci_it_dmabuf *,
+	    struct fwohci_it_dmabuf *);
 	bus_addr_t fwohci_itd_list_head(struct fwohci_it_dmabuf *);
 	void fwohci_itd_clean(struct fwohci_it_dmabuf *);
 	int fwohci_itd_isfilled(struct fwohci_it_dmabuf *);
@@ -275,10 +278,10 @@ struct fwohci_it_ctx {
 	struct fwohci_it_ctx *fwohci_it_ctx_construct(int);
 	void fwohci_it_ctx_destruct(struct fwohci_it_ctx *);
 	void fwohci_it_ctx_intr(struct fwohci_it_ctx *);
-	int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int ndata,
+	int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int,
 	    struct ieee1394_it_datalist *);
 private:
-	void fwohci_it_ctx_run(struct fwohci_it_ctx *itc);
+	void fwohci_it_ctx_run(struct fwohci_it_ctx *);
 	void fwohci_it_intr(struct fwohci_softc *, struct fwohci_it_ctx *);
 #endif
 #define INC_BUF(itc, buf)						\
