@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.38 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.39 2004/03/19 15:16:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.38 2004/03/18 16:40:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.39 2004/03/19 15:16:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -155,6 +155,7 @@ void
 rf_FreeDAG(RF_DagHeader_t *dag_h)
 {
 	RF_AccessStripeMapHeader_t *asmap, *t_asmap;
+	RF_PhysDiskAddr_t *pda;
 	RF_DagNode_t *tmpnode;
 	RF_DagHeader_t *nextDag;
 
@@ -166,7 +167,12 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 			asmap = asmap->next;
 			rf_FreeAccessStripeMap(t_asmap);
 		}
-		while(dag_h->nodes) {
+		while (dag_h->pda_cleanup_list) {
+			pda = dag_h->pda_cleanup_list;
+			dag_h->pda_cleanup_list = dag_h->pda_cleanup_list->next;
+			rf_FreePhysDiskAddr(pda);
+		}
+		while (dag_h->nodes) {
 			tmpnode = dag_h->nodes;
 			dag_h->nodes = dag_h->nodes->list_next;
 			rf_FreeDAGNode(tmpnode);
