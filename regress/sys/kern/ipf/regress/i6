@@ -1,4 +1,7 @@
 pass in on lo0 fastroute from any to any
+pass in on lo0 to qe0 from localhost to localhost
+pass in on le0 to qe0:127.0.0.1 from localhost to localhost
 pass in on lo0 dup-to qe0 from localhost to localhost
-pass in on qe0 dup-to qe0:127.0.0.1 from localhost to localhost
+pass in on le0 dup-to qe0:127.0.0.1 from localhost to localhost
+pass in on le0 to hme0:10.1.1.1 dup-to qe0:127.0.0.1 from localhost to localhost
 block in quick on qe0 to qe1 from any to any
