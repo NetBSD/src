@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.1.2.3 2001/12/10 23:52:27 he Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.1.2.4 2003/09/16 21:53:38 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -70,6 +70,7 @@ buffer_append(Buffer *buffer, const char *data, u_int len)
 void
 buffer_append_space(Buffer *buffer, char **datap, u_int len)
 {
+	u_int newlen;
 	/* If the buffer is empty, start using it from the beginning. */
 	if (buffer->offset == buffer->end) {
 		buffer->offset = 0;
@@ -94,8 +95,12 @@ restart:
 		goto restart;
 	}
 	/* Increase the size of the buffer and retry. */
-	buffer->alloc += len + 32768;
-	buffer->buf = xrealloc(buffer->buf, buffer->alloc);
+	newlen = buffer->alloc + len + 32768;
+	if (newlen > 0xa00000)
+		fatal("buffer_append_space: alloc %u not supported",
+		    newlen);
+	buffer->buf = xrealloc(buffer->buf, newlen);
+	buffer->alloc = newlen;
 	goto restart;
 }
 
