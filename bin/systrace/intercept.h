@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.1 2002/06/17 16:29:09 christos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.2 2002/06/18 02:49:09 thorpej Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.2 2002/06/10 19:16:26 provos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 struct intercept_pid;
 
 struct intercept_system {
-	char *name;
+	const char *name;
 	int (*init)(void);
 	int (*open)(void);
 	int (*attach)(int, pid_t);
@@ -85,7 +85,7 @@ struct intercept_pid {
 #define INTERCEPT_MAXSYSCALLARGS	10
 
 struct intercept_translate {
-	char *name;
+	const char *name;
 	int (*translate)(struct intercept_translate *, int, pid_t, void *);
 	int (*print)(char *, size_t, struct intercept_translate *);
 	int off2;
@@ -148,7 +148,7 @@ char *intercept_filename(int, pid_t, void *);
 void intercept_syscall(int, pid_t, int, const char *, int, const char *, void *,
     int);
 void intercept_child_info(pid_t, pid_t);
-void intercept_syscall_result(int, pid_t, int, const char *, int, char *,
+void intercept_syscall_result(int, pid_t, int, const char *, int, const char *,
     void *, int, int, void *);
 
 

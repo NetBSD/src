@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1 2002/06/17 16:29:08 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.2 2002/06/18 02:49:08 thorpej Exp $	*/
 /*	$OpenBSD: filter.c,v 1.11 2002/06/11 05:30:28 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.1 2002/06/17 16:29:08 christos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.2 2002/06/18 02:49:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -338,7 +338,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 		if (tls != NULL) {
 			struct intercept_translate *tl;
 			char compose[2*MAXPATHLEN], *l;
-			char *lst = NULL;
+			const char *lst = NULL;
 			int set = 0;
 			
 			/* Explicitly match every component */

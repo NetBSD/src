@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.1 2002/06/17 16:29:08 christos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.2 2002/06/18 02:49:09 thorpej Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.1 2002/06/17 16:29:08 christos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.2 2002/06/18 02:49:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,7 +480,7 @@ intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
 
 void
 intercept_syscall_result(int fd, pid_t pid, int policynr,
-    const char *name, int code, char *emulation, void *args, int argsize,
+    const char *name, int code, const char *emulation, void *args, int argsize,
     int result, void *rval)
 {
 	struct intercept_pid *icpid;
