@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 1997/05/14 13:33:23 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.56 1997/05/24 01:42:36 jonathan Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -78,14 +78,8 @@ ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
-.else
-${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
-.endif
+	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -109,19 +103,12 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
-.else
-${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
-.endif
+	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -140,21 +127,14 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
-.else
-${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\n \
-	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
-.endif
+	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${APICFLAGS} -o ${.TARGET}
+
 
 ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
