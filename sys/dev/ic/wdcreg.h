@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.25.4.1 2003/06/30 02:58:34 grant Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.25.4.2 2004/05/14 06:09:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,6 +125,7 @@
 #define	WDCC_UNLOCK		0xdf	/* unlock drawer */
 
 #define	WDCC_FLUSHCACHE		0xe7	/* Flush cache */
+#define	WDCC_FLUSHCACHE_EXT	0xea	/* Flush cache ext */
 #define	WDCC_IDENTIFY		0xec	/* read parameters from controller */
 #define	SET_FEATURES		0xef	/* set features */
 
