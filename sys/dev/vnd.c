@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.88 2002/11/01 11:31:56 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.89 2002/11/16 08:10:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.88 2002/11/01 11:31:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.89 2002/11/16 08:10:48 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -166,9 +166,9 @@ int numvnd = 0;
 #define	VNDLABELDEV(dev) \
 	(MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
-/* called by main() at boot time */
+/* called by main() at boot time (XXX: and the LKM driver) */
 void	vndattach __P((int));
-void	vnddetach __P((void));
+int	vnddetach __P((void));
 
 void	vndclear __P((struct vnd_softc *));
 void	vndstart __P((struct vnd_softc *));
@@ -201,6 +201,8 @@ const struct cdevsw vnd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+int vndattached = 0;
+
 void
 vndattach(num)
 	int num;
@@ -208,6 +210,9 @@ vndattach(num)
 	int i;
 	char *mem;
 
+	if (vndattached)
+		return;
+	vndattached = 1;
 	if (num <= 0)
 		return;
 	i = num * sizeof(struct vnd_softc);
@@ -224,15 +229,23 @@ vndattach(num)
 		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 }
 
-void
+int
 vnddetach()
 {
 	int i;
+
+	/* First check we aren't in use. */
+	for (i = 0; i < numvnd; i++)
+		if (vnd_softc[i].sc_flags & VNF_INITED)
+			return (EBUSY);
 
 	for (i = 0; i < numvnd; i++)
 		bufq_free(&vnd_softc[i].sc_tab);
 
 	free(vnd_softc, M_DEVBUF);
+	vndattached = 0;
+
+	return (0);
 }
 
 int
