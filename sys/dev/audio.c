@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.149 2002/03/09 20:30:43 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.150 2002/03/15 14:35:32 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.149 2002/03/09 20:30:43 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.150 2002/03/15 14:35:32 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -781,8 +781,6 @@ audio_initbufs(struct audio_softc *sc)
 			    sc->sc_rparams.sample_rate,
 			    sc->sc_rr.start, sc->sc_rr.end);
 #endif
-	sc->sc_rconvbuffer_begin = 0;
-	sc->sc_rconvbuffer_end = 0;
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
 		error = hw->init_input(sc->hw_hdl, sc->sc_rr.start,
 				       sc->sc_rr.end - sc->sc_rr.start);
@@ -987,6 +985,8 @@ audio_init_record(struct audio_softc *sc)
 	if (sc->hw_if->speaker_ctl &&
 	    (!sc->sc_full_duplex || (sc->sc_mode & AUMODE_PLAY) == 0))
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_OFF);
+	sc->sc_rconvbuffer_begin = 0;
+	sc->sc_rconvbuffer_end = 0;
 	splx(s);
 }
 
@@ -1001,6 +1001,7 @@ audio_init_play(struct audio_softc *sc)
 	sc->sc_wstamp = sc->sc_pr.stamp;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
+	sc->sc_input_fragment_length = 0;
 	splx(s);
 }
 
@@ -1231,7 +1232,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			cc = (cc / hw_bytes_per_sample) * hw_bytes_per_sample;
 #ifdef DIAGNOSTIC
 			if (cc == 0)
-				printf("audio_read: cc=0 hw_sample_size=%d\n",
+				printf("audio_read: cc=0 hw_bytes_per_sample=%d\n",
 				       hw_bytes_per_sample);
 #endif
 
@@ -1276,14 +1277,14 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 					       ": cc=%d factor=%d\n", cc,
 					       params->factor);
 #endif
+				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
+						cc);
 				cc /= params->factor;
 #ifdef DIAGNOSTIC
 				if (cc == 0)
 					printf("audio_read: cc=0 factor=%d\n",
 					       params->factor);
 #endif
-				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
-						cc);
 				sc->sc_rconvbuffer_end = cc;
 			}
 			sc->sc_rconvbuffer_begin = 0;
