@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.9 1997/01/09 20:18:28 tls Exp $	*/
+/*	$NetBSD: cmp.c,v 1.10 1997/10/18 12:52:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cmp.c,v 1.9 1997/01/09 20:18:28 tls Exp $";
+__RCSID("$NetBSD: cmp.c,v 1.10 1997/10/18 12:52:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: cmp.c,v 1.9 1997/01/09 20:18:28 tls Exp $";
 
 int	lflag, sflag;
 
+int	main __P((int, char **));
 static void usage __P((void));
 
 int
@@ -88,7 +89,6 @@ main(argc, argv)
 		default:
 			usage();
 		}
-endargs:
 	argv += optind;
 	argc -= optind;
 

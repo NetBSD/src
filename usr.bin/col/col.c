@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
+/*	$NetBSD: col.c,v 1.8 1997/10/18 12:53:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $";
+__RCSID("$NetBSD: col.c,v 1.8 1997/10/18 12:53:45 lukem Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -99,6 +99,7 @@ void	flush_line __P((LINE *));
 void	flush_lines __P((int));
 void	flush_blanks __P((void));
 void	free_line __P((LINE *));
+int	main __P((int, char **));
 void	usage __P((void));
 void	wrerr __P((void));
 void   *xmalloc __P((void *, size_t));
@@ -515,7 +516,7 @@ xmalloc(p, size)
 {
 
 	if (!(p = (void *)realloc(p, size)))
-		err(1, NULL);
+		err(1, "realloc");
 	return (p);
 }
 
