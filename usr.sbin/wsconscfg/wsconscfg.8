@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsconscfg.8,v 1.6.8.1 2000/08/23 11:38:29 lukem Exp $
+.\"	$NetBSD: wsconscfg.8,v 1.6.8.2 2001/04/04 16:53:39 he Exp $
 .\"
 .Dd January 12, 1999
 .Os
@@ -28,7 +28,7 @@ argument specifies which virtual terminal is to be configured; the allowed
 numbers are from 0 to an implementation-specified value (currently 7, allowing
 for 8 virtual terminals on a display).
 In keyboard configuration mode, it specifies the
-.Xr wskbd 8
+.Xr wskbd 4
 device to attach or detach.
 Without further option arguments, a virtual terminal is created with
 implementation specific properties and a default terminal emulation variant
@@ -97,7 +97,7 @@ is a screen type offered by the
 .Xr vga 4
 display driver. In this particular case, an 8x8-font must be loaded
 before to make the screen useful. See
-.Xr wsfontload 8 .)
+.Xr wsfontload 8 . )
 .Pp
 .Dl wsconscfg -k
 .Pp
