@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.15 2002/12/04 22:55:11 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.16 2002/12/07 19:06:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.15 2002/12/04 22:55:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.16 2002/12/07 19:06:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -230,6 +230,7 @@ out:
 		return error;
 	return 0;
 }
+
 int
 mach_vm_deallocate(p, msgh, maxlen, dst)
 	struct proc *p;
@@ -273,6 +274,69 @@ mach_vm_deallocate(p, msgh, maxlen, dst)
 	return 0;
 }
 
+int
+mach_vm_wire(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_vm_wire_request_t req;
+	mach_vm_wire_reply_t rep;
+	register_t retval;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	DPRINTF(("mach_vm_wire(addr = %p, size = 0x%08x, prot = 0x%x);\n",
+	    (void *)req.req_address, req.req_size, req.req_access));
+
+	bzero(&rep, sizeof(rep));
+
+	if ((req.req_access & ~VM_PROT_ALL) != 0)
+		return MACH_MSG_ERROR(msgh, &req, &rep, EINVAL, maxlen, dst);
+
+	/* 
+	 * Mach maitains a count of how many times a page is wired
+	 * and unwire it once the count is zero. We cannot do that yet.
+	 */
+	if (req.req_access == 0) {
+		struct sys_munlock_args cup;
+
+		SCARG(&cup, addr) = (void *)req.req_address;
+		SCARG(&cup, len) = req.req_size;
+		error = sys_munlock(p, &cup, &retval);
+	} else {
+		struct sys_mlock_args cup;
+
+		SCARG(&cup, addr) = (void *)req.req_address;
+		SCARG(&cup, len) = req.req_size;
+		error = sys_mlock(p, &cup, &retval);
+	}
+	if (error != 0)
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+		
+	if ((error = uvm_map_protect(&p->p_vmspace->vm_map, req.req_address, 
+	    req.req_address + req.req_size, req.req_access, 0)) != 0)
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
 
 /* XXX The findspace argument is not handled correctly */
 int
