@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.37.4.2 2000/12/13 22:10:23 he Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37.4.2 2000/12/13 22:10:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1787,9 +1787,16 @@ wsdisplay_unset_cons_kbd()
 void
 wsdisplay_switchtoconsole()
 {
-	if (wsdisplay_console_device != NULL)
-		wsdisplay_switch((struct device *)wsdisplay_console_device, 
-		    0, 0);
+	struct wsdisplay_softc *sc;
+	struct wsscreen *scr;
+
+	if (wsdisplay_console_device != NULL) {
+		sc = wsdisplay_console_device;
+		scr = sc->sc_scr[0];
+		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
+						 scr->scr_dconf->emulcookie,
+						 0, NULL, NULL);
+	}
 }
 
 /*
@@ -1799,5 +1806,6 @@ static void
 wsdisplay_shutdownhook(arg)
 	void *arg;
 {
+
 	wsdisplay_switchtoconsole();
 }
