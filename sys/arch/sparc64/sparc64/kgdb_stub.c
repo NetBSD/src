@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.6 2001/09/16 16:34:34 wiz Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.7 2001/11/20 08:43:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,15 +70,15 @@
 
 #include <sparc64/sparc64/kgdb_proto.h>
 
-#ifndef KGDBDEV
-#define KGDBDEV -1
+#ifndef KGDB_DEV
+#define KGDB_DEV NODEV
 #endif
-#ifndef KGDBRATE
-#define KGDBRATE 38400
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE 38400
 #endif
 
-int kgdb_dev = KGDBDEV;		/* remote debugging device (-1 if none) */
-int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
+int kgdb_dev = KGDB_DEV;	/* remote debugging device (NODEV if none) */
+int kgdb_rate = KGDB_DEVRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 

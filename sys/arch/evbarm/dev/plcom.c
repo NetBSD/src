@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.1 2001/10/27 16:22:06 rearnsha Exp $	*/
+/*	$NetBSD: plcom.c,v 1.2 2001/11/20 08:43:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -106,7 +106,6 @@
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
