@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.35 1998/01/12 07:37:40 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.36 1998/02/16 22:05:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,8 +107,12 @@ struct config {
 };
 
 /*
- * Attributes.  These come in two flavors: "plain" and "interface".
- * Plain attributes (e.g., "ether") simply serve to pull in files.
+ * Attributes.  These come in three flavors: "plain", "device class,"
+ * and "interface".  Plain attributes (e.g., "ether") simply serve
+ * to pull in files.  Device class attributes are like plain
+ * attributes, but additionally specify a device class (e.g., the
+ * "disk" device class attribute specifies that devices with the
+ * attribute belong to the "DV_DISK" class) and are mutually exclusive.
  * Interface attributes (e.g., "scsi") carry three lists: locators,
  * child devices, and references.  The locators are those things
  * that must be specified in order to configure a device instance
@@ -120,6 +124,7 @@ struct config {
 struct attr {
 	const char *a_name;		/* name of this attribute */
 	int	a_iattr;		/* true => allows children */
+	const char *a_devclass;		/* device class described */
 	struct	nvlist *a_locs;		/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
@@ -151,7 +156,6 @@ struct attr {
  */
 struct devbase {
 	const char *d_name;		/* e.g., "sd" */
-	const char *d_class;		/* e.g., "DV_DISK" */
 	struct	devbase *d_next;	/* linked list */
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
@@ -162,6 +166,7 @@ struct devbase {
 	struct	devi **d_ipp;		/* used for tacking on more instances */
 	struct	deva *d_ahead;		/* first attachment, if any */
 	struct	deva **d_app;		/* used for tacking on attachments */
+	struct	attr *d_classattr;	/* device class sttribute (if any) */
 };
 
 struct deva {
