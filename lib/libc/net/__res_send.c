@@ -1,4 +1,4 @@
-/*	$NetBSD: __res_send.c,v 1.1 1997/04/22 06:55:39 mrg Exp $	*/
+/*	$NetBSD: __res_send.c,v 1.2 1997/04/22 18:51:55 cgd Exp $	*/
 
 /*
  * written by matthew green, 22/04/97.
@@ -12,6 +12,7 @@ __indr_reference(__res_send,res_send);
 #else
 
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <resolv.h>
 
 extern int __res_send __P((const u_char *, int, u_char *, int));
