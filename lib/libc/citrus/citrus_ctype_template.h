@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.1 2002/05/24 21:55:23 perry Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.2 2003/06/02 14:59:39 tron Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -233,14 +233,12 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(psenc != NULL);
+	_DIAGASSERT(s == NULL);
+	_DIAGASSERT(*s == NULL);
 
-	if (s == NULL || *s == NULL || n==0) {
-		*nresult = (size_t)-1;
-		return EILSEQ;
-	}
-
-	if (!pwcs)
-		n = 1;
+	/* if pwcs is NULL, ignore n */
+	if (pwcs == NULL)
+		n = 1; /* arbitrary >0 value */
 
 	cnt = 0;
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
