@@ -1,5 +1,5 @@
-/*	$NetBSD: mkfs.c,v 1.6 2002/01/08 06:00:14 lukem Exp $	*/
-/* From NetBSD: mkfs.c,v 1.55 2001/09/06 02:16:01 lukem Exp $ */
+/*	$NetBSD: mkfs.c,v 1.7 2002/01/18 08:32:34 lukem Exp $	*/
+/* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.6 2002/01/08 06:00:14 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.7 2002/01/18 08:32:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,6 +223,11 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		printf("fragment size %d is too small, minimum is %d\n",
 		    sblock.fs_fsize, sectorsize);
 		exit(18);
+	}
+	if (sblock.fs_bsize > MAXBSIZE) {
+		printf("block size %d is too large, maximum is %d\n",
+		    sblock.fs_bsize, MAXBSIZE);
+		exit(19);
 	}
 	if (sblock.fs_bsize < MINBSIZE) {
 		printf("block size %d is too small, minimum is %d\n",
@@ -418,10 +423,8 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		printf("cylinder groups must have at least %d cylinders\n",
 			mincpg);
 		exit(25);
-	} else if (sblock.fs_cpg != cpg) {
-		if (!cpgflg)
-			printf("Warning: ");
-		else if (!mapcramped && !inodecramped)
+	} else if (sblock.fs_cpg != cpg && cpgflg) {
+		if (!mapcramped && !inodecramped)
 			exit(26);
 		if (mapcramped && inodecramped)
 			printf("Block size and bytes per inode restrict");
@@ -430,8 +433,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		else
 			printf("Bytes per inode restrict");
 		printf(" cylinders per group to %d.\n", sblock.fs_cpg);
-		if (cpgflg)
-			exit(27);
+		exit(27);
 	}
 	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
 	/*
@@ -883,7 +885,7 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 			return (MAXIPG(&sblock)+1);
 		}
 		new_ipg = (cylpg * (long long)bpcg - usedb) /
-		    ((long long)density * fssize / (ncg * secpercyl * cylpg));
+		    (long long)density * fssize / (ncg * secpercyl * cylpg);
 		if (new_ipg <= 0)
 			new_ipg = 1;		/* ensure ipg > 0 */
 		new_ipg = roundup(new_ipg, INOPB(&sblock));
