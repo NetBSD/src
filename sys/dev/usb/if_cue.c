@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.27 2000/12/14 07:51:36 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.28 2001/01/21 16:03:11 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -55,10 +55,6 @@
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
 
-/*
- * TODO:
- * proper cleanup on errors
- */
 #if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -79,34 +75,20 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 
-#if defined(__FreeBSD__)
-
-#include <net/ethernet.h>
-#include <machine/clock.h>	/* for DELAY */
-#include <sys/bus.h>
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 #include <sys/device.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
-#endif
-
 #include <net/if.h>
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__)
 #include <net/if_arp.h>
 #endif
 #include <net/if_dl.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-#else
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp), (m))
-#endif
 
-#if defined(__FreeBSD__) || NBPFILTER > 0
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -128,21 +110,15 @@
 #endif
 #endif /* defined(__OpenBSD__) */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-
-#ifdef __FreeBSD__
-#include <dev/usb/usb_ethersubr.h>
-#endif
 
 #include <dev/usb/if_cuereg.h>
 
@@ -194,39 +170,6 @@ Static int cue_csr_write_2(struct cue_softc *, int, int);
 #endif
 Static int cue_mem(struct cue_softc *, int, int, void *, int);
 Static int cue_getmac(struct cue_softc *, void *);
-
-#ifdef __FreeBSD__
-#ifndef lint
-static const char rcsid[] =
-  "$FreeBSD: src/sys/dev/usb/if_cue.c,v 1.4 2000/01/16 22:45:06 wpaul Exp $";
-#endif
-
-Static void cue_rxstart(struct ifnet *);
-Static void cue_shutdown(device_t);
-
-Static struct usb_qdat cue_qdat;
-
-Static device_method_t cue_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe,		cue_match),
-	DEVMETHOD(device_attach,	cue_attach),
-	DEVMETHOD(device_detach,	cue_detach),
-	DEVMETHOD(device_shutdown,	cue_shutdown),
-
-	{ 0, 0 }
-};
-
-Static driver_t cue_driver = {
-	"cue",
-	cue_methods,
-	sizeof(struct cue_softc)
-};
-
-Static devclass_t cue_devclass;
-
-DRIVER_MODULE(if_cue, uhub, cue_driver, cue_devclass, usbd_driver_load, 0);
-
-#endif /* defined(__FreeBSD__) */
 
 #define CUE_DO_REQUEST(dev, req, data)			\
 	usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
@@ -456,12 +399,8 @@ Static void
 cue_setmulti(struct cue_softc *sc)
 {
 	struct ifnet		*ifp;
-#if defined(__FreeBSD__)
-	struct ifmultiaddr	*ifma;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	u_int32_t		h, i;
 
 	ifp = GET_IFP(sc);
@@ -482,15 +421,6 @@ cue_setmulti(struct cue_softc *sc)
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-#if defined(__FreeBSD__)
-	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-	    ifma = ifma->ifma_link.le_next) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-		h = cue_crc(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
-	}
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #if defined(__NetBSD__)
 	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
 #else
@@ -509,7 +439,6 @@ cue_setmulti(struct cue_softc *sc)
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	/*
 	 * Also include the broadcast address in the filter
@@ -589,10 +518,6 @@ USB_ATTACH(cue)
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
 
-#ifdef __FreeBSD__
-	bzero(sc, sizeof(struct cue_softc));
-#endif
-
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
 	usbd_devinfo(dev, 0, devinfo);
@@ -654,37 +579,6 @@ USB_ATTACH(cue)
 	/*
 	 * A CATC chip was detected. Inform the world.
 	 */
-#if defined(__FreeBSD__)
-	printf("%s: Ethernet address: %6D\n", USBDEVNAME(sc->cue_dev), eaddr, ":");
-
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
-
-	ifp = &sc->arpcom.ac_if;
-	ifp->if_softc = sc;
-	ifp->if_unit = USBDEVNAME(sc->cue_dev);
-	ifp->if_name = "cue";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = cue_ioctl;
-	ifp->if_output = ether_output;
-	ifp->if_start = cue_start;
-	ifp->if_watchdog = cue_watchdog;
-	ifp->if_init = cue_init;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
-
-	cue_qdat.ifp = ifp;
-	cue_qdat.if_rxstart = cue_rxstart;
-
-	/*
-	 * Call MI attach routines.
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-	usb_register_netisr();
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->cue_dev),
 	    ether_sprintf(eaddr));
 
@@ -710,8 +604,6 @@ USB_ATTACH(cue)
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->cue_dev),
 	    RND_TYPE_NET, 0);
 #endif
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	usb_callout_init(sc->cue_stat_ch);
 
@@ -887,29 +779,6 @@ cue_tx_list_init(struct cue_softc *sc)
 	return (0);
 }
 
-#ifdef __FreeBSD__
-Static void
-cue_rxstart(struct ifnet *ifp)
-{
-	struct cue_softc	*sc;
-	struct cue_chain	*c;
-
-	sc = ifp->if_softc;
-	c = &sc->cue_cdata.cue_rx_chain[sc->cue_cdata.cue_rx_prod];
-
-	if (cue_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		return;
-	}
-
-	/* Setup new transfer. */
-	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-	    USBD_NO_TIMEOUT, cue_rxeof);
-	usbd_transfer(c->cue_xfer);
-}
-#endif
-
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -923,9 +792,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct mbuf		*m;
 	int			total_len = 0;
 	u_int16_t		len;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int			s;
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
 		     __FUNCTION__, status));
@@ -970,13 +837,6 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m_adj(m, sizeof(u_int16_t));
 	m->m_pkthdr.len = m->m_len = total_len;
 
-#if defined(__FreeBSD__)
-	m->m_pkthdr.rcvif = (struct ifnet *)&cue_qdat;
-	/* Put the packet on the special USB input queue. */
-	usb_ether_input(m);
-
-	return;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	m->m_pkthdr.rcvif = ifp;
 
 	s = splimp();
@@ -1003,7 +863,6 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	IF_INPUT(ifp, m);
  done1:
 	splx(s);
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 done:
 	/* Setup new transfer. */
@@ -1055,17 +914,11 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ifp->if_opackets++;
 
-#if defined(__FreeBSD__)
-	c->cue_mbuf->m_pkthdr.rcvif = ifp;
-	usb_tx_done(c->cue_mbuf);
-	c->cue_mbuf = NULL;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	m_freem(c->cue_mbuf);
 	c->cue_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	splx(s);
 }
@@ -1215,11 +1068,11 @@ cue_init(void *xsc)
 	cue_csr_write_1(sc, CUE_ADVANCED_OPMODES,
 	    CUE_AOP_EMBED_RXLEN | 0x03); /* 1 wait state */
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
+#endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		cue_csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
@@ -1328,13 +1181,6 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	s = splimp();
 
 	switch(command) {
-#if defined(__FreeBSD__)
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, command, data);
-		break;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		cue_init(sc);
@@ -1373,8 +1219,6 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -1529,20 +1373,3 @@ cue_stop(struct cue_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
-
-#ifdef __FreeBSD__
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-Static void
-cue_shutdown(device_t dev)
-{
-	struct cue_softc	*sc;
-
-	sc = device_get_softc(dev);
-
-	cue_reset(sc);
-	cue_stop(sc);
-}
-#endif
