@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.7 1999/02/23 23:55:29 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.8 1999/02/27 03:43:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -76,9 +76,6 @@
 #include "rf_nwayxor.h"
 #include "rf_debugprint.h"
 #include "rf_copyback.h"
-#if !defined(__NetBSD__)
-#include "rf_camlayer.h"
-#endif
 #include "rf_driver.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
@@ -301,6 +298,7 @@ rf_UnconfigureVnodes( raidPtr )
 				VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
 				(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
 				    FREAD | FWRITE, p->p_ucred, p);
+				raidPtr->raid_cinfo[r][c].ci_vp = NULL;
 			} else {
 				printf("vnode was NULL\n");
 			}
@@ -313,6 +311,7 @@ rf_UnconfigureVnodes( raidPtr )
 			VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
 			(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
 			    FREAD | FWRITE, p->p_ucred, p);
+			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;
 		} else {
 			printf("vnode was NULL\n");
 		}
