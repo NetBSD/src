@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.153 2002/05/19 17:40:46 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.153.2.1 2002/06/04 11:11:59 lukem Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153 2002/05/19 17:40:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.1 2002/06/04 11:11:59 lukem Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -188,7 +188,6 @@ static int sis_hostbr_match __P(( struct pci_attach_args *));
 void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acer_setup_channel __P((struct channel_softc*));
 int  acer_pci_intr __P((void *));
-static int acer_isabr_match __P(( struct pci_attach_args *));
 
 void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void pdc202xx_setup_channel __P((struct channel_softc*));
@@ -3004,20 +3003,11 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	pciide_print_modes(cp);
 }
 
-static int
-acer_isabr_match(pa)
-	struct pci_attach_args *pa;
-{
-	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI) &&
-	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543));
-}
-
 void
 acer_chip_map(sc, pa)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
-	struct pci_attach_args isa_pa;
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t cr, interface;
@@ -3078,27 +3068,6 @@ acer_chip_map(sc, pa)
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
 		    | ACER_0x4B_CDETECT);
-		/* set south-bridge's enable bit, m1533, 0x79 */
-		if (pci_find_device(&isa_pa, acer_isabr_match) == 0) {
-			printf("%s: can't find PCI/ISA bridge, downgrading "
-			    "to Ultra/33\n", sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 2;
-		} else {
-			if (rev == 0xC2)
-				/* 1543C-B0 (m1533, 0x79, bit 2) */
-				pciide_pci_write(isa_pa.pa_pc, isa_pa.pa_tag,
-				    ACER_0x79,
-				    pciide_pci_read(isa_pa.pa_pc, isa_pa.pa_tag,
-					ACER_0x79)
-				    | ACER_0x79_REVC2_EN);
-			else
-				/* 1553/1535 (m1533, 0x79, bit 1) */
-				pciide_pci_write(isa_pa.pa_pc, isa_pa.pa_tag,
-				    ACER_0x79,
-				    pciide_pci_read(isa_pa.pa_pc, isa_pa.pa_tag,
-					ACER_0x79)
-				    | ACER_0x79_EN);
-		}
 	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
