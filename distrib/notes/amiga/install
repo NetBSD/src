@@ -140,6 +140,9 @@ begin again from scratch.
 	Some notes:
 	    - If you want to install from tape, please read the section
 	      about how to create such a tape.
+	    - Some tapes (e.g. Archive Viper 150) refuse to operate with
+	      the default tape density ("nrst0"). Try "nrst0h",
+	      "nrst0m", or "nrst0l" instead.
 	    - Install at least the base and etc sets.
 	    - If you have to specify a path relative to the mount-point and
 	      you need the mount-point itself, enter '.'.
