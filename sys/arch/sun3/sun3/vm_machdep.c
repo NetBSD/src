@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1995/05/24 21:08:44 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 1995/05/26 17:20:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -63,9 +63,8 @@
 #include <machine/pmap.h>
 #include "cache.h"
 
-/* XXX - Put these in some header file? */
+/* XXX - Put this in some header file? */
 void cpu_set_kpc __P((struct proc *p, u_long func));
-void child_return __P((struct proc *p));
 
 
 /*
@@ -81,25 +80,13 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb2 = &p2->p_addr->u_pcb;
 	register struct trapframe *p2tf;
 	register struct switchframe *p2sf;
-	extern void proc_do_uret();
+	extern void proc_do_uret(), child_return();
 
 	/* copy over the machdep part of struct proc */
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/*
-	 * Copy pcb from proc p1 to p2.
-	 * XXX - Note, if we have never called cpu_switch()
-	 * then our own pcb will not have been initialized.
-	 * Make sure it is valid or the child will die in
-	 * cpu_switch() when it loads the new sr value.
-	 * (Accidently clears the supervisor bit...)
-	 *
-	 * We can just save our context into p2, based on
-	 * the assumption that p1 == curproc (verify that).
-	 */
-	if (p1 != curproc)	/* XXX */
-		panic("cpu_fork: bad p1");
-	savectx(pcb2);
+	/* Copy pcb from proc p1 to p2. */
+	bcopy(&p1->p_addr->u_pcb, pcb2, sizeof(*pcb2));
 
 	/*
 	 * Our cpu_switch MUST always call PMAP_ACTIVATE on a
@@ -112,7 +99,8 @@ cpu_fork(p1, p2)
 	 * Pick a stack pointer, leaving room for a trapframe;
 	 * copy trapframe from parent so return to user mode
 	 * will be to right address, with correct registers.
-	 * Leave one word at the end just to be like proc0...
+	 * Leave one word unused at the end of the kernel stack
+	 * so the system stack pointer stays within its stack.
 	 */
 	p2tf = (struct trapframe *)((char*)p2->p_addr + USPACE-4) - 1;
 	p2->p_md.md_regs = (int *)p2tf;
@@ -126,16 +114,13 @@ cpu_fork(p1, p2)
 	p2sf->sf_pc = (u_int)proc_do_uret;
 	pcb2->pcb_regs[11] = (int)p2sf;		/* SSP */
 
-#if 1	/* XXX - Which way is better? */
-	cpu_set_kpc(p2, (long)child_return);
-#else
 	/*
-	 * Set up return-value registers as fork() libc stub expects.
+	 * This will "push a call" to an arbitrary kernel function
+	 * onto the stack of p2, very much like signal delivery.
+	 * When p2 runs, it will find itself in child_return().
 	 */
-	p2tf->tf_regs[D0] = 0;
-	p2tf->tf_sr &= ~PSL_C;
-	p2tf->tf_format = FMT0;
-#endif
+	cpu_set_kpc(p2, (long)child_return);
+
 	return (0);
 }
 
@@ -149,7 +134,7 @@ cpu_fork(p1, p2)
  * Note that it's assumed that when the named process returns,
  * rei() should be invoked, to return to user mode.  That is
  * accomplished by having cpu_fork set the initial frame with a
- * return address pointing to rei() which eventually does an rte.
+ * return address pointing to proc_do_uret() which does the rte.
  *
  * The design allows this function to be implemented as a general
  * "kernel sendsig" utility, that can "push" a call to a kernel
@@ -173,11 +158,6 @@ cpu_set_kpc(proc, func)
 		u_long func;
 		void *proc;
 	} *ksfp;
-
-#ifdef	DIAGNOSTIC
-	if (proc == curproc)
-		panic("cpu_set_kpc self");
-#endif
 
 	pcbp = &proc->p_addr->u_pcb;
 
