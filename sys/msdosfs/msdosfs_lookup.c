@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.35 1997/11/08 19:18:57 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.36 1997/11/16 21:47:32 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -123,7 +123,7 @@ msdosfs_lookup(v)
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
+	printf("msdosfs_lookup(): vdp %p, dp %p, Attr %02x\n",
 	    vdp, dp, dp->de_Attributes);
 #endif
 
@@ -174,7 +174,7 @@ msdosfs_lookup(v)
 		if (!error) {
 			if (vpid == vdp->v_id) {
 #ifdef MSDOSFS_DEBUG
-				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
+				printf("msdosfs_lookup(): cache hit, vnode %p, file %s\n",
 				       vdp, dp->de_Name);
 #endif
 				return (0);
@@ -239,7 +239,7 @@ msdosfs_lookup(v)
 		slotcount = 0;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename %s, length %d\n",
+	printf("msdosfs_lookup(): dos version of filename %s, length %ld\n",
 	    dosfilename, cnp->cn_namelen);
 #endif
 	/*
@@ -378,7 +378,7 @@ notfound:;
 	 * the pathname and the directory hasn't been removed.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): op %d, refcnt %d\n",
+	printf("msdosfs_lookup(): op %d, refcnt %ld\n",
 	    nameiop, dp->de_refcnt);
 	printf("               slotcount %d, slotoffset %d\n",
 	       slotcount, slotoffset);
@@ -610,7 +610,7 @@ createde(dep, ddep, depp, cnp)
 	int blsize;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("createde(dep %08x, ddep %08x, depp %08x, cnp %08x)\n",
+	printf("createde(dep %p, ddep %p, depp %p, cnp %p)\n",
 	    dep, ddep, depp, cnp);
 #endif
 
@@ -953,7 +953,7 @@ removede(pdep, dep)
 	u_long offset = pdep->de_fndoffset;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("removede(): filename %s, dep %08x, offset %08x\n",
+	printf("removede(): filename %s, dep %p, offset %08lx\n",
 	    dep->de_Name, dep, offset);
 #endif
 
