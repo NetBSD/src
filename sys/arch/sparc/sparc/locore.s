@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 1998/10/11 14:46:46 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.98 1998/10/12 14:39:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -141,11 +141,15 @@
  * stack to the interrupt stack (iff we are not already on the interrupt
  * stack).  One sethi+cmp is all we need since this is so carefully
  * arranged.
+ *
+ * In SMP kernels, each CPU has its own interrupt stack and the computation
+ * to determine whether we're already on the interrupt stack is slightly
+ * more time consuming (see INTR_SETUP() below).
  */
 	.globl	_intstack
 	.globl	_eintstack
 _intstack:
-	.skip	128 * 128		! 16k = 128 128-byte stack frames
+	.skip	INT_STACK_SIZE		! 16k = 128 128-byte stack frames
 _eintstack:
 
 /*
@@ -183,8 +187,7 @@ _kgdb_stack:
  * _cpcb points to the current pcb (and hence u. area).
  * Initially this is the special one.
  */
-	.globl	_cpcb
-_cpcb:	.word	_u0
+_cpcb = CPUINFO_VA + CPUINFO_CURPCB
 
 /*
  * _cputyp is the current cpu type, used to distinguish between
@@ -1141,7 +1144,7 @@ trapbase_sun4m:
 	.skip	4096
 #endif
 
-/*#ifdef DEBUG*/
+#ifdef DEBUG
 /*
  * A hardware red zone is impossible.  We simulate one in software by
  * keeping a `red zone' pointer; if %sp becomes less than this, we panic.
@@ -1202,13 +1205,11 @@ Lpanic_red:
 	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
 7:
 
-#define XDEBUG
-#ifdef XDEBUG
 #else
 
 #define	SET_SP_REDZONE(base, tmp)
 #define	SET_SP_REDZONE_CONST(const, t1, t2)
-#define	SET_SP_REDZONE_VAR(base, t1, t2)
+#define	SET_SP_REDZONE_VAR(var, offset, t1, t2)
 #define	CHECK_SP_REDZONE(t1, t2)
 #endif /* DEBUG */
 
@@ -1492,6 +1493,11 @@ wmask:	.skip	32			! u_char wmask[0..31];
  */
 #ifdef MULTIPROCESSOR
 _EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
+/*
+ * SMP kernels: read `eintstack' from cpuinfo structure. Since the
+ * location of the interrupt stack is not known in advance, we need
+ * to check the current %fp against both ends of the stack space.
+ */
 #define	INTR_SETUP(stackspace) \
 	rd	%wim, %l4; \
 	mov	1, %l5; \
@@ -1510,8 +1516,8 @@ _EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
 	bge,a	3f;			/* %fp >= eintstack */ \
 	 add	%l7, stackspace, %sp;	/* so switch to intstack */ \
 	sethi	%hi(INT_STACK_SIZE), %l6; \
-	sub	%l7, %l6, %l7; \
-	cmp	%fp, %l7; \
+	sub	%l7, %l6, %l6; \
+	cmp	%fp, %l6; \
 	blu,a	3f;			/* %fp < intstack */ \
 	 add	%l7, stackspace, %sp;	/* so switch to intstack */ \
 	b	4f; \
@@ -1539,7 +1545,9 @@ _EINTSTACK = CPUINFO_VA + CPUINFO_EINTSTACK
 	SET_SP_REDZONE_VAR(_EINTSTACK, -INT_STACK_SIZE, %l6, %l5); \
 4: \
 	CHECK_SP_REDZONE(%l6, %l5)
+
 #else /* MULTIPROCESSOR */
+
 #define	INTR_SETUP(stackspace) \
 	rd	%wim, %l4; \
 	mov	1, %l5; \
@@ -3849,6 +3857,21 @@ Lgandul:	nop
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
+
+	/* Clear `cpuinfo' */
+	sethi	%hi(CPUINFO_VA), %o0		! bzero(&cpuinfo, NBPG)
+	sethi	%hi(CPUINFO_STRUCTSIZE), %o1
+	call	_bzero
+	 add	%o1, %lo(CPUINFO_STRUCTSIZE), %o1
+
+	/* Initialize `cpuinfo' fields which are needed early */
+	set	_u0, %o0			! cpuinfo.curpcb = _u0;
+	sethi	%hi(_cpcb), %l0
+	st	%o0, [%l0 + %lo(_cpcb)]
+
+	set	_eintstack, %o0			! cpuinfo.eintstack= _eintstack;
+	sethi	%hi(_EINTSTACK), %l0
+	st	%o0, [%l0 + %lo(_EINTSTACK)]
 
 	/*
 	 * Ready to run C code; finish bootstrap.
