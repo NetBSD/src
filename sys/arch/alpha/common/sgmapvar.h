@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.1.2.1 1997/06/03 06:57:00 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.1.2.2 1997/06/03 23:08:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,18 +39,6 @@
 
 #include <sys/extent.h>
 #include <machine/bus.h>
-
-/*
- * An Alpha SGMAP page table entry looks like this:
- *
- * m                           n+1 n             1   0
- * |           Reserved           | Page address | V |
- *
- * The page address is bits <n:13> of the physical address of the page.
- * The V bit it set if the PTE holds a valid mapping.
- */
-#define	SGPTE_PGADDR_SHIFT	12
-#define	SGPTE_VALID		0x1
 
 /*
  * Bits n:13 of the DMA address are the byte offset of the PTE
