@@ -1,4 +1,4 @@
-# $Id: SUN4,v 1.1 1994/10/02 21:59:56 deraadt Exp $
+# $Id: SUN4,v 1.2 1994/10/26 07:12:38 deraadt Exp $
 #
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -58,6 +58,11 @@ scsibus* at esp?
 sd*	at scsibus? target ? drive ?
 st*	at scsibus? target ? drive ?
 cd*	at scsibus? target ? drive ?
+
+#ie0 at vmes0 addr 0xff31ff02 level 3 vector 0x74
+#ie1 at vmes0 addr 0xffe88000 level 3 vector 0x75
+#ie2 at vmes0 addr 0xff31ff02 level 3 vector 0x76
+#ie3 at vmes0 addr 0xff35ff02 level 3 vector 0x77
 
 pseudo-device	loop
 pseudo-device	pty	32
