@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax.newconf,v 1.1 1995/04/28 23:34:39 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.16 1995/04/30 10:11:00 cgd Exp $
 maxpartitions 8
 maxusers 2 8 64
 
