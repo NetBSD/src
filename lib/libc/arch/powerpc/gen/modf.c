@@ -1,4 +1,4 @@
-/* $NetBSD: modf.c,v 1.3 2000/06/14 06:49:04 cgd Exp $ */
+/* $NetBSD: modf.c,v 1.4 2001/02/09 14:16:12 wiz Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -94,8 +94,8 @@ modf(val, iptr)
 	frac = ((u_int64_t)v.s.dbl_frach << 32) + v.s.dbl_fracl;
 	frac >>= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
 	frac <<= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
-	v.s.dbl_fracl = frac & 0xffffffff;
-	v.s.dbl_frach = frac >> 32;
+	v.s.dbl_fracl = (u_int)(frac & 0x00000000ffffffffLLU);
+	v.s.dbl_frach = (u_int)(frac >> 32);
 	*iptr = v.v;
 
 	u.v -= v.v;
