@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.10 2001/01/28 03:44:46 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.11 2001/01/30 13:17:43 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ struct	uplcom_softc {
 #define UPLCOMIBUFSIZE 256
 #define UPLCOMOBUFSIZE 256
 
-Static	usbd_status uplcom_init(struct uplcom_softc *);
+Static	usbd_status uplcom_reset(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
 					   usb_cdc_line_state_t *state);
 
@@ -113,14 +113,16 @@ Static	void	uplcom_rts(struct uplcom_softc *, int);
 Static	void	uplcom_break(struct uplcom_softc *, int);
 Static	void	uplcom_set_line_state(struct uplcom_softc *);
 Static	int	uplcom_param(void *, int, struct termios *);
+Static	int	uplcom_open(void *, int);
+Static	void	uplcom_close(void *, int);
 
 struct	ucom_methods uplcom_methods = {
 	NULL,
 	uplcom_set,
 	uplcom_param,
 	NULL,
-	NULL,
-	NULL,
+	uplcom_open,
+	uplcom_close,
 	NULL,
 	NULL,
 };
@@ -271,9 +273,10 @@ USB_ATTACH(uplcom)
 	uca.arg = sc;
 	uca.info = NULL;
 
-	err = uplcom_init(sc);
+	err = uplcom_reset(sc);
+
 	if (err) {
-		printf("%s: init failed, %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(err));
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -327,7 +330,7 @@ uplcom_activate(device_ptr_t self, enum devact act)
 
 
 usbd_status
-uplcom_init(struct uplcom_softc *sc)
+uplcom_reset(struct uplcom_softc *sc)
 {
         usb_device_request_t req;
 	usbd_status err;
@@ -387,7 +390,7 @@ void
 uplcom_dtr(struct uplcom_softc *sc, int onoff)
 {
 
-	DPRINTF(("uplcom: onoff=%d\n", onoff));
+	DPRINTF(("uplcom_dtr: onoff=%d\n", onoff));
 
 	if (sc->sc_dtr == onoff)
 		return;
@@ -499,4 +502,42 @@ uplcom_param(void *addr, int portno, struct termios *t)
 		return (EIO);
 	}
 	return (0);
+}
+
+int
+uplcom_open(void *addr, int portno)
+{
+	struct uplcom_softc *sc = addr;
+	usbd_status err;
+	
+	if (sc->sc_dying)
+		return (EIO);
+
+	err = uplcom_reset(sc);
+        if (err) {
+                printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
+                        usbd_errstr(err));
+        }
+
+	DPRINTF(("uplcom_open: open\n"));
+
+	return (0);
+}
+
+void
+uplcom_close(void *addr, int portno) 
+{
+	struct uplcom_softc *sc = addr;
+	usbd_status err;
+
+	if (sc->sc_dying)
+		return;
+
+	err = uplcom_reset(sc);
+	if (err) {
+		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
+			usbd_errstr(err));
+	}
+
+	DPRINTF(("uplcom_close: close\n"));
 }
