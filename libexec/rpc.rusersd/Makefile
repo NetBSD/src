@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.14 1997/09/17 16:35:54 christos Exp $
+#	$NetBSD: Makefile,v 1.15 1997/10/08 09:07:32 mrg Exp $
 
-WARNS ?= 1
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c
 MAN =	rpc.rusersd.8
