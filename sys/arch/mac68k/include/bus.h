@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2001/09/14 00:58:08 briggs Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2002/04/09 01:53:47 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -138,29 +138,29 @@ typedef struct bus_space_handle_s {
 	void		(*bsws4) __P((bus_space_tag_t t, BSH_T *h,
 				  bus_size_t o, u_int32_t v));
 	void		(*bswm1) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int8_t *a, size_t c));
+				   bus_size_t o, const u_int8_t *a, size_t c));
 	void		(*bswm2) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int16_t *a, size_t c));
+				   bus_size_t o, const u_int16_t *a, size_t c));
 	void		(*bswm4) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int32_t *a, size_t c));
+				   bus_size_t o, const u_int32_t *a, size_t c));
 	void		(*bswms1) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int8_t *a, size_t c));
+				   bus_size_t o, const u_int8_t *a, size_t c));
 	void		(*bswms2) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int16_t *a, size_t c));
+				   bus_size_t o, const u_int16_t *a, size_t c));
 	void		(*bswms4) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int32_t *a, size_t c));
+				   bus_size_t o, const u_int32_t *a, size_t c));
 	void		(*bswr1) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int8_t *a, size_t c));
+				   bus_size_t o, const u_int8_t *a, size_t c));
 	void		(*bswr2) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int16_t *a, size_t c));
+				   bus_size_t o, const u_int16_t *a, size_t c));
 	void		(*bswr4) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int32_t *a, size_t c));
+				   bus_size_t o, const u_int32_t *a, size_t c));
 	void		(*bswrs1) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int8_t *a, size_t c));
+				   bus_size_t o, const u_int8_t *a, size_t c));
 	void		(*bswrs2) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int16_t *a, size_t c));
+				   bus_size_t o, const u_int16_t *a, size_t c));
 	void		(*bswrs4) __P((bus_space_tag_t t, BSH_T *h,
-				   bus_size_t o, u_int32_t *a, size_t c));
+				   bus_size_t o, const u_int32_t *a, size_t c));
 	void		(*bssm1) __P((bus_space_tag_t t, BSH_T *h,
 				   bus_size_t o, u_int8_t v, size_t c));
 	void		(*bssm2) __P((bus_space_tag_t t, BSH_T *h,
@@ -490,25 +490,25 @@ void mac68k_bsws4_gen __P((bus_space_tag_t tag, bus_space_handle_t *bsh,
  */
 
 void mac68k_bswm1 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c));
+			   bus_size_t o, const u_int8_t *a, size_t c));
 void mac68k_bswm1_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c));
+			   bus_size_t o, const u_int8_t *a, size_t c));
 void mac68k_bswm2 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswm2_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswm2_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswms2_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswm4 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswm4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswm4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswms4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			  \
@@ -561,25 +561,25 @@ void mac68k_bswms4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
  */
 
 void mac68k_bswr1 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c));
+			   bus_size_t o, const u_int8_t *a, size_t c));
 void mac68k_bswr1_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c));
+			   bus_size_t o, const u_int8_t *a, size_t c));
 void mac68k_bswr2 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswr2_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswr2_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswrs2_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c));
+			   bus_size_t o, const u_int16_t *a, size_t c));
 void mac68k_bswr4 __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswr4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswr4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 void mac68k_bswrs4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c));
+			   bus_size_t o, const u_int32_t *a, size_t c));
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_write_region_1(t, h, o, a, c) do {			   \
