@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.9 2002/08/29 14:53:21 itojun Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.10 2003/07/15 05:09:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.9 2002/08/29 14:53:21 itojun Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.10 2003/07/15 05:09:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -500,28 +500,28 @@ fb64_printsub(data, cnt, buf, buflen, type)
 
 	switch(data[2]) {
 	case FB64_IV:
-		sprintf(lbuf, "%s_IV", type);
+		snprintf(lbuf, sizeof(lbuf), "%s_IV", type);
 		cp = lbuf;
 		goto common;
 
 	case FB64_IV_OK:
-		sprintf(lbuf, "%s_IV_OK", type);
+		snprintf(lbuf, sizeof(lbuf), "%s_IV_OK", type);
 		cp = lbuf;
 		goto common;
 
 	case FB64_IV_BAD:
-		sprintf(lbuf, "%s_IV_BAD", type);
+		snprintf(lbuf, sizeof(lbuf), "%s_IV_BAD", type);
 		cp = lbuf;
 		goto common;
 
 	default:
-		sprintf(lbuf, " %d (unknown)", data[2]);
+		snprintf(lbuf, sizeof(lbuf), " %d (unknown)", data[2]);
 		cp = lbuf;
 	common:
 		for (; (buflen > 0) && (*buf = *cp++); buf++)
 			buflen--;
 		for (i = 3; i < cnt; i++) {
-			sprintf(lbuf, " %d", data[i]);
+			snprintf(lbuf, sizeof(lbuf), " %d", data[i]);
 			for (cp = lbuf; (buflen > 0) && (*buf = *cp++); buf++)
 				buflen--;
 		}

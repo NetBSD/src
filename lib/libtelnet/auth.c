@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.13 2003/07/14 08:36:27 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.14 2003/07/15 05:09:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.13 2003/07/14 08:36:27 itojun Exp $");
+__RCSID("$NetBSD: auth.c,v 1.14 2003/07/15 05:09:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -668,7 +668,7 @@ auth_gen_printsub(data, cnt, buf, buflen)
 	buf[buflen-2] = '*';
 	buflen -= 2;
 	for (; cnt > 0; cnt--, data++) {
-		sprintf((char *)tbuf, " %d", *data);
+		snprintf((char *)tbuf, sizeof(tbuf), " %d", *data);
 		for (cp = tbuf; *cp && buflen > 0; --buflen)
 			*buf++ = *cp++;
 		if (buflen <= 0)
