@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.36 2003/10/01 22:50:15 enami Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.37 2003/11/01 11:09:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,6 +109,8 @@
 
 #endif /* _KERNEL */
 
+#include <sys/tree.h>
+
 #include <uvm/uvm_anon.h>
 
 /*
@@ -118,6 +120,9 @@
  * Also included is control information for virtual copy operations.
  */
 struct vm_map_entry {
+	RB_ENTRY(vm_map_entry)	rb_entry;	/* tree information */
+	vaddr_t			ownspace;	/* free space after */
+	vaddr_t			space;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
@@ -208,6 +213,7 @@ struct vm_map_entry {
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	struct lock		lock;		/* Lock for map data */
+	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */

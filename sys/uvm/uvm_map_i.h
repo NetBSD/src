@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.25 2003/10/01 22:50:15 enami Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.26 2003/11/01 11:09:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -105,6 +105,7 @@ MAP_INLINE void
 uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 {
 
+	RB_INIT(&map->rbhead);
 	map->header.next = map->header.prev = &map->header;
 	map->nentries = 0;
 	map->size = 0;
