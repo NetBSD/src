@@ -370,7 +370,7 @@ rstat_service(rqstp, transp)
                         local = (char *(*)()) rstatproc_stats_3;
                         break;
                 default:
-                        svcerr_progvers(transp);
+                        svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
                         goto leave;
                         /*NOTREACHED*/
                 }
@@ -390,7 +390,7 @@ rstat_service(rqstp, transp)
                         local = (char *(*)()) rstatproc_havedisk_3;
                         break;
                 default:
-                        svcerr_progvers(transp);
+                        svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
                         goto leave;
                         /*NOTREACHED*/
                 }

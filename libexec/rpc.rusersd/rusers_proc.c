@@ -327,7 +327,7 @@ rusers_service(rqstp, transp)
                         local = (char *(*)()) rusersproc_names_2;
                         break;
                 default:
-                        svcerr_progvers(transp);
+                        svcerr_progvers(transp, RUSERSVERS_ORIG, RUSERSVERS_IDLE);
                         goto leave;
                         /*NOTREACHED*/
                 }
@@ -344,7 +344,7 @@ rusers_service(rqstp, transp)
                         local = (char *(*)()) rusersproc_allnames_2;
                         break;
                 default:
-                        svcerr_progvers(transp);
+                        svcerr_progvers(transp, RUSERSVERS_ORIG, RUSERSVERS_IDLE);
                         goto leave;
                         /*NOTREACHED*/
                 }
