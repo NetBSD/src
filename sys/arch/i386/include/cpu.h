@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
+ *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
+ *	$Id: cpu.h,v 1.3 1993/05/20 14:34:43 cgd Exp $
  */
 
 /*
@@ -110,4 +111,7 @@ int	want_resched;		/* resched() was called */
 #define CPU_MINTYPE	CPU_386SX
 #define CPU_MAXTYPE	CPU_586
 
+#ifdef KERNEL
 extern char *cpu_typenames[];
+extern int cpu;
+#endif
