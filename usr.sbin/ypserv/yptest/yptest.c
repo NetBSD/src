@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.7 2004/10/22 18:33:06 peter Exp $	 */
+/*	$NetBSD: yptest.c,v 1.8 2004/10/22 18:41:09 peter Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yptest.c,v 1.7 2004/10/22 18:33:06 peter Exp $");
+__RCSID("$NetBSD: yptest.c,v 1.8 2004/10/22 18:41:09 peter Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,8 +55,8 @@ int
 main(int argc, char **argv)
 {
 	char *Domain, *Value, *Key2;
-	char *Map = "passwd.byname";
-	char *Key = "root";
+	const char *Map = "passwd.byname";
+	const char *Key = "root";
 	int KeyLen, ValLen, Status, Order;
 	struct ypall_callback Callback;
 	struct ypmaplist *ypml, *y;
