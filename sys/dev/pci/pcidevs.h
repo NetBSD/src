@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.237 2000/06/09 00:21:08 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.238 2000/06/12 21:12:59 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.231 2000/06/09 00:20:18 augustss Exp 
+ *	NetBSD: pcidevs,v 1.232 2000/06/12 21:12:30 bouyer Exp 
  */
 
 /*
@@ -1425,6 +1425,10 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9680	0x9680		/* TGUI 9680 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9682	0x9682		/* TGUI 9682 */
+
+/* Triones Technologies products */
+/* The 366 and 370 controllers have the same product ID */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 UDMA/66 Controller */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
