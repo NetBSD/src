@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.37 2000/02/21 01:20:55 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.38 2000/02/21 02:04:48 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -64,6 +64,8 @@
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
+#include <sys/pool.h>
+#include <sys/queue.h>
 #include <sys/systm.h>
 
 #include <machine/viareg.h>

@@ -1,12 +1,9 @@
-/*	$NetBSD: iopreg.h,v 1.2 1999/06/28 04:33:21 briggs Exp $	*/
+/*	$NetBSD: iopreg.h,v 1.3 2000/02/21 02:04:49 scottr Exp $	*/
 
 /*
  * Freely contributed to The NetBSD Foundation.
  * XXX - Do paperwork and put a proper copyright here.
  */
-
-#include <sys/pool.h>
-#include <sys/queue.h>
 
 #define IOP1_BASE	0x00004000
 

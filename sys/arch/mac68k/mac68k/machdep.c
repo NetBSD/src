@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.244 2000/02/21 01:51:37 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.245 2000/02/21 02:04:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,9 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>

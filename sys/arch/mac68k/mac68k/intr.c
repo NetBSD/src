@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2000/02/21 01:48:49 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.11 2000/02/21 02:04:49 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
+#include <sys/queue.h>
 #include <sys/vmmeter.h>
 
 #include <vm/vm.h>
