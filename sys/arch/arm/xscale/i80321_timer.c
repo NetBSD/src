@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.1 2002/03/27 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.2 2002/08/07 05:15:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 /*
  * Timer/clock support for the Intel i80321 I/O processor.
  */
+
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +151,10 @@ void
 cpu_initclocks(void)
 {
 	u_int oldirqstate;
+#if defined(PERFCTRS)
+	void *pmu_ih;
+	extern int xscale_pmc_dispatch(void *);
+#endif
 
 	if (hz < 50 || COUNTS_PER_SEC % hz) {
 		printf("Cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -187,6 +193,13 @@ cpu_initclocks(void)
 	    clockhandler, NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
+
+#if defined(PERFCTRS)
+	pmu_ih = i80321_intr_establish(ICU_INT_PMU, IPL_STATCLOCK,
+	    xscale_pmc_dispatch, NULL);
+	if (pmu_ih == NULL)
+		panic("cpu_initclocks: unable to register timer interrupt");
+#endif
 
 	/* Set up the new clock parameters. */
 
