@@ -1,26 +1,19 @@
-#	$NetBSD: Makefile.inc,v 1.12.2.2 2000/02/12 16:55:02 he Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.3 2000/07/09 21:35:39 he Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
 
 # These are packaged and distributed
-EXTRA_KERNELS+= GENERIC GENERIC_TINY
+EXTRA_KERNELS+= GENERIC_TINY
 
 # These are for use by the bootfloppy construction tools
-INST_KERNELS= INSTALL INSTALL_TINY INSTALL_SMALL
+BUILD_KERNELS= INSTALL INSTALL_TINY INSTALL_SMALL
 
-# Build the INST_KERNELS and the boot floppies and install them
+# Build the boot floppies and install them
 snap_md_post:
-.for k in ${INST_KERNELS}
-	cd ${KERNCONFDIR} && config \
-		-b ${KERNOBJDIR}/${k} -s ${KERNSRCDIR} ${k}
 .ifndef UPDATE
-	cd ${KERNOBJDIR}/${k} && ${MAKE} clean
+	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
-	cd ${KERNOBJDIR}/${k} && ${MAKE} depend && ${MAKE} ${_J}
-.endfor
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib/i386/floppies && ${MAKE} clean
-.endif
-	cd ${.CURDIR}/../distrib/i386/floppies && \
-		${MAKE} depend && ${MAKE} ${_J} && ${MAKE} release
+	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
+	cd ${.CURDIR}/../distrib/i386 && ${MAKE} release
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppy '*.gz' '*.fs'
