@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.22 2002/04/08 17:18:23 tron Exp $
+# $NetBSD: maketars,v 1.23 2002/04/13 12:47:10 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -101,20 +101,21 @@ SDIR_BASE=/tmp/maketar.$$
 SDIR_SERIAL=0
 
 while true; do
-    SDIR=${SDIR_BASE}.${SDIR_SERIAL}
-    mkdir -m 0700 ${SDIR} && break
-    SDIR_SERIAL=`expr ${SDIR_SERIAL} + 1`
+	SDIR=${SDIR_BASE}.${SDIR_SERIAL}
+	mkdir -m 0700 ${SDIR} && break
+	SDIR_SERIAL=$((${SDIR_SERIAL} + 1))
 done    
 
 trap "/bin/rm -rf $SDIR ; exit 0" 0 2 3 13		# EXIT INT QUIT PIPE
 
 if [ -n "$metalog" ]; then
 	echo "parsing $metalog"
-	${MTREE} -D -k all -N ${DESTDIR}/etc \
-	    -f ${DESTDIR}/etc/mtree/NetBSD.dist | \
-	    sed -e 's,\(.*\) \(\..*\),\2 \1,' > $SDIR/metadirs
-	sed -e "s,^\.$dest,.," < $metalog > $SDIR/metafiles
-	cat $SDIR/metadirs $SDIR/metafiles | sort -u > $SDIR/metalog
+	(
+		cat ${DESTDIR}/etc/mtree/NetBSD.dist
+		echo "/unset all"
+		sed -e "s,^\.$dest,.," < $metalog
+	) | ${MTREE} -D -k all -N ${DESTDIR}/etc | \
+	    sed -e 's,\(.*\) \(\..*\),\2 \1,' > $SDIR/metalog
 fi
 
 GZIP=-9			# for pax -z
@@ -129,8 +130,10 @@ for setname in $lists; do
 	if [ -n "$metalog" ]; then
 		awk -f getdirs.awk $SDIR/flist.$setname | sort -u \
 		    > $SDIR/flist.full
-		echo "/set uname=root gname=wheel" > $SDIR/plist.$setname
-		join $SDIR/flist.full $SDIR/metalog >> $SDIR/plist.$setname
+		(
+			echo "/set uname=root gname=wheel"
+			awk -f join.awk $SDIR/flist.full $SDIR/metalog
+		) > $SDIR/plist.$setname
 	else
 		mv $SDIR/flist.$setname $SDIR/plist.$setname
 	fi
