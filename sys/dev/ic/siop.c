@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.30 2000/10/06 20:07:10 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.31 2000/10/18 17:06:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -57,7 +57,7 @@
 #undef DEBUG
 #undef DEBUG_DR
 #undef DEBUG_INTR
-#undef DEBUG_SHED
+#undef DEBUG_SCHED
 #undef DUMP_SCRIPT
 
 #define SIOP_STATS
@@ -71,12 +71,16 @@
 
 void	siop_reset __P((struct siop_softc *));
 void	siop_handle_reset __P((struct siop_softc *));
+int	siop_handle_qtag_reject __P((struct siop_cmd *));
 void	siop_scsicmd_end __P((struct siop_cmd *));
 void	siop_start __P((struct siop_softc *));
 void 	siop_timeout __P((void *));
 int	siop_scsicmd __P((struct scsipi_xfer *));
 void	siop_dump_script __P((struct siop_softc *));
 int	siop_morecbd __P((struct siop_softc *));
+struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
+void	siop_add_reselsw __P((struct siop_softc *, int));
+void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
 
 struct scsipi_adapter siop_adapter = {
 	0,
@@ -99,7 +103,6 @@ static int siop_stat_intr = 0;
 static int siop_stat_intr_shortxfer = 0;
 static int siop_stat_intr_sdp = 0;
 static int siop_stat_intr_done = 0;
-static int siop_stat_intr_reselect = 0;
 static int siop_stat_intr_xferdisc = 0;
 void siop_printstats __P((void));
 #define INCSTAT(x) x++
@@ -113,7 +116,7 @@ siop_table_sync(siop_cmd, ops)
 	struct siop_cmd *siop_cmd;
 	int ops;
 {
-	struct siop_softc *sc  = siop_cmd->siop_target->siop_sc;
+	struct siop_softc *sc  = siop_cmd->siop_sc;
 	bus_addr_t offset;
 	
 	offset = siop_cmd->dsa -
@@ -128,17 +131,37 @@ siop_sched_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, 0, 2*NBPG, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, 0, NBPG, ops);
 }
 
-static __inline__ void siop_resel_sync __P((struct siop_softc *, int));
-static __inline__ void
-siop_resel_sync(sc, ops)
+static __inline__ u_int32_t siop_script_read __P((struct siop_softc *, int));
+static __inline__ u_int32_t
+siop_script_read(sc, offset)
 	struct siop_softc *sc;
-	int ops;
+	int offset;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, NBPG, NBPG, ops);
+	if (sc->features & SF_CHIP_RAM) {
+		return bus_space_read_4(sc->sc_ramt, sc->sc_ramh, offset * 4);
+	} else {
+		return le32toh(sc->sc_script[offset]);
+	}
 }
+
+static __inline__ void siop_script_write __P((struct siop_softc *, int,
+	u_int32_t));
+static __inline__ void
+siop_script_write(sc, offset, val)
+	struct siop_softc *sc;
+	int offset;
+	u_int32_t val;
+{
+	if (sc->features & SF_CHIP_RAM) {
+		bus_space_write_4(sc->sc_ramt, sc->sc_ramh, offset * 4, val);
+	} else {
+		sc->sc_script[offset] = htole32(val);
+	}
+}
+
 
 void
 siop_attach(sc)
@@ -175,8 +198,7 @@ siop_attach(sc)
 			return;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
-		    sc->sc_script,
-		    NBPG, NULL, BUS_DMA_NOWAIT);
+		    sc->sc_script, NBPG, NULL, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: unable to load script DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -184,54 +206,48 @@ siop_attach(sc)
 		}
 		sc->sc_scriptaddr = sc->sc_scriptdma->dm_segs[0].ds_addr;
 	}
-	error = bus_dmamem_alloc(sc->sc_dmat, 2 * NBPG, 
-	    2 * NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate scheduler DMA memory, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, 2 * NBPG,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
 	    (caddr_t *)&sc->sc_sched, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map scheduler DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamap_create(sc->sc_dmat, 2 * NBPG, 1,
-	    2 * NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scheddma);
+	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
+	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scheddma);
 	if (error) {
 		printf("%s: unable to create scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_scheddma, sc->sc_sched,
-	    2 * NBPG, NULL, BUS_DMA_NOWAIT);
+	    NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	sc->sc_resel = &sc->sc_sched[NBPG / sizeof(int32_t)];
 	TAILQ_INIT(&sc->free_list);
+	TAILQ_INIT(&sc->ready_list);
 	TAILQ_INIT(&sc->cmds);
+	TAILQ_INIT(&sc->lunsw_list);
 	/* compute number of scheduler slots */
 	sc->sc_nschedslots = (
 	    NBPG /* memory size allocated for scheduler */
 	    - sizeof(endslot_script) /* memory needed at end of scheduler */
 	    ) / (sizeof(slot_script) - 8);
 	sc->sc_currschedslot = 0;
-	/* compute number of reselect slots */
-	sc->sc_nreselslots = (
-	    NBPG /* memory size allocated for reselect script */
-	    - sizeof(reselected_end_script) /* memory needed at end */
-	    ) / (sizeof(reselected_script) - 16);
 #ifdef DEBUG
-	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d "
-	    "nresel %d\n",
+	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d\n",
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
-	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script, sc->sc_nschedslots,
-	    sc->sc_nreselslots);
+	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script, sc->sc_nschedslots);
 #endif
 
 	sc->sc_link.adapter_softc = sc;
@@ -287,6 +303,7 @@ siop_reset(sc)
 	int i, j;
 	u_int32_t *scr;
 	bus_addr_t physaddr;
+	struct siop_lunsw *lunsw;
 
 	siop_common_reset(sc);
 
@@ -303,12 +320,11 @@ siop_reset(sc)
 			    sc->sc_scheddma->dm_segs[0].ds_addr);
 		}
 		for (j = 0; j <
-		    (sizeof(E_abs_find_dsa_Used) /
-		    sizeof(E_abs_find_dsa_Used[0]));
+		    (sizeof(E_abs_msgin_Used) / sizeof(E_abs_msgin_Used[0]));
 		    j++) {
 			bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
-			    E_abs_find_dsa_Used[j] * 4,
-			    sc->sc_scheddma->dm_segs[0].ds_addr + NBPG);
+			    E_abs_msgin_Used[j] * 4,
+			    sc->sc_scriptaddr + Ent_msgin_space);
 		}
 	} else {
 		for (j = 0;
@@ -323,27 +339,26 @@ siop_reset(sc)
 			    htole32(sc->sc_scheddma->dm_segs[0].ds_addr);
 		}
 		for (j = 0; j <
-		    (sizeof(E_abs_find_dsa_Used) /
-		    sizeof(E_abs_find_dsa_Used[0]));
+		    (sizeof(E_abs_msgin_Used) / sizeof(E_abs_msgin_Used[0]));
 		    j++) {
-			sc->sc_script[E_abs_find_dsa_Used[j]] =
-			    htole32(sc->sc_scheddma->dm_segs[0].ds_addr + NBPG);
+			sc->sc_script[E_abs_msgin_Used[j]] =
+			    htole32(sc->sc_scriptaddr + Ent_msgin_space);
 		}
 	}
+	sc->ram_free = sizeof(siop_script) / sizeof(siop_script[0]);
 	/* copy and init the scheduler slots script */
 	for (i = 0; i < sc->sc_nschedslots; i++) {
 		scr = &sc->sc_sched[(Ent_nextslot / 4) * i];
 		physaddr = sc->sc_scheddma->dm_segs[0].ds_addr +
 		    Ent_nextslot * i;
-		for (j = 0; j < (sizeof(slot_script) / sizeof(slot_script[0]));
-		    j++) {
+		for (j = 0; j < (Ent_nextslot / 4); j++) {
 			scr[j] = htole32(slot_script[j]);
 		}
 		/*
 		 * save current jump offset and patch MOVE MEMORY operands
 		 * to restore it.
 		 */
-		scr[Ent_slotdata/4 + 1] = scr[Ent_slot/4 + 1];
+		scr[(Ent_slotdata/4) + 1] = scr[(Ent_slot/4) + 1];
 		scr[E_slot_nextp_Used[0]] = htole32(physaddr + Ent_slot + 4);
 		scr[E_slot_sched_addrsrc_Used[0]] = htole32(physaddr +
 		    Ent_slotdata + 4);
@@ -363,23 +378,32 @@ siop_reset(sc)
 	scr[E_endslot_abs_reselect_Used[0]] = 
 	    htole32(sc->sc_scriptaddr + Ent_reselect);
 
-	/* The reselect script */
-	for (i = 0; i < sc->sc_nreselslots; i++) {
-		scr = &sc->sc_resel[(Ent_res_nextld / 4) * i];
-		for (j = 0; j <
-		    (sizeof(reselected_script) / sizeof(reselected_script[0]));
-		    j++) {
-			scr[j] = htole32(reselected_script[j]);
-		}
-		scr[E_resel_abs_selected_Used[0]] =
-		    htole32(sc->sc_scriptaddr + Ent_selected);
+	/* free used and unused lun switches */
+	while((lunsw = TAILQ_FIRST(&sc->lunsw_list)) != NULL) {
+#ifdef DEBUG
+		printf("%s: free lunsw at offset %d\n",
+				sc->sc_dev.dv_xname, lunsw->lunsw_off);
+#endif
+		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
+		free(lunsw, M_DEVBUF);
 	}
-	/* The final int */
-	scr = &sc->sc_resel[(Ent_res_nextld / 4) * sc->sc_nreselslots];
-	for (j = 0; j <
-	    (sizeof(reselected_end_script) / sizeof(reselected_end_script[0]));
-	    j++) {
-		scr[j] = htole32(reselected_end_script[j]);
+	TAILQ_INIT(&sc->lunsw_list);
+	/* restore reselect switch */
+	for (i = 0; i < sc->sc_link.scsipi_scsi.max_target; i++) {
+		if (sc->targets[i] == NULL)
+			continue;
+#ifdef DEBUG
+		printf("%s: restore sw for target %d\n",
+				sc->sc_dev.dv_xname, i);
+#endif
+		free(sc->targets[i]->lunsw, M_DEVBUF);
+		sc->targets[i]->lunsw = siop_get_lunsw(sc);
+		if (sc->targets[i]->lunsw == NULL) {
+			printf("%s: can't alloc lunsw for target %d\n",
+			    sc->sc_dev.dv_xname, i);
+			break;
+		}
+		siop_add_reselsw(sc, i);
 	}
 
 	/* start script */
@@ -412,11 +436,13 @@ siop_intr(v)
 	struct siop_softc *sc = v;
 	struct siop_target *siop_target;
 	struct siop_cmd *siop_cmd;
+	struct siop_lun *siop_lun;
 	struct scsipi_xfer *xs;
 	int istat, sist0, sist1, sstat1, dstat;
 	u_int32_t irqcode;
 	int need_reset = 0;
-	int offset, target, lun;
+	int freetarget = 0;
+	int offset, lun;
 	bus_addr_t dsa;
 	struct siop_cbd *cbdp;
 
@@ -443,6 +469,32 @@ siop_intr(v)
 	} 
 	if (cbdp == NULL) {
 		siop_cmd = NULL;
+	}
+	if (siop_cmd) {
+		xs = siop_cmd->xs;
+		siop_target = siop_cmd->siop_target;
+		lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
+		siop_lun = &(siop_target->siop_lun[lun]);
+#ifdef DIAGNOSTIC
+		if (siop_cmd->status != CMDST_ACTIVE &&
+		    siop_cmd->status != CMDST_SENSE_ACTIVE) {
+			printf("siop_cmd (lun %d) not active (%d)\n",
+				lun, siop_cmd->status);
+			xs = NULL;
+			siop_target = NULL;
+			lun = -1;
+			siop_lun = NULL;
+			siop_cmd = NULL;
+		} else if (siop_lun->active != siop_cmd) {
+			printf("siop_cmd (lun %d) not in siop_lun active "
+			    "(%p != %p)\n", lun, siop_cmd, siop_lun->active);
+		}
+#endif
+	} else {
+		xs = NULL;
+		siop_target = NULL;
+		lun = -1;
+		siop_lun = NULL;
 	}
 	if (istat & ISTAT_DIP) {
 		u_int32_t *p;
@@ -483,8 +535,8 @@ siop_intr(v)
 		    le32toh(p[2]), le32toh(p[3]));
 		if (siop_cmd)
 			printf("last msg_in=0x%x status=0x%x\n",
-			    siop_cmd->siop_table->msg_in[0],
-			    le32toh(siop_cmd->siop_table->status));
+			    siop_cmd->siop_tables.msg_in[0],
+			    le32toh(siop_cmd->siop_tables.status));
 		else 
 			printf("%s: current DSA invalid\n",
 			    sc->sc_dev.dv_xname);
@@ -492,14 +544,6 @@ siop_intr(v)
 		}
 	}
 	if (istat & ISTAT_SIP) {
-		/*
-		 * SCSI interrupt. If current command is not active,
-		 * we don't need siop_cmd
-		 */
-		if (siop_cmd && siop_cmd->status != CMDST_ACTIVE &&
-		    siop_cmd->status != CMDST_SENSE_ACTIVE) {
-			siop_cmd = NULL;
-		}
 		if (istat & ISTAT_DIP)
 			delay(10);
 		sist0 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST0);
@@ -514,10 +558,6 @@ siop_intr(v)
 		    (u_long)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
 		    sc->sc_scriptaddr));
 #endif
-		if (siop_cmd) {
-			xs = siop_cmd->xs;
-			siop_target = siop_cmd->siop_target;
-		}
 		if (sist0 & SIST0_RST) {
 			siop_handle_reset(sc);
 			siop_start(sc);
@@ -554,10 +594,10 @@ siop_intr(v)
 				 * and the command should terminate.
 				 */
 					INCSTAT(siop_stat_intr_shortxfer);
-					CALL_SCRIPT(Ent_status);
 					if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(sc);
 					/* no table to flush here */
+					CALL_SCRIPT(Ent_status);
 					return 1;
 				case SSTAT1_PHASE_MSGIN:
 					/*
@@ -601,6 +641,7 @@ siop_intr(v)
 			if (siop_cmd) {
 				siop_cmd->status = CMDST_DONE;
 				xs->error = XS_SELTIMEOUT;
+				freetarget = 1;
 				goto end;
 			} else {
 				printf("%s: selection timeout without "
@@ -669,26 +710,25 @@ scintr:
 #ifdef DEBUG_INTR
 		printf("script interrupt 0x%x\n", irqcode);
 #endif
-		if (siop_cmd == NULL) {
-			printf("%s: script interrupt (0x%x) with invalid "
-			    "DSA !!!\n", sc->sc_dev.dv_xname, irqcode);
-			goto reset;
-		}
 		/*
-		 * an inactive command is only valid if it's a reselect
-		 * interrupt: we'll change siop_cmd to point to the rigth one
-		 * just here
+		 * no command, or an inactive command is only valid for a
+		 * reselect interrupt
 		 */
-		if (irqcode != A_int_resel && irqcode != A_int_reseltag &&
-		    siop_cmd->status != CMDST_ACTIVE &&
-		    siop_cmd->status != CMDST_SENSE_ACTIVE) {
-			printf("%s: Aie, no command (IRQ code 0x%x current "
-			    "status %d) !\n", sc->sc_dev.dv_xname,
-			    irqcode, siop_cmd->status);
-			xs = NULL;
-		} else {
-			xs = siop_cmd->xs;
-			siop_target = siop_cmd->siop_target;
+		if ((irqcode & 0x80) == 0) {
+			if (siop_cmd == NULL) {
+				printf("%s: script interrupt (0x%x) with
+				    invalid DSA !!!\n", sc->sc_dev.dv_xname,
+				    irqcode);
+				goto reset;
+			}
+			if (siop_cmd->status != CMDST_ACTIVE &&
+			    siop_cmd->status != CMDST_SENSE_ACTIVE) {
+				printf("%s: command with invalid status "
+				    "(IRQ code 0x%x current status %d) !\n",
+				    sc->sc_dev.dv_xname,
+				    irqcode, siop_cmd->status);
+				xs = NULL;
+			}
 		}
 		switch(irqcode) {
 		case A_int_err:
@@ -701,23 +741,37 @@ scintr:
 			} else {
 				goto reset;
 			}
+		case A_int_reseltarg:
+			printf("%s: reselect with invalid target\n",
+				    sc->sc_dev.dv_xname);
+			goto reset;
+		case A_int_resellun:
+			printf("%s: reselect with invalid lun\n",
+				    sc->sc_dev.dv_xname);
+			goto reset;
+		case A_int_reseltag:
+			printf("%s: reselect with invalid tag\n",
+				    sc->sc_dev.dv_xname);
+			goto reset;
 		case A_int_msgin:
-			if (siop_cmd->siop_table->msg_in[0] ==
-			    MSG_MESSAGE_REJECT) {
+		{
+			int msgin = bus_space_read_1(sc->sc_rt, sc->sc_rh,
+			    SIOP_SFBR);
+			if (msgin == MSG_MESSAGE_REJECT) {
 				int msg, extmsg;
-				if (siop_cmd->siop_table->msg_out[0] & 0x80) {
+				if (siop_cmd->siop_tables.msg_out[0] & 0x80) {
 					/*
 					 * message was part of a identify +
 					 * something else. Identify shoudl't
 					 * have been rejected.
 					 */
-					msg = siop_cmd->siop_table->msg_out[1];
+					msg = siop_cmd->siop_tables.msg_out[1];
 					extmsg =
-					    siop_cmd->siop_table->msg_out[3];
+					    siop_cmd->siop_tables.msg_out[3];
 				} else {
-					msg = siop_cmd->siop_table->msg_out[0];
+					msg = siop_cmd->siop_tables.msg_out[0];
 					extmsg =
-					    siop_cmd->siop_table->msg_out[2];
+					    siop_cmd->siop_tables.msg_out[2];
 				}
 				if (msg == MSG_MESSAGE_REJECT) {
 					/* MSG_REJECT  for a MSG_REJECT  !*/
@@ -736,27 +790,27 @@ scintr:
 					printf("%s: target %d using 8bit "
 					    "transfers\n", sc->sc_dev.dv_xname,
 					    xs->sc_link->scsipi_scsi.target);
-					if (xs->sc_link->quirks & SDEV_NOSYNC) {
-						siop_cmd->siop_target->status =
-						    TARST_OK;
+					if ((siop_target->flags & TARF_SYNC)
+					    == 0) {
+						siop_target->status = TARST_OK;
 						/* no table to flush here */
 						CALL_SCRIPT(Ent_msgin_ack);
 						return 1;
 					}
 					siop_target->status = TARST_SYNC_NEG;
-					siop_cmd->siop_table->msg_out[0] =
+					siop_cmd->siop_tables.msg_out[0] =
 					    MSG_EXTENDED;
-					siop_cmd->siop_table->msg_out[1] =
+					siop_cmd->siop_tables.msg_out[1] =
 					    MSG_EXT_SDTR_LEN;
-					siop_cmd->siop_table->msg_out[2] =
+					siop_cmd->siop_tables.msg_out[2] =
 					    MSG_EXT_SDTR;
-					siop_cmd->siop_table->msg_out[3] =
+					siop_cmd->siop_tables.msg_out[3] =
 					    sc->minsync;
-					siop_cmd->siop_table->msg_out[4] =
+					siop_cmd->siop_tables.msg_out[4] =
 					    sc->maxoff;
-					siop_cmd->siop_table->t_msgout.count =
+					siop_cmd->siop_tables.t_msgout.count =
 					    htole32(MSG_EXT_SDTR_LEN + 2);
-					siop_cmd->siop_table->t_msgout.addr =
+					siop_cmd->siop_tables.t_msgout.addr =
 					    htole32(siop_cmd->dsa);
 					siop_table_sync(siop_cmd,
 					    BUS_DMASYNC_PREREAD |
@@ -769,8 +823,7 @@ scintr:
 					printf("%s: target %d asynchronous\n",
 					    sc->sc_dev.dv_xname,
 					    xs->sc_link->scsipi_scsi.target);
-					siop_cmd->siop_target->status =
-					    TARST_OK;
+					siop_target->status = TARST_OK;
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
@@ -785,6 +838,12 @@ scintr:
 				} else {
 					printf("scsi message reject, message "
 					    "sent was 0x%x\n", msg);
+					if (msg == MSG_SIMPLE_Q_TAG ||
+					    msg == MSG_HEAD_OF_Q_TAG ||
+					    msg == MSG_ORDERED_Q_TAG)
+						if (siop_handle_qtag_reject(
+						    siop_cmd) == -1)
+							goto reset;
 				}
 				/* no table to flush here */
 				CALL_SCRIPT(Ent_msgin_ack);
@@ -795,30 +854,31 @@ scintr:
 			else
 				printf("%s: ", sc->sc_dev.dv_xname);
 			printf("unhandled message 0x%x\n",
-			    siop_cmd->siop_table->msg_in[0]);
-			siop_cmd->siop_table->t_msgout.count= htole32(1);
-			siop_cmd->siop_table->t_msgout.addr =
+			    siop_cmd->siop_tables.msg_in[0]);
+			siop_cmd->siop_tables.t_msgout.count= htole32(1);
+			siop_cmd->siop_tables.t_msgout.addr =
 			    htole32(siop_cmd->dsa);
-			siop_cmd->siop_table->msg_out[0] = MSG_MESSAGE_REJECT;
+			siop_cmd->siop_tables.msg_out[0] = MSG_MESSAGE_REJECT;
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_send_msgout);
 			return 1;
+		}
 		case A_int_extmsgin:
 #ifdef DEBUG_INTR
 			printf("extended message: msg 0x%x len %d\n",
-			    siop_cmd->siop_table->msg_in[2], 
-			    siop_cmd->siop_table->msg_in[1]);
+			    siop_cmd->siop_tables.msg_in[2], 
+			    siop_cmd->siop_tables.msg_in[1]);
 #endif
-			if (siop_cmd->siop_table->msg_in[1] > 6)
+			if (siop_cmd->siop_tables.msg_in[1] > 6)
 				printf("%s: extended message too big (%d)\n",
 				    sc->sc_dev.dv_xname,
-				    siop_cmd->siop_table->msg_in[1]);
-			siop_cmd->siop_table->t_extmsgdata.count =
-			    htole32(siop_cmd->siop_table->msg_in[1] - 1);
-			siop_cmd->siop_table->t_extmsgdata.addr = 
+				    siop_cmd->siop_tables.msg_in[1]);
+			siop_cmd->siop_tables.t_extmsgdata.count =
+			    htole32(siop_cmd->siop_tables.msg_in[1] - 1);
+			siop_cmd->siop_tables.t_extmsgdata.addr = 
 			    htole32(
-			    le32toh(siop_cmd->siop_table->t_extmsgin.addr)
+			    le32toh(siop_cmd->siop_tables.t_extmsgin.addr)
 			    + 2);
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -829,45 +889,50 @@ scintr:
 			{
 			int i;
 			printf("extended message: 0x%x, data:",
-			    siop_cmd->siop_table->msg_in[2]);
-			for (i = 3; i < 2 + siop_cmd->siop_table->msg_in[1];
+			    siop_cmd->siop_tables.msg_in[2]);
+			for (i = 3; i < 2 + siop_cmd->siop_tables.msg_in[1];
 			    i++)
 				printf(" 0x%x",
-				    siop_cmd->siop_table->msg_in[i]);
+				    siop_cmd->siop_tables.msg_in[i]);
 			printf("\n");
 			}
 #endif
-			if (siop_cmd->siop_table->msg_in[2] == MSG_EXT_WDTR) {
+			if (siop_cmd->siop_tables.msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(siop_cmd)) {
-				case SIOP_NEG_NOP:
-					break;
 				case SIOP_NEG_MSGOUT:
+					siop_update_scntl3(sc,
+					    siop_cmd->siop_target);
 					siop_table_sync(siop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
-					break;
+					return(1);
 				case SIOP_NEG_ACK:
+					siop_update_scntl3(sc,
+					    siop_cmd->siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
+					return(1);
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
 				}
 				return(1);
 			}
-			if (siop_cmd->siop_table->msg_in[2] == MSG_EXT_SDTR) {
+			if (siop_cmd->siop_tables.msg_in[2] == MSG_EXT_SDTR) {
 				switch (siop_sdtr_neg(siop_cmd)) {
-				case SIOP_NEG_NOP:
-					break;
 				case SIOP_NEG_MSGOUT:
+					siop_update_scntl3(sc,
+					    siop_cmd->siop_target);
 					siop_table_sync(siop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
-					break;
+					return(1);
 				case SIOP_NEG_ACK:
+					siop_update_scntl3(sc,
+					    siop_cmd->siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
-					break;
+					return(1);
 				default:
 					panic("invalid retval from "
 					    "siop_wdtr_neg()");
@@ -875,52 +940,14 @@ scintr:
 				return(1);
 			}
 			/* send a message reject */
-			siop_cmd->siop_table->t_msgout.count =
-			    htole32(1);
-			siop_cmd->siop_table->t_msgout.addr =
+			siop_cmd->siop_tables.t_msgout.count = htole32(1);
+			siop_cmd->siop_tables.t_msgout.addr =
 			    htole32(siop_cmd->dsa);
-			siop_cmd->siop_table->msg_out[0] =
+			siop_cmd->siop_tables.msg_out[0] =
 			    MSG_MESSAGE_REJECT;
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_send_msgout);
-			return 1;
-		case A_int_resel: /* reselected */
-		case A_int_reseltag: /* reselected  with tag */
-			INCSTAT(siop_stat_intr_reselect);
-			if ((siop_cmd->siop_table->msg_in[0] & 0x80) == 0) {
-				printf("%s: reselect without identify (%d)\n",
-				    sc->sc_dev.dv_xname,
-				    siop_cmd->siop_table->msg_in[0]);
-				goto reset;
-			}
-			target = bus_space_read_1(sc->sc_rt,
-			    sc->sc_rh, SIOP_SCRATCHA);
-			if ((target & 0x80) == 0) {
-				printf("reselect without id (%d)\n", target);
-				goto reset;
-			}
-			target &= 0x0f;
-			lun = siop_cmd->siop_table->msg_in[0] & 0x07;
-#ifdef DEBUG_DR
-			printf("reselected by target %d lun %d\n",
-			    target, lun);
-#endif
-			siop_cmd =
-			    sc->targets[target]->active_list[lun].tqh_first;
-			if (siop_cmd == NULL) {
-				printf("%s: reselected without cmd\n",
-				    sc->sc_dev.dv_xname);
-				goto reset;
-			}
-			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSA,
-			    siop_cmd->dsa);
-			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
-			    (sc->targets[target]->id >> 24) & 0xff);
-			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
-			    (sc->targets[target]->id >> 8) & 0xff);
-			/* no table to flush */
-			CALL_SCRIPT(Ent_selected);
 			return 1;
 		case A_int_disc:
 			INCSTAT(siop_stat_intr_sdp);
@@ -940,47 +967,44 @@ scintr:
 			 * Don't call memmove in this case.
 			 */
 			if (offset < SIOP_NSG) {
-				memmove(&siop_cmd->siop_table->data[0],
-				    &siop_cmd->siop_table->data[offset],
+				memmove(&siop_cmd->siop_tables.data[0],
+				    &siop_cmd->siop_tables.data[offset],
 				    (SIOP_NSG - offset) * sizeof(scr_table_t));
 				siop_table_sync(siop_cmd,
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			}
-			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-			    sc->sc_scheddma->dm_segs[0].ds_addr);
+			CALL_SCRIPT(Ent_script_sched);
 			return 1;
 		case A_int_resfail:
 			printf("reselect failed\n");
-			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-			    sc->sc_scheddma->dm_segs[0].ds_addr);
+			CALL_SCRIPT(Ent_script_sched);
 			return  1;
 		case A_int_done:
 			if (xs == NULL) {
 				printf("%s: done without command, DSA=0x%lx\n",
 				    sc->sc_dev.dv_xname, (u_long)siop_cmd->dsa);
 				siop_cmd->status = CMDST_FREE;
-				bus_space_write_4(sc->sc_rt, sc->sc_rh,
-				    SIOP_DSP,
-				    sc->sc_scheddma->dm_segs[0].ds_addr);
 				siop_start(sc);
+				CALL_SCRIPT(Ent_script_sched);
 				return 1;
 			}
 			if (siop_target->status == TARST_PROBING &&
-			    xs->sc_link->device_softc != NULL)
+			    xs->sc_link->device_softc != NULL) {
 				siop_target->status = TARST_ASYNC;
+			}
 #ifdef DEBUG_INTR
 			printf("done, DSA=0x%lx target id 0x%x last msg "
 			    "in=0x%x status=0x%x\n", (u_long)siop_cmd->dsa,
-			    le32toh(siop_cmd->siop_table->id),
-			    siop_cmd->siop_table->msg_in[0],
-			    le32toh(siop_cmd->siop_table->status));
+			    le32toh(siop_cmd->siop_tables.id),
+			    siop_cmd->siop_tables.msg_in[0],
+			    le32toh(siop_cmd->siop_tables.status));
 #endif
 			INCSTAT(siop_stat_intr_done);
 			if (siop_cmd->status == CMDST_SENSE_ACTIVE)
 				siop_cmd->status = CMDST_SENSE_DONE;
 			else
 				siop_cmd->status = CMDST_DONE;
-			switch(le32toh(siop_cmd->siop_table->status)) {
+			switch(le32toh(siop_cmd->siop_tables.status)) {
 			case SCSI_OK:
 				xs->error = (siop_cmd->status == CMDST_DONE) ?
 				    XS_NOERROR : XS_SENSE;
@@ -1020,13 +1044,32 @@ check_sense:
 	panic("siop_intr: I shouldn't be there !");
 	return 1;
 end:
-	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    sc->sc_scheddma->dm_segs[0].ds_addr);
-	lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
+	CALL_SCRIPT(Ent_script_sched);
 	siop_scsicmd_end(siop_cmd);
+	siop_lun->active = NULL;
 	if (siop_cmd->status == CMDST_FREE) {
-		TAILQ_REMOVE(&siop_target->active_list[lun],
-		    siop_cmd, next);
+		if (freetarget) {
+#ifdef DEBUG
+			printf("%s: free siop_target for target %d lun %d "
+			    "lunsw offset %d\n",
+			    sc->sc_dev.dv_xname,
+			    xs->sc_link->scsipi_scsi.target, lun,
+			    sc->targets[xs->sc_link->scsipi_scsi.target]->lunsw->lunsw_off);
+#endif
+			/*
+			 * nothing here, free the target struct and resel
+			 * switch entry
+			 */
+			siop_script_write(sc, siop_cmd->siop_target->reseloff,
+			    0x800c00ff);
+			TAILQ_INSERT_TAIL(&sc->lunsw_list,
+			    sc->targets[xs->sc_link->scsipi_scsi.target]->lunsw,
+			    next);
+			free(sc->targets[xs->sc_link->scsipi_scsi.target],
+			    M_DEVBUF);
+			sc->targets[xs->sc_link->scsipi_scsi.target] = NULL;
+			siop_cmd->siop_target = NULL;
+		}
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 	}
 	siop_start(sc);
@@ -1038,17 +1081,8 @@ siop_scsicmd_end(siop_cmd)
 	struct siop_cmd *siop_cmd;
 {
 	struct scsipi_xfer *xs = siop_cmd->xs;
-	struct siop_softc *sc = siop_cmd->siop_target->siop_sc;
-	u_int32_t *scr;
+	struct siop_softc *sc = siop_cmd->siop_sc;
 
-	/* remove from reselect slot */
-	siop_resel_sync(sc, BUS_DMASYNC_POSTWRITE);
-#ifdef DEBUG_SHED
-	printf("freeing resel %d\n", siop_cmd->reselslot);
-#endif
-	scr = &sc->sc_resel[(Ent_res_nextld / 4) * siop_cmd->reselslot];
-	scr[Ent_rtarget / 4] = htole32(0x808400ff);
-	siop_resel_sync(sc, BUS_DMASYNC_PREWRITE);
 	if (siop_cmd->status != CMDST_SENSE_DONE &&
 	    xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1066,10 +1100,10 @@ siop_scsicmd_end(siop_cmd)
 		siop_cmd->rs_cmd.unused[0] = siop_cmd->rs_cmd.unused[1] = 0;
 		siop_cmd->rs_cmd.length = sizeof(struct scsipi_sense_data);
 		siop_cmd->rs_cmd.control = 0;
-		siop_cmd->siop_table->status = htole32(0xff); /*invalid status*/
-		siop_cmd->siop_table->t_msgout.count= htole32(1);
-		siop_cmd->siop_table->t_msgout.addr = htole32(siop_cmd->dsa);
-		siop_cmd->siop_table->msg_out[0] =
+		siop_cmd->siop_tables.status = htole32(0xff);/*invalid status*/
+		siop_cmd->siop_tables.t_msgout.count= htole32(1);
+		siop_cmd->siop_tables.t_msgout.addr = htole32(siop_cmd->dsa);
+		siop_cmd->siop_tables.msg_out[0] =
 		    MSG_IDENTIFY(xs->sc_link->scsipi_scsi.lun, 1);
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
 		    &siop_cmd->rs_cmd, sizeof(struct scsipi_sense),
@@ -1080,9 +1114,9 @@ siop_scsicmd_end(siop_cmd)
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out;
 		}
-		siop_cmd->siop_table->cmd.count = 
+		siop_cmd->siop_tables.cmd.count = 
 		    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
-		siop_cmd->siop_table->cmd.addr =
+		siop_cmd->siop_tables.cmd.addr =
 		    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
 		    &xs->sense.scsi_sense, sizeof(struct  scsipi_sense_data),
@@ -1095,9 +1129,9 @@ siop_scsicmd_end(siop_cmd)
 			goto out;
 		}
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
-			siop_cmd->siop_table->data[i].count =
+			siop_cmd->siop_tables.data[i].count =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);
-			siop_cmd->siop_table->data[i].addr =
+			siop_cmd->siop_tables.data[i].addr =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_addr);
 		}
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1105,6 +1139,8 @@ siop_scsicmd_end(siop_cmd)
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_cmd, 0,
 		    siop_cmd->dmamap_cmd->dm_mapsize, BUS_DMASYNC_PREWRITE);
 		siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
+		/* arrange for the cmd to be handled now */
+		TAILQ_INSERT_HEAD(&sc->ready_list, siop_cmd, next);
 		return;
 	} else if (siop_cmd->status == CMDST_SENSE_DONE) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1121,8 +1157,41 @@ out:
 }
 
 /*
- * handle a bus reset: reset chip, unqueue all active commands and report
- * loosage to upper layer.
+ * handle a rejected queue tag message: the command will run untagged,
+ * has to adjust the reselect script.
+ */
+int
+siop_handle_qtag_reject(siop_cmd)
+	struct siop_cmd *siop_cmd;
+{
+#if 0
+	struct siop_softc *sc = siop_cmd->siop_sc;
+	int target = siop_cmd->xs->sc_link->scsipi_scsi.target;
+	int lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
+	int tag = siop_cmd->siop_tables.msg_out[2];
+	int resel;
+	u_int32_t *rscr;
+
+	for (resel = 0; resel < sc->sc_nreselslots; resel++) {
+		rscr = &sc->sc_resel[
+			(Ent_res_nextld / 4) * resel];
+		if ((htole32(rscr[Ent_rtarget / 4]) & 0x0f) == target &&
+		    (htole32(rscr[Ent_rlun / 4]) & 0x0f) == lun &&
+		    (htole32(rscr[Ent_rtag / 4]) & 0xff) == tag) {
+			rscr[Ent_rtag / 4] = htole32(0x808400ff);
+			return 0;
+		}
+	}
+	printf("%s: reselect entry not found for target %d lun %d tag %d\n",
+	    sc->sc_dev.dv_xname, target, lun, tag);
+	return -1;
+#endif
+	return 0;
+}
+
+/*
+ * handle a bus reset: reset chip, unqueue all active commands, free all
+ * target struct and report loosage to upper layer.
  * As the upper layer may requeue immediatly we have to first store
  * all active commands in a temporary queue.
  */
@@ -1132,6 +1201,7 @@ siop_handle_reset(sc)
 {
 	struct cmd_list reset_list;
 	struct siop_cmd *siop_cmd, *next_siop_cmd;
+	struct siop_lun *siop_lun;
 	int target, lun;
 	/*
 	 * scsi bus reset. reset the chip and restart
@@ -1147,29 +1217,39 @@ siop_handle_reset(sc)
 		if (sc->targets[target] == NULL)
 			continue;
 		for (lun = 0; lun < 8; lun++) {
-			for (siop_cmd =
-			    TAILQ_FIRST(&sc->targets[target]->active_list[lun]);
-			    siop_cmd != NULL; siop_cmd = next_siop_cmd) {
-				next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
-				if (siop_cmd->status < CMDST_ACTIVE)
-					continue;
-				printf("cmd %p (target %d) in reset list\n",
-				    siop_cmd, target);
-				TAILQ_REMOVE(
-				    &sc->targets[target]->active_list[lun],
-				    siop_cmd, next);
-				TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
-			}
+			siop_lun = &(sc->targets[target]->siop_lun[lun]);
+			if (siop_lun == NULL)
+				continue;
+			siop_cmd = siop_lun->active;
+			if (siop_cmd == NULL)
+				continue;
+			printf("cmd %p (target %d:%d) in reset list\n",
+			    siop_cmd, target, lun);
+			TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+			siop_lun->active = NULL;
 		}
 		sc->targets[target]->status = TARST_ASYNC;
-		sc->targets[target]->flags = ~(TARF_SYNC | TARF_WIDE);
+		sc->targets[target]->flags &= ~TARF_ISWIDE;
 	}
+	for (siop_cmd = TAILQ_FIRST(&sc->ready_list); siop_cmd != NULL;
+	    siop_cmd = next_siop_cmd) {
+		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
+		if (siop_cmd->status != CMDST_SENSE) 
+			continue;
+		printf("cmd %p (target %d:%d) in reset list (sense)\n",
+		    siop_cmd, siop_cmd->xs->sc_link->scsipi_scsi.target,
+		    siop_cmd->xs->sc_link->scsipi_scsi.lun);
+		TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
+		TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+	}
+
 	for (siop_cmd = TAILQ_FIRST(&reset_list); siop_cmd != NULL;
 	    siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
 		siop_cmd->xs->error = (siop_cmd->flags & CMDFL_TIMEOUT) ?
 		    XS_TIMEOUT : XS_RESET;
-		printf("cmd %p about to be processed\n", siop_cmd);
+		printf("cmd %p (status %d) about to be processed\n", siop_cmd,
+		    siop_cmd->status);
 		if (siop_cmd->status == CMDST_SENSE ||
 		    siop_cmd->status == CMDST_SENSE_ACTIVE) 
 			siop_cmd->status = CMDST_SENSE_DONE;
@@ -1188,19 +1268,19 @@ siop_scsicmd(xs)
 	struct siop_softc *sc = (struct siop_softc *)xs->sc_link->adapter_softc;
 	struct siop_cmd *siop_cmd;
 	int s, error, i;
-	int target = xs->sc_link->scsipi_scsi.target;
-	int lun = xs->sc_link->scsipi_scsi.lun;
+	const int target = xs->sc_link->scsipi_scsi.target;
+	const int lun = xs->sc_link->scsipi_scsi.lun;
 
 	s = splbio();
-#ifdef DEBUG_SHED
+#ifdef DEBUG_SCHED
 	printf("starting cmd for %d:%d\n", target, lun);
 #endif
-	siop_cmd = sc->free_list.tqh_first;
+	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd) {
 		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 	} else {
 		if (siop_morecbd(sc) == 0) {
-			siop_cmd = sc->free_list.tqh_first;
+			siop_cmd = TAILQ_FIRST(&sc->free_list);
 #ifdef DIAGNOSTIC
 			if (siop_cmd == NULL)
 				panic("siop_morecbd succeed and does nothing");
@@ -1208,9 +1288,9 @@ siop_scsicmd(xs)
 			TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 		}
 	}
-	splx(s);
 	if (siop_cmd == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
+		splx(s);
 		return(TRY_AGAIN_LATER);
 	}
 #ifdef DIAGNOSTIC
@@ -1218,59 +1298,76 @@ siop_scsicmd(xs)
 		panic("siop_scsicmd: new cmd not free");
 #endif
 	if (sc->targets[target] == NULL) {
+#ifdef DEBUG
+		printf("%s: alloc siop_target for target %d\n",
+			sc->sc_dev.dv_xname, target);
+#endif
 		sc->targets[target] =
 		    malloc(sizeof(struct siop_target), M_DEVBUF, M_NOWAIT);
 		if (sc->targets[target] == NULL) {
 			printf("%s: can't malloc memory for target %d\n",
 			    sc->sc_dev.dv_xname, target);
 			xs->error = XS_DRIVER_STUFFUP;
+			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
-		sc->targets[target]->siop_sc = sc;
 		sc->targets[target]->status = TARST_PROBING;
 		sc->targets[target]->flags = 0;
 		sc->targets[target]->id = sc->clock_div << 24; /* scntl3 */
 		sc->targets[target]->id |=  target << 16; /* id */
 		/* sc->targets[target]->id |= 0x0 << 8; scxfer is 0 */
-		for (i = 0; i < 8; i++) 
-			TAILQ_INIT(&sc->targets[target]->active_list[i]);
+
+		/* get a lun switch script */
+		sc->targets[target]->lunsw = siop_get_lunsw(sc);
+		if (sc->targets[target]->lunsw == NULL) {
+			printf("%s: can't alloc lunsw for target %d\n",
+			    sc->sc_dev.dv_xname, target);
+			xs->error = XS_DRIVER_STUFFUP;
+			splx(s);
+			return(TRY_AGAIN_LATER);
+		}
+		siop_add_reselsw(sc, target);
+		for (i=0; i < 8; i++)
+			sc->targets[target]->siop_lun[i].active = NULL;
 	}
 	siop_cmd->siop_target = sc->targets[target];
 	siop_cmd->xs = xs;
-	siop_cmd->siop_table->id = htole32(sc->targets[target]->id);
-	siop_cmd->siop_table->t_msgout.count= htole32(1);
-	siop_cmd->siop_table->t_msgout.addr = htole32(siop_cmd->dsa);
-	memset(siop_cmd->siop_table->msg_out, 0, 8);
-	siop_cmd->siop_table->msg_out[0] = MSG_IDENTIFY(lun, 1);
-#if 0
-	siop_cmd->siop_table->msg_out[1] = MSG_SIMPLE_Q_TAG;
-	siop_cmd->siop_table->msg_out[2] = 0;
-#endif
+	siop_cmd->flags = 0;
+	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
+	siop_cmd->siop_tables.t_msgout.count= htole32(1);
+	siop_cmd->siop_tables.t_msgout.addr = htole32(siop_cmd->dsa);
+	memset(siop_cmd->siop_tables.msg_out, 0, 8);
+	siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (sc->features & SF_BUS_WIDE &&
-		    (xs->sc_link->quirks & SDEV_NOWIDE) == 0) {
+		if (sc->targets[target]->flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
-			siop_cmd->siop_table->msg_out[1] = MSG_EXTENDED;
-			siop_cmd->siop_table->msg_out[2] = MSG_EXT_WDTR_LEN;
-			siop_cmd->siop_table->msg_out[3] = MSG_EXT_WDTR;
-			siop_cmd->siop_table->msg_out[4] =
+			siop_cmd->siop_tables.msg_out[1] = MSG_EXTENDED;
+			siop_cmd->siop_tables.msg_out[2] = MSG_EXT_WDTR_LEN;
+			siop_cmd->siop_tables.msg_out[3] = MSG_EXT_WDTR;
+			siop_cmd->siop_tables.msg_out[4] =
 			    MSG_EXT_WDTR_BUS_16_BIT;
-			siop_cmd->siop_table->t_msgout.count=
+			siop_cmd->siop_tables.t_msgout.count=
 			    htole32(MSG_EXT_WDTR_LEN + 2 + 1);
-		} else if ((xs->sc_link->quirks & SDEV_NOSYNC) == 0) {
+		} else if (sc->targets[target]->flags & TARF_SYNC) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
-			siop_cmd->siop_table->msg_out[1] = MSG_EXTENDED;
-			siop_cmd->siop_table->msg_out[2] = MSG_EXT_SDTR_LEN;
-			siop_cmd->siop_table->msg_out[3] = MSG_EXT_SDTR;
-			siop_cmd->siop_table->msg_out[4] = sc->minsync;
-			siop_cmd->siop_table->msg_out[5] = sc->maxoff;
-			siop_cmd->siop_table->t_msgout.count=
+			siop_cmd->siop_tables.msg_out[1] = MSG_EXTENDED;
+			siop_cmd->siop_tables.msg_out[2] = MSG_EXT_SDTR_LEN;
+			siop_cmd->siop_tables.msg_out[3] = MSG_EXT_SDTR;
+			siop_cmd->siop_tables.msg_out[4] = sc->minsync;
+			siop_cmd->siop_tables.msg_out[5] = sc->maxoff;
+			siop_cmd->siop_tables.t_msgout.count=
 			    htole32(MSG_EXT_SDTR_LEN + 2 +1);
 		} else {
 			sc->targets[target]->status = TARST_OK;
 		}
+	} else if (sc->targets[target]->status == TARST_OK &&
+	    (sc->targets[target]->flags & TARF_TAG)) {
+		siop_cmd->siop_tables.msg_out[1] = MSG_SIMPLE_Q_TAG;
+		siop_cmd->siop_tables.msg_out[2] = 0;
+		siop_cmd->siop_tables.t_msgout.count = htole32(3);
+		siop_cmd->flags |= CMDFL_TAG;
 	}
-	siop_cmd->siop_table->status = htole32(0xff); /* set invalid status */
+	siop_cmd->siop_tables.status = htole32(0xff); /* set invalid status */
 
 	/* load the DMA maps */
 	error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
@@ -1279,11 +1376,12 @@ siop_scsicmd(xs)
 		printf("%s: unable to load cmd DMA map: %d",
 		    sc->sc_dev.dv_xname, error);
 		xs->error = XS_DRIVER_STUFFUP;
+		splx(s);
 		return(TRY_AGAIN_LATER);
 	}
-	siop_cmd->siop_table->cmd.count =
+	siop_cmd->siop_tables.cmd.count =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
-	siop_cmd->siop_table->cmd.addr =
+	siop_cmd->siop_tables.cmd.addr =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
 	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
@@ -1292,13 +1390,14 @@ siop_scsicmd(xs)
 			printf("%s: unable to load cmd DMA map: %d",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
-			return(TRY_AGAIN_LATER);
 			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
+			splx(s);
+			return(TRY_AGAIN_LATER);
 		}
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
-			siop_cmd->siop_table->data[i].count =
+			siop_cmd->siop_tables.data[i].count =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);
-			siop_cmd->siop_table->data[i].addr =
+			siop_cmd->siop_tables.data[i].addr =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_addr);
 		}
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1311,14 +1410,14 @@ siop_scsicmd(xs)
 	siop_table_sync(siop_cmd, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	siop_cmd->status = CMDST_READY;
-	s = splbio();
-	TAILQ_INSERT_TAIL(&sc->targets[target]->active_list[lun],
-	    siop_cmd, next);
+	TAILQ_INSERT_TAIL(&sc->ready_list, siop_cmd, next);
 	siop_start(sc);
 	if (xs->xs_control & XS_CTL_POLL) {
 		/* poll for command completion */
-		while ((xs->xs_status & XS_STS_DONE) == 0)
+		while ((xs->xs_status & XS_STS_DONE) == 0) {
+			delay(1000);
 			siop_intr(sc);
+		}
 		splx(s);
 		return (COMPLETE);
 	}
@@ -1330,11 +1429,12 @@ void
 siop_start(sc)
 	struct siop_softc *sc;
 {
-	struct siop_cmd *siop_cmd;
-	u_int32_t *scr, *rscr;
+	struct siop_cmd *siop_cmd, *next_siop_cmd;
+	struct siop_lun *siop_lun;
+	u_int32_t *scr;
 	u_int32_t dsa;
 	int timeout;
-	int target, lun, slot, resel;
+	int target, lun, tag, slot;
 	int newcmd = 0; 
 
 	/*
@@ -1360,131 +1460,95 @@ siop_start(sc)
 	 * the last used slot, all previous slots are free, we can restart
 	 * from 0.
 	 */
-	if (scr[Ent_slot / 4 + 1] != 0) {
+	if (scr[(Ent_slot / 4) + 1] != 0) {
 		slot = sc->sc_currschedslot = 0;
 	} else {
 		slot++;
 	}
-	
-	for (target = 0; target <= sc->sc_link.scsipi_scsi.max_target;
-	    target++) {
-		if (sc->targets[target] == NULL)
+
+	for (siop_cmd = TAILQ_FIRST(&sc->ready_list); siop_cmd != NULL;
+	    siop_cmd = next_siop_cmd) {
+		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
+#ifdef DIAGNOSTIC
+		if (siop_cmd->status != CMDST_READY &&
+		    siop_cmd->status != CMDST_SENSE)
+			panic("siop: non-ready cmd in ready list");
+#endif	
+		target = siop_cmd->xs->sc_link->scsipi_scsi.target;
+		lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
+		siop_lun = &(sc->targets[target]->siop_lun[lun]);
+		if (siop_lun->active != NULL)
 			continue;
-		for (lun = 0; lun < 8; lun++) {
-			siop_cmd =
-			    sc->targets[target]->active_list[lun].tqh_first;
-			if (siop_cmd == NULL)
-				continue;
-			if (siop_cmd->status != CMDST_READY &&
-			    siop_cmd->status != CMDST_SENSE)
-				continue;
-			/* find a reselect slot */
-			for (resel = 0; resel < sc->sc_nreselslots; resel++) {
-				/* if target is 0xff the slot is free */
-				rscr = &sc->sc_resel[
-				    (Ent_res_nextld / 4) * resel];
-				if ((htole32(rscr[Ent_rtarget / 4]) & 0xff)
-				    == 0xff)
-					break;
-			}
-			if (resel == sc->sc_nreselslots) {
-#ifdef DEBUG
-				printf("%s: out of reselect slot\n",
-					sc->sc_dev.dv_xname);
-#endif
-				goto end; /* no free slot */
-			}
-			/* find a free scheduler slot and load it */
-			for (; slot < sc->sc_nschedslots; slot++) {
-				scr = &sc->sc_sched[(Ent_nextslot / 4) * slot];
-				/*
-				 * if relative addr of first jump is 0 the
-				 * slot isn't free
-				 */
-				if (scr[Ent_slot / 4 + 1] == 0)
-					continue;
-#ifdef DEBUG_SHED
-				printf("using slot %d resel %d for DSA 0x%lx\n", slot, resel, (u_long)siop_cmd->dsa);
-#endif
-				/* note that we started a new command */
-				newcmd = 1;
-				/* mark command as active */
-				if (siop_cmd->status == CMDST_READY)
-					siop_cmd->status = CMDST_ACTIVE;
-				else if (siop_cmd->status == CMDST_SENSE)
-					siop_cmd->status = CMDST_SENSE_ACTIVE;
-				else
-					panic("siop_start: bad status");
-				/* patch scripts with DSA addr */
-				dsa = siop_cmd->dsa;
-				/*
-				 * first reselect script
-				 * 0x808400xx is 'JUMP foo if not 0xxx'
-				 * we need target | 0x80 for the IDENTIFY cmd.
-				 */ 
-				rscr[Ent_rtarget / 4] =
-				    htole32(0x80840080 | target);
-				rscr[Ent_rlun / 4] =
-				    htole32(0x80840000 | lun);
-				/*
-				 * 0x78000000 is a 'move data8 to reg'. data8
-				 * is the second octet, reg offset is the third.
-				 */
-				rscr[Ent_rdsa0 / 4] =
-				    htole32(0x78100000 |
-				    ((dsa & 0x000000ff) <<  8));
-				rscr[Ent_rdsa1 / 4] =
-				    htole32(0x78110000 |
-				    ( dsa & 0x0000ff00       ));
-				rscr[Ent_rdsa2 / 4] =
-				    htole32(0x78120000 |
-				    ((dsa & 0x00ff0000) >>  8));
-				rscr[Ent_rdsa3 / 4] =
-				    htole32(0x78130000 |
-				    ((dsa & 0xff000000) >> 16));
-				siop_cmd->reselslot = resel;
-				/* now scheduler slot */
-				scr[Ent_idsa0 / 4] =
-				    htole32(0x78100000 |
-				    ((dsa & 0x000000ff) <<  8));
-				scr[Ent_idsa1 / 4] =
-				    htole32(0x78110000 |
-				    ( dsa & 0x0000ff00       ));
-				scr[Ent_idsa2 / 4] =
-				    htole32(0x78120000 |
-				    ((dsa & 0x00ff0000) >>  8));
-				scr[Ent_idsa3 / 4] =
-				    htole32(0x78130000 |
-				    ((dsa & 0xff000000) >> 16));
-				/* handle timeout */
-				if (siop_cmd->status == CMDST_ACTIVE) {
-					if ((siop_cmd->xs->xs_control &
-					    XS_CTL_POLL) == 0) {
-						/* start exire timer */
-						timeout = (u_int64_t)
-						    siop_cmd->xs->timeout *
-						    (u_int64_t)hz / 1000;
-						if (timeout == 0)
-							timeout = 1;
-						callout_reset(
-						    &siop_cmd->xs->xs_callout,
-						    timeout, siop_timeout,
-						    siop_cmd);
-					}
-				}
-				/*
-				 * Change jump offset so that this slot will be
-				 * handled
-				 */
-				scr[Ent_slot / 4 + 1] = 0;
+		/* find a free scheduler slot and load it */
+		for (; slot < sc->sc_nschedslots; slot++) {
+			scr = &sc->sc_sched[(Ent_nextslot / 4) * slot];
+			/*
+			 * if relative addr of first jump is not 0 the
+			 * slot is free
+			 */
+			if (scr[(Ent_slot / 4) + 1] != 0)
 				break;
-			}
-			/* no more free slot, no need to continue */
-			if (slot == sc->sc_nschedslots) {
-				goto end;
-			}
-			sc->sc_currschedslot = slot;
 		}
+		/* no more free slot, no need to continue */
+		if (slot == sc->sc_nschedslots) {
+			printf("out of slot\n");
+			goto end;
+		}
+#ifdef DEBUG_SCHED
+		printf("using slot %d for DSA 0x%lx\n", slot,
+		    (u_long)siop_cmd->dsa);
+#endif
+		/* note that we started a new command */
+		newcmd = 1;
+		/* mark command as active */
+		if (siop_cmd->status == CMDST_READY) {
+			siop_cmd->status = CMDST_ACTIVE;
+			tag = (siop_cmd->flags & CMDFL_TAG) ?
+			    0x0 : 0xff;
+		} else if (siop_cmd->status == CMDST_SENSE) {
+			siop_cmd->status = CMDST_SENSE_ACTIVE;
+			tag = 0xff;
+			siop_cmd->siop_tables.t_msgout.count = htole32(1);
+		} else
+			panic("siop_start: bad status");
+		TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
+		siop_lun->active = siop_cmd;
+		/* patch scripts with DSA addr */
+		dsa = siop_cmd->dsa;
+		/* first reselect switch */
+		siop_script_write(sc, siop_lun->reseloff + 1,
+		    dsa + sizeof(struct siop_xfer_common) + Ent_reload_dsa);
+		/* then scheduler entry */
+		scr[E_slot_abs_loaddsa_Used[0]] =
+		    htole32(dsa + sizeof(struct siop_xfer_common));
+#ifdef DEBUG_SCHED
+		{ int j;
+		printf("dump of slot:\n");
+		for (j = 0; j < (sizeof(slot_script) / sizeof(slot_script[0]));
+		    j +=2)
+			printf("0x%x 0x%x\n", scr[j], scr[j+1]);
+		}
+#endif
+		/* handle timeout */
+		if (siop_cmd->status == CMDST_ACTIVE) {
+			if ((siop_cmd->xs->xs_control &
+			    XS_CTL_POLL) == 0) {
+				/* start exire timer */
+				timeout = (u_int64_t) siop_cmd->xs->timeout *
+				    (u_int64_t)hz / 1000;
+				if (timeout == 0)
+					timeout = 1;
+				callout_reset( &siop_cmd->xs->xs_callout,
+				    timeout, siop_timeout, siop_cmd);
+			}
+		}
+		/*
+		 * Change jump offset so that this slot will be
+		 * handled
+		 */
+		scr[(Ent_slot / 4) + 1] = 0;
+		sc->sc_currschedslot = slot;
+		slot++;
 	}
 end:
 	/* if nothing changed no need to flush cache and wakeup script */
@@ -1503,7 +1567,7 @@ siop_timeout(v)
 	void *v;
 {
 	struct siop_cmd *siop_cmd = v;
-	struct siop_softc *sc = siop_cmd->siop_target->siop_sc;
+	struct siop_softc *sc = siop_cmd->siop_sc;
 	int s;
 
 	scsi_print_addr(siop_cmd->xs->sc_link);
@@ -1515,7 +1579,7 @@ siop_timeout(v)
 
 	/* deactivate callout */
 	callout_stop(&siop_cmd->xs->xs_callout);
-	/* mark command has being timed out; siop_intr will handle it */
+	/* mark command as being timed out; siop_intr will handle it */
 	/*
 	 * mark command has being timed out and just return;
 	 * the bus reset will generate an interrupt,
@@ -1548,10 +1612,12 @@ int
 siop_morecbd(sc)
 	struct siop_softc *sc;
 {
-	int error, i;
+	int error, i, j;
 	bus_dma_segment_t seg;
 	int rseg;
 	struct siop_cbd *newcbd;
+	bus_addr_t dsa;
+	u_int32_t *scr;
 
 	/* allocate a new list head */
 	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT);
@@ -1560,6 +1626,7 @@ siop_morecbd(sc)
 		    "head\n", sc->sc_dev.dv_xname);
 		return ENOMEM;
 	}
+	memset(newcbd, 0, sizeof(struct siop_cbd));
 
 	/* allocate cmd list */
 	newcbd->cmds =
@@ -1570,6 +1637,7 @@ siop_morecbd(sc)
 		error = ENOMEM;
 		goto bad3;
 	}
+	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * SIOP_NCMDPB);
 	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error) {
@@ -1598,6 +1666,10 @@ siop_morecbd(sc)
 		    sc->sc_dev.dv_xname, error);
 		goto bad0;
 	}
+#ifdef DEBUG
+	printf("newcdb PHY addr: 0x%lx\n",
+	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
+#endif
 	
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
@@ -1619,33 +1691,60 @@ siop_morecbd(sc)
 			    sc->sc_dev.dv_xname, error);
 			goto bad0;
 		}
+		newcbd->cmds[i].siop_sc = sc;
 		newcbd->cmds[i].siop_cbdp = newcbd;
-		newcbd->cmds[i].siop_table = &newcbd->xfers[i];
-		memset(newcbd->cmds[i].siop_table, 0, sizeof(struct siop_xfer));
+		newcbd->cmds[i].siop_xfer = &newcbd->xfers[i];
+		memset(newcbd->cmds[i].siop_xfer, 0,
+		    sizeof(struct siop_xfer));
 		newcbd->cmds[i].dsa = newcbd->xferdma->dm_segs[0].ds_addr +
 		    i * sizeof(struct siop_xfer);
+		dsa = newcbd->cmds[i].dsa;
 		newcbd->cmds[i].status = CMDST_FREE;
-		newcbd->cmds[i].siop_table->t_msgout.count= htole32(1);
-		newcbd->cmds[i].siop_table->t_msgout.addr =
-		    htole32(newcbd->cmds[i].dsa);
-		newcbd->cmds[i].siop_table->t_msgin.count= htole32(1);
-		newcbd->cmds[i].siop_table->t_msgin.addr =
-		    htole32(newcbd->cmds[i].dsa + 8);
-		newcbd->cmds[i].siop_table->t_extmsgin.count= htole32(2);
-		newcbd->cmds[i].siop_table->t_extmsgin.addr = htole32(
-		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 1);
-		newcbd->cmds[i].siop_table->t_msgtag.count= htole32(2);
-		newcbd->cmds[i].siop_table->t_msgtag.addr = htole32(
-		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 1);
-		newcbd->cmds[i].siop_table->t_status.count= htole32(1);
-		newcbd->cmds[i].siop_table->t_status.addr = htole32(
-		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr) + 8);
+		newcbd->cmds[i].siop_tables.t_msgout.count= htole32(1);
+		newcbd->cmds[i].siop_tables.t_msgout.addr = htole32(dsa);
+		newcbd->cmds[i].siop_tables.t_msgin.count= htole32(1);
+		newcbd->cmds[i].siop_tables.t_msgin.addr = htole32(dsa + 8);
+		newcbd->cmds[i].siop_tables.t_extmsgin.count= htole32(2);
+		newcbd->cmds[i].siop_tables.t_extmsgin.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr) + 1);
+		newcbd->cmds[i].siop_tables.t_msgtag.count= htole32(2);
+		newcbd->cmds[i].siop_tables.t_msgtag.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr) + 1);
+		newcbd->cmds[i].siop_tables.t_status.count= htole32(1);
+		newcbd->cmds[i].siop_tables.t_status.addr = htole32(
+		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr) + 8);
+
+		/* The reselect script */
+		scr = &newcbd->cmds[i].siop_xfer->resel[0];
+		for (j = 0; j < sizeof(load_dsa) / sizeof(load_dsa[0]); j++)
+			scr[j] = htole32(load_dsa[j]);
+		/*
+		 * 0x78000000 is a 'move data8 to reg'. data8 is the second
+		 * octet, reg offset is the third.
+		 */
+		scr[Ent_rdsa0 / 4] =
+		    htole32(0x78100000 | ((dsa & 0x000000ff) <<  8));
+		scr[Ent_rdsa1 / 4] =
+		    htole32(0x78110000 | ( dsa & 0x0000ff00       ));
+		scr[Ent_rdsa2 / 4] =
+		    htole32(0x78120000 | ((dsa & 0x00ff0000) >>  8));
+		scr[Ent_rdsa3 / 4] =
+		    htole32(0x78130000 | ((dsa & 0xff000000) >> 16));
+		for (j = 0;
+		    j < (sizeof(E_resel_abs_reselected_Used) /
+		    sizeof(E_resel_abs_reselected_Used[0])); j++)
+			scr[E_resel_abs_reselected_Used[j]] =
+			    htole32(sc->sc_scriptaddr + Ent_reselected);
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 #ifdef DEBUG
-		printf("tables[%d]: out=0x%x in=0x%x status=0x%x\n", i,
-		    le32toh(newcbd->cmds[i].siop_table->t_msgin.addr),
-		    le32toh(newcbd->cmds[i].siop_table->t_msgout.addr),
-		    le32toh(newcbd->cmds[i].siop_table->t_status.addr));
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i,
+		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr),
+		    le32toh(newcbd->cmds[i].siop_tables.t_msgout.addr),
+		    le32toh(newcbd->cmds[i].siop_tables.t_status.addr));
+		for (j = 0; j < sizeof(load_dsa) / sizeof(load_dsa[0]);
+		    j += 2) {
+			printf("0x%x 0x%x\n", scr[j], scr[j+1]);
+		}
 #endif
 	}
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
@@ -1661,6 +1760,104 @@ bad3:
 	return error;
 }
 
+struct siop_lunsw *
+siop_get_lunsw(sc)
+	struct siop_softc *sc;
+{
+	struct siop_lunsw *lunsw;
+	int i;
+
+	lunsw = TAILQ_FIRST(&sc->lunsw_list);
+	if (lunsw != NULL) {
+#ifdef DEBUG
+		printf("siop_get_lunsw got lunsw at offset %d\n",
+		    lunsw->lunsw_off);
+#endif
+		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
+		return lunsw;
+	}
+	lunsw = malloc(sizeof(struct siop_lunsw), M_DEVBUF, M_NOWAIT);
+	if (lunsw == NULL)
+		return NULL;
+	memset(lunsw, 0, sizeof(struct siop_lunsw));
+#ifdef DEBUG
+	printf("allocating lunsw at offset %d\n", sc->ram_free);
+#endif
+	if (sc->features & SF_CHIP_RAM) {
+		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh,
+		    sc->ram_free * 4, lun_switch,
+		    sizeof(lun_switch) / sizeof(lun_switch[0]));
+		bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
+		    (sc->ram_free + E_abs_lunsw_return_Used[0]) * 4,
+		    sc->sc_scriptaddr + Ent_lunsw_return);
+	} else {
+		for (i = 0; i < sizeof(lun_switch) / sizeof(lun_switch[0]);
+		    i++)
+			sc->sc_script[sc->ram_free + i] =
+			    htole32(lun_switch[i]);
+		sc->sc_script[sc->ram_free + E_abs_lunsw_return_Used[0]] = 
+		    htole32(sc->sc_scriptaddr + Ent_lunsw_return);
+	}
+	lunsw->lunsw_off = sc->ram_free;
+	sc->ram_free += sizeof(lun_switch) / sizeof(lun_switch[0]);
+	if (sc->ram_free > 1024)
+		printf("%s: ram_free (%d) > 1024\n", sc->sc_dev.dv_xname,
+		    sc->ram_free);
+	return lunsw;
+}
+
+void
+siop_add_reselsw(sc, target)
+	struct siop_softc *sc;
+	int target;
+{
+	int i;
+	struct siop_lun *siop_lun;
+	/* add an entry to resel switch */
+	for (i = 0; i < 15; i++) {
+		sc->targets[target]->reseloff = Ent_resel_targ0 / 4 + i * 2;
+		if ((siop_script_read(sc, sc->targets[target]->reseloff) & 0xff)
+		    == 0xff) { /* it's free */
+#ifdef DEBUG
+			printf("siop: target %d slot %d offset %d\n",
+			    target, i, sc->targets[target]->reseloff);
+#endif
+			/* JUMP abs_foo, IF target | 0x80; */
+			siop_script_write(sc, sc->targets[target]->reseloff,
+			    0x800c0080 | target);
+			siop_script_write(sc, sc->targets[target]->reseloff + 1,
+			    sc->sc_scriptaddr +
+			    sc->targets[target]->lunsw->lunsw_off * 4);
+			break;
+		}
+	}
+	if (i == 15) /* no free slot, shouldn't happen */
+		panic("siop: resel switch full");
+
+	for (i = 0; i < 8; i++) {
+		siop_lun = &(sc->targets[target]->siop_lun[i]);
+		siop_lun->reseloff =
+		    sc->targets[target]->lunsw->lunsw_off +
+			(Ent_resel_lun0 / 4) + (i * 2);
+	}
+	siop_update_scntl3(sc, sc->targets[target]);
+}
+
+void
+siop_update_scntl3(sc, siop_target)
+	struct siop_softc *sc;
+	struct siop_target *siop_target;
+{
+	/* MOVE target->id >> 24 TO SCNTL3 */
+	siop_script_write(sc,
+	    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4),
+	    0x78030000 | ((siop_target->id >> 16) & 0x0000ff00));
+	/* MOVE target->id >> 8 TO SXFER */
+	siop_script_write(sc,
+	    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4) + 2,
+	    0x78050000 | (siop_target->id & 0x0000ff00));
+}
+
 #ifdef SIOP_STATS
 void
 siop_printstats()
@@ -1669,7 +1866,6 @@ siop_printstats()
 	printf("siop_stat_intr_shortxfer %d\n", siop_stat_intr_shortxfer);
 	printf("siop_stat_intr_xferdisc %d\n", siop_stat_intr_xferdisc);
 	printf("siop_stat_intr_sdp %d\n", siop_stat_intr_sdp);
-	printf("siop_stat_intr_reselect %d\n", siop_stat_intr_reselect);
 	printf("siop_stat_intr_done %d\n", siop_stat_intr_done);
 }
 #endif

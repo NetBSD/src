@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.5 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.6 2000/10/18 17:06:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -47,9 +47,9 @@ typedef struct scr_table {
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
- * transfer. It lives in the same chunk of DMA-safe memory as the script.
+ * transfer. 
  */
-struct siop_xfer {
+struct siop_xfer_common {
 	u_int8_t msg_out[8];	/* 0 */
 	u_int8_t msg_in[8];	/* 8 */
 	int status;		/* 16 */
@@ -66,6 +66,13 @@ struct siop_xfer {
 	scr_table_t data[SIOP_NSG]; /* 88 */
 } __attribute__((__packed__));
 
+/* xfer description of the script: tables and reselect script */
+struct siop_xfer {
+	struct siop_xfer_common tables;
+	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
+	u_int32_t resel[14];
+} __attribute__((__packed__));
+
 /*
  * This decribes a command handled by the SCSI controller
  * These are chained in either a free list or a active list
@@ -73,9 +80,11 @@ struct siop_xfer {
  */
 struct siop_cmd {
 	TAILQ_ENTRY (siop_cmd) next;
+	struct siop_softc *siop_sc; /* points back to our adapter */
 	struct siop_target *siop_target; /* pointer to our target def */
 	struct scsipi_xfer *xs; /* xfer from the upper level */
-	struct siop_xfer *siop_table; /* tables dealing with this xfer */
+	struct siop_xfer *siop_xfer; /* tables dealing with this xfer */
+#define siop_tables siop_xfer->tables
 	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
@@ -105,14 +114,22 @@ struct siop_cbd {
 #define CMDST_DONE		6 /* cmd slot has been processed */
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
+#define CMDFL_TAG	0x0002 /* tagged cmd */
+
+/* per lun struct */
+struct siop_lun {
+	struct siop_cmd *active; /* active command */
+	int reseloff; /* XXX tmp */
+};
 
 /* per-target struct */
 struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
 	u_int32_t id;	/* for SELECT FROM */
-	struct cmd_list active_list[8]; /* per-lun active cmds */
-	struct siop_softc *siop_sc; /* points back to our adapter */
+	struct siop_lun siop_lun[8]; /* per-lun state, XXX should be dynamic */
+	int reseloff; /* XXX tmp */
+	struct siop_lunsw *lunsw; /* XXX tmp */
 };
 
 /* target status */
@@ -123,8 +140,15 @@ struct siop_target {
 #define TARST_OK	4 /* sync/wide agreement is valid */
 
 /* target flags */
-#define TARF_SYNC	0x00 /* target is sync */
-#define TARF_WIDE	0x01 /* target is wide */
+#define TARF_SYNC	0x01 /* target can do sync */
+#define TARF_WIDE	0x02 /* target can do wide */
+#define TARF_TAG	0x04 /* target can do tags */
+#define TARF_ISWIDE	0x08 /* target is wide */
+
+struct siop_lunsw {
+	TAILQ_ENTRY (siop_lunsw) next;
+	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
+};
 
 void	siop_common_reset __P((struct siop_softc *));
 int	siop_modechange __P((struct siop_softc *));
