@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.9 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10 2001/06/20 02:40:14 briggs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -100,6 +100,28 @@ db_regs_t	ddb_regs;		/* register state */
 				 ((ins)&M_B  ) == I_B )
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+
+/*
+ * GDB's register array is:
+ *  32 4-byte GPRs
+ *  32 8-byte FPRs
+ *   7 4-byte UISA special-purpose registers
+ *  16 4-byte segment registers
+ *  32 4-byte standard OEA special-purpose registers,
+ * and up to 64 4-byte non-standard OES special-purpose registers.
+ * GDB keeps some extra space, so the total size of the register array
+ * they use is 880 bytes (gdb-5.0).
+ */
+typedef long	kgdb_reg_t;
+#define KGDB_NUMREGS	220	/* Treat all registers as 4-byte */
+#define KGDB_BUFLEN	512
+#define KGDB_PPC_PC_REG		96	/* first UISA SP register */
+#define KGDB_PPC_MSR_REG	97
+#define KGDB_PPC_CR_REG		98
+#define KGDB_PPC_LR_REG		99
+#define KGDB_PPC_CTR_REG	100
+#define KGDB_PPC_XER_REG	101
+#define KGDB_PPC_MQ_REG		102
 
 #ifdef _KERNEL
 
