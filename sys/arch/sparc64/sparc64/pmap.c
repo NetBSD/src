@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2001/09/10 21:19:26 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2001/09/15 07:12:22 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3244,7 +3244,6 @@ pmap_page_protect(pg, prot)
 			       
 		firstpv = pv = pa_to_pvh(pa);
 		s = splvm();
-		if (firstpv->pv_pmap) simple_lock(&firstpv->pv_pmap->pm_lock);
 
 		/* First remove the entire list of continuation pv's*/
 		for (npv = pv->pv_next; npv; npv = pv->pv_next) {
@@ -3313,6 +3312,7 @@ pmap_page_protect(pg, prot)
 		}
 #endif
 		if (pv->pv_pmap != NULL) {
+			simple_lock(&pv->pv_pmap->pm_lock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF|PDB_REMOVE)) {
 				printf("pmap_page_protect: demap va %p of pa %lx from pm %p...\n",
