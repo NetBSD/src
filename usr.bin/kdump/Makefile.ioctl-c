@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.4 2001/09/25 14:26:56 mycroft Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.5 2002/09/19 11:31:21 lukem Exp $
+
+# NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
 ioctl.c: mkioctls ${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h
-	CC="${CC}" DESTDIR=${DESTDIR} /bin/sh ${.CURDIR}/../kdump/mkioctls \
+	CC="${CC}" DESTDIR=${DESTDIR} \
+	    /bin/sh ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
 	    ${DESTDIR}/usr/include/sys/ioctl.h \
 	    ${DESTDIR}/usr/include/sys/ioctl_compat.h > ioctl.c
 
