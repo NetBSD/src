@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.16.2.6 1993/11/29 03:31:49 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.7 1994/01/22 14:22:01 briggs Exp $
  */
 
 /*
@@ -439,7 +439,7 @@ stopen(dev, flags)
 
 	sc_link = st->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n",
-		 dev, unit, NST));
+		 dev, unit, stcd.cd_ndevs));
 
 	if (st->flags & ST_OPEN)
 		return EBUSY;
