@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.68 2000/11/08 14:28:14 ad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.69 2001/07/02 15:25:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -623,7 +623,7 @@ in_pcbnotifyall(table, faddr, errno, notify)
 }
 
 void
-in_pcbpurgeif(table, ifp)
+in_pcbpurgeif0(table, ifp)
 	struct inpcbtable *table;
 	struct ifnet *ifp;
 {
@@ -635,9 +635,6 @@ in_pcbpurgeif(table, ifp)
 	    inp != (struct inpcb *)&table->inpt_queue;
 	    inp = ninp) {
 		ninp = inp->inp_queue.cqe_next;
-		if (inp->inp_route.ro_rt != NULL &&
-		    inp->inp_route.ro_rt->rt_ifp == ifp)
-			in_rtchange(inp, 0);
 		imo = inp->inp_moptions;
 		if (imo != NULL) {
 			/*
@@ -662,6 +659,23 @@ in_pcbpurgeif(table, ifp)
 			}
 			imo->imo_num_memberships -= gap;
 		}
+	}
+}
+
+void
+in_pcbpurgeif(table, ifp)
+	struct inpcbtable *table;
+	struct ifnet *ifp;
+{
+	struct inpcb *inp, *ninp;
+
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;
+	    inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
+		if (inp->inp_route.ro_rt != NULL &&
+		    inp->inp_route.ro_rt->rt_ifp == ifp)
+			in_rtchange(inp, 0);
 	}
 }
 
