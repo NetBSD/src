@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.15 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.15 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ svr4_sys_sysarch(l, v, retval)
 	struct proc *p = l->l_proc;
 	char tmp[MAXHOSTNAMELEN];
 	size_t len;
-	int error, name;
+	int error, name[2];
 
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
@@ -316,9 +316,9 @@ svr4_sys_sysarch(l, v, retval)
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)
 			return (error);
-		name = KERN_HOSTNAME;
-		return (kern_sysctl(&name, 1, NULL, NULL, SCARG(uap, a1), len,
-		    p));
+		name[0] = CTL_KERN;
+		name[1] = KERN_HOSTNAME;
+		return (old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL));
 	default:
 		printf("uninplemented svr4_sysarch(%d), a1 %p\n",
 		    SCARG(uap, op), SCARG(uap, a1));

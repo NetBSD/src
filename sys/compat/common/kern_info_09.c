@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.13 2003/08/07 16:30:35 agc Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.14 2003/12/04 19:38:22 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.13 2003/08/07 16:30:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.14 2003/12/04 19:38:22 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,13 +56,13 @@ compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
+	int name[2];
 	size_t sz;
 
-	name = KERN_DOMAINNAME;
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
 	sz = SCARG(uap,len);
-	return (kern_sysctl(&name, 1, SCARG(uap, domainname), &sz, 0, 0, p));
+	return (old_sysctl(&name[0], 2, SCARG(uap, domainname), &sz, 0, 0, l));
 }
 
 
@@ -74,15 +74,12 @@ compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int name;
-	int error;
+	int name[2];
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
-			    SCARG(uap, len), p));
+	name[0] = CTL_KERN;
+	name[1] = KERN_DOMAINNAME;
+	return (old_sysctl(&name[0], 2, 0, 0, SCARG(uap, domainname),
+			   SCARG(uap, len), l));
 }
 
 struct outsname {

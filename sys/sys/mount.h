@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.117 2003/12/01 18:42:12 dbj Exp $	*/
+/*	$NetBSD: mount.h,v 1.118 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -416,8 +416,7 @@ struct vfsops {
 	void	(*vfs_init)	__P((void));
 	void	(*vfs_reinit)	__P((void));
 	void	(*vfs_done)	__P((void));
-	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
-				    size_t, struct proc *));
+	int	*vfs_wassysctl;			/* @@@ no longer useful */
 	int	(*vfs_mountroot) __P((void));
 	int	(*vfs_checkexp) __P((struct mount *, struct mbuf *, int *,
 				    struct ucred **));
@@ -533,8 +532,6 @@ int	vfs_attach __P((struct vfsops *));
 int	vfs_detach __P((struct vfsops *));
 void	vfs_reinit __P((void));
 struct vfsops *vfs_getopsbyname __P((const char *));
-int	vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct proc *));
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */

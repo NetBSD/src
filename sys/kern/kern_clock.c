@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.87 2003/08/07 16:31:42 agc Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.88 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.87 2003/08/07 16:31:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.88 2003/12/04 19:38:23 atatat Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1409,22 +1409,3 @@ hardpps(struct timeval *tvp,		/* time at PPS */
 }
 #endif /* PPS_SYNC */
 #endif /* NTP  */
-
-/*
- * Return information about system clocks.
- */
-int
-sysctl_clockrate(void *where, size_t *sizep)
-{
-	struct clockinfo clkinfo;
-
-	/*
-	 * Construct clockinfo structure.
-	 */
-	clkinfo.tick = tick;
-	clkinfo.tickadj = tickadj;
-	clkinfo.hz = hz;
-	clkinfo.profhz = profhz;
-	clkinfo.stathz = stathz ? stathz : hz;
-	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
-}

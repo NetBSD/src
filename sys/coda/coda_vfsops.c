@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.30 2003/10/30 02:07:38 simonb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.31 2003/12/04 19:38:22 atatat Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.30 2003/10/30 02:07:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.31 2003/12/04 19:38:22 atatat Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.30 2003/10/30 02:07:38 simonb Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
@@ -114,7 +115,7 @@ struct vfsops coda_vfsops = {
     coda_init,
     NULL,
     coda_done,
-    coda_sysctl,
+    NULL,
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
 	eopnotsupp,
@@ -550,30 +551,28 @@ coda_done(void)
     ENTRY;
 }
 
-int
-coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlp;
-	void *newp;
-	size_t newl;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 {
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "coda", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 18, CTL_EOL);
+	/*
+	 * XXX the "18" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "18" is the order as taken from sys/mount.h
+	 */
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
 /*
-	case FFS_CLUSTERREAD:
-		return (sysctl_int(oldp, oldlp, newp, newl, &doclusterread));
- */
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "clusterread", NULL,
+		       NULL, 0, &doclusterread, 0,
+		       CTL_VFS, 18, FFS_CLUSTERREAD, CTL_EOL);
+*/
 }
 
 /*

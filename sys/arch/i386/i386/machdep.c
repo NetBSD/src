@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.544 2003/12/04 13:05:16 keihan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.545 2003/12/04 19:38:21 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.544 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.545 2003/12/04 19:38:21 atatat Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -491,96 +491,155 @@ i386_bufinit()
 }
 
 /*
- * machine dependent system variables.
+ * sysctl helper routine for machdep.tm* nodes.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_tm_longrun(SYSCTLFN_ARGS)
 {
-	dev_t consdev;
-	struct btinfo_bootpath *bibp;
-	int error, mode;
+	struct sysctlnode node;
+	int io, error;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	if (!tmx86_has_longrun)
+		return (EOPNOTSUPP);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
+	node = *rnode;
+	node.sysctl_data = &io;
 
-	case CPU_BIOSBASEMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, biosbasemem));
-
-	case CPU_BIOSEXTMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, biosextmem));
-
-	case CPU_NKPDE:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_FPU_PRESENT:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_fpu_present));
-
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if(!bibp)
-			return(ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	case CPU_DISKINFO:
-		if (i386_alldisks == NULL)
-			return (ENOENT);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, i386_alldisks,
-		    sizeof (struct disklist) +
-			(i386_ndisks - 1) * sizeof (struct nativedisk_info)));
-	case CPU_OSFXSR:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
-	case CPU_SSE:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
-	case CPU_SSE2:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
+	switch (rnode->sysctl_num) {
 	case CPU_TMLR_MODE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
-		mode = (int)(crusoe_longrun = tmx86_get_longrun_mode());
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &mode);
-		if (!error && (u_int)mode != crusoe_longrun) {
-			if (tmx86_set_longrun_mode(mode)) {
-				crusoe_longrun = (u_int)mode;
-			} else {
-				error = EINVAL;
-			}
-		}
-		return (error);
+		io = (int)(crusoe_longrun = tmx86_get_longrun_mode());
+		break;
 	case CPU_TMLR_FREQUENCY:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
 		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_frequency));
+		io = crusoe_frequency;
+		break;
 	case CPU_TMLR_VOLTAGE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
 		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_voltage));
+		io = crusoe_voltage;
+		break;
 	case CPU_TMLR_PERCENTAGE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
 		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_percentage));
+		io = crusoe_percentage;
+		break;
 	default:
 		return (EOPNOTSUPP);
 	}
-	/* NOTREACHED */
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (rnode->sysctl_num == CPU_TMLR_MODE) {
+		if (tmx86_set_longrun_mode(io))
+			crusoe_longrun = (u_int)io;
+		else
+			return (EINVAL);
+	}
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for machdep.booted_kernel
+ */
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct btinfo_bootpath *bibp;
+	struct sysctlnode node;
+
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return(ENOENT); /* ??? */
+
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * sysctl helper routine for machdep.diskinfo
+ */
+static int
+sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = i386_alldisks;
+	node.sysctl_size = sizeof(struct disklist) +
+	    (i386_ndisks - 1) * sizeof(struct nativedisk_info);
+        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * machine dependent system variables.
+ */
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "biosbasemem", NULL,
+		       NULL, 0, &biosbasemem, 0,
+		       CTL_MACHDEP, CPU_BIOSBASEMEM, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "biosextmem", NULL,
+		       NULL, 0, &biosextmem, 0,
+		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "nkpde", NULL,
+		       NULL, 0, &nkpde, 0,
+		       CTL_MACHDEP, CPU_NKPDE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "diskinfo", NULL,
+		       sysctl_machdep_diskinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 0, &i386_fpu_present, 0,
+		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "osfxsr", NULL,
+		       NULL, 0, &i386_use_fxsave, 0,
+		       CTL_MACHDEP, CPU_OSFXSR, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "sse", NULL,
+		       NULL, 0, &i386_has_sse, 0,
+		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "sse2", NULL,
+		       NULL, 0, &i386_has_sse2, 0,
+		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "tm_longrun_mode", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);
 }
 
 void *
