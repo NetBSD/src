@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1998/09/01 17:42:59 tsubai Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1999/01/27 21:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -160,30 +160,30 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	if (biowait(bp))
 		goto done;
 
-	if (get_short(bp->b_data + MBRMAGICOFF) != MBRMAGIC)
+	if (get_short(bp->b_data + MBR_MAGICOFF) != MBR_MAGIC)
 		goto done;
 
 	/* Extract info from MBR partition table */
-	mp = (struct mbr_partition *)(bp->b_data + MBRPARTOFF);
+	mp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
 	for (i = 0; i < NMBRPART; i++, mp++) {
-		if (get_long(&mp->mbr_size)) {
-			switch (mp->mbr_type) {
-			case MBR_EXTENDED:
+		if (get_long(&mp->mbrp_size)) {
+			switch (mp->mbrp_type) {
+			case MBR_PTYPE_EXT:
 				if (*pnpart < MAXPARTITIONS) {
 					pp = lp->d_partitions + *pnpart;
 					bzero(pp, sizeof *pp);
-					pp->p_size = get_long(&mp->mbr_size);
-					pp->p_offset = off + get_long(&mp->mbr_start);
+					pp->p_size = get_long(&mp->mbrp_size);
+					pp->p_offset = off + get_long(&mp->mbrp_start);
 					++*pnpart;
 				}
 				if (found = mbr_to_label(dev, strat,
-							 off + get_long(&mp->mbr_start),
+							 off + get_long(&mp->mbrp_start),
 							 lp, pnpart, osdep, off))
 					goto done;
 				break;
-			case MBR_NETBSD:
+			case MBR_PTYPE_NETBSD:
 				/* Found the real NetBSD partition, use it */
-				osdep->cd_start = off + get_long(&mp->mbr_start);
+				osdep->cd_start = off + get_long(&mp->mbrp_start);
 				if (found = get_netbsd_label(dev, strat, lp, osdep->cd_start))
 					goto done;
 				/* FALLTHROUGH */
@@ -191,8 +191,8 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 				if (*pnpart < MAXPARTITIONS) {
 					pp = lp->d_partitions + *pnpart;
 					bzero(pp, sizeof *pp);
-					pp->p_size = get_long(&mp->mbr_size);
-					pp->p_offset = off + get_long(&mp->mbr_start);
+					pp->p_size = get_long(&mp->mbrp_size);
+					pp->p_offset = off + get_long(&mp->mbrp_start);
 					++*pnpart;
 				}
 				break;
@@ -251,7 +251,7 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 	osdep->cd_start = 0;	/* XXX for now */
 
-	/*mbr_to_label(dev, strat, MBRSECTOR, lp, &lp->d_npartitions, osdep, 0);*/
+	/*mbr_to_label(dev, strat, MBR_BBSECTOR, lp, &lp->d_npartitions, osdep, 0);*/
 	return 0;
 }
 
