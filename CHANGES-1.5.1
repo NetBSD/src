@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.78 2001/06/11 19:12:01 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.79 2001/06/11 20:54:21 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5247,3 +5247,32 @@ sys/conf/osrelease.sh				patch
 gnu/usr.bin/send-pr/Makefile			patch
 
   Mark this as NetBSD 1.5.1.
+
+sys/dev/pcmcia/if_xi.c				1.10
+
+  Packet includes CRC, so mark it in the mbuf header.  Fixes the
+  ``discarding oversize frame (len=1518)'' problem.
+
+etc/etc.arm32/MAKEDEV				1.55
+
+  Add support for fcom.  Fixes PR#11076.
+
+sys/kern/kern_time.c				1.55
+
+  Lower interrupt priority properly in the error path of settime(),
+  e.g. when it's denied due to securelevel being above 1.  Fixes
+  PR#13158.
+
+sys/dev/pci/if_rtk_pci.c			1.6
+sys/dev/pci/pcidevs				1.326
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+
+  Support the D-Link DFE-530TX+.  Fixes PR#13161.
+
+sys/arch/i386/i386/trap.c			1.159
+sys/arch/i386/i386/locore.s			1.240
+
+  Replace magic numbers in trap code with offsetof().
+  Deal better with traps during register restore.
+  Explain a bit more about what is going on here.
