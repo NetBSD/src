@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.10 2000/07/05 15:45:34 msaitoh Exp $
+.\"	$NetBSD: tp.4,v 1.11 2001/09/22 16:36:24 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,6 @@ Transport Protocol
 .Ft int
 .Fn socket "[AF_INET, AF_ISO]" SOCK_SEQPACKET 0
 .Sh DESCRIPTION
-.Pp
 The
 .Tn TP
 protocol provides reliable, flow-controlled, two-way
@@ -213,7 +212,7 @@ for the
 and
 .Dv TPOPT_CONN_DATA
 for
-.Va cmsg_type.
+.Va cmsg_type .
 .It Dv TPOPT_DISC_DATA \&#
 (char *) [none]
 .br
@@ -306,7 +305,7 @@ structure are
 described below.
 .El
 .Pp
-.Em Values for TPOPT_PARAMS:
+.Em Values for TPOPT_PARAMS :
 .Bl -tag -width p_sendack_ticks
 .It Ar p_Nretrans
 nonzero short integer [1]
@@ -406,7 +405,7 @@ implementation places upper bounds of
 .It Ar p_ack_strat
 .Dv TPACK_EACH
 or
-.Dv TPACK_WINDOW.
+.Dv TPACK_WINDOW .
 .Bq Dv TPACK_WINDOW
 .br
 This parameter applies only to class 4.
@@ -559,7 +558,7 @@ Its meaning is as follows.
 The bit numbering used is that of the RT PC, which means that bit
 0 is the most significant bit, while bit 8 is the least significant bit.
 .sp 1
-.Em Values for TPOPT_FLAGS:
+.Em Values for TPOPT_FLAGS :
 .Bl -tag -width Bitsx
 .It Sy Bits
 .Sy Description [Default]
@@ -585,8 +584,7 @@ set when expedited data are present
 .It 4\&..7
 Reserved.
 .El
-.Sh ERROR VALUES
-.Pp
+.Sh ERRORS
 The
 .Tn TP
 entity returns
@@ -620,7 +618,7 @@ If the signal is issued during a system call, the system call
 may be interrupted, in which case the
 .Va errno
 value upon return from the system call is
-.Er EINTR.
+.Er EINTR .
 If the signal
 .Dv SIGURG
 is being handled by reading
@@ -662,8 +660,7 @@ service
 .Dv SIGURG .
 It can use the
 .Fn getsockopt ...TPOPT_FLAGS...
-system
-call to see if the signal
+system call to see if the signal
 was due to the arrival of expedited data or due to a disconnection.
 In the latter case,
 .Xr getsockopt 2
@@ -672,9 +669,9 @@ will return
 .El
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr iso 4 ,
 .Xr clnp 4 ,
 .Xr cltp 4 ,
+.Xr iso 4 ,
 .Xr tcp 4 ,
 .Xr ifconfig 8
 .Sh BUGS
