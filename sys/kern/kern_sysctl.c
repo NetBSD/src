@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.162 2004/03/24 16:34:34 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.163 2004/03/24 16:55:49 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.162 2004/03/24 16:34:34 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.163 2004/03/24 16:55:49 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -103,6 +103,15 @@ static int sysctl_cvt_in(struct lwp *, int *, const void *, size_t,
 			 struct sysctlnode *);
 static int sysctl_cvt_out(struct lwp *, int, const struct sysctlnode *,
 			  void *, size_t, size_t *);
+
+static int sysctl_log_add(struct sysctllog **, struct sysctlnode *);
+static int sysctl_log_realloc(struct sysctllog *);
+
+struct sysctllog {
+	struct sysctlnode *log_root;
+	int *log_num;
+	int log_size, log_left;
+};
 
 /*
  * the "root" of the new sysctl tree
@@ -1617,6 +1626,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	 * what is it?
 	 */
 	flags = SYSCTL_VERSION|SYSCTL_TYPE(type)|SYSCTL_FLAGS(flags);
+	if (log != NULL)
+		flags &= ~CTLFLAG_PERMANENT;
 
 	/*
 	 * where do we put it?
@@ -1732,7 +1743,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		}
 	}
 
-	if (error == 0 && cnode != NULL) {
+	if (error == 0 &&
+	    (cnode != NULL || log != NULL)) {
 		/*
 		 * sysctl_create() gave us back a copy of the node,
 		 * but we need to know where it actually is...
@@ -1759,6 +1771,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 * not expecting an error here, but...
 		 */
 		if (error == 0) {
+			if (log != NULL)
+				sysctl_log_add(log, pnode);
 			if (cnode != NULL)
 				*cnode = pnode;
 		}
@@ -2055,6 +2069,141 @@ sysctl_free(struct sysctlnode *rnode)
 	} while (pnode != NULL && node != rnode);
 }
 
+int
+sysctl_log_add(struct sysctllog **logp, struct sysctlnode *node)
+{
+	int name[CTL_MAXNAME], namelen, i;
+	struct sysctlnode *pnode;
+	struct sysctllog *log;
+
+	if (node->sysctl_flags & CTLFLAG_PERMANENT)
+		return (0);
+
+	if (logp == NULL)
+		return (0);
+
+	if (*logp == NULL) {
+		MALLOC(log, struct sysctllog *, sizeof(struct sysctllog),
+		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+		if (log == NULL) {
+			/* XXX print error message? */
+			return (-1);
+		}
+		MALLOC(log->log_num, int *, 16 * sizeof(int),
+		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+		if (log->log_num == NULL) {
+			/* XXX print error message? */
+			free(log, M_SYSCTLDATA);
+			return (-1);
+		}
+		memset(log->log_num, 0, 16 * sizeof(int));
+		log->log_root = NULL;
+		log->log_size = 16;
+		log->log_left = 16;
+		*logp = log;
+	}
+	else
+		log = *logp;
+
+	/*
+	 * check that the root is proper.  it's okay to record the
+	 * address of the root of a tree.  it's the only thing that's
+	 * guaranteed not to shift around as nodes come and go.
+	 */
+	if (log->log_root == NULL)
+		log->log_root = sysctl_rootof(node);
+	else if (log->log_root != sysctl_rootof(node)) {
+		printf("sysctl: log %p root mismatch (%p)\n",
+		       log->log_root, sysctl_rootof(node));
+		return (-1);
+	}
+
+	/*
+	 * we will copy out name in reverse order
+	 */
+	for (pnode = node, namelen = 0;
+	     pnode != NULL && !(pnode->sysctl_flags & CTLFLAG_ROOT);
+	     pnode = pnode->sysctl_parent)
+		name[namelen++] = pnode->sysctl_num;
+
+	/*
+	 * do we have space?
+	 */
+	if (log->log_left < (namelen + 3))
+		sysctl_log_realloc(log);
+	if (log->log_left < (namelen + 3))
+		return (-1);
+
+	/*
+	 * stuff name in, then namelen, then node type, and finally,
+	 * the version for non-node nodes.
+	 */
+	for (i = 0; i < namelen; i++)
+		log->log_num[--log->log_left] = name[i];
+	log->log_num[--log->log_left] = namelen;
+	log->log_num[--log->log_left] = SYSCTL_TYPE(node->sysctl_flags);
+	if (log->log_num[log->log_left] != CTLTYPE_NODE)
+		log->log_num[--log->log_left] = node->sysctl_ver;
+	else
+		log->log_num[--log->log_left] = 0;
+
+	return (0);
+}
+
+void
+sysctl_teardown(struct sysctllog **logp)
+{
+	struct sysctlnode node, *rnode;
+	struct sysctllog *log;
+	uint namelen;
+	int *name, t, v, error, ni;
+	size_t sz;
+
+	if (logp == NULL || *logp == NULL)
+		return;
+	log = *logp;
+
+	error = sysctl_lock(NULL, NULL, 0);
+	if (error)
+		return;
+
+	memset(&node, 0, sizeof(node));
+
+	while (log->log_left < log->log_size) {
+		KASSERT((log->log_left + 3 < log->log_size) &&
+			(log->log_left + log->log_num[log->log_left + 2] <=
+			 log->log_size));
+		v = log->log_num[log->log_left++];
+		t = log->log_num[log->log_left++];
+		namelen = log->log_num[log->log_left++];
+		name = &log->log_num[log->log_left];
+
+		node.sysctl_num = name[namelen - 1];
+		node.sysctl_flags = t;
+		node.sysctl_ver = v;
+
+		rnode = log->log_root;
+		error = sysctl_locate(NULL, &name[0], namelen, &rnode, &ni);
+		if (error == 0) {
+			name[namelen - 1] = CTL_DESTROY;
+			rnode = rnode->sysctl_parent;
+			sz = 0;
+			(void)sysctl_destroy(&name[namelen - 1], 1, NULL,
+					     &sz, &node, sizeof(node),
+					     &name[0], NULL, rnode);
+		}
+
+		log->log_left += namelen;
+	}
+
+	KASSERT(log->log_size == log->log_left);
+	free(log->log_num, M_SYSCTLDATA);
+	free(log, M_SYSCTLDATA);
+	*logp = NULL;
+
+	sysctl_unlock(NULL);
+}
+
 /*
  * ********************************************************************
  * old_sysctl -- A routine to bridge old-style internal calls to the
@@ -2223,6 +2372,31 @@ sysctl_realloc(struct sysctlnode *p)
 	 */
 	FREE(p->sysctl_child, M_SYSCTLNODE);
 	p->sysctl_child = n;
+
+	return (0);
+}
+
+static int
+sysctl_log_realloc(struct sysctllog *log)
+{
+	int *n, s, d;
+
+	s = log->log_size * 2;
+	d = log->log_size;
+
+	n = malloc(s * sizeof(int), M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
+	if (n == NULL)
+		return (-1);
+
+	memset(n, 0, s * sizeof(int));
+	memcpy(&n[d], log->log_num, d * sizeof(int));
+	free(log->log_num, M_SYSCTLDATA);
+	log->log_num = n;
+	if (d)
+		log->log_left += d;
+	else
+		log->log_left = s;
+	log->log_size = s;
 
 	return (0);
 }
