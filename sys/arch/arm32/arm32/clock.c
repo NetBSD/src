@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.4 1996/04/19 19:39:17 mark Exp $ */
+/* $NetBSD: clock.c,v 1.5 1996/06/03 21:41:09 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -77,6 +77,15 @@ int
 clockhandler(frame)
 	struct clockframe *frame;
 {
+#ifdef RC7500
+	extern void setleds();
+	static int leds = 0;
+
+	setleds(1 << leds);
+	leds++;
+	if (leds >> 3)
+		leds = 0;
+#endif
 	hardclock(frame);
 	return(1);
 }
