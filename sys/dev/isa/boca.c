@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.7 1996/03/09 00:09:04 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.8 1996/03/09 01:04:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -39,6 +39,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 
 #define	NSLAVES	8
 
@@ -75,10 +76,6 @@ bocaprobe(parent, self, aux)
 	return (comprobe1(ia->ia_iobase));
 }
 
-struct boca_attach_args {
-	int ba_slave;
-};
-
 int
 bocasubmatch(parent, match, aux)
 	struct device *parent;
@@ -87,9 +84,9 @@ bocasubmatch(parent, match, aux)
 	struct boca_softc *sc = (void *)parent;
 	struct cfdata *cf = match;
 	struct isa_attach_args *ia = aux;
-	struct boca_attach_args *ba = ia->ia_aux;
+	struct commulti_attach_args *ca = ia->ia_aux;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_slave)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
 		return (0);
 	return ((*cf->cf_driver->cd_match)(parent, match, ia));
 }
@@ -100,9 +97,9 @@ bocaprint(aux, boca)
 	char *boca;
 {
 	struct isa_attach_args *ia = aux;
-	struct boca_attach_args *ba = ia->ia_aux;
+	struct commulti_attach_args *ca = ia->ia_aux;
 
-	printf(" slave %d", ba->ba_slave);
+	printf(" slave %d", ca->ca_slave);
 }
 
 void
@@ -112,7 +109,7 @@ bocaattach(parent, self, aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct boca_attach_args ba;
+	struct commulti_attach_args ca;
 	struct isa_attach_args isa;
 	int subunit;
 
@@ -120,10 +117,10 @@ bocaattach(parent, self, aux)
 
 	printf("\n");
 
-	isa.ia_aux = &ba;
-	for (ba.ba_slave = 0; ba.ba_slave < NSLAVES; ba.ba_slave++) {
+	isa.ia_aux = &ca;
+	for (ca.ca_slave = 0; ca.ca_slave < NSLAVES; ca.ca_slave++) {
 		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ba.ba_slave;
+		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ca.ca_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
@@ -131,9 +128,9 @@ bocaattach(parent, self, aux)
 		if ((cf = config_search(bocasubmatch, self, &isa)) != 0) {
 			subunit = cf->cf_unit;	/* can change if unit == * */
 			config_attach(self, cf, &isa, bocaprint);
-			sc->sc_slaves[ba.ba_slave] =
+			sc->sc_slaves[ca.ca_slave] =
 			    cf->cf_driver->cd_devs[subunit];
-			sc->sc_alive |= 1 << ba.ba_slave;
+			sc->sc_alive |= 1 << ca.ca_slave;
 		}
 	}
 
