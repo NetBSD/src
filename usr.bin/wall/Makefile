@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/07/01 20:50:33 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/20 03:13:32 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-WARNS=	1
 PROG=	wall
 BINGRP=	tty
 BINMODE=2555
