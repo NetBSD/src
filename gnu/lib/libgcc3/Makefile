@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/10/06 05:10:13 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2003/10/16 06:15:20 tron Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -31,7 +31,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 
 DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
-CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} tconfig.h
+CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
