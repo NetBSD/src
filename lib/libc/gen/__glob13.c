@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.4 1998/02/03 18:23:39 perry Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.5 1998/03/31 20:35:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.4 1998/02/03 18:23:39 perry Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.5 1998/03/31 20:35:04 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -604,7 +604,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 			g_Ctoc(pathbuf, buf);
 			if (pglob->gl_errfunc(buf, errno) ||
 			    pglob->gl_flags & GLOB_ERR)
-				return (GLOB_ABEND);
+				return (GLOB_ABORTED);
 		}
 		return(0);
 	}
