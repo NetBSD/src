@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/17 21:42:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/20 15:47:51 xtraeme Exp $
 
+WARNS=	3
 PROG=	brconfig
 MAN=	brconfig.8
 

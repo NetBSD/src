@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.8 2004/10/28 19:40:47 dsl Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.9 2005/01/20 15:47:51 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.8 2004/10/28 19:40:47 dsl Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.9 2005/01/20 15:47:51 xtraeme Exp $");
 #endif
 
 
@@ -147,7 +147,6 @@ void	do_bridgeflag(int, const char *, const char *, int, int);
 
 void	printb(const char *, u_int, const char *);
 
-int	main(int, char *[]);
 void	usage(void);
 
 int	aflag;
