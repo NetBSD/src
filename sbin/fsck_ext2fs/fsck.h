@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.4 2000/01/28 16:01:46 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.5 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -187,8 +187,8 @@ u_char	*typemap;		/* ptr to inode type table */
 int16_t	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
-char	*lfname;		/* lost & found directory name */
-int	lfmode;			/* lost & found directory creation mode */
+extern char	*lfname;	/* lost & found directory name */
+extern int	lfmode;		/* lost & found directory creation mode */
 
 daddr_t	n_blks;			/* number of blocks in use */
 daddr_t	n_files;		/* number of files in use */
