@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.18 1998/02/06 05:42:15 perry Exp $
+.\"	$NetBSD: gettytab.5,v 1.19 1998/04/22 04:54:19 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,11 @@ file each time it starts, allowing simpler
 reconfiguration of terminal characteristics.
 Each entry in the data base
 is used to describe one class of terminals.
+.Pp
+Where to run
+.Xr getty 8
+processes is normally defined by
+.Xr ttys 5 .
 .Pp
 There is a default terminal class,
 .Em default ,
@@ -358,6 +363,7 @@ mode.
 .Xr gethostname 3 ,
 .Xr uname 3 ,
 .Xr termcap 5 ,
+.Xr ttys 5 ,
 .Xr getty 8 .
 .Sh BUGS
 The special characters (erase, kill, etc.) are reset to system defaults
