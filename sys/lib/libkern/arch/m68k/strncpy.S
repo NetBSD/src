@@ -1,5 +1,3 @@
-/*	$NetBSD: strncpy.S,v 1.2 1994/10/26 06:39:38 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,29 +37,27 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-#ifdef notdef
-	.asciz "@(#)strncpy.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$NetBSD: strncpy.S,v 1.2 1994/10/26 06:39:38 cgd Exp $"
+	/*.asciz "from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: strncpy.S,v 1.3 1995/02/08 18:35:57 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(strncpy)
-	movl	sp@(4),d0	/* return value is toaddr */
-	movl	sp@(12),d1	/* count */
-	jeq	scdone		/* nothing to do */
-	movl	sp@(8),a0	/* a0 = fromaddr */
-	movl	d0,a1		/* a1 = toaddr */
+	movl	sp@(4),d0		| return value is toaddr
+	movl	sp@(12),d1		| count
+	beq	scdone			| nothing to do
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	d0,a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+	/* copy a byte */
-	jeq	scploop		/* copied null, go pad if necessary */
-	subql	#1,d1		/* adjust count */
-	jne	scloop		/* more room, keep going */
+	movb	a0@+,a1@+		| copy a byte
+	beq	scploop			| copied null, go pad if necessary
+	subql	#1,d1			| adjust count
+	bne	scloop			| more room, keep going
 scdone:
 	rts
 scploop:
-	subql	#1,d1		/* adjust count */
-	jeq	scdone		/* no more room, all done */
-	clrb	a1@+		/* clear a byte */
-	jra	scploop		/* keep going */
+	subql	#1,d1			| adjust count
+	beq	scdone			| no more room, all done
+	clrb	a1@+			| clear a byte
+	jra	scploop			| keep going
