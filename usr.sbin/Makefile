@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.53 1995/10/08 22:55:48 gwr Exp $
+#	$Id: Makefile,v 1.54 1995/10/09 00:09:05 chopps Exp $
 
 # not yet done: catman
 
 SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron dev_mkdb \
-	diskpart edquota gettable htable inetd iostat kgmon \
+	diskpart edquota gettable gspa htable inetd iostat kgmon \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
 	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdconfig rdate repquota rmt \
