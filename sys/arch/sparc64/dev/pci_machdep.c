@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 1999/06/05 05:29:50 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 1999/06/05 21:58:17 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -313,10 +313,8 @@ pci_conf_read(pc, tag, reg)
 		val = (pcireg_t)~0;
 	} else {
 #if 0
-		membar_sync();
-		data = probeget(bus_type_asi[sc->sc_configtag->type],
-			       sc->sc_configaddr + tag + reg, 4);
-		membar_sync();
+		data = probeget(sc->sc_configaddr + tag + reg,
+				bus_type_asi[sc->sc_configtag->type], 4);
 		if (data == -1)
 			val = (pcireg_t)~0;
 		else
@@ -351,14 +349,15 @@ pci_conf_write(pc, tag, reg, data)
 	if (confaddr_ok(sc, tag) == 0)
 		panic("pci_conf_write: bad addr");
 		
-	membar_sync();
 #if 0
-	probeset(bus_type_asi[sc->sc_configtag->type],
-		 sc->sc_configaddr + tag + reg, 4, data);
+	probeset(sc->sc_configaddr + tag + reg,
+		 bus_type_asi[sc->sc_configtag->type],
+		 4, data);
 #else
-	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
-#endif
 	membar_sync();
+	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
+	membar_sync();
+#endif
 }
 
 /*
