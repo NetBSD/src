@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 2003/05/01 23:02:35 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 2003/05/01 23:25:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -590,20 +590,16 @@ struct consdev consdev_zs = {
 	zscnputc,
 	nullcnpollc,
 	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_DEAD
 };
 
 static void
 zscnprobe(cn)
 	struct consdev *cn;
 {
-	extern const struct cdevsw zstty_cdevsw;
-	extern int tty00_is_console;
-
-	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
-	if (tty00_is_console)
-		cn->cn_pri = CN_REMOTE;
-	else
-		cn->cn_pri = CN_NORMAL;
 }
 
 static void
@@ -612,7 +608,15 @@ zscninit(cn)
 {
 	struct zs_chanstate *cs;
 
+	extern const struct cdevsw zstty_cdevsw;
+	extern int tty00_is_console;
 	extern volatile u_char *sccport0a;
+
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
+	if (tty00_is_console)
+		cn->cn_pri = CN_REMOTE;
+	else
+		cn->cn_pri = CN_NORMAL;
 
 	zc_cons = (struct zschan *)sccport0a; /* XXX */
 
