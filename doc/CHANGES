@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.260 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.261 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -583,3 +583,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	disklabel(8): On i386 & amd64, preserve the MBR and partition table
 		even on disks without a NetBSD MBR partition.  [lukem 20040119]
 	acorn32: beep(4) removed.  [bjh21 20040125]
+	arm: Change ARM9 support code to use the Dcache in write-back mode.
+		[rearnsha 20040126]
