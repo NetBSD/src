@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.482 2002/11/07 20:41:28 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.483 2002/11/07 20:55:14 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.481 2002/11/07 20:40:28 martin Exp 
+ *	NetBSD: pcidevs,v 1.482 2002/11/07 20:49:57 thorpej Exp 
  */
 
 /*
@@ -4196,6 +4196,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82845G/GL Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
+	    0,
+	    "Intel",
+	    "31244 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
