@@ -28,6 +28,10 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.7  1996/12/31 18:08:01  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.6  1996/12/23 19:42:11  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -200,8 +204,8 @@ extern TREE *refuseT;			/* files refused by client */
 extern char *collname;			/* collection name */
 extern char *basedir;			/* base directory name */
 extern char *prefix;			/* collection pathname prefix */
-extern long lasttime;			/* time of last upgrade */
-extern long scantime;			/* time of this scan */
+extern time_t lasttime;			/* time of last upgrade */
+extern time_t scantime;			/* time of this scan */
 extern int trace;			/* trace directories */
 extern int newonly;			/* new files only */
 
@@ -460,7 +464,7 @@ char *listfile,*scanfile;
 {
 	listT = NULL;
 	if (!getscanfile(scanfile)) {	/* check for pre-scanned file list */
-		scantime = time ((long *)NULL);
+		scantime = time ((time_t *)NULL);
 		doscan (listfile);	/* read list file and scan disk */
 	}
 }
@@ -986,7 +990,7 @@ char *scanfile;
 	if (rename (tname,fname) < 0)
 		goaway ("Can't change %s to %s",tname,fname);
 	(void) unlink (tname);
-	tbuf[0].tv_sec = time((long *)NULL);  tbuf[0].tv_usec = 0;
+	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = scantime;  tbuf[1].tv_usec = 0;
 	(void) utimes (fname,tbuf);
 }

@@ -174,6 +174,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.7  1996/12/31 18:08:04  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.6  1996/12/23 19:42:17  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -615,7 +619,7 @@ char **argv;
 	register struct passwd *pw;
 	register TREE *t;
 	TREE *collT;			/* collections we are interested in */
-	long timenow;			/* startup time */
+	time_t timenow;			/* startup time */
 	int oflags,aflags;
 	int cwant;
 #ifdef	MACH
@@ -729,7 +733,7 @@ char **argv;
 	if (cwant)  (void) Tprocess (collT,checkcoll, NULL);
 	Tfree (&collT);
 	if (firstC == NULL)  logquit (1,"No collections to upgrade");
-	timenow = time ((long *)NULL);
+	timenow = time ((time_t *)NULL);
 	if (*supfname == '\0')
 		p = "standard input";
 	else if (sysflag)

@@ -44,6 +44,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.11  1996/12/31 18:08:08  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.10  1996/12/23 19:42:22  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -393,8 +397,8 @@ int denyone __P((TREE *, void *));
 void sendfiles __P((void));
 int sendone __P((TREE *, void *));
 int senddir __P((TREE *, void *));
-int sendfile __P((TREE *, void *));
-void srvfinishup __P((long));
+int sendfile __P((TREE *, va_list));
+void srvfinishup __P((time_t));
 void Hfree __P((HASH **));
 HASH *Hlookup __P((HASH **, int, int ));
 void Hinsert __P((HASH **, int, int , char *, TREE *));
@@ -403,7 +407,7 @@ char *uconvert __P((int));
 char *gconvert __P((int));
 char *changeuid __P((char *, char *, int, int ));
 void goaway __P((char *, ...));
-char *fmttime __P((long));
+char *fmttime __P((time_t));
 int local_file __P((int, struct stat *));
 int stat_info_ok __P((struct stat *, struct stat *));
 int link_nofollow __P((int));
@@ -421,7 +425,7 @@ char **argv;
 	register int x,pid;
 	sigset_t nset, oset;
 	struct sigaction chld,ign;
-	long tloc;
+	time_t tloc;
 
 	/* initialize global variables */
 	pgmversion = PGMVERSION;	/* export version number */
@@ -437,7 +441,7 @@ char **argv;
 #endif
 
 	logopen ("supfile");
-	tloc = time ((long *)NULL);
+	tloc = time ((time_t *)NULL);
 	loginfo ("SUP File Server Version %d.%d (%s) starting at %s",
 		PROTOVERSION,PGMVERSION,scmversion,fmttime (tloc));
 	if (live) {
@@ -670,7 +674,7 @@ char **argv;
 void
 answer ()
 {
-	long starttime;
+	time_t starttime;
 	register int x;
 
 	progpid = fspid = getpid ();
@@ -685,7 +689,7 @@ answer ()
 	goawayreason = NULL;
 	donereason = NULL;
 	lockfd = -1;
-	starttime = time ((long *)NULL);
+	starttime = time ((time_t *)NULL);
 	if (!setjmp (sjbuf)) {
 		srvsignon ();
 		srvsetup ();
@@ -1364,13 +1368,13 @@ void *v;
 }
 
 int
-sendfile (t,v)
-register TREE *t;
-void *v;
+sendfile(t, ap)
+	TREE *t;
+	va_list ap;
 {
-	va_list ap = v;
-	register int x;
-	int fd = va_arg(ap,int);
+	register int x, fd;
+
+	fd = va_arg(ap,int);
 	if ((t->Tmode&S_IFMT) != S_IFREG || listonly || (t->Tflags&FUPDATE))
 		return (SCMOK);
 	x = writefile (fd);
@@ -1385,12 +1389,12 @@ void *v;
 
 void
 srvfinishup (starttime)
-long starttime;
+time_t starttime;
 {
 	register int x = SCMOK;
 	char tmpbuf[BUFSIZ], *p, lognam[STRINGLENGTH];
 	int logfd;
-	long finishtime;
+	time_t finishtime;
 	char *releasename;
 
 	(void) netcrypt ((char *)NULL);
@@ -1429,7 +1433,7 @@ long starttime;
 	(void) sprintf (lognam,FILELOGFILE,collname);
 	if ((logfd = open(lognam,O_APPEND|O_WRONLY,0644)) < 0)
 		return; /* can not open file up...error */
-	finishtime = time ((long *)NULL);
+	finishtime = time ((time_t *)NULL);
 	p = tmpbuf;
 	(void) sprintf (p,"%s ",fmttime (lasttime));
 	p += strlen(p);
@@ -1753,7 +1757,7 @@ va_dcl
 }
 
 char *fmttime (time)
-long time;
+time_t time;
 {
 	static char buf[STRINGLENGTH];
 	int len;

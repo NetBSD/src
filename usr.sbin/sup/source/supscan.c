@@ -39,6 +39,10 @@
  **********************************************************************
  * HISTORY
  * $Log: supscan.c,v $
+ * Revision 1.3  1996/12/31 18:08:11  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.2  1996/12/23 19:42:23  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -157,8 +161,8 @@ SCAN_COLLECTION *firstC;		/* collection list pointer */
 char *collname;				/* collection name */
 char *basedir;				/* base directory name */
 char *prefix;				/* collection pathname prefix */
-long lasttime = 0;			/* time of last upgrade */
-long scantime;				/* time of this scan */
+time_t lasttime = 0;			/* time of last upgrade */
+time_t scantime;			/* time of this scan */
 int newonly = FALSE;			/* new files only */
 jmp_buf sjbuf;				/* jump location for errors */
 
@@ -194,13 +198,13 @@ char **argv;
 		basedir = c->Cbase;
 		prefix = c->Cprefix;
 		(void) chdir (basedir);
-		scantime = time ((long *)NULL);
+		scantime = time ((time_t *)NULL);
 		printf ("SUP Scan for %s starting at %s",collname,
 			ctime (&scantime));
 		(void) fflush (stdout);
 		if (!setjmp (sjbuf)) {
 			makescanlists (); /* record names in scan files */
-			scantime = time ((long *)NULL);
+			scantime = time ((time_t *)NULL);
 			printf ("SUP Scan for %s completed at %s",collname,
 				ctime (&scantime));
 		} else

@@ -140,15 +140,15 @@ int estabd __P((char *, char *));
 void ugconvert __P((char *, char *, int *, int *, int *));
 void notify __P((char *, ...));
 void lockout __P((int));
-char *fmttime __P((long));
+char *fmttime __P((time_t));
 
 /* supcname.c */
 void getnams __P((void));
 
 /* supcparse.c */
 int parsecoll __P((COLLECTION *, char *, char *));
-long getwhen __P((char *, char *));
-int putwhen __P((char *, long));
+time_t getwhen __P((char *, char *));
+int putwhen __P((char *, time_t));
 
 /* supmsg.c */
 int msgsignon __P((void));
@@ -164,7 +164,7 @@ int msglist __P((void));
 int msgneed __P((void));
 int msgdeny __P((void));
 int msgsend __P((void));
-int msgrecv __P((int (*)(TREE *, void *), ...));
+int msgrecv __P((int (*)(TREE *, va_list), ...));
 int msgdone __P((void));
 int msggoaway __P((void));
 int msgxpatch __P((void));

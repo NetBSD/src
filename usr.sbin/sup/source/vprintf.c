@@ -28,6 +28,10 @@
  **********************************************************************
  * HISTORY
  * $Log: vprintf.c,v $
+ * Revision 1.4  1996/12/31 18:08:12  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.3  1996/09/30 04:19:55  christos
  * Use a better fix for vsnprintf on svr4. Apparently, svr4 stdio does not
  * have _IOSTRG, but it uses _IOREAD to indicate that _doprnt() should print
@@ -146,6 +150,7 @@ vsnprintf(s, n, fmt, args)
 	fakebuf._flag = STRFLAG;
 	fakebuf._ptr = s;
 	fakebuf._cnt = n-1;
+	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);
 	fakebuf._cnt++;
 	putc('\0', &fakebuf);

@@ -32,6 +32,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.9  1996/12/31 18:08:05  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.8  1996/12/23 19:42:18  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -178,7 +182,7 @@ extern int portdebug;			/* network debugging ports */
  *************************************************/
 
 static int needone __P((TREE *, void *));
-static int recvone __P((TREE *, void *));
+static int recvone __P((TREE *, va_list));
 static int denyone __P((TREE *, void *));
 static int deleteone __P((TREE *, void *));
 static int linkone __P((TREE *, void *));
@@ -291,7 +295,7 @@ int *tout;
 {
 	register int x;
 	int timeout;
-	long tloc;
+	time_t tloc;
 
 	if ((thisC->Cflags&CFLOCAL) == 0 && thishost (thisC->Chost->Tname)) {
 		vnotify ("SUP: Skipping local collection %s\n",collname);
@@ -322,7 +326,7 @@ int *tout;
 	x = msgsignonack ();	/* receive signon ack from fileserver */
 	if (x != SCMOK)
 		goaway ("Error reading signon reply from fileserver");
-	tloc = time ((long *)NULL);
+	tloc = time ((time_t *)NULL);
 	vnotify ("SUP Fileserver %d.%d (%s) %d on %s at %.8s\n",
 		protver,pgmver,scmver,fspid,remotehost(),ctime (&tloc) + 11);
 	free (scmver);
@@ -818,16 +822,18 @@ struct stat *statp;
 	return (TRUE);
 }
 
-static int recvone (t,v)
+static int
+recvone (t, ap)
 register TREE *t;
-void  *v;
+va_list ap;
 {
-	va_list ap = v;
 	int x = 0;
 	int new;
 	struct stat sbuf;
-	int *recvmore = va_arg(ap,int *);
+	int *recvmore;
 
+	recvmore = va_arg(ap, int *);
+	va_end(ap);
 	/* check for end of file list */
 	if (t == NULL) {
 		*recvmore = FALSE;
@@ -910,7 +916,7 @@ register struct stat *statp;
 		(void) chown (t->Tname,t->Tuid,t->Tgid);
 		(void) chmod (t->Tname,t->Tmode&S_IMODE);
 	}
-	tbuf[0].tv_sec = time((long *)NULL);  tbuf[0].tv_usec = 0;
+	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
 	(void) utimes (t->Tname,tbuf);
 	vnotify ("SUP %s directory %s\n",new?"Created":"Updated",t->Tname);
@@ -986,7 +992,7 @@ register struct stat *statp;
 			(void) chown (t->Tname,t->Tuid,t->Tgid);
 			(void) chmod (t->Tname,t->Tmode&S_IMODE);
 		}
-		tbuf[0].tv_sec = time((long *)NULL);  tbuf[0].tv_usec = 0;
+		tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
 		(void) utimes (t->Tname,tbuf);
 		return (FALSE);
@@ -1045,7 +1051,7 @@ register struct stat *statp;
 		(void) chown (t->Tname,t->Tuid,t->Tgid);
 		(void) chmod (t->Tname,t->Tmode&S_IMODE);
 	}
-	tbuf[0].tv_sec = time((long *)NULL);  tbuf[0].tv_usec = 0;
+	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
 	(void) utimes (t->Tname,tbuf);
 	return (FALSE);
@@ -1334,7 +1340,7 @@ int x;
 	char tname[STRINGLENGTH],fname[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
-	long tloc;
+	time_t tloc;
 	FILE *finishfile;		/* record of all filenames */
 
 	if ((thisC->Cflags&CFURELSUF) && release) {
@@ -1352,7 +1358,7 @@ int x;
 			goaway ((char *)NULL);
 		(void) requestend ();
 	}
-	tloc = time ((long *)NULL);
+	tloc = time ((time_t *)NULL);
 	if (x != SCMOK) {
 		notify ("SUP: Upgrade of %s aborted at %s",
 			collrelname,ctime (&tloc) + 4);
