@@ -477,8 +477,16 @@ Note, that if we wanted to say "port = telnet", "proto tcp" would
 need to be specified as the parser interprets each rule on its own and
 qualifies all service/port names with the protocol specified.
 .SH FILES
-/etc/services
+/dev/ipauth
+.br
+/dev/ipl
+.br
+/dev/ipstate
 .br
 /etc/hosts
+.br
+/etc/services
+.br
+/usr/share/examples/ipf  Directory with examples.
 .SH SEE ALSO
-ipf(8), ipftest(8), mkfilters(1)
+ipftest(1), iptest(1), mkfilters(1), ipf(4), ipnat(5), ipf(8), ipfstat(8)
