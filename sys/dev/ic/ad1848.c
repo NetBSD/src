@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.10 2001/01/18 20:28:17 jdolecek Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.11 2001/11/04 08:08:25 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,15 @@
 #include <dev/ic/ad1848var.h>
 #if 0
 #include <dev/isa/cs4231var.h>
+#endif
+
+/*
+ * AD1845 on some machines don't match the AD1845 doc
+ * and defining AD1845_HACK to 1 works around the problems.
+ * options AD1845_HACK=0  should work if you have ``correct'' one.
+ */
+#ifndef AD1845_HACK
+#define AD1845_HACK	1	/* weird mixer, can't play slinear_be */
 #endif
 
 #ifdef AUDIO_DEBUG
@@ -415,7 +424,11 @@ ad1848_attach(sc)
 	ad1848_set_channel_gain(sc, AD1848_MONITOR_CHANNEL, &vol_0);
 	ad1848_set_channel_gain(sc, AD1848_AUX1_CHANNEL, &vol_mid);	/* CD volume */
 	sc->mute[AD1848_MONITOR_CHANNEL] = MUTE_ALL;
-	if (sc->mode >= 2) {
+	if (sc->mode >= 2
+#if AD1845_HACK
+	    && sc->is_ad1845 == 0
+#endif
+		) {
 		ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_mid); /* CD volume */
 		ad1848_set_channel_gain(sc, AD1848_LINE_CHANNEL, &vol_mid);
 		ad1848_set_channel_gain(sc, AD1848_MONO_CHANNEL, &vol_0);
@@ -845,7 +858,11 @@ ad1848_query_encoding(addr, fp)
 		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
-		fp->flags = sc->mode == 1 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
+		fp->flags = sc->mode == 1
+#if AD1845_HACK
+		    || sc->is_ad1845
+#endif
+			? AUDIO_ENCODINGFLAG_EMULATED : 0;
 		break;
 
 		/* emulate some modes */
@@ -869,7 +886,7 @@ ad1848_query_encoding(addr, fp)
 		break;
 
 	case 8: /* only on CS4231 */
-		if (sc->mode == 1)
+		if (sc->mode == 1 || sc->is_ad1845)
 			return EINVAL;
 		strcpy(fp->name, AudioEadpcm);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
@@ -907,7 +924,11 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 		}
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16 && sc->mode == 1) {
+		if (p->precision == 16 && (sc->mode == 1
+#if AD1845_HACK
+		    || sc->is_ad1845
+#endif
+			)) {
 			enc = AUDIO_ENCODING_SLINEAR_LE;
 			pswcode = rswcode = swap_bytes;
 		}
@@ -920,7 +941,11 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 16) {
-			if (sc->mode == 1) {
+			if (sc->mode == 1
+#if AD1845_HACK
+			    || sc->is_ad1845
+#endif
+				) {
 				enc = AUDIO_ENCODING_SLINEAR_LE;
 				pswcode = swap_bytes_change_sign16_le;
 				rswcode = change_sign16_swap_bytes_le;
