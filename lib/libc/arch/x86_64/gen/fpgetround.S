@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.S,v 1.2 2002/01/13 21:45:51 thorpej Exp $	*/
+/*	$NetBSD: fpgetround.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -6,6 +6,11 @@
  */
 
 #include <machine/asm.h>
+
+/*
+ * XXX store only x87 state. If an application only uses the fp*
+ * interface, this should be in sync with the SSE mxcsr register.
+ */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(fpgetround, _fpgetround)
