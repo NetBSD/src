@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.24 1997/05/08 10:19:10 mycroft Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.25 1997/05/08 12:17:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -378,10 +378,6 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	 */
 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
 		goto badunlock;
-	if ((attr.va_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
-		error = EACCES;
-		goto badunlock;
-	}
 
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
