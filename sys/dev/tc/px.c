@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.9 2001/09/18 19:51:23 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.10 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Driver for DEC PixelStamp graphics adapters (PMAG-C).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.10 2001/11/13 06:26:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

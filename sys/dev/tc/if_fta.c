@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.18 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.19 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -34,6 +34,9 @@
  *
  *   This module supports the DEC DEFTA TurboChannel FDDI Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.19 2001/11/13 06:26:10 lukem Exp $");
 
 #include "opt_inet.h"
 
