@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.31 1997/01/16 21:03:35 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.32 1997/03/03 21:40:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -231,7 +231,7 @@ sbdsp_jazz16_probe(sc)
 
 done:
 	bus_space_unmap(iot, ioh, 1);
-	return (rval | MODEL_JAZZ16);
+	return rval;
 }
 
 /*
