@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.7 2000/01/07 15:10:50 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.8 2000/03/13 18:49:17 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -26,7 +26,7 @@
  *
  */
 #include "opt_tx39_debug.h"
-#include "fb.h"
+#include "hpcfb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,11 +40,12 @@
 #include <hpcmips/tx/tx3912videovar.h>
 #include <hpcmips/tx/tx3912videoreg.h>
 
-#if NFB > 0
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <arch/hpcmips/dev/fbvar.h>
+#if NHPCFB > 0
+#include <arch/hpcmips/dev/hpcfbvar.h>
+#include <arch/hpcmips/dev/hpcfbio.h>
+#include <arch/hpcmips/dev/bivideovar.h>
 #endif
+#include <machine/autoconf.h> /* XXX */
 
 #undef TX3912VIDEO_DEBUG
 
@@ -110,7 +111,7 @@ tx3912video_attach(parent, self, aux)
 	struct txsim_attach_args *ta = aux;
 	struct tx3912video_softc *sc = (void*)self;
 	tx_chipset_tag_t tc = ta->ta_tc;
-	struct fb_attach_args fba;
+	struct mainbus_attach_args ma; /* XXX */
 	txreg_t reg;
 
 	sc->sc_chip = &tx3912video_chip;
@@ -136,14 +137,14 @@ tx3912video_attach(parent, self, aux)
 	tx3912video_attach_drawfunc(sc->sc_chip);
 
 	/* Attach frame buffer device */
-#if NFB > 0
+#if NHPCFB > 0
 	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
-		if (fb_cnattach(0, 0, 0, 0)) {
+		if (hpcfb_cnattach(0, 0, 0, 0)) {
 			panic("tx3912video_attach: can't init fb console");
 		}
 	}
-	fba.fba_name = "fb";
-	config_found(self, &fba, tx3912video_print);
+	ma.ma_name = "bivideo"; /* XXX */
+	config_found(self, &ma, tx3912video_print);
 #endif
 }
 
