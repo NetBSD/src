@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 1998/02/13 07:41:47 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 1998/09/05 21:10:55 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,7 +157,7 @@ int	is_a1200 __P((void));
 int	is_a3000 __P((void));
 int	is_a4000 __P((void));
 #ifdef DRACO
-int	is_draco __P((void));
+#define	is_draco() ((machineid >> 24) == 0x7d ? (machineid >> 16) & 0xff : 0)
 #endif
 
 /*
