@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.5 1996/04/21 21:11:31 veego Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.6 2002/01/13 23:24:23 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -184,6 +184,12 @@ enum colormap_type {
     (((0x000F0000 & (v)) >> 8) | ((0x00000F00 & (v)) >> 4) | (0xF & (v)))
 #define CM_WTOL(v) \
     (((0xF00 & (v)) << 8) | ((0x0F0 & (v)) << 4) | (0xF & (v)))
+
+#define CM_GET_RED(entry)    (((entry) & 0xFF0000) >> 16)
+#define CM_GET_GREEN(entry)  (((entry) & 0x00FF00) >> 8)
+#define CM_GET_BLUE(entry)   (((entry) & 0x0000FF))
+#define CM_GET_GREY(entry)   (((entry) & 0x0000FF))
+#define CM_GET_MONO(entry)   (((entry) & 0x000001))
 
 /*
  * View stuff.
