@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.33 2003/01/20 05:30:00 simonb Exp $	*/
+/*	$NetBSD: pccons.c,v 1.34 2003/03/21 04:35:02 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -824,8 +824,8 @@ void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
 {
 	int maj;
 	static struct consdev pccons = {
-		NULL, NULL, pccngetc, pccnputc, pccnpollc, NULL,
-		    NODEV, CN_NORMAL
+		NULL, NULL, pccngetc, pccnputc, pccnpollc, NULL, NULL,
+		    NULL, NODEV, CN_NORMAL
 	};
 
 	/*
