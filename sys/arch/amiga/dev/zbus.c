@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.19 1996/05/19 21:06:09 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.20 1996/07/17 13:33:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -104,6 +104,7 @@ static struct aconfdata aconftab[] = {
 	/* Village Tronic Ariadne */
 	{ "ae",		2167,	201},
 	/* bsc/Alf Data */
+	{ "Tandem", 2092,    6 },	/* Tandem AT disk controler */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
 	{ "mfc",	2092,	18 },
@@ -135,7 +136,9 @@ static struct aconfdata aconftab[] = {
 	{ "grfet",	2167,	1 },	/* Domnio mem */
 	{ "grfet",	2167,	2 },	/* Domino regs */
 	{ "grfet",	2117,	3 },	/* Merlin mem */
-	{ "grfet",	2117,	4 }	/* Merlin regs */
+	{ "grfet",	2117,	4 },	/* Merlin regs */
+	/* Advanced Systems */
+	{ "nxsc",   2102,   1 }	    /* Nexus SCSI board */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
