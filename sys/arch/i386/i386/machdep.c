@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.535 2003/09/10 11:39:09 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.536 2003/09/10 16:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.535 2003/09/10 11:39:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.536 2003/09/10 16:47:00 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.535 2003/09/10 11:39:09 drochner Exp $
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_ibcs2.h"
 #include "opt_realmem.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_mtrr.h"
@@ -851,6 +852,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 }
 
+#if defined(COMPAT_16) || defined(COMPAT_IBCS2)
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -861,11 +863,10 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
+int sys___sigreturn14(struct lwp *l, void *v, register_t *retval);
+
 int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -937,6 +938,7 @@ sys___sigreturn14(l, v, retval)
 
 	return (EJUSTRETURN);
 }
+#endif
 
 int	waittime = -1;
 struct pcb dumppcb;
