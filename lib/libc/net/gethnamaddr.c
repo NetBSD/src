@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.9 1999/01/16 07:48:23 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.10 1999/01/18 05:26:08 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.9 1999/01/16 07:48:23 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.10 1999/01/18 05:26:08 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -595,10 +595,9 @@ gethostbyname2(name, af)
 		}
 
 	hp = (struct hostent *)NULL;
-	if (nsdispatch(&hp, dtab, NSDB_HOSTS, name, len, af) != NS_SUCCESS) {
-		h_errno = HOST_NOT_FOUND;
+	h_errno = NETDB_INTERNAL;
+	if (nsdispatch(&hp, dtab, NSDB_HOSTS, name, len, af) != NS_SUCCESS)
 		return (struct hostent *)NULL;
-	}
 	h_errno = NETDB_SUCCESS;
 	return (hp);
 }
@@ -647,10 +646,10 @@ gethostbyaddr(addr, len, af)
 		return (NULL);
 	}
 	hp = (struct hostent *)NULL;
-	if (nsdispatch(&hp, dtab, NSDB_HOSTS, uaddr, len, af) != NS_SUCCESS) {
-		h_errno = HOST_NOT_FOUND;
+	h_errno = NETDB_INTERNAL;
+	if (nsdispatch(&hp, dtab, NSDB_HOSTS, uaddr, len, af) != NS_SUCCESS)
 		return (struct hostent *)NULL;
-	}
+	h_errno = NETDB_SUCCESS;
 	return (hp);
 }
 
