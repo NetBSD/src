@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of Sep 22, 1997
+The following sites mirror NetBSD as of March 03, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -13,23 +13,37 @@ Australia
 
 *   ftp://ftp.au.netbsd.org/pub/NetBSD
 
+*   ftp://ftp2.au.netbsd.org/pub/NetBSD
+
 Brazil
 
 *   ftp://ftp.ravel.ufrj.br/pub/NetBSD
+
+Denmark
+
+*   ftp://ftp.dk.netbsd.org/pub/NetBSD
+
+France
+
+*   ftp://ftp.fr.netbsd.org/pub/NetBSD
 
 Germany
 
 *   ftp://ftp.de.netbsd.org/pub/NetBSD
 
+*   ftp://ftp2.de.netbsd.org/pub/NetBSD
+
 *   ftp://ftp.uni-regensburg.de/pub/comp/os/NetBSD
 
 Japan
+
+*   ftp://ftp.dti.ad.jp/pub/NetBSD/
 
 *   ftp://netbsd.tohoku.ac.jp/NetBSD
 
 Netherlands
 
-*   ftp://ftp.nl.netbsd.org/pub/comp/NetBSD
+*   ftp://ftp.nl.netbsd.org/pub/NetBSD
 
 Norway
 
@@ -45,7 +59,7 @@ Sweden
 
 UK
 
-*   ftp://ftp.DOMINO.ORG/pub/NetBSD
+*   ftp://ftp.uk.netbsd.org/pub/NetBSD
 
 USA
 
@@ -67,12 +81,12 @@ USA
 
 Australia
 
-* ftp.au.netbsd.org
+* sup.au.netbsd.org
   Instructions: ftp://sup.au.netbsd.org/pub/NetBSD/sup/README.sup
 
 Germany
 
-* ftp.de.netbsd.org
+* sup.de.netbsd.org
   Instructions: ftp://sup.de.netbsd.org/pub/NetBSD/sup/supfile.example
 
 Norway
@@ -84,7 +98,7 @@ Norway
 
 UK
 
-* ftp.domino.org
+* sup.uk.netbsd.org
   Instructions: See ftp://ftp.netbsd.org/pub/NetBSD/sup/README.sup
 
 USA
