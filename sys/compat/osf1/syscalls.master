@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 1999/05/04 05:17:22 cgd Exp $
+	$NetBSD: syscalls.master,v 1.27 1999/05/10 01:58:37 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -225,7 +225,8 @@
 133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, struct sockaddr *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
-135	UNIMPL		socketpair
+135	STD		{ int osf1_sys_socketpair(int domain, int type, \
+			    int protocol, int *rsv); }
 136	NOARGS		{ int sys_mkdir(const char *path, int mode); }
 137	NOARGS		{ int sys_rmdir(const char *path); }
 138	STD		{ int osf1_sys_utimes(const char *path, \

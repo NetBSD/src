@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.3 1999/05/05 01:51:37 cgd Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.4 1999/05/10 01:58:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -107,7 +107,7 @@ osf1_sys_socket(p, v, retval)
 
 	/* XXX TRANSLATE */
 
-	if (SCARG(uap, type) > AF_LINK)
+	if (SCARG(uap, domain) > AF_LINK)
 		return (EINVAL);	/* XXX After AF_LINK, divergence. */
 
 	SCARG(&a, domain) = SCARG(uap, domain);
@@ -115,4 +115,26 @@ osf1_sys_socket(p, v, retval)
 	SCARG(&a, protocol) = SCARG(uap, protocol);
 
 	return sys_socket(p, &a, retval);
+}
+
+int
+osf1_sys_socketpair(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_socketpair_args *uap = v;
+	struct sys_socketpair_args a;
+
+	/* XXX TRANSLATE */
+
+	if (SCARG(uap, domain) > AF_LINK)
+		return (EINVAL);	/* XXX After AF_LINK, divergence. */
+
+	SCARG(&a, domain) = SCARG(uap, domain);
+	SCARG(&a, type) = SCARG(uap, type);
+	SCARG(&a, protocol) = SCARG(uap, protocol);
+	SCARG(&a, rsv) = SCARG(uap, rsv);
+
+	return sys_socketpair(p, &a, retval);
 }
