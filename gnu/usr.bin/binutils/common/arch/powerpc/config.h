@@ -192,5 +192,5 @@
 /* #undef USE_BINARY_FOPEN */
 
 /* Configured target name. */
-#define TARGET "powerpc-unknown-netbsdX"
+#define TARGET "powerpc--netbsd"
 

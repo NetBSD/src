@@ -192,5 +192,5 @@
 /* #undef USE_BINARY_FOPEN */
 
 /* Configured target name. */
-#define TARGET "sparc64-unknown-netbsd"
+#define TARGET "sparc64--netbsd"
 

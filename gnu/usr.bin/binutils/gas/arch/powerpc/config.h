@@ -234,19 +234,19 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "powerpc-unknown-netbsdX"
+#define TARGET_ALIAS "powerpc--netbsd"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "powerpc-unknown-netbsdX"
+#define TARGET_CANONICAL "powerpc--netbsd"
 
 /* Target CPU. */
 #define TARGET_CPU "powerpc"
 
 /* Target vendor. */
-#define TARGET_VENDOR "unknown"
+#define TARGET_VENDOR ""
 
 /* Target OS. */
-#define TARGET_OS "netbsdX"
+#define TARGET_OS "netbsd"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
