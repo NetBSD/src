@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.22 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: rnd.c,v 1.22.2.1 2001/09/08 04:37:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -150,12 +150,8 @@ static rndsource_t rnd_source_no_collect = {
 struct callout rnd_callout = CALLOUT_INITIALIZER;
 
 void	rndattach __P((int));
-int	rndopen __P((dev_t, int, int, struct proc *));
-int	rndclose __P((dev_t, int, int, struct proc *));
-int	rndread __P((dev_t, struct uio *, int));
-int	rndwrite __P((dev_t, struct uio *, int));
-int	rndioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	rndpoll __P((dev_t, int, struct proc *));
+
+cdev_decl(rnd);
 
 static inline void	rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
@@ -204,7 +200,7 @@ rnd_wakeup_readers()
 			rnd_status &= ~RND_READWAITING;
 			wakeup(&rnd_selq);
 		}
-		selwakeup(&rnd_selq);
+		selnotify(&rnd_selq, 0);
 
 		/*
 		 * Allow open of /dev/random now, too.
@@ -695,6 +691,61 @@ rndpoll(dev, events, p)
 		selrecord(p, &rnd_selq);
 
 	return (revents);
+}
+
+static void
+filt_rndrdetach(struct knote *kn)
+{
+	int s;
+
+	s = splsoftclock();
+	SLIST_REMOVE(&rnd_selq.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_rndread(struct knote *kn, long hint)
+{
+	uint32_t entcnt;
+
+	entcnt = rndpool_get_entropy_count(&rnd_pool);
+	if (entcnt >= RND_ENTROPY_THRESHOLD * 8) {
+		kn->kn_data = RND_TEMP_BUFFER_SIZE;
+		return (1);
+	}
+	return (0);
+}
+
+static const struct filterops rndread_filtops =
+	{ 1, NULL, filt_rndrdetach, filt_rndread };
+
+int
+rndkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		if (minor(dev) == RND_DEV_URANDOM) {
+			/* Simulate "seltrue". */
+			return (1);
+		}
+		klist = &rnd_selq.si_klist;
+		kn->kn_fop = &rndread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splsoftclock();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 static rnd_sample_t *
