@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.239 2001/05/16 22:09:36 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.240 2001/06/11 20:04:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2199,6 +2199,7 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
+	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */

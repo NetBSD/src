@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.158 2001/06/02 18:09:14 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.159 2001/06/11 20:04:03 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -247,6 +247,21 @@ copyfault:
 		 * specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
 		 *
+		 * At this point, there are (at least) two trap frames on
+		 * the kernel stack; we presume here that we faulted while
+		 * loading our registers out of the outer one.
+		 *
+		 * The inner frame does not involve a ring crossing, so it
+		 * ends right before &frame.tf_esp.  The outer frame has
+		 * been partially consumed by the INTRFASTEXIT; exactly
+		 * how much depends which register we were popping when we
+		 * faulted, so we compute the outer frame address based on
+		 * register-dependant offsets computed from &frame.tf_esp
+		 * below.  To decide whether this was a kernel-mode or
+		 * user-mode error, we look at this outer frame's tf_cs
+		 * and tf_eflags, which are (fortunately) not consumed until
+		 * the final instruction of INTRFASTEXIT.
+		 *
 		 * XXX
 		 * The heuristic used here will currently fail for the case of
 		 * one of the 2 pop instructions faulting when returning from a
@@ -257,15 +272,18 @@ copyfault:
 		 */
 		switch (*(u_char *)frame.tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp - 44);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_eip));
 			resume = (int)resume_iret;
 			break;
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)((int)&frame.tf_esp - 4);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_ds));
 			resume = (int)resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)((int)&frame.tf_esp - 0);
+			vframe = (void *)((int)&frame.tf_esp -
+			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
 			break;
 		default:
