@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.77 2003/12/11 12:11:27 drochner Exp $	*/
+/*	$NetBSD: newfs.c,v 1.78 2003/12/22 10:33:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.77 2003/12/11 12:11:27 drochner Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.78 2003/12/22 10:33:21 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -855,7 +855,7 @@ struct help_strings {
 	{ BOTH,		"-h avgfpdir\taverage files per directory" },
 	{ BOTH,		"-i density\tnumber of bytes per inode" },
 	{ BOTH,		"-m minfree\tminimum free space %%" },
-	{ BOTH,		"-n inodes\tnumder of inodes (overrides -i density)" },
+	{ BOTH,		"-n inodes\tnumber of inodes (overrides -i density)" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
 	{ MFS_MOUNT,	"-p perm\t\tpermissions (in octal)" },
