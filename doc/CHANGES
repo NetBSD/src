@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.325 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.326 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -54,10 +54,10 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[thorpej 20040510]
 	xdm(1): use /var/db/xdm for the default authDir.  [lukem 20040512]
 	du(1): add a -n flag to not include "nodump" files.  [simonb 20040517]
-	bind:	Bind-9.3.0beta3 imported. [christos 20040517]
+	bind: Bind-9.3.0beta3 imported. [christos 20040517]
 	sysinst: (i386) Allow installation/upgrade to an existing raid volume.
 		[dsl 20040518]
-	cvs:	cvs-1.11.16 via patch [christos 20040519]
+	cvs: cvs-1.11.16 via patch [christos 20040519]
 	resolver: The libc resolver has been updated to the bind9 one
 		[christos 20040521]
 	uep(4):	Added driver for eGalax USB touchpanel controller
@@ -68,3 +68,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		and other platforms using the same mouse code
 		[tsarna 20040603]
 	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
+	cvs: cvs upgraded to 1.11.17 [christos 20040616]
