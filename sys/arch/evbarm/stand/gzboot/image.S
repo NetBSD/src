@@ -1,4 +1,4 @@
-/*	$NetBSD: image.S,v 1.1 2002/02/24 20:29:44 thorpej Exp $	*/
+/*	$NetBSD: image.S,v 1.2 2003/04/29 05:01:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,5 +49,4 @@ _C_LABEL(md_root_size):
 
 	.global	_C_LABEL(md_root_image)
 _C_LABEL(md_root_image):
-	.asciz	"|This is the gzboot image!\n"
 	.org	_C_LABEL(md_root_image) + MAXIMAGESIZE;
