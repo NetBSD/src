@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/11/20 01:57:09 sekiya Exp $
+#	$NetBSD: Makefile,v 1.8 2005/03/01 01:06:05 sekiya Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,6 @@ CRUNCHGEN_FLAGS= -d "${DBG}"
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
-MAKEDEVTARGETS=	minimal pty0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
 		${.CURDIR}/../miniroot/termcap.iris-ansi \
