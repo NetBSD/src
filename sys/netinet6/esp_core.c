@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.1.1.1.2.2 2000/07/30 05:38:49 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.1.1.1.2.3 2000/08/31 14:50:25 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.20 2000/07/21 02:42:12 itojun Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ esp_descbc_mature(sav)
 	}
 
 	/* weak key check */
-	if (des_is_weak_key((C_Block *)_KEYBUF(sav->key_enc))) {
+	if (des_is_weak_key((des_cblock *)_KEYBUF(sav->key_enc))) {
 		ipseclog((LOG_ERR,
 		    "esp_descbc_mature: weak key was passed.\n"));
 		return 1;
@@ -397,7 +397,7 @@ esp_descbc_decrypt(m, off, sav, algo, ivlen)
 	}
 
 	error = des_cbc_encrypt(m, bodyoff, plen,
-	    *(des_key_schedule *)sav->sched, (C_Block *)iv, DES_DECRYPT);
+	    *(des_key_schedule *)sav->sched, (des_cblock *)iv, DES_DECRYPT);
 
 	/* for safety */
 	bzero(&tiv[0], sizeof(tiv));
@@ -493,7 +493,7 @@ esp_descbc_encrypt(m, off, plen, sav, algo, ivlen)
 	}
 
 	error = des_cbc_encrypt(m, bodyoff, plen,
-	    *(des_key_schedule *)sav->sched, (C_Block *)iv, DES_ENCRYPT);
+	    *(des_key_schedule *)sav->sched, (des_cblock *)iv, DES_ENCRYPT);
 
 	esp_increment_iv(sav);
 
@@ -509,7 +509,7 @@ esp_descbc_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	if (des_key_sched((C_Block *)_KEYBUF(sav->key_enc),
+	if (des_key_sched((des_cblock *)_KEYBUF(sav->key_enc),
 	    *(des_key_schedule *)sav->sched))
 		return EINVAL;
 	else
@@ -556,9 +556,9 @@ esp_cbc_mature(sav)
 	switch (sav->alg_enc) {
 	case SADB_EALG_3DESCBC:
 		/* weak key check */
-		if (des_is_weak_key((C_Block *)_KEYBUF(sav->key_enc))
-		 || des_is_weak_key((C_Block *)(_KEYBUF(sav->key_enc) + 8))
-		 || des_is_weak_key((C_Block *)(_KEYBUF(sav->key_enc) + 16))) {
+		if (des_is_weak_key((des_cblock *)_KEYBUF(sav->key_enc))
+		 || des_is_weak_key((des_cblock *)(_KEYBUF(sav->key_enc) + 8))
+		 || des_is_weak_key((des_cblock *)(_KEYBUF(sav->key_enc) + 16))) {
 			ipseclog((LOG_ERR,
 			    "esp_cbc_mature %s: weak key was passed.\n",
 			    algo->name));
@@ -905,7 +905,7 @@ esp_3descbc_decrypt(m, off, sav, algo, ivlen)
 
 	/* decrypt packet */
 	des_3cbc_process(m, bodyoff, plen, (des_key_schedule *)sav->sched,
-	    (C_Block *)iv, DES_DECRYPT);
+	    (des_cblock *)iv, DES_DECRYPT);
 
 	/* for safety */
 	bzero(&tiv[0], sizeof(tiv));
@@ -960,7 +960,7 @@ esp_3descbc_encrypt(m, off, plen, sav, algo, ivlen)
 
 	/* encrypt packet */
 	des_3cbc_process(m, bodyoff, plen, (des_key_schedule *)sav->sched,
-	    (C_Block *)iv, DES_ENCRYPT);
+	    (des_cblock *)iv, DES_ENCRYPT);
 
 	esp_increment_iv(sav);
 
@@ -980,7 +980,7 @@ esp_3descbc_schedule(algo, sav)
 	p = (des_key_schedule *)sav->sched;
 	k = _KEYBUF(sav->key_enc);
 	for (i = 0; i < 3; i++) {
-		error = des_key_sched((C_Block *)(k + 8 * i), p[i]);
+		error = des_key_sched((des_cblock *)(k + 8 * i), p[i]);
 		if (error)
 			return EINVAL;
 	}
