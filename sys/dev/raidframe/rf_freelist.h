@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_freelist.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
+/*	$NetBSD: rf_freelist.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * rf_freelist.h
  */
@@ -50,16 +50,15 @@
 
 #if RF_FREELIST_STATS > 0
 typedef struct RF_FreeListStats_s {
-  char  *file;
-  int    line;
-  int    allocations;
-  int    frees;
-  int    max_free;
-  int    grows;
-  int    outstanding;
-  int    max_outstanding;
-} RF_FreeListStats_t;
-
+	char   *file;
+	int     line;
+	int     allocations;
+	int     frees;
+	int     max_free;
+	int     grows;
+	int     outstanding;
+	int     max_outstanding;
+}       RF_FreeListStats_t;
 #define RF_FREELIST_STAT_INIT(_fl_) { \
 	bzero((char *)&((_fl_)->stats), sizeof(RF_FreeListStats_t)); \
 	(_fl_)->stats.file = __FILE__; \
@@ -98,7 +97,7 @@ typedef struct RF_FreeListStats_s {
 	printf("  %d outstanding (max)\n", (_fl_)->stats.max_outstanding); \
 }
 
-#else /* RF_FREELIST_STATS > 0 */
+#else				/* RF_FREELIST_STATS > 0 */
 
 #define RF_FREELIST_STAT_INIT(_fl_)
 #define RF_FREELIST_STAT_ALLOC(_fl_)
@@ -107,20 +106,19 @@ typedef struct RF_FreeListStats_s {
 #define RF_FREELIST_STAT_GROW(_fl_)
 #define RF_FREELIST_STAT_REPORT(_fl_)
 
-#endif /* RF_FREELIST_STATS > 0 */
+#endif				/* RF_FREELIST_STATS > 0 */
 
 struct RF_FreeList_s {
-	void  *objlist;      /* list of free obj */
-	int    free_cnt;     /* how many free obj */
-	int    max_free_cnt; /* max free arena size */
-	int    obj_inc;      /* how many to allocate at a time */
-	int    obj_size;     /* size of objects */
-	RF_DECLARE_MUTEX(lock)
+	void   *objlist;	/* list of free obj */
+	int     free_cnt;	/* how many free obj */
+	int     max_free_cnt;	/* max free arena size */
+	int     obj_inc;	/* how many to allocate at a time */
+	int     obj_size;	/* size of objects */
+	        RF_DECLARE_MUTEX(lock)
 #if RF_FREELIST_STATS > 0
-	RF_FreeListStats_t  stats;  /* statistics */
-#endif /* RF_FREELIST_STATS > 0 */
+	RF_FreeListStats_t stats;	/* statistics */
+#endif				/* RF_FREELIST_STATS > 0 */
 };
-
 /*
  * fl     = freelist
  * maxcnt = max number of items in arena
@@ -666,4 +664,4 @@ struct RF_FreeList_s {
 	RF_Free(_fl_,sizeof(RF_FreeList_t)); \
 }
 
-#endif /* !_RF__RF_FREELIST_H_ */
+#endif				/* !_RF__RF_FREELIST_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.3 1999/01/26 04:40:03 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.4 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 #ifndef RF_CMU_PDL
 #define RF_CMU_PDL 0
-#endif /* !RF_CMU_PDL */
+#endif				/* !RF_CMU_PDL */
 
 /*
  * Khalil's performance-displaying demo stuff.
@@ -96,4 +96,4 @@
 
 #include "rf_options.h"
 
-#endif /* !_RF__RF_ARCHS_H_ */
+#endif				/* !_RF__RF_ARCHS_H_ */

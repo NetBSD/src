@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.h,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
+/*	$NetBSD: rf_pqdeg.h,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,17 +57,18 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_011_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateWriteDAG);
-#endif /* RF_UTILITY == 0 */
+#endif				/* RF_UTILITY == 0 */
 
-typedef RF_uint32     RF_ua32_t[32];
-typedef RF_uint8      RF_ua1024_t[1024];
+typedef RF_uint32 RF_ua32_t[32];
+typedef RF_uint8 RF_ua1024_t[1024];
 
 extern RF_ua32_t rf_rn;
 extern RF_ua32_t rf_qfor[32];
-#ifndef _KERNEL                 /* we don't support PQ in the kernel yet, so don't link in this monster table */
-extern RF_ua1024_t rf_qinv[29*29];
-#else /* !_KERNEL */
+#ifndef _KERNEL			/* we don't support PQ in the kernel yet, so
+				 * don't link in this monster table */
+extern RF_ua1024_t rf_qinv[29 * 29];
+#else				/* !_KERNEL */
 extern RF_ua1024_t rf_qinv[1];
-#endif /* !_KERNEL */
+#endif				/* !_KERNEL */
 
-#endif /* !_RF__RF_PQDEG_H_ */
+#endif				/* !_RF__RF_PQDEG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.h,v 1.2 1999/01/26 02:33:57 oster Exp $	*/
+/*	$NetBSD: rf_fifo.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -41,18 +41,21 @@
 #include "rf_diskqueue.h"
 
 typedef struct RF_FifoHeader_s {
-    RF_DiskQueueData_t *hq_head, *hq_tail;	/* high priority requests */
-    RF_DiskQueueData_t *lq_head, *lq_tail;	/* low priority requests */
-    int                 hq_count, lq_count; /* debug only */
-} RF_FifoHeader_t;
+	RF_DiskQueueData_t *hq_head, *hq_tail;	/* high priority requests */
+	RF_DiskQueueData_t *lq_head, *lq_tail;	/* low priority requests */
+	int     hq_count, lq_count;	/* debug only */
+}       RF_FifoHeader_t;
 
-extern void *rf_FifoCreate(RF_SectorCount_t sectPerDisk,
-	RF_AllocListElem_t *clList, RF_ShutdownList_t **listp);
-extern void rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t *elem,
-	int priority);
+extern void *
+rf_FifoCreate(RF_SectorCount_t sectPerDisk,
+    RF_AllocListElem_t * clList, RF_ShutdownList_t ** listp);
+extern void 
+rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t * elem,
+    int priority);
 extern RF_DiskQueueData_t *rf_FifoDequeue(void *q_in);
 extern RF_DiskQueueData_t *rf_FifoPeek(void *q_in);
-extern int rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
-	RF_ReconUnitNum_t which_ru);
+extern int 
+rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
+    RF_ReconUnitNum_t which_ru);
 
-#endif /* !_RF__RF_FIFO_H_ */
+#endif				/* !_RF__RF_FIFO_H_ */
