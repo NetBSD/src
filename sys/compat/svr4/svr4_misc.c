@@ -1,4 +1,5 @@
-/* $NetBSD: svr4_misc.c,v 1.7 1994/10/24 17:37:43 deraadt Exp $	*/
+/*	$NetBSD: svr4_misc.c,v 1.8 1994/10/26 05:27:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +40,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 /*

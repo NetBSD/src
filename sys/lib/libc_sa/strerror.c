@@ -1,6 +1,4 @@
-/*
- *	$Id: strerror.c,v 1.1 1993/10/13 11:16:25 cgd Exp $
- */
+/*	$NetBSD: strerror.c,v 1.2 1994/10/26 05:36:55 cgd Exp $	*/
 
 #include <sys/errno.h>
 

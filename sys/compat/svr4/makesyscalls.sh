@@ -1,6 +1,6 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.5 1994/08/15 23:48:41 mycroft Exp $
-#
+#	$NetBSD: makesyscalls.sh,v 1.6 1994/10/26 05:27:43 cgd Exp $
+
 #	@(#)makesyscalls.sh	8.1 (Berkeley) 6/11/93
 
 set -e
