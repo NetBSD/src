@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/14 05:50:39 sommerfe Exp $
+#	$NetBSD: Makefile,v 1.4 1999/06/13 17:21:18 kim Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -7,12 +7,12 @@ PROG= ${BASE}.sym
 MKMAN=	no
 NEWVERSWHAT=	"BIOS Boot"
 
+.PATH: ${.CURDIR}/../biosboot/
 SRCS= main.c devopen.c conf.c exec.c
 
 CLEANFILES+= ${BSSTART}
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
-
+CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART -DDEBUG
 
 #Sample use of serial line debugger
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0KBD
@@ -20,6 +20,7 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_AUTO -DDIRECT_SERIAL
 #	and maybe
 #CPPFLAGS+= -DDIRECT_SERIAL -DCOMCONS_KEYPRESS -DCONSPEED=57600
+
 CPPFLAGS+= -DPASS_BIOSGEOM
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
@@ -30,11 +31,7 @@ CPPFLAGS+= -DPASS_BIOSGEOM
 #CPPFLAGS+= -DPRIM_LOADSZ=9
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
-CFLAGS+= -Wall
-
-# XXX should go into library
-SRCS+= ls.c
-.PATH: ${.CURDIR}/../libsa ${.CURDIR}/../biosboot
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
