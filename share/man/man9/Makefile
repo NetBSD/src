@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.139 2003/03/25 22:04:50 thorpej Exp $
+#       $NetBSD: Makefile,v 1.140 2003/04/04 20:55:25 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -480,6 +480,7 @@ MLINKS+=vnode.9 vcount.9 \
 	vnode.9 vgone.9 \
 	vnode.9 vgonel.9 \
 	vnode.9 vflush.9 \
+	vnode.9 vfs_shutdown.9 \
 	vnode.9 vaccess.9 \
 	vnode.9 checkalias.9 \
 	vnode.9 bdevvp.9 \
