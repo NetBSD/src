@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	 */
+/* $NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,8 +188,6 @@ CFATTACH_DECL(mec, sizeof(struct mec_softc),
 static int
 mec_match(struct device * parent, struct cfdata * match, void *aux)
 {
-	if (mach_type != MACH_SGI_IP32)
-		return 0;
 	return 1;
 }
 
