@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.52 2002/09/21 18:56:03 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.53 2002/09/21 19:14:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.52 2002/09/21 18:56:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.53 2002/09/21 19:14:14 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -955,7 +955,12 @@ pci_conf_print_type1(
 	printf("      base upper 32 bits register:  0x%08x\n", regs[o2i(0x28)]);
 	printf("      limit upper 32 bits register: 0x%08x\n", regs[o2i(0x2c)]);
 
-	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+
 	/* XXX */
 	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x38)]);
 
@@ -1024,8 +1029,12 @@ pci_conf_print_type2(
 	pci_conf_print_bar(regs, 0x10, "CardBus socket/ExCA registers");
 #endif
 
-	printf("    Reserved @ 0x14: 0x%04x\n",
-	    (regs[o2i(0x14)] >> 0) & 0xffff);
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CARDBUS_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x14: 0x%04x\n",
+		       (regs[o2i(0x14)] >> 0) & 0xffff);
 	rval = (regs[o2i(0x14)] >> 16) & 0xffff;
 	printf("    Secondary status register: 0x%04x\n", rval);
 	onoff("66 MHz capable", 0x0020);
