@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.84 1999/11/27 01:00:06 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.85 1999/11/28 06:32:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.84 1999/11/27 01:00:06 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.85 1999/11/28 06:32:05 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1420,6 +1420,33 @@ xmalloc(size)
 	if (p == NULL)
 		err(1, "Unable to allocate %ld bytes of memory", (long)size);
 	return (p);
+}
+
+/*
+ * sl_init() with inbuilt error checking
+ */
+StringList *
+xsl_init()
+{
+	StringList *p;
+
+	p = sl_init();
+	if (p == NULL)
+		err(1, "Unable to allocate memory for stringlist");
+	return (p);
+}
+
+/*
+ * sl_add() with inbuilt error checking
+ */
+void
+xsl_add(sl, i)
+	StringList	*sl;
+	char		*i;
+{
+
+	if (sl_add(sl, i) == -1)
+		err(1, "Unable to add `%s' to stringlist", i);
 }
 
 /*
