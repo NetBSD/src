@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.20 2001/02/20 19:45:51 hubertf Exp $	*/
+/*	$NetBSD: spec.c,v 1.21 2001/03/09 03:09:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.20 2001/02/20 19:45:51 hubertf Exp $");
+__RCSID("$NetBSD: spec.c,v 1.21 2001/03/09 03:09:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <fts.h>
@@ -59,11 +60,11 @@ __RCSID("$NetBSD: spec.c,v 1.20 2001/02/20 19:45:51 hubertf Exp $");
 
 int lineno;				/* Current spec line number. */
 
-static void	 set __P((char *, NODE *));
-static void	 unset __P((char *, NODE *));
+static void	 set(char *, NODE *);
+static void	 unset(char *, NODE *);
 
 NODE *
-spec()
+spec(void)
 {
 	NODE *centry, *last;
 	char *p;
@@ -171,9 +172,7 @@ noparent:		mtree_err("no parent node");
 }
 
 static void
-set(t, ip)
-	char *t;
-	NODE *ip;
+set(char *t, NODE *ip)
 {
 	int type;
 	char *kw, *val, *md;
@@ -298,9 +297,7 @@ set(t, ip)
 }
 
 static void
-unset(t, ip)
-	char *t;
-	NODE *ip;
+unset(char *t, NODE *ip)
 {
 	char *p;
 
