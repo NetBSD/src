@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.297 2004/03/24 15:34:49 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.298 2004/08/02 03:06:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2004/03/24 15:34:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2004/08/02 03:06:17 scottr Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -500,33 +500,7 @@ cpu_startup(void)
 void
 initcpu()
 {
-#if defined(M68040) || defined(M68060)
-	extern void (*vectab[256]) __P((void));
-	void addrerr4060 __P((void));
-#endif
-#ifdef M68060
-	void buserr60 __P((void));
-#endif
-#ifdef M68040
-	void buserr40 __P((void));
-#endif
-
-	switch (cputype) {
-#ifdef M68060
-	case CPU_68060:
-		vectab[2] = buserr60;
-		vectab[3] = addrerr4060;
-		break;
-#endif
-#ifdef M68040
-	case CPU_68040:
-		vectab[2] = buserr40;
-		vectab[3] = addrerr4060;
-		break;
-#endif
-	default:
-		break;
-	}
+	/* Invalidate supervisor mode data cache. */
 	DCIS();
 }
 
