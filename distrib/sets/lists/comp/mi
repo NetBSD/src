@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.338 2001/05/06 10:43:23 ichiro Exp $
+#	$NetBSD: mi,v 1.339 2001/05/11 08:55:50 bouyer Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3070,6 +3070,7 @@
 ./usr/share/man/cat9/rt_timer_queue_destroy.0		comp-sys-catman
 ./usr/share/man/cat9/rt_timer_remove_all.0		comp-sys-catman
 ./usr/share/man/cat9/runtime.0		comp-sys-catman
+./usr/share/man/cat9/scsipi.0		comp-sys-catman
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_disestablish.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_establish.0		comp-sys-catman
@@ -5018,6 +5019,7 @@
 ./usr/share/man/man9/rt_timer_queue_destroy.9		comp-sys-man
 ./usr/share/man/man9/rt_timer_remove_all.9		comp-sys-man
 ./usr/share/man/man9/runtime.9		comp-sys-man
+./usr/share/man/man9/scsipi.9		comp-sys-man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-sys-man
