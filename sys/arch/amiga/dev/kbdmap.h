@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.8 1995/03/28 18:14:56 jtc Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.9 1995/05/07 15:37:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -96,13 +96,13 @@
 /* size of string table */
 #define KBD_STRTAB_SIZE	255
 
-/* for dead keys, index into acctable */
-#define	KBD_ACC_GRAVE	0
-#define KBD_ACC_ACUTE	1
-#define KBD_ACC_CIRC	2
-#define KBD_ACC_TILDE	3
-#define KBD_ACC_DIER	4
-#define KBD_NUM_ACC	5
+/* for dead keys, index into acctable (plus 1!) */
+#define	KBD_ACC_GRAVE	1
+#define KBD_ACC_ACUTE	2
+#define KBD_ACC_CIRC	3
+#define KBD_ACC_TILDE	4
+#define KBD_ACC_DIER	5
+#define KBD_NUM_ACC	6
 
 
 struct key {
@@ -119,7 +119,7 @@ struct key {
 #define KBD_MODE_CIRC	(KBD_ACC_CIRC  << 4)
 #define KBD_MODE_TILDE	(KBD_ACC_TILDE << 4)
 #define KBD_MODE_DIER	(KBD_ACC_DIER  << 4)
-#define KBD_MODE_ACCENT(m) ((m) >> 4)	/* get accent from mode */
+#define KBD_MODE_ACCENT(m) (((m) >> 4) - 1)	/* get accent from mode */
 #define KBD_MODE_ACCMASK  (0xf0)
 
 struct kbdmap {
