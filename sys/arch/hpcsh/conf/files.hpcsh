@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.32 2003/10/19 02:21:40 uwe Exp $
+#	$NetBSD: files.hpcsh,v 1.33 2003/11/04 03:43:12 uwe Exp $
 #
 maxpartitions 8
 
@@ -68,9 +68,15 @@ file	arch/hpcsh/dev/j6x0pwr.c		j6x0pwr
 
 include "dev/hpc/files.hpctp"
 
-device	j6x0tp: tpcalib, wsmousedev
+device	j6x0tp: tpcalib, wsmousedev, wskbddev
 attach	j6x0tp at adc
 file	arch/hpcsh/dev/j6x0tp.c			j6x0tp
+defflag	opt_j6x0tp.h		J6X0TP_DEBUG
+				J6X0TP_WSMOUSE_EXCLUSIVE
+defparam opt_j6x0tp.h		J6X0TP_SETTINGS_ICON_KEYSYM
+				J6X0TP_PGUP_ICON_KEYSYM
+				J6X0TP_PGDN_ICON_KEYSYM
+				J6X0TP_SWITCH_ICON_KEYSYM
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus
