@@ -38,14 +38,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)exect.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: exect.S,v 1.2 1994/11/14 23:49:37 dean Exp $")
+	ASMSTR("$Id: exect.S,v 1.3 1994/12/15 17:25:10 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_exect)
+LEAF(exect)
 	li	v0, SYS_execve
 	syscall
 	bne	a3, zero, 1f
 	j	ra
 1:
-	j	_cerror
-END(_exect)
+	j	_C_LABEL(cerror)
+END(exect)

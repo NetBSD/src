@@ -38,12 +38,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ffs.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ffs.S,v 1.2 1994/11/14 23:49:19 dean Exp $")
+	ASMSTR("$Id: ffs.S,v 1.3 1994/12/15 17:24:59 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
 
-LEAF(_ffs)
+LEAF(ffs)
 	move	v0, zero
 	beq	a0, zero, done
 1:
@@ -53,4 +53,4 @@ LEAF(_ffs)
 	beq	v1, zero, 1b		# no, continue
 done:
 	j	ra
-END(_ffs)
+END(ffs)

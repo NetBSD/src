@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sbrk.S,v 1.3 1994/11/28 18:56:40 dean Exp $")
+	ASMSTR("$Id: sbrk.S,v 1.4 1994/12/15 17:25:16 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define	SYS_brk		17
@@ -46,21 +46,21 @@
 	.data
 	.globl	minbrk
 minbrk:
-	.word	_end
+	.word	_C_LABEL(end)
 	.globl	curbrk
 curbrk:
-	.word	_end
+	.word	_C_LABEL(end)
 	.text
 
-LEAF(_sbrk)
+LEAF(sbrk)
 	lw	v1, curbrk
 	li	v0, SYS_brk
 	addu	a0, a0, v1	# compute current break
 	syscall
 	bne	a3, zero, 1f
-	move	v0, v1		# return old val of _curbrk from above
-	sw	a0, curbrk	# save current val of _curbrk from above
+	move	v0, v1		# return old val of curbrk from above
+	sw	a0, curbrk	# save current val of curbrk from above
 	j	ra
 1:
-	j	_cerror
-END(_sbrk)
+	j	_C_LABEL(cerror)
+END(sbrk)
