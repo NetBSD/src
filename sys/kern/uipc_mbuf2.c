@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.2 1999/12/13 15:17:18 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.3 2000/02/06 12:49:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -80,7 +80,7 @@
 #include <sys/mbuf.h>
 #if defined(PULLDOWN_STAT) && defined(INET6)
 #include <netinet/in.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 
