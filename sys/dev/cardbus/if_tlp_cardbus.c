@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.18 2000/03/10 07:26:41 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.19 2000/03/14 02:08:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -244,18 +244,7 @@ tlp_cardbus_attach(parent, self, aux)
 	 * Map the device.
 	 */
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
-	if (0 && Cardbus_mapreg_map(ct, TULIP_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
-		csc->sc_cben = CARDBUS_MEM_ENABLE;
-		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
-		csc->sc_bar_reg = TULIP_PCI_MMBA;
-		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
-	} else if (Cardbus_mapreg_map(ct, TULIP_PCI_IOBA,
+	if (Cardbus_mapreg_map(ct, TULIP_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if rbus
@@ -266,6 +255,17 @@ tlp_cardbus_attach(parent, self, aux)
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = TULIP_PCI_IOBA;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
+	} else if (Cardbus_mapreg_map(ct, TULIP_PCI_MMBA,
+	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
+#if rbus
+#else
+		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
+#endif
+		csc->sc_cben = CARDBUS_MEM_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
+		csc->sc_bar_reg = TULIP_PCI_MMBA;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
