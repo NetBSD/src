@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.57 2002/12/08 01:35:13 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.58 2003/01/09 17:26:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.57 2002/12/08 01:35:13 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.58 2003/01/09 17:26:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -788,7 +788,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "+b:cef:hlmopqrstuvwxzBC:HI:LOPT:X:Z014578",
+	    "+b:cef:hlmopqrstuvwxzBC:HI:OPT:X:Z014578",
 	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
@@ -831,9 +831,9 @@ tar_options(int argc, char **argv)
 			break;
 		case 'h':
 			/*
-			 * follow command line symlinks only
+			 * follow symlinks
 			 */
-			Hflag = 1;
+			Lflag = 1;
 			break;
 		case 'l':
 			/*
@@ -962,12 +962,6 @@ tar_options(int argc, char **argv)
 			}
 			incfiles[nincfiles - 1].file = optarg;
 			incfiles[nincfiles - 1].dir = chdname;
-			break;
-		case 'L':
-			/*
-			 * follow symlinks
-			 */
-			Lflag = 1;
 			break;
 		case 'P':
 			/*
