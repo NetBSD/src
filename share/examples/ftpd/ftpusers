@@ -1,32 +1,35 @@
-#	$NetBSD: ftpusers,v 1.1 2000/01/08 13:31:00 lukem Exp $
+#	$NetBSD: ftpusers,v 1.2 2000/01/09 13:19:19 lukem Exp $
 #
 # example /etc/ftpusers
 #
 
 # prevent the following from logging in:
 #	- users `root' and `toor'
-#	- group `noftp'
-#	- connections from 127.0.0.0/8 (i.e, localhost)
+#	- members of the group `noftp'
+#	- connections from 10.0.0.0/8
 #	- connections from *.spammer.com
 #
 root			deny
 toor			deny
 *:noftp			deny
-*@127.0.0.0/8		deny
+*@10.0.0.0/8		deny
 *@*.spammer.com		deny
 
-# anonymous ftp connections from *.netbsd.org go into class `localanon'
+# anonymous ftp connections from *.netbsd.org and 204.152.186.0/24 go into
+# class `localguest'
 #
-ftp@*.netbsd.org	allow	localanon
+ftp@*.netbsd.org	allow	localguest
+ftp@204.152.186.0/24	allow	localguest
 
 # permit anonymous ftp connections from elsewhere (both entries are required,
-# for backwards compatibility)
+# for backwards compatibility, although `ftp' is the user checked in other
+# rules)
 #
 ftp			allow
 anonymous		allow
 
-# users who are members of a group name which ends with `src' connecting
-# from any host in the netbsd.org domain become class `source'
+# users who are members of a group name which ends with `src', connecting
+# from any host in the *.netbsd.org domain become class `source'
 #
 *:*src@*.netbsd.org	allow	source
 
