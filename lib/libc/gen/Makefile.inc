@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.120 2003/02/13 03:00:51 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.121 2003/05/28 20:03:37 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -62,8 +62,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
 
 MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
-	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
-	directory.3 telldir.3
+	directory.3 readdir.3 directory.3 readdir_r.3 directory.3 \
+	rewinddir.3 directory.3 seekdir.3 directory.3 telldir.3
 MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
 	endutxent.3 setutxent.3

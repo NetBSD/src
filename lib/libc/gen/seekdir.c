@@ -1,4 +1,4 @@
-/*	$NetBSD: seekdir.c,v 1.9 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: seekdir.c,v 1.10 2003/05/28 20:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)seekdir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: seekdir.c,v 1.9 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: seekdir.c,v 1.10 2003/05/28 20:03:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/param.h>
 
 #include <dirent.h>
@@ -61,6 +62,15 @@ seekdir(dirp, loc)
 	long loc;
 {
 
+#ifdef _REENTRANT
+	if (__isthreaded)
+		mutex_lock((mutex_t *)dirp->dd_lock);
+#endif
 
 	__seekdir(dirp, loc);
+
+#ifdef _REENTRANT
+	if (__isthreaded)
+		mutex_unlock((mutex_t *)dirp->dd_lock);
+#endif
 }
