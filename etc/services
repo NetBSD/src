@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.25 1997/10/07 08:15:04 lukem Exp $
+#	$NetBSD: services,v 1.26 1997/10/15 08:12:48 fair Exp $
 #
 # Network services, Internet style
 #
@@ -88,6 +88,7 @@ cmip-man	163/tcp				# ISO mgmt over IP (CMOT)
 cmip-man	163/udp
 cmip-agent	164/tcp
 cmip-agent	164/udp
+mailq		174/tcp				# zmailer MTA
 xdmcp		177/tcp				# X Display Mgr. Control Proto
 xdmcp		177/udp
 nextstep	178/tcp		NeXTStep NextStep	# NeXTStep window
