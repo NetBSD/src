@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.2 1998/08/12 18:11:54 augustss Exp $	*/
+/*	$NetBSD: midiio.h,v 1.3 1998/08/12 21:33:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ struct synth_info {
 #define SEQ_TIMING		0x81
 #define SEQ_CHN_COMMON		0x92
 #define SEQ_CHN_VOICE		0x93
+#define SEQ_SYSEX		0x94
 #define SEQ_FULLSIZE		0xfd
 
 #define SEQ_MK_CHN_VOICE(e, unit, cmd, chan, key, vel) (\
