@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.24 2002/11/29 14:40:00 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.25 2002/11/29 19:22:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -340,7 +340,7 @@ Limit the maximum number of concurrent connections for
 to
 .Ar count ,
 with
-.Sq -1
+.Sq \-1
 meaning unlimited connections.
 If the limit is exceeded and
 .Ar file
@@ -362,7 +362,7 @@ is a relative path, it will be searched for in
 Set the maximum size of an uploaded file to
 .Ar size ,
 with
-.Sq -1
+.Sq \-1
 meaning unlimited connections.
 If
 .Ar class
@@ -689,7 +689,7 @@ classtype     chroot CHROOT
 classtype     guest  GUEST
 classtype     real   REAL
 display       none
-limit         all    -1     # unlimited connections
+limit         all    \-1     # unlimited connections
 maxtimeout    all    7200   # 2 hours
 modify        all
 motd          all    motd
