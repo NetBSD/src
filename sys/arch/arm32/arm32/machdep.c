@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1999/04/26 22:46:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1999/05/20 08:21:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,11 +40,9 @@
  * Created      : 17/09/94
  */
 
-#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,16 +60,6 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -126,26 +114,6 @@ int kernel_debug = 0;
 
 struct user *proc0paddr;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-#ifdef BUFCACHE
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
-#else
-int	bufcache = 0;		/* fallback to old algorithm */
-#endif
-
 int cold = 1;
 
 /* Prototypes */
@@ -161,7 +129,6 @@ void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
 u_long strtoul			__P((const char *s, char **ptr, int base));
-caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
@@ -375,6 +342,7 @@ cpu_startup()
 	caddr_t size;
 	vm_size_t bufsize;
 	int base, residual;
+	char pbuf[9];
 
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	proc0.p_addr = proc0paddr;
@@ -411,17 +379,21 @@ cpu_startup()
 	 * not be buffered).
 	 */
 	printf(version);
-	printf("real mem  = %d\n", arm_page_to_byte(physmem));
+
+	format_bytes(pbuf, sizeof(pbuf), arm_page_to_byte(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	size = allocsys((caddr_t)0);
+	size = allocsys(NULL, NULL);
 	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size));
 	if (sysbase == 0)
-		panic("cpu_startup: no room for system tables %d bytes required", (u_int)size);
-	if ((caddr_t)((allocsys(sysbase) - sysbase)) != size)
+		panic(
+		    "cpu_startup: no room for system tables; %d bytes required",
+		    (u_int)size);
+	if ((caddr_t)((allocsys(sysbase, NULL) - sysbase)) != size)
 		panic("cpu_startup: system table size inconsistency");
 
    	/*
@@ -489,9 +461,10 @@ cpu_startup()
 		callout[loop - 1].c_next = &callout[loop];
 	callout[loop - 1].c_next = NULL;
 
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -506,103 +479,6 @@ cpu_startup()
 	    (vm_offset_t)(kernel_pmap)->pm_pdir);
 	    
 	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_sp - 1;
-}
-
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-
-#define valloc(name, type, num) \
-	(caddr_t)(name) = (type *)v; \
-	v = (caddr_t)((name) + (num));
-
-	valloc(callout, struct callout, ncallout);
-
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-                                                                         
-	/*
-	 * If necessary, determine the number of pages to use for the
-	 * buffer cache.  We allocate 1/2 as many swap buffer headers
-	 * as file I/O buffers.
-	 */
-	if (bufpages == 0) {
-		if (bufcache == 0) {		/* use old algorithm */
-			/*
-			 * Determine how many buffers to allocate. We use 10%
-			 * of the first 2MB of memory, and 5% of the rest, with
-			 * a minimum of 16 buffers.
-			 */
-			if (physmem < arm_byte_to_page(2 * 1024 * 1024))
-				bufpages = physmem / (10 * CLSIZE);
-			else
-				bufpages = (arm_byte_to_page(2 * 1024 * 1024)
-					 + physmem) / (20 * CLSIZE);
-		} else {
-			/*
-			 * Set size of buffer cache to physmem/bufcache * 100
-			 * (i.e., bufcache % of physmem).
-			 */
-			if (bufcache < 5 || bufcache > 95) {
-				printf(
-		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
-				    bufcache);
-				bufcache = 10;
-			}
-			bufpages= physmem / (CLSIZE * 100) * bufcache;
-		}
-	}
-#ifdef DIAGNOSTIC
-	if (bufpages == 0)
-		panic("bufpages = 0\n");
-#endif
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	/*
-	 * XXX stopgap measure to prevent wasting too much KVM on
-	 * the sparsely filled buffer cache.
-	 */
-	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
-		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;       /* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;           /* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return(v);
 }
 
 #ifndef FOOTBRIDGE
