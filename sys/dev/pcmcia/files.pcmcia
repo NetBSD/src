@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.13 1998/12/24 04:51:59 marc Exp $
+#	$NetBSD: files.pcmcia,v 1.14 1999/01/01 19:30:03 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -58,3 +58,8 @@ device	pcmcom {[slave = -1]}
 attach	pcmcom at pcmcia
 attach	com at pcmcom with com_pcmcom
 file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
+
+# Xircom Netwave
+device	cnw: arp, ether, ifnet
+attach	cnw at pcmcia
+file	dev/pcmcia/if_cnw.c			cnw
