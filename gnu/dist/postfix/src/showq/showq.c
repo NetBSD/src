@@ -80,6 +80,8 @@
 #include <mail_conf.h>
 #include <record.h>
 #include <rec_type.h>
+#include <quote_822_local.h>
+#include <mail_addr.h>
 #include <bounce_log.h>
 
 /* Single-threaded server skeleton. */
@@ -89,6 +91,7 @@
 /* Application-specific. */
 
 int     var_dup_filter_limit;
+char   *var_empty_addr;
 
 #define STRING_FORMAT	"%-10s %8s %-20s %s\n"
 #define DATA_FORMAT	"%-10s%c%8ld %20.20s %s\n"
@@ -96,10 +99,15 @@ int     var_dup_filter_limit;
 
 static void showq_reasons(VSTREAM *, BOUNCE_LOG *, HTABLE *);
 
+#define STR(x)	vstring_str(x)
+
+/* showq_report - report status of sender and recipients */
+
 static void showq_report(VSTREAM *client, char *queue, char *id,
 			         VSTREAM *qfile, long size)
 {
     VSTRING *buf = vstring_alloc(100);
+    VSTRING *printable_quoted_addr = vstring_alloc(100);
     int     rec_type;
     time_t  arrival_time = 0;
     char   *start;
@@ -109,6 +117,13 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
     char    status = (strcmp(queue, MAIL_QUEUE_ACTIVE) == 0 ? '*' : ' ');
     long    offset;
 
+    /*
+     * XXX addresses in defer logfiles are in printable quoted form, while
+     * addresses in message envelope records are in raw unquoted form. This
+     * may change once we replace the present ad-hoc bounce/defer logfile
+     * format by one that is transparent for control etc. characters. See
+     * also: bounce/bounce_append_service.c.
+     */
     while (!vstream_ferror(client) && (rec_type = rec_get(qfile, buf, 0)) > 0) {
 	start = vstring_str(buf);
 	switch (rec_type) {
@@ -121,18 +136,23 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    break;
 	case REC_TYPE_FROM:
 	    if (*start == 0)
-		start = "(MAILER-DAEMON)";
+		start = var_empty_addr;
+	    quote_822_local(printable_quoted_addr, start);
+	    printable(STR(printable_quoted_addr), '?');
 	    vstream_fprintf(client, DATA_FORMAT, id, status,
 			  msg_size > 0 ? msg_size : size, arrival_time > 0 ?
 			    asctime(localtime(&arrival_time)) : "??",
-			    printable(start, '?'));
+			    STR(printable_quoted_addr));
 	    break;
 	case REC_TYPE_RCPT:
 	    if (*start == 0)			/* can't happen? */
-		start = "(MAILER-DAEMON)";
-	    if (dup_filter == 0 || htable_locate(dup_filter, start) == 0)
+		start = var_empty_addr;
+	    quote_822_local(printable_quoted_addr, start);
+	    printable(STR(printable_quoted_addr), '?');
+	    if (dup_filter == 0
+	      || htable_locate(dup_filter, STR(printable_quoted_addr)) == 0)
 		vstream_fprintf(client, STRING_FORMAT,
-				"", "", "", printable(start, '?'));
+				"", "", "", STR(printable_quoted_addr));
 	    break;
 	case REC_TYPE_MESG:
 	    if ((offset = atol(start)) > 0
@@ -163,6 +183,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	}
     }
     vstring_free(buf);
+    vstring_free(printable_quoted_addr);
     if (dup_filter)
 	htable_free(dup_filter, (void (*) (char *)) 0);
 }
@@ -307,8 +328,13 @@ int     main(int argc, char **argv)
 	VAR_DUP_FILTER_LIMIT, DEF_DUP_FILTER_LIMIT, &var_dup_filter_limit, 0, 0,
 	0,
     };
+    CONFIG_STR_TABLE str_table[] = {
+	VAR_EMPTY_ADDR, DEF_EMPTY_ADDR, &var_empty_addr, 1, 0,
+	0,
+    };
 
     single_server_main(argc, argv, showq_service,
 		       MAIL_SERVER_INT_TABLE, int_table,
+		       MAIL_SERVER_STR_TABLE, str_table,
 		       0);
 }

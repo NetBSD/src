@@ -116,7 +116,8 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, int size)
     dict->delete = dict_default_delete;
     dict->sequence = dict_default_sequence;
     dict->close = dict_default_close;
-    dict->fd = -1;
+    dict->lock_fd = -1;
+    dict->stat_fd = -1;
     dict->mtime = 0;
     return dict;
 }

@@ -364,7 +364,7 @@ static void qmqpd_write_content(QMQPD_STATE *state)
 	if (first) {
 	    if (strncmp(start + strspn(start, ">"), "From ", 5) == 0) {
 		rec_fprintf(state->cleanup, rec_type,
-			    "Mailbox-Line: %*s", len, start);
+			    "X-Mailbox-Line: %*s", len, start);
 		continue;
 	    }
 	    first = 0;

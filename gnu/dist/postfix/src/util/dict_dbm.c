@@ -84,7 +84,7 @@ static const char *dict_dbm_lookup(DICT *dict, const char *name)
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->dict.name);
 
     /*
@@ -122,7 +122,7 @@ static const char *dict_dbm_lookup(DICT *dict, const char *name)
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
 
     return (result);
@@ -167,7 +167,7 @@ static void dict_dbm_update(DICT *dict, const char *name, const char *value)
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->dict.name);
 
     /*
@@ -189,7 +189,7 @@ static void dict_dbm_update(DICT *dict, const char *name, const char *value)
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
 }
 
@@ -206,7 +206,7 @@ static int dict_dbm_delete(DICT *dict, const char *name)
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->dict.name);
 
     /*
@@ -247,7 +247,7 @@ static int dict_dbm_delete(DICT *dict, const char *name)
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
 
     return (status);
@@ -270,7 +270,7 @@ static int dict_dbm_sequence(DICT *dict, const int function,
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_dbm->dict.name);
 
     /*
@@ -291,7 +291,7 @@ static int dict_dbm_sequence(DICT *dict, const int function,
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_dbm->dict.name);
 
     if (dbm_key.dptr != 0 && dbm_key.dsize > 0) {
@@ -379,7 +379,7 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
      * time domain) locks while rewriting the entire file.
      */
     if (dict_flags & DICT_FLAG_LOCK) {
-	dbm_path = concatenate(path, ".pag", (char *) 0);
+	dbm_path = concatenate(path, ".dir", (char *) 0);
 	if ((lock_fd = open(dbm_path, open_flags, 0644)) < 0)
 	    msg_fatal("open database %s: %m", dbm_path);
 	if (myflock(lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
@@ -404,8 +404,11 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     dict_dbm->dict.delete = dict_dbm_delete;
     dict_dbm->dict.sequence = dict_dbm_sequence;
     dict_dbm->dict.close = dict_dbm_close;
-    dict_dbm->dict.fd = dbm_pagfno(dbm);
-    if (fstat(dict_dbm->dict.fd, &st) < 0)
+    dict_dbm->dict.lock_fd = dbm_dirfno(dbm);
+    dict_dbm->dict.stat_fd = dbm_pagfno(dbm);
+    if (dict_dbm->dict.lock_fd == dict_dbm->dict.stat_fd)
+	msg_fatal("open database %s: cannot support GDBM", path);
+    if (fstat(dict_dbm->dict.stat_fd, &st) < 0)
 	msg_fatal("dict_dbm_open: fstat: %m");
     dict_dbm->dict.mtime = st.st_mtime;
 
