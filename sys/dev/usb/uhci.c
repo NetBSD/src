@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.59 1999/10/13 08:10:56 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.60 1999/10/16 15:35:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -533,6 +533,12 @@ uhci_power(why, v)
 		 * controller registers have been lost and BIOS has
 		 * not restored them.
 		 */
+#ifdef DIAGNOSTIC
+		if (sc->sc_bus.use_polling == 0) {
+			printf("uhci_power: weird, polling not set.\n");
+			sc->sc_bus.use_polling = 1;
+		}
+#endif
 		sc->sc_suspend = why;
 		if (cmd & UHCI_CMD_RS)
 			uhci_run(sc, 0); /* in case BIOS has started it */
