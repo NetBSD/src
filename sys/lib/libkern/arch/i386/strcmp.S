@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcmp.S,v 1.2 1994/01/28 23:48:00 jtc Exp $
+ *	$Id: strcmp.S,v 1.3 1994/02/15 13:42:32 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcmp.S,v 1.2 1994/01/28 23:48:00 jtc Exp $"
+	.asciz "$Id: strcmp.S,v 1.3 1994/02/15 13:42:32 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -53,7 +53,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strcmp)
@@ -66,60 +66,60 @@ L1:	incl	%eax
 	incl	%edx
 L2:	movb	(%eax),%cl
 	testb	%cl,%cl			/* null terminator??? */
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)		/* chars match??? */
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	je	L1
 	.align 2, 0x90
-L3:	movsbl	(%eax),%eax		/* unsigned comparison */
-	movsbl	(%edx),%edx
+L3:	movzbl	(%eax),%eax		/* unsigned comparison */
+	movzbl	(%edx),%edx
 	subl	%edx,%eax
 	ret
