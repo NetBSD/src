@@ -1,4 +1,4 @@
-#	$NetBSD: DEFAULT,v 1.12 1997/04/01 16:30:35 matthias Exp $
+#	$NetBSD: DEFAULT,v 1.13 1997/06/03 01:38:00 phil Exp $
 #
 # DEFAULT: default install kernel
 #
@@ -12,7 +12,9 @@ maxusers	8			# estimated number of users
 options		KTRACE			# system call tracing, a la ktrace(1)
 
 #options	ACCOUNTING		# process accounting
-#options	SYSVSHM			# System V shared memory; broken
+#options	SYSVMSG         	# System V message queues
+#options	SYSVSEM         	# System V semaphores
+#options	SYSVSHM			# System V shared memory
 #options	SHMMAXPGS=1024
 options		LKM			# loadable kernel modules
 options		PFIL_HOOKS		# pfil(9) packet filter hooks
