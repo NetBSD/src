@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.219 2003/09/03 13:05:50 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.220 2003/11/06 22:30:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.219 2003/09/03 13:05:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.220 2003/11/06 22:30:09 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2464,7 +2464,6 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 		com_kgdb_ioh = comconsioh;
 #endif
 	} else {
-
 		res = cominit(iot, iobase, rate, frequency, type, cflag,
 			      &com_kgdb_ioh);
 		if (res)
