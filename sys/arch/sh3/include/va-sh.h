@@ -1,3 +1,5 @@
+/* $NetBSD: va-sh.h,v 1.2 1999/09/16 12:48:06 msaitoh Exp $ */
+
 /* This is just like the default gvarargs.h
    except for differences described below.  */
 
