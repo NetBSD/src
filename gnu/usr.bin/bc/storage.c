@@ -1,7 +1,9 @@
+/* 	$NetBSD: storage.c,v 1.3 1994/12/02 00:43:43 phil Exp $ */
+
 /* storage.c:  Code and data storage manipulations.  This includes labels. */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +27,6 @@
                 Bellingham, WA 98226-9062
        
 *************************************************************************/
-
-#ifndef lint
-static char rcsid[] = "$Id: storage.c,v 1.2 1993/08/02 17:25:44 mycroft Exp $";
-#endif /* not lint */
 
 #include "bcdefs.h"
 #include "global.h"
@@ -899,7 +897,6 @@ process_params (pc, func)
 {
   char ch;
   arg_list *params;
-  char warned = FALSE;
   int ix, ix1;
   bc_var *v_temp;
   bc_var_array *a_src, *a_dest;
@@ -958,11 +955,8 @@ process_params (pc, func)
 	}
       else
 	{
-	  if (!warned)
-	    {
-	      rt_error ("Parameter number mismatch");
-	      warned = TRUE;
-	    }
+	    rt_error ("Parameter number mismatch");
+	    return;
 	}
       params = params->next;
     }
