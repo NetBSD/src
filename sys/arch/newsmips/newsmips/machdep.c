@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2000/10/12 03:10:07 onoe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2000/10/13 17:22:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2000/10/12 03:10:07 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2000/10/13 17:22:52 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -174,7 +174,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	int x_bootname;
 	int x_maxmem;
 {
-	register int i;
 	u_long first, last;
 	caddr_t kernend, v;
 	vsize_t size;
@@ -217,6 +216,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 
 #ifdef news5000
 	if (systype == NEWS5000) {
+		int i;
 		char *bootspec = (char *)x_bootdev;
 
 		_sip = (void *)bi_arg->sip;
