@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.20 2002/09/10 03:02:40 kim Exp $	*/
+/*	$NetBSD: finger.c,v 1.21 2002/09/12 01:31:41 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.20 2002/09/10 03:02:40 kim Exp $");
+__RCSID("$NetBSD: finger.c,v 1.21 2002/09/12 01:31:41 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ __RCSID("$NetBSD: finger.c,v 1.20 2002/09/10 03:02:40 kim Exp $");
 
 DB *db;
 time_t now;
-int entries, gflag, lflag, mflag, oflag, sflag, pplan;
+int entries, gflag, lflag, mflag, oflag, sflag, eightflag, pplan;
 char tbuf[1024];
 struct utmpentry *ehead;
 
@@ -124,7 +124,7 @@ main(argc, argv)
 
 	oflag = 1;		/* default to old "office" behavior */
 
-	while ((ch = getopt(argc, argv, "lmpshog")) != -1)
+	while ((ch = getopt(argc, argv, "lmpshog8")) != -1)
 		switch(ch) {
 		case 'l':
 			lflag = 1;		/* long format */
@@ -147,10 +147,13 @@ main(argc, argv)
 		case 'g':
 			gflag = 1;		/* no gecos info, besides name */
 			break;
+		case '8':
+			eightflag = 1;		/* 8-bit pass-through */
+			break;
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: finger [-lmpshog] [login ...]\n");
+			    "usage: finger [-lmpshog8] [login ...]\n");
 			exit(1);
 		}
 	argc -= optind;
