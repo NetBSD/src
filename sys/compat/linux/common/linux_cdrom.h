@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.h,v 1.3 1998/10/03 20:17:40 christos Exp $	*/
+/*	$NetBSD: linux_cdrom.h,v 1.4 1999/10/29 15:02:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,11 @@
 #define LINUX_CDROMRESET	0x5312
 #define LINUX_CDROMVOLREAD	0x5313	/* (struct linux_cdrom_volctrl) */
 #define LINUX_CDROMPLAYBLK	0x5317	/* (struct linux_cdrom_blk) */
+
+/* DVD-ROM Specific ioctls */              
+#define	LINUX_DVD_READ_STRUCT	0x5390	/* Read structure */
+#define	LINUX_DVD_WRITE_STRUCT	0x5391	/* Write structure */ 
+#define	LINUX_DVD_AUTH		0x5392	/* Authentication */
 
 struct linux_cdrom_blk {
 	unsigned from;
