@@ -1,7 +1,7 @@
-/*	$NetBSD: gspahextoc.l,v 1.4 1999/02/16 22:46:58 is Exp $	*/
+/*	$NetBSD: gspahextoc.l,v 1.5 1999/02/16 23:34:13 is Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspahextoc.l,v 1.4 1999/02/16 22:46:58 is Exp $");
+__RCSID("$NetBSD: gspahextoc.l,v 1.5 1999/02/16 23:34:13 is Exp $");
 #endif
 %}
 
