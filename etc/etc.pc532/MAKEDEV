@@ -35,7 +35,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
-#	rd*	"memory" pseudo-disks
+#	md*	"memory" pseudo-disks
 #	ccd*	concatenated disk driver
 #
 # Terminal ports:
@@ -68,12 +68,12 @@ all)
 	sh $0 tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
 	sh $0 pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
 	sh $0 tun0 tun1 tun2 lkm ccd0 ccd1 ccd2 ccd3
-	sh $0 rd0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
+	sh $0 md0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
 	;;
 
 floppy)
 	sh MAKEDEV std sd0 sd1 sd2 tty0 tty1 tty2 tty3
-	sh MAKEDEV st0 st1 cd0 cd1 rd0
+	sh MAKEDEV st0 st1 cd0 cd1 md0
 	;;
 
 std)
@@ -102,9 +102,9 @@ fd)
 	chmod 666 fd/*
 	;;
 
-rd*)
+md*)
 	case $i in
-	rd*) name=rd;	unit=${i#rd};	chr=9;	blk=3;;
+	md*) name=md;	unit=${i#md};	chr=9;	blk=3;;
 	esac
 	rm -f $name$unit r$name$unit
 	mknod $name$unit	b $blk $(($unit +  0))

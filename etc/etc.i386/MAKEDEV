@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.45 1996/10/21 19:58:25 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.46 1997/01/01 23:46:21 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #	cd*	SCSI CD-ROM
 #	mcd*	Mitsumi CD-ROM
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
+#	md*	memory pseudo-disks
 #	ccd*	contatenated disk devices
 #
 # Console ports:
@@ -90,7 +90,7 @@ all)
 	sh $0 std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
 	sh $0 lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1
-	sh $0 ccd0 ccd1 ccd2 ccd3 rd0 ss0 ch0 uk0 uk1
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
 	;;
@@ -101,7 +101,7 @@ floppy)
 	;;
 
 ramdisk)
-	sh $0 floppy rd0
+	sh $0 floppy md0
 	;;
 
 std)
@@ -157,9 +157,9 @@ wt*)
 	chmod 640 $name$unit n$name$unit r$name$unit nr$name$unit
 	;;
 
-rd*)
+md*)
 	case $i in
-	rd*) name=rd;	unit=${i#rd};	chr=24;	blk=17;;
+	md*) name=md;	unit=${i#md};	chr=24;	blk=17;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))

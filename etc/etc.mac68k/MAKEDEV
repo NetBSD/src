@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.18 1996/11/21 08:28:44 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.19 1997/01/01 23:46:22 pk Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -40,6 +40,7 @@
 #	cd*	SCSI compact discs
 #	vnd*	vnode pseudo-disks
 #	ccd*	concatenated disk driver
+#	md*	memory pseudo-disks
 #
 # Terminal ports:
 #	ttye*	ite consoles
@@ -70,7 +71,7 @@ case $i in
 all)
 	sh $0 std fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
-	sh $0 ccd0 ccd1 ccd2 ccd3 rd0 ss0 uk0 uk1
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1
 	sh $0 ttye0 adb grf0 grf1 grf2 grf3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11
@@ -132,9 +133,9 @@ fd)
 	chmod 666 fd/*
 	;;
 
-rd*)
+md*)
 	case $i in
-	rd*) name=rd;	unit=${i#rd};	blk=13;	chr=32;;
+	md*) name=md;	unit=${i#md};	blk=13;	chr=32;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))

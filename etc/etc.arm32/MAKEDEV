@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 1996/11/23 04:22:45 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:19 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #	cd*	SCSI CD-ROM
 #	acd*	ATAPI CD-ROM
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
+#	md*	"memory" pseudo-disks
 #	ccd*	contatenated disk devices
 #
 # Console ports:
@@ -67,7 +67,7 @@
 # Call units:
 #
 # Special purpose devices:
-#	rd	ram disk
+#	md	memory disk
 #	kbd	raw keyboard
 #	kbdctl	keyboard control
 #	fd	file descriptors
@@ -89,7 +89,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
+	sh $0 std fd fd0 fd1 wd0 wd1 md0 md1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0 acd0 acd1
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
@@ -98,7 +98,7 @@ all)
 	;;
 
 floppy)
-	sh $0 std fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1
+	sh $0 std fd0 fd1 wd0 wd1 md0 md1 sd0 sd1 sd2 tty0 tty1
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5
 	sh $0 st0 st1 cd0 cd1
 	;;
@@ -259,14 +259,14 @@ cd*|acd*)
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
-rd*)
-	unit=`expr $i : 'rd\(.*\)'`
-	rm -f rd${unit}
-	rm -f rd${unit}c
-	mknod rd${unit} b 18 ${unit}
-	mknod rd${unit}c c 18 `expr ${unit} + 16`
-	chown root.wheel rd${unit}
-	chown root.wheel rd${unit}c
+md*)
+	unit=`expr $i : 'md\(.*\)'`
+	rm -f md${unit}
+	rm -f md${unit}c
+	mknod md${unit} b 18 ${unit}
+	mknod md${unit}c c 18 `expr ${unit} + 16`
+	chown root.wheel md${unit}
+	chown root.wheel md${unit}c
 	;;
 
 lpt*|lpa*)

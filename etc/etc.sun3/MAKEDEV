@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 1996/10/09 00:40:35 jtc Exp $
+#	$NetBSD: MAKEDEV,v 1.10 1997/01/01 23:46:27 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -56,7 +56,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	rd*	RAM-disk
+#	md*	memory pseudo-disk
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -204,10 +204,10 @@ cgfour*)
 	mk cgfour$unit c 39 $unit
 	;;
 
-rd*)
-	mk  rd$unit b 13 $unit
-#	mk rrd$unit b 13 `expr $unit + 16`
-	mk rd${unit}c b 13 `expr $unit + 16`
+md*)
+	mk  md$unit b 13 $unit
+#	mk rmd$unit b 13 `expr $unit + 16`
+	mk md${unit}c b 13 `expr $unit + 16`
 	;;
 
 local)
