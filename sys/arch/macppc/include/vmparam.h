@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 1999/03/23 00:32:00 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7.2.1 1999/10/20 22:48:36 he Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,6 +88,11 @@
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH - 1)
+
+/* XXX max. amount of KVM to be used by buffers. */
+#ifndef VM_MAX_KERNEL_BUF
+#define VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 7 / 10)
+#endif
 
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * MCLBYTES)
