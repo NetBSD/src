@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.5 (Berkeley) 3/21/94
- *	$Id: pmap.c,v 1.2 1994/06/18 12:09:59 paulus Exp $
+ *	$Id: pmap.c,v 1.3 1994/08/25 06:16:29 paulus Exp $
  */
 
 /*
@@ -1914,7 +1914,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if (ptpmap == curproc->p_vmspace->vm_map.pmap)
+				if (curproc &&
+				    ptpmap == curproc->p_vmspace->vm_map.pmap)
 					PMAP_ACTIVATE(ptpmap,
 					    (struct pcb *)curproc->p_addr, 1);
 			}
