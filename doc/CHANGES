@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.299 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.300 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -13,3 +13,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	heimdal: import version 0.6.1 [lha 20040402]
 	powerpc: implement FP exception handling for OEA processors.
 		[matt 20040404]
+	file(1): update to 4.09.  [pooka 20040408]
