@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.21 2002/06/08 21:22:33 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.22 2002/06/30 22:40:40 thorpej Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -205,6 +205,12 @@ struct	ip6stat {
 #define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
 #define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	IP6_HDR_ALIGNED_P(ip)	1
+#else
+#define	IP6_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
+#endif
 
 extern struct	ip6stat ip6stat;	/* statistics */
 extern u_int32_t ip6_id;		/* fragment identifier */

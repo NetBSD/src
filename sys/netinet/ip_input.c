@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.153 2002/06/13 16:25:54 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.154 2002/06/30 22:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.153 2002/06/13 16:25:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.154 2002/06/30 22:40:34 thorpej Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -420,10 +420,24 @@ ip_input(struct mbuf *m)
 	if (TAILQ_FIRST(&in_ifaddr) == 0)
 		goto bad;
 	ipstat.ips_total++;
-	if (m->m_len < sizeof (struct ip) &&
-	    (m = m_pullup(m, sizeof (struct ip))) == 0) {
-		ipstat.ips_toosmall++;
-		return;
+	/*
+	 * If the IP header is not aligned, slurp it up into a new
+	 * mbuf with space for link headers, in the event we forward
+	 * it.  Otherwise, if it is aligned, make sure the entire
+	 * base IP header is in the first mbuf of the chain.
+	 */
+	if (IP_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+		if ((m = m_copyup(m, sizeof(struct ip),
+				  (max_linkhdr + 3) & ~3)) == NULL) {
+			/* XXXJRT new stat, please */
+			ipstat.ips_toosmall++;
+			return;
+		}
+	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
+		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
+			ipstat.ips_toosmall++;
+			return;
+		}
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
