@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.3 2003/05/29 20:22:32 fvdl Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.4 2003/09/06 14:38:41 fvdl Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -52,7 +52,10 @@ struct mp_intr_map
 	u_int32_t redir;
 	int cpu_id;
 	int global_int;		/* ACPI global interrupt number */
+	int sflags;		/* other, software flags (see below) */
 };
+
+#define MPI_OVR		0x0001	/* Was overridden by an ACPI OVR */
 
 #if defined(_KERNEL)
 extern int mp_verbose;
