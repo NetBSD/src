@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_iopl.2,v 1.4 1996/05/28 13:34:39 fvdl Exp $
+.\"	$NetBSD: i386_iopl.2,v 1.5 1997/04/26 21:31:10 tls Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,8 @@ is set to indicate the error.
 will fail if:
 .Bl -tag -width [EINVAL]
 .It Bq Er EPERM
-The caller was not the super-user.
+The caller was not the super-user, or the operation was not permitted at the
+current security level.
 .El
 .Sh SEE ALSO
 .Xr i386_set_ioperm 2 ,
