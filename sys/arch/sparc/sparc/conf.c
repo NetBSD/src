@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.14 1994/11/02 05:00:40 deraadt Exp $
+ * $Id: conf.c,v 1.15 1994/11/14 05:59:11 christos Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,8 @@ int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
+#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
+					   struct file *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
