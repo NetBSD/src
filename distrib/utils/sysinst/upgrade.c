@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.38 2003/07/18 09:46:11 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.39 2003/07/22 12:18:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -282,6 +282,8 @@ do_reinstall_sets(void)
 
 	if (find_disks(msg_string(MSG_reinstall)) < 0)
 		return;
+
+	process_menu(MENU_distset, NULL);
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
