@@ -1199,3 +1199,15 @@ distrib/notes/pmax/install			patch
   rzX devices for CD-ROMs and not cdX like other NetBSD ports, and redo
   the special CD-ROM installation instructions.  Describe the process of
   updating the RTC.  (simonb)
+
+etc/netstart					1.53
+
+  Use 'echo' instead of 'logger,' because logger is in /usr and that will
+  not be mounted on most systems by the time netstart runs.  If logger is
+  used and is not present, the message explaining why the system is
+  dropping back to single-user mode won't be printed.  (abs)
+
+sys/dev/ic/z8530tty.c				1.53
+
+  Fix hangs when booting with serial devices which supply clocks
+  on DCD or CTS.  (wrstuden)
