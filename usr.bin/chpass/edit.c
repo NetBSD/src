@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.7 1996/08/09 09:22:16 thorpej Exp $	*/
+/*	$NetBSD: edit.c,v 1.8 1997/02/11 08:26:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.7 1996/08/09 09:22:16 thorpej Exp $";
+static char rcsid[] = "$NetBSD: edit.c,v 1.8 1997/02/11 08:26:27 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ bad:					(void)fclose(fp);
 	    strlen(list[E_HPHONE].save) + strlen(list[E_LOCATE].save) + 4;
 	if (!(p = malloc(len)))
 		err(1, NULL);
-	(void)sprintf(pw->pw_gecos = p, "%s,%s,%s,%s", list[E_NAME].save,
+	(void)snprintf(pw->pw_gecos = p, len, "%s,%s,%s,%s", list[E_NAME].save,
 	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save);
 
 	if (snprintf(buf, sizeof(buf),

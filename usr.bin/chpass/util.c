@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1997/02/11 08:26:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.5 1997/02/11 08:26:28 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ ttoa(tval)
 
 	if (tval) {
 		tp = localtime(&tval);
-		(void)sprintf(tbuf, "%s %d, %d", months[tp->tm_mon],
+		(void)snprintf(tbuf, sizeof tbuf, "%s %d, %d", months[tp->tm_mon],
 		    tp->tm_mday, tp->tm_year + TM_YEAR_BASE);
 	}
 	else
