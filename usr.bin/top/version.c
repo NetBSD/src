@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.5 2003/06/23 13:05:53 agc Exp $	*/
+/*	$NetBSD: version.c,v 1.6 2003/07/12 14:08:38 itojun Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: version.c,v 1.5 2003/06/23 13:05:53 agc Exp $");
+__RCSID("$NetBSD: version.c,v 1.6 2003/07/12 14:08:38 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -42,9 +42,9 @@ static char version[16];
 char *version_string()
 
 {
-    sprintf(version, "%d.%d", VERSION, PATCHLEVEL);
+    snprintf(version, sizeof(version), "%d.%d", VERSION, PATCHLEVEL);
 #ifdef BETA
-    strcat(version, BETA);
+    strlcat(version, BETA, sizeof(version));
 #endif
     return(version);
 }

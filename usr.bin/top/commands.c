@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.9 2003/06/23 13:05:52 agc Exp $	*/
+/*	$NetBSD: commands.c,v 1.10 2003/07/12 14:08:37 itojun Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: commands.c,v 1.9 2003/06/23 13:05:52 agc Exp $");
+__RCSID("$NetBSD: commands.c,v 1.10 2003/07/12 14:08:37 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -253,7 +253,8 @@ char *err_string()
 		{
 		    return(err_listem);
 		}
-		(void) strcat(string, "; ");	  /* we know there's more */
+		/* we know there's more */
+		(void) strlcat(string, "; ", sizeof(string));
 	    }
 	    currerr = errp->errnum;
 	    first = Yes;
@@ -294,8 +295,8 @@ int err;
     {
 	return(0);
     }
-    (void) strcat(str, ": ");
-    (void) strcat(str, msg);
+    (void) strlcat(str, ": ", len);
+    (void) strlcat(str, msg, len);
     return(len - msglen);
 }
 
@@ -327,9 +328,9 @@ int  first;
     }
     if (!first)
     {
-	(void) strcat(str, ", ");
+	(void) strlcat(str, ", ", len);
     }
-    (void) strcat(str, arg);
+    (void) strlcat(str, arg, len);
     return(len - arglen);
 }
 
