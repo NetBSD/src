@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.52 1996/10/29 04:26:59 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.53 1996/12/28 23:22:43 pk Exp $
 
 # mac68k-specific configuration info
 
@@ -108,17 +108,17 @@ file	arch/mac68k/mac68k/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
 
-# RAM Disk for installs
+# Memory Disk for installs
 #     These files are out of order
-pseudo-device	rd
-file	dev/ramdisk.c			rd needs-flag
-file	arch/mac68k/dev/rd_root.c	ramdisk_hooks
+pseudo-device	md
+file	dev/md.c			md needs-flag
+file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
 major	{vnd = 8}
-major	{rd = 13}
+major	{md = 13}
 
 # Compatibility modules
 

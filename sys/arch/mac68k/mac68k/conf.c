@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 1996/11/21 08:33:22 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1996/12/28 23:22:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,9 +59,9 @@ bdev_decl(ch);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
-#include "rd.h"
-bdev_decl(rd);
-/* No cdev for rd */
+#include "md.h"
+bdev_decl(md);
+/* No cdev for md */
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,7 +78,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),        	 	/* 10 */
 	bdev_notdef(),        	 	/* 11 */
 	bdev_notdef(),        	 	/* 12 */
-	bdev_disk_init(NRD,rd),	 	/* 13: RAM disk -- for install */
+	bdev_disk_init(NMD,md),	 	/* 13: memory disk -- for install */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
 	bdev_lkm_dummy(),		/* 16 */
@@ -131,7 +131,7 @@ cdev_decl(zs);
 cdev_decl(ch);
 cdev_decl(vnd);
 cdev_decl(ccd);
-cdev_decl(rd);
+cdev_decl(md);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "tun.h"
@@ -172,7 +172,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
-	cdev_disk_init(NRD,rd),		/* 32: ram disk driver */
+	cdev_disk_init(NMD,md),		/* 32: memory disk driver */
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 };

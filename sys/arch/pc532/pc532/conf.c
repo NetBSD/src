@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1996/11/07 07:18:21 matthias Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1996/12/28 23:24:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,8 +48,8 @@ bdev_decl(sd);
 bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 #include "cd.h"
 bdev_decl(cd);
 #include "vnd.h"
@@ -62,7 +62,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
-	bdev_disk_init(NRD,rd),		/* 3: ram disk */
+	bdev_disk_init(NMD,md),		/* 3: memory disk */
 	bdev_disk_init(NCD,cd),		/* 4: SCSI CD-ROM */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
@@ -99,7 +99,7 @@ cdev_decl(ptc);
 cdev_decl(log);
 #include "scn.h"
 cdev_decl(scn);
-cdev_decl(rd);
+cdev_decl(md);
 cdev_decl(st);
 #include "ss.h"
 cdev_decl(ss);
@@ -130,7 +130,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NSCN,scn),	/* 8: serial ports */
-	cdev_disk_init(NRD,rd),		/* 9: RAM disk */
+	cdev_disk_init(NMD,md),		/* 9: memory disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 11: file descriptor pseudo-device */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
