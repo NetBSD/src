@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.10 1997/01/22 07:09:33 mikel Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.11 1998/01/04 03:53:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -86,6 +86,12 @@ struct vmmeter {
 	u_int v_active_count;	/* number of pages active */
 	u_int v_inactive_target; /* number of pages desired inactive */
 	u_int v_inactive_count;  /* number of pages inactive */
+	/*
+	 * Fork statistics.
+	 */
+	u_int v_forks;		/* number of forks */
+	u_int v_forks_ppwait;	/* number of forks that block parent */
+	u_int v_forks_sharevm;	/* number of forks that share address space */
 };
 #ifdef _KERNEL
 struct	vmmeter cnt;
