@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1997/10/16 23:42:35 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1998/02/24 05:46:07 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,11 +39,11 @@
 #include <sys/vnode.h>
 
 #include "ofdisk.h"
-bdev_decl(ofd);
+bdev_decl(ofdisk_);
 bdev_decl(sw);
 
 struct bdevsw bdevsw[] = {
-	bdev_disk_init(NOFDISK,ofd),	/* 0: Openfirmware disk */
+	bdev_disk_init(NOFDISK,ofdisk_),/* 0: Openfirmware disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
@@ -63,10 +63,10 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(sw);
 #include "ofcons.h"
-cdev_decl(ofc);
-cdev_decl(ofd);
+cdev_decl(ofcons_);
+cdev_decl(ofdisk_);
 #include "ofrtc.h"
-cdev_decl(ofrtc);
+cdev_decl(ofrtc_);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "rnd.h"
@@ -85,9 +85,9 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),	/* 4: pseudo tty master */
 	cdev_log_init(1,log),		/* 5: /dev/klog */
 	cdev_swap_init(1,sw),		/* 6: /dev/drum pseudo device */
-	cdev_tty_init(NOFCONS,ofc),	/* 7: Openfirmware console */
-	cdev_disk_init(NOFDISK,ofd),	/* 8: Openfirmware disk */
-	cdev_rtc_init(NOFRTC,ofrtc),	/* 9: Openfirmware RTC */
+	cdev_tty_init(NOFCONS,ofcons_),	/* 7: Openfirmware console */
+	cdev_disk_init(NOFDISK,ofdisk_),/* 8: Openfirmware disk */
+	cdev_rtc_init(NOFRTC,ofrtc_),	/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
 };
@@ -155,11 +155,11 @@ chrtoblk(dev)
 
 #include <dev/cons.h>
 
-cons_decl(ofc);
+cons_decl(ofcons_);
 
 struct consdev constab[] = {
 #if NOFCONS > 0
-	cons_init(ofc),
+	cons_init(ofcons_),
 #endif
 	{ 0 },
 };
