@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.51 2002/02/12 20:32:35 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.52 2002/02/20 21:42:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.51 2002/02/12 20:32:35 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.52 2002/02/20 21:42:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -879,20 +879,27 @@ breakloop:
 #define PARSEBACKQNEW()	{oldstyle = 0; goto parsebackq; parsebackq_newreturn:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
+/*
+ * Keep track of nested doublequotes in dblquote and doublequotep.
+ * We use dblquote for the first 32 levels, and we expand to a malloc'ed
+ * region for levels above that. Usually we never need to malloc.
+ * This code assumes that an int is 32 bits. We don't use uint32_t,
+ * because the rest of the code does not.
+ */
 #define ISDBLQUOTE() ((varnest < 32) ? (dblquote & (1 << varnest)) : \
-    (dblquotep[varnest / 32] & (1 << (varnest % 32))))
+    (dblquotep[(varnest / 32) - 1] & (1 << (varnest % 32))))
 
 #define SETDBLQUOTE() \
     if (varnest < 32) \
 	dblquote |= (1 << varnest); \
     else \
-	dblquotep[varnest / 32] |= (1 << (varnest % 32))
+	dblquotep[(varnest / 32) - 1] |= (1 << (varnest % 32))
 
 #define CLRDBLQUOTE() \
     if (varnest < 32) \
 	dblquote &= ~(1 << varnest); \
     else \
-	dblquotep[varnest / 32] &= ~(1 << (varnest % 32))
+	dblquotep[(varnest / 32) - 1] &= ~(1 << (varnest % 32))
 
 STATIC int
 readtoken1(firstc, syntax, eofmark, striptabs)
@@ -1310,11 +1317,9 @@ badsub:			synerror("Bad substitution");
 		if (subtype != VSNORMAL) {
 			varnest++;
 			if (varnest >= maxnest) {
-				maxnest += 32;
 				dblquotep = ckrealloc(dblquotep, maxnest / 8);
-				if (maxnest == 64)
-					*dblquotep = dblquote;
 				dblquotep[(maxnest / 32) - 1] = 0;
+				maxnest += 32;
 			}
 		}
 	}
