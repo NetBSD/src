@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.17 1996/10/08 03:40:40 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.18 1996/10/11 19:44:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -110,7 +110,9 @@ int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
 #endif
 };
 
-#define	ELF_ALIGN(a, b)	((a) & ~((b) - 1))
+/* round up and down to page boundaries. */
+#define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
+#define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -230,15 +232,15 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot)
 	 */
 	if (*addr != ELFDEFNNAME(NO_ADDR)) {
 		if (ph->p_align > 1) {
-			*addr = ELF_ALIGN(*addr + ph->p_align, ph->p_align);
-			uaddr = ELF_ALIGN(ph->p_vaddr, ph->p_align);
+			*addr = ELF_ROUND(*addr, ph->p_align);
+			uaddr = ELF_TRUNC(ph->p_vaddr, ph->p_align);
 		} else
 			uaddr = ph->p_vaddr;
 		diff = ph->p_vaddr - uaddr;
 	} else {
 		*addr = uaddr = ph->p_vaddr;
 		if (ph->p_align > 1)
-			*addr = ELF_ALIGN(uaddr, ph->p_align);
+			*addr = ELF_TRUNC(uaddr, ph->p_align);
 		diff = uaddr - *addr;
 	}
 
