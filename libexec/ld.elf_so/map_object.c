@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.5 1999/08/06 22:33:49 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,18 +77,18 @@ _rtld_map_object(path, fd)
 	Elf_Off         base_offset;
 	Elf_Addr        base_vaddr;
 	Elf_Addr        base_vlimit;
+	Elf_Addr	text_vlimit;
 	caddr_t         base_addr;
 	Elf_Off         data_offset;
 	Elf_Addr        data_vaddr;
 	Elf_Addr        data_vlimit;
 	caddr_t         data_addr;
+	caddr_t		gap_addr;
+	size_t		gap_size;
 #ifdef RTLD_LOADER
 	Elf_Addr        clear_vaddr;
 	caddr_t         clear_addr;
 	size_t          nclear;
-	Elf_Addr        bss_vaddr;
-	Elf_Addr        bss_vlimit;
-	caddr_t         bss_addr;
 #endif
 
 	if ((nbytes = read(fd, u.buf, PAGESIZE)) == -1) {
@@ -177,9 +177,14 @@ _rtld_map_object(path, fd)
 #endif
 
 	/*
-         * Map the entire address space of the object, to stake out our
-         * contiguous region, and to establish the base address for relocation.
-         */
+	 * Map the entire address space of the object as an anonymous
+	 * region to stake out our contiguous region and establish a
+	 * base for relocation.
+	 *
+	 * We map it using the data/BSS protection, then overlay bits
+	 * of the file over the top, and unmap the gaps left by padding
+	 * to alignment.
+	 */
 	base_offset = round_down(segs[0]->p_offset);
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
@@ -190,19 +195,30 @@ _rtld_map_object(path, fd)
 	base_addr = NULL;
 #endif
 
-	mapbase = mmap(base_addr, mapsize, protflags(segs[0]->p_flags),
-		       MAP_FILE | MAP_PRIVATE, fd, base_offset);
-	if (mapbase == (caddr_t) - 1) {
+	mapbase = mmap(base_addr, mapsize, protflags(segs[1]->p_flags),
+		       MAP_ANON | MAP_PRIVATE, -1, (off_t) 0);
+	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));
 		return NULL;
 	}
 	if (base_addr != NULL && mapbase != base_addr) {
-		_rtld_error("mmap returned wrong address: wanted %p, got %p", base_addr,
-			    mapbase);
+		_rtld_error("mmap returned wrong address: wanted %p, got %p",
+		    base_addr, mapbase);
 		munmap(mapbase, mapsize);
 		return NULL;
 	}
+	base_addr = mapbase;
+
+	/* Overlay the text segment onto the proper region. */
+	text_vlimit = round_up(segs[0]->p_vaddr + segs[0]->p_memsz);
+	if (mmap(base_addr, text_vlimit - base_vaddr,
+	    protflags(segs[0]->p_flags), MAP_FILE | MAP_PRIVATE | MAP_FIXED,
+	    fd, base_offset) == MAP_FAILED) {
+		_rtld_error("mmap of text failed: %s", xstrerror(errno));
+		return NULL;
+	}
+
 	/* Overlay the data segment onto the proper region. */
 	data_offset = round_down(segs[1]->p_offset);
 	data_vaddr = round_down(segs[1]->p_vaddr);
@@ -210,10 +226,20 @@ _rtld_map_object(path, fd)
 	data_addr = mapbase + (data_vaddr - base_vaddr);
 	if (mmap(data_addr, data_vlimit - data_vaddr,
 	    protflags(segs[1]->p_flags), MAP_FILE | MAP_PRIVATE | MAP_FIXED,
-	    fd, data_offset) == (caddr_t)-1) {
+	    fd, data_offset) == MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
 		return NULL;
 	}
+
+	/* Unmap the gap between the text and data. */
+	gap_addr = base_addr + round_up(text_vlimit - base_vaddr);
+	gap_size = data_addr - gap_addr;
+	if (gap_size != 0 && munmap(gap_addr, gap_size) == -1) {
+		_rtld_error("munmap of text -> data gap failed: %s",
+		    xstrerror(errno));
+		return NULL;
+	}
+
 #ifdef RTLD_LOADER
 	/* Clear any BSS in the last page of the data segment. */
 	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
@@ -221,19 +247,7 @@ _rtld_map_object(path, fd)
 	if ((nclear = data_vlimit - clear_vaddr) > 0)
 		memset(clear_addr, 0, nclear);
 
-	/* Overlay the BSS segment onto the proper region. */
-	bss_vaddr = data_vlimit;
-	bss_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
-	bss_addr = mapbase + (bss_vaddr - base_vaddr);
-	if (bss_vlimit > bss_vaddr) {	/* There is something to do */
-		if (mmap(bss_addr, bss_vlimit - bss_vaddr,
-		    protflags(segs[1]->p_flags),
-		    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1,
-		    0) == (caddr_t)-1) {
-			_rtld_error("mmap of bss failed: %s", xstrerror(errno));
-			return NULL;
-		}
-	}
+	/* Non-file portion of BSS mapped above. */
 #endif
 
 	obj = CNEW(Obj_Entry);
