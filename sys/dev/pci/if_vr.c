@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.24 1999/08/14 11:09:18 hwr Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.25 1999/08/14 11:23:39 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1217,7 +1217,7 @@ vr_init(sc)
 	struct ifnet *ifp = &sc->vr_ec.ec_if;
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
-	int i, error;
+	int i, error = 0;
 
 	/* Cancel pending I/O. */
 	vr_stop(sc, 0);
