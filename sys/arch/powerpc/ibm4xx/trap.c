@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2004/09/02 08:22:58 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 2004/09/02 08:22:58 scw Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -470,7 +470,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"2: mtpid %1; mtmsr %0;"	/* Restore PID and MSR */
 		"sync; isync;"
 		: "=&r" (msr), "=&r" (pid), "=&r" (tmp)
-		: "r" (ctx), "r" (udaddr), "r" (kaddr), "r" (len));
+		: "r" (ctx), "b" (udaddr), "b" (kaddr), "b" (len));
 
 	curpcb->pcb_onfault = 0;
 	return 0;
@@ -550,7 +550,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"2: mtpid %1; mtmsr %0;"	/* Restore PID and MSR */
 		"sync; isync;"
 		: "=&r" (msr), "=&r" (pid), "=&r" (tmp)
-		: "r" (ctx), "r" (udaddr), "r" (kaddr), "r" (len));
+		: "r" (ctx), "b" (udaddr), "b" (kaddr), "b" (len));
 
 	curpcb->pcb_onfault = 0;
 	return 0;
