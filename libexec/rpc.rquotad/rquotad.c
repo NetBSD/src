@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.12 1998/08/10 02:57:23 perry Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.13 1999/01/31 08:51:53 mrg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.12 1998/08/10 02:57:23 perry Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.13 1999/01/31 08:51:53 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ main(argc, argv)
 		(void) signal(SIGHUP, cleanup);
 	}
 
-	openlog("rpc.rquotad", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("rpc.rquotad", LOG_PID, LOG_DAEMON);
 
 	/* create and register the service */
 	transp = svcudp_create(sock);

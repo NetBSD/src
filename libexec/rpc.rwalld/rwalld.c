@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.13 1998/08/10 02:57:24 perry Exp $	*/
+/*	$NetBSD: rwalld.c,v 1.14 1999/01/31 08:51:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.13 1998/08/10 02:57:24 perry Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.14 1999/01/31 08:51:53 mrg Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -109,7 +109,7 @@ main(argc, argv)
 		(void) signal(SIGHUP, cleanup);
 	}
 
-	openlog("rpc.rwalld", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("rpc.rwalld", LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {

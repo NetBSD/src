@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.11 1998/07/03 11:49:50 mrg Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.12 1999/01/31 08:51:53 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusersd.c,v 1.11 1998/07/03 11:49:50 mrg Exp $");
+__RCSID("$NetBSD: rusersd.c,v 1.12 1999/01/31 08:51:53 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,7 +92,7 @@ main(argc, argv)
 		(void) signal(SIGHUP, cleanup);
 	}
 
-	openlog("rpc.rusersd", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("rpc.rusersd", LOG_PID, LOG_DAEMON);
 	
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
