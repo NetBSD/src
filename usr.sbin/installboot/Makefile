@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/04/23 02:39:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/04/24 01:35:25 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,16 +14,6 @@ WARNS?=	3
 UFSSRC=		${_SRC_TOP_}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
-
-
-sun68k.c:	sun68k_bbinfo.h
-
-sun68k_bbinfo.h: ${_SRC_TOP_}/sys/arch/sun68k/stand/libsa/bbinfo.h
-	@echo "Copying ${.ALLSRC} to ${.TARGET}"
-	@cp ${.ALLSRC} ${.TARGET}
-
-CLEANFILES+=	sun68k_bbinfo.h
-
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
