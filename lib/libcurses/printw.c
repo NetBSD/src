@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.12 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: printw.c,v 1.13 2000/04/13 07:07:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.12 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: printw.c,v 1.13 2000/04/13 07:07:33 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,10 +66,10 @@ static int __winwrite __P((void *, const char *, int));
  */
 int
 #ifdef __STDC__
-printw(char *fmt,...)
+printw(const char *fmt,...)
 #else
 printw(fmt, va_alist)
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -91,11 +91,11 @@ va_dcl
  */
 int
 #ifdef __STDC__
-wprintw(WINDOW * win, char *fmt,...)
+wprintw(WINDOW * win, const char *fmt,...)
 #else
 wprintw(win, fmt, va_alist)
 	WINDOW *win;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -118,11 +118,11 @@ va_dcl
  */
 int
 #ifdef __STDC__
-mvprintw(int y, int x, char *fmt,...)
+mvprintw(int y, int x, const char *fmt,...)
 #else
 mvprintw(y, x, fmt, va_alist)
 	int     y, x;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -144,12 +144,12 @@ va_dcl
 int
 #ifdef __STDC__
 mvwprintw(WINDOW * win, int y, int x,
-    char *fmt,...)
+    const char *fmt,...)
 #else
 mvwprintw(win, y, x, fmt, va_alist)
 	WINDOW *win;
 	int     y, x;
-	char   *fmt;
+	const char   *fmt;
 va_dcl
 #endif
 {
@@ -197,7 +197,7 @@ __winwrite(cookie, buf, n)
 int
 vwprintw(win, fmt, ap)
 	WINDOW *win;
-	char *fmt;
+	const char *fmt;
 	va_list ap;
 {
 	FILE   *f;
