@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 1995/12/09 07:54:19 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 1995/12/11 17:09:16 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -61,7 +61,7 @@ extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
 
@@ -428,7 +428,7 @@ pmap_bootstrap(nextpa, firstpa)
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
 
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * Determine VA aliasing distance if any
 	 */
