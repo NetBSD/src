@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.26 2000/12/18 20:47:10 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.27 2001/01/08 23:43:34 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -731,7 +731,7 @@ stripoutput(ifp, m, dst, rt)
 	struct ifqueue *ifq;
 	int s, error;
 	u_char dl_addrbuf[STARMODE_ADDR_LEN+1];
-	ALTQ_DECL(altq_pktattr pktattr;)
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/*
 	 * Verify tty line is up and alive.
