@@ -1,7 +1,8 @@
-/*	$NetBSD: label.y,v 1.3 2003/06/30 18:00:07 wiz Exp $	*/
+/*	$NetBSD: label.y,v 1.4 2004/07/30 14:56:51 wiz Exp $	*/
 
 /* -*- C++ -*-
-   Copyright (C) 1989, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1990, 1991, 1992, 2000, 2004
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -408,6 +409,20 @@ const char *spec_ptr;
 const char *spec_end;
 const char *spec_cur;
 
+static char uppercase_array[] = {
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+  'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+  'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+  'Y', 'Z',
+};
+  
+static char lowercase_array[] = {
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+  'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+  'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+  'y', 'z',
+};
+
 int yylex()
 {
   while (spec_ptr < spec_end && csspace(*spec_ptr))
@@ -591,7 +606,8 @@ static const char *format_serial(char c, int n)
 	  d = 26;
 	n -= d;
 	n /= 26;
-	*p++ = c + d - 1;	// ASCII dependent
+	*p++ = c == 'a' ? lowercase_array[d - 1] :
+			       uppercase_array[d - 1];
       }
       *p-- = 0;
       // Reverse it.
@@ -972,8 +988,8 @@ label_info *lookup_label(const string &label)
       label_table[i] = 0;
     for (i = 0; i < old_size; i++)
       if (old_table[i]) {
-	unsigned h = hash_string(label_pool.contents() + old_table[i]->start,
-				 old_table[i]->length);
+	h = hash_string(label_pool.contents() + old_table[i]->start,
+			old_table[i]->length);
 	label_info **p;
 	for (p = label_table + (h % label_table_size);
 	     *p != 0;
@@ -1075,10 +1091,10 @@ int same_author_last_name(const reference &r1, const reference &r2, int n)
 {
   const char *ae1;
   const char *as1 = r1.get_sort_field(0, n, 0, &ae1);
-  assert(as1 != 0);
   const char *ae2;
   const char *as2 = r2.get_sort_field(0, n, 0, &ae2);
-  assert(as2 != 0);
+  if (!as1 && !as2) return 1;	// they are the same
+  if (!as1 || !as2) return 0;
   return ae1 - as1 == ae2 - as2 && memcmp(as1, as2, ae1 - as1) == 0;
 }
 
@@ -1086,10 +1102,10 @@ int same_author_name(const reference &r1, const reference &r2, int n)
 {
   const char *ae1;
   const char *as1 = r1.get_sort_field(0, n, -1, &ae1);
-  assert(as1 != 0);
   const char *ae2;
   const char *as2 = r2.get_sort_field(0, n, -1, &ae2);
-  assert(as2 != 0);
+  if (!as1 && !as2) return 1;	// they are the same
+  if (!as1 || !as2) return 0;
   return ae1 - as1 == ae2 - as2 && memcmp(as1, as2, ae1 - as1) == 0;
 }
 

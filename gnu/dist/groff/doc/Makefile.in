@@ -29,9 +29,9 @@
 
 
 srcdir=@srcdir@
-top_srcdir=@top_srcdir@
+top_srcdir=@abs_top_srcdir@
 VPATH=@srcdir@
-top_builddir=@groff_top_builddir@
+top_builddir=@abs_top_builddir@
 pnmtops=@pnmtops_nosetpage@
 
 # These may be overridden if cross-compiling.
@@ -122,6 +122,11 @@ gnu.png: gnu.xpm
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_gnu.png:
 	xpmtoppm $(srcdir)/gnu.xpm | pnmdepth 15 | pnmtopng >$@
+
+pic.html: pic.ms
+	$(GROFF) -P-p -P-b -P-I`basename $< | sed -e 's|.ms$$||'` \
+                 -P-D$(imagedir) -P-j`basename $< | sed -e 's|.ms$$||'` \
+                 -Thtml -ms >$@
 
 webpage.html: webpage.ms gnu.png gnu.eps
 webpage.ps: gnu.eps

@@ -5,7 +5,7 @@ prog="$0"
 # Default device.
 # First try the "locale charmap" command, because it's most reliable.
 # On systems where it doesn't exist, look at the environment variables.
-case "`#locale charmap 2>/dev/null`" in
+case "`exec 2>/dev/null ; locale charmap`" in
   UTF-8)
     T=-Tutf8 ;;
   ISO-8859-1)
@@ -47,10 +47,10 @@ for i
     -[eq] | -s*)
       # ignore these options
       ;;
-    -[mrnoT])
+    -[dmrnoT])
       echo "$prog: option $1 requires an argument" >&2
       exit 1 ;;
-    -[iptSUC] | -[mrno]*)
+    -[iptSUC] | -[dmrno]*)
       opts="$opts $1" ;;
     -Tascii | -Tlatin1 | -Tutf8 | -Tcp1047)
       T=$1 ;;
@@ -58,14 +58,17 @@ for i
       # ignore other devices
       ;;
     -u*)
-      # Solaris 2.2 `man' uses -u0; ignore it,
+      # Solaris 2.2 through at least Solaris 9 `man' invokes
+      # `nroff -u0 ... | col -x'.  Ignore the -u0,
       # since `less' and `more' can use the emboldening info.
-      ;;
+      # However, disable SGR, since Solaris `col' mishandles it.
+      opts="$opts -P-c" ;;
     -v | --version)
       echo "GNU nroff (groff) version @VERSION@"
       exit 0 ;;
     --help)
-      echo "usage: nroff [-CchipStUv] [-mNAME] [-nNUM] [-oLIST] [-rCN] [-Tname] [FILE...]"
+      echo "usage: nroff [-CchipStUv] [-dCS] [-mNAME] [-nNUM] [-oLIST] [-rCN]"
+      echo "       [-Tname] [FILE...]"
       exit 0 ;;
     --)
       shift
@@ -81,11 +84,15 @@ for i
   shift
 done
 
+# Set up the `GROFF_BIN_PATH' variable
+# to be exported in the current `GROFF_RUNTIME' environment.
+
+@GROFF_BIN_PATH_SETUP@
+export GROFF_BIN_PATH
+
 # This shell script is intended for use with man, so warnings are
 # probably not wanted.  Also load nroff-style character definitions.
 
-: ${GROFF_BIN_PATH=@BINDIR@}
-export GROFF_BIN_PATH
-PATH=$GROFF_BIN_PATH@SEP@$PATH groff -mtty-char $T $opts ${1+"$@"}
+PATH="$GROFF_RUNTIME$PATH" groff -mtty-char $T $opts ${1+"$@"}
 
 # eof
