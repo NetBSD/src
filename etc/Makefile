@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2000/03/10 11:59:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.141 2000/03/28 00:39:17 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -245,15 +245,11 @@ release snapshot snap_pre snap_md_pre snap_md_post:
 	@false
 .else
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
-	sh ../distrib/sets/maketars -s ../distrib/sets \
-		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
-.if defined(CRYPTOPATH) && exists(${CRYPTOPATH})
-	sh ../distrib/sets/maketars -s ../distrib/sets \
-		-d ${DESTDIR} -t ${RELEASEDIR}/binary/security secr
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/security
-.endif
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/sets
+	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
+
+cryptoset: distribution snap_pre snap_md_pre snap_kern snap_md_post
+	(cd ../distrib/sets; ${MAKE} cryptoset)
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
