@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2000/05/08 07:56:01 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2001/02/05 00:22:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,13 +55,14 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2000/05/08 07:56:01 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2001/02/05 00:22:52 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "include.h"
 #include "pathnames.h"
 
+extern FILE	*yyin;
 
 int
 main(ac, av)
@@ -214,7 +215,6 @@ int
 read_file(s)
 	const char	*s;
 {
-	extern FILE	*yyin;
 	int		retval;
 
 	file = s;
