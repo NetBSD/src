@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.5 1997/06/06 17:27:33 jtk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -187,7 +187,7 @@ printbody(proc)
 	  f_print(fout,
 		    "\tif (clnt_call(clnt, %s, xdr_void", proc->proc_name);
 	  f_print(fout, 
- 		  ", NULL, xdr_%s, %s,%s, TIMEOUT) != RPC_SUCCESS) {\n",
+ 		  ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
  		  stringfix(proc->res_type), ampr(proc->res_type), RESULT);
 
 	} else if ( newstyle && args2) {
