@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.45 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.46 2005/03/19 17:27:46 hira Exp $
 
 .include <bsd.init.mk>
 
@@ -175,6 +175,6 @@ cleanx11man: .PHONY
 	    -D__adminmansuffix__=8 \
 	    -D__projectroot__=${X11ROOTDIR} \
 	    -D__xorgversion__='"Release 6.6" "X Version 11"' \
-	    -D__vendorversion__="XFree86 4.4.0" \
+	    -D__vendorversion__="XFree86 4.5.0" \
 	    ${X11EXTRAMANDEFS} \
 	| ${X11TOOL_UNXCOMM} > ${.TARGET}
