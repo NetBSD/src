@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)io.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: io.c,v 1.5 1993/08/10 03:41:48 mycroft Exp $";
+static char rcsid[] = "$Id: io.c,v 1.6 1993/12/08 07:50:47 mycroft Exp $";
 #endif /* not lint */
 
 # include	<curses.h>
@@ -73,6 +73,90 @@ char            *suitname[ SUITS ]      = { "SPADES", "HEARTS", "DIAMONDS",
 char            *suitchar[ SUITS ]      = { "S", "H", "D", "C" };
 
 
+
+/*
+ * msg:
+ *	Display a message at the top of the screen.
+ */
+char		Msgbuf[BUFSIZ] = { '\0' };
+
+int		Mpos = 0;
+
+static int	Newpos = 0;
+
+msg(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	endmsg();
+}
+
+/*
+ * addmsg:
+ *	Add things to the current message
+ */
+addmsg(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+}
+
+/*
+ * endmsg:
+ *	Display a new msg.
+ */
+
+int	Lineno = 0;
+
+endmsg()
+{
+    register int	len;
+    register char	*mp, *omp;
+    static int		lastline = 0;
+
+    /*
+     * All messages should start with uppercase
+     */
+    mvaddch(lastline + Y_MSG_START, SCORE_X, ' ');
+    if (islower(Msgbuf[0]) && Msgbuf[1] != ')')
+	Msgbuf[0] = toupper(Msgbuf[0]);
+    mp = Msgbuf;
+    len = strlen(mp);
+    if (len / MSG_X + Lineno >= MSG_Y) {
+	while (Lineno < MSG_Y) {
+	    wmove(Msgwin, Lineno++, 0);
+	    wclrtoeol(Msgwin);
+	}
+	Lineno = 0;
+    }
+    mvaddch(Lineno + Y_MSG_START, SCORE_X, '*');
+    lastline = Lineno;
+    do {
+	mvwaddstr(Msgwin, Lineno, 0, mp);
+	if ((len = strlen(mp)) > MSG_X) {
+	    omp = mp;
+	    for (mp = &mp[MSG_X-1]; *mp != ' '; mp--)
+	    	continue;
+	    while (*mp == ' ')
+		mp--;
+	    mp++;
+	    wmove(Msgwin, Lineno, mp - omp);
+	    wclrtoeol(Msgwin);
+	}
+	if (++Lineno >= MSG_Y)
+	    Lineno = 0;
+    } while (len > MSG_X);
+    wclrtoeol(Msgwin);
+    Mpos = len;
+    Newpos = 0;
+    wrefresh(Msgwin);
+    refresh();
+    wrefresh(Msgwin);
+}
 
 /*
  * msgcard:
@@ -363,90 +447,6 @@ char		*prompt;
 		msg("%d is not between %d and %d inclusive, try again --> ",
 								sum, lo, hi);
 	}
-}
-
-/*
- * msg:
- *	Display a message at the top of the screen.
- */
-char		Msgbuf[BUFSIZ] = { '\0' };
-
-int		Mpos = 0;
-
-static int	Newpos = 0;
-
-/* VARARGS1 */
-msg(fmt,ap)
-	char *fmt;
-	va_list ap;
-{
-	(void)vsprintf(&Msgbuf[Newpos], fmt, &ap);
-	endmsg();
-}
-
-/*
- * addmsg:
- *	Add things to the current message
- */
-/* VARARGS1 */
-addmsg(fmt,ap)
-	char *fmt;
-	va_list ap;
-{
-	(void)vsprintf(&Msgbuf[Newpos], fmt, &ap);
-}
-
-/*
- * endmsg:
- *	Display a new msg.
- */
-
-int	Lineno = 0;
-
-endmsg()
-{
-    register int	len;
-    register char	*mp, *omp;
-    static int		lastline = 0;
-
-    /*
-     * All messages should start with uppercase
-     */
-    mvaddch(lastline + Y_MSG_START, SCORE_X, ' ');
-    if (islower(Msgbuf[0]) && Msgbuf[1] != ')')
-	Msgbuf[0] = toupper(Msgbuf[0]);
-    mp = Msgbuf;
-    len = strlen(mp);
-    if (len / MSG_X + Lineno >= MSG_Y) {
-	while (Lineno < MSG_Y) {
-	    wmove(Msgwin, Lineno++, 0);
-	    wclrtoeol(Msgwin);
-	}
-	Lineno = 0;
-    }
-    mvaddch(Lineno + Y_MSG_START, SCORE_X, '*');
-    lastline = Lineno;
-    do {
-	mvwaddstr(Msgwin, Lineno, 0, mp);
-	if ((len = strlen(mp)) > MSG_X) {
-	    omp = mp;
-	    for (mp = &mp[MSG_X-1]; *mp != ' '; mp--)
-	    	continue;
-	    while (*mp == ' ')
-		mp--;
-	    mp++;
-	    wmove(Msgwin, Lineno, mp - omp);
-	    wclrtoeol(Msgwin);
-	}
-	if (++Lineno >= MSG_Y)
-	    Lineno = 0;
-    } while (len > MSG_X);
-    wclrtoeol(Msgwin);
-    Mpos = len;
-    Newpos = 0;
-    wrefresh(Msgwin);
-    refresh();
-    wrefresh(Msgwin);
 }
 
 #ifdef notdef
