@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.7 1997/10/20 02:00:36 enami Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.7 1997/10/20 02:00:36 enami Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: getNAME.c,v 1.7 1997/10/20 02:00:36 enami Exp $");
  * Get name sections from manual pages.
  *	-t	for building toc
  *	-i	for building intro entries
+ *	-w	for querying type of manual source
  *	other	apropos database
  */
 #include <stdio.h>
@@ -104,9 +105,10 @@ getfrom(pathname)
 	char *pathname;
 {
 	int i = 0;
-	char *name, *loc;
+	char *name, *loc, *s, *t;
 	char headbuf[BUFSIZ];
 	char linbuf[BUFSIZ];
+	char savebuf[BUFSIZ];
 
 	if (freopen(pathname, "r", stdin) == 0) {
 		perror(pathname);
@@ -127,13 +129,8 @@ getfrom(pathname)
 		if ((headbuf[1] == 'T' && headbuf[2] == 'H') ||
 		    (headbuf[1] == 't' && headbuf[2] == 'h'))
 			break;
-		if (headbuf[1] == 'D' && headbuf[2] == 't') {
-			if (typeflag) {
-				printf("%-60s	NEW\n", pathname);
-				return;
-			}
+		if (headbuf[1] == 'D' && headbuf[2] == 't')
 			goto newman;
-		}
 	}
 	if (typeflag) {
 		printf("%-60s	OLD\n", pathname);
@@ -152,8 +149,6 @@ getfrom(pathname)
 	trimln(headbuf);
 	if (tocrc)
 		doname(name);
-	if (!tocrc && !intro)
-		printf("%s\t", headbuf);
 	linbuf[0] = '\0';
 	for (;;) {
 		if (fgets(headbuf, sizeof headbuf, stdin) == NULL)
@@ -169,6 +164,20 @@ getfrom(pathname)
 		i++;
 		trimln(headbuf);
 		strcat(linbuf, headbuf);
+		/* change the \- into (N) - */
+		if ((s = strstr(linbuf, "\\-")) != NULL) {
+			strncpy(savebuf, s+1, BUFSIZ);
+			if ((t = strchr(name, '.')) != NULL) {
+				t++;
+				*s++ = '(';
+				while (*t)
+					*s++ = *t++;
+				*s++ = ')';
+				*s++ = ' ';
+				*s++ = '\0';
+			}
+			strcat(linbuf, savebuf);
+		}
 	}
 	if (intro)
 		split(linbuf, name);
@@ -177,6 +186,10 @@ getfrom(pathname)
 	return;
 
 newman:
+	if (typeflag) {
+		printf("%-60s	NEW\n", pathname);
+		return;
+	}
 	for (;;) {
 		if (fgets(linbuf, sizeof linbuf, stdin) == NULL)
 			return;
@@ -188,8 +201,6 @@ newman:
 	trimln(headbuf);
 	if (tocrc)
 		doname(name);
-	if (!tocrc && !intro)
-		printf(".TH%s\t", &headbuf[3]);
 	linbuf[0] = '\0';
 	for (;;) {
 		if (fgets(headbuf, sizeof headbuf, stdin) == NULL)
@@ -227,11 +238,18 @@ newman:
 				loc[2] = ')';
 				loc[3] = '\0';
 			}
+
 			/*
-			 * Put dash between names and description.
+			 * Put section and dash between names and description.
 			 */
-			if (headbuf[1] == 'N' && headbuf[2] == 'd')
-				strcat(linbuf, "\\- ");
+			if (headbuf[1] == 'N' && headbuf[2] == 'd') {
+				if ((t = strchr(name, '.')) != NULL) {
+					strcat(linbuf, "(");
+					strcat(linbuf, t+1);
+					strcat(linbuf, ") ");
+				}
+				strcat(linbuf, "- ");
+			}
 			/*
 			 * Skip over macro names.
 			 */
@@ -246,7 +264,7 @@ newman:
 
 void
 trimln(cp)
-	register char *cp;
+	char *cp;
 {
 
 	while (*cp)
@@ -259,7 +277,7 @@ void
 doname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
@@ -283,7 +301,7 @@ void
 split(line, name)
 	char *line, *name;
 {
-	register char *cp, *dp;
+	char *cp, *dp;
 	char *sp, *sep;
 
 	cp = strchr(line, '-');
@@ -298,7 +316,7 @@ split(line, name)
 	for (sep = "", dp = line; dp && *dp; dp = cp, sep = "\n") {
 		cp = strchr(dp, ',');
 		if (cp) {
-			register char *tp;
+			char *tp;
 
 			for (tp = cp - 1; *tp == ' ' || *tp == '\t'; tp--)
 				;
@@ -316,7 +334,7 @@ void
 dorefname(name)
 	char *name;
 {
-	register char *dp = name, *ep;
+	char *dp = name, *ep;
 
 again:
 	while (*dp && *dp != '.')
@@ -337,6 +355,6 @@ again:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: getNAME [-it] file ...\n");
+	(void)fprintf(stderr, "usage: getNAME [-itw] file ...\n");
 	exit(1);
 }
