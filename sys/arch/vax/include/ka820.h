@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.4 2001/06/03 15:10:34 ragge Exp $	*/
+/*	$NetBSD: ka820.h,v 1.5 2002/12/01 21:21:45 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,8 @@
 /*
  * Definitions specific to the ka820 cpu.
  */
+#ifndef _VAX_KA820_H_
+#define _VAX_KA820_H_
 
 /*
  * Device addresses.
@@ -141,4 +143,6 @@ struct ka820clock {
 };
 
 void	crxintr __P((void *arg));
-#endif
+#endif /* _LOCORE */
+
+#endif /* _VAX_KA820_H_ */

@@ -33,6 +33,8 @@
  * KA48 (VS4000 VLC) specific definitions. *** INCOMPLETE ! MK-990306 ***
  */
 
+#ifndef _VAX_KA48_H_
+#define _VAX_KA48_H_
 
 /* IPR bits definitions */
 #define	PCSTS_FLUSH		 4
@@ -59,3 +61,5 @@
 #define	KA48_PARCTL_NPEN	0x00000100	/* ?? Parity Enable */
 #define	KA48_PARCTL_INVENA	0x01000000	/* Invalid ? Enable */
 #define	KA48_PARCTL_AGS		0x02000000	/* ??? */
+
+#endif /* _VAX_KA48_H_ */
