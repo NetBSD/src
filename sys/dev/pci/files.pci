@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.191 2003/08/26 21:11:00 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.192 2003/09/08 18:59:48 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -457,14 +457,6 @@ file	dev/pci/if_glxt.c		glxt
 device	stge: ether, ifnet, arp, mii, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
-
-# SysKonnect SKNET-GE Gigabit Ethernet  
-device	skgec { port = -1 }
-attach	skgec at pci
-file	dev/pci/if_skge.c		skgec
-
-device	skge: ether, ifnet, arp, mii
-attach	skge at skgec   
 
 # Intel i8254x Gigabit Ethernet
 device	wm: ether, ifnet, arp, mii, mii_bitbang
