@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.110 1998/12/21 11:25:39 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.111 1999/01/14 13:08:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1599,10 +1599,12 @@ static struct {
 	{ "iommu",	BUSCLASS_IOMMU },
 	{ "sbus",	BUSCLASS_SBUS },
 	{ "xbox",	BUSCLASS_SBUS },
-	{ "esp",	BUSCLASS_SBUS },
 	{ "dma",	BUSCLASS_SBUS },
+	{ "esp",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
+	{ "isp",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
+	{ "lebuffer",	BUSCLASS_SBUS },
 	{ "vme",	BUSCLASS_VME }
 };
 
@@ -1724,8 +1726,10 @@ device_register(dev, aux)
 	    strcmp(dvname, "xbox") == 0 ||
 	    strcmp(dvname, "dma") == 0 ||
 	    strcmp(dvname, "ledma") == 0 ||
+	    strcmp(dvname, "lebuffer") == 0 ||
 	    strcmp(dvname, "espdma") == 0 ||
 	    strcmp(dvname, "esp") == 0 ||
+	    strcmp(dvname, "isp") == 0 ||
 	    strcmp(dvname, "xdc") == 0 ||
 	    strcmp(dvname, "xyc") == 0 ) {
 		/*
