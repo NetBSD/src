@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.32 2000/07/21 06:38:27 rh Exp $
+.\"	$NetBSD: packages.7,v 1.33 2000/07/26 15:02:14 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -557,17 +557,6 @@ is
 If set, prevent the 
 .Dq update
 target from cleaning up after itself.
-.It PACKAGE_DEPENDS_WITH_PATTERNS
-If set to 'true', the 'package-depends' target prints packages as
-wildcards, if set to 'false' the version currently in pkgsrc will be
-printed. Defaults to 'true'. 
-.Pp
-This switch also enables/disables proper wildcard processing for installed
-packages and pkgsrc, and encoding of wildcard package depends in binary
-packages.
-.It PATCH_DEBUG
-If set, print out more information about the patches as it attempts to
-apply them.
 .It PKG_VERBOSE
 If set, print out more information about the automatic manual
 page handling, and package deletion (see the
