@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.2 2000/02/01 20:05:54 veego Exp $
+#	$NetBSD: ipf2netbsd,v 1.3 2000/05/03 10:50:04 veego Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,7 +78,7 @@ find $dest -type f -print | while read f; do
 done
 
 ### Add our NetBSD RCS Id
-find $dest -name '*.[chly]' -print | while read c; do
+find $dest -type f -name '*.[chly]' -print | while read c; do
 	sed 1q < $c | grep -q '\$NetBSD' || (
 echo "/*	\$NetBSD\$	*/" >/tmp/ipf2n$$
 echo "" >>/tmp/ipf2n$$
@@ -87,7 +87,7 @@ mv /tmp/ipf2n$$ $c && echo added RCS tag to $c
 	)
 done
 
-find $dest -name '*.[0-9]' -a \! -name 'example.*' -print | while read m; do
+find $dest -type f -name '*.[0-9]' -a \! -name 'example.*' -print | while read m; do
 	sed 1q < $m | grep -q '\$NetBSD' || (
 echo ".\\\"	\$NetBSD\$" >/tmp/ipf2m$$
 echo ".\\\"" >>/tmp/ipf2m$$
@@ -96,7 +96,7 @@ echo ".\\\"" >>/tmp/ipf2m$$
 	)
 done
 
-find $dest -name 'example.*' -print | while read e; do
+find $dest -type f -name 'example.*' -print | while read e; do
 	sed 1q < $e | grep -q '\$NetBSD' || (
 echo "#	\$NetBSD\$" >/tmp/ipf2e$$
 	cat $e >> /tmp/ipf2e$$
