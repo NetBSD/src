@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.13 2001/07/08 20:01:43 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.14 2001/07/12 20:46:39 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.13 2001/07/08 20:01:43 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.14 2001/07/12 20:46:39 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ main(argc, argv)
 	char *pathv[2];
 	char path_dev[MAXPATHLEN + 1] = _PATH_DEV;
 	char cur_dir[MAXPATHLEN + 1];
+	struct timeval tv;
+	char *q;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
@@ -120,18 +122,34 @@ main(argc, argv)
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
 
-	/* 
-	 * We use rename() to produce the dev.db file, and rename() 
-	 * is not able to move files across filesystems. Hence we use
-	 * /var/run for dev.tmp, since dev.db will be in /var/run.
-	 */
-	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_VARRUN);
 	if (dbname_arg)
 		strncpy(dbname, dbname_arg, MAXPATHLEN);
 	else
 		(void)snprintf(dbname, MAXPATHLEN, "%sdev.db", _PATH_VARRUN);
-	db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
-	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
+	/* 
+	 * We use rename() to produce the dev.db file from a temporary file,
+	 * and rename() is not able to move files across filesystems. Hence we 
+	 * need the temporary file to be in the same directory as dev.db.
+	 *
+	 * Additionally, we might be working in a world writable directory, 
+	 * we must ensure that we are not opening an existing file, therefore
+	 * the loop on dbopen. 
+	 */
+	(void)strncpy(dbtmp, dbname, MAXPATHLEN);
+	q = rindex(dbtmp, '/');
+	errno = 0;
+	do {
+		(void)gettimeofday(&tv, NULL);
+		if (q) {
+			(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
+			    "%s.%ld.tmp", q, tv.tv_usec);	
+		} else {
+			(void)snprintf(dbtmp, MAXPATHLEN, "./%s.%ld.tmp",
+			    dbname, tv.tv_usec);
+		}
+		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
+		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
+	} while (errno == EEXIST);
 	if (db == NULL)
 		err(1, "%s", dbtmp);
 
@@ -167,8 +185,8 @@ main(argc, argv)
 		 * Create the data; nul terminate the name so caller doesn't
 		 * have to.  Skip path_dev and slash.
 		 */
-		strlcpy(buf, p->fts_path + strlen(path_dev), sizeof(buf));
-		data.size = p->fts_pathlen - strlen(path_dev) + 1;
+		strlcpy(buf, p->fts_path + (strlen(path_dev) + 1), sizeof(buf));
+		data.size = p->fts_pathlen - (strlen(path_dev) + 1) + 1;
 		if ((*db->put)(db, &key, &data, 0)) {
 			err(1, "dbput %s", dbtmp);
 		}
