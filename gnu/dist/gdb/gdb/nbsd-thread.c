@@ -534,11 +534,10 @@ nbsd_core_thread_alive (ptid_t ptid)
 static int
 nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 {
-  int retval;
   td_thread_info_t ti;
   ptid_t ptid;
 
-  if ((retval = td_thr_info (th, &ti)) != 0)
+  if (td_thr_info (th, &ti) != 0)
       return -1;
 
   ptid = BUILD_THREAD (ti.thread_id, main_ptid);
