@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2005/02/20 00:32:18 christos Exp $
+# $NetBSD: Makefile,v 1.5 2005/02/20 00:36:47 christos Exp $
 
 USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@ USE_SHLIBDIR=	yes
 WARNS=3
 LINTFLAGS+= -Sw
 
-LIB=	libradius
+LIB=	radius
 CPPFLAGS+=	-I.
 
 .if (${MKCRYPTO} != "no")
