@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.2 2004/08/03 10:52:52 skrll Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.3 2004/08/18 10:19:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.2 2004/08/03 10:52:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.3 2004/08/18 10:19:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -569,7 +569,7 @@ hook_list_t exechook_list;
 
 void *
 exechook_establish(fn, arg)
-	void (*fn)(struct lwp *, void *);
+	void (*fn)(struct proc *, void *);
 	void *arg;
 {
 	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
@@ -596,7 +596,7 @@ hook_list_t exithook_list;
 
 void *
 exithook_establish(fn, arg)
-	void (*fn)(struct lwp *, void *);
+	void (*fn)(struct proc *, void *);
 	void *arg;
 {
 	return hook_establish(&exithook_list, (void (*)(void *))fn, arg);

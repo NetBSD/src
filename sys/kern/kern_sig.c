@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.2 2004/08/03 10:52:51 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.3 2004/08/18 10:19:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.2 2004/08/03 10:52:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.3 2004/08/18 10:19:08 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.2 2004/08/03 10:52:51 skrll Exp
 
 static void	child_psignal(struct proc *, int);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
-static void	ksiginfo_exithook(struct lwp *, void *);
+static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
 static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
@@ -208,9 +208,8 @@ out:
  * free all pending ksiginfo on exit
  */
 static void
-ksiginfo_exithook(struct lwp *l, void *v)
+ksiginfo_exithook(struct proc *p, void *v)
 {
-	struct proc *p = l->l_proc;
 	int s;
 
 	s = splsoftclock();
