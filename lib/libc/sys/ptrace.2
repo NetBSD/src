@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.23 2003/04/16 13:34:55 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.24 2003/06/26 09:50:49 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -195,7 +195,7 @@ and
 The I/O request is encoded in a
 .Dq Li "struct ptrace_io_desc"
 defined as:
-.Bd -literal -ffset indent
+.Bd -literal -offset indent
 struct ptrace_io_desc {
 	int	piod_op;
 	void	*piod_offs;
