@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.14 2002/10/02 16:33:43 thorpej Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.15 2003/03/11 11:59:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.14 2002/10/02 16:33:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.15 2003/03/11 11:59:31 drochner Exp $");
 
-#include "ehci.h"
+#include "ehci_cardbus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ int	ohci_cardbus_detach(device_ptr_t, int);
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
-#if NEHCI > 0
+#if NEHCI_CARDBUS > 0
 	struct usb_cardbus	sc_cardbus;
 #endif
 	cardbus_chipset_tag_t	sc_cc;
@@ -187,7 +187,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		return;
 	}
 
-#if NEHCI > 0
+#if NEHCI_CARDBUS > 0
 	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
 #endif
 
@@ -215,7 +215,7 @@ ohci_cardbus_detach(device_ptr_t self, int flags)
 		    sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
-#if NEHCI > 0
+#if NEHCI_CARDBUS > 0
 	usb_cardbus_rem(&sc->sc_cardbus);
 #endif
 	return (0);

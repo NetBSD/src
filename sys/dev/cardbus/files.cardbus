@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.18 2001/11/28 10:21:21 lukem Exp $
+#	$NetBSD: files.cardbus,v 1.19 2003/03/11 11:59:31 drochner Exp $
 #
 # files.cardbus
 #
@@ -47,10 +47,10 @@ attach	ohci at cardbus with ohci_cardbus
 file	dev/cardbus/ohci_cardbus.c	ohci_cardbus
 
 #
-# OHCI USB controller
+# EHCI USB controller
 #
 attach	ehci at cardbus with ehci_cardbus
-file	dev/cardbus/ehci_cardbus.c	ehci_cardbus
+file	dev/cardbus/ehci_cardbus.c	ehci_cardbus needs-flag
 
 #
 # OHCI IEEE 1394 controller
