@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.52 2002/04/17 09:16:27 wiz Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.52.4.1 2003/06/30 02:47:21 grant Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.52 2002/04/17 09:16:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.52.4.1 2003/06/30 02:47:21 grant Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -442,6 +442,11 @@ tl_pci_attach(parent, self, aux)
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
+
+	/* 
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->tl_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
