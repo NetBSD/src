@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1999/12/07 05:30:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 1999/12/16 01:16:04 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 SRCTOP=	../..
@@ -9,8 +9,7 @@ SRCS=	conf.c ftpd.c ftpcmd.y logwtmp.c popen.c
 CPPFLAGS+=-DHASSETPROCTITLE
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
-MAN=	ftpd.8
-MLINKS+=ftpd.8 ftpd.conf.5
+MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
 
 # for `internal' ls
 SRCS+=	ls.c cmp.c print.c stat_flags.c util.c
