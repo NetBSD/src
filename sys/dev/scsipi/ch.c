@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.27 1997/08/27 11:26:26 bouyer Exp $	*/
+/*	$NetBSD: ch.c,v 1.28 1997/09/29 17:32:31 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -122,6 +122,7 @@ struct scsipi_device ch_switch = {
 int	ch_move __P((struct ch_softc *, struct changer_move *));
 int	ch_exchange __P((struct ch_softc *, struct changer_exchange *));
 int	ch_position __P((struct ch_softc *, struct changer_position *));
+int	ch_ielem __P((struct ch_softc *));
 int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
 int	ch_get_params __P((struct ch_softc *, int));
@@ -341,6 +342,10 @@ chioctl(dev, cmd, data, flags, p)
 		cp->cp_nportals = sc->sc_counts[CHET_IE];
 		cp->cp_ndrives = sc->sc_counts[CHET_DT];
 		break;		}
+
+	case CHIOIELEM:
+		error = ch_ielem(sc);
+		break;
 
 	case CHIOGSTATUS:	{
 		struct changer_element_status *ces =
@@ -562,6 +567,7 @@ ch_usergetelemstatus(sc, chet, uptr)
 	 */
 	st_hdr = (struct read_element_status_header *)data;
 	avail = _2btol(st_hdr->count);
+
 	if (avail != sc->sc_counts[chet])
 		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
 		    sc->sc_dev.dv_xname);
@@ -612,6 +618,26 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	    sizeof(cmd), (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
 }
 
+
+int
+ch_ielem(sc)
+	struct ch_softc *sc;
+{
+	struct scsi_initialize_element_status cmd;
+
+	/*
+	 * Build SCSI command.
+	 */
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = INITIALIZE_ELEMENT_STATUS;
+
+	/*
+	 * Send command to changer.
+	 */
+	return (sc->sc_link->scsipi_cmd(sc->sc_link,
+		(struct scsipi_generic *)&cmd, sizeof(cmd),
+		NULL, 0, CHRETRIES, 100000, NULL, 0));
+}
 
 /*
  * Ask the device about itself and fill in the parameters in our
@@ -669,7 +695,10 @@ ch_get_params(sc, scsiflags)
 	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
 	cmd.opcode = SCSI_MODE_SENSE;
-	cmd.byte2 |= 0x08;	/* disable block descriptors */
+	/*
+	 * XXX: Note: not all changers can deal with disabled block descriptors
+	 */
+	cmd.byte2 = 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
 	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
