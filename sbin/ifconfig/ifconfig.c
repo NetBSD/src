@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.62 2000/01/24 23:24:16 chopps Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.63 2000/01/25 00:59:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.62 2000/01/24 23:24:16 chopps Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.63 2000/01/25 00:59:39 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1261,6 +1261,11 @@ int carrier()
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
+const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+
+const struct ifmedia_status_description ifm_status_descriptions[] =
+    IFM_STATUS_DESCRIPTIONS;
+
 /*
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
@@ -1321,26 +1326,34 @@ status(ap, alen)
 	}
 	putchar('\n');
 
-	if (ifmr.ifm_status & IFM_AVALID) {
-		printf("\tstatus: ");
-		switch (IFM_TYPE(ifmr.ifm_active)) {
-		case IFM_ETHER:
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				printf("active");
-			else
-				printf("no carrier");
-			break;
+	if (ifmr.ifm_status & IFM_STATUS_VALID) {
+		const struct ifmedia_status_description *ifms;
+		int bitno, found = 0;
 
-		case IFM_FDDI:
-		case IFM_TOKEN:
-			if (ifmr.ifm_status & IFM_ACTIVE)
-				printf("inserted");
-			else
-				printf("no ring");
-			break;
-		default:
-			printf("unknown");
+		printf("\tstatus: ");
+		for (bitno = 0; ifm_status_valid_list[bitno] != 0; bitno++) {
+			for (ifms = ifm_status_descriptions;
+			     ifms->ifms_valid != 0; ifms++) {
+				if (ifms->ifms_type !=
+				      IFM_TYPE(ifmr.ifm_active) &&
+				    ifms->ifms_valid !=
+				      ifm_status_valid_list[bitno])
+					continue;
+				printf("%s%s", found ? ", " : "",
+				    IFM_STATUS_DESC(ifms, ifmr.ifm_status));
+				found = 1;
+
+				/*
+				 * For each valid indicator bit, there's
+				 * only one entry for each media type, so
+				 * terminate the inner loop now.
+				 */
+				break;
+			}
 		}
+
+		if (found == 0)
+			printf("unknown");
 		putchar('\n');
 	}
 
