@@ -1,5 +1,3 @@
-.\"	$NetBSD: ping.8,v 1.1.1.3 1997/03/11 21:04:24 christos Exp $
-.\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
+.\"     @(#)ping.8	8.3 (Berkeley) 4/28/95
 .\"
-.Dd December 11, 1993
+.Dd April 28, 1995
 .Dt PING 8
 .Os BSD 4.3
 .Sh NAME
@@ -43,16 +41,12 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
-.Op Fl dfLnqRrv
+.Op Fl Rdfnqrv
 .Op Fl c Ar count
-.Op Fl I Ar ifaddr
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
-.Op Fl S Ar ifaddr
 .Op Fl s Ar packetsize
-.Op Fl t Ar ttl
-.Op Fl w Ar maxwait
 .Ar host
 .Sh DESCRIPTION
 .Nm Ping
@@ -143,9 +137,6 @@ If the host is not on a directly-attached network, an error is returned.
 This option can be used to ping a local host through an interface
 that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
-.It Fl S Ar ifaddr
-Specify the interface to transmit from on machines with multiple
-interfaces. For unicast pings.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.  
 The default is 56, which translates into 64
@@ -160,20 +151,6 @@ Verbose output.
 packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
-.It Fl w Ar maxwait
-Specifies the number of seconds to wait for a response to a packet
-before transmitting the next one.  The default is 10.
-.El
-.Pp
-In addition, the following options may be used for multicast pings:
-.Bl -tag -width Ds
-.It Fl I Ar ifaddr
-Transmit using the specified interface address.
-.It Fl L
-Disable the loopback, so the transmitting host doesn't see the ICMP
-requests.
-.It Fl t Ar ttl
-Use the specified time-to-live.
 .El
 .Pp
 When using
@@ -188,16 +165,7 @@ in calculating the minimum/average/maximum round-trip time numbers.
 When the specified number of packets have been sent (and received) or
 if the program is terminated with a
 .Dv SIGINT ,
-a brief summary is displayed.  The summary information can be displayed
-while
-.Nm ping
-is running by sending it a
-.Dv SIGINFO
-signal (see the
-.Dq status
-argument for
-.Xr stty 1
-for more information).
+a brief summary is displayed.
 .Pp
 This program is intended for use in network testing, measurement and
 management.
@@ -352,7 +320,6 @@ broadcast address should only be done under very controlled conditions.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
-.Xr spray 8 ,
 .Xr routed 8
 .Sh HISTORY
 The
