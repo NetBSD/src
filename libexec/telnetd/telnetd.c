@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.40 2003/07/14 16:17:37 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.41 2003/07/15 10:14:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.40 2003/07/14 16:17:37 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.41 2003/07/15 10:14:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ char *progname;
 
 int main __P((int, char *[]));
 void usage __P((void));
-int getterminaltype __P((char *));
+int getterminaltype __P((char *, size_t));
 int getent __P((char *, char *));
 void doit __P((struct sockaddr *));
 void _gettermname __P((void));
@@ -492,8 +492,9 @@ static unsigned char ttytype_sbbuf[] = {
 };
 
 int
-getterminaltype(name)
+getterminaltype(name, l)
     char *name;
+    size_t l;
 {
     int retval = -1;
 
@@ -506,7 +507,7 @@ getterminaltype(name)
     while (his_will_wont_is_changing(TELOPT_AUTHENTICATION))
 	ttloop();
     if (his_state_is_will(TELOPT_AUTHENTICATION)) {
-	retval = auth_wait(name);
+	retval = auth_wait(name, l);
     }
 #endif
 
@@ -729,7 +730,7 @@ doit(who)
 	 * get terminal type.
 	 */
 	*user_name = 0;
-	level = getterminaltype(user_name);
+	level = getterminaltype(user_name, sizeof(user_name));
 	setenv("TERM", terminaltype ? terminaltype : "network", 1);
 
 	/*
