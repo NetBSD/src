@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.14 1998/07/29 03:38:30 ross Exp $
+.\"	$NetBSD: getopt.3,v 1.15 1999/02/07 16:52:56 bad Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,8 +125,7 @@ The
 .Fn getopt
 function
 returns \-1
-when the argument list is exhausted, or a non-recognized
-option is encountered.
+when the argument list is exhausted.
 The interpretation of options in the argument list may be cancelled
 by the option
 .Ql --
@@ -179,7 +178,7 @@ int bflag, ch, fd;
 
 bflag = 0;
 while ((ch = getopt(argc, argv, "bf:")) != -1)
-	switch(ch) {
+	switch (ch) {
 	case 'b':
 		bflag = 1;
 		break;
