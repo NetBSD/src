@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.55 1997/05/28 00:07:49 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.56 1997/05/29 04:57:02 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -123,7 +123,7 @@ struct sbmode {
 	u_char	precision;
 	u_short	lowrate, highrate;
 	u_char	cmd;
-	short	cmdchan;
+	u_char	cmdchan;
 };
 static struct sbmode sbpmodes[] = {
  { SB_1,    1,  8,  4000, 22727, SB_DSP_WDMA      },
@@ -133,6 +133,7 @@ static struct sbmode sbpmodes[] = {
  { SB_PRO,  1,  8,  4000, 22727, SB_DSP_WDMA_LOOP },
  { SB_PRO,  1,  8, 22727, 45454, SB_DSP_HS_OUTPUT },
  { SB_PRO,  2,  8, 11025, 22727, SB_DSP_HS_OUTPUT },
+ /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
  { SB_JAZZ, 1,  8,  4000, 22727, SB_DSP_WDMA_LOOP, SB_DSP_RECORD_MONO },
  { SB_JAZZ, 1,  8, 22727, 45454, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_MONO },
  { SB_JAZZ, 2,  8, 11025, 22727, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_STEREO },
@@ -542,6 +543,8 @@ sbdsp_set_params(addr, mode, p, q)
 		default:
 			return EINVAL;
 		}
+		tc = SB_RATE_TO_TC(p->sample_rate * p->channels);
+		p->sample_rate = SB_TC_TO_RATE(tc) / p->channels;
 	} else {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_BE:
@@ -1171,7 +1174,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
-	if (sc->sc_imodep->precision == 16)
+	if ((sc->sc_model == SB_JAZZ && sc->dmachan > 3) ||
+	    (sc->sc_model != SB_JAZZ && sc->sc_omodep->precision == 16))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
@@ -1234,7 +1238,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		Dprintf("sbdsp_dma_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
 #ifdef DIAGNOSTIC
-	if (sc->sc_omodep->channels == 2 && (cc & 1)) {
+	if (stereo && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
 		return EIO;
 	}
@@ -1283,7 +1287,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
-	if (sc->sc_omodep->precision == 16)
+	if ((sc->sc_model == SB_JAZZ && sc->dmachan > 3) ||
+	    (sc->sc_model != SB_JAZZ && sc->sc_omodep->precision == 16))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
