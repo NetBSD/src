@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.45 1998/01/12 07:37:44 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.46 1998/01/14 01:15:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -286,7 +286,6 @@ struct cfdata cfdata[] = {\n\
 		if (v == 0 && fputs("root", fp) < 0)
 			return (1);
 		a = i->i_atattr;
-		nv = a->a_locs;
 		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
 			if (fprintf(fp, " %s %s",
 			    nv->nv_name, i->i_locs[v]) < 0)
