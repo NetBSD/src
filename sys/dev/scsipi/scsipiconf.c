@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.20.4.1 2004/09/11 12:54:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20.4.1 2004/09/11 12:54:14 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 int
-scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
-     flags)
+scsipi_command(periph, xs, cmd, cmdlen, data_addr, datalen,
+     retries, timeout, bp, flags)
 	struct scsipi_periph *periph;
+	struct scsipi_xfer *xs;
 	struct scsipi_generic *cmd;
 	int cmdlen;
 	u_char *data_addr;
@@ -94,7 +95,7 @@ scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
 		PHOLD(curlwp);
 	}
 	error = (*periph->periph_channel->chan_bustype->bustype_cmd)(periph,
-	    cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
+	    xs, cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
 	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
 		PRELE(curlwp);
 	return (error);
