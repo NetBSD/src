@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.4 1996/06/09 23:57:45 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.5 1996/06/11 21:16:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@ int		__C(CHIP,_mem_map) __P((void *, bus_mem_addr_t, bus_mem_size_t,
 		    int, bus_mem_handle_t *));
 void		__C(CHIP,_mem_unmap) __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
+int		__C(CHIP,_mem_subregion) __P((void *, bus_mem_handle_t,
+		    bus_mem_size_t, bus_mem_size_t, bus_mem_handle_t *));
 u_int8_t	__C(CHIP,_mem_read_1) __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
 u_int16_t	__C(CHIP,_mem_read_2) __P((void *, bus_mem_handle_t,
@@ -74,6 +76,7 @@ __C(CHIP,_bus_mem_init)(bc, memv)
 
 	bc->bc_m_map = __C(CHIP,_mem_map);
 	bc->bc_m_unmap = __C(CHIP,_mem_unmap);
+	bc->bc_m_subregion = __C(CHIP,_mem_subregion);
 
 	bc->bc_mr1 = __C(CHIP,_mem_read_1);
 	bc->bc_mr2 = __C(CHIP,_mem_read_2);
@@ -155,6 +158,17 @@ __C(CHIP,_mem_unmap)(v, memh, memsize)
 {
 
 	/* XXX nothing to do. */
+}
+
+int
+__C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
+	void *v;
+	bus_mem_handle_t memh, *nmemh;
+	bus_mem_size_t offset, size;
+{
+
+	*nmemh = memh + offset;
+	return (0);
 }
 
 u_int8_t
