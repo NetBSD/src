@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)calloc.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: calloc.c,v 1.4 1993/10/13 21:44:25 jtc Exp $";
+static char *rcsid = "$Id: calloc.c,v 1.5 1993/11/30 21:55:35 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -48,6 +48,6 @@ calloc(num, size)
 
 	size *= num;
 	if (p = malloc(size))
-		bzero(p, size);
+		memset(p, '\0', size);
 	return(p);
 }
