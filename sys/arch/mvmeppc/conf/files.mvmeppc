@@ -1,8 +1,8 @@
-#	$NetBSD: files.mvmeppc,v 1.8 2003/07/27 01:19:33 thorpej Exp $
+#	$NetBSD: files.mvmeppc,v 1.9 2004/03/25 12:40:19 wiz Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
-maxpartitions 16
+maxpartitions 8
 
 maxusers 2 8 64
 
