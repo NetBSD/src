@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 2002/03/16 16:55:56 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 2002/04/28 17:55:47 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,6 +125,7 @@ cdev_decl(ccd);
 cdev_decl(aed);
 cdev_decl(wd);
 cdev_decl(ofc);
+#include "nvram.h"
 cdev_decl(nvram);
 #include "cz.h"
 cdev_decl(cztty);
@@ -213,7 +214,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NWD,wd),		/* 30: IDE disk driver */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
 	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
-	cdev_mm_init(1,nvram),		/* 33: nvram device */
+	cdev_mm_init(NNVRAM,nvram),	/* 33: nvram device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 35: wsdisplay */
 	cdev_mouse_init(NWSKBD,wskbd),	/* 36: wskbd */
