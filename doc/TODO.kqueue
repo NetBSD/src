@@ -1,6 +1,6 @@
-#	$NetBSD: TODO.kqueue,v 1.2 2002/10/30 21:50:47 jdolecek Exp $
+#	$NetBSD: TODO.kqueue,v 1.3 2002/11/30 13:52:14 jdolecek Exp $
 
-items todo from bill sommerfeld/thorpej:
+items todo:
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
@@ -11,6 +11,8 @@ items todo from bill sommerfeld/thorpej:
 		- smb_trantcp
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
 	- kqfilter for systrace (would it be useful?)
+	- kfilter_(un)register: not used by kernel code ATM, make conditional
+		on option LKM?
 
 	- Test-compile the following ports:
 		- amigappc		XXX not compilable even on trunk
@@ -20,7 +22,7 @@ items todo from bill sommerfeld/thorpej:
 		- x86_64		XXX no intree toolchain available
 
 merge in from FreeBSD:
-	pkgsrc/devel/py-kqueue
+	pkgsrc/net/bsdproxy
 	lib/libc/net/res_send.c
 	sys/netinet/tcp_subr.c	1.93 (?)
 	libc/libc_r/uthread (?)
@@ -28,12 +30,16 @@ merge in from FreeBSD:
 	sys/fs/fifofs/fifo_vnops.c rev. 1.54
 	  - jdolecek: this change seems to be bogus, but perhaps I just
 	    miss something?
+	usr.bin/make/job.c rev 1.44 - check if it causes any problems
+	    on NetBSD (shouldn't)
 
 to fix:
 
 	- look for XXXLUKEM in the comments. these usually indicate
 	  areas to either fix or sanity check they're ok (and remove
 	  the XXXLUKEM comment)
+	- update sys/dev/audio.c:audio_kqfilter() filters for
+	  audio_poll() fix in rev. 1.157
 
 not implemented:
 	- aio support
