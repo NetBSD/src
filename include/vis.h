@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vis.h	5.9 (Berkeley) 4/3/91
- *	$Id: vis.h,v 1.2 1993/08/01 18:45:04 mycroft Exp $
+ *	$Id: vis.h,v 1.3 1993/08/03 21:53:59 mycroft Exp $
  */
 
 #ifndef _VIS_H_
@@ -75,7 +75,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char	*vis __P((char *, char, int, char));
+char	*vis __P((char *, int, int, int));
 int	strvis __P((char *, const char *, int));
 int	strvisx __P((char *, const char *, size_t, int));
 int	strunvis __P((char *, const char *));
