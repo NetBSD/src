@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.153 2004/08/15 07:19:56 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.154 2004/09/19 11:58:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.153 2004/08/15 07:19:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.154 2004/09/19 11:58:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -574,8 +574,8 @@ ffs_reload(mp, cred, p)
 		else
 			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
-	ump->um_maxfilesize = fs->fs_maxfilesize;
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	ump->um_maxfilesize = fs->fs_maxfilesize;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
@@ -815,8 +815,8 @@ ffs_mountfs(devvp, mp, p)
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
 
-	ump->um_maxfilesize = fs->fs_maxfilesize;
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	ump->um_maxfilesize = fs->fs_maxfilesize;
 
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
