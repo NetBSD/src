@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)env.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: env.c,v 1.6 1993/11/19 20:06:41 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.7 1993/12/31 19:26:21 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: env.c,v 1.6 1993/11/19 20:06:41 jtc Exp $";
 #include <unistd.h>
 #include <err.h>
 
-static void usage();
+static void usage __P((void));
 
 int
 main(argc, argv)
