@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.14 2000/01/10 17:03:49 ad Exp $
+#	$NetBSD: weekly,v 1.15 2000/10/07 07:36:57 lukem Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -48,7 +48,7 @@ fi
 #	if test -n "`ls $TDIR`"; then
 #		for file in $TDIR/*; do
 #			sed -e 's,SCCS/p.,,' $file | \
-#			    Mail -s 'checked out files' `basename $file`
+#			    Mail -s 'checked out files' ${file##*/}
 #		done
 #	fi
 #	rm -rf $TDIR
