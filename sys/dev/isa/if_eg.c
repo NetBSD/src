@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.57 2002/01/07 21:47:06 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.57.10.1 2003/01/27 04:45:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.57 2002/01/07 21:47:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.57.10.1 2003/01/27 04:45:20 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -660,6 +660,8 @@ loop:
 		memcpy(buffer, mtod(m, caddr_t), m->m_len);
 		buffer += m->m_len;
 	}
+	if (len > m0->m_pkthdr.len)
+		memset(buffer, 0, len - m0->m_pkthdr.len);
 
 	/* set direction bit: host -> adapter */
 	bus_space_write_1(iot, ioh, EG_CONTROL,
