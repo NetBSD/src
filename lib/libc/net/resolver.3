@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.7 1996/11/09 08:30:56 lukem Exp $
+.\"	$NetBSD: resolver.3,v 1.8 1997/06/08 06:33:47 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ are defined in
 and are as follows.
 Options are stored as a simple bit mask containing the bitwise ``or''
 of the options enabled.
-.Bl -tag -width RES_DEFNAMES
+.Bl -tag -width RES_USE_INET6
 .It Dv RES_INIT
 True if the initial name server address and default domain name are
 initialized (i.e.,
@@ -165,6 +165,8 @@ will search for host names in the current domain and in parent domains; see
 This is used by the standard host lookup routine
 .Xr gethostbyname 3 .
 This option is enabled by default.
+.It Dv RES_USE_INET6
+Enable support for IPv6 addresses.
 .El
 .Pp
 The
@@ -329,12 +331,12 @@ see
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
 .Pp
+.%T RFC974 ,
 .%T RFC1032 ,
 .%T RFC1033 ,
 .%T RFC1034 ,
 .%T RFC1035 ,
-.%T RFC1535 ,
-.%T RFC974
+.%T RFC1535
 .Rs
 .%T "Name Server Operations Guide for BIND"
 .Re
