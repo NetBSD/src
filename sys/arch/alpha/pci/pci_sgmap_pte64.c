@@ -1,4 +1,4 @@
-/* $NetBSD: pci_pte32_sgmap.c,v 1.2.2.1 1997/06/03 07:03:22 thorpej Exp $ */
+/* $NetBSD: pci_sgmap_pte64.c,v 1.1.2.1 1997/06/06 00:31:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: pci_pte32_sgmap.c,v 1.2.2.1 1997/06/03 07:03:22 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte64.c,v 1.1.2.1 1997/06/06 00:31:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,6 @@ __KERNEL_RCSID(1, "$NetBSD: pci_pte32_sgmap.c,v 1.2.2.1 1997/06/03 07:03:22 thor
 
 #include <machine/bus.h>
 
-#include <alpha/pci/pci_pte32_sgmap.h>
+#include <alpha/pci/pci_sgmap_pte64.h>
 
 #include <alpha/common/sgmap_typedep.c>
