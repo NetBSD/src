@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 2000/02/29 04:41:50 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 2000/03/03 17:46:49 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50 2000/02/29 04:41:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2000/03/03 17:46:49 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50 2000/02/29 04:41:50 nisimura Exp $
 #include "rz.h"
 #include "xasc_ioasic.h"
 #include "xasc_pmaz.h"
-
-#if NRZ > 0 && (NXASC_PMAZ + NXASC_IOASIC) > 0
-#error  MI SCSI can not coexist with pmax old SCSI.
-#endif
 
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
@@ -146,12 +142,13 @@ cpu_rootconf()
 	/*
 	 * N.B., below works for rz drive on primary SCSI controller.
 	 */
-	booted_device = NULL;
-	snprintf(name, sizeof(name), "rz%d", booted_unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
-		if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
-			booted_device = dv;
-			break;
+	if (booted_device == NULL) {
+		snprintf(name, sizeof(name), "rz%d", booted_unit);
+		for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
+			if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
+				booted_device = dv;
+				break;
+			}
 		}
 	}
 #endif
