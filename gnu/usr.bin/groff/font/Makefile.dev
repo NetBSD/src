@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.dev,v 1.3 2003/06/30 18:47:42 wiz Exp $
+# $NetBSD: Makefile.dev,v 1.4 2003/07/06 18:43:36 martin Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/Makefile.dev,v 2.12 2003/05/01 13:22:18 ru Exp $
 
@@ -11,6 +11,7 @@ SCRIPTSNAME_${script:T}= ${script:T}
 .endfor
 
 all: $(DEVFILES) $(DEVSCRIPTS)
+dependall:	all
 install: $(DEVFILES) $(DEVSCRIPTS)
 
 .include <bsd.prog.mk>
