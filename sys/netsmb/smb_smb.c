@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.8 2003/03/23 10:52:03 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.9 2003/03/23 16:51:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.8 2003/03/23 10:52:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.9 2003/03/23 16:51:52 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,6 @@ static const struct smb_dialect smb_dialects[] = {
 	{SMB_DIALECT_NTLM0_12,	"NT LM 0.12"},
 	{-1,			NULL}
 };
-
-#define	SMB_DIALECT_MAX	(sizeof(smb_dialects) / sizeof(struct smb_dialect) - 2)
 
 static int
 smb_smb_nomux(struct smb_vc *vcp, struct smb_cred *scred, const char *name)
@@ -321,7 +319,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	error = smb_rq_simple(rqp);
 	SMBSDEBUG("%d\n", error);
 	if (error) {
-		if (rqp->sr_errclass == ERRDOS && rqp->sr_serror == ERRnoaccess)
+		if (error == EACCES)
 			error = EAUTH;
 		goto bad;
 	}
