@@ -1,4 +1,4 @@
-/*	$Id: hd64570reg.h,v 1.1 1998/07/26 03:26:57 explorer Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.2 1998/10/28 16:26:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -36,8 +36,8 @@
  * ``http://www.vix.com''.
  */
 
-#ifndef _HD64750REG_H_
-#define _HD64750REG_H_
+#ifndef _DEV_IC_HD64570REG_H_
+#define _DEV_IC_HD64570REG_H_
 
 /* XXX
  * This is really HDLC specific stuff, but...
@@ -480,4 +480,4 @@ typedef struct hdlc_header {
 #define SCA_DMA_ALIGNMENT	(64 * 1024)	/* 64 KB alignment */
 #define SCA_DMA_BOUNDRY		(16 * 1024 * 1024)	/* 16 MB region */
 
-#endif /* _HD64750REG_H_ */
+#endif /* _DEV_IC_HD64570REG_H_ */
