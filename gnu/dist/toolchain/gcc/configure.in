@@ -1156,10 +1156,7 @@ changequote([,])dnl
 		tmake_file=t-freebsd
 		;;
 changequote(,)dnl
-	i[34567]86-*-netbsdelf* | \
-	i[34567]86-*-netbsd1.4[I-Z]* | \
-	i[34567]86-*-netbsd1.[5-9]* | \
-	i[34567]86-*-netbsd2*)
+	i[34567]86-*-netbsdelf*)
 changequote([,])dnl
 		tm_file=i386/netbsd-elf.h
 		xm_file=i386/xm-netbsd.h
@@ -3032,7 +3029,7 @@ changequote([,])dnl
 		tmake_file=sparc/t-sparcbare
 		tm_file="sparc/aout.h libgloss.h"
 		;;
-	sparc-*-netbsd*elf*)
+	sparc-*-netbsdelf*)
 		tm_file=sparc/netbsd-elf.h
 		xm_file=sparc/xm-netbsd.h
 		tmake_file=t-netbsd
