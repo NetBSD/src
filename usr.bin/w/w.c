@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.61 2004/01/03 01:18:14 wiz Exp $	*/
+/*	$NetBSD: w.c,v 1.62 2004/11/10 16:58:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.61 2004/01/03 01:18:14 wiz Exp $");
+__RCSID("$NetBSD: w.c,v 1.62 2004/11/10 16:58:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	argwidth = printf("%-*sTTY %-*s %*s  IDLE WHAT\n",
+	argwidth = printf("%-*s TTY     %-*s %*s  IDLE WHAT\n",
 	    maxname, "USER", maxhost, "FROM",
 	    7 /* "dddhhXm" */, "LOGIN@");
 	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
@@ -408,11 +408,8 @@ main(int argc, char **argv)
 			    ep->type, ep->name, ep->line, ep->host);
 			continue;
 		}
-		(void)printf("%-*s %-2.2s %-*.*s ",
-		    maxname, kp->p_login,
-		    (strncmp(ep->line, "tty", 3) &&
-		    strncmp(ep->line, "dty", 3)) ?
-		    ep->line : ep->line + 3,
+		(void)printf("%-*s %-7.7s %-*.*s ",
+		    maxname, kp->p_login, ep->line,
 		    maxhost, maxhost, *p ? p : "-");
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
