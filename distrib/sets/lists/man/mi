@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.614 2003/10/08 11:32:08 bouyer Exp $
+# $NetBSD: mi,v 1.615 2003/10/08 12:03:41 bouyer Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -448,6 +448,8 @@
 ./usr/share/man/cat1/zmore.0			man-util-catman
 ./usr/share/man/cat1/znew.0			man-util-catman
 ./usr/share/man/cat4/aac.0			man-sys-catman
+./usr/share/man/cat4/acardide.0			man-sys-catman
+./usr/share/man/cat4/aceride.0			man-sys-catman
 ./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/arcwskbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/arcwsmouse.0	man-sys-catman
@@ -601,6 +603,7 @@
 ./usr/share/man/cat4/clnp.0			man-sys-catman
 ./usr/share/man/cat4/clockctl.0			man-sys-catman
 ./usr/share/man/cat4/cltp.0			man-sys-catman
+./usr/share/man/cat4/cmdide.0			man-sys-catman
 ./usr/share/man/cat4/cmpci.0			man-sys-catman
 ./usr/share/man/cat4/cms.0			man-sys-catman
 ./usr/share/man/cat4/cnw.0			man-sys-catman
@@ -611,6 +614,7 @@
 ./usr/share/man/cat4/cs80bus.0			man-sys-catman
 ./usr/share/man/cat4/cue.0			man-sys-catman
 ./usr/share/man/cat4/cy.0			man-sys-catman
+./usr/share/man/cat4/cypide.0			man-sys-catman
 ./usr/share/man/cat4/cz.0			man-sys-catman
 ./usr/share/man/cat4/daic.0			man-sys-catman
 ./usr/share/man/cat4/ddb.0			man-sys-catman
@@ -714,6 +718,7 @@
 ./usr/share/man/cat4/hp300/rmp.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman
+./usr/share/man/cat4/hptide.0			man-sys-catman
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman
 ./usr/share/man/cat4/i386/autoconf.0		man-sys-catman
@@ -868,6 +873,7 @@
 ./usr/share/man/cat4/ohci.0			man-sys-catman
 ./usr/share/man/cat4/oosiop.0			man-sys-catman
 ./usr/share/man/cat4/opl.0			man-sys-catman
+./usr/share/man/cat4/optiide.0			man-sys-catman
 ./usr/share/man/cat4/options.0			man-sys-catman
 ./usr/share/man/cat4/osiop.0			man-sys-catman
 ./usr/share/man/cat4/pas.0			man-sys-catman
@@ -881,6 +887,8 @@
 ./usr/share/man/cat4/pci.0			man-sys-catman
 ./usr/share/man/cat4/pcic.0			man-sys-catman
 ./usr/share/man/cat4/pciide.0			man-sys-catman
+./usr/share/man/cat4/pdcide.0			man-sys-catman
+./usr/share/man/cat4/piixide.0			man-sys-catman
 ./usr/share/man/cat4/pckbc.0			man-sys-catman
 ./usr/share/man/cat4/pckbd.0			man-sys-catman
 ./usr/share/man/cat4/pcmcia.0			man-sys-catman
@@ -952,10 +960,12 @@
 ./usr/share/man/cat4/si.0			man-sys-catman
 ./usr/share/man/cat4/siop.0			man-sys-catman
 ./usr/share/man/cat4/sip.0			man-sys-catman
+./usr/share/man/cat4/siside.0			man-sys-catman
 ./usr/share/man/cat4/sk.0			man-sys-catman
 ./usr/share/man/cat4/skc.0			man-sys-catman
 ./usr/share/man/cat4/sl.0			man-sys-catman
 ./usr/share/man/cat4/slhci.0			man-sys-catman
+./usr/share/man/cat4/slide.0			man-sys-catman
 ./usr/share/man/cat4/sm.0			man-sys-catman
 ./usr/share/man/cat4/sound.0			man-sys-catman
 ./usr/share/man/cat4/sp.0			man-sys-catman
@@ -1133,6 +1143,7 @@
 ./usr/share/man/cat4/verifiedexec.0		man-sys-catman
 ./usr/share/man/cat4/vga.0			man-sys-catman
 ./usr/share/man/cat4/viaenv.0			man-sys-catman
+./usr/share/man/cat4/viaide.0			man-sys-catman
 ./usr/share/man/cat4/viapm.0			man-sys-catman
 ./usr/share/man/cat4/vlan.0			man-sys-catman
 ./usr/share/man/cat4/vmmon.0			man-sys-catman
@@ -2283,6 +2294,8 @@
 ./usr/share/man/man1/zmore.1			man-util-man
 ./usr/share/man/man1/znew.1			man-util-man
 ./usr/share/man/man4/aac.4			man-sys-man
+./usr/share/man/man4/acardide.4			man-sys-man
+./usr/share/man/man4/aceride.4			man-sys-man
 ./usr/share/man/man4/acorn26/arckbd.4		man-sys-man
 ./usr/share/man/man4/acorn26/arcwskbd.4		man-sys-man
 ./usr/share/man/man4/acorn26/arcwsmouse.4	man-sys-man
@@ -2436,6 +2449,7 @@
 ./usr/share/man/man4/clnp.4			man-sys-man
 ./usr/share/man/man4/clockctl.4			man-sys-man
 ./usr/share/man/man4/cltp.4			man-sys-man
+./usr/share/man/man4/cmdide.4			man-sys-man
 ./usr/share/man/man4/cmpci.4			man-sys-man
 ./usr/share/man/man4/cms.4			man-sys-man
 ./usr/share/man/man4/cnw.4			man-sys-man
@@ -2446,6 +2460,7 @@
 ./usr/share/man/man4/cs80bus.4			man-sys-man
 ./usr/share/man/man4/cue.4			man-sys-man
 ./usr/share/man/man4/cy.4			man-sys-man
+./usr/share/man/man4/cypide.4			man-sys-man
 ./usr/share/man/man4/cz.4			man-sys-man
 ./usr/share/man/man4/daic.4			man-sys-man
 ./usr/share/man/man4/ddb.4			man-sys-man
@@ -2549,6 +2564,7 @@
 ./usr/share/man/man4/hp300/rmp.4		man-sys-man
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man
+./usr/share/man/man4/hptide.4			man-sys-man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man
 ./usr/share/man/man4/i386/apm.4			man-sys-man
 ./usr/share/man/man4/i386/autoconf.4		man-sys-man
@@ -2704,6 +2720,7 @@
 ./usr/share/man/man4/oosiop.4			man-sys-man
 ./usr/share/man/man4/opl.4			man-sys-man
 ./usr/share/man/man4/options.4			man-sys-man
+./usr/share/man/man4/optiide.4			man-sys-man
 ./usr/share/man/man4/osiop.4			man-sys-man
 ./usr/share/man/man4/pas.4			man-sys-man
 ./usr/share/man/man4/pc532/lpt.4		man-sys-man
@@ -2716,6 +2733,9 @@
 ./usr/share/man/man4/pci.4			man-sys-man
 ./usr/share/man/man4/pcic.4			man-sys-man
 ./usr/share/man/man4/pciide.4			man-sys-man
+./usr/share/man/man4/pciide.4			man-sys-man
+./usr/share/man/man4/pdcide.4			man-sys-man
+./usr/share/man/man4/piixide.4			man-sys-man
 ./usr/share/man/man4/pckbc.4			man-sys-man
 ./usr/share/man/man4/pckbd.4			man-sys-man
 ./usr/share/man/man4/pcmcia.4			man-sys-man
@@ -2787,10 +2807,12 @@
 ./usr/share/man/man4/si.4			man-sys-man
 ./usr/share/man/man4/siop.4			man-sys-man
 ./usr/share/man/man4/sip.4			man-sys-man
+./usr/share/man/man4/siside.4			man-sys-man
 ./usr/share/man/man4/sk.4			man-sys-man
 ./usr/share/man/man4/skc.4			man-sys-man
 ./usr/share/man/man4/sl.4			man-sys-man
 ./usr/share/man/man4/slhci.4			man-sys-man
+./usr/share/man/man4/slide.4			man-sys-man
 ./usr/share/man/man4/sm.4			man-sys-man
 ./usr/share/man/man4/sound.4			man-sys-man
 ./usr/share/man/man4/sp.4			man-sys-man
@@ -2968,6 +2990,7 @@
 ./usr/share/man/man4/verifiedexec.4		man-sys-man
 ./usr/share/man/man4/vga.4			man-sys-man
 ./usr/share/man/man4/viaenv.4			man-sys-man
+./usr/share/man/man4/viaide.4			man-sys-man
 ./usr/share/man/man4/viapm.4			man-sys-man
 ./usr/share/man/man4/vlan.4			man-sys-man
 ./usr/share/man/man4/vmmon.4			man-sys-man
