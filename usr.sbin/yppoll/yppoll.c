@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
- * Copyright (c) 1992/3 John Brezak
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 John Brezak
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Theo de Raadt and
+ *	John Brezak.
+ * 4. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -29,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.2 1993/08/02 17:57:20 mycroft Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.3 1994/05/25 09:55:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
