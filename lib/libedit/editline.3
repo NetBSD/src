@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.5 1997/07/30 23:57:36 jtc Exp $
+.\"	$NetBSD: editline.3,v 1.6 1997/10/14 15:05:49 christos Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,8 +87,8 @@
 .Fn history_init
 .Ft void
 .Fn history_end "History *h"
-.Ft HistEvent *
-.Fn history "History h" "int op" "..."
+.Ft int
+.Fn history "History h" "HistEvent *ev" "int op" "..."
 .Sh DESCRIPTION
 The
 .Nm
@@ -434,14 +434,18 @@ Perform operation
 .Fa op
 on the history list, with optional arguments as needed by the
 operation.
+.Fa ev
+is changed accordingly to operation.
 The following values for
 .Fa op
 are supported, along with the required argument list:
 .Bl -tag -width 4n
-.It Dv H_EVENT , Fa "int size"
+.It Dv H_SETMAXSIZE , Fa "int size"
 Set size of history to
 .Fa size
 elements.
+.It Dv H_GETSIZE
+Get number of events currently in history.
 .It Dv H_END
 Cleans up and finishes with
 .Fa h ,
@@ -506,6 +510,13 @@ Save the history list to
 .El
 .\"XXX.Sh EXAMPLES
 .\"XXX: provide some examples
+.Sh RETURN VALUES
+.Ft history
+function returns 0 if the operation
+.Ft op
+succeeds, otherwise -1 is returned and
+.Ft ev
+is updated to contain more detailes about error.
 .Sh SEE ALSO
 .Xr editrc 5 ,
 .Xr sh 1 ,
