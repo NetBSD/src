@@ -71,7 +71,11 @@ MAN8			= supservers.8
 AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
-.if exists(/usr/lib/libcrypt.a) && !defined(EXPORTABLE_SYSTEM)
+.if exists(/usr/lib/libcrypt.a) && exists(${.CURDIR}/crypt/crypt.c) && !defined(EXPORTABLE_SYSTEM)
+USE_CRYPT		= yes
+.endif
+
+.if defined(USE_CRYPT)
 NETBSD_LIBS		= -lcrypt
 .else
 NETBSD_LIBS		=
@@ -86,7 +90,7 @@ supscan_OFILES		= supscan.o stree.o scan.o
 
 
 all: ${PROGRAMS}
-.if exists(/usr/lib/libcrypt.a) && !defined(EXPORTABLE_SYSTEM)
+.if defined(USE_CRYPT)
 	@echo "WARNING: You have built a NON-exportable version of sup because it uses crypt()!"
 	@echo "	To build a crypt-clean version define EXPORTABLE_SYSTEM=true and make."
 .endif
@@ -113,12 +117,12 @@ install: ${PROGRAMS}
 	install -c -m 444 -o bin -g bin ${MAN8} ${NETBSD_MAN8}
 
 netcrypt.c: crypt.diffs
-	if [ -d crypt -a "X$$EXPORTABLE_SYSTEM" = X ]; then \
-		ed - crypt/crypt.c < crypt.diffs; \
-	else \
-        	echo "[ Using netcryptvoid.c ]"; \
-		cp netcryptvoid.c netcrypt.c; \
-	fi
+.if defined(USE_CRYPT)
+	ed - crypt/crypt.c < crypt.diffs
+.else
+	@echo "[ Using netcryptvoid.c ]"
+	cp netcryptvoid.c netcrypt.c
+.endif
 
 scan.o:	sup.h
 scm.o:	sup.h
