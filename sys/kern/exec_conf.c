@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.72 2002/04/02 23:56:17 rafal Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.72.4.1 2003/08/17 13:40:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.72 2002/04/02 23:56:17 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.72.4.1 2003/08/17 13:40:52 tron Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -184,7 +184,7 @@ extern const struct emul emul_netbsd_aoutm68k;
 const struct execsw execsw_builtin[] = {
 #ifdef EXEC_SCRIPT
 	/* Shell scripts */
-	{ MAXINTERP,
+	{ SCRIPT_HDR_SIZE,
 	  exec_script_makecmds,
 	  { NULL },
 	  NULL,
