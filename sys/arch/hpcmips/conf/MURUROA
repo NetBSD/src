@@ -2,12 +2,12 @@
 # Mycroft's WorkPad z50
 
 #
-# 	$NetBSD: MURUROA,v 1.8 2000/03/26 21:35:48 mycroft Exp $
+# 	$NetBSD: MURUROA,v 1.9 2000/06/14 22:02:25 veego Exp $
 # 	From: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"MURUROA-$Revision: 1.8 $"
+#ident 		"MURUROA-$Revision: 1.9 $"
 
 maxusers	8
 
@@ -67,17 +67,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 #options 	SOFTDEP         # FFS soft updates support.
 #options 	QUOTA		# UFS quotas
-
-# Pull in config fragments for kernel crypto.  Use only one of these,
-# and adjust the prefixes as necessary.
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
-
-prefix ../crypto-intl/sys
-cinclude "conf/files.crypto-intl"
-prefix
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
