@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2004/01/05 02:25:32 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2004/05/16 17:07:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/01/05 02:25:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2004/05/16 17:07:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1547,8 +1547,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pmap_remove(pmap, sva, eva);
 		return;
 	}
-	if (prot & VM_PROT_WRITE)
-		return;
 
 	sva = hppa_trunc_page(sva);
 	space = pmap_sid(pmap, sva);
