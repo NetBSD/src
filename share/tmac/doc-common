@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.32 1999/08/23 21:20:27 ross Exp $
+.\"	$NetBSD: doc-common,v 1.33 1999/12/08 01:57:37 simonb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,10 +150,39 @@
 .if !"\\$2"" \{\
 .	ds cH \\$2
 .		if \\$2>=1 .if \\$2<=9 \{\
-.			ds vT NetBSD Reference Manual
-.			if \\$2>1 .if \\$2<6 .ds vT NetBSD Programmer's Manual
-.			if "\\$2"8" .ds vT NetBSD System Manager's Manual
-.			if "\\$2"9" .ds vT NetBSD Kernel Manual
+.			ds vT NetBSD
+.			if "\\$3"alpha"    .as vT /\\$3\ 
+.			if "\\$3"amiga"    .as vT /\\$3\ 
+.			if "\\$3"arm32"    .as vT /\\$3\ 
+.			if "\\$3"atari"    .as vT /\\$3\ 
+.			if "\\$3"bebox"    .as vT /\\$3\ 
+.			if "\\$3"evbsh3"   .as vT /\\$3\ 
+.			if "\\$3"hp300"    .as vT /\\$3\ 
+.			if "\\$3"hpcmips"  .as vT /\\$3\ 
+.			if "\\$3"i386"     .as vT /\\$3\ 
+.			if "\\$3"m68k"     .as vT /\\$3\ 
+.			if "\\$3"mac68k"   .as vT /\\$3\ 
+.			if "\\$3"macppc"   .as vT /\\$3\ 
+.			if "\\$3"mips"     .as vT /\\$3\ 
+.			if "\\$3"mmeye"    .as vT /\\$3\ 
+.			if "\\$3"mvme68k"  .as vT /\\$3\ 
+.			if "\\$3"newsmips" .as vT /\\$3\ 
+.			if "\\$3"next68k"  .as vT /\\$3\ 
+.			if "\\$3"ofppc"    .as vT /\\$3\ 
+.			if "\\$3"pc532"    .as vT /\\$3\ 
+.			if "\\$3"pica"     .as vT /\\$3\ 
+.			if "\\$3"pmax"     .as vT /\\$3\ 
+.			if "\\$3"powerpc"  .as vT /\\$3\ 
+.			if "\\$3"sh3"      .as vT /\\$3\ 
+.			if "\\$3"sparc"    .as vT /\\$3\ 
+.			if "\\$3"sparc64"  .as vT /\\$3\ 
+.			if "\\$3"sun3"     .as vT /\\$3\ 
+.			if "\\$3"vax"      .as vT /\\$3\ 
+.			if "\\$3"x68k"     .as vT /\\$3\ 
+.			if \\$2>1 .if \\$2<6 .as vT Programmer's Manual
+.			if "\\$2"7" .as vT Reference Manual
+.			if "\\$2"8" .as vT System Manager's Manual
+.			if "\\$2"9" .as vT Kernel Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
@@ -170,21 +199,6 @@
 .	if "\\$3"KM"    .ds vT NetBSD Kernel Manual
 .	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
-.	if "\\$3"alpha"   .as vT \ (ALPHA Architecture)
-.	if "\\$3"amiga"   .as vT \ (AMIGA Architecture)
-.	if "\\$3"arm32"   .as vT \ (ARM32 Architecture)
-.	if "\\$3"atari"   .as vT \ (ATARI Architecture)
-.	if "\\$3"hp300"   .as vT \ (HP300 Architecture)
-.	if "\\$3"i386"    .as vT \ (i386 Architecture)
-.	if "\\$3"mac68k"  .as vT \ (MAC68K Architecture)
-.	if "\\$3"mvme68k" .as vT \ (MVME68K Architecture)
-.	if "\\$3"pc532"   .as vT \ (PC532 Architecture)
-.	if "\\$3"pica"    .as vT \ (PICA Architecture)
-.	if "\\$3"pmax"    .as vT \ (PMAX  Architecture)
-.	if "\\$3"sparc"   .as vT \ (SPARC Architecture)
-.	if "\\$3"sun3"    .as vT \ (SUN3 Architecture)
-.	if "\\$3"vax"     .as vT \ (VAX Architecture)
-.	if "\\$3"x68k"    .as vT \ (X68K Architecture)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
