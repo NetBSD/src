@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.17 2003/02/18 18:47:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.17 2003/02/18 18:47:06 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -887,7 +887,7 @@ emuxki_chanparms_set_defaults(struct emuxki_channel *chan)
 	chan->fxsend.c.dest = 0x2;
 	chan->fxsend.d.dest = 0x3;
 
-	chan->pitch.intial = 0x0000;	/* shouldn't it be 0xE000 ? */
+	chan->pitch.initial = 0x0000;	/* shouldn't it be 0xE000 ? */
 	chan->pitch.current = 0x0000;	/* should it be 0x0400 */
 	chan->pitch.target = 0x0000;	/* the unity pitch shift ? */
 	chan->pitch.envelope_amount = 0x00;	/* none */
@@ -976,7 +976,7 @@ emuxki_channel_set_srate(struct emuxki_channel *chan, u_int32_t srate)
 		(chan->pitch.target & 1);
 	chan->pitch.target &= 0xffff;
 	chan->pitch.current = chan->pitch.target;
-	chan->pitch.intial =
+	chan->pitch.initial =
 		(emuxki_rate_to_pitch(srate) >> 8) & EMU_CHAN_IP_MASK;
 }
 
@@ -1102,7 +1102,7 @@ emuxki_channel_start(struct emuxki_channel *chan)
 		chan->pitch.target);
 	emuxki_write(sc, chano, EMU_CHAN_CPF_PITCH,
 		chan->pitch.current);
-	emuxki_write(sc, chano, EMU_CHAN_IP, chan->pitch.intial);
+	emuxki_write(sc, chano, EMU_CHAN_IP, chan->pitch.initial);
 
 	splx(s);
 }
