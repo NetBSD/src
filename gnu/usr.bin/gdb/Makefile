@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkley) 5/6/91
-#	$Id: Makefile,v 1.4 1993/10/07 07:24:47 cgd Exp $
+#	$Id: Makefile,v 1.5 1993/12/05 00:58:46 cgd Exp $
 
 PROG=		gdb
 GDBSRCS=	blockframe.c breakpoint.c command.c copying.c core.c \
@@ -18,7 +18,7 @@ DPADD+=		${LIBTERMCAP} /usr/lib/libgnumalloc.a
 YFLAGS=
 .PATH: $(.CURDIR)/config $(.CURDIR)/readline
 
-.include "config/Makefile.$(MACHINE)"
+.include "config/Makefile.$(MACHINE_ARCH)"
 .include <bsd.prog.mk>
 
 $(OBJS):	param.h
