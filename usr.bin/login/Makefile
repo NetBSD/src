@@ -1,5 +1,11 @@
-#	$NetBSD: Makefile,v 1.20 1999/02/18 21:22:52 scottr Exp $
+#	$NetBSD: Makefile,v 1.21 1999/03/05 01:07:56 kim Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
+
+.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
+
+.if !exists(${.CURDIR}/../../domestic/usr.bin/login) || \
+    defined(EXPORTABLE_SYSTEM) || \
+    make(obj) || make(clean) || make(cleandir) || make(distclean)
 
 PROG=	login
 SRCS=	login.c
@@ -18,3 +24,11 @@ LDADD+=	-lskey
 .endif
 
 .include <bsd.prog.mk>
+
+.else	# EXPORTABLE_SYSTEM
+
+MAN=	login.1
+
+.include <bsd.man.mk>
+
+.endif	# EXPORTABLE_SYSTEM
