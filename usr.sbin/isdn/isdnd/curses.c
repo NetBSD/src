@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.2 2002/03/24 20:37:47 martin Exp $ 
+ *	$Id: curses.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -45,6 +45,8 @@ static void display_budget(void);
 static void display_cards(void);
 static void menuexit(WINDOW *menu_w);
 
+static int ncontroller = 0;
+
 /*---------------------------------------------------------------------------*
  *	init curses fullscreen display
  *---------------------------------------------------------------------------*/
@@ -54,9 +56,11 @@ init_screen(void)
 	char buffer[512];
 	int uheight, lheight;
 	int i, j;
-	cfg_entry_t *p;
+	struct cfg_entry *p;
+	struct isdn_ctrl_state *ctrl;
 	
 	initscr();			/* curses init */
+	ncontroller = count_ctrl_states();
 	
 	if((COLS < 80) || (LINES < 24))
 	{
@@ -102,7 +106,7 @@ init_screen(void)
 	
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
-	addstr("c tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
+	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 	
 	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");	
 	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
@@ -124,25 +128,22 @@ init_screen(void)
 	
 	refresh();
 
-	for(i=0, j=0; i <= ncontroller; i++, j+=2)
+	for (ctrl = get_first_ctrl_state(), i=j=0; ctrl; ctrl = NEXT_CTRL(ctrl), i++, j+=2)
 	{
-		if(isdn_ctrl_tab[i].tei == -1)
+		if (ctrl->tei == -1)
 			mvwprintw(upper_w, j,   H_CNTL, "%d --- 1 ", i);
 		else
-			mvwprintw(upper_w, j,   H_CNTL, "%d %3d 1 ", i, isdn_ctrl_tab[i].tei);
+			mvwprintw(upper_w, j,   H_CNTL, "%d %3d 1 ", i, ctrl->tei);
 		mvwprintw(upper_w, j+1, H_CNTL, "  L12 2 ");
 	}
 	wrefresh(upper_w);
 
-	for(i=0, j=0; i < nentries; i++)	/* walk thru all entries */
-	{
-		p = &cfg_entry_tab[i];		/* get ptr to enry */
-
-		mvwprintw(mid_w, 0, j, "%s%d ", bdrivername(p->usrdevicename), p->usrdeviceunit);
+	for (p = get_first_cfg_entry(), j=0; p; p = NEXT_CFE(p)) {
+		mvwprintw(mid_w, 0, j, "%s%d ", p->usrdevicename, p->usrdeviceunit);
 
 		p->fs_position = j;
 
-		j += ((strlen(bdrivername(p->usrdevicename)) + (p->usrdeviceunit > 9 ? 2 : 1) + 1));
+		j += ((strlen(p->usrdevicename) + (p->usrdeviceunit > 9 ? 2 : 1) + 1));
 	}
 	wrefresh(mid_w);
 
@@ -337,7 +338,7 @@ menuexit(WINDOW *menu_w)
 
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
-	addstr("c tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
+	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 	
 	sprintf(buffer, "----- isdn userland interface state ------------------------------------------");	
 	while(strlen(buffer) < COLS)
@@ -364,7 +365,7 @@ menuexit(WINDOW *menu_w)
  *	display the charge in units
  *---------------------------------------------------------------------------*/
 void
-display_charge(cfg_entry_t *cep)
+display_charge(struct cfg_entry *cep)
 {
 	mvwprintw(upper_w, CHPOS(cep), H_UNITS, "%d", cep->charge);
 	wclrtoeol(upper_w);	
@@ -375,7 +376,7 @@ display_charge(cfg_entry_t *cep)
  *	display the calculated charge in units
  *---------------------------------------------------------------------------*/
 void
-display_ccharge(cfg_entry_t *cep, int units)
+display_ccharge(struct cfg_entry *cep, int units)
 {
 	mvwprintw(upper_w, CHPOS(cep), H_UNITS, "(%d)", units);
 	wclrtoeol(upper_w);	
@@ -386,7 +387,7 @@ display_ccharge(cfg_entry_t *cep, int units)
  *	display accounting information
  *---------------------------------------------------------------------------*/
 void
-display_acct(cfg_entry_t *cep)
+display_acct(struct cfg_entry *cep)
 {
 	mvwprintw(upper_w, CHPOS(cep), H_OUT,    "%-10d", cep->outbytes);
 	mvwprintw(upper_w, CHPOS(cep), H_OUTBPS, "%-4d", cep->outbps);
@@ -399,7 +400,7 @@ display_acct(cfg_entry_t *cep)
  *	display connect information
  *---------------------------------------------------------------------------*/
 void
-display_connect(cfg_entry_t *cep)
+display_connect(struct cfg_entry *cep)
 {
 	char buffer[256];
 
@@ -427,7 +428,7 @@ display_connect(cfg_entry_t *cep)
 	/* interface */
 	
 	mvwprintw(upper_w, CHPOS(cep), H_IFN, "%s%d ",
-			bdrivername(cep->usrdevicename), cep->usrdeviceunit);
+			cep->usrdevicename, cep->usrdeviceunit);
 	
 	mvwprintw(upper_w, CHPOS(cep), H_IO,
 		cep->direction == DIR_OUT ? "out" : "in");
@@ -447,7 +448,7 @@ display_connect(cfg_entry_t *cep)
  *	erase line at disconnect time
  *---------------------------------------------------------------------------*/
 void
-display_disconnect(cfg_entry_t *cep)
+display_disconnect(struct cfg_entry *cep)
 {
 	wmove(upper_w, CHPOS(cep),
 		 H_TELN);
@@ -463,7 +464,7 @@ display_disconnect(cfg_entry_t *cep)
  *	display interface up/down information
  *---------------------------------------------------------------------------*/
 void
-display_updown(cfg_entry_t *cep, int updown)
+display_updown(struct cfg_entry *cep, int updown)
 {
 	if(updown)
 		wstandend(mid_w);
@@ -471,7 +472,7 @@ display_updown(cfg_entry_t *cep, int updown)
 		wstandout(mid_w);
 
 	mvwprintw(mid_w, 0, cep->fs_position, "%s%d ",
-			bdrivername(cep->usrdevicename), cep->usrdeviceunit);
+			cep->usrdevicename, cep->usrdeviceunit);
 
 	wstandend(mid_w);
 	wrefresh(mid_w);
@@ -544,13 +545,13 @@ void
 display_chans(void)
 {
 	char buffer[80];
-	int i;
-	int cnt = 0;
+	int i, cnt = 0;
 	WINDOW *chan_w;
 	int nlines, ncols, pos_x, pos_y;
 	fd_set set;
 	struct timeval timeout;
-	cfg_entry_t *cep = NULL;
+	struct cfg_entry *cep = NULL;
+	struct isdn_ctrl_state *ctrl;
 
 	/* need this later to close the connection */
 	struct ctlr_chan {
@@ -558,13 +559,12 @@ display_chans(void)
 		int chn;
 	} *cc = NULL;
 
-	for (i = 0; i < ncontroller; i++)
-	{
-		if((get_controller_state(i)) != CTRL_UP)
+	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
+		if((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
-		if((ret_channel_state(i, CHAN_B1)) == CHAN_RUN)
+		if((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
 			cnt++;
-		if((ret_channel_state(i, CHAN_B2)) == CHAN_RUN)
+		if((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
 			cnt++;
 	}
 
@@ -623,12 +623,11 @@ display_chans(void)
 	nlines = 2;
 	ncols = 1;
 
-	for (i = 0; i < ncontroller; i++)
-	{
-		if((get_controller_state(i)) != CTRL_UP)
+	for (ctrl = get_first_ctrl_state(), i = 0; ctrl; ctrl = NEXT_CTRL(ctrl), i++) {
+		if((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
 
-		if((ret_channel_state(i, CHAN_B1)) == CHAN_RUN)
+		if((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
 		{
 			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B1");
 			mvwaddstr(chan_w, nlines, 2, buffer);
@@ -637,7 +636,7 @@ display_chans(void)
 			nlines++;
 			ncols++;
 		}
-		if((ret_channel_state(i, CHAN_B2)) == CHAN_RUN)
+		if((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
 		{
 			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B2");
 			mvwaddstr(chan_w, nlines, 2, buffer);
@@ -705,6 +704,7 @@ display_cards(void)
 	fd_set set;
 	struct timeval timeout;
 	int i;
+	struct isdn_ctrl_state *ctrl;
 	
 	nlines = 6+ncontroller;
 	ncols = 60;
@@ -729,12 +729,13 @@ display_cards(void)
 	mvwaddstr(chan_w, 0, (ncols / 2) - (strlen("Cards") / 2), "Cards");
 	wstandend(chan_w);
 
-	mvwprintw(chan_w, 2, 2, "ctrl description");
+	mvwprintw(chan_w, 2, 2, "ctrl device");
 	mvwprintw(chan_w, 3, 2, "---- ----------------------------------------------");
-	for (i = 0; i < ncontroller; i++)
+	for (i = 0, ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl), i++)
 	{
-		mvwprintw(chan_w, 4+i, 2, " #%d  %s", i,
-			isdn_ctrl_tab[i].controller);
+		mvwprintw(chan_w, 4+i, 2, " #%d  %s: %s", i,
+		    ctrl->device_name,
+		    ctrl->controller);
 	}
 
 	wrefresh(chan_w);
@@ -764,8 +765,8 @@ display_budget(void)
 	int nlines, ncols, pos_x, pos_y;
 	fd_set set;
 	struct timeval timeout;
-	int i, j;
-	cfg_entry_t *cep;
+	int j;
+	struct cfg_entry *cep;
 	time_t now;
 	double uptime;
 	int minutes;
@@ -777,10 +778,7 @@ display_budget(void)
 	pos_y = WMENU_POSLN;
 	pos_x = WMENU_POSCO-3;
 
-	for(i=0, j=0; i < nentries; i++)	/* walk thru all entries */
-	{
-		cep = &cfg_entry_tab[i];	/* get ptr to entry */
-
+	for (cep = get_first_cfg_entry(), j=0; cep; cep = NEXT_CFE(cep)) {
 		if(cep->budget_callbackperiod && cep->budget_callbackncalls)
 			nlines++;
 		if(cep->budget_calloutperiod && cep->budget_calloutncalls)
@@ -830,10 +828,7 @@ display_budget(void)
 	mvwprintw(bud_w, 2, 2, "name     t period rest   ncall rest  rqsts /hr  rdone /hr  rrjct /hr ");
 	mvwprintw(bud_w, 3, 2, "-------- - ------ ------ ----- ----- ----- ---- ----- ---- ----- ----");
 
-	for(i=0, j=4; i < nentries; i++)	/* walk thru all entries */
-	{
-		cep = &cfg_entry_tab[i];		/* get ptr to enry */
-
+	for (cep = get_first_cfg_entry(), j=4; cep; cep = NEXT_CFE(cep)) {
 		if(cep->budget_calloutperiod && cep->budget_calloutncalls)
 		{
 			mvwprintw(bud_w, j, 2, "%-8s %c %-6d %-6ld %-5d %-5d %-5d %-4.1f %-5d %-4.1f %-5d %-4.1f",
