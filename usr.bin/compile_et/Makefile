@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2001/09/21 22:47:37 tv Exp $
-
-NOMAN=	noman
+# $NetBSD: Makefile,v 1.9 2001/11/10 07:50:42 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +27,8 @@ LDADD=	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
 .endif
+
+MAN=	compile_et.1
 
 CLEANFILES+=	lex.c parse.c parse.h
 
