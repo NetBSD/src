@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.33 2003/12/03 18:18:43 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.34 2003/12/07 23:44:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.33 2003/12/03 18:18:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.34 2003/12/07 23:44:14 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -70,7 +70,17 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.33 2003/12/03 18:18:43 manu Exp $
 /* Mach message pool */
 static struct pool mach_message_pool;
 
-static struct lwp *mach_get_target_task(struct lwp *, struct mach_port *);
+static inline 
+    int mach_msg_send(struct lwp *, mach_msg_header_t *, int *, size_t);
+static inline int mach_msg_recv(struct lwp *, mach_msg_header_t *, 
+    int, size_t, unsigned int, mach_port_t);
+static inline 
+    struct lwp *mach_get_target_task(struct lwp *, struct mach_port *);
+static inline void mach_drop_rights(struct mach_right *, int);
+static inline 
+    void mach_trade_rights(struct lwp *, struct lwp *, mach_port_t *, int);
+static inline 
+    int mach_trade_rights_complex(struct lwp *, struct mach_message *);
 
 int
 mach_sys_msg_overwrite_trap(l, v, retval)
@@ -89,671 +99,568 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		syscallarg(mach_msg_header_t *) rcv_msg;
 		syscallarg(mach_msg_size_t) scatter_list_size;
 	} */ *uap = v;
-	struct mach_emuldata *med;
-	struct mach_port *mp;
-	struct proc *p = l->l_proc;
-	size_t send_size, rcv_size;
-	int error = 0;
+	size_t send_size, recv_size;
+	mach_msg_header_t *msg;
+	int opt;
 
-	*retval = 0;
-
+	*retval = MACH_MSG_SUCCESS;
 	send_size = SCARG(uap, send_size);
-	rcv_size = SCARG(uap, rcv_size);
+	recv_size = SCARG(uap, rcv_size);
+	opt = SCARG(uap, option);
 
 	/* XXX not safe enough: lots of big messages will kill us */
 	if (send_size > MACH_MAX_MSG_LEN) {
 		*retval = MACH_SEND_TOO_LARGE;
 		return 0;
 	}
-	if (rcv_size > MACH_MAX_MSG_LEN) {
+	if (recv_size > MACH_MAX_MSG_LEN) {
 		*retval = MACH_RCV_TOO_LARGE;
 		return 0;
 	}
-
 
 	/* 
 	 * Two options: receive or send. If both are 
 	 * set, we must send, and then receive. If
 	 * send fail, then we skip recieve.
 	 */
-	if (SCARG(uap, option) & MACH_SEND_MSG) {
-		mach_msg_header_t *sm;
-		struct mach_service *srv;
-		mach_port_t ln;
-		mach_port_t rn;
-		struct mach_right *lr = NULL;
-		struct mach_right *rr;
-		int bits, rights;
+	msg = SCARG(uap, msg);
+	if (opt & MACH_SEND_MSG)
+		*retval = mach_msg_send(l, msg, &opt, send_size);
 
-		if (SCARG(uap, msg) == NULL) {
-			*retval = MACH_SEND_INVALID_DATA;
-			return 0;
-		}
-
-		/* 
-		 * Allocate memory for the message and its reply,
-		 * and copy the whole message in the kernel.
-		 */
-		sm = malloc(send_size, M_EMULDATA, M_WAITOK);
-		if ((error = copyin(SCARG(uap, msg), sm, send_size)) != 0) {
-			*retval = MACH_SEND_INVALID_DATA;	
-			goto out1;
-		}
-
-#ifdef KTRACE
-		/* Dump the Mach message */
-		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(p, (char *)sm, send_size); 
-#endif
-		/*
-		 * Handle rights in the message
-		 */
-		ln = sm->msgh_local_port;
-		rn = sm->msgh_remote_port;
-
-		lr = mach_right_check(ln, l, MACH_PORT_TYPE_ALL_RIGHTS);
-		rr = mach_right_check(rn, l, MACH_PORT_TYPE_ALL_RIGHTS);
-		if ((rr == NULL) || (rr->mr_port == NULL)) {
-#ifdef DEBUG_MACH
-			printf("msg id %d: invalid dest\n", sm->msgh_id);
-#endif
-			*retval = MACH_SEND_INVALID_DEST;
-			goto out1;
-		}
-
-		/* 
-		 * Check that the process has send a send right on 
-		 * the remote port. 
-		 */
-		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
-		if (mach_right_check(rn, l, rights) == NULL) {
-			*retval = MACH_SEND_INVALID_RIGHT;
-			goto out1;
-		}
-
-		/*
-		 * If the remote port is a special port (host, kernel,
-		 * clock, or io_master), the message will be handled 
-		 * by the kernel.
-		 */
-		med = (struct mach_emuldata *)p->p_emuldata;
-		mp = rr->mr_port;
-		if (mp->mp_flags & MACH_MP_INKERNEL) {
-			struct mach_trap_args args;
-			mach_msg_header_t *rm;
-			size_t min_reqlen, max_replen;
-
-			/* 
-			 * Look for the function that will handle it,
-			 * using the message id.
-			 */
-			for (srv = mach_services_table; srv->srv_id; srv++)
-				if (srv->srv_id == sm->msgh_id)
-					break;
-			
-			/* 
-			 * If no match, give up, and display a warning.
-			 */
-			if (srv->srv_handler == NULL) {
-				uprintf("No mach server for id = %d\n",
-				    sm->msgh_id);
-				*retval = MACH_SEND_INVALID_DEST;
-				goto out1;
-			}
-			min_reqlen = srv->srv_reqlen;
-			max_replen = srv->srv_replen;
-
-			/*
-			 * Special case when the kernel behaves as
-			 * the client: replies to exceptions and
-			 * notifications. There will be no reply,
-			 * as we already receive a reply.
-			 * - request and reply are swapped
-			 * - there will be no reply, so set lr to NULL.
-			 * - skip the lr == NULL tests
-			 * XXX This is inelegant.
-			 */
-			if ((sm->msgh_id >= 2501) && (sm->msgh_id <= 2503)) {
-				min_reqlen = srv->srv_replen;
-				max_replen = srv->srv_reqlen;
-				lr = NULL;
-				goto skip_null_lr;
-			}
-
-			/*
-			 * Check that the local port is valid, else
-			 * we will not be able to send the reply
-			 */
-			if ((lr == NULL) || 
-			    (lr->mr_port == NULL) || 
-			    (lr->mr_port->mp_recv == NULL)) {
-#ifdef DEBUG_MACH
-				printf("msg id %d: invalid src\n", sm->msgh_id);
-#endif
-				*retval = MACH_SEND_INVALID_REPLY;
-				goto out1;
-			}
-skip_null_lr:
-
-			/*
-			 * Sanity check message length. We do not want the
-			 * server to: 
-			 * 1) use kernel memory located after
-			 *    the end of the request message.
-			 */
-			if (send_size < min_reqlen) {
-#ifdef DEBUG_MACH
-				printf("mach server %s: smsg overflow: "
-				    "send = %d, min = %d\n",
-				    srv->srv_name, send_size, min_reqlen);
-#endif
-				*retval = MACH_SEND_MSG_TOO_SMALL;
-				goto out1;
-			}
-
-			/*
-			 * 2) give away random kernel data to the user program
-			 *    when the reply message is copied out.
-			 */
-			if (rcv_size > max_replen) {
-#ifdef DEBUG_MACH
-				printf("mach server %s: rmsg overflow: "
-				    "recv = %d, max = %d\n",
-				    srv->srv_name, rcv_size, max_replen);
-#endif
-				rcv_size = max_replen;
-			}
-
-			/*
-			 * 3) Overwrite kernel memory after the end of the
-			 *    reply message buffer. This check is the
-			 *    responsability of the server.
-			 */
-
-
-			/* 
-			 * Invoke the server. We give it the opportunity
-			 * to shorten rcv_size if there is less data in
-			 * the reply than what the sender expected.
-			 * If lr is NULL, this is a no reply operation.
-			 */
-			if (lr != NULL)
-				rm = malloc(max_replen, 
-				    M_EMULDATA, M_WAITOK | M_ZERO);
-			else
-				rm = NULL;
-
-			args.l = l;
-			args.tl = mach_get_target_task(l, mp);
-			args.smsg = sm;
-			args.rmsg = rm;
-			args.rsize = &rcv_size;
-			args.ssize = send_size;
-			if ((*retval = (*srv->srv_handler)(&args)) != 0) 
-				goto out1;
-			
-			/*
-			 * No-reply opration: everything is done.
-			 */
-			if (lr == NULL)
-				goto out1;
-
-#ifdef DIAGNOSTIC
-			/* 
-			 * Catch potential bug in the server (sanity
-			 * check #3): did it output a larger message
-			 * then the one that was allocated?
-			 */
-			if ((SCARG(uap, option) & MACH_RCV_MSG) &&
-			    (rcv_size > max_replen)) {
-				uprintf("mach_msg: reply too big in %s\n",
-				    srv->srv_name);
-			}
-#endif
-
-			/*
-			 * Queue the reply
-			 */
-			mp = lr->mr_port;
-			(void)mach_message_get(rm, rcv_size, mp, NULL);
-#ifdef DEBUG_MACH_MSG
-			printf("pid %d: message queued on port %p (%d) [%p]\n", 
-			    p->p_pid, mp, rm->msgh_id,
-			    mp->mp_recv->mr_sethead);
-			if (sm->msgh_id == 404)
-				printf("*** msg to bootstrap. port = %p, "
-				    "recv = %p [%p]\n", mach_bootstrap_port, 
-				    mach_bootstrap_port->mp_recv,
-				    mach_bootstrap_port->mp_recv->mr_sethead);
-#endif
-			wakeup(mp->mp_recv->mr_sethead);
-			*retval = 0;
-out1:
-			free(sm, M_EMULDATA);
-			/* 
-			 * Skip the recieve part and return now if
-			 * - there has been an error in the send part
-			 * - this is a no-reply operation (lr == NULL)
-			 */
-			if ((*retval != 0) || (lr == NULL))
-				return 0;
-
-		} else {
-			/* 
-			 * The message is not to be handled by the kernel. 
-			 * Check that there is a valid receiver, and
-			 * queue the message in the remote port.
-			 */
-			mp = rr->mr_port; /* (mp != NULL) already checked */
-			if (mp->mp_recv == NULL) {
-#ifdef DEBUG_MACH
-				printf("msg id %d: invalid dst\n", sm->msgh_id);
-#endif
-				*retval = MACH_SEND_INVALID_DEST;
-				free(sm, M_EMULDATA);
-				return 0;
-			}
-
-			(void)mach_message_get(sm, send_size, mp, l);
-#ifdef DEBUG_MACH_MSG
-			printf("pid %d: message queued on port %p (%d) [%p]\n", 
-			    p->p_pid, mp, sm->msgh_id, 
-			    mp->mp_recv->mr_sethead);
-#endif
-			/*
-			 * Drop any right carried by the message
-			 */
-			bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
-			switch (bits) {
-			case MACH_MSG_TYPE_MOVE_SEND:
-				rights = MACH_PORT_TYPE_SEND;
-				break;
-			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-				rights = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				/* Recv. right is lost when msg is received */
-			case MACH_MSG_TYPE_MAKE_SEND:
-			case MACH_MSG_TYPE_COPY_SEND:
-			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-			default:
-				rights = 0;
-				break;
-			}
-			if ((lr != NULL) && (rights != 0))
-				mach_right_put(lr, rights);
-
-			bits = MACH_MSGH_REMOTE_BITS(sm->msgh_bits);
-			switch (bits) {
-			case MACH_MSG_TYPE_MOVE_SEND:
-				rights = MACH_PORT_TYPE_SEND;
-				break;
-			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-				rights = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				/* Recv. right is lost when msg is received */
-			case MACH_MSG_TYPE_MAKE_SEND:
-			case MACH_MSG_TYPE_COPY_SEND:
-			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-			default:
-				rights = 0;
-				break;
-			}
-			if ((rr != NULL) && (rights != 0))
-				mach_right_put(rr, rights);
-
-
-			/*
-			 * Wakeup any process awaiting for this message
-			 */
-			wakeup(mp->mp_recv->mr_sethead);
-		}
-	}
-
-	/*
-	 * Receiving messages.
-	 */
-	if (SCARG(uap, option) & MACH_RCV_MSG) {
-		struct mach_message *mm;
-		mach_port_t mn;
-		mach_port_t tmp;
-		struct mach_right *cmr;
-		struct mach_right *mr;
-		struct mach_right *nmr;
-		mach_msg_header_t *urm;
-		int timeout;
-		int bits, nr, or;
-
+	if ((opt & MACH_RCV_MSG) && (*retval == MACH_MSG_SUCCESS)) {
 		/* 
 		 * Find a buffer for the reply
 		 */
 		if (SCARG(uap, rcv_msg) != NULL)
-			urm = SCARG(uap, rcv_msg);
+			msg = SCARG(uap, rcv_msg);
 		else if (SCARG(uap, msg) != NULL)
-			urm = SCARG(uap, msg);
+			msg = SCARG(uap, msg);
 		else {
 			*retval = MACH_RCV_INVALID_DATA;
 			return 0;
 		}
 
-		if (SCARG(uap, option) & MACH_RCV_TIMEOUT)
-			timeout = SCARG(uap, timeout) * hz / 1000;
-		else
-			timeout = 0;
+		*retval = mach_msg_recv(l, msg, opt, recv_size, 
+		    SCARG(uap, timeout), SCARG(uap, rcv_name));
+	}
+
+	return 0;
+}
+
+/* 
+ * Send a Mach message. This returns a Mach message error code.
+ */
+static inline int 
+mach_msg_send(l, msg, option, send_size)
+	struct lwp *l;
+	mach_msg_header_t *msg;
+	int *option; 
+	size_t send_size;
+{
+	struct mach_emuldata *med;
+	struct mach_port *mp;
+	struct proc *p = l->l_proc;
+	mach_msg_header_t *sm;
+	struct mach_service *srv;
+	mach_port_t ln;
+	mach_port_t rn;
+	struct mach_right *lr = NULL;
+	struct mach_right *rr;
+	int rights;
+	int bits;
+	int ret;
+	size_t reply_size;
+	int error = 0;
+
+	if (msg == NULL)
+		return MACH_SEND_INVALID_DATA;
+
+	/* 
+	 * Allocate memory for the message and its reply,
+	 * and copy the whole message in the kernel.
+	 */
+	sm = malloc(send_size, M_EMULDATA, M_WAITOK);
+	if ((error = copyin(msg, sm, send_size)) != 0) {
+		ret = MACH_SEND_INVALID_DATA;	
+		goto out1;
+	}
+
+#ifdef KTRACE
+	/* Dump the Mach message */
+	if (KTRPOINT(p, KTR_MMSG))
+		ktrmmsg(p, (char *)sm, send_size); 
+#endif
+	/*
+	 * Handle rights in the message
+	 */
+	ln = sm->msgh_local_port;
+	rn = sm->msgh_remote_port;
+
+	lr = mach_right_check(ln, l, MACH_PORT_TYPE_ALL_RIGHTS);
+	rr = mach_right_check(rn, l, MACH_PORT_TYPE_ALL_RIGHTS);
+	if ((rr == NULL) || (rr->mr_port == NULL)) {
+#ifdef DEBUG_MACH
+		printf("msg id %d: invalid dest\n", sm->msgh_id);
+#endif
+		ret = MACH_SEND_INVALID_DEST;
+		goto out1;
+	}
+
+	/* 
+	 * Check that the process has send a send right on 
+	 * the remote port. 
+	 */
+	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
+	if (mach_right_check(rn, l, rights) == NULL) {
+		ret = MACH_SEND_INVALID_RIGHT;
+		goto out1;
+	}
+
+	/*
+	 * If the remote port is a special port (host, kernel,
+	 * clock, or io_master), the message will be handled 
+	 * by the kernel.
+	 */
+	med = (struct mach_emuldata *)p->p_emuldata;
+	mp = rr->mr_port;
+	if (mp->mp_flags & MACH_MP_INKERNEL) {
+		struct mach_trap_args args;
+		mach_msg_header_t *rm;
+		size_t min_reqlen, max_replen;
 
 		/* 
-		 * Check for receive right on the port 
+		 * Look for the function that will handle it,
+		 * using the message id.
 		 */
-		mn = SCARG(uap, rcv_name);
-		mr = mach_right_check(mn, l, MACH_PORT_TYPE_RECEIVE);
-		if (mr == NULL) {
-			
+		for (srv = mach_services_table; srv->srv_id; srv++)
+			if (srv->srv_id == sm->msgh_id)
+				break;
+		
+		/* 
+		 * If no match, give up, and display a warning.
+		 */
+		if (srv->srv_handler == NULL) {
+			uprintf("No mach server for id = %d\n",
+			    sm->msgh_id);
+			ret = MACH_SEND_INVALID_DEST;
+			goto out1;
+		}
+		min_reqlen = srv->srv_reqlen;
+		max_replen = srv->srv_replen;
+
+		/*
+		 * Special case when the kernel behaves as
+		 * the client: replies to exceptions and
+		 * notifications. There will be no reply,
+		 * as we already receive a reply.
+		 * - request and reply are swapped
+		 * - there will be no reply, so set lr to NULL.
+		 * - skip the lr == NULL tests
+		 * XXX This is inelegant.
+		 */
+		if ((sm->msgh_id >= 2501) && (sm->msgh_id <= 2503)) {
+			min_reqlen = srv->srv_replen;
+			max_replen = srv->srv_reqlen;
+			lr = NULL;
+			goto skip_null_lr;
+		}
+
+		/*
+		 * Check that the local port is valid, else
+		 * we will not be able to send the reply
+		 */
+		if ((lr == NULL) || 
+		    (lr->mr_port == NULL) || 
+		    (lr->mr_port->mp_recv == NULL)) {
+#ifdef DEBUG_MACH
+			printf("msg id %d: invalid src\n", sm->msgh_id);
+#endif
+			ret = MACH_SEND_INVALID_REPLY;
+			goto out1;
+		}
+skip_null_lr:
+
+		/*
+		 * Sanity check message length. We do not want the
+		 * server to: 
+		 * 1) use kernel memory located after
+		 *    the end of the request message.
+		 */
+		if (send_size < min_reqlen) {
+#ifdef DEBUG_MACH
+			printf("mach server %s: smsg overflow: "
+			    "send = %d, min = %d\n",
+			    srv->srv_name, send_size, min_reqlen);
+#endif
+			ret = MACH_SEND_MSG_TOO_SMALL;
+			goto out1;
+		}
+
+		/*
+		 * 2) Overwrite kernel memory after the end of the
+		 *    reply message buffer. This check is the
+		 *    responsability of the server.
+		 */
+
+
+		/* 
+		 * Invoke the server. We give it the opportunity
+		 * to shorten recv_size if there is less data in
+		 * the reply than what the sender expected.
+		 * If lr is NULL, this is a no reply operation.
+		 */
+		reply_size = max_replen;
+		if (lr != NULL)
+			rm = malloc(reply_size, M_EMULDATA, M_WAITOK | M_ZERO);
+		else
+			rm = NULL;
+
+		args.l = l;
+		args.tl = mach_get_target_task(l, mp);
+		args.smsg = sm;
+		args.rmsg = rm;
+		args.rsize = &reply_size;
+		args.ssize = send_size;
+		if ((ret = (*srv->srv_handler)(&args)) != 0) 
+			goto out1;
+		
+		/*
+		 * No-reply opration: everything is done.
+		 * Change option so that we skip the
+		 * receive stage.
+		 */
+		if (lr == NULL) {
+			*option &= ~MACH_RCV_MSG;
+			return MACH_MSG_SUCCESS;
+		}
+
+#ifdef DIAGNOSTIC
+		/* 
+		 * Catch potential bug in the server (sanity
+		 * check #2): did it output a larger message
+		 * then the one that was allocated?
+		 */
+		if ((*option & MACH_RCV_MSG) && (reply_size > max_replen)) {
+			uprintf("mach_msg: reply too big in %s\n",
+			    srv->srv_name);
+		}
+#endif
+
+		/*
+		 * Queue the reply
+		 */
+		mp = lr->mr_port;
+		(void)mach_message_get(rm, reply_size, mp, NULL);
+#ifdef DEBUG_MACH_MSG
+		printf("pid %d: message queued on port %p (%d) [%p]\n", 
+		    p->p_pid, mp, rm->msgh_id,
+		    mp->mp_recv->mr_sethead);
+		if (sm->msgh_id == 404)
+			printf("*** msg to bootstrap. port = %p, "
+			    "recv = %p [%p]\n", mach_bootstrap_port, 
+			    mach_bootstrap_port->mp_recv,
+			    mach_bootstrap_port->mp_recv->mr_sethead);
+#endif
+		wakeup(mp->mp_recv->mr_sethead);
+		ret = MACH_MSG_SUCCESS;
+out1:
+		free(sm, M_EMULDATA);
+
+		return ret;
+	}
+
+	/* 
+	 * The message is not to be handled by the kernel. 
+	 * Check that there is a valid receiver, and
+	 * queue the message in the remote port.
+	 */
+	mp = rr->mr_port; /* (mp != NULL) already checked */
+	if (mp->mp_recv == NULL) {
+#ifdef DEBUG_MACH
+		printf("msg id %d: invalid dst\n", sm->msgh_id);
+#endif
+		free(sm, M_EMULDATA);
+		return MACH_SEND_INVALID_DEST;
+	}
+
+	(void)mach_message_get(sm, send_size, mp, l);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: message queued on port %p (%d) [%p]\n", 
+	    p->p_pid, mp, sm->msgh_id, 
+	    mp->mp_recv->mr_sethead);
+#endif
+	/*
+	 * Drop any right carried by the message
+	 */
+	if (lr != NULL) {
+		bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
+		mach_drop_rights(lr, bits);
+	}
+
+	if (rr != NULL) {
+		bits = MACH_MSGH_REMOTE_BITS(sm->msgh_bits);
+		mach_drop_rights(rr, bits);
+	}
+
+	/*
+	 * Wakeup any process awaiting for this message
+	 */
+	wakeup(mp->mp_recv->mr_sethead);
+
+	return MACH_MSG_SUCCESS;
+}
+
+/* 
+ * Receive a Mach message. This returns a Mach message error code.
+ */
+static inline int 
+mach_msg_recv(l, urm, option, recv_size, timeout, mn)
+	struct lwp *l;
+	mach_msg_header_t *urm;
+	int option;
+	size_t recv_size; 
+    	unsigned int timeout;
+	mach_port_t mn;
+{
+	struct mach_port *mp;
+	struct proc *p = l->l_proc;
+	struct mach_message *mm;
+	mach_port_t tmp;
+	struct mach_right *cmr;
+	struct mach_right *mr;
+	int bits;
+	int ret;
+	int error = 0;
+
+
+	if (option & MACH_RCV_TIMEOUT)
+		timeout = timeout * hz / 1000;
+	else
+		timeout = 0;
+
+	/* 
+	 * Check for receive right on the port 
+	 */
+	mr = mach_right_check(mn, l, MACH_PORT_TYPE_RECEIVE);
+	if (mr == NULL) {
+		
+		/* 
+		 * Is it a port set?
+		 */
+		mr = mach_right_check(mn, l, MACH_PORT_TYPE_PORT_SET);
+		if (mr == NULL)
+			return MACH_RCV_INVALID_NAME;
+		
+		/* 
+		 * This is a port set. For each port in the
+		 * port set, check we have receive right, and
+		 * and check if we have some message.
+		 */
+		LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
+			if ((mach_right_check(cmr->mr_name, l, 
+			    MACH_PORT_TYPE_RECEIVE)) == NULL)
+				return MACH_RCV_INVALID_NAME;
+
+			mp = cmr->mr_port;	
+#ifdef DEBUG_MACH
+			if (mp->mp_recv != cmr)
+				uprintf("mach_msg_trap: bad receive "
+				    "port/right\n");
+#endif
+			if (mp->mp_count != 0)
+				break;
+		}
+
+		/* 
+		 * If cmr is NULL then we found no message on
+		 * any port. Sleep on the port set until we get 
+		 * some or until we get a timeout.
+		 */
+		if (cmr == NULL) {
+#ifdef DEBUG_MACH_MSG
+			printf("pid %d: wait on port %p [%p]\n",
+			    p->p_pid, mp, mr->mr_sethead);
+#endif
+			error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
+			    "mach_msg", timeout);
+			if ((error == ERESTART) || (error == EINTR))
+				return MACH_RCV_INTERRUPTED;
+
 			/* 
-			 * Is it a port set?
+			 * Check we did not loose the receive right
+			 * while we were sleeping.
 			 */
-			mr = mach_right_check(mn, l, MACH_PORT_TYPE_PORT_SET);
-			if (mr == NULL) {
-				*retval = MACH_RCV_INVALID_NAME;
-				return 0;
-			}
-			
-			/* 
-			 * This is a port set. For each port in the
-			 * port set, check we have receive right, and
-			 * and check if we have some message.
+			if ((mach_right_check(mn, l, 
+			     MACH_PORT_TYPE_PORT_SET)) == NULL)
+				return  MACH_RCV_PORT_DIED;
+
+			/*
+			 * Is there any pending message for 
+			 * a port in the port set?
 			 */
 			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
-				if ((mach_right_check(cmr->mr_name, l, 
-				    MACH_PORT_TYPE_RECEIVE)) == NULL) {
-					*retval = MACH_RCV_INVALID_NAME;
-					return 0;
-				}
-
 				mp = cmr->mr_port;	
-#ifdef DEBUG_MACH
-				if (mp->mp_recv != cmr)
-					uprintf("mach_msg_trap: bad receive "
-					    "port/right\n");
-#endif
 				if (mp->mp_count != 0)
 					break;
 			}
 
-			/* 
-			 * If cmr is NULL then we found no message on
-			 * any port. Sleep on the port set until we get 
-			 * some or until we get a timeout.
-			 */
-			if (cmr == NULL) {
-#ifdef DEBUG_MACH_MSG
-				printf("pid %d: wait on port %p [%p]\n",
-				    p->p_pid, mp, mr->mr_sethead);
-#endif
-				error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
-				    "mach_msg", timeout);
-				if ((error == ERESTART) || (error == EINTR)) {
-					*retval = MACH_RCV_INTERRUPTED;
-					return 0;
-				}
-
-				/* 
-				 * Check we did not loose the receive right
-				 * while we were sleeping.
-				 */
-				if ((mach_right_check(mn, l, 
-				     MACH_PORT_TYPE_PORT_SET)) == NULL) {
-					*retval = MACH_RCV_PORT_DIED;
-					return 0;
-				}
-
-				/*
-				 * Is there any pending message for 
-				 * a port in the port set?
-				 */
-				LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
-					mp = cmr->mr_port;	
-					if (mp->mp_count != 0)
-						break;
-				}
-
-				if (cmr == NULL) {
-					*retval = MACH_RCV_TIMED_OUT;
-					return 0;
-				}
-			}
-			
-			/* 
-			 * We found a port with a pending message.
-			 */
-			mp = cmr->mr_port;
-
-		} else {
-			/*
-			 * This is a receive on a simple port (no port set).
-			 * If there is no message queued on the port,
-			 * block until we get some.
-			 */
-			mp = mr->mr_port;
-
-#ifdef DEBUG_MACH
-			if (mp->mp_recv != mr)
-				uprintf("mach_msg_trap: bad receive "
-				    "port/right\n");
-#endif
-#ifdef DEBUG_MACH_MSG
-			printf("pid %d: wait on port %p [%p]\n", 
-			    p->p_pid, mp, mr->mr_sethead);
-#endif
-			if (mp->mp_count == 0) {
-				error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
-				    "mach_msg", timeout);
-				if ((error == ERESTART) || (error == EINTR)) {
-					*retval = MACH_RCV_INTERRUPTED;
-					return 0;
-				}
-
-				/* 
-				 * Check we did not loose the receive right
-				 * while we were sleeping.
-				 */
-				if ((mach_right_check(mn, l, 
-				     MACH_PORT_TYPE_RECEIVE)) == NULL) {
-					*retval = MACH_RCV_PORT_DIED;
-					return 0;
-				}
-
-				if (mp->mp_count == 0) {
-					*retval = MACH_RCV_TIMED_OUT;
-					return 0;
-				}
-			}
+			if (cmr == NULL)
+				return MACH_RCV_TIMED_OUT;
 		}
-
+		
 		/* 
-		 * Dequeue the message.
-		 * XXX Do we really need to lock here? There could be
-		 * only one reader process, so mm will not disapear
-		 * except if there is a port refcount error in our code.
+		 * We found a port with a pending message.
 		 */
-		lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
-		mm = TAILQ_FIRST(&mp->mp_msglist);
-#ifdef DEBUG_MACH_MSG
-		printf("pid %d: dequeue message on port %p (id %d)\n", 
-		    p->p_pid, mp, mm->mm_msg->msgh_id);
-#endif
+		mp = cmr->mr_port;
 
-		if (mm->mm_size > rcv_size) {
-			struct mach_short_reply sr;
-
-			*retval = MACH_RCV_TOO_LARGE;
-			/* 
-			 * If MACH_RCV_LARGE was not set, destroy the message.
-			 */
-			if ((SCARG(uap, option) & MACH_RCV_LARGE) == 0) {
-				free(mm->mm_msg, M_EMULDATA);
-				mach_message_put_shlocked(mm);
-				goto unlock;
-			}		
-
-			/* 
-			 * If MACH_RCV_TOO_LARGE is set, then return 
-			 * a message with just header and trailer. The 
-			 * size in the header should correspond to the
-			 * whole message, so just copy the whole header.
-			 */
-			memcpy(&sr, mm->mm_msg, sizeof(mach_msg_header_t));
-			sr.sr_trailer.msgh_trailer_type = 0;
-			sr.sr_trailer.msgh_trailer_size = 8;
-
-			if ((error = copyout(&sr, urm, sizeof(sr))) != 0) {
-				*retval = MACH_RCV_INVALID_DATA;
-				goto unlock;
-			}
-#ifdef KTRACE
-			/* Dump the Mach message */
-			if (KTRPOINT(p, KTR_MMSG))
-				ktrmmsg(p, (char *)&sr, sizeof(sr)); 
-#endif
-			goto unlock;
-		}
-
-		/* 
-		 * Get rights carried by the message if it is not a
-		 * reply from the kernel.
-		 */
-		if (mm->mm_l != NULL) {
-#ifdef DEBUG_MACH
-			printf("mach_msg: non kernel-reply message\n");
-#endif
-			bits = MACH_MSGH_LOCAL_BITS(mm->mm_msg->msgh_bits);
-			switch (bits) {
-			case MACH_MSG_TYPE_MAKE_SEND:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_SEND;
-				break;
-
-			case MACH_MSG_TYPE_COPY_SEND:
-			case MACH_MSG_TYPE_MOVE_SEND:
-				or = MACH_PORT_TYPE_SEND;
-				nr = MACH_PORT_TYPE_SEND;
-				break;
-
-			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-
-			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-				or = MACH_PORT_TYPE_SEND_ONCE;
-				nr = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-
-			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_RECEIVE;
-				break;
-
-			default:
-				or = 0;
-				nr = 0;
-				break;
-			}
-
-			mr = NULL;
-			if (nr != 0) {
-				mn = mm->mm_msg->msgh_local_port;
-				mr = mach_right_check(mn, mm->mm_l, or);
-			}
-
-			if (mr != NULL) {
-				nmr = mach_right_get(mr->mr_port, l, nr, 0);
-				mm->mm_msg->msgh_local_port = nmr->mr_name;
-			} else {
-				mm->mm_msg->msgh_local_port = 0;
-			}
-
-			bits = MACH_MSGH_REMOTE_BITS(mm->mm_msg->msgh_bits);
-			switch (bits) {
-			case MACH_MSG_TYPE_MAKE_SEND:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_SEND;
-				break;
-
-			case MACH_MSG_TYPE_COPY_SEND:
-			case MACH_MSG_TYPE_MOVE_SEND:
-				or = MACH_PORT_TYPE_SEND;
-				nr = MACH_PORT_TYPE_SEND;
-				break;
-
-			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-
-			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-				or = MACH_PORT_TYPE_SEND_ONCE;
-				nr = MACH_PORT_TYPE_SEND_ONCE;
-				break;
-
-			case MACH_MSG_TYPE_MOVE_RECEIVE:
-				or = MACH_PORT_TYPE_RECEIVE;
-				nr = MACH_PORT_TYPE_RECEIVE;
-				break;
-
-			default:
-				or = 0;
-				nr = 0;
-				break;
-			}
-			
-			mr = NULL;
-			if (nr != 0) {
-				mn = mm->mm_msg->msgh_remote_port;
-				mr = mach_right_check(mn, mm->mm_l, or);
-			}
-
-			if (mr != NULL) {
-				nmr = mach_right_get(mr->mr_port, l, nr, 0);
-				mm->mm_msg->msgh_remote_port = nmr->mr_name;
-			} else {
-				mm->mm_msg->msgh_remote_port = 0;
-			}
-
-			/*
-			 * swap local and remote ports, and 
-			 * corresponding bits as well.
-			 */
-			bits = (bits & 0xffff0000) | 
-			    ((bits & 0xff00) >> 8) |
-			    ((bits & 0x00ff) << 8);
-			tmp = mm->mm_msg->msgh_remote_port;
-			mm->mm_msg->msgh_remote_port = 
-			    mm->mm_msg->msgh_local_port;
-			mm->mm_msg->msgh_local_port = tmp;
-		}
-
+	} else {
 		/*
-		 * Copy the message to userland
+		 * This is a receive on a simple port (no port set).
+		 * If there is no message queued on the port,
+		 * block until we get some.
 		 */
-		if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
-			*retval = MACH_RCV_INVALID_DATA;
+		mp = mr->mr_port;
+
+#ifdef DEBUG_MACH
+		if (mp->mp_recv != mr)
+			uprintf("mach_msg_trap: bad receive "
+			    "port/right\n");
+#endif
+#ifdef DEBUG_MACH_MSG
+		printf("pid %d: wait on port %p [%p]\n", 
+		    p->p_pid, mp, mr->mr_sethead);
+#endif
+		if (mp->mp_count == 0) {
+			error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
+			    "mach_msg", timeout);
+			if ((error == ERESTART) || (error == EINTR))
+				return MACH_RCV_INTERRUPTED;
+
+			/* 
+			 * Check we did not loose the receive right
+			 * while we were sleeping.
+			 */
+			if ((mach_right_check(mn, l, 
+			     MACH_PORT_TYPE_RECEIVE)) == NULL)
+				return MACH_RCV_PORT_DIED;
+
+			if (mp->mp_count == 0)
+				return MACH_RCV_TIMED_OUT;
+		}
+	}
+
+	/* 
+	 * Dequeue the message.
+	 * XXX Do we really need to lock here? There could be
+	 * only one reader process, so mm will not disapear
+	 * except if there is a port refcount error in our code.
+	 */
+	lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
+	mm = TAILQ_FIRST(&mp->mp_msglist);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: dequeue message on port %p (id %d)\n", 
+	    p->p_pid, mp, mm->mm_msg->msgh_id);
+#endif
+
+	ret = MACH_MSG_SUCCESS;
+	if (mm->mm_size > recv_size) {
+		struct mach_short_reply sr;
+
+		ret = MACH_RCV_TOO_LARGE;
+		/* 
+		 * If MACH_RCV_LARGE was not set, destroy the message.
+		 */
+		if ((option & MACH_RCV_LARGE) == 0) {
+			free(mm->mm_msg, M_EMULDATA);
+			mach_message_put_shlocked(mm);
+			goto unlock;
+		}		
+
+		/* 
+		 * If MACH_RCV_TOO_LARGE is set, then return 
+		 * a message with just header and trailer. The 
+		 * size in the header should correspond to the
+		 * whole message, so just copy the whole header.
+		 */
+		memcpy(&sr, mm->mm_msg, sizeof(mach_msg_header_t));
+		sr.sr_trailer.msgh_trailer_type = 0;
+		sr.sr_trailer.msgh_trailer_size = 8;
+
+		if ((error = copyout(&sr, urm, sizeof(sr))) != 0) {
+			ret = MACH_RCV_INVALID_DATA;
 			goto unlock;
 		}
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size); 
+			ktrmmsg(p, (char *)&sr, sizeof(sr)); 
 #endif
-
-		free(mm->mm_msg, M_EMULDATA);
-		mach_message_put_shlocked(mm); /* decrease mp_count */
-unlock:
-		lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
+		goto unlock;
 	}
 
-	return 0;
+	/* 
+	 * Get rights carried by the message if it is not a
+	 * reply from the kernel.
+	 */
+	if (mm->mm_l != NULL) {
+		mach_port_t *mnp;
+#ifdef DEBUG_MACH
+		printf("mach_msg: non kernel-reply message\n");
+#endif
+		/* 
+		 * Turn local and remote port names into. 
+		 * names in the local process namespace
+		 */
+		bits = MACH_MSGH_LOCAL_BITS(mm->mm_msg->msgh_bits);
+		mnp = &mm->mm_msg->msgh_local_port;
+		mach_trade_rights(l, mm->mm_l, mnp, bits);
+
+		bits = MACH_MSGH_REMOTE_BITS(mm->mm_msg->msgh_bits);
+		mnp = &mm->mm_msg->msgh_remote_port;
+		mach_trade_rights(l, mm->mm_l, mnp, bits);
+
+		/* 
+		 * The same operation must be done to all
+		 * port descriptors carried with the message.
+		 */
+		if ((mm->mm_msg->msgh_bits & MACH_MSGH_BITS_COMPLEX) &&
+		    ((ret = mach_trade_rights_complex(l, mm)) != 0))
+			goto unlock;
+
+		/*
+		 * swap local and remote ports, and 
+		 * corresponding bits as well.
+		 */
+		bits = (bits & 0xffff0000) | 
+		    ((bits & 0xff00) >> 8) |
+		    ((bits & 0x00ff) << 8);
+		tmp = mm->mm_msg->msgh_remote_port;
+		mm->mm_msg->msgh_remote_port = 
+		    mm->mm_msg->msgh_local_port;
+		mm->mm_msg->msgh_local_port = tmp;
+	}
+
+	/*
+	 * Copy the message to userland
+	 */
+	if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
+		ret = MACH_RCV_INVALID_DATA;
+		goto unlock;
+	}
+#ifdef KTRACE
+	/* Dump the Mach message */
+	if (KTRPOINT(p, KTR_MMSG))
+		ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size); 
+#endif
+
+	free(mm->mm_msg, M_EMULDATA);
+	mach_message_put_shlocked(mm); /* decrease mp_count */
+unlock:
+	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
+
+	return ret;
 }
+
 
 int
 mach_sys_msg_trap(l, v, retval)
@@ -785,7 +692,7 @@ mach_sys_msg_trap(l, v, retval)
 	return mach_sys_msg_overwrite_trap(l, &cup, retval);
 }
 
-static struct lwp *
+static inline  struct lwp *
 mach_get_target_task(l, mp)
 	struct lwp *l;
 	struct mach_port *mp;
@@ -804,6 +711,151 @@ mach_get_target_task(l, mp)
 	tl = proc_representative_lwp(tp);
 
 	return tl;
+}
+
+static inline void 
+mach_drop_rights(mr, bits)
+	struct mach_right *mr;
+	int bits;
+{
+	int rights;
+
+	switch (bits) {
+	case MACH_MSG_TYPE_MOVE_SEND:
+		rights = MACH_PORT_TYPE_SEND;
+		break;
+	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+		rights = MACH_PORT_TYPE_SEND_ONCE;
+		break;
+	case MACH_MSG_TYPE_MOVE_RECEIVE:
+		/* Recv. right is lost when msg is received */
+	case MACH_MSG_TYPE_MAKE_SEND:
+	case MACH_MSG_TYPE_COPY_SEND:
+	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+	default:
+		rights = 0;
+		break;
+	}
+
+	if (rights != 0)
+		mach_right_put(mr, rights);
+	
+	return;
+}
+
+/* 
+ * When a messages is transmitted from one process to another one, 
+ * we need to make sure the port names are in the receiver process
+ * namespace. 
+ */
+static inline void 
+mach_trade_rights(ll, rl, mnp, bits)
+	struct lwp *ll;		/* local lwp (receiver, current lwp) */
+	struct lwp *rl;		/* remote lwp (sender) */
+	mach_port_t *mnp;	/* pointer to the port name */
+	int bits;		/* right bits */
+{
+	int lr;			/* local right type (to be added) */
+	int rr;			/* remote right type */
+	struct mach_right *lmr;	/* right in the local process */
+	struct mach_right *rmr;	/* right in the remote process */
+
+	switch (bits) {
+	case MACH_MSG_TYPE_MAKE_SEND:
+		rr = MACH_PORT_TYPE_RECEIVE;
+		lr = MACH_PORT_TYPE_SEND;
+		break;
+
+	case MACH_MSG_TYPE_COPY_SEND:
+	case MACH_MSG_TYPE_MOVE_SEND:
+		rr = MACH_PORT_TYPE_SEND;
+		lr = MACH_PORT_TYPE_SEND;
+		break;
+
+	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+		rr = MACH_PORT_TYPE_RECEIVE;
+		lr = MACH_PORT_TYPE_SEND_ONCE;
+		break;
+
+	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+		rr = MACH_PORT_TYPE_SEND_ONCE;
+		lr = MACH_PORT_TYPE_SEND_ONCE;
+		break;
+
+	case MACH_MSG_TYPE_MOVE_RECEIVE:
+		rr = MACH_PORT_TYPE_RECEIVE;
+		lr = MACH_PORT_TYPE_RECEIVE;
+		break;
+
+	default:
+		rr = 0;
+		lr = 0;
+		break;
+	}
+
+	/* Get the right in the remote process (sender) */
+	rmr = NULL;
+	if (lr != 0) 
+		rmr = mach_right_check(*mnp, rl, rr);
+
+	/* Translate it into a right in the local process (receiver) */
+	if (rmr != NULL) {
+		lmr = mach_right_get(rmr->mr_port, ll, lr, 0);
+		*mnp = lmr->mr_name;
+	} else {
+		*mnp = 0;
+	}
+
+	return;
+}
+
+/* 
+ * Turn rights carried by complex messages into rights in 
+ * the local namespace. Returns a Mach messsage error
+ * XXX Nothing is there yet to remove the rights from the 
+ * sender namespace, it should be done at send time and it 
+ * is not done yet.
+ */
+static inline int
+mach_trade_rights_complex(l, mm)
+	struct lwp *l;
+	struct mach_message *mm;
+{
+	struct mach_complex_msg *mcm;
+	unsigned int i, count;
+	unsigned long begin, end;
+
+	/* 
+	 * Sanity check the descriptor count. 
+	 * Note that all descriptor types 
+	 * have the same size, hence it is
+	 * safe to assume this is a port
+	 * descriptor here.
+	 */
+	mcm = (struct mach_complex_msg *)mm->mm_msg;
+	count = mcm->mcm_body.msgh_descriptor_count;
+	begin = (u_long)mcm;
+	end = (u_long)&mcm->mcm_port_desc[count + 1];
+
+	if ((end - begin) > mm->mm_size) {
+#ifdef DEBUG_MACH
+		printf("msg id %d: invalid count\n", mm->mm_msg->msgh_id);
+#endif
+		return MACH_SEND_INVALID_DATA;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (mcm->mcm_port_desc[i].type != MACH_MSG_PORT_DESCRIPTOR) {
+#ifdef DEBUG_MACH
+			printf("OOL data in task to task message\n");
+#endif
+			continue;
+		}
+		mach_trade_rights(l, mm->mm_l, &mcm->mcm_port_desc[i].name, 
+		    mcm->mcm_port_desc[i].disposition);
+	}
+
+	return MACH_MSG_SUCCESS;
 }
 
 void
