@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.3 2000/11/26 17:44:12 ad Exp $
+.\"	$NetBSD: iop.4,v 1.4 2000/12/11 13:15:43 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,64 @@ driver provides support for
 adapters conforming to the
 .Tn I2O
 specification, revision 1.5.
+.Sh IOCTL INTERFACE
+The following structures and constants are defined in
+.Pa dev/i2o/i2ovar.h .
+Note that the header
+.Pa dev/i2o/i2o.h
+is a prerequsite and must therefore be included beforehand.
+.Bl -tag -width OTTF
+.It Dv IOPIOCPT (struct ioppt)
+Submit a message to the IOP and return the reply.  Note that the return
+value of this ioctl is not affected by completion status as indicated by the
+reply. 
+.Bd -literal
+struct ioppt {
+	void	*pt_msg;	/* pointer to message buffer */
+	size_t	pt_msglen;	/* message buffer size in bytes */
+	void	*pt_reply;	/* pointer to reply buffer */
+	size_t	pt_replylen;	/* reply buffer size in bytes */
+	int	pt_timo;	/* completion timeout in ms */
+	int	pt_nbufs;	/* number of transfers */
+	struct	ioppt_buf pt_bufs[IOP_MAX_MSG_XFERS]; /* transfers */
+};
+
+struct ioppt_buf {
+	void	*ptb_data;	/* pointer to buffer */
+	size_t	ptb_datalen;	/* buffer size in bytes */
+	int	ptb_out;	/* non-zero if transfer is to IOP */
+};
+.Ed
+.Pp
+The minimum timeout value that may be specified is 1000ms.  All other values
+must not exceed the
+.Nm
+driver's operational limits.
+.It Dv IOPIOCGLCT (struct iovec)
+Return the
+.Nm
+driver's copy of the logical configuration table.  This copy of the LCT
+matches the current device configuration, but is not necessarily the latest
+available version of the LCT.  This ioctl may block while attempting to
+acquire a lock on the LCT, and may fail if the acquisition times out.
+.It Dv IOPIOCGSTATUS (struct iovec)
+Request the latest available status record from the IOP.  This special-case
+ioctl is provided as the I2O_EXEC_STATUS_GET message does not post replies,
+and can therefore not be safely issued using the IOPIOCPT ioctl.
+.It Dv IOPIOCRECONFIG
+Request that the
+.Nm
+driver scan all bus ports, retrieve the latest version of the LCT, and
+attach or detach devices as necessary.  Note that higher-level
+reconfiguration tasks (such as logically re-scanning SCSI busses) will not
+be performed by this ioctl.
+.El
+.Sh FILES
+.Bl -tag -width /dev/iopn -compact
+.It Pa /dev/iop Ns Ar u
+control device for IOP unit
+.Ar u
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr iopsp 4 ,
