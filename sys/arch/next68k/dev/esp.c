@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 1999/02/03 20:44:43 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.19 1999/02/13 09:44:50 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ espattach_intio(parent, self, aux)
 		{
 			int error;
 			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
-					sc->sc_maxxfer, 1, sc->sc_maxxfer,
+					sc->sc_maxxfer, sc->sc_maxxfer/NBPG, sc->sc_maxxfer,
 					0, BUS_DMA_ALLOCNOW, &esc->sc_main_dmamap)) != 0) {
 				panic("%s: can't create main i/o DMA map, error = %d",
 						sc->sc_dev.dv_xname,error);
@@ -364,7 +364,8 @@ espattach_intio(parent, self, aux)
 		{
 			int error;
 			if ((error = bus_dmamap_create(esc->sc_scsi_dma.nd_dmat,
-					ESP_DMA_MAXTAIL, 1, ESP_DMA_MAXTAIL,
+					ESP_DMA_TAILBUFSIZE,
+					1, ESP_DMA_TAILBUFSIZE,
 					0, BUS_DMA_ALLOCNOW, &esc->sc_tail_dmamap)) != 0) {
 				panic("%s: can't create tail i/o DMA map, error = %d",
 						sc->sc_dev.dv_xname,error);
@@ -377,7 +378,7 @@ espattach_intio(parent, self, aux)
 
 	/* Establish interrupt channel */
 	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), 0);
+			NEXT_I_IPL(NEXT_I_SCSI), -1);
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
@@ -527,6 +528,14 @@ esp_dma_intr(sc)
 	return -1;
 }
 
+/* it appears that:
+ * addr and len arguments to this need to be kept up to date
+ * with the status of the transfter.
+ * the dmasize of this is the actual length of the transfer
+ * request, which is guaranteed to be less than maxxfer.
+ * (len may be > maxxfer)
+ */
+
 int
 esp_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
@@ -590,8 +599,14 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 			slop_bgn_size = DMA_BEGINALIGNMENT-(bgn % DMA_BEGINALIGNMENT);
 			if (slop_bgn_size == DMA_BEGINALIGNMENT) slop_bgn_size = 0;
-			slop_end_size = end % DMA_ENDALIGNMENT;
+			slop_end_size = (end % DMA_ENDALIGNMENT);
 		}
+
+		/* Force a minimum slop end size to guarantee correct use of tailbuf
+		 * and provide for dma overrun
+		 */
+		slop_end_size += ESP_DMA_MAXTAIL;
+
 
 		/* Check to make sure we haven't counted extra slop
 		 * as would happen for a very short dma buffer, also
@@ -631,6 +646,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 					panic("%s: can't load main dma map. error = %d, addr=0x%08x, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
 				}
+				bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
+						0, esc->sc_main_dmamap->dm_mapsize, 
+						(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
 			} else {
 				esc->sc_main = 0;
 			}
@@ -645,6 +663,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			esc->sc_tail      = DMA_ALIGN(caddr_t,esc->sc_tail);
 			/* So therefore, we change the tail size to be end aligned again. */
 			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+slop_end_size)-esc->sc_tail;
+
+			/* @@@ next dma overrun lossage */
+			if (!esc->sc_datain) esc->sc_tail_size += ESP_DMA_OVERRUN;
 		
 			{
 				int error;
@@ -656,6 +677,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 					panic("%s: can't load tail dma map. error = %d, addr=0x%08x, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_tail,esc->sc_tail_size);
 				}
+				bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
+						0, esc->sc_tail_dmamap->dm_mapsize, 
+						(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
 			}
 		}
 	}
@@ -669,6 +693,8 @@ esp_dma_go(sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+#ifdef DEBUG
+
 	DPRINTF(("%s: esp_dma_go(datain = %d)\n",
 			sc->sc_dev.dv_xname, esc->sc_datain));
 
@@ -680,8 +706,29 @@ esp_dma_go(sc)
 			sc->sc_dev.dv_xname, esc->sc_begin, esc->sc_begin_size));
 	DPRINTF(("%s: main = 0x%08x, size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_main, esc->sc_main_size));
+	{
+		int i;
+		bus_dmamap_t map = esc->sc_main_dmamap;
+		DPRINTF(("%s: main map. mapsize = 0x%08x, nsegs = %d\n",
+				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs));
+		for(i=0;i<map->dm_nsegs;i++) {
+			DPRINTF(("%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
+		}
+	}
 	DPRINTF(("%s: tail = 0x%08x, size = 0x%08x\n",
 			sc->sc_dev.dv_xname, esc->sc_tail, esc->sc_tail_size));
+	{
+		int i;
+		bus_dmamap_t map = esc->sc_tail_dmamap;
+		DPRINTF(("%s: tail map. mapsize = 0x%08x, nsegs = %d\n",
+				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs));
+		for(i=0;i<map->dm_nsegs;i++) {
+			DPRINTF(("%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
+		}
+	}
+#endif
 
 #ifdef DIAGNOSTIC
 	{
@@ -770,9 +817,11 @@ esp_dmacb_continue(arg)
 	if ((!(esc->sc_loaded & ESP_LOADED_MAIN)) && 
 			(esc->sc_main_dmamap->dm_mapsize)) {
 			DPRINTF(("%s: Loading main map\n",sc->sc_dev.dv_xname));
+#if 0
 			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
 					0, esc->sc_main_dmamap->dm_mapsize, 
 					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+#endif
 			esc->sc_loaded |= ESP_LOADED_MAIN;
 			return(esc->sc_main_dmamap);
 	}
@@ -780,9 +829,11 @@ esp_dmacb_continue(arg)
 	if ((!(esc->sc_loaded & ESP_LOADED_TAIL)) && 
 			(esc->sc_tail_dmamap->dm_mapsize)) {
 			DPRINTF(("%s: Loading tail map\n",sc->sc_dev.dv_xname));
+#if 0
 			bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
 					0, esc->sc_tail_dmamap->dm_mapsize, 
 					(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
+#endif
 			esc->sc_loaded |= ESP_LOADED_TAIL;
 			return(esc->sc_tail_dmamap);
 	}
@@ -812,9 +863,11 @@ esp_dmacb_completed(map, arg)
 	}
 #endif
 
+#if 0
 	bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, map,
 			0, map->dm_mapsize,
 			(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+#endif
 
 }
 
@@ -850,6 +903,9 @@ esp_dmacb_shutdown(arg)
 				(esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size)));
 	}
 
+	*(esc->sc_dmaaddr) += esc->sc_dmasize;
+	*(esc->sc_dmalen)  -= esc->sc_dmasize;
+
 #ifdef ESP_DEBUG
 	if (esp_debug) {
 		printf("%s: dma_shutdown: addr=0x%08lx,len=0x%08lx,size=0x%08lx\n",
@@ -863,6 +919,24 @@ esp_dmacb_shutdown(arg)
 	}
 #endif
 
+	if (esc->sc_main_dmamap->dm_mapsize) {
+		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap,
+			0, esc->sc_main_dmamap->dm_mapsize,
+				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap);
+	}
+	esc->sc_main = 0;
+	esc->sc_main_size = 0;
+
+	if (esc->sc_tail_dmamap->dm_mapsize) {
+		bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap,
+			0, esc->sc_tail_dmamap->dm_mapsize,
+				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap);
+	}
+	esc->sc_tail = 0;
+	esc->sc_tail_size = 0;
+
 	esc->sc_datain = -1;
 	esc->sc_dmaaddr = 0;
 	esc->sc_dmalen  = 0;
@@ -872,17 +946,5 @@ esp_dmacb_shutdown(arg)
 
 	esc->sc_begin = 0;
 	esc->sc_begin_size = 0;
-
-	if (esc->sc_main_dmamap->dm_mapsize) {
-		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_main_dmamap);
-	}
-	esc->sc_main = 0;
-	esc->sc_main_size = 0;
-
-	if (esc->sc_tail_dmamap->dm_mapsize) {
-		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_tail_dmamap);
-	}
-	esc->sc_tail = 0;
-	esc->sc_tail_size = 0;
 
 }
