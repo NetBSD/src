@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.520 2004/11/12 06:16:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.521 2004/11/12 06:17:20 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7973,3 +7973,9 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Added support for DELL PERC 4e/Si RAID controller
 	[martti, ticket #947]
+
+sys/dev/pci/agp_amd.c				1.10
+
+	Add another case to match "PCI_PRODUCT_AMD_SC761_SC" (AMD761 System
+	Controller) in agp_amd_match().
+	[xtraeme, ticket #948]
