@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.47 1995/08/13 09:04:47 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.48 1995/12/09 04:28:19 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -202,10 +202,13 @@ vsunlock(addr, len, dirtied)
  * after cpu_fork returns in the child process.  We do nothing here
  * after cpu_fork returns.
  */
+#ifdef __FORK_BRAINDAMAGE
 int
-vm_fork(p1, p2, isvfork)
+#else
+void
+#endif
+vm_fork(p1, p2)
 	register struct proc *p1, *p2;
-	int isvfork;
 {
 	register struct user *up;
 	vm_offset_t addr;
@@ -222,7 +225,7 @@ vm_fork(p1, p2, isvfork)
 
 #ifdef SYSVSHM
 	if (p1->p_vmspace->vm_shm)
-		shmfork(p1, p2, isvfork);
+		shmfork(p1, p2);
 #endif
 
 #if !defined(i386) && !defined(pc532)
@@ -272,6 +275,8 @@ vm_fork(p1, p2, isvfork)
 	(void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 	}
 #endif
+
+#ifdef __FORK_BRAINDAMAGE
 	/*
 	 * cpu_fork will copy and update the kernel stack and pcb,
 	 * and make the child ready to run.  It marks the child
@@ -280,6 +285,15 @@ vm_fork(p1, p2, isvfork)
 	 * once in the child.
 	 */
 	return (cpu_fork(p1, p2));
+#else
+	/*
+	 * cpu_fork will copy and update the kernel stack and pcb,
+	 * and make the child ready to run.  The child will exit
+	 * directly to user mode on its first time slice, and will
+	 * not return here.
+	 */
+	cpu_fork(p1, p2);
+#endif
 }
 
 /*
