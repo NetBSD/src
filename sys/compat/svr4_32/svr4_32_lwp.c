@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.4 2003/01/19 16:47:14 thorpej Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.5 2003/01/20 08:27:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.4 2003/01/19 16:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.5 2003/01/20 08:27:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -165,7 +165,7 @@ svr4_32_sys__lwp_wait(l, v, retval)
 	struct sys__lwp_wait_args ap;
 
 	SCARG(&ap, wait_for) = SCARG(uap, wait_for);
-	SCARG(&ap, departed) = SCARG(uap, departed_lwp);
+	SCARG(&ap, departed) = NETBSD32PTR64(SCARG(uap, departed_lwp));
 
 	return sys__lwp_wait(l, &ap, retval);
 }
