@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.519 2003/01/21 02:33:48 christos Exp $
+#	$NetBSD: mi,v 1.520 2003/01/21 06:49:23 kent Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2751,6 +2751,15 @@
 ./usr/share/man/cat3/secure_path.0	comp-c-catman
 ./usr/share/man/cat3/seed48.0	comp-c-catman
 ./usr/share/man/cat3/seekdir.0	comp-c-catman
+./usr/share/man/cat3/sem_close.0	comp-c-catman
+./usr/share/man/cat3/sem_destroy.0	comp-c-catman
+./usr/share/man/cat3/sem_getvalue.0	comp-c-catman
+./usr/share/man/cat3/sem_init.0		comp-c-catman
+./usr/share/man/cat3/sem_open.0		comp-c-catman
+./usr/share/man/cat3/sem_post.0		comp-c-catman
+./usr/share/man/cat3/sem_trywait.0	comp-c-catman
+./usr/share/man/cat3/sem_unlink.0	comp-c-catman
+./usr/share/man/cat3/sem_wait.0		comp-c-catman
 ./usr/share/man/cat3/set_com_err_hook.0	comp-c-catman
 ./usr/share/man/cat3/set_current_field.0	comp-c-catman
 ./usr/share/man/cat3/set_field_back.0	comp-c-catman
@@ -5769,6 +5778,7 @@
 ./usr/share/man/man3/sem_close.3	comp-c-man
 ./usr/share/man/man3/sem_destroy.3	comp-c-man
 ./usr/share/man/man3/sem_getvalue.3	comp-c-man
+./usr/share/man/man3/sem_init.3		comp-c-man
 ./usr/share/man/man3/sem_open.3		comp-c-man
 ./usr/share/man/man3/sem_post.3		comp-c-man
 ./usr/share/man/man3/sem_trywait.3	comp-c-man
