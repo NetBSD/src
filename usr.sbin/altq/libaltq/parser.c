@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.9 2003/02/01 17:13:14 wiz Exp $	*/
+/*	$NetBSD: parser.c,v 1.10 2004/10/29 19:58:18 dsl Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -401,7 +401,7 @@ get_port(const char *name, u_int16_t *port_no)
 	struct servent *s;
 	u_int16_t num;
 
-	if (isdigit(name[0])) {
+	if (isdigit((unsigned char)name[0])) {
 		num = (u_int16_t)strtol(name, NULL, 0);
 		*port_no = htons(num);
 		return (1);
@@ -419,7 +419,7 @@ get_proto(const char *name, int *proto_no)
 {
 	struct protoent *p;
 
-	if (isdigit(name[0])) {
+	if (isdigit((unsigned char)name[0])) {
 		*proto_no = (int)strtol(name, NULL, 0);
 		return (1);
 	}

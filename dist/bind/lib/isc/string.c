@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.1.1.1 2004/05/17 23:45:03 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.2 2004/10/29 20:26:45 dsl Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -62,7 +62,7 @@ isc_string_touint64(char *source, char **end, int base) {
 	tmp = 0;
 
 	while ((c = *s) != 0) {
-		c = tolower(c);
+		c = tolower((unsigned char)c);
 		/* end ? */
 		if ((o = strchr(digits, c)) == NULL) {
 			*end = s;

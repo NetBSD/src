@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2003/08/01 06:15:02 provos Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2004/10/29 19:55:43 dsl Exp $	*/
 /*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.5 2003/08/01 06:15:02 provos Exp $");
+__RCSID("$NetBSD: util.c,v 1.6 2004/10/29 19:55:43 dsl Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -83,7 +83,7 @@ strrpl(char *str, size_t size, char *match, char *value)
 
 	/* Try to match against the variable */
 	while ((p = strchr(p, match[0])) != NULL) {
-		if (!strncmp(p, match, len) && !isalnum(p[len]))
+		if (!strncmp(p, match, len) && !isalnum((unsigned char)p[len]))
 			break;
 		p += len;
 
