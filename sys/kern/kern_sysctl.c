@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.4 2002/01/05 18:01:58 he Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.5 2003/08/27 03:18:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -577,7 +577,6 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	struct proc *ptmp = NULL;
-	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
 	struct plimit *newplim;
@@ -589,23 +588,9 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	if (name[0] == PROC_CURPROC) {
 		ptmp = p;
+	} else if ((ptmp = pfind((pid_t)name[0])) == NULL) {
+		return (ESRCH);
 	} else {
-		proclist_lock_read();
-		for (pd = proclists; pd->pd_list != NULL; pd++) {
-			for (ptmp = LIST_FIRST(pd->pd_list); ptmp != NULL;
-			    ptmp = LIST_NEXT(ptmp, p_list)) {
-				/* Skip embryonic processes. */
-				if (ptmp->p_stat == SIDL)
-					continue;
-				if (ptmp->p_pid == (pid_t)name[0])
-					break;
-			}
-			if (ptmp != NULL)
-				break;
-		}
-		proclist_unlock_read();
-		if (ptmp == NULL)
-			return(ESRCH);
 		if (p->p_ucred->cr_uid != 0) {
 			if(p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
 			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
