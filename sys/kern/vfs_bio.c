@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.83 2002/08/30 15:43:41 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.84 2002/09/04 01:32:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.83 2002/08/30 15:43:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.84 2002/09/04 01:32:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ bremfree(bp)
 	 *
 	 * NB: This makes an assumption about how tailq's are implemented.
 	 */
-	if (bp->b_freelist.tqe_next == NULL) {
+	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 			if (dp->tqh_last == &bp->b_freelist.tqe_next)
 				break;
@@ -589,10 +589,8 @@ incore(vp, blkno)
 {
 	struct buf *bp;
 
-	bp = BUFHASH(vp, blkno)->lh_first;
-
 	/* Search hash chain */
-	for (; bp != NULL; bp = bp->b_hash.le_next) {
+	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_flags, B_INVAL))
 		return (bp);
@@ -740,7 +738,7 @@ allocbuf(bp, size)
 	 */
 	if (bp->b_bufsize > desired_size) {
 		s = splbio();
-		if ((nbp = bufqueues[BQ_EMPTY].tqh_first) == NULL) {
+		if ((nbp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) == NULL) {
 			/* No free buffer head */
 			splx(s);
 			goto out;
@@ -779,8 +777,8 @@ getnewbuf(slpflag, slptimeo)
 
 start:
 	s = splbio();
-	if ((bp = bufqueues[BQ_AGE].tqh_first) != NULL ||
-	    (bp = bufqueues[BQ_LRU].tqh_first) != NULL) {
+	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE])) != NULL ||
+	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU])) != NULL) {
 		bremfree(bp);
 	} else {
 		/* wait for a free buffer of any kind */
@@ -922,8 +920,7 @@ count_lock_queue()
 	struct buf *bp;
 	int n = 0;
 
-	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
-	    bp = bp->b_freelist.tqe_next)
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist)
 		n++;
 	return (n);
 }
@@ -948,7 +945,7 @@ vfs_bufstats()
 		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		s = splbio();
-		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
+		TAILQ_FOREACH(bp, dp, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}
