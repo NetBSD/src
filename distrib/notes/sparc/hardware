@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.31 2004/06/10 07:29:42 mbw Exp $
+.\"	$NetBSD: hardware,v 1.32 2004/06/17 08:07:50 mbw Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -151,8 +151,9 @@ SPARCstation/server 20, and clones
 All single-CPU systems are supported
 .It
 .Em cpuN ;
-All hardware compatible dual-, tri- and quad-CPU SuperSPARC-I and 
-SuperSPARC-II systems are supported with an SMP kernel
+All hardware compatible dual-, tri- and quad-CPU SuperSPARC-I,
+SuperSPARC-II, and hyperSPARC systems are supported with the SMP kernel
+.Pq Pa GENERIC.MP
 .Lk http://www.NetBSD.org/Ports/sparc/faq.html#smp-cpus
 .bullet)
 .It
@@ -373,19 +374,11 @@ PCMCIA interface
 .br
 On-board (SPARCstation Voyager) and Sbus card.
 .br
-All 8 bit devices listed in the Machine-independent PCMCIA drivers page
-should work.
-Very few have been tested with
+All devices listed in the Machine-independent PCMCIA drivers page
+should work, but very few have been tested with
 .Nx*M .
-There is a byte endian issue which
-currently prevents 16 bit devices from working.
 .Lk http://www.NetBSD.org/Hardware/pcmcia.html
 .(Note
-Note: there is a conflict between the
-.Em audioamd
-device in sun4c and some sun4m models and the
-.Em nell
-device.
 See the FAQ for more information.
 .Lk http://www.NetBSD.org/Ports/sparc/faq.html#nell
 .Note)
@@ -453,9 +446,6 @@ On-board and Sbus card
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
-.Em cpuN ;
-multiple hyperSPARC CPUs
-.It
 DBRIe-based audio and ISDN.
 .br
 On-board some sun4m machines (such as SPARCstation 10,
