@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.10 2004/05/14 21:56:45 christos Exp $
+.\"	$NetBSD: ldd.1,v 1.11 2004/05/14 22:07:21 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,9 +66,9 @@ to the
 environment variable
 .Ev LD_TRACE_LOADED_OBJECTS_FMT1 .
 It defaults to
-.Qq "\et-l%o.%m => %p\en"
+.Qq "\et-l%o.%m =\*[Gt] %p\en"
 for elf and
-.Qq "\et-l%o.%m => %p (%x)\en"
+.Qq "\et-l%o.%m =\*[Gt] %p (%x)\en"
 for a.out.
 The second format argument is used for non-library objects and it is equivalent
 to the
@@ -76,7 +76,7 @@ to the
 environment variable
 .Ev LD_TRACE_LOADED_OBJECTS_FMT2 .
 It defaults to
-.Qq "\et%o => %p\en"
+.Qq "\et%o =\*[Gt] %p\en"
 for elf and
 .Qq "\et%o (%x)\en"
 for a.out.
@@ -118,10 +118,10 @@ and
 are recognized and have their usual meaning.
 .Sh SEE ALSO
 .Xr ld 1 ,
-.Xr ld.elf_so 1 ,
 .Xr ld.aout_so 1 ,
-.Xr rtld 1 ,
-.Xr nm 1
+.Xr ld.elf_so 1 ,
+.Xr nm 1 ,
+.Xr rtld 1
 .Sh HISTORY
 A
 .Nm
