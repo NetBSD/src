@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch.c,v 1.1 1999/02/22 10:33:16 christos Exp $	*/
+/*	$NetBSD: tsearch.c,v 1.2 1999/05/03 15:34:05 christos Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: tsearch.c,v 1.1 1999/02/22 10:33:16 christos Exp $");
+__RCSID("$NetBSD: tsearch.c,v 1.2 1999/05/03 15:34:05 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _SEARCH_PRIVATE
@@ -47,6 +47,7 @@ tsearch(vkey, vrootp, compar)
 	q = malloc(sizeof(node_t));		/* T5: key not found */
 	if (q != 0) {				/* make new node */
 		*rootp = q;			/* link new node to old */
+		/* LINTED const castaway ok */
 		q->key = (void *)vkey;		/* initialize new node */
 		q->llink = q->rlink = NULL;
 	}
