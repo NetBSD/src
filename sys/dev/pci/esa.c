@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.2 2002/01/06 16:58:23 augustss Exp $ */
+/* $NetBSD: esa.c,v 1.3 2002/01/07 07:33:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -144,7 +144,7 @@ void		esa_codec_reset(struct esa_softc *);
 int		esa_amp_enable(struct esa_softc *);
 void		esa_enable_interrupts(struct esa_softc *);
 int		esa_power(struct esa_softc *, int);
-u_int32_t	esa_get_pointer(struct esa_softc *);
+u_int32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
 
 struct device *	audio_attach_mi_lkm(struct audio_hw_if *, void *,
 				    struct device *);
@@ -235,76 +235,103 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 	       struct audio_params *rec)
 {
 	struct esa_softc *sc = hdl;
+	struct esa_channel *ch;
+	struct audio_params *p;
 	u_int32_t data;
 	u_int32_t freq;
+	int mode;
 
-	if ((setmode & AUMODE_PLAY) == 0) {
-		printf("%s: esa_set_params: only AUMODE_PLAY is supported\n",
-		    sc->sc_dev.dv_xname);
-		return (EINVAL);
-	}
+	for (mode = AUMODE_RECORD; mode != -1;
+	     mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
+		if ((setmode & mode) == 0)
+			continue;
 
-	if (play->sample_rate < ESA_MINRATE ||
-	    play->sample_rate > ESA_MAXRATE ||
-	    (play->precision != 8 && play->precision != 16) ||
-	    (play->channels < 1 && play->channels > 2)) /* XXX: Are you sure? */
-		return (EINVAL);
+		switch (mode) {
+		case AUMODE_PLAY:
+			p = play;
+			ch = &sc->play;
+			break;
+		case AUMODE_RECORD:
+			p = rec;
+			ch = &sc->rec;
+			break;
+		}
 
-	play->factor = 1;
-	play->sw_code = 0;
+		if (p->sample_rate < ESA_MINRATE ||
+		    p->sample_rate > ESA_MAXRATE ||
+		    (p->precision != 8 && p->precision != 16) ||
+		    (p->channels < 1 && p->channels > 2))
+			return (EINVAL);
 
-	switch(play->encoding) {
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (play->precision == 16)
-			play->sw_code = swap_bytes;
-		else
-			play->sw_code = change_sign8;
-		break;
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (play->precision != 16)
-			play->sw_code = change_sign8;
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (play->precision == 16)
-			play->sw_code = swap_bytes_change_sign16_le;
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (play->precision == 16)
-			play->sw_code = change_sign16_le;
-		break;
-	case AUDIO_ENCODING_ULAW:
-		play->factor = 2;
-		play->sw_code = mulaw_to_slinear16_le;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		play->factor = 2;
-		play->sw_code = alaw_to_slinear16_le;
-		break;
-	default:
-		return (EINVAL);
-	}
+		p->factor = 1;
+		p->sw_code = 0;
 
-	if (play->channels == 1)
-		data = 1;
-	else
-		data = 0;
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-		       ESA_DAC_DATA + ESA_SRC3_MODE_OFFSET,
-	    data);
-
-	if (play->precision * play->factor == 8)
-		data = 1;
-	else
-		data = 0;
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-		       ESA_DAC_DATA + ESA_SRC3_WORD_LENGTH_OFFSET, data);
-
-	if ((freq = ((play->sample_rate << 15) + 24000) / 48000) != 0) {
-		freq--;
-	}
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-		       ESA_DAC_DATA + ESA_CDATA_FREQUENCY, freq);
+		switch(p->encoding) {
+		case AUDIO_ENCODING_SLINEAR_BE:
+			if (p->precision == 16)
+				p->sw_code = swap_bytes;
+			else
+				p->sw_code = change_sign8;
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			if (p->precision != 16)
+				p->sw_code = change_sign8;
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision == 16) {
+				if (mode == AUMODE_PLAY)
+					p->sw_code =
+					    swap_bytes_change_sign16_le;
+				else
+					p->sw_code =
+					    change_sign16_swap_bytes_le;
+			}
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			if (p->precision == 16)
+				p->sw_code = change_sign16_le;
+			break;
+		case AUDIO_ENCODING_ULAW:
+			if (mode == AUMODE_PLAY) {
+				p->factor = 2;
+				p->sw_code = mulaw_to_slinear16_le;
+			} else
+				p->sw_code = ulinear8_to_mulaw;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			if (mode == AUMODE_PLAY) {
+				p->factor = 2;
+				p->sw_code = alaw_to_slinear16_le;
+			} else
+				p->sw_code = ulinear8_to_alaw;
+			break;
+		default:
+			return (EINVAL);
+		}
 	
+		if (p->channels == 1)
+			data = 1;
+		else
+			data = 0;
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ch->data_offset + ESA_SRC3_MODE_OFFSET,
+		    data);
+	
+		if (play->precision * play->factor == 8)
+			data = 1;
+		else
+			data = 0;
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ch->data_offset + ESA_SRC3_WORD_LENGTH_OFFSET,
+			       data);
+
+		if ((freq = ((p->sample_rate << 15) + 24000) / 48000) != 0) {
+			freq--;
+		}
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ch->data_offset + ESA_CDATA_FREQUENCY, freq);
+	}
+
 	return (0);
 }
 
@@ -313,8 +340,7 @@ esa_round_blocksize(void *hdl, int bs)
 {
 	struct esa_softc *sc = hdl;
 
-	bs = 4096;		/* XXX why? */
-	sc->play.blksize = bs;
+	sc->play.blksize = sc->rec.blksize = 4096;
 
 	return (sc->play.blksize);
 }
@@ -347,8 +373,27 @@ esa_halt_output(void *hdl)
 int
 esa_halt_input(void *hdl)
 {
+	struct esa_softc *sc = hdl;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t data;
+	
+	if (sc->rec.active == 0)
+		return (0);
+		
+	sc->rec.active = 0;
+	
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       ESA_KDATA_TIMER_COUNT_RELOAD, 0);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_TIMER_COUNT_CURRENT, 0);
+	data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, data & ~ESA_CLKRUN_GEN_ENABLE);
+	
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, sc->rec.data_offset +
+		       ESA_CDATA_INSTANCE_READY, 0);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST, 0);
 
-	return (EOPNOTSUPP);
+	return (0);
 }
 
 void *
@@ -428,8 +473,7 @@ esa_round_buffersize(void *hdl, int direction, size_t bufsize)
 {
 	struct esa_softc *sc = hdl;
 
-	bufsize = 65536;	/* XXX why? */
-	sc->play.bufsize = bufsize;
+	sc->play.bufsize = sc->rec.bufsize = 65536;
 
 	return (sc->play.bufsize);
 }
@@ -438,7 +482,7 @@ int
 esa_get_props(void *hdl)
 {
 
-	return (AUDIO_PROP_MMAP);
+	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
 }
 
 int
@@ -454,10 +498,16 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	u_int32_t bufaddr;
 	u_int32_t i;
 	size_t size;
+	int data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
+			   &~ 255;
+	int dac_data = ESA_DAC_DATA + data_bytes;
 	int dsp_in_size = ESA_MINISRC_IN_BUFFER_SIZE - (0x20 * 2);
 	int dsp_out_size = ESA_MINISRC_OUT_BUFFER_SIZE - (0x20 * 2);
-	int dsp_in_buf = ESA_DAC_DATA + (ESA_MINISRC_TMP_BUFFER_SIZE / 2);
+	int dsp_in_buf = dac_data + (ESA_MINISRC_TMP_BUFFER_SIZE / 2);
 	int dsp_out_buf = dsp_in_buf + (dsp_in_size / 2) + 1;
+	sc->play.data_offset = dac_data;
 
 	if (sc->play.active)
 		return (EINVAL);
@@ -471,8 +521,8 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	}
 
 	sc->play.active = 1;
-	sc->intr = intr;
-	sc->arg = intrarg;
+	sc->play.intr = intr;
+	sc->play.arg = intrarg;
 	sc->play.pos = 0;
 	sc->play.count = 0;
 	sc->play.buf = start;
@@ -483,64 +533,64 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 #define LO(x) ((x) & 0x0000ffff)
 #define HI(x) ((x) >> 16)
 
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_ADDRL, LO(bufaddr));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_ADDRH, HI(bufaddr));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_END_PLUS_1L, LO(bufaddr + size));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_END_PLUS_1H, HI(bufaddr + size));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_CURRENTL, LO(bufaddr));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_CURRENTH, HI(bufaddr));
 
 	/* DSP buffers */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_IN_BUF_BEGIN, dsp_in_buf);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_IN_BUF_END_PLUS_1, dsp_in_buf + (dsp_in_size / 2));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_IN_BUF_HEAD, dsp_in_buf);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_IN_BUF_TAIL, dsp_in_buf);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_OUT_BUF_BEGIN, dsp_out_buf);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_OUT_BUF_END_PLUS_1, dsp_out_buf + (dsp_out_size / 2));
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_OUT_BUF_HEAD, dsp_out_buf);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_OUT_BUF_TAIL, dsp_out_buf);
 
 	/* Some per-client initializers */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
-	    ESA_SRC3_DIRECTION_OFFSET + 12, ESA_DAC_DATA + 40 + 8);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
+	    ESA_SRC3_DIRECTION_OFFSET + 12, dac_data + 40 + 8);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_SRC3_DIRECTION_OFFSET + 19, 0x400 + ESA_MINISRC_COEF_LOC);
 	/* Enable or disable low-pass filter? (0xff if rate > 45000) */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_SRC3_DIRECTION_OFFSET + 22, 0);
 	/* Tell it which way DMA is going */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_DMA_CONTROL,
 	    ESA_DMACONTROL_AUTOREPEAT + ESA_DMAC_PAGE3_SELECTOR +
 	    ESA_DMAC_BLOCKF_SELECTOR);
 
 	/* Set an armload of static initializers */
 	for (i = 0; i < (sizeof(esa_playvals) / sizeof(esa_playvals[0])); i++)
-		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 		    esa_playvals[i].addr, esa_playvals[i].val);
 
 	/* Put us in the packed task lists */
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 	    ESA_KDATA_INSTANCE0_MINISRC,
-	    ESA_DAC_DATA >> ESA_DP_SHIFT_COUNT);
+	    dac_data >> ESA_DP_SHIFT_COUNT);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_XFER0,
-	    ESA_DAC_DATA >> ESA_DP_SHIFT_COUNT);
+	    dac_data >> ESA_DP_SHIFT_COUNT);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_MIXER_XFER0,
-	    ESA_DAC_DATA >> ESA_DP_SHIFT_COUNT);
+	    dac_data >> ESA_DP_SHIFT_COUNT);
 #undef LO
 #undef HI
 
@@ -552,7 +602,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
 	    data | ESA_CLKRUN_GEN_ENABLE);
 
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_INSTANCE_READY, 1);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 	    ESA_KDATA_MIXER_TASK_NUMBER, 1);
@@ -565,8 +615,118 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 			void (*intr)(void *), void *intrarg,
 			struct audio_params *param)
 {
+	struct esa_softc *sc = hdl;
+	struct esa_dma *p;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t data;
+	u_int32_t bufaddr;
+	u_int32_t i;
+	size_t size;
+	int data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
+			   &~ 255;
+	int adc_data = ESA_DAC_DATA + data_bytes + (data_bytes / 2);
+	int dsp_in_size = ESA_MINISRC_IN_BUFFER_SIZE - (0x10 * 2);
+	int dsp_out_size = ESA_MINISRC_OUT_BUFFER_SIZE - (0x10 * 2);
+	int dsp_in_buf = adc_data + (ESA_MINISRC_TMP_BUFFER_SIZE / 2);
+	int dsp_out_buf = dsp_in_buf + (dsp_in_size / 2) + 1;
+	sc->rec.data_offset = adc_data;
 
-	return (EOPNOTSUPP);
+	if (sc->rec.active)
+		return (EINVAL);
+
+	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+		;
+	if (!p) {
+		printf("%s: esa_trigger_input: bad addr %p\n",
+		    sc->sc_dev.dv_xname, start);
+		return (EINVAL);
+	}
+
+	sc->rec.active = 1;
+	sc->rec.intr = intr;
+	sc->rec.arg = intrarg;
+	sc->rec.pos = 0;
+	sc->rec.count = 0;
+	sc->rec.buf = start;
+	size = (size_t)(((caddr_t)end - (caddr_t)start));
+	bufaddr = DMAADDR(p);
+	sc->rec.start = bufaddr;
+
+#define LO(x) ((x) & 0x0000ffff)
+#define HI(x) ((x) >> 16)
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_ADDRL, LO(bufaddr));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_ADDRH, HI(bufaddr));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_END_PLUS_1L, LO(bufaddr + size));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_END_PLUS_1H, HI(bufaddr + size));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_CURRENTL, LO(bufaddr));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_HOST_SRC_CURRENTH, HI(bufaddr));
+
+	/* DSP buffers */
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_IN_BUF_BEGIN, dsp_in_buf);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_IN_BUF_END_PLUS_1, dsp_in_buf + (dsp_in_size / 2));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_IN_BUF_HEAD, dsp_in_buf);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_IN_BUF_TAIL, dsp_in_buf);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_OUT_BUF_BEGIN, dsp_out_buf);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_OUT_BUF_END_PLUS_1, dsp_out_buf + (dsp_out_size / 2));
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_OUT_BUF_HEAD, dsp_out_buf);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_OUT_BUF_TAIL, dsp_out_buf);
+
+	/* Some per-client initializers */
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_SRC3_DIRECTION_OFFSET + 12, adc_data + 40 + 8);
+	/* Tell it which way DMA is going */
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_DMA_CONTROL,
+	    ESA_DMACONTROL_DIRECTION + ESA_DMACONTROL_AUTOREPEAT +
+	    ESA_DMAC_PAGE3_SELECTOR + ESA_DMAC_BLOCKF_SELECTOR);
+
+	/* Set an armload of static initializers */
+	for (i = 0; i < (sizeof(esa_recvals) / sizeof(esa_recvals[0])); i++)
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+		    esa_recvals[i].addr, esa_recvals[i].val);
+
+	/* Put us in the packed task lists */
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+	    ESA_KDATA_INSTANCE0_MINISRC,
+	    adc_data >> ESA_DP_SHIFT_COUNT);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_XFER0,
+	    adc_data >> ESA_DP_SHIFT_COUNT);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_XFER0,
+	    adc_data >> ESA_DP_SHIFT_COUNT);
+#undef LO
+#undef HI
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+	    ESA_KDATA_TIMER_COUNT_RELOAD, 240);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+	    ESA_KDATA_TIMER_COUNT_CURRENT, 240);
+	data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
+	    data | ESA_CLKRUN_GEN_ENABLE);
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST, 1);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
+	    ESA_CDATA_INSTANCE_READY, 1);
+
+	return (0);
 }
 
 /* Interrupt handler */
@@ -580,8 +740,10 @@ esa_intr(void *hdl)
 	u_int32_t status, ctl;
 	u_int32_t pos;
 	u_int32_t diff;
-	u_int32_t blksize = sc->play.blksize;
-	u_int32_t bufsize = sc->play.bufsize;
+	u_int32_t play_blksize = sc->play.blksize;
+	u_int32_t play_bufsize = sc->play.bufsize;
+	u_int32_t rec_blksize = sc->rec.blksize;
+	u_int32_t rec_bufsize = sc->rec.bufsize;
 
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
 	if (!status)
@@ -620,14 +782,27 @@ esa_intr(void *hdl)
 				    ESA_ASSP_HOST_INT_STATUS,
 				    ESA_DSP2HOST_REQ_TIMER);
 				if (sc->play.active) {
-					pos = esa_get_pointer(sc) % bufsize;
-					diff = (bufsize + pos - sc->play.pos)
-					    % bufsize;
+					pos = esa_get_pointer(sc, &sc->play)
+					    % play_bufsize;
+					diff = (play_bufsize + pos - sc->play.pos)
+					    % play_bufsize;
 					sc->play.pos = pos;
 					sc->play.count += diff;
-					while(sc->play.count >= blksize) {
-						sc->play.count -= blksize;
-						(*sc->intr)(sc->arg);
+					while(sc->play.count >= play_blksize) {
+						sc->play.count -= play_blksize;
+						(*sc->play.intr)(sc->play.arg);
+					}
+				}
+				if (sc->rec.active) {
+					pos = esa_get_pointer(sc, &sc->rec)
+					    % rec_bufsize;
+					diff = (rec_bufsize + pos - sc->rec.pos)
+					    % rec_bufsize;
+					sc->rec.pos = pos;
+					sc->rec.count += diff;
+					while(sc->rec.count >= rec_blksize) {
+						sc->rec.count -= rec_blksize;
+						(*sc->rec.intr)(sc->rec.arg);
 					}
 				}
 			}
@@ -945,6 +1120,10 @@ esa_init(struct esa_softc *sc)
 	pci_chipset_tag_t pc = sc->sc_pct;
 	u_int32_t data, i, size;
 	u_int8_t reset_state;
+	int data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
+			   &~ 255;
 
 	/* Disable legacy emulation */
 	data = pci_conf_read(pc, tag, PCI_LEGACY_AUDIO_CTRL);
@@ -1005,6 +1184,10 @@ esa_init(struct esa_softc *sc)
 	/* Zero entire DAC/ADC area */
 	for (i = 0x1100; i < 0x1c00; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, i, 0);
+
+	/* set some sane defaults */
+	sc->play.data_offset = ESA_DAC_DATA + data_bytes;
+	sc->rec.data_offset = ESA_DAC_DATA + data_bytes + (data_bytes / 2);
 
 	esa_enable_interrupts(sc);
 
@@ -1197,18 +1380,19 @@ esa_power(struct esa_softc *sc, int state)
 }
 
 u_int32_t
-esa_get_pointer(struct esa_softc *sc)
+esa_get_pointer(struct esa_softc *sc, struct esa_channel *ch)
 {
 	u_int16_t hi = 0, lo = 0;
 	u_int32_t addr;
+	int data_offset = ch->data_offset;
 
-	hi = esa_read_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	hi = esa_read_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, data_offset +
 	    ESA_CDATA_HOST_SRC_CURRENTH);
-	lo = esa_read_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_DAC_DATA +
+	lo = esa_read_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, data_offset +
 	    ESA_CDATA_HOST_SRC_CURRENTL);
 
 	addr = lo | ((u_int32_t)hi << 16);
-	return (addr - sc->play.start);
+	return (addr - ch->start);
 }
 
 paddr_t
