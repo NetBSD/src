@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.12 1997/01/01 23:46:17 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.13 1997/01/07 00:10:07 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,6 +65,7 @@
 #	bpf*	packet filter
 #	ch*	SCSI media changer
 #	fd	file descriptors
+#	ipl	IP filter
 #	kbd	keyboard (provides events, for X11)
 #	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)
@@ -84,7 +85,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3 md0 md1 ss0 ss1 uk0 uk1
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV kbd mouse lpa0 lpt0 audio
+	sh MAKEDEV kbd mouse lpa0 lpt0 audio ipl
 	sh MAKEDEV local
 	;;
 
@@ -286,6 +287,13 @@ lpt*|lpa*)
 	rm -f $name$unit
 	mknod $name$unit c 31 `expr $unit + $flags`
 	chown root.wheel $name$unit
+	;;
+
+ipl)    
+	rm -f ipl
+	mknod ipl c 35 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	;;
 
 local)
