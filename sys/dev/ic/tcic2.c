@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.4 2000/05/08 19:44:34 explorer Exp $	*/
 
 #undef	TCICDEBUG
 
@@ -421,6 +421,7 @@ tcic_attach_socket(h)
 
 	/* now, config one pcmcia device per socket */
 
+	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
 	paa.iobase = h->sc->iobase;
