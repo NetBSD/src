@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.20 1999/02/11 15:32:23 mrg Exp $	*/
+/*	$NetBSD: compare.c,v 1.21 1999/07/06 15:11:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.20 1999/02/11 15:32:23 mrg Exp $");
+__RCSID("$NetBSD: compare.c,v 1.21 1999/07/06 15:11:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,16 +242,30 @@ typeerr:		LABEL;
 	 */
 	if (s->flags & F_TIME) {
 		struct timeval tv[2];
+		struct stat *ps = p->fts_statp;
+#ifdef BSD4_4
+		time_t smtime = s->st_mtimespec.tv_sec;
+		time_t pmtime = ps->st_mtimespec.tv_sec;
 
 		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
-		TIMESPEC_TO_TIMEVAL(&tv[1], &p->fts_statp->st_mtimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtimespec);
+#else
+		time_t smtime = s->st_mtime;
+		time_t pmtime = ps->st_mtime;
+
+		tv[0].tv_sec = s->st_mtime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = ps->st_mtime;
+		tv[1].tv_usec = 0;
+#endif
+
+
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
 			LABEL;
 			(void)printf("%smodification time (%.24s, ",
-			    tab, ctime(&s->st_mtimespec.tv_sec));
-			(void)printf("%.24s",
-			    ctime(&p->fts_statp->st_mtimespec.tv_sec));
+			    tab, ctime(&smtime));
+			(void)printf("%.24s", ctime(&pmtime));
 			if (tflag) {
 				tv[1] = tv[0];
 				if (utimes(p->fts_accpath, tv))
