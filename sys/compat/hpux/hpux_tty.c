@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.25 2003/08/07 16:30:43 agc Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.26 2004/04/25 06:04:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.25 2003/08/07 16:30:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.26 2004/04/25 06:04:54 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -506,7 +506,7 @@ int
 hpuxtobsdbaud(hpux_speed)
 	int hpux_speed;
 {
-	static int hpuxtobsdbaudtab[32] = {
+	static const int hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
 		B600,	B0,	B1200,	B1800,	B2400,	B0,	B4800,	B0,
 		B9600,	B19200,	B38400,	B0,	B0,	B0,	B0,	B0,
