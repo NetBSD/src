@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.1.2.5 2005/03/08 19:31:39 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.1.2.6 2005/03/09 12:40:17 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.5 2005/03/08 19:31:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.6 2005/03/09 12:40:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -487,7 +487,6 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	struct intrsource *isp;
 	struct intrhand *ih;
 	struct cpu_info *ci;
-	char evtname[16];
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
@@ -526,9 +525,9 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 		isp->is_handlers = ih;
 		isp->is_pic = &xenev_pic;
 		ci->ci_isources[irq] = isp;
-		snprintf(evtname, sizeof(evtname), "irq%d", irq);
+		snprintf(isp->is_evname, sizeof(isp->is_evname), "irq%d", irq);
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    ci->ci_dev->dv_xname, evtname);
+		    ci->ci_dev->dv_xname, isp->is_evname);
 	} else {
 		isp = ci->ci_isources[irq];
 		ih->ih_next = isp->is_handlers;
