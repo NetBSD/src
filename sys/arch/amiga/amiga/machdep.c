@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.17 1994/04/10 21:30:48 chopps Exp $
+ *	$Id: machdep.c,v 1.18 1994/04/18 04:08:47 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -376,8 +376,8 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d (%d pages)\n", ptoa(vm_page_free_count),
-	    ptoa(vm_page_free_count)/NBPG);
+	printf("avail mem = %d (%d pages)\n", ptoa(cnt.v_free_count),
+	    ptoa(cnt.v_free_count)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 #ifdef DEBUG

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	@(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.7 1994/03/08 10:48:51 chopps Exp $
+ *	$Id: mem.c,v 1.8 1994/04/18 04:08:48 chopps Exp $
  */
 
 /*
@@ -55,7 +55,6 @@
 
 #include <vm/vm_param.h>
 #include <vm/lock.h>
-#include <vm/vm_statistics.h>
 #include <vm/pmap.h>
 #include <vm/vm_prot.h>
 

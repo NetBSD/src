@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.8 1994/03/28 06:15:58 chopps Exp $
+ *	$Id: pmap.c,v 1.9 1994/04/18 04:08:49 chopps Exp $
  */
 
 /*
@@ -84,7 +84,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <vm/vm_statistics.h>
 
 #include <machine/cpu.h>
 
