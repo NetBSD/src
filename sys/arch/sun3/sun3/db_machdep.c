@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 1995/02/07 04:39:39 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 1995/02/11 21:04:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -109,12 +109,12 @@ db_write_bytes(addr, size, data)
 	int	size;
 	char	*data;
 {
-	extern char	start[], etext[] ;
+	extern char	kernel_text[], etext[] ;
 	char	*dst;
 
 	dst = (char *)addr;
 	while (--size >= 0) {
-		if ((dst >= start) && (dst < etext))
+		if ((dst >= kernel_text) && (dst < etext))
 			db_write_text(dst, *data);
 		else
 			*dst = *data;
