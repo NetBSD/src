@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2000/07/06 18:16:35 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2000/07/10 09:50:48 joda Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -25,7 +25,7 @@ realall:	netbsd boot
 	tar cvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
-	mv -f ${IMAGE1} ${IMAGE1}.tmp
+	-mv -f ${IMAGE1} ${IMAGE1}.tmp
 	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}.tmp
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
