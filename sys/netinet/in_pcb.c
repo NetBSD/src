@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.16 1995/06/04 05:58:22 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.17 1995/06/04 06:03:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -182,7 +182,7 @@ in_pcbconnect(inp, nam)
 		 * choose the broadcast address for that interface.
 		 */
 		if (sin->sin_addr.s_addr == INADDR_ANY)
-			sin->sin_addr = in_ifaddr->in_addr.sin_addr;
+			sin->sin_addr = in_ifaddr->ia_addr.sin_addr;
 		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
 		  (in_ifaddr->ia_ifp->if_flags & IFF_BROADCAST))
 			sin->sin_addr = in_ifaddr->ia_broadaddr.sin_addr;
@@ -411,7 +411,7 @@ in_losing(inp)
 	if ((rt = inp->inp_route.ro_rt)) {
 		inp->inp_route.ro_rt = 0;
 		bzero((caddr_t)&info, sizeof(info));
-		info.rti_info[RTAX_DST] = sintosa(&inp->inp_route.ro_dst);
+		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
