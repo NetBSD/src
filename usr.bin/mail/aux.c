@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.6 1997/10/19 05:02:57 lukem Exp $	*/
+/*	$NetBSD: aux.c,v 1.7 1997/10/19 13:48:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: aux.c,v 1.6 1997/10/19 05:02:57 lukem Exp $");
+__RCSID("$NetBSD: aux.c,v 1.7 1997/10/19 13:48:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,10 +345,10 @@ alter(name)
 
 	if (stat(name, &sb))
 		return;
-	tv[0].tv_sec = time((time_t *)0) + 1;
-	tv[1].tv_sec = sb.st_mtime;
-	tv[0].tv_usec = tv[1].tv_usec = 0;
-	(void)utimes(name, tv);
+	(void) gettimeofday(&tv[0], (struct timezone *)0);
+	tv[0].tv_sec++;
+	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+	(void) utimes(name, tv);
 }
 
 /*
