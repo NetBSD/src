@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.337 2001/06/20 19:52:19 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.338 2001/06/27 18:03:14 mcr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.333 2001/06/20 19:51:12 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.334 2001/06/27 17:57:23 mcr Exp 
  */
 
 /*
@@ -3520,6 +3520,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "LTMODEM",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3LP26,
+	    0,
+	    "Lucent Technologies",
+	    "Lucent ORCA FPGA w/32-bit PCI ASIC core",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3TP12,
+	    0,
+	    "Lucent Technologies",
+	    "Lucent ORCA FPGA w/64-bit PCI ASIC core",
+	},
+	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
 	    0,
 	    "Lucent Technologies",
@@ -4826,6 +4838,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Solidum Systems Corp.",
 	    "SNP8023: Classifier Engine",
+	},
+	{
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_PAXWARE1100,
+	    0,
+	    "Solidum Systems Corp.",
+	    "PAX.ware 1100 dual Gb Classifier Engine",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
