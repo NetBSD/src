@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.4 1999/07/17 06:01:52 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.5 1999/07/18 00:43:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct stat st;
-	void *addr, *addr2;
+	void *addr, *addr2, *addr3;
 	int i, ch, ecode, fd, npgs, shmid;
 	const char *filename;
 	u_int8_t *cp;
@@ -185,6 +185,32 @@ main(argc, argv)
 		ecode = 1;
 	}
 
+	printf(">>> MAPPING THIRD %d PAGE ANONYMOUS REGION, PROT_NONE <<<\n",
+	    npgs);
+
+	addr3 = mmap(NULL, npgs * pgsize, PROT_NONE, MAP_ANON, -1, (off_t) 0);
+	if (addr3 == MAP_FAILED)
+		err(1, "mmap anon #3");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr3, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	printf("    PROT_READ'ING MAPPING\n");
+
+	if (mprotect(addr3, npgs * pgsize, PROT_READ) == -1)
+		err(1, "mprotect");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr3, npgs) != npgs) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
 	printf("    UNLOCKING ALL\n");
 
 	(void) munlockall();
@@ -233,6 +259,7 @@ main(argc, argv)
 
 	(void) munmap(addr, npgs * pgsize);
 	(void) munmap(addr2, npgs * pgsize);
+	(void) munmap(addr3, npgs * pgsize);
 
 	printf(">>> CREATING MAPPED FILE <<<\n");
 
