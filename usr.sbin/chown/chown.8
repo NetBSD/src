@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)chown.8	6.6 (Berkeley) 6/17/91
-.\"	$Id: chown.8,v 1.3 1993/11/30 00:38:54 jtc Exp $
+.\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
+.\"	$Id: chown.8,v 1.4 1994/06/18 20:55:57 cgd Exp $
 .\"
-.Dd June 17, 1991
+.Dd March 31, 1994
 .Dt CHOWN 8
 .Os BSD 4
 .Sh NAME
@@ -40,11 +40,19 @@
 .Nd change file owner and group
 .Sh SYNOPSIS
 .Nm chown
-.Op Fl Rf
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl f
 .Ar owner Op Ar :group
 .Ar file ...
 .Nm chown
-.Op Fl Rf
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl f
 .Ar :group
 .Ar file ...
 .Sh DESCRIPTION
@@ -53,6 +61,19 @@ sets the user ID and/or the group ID of the specified files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl H
+If the
+.Fl R
+option is specified, symbolic links on the command line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl L
+If the
+.Fl R
+option is specified, all symbolic links are followed.
+.It Fl P
+If the
+.Fl R
+option is specified, no symbolic links are followed.
 .It Fl R
 Change the user ID and/or the group ID for the file hierarchies rooted
 in the files instead of just the files themselves.
@@ -60,6 +81,24 @@ in the files instead of just the files themselves.
 Don't report any failure to change file owner or group, nor modify
 the exit status to reflect such failures.
 .El
+.Pp
+Symbolic links don't have owners, so unless the
+.Fl H
+or 
+.Fl L 
+option is set,
+.Nm chown
+on a symbolic link always succeeds and has no effect.
+The
+.Fl H ,
+.Fl L
+and
+.Fl P
+options are ignored unless the
+.Fl R
+option is specified.
+In addition, these options override each other and the
+command's actions are determined by the last one specified.
 .Pp
 The
 .Ar owner
@@ -84,9 +123,6 @@ group name.
 The ownership of a file may only be altered by a super-user for
 obvious security reasons.
 .Pp
-The owner and group of symbolic links are themselves changed instead
-of the file to which the link points.
-.Pp
 The
 .Nm chown
 utility exits 0 on success, and >0 if an error occurs.
@@ -96,12 +132,19 @@ Previous versions of the
 utility used the dot (``.'') character to distinguish the group name.
 This has been changed to be a colon (``:'') character so that user and
 group names may contain the dot character.
+.Pp
+Previous versions of the
+.Nm chown
+utility changed the owner of symbolic links specified on the command
+line.
+In this system, symbolic links do not have owners.
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr find 1 ,
-.Xr chown 2
+.Xr chown 2 ,
+.Xr fts 3 ,
+.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm chown
-command is expected to conform to 
-.St -p1003.2-92 .
+command is expected to be POSIX 1003.2 compliant.

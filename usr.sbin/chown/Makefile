@@ -1,10 +1,10 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 10/26/90
-#	$Id: Makefile,v 1.3 1993/08/01 05:38:29 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.4 1994/06/18 20:55:54 cgd Exp $
 
 PROG=	chown
 CFLAGS+=-DSUPPORT_DOT
 MAN1=	chgrp.0
 MAN8=	chown.0
-LINKS=	${BINDIR}/chown ${BINDIR}/../bin/chgrp
+LINKS=	${BINDIR}/chown /usr/bin/chgrp
 
 .include <bsd.prog.mk>
