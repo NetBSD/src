@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.2 1997/01/05 21:32:20 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.3 1997/02/18 20:49:34 mrg Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -13,6 +13,10 @@
 
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
+
+#ifdef _KERNEL
+#include "ipfilter.h"
+#endif
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.44 1997/01/11 05:21:10 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.45 1997/02/18 20:49:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -54,6 +54,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -62,10 +63,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif /* PFIL_HOOKS */
 
 /* XXX should really put this in libkern.h */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.3 1996/12/20 08:40:48 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.4 1997/02/18 20:49:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -62,5 +62,12 @@ void	pfil_add_hook __P((int (*func) __P((void *, int,
 void	pfil_remove_hook __P((int (*func) __P((void *, int,
 	    struct ifnet *, int, struct mbuf **)), int));
 #endif /* _KERNEL */
+
+/* XXX */
+#include "ipfilter.h"
+
+#if NIPFILTER > 0
+#define PFIL_HOOKS
+#endif /* NIPFILTER */
 
 #endif /* _NET_PFIL_H_ */
