@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2001/03/19 00:29:03 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2001/04/13 12:40:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -115,7 +115,7 @@
  * Also make sure the window size is at least the page size.
  */
 #ifndef UBC_WINSHIFT
-#define UBC_WINSHIFT PAGE_SHIFT
+#define UBC_WINSHIFT PGSHIFT
 #endif
 #ifndef UBC_NWINS
 #define UBC_NWINS 32
