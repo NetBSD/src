@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.3 2001/02/04 20:06:51 christos Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.4 2001/04/12 23:52:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -213,24 +213,24 @@ main(int argc, char **argv)
 	if (flag_c)
 		ctl.clock_source = wanted.clock_source;
 	if (flag_l) {
-		lmc_av9110_freq(wanted.clock_rate, &wanted.cardspec.t1);
-		if (wanted.cardspec.t1.f == 0) {
+		lmc_av9110_freq(wanted.clock_rate, &wanted.cardspec.ssi);
+		if (wanted.cardspec.ssi.f == 0) {
 			printf("Unable to calculate requested rate.\n");
 			exit(1);
 		}
-		if (wanted.cardspec.t1.exact == 0)
+		if (wanted.cardspec.ssi.exact == 0)
 			printf("Unable to calculate exact frequency,"
 			       " using approximation %u\n",
-			       wanted.cardspec.t1.f);
+			       wanted.cardspec.ssi.f);
 		ctl.clock_rate = wanted.clock_rate;
-		ctl.cardspec.t1 = wanted.cardspec.t1;
-		printf("rate: %u\n", ctl.cardspec.t1.f);
+		ctl.cardspec.ssi = wanted.cardspec.ssi;
+		printf("rate: %u\n", ctl.cardspec.ssi.f);
 #if 0
 		{
 			u_int32_t f;
 			lmc_av9110_t *av;
 
-			av = &wanted.cardspec.t1;
+			av = &wanted.cardspec.ssi;
 
 			printf("m == %u, v == %u, n == %u, r == %u, x == %u\n",
 			       av->m, av->v, av->n, av->r, av->x);
