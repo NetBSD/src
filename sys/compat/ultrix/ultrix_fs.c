@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.8 1997/01/15 01:41:35 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.9 1997/04/06 23:26:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -38,6 +38,7 @@
 #include <sys/exec.h>
 #include <sys/namei.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -47,6 +48,7 @@
 
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
+#include <compat/common/compat_util.h>
 
 #include <vm/vm.h>
 
@@ -340,8 +342,7 @@ ultrix_sys_mount(p, v, retval)
 	struct sys_mount_args nuap;
 	char *native_fstype;
 
-#define	szsigcode	(esigcode - sigcode)
-	caddr_t usp = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	caddr_t usp = stackgap_init(p->p_emul);
 
 	bzero(&nuap, sizeof(nuap));
 	SCARG(&nuap, flags) = 0;

@@ -1,8 +1,8 @@
-/*	$NetBSD: ultrix_misc.c,v 1.29 1997/01/31 02:20:06 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.30 1997/04/06 23:26:53 jonathan Exp $	*/
 
 /*
- * Copyright (c) 1995
- *	Jonathan Stone (hereinafter referred to as the author)
+ * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,11 +111,13 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/ipc.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/ultrix/ultrix_syscall.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
+#include <compat/common/compat_util.h>
 
 #include <netinet/in.h>
 
@@ -372,12 +374,32 @@ ultrix_sys_setsockopt(p, v, retval)
 		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 		    SO_LINGER, m));
 	}
+	if (SCARG(uap, level) == IPPROTO_IP) {
+#define		EMUL_IP_MULTICAST_IF		2
+#define		EMUL_IP_MULTICAST_TTL		3
+#define		EMUL_IP_MULTICAST_LOOP		4
+#define		EMUL_IP_ADD_MEMBERSHIP		5
+#define		EMUL_IP_DROP_MEMBERSHIP	6
+		static int ipoptxlat[] = {
+			IP_MULTICAST_IF,
+			IP_MULTICAST_TTL,
+			IP_MULTICAST_LOOP,
+			IP_ADD_MEMBERSHIP,
+			IP_DROP_MEMBERSHIP
+		};
+		if (SCARG(uap, name) >= EMUL_IP_MULTICAST_IF &&
+		    SCARG(uap, name) <= EMUL_IP_DROP_MEMBERSHIP) {
+			SCARG(uap, name) =
+			    ipoptxlat[SCARG(uap, name) - EMUL_IP_MULTICAST_IF];
+		}
+	}
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-				    (u_int)SCARG(uap, valsize))) != 0) {
+		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize));
+		if (error) {
 			(void) m_free(m);
 			return (error);
 		}
@@ -580,4 +602,53 @@ ultrix_sys_sigreturn(p, v, retval)
 	printf("ultrix sigreturn\n");
 #endif
 	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
+}
+
+ultrix_sys_shmsys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+#ifdef SYSVSHM
+
+	/* Ultrix SVSHM weirndess: */
+	struct ultrix_sys_shmsys_args *uap = v;
+	struct sys_shmat_args shmat_args;
+	struct sys_shmctl_args shmctl_args;
+	struct sys_shmdt_args shmdt_args;
+	struct sys_shmget_args shmget_args;
+
+
+	switch (SCARG(uap, shmop)) {
+	case 0:						/* Ultrix shmat() */
+		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
+		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a3);
+		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
+		return (sys_shmat(p, &shmat_args, retval));
+
+	case 1:						/* Ultrix shmctl() */
+		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
+		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
+		SCARG(&shmctl_args, buf) = (struct shmid_ds *)SCARG(uap, a4);
+		return (sys_shmctl(p, &shmctl_args, retval));
+
+	case 2:						/* Ultrix shmdt() */
+		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
+		return (sys_shmdt(p, &shmdt_args, retval));
+
+	case 3:						/* Ultrix shmget() */
+		SCARG(&shmget_args, key) = SCARG(uap, a2);
+		SCARG(&shmget_args, size) = SCARG(uap, a3);
+		SCARG(&shmget_args, shmflg) = SCARG(uap, a4)
+		    & (IPC_CREAT|IPC_EXCL|IPC_NOWAIT);
+		return (sys_shmget(p, &shmget_args, retval));
+
+	default:
+		return (EINVAL);
+	}
+}
+#endif	/* SYSVSHM */
+
+	return (EOPNOTSUPP);
 }
