@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.141 2003/10/09 02:44:54 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.142 2003/10/09 03:12:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.141 2003/10/09 02:44:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.142 2003/10/09 03:12:29 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -571,7 +571,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	new_entry = NULL;
 	if (map == pager_map) {
 		new_entry = uvm_mapent_alloc(map, (flags & UVM_FLAG_NOWAIT));
-		 if (__predict_false(new_entry == NULL))
+		if (__predict_false(new_entry == NULL))
 			return ENOMEM;
 	}
 
@@ -780,7 +780,7 @@ forwardmerge:
 				    prev_entry->next->end -
 				    prev_entry->next->start,
 				    amapwaitflag | AMAP_EXTEND_FORWARDS))
-				goto nomerge;
+					goto nomerge;
 			}
 
 			/*
@@ -798,7 +798,7 @@ forwardmerge:
 				    prev_entry->end -
 				    prev_entry->start,
 				    amapwaitflag | AMAP_EXTEND_BACKWARDS))
-				goto nomerge;
+					goto nomerge;
 			}
 		} else {
 			/*
