@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.6 2001/09/24 13:22:32 wiz Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7 2001/11/26 20:49:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -65,7 +65,6 @@
  */
 #include <sys/param.h>
 
-#include <machine/psl.h>
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
