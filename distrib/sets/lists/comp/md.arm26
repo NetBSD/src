@@ -1,4 +1,24 @@
-# $NetBSD: md.arm26,v 1.1 2000/10/19 21:57:54 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.2 2001/01/11 21:52:25 bjh21 Exp $
+./usr/include/arm			comp-c-include
+./usr/include/arm/ansi.h		comp-c-include
+./usr/include/arm/aout_machdep.h	comp-c-include
+./usr/include/arm/asm.h			comp-c-include
+./usr/include/arm/bswap.h		comp-c-include
+./usr/include/arm/cdefs.h		comp-c-include
+./usr/include/arm/disklabel.h		comp-c-include
+./usr/include/arm/disklabel_acorn.h	comp-c-include
+./usr/include/arm/float.h		comp-c-include
+./usr/include/arm/fp.h			comp-c-include
+./usr/include/arm/ieee.h		comp-c-include
+./usr/include/arm/ieeefp.h		comp-c-include
+./usr/include/arm/int_types.h		comp-c-include
+./usr/include/arm/limits.h		comp-c-include
+./usr/include/arm/lock.h		comp-c-include
+./usr/include/arm/math.h		comp-c-include
+./usr/include/arm/setjmp.h		comp-c-include
+./usr/include/arm/stdarg.h		comp-c-include
+./usr/include/arm/trap.h		comp-c-include
+./usr/include/arm/varargs.h		comp-c-include
 ./usr/include/arm26			comp-c-include
 ./usr/include/arm26/ansi.h		comp-c-include
 ./usr/include/arm26/aout_machdep.h	comp-c-include

@@ -1,4 +1,24 @@
-# $NetBSD: md.arm32,v 1.31 2000/06/26 15:49:46 kleink Exp $
+# $NetBSD: md.arm32,v 1.32 2001/01/11 21:52:25 bjh21 Exp $
+./usr/include/arm			comp-c-include
+./usr/include/arm/ansi.h		comp-c-include
+./usr/include/arm/aout_machdep.h	comp-c-include
+./usr/include/arm/asm.h			comp-c-include
+./usr/include/arm/bswap.h		comp-c-include
+./usr/include/arm/cdefs.h		comp-c-include
+./usr/include/arm/disklabel.h		comp-c-include
+./usr/include/arm/disklabel_acorn.h	comp-c-include
+./usr/include/arm/float.h		comp-c-include
+./usr/include/arm/fp.h			comp-c-include
+./usr/include/arm/ieee.h		comp-c-include
+./usr/include/arm/ieeefp.h		comp-c-include
+./usr/include/arm/int_types.h		comp-c-include
+./usr/include/arm/limits.h		comp-c-include
+./usr/include/arm/lock.h		comp-c-include
+./usr/include/arm/math.h		comp-c-include
+./usr/include/arm/setjmp.h		comp-c-include
+./usr/include/arm/stdarg.h		comp-c-include
+./usr/include/arm/trap.h		comp-c-include
+./usr/include/arm/varargs.h		comp-c-include
 ./usr/include/arm32		comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
 ./usr/include/arm32/ansi.h		comp-c-include
