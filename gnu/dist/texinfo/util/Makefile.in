@@ -559,7 +559,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 # we don't actually use version.texi in the rule, but it's one way of
 # noticing when the version changes.
 texinfo.cat: texinfo-cat.in $(top_srcdir)/doc/version.texi
-	sed 's/__VERSION__/@VERSION@/g' $< >$@
+	sed 's/__VERSION__/@VERSION@/g' $(srcdir)/texinfo-cat.in >$@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
