@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.36 1996/12/09 10:46:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.37 1996/12/09 11:31:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1122,7 +1122,7 @@ nfs_init()
 #endif /* NFSSERVER */
 
 	/*
-	 * Initialize the nqnfs.
+	 * Initialize the nqnfs data structures.
 	 */
 	if (nqnfsstarttime == 0) {
 		nqnfsstarttime = boottime.tv_sec + nqsrv_maxlease
