@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.10 2001/12/28 20:35:47 christos Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.11 2002/11/09 11:45:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@
 #define ELINK_DNUNSTALL		0x3003
 #define ELINK_TXRECLTHRESH	0xc000
 #define ELINK_TXSTARTTHRESH	0x9800
+#define ELINK_CLEARHASHFILBIT	0xc800
 #define ELINK_SETHASHFILBIT	0xcc00
 
 /*
