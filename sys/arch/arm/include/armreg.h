@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.1 2001/01/22 22:10:40 bjh21 Exp $	*/
+/*	$NetBSD: armreg.h,v 1.2 2001/02/21 17:41:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -139,10 +139,12 @@
 
 /* Next three nybbles are part number */
 #define CPU_ID_PARTNO_MASK	0x0000fff0
-#define CPU_ID_CPU_MASK		CPU_ID_PARTNO_MASK
 
 /* And finally, the revision number. */
 #define CPU_ID_REVISION_MASK	0x0000000f
+
+/* Individual CPUs are probably best IDed by everything but the revision. */
+#define CPU_ID_CPU_MASK		0xfffffff0
 
 /* Fake CPU IDs for ARMs without CP15 */
 #define CPU_ID_ARM2		0x41560200
