@@ -83,6 +83,7 @@ pam_get_user(pam_handle_t *pamh,
 		RETURNC(r);
 	r = pam_get_item(pamh, PAM_USER, (const void **)user);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

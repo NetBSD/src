@@ -96,6 +96,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 	}
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -87,8 +87,10 @@ pam_get_item(pam_handle_t *pamh,
 	case PAM_REPOSITORY:
 		*item = pamh->item[item_type];
 		RETURNC(PAM_SUCCESS);
+		/*NOTREACHED*/
 	default:
 		RETURNC(PAM_SYMBOL_ERR);
+		/*NOTREACHED*/
 	}
 }
 

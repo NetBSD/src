@@ -88,6 +88,7 @@ pam_putenv(pam_handle_t *pamh,
 		RETURNC(PAM_BUF_ERR);
 	++pamh->env_count;
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

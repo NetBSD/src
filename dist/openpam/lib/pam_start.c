@@ -77,6 +77,7 @@ pam_start(const char *service,
  fail:
 	pam_end(ph, r);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

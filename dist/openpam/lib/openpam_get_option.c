@@ -71,6 +71,7 @@ openpam_get_option(pam_handle_t *pamh,
 		}
 	}
 	RETURNS(NULL);
+	/*NOTREACHED*/
 }
 
 /**

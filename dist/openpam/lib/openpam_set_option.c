@@ -101,6 +101,7 @@ openpam_set_option(pam_handle_t *pamh,
 		cur->optv[i] = opt;
 	}
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -76,6 +76,7 @@ pam_setenv(pam_handle_t *pamh,
 	r = pam_putenv(pamh, env);
 	FREE(env);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

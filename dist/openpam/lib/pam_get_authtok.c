@@ -128,6 +128,7 @@ pam_get_authtok(pam_handle_t *pamh,
 		RETURNC(r);
 	r = pam_get_item(pamh, item, (const void **)authtok);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

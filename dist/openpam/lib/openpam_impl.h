@@ -136,46 +136,45 @@ pam_module_t	*openpam_dynamic(const char *);
 
 #ifdef DEBUG
 #define ENTER() openpam_log(PAM_LOG_DEBUG, "entering")
-#define ENTERI(i) do { \
-	if ((i) > 0 && (i) < PAM_NUM_ITEMS) \
-		openpam_log(PAM_LOG_DEBUG, "entering: %s", _pam_item_name[i]); \
+#define ENTERI(iv) do { \
+	if (/*CONSTCOND*/(iv) > 0 && (iv) < PAM_NUM_ITEMS) \
+		openpam_log(PAM_LOG_DEBUG, "entering: %s", \
+		    _pam_item_name[(iv)]); \
 	else \
-		openpam_log(PAM_LOG_DEBUG, "entering: %d", (i)); \
+		openpam_log(PAM_LOG_DEBUG, "entering: %d", (iv)); \
 } while (/*CONSTCOND*/0)
-#define ENTERN(n) do { \
-	openpam_log(PAM_LOG_DEBUG, "entering: %d", (n)); \
-} while (0)
-#define ENTERS(s) do { \
-	if ((s) == NULL) \
-		openpam_log(PAM_LOG_DEBUG, "entering: NULL"); \
-	else \
-		openpam_log(PAM_LOG_DEBUG, "entering: '%s'", (s)); \
+#define ENTERN(num) do { \
+	openpam_log(PAM_LOG_DEBUG, "entering: %d", (num)); \
+} while (/*CONSTCOND*/0)
+#define ENTERS(str) do { \
+	openpam_log(PAM_LOG_DEBUG, "entering: '%s'", \
+	    /*CONSTCOND*/(str) ? (str) : "(null)"); \
 } while (/*CONSTCOND*/0)
 #define	RETURNV() openpam_log(PAM_LOG_DEBUG, "returning")
-#define RETURNC(c) do { \
-	if ((c) >= 0 && (c) < PAM_NUM_ERRORS) \
-		openpam_log(PAM_LOG_DEBUG, "returning %s", _pam_err_name[c]); \
+#define RETURNC(chr) do { \
+	if (/*CONSTCOND*/(chr) >= 0 && (chr) < PAM_NUM_ERRORS) \
+		openpam_log(PAM_LOG_DEBUG, "returning %s", \
+		    _pam_err_name[(chr)]); \
 	else \
-		openpam_log(PAM_LOG_DEBUG, "returning %d!", (c)); \
-	return (c); \
+		openpam_log(PAM_LOG_DEBUG, "returning %d!", (chr)); \
+	return (chr); \
+	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
-#define	RETURNN(n) do { \
-	openpam_log(PAM_LOG_DEBUG, "returning %d", (n)); \
-	return (n); \
+#define	RETURNN(num) do { \
+	openpam_log(PAM_LOG_DEBUG, "returning %d", (num)); \
+	return (num); \
+	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
-#define	RETURNP(p) do { \
-	if ((p) == NULL) \
-		openpam_log(PAM_LOG_DEBUG, "returning NULL"); \
-	else \
-		openpam_log(PAM_LOG_DEBUG, "returning %p", (p)); \
-	return (p); \
+#define	RETURNP(ptr) do { \
+	openpam_log(PAM_LOG_DEBUG, "returning %p", (ptr)); \
+	return (ptr); \
+	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
-#define	RETURNS(s) do { \
-	if ((s) == NULL) \
-		openpam_log(PAM_LOG_DEBUG, "returning NULL"); \
-	else \
-		openpam_log(PAM_LOG_DEBUG, "returning '%s'", (s)); \
-	return (s); \
+#define	RETURNS(str) do { \
+	openpam_log(PAM_LOG_DEBUG, "returning '%s'", \
+	    /*CONSTCOND*/(str) ? (str) : "(null)"); \
+	return (str); \
+	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
 #else
 #define ENTER()

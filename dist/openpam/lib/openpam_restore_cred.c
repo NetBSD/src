@@ -74,6 +74,7 @@ openpam_restore_cred(pam_handle_t *pamh)
 	}
 	pam_set_data(pamh, PAM_SAVED_CRED, NULL, NULL);
 	RETURNC(PAM_SUCCESS);
+	/*NOTREACHED*/
 }
 
 /*

@@ -69,6 +69,7 @@ pam_getenv(pam_handle_t *pamh,
 		}
 	}
 	RETURNS(str);
+	/*NOTREACHED*/
 }
 
 /**
