@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.110 2003/05/07 13:41:35 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.111 2003/06/01 20:25:02 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -130,6 +130,7 @@
 #	kttcp	kernel ttcp helper device
 #	radio*	control radio receivers
 #	wsfont*	console font control
+#	nsmb*	SMB requester
 
 dialin=0
 dialout=524288
@@ -180,6 +181,7 @@ init|all)
 	makedev bktr
 	makedev kttcp
 	makedev radio
+	makedev nsmb
 	;;
 
 minimal)
@@ -769,6 +771,19 @@ clockctl)
 	mknod clockctl c 69 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+nsmb)
+	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	;;
+
+nsmb*)
+	unit=${i#nsmb}
+	nsmb=nsmb$unit
+	major=77
+	rm -f $nsmb
+	mknod $nsmb c $major $unit
+	chmod 644 $nsmb
 	;;
 
 systrace)
