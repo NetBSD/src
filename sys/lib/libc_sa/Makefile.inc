@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1 1993/10/13 11:16:21 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1993/10/13 11:36:29 cgd Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -14,6 +14,6 @@ C_SA_LIB=	$(C_SA_LIBDIR)/libc_sa.a
 
 $(C_SA_LIB):	.NOTMAIN __always_make_c_sa_lib
 	@echo making sure the stand-alone c library is up to date...
-	@(cd $(C_SA_LIBDIR) ; make)
+	@(cd $(C_SA_DIR) ; make)
 
 __always_make_c_sa_lib: .NOTMAIN
