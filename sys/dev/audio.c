@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.33 1996/11/01 23:05:45 pk Exp $	*/
+/*	$NetBSD: audio.c,v 1.34 1997/01/18 04:02:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1205,7 +1205,7 @@ audio_poll(dev, events, p)
 
 	if (events & (POLLOUT | POLLWRNORM))
 		if ((sc->sc_mode & AUMODE_RECORD) ?
-		    1 : (sc->pr.nblk < sc->sc_lowat))
+		    1 : (sc->pr.nblk <= sc->sc_lowat))
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
