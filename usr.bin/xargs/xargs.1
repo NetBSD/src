@@ -1,4 +1,4 @@
-.\"	$NetBSD: xargs.1,v 1.9 1999/01/12 00:07:20 lukem Exp $
+.\"	$NetBSD: xargs.1,v 1.10 1999/12/22 14:41:00 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 12, 1999
+.Dd December 21, 1999
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 0
+.Op Fl p
 .Op Fl t
 .Oo Op Fl x
 .Fl n Ar number
@@ -107,6 +108,16 @@ arguments remaining for the last invocation of
 The current default value for
 .Ar number
 is 5000.
+.It Fl p
+Prompt mode: immediately before each command execution the user is prompted
+whether to execute the command instance.  If an affirmative response is read
+from
+.Pa /dev/tty
+the command will be executed; otherwise this particular invocation will be
+skipped.
+This option implies the
+.Fl t
+option.
 .It Fl s Ar size
 Set the maximum number of bytes for the command line length provided to
 .Ar utility .
@@ -148,6 +159,11 @@ command line cannot be assembled,
 .Ar utility
 cannot be invoked, an invocation of the utility is terminated by a signal
 or an invocation of the utility exits with a value of 255.
+.Sh FILES
+.Bl -tag -width /dev/tty -compact
+.It Pa /dev/tty
+used to read responses in prompt mode
+.El
 .Sh DIAGNOSTICS
 .Nm
 exits with one of the following values:
