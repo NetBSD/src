@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 2000/06/01 15:38:24 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 2000/06/01 17:35:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -415,9 +415,9 @@ findroot(void)
 			continue;
 
 found:
-			if (*devpp) {
+			if (booted_device) {
 				printf("warning: double match for boot "
-				    "device (%s, %s)\n", (*devpp)->dv_xname,
+				    "device (%s, %s)\n", booted_device->dv_xname,
 				    dv->dv_xname);
 				continue;
 			}
