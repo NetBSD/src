@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.35.2.1 2000/12/14 23:36:36 he Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.35.2.2 2001/09/30 13:17:24 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -223,7 +223,8 @@ ffs_truncate(v)
 
 	if (DOINGSOFTDEP(ovp)) {
 		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
+		if (ovp->v_usecount)	/* can't be cached if usecount=0 */
+			(void) uvm_vnp_uncache(ovp);
 		if (length > 0) {
 			/*
 			 * If a file is only partially truncated, then
