@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.5 1996/09/24 09:18:29 matthias Exp $
+#	$Id: Makefile.inc,v 1.6 1996/11/07 07:42:29 matthias Exp $
 
-KMINCLUDES= arch/ns32k/SYS.h arch/ns32k/DEFS.h
-KMSRCS=	bcmp.S bzero.S ffs.S strcat.S strcmp.S strcpy.S strlen.S strncmp.S \
-	strncpy.S htonl.S htons.S ntohl.S ntohs.S
+KMINCLUDES= arch/ns32k/SYS.h
+KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S memcpy.S memset.S strcat.S strcmp.S \
+	strcpy.S strlen.S strncmp.S strncpy.S htonl.S htons.S ntohl.S ntohs.S
