@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.9 2000/11/27 08:39:53 chs Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.10 2001/09/15 16:13:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -103,6 +103,7 @@ void	ext2fs_checkoverlap __P((struct buf *, struct inode *));
 
 /* ext2fs_vfsops.c */
 void ext2fs_init __P((void));
+void ext2fs_reinit __P((void));
 void ext2fs_done __P((void));
 int ext2fs_mountroot __P((void));
 int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,

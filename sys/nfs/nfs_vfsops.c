@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.106 2001/07/30 22:51:06 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.107 2001/09/15 16:13:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -108,6 +108,7 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
+	nfs_vfs_reinit,
 	nfs_vfs_done,
 	nfs_sysctl,
 	nfs_mountroot,

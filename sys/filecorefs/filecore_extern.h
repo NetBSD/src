@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.6 2000/03/16 18:08:22 jdolecek Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.7 2001/09/15 16:12:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -86,6 +86,7 @@ int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
 	    struct ucred **));
 int filecore_vptofh __P((struct vnode *, struct fid *));
 void filecore_init __P((void));
+void filecore_reinit __P((void));
 void filecore_done __P((void));
 int filecore_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			struct proc *));
