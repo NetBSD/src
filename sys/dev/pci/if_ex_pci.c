@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.28 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.29 2002/12/23 03:06:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.28 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.29 2002/12/23 03:06:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,12 +281,12 @@ ex_pci_attach(parent, self, aux)
 		sc->disable = ex_pci_disable;
 
 		psc->psc_pwrmgmt_csr_reg = pmreg + PCI_PMCSR;
-		reg = pci_conf_read(pc, pa->pa_tag,
-		    psc->psc_pwrmgmt_csr_reg) & PCI_PMCSR_STATE_MASK;
+		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
 
 		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
 		    PCI_PMCSR_STATE_D0;
 
+		reg &= PCI_PMCSR_STATE_MASK;
 		if (reg == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
