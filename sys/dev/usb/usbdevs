@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.329 2003/06/23 21:56:36 augustss Exp $
+$NetBSD: usbdevs,v 1.330 2003/06/23 23:00:46 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1119,6 +1119,7 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 
 /* Ours Technology Inc. */
 product OTI SOLID		0x6803	Solid state disk
+product OTI FLASHDISK		0x6828	Flash Disk 128M
 
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
