@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.24 2003/09/06 22:08:14 christos Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.25 2003/09/10 16:46:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.24 2003/09/06 22:08:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.25 2003/09/10 16:46:15 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_math_emulate.h"
+#include "opt_compat_ibcs2.h"
 #endif
 
 #include <sys/param.h>
@@ -103,10 +104,10 @@ ibcs2_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
 	u_long code = ksi->ksi_trap;
-	/* XXX Need SCO sigframe format. */
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int onstack;
+	/* XXX Need SCO sigframe format. */
 	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
