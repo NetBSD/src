@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 1998/02/25 22:36:45 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14 1998/02/26 01:57:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-/* LINTLIBRARY */
+#ifdef _KERNEL
 
 static __inline void 
 invlpg(u_int addr)
@@ -164,5 +164,7 @@ breakpoint(void)
 {
 	__asm __volatile("int $3");
 }
+
+#endif /* _KERNEL */
 
 #endif /* !_I386_CPUFUNC_H_ */
