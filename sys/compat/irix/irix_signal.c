@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.18 2002/07/04 23:32:10 thorpej Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.19 2002/07/28 18:42:41 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.18 2002/07/04 23:32:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.19 2002/07/28 18:42:41 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -801,11 +801,10 @@ loop:
 			 * parent a SIGCHLD.  The rest of the cleanup will be
 			 * done when the old parent waits on the child.
 			 */
-			if ((q->p_flag & P_TRACED) &&
-			    q->p_oppid != q->p_pptr->p_pid) {
-				t = pfind(q->p_oppid);
+			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
+				t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
-				q->p_oppid = 0;
+				q->p_opptr = NULL;
 				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				psignal(q->p_pptr, SIGCHLD);
 				wakeup((caddr_t)q->p_pptr);
