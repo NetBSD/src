@@ -1,4 +1,4 @@
-.\"	$NetBSD: getNAME.8,v 1.1 1997/11/01 15:03:53 mrg Exp $
+.\"	$NetBSD: getNAME.8,v 1.2 1997/11/02 00:23:36 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -48,11 +48,11 @@ returns data for use in an
 database.
 .Nm
 is designed to be called from
-.Xr makewhatis 8 ,
+.Xr makewhatis 8
 or other manual grovelling tools, not to be used directly.
 .Sh OPTIONS
 The following options are available:
-.Bl -tag -width 123456 
+.Bl -tag -width Ds 
 .It Fl i
 The
 .Fl i
@@ -68,11 +68,11 @@ option returns information useful for creating a table of contents.
 The
 .Fl w
 option determines whether traditional man
-.Sy (OLD) ,
+.Pq Dq OLD ,
 new mandoc
-.Sy (NEW) ,
+.Pq Dq NEW ,
 or some unknown
-.Sy (UNKNOWN)
+.Pq Dq UNKNOWN
 format exists.
 .El
 .Sh HISTORY
@@ -85,6 +85,6 @@ It would be nice if
 .Nm
 could deal with preformatted manuals.
 .Sh SEE ALSO
+.Xr man 1 ,
 .Xr catman 8 ,
-.Xr makewhatis 8 ,
-.Xr man 1 .
+.Xr makewhatis 8
