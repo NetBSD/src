@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.10 1999/08/04 19:16:48 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.11 1999/08/05 02:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,7 +77,7 @@ struct	ether_header {
 /*
  * Ethernet-specific mbuf flags.
  */
-#define	M_HASCRC	M_LINK0		/* CRC included at end of frame */
+#define	M_HASFCS	M_LINK0		/* FCS included at end of frame */
 
 #ifdef _KERNEL
 /*
