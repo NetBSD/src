@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.64 2004/08/17 23:20:10 drochner Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.65 2004/08/30 10:30:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -187,6 +187,8 @@ extern struct cfdriver pci_cd;
 
 #define	pcicf_function		cf_loc[PCICF_FUNCTION]
 #define	PCI_UNK_FUNCTION	PCICF_FUNCTION_DEFAULT /* wildcarded 'function' */
+
+int pcibusprint(void *, const char *);
 
 /*
  * Configuration space access and utility functions.  (Note that most,
