@@ -1,7 +1,7 @@
 #
 # DECstation 5000/240 kernel config
 #
-# 	$NetBSD: DS5000_240,v 1.8 1997/12/01 15:58:25 kleink Exp $
+# 	$NetBSD: DS5000_240,v 1.9 1998/03/25 04:17:08 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -12,12 +12,10 @@ options 	MIPS1			# R2000/R3000 support (new)
 
 
 # Support for specific models of DECstation
-#options 	DS3100			# PMAX (kn01) DECstation 2100, 3100
-#options 	DS5000_25		# MAXINE (kn02ca/xine) support
-#options 	DS5000_100		# 3MIN (kn02ba/kmin) support
-#options 	DS5000_200		# 3MAX (kn02) support
-options 	DS5000_240		# 3MAXPLUS (kn03) support
+options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 
+# old stype options (deprecated, still required)
+options 	DS5000_240		# 3MAXPLUS (kn03) support
 
 
 # Standard system options
