@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2001/05/21 00:31:08 jhawk Exp $
+.\"	$NetBSD: install,v 1.27 2001/07/24 18:11:00 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -337,7 +337,7 @@ the
 .Dq raw disk partition
 is the
 .Sq Li d
-parttion, so do:
+partition, so do:
 .Pp
 .Dl # Ic "disklabel -W /dev/rsd" Ns Ar X Ns Ic "d"
 .Dl # Ic "gunzip -c diskimage.gz\ |\ dd of=/dev/rsd" Ns Ar X Ns Ic "d bs=10240"
@@ -371,7 +371,7 @@ On
 .Tn MS-DOS ,
 use an
 .Sq unzip
-utlility, then use
+utility, then use
 .Ic rawrite .
 .Pp
 Then boot using one of:
@@ -504,7 +504,7 @@ section.
 .
 .Ss2 Once you've booted the diskimage
 .
-Once you'e booted the installation kernel you will need to
+Once you've booted the installation kernel you will need to
 select your terminal type.  Use
 .Ic rcons
 for a framebuffer console,
