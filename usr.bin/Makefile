@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 1995/11/28 20:58:08 jtc Exp $
+#	$NetBSD: Makefile,v 1.61 1996/01/22 04:07:22 mrg Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
@@ -6,9 +6,9 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	compress crontab ctags cut dirname du \
 	eject env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
-	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave lex locate \
-	lock logger login logname look lorder m4 machine mail make man mesg \
-	mkdep mkfifo mkstr modstat more msgs netstat newsyslog nfsstat nice \
+	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave less lex \
+	locate lock logger login logname look lorder m4 machine mail make man \
+	mesg mkdep mkfifo mkstr modstat msgs netstat newsyslog nfsstat nice \
 	nohup pagesize passwd paste patch pr printenv printf quota \
 	rdist renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
