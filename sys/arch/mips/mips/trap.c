@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.13 2002/07/06 03:14:00 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.14 2002/07/06 03:17:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.13 2002/07/06 03:14:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.14 2002/07/06 03:17:58 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -487,7 +487,7 @@ trap(status, cause, vaddr, opc, frame)
 	    }
 	case T_RES_INST+T_USER:
 #if defined(MIPS3_5900) && defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+		MachFPInterrupt(status, cause, opc, l->l_md.md_regs);
 		userret(l);
 		return; /* GEN */
 #else
