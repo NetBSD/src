@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.437 2005/02/24 14:56:55 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.438 2005/02/28 02:28:09 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -661,7 +661,6 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # corresponding MK* variable is set to "no".
 # (The latter is implemented using the .for loop in the next block.)
 #
-USE_PAM?= no
 
 #
 # USE_* options which default to "yes" unless their corresponding MK*
