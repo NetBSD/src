@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.7 1995/06/24 14:59:41 pk Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.8 1995/08/29 23:05:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$Id: rpc_main.c,v 1.7 1995/06/24 14:59:41 pk Exp $";
+static char cvsid[] = "$Id: rpc_main.c,v 1.8 1995/08/29 23:05:53 cgd Exp $";
 #endif
 
 /*
@@ -39,13 +39,13 @@ static char cvsid[] = "$Id: rpc_main.c,v 1.7 1995/06/24 14:59:41 pk Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #ifdef __TURBOC__
 #define	MAXPATHLEN	80
 #include <process.h>
 #include <dir.h>
-#include <stdlib.h>
 #else
 #include <sys/param.h>
 #include <sys/file.h>
