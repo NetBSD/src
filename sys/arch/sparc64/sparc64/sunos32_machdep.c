@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.9 2003/01/18 06:55:25 thorpej Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.10 2003/01/24 16:54:34 nakayama Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -31,6 +31,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "firm_events.h"
 #endif
 
 #include <sys/param.h>
@@ -88,7 +89,9 @@ struct sunos32_sigframe {
 	struct	sunos32_sigcontext sf_sc;	/* actual sigcontext */
 };
 
+#if NFIRM_EVENTS > 0
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
+#endif
 
 /*
  * Set up registers on exec.
@@ -114,8 +117,10 @@ sunos32_setregs(l, pack, stack)
 	p->p_flag |= P_32;
 
 	/* Setup the ev_out32 hook */
+#if NFIRM_EVENTS > 0
 	if (ev_out32_hook == NULL)
 		ev_out32_hook = ev_out32;
+#endif
 
 	/*
 	 * Set the registers to 0 except for:
@@ -360,6 +365,7 @@ sunos32_sys_sigreturn(l, v, retval)
 	return (EJUSTRETURN);
 }
 
+#if NFIRM_EVENTS > 0
 /*
  * Write out a series of 32-bit firm_events.
  */
@@ -382,3 +388,4 @@ ev_out32(e, n, uio)
 	}
 	return (error);
 }
+#endif
