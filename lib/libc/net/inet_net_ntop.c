@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.11 2000/04/23 16:59:12 itojun Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.12 2001/12/08 11:47:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.11 2000/04/23 16:59:12 itojun Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.12 2001/12/08 11:47:04 lukem Exp $");
 #endif
 #endif
 
@@ -48,8 +48,7 @@ __weak_alias(inet_net_ntop,_inet_net_ntop)
 # define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
-static char *	inet_net_ntop_ipv4 __P((const u_char *src, int bits,
-					char *dst, size_t size));
+static char *	inet_net_ntop_ipv4(const u_char *, int, char *, size_t);
 
 /*
  * char *
@@ -62,12 +61,7 @@ static char *	inet_net_ntop_ipv4 __P((const u_char *src, int bits,
  *	Paul Vixie (ISC), July 1996
  */
 char *
-inet_net_ntop(af, src, bits, dst, size)
-	int af;
-	const void *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 
 	_DIAGASSERT(src != NULL);
@@ -96,11 +90,7 @@ inet_net_ntop(af, src, bits, dst, size)
  *	Paul Vixie (ISC), July 1996
  */
 static char *
-inet_net_ntop_ipv4(src, bits, dst, size)
-	const u_char *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char *odst = dst;
 	char *t;
