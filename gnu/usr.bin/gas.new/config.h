@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 1998/05/21 18:43:27 cgd Exp $
+/*	$NetBSD: config.h,v 1.3 1998/09/29 05:32:23 jonathan Exp $
  *
  * Munged from actual 2.8.1 config.h file for machine independence.
  *
@@ -84,8 +84,12 @@
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
-#define DEFAULT_EMULATION ""
-#define EMULATIONS 
+#ifndef DEFAULT_EMULATION
+# define DEFAULT_EMULATION ""
+#endif
+#ifndef EMULATIONS
+# define EMULATIONS 
+#endif
 /* #undef USE_EMULATIONS */
 /* #undef OBJ_MAYBE_AOUT */
 /* #undef OBJ_MAYBE_BOUT */
