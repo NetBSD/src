@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.4 2000/03/05 23:20:25 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.5 2000/03/07 00:08:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.4 2000/03/05 23:20:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.5 2000/03/07 00:08:42 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.4 2000/03/05 23:20:25 matt Exp $");
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/bus.h>
+#include <machine/vmparam.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
@@ -94,7 +95,7 @@ struct asc_vsbus_softc {
 #define	ASC_FROMMEMORY		0x0001
 
 #define	ASC_MAXXFERSIZE		65536
-#define	ASC_FREQUENCY		20000000
+#define	ASC_FREQUENCY		25000000
 
 static int asc_vsbus_match __P((struct device *, struct cfdata *, void *));
 static void asc_vsbus_attach __P((struct device *, struct device *, void *));
@@ -244,7 +245,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 	sc->sc_minsync = (1000 / sc->sc_freq);
-	sc->sc_maxxfer = 64 * 1024;
+	sc->sc_maxxfer = 63 * 1024;
 
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
@@ -343,7 +344,7 @@ asc_vsbus_dma_intr(sc)
 
 	trans = asc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("ioasic_intr: xfer (%d) > req (%d)\n",
+		printf("asc_vsbus_intr: xfer (%d) > req (%d)\n",
 		    trans, asc->sc_dmasize);
 		trans = asc->sc_dmasize;
 	}
@@ -369,6 +370,9 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	} else {
 		asc->sc_flags &= ~ASC_ISWRITE;
 	}
+	if ((vaddr_t) *asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
+		panic("asc_vsbus_dma_setup: dma address (%p) outside of kernel",
+		    *asc->sc_dmaaddr);
 
         NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
                 (int)*asc->sc_dmalen, *asc->sc_dmaaddr, (asc->sc_flags & ASC_ISWRITE)));
