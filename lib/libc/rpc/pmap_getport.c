@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.7 1998/02/13 05:52:26 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.8 1998/07/26 13:16:59 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.7 1998/02/13 05:52:26 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.8 1998/07/26 13:16:59 mycroft Exp $");
 #endif
 #endif
 
@@ -63,8 +63,8 @@ __RCSID("$NetBSD: pmap_getport.c,v 1.7 1998/02/13 05:52:26 lukem Exp $");
 __weak_alias(pmap_getport,_pmap_getport);
 #endif
 
-static struct timeval timeout = { 5, 0 };
-static struct timeval tottimeout = { 60, 0 };
+static const struct timeval timeout = { 5, 0 };
+static const struct timeval tottimeout = { 60, 0 };
 
 /*
  * Find the mapped port for program,version.
