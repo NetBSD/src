@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.23 1993/09/06 23:31:33 mycroft Exp $
+#	$Id: ALL,v 1.24 1993/09/06 23:35:19 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -132,11 +132,11 @@ device	        ch0
 device	        ch1
 
 #ethernet
+device ne0 at isa? port 0x300 net irq 9 vector neintr
 device ed0 at isa? port 0x300 net irq 10 iomem 0xcc000 vector edintr
 #device we0 at isa? port 0x300 net irq 10 iomem 0xd0000 iosiz 8192 vector weintr
 device ed1 at isa? port 0x250 net irq 9 iomem 0xd8000 vector edintr
 #device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
-device ne0 at isa? port 0x300 net irq 9 vector neintr
 device hp0 at isa? port 0x300 net irq 5 vector hpintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 
