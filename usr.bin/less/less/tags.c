@@ -1,4 +1,4 @@
-/*	$NetBSD: tags.c,v 1.5 2003/11/17 11:16:10 wiz Exp $	*/
+/*	$NetBSD: tags.c,v 1.6 2004/10/30 20:17:19 dsl Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -714,12 +714,12 @@ getentry(buf, tag, file, line)
 {
 	char *p = buf;
 
-	for (*tag = p;  *p && !isspace(*p);  p++)	/* tag name */
+	for (*tag = p;  *p && !isspace((unsigned char)*p);  p++) /* tag name */
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ;  *p && isspace(*p);  p++)		/* (skip blanks) */
+	for ( ;  *p && isspace((unsigned char)*p);  p++)    /* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
@@ -727,27 +727,27 @@ getentry(buf, tag, file, line)
 	 * If the second part begin with other than digit,
 	 * it is assumed tag type. Skip it.
 	 */
-	if (!isdigit(*p))
+	if (!isdigit((unsigned char)*p))
 	{
-		for ( ;  *p && !isspace(*p);  p++)	/* (skip tag type) */
+		for ( ; *p && !isspace((unsigned char)*p); p++)	/* (skip tag type) */
 			;
-		for (;  *p && isspace(*p);  p++)	/* (skip blanks) */
+		for (;  *p && isspace((unsigned char)*p);  p++)	/* (skip blanks) */
 			;
 	}
-	if (!isdigit(*p))
+	if (!isdigit((unsigned char)*p))
 		return (-1);
 	*line = p;					/* line number */
-	for (*line = p;  *p && !isspace(*p);  p++)
+	for (*line = p;  *p && !isspace((unsigned char)*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ; *p && isspace(*p);  p++)		/* (skip blanks) */
+	for ( ; *p && isspace((unsigned char)*p);  p++)	/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
 	*file = p;					/* file name */
-	for (*file = p;  *p && !isspace(*p);  p++)
+	for (*file = p;  *p && !isspace((unsigned char)*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
