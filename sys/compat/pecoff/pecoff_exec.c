@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.15 2002/03/18 07:11:06 oki Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.16 2002/03/24 05:55:49 oki Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.15 2002/03/18 07:11:06 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.16 2002/03/24 05:55:49 oki Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -203,8 +203,17 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	const char *bp;
 
 	if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-			       path, &bp, 0)))
-		return error;
+			       path, &bp, 0))) {
+		char *ptr;
+		int len;
+
+		len = strlen(path) + 1;
+		if (len > MAXPATHLEN)
+			return error;
+		ptr = malloc(len, M_TEMP, M_WAITOK);
+		copystr(path, ptr, len, 0);
+		bp = ptr;
+	}
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, bp, p);
 	if ((error = namei(&nd)) != 0) {
 		free((void *)bp, M_TEMP);
