@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.51 2002/11/07 07:48:35 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.52 2003/01/13 17:00:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.51 2002/11/07 07:48:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.52 2003/01/13 17:00:18 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -106,6 +106,8 @@ void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 int	epic_copy_small = 0;
 
+#define	ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
+
 /*
  * Attach an EPIC interface to the system.
  */
@@ -121,6 +123,7 @@ epic_attach(sc)
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
+	char *nullbuf;
 
 	callout_init(&sc->sc_mii_callout);
 
@@ -129,20 +132,24 @@ epic_attach(sc)
 	 * DMA map for it.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct epic_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) != 0) {
+	    sizeof(struct epic_control_data) + ETHER_PAD_LEN, PAGE_SIZE, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct epic_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct epic_control_data) + ETHER_PAD_LEN,
+	    (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
+	nullbuf =
+	    (char *)sc->sc_control_data + sizeof(struct epic_control_data);
+	memset(nullbuf, 0, ETHER_PAD_LEN);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct epic_control_data), 1,
@@ -188,6 +195,24 @@ epic_attach(sc)
 		EPIC_DSRX(sc, i)->ds_mbuf = NULL;
 	}
 
+	/*
+	 * create and map the pad buffer
+	 */
+	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
+	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT,&sc->sc_nulldmamap)) != 0) {
+		printf("%s: unable to create pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_5;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_nulldmamap,
+	    nullbuf, ETHER_PAD_LEN, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_6;
+	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_nulldmamap, 0, ETHER_PAD_LEN,
+	    BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Bring the chip out of low-power mode and reset it to a known state.
@@ -291,6 +316,8 @@ epic_attach(sc)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
+ fail_6:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_nulldmamap);
  fail_5:
 	for (i = 0; i < EPIC_NRXDESC; i++) {
 		if (EPIC_DSRX(sc, i)->ds_dmamap != NULL)
@@ -379,8 +406,13 @@ epic_start(ifp)
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+		    (m0->m_pkthdr.len < ETHER_PAD_LEN &&
+		    dmamap-> dm_nsegs == EPIC_NFRAGS)) {
+			if (error == 0)
+				bus_dmamap_unload(sc->sc_dmat, dmamap);
+			
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -413,13 +445,19 @@ epic_start(ifp)
 		}
 
 		/* Initialize the fraglist. */
-		fr->ef_nfrags = dmamap->dm_nsegs;
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 			fr->ef_frags[seg].ef_addr =
 			    dmamap->dm_segs[seg].ds_addr;
 			fr->ef_frags[seg].ef_length =
 			    dmamap->dm_segs[seg].ds_len;
 		}
+		if (m0->m_pkthdr.len < ETHER_PAD_LEN) {
+			fr->ef_frags[seg].ef_addr = sc->sc_nulldma;
+			fr->ef_frags[seg].ef_length =
+			    ETHER_PAD_LEN - m0->m_pkthdr.len;
+			seg++;
+		}
+		fr->ef_nfrags = seg;
 
 		EPIC_CDFLSYNC(sc, nexttx, BUS_DMASYNC_PREWRITE);
 
@@ -433,12 +471,10 @@ epic_start(ifp)
 		ds->ds_mbuf = m0;
 
 		/*
-		 * Fill in the transmit descriptor.  The EPIC doesn't
-		 * auto-pad, so we have to do this ourselves.
+		 * Fill in the transmit descriptor.
 		 */
 		txd->et_control = ET_TXCTL_LASTDESC | ET_TXCTL_FRAGLIST;
-		txd->et_txlength = max(m0->m_pkthdr.len,
-		    ETHER_MIN_LEN - ETHER_CRC_LEN);
+		txd->et_txlength = max(m0->m_pkthdr.len, ETHER_PAD_LEN);
 
 		/*
 		 * If this is the first descriptor we're enqueueing,
