@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.35 1996/10/18 07:04:24 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.36 1996/11/07 21:04:36 cgd Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -912,6 +912,11 @@ cat3f
 # ./usr/share/man/cat4
 cat4
 
+# ./usr/share/man/cat4/alpha
+alpha
+# ./usr/share/man/cat4/alpha
+..
+
 # ./usr/share/man/cat4/amiga
 amiga
 # ./usr/share/man/cat4/amiga
@@ -992,6 +997,11 @@ cat7
 
 # ./usr/share/man/cat8
 cat8
+
+# ./usr/share/man/cat8/alpha
+alpha
+# ./usr/share/man/cat8/alpha
+..
 
 # ./usr/share/man/cat8/amiga
 amiga
@@ -1079,6 +1089,11 @@ man3f
 # ./usr/share/man/man4
 man4
 
+# ./usr/share/man/man4/alpha
+alpha
+# ./usr/share/man/man4/alpha
+..
+
 # ./usr/share/man/man4/amiga
 amiga
 # ./usr/share/man/man4/amiga
@@ -1159,6 +1174,11 @@ man7
 
 # ./usr/share/man/man8
 man8
+
+# ./usr/share/man/man8/alpha
+alpha
+# ./usr/share/man/man8/alpha
+..
 
 # ./usr/share/man/man8/amiga
 amiga
