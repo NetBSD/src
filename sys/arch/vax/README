@@ -1,0 +1,53 @@
+
+	$Id: README,v 1.2.2.2 1994/08/16 23:39:53 ragge Exp $
+
+Some information and status of VAX port:
+
+We are trying to make a more easy-to-port-to-new-vax-cpu structure than the old
+Berkeley code provides. autoconf.c was a real mess! We will here try to keep 
+cpu-dependent autoconfig code in ka???.c, so we don't have to bother with
+those old structures. 
+
+The file skit.c shouldn't exist; it contains all currently undefined symbols 
+(even undefined pointers, bleh!) It is actually created from an awk script 
+taking input from ld :) Things are taken out of there as soon they are 
+implemented.
+
+Device drivers for UDA50 and DELUA are almost unchanged from the 4.4BSD
+release, and at least uda/ra routines seem to work.
+
+Config code isn't working yet, there are more important things to fix
+first :) To glue together IO devices there are a file glue.c. Config.new
+just creates some header files right now.
+
+Current state of VAX port of NetBSD:
+
+- Some locore init works fine.
+- Virtual memory starts ok.
+- It may find some devices :)
+- It mounts root filesystem from RA81 OK.
+- It loads init and fork it to process 3 to exec /bin/sh, but 
+  something is wrong, copy-on-write on stack area doesn't work...
+
+Lots important things to do:
+- Boot blocks and routines. (We currently use old 4.3 boot)
+- Whole skit.c should be emptied.
+- Clean the code almost everywhere from foolish printouts. :)
+
+As base code for our work we have used 0.9b distribution. For development 
+we used gas 1.35 with patches for bit instructions and gcc 2.5.8.
+The kernel can currently only be compiled without -O option, because
+we lacks some volatile definitions in device code. It anyway takes
+about 2 1/2 hours to recompile the whole kernel...
+
+We are developing on 11/750's with Massbuss disks, because of the ease to share
+disks between computers, but have root filesystem on an RA81 on an UDA50.
+In the future we have the possibility to try it out on almost all VAX cpu
+types, ka730, ka780, ka420, ka630, ka650, ka8200, ka8600 and ka8800. Phew :)
+
+I have only included relevant files from old berkeley VAX distributions.
+If you want to look at other files get them from nearest ftp site with
+an 4.4BSD distribution, or from ftp.luth.se:/pub/unix/4_4bsd_l directory.
+
+/ragge@ludd.luth.se
+
