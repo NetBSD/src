@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.4 2002/07/04 20:50:29 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.5 2002/08/20 16:55:28 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.4 2002/07/04 20:50:29 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.5 2002/08/20 16:55:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -72,7 +72,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-d device] [-f fifo] [-n] [-X number]\n",
+	    "Usage: %s [-d device] [-f fifo] [-n] [-X number] [-x number] "
+	    "[-y number]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -214,8 +215,6 @@ mouse_init(void)
 	mouse.col = mouse.max_col / 2;
 	mouse.count_row = 0;
 	mouse.count_col = 0;
-	mouse.slowdown_x = 0;
-	mouse.slowdown_y = 2;
 	mouse.cursor = 0;
 	mouse.selecting = 0;
 }
@@ -310,8 +309,13 @@ main(int argc, char **argv)
 	mouse.device_name = _PATH_DEFAULT_MOUSE;
 	mouse.fifo_name = NULL;
 
+	/* Defaults that can be overriden by options. If you change
+	 * these, update wsmoused.8 accordingly. */
+	mouse.slowdown_x = 0;
+	mouse.slowdown_y = 3;
+
 	/* Parse command line options */
-	while ((opt = getopt(argc, argv, "nf:d:X:")) != -1) {
+	while ((opt = getopt(argc, argv, "nf:d:X:x:y:")) != -1) {
 		switch (opt) {
 		case 'd': /* Mouse device name */
 			mouse.device_name = strdup(optarg);
@@ -324,6 +328,12 @@ main(int argc, char **argv)
 			break;
 		case 'X': /* X console number */
 			XConsole = atoi(optarg);
+			break;
+		case 'x': /* x slowdown */
+			mouse.slowdown_x = atoi(optarg);
+			break;
+		case 'y': /* y slowdown */
+			mouse.slowdown_y = atoi(optarg);
 			break;
 		default:
 			usage();

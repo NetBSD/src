@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.4 2002/06/27 22:53:12 wiz Exp $
+.\" $NetBSD: wsmoused.8,v 1.5 2002/08/20 16:55:28 christos Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,6 +39,8 @@
 .Op Fl f Ar fifo
 .Op Fl n
 .Op Fl X Ar number
+.Op Fl x Ar number
+.Op Fl y Ar number
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,15 +68,23 @@ where the ? appears).
 .Nm
 will stop processing events when entering this console and will
 continue its job when you return to any other terminal.
+.It Fl x Ar number
+x slowdown. This positive integer specifies how many events in the x
+direction should be ignored before changing the current column. It
+defaults to 0.
+.It Fl y Ar number
+y slowdown. This positive integer specifies how many events in the y
+direction should be ignored before changing the current row. It
+defaults to 3.
 .El
 .Sh FILES
 .Bl -tag -width /dev/wsdisplayXXX -compact
 .It Pa /dev/ttyE[0-n]
 tty devices
-.It Pa /dev/wsmouse0
-mouse control device
 .It Pa /dev/ttyEstat
 wsdisplay status notification device
+.It Pa /dev/wsmouse0
+mouse control device
 .El
 .Sh EXAMPLES
 The following are just a few examples of
