@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 1999/05/03 10:02:19 tsubai Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3 2000/06/04 09:30:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,8 +33,10 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/systm.h>
 
+#include <machine/pcb.h>
 #include <machine/reg.h>
 
 int
@@ -67,6 +69,44 @@ process_write_regs(p, regs)
 	tf->xer = regs->xer;
 	tf->ctr = regs->ctr;
 	tf->srr0 = regs->pc;
+
+	return 0;
+}
+
+int
+process_read_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	/* Is the process using the fpu? */
+	if ((pcb->pcb_flags & PCB_FPU) == 0) {
+		bzero(regs, sizeof (struct fpreg));
+		return 0;
+	}
+
+	if (p == fpuproc)
+		save_fpu(p);
+	bcopy(&pcb->pcb_fpu, regs, sizeof (struct fpreg));
+
+	return 0;
+}
+
+int
+process_write_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	if (p == fpuproc)
+		fpuproc = NULL;
+
+	bcopy(regs, &pcb->pcb_fpu, sizeof(struct fpreg));
+
+	/* pcb_fpu is initialized now. */
+	pcb->pcb_flags |= PCB_FPU;
 
 	return 0;
 }
