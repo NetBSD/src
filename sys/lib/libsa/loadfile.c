@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.14 2001/07/31 19:20:29 bjh21 Exp $ */
+/* $NetBSD: loadfile.c,v 1.15 2001/07/31 20:03:03 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -413,11 +413,11 @@ elf_exec(fd, elf, marks, flags)
 		}
 		if (flags & LOAD_SYM) {
 			BCOPY(shp, shpp, sz);
-			FREE(shp, sz);
 
 			if (first == 0)
 				PROGRESS(("]"));
 		}
+		FREE(shp, sz);
 	}
 
 	/*
