@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.20 2002/09/15 21:34:03 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.21 2002/09/17 02:55:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.20 2002/09/15 21:34:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.21 2002/09/17 02:55:12 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -89,9 +89,19 @@ static int init_dqd(RF_DiskQueueData_t *);
 static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
 
+#ifndef RF_DEBUG_DISKQUEUE
+#define RF_DEBUG_DISKQUEUE 0
+#endif
+
+#if RF_DEBUG_DISKQUEUE
 #define Dprintf1(s,a)         if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
+#else
+#define Dprintf1(s,a)
+#define Dprintf2(s,a,b)
+#define Dprintf3(s,a,b,c)
+#endif
 
 /*****************************************************************************
  *
@@ -342,9 +352,11 @@ rf_DiskIOEnqueue(queue, req, pri)
 	RF_ASSERT(req->type == RF_IO_TYPE_NOP || req->numSector);
 	req->priority = pri;
 
+#if RF_DEBUG_DISKQUEUE
 	if (rf_queueDebug && (req->numSector == 0)) {
 		printf("Warning: Enqueueing zero-sector access\n");
 	}
+#endif
 	/*
          * kernel
          */
