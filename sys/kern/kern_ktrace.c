@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.54.2.2 2002/01/10 19:59:48 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.54.2.3 2002/02/21 20:33:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.54.2.2 2002/01/10 19:59:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.54.2.3 2002/02/21 20:33:08 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -89,7 +89,11 @@ ktrderef(struct proc *p)
 	if (fp == NULL)
 		return;
 	FILE_USE(fp);
-/* XXXLUKEM: knote_fdclose here ??? */
+
+	/*
+	 * ktrace file descriptor can't be watched (are not visible to
+	 * userspace), so no kqueue stuff here
+	 */
 	closef(fp, NULL);
 
 	p->p_tracep = NULL;
