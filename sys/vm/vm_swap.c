@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.13 1997/05/11 07:58:09 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.14 1997/05/11 13:28:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -86,7 +86,7 @@
  *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname
  *		of a device or file to stop swapping on.  returning 0
  *		or -1 (done).  XXX unwritten
- *	SWAP_CTL - swap(2) changes the properties of a swap device,
+ *	SWAP_CTL - swap(2) changes the priority of a swap device,
  *		using the misc value (done).
  */
 
@@ -212,6 +212,7 @@ sys_swapon(p, v, retval)
 	vp = nd.ni_vp;
 
 	switch(SCARG(uap, cmd)) {
+	case SWAP_CTL:
 	case SWAP_ON:
 	{
 		int	priority = SCARG(uap, misc);
@@ -221,7 +222,7 @@ sys_swapon(p, v, retval)
 
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: doing SWAP_ON...\n");
+			printf("sw: doing SWAP_ON/CTL...\n");
 #endif /* SWAPDEBUG */
 
 		pspp = swap_priority.lh_first;
@@ -232,10 +233,17 @@ sys_swapon(p, v, retval)
 			     sdp != (void *)&spp->spi_swapdev;
 			     sdp = sdp->swd_next.cqe_next)
 				if (sdp->swd_vp == vp) {
-					error = EBUSY;
-					goto bad;
+					if (SCARG(uap, cmd) == SWAP_ON) {
+						error = EBUSY;
+						goto bad;
+					}
+					CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
+					    swd_next);
+					nsdp = sdp;
 				}
 		}
+		if (SCARG(uap, cmd) == SWAP_CTL && nsdp == NULL)
+			return (ENOENT);
 
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
 			if (spp->spi_priority <= priority)
@@ -264,27 +272,34 @@ sys_swapon(p, v, retval)
 
 			spp = nspp;
 		}
-
-		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
-					        M_WAITOK);
-		nsdp->swd_inuse = nsdp->swd_flags = 0;
-		nsdp->swd_priority = priority;
-		nsdp->swd_vp = vp;
-		nsdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-		if ((error = swap_on(p, nsdp)) != 0) {
-			free((caddr_t)nsdp, M_VMSWAP);
-			if (nspp) {
-				LIST_REMOVE(nspp, spi_swappri);
-				free((caddr_t)nspp, M_VMSWAP);
+		if (SCARG(uap, cmd) == SWAP_ON) {
+			nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
+							M_WAITOK);
+			nsdp->swd_inuse = nsdp->swd_flags = 0;
+			nsdp->swd_vp = vp;
+			nsdp->swd_dev =
+			    (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
+			if ((error = swap_on(p, nsdp)) != 0) {
+				free((caddr_t)nsdp, M_VMSWAP);
+				if (nspp) {
+					LIST_REMOVE(nspp, spi_swappri);
+					free((caddr_t)nspp, M_VMSWAP);
+				}
+				break;
 			}
-			break;
+			/* Keep reference to vnode */
+			vref(vp);
 		}
+		nsdp->swd_priority = priority;
 
 		/* Onto priority list */
 		CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, nsdp, swd_next);
 
-		/* Keep reference to vnode */
-		vref(vp);
+		/*
+		 * XXX do we need a vrel or vput for the vp for the
+		 * SWAP_CTL case ?
+		 */
+
 		break;
 	}
 
@@ -323,12 +338,6 @@ sys_swapon(p, v, retval)
 #endif
 #endif
 		break;
-
-	case SWAP_CTL:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing SWAP_CTL...\n");
-#endif /* SWAPDEBUG */
 
 	default:
 #ifdef SWAPDEBUG
