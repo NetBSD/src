@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.25 1999/09/13 10:31:44 itojun Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.26 1999/10/23 08:45:49 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -476,6 +476,13 @@ typedef struct {
 #define ELF_NOTE_GNU_OSLINUX		(u_int32_t)0x01000000
 #define ELF_NOTE_GNU_OSMACH		(u_int32_t)0x00000000
 
+#if defined(ELFSIZE)
+#define CONCAT(x,y)	__CONCAT(x,y)
+#define ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#endif
 
 #include <machine/elf_machdep.h>
 
@@ -529,14 +536,6 @@ typedef struct {
 #define ELF_NO_ADDR	ELF64_NO_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_NO_ADDR	ELF32_NO_ADDR
-#endif
-
-#if defined(ELFSIZE)
-#define CONCAT(x,y)	__CONCAT(x,y)
-#define ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
 struct elf_args {
