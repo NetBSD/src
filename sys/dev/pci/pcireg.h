@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.18 1998/11/07 16:47:22 drochner Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.19 1998/12/21 20:31:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -284,7 +284,19 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffc
 
 /*
- * capabilities link list
+ * Cardbus CIS pointer (PCI rev. 2.1)
+ */
+#define PCI_CARDBUS_CIS_REG 0x28
+
+/*
+ * Subsystem identification register; contains a vendor ID and a device ID.
+ * Types/macros for PCI_ID_REG apply.
+ * (PCI rev. 2.1)
+ */
+#define PCI_SUBSYS_ID_REG 0x2c
+
+/*
+ * capabilities link list (PCI rev. 2.2)
  */
 #define PCI_CAPLISTPTR_REG		0x34
 #define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
