@@ -1,3 +1,4 @@
+# $NetBSD: ad.m68k,v 1.6 1999/04/19 03:11:31 simonb Exp $
 ./sbin/ldconfig
 ./usr/lib/libm68k.so.0.0
 ./usr/libexec/ld.so

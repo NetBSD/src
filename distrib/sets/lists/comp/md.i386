@@ -1,3 +1,4 @@
+# $NetBSD: md.i386,v 1.35 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/i386
 ./usr/include/i386/_G_config.h
 ./usr/include/i386/ansi.h
