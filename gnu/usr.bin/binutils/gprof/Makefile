@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/27 15:02:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2003/11/28 05:14:18 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -9,11 +9,7 @@ TOP=		${NETBSDSRCDIR}/gnu
 
 PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
-		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
-		-I${DIST}/binutils/include \
-		-I${DIST}/include -I${DIST}/bfd \
-		-DLOCALEDIR=\"/usr/share/locale\"
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
