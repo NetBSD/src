@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.187 2000/01/25 09:04:03 haya Exp $
+$NetBSD: pcidevs,v 1.188 2000/01/31 18:34:19 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1255,12 +1255,13 @@ product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
-product SIS 900			0x0900	SiS900 10/100 Ethernet
+product SIS 900			0x0900	SiS 900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
 product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
+product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
 
 /* Silicon Motion products */
 product SILMOTION LYNX_E	0x0810	Lynx E
