@@ -1,6 +1,10 @@
 /*
- * Copyright (c) 1993 Paul Kranenburg
- * All rights reserved.
+ * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,68 +16,73 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- *	$Id: mount_procfs.c,v 1.3 1993/08/25 13:16:27 pk Exp $
+ *	from: @(#)mount_procfs.c	8.1 (Berkeley) 1/11/94
+ *	$Id: mount_procfs.c,v 1.4 1994/01/12 20:21:50 cgd Exp $
  */
 
-#include <stdio.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 
-void
-usage ()
-{
-	fprintf (stderr, "usage: mount_pfs dir\n");
-	exit (1);
-}
-		
+#include <errno.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void usage __P((void));
+
 int
-main (argc, argv)
-int argc;
-char **argv;
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	char *dev;
-	char *dir;
-	int c;
-	extern char *optarg;
-	extern int optind;
-	int opts = 0;
+	int ch, mntflags;
 
-	while ((c = getopt (argc, argv, "F:")) != EOF) {
-		switch (c) {
+	mntflags = 0;
+	while ((ch = getopt(argc, argv, "F:")) != EOF)
+		switch(ch) {
 		case 'F':
-			opts |= atoi (optarg);
+			mntflags = atoi(optarg);
 			break;
+		case '?':
 		default:
-			usage ();
+			usage();
 		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2)
+		usage();
+
+	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL)) {
+		(void)fprintf(stderr, "mount_fdesc: %s\n", strerror(errno));
+		exit(1);
 	}
-
-	if (optind + 2 != argc)
-		usage ();
-
-	dev = argv[optind];
-	dir = argv[optind + 1];
-
-	if (mount (MOUNT_PROCFS, dir, opts, (caddr_t)0) < 0) {
-		perror ("mount");
-		exit (1);
-	}
-
-	exit (0);
+	exit(0);
 }
 
+void
+usage()
+{
+	(void)fprintf(stderr,
+	    "usage: mount_procfs [ -F fsoptions ] /proc mount_point\n");
+	exit(1);
+}
