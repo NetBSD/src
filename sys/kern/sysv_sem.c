@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.20 1995/03/19 23:44:59 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.21 1995/06/05 12:57:03 pk Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -1000,7 +1000,7 @@ unlock:
 	}
 }
 
-#if defined(COMPAT_10) && !defined(alpha)
+#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
 int
 compat_10_semsys(p, uap, retval)
 	struct proc *p;
@@ -1061,4 +1061,4 @@ compat_10_semsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
-#endif /* defined(COMPAT_10) && !defined(alpha) */
+#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */
