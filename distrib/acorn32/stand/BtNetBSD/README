@@ -1,0 +1,15 @@
+$NetBSD: README,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+
+Welcome to NetBSD for the Acorn RiscPC/A7000/NC !
+
+To get this distribution working run `settype' the file `Settype'
+to Obey and run this file. It will set all file types in this
+directory to the correct RISC OS types. Pity those file types get
+lost after retrieving them from the source repository....
+
+To read more about installing the bootloader, read the FBInstall file.
+
+Enjoy your installation !
+
+11 February 2002
+Reinoud Zandijk
