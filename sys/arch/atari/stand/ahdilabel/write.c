@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.1.1.1.2.2 2000/08/14 08:00:00 leo Exp $	*/
+/*	$NetBSD: write.c,v 1.1.1.1.2.3 2001/03/22 02:24:29 he Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #include "privahdi.h"
 #include <fcntl.h>
+#ifdef DEBUG
+#include <stdio.h> 
+#endif
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
@@ -58,7 +61,7 @@ ahdi_writelabel (ptable, diskname, flags)
 	char			*diskname;
 	int			 flags;
 {
-	int			 fd, i, j, k, firstxgm, keep;
+	int			 fd, i, j, k, firstxgm, keep, cksum_ok;
 	struct ahdi_root	*root;
 	u_int			 rsec;
 	u_int32_t		 xgmsec, nbdsec;
@@ -75,6 +78,11 @@ ahdi_writelabel (ptable, diskname, flags)
 		if ((root = disk_read (fd, AHDI_BBLOCK, 1)) == NULL) {
 			return (-1);
 		}
+		cksum_ok = ahdi_cksum (root) == root->ar_checksum;
+#ifdef DEBUG
+		printf ("Previous root sector checksum was ");
+		cksum_ok ? printf (" correct\n") : printf (" incorrect\n");
+#endif
 		bzero ((void *) root->ar_parts,
 		    sizeof (struct ahdi_part) * AHDI_MAXRPD);
 	} else {
@@ -83,6 +91,10 @@ ahdi_writelabel (ptable, diskname, flags)
 			return (-1);
 		}
 		bzero ((void *) root, sizeof (struct ahdi_root));
+		cksum_ok = 0;
+#ifdef DEBUG
+		printf ("Clearing root sector - forcing incorrect checksum\n");
+#endif
 	}
 
 	nbdsec = 0;
@@ -145,7 +157,17 @@ ahdi_writelabel (ptable, diskname, flags)
 		root->ar_bslst = (u_int32_t) BSL_OFFSET;
 		root->ar_bslsize = (u_int32_t) BSL_SIZE;
 	}
+
+	/* Write correct checksum? */
 	root->ar_checksum = ahdi_cksum (root);
+	if (!cksum_ok) {
+		root->ar_checksum ^= 0x5555;
+#ifdef DEBUG
+		printf ("Setting incorrect checksum\n");
+	} else {
+		printf ("Setting correct checksum\n");
+#endif
+	}
 
 	if (!disk_write (fd, AHDI_BBLOCK, 1, root)) {
 		free (root);
@@ -200,7 +222,6 @@ ahdi_writelabel (ptable, diskname, flags)
 				    root->ar_parts[j].ap_st,
 				    root->ar_parts[j].ap_size);
 #endif
-				root->ar_parts[j].ap_size = 0;
 			}
 			if (ptable->parts[i].root == ptable->parts[i+1].root) {
 				/* Next partition has same auxiliary root */
