@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.9,v 1.10 2001/12/26 00:24:16 wiz Exp $
+.\"	$NetBSD: disklabel.9,v 1.11 2002/12/21 13:00:57 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ attempts to read a disklabel from the device identified by
 using the device strategy routine passed in
 .Fa strat .
 Note that a buffer structure is required to pass to the strategy routine;
-it needs to be acquired and parametrized for the intended I/O operation,
+it needs to be acquired and parameterized for the intended I/O operation,
 and disposed of when the operation has completed.
 Some fields in the in the disklabel passed in
 .Fa lp
