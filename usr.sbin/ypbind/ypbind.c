@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.17 1995/01/15 08:55:59 mycroft Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.18 1995/01/15 09:09:30 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -287,7 +287,7 @@ main(argc, argv)
 	struct timeval tv;
 	fd_set fdsr;
 	int width, lockfd;
-	int i;
+	int evil = 0, one;
 
 	yp_get_default_domain(&domainname);
 	if (domainname[0] == '\0') {
@@ -295,10 +295,11 @@ main(argc, argv)
 		exit(1);
 	}
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp("-ypset", argv[i]))
+	while (--argc) {
+		++argv;
+		if (!strcmp("-ypset", *argv))
 			ypsetmode = YPSET_ALL;
-		else if (!strcmp("-ypsetme", argv[i]))
+		else if (!strcmp("-ypsetme", *argv))
 			ypsetmode = YPSET_LOCAL;
 	}
 
@@ -317,20 +318,7 @@ main(argc, argv)
 	flock(lockfd, LOCK_SH);
 #endif
 
-#ifdef DAEMON
-	switch (fork()) {
-	case 0:
-		break;
-	case -1:
-		perror("fork");
-		exit(1);
-	default:
-		exit(0);
-	}
-	setsid();
-#endif
-
-	pmap_unset(YPBINDPROG, YPBINDVERS);
+	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
 	udptransp = svcudp_create(RPC_ANYSOCK);
 	if (udptransp == NULL) {
@@ -365,8 +353,8 @@ main(argc, argv)
 	
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	fcntl(pingsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
-	i = 1;
-	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
+	one = 1;
+	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 	rmtca.prog = YPPROG;
 	rmtca.vers = YPVERS;
 	rmtca.proc = YPPROC_DOMAIN_NONACK;
@@ -419,6 +407,11 @@ main(argc, argv)
 			if (check)
 				checkwork();
 			break;
+		}
+
+		if (!evil && ypbindlist->dom_alive) {
+			evil = 1;
+			daemon(0, 0);
 		}
 	}
 }
