@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp $
+$NetBSD: pcidevs,v 1.286 2001/01/08 21:47:10 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -628,6 +628,7 @@ product ACARD AEC6715UW	0x8050	AEC6715UW SCSI
 
 /* Accton products */
 product ACCTON MPX5030	0x1211	MPX 5030/5038 Ethernet
+product ACCTON EN2242	0x1216	EN2242 10/100 Ethernet
 
 /* Acer products */
 product ACER M1435	0x1435	M1435 VL-PCI Bridge
