@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.6 1999/12/17 23:54:40 he Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.7 1999/12/18 00:01:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -449,32 +449,30 @@ lfs_segwrite(mp, flags)
 	/*
 	 * If lfs_flushvp is non-NULL, we are called from lfs_vflush,
 	 * in which case we have to flush *all* buffers off of this vnode.
+	 * We don't care about other nodes, but write any non-dirop nodes
+	 * anyway in anticipation of another getnewvnode().
+	 *
+	 * If we're cleaning we only write cleaning and ifile blocks, and
+	 * no dirops, since otherwise we'd risk corruption in a crash.
 	 */
-	if((sp->seg_flags & SEGM_CLEAN) && !(fs->lfs_flushvp))
+	if(fs->lfs_flushvp)
+		lfs_writevnodes(fs, mp, sp, VN_REG);
+	else if(sp->seg_flags & SEGM_CLEAN)
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
 	else {
 		lfs_writevnodes(fs, mp, sp, VN_REG);
-		/*
-		 * XXX KS - If we're cleaning, we can't wait for dirops,
-		 * because they might be waiting on us.  The downside of this
-		 * is that, if we write anything besides cleaning blocks
-		 * while cleaning, the checkpoint is not completely
-		 * consistent.
-		 */
-		if(!(sp->seg_flags & SEGM_CLEAN)) {
-			while(fs->lfs_dirops)
-				if((error = tsleep(&fs->lfs_writer, PRIBIO + 1,
-						"lfs writer", 0)))
-				{
-					free(sp->bpp, M_SEGMENT);
-					free(sp, M_SEGMENT); 
-					return (error);
-				}
-			fs->lfs_writer++;
-			writer_set=1;
-			lfs_writevnodes(fs, mp, sp, VN_DIROP);
-			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
-		}
+		while(fs->lfs_dirops)
+			if((error = tsleep(&fs->lfs_writer, PRIBIO + 1,
+					"lfs writer", 0)))
+			{
+				free(sp->bpp, M_SEGMENT);
+				free(sp, M_SEGMENT); 
+				return (error);
+			}
+		fs->lfs_writer++;
+		writer_set=1;
+		lfs_writevnodes(fs, mp, sp, VN_DIROP);
+		((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 	}	
 
 	/*
