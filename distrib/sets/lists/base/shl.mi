@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.95 2000/11/20 00:31:37 wiz Exp $
+# $NetBSD: shl.mi,v 1.96 2000/12/06 13:40:58 tron Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.1.2
 ./usr/lib/libasn1.so.3.0
@@ -42,6 +42,6 @@
 ./usr/lib/libtermcap.so.0.4
 ./usr/lib/libtermlib.so.0.4
 ./usr/lib/libusb.so.0.1
-./usr/lib/libutil.so.5.3
+./usr/lib/libutil.so.5.4
 ./usr/lib/libwrap.so.0.2
 ./usr/lib/libz.so.0.2
