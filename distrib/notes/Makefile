@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/06/15 21:32:43 itojun Exp $
+#	$NetBSD: Makefile,v 1.26 2002/06/15 21:33:07 itojun Exp $
 #
 
 TARGETS+=	release
@@ -24,6 +24,7 @@ SUBDIR+= macppc
 SUBDIR+= mmeye
 SUBDIR+= mvme68k
 SUBDIR+= news68k
+SUBDIR+= newsmips
 SUBDIR+= next68k
 SUBDIR+= pc532
 SUBDIR+= pmax
