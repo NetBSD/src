@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.2 2003/10/27 22:38:39 lukem Exp $ */
+/* $NetBSD: next68k.c,v 1.2.2.1 2004/06/22 07:15:04 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.2 2003/10/27 22:38:39 lukem Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.2.2.1 2004/06/22 07:15:04 tron Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ nextstep_checksum(const void *vbuf, const void *vlimit)
 {
 	const uint16_t *buf = vbuf;
 	const uint16_t *limit = vlimit;
-	uint sum = 0;
+	u_int sum = 0;
 
 	while (buf < limit) {
 		sum += be16toh(*buf++);
@@ -81,7 +81,7 @@ next68k_setboot(ib_params *params)
 {
 	int retval, labelupdated;
 	uint8_t *bootbuf;
-	uint bootsize;
+	u_int bootsize;
 	ssize_t rv;
 	uint32_t cd_secsize;
 	int sec_netonb_mult;
