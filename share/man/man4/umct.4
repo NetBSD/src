@@ -1,6 +1,6 @@
-.\" $NetBSD: ucom.4,v 1.5 2001/03/28 18:56:42 ichiro Exp $
+.\" $NetBSD: umct.4,v 1.1 2001/03/28 18:56:42 ichiro Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,51 +34,38 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 25, 1999
-.Dt UCOM 4
+.Dd Jan 23, 2001
+.Dt UPLCOM 4
 .Os
 .Sh NAME
-.Nm ucom
-.Nd USB tty support
+.Nm umct
+.Nd USB support for MCT USB-RS232 serial adapters driver
 .Sh SYNOPSIS
-.\"Cd "ucom* at uetekcom? portno ?"
-.Cd "ucom* at uftdi?"
-.Cd "ucom* at umodem? portno ?"
-.Cd "ucom* at uplcom?"
-.Cd "ucom* at umct?"
-.Cd "ucom* at uvisor?"
+.Cd "umct*  at uhub?"
+.Cd "ucom*  at umct?"
+.Sh HARDWARE
+The
+.Nm
+driver supports the following adapters:
 .Pp
+.Bl -tag -width -offset indent -compact
+.It MCT USB-RS232 Converter 25 pin Model U232-P25
+.It MCT USB-RS232 Converter  9 pin Model U232-P9
+.It Sitecom USB-RS232 Converter
+.It D-Link DU-H3SP USB BAY
+.El
 .Sh DESCRIPTION
 The
 .Nm
-driver attaches to USB modems, serial ports, and other devices that need
-to look like a tty.
-The
-.Nm
-driver shows a behaviour like a
-.Xr tty 4 .
-This means that normal programs such as
-.Xr tip 1
-or
-.Xr pppd 8
-can be used to access the device.
+driver provides support for MCT USB-to-RS232 Converter and there family products.
 .Pp
-The
-.Va portno
-locator can be used to decide which port to use for device that have
-multiple external ports.
-.Sh FILES
-.Bl -tag -width Pa
-.It Pa /dev/ttyU?
-.El
+The device is accessed through the
+.Xr ucom 4
+driver which makes it behave like a
+.Xr tty 4 .
 .Sh SEE ALSO
 .Xr tty 4 ,
-.\"Xr uetekcom 4 ,
-.Xr uftdi 4 ,
-.Xr umodem 4 ,
-.Xr uplcom 4 ,
-.Xr umct 4 ,
-.Xr uvisor 4 ,
+.Xr ucom 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
