@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.92 2003/04/24 16:55:29 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.93 2003/05/30 15:43:33 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -676,49 +676,70 @@ _rtld_dlsym(handle, name)
 	unsigned long hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
+	void *retaddr;
 	
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
 	
-	if (handle == NULL
-#if 0
-	    || handle == RTLD_NEXT
-#endif
-	) {
-		void *retaddr;
-
+	switch ((intptr_t)handle) {
+	case (intptr_t)NULL:
+	case (intptr_t)RTLD_NEXT:
+	case (intptr_t)RTLD_DEFAULT:
+	case (intptr_t)RTLD_SELF:
 		retaddr = __builtin_return_address(0); /* __GNUC__ only */
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
 			return NULL;
 		}
-		if (handle == NULL) { /* Just the caller's shared object. */
+
+		switch ((intptr_t)handle) {
+		case (intptr_t)NULL:	 /* Just the caller's shared object. */
 			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
-		} else { /* All the shared objects after the caller's */
-			while ((obj = obj->next) != NULL) {
-				if ((def = _rtld_symlook_obj(name, hash, obj, false)) != NULL) {
+			break;
+
+		case (intptr_t)RTLD_NEXT:	/* Objects after callers */
+			obj = obj->next;
+			/*FALLTHROUGH*/
+
+		case (intptr_t)RTLD_SELF:	/* Caller included */
+			for (; obj; obj = obj->next) {
+				if ((def = _rtld_symlook_obj(name, hash, obj,
+				    false)) != NULL) {
 					defobj = obj;
 					break;
 				}
 			}
+			break;
+
+		case (intptr_t)RTLD_DEFAULT:
+			def = _rtld_symlook_default(name, hash, obj, &defobj,
+			    true);
+			break;
+
+		default:
+			abort();
 		}
-	} else {
+		break;
+
+	default:
 		if ((obj = _rtld_dlcheck(handle)) == NULL)
 			return NULL;
 		
 		if (obj->mainprog) {
-			/* Search main program and all libraries loaded by it. */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, false);
+			/* Search main program and all libraries loaded by it */
+			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
+			    &defobj, false);
 		} else {
 			/*
-			 * XXX - This isn't correct.  The search should include the whole
-			 * DAG rooted at the given object.
+			 * XXX - This isn't correct.  The search should include
+			 * the whole DAG rooted at the given object.
 			 */
 			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
 		}
+		break;
 	}
 	
 	if (def != NULL) {
