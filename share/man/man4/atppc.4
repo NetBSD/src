@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.14 2004/01/30 19:06:36 jdolecek Exp $
+.\"	$NetBSD: atppc.4,v 1.15 2004/01/31 21:28:45 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net>
@@ -105,11 +105,10 @@ The information has been updated for the
 .Nx
 port by Gary Thorpe.
 .Sh BUGS
-Original
+The
 .Fx
-included support for some specific chip sets, specifically
-detection of some nonstandard device I/O locations on ISA
-bus.
-This support was not ported over to
+driver includes support for some specific chip sets, specifically
+detection of some non-standard device I/O locations on the ISA bus.
+This support was not ported over to the
 .Nx
 version of the driver yet.
