@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2002/02/11 23:07:46 reinoud Exp $
+# $NetBSD: Makefile,v 1.5 2002/02/16 01:53:52 reinoud Exp $
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
@@ -25,8 +25,14 @@ release:
 .endfor
 	cd ${.CURDIR}/../../sys/arch/acorn32/stand && \
 		./export-BtNetBSD && \
-		mv -f BtNetBSD.tar ${ITARGET}/misc && \
-		rm -rf ${ITARGET}/misc/BtNetBSD.tar.gz
-		gzip ${ITARGET}/misc/BtNetBSD.tar && \
-		rm -rf BtNetBSD.tar 
+		rm -f ${ITARGET}/misc/BtNetBSD.tgz && \
+		gzip -9 -c BtNetBSD.tar > ${ITARGET}/misc/BtNetBSD.tgz && \
+		rm -f BtNetBSD.tar && \
+		mv -f BtNetBSD.zip ${ITARGET}/misc && \
+	${IINST} ${.CURDIR}/../notes/acorn32/prep.RISCOS ${RELEASEDIR}/ && \
+	cd ${.CURDIR} && \
+		rm -f ${ITARGET}/misc/gzip_ff8.bin && \
+		uudecode < gzip_ff8.bin.uue && \
+		mv -f gzip_ff8.bin ${ITARGET}/misc/
 .endif
+
