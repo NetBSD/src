@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.55 2001/01/22 13:57:00 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.56 2001/03/22 22:20:28 petrov Exp $ */
 
 /*
  * Mach Operating System
@@ -76,12 +76,77 @@ extern struct traptrace {
 
 static int nil;
 
+static int
+db__char_value(const struct db_variable *var, db_expr_t *expr, int mode)
+{
+
+	switch (mode) {
+	case DB_VAR_SET:
+		*var->valuep = *(char *)expr;
+		break;
+	case DB_VAR_GET:
+		*expr = *(char *)var->valuep;
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("db__char_value: mode %d\n", mode);
+		break;
+#endif
+	}
+
+	return 0;
+}
+
+#ifdef notdef_yet
+static int
+db__short_value(const struct db_variable *var, db_expr_t *expr, int mode)
+{
+
+	switch (mode) {
+	case DB_VAR_SET:
+		*var->valuep = *(short *)expr;
+		break;
+	case DB_VAR_GET:
+		*expr = *(short *)var->valuep;
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("db__short_value: mode %d\n", mode);
+		break;
+#endif
+	}
+
+	return 0;
+}
+#endif
+
+static int
+db__int_value(const struct db_variable *var, db_expr_t *expr, int mode)
+{
+
+	switch (mode) {
+	case DB_VAR_SET:
+		*var->valuep = *(int *)expr;
+		break;
+	case DB_VAR_GET:
+		*expr = *(int *)var->valuep;
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("db__int_value: mode %d\n", mode);
+		break;
+#endif
+	}
+
+	return 0;
+}
+
 const struct db_variable db_regs[] = {
 	{ "tstate", (long *)&DDB_TF->tf_tstate, FCN_NULL, },
 	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
-	{ "ipl", (long *)&DDB_TF->tf_oldpil, FCN_NULL, },
-	{ "y", (long *)&DDB_TF->tf_y, FCN_NULL, },
+	{ "ipl", (long *)&DDB_TF->tf_oldpil, db__char_value, },
+	{ "y", (long *)&DDB_TF->tf_y, db__int_value, },
 	{ "g0", (long *)&nil, FCN_NULL, },
 	{ "g1", (long *)&DDB_TF->tf_global[1], FCN_NULL, },
 	{ "g2", (long *)&DDB_TF->tf_global[2], FCN_NULL, },
