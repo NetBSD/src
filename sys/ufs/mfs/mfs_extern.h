@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.5 1996/09/01 23:49:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,5 @@ int	mfs_close	__P((void *));
 int	mfs_inactive	__P((void *));
 int	mfs_reclaim	__P((void *));
 int	mfs_print	__P((void *));
-int	mfs_badop	__P((void *));
 
 __END_DECLS

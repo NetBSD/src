@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.9 1996/09/01 23:49:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <machine/vmparam.h>
@@ -334,18 +335,6 @@ mfs_print(v)
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
-}
-
-/*
- * Block device bad operation
- */
-int
-mfs_badop(v)
-	void *v;
-{
-
-	panic("mfs_badop called\n");
-	/* NOTREACHED */
 }
 
 /*
