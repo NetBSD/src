@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15 2003/08/25 09:12:46 cb Exp $	*/
+/*	$NetBSD: systrace.h,v 1.16 2003/11/28 21:53:32 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -203,6 +203,8 @@ char *filter_expand(char *);
 char *filter_dynamicexpand(struct intercept_pid *, char *);
 int filter_needexpand(char *);
 
+void cradle_start(char *, char *, char *);
+
 int parse_filter(char *, struct filter **);
 
 char *uid_to_name(uid_t);
@@ -232,6 +234,8 @@ extern struct intercept_translate ic_pidname;
 extern struct intercept_translate ic_signame;
 
 extern struct intercept_translate ic_linux_oflags;
+
+int requestor_start(char *, int);
 
 #if defined(__i386__) || defined(__m68k__) || defined(__alpha__) || defined(__powerpc__) || defined(__mips__) || defined(__arm__)
 #define HAVE_LINUX_FCNTL_H
