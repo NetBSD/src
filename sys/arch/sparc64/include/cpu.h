@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1999/06/07 05:28:04 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.11 1999/06/20 00:51:30 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,9 +212,6 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
-/* iommu.c */
-void	iommu_enter __P((u_int, u_int));
-void	iommu_remove __P((u_int, u_int));
 /* emul.c */
 int	fixalign __P((struct proc *, struct trapframe *));
 int	emulinstr __P((vaddr_t, struct trapframe *));
