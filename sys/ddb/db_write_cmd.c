@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.4 1994/06/29 06:31:28 cgd Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.5 1994/10/09 08:56:30 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -73,7 +73,7 @@ db_write_cmd(address, have_addr, count, modif)
 		break;
 	    default:
 		db_error("Unknown size\n");
-		return;
+		/*NOTREACHED*/
 	}
 
 	while (db_expression(&new_value)) {
@@ -86,8 +86,10 @@ db_write_cmd(address, have_addr, count, modif)
 	    wrote_one = TRUE;
 	}
 
-	if (!wrote_one)
+	if (!wrote_one) {
 	    db_error("Nothing written.\n");
+	    /*NOTREACHED*/
+	}
 
 	db_next = addr;
 	db_prev = addr - size;

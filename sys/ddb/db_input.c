@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.4 1994/06/29 06:31:08 cgd Exp $	*/
+/*	$NetBSD: db_input.c,v 1.5 1994/10/09 08:56:23 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -227,8 +227,10 @@ db_check_interrupt()
 	    case CTRL('s'):
 		do {
 		    c = cnmaygetc();
-		    if (c == CTRL('c'))
+		    if (c == CTRL('c')) {
 			db_error((char *)0);
+			/*NOTREACHED*/
+		    }
 		} while (c != CTRL('q'));
 		break;
 

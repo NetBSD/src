@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.6 1994/10/09 08:30:03 mycroft Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.7 1994/10/09 08:56:25 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -171,8 +171,7 @@ db_lex()
 		(c == '_'))
 	    {
 		db_error("Bad character in number\n");
-		db_flush_lex();
-		return (tEOF);
+		/*NOTREACHED*/
 	    }
 	    db_unread_char(c);
 	    return (tNUMBER);
@@ -187,8 +186,10 @@ db_lex()
 	    cp = db_tok_string;
 	    if (c == '\\') {
 		c = db_read_char();
-		if (c == '\n' || c == -1)
+		if (c == '\n' || c == -1) {
 		    db_error("Bad escape\n");
+		    /*NOTREACHED*/
+		}
 	    }
 	    *cp++ = c;
 	    while (1) {
@@ -200,14 +201,15 @@ db_lex()
 		{
 		    if (c == '\\') {
 			c = db_read_char();
-			if (c == '\n' || c == -1)
+			if (c == '\n' || c == -1) {
 			    db_error("Bad escape\n");
+			    /*NOTREACHED*/
+			}
 		    }
 		    *cp++ = c;
 		    if (cp == db_tok_string+sizeof(db_tok_string)) {
 			db_error("String too long\n");
-			db_flush_lex();
-			return (tEOF);
+			/*NOTREACHED*/
 		    }
 		    continue;
 		}

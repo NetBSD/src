@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.7 1994/06/29 06:31:18 cgd Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.8 1994/10/09 08:56:27 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -199,6 +199,7 @@ db_lookup(symstr)
 			*cp = ':';
 			if (i == MAXNOSYMTABS) {
 				db_error("invalid symbol table name");
+				/*NOTREACHED*/
 			}
 			symstr = cp+1;
 		}
