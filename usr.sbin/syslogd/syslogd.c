@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.49 2001/11/06 05:39:27 kim Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.50 2002/01/18 10:27:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.49 2001/11/06 05:39:27 kim Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.50 2002/01/18 10:27:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,8 +573,7 @@ logpath_add(lp, szp, maxszp, new)
 		if (*maxszp == 0) {
 			*maxszp = 4;	/* start of with enough for now */
 			*lp = NULL;
-		}
-		else
+		} else
 			*maxszp *= 2;
 		*lp = realloc(*lp, sizeof(char *) * (*maxszp + 1));
 		if (*lp == NULL) {
@@ -582,7 +581,10 @@ logpath_add(lp, szp, maxszp, new)
 			die(0);
 		}
 	}
-	(*lp)[(*szp)++] = new;
+	if (((*lp)[(*szp)++] = strdup(new)) == NULL) {
+		logerror("Couldn't allocate logpath");
+		die(0);
+	}
 	(*lp)[(*szp)] = NULL;		/* always keep it NULL terminated */
 }
 
@@ -606,6 +608,7 @@ logpath_fileadd(lp, szp, maxszp, file)
 
 	while ((line = fgetln(fp, &len))) {
 		line[len - 1] = 0;
+//printf("got line as |%s|\n", line);
 		logpath_add(lp, szp, maxszp, line);
 	}
 	fclose(fp);
