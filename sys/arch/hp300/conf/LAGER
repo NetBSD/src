@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.19 1997/05/06 00:57:00 lukem Exp $
+#	$NetBSD: LAGER,v 1.20 1997/05/07 00:27:36 lukem Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -38,11 +38,11 @@ options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Network filesystem server
 
 # Networking options
-options 	INET		# Internet protocols
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options 	GATEWAY		# Packet forwarding + larger mb_map
-options 	NMBCLUSTERS="1024"	# Crank this up
-options 	PFIL_HOOKS	# packet filter hooks
+options 	INET			# Internet protocols
+options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY			# Packet forwarding + larger mb_map
+options 	NMBCLUSTERS=1024	# Crank this up
+options 	PFIL_HOOKS		# packet filter hooks
 
 # Options for HP hardware
 options 	USELEDS		# make the lights twinkle

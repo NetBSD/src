@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.18 1997/05/06 00:56:55 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.19 1997/05/07 00:27:34 lukem Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -34,7 +34,7 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
-options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 # Filesystems
 file-system	NFS		# Network filesystem client
@@ -58,7 +58,7 @@ options 	FPSP		# floating point interface for 68040
 options 	USELEDS		# make the lights twinkle
 options 	COMPAT_NOLABEL	# defaults for unlabeled disks
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
-#options 	CONSCODE="9"	# force console at this select code
+#options 	CONSCODE=9	# force console at this select code
 options 	UK_KEYBOARD	# include United Kingdom HIL keymap
 options 	SE_KEYBOARD	# include Swedish HIL keymap
 
