@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.18 2003/02/14 15:20:19 grant Exp $
+.\" $NetBSD: lkm.4,v 1.19 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -102,7 +102,7 @@ to run an appropriate program when the driver has been successfully loaded.
 Emulation modules allow to load an emulation support for foreign
 operating systems.
 .Ss Execution Interpreters
-Execution interpreters allow to load support for execution of new type
+Execution Interpreters allow to load support for execution of new type
 of binaries, not normally supported by kernel. This also allows to load
 support for executing foreign system binaries.
 Execution Interpreters normally depend on
@@ -114,7 +114,7 @@ well-defined or well-used interfaces for extension.
 They are provided for extension, and the user is expected to
 write their own loader to handle the kernel pointer/table
 manipulation to "wire in" their loaded module (and "unwire"
-it on uload).
+it on unload).
 An example of a "miscellaneous module" might be a loader for
 card-specific VGA drivers or alternate terminal emulations in
 an appropriately layered console driver.

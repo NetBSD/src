@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.20 2003/08/07 10:31:02 agc Exp $
+.\"	$NetBSD: le.4,v 1.21 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Cd "le* at bicc?"
 .Cd "depca0 at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5 # DEC DEPCA"
 .Cd "le* at depca?"
-.Cd "le* at isapnp?                          # ISA-Plug-and-Play adapters"
+.Cd "le* at isapnp?                          # ISA Plug-and-Play adapters"
 .Ss EISA boards
 .Cd "depca* at eisa? slot ?                  # DEC DE422"
 .Cd "le* at depca?"
@@ -145,7 +145,7 @@ Ameristar's Ethernet card, manufacturer\ 1053, product\ 1
 Village Tronic's Ethernet card, manufacturer\ 2167, product\ 201
 .El
 .Pp
-The A2065 and Ameristar Ethernet cards supports only manual media selection.
+The A2065 and Ameristar Ethernet cards support only manual media selection.
 .Pp
 The Ariadne card supports a software media selection for its two
 different connectors:
@@ -294,7 +294,7 @@ is
 The
 .Tn LANCE
 TDR value is an internal counter of the interval between the start
-of a transmission, and the occurrence of a collision.
+of a transmission and the occurrence of a collision.
 This value can be used to determine the distance from the Ethernet
 tap to the point on the Ethernet cable that is shorted or open
 (unterminated).
@@ -391,7 +391,7 @@ driver executes one or two calls to an inline Ethernet address
 comparison function for every received packet.
 On the
 .Tn mc68000
-it is exactly eight instructions of 16-bits each.
+it is exactly eight instructions of 16 bits each.
 There is one comparison for each unicast packet, and two
 comparisons for each broadcast packet.
 .Pp

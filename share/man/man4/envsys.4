@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.14 2004/04/25 03:13:00 kochi Exp $
+.\"	$NetBSD: envsys.4,v 1.15 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -53,33 +53,40 @@ There are a number of considerations:
 .Bl -enum
 .It
 This API is designed to support various environmental sensor ICs
-available on modern motherboards.  Initially it supports three
-distinct sensor types; fan speed, temperature, and voltage.
+available on modern motherboards.
+Initially it supports three
+distinct sensor types: fan speed, temperature, and voltage.
 Additional sensor types can be added with new ioctl's without
 disrupting the current API.
 .It
 Many sensor ICs have no fixed assignment of registers to
-physical phenomena.  Thus, some userland mechanism of
+physical phenomena.
+Thus, some userland mechanism of
 assigning meanings to the registers is required to allow
 userland utilities to produce reasonable output.
 .It
 The number of registers for each class of sensor varies
-among devices.  Therefore a way to enumerate all data of
-a particular sensor type is required.  Fixed limits on the
-number of sensors per type is not desirable.
+among devices.
+Therefore a way to enumerate all data of
+a particular sensor type is required.
+Fixed limits on the
+number of sensors per type are not desirable.
 .It
 Some ICs provide useful statistical information.
 Collecting reliable statistical information in userland
-from a polled device is problematic.  We would like to use
+from a polled device is problematic.
+We would like to use
 the on-chip information when it is available.
 .It
 A useful balance between complexity of use and amount
-of available information is desired.  While it may be
+of available information is desired.
+While it may be
 possible to allow for an unlimited number of statistical
 measures to be returned by a device, we have chosen only
 four common ones: current, minimum, maximum, and average.
 Even with this limited set, it may be impractical or
-impossible for devices to produce them all.  Thus, a
+impossible for devices to produce them all.
+Thus, a
 mechanism to determine which statistics are valid is required.
 .It
 The API is designed in a way that can be used to monitor
@@ -88,8 +95,10 @@ sensors.
 .El
 .Pp
 For the purposes of this API, all devices must number the sensors
-sequentially, beginning with 0.  Moreover, all sensors of the same
-type must occupy a sub-interval of [0..n-1].  This arrangement
+sequentially, beginning with 0.
+Moreover, all sensors of the same
+type must occupy a sub-interval of [0..n-1].
+This arrangement
 allows easy iteration over the entire collection of sensors or over
 sensors of a particular type.
 .Pp
@@ -97,11 +106,12 @@ The following
 .Xr ioctl 2 Ns 's
 must be supported by any device claiming to
 be compliant with version 1.0 of
-.Nm
+.Nm :
 .Pp
 .Bl -tag -width indent
 .It Dv ENVSYS_VERSION (int)
-Returns API version * 1000.  A userland application could use
+Returns API version * 1000.
+A userland application could use
 this command to determine further supported ioctl's of the
 device.
 .It Dv ENVSYS_GRANGE (envsys_range_t)
@@ -109,12 +119,12 @@ The caller fills in the
 .Va units
 member of:
 .Bd -literal
-typedef struct envsys_range {
+struct envsys_range {
 	u_int low;
 	u_int high;
-
 	u_int units;	/* see GTREDATA */
-} envsys_range_t;
+};
+typedef struct envsys_range envsys_range_t;
 .Ed
 .Pp
 The driver fills in the
@@ -154,7 +164,8 @@ typedef struct envsys_tre_data {
 At request time, the caller of this command fills only the
 .Va sensor
 member with the sensor number for which data is being
-requested.  The structure is returned with available data
+requested.
+The structure is returned with available data
 filled in by the driver.
 .Pp
 Zero or more of the following bits may be set in
@@ -168,7 +179,8 @@ Not set implies an illegal sensor number was requested.
 .It Dv ENVSYS_FMINVALID
 .It Dv ENVSYS_FMAXVALID
 .It Dv ENVSYS_FAVGVALID
-Set if these fields are filled with valid data
+.It Dv ENVSYS_FFRACVALID
+Set if these fields are filled with valid data.
 .Pp
 Although
 .Dv !ENVSYS_FVALID
@@ -205,6 +217,11 @@ are:
 .It Dv ENVSYS_SOHMS
 .It Dv ENVSYS_SWATTS
 .It Dv ENVSYS_SAMPS
+.It Dv ENVSYS_SWATTHOUR
+.It Dv ENVSYS_SAMPHOUR
+.It Dv ENVSYS_INDICATOR
+.It Dv ENVSYS_INTEGER
+.It Dv ENVSYS_NSENSORS
 .El
 .It Dv ENVSYS_STREINFO (envsys_basic_info_t)
 .It Dv ENVSYS_GTREINFO (envsys_basic_info_t)
@@ -214,8 +231,8 @@ typedef struct envsys_basic_info {
 	u_int	sensor;		/* sensor number */
 	u_int	units;		/* type of sensor */
 	char	desc[33];	/* sensor description */
-	u_int	rpms;		/* for fans */
 	u_int	rfact;		/* for volts, (factor x 10^4) */
+	u_int	rpms;		/* for fans */
 	u_int32_t validflags;	/* sensor valid flags */
 } envsys_basic_info_t;
 .Ed
@@ -232,8 +249,8 @@ member.
 .Pp
 All environmental sensor types read the supplied
 .Va desc
-field and store the contents for subsequent requests.  The
-driver is expected to supply a default
+field and store the contents for subsequent requests.
+The driver is expected to supply a default
 .Dv NULL
 terminated string for
 .Va desc .
@@ -246,7 +263,7 @@ Drivers are expected to multiply DC voltage values by this factor before
 returning them to the user.
 .Pp
 The driver will fill in the
-.Va flags
+.Va validflags
 value, indicating to the user that he has successfully programmed or
 retrieved data from an existing sensor.
 .El

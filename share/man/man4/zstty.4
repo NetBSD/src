@@ -1,4 +1,4 @@
-.\"	$NetBSD: zstty.4,v 1.7 2003/05/06 08:15:04 wiz Exp $
+.\"	$NetBSD: zstty.4,v 1.8 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,7 +155,7 @@ range 50 to 38400 (and higher on some machines).
 .It zs0*: fifo overflow
 .br
 The on-chip
-.Dq fifo
+.Dq FIFO
 has overflowed and incoming data has been lost.
 This generally means the machine is not responding to
 interrupts from the ZS chip fast enough, which can be
@@ -185,7 +185,7 @@ driver supplied with
 .Sh BUGS
 The old
 .Tn Zilog
-8530 chip has a very small fifo (3 bytes?) and
+8530 chip has a very small FIFO (3 bytes?) and
 therefore has very strict latency requirements for the
 interrupt service routine.
 This limits the usable baud rates on many machines.
