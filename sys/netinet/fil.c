@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.7 1997/05/25 12:40:11 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.8 1997/05/27 01:09:13 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.7 1997/05/25 12:40:11 darrenr Exp $";
+static	char	rcsid[] = "$Id: fil.c,v 1.8 1997/05/27 01:09:13 thorpej Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -412,7 +412,7 @@ void *m;
 #endif
 		{
 			register u_long	*ld, *lm, *lip;
-			register int i, j;
+			register int i;
 
 			lip = (u_long *)fi;
 			lm = (u_long *)&fr->fr_mip;
@@ -819,7 +819,10 @@ tcphdr_t *tcp;
 	} bytes;
 	u_long sum;
 	u_short	*sp;
-	int len, add, hlen, ilen;
+	int len, ilen;
+# if SOLARIS
+	int add, hlen;
+# endif
 
 	/*
 	 * Add up IP Header portion
