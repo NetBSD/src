@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 1997/10/14 10:12:04 mark Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 1999/01/20 13:56:35 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -65,7 +65,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	 */
 
 	if (!have_addr)
-		frame = (struct frame *)(DDB_TF->tf_r11
+		frame = (struct frame *)(DDB_REGS->tf_r11
 		    - (sizeof(struct frame) - sizeof(u_int)));
 	else
 		frame = (struct frame *)(addr - (sizeof(struct frame)

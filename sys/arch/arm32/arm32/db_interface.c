@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 1998/11/25 13:09:14 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 1999/01/20 13:56:35 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -62,25 +62,25 @@ int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
 
 struct db_variable db_regs[] = {
-	{ "spsr", (long *)&DDB_TF->tf_spsr, FCN_NULL, },
-	{ "r0", (long *)&DDB_TF->tf_r0, FCN_NULL, },
-	{ "r1", (long *)&DDB_TF->tf_r1, FCN_NULL, },
-	{ "r2", (long *)&DDB_TF->tf_r2, FCN_NULL, },
-	{ "r3", (long *)&DDB_TF->tf_r3, FCN_NULL, },
-	{ "r4", (long *)&DDB_TF->tf_r4, FCN_NULL, },
-	{ "r5", (long *)&DDB_TF->tf_r5, FCN_NULL, },
-	{ "r6", (long *)&DDB_TF->tf_r6, FCN_NULL, },
-	{ "r7", (long *)&DDB_TF->tf_r7, FCN_NULL, },
-	{ "r8", (long *)&DDB_TF->tf_r8, FCN_NULL, },
-	{ "r9", (long *)&DDB_TF->tf_r9, FCN_NULL, },
-	{ "r10", (long *)&DDB_TF->tf_r10, FCN_NULL, },
-	{ "r11", (long *)&DDB_TF->tf_r11, FCN_NULL, },
-	{ "r12", (long *)&DDB_TF->tf_r12, FCN_NULL, },
-	{ "usr_sp", (long *)&DDB_TF->tf_usr_sp, FCN_NULL, },
-	{ "usr_lr", (long *)&DDB_TF->tf_usr_lr, FCN_NULL, },
-	{ "svc_sp", (long *)&DDB_TF->tf_svc_sp, FCN_NULL, },
-	{ "svc_lr", (long *)&DDB_TF->tf_svc_lr, FCN_NULL, },
-	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
+	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
+	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
+	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
+	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, },
+	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, },
+	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, },
+	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, },
+	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, },
+	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, },
+	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, },
+	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, },
+	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, },
+	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, },
+	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, },
+	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, },
+	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, },
+	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
+	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
+	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
 	{ "und_sp", (long *)&nil, db_access_und_sp, },
 	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
 	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
@@ -126,9 +126,9 @@ int db_access_irq_sp(vp, valp, rw)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, tf)
-	int	type;
-	register struct trapframe *tf;
+kdb_trap(type, regs)
+	int type;
+	db_regs_t *regs;
 {
 	int s;
 
@@ -146,8 +146,7 @@ kdb_trap(type, tf)
 
 	/* Should switch to kdb`s own stack here. */
 
-	ddb_regs.ddb_tf = *tf;
-	ddb_regs.ddb_tf.tf_pc -= INSN_SIZE;
+	ddb_regs = *regs;
 
 	s = splhigh();
 	db_active++;
@@ -157,9 +156,9 @@ kdb_trap(type, tf)
 	db_active--;
 	splx(s);
 
-	*tf = ddb_regs.ddb_tf;
+	*regs = ddb_regs;
 
-	return(1);
+	return (1);
 }
 
 
@@ -167,12 +166,12 @@ kdb_trap(type, tf)
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kbd_trap(tf)
-	struct trapframe *tf;
+kdb_kbd_trap(regs)
+	db_regs_t *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, tf);
+		kdb_trap(-1, regs);
 	}
 }
 
@@ -334,14 +333,14 @@ db_trapper(addr, inst, frame, fault_code)
 	int		fault_code;
 {
 	if (fault_code == 0) {
+		frame->tf_pc -= INSN_SIZE;
 		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
 			kdb_trap(T_BREAKPOINT, frame);
 		else
-			panic("Undefined instruction 0x%08x @ 0x%08x in kernel\n",
-			    inst, addr);
+			kdb_trap(-1, frame);
 	} else
-		return(1);
-	return(0);
+		return (1);
+	return (0);
 }
 
 extern u_int esym;
@@ -387,37 +386,37 @@ db_fetch_reg(reg, db_regs)
 
 	switch (reg) {
 	case 0:
-		return (db_regs->ddb_tf.tf_r0);
+		return (db_regs->tf_r0);
 	case 1:
-		return (db_regs->ddb_tf.tf_r1);
+		return (db_regs->tf_r1);
 	case 2:
-		return (db_regs->ddb_tf.tf_r2);
+		return (db_regs->tf_r2);
 	case 3:
-		return (db_regs->ddb_tf.tf_r3);
+		return (db_regs->tf_r3);
 	case 4:
-		return (db_regs->ddb_tf.tf_r4);
+		return (db_regs->tf_r4);
 	case 5:
-		return (db_regs->ddb_tf.tf_r5);
+		return (db_regs->tf_r5);
 	case 6:
-		return (db_regs->ddb_tf.tf_r6);
+		return (db_regs->tf_r6);
 	case 7:
-		return (db_regs->ddb_tf.tf_r7);
+		return (db_regs->tf_r7);
 	case 8:
-		return (db_regs->ddb_tf.tf_r8);
+		return (db_regs->tf_r8);
 	case 9:
-		return (db_regs->ddb_tf.tf_r9);
+		return (db_regs->tf_r9);
 	case 10:
-		return (db_regs->ddb_tf.tf_r10);
+		return (db_regs->tf_r10);
 	case 11:
-		return (db_regs->ddb_tf.tf_r11);
+		return (db_regs->tf_r11);
 	case 12:
-		return (db_regs->ddb_tf.tf_r12);
+		return (db_regs->tf_r12);
 	case 13:
-		return (db_regs->ddb_tf.tf_svc_sp);
+		return (db_regs->tf_svc_sp);
 	case 14:
-		return (db_regs->ddb_tf.tf_svc_lr);
+		return (db_regs->tf_svc_lr);
 	case 15:
-		return (db_regs->ddb_tf.tf_pc);
+		return (db_regs->tf_pc);
 	default:
 		panic("db_fetch_reg: botch");
 	}
