@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.5 1994/01/09 20:17:06 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.6 1994/01/09 23:57:56 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
  */
 #define TRACE_WAIT_P(curp, p) \
 	((p)->p_stat == SSTOP && \
+	 ((p)->p_flag & SWTED) && \
 	 (p)->p_pptr == (curp) && \
 	 ((p)->p_flag & STRC))
 
@@ -121,8 +122,7 @@ procfs_control(curp, p, op)
 			return (EINVAL);
 
 		/*
-		 * Go ahead and set the trace flag, and note that,
-		 *   if we wanted one, we've got it.
+		 * Go ahead and set the trace flag.
 		 * Save the old parent (it's reset in
 		 *   _DETACH, and also in kern_exit.c:wait4()
 		 * Reparent the process so that the tracing
@@ -130,7 +130,6 @@ procfs_control(curp, p, op)
 		 * Stop the target.
 		 */
 		p->p_flag |= STRC;
-		p->p_flag &= ~SWTED;
 		if (p->p_pptr != curp) {
 			p->p_oppid = p->p_pptr->p_pid;
 			proc_reparent(p, curp);
@@ -151,10 +150,6 @@ procfs_control(curp, p, op)
 		break;
 
 	default:
-		/*
-		 * XXX -- if the process is not stopped but SWTED is set, in
-		 * its flags, we should try to attach to it!
-		 */
 		if (!TRACE_WAIT_P(curp, p))
 			return (EBUSY);
 	}
@@ -193,6 +188,7 @@ procfs_control(curp, p, op)
 				proc_reparent(p, pp);
 		}
 
+		p->p_flag &= ~SWTED;    /* XXX ? */
 		p->p_oppid = 0;
 
 		break;
