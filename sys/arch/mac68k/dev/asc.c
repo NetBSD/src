@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.21 1997/06/10 20:29:10 veego Exp $	*/
+/*	$NetBSD: asc.c,v 1.22 1997/08/11 22:53:29 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -83,8 +83,8 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include "ascvar.h"
-#include "obiovar.h"
+#include <mac68k/dev/ascvar.h>
+#include <mac68k/dev/obiovar.h>
 
 #define	MAC68K_ASC_BASE	0x50f14000
 #define	MAC68K_ASC_LEN	0x01000

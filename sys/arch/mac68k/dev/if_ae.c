@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.64 1997/04/29 04:40:22 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.65 1997/08/11 22:53:32 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -28,7 +28,7 @@
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
-#include <arch/mac68k/dev/if_aevar.h>
+#include <mac68k/dev/if_aevar.h>
 
 struct cfdriver ae_cd = {
 	NULL, "ae", DV_IFNET
