@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.88 2001/07/08 16:32:23 abs Exp $
+# 	$NetBSD: GENERIC,v 1.89 2001/08/26 11:47:20 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.88 $"
+#ident		"GENERIC-$Revision: 1.89 $"
 
 maxusers	64
 
@@ -100,6 +100,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # NetBSD backwards compatibility
+#options 	EXEC_ELF_CATCHALL # Older .note-less ELF binaries
 #options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
 #options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# Netbsd 1.2 reboot()
@@ -115,6 +116,7 @@ options 	FONT_LUCIDA16x29	# Font for px devices
 
 # pmax specific
 options 	COMPAT_ULTRIX	# Ultrix compatibility
+#options 	EXEC_AOUT	# Old NetBSD/pmax a.out compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options 	"HZ=256"	# RTC rate required
 
@@ -143,7 +145,6 @@ audio*	at	bba?
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
-#xasc*	at	ioasic? offset ?	#  [ MI SCSI version ]
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
@@ -161,38 +162,30 @@ px0	at	tc? slot ? offset ?	# PMAG-C,D,E,F PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
 xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
-#xasc*	at	tc? slot ? offset ?	#  [ MI SCSI version ]
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
 fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
-#tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
-#asc*	at	tcds? chip ?
+tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
+asc*	at	tcds? chip ?
 
 # PMAX and MIPSMATE
 ibus0	at	mainbus0
 pm*	at	ibus0 addr ?		# 3100 onboard fb
 le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
 sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
-#xsii*	at	ibus0 addr ?		#  [ MI SCSI version ]
 
 #########################################################################
 # SCSI configuration							#
 #########################################################################
 
-# old 4.4BSD/pmax DECstation SCSI driver
-oldscsibus*	at sii?
-oldscsibus*	at asc?
-include 	"arch/pmax/conf/scsi.pmax"
+scsibus* at sii?
+scsibus* at asc?
 
-# MI SCSI configuration 
-#scsibus*	at xsii?
-#scsibus*	at xasc?
-#
-#sd*	at scsibus? target ? lun ?	# SCSI disks
-#st*	at scsibus? target ? lun ?	# SCSI tapes
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
-#ch*	at scsibus? target ? lun ?	# SCSI changer devices
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# unknown SCSI
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 #########################################################################
 # Pseudo-devices							#
