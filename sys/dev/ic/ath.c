@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.42 2005/01/04 01:45:04 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.43 2005/01/16 11:43:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.42 2005/01/04 01:45:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.43 2005/01/16 11:43:34 dyoung Exp $");
 #endif
 
 /*
@@ -3346,8 +3346,18 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
 		if (le64toh(ni->ni_tsf) >= ath_tsf_extend(ah, rstamp) &&
-		    ieee80211_ibss_merge(ic, ni) == ENETRESET)
+		    ieee80211_ibss_merge(ic, ni)) {
+			/*
+			 * XXX rather than handle this here it's
+			 *     probably better to do it at the 802.11
+			 *     layer through the state machine so,
+			 *     we can switch channel, etc.
+			 */
+			/* XXX adopt beacon interval and ATIM window */
 			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
+			ath_hal_stoptxdma(ah, sc->sc_bhalq);
+			ath_beacon_config(sc);
+		}
 		break;
 	default:
 		break;
