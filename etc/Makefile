@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.277 2004/01/27 15:55:42 he Exp $
+#	$NetBSD: Makefile,v 1.278 2004/01/30 08:46:19 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -145,6 +145,7 @@ distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
 	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= install)
 .endif	# !INSTALL_DONE
 	(cd ${.CURDIR}; ${MAKE} install-etc-files)
+	(cd ${NETBSDSRCDIR}/distrib/sets && ${MAKE} makesetfiles)
 .endif	# !DISTRIBUTION_DONE
 
 
