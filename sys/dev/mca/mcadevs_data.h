@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.20 2005/02/27 05:40:06 perry Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.21 2005/04/03 11:19:30 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.18 2003/06/29 14:48:21 jdolecek Exp
+ *	NetBSD: mcadevs,v 1.19 2005/04/03 11:17:49 jdolecek Exp 
  */
 
 /*-
@@ -105,8 +105,10 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x5EEE,	"Hitachi CD-ROM Adapter" },
     { 0x5F77,	"Future Domain SCSI Adapter" },
     { 0x5FF8,	"Plus Passport MC Adapter" },
+    { 0x6000,	"Tiara LANCard/E Ethernet Adapter" },
     { 0x6001,	"Tiara LANcard/E Ethernet Adapter" },
     { 0x6014,	"Standard Microsystems ARCNET-PS110 Adapter" },
+    { 0x6016,	"Standard MicroSystems 3016/MC Ethernet" },
     { 0x6018,	"Gateway Comms. G/Ethernet Adapter" },
     { 0x601F,	"HP Scanner Interface Adapter" },
     { 0x602F,	"Arcmaster ARCnet Adapter" },
