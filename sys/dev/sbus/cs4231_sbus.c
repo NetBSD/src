@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.24 2002/10/02 16:52:34 thorpej Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.25 2002/12/10 13:44:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.24 2002/10/02 16:52:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.25 2002/12/10 13:44:47 pk Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -192,7 +192,7 @@ cs4231_sbus_attach(parent, self, aux)
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
 		bus_intr_establish(sa->sa_bustag,
-				   sa->sa_pri, IPL_AUDIO, 0,
+				   sa->sa_pri, IPL_AUDIO,
 				   cs4231_sbus_intr, sbsc);
 
 	audio_attach_mi(&audiocs_sbus_hw_if, sbsc, &sc->sc_ad1848.sc_dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.93 2002/12/09 16:11:51 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.94 2002/12/10 13:44:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -516,7 +516,7 @@ zs_attach(zsc, zsd, pri)
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
-		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0,
+		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL,
 				   zshard, NULL);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");

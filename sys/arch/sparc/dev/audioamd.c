@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.15 2002/12/10 12:11:22 pk Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.16 2002/12/10 13:44:49 pk Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -309,7 +309,7 @@ audioamd_attach(sc, pri)
 	/* Copy bus tag & handle for use by am7930_trap */
 	sc->sc_au.au_bt = sc->sc_bt;
 	sc->sc_au.au_bh = sc->sc_bh;
-	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_AUDIO, 0,
+	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_AUDIO,
 				  am7930hwintr, sc, amd7930_trap);
 
 	sc->sc_sicookie = softintr_establish(IPL_SOFTAUDIO, am7930swintr, sc);

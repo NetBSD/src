@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98 2002/12/10 12:11:21 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.99 2002/12/10 13:44:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -620,7 +620,7 @@ fdcattach(fdc, pri)
 	}
 
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish2(fdc->sc_bustag, pri, 0, 0,
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
 				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
 		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1363,7 +1363,6 @@ fdcswintr(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
-	int s;
 
 	if (fdc->sc_istatus == FDC_ISTATUS_NONE)
 		/* This (software) interrupt is not for us */

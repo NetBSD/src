@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.26 2002/10/02 16:52:38 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27 2002/12/10 13:44:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.26 2002/10/02 16:52:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.27 2002/12/10 13:44:48 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -291,5 +291,5 @@ leattach_sbus(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
-					 IPL_NET, 0, am7990_intr, sc);
+					 IPL_NET, am7990_intr, sc);
 }

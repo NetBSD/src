@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.58 2002/10/02 16:52:39 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.59 2002/12/10 13:44:48 pk Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.58 2002/10/02 16:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.59 2002/12/10 13:44:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
 	/* Establish interrupt channel */
-	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
+	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO,
 	    isp_sbus_intr, sbc);
 	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
 

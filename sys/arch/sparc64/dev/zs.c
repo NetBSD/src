@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.43 2002/10/02 16:02:20 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.44 2002/12/10 13:44:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -399,7 +399,7 @@ zs_attach(zsc, zsd, pri)
 	 * to the interrupt handlers aren't used.  Note, we only do this
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
-	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
+	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 

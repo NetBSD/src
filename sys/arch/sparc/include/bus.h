@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.34 2002/12/10 12:16:27 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.35 2002/12/10 13:44:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -140,7 +140,6 @@ struct sparc_bus_space_tag {
 				int,			/*bus-specific intr*/
 				int,			/*device class level,
 							  see machine/intr.h*/
-				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *,			/*handler arg*/
 				void (*)(void)));	/*optional fast vector*/
@@ -209,7 +208,6 @@ static void	*bus_intr_establish __P((
 				int,			/*bus-specific intr*/
 				int,			/*device class level,
 							  see machine/intr.h*/
-				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
 static void	*bus_intr_establish2 __P((
@@ -217,7 +215,6 @@ static void	*bus_intr_establish2 __P((
 				int,			/*bus-specific intr*/
 				int,			/*device class level,
 							  see machine/intr.h*/
-				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *,			/*handler arg*/
 				void (*)(void)));	/*optional fast vector*/
@@ -284,28 +281,26 @@ bus_space_mmap(t, a, o, p, f)
 }
 
 static __inline__ void *
-bus_intr_establish(t, p, l, f, h, a)
+bus_intr_establish(t, p, l, h, a)
 	bus_space_tag_t t;
 	int	p;
 	int	l;
-	int	f;
 	int	(*h)__P((void *));
 	void	*a;
 {
-	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a, NULL);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, h, a, NULL);
 }
 
 static __inline__ void *
-bus_intr_establish2(t, p, l, f, h, a, v)
+bus_intr_establish2(t, p, l, h, a, v)
 	bus_space_tag_t t;
 	int	p;
 	int	l;
-	int	f;
 	int	(*h)__P((void *));
 	void	*a;
 	void	(*v)__P((void));
 {
-	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a, v);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, h, a, v);
 }
 
 static __inline__ void

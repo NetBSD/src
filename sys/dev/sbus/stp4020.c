@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.28 2002/10/10 22:23:16 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.29 2002/12/10 13:44:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.28 2002/10/10 22:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.29 2002/12/10 13:44:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ stp4020attach(parent, self, aux)
 	if (sa->sa_nintr > sbus_intno) {
 		bus_intr_establish(sa->sa_bustag,
 		    sa->sa_intr[sbus_intno].oi_pri,
-		    IPL_NONE, 0, stp4020_intr, sc);
+		    IPL_NONE, stp4020_intr, sc);
 	}
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &

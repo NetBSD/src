@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.56 2002/12/10 12:24:05 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.57 2002/12/10 13:44:51 pk Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -98,7 +98,7 @@ static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 				    int, int));
 static int _psycho_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 				vaddr_t, bus_space_handle_t *));
-static void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
+static void *psycho_intr_establish __P((bus_space_tag_t, int, int,
 				int (*) __P((void *)), void *, void(*)__P((void))));
 
 static int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
@@ -998,11 +998,10 @@ psycho_bus_mmap(t, paddr, off, prot, flags)
  * install an interrupt handler for a PCI device
  */
 void *
-psycho_intr_establish(t, ihandle, level, flags, handler, arg, fastvec)
+psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int ihandle;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 	void (*fastvec) __P((void));	/* ignored */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.18 2002/11/26 18:49:46 christos Exp $ */
+/*	$NetBSD: bpp.c,v 1.19 2002/12/10 13:44:47 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.18 2002/11/26 18:49:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.19 2002/12/10 13:44:47 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -204,7 +204,7 @@ bppattach(parent, self, aux)
 	if (sa->sa_nintr) {
 		sc->sc_intrchain = bppintr;
 		sc->sc_intrchainarg = dsc;
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
 					 bppintr, sc);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.25 2002/12/10 12:21:03 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.26 2002/12/10 13:44:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.25 2002/12/10 12:21:03 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.26 2002/12/10 13:44:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ static void *qec_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
-		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *,			/*arg*/
 		void (*) __P((void))));	/*optional fast trap handler*/
@@ -260,11 +259,10 @@ qec_bus_map(t, baddr, size, flags, va, hp)
 }
 
 void *
-qec_intr_establish(t, pri, level, flags, handler, arg, fastvec)
+qec_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 	void (*fastvec) __P((void));	/* ignored */
@@ -284,7 +282,7 @@ qec_intr_establish(t, pri, level, flags, handler, arg, fastvec)
 		pri = sc->sc_intr->oi_pri;
 	}
 
-	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, handler, arg));
 }
 
 void

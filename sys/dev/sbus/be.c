@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.37 2002/10/02 16:52:32 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.38 2002/12/10 13:44:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.37 2002/10/02 16:52:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.38 2002/12/10 13:44:47 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -309,7 +309,7 @@ beattach(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
-					 0, beintr, sc);
+					 beintr, sc);
 
 	myetheraddr(sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));

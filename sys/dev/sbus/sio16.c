@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.10 2002/10/02 16:52:43 thorpej Exp $	*/
+/*	$NetBSD: sio16.c,v 1.11 2002/12/10 13:44:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.10 2002/10/02 16:52:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.11 2002/12/10 13:44:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -217,7 +217,7 @@ sio16_attach(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* establish interrupt channel */
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
 	    cd18xx_hardintr, sc);
 
 	/* reset the board, and turn on interrupts and I/O */

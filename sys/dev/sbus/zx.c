@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
+/*	$NetBSD: zx.c,v 1.6 2002/12/10 13:44:48 pk Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.6 2002/12/10 13:44:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dv);
 	if (sa->sa_nintr != 0)
-		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, 0, zx_intr, sc);
+		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, zx_intr, sc);
 
 	sc->sc_cmap = malloc(768, M_DEVBUF, M_NOWAIT);
 	fb_attach(&sc->sc_fb, isconsole);

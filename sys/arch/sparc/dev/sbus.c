@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.54 2002/12/10 12:16:25 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.55 2002/12/10 13:44:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,6 @@ static void *sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
 		int,			/*`device class' priority*/
-		int,
 		int (*) __P((void *)),	/*handler*/
 		void *,			/*handler arg*/
 		void (*) __P((void))));	/*fast handler*/
@@ -663,11 +662,10 @@ sbus_get_intr(sc, node, ipp, np)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, pri, level, flags, handler, arg, fastvec)
+sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 	void (*fastvec) __P((void));
