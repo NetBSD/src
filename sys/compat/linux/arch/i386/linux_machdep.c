@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.89 2003/06/29 22:29:24 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.90 2003/07/03 21:24:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89 2003/06/29 22:29:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.90 2003/07/03 21:24:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -120,8 +120,12 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
-static void linux_savecontext __P((struct lwp *, struct trapframe *,
+static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
+    sigset_t *, struct sigaltstack *, struct linux_ucontext *));
+static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
     sigset_t *, struct linux_sigcontext *));
+static int linux_restore_sigcontext __P((struct lwp *,
+    struct linux_sigcontext *, register_t *));
 static void linux_rt_sendsig __P((int, sigset_t *, u_long));
 static void linux_old_sendsig __P((int, sigset_t *, u_long));
 
@@ -201,7 +205,23 @@ linux_sendsig(sig, mask, code)
 
 
 static void
-linux_savecontext(l, tf, mask, sc)
+linux_save_ucontext(l, tf, mask, sas, uc)
+	struct lwp *l;
+	struct trapframe *tf;
+	sigset_t *mask;
+	struct sigaltstack *sas;
+	struct linux_ucontext *uc;
+{
+	uc->uc_flags = 0;
+	uc->uc_link = NULL;
+	native_to_linux_sigaltstack(&uc->uc_stack, sas);
+	linux_save_sigcontext(l, tf, mask, &uc->uc_mcontext);
+	native_to_linux_sigset(&uc->uc_sigmask, mask);
+	(void)memset(&uc->uc_fpregs_mem, 0, sizeof(uc->uc_fpregs_mem));
+}
+
+static void
+linux_save_sigcontext(l, tf, mask, sc)
 	struct lwp *l;
 	struct trapframe *tf;
 	sigset_t *mask;
@@ -283,15 +303,33 @@ linux_rt_sendsig(sig, mask, code)
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 	frame.sf_sip = &fp->sf_si;
-	frame.sf_scp = &fp->sf_sc;
+	frame.sf_ucp = &fp->sf_uc;
 
-	/*
-	 * XXX: zero siginfo out until we provide more info.
-	 */
 	(void)memset(&frame.sf_si, 0, sizeof(frame.sf_si));
+	/*
+	 * XXX: We'll fake bit of it here, all of the following
+	 * info is a bit bogus, because we don't have the
+	 * right info passed to us from the trap.
+	 */
+	switch (frame.sf_si.lsi_signo = frame.sf_sig) {
+	case LINUX_SIGSEGV:
+		frame.sf_si.lsi_code = LINUX_SEGV_MAPERR;
+		break;
+	case LINUX_SIGBUS:
+		frame.sf_si.lsi_code = LINUX_BUS_ADRERR;
+		break;
+	case LINUX_SIGTRAP:
+		frame.sf_si.lsi_code = LINUX_TRAP_BRKPT;
+		break;
+	case LINUX_SIGCHLD:
+	case LINUX_SIGIO:
+	default:
+		frame.sf_si.lsi_signo = 0;
+		break;
+	}
 
 	/* Save register context. */
-	linux_savecontext(l, tf, mask, &frame.sf_sc);
+	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -356,7 +394,7 @@ linux_old_sendsig(sig, mask, code)
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
 
-	linux_savecontext(l, tf, mask, &frame.sf_sc);
+	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -401,8 +439,22 @@ linux_sys_rt_sigreturn(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* XXX XAX write me */
-	return(ENOSYS);
+	struct linux_sys_rt_sigreturn_args /* {
+		syscallarg(struct linux_ucontext *) ucp;
+	} */ *uap = v;
+	struct linux_ucontext context, *ucp = SCARG(uap, ucp);
+	int error;
+
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
+	if ((error = copyin(ucp, &context, sizeof(*ucp))) != 0)
+		return error;
+
+	/* XXX XAX we can do better here by using more of the ucontext */
+	return linux_restore_sigcontext(l, &context.uc_mcontext, retval);
 }
 
 int
@@ -414,35 +466,43 @@ linux_sys_sigreturn(l, v, retval)
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct linux_sigcontext *scp, context;
-	struct trapframe *tf;
-	sigset_t mask;
-	ssize_t ss_gap;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct linux_sigcontext context, *scp = SCARG(uap, scp);
+	int error;
 
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = SCARG(uap, scp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return EFAULT;
+	if ((error = copyin((caddr_t)scp, &context, sizeof(*scp))) != 0)
+		return error;
+	return linux_restore_sigcontext(l, &context, retval);
+}
 
+static int
+linux_restore_sigcontext(l, scp, retval)
+	struct lwp *l;
+	struct linux_sigcontext *scp;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct trapframe *tf;
+	sigset_t mask;
+	ssize_t ss_gap;
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
 
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
+	if (scp->sc_eflags & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
 
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
+		tf->tf_vm86_gs = scp->sc_gs;
+		tf->tf_vm86_fs = scp->sc_fs;
+		tf->tf_vm86_es = scp->sc_es;
+		tf->tf_vm86_ds = scp->sc_ds;
+		set_vflags(l, scp->sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -453,31 +513,31 @@ linux_sys_sigreturn(l, v, retval)
 		 * automatically and generate a trap on violations.  We handle
 		 * the trap, rather than doing all of the checking here.
 		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
+		if (((scp->sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(scp->sc_cs, scp->sc_eflags))
 			return EINVAL;
 
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
+		tf->tf_gs = scp->sc_gs;
+		tf->tf_fs = scp->sc_fs;
+		tf->tf_es = scp->sc_es;
+		tf->tf_ds = scp->sc_ds;
 #ifdef VM86
 		if (tf->tf_eflags & PSL_VM)
 			(*p->p_emul->e_syscall_intern)(p);
 #endif
-		tf->tf_eflags = context.sc_eflags;
+		tf->tf_eflags = scp->sc_eflags;
 	}
-	tf->tf_edi = context.sc_edi;
-	tf->tf_esi = context.sc_esi;
-	tf->tf_ebp = context.sc_ebp;
-	tf->tf_ebx = context.sc_ebx;
-	tf->tf_edx = context.sc_edx;
-	tf->tf_ecx = context.sc_ecx;
-	tf->tf_eax = context.sc_eax;
-	tf->tf_eip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_esp = context.sc_esp_at_signal;
-	tf->tf_ss = context.sc_ss;
+	tf->tf_edi = scp->sc_edi;
+	tf->tf_esi = scp->sc_esi;
+	tf->tf_ebp = scp->sc_ebp;
+	tf->tf_ebx = scp->sc_ebx;
+	tf->tf_edx = scp->sc_edx;
+	tf->tf_ecx = scp->sc_ecx;
+	tf->tf_eax = scp->sc_eax;
+	tf->tf_eip = scp->sc_eip;
+	tf->tf_cs = scp->sc_cs;
+	tf->tf_esp = scp->sc_esp_at_signal;
+	tf->tf_ss = scp->sc_ss;
 
 	/* Restore signal stack. */
 	/*
@@ -485,14 +545,14 @@ linux_sys_sigreturn(l, v, retval)
 	 * to save the onstack flag.
 	 */
 	ss_gap = (ssize_t)
-	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) sas->ss_sp);
+	    ((caddr_t) scp->sc_esp_at_signal - (caddr_t) sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
 	else
 		sas->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_to_native_sigset(&mask, &context.sc_mask);
+	linux_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
