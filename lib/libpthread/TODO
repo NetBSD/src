@@ -1,12 +1,16 @@
 
 - priority scheduling!
 
+- Finish interfaces: pthread_cond_*()
+
 - non-i386 platform support.
 
 - stress-test spinlock-preemption handling.
 
 - Mutexes should have an internal simple_lock, not counted against a
   per-thread spinlock, so that there can be an optimistic fast-path lock.
+
+- Mutexes should support adaptive spin/sleep locks.
 
 - Supporting different mutex types would be nice (normal, debugging,
   recursive, etc).
