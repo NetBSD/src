@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.12 2000/09/08 13:14:33 mjl Exp $	*/
+/*	$NetBSD: from.c,v 1.13 2001/07/01 00:09:46 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.12 2000/09/08 13:14:33 mjl Exp $");
+__RCSID("$NetBSD: from.c,v 1.13 2001/07/01 00:09:46 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,6 @@ main(int argc, char **argv)
 				if (isupper((unsigned char)*p))
 					*p = tolower(*p);
 			break;
-		case '?':
 		default:
 			fprintf(stderr, "usage: from [-f file] [-s sender] [user]\n");
 			exit(1);
@@ -101,22 +100,24 @@ main(int argc, char **argv)
 		if (!(file = *argv)) {
 			if (!(file = getenv("MAIL"))) {
 				if (!(pwd = getpwuid(getuid())))
-					err(1, "no password file entry for you");
+					errx(1, "no password file entry for you");
 				if ((file = getenv("USER")) != NULL) {
-					(void)sprintf(buf, "%s/%s",
-					    _PATH_MAILDIR, file);
+					(void)snprintf(buf, sizeof(buf), 
+					    "%s/%s", _PATH_MAILDIR, file);
 					file = buf;
 				} else
-					(void)sprintf(file = buf, "%s/%s",
+					(void)snprintf(file = buf, sizeof(buf),
+					    "%s/%s",
 					    _PATH_MAILDIR, pwd->pw_name);
 			}
 		} else {
-			(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, file);
+			(void)snprintf(buf, sizeof(buf), "%s/%s",
+				_PATH_MAILDIR, file);
 			file = buf;
 		}
 	}
 	if (!freopen(file, "r", stdin))
-		errx(1, "can't read %s", file);
+		err(1, "can't read %s", file);
 
 	for (newline = 1; fgets(buf, sizeof(buf), stdin);) {
 		if (*buf == '\n') {
