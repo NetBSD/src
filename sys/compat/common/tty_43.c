@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.3 1996/03/14 19:31:49 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.4 1996/05/18 22:17:49 veego Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -49,6 +49,11 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/ioctl_compat.h>
+
+/*
+ * XXX libcompat files should be included with config attributes
+ */
+#ifdef COMPAT_OLDTTY
 
 int ttydebug = 0;
 
@@ -474,3 +479,5 @@ ttcompatsetlflags(tp, t)
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
 }
+
+#endif /* COMPAT_OLDTTY */
