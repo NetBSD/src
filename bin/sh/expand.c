@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.28 1997/03/03 19:26:18 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.29 1997/03/18 18:54:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.28 1997/03/03 19:26:18 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.29 1997/03/18 18:54:40 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -585,12 +585,10 @@ again: /* jump here after setting a variable with ${var=text} */
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
-			char *exp, *oexpdest = expdest;
 			varvalue(var, varflags & VSQUOTE, flag & EXP_FULL);
 			if (subtype == VSLENGTH) {
-				for (exp = oexpdest;exp != expdest; exp++)
-					varlen++;
-				expdest = oexpdest;
+				varlen = expdest - stackblock() - startloc;
+				STADJUST(-varlen, expdest);
 			}
 		} else {
 			char const *syntax = (varflags & VSQUOTE) ? DQSYNTAX
