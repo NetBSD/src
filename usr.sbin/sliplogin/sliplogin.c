@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.8 1994/04/06 08:34:46 cgd Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.9 1994/04/24 07:09:09 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -87,9 +87,10 @@ static char rcsid[] = "$Id: sliplogin.c,v 1.8 1994/04/06 08:34:46 cgd Exp $";
 #endif
 #include <net/slip.h>
 
-#include <stdio.h>
-#include <errno.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
@@ -115,10 +116,8 @@ findid(name)
 
 	(void)strcpy(loginname, name);
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
-		(void)fprintf(stderr, "sliplogin: %s: %s\n",
-		    _PATH_ACCESS, strerror(errno));
 		syslog(LOG_ERR, "%s: %m\n", _PATH_ACCESS);
-		exit(1);
+		err(1, "%s", _PATH_ACCESS);
 	}
 	while (fgets(loginargs, sizeof(loginargs) - 1, fp)) {
 		if (ferror(fp))
@@ -153,9 +152,8 @@ findid(name)
 		(void) fclose(fp);
 		return;
 	}
-	(void)fprintf(stderr, "SLIP access denied for %s\n", name);
 	syslog(LOG_ERR, "SLIP access denied for %s\n", name);
-	exit(4);
+	errx(1, "SLIP access denied for %s", name);
 	/* NOTREACHED */
 }
 
@@ -251,61 +249,65 @@ main(argc, argv)
 				close(fd);
 		}
 #ifdef TIOCSCTTY
-		if (ioctl(0, TIOCSCTTY, (caddr_t)0) != 0)
+		if (ioctl(STDIN_FILENO, TIOCSCTTY, (caddr_t)0) != 0)
 			perror("ioctl (TIOCSCTTY)");
 #endif
 	} else {
 		extern char *getlogin();
 
 		if ((name = getlogin()) == NULL) {
-			(void) fprintf(stderr, "access denied - no username\n");
-			syslog(LOG_ERR, "access denied - getlogin returned 0\n");
-			exit(1);
+			syslog(LOG_ERR,
+			    "access denied - getlogin returned 0\n");
+			errx(1, "access denied - no username");
 		}
 		findid(name);
 	}
-	(void) fchmod(0, 0600);
-	(void) fprintf(stderr, "starting slip login for %s\n", loginname);
+	if (!isatty(STDIN_FILENO)) {
+		syslog(LOG_ERR, "stdin not a tty");
+		errx(1, "stdin not a tty");
+	}
+	(void) fchmod(STDIN_FILENO, 0600);
+	warnx("starting slip login for %s", loginname);
 #ifdef POSIX
 	/* set up the line parameters */
-	if (tcgetattr(0, &tios) < 0) {
+	if (tcgetattr(STDIN_FILENO, &tios) < 0) {
 		syslog(LOG_ERR, "tcgetattr: %m");
 		exit(1);
 	}
 	otios = tios;
 	cfmakeraw(&tios);
 	tios.c_iflag &= ~IMAXBEL;
-	if (tcsetattr(0, TCSAFLUSH, &tios) < 0) {
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tios) < 0) {
 		syslog(LOG_ERR, "tcsetattr: %m");
 		exit(1);
 	}
 	speed = cfgetispeed(&tios);
 #else
 	/* set up the line parameters */
-	if (ioctl(0, TIOCGETP, (caddr_t)&tty) < 0) {
+	if (ioctl(STDIN_FILENO, TIOCGETP, (caddr_t)&tty) < 0) {
 		syslog(LOG_ERR, "ioctl (TIOCGETP): %m");
 		exit(1);
 	}
 	otty = tty;
 	speed = tty.sg_ispeed;
 	tty.sg_flags = RAW | ANYP;
-	if (ioctl(0, TIOCSETP, (caddr_t)&tty) < 0) {
+	if (ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&tty) < 0) {
 		syslog(LOG_ERR, "ioctl (TIOCSETP): %m");
 		exit(1);
 	}
 #endif
 	/* find out what ldisc we started with */
-	if (ioctl(0, TIOCGETD, (caddr_t)&odisc) < 0) {
+	if (ioctl(STDIN_FILENO, TIOCGETD, (caddr_t)&odisc) < 0) {
 		syslog(LOG_ERR, "ioctl(TIOCGETD) (1): %m");
 		exit(1);
 	}
 	ldisc = SLIPDISC;
-	if (ioctl(0, TIOCSETD, (caddr_t)&ldisc) < 0) {
+	if (ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&ldisc) < 0) {
 		syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
 		exit(1);
 	}
 	/* find out what unit number we were assigned */
-	if (ioctl(0, SLIOCGUNIT, (caddr_t)&unit) < 0) {
+	if (ioctl(STDIN_FILENO, SLIOCGUNIT, (caddr_t)&unit) < 0) {
 		syslog(LOG_ERR, "ioctl (SLIOCGUNIT): %m");
 		exit(1);
 	}
@@ -339,11 +341,11 @@ main(argc, argv)
 	if (s = system(logincmd)) {
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		       loginname, s, loginfile);
-		(void) ioctl(0, TIOCSETD, (caddr_t)&odisc);
+		(void) ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
 #ifdef POSIX
-		(void) tcsetattr(0, TCSAFLUSH, &otios);
+		(void) tcsetattr(STDIN_FILENO, TCSAFLUSH, &otios);
 #else
-		(void) ioctl(0, TIOCSETP, (caddr_t)&otty);
+		(void) ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&otty);
 #endif
 		exit(6);
 	}
