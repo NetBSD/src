@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.5 1998/07/03 11:54:08 mrg Exp $	*/
+/*	$NetBSD: process.c,v 1.6 1998/07/04 19:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.5 1998/07/03 11:54:08 mrg Exp $");
+__RCSID("$NetBSD: process.c,v 1.6 1998/07/04 19:31:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,6 @@ process_request(mp, rp)
 	CTL_RESPONSE *rp;
 {
 	CTL_MSG *ptr;
-	extern int debug;
 
 	rp->vers = TALK_VERSION;
 	rp->type = mp->type;
@@ -100,8 +99,8 @@ process_request(mp, rp)
 		return;
 	}
 	mp->pid = ntohl(mp->pid);
-	if (debug)
-		print_request("process_request", mp);
+	if (debug || logging)
+		print_request("request", mp);
 	switch (mp->type) {
 
 	case ANNOUNCE:
@@ -137,7 +136,7 @@ process_request(mp, rp)
 		break;
 	}
 	if (debug)
-		print_response("process_request", rp);
+		print_response("process_request done", rp);
 }
 
 void
