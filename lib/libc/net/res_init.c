@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.11 1997/04/13 10:30:50 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.11 1997/04/13 10:30:50 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -137,7 +137,7 @@ res_init()
 	_res.ndots = 1;
 	_res.pfcode = 0;
 	_res.lookups[0] = 'f';
-	_res.lookups[1] = '0';
+	_res.lookups[1] = '\0';
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -183,7 +183,7 @@ res_init()
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
 	    _res.lookups[0] = 'b';
 	    _res.lookups[1] = 'f';
-	    _res.lookups[2] = '0';
+	    _res.lookups[2] = '\0';
 
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
