@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 1995/09/07 21:55:43 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.18 1995/09/08 07:57:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -134,14 +134,13 @@ linux_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 	} else
-#else
+#endif
 	{
 		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
 		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 	}
-#endif
 	frame.sf_sc.sc_edi    = tf->tf_edi;
 	frame.sf_sc.sc_esi    = tf->tf_esi;
 	frame.sf_sc.sc_ebp    = tf->tf_ebp;
