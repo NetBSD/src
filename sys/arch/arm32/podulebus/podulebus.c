@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.25 1998/01/18 04:09:50 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.26 1998/02/21 02:44:42 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -90,6 +90,7 @@ podulebusmatch(parent, cf, aux)
 	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
 	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
 		return(1);
 	}
 	return (0);
