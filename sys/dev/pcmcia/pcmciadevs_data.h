@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.83 2000/03/20 18:39:52 tron Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.84 2000/03/22 21:41:48 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.84 2000/03/20 18:39:32 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.85 2000/03/22 21:39:57 mycroft Exp 
  */
 
 /*-
@@ -323,6 +323,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC3-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_NOKIA, PCMCIA_PRODUCT_NOKIA_C020_WLAN,
+	    PCMCIA_CIS_NOKIA_C020_WLAN,
+	    0,
+	    "Nokia Communications",
+	    "Nokia C020 WLAN Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
@@ -910,6 +917,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NOKIA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Nokia Communications",
 	    NULL,
 	},
 	{

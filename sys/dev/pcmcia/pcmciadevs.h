@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.83 2000/03/20 18:39:52 tron Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.84 2000/03/22 21:41:48 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.84 2000/03/20 18:39:32 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.85 2000/03/22 21:39:57 mycroft Exp 
  */
 
 /*-
@@ -73,6 +73,7 @@
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
@@ -235,6 +236,11 @@
 #define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
 #define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
+
+/* Nokia Products */
+#define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
+#define	PCMCIA_STR_NOKIA_C020_WLAN	"Nokia C020 WLAN Card"
 
 /* Panasonic Products */
 #define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
