@@ -1,4 +1,4 @@
-.\"	$NetBSD: getNAME.8,v 1.8 2002/03/08 20:40:00 jdolecek Exp $
+.\"	$NetBSD: getNAME.8,v 1.9 2002/03/08 20:59:08 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -58,28 +58,22 @@ to get manpage names, but that's no longer the case.
 The following options are available:
 .Bl -tag -width Ds
 .It Fl i
-The
-.Fl i
-option returns information useful in creating an introduction manual.  See
+Print information useful in creating an introduction manual.  See
 .Xr intro 1 ,
 .Xr intro 2 ,
 etc. for examples.
 .It Fl t
-The
-.Fl t
-option returns information useful for creating a table of contents.
+Print information useful for creating a table of contents.
 .It Fl v
 Complain about incorrectly formatted man pages.
 .It Fl w
-The
-.Fl w
-option determines whether traditional man
+Print information whether the manpage uses traditional man
 .Pq Dq OLD ,
 new mandoc
 .Pq Dq NEW ,
 or some unknown
 .Pq Dq UNKNOWN
-macros are in use.
+macros.
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
