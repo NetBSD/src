@@ -1,4 +1,33 @@
-/* $NetBSD: isp_netbsd.c,v 1.29 2000/08/08 22:58:31 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.30 2000/08/14 07:08:12 mjacob Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -395,8 +424,8 @@ isp_dog(arg)
 	XS_T *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
 	u_int32_t handle;
-	int s = splbio();
 
+	ISP_ILOCK(isp);
 	/*
 	 * We've decided this command is dead. Make sure we're not trying
 	 * to kill a command that's already dead by getting it's handle and
@@ -409,14 +438,14 @@ isp_dog(arg)
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "watchdog found done cmd (handle 0x%x)", handle);
-			(void) splx(s);
+			ISP_IUNLOCK(isp);
 			return;
 		}
 
 		if (XS_CMD_WDOG_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "recursive watchdog (handle 0x%x)", handle);
-			(void) splx(s);
+			ISP_IUNLOCK(isp);
 			return;
 		}
 
@@ -461,7 +490,7 @@ isp_dog(arg)
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
 			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
-				(void) splx(s);
+				ISP_IUNLOCK(isp);
 				return;
 			}
 			XS_CMD_S_GRACE(xs);
@@ -473,10 +502,10 @@ isp_dog(arg)
 			ISP_SWIZZLE_REQUEST(isp, mp);
 			ISP_ADD_REQUEST(isp, iptr);
 		}
-	} else if (isp->isp_dblev) {
-		isp_prt(isp, ISP_LOGDEBUG2, "watchdog with no command");
+	} else {
+		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
 	}
-	(void) splx(s);
+	ISP_IUNLOCK(isp);
 }
 
 /*
@@ -507,7 +536,7 @@ isp_command_requeue(arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	int s = splbio();
+	ISP_ILOCK(isp);
 	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
@@ -531,7 +560,7 @@ isp_command_requeue(arg)
 		scsipi_done(xs);
 		break;
 	}
-	(void) splx(s);
+	ISP_IUNLOCK(isp);
 }
 
 /*
@@ -543,9 +572,9 @@ isp_internal_restart(arg)
 	void *arg;
 {
 	struct ispsoftc *isp = arg;
-	int result, nrestarted = 0, s;
+	int result, nrestarted = 0;
 
-	s = splbio();
+	ISP_ILOCK(isp);
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
@@ -568,7 +597,7 @@ isp_internal_restart(arg)
 		isp_prt(isp, ISP_LOGINFO,
 		    "isp_restart requeued %d commands", nrestarted);
 	}
-	(void) splx(s);
+	ISP_IUNLOCK(isp);
 }
 
 int
