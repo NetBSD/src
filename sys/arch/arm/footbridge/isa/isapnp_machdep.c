@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.5 2002/02/09 11:03:55 skrll Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.1 2002/02/10 12:26:02 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
