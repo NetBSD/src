@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dinode.h	8.3 (Berkeley) 1/21/94
- *	$Id: dinode.h,v 1.1 1994/06/08 11:43:02 mycroft Exp $
+ *	$Id: dinode.h,v 1.2 1994/06/14 22:56:19 mycroft Exp $
  */
 
 /*
@@ -75,8 +75,6 @@ struct dinode {
 	u_long		di_gid;		/* 116: File group. */
 	long		di_spare[2];	/* 120: Reserved; currently unused */
 };
-#define	OLDFASTLINK(dp)	\
-	((dp)->di_size < MAXSYMLINKLEN && (dp)->di_size == (dp)->di_uid)
 
 /*
  * The di_db fields may be overlaid with other information for
