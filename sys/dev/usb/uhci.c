@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.180 2004/07/17 20:12:03 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.181 2004/07/22 18:45:40 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.180 2004/07/17 20:12:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.181 2004/07/22 18:45:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ int uhcinoloop = 0;
 
 /*
  * The UHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
