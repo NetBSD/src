@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.48 1998/04/29 05:16:46 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.49 1998/04/29 20:43:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,10 @@
 /* patchable/settable parameters for tcp */
 int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
-int	tcp_do_rfc1323 = 1;
+int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
+int	tcp_do_sack = 1;	/* selective acknowledgement */
+int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
+int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_init_win = 1;
 int	tcp_mss_ifmtu = 0;
 #ifdef TCP_COMPAT_42
@@ -273,11 +276,21 @@ tcp_newtcpcb(inp)
 		return ((struct tcpcb *)0);
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
+	LIST_INIT(&tp->timeq);
 	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
 
-	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+	tp->t_flags = 0;
+	if (tcp_do_rfc1323 && tcp_do_win_scale)
+		tp->t_flags |= TF_REQ_SCALE;
+	if (tcp_do_rfc1323 && tcp_do_timestamps)
+		tp->t_flags |= TF_REQ_TSTMP;
+	if (tcp_do_sack == 2)
+		tp->t_flags |= TF_WILL_SACK;
+	else if (tcp_do_sack == 1)
+		tp->t_flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
+	tp->t_flags |= TF_CANT_TXSACK;
 	tp->t_inpcb = inp;
 	/*
 	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
@@ -422,9 +435,18 @@ tcp_freeq(tp)
 {
 	register struct ipqent *qe;
 	int rv = 0;
+#ifdef TCPREASS_DEBUG
+	int i = 0;
+#endif
 
 	while ((qe = tp->segq.lh_first) != NULL) {
+#ifdef TCPREASS_DEBUG
+		printf("tcp_freeq[%p,%d]: %u:%u(%u) 0x%02x\n",
+			tp, i++, qe->ipqe_seq, qe->ipqe_seq + qe->ipqe_len,
+			qe->ipqe_len, qe->ipqe_flags & (TH_SYN|TH_FIN|TH_RST));
+#endif
 		LIST_REMOVE(qe, ipqe_q);
+		LIST_REMOVE(qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
 		FREE(qe, M_IPQ);
 		rv = 1;

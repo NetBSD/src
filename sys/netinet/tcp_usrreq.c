@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.35 1998/04/13 21:18:20 kml Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.36 1998/04/29 20:43:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -593,6 +593,8 @@ tcp_usrclosed(tp)
 	return (tp);
 }
 
+static int *tcp_ctlvars[] = TCPCTL_VARIABLES;
+
 /*
  * Sysctl for tcp variables.
  */
@@ -605,41 +607,14 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
-	switch (name[0]) {
-	case TCPCTL_RFC1323:
+	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
+	    && tcp_ctlvars[name[0]] != NULL)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_do_rfc1323));
-	case TCPCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_sendspace));
-	case TCPCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_recvspace));
-	case TCPCTL_MSSDFLT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_mssdflt));
-	case TCPCTL_SYN_CACHE_LIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_syn_cache_limit));
-	case TCPCTL_SYN_BUCKET_LIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_syn_bucket_limit));
-	case TCPCTL_SYN_CACHE_INTER:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_syn_cache_interval));
-	case TCPCTL_INIT_WIN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_init_win));
-	case TCPCTL_MSS_IFMTU:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_mss_ifmtu));
-	default:
-		return (ENOPROTOOPT);
-	}
-	/* NOTREACHED */
+		    tcp_ctlvars[name[0]]));
+	
+	return (ENOPROTOOPT);
 }
