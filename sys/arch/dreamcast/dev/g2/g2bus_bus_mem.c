@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.1 2001/01/31 18:33:24 thorpej Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.2 2001/01/31 21:58:37 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,8 +53,7 @@
 
 #include <machine/cpu.h> 
 #include <machine/bus.h>
-
-#include <dev/pci/pcivar.h>
+#include <machine/cpufunc.h>
 
 #include <dreamcast/dev/g2/g2busvar.h>
 
@@ -112,15 +111,34 @@ g2bus_bus_mem_unmap(void *v, bus_space_handle_t sh, bus_size_t size)
 }
 
 /*
- * XXX NEED TO ADD THE LOCKING STUFF THAT MARCUS MENTIONED!
+ * G2 bus cycles must not be interrupted by IRQs or G2 DMA.
+ * The following paired macros will take the necessary precautions.
  */
+
+#define G2_LOCK								\
+	do {								\
+		disable_intr();						\
+		/* suspend any G2 DMA here... */			\
+		while((*(volatile unsigned int *)0xa05f688c) & 32);	\
+	} while(0)
+
+#define G2_UNLOCK							\
+	do {								\
+		/* resume any G2 DMA here... */				\
+		enable_intr();						\
+	} while(0)
+
 
 u_int8_t
 g2bus_bus_mem_read_1(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	u_int8_t rv;
 
+	G2_LOCK;
+
 	rv = *(u_int8_t *)(sh + off);
+
+	G2_UNLOCK;
 
 	return (rv);
 }
@@ -130,7 +148,11 @@ g2bus_bus_mem_read_2(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	u_int16_t rv;
 
+	G2_LOCK;
+
 	rv = *(u_int16_t *)(sh + off);
+
+	G2_UNLOCK;
 
 	return (rv);
 }
@@ -140,7 +162,11 @@ g2bus_bus_mem_read_4(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	u_int32_t rv;
 
+	G2_LOCK;
+
 	rv = *(u_int32_t *)(sh + off);
+
+	G2_UNLOCK;
 
 	return (rv);
 }
@@ -150,7 +176,11 @@ g2bus_bus_mem_write_1(void *v, bus_space_handle_t sh, bus_size_t off,
     u_int8_t val)
 {
 
+	G2_LOCK;
+
 	*(u_int8_t *)(sh + off) = val;
+
+	G2_UNLOCK;
 }
 
 void
@@ -158,7 +188,11 @@ g2bus_bus_mem_write_2(void *v, bus_space_handle_t sh, bus_size_t off,
     u_int16_t val)
 {
 
+	G2_LOCK;
+
 	*(u_int16_t *)(sh + off) = val;
+
+	G2_UNLOCK;
 }
 
 void
@@ -166,5 +200,9 @@ g2bus_bus_mem_write_4(void *v, bus_space_handle_t sh, bus_size_t off,
     u_int32_t val)
 {
 
+	G2_LOCK;
+
 	*(u_int32_t *)(sh + off) = val;
+
+	G2_UNLOCK;
 }
