@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.257 2000/09/04 13:13:36 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.258 2000/09/04 20:44:37 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.253 2000/09/04 13:13:14 itojun Exp 
+ *	NetBSD: pcidevs,v 1.254 2000/09/04 20:30:50 soren Exp 
  */
 
 /*
@@ -2341,37 +2341,55 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX,
 	    0,
 	    "Intel",
-	    "82440MX Host Bridge/Controller",
+	    "82443MX Host Bridge/Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
 	    0,
 	    "Intel",
-	    "82440MX AC-97 Audio Controller",
+	    "82443MX AC-97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA,
 	    0,
 	    "Intel",
-	    "82440MX PCI-to-ISA Bridge",
+	    "82443MX PCI-to-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE,
 	    0,
 	    "Intel",
-	    "82440MX IDE Controller",
+	    "82443MX IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_USB,
 	    0,
 	    "Intel",
-	    "82440MX USB Host Controller",
+	    "82443MX USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PMC,
 	    0,
 	    "Intel",
-	    "82440MX Power Management Controller",
+	    "82443MX Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX,
+	    0,
+	    "Intel",
+	    "82443GX Host Bridge/Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_AGP,
+	    0,
+	    "Intel",
+	    "82443GX AGP Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_NOAGP,
+	    0,
+	    "Intel",
+	    "82443GX Host Bridge/Controller (AGP disabled)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I740,
