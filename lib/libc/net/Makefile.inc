@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 1997/04/13 10:30:29 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.29 1997/04/22 06:55:36 mrg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -12,6 +12,8 @@ SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
 	res_comp.c res_data.c res_debug.c res_init.c res_mkquery.c res_query.c \
 	res_send.c send.c sethostent.c ethers.c
+
+SRCS+=	__dn_comp.c __res_close.c __res_send.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
