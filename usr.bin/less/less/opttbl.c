@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.2 1997/04/22 14:16:22 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.3 1997/09/21 12:41:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -232,6 +232,9 @@ static struct option option[] =
 		"Scroll window size: ",
 		"Scroll window size is %d lines",
 		NULL
+	},
+	{ '"', STRING, 0, NULL, opt_quote,
+		"quotes: ", NULL, NULL
 	},
 	{ '?', NOVAR, 0, NULL, opt_query,
 		NULL, NULL, NULL
