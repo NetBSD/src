@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.11 1997/04/02 21:07:03 pk Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.12 1997/08/12 16:34:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sparc.c,v 1.11 1997/04/02 21:07:03 pk Exp $";
+static char *rcsid = "$NetBSD: kvm_sparc.c,v 1.12 1997/08/12 16:34:12 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -277,4 +277,21 @@ _kvm_pa2off(kd, pa)
 	}
 
 	return (kd->dump_off + off + pa - mp->start);
+}
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+
+	return (0);
 }

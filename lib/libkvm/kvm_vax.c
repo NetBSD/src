@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.4 1997/06/07 12:18:55 ragge Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.5 1997/08/12 16:34:13 gwr Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -146,3 +146,20 @@ _kvm_pa2off(kd, pa)
 	return(kd->dump_off + pa);
 }
 
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+
+	return (0);
+}
