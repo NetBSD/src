@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetattr.c,v 1.1 1995/04/25 00:04:48 jtc Exp $	*/
+/*	$NetBSD: tcsetattr.c,v 1.2 1995/06/26 23:06:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,20 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: tcsetattr.c,v 1.1 1995/04/25 00:04:48 jtc Exp $";
+static char rcsid[] = "$NetBSD: tcsetattr.c,v 1.2 1995/06/26 23:06:06 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/time.h>
-#include <sys/fcntl.h>
-
-#include <errno.h>
-#include <stdio.h>
 #include <termios.h>
-#include <unistd.h>
+#include <errno.h>
 
 int
 tcsetattr(fd, opt, t)
