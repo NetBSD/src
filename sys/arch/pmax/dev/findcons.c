@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.21 1999/12/08 02:56:17 simonb Exp $	*/
+/*	$NetBSD: findcons.c,v 1.22 1999/12/23 15:34:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.21 1999/12/08 02:56:17 simonb Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.22 1999/12/23 15:34:18 ad Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,13 +163,13 @@ dc_ds_kbd(kbd_slot)
 
 #if NDC > 0 && NWS > 0
 	if (systype == DS_PMAX) {
-		cd.cn_getc = LKgetc;
+		cd.cn_getc = lk_getc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		return 1;
 	}
 	else if (systype == DS_3MAX && kbd_slot == 7) {
 		cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
-		cd.cn_getc = LKgetc;
+		cd.cn_getc = lk_getc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		return 1;
 	}
@@ -188,7 +188,7 @@ scc_kbd(kbd_slot)
 	if (kbd_slot == 3) {
 		cd.cn_dev =  makedev(SCCDEV, SCCKBD_PORT);
 		lk_divert(sccGetc, makedev(SCCDEV, SCCKBD_PORT));
-		cd.cn_getc = LKgetc;
+		cd.cn_getc = lk_getc;
 		return 1;
 	}
 #endif /* NSCC */

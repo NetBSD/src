@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $	*/
+/*	$NetBSD: dtop.c,v 1.42 1999/12/23 15:34:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.42 1999/12/23 15:34:17 ad Exp $");
 
 #include "rasterconsole.h"
 
@@ -905,7 +905,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	ls = &dev->keyboard.last_codes[dev->keyboard.last_codes_count - 1];
 	for ( ; ls >= le; ls--)
 	    if ((c = *ls) != 0) {
-		(void) kbdMapChar(c, &cl);
+		(void) lk_mapchar(c, &cl);
 
 		if (outc == 0 && dtopDivertXInput &&
 		    (keymodes[(c >> 5) & 0x7] & (1 << (c & 0x1f))))
@@ -919,7 +919,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	retc = 0;
 	for ( ; ns >= ne; ns--)
 	    if (*ns) {
-		cp = kbdMapChar(*ns, &cl);
+		cp = lk_mapchar(*ns, &cl);
 #ifdef DDB
 		if (*ns == LK_DO) {
 			spl0();
@@ -986,7 +986,7 @@ dtop_keyboard_repeat(arg)
 				continue;
 			}
 
-			if ((cp = kbdMapChar(KEY_REPEAT, &cl)) != NULL) {
+			if ((cp = lk_mapchar(KEY_REPEAT, &cl)) != NULL) {
 				for (; cl; cl--, cp++) {
 #if 0
 					(*linesw[tp->t_line].l_rint)(*cp, tp);

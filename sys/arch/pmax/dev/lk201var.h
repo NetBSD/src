@@ -1,15 +1,15 @@
-/*	$NetBSD: lk201var.h,v 1.6 1999/12/23 15:27:14 ad Exp $	*/
+/*	$NetBSD: lk201var.h,v 1.7 1999/12/23 15:34:18 ad Exp $	*/
 
 #ifndef _LK201VAR_H_
 #define _LK201VAR_H_
 
 #ifdef _KERNEL
 
-char	*kbdMapChar __P((int, int *));
-void	KBDReset __P((dev_t, void (*)(dev_t, int)));
-void	MouseInit __P((dev_t, void (*)(dev_t, int), int (*)(dev_t)));
+char	*lk_mapchar __P((int, int *));
+void	lk_reset __P((dev_t, void (*)(dev_t, int)));
+void	lk_mouseinit __P((dev_t, void (*)(dev_t, int), int (*)(dev_t)));
 
-int	LKgetc __P((dev_t dev));
+int	lk_getc __P((dev_t dev));
 void	lk_divert __P((int (*getfn) __P ((dev_t dev)), dev_t in_dev));
 void	lk_bell __P ((int ring));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.c,v 1.15 1999/11/29 15:02:38 ad Exp $	*/
+/*	$NetBSD: lk201.c,v 1.16 1999/12/23 15:34:18 ad Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -214,23 +214,23 @@ static dev_t	lk_in_dev = NODEV;
  * Initialize the keyboard.
  */
 void
-KBDReset(kbddev, putc)
+lk_reset(kbddev, putc)
 	dev_t kbddev;
 	void (*putc) __P((dev_t, int));
 {
-	static int inKBDReset;
+	static int inlk_reset;
 	int i;
 
-	if (inKBDReset)
+	if (inlk_reset)
 		return;
-	inKBDReset = 1;
+	inlk_reset = 1;
 
 	for (i = 0; i < sizeof(kbdInitString); i++) {
 		(*putc)(kbddev, (int)kbdInitString[i]);
 		DELAY(20000);
 	}
 
-	inKBDReset = 0;
+	inlk_reset = 0;
 	raw_kbd_putc = putc;
 	lk_out_dev = kbddev;
 }
@@ -255,7 +255,7 @@ lk_bell(ring)
  * string is not NUL terminated, as NUL is a valid code.
  */
 char *
-kbdMapChar(cc, len)
+lk_mapchar(cc, len)
 	int cc, *len;
 {
 	static u_char shiftDown, ctrlDown, capsLock;
@@ -398,7 +398,7 @@ lk_divert(getfn, in_dev)
  * ASCII.
  */
 int
-LKgetc(dev)
+lk_getc(dev)
 	dev_t dev;	/* ignored */
 {
 	static char *cp;
@@ -424,7 +424,7 @@ LKgetc(dev)
 		if (c == 0)
 			return (-1);
 
-		cp = kbdMapChar(c & 0xff, &len);
+		cp = lk_mapchar(c & 0xff, &len);
 	}
 
 	return (c);
@@ -434,7 +434,7 @@ LKgetc(dev)
  * Initialize the mouse.  (Doesn't really belong here.)
  */
 void
-MouseInit(mdev, putc, getc)
+lk_mouseinit(mdev, putc, getc)
 	dev_t mdev;
 	void (*putc) __P((dev_t, int));
 	int (*getc) __P((dev_t));
@@ -447,34 +447,34 @@ MouseInit(mdev, putc, getc)
 	(*putc)(mdev, MOUSE_SELF_TEST);
 	id_byte1 = (*getc)(mdev);
 	if (id_byte1 == MOUSE_SELF_TEST) {
-		printf("MouseInit: mouse loopback connector.\n");
+		printf("lk_mouseinit: mouse loopback connector.\n");
 		return;
 	}
 	if (id_byte1 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", 
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
 		    "1st");
 		return;
 	}
 	id_byte2 = (*getc)(mdev);
 	if (id_byte2 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", 
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
 		    "2nd");
 		return;
 	}
 	id_byte3 = (*getc)(mdev);
 	if (id_byte3 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", 
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
 		    "3rd");
 		return;
 	}
 	id_byte4 = (*getc)(mdev);
 	if (id_byte4 < 0) {
-		printf("MouseInit: Timeout on %s byte of self-test report\n", 
+		printf("lk_mouseinit: Timeout on %s byte of self-test report\n", 
 		    "4th");
 		return;
 	}
 	if ((id_byte2 & 0x0f) != 0x2)
-		printf("MouseInit: We don't have a mouse!!!\n");
+		printf("lk_mouseinit: We don't have a mouse!!!\n");
 	/*
 	 * For some reason, the mouse doesn't see this command if it comes
 	 * too soon after a self test.
