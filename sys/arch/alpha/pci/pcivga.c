@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.7 1996/04/12 06:08:56 cgd Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.8 1996/04/17 21:49:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -340,7 +340,7 @@ pcivga_putstr(id, row, col, cp, len)
 	off = (row * dc->dc_ncol + col) * 2;
 	for (i = 0; i < len; i++, cp++, off += 2) {
 		bus_mem_write_1(bc, memh, off, *cp);
-		bus_mem_write_1(bc, memh, off+1,
+		bus_mem_write_1(bc, memh, off + 1,
 		    dc->dc_so ? dc->dc_so_at : dc->dc_at);
 	}
 }
@@ -381,7 +381,7 @@ pcivga_erasecols(id, row, startcol, ncols)
 	/*
 	 * YUCK.  Need bus 'set' functions.
 	 */
-	off = row * dc->dc_ncol + startcol;
+	off = (row * dc->dc_ncol + startcol) * 2;
 	endoff = off + ncols * 2;
 	val = (dc->dc_at << 8) | ' ';
 
