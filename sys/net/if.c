@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.108 2002/05/30 05:06:28 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.109 2002/06/08 11:54:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.108 2002/05/30 05:06:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.109 2002/06/08 11:54:24 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -478,6 +478,9 @@ if_attachdomain1(ifp)
 	struct ifnet *ifp;
 {
 	struct domain *dp;
+	int s;
+
+	s = splnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -486,6 +489,8 @@ if_attachdomain1(ifp)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
 	}
+
+	splx(s);
 }
 
 /*
