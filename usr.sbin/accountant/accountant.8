@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: accountant.8,v 1.4 1993/05/03 04:08:16 cgd Exp $
+.\"	$Id: accountant.8,v 1.5 1993/05/03 04:30:10 cgd Exp $
 .\"
 .Dd May 2, 1993
 .Dt ACCOUNTANT 8
@@ -54,6 +54,13 @@ becomes a daemon process and does its work silently.
 Recording of accounting information is automatically suspended
 if there is less than a given amount of free space left on the disk.
 Recording is automatically resumed when enough space becomes available.
+.Pp
+.Nm Accountant
+creates the file
+.Pa /var/run/accountant.pid ,
+and stores its process id
+there.  This can be used to kill or reconfigure
+.Nm accountant .
 .Pp
 Options:
 .Pp
@@ -122,9 +129,13 @@ By default,
 is 15 seconds.
 .El
 .Sh FILES
-.Bl -tag -width /var/account/acct -compact
+.Bl -tag -width /var/run/accountant.pid -compact
 .It Pa /var/account/acct
 Default accounting log file.
+.It Pa /var/run/accountant.pid
+The process id of the
+.Nm accountant
+process.
 .It Pa /dev/acct
 Default accounting device.
 .El
