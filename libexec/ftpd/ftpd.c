@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.78 1999/12/18 05:51:35 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.79 1999/12/18 06:33:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.78 1999/12/18 05:51:35 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.79 1999/12/18 06:33:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,6 @@ main(argc, argv)
 	char *argv[];
 {
 	int		addrlen, ch, on = 1, tos, keepalive;
-	char		thost[MAXHOSTNAMELEN+6];  /* hostname + " ftpd" */
 #ifdef KERBEROS5
 	krb5_error_code	kerror;
 #endif
@@ -279,9 +278,8 @@ main(argc, argv)
 	logging = 0;
 	sflag = 0;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
-	hostname[0] = '\0';
 
-	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv46")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dlst:T:u:Uv46")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -298,10 +296,6 @@ main(argc, argv)
 		case 'd':
 		case 'v':		/* deprecated */
 			debug = 1;
-			break;
-
-		case 'h':
-			strlcpy(hostname, optarg, sizeof(hostname));
 			break;
 
 		case 'l':
@@ -343,9 +337,7 @@ main(argc, argv)
 	 * LOG_NDELAY sets up the logging connection immediately,
 	 * necessary for anonymous ftp's that chroot and can't do it later.
 	 */
-	snprintf(thost, sizeof(thost), "%s%sftpd", hostname,
-	    hostname[0] != '\0' ? " " : "");
-	openlog(thost, LOG_PID | LOG_NDELAY, LOG_FTP);
+	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 	addrlen = sizeof(his_addr); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&his_addr, &addrlen) < 0) {
 		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
@@ -409,6 +401,11 @@ main(argc, argv)
 #endif
 	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
 
+	if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
+	    hostname, sizeof(hostname), NULL, 0, 0) != 0)
+		(void)gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
+
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
@@ -463,10 +460,6 @@ main(argc, argv)
 	}
 	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
-	if (hostname[0] == '\0') {
-		(void)gethostname(hostname, sizeof(hostname));
-		hostname[sizeof(hostname) - 1] = '\0';
-	}
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
 
 	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
@@ -2099,16 +2092,14 @@ static void
 dolog(who)
 	struct sockaddr *who;
 {
-	int error;
-	error = getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
-			    NULL, 0, 0);
+	getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost), NULL,0,0);
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle(proctitle);
 #endif /* HASSETPROCTITLE */
-
 	if (logging)
-		syslog(LOG_INFO, "connection from %s", remotehost);
+		syslog(LOG_INFO, "connection from %s to %s",
+		    remotehost, hostname);
 }
 
 /*

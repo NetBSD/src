@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.46 1999/12/18 05:51:35 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.47 1999/12/18 06:33:54 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,7 +80,6 @@ Internet File Transfer Protocol server
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
-.Op Fl h Ar hostname
 .Sh DESCRIPTION
 .Nm
 is the Internet File Transfer Protocol server process.
@@ -118,21 +117,6 @@ This can be useful for testing configurations.
 .It Fl d
 Debugging information is written to the syslog using
 .Dv LOG_FTP .
-.It Fl h Ar hostname
-Hostname to advertise as (defaults to
-.Xr hostname 1 ) .
-If this option is used, each syslog messages has
-.Ar hostname
-inserted before the
-.Dq ftpd[\fIpid\fR]
-string.
-This option is useful when configuring
-.Sq virtual
-.Tn FTP
-servers, each listening on separate addresses as separate names.
-Refer to
-.Xr inetd.conf 5
-for more information on starting services to listen on specific IP addresses.
 .It Fl l
 Each successful and failed
 .Tn FTP
@@ -491,6 +475,21 @@ to allow logging-in via
 into the accounts, which must have
 .Pa /sbin/ftplogin 
 as login shell.
+.Sh Multiple virtual FTP servers
+If
+.Nm
+is started on a specific IP address (with a separate IP name to the
+system's hostname), then that separate name will be returned to the
+client as the hostname that the client is connecting to.
+This feature, in conjunction with 
+.Fl c Ar confdir ,
+is useful when configuring
+.Sq virtual
+.Tn FTP
+servers, each listening on separate addresses as separate names.
+Refer to
+.Xr inetd.conf 5
+for more information on starting services to listen on specific IP addresses.
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
 .It Pa /etc/ftpchroot
