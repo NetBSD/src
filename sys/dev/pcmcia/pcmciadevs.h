@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.33 1999/01/01 19:30:52 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.34 1999/02/19 00:44:15 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -47,6 +47,7 @@
  * List of known PCMCIA vendors
  */
 
+#define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
@@ -109,6 +110,11 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* Fujutsu Products */
+#define	PCMCIA_CIS_FUJUTSU_SCSI600	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJUTSU_SCSI600	0x0401
+#define	PCMCIA_STR_FUJUTSU_SCSI600	"Fujitsu SCSI 600 Interface"
 
 /* Motorola Products */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
