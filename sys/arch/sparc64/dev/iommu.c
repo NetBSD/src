@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.16 2000/06/22 18:18:19 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.17 2000/06/24 20:48:36 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -128,7 +128,6 @@
 #include <sparc64/dev/iommuvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/ctlreg.h>
 #include <machine/cpu.h>
 
 #ifdef DEBUG
