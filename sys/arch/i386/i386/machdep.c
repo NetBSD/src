@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.15 1993/10/29 02:15:56 cgd Exp $
+ *	$Id: machdep.c,v 1.47.2.16 1993/10/29 05:25:34 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -137,7 +137,6 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
-/* XXX */ panic("got this far");
 
 	/*
 	 * Find out how much space we need, allocate it,
