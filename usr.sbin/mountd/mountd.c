@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.66 2000/06/10 07:04:14 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.67 2000/06/10 08:01:07 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.66 2000/06/10 07:04:14 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.67 2000/06/10 08:01:07 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1422,6 +1422,9 @@ netpartcmp(struct sockaddr *s1, struct sockaddr *s2, int bitlen)
 	case AF_INET6:
 		src = &((struct sockaddr_in6 *)s1)->sin6_addr;
 		dst = &((struct sockaddr_in6 *)s2)->sin6_addr;
+		if (((struct sockaddr_in6 *)s1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)s2)->sin6_scope_id)
+			return 1;
 		if (bitlen > sizeof(((struct sockaddr_in6 *)s1)->sin6_addr) * 8)
 			return 1;
 		break;
@@ -1523,6 +1526,9 @@ sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
 		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
 		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
 		len = 16;
+		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
+			return 1;
 		break;
 	default:
 		return 1;
