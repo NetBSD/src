@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.11 2002/06/28 18:44:45 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.12 2002/06/28 18:46:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -36,9 +36,14 @@
  */
 
 /*
- * Broadcom BCM570x family gigabit ethernet driver for FreeBSD.
+ * Broadcom BCM570x family gigabit ethernet driver for NetBSD.
  *
- * Written by Bill Paul <wpaul@windriver.com>
+ * NetBSD version by:
+ *
+ *	Frank van der Linden <fvdl@wasabisystems.com>
+ *	Jason Thorpe <thorpej@wasabisystems.com>
+ *
+ * Originally written for FreeBSD by Bill Paul <wpaul@windriver.com>
  * Senior Engineer, Wind River Systems
  */
 
