@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.48 1999/05/04 16:16:54 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.49 1999/08/05 18:08:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -716,7 +716,7 @@ hardclock(frame)
 			 * Save the overhead of a software interrupt;
 			 * it will happen as soon as we return, so do it now.
 			 */
-			(void)splsoftclock();
+			(void)spllowersoftclock();
 			softclock();
 		} else
 			setsoftclock();
