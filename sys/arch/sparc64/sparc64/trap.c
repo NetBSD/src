@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1999/12/05 11:56:36 ragge Exp $ */
+/*	$NetBSD: trap.c,v 1.34 1999/12/30 16:57:27 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,8 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
+
+#define NEW_FPSTATE
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -577,6 +579,7 @@ trap(type, tstate, pc, tf)
 		 * the FPU.
 		 */
 		if (type == T_FPDISABLED) {
+#ifndef NEW_FPSTATE
 			if (fpproc != NULL) {	/* someone else had it */
 				savefpstate(fpproc->p_md.md_fpstate);
 				fpproc = NULL;
@@ -585,6 +588,26 @@ trap(type, tstate, pc, tf)
 			}
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
+#else
+			/* New scheme */
+			if (fpproc != NULL) {	/* someone else had it, maybe? */
+				savefpstate(fpproc->p_md.md_fpstate);
+				fpproc = NULL;
+				/* Enable the FPU */
+			}
+			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
+				fpproc = &proc0;
+			} else {
+				fpproc = curproc;
+			}
+			/* If we have an allocated fpstate then load it */
+			if (fpproc->p_md.md_fpstate != 0)
+				loadfpstate(fpproc->p_md.md_fpstate);
+			else
+				fpproc = NULL;
+			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+			return;
+#endif
 		}
 		goto dopanic;
 	}
@@ -636,16 +659,22 @@ badtrap:
 	case T_ILLINST:
 	case T_INST_EXCEPT:
 	case T_TEXTFAULT:
+		/* This is not an MMU issue!!!! */
 		printf("trap: textfault at %p!! sending SIGILL due to trap %d: %s\n", 
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
+#ifdef DDB
 		Debugger();
+#endif
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
 
 	case T_PRIVINST:
 		printf("trap: privinst!! sending SIGILL due to trap %d: %s\n", 
 		       type, type < N_TRAP_TYPES ? trap_type[type] : T);
-		Debugger();
+#if defined(DDB) && defined(DEBUG)
+		if (trapdebug & TDB_STOPSIG)
+			Debugger();
+#endif
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
 
@@ -716,9 +745,11 @@ badtrap:
 		       fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}
 		
-#ifdef DDB
+#if defined(DDB) && defined(DEBUG)
+	if (trapdebug & TDB_STOPSIG) {
 		write_all_windows();
 		kdb_trap(type, tf);
+	}
 #endif
 		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
 		    fixalign(p, tf) == 0) {
@@ -873,7 +904,7 @@ rwindow_save(p)
 			}
 #endif
 			rwdest += BIAS;
-			if (copyout((caddr_t)rw, (caddr_t)rwdest,
+			if (copyout((caddr_t)rw, (caddr_t)(u_long)rwdest,
 				    sizeof(*rw))) {
 #ifdef DEBUG
 			if (rwindow_debug&(RW_ERR|RW_64))
@@ -903,7 +934,7 @@ rwindow_save(p)
 				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
-			if (copyout(&rwstack, (caddr_t)rwdest, sizeof(rwstack))) {
+			if (copyout(&rwstack, (caddr_t)(u_long)rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug&RW_ERR)
 					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", rwdest);
@@ -1244,11 +1275,15 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 		printf("data memory error type %x sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+#ifdef DDB
 DEBUGGER(type, tf);
+#endif
 			/* User fault -- Berr */
 			trapsignal(p, SIGBUS, (u_long)sfva);
 		} else {
+#ifdef DDB
 			DEBUGGER(type, tf);
+#endif
 			panic("trap: memory error");
 		}
 #endif
@@ -1745,7 +1780,7 @@ syscall(code, tf, pc)
 	register int64_t *ap;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, new;
+	int error = 0, new;
 	union args {
 		register32_t i[8];
 		register64_t l[8];
@@ -1768,8 +1803,6 @@ syscall(code, tf, pc)
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if (trapdebug & TDB_STOPCALL)
-		Debugger();
 	if ((trapdebug & TDB_TL) && tl()) {
 		printf("%d tl %d syscall(%x, %x, %x)\n",
 		       curproc?curproc->p_pid:-1, tl(), code, tf, pc); 
@@ -1815,8 +1848,9 @@ syscall(code, tf, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent)
-			break;
+		if (code < nsys &&
+		    callp[code].sy_call != callp[p->p_emul->e_nosys].sy_call)
+			break; /* valid system call */
 		if (tf->tf_out[6] & 1L) {
 			/* longs *are* quadwords */
 			code = ap[0];
@@ -1858,10 +1892,6 @@ syscall(code, tf, pc)
 			       callp->sy_narg, callp->sy_argsize, callp->sy_call, (long)callp->sy_argsize / sizeof(register64_t));
 #endif
 		if (i > nap) {	/* usually false */
-#if 0
-			register64_t temp[6];
-			int j = 0;
-#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8) {
 				printf("Args64 %d>%d -- need to copyin\n", i , nap);
@@ -1869,51 +1899,41 @@ syscall(code, tf, pc)
 #endif
 			if (i > 8)
 				panic("syscall nargs");
-#if 0
 			/* Read the whole block in */
-			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
-				       offsetof(struct frame64, fr_argx),
-				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
-			/* Copy each to the argument array */
-			for (j=0; nap+j < i; j++)
-				args.l[nap+j] = temp[j];
-#else
-			/* Read the whole block in */
-			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
+			error = copyin((caddr_t)(u_long)tf->tf_out[6] + BIAS +
 				       offsetof(struct frame64, fr_argx),
 				       (caddr_t)&args.l[nap], (i - nap) * sizeof(register64_t));
-#endif
-			if (error) {
-#ifdef KTRACE
-				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p->p_tracep, code,
-						   callp->sy_argsize, (register_t*)args.l);
-#endif
-				goto bad;
-			}
 			i = nap;
 		}
 		/* It should be faster to do <=6 longword copies than call bcopy */
 		for (argp = &args.l[0]; i--;) 
 			*argp++ = *ap++;
 		
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_SYSCALL))
+			ktrsyscall(p->p_tracep, code,
+				   callp->sy_argsize, (register_t*)args.l);
+#endif
+		if (error) goto bad;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < callp->sy_narg; i++) 
 				printf("arg[%d]=%lx ", i, (long)(args.l[i]));
 			printf("\n");
 		}
-		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
+		if (trapdebug&(TDB_STOPCALL)) { 
 			printf("stop precall\n");
 			Debugger();
 		}
 #endif
 	} else {
 		register32_t *argp;
+		int j = 0;
+
 		/* 32-bit stack */
 		callp += code;
 
-#if defined(__arch64__) && COMPAT_SPARC32 != 1
+#if defined(__arch64__) && !defined(COMPAT_NETBSD32)
 #ifdef DEBUG
 		printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
 		Debugger();
@@ -1923,7 +1943,6 @@ syscall(code, tf, pc)
 		i = (long)callp->sy_argsize / sizeof(register32_t);
 		if (i > nap) {	/* usually false */
 			register32_t temp[6];
-			int j = 0;
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8)
 				printf("Args %d>%d -- need to copyin\n", i , nap);
@@ -1931,7 +1950,7 @@ syscall(code, tf, pc)
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
-			error = copyin((caddr_t)(tf->tf_out[6] +
+			error = copyin((caddr_t)(u_long)(tf->tf_out[6] +
 						 offsetof(struct frame32, fr_argx)),
 				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
 			/* Copy each to the argument array */
@@ -1946,37 +1965,56 @@ syscall(code, tf, pc)
 					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)args.i[nap+k]);
 			}
 #endif
-			if (error) {
-#ifdef KTRACE
-				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, (register_t *)args.i);
-#endif
-				goto bad;
-			}
 			i = nap;
 		}
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
 				*argp++ = *ap++;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_SYSCALL)) {
+#if defined(__arch64__)
+			register_t temp[8];
+			
+			/* Need to xlate 32-bit->64-bit */
+			i = (long)callp->sy_argsize / 
+				sizeof(register32_t);
+			for (j=0; j<i; j++) 
+				temp[j] = args.i[j];
+			ktrsyscall(p->p_tracep, code,
+				   callp->sy_argsize, (register_t *)temp);
+#else
+			ktrsyscall(p->p_tracep, code,
+				   callp->sy_argsize, (register_t *)args.i);
+#endif
+		}
+#endif
+		if (error) {
+			goto bad;
+		}
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < (long)callp->sy_argsize / sizeof(register32_t); i++) 
 				printf("arg[%d]=%x ", i, (int)(args.i[i]));
 			printf("\n");
 		}
-		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
+		if (trapdebug&(TDB_STOPCALL)) { 
 			printf("stop precall\n");
 			Debugger();
 		}
 #endif
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)args.i);
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, (register_t *)&args);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
+#ifdef DEBUG
+	if (callp->sy_call == sys_nosys) {
+		printf("trapdebug: emul %s UNIPL syscall %d:%s\n", 
+		       p->p_emul->e_name, code,
+		       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
+	}
+#endif
 	error = (*callp->sy_call)(p, &args, rval);
 
 	switch (error) {
@@ -2035,6 +2073,9 @@ syscall(code, tf, pc)
 		break;
 	}
 
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif
 	userret(p, pc, sticks);
 #ifdef NOTDEF_DEBUG
 	if ( code == 202) {
