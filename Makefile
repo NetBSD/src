@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.156 2001/11/15 19:32:19 tv Exp $
+#	$NetBSD: Makefile,v 1.157 2001/11/20 15:20:28 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -77,8 +77,17 @@
 _J=		-j${NBUILDJOBS}
 .endif
 
-_SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin \
-		usr.sbin share sys etc distrib regress
+# NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW.  Also note that
+# distrib does not belong here, either, as it is a very special case.
+_SUBDIR+=	tools lib include gnu bin games libexec sbin usr.bin \
+		usr.sbin share sys regress
+
+.if make(cleandir) || make(clean) || make(obj)
+_SUBDIR+= distrib
+.ifdef MAKEOBJDIRPREFIX
+_SUBDIR+= etc
+.endif
+.endif  
 
 # Weed out directories that don't exist.
 
