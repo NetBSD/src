@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.8.2.1 1999/12/20 15:59:39 he Exp $	*/
+/*	$NetBSD: tset.c,v 1.8.2.2 2000/10/19 16:28:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.8.2.1 1999/12/20 15:59:39 he Exp $");
+__RCSID("$NetBSD: tset.c,v 1.8.2.2 2000/10/19 16:28:47 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ main(argc, argv)
 	struct winsize win;
 #endif
 	int ch, noinit, noset, quiet, Sflag, sflag, showterm, usingupper;
-	char savech, *p, *t, *tcapbuf;
+	char savech, *p, *q, *t, *tcapbuf;
 	const char *ttype;
 
 	if (tcgetattr(STDERR_FILENO, &mode) < 0)
@@ -230,15 +230,17 @@ main(argc, argv)
 		 */
 		if ((p = getenv("SHELL")) &&
 		    !strcmp(p + strlen(p) - 3, "csh")) {
-			p = "set noglob;\nsetenv TERM %s;\nsetenv TERMCAP '";
+			p = "set noglob;\nsetenv TERM ";
+			q = ";\nsetenv TERMCAP '";
 			t = "';\nunset noglob;\n";
 		} else {
-			p = "TERM=%s;\nTERMCAP='";
+			p = "TERM=";
+			q = ";\nTERMCAP='";
 			t = "';\nexport TERMCAP TERM;\n";
 		}
-		(void)printf(p, ttype);
+		(void)printf("%s%s%s, p, ttype, q);
 		wrtermcap(tcapbuf);
-		(void)printf(t);
+		(void)printf("%s", t);
 	}
 
 	exit(0);
