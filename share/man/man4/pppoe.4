@@ -1,0 +1,146 @@
+.\"	$NetBSD: pppoe.4,v 1.1 2001/12/10 20:49:30 martin Exp $
+.\"
+.\" Copyright (c) 2001 Martin Husemann. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 10, 2001
+.Dt PPPOE 4
+.Os
+.Sh NAME
+.Nm pppoe
+.Nd PPP over ethernet protocol network interface
+.Sh SYNOPSIS
+.Nm pseudo-device pppoe
+.Sh DESCRIPTION
+The
+.Nm
+interface encapsulatates
+.Em Point-to-Point Protocol (PPP)
+packets inside ehternet frames as defined by 
+.Li RFC2516 .
+.Pp
+This is often used to connect a router via a DSL modem to
+an access concentrator. The
+.Nm
+interface does not by itself transmit or receive frames,
+but needs an ethernet interface to do so. This ethernet interface
+is connected to the
+.Nm
+interface via
+.Xr pppoectl 8 .
+The ethernet interface needs to be marked UP, but does not need to have an 
+IP address.
+.Pp
+There are two basic modes of operation, controlled via the
+.Em link1
+switch. The default mode,
+.Em link1
+not being set, tries to keep the configured session open all the
+time. If the session is disconnected, a new connection attempt is started
+imediately. The
+.Dq dial on demand
+mode, selected by setting
+.Em link1 ,
+only establishes a connection when data is being sent to the interface.
+.Pp
+Before a
+.Nm
+interface is useable, it needs to be configured. The following steps
+are necessary:
+.Bl -bullet
+.It
+create the interface
+.It
+connect an ethernet interface
+This interface is used for the physical communication. As noted above it
+must be marked UP, but need not have an IP address.
+.It
+configure authentication
+The PPP session needs to identify the client to the peer. For more details
+on the available options see
+.Xr pppoectl 8 .
+.El
+This all is typically done in an /etc/ifconfig.pppoe0 file.
+.Sh EXAMPLES
+A typical /etc/ifconfig.pppoe0 file looks like this:
+.Bd -literal
+create
+! /sbin/ifconfig ne0 up
+! /sbin/pppoectl -e ne0 $int
+! /sbin/pppoectl $int myauthproto=pap myauthname=testcaller myauthsecret=donttell
+inet 0.0.0.0 0.0.0.1
+#! /sbin/route add default -iface 0.0.0.1
+up
+.Ed
+The commented out call to
+.Xr route 8
+may be ommited and the route added in the ip-up script called by
+.Xr ifwatchd 8 ,
+when the real IP address is known. This is easy in the
+.Dq connect always
+mode (link1 not set), but hard to acomplish in the
+.Dq dial on demand
+mode (link1 set). In the latter case adding an iface route is an easy
+workaround.
+.Pp
+The 
+.Nm
+interfaces operate completely inside the kernel, without any userland
+support. Because of this, a special deamon is used to fire ip-up or
+down scripts to execute arbitrary code when the PPP session is established
+and addresses of the interface become available. To enable the useage of
+/etc/ppp/ip-up and /etc/ppp/ip-down for this purpose, simply add
+.Bd -literal
+ifwatchd=YES
+.Ed
+to /etc/rc.conf. See
+.Xr ifwatchd 8
+for details and parameters passed to this scripts.
+.Pp
+Since this is a PPP interface, the addresses assigned to the interface
+may change during PPP negotiation. There is no fine grained control available,
+which addresses are acceptable and which are not. For the local side and the
+remote address there is exactly one choice: hard code address or wildcard.
+If a real address is assigned to one side of the connection, PPP negotiation
+will only aggree to exactly this address. If one side is wildcarded, every
+address suggested by the peer will be accepted.
+.Pp
+To wildcard the local address set it to 0.0.0.0, to wildcard the remote
+address set it to 0.0.0.1. Wildcarding is not available (nor necessary)
+for IPv6 operation.
+.Sh BUGS
+This implementation is client side only.
+.Sh SEE ALSO
+.Xr pppoectl 8 ,
+.Xr ifwatchd 8
+.Rs
+.%R RFC
+.%N 2516
+.%D February 1999
+.%T "A Method for Transmitting PPP Over Ethernet (PPPoE)"
+.Re
+.Sh HISTORY
+The
+.Nm
+device appeared in
+.Nx 1.6 .
