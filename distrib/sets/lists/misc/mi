@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.57 2001/01/24 07:59:06 jwise Exp $
+# $NetBSD: mi,v 1.58 2001/01/24 08:17:53 jwise Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -336,8 +336,8 @@
 ./usr/share/examples/emul/svr4/etc/netconfig		misc-sys-examples
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples
 ./usr/share/examples/emul/ultrix/etc/svc.conf		misc-sys-examples
-./usr/share/examples/ftpd/ftpd.conf		misc-net-examples
-./usr/share/examples/ftpd/ftpusers		misc-net-examples
+./usr/share/examples/ftpd/ftpd.conf		misc-netutil-examples
+./usr/share/examples/ftpd/ftpusers		misc-netutil-examples
 ./usr/share/examples/ipf/BASIC.NAT		misc-ipf-examples
 ./usr/share/examples/ipf/BASIC_1.FW		misc-ipf-examples
 ./usr/share/examples/ipf/BASIC_2.FW		misc-ipf-examples
