@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_lnaof.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: inet_lnaof.c,v 1.2 2003/05/06 07:31:43 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -50,7 +50,7 @@ static const char sccsid[] = "@(#)inet_lnaof.c	8.1 (Berkeley) 6/4/93";
  * internet address; handles class a/b/c network
  * number formats.
  */
-u_long
+in_addr_t
 inet_lnaof(in)
 	struct in_addr in;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_netof.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: inet_netof.c,v 1.2 2003/05/06 07:31:44 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -49,7 +49,7 @@ static const char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
  * Return the network number from an internet
  * address; handles class a/b/c network #'s.
  */
-u_long
+in_addr_t
 inet_netof(in)
 	struct in_addr in;
 {
