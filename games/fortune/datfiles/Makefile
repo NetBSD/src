@@ -24,7 +24,7 @@ install:
         else \
                 true ; \
         fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${DATFILES} \
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${DATFILES} \
 	    ${DESTDIR}/usr/share/games/fortune
 	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 		${NORMDAT:R} ${DESTDIR}/usr/share/games/fortune)
