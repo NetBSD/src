@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.5 2000/05/09 05:52:54 thorpej Exp $
+# $NetBSD: Makefile,v 1.6 2001/12/28 01:32:39 lukem Exp $
 
 LIB=	ipsec
+USE_SHLIBDIR=	yes
 CFLAGS+=-g
 CPPFLAGS+=-DIPSEC_DEBUG -DIPSEC -DINET6 -I${.CURDIR} -I. -DYY_NO_UNPUT
 

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2000/07/03 21:10:57 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2001/12/28 01:32:39 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
+USE_SHLIBDIR=	yes
 CPPFLAGS+=-I${.CURDIR} -DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS=	termcap.c tgoto.c tputs.c
 
@@ -31,15 +32,24 @@ LINKS+=	${LIBDIR}/libtermcap_pic.a ${LIBDIR}/libtermlib_pic.a
 .endif
 
 .if exists(${.CURDIR}/shlib_version)
-LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+LINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_FULLVERSION} \
+	${_LIBSODIR}/libtermlib.so.${SHLIB_FULLVERSION}
+.if ${_LIBSODIR} != ${LIBDIR}
+SYMLINKS+=${_LIBSODIR}/libtermcap.so.${SHLIB_FULLVERSION} \
 	${LIBDIR}/libtermlib.so.${SHLIB_FULLVERSION}
+.endif
 
 .if (${OBJECT_FMT} == "ELF")
-LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR} \
-	${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}
-LINKS+=	${LIBDIR}/lib${LIB}.so ${LIBDIR}/libtermlib.so
+LINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_MAJOR} \
+	${_LIBSODIR}/libtermlib.so.${SHLIB_MAJOR}
+LINKS+=	${_LIBSODIR}/libtermcap.so ${_LIBSODIR}/libtermlib.so
+.if ${_LIBSODIR} != ${LIBDIR}
+SYMLINKS+=	${_LIBSODIR}/libtermcap.so.${SHLIB_MAJOR} \
+		${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}
+SYMLINKS+=	${_LIBSODIR}/libtermcap.so ${LIBDIR}/libtermlib.so
 .endif
 .endif
+.endif	# exists shlib_version
 
 .endif	# ${MKPIC} != "no"
 

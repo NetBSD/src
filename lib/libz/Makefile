@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/12 00:51:06 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/12/28 01:32:40 lukem Exp $
 
 LIB=		z
 NOMAN=		# defined
+USE_SHLIBDIR=	yes
 
 SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
 	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c \
