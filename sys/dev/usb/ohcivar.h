@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.7 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.8 1999/08/22 23:41:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,26 +38,27 @@
  */
 
 typedef struct ohci_soft_ed {
-	ohci_ed_t *ed;
+	ohci_ed_t ed;
 	struct ohci_soft_ed *next;
 	ohci_physaddr_t physaddr;
 } ohci_soft_ed_t;
-#define OHCI_ED_CHUNK 256
+#define OHCI_SED_SIZE ((sizeof (struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
+#define OHCI_SED_CHUNK 128
 
 typedef struct ohci_soft_td {
-	ohci_td_t *td;
+	ohci_td_t td;
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	/*ohci_soft_ed_t *sed;*/
 	usbd_request_handle reqh;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_SET_LEN	0x0002
 } ohci_soft_td_t;
-#define OHCI_TD_CHUNK 256
+#define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
+#define OHCI_STD_CHUNK 128
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
 
