@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.18 1994/02/16 17:59:17 mycroft Exp $
+ *	$Id: if_ep.c,v 1.19 1994/03/04 01:31:50 hpeyerl Exp $
  */
 /*
  * TODO:
@@ -117,6 +117,47 @@ static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct isa_device * is));
 
 /*
+ * Eisa probe routine. If any part of this probe should fail to
+ * return the desired result, the isa_epprobe() is called.  Astute
+ * readers will discover a problem that I don't feel inclined to address
+ * at the moment.
+ */
+int
+epprobe(is)
+	struct isa_device *is;
+{
+	struct ep_softc *sc = &ep_softc[is->id_unit];
+	int port;
+	int i;
+	int eisa_slot;
+	u_short k;
+
+	eisa_slot=1;
+	while (eisa_slot < 8) {
+		port = 0x1000 * eisa_slot;
+		outw(port + EP_COMMAND, GLOBAL_RESET);
+		DELAY(1000);
+		if (inw(port + EP_W0_MFG_ID) == MFG_ID)
+			break;
+		eisa_slot++;
+	}
+	k = inw(port + EP_W0_PRODUCT_ID);
+	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
+		return(isa_epprobe(is));
+
+	k = inw(port + EP_W0_ADDRESS_CFG);
+	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
+		
+	k = inw(port + EP_W0_RESOURCE_CFG);
+	k >>= 12;
+	if (is->id_irq != (1 << ((k == 2) ? 9 : k)))
+		return (isa_epprobe(is));
+
+	is->id_iobase = port;	/* Set the base addr for later */
+	return(0x10);
+}
+
+/*
  * Rudimentary support for multiple cards is here but is not
  * currently handled.  In the future we will have to add code
  * for tagging the cards for later activation.  We wanna do something
@@ -124,7 +165,7 @@ static int epbusyeeprom __P((struct isa_device * is));
  * Magnum config holds promise of a fix but we'll have to wait a bit.
  */
 int
-epprobe(is)
+isa_epprobe(is)
 	struct isa_device *is;
 {
 	struct ep_softc *sc = &ep_softc[is->id_unit];
