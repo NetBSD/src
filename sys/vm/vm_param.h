@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.14 1998/02/06 00:15:01 mrg Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.15 1998/02/10 14:09:06 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,6 +70,10 @@
 
 #ifndef	_VM_PARAM_
 #define	_VM_PARAM_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #include <machine/vmparam.h>
 

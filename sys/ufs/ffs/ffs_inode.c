@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.16 1998/02/05 08:00:34 mrg Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.17 1998/02/10 14:10:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ffs_inode.c	8.8 (Berkeley) 10/19/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 1998/02/10 00:25:36 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 1998/02/10 14:08:47 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -41,6 +41,10 @@
 
 #ifndef	_SYS_LOCK_H_
 #define	_SYS_LOCK_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #define NCPUS 1		/* XXX */
 

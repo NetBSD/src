@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.88 1998/02/05 07:59:48 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.89 1998/02/10 14:09:27 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,6 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

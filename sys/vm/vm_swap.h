@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.7 1998/02/06 00:15:03 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.8 1998/02/10 14:09:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -30,6 +30,10 @@
 
 #ifndef _VM_VM_SWAP_H_
 #define _VM_VM_SWAP_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 /* These structures are used to return swap information for userland */
 struct swapent {

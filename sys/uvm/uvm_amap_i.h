@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.5 1998/02/10 02:34:23 perry Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.6 1998/02/10 14:12:05 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -40,6 +40,8 @@
 
 #ifndef _UVM_UVM_AMAP_I_H_
 #define _UVM_UVM_AMAP_I_H_
+
+#include "opt_uvmhist.h"
 
 /*
  * uvm_amap_i.h

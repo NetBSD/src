@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.4 1998/02/07 11:08:38 mrg Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.5 1998/02/10 14:12:13 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -70,8 +70,6 @@
 
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
-
-UVMHIST_DECL(maphist);
 
 /*
  * local prototypes

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.39 1998/02/06 07:22:07 mrg Exp $	*/
+/*	$NetBSD: vector.s,v 1.40 1998/02/10 14:11:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <i386/isa/icu.h>
 #include <dev/isa/isareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.47 1998/02/05 07:59:55 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.48 1998/02/10 14:09:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_synch.c	8.6 (Berkeley) 1/21/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

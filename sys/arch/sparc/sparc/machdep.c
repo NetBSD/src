@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1998/02/08 06:15:56 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.103 1998/02/10 14:11:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
  *
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>

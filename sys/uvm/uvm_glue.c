@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.4 1998/02/07 11:08:33 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.5 1998/02/10 14:12:12 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -70,10 +70,11 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvmhist.h"
+
 /*
  * uvm_glue.c: glue functions
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +93,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  * local prototypes

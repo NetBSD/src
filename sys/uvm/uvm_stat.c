@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.3 1998/02/07 11:09:38 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.c,v 1.4 1998/02/10 14:12:29 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,8 @@
  *
  * from: Id: uvm_stat.c,v 1.1.2.3 1997/12/19 15:01:00 mrg Exp 
  */
+
+#include "opt_uvmhist.h"
 
 /*
  * uvm_stat.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 1998/02/06 07:22:03 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 1998/02/10 14:12:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,9 @@
 #ifndef _VMPARAM_H_
 #define _VMPARAM_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
 
 /*
  * Machine dependent constants for 386.

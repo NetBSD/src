@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 1998/02/05 07:57:57 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 1998/02/10 14:11:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -49,6 +49,8 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
+
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -5085,7 +5087,7 @@ Lbcopy_start:
 	inc	%o1
 1:
 	retl
-	nop
+	 nop
 	/* NOTREACHED */
 
 	/*
@@ -5116,7 +5118,7 @@ Lbcopy_fancy:
 	bnz	0b		!	} while (--len != 0);
 	stb	%o4, [%o1 - 1]
 	retl
-	nop
+	 nop
 	/* NOTREACHED */
 
 	! lowest bit matches, so we can copy by words, if nothing else
@@ -5214,7 +5216,7 @@ Lbcopy_mopw:
 	sth	%o4, [%o1]
 	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
 	retl
-	stb	%o4, [%o1 + 2]
+	 stb	%o4, [%o1 + 2]
 	/* NOTREACHED */
 
 	! mop up trailing byte (if present).
@@ -5224,11 +5226,11 @@ Lbcopy_mopb:
 
 Lbcopy_done:
 	retl
-	nop
+	 nop
 
 1:
 	retl
-	stb	%o4,[%o1]
+	 stb	%o4,[%o1]
 /*
  * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
  */
