@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 1997/03/24 01:32:38 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227 1997/03/24 01:36:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1621,7 +1621,11 @@ cpu_reset()
 
 	disable_intr();
 
-	/* Toggle the hardware reset line on the keyboard controller. */
+	/*
+	 * The keyboard controller has 4 random output pins, one of which is
+	 * connected to the RESET pin on the CPU in many PCs.  We tell the
+	 * keyboard controller to pulse this line a couple of times.
+	 */
 	outb(KBCMDP, KBC_PULSE0);
 	delay(100000);
 	outb(KBCMDP, KBC_PULSE0);
