@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.27 1993/09/29 01:02:21 pk Exp $
+#	$Id: bsd.lib.mk,v 1.28 1993/10/04 20:54:33 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -32,6 +32,11 @@
 
 .cc.po .C.po:
 	${CXX} -p ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
+
+.cc.so .C.so:
+	${CXX} ${PICFLAG} -DPIC ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
