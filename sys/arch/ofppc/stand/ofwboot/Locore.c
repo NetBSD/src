@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.5 2001/01/17 15:31:04 ws Exp $	*/
+/*	$NetBSD: Locore.c,v 1.6 2001/10/23 03:31:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,15 +45,6 @@ static void setup __P((void));
 
 static int stack[1024];
 
-#ifdef XCOFF_GLUE
-asm("
-	.text
-	.globl	_entry
-_entry:
-	.long	_start,0,0
-");
-#endif
-
 asm("
 	.text
 	.globl	_start
@@ -92,7 +83,9 @@ startup(vpd, res, openfirm, arg, argl)
 	char *arg;
 	int argl;
 {
+	extern char etext[], _end[], _edata[];
 
+	memset(_edata, 0, (_end - _edata));
 	openfirmware_entry = openfirm;
 	setup();
 	main();

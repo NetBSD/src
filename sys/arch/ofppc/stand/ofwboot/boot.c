@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2001/07/22 14:43:15 wiz Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2001/10/23 03:31:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/cpu.h>
@@ -94,30 +95,34 @@
 #include "ofdev.h"
 #include "openfirm.h"
 
+#ifdef DEBUG
+# define DPRINTF printf
+#else
+# define DPRINTF while (/*CONSTCOND*/0) printf
+#endif
+
 char bootdev[128];
 char bootfile[128];
 int boothowto;
 int debug;
 
-#ifdef POWERPC_BOOT_ELF
-int	elf_exec __P((int, Elf_Ehdr *, u_int32_t *, void **));
-#endif
-
-#ifdef POWERPC_BOOT_AOUT
-int	aout_exec __P((int, struct exec *, u_int32_t *, void **));
-#endif
+static int ofw_version = 0;
+static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.ofppc", NULL };
 
 static void
 prom2boot(dev)
 	char *dev;
 {
-	char *cp;
+	char *cp, *ocp;
 	
-	for (cp = dev; *cp != '\0'; cp++)
+	ocp = cp;
+	cp = dev + strlen(dev) - 1;
+	for (; cp >= ocp; cp--) {
 		if (*cp == ':') {
 			*cp = '\0';
 			return;
 		}
+	}
 }
 
 static void
@@ -132,102 +137,49 @@ parseargs(str, howtop)
 		OF_exit();
 
 	*howtop = 0;
+
 	for (cp = str; *cp; cp++)
 		if (*cp == ' ' || *cp == '-')
-			break;
-	if (!*cp)
-		return;
+			goto found;
 	
+	return;
+
+ found:
 	*cp++ = '\0';
 	while (*cp)
 		BOOT_FLAG(*cp++, *howtop);
 }
 
 static void
-chain(entry, args, esym)
+chain(entry, args, ssym, esym)
 	void (*entry)();
 	char *args;
-	void *esym;
+	void *ssym, *esym;
 {
-	extern char end[];
-	int l;
+	extern char end[], *cp;
+	u_int l, magic = 0x19730224;
 
 	freeall();
 
 	/*
-	 * Stash pointer to end of symbol table after the argument
+	 * Stash pointer to start and end of symbol table after the argument
 	 * strings.
 	 */
 	l = strlen(args) + 1;
+	l = (l + 3) & ~3;			/* align */
+	DPRINTF("magic @ %p\n", args + l);
+	memcpy(args + l, &magic, sizeof(magic));
+	l += sizeof(magic);
+	DPRINTF("ssym @ %p\n", args + l);
+	memcpy(args + l, &ssym, sizeof(ssym));
+	l += sizeof(ssym); 
+	DPRINTF("esym @ %p\n", args + l);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
+	DPRINTF("args + l -> %p\n", args + l);
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
-}
-
-int
-loadfile(fd, args)
-	int fd;
-	char *args;
-{
-	union {
-#ifdef POWERPC_BOOT_AOUT
-		struct exec aout;
-#endif
-#ifdef POWERPC_BOOT_ELF
-		Elf_Ehdr elf;
-#endif
-	} hdr;
-	int rval;
-	u_int32_t entry;
-	void *esym;
-
-	rval = 1;
-	esym = NULL;
-
-	/* Load the header. */
-	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-		printf("read header: %s\n", strerror(errno));
-		goto err;
-	}
-
-	/* Determine file type, load kernel. */
-#ifdef POWERPC_BOOT_AOUT
-	if (N_BADMAG(hdr.aout) == 0 && N_GETMID(hdr.aout) == MID_POWERPC) {
-		rval = aout_exec(fd, &hdr.aout, &entry, &esym);
-	} else
-#endif
-#ifdef POWERPC_BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
-		rval = elf_exec(fd, &hdr.elf, &entry, &esym);
-	} else
-#endif
-	{
-		printf("unknown executable format\n");
-	}
-
-	if (rval)
-		goto err;
-
-	printf(" start=0x%x\n", entry);
-
-	close(fd);
-
-	/* XXX this should be replaced w/ a mountroothook. */
-	if (floppyboot) {
-		printf("Please insert root disk and press ENTER ");
-		getchar();
-		printf("\n");
-	}
-
-	chain((void *)entry, args, esym);
-	/* NOTREACHED */
-
- err:
-	close(fd);
-	return (rval);
 }
 
 __dead void
@@ -237,210 +189,19 @@ _rtt()
 	OF_exit();
 }
 
-#ifdef POWERPC_BOOT_AOUT
-int
-aout_exec(fd, hdr, entryp, esymp)
-	int fd;
-	struct exec *hdr;
-	u_int32_t *entryp;
-	void **esymp;
-{
-	int n, *addr;
-
-	/* Display the load address (entry point) for a.out. */
-	printf("Booting %s @ 0x%lx\n", opened_name, hdr->a_entry);
-	addr = (void *)(hdr->a_entry);
-
-	/*
-	 * Determine memory needed for kernel and allocate it from
-	 * the firmware.
-	 */
-	n = hdr->a_text + hdr->a_data + hdr->a_bss + hdr->a_syms + sizeof(int);
-
-	/* Load text. */
-	lseek(fd, N_TXTOFF(*hdr), SEEK_SET);
-	printf("%lu", hdr->a_text);
-	if (read(fd, addr, hdr->a_text) != hdr->a_text) {
-		printf("read text: %s\n", strerror(errno));
-		return (1);
-	}
-	__syncicache((void *)addr, hdr->a_text);
-
-	/* Load data. */
-	printf("+%lu", hdr->a_data);
-	if (read(fd, (char *)addr + hdr->a_text, hdr->a_data) != hdr->a_data) {
-		printf("read data: %s\n", strerror(errno));
-		return (1);
-	}
-
-	/* Zero BSS. */
-	printf("+%lu", hdr->a_bss);
-	memset((char *)addr + hdr->a_text + hdr->a_data, 0, hdr->a_bss);
-
-	/* Symbols. */
-	*esymp = addr;
-	addr = (int *)((char *)addr + hdr->a_text + hdr->a_data + hdr->a_bss);
-	*addr++ = hdr->a_syms;
-	if (hdr->a_syms) {
-		printf(" [%lu", hdr->a_syms);
-		if (read(fd, addr, hdr->a_syms) != hdr->a_syms) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		addr = (int *)((char *)addr + hdr->a_syms);
-		if (read(fd, &n, sizeof(int)) != sizeof(int)) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		*addr++ = n;
-		if (read(fd, addr, n - sizeof(int)) != n - sizeof(int)) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		printf("+%d]", n - sizeof(int));
-		*esymp = addr + (n - sizeof(int));
-	}
-
-	*entryp = hdr->a_entry;
-	return (0);
-}
-#endif /* POWERPC_BOOT_AOUT */
-
-#ifdef POWERPC_BOOT_ELF
-int
-elf_exec(fd, elf, entryp, esymp)
-	int fd;
-	Elf_Ehdr *elf;
-	u_int32_t *entryp;
-	void **esymp;
-{
-	Elf32_Shdr *shp;
-	Elf32_Off off;
-	void *addr;
-	size_t size;
-	int i, first = 1;
-	int n;
-
-	/*
-	 * Don't display load address for ELF; it's encoded in
-	 * each section.
-	 */
-	printf("Booting %s\n", opened_name);
-
-	for (i = 0; i < elf->e_phnum; i++) {
-		Elf_Phdr phdr;
-		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
-		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
-			printf("read phdr: %s\n", strerror(errno));
-			return (1);
-		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0)
-			continue;
-
-		/* Read in segment. */
-		printf("%s%lu@0x%lx", first ? "" : "+", phdr.p_filesz,
-		    (u_long)phdr.p_vaddr);
-		(void)lseek(fd, phdr.p_offset, SEEK_SET);
-		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
-		    phdr.p_filesz) {
-			printf("read segment: %s\n", strerror(errno));
-			return (1);
-		}
-		__syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
-
-		/* Zero BSS. */
-		if (phdr.p_filesz < phdr.p_memsz) {
-			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
-			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			memset((void *)phdr.p_vaddr + phdr.p_filesz, 0,
-			    phdr.p_memsz - phdr.p_filesz);
-		}
-		first = 0;
-	}
-
-	printf(" \n");
-
-#if 0 /* I want to rethink this... --thorpej@netbsd.org */
-	/*
-	 * Compute the size of the symbol table.
-	 */
-	size = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	shp = addr = alloc(elf->e_shnum * sizeof(Elf32_Shdr));
-	(void)lseek(fd, elf->e_shoff, SEEK_SET);
-	if (read(fd, addr, elf->e_shnum * sizeof(Elf32_Shdr)) !=
-	    elf->e_shnum * sizeof(Elf32_Shdr)) {
-		printf("read section headers: %s\n", strerror(errno));
-		return (1);
-	}
-	for (i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == SHT_NULL)
-			continue;
-		if (shp->sh_type != SHT_SYMTAB
-		    && shp->sh_type != SHT_STRTAB) {
-			shp->sh_offset = 0; 
-			shp->sh_type = SHT_NOBITS;
-			continue;
-		}
-		size += shp->sh_size;
-	}
-	shp = addr;
-
-	panic("no space for symbol table");
-
-	/*
-	 * Copy the headers.
-	 */
-	elf->e_phoff = 0;
-	elf->e_shoff = sizeof(Elf_Ehdr);
-	elf->e_phentsize = 0;
-	elf->e_phnum = 0;
-	memcpy(addr, elf, sizeof(Elf_Ehdr));
-	memcpy(addr + sizeof(Elf_Ehdr), shp, elf->e_shnum * sizeof(Elf32_Shdr));
-	free(shp, elf->e_shnum * sizeof(Elf32_Shdr));
-	*ssymp = addr;
-
-	/*
-	 * Now load the symbol sections themselves.
-	 */
-	shp = addr + sizeof(Elf_Ehdr);
-	addr += sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	off = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == SHT_SYMTAB
-		    || shp->sh_type == SHT_STRTAB) {
-			if (first)
-				printf("symbols @ 0x%lx ", (u_long)addr);
-			printf("%s%d", first ? "" : "+", shp->sh_size);
-			(void)lseek(fd, shp->sh_offset, SEEK_SET);
-			if (read(fd, addr, shp->sh_size) != shp->sh_size) {
-				printf("read symbols: %s\n", strerror(errno));
-				return (1);
-			}
-			addr += shp->sh_size;
-			shp->sh_offset = off;
-			off += shp->sh_size;
-			first = 0;
-		}
-	}
-	*esymp = addr;
-#endif /* 0 */
-
-	*entryp = elf->e_entry;
-	return (0);
-}
-#endif /* POWERPC_BOOT_ELF */
-
 void
 main()
 {
 	extern char bootprog_name[], bootprog_rev[],
-	    bootprog_maker[], bootprog_date[];
-	int chosen;
+		    bootprog_maker[], bootprog_date[];
+	int chosen, options;
 	char bootline[512];		/* Should check size? */
 	char *cp;
-	int fd;
-	
+	u_long marks[MARK_MAX];
+	u_int32_t entry;
+	void *ssym, *esym;
+
+	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
@@ -456,19 +217,34 @@ main()
 
 	prom2boot(bootdev);
 	parseargs(bootline, &boothowto);
+	DPRINTF("bootline=%s\n", bootline);
 
 	for (;;) {
+		int i;
+
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
 			gets(bootline);
 			parseargs(bootline, &boothowto);
 		}
-		if ((fd = open(bootline, 0)) >= 0)
-			break;
-		if (errno)
-			printf("open %s: %s\n", opened_name, strerror(errno));
+
+		if (bootline[0]) {
+			kernels[0] = bootline;
+			kernels[1] = NULL;
+		}
+
+		for (i = 0; kernels[i]; i++) {
+			DPRINTF("Trying %s\n", kernels[i]);
+
+			marks[MARK_START] = 0;
+			if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
+				goto loaded;
+		}
+
 		boothowto |= RB_ASKNAME;
 	}
+ loaded:
+
 #ifdef	__notyet__
 	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
 	cp = bootline;
@@ -495,8 +271,14 @@ main()
 #ifdef	__notyet__
 	OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
 #endif
-	/* XXX void, for now */
-	(void)loadfile(fd, bootline);
+
+	entry = marks[MARK_ENTRY];
+	ssym = (void *)marks[MARK_SYM];
+	esym = (void *)marks[MARK_END];
+
+	printf(" start=0x%x\n", entry);
+	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
+	chain((void *)entry, bootline, ssym, esym);
 
 	OF_exit();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5 2001/07/22 14:43:15 wiz Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.6 2001/10/23 03:31:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,11 +43,18 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
+#include <lib/libsa/dosfs.h>
 #include <lib/libsa/nfs.h>
 
 #include "ofdev.h"
 
 extern char bootdev[];
+
+#ifdef DEBUG
+# define DPRINTF printf
+#else 
+# define DPRINTF while (0) printf
+#endif  
 
 static char *
 filename(str, ppart)
@@ -153,6 +160,10 @@ static struct fs_ops file_system_ufs = {
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	    cd9660_stat
+};
+static struct fs_ops file_system_dosfs = {
+	dosfs_open, dosfs_close, dosfs_read, dosfs_write, dosfs_seek,
+	    dosfs_stat
 };
 static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
@@ -265,6 +276,7 @@ devopen(of, name, file)
 	strcpy(fname, name);
 	cp = filename(fname, &partition);
 	if (cp) {
+		DPRINTF("filename=%s\n", cp);
 		strcpy(buf, cp);
 		*cp = 0;
 	}
@@ -272,6 +284,7 @@ devopen(of, name, file)
 		strcpy(buf, DEFAULT_KERNEL);
 	if (!*fname)
 		strcpy(fname, bootdev);
+	DPRINTF("fname=%s\n", fname);
 	strcpy(opened_name, fname);
 	if (partition) {
 		cp = opened_name + strlen(opened_name);
@@ -283,8 +296,10 @@ devopen(of, name, file)
 		strcat(opened_name, "/");
 	strcat(opened_name, buf);
 	*file = opened_name + strlen(fname) + 1;
-	if ((handle = OF_finddevice(fname)) == -1)
+	if ((handle = OF_finddevice(fname)) == -1) {
+		DPRINTF("OF_finddevice(\"%s\") failed\n", fname);
 		return ENOENT;
+	}
 	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
 	floppyboot = !strcmp(buf, "floppy");
@@ -324,9 +339,9 @@ devopen(of, name, file)
 		
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		memcpy(file_system, &file_system_ufs, sizeof file_system[0]);
-		memcpy(file_system + 1, &file_system_cd9660,
-		    sizeof file_system[0]);
+		file_system[0] = file_system_ufs;
+		file_system[1] = file_system_cd9660;
+		file_system[1] = file_system_dosfs;
 		nfsys = 2;
 		return 0;
 	}
@@ -334,7 +349,7 @@ devopen(of, name, file)
 		ofdev.type = OFDEV_NET;
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		memcpy(file_system, &file_system_nfs, sizeof file_system[0]);
+		file_system[0] = file_system_nfs;
 		nfsys = 1;
 		if (error = net_open(&ofdev))
 			goto bad;
