@@ -2,20 +2,11 @@
 #include "sys/types.h"
 #include "sys/reboot.h"
 #include "sys/buf.h"
-#include "../include/control.h"
+
 #include "../include/mon.h"
-#include "../dev/idprom.h"
 
 
-int idprom_fetch(idp, version)
-     struct idprom *idp;
-     int version;
-{
-    control_copy_byte(OIDPROM_BASE, (caddr_t) idp, sizeof(idp->idp_format));
-    if (idp->idp_format != version) return 0;
-    control_copy_byte(OIDPROM_BASE, (caddr_t) idp, sizeof(struct idprom));
-    return 0;
-}
+
 
 
 int cold;
@@ -30,6 +21,7 @@ void cpu_startup()
 
 void consinit()
 {
+    extern void cninit();
     mon_printf("determining console:");
     cninit();
 }

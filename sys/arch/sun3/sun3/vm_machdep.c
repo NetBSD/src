@@ -5,11 +5,11 @@
 #include "buf.h"
 #include "user.h"
 
-#include "../include/cpu.h"
-
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
-#include "pte.h"
+
+#include "machine/cpu.h"
+#include "machine/pte.h"
 
 extern vm_map_t phys_map;
 
