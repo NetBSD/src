@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.52.4.1 1999/08/02 22:11:16 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.52.4.2 1999/08/06 12:55:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -278,6 +278,30 @@ cd9660_read(v)
 		return (EINVAL);
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
+
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(ip->i_size - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0)
+				break;
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+#ifdef DIAGNOSTIC
+			if (win == NULL)
+				panic("cd9660_read: ubc_alloc -> NULL");
+#endif
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error)
+				break;
+		}
+		goto out;
+	}
+
 	do {
 		lbn = lblkno(imp, uio->uio_offset);
 		on = blkoff(imp, uio->uio_offset);
@@ -315,6 +339,8 @@ cd9660_read(v)
 		error = uiomove(bp->b_data + on, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+
+out:
 	return (error);
 }
 
@@ -954,7 +980,8 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_truncate_desc, cd9660_truncate },	/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 	{ &cd9660_vnodeop_p, cd9660_vnodeop_entries };
@@ -1007,7 +1034,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
@@ -1057,7 +1084,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_fifoop_opv_desc =
 	{ &cd9660_fifoop_p, cd9660_fifoop_entries };

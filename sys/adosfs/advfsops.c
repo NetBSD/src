@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.35.4.1 1999/06/21 00:44:32 thorpej Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.35.4.2 1999/08/06 12:55:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -235,6 +235,9 @@ adosfs_mountfs(devvp, mp, p)
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_dev_bshift = ffs(amp->bsize) - 1;
+	mp->mnt_fs_bshift = ffs(amp->secsperblk) - 1;
+
 	devvp->v_specflags |= SI_MOUNTEDON;
 
 	/*

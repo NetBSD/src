@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.6.4.1 1999/08/02 22:10:52 thorpej Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.6.4.2 1999/08/06 12:55:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -162,6 +162,33 @@ filecore_read(v)
 		return (EINVAL);
 	ip->i_flag |= IN_ACCESS;
 	fcmp = ip->i_mnt;
+
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(ip->i_size - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0) {
+				break;
+			}
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+#ifdef DIAGNOSTIC
+			if (win == NULL) {
+				panic("filecore_read: ubc_alloc -> NULL");
+			}
+#endif
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				break;
+			}
+		}
+		goto out;
+	}
+
 	do {
 		lbn = lblkno(fcmp, uio->uio_offset);
 		on = blkoff(fcmp, uio->uio_offset);
@@ -213,6 +240,8 @@ filecore_read(v)
 #endif
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+
+out:
 	return (error);
 }
 
@@ -570,7 +599,8 @@ struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_truncate_desc, filecore_truncate },	/* truncate */
 	{ &vop_update_desc, filecore_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc filecore_vnodeop_opv_desc =
 	{ &filecore_vnodeop_p, filecore_vnodeop_entries };

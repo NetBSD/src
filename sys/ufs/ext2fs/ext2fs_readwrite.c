@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.10.4.1 1999/07/11 05:43:59 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.10.4.2 1999/08/06 12:55:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,8 @@
  *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +113,32 @@ ext2fs_read(v)
 	if (uio->uio_resid == 0)
 		return (0);
 
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(ip->i_e2fs_size - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0) {
+				break;
+			}
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+#ifdef DIAGNOSTIC
+			if (win == NULL)
+				panic("ext2fs_read: ubc_alloc -> NULL");
+#endif
+			error = uiomove(win, bytelen, uio);
+if (error) Debugger();
+			ubc_release(win, 0);
+			if (error) {
+				break;
+			}
+		}
+		goto out;
+	}
+
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_e2fs_size - uio->uio_offset) <= 0)
 			break;
@@ -160,6 +188,8 @@ ext2fs_read(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
+
+out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
@@ -190,6 +220,8 @@ ext2fs_write(v)
 	ufs_daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	vsize_t bytelen;
+	void *win;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -240,6 +272,44 @@ ext2fs_write(v)
 	osize = ip->i_e2fs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
+	if (vp->v_type == VREG) {
+
+		/*
+		 * make sure the range of file offsets to be written
+		 * is fully allocated.  updating of ip->i_e2fs_size
+		 * is handled by ext2fs_balloc_range().
+		 */
+
+		if ((error = ext2fs_balloc_range(vp, uio->uio_offset,
+						 uio->uio_resid, ap->a_cred,
+						 0))) {
+/* XXX handle partial failures */
+			return error;
+		}
+		while (uio->uio_resid > 0) {
+			bytelen = uio->uio_resid;
+/* XXX if file is mapped and this is the last block, limit len to a page */
+
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_WRITE);
+#ifdef DIAGNOSTIC
+			if (win == NULL) {
+				panic("ext2fs_write: ubc_alloc -> NULL");
+			}
+#endif
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				/*
+				 * XXX zero out any part of the current window
+				 * that we might have failed to copyin.
+				 */
+				break;
+			}
+		}
+		goto out;
+	}
+
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
@@ -251,8 +321,8 @@ ext2fs_write(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ext2fs_balloc(ip,
-			lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
+		error = ext2fs_balloc1(ip, lbn, blkoffset + xfersize,
+				       ap->a_cred, &bp, flags);
 		if (error)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
@@ -265,7 +335,7 @@ ext2fs_write(v)
 			xfersize = size;
 
 		error =
-			uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
+			uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize)
@@ -279,11 +349,14 @@ ext2fs_write(v)
 			break;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
+
+out:
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (error) {

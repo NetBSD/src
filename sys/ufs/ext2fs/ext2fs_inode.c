@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.13.4.1 1999/07/11 05:43:59 chs Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.13.4.2 1999/08/06 12:55:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -186,7 +186,7 @@ ext2fs_truncate(v)
 	register struct vnode *ovp = ap->a_vp;
 	register ufs_daddr_t lastblock;
 	register struct inode *oip;
-	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	register struct m_ext2fs *fs;
@@ -221,34 +221,24 @@ ext2fs_truncate(v)
 	}
 	fs = oip->i_e2fs;
 	osize = oip->i_e2fs_size;
+
 	/*
-	 * Lengthen the size of the file. We must ensure that the
-	 * last byte of the file is allocated. Since the smallest
-	 * value of osize is 0, length will be at least 1.
+	 * Lengthen the size of the file.
 	 */
+
 	if (osize < length) {
 #if 0 /* XXX */
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
 #endif
-		offset = blkoff(fs, length - 1);
-		lbn = lblkno(fs, length - 1);
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = ext2fs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
-				   aflags);
-		if (error)
-			return (error);
-		oip->i_e2fs_size = length;
+		aflags = 0;
+		bp = 0;
+		oip->i_ffs_size = length;
 		uvm_vnp_setsize(ovp, length);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
+
 	/*
 	 * Shorten the size of the file. If the file is not being
 	 * truncated to a block boundry, the contents of the
@@ -256,26 +246,15 @@ ext2fs_truncate(v)
 	 * zero'ed in case it ever become accessable again because
 	 * of subsequent file growth.
 	 */
+
 	offset = blkoff(fs, length);
-	if (offset == 0) {
-		oip->i_e2fs_size = length;
-	} else {
-		lbn = lblkno(fs, length);
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = ext2fs_balloc(oip, lbn, offset, ap->a_cred, &bp, aflags);
-		if (error)
-			return (error);
-		oip->i_e2fs_size = length;
+	if (offset != 0) {
 		size = fs->e2fs_bsize;
-		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
-		allocbuf(bp, size);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
+
+		/* XXX we should handle more than just VREG */
+		uvm_vnp_zerorange(ovp, length, size - offset);
 	}
+	oip->i_e2fs_size = length;
 	uvm_vnp_setsize(ovp, length);
 
 	/*
