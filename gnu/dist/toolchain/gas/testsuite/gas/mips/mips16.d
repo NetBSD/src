@@ -1,5 +1,5 @@
 #objdump: -dr -mmips:4000
-#as: -mips3 -mcpu=r4000
+#as: -mips3 -mtune=r4000
 #name: mips16
 
 # Test the mips16 instruction set.

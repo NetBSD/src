@@ -14,5 +14,5 @@
 .*:18: Error: Operand 2 of `xor' should be .*
 .*:20: Error: Operand 2 of `andcm' should be .*
 .*:21: Error: Operand 2 of `andcm' should be .*
-.*:23: Error: Operand [3|4] of `cmp4.lt.or' should be r0
-.*:24: Error: Operand [3|4] of `cmp4.lt.or' should be r0
+.*:23: Error: Operand [34] of `cmp4.lt.or' should be r0
+.*:24: Error: Operand [34] of `cmp4.lt.or' should be r0

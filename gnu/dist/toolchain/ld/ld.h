@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -73,6 +73,11 @@ struct wildcard_spec {
   boolean sorted;
 };
 
+struct wildcard_list {
+  struct wildcard_list *next;
+  struct wildcard_spec spec;
+};
+
 /* Extra information we hold on sections */
 typedef struct user_section_struct {
   /* Pointer to the section where this data will go */
@@ -86,17 +91,12 @@ typedef struct user_section_struct {
 #define LONG_SIZE	(4)
 #define QUAD_SIZE	(8)
 
-/* ALIGN macro changed to ALIGN_N to avoid	*/
-/* conflict in /usr/include/machine/machparam.h */
-/* WARNING: If THIS is a 64 bit address and BOUNDARY is a 32 bit int,
-   you must coerce boundary to the same type as THIS.
-   ??? Is there a portable way to avoid this.  */
-#define ALIGN_N(this, boundary) \
-  ((( (this) + ((boundary) -1)) & (~((boundary)-1))))
-
 typedef struct {
   /* 1 => assign space to common symbols even if `relocatable_output'.  */
   boolean force_common_definition;
+
+  /* 1 => do not assign addresses to common symbols.  */
+  boolean inhibit_common_definition;
   boolean relax;
 
   /* Name of runtime interpreter to invoke.  */
@@ -114,10 +114,6 @@ typedef struct {
 
   /* Big or little endian as set on command line.  */
   enum { ENDIAN_UNSET = 0, ENDIAN_BIG, ENDIAN_LITTLE } endian;
-
-  /* If true, export all symbols in the dynamic symbol table of an ELF
-     executable.  */
-  boolean export_dynamic;
 
   /* If true, build MIPS embedded PIC relocation tables in the output
      file.  */
@@ -192,6 +188,9 @@ typedef struct {
      changes due to the alignment of an input section.  */
   boolean warn_section_align;
 
+  /* If true, warning messages are fatal */
+  boolean fatal_warnings;
+
   boolean sort_common;
 
   boolean text_read_only;
@@ -207,6 +206,10 @@ typedef struct {
 
   unsigned int split_by_reloc;
   bfd_size_type split_by_file;
+
+  /* If set, only search library directories explicitly selected
+     on the command line.  */
+  boolean only_cmd_line_lib_dirs;
 } ld_config_type;
 
 extern ld_config_type config;
@@ -217,7 +220,7 @@ typedef enum {
   lang_final_phase_enum
 } lang_phase_type;
 
-extern boolean had_script;
+extern FILE * saved_script_handle;
 extern boolean force_make_executable;
 
 /* Non-zero if we are processing a --defsym from the command line.  */

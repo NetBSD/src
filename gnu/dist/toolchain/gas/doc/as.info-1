@@ -1,20 +1,21 @@
-This is as.info, produced by makeinfo version 4.0 from as.texinfo.
+This is as.info, produced by makeinfo version 4.3 from as.texinfo.
 
 START-INFO-DIR-ENTRY
 * As: (as).                     The GNU assembler.
+* Gas: (as).                    The GNU assembler.
 END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 
 File: as.info,  Node: Top,  Next: Overview,  Up: (dir)
@@ -22,7 +23,7 @@ File: as.info,  Node: Top,  Next: Overview,  Up: (dir)
 Using as
 ********
 
-   This file is a user guide to the GNU assembler `as' version 2.11.2.
+   This file is a user guide to the GNU assembler `as' version 2.13.2.1.
 
    This document is distributed under the terms of the GNU Free
 Documentation License.  A copy of the license is included in the
@@ -52,49 +53,116 @@ Overview
    Here is a brief summary of how to invoke `as'.  For details, *note
 Comand-Line Options: Invoking..
 
-     as [ -a[cdhlns][=file] ] [ -D ]  [ --defsym SYM=VAL ]
-      [ -f ] [ --gstabs ] [ --gdwarf2 ] [ --help ] [ -I DIR ] [ -J ] [ -K ] [ -L ]
-      [ --keep-locals ] [ -o OBJFILE ] [ -R ] [ --statistics ] [ -v ]
-      [ -version ] [ --version ] [ -W ] [ --warn ] [ --fatal-warnings ]
-      [ -w ] [ -x ] [ -Z ] [ --target-help ]
-      [ -marc[5|6|7|8] ]
-      [ -EB | -EL ]
-      [ -m[arm]1 | -m[arm]2 | -m[arm]250 | -m[arm]3 | -m[arm]6 | -m[arm]60 |
-        -m[arm]600 | -m[arm]610 | -m[arm]620 | -m[arm]7[t][[d]m[i]][fe] | -m[arm]70 |
-        -m[arm]700 | -m[arm]710[c] | -m[arm]7100 | -m[arm]7500 | -m[arm]8 |
-        -m[arm]810 | -m[arm]9 | -m[arm]920 | -m[arm]920t | -m[arm]9tdmi |
-        -mstrongarm | -mstrongarm110 | -mstrongarm1100 ]
-      [ -m[arm]v2 | -m[arm]v2a | -m[arm]v3 | -m[arm]v3m | -m[arm]v4 | -m[arm]v4t |
-        -m[arm]v5 | -[arm]v5t | -[arm]v5te ]
-      [ -mthumb | -mall ]
-      [ -mfpa10 | -mfpa11 | -mfpe-old | -mno-fpu ]
-      [ -EB | -EL ]
-      [ -mapcs-32 | -mapcs-26 | -mapcs-float | -mapcs-reentrant ]
-      [ -mthumb-interwork ]
-      [ -moabi ]
-      [ -k ]
-      [ -O ]
-      [ -O | -n | -N ]
-      [ -mb | -me ]
-      [ -Av6 | -Av7 | -Av8 | -Asparclet | -Asparclite
-        -Av8plus | -Av8plusa | -Av9 | -Av9a ]
-      [ -xarch=v8plus | -xarch=v8plusa ] [ -bump ] [ -32 | -64 ]
-      [ -ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC ]
-      [ -b ] [ -no-relax ]
-      [ --m32rx | --[no-]warn-explicit-parallel-conflicts | --W[n]p ]
-      [ -l ] [ -m68000 | -m68010 | -m68020 | ... ]
-      [ -jsri2bsr ] [ -sifilter ] [ -relax ]
-      [ -mcpu=[210|340] ]
-      [ -m68hc11 | -m68hc12 ]
-      [ --force-long-branchs ] [ --short-branchs ] [ --strict-direct-mode ]
-      [ --print-insn-syntax ] [ --print-opcodes ] [ --generate-example ]
-      [ -nocpp ] [ -EL ] [ -EB ] [ -G NUM ] [ -mcpu=CPU ]
-      [ -mips1 ] [ -mips2 ] [ -mips3 ] [ -mips4 ] [ -mips5 ]
-      [ -mips32 ] [ -mips64 ]
-      [ -m4650 ] [ -no-m4650 ]
-      [ --trap ] [ --break ]
-      [ --emulation=NAME ]
-      [ -- | FILES ... ]
+     as [-a[cdhlns][=FILE]] [-D] [-defsym SYM=VAL]
+      [-f] [-gstabs] [-gdwarf2] [-help] [-I DIR]
+      [-J] [-K] [-L]
+      [-listing-lhs-width=NUM] [-listing-lhs-width2=NUM]
+      [-listing-rhs-width=NUM] [-listing-cont-lines=NUM]
+      [-keep-locals] [-o OBJFILE] [-R] [-statistics] [-v]
+      [-version] [-version] [-W] [-warn] [-fatal-warnings]
+      [-w] [-x] [-Z] [-target-help] [TARGET-OPTIONS]
+      [-|FILES ...]
+     
+     _Target Alpha options:_
+        [-mCPU]
+        [-mdebug | -no-mdebug]
+        [-relax] [-g] [-GSIZE]
+        [-F] [-32addr]
+     
+     _Target ARC options:_
+        [-marc[5|6|7|8]]
+        [-EB|-EL]
+     
+     _Target ARM options:_
+        [-mcpu=PROCESSOR[+EXTENSION...]]
+        [-march=ARCHITECTURE[+EXTENSION...]]
+        [-mfpu=FLOATING-POINT-FROMAT]
+        [-mthumb]
+        [-EB|-EL]
+        [-mapcs-32|-mapcs-26|-mapcs-float|
+         -mapcs-reentrant]
+        [-mthumb-interwork] [-moabi] [-k]
+     
+     _Target CRIS options:_
+        [-underscore | -no-underscore]
+        [-pic] [-N]
+        [-emulation=criself | -emulation=crisaout]
+     
+     _Target D10V options:_
+        [-O]
+     
+     _Target D30V options:_
+        [-O|-n|-N]
+     
+     _Target i386 options:_
+        [-32|-64]
+     
+     _Target i960 options:_
+        [-ACA|-ACA_A|-ACB|-ACC|-AKA|-AKB|
+         -AKC|-AMC]
+        [-b] [-no-relax]
+     
+     _Target M32R options:_
+        [-m32rx|-[no-]warn-explicit-parallel-conflicts|
+        -W[n]p]
+     
+     _Target M680X0 options:_
+        [-l] [-m68000|-m68010|-m68020|...]
+     
+     _Target M68HC11 options:_
+        [-m68hc11|-m68hc12]
+        [-force-long-branchs] [-short-branchs]
+        [-strict-direct-mode] [-print-insn-syntax]
+        [-print-opcodes] [-generate-example]
+     
+     _Target MCORE options:_
+        [-jsri2bsr] [-sifilter] [-relax]
+        [-mcpu=[210|340]]
+     
+     _Target MIPS options:_
+        [-nocpp] [-EL] [-EB] [-n] [-O[OPTIMIZATION LEVEL]]
+        [-g[DEBUG LEVEL]] [-G NUM] [-KPIC] [-call_shared]
+        [-non_shared] [-xgot] [-membedded-pic]
+        [-mabi=ABI] [-32] [-n32] [-64] [-mfp32] [-mgp32]
+        [-march=CPU] [-mtune=CPU] [-mips1] [-mips2]
+        [-mips3] [-mips4] [-mips5] [-mips32] [-mips64]
+        [-construct-floats] [-no-construct-floats]
+        [-trap] [-no-break] [-break] [-no-trap]
+        [-mfix7000] [-mno-fix7000]
+        [-mips16] [-no-mips16]
+        [-mips3d] [-no-mips3d]
+        [-mdmx] [-no-mdmx]
+        [-mdebug] [-no-mdebug]
+     
+     _Target MMIX options:_
+        [-fixed-special-register-names] [-globalize-symbols]
+        [-gnu-syntax] [-relax] [-no-predefined-symbols]
+        [-no-expand] [-no-merge-gregs] [-x]
+        [-linker-allocated-gregs]
+     
+     _Target PDP11 options:_
+        [-mpic|-mno-pic] [-mall] [-mno-extensions]
+        [-mEXTENSION|-mno-EXTENSION]
+        [-mCPU] [-mMACHINE]
+     
+     _Target picoJava options:_
+        [-mb|-me]
+     
+     _Target PowerPC options:_
+        [-mpwrx|-mpwr2|-mpwr|-m601|-mppc|-mppc32|-m603|-m604|
+         -m403|-m405|-mppc64|-m620|-mppc64bridge|-mbooke|
+         -mbooke32|-mbooke64]
+        [-mcom|-many|-maltivec] [-memb]
+        [-mregnames|-mno-regnames]
+        [-mrelocatable|-mrelocatable-lib]
+        [-mlittle|-mlittle-endian|-mbig|-mbig-endian]
+        [-msolaris|-mno-solaris]
+     
+     _Target SPARC options:_
+        [-Av6|-Av7|-Av8|-Asparclet|-Asparclite
+         -Av8plus|-Av8plusa|-Av9|-Av9a]
+        [-xarch=v8plus|-xarch=v8plusa] [-bump]
+        [-32|-64]
 
 `-a[cdhlmns]'
      Turn on listings, in any of a variety of ways:
@@ -173,6 +241,22 @@ Comand-Line Options: Invoking..
      systems these start with `L', but different systems have different
      local label prefixes.
 
+`--listing-lhs-width=NUMBER'
+     Set the maximum width, in words, of the output data column for an
+     assembler listing to NUMBER.
+
+`--listing-lhs-width2=NUMBER'
+     Set the maximum width, in words, of the output data column for
+     continuation lines in an assembler listing to NUMBER.
+
+`--listing-rhs-width=NUMBER'
+     Set the maximum width of an input source line, as displayed in a
+     listing, to NUMBER bytes.
+
+`--listing-cont-lines=NUMBER'
+     Set the maximum number of lines printed in a listing for a single
+     line of input to NUMBER + 1.
+
 `-o OBJFILE'
      Name the object-file output from `as' OBJFILE.
 
@@ -227,17 +311,17 @@ processor.
    The following options are available when as is configured for the ARM
 processor family.
 
-`-m[arm][1|2|3|6|7|8|9][...]'
+`-mcpu=PROCESSOR[+EXTENSION...]'
      Specify which ARM processor variant is the target.
 
-`-m[arm]v[2|2a|3|3m|4|4t|5|5t]'
+`-march=ARCHITECTURE[+EXTENSION...]'
      Specify which ARM architecture variant is used by the target.
 
-`-mthumb | -mall'
-     Enable or disable Thumb only instruction decoding.
-
-`-mfpa10 | -mfpa11 | -mfpe-old | -mno-fpu'
+`-mfpu=FLOATING-POINT-FORMAT'
      Select which Floating Point architecture is the target.
+
+`-mthumb'
+     Enable Thumb only instruction decoding.
 
 `-mapcs-32 | -mapcs-26 | -mapcs-float | -mapcs-reentrant | -moabi'
      Select which procedure calling convention is in use.
@@ -251,6 +335,8 @@ processor family.
 
 `-k'
      Specify that PIC code has been generated.
+
+   See the info pages for documentation of the CRIS-specific options.
 
    The following options are available when as is configured for a D10V
 processor.
@@ -304,8 +390,9 @@ Motorola 68000 series.
      Shorten references to undefined symbols, to one word instead of
      two.
 
-`-m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060'
-`| -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -mcpu32 | -m5200'
+`-m68000 | -m68008 | -m68010 | -m68020 | -m68030'
+`| -m68040 | -m68060 | -m68302 | -m68331 | -m68332'
+`| -m68333 | -m68340 | -mcpu32 | -m5200'
      Specify what processor in the 68000 family is the target.  The
      default is normally the 68020, but this can be changed at
      configuration time.
@@ -322,6 +409,31 @@ Motorola 68000 series.
      The target machine does (or does not) have a memory-management
      unit coprocessor.  The default is to assume an MMU for 68020 and
      up.
+
+   For details about the PDP-11 machine dependent features options, see
+*Note PDP-11-Options::.
+
+`-mpic | -mno-pic'
+     Generate position-independent (or position-dependent) code.  The
+     default is `-mpic'.
+
+`-mall'
+`-mall-extensions'
+     Enable all instruction set extensions.  This is the default.
+
+`-mno-extensions'
+     Disable all instruction set extensions.
+
+`-mEXTENSION | -mno-EXTENSION'
+     Enable (or disable) a particular instruction set extension.
+
+`-mCPU'
+     Enable the instruction set extensions supported by a particular
+     CPU, and disable all other extensions.
+
+`-mMACHINE'
+     Enable the instruction set extensions supported by a particular
+     machine model, and disable all other extensions.
 
    The following options are available when as is configured for a
 picoJava processor.
@@ -401,23 +513,67 @@ processor.
 `-mips2'
 `-mips3'
 `-mips4'
+`-mips5'
 `-mips32'
+`-mips64'
      Generate code for a particular MIPS Instruction Set Architecture
-     level.  `-mips1' corresponds to the R2000 and R3000 processors,
-     `-mips2' to the R6000 processor, and `-mips3' to the R4000
-     processor.  `-mips5', `-mips32', and `-mips64' correspond to
-     generic MIPS V, MIPS32, and MIPS64 ISA processors, respectively.
+     level.  `-mips1' is an alias for `-march=r3000', `-mips2' is an
+     alias for `-march=r6000', `-mips3' is an alias for `-march=r4000'
+     and `-mips4' is an alias for `-march=r8000'.  `-mips5', `-mips32',
+     and `-mips64' correspond to generic `MIPS V', `MIPS32', and
+     `MIPS64' ISA processors, respectively.
 
-`-m4650'
-`-no-m4650'
-     Generate code for the MIPS R4650 chip.  This tells the assembler
-     to accept the `mad' and `madu' instruction, and to not schedule
-     `nop' instructions around accesses to the `HI' and `LO' registers.
-     `-no-m4650' turns off this option.
+`-march=CPU'
+     Generate code for a particular MIPS cpu.
 
-`-mcpu=CPU'
-     Generate code for a particular MIPS cpu.  It is exactly equivalent
-     to `-mCPU', except that there are more value of CPU understood.
+`-mtune=CPU'
+     Schedule and tune for a particular MIPS cpu.
+
+`-mfix7000'
+`-mno-fix7000'
+     Cause nops to be inserted if the read of the destination register
+     of an mfhi or mflo instruction occurs in the following two
+     instructions.
+
+`-mdebug'
+`-no-mdebug'
+     Cause stabs-style debugging output to go into an ECOFF-style
+     .mdebug section instead of the standard ELF .stabs sections.
+
+`-mgp32'
+`-mfp32'
+     The register sizes are normally inferred from the ISA and ABI, but
+     these flags force a certain group of registers to be treated as 32
+     bits wide at all times.  `-mgp32' controls the size of
+     general-purpose registers and `-mfp32' controls the size of
+     floating-point registers.
+
+`-mips16'
+`-no-mips16'
+     Generate code for the MIPS 16 processor.  This is equivalent to
+     putting `.set mips16' at the start of the assembly file.
+     `-no-mips16' turns off this option.
+
+`-mips3d'
+`-no-mips3d'
+     Generate code for the MIPS-3D Application Specific Extension.
+     This tells the assembler to accept MIPS-3D instructions.
+     `-no-mips3d' turns off this option.
+
+`-mdmx'
+`-no-mdmx'
+     Generate code for the MDMX Application Specific Extension.  This
+     tells the assembler to accept MDMX instructions.  `-no-mdmx' turns
+     off this option.
+
+`--construct-floats'
+`--no-construct-floats'
+     The `--no-construct-floats' option disables the construction of
+     double width floating point constants by loading the two halves of
+     the value into the two single width floating point registers that
+     make up the double width register.  By default
+     `--construct-floats' is selected, allowing construction of these
+     floating point constants.
 
 `--emulation=NAME'
      This option causes `as' to emulate `as' configured for some other
@@ -457,6 +613,10 @@ processor.
      and higher); `--break' or `--no-trap' (also synonyms, and the
      default) take a break exception.
 
+`-n'
+     When this option is used, `as' will issue a warning every time it
+     generates a nop instruction from a macro.
+
    The following options are available when as is configured for an
 MCore processor.
 
@@ -484,6 +644,8 @@ MCore processor.
 
 `-EL'
      Assemble for a little endian target.
+
+   See the info pages for documentation of the MMIX-specific options.
 
 * Menu:
 
@@ -701,8 +863,8 @@ by commas.  For example:
      gcc -c -g -O -Wa,-alh,-L file.c
 
 This passes two options to the assembler: `-alh' (emit a listing to
-standard output with with high-level and assembly source) and `-L'
-(retain local symbols in the symbol table).
+standard output with high-level and assembly source) and `-L' (retain
+local symbols in the symbol table).
 
    Usually you do not need to use this `-Wa' mechanism, since many
 compiler command-line options are automatically passed to the assembler
@@ -720,6 +882,7 @@ pass, including the assembler.)
 * K::             -K for difference tables
 
 * L::             -L to retain local labels
+* listing::       --listing-XXX to configure listing output
 * M::		  -M or --mri to assemble in MRI compatibility mode
 * MD::            --MD for dependency tracking
 * o::             -o to name the object file
@@ -760,6 +923,14 @@ have no effect.
 
    The letters after `-a' may be combined into one option, _e.g._,
 `-aln'.
+
+   Note if the assembler source is coming from the standard input (eg
+because it is being created by `gcc' and the `-pipe' command line switch
+is being used) then the listing will not contain any comments or
+preprocessor directives.  This is because the listing code buffers
+input source lines from stdin only after they have been preprocessed by
+the assembler.  This reduces memory usage and makes the code more
+efficient.
 
 
 File: as.info,  Node: D,  Next: f,  Prev: a,  Up: Invoking
@@ -810,7 +981,7 @@ Difference Tables: `-K'
 if you want a warning issued when this is done.
 
 
-File: as.info,  Node: L,  Next: M,  Prev: K,  Up: Invoking
+File: as.info,  Node: L,  Next: listing,  Prev: K,  Up: Invoking
 
 Include Local Labels: `-L'
 ==========================
@@ -831,7 +1002,44 @@ target is allowed to redefine the local label prefix.  On the HPPA
 local labels begin with `L$'.
 
 
-File: as.info,  Node: M,  Next: MD,  Prev: L,  Up: Invoking
+File: as.info,  Node: listing,  Next: M,  Prev: L,  Up: Invoking
+
+Configuring listing output: `--listing'
+=======================================
+
+   The listing feature of the assembler can be enabled via the command
+line switch `-a' (*note a::).  This feature combines the input source
+file(s) with a hex dump of the corresponding locations in the output
+object file, and displays them as a listing file.  The format of this
+listing can be controlled by pseudo ops inside the assembler source
+(*note List:: *note Title:: *note Sbttl:: *note Psize:: *note Eject::)
+and also by the following switches:
+
+`--listing-lhs-width=`number''
+     Sets the maximum width, in words, of the first line of the hex
+     byte dump.  This dump appears on the left hand side of the listing
+     output.
+
+`--listing-lhs-width2=`number''
+     Sets the maximum width, in words, of any further lines of the hex
+     byte dump for a given inut source line.  If this value is not
+     specified, it defaults to being the same as the value specified
+     for `--listing-lhs-width'.  If neither switch is used the default
+     is to one.
+
+`--listing-rhs-width=`number''
+     Sets the maximum width, in characters, of the source line that is
+     displayed alongside the hex dump.  The default value for this
+     parameter is 100.  The source line is displayed on the right hand
+     side of the listing output.
+
+`--listing-cont-lines=`number''
+     Sets the maximum number of continuation lines of hex dump that
+     will be displayed for a given single line of source input.  The
+     default value is 4.
+
+
+File: as.info,  Node: M,  Next: MD,  Prev: listing,  Up: Invoking
 
 Assemble in MRI Compatibility Mode: `-M'
 ========================================
@@ -1173,10 +1381,11 @@ you may not nest these comments.
 considered a comment and is ignored.  The line comment character is `;'
 for the AMD 29K family; `;' on the ARC; `@' on the ARM; `;' for the
 H8/300 family; `!' for the H8/500 family; `;' for the HPPA; `#' on the
-i386 and x86-64; `#' on the i960; `;' for picoJava; `!' for the Hitachi
-SH; `!' on the SPARC; `#' on the m32r; `|' on the 680x0; `#' on the
-68HC11 and 68HC12; `#' on the Vax; `!' for the Z8000; `#' on the V850;
-see *Note Machine Dependencies::.
+i386 and x86-64; `#' on the i960; `;' for the PDP-11; `;' for picoJava;
+`;' for Motorola PowerPC; `!' for the Hitachi SH; `!' on the SPARC; `#'
+on the m32r; `|' on the 680x0; `#' on the 68HC11 and 68HC12; `;' on the
+M880x0; `#' on the Vax; `!' for the Z8000; `#' on the V850; see *Note
+Machine Dependencies::.
 
    On some machines there are two different line comment characters.
 One character only begins a comment if it is the first non-whitespace
@@ -1218,177 +1427,4 @@ all characters are significant.  Symbols are delimited by characters
 not in that set, or by the beginning of a file (since the source
 program must end with a newline, the end of a file is not a possible
 symbol delimiter).  *Note Symbols::.
-
-
-File: as.info,  Node: Statements,  Next: Constants,  Prev: Symbol Intro,  Up: Syntax
-
-Statements
-==========
-
-   A "statement" ends at a newline character (`\n') or line separator
-character.  (The line separator is usually `;', unless this conflicts
-with the comment character; *note Machine Dependencies::.)  The newline
-or separator character is considered part of the preceding statement.
-Newlines and separators within character constants are an exception:
-they do not end statements.
-
-   It is an error to end any statement with end-of-file:  the last
-character of any input file should be a newline.
-
-   An empty statement is allowed, and may include whitespace.  It is
-ignored.
-
-   A statement begins with zero or more labels, optionally followed by a
-key symbol which determines what kind of statement it is.  The key
-symbol determines the syntax of the rest of the statement.  If the
-symbol begins with a dot `.' then the statement is an assembler
-directive: typically valid for any computer.  If the symbol begins with
-a letter the statement is an assembly language "instruction": it
-assembles into a machine language instruction.  Different versions of
-`as' for different computers recognize different instructions.  In
-fact, the same symbol may represent a different instruction in a
-different computer's assembly language.
-
-   A label is a symbol immediately followed by a colon (`:').
-Whitespace before a label or after a colon is permitted, but you may not
-have whitespace between a label's symbol and its colon. *Note Labels::.
-
-   For HPPA targets, labels need not be immediately followed by a
-colon, but the definition of a label must begin in column zero.  This
-also implies that only one label may be defined on each line.
-
-     label:     .directive    followed by something
-     another_label:           # This is an empty statement.
-                instruction   operand_1, operand_2, ...
-
-
-File: as.info,  Node: Constants,  Prev: Statements,  Up: Syntax
-
-Constants
-=========
-
-   A constant is a number, written so that its value is known by
-inspection, without knowing any context.  Like this:
-     .byte  74, 0112, 092, 0x4A, 0X4a, 'J, '\J # All the same value.
-     .ascii "Ring the bell\7"                  # A string constant.
-     .octa  0x123456789abcdef0123456789ABCDEF0 # A bignum.
-     .float 0f-314159265358979323846264338327\
-     95028841971.693993751E-40                 # - pi, a flonum.
-
-* Menu:
-
-* Characters::                  Character Constants
-* Numbers::                     Number Constants
-
-
-File: as.info,  Node: Characters,  Next: Numbers,  Up: Constants
-
-Character Constants
--------------------
-
-   There are two kinds of character constants.  A "character" stands
-for one character in one byte and its value may be used in numeric
-expressions.  String constants (properly called string _literals_) are
-potentially many bytes and their values may not be used in arithmetic
-expressions.
-
-* Menu:
-
-* Strings::                     Strings
-* Chars::                       Characters
-
-
-File: as.info,  Node: Strings,  Next: Chars,  Up: Characters
-
-Strings
-.......
-
-   A "string" is written between double-quotes.  It may contain
-double-quotes or null characters.  The way to get special characters
-into a string is to "escape" these characters: precede them with a
-backslash `\' character.  For example `\\' represents one backslash:
-the first `\' is an escape which tells `as' to interpret the second
-character literally as a backslash (which prevents `as' from
-recognizing the second `\' as an escape character).  The complete list
-of escapes follows.
-
-`\b'
-     Mnemonic for backspace; for ASCII this is octal code 010.
-
-`\f'
-     Mnemonic for FormFeed; for ASCII this is octal code 014.
-
-`\n'
-     Mnemonic for newline; for ASCII this is octal code 012.
-
-`\r'
-     Mnemonic for carriage-Return; for ASCII this is octal code 015.
-
-`\t'
-     Mnemonic for horizontal Tab; for ASCII this is octal code 011.
-
-`\ DIGIT DIGIT DIGIT'
-     An octal character code.  The numeric code is 3 octal digits.  For
-     compatibility with other Unix systems, 8 and 9 are accepted as
-     digits: for example, `\008' has the value 010, and `\009' the
-     value 011.
-
-`\`x' HEX-DIGITS...'
-     A hex character code.  All trailing hex digits are combined.
-     Either upper or lower case `x' works.
-
-`\\'
-     Represents one `\' character.
-
-`\"'
-     Represents one `"' character.  Needed in strings to represent this
-     character, because an unescaped `"' would end the string.
-
-`\ ANYTHING-ELSE'
-     Any other character when escaped by `\' gives a warning, but
-     assembles as if the `\' was not present.  The idea is that if you
-     used an escape sequence you clearly didn't want the literal
-     interpretation of the following character.  However `as' has no
-     other interpretation, so `as' knows it is giving you the wrong
-     code and warns you of the fact.
-
-   Which characters are escapable, and what those escapes represent,
-varies widely among assemblers.  The current set is what we think the
-BSD 4.2 assembler recognizes, and is a subset of what most C compilers
-recognize.  If you are in doubt, do not use an escape sequence.
-
-
-File: as.info,  Node: Chars,  Prev: Strings,  Up: Characters
-
-Characters
-..........
-
-   A single character may be written as a single quote immediately
-followed by that character.  The same escapes apply to characters as to
-strings.  So if you want to write the character backslash, you must
-write `'\\' where the first `\' escapes the second `\'.  As you can
-see, the quote is an acute accent, not a grave accent.  A newline
-immediately following an acute accent is taken as a literal character
-and does not count as the end of a statement.  The value of a character
-constant in a numeric expression is the machine's byte-wide code for
-that character.  `as' assumes your character code is ASCII: `'A' means
-65, `'B' means 66, and so on.
-
-
-File: as.info,  Node: Numbers,  Prev: Characters,  Up: Constants
-
-Number Constants
-----------------
-
-   `as' distinguishes three kinds of numbers according to how they are
-stored in the target machine.  _Integers_ are numbers that would fit
-into an `int' in the C language.  _Bignums_ are integers, but they are
-stored in more than 32 bits.  _Flonums_ are floating point numbers,
-described below.
-
-* Menu:
-
-* Integers::                    Integers
-* Bignums::                     Bignums
-* Flonums::                     Flonums
 

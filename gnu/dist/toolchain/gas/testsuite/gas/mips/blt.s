@@ -24,6 +24,12 @@ text_label:
 	bltl	$4,$5,text_label
 	blel	$4,$5,text_label
 
+# Branch to an external label.
+	blt	$4,$5,external_label
+	ble	$4,$5,external_label
+	bltl	$4,$5,external_label
+	blel	$4,$5,external_label
+
 # Round to a 16 byte boundary, for ease in testing multiple targets.
 	nop
 	nop

@@ -1,4 +1,4 @@
-# Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+# Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -532,7 +532,7 @@ if [istarget cris-*-*] then {
     run_dump_test "break"
     test_template_insn_reg regreg lz 73 "" "" 44
 
-    # Additional insns for CRIS v8 (also the swapxxx insns other then "not" above).
+    # Additional insns for CRIS v8 (also the swapxxx insns other than "not" above).
     test_template_insn_mem unop jirc 293 "@OC@\\." "jump-type" b93
     test_template_insn_mem unop jsrc 393 "@OC@\\." "jump-type" b93
     test_template_insn_mem unop jbrc 693 "@OC@\\." "jump-type" b93

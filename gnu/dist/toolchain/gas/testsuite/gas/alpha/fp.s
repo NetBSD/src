@@ -1,4 +1,4 @@
-	.rdata
+	.data
 # These three formats are 8 bytes each.
 	.t_floating 3.32192809488736218171e0
 #	.byte 0x71, 0xa3, 0x79, 0x09, 0x4f, 0x93, 0x0a, 0x40

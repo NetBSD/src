@@ -1,5 +1,5 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001
+   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -68,13 +68,20 @@
 #define TARGET_FORMAT "som"
 #endif
 
-#ifdef TE_LINUX
+#if defined(TE_LINUX) || defined(TE_NetBSD)
 /* Define to compile in an extra assembler option, -c, which enables a
    warning (once per file) when a comment is encountered.
    The hppa comment char is a `;' which tends to occur in random C asm
    statements.  A semicolon is a line separator for most assemblers.
    It's hard to find these lurking semicolons.  Thus...  */
 #define WARN_COMMENTS 1
+#endif
+
+#ifdef TE_NetBSD
+/* XXX the original OpenBSD code has labels without colons,
+   so this is required, for now -- fredette@netbsd.org */
+/* Labels are not required to have a colon for a suffix.  */
+#define LABELS_WITHOUT_COLONS 1
 #endif
 
 /* FIXME.  Why oh why aren't these defined somewhere globally?  */

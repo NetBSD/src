@@ -1,5 +1,5 @@
 /* Common code for PA ELF implementations.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ELF_R_TYPE(X)   ELF64_R_TYPE(X)
 #define ELF_R_SYM(X)   ELF64_R_SYM(X)
 #define elf_hppa_internal_shdr Elf64_Internal_Shdr
+#define elf_hppa_reloc_final_type elf64_hppa_reloc_final_type
 #define _bfd_elf_hppa_gen_reloc_type _bfd_elf64_hppa_gen_reloc_type
 #define elf_hppa_relocate_section elf64_hppa_relocate_section
 #define bfd_elf_bfd_final_link bfd_elf64_bfd_final_link
@@ -38,14 +39,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ELF_R_TYPE(X)   ELF32_R_TYPE(X)
 #define ELF_R_SYM(X)   ELF32_R_SYM(X)
 #define elf_hppa_internal_shdr Elf32_Internal_Shdr
+#define elf_hppa_reloc_final_type elf32_hppa_reloc_final_type
 #define _bfd_elf_hppa_gen_reloc_type _bfd_elf32_hppa_gen_reloc_type
 #define elf_hppa_relocate_section elf32_hppa_relocate_section
 #define bfd_elf_bfd_final_link bfd_elf32_bfd_final_link
 #define elf_hppa_final_link elf32_hppa_final_link
 #endif
-
-elf_hppa_reloc_type ** _bfd_elf_hppa_gen_reloc_type
-  PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *));
 
 static void elf_hppa_info_to_howto
   PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
@@ -65,6 +64,12 @@ static boolean elf_hppa_fake_sections
 static void elf_hppa_final_write_processing
   PARAMS ((bfd *, boolean));
 
+static int hppa_unwind_entry_compare
+  PARAMS ((const PTR, const PTR));
+
+static boolean elf_hppa_sort_unwind
+  PARAMS ((bfd *));
+
 #if ARCH_SIZE == 64
 static boolean elf_hppa_add_symbol_hook
   PARAMS ((bfd *, struct bfd_link_info *, const Elf_Internal_Sym *,
@@ -76,6 +81,9 @@ static boolean elf_hppa_unmark_useless_dynamic_symbols
 static boolean elf_hppa_remark_useless_dynamic_symbols
   PARAMS ((struct elf_link_hash_entry *, PTR));
 
+static boolean elf_hppa_is_dynamic_loader_symbol
+  PARAMS ((const char *));
+
 static void elf_hppa_record_segment_addrs
   PARAMS ((bfd *, asection *, PTR));
 
@@ -84,16 +92,16 @@ static boolean elf_hppa_final_link
 
 static boolean elf_hppa_relocate_section
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *,
-           bfd_byte *, Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
+	   bfd_byte *, Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
 
 static bfd_reloc_status_type elf_hppa_final_link_relocate
   PARAMS ((Elf_Internal_Rela *, bfd *, bfd *, asection *,
-           bfd_byte *, bfd_vma, struct bfd_link_info *,
-           asection *, struct elf_link_hash_entry *,
+	   bfd_byte *, bfd_vma, struct bfd_link_info *,
+	   asection *, struct elf_link_hash_entry *,
 	   struct elf64_hppa_dyn_hash_entry *));
 
-static unsigned int elf_hppa_relocate_insn
-  PARAMS ((unsigned int, unsigned int, unsigned int));
+static int elf_hppa_relocate_insn
+  PARAMS ((int, int, unsigned int));
 #endif
 
 /* ELF/PA relocation howto entries.  */
@@ -605,40 +613,17 @@ static reloc_howto_type elf_hppa_howto_table[ELF_HOWTO_TABLE_SIZE] =
 #define OFFSET_14R_FROM_21L 4
 #define OFFSET_14F_FROM_21L 5
 
-/* Return one (or more) BFD relocations which implement the base
-   relocation with modifications based on format and field.  */
+/* Return the final relocation type for the given base type, instruction
+   format, and field selector.  */
 
-elf_hppa_reloc_type **
-_bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
+elf_hppa_reloc_type
+elf_hppa_reloc_final_type (abfd, base_type, format, field)
      bfd *abfd;
      elf_hppa_reloc_type base_type;
      int format;
      unsigned int field;
-     int ignore ATTRIBUTE_UNUSED;
-     asymbol *sym ATTRIBUTE_UNUSED;
 {
-  elf_hppa_reloc_type *finaltype;
-  elf_hppa_reloc_type **final_types;
-
-  /* Allocate slots for the BFD relocation.  */
-  final_types = ((elf_hppa_reloc_type **)
-		 bfd_alloc (abfd, sizeof (elf_hppa_reloc_type *) * 2));
-  if (final_types == NULL)
-    return NULL;
-
-  /* Allocate space for the relocation itself.  */
-  finaltype = ((elf_hppa_reloc_type *)
-	       bfd_alloc (abfd, sizeof (elf_hppa_reloc_type)));
-  if (finaltype == NULL)
-    return NULL;
-
-  /* Some reasonable defaults.  */
-  final_types[0] = finaltype;
-  final_types[1] = NULL;
-
-#define final_type finaltype[0]
-
-  final_type = base_type;
+  elf_hppa_reloc_type final_type = base_type;
 
   /* Just a tangle of nested switch statements to deal with the braindamage
      that a different field selector means a completely different relocation
@@ -677,7 +662,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PLABEL14R;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -693,7 +678,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_DIR17R;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -717,7 +702,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PLABEL21L;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -730,13 +715,13 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 		 be a section relative relocation.  Dwarf2 (for example)
 		 uses 32bit section relative relocations.  */
 	      if (bfd_get_arch_info (abfd)->bits_per_address != 32)
-	        final_type = R_PARISC_SECREL32;
+		final_type = R_PARISC_SECREL32;
 	      break;
 	    case e_psel:
 	      final_type = R_PARISC_PLABEL32;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -750,12 +735,12 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_FPTR64;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
 	default:
-	  return NULL;
+	  return R_PARISC_NONE;
 	}
       break;
 
@@ -776,7 +761,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = base_type + OFFSET_14F_FROM_21L;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -792,12 +777,12 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = base_type;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
 	default:
-	  return NULL;
+	  return R_PARISC_NONE;
 	}
       break;
 
@@ -811,7 +796,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PCREL12F;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -826,10 +811,13 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PCREL14R;
 	      break;
 	    case e_fsel:
-	      final_type = R_PARISC_PCREL14F;
+	      if (bfd_get_mach (abfd) < 25)
+		final_type = R_PARISC_PCREL14F;
+	      else
+		final_type = R_PARISC_PCREL16F;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -845,7 +833,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PCREL17F;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -860,7 +848,7 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PCREL21L;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
@@ -871,12 +859,12 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
 	      final_type = R_PARISC_PCREL22F;
 	      break;
 	    default:
-	      return NULL;
+	      return R_PARISC_NONE;
 	    }
 	  break;
 
 	default:
-	  return NULL;
+	  return R_PARISC_NONE;
 	}
       break;
 
@@ -888,8 +876,44 @@ _bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
       break;
 
     default:
-      return NULL;
+      return R_PARISC_NONE;
     }
+
+  return final_type;
+}
+
+/* Return one (or more) BFD relocations which implement the base
+   relocation with modifications based on format and field.  */
+
+elf_hppa_reloc_type **
+_bfd_elf_hppa_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
+     bfd *abfd;
+     elf_hppa_reloc_type base_type;
+     int format;
+     unsigned int field;
+     int ignore ATTRIBUTE_UNUSED;
+     asymbol *sym ATTRIBUTE_UNUSED;
+{
+  elf_hppa_reloc_type *finaltype;
+  elf_hppa_reloc_type **final_types;
+  bfd_size_type amt = sizeof (elf_hppa_reloc_type *) * 2;
+
+  /* Allocate slots for the BFD relocation.  */
+  final_types = (elf_hppa_reloc_type **) bfd_alloc (abfd, amt);
+  if (final_types == NULL)
+    return NULL;
+
+  /* Allocate space for the relocation itself.  */
+  amt = sizeof (elf_hppa_reloc_type);
+  finaltype = (elf_hppa_reloc_type *) bfd_alloc (abfd, amt);
+  if (finaltype == NULL)
+    return NULL;
+
+  /* Some reasonable defaults.  */
+  final_types[0] = finaltype;
+  final_types[1] = NULL;
+
+  *finaltype = elf_hppa_reloc_final_type (abfd, base_type, format, field);
 
   return final_types;
 }
@@ -1022,6 +1046,64 @@ elf_hppa_final_write_processing (abfd, linker)
 				      | EF_PARISC_TRAPNIL);
 }
 
+/* Comparison function for qsort to sort unwind section during a
+   final link.  */
+
+static int
+hppa_unwind_entry_compare (a, b)
+     const PTR a;
+     const PTR b;
+{
+  const bfd_byte *ap, *bp;
+  unsigned long av, bv;
+
+  ap = (const bfd_byte *) a;
+  av = (unsigned long) ap[0] << 24;
+  av |= (unsigned long) ap[1] << 16;
+  av |= (unsigned long) ap[2] << 8;
+  av |= (unsigned long) ap[3];
+
+  bp = (const bfd_byte *) b;
+  bv = (unsigned long) bp[0] << 24;
+  bv |= (unsigned long) bp[1] << 16;
+  bv |= (unsigned long) bp[2] << 8;
+  bv |= (unsigned long) bp[3];
+
+  return av < bv ? -1 : av > bv ? 1 : 0;
+}
+
+static boolean elf_hppa_sort_unwind (abfd)
+     bfd *abfd;
+{
+  asection *s;
+
+  /* Magic section names, but this is much safer than having
+     relocate_section remember where SEGREL32 relocs occurred.
+     Consider what happens if someone inept creates a linker script
+     that puts unwind information in .text.  */
+  s = bfd_get_section_by_name (abfd, ".PARISC.unwind");
+  if (s != NULL)
+    {
+      bfd_size_type size;
+      char *contents;
+
+      size = s->_raw_size;
+      contents = bfd_malloc (size);
+      if (contents == NULL)
+	return false;
+
+      if (! bfd_get_section_contents (abfd, s, contents, (file_ptr) 0, size))
+	return false;
+
+      qsort (contents, (size_t) (size / 16), 16, hppa_unwind_entry_compare);
+
+      if (! bfd_set_section_contents (abfd, s, contents, (file_ptr) 0, size))
+	return false;
+    }
+
+  return true;
+}
+
 #if ARCH_SIZE == 64
 /* Hook called by the linker routine which adds symbols from an object
    file.  HP's libraries define symbols with HP specific section
@@ -1064,6 +1146,9 @@ elf_hppa_unmark_useless_dynamic_symbols (h, data)
 {
   struct bfd_link_info *info = (struct bfd_link_info *)data;
 
+  if (h->root.type == bfd_link_hash_warning)
+    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
   /* If we are not creating a shared library, and this symbol is
      referenced by a shared library but is not defined anywhere, then
      the generic code will warn that it is undefined.
@@ -1097,6 +1182,9 @@ elf_hppa_remark_useless_dynamic_symbols (h, data)
 {
   struct bfd_link_info *info = (struct bfd_link_info *)data;
 
+  if (h->root.type == bfd_link_hash_warning)
+    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
   /* If we are not creating a shared library, and this symbol is
      referenced by a shared library but is not defined anywhere, then
      the generic code will warn that it is undefined.
@@ -1122,6 +1210,23 @@ elf_hppa_remark_useless_dynamic_symbols (h, data)
     }
 
   return true;
+}
+
+static boolean
+elf_hppa_is_dynamic_loader_symbol (name)
+     const char * name;
+{
+  return (! strcmp (name, "__CPU_REVISION")
+	  || ! strcmp (name, "__CPU_KEYBITS_1")
+	  || ! strcmp (name, "__SYSTEM_ID_D")
+	  || ! strcmp (name, "__FPU_MODEL")
+	  || ! strcmp (name, "__FPU_REVISION")
+	  || ! strcmp (name, "__ARGC")
+	  || ! strcmp (name, "__ARGV")
+	  || ! strcmp (name, "__ENVP")
+	  || ! strcmp (name, "__TLS_SIZE_D")
+	  || ! strcmp (name, "__LOAD_INFO")
+	  || ! strcmp (name, "__systab"));
 }
 
 /* Record the lowest address for the data and text segments.  */
@@ -1194,22 +1299,22 @@ elf_hppa_final_link (abfd, info)
 	     address of the .plt + gp_offset.
 
 	     If no .plt is found, then look for .dlt, .opd and .data (in
-	     that order) and set __gp to the base address of whichever section
-	    is found first.  */
+	     that order) and set __gp to the base address of whichever
+	     section is found first.  */
 
 	  sec = hppa_info->plt_sec;
-	  if (sec)
+	  if (sec && ! (sec->flags & SEC_EXCLUDE))
 	    gp_val = (sec->output_offset
 		      + sec->output_section->vma
 		      + hppa_info->gp_offset);
 	  else
 	    {
 	      sec = hppa_info->dlt_sec;
-	      if (!sec)
+	      if (!sec || (sec->flags & SEC_EXCLUDE))
 		sec = hppa_info->opd_sec;
-	      if (!sec)
+	      if (!sec || (sec->flags & SEC_EXCLUDE))
 		sec = bfd_get_section_by_name (abfd, ".data");
-	      if (!sec)
+	      if (!sec || (sec->flags & SEC_EXCLUDE))
 		return false;
 
 	      gp_val = sec->output_offset + sec->output_section->vma;
@@ -1245,6 +1350,11 @@ elf_hppa_final_link (abfd, info)
   elf_link_hash_traverse (elf_hash_table (info),
 			  elf_hppa_remark_useless_dynamic_symbols,
 			  info);
+
+  /* If we're producing a final executable, sort the contents of the
+     unwind section. */
+  if (retval)
+    retval = elf_hppa_sort_unwind (abfd);
 
   return retval;
 }
@@ -1325,10 +1435,7 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 	  /* This is a local symbol.  */
 	  sym = local_syms + r_symndx;
 	  sym_sec = local_sections[r_symndx];
-	  relocation = ((ELF_ST_TYPE (sym->st_info) == STT_SECTION
-			   ? 0 : sym->st_value)
-			 + sym_sec->output_offset
-			 + sym_sec->output_section->vma);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sym_sec, rel);
 
 	  /* If this symbol has an entry in the PA64 dynamic hash
 	     table, then get it.  */
@@ -1367,7 +1474,7 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 		{
 		  (*_bfd_error_handler)
 		    (_("%s: warning: unresolvable relocation against symbol `%s' from %s section"),
-		     bfd_get_filename (input_bfd), h->root.root.string,
+		     bfd_archive_filename (input_bfd), h->root.root.string,
 		     bfd_get_section_name (input_bfd, input_section));
 		  relocation = 0;
 		}
@@ -1381,7 +1488,7 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 		relocation = 0;
 	    }
 	  /* Allow undefined symbols in shared libraries.  */
-          else if (info->shared && !info->no_undefined
+	  else if (info->shared && !info->no_undefined
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    {
 	      if (info->symbolic)
@@ -1400,7 +1507,7 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 		{
 		  (*_bfd_error_handler)
 		    (_("%s: warning: unresolvable relocation against symbol `%s' from %s section"),
-		     bfd_get_filename (input_bfd), h->root.root.string,
+		     bfd_archive_filename (input_bfd), h->root.root.string,
 		     bfd_get_section_name (input_bfd, input_section));
 		  relocation = 0;
 		}
@@ -1410,11 +1517,17 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 	    relocation = 0;
 	  else
 	    {
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, h->root.root.string, input_bfd,
-		     input_section, rel->r_offset, true)))
-		return false;
-	      break;
+	      /* Ignore dynamic loader defined symbols.  */
+	      if (elf_hppa_is_dynamic_loader_symbol (h->root.root.string))
+		relocation = 0;
+	      else
+		{
+		  if (!((*info->callbacks->undefined_symbol)
+			(info, h->root.root.string, input_bfd,
+			 input_section, rel->r_offset, true)))
+		    return false;
+		  break;
+		}
 	    }
 	}
 
@@ -1484,9 +1597,9 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
      struct elf_link_hash_entry *h ATTRIBUTE_UNUSED;
      struct elf64_hppa_dyn_hash_entry *dyn_h;
 {
-  unsigned int insn;
+  int insn;
   bfd_vma offset = rel->r_offset;
-  bfd_vma addend = rel->r_addend;
+  bfd_signed_vma addend = rel->r_addend;
   reloc_howto_type *howto = elf_hppa_howto_table + ELF_R_TYPE (rel->r_info);
   unsigned int r_type = howto->type;
   bfd_byte *hit_data = contents + offset;
@@ -1499,8 +1612,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
     case R_PARISC_NONE:
       break;
 
-    /* Basic function call support.  I'm not entirely sure if PCREL14F is
-       actually needed or even handled correctly.
+    /* Basic function call support.
 
        Note for a call to a function defined in another dynamic library
        we want to redirect the call to a stub.  */
@@ -1538,7 +1650,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	  value = hppa_field_adjust (value, -8 + addend, e_rsel);
 
 	/* Apply the relocation to the given instruction.  */
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1570,7 +1682,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	value >>= 2;
 
 	/* Apply the relocation to the given instruction.  */
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1611,11 +1723,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	   a local function which had its address taken.  */
 	if (dyn_h->h == NULL)
 	  {
-	    bfd_put_64 (hppa_info->dlt_sec->owner,
-			value,
-			hppa_info->dlt_sec->contents + dyn_h->dlt_offset);
-
-	    /* Now handle .opd creation if needed.  */
+	    /* Now do .opd creation if needed.  */
 	    if (r_type == R_PARISC_LTOFF_FPTR14R
 		|| r_type == R_PARISC_LTOFF_FPTR14DR
 		|| r_type == R_PARISC_LTOFF_FPTR14WR
@@ -1629,7 +1737,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 			0, 16);
 
 		/* The next word is the address of the function.  */
-		bfd_put_64 (hppa_info->opd_sec->owner, value,
+		bfd_put_64 (hppa_info->opd_sec->owner, value + addend,
 			    (hppa_info->opd_sec->contents
 			     + dyn_h->opd_offset + 16));
 
@@ -1639,7 +1747,17 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 		bfd_put_64 (hppa_info->opd_sec->owner, value,
 			    (hppa_info->opd_sec->contents
 			     + dyn_h->opd_offset + 24));
+
+		/* The DLT value is the address of the .opd entry.  */
+		value = (dyn_h->opd_offset
+			 + hppa_info->opd_sec->output_offset
+			 + hppa_info->opd_sec->output_section->vma);
+		addend = 0;
 	      }
+
+	    bfd_put_64 (hppa_info->dlt_sec->owner,
+			value + addend,
+			hppa_info->dlt_sec->contents + dyn_h->dlt_offset);
 	  }
 
 	/* We want the value of the DLT offset for this symbol, not
@@ -1657,7 +1775,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	if (r_type == R_PARISC_DLTIND21L
 	    || r_type == R_PARISC_LTOFF_FPTR21L
 	    || r_type == R_PARISC_LTOFF_TP21L)
-	  value = hppa_field_adjust (value, addend, e_lrsel);
+	  value = hppa_field_adjust (value, 0, e_lsel);
 	else if (r_type == R_PARISC_DLTIND14F
 		 || r_type == R_PARISC_LTOFF_FPTR16F
 		 || r_type == R_PARISC_LTOFF_FPTR16WF
@@ -1668,11 +1786,11 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 		 || r_type == R_PARISC_LTOFF_TP16F
 		 || r_type == R_PARISC_LTOFF_TP16WF
 		 || r_type == R_PARISC_LTOFF_TP16DF)
-	  value = hppa_field_adjust (value, addend, e_fsel);
+	  value = hppa_field_adjust (value, 0, e_fsel);
 	else
-	  value = hppa_field_adjust (value, addend, e_rrsel);
+	  value = hppa_field_adjust (value, 0, e_rsel);
 
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1709,7 +1827,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	else
 	  value = hppa_field_adjust (value, addend, e_rrsel);
 
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1746,7 +1864,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	    value >>= 2;
 	  }
 
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1781,7 +1899,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	else
 	  value = hppa_field_adjust (value, addend, e_rrsel);
 
-	insn = elf_hppa_relocate_insn (insn, value, r_type);
+	insn = elf_hppa_relocate_insn (insn, (int) value, r_type);
 	break;
       }
 
@@ -1795,7 +1913,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	    memset (hppa_info->opd_sec->contents + dyn_h->opd_offset, 0, 16);
 
 	    /* The next word is the address of the function.  */
-	    bfd_put_64 (hppa_info->opd_sec->owner, value,
+	    bfd_put_64 (hppa_info->opd_sec->owner, value + addend,
 			(hppa_info->opd_sec->contents
 			 + dyn_h->opd_offset + 16));
 
@@ -1804,6 +1922,15 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 		      (hppa_info->opd_sec->output_section->owner);
 	    bfd_put_64 (hppa_info->opd_sec->owner, value,
 			hppa_info->opd_sec->contents + dyn_h->opd_offset + 24);
+
+	    /* The DLT value is the address of the .opd entry.  */
+	    value = (dyn_h->opd_offset
+		     + hppa_info->opd_sec->output_offset
+		     + hppa_info->opd_sec->output_section->vma);
+
+	    bfd_put_64 (hppa_info->dlt_sec->owner,
+			value,
+			hppa_info->dlt_sec->contents + dyn_h->dlt_offset);
 	  }
 
 	/* We want the value of the DLT offset for this symbol, not
@@ -1829,7 +1956,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	    memset (hppa_info->opd_sec->contents + dyn_h->opd_offset, 0, 16);
 
 	    /* The next word is the address of the function.  */
-	    bfd_put_64 (hppa_info->opd_sec->owner, value,
+	    bfd_put_64 (hppa_info->opd_sec->owner, value + addend,
 			(hppa_info->opd_sec->contents
 			 + dyn_h->opd_offset + 16));
 
@@ -1838,6 +1965,15 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 		      (hppa_info->opd_sec->output_section->owner);
 	    bfd_put_64 (hppa_info->opd_sec->owner, value,
 			hppa_info->opd_sec->contents + dyn_h->opd_offset + 24);
+
+	    /* The DLT value is the address of the .opd entry.  */
+	    value = (dyn_h->opd_offset
+		     + hppa_info->opd_sec->output_offset
+		     + hppa_info->opd_sec->output_section->vma);
+
+	    bfd_put_64 (hppa_info->dlt_sec->owner,
+			value,
+			hppa_info->dlt_sec->contents + dyn_h->dlt_offset);
 	  }
 
 	/* We want the value of the DLT offset for this symbol, not
@@ -1929,7 +2065,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	    memset (hppa_info->opd_sec->contents + dyn_h->opd_offset, 0, 16);
 
 	    /* The next word is the address of the function.  */
-	    bfd_put_64 (hppa_info->opd_sec->owner, value,
+	    bfd_put_64 (hppa_info->opd_sec->owner, value + addend,
 			(hppa_info->opd_sec->contents
 			 + dyn_h->opd_offset + 16));
 
@@ -1940,13 +2076,16 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 			hppa_info->opd_sec->contents + dyn_h->opd_offset + 24);
 	  }
 
-	/* We want the value of the OPD offset for this symbol, not
-           the symbol's actual address.  */
-	value = (dyn_h->opd_offset
-		 + hppa_info->opd_sec->output_offset
-		 + hppa_info->opd_sec->output_section->vma);
+	if (dyn_h->want_opd)
+	  /* We want the value of the OPD offset for this symbol.  */
+	  value = (dyn_h->opd_offset
+		   + hppa_info->opd_sec->output_offset
+		   + hppa_info->opd_sec->output_section->vma);
+	else
+	  /* We want the address of the symbol.  */
+	  value += addend;
 
-	bfd_put_64 (input_bfd, value + addend, hit_data);
+	bfd_put_64 (input_bfd, value, hit_data);
 	return bfd_reloc_ok;
       }
 
@@ -1982,7 +2121,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
 	  bfd_put_32 (input_bfd, value, hit_data);
 	else
 	  bfd_put_64 (input_bfd, value, hit_data);
-        return bfd_reloc_ok;
+	return bfd_reloc_ok;
       }
 
     /* Something we don't know how to handle.  */
@@ -1991,7 +2130,7 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
     }
 
   /* Update the instruction word.  */
-  bfd_put_32 (input_bfd, insn, hit_data);
+  bfd_put_32 (input_bfd, (bfd_vma) insn, hit_data);
   return bfd_reloc_ok;
 }
 
@@ -2001,10 +2140,10 @@ elf_hppa_final_link_relocate (rel, input_bfd, output_bfd,
    Instead this routine is meant to handle the bit manipulations needed
    to insert the relocation into the given instruction.  */
 
-static unsigned int
+static int
 elf_hppa_relocate_insn (insn, sym_value, r_type)
-     unsigned int insn;
-     unsigned int sym_value;
+     int insn;
+     int sym_value;
      unsigned int r_type;
 {
   switch (r_type)
@@ -2013,11 +2152,11 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
        the "B" instruction.  */
     case R_PARISC_PCREL22F:
     case R_PARISC_PCREL22C:
-      return (insn & ~ 0x3ff1ffd) | re_assemble_22 (sym_value);
+      return (insn & ~0x3ff1ffd) | re_assemble_22 (sym_value);
 
       /* This is any 12 bit branch.  */
     case R_PARISC_PCREL12F:
-      return (insn & ~ 0x1ffd) | re_assemble_12 (sym_value);
+      return (insn & ~0x1ffd) | re_assemble_12 (sym_value);
 
     /* This is any 17 bit branch.  In PA2.0 syntax it also corresponds
        to the "B" instruction as well as BE.  */
@@ -2026,7 +2165,7 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
     case R_PARISC_DIR17R:
     case R_PARISC_PCREL17C:
     case R_PARISC_PCREL17R:
-      return (insn & ~ 0x1f1ffd) | re_assemble_17 (sym_value);
+      return (insn & ~0x1f1ffd) | re_assemble_17 (sym_value);
 
     /* ADDIL or LDIL instructions.  */
     case R_PARISC_DLTREL21L:
@@ -2037,7 +2176,7 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
     case R_PARISC_DPREL21L:
     case R_PARISC_PLTOFF21L:
     case R_PARISC_DIR21L:
-      return (insn & ~ 0x1fffff) | re_assemble_21 (sym_value);
+      return (insn & ~0x1fffff) | re_assemble_21 (sym_value);
 
     /* LDO and integer loads/stores with 14 bit displacements.  */
     case R_PARISC_DLTREL14R:
@@ -2045,24 +2184,27 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
     case R_PARISC_DLTIND14R:
     case R_PARISC_DLTIND14F:
     case R_PARISC_LTOFF_FPTR14R:
-    case R_PARISC_LTOFF_FPTR16F:
     case R_PARISC_PCREL14R:
     case R_PARISC_PCREL14F:
-    case R_PARISC_PCREL16F:
     case R_PARISC_LTOFF_TP14R:
     case R_PARISC_LTOFF_TP14F:
-    case R_PARISC_LTOFF_TP16F:
     case R_PARISC_DPREL14R:
     case R_PARISC_DPREL14F:
-    case R_PARISC_GPREL16F:
     case R_PARISC_PLTOFF14R:
     case R_PARISC_PLTOFF14F:
-    case R_PARISC_PLTOFF16F:
     case R_PARISC_DIR14R:
     case R_PARISC_DIR14F:
+      return (insn & ~0x3fff) | low_sign_unext (sym_value, 14);
+
+    /* PA2.0W LDO and integer loads/stores with 16 bit displacements.  */
+    case R_PARISC_LTOFF_FPTR16F:
+    case R_PARISC_PCREL16F:
+    case R_PARISC_LTOFF_TP16F:
+    case R_PARISC_GPREL16F:
+    case R_PARISC_PLTOFF16F:
     case R_PARISC_DIR16F:
     case R_PARISC_LTOFF16F:
-      return (insn & ~ 0x3fff) | low_sign_unext (sym_value, 14);
+      return (insn & ~0xffff) | re_assemble_16 (sym_value);
 
     /* Doubleword loads and stores with a 14 bit displacement.  */
     case R_PARISC_DLTREL14DR:
@@ -2080,8 +2222,8 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
     case R_PARISC_DIR14DR:
     case R_PARISC_DIR16DF:
     case R_PARISC_LTOFF16DF:
-      return (insn & ~ 0x3ff1) | (((sym_value & 0x2000) >> 13)
-				  | ((sym_value & 0x1ff8) << 1));
+      return (insn & ~0x3ff1) | (((sym_value & 0x2000) >> 13)
+				 | ((sym_value & 0x1ff8) << 1));
 
     /* Floating point single word load/store instructions.  */
     case R_PARISC_DLTREL14WR:
@@ -2099,8 +2241,8 @@ elf_hppa_relocate_insn (insn, sym_value, r_type)
     case R_PARISC_DIR16WF:
     case R_PARISC_DIR14WR:
     case R_PARISC_LTOFF16WF:
-      return (insn & ~ 0x3ff9) | (((sym_value & 0x2000) >> 13)
-				  | ((sym_value & 0x1ffc) << 1));
+      return (insn & ~0x3ff9) | (((sym_value & 0x2000) >> 13)
+				 | ((sym_value & 0x1ffc) << 1));
 
     default:
       return insn;

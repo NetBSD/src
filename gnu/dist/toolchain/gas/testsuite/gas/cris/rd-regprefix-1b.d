@@ -9,7 +9,7 @@
 
 .*:[ 	]+file format elf32-cris
 Disassembly of section \.text:
-00000000 <start>:
+0+ <start>:
 [ 	]+0:[ 	]+6f5e 0000 0000[ 	]+move\.d[ 	]+0[ 	]+<start>,\$r5
 [ 	]+2:[ 	]+(R_CRIS_)?32[ 	]+r5
 [ 	]+6:[ 	]+3f9e 0000 0000[ 	]+move[ 	]+0[ 	]+<start>,\$ibr

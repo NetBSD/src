@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:4100
 #name: MIPS 4100
-#as: -mcpu=4100
+#as: -march=4100
 
 
 .*: +file format .*mips.*

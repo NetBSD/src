@@ -1,5 +1,5 @@
 #objdump: -dr --prefix-addresses -mmips:3000
-#as: -mcpu=r3000
+#as: -march=r3000 -mtune=r3000
 #name: MIPS R3000 rol
 
 # Test the rol and ror macros.
@@ -21,17 +21,20 @@ Disassembly of section .text:
 0+002c <[^>]*> sll	at,a1,0x1
 0+0030 <[^>]*> srl	a0,a1,0x1f
 0+0034 <[^>]*> or	a0,a0,at
-0+0038 <[^>]*> negu	at,a1
-0+003c <[^>]*> sllv	at,a0,at
-0+0040 <[^>]*> srlv	a0,a0,a1
-0+0044 <[^>]*> or	a0,a0,at
-0+0048 <[^>]*> negu	at,a2
-0+004c <[^>]*> sllv	at,a1,at
-0+0050 <[^>]*> srlv	a0,a1,a2
-0+0054 <[^>]*> or	a0,a0,at
-0+0058 <[^>]*> srl	at,a0,0x1
-0+005c <[^>]*> sll	a0,a0,0x1f
-0+0060 <[^>]*> or	a0,a0,at
-0+0064 <[^>]*> srl	at,a1,0x1
-0+0068 <[^>]*> sll	a0,a1,0x1f
-0+006c <[^>]*> or	a0,a0,at
+0+0038 <[^>]*> srl	a0,a1,0x0
+0+003c <[^>]*> negu	at,a1
+0+0040 <[^>]*> sllv	at,a0,at
+0+0044 <[^>]*> srlv	a0,a0,a1
+0+0048 <[^>]*> or	a0,a0,at
+0+004c <[^>]*> negu	at,a2
+0+0050 <[^>]*> sllv	at,a1,at
+0+0054 <[^>]*> srlv	a0,a1,a2
+0+0058 <[^>]*> or	a0,a0,at
+0+005c <[^>]*> srl	at,a0,0x1
+0+0060 <[^>]*> sll	a0,a0,0x1f
+0+0064 <[^>]*> or	a0,a0,at
+0+0068 <[^>]*> srl	at,a1,0x1
+0+006c <[^>]*> sll	a0,a1,0x1f
+0+0070 <[^>]*> or	a0,a0,at
+0+0074 <[^>]*> srl	a0,a1,0x0
+	...

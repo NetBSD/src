@@ -20,7 +20,7 @@ SYMBOL TABLE:
 
 
 RELOCATION RECORDS FOR \[foo\]:
-OFFSET           TYPE              VALUE 
+OFFSET [ ]+ TYPE              VALUE 
 0+0000000 R_MIPS_32         l1
 0+0000004 R_MIPS_32         l1
 0+0000008 R_MIPS_32         L1.1

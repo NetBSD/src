@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lifloat-svr4pic
-#as: -mips1 -mcpu=r3000 -KPIC -EB --defsym SVR4=1
+#as: -mips1 -mtune=r3000 -KPIC -EB --defsym SVR4=1
 #source: lifloat.s
 
 # Test the li.d and li.s macros with -KPIC.

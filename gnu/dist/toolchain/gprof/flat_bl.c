@@ -2,7 +2,9 @@
    from flat_bl.m using the gen-c-prog.awk script.  <== */
 
 #include <stdio.h>
+#include "ansidecl.h"
 
+void  flat_blurb PARAMS ((FILE *));
 void
 flat_blurb (file)
      FILE *file;

@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/mn10200.h"
 
@@ -175,7 +175,7 @@ reg_name_search (regs, regcount, name)
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
@@ -197,6 +197,9 @@ data_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (data_registers, DATA_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -207,27 +210,19 @@ data_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
       return true;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return false;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
@@ -249,6 +244,9 @@ address_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (address_registers, ADDRESS_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -259,27 +257,19 @@ address_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
       return true;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return false;
 }
 
 /* Summary of register_name().
  *
  * in: Input_line_pointer points to 1st char of operand.
  *
- * out: A expressionS.
+ * out: An expressionS.
  *	The operand may have been a register: in this case, X_op == O_register,
  *	X_add_number is set to the register number, and truth is returned.
  *	Input_line_pointer->(next non-blank) char after operand, or is in
@@ -301,6 +291,9 @@ other_register_name (expressionP)
   c = get_symbol_end ();
   reg_number = reg_name_search (other_registers, OTHER_REG_NAME_CNT, name);
 
+  /* Put back the delimiting char.  */
+  *input_line_pointer = c;
+
   /* Look to see if it's in the register table.  */
   if (reg_number >= 0)
     {
@@ -311,20 +304,12 @@ other_register_name (expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
       return true;
     }
-  else
-    {
-      /* Reset the line as if we had not done anything.  */
-      /* Put back the delimiting char.  */
-      *input_line_pointer = c;
 
-      /* Reset input_line pointer.  */
-      input_line_pointer = start;
-      return false;
-    }
+  /* Reset the line as if we had not done anything.  */
+  input_line_pointer = start;
+  return false;
 }
 
 void
@@ -775,7 +760,7 @@ md_begin ()
       op++;
     }
 
-  /* This is both a simplification (we don't have to write md_apply_fix)
+  /* This is both a simplification (we don't have to write md_apply_fix3)
      and support for future optimizations (branch shortening and similar
      stuff in the linker.  */
   linkrelax = 1;
@@ -796,7 +781,7 @@ md_assemble (str)
   int match;
 
   /* Get the opcode.  */
-  for (s = str; *s != '\0' && !isspace (*s); s++)
+  for (s = str; *s != '\0' && !ISSPACE (*s); s++)
     ;
   if (*s != '\0')
     *s++ = '\0';
@@ -810,7 +795,7 @@ md_assemble (str)
     }
 
   str = s;
-  while (isspace (*str))
+  while (ISSPACE (*str))
     ++str;
 
   input_line_pointer = str;
@@ -1044,7 +1029,7 @@ keep_going:
       break;
     }
 
-  while (isspace (*str))
+  while (ISSPACE (*str))
     ++str;
 
   if (*str != '\0')
@@ -1315,16 +1300,15 @@ md_pcrel_from (fixp)
 #endif
 }
 
-int
-md_apply_fix3 (fixp, valuep, seg)
-     fixS *fixp;
-     valueT *valuep;
-     segT seg;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS * fixP;
+     valueT * valP ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED;
 {
   /* We shouldn't ever get here because linkrelax is nonzero.  */
   abort ();
-  fixp->fx_done = 1;
-  return 0;
+  fixP->fx_done = 1;
 }
 
 /* Insert an operand value into an instruction.  */

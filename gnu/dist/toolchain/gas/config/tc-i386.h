@@ -98,18 +98,32 @@ extern unsigned long i386_mach PARAMS ((void));
 #define AOUT_TARGET_FORMAT	"a.out-i386"
 #endif
 
+#ifdef TE_FreeBSD
+#define ELF_TARGET_FORMAT	"elf32-i386-freebsd"
+#endif
+#ifndef ELF_TARGET_FORMAT
+#define ELF_TARGET_FORMAT	"elf32-i386"
+#endif
+
 #if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
      || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))
 extern const char *i386_target_format PARAMS ((void));
 #define TARGET_FORMAT i386_target_format ()
 #else
 #ifdef OBJ_ELF
-#define TARGET_FORMAT		"elf32-i386"
+#define TARGET_FORMAT		ELF_TARGET_FORMAT
 #endif
 #ifdef OBJ_AOUT
 #define TARGET_FORMAT		AOUT_TARGET_FORMAT
 #endif
 #endif
+
+#if (defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF))
+#define md_end i386_elf_emit_arch_note
+extern void i386_elf_emit_arch_note PARAMS ((void));
+#endif
+
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
 #else /* ! BFD_ASSEMBLER */
 
@@ -121,12 +135,12 @@ extern const char *i386_target_format PARAMS ((void));
 #define TC_COUNT_RELOC(x) ((x)->fx_addsy || (x)->fx_r_type==7)
 #define TC_COFF_FIX2RTYPE(fixP) tc_coff_fix2rtype(fixP)
 extern short tc_coff_fix2rtype PARAMS ((struct fix *));
-#define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep(frag)
+#define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep (frag)
 extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 
 #ifdef TE_GO32
 /* DJGPP now expects some sections to be 2**4 aligned.  */
-#define SUB_SEGMENT_ALIGN(SEG)						\
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)					\
   ((strcmp (obj_segment_name (SEG), ".text") == 0			\
     || strcmp (obj_segment_name (SEG), ".data") == 0			\
     || strcmp (obj_segment_name (SEG), ".bss") == 0			\
@@ -136,7 +150,7 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
    ? 4									\
    : 2)
 #else
-#define SUB_SEGMENT_ALIGN(SEG) 2
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 2
 #endif
 
 #define TC_RVA_RELOC 7
@@ -164,8 +178,15 @@ extern void x86_cons_fix_new
   PARAMS ((fragS *, unsigned int, unsigned int, expressionS *));
 #endif
 
-#define TC_FORCE_RELOCATION(fixp) tc_i386_force_relocation(fixp)
-extern int tc_i386_force_relocation PARAMS ((struct fix *));
+#ifdef BFD_ASSEMBLER
+#define TC_FORCE_RELOCATION(FIXP)			\
+  ((FIXP)->fx_r_type == BFD_RELOC_VTABLE_INHERIT	\
+   || (FIXP)->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+#else
+/* For COFF.  */
+#define TC_FORCE_RELOCATION(FIXP)			\
+  ((FIXP)->fx_r_type == 7)
+#endif
 
 #ifdef BFD_ASSEMBLER
 #define NO_RELOC BFD_RELOC_NONE
@@ -293,7 +314,6 @@ typedef struct
 #define CpuSSE	       0x1000	/* Streaming SIMD extensions required */
 #define CpuSSE2	       0x2000	/* Streaming SIMD extensions 2 required */
 #define Cpu3dnow       0x4000	/* 3dnow! support required */
-#define CpuUnknown     0x8000	/* The CPU is unknown,  be on the safe side.  */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
@@ -463,15 +483,17 @@ typedef struct
 modrm_byte;
 
 /* x86-64 extension prefix.  */
-typedef struct
-  {
-    unsigned int mode64;
-    unsigned int extX;		/* Used to extend modrm reg field.  */
-    unsigned int extY;		/* Used to extend SIB index field.  */
-    unsigned int extZ;		/* Used to extend modrm reg/mem, SIB base, modrm base fields.  */
-    unsigned int empty;		/* Used to old-style byte registers to new style.  */
-  }
-rex_byte;
+typedef int rex_byte;
+#define REX_OPCODE	0x40
+
+/* Indicates 64 bit operand size.  */
+#define REX_MODE64	8
+/* High extension to reg field of modrm byte.  */
+#define REX_EXTX	4
+/* High extension to SIB index field.  */
+#define REX_EXTY	2
+/* High extension to base field of modrm or SIB, or reg field of opcode.  */
+#define REX_EXTZ	1
 
 /* 386 opcode byte to code indirect addressing.  */
 typedef struct
@@ -526,9 +548,6 @@ if (fragP->fr_type == rs_align_code) 					\
   i386_align_code (fragP, (fragP->fr_next->fr_address			\
 			   - fragP->fr_address				\
 			   - fragP->fr_fix));
-
-/* call md_apply_fix3 with segment instead of md_apply_fix */
-#define MD_APPLY_FIX3
 
 void i386_print_statistics PARAMS ((FILE *));
 #define tc_print_statistics i386_print_statistics

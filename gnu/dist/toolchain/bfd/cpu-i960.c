@@ -1,5 +1,5 @@
 /* BFD library support routines for the i960 architecture.
-   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000
+   Copyright 1990, 1991, 1993, 1994, 1996, 1999, 2000, 2001
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
@@ -23,6 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
+static boolean scan_960_mach
+  PARAMS ((const bfd_arch_info_type *, const char *));
+static const bfd_arch_info_type *compatible
+  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
+
 /* This routine is provided a string, and tries to work out if it
    could possibly refer to the i960 machine pointed at in the
    info_struct pointer */
@@ -33,14 +38,10 @@ scan_960_mach (ap, string)
      const char *string;
 {
   unsigned long machine;
-  int i;
   int fail_because_not_80960 = false;
 
-  for (i = 0; i < strlen (string); i ++)
-    string[i] = tolower (string[i]);
-
   /* Look for the string i960 at the front of the string.  */
-  if (strncmp ("i960", string, 4) == 0)
+  if (strncasecmp ("i960", string, 4) == 0)
     {
       string += 4;
 
@@ -74,9 +75,9 @@ scan_960_mach (ap, string)
   if (string[0] == 'c' && string[1] == 'o' && string[2] == 'r' &&
       string[3] == 'e' && string[4] == '\0')
     machine = bfd_mach_i960_core;
-  else if (strcmp (string, "ka_sa") == 0)
+  else if (strcasecmp (string, "ka_sa") == 0)
     machine = bfd_mach_i960_ka_sa;
-  else if (strcmp (string, "kb_sb") == 0)
+  else if (strcasecmp (string, "kb_sb") == 0)
     machine = bfd_mach_i960_kb_sb;
   else if (string[1] == '\0' || string[2] != '\0') /* rest are 2-char.  */
     return false;
@@ -140,7 +141,7 @@ compatible (a,b)
 #define HX	bfd_mach_i960_hx    /*8*/
 #define MAX_ARCH ((int)HX)
 
-  static CONST unsigned long matrix[MAX_ARCH+1][MAX_ARCH+1] =
+  static const unsigned long matrix[MAX_ARCH+1][MAX_ARCH+1] =
     {
       { ERROR,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
       { CORE,	CORE,	KA,	KB,	MC,	XA,	CA,	JX,	HX },
@@ -163,7 +164,6 @@ compatible (a,b)
     }
 }
 
-int bfd_default_scan_num_mach();
 #define N(a,b,d,n) \
 { 32, 32, 8,bfd_arch_i960,a,"i960",b,3,d,compatible,scan_960_mach,n,}
 

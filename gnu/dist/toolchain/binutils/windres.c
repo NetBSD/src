@@ -1,5 +1,5 @@
 /* windres.c -- a program to manipulate Windows resources
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -39,11 +39,11 @@
 #include "getopt.h"
 #include "bucomm.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "obstack.h"
 #include "windres.h"
 
 #include <assert.h>
-#include <ctype.h>
 #include <time.h>
 
 /* used by resrc.c at least */
@@ -145,6 +145,8 @@ static enum res_format format_from_filename PARAMS ((const char *, int));
 static void usage PARAMS ((FILE *, int));
 static int cmp_res_entry PARAMS ((const PTR, const PTR));
 static struct res_directory *sort_resources PARAMS ((struct res_directory *));
+static void reswr_init PARAMS ((void));
+static const char * quot PARAMS ((const char *));
 
 /* When we are building a resource tree, we allocate everything onto
    an obstack, so that we can free it all at once if we want.  */
@@ -441,11 +443,9 @@ define_resource (resources, cids, ids, dupok)
 
   re->u.res = ((struct res_resource *)
 	       res_alloc (sizeof (struct res_resource)));
+  memset (re->u.res, 0, sizeof (struct res_resource));
 
   re->u.res->type = RES_TYPE_UNINITIALIZED;
-  memset (&re->u.res->res_info, 0, sizeof (struct res_res_info));
-  memset (&re->u.res->coff_info, 0, sizeof (struct res_coff_info));
-
   return re->u.res;
 }
 
@@ -638,13 +638,11 @@ format_from_filename (filename, input)
 
   /* If we don't recognize the name of an output file, assume it's a
      COFF file.  */
-
   if (! input)
     return RES_FORMAT_COFF;
 
   /* Read the first few bytes of the file to see if we can guess what
      it is.  */
-
   e = fopen (filename, FOPEN_RB);
   if (e == NULL)
     fatal ("%s: %s", filename, strerror (errno));
@@ -679,11 +677,11 @@ format_from_filename (filename, input)
     return RES_FORMAT_RES;
 
   /* If every character is printable or space, assume it's an RC file.  */
-  if ((isprint (b1) || isspace (b1))
-      && (isprint (b2) || isspace (b2))
-      && (isprint (b3) || isspace (b3))
-      && (isprint (b4) || isspace (b4))
-      && (isprint (b5) || isspace (b5)))
+  if ((ISPRINT (b1) || ISSPACE (b1))
+      && (ISPRINT (b2) || ISSPACE (b2))
+      && (ISPRINT (b3) || ISSPACE (b3))
+      && (ISPRINT (b4) || ISSPACE (b4))
+      && (ISPRINT (b5) || ISSPACE (b5)))
     return RES_FORMAT_RC;
 
   /* Otherwise, we give up.  */
@@ -701,45 +699,46 @@ usage (stream, status)
      FILE *stream;
      int status;
 {
-  fprintf (stream, _("Usage: %s [options] [input-file] [output-file]\n"),
+  fprintf (stream, _("Usage: %s [option(s)] [input-file] [output-file]\n"),
 	   program_name);
-  fprintf (stream, _("\
-Options:\n\
-  -i FILE, --input FILE       Name input file\n\
-  -o FILE, --output FILE      Name output file\n\
-  -I FORMAT, --input-format FORMAT\n\
-                              Specify input format\n\
-  -O FORMAT, --output-format FORMAT\n\
-                              Specify output format\n\
-  -F TARGET, --target TARGET  Specify COFF target\n\
-  --preprocessor PROGRAM      Program to use to preprocess rc file\n\
-  --include-dir DIR           Include directory when preprocessing rc file\n\
-  -DSYM[=VAL], --define SYM[=VAL]\n\
-                              Define SYM when preprocessing rc file\n\
-  -v                          Verbose - tells you what it's doing\n\
-  --language VAL              Set language when reading rc file\n\
-  --use-temp-file             Use a temporary file instead of popen to read\n\
-                              the preprocessor output\n\
-  --no-use-temp-file          Use popen (default)\n"));
+  fprintf (stream, _(" The options are:\n\
+  -i --input=<file>            Name input file\n\
+  -o --output=<file>           Name output file\n\
+  -I --input-format=<format>   Specify input format\n\
+  -O --output-format=<format>  Specify output format\n\
+  -F --target=<target>         Specify COFF target\n\
+     --preprocessor=<program>  Program to use to preprocess rc file\n\
+     --include-dir=<dir>       Include directory when preprocessing rc file\n\
+  -D --define <sym>[=<val>]    Define SYM when preprocessing rc file\n\
+  -v --verbose                 Verbose - tells you what it's doing\n\
+     --language=<val>          Set language when reading rc file\n\
+     --use-temp-file           Use a temporary file instead of popen to read\n\
+                               the preprocessor output\n\
+     --no-use-temp-file        Use popen (default)\n"));
 #ifdef YYDEBUG
   fprintf (stream, _("\
-  --yydebug                   Turn on parser debugging\n"));
+     --yydebug                 Turn on parser debugging\n"));
 #endif
   fprintf (stream, _("\
-  --help                      Print this help message\n\
-  --version                   Print version information\n"));
+  -h --help                    Print this help message\n\
+  -V --version                 Print version information\n"));
   fprintf (stream, _("\
 FORMAT is one of rc, res, or coff, and is deduced from the file name\n\
 extension if not specified.  A single file name is an input file.\n\
 No input-file is stdin, default rc.  No output-file is stdout, default rc.\n"));
+
   list_supported_targets (program_name, stream);
+
   if (status == 0)
     fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
+
   exit (status);
 }
 
-/* Quote characters that will confuse the shell when we run the preprocessor */
-static const char *quot (string)
+/* Quote characters that will confuse the shell when we run the preprocessor.  */
+
+static const char *
+quot (string)
      const char *string;
 {
   static char *buf = 0;
@@ -766,6 +765,9 @@ static const char *quot (string)
   return buf;
 }
 
+/* This keeps gcc happy when using -Wmissing-prototypes -Wstrict-prototypes.  */
+int main PARAMS ((int, char **));
+
 /* The main function.  */
 
 int
@@ -789,6 +791,9 @@ main (argc, argv)
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
 #endif
+#if defined (HAVE_SETLOCALE)
+  setlocale (LC_CTYPE, "");
+#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -807,10 +812,10 @@ main (argc, argv)
   target = NULL;
   preprocessor = NULL;
   preprocargs = NULL;
-  language = -1;
+  language = 0x409;   /* LANG_ENGLISH, SUBLANG_ENGLISH_US.  */
   use_temp_file = 0;
 
-  while ((c = getopt_long (argc, argv, "i:o:I:O:F:D:v", long_options,
+  while ((c = getopt_long (argc, argv, "i:o:I:O:F:D:hHvV", long_options,
 			   (int *) 0)) != EOF)
     {
       switch (c)
@@ -913,10 +918,13 @@ main (argc, argv)
 	  break;
 #endif
 
+	case 'h':
+	case 'H':
 	case OPTION_HELP:
 	  usage (stdout, 0);
 	  break;
 
+	case 'V':
 	case OPTION_VERSION:
 	  print_version ("windres");
 	  break;

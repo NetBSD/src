@@ -1,5 +1,5 @@
 /* An expandable hash tables datatype.  
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov (vmakarov@cygnus.com).
 
 This file is part of the libiberty library.
@@ -80,46 +80,46 @@ higher_prime_number (n)
 {
   /* These are primes that are near, but slightly smaller than, a
      power of two.  */
-  static unsigned long primes[] = {
-    2,
-    7,
-    13,
-    31,
-    61,
-    127,
-    251,
-    509,
-    1021,
-    2039,
-    4093,
-    8191,
-    16381,
-    32749,
-    65521,
-    131071,
-    262139,
-    524287,
-    1048573,
-    2097143,
-    4194301,
-    8388593,
-    16777213,
-    33554393,
-    67108859,
-    134217689,
-    268435399,
-    536870909,
-    1073741789,
-    2147483647,
-    4294967291
+  static const unsigned long primes[] = {
+    (unsigned long) 7,
+    (unsigned long) 13,
+    (unsigned long) 31,
+    (unsigned long) 61,
+    (unsigned long) 127,
+    (unsigned long) 251,
+    (unsigned long) 509,
+    (unsigned long) 1021,
+    (unsigned long) 2039,
+    (unsigned long) 4093,
+    (unsigned long) 8191,
+    (unsigned long) 16381,
+    (unsigned long) 32749,
+    (unsigned long) 65521,
+    (unsigned long) 131071,
+    (unsigned long) 262139,
+    (unsigned long) 524287,
+    (unsigned long) 1048573,
+    (unsigned long) 2097143,
+    (unsigned long) 4194301,
+    (unsigned long) 8388593,
+    (unsigned long) 16777213,
+    (unsigned long) 33554393,
+    (unsigned long) 67108859,
+    (unsigned long) 134217689,
+    (unsigned long) 268435399,
+    (unsigned long) 536870909,
+    (unsigned long) 1073741789,
+    (unsigned long) 2147483647,
+					/* 4294967291L */
+    ((unsigned long) 2147483647) + ((unsigned long) 2147483644),
   };
 
-  unsigned long* low = &primes[0];
-  unsigned long* high = &primes[sizeof(primes) / sizeof(primes[0])];
+  const unsigned long *low = &primes[0];
+  const unsigned long *high = &primes[sizeof(primes) / sizeof(primes[0])];
 
   while (low != high)
     {
-      unsigned long* mid = low + (high - low) / 2;
+      const unsigned long *mid = low + (high - low) / 2;
       if (n > *mid)
 	low = mid + 1;
       else
@@ -158,8 +158,42 @@ eq_pointer (p1, p2)
 /* This function creates table with length slightly longer than given
    source length.  Created hash table is initiated as empty (all the
    hash table entries are EMPTY_ENTRY).  The function returns the
-   created hash table.  Memory allocation must not fail.  */
+   created hash table, or NULL if memory allocation fails.  */
 
+htab_t
+htab_create_alloc (size, hash_f, eq_f, del_f, alloc_f, free_f)
+     size_t size;
+     htab_hash hash_f;
+     htab_eq eq_f;
+     htab_del del_f;
+     htab_alloc alloc_f;
+     htab_free free_f;
+{
+  htab_t result;
+
+  size = higher_prime_number (size);
+  result = (htab_t) (*alloc_f) (1, sizeof (struct htab));
+  if (result == NULL)
+    return NULL;
+  result->entries = (PTR *) (*alloc_f) (size, sizeof (PTR));
+  if (result->entries == NULL)
+    {
+      if (free_f != NULL)
+	(*free_f) (result);
+      return NULL;
+    }
+  result->size = size;
+  result->hash_f = hash_f;
+  result->eq_f = eq_f;
+  result->del_f = del_f;
+  result->alloc_f = alloc_f;
+  result->free_f = free_f;
+  return result;
+}
+
+/* These functions exist solely for backward compatibility.  */
+
+#undef htab_create
 htab_t
 htab_create (size, hash_f, eq_f, del_f)
      size_t size;
@@ -167,23 +201,8 @@ htab_create (size, hash_f, eq_f, del_f)
      htab_eq eq_f;
      htab_del del_f;
 {
-  htab_t result;
-
-  size = higher_prime_number (size);
-  result = (htab_t) xcalloc (1, sizeof (struct htab));
-  result->entries = (PTR *) xcalloc (size, sizeof (PTR));
-  result->size = size;
-  result->hash_f = hash_f;
-  result->eq_f = eq_f;
-  result->del_f = del_f;
-  result->return_allocation_failure = 0;
-  return result;
+  return htab_create_alloc (size, hash_f, eq_f, del_f, xcalloc, free);
 }
-
-/* This function creates table with length slightly longer than given
-   source length.  The created hash table is initiated as empty (all the
-   hash table entries are EMPTY_ENTRY).  The function returns the created
-   hash table.  Memory allocation may fail; it may return NULL.  */
 
 htab_t
 htab_try_create (size, hash_f, eq_f, del_f)
@@ -192,26 +211,7 @@ htab_try_create (size, hash_f, eq_f, del_f)
      htab_eq eq_f;
      htab_del del_f;
 {
-  htab_t result;
-
-  size = higher_prime_number (size);
-  result = (htab_t) calloc (1, sizeof (struct htab));
-  if (result == NULL)
-    return NULL;
-
-  result->entries = (PTR *) calloc (size, sizeof (PTR));
-  if (result->entries == NULL)
-    {
-      free (result);
-      return NULL;
-    }
-
-  result->size = size;
-  result->hash_f = hash_f;
-  result->eq_f = eq_f;
-  result->del_f = del_f;
-  result->return_allocation_failure = 1;
-  return result;
+  return htab_create_alloc (size, hash_f, eq_f, del_f, calloc, free);
 }
 
 /* This function frees all memory allocated for given hash table.
@@ -229,8 +229,11 @@ htab_delete (htab)
 	  && htab->entries[i] != DELETED_ENTRY)
 	(*htab->del_f) (htab->entries[i]);
 
-  free (htab->entries);
-  free (htab);
+  if (htab->free_f != NULL)
+    {
+      (*htab->free_f) (htab->entries);
+      (*htab->free_f) (htab);
+    }
 }
 
 /* This function clears all entries in the given hash table.  */
@@ -263,21 +266,27 @@ find_empty_slot_for_expand (htab, hash)
      hashval_t hash;
 {
   size_t size = htab->size;
-  hashval_t hash2 = 1 + hash % (size - 2);
   unsigned int index = hash % size;
+  PTR *slot = htab->entries + index;
+  hashval_t hash2;
 
+  if (*slot == EMPTY_ENTRY)
+    return slot;
+  else if (*slot == DELETED_ENTRY)
+    abort ();
+
+  hash2 = 1 + hash % (size - 2);
   for (;;)
     {
-      PTR *slot = htab->entries + index;
+      index += hash2;
+      if (index >= size)
+	index -= size;
 
+      slot = htab->entries + index;
       if (*slot == EMPTY_ENTRY)
 	return slot;
       else if (*slot == DELETED_ENTRY)
 	abort ();
-
-      index += hash2;
-      if (index >= size)
-	index -= size;
     }
 }
 
@@ -296,21 +305,17 @@ htab_expand (htab)
   PTR *oentries;
   PTR *olimit;
   PTR *p;
+  PTR *nentries;
 
   oentries = htab->entries;
   olimit = oentries + htab->size;
 
   htab->size = higher_prime_number (htab->size * 2);
 
-  if (htab->return_allocation_failure)
-    {
-      PTR *nentries = (PTR *) calloc (htab->size, sizeof (PTR *));
-      if (nentries == NULL)
-	return 0;
-      htab->entries = nentries;
-    }
-  else
-    htab->entries = (PTR *) xcalloc (htab->size, sizeof (PTR *));
+  nentries = (PTR *) (*htab->alloc_f) (htab->size, sizeof (PTR *));
+  if (nentries == NULL)
+    return 0;
+  htab->entries = nentries;
 
   htab->n_elements -= htab->n_deleted;
   htab->n_deleted = 0;
@@ -331,7 +336,8 @@ htab_expand (htab)
     }
   while (p < olimit);
 
-  free (oentries);
+  if (htab->free_f != NULL)
+    (*htab->free_f) (oentries);
   return 1;
 }
 
@@ -404,50 +410,59 @@ htab_find_slot_with_hash (htab, element, hash, insert)
   unsigned int index;
   hashval_t hash2;
   size_t size;
+  PTR entry;
 
   if (insert == INSERT && htab->size * 3 <= htab->n_elements * 4
       && htab_expand (htab) == 0)
     return NULL;
 
   size = htab->size;
-  hash2 = 1 + hash % (size - 2);
   index = hash % size;
 
   htab->searches++;
   first_deleted_slot = NULL;
 
+  entry = htab->entries[index];
+  if (entry == EMPTY_ENTRY)
+    goto empty_entry;
+  else if (entry == DELETED_ENTRY)
+    first_deleted_slot = &htab->entries[index];
+  else if ((*htab->eq_f) (entry, element))
+    return &htab->entries[index];
+      
+  hash2 = 1 + hash % (size - 2);
   for (;;)
     {
-      PTR entry = htab->entries[index];
-      if (entry == EMPTY_ENTRY)
-	{
-	  if (insert == NO_INSERT)
-	    return NULL;
-
-	  htab->n_elements++;
-
-	  if (first_deleted_slot)
-	    {
-	      *first_deleted_slot = EMPTY_ENTRY;
-	      return first_deleted_slot;
-	    }
-
-	  return &htab->entries[index];
-	}
-
-      if (entry == DELETED_ENTRY)
-	{
-	  if (!first_deleted_slot)
-	    first_deleted_slot = &htab->entries[index];
-	}
-      else  if ((*htab->eq_f) (entry, element))
-	return &htab->entries[index];
-      
       htab->collisions++;
       index += hash2;
       if (index >= size)
 	index -= size;
+      
+      entry = htab->entries[index];
+      if (entry == EMPTY_ENTRY)
+	goto empty_entry;
+      else if (entry == DELETED_ENTRY)
+	{
+	  if (!first_deleted_slot)
+	    first_deleted_slot = &htab->entries[index];
+	}
+      else if ((*htab->eq_f) (entry, element))
+	return &htab->entries[index];
     }
+
+ empty_entry:
+  if (insert == NO_INSERT)
+    return NULL;
+
+  htab->n_elements++;
+
+  if (first_deleted_slot)
+    {
+      *first_deleted_slot = EMPTY_ENTRY;
+      return first_deleted_slot;
+    }
+
+  return &htab->entries[index];
 }
 
 /* Like htab_find_slot_with_hash, but compute the hash value from the
@@ -559,4 +574,43 @@ htab_collisions (htab)
     return 0.0;
 
   return (double) htab->collisions / (double) htab->searches;
+}
+
+/* Hash P as a null-terminated string.
+
+   Copied from gcc/hashtable.c.  Zack had the following to say with respect
+   to applicability, though note that unlike hashtable.c, this hash table
+   implementation re-hashes rather than chain buckets.
+
+   http://gcc.gnu.org/ml/gcc-patches/2001-08/msg01021.html
+   From: Zack Weinberg <zackw@panix.com>
+   Date: Fri, 17 Aug 2001 02:15:56 -0400
+
+   I got it by extracting all the identifiers from all the source code
+   I had lying around in mid-1999, and testing many recurrences of
+   the form "H_n = H_{n-1} * K + c_n * L + M" where K, L, M were either
+   prime numbers or the appropriate identity.  This was the best one.
+   I don't remember exactly what constituted "best", except I was
+   looking at bucket-length distributions mostly.
+   
+   So it should be very good at hashing identifiers, but might not be
+   as good at arbitrary strings.
+   
+   I'll add that it thoroughly trounces the hash functions recommended
+   for this use at http://burtleburtle.net/bob/hash/index.html, both
+   on speed and bucket distribution.  I haven't tried it against the
+   function they just started using for Perl's hashes.  */
+
+hashval_t
+htab_hash_string (p)
+     const PTR p;
+{
+  const unsigned char *str = (const unsigned char *) p;
+  hashval_t r = 0;
+  unsigned char c;
+
+  while ((c = *str++) != 0)
+    r = r * 67 + c - 113;
+
+  return r;
 }

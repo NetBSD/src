@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright 1986, 1988, 1991, 1992, 1994, 1998
+   Copyright 1986, 1988, 1991, 1992, 1994, 1998, 2001
    Free Software Foundation, Inc.
 
 This file is part of opcodes library.
@@ -39,6 +39,16 @@ static int print_insn_arg
   PARAMS ((int, int, int *, char *, bfd_vma, char *, int));
 static int get_displacement PARAMS ((char *, int *));
 static int invalid_float PARAMS ((char *, int));
+static long int read_memory_integer PARAMS ((unsigned char *, int));
+static int fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
+struct ns32k_option;
+static void optlist PARAMS ((int, const struct ns32k_option *, char *));
+static void list_search PARAMS ((int, const struct ns32k_option *, char *));
+static int bit_extract PARAMS ((bfd_byte *, int, int));
+static int bit_extract_simple PARAMS ((bfd_byte *, int, int));
+static void bit_copy PARAMS ((char *, int, int, char *));
+static int sign_extend PARAMS ((int, int));
+static void flip_bytes PARAMS ((char *, int));
 
 static long read_memory_integer(addr, nr)
      unsigned char *addr;
@@ -308,7 +318,6 @@ bit_extract_simple (buffer, offset, count)
      int count;
 {
   int result;
-  int mask;
   int bit;
 
   buffer += offset >> 3;
@@ -626,20 +635,20 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
 	      break;
 	    case 'W':
 	      Ivalue = bit_extract (buffer, *aoffsetp, 16);
-	      flip_bytes (&Ivalue, 2);
+	      flip_bytes ((char *) & Ivalue, 2);
 	      *aoffsetp += 16;
 	      Ivalue = sign_extend (Ivalue, 16);
 	      sprintf (result, "$%d", Ivalue);
 	      break;
 	    case 'D':
 	      Ivalue = bit_extract (buffer, *aoffsetp, 32);
-	      flip_bytes (&Ivalue, 4);
+	      flip_bytes ((char *) & Ivalue, 4);
 	      *aoffsetp += 32;
 	      sprintf (result, "$%d", Ivalue);
 	      break;
 	    case 'F':
 	      bit_copy (buffer, *aoffsetp, 32, (char *) &Fvalue);
-	      flip_bytes (&Fvalue, 4);
+	      flip_bytes ((char *) & Fvalue, 4);
 	      *aoffsetp += 32;
 	      if (INVALID_FLOAT (&Fvalue, 4))
 		sprintf (result, "<<invalid float 0x%.8x>>", *(int *) &Fvalue);
@@ -648,7 +657,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
 	      break;
 	    case 'L':
 	      bit_copy (buffer, *aoffsetp, 64, (char *) &Lvalue);
-	      flip_bytes (&Lvalue, 8);
+	      flip_bytes ((char *) & Lvalue, 8);
 	      *aoffsetp += 64;
 	      if (INVALID_FLOAT (&Lvalue, 8))
 		sprintf (result, "<<invalid long 0x%.8x%.8x>>",
@@ -831,13 +840,13 @@ get_displacement (buffer, aoffsetp)
       break;
     case 0x80:
       Ivalue2 = bit_extract (buffer, *aoffsetp, 16);
-      flip_bytes (&Ivalue2, 2);
+      flip_bytes ((char *) & Ivalue2, 2);
       Ivalue = sign_extend (Ivalue2, 14);
       *aoffsetp += 16;
       break;
     case 0xc0:
       Ivalue = bit_extract (buffer, *aoffsetp, 32);
-      flip_bytes (&Ivalue, 4);
+      flip_bytes ((char *) & Ivalue, 4);
       Ivalue = sign_extend (Ivalue, 30);
       *aoffsetp += 32;
       break;
