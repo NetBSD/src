@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/25 07:43:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/28 04:33:24 lukem Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -8,7 +8,6 @@ MINIROOT=	${TOP}/../miniroot
 .include <bsd.own.mk>	# So we use /etc/mk.conf.
 .include <bsd.kernobj.mk>
 
-HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
 INSTKERN?=	${KERNOBJDIR}/INSTALL/netbsd
@@ -95,11 +94,10 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
-# This is listed in ramdiskbin.conf but is built here.
-${CBIN}: libhack.o
-
 # Use stubs to eliminate some large stuff from libc
-.include "${HACKSRC}/Makefile.inc"
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CBIN}:	libhack.o
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} netbsd.INSTALL ${CBIN} \

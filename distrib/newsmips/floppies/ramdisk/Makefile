@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/03/28 03:12:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/03/28 04:33:23 lukem Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -20,16 +20,15 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
 
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
+
+
 realall: ${IMAGE}
 
 release:
-
-# Use stubs to eliminate some large stuff from libc
-HACKSRC=${DISTRIBDIR}/utils/libhack
-.include "${HACKSRC}/Makefile.inc"
-
-# This is listed in "list" file but is built here.
-${CRUNCHBIN}:	libhack.o
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"

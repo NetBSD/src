@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/26 23:09:40 fredette Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/28 04:33:24 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -70,15 +70,13 @@ unconfig:
 # Rules for making ${CBIN} ...
 .include "${TOP}/common/Make.crunch"
 
-# This is listed in rd_bin.conf but is built here.
-${CBIN} : libhack.o
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=${TOP}/../utils/libhack
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACKOBJS=	gethost.o
+.include	"${HACKSRC}/Makefile.inc"
+${CBIN}:	libhack.o
 CPPFLAGS+=-I${DESTDIR}/usr/include
-.include "${HACKSRC}/Makefile.inc"
-HACKOBJS+=	gethost.o
-libhack.o: gethost.o
 
 clean cleandir distclean:
 	-rm -f a.out core *.core *.o *.cro *.c

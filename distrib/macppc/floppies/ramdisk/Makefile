@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/02/04 11:13:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.22 2002/03/28 04:33:22 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -48,11 +48,13 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk DBG="${DBG}" all
 
-HACKSRC=${TOP}/../../utils/libhack
-.include "${HACKSRC}/Makefile.inc"
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CBIN}:	libhack.o
 
 clean cleandir distclean:
 	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;

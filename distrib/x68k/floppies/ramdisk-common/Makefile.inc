@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/03/25 07:43:50 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/03/28 04:33:25 lukem Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -52,11 +52,10 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
-# Use size-reduced libhack.
-${CBIN}: libhack.o
-
-HACKSRC=${TOP}/../../utils/libhack
-.include "${HACKSRC}/Makefile.inc"
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CBIN}:	libhack.o
 
 # Used in building bootfloppy
 echoimage:
