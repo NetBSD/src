@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.5 1994/10/09 08:56:23 mycroft Exp $	*/
+/*	$NetBSD: db_input.c,v 1.6 1994/10/26 17:57:50 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -244,8 +244,3 @@ cnmaygetc ()
 {
 	return (-1);
 }
-
-/* called from kdb_trap in db_interface.c */
-cnpollc (flag)
-{
-}	
