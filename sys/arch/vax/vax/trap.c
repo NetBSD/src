@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1998/05/03 13:22:01 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.36 1998/06/08 18:42:40 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -105,7 +105,7 @@ void
 arithflt(frame)
 	struct trapframe *frame;
 {
-	u_int	sig, type = frame->trap, trapsig = 1;
+	u_int	sig = 0, type = frame->trap, trapsig = 1;
 	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
 	struct	pmap *pm;

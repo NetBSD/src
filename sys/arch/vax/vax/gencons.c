@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.16 1998/04/13 12:10:27 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.17 1998/06/08 18:42:40 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -205,19 +205,21 @@ void
 gencnrint()
 {
 	struct tty *tp;
-	int i, j;
+	int i;
 
 	tp = gencn_tty[0];
 	i = mfpr(PR_RXDB) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
-	j = kdbrint(i);
+	{
+		int j = kdbrint(i);
 
-	if (j == 1)	/* Escape received, just return */
-		return;
+		if (j == 1)	/* Escape received, just return */
+			return;
 
-	if (j == 2)	/* Second char wasn't 'D' */
-		(*linesw[tp->t_line].l_rint)(27, tp);
+		if (j == 2)	/* Second char wasn't 'D' */
+			(*linesw[tp->t_line].l_rint)(27, tp);
+	}
 #endif
 
 	(*linesw[tp->t_line].l_rint)(i,tp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.26 1998/06/07 20:20:05 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.27 1998/06/08 18:42:40 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,6 +52,7 @@
 void	start __P((void));
 void	main __P((void));
 
+extern vm_offset_t avail_end;
 u_int	proc0paddr, esym;
 
 /* 
@@ -90,7 +91,6 @@ extern struct cpu_dep ka650_calls;
 void
 start()
 {
-	extern vm_offset_t avail_end;
 	extern char cpu_model[];
 	extern void *scratch;
 	int tmpptr;
