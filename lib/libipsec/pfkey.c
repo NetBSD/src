@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.6 2000/01/31 14:15:32 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.7 2000/02/08 13:14:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -35,7 +35,6 @@
 #include <netkey/keyv2.h>
 #include <netkey/key_var.h>
 #include <netinet/in.h>
-#include <netinet6/in6.h>
 #include <netinet6/ipsec.h>
 
 #include <stdlib.h>
