@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.23 2002/09/29 07:22:58 sjg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.24 2002/10/05 17:17:48 chs Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -51,15 +51,8 @@ COPTS+=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length
-WEAK_POINTERS?=	no
-.if !(${WEAK_POINTERS} == "yes")
-CWARNFLAGS+=	-Wpointer-arith
-.endif
-LOOSE_PROTOTYPES?= no
-.if !(${LOOSE_PROTOTYPES} == "yes")
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-.endif
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
