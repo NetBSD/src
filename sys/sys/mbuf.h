@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.81 2003/04/12 02:49:25 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.82 2003/04/17 16:15:36 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -86,6 +86,13 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 
+/* For offsetof() */
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
+#include <stddef.h>
+#endif
+
 #include <uvm/uvm_param.h>	/* for MIN_PAGE_SIZE */
 
 /*
@@ -95,12 +102,6 @@
  * and is used instead of the internal data area; this is done when
  * at least MINCLSIZE of data must be stored.
  */
-
-#define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
-#define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
-
-#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
-#define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /* Packet tags structure */
 struct m_tag {
@@ -216,19 +217,24 @@ struct _m_ext {
 
 #define	M_PADDR_INVALID		POOL_PADDR_INVALID
 
-struct mbuf {
-	struct	m_hdr m_hdr;
-	union {
-		struct {
-			struct	pkthdr MH_pkthdr;	/* M_PKTHDR set */
-			union {
-				struct	_m_ext MH_ext;	/* M_EXT set */
-				char	MH_databuf[MHLEN];
-			} MH_dat;
-		} MH;
-		char	M_databuf[MLEN];		/* !M_PKTHDR, !M_EXT */
-	} M_dat;
-};
+/*
+ * Definition of "struct mbuf".
+ * Don't change this without understanding how MHLEN/MLEN are defined.
+ */
+#define	MBUF_DEFINE(name, mhlen, mlen)					\
+	struct name {							\
+		struct	m_hdr m_hdr;					\
+		union {							\
+			struct {					\
+				struct	pkthdr MH_pkthdr;		\
+				union {					\
+					struct	_m_ext MH_ext;		\
+					char MH_databuf[(mhlen)];	\
+				} MH_dat;				\
+			} MH;						\
+			char M_databuf[(mlen)];				\
+		} M_dat;						\
+	}
 #define	m_next		m_hdr.mh_next
 #define	m_len		m_hdr.mh_len
 #define	m_data		m_hdr.mh_data
@@ -241,6 +247,25 @@ struct mbuf {
 #define	m_ext		M_dat.MH.MH_dat.MH_ext
 #define	m_pktdat	M_dat.MH.MH_dat.MH_databuf
 #define	m_dat		M_dat.M_databuf
+
+/*
+ * Dummy mbuf structure to calculate the right values for MLEN/MHLEN, taking
+ * into account inter-structure padding.
+ */
+MBUF_DEFINE(_mbuf_dummy, 1, 1);
+
+/* normal data len */
+#define	MLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_dat))
+/* data len w/pkthdr */
+#define	MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
+
+#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
+#define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
+
+/*
+ * The *real* struct mbuf
+ */
+MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* mbuf flags */
 #define	M_EXT		0x0001	/* has associated external storage */
