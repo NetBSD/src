@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.15 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.16 2004/02/29 23:25:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -170,17 +170,17 @@ menu utility, title MSG_NetBSD_VERSION_Utilities, exit;
 	option MSG_Halt_the_system, exit,
 		action (endwin) { system("/sbin/halt -q"); };
 
-menu yesno;
+menu yesno, y=-10;
 	display action { menu->title = arg ? arg : MSG_yes_or_no; };
 	option MSG_Yes, exit, action  {yesno = 1;};
 	option MSG_No,  exit, action  {yesno = 0;};
 
-menu noyes;
+menu noyes, y=-10;
 	display action { menu->title = arg ? arg : MSG_yes_or_no; };
 	option MSG_No,  exit, action  {yesno = 0;};
 	option MSG_Yes, exit, action  {yesno = 1;};
 
-menu ok, no shortcut;
+menu ok, no shortcut, y=-10;
 	display action { menu->title = arg; };
 	option MSG_Hit_enter_to_continue, exit;
 
