@@ -36,50 +36,63 @@
 /* From arm-tdep.c */
 extern int arm_apcs_32;
 
+/* Common routine to supply registers from a struct reg.  Used for registers
+   from ptrace and from core dumps. */
+static void
+supply_struct_reg (struct reg *reg)
+{
+  int i;
+
+  for (i = 0; i < 13; i++)
+    supply_register (A1_REGNUM + i, (char *)&reg->r[i]);
+  supply_register (SP_REGNUM, (char *)&reg->r_sp);
+  supply_register (LR_REGNUM, (char *)&reg->r_lr);
+  if (reg->r_cpsr != 0)
+    {
+      supply_register (PC_REGNUM, (char *)&reg->r_pc);
+      supply_register (PS_REGNUM, (char *)&reg->r_cpsr);
+    }
+  else
+    arm_supply_26bit_r15 ((char *)&reg->r_pc);
+
+  arm_apcs_32 = (read_register (PS_REGNUM) & PSR_MODE_32) != 0;
+}
+
+
 void
-fetch_inferior_registers (regno)
-     int regno;
+fetch_inferior_registers (int regno)
 {
   struct reg inferior_registers;
   struct fpreg inferior_fpregisters;
+  int i;
 
+  /* Integer registers */
   ptrace (PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
-  if (inferior_registers.r_cpsr == 0)
-    {
-      /* 26-bit target: split PC and PSR out of R15.  */
-      inferior_registers.r_cpsr = inferior_registers.r_pc & R15_PSR;
-      inferior_registers.r_pc = inferior_registers.r_pc & R15_PC;
-    }
-  arm_apcs_32 = (inferior_registers.r_cpsr & PSR_MODE_32) != 0;
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers,
-	  16 * sizeof (unsigned int));
-  memcpy (&registers[REGISTER_BYTE (PS_REGNUM)], &inferior_registers.r_cpsr,
-	  sizeof (unsigned int));
+  supply_struct_reg (&inferior_registers);
+
+  /* FPA registers */
   ptrace (PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_fpregisters,
 	  0);
-  memcpy (&registers[REGISTER_BYTE (F0_REGNUM)], &inferior_fpregisters.fpr[0],
-	  8 * sizeof (fp_reg_t));
-  memcpy (&registers[REGISTER_BYTE (FPS_REGNUM)],
-	  &inferior_fpregisters.fpr_fpsr, sizeof (unsigned int));
-  registers_fetched ();
+  for (i = 0; i < 8; i++)
+    supply_register (F0_REGNUM + i, (char *)&inferior_fpregisters.fpr[i]);
+  supply_register (FPS_REGNUM, (char *)&inferior_fpregisters.fpr_fpsr);
 }
 
 void
-store_inferior_registers (regno)
-     int regno;
+store_inferior_registers (int regno)
 {
   struct reg inferior_registers;
+  int i;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)],
-	  16 * sizeof (unsigned int));
-  memcpy (&inferior_registers.r_cpsr, &registers[REGISTER_BYTE (PS_REGNUM)],
-	  sizeof (unsigned int));
-  if ((inferior_registers.r_cpsr & PSR_MODE_32) == 0)
-    {
-      /* Target is in 26-bit mode.  Merge PSR into R15.  */
-      inferior_registers.r_pc &= R15_PC;
-      inferior_registers.r_pc |= inferior_registers.r_cpsr & R15_PSR;
-    }
+  for (i = 0; i < 13; i++)
+    read_register_gen (A1_REGNUM + i, (char *)&inferior_registers.r[i]);
+  read_register_gen (SP_REGNUM, (char *)&inferior_registers.r_sp);
+  read_register_gen (LR_REGNUM, (char *)&inferior_registers.r_lr);
+  if ((inferior_registers.r_cpsr & PSR_MODE_32))
+    read_register_gen (PC_REGNUM, (char *)&inferior_registers.r_pc);
+  else
+    arm_read_26bit_r15 ((char *)&inferior_registers.r_pc);
+  read_register_gen (PS_REGNUM, (char *)&inferior_registers.r_cpsr);
   ptrace (PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
   /* XXX Set FP regs. */
@@ -100,16 +113,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 {
   struct md_core *core_reg = (struct md_core *) core_reg_sect;
 
-  if (core_reg->intreg.r_cpsr == 0)
-    {
-      /* 26-bit target: split PC and PSR out of R15.  */
-      core_reg->intreg.r_cpsr = core_reg->intreg.r_pc & R15_PSR;
-      core_reg->intreg.r_pc = core_reg->intreg.r_pc & R15_PC;
-    }
-  arm_apcs_32 = (core_reg->intreg.r_cpsr & PSR_MODE_32) != 0;
-  /* integer registers */
-  memcpy (&registers[REGISTER_BYTE (0)], &core_reg->intreg,
-	  sizeof (struct reg));
+  supply_struct_reg (&core_reg->intreg);
   /* floating point registers */
   /* XXX */
 }
