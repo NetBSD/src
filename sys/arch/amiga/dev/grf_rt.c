@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.24 1996/03/17 01:17:18 thorpej Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.25 1996/04/21 21:11:21 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -37,6 +37,7 @@
    using the NCR 77C22E+ VGA controller. */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -63,7 +64,7 @@ int retina_inited;
  * initial driver, has made an agreement with MS not to document
  * the driver source (see also his comment below).
  * -> ALL comments after 
- * -> "/* -------------- START OF CODE -------------- * /"
+ * -> " -------------- START OF CODE -------------- "
  * -> have been added by myself (mw) from studying the publically
  * -> available "NCR 77C22E+" Data Manual
  */	 
@@ -256,6 +257,10 @@ static const long FQTab[16] =
 static struct MonDef *default_monitor = &DEFAULT_MONDEF;
 #endif
 
+int retina_alive __P((struct MonDef *));
+static int rt_load_mon __P((struct grf_softc *, struct MonDef *));
+
+
 /*
  * used to query the retina to see if its alive (?)
  */
@@ -284,8 +289,7 @@ rt_load_mon(gp, md)
 	struct MonDef *md;
 {
 	struct grfinfo *gi = &gp->g_display;
-	volatile unsigned char *ba;
-	volatile unsigned char *fb;
+	volatile caddr_t ba, fb;
 	short FW, clksel, HDE, VDE;
 
 	for (clksel = 15; clksel; clksel--) {
@@ -618,7 +622,7 @@ rt_load_mon(gp, md)
 		/* first set the whole font memory to a test-pattern, so we 
 		   can see if something that shouldn't be drawn IS drawn.. */
 		{
-			volatile unsigned char * c = fb;
+			volatile caddr_t c = fb;
 			long x;
 			Map(2);
 			
@@ -628,7 +632,7 @@ rt_load_mon(gp, md)
 		}
 		
 		{
-			volatile unsigned char * c = fb;
+			volatile caddr_t c = fb;
 			long x;
 			Map(3);
 			
@@ -640,7 +644,7 @@ rt_load_mon(gp, md)
 		{
 		  /* ok, now position at first defined character, and
 		     copy over the images */
-		  volatile unsigned char * c = fb + md->FLo * 32;
+		  volatile caddr_t c = fb + md->FLo * 32;
 		  const unsigned char * f = md->FData;
 		  unsigned short z;
 		
@@ -759,11 +763,21 @@ rt_load_mon(gp, md)
 	return(1);
 }
 
-int rt_mode __P((struct grf_softc *, int, void *, int , int));
-
 void grfrtattach __P((struct device *, struct device *, void *));
 int grfrtprint __P((void *, char *));
 int grfrtmatch __P((struct device *, void *, void *));
+ 
+int rt_mode __P((struct grf_softc *, u_long, void *, u_long, int));
+static int rt_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+static int rt_setvmode __P((struct grf_softc *, unsigned, int));
+int rt_getspritepos __P((struct grf_softc *, struct grf_position *));
+int rt_setspritepos __P((struct grf_softc *, struct grf_position *));
+int rt_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+int rt_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+int rt_getspritemax __P((struct grf_softc *, struct grf_position *));
+int rt_getcmap __P((struct grf_softc *, struct grf_colormap *));
+int rt_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int rt_bitblt __P((struct grf_softc *, struct grf_bitblt *));
 
 struct cfattach grfrt_ca = {
 	sizeof(struct grf_softc), grfrtmatch, grfrtattach
@@ -838,7 +852,6 @@ grfrtattach(pdp, dp, auxp)
 	void *auxp;
 {
 	static struct grf_softc congrf;
-	static int coninited;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 
@@ -899,7 +912,7 @@ rt_getvmode (gp, vm)
     vm->mode_num = (current_mon - monitor_defs) + 1;
 
   md = monitor_defs + (vm->mode_num - 1);
-  strncpy (vm->mode_descr, monitor_descr + (vm->mode_num - 1), 
+  strncpy (vm->mode_descr, monitor_descr[vm->mode_num - 1], 
 	   sizeof (vm->mode_descr));
   vm->pixel_clock  = md->FQ;
   vm->disp_width   = md->MW;
@@ -950,7 +963,6 @@ rt_setvmode (gp, mode, txtonly)
      unsigned mode;
      int txtonly;
 {
-  struct MonDef *md;
   int error;
 
   if (!mode || mode > retina_mon_max)
@@ -974,9 +986,10 @@ rt_setvmode (gp, mode, txtonly)
 int
 rt_mode(gp, cmd, arg, a2, a3)
 	struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *arg;
-	int a2, a3;
+	u_long a2;
+	int a3;
 {
   /* implement these later... */
 
@@ -1016,7 +1029,7 @@ rt_mode(gp, cmd, arg, a2, a3)
       return rt_setbank (gp, arg);
 #endif
     case GM_GRFIOCTL:
-      return rt_ioctl (gp, (u_long)arg, (void *)a2);
+      return rt_ioctl (gp, a2, arg);
 
     default:
       break;
@@ -1069,7 +1082,7 @@ rt_ioctl (gp, cmd, data)
 int
 rt_getbank (gp, offs, prot)
      struct grf_softc *gp;
-     off_t offs;
+     u_long offs;
      int prot;
 {
   /* XXX */
@@ -1232,7 +1245,7 @@ rt_getspriteinfo (gp, info)
      struct grf_softc *gp;
      struct grf_spriteinfo *info;
 {
-  volatile unsigned char *ba, *fb;
+  volatile caddr_t ba, fb;
 
   ba = gp->g_regkva;
   fb = gp->g_fbkva;
@@ -1280,6 +1293,7 @@ rt_getspriteinfo (gp, info)
       info->size.y = (RSeq (ba, SEQ_ID_CURSOR_CONTROL) & 6) << 4;
     }
 
+  return 0;
 }
 
 int
@@ -1287,7 +1301,7 @@ rt_setspriteinfo (gp, info)
      struct grf_softc *gp;
      struct grf_spriteinfo *info;
 {
-  volatile unsigned char *ba, *fb;
+  volatile caddr_t ba, fb;
   u_char control;
 
   ba = gp->g_regkva;
@@ -1370,7 +1384,7 @@ rt_bitblt (gp, bb)
 
 
 #if 0
-  volatile unsigned char *ba, *fb;
+  volatile caddr_t ba, fb;
   u_char control;
   u_char saved_bank_lo;
   u_char saved_bank_hi;

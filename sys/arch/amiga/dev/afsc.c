@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.13 1996/03/18 04:58:36 mhitch Exp $	*/
+/*	$NetBSD: afsc.c,v 1.14 1996/04/21 21:10:48 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,7 @@
 #include <sys/device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+#include <machine/cpu.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
@@ -53,8 +54,10 @@
 int afscprint __P((void *auxp, char *));
 void afscattach __P((struct device *, struct device *, void *));
 int afscmatch __P((struct device *, void *, void *));
-int siopintr __P((struct siop_softc *));
-int afsc_dmaintr __P((struct siop_softc *));
+int afsc_dmaintr __P((void *));
+#ifdef DEBUG
+void afsc_dump __P((void));
+#endif
 
 struct scsi_adapter afsc_scsiswitch = {
 	siop_scsicmd,
@@ -98,7 +101,6 @@ afscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 	u_long temp, scratch;
@@ -109,7 +111,7 @@ afscmatch(pdp, match, auxp)
 	if (!is_a4000() || !matchname(auxp, "afsc"))
 		return(0);		/* Not on an A4000 or not A4000T SCSI */
 	rp = ztwomap(0xdd0040);
-	if (badaddr(&rp->siop_scratch) || badaddr(&rp->siop_temp)) {
+	if (badaddr((caddr_t)&rp->siop_scratch) || badaddr((caddr_t)&rp->siop_temp)) {
 		return(0);
 	}
 	scratch = rp->siop_scratch;
@@ -184,9 +186,10 @@ afscprint(auxp, pnp)
 }
 
 int
-afsc_dmaintr(sc)
-	struct siop_softc *sc;
+afsc_dmaintr(arg)
+	void *arg;
 {
+	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
 	u_char istat;
 

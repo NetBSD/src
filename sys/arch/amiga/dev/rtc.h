@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.2 1994/10/26 02:04:32 cgd Exp $	*/
+/*	$NetBSD: rtc.h,v 1.3 1996/04/21 21:12:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -97,7 +97,7 @@ struct rtclock3000 {
 #define SECYR		(SECDAY * 365)
 
 
-#define	leapyear(y)		(((y)%4)==0 && ((y)%100)!=0 || ((y)%400) == 0)
+#define	leapyear(y)		((((y)%4)==0 && ((y)%100)!=0) || ((y)%400) == 0)
 #define	range_test(n, l, h)	((n) < (l) || (n) > (h))
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])

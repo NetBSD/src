@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.14 1995/04/08 05:30:58 chopps Exp $	*/
+/*	$NetBSD: ite_rt.c,v 1.15 1996/04/21 21:12:01 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -107,7 +107,7 @@ retina_init(ip)
 
 void retina_cursor(struct ite_softc *ip, int flag)
 {
-      volatile u_char *ba = ip->grf->g_regkva;
+      volatile caddr_t ba = ip->grf->g_regkva;
       
       if (flag == ERASE_CURSOR)
         {
@@ -134,8 +134,8 @@ void retina_cursor(struct ite_softc *ip, int flag)
 
 static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 {	
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
+	volatile caddr_t ba = ip->grf->g_regkva;
+	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
 #ifdef BANKEDDEVPAGER
 	int bank;
@@ -192,7 +192,7 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ; 
 	}
 	{
-		unsigned char * p = (unsigned char *) fb;
+		caddr_t p = (caddr_t)fb;
 		/* transfer all characters but LINES lines, unroll by 16 */
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		do {
@@ -235,9 +235,6 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 		
 		f += (1 + bottom - lines) * md->TX * 2;
 		*f = 0x2010;
-		{
-			volatile unsigned short dummy = *((volatile unsigned short *)f);
-		}
 	}
 	
 	   /* clear extended chain4 mode */
@@ -276,8 +273,8 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 
 static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 {	
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
+	volatile caddr_t ba = ip->grf->g_regkva;
+	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
 #ifdef BANKEDDEVPAGER
 	int bank;
@@ -324,7 +321,7 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	}
 	
 	{
-		unsigned char * p = (unsigned char *) fb;
+		caddr_t p = (caddr_t)fb;
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		p += (1 + bottom - (top + lines)) * md->TX;
 		do {
@@ -366,9 +363,6 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 		
 		f += top * md->TX * 2;
 		*f = 0x2010;
-		{
-			volatile unsigned short dummy = *((volatile unsigned short *)f);
-		}
 	}
 	
 	   /* clear extended chain4 mode */
@@ -413,8 +407,7 @@ void retina_deinit(struct ite_softc *ip)
 
 void retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
-	volatile u_char * ba = ip->grf->g_regkva;
-	volatile u_char * fb = ip->grf->g_fbkva;
+	volatile caddr_t fb = ip->grf->g_fbkva;
 	register u_char attr;
 	
 	attr = (mode & ATTR_INV) ? 0x21 : 0x10;
@@ -428,7 +421,6 @@ void retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 
 void retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
-	volatile u_char * ba = ip->grf->g_regkva;
 	u_short * fb = (u_short *) ip->grf->g_fbkva;
 	short x;
 	const u_short fillval = 0x2010;
@@ -449,8 +441,7 @@ void retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 void
 retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
-	register int height, dy, i;
-	volatile u_char *ba;
+	volatile caddr_t ba;
 	u_long *fb;
 
 	ba = ip->grf->g_regkva;

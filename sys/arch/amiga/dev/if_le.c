@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 1996/04/18 00:25:11 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19 1996/04/21 21:11:47 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -133,8 +133,6 @@ le_zbus_attach(parent, self, aux)
 {
 	struct le_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
-	char *cp;
-	int i;
 	u_long ser;
 
 	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);

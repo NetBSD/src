@@ -1,3 +1,5 @@
+/*	$NetBSD: sfas.c,v 1.8 1996/04/21 21:12:30 veego Exp $	*/
+
 /*
  * Copyright (c) 1995 Daniel Widenfalk
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,16 +67,37 @@
 void sfasinitialize __P((struct sfas_softc *));
 void sfas_minphys   __P((struct buf *bp));
 int  sfas_scsicmd   __P((struct scsi_xfer *xs));
-int  sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
+void sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
 void sfas_scsidone  __P((struct sfas_softc *dev, struct scsi_xfer *xs,
 			 int stat));
-void sfasintr	    __P((struct sfas_softc *dev));
-void sfasiwait	    __P((struct sfas_softc *dev));
-void sfasreset	    __P((struct sfas_softc *dev, int how));
-int  sfasselect	    __P((struct sfas_softc *dev, struct sfas_pending *pendp,
+void sfasiwait __P((struct sfas_softc *dev));
+void sfasreset __P((struct sfas_softc *dev, int how));
+int  sfasselect __P((struct sfas_softc *dev, struct sfas_pending *pendp,
 			 unsigned char *cbuf, int clen,
 			 unsigned char *buf, int len, int mode));
-void sfasicmd	    __P((struct sfas_softc *dev, struct sfas_pending *pendp));
+void sfasicmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
+int  sfas_postaction __P((struct sfas_softc *dev, sfas_regmap_p rp,
+			struct nexus *nexus));
+int  sfas_midaction __P((struct sfas_softc *dev, sfas_regmap_p rp,
+			struct nexus *nexus));
+void sfas_init_nexus __P((struct sfas_softc *dev, struct nexus *nexus));
+int  sfasgo __P((struct sfas_softc *dev, struct sfas_pending *pendp));
+void sfas_save_pointers __P((struct sfas_softc *dev));
+void sfas_restore_pointers __P((struct sfas_softc *dev));
+void sfas_ixfer __P((struct sfas_softc *dev));
+void sfas_build_sdtrm __P((struct sfas_softc *dev, int period, int offset));
+int  sfas_select_unit __P((struct sfas_softc *dev, short target));
+struct nexus *sfas_arbitate_target __P((struct sfas_softc *dev, int target));
+void sfas_setup_nexus __P((struct sfas_softc *dev, struct nexus *nexus,
+			struct sfas_pending *pendp, unsigned char *cbuf,
+			int clen, unsigned char *buf, int len, int mode));
+void sfas_request_sense __P((struct sfas_softc *dev, struct nexus *nexus));
+int sfas_pretests __P((struct sfas_softc *dev, sfas_regmap_p rp));
+#ifdef SFAS_NEED_VM_PATCH
+void sfas_unlink_vm_link __P((struct sfas_softc *dev));
+void sfas_link_vm_link __P((struct sfas_softc *dev,
+				struct vm_link_data *vm_link_data));
+#endif
 
 /*
  * Initialize these to make 'em patchable. Defaults to enable sync and discon.
@@ -125,7 +148,6 @@ void
 sfasinitialize(dev)
 	struct sfas_softc *dev;
 {
-	sfas_regmap_p	 rp;
 	u_int		*pte, page;
 	int		 i;
 	u_int		inhibit_sync;
@@ -224,7 +246,7 @@ sfasinitialize(dev)
 	*pte = PG_V | PG_RW | PG_CI | page;
 	TBIAS();
 
-	printf(": dmabuf 0x%x", dev->sc_bump_pa);
+	printf(": dmabuf 0x%lx", dev->sc_bump_pa);
 
 /*
  * FIX
@@ -249,7 +271,7 @@ sfasinitialize(dev)
  * to us during interrupt time.
  */
 		offset = (vm_offset_t)dev->sc_vm_link - VM_MIN_KERNEL_ADDRESS;
-		printf(" vmlnk %x", dev->sc_vm_link);
+		printf(" vmlnk %p", dev->sc_vm_link);
 		vm_object_reference(kernel_object);
 		vm_map_insert(kernel_map, kernel_object, offset,
 			      (vm_offset_t)dev->sc_vm_link,
@@ -294,7 +316,7 @@ sfas_link_vm_link(dev, vm_link_data)
 
 	if (vm_link_data->pages) {
 		for(i=0; i<vm_link_data->pages; i++)
-			physaccess(dev->sc_vm_link+i*NBPG, vm_link_data->pa[i],
+			physaccess(dev->sc_vm_link+i*NBPG, (caddr_t)vm_link_data->pa[i],
 				   NBPG, PG_CI);
 
 		dev->sc_flags |= SFAS_HAS_VM_LINK;
@@ -312,9 +334,6 @@ sfas_scsicmd(struct scsi_xfer *xs)
 	struct scsi_link	*slp;
 	struct sfas_pending	*pendp;
 	int			 flags, s, target;
-#ifdef SFAS_NEED_VM_PATCH
-	struct vm_link_data	 vm_link_data;
-#endif
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
@@ -363,7 +382,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
 							sva)/NBPG;
 
 		for(n=0; n<pendp->vm_link_data.pages; n++)
-			pendp->vm_link_data.pa[n] = kvtop(sva + n*NBPG);
+			pendp->vm_link_data.pa[n] = kvtop((caddr_t)(sva + n*NBPG));
 	}
 #endif
 
@@ -382,7 +401,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
 /*
  * Actually select the unit, whereby the whole scsi-process is started.
  */
-int
+void
 sfas_donextcmd(dev, pendp)
 	struct sfas_softc	*dev;
 	struct sfas_pending	*pendp;
@@ -808,7 +827,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 	int			 len;
 	int			 mode;
 {
-	char	sync, target, lun;
+	int	sync, target, lun;
 
 	target = pendp->xs->sc_link->target;
 	lun    = pendp->xs->sc_link->lun;
@@ -955,7 +974,7 @@ sfas_request_sense(dev, nexus)
 	struct scsi_xfer	*xs;
 	struct sfas_pending	 pend;
 	struct scsi_sense	 rqs;
-	int			 stat, mode;
+	int			 mode;
 
 	xs = nexus->xs;
 
@@ -1391,7 +1410,7 @@ sfas_postaction(dev, rp, nexus)
 	sfas_regmap_p	  rp;
 	struct nexus	 *nexus;
 {
-	int	i, left, len;
+	int	i, len;
 	u_char	cmd;
 	short	offset, period;
 
@@ -1722,7 +1741,6 @@ sfasintr(dev)
 {
 	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
-	int		 s;
 
 	rp = dev->sc_fas;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.16 1996/03/20 13:28:50 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.17 1996/04/21 21:11:42 veego Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -181,17 +181,15 @@ void	bah_init __P((struct bah_softc *));
 void	bah_reset __P((struct bah_softc *));
 void	bah_stop __P((struct bah_softc *));
 void	bah_start __P((struct ifnet *));
-int	bahintr __P((struct bah_softc *sc));
+int	bahintr __P((void *));
 int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
 void	bah_watchdog __P((int));
 void	movepout __P((u_char *from, u_char __volatile *to, int len));
 void	movepin __P((u_char __volatile *from, u_char *to, int len));
 void	bah_srint __P((void *vsc, void *dummy));
 void	callstart __P((void *vsc, void *dummy));
+static	void bah_tint __P((struct bah_softc *, int));
 
-#ifdef BAHTIMINGS
-int	clkread();
-#endif
 
 struct cfattach bah_zbus_ca = {
 	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
@@ -251,7 +249,7 @@ bah_zbus_attach(parent, self, aux)
 	printf(": link addr 0x%02x(%ld), with timer\n",
 	    linkaddress, linkaddress);
 #else
-	printf(": link addr 0x%02x(%ld)\n", linkaddress, linkaddress);
+	printf(": link addr 0x%02x(%d)\n", linkaddress, linkaddress);
 #endif
 
 	sc->sc_arccom.ac_anaddr = linkaddress;
@@ -766,7 +764,7 @@ bah_srint(vsc, dummy)
 	void *vsc, *dummy;
 {
 	struct bah_softc *sc;
-	int buffer, len, len1, amount, offset, s, i, type;
+	int buffer, len, len1, amount, offset, s, type;
 	u_char __volatile *bah_ram_ptr;
 	struct mbuf *m, *dst, *head;
 	struct arc_header *ah;
@@ -1015,9 +1013,10 @@ bah_tint(sc, isr)
  * Our interrupt routine
  */
 int
-bahintr(sc)
-	struct bah_softc *sc;
+bahintr(arg)
+	void *arg;
 {
+	struct bah_softc *sc = arg;
 	u_char isr, maskedisr;
 	int buffer;
 	u_long newsec;

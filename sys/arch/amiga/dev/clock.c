@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1996/03/17 05:58:30 mhitch Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1996/04/21 21:10:57 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
@@ -83,6 +84,8 @@ int eclockfreq;
 
 int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
+void cpu_initclocks __P((void));
+void setmicspertick __P((void));
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
@@ -96,7 +99,6 @@ clockmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (matchname("clock", auxp))
 		return(1);
@@ -160,6 +162,7 @@ cpu_initclocks()
 	custom.intena = INTF_SETCLR | INTF_EXTER;
 }
 
+void
 setstatclockrate(hz)
 	int hz;
 {
@@ -169,6 +172,7 @@ setstatclockrate(hz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
+u_long
 clkread()
 {
 	u_char hi, hi2, lo;
@@ -236,7 +240,6 @@ delay(mic)
 	int mic;
 {
 	u_int temp;
-	int s;
 
 	if (micspertick == 0)
 		setmicspertick();
@@ -655,6 +658,7 @@ int rtcinit __P((void));
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
+void
 inittodr(base)
 	time_t base;
 {
@@ -674,11 +678,11 @@ inittodr(base)
 	time.tv_sec = timbuf;
 }
 
+void
 resettodr()
 {
-	if (settod && settod(time.tv_sec) == 1)
-		return;
-	printf("Cannot set battery backed clock\n");
+	if (settod && settod(time.tv_sec) == 0)
+		printf("Cannot set battery backed clock\n");
 }
 
 int

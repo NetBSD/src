@@ -1,3 +1,4 @@
+/*	$NetBSD: grf_clreg.h,v 1.3 1996/04/21 21:11:13 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -296,7 +297,6 @@ struct grfcltext_mode {
  */
 static inline void RegWakeup(volatile void *ba) {
     	extern int cltype;
-    	extern unsigned char pass_toggle;
 
     	switch (cltype) { 
     	case SPECTRUM: 
@@ -371,7 +371,8 @@ static inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int cl_mode __P((register struct grf_softc *gp, int cmd, void *arg, int a2, int a3));
+int cl_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
+			u_long a2, int a3));
 int cl_load_mon __P((struct grf_softc *gp, struct grfcltext_mode *gv)); 
 int grfcl_cnprobe __P((void));
 void grfcl_iteinit __P((struct grf_softc *gp));
