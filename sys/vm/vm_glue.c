@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.68 1997/06/19 20:54:48 pk Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.68.6.1 1997/09/08 23:22:28 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -245,14 +245,11 @@ vm_fork(p1, p2)
 	p2->p_addr = up;
 
 	/*
-	 * p_stats and p_sigacts currently point at fields
-	 * in the user struct but not at &u, instead at p_addr.
-	 * Copy p_sigacts and parts of p_stats; zero the rest
-	 * of p_stats (statistics).
+	 * p_stats currently points at a field in the user struct at
+	 * p_addr.  Copy parts of p_stats; zero the rest of p_stats
+	 * (statistics).
 	 */
 	p2->p_stats = &up->u_stats;
-	p2->p_sigacts = &up->u_sigacts;
-	up->u_sigacts = *p1->p_sigacts;
 	bzero(&up->u_stats.pstat_startzero,
 	    (unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
 	    (caddr_t)&up->u_stats.pstat_startzero));
