@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.11 1994/06/02 23:40:19 jtc Exp $
+#	$Id: Makefile,v 1.12 1995/04/20 02:05:51 mycroft Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc
@@ -16,6 +16,7 @@ all clean cleandir depend lint tags:
 
 realinstall:
 	for i in ${MSRCS}; do \
+		rm -f ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		sed -f ${STRIP_SED} < $$i > ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		chmod 444 ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
