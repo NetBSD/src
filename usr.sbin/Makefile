@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 1997/01/13 23:33:15 cjs Exp $
+#	$NetBSD: Makefile,v 1.74 1997/01/30 10:44:46 thorpej Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -15,14 +15,14 @@ SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest chown \
 	zdump zic
 
 .if   make(clean) || make(cleandir)
-SUBDIR+=apm apmd bad144 config.old dbsym eeprom grfconfig grfinfo hilinfo \
+SUBDIR+=apm apmd bad144 dbsym eeprom grfconfig grfinfo hilinfo \
 	iteconfig screenblank videomode
 .elif ${MACHINE} == "amiga"
 SUBDIR+=grfconfig iteconfig screenblank videomode
 .elif ${MACHINE} == "atari"
 SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
-SUBDIR+=config.old grfinfo hilinfo
+SUBDIR+=grfinfo hilinfo
 .elif ${MACHINE} == "i386"
 SUBDIR+=apm apmd bad144
 .elif ${MACHINE} == "pmax"
