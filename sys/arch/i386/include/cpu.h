@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.10 2002/10/18 02:37:53 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.11 2002/10/18 03:27:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -252,7 +252,7 @@ do {									\
 #endif
 
 #define	curpcb			curcpu()->ci_curpcb
-#define	curproc			curcpu()->ci_curproc
+#define	curlwp			curcpu()->ci_curlwp
 
 /*
  * Arguments to hardclock, softclock and statclock
