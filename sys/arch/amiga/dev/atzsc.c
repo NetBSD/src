@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.9 1994/12/28 09:24:59 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.10 1995/01/05 07:22:34 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,8 +65,6 @@ struct scsi_adapter atzsc_scsiswitch = {
 	sbic_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sbic_adinfo,
-	"atzsc",
 };
 
 struct scsi_device atzsc_scsidev = {
@@ -74,8 +72,6 @@ struct scsi_device atzsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"atzsc",
-	0,
 };
 
 
@@ -164,9 +160,10 @@ atzscattach(pdp, dp, auxp)
 	sbicreset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &atzsc_scsiswitch;
 	sc->sc_link.device = &atzsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

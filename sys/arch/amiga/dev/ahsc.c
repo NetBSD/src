@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.6 1994/12/28 09:24:57 chopps Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.7 1995/01/05 07:22:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,8 +65,6 @@ struct scsi_adapter ahsc_scsiswitch = {
 	sbic_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sbic_adinfo,
-	"ahsc",
 };
 
 struct scsi_device ahsc_scsidev = {
@@ -74,8 +72,6 @@ struct scsi_device ahsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"ahsc",
-	0,
 };
 
 
@@ -142,9 +138,10 @@ ahscattach(pdp, dp, auxp)
 	sbicreset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &ahsc_scsiswitch;
 	sc->sc_link.device = &ahsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.7 1994/12/28 09:25:48 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.8 1995/01/05 07:22:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -138,18 +138,6 @@ sbic_minphys(bp)
 }
 
 /*
- * must be used
- */
-u_int
-sbic_adinfo()
-{
-	/* 
-	 * one request at a time please
-	 */
-	return(1);
-}
-
-/*
  * used by specific sbic controller
  *
  * it appears that the higher level code does nothing with LUN's
@@ -172,7 +160,7 @@ sbic_scsicmd(xs)
 	if (flags & SCSI_DATA_UIO)
 		panic("sbic: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & SCSI_NOMASK)
+	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("sbic_scsicmd: busy");
 
 	s = splbio();
@@ -197,7 +185,7 @@ sbic_scsicmd(xs)
 	 */
 	sbic_donextcmd(dev);
 
-	if (flags & SCSI_NOMASK)
+	if (flags & SCSI_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -229,7 +217,7 @@ sbic_donextcmd(dev)
 
 	dev->sc_stat[0] = -1;
 	xs->cmd->bytes[0] |= slp->lun << 5;
-	if (phase == STATUS_PHASE || flags & SCSI_NOMASK ||
+	if (phase == STATUS_PHASE || flags & SCSI_POLL ||
 	    sbicdmaok(dev, xs) == 0) 
 		stat = sbicicmd(dev, slp->target, slp->lun, xs->cmd,
 		    xs->cmdlen, xs->data, xs->datalen, phase);
@@ -260,7 +248,7 @@ sbic_scsidone(dev, stat)
 	 */
 	xs->status = stat;
 
-	if (stat == 0 || xs->flags & SCSI_ERR_OK)
+	if (stat == 0)
 		xs->resid = 0;
 	else {
 		switch(stat) {
@@ -314,7 +302,7 @@ sbicgetsense(dev, xs)
 
 	slp = xs->sc_link;
 	
-	rqs.op_code = REQUEST_SENSE;
+	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 

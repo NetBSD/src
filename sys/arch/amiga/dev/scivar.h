@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.4 1994/10/26 02:04:47 cgd Exp $	*/
+/*	$NetBSD: scivar.h,v 1.5 1995/01/05 07:22:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,7 +139,6 @@ struct buf;
 struct scsi_xfer;
 
 void sci_minphys __P((struct buf *bp));
-u_int sci_adinfo __P((void));
 int sci_scsicmd __P((struct scsi_xfer *));
 
 #endif /* _SCIVAR_H_ */
