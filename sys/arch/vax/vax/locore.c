@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.5 1995/05/03 19:20:14 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.6 1995/05/05 10:47:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,6 +61,7 @@ extern volatile int bootdev;
 start(how, dev)
 {
 	extern u_int *end;
+	extern void *scratch;
 	register curtop;
 
 	mtpr(0x1f,PR_IPL); /* No interrupts before istack is ok, please */
@@ -124,13 +125,14 @@ to_kmem:
 #endif
 	pmap_bootstrap();
 
-	main();
-	/* XXX det {r dumt att fastna vid att init startar p} 2 */
-	asm("
-		pushl   $0x3c00000
-		pushl   $2
-		rei
-	");
+	((struct pcb *)proc0paddr)->framep = scratch;
 
-	/* Notreached */
+	/*
+	 * change mode down to userspace is done by faking an stack
+	 * frame that is setup in cpu_set_kpc(). Not done by returning
+	 * from main anymore.
+	 */
+	main();
+
+	/* NOTREACHED */
 }

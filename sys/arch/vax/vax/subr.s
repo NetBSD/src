@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.8 1995/04/12 15:35:09 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.9 1995/05/05 10:47:42 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -233,12 +233,12 @@ cs:	ret
 	ret
 
 
-_loswtch:	.globl	_loswtch
+_loswtch:	.globl	_loswtch,_rei
 	mtpr	_curpcb,$PR_PCBB
 	svpctx
 	mtpr	_nypcb,$PR_PCBB
 	ldpctx
-	rei
+_rei:	rei
 
 	.data
 
