@@ -1,7 +1,7 @@
-/*	$Id: vrc4172pwmvar.h,v 1.4 2000/12/29 15:54:17 sato Exp $	*/
+/*	$Id: vrc4172pwmvar.h,v 1.5 2001/02/27 08:48:38 sato Exp $	*/
 
 /*
- * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
+ * Copyright (c) 2000,2001 SATO Kazumi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,12 +25,18 @@
  * SUCH DAMAGE.
  */
 
-#define VRC2_PWM_N_BRIGHTNESS	8
+#define VRC2_PWM_N_BRIGHTNESS	16
 #define VRC2_PWM_MAX_BRIGHTNESS	(VRC2_PWM_N_BRIGHTNESS-1)
+#define VRC2_PWM_N_CONTRAST	32
+#define VRC2_PWM_MAX_CONTRAST	(VRC2_PWM_N_CONTRAST-1)
+
 
 struct vrc4172pwm_param {
+	int brokenprobe;
 	int n_brightness;
-	int values[VRC2_PWM_N_BRIGHTNESS];
+	int bvalues[VRC2_PWM_N_BRIGHTNESS];
+	int n_contrast;
+	int cvalues[VRC2_PWM_N_CONTRAST];
 };
 
 struct vrc4172pwm_softc {
