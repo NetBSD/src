@@ -6,7 +6,7 @@
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
  *	from: @(#)m-hp300bsd.h	6.8 (Berkeley) 5/8/91
- *	$Id: m-m68kbsd.h,v 1.1 1993/12/23 14:02:21 cgd Exp $
+ *	$Id: m-m68kbsd.h,v 1.2 1994/01/10 00:04:08 cgd Exp $
  */
 
 /* Parameters for execution on a Hewlett-Packard 9000/300, running bsd.
@@ -74,9 +74,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define READ_DBX_FORMAT
 
-/* Don't implement the attach and detach commands.  */
+/* Do implement the attach and detach commands.  */
 
-/* #define ATTACH_DETACH */
+#define ATTACH_DETACH
 
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
