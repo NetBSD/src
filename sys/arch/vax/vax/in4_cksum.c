@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.2 2001/04/28 09:36:01 ragge Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.3 2001/05/19 00:04:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -125,14 +125,16 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 		panic("in4_cksum: bad mbuf chain");
 #endif
 
-	__asm __volatile("
-		movzwl	16(ap),%0	# mov len to sum
-		addb2	8(ap),%0	# add proto to sum
-		rotl	$8,%0,%0	# htons, carry is preserved
-		adwc	12(%2),%0	# add src ip
-		adwc	16(%2),%0	# add dst ip
-		adwc	$0,%0		# clean up carry
-		" : "=r" (sum) : "0" (sum), "r" (mtod(m, void *)));
+	if (nxt != 0) {
+		__asm __volatile("
+			movzwl	16(ap),%0	# mov len to sum
+			addb2	8(ap),%0	# add proto to sum
+			rotl	$8,%0,%0	# htons, carry is preserved
+			adwc	12(%2),%0	# add src ip
+			adwc	16(%2),%0	# add dst ip
+			adwc	$0,%0		# clean up carry
+			" : "=r" (sum) : "0" (sum), "r" (mtod(m, void *)));
+	}
 
 	/* skip unnecessary part */
 	while (m && off > 0) {
