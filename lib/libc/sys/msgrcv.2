@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.5 1998/02/08 20:09:12 kleink Exp $	
+.\"	$NetBSD: msgrcv.2,v 1.6 1998/05/07 18:42:00 kleink Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/msg.h>
-.Ft int
+.Ft ssize_t
 .Fn msgrcv "int msqid" "void *msgp" "size_t msgsz" "long msgtyp" "int msgflg"
 .Sh DESCRIPTION
 The 
