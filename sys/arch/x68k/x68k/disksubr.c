@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 2003/08/07 16:30:29 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 2003/11/01 11:44:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2003/08/07 16:30:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2003/11/01 11:44:46 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -363,9 +363,9 @@ writedisklabel(dev, strat, lp, osdep)
 		}
 	}
 
-dodospart:
 	/* do dos partitions in the process of getting disklabel? */
 	if (error) {
+dodospart:
 		if (lp->d_secsize >= 2048) {
 			error = ESRCH;
 			goto done;
