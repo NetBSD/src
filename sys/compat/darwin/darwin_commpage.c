@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.5 2004/07/04 15:27:26 christos Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.6 2004/07/11 19:38:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.5 2004/07/04 15:27:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.6 2004/07/11 19:38:14 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,11 +74,7 @@ darwin_commpage_map(p)
 	 * XXX This crashes. For now we map only one page,
 	 * to avoid the crash, but this ought to be fixed
 	 */
-#ifdef notyet
 	memsize = round_page(sizeof(struct darwin_commpage));
-#else
-	memsize = PAGE_SIZE;
-#endif
 
 	if (darwin_commpage_uao == NULL) {
 		darwin_commpage_uao = uao_create(memsize, 0);
@@ -149,11 +145,8 @@ darwin_commpage_init(dcp)
 	/* 
 	 * XXX Only one page is mapped yet (see higher in the file)
 	 */
-#ifdef notyet
 	bzero(dcp, sizeof(*dcp));
-#else
-	bzero(dcp, PAGE_SIZE);
-#endif
+
 	dcp->dcp_version = DARWIN_COMMPAGE_VERSION;	
 
 	name[0] = CTL_HW;
@@ -203,19 +196,16 @@ darwin_commpage_init(dcp)
 	DCP_MEMCPY(spinlock_try);
 	DCP_MEMCPY(spinlock_lock);
 	DCP_MEMCPY(spinlock_unlock);
-	DCP_MEMCPY(pthread_specific);
+	DCP_MEMCPY(pthread_getspecific);
 	DCP_MEMCPY(gettimeofday);
 	DCP_MEMCPY(sys_dcache_flush);
 	DCP_MEMCPY(sys_icache_invalidate);
 	DCP_MEMCPY(pthread_self);
 	DCP_MEMCPY(spinlock_relinquish);
 	DCP_MEMCPY(bzero);
+	DCP_MEMCPY(bcopy);
 	DCP_MEMCPY(memcpy);
-
-	/* XXX we only map one page yet */
-#ifdef notyet
 	DCP_MEMCPY(bigcopy);
-#endif
 
 	return;
 }
