@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.3 1993/08/07 05:14:00 cgd Exp $
+ *	$Id: swapgeneric.c,v 1.4 1994/01/20 02:17:17 brezak Exp $
  */
 
 #include "sys/param.h"
@@ -99,6 +99,7 @@ retry:
 		printf("\n");
 		goto retry;
 gotit:
+		cp = &name[1];
 		if (*++cp < '0' || *cp > '9') {
 			printf("bad/missing unit number\n");
 			goto retry;
