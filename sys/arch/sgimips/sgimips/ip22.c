@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.17 2003/10/04 09:41:27 tsutsui Exp $	*/
+/*	$NetBSD: ip22.c,v 1.18 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.17 2003/10/04 09:41:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.18 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.17 2003/10/04 09:41:27 tsutsui Exp $");
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
 static unsigned long last_clk_intr;
+u_int32_t int23addr;
 
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
@@ -81,7 +82,6 @@ ip22_init(void)
 {
 	u_int i;
 	u_int32_t sysid;
-	u_int32_t int23addr;
 	unsigned long cps;
 	unsigned long ctrdiff[3];
 
@@ -277,13 +277,7 @@ ip22_mappable_intr(void* arg)
 	int intnum;
 	u_int32_t mstat;
 	u_int32_t mmask;
-	u_int32_t int23addr;
 	int which = (int)arg;
-
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		int23addr = 0x1fbd9000;
-	else
-		int23addr = 0x1fbd9880;
 
 	ret = 0;
 	mstat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x10);
@@ -314,12 +308,6 @@ ip22_local0_intr()
 	int ret;
 	u_int32_t l0stat;
 	u_int32_t l0mask;
-	u_int32_t int23addr;
-
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		int23addr = 0x1fbd9000;
-	else
-		int23addr = 0x1fbd9880;
 
 	ret = 0;
 	l0stat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x00);
@@ -346,12 +334,6 @@ ip22_local1_intr()
 	int ret;
 	u_int32_t l1stat;
 	u_int32_t l1mask;
-	u_int32_t int23addr;
-
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		int23addr = 0x1fbd9000;
-	else
-		int23addr = 0x1fbd9880;
 
 	l1stat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x08);
 	l1mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c);
@@ -381,7 +363,6 @@ ip22_intr_establish(level, ipl, handler, arg)
 	void *arg;
 {
 	u_int32_t mask;
-	u_int32_t int23addr;
 
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
@@ -391,11 +372,6 @@ ip22_intr_establish(level, ipl, handler, arg)
 
 	intrtab[level].ih_fun = handler;
 	intrtab[level].ih_arg = arg;
-
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		int23addr = 0x1fbd9000;
-	else
-		int23addr = 0x1fbd9880;
 
 	if (level < 8) {
 		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x4);
@@ -477,34 +453,6 @@ ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 	splx(s);
 
 	return (endctr - startctr) / roundtime * roundtime;
-}
-
-void	ip22_cache_init(struct device *);
-
-void
-ip22_cache_init(struct device *self)
-{
-
-	/*
-	 * If we don't have an R4000-style cache, then initialize the
-	 * IP22 SysAD L2 cache.
-	 *
-	 * XXX: For now we disable the SysAD cache on R4600/R5k systems,
-	 * as there's no code to drive it; also make sure to clear the
-	 * flags used by the generic MIPS code so it doesn't attempt to
-	 * use the L2.
-	 */
-	switch (MIPS_PRID_IMPL(cpu_id)) {
-	case MIPS_R4600:
-#ifndef ENABLE_MIPS_R3NKK
-	case MIPS_R5000:
-#endif
-		mips_sdcache_size = 0;
-		mips_sdcache_line_size = 0;
-		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
-		ip22_sdcache_disable();
-		break;
-	}
 }
 
 #endif	/* IP22 */

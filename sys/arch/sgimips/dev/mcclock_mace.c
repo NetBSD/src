@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.10 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.10 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,10 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 	struct mace_attach_args *maa = aux;
 
 	sc->sc_st = maa->maa_st;
-	sc->sc_sh = maa->maa_sh;
+	/* XXX should be bus_space_map() */
+	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
+	    maa->maa_offset, NULL, &sc->sc_sh))
+		panic("mcclock_mace_attach: couldn't map");
 
 	/*
 	 * We want a fixed format: 24-hour, BCD data, so just force the

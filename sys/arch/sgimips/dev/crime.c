@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.12 2003/07/15 03:35:51 lukem Exp $	*/
+/*	$NetBSD: crime.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.12 2003/07/15 03:35:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,19 +50,17 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.12 2003/07/15 03:35:51 lukem Exp $");
 #include <machine/intr.h>
 #include <machine/machtype.h>
 
-#include <dev/pci/pcivar.h>
-
-#include <sgimips/dev/macereg.h>
+#include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
 
 #include "locators.h"
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
-void *		crime_intr_establish(int, int, int, int (*)(void *), void *);
-void		crime_intr(u_int);
 
-CFATTACH_DECL(crime, sizeof(struct device),
+struct crime_softc *crime_sc; /* only one per machine, okay to be global */
+
+CFATTACH_DECL(crime, sizeof(struct crime_softc),
     crime_match, crime_attach, NULL, NULL);
 
 #define CRIME_NINTR 32 	/* XXX */
@@ -94,10 +92,19 @@ crime_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct crime_softc *sc = (struct crime_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	u_int64_t crm_id;
 
-	crm_id = bus_space_read_8(ma->ma_iot, ma->ma_ioh, 0);
+	crime_sc = sc;
+
+	sc->iot = SGIMIPS_BUS_SPACE_HPC;
+
+	if (bus_space_map(sc->iot, ma->ma_addr, 0 /* XXX */,
+	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
+		panic("crime_attach: can't map I/O space");
+
+	crm_id = bus_space_read_8(sc->iot, sc->ioh, CRIME_REV);
 
 	aprint_naive(": system ASIC");
 
@@ -126,13 +133,18 @@ crime_attach(parent, self, aux)
 
 	aprint_normal(" (CRIME_ID: %llx)\n", crm_id);
 
-	/* All interrupts off.  Turned on as we register devices */
-	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0;
-	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTSTAT) = 0;
-	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_SOFTINT) = 0;
-	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_HARDINT) = 0;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_STATUS) = 0;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = 0;
+	/* Turn on memory error and crime error interrupts.
+	   All others turned on as devices are registered. */
+	bus_space_write_8(sc->iot, sc->ioh, CRIME_INTMASK,
+	    CRIME_INT_MEMERR |
+	    CRIME_INT_CRMERR |
+	    CRIME_INT_VICE |
+	    CRIME_INT_VID_OUT |
+	    CRIME_INT_VID_IN2 |
+	    CRIME_INT_VID_IN1);
+	bus_space_write_8(sc->iot, sc->ioh, CRIME_INTSTAT, 0);
+	bus_space_write_8(sc->iot, sc->ioh, CRIME_SOFTINT, 0);
+	bus_space_write_8(sc->iot, sc->ioh, CRIME_HARDINT, 0);
 }
 
 /*
@@ -153,6 +165,8 @@ crime_intr_establish(irq, type, level, func, arg)
 	crime[irq].func = func;
 	crime[irq].arg = arg;
 
+	crime_intr_mask(irq);
+
 	return (void *)&crime[irq];
 }
 
@@ -168,3 +182,12 @@ crime_intr(pendmask)
 	}
 }
 
+void
+crime_intr_mask(unsigned int intr)
+{
+	u_int64_t mask;
+
+	mask = bus_space_read_8(crime_sc->iot, crime_sc->ioh, CRIME_INTMASK);
+	mask |= (1 << intr);
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh, CRIME_INTMASK, mask);
+}
