@@ -151,6 +151,7 @@ sparc-*-lynxos*)	gdb_host=sparclynx ;;
 sparc-*-netbsdelf*)	gdb_host=nbsdelf ;;
 sparc-*-netbsdaout*)	gdb_host=nbsd ;;
 sparc-*-netbsd*)	gdb_host=nbsd ;;
+sparc64-*-netbsd*)	gdb_host=nbsd64 ;;
 sparc-*-solaris2*)	gdb_host=sun4sol2 ;;
 sparc-*-sunos4*)	gdb_host=sun4os4 ;;
 sparc-*-sunos5*)	gdb_host=sun4sol2 ;;

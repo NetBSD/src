@@ -273,7 +273,7 @@ changequote([,])dnl
   powerpc-*-aix*)	COREFILE=rs6000-core.lo ;;
   powerpc-*-beos*)	;;
   powerpc-*-netbsd*)	COREFILE=netbsd-core.lo ;;
-  sparc-*-netbsd* | sparc-*-openbsd*)
+  sparc*-*-netbsd* | sparc-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   tahoe-*-*)

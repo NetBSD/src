@@ -254,6 +254,7 @@ sparc-*-linux*)		gdb_target=linux ;;
 sparc-*-lynxos*)	gdb_target=sparclynx
 		configdirs="${configdirs} gdbserver" ;;
 sparc-*-netbsd*)	gdb_target=nbsd ;;
+sparc64-*-netbsd*)	gdb_target=nbsd64 ;;
 sparc-*-solaris2*)	gdb_target=sun4sol2 ;;
 sparc-*-sunos4*)	gdb_target=sun4os4 ;;
 sparc-*-sunos5*)	gdb_target=sun4sol2 ;;
