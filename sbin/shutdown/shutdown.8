@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.23 2002/10/18 20:35:36 atatat Exp $
+.\"	$NetBSD: shutdown.8,v 1.24 2002/10/18 22:44:42 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd January 20, 1998
+.Dd October 18, 2002
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -60,7 +60,8 @@ The given
 is passed to
 .Xr reboot 8
 for the benefit of those systems that can pass boot arguments to the
-firmware.  Currently, this only affects sun3 and sparc machines.
+firmware.
+Currently, this only affects sun3 and sparc machines.
 .It Fl d
 .Nm
 will pass the
