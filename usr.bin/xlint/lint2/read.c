@@ -1,6 +1,7 @@
-/*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
+/*	$NetBSD: read.c,v 1.3 1996/12/22 11:31:10 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: read.c,v 1.3 1996/12/22 11:31:10 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -600,8 +601,6 @@ inptype(cp, epp)
 	case STRUCT:
 	case UNION:
 		switch (*cp++) {
-		case '0':
-			break;
 		case '1':
 			tp->t_istag = 1;
 			tp->t_tag = hsearch(inpname(cp, &cp), 1);
@@ -609,6 +608,19 @@ inptype(cp, epp)
 		case '2':
 			tp->t_istynam = 1;
 			tp->t_tynam = hsearch(inpname(cp, &cp), 1);
+			break;
+		case '3':
+			tp->t_isuniqpos = 1;
+			tp->t_uniqpos.p_line = strtol(cp, &eptr, 10);
+			cp = eptr;
+			cp++;
+			/* xlate to 'global' file name. */
+			tp->t_uniqpos.p_file =
+			    addoutfile(inpfns[strtol(cp, &eptr, 10)]);
+			cp = eptr;
+			cp++;
+			tp->t_uniqpos.p_uniq = strtol(cp, &eptr, 10);
+			cp = eptr;
 			break;
 		}
 		break;
@@ -769,13 +781,30 @@ gettlen(cp, epp)
 	case STRUCT:
 	case UNION:
 		switch (*cp++) {
-		case '0':
-			break;
 		case '1':
 			(void)inpname(cp, &cp);
 			break;
 		case '2':
 			(void)inpname(cp, &cp);
+			break;
+		case '3':
+			/* unique position: line.file.uniquifier */
+			(void)strtol(cp, &eptr, 10);
+			if (cp == eptr)
+				inperr();
+			cp = eptr;
+			if (*cp++ != '.')
+				inperr();
+			(void)strtol(cp, &eptr, 10);
+			if (cp == eptr)
+				inperr();
+			cp = eptr;
+			if (*cp++ != '.')
+				inperr();
+			(void)strtol(cp, &eptr, 10);
+			if (cp == eptr)
+				inperr();
+			cp = eptr;
 			break;
 		default:
 			inperr();

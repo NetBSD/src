@@ -1,6 +1,7 @@
-/*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
+/*	$NetBSD: emit1.c,v 1.5 1996/12/22 11:31:06 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $";
+static char rcsid[] = "$NetBSD: emit1.c,v 1.5 1996/12/22 11:31:06 cgd Exp $";
 #endif
 
 #include <ctype.h>
@@ -187,6 +188,10 @@ static void
 outtt(tag, tdef)
 	sym_t	*tag, *tdef;
 {
+
+	/*
+	 * 0 is no longer used.
+	 */
 	if (tag->s_name != unnamed) {
 		outint(1);
 		outname(tag->s_name);
@@ -194,7 +199,12 @@ outtt(tag, tdef)
 		outint(2);
 		outname(tdef->s_name);
 	} else {
-		outint(0);
+		outint(3);
+		outint(tag->s_dpos.p_line);
+		outchar('.');
+		outint(getfnid(tag->s_dpos.p_file));
+		outchar('.');
+		outint(tag->s_dpos.p_uniq);
 	}
 }
 

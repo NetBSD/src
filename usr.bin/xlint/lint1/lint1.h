@@ -1,6 +1,7 @@
-/*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
+/*	$NetBSD: lint1.h,v 1.7 1996/12/22 11:31:07 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -40,7 +41,17 @@
 typedef struct {
 	int	p_line;
 	const	char *p_file;
+	int	p_uniq;			/* uniquifier */
 } pos_t;
+
+/* Copies curr_pos, keeping things unique. */
+#define UNIQUE_CURR_POS(pos)						\
+    do {								\
+    	STRUCT_ASSIGN((pos), curr_pos);					\
+	curr_pos.p_uniq++;						\
+	if (curr_pos.p_file == csrc_pos.p_file)				\
+	    csrc_pos.p_uniq++;						\
+    } while (0)
 
 /*
  * Strings cannot be referenced to simply by a pointer to its first

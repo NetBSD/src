@@ -1,6 +1,7 @@
-/*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.12 1996/12/22 11:31:05 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.12 1996/12/22 11:31:05 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1590,7 +1591,7 @@ mktag(tag, kind, decl, semi)
 	} else {
 		tag = getblk(sizeof (sym_t));
 		tag->s_name = unnamed;
-		STRUCT_ASSIGN(tag->s_dpos, curr_pos);
+		UNIQUE_CURR_POS(tag->s_dpos);
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_blklev = -1;
@@ -2786,7 +2787,7 @@ setsflg(sym)
 {
 	if (!sym->s_set) {
 		sym->s_set = 1;
-		STRUCT_ASSIGN(sym->s_spos, curr_pos);
+		UNIQUE_CURR_POS(sym->s_spos);
 	}
 }
 
@@ -2800,7 +2801,7 @@ setuflg(sym, fcall, szof)
 {
 	if (!sym->s_used) {
 		sym->s_used = 1;
-		STRUCT_ASSIGN(sym->s_upos, curr_pos);
+		UNIQUE_CURR_POS(sym->s_upos);
 	}
 	/*
 	 * for function calls another record is written

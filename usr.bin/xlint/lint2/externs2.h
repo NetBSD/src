@@ -1,6 +1,7 @@
-/*	$NetBSD: externs2.h,v 1.2 1995/07/03 21:24:46 cgd Exp $	*/
+/*	$NetBSD: externs2.h,v 1.3 1996/12/22 11:31:09 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -85,3 +86,4 @@ extern	const	char *mkpos __P((pos_t *));
  * emit2.c
  */
 extern	void	outlib __P((const char *));
+extern	int	addoutfile __P((short));

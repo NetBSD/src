@@ -1,6 +1,7 @@
-/*	$NetBSD: emit2.c,v 1.2 1995/07/03 21:24:44 cgd Exp $	*/
+/*	$NetBSD: emit2.c,v 1.3 1996/12/22 11:31:08 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit2.c,v 1.2 1995/07/03 21:24:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: emit2.c,v 1.3 1996/12/22 11:31:08 cgd Exp $";
 #endif
 
 #include <err.h>
@@ -42,6 +43,7 @@ static char rcsid[] = "$NetBSD: emit2.c,v 1.2 1995/07/03 21:24:44 cgd Exp $";
 static	void	outtype __P((type_t *));
 static	void	outdef __P((hte_t *, sym_t *));
 static	void	dumpname __P((hte_t *));
+static	void	outfiles __P(());
 
 /*
  * Write type into the output buffer.
@@ -105,9 +107,15 @@ outtype(tp)
 			} else if (tp->t_istynam) {
 				outint(2);
 				outname(tp->t_tynam->h_name);
-			} else {
-				outint(0);
-			}
+			} else if (tp->t_isuniqpos) {
+				outint(3);
+				outint(tp->t_uniqpos.p_line);
+				outchar('.');
+				outint(tp->t_uniqpos.p_file);
+				outchar('.');
+				outint(tp->t_uniqpos.p_uniq);
+			} else
+				errx(1, "internal error: outtype() 2");
 		} else if (ts == FUNC && tp->t_args != NULL) {
 			na = 0;
 			for (ap = tp->t_args; *ap != NULL; ap++)
@@ -228,9 +236,68 @@ outlib(name)
 	outchar('s');
 	outstrg(name);
 
+	/*
+	 * print the names of all files references by unnamed
+	 * struct/union/enum declarations.
+	 */
+	outfiles();
+
 	/* write all definitions with external linkage */
 	forall(dumpname);
 
 	/* close the output */
 	outclose();
+}
+
+/*
+ * Write out the name of a file referenced by a type.
+ */
+struct outflist {
+	short ofl_num;
+	struct outflist *ofl_next;
+};
+static struct outflist *outflist;
+
+int
+addoutfile(num)
+	short num;
+{
+	struct outflist *ofl, **pofl;
+	int i;
+
+	ofl = outflist;
+	pofl = &outflist;
+	i = 1;				/* library is 0 */
+
+	while (ofl != NULL) {
+		if (ofl->ofl_num == num)
+			break;
+	
+		pofl = &ofl->ofl_next;
+		ofl = ofl->ofl_next;
+		i++;
+	}
+
+	if (ofl == NULL) {
+		ofl = *pofl = xmalloc(sizeof (struct outflist));
+		ofl->ofl_num = num;
+		ofl->ofl_next = NULL;
+	}
+	return (i);
+}
+
+void
+outfiles()
+{
+	struct outflist *ofl;
+	int i;
+
+	for (ofl = outflist, i = 1; ofl != NULL; ofl = ofl->ofl_next, i++) {
+		/* reset output buffer */ 
+		outclr();
+
+		outint(i);
+		outchar('s');
+		outstrg(fnames[ofl->ofl_num]);
+	}
 }
