@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.40 1999/04/17 17:08:12 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.41 1999/04/17 19:49:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -458,8 +458,8 @@ idescattach(pdp, dp, auxp)
 #endif
 				continue;
 			}
-			if (idecommand(&sc->sc_ide[i], 0, 0, 0,
-			    DEV_BSIZE, ATAPI_IDENTIFY) != 0 ||
+			if (idecommand(&sc->sc_ide[i], DEV_BSIZE, 0, 0, 0,
+			    ATAPI_IDENTIFY) != 0 ||
 			    wait_for_drq(sc) != 0) {
 #ifdef DEBUG_ATAPI
 				printf("\nATAPI_IDENTIFY failed for drive %d",
@@ -791,8 +791,11 @@ idewait (sc, mask)
 	}
 	if (status & IDES_ERR) {
 		sc->sc_error = regs->ide_error;
-		printf ("idewait: status %02x error %02x\n", status,
-		    sc->sc_error);
+#ifdef DEBUG
+		if (ide_debug)
+			printf ("idewait: status %02x error %02x\n", status,
+			    sc->sc_error);
+#endif
 	}
 #ifdef DEBUG
 	else if (ide_debug)
@@ -1319,7 +1322,9 @@ int ide_atapi_start(dev)
 	xs = dev->sc_xs;
 	clen = dev->sc_cur->sc_flags & IDEF_ACAPLEN ? 16 : 12;
 
-	if (idecommand(dev->sc_cur, 0, 0, 0, xs->datalen, ATAPI_PACKET) != 0) {
+	if (idecommand(dev->sc_cur,
+	    (xs->datalen < 0xffff) ? xs->datalen : 0xfffe, 0, 0, 0,
+	    ATAPI_PACKET) != 0) {
 		printf("ide_atapi_start: send packet failed\n");
 		dev->sc_stat[0] = -1;
 		ide_scsidone(dev, dev->sc_stat[0]);
@@ -1405,7 +1410,8 @@ ide_atapi_icmd(dev, target, cbuf, clen, buf, len)
 		return (-1);
 	}
 
-	if (idecommand(ide, 0, 0, 0, len, ATAPI_PACKET) != 0) {
+	if (idecommand(ide, (len < 0xffff) ? len : 0xfffe, 0, 0, 0,
+	    ATAPI_PACKET) != 0) {
 		printf("ide_atapi_icmd: send packet failed\n");
 		dev->sc_stat[0] = -1;
 		return(-1);
@@ -1601,8 +1607,10 @@ again:
 		} else if (status & IDES_ERR) {
 			struct scsipi_sense rqs;
 
+#ifdef DEBUG_ATAPI
 			printf("ide_atapi_intr: error status %x err %x\n",
 			    status, err);
+#endif
 			xs->error = XS_SHORTSENSE;
 			xs->sense.atapi_sense = err;
 			ide->sc_flags |= IDEF_SENSE;
@@ -1615,8 +1623,10 @@ again:
 			    sizeof(xs->sense.scsi_sense));
 			return(1);
 		}
+#ifdef DEBUG_ATAPI
 		if (ide->sc_bcount != 0)
 			printf("ide_atapi_intr: %ld bytes remaining\n", ide->sc_bcount);
+#endif
 		break;
 	default:
 		if (++retries < 500) {
