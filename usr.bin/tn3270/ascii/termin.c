@@ -1,4 +1,4 @@
-/*	$NetBSD: termin.c,v 1.5 1998/11/06 20:05:12 christos Exp $	*/
+/*	$NetBSD: termin.c,v 1.6 2002/01/06 01:02:48 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termin.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termin.c,v 1.5 1998/11/06 20:05:12 christos Exp $");
+__RCSID("$NetBSD: termin.c,v 1.6 2002/01/06 01:02:48 sjg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: termin.c,v 1.5 1998/11/06 20:05:12 christos Exp $");
 #include "map3270.h"
 
 #include "../general/globals.h"
+
+extern cc_t escape;			/* Escape to command mode */
 
 #define IsControl(c)	(!isprint((unsigned char)c) || (isspace((unsigned char)c) && ((c) != ' ')))
 
@@ -202,7 +204,7 @@ char	*buffer;		/* the data read in */
 int	count;			/* how many bytes in this buffer */
 {
     state *regControlPointer;
-    char c;
+    int c;
     int result;
     int origCount;
     extern int bellwinup;
@@ -237,6 +239,17 @@ int	count;			/* how many bytes in this buffer */
     while (count) {
 	c = *buffer++&0x7f;
 	count--;
+
+	if (c == escape) {
+		if (count && (*buffer&0x7f) == escape) {
+			buffer++;
+			count--;
+		} else {
+			command(0, (char *)0, 0);
+			RefreshScreen();
+			continue;
+		}
+	}
 
 	if (!InControl && !IsControl(c)) {
 	    AddChar(c);			/* add ascii character */
