@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.97 2004/05/25 04:34:01 atatat Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.98 2004/10/27 22:26:50 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.97 2004/05/25 04:34:01 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.98 2004/10/27 22:26:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1681,12 +1681,18 @@ ipsec_get_reqlevel(isr, af)
 				level = ah_net_deflev;
 			else
 				level = ah_trans_deflev;
+			break;
 		case IPPROTO_IPCOMP:
 			/*
 			 * we don't really care, as IPcomp document says that
 			 * we shouldn't compress small packets
 			 */
 			level = IPSEC_LEVEL_USE;
+			break;
+		case IPPROTO_IPV4:
+		case IPPROTO_IPV6:
+			/* should never go into here */
+			level = IPSEC_LEVEL_REQUIRE;
 			break;
 		default:
 			panic("ipsec_get_reqlevel: "
@@ -1778,6 +1784,13 @@ ipsec_in_reject(sp, m)
 			 * we don't really care, as IPcomp document says that
 			 * we shouldn't compress small packets, IPComp policy
 			 * should always be treated as being in "use" level.
+			 */
+			break;
+		case IPPROTO_IPV4:
+		case IPPROTO_IPV6:
+			/*
+			 * XXX what shall we do, until introducing more complex
+			 * policy checking code?
 			 */
 			break;
 		}
@@ -1952,6 +1965,11 @@ ipsec_hdrsiz(sp)
 			break;
 		case IPPROTO_IPCOMP:
 			clen = sizeof(struct ipcomp);
+			break;
+		case IPPROTO_IPV4:
+		case IPPROTO_IPV6:
+			/* the next "if" clause will compute it */
+			clen = 0;
 			break;
 		}
 
@@ -2652,6 +2670,9 @@ ipsec4_output(state, sp, flags)
 			case IPSEC_LEVEL_USE:
 				continue;
 			case IPSEC_LEVEL_REQUIRE:
+				if (isr->saidx.proto == AF_INET ||
+				    isr->saidx.proto == AF_INET6)
+					break;
 				/* must be not reached here. */
 				panic("ipsec4_output: no SA found, but required.");
 			}
@@ -2767,6 +2788,14 @@ ipsec4_output(state, sp, flags)
 				goto bad;
 			}
 			break;
+		case IPPROTO_IPV4:
+			break;
+		case IPPROTO_IPV6:
+			ipseclog((LOG_ERR, "ipsec4_output: "
+			    "family mismatched between inner and outer "
+			    "header\n"));
+			error = EAFNOSUPPORT;
+			goto bad;
 		default:
 			ipseclog((LOG_ERR,
 			    "ipsec4_output: unknown ipsec protocol %d\n",
