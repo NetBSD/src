@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.7 2003/03/09 01:02:35 lukem Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.8 2003/04/09 14:11:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: textdomain.c,v 1.7 2003/03/09 01:02:35 lukem Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.8 2003/04/09 14:11:33 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ bindtextdomain(domainname, dirname)
 	if (!domainname || !*domainname)
 		return NULL;
 
-	if (strlen(dirname) + 1 > sizeof(p->path))
+	if (dirname && (strlen(dirname) + 1 > sizeof(p->path)))
 		return NULL;
 
 #if 0
@@ -95,21 +95,28 @@ bindtextdomain(domainname, dirname)
 	for (p = __bindings; p; p = p->next)
 		if (strcmp(p->domainname, domainname) == 0)
 			break;
+
+	if (!dirname) {
+		if (p)
+			return (p->path);
+		else
+			return _PATH_TEXTDOMAIN;
+	}
+
 	if (!p) {
 		p = (struct domainbinding *)malloc(sizeof(*p));
 		if (!p)
 			return NULL;
 		memset(p, 0, sizeof(*p));
 		p->next = __bindings;
+		strlcpy(p->domainname, domainname, sizeof(p->domainname));
 		__bindings = p;
 	}
 
 	strlcpy(p->path, dirname, sizeof(p->path));
-	strlcpy(p->domainname, domainname, sizeof(p->domainname));
 	p->mohandle.mo.mo_magic = 0; /* invalidate current mapping */
 
-	/* LINTED const cast */
-	return (char *)domainname;
+	return (p->path);
 }
 
 /* ARGSUSED */
