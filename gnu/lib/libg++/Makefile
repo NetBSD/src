@@ -1,11 +1,10 @@
-#	$Id: Makefile,v 1.8 1993/11/17 20:43:37 jtc Exp $
+#	$Id: Makefile,v 1.9 1994/01/07 00:16:43 jtc Exp $
 
 SUBDIR= libg++ genclass
 
 INCLUDEDIRS=	iostream libg++ g++-include
 
 beforeinstall:
-	rm -rf ${DESTDIR}/usr/include/g++
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include/g++
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include/g++/gen
 
