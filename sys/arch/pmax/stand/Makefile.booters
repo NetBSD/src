@@ -1,22 +1,18 @@
-# $NetBSD: Makefile.booters,v 1.42 2003/10/26 07:25:37 lukem Exp $
+# $NetBSD: Makefile.booters,v 1.43 2003/11/24 23:29:54 he Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
-.BEGIN: machine pmax mips
-${PROG} realdepend realall: machine pmax mips
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
+	@[ -h pmax ] || ln -s $S/arch/${MACHINE}/include pmax
+	@[ -h mips ] || ln -s $S/arch/mips/include mips
+.NOPATH: machine pmax mips
+.endif
 CLEANFILES+= machine pmax mips
-machine:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-pmax:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-mips:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mips/include mips
 
 BINMODE?=	444
 
@@ -111,7 +107,6 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 .include <bsd.own.mk>
 
-.PHONY: vers.c
 vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
