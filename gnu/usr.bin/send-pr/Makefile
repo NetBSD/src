@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/02/13 23:53:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 1999/03/26 13:12:43 sommerfe Exp $
 
 .include <bsd.own.mk>
 
@@ -95,7 +95,8 @@ FILES=send-pr install-sid
 FILESMODE_send-pr=${BINMODE}
 FILESMODE_install-sid=${BINMODE}
 .if ${MKSHARE} != "no"
-FILES+=categories
+FILES+=categories send-pr.el
+FILESDIR_send-pr.el=${LIBDIR}/gnats
 FILESDIR_categories=${LIBDIR}/gnats
 FILESNAME_categories=${GNATS_SITE}
 .endif
