@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.24 2002/02/12 20:32:35 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.25 2002/05/31 16:18:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mksyntax.c,v 1.24 2002/02/12 20:32:35 christos Exp $";
+    "$NetBSD: mksyntax.c,v 1.25 2002/05/31 16:18:48 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,9 +202,9 @@ main(argc, argv)
 	fprintf(hfile, "#define SYNBASE %d\n", base);
 	fprintf(hfile, "#define PEOF %d\n\n", -base);
 	if (sign)
-		fprintf(hfile, "#define UPEOF %d\n\n", -base);
+		fprintf(hfile, "#define UPEOF ((char)%d)\n\n", -base);
 	else
-		fprintf(hfile, "#define UPEOF ((unsigned char) %d)\n\n", -base);
+		fprintf(hfile, "#define UPEOF ((unsigned char)%d)\n\n", -base);
 	putc('\n', hfile);
 	fputs("#define BASESYNTAX (basesyntax + SYNBASE)\n", hfile);
 	fputs("#define DQSYNTAX (dqsyntax + SYNBASE)\n", hfile);
