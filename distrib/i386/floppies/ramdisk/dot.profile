@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.6 1999/06/26 06:12:57 cgd Exp $
+#	$NetBSD: dot.profile,v 1.7 1999/09/27 02:47:58 hubertf Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -66,6 +66,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# pull in the functions that people will use from the shell prompt.
 	# . /.commonutils
 	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
 
 	# run the installation or upgrade script.
 	sysinst
