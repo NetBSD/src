@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.179 2001/05/05 18:22:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2001/05/05 18:22:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ void	alpha_protection_init(void);
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, boolean_t);
 boolean_t pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *,
 	    boolean_t, long);
-void	pmap_changebit(vm_page_t, pt_entry_t, pt_entry_t, long);
+void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, long);
 
 /*
  * PT page management functions.
@@ -495,8 +495,9 @@ int	pmap_l1pt_ctor(void *, void *, int);
 /*
  * PV table management functions.
  */
-int	pmap_pv_enter(pmap_t, vm_page_t, vaddr_t, pt_entry_t *, boolean_t);
-void	pmap_pv_remove(pmap_t, vm_page_t, vaddr_t, boolean_t);
+int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
+	    boolean_t);
+void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, boolean_t);
 void	*pmap_pv_page_alloc(u_long, int, int);
 void	pmap_pv_page_free(void *, u_long, int);
 #ifdef DEBUG
@@ -1458,7 +1459,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
  *	the permissions specified.
  */
 void
-pmap_page_protect(vm_page_t pg, vm_prot_t prot)
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	pmap_t pmap;
 	pv_entry_t pv, nextpv;
@@ -1625,7 +1626,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
-	vm_page_t pg;			/* if != NULL, managed page */
+	struct vm_page *pg;			/* if != NULL, managed page */
 	pt_entry_t *pte, npte, opte;
 	paddr_t opa;
 	boolean_t tflush = TRUE;
@@ -2410,7 +2411,7 @@ pmap_pageidlezero(paddr_t pa)
  *	Clear the modify bits on the specified physical page.
  */
 boolean_t
-pmap_clear_modify(vm_page_t pg)
+pmap_clear_modify(struct vm_page *pg)
 {
 	boolean_t rv = FALSE;
 	long cpu_id = cpu_number();
@@ -2441,7 +2442,7 @@ pmap_clear_modify(vm_page_t pg)
  *	Clear the reference bit on the specified physical page.
  */
 boolean_t
-pmap_clear_reference(vm_page_t pg)
+pmap_clear_reference(struct vm_page *pg)
 {
 	boolean_t rv = FALSE;
 	long cpu_id = cpu_number();
@@ -2577,7 +2578,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
     boolean_t dolock, long cpu_id)
 {
 	paddr_t pa;
-	vm_page_t pg;		/* if != NULL, page is managed */
+	struct vm_page *pg;		/* if != NULL, page is managed */
 	boolean_t onpv;
 	boolean_t hadasm;
 	boolean_t isactive;
@@ -2680,7 +2681,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
  *	XXX optimization done.
  */
 void
-pmap_changebit(vm_page_t pg, u_long set, u_long mask, long cpu_id)
+pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 {
 	pv_entry_t pv;
 	pt_entry_t *pte, npte;
@@ -2756,7 +2757,7 @@ void
 pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 {
 	pt_entry_t faultoff, *pte;
-	vm_page_t pg;
+	struct vm_page *pg;
 	paddr_t pa;
 	boolean_t didlock = FALSE;
 	long cpu_id = cpu_number();
@@ -2873,7 +2874,7 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 void
 pmap_pv_dump(paddr_t pa)
 {
-	vm_page_t pg;
+	struct vm_page *pg;
 	pv_entry_t pv;
 
 	pg = PHYS_TO_VM_PAGE(pa);
@@ -2929,7 +2930,7 @@ vtophys(vaddr_t vaddr)
  *	Add a physical->virtual entry to the pv_table.
  */
 int
-pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
+pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
     boolean_t dolock)
 {
 	pv_entry_t newpv;
@@ -2980,7 +2981,7 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
  *	Remove a physical->virtual entry from the pv_table.
  */
 void
-pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
+pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, boolean_t dolock)
 {
 	pv_entry_t pv, *pvp;
 
@@ -3105,7 +3106,7 @@ pmap_physpage_free(paddr_t pa)
 int
 pmap_physpage_addref(void *kva)
 {
-	vm_page_t pg;
+	struct vm_page *pg;
 	paddr_t pa;
 	int rval;
 
@@ -3127,7 +3128,7 @@ pmap_physpage_addref(void *kva)
 int
 pmap_physpage_delref(void *kva)
 {
-	vm_page_t pg;
+	struct vm_page *pg;
 	paddr_t pa;
 	int rval;
 

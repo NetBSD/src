@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 2001/04/24 04:30:53 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 2001/05/26 21:27:04 chs Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -673,7 +673,7 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	paddr_t high;
 {
 	paddr_t curaddr, lastaddr;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
 
@@ -737,7 +737,7 @@ _bus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 	struct pglist mlist;
 	int curseg;
