@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.4.2.1 1997/10/30 07:17:40 mrg Exp $	*/
+/*	$NetBSD: iptests.c,v 1.4.2.2 1998/07/23 01:44:38 mellon Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.0.2.13 1997/10/23 11:42:45 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.0.2.13.2.2 1997/12/21 12:17:38 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -100,24 +100,21 @@ int	ptest;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_sum = 0;
 	u = (udphdr_t *)(ip + 1);
-	u->uh_sport = 1;
-	u->uh_dport = 9;
+	u->uh_sport = htons(1);
+	u->uh_dport = htons(9);
 	u->uh_sum = 0;
-	u->uh_ulen = sizeof(*u) + 4;
-	ip->ip_len = sizeof(*ip) + u->uh_ulen;
+	u->uh_ulen = htons(sizeof(*u) + 4);
+	ip->ip_len = sizeof(*ip) + ntohs(u->uh_ulen);
 	len = ip->ip_len;
 	nfd = initdevice(dev, u->uh_sport, 1);
 
-	u->uh_sport = htons(u->uh_sport);
-	u->uh_dport = htons(u->uh_dport);
-	u->uh_ulen = htons(u->uh_ulen);
 	if (!ptest || (ptest == 1)) {
 		/*
 		 * Part1: hl < len
 		 */
 		ip->ip_id = 0;
 		printf("1.1. sending packets with ip_hl < ip_len\n");
-		for (i = 0; i < ((sizeof(*ip) + u->uh_ulen) >> 2); i++) {
+		for (i = 0; i < ((sizeof(*ip) + ntohs(u->uh_ulen)) >> 2); i++) {
 			ip->ip_hl = i >> 2;
 			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
@@ -133,7 +130,7 @@ int	ptest;
 		 */
 		ip->ip_id = 0;
 		printf("1.2. sending packets with ip_hl > ip_len\n");
-		for (; i < ((sizeof(*ip) * 2 + u->uh_ulen) >> 2); i++) {
+		for (; i < ((sizeof(*ip) * 2 + ntohs(u->uh_ulen)) >> 2); i++) {
 			ip->ip_hl = i >> 2;
 			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
@@ -183,10 +180,8 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_v = IPVERSION;
 		i = ip->ip_len + 1;
-		ip->ip_len = htons(ip->ip_len);
-		ip->ip_off = htons(ip->ip_off);
 		printf("1.5.0 ip_len < packet size (size++, long packets)\n");
-		for (; i < (ntohs(ip->ip_len) * 2); i++) {
+		for (; i < (ip->ip_len * 2); i++) {
 			ip->ip_id = htons(id++);
 			ip->ip_sum = 0;
 			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
@@ -199,7 +194,7 @@ int	ptest;
 		printf("1.5.1 ip_len < packet size (ip_len-, short packets)\n");
 		for (i = len; i > 0; i--) {
 			ip->ip_id = htons(id++);
-			ip->ip_len = htons(i);
+			ip->ip_len = i;
 			ip->ip_sum = 0;
 			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
 			(void) send_ether(nfd, (char *)ip, len, gwip);
@@ -218,7 +213,7 @@ int	ptest;
 		printf("1.6.0 ip_len > packet size (increase ip_len)\n");
 		for (i = len + 1; i < (len * 2); i++) {
 			ip->ip_id = htons(id++);
-			ip->ip_len = htons(i);
+			ip->ip_len = i;
 			ip->ip_sum = 0;
 			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
 			(void) send_ether(nfd, (char *)ip, len, gwip);
@@ -227,7 +222,7 @@ int	ptest;
 			PAUSE();
 		}
 		putchar('\n');
-		ip->ip_len = htons(len);
+		ip->ip_len = len;
 		printf("1.6.1 ip_len > packet size (size--, short packets)\n");
 		for (i = len; i > 0; i--) {
 			ip->ip_id = htons(id++);
@@ -290,7 +285,7 @@ int	ptest;
 		 * about that here.
 		 */
 		ip->ip_p = IPPROTO_ICMP;
-		ip->ip_off = IP_MF;
+		ip->ip_off = htons(IP_MF);
 		u->uh_dport = htons(9);
 		ip->ip_id = htons(id++);
 		printf("1.8.1 63k packet + 1k fragment at offset 0x1ffe\n");
@@ -301,14 +296,14 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (63 * 1024 + 768); i += 768) {
-			ip->ip_off = IP_MF | (i >> 3);
+			ip->ip_off = htons(IP_MF | (i >> 3));
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = (i >> 3);
+		ip->ip_off = htons(i >> 3);
 		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		printf("%d\r", i);
 		putchar('\n');
@@ -321,7 +316,7 @@ int	ptest;
 		 * about that here.  (Lossage here)
 		 */
 		ip->ip_p = IPPROTO_ICMP;
-		ip->ip_off = IP_MF;
+		ip->ip_off = htons(IP_MF);
 		u->uh_dport = htons(9);
 		ip->ip_id = htons(id++);
 		printf("1.8.2 63k packet + 1k fragment at offset 0x1ffe\n");
@@ -335,7 +330,7 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (63 * 1024 + 768); i += 768) {
-			ip->ip_off = IP_MF | (i >> 3);
+			ip->ip_off = htons(IP_MF | (i >> 3));
 			if ((rand() & 0x1f) != 0) {
 				(void) send_ip(nfd, mtu, ip, gwip, 1);
 				printf("%d\r", i);
@@ -345,7 +340,7 @@ int	ptest;
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = (i >> 3);
+		ip->ip_off = htons(i >> 3);
 		if ((rand() & 0x1f) != 0) {
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
@@ -361,7 +356,7 @@ int	ptest;
 		 * about that here.
 		 */
 		ip->ip_p = IPPROTO_ICMP;
-		ip->ip_off = IP_MF;
+		ip->ip_off = htons(IP_MF);
 		u->uh_dport = htons(9);
 		ip->ip_id = htons(id++);
 		printf("1.8.3 33k packet\n");
@@ -372,14 +367,14 @@ int	ptest;
 		ip->ip_len = MIN(768 + 20, mtu - 68);
 		i = 512;
 		for (; i < (32 * 1024 + 768); i += 768) {
-			ip->ip_off = IP_MF | (i >> 3);
+			ip->ip_off = htons(IP_MF | (i >> 3));
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = (i >> 3);
+		ip->ip_off = htons(i >> 3);
 		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		printf("%d\r", i);
 		putchar('\n');
@@ -393,7 +388,7 @@ int	ptest;
 		 * Part9: off & 0x8000 == 0x8000
 		 */
 		ip->ip_id = 0;
-		ip->ip_off = 0x8000;
+		ip->ip_off = htons(0x8000);
 		printf("1.9. ip_off & 0x8000 == 0x8000\n");
 		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
@@ -442,7 +437,7 @@ int	ptest;
 	u_char	*s;
 
 	s = (u_char *)(ip + 1);
-	nfd = initdevice(dev, 1, 1);
+	nfd = initdevice(dev, htons(1), 1);
 
 	ip->ip_hl = 6;
 	ip->ip_len = ip->ip_hl << 2;
@@ -541,7 +536,7 @@ int	ptest;
 	ip->ip_sum = 0;
 	ip->ip_len = sizeof(*ip) + sizeof(*icp);
 	icp = (struct icmp *)((char *)ip + (ip->ip_hl << 2));
-	nfd = initdevice(dev, 1, 1);
+	nfd = initdevice(dev, htons(1), 1);
 
 	if (!ptest || (ptest == 1)) {
 		/*
@@ -733,20 +728,20 @@ int	ptest;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_sum = 0;
 	u = (udphdr_t *)((char *)ip + (ip->ip_hl << 2));
-	u->uh_sport = 1;
-	u->uh_dport = 1;
-	u->uh_ulen = sizeof(*u) + 4;
+	u->uh_sport = htons(1);
+	u->uh_dport = htons(1);
+	u->uh_ulen = htons(sizeof(*u) + 4);
 	nfd = initdevice(dev, u->uh_sport, 1);
 
 	if (!ptest || (ptest == 1)) {
 		/*
 		 * Test 1. ulen > packet
 		 */
-		u->uh_ulen = sizeof(*u) + 4;
-		ip->ip_len = (ip->ip_hl << 2) + u->uh_ulen;
+		u->uh_ulen = htons(sizeof(*u) + 4);
+		ip->ip_len = (ip->ip_hl << 2) + ntohs(u->uh_ulen);
 		printf("4.1 UDP uh_ulen > packet size - short packets\n");
-		for (i = u->uh_ulen * 2; i > sizeof(*u) + 4; i--) {
-			u->uh_ulen = i;
+		for (i = ntohs(u->uh_ulen) * 2; i > sizeof(*u) + 4; i--) {
+			u->uh_ulen = htons(i);
 			(void) send_udp(nfd, 1500, ip, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
@@ -759,10 +754,10 @@ int	ptest;
 		/*
 		 * Test 2. ulen < packet
 		 */
-		u->uh_ulen = sizeof(*u) + 4;
-		ip->ip_len = (ip->ip_hl << 2) + u->uh_ulen;
+		u->uh_ulen = htons(sizeof(*u) + 4);
+		ip->ip_len = (ip->ip_hl << 2) + ntohs(u->uh_ulen);
 		printf("4.2 UDP uh_ulen < packet size - short packets\n");
-		for (i = u->uh_ulen * 2; i > sizeof(*u) + 4; i--) {
+		for (i = ntohs(u->uh_ulen) * 2; i > sizeof(*u) + 4; i--) {
 			ip->ip_len = i;
 			(void) send_udp(nfd, 1500, ip, gwip);
 			printf("%d\r", i);
@@ -778,7 +773,7 @@ int	ptest;
 		 *         sport = 32768, sport = 65535
 		 */
 		u->uh_ulen = sizeof(*u) + 4;
-		ip->ip_len = (ip->ip_hl << 2) + u->uh_ulen;
+		ip->ip_len = (ip->ip_hl << 2) + ntohs(u->uh_ulen);
 		printf("4.3.1 UDP sport = 0\n");
 		u->uh_sport = 0;
 		(void) send_udp(nfd, 1500, ip, gwip);
@@ -786,26 +781,26 @@ int	ptest;
 		fflush(stdout);
 		PAUSE();
 		printf("4.3.2 UDP sport = 1\n");
-		u->uh_sport = 1;
+		u->uh_sport = htons(1);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("1\n");
 		fflush(stdout);
 		PAUSE();
 		printf("4.3.3 UDP sport = 32767\n");
-		u->uh_sport = 32767;
+		u->uh_sport = htons(32767);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("32767\n");
 		fflush(stdout);
 		PAUSE();
 		printf("4.3.4 UDP sport = 32768\n");
-		u->uh_sport = 32768;
+		u->uh_sport = htons(32768);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("32768\n");
 		putchar('\n');
 		fflush(stdout);
 		PAUSE();
 		printf("4.3.5 UDP sport = 65535\n");
-		u->uh_sport = 65535;
+		u->uh_sport = htons(65535);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("65535\n");
 		fflush(stdout);
@@ -817,9 +812,9 @@ int	ptest;
 		 * Test 4: dport = 0, dport = 1, dport = 32767
 		 *         dport = 32768, dport = 65535
 		 */
-		u->uh_ulen = sizeof(*u) + 4;
-		u->uh_sport = 1;
-		ip->ip_len = (ip->ip_hl << 2) + u->uh_ulen;
+		u->uh_ulen = ntohs(sizeof(*u) + 4);
+		u->uh_sport = htons(1);
+		ip->ip_len = (ip->ip_hl << 2) + ntohs(u->uh_ulen);
 		printf("4.4.1 UDP dport = 0\n");
 		u->uh_dport = 0;
 		(void) send_udp(nfd, 1500, ip, gwip);
@@ -827,25 +822,25 @@ int	ptest;
 		fflush(stdout);
 		PAUSE();
 		printf("4.4.2 UDP dport = 1\n");
-		u->uh_dport = 1;
+		u->uh_dport = htons(1);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("1\n");
 		fflush(stdout);
 		PAUSE();
 		printf("4.4.3 UDP dport = 32767\n");
-		u->uh_dport = 32767;
+		u->uh_dport = htons(32767);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("32767\n");
 		fflush(stdout);
 		PAUSE();
 		printf("4.4.4 UDP dport = 32768\n");
-		u->uh_dport = 32768;
+		u->uh_dport = htons(32768);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("32768\n");
 		fflush(stdout);
 		PAUSE();
 		printf("4.4.5 UDP dport = 65535\n");
-		u->uh_dport = 65535;
+		u->uh_dport = htons(65535);
 		(void) send_udp(nfd, 1500, ip, gwip);
 		printf("65535\n");
 		fflush(stdout);
@@ -858,7 +853,7 @@ int	ptest;
 		 * sizeof(ip_t)
 		 */
 		printf("4.5 UDP 20 <= MTU <= 32\n");
-		for (i = sizeof(*ip); i <= u->uh_ulen; i++) {
+		for (i = sizeof(*ip); i <= ntohs(u->uh_ulen); i++) {
 			(void) send_udp(nfd, i, ip, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
@@ -887,13 +882,14 @@ int	ptest;
 	t->th_x2 = 0;
 #endif
 	t->th_off = 0;
-	t->th_sport = 1;
-	t->th_dport = 1;
-	t->th_win = 4096;
+	t->th_sport = htons(1);
+	t->th_dport = htons(1);
+	t->th_win = htons(4096);
 	t->th_urp = 0;
 	t->th_sum = 0;
-	t->th_seq = 1;
+	t->th_seq = htonl(1);
 	t->th_ack = 0;
+	ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	nfd = initdevice(dev, t->th_sport, 1);
 
 	if (!ptest || (ptest == 1)) {
@@ -920,37 +916,37 @@ int	ptest;
 		 *         seq = 0xa000000, seq = 0xffffffff
 		 */
 		printf("5.2.1 TCP seq = 0\n");
-		t->th_seq = 0;
+		t->th_seq = htonl(0);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.2.2 TCP seq = 1\n");
-		t->th_seq = 1;
+		t->th_seq = htonl(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.2.3 TCP seq = 0x7fffffff\n");
-		t->th_seq = 0x7fffffff;
+		t->th_seq = htonl(0x7fffffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.2.4 TCP seq = 0x80000000\n");
-		t->th_seq = 0x80000000;
+		t->th_seq = htonl(0x80000000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.2.5 TCP seq = 0xc0000000\n");
-		t->th_seq = 0xc0000000;
+		t->th_seq = htonl(0xc0000000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.2.6 TCP seq = 0xffffffff\n");
-		t->th_seq = 0xffffffff;
+		t->th_seq = htonl(0xffffffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
@@ -969,31 +965,31 @@ int	ptest;
 		PAUSE();
 
 		printf("5.3.2 TCP ack = 1\n");
-		t->th_ack = 1;
+		t->th_ack = htonl(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.3.3 TCP ack = 0x7fffffff\n");
-		t->th_ack = 0x7fffffff;
+		t->th_ack = htonl(0x7fffffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.3.4 TCP ack = 0x80000000\n");
-		t->th_ack = 0x80000000;
+		t->th_ack = htonl(0x80000000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.3.5 TCP ack = 0xc0000000\n");
-		t->th_ack = 0xc0000000;
+		t->th_ack = htonl(0xc0000000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.3.6 TCP ack = 0xffffffff\n");
-		t->th_ack = 0xffffffff;
+		t->th_ack = htonl(0xffffffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
@@ -1005,27 +1001,28 @@ int	ptest;
 		 * Test 4: win = 0, win = 32768, win = 65535
 		 */
 		printf("5.4.1 TCP win = 0\n");
-		t->th_seq = 0;
+		t->th_seq = htonl(0);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.4.2 TCP win = 32768\n");
-		t->th_seq = 0x7fff;
+		t->th_seq = htonl(0x7fff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.4.3 TCP win = 65535\n");
-		t->th_win = 0xffff;
+		t->th_win = htons(0xffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 	}
 
-#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__) && !defined(__sgi)
+#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__) && \
+    !defined(__sgi)
 	{
-	struct tcpcb *t, tcb;
+	struct tcpcb *tcbp, tcb;
 	struct tcpiphdr ti;
 	struct sockaddr_in sin;
 	int fd, slen;
@@ -1034,10 +1031,13 @@ int	ptest;
 
 	for (i = 1; i < 63; i++) {
 		fd = socket(AF_INET, SOCK_STREAM, 0);
+		bzero((char *)&sin, sizeof(sin));
 		sin.sin_addr.s_addr = ip->ip_dst.s_addr;
 		sin.sin_port = htons(i);
+		sin.sin_family = AF_INET;
 		if (!connect(fd, (struct sockaddr *)&sin, sizeof(sin)))
 			break;
+		close(fd);
 	}
 
 	if (i == 63) {
@@ -1048,44 +1048,53 @@ int	ptest;
 	}
 
 	bcopy((char *)ip, (char *)&ti, sizeof(*ip));
-	ti.ti_dport = i;
+	t->th_dport = htons(i);
 	slen = sizeof(sin);
 	if (!getsockname(fd, (struct sockaddr *)&sin, &slen))
-		ti.ti_sport = sin.sin_port;
-	if (!(t = find_tcp(fd, &ti))) {
+		t->th_sport = sin.sin_port;
+	if (!(tcbp = find_tcp(fd, &ti))) {
 		printf("Can't find PCB\n");
 		goto skip_five_and_six;
 	}
-	KMCPY(&tcb, t, sizeof(tcb));
+	KMCPY(&tcb, tcbp, sizeof(tcb));
 	ti.ti_win = tcb.rcv_adv;
-	ti.ti_seq = tcb.snd_nxt - 1;
+	ti.ti_seq = htonl(tcb.snd_nxt - 1);
 	ti.ti_ack = tcb.rcv_nxt;
 
 	if (!ptest || (ptest == 5)) {
 		/*
 		 * Test 5: urp
 		 */
-		printf("5.1 TCP Urgent pointer\n");
-		ti.ti_urp = 1;
+		t->th_flags = TH_ACK|TH_URG;
+		printf("5.5.1 TCP Urgent pointer, sport %hu dport %hu\n",
+			ntohs(t->th_sport), ntohs(t->th_dport));
+		t->th_urp = htons(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0x7fff;
+
+		t->th_seq = htonl(tcb.snd_nxt);
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t) + 1;
+		t->th_urp = htons(0x7fff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0x8000;
+		t->th_urp = htons(0x8000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0xffff;
+		t->th_urp = htons(0xffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
+		t->th_urp = 0;
+		t->th_flags &= ~TH_URG;
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	}
 
 	if (!ptest || (ptest == 6)) {
 		/*
 		 * Test 6: data offset, off = 0, off is inside, off is outside
 		 */
-		printf("6.1 TCP off = 0-15, len = 40\n");
-		for (i = 0; i < 16; i++) {
+		t->th_flags = TH_ACK;
+		printf("5.6.1 TCP off = 1-15, len = 40\n");
+		for (i = 1; i < 16; i++) {
 			ti.ti_off = ntohs(i);
 			(void) send_tcp(nfd, mtu, ip, gwip);
 			printf("%d\r", i);
@@ -1093,17 +1102,18 @@ int	ptest;
 			PAUSE();
 		}
 		putchar('\n');
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	}
 
 	(void) close(fd);
 	}
 skip_five_and_six:
 #endif
-	t->th_seq = 1;
-	t->th_ack = 1;
+	t->th_seq = htonl(1);
+	t->th_ack = htonl(1);
+	t->th_off = 0;
 
 	if (!ptest || (ptest == 7)) {
-		t->th_off = 0;
 		t->th_flags = TH_SYN;
 		/*
 		 * Test 7: sport = 0, sport = 1, sport = 32767
@@ -1116,32 +1126,33 @@ skip_five_and_six:
 		PAUSE();
 
 		printf("5.7.2 TCP sport = 1\n");
-		t->th_sport = 1;
+		t->th_sport = htons(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.7.3 TCP sport = 32767\n");
-		t->th_sport = 32767;
+		t->th_sport = htons(32767);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.7.4 TCP sport = 32768\n");
-		t->th_sport = 32768;
+		t->th_sport = htons(32768);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.7.5 TCP sport = 65535\n");
-		t->th_sport = 65535;
+		t->th_sport = htons(65535);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 	}
 
 	if (!ptest || (ptest == 8)) {
-		t->th_sport = 1;
+		t->th_sport = htons(1);
+		t->th_flags = TH_SYN;
 		/*
 		 * Test 8: dport = 0, dport = 1, dport = 32767
 		 *         dport = 32768, dport = 65535
@@ -1153,29 +1164,43 @@ skip_five_and_six:
 		PAUSE();
 
 		printf("5.8.2 TCP dport = 1\n");
-		t->th_dport = 1;
+		t->th_dport = htons(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.8.3 TCP dport = 32767\n");
-		t->th_dport = 32767;
+		t->th_dport = htons(32767);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.8.4 TCP dport = 32768\n");
-		t->th_dport = 32768;
+		t->th_dport = htons(32768);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 
 		printf("5.8.5 TCP dport = 65535\n");
-		t->th_dport = 65535;
+		t->th_dport = htons(65535);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		fflush(stdout);
 		PAUSE();
 	}
+
+	/* LAND attack - self connect, so make src & dst ip/port the same */
+	if (!ptest || (ptest == 9)) {
+		printf("5.9 TCP LAND attack. sport = 25, dport = 25\n");
+		/* chose SMTP port 25 */
+		t->th_sport = htons(25);
+		t->th_dport = htons(25);
+		t->th_flags = TH_SYN;
+		ip->ip_src = ip->ip_dst;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		fflush(stdout);
+		PAUSE();
+	}
+
 	/* TCP options header checking */
 	/* 0 length options, etc */
 }
@@ -1201,22 +1226,23 @@ int	ptest;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_sum = 0;
 	u = (udphdr_t *)(ip + 1);
-	u->uh_sport = 1;
-	u->uh_dport = 9;
+	u->uh_sport = htons(1);
+	u->uh_dport = htons(9);
 	u->uh_sum = 0;
 
 	nfd = initdevice(dev, u->uh_sport, 1);
-	u->uh_sport = htons(u->uh_sport);
-	u->uh_dport = htons(u->uh_dport);
-	u->uh_ulen = 7168;
+	u->uh_ulen = htons(7168);
 
+	printf("6. Exhaustive mbuf test.\n");
+	printf("   Send 7k packet in 768 & 128 byte fragments, 128 times.\n");
+	printf("   Total of around 8,900 packets\n");
 	for (i = 0; i < 128; i++) {
 		/*
 		 * First send the entire packet in 768 byte chunks.
 		 */
 		ip->ip_len = sizeof(*ip) + 768 + sizeof(*u);
 		ip->ip_hl = sizeof(*ip) >> 2;
-		ip->ip_off = IP_MF;
+		ip->ip_off = htons(IP_MF);
 		(void) send_ip(nfd, 1500, ip, gwip, 1);
 		printf("%d %d\r", i, 0);
 		fflush(stdout);
@@ -1225,7 +1251,7 @@ int	ptest;
 		 * And again using 128 byte chunks.
 		 */
 		ip->ip_len = sizeof(*ip) + 128 + sizeof(*u);
-		ip->ip_off = IP_MF;
+		ip->ip_off = htons(IP_MF);
 		(void) send_ip(nfd, 1500, ip, gwip, 1);
 		printf("%d %d\r", i, 0);
 		fflush(stdout);
@@ -1233,7 +1259,7 @@ int	ptest;
 
 		for (j = 768; j < 3584; j += 768) {
 			ip->ip_len = sizeof(*ip) + 768;
-			ip->ip_off = IP_MF|(j>>3);
+			ip->ip_off = htons(IP_MF|(j>>3));
 			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d %d\r", i, j);
 			fflush(stdout);
@@ -1241,7 +1267,7 @@ int	ptest;
 
 			ip->ip_len = sizeof(*ip) + 128;
 			for (k = j - 768; k < j; k += 128) {
-				ip->ip_off = IP_MF|(k>>3);
+				ip->ip_off = htons(IP_MF|(k>>3));
 				(void) send_ip(nfd, 1500, ip, gwip, 1);
 				printf("%d %d\r", i, k);
 				fflush(stdout);
@@ -1295,7 +1321,7 @@ int	ptest;
 		for (s = (u_char *)pip, j = 0; j < sizeof(tbuf); j++, s++)
 			*s = (rand() >> 13) & 0xff;
 		pip->ip_v = IPVERSION;
-		pip->ip_off &= 0xc000;
+		pip->ip_off &= htons(0xc000);
 		bcopy((char *)&ip->ip_dst, (char *)&pip->ip_dst,
 		      sizeof(struct in_addr));
 		pip->ip_sum = 0;
