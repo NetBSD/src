@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.enc,v 1.6 2004/02/09 06:52:34 lukem Exp $
+#	$NetBSD: Makefile.enc,v 1.7 2004/03/06 03:13:06 rtr Exp $
 
 FILESDIR=	${X11FONTDIR}/${ENCDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/${ENCDIR}
@@ -16,13 +16,14 @@ CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
 
 realall: ${FILES}
 
-.include "${NETBSDSRCDIR}/x11/tools/mkfontdir/Makefile.mkfontdir"
+MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontscale && ${PRINTOBJDIR}
+MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
 
 afterinstall:
 	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/encodings.dir
 	(cd ${DESTDIR}${FILESDIR} && \
 	    rm -f encodings.dir ; \
-	    ${MKFONTDIR} -n -r -p ${X11FONTDIR}/${ENCDIR}/ -e . ${ENCARGS} . ; \
+	    ${MKFONTSCALE} -b -s -l -n -r -p ${X11FONTDIR}/${ENCDIR}/ -e . ${ENCARGS} . ; \
 	)
 .if ${MKUNPRIVED} != "no"
 	echo ".${FILESDIR}/encodings.dir type=file mode=0644 uname=${BINOWN} gname=${BINGRP}" \
