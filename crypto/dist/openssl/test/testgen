@@ -6,7 +6,11 @@ CA=../certs/testca.pem
 
 /bin/rm -f $T.1 $T.2 $T.key
 
-PATH=../apps:$PATH;
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH;
+else
+    PATH=../apps:$PATH;
+fi
 export PATH
 
 echo "generating certificate request"
@@ -22,6 +26,8 @@ else
 fi
 
 echo "This could take some time."
+
+rm -f testkey.pem testreq.pem
 
 ../apps/openssl req -config test.cnf $req_new -out testreq.pem
 if [ $? != 0 ]; then
