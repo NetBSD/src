@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1997/01/27 07:58:09 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.17.4.1 1997/03/12 14:46:53 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,9 +58,16 @@
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
 #define ALIGNBYTES	(sizeof(int) - 1)
 #define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -99,7 +106,11 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11
+
+#ifndef MCLSHIFT
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+#endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
@@ -149,67 +160,9 @@
 #define atari_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define atari_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-/*
- * spl functions; all but spl0 are done in-line
- */
-#include <machine/psl.h>
-
-#define _debug_spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
-		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
-		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&s)>>8)); \
-        _spl_r; \
-})
-
-#define _spl_no_check(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
-})
-#if defined (DEBUG)
-#define _spl _debug_spl
-#else
-#define _spl _spl_no_check
-#endif
-
-/* spl0 requires checking for software interrupts */
-#define spl1()	_spl(PSL_S|PSL_IPL1)
-#define spl2()	_spl(PSL_S|PSL_IPL2)
-#define spl3()	_spl(PSL_S|PSL_IPL3)
-#define spl4()	_spl(PSL_S|PSL_IPL4)
-#define spl5()	_spl(PSL_S|PSL_IPL5)
-#define spl6()	_spl(PSL_S|PSL_IPL6)
-#define spl7()	_spl(PSL_S|PSL_IPL7)
-
-#define splnone()	spl0()
-#define splsoftclock()	spl1()
-#define splsoftnet()	spl1()
-#define splbio()	spl3()
-#define splnet()	spl3()
-/*
- * lowered to spl4 to allow for serial input into
- * private ringbuffer inspite of spltty
- */
-#define spltty()	spl4()
-#define splimp()	spl4()
-#define splclock()	spl6()
-#define splstatclock()	spl6()
-#define splvm()		spl6()
-#define splhigh()	spl7()
-#define splsched()	spl7()
-
-#define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
+#include <machine/intr.h>
 
 #ifdef _KERNEL
-int spl0 __P((void));
 void delay __P((int));
 
 #define	DELAY(n)	delay(n)

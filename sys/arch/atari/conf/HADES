@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.6 1997/01/31 05:50:04 thorpej Exp $
+#	$NetBSD: HADES,v 1.6.4.1 1997/03/12 14:46:45 is Exp $
 #
 # Medusa-Hades
 #
@@ -109,3 +109,5 @@ grfet2	at grfbus0
 ite*	at grfet2
 pcibus0	at mainbus0		# PCI-bus
 pci0	at pcibus0
+vmebus0	at mainbus0		# VME bus
+vme0	at vmebus0

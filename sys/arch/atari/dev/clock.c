@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1996/12/20 12:49:35 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.6.1 1997/03/12 14:46:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,9 @@
 #include <sys/device.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+
+#include <dev/clock_subr.h>
+
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -402,23 +405,12 @@ resettodr()
 	return;
 }
 
-static	char	dmsize[12] =
-{
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-static	char	ldmsize[12] =
-{
-	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
 static u_long
 gettod()
 {
-	int		i, sps;
-	u_long		new_time = 0;
-	char		*msize;
-	mc_todregs	clkregs;
+	int			sps;
+	mc_todregs		clkregs;
+	struct clock_ymdhms	dt;
 
 	sps = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);
@@ -436,21 +428,14 @@ gettod()
 		return(0);
 	if(clkregs[MC_YEAR] > (2000 - GEMSTARTOFTIME))
 		return(0);
-	clkregs[MC_YEAR] += GEMSTARTOFTIME;
 
-	for(i = BSDSTARTOFTIME; i < clkregs[MC_YEAR]; i++) {
-		if(is_leap(i))
-			new_time += 366;
-		else new_time += 365;
-	}
-
-	msize = is_leap(clkregs[MC_YEAR]) ? ldmsize : dmsize;
-	for(i = 0; i < (clkregs[MC_MONTH] - 1); i++)
-		new_time += msize[i];
-	new_time += clkregs[MC_DOM] - 1;
-	new_time *= SECS_DAY;
-	new_time += (clkregs[MC_HOUR] * 3600) + (clkregs[MC_MIN] * 60);
-	return(new_time + clkregs[MC_SEC]);
+	dt.dt_year = clkregs[MC_YEAR] + GEMSTARTOFTIME;
+	dt.dt_mon  = clkregs[MC_MONTH];
+	dt.dt_day  = clkregs[MC_DOM];
+	dt.dt_hour = clkregs[MC_HOUR];
+	dt.dt_min  = clkregs[MC_MIN];
+	dt.dt_sec  = clkregs[MC_SEC];
+	return(clock_ymdhms_to_secs(&dt));
 }
 /***********************************************************************
  *                   RTC-device support				       *

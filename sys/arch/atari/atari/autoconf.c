@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1997/01/31 01:47:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.4.1 1997/03/12 14:46:40 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -156,25 +156,25 @@ config_console()
 #include "sd.h"
 #include "cd.h"
 
-#if NFD > 0
-extern	struct cfdriver fd_cd;
-#endif
 #if NSD > 0
 extern	struct cfdriver sd_cd;  
 #endif
 #if NCD > 0
 extern	struct cfdriver cd_cd;
 #endif
-
-struct cfdriver genericconf[] = {
 #if NFD > 0
-	&fd_cd,
+extern	struct cfdriver fd_cd;
 #endif
+
+struct cfdriver *genericconf[] = {
 #if NSD > 0
 	&sd_cd,
 #endif
-#ifdef NCD > 0
+#if NCD > 0
 	&cd_cd,
+#endif
+#if NFD > 0
+	&fd_cd,
 #endif
 	NULL,
 };
@@ -186,8 +186,7 @@ findroot(devpp, partp)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct bdevsw *bdp;
-	struct device *dv, **devs;
+	struct device **devs;
 	int i, maj, unit;
 
 	/*
@@ -215,12 +214,12 @@ findroot(devpp, partp)
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
 			
-			for (maj = 0; maj < nbdevsw; maj++)
+			for (maj = 0; maj < nblkdev; maj++)
 				if (bdevsw[maj].d_strategy ==
 				    dkp->dk_driver->d_strategy)
 					break;
 #ifdef DIAGNOSTIC
-			if (maj >= nbdevsw)
+			if (maj >= nblkdev)
 				panic("findroot: impossible");
 #endif
 
@@ -277,6 +276,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "clock"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "pcibus" , simple_devprint);
+	config_found(dp, "vmebus" , simple_devprint);
 	config_found(dp, "kbd"    , simple_devprint);
 	config_found(dp, "fdc"    , simple_devprint);
 	config_found(dp, "zs"     , simple_devprint);

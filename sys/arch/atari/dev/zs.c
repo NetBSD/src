@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 1997/01/21 20:41:10 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.26.4.1 1997/03/12 14:46:50 is Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -295,7 +295,7 @@ void		*aux;
 		/*
 		 * enable scc related interrupts
 		 */
-		SCU->sys_mask |= SCU_SCC;
+		SCU->vme_mask |= SCU_SCC;
 
 		zs_frequencies = zs_freqs_tt;
 	} else if (machineid & ATARI_FALCON) {

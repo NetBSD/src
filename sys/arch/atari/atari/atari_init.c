@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.26 1997/01/21 20:37:03 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.26.4.1 1997/03/12 14:46:38 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -469,11 +469,17 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 * movel #$0xc000,d0;
 		 * movec d0,TC
 		 */
-		asm volatile ("movel %0,a0;.word 0x4e7b,0x8807" : :
-						"a" (Sysseg_pa) : "a0");
+		if (cputype == CPU_68060) {
+			/* XXX: Need the branch cache be cleared? */
+			asm volatile (".word 0x4e7a,0x0002;" 
+				      "orl #0x400000,d0;" 
+				      ".word 0x4e7b,0x0002" : : : "d0");
+		}
+		asm volatile ("movel %0,a0;"
+			      ".word 0x4e7b,0x8807" : : "a" (Sysseg_pa) : "a0");
 		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : :
-						"d0" );
+		asm volatile ("movel #0xc000,d0;"
+			      ".word 0x4e7b,0x0003" : : : "d0" );
 	} else
 #endif
 	{
@@ -577,7 +583,8 @@ atari_hwinit()
 		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
 		 * MFP (ipl6) and softints (ipl1).
 		 */
-		SCU->sys_mask = SCU_MFP | SCU_SCC | SCU_SYS_SOFT;
+		SCU->sys_mask = SCU_SYS_SOFT;
+		SCU->vme_mask = SCU_MFP | SCU_SCC;
 #ifdef DDB
 		/*
 		 * This allows people with the correct hardware modification

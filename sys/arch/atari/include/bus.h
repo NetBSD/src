@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1997/01/27 10:18:33 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.4.1 1997/03/12 14:46:51 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -71,6 +71,18 @@ void	bus_space_write_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 void	bus_space_write_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
+
+/*
+ * Check accesibility of the location for various sized bus accesses
+ */
+#define bus_space_peek_1(t, h, o)					\
+	(!badbaddr((caddr_t)((h) + (o)), 1))
+#define bus_space_peek_2(t, h, o)					\
+	(!badbaddr((caddr_t)((h) + (o)), 2))
+#define bus_space_peek_4(t, h, o)					\
+	(!badbaddr((caddr_t)((h) + (o)), 4))
+#define bus_space_peek_8(t, h, o)					\
+	(!badbaddr((caddr_t)((h) + (o)), 8))
 
 #define	bus_space_read_1(t, h, o)					\
     ((void) t, (*(volatile u_int8_t *)((h) + (o))))
