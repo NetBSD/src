@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.24 1994/11/03 16:46:42 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.25 1994/11/03 16:50:50 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -96,9 +96,9 @@ file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-count
 
 define	commulti {}
 device	ast at isa: commulti
-file	arch/i386/isa/ast.c		ast needs-count
+file	arch/i386/isa/ast.c		ast
 device	rtfps at isa: commulti
-file	arch/i386/isa/rtfps.c		rtfps needs-count
+file	arch/i386/isa/rtfps.c		rtfps
 
 device	com at isa, commulti: tty
 file	arch/i386/isa/com.c		com needs-count
@@ -126,14 +126,14 @@ file	arch/i386/isa/seagate.c		sea
 device	uha at isa, eisa: scsi, dma
 file	arch/i386/isa/ultra14f.c	uha
 device	wds at isa: scsi, dma
-file	arch/i386/isa/wd7000.c		wds needs-count
+file	arch/i386/isa/wd7000.c		wds
 
 device	fdc at isa {drive = -1}
 device	fd at fdc: disk, dma
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 device	mcd at isa: disk, dma
-file	arch/i386/isa/mcd.c		mcd needs-count
+file	arch/i386/isa/mcd.c		mcd needs-flag
 major	{mcd = 7}
 device	wdc at isa {drive = -1}
 device	wd at wdc: disk
