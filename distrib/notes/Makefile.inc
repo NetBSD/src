@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.2.2 2002/06/18 13:57:53 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.3 2002/07/20 07:02:46 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -16,9 +16,9 @@ TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
-SRCS=	${MAIN} whatis contents hardware xfer prep install\
-	upgrade donations legal.common legal postinstall ../Makefile.inc\
-	${MERGED_SRCS}
+SRCS=	${MAIN} whatis contents hardware xfer prep ${.CURDIR}/install \
+	upgrade donations legal.common legal postinstall \
+	${.CURDIR}/../Makefile.inc ${MERGED_SRCS}
 
 PRESET=	${GFLAGS} -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
 
@@ -39,24 +39,25 @@ ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 all: ${TARGS}
 
 .if ${MKTOCS} != "no"
-  TOCDEPS = ${TOCS}
-.else
-  TOCDEPS =
+TOC.ps=		${TOCS:M*.PostScript.*}
+TOC.txt=	${TOCS:M*.ASCII.*}
+TOC.html=	${TOCS:M*.HTML.*}
+TOC.more=	${TOCS:M*.more.*}
 .endif
 
-${TARG}.ps: ${SRCS} ${TOCDEPS}
+${TARG}.ps: ${SRCS} ${TOC.ps}
 	${GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
-${TARG}.txt: ${SRCS} ${TOCDEPS}
+${TARG}.txt: ${SRCS} ${TOC.txt}
 	${GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
 
-${TARG}.html: ${SRCS} ${TOCDEPS}
+${TARG}.html: ${SRCS} ${TOC.html}
 	${GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
 
-${TARG}.more: ${SRCS} ${TOCDEPS}
+${TARG}.more: ${SRCS} ${TOC.more}
 	${GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 TOCPROC=	   2>&1 >/dev/null |\
@@ -80,8 +81,6 @@ ${TARG}.HTML.toc: ${SRCS}
 	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
-# needs to be created twice to take into account the space taken
-# by the TOC itself
 ${TARG}.more.toc: ${SRCS}
 	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
@@ -94,6 +93,7 @@ release: check_RELEASEDIR .WAIT ${TARGS}
 .PATH: ${.CURDIR}/../common
 
 cleannotes:
-	rm -f [Ee]rrs mklog core *.core ${TARGS} ${TOCS}
+	rm -f [Ee]rrs mklog core *.core ${TARGS} ${TOCS} \
+	    ${TOCS:S/.toc$/.toc.tmp/g}
 
 clean cleandir distclean: cleannotes
