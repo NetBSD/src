@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.9,v 1.1 1995/11/25 21:24:48 perry Exp $
+.\"	$NetBSD: boot.9,v 1.2 1996/09/24 07:01:26 ghudson Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/reboot.h>
 .Ft void
-.Fn boot "int howto"
+.Fn boot "int howto" "char *bootstr"
 .Sh DESCRIPTION
 The
 .Fn boot
@@ -99,6 +99,14 @@ If the system has not finished autoconfiguration,
 runs any shutdown hooks by calling
 .Xr doshutdownhooks 9 ,
 prints a message, and halts the system.
+.Pp
+If
+.Dv RB_STRING
+is set in
+.Pa howto ,
+then the parameter
+.Fa bootstr
+is passed to the system boot loader on some ports.
 .Sh SEE ALSO
 .Xr doshutdownhooks 9 ,
 .Xr resettodr 9 ,
