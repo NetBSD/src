@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.48 1997/07/01 07:21:15 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.49 1997/08/06 12:03:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,7 +140,6 @@ extern tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 extern u_long kmin_tc3_imask, xine_tc3_imask;
 extern const struct callback *callv;
 
-extern volatile struct chiptime *Mach_clock_addr;
 extern u_long intrcnt[];
 
 /*
@@ -195,7 +194,8 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register volatile struct chiptime *c = Mach_clock_addr;
+	register volatile struct chiptime *c = 
+	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	struct clockframe cf;
 	int temp;
 	extern struct cfdriver sii_cd;
@@ -266,7 +266,8 @@ kn02_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register unsigned i, m;
-	register volatile struct chiptime *c = Mach_clock_addr;
+	register volatile struct chiptime *c = 
+	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 	register unsigned csr;
 	int temp;
 	struct clockframe cf;
@@ -344,7 +345,8 @@ kmin_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
+	register volatile struct chiptime *c = 
+	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
 	volatile u_int *imaskp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
 	volatile u_int *intrp =
@@ -463,7 +465,8 @@ xine_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
+	register volatile struct chiptime *c = 
+	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK);
 	volatile u_int *intrp = (volatile u_int *)
@@ -601,7 +604,8 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
+	register volatile struct chiptime *c = 
+	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(KN03_REG_IMSK);
 	volatile u_int *intrp = (volatile u_int *)

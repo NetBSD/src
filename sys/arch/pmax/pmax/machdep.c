@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/07/28 19:40:44 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1997/08/06 12:03:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,7 +208,7 @@ int	(*Mach_splimp)__P((void)) = splhigh;
 int	(*Mach_splclock)__P((void)) = splhigh;
 int	(*Mach_splstatclock)__P((void)) = splhigh;
 
-extern	volatile struct chiptime *Mach_clock_addr;
+volatile struct chiptime *mcclock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 
 int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
@@ -506,7 +506,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splclock = cpu_spl3;
 		Mach_splstatclock = cpu_spl3;
 
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "3100");
 		break;
@@ -527,7 +527,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = Mach_spl2;
 		Mach_splclock = Mach_spl3;
 		Mach_splstatclock = Mach_spl3;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "5100");
 		break;
@@ -559,7 +559,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = Mach_spl0;
 		Mach_splclock = cpu_spl1;
 		Mach_splstatclock = cpu_spl1;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 
 		}
@@ -592,7 +592,7 @@ mach_init(argc, argv, code, cv)
 		Mach_splimp = splhigh;
 		Mach_splclock = splhigh;
 		Mach_splstatclock = splhigh;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
 
 
@@ -652,7 +652,7 @@ mach_init(argc, argv, code, cv)
 		 */
 		Mach_splclock = cpu_spl3;
 		Mach_splstatclock = cpu_spl3;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
 
 		/*
@@ -697,7 +697,7 @@ mach_init(argc, argv, code, cv)
 		 */
 		Mach_splclock = cpu_spl1;
 		Mach_splstatclock = cpu_spl1;
-		Mach_clock_addr = (volatile struct chiptime *)
+		mcclock_addr = (volatile struct chiptime *)
 			MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 
 		asic_init(0);
@@ -1316,10 +1316,10 @@ initcpu()
 	 */
 #if 1 /*XXX*/
 	/* disable clock interrupts (until startrtclock()) */
-	if (Mach_clock_addr) {
-	c = Mach_clock_addr;
-	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	i = c->regc;
+	if (mcclock_addr) {
+		c = mcclock_addr;
+		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
+		i = c->regc;
 	}
 	return (i);
 #endif
