@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.122 1999/03/26 13:10:17 sommerfe Exp $
+#	$NetBSD: rc,v 1.123 1999/03/26 13:45:47 drochner Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -503,10 +503,6 @@ if checkyesno usbd; then
 	echo -n ' usbd';		usbd $usbd_flags
 fi
 
-if checkyesno xdm; then
-	echo -n ' xdm';			xdm $xdm_flags
-fi
-
 echo '.'
 
 # Kerberos runs ONLY on the Kerberos server machine
@@ -520,6 +516,12 @@ fi
 if checkyesno wscons && [ -f /etc/rc.wscons ]; then
 	echo 'configuring wscons'
 	/bin/sh /etc/rc.wscons $wscons_flags
+fi
+
+# xdm after wscons - need a virtual screen for X
+if checkyesno xdm; then
+	echo 'starting xdm'
+	xdm $xdm_flags
 fi
 
 . /etc/rc.local
