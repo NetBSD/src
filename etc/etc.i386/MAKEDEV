@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.196 2003/04/17 18:51:23 fvdl Exp $
+#	$NetBSD: MAKEDEV,v 1.197 2003/04/18 06:00:46 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -829,6 +829,10 @@ sysmon)
 	rm -f watchdog
 	mknod watchdog c $major 1
 	chmod 644 watchdog
+
+	rm -f power
+	mknod power c $major 2
+	chmod 640 power
 	;;
 
 scsibus*)
