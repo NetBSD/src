@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.9 2000/07/06 11:19:39 ad Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.10 2000/11/18 19:29:20 fvdl Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@ krb5_arg_end(void)
 void
 krb5_end(void)
 {
+    if (context == NULL)
+	return;
     if(defprinc)
 	krb5_free_principal(context, defprinc);
     krb5_free_context(context);
