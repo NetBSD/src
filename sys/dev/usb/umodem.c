@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.39 2001/02/16 20:15:57 kenh Exp $	*/
+/*	$NetBSD: umodem.c,v 1.40 2001/03/25 23:02:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ USB_ATTACH(umodem)
 	/*
 	 * The standard allows for notification messages (to indicate things
 	 * like a modem hangup) to come in via an interrupt endpoint
-	 * off of the control interface.  Interate over the endpoints on
+	 * off of the control interface.  Iterate over the endpoints on
 	 * the control interface and see if there are any interrupt
 	 * endpoints; if there are, then register it.
 	 */
@@ -398,49 +398,47 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 	}
 
-	if (sc->sc_notify_buf.bmRequestType == UCDC_NOTIFICATION)
-		switch (sc->sc_notify_buf.bNotification) {
-		case UCDC_N_SERIAL_STATE:
-			/*
-			 * Set the serial state in ucom driver based on
-			 * the bits from the notify message
-			 */
-			if (UGETW(sc->sc_notify_buf.wLength) != 2) {
-				printf("%s: Invalid notification length! "
-					"(%d)\n", USBDEVNAME(sc->sc_dev),
-					UGETW(sc->sc_notify_buf.wLength));
-				break;
-			}
-			DPRINTF(("%s: notify bytes = %02x%02x\n",
-				USBDEVNAME(sc->sc_dev),
-				sc->sc_notify_buf.data[0],
-				sc->sc_notify_buf.data[1]));
-			/*
-			 * Currently, lsr is always zero
-			 */
-			sc->sc_lsr = sc->sc_msr = 0;
-			mstatus = sc->sc_notify_buf.data[0];
-
-			if (ISSET(mstatus, UCDC_N_SERIAL_RI))
-				sc->sc_msr |= UMSR_RI;
-			if (ISSET(mstatus, UCDC_N_SERIAL_DSR))
-				sc->sc_msr |= UMSR_DSR;
-			if (ISSET(mstatus, UCDC_N_SERIAL_DCD))
-				sc->sc_msr |= UMSR_DCD;
-			ucom_status_change((struct ucom_softc *) sc->sc_subdev);
-			break;
-		default:
-			DPRINTF(("%s: unknown notify message: %02x\n",
-				 USBDEVNAME(sc->sc_dev),
-				 sc->sc_notify_buf.bNotification));
-			break;
-		}
-	else
+	if (sc->sc_notify_buf.bmRequestType != UCDC_NOTIFICATION) {
 		DPRINTF(("%s: unknown message type (%02x) on notify pipe\n",
 			 USBDEVNAME(sc->sc_dev),
 			 sc->sc_notify_buf.bmRequestType));
+		return;
+	}
 
-	return;
+	switch (sc->sc_notify_buf.bNotification) {
+	case UCDC_N_SERIAL_STATE:
+		/*
+		 * Set the serial state in ucom driver based on
+		 * the bits from the notify message
+		 */
+		if (UGETW(sc->sc_notify_buf.wLength) != 2) {
+			printf("%s: Invalid notification length! (%d)\n",
+			       USBDEVNAME(sc->sc_dev),
+			       UGETW(sc->sc_notify_buf.wLength));
+			break;
+		}
+		DPRINTF(("%s: notify bytes = %02x%02x\n",
+			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_notify_buf.data[0],
+			 sc->sc_notify_buf.data[1]));
+		/* Currently, lsr is always zero. */
+		sc->sc_lsr = sc->sc_msr = 0;
+		mstatus = sc->sc_notify_buf.data[0];
+		
+		if (ISSET(mstatus, UCDC_N_SERIAL_RI))
+			sc->sc_msr |= UMSR_RI;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DSR))
+			sc->sc_msr |= UMSR_DSR;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DCD))
+			sc->sc_msr |= UMSR_DCD;
+		ucom_status_change((struct ucom_softc *)sc->sc_subdev);
+		break;
+	default:
+		DPRINTF(("%s: unknown notify message: %02x\n",
+			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_notify_buf.bNotification));
+		break;
+	}
 }
 
 void
