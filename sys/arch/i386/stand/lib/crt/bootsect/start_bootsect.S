@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.4 1998/07/07 13:58:59 drochner Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.5 1998/10/08 14:25:42 ws Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -380,8 +380,8 @@ endofcode:
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
-	.byte	BOOTABLE,0,1,0,NETBSDPART,255,255,255
-	.long	0,50000
+	.byte	BOOTABLE,0,1,0,NETBSDPART,0,16,0
+	.long	0,16
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = _C_LABEL(boot1) + 0x1fe
 	.short	SIGNATURE
