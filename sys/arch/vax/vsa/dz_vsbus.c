@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.24 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.25 2002/09/18 18:36:52 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -196,7 +196,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 #if NDZMS > 0
-	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR \
+	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_8_BIT_CHAR \
 	    | DZ_LPR_PARENB | DZ_LPR_OPAR | 1 /* line */;
 	daa.daa_line = 1;
 	daa.daa_flags = 0;
@@ -334,7 +334,7 @@ dzgetc(struct dz_linestate *ls)
 void
 dzputc(struct dz_linestate *ls, int ch)
 {
-	int line = 0; /* = ls->dz_line; */
+	int line;
 	u_short tcr;
 	int s;
 	extern const struct cdevsw dz_cdevsw;
@@ -343,7 +343,8 @@ dzputc(struct dz_linestate *ls, int ch)
 	   driver will do the transmitting: */
 	if (ls && ls->dz_sc) {
 		s = spltty();
-		putc(ch, &ls->dz_sc->sc_dz[line].dz_tty->t_outq);
+		line = ls->dz_line;
+		putc(ch, &ls->dz_tty->t_outq);
 		tcr = dz->tcr;
 		if (!(tcr & (1 << line)))
 			dz->tcr = tcr | (1 << line);
@@ -353,6 +354,6 @@ dzputc(struct dz_linestate *ls, int ch)
 	}
 
 	/* use dzcnputc to do the transmitting: */
-	dzcnputc(makedev(cdevsw_lookup_major(&dz_cdevsw), line), ch);
+	dzcnputc(makedev(cdevsw_lookup_major(&dz_cdevsw), 0), ch);
 }
 #endif /* NDZKBD > 0 || NDZMS > 0 */
