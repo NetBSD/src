@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.75 2002/03/13 08:12:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.75 2002/03/13 08:12:58 simonb Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1048,7 +1048,7 @@ pool_prime(struct pool *pp, int n)
 {
 	struct pool_item_header *ph;
 	caddr_t cp;
-	int newpages, error = 0;
+	int newpages;
 
 	simple_lock(&pp->pr_slock);
 
@@ -1062,7 +1062,6 @@ pool_prime(struct pool *pp, int n)
 		simple_lock(&pp->pr_slock);
 
 		if (__predict_false(cp == NULL || ph == NULL)) {
-			error = ENOMEM;
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
 			break;
@@ -1198,7 +1197,6 @@ pool_catchup(struct pool *pp)
 void
 pool_setlowat(struct pool *pp, int n)
 {
-	int error;
 
 	simple_lock(&pp->pr_slock);
 
@@ -1208,7 +1206,7 @@ pool_setlowat(struct pool *pp, int n)
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	/* Make sure we're caught up with the newly-set low water mark. */
-	if (POOL_NEEDS_CATCHUP(pp) && (error = pool_catchup(pp) != 0)) {
+	if (POOL_NEEDS_CATCHUP(pp) && pool_catchup(pp) != 0) {
 		/*
 		 * XXX: Should we log a warning?  Should we set up a timeout
 		 * to try again in a second or so?  The latter could break
