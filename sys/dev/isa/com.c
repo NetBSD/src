@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.76 1996/03/17 00:53:10 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.77 1996/03/17 13:38:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -68,6 +68,8 @@
 #endif
 #define	com_lcr	com_cfcr
 
+#include "com.h"
+
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
 
@@ -108,11 +110,9 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
-int comprobe __P((struct device *, void *, void *));
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_io_handle_t hayespioh, struct com_softc *sc));
 #endif
-void comattach __P((struct device *, struct device *, void *));
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 void comdiag __P((void *));
@@ -125,13 +125,20 @@ void comstart __P((struct tty *));
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
+int comprobe __P((struct device *, void *, void *));
+void comattach __P((struct device *, struct device *, void *));
+
+#if NCOM_ISA
 struct cfattach com_isa_ca = {
 	sizeof(struct com_softc), comprobe, comattach
 };
+#endif
 
-struct cfattach com_multi_ca = {
+#if NCOM_COMMULTI
+struct cfattach com_commulti_ca = {
 	sizeof(struct com_softc), comprobe, comattach
 };
+#endif
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
@@ -290,13 +297,17 @@ comprobe(parent, match, aux)
 	 * XXX for commulti probe, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
+#if NCOM_ISA
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
 		bc = ia->ia_bc;
 		iobase = ia->ia_iobase;
 		needioh = 1;
-	} else {
+	} else
+#endif
+#if NCOM_COMMULTI
+	if (1) {
 		struct commulti_attach_args *ca = aux;
  
 		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
@@ -306,7 +317,9 @@ comprobe(parent, match, aux)
 		iobase = ca->ca_iobase;
 		ioh = ca->ca_ioh;
 		needioh = 0;
-	}
+	} else
+#endif
+		return(0);			/* This cannot happen */
 
 	/* if it's in use as console, it's there. */
 	if (iobase == comconsaddr && !comconsattached)
@@ -321,12 +334,14 @@ comprobe(parent, match, aux)
 		bus_io_unmap(bc, ioh, COM_NPORTS);
 
 out:
+#if NCOM_ISA
 	if (rv && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
 		ia->ia_iosize = COM_NPORTS;
 		ia->ia_msize = 0;
 	}
+#endif
 	return (rv);
 }
 
@@ -353,6 +368,7 @@ comattach(parent, self, aux)
 	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
+#if NCOM_ISA
 	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
 		struct isa_attach_args *ia = aux;
 
@@ -367,7 +383,10 @@ comattach(parent, self, aux)
 		} else
 	                ioh = comconsioh;
 		irq = ia->ia_irq;
-	} else {
+	} else
+#endif
+#if NCOM_COMMULTI
+	if (1) {
 		struct commulti_attach_args *ca = aux;
 
 		/*
@@ -380,7 +399,9 @@ comattach(parent, self, aux)
 
 		if (ca->ca_noien)
 			sc->sc_hwflags |= COM_HW_NOIEN;
-	}
+	} else
+#endif
+		panic("comattach: impossible");
 
 	sc->sc_bc = bc;
 	sc->sc_ioh = ioh;
