@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.13 1997/07/07 10:57:34 fvdl Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.14 1997/07/20 23:23:45 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -195,7 +195,8 @@ typedef struct {
 }
 #define vm_map_clear_recursive(map) { \
 	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags &= ~LK_CANRECURSE; \
+	if ((map)->lk_exclusivecount <= 1) \
+		(map)->lk_flags &= ~LK_CANRECURSE; \
 	simple_unlock(&(map)->lk_interlock); \
 }
 
