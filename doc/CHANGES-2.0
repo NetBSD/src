@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.519 2004/11/12 06:13:26 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.520 2004/11/12 06:16:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7965,3 +7965,11 @@ dist/ipf/tools/ipf_y.y				1.15
 	In going from 3.4.x to 4.1.x, "state-age" became "age" but the input 
 	grammar did not allow for backwards compatibility. PR#27590
 	[christos, ticket #945]
+
+sys/dev/pci/pcidevs				1.657
+sys/dev/pci/amr.c				1.23
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Added support for DELL PERC 4e/Si RAID controller
+	[martti, ticket #947]
