@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/09/18 03:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2002/11/29 13:06:32 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 PROG=	makefs
 SRCS=	makefs.c walk.c \
 	ffs.c mkfs.c buf.c \
-	getid.c misc.c spec.c pack_dev.c stat_flags.c strsuftoull.c \
+	getid.c misc.c spec.c pack_dev.c stat_flags.c \
 	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c ufs_bmap.c 
 MAN=	makefs.8
 
