@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/19 08:07:28 jmc Exp $
 
 NOMAN=		# defined
 
@@ -11,6 +11,8 @@ TESTS=		C en_US.UTF-8 ja_JP.ISO2022-JP2 ja_JP.SJIS ja_JP.eucJP
 INPUTS=		${TESTS:S/$/.in/}
 OUTPUTS=	${TESTS:S/$/.out/}
 
+UUDECODE_FILES=	${TESTS}
+
 CLEANFILES+=	${OUTPUTS} ${INPUTS}
 
 regress: ${PROG} ${TESTS}
@@ -21,10 +23,5 @@ $L: $L.in
 	@env LC_CTYPE=$L LC_ALL= LANG= ./${PROG} `cat ${.ALLSRC}` > $L.out
 .endfor
 
-# paranoia: protect against non-ASCII characters
-.for L in ${TESTS}
-$L.in: $L.in.uu
-	uudecode ${.ALLSRC}
-.endfor
-
+.include <bsd.files.mk>
 .include <bsd.prog.mk>
