@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.11 1997/11/12 23:12:26 thorpej Exp $
+#	$NetBSD: Makefile.powerpc,v 1.12 1998/04/12 23:47:44 tv Exp $
 #
 # Makefile for NetBSD
 #
@@ -44,10 +44,14 @@ S!=	cd ../../../..; pwd
 .endif
 PPC=	$S/arch/powerpc
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpowerpc
-CWARNFLAGS=	-Werror -Wreturn-type
+CWARNFLAGS?=	-Werror -Wreturn-type
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100000 -e __start

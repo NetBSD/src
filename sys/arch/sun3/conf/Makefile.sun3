@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.67 1998/02/05 04:56:30 gwr Exp $
+# $NetBSD: Makefile.sun3,v 1.68 1998/04/12 23:47:45 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -54,12 +54,16 @@ TEXTADDR=0E004000
 
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
 DEFINES=	-D_KERNEL -Dmc68020 -Dsun3
 CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
-CWARNFLAGS= 	-Wall -Wstrict-prototypes # -Wmissing-prototypes -Werror
+CWARNFLAGS?= 	-Wall -Wstrict-prototypes # -Wmissing-prototypes -Werror
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 # No, we may NOT assume that the compiler does -x whatever...
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.38 1997/11/12 23:12:37 thorpej Exp $
+#	$NetBSD: Makefile.vax,v 1.39 1998/04/12 23:47:45 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -42,10 +42,14 @@ S!=	cd ../../../..; pwd
 .endif
 VAX=	$S/arch/vax
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D_VAX_INLINE_
-CWARNFLAGS=	-Werror
+CWARNFLAGS?=	-Werror
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Z -Ttext 80000000 -e _start

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.50 1997/11/12 23:12:28 thorpej Exp $
+# 	$NetBSD: Makefile.sparc,v 1.51 1998/04/12 23:47:44 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -42,9 +42,13 @@ S!=	cd ../../../..; pwd
 .endif
 SPARC=	$S/arch/sparc
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu

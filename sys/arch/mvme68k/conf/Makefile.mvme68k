@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.32 1997/11/12 23:12:16 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.33 1998/04/12 23:47:44 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -44,10 +44,14 @@ MVME68K=$S/arch/mvme68k
 
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dmvme68k
-CWARNFLAGS=	-Werror
+CWARNFLAGS?=	-Werror
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
