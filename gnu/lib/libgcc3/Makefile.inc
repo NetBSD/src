@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2004/03/08 14:45:07 skrll Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -52,7 +52,7 @@ ${LIB2DIVMOD}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
-.if !empty(LIB1ASMFUNCS)
+.if !empty(G_LIB1ASMFUNCS)
 ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
