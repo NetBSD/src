@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.14 2001/12/03 06:11:33 kent Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.15 2002/03/18 07:11:06 oki Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.14 2001/12/03 06:11:33 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.15 2002/03/18 07:11:06 oki Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -58,57 +58,62 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.14 2001/12/03 06:11:33 kent Exp $"
 
 #include <compat/pecoff/pecoff_exec.h>
 #include <compat/pecoff/pecoff_util.h>
+#include <compat/pecoff/pecoff_syscall.h>
 
-int pecoff_signature __P((struct proc *p, struct vnode *vp,
-			    struct pecoff_dos_filehdr *dp));
-int pecoff_load_file __P((struct proc *p, struct exec_package *epp,
-			 char *path, struct exec_vmcmd_set *vcset,
-			 u_long *entry, struct pecoff_args *argp));
-void pecoff_load_section __P((struct exec_vmcmd_set *vcset, struct vnode *vp,
-			     struct coff_scnhdr *sh, long *addr,
-			     u_long *size, int *prot));
-int exec_pecoff_makecmds __P((struct proc *p, struct exec_package *epp));
-int exec_pecoff_coff_makecmds __P((struct proc *p, struct exec_package *epp,
-				  struct coff_filehdr *fp, int peofs));
-int exec_pecoff_setup_stack __P((struct proc *p, struct exec_package *epp));
-int exec_pecoff_prep_omagic __P((struct proc *p, struct exec_package *epp,
-				     struct coff_filehdr *fp,
-				     struct coff_aouthdr *ap, int peofs));
-int exec_pecoff_prep_nmagic __P((struct proc *p, struct exec_package *epp,
-				     struct coff_filehdr *fp,
-				     struct coff_aouthdr *ap, int peofs));
-int exec_pecoff_prep_zmagic __P((struct proc *p, struct exec_package *epp,
-				     struct coff_filehdr *fp,
-				     struct coff_aouthdr *ap, int peofs));
+int pecoff_signature (struct proc *p, struct vnode *vp,
+		      struct pecoff_dos_filehdr *dp);
+int pecoff_load_file (struct proc *p, struct exec_package *epp,
+		      const char *path, struct exec_vmcmd_set *vcset,
+		      u_long *entry, struct pecoff_args *argp);
+void pecoff_load_section (struct exec_vmcmd_set *vcset, struct vnode *vp,
+			  struct coff_scnhdr *sh, long *addr,
+			  u_long *size, int *prot);
+int exec_pecoff_makecmds (struct proc *p, struct exec_package *epp);
+int exec_pecoff_coff_makecmds (struct proc *p, struct exec_package *epp,
+			       struct coff_filehdr *fp, int peofs);
+int exec_pecoff_setup_stack (struct proc *p, struct exec_package *epp);
+int exec_pecoff_prep_omagic (struct proc *p, struct exec_package *epp,
+			     struct coff_filehdr *fp,
+			     struct coff_aouthdr *ap, int peofs);
+int exec_pecoff_prep_nmagic (struct proc *p, struct exec_package *epp,
+			     struct coff_filehdr *fp,
+			     struct coff_aouthdr *ap, int peofs);
+int exec_pecoff_prep_zmagic (struct proc *p, struct exec_package *epp,
+			     struct coff_filehdr *fp,
+			     struct coff_aouthdr *ap, int peofs);
 
 
+extern struct sysent pecoff_sysent[];
+#ifdef SYSCALL_DEBUG
+extern const char * const pecoff_syscallnames[];
+#endif
 extern char sigcode[], esigcode[];
 #ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern __P((void));
+void syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
-#if notyet
 const struct emul emul_pecoff = {
 	"pecoff",
 	"/emul/pecoff",
 #ifndef __HAVE_MINIMAL_EMUL
+	EMUL_HAS_SYS___syscall,
 	0,
-	0,
-	SYS_syscall,
-	SYS_MAXSYSCALL,
+	PECOFF_SYS_syscall,
+	PECOFF_SYS_MAXSYSCALL,
 #endif
-	sysent,
+	pecoff_sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
+	pecoff_syscallnames,
 #else
-	0,
+	NULL,
 #endif
 	sendsig,
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
@@ -118,7 +123,6 @@ const struct emul emul_pecoff = {
 	syscall,
 #endif
 };
-#endif
 
 int
 pecoff_copyargs(pack, arginfo, stackp, argp)
@@ -139,7 +143,7 @@ pecoff_copyargs(pack, arginfo, stackp, argp)
 		return error;
 
 #if 0 /*  kern_exec.c? */
-	free((char *)ap, M_TEMP);
+	free(ap, M_TEMP);
 	pack->ep_emul_arg = 0;
 #endif
 
@@ -182,7 +186,7 @@ int
 pecoff_load_file(p, epp, path, vcset, entry, argp)
 	struct proc *p;
 	struct exec_package *epp;
-	char *path;
+	const char *path;
 	struct exec_vmcmd_set *vcset;
 	u_long *entry;
 	struct pecoff_args *argp;
@@ -196,10 +200,16 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	struct coff_aouthdr *ap;
 	struct pecoff_opthdr *wp;
 	struct coff_scnhdr *sh = 0;
+	const char *bp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
-	if ((error = namei(&nd)) != 0)
+	if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
+			       path, &bp, 0)))
 		return error;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, bp, p);
+	if ((error = namei(&nd)) != 0) {
+		free((void *)bp, M_TEMP);
+		return error;
+	}
 	vp = nd.ni_vp;
 
 	/*
@@ -278,8 +288,9 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 	argp->a_ldbase = wp->w_base;
 	argp->a_ldexport = wp->w_imghdr[0].i_vaddr + wp->w_base;
 
-	free((char *)fp, M_TEMP);
-	free((char *)sh, M_TEMP);
+	free(fp, M_TEMP);
+	free(sh, M_TEMP);
+	free((void *)bp, M_TEMP);
 	vrele(vp);
 	return 0;
 
@@ -288,9 +299,10 @@ badunlock:
 
 bad:
 	if (fp != 0)
-		free((char *)fp, M_TEMP);
+		free(fp, M_TEMP);
 	if (sh != 0)
-		free((char *)sh, M_TEMP);
+		free(sh, M_TEMP);
+	free((void *)bp, M_TEMP);
 	vrele(vp);
 	return error;
 }
