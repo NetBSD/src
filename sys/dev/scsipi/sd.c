@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.119 1997/10/08 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.120 1997/10/10 01:09:10 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -62,6 +62,7 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/rnd.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -101,6 +102,7 @@ struct sd_softc {
 	} params;
 	struct buf buf_queue;
 	u_int8_t type;
+	rndsource_element_t rnd_source;
 };
 
 struct scsi_mode_sense_data {
@@ -240,6 +242,11 @@ sdattach(parent, self, aux)
 	        printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sect x %ld sectors\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+
+	/*
+	 * attach the device into the random source list
+	 */
+	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname, RND_TYPE_DISK);
 }
 
 /*
@@ -642,8 +649,10 @@ sddone(xs)
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
 
-	if (xs->bp != NULL)
+	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+	}
 }
 
 void
