@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
+/*	$NetBSD: vga.c,v 1.3.2.1 1996/12/07 02:04:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,9 @@
 #include <sys/device.h>
 #include <machine/bus.h>
 
-#include <alpha/wscons/wsconsvar.h>
+#include <machine/wsconsio.h>
+#include <alpha/wscons/wsdisplayvar.h>
+
 #include <alpha/common/vgavar.h>
 
 #define	VGA_IO_D_6845_ADDR	0x4
@@ -50,7 +52,7 @@ static void	vga_erasecols __P((void *, int, int, int));
 static void	vga_copyrows __P((void *, int, int, int));
 static void	vga_eraserows __P((void *, int, int));
 
-struct wscons_emulfuncs vga_emulfuncs = {
+struct wsdisplay_emulops vga_emulops = {
 	vga_cursor,
 	vga_putstr,
 	vga_copycols,
@@ -59,9 +61,16 @@ struct wscons_emulfuncs vga_emulfuncs = {
 	vga_eraserows,
 };
 
-static int	vgaprint __P((void *, const char *));
-static int	vgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	vgammap __P((void *, off_t, int));
+static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int	vga_mmap __P((void *, off_t, int));
+
+struct wsdisplay_accessops vga_accessops = {
+	vga_ioctl,
+	vga_mmap,
+};
+
+#define	VGA_NROWS	25
+#define	VGA_NCOLS	80
 
 /*
  * The following functions implement back-end configuration grabbing
@@ -109,8 +118,9 @@ bad:
 }
 
 void
-vga_common_setup(iot, memt, vc)
+vga_common_setup(iot, memt, type, vc)
 	bus_space_tag_t iot, memt;
+	u_int type;
 	struct vga_config *vc;
 {
 	int cpos;
@@ -127,15 +137,14 @@ vga_common_setup(iot, memt, vc)
         if (bus_space_map(vc->vc_memt, 0xb8000, 0x8000, 0, &vc->vc_memh))
                 panic("vga_common_setup: couldn't map memory"); 
 
-	vc->vc_nrow = 25;
-	vc->vc_ncol = 80;
+	vc->vc_type = type;
 
 	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 14); 
 	cpos = bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA) << 8;
 	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 15);
 	cpos |= bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA);
-	vc->vc_crow = cpos / vc->vc_ncol;
-	vc->vc_ccol = cpos % vc->vc_ncol;
+	vc->vc_crow = cpos / VGA_NCOLS;
+	vc->vc_ccol = cpos % VGA_NCOLS;
 
 	vc->vc_so = 0;
 #if 0
@@ -143,7 +152,7 @@ vga_common_setup(iot, memt, vc)
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
 
 	/* clear screen, frob cursor, etc.? */
-	pcivga_eraserows(vc, 0, vc->vc_nrow);
+	pcivga_eraserows(vc, 0, VGA_NROWS);
 #endif
 	/*
 	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
@@ -155,77 +164,68 @@ vga_common_setup(iot, memt, vc)
 }
 
 void
-vga_wscons_attach(parent, vc, console)
+vga_wsdisplay_attach(parent, vc, console)
 	struct device *parent;
 	struct vga_config *vc;
 	int console;
 {
-	struct wscons_attach_args waa;
-	struct wscons_odev_spec *wo;
+	struct wsemuldisplaydev_attach_args aa;
 
-        waa.waa_isconsole = console;
-        wo = &waa.waa_odev_spec;
+	aa.console = console;
+	aa.emulops = &vga_emulops;
+	aa.emulcookie = vc;
+	aa.nrows = VGA_NROWS;
+	aa.ncols = VGA_NCOLS;
+	aa.crow = vc->vc_crow;
+	aa.ccol = vc->vc_ccol;
+	aa.accessops = &vga_accessops;
+	aa.accesscookie = vc;
 
-        wo->wo_emulfuncs = &vga_emulfuncs;
-	wo->wo_emulfuncs_cookie = vc;
-
-        wo->wo_ioctl = vgaioctl;
-        wo->wo_mmap = vgammap;
-        wo->wo_miscfuncs_cookie = vc;
-
-        wo->wo_nrows = vc->vc_nrow;
-        wo->wo_ncols = vc->vc_ncol;
-        wo->wo_crow = vc->vc_crow;
-        wo->wo_ccol = vc->vc_ccol;
- 
-        config_found(parent, &waa, vgaprint);
+        config_found(parent, &aa, wsemuldisplaydevprint);
 }
 
 void
-vga_wscons_console(vc)
+vga_wsdisplay_console(vc)
 	struct vga_config *vc;
 {
-	struct wscons_odev_spec wo;
-
-        wo.wo_emulfuncs = &vga_emulfuncs;
-	wo.wo_emulfuncs_cookie = vc;
-
-	/* ioctl and mmap are unused until real attachment. */
-
-        wo.wo_nrows = vc->vc_nrow;
-        wo.wo_ncols = vc->vc_ncol;
-        wo.wo_crow = vc->vc_crow;
-        wo.wo_ccol = vc->vc_ccol;
  
-        wscons_attach_console(&wo);
+	wsdisplay_attach_console(&vga_emulops, vc, VGA_NROWS, VGA_NCOLS,
+	    vc->vc_crow, vc->vc_ccol);
 }
 
-static int
-vgaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	if (pnp)
-		printf("wscons at %s", pnp);
-	return (UNCONF);
-}
-
-static int
-vgaioctl(v, cmd, data, flag, p)
+int
+vga_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
+	struct vga_config *vc = v;
 
-	/* XXX */
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(int *)data = vc->vc_type;
+		return 0;
+
+	case WSDISPLAYIO_GINFO:
+	case WSDISPLAYIO_GETCMAP:
+	case WSDISPLAYIO_PUTCMAP:
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_GCURSOR:
+	case WSDISPLAYIO_SCURSOR:
+		/* NONE of these operations are by the generic VGA driver. */
+		return ENOTTY;
+	}
 	return -1;
 }
 
 static int
-vgammap(v, offset, prot)
+vga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
 	int prot;
@@ -261,7 +261,7 @@ vga_cursor(id, on, row, col)
 		vc->vc_ccol = col;
 	}
 
-	pos = row * vc->vc_ncol + col;
+	pos = row * VGA_NCOLS + col;
 
 	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_ADDR, 14);
 	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_DATA, pos >> 8);
@@ -281,7 +281,7 @@ vga_putstr(id, row, col, cp, len)
 	bus_space_handle_t memh = vc->vc_memh;
 	int i, off;
 
-	off = (row * vc->vc_ncol + col) * 2;
+	off = (row * VGA_NCOLS + col) * 2;
 	for (i = 0; i < len; i++, cp++, off += 2) {
 		bus_space_write_1(memt, memh, off, *cp);
 		bus_space_write_1(memt, memh, off + 1,
@@ -297,8 +297,8 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 	struct vga_config *vc = id;
 	bus_size_t srcoff, dstoff;
 
-	srcoff = (row * vc->vc_ncol + srccol) * 2;
-	dstoff = (row * vc->vc_ncol + dstcol) * 2;
+	srcoff = (row * VGA_NCOLS + srccol) * 2;
+	dstoff = (row * VGA_NCOLS + dstcol) * 2;
 
 	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
 	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
@@ -314,7 +314,7 @@ vga_erasecols(id, row, startcol, ncols)
 	bus_size_t off, count;
 	u_int16_t val;
 
-	off = (row * vc->vc_ncol + startcol) * 2;
+	off = (row * VGA_NCOLS + startcol) * 2;
 	count = ncols * 2;
 
 	val = (vc->vc_at << 8) | ' ';
@@ -330,12 +330,12 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	struct vga_config *vc = id;
 	bus_size_t srcoff, dstoff;
 
-	srcoff = (srcrow * vc->vc_ncol + 0) * 2;
-	dstoff = (dstrow * vc->vc_ncol + 0) * 2;
+	srcoff = (srcrow * VGA_NCOLS + 0) * 2;
+	dstoff = (dstrow * VGA_NCOLS + 0) * 2;
 
 	/* XXX SHOULDN'T USE THIS IF REGIONS OVERLAP... */
 	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
-	    nrows * vc->vc_ncol);
+	    nrows * VGA_NCOLS);
 }
 
 static void
@@ -347,8 +347,8 @@ vga_eraserows(id, startrow, nrows)
 	bus_size_t off, count;
 	u_int16_t val;
 
-	off = (startrow * vc->vc_ncol + 0) * 2;
-	count = nrows * vc->vc_ncol;
+	off = (startrow * VGA_NCOLS + 0) * 2;
+	count = nrows * VGA_NCOLS;
 
 	val = (vc->vc_at << 8) | ' ';
 

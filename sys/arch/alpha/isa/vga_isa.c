@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_isa.c,v 1.3 1996/11/23 06:06:44 cgd Exp $	*/
+/*	$NetBSD: vga_isa.c,v 1.3.2.1 1996/12/07 02:05:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,6 +38,8 @@
 
 #include <dev/isa/isavar.h>
 
+#include <machine/wsconsio.h>
+#include <alpha/wscons/wsdisplayvar.h>
 #include <alpha/common/vgavar.h>
 #include <alpha/isa/vga_isavar.h>
 
@@ -104,12 +106,13 @@ vga_isa_attach(parent, self, aux)
 		    malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
 
 		/* set up bus-independent VGA configuration */
-		vga_common_setup(ia->ia_iot, ia->ia_memt, vc);
+		vga_common_setup(ia->ia_iot, ia->ia_memt,
+		    WSDISPLAY_TYPE_ISAVGA, vc);
 	}
 
 	printf("\n");
 
-	vga_wscons_attach(self, vc, console);
+	vga_wsdisplay_attach(self, vc, console);
 }
 
 int
@@ -130,7 +133,7 @@ vga_isa_console_attach(iot, memt)
 	vga_isa_console_tag = 1;
 
 	/* set up bus-independent VGA configuration */
-	vga_common_setup(iot, memt, vc);
+	vga_common_setup(iot, memt, WSDISPLAY_TYPE_ISAVGA, vc);
 
-	vga_wscons_console(vc);
+	vga_wsdisplay_console(vc);
 }

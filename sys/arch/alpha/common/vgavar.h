@@ -1,4 +1,4 @@
-/*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
+/*	$NetBSD: vgavar.h,v 1.2.2.1 1996/12/07 02:04:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,25 +28,19 @@
  */
 
 struct vga_config {
-	/*
-	 * Filled in by front-ends.
-	 */
 	bus_space_tag_t	vc_iot, vc_memt;
 	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh;
 
-	/*
-	 * Private to back-end.
-	 */
-	int		vc_ncol, vc_nrow; /* screen width & height */
-	int		vc_ccol, vc_crow; /* current cursor position */
+	u_int	vc_type;		/* type (for wsdisplay) */
+	u_int	vc_crow, vc_ccol;	/* current cursor position */
 
-	char		vc_so;		/* in standout mode? */
-	char		vc_at;		/* normal attributes */
-	char		vc_so_at;	/* standout attributes */
+	char	vc_so;			/* in standout mode? */
+	char	vc_at;			/* normal attributes */
+	char	vc_so_at;		/* standout attributes */
 };
 
 int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
-void	vga_common_setup __P((bus_space_tag_t, bus_space_tag_t,
+void	vga_common_setup __P((bus_space_tag_t, bus_space_tag_t, u_int,
 	    struct vga_config *));
-void	vga_wscons_attach __P((struct device *, struct vga_config *, int));
-void	vga_wscons_console __P((struct vga_config *));
+void	vga_wsdisplay_attach __P((struct device *, struct vga_config *, int));
+void	vga_wsdisplay_console __P((struct vga_config *));

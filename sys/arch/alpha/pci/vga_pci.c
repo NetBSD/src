@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.3 1996/11/27 01:20:26 cgd Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.3.2.1 1996/12/07 02:05:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,6 +40,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <machine/wsconsio.h>
+#include <alpha/wscons/wsdisplayvar.h>
 #include <alpha/common/vgavar.h>
 #include <alpha/pci/vga_pcivar.h>
 
@@ -116,7 +118,8 @@ vga_pci_attach(parent, self, aux)
 		    malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
 
 		/* set up bus-independent VGA configuration */
-		vga_common_setup(pa->pa_iot, pa->pa_memt, vc);
+		vga_common_setup(pa->pa_iot, pa->pa_memt,
+		    WSDISPLAY_TYPE_PCIVGA, vc);
 	}
 
 	sc->sc_pcitag = pa->pa_tag;
@@ -125,7 +128,7 @@ vga_pci_attach(parent, self, aux)
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	vga_wscons_attach(self, vc, console);
+	vga_wsdisplay_attach(self, vc, console);
 }
 
 void
@@ -140,7 +143,7 @@ vga_pci_console(iot, memt, pc, bus, device, function)
 	vga_pci_console_tag = pci_make_tag(pc, bus, device, function);
 
 	/* set up bus-independent VGA configuration */
-	vga_common_setup(iot, memt, vc);
+	vga_common_setup(iot, memt, WSDISPLAY_TYPE_PCIVGA, vc);
 
-	vga_wscons_console(vc);
+	vga_wsdisplay_console(vc);
 }

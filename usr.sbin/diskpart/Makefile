@@ -1,7 +1,0 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1994/12/22 11:34:14 cgd Exp $
-
-PROG=	diskpart
-MAN=	diskpart.8
-
-.include <bsd.prog.mk>

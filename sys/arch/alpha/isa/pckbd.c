@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.13 1996/11/25 03:26:33 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.13.2.1 1996/12/07 02:04:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -60,11 +61,10 @@
 #include <alpha/isa/pckbdreg.h>
 #include <alpha/isa/spkrreg.h>
 #include <alpha/isa/timerreg.h>
-#include <machine/wsconsio.h>
 #include <alpha/isa/pcppivar.h>
 
-#include <alpha/wscons/wsconsvar.h>
-#include "wscons.h"
+#include <machine/wsconsio.h>
+#include <alpha/wscons/wskbdvar.h>
 
 #undef KBDATAP
 #undef KBOUTP
@@ -90,6 +90,7 @@ isa_chipset_tag_t pckbd_ic;
 bus_space_handle_t pckbd_ioh;
 bus_space_handle_t pckbd_timer_ioh;
 bus_space_handle_t pckbd_delay_ioh;
+struct device *pckbd_wskbddev;
 
 struct pckbd_softc {
         struct  device sc_dev;
@@ -97,6 +98,8 @@ struct pckbd_softc {
 
 	int	sc_bellactive;		/* is the bell active? */
 	int	sc_bellpitch;		/* last pitch programmed */
+
+	struct device *sc_wskbddev;
 };
 
 int pckbdprobe __P((struct device *, void *, void *));
@@ -111,25 +114,23 @@ struct cfdriver pckbd_cd = {
 	NULL, "pckbd", DV_DULL,
 };
 
-int	pckbd_cngetc __P((struct device *));
-void	pckbd_cnpollc __P((struct device *, int));
-void	pckbd_bell __P((struct device *, struct wsconsio_bell_data *));
-int	pckbd_ioctl __P((void *, u_long, caddr_t, int,
-	    struct proc *));
-char	*pckbd_translate __P((struct device *dev, int c));
+int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+const char *pckbd_translate __P((void *, u_int, int));
 
-#if NWSCONS
-struct wscons_idev_spec pckbd_wscons_idev = {
-	pckbd_cngetc,
-	pckbd_cnpollc,
-	pckbd_bell,
+const struct wskbd_accessops pckbd_accessops = {
 	pckbd_ioctl,
 	pckbd_translate,
-	0x7f,			/* key data mask */
-	0x80,			/* key-up mask */
 };
-#endif
 
+int	pckbd_cngetc __P((void *));
+void	pckbd_cnpollc __P((void *, int));
+
+const struct wskbd_consops pckbd_consops = {
+	pckbd_cngetc,
+	pckbd_cnpollc,
+};
+
+void	pckbd_bell __P((struct pckbd_softc *, struct wskbd_bell_data *));
 void	pckbd_bell_stop __P((void *));
 static int kbd_wait_output __P((void));
 static int kbd_wait_input __P((void));
@@ -395,6 +396,9 @@ pckbdattach(parent, self, aux)
 {
 	struct pckbd_softc *sc = (void *)self;
 	struct pcppi_attach_args *pa = aux;
+	struct wskbddev_attach_args a;
+
+	printf("\n");
 
 	pckbd_iot = pa->pa_iot;
 	pckbd_ic = pa->pa_ic;
@@ -407,12 +411,16 @@ pckbdattach(parent, self, aux)
 
 	sc->sc_bellactive = sc->sc_bellpitch = 0;
 
-#if NWSCONS
-	printf("\n");
-	kbdattach(self, &pckbd_wscons_idev);
-#else
-	printf(": no wscons driver present; no input possible\n");
-#endif
+	a.console = 0;				/* XXX */
+	a.accessops = &pckbd_accessops;
+	a.accesscookie = sc;
+
+	/*
+	 * Attach the wskbd, saving a handle to it.
+	 * XXX XXX XXX
+	 */
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	pckbd_wskbddev = sc->sc_wskbddev;
 }
 
 /*
@@ -426,6 +434,7 @@ pckbdintr(arg)
 {
 	u_char data;
 	static u_char last;
+	int type;
 
 	if ((bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB) == 0)
 		return 0;
@@ -447,9 +456,16 @@ pckbdintr(arg)
 			if (data == last)
 				break;
 			last = data;
-#if NWSCONS
-			kbd_input(data);
-#endif
+			switch (data) {
+			case KBR_EXTENDED:
+				type = WSCONS_EVENT_KEY_OTHER;
+				break;
+			default:
+				type = (data & 0x80) ? WSCONS_EVENT_KEY_DOWN :
+				    WSCONS_EVENT_KEY_UP;
+				break;
+			}
+			wskbd_input(pckbd_wskbddev, type, data);
 			break;
 		}
 	} while (bus_space_read_1(pckbd_iot, pckbd_ioh, KBSTATP) & KBS_DIB);
@@ -508,11 +524,17 @@ pckbd_ioctl(v, cmd, data, flag, p)
 {
 
 	switch (cmd) {
-	case WSCONSIO_KBD_GTYPE:
-		*(int *)data = KBD_TYPE_PC;
+	case WSKBDIO_GTYPE:
+		*(int *)data = WSKBD_TYPE_PC;
+		return 0;
+
+	case WSKBDIO_COMPLEXBELL:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+		pckbd_bell(v, (struct wskbd_bell_data *)data);
 		return 0;
 	}
-	return ENOTTY;
+	return -1;
 }
 
 #if 0
@@ -721,12 +743,13 @@ static Scan_def	scan_codes[] = {
 /*
  * Get characters from the keyboard.  If none are present, return NULL.
  */
-char *
-pckbd_translate(dev, c)
-	struct device *dev;
-	int c;
+const char *
+pckbd_translate(v, type, value)
+	void *v;
+	u_int type;
+	int value;
 {
-	u_char dt = c;
+	u_char dt = value;
 	static u_char extended = 0, shift_state = 0;
 	static u_char capchar[2];
 
@@ -790,6 +813,7 @@ pckbd_translate(dev, c)
 				break;
 			shift_state |= SCROLL;
 			lock_state ^= SCROLL;
+			wskbd_holdscreen(pckbd_wskbddev, lock_state & SCROLL);
 			if ((lock_state & SCROLL) == 0)
 				wakeup((caddr_t)&lock_state);
 			async_update();
@@ -854,10 +878,10 @@ pckbd_translate(dev, c)
 
 /* ARGSUSED */
 int
-pckbd_cngetc(dev)
-	struct device *dev;
+pckbd_cngetc(v)
+	void *v;
 {
-        register char *cp = NULL;
+        register const char *cp = NULL;
 	u_char data;
 	static u_char last;
 
@@ -884,7 +908,7 @@ pckbd_cngetc(dev)
 			continue;
 		last = data;
 
-		cp = pckbd_translate(NULL, data);
+		cp = pckbd_translate(NULL, 0, data);
         } while (!cp);
         if (*cp == '\r')
                 return '\n';
@@ -892,11 +916,11 @@ pckbd_cngetc(dev)
 }
 
 void
-pckbd_cnpollc(dev, on)
-	struct device *dev;
+pckbd_cnpollc(v, on)
+	void *v;
         int on;
 {
-	struct pckbd_softc *sc = (struct pckbd_softc *)dev;
+	struct pckbd_softc *sc = v;
 
         polling = on;
         if (!on) {
@@ -917,16 +941,15 @@ pckbd_cnpollc(dev, on)
 }
 
 void
-pckbd_bell(dev, wbd)
-	struct device *dev;
-	struct wsconsio_bell_data *wbd;
+pckbd_bell(sc, bdp)
+	struct pckbd_softc *sc;
+	struct wskbd_bell_data *bdp;
 {
-	struct pckbd_softc *sc = (struct pckbd_softc *)dev;
 	int pitch, period;
 	int s;
 
-	pitch = wbd->wbd_pitch;
-	period = (wbd->wbd_period * hz) / 1000;
+	pitch = bdp->pitch;
+	period = (bdp->period * hz) / 1000;
 	/* XXX volume ignored */
 
 	s = splhigh();

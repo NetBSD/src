@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.1 1996/12/07 02:04:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -79,7 +79,7 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /* open, close, read, write, ioctl, tty, mmap */
-#define cdev_wscons_init(c,n) { \
+#define cdev_wsdisplay_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
@@ -120,12 +120,14 @@ cdev_decl(ch);
 cdev_decl(scc);
 #include "audio.h"
 cdev_decl(audio);
-#include "wscons.h"
-cdev_decl(wscons);
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
 #include "com.h"
 cdev_decl(com);
-cdev_decl(kbd);
-cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(rd);
@@ -164,12 +166,14 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 22 */
 	cdev_tty_init(1,prom),          /* 23: XXX prom console */
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
-	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */
+	cdev_wsdisplay_init(NWSDISPLAY,
+	    wsdisplay),			/* 25: frame buffers, etc. */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_disk_init(NRD,rd),		/* 28: ram disk driver */
-	cdev_mouse_init(NWSCONS,kbd),	/* 29: /dev/kbd XXX */
-	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 29: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+	    wsmouse),			/* 30: mice */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
