@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.17 2002/04/15 17:27:39 thorpej Exp $	*/
+/*	$NetBSD: armreg.h,v 1.18 2002/04/27 15:50:59 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -187,6 +187,7 @@
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
+#define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000
 #define CPU_ID_PXA250		0x69052100
 #define CPU_ID_PXA210		0x69052120
