@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.11 1994/05/08 05:52:27 chopps Exp $
+ *	$Id: pmap.c,v 1.12 1994/05/21 10:05:39 chopps Exp $
  */
 
 /*
@@ -77,14 +77,11 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
-
-#include <machine/pte.h>
-
 #include <vm/vm.h>
+#include <sys/user.h>
+#include <machine/pte.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-
 #include <machine/cpu.h>
 #include <amiga/dev/ztwobusvar.h>
 /*
