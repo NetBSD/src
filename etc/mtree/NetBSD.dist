@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.261 2004/05/07 00:55:15 jonathan Exp $
+#	$NetBSD: NetBSD.dist,v 1.262 2004/05/12 03:58:47 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1080,6 +1080,7 @@
 ./var/db
 ./var/db/ns
 ./var/db/obsolete
+./var/db/xdm
 ./var/games			uname=games gname=games mode=0775
 ./var/games/hackdir		uname=games gname=games mode=0775
 ./var/games/hackdir/save	uname=games gname=games mode=0770
