@@ -86,7 +86,7 @@ char	*inetname();
  * -a (all) flag is specified.
  */
 protopr(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct inpcb cb;
@@ -158,7 +158,7 @@ protopr(off, name)
  * Dump TCP statistics structure.
  */
 tcp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct tcpstat tcpstat;
@@ -224,7 +224,7 @@ tcp_stats(off, name)
  * Dump UDP statistics structure.
  */
 udp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct udpstat udpstat;
@@ -256,7 +256,7 @@ udp_stats(off, name)
  * Dump IP statistics structure.
  */
 ip_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct ipstat ipstat;
@@ -312,7 +312,7 @@ static	char *icmpnames[] = {
  * Dump ICMP statistics.
  */
 icmp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct icmpstat icmpstat;
@@ -366,7 +366,7 @@ pluraly(n)
  */
 void
 igmp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct igmpstat igmpstat;
