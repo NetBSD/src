@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.12 1995/06/03 13:16:18 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.13 1995/06/05 00:10:44 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -53,6 +53,7 @@ static void		__call __P((void));
 #define mmap(addr, len, prot, flags, fd, off)	\
     __syscall2((quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
 	(fd), 0, (off_t)(off))
+extern int		__syscall2 __P((int, ...));
 #endif
 
 asm ("	.global start");
