@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.42 1998/12/29 14:59:04 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.43 1998/12/31 02:10:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.42 1998/12/29 14:59:04 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.43 1998/12/31 02:10:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: fetch.c,v 1.42 1998/12/29 14:59:04 lukem Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/utsname.h>
 
 #include <netinet/in.h>
 
@@ -450,11 +451,16 @@ fetch_url(url, outfile, proxyenv)
 			    url, proxyenv);
 			fprintf(fin, "GET %s HTTP/1.0\r\n\r\n", path);
 		} else {
+			struct utsname unam;
+
 			fprintf(ttyout, "Requesting %s\n", url);
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s\r\n", host);
 			fprintf(fin, "Accept: */*\r\n");
-			fprintf(fin, "User-Agent: NetBSD-ftp/1.4\r\n");
+			if (uname(&unam) != -1) {
+				fprintf(fin, "User-Agent: %s-%s/ftp\r\n",
+				    unam.sysname, unam.release);
+			}
 			fprintf(fin, "Connection: close\r\n");
 			fprintf(fin, "\r\n");
 		}
