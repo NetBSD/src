@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.12 2001/03/21 19:22:27 thorpej Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.13 2001/11/13 00:12:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)ccitt_proto.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ccitt_proto.c,v 1.13 2001/11/13 00:12:56 lukem Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"

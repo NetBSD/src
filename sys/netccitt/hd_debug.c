@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_debug.c,v 1.11 2000/03/30 13:53:32 augustss Exp $	*/
+/*	$NetBSD: hd_debug.c,v 1.12 2001/11/13 00:12:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_debug.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_debug.c,v 1.12 2001/11/13 00:12:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.16 2001/10/18 20:17:26 thorpej Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.17 2001/11/13 00:12:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_input.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.17 2001/11/13 00:12:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
