@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.90 2003/07/03 21:24:27 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.91 2003/08/02 20:23:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.90 2003/07/03 21:24:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.91 2003/08/02 20:23:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -991,9 +991,13 @@ linux_machdepioctl(p, v, retval)
 		com = VT_GETSTATE;
 		break;
 	case LINUX_KDGKBTYPE:
+	    {
+		static const u_int8_t kb101 = KB_101;
+
 		/* This is what Linux does. */
-		error = subyte(SCARG(uap, data), KB_101);
+		error = copyout(&kb101, SCARG(uap, data), 1);
 		goto out;
+	    }
 	case LINUX_KDGKBENT:
 		/*
 		 * The Linux KDGKBENT ioctl is different from the
