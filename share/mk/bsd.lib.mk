@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.108 1997/05/26 03:58:18 cjs Exp $
+#	$NetBSD: bsd.lib.mk,v 1.109 1997/05/27 17:45:57 cjs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -348,9 +348,9 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
 
 .include <bsd.obj.mk>
-.include <bsd.links.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
+.include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
