@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.10 2002/04/30 14:24:33 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.11 2002/05/14 06:18:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.10 2002/04/30 14:24:33 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.11 2002/05/14 06:18:52 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -80,11 +80,13 @@ __RCSID("$NetBSD: sparc64.c,v 1.10 2002/04/30 14:24:33 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "installboot.h"
+#if HAVE_CONFIG_H
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
+#endif
 
-#define SPARC64_BOOT_BLOCK_OFFSET	DEV_BSIZE
-#define SPARC64_BOOT_BLOCK_BLOCKSIZE	DEV_BSIZE
-#define SPARC64_BOOT_BLOCK_MAX_SIZE	(DEV_BSIZE * 15)
+#include "installboot.h"
 
 int
 sparc64_clearboot(ib_params *params)
@@ -96,10 +98,12 @@ sparc64_clearboot(ib_params *params)
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
 
-	if (params->flags & IB_STARTBLOCK) {
-		warnx("Can't use `-b bno' with `-c'");
+	if (params->flags & (IB_STAGE1START | IB_STAGE2START)) {
+		warnx("`-b bno' and `-B bno' are not supported for %s",
+		    params->machine->name);
 		return (0);
 	}
+
 	/* first check that it _could_ exist here */
 	rv = pread(params->fsfd, &bb, sizeof(bb), SPARC64_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
@@ -136,7 +140,6 @@ sparc64_setboot(ib_params *params)
 {
 	struct stat	bootstrapsb;
 	char		bb[SPARC64_BOOT_BLOCK_MAX_SIZE];
-	uint32_t	startblock;
 	int		retval;
 	ssize_t		rv;
 
@@ -147,6 +150,12 @@ sparc64_setboot(ib_params *params)
 	assert(params->stage1 != NULL);
 
 	retval = 0;
+
+	if (params->flags & (IB_STAGE1START | IB_STAGE2START)) {
+		warnx("`-b bno' and `-B bno' are not supported for %s",
+		    params->machine->name);
+		goto done;
+	}
 
 	if (fstat(params->s1fd, &bootstrapsb) == -1) {
 		warn("Examining `%s'", params->stage1);
@@ -164,14 +173,9 @@ sparc64_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (params->flags & IB_STARTBLOCK)
-		startblock = params->startblock;
-	else
-		startblock = SPARC64_BOOT_BLOCK_OFFSET /
-		    SPARC64_BOOT_BLOCK_BLOCKSIZE;
-
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %u\n", startblock);
+		printf("Bootstrap start sector: %u\n",
+		    SPARC64_BOOT_BLOCK_OFFSET / SPARC64_BOOT_BLOCK_BLOCKSIZE);
 		printf("Bootstrap byte count:   %u\n", (unsigned)rv);
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
@@ -182,7 +186,7 @@ sparc64_setboot(ib_params *params)
 	}
 
 	rv = pwrite(params->fsfd, &bb, SPARC64_BOOT_BLOCK_MAX_SIZE,
-	    startblock * SPARC64_BOOT_BLOCK_BLOCKSIZE);
+	    SPARC64_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
