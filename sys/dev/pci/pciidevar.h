@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.2.12.1 2000/11/20 11:42:35 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.2.12.2 2001/01/15 09:27:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -64,9 +64,10 @@ struct pciide_softc {
 	struct pciide_channel {			/* per-channel data */
 		struct channel_softc wdc_channel; /* generic part */
 		char		*name;
-		int		hw_ok;		/* hardware mapped & OK? */
-		int		compat;		/* is it compat? */
-		void		*ih;		/* compat or pci handle */
+		int		hw_ok;	/* hardware mapped & OK? */
+		int		compat;	/* is it compat? */
+		void		*ih;	/* compat or pci handle */
+		bus_space_handle_t ctl_baseioh; /* ctrl regs blk, native mode */
 		/* DMA tables and DMA map for xfer, for each drive */
 		struct pciide_dma_maps {
 			bus_dmamap_t    dmamap_table;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.4 2000/11/20 11:40:45 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.5 2001/01/15 09:27:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -832,7 +832,6 @@ finish:
 	sc->sc_ncmds--;
 
 	/* Tell common SCSI code it is done. */
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	sc->sc_state = NCR_IDLE;

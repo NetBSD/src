@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.14.2.6 2000/11/22 16:03:09 bouyer Exp $	*/
+/*	$NetBSD: adv.c,v 1.14.2.7 2001/01/15 09:27:42 bouyer Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -937,6 +937,5 @@ adv_narrow_isr_callback(sc, qdonep)
 
 
 	adv_free_ccb(sc, ccb);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 }
