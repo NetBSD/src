@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.196 2003/05/16 14:40:42 itojun Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.197 2003/05/17 22:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.196 2003/05/16 14:40:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.197 2003/05/17 22:22:41 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2686,10 +2686,11 @@ vfs_mountroot()
 		if (v->vfs_mountroot == NULL)
 			continue;
 #ifdef DEBUG
-		printf("mountroot: trying %s...\n", v->vfs_name);
+		aprint_normal("mountroot: trying %s...\n", v->vfs_name);
 #endif
 		if ((*v->vfs_mountroot)() == 0) {
-			printf("root file system type: %s\n", v->vfs_name);
+			aprint_normal("root file system type: %s\n",
+			    v->vfs_name);
 			break;
 		}
 	}
