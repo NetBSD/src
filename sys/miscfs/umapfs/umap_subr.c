@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.2 1994/06/29 06:35:11 cgd Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.3 1994/08/19 11:25:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
 
 #define LOG2_SIZEVNODE 7		/* log2(sizeof struct vnode) */
 #define	NUMAPNODECACHE 16
-#define	UMAP_NHASH(vp) ((((u_long) vp)>>LOG2_SIZEVNODE) & (NUMAPNODECACHE-1))
 
 /*
  * Null layer cache:
@@ -61,39 +60,21 @@
  * alias is removed the target vnode is vrele'd.
  */
 
-/*
- * Cache head
- */
-struct umap_node_cache {
-	struct umap_node	*ac_forw;
-	struct umap_node	*ac_back;
-};
-
-static struct umap_node_cache umap_node_cache[NUMAPNODECACHE];
+#define	UMAP_NHASH(vp) \
+	(&umap_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & umap_node_hash])
+LIST_HEAD(umap_node_hashhead, umap_node) *umap_node_hashtbl;
+u_long umap_node_hash;
 
 /*
  * Initialise cache headers
  */
 umapfs_init()
 {
-	struct umap_node_cache *ac;
+
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_init\n");		/* printed during system boot */
 #endif
-
-	for (ac = umap_node_cache; ac < umap_node_cache + NUMAPNODECACHE; ac++)
-		ac->ac_forw = ac->ac_back = (struct umap_node *) ac;
-}
-
-/*
- * Compute hash list for given target vnode
- */
-static struct umap_node_cache *
-umap_node_hash(targetvp)
-	struct vnode *targetvp;
-{
-
-	return (&umap_node_cache[UMAP_NHASH(targetvp)]);
+	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
 }
 
 /*
@@ -152,7 +133,7 @@ umap_node_find(mp, targetvp)
 	struct mount *mp;
 	struct vnode *targetvp;
 {
-	struct umap_node_cache *hd;
+	struct umap_node_hashhead *hd;
 	struct umap_node *a;
 	struct vnode *vp;
 
@@ -166,10 +147,9 @@ umap_node_find(mp, targetvp)
 	 * the target vnode.  If found, the increment the umap_node
 	 * reference count (but NOT the target vnode's VREF counter).
 	 */
-	hd = umap_node_hash(targetvp);
-
- loop:
-	for (a = hd->ac_forw; a != (struct umap_node *) hd; a = a->umap_forw) {
+	hd = UMAP_NHASH(targetvp);
+loop:
+	for (a = hd->lh_first; a != 0; a = a->umap_hash.le_next) {
 		if (a->umap_lowervp == targetvp &&
 		    a->umap_vnode->v_mount == mp) {
 			vp = UMAPTOV(a);
@@ -206,7 +186,7 @@ umap_node_alloc(mp, lowervp, vpp)
 	struct vnode *lowervp;
 	struct vnode **vpp;
 {
-	struct umap_node_cache *hd;
+	struct umap_node_hashhead *hd;
 	struct umap_node *xp;
 	struct vnode *othervp, *vp;
 	int error;
@@ -234,8 +214,8 @@ umap_node_alloc(mp, lowervp, vpp)
 		return (0);
 	}
 	VREF(lowervp);   /* Extra VREF will be vrele'd in umap_node_create */
-	hd = umap_node_hash(lowervp);
-	insque(xp, hd);
+	hd = UMAP_NHASH(lowervp);
+	LIST_INSERT_HEAD(hd, xp, umap_hash);
 	return (0);
 }
 
