@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.31 1999/05/10 12:36:16 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.32 1999/07/25 22:50:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,7 +113,6 @@
  */
 struct fbuaccess sfbu;
 struct pmax_fbtty sfbfb;
-struct fbinfo	sfbfi;	/*XXX*/ /* should be softc */
 
 
 /*
@@ -121,9 +120,6 @@ struct fbinfo	sfbfi;	/*XXX*/ /* should be softc */
  */
 
 int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
-
-#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 int sfbmatch __P((struct device *, struct cfdata *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
@@ -183,17 +179,15 @@ sfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	caddr_t sfbaddr = (caddr_t)ta->ta_addr;
 	int unit = self->dv_unit;
-	struct fbinfo *fi = (struct fbinfo *) self;
+	struct fbinfo *fi;
 
-#ifdef notyet
-	/* if this is the console, it's already configured. */
-	if (ta->ta_cookie == cons_slot)
-		return;	/* XXX patch up f softc pointer */
-#endif
+	/* Allocate a struct fbinfo and point the softc at it */
+	if (fballoc(sfbaddr, &fi) == 0 && !sfbinit(fi, sfbaddr, unit, 0))
+			return;
 
-	if (!sfbinit(fi, sfbaddr, unit, 0))
+	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
 		return;
-
+		
 #if 0 /*XXX*/
 
 	/*
@@ -211,6 +205,7 @@ sfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, sfb_intr, fi);
+	fbconnect ("PMAGB-BA", fi, 0);
 	printf("\n");
 }
 
@@ -228,22 +223,6 @@ sfbinit(fi, base, unit, silent)
 
 	int h_setup, v_setup;
 	int x_pixels, y_pixels;	/* visible pixel dimensions */
-
-	/*
-	 * If this device is being intialized as the console, malloc()
-	 * is not yet up and we must use statically-allocated space.
-	 */
-	if (fi == NULL) {
-		fi = &sfbfi;	/* XXX */
-  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
-	}
-	else {
-    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
-		if (fi->fi_cmap_bits == NULL) {
-			printf("sfb%d: no memory for cmap\n", unit);
-			return (0);
-		}
-	}
 
 	/* check for no frame buffer */
 	if (badaddr(base + SFB_OFFSET_VRAM, 4))
@@ -348,9 +327,12 @@ int
 sfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = (struct fbinfo *)sc;
-	char *slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
+	struct fbinfo *fi;
+	char *slot_addr;
 
+	fi = (struct fbinfo *)sc;
+	slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
+	
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr + SFB_CLEAR) = 0;
 

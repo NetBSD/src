@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.32 1999/04/24 08:01:02 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.33 1999/07/25 22:50:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,14 +114,6 @@ struct fbuaccess cfbu;
 struct pmax_fbtty cfbfb;
 struct fbinfo	cfbfi;	/*XXX*/ /* should be softc */
 
-
-/*
- * Forward references.
- */
-
-#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
-
 /*
  * Method table for standard framebuffer operations on a CFB.
  * The  CFB uses a Brooktree bt479 ramdac.
@@ -138,8 +130,6 @@ struct fbdriver cfb_driver = {
 };
 
 int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
-extern void fbScreenInit __P((struct fbinfo *fi));
-
 
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */
 #define CFB_OFFSET_BT459	0x200000	/* Bt459 registers */
@@ -159,7 +149,7 @@ void cfbattach __P((struct device *, struct device *, void *));
 int cfb_intr __P((void *sc));
 
 struct cfattach cfb_ca = {
-	sizeof(struct fbinfo), cfbmatch, cfbattach
+	sizeof(struct fbsoftc), cfbmatch, cfbattach
 };
 
 int
@@ -196,15 +186,13 @@ cfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	caddr_t base = 	(caddr_t)(ta->ta_addr);
 	int unit = self->dv_unit;
-	struct fbinfo *fi = (struct fbinfo *) self;
+	struct fbinfo *fi;
+	
+	/* Allocate a struct fbinfo and point the softc at it */
+	if (fballoc(base, &fi) == 0 && !cfbinit(fi, base, unit, 0))
+			return;
 
-#ifdef notyet
-	/* if this is the console, it's already configured. */
-	if (ca->ca_slotpri == cons_slot)
-		return;	/* XXX patch up softc pointer */
-#endif
-
-	if (!cfbinit(fi, base, unit, 0))
+	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
 		return;
 
 	/*
@@ -214,6 +202,7 @@ cfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, cfb_intr, fi);
+	fbconnect("PMAG-BA", fi, 0);
 	printf("\n");
 }
 
@@ -230,29 +219,12 @@ cfbinit(fi, cfbaddr, unit, silent)
 	int unit;
 	int silent;
 {
-	/*
-	 * If this device is being intialized as the console, malloc()
-	 * is not yet up and we must use statically-allocated space.
-	 */
-	if (fi == NULL) {
-		fi = &cfbfi;	/* XXX */
-  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
-	}
-	else {
-    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
-		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap\n", unit);
-			return (0);
-		}
-	}
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
 		printf("cfb: bad address 0x%p\n", cfbaddr);
 		return (0);
 	}
-
-	/* XXX  fi should be a pointer to a field in the softc */
 
 	/* Fill in main frame buffer info struct. */
 	fi->fi_unit = unit;
@@ -273,17 +245,11 @@ cfbinit(fi, cfbaddr, unit, silent)
 	fi->fi_type.fb_cmsize = 256;
 	fi->fi_type.fb_size = CFB_FB_SIZE;
 
-
-	/*
-	 * Reset the chip.   (Initializes colormap for us as a
-	 * "helpful"  side-effect.)
-	 */
+	/* Reset the chip */
 	if (!bt459init(fi)) {
 		printf("cfb%d: vdac init failed.\n", unit);
 		return (0);
 	}
-	/*cfbInitColorMap();*/  /* done by bt459init() */
-
 
 	/*
 	 * qvss/pm-style mmap()ed event queue compatibility glue
@@ -299,33 +265,19 @@ cfbinit(fi, cfbaddr, unit, silent)
 	/* This is glass-tty state but it's in the shared structure. Ick. */
 	fi->fi_fbu->scrInfo.max_row = 56;
 	fi->fi_fbu->scrInfo.max_col = 80;
-
 	init_pmaxfbu(fi);
 
-	/*
-	 * Initialize old-style pmax glass-tty screen info.
-	 */
+	/* Initialize old-style pmax glass-tty screen info. */
 	fi->fi_glasstty = &cfbfb;
 
-
-	/*
-	 * Initialize the color map, the screen, and the mouse.
-	 */
+	/* Initialize the color map, the screen, and the mouse. */
 	if (tb_kbdmouseconfig(fi)) {
 		printf(" (mouse/keyboard config failed)");
 		return (0);
 	}
 
-
-	/*
-	 * Connect to the raster-console pseudo-driver
-	 */
+	/* Connect to the raster-console pseudo-driver */
 	fbconnect("PMAG-BA", fi, silent);
-
-
-#ifdef fpinitialized
-	fp->initialized = 1;
-#endif
 	return (1);
 }
 
@@ -344,12 +296,14 @@ int
 cfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = (struct fbinfo *)sc;
-	char *slot_addr = (((char *)fi->fi_base) - CFB_OFFSET_VRAM);
+	struct fbinfo *fi;
+	caddr_t slot_addr;
 
+	fi = (struct fbinfo *)sc;
+	slot_addr = (((caddr_t)fi->fi_base) - CFB_OFFSET_VRAM);
+	
 	/* reset vertical-retrace interrupt by writing a dont-care */
-	*(int*) (slot_addr+CFB_OFFSET_IREQ) = 0;
-
+	*(int*) (slot_addr + CFB_OFFSET_IREQ) = 0;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.38 1999/07/25 22:50:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.38 1999/07/25 22:50:28 ad Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -112,18 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $");
  */
 struct fbuaccess mfbu;
 struct pmax_fbtty mfbfb;
-struct fbinfo	mfbfi;	/*XXX*/
-
-
-/*
- * Forward references.
- */
-#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
-
 
 void mfbPosCursor  __P((struct fbinfo *fi, int x, int y));
-
 
 
 int	mfbinit __P((struct fbinfo *fi, caddr_t mfbaddr, int unit, int silent));
@@ -234,17 +223,13 @@ mfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	caddr_t mfbaddr = (caddr_t) ta->ta_addr;
 	int unit = self->dv_unit;
-	struct fbinfo *fi = (struct fbinfo *) self;
+	struct fbinfo *fi;
+	
+	/* Allocate a struct fbinfo and point the softc at it */
+	if (fballoc(mfbaddr, &fi) == 0 && !mfbinit(fi, mfbaddr, unit, 0))
+			return;
 
-#ifdef notyet
-	struct fbinfo *fi = &mfbfi;
-
-	/* if this is the console, it's already configured. */
-	if (ta->ta_cookie == cons_slot)
-		return;	/* XXX patch up softc pointer */
-#endif
-
-	if (!mfbinit(fi, mfbaddr, unit, 0))
+	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
 		return;
 
 	/*
@@ -254,6 +239,7 @@ mfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, mfb_intr, fi);
+	fbconnect("PMAG-AA", fi, 0);
 	printf("\n");
 }
 
@@ -268,25 +254,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 	int unit;
 	int silent;
 {
-
 	int isconsole = 0;
-
-	/*
-	 * If this device is being intialized as the console, malloc()
-	 * is not yet up and we must use statically-allocated space.
-	 */
-	if (fi == NULL) {
-		fi = &mfbfi;	/* XXX */
-		fi->fi_cmap_bits = (caddr_t)cmap_bits;
-		isconsole = 1;
-	}
-	else {
-		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
-		if (fi->fi_cmap_bits == NULL) {
-			printf("mfb%d: no memory for cmap\n", unit);
-			return (0);
-		}
-	}
 
 	/* check for no frame buffer */
 	if (badaddr(mfbaddr, 4)) {
@@ -359,10 +327,6 @@ mfbinit(fi, mfbaddr, unit, silent)
 	 * Connect to the raster-console pseudo-driver.
 	 */
 	fbconnect("PMAG-AA", fi, silent);
-
-#ifdef 	fpinitialized
-	fp->initialized = 1;
-#endif
 	return (1);
 }
 
@@ -614,7 +578,7 @@ mfbLoadColorMap(fi, bits, index, count)
 	if (count < 0 || index < 0 || index + count > 15)
 		return EINVAL;
 
-	/* We will read COUNT red, green, and blue values from CMAP_BITS. */
+	/* We will read COUNT red, green, and blue values from cmap_bits */
 	cmap_bits = (u_char *)bits;
 
 	/*
@@ -819,9 +783,12 @@ int
 mfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = (struct fbinfo *)sc;
+	struct fbinfo *fi;
 	volatile int junk;
-	char *slot_addr = (((char *)fi->fi_base) - MFB_OFFSET_BT431);
+	char *slot_addr;
+
+	fi = (struct fbinfo *)sc;
+	slot_addr = (((char *)fi->fi_base) - MFB_OFFSET_BT431);
 
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	junk = *(volatile int*) (slot_addr + MFB_OFFSET_IREQ);

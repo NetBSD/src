@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.26 1999/04/24 08:01:08 simonb Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.27 1999/07/25 22:50:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,11 +133,6 @@ struct fbuaccess xcfbu;
  */
 struct pmax_fbtty xcfbfb;
 
-struct fbinfo	xcfbfi;	/*XXX*/
-
-#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
-
 #define XCFB_FB_SIZE 0x100000	/* size of raster (mapped into userspace) */
 
 
@@ -194,13 +189,23 @@ xcfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct tc_attach_args *ta = aux;
+	struct tc_attach_args *ta;
+	struct fbinfo *fi;
+	caddr_t base;
 
-	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0))
+	ta = aux;
+	base = (caddr_t)ta->ta_addr;
+
+	/* Allocate a struct fbinfo and point the softc at it */
+	if (fballoc(base, &fi) == 0 && !xcfbinit(fi, base, self->dv_unit, 0))
+			return;
+
+	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
 		return;
 
-	/* no interrupts for XCFB */
+
 	/*BUS_INTR_ESTABLISH(ca, xcfbintr, self->dv_unit);*/
+	fbconnect("PMAG-DV", fi, 0);
 	printf("\n");
 }
 
@@ -215,29 +220,13 @@ xcfbinit(fi, base, unit, silent)
 	int unit;
 	int silent;
 {
-	/*XXX*/
-	/*
-	 * If this device is being intialized as the console, malloc()
-	 * is not yet up and we must use statically-allocated space.
-	 */
-	if (fi == NULL) {
-		fi = &xcfbfi;	/* XXX */
-  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
-	} else {
-    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
-		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap\n", unit);
-			return (0);
-		}
-	}
-
+	
 	/*XXX*/
 	/*
 	 * Or Cached? A comment in the Mach driver suggests that the X server
 	 * runs faster in cached address space, but the X server is going
 	 * to blow away the data cache whenever it updates the screen, so..
 	 */
-	base = (char *) MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
 
 	/* Fill in main frame buffer info struct. */
 	fi->fi_unit = unit;

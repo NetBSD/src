@@ -1,10 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.15 1999/04/24 08:01:04 simonb Exp $	*/
-
-/*
- * XXX this should be stored in 'fbinfo', but that might just break the
- * staticly linked Xserver.
- */
-static u_char saved_cmap[NFB][768];
+/*	$NetBSD: fb_usrreq.c,v 1.16 1999/07/25 22:50:28 ad Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -15,23 +9,26 @@ fbopen(dev, flag, mode, p)
 {
 	struct fbinfo *fi;
 
-#ifdef fpinitialized
-	if (!fp->initialized)
-		return (ENXIO);
-#endif
-
-	if (minor(dev) >= fbcd.cd_ndevs ||
-	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
+	if (minor(dev) >= fbndevs)
 	    return(ENXIO);
+	    
+	fi = &fbdevs[minor(dev)].fd_info;
 
 	if (fi->fi_open)
 		return (EBUSY);
 
+	/* Save colormap for 8bpp devices */
+	if (fi->fi_type.fb_depth == 8) {
+		fi->fi_savedcmap = malloc(768, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_savedcmap == NULL) {
+			printf("fbopen: no memory for cmap\n");
+			return (ENOMEM);
+		}
+		
+		fi->fi_driver->fbd_getcmap(fi, fi->fi_savedcmap, 0, 256);
+	}
+	
 	fi->fi_open = 1;
-
-	if (fi->fi_type.fb_depth == 8)
-		fi->fi_driver->fbd_getcmap(fi, saved_cmap[minor(dev)], 0, 256);
-
 	(*fi->fi_driver->fbd_initcmap)(fi);
 
 	/*
@@ -53,9 +50,10 @@ fbclose(dev, flag, mode, p)
 	struct fbinfo *fi;
 	struct pmax_fbtty *fbtty;
 
-	if (minor(dev) >= fbcd.cd_ndevs ||
-	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
+	if (minor(dev) >= fbndevs)
 	    return(EBADF);
+	    
+	fi = &fbdevs[minor(dev)].fd_info;
 
 	if (!fi->fi_open)
 		return (EBADF);
@@ -63,13 +61,13 @@ fbclose(dev, flag, mode, p)
 	fbtty = fi->fi_glasstty;
 	fi->fi_open = 0;
 
-	if (fi->fi_type.fb_depth == 8)
-		fi->fi_driver->fbd_putcmap(fi, saved_cmap[minor(dev)], 0, 256);
-	else
+	if (fi->fi_type.fb_depth == 8) {
+		fi->fi_driver->fbd_putcmap(fi, fi->fi_savedcmap, 0, 256);
+		free(fi->fi_savedcmap, M_DEVBUF);
+	} else
 		fi->fi_driver->fbd_initcmap(fi);
 
 	genDeconfigMouse();
-	fbScreenInit(fi);
 
 	bzero((caddr_t)fi->fi_pixels, fi->fi_pixelsize);
 	(*fi->fi_driver->fbd_poscursor)
@@ -89,10 +87,10 @@ fbioctl(dev, cmd, data, flag, p)
 	struct pmax_fbtty *fbtty;
 	char cmap_buf [3];
 
-	if (minor(dev) >= fbcd.cd_ndevs ||
-	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
+	if (minor(dev) >= fbndevs)
 	    return(EBADF);
-
+	    
+	fi = &fbdevs[minor(dev)].fd_info;
 	fbtty = fi->fi_glasstty;
 
 	switch (cmd) {
@@ -118,7 +116,6 @@ fbioctl(dev, cmd, data, flag, p)
 		/*
 		 * Initialize the screen.
 		 */
-		fbScreenInit(fi);
 		break;
 
 	case QIOCKPCMD:
@@ -225,8 +222,13 @@ fbpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct fbinfo *fi = fbcd.cd_devs[minor(dev)];
+	struct fbinfo *fi;
 	int revents = 0;
+
+	if (minor(dev) >= fbndevs)
+	    return(EBADF);
+	    
+	fi = &fbdevs[minor(dev)].fd_info;
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
@@ -255,15 +257,16 @@ fbmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	int len;
 	struct fbinfo *fi;
+	int len;
 
 	if (off < 0)
 		return (-1);
 
-	if (minor(dev) >= fbcd.cd_ndevs ||
-	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
+	if (minor(dev) >= fbndevs)
 	    return(-1);
+	    
+	fi = &fbdevs[minor(dev)].fd_info;
 
 	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
