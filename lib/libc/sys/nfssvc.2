@@ -40,10 +40,10 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn nfssvc "int sock"
+.Fn nfssvc "int sock" "struct sockaddr *mask" "int mask_length" "struct sockaddr *match" "int match_length"
 .Sh DESCRIPTION
 .Bf -symbolic
-The calling sequence of this function is expected to change
+The calling sequence of this function is expected to change. In fact it is known to have changed in 4.4 BSD.  
 .Ef
 .Fn Nfssvc
 starts an
