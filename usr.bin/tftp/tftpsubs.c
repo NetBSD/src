@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.c,v 1.6 1999/07/12 20:19:21 itojun Exp $	*/
+/*	$NetBSD: tftpsubs.c,v 1.6.8.1 2004/04/07 22:27:16 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftpsubs.c,v 1.6 1999/07/12 20:19:21 itojun Exp $");
+__RCSID("$NetBSD: tftpsubs.c,v 1.6.8.1 2004/04/07 22:27:16 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,9 @@ __RCSID("$NetBSD: tftpsubs.c,v 1.6 1999/07/12 20:19:21 itojun Exp $");
 
 #include "tftpsubs.h"
 
-#define PKTSIZE SEGSIZE+4       /* should be moved to tftp.h */
-
 struct bf {
 	int counter;            /* size of data in buffer, or flag */
-	char buf[PKTSIZE];      /* room for data packet */
+	char buf[MAXPKTSIZE];   /* room for data packet */
 } bfs[2];
 
 				/* Values for bf.counter  */
@@ -85,8 +83,17 @@ int prevchar = -1;		/* putbuf: previous char (cr check) */
 
 static struct tftphdr *rw_init __P((int));
 
-struct tftphdr *w_init() { return rw_init(0); }	/* write-behind */
-struct tftphdr *r_init() { return rw_init(1); }	/* read-ahead */
+struct tftphdr *
+w_init()		/* write-behind */
+{
+	return rw_init(0);
+}
+
+struct tftphdr *
+r_init()		/* read-ahead */
+{
+	return rw_init(1);
+}
 
 static struct tftphdr *
 rw_init(x)			/* init for either read-ahead or write-behind */
@@ -105,9 +112,10 @@ rw_init(x)			/* init for either read-ahead or write-behind */
    Free it and return next buffer filled with data.
  */
 int
-readit(file, dpp, convert)
+readit(file, dpp, amt, convert)
 	FILE *file;                     /* file opened for read */
 	struct tftphdr **dpp;
+	int amt;
 	int convert;                    /* if true, convert to ascii */
 {
 	struct bf *b;
@@ -117,7 +125,7 @@ readit(file, dpp, convert)
 
 	b = &bfs[current];              /* look at new buffer */
 	if (b->counter == BF_FREE)      /* if it's empty */
-		read_ahead(file, convert);      /* fill it */
+		read_ahead(file, amt, convert);      /* fill it */
 /*      assert(b->counter != BF_FREE);*//* check */
 	*dpp = (struct tftphdr *)b->buf;        /* set caller's ptr */
 	return b->counter;
@@ -128,8 +136,9 @@ readit(file, dpp, convert)
  * conversions are  lf -> cr,lf  and cr -> cr, nul
  */
 void
-read_ahead(file, convert)
+read_ahead(file, amt, convert)
 	FILE *file;                     /* file opened for read */
+	int amt;			/* number of bytes to read */
 	int convert;                    /* if true, convert to ascii */
 {
 	int i;
@@ -146,12 +155,12 @@ read_ahead(file, convert)
 	dp = (struct tftphdr *)b->buf;
 
 	if (convert == 0) {
-		b->counter = read(fileno(file), dp->th_data, SEGSIZE);
+		b->counter = read(fileno(file), dp->th_data, amt);
 		return;
 	}
 
 	p = dp->th_data;
-	for (i = 0 ; i < SEGSIZE; i++) {
+	for (i = 0 ; i < amt; i++) {
 		if (newline) {
 			if (prevchar == '\n')
 				c = '\n';       /* lf to cr,lf */
@@ -257,8 +266,9 @@ skipit:
  */
 
 int
-synchnet(f)
+synchnet(f, bsize)
 	int	f;		/* socket to flush */
+	int	bsize;		/* size of buffer to sync */
 {
 	int i, j = 0;
 	char rbuf[PKTSIZE];
