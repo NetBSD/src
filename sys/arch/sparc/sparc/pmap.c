@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1996/03/14 21:09:23 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.54 1996/03/16 23:31:45 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -508,7 +508,7 @@ pmap_page_index(pa)
 
 #ifdef  DIAGNOSTIC
 	if (pa < avail_start || pa >= avail_end)
-		panic("pmap_page_index: pa=0x%x", pa);
+		panic("pmap_page_index: pa=0x%lx", pa);
 #endif
 
 	for (idx = 0, mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
@@ -1501,7 +1501,7 @@ pv_link(pv, pm, va)
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
 				if (pmapdebug) printf(
-				"pv_link: badalias: pid %d, %x<=>%x, pa %x\n",
+				"pv_link: badalias: pid %d, %lx<=>%x, pa %lx\n",
 				curproc?curproc->p_pid:-1, va, npv->pv_va,
 				vm_first_phys + (pv-pv_table)*NBPG);
 #endif
@@ -1957,7 +1957,7 @@ pass2:
 		len = sizeof(struct pvlist) * atop(len);
 
 		if (addr < avail_start || addr >= avail_end)
-			panic("pmap_init: unmanaged address: 0x%x", addr);
+			panic("pmap_init: unmanaged address: 0x%lx", addr);
 
 		va = (vm_offset_t)&pv_table[atop(addr - avail_start)];
 		sva = trunc_page(va);
@@ -1967,7 +1967,8 @@ pass2:
 #endif
 			sva += PAGE_SIZE;
 			if (sva < eva)
-				panic("pmap_init: sva(%x) < eva(%x)", sva, eva);
+				panic("pmap_init: sva(%lx) < eva(%lx)",
+				    sva, eva);
 		}
 		eva = round_page(va + len);
 		if (pass1) {
@@ -2196,7 +2197,7 @@ pmap_remove(pm, va, endva)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(%p, %x, %x)\n", pm, va, endva);
+		printf("pmap_remove(%p, %lx, %lx)\n", pm, va, endva);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -2545,10 +2546,10 @@ pmap_page_protect(pa, prot)
 
 #ifdef DEBUG
 	if (!pmap_pa_exists(pa))
-		panic("pmap_page_protect: no such address: %x", pa);
+		panic("pmap_page_protect: no such address: %lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(%x, %x)\n", pa, prot);
+		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
 #endif
 	/*
 	 * Skip unmanaged pages, or operations that do not take
@@ -2836,7 +2837,7 @@ pmap_changeprot(pm, va, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%p, %x, %x, %x)\n",
+		printf("pmap_changeprot(%p, %lx, %x, %x)\n",
 		    pm, va, prot, wired);
 #endif
 
@@ -2944,7 +2945,7 @@ pmap_enter(pm, va, pa, prot, wired)
 
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
-		printf("pmap_enter: pm %p, va %x, pa %x: in MMU hole\n",
+		printf("pmap_enter: pm %p, va %lx, pa %lx: in MMU hole\n",
 			pm, va, pa);
 #endif
 		return;
@@ -2952,7 +2953,7 @@ pmap_enter(pm, va, pa, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter(%p, %x, %x, %x, %x)\n",
+		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		    pm, va, pa, prot, wired);
 #endif
 
@@ -2966,7 +2967,7 @@ pmap_enter(pm, va, pa, prot, wired)
 	if ((pteproto & PG_TYPE) == PG_OBMEM && managed(pa)) {
 #ifdef DIAGNOSTIC
 		if (!pmap_pa_exists(pa))
-			panic("pmap_enter: no such address: %x", pa);
+			panic("pmap_enter: no such address: %lx", pa);
 #endif
 		pteproto |= SWTOHW(atop(pa));
 		pv = pvhead(pa);
@@ -3037,7 +3038,7 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
 #ifdef DEBUG
-printf("pmap_enk: changing existing va=>pa entry: va %x, pteproto %x\n",
+printf("pmap_enk: changing existing va=>pa entry: va %lx, pteproto %x\n",
 	va, pteproto);
 #endif
 			/*
@@ -3704,12 +3705,12 @@ pm_check_u(s, pm)
 			panic("%s: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, vr, rp->rg_nsegmap);
 		if ((unsigned int)rp < KERNBASE)
-			panic("%s: rp=%x", s, rp);
+			panic("%s: rp=%p", s, rp);
 		n = 0;
 		for (vs = 0; vs < NSEGRG; vs++) {
 			sp = &rp->rg_segmap[vs];
 			if ((unsigned int)sp < KERNBASE)
-				panic("%s: sp=%x", s, sp);
+				panic("%s: sp=%p", s, sp);
 			if (sp->sg_npte != 0) {
 				n++;
 				if (sp->sg_pte == NULL)
