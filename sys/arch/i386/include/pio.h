@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.18 2001/11/13 03:27:50 perry Exp $	*/
+/*	$NetBSD: pio.h,v 1.19 2001/12/28 06:44:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static __inline u_int8_t
 __inbc(u_long port)
 {
 	u_int8_t data;
-	__asm __volatile("inb %1,%0" : "=a" (data) : "id" (port));
+	__asm __volatile("inb %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -97,7 +97,7 @@ static __inline u_int16_t
 __inwc(u_long port)
 {
 	u_int16_t data;
-	__asm __volatile("inw %1,%0" : "=a" (data) : "id" (port));
+	__asm __volatile("inw %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -127,7 +127,7 @@ static __inline u_int32_t
 __inlc(u_long port)
 {
 	u_int32_t data;
-	__asm __volatile("inl %1,%0" : "=a" (data) : "id" (port));
+	__asm __volatile("inl %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -157,7 +157,7 @@ insl(u_long port, void *addr, int cnt)
 static __inline void
 __outbc(u_long port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%1" : : "a" (data), "id" (port));
+	__asm __volatile("outb %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
@@ -183,7 +183,7 @@ outsb(u_long port, const void *addr, int cnt)
 static __inline void
 __outwc(u_long port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%1" : : "a" (data), "id" (port));
+	__asm __volatile("outw %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
@@ -209,7 +209,7 @@ outsw(u_long port, const void *addr, int cnt)
 static __inline void
 __outlc(u_long port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%1" : : "a" (data), "id" (port));
+	__asm __volatile("outl %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
