@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.9 1999/08/26 14:52:04 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.10 2000/02/03 17:42:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.9 1999/08/26 14:52:04 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.10 2000/02/03 17:42:01 itojun Exp $");
 #endif
 #endif
 
@@ -384,6 +384,10 @@ ip_print(register const u_char *bp, register u_int length)
 		return;
 	}
 	hlen = ip->ip_hl * 4;
+	if (hlen < sizeof (struct ip)) {
+		(void)printf("bad-hlen %d", hlen);
+		return;
+	}
 
 	len = ntohs(ip->ip_len);
 	if (length < len)
