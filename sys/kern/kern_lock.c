@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.12 2002/10/18 02:44:52 nathanw Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.13 2002/10/18 05:11:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.12 2002/10/18 02:44:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.13 2002/10/18 05:11:03 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1324,14 +1324,14 @@ _kernel_proc_lock(struct lwp *l)
 
 	SCHED_ASSERT_UNLOCKED();
 	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
-	l->l_flag |= P_BIGLOCK;
+	l->l_flag |= L_BIGLOCK;
 }
 
 void
 _kernel_proc_unlock(struct lwp *l)
 {
 
-	l->l_flag &= ~P_BIGLOCK;
+	l->l_flag &= ~L_BIGLOCK;
 	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 }
 #endif /* MULTIPROCESSOR */
