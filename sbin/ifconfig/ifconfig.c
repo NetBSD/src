@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.105 2001/04/27 09:10:04 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.106 2001/04/28 00:00:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.105 2001/04/27 09:10:04 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.106 2001/04/28 00:00:06 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,9 +121,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.105 2001/04/27 09:10:04 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
-#endif
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
@@ -696,7 +694,6 @@ getinfo(ifr)
 void
 printall()
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
 	const struct sockaddr_dl *sdl = NULL;
@@ -755,80 +752,6 @@ printall()
 	if (lflag)
 		putchar('\n');
 	freeifaddrs(ifap);
-#else
-	char inbuf[8192];
-	const struct sockaddr_dl *sdl = NULL;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
-	int i, siz, idx;
-	char ifrbuf[8192], *cp;
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	getsock(af);
-	if (s < 0)
-		err(1, "socket");
-	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-		err(1, "SIOCGIFCONF");
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */
-		cp = ((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, cp, sizeof(*ifr));
-
-		/* Now compute the actual size of the ifreq. */
-		ifr = (struct ifreq *)ifrbuf;
-		siz = ifr->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += sizeof(ifr->ifr_name);
-		i += siz;
-
-		/* Now copy the whole thing. */
-		if (sizeof(ifrbuf) < siz)
-			errx(1, "ifr too big");
-		memcpy(ifrbuf, cp, siz);
-
-		if (ifr->ifr_addr.sa_family == AF_LINK)
-			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
-		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-			     sizeof(ifr->ifr_name)))
-			continue;
-		(void) strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
-		ifreq = *ifr;
-
-		if (getinfo(&ifreq) < 0)
-			continue;
-		if (bflag && (flags & (IFF_POINTOPOINT|IFF_LOOPBACK)))
-			continue;
-		if (dflag && (flags & IFF_UP) != 0)
-			continue;
-		if (uflag && (flags & IFF_UP) == 0)
-			continue;
-
-		if (sflag && carrier())
-			continue;
-		idx++;
-		/*
-		 * Are we just listing the interfaces?
-		 */
-		if (lflag) {
-			if (idx > 1)
-				putchar(' ');
-			fputs(name, stdout);
-			continue;
-		}
-
-		if (sdl == NULL) {
-			status(NULL, 0);
-		} else {
-			status(LLADDR(sdl), sdl->sdl_alen);
-			sdl = NULL;
-		}
-	}
-	if (lflag)
-		putchar('\n');
-#endif
 }
 
 void
@@ -2066,7 +1989,6 @@ void
 in_status(force)
 	int force;
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
 
@@ -2086,44 +2008,6 @@ in_status(force)
 		in_alias(&ifr);
 	}
 	freeifaddrs(ifap);
-#else
-	char inbuf[8192];
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	int i, siz;
-	char ifrbuf[8192], *cp;
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	getsock(af);
-	if (s < 0)
-		err(1, "socket");
-	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-		err(1, "SIOCGIFCONF");
-	for (i = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */
-		cp = ((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, cp, sizeof(*ifr));
-
-		/* Now compute the actual size of the ifreq. */
-		ifr = (struct ifreq *)ifrbuf;
-		siz = ifr->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += sizeof(ifr->ifr_name);
-		i += siz;
-
-		/* Now copy the whole thing. */
-		if (sizeof(ifrbuf) < siz)
-			errx(1, "ifr too big");
-		memcpy(ifrbuf, cp, siz);
-
-		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
-			if (ifr->ifr_addr.sa_family == AF_INET)
-				in_alias(ifr);
-		}
-	}
-#endif
 }
 
 void
@@ -2271,7 +2155,6 @@ void
 in6_status(force)
 	int force;
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct in6_ifreq ifr;
 
@@ -2291,44 +2174,6 @@ in6_status(force)
 		in6_alias(&ifr);
 	}
 	freeifaddrs(ifap);
-#else
-	char inbuf[8192];
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	int i, siz;
-	char ifrbuf[8192], *cp;
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	getsock(af);
-	if (s < 0)
-		err(1, "socket");
-	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-		err(1, "SIOCGIFCONF");
-	for (i = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */
-		cp = ((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, cp, sizeof(*ifr));
-
-		/* Now compute the actual size of the ifreq. */
-		ifr = (struct ifreq *)ifrbuf;
-		siz = ifr->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += sizeof(ifr->ifr_name);
-		i += siz;
-
-		/* Now copy the whole thing. */
-		if (sizeof(ifrbuf) < siz)
-			errx(1, "ifr too big");
-		memcpy(ifrbuf, cp, siz);
-
-		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
-			if (ifr->ifr_addr.sa_family == AF_INET6)
-				in6_alias((struct in6_ifreq *)ifr);
-		}
-	}
-#endif
 }
 #endif /*INET6*/
 
