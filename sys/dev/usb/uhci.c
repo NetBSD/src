@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.164 2002/09/29 21:13:01 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.165 2002/12/31 02:04:49 dsainty Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.164 2002/09/29 21:13:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.165 2002/12/31 02:04:49 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,11 +276,14 @@ void			uhci_dump(void);
 #define UBARR(sc) bus_space_barrier((sc)->iot, (sc)->ioh, 0, (sc)->sc_size, \
 			BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 #define UWRITE1(sc, r, x) \
- do { UBARR(sc); bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
+ do { UBARR(sc); bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x)); \
+ } while (/*CONSTCOND*/0)
 #define UWRITE2(sc, r, x) \
- do { UBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
+ do { UBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); \
+ } while (/*CONSTCOND*/0)
 #define UWRITE4(sc, r, x) \
- do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
+ do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); \
+ } while (/*CONSTCOND*/0)
 #define UREAD1(sc, r) (UBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
 #define UREAD2(sc, r) (UBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
 #define UREAD4(sc, r) (UBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
