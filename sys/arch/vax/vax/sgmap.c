@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.3 1999/07/08 18:11:02 thorpej Exp $ */
+/* $NetBSD: sgmap.c,v 1.4 2000/03/07 00:04:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -205,10 +205,6 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	/*
 	 * Allocate the necessary virtual address space for the
 	 * mapping.  Round the size, since we deal with whole pages.
-	 *
-	 * alpha_sgmap_alloc will deal with the appropriate spill page
-	 * allocations.
-	 *
 	 */
 	endva = vax_round_page(va + buflen);
 	va = vax_trunc_page(va);
@@ -235,8 +231,7 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	 * Create the bus-specific page tables.
 	 * Can be done much more efficient than this.
 	 */
-	for (; va < endva; va += VAX_NBPG, pteidx++,
-		pte = &page_table[pteidx], map->_dm_ptecnt++) {
+	for (; va < endva; va += VAX_NBPG, pte++, map->_dm_ptecnt++) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -301,17 +296,14 @@ vax_sgmap_unload(t, map, sgmap)
 	struct vax_sgmap *sgmap;
 {
 	long *pte, *page_table = (long *)sgmap->aps_pt;
-	int ptecnt, pteidx;
+	int ptecnt;
 
 	/*
 	 * Invalidate the PTEs for the mapping.
 	 */
-	for (ptecnt = map->_dm_ptecnt, pteidx = map->_dm_pteidx,
-		pte = &page_table[pteidx];
-		ptecnt != 0;
-		ptecnt--, pteidx++,
-		pte = &page_table[pteidx]) {
-		*pte = 0;
+	for (ptecnt = map->_dm_ptecnt, pte = &page_table[map->_dm_pteidx];
+		ptecnt-- != 0; ) {
+		*pte++ = 0;
 	}
 
 	/*
