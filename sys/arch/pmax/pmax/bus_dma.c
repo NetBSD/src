@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.25 2000/10/02 22:56:51 nisimura Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26 2000/10/04 02:02:05 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -478,14 +478,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * for the appropriate offset, and flush the D-cache
 	 * at that physical address.
 	 *
-	 * The R4000 has a virtually indexed data cache.  Make sure
-	 * both of primary and secodary cache flushed.
+	 * The R4000 has a virtually indexed primary data cache.  We
+	 * do the same loop, instead using the virtual address stashed
+	 * away in the segments when the map was loaded.
 	 */
-#ifdef MIPS3
-	if (CPUISMIPS3)
-		MachHitFlushDCache(map->dm_segs[0]._ds_vaddr + offset, len);
-	else
-#endif
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
 		if (offset >= map->dm_segs[i].ds_len) {
@@ -501,19 +497,31 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
-		addr = map->dm_segs[i].ds_addr;
+#ifdef MIPS3
+		if (CPUISMIPS3)
+			addr = map->dm_segs[i]._ds_vaddr;
+		else
+#endif
+			addr = map->dm_segs[i].ds_addr;
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
-		/*
-		 * We can't have a TLB miss; use KSEG0.
-		 */
-		MachFlushDCache(
-		  MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
-		  minlen);
+#ifdef MIPS3
+		if (CPUISMIPS3)
+			MachHitFlushDCache(addr + offset, minlen);
+		else
+#endif
+		{
+			/*
+			 * We can't have a TLB miss; use KSEG0.
+			 */
+			MachFlushDCache(
+			  MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
+			  minlen);
+		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
