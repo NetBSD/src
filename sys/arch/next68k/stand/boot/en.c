@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.8 2002/09/11 13:15:59 mycroft Exp $        */
+/*      $NetBSD: en.c,v 1.9 2003/03/13 13:44:05 drochner Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -78,7 +78,7 @@ struct netif_dif en_ifs[] = {
 struct netif_driver en_driver = {
 	"en",
 	en_match, en_probe, en_init, en_get, en_put, en_end,
-	en_ifs, NENTS(en_ifs)
+	en_ifs, sizeof(en_ifs) / sizeof(en_ifs[0])
 };
 
 extern int turbo;
