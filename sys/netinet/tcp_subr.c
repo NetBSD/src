@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.168 2004/04/26 05:05:49 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.169 2004/04/26 05:15:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.168 2004/04/26 05:05:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.169 2004/04/26 05:15:47 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1666,12 +1666,7 @@ tcp_signature_compute(struct mbuf *m, struct tcphdr *th, int thoff,
 	u_int16_t savecsum;
 	struct ippseudo ippseudo;
 	struct ip6_ext ip6e;
-	struct {
-		struct in6_addr src, dst;
-		u_int32_t len;
-		u_int8_t zero[3];
-		u_int8_t nxt;
-	} ip6pseudo;
+	struct ip6_hdr_pseudo ip6pseudo;
 	u_int8_t nxt;
 
 	KASSERT(m != NULL /*, ("NULL mbuf chain")*/);
@@ -1761,12 +1756,13 @@ found:
 		    htons(len + sizeof(struct tcphdr) + optlen);
 		MD5Update(&ctx, (char *)&ippseudo, sizeof(ippseudo));
 	} else {
-		ip6pseudo.src = ip6->ip6_src;
-		in6_clearscope(&ip6pseudo.src);
-		ip6pseudo.dst = ip6->ip6_dst;
-		in6_clearscope(&ip6pseudo.dst);
-		ip6pseudo.len = htonl(len + sizeof(struct tcphdr) + optlen);
-		ip6pseudo.nxt = IPPROTO_TCP;
+		ip6pseudo.ip6ph_src = ip6->ip6_src;
+		in6_clearscope(&ip6pseudo.ip6ph_src);
+		ip6pseudo.ip6ph_dst = ip6->ip6_dst;
+		in6_clearscope(&ip6pseudo.ip6ph_dst);
+		ip6pseudo.ip6ph_len =
+		    htonl(len + sizeof(struct tcphdr) + optlen);
+		ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
 		MD5Update(&ctx, (char *)&ip6pseudo, sizeof(ip6pseudo));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.16 2003/08/07 16:33:11 agc Exp $	*/
+/*	$NetBSD: ip6.h,v 1.17 2004/04/26 05:15:47 itojun Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -106,6 +106,20 @@ struct ip6_hdr {
 /* ECN bits proposed by Sally Floyd */
 #define IP6TOS_CE		0x01	/* congestion experienced */
 #define IP6TOS_ECT		0x02	/* ECN-capable transport */
+#endif
+
+#ifdef _KERNEL
+/*
+ * for IPv6 pseudo header checksum
+ * XXX nonstandard
+ */
+struct ip6_hdr_pseudo {
+	struct in6_addr ip6ph_src;
+	struct in6_addr ip6ph_dst;
+	u_int32_t	ip6ph_len;
+	u_int8_t	ip6ph_zero[3];
+	u_int8_t	ip6ph_nxt;
+} __attribute__((__packed__));
 #endif
 
 /*
