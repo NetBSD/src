@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.3 1995/10/22 08:20:44 mycroft Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -156,7 +156,6 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 		free(buf, M_TEMP);
 	}
 
-done:
 	vrele(nd.ni_vp);
 	if (!cflag)
 		vrele(ndroot.ni_vp);
