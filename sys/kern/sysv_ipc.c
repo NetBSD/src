@@ -1,8 +1,7 @@
-/*	$NetBSD: sysv_ipc.c,v 1.9 1995/06/02 19:04:22 mycroft Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
- * All rights reserved.
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Herb Peyerl.
- * 4. The name of Herb Peyerl may not be used to endorse or promote products
+ *      This product includes software developed by Charles M. Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -35,6 +34,8 @@
 #include <sys/proc.h>
 #include <sys/ipc.h>
 #include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
 
 /*
  * Check for ipc permission
