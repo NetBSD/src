@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.23 1998/11/03 05:04:49 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.24 1998/11/03 05:47:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -158,16 +158,14 @@ static u_int8_t fxp_cb_config_template[] = {
 	0x5	/* 21 */
 };
 
-/* Supported media types. */
-struct fxp_supported_media {
-	const int	fsm_phy;	/* PHY type */
-	const int	*fsm_media;	/* the media array */
-	const int	fsm_nmedia;	/* the number of supported media */
-	const int	fsm_defmedia;	/* default media for this PHY */
-};
+static void fxp_mii_initmedia __P((struct fxp_softc *));
+static int fxp_mii_mediachange	__P((struct ifnet *));
+static void fxp_mii_mediastatus	__P((struct ifnet *, struct ifmediareq *));
 
-static int fxp_mediachange	__P((struct ifnet *));
-static void fxp_mediastatus	__P((struct ifnet *, struct ifmediareq *));
+static void fxp_80c24_initmedia __P((struct fxp_softc *));
+static int fxp_80c24_mediachange __P((struct ifnet *));
+static void fxp_80c24_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
 static int fxp_intr		__P((void *));
 static void fxp_start		__P((struct ifnet *));
@@ -184,6 +182,14 @@ static void fxp_read_eeprom	__P((struct fxp_softc *, u_int16_t *,
 static void fxp_get_info	__P((struct fxp_softc *, u_int8_t *));
 void fxp_tick			__P((void *));
 static void fxp_mc_setup	__P((struct fxp_softc *));
+
+struct fxp_phytype {
+	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
+	void	(*fp_init) __P((struct fxp_softc *));
+} fxp_phytype_table[] = {
+	{ FXP_PHY_80C24,		fxp_80c24_initmedia },
+	{ -1,				fxp_mii_initmedia },
+};
 
 /*
  * Set initial transmit threshold at 64 (512 bytes). This is
@@ -258,6 +264,7 @@ fxp_attach(parent, self, aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags, rseg, i, error, attach_stage;
+	struct fxp_phytype *fp;
 
 	/*
 	 * Map control/status registers.
@@ -446,20 +453,14 @@ fxp_attach(parent, self, aux)
 	ifp = &sc->sc_ethercom.ec_if;
 
 	/*
-	 * Initialize our media structures and probe the MII.
+	 * Get info about our media interface, and initialize it.  Note
+	 * the table terminates itself with a phy of -1, indicating
+	 * that we're using MII.
 	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = fxp_mdi_read;
-	sc->sc_mii.mii_writereg = fxp_mdi_write;
-	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mediachange,
-	    fxp_mediastatus);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	for (fp = fxp_phytype_table; fp->fp_phy != -1; fp++)
+		if (fp->fp_phy == sc->phy_primary_device)
+			break;
+	(*fp->fp_init)(sc);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -541,6 +542,44 @@ fxp_attach(parent, self, aux)
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		break;
 	}
+}
+
+void
+fxp_mii_initmedia(sc)
+	struct fxp_softc *sc;
+{
+
+	sc->sc_mii.mii_ifp = &sc->sc_ethercom.ec_if;
+	sc->sc_mii.mii_readreg = fxp_mdi_read;
+	sc->sc_mii.mii_writereg = fxp_mdi_write;
+	sc->sc_mii.mii_statchg = fxp_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
+	    fxp_mii_mediastatus);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+}
+
+void
+fxp_80c24_initmedia(sc)
+	struct fxp_softc *sc;
+{
+
+	/*
+	 * The Seeq 80c24 AutoDUPLEX(tm) Ethernet Interface Adapter
+	 * doesn't have a programming interface of any sort.  The
+	 * media is sensed automatically based on how the link partner
+	 * is configured.  This is, in essence, manual configuration.
+	 */
+	printf("%s: Seeq 80c24 AutoDUPLEX media interface present\n",
+	    sc->sc_dev.dv_xname);
+	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_80c24_mediachange,
+	    fxp_80c24_mediastatus);
+	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
 }
 
 /*
@@ -1322,7 +1361,7 @@ fxp_init(xsc)
  * Change media according to request.
  */
 int
-fxp_mediachange(ifp)
+fxp_mii_mediachange(ifp)
 	struct ifnet *ifp;
 {
 
@@ -1335,7 +1374,7 @@ fxp_mediachange(ifp)
  * Notify the world which media we're using.
  */
 void
-fxp_mediastatus(ifp, ifmr)
+fxp_mii_mediastatus(ifp, ifmr)
 	struct ifnet *ifp;
 	struct ifmediareq *ifmr;
 {
@@ -1344,6 +1383,30 @@ fxp_mediastatus(ifp, ifmr)
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+}
+
+int
+fxp_80c24_mediachange(ifp)
+	struct ifnet *ifp;
+{
+
+	/* Nothing to do here. */
+	return (0);
+}
+
+void
+fxp_80c24_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct fxp_softc *sc = ifp->if_softc;
+
+	/*
+	 * Media is currently-selected media.  We cannot determine
+	 * the link status.
+	 */
+	ifmr->ifm_status = 0;
+	ifmr->ifm_active = sc->sc_mii.mii_media.ifm_cur->ifm_media;
 }
 
 /*
