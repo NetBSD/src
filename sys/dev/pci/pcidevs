@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.247 2000/08/07 04:08:35 billc Exp $
+$NetBSD: pcidevs,v 1.248 2000/08/10 01:55:57 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -409,7 +409,7 @@ vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
-vendor TOSHIBA2		0x1179	Toshiba America Info Systems
+vendor TOSHIBA2		0x1179	Toshiba
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -1463,14 +1463,15 @@ product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
-/* Toshiba America Info Systems products */
+/* Toshiba products */
 product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602  ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
-product TOSHIBA2 FIRO		0x0701	Fast Infrared Type O
+product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
+product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
 
 /* Trident products */
 product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7
