@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.21.2.3 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: rl.c,v 1.21.2.4 2004/10/19 15:57:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.3 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.4 2004/10/19 15:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,6 +119,10 @@ static char *rlstates[] = {
 	"drive ready",
 	"drive unloading heads",
 	"drive spun down",
+};
+
+static struct dkdriver rldkdriver = {
+	rlstrategy, minphys
 };
 
 static char *
@@ -249,6 +253,7 @@ rlattach(struct device *parent, struct device *self, void *aux)
 
 	rc->rc_hwid = ra->hwid;
 	rc->rc_disk.dk_name = rc->rc_dev.dv_xname;
+	rc->rc_disk.dk_driver = &rldkdriver;
 	disk_attach(&rc->rc_disk);
 	dl = rc->rc_disk.dk_label;
 	dl->d_npartitions = 3;
@@ -271,12 +276,18 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	dl->d_type = DTYPE_DEC;
 	printf(": %s, %s\n", dl->d_typename,
 	    rlstate((struct rlc_softc *)parent, ra->hwid));
+
+	/*
+	 * XXX We should try to discovery wedges here, but
+	 * XXX that would mean loading up the pack and being
+	 * XXX able to do I/O.  Should use config_defer() here.
+	 */
 }
 
 int
 rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	int part, unit, mask;
+	int error, part, unit, mask;
 	struct disklabel *dl;
 	struct rlc_softc *sc;
 	struct rl_softc *rc;
@@ -292,12 +303,29 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (rc == 0)
 		return ENXIO;
 
+	part = DISKPART(dev);
+
+	if ((error = lockmgr(&rc->rc_disk.dk_openlock, LK_EXCLUSIVE,
+			     NULL)) != 0)
+		return (error);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (rc->rc_disk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
+
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 	/* Check that the disk actually is useable */
 	msg = rlstate(sc, rc->rc_hwid);
 	if (msg == NULL || msg == rlstates[RLMP_UNLOAD] ||
-	    msg == rlstates[RLMP_SPUNDOWN])
-		return ENXIO;
+	    msg == rlstates[RLMP_SPUNDOWN]) {
+		error = ENXIO;
+		goto bad1;
+	}
 	/*
 	 * If this is the first open; read in where on the disk we are.
 	 */
@@ -319,9 +347,10 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			printf("%s: ", msg);
 		printf("size %d sectors\n", dl->d_secperunit);
 	}
-	part = DISKPART(dev);
-	if (part >= dl->d_npartitions)
-		return ENXIO;
+	if (part >= dl->d_npartitions) {
+		error = ENXIO;
+		goto bad1;
+	}
 
 	mask = 1 << part;
 	switch (fmt) {
@@ -333,15 +362,24 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		break;
 	}
 	rc->rc_disk.dk_openmask |= mask;
+	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
+
+ bad1:
+	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
+	return (error);
 }
 
 int
 rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	int unit = DISKUNIT(dev);
+	int error, unit = DISKUNIT(dev);
 	struct rl_softc *rc = rl_cd.cd_devs[unit];
 	int mask = (1 << DISKPART(dev));
+
+	if ((error = lockmgr(&rc->rc_disk.dk_openlock, LK_EXCLUSIVE,
+			     NULL)) != 0)
+		return (error);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -356,6 +394,7 @@ rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (rc->rc_disk.dk_openmask == 0)
 		rc->rc_state = DK_CLOSED; /* May change pack */
+	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -449,7 +488,10 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 
 		if ((flag & FWRITE) == 0)
 			err = EBADF;
-		else
+		else {
+			if ((err = lockmgr(&rc->rc_disk.dk_openlock,
+					   LK_EXCLUSIVE, NULL)) != 0)
+				break;
 			err = ((
 #ifdef __HAVE_OLD_DISKLABEL
 			       cmd == ODIOCSDINFO ||
@@ -457,6 +499,9 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 			       cmd == DIOCSDINFO) ?
 			    setdisklabel(lp, tp, 0, 0) :
 			    writedisklabel(dev, rlstrategy, lp, 0));
+			(void) lockmgr(&rc->rc_disk.dk_openlock,
+				       LK_RELEASE, NULL);
+		}
 		break;
 	}
 
@@ -464,6 +509,37 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			err = EBADF;
 		break;
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+	
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+	
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) addr;
+
+		return (dkwedge_list(&rc->rc_disk, dkwl, p));
+	    }
 
 	default:
 		err = ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.71.2.3 2004/09/21 13:35:07 skrll Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.71.2.4 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71.2.3 2004/09/21 13:35:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71.2.4 2004/10/19 15:58:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ sys_getpriority(l, v, retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who) &&
 			    p->p_nice < low)
 				low = p->p_nice;
@@ -179,7 +179,7 @@ sys_setpriority(l, v, retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who)) {
 				error = donice(curp, p, SCARG(uap, prio));
 				found++;

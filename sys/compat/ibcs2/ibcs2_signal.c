@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.18.2.3 2004/09/21 13:25:13 skrll Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.18.2.4 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18.2.3 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18.2.4 2004/10/19 15:56:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,11 @@ ibcs2_sys_sigaction(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct ibcs2_sigaction nisa, oisa;
 	struct sigaction nbsa, obsa;
-	int error;
+	int error, signum = SCARG(uap, signum);
+
+	if (signum < 0 || signum >= IBCS2_NSIG)
+		return EINVAL;
+	signum = ibcs2_to_native_signo[signum];
 
 	if (SCARG(uap, nsa)) {
 		error = copyin(SCARG(uap, nsa), &nisa, sizeof(nisa));
@@ -198,7 +202,7 @@ ibcs2_sys_sigaction(l, v, retval)
 			return (error);
 		ibcs2_to_native_sigaction(&nisa, &nbsa);
 	}
-	error = sigaction1(p, ibcs2_to_native_signo[SCARG(uap, signum)],
+	error = sigaction1(p, signum,
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
 	    NULL, 0);
 	if (error)
@@ -257,13 +261,13 @@ ibcs2_sys_sigsys(l, v, retval)
 		syscallarg(ibcs2_sig_t) fp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int signum = ibcs2_to_native_signo[IBCS2_SIGNO(SCARG(uap, sig))];
 	struct sigaction nbsa, obsa;
 	sigset_t ss;
-	int error;
+	int error, signum = IBCS2_SIGNO(SCARG(uap, sig));
 
-	if (signum <= 0 || signum >= IBCS2_NSIG)
-		return (EINVAL);
+	if (signum < 0 || signum >= IBCS2_NSIG)
+		return EINVAL;
+	signum = ibcs2_to_native_signo[signum];
 	
 	switch (IBCS2_SIGCALL(SCARG(uap, sig))) {
 	case IBCS2_SIGSET_MASK:
@@ -421,8 +425,13 @@ ibcs2_sys_kill(l, v, retval)
 		syscallarg(int) signo;
 	} */ *uap = v;
 	struct sys_kill_args ka;
+	int signum = SCARG(uap, signo);
+
+	if (signum < 0 || signum >= IBCS2_NSIG)
+		return EINVAL;
+	signum = ibcs2_to_native_signo[signum];
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = ibcs2_to_native_signo[SCARG(uap, signo)];
+	SCARG(&ka, signum) = signum;
 	return sys_kill(l, &ka, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.2.4.4 2004/09/21 13:21:24 skrll Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.2.4.5 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -75,28 +75,28 @@ static void	arcemu_unimpl_void_void_noret(void)
 static void	arcemu_unimpl_void_void(void);
 static void    *arcemu_unimpl_voidptr_void(void);
 static void    *arcemu_unimpl_voidptr_voidptr(void *);
-static uint32_t	arcemu_unimpl_Load(char *, uint32_t, uint32_t, uint32_t *);
-static uint32_t	arcemu_unimpl_Invoke(uint32_t, uint32_t, uint32_t, char **,
+static paddr_t	arcemu_unimpl_Load(char *, paddr_t, paddr_t, paddr_t *);
+static paddr_t	arcemu_unimpl_Invoke(paddr_t, paddr_t, paddr_t, char **,
 								   char **);
-static uint32_t	arcemu_unimpl_Execute(char *, uint32_t, char **, char **);
-static uint32_t	arcemu_unimpl_GetConfigurationData(void *, void *);
+static paddr_t	arcemu_unimpl_Execute(char *, paddr_t, char **, char **);
+static paddr_t	arcemu_unimpl_GetConfigurationData(void *, void *);
 static void    *arcemu_unimpl_AddChild(void *, void *);
-static uint32_t	arcemu_unimpl_DeleteComponent(void *);
-static uint32_t	arcemu_unimpl_GetComponent(char *);
-static uint32_t	arcemu_unimpl_SaveConfiguration(void);
+static paddr_t	arcemu_unimpl_DeleteComponent(void *);
+static paddr_t	arcemu_unimpl_GetComponent(char *);
+static paddr_t	arcemu_unimpl_SaveConfiguration(void);
 static void    *arcemu_unimpl_GetMemoryDescriptor(void *);
-static uint32_t	arcemu_unimpl_GetRelativeTime(void);
-static uint32_t	arcemu_unimpl_GetDirectoryEntry(uint32_t, void *, uint32_t,
-								  uint32_t *);
-static uint32_t arcemu_unimpl_Open(char *, uint32_t, uint32_t *);
-static uint32_t arcemu_unimpl_Close(uint32_t);
-static uint32_t arcemu_unimpl_GetReadStatus(uint32_t);
-static uint32_t arcemu_unimpl_Seek(uint32_t, int64_t *, uint32_t);
-static uint32_t	arcemu_unimpl_Mount(char *, uint32_t); 
+static paddr_t	arcemu_unimpl_GetRelativeTime(void);
+static paddr_t	arcemu_unimpl_GetDirectoryEntry(paddr_t, void *, paddr_t,
+								  paddr_t *);
+static paddr_t arcemu_unimpl_Open(char *, paddr_t, paddr_t *);
+static paddr_t arcemu_unimpl_Close(paddr_t);
+static paddr_t arcemu_unimpl_GetReadStatus(paddr_t);
+static paddr_t arcemu_unimpl_Seek(paddr_t, int64_t *, paddr_t);
+static paddr_t	arcemu_unimpl_Mount(char *, paddr_t); 
 static char    *arcemu_unimpl_GetEnvironmentVariable(char *);
-static uint32_t	arcemu_unimpl_SetEnvironmentVariable(char *, char *);
-static uint32_t	arcemu_unimpl_GetFileInformation(uint32_t, void *);
-static uint32_t	arcemu_unimpl_SetFileInformation(uint32_t, uint32_t, uint32_t);
+static paddr_t	arcemu_unimpl_SetEnvironmentVariable(char *, char *);
+static paddr_t	arcemu_unimpl_GetFileInformation(paddr_t, void *);
+static paddr_t	arcemu_unimpl_SetFileInformation(paddr_t, paddr_t, paddr_t);
 
 #endif /* _ARCEMU_PRIVATE */
 

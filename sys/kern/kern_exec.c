@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.4 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.5 2004/10/19 15:58:03 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.5 2004/10/19 15:58:03 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1027,7 +1027,7 @@ emul_unregister(const char *name)
 	 */
 	proclist_lock_read();
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
-		LIST_FOREACH(ptmp, pd->pd_list, p_list) {
+		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
 				error = EBUSY;
 				break;

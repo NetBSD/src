@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.130.2.2 2004/08/12 11:41:27 skrll Exp $	*/
+/*	$NetBSD: wi.c,v 1.130.2.3 2004/10/19 15:56:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130.2.2 2004/08/12 11:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130.2.3 2004/10/19 15:56:56 skrll Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -705,8 +705,6 @@ wi_init(struct ifnet *ifp)
 	case IEEE80211_M_IBSS:
 		wi_write_val(sc, WI_RID_PORTTYPE, sc->sc_ibss_port);
 		ic->ic_flags |= IEEE80211_F_IBSSON;
-		sc->sc_syn_timer = 5;
-		ifp->if_timer = 1;
 		break;
 	case IEEE80211_M_AHDEMO:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_ADHOC);
@@ -912,7 +910,6 @@ wi_stop(struct ifnet *ifp, int disable)
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
-	sc->sc_syn_timer = 0;
 	sc->sc_false_syns = 0;
 	sc->sc_naps = 0;
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
@@ -1217,7 +1214,6 @@ STATIC void
 wi_watchdog(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = 0;
 	if (!sc->sc_enabled)
@@ -1241,17 +1237,6 @@ wi_watchdog(struct ifnet *ifp)
 		}
 		if (sc->sc_scan_timer)
 			ifp->if_timer = 1;
-	}
-
-	if (sc->sc_syn_timer) {
-		if (--sc->sc_syn_timer == 0) {
-			DPRINTF2(("%s: %d false syns\n",
-			    sc->sc_dev.dv_xname, sc->sc_false_syns));
-			sc->sc_false_syns = 0;
-			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-			sc->sc_syn_timer = 5;
-		}
-		ifp->if_timer = 1;
 	}
 
 	/* TODO: rate control */
@@ -1462,7 +1447,8 @@ wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 	 * change-of-BSSID indications.
 	 */
 	if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-	    sc->sc_false_syns >= WI_MAX_FALSE_SYNS)
+	    !ppsratecheck(&sc->sc_last_syn, &sc->sc_false_syns,
+	                 WI_MAX_FALSE_SYNS))
 		return;
 
 	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
@@ -2890,10 +2876,9 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    le16toh(val));
 		ni->ni_chan = &ic->ic_channels[le16toh(val)];
 
-		if (IEEE80211_ADDR_EQ(old_bssid.wi_mac_addr, ni->ni_bssid))
-			sc->sc_false_syns++;
-		else
-			sc->sc_false_syns = 0;
+		/* If not equal, then discount a false synchronization. */
+		if (!IEEE80211_ADDR_EQ(old_bssid.wi_mac_addr, ni->ni_bssid))
+			sc->sc_false_syns = MAX(0, sc->sc_false_syns - 1);
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			ni->ni_esslen = ic->ic_des_esslen;

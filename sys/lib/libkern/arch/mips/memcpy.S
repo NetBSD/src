@@ -1,9 +1,17 @@
-/*	$NetBSD: memcpy.S,v 1.7 2001/10/16 15:40:53 uch Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.7.18.1 2004/10/19 15:58:08 skrll Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */
 #include <mips/asm.h>
 #include <machine/endian.h>
+
+#if defined(_LP64)
+#define ADDU    daddu
+#define SUBU    dsubu
+#else
+#define ADDU    addu
+#define SUBU    subu    
+#endif  
 
 .set	push
 .set noreorder
@@ -32,7 +40,7 @@ XLEAF(memcpy)
 	 *	Make sure we can copy forwards.
 	 */
 	sltu	t0,a1,a0	# t0 == a1 < a0
-	addu	a3,a1,a2	# a3 == end of source
+	ADDU	a3,a1,a2	# a3 == end of source
 	sltu	t1,a0,a3	# t1 == a0 < a1+a2
 	and	t2,t0,t1	# overlap -- copy backwards
 	bne	t2,zero,backcopy
@@ -61,10 +69,10 @@ XLEAF(memcpy)
 	 */
 	li	AT,-32		# BDSLOT
 	and	t0,a2,AT	# count truncated to multiple of 32
-	addu	a3,a1,t0	# run fast loop up to this address
+	ADDU	a3,a1,t0	# run fast loop up to this address
 	sltu	AT,a1,a3	# any work to do?
 	beq	AT,zero,wordcopy
-	subu	a2,t0		# BDSLOT
+	SUBU	a2,t0		# BDSLOT
 
 	/*
 	 *	loop body
@@ -81,13 +89,13 @@ cp8:
 	ld	v1,8(a1)
 	ld	t0,16(a1)
 	ld	t1,24(a1)
-	addu	a1,32
+	ADDU	a1,32
 	sd	t3,0(a0)
 	sd	v1,8(a0)
 	sd	t0,16(a0)
 	sd	t1,24(a0)
 	bne	a1,a3,cp8
-	addu	a0,32		# BDSLOT
+	ADDU	a0,32		# BDSLOT
 
 	b	wordcopy
 	nop			# BDSLOT
@@ -97,7 +105,7 @@ cp:
 	lw	v1,4(a1)
 	lw	t0,8(a1)
 	lw	t1,12(a1)
-	addu	a1,32
+	ADDU	a1,32
 	sw	t3,0(a0)
 	sw	v1,4(a0)
 	sw	t0,8(a0)
@@ -106,7 +114,7 @@ cp:
 	lw	t0,-8(a1)
 	lw	v1,-12(a1)
 	lw	t3,-16(a1)
-	addu	a0,32
+	ADDU	a0,32
 	sw	t1,-4(a0)
 	sw	t0,-8(a0)
 	sw	v1,-12(a0)
@@ -118,34 +126,34 @@ cp:
 	 */
 wordcopy:
 	andi	t2,a2,3		# get byte count / 4
-	subu	t2,a2,t2	# t2 = number of words to copy * 4
+	SUBU	t2,a2,t2	# t2 = number of words to copy * 4
 	beq	t2,zero,bytecopy
-	addu	t0,a1,t2	# BDSLOT stop at t0
-	subu	a2,a2,t2
+	ADDU	t0,a1,t2	# BDSLOT stop at t0
+	SUBU	a2,a2,t2
 1:
 	lw	t3,0(a1)
-	addu	a1,4
+	ADDU	a1,4
 	sw	t3,0(a0)
 #ifdef MIPS3_5900	
 	nop
 	nop
 #endif	
 	bne	a1,t0,1b
-	addu	a0,4		# BDSLOT
+	ADDU	a0,4		# BDSLOT
 
 bytecopy:
 	beq	a2,zero,copydone	# nothing left to do?
 	nop
 2:
 	lb	t3,0(a1)
-	addu	a1,1
+	ADDU	a1,1
 	sb	t3,0(a0)
-	subu	a2,1
+	SUBU	a2,1
 #ifdef MIPS3_5900	
 	nop
 #endif	
 	bgtz	a2,2b
-	addu	a0,1		# BDSLOT
+	ADDU	a0,1		# BDSLOT
 
 copydone:
 	j	ra
@@ -155,9 +163,9 @@ copydone:
 	 */
 destaligned:
 	andi	t0,a2,3		# t0 = bytecount mod 4
-	subu	a3,a2,t0	# number of words to transfer
+	SUBU	a3,a2,t0	# number of words to transfer
 	beq	a3,zero,bytecopy
-	addu	a3,a1,a3	# BDSLOT: stop point for destaligned
+	ADDU	a3,a1,a3	# BDSLOT: stop point for destaligned
 	move	a2,t0		# this many to do after we are done
 
 3:
@@ -179,18 +187,18 @@ destaligned:
 	 */
 backcopy:
 	blez	a2,copydone	# nothing left to do?
-	addu	t0,a1,a2	# BDSLOT: end of source
-	addu	t1,a0,a2	# end of destination
+	ADDU	t0,a1,a2	# BDSLOT: end of source
+	ADDU	t1,a0,a2	# end of destination
 4:
 	lb	t3,-1(t0)	
-	subu	t0,1
+	SUBU	t0,1
 	sb	t3,-1(t1)
 #ifdef MIPS3_5900
 	nop
 	nop
 #endif	
 	bne	t0,a1,4b
-	subu	t1,1		# BDSLOT
+	SUBU	t1,1		# BDSLOT
 	j	ra
 	nop
 	

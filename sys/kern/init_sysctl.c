@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.31.2.4 2004/09/21 13:35:03 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.31.2.5 2004/10/19 15:58:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31.2.5 2004/10/19 15:58:02 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1893,7 +1893,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 	pd = proclists;
 again:
-	for (p = LIST_FIRST(pd->pd_list); p != NULL; p = LIST_NEXT(p, p_list)) {
+	PROCLIST_FOREACH(p, pd->pd_list) {
 		/*
 		 * Skip embryonic processes.
 		 */

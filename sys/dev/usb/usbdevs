@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.332.2.3 2004/09/21 13:33:50 skrll Exp $
+$NetBSD: usbdevs,v 1.332.2.4 2004/10/19 15:57:35 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
+vendor AIPTEK2		0x04fc	AIPTEK International
 vendor ACER		0x0502	Acer
 vendor 3COM		0x0506	3Com
 vendor AZTECH		0x0509	Aztech Systems
@@ -489,6 +490,9 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
+
+/* AIPTEK International products */
+product AIPTEK2 PENCAM_MEGA_1_3	0x504a	PenCam Mega 1.3
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55.2.4 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.2.5 2004/10/19 15:56:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,6 +78,8 @@
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
+#if defined(_KERNEL)
+
 /*
  * Exported definitions unique to amiga/68k cpu support.
  */
@@ -97,7 +99,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
@@ -156,8 +157,6 @@ extern int want_resched;	/* resched() was called */
 extern int astpending;		/* need trap before returning to user mode */
 #define setsoftast()	(astpending = 1)
 
-#endif /* _KERNEL */
-
 /* include support for software interrupts */
 #include <machine/mtpr.h>
 
@@ -175,9 +174,9 @@ extern int astpending;		/* need trap before returning to user mode */
 #define	AMIGA_FPU40	(1L<<6)
 #define AMIGA_68060	(1L<<7)
 
-#ifdef _KERNEL
 extern int machineid;
-#endif
+
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.

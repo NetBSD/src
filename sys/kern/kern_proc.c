@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.64.2.3 2004/09/21 13:35:06 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.64.2.4 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.3 2004/09/21 13:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.4 2004/10/19 15:58:04 skrll Exp $");
 
 #include "opt_kstack.h"
 
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.3 2004/09/21 13:35:06 skrll Exp
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Other process lists
@@ -1083,3 +1084,40 @@ kstack_check_magic(const struct lwp *l)
 	}
 }
 #endif /* KSTACK_CHECK_MAGIC */
+
+/* XXX shouldn't be here */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	PROCLIST_ASSERT_LOCKED_READ()	\
+	KASSERT(lockstatus(&proclist_lock) == LK_SHARED)
+#else
+#define	PROCLIST_ASSERT_LOCKED_READ()	/* nothing */
+#endif
+
+int
+proclist_foreach_call(struct proclist *list,
+    int (*callback)(struct proc *, void *arg), void *arg)
+{
+	struct proc marker;
+	struct proc *p;
+	struct lwp * const l = curlwp;
+	int ret = 0;
+
+	marker.p_flag = P_MARKER;
+	PHOLD(l);
+	proclist_lock_read();
+	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
+		if (p->p_flag & P_MARKER) {
+			p = LIST_NEXT(p, p_list);
+			continue;
+		}
+		LIST_INSERT_AFTER(p, &marker, p_list);
+		ret = (*callback)(p, arg);
+		PROCLIST_ASSERT_LOCKED_READ();
+		p = LIST_NEXT(&marker, p_list);
+		LIST_REMOVE(&marker, p_list);
+	}
+	proclist_unlock_read();
+	PRELE(l);
+
+	return ret;
+}

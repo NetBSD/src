@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32.2.6 2004/09/21 13:27:52 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.32.2.7 2004/10/19 15:56:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.6 2004/09/21 13:27:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.7 2004/10/19 15:56:53 skrll Exp $");
 #endif
 
 /*
@@ -1532,8 +1532,13 @@ ath_getmbuf(int flags, int type, u_int pktlen)
 		m = m_getcl(flags, type, M_PKTHDR);
 #else
 	MGETHDR(m, flags, type);
-	if (m != NULL && pktlen > MHLEN)
+	if (m != NULL && pktlen > MHLEN) {
 		MCLGET(m, flags);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			m = NULL;
+		}
+	}
 #endif
 	return m;
 }

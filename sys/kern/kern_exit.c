@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.117.2.5 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.117.2.6 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.5 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117.2.6 2004/10/19 15:58:04 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -396,7 +396,7 @@ exit1(struct lwp *l, int rv)
 	 * p_opptr anymore.
 	 */
 	if (p->p_flag & P_CHTRACED) {
-		LIST_FOREACH(q, &allproc, p_list) {
+		PROCLIST_FOREACH(q, &allproc) {
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}

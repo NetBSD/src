@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.3.4.4 2004/09/21 13:21:20 skrll Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.3.4.5 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.3.4.4 2004/09/21 13:21:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.3.4.5 2004/10/19 15:56:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,19 +76,13 @@ CFATTACH_DECL(com_mace, sizeof(struct com_mace_softc),
     com_mace_match, com_mace_attach, NULL, NULL);
 
 static int
-com_mace_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return 1;
 }
 
 static void
-com_mace_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+com_mace_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_mace_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;

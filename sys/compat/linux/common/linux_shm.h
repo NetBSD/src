@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.5 2003/01/18 21:21:31 thorpej Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.5.2.1 2004/10/19 15:56:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct linux_sys_shmctl_args {
 #ifdef SYSVSHM
 #ifdef _KERNEL
 __BEGIN_DECLS
+int linux_sys_shmget __P((struct lwp *, void *, register_t *));
 int linux_sys_shmat __P((struct lwp *, void *, register_t *));
 int linux_sys_shmctl __P((struct lwp *, void *, register_t *));
 void linux_to_bsd_shmid_ds __P((struct linux_shmid_ds *,

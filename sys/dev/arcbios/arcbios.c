@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.7 2003/03/06 07:59:37 rafal Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.7.2.1 2004/10/19 15:56:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7 2003/03/06 07:59:37 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7.2.1 2004/10/19 15:56:44 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -81,7 +81,7 @@ arcbios_init(vaddr_t pblkva)
 	struct arcbios_sysid *sid;
 
 	ARCBIOS_SPB = (struct arcbios_spb *) pblkva;
-	
+
 	switch (ARCBIOS_SPB->SPBSignature) {
 	case ARCBIOS_SPB_SIGNATURE:
 	case ARCBIOS_SPB_SIGNATURE_1:
@@ -196,7 +196,7 @@ arcbios_component_id_copy(struct arcbios_component *node,
 int
 arcbios_cngetc(dev_t dev)
 {
-	uint32_t count;
+	unsigned long count;
 	char c;
 
 	(*ARCBIOS->Read)(ARCBIOS_STDIN, &c, 1, &count);
@@ -206,7 +206,7 @@ arcbios_cngetc(dev_t dev)
 void
 arcbios_cnputc(dev_t dev, int c)
 {
-	uint32_t count;
+	unsigned long count;
 	char ch = c;
 
 	(*ARCBIOS->Write)(ARCBIOS_STDOUT, &ch, 1, &count);

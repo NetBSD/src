@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.5 2004/09/21 13:38:39 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.6 2004/10/19 15:58:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.5 2004/09/21 13:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.6 2004/10/19 15:58:19 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1483,6 +1483,7 @@ retry:
 	ndp->dc_cookie = off;
 	ndp->dc_blkcookie = blkoff;
 	ndp->dc_entry = en;
+	ndp->dc_flags = 0;
 
 	if (overwrite)
 		goto done;

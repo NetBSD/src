@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.68.2.3 2004/09/21 13:35:15 skrll Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.68.2.4 2004/10/19 15:58:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.68.2.3 2004/09/21 13:35:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.68.2.4 2004/10/19 15:58:06 skrll Exp $");
 
 #define SYSVSHM
 
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.68.2.3 2004/09/21 13:35:15 skrll Exp 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
-struct shmid_ds *shm_find_segment_by_shmid(int, int);
+struct shmid_ds *shm_find_segment_by_shmid(int);
 
 static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 
@@ -108,13 +108,10 @@ static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 #define	SHMSEG_REMOVED  	0x0400
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
+#define	SHMSEG_RMLINGER		0x2000
 
 static int	shm_last_free, shm_nused, shm_committed;
 struct	shmid_ds *shmsegs;
-
-struct shm_handle {
-	struct uvm_object *shm_object;
-};
 
 struct shmmap_entry {
 	SLIST_ENTRY(shmmap_entry) next;
@@ -123,7 +120,7 @@ struct shmmap_entry {
 };
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
-    "shmmp", 0);
+    "shmmp", &pool_allocator_nointr);
 
 struct shmmap_state {
 	unsigned int nitems;
@@ -156,9 +153,8 @@ shm_find_segment_by_key(key)
 }
 
 struct shmid_ds *
-shm_find_segment_by_shmid(shmid, findremoved)
+shm_find_segment_by_shmid(shmid)
 	int shmid;
-	int findremoved;
 {
 	int segnum;
 	struct shmid_ds *shmseg;
@@ -169,7 +165,7 @@ shm_find_segment_by_shmid(shmid, findremoved)
 	shmseg = &shmsegs[segnum];
 	if ((shmseg->shm_perm.mode & SHMSEG_ALLOCATED) == 0)
 		return NULL;
-	if (!findremoved && ((shmseg->shm_perm.mode & SHMSEG_REMOVED) != 0))
+	if ((shmseg->shm_perm.mode & (SHMSEG_REMOVED|SHMSEG_RMLINGER)) == SHMSEG_REMOVED)
 		return NULL;
 	if (shmseg->shm_perm._seq != IPCID_TO_SEQ(shmid))
 		return NULL;
@@ -180,12 +176,10 @@ static void
 shm_deallocate_segment(shmseg)
 	struct shmid_ds *shmseg;
 {
-	struct shm_handle *shm_handle = shmseg->_shm_internal;
-	struct uvm_object *uobj = shm_handle->shm_object;
+	struct uvm_object *uobj = shmseg->_shm_internal;
 	size_t size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 
 	(*uobj->pgops->pgo_detach)(uobj);
-	free((caddr_t)shm_handle, M_SHM);
 	shmseg->_shm_internal = NULL;
 	shm_committed -= btoc(size);
 	shmseg->shm_perm.mode = SHMSEG_FREE;
@@ -325,28 +319,8 @@ sys_shmat(l, v, retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	vaddr_t attach_va;
-	int error;
-
-	error = shmat1(p, SCARG(uap, shmid), SCARG(uap, shmaddr),
-	    SCARG(uap, shmflg), &attach_va, 0);
-	if (error != 0)
-		return error;
-	retval[0] = attach_va;
-	return 0;
-}
-
-int
-shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
-	struct proc *p;
-	int shmid;
-	const void *shmaddr;
-	int shmflg;
-	vaddr_t *attachp;
-	int findremoved;
-{
 	int error, flags;
+	struct proc *p = l->l_proc;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
 	struct shmmap_state *shmmap_s;
@@ -356,11 +330,11 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 	vsize_t size;
 	struct shmmap_entry *shmmap_se;
 
-	shmseg = shm_find_segment_by_shmid(shmid, findremoved);
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
 	if (shmseg == NULL)
 		return EINVAL;
 	error = ipcperm(cred, &shmseg->shm_perm,
-		    (shmflg & SHM_RDONLY) ? IPC_R : IPC_R|IPC_W);
+		    (SCARG(uap, shmflg) & SHM_RDONLY) ? IPC_R : IPC_R|IPC_W);
 	if (error)
 		return error;
 
@@ -370,23 +344,23 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 
 	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	prot = VM_PROT_READ;
-	if ((shmflg & SHM_RDONLY) == 0)
+	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
 	flags = MAP_ANON | MAP_SHARED;
-	if (shmaddr) {
+	if (SCARG(uap, shmaddr)) {
 		flags |= MAP_FIXED;
-		if (shmflg & SHM_RND)
+		if (SCARG(uap, shmflg) & SHM_RND)
 			attach_va =
-			    (vaddr_t)shmaddr & ~(SHMLBA-1);
-		else if (((vaddr_t)shmaddr & (SHMLBA-1)) == 0)
-			attach_va = (vaddr_t)shmaddr;
+			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
+		else if (((vaddr_t)SCARG(uap, shmaddr) & (SHMLBA-1)) == 0)
+			attach_va = (vaddr_t)SCARG(uap, shmaddr);
 		else
 			return EINVAL;
 	} else {
 		/* This is just a hint to uvm_mmap() about where to put it. */
 		attach_va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size);
 	}
-	uobj = ((struct shm_handle *)shmseg->_shm_internal)->shm_object;
+	uobj = shmseg->_shm_internal;
 	(*uobj->pgops->pgo_reference)(uobj);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    uobj, 0, 0,
@@ -397,7 +371,7 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 	}
 	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
 	shmmap_se->va = attach_va;
-	shmmap_se->shmid = shmid;
+	shmmap_se->shmid = SCARG(uap, shmid);
 	shmmap_s = shmmap_getprivate(p);
 #ifdef SHMDEBUG
 	printf("shmat: vm %p: add %d @%lx\n", p->p_vmspace, shmid, attach_va);
@@ -407,7 +381,8 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 	shmseg->shm_lpid = p->p_pid;
 	shmseg->shm_atime = time.tv_sec;
 	shmseg->shm_nattch++;
-	*attachp = attach_va;
+
+	retval[0] = attach_va;
 	return 0;
 }
 
@@ -454,7 +429,7 @@ shmctl1(p, shmid, cmd, shmbuf)
 	struct shmid_ds *shmseg;
 	int error = 0;
 
-	shmseg = shm_find_segment_by_shmid(shmid, 0);
+	shmseg = shm_find_segment_by_shmid(shmid);
 	if (shmseg == NULL)
 		return EINVAL;
 	switch (cmd) {
@@ -545,7 +520,6 @@ shmget_allocate_segment(p, uap, mode, retval)
 	int i, segnum, shmid, size;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
-	struct shm_handle *shm_handle;
 	int error = 0;
 
 	if (SCARG(uap, size) < shminfo.shmmin ||
@@ -575,17 +549,14 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shmseg->shm_perm.mode = SHMSEG_ALLOCATED | SHMSEG_REMOVED;
 	shmseg->shm_perm._key = SCARG(uap, key);
 	shmseg->shm_perm._seq = (shmseg->shm_perm._seq + 1) & 0x7fff;
-	shm_handle = (struct shm_handle *)
-	    malloc(sizeof(struct shm_handle), M_SHM, M_WAITOK);
 	shmid = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 
-	shm_handle->shm_object = uao_create(size, 0);
+	shmseg->_shm_internal = uao_create(size, 0);
 
-	shmseg->_shm_internal = shm_handle;
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
 	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
-	    (mode & ACCESSPERMS) | SHMSEG_ALLOCATED;
+	    (mode & (ACCESSPERMS|SHMSEG_RMLINGER)) | SHMSEG_ALLOCATED;
 	shmseg->shm_segsz = SCARG(uap, size);
 	shmseg->shm_cpid = p->p_pid;
 	shmseg->shm_lpid = shmseg->shm_nattch = 0;
@@ -621,6 +592,9 @@ sys_shmget(l, v, retval)
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
+	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
+		mode |= SHMSEG_RMLINGER;
+
 	if (SCARG(uap, key) != IPC_PRIVATE) {
 	again:
 		segnum = shm_find_segment_by_key(SCARG(uap, key));

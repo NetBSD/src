@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18.2.3 2004/09/21 13:21:13 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.2.4 2004/10/19 15:56:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.2.3 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.2.4 2004/10/19 15:56:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -725,8 +725,7 @@ zscnprobe(struct consdev *cn)
 }
 
 void
-zscninit(cn)
-	struct consdev *cn;
+zscninit(struct consdev *cn)
 {
 	extern const struct cdevsw zstty_cdevsw;
 	char* consdev;

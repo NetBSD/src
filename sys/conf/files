@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.7 2004/09/24 10:53:27 skrll Exp $
+#	$NetBSD: files,v 1.615.2.8 2004/10/19 15:56:44 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -59,6 +59,10 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
+
+defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
+				DKWEDGE_METHOD_BSDLABEL
+				DKWEDGE_METHOD_GPT
 
 # compatibility options
 #
@@ -500,6 +504,13 @@ file	../contrib/sys/dev/ic/athhal_osdep.c		ath
 #
 device	atw: arp, wlan, ifnet, smc93cx6
 file	dev/ic/atw.c			atw
+
+# Realtek RTL8180 802.11
+#
+device rtw: arp, wlan, ifnet, smc93cx6
+file	dev/ic/rtw.c			rtw
+file	dev/ic/rtwphy.c			rtw
+file	dev/ic/rtwphyio.c		rtw
 
 # 3Com Etherlink-III Ethernet controller
 #
@@ -1136,6 +1147,9 @@ file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd | xbd
+file	dev/dkwedge/dk.c
+file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
+file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
@@ -1148,6 +1162,10 @@ file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/vnd.c			vnd			needs-flag
+file	kern/bufq_disksort.c
+file	kern/bufq_fcfs.c
+file	kern/bufq_priocscan.c
+file	kern/bufq_readprio.c
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c

@@ -1,4 +1,4 @@
-$NetBSD: README.IPn,v 1.4 2002/05/14 16:21:47 soren Exp $
+$NetBSD: README.IPn,v 1.4.10.1 2004/10/19 15:56:38 skrll Exp $
 
 Arch (kernel)	Models				Codename
 -------------	------				--------
@@ -14,10 +14,10 @@ IP13 (IP7)	4D/3x0
 IP15 (IP7)	4D/4x0
 IP12		4D/30, 4D/35, Indigo R3K
 IP17		Crimson
-IP19		Onyx, Challenge M/L(/XL?)	Everest
+IP19		Challenge L/XL, Onyx		Everest
 IP20		Indigo R4K
-IP21		Power Challenge, Power Onyx 	Everest
-IP22		Indigo2				Fullhouse
+IP21		Power Challenge R8K, Power Onyx	Everest
+IP22		Indigo2, Challenge M		Fullhouse
 IP24 (IP22)	Indy, Challenge S 		Guiness
 IP25		Power Challenge R10K		Everest
 IP26		Power Indigo2 R8K		Teuton
@@ -27,3 +27,15 @@ IP30		Octane				Speedracer
 IP32		O2				Moosehead
 IP33		SN1 (?)
 IP35		SN1 (?)
+
+Architecture	ABI	Bootstrap Load Address	Kernel Load Address
+------------	---	----------------------	-------------------
+IP19 IP21 IP25	32	0x80004000		0x80100000
+IP19 IP21 IP25	64	0xa800000000004000	0xa800000000180000
+IP20 IP22 IP24	32	0x88002000		0x88069000
+IP22 IP24 IP26	64	0xa800000008002000	0xa800000008069000
+IP28		64	0xa800000020003000	0xa800000020080000
+IP30		64	0xa800000020004000	0xa800000020080000
+IP32		32	0x80002000		0x80069000
+IP32		64	0xa800000000002000	0xa800000000078000
+IP33		64	0xa800000000019000	0xa800000000300000

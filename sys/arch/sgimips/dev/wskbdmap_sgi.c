@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sgi.c,v 1.1.2.4 2004/09/21 13:21:13 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_sgi.c,v 1.1.2.5 2004/10/19 15:56:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.1.2.4 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.1.2.5 2004/10/19 15:56:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.1.2.4 2004/09/21 13:21:13 skrll E
 
 static const keysym_t wssgi_keydesctab_us[] = {
 /*	pos		command			normal		shifted */
-	KC(0x00),				//break - not impl
-	KC(0x01),				//setupkey - not impl
+	KC(0x00),				/* break - not impl */
+	KC(0x01),				/* setupkey - not impl */
 	KC(0x02),				KS_Meta_L,
 	KC(0x03),				KS_Caps_Lock,
 	KC(0x04),				KS_Shift_R,
@@ -50,7 +50,7 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x09),				KS_q,
 	KC(0x0A),				KS_a,
 	KC(0x0B),				KS_s,	
-	KC(0x0C),				//no scroll - not impl
+	KC(0x0C),				/* no scroll - not impl */
 	KC(0x0D),				KS_2,		KS_at,
 	KC(0x0E),				KS_3,		KS_numbersign,
 	KC(0x0F),				KS_w,
@@ -97,7 +97,7 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x38),				KS_backslash,	KS_bar,
 	KC(0x39),				KS_KP_End,	KS_KP_1,
 	KC(0x3A),				KS_KP_Insert,	KS_KP_0,
-	KC(0x3B),				KS_Linefeed, //not impl
+	KC(0x3B),				KS_Linefeed, 	/* not impl */
 	KC(0x3C),				KS_BackSpace,
 	KC(0x3D),				KS_Delete,
 	KC(0x3E),				KS_KP_Left,	KS_KP_4,
@@ -108,15 +108,15 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x43),				KS_KP_Up,	KS_KP_8,
 	KC(0x44),				KS_KP_Begin,	KS_KP_5,
 	KC(0x45),				KS_KP_Right,	KS_KP_6,
-	KC(0x46),				//padpf2key - not impl	
-	KC(0x47),				//padpf1key - not impl
+	KC(0x46),				/* padpf2key - not impl	*/
+	KC(0x47),				/* padpf1key - not impl */
 	KC(0x48),				KS_Left,
 	KC(0x49),				KS_Down,
 	KC(0x4A),				KS_KP_Prior,	KS_KP_9,
 	KC(0x4B),				KS_KP_Subtract,
-	KC(0x4C),				//padcommakey -- not impl
-	KC(0x4D),				//padpf4key -- not impl
-	KC(0x4E),				//padpf3key -- not impl
+	KC(0x4C),				/* padcommakey -- not impl */
+	KC(0x4D),				/* padpf4key -- not impl */
+	KC(0x4E),				/* padpf3key -- not impl */
 	KC(0x4F),				KS_Right,
 	KC(0x50),				KS_Up,
 	KC(0x51),				KS_KP_Enter,

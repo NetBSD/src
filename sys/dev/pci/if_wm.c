@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.5 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.6 2004/10/19 15:56:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.5 2004/09/21 13:31:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.6 2004/10/19 15:56:59 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -135,6 +135,8 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #define	WM_TXDESCSIZE(sc)	(WM_NTXDESC(sc) * sizeof(wiseman_txdesc_t))
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
+
+#define	WM_MAXTXDMA		ETHER_MAX_LEN_JUMBO
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -263,6 +265,7 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
+	struct evcnt sc_ev_txfifo_stall;/* Tx FIFO stalls (82547) */
 	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -298,6 +301,13 @@ struct wm_softc {
 	int	sc_txsnext;		/* next free Tx job */
 	int	sc_txsdirty;		/* dirty Tx jobs */
 
+	/* These 5 variables are used only on the 82547. */
+	int	sc_txfifo_size;		/* Tx FIFO size */
+	int	sc_txfifo_head;		/* current head of FIFO */
+	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
+	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
+	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
+
 	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum ctx */
 	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum ctx */
 
@@ -320,6 +330,7 @@ struct wm_softc {
 	uint32_t sc_txcw;		/* prototype TXCW register */
 	uint32_t sc_tipg;		/* prototype TIPG register */
 	uint32_t sc_fcrtl;		/* prototype FCRTL register */
+	uint32_t sc_pba;		/* prototype PBA register */
 
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_anstate;		/* autonegotiation state */
@@ -365,6 +376,8 @@ do {									\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+#define	CSR_WRITE_FLUSH(sc)						\
+	(void) CSR_READ((sc), WMREG_STATUS)
 
 #define	WM_CDTXADDR(sc, x)	((sc)->sc_cddma + WM_CDTXOFF((x)))
 #define	WM_CDRXADDR(sc, x)	((sc)->sc_cddma + WM_CDRXOFF((x)))
@@ -487,6 +500,8 @@ static void	wm_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
+
+static void	wm_82547_txfifo_stall(void *);
 
 /*
  * Devices supported by this driver.
@@ -843,6 +858,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_bus_speed = 66;
 		aprint_verbose("%s: Communication Streaming Architecture\n",
 		    sc->sc_dev.dv_xname);
+		if (sc->sc_type == WM_T_82547) {
+			callout_init(&sc->sc_txfifo_ch);
+			callout_setfunc(&sc->sc_txfifo_ch,
+					wm_82547_txfifo_stall, sc);
+			aprint_verbose("%s: using 82547 Tx FIFO stall "
+				       "work-around\n", sc->sc_dev.dv_xname);
+		}
 	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
@@ -975,8 +997,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) ?
 	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
-					       WM_NTXSEGS, MCLBYTES, 0, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
+					       WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
 					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -1200,6 +1222,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
+	evcnt_attach_dynamic(&sc->sc_ev_txfifo_stall, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txfifo_stall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txdw");
 	evcnt_attach_dynamic(&sc->sc_ev_txqe, EVCNT_TYPE_INTR,
@@ -1443,6 +1467,97 @@ wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
 }
 
 /*
+ * wm_82547_txfifo_stall:
+ *
+ *	Callout used to wait for the 82547 Tx FIFO to drain,
+ *	reset the FIFO pointers, and restart packet transmission.
+ */
+static void
+wm_82547_txfifo_stall(void *arg)
+{
+	struct wm_softc *sc = arg;
+	int s;
+
+	s = splnet();
+
+	if (sc->sc_txfifo_stall) {
+		if (CSR_READ(sc, WMREG_TDT) == CSR_READ(sc, WMREG_TDH) &&
+		    CSR_READ(sc, WMREG_TDFT) == CSR_READ(sc, WMREG_TDFH) &&
+		    CSR_READ(sc, WMREG_TDFTS) == CSR_READ(sc, WMREG_TDFHS)) {
+			/*
+			 * Packets have drained.  Stop transmitter, reset
+			 * FIFO pointers, restart transmitter, and kick
+			 * the packet queue.
+			 */
+			uint32_t tctl = CSR_READ(sc, WMREG_TCTL);
+			CSR_WRITE(sc, WMREG_TCTL, tctl & ~TCTL_EN);
+			CSR_WRITE(sc, WMREG_TDFT, sc->sc_txfifo_addr);
+			CSR_WRITE(sc, WMREG_TDFH, sc->sc_txfifo_addr);
+			CSR_WRITE(sc, WMREG_TDFTS, sc->sc_txfifo_addr);
+			CSR_WRITE(sc, WMREG_TDFHS, sc->sc_txfifo_addr);
+			CSR_WRITE(sc, WMREG_TCTL, tctl);
+			CSR_WRITE_FLUSH(sc);
+
+			sc->sc_txfifo_head = 0;
+			sc->sc_txfifo_stall = 0;
+			wm_start(&sc->sc_ethercom.ec_if);
+		} else {
+			/*
+			 * Still waiting for packets to drain; try again in
+			 * another tick.
+			 */
+			callout_schedule(&sc->sc_txfifo_ch, 1);
+		}
+	}
+
+	splx(s);
+}
+
+/*
+ * wm_82547_txfifo_bugchk:
+ *
+ *	Check for bug condition in the 82547 Tx FIFO.  We need to
+ *	prevent enqueueing a packet that would wrap around the end
+ *	if the Tx FIFO ring buffer, otherwise the chip will croak.
+ *
+ *	We do this by checking the amount of space before the end
+ *	of the Tx FIFO buffer.  If the packet will not fit, we "stall"
+ *	the Tx FIFO, wait for all remaining packets to drain, reset
+ *	the internal FIFO pointers to the beginning, and restart
+ *	transmission on the interface.
+ */
+#define	WM_FIFO_HDR		0x10
+#define	WM_82547_PAD_LEN	0x3e0
+static int
+wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
+{
+	int space = sc->sc_txfifo_size - sc->sc_txfifo_head;
+	int len = roundup(m0->m_pkthdr.len + WM_FIFO_HDR, WM_FIFO_HDR);
+
+	/* Just return if already stalled. */
+	if (sc->sc_txfifo_stall)
+		return (1);
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX) {
+		/* Stall only occurs in half-duplex mode. */
+		goto send_packet;
+	}
+
+	if (len >= WM_82547_PAD_LEN + space) {
+		sc->sc_txfifo_stall = 1;
+		callout_schedule(&sc->sc_txfifo_ch, 1);
+		return (1);
+	}
+
+ send_packet:
+	sc->sc_txfifo_head += len;
+	if (sc->sc_txfifo_head >= sc->sc_txfifo_size)
+		sc->sc_txfifo_head -= sc->sc_txfifo_size;
+
+	return (0);
+}
+
+/*
  * wm_start:		[ifnet interface function]
  *
  *	Start packet transmission on the interface.
@@ -1457,7 +1572,9 @@ wm_start(struct ifnet *ifp)
 #endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg;
+	int error, nexttx, lasttx = -1, ofree, seg, segs_needed;
+	bus_addr_t curaddr;
+	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
 
@@ -1529,6 +1646,8 @@ wm_start(struct ifnet *ifp)
 			break;
 		}
 
+		segs_needed = dmamap->dm_nsegs;
+
 		/*
 		 * Ensure we have enough descriptors free to describe
 		 * the packet.  Note, we always reserve one descriptor
@@ -1536,7 +1655,7 @@ wm_start(struct ifnet *ifp)
 		 * TDT register, plus one more in the event we need
 		 * to re-load checksum offload context.
 		 */
-		if (dmamap->dm_nsegs > (sc->sc_txfree - 2)) {
+		if (segs_needed > sc->sc_txfree - 2) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed anything yet,
@@ -1545,12 +1664,28 @@ wm_start(struct ifnet *ifp)
 			 * layer that there are no more slots left.
 			 */
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: need %d descriptors, have %d\n",
-			    sc->sc_dev.dv_xname, dmamap->dm_nsegs,
+			    ("%s: TX: need %d (%) descriptors, have %d\n",
+			    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed,
 			    sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
+			break;
+		}
+
+		/*
+		 * Check for 82547 Tx FIFO bug.  We need to do this
+		 * once we know we can transmit the packet, since we
+		 * do some internal FIFO space accounting here.
+		 */
+		if (sc->sc_type == WM_T_82547 &&
+		    wm_82547_txfifo_bugchk(sc, m0)) {
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: 82547 Tx FIFO bug detected\n",
+			    sc->sc_dev.dv_xname));
+			ifp->if_flags |= IFF_OACTIVE;
+			bus_dmamap_unload(sc->sc_dmat, dmamap);
+			WM_EVCNT_INCR(&sc->sc_ev_txfifo_stall);
 			break;
 		}
 
@@ -1560,13 +1695,9 @@ wm_start(struct ifnet *ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
-		/* Sync the DMA map. */
-		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
 		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: packet has %d DMA segments\n",
-		    sc->sc_dev.dv_xname, dmamap->dm_nsegs));
+		    ("%s: TX: packet has %d (%d) DMA segments\n",
+		    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed));
 
 		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
 
@@ -1581,7 +1712,7 @@ wm_start(struct ifnet *ifp)
 		 */
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
-		txs->txs_ndesc = dmamap->dm_nsegs;
+		txs->txs_ndesc = segs_needed;
 
 		/*
 		 * Set up checksum offload parameters for
@@ -1602,27 +1733,40 @@ wm_start(struct ifnet *ifp)
 
 		cksumcmd |= WTX_CMD_IDE;
 
+		/* Sync the DMA map. */
+		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
 		/*
 		 * Initialize the transmit descriptor.
 		 */
 		for (nexttx = sc->sc_txnext, seg = 0;
-		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = WM_NEXTTX(sc, nexttx)) {
-			wm_set_dma_addr(&sc->sc_txdescs[nexttx].wtx_addr,
-			    dmamap->dm_segs[seg].ds_addr);
-			sc->sc_txdescs[nexttx].wtx_cmdlen =
-			    htole32(cksumcmd | dmamap->dm_segs[seg].ds_len);
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_status = 0;
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_options =
-			    cksumfields;
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
-			lasttx = nexttx;
+		     seg < dmamap->dm_nsegs; seg++) {
+			for (seglen = dmamap->dm_segs[seg].ds_len,
+			     curaddr = dmamap->dm_segs[seg].ds_addr;
+			     seglen != 0;
+			     curaddr += curlen, seglen -= curlen,
+			     nexttx = WM_NEXTTX(sc, nexttx)) {
+				curlen = seglen;
 
-			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
-			    sc->sc_dev.dv_xname, nexttx,
-			    (u_int)le32toh(dmamap->dm_segs[seg].ds_addr),
-			    (u_int)le32toh(dmamap->dm_segs[seg].ds_len)));
+				wm_set_dma_addr(
+				    &sc->sc_txdescs[nexttx].wtx_addr,
+				    curaddr);
+				sc->sc_txdescs[nexttx].wtx_cmdlen =
+				    htole32(cksumcmd | curlen);
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_status =
+				    0;
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_options =
+				    cksumfields;
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
+				lasttx = nexttx;
+
+				DPRINTF(WM_DEBUG_TX,
+				    ("%s: TX: desc %d: low 0x%08x, "
+				     "len 0x%04x\n",
+				    sc->sc_dev.dv_xname, nexttx,
+				    curaddr & 0xffffffffU, curlen, curlen));
+			}
 		}
 
 		KASSERT(lasttx != -1);
@@ -1658,7 +1802,7 @@ wm_start(struct ifnet *ifp)
 		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
-		WM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
+		WM_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndesc,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Give the packet to the chip. */
@@ -1871,7 +2015,7 @@ wm_txintr(struct wm_softc *sc)
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: checking job %d\n", sc->sc_dev.dv_xname, i));
 
-		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
+		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		status =
@@ -2252,6 +2396,25 @@ wm_reset(struct wm_softc *sc)
 {
 	int i;
 
+	/*
+	 * Allocate on-chip memory according to the MTU size.
+	 * The Packet Buffer Allocation register must be written
+	 * before the chip is reset.
+	 */
+	if (sc->sc_type < WM_T_82547) {
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_40K : PBA_48K;
+	} else {
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_22K : PBA_30K;
+		sc->sc_txfifo_head = 0;
+		sc->sc_txfifo_addr = sc->sc_pba << PBA_ADDR_SHIFT;
+		sc->sc_txfifo_size =
+		    (PBA_40K - sc->sc_pba) << PBA_BYTE_SHIFT;
+		sc->sc_txfifo_stall = 0;
+	}
+	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
+
 	switch (sc->sc_type) {
 	case WM_T_82544:
 	case WM_T_82540:
@@ -2592,6 +2755,10 @@ wm_stop(struct ifnet *ifp, int disable)
 
 	/* Stop the one second clock. */
 	callout_stop(&sc->sc_tick_ch);
+
+	/* Stop the 82547 Tx FIFO stall check timer. */
+	if (sc->sc_type == WM_T_82547)
+		callout_stop(&sc->sc_txfifo_ch);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.2 2002/03/13 13:12:30 simonb Exp $	 */
+/*	$NetBSD: putchar.c,v 1.2.12.1 2004/10/19 15:56:42 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ putchar(c)
 	int c;
 {
 	static char ch[2] = "?\r";
-	int count;
+	paddr_t count;
 
 	ch[0] = c;
 	(*ARCBIOS->Write)(1, &ch, c == '\n' ? 2 : 1, &count);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.2.4 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.5 2004/10/19 15:56:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
 #ifndef _AMD64_CPU_H_
 #define _AMD64_CPU_H_
 
+#if defined(_KERNEL)
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -60,7 +61,7 @@ struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime stete */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;
 
 	struct lwp *ci_curlwp;
@@ -164,12 +165,9 @@ extern void need_resched __P((struct cpu_info *));
 
 #define X86_MAXPROCS		1
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_primary;
 
 #define curcpu()		(&cpu_info_primary)
-
-#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -247,7 +245,6 @@ extern void (*microtime_func) __P((struct timeval *));
  * pull in #defines for kinds of processors
  */
 
-#ifdef _KERNEL
 extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.22.2.5 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.22.2.6 2004/10/19 15:56:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.5 2004/09/21 13:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.6 2004/10/19 15:56:57 skrll Exp $");
 
 #include "rnd.h"
 
@@ -90,8 +90,6 @@ CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
 extern struct cfdriver ed_cd;
 
 static int	ed_get_params __P((struct ed_softc *, int *));
-static int	ed_lock	__P((struct ed_softc *));
-static void	ed_unlock	__P((struct ed_softc *));
 static void	edgetdisklabel	__P((dev_t, struct ed_softc *));
 static void	edgetdefaultlabel __P((struct ed_softc *, struct disklabel *));
 
@@ -114,7 +112,7 @@ const struct cdevsw ed_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver eddkdriver = { edmcastrategy };
+static struct dkdriver eddkdriver = { edmcastrategy, minphys };
 
 /*
  * Just check if it's possible to identify the disk.
@@ -149,7 +147,7 @@ ed_mca_attach(parent, self, aux)
 	struct ed_softc *ed = (void *) self;
 	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (struct ed_attach_args *) aux;
-	char pbuf[8], lckname[10];
+	char pbuf[8];
 	int drv_flags;
 
 	ed->edc_softc = sc;
@@ -158,8 +156,6 @@ ed_mca_attach(parent, self, aux)
 
 	bufq_alloc(&ed->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 	simple_lock_init(&ed->sc_q_lock);
-	snprintf(lckname, sizeof(lckname), "%slck", ed->sc_dev.dv_xname);
-	lockinit(&ed->sc_lock, PRIBIO | PCATCH, lckname, 0, 0);
 
 	if (ed_get_params(ed, &drv_flags)) {
 		printf(": IDENTIFY failed, no disk found\n");
@@ -194,6 +190,12 @@ ed_mca_attach(parent, self, aux)
 #endif
 
 	ed->sc_flags |= EDF_INIT;
+
+	/*
+	 * XXX We should try to discovery wedges here, but
+	 * XXX that would mean being able to do I/O.  Should
+	 * XXX use config_defer() here.
+	 */
 }
 
 /*
@@ -289,37 +291,6 @@ edmcawrite(dev, uio, flags)
 	return (physio(edmcastrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-/*
- * Wait interruptibly for an exclusive lock.
- */
-static int
-ed_lock(ed)
-	struct ed_softc *ed;
-{
-	int error;
-	int s;
-
-	ATADEBUG_PRINT(("ed_lock\n"), DEBUG_FUNCS);
-
-	s = splbio();
-	error = lockmgr(&ed->sc_lock, LK_EXCLUSIVE, NULL);
-	splx(s);
-
-	return (error);
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-static void
-ed_unlock(ed)
-	struct ed_softc *ed;
-{
-	ATADEBUG_PRINT(("ed_unlock\n"), DEBUG_FUNCS);
-
-	(void) lockmgr(&ed->sc_lock, LK_RELEASE, NULL);
-}
-
 int
 edmcaopen(dev, flag, fmt, l)
 	dev_t dev;
@@ -334,8 +305,19 @@ edmcaopen(dev, flag, fmt, l)
 	if (wd == NULL || (wd->sc_flags & EDF_INIT) == 0)
 		return (ENXIO);
 
-	if ((error = ed_lock(wd)) != 0)
-		goto bad4;
+	part = DISKPART(dev);
+
+	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (wd->sc_dk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
 
 	if (wd->sc_dk.dk_openmask != 0) {
 		/*
@@ -344,7 +326,7 @@ edmcaopen(dev, flag, fmt, l)
 		 */
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
 			error = EIO;
-			goto bad3;
+			goto bad1;
 		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
@@ -362,14 +344,12 @@ edmcaopen(dev, flag, fmt, l)
 		}
 	}
 
-	part = DISKPART(dev);
-
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= wd->sc_dk.dk_label->d_npartitions ||
 	     wd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
-		goto bad;
+		goto bad1;
 	}
 
 	/* Insure only one open at a time. */
@@ -384,16 +364,11 @@ edmcaopen(dev, flag, fmt, l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	ed_unlock(wd);
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
 
-bad:
-	if (wd->sc_dk.dk_openmask == 0) {
-	}
-
-bad3:
-	ed_unlock(wd);
-bad4:
+ bad1:
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (error);
 }
 
@@ -408,8 +383,9 @@ edmcaclose(dev, flag, fmt, l)
 	int error;
 
 	ATADEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
-	if ((error = ed_lock(wd)) != 0)
-		return error;
+
+	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -432,7 +408,7 @@ edmcaclose(dev, flag, fmt, l)
 			wd->sc_flags &= ~WDF_LOADED;
 	}
 
-	ed_unlock(wd);
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 
 	return 0;
 }
@@ -547,8 +523,9 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if ((error = ed_lock(ed)) != 0)
-			return error;
+		if ((error = lockmgr(&ed->sc_dk.dk_openlock, LK_EXCLUSIVE,
+				     NULL)) != 0)
+			return (error);
 		ed->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(ed->sc_dk.dk_label,
@@ -566,7 +543,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		}
 
 		ed->sc_flags &= ~WDF_LABELLING;
-		ed_unlock(ed);
+		(void) lockmgr(&ed->sc_dk.dk_openlock, LK_RELEASE, NULL);
 		return (error);
 	}
 
@@ -617,6 +594,37 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		return error;
 		}
 #endif
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+	
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+	
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) addr;
+
+		return (dkwedge_list(&ed->sc_dk, dkwl, l));
+	    }
 
 	default:
 		return ENOTTY;

@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.4.2.4 2004/09/21 13:21:13 skrll Exp $	 */
+/* $NetBSD: grtwo.c,v 1.4.2.5 2004/10/19 15:56:38 skrll Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.4.2.4 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.4.2.5 2004/10/19 15:56:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,7 +510,7 @@ grtwo_attach(struct device * parent, struct device * self, void *aux)
 
 	aprint_naive(": Display adapter\n");
 
-	aprint_normal(": SGI GR2 (board rev %x, monitor %d, depth %d)\n",
+	aprint_normal(": GR2 (board rev %x, monitor %d, depth %d)\n",
 	      sc->sc_dc->boardrev, sc->sc_dc->monitor, sc->sc_dc->depth);
 
 	wa.scrdata = &grtwo_screenlist;

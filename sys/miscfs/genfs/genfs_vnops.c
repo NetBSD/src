@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.80.2.4 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.80.2.5 2004/10/19 15:58:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.4 2004/09/21 13:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.5 2004/10/19 15:58:08 skrll Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1301,6 +1301,8 @@ genfs_putpages(void *v)
 
 					nextpg = TAILQ_NEXT(tpg, listq);
 					uvm_pagefree(tpg);
+					if (pagedaemon)
+						uvmexp.pdfreed++;
 				}
 			}
 		}

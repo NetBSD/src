@@ -1,19 +1,21 @@
-#	$NetBSD: files.ipfilter,v 1.2.8.1 2004/08/03 10:54:36 skrll Exp $
+#	$NetBSD: files.ipfilter,v 1.2.8.2 2004/10/19 15:58:11 skrll Exp $
 
 defflag		IPFILTER_LOG		# logging of ip packets
 
 defpseudo ipfilter: ifnet		# XXX not really an ifnet
 
-file	netinet/fil.c		ipfilter
-file	netinet/ip_auth.c	ipfilter
-file	netinet/ip_fil_netbsd.c	ipfilter			needs-flag
-file	netinet/ip_frag.c	ipfilter
-file	netinet/ip_htable.c	ipfilter
-file	netinet/ip_log.c	ipfilter & ipfilter_log
-file	netinet/ip_lookup.c	ipfilter
-file	netinet/ip_nat.c	ipfilter
-file	netinet/ip_pool.c	ipfilter
-file	netinet/ip_proxy.c	ipfilter
-file	netinet/ip_scan.c	ipfilter
-file	netinet/ip_state.c	ipfilter
-file	netinet/ip_sync.c	ipfilter
+file	dist/ipf/netinet/fil.c			ipfilter
+file	dist/ipf/netinet/ip_auth.c		ipfilter
+file	dist/ipf/netinet/ip_fil_netbsd.c	ipfilter	needs-flag
+file	dist/ipf/netinet/ip_frag.c		ipfilter
+file	dist/ipf/netinet/ip_htable.c		ipfilter
+file	dist/ipf/netinet/ip_log.c		ipfilter & ipfilter_log
+file	dist/ipf/netinet/ip_lookup.c		ipfilter
+file	dist/ipf/netinet/ip_nat.c		ipfilter
+file	dist/ipf/netinet/ip_pool.c		ipfilter
+file	dist/ipf/netinet/ip_proxy.c		ipfilter
+file	dist/ipf/netinet/ip_scan.c		ipfilter
+file	dist/ipf/netinet/ip_state.c		ipfilter
+file	dist/ipf/netinet/ip_sync.c		ipfilter
+
+makeoptions	ipfilter	CPPFLAGS+="-I$S/dist/ipf"

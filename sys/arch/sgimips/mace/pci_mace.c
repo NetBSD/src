@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.2.4.5 2004/09/21 13:21:20 skrll Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.2.4.6 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.2.4.5 2004/09/21 13:21:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.2.4.6 2004/10/19 15:56:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,20 +97,14 @@ CFATTACH_DECL(macepci, sizeof(struct macepci_softc),
     macepci_match, macepci_attach, NULL, NULL);
 
 static int
-macepci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+macepci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-macepci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+macepci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct macepci_softc *sc = (struct macepci_softc *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
@@ -224,10 +218,7 @@ macepci_attach(parent, self, aux)
 }
 
 pcireg_t
-macepci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+macepci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
@@ -239,11 +230,7 @@ macepci_conf_read(pc, tag, reg)
 }
 
 void
-macepci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+macepci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	/* XXX O2 soren */
 	if (tag == 0)
@@ -259,8 +246,7 @@ macepci_conf_write(pc, tag, reg, data)
  * Handle PCI error interrupts.
  */
 int
-macepci_intr(arg)
-	void *arg;
+macepci_intr(void *arg)
 {
 	struct macepci_softc *sc = (struct macepci_softc *)arg;
 	pci_chipset_tag_t pc = &sc->sc_pc;
@@ -350,11 +336,8 @@ macepci_intr(arg)
 /* PCI Address fixup routines */
 
 void
-pciaddr_resource_manage(pc, tag, func, ctx)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pciaddr_resource_manage_func_t func;
-	void *ctx;
+pciaddr_resource_manage(pci_chipset_tag_t pc, pcitag_t tag,
+		pciaddr_resource_manage_func_t func, void *ctx)
 {
 	pcireg_t val, mask;
 	bus_addr_t addr;
@@ -482,8 +465,7 @@ pciaddr_resource_manage(pc, tag, func, ctx)
 }
 
 bus_addr_t
-pciaddr_ioaddr(val)
-	u_int32_t val;
+pciaddr_ioaddr(u_int32_t val)
 {
 
 	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM) ?
@@ -491,13 +473,8 @@ pciaddr_ioaddr(val)
 }
 
 int
-pciaddr_do_resource_allocate(pc, tag, mapreg, ctx, type, addr, size)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void *ctx;
-	int mapreg, type;
-	bus_addr_t *addr;
-	bus_size_t size;
+pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg,
+		void *ctx, int type, bus_addr_t *addr, bus_size_t size)
 {
 
 	switch (type) {
@@ -544,9 +521,7 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ctx, type, addr, size)
 }
 
 void
-pciaddr_print_devid(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	int bus, device, function;
 	pcireg_t id;
@@ -556,4 +531,3 @@ pciaddr_print_devid(pc, tag)
 	printf("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function,
 	    PCI_VENDOR(id), PCI_PRODUCT(id));
 }
-

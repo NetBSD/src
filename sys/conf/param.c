@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.40.16.3 2004/09/21 13:26:15 skrll Exp $	*/
+/*	$NetBSD: param.c,v 1.40.16.4 2004/10/19 15:56:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.40.16.3 2004/09/21 13:26:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.40.16.4 2004/10/19 15:56:44 skrll Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -193,7 +193,7 @@ struct	msginfo msginfo = {
  * AUTONICEVAL is NOT offset by NZERO, i.e. it's between PRIO_MIN and PRIO_MAX.
  */
 #ifndef AUTONICETIME
-#define AUTONICETIME (60 * 10)	/* 10 minutes */
+#define AUTONICETIME 0		/* disabled */
 #endif
 
 #ifndef AUTONICEVAL

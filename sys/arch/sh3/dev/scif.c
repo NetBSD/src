@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.33.6.3 2004/09/21 13:21:25 skrll Exp $ */
+/*	$NetBSD: scif.c,v 1.33.6.4 2004/10/19 15:56:42 skrll Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.33.6.3 2004/09/21 13:21:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.33.6.4 2004/10/19 15:56:42 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -294,6 +294,43 @@ void scif_putc(unsigned char);
 unsigned char scif_getc(void);
 int ScifErrCheck(void);
 
+
+/* XXX: uwe
+ * Prepare for bus_spacification.  The difference in access widths is
+ * still handled by the magic definitions in scifreg.h
+ */
+#define scif_smr_read()		SHREG_SCSMR2
+#define scif_smr_write(v)	(SHREG_SCSMR2 = (v))
+
+#define scif_brr_read()		SHREG_SCBRR2
+#define scif_brr_write(v)	(SHREG_SCBRR2 = (v))
+
+#define scif_scr_read()		SHREG_SCSCR2
+#define scif_scr_write(v)	(SHREG_SCSCR2 = (v))
+
+#define scif_ftdr_write(v)	(SHREG_SCFTDR2 = (v))
+
+#define scif_ssr_read()		SHREG_SCSSR2
+#define scif_ssr_write(v)	(SHREG_SCSSR2 = (v))
+
+#define scif_frdr_read()	SHREG_SCFRDR2
+
+#define scif_fcr_read()		SHREG_SCFCR2
+#define scif_fcr_write(v)	(SHREG_SCFCR2 = (v))
+
+#define scif_fdr_read()		SHREG_SCFDR2
+
+#ifdef SH4 /* additional registers in sh4 */
+
+#define scif_sptr_read()	SHREG_SCSPTR2
+#define scif_sptr_write(v)	(SHREG_SCSPTR2 = (v))
+
+#define scif_lsr_read()		SHREG_SCLSR2
+#define scif_lsr_write(v)	(SHREG_SCLSR2 = (v))
+
+#endif /* SH4 */
+
+
 /*
  * InitializeScif
  * : unsigned int bps;
@@ -305,18 +342,18 @@ InitializeScif(unsigned int bps)
 {
 
 	/* Initialize SCR */
-	SHREG_SCSCR2 = 0x00;
+	scif_scr_write(0x00);
 
 #if 0
-	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST | SCFCR2_MCE;
+	scif_fcr_write(SCFCR2_TFRST | SCFCR2_RFRST | SCFCR2_MCE);
 #else
-	SHREG_SCFCR2 = SCFCR2_TFRST | SCFCR2_RFRST;
+	scif_fcr_write(SCFCR2_TFRST | SCFCR2_RFRST);
 #endif
 	/* Serial Mode Register */
-	SHREG_SCSMR2 = 0x00;	/* 8bit,NonParity,Even,1Stop */
+	scif_smr_write(0x00);	/* 8bit,NonParity,Even,1Stop */
 
 	/* Bit Rate Register */
-	SHREG_SCBRR2 = divrnd(sh_clock_get_pclock(), 32 * bps) - 1;
+	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * bps) - 1);
 
 	/*
 	 * wait 1mSec, because Send/Recv must begin 1 bit period after
@@ -325,16 +362,16 @@ InitializeScif(unsigned int bps)
 	delay(1000);
 
 #if 0
-	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE;
+	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE);
 #else
-	SHREG_SCFCR2 = FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1;
+	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1);
 #endif
 
 	/* Send permission, Receive permission ON */
-	SHREG_SCSCR2 = SCSCR2_TE | SCSCR2_RE;
+	scif_scr_write(SCSCR2_TE | SCSCR2_RE);
 
 	/* Serial Status Register */
-	SHREG_SCSSR2 &= SCSSR2_TDFE;	/* Clear Status */
+	scif_ssr_write(scif_ssr_read() & SCSSR2_TDFE); /* Clear Status */
 }
 
 
@@ -348,14 +385,14 @@ scif_putc(unsigned char c)
 {
 
 	/* wait for ready */
-	while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
-		;
+	while ((scif_fdr_read() & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
+		continue;
 
 	/* write send data to send register */
-	SHREG_SCFTDR2 = c;
+	scif_ftdr_write(c);
 
 	/* clear ready flag */
-	SHREG_SCSSR2 &= ~(SCSSR2_TDFE | SCSSR2_TEND);
+	scif_ssr_write(scif_ssr_read() & ~(SCSSR2_TDFE | SCSSR2_TEND));
 }
 
 /*
@@ -368,7 +405,7 @@ int
 ScifErrCheck(void)
 {
 
-	return(SHREG_SCSSR2 & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER));
+	return (scif_ssr_read() & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER));
 }
 
 /*
@@ -382,19 +419,19 @@ scif_getc(void)
 	unsigned short err_c2;
 #endif
 
-	while (1) {
+	for (;;) {
 		/* wait for ready */
-		while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
-			;
+		while ((scif_fdr_read() & SCFDR2_RECVCNT) == 0)
+			continue;
 
-		c = SHREG_SCFRDR2;
-		err_c = SHREG_SCSSR2;
-		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF
-		    | SCSSR2_DR);
+		c = scif_frdr_read();
+		err_c = scif_ssr_read();
+		scif_ssr_write(scif_ssr_read()
+			& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
 #ifdef SH4
 		if (CPU_IS_SH4) {
-			err_c2 = SHREG_SCLSR2;
-			SHREG_SCLSR2 &= ~SCLSR2_ORER;
+			err_c2 = scif_lsr_read();
+			scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
 		}
 #endif
 		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
@@ -537,7 +574,7 @@ scifstart(struct tty *tp)
 	sc->sc_tx_busy = 1;
 
 	/* Enable transmit completion interrupts if necessary. */
-	SHREG_SCSCR2 |= SCSCR2_TIE | SCSCR2_RIE;
+	scif_scr_write(scif_scr_read() | SCSCR2_TIE | SCSCR2_RIE);
 
 	/* Output the first chunk of the contiguous buffer. */
 	{
@@ -546,7 +583,7 @@ scifstart(struct tty *tp)
 		int i;
 
 		n = sc->sc_tbc;
-		max = sc->sc_fifolen - ((SHREG_SCFDR2 & SCFDR2_TXCNT) >> 8);
+		max = sc->sc_fifolen - ((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
 		if (n > max)
 			n = max;
 
@@ -613,12 +650,12 @@ scifparam(struct tty *tp, struct termios *t)
 	 * mode.
 	 */
 	if (ISSET(t->c_cflag, CRTSCTS)) {
-		SHREG_SCFCR2 |= SCFCR2_MCE;
+		scif_fcr_write(scif_fcr_read() | SCFCR2_MCE);
 	} else {
-		SHREG_SCFCR2 &= ~SCFCR2_MCE;
+		scif_fcr_write(scif_fcr_read() & ~SCFCR2_MCE);
 	}
 
-	SHREG_SCBRR2 = divrnd(sh_clock_get_pclock(), 32 * ospeed) -1;
+	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * ospeed) -1);
 
 	/*
 	 * Set the FIFO threshold based on the receive speed.
@@ -695,11 +732,11 @@ scif_iflush(struct scif_softc *sc)
 	int i;
 	unsigned char c;
 
-	i = SHREG_SCFDR2 & SCFDR2_RECVCNT;
+	i = scif_fdr_read() & SCFDR2_RECVCNT;
 
 	while (i > 0) {
-		c = SHREG_SCFRDR2;
-		SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
+		c = scif_frdr_read();
+		scif_ssr_write(scif_ssr_read() & ~(SCSSR2_RDF | SCSSR2_DR));
 		i--;
 	}
 }
@@ -751,7 +788,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 		s2 = splserial();
 
 		/* Turn on interrupts. */
-		SHREG_SCSCR2 |= SCSCR2_TIE | SCSCR2_RIE;
+		scif_scr_write(scif_scr_read() | SCSCR2_TIE | SCSCR2_RIE);
 
 		splx(s2);
 
@@ -953,9 +990,9 @@ scif_break(struct scif_softc *sc, int onoff)
 {
 
 	if (onoff)
-		SHREG_SCSSR2 &= ~SCSSR2_TDFE;
+		scif_ssr_write(scif_ssr_read() & ~SCSSR2_TDFE);
 	else
-		SHREG_SCSSR2 |= SCSSR2_TDFE;
+		scif_ssr_write(scif_ssr_read() | SCSSR2_TDFE);
 
 #if 0	/* XXX */
 	if (!sc->sc_heldchange) {
@@ -1087,7 +1124,7 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 		if (cc >= sc->sc_r_lowat) {
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				SHREG_SCSCR2 |= SCSCR2_RIE;
+				scif_scr_write(scif_scr_read() | SCSCR2_RIE);
 			}
 #if 0
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
@@ -1237,9 +1274,10 @@ scifintr(void *arg)
 	cc = sc->sc_rbavail;
 
 	do {
-		ssr2 = SHREG_SCSSR2;
+		ssr2 = scif_ssr_read();
 		if (ISSET(ssr2, SCSSR2_BRK)) {
-			SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
+			scif_ssr_write(scif_ssr_read()
+				& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR));
 #ifdef DDB
 			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
 				console_debugger();
@@ -1251,16 +1289,18 @@ scifintr(void *arg)
 			}
 #endif /* KGDB */
 		}
-		count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
+		count = scif_fdr_read() & SCFDR2_RECVCNT;
 		if (count != 0) {
-			while (1) {
-				u_char c = SHREG_SCFRDR2;
-				u_char err = (u_char)(SHREG_SCSSR2 & 0x00ff);
+			for (;;) {
+				u_char c = scif_frdr_read();
+				u_char err = (u_char)(scif_ssr_read() & 0x00ff);
 
-				SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR);
+				scif_ssr_write(scif_ssr_read()
+				    & ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR));
 #ifdef SH4
 				if (CPU_IS_SH4)
-					SHREG_SCLSR2 &= ~SCLSR2_ORER;
+					scif_lsr_write(scif_lsr_read()
+						       & ~SCLSR2_ORER);
 #endif
 				if ((cc > 0) && (count > 0)) {
 					put[0] = c;
@@ -1303,17 +1343,19 @@ scifintr(void *arg)
 			 */
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				SHREG_SCSCR2 &= ~SCSCR2_RIE;
+				scif_scr_write(scif_scr_read() & ~SCSCR2_RIE);
 			}
 		} else {
-			if (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR)) {
-				SHREG_SCSCR2 &= ~(SCSCR2_TIE | SCSCR2_RIE);
+			if (scif_ssr_read() & (SCSSR2_RDF | SCSSR2_DR)) {
+				scif_scr_write(scif_scr_read()
+					       & ~(SCSCR2_TIE | SCSCR2_RIE));
 				delay(10);
-				SHREG_SCSCR2 |= SCSCR2_TIE | SCSCR2_RIE;
+				scif_scr_write(scif_scr_read()
+					       | SCSCR2_TIE | SCSCR2_RIE);
 				continue;
 			}
 		}
-	} while (SHREG_SCSSR2 & (SCSSR2_RDF | SCSSR2_DR));
+	} while (scif_ssr_read() & (SCSSR2_RDF | SCSSR2_DR));
 
 #if 0
 	msr = bus_space_read_1(iot, ioh, scif_msr);
@@ -1393,7 +1435,7 @@ scifintr(void *arg)
 	 * transmitted as well. Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
-	if (((SHREG_SCFDR2 & SCFDR2_TXCNT) >> 8) != 16) { /* XXX (msaitoh) */
+	if (((scif_fdr_read() & SCFDR2_TXCNT) >> 8) != 16) { /* XXX (msaitoh) */
 		/*
 		 * If we've delayed a parameter change, do it now, and restart
 		 * output.
@@ -1412,7 +1454,7 @@ scifintr(void *arg)
 
 			n = sc->sc_tbc;
 			max = sc->sc_fifolen -
-				((SHREG_SCFDR2 & SCFDR2_TXCNT) >> 8);
+				((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
 			if (n > max)
 				n = max;
 
@@ -1426,7 +1468,7 @@ scifintr(void *arg)
 #if 0
 			if (ISSET(sc->sc_ier, IER_ETXRDY))
 #endif
-				SHREG_SCSCR2 &= ~SCSCR2_TIE;
+				scif_scr_write(scif_scr_read() & ~SCSCR2_TIE);
 
 			if (sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
@@ -1450,7 +1492,7 @@ scifintr(void *arg)
 #endif
 
 #if NRND > 0 && defined(RND_SCIF)
-rnd_add_uint32(&sc->rnd_source, iir | lsr);
+	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 
 	return (1);

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.5.2.3 2004/09/21 13:14:33 skrll Exp $
+#	$NetBSD: majors.cobalt,v 1.5.2.4 2004/10/19 15:56:35 skrll Exp $
 #
 # Device majors for cobalt
 #
@@ -41,6 +41,7 @@ device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 11	cgd
 device-major	panel		char 36			panel
 device-major	ksyms		char 37			ksyms
+device-major	altq		char 77			altq
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

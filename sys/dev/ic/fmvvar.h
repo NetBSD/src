@@ -1,4 +1,4 @@
-/*	$NetBSD: fmvvar.h,v 1.1 2002/10/05 15:16:12 tsutsui Exp $	*/
+/*	$NetBSD: fmvvar.h,v 1.1.8.1 2004/10/19 15:56:53 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -31,5 +31,5 @@
  * incurred with its use.
  */
 
-int fmv_detect __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *));
-void fmv_attach __P((struct mb86960_softc *));
+int fmv_detect(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
+void fmv_attach(struct mb86960_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.5 2004/09/21 13:32:20 skrll Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.6 2004/10/19 15:57:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.5 2004/09/21 13:32:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.6 2004/10/19 15:57:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,16 +498,36 @@ static const struct ne2000dev {
 
 #define	NE2000_NDEVS	(sizeof(ne2000devs) / sizeof(ne2000devs[0]))
 
-#define ne2000_match(card, fct, n) \
-((((((card)->manufacturer != PCMCIA_VENDOR_INVALID) && \
-    ((card)->manufacturer == ne2000devs[(n)].manufacturer) && \
-    ((card)->product != PCMCIA_PRODUCT_INVALID) && \
-    ((card)->product == ne2000devs[(n)].product)) || \
-   ((ne2000devs[(n)].cis_info[0]) && (ne2000devs[(n)].cis_info[1]) && \
-    (strcmp((card)->cis1_info[0], ne2000devs[(n)].cis_info[0]) == 0) && \
-    (strcmp((card)->cis1_info[1], ne2000devs[(n)].cis_info[1]) == 0))) && \
-  ((fct) == ne2000devs[(n)].function))? \
- &ne2000devs[(n)]:NULL)
+static const struct ne2000dev *
+ne2000_match(struct pcmcia_card *card, int fct, int n)
+{
+	size_t i;
+
+	/*
+	 * See if it matches by manufacturer & product.
+	 */
+	if (card->manufacturer == ne2000devs[n].manufacturer &&
+	    card->manufacturer != PCMCIA_VENDOR_INVALID &&
+	    card->product == ne2000devs[n].product &&
+	    card->product != PCMCIA_PRODUCT_INVALID)
+		goto match;
+
+	/*
+	 * Otherwise, try to match by CIS strings.
+	 */
+	for (i = 0; i < 2; i++)
+		if (card->cis1_info[i] == NULL ||
+		    ne2000devs[n].cis_info[i] == NULL ||
+		    strcmp(card->cis1_info[i], ne2000devs[n].cis_info[i]) != 0)
+			return (NULL);
+
+match:
+	/*
+	 * Finally, see if function number matches.
+	 */
+	return (fct == ne2000devs[n].function ? &ne2000devs[n] : NULL);
+}
+
 
 int
 ne_pcmcia_match(parent, match, aux)

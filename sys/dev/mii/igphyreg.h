@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.1.4.4 2004/09/21 13:30:40 skrll Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.1.4.5 2004/10/19 15:56:57 skrll Exp $	*/
 
 /*******************************************************************************
 
@@ -162,4 +162,5 @@
 	PHY_WRITE(sc, (reg) & 0x1f, val); \
     } while (/*CONSTCOND*/0)
 
-#define IGPHY_TICK_DOWNSHIFT	3
+#define	IGPHY_TICK_DOWNSHIFT	3
+#define	IGPHY_TICK_MAX		15

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.92.2.4 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.92.2.5 2004/10/19 15:58:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.4 2004/09/24 10:53:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.5 2004/10/19 15:58:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 /* Function prototypes */
 struct bqueue;
 
+static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
@@ -249,6 +250,20 @@ buf_setvalimit(vsize_t sz)
 	return 0;
 }
 
+static void
+buf_setwm(void)
+{
+
+	bufmem_hiwater = buf_memcalc();
+	/* lowater is approx. 2% of memory (with bufcache = 15) */
+#define	BUFMEM_WMSHIFT	3
+#define	BUFMEM_HIWMMIN	(64 * 1024 << BUFMEM_WMSHIFT)
+	if (bufmem_hiwater < BUFMEM_HIWMMIN)
+		/* Ensure a reasonable minimum value */
+		bufmem_hiwater = BUFMEM_HIWMMIN;
+	bufmem_lowater = bufmem_hiwater >> BUFMEM_WMSHIFT;
+}
+
 #ifdef DEBUG
 int debug_verify_freelist = 0;
 static int
@@ -356,12 +371,7 @@ bufinit(void)
 	 * Initialize buffer cache memory parameters.
 	 */
 	bufmem = 0;
-	bufmem_hiwater = buf_memcalc();
-	/* lowater is approx. 2% of memory (with bufcache=15) */
-	bufmem_lowater = (bufmem_hiwater >> 3);
-	if (bufmem_lowater < 64 * 1024)
-		/* Ensure a reasonable minimum value */
-		bufmem_lowater = 64 * 1024;
+	buf_setwm();
 
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
@@ -450,11 +460,11 @@ buf_lotsfree(void)
 	try = random() & 0x0000000fL;
 
 	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
-	thresh = bufmem / (bufmem_hiwater / 16);
+	thresh = (bufmem - bufmem_lowater) /
+	    ((bufmem_hiwater - bufmem_lowater) / 16);
 
-	if ((try > thresh) && (uvmexp.free > (2 * uvmexp.freetarg))) {
+	if (try >= thresh)
 		return 1;
-	}
 
 	/* Otherwise don't allocate. */
 	return 0;
@@ -1183,7 +1193,7 @@ start:
 	 * Get a new buffer from the pool; but use NOWAIT because
 	 * we have the buffer queues locked.
 	 */
-	if (buf_lotsfree() && !from_bufq &&
+	if (!from_bufq && buf_lotsfree() &&
 	    (bp = pool_get(&bufpool, PR_NOWAIT)) != NULL) {
 		memset((char *)bp, 0, sizeof(*bp));
 		BUF_INIT(bp);
@@ -1202,10 +1212,15 @@ start:
 		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 	} else {
-		/* wait for a free buffer of any kind */
-		needbuffer = 1;
-		ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
-			"getnewbuf", slptimeo, &bqueue_slock);
+		/*
+		 * XXX: !from_bufq should be removed.
+		 */
+		if (!from_bufq || curproc != uvm.pagedaemon_proc) {
+			/* wait for a free buffer of any kind */
+			needbuffer = 1;
+			ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
+			    "getnewbuf", slptimeo, &bqueue_slock);
+		}
 		return (NULL);
 	}
 
@@ -1299,17 +1314,17 @@ buf_trim(void)
 int
 buf_drain(int n)
 {
-	int s, size = 0;
+	int s, size = 0, sz;
 
 	s = splbio();
 	simple_lock(&bqueue_slock);
 
-	/* If not asked for a specific amount, make our own estimate */
-	if (n == 0)
-		n = buf_canrelease();
-
-	while (size < n && bufmem > bufmem_lowater)
-		size += buf_trim();
+	while (size < n && bufmem > bufmem_lowater) {
+		sz = buf_trim();
+		if (sz <= 0)
+			break;
+		size += sz;
+	}
 
 	simple_unlock(&bqueue_slock);
 	splx(s);
@@ -1597,15 +1612,14 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 		if (t < 0 || t > 100)
 			return (EINVAL);
 		bufcache = t;
-		bufmem_hiwater = buf_memcalc();
-		bufmem_lowater = (bufmem_hiwater >> 3);
-		if (bufmem_lowater < 64 * 1024) 
-			/* Ensure a reasonable minimum value */
-			bufmem_lowater = 64 * 1024;
-
+		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
+		if (bufmem_hiwater - bufmem_lowater < 16)
+			return (EINVAL);
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
+		if (bufmem_hiwater - bufmem_lowater < 16)
+			return (EINVAL);
 		bufmem_hiwater = t;
 	} else
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.26.2.4 2004/09/21 13:39:28 skrll Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.26.2.5 2004/10/19 15:58:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26.2.4 2004/09/21 13:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26.2.5 2004/10/19 15:58:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -405,6 +405,12 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 				    "file data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
 		       CTL_VM, VM_FILEMAX, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "idlezero",
+		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
+		       NULL, 0, &vm_page_zero_enable, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
 }
 
 /*

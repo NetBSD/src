@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23.6.3 2004/09/21 13:11:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.23.6.4 2004/10/19 15:56:35 skrll Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -34,7 +34,7 @@ SUBDIR+= xen
 #	dreamcast \
 #	evbarm evbmips evbppc evbsh3 evbsh5 \
 #	hp300 hpc hpcarm hpcmips hpcsh \
-#	i386 \
+#	i386 iyonix \
 #	luna68k \
 #	m68k mac68k macppc mips mipsco mmeye mvme68k \
 #	netwinder news68k newsmips next68k \

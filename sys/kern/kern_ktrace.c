@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.9 2004/10/17 07:44:37 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.10 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.9 2004/10/17 07:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.10 2004/10/19 15:58:04 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -805,7 +805,7 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 			goto done;
 
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_tracep == ktd) {
 				if (ktrcanset(curp, p))
 					ktrderef(p);
@@ -1193,7 +1193,7 @@ again:
 			    "ktrace write failed, errno %d, tracing stopped\n",
 			    error);
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_tracep == ktd)
 				ktrderef(p);
 		}

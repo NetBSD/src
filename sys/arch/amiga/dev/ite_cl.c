@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cl.c,v 1.6 2002/01/28 09:56:59 aymeric Exp $ */
+/*	$NetBSD: ite_cl.c,v 1.6.16.1 2004/10/19 15:56:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.6 2002/01/28 09:56:59 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cl.c,v 1.6.16.1 2004/10/19 15:56:35 skrll Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -152,7 +152,7 @@ cl_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 	volatile unsigned char *ba = ip->grf->g_regkva;
 	unsigned char *fb = ip->grf->g_fbkva;
 	unsigned char attr;
-	unsigned char *cp;
+	volatile unsigned char *cp;
 
 	if (ip->flags & ITE_INGRF)
 		return;

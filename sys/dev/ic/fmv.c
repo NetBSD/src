@@ -1,4 +1,4 @@
-/*	$NetBSD: fmv.c,v 1.3 2002/11/30 14:15:11 tsutsui Exp $	*/
+/*	$NetBSD: fmv.c,v 1.3.6.1 2004/10/19 15:56:53 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.3 2002/11/30 14:15:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.3.6.1 2004/10/19 15:56:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.3 2002/11/30 14:15:11 tsutsui Exp $");
  * Determine type and ethernet address.
  */
 int
-fmv_detect(iot, ioh, enaddr)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *enaddr;
+fmv_detect(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *enaddr)
 {
 	int model, id, type;
 
@@ -104,8 +101,7 @@ fmv_detect(iot, ioh, enaddr)
 }
 
 void
-fmv_attach(sc)
-	struct mb86960_softc *sc;
+fmv_attach(struct mb86960_softc *sc)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.92.2.3 2004/09/21 13:35:12 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.92.2.4 2004/10/19 15:58:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92.2.3 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.92.2.4 2004/10/19 15:58:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -545,6 +545,12 @@ db_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	kprintf(fmt, TODDB, NULL, NULL, ap);
 	va_end(ap);
+
+	if (db_tee_msgbuf) {
+		va_start(ap, fmt);
+		kprintf(fmt, TOLOG, NULL, NULL, ap);
+		va_end(ap);
+	};
 }
 
 void
@@ -555,6 +561,8 @@ db_vprintf(fmt, ap)
 
 	/* No mutex needed; DDB pauses all processors. */
 	kprintf(fmt, TODDB, NULL, NULL, ap);
+	if (db_tee_msgbuf)
+		kprintf(fmt, TOLOG, NULL, NULL, ap);
 }
 
 #endif /* DDB */

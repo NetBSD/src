@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.3 2004/09/21 13:21:24 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.4 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.3 2004/09/21 13:21:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.4 2004/10/19 15:56:42 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -202,6 +202,12 @@ extern struct user *proc0paddr;
 
 static struct btinfo_common *bootinfo;
 
+#if defined(_LP64)
+#define ARCS_VECTOR 0xa800000000001000
+#else
+#define ARCS_VECTOR (MIPS_PHYS_TO_KSEG0(0x00001000))
+#endif
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the ARCS firmware.
@@ -229,7 +235,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	 * fall back to the emulator.  If the latter fails also we
 	 * don't have much to panic with.
 	 */
-	if (arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000)) == 1)
+	if (arcbios_init(ARCS_VECTOR) == 1)
 		arcemu_init();
 
 	strcpy(cpu_model, arcbios_system_identifier);
@@ -414,7 +420,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips1_clkread;
 		break;
 #endif /* MIPS1 */
-#ifdef MIPS3
+#if defined(MIPS3) || defined(MIPS64)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
@@ -434,6 +440,14 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
+	case MACH_SGI_IP30:
+		biomask = 0x0700;
+		netmask = 0x0700;
+		ttymask = 0x0700;
+		clockmask = 0x8700;
+		platform.intr5 = mips3_clock_intr;
+		platform.clkread = mips3_clkread;
+		break;
 	case MACH_SGI_IP32:
 		biomask = 0x0700;
 		netmask = 0x0700;
@@ -442,7 +456,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.intr5 = mips3_clock_intr;
 		platform.clkread = mips3_clkread;
 		break;
-#endif /* MIPS3 */
+#endif /* MIPS3 || MIPS64 */
 	default:
 		panic("IP%d architecture not supported", mach_type);
 		break;
@@ -460,7 +474,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
 			i++;
 			printf("Mem block %d: type %d, "
-			    "base 0x%04x, size 0x%04x\n",
+			    "base 0x%04lx, size 0x%04lx\n",
 			    i, mem->Type, mem->BasePage, mem->PageCount);
 		}
 	} while (mem != NULL);
@@ -829,7 +843,7 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
-#if defined(MIPS3)
+#if defined(MIPS3) || defined(MIPS64)
 	volatile u_int32_t cpu_config;
 
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);

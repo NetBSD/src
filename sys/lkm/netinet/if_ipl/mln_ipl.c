@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.32.2.6 2004/09/21 13:36:24 skrll Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.32.2.7 2004/10/19 15:58:08 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.32.2.6 2004/09/21 13:36:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.32.2.7 2004/10/19 15:58:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.32.2.6 2004/09/21 13:36:24 skrll Exp $
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
-#include "ipl.h"
-#include "ip_compat.h"
-#include "ip_fil.h"
+#include <netinet/ipl.h>
+#include <netinet/ip_compat.h>
+#include <netinet/ip_fil.h>
 
 int		if_ipl_lkmentry(struct lkm_table *, int, int);
 static int	if_ipl_lkmload(struct lkm_table *, int);

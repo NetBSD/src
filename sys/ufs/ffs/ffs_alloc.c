@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.68.2.6 2004/09/21 13:39:08 skrll Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.68.2.7 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.6 2004/09/21 13:39:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.7 2004/10/19 15:58:30 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1806,8 +1806,8 @@ ffs_freefile(fs, devvp, ino, mode)
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
-		printf("dev = 0x%x, ino = %d, fs = %s\n",
-		    dev, ino, fs->fs_fsmnt);
+		printf("ifree: dev = 0x%x, ino = %d, fs = %s\n",
+		    dev, ino + cg * fs->fs_ipg, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ifree: freeing free inode");
 	}

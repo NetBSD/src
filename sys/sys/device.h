@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.5 2004/09/21 13:38:45 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.6 2004/10/19 15:58:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -376,7 +376,7 @@ struct device *config_attach_loc(struct device *, struct cfdata *,
 	config_attach_loc((p), (cf), 0, (aux), (pr))
 int config_match(struct device *, struct cfdata *, void *);
 
-struct device *config_attach_pseudo(const char *, int);
+struct device *config_attach_pseudo(struct cfdata *);
 
 void config_makeroom(int n, struct cfdriver *cd);
 int config_detach(struct device *, int);

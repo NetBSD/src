@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.37.2.2 2004/08/25 06:57:34 skrll Exp $ */
+/*	$NetBSD: mach_port.c,v 1.37.2.3 2004/10/19 15:56:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37.2.2 2004/08/25 06:57:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37.2.3 2004/10/19 15:56:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1002,7 +1002,7 @@ mach_debug_port(void)
 	struct mach_right *mrs;
 	struct proc *p;
 
-	LIST_FOREACH(p, &allproc, p_list) {
+	PROCLIST_FOREACH(p, &allproc) {
 		if ((p->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
 		    (p->p_emul != &emul_darwin) &&

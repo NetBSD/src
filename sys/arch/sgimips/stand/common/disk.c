@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.2.18.3 2004/09/21 13:21:25 skrll Exp $	*/
+/*	$NetBSD: disk.c,v 1.2.18.4 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ diskstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	struct partition *pp = &sc->sc_label.d_partitions[part];
 	int s;
 	int64_t offset;
-	int count;
+	paddr_t count;
 
 	offset = bn;
 
@@ -112,6 +112,7 @@ diskopen(struct open_file *f, ...)
 	char *msg, buf[DEV_BSIZE];
 #endif
 	int i;
+	paddr_t i_arg;
 	char *device;
 	va_list ap;
 
@@ -134,10 +135,11 @@ diskopen(struct open_file *f, ...)
 	if (part >= 16)
 		return (ENXIO);
 
-	if (ARCBIOS->Open(device, 0, &i)) {
+	if (ARCBIOS->Open(device, 0, &i_arg)) {
 		printf("open failed\n");
 		return (ENXIO);
 	}
+	i = (int)i_arg;
 
 	sc = alloc(sizeof(struct disk_softc));
 	memset(sc, 0, sizeof(struct disk_softc));

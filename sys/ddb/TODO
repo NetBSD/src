@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.11.6.3 2004/09/21 13:26:24 skrll Exp $
+$NetBSD: TODO,v 1.11.6.4 2004/10/19 15:56:44 skrll Exp $
 
 In rough order.
 
@@ -115,3 +115,7 @@ done	Numbers starting with [a-f] should work, but symbols
 	ILP32 ABI. On this CPU db_expr_t is, necessarily, 64-bits.
 	Unfortunately, in ILP32 mode, ddb will only display the low 32-bits
 	of any expression, including registers...
+
+done	Add support for duplicating all ddb output to the message buffer for
+	those unlucky souls that don't have a serial console.
+
