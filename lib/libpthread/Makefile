@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.12 2002/04/11 02:53:09 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.13 2002/04/11 18:54:16 thorpej Exp $
 #
 
 WARNS=	2
@@ -19,6 +19,9 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR}
+
+STRIPFLAG=
+COPTS+=-g
 
 DPSRCS+=	assym.h
 
@@ -48,7 +51,7 @@ SRCS+=	pthread_switch.S _context_u.S
 
 pthread_switch.S _context_u.S: assym.h
 
-INCS=	pthread.h pthread_types.h pthread_queue.h sched.h
+INCS=	pthread.h pthread_types.h pthread_queue.h
 INCSDIR=/usr/include
 
 debuglog: debuglog.o
