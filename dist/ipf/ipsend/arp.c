@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: arp.c,v 1.2 2002/01/24 08:21:39 martti Exp $	*/
 
 /*
  * arp.c (C) 1995-1998 Darren Reed
