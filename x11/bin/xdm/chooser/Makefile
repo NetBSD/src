@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/02 17:19:51 lukem Exp $
 
 NOMAN=	1
 
 .include <bsd.own.mk>
 
 PROG=	chooser
-
-BINDIR=	${X11LIBDIR}/xdm
 
 CPPFLAGS.chooser.c=	-DBSD44SOCKETS
 
@@ -19,4 +17,5 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 .include "../Makefile.xdm"
 
 .include <bsd.x11.mk>
+BINDIR=	${CHOOSERPATH:H}
 .include <bsd.prog.mk>
