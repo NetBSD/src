@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.114.2.4 2002/01/10 19:59:54 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.114.2.5 2002/03/15 21:02:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.114.2.4 2002/01/10 19:59:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.114.2.5 2002/03/15 21:02:05 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -751,7 +751,6 @@ psignal1(struct proc *p, int signum,
 	/*
 	 * Notify any interested parties in the signal.
 	 */
-			/* XXXLUKEM: should we LOCK the process first? */
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
@@ -1495,9 +1494,7 @@ filt_sigattach(struct knote *kn)
 	kn->kn_ptr.p_proc = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
-	KERNEL_PROC_LOCK(p);			/* XXXLUKEM; needed? */
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
-	KERNEL_PROC_UNLOCK(p);
 
 	return (0);
 }
@@ -1507,9 +1504,7 @@ filt_sigdetach(struct knote *kn)
 {
 	struct proc *p = kn->kn_ptr.p_proc;
 
-	KERNEL_PROC_LOCK(p);			/* XXXLUKEM; needed? */
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
-	KERNEL_PROC_UNLOCK(p);
 }
 
 /*
