@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.18 2001/09/02 01:58:31 lukem Exp $	*/
+/*	$NetBSD: fs.h,v 1.19 2001/09/03 14:52:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -234,8 +234,7 @@ struct fs {
 	int32_t	*fs_maxcluster;	/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
-	int32_t	 fs_sparecon[49];	/* reserved for future constants */
-	int32_t	 fs_fscktime;		/* last time fsck(8)ed */
+	int32_t	 fs_sparecon[50];	/* RESERVED for future constants */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
