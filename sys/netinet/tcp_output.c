@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.78 2002/03/01 22:54:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.78 2002/03/01 22:54:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -199,6 +199,21 @@ extern struct mbuf *m_copypack();
  */
 int	tcp_cwm = 1;
 int	tcp_cwm_burstsize = 4;
+
+#ifdef TCP_OUTPUT_COUNTERS
+#include <sys/device.h>
+
+extern struct evcnt tcp_output_bigheader;
+extern struct evcnt tcp_output_copysmall;
+extern struct evcnt tcp_output_copybig;
+extern struct evcnt tcp_output_refbig;
+
+#define	TCP_OUTPUT_COUNTER_INCR(ev)	(ev)->ev_count++
+#else
+
+#define	TCP_OUTPUT_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* TCP_OUTPUT_COUNTERS */
 
 static
 #ifndef GPROF
@@ -384,29 +399,43 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	m->m_data -= hdrlen;
 #else
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
-	if (m != NULL &&
-	    (max_linkhdr + hdrlen > MHLEN ||
-	     max_linkhdr + hdrlen + len <= MCLBYTES)) {
+	if (__predict_false(m == NULL))
+		return (ENOBUFS);
+
+	/*
+	 * XXX Because other code assumes headers will fit in
+	 * XXX one header mbuf.
+	 *
+	 * (This code should almost *never* be run.)
+	 */
+	if (__predict_false((max_linkhdr + hdrlen) > MHLEN)) {
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_bigheader);
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			m = NULL;
+			return (ENOBUFS);
 		}
 	}
-	if (m == NULL)
-		return (ENOBUFS);
+
 	m->m_data += max_linkhdr;
 	m->m_len = hdrlen;
 	if (len <= M_TRAILINGSPACE(m)) {
 		m_copydata(so->so_snd.sb_mb, off, (int) len,
 		    mtod(m, caddr_t) + hdrlen);
 		m->m_len += len;
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
 		m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
 		if (m->m_next == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
 		}
+#ifdef TCP_OUTPUT_COUNTERS
+		if (m->m_next->m_flags & M_EXT)
+			TCP_OUTPUT_COUNTER_INCR(&tcp_output_refbig);
+		else
+			TCP_OUTPUT_COUNTER_INCR(&tcp_output_copybig);
+#endif /* TCP_OUTPUT_COUNTERS */
 	}
 #endif
 
