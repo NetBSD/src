@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.15 1998/11/13 15:46:57 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.16 1998/11/15 17:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.15 1998/11/13 15:46:57 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.16 1998/11/15 17:40:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -292,7 +292,7 @@ res_send(buf, buflen, ans, anssiz)
 	u_char *ans;
 	int anssiz;
 {
-	const HEADER *hp = (const HEADER *)(void *)buf;
+	const HEADER *hp = (const HEADER *)(const void *)buf;
 	HEADER *anhp = (HEADER *)(void *)ans;
 	int gotsomewhere, connreset, terrno, try, v_circuit, resplen, ns;
 	register int n;
@@ -550,7 +550,7 @@ read_len:
 					}
 					connected = 1;
 				}
-				if (send(s, buf, buflen, 0) != buflen) {
+				if (send(s, buf, (size_t)buflen, 0) != buflen) {
 					Perror(stderr, "send", errno);
 					badns |= (1 << ns);
 					res_close();
@@ -625,7 +625,7 @@ wait:
 			}
 			errno = 0;
 			fromlen = sizeof(struct sockaddr_in);
-			resplen = recvfrom(s, ans, anssiz, 0,
+			resplen = recvfrom(s, ans, (size_t)anssiz, 0,
 			    (struct sockaddr *)(void *)&from, &fromlen);
 			if (resplen <= 0) {
 				Perror(stderr, "recvfrom", errno);

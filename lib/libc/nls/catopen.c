@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.13 1998/02/20 09:27:20 mycroft Exp $	*/
+/*	$NetBSD: catopen.c,v 1.14 1998/11/15 17:42:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 
 static nl_catd load_msgcat __P((const char *));
 
+/* ARGSUSED */
 nl_catd
 _catopen(name, oflag)
 	const char *name;
@@ -146,7 +147,7 @@ load_msgcat(path)
 	}
 
 	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
-	    0);
+	    (off_t)0);
 	close (fd);
 
 	if (data == (void *)-1) {
@@ -154,7 +155,8 @@ load_msgcat(path)
 		return (nl_catd)-1;
 	}
 
-	if (ntohl(((struct _nls_cat_hdr *)data)->__magic) != _NLS_MAGIC) {
+	if (ntohl((u_int32_t)((struct _nls_cat_hdr *)data)->__magic) !=
+	    _NLS_MAGIC) {
 		munmap(data, (size_t)st.st_size);
 		return (nl_catd)-1;
 	}
@@ -165,6 +167,6 @@ load_msgcat(path)
 	}
 
 	catd->__data = data;
-	catd->__size = st.st_size;
+	catd->__size = (int)st.st_size;
 	return catd;
 }

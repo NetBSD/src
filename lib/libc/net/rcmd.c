@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.28 1998/11/13 15:46:56 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.29 1998/11/15 17:40:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.28 1998/11/13 15:46:56 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.29 1998/11/15 17:40:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,10 +109,11 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	 */
 	sp = getservbyname("shell", "tcp");
 	if (sp != NULL && sp->s_port == rport)
-		return (rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p,
-		    getenv("RCMD_CMD")));
+		return (rshrcmd(ahost, (u_int32_t)rport,
+		    locuser, remuser, cmd, fd2p, getenv("RCMD_CMD")));
 	else
-		return (hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
+		return (hprcmd(hp, ahost, (u_int32_t)rport,
+		    locuser, remuser, cmd, fd2p));
 }
 
 /* this is simply a wrapper around hprcmd() that handles ahost first */

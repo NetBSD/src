@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.22 1998/11/13 15:46:56 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.23 1998/11/15 17:40:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.22 1998/11/13 15:46:56 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.23 1998/11/15 17:40:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -742,7 +742,7 @@ __p_rr(cp, msg, file)
 
 	case T_UINFO:
 		putc('\t', file);
-		fputs((char *)cp, file);
+		fputs((const char *)cp, file);
 		cp += dlen;
 		break;
 
@@ -824,11 +824,11 @@ __p_rr(cp, msg, file)
 		cp += INT32SZ;
 		/* sig expire */
 		fprintf(file, " (\n\t%s",
-		    __p_secstodate(_getlong((const u_char *)cp)));
+		    __p_secstodate((u_long)_getlong((const u_char *)cp)));
 		cp += INT32SZ;
 		/* time signed */
 		fprintf(file, " %s",
-		    __p_secstodate(_getlong((const u_char *)cp)));
+		    __p_secstodate((u_long)_getlong((const u_char *)cp)));
 		cp += INT32SZ;
 		/* sig footprint */
 		fprintf(file," %u ", _getshort((const u_char *)cp));
@@ -1492,11 +1492,11 @@ loc_ntoa(binary, ascii)
 	altfrac = altval % 100;
 	altmeters = (altval / 100) * altsign;
 
-	if ((sizestr = strdup(precsize_ntoa(sizeval))) == NULL)
+	if ((sizestr = strdup(precsize_ntoa((u_int32_t)sizeval))) == NULL)
 		sizestr = error;
-	if ((hpstr = strdup(precsize_ntoa(hpval))) == NULL)
+	if ((hpstr = strdup(precsize_ntoa((u_int32_t)hpval))) == NULL)
 		hpstr = error;
-	if ((vpstr = strdup(precsize_ntoa(vpval))) == NULL)
+	if ((vpstr = strdup(precsize_ntoa((u_int32_t)vpval))) == NULL)
 		vpstr = error;
 
 	sprintf(ascii,
