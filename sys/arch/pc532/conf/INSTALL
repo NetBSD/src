@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 1997/02/08 09:33:22 matthias Exp $
+#	$NetBSD: INSTALL,v 1.12 1997/04/01 16:30:43 matthias Exp $
 #
 # INSTALL -- install kernel
 #
@@ -32,6 +32,7 @@ config		netbsd	root on ? type ?
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
 cd* at scsibus? target ? lun ?			# SCSI CD-ROMs
+se* at scsibus0 target ? lun ?			# Cabletron EA412/EA419
 
 options		MEMORY_DISK_HOOKS, MEMORY_DISK_SERVER=0
 pseudo-device	md				# Memory disk
