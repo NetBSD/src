@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.19 2000/05/21 18:45:55 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.20 2000/06/12 10:28:22 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.17.2.1 2000/05/15 06:50:14 darrenr Exp
+ * Id: ip_nat.h,v 2.17.2.3 2000/06/10 15:52:25 darrenr Exp
  */
 
 #ifndef _NETINET_IP_NAT_H_
@@ -107,8 +107,9 @@ typedef	struct	ipnat	{
 	u_short	in_pnext;
 	u_short	in_ppip;	/* ports per IP */
 	u_short	in_ippip;	/* IP #'s per IP# */
-	u_short	in_flags;	/* From here to in_dport must be reflected */
 	u_short	in_port[2];	/* correctly in IPN_CMPSIZ */
+	u_short	in_spare;
+	u_32_t	in_flags;	/* From here to in_dport must be reflected */
 	struct	in_addr	in_in[2];
 	struct	in_addr	in_out[2];
 	struct	in_addr	in_src[2];
@@ -214,11 +215,13 @@ typedef	struct	natstat	{
 #define	IPN_RF		(IPN_TCPUDP|IPN_DELETE|IPN_ICMPERR)
 #define	IPN_AUTOPORTMAP	0x010
 #define	IPN_IPRANGE	0x020
-#define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|\
-			 IPN_SPLIT|IPN_ROUNDR|IPN_FILTER)
+#define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
+			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST)
 #define	IPN_FILTER	0x040
 #define	IPN_SPLIT	0x080
 #define	IPN_ROUNDR	0x100
+#define	IPN_NOTSRC	0x080000
+#define	IPN_NOTDST	0x100000
 
 
 typedef	struct	natlog {
