@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.112 2003/01/16 07:37:37 martti Exp $
+# $NetBSD: mi,v 1.113 2003/01/16 11:55:28 martti Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -163,7 +163,6 @@
 ./etc/rc.d/ypbind			etc-nis-rc
 ./etc/rc.d/yppasswdd			etc-nis-rc
 ./etc/rc.d/ypserv			etc-nis-rc
-./etc/rc.d/ypset			etc-nis-rc
 ./etc/rc.lkm				etc-sys-rc
 ./etc/rc.local				etc-sys-rc
 ./etc/rc.shutdown			etc-sys-rc
