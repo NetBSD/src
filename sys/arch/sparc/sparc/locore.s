@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 2002/12/06 17:45:39 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.168 2002/12/08 16:16:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4897,13 +4897,12 @@ Lsw_load:
 	mov	1, %o1
 	sll	%o1, %o0, %o0
 	wr	%o0, 0, %wim		! %wim = 1 << newpcb->pcb_wim;
-	/* Clear FP & CP enable bits, as well as the PIL field */
 	/* now must not change %psr for 3 more instrs */
-/*1*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
-/*2*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
-/*3*/	nop
+	/* Clear FP & CP enable bits; continue new process at splclock() */
+/*1,2*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
+/*3*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
 	/* set new psr, but with traps disabled */
-	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
+	wr	%g2, (PIL_CLOCK << 8)|PSR_ET, %psr ! %psr = newpsr ^ PSR_ET;
 	/* set new cpcb */
 	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = newpcb;
 	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
@@ -4921,8 +4920,8 @@ Lsw_load:
 	SET_SP_REDZONE(%o0, %o1)
 	CHECK_SP_REDZONE(%o0, %o1)
 #endif
-	/* finally, enable traps and continue at splclock() */
-	wr	%g2, PIL_CLOCK << 8 , %psr	! psr = newpsr;
+	/* finally, enable traps */
+	wr	%g2, PIL_CLOCK << 8, %psr	! psr = newpsr;
 
 	/*
 	 * Now running p.  Make sure it has a context so that it
