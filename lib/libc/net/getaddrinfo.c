@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.20 2000/01/22 23:54:20 mycroft Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.21 2000/01/23 01:37:19 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -346,11 +346,15 @@ getaddrinfo(hostname, servname, hints, res)
 	 */
 	if (MATCH_FAMILY(pai->ai_family, PF_INET, 1)
 	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)) {
+		ai0 = *pai;
+
 		if (pai->ai_family == PF_UNSPEC)
 			pai->ai_family = PF_INET6;
 		error = get_portmatch(pai, servname);
 		if (error)
 			ERR(error);
+
+		*pai = ai0;
 	}
 
 	ai0 = *pai;
