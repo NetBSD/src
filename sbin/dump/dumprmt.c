@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.19 1997/09/16 06:41:20 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.20 1998/03/30 01:54:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.19 1997/09/16 06:41:20 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.20 1998/03/30 01:54:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: dumprmt.c,v 1.19 1997/09/16 06:41:20 lukem Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
@@ -219,7 +220,6 @@ rmtread(buf, count)
 {
 	char line[30];
 	int n, i, cc;
-	extern errno;
 
 	(void)snprintf(line, sizeof line, "R%d\n", count);
 	n = rmtcall("read", line);
