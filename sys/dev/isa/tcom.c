@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: tcom.c,v 1.8 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.8 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ struct tcom_softc {
 int tcomprobe __P((struct device *, struct cfdata *, void *));
 void tcomattach __P((struct device *, struct device *, void *));
 int tcomintr __P((void *));
-int tcomprint __P((void *, const char *));
 
 CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);
@@ -190,19 +189,6 @@ out:
 	return (rv);
 }
 
-int
-tcomprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 tcomattach(parent, self, aux)
 	struct device *parent, *self;
@@ -243,7 +229,7 @@ tcomattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, tcomprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

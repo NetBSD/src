@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.52 2003/01/01 00:10:20 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.53 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.52 2003/01/01 00:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.53 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ struct ast_softc {
 int astprobe __P((struct device *, struct cfdata *, void *));
 void astattach __P((struct device *, struct device *, void *));
 int astintr __P((void *));
-int astprint __P((void *, const char *));
 
 CFATTACH_DECL(ast, sizeof(struct ast_softc),
     astprobe, astattach, NULL, NULL);
@@ -145,19 +144,6 @@ out:
 	return (rv);
 }
 
-int
-astprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 astattach(parent, self, aux)
 	struct device *parent, *self;
@@ -197,7 +183,7 @@ astattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		sc->sc_slaves[i] = config_found(self, &ca, astprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}
