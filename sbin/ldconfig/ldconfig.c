@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.23 1999/04/08 13:27:38 agc Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.24 1999/04/08 19:19:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ do_conf ()
 	int		rval = 0;
 
 	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL) {
-		if (!silent) {
+		if (verbose) {
 			warnx("can't open `%s'", _PATH_LD_SO_CONF);
 		}
 		return (0);
