@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.328 2001/05/21 22:11:32 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.329 2001/05/31 01:13:33 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.324 2001/05/21 22:11:06 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.325 2001/05/31 01:10:34 nisimura Exp 
  */
 
 /*
@@ -2414,6 +2414,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IDT",
 	    "77201/77211 ATM (\"NICStAR\")",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32334,
+	    0,
+	    "IDT",
+	    "RC32334 System Controller",
+	},
+	{
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32332,
+	    0,
+	    "IDT",
+	    "RC32332 System Controller",
 	},
 	{
 	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
