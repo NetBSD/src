@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.3 1998/07/25 01:46:38 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.4 1998/07/27 18:51:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,23 +91,14 @@ struct ums_softc {
 	struct hid_location sc_loc_x, sc_loc_y, 
 		sc_loc_btn1, sc_loc_btn2, sc_loc_btn3;
 
-	struct clist sc_q;
-	struct selinfo sc_rsel;
 	u_char sc_state;	/* mouse driver state */
-#define	UMS_OPEN	0x01	/* device is open */
-#define	UMS_ASLP	0x02	/* waiting for mouse data */
 #define UMS_NEEDCLEAR	0x04	/* needs clearing endpoint stall */
-	u_char sc_status;	/* mouse button status */
-	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
+	u_char sc_buttons;	/* mouse button status */
 	int sc_disconnected;	/* device is gone */
 
 	int sc_enabled;
 	struct device *sc_wsmousedev;
 };
-
-#define	UMSUNIT(dev)	(minor(dev))
-#define	UMS_CHUNK	128	/* chunk size for read */
-#define	UMS_BSIZE	1020	/* buffer size */
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 #define MOUSE_FLAGS (HIO_RELATIVE)
@@ -115,11 +106,6 @@ struct ums_softc {
 int ums_match __P((struct device *, struct cfdata *, void *));
 void ums_attach __P((struct device *, struct device *, void *));
 
-int umsopen __P((dev_t, int, int, struct proc *));
-int umsclose __P((dev_t, int, int, struct proc *p));
-int umsread __P((dev_t, struct uio *uio, int));
-int umsioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int umspoll __P((dev_t, int, struct proc *));
 void ums_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 void ums_disco __P((void *));
 
@@ -235,11 +221,11 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
 		printf("%s: sorry, Y report 0x%04x not supported yet\n",
 		       sc->sc_dev.dv_xname, flags);
-	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 1), 
+	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 1), /* left */
 		   hid_input, &sc->sc_loc_btn1, 0);
-	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 2), 
+	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 2), /* right */
 		   hid_input, &sc->sc_loc_btn2, 0);
-	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 3),
+	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 3), /* middle */
 		   hid_input, &sc->sc_loc_btn3, 0);
 	DPRINTF(("ums_attach: sc=%p\n", sc));
 	DPRINTF(("ums_attach: X  %d/%d\n", 
@@ -286,8 +272,7 @@ ums_intr(reqh, addr, status)
 	struct ums_softc *sc = addr;
 	u_char *ibuf;
 	char dx, dy;
-	u_char buttons, changed;
-	u_char buffer[5];
+	u_char buttons;
 
 	DPRINTFN(5, ("ums_intr: sc=%p status=%d\n", sc, status));
 	DPRINTFN(5, ("ums_intr: data = %02x %02x %02x\n",
@@ -307,214 +292,18 @@ ums_intr(reqh, addr, status)
 		if (*ibuf++ != sc->sc_iid)
 			return;
 	}
-	DPRINTF(("ums_attach: X  %d/%d\n", 
-		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	buttons = 0;
-	if (hid_get_data(ibuf, &sc->sc_loc_btn1)) buttons |= PS2LBUTMASK;
-	if (hid_get_data(ibuf, &sc->sc_loc_btn2)) buttons |= PS2RBUTMASK;
-	if (hid_get_data(ibuf, &sc->sc_loc_btn3)) buttons |= PS2MBUTMASK;
+	if (hid_get_data(ibuf, &sc->sc_loc_btn1)) buttons |= 1 << 0;
+	if (hid_get_data(ibuf, &sc->sc_loc_btn2)) buttons |= 1 << 2;
+	if (hid_get_data(ibuf, &sc->sc_loc_btn3)) buttons |= 1 << 1;
 
-	buttons = ((buttons & PS2LBUTMASK) << 2) |
-		  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
-	changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
-	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
-
-	if (dx || dy || changed) {
-		/* Update accumulated movements. */
-		sc->sc_x += dx;
-		sc->sc_y += dy;
-		
-		if (sc->sc_wsmousedev) {
+	if (dx || dy || buttons != sc->sc_buttons) {
+		sc->sc_buttons = buttons;
+		if (sc->sc_wsmousedev)
 			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy);
-		} else {
-			/* Add this event to the queue. */
-			buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
-			buffer[1] = dx;
-			buffer[2] = dy;
-			buffer[3] = buffer[4] = 0;
-			(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
-			
-			if (sc->sc_state & UMS_ASLP) {
-				sc->sc_state &= ~UMS_ASLP;
-				DPRINTFN(5, ("ums_intr: waking %p\n", sc));
-				wakeup((caddr_t)sc);
-			}
-			selwakeup(&sc->sc_rsel);
-		}
 	}
-}
-
-int
-umsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	int unit = UMSUNIT(dev);
-	struct ums_softc *sc;
-	usbd_status r;
-
-	if (unit >= ums_cd.cd_ndevs)
-		return (ENXIO);
-	sc = ums_cd.cd_devs[unit];
-	if (!sc)
-		return (ENXIO);
-
-	DPRINTF(("umsopen: sc=%p, disco=%d\n", sc, sc->sc_disconnected));
-
-	if (sc->sc_wsmousedev)
-		return (ENXIO);
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	if (sc->sc_state & UMS_OPEN)
-		return (EBUSY);
-
-	if (clalloc(&sc->sc_q, UMS_BSIZE, 0) == -1)
-		return (ENOMEM);
-
-	sc->sc_state |= UMS_OPEN;
-	sc->sc_status = 0;
-
-	/* Set up interrupt pipe. */
-	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-				USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, 
-				sc->sc_ibuf, sc->sc_isize, ums_intr);
-	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("umsopen: usbd_open_pipe_intr failed, error=%d\n",r));
-		sc->sc_state &= ~UMS_OPEN;
-		clfree(&sc->sc_q);
-		return (EIO);
-	}
-	usbd_set_disco(sc->sc_intrpipe, ums_disco, sc);
-	return 0;
-}
-
-int
-umsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	struct ums_softc *sc = ums_cd.cd_devs[UMSUNIT(dev)];
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	DPRINTF(("umsclose: sc=%p\n", sc));
-
-	/* Disable interrupts. */
-	usbd_abort_pipe(sc->sc_intrpipe);
-	usbd_close_pipe(sc->sc_intrpipe);
-
-	sc->sc_state &= ~UMS_OPEN;
-
-	clfree(&sc->sc_q);
-
-	return 0;
-}
-
-int
-umsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	struct ums_softc *sc = ums_cd.cd_devs[UMSUNIT(dev)];
-	int s;
-	int error = 0;
-	size_t length;
-	u_char buffer[UMS_CHUNK];
-
-	/* Block until mouse activity occured. */
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	s = spltty();
-	while (sc->sc_q.c_cc == 0) {
-		if (flag & IO_NDELAY) {
-			splx(s);
-			return EWOULDBLOCK;
-		}
-		sc->sc_state |= UMS_ASLP;
-		DPRINTFN(5, ("umsread: sleep on %p\n", sc));
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "umsrea", 0);
-		DPRINTFN(5, ("umsread: woke, error=%d\n", error));
-		if (error) {
-			sc->sc_state &= ~UMS_ASLP;
-			splx(s);
-			return error;
-		}
-		if (sc->sc_state & UMS_NEEDCLEAR) {
-			DPRINTFN(-1,("umsread: clearing stall\n"));
-			sc->sc_state &= ~UMS_NEEDCLEAR;
-			usbd_clear_endpoint_stall(sc->sc_intrpipe);
-		}
-	}
-	splx(s);
-
-	/* Transfer as many chunks as possible. */
-	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
-		if (length > sizeof(buffer))
-			length = sizeof(buffer);
-
-		/* Remove a small chunk from the input queue. */
-		(void) q_to_b(&sc->sc_q, buffer, length);
-		DPRINTFN(5, ("umsread: got %d chars\n", length));
-
-		/* Copy the data to the user process. */
-		if ((error = uiomove(buffer, length, uio)) != 0)
-			break;
-	}
-
-	return error;
-}
-
-int
-umsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
-{
-	struct ums_softc *sc = ums_cd.cd_devs[UMSUNIT(dev)];
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	return EINVAL;
-}
-
-int
-umspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct ums_softc *sc = ums_cd.cd_devs[UMSUNIT(dev)];
-	int revents = 0;
-	int s;
-
-	if (sc->sc_disconnected)
-		return (EIO);
-
-	s = spltty();
-	if (events & (POLLIN | POLLRDNORM))
-		if (sc->sc_q.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-
-	splx(s);
-	return (revents);
 }
 
 /* wscons routines */
@@ -529,7 +318,7 @@ ums_enable(v)
 		return EBUSY;
 
 	sc->sc_enabled = 1;
-	sc->sc_status = 0;
+	sc->sc_buttons = 0;
 
 	/* Set up interrupt pipe. */
 	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
