@@ -1,4 +1,4 @@
-/* $NetBSD: com_upc.c,v 1.3 2002/09/27 20:38:04 thorpej Exp $ */
+/* $NetBSD: com_upc.c,v 1.4 2002/09/30 21:17:57 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.3 2002/09/27 20:38:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.4 2002/09/30 21:17:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,9 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_upc.c,v 1.3 2002/09/27 20:38:04 thorpej Exp $");
 static int com_upc_match(struct device *, struct cfdata *, void *);
 static void com_upc_attach(struct device *, struct device *, void *);
 
-const struct cfattach com_upc_ca = {
-	sizeof(struct com_softc), com_upc_match, com_upc_attach
-};
+CFATTACH_DECL(com_upc, sizeof(struct com_softc),
+    com_upc_match, com_upc_attach, NULL, NULL)
 
 static int
 com_upc_match(struct device *parent, struct cfdata *cf, void *aux)
