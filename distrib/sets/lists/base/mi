@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.338 2002/07/09 00:48:35 mycroft Exp $
+# $NetBSD: mi,v 1.339 2002/07/10 10:35:50 agc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1145,6 +1145,8 @@
 ./usr/share/locale/ru_RU.ISO8859-5/LC_CTYPE	base-locale-ru
 ./usr/share/locale/ru_RU.KOI8-R			base-locale-ru
 ./usr/share/locale/ru_RU.KOI8-R/LC_CTYPE	base-locale-ru
+./usr/share/locale/sk_SK.ISO8859-2		base-locale-sk
+./usr/share/locale/sk_SK.ISO8859-2/LC_CTYPE	base-locale-sk
 ./usr/share/locale/sl				base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES		base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl
