@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41.2.6 2004/08/12 19:35:44 jmc Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41.2.7 2004/08/25 02:44:45 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41.2.6 2004/08/12 19:35:44 jmc Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41.2.7 2004/08/25 02:44:45 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static int warn_broken;
  */
 
 int
-file_creat(ARCHD *arcn)
+file_creat(ARCHD *arcn, int write_to_hardlink)
 {
 	int fd = -1;
 	int oerrno;
@@ -112,6 +112,19 @@ file_creat(ARCHD *arcn)
 		}
 		return -1;
 	}
+
+	/*
+	 * In "cpio" archives it's usually the last record of a set of
+	 * hardlinks which includes the contents of the file. We cannot
+	 * use a tempory file in that case because we couldn't link it
+	 * with the existing other hardlinks after restoring the contents
+	 * to it. And it's also useless to create the hardlink under a
+	 * temporary name because the other hardlinks would have partial
+	 * contents while restoring.
+	 */
+	if (write_to_hardlink)
+		return (open(arcn->name, O_TRUNC | O_EXCL | O_RDWR, 0));
+	
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
@@ -121,7 +134,7 @@ file_creat(ARCHD *arcn)
 		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
 		return(-1);
 	}
-	if (xtmp_name)
+	if (xtmp_name != NULL)
 		abort();
 	xtmp_name = arcn->tmp_name;
 
@@ -161,13 +174,17 @@ file_creat(ARCHD *arcn)
 void
 file_close(ARCHD *arcn, int fd)
 {
-	int res = 0;
+	char *tmp_name;
+	int res;
 
 	if (fd < 0)
 		return;
+
+	tmp_name = (arcn->tmp_name != NULL) ? arcn->tmp_name : arcn->name;
+
 	if (close(fd) < 0)
 		syswarn(0, errno, "Cannot close file descriptor on %s",
-		    arcn->tmp_name);
+		    tmp_name);
 
 	/*
 	 * set owner/groups first as this may strip off mode bits we want
@@ -175,7 +192,9 @@ file_close(ARCHD *arcn, int fd)
 	 * modification times.
 	 */
 	if (pids)
-		res = set_ids(arcn->tmp_name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = set_ids(tmp_name, arcn->sb.st_uid, arcn->sb.st_gid);
+	else
+		res = 0;
 
 	/*
 	 * IMPORTANT SECURITY NOTE:
@@ -185,19 +204,24 @@ file_close(ARCHD *arcn, int fd)
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~SETBITS(0);
 	if (pmode)
-		set_pmode(arcn->tmp_name, arcn->sb.st_mode);
+		set_pmode(tmp_name, arcn->sb.st_mode);
 	else
-		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS(0));
+		set_pmode(tmp_name, arcn->sb.st_mode & FILEBITS(0));
 	if (patime || pmtime)
-		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+		set_ftime(tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+
+	/* Did we write directly to the target file? */
+	if (arcn->tmp_name == NULL)
+		return;
+
 	/*
 	 * Finally, now the temp file is fully instantiated rename it to
 	 * the desired file name.
 	 */
-	if (rename(arcn->tmp_name, arcn->name) < 0) {
+	if (rename(tmp_name, arcn->name) < 0) {
 		syswarn(0, errno, "Cannot rename %s to %s",
-		    arcn->tmp_name, arcn->name);
-		(void)unlink(arcn->tmp_name);
+		    tmp_name, arcn->name);
+		(void)unlink(tmp_name);
 	}
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
@@ -219,12 +243,21 @@ file_close(ARCHD *arcn, int fd)
  */
 
 int
-lnk_creat(ARCHD *arcn)
+lnk_creat(ARCHD *arcn, int *payload)
 {
 	struct stat sb;
 
 	/*
-	 * we may be running as root, so we have to be sure that link target
+	 * Check if this hardlink carries the "payload". In "cpio" archives
+	 * it's usually the last record of a set of hardlinks which includes
+	 * the contents of the file.
+	 *
+	 */
+	*payload = S_ISREG(arcn->sb.st_mode) &&
+	    (arcn->sb.st_size > 0) && (arcn->sb.st_size <= arcn->skip);
+
+	/*
+	 * We may be running as root, so we have to be sure that link target
 	 * is not a directory, so we lstat and check
 	 */
 	if (lstat(arcn->ln_name, &sb) < 0) {
