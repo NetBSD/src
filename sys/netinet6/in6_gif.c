@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_gif.c,v 1.18 2001/02/20 10:41:48 itojun Exp $	*/
-/*	$KAME: in6_gif.c,v 1.45 2001/02/20 08:37:00 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.19 2001/05/10 01:37:42 itojun Exp $	*/
+/*	$KAME: in6_gif.c,v 1.48 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -173,11 +173,12 @@ in6_gif_output(ifp, family, m, rt)
 			return ENETUNREACH;
 		}
 	}
-	if (ifp->if_flags & IFF_LINK1) {
-		otos = 0;
+	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
-		ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
-	}
+	else
+		ip_ecn_ingress(ECN_NOCARE, &otos, &itos);
+	ip6->ip6_flow &= ~ntohl(0xff00000);
+	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	if (dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
@@ -264,6 +265,8 @@ int in6_gif_input(mp, offp, proto)
 		ip = mtod(m, struct ip *);
 		if (gifp->if_flags & IFF_LINK1)
 			ip_ecn_egress(ECN_ALLOWED, &otos8, &ip->ip_tos);
+		else
+			ip_ecn_egress(ECN_NOCARE, &otos8, &ip->ip_tos);
 		break;
 	    }
 #endif /* INET */
@@ -280,6 +283,8 @@ int in6_gif_input(mp, offp, proto)
 		ip6 = mtod(m, struct ip6_hdr *);
 		if (gifp->if_flags & IFF_LINK1)
 			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6->ip6_flow);
+		else
+			ip6_ecn_egress(ECN_NOCARE, &otos, &ip6->ip6_flow);
 		break;
 	    }
 #endif
