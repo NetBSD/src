@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 1996/02/22 10:11:37 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 1996/03/08 21:50:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -182,6 +182,7 @@ dev_type_close(zsclose);
 dev_type_read(zsread);
 dev_type_write(zswrite);
 dev_type_ioctl(zsioctl);
+dev_type_tty(zstty);
 
 /* Interrupt handlers. */
 int		zshard __P((long));
@@ -195,10 +196,11 @@ static struct zs_chanstate *zslist;
 /* Routines called from other code. */
 static void	zsstart __P((struct tty *));
 void		zsstop __P((struct tty *, int));
-static int	zsparam __P((struct tty *, struct termios *));
-static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
 
 /* Routines purely local to this driver. */
+static void	zsoverrun __P((int, long *, char *));
+static int	zsparam __P((struct tty *, struct termios *));
+static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
 static int	zs_modem __P((struct zs_chanstate *, int, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 
@@ -359,7 +361,7 @@ struct proc	*p;
 		zs_modem(cs, ZSWR5_RTS|ZSWR5_DTR, DMSET);
 
 		/* May never get a status intr. if DCD already on. -gwr */
-		if(cs->cs_zc->zc_csr & ZSRR0_DCD)
+		if((cs->cs_rr0 = cs->cs_zc->zc_csr) & ZSRR0_DCD)
 			tp->t_state |= TS_CARR_ON;
 		if(cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
