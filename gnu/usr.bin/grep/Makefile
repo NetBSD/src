@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 1999/04/24 17:40:33 dbj Exp $
+#	$NetBSD: Makefile,v 1.13 1999/05/31 14:21:11 kleink Exp $
+
+.include <bsd.own.mk>
 
 PROG=		grep
 SRCS=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
@@ -16,12 +18,14 @@ CPPFLAGS+=	-I${DIST}/grep/src -I${DIST}/grep/intl -I${.CURDIR} \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
 		-DLOCALEDIR=\"/usr/share/locale\"
 
+.if ${MKNLS} != "no"
 .for F in de.gmo el.gmo es.gmo fr.gmo ko.gmo nl.gmo no.gmo pl.gmo ru.gmo \
 	sl.gmo sv.gmo
 FILES+=		${F}
 FILESDIR_${F}=	/usr/share/locale/${F:.gmo=}/LC_MESSAGES
 FILESNAME_${F}=	grep.mo
 .endfor
+.endif
 
 TEXINFO=	grep.texi
 INFOFLAGS=	-I${.CURDIR}/../../dist/grep/doc
