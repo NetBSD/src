@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.15 2002/07/06 00:55:29 wiz Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.16 2002/11/30 03:10:59 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.15 2002/07/06 00:55:29 wiz Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.16 2002/11/30 03:10:59 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: stdhosts.c,v 1.15 2002/07/06 00:55:29 wiz Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
 #include <unistd.h>
 #include <netdb.h>
 

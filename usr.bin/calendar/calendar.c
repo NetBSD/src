@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.26 2001/12/04 15:55:32 christos Exp $	*/
+/*	$NetBSD: calendar.c,v 1.27 2002/11/30 03:10:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.26 2001/12/04 15:55:32 christos Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.27 2002/11/30 03:10:55 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: calendar.c,v 1.26 2001/12/04 15:55:32 christos Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "pathnames.h"
 

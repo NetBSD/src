@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.10 2002/06/30 14:17:45 lukem Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.11 2002/11/30 03:10:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "ealloc.h"
 #include "hash.h"

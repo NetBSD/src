@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.12 2002/07/10 20:19:44 wiz Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.13 2002/11/30 03:10:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,9 +73,6 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #endif	/* MACH */
-#ifdef HAS_FPARSELN
-#include <util.h>
-#endif /* HAS_FPARSELN */
 #include "c.h"
 #include "sup.h"
 #include "supmsg.h"
