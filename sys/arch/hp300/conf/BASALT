@@ -1,6 +1,6 @@
-#	$NetBSD: BASALT,v 1.31 1999/09/19 21:12:43 thorpej Exp $
+#	$NetBSD: BASALT,v 1.32 1999/09/19 21:13:44 thorpej Exp $
 #
-# Kernel for basalt.og.org - thorpej's HP380 file server.
+# Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
 
 # Include attributes common to all hp300s
