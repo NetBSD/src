@@ -35,13 +35,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.73 1994/03/12 22:36:40 mycroft Exp $
+ *	$Id: wd.c,v 1.74 1994/03/29 04:36:30 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
-
-#include "wd.h"
-#if NWDC > 0
 
 #include <sys/param.h>
 #include <sys/dkbad.h>
@@ -68,7 +65,10 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
+#ifndef NEWCONFIG
 #include <i386/isa/isa_device.h>
+#endif
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/wdreg.h>
 
@@ -111,8 +111,7 @@ struct wd_softc {
 	long	sc_mbcount;	/* total byte count left */
 	short	sc_skip;	/* blocks already transferred */
 	short	sc_mskip;	/* blocks already transferred for multi */
-	char	sc_unit;	/* physical unit number */
-	char	sc_lunit;	/* logical unit number */
+	char	sc_drive;	/* physical unit number */
 	char	sc_state;	/* control state */
 	
 	u_long  sc_copenpart;   /* character units open on this drive */
@@ -128,7 +127,7 @@ struct wd_softc {
 	struct disklabel sc_label;	/* device configuration data */
 	struct cpu_disklabel sc_cpulabel;
 	long	sc_badsect[127];	/* 126 plus trailing -1 marker */
-} *wd_softc[NWD];
+};
 
 struct wdc_softc {
 	struct device sc_dev;
@@ -141,16 +140,17 @@ struct wdc_softc {
 	u_char	sc_error;	/* copy of error register */
 	u_short	sc_iobase;	/* i/o port base */
 	int	sc_timeout;	/* timeout counter */
-} wdc_softc[NWDC];
-
-int wdcprobe(), wdcattach(), wdprobe(), wdattach(), wdintr();
-
-struct	isa_driver wdcdriver = {
-	wdcprobe, wdcattach, "wdc",
 };
 
-struct	isa_driver wddriver = {
-	wdprobe, wdattach, "wd",
+int wdcprobe(), wdprobe(), wdintr();
+void wdcattach(), wdattach();
+
+struct cfdriver wdccd = {
+	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc)
+};
+
+struct cfdriver wdcd = {
+	NULL, "wd", wdprobe, wdattach, DV_DISK, sizeof(struct wd_softc)
 };
 
 void wdfinish __P((struct wd_softc *, struct buf *));
@@ -176,22 +176,16 @@ int wdcwait __P((struct wdc_softc *, int));
  * Probe for controller.
  */
 int
-wdcprobe(dev)
-	struct isa_device *dev;
+wdcprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct wdc_softc *wdc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct wd_softc *wd;
-	struct wdc_softc *wdc;
 	u_short iobase;
 
-	if (dev->id_unit >= NWDC)
-		return 0;
-	wdc = &wdc_softc[dev->id_unit];
-
-	/* XXX HACK */
-	sprintf(wdc->sc_dev.dv_xname, "%s%d", wdcdriver.name, dev->id_unit);
-	wdc->sc_dev.dv_unit = dev->id_unit;
-
-	wdc->sc_iobase = iobase = dev->id_iobase;
+	wdc->sc_iobase = iobase = ia->ia_iobase;
 
 	/* Check if we have registers that work. */
 	outb(iobase+wd_error, 0x5a);	/* Error register not writable. */
@@ -210,8 +204,8 @@ wdcprobe(dev)
 	 */
 	wd = (void *)malloc(sizeof(struct wd_softc), M_TEMP, M_NOWAIT);
 	bzero(wd, sizeof(struct wd_softc));
-	wd->sc_unit = 0;
-	wd->sc_lunit = 0;
+	wd->sc_drive = 0;
+	wd->sc_dev.dv_unit = 0;
 	wd->sc_dev.dv_parent = (void *)wdc;
 
 	/* Execute a controller only command. */
@@ -219,76 +213,89 @@ wdcprobe(dev)
 	    wait_for_unbusy(wdc) != 0)
 		goto lose;
 
-	wdctimeout(wdc);
-
 	free(wd, M_TEMP);
-	return 8;
+	ia->ia_iosize = 8;
+	ia->ia_msize = 0;
+	return 1;
 
 lose:
 	free(wd, M_TEMP);
 	return 0;
 }
 
-int
-wdcattach(dev)
-	struct isa_device *dev;
-{
+struct wdc_attach_args {
+	int wa_drive;
+};
 
+int
+wdprint(aux, wdc)
+	void *aux;
+	char *wdc;
+{
+	struct wdc_attach_args *wa = aux;
+
+	if (!wdc)
+		printf(" drive %d", wa->wa_drive);
+	return QUIET;
+}
+
+void
+wdcattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct wdc_softc *wdc = (void *)self;
+	struct wdc_attach_args wa;
+
+	wdctimeout(wdc);
+	printf("\n");
+
+	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
+		(void)config_found(self, &wa, wdprint);
 }
 
 int
-wdprobe(dev)
-	struct isa_device *dev;
+wdprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct wd_softc *wd = (void *)self;
+	struct cfdata *cf = wd->sc_dev.dv_cfdata;
+	struct wdc_attach_args *wa = aux;
+	int drive = wa->wa_drive;
+#ifdef NEWCONFIG
+
+#define cf_drive cf_loc[0]
+	if (cf->cf_drive != -1 && cf->cf_drive != drive)
+		return 0;
+#undef cf_drive
+#else
+	struct isa_device *id = (void *)cf->cf_loc;
+
+	if (id->id_physid != -1 && id->id_physid != drive)
+		return 0;
+#endif
+	
+	wd->sc_drive = drive;
+
+	if (wdgetctlr(wd) != 0)
+		return 0;
 
 	return 1;
 }
 
-/*
- * Called for the controller too.  Attach each drive if possible.
- */
-int
-wdattach(dev)
-	struct isa_device *dev;
+void
+wdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int lunit;
-	struct wd_softc *wd;
-	struct wdc_softc *wdc;
+	struct wd_softc *wd = (void *)self;
 	int i, blank;
 
-	lunit = dev->id_unit;
-	if (lunit == -1) {
-		printf("%s: cannot support unit ?\n", wdc->sc_dev.dv_xname);
-		return 0;
-	}
-	if (lunit >= NWD)
-		return 0;
-	
-	wdc = &wdc_softc[dev->id_parent->id_unit];
-
-	wd_softc[lunit] = wd =
-	    (void *)malloc(sizeof(struct wd_softc), M_TEMP, M_NOWAIT);
-	bzero(wd, sizeof(struct wd_softc));
-	wd->sc_unit = dev->id_physid;
-	wd->sc_lunit = lunit;
-
-	/* XXX HACK */
-	sprintf(wd->sc_dev.dv_xname, "%s%d", wddriver.name, dev->id_unit);
-	wd->sc_dev.dv_unit = dev->id_unit;
-	wd->sc_dev.dv_parent = (void *)wdc;
-
-	if (wdgetctlr(wd) != 0) {
-		wd_softc[lunit] = NULL;
-		free(wd, M_TEMP);
-		return 0;
-	}
-
-	printf("%s at %s targ %d: ", wd->sc_dev.dv_xname, wdc->sc_dev.dv_xname,
-	    dev->id_physid);
 	if (wd->sc_params.wdp_heads == 0)
-		printf("(unknown size) <");
+		printf(": (unknown size) <");
 	else
-		printf("%dMB %d cyl, %d head, %d sec <",
+		printf(": %dMB %d cyl, %d head, %d sec <",
 		    wd->sc_label.d_ncylinders * wd->sc_label.d_secpercyl /
 		    (1048576 / DEV_BSIZE),
 		    wd->sc_label.d_ncylinders, wd->sc_label.d_ntracks,
@@ -307,8 +314,6 @@ wdattach(dev)
 			blank = 1;
 	}
 	printf(">\n");
-
-	return 1;
 }
 
 /*
@@ -328,9 +333,9 @@ wdstrategy(bp)
 	int s;
     
 	/* Valid unit, controller, and request?  */
-	if (lunit >= NWD || bp->b_blkno < 0 ||
+	if (lunit >= wdcd.cd_ndevs || bp->b_blkno < 0 ||
 	    howmany(bp->b_bcount, DEV_BSIZE) >= (1 << NBBY) ||
-	    (wd = wd_softc[lunit]) == 0) {
+	    (wd = wdcd.cd_devs[lunit]) == 0) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -431,7 +436,7 @@ wdfinish(wd, bp)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 
 #ifdef INSTRUMENT
-	dk_busy &= ~(1 << wd->sc_unit);
+	dk_busy &= ~(1 << wd->sc_drive);
 #endif
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR);
 	wdc->sc_q.b_errcnt = 0;
@@ -496,7 +501,7 @@ loop:
     
 	/* Obtain controller and drive information */
 	lunit = WDUNIT(bp->b_dev);
-	wd = wd_softc[lunit];
+	wd = wdcd.cd_devs[lunit];
 
 	if (wdc->sc_q.b_errcnt >= WDIORETRIES) {
 		wderror(wd, bp, "hard error");
@@ -621,8 +626,8 @@ loop:
     
 #ifdef INSTRUMENT
 	if (wd->sc_skip == 0) {
-		dk_busy |= 1 << wd->sc_lunit;
-		dk_wds[wd->sc_lunit] += bp->b_bcount >> 6;
+		dk_busy |= 1 << wd->sc_dev.dv_unit;
+		dk_wds[wd->sc_dev.dv_unit] += bp->b_bcount >> 6;
 	}
 #endif
 
@@ -631,8 +636,8 @@ loop:
 		int command, count;
 
 #ifdef INSTRUMENT
-		++dk_seek[wd->sc_lunit];
-		++dk_xfer[wd->sc_lunit];
+		++dk_seek[wd->sc_dev.dv_unit];
+		++dk_xfer[wd->sc_dev.dv_unit];
 #endif
 
 #ifdef B_FORMAT
@@ -694,7 +699,7 @@ int
 wdintr(ctrlr)
 	int ctrlr;
 {
-	struct wdc_softc *wdc = &wdc_softc[ctrlr];
+	struct wdc_softc *wdc = wdccd.cd_devs[ctrlr];
 	struct wd_softc *wd;
 	struct buf *bp;
 
@@ -707,7 +712,7 @@ wdintr(ctrlr)
 	}
     
 	bp = wdc->sc_q.b_forw->b_actf;
-	wd = wd_softc[WDUNIT(bp->b_dev)];
+	wd = wdcd.cd_devs[WDUNIT(bp->b_dev)];
 	wdc->sc_timeout = 0;
     
 #ifdef WDDEBUG
@@ -816,9 +821,9 @@ wdopen(dev, flag, fmt, p)
 	char *msg;
     
 	lunit = WDUNIT(dev);
-	if (lunit >= NWD)
+	if (lunit >= wdcd.cd_ndevs)
 		return ENXIO;
-	wd = wd_softc[lunit];
+	wd = wdcd.cd_devs[lunit];
 	if (wd == 0)
 		return ENXIO;
     
@@ -996,7 +1001,7 @@ wdcommand(wd, cylin, head, sector, count, cmd)
 
 	/* Select drive. */
 	iobase = wdc->sc_iobase;
-	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_unit << 4) | head);
+	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
 	if (cmd == WDCC_DIAGNOSE || cmd == WDCC_IDC)
 		stat = wait_for_unbusy(wdc);
 	else
@@ -1027,7 +1032,7 @@ wdsetctlr(wd)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 
 #ifdef WDDEBUG
-	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_ctrlr, wd->sc_unit,
+	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_ctrlr, wd->sc_drive,
 	    wd->sc_label.d_ncylinders, wd->sc_label.d_ntracks,
 	    wd->sc_label.d_nsectors);
 #endif
@@ -1119,7 +1124,7 @@ wdclose(dev, flag, fmt)
 	int flag;
 	int fmt;
 {
-	struct wd_softc *wd = wd_softc[WDUNIT(dev)];
+	struct wd_softc *wd = wdcd.cd_devs[WDUNIT(dev)];
 	int part = WDPART(dev), mask = 1 << part;
     
 	switch (fmt) {
@@ -1144,7 +1149,7 @@ wdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	int lunit = WDUNIT(dev);
-	struct wd_softc *wd = wd_softc[lunit];
+	struct wd_softc *wd = wdcd.cd_devs[lunit];
 	int error;
     
 	switch (cmd) {
@@ -1269,9 +1274,9 @@ wdsize(dev)
 	int lunit = WDUNIT(dev), part = WDPART(dev);
 	struct wd_softc *wd;
     
-	if (lunit >= NWD)
+	if (lunit >= wdcd.cd_ndevs)
 		return -1;
-	wd = wd_softc[lunit];
+	wd = wdcd.cd_devs[lunit];
 	if (wd == 0)
 		return -1;
     
@@ -1319,9 +1324,9 @@ wddump(dev)
 
 	lunit = WDUNIT(dev);
 	/* Check for acceptable drive number. */
-	if (lunit >= NWD)
+	if (lunit >= wdcd.cd_ndevs)
 		return ENXIO;
-	wd = wd_softc[lunit];
+	wd = wdcd.cd_devs[lunit];
 	/* Was it ever initialized? */
 	if (wd == 0 || wd->sc_state < OPEN || wd->sc_flags & WDF_WRITEPROT)
 		return ENXIO;
@@ -1511,8 +1516,8 @@ wdcunwedge(wdc)
 	(void) wdcreset(wdc);
 
 	/* Schedule recalibrate for all drives on this controller. */
-	for (lunit = 0; lunit < NWD; lunit++) {
-		struct wd_softc *wd = wd_softc[lunit];
+	for (lunit = 0; lunit < wdcd.cd_ndevs; lunit++) {
+		struct wd_softc *wd = wdcd.cd_devs[lunit];
 		if (!wd || (void *)wd->sc_dev.dv_parent != wdc)
 			continue;
 		if (wd->sc_state > RECAL)
@@ -1582,5 +1587,3 @@ wderror(dev, bp, msg)
 		printf("%s: %s: status %b error %b\n", wdc->sc_dev.dv_xname,
 		    msg, wdc->sc_status, WDCS_BITS, wdc->sc_error, WDERR_BITS);
 }
-
-#endif /* NWDC > 0 */
