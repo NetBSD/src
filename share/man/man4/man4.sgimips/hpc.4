@@ -1,10 +1,10 @@
-.\"	$NetBSD: hpc.4,v 1.1 2002/05/19 20:38:52 pooka Exp $
+.\"	$NetBSD: hpc.4,v 1.2 2002/05/19 20:47:26 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from work contributed to The NetBSD Foundation
-.\" by Antti Kantee
+.\" by Antti Kantee.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -44,10 +44,10 @@
 .Cd "hpc0 at gio0 addr 0x1fb80000"
 .Sh DESCRIPTION
 .Nm hpc
-intefaces the peripherals connected to it to the
-.Nm gio
-bus. 
-.Nm hpc
+interfaces the peripherals connected to it to the
+.Xr gio 4
+bus.
+.Nm
 is found for example on the Indy and Indigo2 machines.
 .Sh HARDWARE
 .Bl -tag -width dsclock -offset indent
@@ -55,7 +55,7 @@ is found for example on the Indy and Indigo2 machines.
 DS1286-based RTC
 .It sq
 Seeq 8003 and 80C03
-.Tn ethernet
+.Tn Ethernet
 controllers
 .It wdsc
 WD33c93
@@ -66,7 +66,7 @@ Zilog Z8530 UART
 .El
 .Sh SEE ALSO
 .Xr gio 4 ,
-.Xr imc 4 .
+.Xr imc 4
 .Sh HISTORY
 The
 .Nm
