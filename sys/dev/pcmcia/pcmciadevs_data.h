@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.71 2000/01/25 08:07:14 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.72 2000/01/25 15:44:21 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.70 2000/01/25 08:06:49 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp 
  */
 
 /*-
@@ -434,7 +434,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_SMC_EZCARD,
 	    0,
 	    "Standard Microsystems Corporation",
-	    "SMC EXCard 10 PCMCIA"	},
+	    "SMC EZCard 10 PCMCIA"	},
 	},
 	{
 	    PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_CNETPC,
