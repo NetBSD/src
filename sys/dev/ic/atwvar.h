@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.14 2004/07/24 23:53:49 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.15 2004/12/19 08:09:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -428,29 +428,6 @@ do {									\
 #define	ATW_COUNTRY_FRANCE 4		/* 10-13 */
 #define	ATW_COUNTRY_MKK 5		/* Japan: 14 */
 #define	ATW_COUNTRY_MKK2 6		/* Japan: 1-14 */
-
-/* One Time Unit (TU) is 1Kus = 1024 microseconds. */
-#define IEEE80211_DUR_TU		1024
-
-/* IEEE 802.11b durations for DSSS PHY in microseconds */
-#define IEEE80211_DUR_DS_LONG_PREAMBLE	144
-#define IEEE80211_DUR_DS_SHORT_PREAMBLE	72
-#define IEEE80211_DUR_DS_FAST_PLCPHDR	24
-#define IEEE80211_DUR_DS_SLOW_PLCPHDR	48
-#define IEEE80211_DUR_DS_SLOW_ACK	112
-#define IEEE80211_DUR_DS_FAST_ACK	56
-#define IEEE80211_DUR_DS_SLOW_CTS	112
-#define IEEE80211_DUR_DS_FAST_CTS	56
-#define IEEE80211_DUR_DS_SLOT		20
-#define IEEE80211_DUR_DS_SIFS		10
-#define IEEE80211_DUR_DS_PIFS	(IEEE80211_DUR_DS_SIFS + IEEE80211_DUR_DS_SLOT)
-#define IEEE80211_DUR_DS_DIFS	(IEEE80211_DUR_DS_SIFS + \
-				 2 * IEEE80211_DUR_DS_SLOT)
-#define IEEE80211_DUR_DS_EIFS	(IEEE80211_DUR_DS_SIFS + \
-				 IEEE80211_DUR_DS_SLOW_ACK + \
-				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
-				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
-				 IEEE80211_DUR_DIFS)
 
 /*
  * register space access macros
