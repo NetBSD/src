@@ -1,10 +1,12 @@
-#	$NetBSD: files.bebox,v 1.39 2003/03/18 16:40:19 matt Exp $
+#	$NetBSD: files.bebox,v 1.40 2003/10/24 18:21:52 matt Exp $
 #
 # First try for bebox specific configuration info
 #
 maxpartitions 16
 
 maxusers 2 8 64
+
+defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/clock.c

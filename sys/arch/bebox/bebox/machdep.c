@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2003/10/20 00:12:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2003/10/24 18:21:52 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2003/10/20 00:12:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2003/10/24 18:21:52 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -337,7 +337,9 @@ consinit()
 #if (NPC > 0)
 		pccnattach();
 #endif
+#if (NVGA > 0)
 dokbd:
+#endif
 #if (NPCKBC > 0)
 		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
