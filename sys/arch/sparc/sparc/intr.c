@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 1998/10/24 08:12:55 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.37 1999/01/19 10:04:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,10 @@
 #include <net/if_ppp.h>
 #endif
 #include "kbd.h"
+#include "com.h"
+#if NCOM > 0
+extern void comsoft __P((void));
+#endif
 
 union sir	sir;
 
@@ -187,6 +191,15 @@ soft01intr(fp)
 			sir.sir_which[SIR_CLOCK] = 0;
 			softclock();
 		}
+#if NCOM > 0
+		/*
+		 * XXX - consider using __GENERIC_SOFT_INTERRUPTS instead
+		 */
+		if (sir.sir_which[SIR_SERIAL]) {
+			sir.sir_which[SIR_SERIAL] = 0;
+			comsoft();
+		}
+#endif
 	}
 	return (1);
 }
