@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.2 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3 2004/03/28 09:01:26 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -78,7 +78,6 @@ MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures"
 
 #if __NetBSD_Version__ >= 105009999
 # define	csuminfo	csum_flags
-#endif
 #endif
 
 extern	struct	protosw	inetsw[];
@@ -1280,6 +1279,7 @@ frdest_t *fdp;
 	} else {
 #if (__NetBSD_Version__ >= 106010000)
 		struct in6_addr finaldst = fin->fin_dst6;
+		int frag;
 #endif
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
@@ -1289,7 +1289,7 @@ frdest_t *fdp;
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 #else
 		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu);
+		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
 			
 #endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu))

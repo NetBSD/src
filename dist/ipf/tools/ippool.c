@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool.c,v 1.1.1.1 2004/03/28 08:56:34 martti Exp $	*/
+/*	$NetBSD: ippool.c,v 1.2 2004/03/28 09:01:26 martti Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -346,6 +346,7 @@ char *argv[];
 	int c, role, type, live_kernel;
 	ip_pool_stat_t *plstp, plstat;
 	iphtstat_t *htstp, htstat;
+	iphtable_t *hptr;
 	iplookupop_t op;
 	ip_pool_t *ptr;
 
@@ -455,16 +456,16 @@ char *argv[];
 		}
 
 		if (role != IPL_LOGALL) {
-			ptr = htstp->iphs_tables;
-			while (ptr != NULL) {
-				ptr = printhash(ptr, kmemcpywrap, opts);
+			hptr = htstp->iphs_tables;
+			while (hptr != NULL) {
+				hptr = printhash(hptr, kmemcpywrap, opts);
 			}
 		} else {
 			for (role = 0; role <= IPL_LOGMAX; role++) {
-				ptr = htstp->iphs_tables;
-				while (ptr != NULL) {
-					ptr = printhash(ptr, kmemcpywrap,
-							opts);
+				hptr = htstp->iphs_tables;
+				while (hptr != NULL) {
+					hptr = printhash(hptr, kmemcpywrap,
+							 opts);
 				}
 
 				op.iplo_unit = role;

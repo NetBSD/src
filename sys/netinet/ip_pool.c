@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.1.1.1 2004/03/28 08:56:43 martti Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.2 2004/03/28 09:01:26 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -69,8 +69,9 @@ struct file;
 #include "netinet/ip_fil.h"
 #include "netinet/ip_pool.h"
 
-#if defined(_KERNEL) && !defined(__osf__) && !defined(__hpux) && \
-    !(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#if defined(IPFILTER_LOOKUP) && defined(_KERNEL) && \
+	((BSD >= 198911) && !defined(__osf__) && \
+	!defined(__hpux) && !defined(__sgi))
 static int rn_freenode __P((struct radix_node *, void *));
 #endif
 
