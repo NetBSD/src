@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.18 2004/08/10 07:04:19 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.19 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.18 2004/08/10 07:04:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.19 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,11 +221,8 @@ esp_pcmcia_attach(parent, self, aux)
 	esp_pcmcia_init(esc);
 
 	error = esp_pcmcia_enable(self, 1);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
@@ -299,6 +296,7 @@ esp_pcmcia_enable(arg, onoff)
 	int onoff;
 {
 	struct esp_pcmcia_softc *sc = (void *)arg;
+	int error;
 
 	if (onoff) {
 		/*
@@ -314,19 +312,14 @@ esp_pcmcia_enable(arg, onoff)
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 			    ncr53c9x_intr, &sc->sc_ncr53c9x);
-			if (sc->sc_ih == NULL) {
-				printf("%s: couldn't establish interrupt handler\n",
-				    sc->sc_ncr53c9x.sc_dev.dv_xname);
+			if (!sc->sc_ih)
 				return (EIO);
-			}
 #endif
 
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_ncr53c9x.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(sc->sc_pf,
-				    sc->sc_ih);
-				return (EIO);
+			error = pcmcia_function_enable(sc->sc_pf);
+			if (error) {
+				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+				return (error);
 			}
 
 			/* Initialize only chip.  */
