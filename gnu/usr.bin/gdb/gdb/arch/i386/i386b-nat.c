@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.9 1995/01/26 22:39:16 mycroft Exp $
+	$Id: i386b-nat.c,v 1.10 1995/08/06 20:38:46 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -58,6 +58,37 @@ store_inferior_registers (regno)
 
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+}
+
+struct md_core {
+	struct reg intreg;
+	struct fpreg freg;
+};
+
+void
+fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     unsigned int ignore;
+{
+  struct md_core *core_reg;
+
+  core_reg = (struct md_core *)core_reg_sect;
+
+  switch (which) {
+  case 0:
+    /* integer registers */
+    memcpy(&registers[REGISTER_BYTE (0)], &core_reg->intreg,
+	   sizeof(struct reg));
+    break;
+  case 2:
+    /* floating point registers */
+    /* XXX */
+  default:
+    printf("fetch_core_registers: invalid `which' argument\n");
+    break;
+  }
 }
 
 #if 0
