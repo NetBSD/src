@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.33 1999/11/22 21:57:09 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.34 1999/11/26 01:41:03 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -93,6 +93,11 @@ int	uhcidebug;
 #ifdef OHCI_DEBUG
 int	ohcidebug;
 #endif
+/* 
+ * 0  - do usual exploration
+ * 1  - do not use timeout exploration
+ * >1 - do no exploration
+ */
 int	usb_noexplore = 0;
 #else
 #define DPRINTF(x)
@@ -270,11 +275,15 @@ usb_event_thread(arg)
 
 	while (!sc->sc_dying) {
 #ifdef USB_DEBUG
-		if (!usb_noexplore)
+		if (usb_noexplore < 2)
 #endif
 		usb_discover(sc);
-		(void)tsleep(&sc->sc_bus->needs_explore, 
-			     PWAIT, "usbevt", hz*60);
+		(void)tsleep(&sc->sc_bus->needs_explore, PWAIT, "usbevt",
+#ifdef USB_DEBUG
+			     usb_noexplore ? 0 :
+#endif
+			     hz*60
+			);
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = 0;
