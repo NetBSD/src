@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.98.2.2 2004/04/11 11:23:44 tron Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.98.2.3 2004/06/27 13:39:44 he Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.98.2.2 2004/04/11 11:23:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.98.2.3 2004/06/27 13:39:44 he Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -155,6 +155,8 @@ static RF_ShutdownList_t *globalShutdown;	/* non array-specific
 						 * stuff */
 
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
+static int rf_AllocEmergBuffers(RF_Raid_t *);
+static void rf_FreeEmergBuffers(RF_Raid_t *);
 
 /* called at system boot time */
 int     
@@ -202,7 +204,6 @@ rf_UnconfigureArray()
 int 
 rf_Shutdown(RF_Raid_t *raidPtr)
 {
-	RF_VoidPointerListElem_t *tmp;
 
 	if (!raidPtr->valid) {
 		RF_ERRORMSG("Attempt to shut down unconfigured RAIDframe driver.  Aborting shutdown\n");
@@ -240,22 +241,8 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	rf_UnconfigureVnodes(raidPtr);
 
-	/* Free the emergency IO buffers */
-	while (raidPtr->iobuf != NULL) {
-		tmp = raidPtr->iobuf;
-		raidPtr->iobuf = raidPtr->iobuf->next;
-		free(tmp->p, M_RAIDFRAME);
-		rf_FreeVPListElem(tmp);
-	}
+	rf_FreeEmergBuffers(raidPtr);
 
-	/* Free the emergency stripe buffers */
-	while (raidPtr->stripebuf != NULL) {
-		tmp = raidPtr->stripebuf;
-		raidPtr->stripebuf = raidPtr->stripebuf->next;
-		free(tmp->p, M_RAIDFRAME);
-		rf_FreeVPListElem(tmp);
-	}
-		
 	rf_ShutdownList(&raidPtr->shutdownList);
 
 	rf_UnconfigureArray();
@@ -277,6 +264,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 #define DO_RAID_FAIL() { \
 	rf_UnconfigureVnodes(raidPtr); \
+	rf_FreeEmergBuffers(raidPtr); \
 	rf_ShutdownList(&raidPtr->shutdownList); \
 	rf_UnconfigureArray(); \
 }
@@ -298,9 +286,7 @@ int
 rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
-	void *tmpbuf;
-	RF_VoidPointerListElem_t *vple;
-	int rc, i;
+	int rc;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
@@ -415,49 +401,14 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	/* Allocate a bunch of buffers to be used in low-memory conditions */
 	raidPtr->iobuf = NULL;
-	/* XXX next line needs tuning... */
-	raidPtr->numEmergencyBuffers = 10 * raidPtr->numCol;
-#if DEBUG
-	printf("raid%d: allocating %d buffers of %d bytes.\n",
-	       raidPtr->raidid,
-	       raidPtr->numEmergencyBuffers, 
-	       (int)(raidPtr->Layout.sectorsPerStripeUnit << 
-	       raidPtr->logBytesPerSector));
-#endif
-	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
-		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
-				 raidPtr->logBytesPerSector, 
-				 M_RAIDFRAME, M_NOWAIT);
-		if (tmpbuf) {
-			vple = rf_AllocVPListElem();
-			vple->p= tmpbuf;
-			vple->next = raidPtr->iobuf;
-			raidPtr->iobuf = vple;
-			raidPtr->iobuf_count++;
-		} else {
-			printf("raid%d: failed to allocate emergency buffer!\n",
-			       raidPtr->raidid);
-		}
+
+	rc = rf_AllocEmergBuffers(raidPtr); 
+	if (rc) {
+		printf("raid%d: Unable to allocate emergency buffers.\n",
+		       raidPtr->raidid);
+		DO_RAID_FAIL();
+		return(rc);
 	}
-
-	/* XXX next line needs tuning too... */
-	raidPtr->numEmergencyStripeBuffers = 10;
-        for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
-                tmpbuf = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
-                                 raidPtr->logBytesPerSector),
-                                 M_RAIDFRAME, M_NOWAIT);
-                if (tmpbuf) {
-                        vple = rf_AllocVPListElem();
-                        vple->p= tmpbuf;
-                        vple->next = raidPtr->stripebuf;
-                        raidPtr->stripebuf = vple;
-                        raidPtr->stripebuf_count++;
-                } else {
-                        printf("raid%d: failed to allocate emergency stripe buffer!\n",
-                               raidPtr->raidid);
-                }
-        }
-
 
 	raidPtr->valid = 1;
 
@@ -480,6 +431,93 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	return (0);
 }
+
+
+/*
+
+  Routines to allocate and free the "emergency buffers" for a given
+  RAID set.  These emergency buffers will be used when the kernel runs
+  out of kernel memory. 
+  
+ */
+
+static int 
+rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
+{
+	void *tmpbuf;
+	RF_VoidPointerListElem_t *vple;
+	int i;
+
+	/* XXX next line needs tuning... */
+	raidPtr->numEmergencyBuffers = 10 * raidPtr->numCol;
+#if DEBUG
+	printf("raid%d: allocating %d buffers of %d bytes.\n",
+	       raidPtr->raidid,
+	       raidPtr->numEmergencyBuffers, 
+	       (int)(raidPtr->Layout.sectorsPerStripeUnit << 
+	       raidPtr->logBytesPerSector));
+#endif
+	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
+		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
+				 raidPtr->logBytesPerSector, 
+				 M_RAIDFRAME, M_NOWAIT);
+		if (tmpbuf) {
+			vple = rf_AllocVPListElem();
+			vple->p= tmpbuf;
+			vple->next = raidPtr->iobuf;
+			raidPtr->iobuf = vple;
+			raidPtr->iobuf_count++;
+		} else {
+			printf("raid%d: failed to allocate emergency buffer!\n",
+			       raidPtr->raidid);
+			break;
+		}
+	}
+
+	/* XXX next line needs tuning too... */
+	raidPtr->numEmergencyStripeBuffers = 10;
+        for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
+                tmpbuf = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
+                                 raidPtr->logBytesPerSector),
+                                 M_RAIDFRAME, M_NOWAIT);
+                if (tmpbuf) {
+                        vple = rf_AllocVPListElem();
+                        vple->p= tmpbuf;
+                        vple->next = raidPtr->stripebuf;
+                        raidPtr->stripebuf = vple;
+                        raidPtr->stripebuf_count++;
+                } else {
+                        printf("raid%d: failed to allocate emergency stripe buffer!\n",
+                               raidPtr->raidid);
+			break;
+                }
+        }
+	
+	return (0);
+}
+
+static void
+rf_FreeEmergBuffers(RF_Raid_t *raidPtr)
+{
+	RF_VoidPointerListElem_t *tmp;
+
+	/* Free the emergency IO buffers */
+	while (raidPtr->iobuf != NULL) {
+		tmp = raidPtr->iobuf;
+		raidPtr->iobuf = raidPtr->iobuf->next;
+		free(tmp->p, M_RAIDFRAME);
+		rf_FreeVPListElem(tmp);
+	}
+
+	/* Free the emergency stripe buffers */
+	while (raidPtr->stripebuf != NULL) {
+		tmp = raidPtr->stripebuf;
+		raidPtr->stripebuf = raidPtr->stripebuf->next;
+		free(tmp->p, M_RAIDFRAME);
+		rf_FreeVPListElem(tmp);
+	}
+}
+
 
 static void 
 rf_ShutdownRDFreeList(void *ignored)
