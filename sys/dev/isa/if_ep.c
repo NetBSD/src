@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.14 1994/02/14 02:09:31 deraadt Exp $
+ *	$Id: if_ep.c,v 1.15 1994/02/14 03:50:09 hpeyerl Exp $
  */
 /*
  * TODO:
@@ -315,6 +315,7 @@ epinit(unit)
 	}
 	if (ifp->if_flags & IFF_LINK0) {
 		outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
+		DELAY(1000);
 		if((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
 			GO_WINDOW(4);
 			outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
