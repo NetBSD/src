@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61 2001/02/22 10:39:31 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.62 2001/04/12 18:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -1042,7 +1042,7 @@ pccbbintr_function(sc)
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
 		} else if (pil->pil_level == IPL_IMP) {
-			s = splimp();
+			s = splvm();	/* XXX */
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 		} else if (pil->pil_level == IPL_SOFTSERIAL) {
