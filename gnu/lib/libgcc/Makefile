@@ -1,13 +1,59 @@
-#	$NetBSD: Makefile,v 1.17 2001/07/13 19:54:28 matt Exp $
+#	$NetBSD: Makefile,v 1.18 2001/07/18 18:29:02 tv Exp $
 
 .include <bsd.own.mk>
-
-HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 LIB=		gcc
 MKLINT=		no
 MKPROFILE=	no
+
+.if defined(USE_NEW_TOOLCHAIN)
+
+.include "${MACHINE_ARCH}.mk"
+
+MKPIC=no	# XXX to be fixed
+
+TOP=		${.CURDIR}/../..
+DIST=		${TOP}/dist/toolchain
+GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
+
+SRCS=		${G_LIB2ADD:M*.c*} ${G_CXX_LIB2SRCS:N*/new?.cc}
+
+GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
+CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+
+.PATH: ${DIST}/gcc
+
+OBJS+=		${G_LIB2FUNCS:=.o} ${G_LIB2FUNCS_EH:=.o} ${G_CXX_LIB2FUNCS:Mop*}
+
+${G_LIB2FUNCS:=.o}: libgcc2.c
+	${COMPILE.c} -DL$* -o $@ ${>:M*.c}
+
+${G_LIB2FUNCS_EH:=.o}: libgcc2.c
+	${COMPILE.c} -fexceptions -DL$* -o $@ ${>:M*.c}
+
+.for f in new newnt
+op${f}.o: ${G_CXX_LIB2SRCS:M*/new1.cc}
+	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
+.endfor
+
+.for f in vnew vnewnt del delnt vdel vdelnt
+op${f}.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
+	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
+.endfor
+
+.include <bsd.lib.mk>
+
+${OBJS}: ${MACHINE_ARCH}.mk
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
+HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+
+.if !empty(HAVE_GCC28)
 MKPIC=		no
+
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
@@ -41,7 +87,6 @@ LIB2OBJS+=	_fixunsdfsi.o _fixunssfsi.o
 OBJS+=		${LIB2OBJS}
 
 # Extra code to include in libgcc2 for C++ support.
-.if !empty(HAVE_GCC28)
 SRCS+=		tinfo.cc tinfo2.cc new.cc exception.cc frame.c
 OBJS+=		${NEW1OBJS} ${NEW2OBJS}
 CXXFLAGS+=	-I${DIST}/cp/inc
@@ -60,7 +105,6 @@ ${NEW1OBJS}: new1.cc
 	${COMPILE.cc} -DL$* -o $@ $>
 ${NEW2OBJS}: new2.cc
 	${COMPILE.cc} -DL$* -o $@ $>
-.endif
 
 ${LIB2OBJS}: libgcc2.c
 	${COMPILE.c} -DL$* -o $@ $>
@@ -74,3 +118,11 @@ afterinstall:
 .PATH:		${DIST} ${DIST}/cp ${DIST}/cp/inc
 
 .include <bsd.lib.mk>
+.else
+# Do nothing. (PROG undefined)
+.include <bsd.prog.mk>
+.endif
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
+.endif
