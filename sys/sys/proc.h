@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.101 2000/08/12 22:41:53 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.102 2000/08/22 17:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -419,6 +419,10 @@ void	p_sugid __P((struct proc*));
 /* Compatbility with old, non-interlocked tsleep call. */
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
+
+#if defined(MULTIPROCESSOR)
+void	proc_trampoline_mp(void);	/* XXX */
+#endif
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

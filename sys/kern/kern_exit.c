@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.84 2000/08/12 22:41:55 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.85 2000/08/22 17:28:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -320,6 +320,9 @@ exit1(struct proc *p, int rv)
 	limfree(p->p_limit);
 	p->p_limit = NULL;
 
+	/* This process no longer needs to hold the kernel lock. */
+	KERNEL_PROC_UNLOCK(p);
+
 	/*
 	 * Finally, call machine-dependent code to switch to a new
 	 * context (possibly the idle context).  Once we are no longer
@@ -335,7 +338,8 @@ exit1(struct proc *p, int rv)
 
 /*
  * We are called from cpu_exit() once it is safe to schedule the
- * dead process's resources to be freed.
+ * dead process's resources to be freed (i.e., once we've switched to
+ * the idle PCB for the current CPU).
  *
  * NOTE: One must be careful with locking in this routine.  It's
  * called from a critical section in machine-dependent code, so

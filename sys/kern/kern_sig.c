@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.105 2000/08/21 02:09:33 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.106 2000/08/22 17:28:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1188,6 +1188,9 @@ postsig(signum)
 	if (signum == 0)
 		panic("postsig");
 #endif
+
+	KERNEL_PROC_LOCK(p);
+
 	sigdelset(&p->p_siglist, signum);
 	action = ps->ps_sigact[signum].sa_handler;
 #ifdef KTRACE
@@ -1244,6 +1247,8 @@ postsig(signum)
 		}
 		(void) spl0();		/* XXXSMP */
 	}
+
+	KERNEL_PROC_UNLOCK(p);
 }
 
 /*

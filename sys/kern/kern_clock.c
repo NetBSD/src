@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.68 2000/08/22 16:44:51 eeh Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.69 2000/08/22 17:28:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -874,7 +874,9 @@ hardclock(struct clockframe *frame)
 			 * was not already running.
 			 */
 			spllowersoftclock();
+			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			softclock();
+			KERNEL_UNLOCK();
 		} else
 			setsoftclock();
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.70 2000/08/01 04:57:30 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.71 2000/08/22 17:28:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -406,3 +406,18 @@ again:
 	}
 	return (0);
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX This is a slight hack to get newly-formed processes to
+ * XXX acquire the kernel lock as soon as they run.
+ */
+void
+proc_trampoline_mp(void)
+{
+	struct proc *p = curproc;
+
+	SCHED_ASSERT_UNLOCKED();
+	KERNEL_PROC_LOCK(p);
+}
+#endif
