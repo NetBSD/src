@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.47 2000/02/07 14:36:42 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.48 2000/03/28 23:57:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -803,7 +803,6 @@ u_long	kbase;
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern char end[];
-	extern char machine[];
 	int	i;
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));

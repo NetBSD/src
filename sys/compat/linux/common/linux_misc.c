@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.67 2000/03/18 22:23:13 erh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.68 2000/03/28 23:57:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -353,8 +353,6 @@ linux_sys_uname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_utsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[],
-	    domainname[];
 	struct linux_utsname luts;
 	int len;
 	char *cp;
@@ -1157,4 +1155,3 @@ linux_sys_reboot(struct proc *p, void *v, register_t *retval)
 
 	return(sys_reboot(p, &sra, retval));
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2000/03/23 06:47:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2000/03/28 23:57:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -397,7 +397,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char	cpu_model[96];		/* max 85 chars */
-extern	char version[];
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	", emulator FPU", 	/* 0 */

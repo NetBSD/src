@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.105 2000/03/23 06:31:52 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.106 2000/03/28 23:57:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -83,8 +83,13 @@ struct vnode;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
-extern char version[];		/* system version */
 extern char copyright[];	/* system copyright */
+extern char cpu_model[];	/* machine/cpu model name */
+extern char machine[];		/* machine type */
+extern char machine_arch[];	/* machine architecture */
+extern char ostype[];		/* system type */
+extern char osrelease[];	/* short system version */
+extern char version[];		/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
