@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: aout-target.h,v 1.1 1994/01/28 12:37:31 pk Exp $
+	$Id: aout-target.h,v 1.2 1994/04/29 20:46:50 pk Exp $
 */
 
 #include "aout/aout64.h"
@@ -47,6 +47,20 @@ DEFUN(MY(callback),(abfd),
   /* The file offsets of the sections */
   obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
   obj_datasec (abfd)->filepos = N_DATOFF (*execp);
+
+  /*
+   * XXX - A few hacks to be able to read .o files and kernels.
+   */
+  if ((execp->a_entry & ~(N_SEGSIZE(x)-1)) > obj_textsec (abfd)->vma) {
+    obj_textsec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
+    obj_datasec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
+    obj_bsssec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
+  }
+  if (execp->a_entry == 0 && N_MAGIC(*execp) == OMAGIC) {
+    obj_textsec (abfd)->vma -= N_TXTADDR(*execp);
+    obj_datasec (abfd)->vma -= N_TXTADDR(*execp);
+    obj_bsssec (abfd)->vma -= N_TXTADDR(*execp);
+  }
 
   /* The file offsets of the relocation info */
   obj_textsec (abfd)->rel_filepos = N_TRELOFF(*execp);
