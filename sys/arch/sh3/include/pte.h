@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 2002/02/11 18:06:06 uch Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 2002/02/17 20:55:52 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,6 +106,8 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 /*
  * Software bits
  */
+/* XXX referece bit is not emulated. */
+#define PG_U			0		/* referenced bit */
 #define	PG_W			0x00000080	/* page is wired */
 #define	PG_PVLIST		0x00000001	/* mapping has entry on pvlist */
 /* SH4 PCMCIA MMU support bits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2002/02/12 15:26:47 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2002/02/17 20:55:52 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -173,17 +173,12 @@ do {									\
  */
 #include <machine/cputypes.h>
 
-
 #ifdef _KERNEL
-extern int cpu;
-extern int cpu_class;
-extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
-extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
-
 /* autoconf.c */
 void	configure(void);
 
 /* sh3_machdep.c */
+void sh_cpu_init(int, int);
 void sh3_startup(void);
 
 /* machdep.c */
@@ -197,7 +192,6 @@ void	lgdt(struct region_descriptor *);
 void	fillw(short, void *, size_t);
 void	bcopyb (caddr_t, caddr_t, size_t);
 void	bcopyw(caddr_t, caddr_t, size_t);
-void	setPageDirReg(int);
 
 struct pcb;
 void	savectx(struct pcb *);
