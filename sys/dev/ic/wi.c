@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.182 2004/07/23 08:34:11 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.183 2004/08/05 22:57:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.182 2004/07/23 08:34:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.183 2004/08/05 22:57:32 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1562,8 +1562,8 @@ wi_rx_intr(struct wi_softc *sc)
 		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		tap->wr_rate = frmhdr.wi_rx_rate / 5;
-		tap->wr_antsignal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
-		tap->wr_antnoise = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
+		tap->wr_antsignal = frmhdr.wi_rx_signal;
+		tap->wr_antnoise = frmhdr.wi_rx_silence;
 
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
