@@ -1,26 +1,24 @@
-$NetBSD: UPDATING,v 1.43 2001/10/29 01:53:56 mason Exp $
+$NetBSD: UPDATING,v 1.44 2001/10/29 19:57:38 tv Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
 
 For a more detailed description see Makefile.
 
-Note that users of the new toolchain in many instances will not
-experience the problems listed below because their host tools are
-automatically generated for them.
-
 Recent changes:
 ^^^^^^^^^^^^^^^
 
-20011028:
-        /usr/src/build.sh exists as of 2001.10.19. From the cvs log:
+20011029:
+	The new document BUILDING.mdoc (view with nroff | more, or
+	see pre-generated .txt and .html versions) describes the build
+	procedure in great detail.  BUILDING, and the USE_NEW_TOOLCHAIN
+	build process, are intended in the long run to replace this
+	manual update log.
 
-        "Script to automate bootstrapping a build on any host platform.
-         Creates a bmake (rebuilds, if necessary) and invokes that to
-         start the build."
-
-        This should, incidentally, allow 1.5.x hosts to build -current
-        using the new toolchain, on USE_NEW_TOOLCHAIN-enabled platforms.
+	Users building a USE_NEW_TOOLCHAIN system should read the
+	BUILDING document for caveats.  Generally, BUILDING supersedes
+	UPDATING for these systems, as tool updating is taken care of
+	by the new build system.
 
 20011028:
 	src/etc/Makefile now needs install to be able to handle
@@ -39,23 +37,8 @@ Recent changes:
 	Solution: update and reinstall usr.sbin/mtree
 
 20011004:
-
 	Crunchgen has been updated to work via reach-over makefiles. Updating
 	is suggested before running a snapshot build
-
-20010922:
-	The new toolchain is enabled on i386.  This new build method
-	is intended to make all the upgrade issues elsewhere in UPDATING
-	obsolete (stay tuned...).
-
-	i386 platform builds must now set TOOLDIR in mk.conf or the
-	environment in order to build the system.  This is a pathname
-	where host build tools will be installed, and must NOT be
-	the same as src/tools.
-
-	(Optionally, USETOOLS=no can be set in the environment if you
-	wish to avoid using the separate host toolchain for building a
-	subtree.  Otherwise, this will default to "yes" automatically.)
 
 20010915:
 	The new "ubcperf" code committed by Chuck Silvers removed
@@ -92,7 +75,6 @@ Recent changes:
 	make MKINFO=no dependall install
 
 20010718:
-
 	Enabled correct .init/.fini processing in crt0.  The way this
 	was done was to change a -I directive to cc(1), which means
 	make(1) will have a stale dependency (it will be checking the
@@ -105,13 +87,11 @@ Recent changes:
 	before starting your build.
 
 20010628:
-
 	A construct was added to uvm_page.h that uncovered a bug
 	in lint(1).  If you get a warning/error about a non-portable
 	bitfield, update your lint(1) before proceeding.
 
 20010226:
-
 	Added named user/group to system. Need to hand add this in or builds
 	will break as mtree aborts early.
 
@@ -169,10 +149,6 @@ Recent changes:
 	By default, RSA is built into libcrypto.  IDEA and RC5 will not be
 	built into libcrypto.  By using MKCRYPTO_{RC5,IDEA}, you can build
 	additional library libcrypto_{idea,rc5}.
-
-20000623:
-	MKCRYPTO and friends added to share/mk/bsd.own.mk.
-	'cd share/mk ; make install' needed before make build.
 
 
 Hints for a more successful build:
