@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.18 2003/02/24 20:03:02 christos Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.19 2003/04/26 16:38:00 yamt Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,13 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.18 2003/02/24 20:03:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.19 2003/04/26 16:38:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/device.h>
-#include <sys/callout.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/acpi/acpica.h>
