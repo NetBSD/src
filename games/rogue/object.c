@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.7 1998/09/11 14:09:27 hubertf Exp $	*/
+/*	$NetBSD: object.c,v 1.8 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.7 1998/09/11 14:09:27 hubertf Exp $");
+__RCSID("$NetBSD: object.c,v 1.8 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,11 +295,11 @@ free_stuff(objlist)
 	}
 }
 
-char *
+const char *
 name_of(obj)
-	object *obj;
+	const object *obj;
 {
-	char *retstring;
+	const char *retstring;
 
 	switch(obj->what_is) {
 	case SCROL:
@@ -624,7 +624,7 @@ put_stairs()
 
 int
 get_armor_class(obj)
-	object *obj;
+	const object *obj;
 {
 	if (obj) {
 		return(obj->class + obj->d_enchant);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.6 1998/07/27 01:12:35 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.6 1998/07/27 01:12:35 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ boolean save_is_interactive = 1;
 boolean ask_quit = 1;
 boolean no_skull = 0;
 boolean passgo = 0;
-char *error_file = "rogue.esave";
-char *byebye_string = "Okay, bye bye!";
+const char *error_file = "rogue.esave";
+const char *byebye_string = "Okay, bye bye!";
 
 int
 init(argc, argv)
@@ -177,7 +177,7 @@ player_init()
 
 void
 clean_up(estr)
-	char *estr;
+	const char *estr;
 {
 	if (save_is_interactive) {
 		if (init_curses) {
@@ -318,7 +318,7 @@ env_get_value(s, e, add_blank)
 	boolean add_blank;
 {
 	short i = 0;
-	char *t;
+	const char *t;
 
 	t = e;
 
@@ -341,7 +341,8 @@ env_get_value(s, e, add_blank)
 
 void
 init_str(str, dflt)
-	char **str, *dflt;
+	char **str;
+	const char *dflt;
 {
 	if (!(*str)) {
 		*str = md_malloc(MAX_OPT_LEN + 2);
