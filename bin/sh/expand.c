@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.38 1998/03/23 18:21:02 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.39 1998/03/29 04:41:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.38 1998/03/23 18:21:02 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.39 1998/03/29 04:41:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ done:
 		goto lose;
 	*p = c;
 	while ((c = *home++) != '\0') {
-		if (quotes && SQSYNTAX[c] == CCTL)
+		if (quotes && SQSYNTAX[(int)c] == CCTL)
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 	}
@@ -397,7 +397,7 @@ expbackq(cmd, quoted, flag)
 		}
 		lastc = *p++;
 		if (lastc != '\0') {
-			if (quotes && syntax[lastc] == CCTL)
+			if (quotes && syntax[(int)lastc] == CCTL)
 				STPUTC(CTLESC, dest);
 			STPUTC(lastc, dest);
 		}
@@ -590,7 +590,7 @@ again: /* jump here after setting a variable with ${var=text} */
 			}
 			else {
 				while (*val) {
-					if (quotes && syntax[*val] == CCTL)
+					if (quotes && syntax[(int)*val] == CCTL)
 						STPUTC(CTLESC, expdest);
 					STPUTC(*val++, expdest);
 				}
@@ -756,7 +756,7 @@ varvalue(name, quoted, allow_split)
 	if (allow_split) { \
 		syntax = quoted? DQSYNTAX : BASESYNTAX; \
 		while (*p) { \
-			if (syntax[*p] == CCTL) \
+			if (syntax[(int)*p] == CCTL) \
 				STPUTC(CTLESC, expdest); \
 			STPUTC(*p++, expdest); \
 		} \
