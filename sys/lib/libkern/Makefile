@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 1998/01/21 21:23:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.39 1998/01/23 19:01:17 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -37,17 +37,22 @@ mcount.po: mcount.o
 .if empty(SRCS:Mstrchr.S)
 OBJS+=	strchr.o
 strchr.o: index.c
-	${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strchr.po: index.c
-	${COMPILE.c} -DSTRCHR -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strchr.so: index.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DSTRCHR ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= strchr.ln
 strchr.ln: index.c
@@ -59,17 +64,22 @@ strchr.ln: index.c
 .if empty(SRCS:Mstrrchr.S)
 OBJS+=	strrchr.o
 strrchr.o: rindex.c
-	${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strrchr.po: rindex.c
-	${COMPILE.c} -DSTRRCHR -p ${.ALLSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 strrchr.so: rindex.c
-	${COMPILE.c} ${PICFLAG} -DPIC -DSTRRCHR ${.ALLSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} -DSTRRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DSTRRCHR ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 LOBJS+= strrchr.ln
 strrchr.ln: rindex.c
