@@ -1,3 +1,4 @@
+.\"	$NetBSD: sshd.8,v 1.9 2001/04/10 08:08:04 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -34,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.107 2001/03/19 12:10:17 djm Exp $
+.\" $OpenBSD: sshd.8,v 1.112 2001/04/09 18:00:15 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -485,14 +486,42 @@ The key is never stored anywhere.
 If the value is 0, the key is never regenerated.
 The default is 3600 (seconds).
 .It Cm ListenAddress
-Specifies what local address
-.Nm
+Specifies the local addresses
+.Xr sshd 8
 should listen on.
-The default is to listen to all local addresses.
-Multiple options of this type are permitted.
-Additionally, the
-.Cm Ports
-options must precede this option.
+The following forms may be used:
+.Pp
+.Bl -item -offset indent -compact
+.It
+.Cm ListenAddress
+.Sm off
+.Ar host No | Ar IPv4_addr No | Ar IPv6_addr
+.Sm on
+.It
+.Cm ListenAddress
+.Sm off
+.Ar host No | Ar IPv4_addr No : Ar port
+.Sm on
+.It
+.Cm ListenAddress
+.Sm off
+.Oo
+.Ar host No | Ar IPv6_addr Oc : Ar port
+.Sm on
+.El
+.Pp
+If
+.Ar port
+is not specified,
+.Xr sshd 8
+will listen on the address and all prior
+.Cm Port
+options specified. The default is to listen on all local
+addresses.  Multiple
+.Cm ListenAddress
+options are permitted. Additionally, any
+.Cm Port
+options must precede this option for non port qualified addresses.
 .It Cm LoginGraceTime
 The server disconnects after this time if the user has not
 successfully logged in.
@@ -593,6 +622,12 @@ Specifies the port number that
 listens on.
 The default is 22.
 Multiple options of this type are permitted.
+.It Cm PrintLastLog
+Specifies whether
+.Nm
+should print the date and time when the user last logged in.
+The default is
+.Dq yes .
 .It Cm PrintMotd
 Specifies whether
 .Nm
@@ -855,10 +890,10 @@ Prevents tty allocation (a request to allocate a pty will fail).
 .It Cm permitopen="host:port"
 Limit local 
 .Li ``ssh -L''
-port-forwading such that it may only connect to the specified host and
+port forwarding such that it may only connect to the specified host and
 port. Multiple 
 .Cm permitopen
-options may be applied seperated by commas. No pattern matching is 
+options may be applied separated by commas. No pattern matching is 
 performed on the specified hostnames, they must be literal domains or 
 addresses.
 .El
@@ -941,7 +976,7 @@ Note that
 .Nm
 does not start if this file is group/world-accessible.
 .It Pa /etc/ssh_host_key.pub, /etc/ssh_host_dsa_key.pub, /etc/ssh_host_rsa_key.pub
-There three files contain the public parts of the
+These three files contain the public parts of the
 (SSH1, SSH2 DSA, and SSH2 RSA) host keys.
 These files should be world-readable but writable only by
 root.

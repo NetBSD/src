@@ -1,3 +1,4 @@
+/*	$NetBSD: servconf.c,v 1.8 2001/04/10 08:08:00 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -10,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.71 2001/03/05 15:44:51 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.74 2001/04/06 22:25:25 stevesk Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -35,7 +36,8 @@ RCSID("$OpenBSD: servconf.c,v 1.71 2001/03/05 15:44:51 stevesk Exp $");
 #include "mac.h"
 
 /* add listen address */
-void add_listen_addr(ServerOptions *options, char *addr);
+void add_listen_addr(ServerOptions *options, char *addr, char *port);
+void add_one_listen_addr(ServerOptions *options, char *addr, u_short port);
 
 /* AF_UNSPEC or AF_INET or AF_INET6 */
 extern int IPv4or6;
@@ -59,6 +61,7 @@ initialize_server_options(ServerOptions *options)
 	options->ignore_root_rhosts = -1;
 	options->ignore_user_known_hosts = -1;
 	options->print_motd = -1;
+	options->print_lastlog = -1;
 	options->check_mail = -1;
 	options->x11_forwarding = -1;
 	options->x11_display_offset = -1;
@@ -122,7 +125,7 @@ fill_default_server_options(ServerOptions *options)
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
 	if (options->listen_addrs == NULL)
-		add_listen_addr(options, NULL);
+		add_listen_addr(options, NULL, NULL);
 	if (options->pid_file == NULL)
 		options->pid_file = _PATH_SSH_DAEMON_PID_FILE;
 	if (options->server_key_bits == -1)
@@ -143,6 +146,8 @@ fill_default_server_options(ServerOptions *options)
 		options->check_mail = 0;
 	if (options->print_motd == -1)
 		options->print_motd = 1;
+	if (options->print_lastlog == -1)
+		options->print_lastlog = 1;
 	if (options->x11_forwarding == -1)
 		options->x11_forwarding = 0;
 	if (options->x11_display_offset == -1)
@@ -239,7 +244,8 @@ typedef enum {
 #endif /* AFS */
 	sChallengeResponseAuthentication,
 	sPasswordAuthentication, sKbdInteractiveAuthentication, sListenAddress,
-	sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
+	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
+	sX11Forwarding, sX11DisplayOffset,
 	sStrictModes, sEmptyPasswd, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowTcpForwarding,
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
@@ -290,6 +296,7 @@ static struct {
 	{ "checkmail", sCheckMail },
 	{ "listenaddress", sListenAddress },
 	{ "printmotd", sPrintMotd },
+	{ "printlastlog", sPrintLastLog },
 	{ "ignorerhosts", sIgnoreRhosts },
 	{ "ignorerootrhosts", sIgnoreRootRhosts },
 	{ "ignoreuserknownhosts", sIgnoreUserKnownHosts },
@@ -317,8 +324,7 @@ static struct {
 };
 
 /*
- * Returns the number of the token pointed to by cp of length len. Never
- * returns if the token is not known.
+ * Returns the number of the token pointed to by cp or sBadOption.
  */
 
 static ServerOpCodes
@@ -340,30 +346,39 @@ parse_token(const char *cp, const char *filename,
  * add listen address
  */
 void
-add_listen_addr(ServerOptions *options, char *addr)
+add_listen_addr(ServerOptions *options, char *addr, char *port)
 {
-	struct addrinfo hints, *ai, *aitop;
-	char strport[NI_MAXSERV];
-	int gaierr;
 	int i;
 
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
-	for (i = 0; i < options->num_ports; i++) {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = IPv4or6;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = (addr == NULL) ? AI_PASSIVE : 0;
-		snprintf(strport, sizeof strport, "%d", options->ports[i]);
-		if ((gaierr = getaddrinfo(addr, strport, &hints, &aitop)) != 0)
-			fatal("bad addr or host: %s (%s)",
-			    addr ? addr : "<NULL>",
-			    gai_strerror(gaierr));
-		for (ai = aitop; ai->ai_next; ai = ai->ai_next)
-			;
-		ai->ai_next = options->listen_addrs;
-		options->listen_addrs = aitop;
-	}
+	if (port == NULL)
+		for (i = 0; i < options->num_ports; i++)
+			add_one_listen_addr(options, addr, options->ports[i]);
+	else
+		add_one_listen_addr(options, addr, atoi(port));
+}
+
+void
+add_one_listen_addr(ServerOptions *options, char *addr, u_short port)
+{
+	struct addrinfo hints, *ai, *aitop;
+	char strport[NI_MAXSERV];
+	int gaierr;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = IPv4or6;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = (addr == NULL) ? AI_PASSIVE : 0;
+	snprintf(strport, sizeof strport, "%d", port);
+	if ((gaierr = getaddrinfo(addr, strport, &hints, &aitop)) != 0)
+		fatal("bad addr or host: %s (%s)",
+		    addr ? addr : "<NULL>",
+		    gai_strerror(gaierr));
+	for (ai = aitop; ai->ai_next; ai = ai->ai_next)
+		;
+	ai->ai_next = options->listen_addrs;
+	options->listen_addrs = aitop;
 }
 
 /* Reads the server configuration file. */
@@ -373,7 +388,7 @@ read_server_config(ServerOptions *options, const char *filename)
 {
 	FILE *f;
 	char line[1024];
-	char *cp, **charptr, *arg;
+	char *cp, **charptr, *arg, *p;
 	int linenum, *intptr, value;
 	int bad_options = 0;
 	ServerOpCodes opcode;
@@ -442,10 +457,34 @@ parse_int:
 
 		case sListenAddress:
 			arg = strdelim(&cp);
-			if (!arg || *arg == '\0')
+			if (!arg || *arg == '\0' || strncmp(arg, "[]", 2) == 0)
 				fatal("%s line %d: missing inet addr.",
 				    filename, linenum);
-			add_listen_addr(options, arg);
+			if (*arg == '[') {
+				if ((p = strchr(arg, ']')) == NULL)
+					fatal("%s line %d: bad ipv6 inet addr usage.",
+					    filename, linenum);
+				arg++;
+				memmove(p, p+1, strlen(p+1)+1);
+			} else if (((p = strchr(arg, ':')) == NULL) ||
+				    (strchr(p+1, ':') != NULL)) {
+				add_listen_addr(options, arg, NULL);
+				break;
+			}
+			if (*p == ':') {
+				p++;
+				if (*p == '\0')
+					fatal("%s line %d: bad inet addr:port usage.",
+					    filename, linenum);
+				else {
+					*(p-1) = '\0';
+					add_listen_addr(options, arg, p);
+				}
+			} else if (*p == '\0')
+				add_listen_addr(options, arg, NULL);
+			else
+				fatal("%s line %d: bad inet addr usage.",
+				    filename, linenum);
 			break;
 
 		case sHostKeyFile:
@@ -599,6 +638,10 @@ parse_flag:
 
 		case sPrintMotd:
 			intptr = &options->print_motd;
+			goto parse_flag;
+
+		case sPrintLastLog:
+			intptr = &options->print_lastlog;
 			goto parse_flag;
 
 		case sX11Forwarding:

@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-chall.c,v 1.4 2001/04/10 08:07:54 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,10 +24,51 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.5 2001/03/02 18:54:30 deraadt Exp $");
+RCSID("$OpenBSD: auth-chall.c,v 1.7 2001/04/05 10:42:47 markus Exp $");
 
 #include "auth.h"
+#include "log.h"
 
+#ifdef BSD_AUTH
+char *
+get_challenge(Authctxt *authctxt, char *devs)
+{
+	char *challenge;
+
+	if (authctxt->as != NULL) {
+		debug2("try reuse session");
+		challenge = auth_getitem(authctxt->as, AUTHV_CHALLENGE);
+		if (challenge != NULL) {
+			debug2("reuse bsd auth session");
+			return challenge;
+		}
+		auth_close(authctxt->as);
+		authctxt->as = NULL;
+	}
+	debug2("new bsd auth session");
+	if (devs == NULL || strlen(devs) == 0)
+		devs = authctxt->style;
+	debug3("bsd auth: devs %s", devs ? devs : "<default>");
+	authctxt->as = auth_userchallenge(authctxt->user, devs, "auth-ssh",
+	    &challenge);
+	if (authctxt->as == NULL)
+		return NULL;
+	debug2("get_challenge: <%s>", challenge ? challenge : "EMPTY");
+	return challenge;
+}
+int
+verify_response(Authctxt *authctxt, char *response)
+{
+	int authok;
+
+	if (authctxt->as == 0)
+		error("verify_response: no bsd auth session");
+	authok = auth_userresponse(authctxt->as, response, 0);
+	authctxt->as = NULL;
+	debug("verify_response: <%s> = <%d>", response, authok);
+	return authok != 0;
+}
+#else
 #ifdef SKEY
 #include <skey.h>
 
@@ -59,4 +101,5 @@ verify_response(Authctxt *authctxt, char *response)
 {
 	return 0;
 }
+#endif
 #endif

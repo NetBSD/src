@@ -1,3 +1,4 @@
+/*	$NetBSD: sftp-int.c,v 1.7 2001/04/10 08:08:01 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -26,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.31 2001/03/16 13:44:24 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.33 2001/04/05 10:42:53 markus Exp $");
 
 #include <glob.h>
 
@@ -453,9 +454,12 @@ process_put(int in, int out, char *src, char *dst, char *pwd, int pflag)
 				xfree(tmp);
 			} else
 				abs_dst = xstrdup(tmp_dst);
-		} else if (infer_path(g.gl_pathv[0], &abs_dst)) {
-			err = -1;
-			goto out;
+		} else {
+			if (infer_path(g.gl_pathv[0], &abs_dst)) {
+				err = -1;
+				goto out;
+			}
+			abs_dst = make_absolute(abs_dst, pwd);
 		}
 		printf("Uploading %s to %s\n", g.gl_pathv[0], abs_dst);
 		err = do_upload(in, out, g.gl_pathv[0], abs_dst, pflag);
@@ -664,8 +668,8 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_PUT:
 		err = process_put(in, out, path1, path2, *pwd, pflag);
-  		break;
-  	case I_RENAME:
+		break;
+	case I_RENAME:
 		path1 = make_absolute(path1, *pwd);
 		path2 = make_absolute(path2, *pwd);
 		err = do_rename(in, out, path1, path2);

@@ -1,3 +1,4 @@
+/*	$NetBSD: uuencode.c,v 1.5 2001/04/10 08:08:05 itojun Exp $	*/
 /*	$OpenBSD: uuencode.c,v 1.12 2001/03/01 02:27:18 deraadt Exp $	*/
 
 /*
