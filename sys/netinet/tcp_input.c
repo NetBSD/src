@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.13 1995/06/01 21:36:45 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.14 1995/06/04 05:07:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1525,8 +1525,7 @@ tcp_mss(tp, offer)
 		if (inp->inp_faddr.s_addr != INADDR_ANY) {
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-			((struct sockaddr_in *) &ro->ro_dst)->sin_addr =
-				inp->inp_faddr;
+			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 			rtalloc(ro);
 		}
 		if ((rt = ro->ro_rt) == (struct rtentry *)0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.16 1995/06/01 21:36:05 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.17 1995/06/04 05:06:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -260,5 +260,9 @@ int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));
 int	   in_localaddr __P((struct in_addr));
 void	   in_socktrim __P((struct sockaddr_in *));
+
+#define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define	sintosa(sin)	((struct sockaddr *)(sin))
+#define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 #endif
 #endif /* !_NETINET_IN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.14 1995/06/01 21:36:11 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.15 1995/06/04 05:06:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -123,7 +123,7 @@ in_pcbbind(inp, nam)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
-			if (ifa_ifwithaddr((struct sockaddr *)sin) == 0)
+			if (ifa_ifwithaddr(sintosa(sin)) == 0)
 				return (EADDRNOTAVAIL);
 		}
 		if (lport) {
@@ -181,9 +181,6 @@ in_pcbconnect(inp, nam)
 		 * and the primary interface supports broadcast,
 		 * choose the broadcast address for that interface.
 		 */
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
-#define sintosa(sin)	((struct sockaddr *)(sin))
-#define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 		    sin->sin_addr = IA_SIN(in_ifaddr)->sin_addr;
 		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
@@ -212,8 +209,7 @@ in_pcbconnect(inp, nam)
 			/* No route yet, so try to acquire one */
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
-			((struct sockaddr_in *) &ro->ro_dst)->sin_addr =
-				sin->sin_addr;
+			satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
 			rtalloc(ro);
 		}
 		/*
@@ -257,7 +253,7 @@ in_pcbconnect(inp, nam)
 					return (EADDRNOTAVAIL);
 			}
 		}
-		ifaddr = (struct sockaddr_in *)&ia->ia_addr;
+		ifaddr = satosin(&ia->ia_addr);
 	}
 	if (in_pcblookup(inp->inp_head,
 	    sin->sin_addr,
@@ -364,7 +360,7 @@ in_pcbnotify(head, dst, fport_arg, laddr, lport_arg, cmd, notify)
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET)
 		return;
-	faddr = ((struct sockaddr_in *)dst)->sin_addr;
+	faddr = satosin(dst)->sin_addr;
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
@@ -415,8 +411,7 @@ in_losing(inp)
 	if ((rt = inp->inp_route.ro_rt)) {
 		inp->inp_route.ro_rt = 0;
 		bzero((caddr_t)&info, sizeof(info));
-		info.rti_info[RTAX_DST] =
-			(struct sockaddr *)&inp->inp_route.ro_dst;
+		info.rti_info[RTAX_DST] = sintosa(&inp->inp_route.ro_dst);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);

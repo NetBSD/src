@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.13 1995/04/13 06:36:44 cgd Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.14 1995/06/04 05:07:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -293,7 +293,7 @@ tcp_close(tp)
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
 	    (rt = inp->inp_route.ro_rt) &&
-	    ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
+	    satosin(rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
 		register u_long i;
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
