@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.11 2001/04/22 17:33:53 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.12 2001/04/28 06:55:46 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -1715,6 +1715,7 @@ icmp6_reflect(m, off)
 	int plen;
 	int type, code;
 	struct ifnet *outif = NULL;
+	struct sockaddr_in6 sa6_src;
 #ifdef COMPAT_RFC1885
 	int mtu = IPV6_MMTU;
 	struct sockaddr_in6 *sin6 = &icmp6_reflect_rt.ro_dst;
@@ -1732,6 +1733,10 @@ icmp6_reflect(m, off)
 	 * If there are extra headers between IPv6 and ICMPv6, strip
 	 * off that header first.
 	 */
+#ifdef DIAGNOSTIC
+	if (sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) > MHLEN)
+		panic("assumption failed in icmp6_reflect");
+#endif
 	if (off > sizeof(struct ip6_hdr)) {
 		size_t l;
 		struct ip6_hdr nip6;
@@ -1768,11 +1773,25 @@ icmp6_reflect(m, off)
 	ip6->ip6_dst = ip6->ip6_src;
 
 	/* XXX hack for link-local addresses */
-	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst))
+	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst) && !ip6->ip6_dst.s6_addr16[1]) {
+		if (!m->m_pkthdr.rcvif)
+			goto bad;
 		ip6->ip6_dst.s6_addr16[1] =
 			htons(m->m_pkthdr.rcvif->if_index);
-	if (IN6_IS_ADDR_LINKLOCAL(&t))
+	}
+	if (IN6_IS_ADDR_LINKLOCAL(&t) && !t.s6_addr16[1]) {
+		if (!m->m_pkthdr.rcvif)
+			goto bad;
 		t.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	}
+	bzero(&sa6_src, sizeof(sa6_src));
+	sa6_src.sin6_family = AF_INET6;
+	sa6_src.sin6_len = sizeof(sa6_src);
+	sa6_src.sin6_addr = ip6->ip6_dst;
+	if (IN6_IS_SCOPE_LINKLOCAL(&sa6_src.sin6_addr)) {
+		sa6_src.sin6_scope_id = ntohs(sa6_src.sin6_addr.s6_addr16[1]);
+		sa6_src.sin6_addr.s6_addr16[1] = 0;
+	}
 
 #ifdef COMPAT_RFC1885
 	/*
@@ -1784,6 +1803,7 @@ icmp6_reflect(m, off)
 	if (icmp6_reflect_rt.ro_rt == 0 ||
 	    ! (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_dst))) {
 		if (icmp6_reflect_rt.ro_rt) {
+			RTFREE(icmp6_reflect_rt.ro_rt);
 			icmp6_reflect_rt.ro_rt = 0;
 		}
 		bzero(sin6, sizeof(*sin6));
@@ -1827,19 +1847,27 @@ icmp6_reflect(m, off)
 		src = &t;
 	}
 
-	if (src == 0 && m->m_pkthdr.rcvif)
+	if (src == 0) {
+		int e;
+		struct route_in6 ro;
+
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
-		 * that we do not own. Select a source address which has the
-		 * same scope.
-		 * XXX: for (non link-local) multicast addresses, this might
-		 * not be a good choice.
+		 * that we do not own. Select a source address based on the
+		 * source address of the erroneous packet.
 		 */
-		if ((ia = in6_ifawithscope(m->m_pkthdr.rcvif, &t)) != 0)
-			src = &IA6_SIN6(ia)->sin6_addr;
-
-	if (src == 0)
-		goto bad;
+		bzero(&ro, sizeof(ro));
+		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e);
+		if (ro.ro_rt)
+			RTFREE(ro.ro_rt); /* XXX: we could use this */
+		if (src == NULL) {
+			log(LOG_DEBUG,
+			    "icmp6_reflect: source can't be determined: "
+			    "dst=%s, error=%d\n",
+			    ip6_sprintf(&sa6_src.sin6_addr), e);
+			goto bad;
+		}
+	}
 
 	ip6->ip6_src = *src;
 
