@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.12 2004/08/28 17:37:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.12 2004/08/28 17:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -295,13 +295,11 @@ int nrdcompatinfo = sizeof(rdcompatinfo) / sizeof(rdcompatinfo[0]);
 extern struct cfdriver rd_cd;
 
 void
-rdmakedisklabel(unit, lp)
-	int unit;
-	struct disklabel *lp;
+rdmakedisklabel(int unit, struct disklabel *lp)
 {
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
 	struct rdcompatinfo *ci = &rdcompatinfo[rs->sc_type];
-	struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];
+	const struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];
 	struct partition *pi;
 	int dcount;
 

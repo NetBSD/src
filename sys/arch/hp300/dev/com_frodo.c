@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.2 2004/04/10 07:51:15 tsutsui Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.3 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.2 2004/04/10 07:51:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.3 2004/08/28 17:37:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ struct com_frodo_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
 };
 
-int com_frodo_match(struct device *, struct cfdata *, void *);
-void com_frodo_attach(struct device *, struct device *, void *);
+static int	com_frodo_match(struct device *, struct cfdata *, void *);
+static void	com_frodo_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_frodo, sizeof(struct com_frodo_softc),
     com_frodo_match, com_frodo_attach, NULL, NULL);
@@ -104,7 +104,7 @@ static struct bus_space_tag comcntag;
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #define COM_FRODO_FREQ	8006400
 
-int
+static int
 com_frodo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
@@ -122,7 +122,7 @@ com_frodo_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 com_frodo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_frodo_softc *fsc = (void *)self;

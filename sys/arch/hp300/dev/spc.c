@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.3 2004/08/28 17:37:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.3 2004/08/28 17:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $");
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
 
-static int  spc_dio_match __P((struct device *, struct cfdata *, void *));
-static void spc_dio_attach __P((struct device *, struct device *, void *));
-static void spc_dio_dmastart __P((struct spc_softc *, void *, size_t, int));
-static void spc_dio_dmadone __P((struct spc_softc *));
-static void spc_dio_dmago __P((void *));
-static void spc_dio_dmastop __P((void *));
+static int	spc_dio_match(struct device *, struct cfdata *, void *);
+static void	spc_dio_attach(struct device *, struct device *, void *);
+static void	spc_dio_dmastart(struct spc_softc *, void *, size_t, int);
+static void	spc_dio_dmadone(struct spc_softc *);
+static void	spc_dio_dmago(void *);
+static void	spc_dio_dmastop(void *);
 
 struct spc_dio_softc {
 	struct spc_softc sc_spc;	/* MI spc softc */
@@ -82,10 +82,7 @@ CFATTACH_DECL(spc, sizeof(struct spc_dio_softc),
     spc_dio_match, spc_dio_attach, NULL, NULL);
 
 static int
-spc_dio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+spc_dio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -101,9 +98,7 @@ spc_dio_match(parent, cf, aux)
 }
 
 static void
-spc_dio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spc_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)self;
 	struct spc_softc *sc = &dsc->sc_spc;
@@ -160,12 +155,8 @@ spc_dio_attach(parent, self, aux)
 	bus_space_write_1(iot, iohsc, HPSCSI_CSR, CSR_IE);
 }
 
-static
-void spc_dio_dmastart(sc, addr, size, datain)
-	struct spc_softc *sc;
-	void *addr;
-	size_t size;
-	int datain;
+static void
+spc_dio_dmastart(struct spc_softc *sc, void *addr, size_t size, int datain)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)sc;
 
@@ -182,9 +173,8 @@ void spc_dio_dmastart(sc, addr, size, datain)
 	/* else dma start function will be called later from dmafree(). */
 }
 
-static
-void spc_dio_dmago(arg)
-	void *arg;
+static void
+spc_dio_dmago(void *arg)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)arg;
 	struct spc_softc *sc = &dsc->sc_spc;
@@ -241,9 +231,8 @@ void spc_dio_dmago(arg)
 	sc->sc_flags |= SPC_DOINGDMA;
 }
 
-static
-void spc_dio_dmadone(sc)
-	struct spc_softc *sc;
+static void
+spc_dio_dmadone(struct spc_softc *sc)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)sc;
 	bus_space_tag_t iot;
@@ -285,9 +274,8 @@ void spc_dio_dmadone(sc)
 	sc->sc_flags &= ~SPC_DOINGDMA;
 }
 
-static
-void spc_dio_dmastop(arg)
-	void *arg;
+static void
+spc_dio_dmastop(void *arg)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)arg;
 	struct spc_softc *sc = &dsc->sc_spc;
