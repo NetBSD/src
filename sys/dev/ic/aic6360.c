@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.55 1998/01/12 09:23:11 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.56 1998/01/13 03:31:42 enami Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -131,15 +131,14 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <dev/isa/isavar.h>
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
