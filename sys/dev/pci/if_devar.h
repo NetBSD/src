@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.29 1998/09/15 02:39:03 matt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.30 1998/09/15 17:26:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -630,6 +630,7 @@ struct _tulip_softc_t {
 	u_int32_t dbg_rxintrs;
 	u_int32_t dbg_last_rxintrs;
 	u_int32_t dbg_high_rxintrs_hz;
+	u_int32_t dbg_no_txmaps;
 	u_int32_t dbg_txput_finishes[8];
 	u_int32_t dbg_txprobes_ok[TULIP_MEDIA_MAX];
 	u_int32_t dbg_txprobes_failed[TULIP_MEDIA_MAX];
