@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.4 1995/02/13 00:46:13 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.5 1995/07/05 08:34:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -113,7 +113,7 @@ struct mscp_ri {
 	int	mri_size;		/* ring size */
 	int	mri_next;		/* next (expected|free) */
 	long	*mri_desc;		/* base address of descriptors */
-	volatile struct	mscp *mri_ring;		/* base address of packets */
+	struct	mscp *mri_ring;		/* base address of packets */
 };
 
 /*
@@ -201,8 +201,8 @@ struct	mscp *mscp_getcp();	/* get a command packet */
 		(queue)->b_actf = (bp); \
 	else { \
 		tmp=(queue)->b_actf; \
-		while(tmp->b_actf) tmp=tmp->b_actf; \
-		tmp->b_actf = (bp); \
+		while(tmp->link) tmp=tmp->link; \
+		tmp->link = (bp); \
 	} \
 }
 
