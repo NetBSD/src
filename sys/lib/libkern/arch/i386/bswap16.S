@@ -34,13 +34,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: bswap16.S,v 1.1 1997/10/09 15:42:37 bouyer Exp $
+ *	$NetBSD: bswap16.S,v 1.2 1997/10/13 11:56:32 lukem Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$Id: bswap16.S,v 1.1 1997/10/09 15:42:37 bouyer Exp $")
+RCSID("$NetBSD: bswap16.S,v 1.2 1997/10/13 11:56:32 lukem Exp $")
 #endif
 
 ENTRY(bswap16)

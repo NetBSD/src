@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: ntohl.s,v 1.1 92/06/25 12:47:06 torek Exp
- * $Id: ntohl.S,v 1.3 1996/11/18 22:50:34 pk Exp $
+ * $NetBSD: ntohl.S,v 1.4 1997/10/13 11:58:06 lukem Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

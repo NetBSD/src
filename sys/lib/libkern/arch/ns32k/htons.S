@@ -30,7 +30,7 @@
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: htons.S,v 1.3 1996/11/07 07:36:17 matthias Exp $
+ *	$NetBSD: htons.S,v 1.4 1997/10/13 11:57:15 lukem Exp $
  */
 
 #include <machine/asm.h>

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: htons.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htons.S,v 1.3 1996/11/18 22:50:33 pk Exp $
+ * $NetBSD: htons.S,v 1.4 1997/10/13 11:57:58 lukem Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
