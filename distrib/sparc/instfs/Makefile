@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2002/05/09 11:12:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/12/21 02:52:25 lukem Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
 # It is constructed by tarring up the contents of the miniroot with
-# the exeption of the kernel and boot program.
+# the exception of the kernel and boot program.
 #
 
 .include <bsd.own.mk>
