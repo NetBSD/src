@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.10 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.11 2000/06/11 09:19:27 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@ __END_DECLS
  * ugly patch to fake device numbers.
  */
 #define LINUX_CONS_MAJOR   4
-#define NETBSD_PCCONS_MAJOR 12
 #define NETBSD_WSCONS_MAJOR 47
 
 /*
