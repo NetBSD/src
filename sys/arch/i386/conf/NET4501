@@ -1,5 +1,5 @@
+# $NetBSD: NET4501,v 1.20.2.9 2005/03/07 08:00:09 skrll Exp $
 #
->>>>>>> 1.33
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
 #
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.20.2.8 $"
+#ident 		"NET4501-$Revision: 1.20.2.9 $"
 
 maxusers	32		# estimated number of users
 
