@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2002/03/24 18:21:10 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2002/05/09 12:32:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,9 +41,6 @@
 #include <sh3/exception.h>
 #include <sh3/mmu_sh4.h>
 #include <sh3/cache_sh4.h>
-
-/* bootstrap stack is near upper address of RAM. don't increase MSGBUFSIZE */	
-#define INIT_STACK	IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000
 
 /*
  * void start(void) __attribute__((__noreturn__)):
@@ -88,7 +85,7 @@ NENTRY(start)
 	/* NOTREACHED */	
 	.align	2
 _L.dreamcast_startup:	.long	_C_LABEL(dreamcast_startup)	
-_L.bootstrap_stack:	.long	INIT_STACK		
+_L.bootstrap_stack:	.long	_C_LABEL(start)
 _L.sh4_icache_sync_all:	.long	_C_LABEL(sh4_icache_sync_all)
 _L.CCR:			.long	SH4_CCR	
 _L.CCRconfig:		.long	0x00000909	
