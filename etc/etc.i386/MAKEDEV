@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.140 2001/09/03 18:18:25 drochner Exp $
+#	$NetBSD: MAKEDEV,v 1.141 2001/09/03 18:37:15 drochner Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -125,6 +125,8 @@
 #	mlx*	Mylex DAC960 control interface
 #	mly*	Mylex AcceleRAID/eXtremeRAID control interface
 #	altq	ALTQ control interface
+#	vmegen*	generic VME access
+#	wsfont*	console font control
 #
 
 dialin=0
