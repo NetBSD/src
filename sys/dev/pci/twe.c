@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.52 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: twe.c,v 1.53 2003/11/10 15:35:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.52 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.53 2003/11/10 15:35:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1674,7 +1674,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 #endif
 				return EINVAL;
 			}
-			pdata = malloc(tu->tu_size, M_DEVBUF, M_WAITOK);
+			pdata = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_WAITOK);
 			error = copyin(tu->tu_data, pdata, tu->tu_size);
 			if (error != 0)
 				goto done;
