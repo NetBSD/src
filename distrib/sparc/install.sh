@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: install.sh,v 1.1 1994/10/25 06:48:40 deraadt Exp $
+# $Id: install.sh,v 1.2 1994/11/14 06:25:42 deraadt Exp $
 umask 0
 
 TAR="base.tar.gz comp.tar.gz etc.tar.gz games.tar.gz man.tar.gz
@@ -7,7 +7,7 @@ TAR="base.tar.gz comp.tar.gz etc.tar.gz games.tar.gz man.tar.gz
 
 for i in $TAR
 do
-    if [ -f $i]; then
+    if [ -f $i ]; then
 	echo -n $i...
 	cat $i | gzip -d | (cd /mnt; gtar xvpf -)
     else
