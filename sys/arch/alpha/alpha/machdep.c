@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.193 2000/02/09 05:48:26 shin Exp $ */
+/* $NetBSD: machdep.c,v 1.194 2000/02/12 20:57:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2000/02/09 05:48:26 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2000/02/12 20:57:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,6 @@ u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 
 struct platform platform;
 
-u_int32_t vm_kmem_size = _VM_KMEM_SIZE;
 u_int32_t vm_phys_size = _VM_PHYS_SIZE;
 
 #ifdef DDB
@@ -652,10 +651,8 @@ nobootinfo:
  	 *
 	 * It's for booting a GENERIC kernel on a large memory platform.
 	 */
-	if (physmem >= atop(128 * 1024 * 1024)) {
-		vm_kmem_size <<= 3;
+	if (physmem >= atop(128 * 1024 * 1024))
 		vm_phys_size <<= 2;
-	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
