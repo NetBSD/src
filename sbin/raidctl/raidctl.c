@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.34 2003/10/21 02:31:43 fvdl Exp $   */
+/*      $NetBSD: raidctl.c,v 1.35 2004/02/29 20:40:29 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.34 2003/10/21 02:31:43 fvdl Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.35 2004/02/29 20:40:29 oster Exp $");
 #endif
 
 
@@ -245,7 +245,7 @@ main(argc,argv)
 		usage();
 
 	strlcpy(name, argv[0], sizeof(name));
-	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 1);
+	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
 	if (fd == -1) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
 			getprogname(), name);
