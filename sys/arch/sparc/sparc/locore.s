@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.212 2004/05/13 16:34:22 pooka Exp $	*/
+/*	$NetBSD: locore.s,v 1.213 2004/07/04 09:11:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1234,7 +1234,7 @@ Lpanic_red:
 	st	%g0, [t1 + %lo(_redzone)]; \
 	set	_redstack + REDSTACK - 96, %sp; \
 	/* prevent panic() from lowering ipl */ \
-	sethi	%hi(_C_LABEL(panicstr)), t2; \
+	sethi	%hi(_C_LABEL(panicstr)), t1; \
 	set	Lpanic_red, t2; \
 	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; \
 	rd	%psr, t1;		/* t1 = splhigh() */ \
