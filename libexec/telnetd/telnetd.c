@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.14 1998/07/09 18:32:52 msaitoh Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.15 1999/02/12 05:30:12 dean Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.14 1998/07/09 18:32:52 msaitoh Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.15 1999/02/12 05:30:12 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ struct	socket_security ss;
 #include <libtelnet/auth.h>
 int	auth_level = 0;
 #endif
-#if	defined(SecurID)
-int	require_SecurID = 0;
+#if	defined(SECURELOGIN)
+int	require_secure_login = 0;
 #endif
 
 extern	int utmp_len;
@@ -170,7 +170,7 @@ char valid_opts[] = {
 #ifdef CRAY
 	'r', ':',
 #endif
-#ifdef	SecurID
+#ifdef	SECURELOGIN
 	's',
 #endif
 	'\0'
@@ -333,12 +333,12 @@ main(argc, argv)
 		    }
 #endif	/* CRAY */
 
-#ifdef	SecurID
+#ifdef	SECURELOGIN
 		case 's':
-			/* SecurID required */
-			require_SecurID = 1;
+			/* Secure login required */
+			require_secure_login = 1;
 			break;
-#endif	/* SecurID */
+#endif	/* SECURELOGIN */
 		case 'S':
 #ifdef	HAS_GETTOS
 			if ((tos = parsetos(optarg, "tcp")) < 0)
@@ -568,7 +568,7 @@ usage()
 	fprintf(stderr, " [-r[lowpty]-[highpty]]");
 #endif
 	fprintf(stderr, "\n\t");
-#ifdef	SecurID
+#ifdef	SECURELOGIN
 	fprintf(stderr, " [-s]");
 #endif
 #ifdef	HAS_GETTOS
