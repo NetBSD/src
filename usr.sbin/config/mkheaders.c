@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.35 2003/08/07 11:25:16 agc Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.35.2.1 2004/06/22 07:23:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)mkheaders.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <ctype.h>
