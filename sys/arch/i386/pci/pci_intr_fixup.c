@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.12 2001/04/19 17:32:40 uch Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.13 2001/05/16 08:10:36 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -716,8 +716,21 @@ pci_intr_fixup(pc, iot, pciirq)
 	 * specified by the PIR Table, and use the compat ID,
 	 * if present.  Otherwise, we have to look for the router
 	 * ourselves (the PCI-ISA bridge).
+	 *
+	 * A number of buggy BIOS implementations leave the router
+	 * entry as 000:00:0, which is typically not the correct
+	 * device/function.  If the router device address is set to
+	 * this value, and the compatible router entry is undefined
+	 * (zero is the correct value to indicate undefined), then we
+	 * work on the basis it is most likely an error, and search
+	 * the entire device-space of bus 0 (but obviously starting
+	 * with 000:00:0, in case that really is the right one).
 	 */
-	if (pcibios_pir_header.signature != 0) {
+	if (pcibios_pir_header.signature != 0 &&
+	    (pcibios_pir_header.router_bus != 0 ||
+	     PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc) != 0 ||
+	     PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc) != 0 ||
+	     pcibios_pir_header.compat_router != 0)) {
 		icutag = pci_make_tag(pc, pcibios_pir_header.router_bus,
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
@@ -740,6 +753,10 @@ pci_intr_fixup(pc, iot, pciirq)
 		 * router.
 		 */
 		for (device = 0; device < maxdevs; device++) {
+			const struct pci_quirkdata *qd;
+			int function, nfuncs;
+			pcireg_t bhlcr;
+
 			icutag = pci_make_tag(pc, 0, device, 0);
 			icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
 
@@ -750,10 +767,43 @@ pci_intr_fixup(pc, iot, pciirq)
 			if (PCI_VENDOR(icuid) == 0)
 				continue;
 
-			piit = pciintr_icu_lookup(icuid);
-			if (piit != NULL)
-				break;
+			qd = pci_lookup_quirkdata(PCI_VENDOR(icuid),
+			    PCI_PRODUCT(icuid));
+
+			bhlcr = pci_conf_read(pc, icutag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+			    (qd != NULL &&
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+				nfuncs = 8;
+			else
+				nfuncs = 1;
+
+			for (function = 0; function < nfuncs; function++) {
+				icutag = pci_make_tag(pc, 0, device, function);
+				icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
+
+				/* Invalid vendor ID value? */
+				if (PCI_VENDOR(icuid) == PCI_VENDOR_INVALID)
+					continue;
+				/* Not invalid, but we've done this ~forever */
+				if (PCI_VENDOR(icuid) == 0)
+					continue;
+
+				piit = pciintr_icu_lookup(icuid);
+				if (piit != NULL)
+					goto found;
+			}
 		}
+
+		/*
+		 * Invalidate the ICU ID.  If we failed to find the
+		 * interrupt router (piit == NULL) we don't want to
+		 * display a spurious device address below containing
+		 * the product information of the last device we
+		 * looked at.
+		 */
+		icuid = 0;
+found:
 	}
 
 	if (piit == NULL) {
