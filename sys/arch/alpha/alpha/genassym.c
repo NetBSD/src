@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1996/07/11 03:53:23 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.7 1996/07/11 05:31:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -82,8 +82,6 @@ main(argc, argv)
 	def("VM_MAX_ADDRESS", VM_MAX_ADDRESS);
 
 	/* Register offsets, for stack frames. */
-	def("FRAMESIZE", sizeof(struct trapframe));
-	def("FRAME_NSAVEREGS", FRAME_NSAVEREGS);
 	def("FRAME_V0", FRAME_V0);
 	def("FRAME_T0", FRAME_T0);
 	def("FRAME_T1", FRAME_T1);
@@ -111,11 +109,17 @@ main(argc, argv)
 	def("FRAME_T12", FRAME_T12);
 	def("FRAME_AT", FRAME_AT);
 	def("FRAME_SP", FRAME_SP);
-	off("TF_AF_PS", struct trapframe, tf_af.af_ps);
-	off("TF_AF_PC", struct trapframe, tf_af.af_pc);
-	off("TF_AF_A0", struct trapframe, tf_af.af_a0);
-	off("TF_AF_A1", struct trapframe, tf_af.af_a1);
-	off("TF_AF_A2", struct trapframe, tf_af.af_a2);
+
+	def("FRAME_SW_SIZE", FRAME_SW_SIZE);
+
+	def("FRAME_PS", FRAME_PS);
+	def("FRAME_PC", FRAME_PC);
+	def("FRAME_GP", FRAME_GP);
+	def("FRAME_A0", FRAME_A0);
+	def("FRAME_A1", FRAME_A1);
+	def("FRAME_A2", FRAME_A2);
+
+	def("FRAME_SIZE", FRAME_SIZE);
 
 	/* bits of the PS register */
 	def("ALPHA_PSL_USERMODE", ALPHA_PSL_USERMODE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 1996/07/11 03:53:31 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 1996/07/11 05:31:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -72,7 +72,7 @@ process_read_regs(p, regs)
 {
 
 	frametoreg(process_frame(p), regs);
-	regs->r_regs[R_ZERO] = process_frame(p)->tf_af.af_pc;
+	regs->r_regs[R_ZERO] = process_frame(p)->tf_regs[FRAME_PC];
 	return (0);
 }
 
@@ -82,7 +82,7 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 
-	process_frame(p)->tf_af.af_pc = regs->r_regs[R_ZERO];
+	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
 	regtoframe(regs, process_frame(p));
 	return (0);
 }
@@ -106,7 +106,7 @@ process_set_pc(p, addr)
 {
 	struct trapframe *frame = process_frame(p);
 
-	frame->tf_af.af_pc = (u_int64_t)addr;
+	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
 	return (0);
 }
 

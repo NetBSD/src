@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 1996/07/11 03:46:02 cgd Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 1996/07/11 05:31:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,18 +33,19 @@
 #include <machine/alpha_cpu.h>
 
 /*
- * Trap and syscall frame.
+ * Software trap, exception, and syscall frame.
  *
- * Hardware puts fields marked "[HW]" on stack.  We have to add
- * all of the general-purpose registers except for zero, for sp,
- * which is automatically saved in usp for traps, and implicitly
- * saved for syscalls, and for a0-a2, which are saved by hardware.
+ * Includes "hardware" (PALcode) frame.
+ *
+ * PALcode puts ALPHA_HWFRAME_* fields on stack.  We have to add
+ * all of the general-purpose registers except for zero, for sp
+ * (which is automatically saved in the PCB's USP field for entries
+ * from user mode, and which is implicitly saved and restored by the
+ * calling conventions for entries from kernel mode), and (on traps
+ * and exceptions) for a0, a1, and a2 (which are saved by PALcode).
  */
 
-/* Number of registers saved, including padding. */
-#define	FRAME_NSAVEREGS	28
-
-/* The offsets of the registers to be saved, into the array. */
+/* Quadword offsets of the registers to be saved. */
 #define	FRAME_V0	0
 #define	FRAME_T0	1
 #define	FRAME_T1	2
@@ -72,11 +73,22 @@
 #define	FRAME_T12	24
 #define	FRAME_AT	25
 #define	FRAME_SP	26
-#define	FRAME_SPARE	27	/* spare; padding */
+
+#define	FRAME_SW_SIZE	(FRAME_SP + 1)
+#define	FRAME_HW_OFFSET	FRAME_SW_SIZE
+
+#define	FRAME_PS	(FRAME_HW_OFFSET + ALPHA_HWFRAME_PS)
+#define	FRAME_PC	(FRAME_HW_OFFSET + ALPHA_HWFRAME_PC)
+#define	FRAME_GP	(FRAME_HW_OFFSET + ALPHA_HWFRAME_GP)
+#define	FRAME_A0	(FRAME_HW_OFFSET + ALPHA_HWFRAME_A0)
+#define	FRAME_A1	(FRAME_HW_OFFSET + ALPHA_HWFRAME_A1)
+#define	FRAME_A2	(FRAME_HW_OFFSET + ALPHA_HWFRAME_A2)
+
+#define	FRAME_HW_SIZE	ALPHA_HWFRAME_SIZE
+#define	FRAME_SIZE	(FRAME_HW_OFFSET + FRAME_HW_SIZE)
 
 struct trapframe {
-	u_int64_t	tf_regs[FRAME_NSAVEREGS]; /* GPRs (listed above) */
-	struct alpha_frame tf_af;		/* hardware-defined frame */
+	unsigned long	tf_regs[FRAME_SIZE];	/* See above */
 };
 
 #endif /* _ALPHA_FRAME_H_ */

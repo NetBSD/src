@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 1996/07/11 03:53:26 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 1996/07/11 05:31:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -106,7 +106,7 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	 * Note that setregs() is responsible for setting its contents
 	 * to 'reasonable' values.
 	 */
-	lda	sp,-(FRAMESIZE)(sp)		/* space for struct trapframe */
+	lda	sp,-(FRAME_SIZE * 8)(sp)	/* space for struct trapframe */
 
 	mov	sp, a0				/* main()'s arg is frame ptr */
 	CALL(main)				/* go to main()! */
@@ -186,7 +186,7 @@ LEAF(rei, 1)					/* XXX should be NESTED */
 	br	pv, 1f
 1:	SETGP(pv)
 
-	ldq	s1, TF_AF_PS(sp)		/* get the saved PS */
+	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
 	bne	t0, Lrestoreregs		/* != 0: can't do AST or SIR */
 
@@ -258,7 +258,7 @@ Lrestoreregs:
 	ldq	t12,(FRAME_T12*8)(sp)
 	ldq	at_reg,(FRAME_AT*8)(sp)
 
-	lda	sp,(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,(FRAME_SW_SIZE*8)(sp)
 	call_pal PAL_OSF1_rti
 	END(rei)
 
@@ -271,7 +271,7 @@ Lrestoreregs:
 
 LEAF(XentArith, 2)				/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)
 	stq	t0,(FRAME_T0*8)(sp)
 	stq	t1,(FRAME_T1*8)(sp)
@@ -327,7 +327,7 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 
 LEAF(XentIF, 1)					/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)
 	stq	t0,(FRAME_T0*8)(sp)
 	stq	t1,(FRAME_T1*8)(sp)
@@ -366,7 +366,7 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 
 	or	s0, T_IFLT, a0			/* type = T_IFLT|type*/
 	mov	s0, a1				/* code = type */
-	ldq	a2, TF_AF_PC(sp)		/* v = frame's pc */
+	ldq	a2, (FRAME_PC * 8)(sp)		/* v = frame's pc */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
@@ -382,7 +382,7 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 
 LEAF(XentInt, 2)				/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)
 	stq	t0,(FRAME_T0*8)(sp)
 	stq	t1,(FRAME_T1*8)(sp)
@@ -439,7 +439,7 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 
 LEAF(XentMM, 3)					/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)
 	stq	t0,(FRAME_T0*8)(sp)
 	stq	t1,(FRAME_T1*8)(sp)
@@ -496,7 +496,7 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
 
 LEAF(XentSys, 0)				/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)		/* in case we need to restart */
 	stq	s0,(FRAME_S0*8)(sp)
 	stq	s1,(FRAME_S1*8)(sp)
@@ -505,9 +505,9 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 	stq	s4,(FRAME_S4*8)(sp)
 	stq	s5,(FRAME_S5*8)(sp)
 	stq	s6,(FRAME_S6*8)(sp)
-	stq	a0,TF_AF_A0(sp)
-	stq	a1,TF_AF_A1(sp)
-	stq	a2,TF_AF_A2(sp)
+	stq	a0,(FRAME_A0 * 8)(sp)
+	stq	a1,(FRAME_A1 * 8)(sp)
+	stq	a2,(FRAME_A2 * 8)(sp)
 	stq	a3,(FRAME_A3*8)(sp)
 	stq	a4,(FRAME_A4*8)(sp)
 	stq	a5,(FRAME_A5*8)(sp)
@@ -540,7 +540,7 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 
 LEAF(XentUna, 3)				/* XXX should be NESTED */
 	.set noat
-	lda	sp,-(FRAME_NSAVEREGS*8)(sp)
+	lda	sp,-(FRAME_SW_SIZE*8)(sp)
 	stq	v0,(FRAME_V0*8)(sp)
 	stq	t0,(FRAME_T0*8)(sp)
 	stq	t1,(FRAME_T1*8)(sp)
