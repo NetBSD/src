@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 1997/10/16 04:23:39 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.29.2.1 1998/01/29 11:57:00 mellon Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -41,11 +41,13 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/exec_elf.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -58,6 +60,18 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+
+void
+svr4_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+	register struct pcb *pcb = &p->p_addr->u_pcb;
+
+	pcb->pcb_savefpu.sv_env.en_cw = __SVR4_NPXCW__;
+	setregs(p, epp, stack);
+}
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
