@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.28 1998/02/13 04:22:11 enami Exp $	
+	$NetBSD: hardware,v 1.29 1998/05/14 08:14:59 augustss Exp $	
 
 NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
@@ -156,6 +156,7 @@ Supported devices include:
 		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
 		Gravis Ultrasound Plug&Play [*] [+]
+		Ensoniq AudioPCI [*] [+]
 	Game Ports (Joysticks). [*] [+]
 	Miscellaneous:
 		Advanced power management (APM) [*]
