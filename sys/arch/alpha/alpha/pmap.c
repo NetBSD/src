@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.42 1998/05/19 02:57:01 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.43 1998/05/19 05:21:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 1998/05/19 02:57:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 1998/05/19 05:21:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,36 +400,35 @@ void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
 /*
  * PT page management functions.
  */
-void	pmap_create_lev1map __P((pmap_t));
-void	pmap_destroy_lev1map __P((pmap_t));
-void	pmap_alloc_ptpage __P((pmap_t, pt_entry_t *, int));
-void	pmap_free_ptpage __P((pmap_t, pt_entry_t *));
+void	pmap_lev1map_create __P((pmap_t));
+void	pmap_lev1map_destroy __P((pmap_t));
+void	pmap_ptpage_alloc __P((pmap_t, pt_entry_t *, int));
+void	pmap_ptpage_free __P((pmap_t, pt_entry_t *));
 
 /*
  * PV table management functions.
  */
-void	pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
-void	pmap_remove_pv __P((pmap_t, vm_offset_t, vm_offset_t));
-struct	pv_entry *pmap_alloc_pv __P((void));
-void	pmap_free_pv __P((struct pv_entry *));
-void	pmap_collect_pv __P((void));
+void	pmap_pv_enter __P((pmap_t, vm_offset_t, vm_offset_t));
+void	pmap_pv_remove __P((pmap_t, vm_offset_t, vm_offset_t));
+struct	pv_entry *pmap_pv_alloc __P((void));
+void	pmap_pv_free __P((struct pv_entry *));
+void	pmap_pv_collect __P((void));
+#ifdef DEBUG
+void	pmap_pv_dump __P((vm_offset_t));
+#endif
 
 /*
  * ASN management functions.
  */
-void	pmap_alloc_asn __P((pmap_t));
+void	pmap_asn_alloc __P((pmap_t));
 
 /*
  * Misc. functions.
  */
-vm_offset_t pmap_alloc_physpage __P((int));
-void	pmap_free_physpage __P((vm_offset_t));
+vm_offset_t pmap_physpage_alloc __P((int));
+void	pmap_physpage_free __P((vm_offset_t));
 int	pmap_physpage_addref __P((void *));
 int	pmap_physpage_delref __P((void *));
-
-#ifdef DEBUG
-void	pmap_pvdump __P((vm_offset_t));
-#endif
 
 /*
  * active_pmap{,_test}:
@@ -504,7 +503,7 @@ do {									\
  *
  *	This is essentially the guts of pmap_activate(), without
  *	ASN allocation.  This is used by pmap_activate(),
- *	pmap_create_lev1map(), and pmap_destroy_lev1map().
+ *	pmap_lev1map_create(), and pmap_lev1map_destroy().
  *
  *	This is called only when it is known that a pmap is "active"
  *	on the current processor; the ASN must already be valid.
@@ -533,7 +532,7 @@ do {									\
  * PMAP_INVALIDATE_ASN:
  *
  *	Invalidate the specified pmap's ASN, so as to force allocation
- *	of a new one the next time pmap_alloc_asn() is called.
+ *	of a new one the next time pmap_asn_alloc() is called.
  *
  *	NOTE: THIS MUST ONLY BE CALLED IF AT LEAST ONE OF THE FOLLOWING
  *	CONDITIONS ARE TRUE:
@@ -1440,7 +1439,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * created.
 		 */
 		if (pmap->pm_lev1map == kernel_lev1map)
-			pmap_create_lev1map(pmap);
+			pmap_lev1map_create(pmap);
 
 		/*
 		 * Check to see if the level 1 PTE is valid, and
@@ -1450,7 +1449,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		l1pte = pmap_l1pte(pmap, va);
 		if (pmap_pte_v(l1pte) == 0) {
-			pmap_alloc_ptpage(pmap, l1pte, PGU_L2PT);
+			pmap_ptpage_alloc(pmap, l1pte, PGU_L2PT);
 			pmap_physpage_addref(l1pte);
 			pmap->pm_nlev2++;
 #ifdef DEBUG
@@ -1468,7 +1467,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		l2pte = pmap_l2pte(pmap, va, l1pte);
 		if (pmap_pte_v(l2pte) == 0) {
-			pmap_alloc_ptpage(pmap, l2pte, PGU_L3PT);
+			pmap_ptpage_alloc(pmap, l2pte, PGU_L3PT);
 			pmap_physpage_addref(l2pte);
 			pmap->pm_nlev3++;
 #ifdef DEBUG
@@ -1586,7 +1585,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	if (managed) {
 		int s = splimp();
-		pmap_enter_pv(pmap, pa, va);
+		pmap_pv_enter(pmap, pa, va);
 		splx(s);
 	}
 
@@ -1916,7 +1915,7 @@ pmap_collect(pmap)
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
-	pmap_collect_pv();
+	pmap_pv_collect();
 #endif
 }
 
@@ -1949,7 +1948,7 @@ pmap_activate(p)
 	 * XXX This checks a non-per-cpu value (pm_lev1map), but we can't
 	 * XXX lock!
 	 */
-	pmap_alloc_asn(pmap);
+	pmap_asn_alloc(pmap);
 
 	/*
 	 * Mark the pmap in use by this processor.
@@ -2384,7 +2383,7 @@ pmap_remove_mapping(pmap, va, pte)
 				printf("pmap_remove_mapping: freeing level 3 "
 				    "table at 0x%lx\n", pmap_pte_pa(l2pte));
 #endif
-			pmap_free_ptpage(pmap, l2pte);
+			pmap_ptpage_free(pmap, l2pte);
 			pmap->pm_nlev3--;
 
 			/*
@@ -2414,7 +2413,7 @@ pmap_remove_mapping(pmap, va, pte)
 					    "level 2 table at 0x%lx\n",
 					    pmap_pte_pa(l1pte));
 #endif
-				pmap_free_ptpage(pmap, l1pte);
+				pmap_ptpage_free(pmap, l1pte);
 				pmap->pm_nlev2--;
 
 				/*
@@ -2426,7 +2425,7 @@ pmap_remove_mapping(pmap, va, pte)
 					 * No more level 2 tables left,
 					 * go back to global kernel_lev1map.
 					 */
-					pmap_destroy_lev1map(pmap);
+					pmap_lev1map_destroy(pmap);
 				}
 			}
 		}
@@ -2443,7 +2442,7 @@ pmap_remove_mapping(pmap, va, pte)
 	 * (raise IPL since we may be called at interrupt time).
 	 */
 	s = splimp();
-	pmap_remove_pv(pmap, pa, va);
+	pmap_pv_remove(pmap, pa, va);
 	splx(s);
 }
 
@@ -2646,24 +2645,31 @@ pmap_emulate_reference(p, v, user, write)
 
 #ifdef DEBUG
 /*
- * pmap_pvdump:
+ * pmap_pv_dump:
  *
  *	Dump the physical->virtual data for the specified page.
  */
-/* static */
 void
-pmap_pvdump(pa)
+pmap_pv_dump(pa)
 	vm_offset_t pa;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
+	static const char *usage[] = {
+		"normal", "pvent", "l1pt", "l2pt", "l3pt",
+	};
 
 	pvh = pa_to_pvh(pa);
 
-	printf("pa %lx (attrs = 0x%x):\n", pa, pvh->pvh_attrs);
+	printf("pa 0x%lx (attrs = 0x%x, usage = " /* ) */, pa, pvh->pvh_attrs);
+	if (pvh->pvh_usage < PGU_NORMAL || pvh->pvh_usage > PGU_L3PT)
+/* ( */		printf("??? %d):\n", pvh->pvh_usage);
+	else
+/* ( */		printf("%s):\n", usage[pvh->pvh_usage]);
+
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
-		printf("     pmap %p, va %lx\n",
+		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
 	printf("\n");
 }
@@ -2702,13 +2708,13 @@ vtophys(vaddr)
 /******************** pv_entry management ********************/
 
 /*
- * pmap_enter_pv:
+ * pmap_pv_enter:
  *
  *	Add a physical->virtual entry to the pv_table.
  *	Must be called at splimp()!
  */
 void
-pmap_enter_pv(pmap, pa, va)
+pmap_pv_enter(pmap, pa, va)
 	pmap_t pmap;
 	vm_offset_t pa, va;
 {
@@ -2725,14 +2731,14 @@ pmap_enter_pv(pmap, pa, va)
 	     pv = LIST_NEXT(pv, pv_list))
 		if (pmap == pv->pv_pmap && va == pv->pv_va) {
 			printf("pmap = %p, va = 0x%lx\n", pmap, va);
-			panic("pmap_enter_pv: already in pv table");
+			panic("pmap_pv_enter: already in pv table");
 		}
 #endif
 
 	/*
 	 * Allocate and fill in the new pv_entry.
 	 */
-	pv = pmap_alloc_pv();
+	pv = pmap_pv_alloc();
 	pv->pv_va = va;
 	pv->pv_pmap = pmap;
 
@@ -2749,13 +2755,13 @@ pmap_enter_pv(pmap, pa, va)
 }
 
 /*
- * pmap_remove_pv:
+ * pmap_pv_remove:
  *
  *	Remove a physical->virtual entry from the pv_table.
  *	Must be called at splimp()!
  */
 void
-pmap_remove_pv(pmap, pa, va)
+pmap_pv_remove(pmap, pa, va)
 	pmap_t pmap;
 	vm_offset_t pa, va;
 {
@@ -2774,7 +2780,7 @@ pmap_remove_pv(pmap, pa, va)
 
 #ifdef DEBUG
 	if (pv == NULL)
-		panic("pmap_remove_pv: not in pv table");
+		panic("pmap_pv_remove: not in pv table");
 #endif
 
 	LIST_REMOVE(pv, pv_list);
@@ -2782,16 +2788,16 @@ pmap_remove_pv(pmap, pa, va)
 	/*
 	 * ...and free the pv_entry.
 	 */
-	pmap_free_pv(pv);
+	pmap_pv_free(pv);
 }
 
 /*
- * pmap_alloc_pv:
+ * pmap_pv_alloc:
  *
  *	Allocate a pv_entry.
  */
 struct pv_entry *
-pmap_alloc_pv()
+pmap_pv_alloc()
 {
 	vm_offset_t pvppa;
 	struct pv_page *pvp;
@@ -2802,7 +2808,7 @@ pmap_alloc_pv()
 		/*
 		 * No free pv_entry's; allocate a new pv_page.
 		 */
-		pvppa = pmap_alloc_physpage(PGU_PVENT);
+		pvppa = pmap_physpage_alloc(PGU_PVENT);
 		pvp = (struct pv_page *)ALPHA_PHYS_TO_K0SEG(pvppa);
 		LIST_INIT(&pvp->pvp_pgi.pgi_freelist);
 		for (i = 0; i < pmap_npvppg; i++)
@@ -2819,19 +2825,19 @@ pmap_alloc_pv()
 	pv = LIST_FIRST(&pvp->pvp_pgi.pgi_freelist);
 #ifdef DIAGNOSTIC
 	if (pv == NULL)
-		panic("pmap_alloc_pv: pgi_nfree inconsistent");
+		panic("pmap_pv_alloc: pgi_nfree inconsistent");
 #endif
 	LIST_REMOVE(pv, pv_list);
 	return (pv);
 }
 
 /*
- * pmap_free_pv:
+ * pmap_pv_free:
  *
  *	Free a pv_entry.
  */
 void
-pmap_free_pv(pv)
+pmap_pv_free(pv)
 	struct pv_entry *pv;
 {
 	vm_offset_t pvppa;
@@ -2849,7 +2855,7 @@ pmap_free_pv(pv)
 		pv_nfree -= pmap_npvppg - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
-		pmap_free_physpage(pvppa);
+		pmap_physpage_free(pvppa);
 	} else {
 		if (nfree == 1)
 			TAILQ_INSERT_TAIL(&pv_page_freelist, pvp,
@@ -2860,13 +2866,13 @@ pmap_free_pv(pv)
 }
 
 /*
- * pmap_collect_pv:
+ * pmap_pv_collect:
  *
  *	Compact the pv_table and release any completely free
  *	pv_page's back to the system.
  */
 void
-pmap_collect_pv()
+pmap_pv_collect()
 {
 	struct pv_page_list pv_page_collectlist;
 	struct pv_page *pvp, *npvp;
@@ -2928,7 +2934,7 @@ pmap_collect_pv()
 				LIST_REMOVE(newpv, pv_list);
 #ifdef DIAGNOSTIC
 				if (newpv == NULL)
-					panic("pmap_collect_pv: pgi_nfree inconsistent");
+					panic("pmap_pv_collect: pgi_nfree inconsistent");
 #endif
 				/*
 				 * Remove the doomed pv_entry from its
@@ -2955,20 +2961,20 @@ pmap_collect_pv()
 	for (pvp = TAILQ_FIRST(&pv_page_collectlist); pvp != NULL; pvp = npvp) {
 		npvp = TAILQ_NEXT(pvp, pvp_pgi.pgi_list);
 		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
-		pmap_free_physpage(pvppa);
+		pmap_physpage_free(pvppa);
 	}
 }
 
 /******************** misc. functions ********************/
 
 /*
- * pmap_alloc_physpage:
+ * pmap_physpage_alloc:
  *
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
 vm_offset_t
-pmap_alloc_physpage(usage)
+pmap_physpage_alloc(usage)
 	int usage;
 {
 	struct vm_page *pg;
@@ -2993,7 +2999,7 @@ pmap_alloc_physpage(usage)
 			pvh->pvh_usage = usage;
 #ifdef DIAGNOSTIC
 			if (pvh->pvh_refcnt != 0)
-				panic("pmap_alloc_physpage: page has "
+				panic("pmap_physpage_alloc: page has "
 				    "references");
 #endif
 
@@ -3026,23 +3032,23 @@ pmap_alloc_physpage(usage)
 	 * If we couldn't get any more pages after 5 tries, just
 	 * give up.
 	 */
-	panic("pmap_alloc_physpage: no pages available after 5 tries");
+	panic("pmap_physpage_alloc: no pages available after 5 tries");
 }
 
 /*
- * pmap_free_physpage:
+ * pmap_physpage_free:
  *
  *	Free the single page table page at the specified physical address.
  */
 void
-pmap_free_physpage(pa)
+pmap_physpage_free(pa)
 	vm_offset_t pa;
 {
 	struct pv_head *pvh;
 	struct vm_page *pg;
 
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
-		panic("pmap_free_physpage: bogus physical page address");
+		panic("pmap_physpage_free: bogus physical page address");
 
 	pvh = pa_to_pvh(pa);
 	pvh->pvh_usage = PGU_NORMAL;
@@ -3121,12 +3127,12 @@ pmap_physpage_delref(kva)
 #endif /* PMAP_NEW */
 
 /*
- * pmap_create_lev1map:
+ * pmap_lev1map_create:
  *
  *	Create a new level 1 page table for the specified pmap.
  */
 void
-pmap_create_lev1map(pmap)
+pmap_lev1map_create(pmap)
 	pmap_t pmap;
 {
 	vm_offset_t ptpa;
@@ -3135,16 +3141,16 @@ pmap_create_lev1map(pmap)
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
-		panic("pmap_create_lev1map: got kernel pmap");
+		panic("pmap_lev1map_create: got kernel pmap");
 
 	if (pmap->pm_asn != PMAP_ASN_RESERVED)
-		panic("pmap_create_lev1map: pmap uses non-reserved ASN");
+		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
 	/*
 	 * Allocate a page for the level 1 table.
 	 */
-	ptpa = pmap_alloc_physpage(PGU_L1PT);
+	ptpa = pmap_physpage_alloc(PGU_L1PT);
 	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
 
 	/*
@@ -3166,25 +3172,25 @@ pmap_create_lev1map(pmap)
 	 * reactivate it.
 	 */
 	if (active_pmap(pmap)) {
-		pmap_alloc_asn(pmap);
+		pmap_asn_alloc(pmap);
 		PMAP_ACTIVATE(pmap, curproc);
 	}
 }
 
 /*
- * pmap_destroy_lev1map:
+ * pmap_lev1map_destroy:
  *
  *	Destroy the level 1 page table for the specified pmap.
  */
 void
-pmap_destroy_lev1map(pmap)
+pmap_lev1map_destroy(pmap)
 	pmap_t pmap;
 {
 	vm_offset_t ptpa;
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
-		panic("pmap_destroy_lev1map: got kernel pmap");
+		panic("pmap_lev1map_destroy: got kernel pmap");
 #endif
 
 	ptpa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pmap->pm_lev1map);
@@ -3219,17 +3225,17 @@ pmap_destroy_lev1map(pmap)
 	/*
 	 * Free the old level 1 page table page.
 	 */
-	pmap_free_physpage(ptpa);
+	pmap_physpage_free(ptpa);
 }
 
 /*
- * pmap_alloc_ptpage:
+ * pmap_ptpage_alloc:
  *
  *	Allocate a level 2 or level 3 page table page, and
  *	initialize the PTE that references it.
  */
 void
-pmap_alloc_ptpage(pmap, pte, usage)
+pmap_ptpage_alloc(pmap, pte, usage)
 	pmap_t pmap;
 	pt_entry_t *pte;
 	int usage;
@@ -3239,7 +3245,7 @@ pmap_alloc_ptpage(pmap, pte, usage)
 	/*
 	 * Allocate the page table page.
 	 */
-	ptpa = pmap_alloc_physpage(usage);
+	ptpa = pmap_physpage_alloc(usage);
 
 	/*
 	 * Initialize the referencing PTE.
@@ -3250,13 +3256,13 @@ pmap_alloc_ptpage(pmap, pte, usage)
 }
 
 /*
- * pmap_free_ptpage:
+ * pmap_ptpage_free:
  *
  *	Free the level 2 or level 3 page table page referenced
  *	be the provided PTE.
  */
 void
-pmap_free_ptpage(pmap, pte)
+pmap_ptpage_free(pmap, pte)
 	pmap_t pmap;
 	pt_entry_t *pte;
 {
@@ -3276,24 +3282,24 @@ pmap_free_ptpage(pmap, pte)
 	/*
 	 * Free the page table page.
 	 */
-	pmap_free_physpage(ptpa);
+	pmap_physpage_free(ptpa);
 }
 
 /******************** Address Space Number management ********************/
 
 /*
- * pmap_alloc_asn:
+ * pmap_asn_alloc:
  *
  *	Allocate and assign an ASN to the specified pmap.
  */
 void
-pmap_alloc_asn(pmap)
+pmap_asn_alloc(pmap)
 	pmap_t pmap;
 {
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ASN))
-		printf("pmap_alloc_asn(%p)\n", pmap);
+		printf("pmap_asn_alloc(%p)\n", pmap);
 #endif
 
 	/*
@@ -3306,12 +3312,12 @@ pmap_alloc_asn(pmap)
 	if (pmap->pm_lev1map == kernel_lev1map) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
-			printf("pmap_alloc_asn: still references "
+			printf("pmap_asn_alloc: still references "
 			    "kernel_lev1map\n");
 #endif
 #ifdef DIAGNOSTIC
 		if (pmap->pm_asn != PMAP_ASN_RESERVED)
-			panic("pmap_alloc_asn: kernel_lev1map without "
+			panic("pmap_asn_alloc: kernel_lev1map without "
 			    "PMAP_ASN_RESERVED");
 #endif
 		return;
@@ -3330,7 +3336,7 @@ pmap_alloc_asn(pmap)
 		pmap->pm_asngen = pmap_asn_generation;
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
-			printf("pmap_alloc_asn: no ASNs, using asngen %lu\n",
+			printf("pmap_asn_alloc: no ASNs, using asngen %lu\n",
 			    pmap->pm_asngen);
 #endif
 		return;
@@ -3346,7 +3352,7 @@ pmap_alloc_asn(pmap)
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN) 
-			printf("pmap_alloc_asn: same generation, keeping %u\n",
+			printf("pmap_asn_alloc: same generation, keeping %u\n",
 			    pmap->pm_asn);
 #endif
 		return;
@@ -3385,12 +3391,12 @@ pmap_alloc_asn(pmap)
 			 *
 			 * So, we don't bother.
 			 */
-			panic("pmap_alloc_asn: too much uptime");
+			panic("pmap_asn_alloc: too much uptime");
 		}
 #endif
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
-			printf("pmap_alloc_asn: generation bumped to %lu\n",
+			printf("pmap_asn_alloc: generation bumped to %lu\n",
 			    pmap_asn_generation);
 #endif
 	}
@@ -3403,7 +3409,7 @@ pmap_alloc_asn(pmap)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ASN)
-		printf("pmap_alloc_asn: assigning %u to pmap %p\n",
+		printf("pmap_asn_alloc: assigning %u to pmap %p\n",
 		    pmap->pm_asn, pmap);
 #endif
 }
