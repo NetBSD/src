@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.229 2001/12/07 02:28:53 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.230 2001/12/11 23:25:23 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -223,24 +223,25 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 
 # The sh3 port is incomplete.
 .if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
-NOLINT=1
-NOPROFILE=1
-OBJECT_FMT?=COFF
-NOPIC?=1
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+OBJECT_FMT?=	COFF
 .endif
 
 # Profiling and linting is also off on the x86_64 port at the moment.
 # The x86_64 port is incomplete.
 .if ${MACHINE_ARCH} == "x86_64"
-NOPROFILE=1
-NOLINT=1
+NOPROFILE=	# defined
+NOLINT=		# defined
+CFLAGS+=	-Wno-format -fno-builtin
 .endif
 
 # The m68000 port is incomplete.
 .if ${MACHINE_ARCH} == "m68000"
-NOLINT=1
-NOPROFILE=1
-NOPIC?=1
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 .endif
 
 # Data-driven table using make variables to control how 
@@ -265,13 +266,9 @@ NOPIC?=1
     ${MACHINE} == "news68k" || \
     ${MACHINE} == "cesfic" || \
     ${MACHINE} == "atari"
-OBJECT_FMT?=ELF
+OBJECT_FMT?=	ELF
 .else
-OBJECT_FMT?=a.out
-.endif
-
-.if ${MACHINE_ARCH} == "x86_64"
-CFLAGS+=-Wno-format -fno-builtin
+OBJECT_FMT?=	a.out
 .endif
 
 # Location of the file that contains the major and minor numbers of the
@@ -336,106 +333,50 @@ dependall:	.NOTMAIN realdepend .MAKE
 # The NOxxx variables should only be used by Makefiles.
 #
 
-MKCATPAGES?=yes
+# Supported NO* options (if defined, MK* will be forced to "no",
+# regardless of user's mk.conf setting).
+.for var in CRYPTO DOC KERBEROS LINKLIB LINT MAN NLS OBJ \
+	    PIC PICINSTALL PROFILE SHARE
+.if defined(NO${var})
+MK${var}:=	no
+.endif
+.endfor
 
-.if defined(NODOC)
-MKDOC=no
-.else
-MKDOC?=yes
+# MK* options which default to "yes".
+.for var in CATPAGES CRYPTO DOC INFO KERBEROS LINKLIB LINT \
+	    MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
+MK${var}?=	yes
+.endfor
+
+# MK* options which default to "no".
+.for var in CRYPTO_IDEA CRYPTO_RC5 OBJDIRS SOFTFLOAT
+MK${var}?=	no
+.endfor
+
+# Force some options off if their dependencies are off.
+.if ${MKCRYPTO} == "no"
+MKKERBEROS:=	no
 .endif
 
-MKINFO?=yes
-
-.if defined(NOLINKLIB)
-MKLINKLIB=no
-.else
-MKLINKLIB?=yes
-.endif
 .if ${MKLINKLIB} == "no"
-MKPICINSTALL=no
-MKPROFILE=no
+MKPICINSTALL:=	no
+MKPROFILE:=	no
 .endif
 
-.if defined(NOLINT)
-MKLINT=no
-.else
-MKLINT?=yes
-.endif
-
-.if defined(NOMAN)
-MKMAN=no
-.else
-MKMAN?=yes
-.endif
 .if ${MKMAN} == "no"
-MKCATPAGES=no
+MKCATPAGES:=	no
 .endif
 
-.if defined(NONLS)
-MKNLS=no
-.else
-MKNLS?=yes
+.if ${MKOBJ} == "no"
+MKOBJDIRS:=	no
 .endif
 
-#
-# MKOBJDIRS controls whether object dirs are created during "make build".
-# MKOBJ controls whether the "make obj" rule does anything.
-#
-.if defined(NOOBJ)
-MKOBJ=no
-MKOBJDIRS=no
-.else
-MKOBJ?=yes
-MKOBJDIRS?=no
-.endif
-
-.if defined(NOPIC)
-MKPIC=no
-.else
-MKPIC?=yes
-.endif
-
-.if defined(NOPICINSTALL)
-MKPICINSTALL=no
-.else
-MKPICINSTALL?=yes
-.endif
-
-.if defined(NOPROFILE)
-MKPROFILE=no
-.else
-MKPROFILE?=yes
-.endif
-
-.if defined(NOSHARE)
-MKSHARE=no
-.else
-MKSHARE?=yes
-.endif
 .if ${MKSHARE} == "no"
-MKCATPAGES=no
-MKDOC=no
-MKINFO=no
-MKMAN=no
-MKNLS=no
+MKCATPAGES:=	no
+MKDOC:=		no
+MKINFO:=	no
+MKMAN:=		no
+MKNLS:=		no
 .endif
-
-.if defined(NOCRYPTO)
-MKCRYPTO=no
-.else
-MKCRYPTO?=yes
-.endif
-
-MKCRYPTO_IDEA?=no
-
-MKCRYPTO_RC5?=no
-
-.if defined(NOKERBEROS) || (${MKCRYPTO} == "no")
-MKKERBEROS=no
-.else
-MKKERBEROS?=yes
-.endif
-
-MKSOFTFLOAT?=no
 
 .endif		# _BSD_OWN_MK_
