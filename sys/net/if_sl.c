@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.50 1998/07/05 00:51:27 jonathan Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.51 1998/07/06 13:51:32 jtk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -95,7 +95,7 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
