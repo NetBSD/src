@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 1996/07/12 00:46:20 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 1997/10/18 14:34:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,14 +43,12 @@
 
 #include <netinet/in.h>
 
-#include <errno.h>
-#include <pwd.h>
-#include <grp.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "pathnames.h"
 
 /*

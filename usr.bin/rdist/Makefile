@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/08 19:13:39 christos Exp $
-#	from: @(#)Makefile	5.11 (Berkeley) 3/12/91
+#	$NetBSD: Makefile,v 1.8 1997/10/18 14:34:39 mrg Exp $
+#	from: @(#)Makefile	8.3 (Berkeley) 7/19/93
 
 PROG=	rdist
 SRCS=	docmd.c expand.c lookup.c main.c server.c
