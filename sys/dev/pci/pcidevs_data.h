@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.346 2001/08/18 05:00:52 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.347 2001/08/20 03:48:30 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.344 2001/08/20 03:45:55 gehenna Exp 
  */
 
 /*
@@ -3986,6 +3986,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A,
+	    0,
+	    "NEC",
+	    "USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,

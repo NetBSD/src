@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.348 2001/08/18 05:00:51 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.349 2001/08/20 03:48:29 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.344 2001/08/20 03:45:55 gehenna Exp 
  */
 
 /*
@@ -1452,6 +1452,7 @@
 #define	PCI_PRODUCT_NEC_VRC4173_AC97U	0x00a6		/* VRC4173 AC97 Unit */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB Host Controller */
 #define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
 #define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
 
