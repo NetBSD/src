@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/07/23 03:52:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2003/07/23 08:00:52 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5
-LDADD+=	-lkrb5 -lkafs -lasn1 -lcom_err -lroken
+LDADD+=	-lkrb5 -lasn1 -lcom_err -lroken
 DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
