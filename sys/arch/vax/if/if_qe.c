@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.1 1995/03/30 20:26:37 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.2 1995/04/11 06:16:35 mycroft Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -242,7 +242,8 @@ struct	uba_device *qeinfo[NQE];
 extern struct timeval time;
 
 int	qeprobe(), qeattach(), qeintr(), qetimeout();
-int	qeinit(), qeioctl(), qereset(), qestart();
+int	qeinit(), qeioctl(), qereset();
+void	qestart();
 
 u_short qestd[] = { 0 };
 struct	uba_driver qedriver =
@@ -356,12 +357,11 @@ qeattach(ui)
 
 	ifp->if_unit = ui->ui_unit;
 	ifp->if_name = "qe";
-	ifp->if_mtu = ETHERMTU;
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
 	 * doesn't listen to its own.
 	 */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	/*
 	 * Read the address from the prom and save it.
@@ -379,13 +379,13 @@ qeattach(ui)
 	 */
 	sc->qe_intvec = addr->qe_vector;
 
-	ifp->if_output = ether_output;
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
 	ifp->if_reset = qereset;
 	ifp->if_watchdog = qetimeout;
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
+	ether_ifattach(ifp);
 }
 
 /*
@@ -495,7 +495,7 @@ qeinit(unit)
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 	sc->qe_flags |= QEF_RUNNING;
 	qesetup( sc );
-	(void) qestart( ifp );
+	qestart( ifp );
 	sc->qe_if.if_timer = QESLOWTIMEOUT;	/* Start watchdog */
 	splx( s );
 }
@@ -504,6 +504,7 @@ qeinit(unit)
  * Start output on interface.
  *
  */
+void
 qestart(ifp)
 	struct ifnet *ifp;
 {
@@ -661,7 +662,7 @@ qetint(unit)
 		}
 		sc->otindex = ++sc->otindex % NXMT;
 	}
-	(void) qestart( &sc->qe_if );
+	qestart( &sc->qe_if );
 }
 
 /*
@@ -765,9 +766,7 @@ qeioctl(ifp, cmd, data)
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->qe_ac, ifa);
 			break;
 #endif
 #ifdef NS
@@ -887,9 +886,8 @@ qeread(sc, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int off, resid, s;
+	int s;
 	struct ifqueue *inq;
-	u_short eth_type;
 
 	/*
 	 * Deal with trailer protocol: if type is INET trailer
@@ -898,20 +896,6 @@ qeread(sc, ifrw, len)
 	 */
 
 	eh = (struct ether_header *)ifrw->ifrw_addr;
-	eth_type = ntohs((u_short)eh->ether_type);
-#define	qedataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
-	if (eth_type >= ETHERTYPE_TRAIL &&
-	    eth_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (eth_type - ETHERTYPE_TRAIL) * 512;
-		if (off >= ETHERMTU)
-			return;		/* sanity */
-		eh->ether_type = *qedataaddr(eh,off, u_short *);
-		resid = ntohs(*(qedataaddr(eh, off+2, u_short *)));
-		if (off + resid > len)
-		     return;		/* sanity */
-		len = off + resid;
-	} else
-		off = 0;
 	if (len == 0)
 		return;
 
@@ -921,7 +905,7 @@ qeread(sc, ifrw, len)
 	 * information to be at the front, but we still have to drop
 	 * the type and length which are at the front of any trailer data.
 	 */
-	m = if_ubaget(&sc->qe_uba, ifrw, len, off, &sc->qe_if);
+	m = if_ubaget(&sc->qe_uba, ifrw, len, &sc->qe_if);
 #ifdef notdef
 if (m) {
 *(((u_long *)m->m_data)+0),
@@ -976,7 +960,7 @@ qerestart(sc)
 	addr->qe_rcvlist_lo = (short)((int)sc->rringaddr);
 	addr->qe_rcvlist_hi = (short)((int)sc->rringaddr >> 16);
 	sc->qe_flags |= QEF_RUNNING;
-	(void) qestart(ifp);
+	qestart(ifp);
 }
 
 qe_match(){
