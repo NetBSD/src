@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.78.2.3 2000/09/06 08:41:42 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.78.2.4 2000/09/19 18:02:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -964,15 +964,15 @@ schedclock(struct proc *p)
 void
 suspendsched()
 {
-	int s, i;
 	struct proc *p, *next;
+	int s, i;
 	
-	s = splclock();
-
 	/*
 	 * Convert all non-P_SYSTEM SSLEEP processes to SSTOP. Curproc is
 	 * necesserelly SONPROC.
 	 */
+	proclist_lock_read();
+	s = splclock();
 	for (p = LIST_FIRST(&allproc); p != NULL; p = next) {
 		next = LIST_NEXT(p, p_list);
 		if (p->p_stat != SSLEEP || p == curproc ||
@@ -980,10 +980,12 @@ suspendsched()
 			continue;
 		p->p_stat = SSTOP;
 	}
+	proclist_unlock_read();
+
 	/* go through the run queues, remove non-P_SYSTEM processes */
 	for (i = 0; i < RUNQUE_NQS; i++) {
-		for (p = (struct proc *)&sched_qs[i];
-		    p->p_forw != (struct proc *)&sched_qs[i]; p = next) {
+		for (p = sched_qs[i].ph_link;
+		    p != (struct proc *)&sched_qs[i]; p = next) {
 			next = p->p_forw;
 			if ((p->p_flag & P_SYSTEM) == 0) {
 				if (p->p_flag & P_INMEM)
