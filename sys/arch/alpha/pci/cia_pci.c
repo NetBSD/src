@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.8 1997/04/07 05:19:37 cgd Exp $ */
+/* $NetBSD: cia_pci.c,v 1.9 1997/04/07 05:40:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,6 @@
 #include <alpha/pci/ciavar.h>
 
 #include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
-#include "dec_eb164.h"		/* XXX for eb164 CIA firmware workarounds. */
 
 void		cia_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -115,7 +114,7 @@ cia_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
-#if NDEC_EB164
+#ifdef DEC_EB164
 	extern int cputype;					/* XXX */
 #endif
 
@@ -124,7 +123,7 @@ cia_conf_read(cpv, tag, offset)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
-#if NDEC_EB164
+#ifdef DEC_EB164
 	/*
 	 * Some (apparently-common) revisions of EB164 firmware do the
 	 * Wrong thing with PCI master aborts, which are caused by
@@ -170,7 +169,7 @@ cia_conf_read(cpv, tag, offset)
 		splx(s);
 	}
 
-#if NDEC_EB164
+#ifdef DEC_EB164
 	if (cputype == ST_EB164) {
 		alpha_pal_draina();	
 		/* check CIA error register for PCI master abort */
