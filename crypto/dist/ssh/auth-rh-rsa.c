@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.4 2001/04/10 07:13:48 itojun Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.5 2001/06/23 16:36:23 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rh-rsa.c,v 1.23 2001/04/06 21:00:04 markus Exp $");
+RCSID("$OpenBSD: auth-rh-rsa.c,v 1.25 2001/06/23 03:04:42 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -39,7 +39,7 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 	extern ServerOptions options;
 	const char *canonical_hostname;
 	HostStatus host_status;
-	Key *client_key, *found;
+	Key *client_key;
 
 	debug("Trying rhosts with RSA host authentication for client user %.100s", client_user);
 
@@ -59,37 +59,12 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 	client_key = key_new(KEY_RSA1);
 	BN_copy(client_key->rsa->e, client_host_key->e);
 	BN_copy(client_key->rsa->n, client_host_key->n);
-	found = key_new(KEY_RSA1);
 
-	/* Check if we know the host and its host key. */
-	host_status = check_host_in_hostfile(_PATH_SSH_SYSTEM_HOSTFILE, canonical_hostname,
-	    client_key, found, NULL);
+	host_status = check_key_in_hostfiles(pw, client_key, canonical_hostname,
+	    _PATH_SSH_SYSTEM_HOSTFILE,
+	    options.ignore_user_known_hosts ? NULL : _PATH_SSH_USER_HOSTFILE);
 
-	/* Check user host file unless ignored. */
-	if (host_status != HOST_OK && !options.ignore_user_known_hosts) {
-		struct stat st;
-		char *user_hostfile = tilde_expand_filename(_PATH_SSH_USER_HOSTFILE, pw->pw_uid);
-		/*
-		 * Check file permissions of _PATH_SSH_USER_HOSTFILE, auth_rsa()
-		 * did already check pw->pw_dir, but there is a race XXX
-		 */
-		if (options.strict_modes &&
-		    (stat(user_hostfile, &st) == 0) &&
-		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
-		     (st.st_mode & 022) != 0)) {
-			log("Rhosts RSA authentication refused for %.100s: bad owner or modes for %.200s",
-			    pw->pw_name, user_hostfile);
-		} else {
-			/* XXX race between stat and the following open() */
-			temporarily_use_uid(pw);
-			host_status = check_host_in_hostfile(user_hostfile, canonical_hostname,
-			    client_key, found, NULL);
-			restore_uid();
-		}
-		xfree(user_hostfile);
-	}
 	key_free(client_key);
-	key_free(found);
 
 	if (host_status != HOST_OK) {
 		debug("Rhosts with RSA host authentication denied: unknown or invalid host key");

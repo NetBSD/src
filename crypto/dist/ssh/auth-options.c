@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.6 2001/04/10 07:13:48 itojun Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.7 2001/06/23 16:36:23 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.16 2001/03/18 12:07:52 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.18 2001/05/31 10:30:12 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
