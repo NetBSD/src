@@ -1,4 +1,4 @@
-/*	$NetBSD: fdboot.s,v 1.2 1996/03/18 21:06:35 leo Exp $	*/
+/*	$NetBSD: fdboot.s,v 1.3 1996/12/28 23:38:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -67,11 +67,7 @@ main:	movml	d1-d7/a0-a6,sp@-
 
 	lea	pc@(m_top),a3
 	movl	_memtop:w,d3
-	movl	_v_bas_ad:w,d0
-	cmpl	d0,d3
-	blts	0f			| memtop < v_bas_ad
-	movl	d0,d3
-0:	cmpl	#MINTOP,d3
+	cmpl	#MINTOP,d3
 	blts	exit			| memtop < MINTOP
 
 	andw	#-4,d3
@@ -222,6 +218,6 @@ m_sbl:	.asciz	"fdboot: bootxx => 0x#\r\n"
 m_rds:	.asciz	"fdboot: Floprd => 0x#\r\n"
 m_key:	.asciz	"\007\r\npress any key... @\r\n"
 
-fill:	.space	12		| 510-(fill-start)
+fill:	.space	22		| 510-(fill-start)
 	.word	0		| checksum
 end:

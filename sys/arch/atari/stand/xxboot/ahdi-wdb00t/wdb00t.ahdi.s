@@ -1,4 +1,4 @@
-/*	$NetBSD: wdb00t.ahdi.s,v 1.2 1996/12/26 14:55:23 leo Exp $	*/
+/*	$NetBSD: wdb00t.ahdi.s,v 1.3 1996/12/28 23:38:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -51,6 +51,12 @@ main:	bclr	#2,(_drvbits+3):w
 	movq	#3,d0
 	lea	pc@(p0_dsc),a0
 	movb	d5,d1			| NVRAM bootpref
+	bnes	0f
+
+	| The Hades bios does not provide a bootprev. In case
+	| of doubt, we fetch it ourselves.
+	movb	#BOOTPREF,rtcrnr:w
+	movb	rtcdat:w,d1
 	bnes	0f
 	movq	#-8,d1	 		| bootpref = any
 
@@ -161,7 +167,7 @@ err:	movq	#-1,d0
 	movq	#0,d0
 	rts
 
-fill:	.space	64
+fill:	.space	52
 
 dpar:	.byte	0			| tracks/cylinder
 	.byte	0			| sectors/track
