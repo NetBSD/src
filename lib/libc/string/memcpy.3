@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.3,v 1.9 2002/02/07 07:00:31 ross Exp $
+.\"	$NetBSD: memcpy.3,v 1.10 2002/10/01 17:29:59 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt MEMCPY 3
@@ -59,7 +59,8 @@ bytes from string
 to string
 .Fa dst .
 The arguments must not overlap -- behavior if the arguments overlap is
-undefined. To copy byte strings that overlap, use
+undefined.
+To copy byte strings that overlap, use
 .Xr memmove 3 .
 .Sh RETURN VALUES
 The
