@@ -1,9 +1,9 @@
-/*	$NetBSD: log.c,v 1.7 2002/07/10 18:53:57 wiz Exp $	*/
+/*	$NetBSD: log.c,v 1.8 2002/07/10 20:19:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
@@ -31,12 +31,12 @@
  * Revision 1.5  92/08/11  12:03:43  mrt
  * 	Brad's delinting and variable argument list usage
  * 	changes. Added copyright.
- * 
+ *
  * Revision 1.3  89/08/15  15:30:37  bww
  * 	Updated to use v*printf() in place of _doprnt().
  * 	From "[89/04/19            mja]" at CMU.
  * 	[89/08/15            bww]
- * 
+ *
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added check to allow logopen() to be called multiple times.
  *
@@ -48,121 +48,119 @@
 
 #include <stdio.h>
 #include <sys/syslog.h>
-#include <c.h>
+#include "c.h"
 #include "supcdefs.h"
 #include "supextern.h"
 
 static int opened = 0;
 
 void
-logopen(program)
-char *program;
+logopen(char *program)
 {
-	if (opened)  return;
-	openlog(program,LOG_PID,LOG_DAEMON);
+	if (opened)
+		return;
+	openlog(program, LOG_PID, LOG_DAEMON);
 	opened++;
 }
 
 void
-logquit(int retval,char *fmt,...)
+logquit(int retval, char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR, "%s", buf);
-		closelog ();
-		exit (retval);
+		syslog(LOG_ERR, "%s", buf);
+		closelog();
+		exit(retval);
 	}
-	quit (retval,"SUP: %s\n", buf);
+	quit(retval, "SUP: %s\n", buf);
 }
 
 void
-logerr(char *fmt,...)
+logerr(char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR, "%s", buf);
+		syslog(LOG_ERR, "%s", buf);
 		return;
 	}
-	fprintf (stderr,"SUP: %s\n",buf);
-	(void) fflush (stderr);
+	fprintf(stderr, "SUP: %s\n", buf);
+	(void) fflush(stderr);
 }
 
 void
-loginfo(char *fmt,...)
+loginfo(char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_INFO, "%s", buf);
+		syslog(LOG_INFO, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf("%s\n", buf);
+	(void) fflush(stdout);
 }
-
 #ifdef LIBWRAP
-#include <tcpd.h>          
+#include <tcpd.h>
 #ifndef LIBWRAP_ALLOW_FACILITY
-# define LIBWRAP_ALLOW_FACILITY LOG_AUTH
+#define LIBWRAP_ALLOW_FACILITY LOG_AUTH
 #endif
 #ifndef LIBWRAP_ALLOW_SEVERITY
-# define LIBWRAP_ALLOW_SEVERITY LOG_INFO
+#define LIBWRAP_ALLOW_SEVERITY LOG_INFO
 #endif
 #ifndef LIBWRAP_DENY_FACILITY
-# define LIBWRAP_DENY_FACILITY LOG_AUTH
-#endif  
-#ifndef LIBWRAP_DENY_SEVERITY 
-# define LIBWRAP_DENY_SEVERITY LOG_WARNING
+#define LIBWRAP_DENY_FACILITY LOG_AUTH
 #endif
-int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
-int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
+#ifndef LIBWRAP_DENY_SEVERITY
+#define LIBWRAP_DENY_SEVERITY LOG_WARNING
+#endif
+int allow_severity = LIBWRAP_ALLOW_FACILITY | LIBWRAP_ALLOW_SEVERITY;
+int deny_severity = LIBWRAP_DENY_FACILITY | LIBWRAP_DENY_SEVERITY;
 
 void
-logdeny(char *fmt,...)
+logdeny(char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (deny_severity, "%s", buf);
+		syslog(deny_severity, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf("%s\n", buf);
+	(void) fflush(stdout);
 }
 
 void
-logallow(char *fmt,...)
+logallow(char *fmt, ...)
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (allow_severity, "%s", buf);
+		syslog(allow_severity, "%s", buf);
 		return;
 	}
-	printf ("%s\n",buf);
-	(void) fflush (stdout);
+	printf("%s\n", buf);
+	(void) fflush(stdout);
 }
-
-#endif /*  LIBWRAP */
+#endif				/* LIBWRAP */
