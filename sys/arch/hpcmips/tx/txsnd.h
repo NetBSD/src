@@ -1,4 +1,4 @@
-/*	$NetBSD: txsnd.h,v 1.1 2000/01/12 14:56:17 uch Exp $ */
+/*	$NetBSD: txsnd.h,v 1.2 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -30,12 +30,16 @@ typedef struct tx_sound_tag *tx_sound_tag_t;
 
 struct tx_sound_tag {
 	void	*ts_v;
-
-	void	(*ts_click) __P((tx_sound_tag_t));
+	
+	void	(*ts_click)	__P((tx_sound_tag_t));
+	void	(*ts_mute)	__P((tx_sound_tag_t, int));
 };
 
 #define	tx_sound_click(t) \
 	(*((tx_sound_tag_t)(t->tc_soundt))->ts_click) \
 	(((tx_sound_tag_t)(t->tc_soundt))->ts_v)
+#define	tx_sound_mute(t, onoff) \
+	(*((tx_sound_tag_t)(t->tc_soundt))->ts_mute) \
+	(((tx_sound_tag_t)(t->tc_soundt))->ts_v, (onoff))
 
 void	tx_sound_init __P((tx_chipset_tag_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.3 2000/01/07 15:19:13 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.4 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -61,7 +61,8 @@ struct tc5165buf_chip {
 	bus_space_handle_t	scc_csh;
 	u_int16_t		scc_buf[TC5165_COLUMN_MAX];
 	int			scc_enabled;
-
+	int			scc_queued;
+	
 	struct skbd_controller	scc_controller;
 };
 
@@ -72,10 +73,11 @@ struct tc5165buf_softc {
 	void			*sc_ih;
 };
 
-int	tc5165buf_match __P((struct device*, struct cfdata*, void*));
+int	tc5165buf_match	__P((struct device*, struct cfdata*, void*));
 void	tc5165buf_attach __P((struct device*, struct device*, void*));
 int	tc5165buf_intr __P((void*));
 int	tc5165buf_poll __P((void*));
+void	tc5165buf_soft __P((void*));
 void	tc5165buf_ifsetup __P((struct tc5165buf_chip*));
 
 int	tc5165buf_input_establish __P((void*, int (*) __P((void*, int, int)),
@@ -106,6 +108,7 @@ tc5165buf_attach(parent, self, aux)
 	struct tc5165buf_softc *sc = (void*)self;
 	struct skbd_attach_args saa;
 
+	printf(": ");
 	sc->sc_tc = ca->ca_tc;
 	sc->sc_chip = &tc5165buf_chip;
 	
@@ -113,23 +116,25 @@ tc5165buf_attach(parent, self, aux)
 
 	if (bus_space_map(sc->sc_chip->scc_cst, ca->ca_csio.csbase, 
 			  ca->ca_csio.cssize, 0, &sc->sc_chip->scc_csh)) {
-		printf(": can't map i/o space\n");
+		printf("can't map i/o space\n");
 		return;
 	}
 
 	sc->sc_chip->scc_enabled = 0;
-#if notyet
-	if (!(sc->sc_ih = tx_intr_establish(sc->sc_tc, ca->ca_irq1,
+
+	if (ca->ca_irq1 != -1) {
+		sc->sc_ih = tx_intr_establish(sc->sc_tc, ca->ca_irq1,
 					      IST_EDGE, IPL_TTY, 
-					      tc5165buf_intr, sc))) {
-		printf(": can't establish interrupt(1)\n");
-		return;
+					      tc5165buf_intr, sc);
+		printf("interrupt mode");
+	} else {
+		sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1, IPL_TTY, 
+						tc5165buf_intr, sc);
+		printf("polling mode");
 	}
-#endif
-	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
-					      IPL_TTY, tc5165buf_poll, 
-					      sc->sc_chip))) {
-		printf(": can't establish interrupt\n");
+
+	if (!sc->sc_ih) {
+		printf(" can't establish interrupt\n");
 		return;
 	}
 
@@ -194,25 +199,43 @@ tc5165buf_intr(arg)
 	void *arg;
 {
 	struct tc5165buf_softc *sc = arg;
+	struct tc5165buf_chip *scc = sc->sc_chip;
 
-	return tc5165buf_poll(sc->sc_chip);
+	if (!scc->scc_enabled || scc->scc_queued)
+		return 0;
+	
+	scc->scc_queued = 1;
+	timeout(tc5165buf_soft, scc, 1);
+	
+	return 0;
 }
 
 int
 tc5165buf_poll(arg)
 	void *arg;
 {
-	struct tc5165buf_chip *scc = arg;	
+	struct tc5165buf_chip *scc = arg;
+
+	if (!scc->scc_enabled)
+		return POLL_CONT;
+
+	tc5165buf_soft(arg);
+
+	return POLL_CONT;
+}
+
+void
+tc5165buf_soft(arg)
+	void *arg;
+{
+	struct tc5165buf_chip *scc = arg;
 	bus_space_tag_t t = scc->scc_cst;
 	bus_space_handle_t h = scc->scc_csh;
 	u_int16_t mask, rpat, edge;
 	int i, j, type, val;
 	skbd_tag_t controller;
+	int s;
 
-	if (!scc->scc_enabled) {
-		return 0;
-	}
-	
 	controller = &scc->scc_controller;
 	skbd_input_hook(controller);
 
@@ -227,7 +250,6 @@ tc5165buf_poll(arg)
 		delay(3);
 		if ((edge = (rpat ^ scc->scc_buf[i]))) {
 			scc->scc_buf[i] = rpat;
-			
 			for (j = 0, mask = 1; j < TC5165_ROW_MAX; 
 			     j++, mask <<= 1) {
 				if (mask & edge) {
@@ -240,5 +262,7 @@ tc5165buf_poll(arg)
 		}
 	}
 
-	return POLL_CONT;
+	s = spltty();
+	scc->scc_queued = 0;
+	splx(s);
 }
