@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.73 2001/11/15 15:15:58 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.74 2001/11/28 05:45:28 lukem Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.73 2001/11/15 15:15:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.74 2001/11/28 05:45:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ ukbd_intr(xfer, addr, status)
 		 */
 		sc->sc_data = *ud;
 		usb_callout(sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
-#if DDB
+#ifdef DDB
 	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
 		/*
 		 * For the console keyboard we can't deliver CTL-ALT-ESC
