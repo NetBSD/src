@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.4 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.4 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7313,7 +7313,233 @@ key_alloc_mbuf(l)
 	return m;
 }
 
-#ifdef __NetBSD__
+static struct mbuf *
+key_setdump(u_int8_t req_satype, int *errorp)
+{
+	struct secashead *sah;
+	struct secasvar *sav;
+	u_int16_t proto;
+	u_int stateidx;
+	u_int8_t satype;
+	u_int8_t state;
+	int cnt;
+	struct mbuf *m, *n;
+
+	/* map satype to proto */
+	if ((proto = key_satype2proto(req_satype)) == 0) {
+		*errorp = EINVAL;
+		return (NULL);
+	}
+
+	/* count sav entries to be sent to the userland. */
+	cnt = 0;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (req_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
+			continue;
+
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				cnt++;
+			}
+		}
+	}
+
+	if (cnt == 0) {
+		*errorp = ENOENT;
+		return (NULL);
+	}
+
+	/* send this to the userland, one at a time. */
+	m = NULL;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (req_satype != SADB_SATYPE_UNSPEC &&
+		    proto != sah->saidx.proto)
+			continue;
+
+		/* map proto to satype */
+		if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
+			m_freem(m);
+			*errorp = EINVAL;
+			return (NULL);
+		}
+
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				n = key_setdumpsa(sav, SADB_DUMP, satype,
+				    --cnt, 0);
+				if (!n) {
+					m_freem(m);
+					*errorp = ENOBUFS;
+					return (NULL);
+				}
+
+				if (!m)
+					m = n;
+				else
+					m_cat(m, n);
+			}
+		}
+	}
+
+	if (!m) {
+		*errorp = EINVAL;
+		return (NULL);
+	}
+
+	if ((m->m_flags & M_PKTHDR) != 0) {
+		m->m_pkthdr.len = 0;
+		for (n = m; n; n = n->m_next)
+			m->m_pkthdr.len += n->m_len;
+	}
+
+	*errorp = 0;
+	return (m);
+}
+
+static struct mbuf *
+key_setspddump(int *errorp)
+{
+	struct secpolicy *sp;
+	int cnt;
+	u_int dir;
+	struct mbuf *m, *n;
+
+	/* search SPD entry and get buffer size. */
+	cnt = 0;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			cnt++;
+		}
+	}
+
+	if (cnt == 0) {
+		*errorp = ENOENT;
+		return (NULL);
+	}
+
+	m = NULL;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			--cnt;
+			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, 0);
+
+			if (!n) {
+				*errorp = ENOBUFS;
+				m_freem(m);
+				return (NULL);
+			}
+			if (!m)
+				m = n;
+			else {
+				m->m_pkthdr.len += n->m_pkthdr.len;
+				m_cat(m, n);
+			}
+		}
+	}
+
+	*errorp = 0;
+	return (m);
+}
+
+static int
+sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
+{
+	struct mbuf *m, *n;
+	int err2 = 0;
+	char *p, *ep;
+	size_t len;
+	int s, error;
+
+	if (newp)
+		return (EPERM);
+	if (namelen != 1)
+		return (EINVAL);
+
+	s = splsoftnet();
+	m = key_setdump(name[1], &error);
+	splx(s);
+	if (!m)
+		return (error);
+	if (!oldp)
+		*oldlenp = m->m_pkthdr.len;
+	else {
+		p = oldp;
+		if (*oldlenp < m->m_pkthdr.len) {
+			err2 = ENOMEM;
+			ep = p + *oldlenp;
+		} else {
+			*oldlenp = m->m_pkthdr.len;
+			ep = p + m->m_pkthdr.len;
+		}
+		for (n = m; n; n = n->m_next) {
+			len =  (ep - p < n->m_len) ?
+				ep - p : n->m_len;
+			error = copyout(mtod(n, const void *), p, len);
+			p += len;
+			if (error)
+				break;
+		}
+		if (error == 0)
+			error = err2;
+	}
+	m_freem(m);
+
+	return (error);
+}
+
+static int
+sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
+{
+	struct mbuf *m, *n;
+	int err2 = 0;
+	char *p, *ep;
+	size_t len;
+	int s, error;
+
+	if (newp)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	s = splsoftnet();
+	m = key_setspddump(&error);
+	splx(s);
+	if (!m)
+		return (error);
+	if (!oldp)
+		*oldlenp = m->m_pkthdr.len;
+	else {
+		p = oldp;
+		if (*oldlenp < m->m_pkthdr.len) {
+			err2 = ENOMEM;
+			ep = p + *oldlenp;
+		} else {
+			*oldlenp = m->m_pkthdr.len;
+			ep = p + m->m_pkthdr.len;
+		}
+		for (n = m; n; n = n->m_next) {
+			len =  (ep - p < n->m_len) ?
+				ep - p : n->m_len;
+			error = copyout(mtod(n, const void *), p, len);
+			p += len;
+			if (error)
+				break;
+		}
+		if (error == 0)
+			error = err2;
+	}
+	m_freem(m);
+
+	return (error);
+}
+
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 {
 
@@ -7370,9 +7596,12 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTLTYPE_INT, "ah_keymin", NULL,
 		       NULL, 0, &ipsec_ah_keymin, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_AH_KEYMIN, CTL_EOL);
-
-	/*
-	 * @@@ no KEYCTL_DUMPSA or KEYCTL_DUMPSP here?!
-	 */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "dumpsa", NULL,
+		       sysctl_net_key_dumpsa, 0, NULL, 0,
+		       CTL_NET, PF_KEY, KEYCTL_DUMPSA, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "dumpsp", NULL,
+		       sysctl_net_key_dumpsp, 0, NULL, 0,
+		       CTL_NET, PF_KEY, KEYCTL_DUMPSP, CTL_EOL);
 }
-#endif /*__NetBSD__*/
