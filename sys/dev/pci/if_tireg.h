@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.4 2001/05/15 14:37:36 lukem Exp $ */
+/* $NetBSD: if_tireg.h,v 1.5 2001/06/03 03:29:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -768,11 +768,7 @@ struct ti_tx_desc {
 
 #define ETHER_ALIGN 2
 
-#define TI_FRAMELEN		1518
-#define TI_JUMBO_FRAMELEN	9018
-#define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define TI_PAGE_SIZE		PAGE_SIZE
-#define TI_MIN_FRAMELEN		60
 
 /*
  * Buffer descriptor error flags.
@@ -994,7 +990,7 @@ struct ti_event_desc {
 #define TI_JSLOTS	64 /* 256 */
 #define TI_RSLOTS	128
 
-#define TI_JRAWLEN (TI_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
+#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
 #define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
 	(TI_JRAWLEN % sizeof(u_int64_t))))
 #define TI_JPAGESZ PAGE_SIZE
