@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.21 2005/03/21 00:49:17 rtr Exp $
+#	$NetBSD: Makefile.common,v 1.22 2005/03/22 19:47:59 rtr Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -83,7 +83,7 @@ XSERVER_XVFB=		no
 # Does this server need Xfont/fontbase libraries?
 XSERVER_NEEDS_XFONT?=	no
 # Does this server need miext modules?
-XSERVER_NEEDS_MIEXT?=	no
+XSERVER_NEEDS_MIEXT?=	yes
 # Does this server use cfb* libraries?
 XSERVER_HAS_CFB?=	yes
 # Does this server use fb library?
