@@ -1,13 +1,11 @@
 #	from: @(#)Makefile	5.16 (Berkeley) 4/26/91
-#	$Id: Makefile,v 1.7 1993/12/30 10:43:58 cgd Exp $
+#	$Id: Makefile,v 1.8 1994/01/28 00:38:59 cgd Exp $
 
 PROG=	routed
 SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
 	trace.c inet.c
 MAN8=	routed.0
 #SUBDIR=	query trace
-DPADD=	${LIBUTIL} ${LIBCOMPAT}
-LDADD=	-lutil 
 
 .include <bsd.prog.mk>
 
