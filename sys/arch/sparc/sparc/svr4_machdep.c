@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.13 1996/01/07 19:47:27 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.14 1996/03/14 21:09:30 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,6 +54,7 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+#define DEBUG_SVR4
 
 #ifdef DEBUG
 extern int sigdebug;
@@ -74,7 +75,7 @@ svr4_printcontext(fun, uc)
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 
-	printf("%s at %x\n", fun, uc);
+	printf("%s at %p\n", fun, uc);
 
 	printf("Regs: ");
 	printf("PSR = %x ", r[SVR4_SPARC_PSR]);
@@ -98,10 +99,8 @@ svr4_printcontext(fun, uc)
 	printf("O7 = %x ",  r[SVR4_SPARC_O7]);
 	printf("\n");
 
-	printf("Signal Stack: sp %x, size %d, flags %x\n",
+	printf("Signal Stack: sp %p, size %d, flags %x\n",
 	       s->ss_sp, s->ss_size, s->ss_flags);
-
-	printf("Signal mask: %x\n", uc->uc_sigmask);
 
 	printf("Flags: %x\n", uc->uc_flags);
 }
@@ -118,11 +117,19 @@ svr4_getcontext(p, uc, mask, oonstack)
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
+#ifdef FPU_CONTEXT
+	svr4_fregset_t *f = &uc->uc_mcontext.freg;
+	struct fpstate *fps = p->p_md.md_fpstate;
+#endif
+
+	write_user_windows();
+	if (rwindow_save(p))
+		sigexit(p, SIGILL);
 
 	bzero(uc, sizeof(struct svr4_ucontext));
 
 	/*
-	 * Set the general purpose registers
+	 * Get the general purpose registers
 	 */
 	r[SVR4_SPARC_PSR] = tf->tf_psr;
 	r[SVR4_SPARC_PC] = tf->tf_pc;
@@ -144,20 +151,47 @@ svr4_getcontext(p, uc, mask, oonstack)
 	r[SVR4_SPARC_O6] = tf->tf_out[6];
 	r[SVR4_SPARC_O7] = tf->tf_out[7];
 
+#ifdef FPU_CONTEXT
 	/*
-	 * Set the signal stack
+	 * Get the floating point registers
+	 */
+	bcopy(fps->fs_regs, f->fpu_regs, sizeof(fps->fs_regs));
+	f->fp_nqsize = sizeof(struct fp_qentry);
+	f->fp_nqel = fps->fs_qsize;
+	f->fp_fsr = fps->fs_fsr;
+	if (f->fp_q != NULL) {
+		size_t sz = f->fp_nqel * f->fp_nqsize;
+		if (sz > sizeof(fps->fs_queue)) {
+#ifdef DIAGNOSTIC
+			printf("getcontext: fp_queue too large\n");
+#endif
+			return;
+		}
+		if (copyout(fps->fs_queue, f->fp_q, sz) != 0) {
+#ifdef DIAGNOSTIC
+			printf("getcontext: copy of fp_queue failed %d\n",
+			       error);
+#endif
+			return;
+		}
+	}
+	f->fp_busy = 0;	/* XXX: How do we determine that? */
+#endif
+
+	/*
+	 * Get the signal stack
 	 */
 	bsd_to_svr4_sigaltstack(sf, s);
 
 	/*
-	 * Set the signal mask
+	 * Get the signal mask
 	 */
 	bsd_to_svr4_sigset(&mask, &uc->uc_sigmask);
 
 	/*
-	 * Set the flags
+	 * Get the flags
 	 */
-	uc->uc_flags = SVR4_UC_ALL;
+	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
 
 #ifdef DEBUG_SVR4
 	svr4_printcontext("getcontext", uc);
@@ -181,21 +215,20 @@ svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-	struct sigcontext *scp, context;
 	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
 	struct sigaltstack *sf = &psp->ps_sigstk;
 	int mask;
+#ifdef FPU_CONTEXT
+	svr4_fregset_t *f = &uc->uc_mcontext.freg;
+	struct fpstate *fps = p->p_md.md_fpstate;
+#endif
 
 #ifdef DEBUG_SVR4
 	svr4_printcontext("setcontext", uc);
 #endif
-	/*
-	 * XXX:
-	 * Should we check the value of flags to determine what to restore?
-	 */
 
 	write_user_windows();
 	if (rwindow_save(p))
@@ -203,7 +236,7 @@ svr4_setcontext(p, uc)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("svr4_setcontext: %s[%d], svr4_ucontext %x\n",
+		printf("svr4_setcontext: %s[%d], svr4_ucontext %p\n",
 		    p->p_comm, p->p_pid, uc);
 #endif
 
@@ -212,50 +245,91 @@ svr4_setcontext(p, uc)
 	/*
 	 * Restore register context.
 	 */
-	/*
-	 * Only the icc bits in the psr are used, so it need not be
-	 * verified.  pc and npc must be multiples of 4.  This is all
-	 * that is required; if it holds, just do it.
-	 */
-	if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0) {
-		printf("pc or npc are not multiples of 4!\n");
-		return EINVAL;
+	if (uc->uc_flags & SVR4_UC_CPU) {
+		/*
+		 * Only the icc bits in the psr are used, so it need not be
+		 * verified.  pc and npc must be multiples of 4.  This is all
+		 * that is required; if it holds, just do it.
+		 */
+		if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0) {
+			printf("pc or npc are not multiples of 4!\n");
+			return EINVAL;
+		}
+
+		/* take only psr ICC field */
+		tf->tf_psr = (tf->tf_psr & ~PSR_ICC) |
+		    (r[SVR4_SPARC_PSR] & PSR_ICC);
+		tf->tf_pc = r[SVR4_SPARC_PC];
+		tf->tf_npc = r[SVR4_SPARC_nPC];
+#if 0
+		tf->tf_y = r[SVR4_SPARC_Y];
+#endif
+
+#if 0
+		/* Restore everything */
+		tf->tf_global[1] = r[SVR4_SPARC_G1];
+		tf->tf_global[2] = r[SVR4_SPARC_G2];
+		tf->tf_global[3] = r[SVR4_SPARC_G3];
+		tf->tf_global[4] = r[SVR4_SPARC_G4];
+		tf->tf_global[5] = r[SVR4_SPARC_G5];
+		tf->tf_global[6] = r[SVR4_SPARC_G6];
+		tf->tf_global[7] = r[SVR4_SPARC_G7];
+#endif
+#if 0
+		tf->tf_out[0] = r[SVR4_SPARC_O0];
+		tf->tf_out[1] = r[SVR4_SPARC_O1];
+		tf->tf_out[2] = r[SVR4_SPARC_O2];
+		tf->tf_out[3] = r[SVR4_SPARC_O3];
+		tf->tf_out[4] = r[SVR4_SPARC_O4];
+		tf->tf_out[5] = r[SVR4_SPARC_O5];
+#endif
+		tf->tf_out[6] = r[SVR4_SPARC_O6];
+		tf->tf_out[7] = r[SVR4_SPARC_O7];
 	}
 
-	/* take only psr ICC field */
-	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (r[SVR4_SPARC_PSR] & PSR_ICC);
-	tf->tf_pc = r[SVR4_SPARC_PC];
-	tf->tf_npc = r[SVR4_SPARC_nPC];
-	tf->tf_y = r[SVR4_SPARC_Y];
 
-	/* Restore everything */
-	tf->tf_global[1] = r[SVR4_SPARC_G1];
-	tf->tf_global[2] = r[SVR4_SPARC_G2];
-	tf->tf_global[3] = r[SVR4_SPARC_G3];
-	tf->tf_global[4] = r[SVR4_SPARC_G4];
-	tf->tf_global[5] = r[SVR4_SPARC_G5];
-	tf->tf_global[6] = r[SVR4_SPARC_G6];
-	tf->tf_global[7] = r[SVR4_SPARC_G7];
+#ifdef FPU_CONTEXT
+	if (uc->uc_flags & SVR4_UC_FPU) {
+		/*
+		 * Set the floating point registers
+		 */
+		int error;
+		size_t sz = f->fp_nqel * f->fp_nqsize;
+		if (sz > sizeof(fps->fs_queue)) {
+#ifdef DIAGNOSTIC
+			printf("setcontext: fp_queue too large\n");
+#endif
+			return EINVAL;
+		}
+		bcopy(f->fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+		fps->fs_qsize = f->fp_nqel;
+		fps->fs_fsr = f->fp_fsr;
+		if (f->fp_q != NULL) {
+			if ((error = copyin(f->fp_q, fps->fs_queue,
+					    f->fp_nqel * f->fp_nqsize)) != 0) {
+#ifdef DIAGNOSTIC
+				printf("setcontext: copy of fp_queue failed\n");
+#endif
+				return error;
+			}
+		}
+	}
+#endif
 
-	tf->tf_out[0] = r[SVR4_SPARC_O0];
-	tf->tf_out[1] = r[SVR4_SPARC_O1];
-	tf->tf_out[2] = r[SVR4_SPARC_O2];
-	tf->tf_out[3] = r[SVR4_SPARC_O3];
-	tf->tf_out[4] = r[SVR4_SPARC_O4];
-	tf->tf_out[5] = r[SVR4_SPARC_O5];
-	tf->tf_out[6] = r[SVR4_SPARC_O6];
-	tf->tf_out[7] = r[SVR4_SPARC_O7];
+	if (uc->uc_flags & SVR4_UC_STACK) {
+		/*
+		 * restore signal stack
+		 */
+		svr4_to_bsd_sigaltstack(s, sf);
+	}
 
-	/*
-	 * restore signal stack
-	 */
-	svr4_to_bsd_sigaltstack(s, sf);
-
-	/*
-	 * restore signal mask
-	 */
-	svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
-	p->p_sigmask = mask & ~sigcantmask;
+	if (uc->uc_flags & SVR4_UC_SIGMASK) {
+		/*
+		 * restore signal mask
+		 */
+		svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
+		p->p_sigmask = mask & ~sigcantmask;
+	}
 
 	return EJUSTRETURN;
 }
@@ -399,7 +473,6 @@ svr4_sendsig(catcher, sig, mask, code)
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack, oldsp, newsp, addr;
-	svr4_greg_t* r = frame.sf_uc.uc_mcontext.greg;
 	extern char svr4_sigcode[], svr4_esigcode[];
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 1995/04/19 21:24:29 pk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.7 1996/03/14 21:09:03 christos Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -34,6 +34,10 @@
 #include <sys/param.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
+#include <ddb/db_access.h>
 #include <machine/instr.h>
 
 /*
@@ -52,35 +56,35 @@
  * 0000 0000 0000 0000 0010 0000 0000 0000 f3i bit, format 3 only
  */
 
-#define OP(x)	((x & 0x3) << 30)
-#define OP2(x)	((x & 0x7) << 22)
-#define OP3(x)	((x & 0x3f) << 19)
-#define OPF(x)	((x & 0x1ff) << 5)
-#define F3I(x)	((x & 0x1) << 13)
+#define OP(x)	(((x) & 0x3) << 30)
+#define OP2(x)	(((x) & 0x7) << 22)
+#define OP3(x)	(((x) & 0x3f) << 19)
+#define OPF(x)	(((x) & 0x1ff) << 5)
+#define F3I(x)	(((x) & 0x1) << 13)
 
 /* various other fields */
 
-#define A(x)		((x & 0x1) << 29) 
-#define P(x)		((x & 0x1) << 19) 
-#define X(x)		((x & 0x1) << 12) 
-#define FCN(x)		((x & 0x1f) << 25)
-#define OPF(x)		((x & 0x1ff) << 5)
-#define RCOND2(x)	((x & 0x7) << 25)
-#define RCOND34(x)	((x & 0x7) << 10) 
-#define COND(x)		((x & 0xf) << 25) 
-#define SW_TRAP(x)	(x & 0x7f)
-#define SHCNT32(x)	(x & 0x1f)
-#define SHCNT64(x)	(x & 0x3f)
-#define IMM11(x)	(x & 0x7ff)
-#define IMM22(x)	(x & 0x3fffff)
-#define DISP19(x)	(x & 0x7ffff)
-#define DISP22(x)	(x & 0x3fffff)
-#define DISP30(x)	(x & 0x3fffffff)
+#define A(x)		(((x) & 0x1) << 29) 
+#define P(x)		(((x) & 0x1) << 19) 
+#define X(x)		(((x) & 0x1) << 12) 
+#define FCN(x)		(((x) & 0x1f) << 25)
+#define OPF(x)		(((x) & 0x1ff) << 5)
+#define RCOND2(x)	(((x) & 0x7) << 25)
+#define RCOND34(x)	(((x) & 0x7) << 10) 
+#define COND(x)		(((x) & 0xf) << 25) 
+#define SW_TRAP(x)	((x) & 0x7f)
+#define SHCNT32(x)	((x) & 0x1f)
+#define SHCNT64(x)	((x) & 0x3f)
+#define IMM11(x)	((x) & 0x7ff)
+#define IMM22(x)	((x) & 0x3fffff)
+#define DISP19(x)	((x) & 0x7ffff)
+#define DISP22(x)	((x) & 0x3fffff)
+#define DISP30(x)	((x) & 0x3fffffff)
 
 /* Register Operand Fields */
-#define RS1(x)		((x & 0x1f) << 14)
-#define RS2(x)		(x & 0x1f)        
-#define RD(x)		((x & 0x1f) << 25)
+#define RS1(x)		(((x) & 0x1f) << 14)
+#define RS2(x)		((x) & 0x1f)        
+#define RD(x)		(((x) & 0x1f) << 25)
 
 /* FORMAT macros used in sparc_i table to decode each opcode */
 #define FORMAT1(a)	(OP(a))
@@ -93,7 +97,7 @@
 #define OPF_X(x,y)	((((x) & 0x1f) << 4) | ((y) & 0xf))
 
 /* COND condition codes field... */
-#define COND2(x)	((x & 0xf) << 14)
+#define COND2(x)	(((x) & 0xf) << 14)
 
 struct sparc_insn {
 	  unsigned long int match;
@@ -790,7 +794,7 @@ struct sparc_insn sparc_i[] = {
 
 };
 
-vm_offset_t
+db_addr_t
 db_disasm(loc, altfmt)
 	vm_offset_t loc;
 	boolean_t altfmt;

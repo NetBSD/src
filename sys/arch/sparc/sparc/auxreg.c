@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.10 1996/02/19 09:46:32 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.11 1996/03/14 21:08:53 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
@@ -55,6 +56,7 @@
 
 static int auxregmatch __P((struct device *, void *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
+
 struct cfdriver auxregcd =
     { 0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device) };
 
@@ -90,7 +92,6 @@ auxregmatch(parent, vcf, aux)
 	void *aux, *vcf;
 {
 	register struct confargs *ca = aux;
-	struct cfdata *cf = vcf;
 
 	if (cputyp==CPU_SUN4)
 		return (0);
@@ -116,6 +117,7 @@ auxregattach(parent, self, aux)
 
 unsigned int
 auxregbisc(bis, bic)
+	int bis, bic;
 {
 	register int v, s = splhigh();
 
