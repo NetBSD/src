@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.11 2002/06/28 22:24:13 drochner Exp $ */
+/* $NetBSD: vga_isa.c,v 1.12 2002/07/09 06:55:09 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.11 2002/06/28 22:24:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.12 2002/07/09 06:55:09 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,18 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.11 2002/06/28 22:24:13 drochner Exp $"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-int	vga_isa_match __P((struct device *, struct cfdata *, void *));
-void	vga_isa_attach __P((struct device *, struct device *, void *));
+int	vga_isa_match(struct device *, struct cfdata *, void *);
+void	vga_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach vga_isa_ca = {
 	sizeof(struct vga_softc), vga_isa_match, vga_isa_attach,
 };
 
 int
-vga_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vga_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -106,9 +103,7 @@ vga_isa_match(parent, match, aux)
 }
 
 void
-vga_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vga_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vga_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
@@ -120,8 +115,7 @@ vga_isa_attach(parent, self, aux)
 }
 
 int
-vga_isa_cnattach(iot, memt)
-	bus_space_tag_t iot, memt;
+vga_isa_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_ISAVGA, 1));
