@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.4.3 2001/07/02 17:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.4.4 2001/07/13 04:51:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -292,7 +292,9 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		if (bp->b_flags & B_CALL) {
 			LFS_SET_UINO(ip, IN_CLEANING);
 		} else {
-			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+			LFS_SET_UINO(ip, IN_MODIFIED);
+			if (bp->b_lblkno >= 0)
+				LFS_SET_UINO(ip, IN_UPDATE);
 		}
 		fs->lfs_avail -= fsb;
 		bp->b_flags |= B_DELWRI;

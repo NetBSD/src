@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.2.5 2001/07/10 01:43:28 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.2.6 2001/07/13 04:51:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -379,6 +379,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 	
 	ip = VTOI(vp);
+	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
 	/* Zero out the direct and indirect block addresses. */
 	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
@@ -463,7 +464,8 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	ip->i_ffs_blocks = 0;
 	ip->i_lfs_effnblks = 0;
 	ip->i_flag = 0;
-	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
+	/* Why was IN_MODIFIED ever set here? */
+	/* LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED); */
 }
 
 /* Free an inode. */
