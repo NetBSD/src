@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.3 1998/11/19 00:01:30 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.4 1998/11/20 05:20:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ pcmcom_detach(self, flags)
 	struct pcmcom_slave_info *psi;
 	int slave, error;
 
-	for (slave = 0; slave < sc->sc_nslaves; slave++) {
+	for (slave = sc->sc_nslaves - 1; slave >= 0; slave--) {
 		psi = &sc->sc_slaves[slave];
 		if (psi->psi_child == NULL)
 			continue;
@@ -335,7 +335,7 @@ pcmcom_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		for (slave = 0; slave < sc->sc_nslaves; slave++) {
+		for (slave = sc->sc_nslaves - 1; slave >= 0; slave--) {
 			psi = &sc->sc_slaves[slave];
 			if (psi->psi_child == NULL)
 				continue;
