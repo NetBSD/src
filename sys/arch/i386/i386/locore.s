@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.31 2002/04/27 20:24:46 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.32 2002/04/30 14:15:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1894,7 +1894,7 @@ ENTRY(cpu_switch)
 	 * Registers:
 	 *   %eax, %ecx - scratch
 	 *   %esi - old process, then old pcb
-	 *   %edi - new process
+	 *   %edi - idle pcb
 	 */
 
 	pushl	%esi
@@ -1910,10 +1910,10 @@ ENTRY(cpu_switch)
 	/* Find idle PCB for this CPU */
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(proc0),%ebx
-	movl	P_ADDR(%ebx),%esi
+	movl	P_ADDR(%ebx),%edi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	movl	CPUVAR(IDLE_PCB),%esi
+	movl	CPUVAR(IDLE_PCB),%edi
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
 	movl	$0,CPUVAR(CURPROC)		/* In case we fault... */
@@ -1922,12 +1922,12 @@ ENTRY(cpu_switch)
 	cli
 
 	/* Restore stack pointers. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
+	movl	PCB_ESP(%edi),%esp
+	movl	PCB_EBP(%edi),%ebp
 
 
 	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
+	movl	PCB_CR3(%edi),%ecx
 	movl	%ecx,%cr3
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
@@ -1942,11 +1942,11 @@ ENTRY(cpu_switch)
 	/* We're always in the kernel, so we don't need the LDT. */
 
 	/* Restore cr0 (including FPU state). */
-	movl	PCB_CR0(%esi),%ecx
+	movl	PCB_CR0(%edi),%ecx
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi)
+	SET_CURPCB(%edi)
 
 	xorl	%esi,%esi
 	sti
@@ -2026,10 +2026,6 @@ switch_dequeue:
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
 	SET_CURPROC(%edi,%ecx)
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-
 	/* Skip context switch if same process. */
 	cmpl	%edi,%esi
 	je	switch_return
@@ -2062,7 +2058,7 @@ switch_exited:
 	 * Third phase: restore saved context.
 	 *
 	 * Registers:
-	 *   %eax, %ecx, %edx - scratch
+	 *   %eax, %ebx, %ecx, %edx - scratch
 	 *   %esi - new pcb
 	 *   %edi - new process
 	 */
@@ -2097,7 +2093,9 @@ switch_exited:
 	call	_C_LABEL(pmap_activate)		# pmap_activate(p)
 	addl	$4,%esp
 
+#if 0
 switch_restored:
+#endif
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
 #ifdef MULTIPROCESSOR
@@ -2120,6 +2118,10 @@ switch_restored:
 	sti
 
 switch_return:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+	
 	movl	$0,CPL			# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	movl	$IPL_HIGH,CPL		# splhigh()
