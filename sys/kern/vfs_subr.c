@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.218.2.2 2004/05/29 09:04:29 tron Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.218.2.3 2004/06/21 10:18:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.218.2.2 2004/05/29 09:04:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.218.2.3 2004/06/21 10:18:46 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -246,6 +246,10 @@ getcleanvnode(p)
 	for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
 		if (!simple_lock_try(&vp->v_interlock))
 			continue;
+		/*
+		 * as our lwp might hold the underlying vnode locked,
+		 * don't try to reclaim the VLAYER vnode if it's locked.
+		 */
 		if ((vp->v_flag & VLAYER) == 0) {
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0)
 				break;
