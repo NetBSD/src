@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.20 2002/11/22 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.21 2003/05/31 19:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #ifdef DWARF2_EH
 #include "dwarf2_eh.h"
 #endif
-#include "sysident.h"
 #include "dot_init.h"
 
 static void (*__CTOR_LIST__[1])(void)
