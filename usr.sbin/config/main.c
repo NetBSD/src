@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2000/12/14 22:14:45 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2001/01/16 02:43:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -821,6 +821,7 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
 loop:
+		;
 	}
 	return (errs);
 }
