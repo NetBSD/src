@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.33 2003/04/04 06:45:12 kent Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.34 2003/04/05 13:23:17 kent Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -476,6 +476,14 @@ const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM,
 	  "Intel i82540EM 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP_LOM,
+	  "Intel i82540EP 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP,
+	  "Intel i82540EP 1000BASE-T Ethernet",
 	  WM_T_82540,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP_LP,
