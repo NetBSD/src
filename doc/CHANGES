@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.224 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.225 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -525,4 +525,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sh3el: Switch to GDB 5.3.  [uwe 20031027]
 	file(1): update to 4.06.  [pooka 20031027]
 	installboot(8): Add support for next68k.  [cl 20031027]
+	stpcide(4): added STMicroelectronics STPC IDE controller.
+		[nisimura 20031031]
 
