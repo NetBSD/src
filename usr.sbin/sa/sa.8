@@ -1,4 +1,4 @@
-.\" $NetBSD: sa.8,v 1.12 2002/01/19 11:45:01 wiz Exp $
+.\" $NetBSD: sa.8,v 1.13 2002/02/02 01:48:08 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -210,10 +210,18 @@ per-command accounting summary database
 per-user accounting summary database
 .El
 .Sh SEE ALSO
-.Xr ac 8 ,
+.Xr lastcomm 1 ,
 .Xr acct 5 ,
-.Xr accton 8 ,
-.Xr lastcomm 1
+.Xr ac 8 ,
+.Xr accton 8
+.Sh HISTORY
+.Nm
+was written for
+.Nx 1.0
+from the specification provided by various systems' manual pages.
+Its date of origin is unknown to the author.
+.Sh AUTHORS
+.An Chris G. Demetriou Aq cgd@postgres.berkeley.edu
 .Sh BUGS
 The number of options to this program is absurd, especially considering
 that there's not much logic behind their lettering.
@@ -238,13 +246,3 @@ The formats of the summary files created by this version of
 are very different than the those used by the original version.
 This is not considered a problem, however, because the accounting record
 format has changed as well (since user ids are now 32 bits).
-.Sh HISTORY
-.Nm
-was written for
-.Nx 1.0
-from the specification provided by various systems' manual pages.
-Its date of origin is unknown to the author.
-.Sh AUTHOR
-.Bl -tag
-Chris G. Demetriou, cgd@postgres.berkeley.edu
-.El
