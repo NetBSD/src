@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2003/08/07 16:30:02 agc Exp $ */
+/*	$NetBSD: boot.c,v 1.21 2003/11/01 13:02:04 jdolecek Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -174,7 +174,7 @@ Xmain(void)
 		if (c[0] == 0)
 			continue;
 
-		if ((d = index(c, ' ')))
+		if ((d = strchr(c, ' ')))
 			*d++ = 0;
 
 		while (v->namn) {
@@ -208,7 +208,7 @@ boot(char *arg)
 
 		if (*arg != '-') {
 			fn = arg;
-			if ((arg = index(arg, ' '))) {
+			if ((arg = strchr(arg, ' '))) {
 				*arg++ = 0;
 				while (*arg == ' ')
 					arg++;
