@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.32 1994/07/27 13:10:36 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.33 1994/07/27 13:24:17 mycroft Exp $
  */
 
 /*
@@ -637,7 +637,7 @@ uhaattach(parent, self, aux)
 	 * fill in the prototype scsi_link.
 	 */
 	uha->sc_link.adapter_softc = uha;
-	uha->sc_link.adapter_targ = uha->our_id;
+	uha->sc_link.adapter_targ = uha->uha_scsi_dev;
 	uha->sc_link.adapter = &uha_switch;
 	uha->sc_link.device = &uha_dev;
 
@@ -1010,7 +1010,7 @@ u14_find(uha, ia)
 	}
 
 	/* who are we on the scsi bus */
-	uha->our_id = uha_id;
+	uha->uha_scsi_dev = uha_id;
 
 	outb(iobase + U14_LINT, U14_ASRST);
 
@@ -1100,7 +1100,7 @@ u24_find(uha, ia)
 		}
 
 		/* who are we on the scsi bus */
-		uha->our_id = uha_id;
+		uha->uha_scsi_dev = uha_id;
 
 		outb(iobase + U24_LINT, U24_ASRST);
 
