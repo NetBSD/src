@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 1995/03/05 23:23:51 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.3 1995/03/10 22:55:14 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -68,7 +68,7 @@
 26	UNIMPL		linux_ptrace
 27	STD		{ int linux_alarm(unsigned int secs); }
 28	OBSOL		linux_ofstat
-29	UNIMPL		linux_pause
+29	STD		{ int linux_pause(void); }
 30	STD		{ int linux_utime(char *path, struct linux_utimbuf *times); }
 31	UNIMPL		linux_stty
 32	UNIMPL		linux_gtty
@@ -113,7 +113,8 @@
 69	STD		{ int linux_sigsetmask(linux_sigset_t mask); }
 70	NOARGS		{ int compat_43_setreuid(int ruid, int euid); }
 71	NOARGS		{ int compat_43_setregid(int rgid, int egid); }
-72	STD		{ int linux_sigsuspend(int mask); }
+72	STD		{ int linux_sigsuspend(caddr_t restart, int oldmask, \
+				int mask); }
 73	STD		{ int linux_sigpending(linux_sigset_t *mask); }
 74	NOARGS		{ int compat_43_sethostname(char *hostname, u_int len);}
 75	NOARGS		{ int compat_43_setrlimit(u_int which, \
