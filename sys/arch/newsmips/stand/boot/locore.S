@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 1999/07/08 11:48:05 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 1999/12/22 05:54:41 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -35,13 +35,36 @@
 
 	.globl	_start
 _start:
+	bal	1f
+	nop
+1:
+	la	t0, 1b
+	beq	t0, ra, skip
+	nop
+
+	/* relocate myself */
+	subu	t0, ra, (1b - _start)	# load address
+	la	t1, _start
+	la	t2, _edata
+2:
+	lw	t3, 0(t0)
+	nop
+	sw	t3, 0(t1)
+	addu	t0, t0, 4
+	addu	t1, t1, 4
+	bne	t1, t2, 2b
+	nop
+
+skip:
 	j	boot
 	nop
 
-/* void flushicache(addr, len); */
+/*
+ * void mips1_flushicache(addr, len)
+ */
+	.globl	mips1_flushicache
 
-	.globl	flushicache
-flushicache:
+mips1_flushicache:
 	mfc0	v0, MIPS_COP_0_STATUS		# save SR
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
