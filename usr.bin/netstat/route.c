@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.44 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.45 2000/01/07 04:49:11 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.44 1999/12/13 15:22:55 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.45 2000/01/07 04:49:11 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,7 +423,9 @@ p_sockaddr(sa, mask, flags, width)
 	    {
 		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 
-		if (sin->sin_addr.s_addr == INADDR_ANY)
+		if ((sin->sin_addr.s_addr == INADDR_ANY) &&
+		    (mask != NULL) &&
+		    (((struct sockaddr_in *)mask)->sin_addr.s_addr == 0))
 			cp = "default";
 		else if (flags & RTF_HOST)
 			cp = routename(sin->sin_addr.s_addr);
