@@ -1,4 +1,4 @@
-.\" AWK Reference Card --- Arnold Robbins, arnold@gnu.ai.mit.edu
+.\" AWK Reference Card --- Arnold Robbins, arnold@gnu.org
 .\" cardfonts --- this file sets the fonts to use for the reference card
 .\"
 .\" Copyright (C) 1996 Free Software Foundation, Inc.
@@ -34,4 +34,4 @@ FC - font courier
 .ds RN Times Roman
 .ds IN Times Italic
 .ds CN Courier Bold
-.ds AM \fIThe GNU Awk User's Guide\fP
+.ds AM \fIGAWK: Effective AWK Programming\fP

@@ -1,0 +1,2 @@
+gawk: match2.awk:3: fatal: match: third argument is not an array
+EXIT CODE: 2

@@ -1,0 +1,2 @@
+#! /tmp/gawk -f 
+{ print }
