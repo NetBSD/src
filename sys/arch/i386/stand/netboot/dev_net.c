@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.3 1997/03/22 09:18:07 thorpej Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.4 1997/06/13 13:28:19 drochner Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -33,7 +33,8 @@
  */
 
 /*
- * network device for libsa supports BOOTP, RARP and BOOTPARAM
+ * network device for libsa
+ * supports BOOTP, RARP and BOOTPARAM
  */
 
 #include <sys/param.h>
@@ -70,10 +71,11 @@ int	domainnamelen;
 
 u_char	bcea[6] = BA;
 
-static int      netdev_sock;
-static int      open_count;
+static int      netdev_sock = -1;
 
+#ifdef SUPPORT_BOOTP
 int	no_bootp = 0;
+#endif
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -85,76 +87,78 @@ net_open(f, devname)
 	char           *devname;/* Device part of file name (or NULL). */
 {
 	int             error = 0;
-	/* On first open, do netif open */
-	if (open_count == 0) {
 
-		/* Find network interface. */
-		if ((netdev_sock = netif_open(devname)) < 0)
-			return (ENXIO);
-
-#ifdef SUPPORT_BOOTP
-		if (!no_bootp) {
-			printf("configure network...trying bootp\n");
-			/* Get boot info using BOOTP way. (RFC951, RFC1048) */
-			bootp(netdev_sock);
-		}
+#ifdef NET_DEBUG
+	if (netdev_sock != -1)
+	    panic("net_open");
 #endif
 
-		if (myip.s_addr != INADDR_ANY) {	/* got bootp reply or
+	/* Find network interface. */
+	if ((netdev_sock = netif_open(devname)) < 0)
+	    return (ENXIO);
+
+#ifdef SUPPORT_BOOTP
+	if (!no_bootp) {
+	    printf("configure network...trying bootp\n");
+	    /* Get boot info using BOOTP way. (RFC951, RFC1048) */
+	    bootp(netdev_sock);
+	}
+#endif
+
+	if (myip.s_addr != INADDR_ANY) {	/* got bootp reply or
 							 * manually set */
 
 #ifdef TFTP_HACK
-			int             num, i;
-			/* XXX (some) tftp servers don't like leading "/" */
-			for (num = 0; bootfile[num] == '/'; num++);
-			for (i = 0; bootfile[i] = bootfile[i + num]; i++);
+	    int             num, i;
+	    /* XXX (some) tftp servers don't like leading "/" */
+	    for (num = 0; bootfile[num] == '/'; num++);
+	    for (i = 0; bootfile[i] = bootfile[i + num]; i++);
 #endif
 
-			printf("boot: client IP address: %s\n",
-			    inet_ntoa(myip));
-			printf("boot: client name: %s\n", hostname);
-		} else {
+	    printf("boot: client IP address: %s\n",
+		   inet_ntoa(myip));
+	    printf("boot: client name: %s\n", hostname);
+	} else {
 
 #ifdef SUPPORT_RARP
-			/*
-			 * no answer, Get boot info using RARP and Sun
-			 * bootparams.
-			 */
-			printf("configure network...trying rarp\n");
+	    /*
+	     * no answer, Get boot info using RARP and Sun
+	     * bootparams.
+	     */
+	    printf("configure network...trying rarp\n");
 
-			/* Get our IP address.  (rarp.c) */
-			if (rarp_getipaddress(netdev_sock)) {
-				error = EIO;
-				goto bad;
-			}
-			printf("boot: client IP address: %s\n",
-			    inet_ntoa(myip));
+	    /* Get our IP address.  (rarp.c) */
+	    if (rarp_getipaddress(netdev_sock)) {
+		error = EIO;
+		goto bad;
+	    }
+	    printf("boot: client IP address: %s\n",
+		   inet_ntoa(myip));
 
 #ifdef SUPPORT_BOOTPARAM
-			/* Get our hostname, server IP address. */
-			if (!bp_whoami(netdev_sock)) {
-				printf("boot: client name: %s\n", hostname);
+	    /* Get our hostname, server IP address. */
+	    if (!bp_whoami(netdev_sock)) {
+		printf("boot: client name: %s\n", hostname);
 
-				/* Get the root pathname. */
-				bp_getfile(netdev_sock, "root", &rootip,
-				    rootpath);
-			}
+		/* Get the root pathname. */
+		bp_getfile(netdev_sock, "root", &rootip,
+			   rootpath);
+	    }
 #else
-			/*
-			 * else fallback: use rarp server address
-			 */
+	    /*
+	     * else fallback: use rarp server address
+	     */
 #endif
 
 #else				/* no SUPPORT_RARP */
-			error = EIO;
-			goto bad;
+	    error = EIO;
+	    goto bad;
 #endif
 
-		}
-		printf("boot: server: %s, rootpath: %s, bootfile: %s\n",
-		       inet_ntoa(rootip), rootpath, bootfile);
 	}
-	open_count++;
+	printf("boot: server: %s, rootpath: %s, bootfile: %s\n",
+	       inet_ntoa(rootip), rootpath, bootfile);
+
 	f->f_devdata = &netdev_sock;
 	return (error);
 
@@ -168,13 +172,14 @@ int
 net_close(f)
 	struct open_file *f;
 {
-	/* On last close, do netif close, etc. */
-	if (--open_count == 0)
-		netif_close(netdev_sock);
-#ifdef DEBUG
-	if (open_count < 0)
+#ifdef NET_DEBUG
+	if (netdev_sock == -1)
 		panic("net_close");
 #endif
+
+	netif_close(netdev_sock);
+	netdev_sock = -1;
+
 	f->f_devdata = NULL;
 
 	return (0);
