@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.17 2002/11/29 04:54:48 rafal Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.18 2003/02/02 10:21:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.17 2002/11/29 04:54:48 rafal Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.18 2003/02/02 10:21:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ rep_add(char *str)
 
 	*pt2 = '\0';
 
-	/* Make sure to dup replacement, who know where it came from! */
+	/* Make sure to dup replacement, who knows where it came from! */
 	if ((rep->nstr = strdup(pt1)) == NULL) {
 #ifdef NET2_REGEX
 		(void)free((char *)rep->rcmp);
@@ -331,7 +331,7 @@ pat_chk(void)
  *
  *	NOTE: When the -c option is used, we are called when there was no match
  *	by pat_match() (that means we did match before the inverted sense of
- *	the logic). Now this seems really strange at first, but with -c  we
+ *	the logic). Now this seems really strange at first, but with -c we
  *	need to keep track of those patterns that cause a archive member to NOT
  *	be selected (it found an archive member with a specified pattern)
  * Return:
@@ -422,7 +422,7 @@ pat_sel(ARCHD *arcn)
 	 * we are then done with this pattern, so we delete it from the list
 	 * because it can never be used for another match.
 	 * Seems kind of strange to do for a -c, but the pax spec is really
-	 * vague on the interaction of -c -n and -d. We assume that when -c
+	 * vague on the interaction of -c, -n, and -d. We assume that when -c
 	 * and the pattern rejects a member (i.e. it matched it) it is done.
 	 * In effect we place the order of the flags as having -c last.
 	 */
