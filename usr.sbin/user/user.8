@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.7 2000/10/03 19:32:23 bjh21 Exp $ */
+.\" $NetBSD: user.8,v 1.8 2001/04/27 09:13:35 agc Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -105,7 +105,7 @@ The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
-.Bl -tag -width /etc/usermgmt.conf -compact
+.Bl -tag -width /usr/share/examples/usermgmt -compact
 .It Pa /etc/skel/.[A-z]*
 Skeleton files for new user
 .It Pa /etc/usermgmt.conf
@@ -114,7 +114,7 @@ Configuration file for
 .Xr group 8
 and those backend commands
 .It Pa /usr/share/examples/usermgmt
-A directory hopefully containing examples for
+A directory containing examples for
 .Xr user 8
 and
 .Xr group 8
