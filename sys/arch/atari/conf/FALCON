@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.9 1996/08/26 23:39:50 mrg Exp $
+#	$NetBSD: FALCON,v 1.10 1996/09/16 06:14:23 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -17,10 +17,22 @@ maxusers	16
 # processors this kernel should support
 #
 options		"M68030"	# support for 030
+# options	"M68040"	# support for 040
 
-options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		TIMEZONE=0	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
+
+#
+# X11R6 related options
+#
+options		UCONSOLE	# Allow xconsole to work
+
+#
+# Floating-point options
+#
+options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
+# options	FPSP			# 68040 Floatingpoint support
 
 #
 # Networking options
@@ -54,7 +66,6 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
-options 	COMPAT_12
 
 #
 # Support for various kernel options
@@ -92,6 +103,6 @@ pseudo-device	rd	1	# Boot ramdisk
 #
 zs0	at mainbus0		# Serial support through 8530
 grf1	at grfbus0		# second graphics driver
-ite1	at grf1			# second tty
+ite*	at grfcc1		# second tty
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
