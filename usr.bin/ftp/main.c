@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 1999/10/09 03:00:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.62 1999/10/11 12:34:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 1999/10/09 03:00:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 1999/10/11 12:34:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,6 +466,8 @@ intr(dummy)
 {
 
 	alarmtimer(0);
+	if (editing)		/* ugly hack to cleanup after editline */
+		write(fileno(ttyout), "\n", 1);
 	siglongjmp(toplevel, 1);
 }
 
