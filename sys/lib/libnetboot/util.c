@@ -56,34 +56,6 @@ intoa(addr)
 	return (cp + 1);
 }
 
-char *strerror(errnum)
-     int errnum;
-{
-    char ebuf[1024] = "Unknown error: code ";
-    char *p;
-    int length;
-
-
-
-    switch (errnum) {
-    case EPERM:
-	return "Permission Denied";
-    case ENOENT:
-	return "No such file or directory";
-    case ESTALE:
-	return "Stale NFS file handle";
-    default:
-	length = strlen(ebuf);
-	p = ebuf+length;
-	do {
-	    *p++ = "0123456789"[errnum %10];
-	} while (errnum /= 10);
-	*p = '\0';
-	return ebuf;
-    }
-}
-
-
 /*
  * Convert Ethernet address to printable (loggable) representation.
  */
@@ -103,12 +75,4 @@ ether_sprintf(ap)
 	}
 	*--cp = 0;
 	return (etherbuf);
-}
-
-void bzero(addr, len)
-     char *addr;
-     int len;
-{
-    while (len--)
-	*addr++ = '\0';
 }
