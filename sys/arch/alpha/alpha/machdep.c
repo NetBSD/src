@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1996/06/12 19:00:17 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1996/06/12 22:06:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -174,7 +174,7 @@ int		ncpus;
 
 /* various CPU-specific functions. */
 char		*(*cpu_modelname) __P((void));
-void		(*cpu_consinit) __P((char *));
+void		(*cpu_consinit) __P((void));
 char		*cpu_iobus;
 
 char *boot_file, *boot_flags, *boot_console, *boot_dev;
@@ -603,7 +603,7 @@ void
 consinit()
 {
 
-	(*cpu_consinit)(boot_console);
+	(*cpu_consinit)();
 	pmap_unmap_prom();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.h,v 1.3 1996/06/12 19:00:20 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.h,v 1.4 1996/06/12 22:06:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -28,4 +28,4 @@
  */
 
 char	*dec_2100_a50_modelname __P((void));
-void	dec_2100_a50_consinit __P((char *));
+void	dec_2100_a50_consinit __P((void));

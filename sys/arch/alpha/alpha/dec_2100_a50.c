@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.7 1996/06/12 19:00:19 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.8 1996/06/12 22:06:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -78,8 +78,7 @@ dec_2100_a50_modelname()
 }
 
 void
-dec_2100_a50_consinit(constype)
-	char *constype;
+dec_2100_a50_consinit()
 {
 	struct ctb *ctb;
 	struct apecs_config *acp;
@@ -90,7 +89,6 @@ dec_2100_a50_consinit(constype)
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-	printf("constype = %s\n", constype);
 	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
