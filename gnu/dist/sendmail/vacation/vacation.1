@@ -9,35 +9,46 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	Id: vacation.1,v 8.11.4.8 2001/07/20 04:19:38 gshapiro Exp
+.\"	Id: vacation.1,v 8.29.2.1 2002/06/21 21:28:06 ca Exp
 .\"
-.TH VACATION 1 "Date: 2001/07/20 04:19:38"
+.TH VACATION 1 "Date: 2002/06/21 21:28:06"
 .SH NAME
 vacation
-\- return ``I am not here'' indication
+\- E-mail auto-responder
 .SH SYNOPSIS
 .B vacation
-.RB [ \-i ]
-.RB [ \-I ]
-.RB [ \-r 
-.IR interval ]
-.RB [ \-x ]
 .RB [ \-a
 .IR alias ]
+.RB [ \-C
+.IR cffile ]
+.RB [ \-d ]
 .RB [ \-f
 .IR database ]
+.RB [ \-i ]
+.RB [ \-I ]
+.RB [ \-l ]
 .RB [ \-m
 .IR message ]
+.RB [ \-r 
+.IR interval ]
 .RB [ \-s
 .IR address ]
 .RB [ \-t
 .IR time ]
+.RB [ \-U ]
+.RB [ \-x ]
 .RB [ \-z ]
 .I login
 .SH DESCRIPTION
 .B Vacation
-returns a message to the sender of a message telling them that you
-are currently not reading your mail.  The intended use is in a
+returns a message,
+.IR ~/.vacation.msg
+by default, to the sender informing them that you are currently not
+reading your mail.
+The message is only sent to each sender once per reply interval (see
+.B \-r
+below).
+The intended use is in a
 .I .forward
 file.  For example, your
 .I .forward
@@ -59,11 +70,33 @@ Handle messages for
 in the same manner as those received for the user's
 login name.
 .TP
+.BI \-C " cfpath"
+Specify pathname of the sendmail configuration file.
+This option is ignored if
+.B \-U
+is specified.
+This option defaults to the standard sendmail configuration file,
+located at /etc/mail/sendmail.cf on most systems.
+.TP
+.B \-d
+Send error/debug messages to stderr instead of syslog.
+Otherwise, fatal errors, such as calling
+.B vacation
+with incorrect arguments, or with non-existent
+.IR login s,
+are logged in the system log file, using
+syslog(8).
+This should only be used on the command line, not in your
+.I .forward
+file.
+.TP
 .BI \-f " filename"
 Use
 .I filename
 as name of the database instead of
-.IR ~/.vacation.db .
+.IR ~/.vacation.db
+or
+.IR ~/.vacation.{dir,pag} .
 Unless the
 .I filename
 starts with / it is relative to ~.
@@ -73,11 +106,24 @@ Initialize the vacation database files.  It should be used
 before you modify your
 .I .forward
 file.
+This should only be used on the command line, not in your
+.I .forward
+file.
 .TP
 .B \-I
 Same as
 .B \-i
 (for backwards compatibility).
+This should only be used on the command line, not in your
+.I .forward
+file.
+.TP
+.B \-l
+List the content of the vacation database file including the address
+and the associated time of the last auto-response to that address.
+This should only be used on the command line, not in your
+.I .forward
+file.
 .TP
 .BI \-m " filename"
 Use
@@ -96,6 +142,12 @@ An interval of ``0'' or
 ``infinite''
 (actually, any non-numeric character) will never send more than
 one reply.
+The
+.B \-r
+option should only be used when the vacation database is initialized
+(see
+.B \-i
+above).
 .TP
 .BI \-s " address"
 Use
@@ -108,14 +160,24 @@ line as the recipient for the vacation message.
 Ignored, available only for compatibility with Sun's
 vacation program.
 .TP
+.B \-U
+Do not attempt to lookup 
+.I login
+in the password file.
+The -f and -m options must be used to specify the database and message file
+since there is no home directory for the default settings for these options.
+.TP
 .B \-x
-reads an exclusion list from stdin (one address per line).
+Reads an exclusion list from stdin (one address per line).
 Mails coming from an address
 in this exclusion list won't get a reply by
 .BR vacation .
 It is possible to exclude complete domains by specifying
 ``@domain''
 as element of the exclusion list.
+This should only be used on the command line, not in your
+.I .forward
+file.
 .TP
 .B \-z
 Set the sender of the vacation message to
@@ -123,6 +185,16 @@ Set the sender of the vacation message to
 instead of the user.
 This probably violates the RFCs since vacation messages are
 not required by a standards-track RFC to have a null reverse-path.
+.PP
+.B Vacation
+reads the first line from the standard input for a
+UNIX
+``From''
+line to determine the sender.
+Sendmail(8)
+includes this
+``From''
+line automatically.
 .PP
 No message will be sent unless
 .I login
@@ -153,8 +225,12 @@ or
 line is included in the mail headers.
 The people who have sent you messages are maintained as a
 db(3)
+or
+dbm(3)
 database in the file
 .I .vacation.db
+or
+.I .vacation.{dir,pag}
 in your home directory.
 .PP
 .B Vacation
@@ -174,27 +250,13 @@ I am on vacation until July 22.  If you have something urgent,
 please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .fi 
-.PP
-.B Vacation
-reads the first line from the standard input for a
-UNIX
-``From''
-line to determine the sender.
-Sendmail(8)
-includes this
-``From''
-line automatically.
-.PP
-Fatal errors, such as calling
-.B vacation
-with incorrect arguments, or with non-existent
-.IR login s,
-are logged in the system log file, using
-syslog(8).
 .SH FILES
 .TP 1.8i
 ~/.vacation.db
-default database file
+default database file for db(3)
+.TP 1.8i
+~/.vacation.{dir,pag}
+default database file for dbm(3)
 .TP
 ~/.vacation.msg
 default message to send
