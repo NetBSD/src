@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.1 1994/02/26 10:57:09 pk Exp $
+#	     $Id: Makefile,v 1.2 1994/07/01 10:46:55 pk Exp $
 
 DESTDIR=
 
@@ -12,7 +12,7 @@ RELOC=		${RELOC_SUN4C}
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL # -DROMPRF
 CFLAGS=	-O2 ${INCPATH} ${DEFS}
 
-SRCS=   boot.c promdev.c version.c
+SRCS=   boot.c filesystem.c promdev.c version.c
 #SRCS+=	io.c strerror.c
 
 S=	${.CURDIR}/../../..
