@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.S,v 1.5 1995/11/28 23:40:57 thorpej Exp $	*/
+/*	$NetBSD: rindex.S,v 1.6 1997/01/04 03:21:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)rindex.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: rindex.S,v 1.5 1995/11/28 23:40:57 thorpej Exp $")
+	RCSID("$NetBSD: rindex.S,v 1.6 1997/01/04 03:21:15 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,10 @@ ENTRY(rindex)
 	subl	a1,a1			| clear rindex pointer
 rixloop:
 	cmpb	a0@,d0			| found our char?
-	bne	rixnope			| no, check for null
+	jne	rixnope			| no, check for null
 	movl	a0,a1			| yes, remember location
 rixnope:
 	tstb	a0@+			| null?
-	bne	rixloop			| no, keep going
+	jne	rixloop			| no, keep going
 	movl	a1,d0			| return value
 	rts
