@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.25 2003/08/07 09:46:37 agc Exp $	*/
+/*	$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.25 2003/08/07 09:46:37 agc Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,6 +159,7 @@ onalrm(int signo)
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static u_int utmpmtime;		/* last modification time for utmp */
 	struct stat statbf;
+	struct utmp *u;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
@@ -167,11 +168,13 @@ onalrm(int signo)
 	if (statbf.st_mtime > utmpmtime) {
 		utmpmtime = statbf.st_mtime;
 		if (statbf.st_size > utmpsize) {
-			utmpsize = statbf.st_size + 10 * sizeof(struct utmp);
-			if ((utmp = realloc(utmp, utmpsize)) == NULL) {
+			if ((u = realloc(utmp,
+			    statbf.st_size + 10 * sizeof(struct utmp))) == NULL) {
 				syslog(LOG_ERR, "%s", strerror(errno));
 				exit(1);
 			}
+			utmp = u;
+			utmpsize = statbf.st_size + 10 * sizeof(struct utmp);
 		}
 		(void)lseek(uf, (off_t)0, SEEK_SET);
 		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
