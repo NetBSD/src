@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.19 2000/05/08 07:56:06 mycroft Exp $	*/
+/*	$NetBSD: worm.c,v 1.20 2001/08/29 23:25:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.19 2000/05/08 07:56:06 mycroft Exp $");
+__RCSID("$NetBSD: worm.c,v 1.20 2001/08/29 23:25:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,10 +104,6 @@ main(argc, argv)
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
-	if (argc == 2)
-		start_len = atoi(argv[1]);
-	if ((start_len <= 0) || (start_len > 500))
-		start_len = LENGTH;
 	setbuf(stdout, outbuf);
 	srand(getpid());
 	signal(SIGALRM, wake);
@@ -121,6 +117,10 @@ main(argc, argv)
 #endif
 	slow = (baudrate() <= 1200);
 	clear();
+	if (argc == 2)
+		start_len = atoi(argv[1]);
+	if ((start_len <= 0) || (start_len > ((LINES-3) * (COLS-2)) / 3))
+		start_len = LENGTH;
 	stw = newwin(1, COLS-1, 0, 0);
 	tv = newwin(LINES-1, COLS-1, 1, 0);
 	box(tv, '*', '*');
@@ -152,14 +152,14 @@ void
 life()
 {
 	struct body *bp, *np;
-	int i;
+	int i, j = 1;
 
 	np = NULL;
 	head = newlink();
 	if (head == NULL)
 		err(1, NULL);
-	head->x = start_len+2;
-	head->y = 12;
+	head->x = start_len % (COLS-5) + 2;
+	head->y = LINES / 2;
 	head->next = NULL;
 	display(head, HEAD);
 	for (i = 0, bp = head; i < start_len; i++, bp = np) {
@@ -168,8 +168,14 @@ life()
 			err(1, NULL);
 		np->next = bp;
 		bp->prev = np;
-		np->x = bp->x - 1;
-		np->y = bp->y;
+		if (((bp->x <= 2) && (j == 1)) || ((bp->x >= COLS-4) && (j == -1))) {
+			j *= -1;
+			np->x = bp->x;
+			np->y = bp->y + 1;
+		} else {
+			np->x = bp->x - j;
+			np->y = bp->y;
+		}
 		display(np, BODY);
 	}
 	tail = np;
