@@ -1,7 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2000/08/09 02:12:48 thorpej Exp $
+# $NetBSD: Makefile,v 1.6 2000/08/09 02:16:20 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
-.PATH: ${DIST}/heimdal/lib/des
 .PATH: ${DIST}/heimdal/doc
 
 WARNS?=  1
