@@ -5,6 +5,9 @@ device	pcmcia {[function = -1], [irq = -1]}
 file	dev/pcmcia/pcmcia.c
 file	dev/pcmcia/pcmcia_cis.c
 
+# device declaration in sys/conf/files
+attach	pcmcia at pcic
+
 # 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
 # device declaration in sys/conf/files
 attach	ep at pcmcia with ep_pcmcia
