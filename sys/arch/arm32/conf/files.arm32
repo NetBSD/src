@@ -189,6 +189,24 @@ device	oak: scsi, ncr
 attach	oak at podulebus
 file	arch/arm32/podulebus/oak.c		oak
 
+# ICS IDE driver
+device	icside {}
+attach	icside at podulebus
+file	arch/arm32/podulebus/icside.c		icside
+file	arch/arm32/podulebus/icside_io.c	icside
+file	arch/arm32/podulebus/icside_io_asm.S	icside
+
+attach	wdc at icside with wdc_ics
+
+# Yellowstone RapIDE driver
+device	rapide {}
+attach	rapide at podulebus
+file	arch/arm32/podulebus/rapide.c		rapide
+file	arch/arm32/podulebus/rapide_io_asm.S	rapide
+
+attach	wdc at rapide with wdc_rapide
+
+# VIDC device
 device  vidcvideo
 attach	vidcvideo at mainbus
 major	{vidcvideo = 37}
