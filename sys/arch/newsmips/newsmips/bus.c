@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.8 2001/09/10 21:19:20 chris Exp $	*/
+/*	$NetBSD: bus.c,v 1.8.2.1 2001/11/13 22:24:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/cpuregs.h>
-#include <mips/locore.h>
+#include <mips/cache.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
@@ -65,13 +64,28 @@ struct newsmips_bus_dma_tag newsmips_default_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	NULL,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+void
+newsmips_bus_dma_init(void)
+{
+#ifdef MIPS1
+	if (CPUISMIPS3 == 0)
+		newsmips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_r3k;
+#endif
+#ifdef MIPS3
+	if (CPUISMIPS3)
+		newsmips_default_bus_dma_tag._dmamap_sync =
+		    _bus_dmamap_sync_r4k;
+#endif
+}
 
 int
 bus_space_map(t, bpa, size, flags, bshp)
@@ -473,12 +487,15 @@ _bus_dmamap_unload(t, map)
 	map->_dm_flags &= ~NEWSMIPS_DMAMAP_COHERENT;
 }
 
+#ifdef MIPS1
 /*
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R3000 version.
  */
 void
-_bus_dmamap_sync(t, map, offset, len, ops)
+_bus_dmamap_sync_r3k(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_addr_t offset;
@@ -487,27 +504,158 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 {
 	bus_size_t minlen;
 	bus_addr_t addr;
-	int i, align;
+	int i;
 
 	/*
 	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync: mix PRE and POST");
+		panic("_bus_dmamap_sync_r3k: mix PRE and POST");
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
+		panic("_bus_dmamap_sync_r3k: bad offset %lu (map size is %lu)",
 		      offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
+		panic("_bus_dmamap_sync_r3k: bad length");
 #endif
 
 	/*
+	 * The R3000 cache is write-though.  Therefore, we only need
+	 * to drain the write buffer on PREWRITE.  The cache is not
+	 * coherent, however, so we need to invalidate the data cache
+	 * on PREREAD (should we do it POSTREAD instead?).
+	 *
+	 * POSTWRITE (and POSTREAD, currently) are noops.
+	 */
+
+	if (ops & BUS_DMASYNC_PREWRITE) {
+		/*
+		 * Flush the write buffer.
+		 */
+		wbflush();
+	}
+
+	/*
+	 * If we're not doing PREREAD, nothing more to do.
+	 */
+	if ((ops & BUS_DMASYNC_PREREAD) == 0)
+		return;
+
+	/*
+	 * No cache invlidation is necessary if the DMA map covers
+	 * COHERENT DMA-safe memory (which is mapped un-cached).
+	 */
+	if (map->_dm_flags & NEWSMIPS_DMAMAP_COHERENT)
+		return;
+
+	/*
+	 * If we are going to hit something as large or larger
+	 * than the entire data cache, just nail the whole thing.
+	 *
+	 * NOTE: Even though this is `wbinv_all', since the cache is
+	 * write-though, it just invalidates it.
+	 */
+	if (len >= mips_pdcache_size) {
+		mips_dcache_wbinv_all();
+		return;
+	}
+
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find the beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		/*
+		 * Now at the first segment to sync; nail 
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		minlen = len < map->dm_segs[i].ds_len - offset ?  
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i].ds_addr;
+
+#ifdef BUS_DMA_DEBUG
+		printf("bus_dmamap_sync_r3k: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
+#endif
+		mips_dcache_inv_range(
+		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
+#ifdef BUS_DMA_DEBUG
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
+	}
+}
+#endif /* MIPS1 */
+
+#ifdef MIPS3
+/*
+ * Common function for DMA map synchronization.  May be called
+ * by chipset-specific DMA map synchronization functions.
+ *
+ * This is the R4000 version.
+ */
+void
+_bus_dmamap_sync_r4k(t, map, offset, len, ops)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
+	int ops;
+{
+	bus_size_t minlen;
+	bus_addr_t addr;
+	int i, useindex;
+
+	/*
+	 * Mising PRE and POST operations is not allowed.
+	 */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("_bus_dmamap_sync_r4k: mix PRE and POST");
+
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("_bus_dmamap_sync_r4k: bad offset %lu (map size is %lu)",
+		      offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("_bus_dmamap_sync_r4k: bad length");
+#endif
+
+	/*
+	 * The R4000 cache is virtually-indexed, write-back.  This means
+	 * we need to do the following things:
+	 *
+	 *	PREREAD -- Invalidate D-cache.  Note we might have
+	 *	to also write-back here if we have to use an Index
+	 *	op, or if the buffer start/end is not cache-line aligned.
+	 *
+	 *	PREWRITE -- Write-back the D-cache.  If we have to use
+	 *	an Index op, we also have to invalidate.  Note that if
+	 *	we are doing PREREAD|PREWRITE, we can collapse everything
+	 *	into a single op.
+	 *
+	 *	POSTREAD -- Nothing.
+	 *
+	 *	POSTWRITE -- Nothing.
+	 */
+
+	/*
 	 * Flush the write buffer.
+	 * XXX Is this always necessary?
 	 */
 	wbflush();
+
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
 
 	/*
 	 * If the mapping is of COHERENT DMA-safe memory, no cache
@@ -517,23 +665,16 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		return;
 
 	/*
-	 * No cache flushes are necessary if we're only doing
-	 * POSTREAD or POSTWRITE (i.e. not doing PREREAD or PREWRITE).
-	 */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) == 0)
-		return;
-
-	/*
-	 * Flush data cache for PREREAD.  This has the side-effect
-	 * of invalidating the cache.  Done at PREREAD since it
-	 * causes the cache line(s) to be written back to memory.
+	 * If the mapping belongs to the kernel, or if it belongs
+	 * to the currently-running process (XXX actually, vmspace),
+	 * then we can use Hit ops.  Otherwise, Index ops.
 	 *
-	 * Flush data cache for PREWRITE, so that the contents of
-	 * the data buffer in memory reflect reality.
-	 *
-	 * Given the test above, we know we're doing one of these
-	 * two operations, so no additional tests are necessary.
+	 * This should be true the vast majority of the time.
 	 */
+	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+		useindex = 0;
+	else
+		useindex = 1;
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
@@ -552,15 +693,43 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 
 		addr = map->dm_segs[i]._ds_vaddr;
 
-		align = (addr + offset) - ((addr + offset) & ~ALIGNBYTES);
-
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset - align,
-		    addr + offset - align + minlen - 1);
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
 #endif
-		MachFlushDCache(addr + offset - align, minlen + align);
 
+		/*
+		 * If we are forced to use Index ops, it's always a
+		 * Write-back,Invalidate, so just do one test.
+		 */
+		if (__predict_false(useindex)) {
+			mips_dcache_wbinv_range_index(addr + offset, minlen);
+#ifdef BUS_DMA_DEBUG
+			printf("\n");
+#endif
+			offset = 0;
+			len -= minlen;
+			continue;
+		}
+
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			mips_dcache_wbinv_range(addr + offset, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+#if 1
+			mips_dcache_wbinv_range(addr + offset, minlen);
+#else
+			mips_dcache_inv_range(addr + offset, minlen);
+#endif
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			mips_dcache_wb_range(addr + offset, minlen);
+			break;
+		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
@@ -568,6 +737,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		len -= minlen;
 	}
 }
+#endif /* MIPS3 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called
