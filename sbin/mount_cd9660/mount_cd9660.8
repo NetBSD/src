@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_cd9660.8,v 1.4 1997/09/15 04:27:38 lukem Exp $
+.\"	$NetBSD: mount_cd9660.8,v 1.4.2.1 1997/12/09 19:33:56 thorpej Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -63,11 +63,18 @@ The options are as follows:
 .It Fl e
 Enable the use of extended attributes.
 .It Fl g
-Do not strip version numbers on files.
-(By default, if there are files with different version numbers on the disk,
+Do not strip version numbers on files and leave the case of the filename
+alone.
+(By default, uppercase characters are translated to lowercase,
+and if there are files with different version numbers on the disk,
 only the last one will be listed.)
-In either case, files may be opened without explicitly stating a
-version number.
+.Pp
+In either case, files may be opened without giving a
+version number, in which case you get the last one, or by explicitly
+stating a version number (albeit it's quite difficult to know it, if
+you are not using the
+.Fl g
+option), in which case you get the specified version.
 .It Fl o
 Options are specified with a
 .Fl o
@@ -90,9 +97,8 @@ The cd9660 filesystem does not support the original "High Sierra"
 POSIX device node mapping is currently not supported.
 .Pp
 Version numbers are not stripped if Rockridge extensions are in use.
-In this case, accessing files that don't have Rockridge names without
-version numbers gets the one with the lowest version number and not
-the one with the highest.
+In this case, you have to use the original name of the file as recorded
+on disk, i.e. use uppercase and append the version number to the file.
 .Pp
 There is no ECMA support.
 .Sh HISTORY
