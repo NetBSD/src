@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.25 1998/04/01 16:58:33 tv Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.26 1998/04/09 00:32:36 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -21,6 +21,9 @@ CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS}
+.if defined(YHEADER)
+CLEANFILES+=	${SRCS:M*.y:.y=.h}
+.endif
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.4 1997/10/03 15:53:18 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.5 1998/04/09 00:32:35 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.4 1997/10/03 15:53:18 christos Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.5 1998/04/09 00:32:35 tv Exp $");
 #endif
 #endif
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: scanner.l,v 1.4 1997/10/03 15:53:18 christos Exp $");
 
 #include "gencode.h"
 #include <pcap-namedb.h>
-#include "y.tab.h"
+#include "grammar.h"
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H

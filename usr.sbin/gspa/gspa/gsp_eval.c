@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_eval.c,v 1.2 1997/10/17 06:58:54 lukem Exp $	*/
+/*	$NetBSD: gsp_eval.c,v 1.3 1998/04/09 00:32:40 tv Exp $	*/
 /*
  * GSP assembler - expression evaluation
  *
@@ -33,12 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_eval.c,v 1.2 1997/10/17 06:58:54 lukem Exp $");
+__RCSID("$NetBSD: gsp_eval.c,v 1.3 1998/04/09 00:32:40 tv Exp $");
 #endif
 
 #include <stdlib.h>
 #include "gsp_ass.h"
-#include "y.tab.h"
+#include "gsp_gram.h"
 
 int32_t eval_op(int, int32_t, int32_t);
 int32_t eval_subtree(expr, unsigned *);

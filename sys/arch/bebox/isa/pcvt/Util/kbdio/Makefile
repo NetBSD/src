@@ -14,6 +14,7 @@ NOMAN=
 NOSHARED=	no shared linkage
 
 CFLAGS+= -I. #-g
+YFLAGS+= -d
 
 CLEANFILES+= y.tab.h
 CLEANFILES+= y.output	# comment file from bison

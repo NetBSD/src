@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 1998/03/16 18:30:45 cgd Exp $
+# $NetBSD: Makefile,v 1.14 1998/04/09 00:32:35 tv Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -51,7 +51,7 @@ REMOTE_SRCS = remote.c dcache.c remote-utils.c
 DEPFILES = $(TDEP_FILES) $(XDEP_FILES) \
  $(NDEP_CMN) $(NDEP_FILES) $(REMOTE_SRCS)
 
-YYSRCS= c-exp.tab.c f-exp.tab.c m2-exp.tab.c
+YYSRCS= c-exp.y f-exp.y m2-exp.y
 
 # This exists only for easy comparison with the GNU Makefile.
 COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
@@ -116,6 +116,3 @@ version.o : version.c
 	  -DHOST_NAME=\"$(MACHINE_ARCH)-netbsd\" \
 	  -DTARGET_NAME=\"$(TARGET_ARCH)-netbsd\" \
 	  -c $(.IMPSRC)
-
-# YACC rules for YYSRCS?  Our yacc did not work for me, so
-# this makefile uses the FSF-provided YYSRCS for now.

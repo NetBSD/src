@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/25 10:11:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 1998/04/09 00:32:35 tv Exp $
 
 LIB=	cc1
 
 NOMAN=
 NOPIC=
 NOPROFILE=
+YHEADER=1
 
 COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
@@ -164,21 +165,13 @@ CLEANFILES += bi-lexer.o bi-parser.o bi-parser.c bi-parser.h
 
 bi-lexer.o: bi-parser.h
 
-bi-parser.h: bi-parser.c
-bi-parser.c: bi-parser.y
-	$(YACC) -b bi -d $(.IMPSRC)
-	mv -f bi.tab.c bi-parser.c
-	mv -f bi.tab.h bi-parser.h
+bi-parser.h bi-parser.o: bi-parser.c
 
 CLEANFILES += c-parse.c c-parse.h
 
 c-lex.o: c-parse.h
 
-c-parse.h: c-parse.c
-c-parse.c: c-parse.y
-	$(YACC) -b c -d $(.IMPSRC)
-	mv -f c.tab.c c-parse.c
-	mv -f c.tab.h c-parse.h
+c-parse.h c-parse.o: c-parse.c
 
 # only needed during build
 libinstall::

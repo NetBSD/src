@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.3 1998/03/30 02:34:33 mrg Exp $	*/
+/*	$NetBSD: gspa.c,v 1.4 1998/04/09 00:32:40 tv Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.3 1998/03/30 02:34:33 mrg Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.4 1998/04/09 00:32:40 tv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: gspa.c,v 1.3 1998/03/30 02:34:33 mrg Exp $");
 #include <unistd.h>
 
 #include "gsp_ass.h"
-#include "y.tab.h"
+#include "gsp_gram.h"
 
 #define YYDEBUG_VALUE	0
 
