@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 1996/05/05 06:54:09 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 1996/05/05 11:45:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,8 @@
 
 #ifndef _CPU_MACHINE_
 #define _CPU_MACHINE_
+
+#include <machine/pcb.h>
 
 /*
  * definitions of cpu-dependent requirements
