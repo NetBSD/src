@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2000/07/27 13:59:26 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2000/07/31 05:40:22 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -321,6 +321,8 @@ int	pmapdebug = 0/*PDB_ALIAS|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|
 int	pmap_pages_stolen = 0;
 
 #define	BDPRINTF(n, f)	if (pmapdebug & (n)) prom_printf f
+#else
+#define	BDPRINTF(n, f)
 #endif
 
 #ifdef NOTDEF_DEBUG
