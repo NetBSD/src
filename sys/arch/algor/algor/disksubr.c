@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2001/08/22 17:53:44 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2 2001/08/22 17:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2001/08/24 02:07:34 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -164,7 +164,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 #endif
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-		dkcksum(nlp) != 0)
+	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
 	while ((i = ffs((long)openmask)) != 0) {
@@ -177,9 +177,9 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
 			return (EBUSY);
 		/*
-		* Copy internally-set partition information
-		* if new label doesn't include it.             XXX
-		*/
+		 * Copy internally-set partition information
+		 * if new label doesn't include it.             XXX
+		 */
 		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
 			npp->p_fstype = opp->p_fstype;
 			npp->p_fsize = opp->p_fsize;
