@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.91 2003/11/03 03:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.92 2003/11/05 15:45:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.91 2003/11/03 03:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.92 2003/11/05 15:45:54 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1237,6 +1237,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
 	p = (int *)uvm_zerocheckkva;
 	ep = (int *)((char *)p + PAGE_SIZE);
+	pmap_update(pmap_kernel());
 	while (p < ep) {
 		if (*p != 0)
 			panic("PG_ZERO page isn't zero-filled");
