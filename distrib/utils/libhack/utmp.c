@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
+/*	$NetBSD: utmp.c,v 1.3 1999/06/21 02:32:20 danw Exp $	*/
 
 /*
  * Written by Gordon W. Ross <gwr@netbsd.org>
@@ -12,7 +12,7 @@
 
 void
 login(ut)
-	struct utmp *ut;
+	const struct utmp *ut;
 {
 }
 
