@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.57 2003/07/01 15:24:22 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.58 2003/07/01 16:44:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.57 2003/07/01 15:24:22 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.58 2003/07/01 16:44:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,20 @@ session_t *find_session(pid_t);
 DB *session_db;
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
+
+struct mappedfile {
+	const char *path;
+	void	*buf;
+	size_t	len;
+} mfile[] = {
+	{ "/dev/MAKEDEV",	NULL,	0 },
+	{ "/dev/MAKEDEV.local",	NULL,	0 }
+};
+
 static int mfs_dev(void);
+static void mapfile(struct mappedfile *);
+static void writefile(struct mappedfile *);
+
 #endif
 
 /*
@@ -1333,52 +1346,59 @@ death(void)
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
+static void
+mapfile(struct mappedfile *mf)
+{
+	int fd;
+	struct stat st;
+
+	if ((fd = open(mf->path, O_RDONLY)) != -1) {
+		if (fstat(fd, &st) != -1 && (mf->buf = mmap(0,
+		    (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
+		    (off_t)0)) != MAP_FAILED)
+			mf->len = (size_t)st.st_size;
+		else
+			mf->len = 0;
+		(void)close(fd);
+	}
+}
+
+static void
+writefile(struct mappedfile *mf)
+{
+	int fd;
+
+	if (mf->len && (fd = open(mf->path, O_WRONLY|O_CREAT|O_TRUNC,
+	    0755)) != -1) {
+		(void)write(fd, mf->buf, mf->len);
+		(void)munmap(mf->buf, mf->len);
+		(void)close(fd);
+	}
+}
+
 static int
 mfs_dev(void)
 {
 	/*
 	 * We cannot print errors so we bail out silently...
 	 */
-	int fd;
-	struct stat st;
 	pid_t pid;
 	int status;
-	void *makedev = 0;
-	void *makedev_local = 0;
-	size_t makedev_size;
-	size_t makedev_local_size;
 	dev_t dev;
 #ifdef CPU_CONSDEV
 	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
 	size_t olen;
 #endif
 
-
 	/* If we have /dev/console, assume all is OK  */
 	if (access(_PATH_CONSOLE, F_OK) != -1)
 		return(0);
 
 	/* Grab the contents of MAKEDEV */
-	if ((fd = open("/dev/MAKEDEV", O_RDONLY)) != -1) {
-		if (fstat(fd, &st) != -1 && (makedev = mmap(0,
-		    (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
-		    (off_t)0)) != MAP_FAILED)
-			makedev_size = (size_t)st.st_size;
-		else
-			makedev = 0;
-		(void)close(fd);
-	}
+	mapfile(&mfile[0]);
 
 	/* Grab the contents of MAKEDEV.local */
-	if ((fd = open("/dev/MAKEDEV.local", O_RDONLY)) != -1) {
-		if (fstat(fd, &st) != -1 && (makedev_local = mmap(0,
-		    (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
-		    (off_t)0)) != MAP_FAILED)
-			makedev_local_size = (size_t)st.st_size;
-		else
-			makedev_local = 0;
-		(void)close(fd);
-	}
+	mapfile(&mfile[1]);
 
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
@@ -1416,20 +1436,10 @@ mfs_dev(void)
 	warnx("Creating mfs /dev");
 
 	/* Create a MAKEDEV script in the mfs /dev */
-	if (makedev && (fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC,
-	    0755)) != -1) {
-		(void)write(fd, makedev, makedev_size);
-		(void)munmap(makedev, makedev_size);
-		(void)close(fd);
-	}
+	writefile(&mfile[0]);
 
 	/* Create a MAKEDEV.local script in the mfs /dev */
-	if (makedev_local && (fd = open("/dev/MAKEDEV.local",
-	    O_WRONLY|O_CREAT|O_TRUNC, 0755)) != -1) {
-		(void)write(fd, makedev_local, makedev_local_size);
-		(void)munmap(makedev_local, makedev_local_size);
-		(void)close(fd);
-	}
+	writefile(&mfile[1]);
 
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
