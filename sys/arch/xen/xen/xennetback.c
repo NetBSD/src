@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.3 2005/03/10 17:12:12 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -405,10 +405,11 @@ int
 xennetback_get_xmit_page(vaddr_t *vap, paddr_t *map)
 {
 	if (xmit_pages_alloc < 0)
-		/* we exhausted our allocation, try to get a new one */
-		xennetback_get_new_xmit_pages();
-	if (xmit_pages_alloc < 0)
-		/* still no pages available */
+		/*
+		 * we exhausted our allocation. We can't allocate new ones yet
+		 * because the current pages may not have been loaned to
+		 * the remote domain yet. We have to let the caller do this.
+		 */
 		return -1;
 
 	*map = xmit_pages[xmit_pages_alloc] << PAGE_SHIFT;
@@ -425,21 +426,10 @@ xennetback_get_new_xmit_pages(void)
 	int nb_pages;
 
 	/* get some new pages */
-#if 1
 	nb_pages = HYPERVISOR_dom_mem_op(MEMOP_increase_reservation, xmit_pages,
 	    NB_XMIT_PAGES_BATCH, 0);
-#else
-	mcl[0].op = __HYPERVISOR_dom_mem_op;
-	mcl[0].args[0] = MEMOP_increase_reservation;
-	mcl[0].args[1] = (unsigned long)xmit_pages;
-	mcl[0].args[2] = (unsigned long)NB_XMIT_PAGES_BATCH;
-	mcl[0].args[3] = 0;
-	mcl[0].args[4] = DOMID_SELF;
-	HYPERVISOR_multicall(mcl, 1);
-	nb_pages = mcl[0].args[5];
-#endif
 	if (nb_pages <= 0) {
-		printf("xennetback: can get new xmit pages (%d)\n", nb_pages);
+		printf("xennetback: can't get new xmit pages (%d)\n", nb_pages);
 		return;
 	}
 	if (nb_pages != NB_XMIT_PAGES_BATCH)
@@ -476,18 +466,18 @@ xennetback_evthandler(void *arg)
 	netif_tx_response_t *txresp;
 
 	NETIF_RING_IDX req_prod;
-	NETIF_RING_IDX req_cons, resp_prod;
+	NETIF_RING_IDX req_cons, resp_prod, i;
 	vaddr_t pkt;
 	paddr_t ma;
-	int i;
 	struct mbuf *m;
 	int do_event = 0;
 
 
-	req_prod = MASK_NETIF_TX_IDX(xneti->xni_txring->req_prod);
+again:
+	req_prod = xneti->xni_txring->req_prod;
 	__insn_barrier(); /* ensure we see all requests up to req_prod */
-	resp_prod = MASK_NETIF_TX_IDX(xneti->xni_txring->resp_prod);
-	req_cons = MASK_NETIF_TX_IDX(xneti->xni_txring->req_cons);
+	resp_prod = xneti->xni_txring->resp_prod;
+	req_cons = xneti->xni_txring->req_cons;
 	XENPRINTF(("%s event req_prod %d resp_prod %d req_cons %d event %d\n",
 	    xneti->xni_if.if_xname,
 	    xneti->xni_txring->req_prod,
@@ -495,11 +485,13 @@ xennetback_evthandler(void *arg)
 	    xneti->xni_txring->req_cons,
 	    xneti->xni_txring->event));
 	for (i = 0; req_cons != req_prod;
-	    req_cons = MASK_NETIF_TX_IDX(req_cons + 1),
-	    resp_prod = MASK_NETIF_TX_IDX(resp_prod + 1), i++) {
-		txreq = &xneti->xni_txring->ring[req_cons].req;
-		txresp = &xneti->xni_txring->ring[resp_prod].resp;
-		if (MASK_NETIF_TX_IDX(xneti->xni_txring->event) == resp_prod)
+	    req_cons++, 
+	    resp_prod++, i++) {
+		txreq =
+		    &xneti->xni_txring->ring[MASK_NETIF_TX_IDX(req_cons)].req;
+		txresp =
+		    &xneti->xni_txring->ring[MASK_NETIF_TX_IDX(resp_prod)].resp;
+		if (xneti->xni_txring->event == resp_prod)
 			do_event = 1;
 
 		XENPRINTF(("%s pkg size %d\n", xneti->xni_if.if_xname, txreq->size));
@@ -570,11 +562,13 @@ xennetback_evthandler(void *arg)
 #endif
 		(*ifp->if_input)(ifp, m);
 	}
-	if (MASK_NETIF_TX_IDX(xneti->xni_txring->event) == resp_prod)
+	if (xneti->xni_txring->event == resp_prod)
 		do_event = 1;
 	__insn_barrier(); /* make sure the guest see out responses */
-	xneti->xni_txring->req_cons = xneti->xni_txring->req_cons + i;
-	xneti->xni_txring->resp_prod = xneti->xni_txring->resp_prod + i;
+	xneti->xni_txring->req_cons = req_cons;
+	xneti->xni_txring->resp_prod = resp_prod;
+	if (i > 0)
+		goto again; /* more work to do ? */
 	if (do_event) {
 		__insn_barrier();
 		XENPRINTF(("%s send event\n", xneti->xni_if.if_xname));
@@ -610,10 +604,8 @@ xennetback_ifstart(struct ifnet *ifp)
 	multicall_entry_t *mclp;
 	netif_rx_request_t *rxreq;
 	netif_rx_response_t *rxresp;
-	NETIF_RING_IDX req_prod =
-	    MASK_NETIF_RX_IDX(xneti->xni_rxring->req_prod);
-	NETIF_RING_IDX resp_prod =
-	    MASK_NETIF_RX_IDX(xneti->xni_rxring->resp_prod);
+	NETIF_RING_IDX req_prod = xneti->xni_rxring->req_prod;
+	NETIF_RING_IDX resp_prod = xneti->xni_rxring->resp_prod;
 	int need_event = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -630,13 +622,13 @@ xennetback_ifstart(struct ifnet *ifp)
 			if (xneti->rxreq_cons == req_prod)
 				/* out of ring space */
 				break;
+			if (i == NB_XMIT_PAGES_BATCH)
+				break; /* we filled the array */
 			if (xennetback_get_xmit_page(&xmit_va, &xmit_pa) != 0) {
 				/* out of memory */
 				break;
 			}
 			XENPRINTF(("xennetback_get_xmit_page: got va 0x%x pa 0x%x\n", (u_int)xmit_va, (u_int)xmit_pa));
-			if (i == NB_XMIT_PAGES_BATCH)
-				break; /* we filled the array */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			i++; /* this packet will be queued */
 #if NBPFILTER > 0
@@ -661,16 +653,16 @@ xennetback_ifstart(struct ifnet *ifp)
 			mmup += 2;
 			mclp += 2;
 			/* fill in ring */
-			rxreq = &xneti->xni_rxring->ring[xneti->rxreq_cons].req;
-			rxresp = &xneti->xni_rxring->ring[resp_prod].resp;
+			rxreq = &xneti->xni_rxring->ring[
+			    MASK_NETIF_RX_IDX(xneti->rxreq_cons)].req;
+			rxresp = &xneti->xni_rxring->ring[
+			    MASK_NETIF_RX_IDX(resp_prod)].resp;
 			rxresp->id = rxreq->id;
 			rxresp->status = m->m_pkthdr.len;
 			rxresp->addr = xmit_pa;
-			xneti->rxreq_cons =
-			    MASK_NETIF_RX_IDX(xneti->rxreq_cons + 1);
-			resp_prod = MASK_NETIF_RX_IDX(resp_prod + 1);
-			if (resp_prod ==
-			    MASK_NETIF_RX_IDX(xneti->xni_rxring->event))
+			xneti->rxreq_cons++;
+			resp_prod++;
+			if (resp_prod == xneti->xni_rxring->event)
 				need_event = 1;
 
 			/* done with this packet */
@@ -693,6 +685,9 @@ xennetback_ifstart(struct ifnet *ifp)
 		/* update pointer */
 		xneti->xni_rxring->resp_prod += i;
 		__insn_barrier();
+		/* check if we need to allocate new xmit pages */
+		if (xmit_pages_alloc < 0)
+			xennetback_get_new_xmit_pages();
 	}
 	/* send event, if needed */
 	if (do_event) {
