@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/03/05 05:41:05 shin Exp $
+#	$NetBSD: Makefile,v 1.9 2001/01/04 09:22:06 itojun Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -17,6 +17,8 @@ INCSDIR=	/usr/include/objc
 
 .if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
 ARCHSUBDIR= mips
+.elif (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
+ARCHSUBDIR= sh3
 .else
 ARCHSUBDIR= ${MACHINE_ARCH}
 .endif
