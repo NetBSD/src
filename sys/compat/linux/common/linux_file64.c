@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.18.2.1 2004/05/11 14:30:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18.2.1 2004/05/11 14:30:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,11 +224,39 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
+	struct sys_truncate_args ta;
+
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_truncate(p, uap, retval);
+         /* Linux doesn't have the 'pad' pseudo-parameter */
+         SCARG(&ta, path) = SCARG(uap, path);
+         SCARG(&ta, pad) = 0;
+         SCARG(&ta, length) = SCARG(uap, length);
+ 
+	return sys_truncate(p, &ta, retval);
+}
+ 
+int
+linux_sys_ftruncate64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+ 
+	struct linux_sys_ftruncate64_args /* {
+		syscallarg(int) fd;
+		syscallarg(off_t) length;
+	} */ *uap = v;
+	struct sys_ftruncate_args ta;
+ 
+	/* Linux doesn't have the 'pad' pseudo-parameter */
+	SCARG(&ta, fd) = SCARG(uap, fd);
+	SCARG(&ta, pad) = 0;
+	SCARG(&ta, length) = SCARG(uap, length);
+
+	return sys_ftruncate(p, &ta, retval);
 }
 
 #if !defined(__m68k__)
