@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2000/05/19 18:54:27 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2000/06/16 23:27:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,7 +44,7 @@
 #include <sys/disklabel.h>
 
 #ifdef COMPAT_ULTRIX
-#include <machine/dec_boot.h>
+#include <dev/dec/dec_boot.h>
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
