@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.18 2001/02/04 21:29:32 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.19 2001/02/19 22:56:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.18 2001/02/04 21:29:32 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.19 2001/02/19 22:56:19 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: fsdb.c,v 1.18 2001/02/04 21:29:32 christos Exp $");
 #include "fsck.h"
 #include "extern.h"
 
-extern char *__progname;	/* from crt0.o */
-
 int main __P((int, char *[]));
 static void usage __P((void));
 static int cmdloop __P((void));
@@ -89,7 +87,7 @@ ino_t   curinum;
 static void
 usage()
 {
-	errx(1, "usage: %s [-d] [-n] -f <fsname>", __progname);
+	errx(1, "usage: %s [-d] [-n] -f <fsname>", getprogname());
 }
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
@@ -255,7 +253,7 @@ cmdloop()
 	hist = history_init();
 	history(hist, &he, H_SETSIZE, 100);	/* 100 elt history buffer */
 
-	elptr = el_init(__progname, stdin, stdout, stderr);
+	elptr = el_init(getprogname(), stdin, stdout, stderr);
 	el_set(elptr, EL_EDITOR, "emacs");
 	el_set(elptr, EL_PROMPT, prompt);
 	el_set(elptr, EL_HIST, history, hist);

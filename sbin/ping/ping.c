@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.58 2001/01/12 18:50:57 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.59 2001/02/19 22:56:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.58 2001/01/12 18:50:57 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.59 2001/02/19 22:56:21 cgd Exp $");
 #endif
 
 #include <stdio.h>
@@ -165,12 +165,11 @@ struct sockaddr_in src_addr;		/* from where */
 struct sockaddr_in loc_addr;		/* 127.1 */
 int datalen = 64-PHDR_LEN;		/* How much data */
 
-#ifdef sgi
-static char *__progname;
-#else
-extern char *__progname;
+#ifndef __NetBSD__
+static char *progname;
+#define	getprogname()		(progname)
+#define	setprogname(name)	((void)(progname = (name)))
 #endif
-
 
 char hostname[MAXHOSTNAMELEN];
 
@@ -261,9 +260,8 @@ main(int argc, char *argv[])
 #endif
   
 
-#ifdef sgi
-	__progname = argv[0];
-#endif
+	setprogname(argv[0]);
+
 #ifndef IPSEC
 #define IPSECOPT
 #else
@@ -1827,6 +1825,6 @@ usage(void)
 	    " [-i interval] [-I addr]\n"
 	    "     [-l preload] [-p pattern] [-s size] [-t tos] [-T ttl]"
 	    " [-w maxwait] " IPSECOPT "host\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
