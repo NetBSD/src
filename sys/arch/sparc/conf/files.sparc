@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.62 1998/08/27 11:41:24 mrg Exp $
+#	$NetBSD: files.sparc,v 1.63 1998/08/29 20:53:11 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -110,18 +110,11 @@ major { cd = 18 }
 major { xd = 10 }
 major { xy = 3 }
 
-device dma {}
-attach dma at sbus with dma_sbus
 attach dma at obio with dma_obio
-device ledma {}
-attach ledma at sbus
-file	arch/sparc/dev/dma.c		dma | ledma
+file	arch/sparc/dev/dma_obio.c	dma_obio
 
-device esp: scsi, ncr53c9x
-attach esp at sbus with esp_sbus
-attach esp at dma with esp_dma
 attach esp at obio with esp_obio
-file	arch/sparc/dev/esp.c		esp
+file	arch/sparc/dev/esp_obio.c	esp_obio
 
 attach audioamd at mainbus with audioamd_mainbus
 attach audioamd at sbus with audioamd_sbus
@@ -175,9 +168,7 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
-attach le at ledma with le_ledma: le24
 attach le at obio with le_obio: le24
-file	arch/sparc/dev/if_le_ledma.c	le_ledma
 file	arch/sparc/dev/if_le_obio.c	le_obio
 
 attach ie at obio with ie_obio
