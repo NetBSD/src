@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.4 1995/10/07 19:48:08 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.5 1995/10/07 19:54:58 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -54,7 +54,10 @@
 #include <amiga/dev/grf_ulreg.h>
 #include <amiga/dev/grf_ultmscode.h>
 
-int ul_ioctl __P((struct grf_softc *gp, u_long, void *, dev_t));
+int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
+int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
+int ul_putcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
+int ul_bitblt __P((struct grf_softc *, struct grf_bitblt *, dev_t));
 
 /*
  * marked true early so that ulowell_cnprobe() can tell if we are alive. 
@@ -214,7 +217,7 @@ ul_load_code(gp)
 	gi->gd_fbheight	= 1024;
 	gi->gd_colors	= 256;
 
-	ba->ctrl = ba->ctrl & ~INCR | (LBL|INCW);
+	ba->ctrl = (ba->ctrl & ~INCR) | (LBL|INCW);
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0080;
 	ba->data = 0x0;		/* disable screen refresh and video output */
@@ -222,7 +225,7 @@ ul_load_code(gp)
 	ba->data = 0xFFFF;	/* no display int possible */
 	ba->data = 0x000C;	/* CAS before RAS refresh each 64 local clks */
 
-	ba->ctrl = ba->ctrl & ~INCW | LBL;
+	ba->ctrl = (ba->ctrl & ~INCW) | LBL;
 	ba->hstadrh = 0xfe80;
 	ba->hstadrl = 0;
 	ba->data = 4;
@@ -258,32 +261,20 @@ ul_load_code(gp)
 	ba->ctrl = LBL | INCW | NMI | NMIM | HLT | CF;
 
 	printf("\ndownloading TMS code");
-	for (i=0; i<NTMSBLOCKS; ++i) {
+	i=0;
+	while ((j = tmscode[i++])) {
 		printf(".");
-		ba->hstadrh = tmscode[i].startaddr >> 16;
-		ba->hstadrl = tmscode[i].startaddr;
-		for (j=0; j<tmscode[i].size; ++j) {
-			ba->data = tmscode[i].datptr[j];
+		ba->hstadrh = tmscode[i++];
+		ba->hstadrl = tmscode[i++];
+		while (j-- > 0) {
+			ba->data = tmscode[i++];
 		}
 	}
-	ba->ctrl &= ~CF;
 
-#ifdef TMSSTART
 	/* font info was uploaded in ite_ul.c(ite_ulinit). */
-	printf("starting TMS at 0x%08x",TMSSTART);
-	ba->ctrl = LBL | INCW | NMI | NMIM | HLT | CF;
 
-	ba->hstadrh = 0xFFFF;
-	ba->hstadrl = 0xFFE0;		/* RESET vector */
-	ba->data = TMSSTART;
-	ba->data = TMSSTART >> 16;
-	ba->hstadrh = 0xFFFF;
-	ba->hstadrl = 0xFEE0;		/* NMI vector */
-	ba->data = TMSSTART;
-	ba->data = TMSSTART >> 16;
-	ba->ctrl |= HLT|NMI|NMIM;
-	ba->ctrl &= ~(HLT|CF);
-#endif
+	/* unflush cache, unhalt cpu -> nmi starts to run */
+	ba->ctrl &= ~(HLT|CF);	
 
 #if 0
 	/* XXX load image palette with some initial values, slightly hacky */
@@ -351,7 +342,7 @@ ul_load_mon(gp, md)
 	gi->gd_dyn.gdi_dx	= 0;
 	gi->gd_dyn.gdi_dy	= 0;
 
-	ba->ctrl = ba->ctrl & ~INCR | (LBL|INCW);
+	ba->ctrl = (ba->ctrl & ~INCR) | (LBL|INCW);
 
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0000;
@@ -371,11 +362,11 @@ ul_load_mon(gp, md)
 	if (abs(md->pixel_clock - ulowell_clock[0]) >
 	    abs(md->pixel_clock - ulowell_clock[1])) {
 
-		ba->data = ba->data & 0xFC | 2 | 1;
+		ba->data = (ba->data & 0xFC) | 2 | 1;
 		md->pixel_clock = ulowell_clock[1];
 
 	} else {
-		ba->data = ba->data & 0xFC | 2 | 0;
+		ba->data = (ba->data & 0xFC) | 2 | 0;
 		md->pixel_clock = ulowell_clock[0];
 	}
 
@@ -474,7 +465,6 @@ grfulattach(pdp, dp, auxp)
 	void *auxp;
 {
 	static struct grf_ul_softc congrf;
-	static int coninited;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 	struct grf_ul_softc *gup;
@@ -594,7 +584,6 @@ ul_setvmode (gp, mode)
 	struct grf_softc *gp;
 	unsigned mode;
 {
-	struct grfvideo_mode *md;
 	struct grf_ul_softc *gup;
 	struct gspregs *ba;
 	int error;
@@ -753,7 +742,7 @@ ul_getcmap (gp, cmap, dev)
 {
 	struct grf_ul_softc *gup;
 	u_int8_t *mymap;
-	int i, mxidx, error;
+	int mxidx, error;
 
 	gup = (struct grf_ul_softc *)gp;
 
@@ -886,7 +875,6 @@ gsp_write(gsp, ptr, size)
 	u_short put, new_put, next, oc;
 	u_long put_hi, oa;
 	size_t n;
-	int s;
 
 	if (size == 0 || size > 8)
 	        return;
@@ -896,18 +884,18 @@ gsp_write(gsp, ptr, size)
 	oc = gsp->ctrl;
 	oa = GSPGETHADRS(gsp);
 
-	gsp->ctrl = oc & ~INCR | LBL | INCW;
-	GSPSETHADRS(gsp,GSP_MODE_ADRS);
+	gsp->ctrl = (oc & ~INCR) | LBL | INCW;
+	GSPSETHADRS(gsp, GSP_MODE_ADRS);
 	gsp->data &= ~GMODE_FLUSH;
 
-	GSPSETHADRS(gsp,PUT_HI_PTR_ADRS);
+	GSPSETHADRS(gsp, PUT_HI_PTR_ADRS);
 	put_hi = gsp->data << 16;
 
-	GSPSETHADRS(gsp,PUT_PTR_ADRS);
+	GSPSETHADRS(gsp, PUT_PTR_ADRS);
 	put = gsp->data;
 	new_put = put + (8<<4);
 
-	GSPSETHADRS(gsp,GET_PTR_ADRS);
+	GSPSETHADRS(gsp, GET_PTR_ADRS);
 	next = gsp->data;
 	
 	while (next == new_put) {

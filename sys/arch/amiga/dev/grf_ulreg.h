@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ulreg.h,v 1.1 1995/08/18 16:15:46 chopps Exp $	*/
+/*	$NetBSD: grf_ulreg.h,v 1.2 1995/10/07 19:54:59 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -99,5 +99,7 @@ struct grf_ul_softc {
 
 #ifdef _KERNEL
 void gsp_write(struct gspregs *gsp, u_int16_t *data, size_t size);
+int grful_cnprobe(void);
+void grful_iteinit(struct grf_softc *gp);
 #endif
 
