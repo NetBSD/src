@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.445 2002/06/22 14:34:49 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.446 2002/06/26 09:42:45 cjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.443 2002/06/22 14:33:54 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.444 2002/06/26 09:33:50 cjs Exp 
  */
 
 /*
@@ -6176,6 +6176,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "TSB43AA22 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22A,
+	    0,
+	    "Texas Instruments",
+	    "TSB43AA22/A OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA23,
+	    0,
+	    "Texas Instruments",
+	    "TSB43AA23 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21,
+	    0,
+	    "Texas Instruments",
+	    "TSB43AA21 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
