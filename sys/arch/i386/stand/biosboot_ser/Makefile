@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/14 00:04:35 fvdl Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/14 05:50:39 sommerfe Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -34,7 +34,7 @@ CFLAGS+= -Wall
 
 # XXX should go into library
 SRCS+= ls.c
-.PATH: ${.CURDIR}/../libsa
+.PATH: ${.CURDIR}/../libsa ${.CURDIR}/../biosboot
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
