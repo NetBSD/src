@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.25.2.1 2000/01/23 12:02:26 he Exp $	*/
+/*	$NetBSD: job.c,v 1.25.2.2 2000/01/23 13:35:44 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.25.2.1 2000/01/23 12:02:26 he Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.25.2.2 2000/01/23 13:35:44 he Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.25.2.1 2000/01/23 12:02:26 he Exp $");
+__RCSID("$NetBSD: job.c,v 1.25.2.2 2000/01/23 13:35:44 he Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -201,7 +201,12 @@ static Shell    shells[] = {
 #ifdef OLDBOURNESHELL
     FALSE, "echo \"%s\"\n", "sh -c '%s || exit 0'\n",
 #endif
-    "vq", "e",
+#ifdef __NetBSD__
+    "vq",
+#else
+    "v",
+#endif
+    "e",
 },
     /*
      * UNKNOWN.
@@ -267,7 +272,7 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 
 
 #if defined(USE_PGRP) && defined(SYSV)
-# define KILL(pid, sig)		killpg(-(pid), (sig))
+# define KILL(pid, sig)		kill(-(pid), (sig))
 #else
 # if defined(USE_PGRP)
 #  define KILL(pid, sig)	killpg((pid), (sig))
@@ -282,19 +287,12 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
  * stuff much more. So, we devise our own macros... This is
  * really ugly, use dramamine sparingly. You have been warned.
  */
-#define W_SETMASKED(st, val, fun)				\
-	{							\
-		int sh = (int) ~0;				\
-		int mask = fun(sh);				\
-								\
-		for (sh = 0; ((mask >> sh) & 1) == 0; sh++)	\
-			continue;				\
-		*(st) = (*(st) & ~mask) | ((val) << sh);	\
-	}
-
-#define W_SETTERMSIG(st, val) W_SETMASKED(st, val, WTERMSIG)
-#define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
-
+#ifndef W_STOPCODE
+#define W_STOPCODE(sig) (((sig) << 8) | 0177)
+#endif
+#ifndef W_EXITCODE
+#define W_EXITCODE(ret, sig) ((ret << 8) | (sig))
+#endif 
 
 static int JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
@@ -383,6 +381,7 @@ JobPassSig(signo)
 {
     sigset_t nmask, omask;
     struct sigaction act;
+    int sigcont;
 
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout, "JobPassSig(%d) called.\n", signo);
@@ -414,8 +413,7 @@ JobPassSig(signo)
      * This ensures that all our jobs get continued when we wake up before
      * we take any other signal.
      */
-    sigemptyset(&nmask);
-    sigaddset(&nmask, signo);
+    sigfillset(&nmask);
     sigprocmask(SIG_SETMASK, &nmask, &omask);
     act.sa_handler = SIG_DFL;
     sigemptyset(&act.sa_mask);
@@ -428,17 +426,19 @@ JobPassSig(signo)
 		       ~0 & ~(1 << (signo-1)));
 	(void) fflush(stdout);
     }
-    (void) signal(signo, SIG_DFL);
 
-    (void) KILL(getpid(), signo);
-
-    signo = SIGCONT;
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
+    (void) kill(getpid(), signo);
+    if (signo != SIGTSTP) {
+	sigcont = SIGCONT;
+	Lst_ForEach(jobs, JobCondPassSig, (ClientData) &sigcont);
+    }
 
     (void) sigprocmask(SIG_SETMASK, &omask, NULL);
     sigprocmask(SIG_SETMASK, &omask, NULL);
-    act.sa_handler = JobPassSig;
-    sigaction(signo, &act, NULL);
+    if (signo != SIGCONT && signo != SIGTSTP) {
+	act.sa_handler = JobPassSig;
+	sigaction(sigcont, &act, NULL);
+    }
 }
 
 /*-
@@ -753,7 +753,7 @@ JobFinish(job, status)
 
     if ((WIFEXITED(*status) &&
 	 (((WEXITSTATUS(*status) != 0) && !(job->flags & JOB_IGNERR)))) ||
-	(WIFSIGNALED(*status) && (WTERMSIG(*status) != SIGCONT)))
+	WIFSIGNALED(*status))
     {
 	/*
 	 * If it exited non-zero and either we're doing things our
@@ -804,8 +804,7 @@ JobFinish(job, status)
 
     if (done ||
 	WIFSTOPPED(*status) ||
-	(WIFSIGNALED(*status) && (WTERMSIG(*status) == SIGCONT)) ||
-	DEBUG(JOB))
+	(WIFSIGNALED(*status) && (WTERMSIG(*status) == SIGCONT)))
     {
 	FILE	  *out;
 
@@ -844,7 +843,7 @@ JobFinish(job, status)
 		}
 		(void) fprintf(out, "*** Completed successfully\n");
 	    }
-	} else if (WIFSTOPPED(*status)) {
+	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) != SIGCONT) {
 	    if (DEBUG(JOB)) {
 		(void) fprintf(stdout, "Process %d stopped.\n", job->pid);
 		(void) fflush(stdout);
@@ -854,8 +853,17 @@ JobFinish(job, status)
 		lastNode = job->node;
 	    }
 	    if (!(job->flags & JOB_REMIGRATE)) {
-		(void) fprintf(out, "*** Stopped -- signal %d\n",
-		    WSTOPSIG(*status));
+		switch (WSTOPSIG(*status)) {
+		case SIGTSTP:
+		    (void) fprintf(out, "*** Suspended\n");
+		    break;
+		case SIGSTOP:
+		    (void) fprintf(out, "*** Stopped\n");
+		    break;
+		default:
+		    (void) fprintf(out, "*** Stopped -- signal %d\n",
+			WSTOPSIG(*status));
+		}
 	    }
 	    job->flags |= JOB_RESUME;
 	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
@@ -865,7 +873,7 @@ JobFinish(job, status)
 #endif
 	    (void) fflush(out);
 	    return;
-	} else if (WTERMSIG(*status) == SIGCONT) {
+	} else if (WIFSTOPPED(*status) &&  WSTOPSIG(*status) == SIGCONT) {
 	    /*
 	     * If the beastie has continued, shift the Job from the stopped
 	     * list to the running one (or re-stop it if concurrency is
@@ -940,7 +948,7 @@ JobFinish(job, status)
 	    break;
 	case JOB_ERROR:
 	    done = TRUE;
-	    W_SETEXITSTATUS(status, 1);
+	    *status = W_EXITCODE(1, 0);
 	    break;
 	case JOB_FINISHED:
 	    /*
@@ -1000,7 +1008,6 @@ JobFinish(job, status)
 	/*
 	 * If we are aborting and the job table is now empty, we finish.
 	 */
-	(void) eunlink(tfile);
 	Finish(errors);
     }
 }
@@ -1285,7 +1292,10 @@ JobExec(job, argv)
 	_exit(1);
     } else {
 #ifdef REMOTE
-	long omask = sigblock(sigmask(SIGCHLD));
+	sigset_t nmask, omask;
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nmask, &omask);
 #endif
 	job->pid = cpid;
 
@@ -1321,7 +1331,7 @@ JobExec(job, argv)
 	    }
 	}
 #ifdef REMOTE
-	(void) sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 #endif
     }
 
@@ -1370,7 +1380,7 @@ JobMakeArgv(job, argv)
 	 * Bourne shell thinks its second argument is a file to source.
 	 * Grrrr. Note the ten-character limitation on the combined arguments.
 	 */
-	(void)sprintf(args, "-%s%s",
+	(void)snprintf(args, sizeof(args), "-%s%s",
 		      ((job->flags & JOB_IGNERR) ? "" :
 		       (commandShell->exit ? commandShell->exit : "")),
 		      ((job->flags & JOB_SILENT) ? "" :
@@ -1506,7 +1516,7 @@ JobRestart(job)
 	 * 'echo' flag of the commandShell is used to get it to start echoing
 	 * as soon as it starts processing commands.
 	 */
-	char	  *argv[4];
+	char	  *argv[10];
 
 	JobMakeArgv(job, argv);
 
@@ -1608,7 +1618,7 @@ JobRestart(job)
 		 * actually put the thing in the job table.
 		 */
 		job->flags |= JOB_CONTINUING;
-		W_SETTERMSIG(&status, SIGCONT);
+		status = W_STOPCODE(SIGCONT);
 		JobFinish(job, &status);
 
 		job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
@@ -1619,8 +1629,7 @@ JobRestart(job)
 	    } else {
 		Error("couldn't resume %s: %s",
 		    job->node->name, strerror(errno));
-		status = 0;
-		W_SETEXITSTATUS(&status, 1);
+		status = W_EXITCODE(1, 0);
 		JobFinish(job, &status);
 	    }
 	} else {
@@ -1667,11 +1676,11 @@ JobStart(gn, flags, previous)
 			       * if any. */
 {
     register Job  *job;       /* new job descriptor */
-    char	  *argv[4];   /* Argument vector to shell */
-    static int    jobno = 0;  /* job number of catching output in a file */
+    char	  *argv[10];  /* Argument vector to shell */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
+    int		  tfd;	      /* File descriptor to the temp file */
 
     if (previous != NULL) {
 	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT|JOB_REMOTE);
@@ -1726,9 +1735,13 @@ JobStart(gn, flags, previous)
 	    DieHorribly();
 	}
 
-	job->cmdFILE = fopen(tfile, "w+");
+	if ((tfd = mkstemp(tfile)) == -1)
+	    Punt("Could not create temporary file %s", strerror(errno));
+	(void) eunlink(tfile);
+
+	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL) {
-	    Punt("Could not open %s", tfile);
+	    Punt("Could not fdopen %s", tfile);
 	}
 	(void) fcntl(FILENO(job->cmdFILE), F_SETFD, 1);
 	/*
@@ -1834,7 +1847,6 @@ JobStart(gn, flags, previous)
 	 * Unlink and close the command file if we opened one
 	 */
 	if (job->cmdFILE != stdout) {
-	    (void) eunlink(tfile);
 	    if (job->cmdFILE != NULL)
 		(void) fclose(job->cmdFILE);
 	} else {
@@ -1862,7 +1874,6 @@ JobStart(gn, flags, previous)
 	}
     } else {
 	(void) fflush(job->cmdFILE);
-	(void) eunlink(tfile);
     }
 
     /*
@@ -1874,8 +1885,7 @@ JobStart(gn, flags, previous)
     /*
      * If we're using pipes to catch output, create the pipe by which we'll
      * get the shell's output. If we're using files, print out that we're
-     * starting a job and then set up its temporary-file name. This is just
-     * tfile with two extra digits tacked on -- jobno.
+     * starting a job and then set up its temporary-file name.
      */
     if (!compatMake || (job->flags & JOB_FIRST)) {
 	if (usePipes) {
@@ -1889,9 +1899,8 @@ JobStart(gn, flags, previous)
 	} else {
 	    (void) fprintf(stdout, "Remaking `%s'\n", gn->name);
   	    (void) fflush(stdout);
-	    sprintf(job->outFile, "%s%02d", tfile, jobno);
-	    jobno = (jobno + 1) % 100;
-	    job->outFd = open(job->outFile,O_WRONLY|O_CREAT|O_APPEND,0600);
+	    (void) strcpy(job->outFile, TMPPAT);
+	    job->outFd = mkstemp(job->outFile);
 	    (void) fcntl(job->outFd, F_SETFD, 1);
 	}
     }
@@ -2242,7 +2251,8 @@ Job_CatchChildren(block)
 			  (block?0:WNOHANG)|WUNTRACED)) > 0)
     {
 	if (DEBUG(JOB)) {
-	    (void) fprintf(stdout, "Process %d exited or stopped.\n", pid);
+	    (void) fprintf(stdout, "Process %d exited or stopped %x.\n", pid,
+	      status);
 	    (void) fflush(stdout);
 	}
 
@@ -2250,7 +2260,7 @@ Job_CatchChildren(block)
 	jnode = Lst_Find(jobs, (ClientData)&pid, JobCmpPid);
 
 	if (jnode == NILLNODE) {
-	    if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGCONT)) {
+	    if (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGCONT)) {
 		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
 		if (jnode == NILLNODE) {
 		    Error("Resumed child (%d) not in table", pid);
@@ -2407,8 +2417,6 @@ Job_Init(maxproc, maxlocal)
 			     * be running at once. */
 {
     GNode         *begin;     /* node for commands to do at the very start */
-
-    (void) sprintf(tfile, "/tmp/make%05ld", (unsigned long)getpid());
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
@@ -2918,7 +2926,6 @@ JobInterrupt(runINTERRUPT, signo)
 	    }
 	}
     }
-    (void) eunlink(tfile);
     exit(signo);
 }
 
@@ -2953,7 +2960,6 @@ Job_Finish()
 	    }
 	}
     }
-    (void) eunlink(tfile);
     return(errors);
 }
 
@@ -2972,8 +2978,10 @@ Job_Finish()
 void
 Job_End()
 {
+#ifdef CLEANUP
     if (shellArgv)
 	free(shellArgv);
+#endif
 }
 
 /*-
@@ -3056,7 +3064,6 @@ Job_AbortAll()
      */
     while (waitpid((pid_t) -1, &foo, WNOHANG) > 0)
 	continue;
-    (void) eunlink(tfile);
 }
 
 #ifdef REMOTE
