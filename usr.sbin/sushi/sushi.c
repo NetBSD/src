@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.7 2001/01/14 21:23:23 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.8 2001/01/22 07:12:49 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -357,15 +357,18 @@ display_menu(cqm, title, basedir)
 
 	bind_menu(scrollp, basedir);
 
+loop:
 	selection = activateCDKScroll(scrollp, NULL);
+
+	mte = tree_getentry(cqm, selection);
+	if (selection != -1 && strcmp(mte->filename, "BLANK") == 0)
+		goto loop;
 
 	destroyCDKScroll(scrollp);
 
 	for(i=0; i<items; i++)
 		free(menu[i]);
 	free(menu);
-
-	mte = tree_getentry(cqm, selection);
 
 	return(mte);
 }
