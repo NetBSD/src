@@ -1,11 +1,11 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2001/11/03 02:12:37 reinoud Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.2 2002/12/28 02:42:13 reinoud Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,21 +36,51 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define BOOT_AOUT
+#ifndef _ARM32_LOADFILE_MACHDEP_H_
+#define _ARM32_LOADFILE_MACHDEP_H_
+
 #define BOOT_ELF32
 
-#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
-#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
+#define LOAD_KERNEL		(LOAD_ALL & ~LOAD_TEXTA)
+#define COUNT_KERNEL		(COUNT_ALL & ~COUNT_TEXTA)
 
-#define LOADADDR(a)		(((u_long)(a)))
-#define ALIGNENTRY(a)		((u_long)(a))
-#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
-#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
-#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#ifdef _STANDALONE
+
+#define LOADADDR(a)		(((u_long)(a)) + offset)
+/* ALIGNENTRY is only for a.out. */
+#define READ(f, b, c)		boot32_read((f), (void *)LOADADDR(b), (c))
+#define	BCOPY(s, d, c)		boot32_memcpy((void *)LOADADDR(d), (s), (c))
+#define	BZERO(d, c)		boot32_memset((void *)LOADADDR(d), 0, (c))
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
-#define PROGRESS(a)		(void) printf a
-#define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == ZMAGIC)
+#define	PROGRESS(a)		(void) printf a
+#define	ALLOC(a)		alloc(a)
+#define	FREE(a, b)		free(a, b)
+/* OKMAGIC is only for a.out. */
+
+extern ssize_t boot32_read(int, void *, size_t);
+extern void *boot32_memcpy(void *, const void *, size_t);
+extern void *boot32_memset(void *, int, size_t);
+
+#else
+
+#define	LOADADDR(a)		(((u_long)(a)) + offset)
+#define	ALIGNENTRY(a)		((u_long)(a))
+#define	READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define	BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define	BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#define	WARN(a)			warn a
+#define	PROGRESS(a)		/* nothing */
+#define	ALLOC(a)		malloc(a)
+#define	FREE(a, b)		free(a)
+#define	OKMAGIC(a)		((a) == OMAGIC)
+
+ssize_t vread __P((int, u_long, u_long *, size_t));
+void vcopy __P((u_long, u_long, u_long *, size_t));
+void vzero __P((u_long, u_long *, size_t));
+
+#endif
+#endif
+
+/* end of loadfile_machdep.h */
