@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.3 2002/05/02 14:58:37 nonaka Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.4 2002/05/02 15:18:00 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ struct platform platform_mot_ulmb60xa = {
 	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 static int

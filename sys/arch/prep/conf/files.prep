@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.33 2002/05/02 14:58:36 nonaka Exp $
+#	$NetBSD: files.prep,v 1.34 2002/05/02 15:17:57 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -201,3 +201,12 @@ file	dev/isa/i82365_isa.c		pcic_isa
 file	dev/isa/i82365_isasubr.c	pcic_isa
 
 include "dev/pcmcia/files.pcmcia"
+
+# on-board I/O
+define obio {[port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1]}
+device obio: obio
+attach obio at mainbus
+file arch/prep/dev/obio.c		obio needs-flag
+
+attach wdc at obio with wdc_obio
+file arch/prep/dev/wdc_obio.c		wdc_obio needs-flag
