@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.8 1999/08/16 08:11:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.9 1999/09/05 10:45:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -521,7 +521,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 			error = ntfs_readattr(ntmp, VTONT(vp),
 					NTFS_A_DATA, NULL,
 					num * sizeof(ad), sizeof(ad),
-					&ad);
+					&ad, NULL);
 			if (error)
 				goto out1;
 			if (ad.ad_name[0] == 0)
@@ -540,7 +540,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 			error = ntfs_readattr(ntmp, VTONT(vp),
 					NTFS_A_DATA, NULL,
 					i * sizeof(ad), sizeof(ad),
-					&ad);
+					&ad, NULL);
 			if (error)
 				goto out1;
 			j = 0;
@@ -714,7 +714,7 @@ ntfs_calccfree(
 	MALLOC(tmp, u_int8_t *, bmsize, M_TEMP, M_WAITOK);
 
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
-			       0, bmsize, tmp);
+			       0, bmsize, tmp, NULL);
 	if (error)
 		goto out;
 
