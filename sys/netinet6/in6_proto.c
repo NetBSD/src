@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.4 1999/07/09 22:57:27 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,7 +290,7 @@ int	ip6_gif_hlim = GIF_HLIM;
 int	ip6_gif_hlim = 0;
 #endif
 
-u_long	ip6_id = 0UL;
+u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 
