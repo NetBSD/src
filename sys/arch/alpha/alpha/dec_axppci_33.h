@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_axppci_33.h,v 1.4 1996/06/13 04:53:56 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.h,v 1.5 1996/06/13 18:32:05 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
