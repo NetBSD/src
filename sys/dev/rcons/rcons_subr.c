@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.5 1999/05/19 20:07:34 ad Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.6 1999/08/26 20:48:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -79,8 +79,14 @@ rcons_init_ops(rc)
 		rc->rc_ops->mapchar(rc->rc_cookie, i, rc->rc_charmap + i);
 
 	/* Determine which attributes the device supports. */
-	rc->rc_fgcolor = RASTERCONSOLE_FGCOL;
-	rc->rc_bgcolor = RASTERCONSOLE_BGCOL;
+#ifdef RASTERCONSOLE_FGCOL
+	rc->rc_deffgcolor = RASTERCONSOLE_FGCOL;
+#endif
+#ifdef RASTERCONSOLE_BGCOL
+	rc->rc_defbgcolor = RASTERCONSOLE_BGCOL;
+#endif
+	rc->rc_fgcolor = rc->rc_deffgcolor;
+	rc->rc_bgcolor = rc->rc_defbgcolor;
 	rc->rc_supwsflg = 0;
 	
 	for (i = 1; i < 256; i <<= 1)
@@ -89,11 +95,11 @@ rcons_init_ops(rc)
 
 	/* Allocate kernel output attribute */
 	rc->rc_wsflg = WSATTR_HILIT;
-	rcons_setcolor(rc, RASTERCONSOLE_FGCOL, RASTERCONSOLE_BGCOL);
+	rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
 	rc->rc_kern_attr = rc->rc_attr;
 	
 	rc->rc_wsflg = 0;
-	rcons_setcolor(rc, RASTERCONSOLE_FGCOL, RASTERCONSOLE_BGCOL);
+	rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
 }
 
 /* Output (or at least handle) a string sent to the console */
@@ -271,7 +277,7 @@ rcons_sgresc(rc, c)
 	/* Clear all attributes || End underline */
 	case 0:
 		rc->rc_wsflg = 0;
-		rcons_setcolor(rc, RASTERCONSOLE_FGCOL, RASTERCONSOLE_BGCOL);
+		rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
 		break;
 
 	/* ANSI foreground color */
@@ -444,7 +450,7 @@ rcons_doesc(rc, c)
 		rc->rc_wsflg = 0;
 		rc->rc_scroll = 0;
 		rc->rc_bits &= ~FB_NO_CURSOR;
-		rcons_setcolor(rc, RASTERCONSOLE_FGCOL, RASTERCONSOLE_BGCOL);
+		rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
 
 		if (rc->rc_bits & FB_INVERT)
 			rcons_invert(rc, 0);
