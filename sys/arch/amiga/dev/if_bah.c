@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.23 1996/11/18 08:49:30 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.24 1996/11/18 09:08:29 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -189,6 +189,8 @@ void	movepin __P((u_char __volatile *from, u_char *to, int len));
 void	bah_srint __P((void *vsc, void *dummy));
 void	callstart __P((void *vsc, void *dummy));
 static	void bah_tint __P((struct bah_softc *, int));
+void	bah_reconwatch(void *);
+
 
 
 struct cfattach bah_zbus_ca = {
@@ -1047,10 +1049,8 @@ bahintr(arg)
 		sc->sc_arccom.ac_if.if_collisions++;
 
 		/*
-		 * If more than 2 seconds per reconfig:
-		 *	Reset time and counter.
-		 * else:
-		 *	If more than ARC_EXCESSIVE_RECONFIGS reconfigs
+		 * If less than 2 seconds per reconfig:
+		 *	If ARC_EXCESSIVE_RECONFIGS
 		 *	since last burst, complain and set treshold for
 		 *	warnings to ARC_EXCESSIVE_RECONS_REWARN.
 		 *
@@ -1062,24 +1062,19 @@ bahintr(arg)
 		 * time if necessary.
 		 */
 
+		untimeout(bah_reconwatch, (void *)sc);
 		newsec = time.tv_sec;
-		if (newsec - sc->sc_recontime > 2 * sc->sc_reconcount) {
-			sc->sc_recontime = newsec;
-			sc->sc_reconcount = 0;
-			sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
-		} else if (++sc->sc_reconcount > sc->sc_reconcount_excessive) {
-			sc->sc_reconcount_excessive = 
-			    ARC_EXCESSIVE_RECONS_REWARN;
+		if ((newsec - sc->sc_recontime <= 2) && 
+		    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
 			log(LOG_WARNING,
 			    "%s: excessive token losses, cable problem?\n",
 			    sc->sc_dev.dv_xname);
-			sc->sc_recontime = newsec;
-			sc->sc_reconcount = 0;
 		}
+		sc->sc_recontime = newsec;
+		timeout(bah_reconwatch, (void *)sc, 15*hz);
 	}
 
 	if (maskedisr & ARC_RI) {
-
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
 		printf("%s: intr: hard rint, act %ld\n",
 		    sc->sc_dev.dv_xname, sc->sc_rx_act);
@@ -1088,7 +1083,10 @@ bahintr(arg)
 		buffer = sc->sc_rx_act;
 		/* look if buffer is marked invalid: */
 		if (sc->sc_base->buffers[buffer*512*2] == 0) {
-	/* invalid marked buffer (or illegally configured sender) */
+			/*
+			 * invalid marked buffer (or illegally configured
+			 * sender)
+			 */
 			log(LOG_WARNING, 
 			    "%s: spurious RX interrupt or sender 0 (ignored)\n",
 			    sc->sc_dev.dv_xname);
@@ -1097,29 +1095,29 @@ bahintr(arg)
 			 * XXX maybe better reset interface?
 			 */
 			sc->sc_base->command = ARC_RXBC(buffer);
-
-		} else { 
+		} else {
 			if (++sc->sc_rx_fillcount > 1) {
 				sc->sc_intmask &= ~ARC_RI;
 				sc->sc_base->status = sc->sc_intmask;
 			} else {
+
 				buffer ^= 1;
 				sc->sc_rx_act = buffer;
-	
+
 				/*
 				 * Start receiver on other receive buffer.
 				 * This also clears the RI interupt flag.
 				 */
 				sc->sc_base->command = ARC_RXBC(buffer);
 				/* in the RX intr, so mask is ok for RX */
-
+	
 #ifdef BAH_DEBUG
-				printf("%s: strtd rx buf %ld, stat 0x%02x\n",
+				printf("%s: strt rx for buf %ld, stat 0x%02x\n",
 				    sc->sc_dev.dv_xname, sc->sc_rx_act,
 				    sc->sc_base->status);
 #endif
 			}
-
+	
 #ifdef BAHSOFTCOPY
 			/* this one starts a soft int to copy out of the hw */
 			add_sicallback((sifunc_t)bah_srint, sc,NULL);
@@ -1129,12 +1127,27 @@ bahintr(arg)
 #endif
 		}
 	}
-
-	if (maskedisr & ARC_TA) 
+	if (maskedisr & ARC_TA) {
 		bah_tint(sc, isr);
+	}
 
 	return (1);
 }
+
+void
+bah_reconwatch(arg)
+	void *arg;
+{
+	struct bah_softc *sc = arg;
+
+	if (sc->sc_reconcount >= ARC_EXCESSIVE_RECONS) {
+		sc->sc_reconcount = 0;
+		log(LOG_WARNING, "%s: token valid again.\n",
+		    sc->sc_dev.dv_xname);
+	}
+	sc->sc_reconcount = 0;
+}
+
 
 /*
  * Process an ioctl request. 
