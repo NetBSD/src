@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.24 2003/01/06 13:26:26 wiz Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.25 2003/01/18 08:49:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.24 2003/01/06 13:26:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.25 2003/01/18 08:49:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.24 2003/01/06 13:26:26 wiz Exp $");
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
@@ -203,12 +204,13 @@ make_ultrix_mntent(sp, tem)
 }
 
 int
-ultrix_sys_getmnt(p, v, retval)
-	struct proc *p;
+ultrix_sys_getmnt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_getmnt_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
 	struct ultrix_fs_data *sfsp;
@@ -346,13 +348,13 @@ struct ultrix_ufs_args {
 };
 
 int
-ultrix_sys_mount(p, v, retval)
-	struct proc *p;
+ultrix_sys_mount(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_mount_args *uap = v;
-
+	struct proc *p = l->l_proc;
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];
@@ -472,5 +474,5 @@ ultrix_sys_mount(p, v, retval)
 		if ((error = copyout(&na, SCARG(&nuap, data), sizeof na)) != 0)
 			return (error);
 	}
-	return (sys_mount(p, &nuap, retval));
+	return (sys_mount(l, &nuap, retval));
 }
