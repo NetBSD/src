@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.8 2000/05/27 21:33:26 jdolecek Exp $
+.\"	$NetBSD: man.conf.5,v 1.9 2001/06/25 21:37:24 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)man.conf.5	8.5 (Berkeley) 1/2/94
 .\"
-.Dd January 2, 1994
+.Dd June 26, 2001
 .Dt MAN.CONF 5
 .Os
 .Sh NAME
@@ -143,6 +143,9 @@ by the
 and
 .Xr whatis 1
 commands.
+The pathname may contain the normal shell globbing characters,
+including curly braces (``{}''); to escape a shell globbing character,
+precede it with a backslash (``\e'').
 .El
 .Pp
 Multiple specifications for all types of lines are cumulative and the
