@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.28 2003/06/29 22:31:13 fvdl Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.29 2003/10/25 08:42:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28 2003/06/29 22:31:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.29 2003/10/25 08:42:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ smbfs_closel(struct vop_close_args *ap)
 	struct smbnode *np = VTOSMB(vp);
 	struct proc *p = ap->a_p;
 	struct smb_cred scred;
-	int error;
+	int error = 0;
 
 	SMBVDEBUG("name=%.*s, pid=%d, c=%d\n",
 		(int)np->n_nmlen, np->n_name, p->p_pid, np->n_opencount);
@@ -587,7 +587,7 @@ smbfs_create(v)
 	struct smb_cred scred;
 	const char *name = cnp->cn_nameptr;
 	int nmlen = cnp->cn_namelen;
-	int error;
+	int error = EINVAL;
 	
 
 	if (vap->va_type != VREG)
