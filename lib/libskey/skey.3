@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.1 2001/11/10 06:11:10 gmcgarry Exp $
+.\"     $NetBSD: skey.3,v 1.2 2001/11/10 08:05:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -127,7 +127,7 @@ Return a S/Key challenge for user
 .Fa name .
 If successful, the caller's skey structure
 .Fa mp
-is filled and 0 is returned.  If unsuccessful (eg if name in unknown),
+is filled and 0 is returned.  If unsuccessful (e.g. if name is unknown),
 -1 is returned.
 .It Fn skeylookup "mp" "name"
 Find an entry for user
@@ -156,7 +156,7 @@ Issue a S/Key challenge for user
 .Ar name .
 If successful, fill in the caller's skey structure
 .Fa mp
-and return 0.  If unsuccessful (eg if name in unknown) -1 is returned.
+and return 0.  If unsuccessful (e.g. if name is unknown) -1 is returned.
 .El
 .Pp
 The following lower-level functions are available:
@@ -203,7 +203,7 @@ to binary array
 .Fa out .
 Returns 0 on success, -1 on error.
 .It Fn btoa8 "out" "in"
-Convert 8-bte binary array
+Convert 8-byte binary array
 .Fa in
 to hex-ascii string
 .Fa out .
@@ -228,7 +228,7 @@ as a string of English words.  Returns a pointer to a static buffer in
 .It Fn etob "out" "e"
 Convert English to binary.  Returns 0 if the word is not in the
 database, 1 if all good words and parity is valid, -1 if badly formed
-in put (ie > 4 char word) and -2 if words are valid but parity is
+input (i.e. > 4 char word) and -2 if words are valid but parity is
 wrong.
 .It Fn put8 "out" "s"
 Display 8 bytes
@@ -238,16 +238,16 @@ as a series of 16-bit hex digits.
 .Sh FILES
 .Bl -tag -width /usr/lib/libskey_p.a -compact
 .It Pa /usr/lib/libskey.a
-the static skey library
+static skey library
 .It Pa /usr/lib/libskey.so
-the dynamic skey library
+dynamic skey library
 .It Pa /usr/lib/libskey_p.a
-the static skey library compiled for profiling
+static skey library compiled for profiling
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,
-.Xr skeyinfo 1 ,
-.Xr skeyaudit 1
+.Xr skeyaudit 1 ,
+.Xr skeyinfo 1
 .Sh BUGS
 The
 .Nm
