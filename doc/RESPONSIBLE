@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.46 2004/11/11 14:45:12 wiz Exp $
+#	$NetBSD: RESPONSIBLE,v 1.47 2004/12/11 09:57:32 jdolecek Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -18,6 +18,7 @@ csh		christos
 cvs		mycroft, christos, wiz
 dhcp		mellon
 etcupdate	martti
+expr		jdolecek
 file		christos, pooka
 grep		simonb, wiz
 groff		wiz
