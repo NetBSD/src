@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2000/05/01 05:31:14 thorpej Exp $
+# $NetBSD: mi,v 1.50 2000/05/02 12:46:06 simonb Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -99,6 +99,7 @@
 ./etc/rc.d/network
 ./etc/rc.d/nfsd
 ./etc/rc.d/nfslocking
+./etc/rc.d/ntpd
 ./etc/rc.d/ntpdate
 ./etc/rc.d/portmap
 ./etc/rc.d/postfix
@@ -129,7 +130,6 @@
 ./etc/rc.d/wscons
 ./etc/rc.d/xdm
 ./etc/rc.d/xfs
-./etc/rc.d/xntpd
 ./etc/rc.d/ypbind
 ./etc/rc.d/yppasswdd
 ./etc/rc.d/ypserv
