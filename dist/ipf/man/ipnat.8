@@ -1,9 +1,10 @@
-.\"	$NetBSD: ipnat.8,v 1.1 1999/12/12 10:30:46 veego Exp $
+.\"	$NetBSD: ipnat.8,v 1.2 2000/05/06 15:39:02 veego Exp $
 .\"
 .TH IPNAT 8
 .SH NAME
 ipnat \- user interface to the NAT
 .SH SYNOPSIS
+.Nm ipnat
 .B ipnat
 [
 .B \-lnrsvCF
@@ -18,6 +19,37 @@ Each rule processed by \fBipnat\fP
 is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
 which they appear when given to \fBipnat\fP.
+.PP
+\fBPlease Note\fP
+that
+\fBipnat\fP
+is not functional without
+\fBipf(8)\fP
+running. In addition, the following kernel options need to be turned on
+in order to use
+\fBipnat\fP:
+\fIIPFORWARDING\fP
+and
+\fIPFIL_HOOKS\fP.
+The
+\fIGATEWAY\fP
+kernel option includes the
+\fIIPFORWARDING\fP
+option.
+The sysctl command:
+.LP
+.nf
+        sysctl net.inet.ip.forwarding
+.fi     
+.PP     
+will inform you if
+\fIIPFORWARDING\fP
+is currently turned on in your kernel.
+Please see
+\fBoptions(4)\fP
+and
+\fBsysctl(8)\fP
+for more information on turning these parameters on.
 .SH OPTIONS
 .TP
 .B \-C
@@ -46,5 +78,7 @@ and active rules/table entries.
 .DT
 .SH FILES
 /dev/ipnat
+.br
+/usr/share/examples/ipf  Directory with examples.
 .SH SEE ALSO
 ipnat(5), ipf(8), ipfstat(8)
