@@ -1,3 +1,4 @@
+/*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -37,15 +38,18 @@ static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
  * rpc_sample.c, Sample client-server code outputter for the RPC protocol compiler
  */
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-
 static char RQSTP[] = "rqstp";
 
 void printarglist();
+static write_sample_client __P((char *, version_list *));
+static write_sample_server __P((definition *));
+static return_type __P((proc_list *));
 
 void
 write_sample_svc(def)
@@ -201,13 +205,11 @@ write_sample_server(def)
 	}
 }
 
-
-
 static 
 return_type(plist)
 	proc_list *plist;
 {
-  ptype( plist->res_prefix, plist->res_type, 1 );
+	ptype( plist->res_prefix, plist->res_type, 1 );
 }
 
 add_sample_msg()
