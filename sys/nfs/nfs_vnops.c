@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.136 2001/08/14 05:31:55 itojun Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.137 2001/08/17 05:54:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,6 +195,9 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.34 2001/07/24 15:39:34 assar Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.35 2001/08/17 05:54:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1527,6 +1527,9 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_specop_opv_desc =

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.37 2001/01/22 12:17:43 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.38 2001/08/17 05:54:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -169,6 +169,9 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_specop_opv_desc =
