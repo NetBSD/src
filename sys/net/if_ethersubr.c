@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.25 1997/04/03 18:48:28 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.26 1997/10/02 19:41:59 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -648,6 +648,7 @@ ether_ifattach(ifp, lla)
 		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
+	ifp->if_broadcastaddr = etherbroadcastaddr;
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
