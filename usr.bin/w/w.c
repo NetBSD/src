@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)w.c	5.29 (Berkeley) 4/23/91"; */
-static char rcsid[] = "$Id: w.c,v 1.5 1993/06/08 14:47:33 mycroft Exp $";
+static char rcsid[] = "$Id: w.c,v 1.6 1993/07/07 18:58:23 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -101,10 +101,6 @@ struct	entry {
 struct nlist nl[] = {
 	{ "_boottime" },
 #define X_BOOTTIME	0
-#if defined(hp300) || defined(i386)
-	{ "_cn_tty" },
-#define X_CNTTY		1
-#endif
 	{ "" },
 };
 
@@ -182,28 +178,6 @@ main(argc, argv)
 		bcopy(&utmp, &(ep->utmp), sizeof (struct utmp));
 		stp = ttystat(ep->utmp.ut_line);
 		ep->tdev = stp->st_rdev;
-#if defined(hp300) || defined(i386)
-		/*
-		 * XXX  If this is the console device, attempt to ascertain
-		 * the true console device dev_t.
-		 */
-		if (ep->tdev == 0) {
-			static dev_t cn_dev;
-
-			if (nl[X_CNTTY].n_value) {
-				struct tty cn_tty, *cn_ttyp;
-				
-				if (kvm_read((void *)nl[X_CNTTY].n_value,
-				    &cn_ttyp, sizeof(cn_ttyp)) > 0) {
-					(void)kvm_read(cn_ttyp, &cn_tty,
-					    sizeof (cn_tty));
-					cn_dev = cn_tty.t_dev;
-				}
-				nl[X_CNTTY].n_value = 0;
-			}
-			ep->tdev = cn_dev;
-		}
-#endif
 		ep->idle = ((now - stp->st_atime) + 30) / 60; /* secs->mins */
 		if (ep->idle < 0)
 			ep->idle = 0;
