@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.8 2001/01/07 19:39:09 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.9 2001/01/13 00:06:51 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -429,36 +429,7 @@ ENTRY(cpu_Debugger)
 	bl	_C_LABEL(kdb_trap)
 	add	r13, r13, #(4 * 16)
 	ldmfd	r13!, {pc}^
-
 #endif
-/*
- * Signal trampoline; copied to top of user stack.
- */
-
-ENTRY_NP(sigcode)
-/*
- * r0-r2 are our signal handler parameters
- * r3 is the handler address
- */
-
-	add	lr, pc, #0			/* Set return address */
-	mov	pc, r3				/* Call the handler */
-
-/*
- * Call sig_return with address of the signal context
- * Note: Don't use SIG_SCP as this make have been trashed by the program
- */
-	add	r0, sp, #SF_SC
-	swi	SYS___sigreturn14
-
-/* Well if that failed we better exit quick ! */
-
-	swi	SYS_exit
-	b	. - 8
-
-	.align	0
-        .global _C_LABEL(esigcode)
-_C_LABEL(esigcode):
 
 /*
  * Dummy symbols for vmstat -i
@@ -472,4 +443,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.8 2001/01/07 19:39:09 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.9 2001/01/13 00:06:51 bjh21 Exp $")

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2000/03/24 17:05:30 ws Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2001/01/13 00:06:51 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -205,35 +205,6 @@ Lboot_cache_purged:
 Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
 #endif	/* OFW */
-
-/*
- * Signal trampoline; copied to top of user stack.
- */
-
-ENTRY_NP(sigcode)
-/*
- * r0-r2 are our signal handler parameters
- * r3 is the handler address
- */
-
-	add	lr, pc, #0			/* Set return address */
-	mov	pc, r3				/* Call the handler */
-
-/*
- * Call sig_return with address of the signal context
- * Note: Don't use SIG_SCP as this make have been trashed by the program
- */
-	add	r0, sp, #SIGF_SC
-	swi	SYS___sigreturn14
-
-/* Well if that failed we better exit quick ! */
-
-	swi	SYS_exit
-	b	. - 8
-
-	.align	0
-        .global _C_LABEL(esigcode)
-_C_LABEL(esigcode):
 
 #ifdef IPKDB
 #if	0
