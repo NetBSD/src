@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.7 2002/10/04 15:22:30 tsutsui Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.8 2002/11/30 14:15:10 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -340,8 +340,15 @@
 /* How many packets we can put in the transmission buffer on NIC memory.  */
 #define FE_QUEUEING_MAX 127
 
-/* Length (in bytes) of a "packet length" word in transmission buffer.  */
-#define FE_DATA_LEN_LEN 2
+/* Size (in bytes) of a "packet length" word in transmission buffer.  */
+#define FE_TXLEN_SIZE 2
+
+/* receive packet status in the receive packet header. */
+#define FE_RXSTAT_GOODPKT	0x20
+#define FE_RXSTAT_RMT0900	0x10
+#define FE_RXSTAT_SHORTPKT	0x08
+#define FE_RXSTAT_ALIGNERR	0x04
+#define FE_RXSTAT_CRCERR	0x02
 
 /*
  * FUJITSU MBH10302 specific Registers.
