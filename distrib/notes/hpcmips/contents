@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.5 2000/06/14 03:33:11 shin Exp $
+.\"	$NetBSD: contents,v 1.6 2000/07/07 01:39:26 imp Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -447,7 +447,7 @@ distribution tree. These kernels are generally named something like
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
-The WindowsCE-based utilities necessary for installing and running
+The Windows CE-based utilities necessary for installing and running
 .Nx
 can
 be found in the
@@ -467,23 +467,23 @@ NetBSD/hpcmips kernel with system installer (sysinst).
 
 .Bl -tag -width pbsdboot.exe
 .It Pa pbsdboot.exe
-The NetBSD/hpcmips Booter utility. This program is used to boot the
+The NetBSD/hpcmips boot loader utility. This program is used to boot the
 .Nx
-kernel from within WindowsCE (version 2.0 and later).
+kernel from within Windows CE (version 2.0 and later).
 .br
 .Em 122k
 .El
 
 .Bl -tag -width pbsdboot1.exe
 .It Pa pbsdboot1.exe
-The NetBSD/hpcmips Booter utility. This program is used to boot the
+The NetBSD/hpcmips boot loader utility. This program is used to boot the
 .Nx
-kernel from within WindowsCE (version 1.0).
+kernel from within Windows CE (version 1.0).
 .br
 .Em 134k
 .El
 
 .Pp
-These files are all WindowsCE binary. If you need them,
+These files are Windows CE binaries. If you need them,
 the sources for these utilities are in the
 .Pa src/arch/hpcmips/stand/ directory.
