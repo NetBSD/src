@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 1996/10/13 02:59:26 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 1996/11/13 01:03:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -76,6 +76,7 @@ cpuattach(parent, dev, aux)
 		"21066/21068 (LCA4)",		/* PCS_PROC_LCA4 */
 		"21164 (EV5)",			/* PCS_PROC_EV5 */
 		"21064A (EV45)",		/* PCS_PROC_EV45 */
+		"21164A (EV56)",		/* PCS_PROC_EV56 */
 	};
 	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
 	char *dc21064_cpu_minor[] = {
@@ -112,6 +113,10 @@ cpuattach(parent, dev, aux)
 	case PCS_PROC_EV45:
 	case PCS_PROC_EV5:
 		printf("Pass %d", minor + 1);
+		break;
+
+	case PCS_PROC_EV56:
+		printf("Pass %d", minor);
 		break;
 
 	default:
