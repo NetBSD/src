@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.23 2003/06/09 13:30:44 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.24 2003/06/19 14:36:14 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 6, 2003
+.Dd June 19, 2003
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -1397,9 +1397,16 @@ is offset in the file to start accessing and
 is an array of VM pages.
 The argument
 .Fa count
-specifies the number of pages to read.
+points a variable that specifies the number of pages to read.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
+If PGO_LOCKED is specified in
+.Em flags,
+.Fn VOP_GETPAGES
+might return less pages than requested.
+In that case, a variable pointed by
+.Em count
+will be updated.
 .Pp
 This function is primarily used by the page-fault handing mechanism.
 .It Fn VOP_PUTPAGES "vp" "offset" "len" "flags"
