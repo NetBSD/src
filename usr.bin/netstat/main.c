@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2002/07/02 21:34:18 soren Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2002/07/03 01:42:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2002/07/02 21:34:18 soren Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2002/07/03 01:42:59 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2002/07/02 21:34:18 soren Exp $");
 #include <sys/protosw.h>
 #include <sys/socket.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
 
 #include <ctype.h>
@@ -181,6 +182,26 @@ struct nlist nl[] = {
 	{ "_arpstat" },
 #define N_RIP6STAT	55
 	{ "_rip6stat" },
+#define	N_ARPINTRQ	56
+	{ "_arpintrq" },
+#define	N_IPINTRQ	57
+	{ "_ipintrq" },
+#define	N_IP6INTRQ	58
+	{ "_ip6intrq" },
+#define	N_ATINTRQ1	59
+	{ "_atintrq1" },
+#define	N_ATINTRQ2	60
+	{ "_atintrq2" },
+#define	N_NSINTRQ	61
+	{ "_nsintrq" },
+#define	N_CLNLINTRQ	62
+	{ "_clnlintrq" },
+#define	N_LLCINTRQ	63
+	{ "_llcintrq" },
+#define	N_HDINTRQ	64
+	{ "_hdintrq" },
+#define	N_NATMINTRQ	65
+	{ "_natmintrq" },
 	{ "" },
 };
 
@@ -306,8 +327,26 @@ struct protox *protoprotox[] = { protox,
 #endif
 				 NULL };
 
+const struct softintrq {
+	const char *siq_name;
+	int siq_index;
+} softintrq[] = {
+	{ "arpintrq", N_ARPINTRQ },
+	{ "ipintrq", N_IPINTRQ },
+	{ "ip6intrq", N_IP6INTRQ },
+	{ "atintrq1", N_ATINTRQ1 },
+	{ "atintrq2", N_ATINTRQ2 },
+	{ "nsintrq", N_NSINTRQ },
+	{ "clnlintrq", N_CLNLINTRQ },
+	{ "llcintrq", N_LLCINTRQ },
+	{ "hdintrq", N_HDINTRQ },
+	{ "natmintrq", N_NATMINTRQ },
+	{ NULL, -1 },
+};
+
 int main __P((int, char *[]));
 static void printproto __P((struct protox *, char *));
+static void print_softintrq __P((void));
 static void usage __P((void));
 static struct protox *name2protox __P((char *));
 static struct protox *knownname __P((char *));
@@ -332,8 +371,9 @@ main(argc, argv)
 	af = AF_UNSPEC;
 	pcbaddr = 0;
 
-	while ((ch = getopt(argc, argv, "Aabdf:ghI:LliM:mN:nP:p:rsStuvw:")) != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv,
+	    "Aabdf:ghI:LliM:mN:nP:p:qrsStuvw:")) != -1)
+		switch (ch) {
 		case 'A':
 			Aflag = 1;
 			break;
@@ -410,6 +450,9 @@ main(argc, argv)
 				errx(1, "%s: unknown or uninstrumented protocol",
 				    optarg);
 			pflag = 1;
+			break;
+		case 'q':
+			qflag = 1;
 			break;
 		case 'r':
 			rflag = 1;
@@ -508,6 +551,10 @@ main(argc, argv)
 				tp->pr_name);
 		else
 			printf("%s: no stats routine\n", tp->pr_name);
+		exit(0);
+	}
+	if (qflag) {
+		print_softintrq();
 		exit(0);
 	}
 	/*
@@ -639,6 +686,29 @@ printproto(tp, name)
 }
 
 /*
+ * Print softintrq status.
+ */
+void
+print_softintrq()
+{
+	struct ifqueue intrq, *ifq = &intrq;
+	const struct softintrq *siq;
+	u_long off;
+
+	for (siq = softintrq; siq->siq_name != NULL; siq++) {
+		off = nl[siq->siq_index].n_value;
+		if (off == 0)
+			continue;
+
+		kread(off, (char *)ifq, sizeof(*ifq));
+		printf("%s:\n", siq->siq_name);
+		printf("\tqueue length: %d\n", ifq->ifq_len);
+		printf("\tmaximum queue length: %d\n", ifq->ifq_maxlen);
+		printf("\tpackets dropped: %d\n", ifq->ifq_drops);
+	}
+}
+
+/*
  * Read kernel memory, return 0 on success.
  */
 int
@@ -726,7 +796,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnrsSv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n", 
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);
