@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hilvar.h 1.1 90/07/09
  *	from: @(#)hilvar.h	7.2 (Berkeley) 11/4/90
- *	$Id: hilvar.h,v 1.4 1993/08/01 19:24:21 mycroft Exp $
+ *	$Id: hilvar.h,v 1.5 1993/08/07 04:42:15 cgd Exp $
  */
 
 #ifndef TRUE
@@ -72,7 +72,7 @@ struct hiliqueue {
 struct hilloopdev {
 	int	hd_flags;		/* device state */
 	int	hd_qmask;		/* queues this device is mapped to */
-	struct	ringb hd_queue;		/* event queue for HPUX-style input */
+	struct	clist hd_queue;		/* event queue for HPUX-style input */
 	struct	selinfo hd_selr;	/* process read selecting */
 	uid_t	hd_uid;			/* uid of mapping process */
 };
