@@ -1,4 +1,4 @@
-/*	$Id: header.h,v 1.3 1993/08/02 17:20:03 mycroft Exp $ */
+/*	$Id: header.h,v 1.4 1994/10/21 21:26:08 mycroft Exp $ */
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -48,7 +48,6 @@ struct monst
 struct _itm
 	{
 	short	price;
-	char	**mem;
 	char	obj;
 	char	arg;
 	char	qty;
