@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.15 2003/08/07 16:34:03 agc Exp $	*/
+/*	$NetBSD: domain.h,v 1.16 2004/04/18 18:30:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,26 +49,27 @@ struct	domain {
 	int	dom_family;		/* AF_xxx */
 	char	*dom_name;
 	void	(*dom_init)		/* initialize domain data structures */
-			__P((void));
+			(void);
 	int	(*dom_externalize)	/* externalize access rights */
-			__P((struct mbuf *));
+			(struct mbuf *);
 	void	(*dom_dispose)		/* dispose of internalized rights */
-			__P((struct mbuf *));
+			(struct mbuf *);
 	struct	protosw *dom_protosw, *dom_protoswNPROTOSW;
 	struct	domain *dom_next;
 	int	(*dom_rtattach)		/* initialize routing table */
-			__P((void **, int));
+			(void **, int);
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
 	int	dom_maxrtkey;		/* for routing layer */
-	void	*(*dom_ifattach) __P((struct ifnet *));
-	void	(*dom_ifdetach) __P((struct ifnet *, void *));
-					/* af-dependent data on ifnet */
+	void	*(*dom_ifattach)	/* attach af-dependent data on ifnet */
+			(struct ifnet *);
+	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
+			(struct ifnet *, void *);
 	struct	mowner dom_mowner;
 };
 
 #ifdef _KERNEL
 extern	struct	domain *domains;
-void domaininit __P((void));
+void domaininit (void);
 #endif
 
 #endif /* !_SYS_DOMAIN_H_ */

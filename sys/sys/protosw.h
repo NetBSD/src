@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.31 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: protosw.h,v 1.32 2004/04/18 18:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -71,29 +71,29 @@ struct protosw {
 
 /* protocol-protocol hooks */
 	void	(*pr_input)		/* input to protocol (from below) */
-			__P((struct mbuf *, ...));
+			(struct mbuf *, ...);
 	int	(*pr_output)		/* output to protocol (from above) */
-			__P((struct mbuf *, ...));
+			(struct mbuf *, ...);
 	void	*(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, void *));
+			(int, struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
-			__P((int, struct socket *, int, int, struct mbuf **));
+			(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct proc *));
+			(struct socket *, int, struct mbuf *,
+			     struct mbuf *, struct mbuf *, struct proc *);
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
-			__P((void));
+			(void);
 
 	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			__P((void));
+			(void);
 	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			__P((void));
+			(void);
 	void	(*pr_drain)		/* flush any excess space possible */
-			__P((void));
+			(void);
 	int	*pr_wassysctl;		/* @@@ was sysctl for protocol, now obsolete */
 };
 
@@ -253,12 +253,12 @@ extern	u_int pffasttimo_now;
 #define	PRT_FAST_ISEXPIRED(t)	(PRT_FAST_ISARMED((t)) && (t) <= pffasttimo_now)
 
 struct sockaddr;
-struct protosw *pffindproto __P((int, int, int));
-struct protosw *pffindtype __P((int, int));
-struct domain *pffinddomain __P((int));
+struct protosw *pffindproto (int, int, int);
+struct protosw *pffindtype (int, int);
+struct domain *pffinddomain (int);
 extern struct protosw inetsw[];
-void pfctlinput __P((int, struct sockaddr *));
-void pfctlinput2 __P((int, struct sockaddr *, void *));
+void pfctlinput (int, struct sockaddr *);
+void pfctlinput2 (int, struct sockaddr *, void *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */
