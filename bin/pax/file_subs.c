@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.9 1998/02/03 07:48:38 mycroft Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.9 1998/02/03 07:48:38 mycroft Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.10 1998/02/28 15:52:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -961,7 +961,7 @@ file_flush(fd, fname, isempt)
 
 /*
  * rdfile_close()
- *	close a file we have beed reading (to copy or archive). If we have to
+ *	close a file we have been reading (to copy or archive). If we have to
  *	reset access time (tflag) do so (the times are stored in arcn).
  */
 
