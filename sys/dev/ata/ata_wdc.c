@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.19.2.1 1999/08/25 11:17:59 he Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.19.2.2 2000/01/23 12:26:01 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -220,6 +220,8 @@ _wdc_ata_bio_start(chp, xfer)
 	}
 
 	if (xfer->c_flags & C_DMA) {
+		if (drvp->n_xfers <= NXFER)
+			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
 		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
@@ -451,7 +453,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
-			drvp->n_dmaerrs++;
+			ata_dmaerr(drvp);
 		}
 		ata_bio->error = TIMEOUT;
 		wdc_ata_bio_done(chp, xfer);
@@ -496,7 +498,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		}
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-		drvp->n_dmaerrs++;
+		ata_dmaerr(drvp);
 	}
 
 	/* if we had an error, end */
@@ -575,7 +577,6 @@ wdc_ata_bio_done(chp, xfer)
 	struct ata_bio *ata_bio = xfer->cmd;
 	int need_done = xfer->c_flags & C_NEEDDONE;
 	int drive = xfer->drive;
-	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, 
@@ -583,11 +584,6 @@ wdc_ata_bio_done(chp, xfer)
 	    DEBUG_XFERS);
 
 	untimeout(wdctimeout, chp);
-	if (ata_bio->error == NOERROR)
-		drvp->n_dmaerrs = 0;
-	else if (drvp->n_dmaerrs >= NERRS_MAX) {
-		wdc_downgrade_mode(drvp);
-	}
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
