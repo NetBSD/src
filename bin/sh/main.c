@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1995/05/28 18:09:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1995/07/20 15:04:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/28/95";
+static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1995/05/28 18:09:48 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1995/07/20 15:04:16 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -341,10 +341,14 @@ exitcmd(argc, argv)
 	int argc;
 	char **argv; 
 {
+	extern int oexitstatus;
+
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
+	else
+		exitstatus = oexitstatus;
 	exitshell(exitstatus);
 	/*NOTREACHED*/
 	return 0;
