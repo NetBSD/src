@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.3 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.4 2000/01/02 18:29:23 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,6 +127,8 @@ a34kugettod(tvp)
 	dt.dt_year  = rt->year1   * 10 + rt->year2;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
 
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
@@ -135,7 +137,7 @@ a34kugettod(tvp)
 	    (dt.dt_wday > 6) || 
 	    (dt.dt_day  > 31) || 
 	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
 
 	secs = clock_ymdhms_to_secs(&dt);
