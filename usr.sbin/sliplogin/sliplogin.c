@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.11 1995/06/19 22:52:25 jtc Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.12 1997/04/13 13:42:16 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -114,7 +114,7 @@ findid(name)
 	char user[16];
 	int i, j, n;
 
-	(void)strcpy(loginname, name);
+	(void)strncpy(loginname, name, sizeof(loginname) - 1);
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
 		syslog(LOG_ERR, "%s: %m\n", _PATH_ACCESS);
 		err(1, "%s", _PATH_ACCESS);
@@ -136,9 +136,10 @@ findid(name)
 		 * one specific to this host.  If none found, try for
 		 * a generic one.
 		 */
-		(void)sprintf(loginfile, "%s.%s", _PATH_LOGIN, name);
+		(void)snprintf(loginfile, sizeof loginfile, "%s.%s",
+		    _PATH_LOGIN, name);
 		if (access(loginfile, R_OK|X_OK) != 0) {
-			(void)strcpy(loginfile, _PATH_LOGIN);
+			(void)strncpy(loginfile, _PATH_LOGIN, sizeof(loginfile) - 1);
 			if (access(loginfile, R_OK|X_OK)) {
 				fputs("access denied - no login file\n",
 				      stderr);
@@ -165,7 +166,8 @@ sigstr(s)
 		return(sys_signame[s]);
 	else {
 		static char buf[32];
-		(void)sprintf(buf, "sig %d", s);
+
+		(void)snprintf(buf, sizeof buf, "sig %d", s);
 		return(buf);
 	}
 }
@@ -176,14 +178,15 @@ hup_handler(s)
 {
 	char logoutfile[MAXPATHLEN];
 
-	(void)sprintf(logoutfile, "%s.%s", _PATH_LOGOUT, loginname);
+	(void)snprintf(logoutfile, sizeof logoutfile, "%s.%s", _PATH_LOGOUT,
+	    loginname);
 	if (access(logoutfile, R_OK|X_OK) != 0)
-		(void)strcpy(logoutfile, _PATH_LOGOUT);
+		(void)strncpy(logoutfile, _PATH_LOGOUT, sizeof(logoutfile) - 1);
 	if (access(logoutfile, R_OK|X_OK) == 0) {
 		char logincmd[2*MAXPATHLEN+32];
 
-		(void) sprintf(logincmd, "%s %d %d %s", logoutfile, unit, speed,
-			      loginargs);
+		(void)snprintf(logincmd, sizeof logincmd, "%s %d %d %s",
+		    logoutfile, unit, speed, loginargs);
 		(void) system(logincmd);
 	}
 	(void) close(0);
@@ -315,8 +318,8 @@ main(argc, argv)
 	(void) signal(SIGTERM, hup_handler);
 
 	syslog(LOG_INFO, "attaching slip unit %d for %s\n", unit, loginname);
-	(void)sprintf(logincmd, "%s %d %d %s", loginfile, unit, speed,
-		      loginargs);
+	(void)snprintf(logincmd, sizeof logincmd, "%s %d %d %s", loginfile,
+	    unit, speed, loginargs);
 	/*
 	 * aim stdout and errout at /dev/null so logincmd output won't
 	 * babble into the slip tty line.

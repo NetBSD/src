@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.3 1997/04/13 13:36:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ ee_diagpath(ktent, arg)
 	if (arg) {
 		if (strlen(arg) > sizeof(path))
 			BARF(ktent);
-		sprintf(path, arg);
+		memcpy(path, arg, sizeof path);
 		if (doio(ktent, (u_char *)&path[0], sizeof(path), IO_WRITE))
 			FAILEDWRITE(ktent);
 	} else
@@ -434,13 +434,13 @@ ee_banner(ktent, arg)
 	kt.kt_offset = EE_BANNER_ENABLE_LOC;
 	kt.kt_handler = ee_notsupp;
 
-	bzero(string, sizeof(string));
+	memset(string, '\0', sizeof(string));
 	if (arg) {
 		if (strlen(arg) > sizeof(string))
 			BARF(ktent);
 		if (*arg != '\0') {
 			enable = EE_TRUE;
-			sprintf(string, arg);
+			memcpy(string, arg, sizeof string);
 			if (doio(ktent, (u_char *)string,
 			    sizeof(string), IO_WRITE))
 				FAILEDWRITE(ktent);
@@ -495,28 +495,28 @@ doio(ktent, buf, len, wr)
 
 	buf2 = (u_char *)calloc(1, len);
 	if (buf2 == NULL) {
-		sprintf(err_str, "memory allocation failed");
+		memcpy(err_str, "memory allocation failed", sizeof err_str);
 		return (1);
 	}
 
 	fd = open(path_eeprom, wr == IO_WRITE ? O_RDWR : O_RDONLY, 0640);
 	if (fd < 0) {
-		sprintf(err_str, "open: %s: %s", path_eeprom,
+		(void)snprintf(err_str, sizeof err_str, "open: %s: %s", path_eeprom,
 		    strerror(errno));
 		free(buf2);
 		return (1);
 	}
 
 	if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
-		sprintf(err_str, "lseek: %s:", path_eeprom,
-		    strerror(errno));
+		(void)snprintf(err_str, sizeof err_str, "lseek: %s:",
+		    path_eeprom, strerror(errno));
 		rval = 1;
 		goto done;
 	}
 
 	if (read(fd, buf2, len) != len) {
-		sprintf(err_str, "read: %s: %s", path_eeprom,
-		     strerror(errno));
+		(void)snprintf(err_str, sizeof err_str, "read: %s: %s",
+		    path_eeprom, strerror(errno));
 		return (1);
 	}
 
@@ -525,16 +525,16 @@ doio(ktent, buf, len, wr)
 			goto done;
 
 		if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
-			sprintf(err_str, "lseek: %s: %s", path_eeprom,
-			     strerror(errno));
+			(void)snprintf(err_str, sizeof err_str, "lseek: %s: %s",
+			    path_eeprom, strerror(errno));
 			rval = 1;
 			goto done;
 		}
 
 		++update_checksums;
 		if (write(fd, buf, len) < 0) {
-			sprintf(err_str, "write: %s: %s", path_eeprom,
-			     strerror(errno));
+			(void)snprintf(err_str, sizeof err_str, "write: %s: %s",
+			    path_eeprom, strerror(errno));
 			rval = 1;
 			goto done;
 		}

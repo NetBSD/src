@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.3 1997/04/13 13:36:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ static	struct extabent opextab[] = {
 };
 
 #define BARF(str1, str2) {						\
-	sprintf(err_str, "%s: %s", (str1), (str2));			\
+	snprintf(err_str, sizeof err_str, "%s: %s", (str1), (str2));	\
 	++eval;								\
 	return (err_str);						\
 };
@@ -145,8 +145,8 @@ op_handler(keyword, arg)
 			BARF("OPIOCGET", strerror(errno));
 
 		if (opio.op_buflen <= 0) {
-			sprintf(err_str, "nothing available for %s",
-			    keyword);
+			(void)snprintf(err_str, sizeof err_str,
+			    "nothing available for %s", keyword);
 			return (err_str);
 		}
 
@@ -227,7 +227,7 @@ op_dump()
 		 * of opio1.  If the length of the name is 0, there
 		 * are no more properties left.
 		 */
-		sprintf(opio2.op_name, opio1.op_buf);
+		strcpy(opio2.op_name, opio1.op_buf);	/* XXX strcpy is safe */
 		opio2.op_namelen = strlen(opio2.op_name);
 
 		if (opio2.op_namelen == 0) {
@@ -256,7 +256,7 @@ op_dump()
 		 */
 		bzero(opio1.op_name, sizeof(buf1));
 		bzero(opio1.op_buf, sizeof(buf2));
-		sprintf(opio1.op_name, opio2.op_name);
+		strcpy(opio1.op_name, opio2.op_name);	/* XXX strcpy is safe */
 	}
 	/* NOTREACHED */
 }
