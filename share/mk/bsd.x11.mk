@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.8 2003/11/17 05:14:21 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.9 2003/11/26 15:18:00 jwise Exp $
 
 .include <bsd.init.mk>
 
@@ -87,7 +87,7 @@ appdefsinstall:: ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
 .PRECIOUS:       ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}@}
 
 __appdefinstall: .USE
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL_FILE} -o ${NONBINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .for S in ${APPDEFS:O:u}
