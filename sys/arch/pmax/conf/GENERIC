@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.44 1999/04/26 04:30:26 ad Exp $
+# 	$NetBSD: GENERIC,v 1.45 1999/05/10 04:49:24 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -167,6 +167,6 @@ pseudo-device	ccd		 4	# concatenated disks
 #pseudo-device	raid		 4	# RAIDframe disk driver
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
-pseudo-device	fb		 1	# up to 3 framebuffers
+pseudo-device	fb		 3	# up to 3 framebuffers
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
