@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.20 2001/06/23 09:20:06 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.21 2001/07/10 16:34:08 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -75,6 +75,11 @@ device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
 attach	sacc at saip
 file	arch/hpcarm/sa11x0/sa1111.c		sacc
 
+# iPAQ Virtual bus
+device	ipaqbus {}
+attach	ipaqbus at saip
+file	arch/hpcarm/dev/ipaq_saip.c			ipaqbus
+
 #
 # H/PC Platform common files.
 #
@@ -116,11 +121,11 @@ device	sacpcic: pcmciabus
 attach	sacpcic at sacc
 file	arch/hpcarm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
 
-device	sagpcic: pcmciabus
-attach	sagpcic at saip
-file	arch/hpcarm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
+device	ipaqpcic: pcmciabus
+attach	ipaqpcic at ipaqbus
+file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
 
-file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
+file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
 
 # Include ISA stuff
 include "dev/isa/files.isa"
