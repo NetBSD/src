@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.163 2004/12/11 18:37:26 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.164 2005/02/20 01:45:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.163 2004/12/11 18:37:26 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.164 2005/02/20 01:45:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,14 @@ __RCSID("$NetBSD: ftpd.c,v 1.163 2004/12/11 18:37:26 christos Exp $");
 #include <krb5/krb5.h>
 #endif
 
+#ifdef	LOGIN_CAP
+#include <login_cap.h>
+#endif
+
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#endif
+
 #define	GLOBAL
 #include "extern.h"
 #include "pathnames.h"
@@ -187,6 +195,12 @@ int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
 off_t	byte_count;
 static char ttyline[20];
+
+#ifdef USE_PAM
+static int	auth_pam(struct passwd **, const char *);
+pam_handle_t	*pamh = NULL;
+#endif
+
 #ifdef SUPPORT_UTMP
 static struct utmp utmp;	/* for utmp */
 #endif
@@ -698,6 +712,9 @@ void
 user(const char *name)
 {
 	char	*class;
+#ifdef	LOGIN_CAP
+	login_cap_t *lc = NULL;
+#endif
 
 	class = NULL;
 	if (logged_in) {
@@ -761,7 +778,12 @@ user(const char *name)
 	permitted = checkuser(_NAME_FTPUSERS, curname, 1, 0, &class);
 
 			/* check user in /etc/ftpchroot */
-	if (checkuser(_NAME_FTPCHROOT, curname, 0, 0, NULL)) {
+	lc = login_getpwclass(pw);
+	if (checkuser(_NAME_FTPCHROOT, curname, 0, 0, NULL)
+#ifdef	LOGIN_CAP	/* Allow login.conf configuration as well */
+	    || login_getcapbool(lc, "ftp-chroot", 0)
+#endif
+	) {
 		if (curclass.type == CLASS_GUEST) {
 			syslog(LOG_NOTICE,
 	    "Can't change guest user to chroot class; remove entry in %s",
@@ -833,6 +855,9 @@ user(const char *name)
 	}
 
  cleanup_user:
+#ifdef LOGIN_CAP
+	login_close(lc);
+#endif
 	/*
 	 * Delay before reading passwd after first failed
 	 * attempt to slow down passwd-guessing programs.
@@ -1074,6 +1099,9 @@ logout_utmp(void)
 static void
 end_login(void)
 {
+#ifdef USE_PAM
+	int e;
+#endif
 	logout_utmp();
 	show_chdir_messages(-1);		/* flush chdir cache */
 	if (pw != NULL && pw->pw_passwd != NULL)
@@ -1086,6 +1114,23 @@ end_login(void)
 	gidcount = 0;
 	curclass.type = CLASS_REAL;
 	(void) seteuid((uid_t)0);
+#ifdef	LOGIN_CAP
+	setusercontext(NULL, getpwuid(0), 0,
+		       LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
+#endif
+#ifdef USE_PAM
+	if (pamh) {
+		if ((e = pam_setcred(pamh, PAM_DELETE_CRED)) != PAM_SUCCESS)
+			syslog(LOG_ERR, "pam_setcred: %s",
+			    pam_strerror(pamh, e));
+		if ((e = pam_close_session(pamh,0)) != PAM_SUCCESS)
+			syslog(LOG_ERR, "pam_close_session: %s",
+			    pam_strerror(pamh, e));
+		if ((e = pam_end(pamh, e)) != PAM_SUCCESS)
+			syslog(LOG_ERR, "pam_end: %s", pam_strerror(pamh, e));
+		pamh = NULL;
+	}
+#endif
 }
 
 void
@@ -1093,7 +1138,12 @@ pass(const char *passwd)
 {
 	int		 rval;
 	char		 root[MAXPATHLEN];
-
+#ifdef	LOGIN_CAP
+	login_cap_t *lc = NULL;
+#endif
+#ifdef USE_PAM
+	int e;
+#endif
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
 		return;
@@ -1105,6 +1155,18 @@ pass(const char *passwd)
 			rval = 1;	/* failure below */
 			goto skip;
 		}
+#ifdef USE_PAM
+		rval = auth_pam(&pw, passwd);
+#ifdef notdef
+		/* If PAM fails, we proceed with other authentications */
+		if (rval >= 0) {
+			goto skip;
+		}
+#else
+		/* If PAM fails, that's it */
+		goto skip;
+#endif
+#endif
 #if defined(KERBEROS)
 		if (klogin(pw, "", hostname, (char *)passwd) == 0) {
 			rval = 0;
@@ -1178,8 +1240,51 @@ pass(const char *passwd)
 		reply(550, "Can't set gid.");
 		goto bad;
 	}
+#ifdef	LOGIN_CAP
+	if ((lc = login_getpwclass(pw)) != NULL) {
+#ifdef notyet
+		char	remote_ip[NI_MAXHOST];
+
+		if (getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
+			remote_ip, sizeof(remote_ip) - 1, NULL, 0,
+			NI_NUMERICHOST))
+				*remote_ip = 0;
+		remote_ip[sizeof(remote_ip) - 1] = 0;
+		if (!auth_hostok(lc, remotehost, remote_ip)) {
+			syslog(LOG_INFO|LOG_AUTH,
+			    "FTP LOGIN FAILED (HOST) as %s: permission denied.",
+			    pw->pw_name);
+			reply(530, "Permission denied.");
+			pw = NULL;
+			return;
+		}
+		if (!auth_timeok(lc, time(NULL))) {
+			reply(530, "Login not available right now.");
+			pw = NULL;
+			return;
+		}
+#endif
+	}
+	setsid();
+	setusercontext(lc, pw, 0,
+		LOGIN_SETLOGIN|LOGIN_SETGROUP|LOGIN_SETPRIORITY|
+		LOGIN_SETRESOURCES|LOGIN_SETUMASK);
+#else
 	(void) initgroups(pw->pw_name, pw->pw_gid);
 			/* cache groups for cmds.c::matchgroup() */
+#endif
+#ifdef USE_PAM
+	if (pamh) {
+		if ((e = pam_open_session(pamh, 0)) != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_open_session: %s",
+			    pam_strerror(pamh, e));
+		} else if ((e = pam_setcred(pamh, PAM_ESTABLISH_CRED))
+		    != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_setcred: %s",
+			    pam_strerror(pamh, e));
+		}
+	}
+#endif
 	gidcount = getgroups(0, NULL);
 	if (gidlist)
 		free(gidlist);
@@ -1298,8 +1403,10 @@ pass(const char *passwd)
 		}
 		break;
 	}
+#ifndef LOGIN_CAP
 	setsid();
 	setlogin(pw->pw_name);
+#endif
 	if (dropprivs ||
 	    (curclass.type != CLASS_REAL && 
 	    ntohs(ctrl_addr.su_port) > IPPORT_RESERVED + 1)) {
@@ -1363,9 +1470,15 @@ pass(const char *passwd)
 			    curclass.classname, CURCLASSTYPE);
 	}
 	(void) umask(curclass.umask);
+#ifdef	LOGIN_CAP
+	login_close(lc);
+#endif
 	return;
 
  bad:
+#ifdef	LOGIN_CAP
+	login_close(lc);
+#endif
 			/* Forget all about it... */
 	end_login();
 }
@@ -3376,3 +3489,156 @@ cprintf(FILE *fd, const char *fmt, ...)
 	total_bytes += b;
 	total_bytes_out += b;
 }
+
+#ifdef USE_PAM
+/*
+ * the following code is stolen from imap-uw PAM authentication module and
+ * login.c
+ */
+#define COPY_STRING(s) (s ? strdup(s) : NULL)
+
+struct cred_t {
+	const char *uname;		/* user name */
+	const char *pass;		/* password */
+};
+typedef struct cred_t cred_t;
+
+static int
+auth_conv(int num_msg, const struct pam_message **msg,
+    struct pam_response **resp, void *appdata)
+{
+	int i;
+	cred_t *cred = (cred_t *) appdata;
+	struct pam_response *myreply;
+
+	myreply = calloc(num_msg, sizeof *myreply);
+	if (myreply == NULL)
+		return PAM_BUF_ERR;
+
+	for (i = 0; i < num_msg; i++) {
+		switch (msg[i]->msg_style) {
+		case PAM_PROMPT_ECHO_ON:	/* assume want user name */
+			myreply[i].resp_retcode = PAM_SUCCESS;
+			myreply[i].resp = COPY_STRING(cred->uname);
+			/* PAM frees resp. */
+			break;
+		case PAM_PROMPT_ECHO_OFF:	/* assume want password */
+			myreply[i].resp_retcode = PAM_SUCCESS;
+			myreply[i].resp = COPY_STRING(cred->pass);
+			/* PAM frees resp. */
+			break;
+		case PAM_TEXT_INFO:
+		case PAM_ERROR_MSG:
+			myreply[i].resp_retcode = PAM_SUCCESS;
+			myreply[i].resp = NULL;
+			break;
+		default:			/* unknown message style */
+			free(myreply);
+			return PAM_CONV_ERR;
+		}
+	}
+
+	*resp = myreply;
+	return PAM_SUCCESS;
+}
+
+/*
+ * Attempt to authenticate the user using PAM.  Returns 0 if the user is
+ * authenticated, or 1 if not authenticated.  If some sort of PAM system
+ * error occurs (e.g., the "/etc/pam.conf" file is missing) then this
+ * function returns -1.  This can be used as an indication that we should
+ * fall back to a different authentication mechanism.
+ */
+static int
+auth_pam(struct passwd **ppw, const char *pwstr)
+{
+	const char *tmpl_user;
+	const void *item;
+	int rval;
+	int e;
+	cred_t auth_cred = { (*ppw)->pw_name, pwstr };
+	struct pam_conv conv = { &auth_conv, &auth_cred };
+
+	e = pam_start("ftpd", (*ppw)->pw_name, &conv, &pamh);
+	if (e != PAM_SUCCESS) {
+		/*
+		 * In OpenPAM, it's OK to pass NULL to pam_strerror()
+		 * if context creation has failed in the first place.
+		 */
+		syslog(LOG_ERR, "pam_start: %s", pam_strerror(NULL, e));
+		return -1;
+	}
+
+	e = pam_set_item(pamh, PAM_RHOST, remotehost);
+	if (e != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_set_item(PAM_RHOST): %s",
+			pam_strerror(pamh, e));
+		if ((e = pam_end(pamh, e)) != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_end: %s", pam_strerror(pamh, e));
+		}
+		pamh = NULL;
+		return -1;
+	}
+
+	e = pam_authenticate(pamh, 0);
+	switch (e) {
+	case PAM_SUCCESS:
+		/*
+		 * With PAM we support the concept of a "template"
+		 * user.  The user enters a login name which is
+		 * authenticated by PAM, usually via a remote service
+		 * such as RADIUS or TACACS+.  If authentication
+		 * succeeds, a different but related "template" name
+		 * is used for setting the credentials, shell, and
+		 * home directory.  The name the user enters need only
+		 * exist on the remote authentication server, but the
+		 * template name must be present in the local password
+		 * database.
+		 *
+		 * This is supported by two various mechanisms in the
+		 * individual modules.  However, from the application's
+		 * point of view, the template user is always passed
+		 * back as a changed value of the PAM_USER item.
+		 */
+		if ((e = pam_get_item(pamh, PAM_USER, &item)) ==
+		    PAM_SUCCESS) {
+			tmpl_user = (const char *) item;
+			if (strcmp((*ppw)->pw_name, tmpl_user) != 0)
+				*ppw = getpwnam(tmpl_user);
+		} else
+			syslog(LOG_ERR, "Couldn't get PAM_USER: %s",
+			    pam_strerror(pamh, e));
+		rval = 0;
+		break;
+
+	case PAM_AUTH_ERR:
+	case PAM_USER_UNKNOWN:
+	case PAM_MAXTRIES:
+		rval = 1;
+		break;
+
+	default:
+		syslog(LOG_ERR, "pam_authenticate: %s", pam_strerror(pamh, e));
+		rval = -1;
+		break;
+	}
+
+	if (rval == 0) {
+		e = pam_acct_mgmt(pamh, 0);
+		if (e != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_acct_mgmt: %s",
+						pam_strerror(pamh, e));
+			rval = 1;
+		}
+	}
+
+	if (rval != 0) {
+		if ((e = pam_end(pamh, e)) != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_end: %s", pam_strerror(pamh, e));
+		}
+		pamh = NULL;
+	}
+	return rval;
+}
+
+#endif /* USE_PAM */

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.52 2005/01/10 02:58:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.53 2005/02/20 01:45:17 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
 
 PROG=	ftpd
 SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
-CPPFLAGS+=-I${.CURDIR} -DSUPPORT_UTMP -DSUPPORT_UTMPX
+CPPFLAGS+=-I${.CURDIR} -DSUPPORT_UTMP -DSUPPORT_UTMPX -DLOGIN_CAP
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
 MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
@@ -25,6 +25,11 @@ WARNS=2
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
+.endif
+.if (${USE_PAM} != "no")
+CPPFLAGS+=-DUSE_PAM
+DPADD+= ${LIBPAM}
+LDADD+= -lpam
 .endif
 
 ftpd.o ftpcmd.o: version.h
