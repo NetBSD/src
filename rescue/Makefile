@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2005/01/10 10:47:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2005/01/13 03:08:07 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -35,6 +35,27 @@ PARSELISTENV+=	LDD_CMD=ldd_elf
 .else
 PARSELISTENV+=	LDD_CMD=ldd_aout
 .endif
+
+#	Specially built objects to override the behaviour of
+#	various library functions
+#
+
+OVERRIDEOBJS=	rcmd.o
+.PATH:	${NETBSDSRCDIR}/lib/libc/net
+CPPFLAGS.rcmd.c+=-I${NETBSDSRCDIR}/lib/libc/include -DRESCUEDIR=\"${RESCUEDIR}\"
+
+LIBOVERRIDE=	liboverride.o
+${LIBOVERRIDE}: ${OVERRIDEOBJS}
+	${_MKMSG_CREATE}
+	${LD} -r -o $@ ${OVERRIDEOBJS}
+
+CLEANFILES+=	${OVERRIDEOBJS} ${LIBOVERRIDE}
+
+${CRUNCHBIN}:	${LIBOVERRIDE}
+
+
+#	The primary target ...
+#
 
 CLEANFILES+=	rescue.unstripped
 
