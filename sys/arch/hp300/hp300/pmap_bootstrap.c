@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 1995/05/12 12:54:56 mycroft Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 1995/10/05 06:54:12 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -240,7 +240,17 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = protopte;
 			protopte += NBPG;
 		}
-		pte = &((u_int *)kptmpa)[NPTEPG-1];
+		/*
+		 * Invalidate all but the last remaining entry.
+		 */
+		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		while (pte < epte) {
+			*pte++ = PG_NV;
+		}
+                /*
+		 * Initialize the last to point to point to the page
+		 * table page allocated earlier.
+		 */
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else {
 		/*
