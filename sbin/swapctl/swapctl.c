@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.8 1998/02/10 03:14:33 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -354,7 +354,7 @@ do_fstab()
 #define NFSMNTPT	"nfsmntpt="
 #define PATH_MOUNT	"/sbin/mount_nfs"
 	while ((fp = getfsent()) != NULL) {
-		char *spec;
+		const char *spec;
 
 		if (strcmp(fp->fs_type, "sw") != 0)
 			continue;
@@ -391,7 +391,7 @@ do_fstab()
 
 			if (strlen(spec) == 0) {
 				warnx("empty mountpoint");
-				free(spec);
+				free((char *)spec);
 				continue;
 			}
 			snprintf(cmd, sizeof(cmd), "%s %s %s",
@@ -431,7 +431,7 @@ do_fstab()
 		}
 
 		if (spec != fp->fs_spec)
-			free(spec);
+			free((char *)spec);
 	}
 	if (gotone == 0)
 		exit(1);

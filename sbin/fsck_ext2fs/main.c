@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1998/04/01 15:24:12 kleink Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1998/07/26 20:27:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1998/04/01 15:24:12 kleink Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1998/07/26 20:27:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ int	returntosingle;
 int	main __P((int, char *[]));
 
 static int	argtoi __P((int, char *, char *, int));
-static int	checkfilesys __P((char *, char *, long, int));
+static int	checkfilesys __P((const char *, char *, long, int));
 static  void usage __P((void));
 
 
@@ -168,7 +168,8 @@ argtoi(flag, req, str, base)
 /* ARGSUSED */
 static int
 checkfilesys(filesys, mntpt, auxdata, child)
-	char *filesys, *mntpt;
+	const char *filesys;
+	char *mntpt;
 	long auxdata;
 	int child;
 {
