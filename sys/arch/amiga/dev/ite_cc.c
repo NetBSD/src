@@ -84,7 +84,7 @@ customc_init(ip)
 
   cci = &ccite[ip - ite_softc];
   ip->priv = cci;
-  fb = (struct ccfb *) ip->grf->g_display.gd_regaddr;
+  fb = (struct ccfb *) ip->grf->g_data;
   cci->fb = fb;
 
   ip->font     = kernel_font;
