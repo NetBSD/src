@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.124 2003/07/24 14:30:53 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.125 2003/07/24 15:32:58 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -505,7 +505,7 @@ Current Vers:	3.6.1 / portable 3.6.1p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
-Responsible:	thorpej, itojun
+Responsible:	thorpej
 Notes:
 imported from OpenBSD usr.bin/ssh (it is not from the portable OpenSSH)
 into crypto/dist/openssh.  use openssh2netbsd before import.
@@ -520,6 +520,8 @@ http://www.openbsd.org/advisories/ssh_channelalloc.txt is integrated
 manually to 1.5 branch.  version date "20020307" identifies the fix.
 http://www.openssh.com/txt/preauth.adv is integrated manually to 1.5 branch.
 version date "20020626" identifies the fix.
+official openssh releases dropped kerberosIV support already, therefore
+if we need to keep it we need to maintain it ourselves.
 
 Package:	OpenSSL
 Version:	0.9.7b
