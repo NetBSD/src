@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.12 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.13 2003/06/26 16:37:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.13 2003/06/26 16:37:20 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12 2003/01/17 23:10:32 thorpej 
 #include <machine/specialreg.h>
 
 extern int i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
-extern int cpu_feature;
 extern char cpu_model[];
-extern int cpu_class;
 
 static const char * const i386_features[] = {
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
