@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94"; */
-static char *rcsid = "$Id: rcmd.c,v 1.6 1994/05/18 06:35:19 cgd Exp $";
+static char *rcsid = "$Id: rcmd.c,v 1.7 1994/05/27 18:56:24 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -148,7 +148,8 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		FD_SET(s, &reads);
 		FD_SET(s2, &reads);
 		errno = 0;
-		if (select(32, &reads, 0, 0, 0) < 1 || !FD_ISSET(s2, &reads)) {
+		if (select(MAX(s, s2) + 1, &reads, 0, 0, 0) < 1 ||
+		    !FD_ISSET(s2, &reads)) {
 			if (errno != 0)
 				(void)fprintf(stderr,
 				    "rcmd: select (setting up stderr): %s\n",
