@@ -1,4 +1,4 @@
-/*	$NetBSD: seeq8003reg.h,v 1.2 2001/06/06 22:11:42 soren Exp $	*/
+/*	$NetBSD: seeq8003reg.h,v 1.3 2001/06/07 05:19:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -57,7 +57,7 @@
 #define RXCMD_IE_SHORT	0x08		/* Interrupt on Short Frame */
 #define RXCMD_IE_END	0x10		/* Interrupt on End of Frame */
 #define RXCMD_IE_GOOD	0x20		/* Interrupt on Good Frame */
-#define RXCMD_REC_MASK	0xf0		/* Receiver Match Mode Mask */
+#define RXCMD_REC_MASK	0xc0		/* Receiver Match Mode Mask */
 #define RXCMD_REC_NONE	0x00		/* Receiver Disabled */
 #define RXCMD_REC_ALL	0x40		/* Receive All Frames */
 #define RXCMD_REC_BROAD	0x80		/* Receive Station/Broadcast Frames */
