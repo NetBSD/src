@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2002/11/29 22:14:15 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2002/12/03 22:03:01 fvdl Exp $	*/
 
 /*
  *
@@ -270,6 +270,13 @@
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 /* PG_AVAIL3 not used */
 
+/*
+ * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
+ * Used to avoid false sharing of cache lines.
+ */
+#define NPTECL		8
+
+
 #if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -313,6 +320,7 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
+	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 
 /* pm_flags */
@@ -436,6 +444,10 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
+void	pmap_tlb_shootnow __P((int32_t));
+void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
