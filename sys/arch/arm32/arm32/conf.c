@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1998/08/22 22:50:53 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1998/08/29 03:28:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -122,6 +122,20 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 53: */
 	bdev_lkm_dummy(),		/* 54: */
 	bdev_lkm_dummy(),		/* 55: */
+	bdev_lkm_dummy(),		/* 56: */
+	bdev_lkm_dummy(),		/* 57: */
+	bdev_lkm_dummy(),		/* 58: */
+	bdev_lkm_dummy(),		/* 59: */
+	bdev_lkm_dummy(),		/* 60: */
+	bdev_lkm_dummy(),		/* 61: */
+	bdev_lkm_dummy(),		/* 62: */
+	bdev_lkm_dummy(),		/* 63: */
+	bdev_lkm_dummy(),		/* 64: */
+	bdev_lkm_dummy(),		/* 65: */
+	bdev_lkm_dummy(),		/* 66: */
+	bdev_lkm_dummy(),		/* 67: */
+	bdev_lkm_dummy(),		/* 68: */
+	bdev_lkm_dummy(),		/* 69: */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -210,34 +224,45 @@ struct cdevsw cdevsw[] = {
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(NVIDCVIDEO,vidcvideo),	/* 37: vidcvideo device */
 	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
-	cdev_lkm_dummy(),		/* 39: */
+	cdev_lkm_dummy(),		/* 39: reserved */
 	cdev_mouse_init(NPMS,pms),      /* 40: PS2 mouse driver */
-	cdev_lkm_dummy(),		/* 41: */
+	cdev_lkm_dummy(),		/* 41: reserved */
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
-	cdev_lkm_dummy(),		/* 44: */
-	cdev_lkm_dummy(),		/* 45: */
+	cdev_lkm_dummy(),		/* 44: reserved */
+	cdev_lkm_dummy(),		/* 45: reserved */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 46: ip-filter device */
-	cdev_lkm_dummy(),		/* 47: */
-	cdev_lkm_dummy(),		/* 48: */
+	cdev_lkm_dummy(),		/* 47: reserved */
+	cdev_lkm_dummy(),		/* 48: reserved */
 	cdev_mm_init(NOFROM, ofrom),	/* 49: ofrom */
 #ifdef SHARK /* XXX */
 	cdev_tty_init(NSCR,scr),        /*  50: Smart card reader  */
 #else
-	cdev_lkm_dummy(),		/* 50: */
+	cdev_lkm_dummy(),		/* 50: reserved */
 #endif
-	cdev_notdef(),			/* 51: */
+	cdev_notdef(),			/* 51: reserved */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
 #ifdef	SHARK
 	cdev_prof_init(NPROFILER, prof), /* 53: fiq Profiler*/
 #else
-	cdev_lkm_dummy(),		/* 53: */
+	cdev_lkm_dummy(),		/* 53: reserved */
 #endif
-	cdev_lkm_dummy(),		/* 54: */
-	cdev_lkm_dummy(),		/* 55: */
+	cdev_lkm_dummy(),		/* 54: reserved for DC21285 serial */
+	cdev_lkm_dummy(),		/* 55: reserved for PCI bypass dev */
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
+	cdev_lkm_dummy(),		/* 59: reserved for coda ? */
+	cdev_lkm_dummy(), 		/* 60: reserved for wsdisplay. */
+	cdev_lkm_dummy(), 		/* 61: reserved for wskbd */
+	cdev_lkm_dummy(),		/* 62: reserved for wsmouse */
+	cdev_lkm_dummy(),		/* 63: reserved */
+	cdev_lkm_dummy(),		/* 64: reserved for USB */
+	cdev_lkm_dummy(),		/* 65: reserved for USB HID*/
+	cdev_lkm_dummy(),		/* 66: reserved for USB LPT */
+	cdev_lkm_dummy(),		/* 67: reserved */
+	cdev_lkm_dummy(),		/* 68: reserved */
+	cdev_lkm_dummy(),		/* 69: reserved */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -338,6 +363,17 @@ static int chrtoblktbl[] = {
     /* 56 */	    NODEV,
     /* 57 */	    NODEV,
     /* 58 */	    NODEV,
+    /* 59 */        NODEV,
+    /* 60 */        NODEV,
+    /* 61 */        NODEV,
+    /* 62 */        NODEV,
+    /* 63 */        NODEV,
+    /* 64 */        NODEV,
+    /* 65 */        NODEV,
+    /* 66 */	    NODEV,
+    /* 67 */	    NODEV,
+    /* 68 */	    NODEV,
+    /* 69 */	    NODEV,
 };
 
 /*
