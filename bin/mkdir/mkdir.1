@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mkdir.1	6.9 (Berkeley) 6/27/91
+.\"	@(#)mkdir.1	8.2 (Berkeley) 1/25/94
 .\"
-.Vx
-.Dd June 27, 1991
+.Dd January 25, 1994
 .Dt MKDIR 1
 .Os
 .Sh NAME
@@ -44,21 +43,40 @@
 .Sh SYNOPSIS
 .Nm mkdir
 .Op Fl p
+.Op Fl m Ar mode
 .Ar directory_name  ...
 .Sh DESCRIPTION
 .Nm Mkdir
 creates the directories named as operands, in the order specified,
 using mode
-.Li \&0777
-modified by the current
+.Li rwxrwxrwx (\&0777)
+as modified by the current
 .Xr umask  2  .
 .Pp
 The options are as follows:
-.Tw Ds
-.Tp Fl p
-Create intermediate directories as required.  If this option is not
-specified, the full path prefix of each operand must already exist.
-.Tp
+.Pp
+.Bl -tag -width indent
+.It Fl m
+Set the file permission bits of the final created directory to
+the specified mode.
+The mode argument can be in any of the formats specified to the
+.Xr chmod 1
+command.
+If a symbolic mode is specified, the operation characters
+.Dq +
+and
+.Dq -
+are interpreted relative to an initial mode of
+.Dq a=rwx .
+.It Fl p
+Create intermediate directories as required.
+If this option is not specified, the full path prefix of each
+operand must already exist.
+Intermediate directories are created with permission bits of
+.Li rwxrwxrwx (\&0777)
+as modified by the current umask, plus write and search
+permission for the owner.
+.El
 .Pp
 The user must have write permission in the parent directory.
 .Pp
@@ -67,5 +85,8 @@ exits 0 if successful, and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr rmdir 1
 .Sh STANDARDS
-Mkdir is POSIX 1003.2 compliant.
-This manual page is derived from the POSIX 1003.2 manual page.
+The
+.Nm mkdir
+utility is expected to be
+.St -p1003.2
+compatible.

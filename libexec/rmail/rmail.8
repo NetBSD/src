@@ -29,11 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)rmail.8	6.8 (Berkeley) 4/20/91
+.\"	@(#)rmail.8	6.10 (Berkeley) 4/29/93
 .\"
-.Vx
-.Vx
-.Dd April 20, 1991
+.Dd April 29, 1993
 .Dt RMAIL 8
 .Os BSD 4.2
 .Sh NAME
@@ -48,7 +46,7 @@ interprets incoming mail received via
 .Xr uucp 1 ,
 collapsing ``From'' lines in the form generated
 by
-.Xr binmail  1
+.Xr mail.local 8
 into a single line of the form ``return-path!sender'',
 and passing the processed mail on to
 .Xr sendmail  8  .
@@ -59,12 +57,15 @@ is explicitly designed for use with
 and
 .Xr sendmail  .
 .Sh SEE ALSO
-.Xr binmail 1 ,
 .Xr uucp 1 ,
+.Xr mail.local 8 ,
 .Xr sendmail 8
 .Sh HISTORY
-.Nm Rmail
-apeared in 4.2 BSD.
+The
+.Nm rmail
+program appeared in
+.Bx 4.2 .
 .Sh BUGS
 .Nm Rmail
-should not reside in /bin.
+should not reside in
+.Pa /bin .

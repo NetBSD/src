@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1992, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,35 +32,55 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rmdir.c	5.3 (Berkeley) 5/31/90";
+static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
-/*
- * Remove directory
- */
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	int errors;
+	int ch, errors;
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: rmdir directory ...\n");
-		exit(1);
-	}
-	for (errors = 0; *++argv;)
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		usage();
+
+	for (errors = 0; *argv; ++argv)
 		if (rmdir(*argv) < 0) {
-			fprintf(stderr, "rmdir: ");
-			perror(*argv);
+			warn("%s", *argv);
 			errors = 1;
 		}
 	exit(errors);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: rmdir directory ...\n");
+	exit(1);
 }

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mv.1	6.9 (Berkeley) 7/27/91
+.\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd July 27, 1991
+.Dd May 31, 1993
 .Dt MV 1
 .Os
 .Sh NAME
@@ -119,7 +119,8 @@ The
 .Nm mv
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
-.Xr cp 1
+.Xr cp 1 ,
+.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm mv

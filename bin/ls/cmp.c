@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -35,57 +35,70 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmp.c	5.4 (Berkeley) 3/8/91";
+static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <fts.h>
+#include <string.h>
+
 #include "ls.h"
+#include "extern.h"
 
+int
 namecmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(strcmp(a->name, b->name));
+	return (strcmp(a->fts_name, b->fts_name));
 }
 
+int
 revnamecmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(strcmp(b->name, a->name));
+	return (strcmp(b->fts_name, a->fts_name));
 }
 
+int
 modcmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(b->lstat.st_mtime - a->lstat.st_mtime);
+	return (b->fts_statp->st_mtime - a->fts_statp->st_mtime);
 }
 
+int
 revmodcmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(a->lstat.st_mtime - b->lstat.st_mtime);
+	return (a->fts_statp->st_mtime - b->fts_statp->st_mtime);
 }
 
+int
 acccmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(b->lstat.st_atime - a->lstat.st_atime);
+	return (b->fts_statp->st_atime - a->fts_statp->st_atime);
 }
 
+int
 revacccmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(a->lstat.st_atime - b->lstat.st_atime);
+	return (a->fts_statp->st_atime - b->fts_statp->st_atime);
 }
 
+int
 statcmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(b->lstat.st_ctime - a->lstat.st_ctime);
+	return (b->fts_statp->st_ctime - a->fts_statp->st_ctime);
 }
 
+int
 revstatcmp(a, b)
-	LS *a, *b;
+	const FTSENT *a, *b;
 {
-	return(a->lstat.st_ctime - b->lstat.st_ctime);
+	return (a->fts_statp->st_ctime - b->fts_statp->st_ctime);
 }

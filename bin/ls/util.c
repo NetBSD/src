@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -35,44 +35,37 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	5.8 (Berkeley) 7/22/90";
+static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <stdio.h>
+#include <sys/stat.h>
+
 #include <ctype.h>
+#include <fts.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "ls.h"
+#include "extern.h"
+
+void
 prcopy(src, dest, len)
-	register char *src, *dest;
-	register int len;
+	char *src, *dest;
+	int len;
 {
-	register int ch;
+	int ch;
 
-	while(len--) {
+	while (len--) {
 		ch = *src++;
 		*dest++ = isprint(ch) ? ch : '?';
 	}
 }
 
-char
-*emalloc(size)
-	u_int size;
-{
-	char *retval, *malloc();
-
-	if (!(retval = malloc(size)))
-		nomem();
-	return(retval);
-}
-
-nomem()
-{
-	(void)fprintf(stderr, "ls: out of memory.\n");
-	exit(1);
-}
-
+void
 usage()
 {
-	(void)fprintf(stderr, "usage: ls [-1ACFLRTacdfgiklqrstu] [file ...]\n");
+	(void)fprintf(stderr, "usage: ls [-1ACFLRTacdfiklqrstu] [file ...]\n");
 	exit(1);
 }
