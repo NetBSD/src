@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1997/10/27 00:28:09 mark Exp $	*/
+/*	$NetBSD: asm.h,v 1.9 1998/04/01 22:50:22 mark Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,12 +41,15 @@
 #ifndef _ARM32_ASM_H_
 #define _ARM32_ASM_H_
 
+#define _BEGIN_ENTRY_NP	.text; .align 0
+#define _END_ENTRY_NP
+
 #ifdef GPROF
-# define _BEGIN_ENTRY	.text; .align 0
-# define _END_ENTRY
+# define _BEGIN_ENTRY	_BEGIN_ENTRY_NP
+# define _END_ENTRY	_END_ENTRY_NP
 #else
-# define _BEGIN_ENTRY	.text; .align 0
-# define _END_ENTRY
+# define _BEGIN_ENTRY	_BEGIN_ENTRY_NP
+# define _END_ENTRY	_END_ENTRY_NP
 #endif
 
 #ifdef __STDC__
@@ -73,6 +76,9 @@
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
 			_END_ENTRY
 #define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
+
+#define	ENTRY_NP(y)	_BEGIN_ENTRY_NP; _ENTRY(_C_FUNC(y)); _END_ENTRY_NP
+#define	ASENTRY_NP(y)	_BEGIN_ENTRY_NP; _ENTRY(_ASM_FUNC(y)); _END_ENTRY_NP
 
 #define	ASMSTR		.asciz
 
