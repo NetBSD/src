@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.7 1994/12/18 05:44:04 cgd Exp $";
+static char *rcsid = "$Id: trace.c,v 1.8 1994/12/23 13:13:11 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -44,7 +44,6 @@ static char *rcsid = "$Id: trace.c,v 1.7 1994/12/18 05:44:04 cgd Exp $";
 #include <sys/stat.h>
 #include <sys/signal.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include "pathnames.h"
 
 #define	NRECORDS	50		/* size of circular trace buffer */
