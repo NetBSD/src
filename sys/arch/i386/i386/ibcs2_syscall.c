@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.22 2003/08/20 21:48:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.22 2003/08/20 21:48:36 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.21 2003/01/17 23:10:30 thorpej E
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <machine/ibcs2_machdep.h>
 
-void ibcs2_syscall_plain __P((struct trapframe));
-void ibcs2_syscall_fancy __P((struct trapframe));
+void ibcs2_syscall_plain __P((struct trapframe *));
+void ibcs2_syscall_fancy __P((struct trapframe *));
 extern struct sysent ibcs2_sysent[];
 
 void
@@ -101,7 +101,7 @@ ibcs2_syscall_intern(p)
  */
 void
 ibcs2_syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -113,11 +113,11 @@ ibcs2_syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
 	callp = ibcs2_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -153,9 +153,9 @@ ibcs2_syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -163,7 +163,7 @@ ibcs2_syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -171,8 +171,8 @@ ibcs2_syscall_plain(frame)
 	default:
 	bad:
 		error = native_to_ibcs2_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -189,7 +189,7 @@ ibcs2_syscall_plain(frame)
  */
 void
 ibcs2_syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -203,11 +203,11 @@ ibcs2_syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
 	callp = ibcs2_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -241,9 +241,9 @@ ibcs2_syscall_fancy(frame)
 	
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -251,7 +251,7 @@ ibcs2_syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -259,8 +259,8 @@ ibcs2_syscall_fancy(frame)
 	default:
 	bad:
 		error = native_to_ibcs2_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/06/23 14:59:21 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2003/08/20 21:48:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -264,8 +264,8 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);
-void x86_intlock(struct intrframe);
-void x86_intunlock(struct intrframe);
+void x86_intlock(struct intrframe *);
+void x86_intunlock(struct intrframe *);
 void x86_softintlock(void);
 void x86_softintunlock(void);
 

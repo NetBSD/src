@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2 2003/05/04 23:46:41 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.3 2003/08/20 21:48:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -225,6 +225,7 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
@@ -235,6 +236,7 @@ calltrap:
 5:	CLEAR_ASTPENDING(%r11)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	2b
 #ifndef DIAGNOSTIC
@@ -370,8 +372,8 @@ IDTVEC(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 #ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	call _C_LABEL(x86_intlock)
-#define UNLOCK_KERNEL	call _C_LABEL(x86_intunlock)
+#define LOCK_KERNEL	movq %rsp,%rdi ; call _C_LABEL(x86_intlock)
+#define UNLOCK_KERNEL	movq %rsp,%rdi ; call _C_LABEL(x86_intunlock)
 #else
 #define LOCK_KERNEL
 #define UNLOCK_KERNEL

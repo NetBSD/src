@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.531 2003/08/17 14:23:16 kochi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.532 2003/08/20 21:48:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.531 2003/08/17 14:23:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.532 2003/08/20 21:48:38 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -798,7 +798,7 @@ sys___sigreturn14(l, v, retval)
 	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe));
+		void syscall_vm86 __P((struct trapframe *));
 
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;

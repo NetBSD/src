@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.7 2003/08/20 21:48:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,7 +162,9 @@ IDTVEC(doreti)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	cli
 	jmp	5b
 3:

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.12 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.13 2003/08/20 21:48:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.12 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.13 2003/08/20 21:48:36 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.12 2003/01/17 23:10:30 thorpej
 #include <machine/freebsd_machdep.h>
 #include <compat/freebsd/freebsd_syscall.h>
 
-void freebsd_syscall_plain __P((struct trapframe));
-void freebsd_syscall_fancy __P((struct trapframe));
+void freebsd_syscall_plain __P((struct trapframe *));
+void freebsd_syscall_fancy __P((struct trapframe *));
 
 void
 freebsd_syscall_intern(p)
@@ -98,7 +98,7 @@ freebsd_syscall_intern(p)
  */
 void
 freebsd_syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -112,9 +112,9 @@ freebsd_syscall_plain(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -150,7 +150,7 @@ freebsd_syscall_plain(frame)
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
-	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
+	rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
 
 	KERNEL_PROC_LOCK(l);
 	error = (*callp->sy_call)(l, args, rval);
@@ -158,9 +158,9 @@ freebsd_syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -168,15 +168,15 @@ freebsd_syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -188,7 +188,7 @@ freebsd_syscall_plain(frame)
 
 void
 freebsd_syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -202,9 +202,9 @@ freebsd_syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -240,14 +240,14 @@ freebsd_syscall_fancy(frame)
 		goto bad;
 
 	rval[0] = 0;
-	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
+	rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
 	error = (*callp->sy_call)(l, args, rval);
 	KERNEL_PROC_UNLOCK(l);	
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -255,15 +255,15 @@ freebsd_syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
