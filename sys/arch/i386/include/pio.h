@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.9 1994/11/18 22:18:35 mycroft Exp $	*/
+/*	$NetBSD: pio.h,v 1.10 1994/11/20 21:36:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -34,8 +34,20 @@
  * Functions to provide access to i386 programmed I/O instructions.
  */
 
+#define	inb(port) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __inbc(port) : __inb(port))
+
 static __inline u_char
-inb(int port)
+__inbc(int port)
+{
+	u_char	data;
+	__asm __volatile("inb %1,%0" : "=a" (data) : "i" (port));
+	return data;
+}
+
+static __inline u_char
+__inb(int port)
 {
 	u_char	data;
 	__asm __volatile("inb %%dx,%0" : "=a" (data) : "d" (port));
@@ -49,8 +61,20 @@ insb(int port, void *addr, int cnt)
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
+#define	inw(port) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __inwc(port) : __inw(port))
+
 static __inline u_short
-inw(int port)
+__inwc(int port)
+{
+	u_short	data;
+	__asm __volatile("inw %1,%0" : "=a" (data) : "i" (port));
+	return data;
+}
+
+static __inline u_short
+__inw(int port)
 {
 	u_short	data;
 	__asm __volatile("inw %%dx,%0" : "=a" (data) : "d" (port));
@@ -64,8 +88,20 @@ insw(int port, void *addr, int cnt)
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
+#define	inl(port) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __inlc(port) : __inl(port))
+
 static __inline u_int
-inl(int port)
+__inlc(int port)
+{
+	u_int	data;
+	__asm __volatile("inl %1,%0" : "=a" (data) : "i" (port));
+	return data;
+}
+
+static __inline u_int
+__inl(int port)
 {
 	u_int	data;
 	__asm __volatile("inl %%dx,%0" : "=a" (data) : "d" (port));
@@ -79,8 +115,18 @@ insl(int port, void *addr, int cnt)
 			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
+#define	outb(port, data) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __outbc(port, data) : __outb(port, data))
+
 static __inline void
-outb(int port, u_char data)
+__outbc(int port, u_char data)
+{
+	__asm __volatile("outb %0,%1" : : "a" (data), "i" (port));
+}
+
+static __inline void
+__outb(int port, u_char data)
 {
 	__asm __volatile("outb %0,%%dx" : : "a" (data), "d" (port));
 }
@@ -92,8 +138,18 @@ outsb(int port, void *addr, int cnt)
 			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
+#define	outw(port, data) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __outwc(port, data) : __outw(port, data))
+
 static __inline void
-outw(int port, u_short data)
+__outwc(int port, u_short data)
+{
+	__asm __volatile("outw %0,%1" : : "a" (data), "i" (port));
+}
+
+static __inline void
+__outw(int port, u_short data)
 {
 	__asm __volatile("outw %0,%%dx" : : "a" (data), "d" (port));
 }
@@ -105,8 +161,18 @@ outsw(int port, void *addr, int cnt)
 			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
+#define	outl(port, data) \
+	((__builtin_constant_p((port)) && (port) < 0x100) ? \
+	 __outlc(port, data) : __outl(port, data))
+
 static __inline void
-outl(int port, u_int data)
+__outlc(int port, u_int data)
+{
+	__asm __volatile("outl %0,%1" : : "a" (data), "i" (port));
+}
+
+static __inline void
+__outl(int port, u_int data)
 {
 	__asm __volatile("outl %0,%%dx" : : "a" (data), "d" (port));
 }
