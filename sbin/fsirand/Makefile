@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 1997/03/07 20:16:39 christos Exp $
+#	$NetBSD: Makefile,v 1.2 1998/03/18 17:07:14 bouyer Exp $
 
 PROG=	fsirand
-SRCS=	fsirand.c
+SRCS=	fsirand.c ffs_bswap.c
 MAN=	fsirand.8
+DPADD=	${LIBUTIL}
+LDADD+=	-lutil
+
+.PATH:  ${.CURDIR}/../../sys/ufs/ffs
 
 .include <bsd.prog.mk>
