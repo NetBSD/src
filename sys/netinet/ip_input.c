@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.41 1996/10/25 06:30:32 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.42 1996/12/20 08:39:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -438,14 +438,6 @@ found:
 	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
 	goto next;
 bad:
-#ifdef PFIL_HOOKS
-	m0 = m;
-	for (pfh = pfil_hook_get(PFIL_BAD); pfh; pfh = pfh->pfil_link.le_next)
-		if (pfh->pfil_func) {
-			(void)pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 2, &m0);
-			ip = mtod(m = m0, struct ip *);
-		}
-#endif /* PFIL_HOOKS */
 	m_freem(m);
 	goto next;
 }
