@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.378 2000/03/28 23:57:27 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.379 2000/04/05 07:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -185,6 +185,8 @@ int	boothowto;
 int	cpu_class;
 int	i386_fpu_present = 0;
 
+#define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
+
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
 
@@ -221,6 +223,7 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
 void cyrix6x86_cpu_setup __P((void));
+void winchip_cpu_setup __P((void));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -619,10 +622,10 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
+				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
 				"WinChip"		/* Default */
 			},
-			NULL
+			winchip_cpu_setup
 		},
 		/* Family 6, not yet available from IDT */
 		{
@@ -657,6 +660,20 @@ cyrix6x86_cpu_setup()
 }
 
 void
+winchip_cpu_setup()
+{
+	extern int cpu_id;
+
+#if defined(I586_CPU)
+	switch (CPUID2MODEL(cpu_id)) { /* model */
+	case 4:	/* WinChip C6 */
+		cpu_feature &= ~CPUID_TSC;
+		printf("WARNING: WinChip C6: broken TSC disabled\n");
+	}
+#endif
+}
+
+void
 identifycpu()
 {
 	extern char cpu_vendor[];
@@ -685,7 +702,7 @@ identifycpu()
 		family = (cpu_id >> 8) & 15;
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
-		model = (cpu_id >> 4) & 15;
+		model = CPUID2MODEL(cpu_id);
 		step = cpu_id & 15;
 #ifdef CPUDEBUG
 		printf("cpu0: family %x model %x step %x\n", family, model,
