@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 1998/05/06 14:28:29 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.66 1998/06/12 10:02:44 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -318,6 +318,9 @@ trap(type, psr, pc, tf)
 		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
 		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 		       PSR_BITS, bits, sizeof(bits)));
+#ifdef DDB
+		(void) kdb_trap(type, tf);
+#endif
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 		/* NOTREACHED */
 	}
