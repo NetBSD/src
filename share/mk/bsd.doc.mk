@@ -1,23 +1,25 @@
 #	@(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
 
-PRINTER=ps
+PRINTER?=	ps
 
 BIB?=		bib
-EQN?=		eqn -P${PRINTER}
-GREMLIN?=	grn -P${PRINTER}
+EQN?=		eqn
+GREMLIN?=	grn
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
-PIC?=		pic -P${PRINTER}
+PIC?=		pic
 REFER?=		refer
-ROFF?=		troff -t ${MACROS} ${PAGES} -P${PRINTER}
+ROFF?=		groff -T${PRINTER} ${MACROS} ${PAGES}
 SOELIM?=	soelim
-TBL?=		tbl -P${PRINTER}
+TBL?=		tbl
 
 .PATH: ${.CURDIR}
 
+all:	${DOC}.${PRINTER}
+
 .if !target(print)
-print: paper.${PRINTER}
-	lpr -P${PRINTER} paper.${PRINTER}
+print: ${DOC}.${PRINTER}
+	lpr -P${PRINTER} ${DOC}.${PRINTER}
 .endif
 
 .if !target(obj)
@@ -25,7 +27,7 @@ obj:
 .endif
 
 clean cleandir:
-	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
+	rm -f ${DOC}.* [eE]rrs mklog ${CLEANFILES}
 	rm -rf obj
 
 FILES?=	${SRCS}
@@ -42,7 +44,7 @@ install:
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
 
 spell: ${SRCS}
-	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
+	spell ${SRCS} | sort | comm -23 - spell.ok > ${DOC}.spell
 
 BINDIR?=	/usr/share/doc
 BINGRP?=	bin
