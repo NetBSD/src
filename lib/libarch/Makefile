@@ -29,4 +29,5 @@ all:
 clean:
 cleandir:
 obj:
+depend:
 .endif
