@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qtreg.h,v 1.1 2003/08/28 10:03:32 ragge Exp $	*/
+/*	$NetBSD: if_qtreg.h,v 1.2 2003/08/29 13:49:39 ragge Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -36,8 +36,8 @@
  *	Created from the DELQA-PLUS Addendum to the DELQA User's Guide.
 */
 
-#define	QT_MAX_RCV	32
-#define	QT_MAX_XMT	12
+#define QT_MAX_RCV	32
+#define QT_MAX_XMT	12
 
 /* Receive ring descriptor and bit/field definitions */
 
@@ -49,8 +49,12 @@
 		short	rmd3;
 		short	rmd4;
 		short	rmd5;
+#ifdef pdp11
 		struct	qt_uba	*rhost0;
 		short	rhost1;
+#else
+		short	pad1, pad2;
+#endif
 		};
 
 #define	RMD0_ERR3	0x4000		/* Error summary. FRA|CRC|OFL|BUF */
@@ -90,8 +94,12 @@
 		short	tmd3;
 		short	tmd4;
 		short	tmd5;
+#ifdef pdp11
 		struct	qt_uba	*thost0;
 		short	thost1;
+#else
+		short	pad1, pad2;
+#endif
 		};
 
 #define	TMD0_ERR1	0x4000		/* Error summary.  LCO|LCA|RTR */
@@ -196,6 +204,7 @@
 		u_short	vector;
 		u_short	hit;
 		char	passwd[6];
+		char	pad[4];		/* even on 40 byte for alignment */
 		};
 
 #define	INIT_MODE_PRO	0x8000		/* Promiscuous mode */

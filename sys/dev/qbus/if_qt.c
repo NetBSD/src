@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.1 2003/08/28 10:03:32 ragge Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.2 2003/08/29 13:49:39 ragge Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -77,96 +77,109 @@
  *	This driver ('qt') is selected at system configuration time.  If the 
  *	board *	is not a DELQA-YM an error message will be printed and the 
  *	interface will not be attached.
-*/
- 
-#include "qt.h"
-#if	NQT > 0
+ */
 
-#include "param.h"
-#include "pdp/psl.h"
-#include "pdp/seg.h"
-#include "map.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "buf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
-#include "time.h"
-#include "kernel.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.2 2003/08/29 13:49:39 ragge Exp $");
 
-#include "../net/if.h"
-#include "../net/netisr.h"
-#include "../net/route.h"
+#include "opt_inet.h"
+#include "bpfilter.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "domain.h"
-#include "../netinet/in.h"
-#include "../netinet/in_systm.h"
-#include "../netinet/in_var.h"
-#include "../netinet/ip.h"
-#include "../netinet/if_ether.h"
+#include <sys/domain.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
 #endif
 
 #ifdef NS
-#include "../netns/ns.h"
-#include "../netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
-#include "if_qtreg.h"
-#include "if_uba.h"
-#include "../pdpuba/ubavar.h"
- 
-#define NRCV	16	 	/* Receive descriptors (must be <= 32) */
-#define NXMT	6	 	/* Transmit descriptors	(must be <= 12) */
-#if	NRCV > 32 || NXMT > 12
-	generate an error
+#include <machine/bus.h>
+#ifdef __vax__
+#include <machine/scb.h>
+#endif
+
+#include <dev/qbus/ubavar.h>
+#include <dev/qbus/if_uba.h>
+#include <dev/qbus/if_qtreg.h>
+
+#define NRCV	QT_MAX_RCV	/* Receive descriptors (must be == 32) */
+#define NXMT	QT_MAX_XMT	/* Transmit descriptors	(must be == 12) */
+#if	NRCV != 32 || NXMT != 12
+	hardware requires these sizes.
 #endif
  
-	struct	qt_uba
-		{
-		struct	qt_uba	*next;	/* link to next buffer in list or
-					 * NULL if the last buffer
-					*/
-		struct	ifuba	ubabuf;	/* buffer descriptor */
-		};
+struct	qt_cdata {
+	struct	qt_init qc_init;	/* Init block			*/
+	struct	qt_rring qc_r[NRCV];	/* Receive descriptor ring	*/
+	struct	qt_tring qc_t[NXMT];	/* Transmit descriptor ring	*/
+};
 
 struct	qt_softc {
-	struct	arpcom is_ac;		/* common part - must be first  */
-#define	is_if	is_ac.ac_if		/* network-visible interface 	*/
-#define	is_addr	is_ac.ac_enaddr		/* hardware Ethernet address 	*/
-	struct	qt_uba	*freelist;	/* list of available buffers	*/
-	struct	qt_uba	ifrw[NRCV + NXMT];
-	u_short	initclick;		/* click addr of the INIT block */
-	struct	qt_rring *rring;	/* Receive ring address 	*/
-	struct	qt_tring *tring;	/* Transmit ring address 	*/
-	char	r_align[QT_MAX_RCV * sizeof (struct qt_rring) + 8];
-	char	t_align[QT_MAX_XMT * sizeof (struct qt_tring) + 8];
-	short	qt_flags;		/* software state		*/
-#define	QTF_RUNNING	0x1
-#define	QTF_STARTUP	0x2		/* Waiting for start interrupt  */
+	struct	device sc_dev;		/* Configuration common part */
+	struct	ethercom is_ec;		/* common part - must be first  */
+	struct	evcnt sc_intrcnt;	/* Interrupt counting */
+#define	is_if	is_ec.ec_if		/* network-visible interface 	*/
+	u_int8_t is_addr[ETHER_ADDR_LEN]; /* hardware Ethernet address	*/
+	bus_space_tag_t	sc_iot;
+	bus_addr_t	sc_ioh;
+	bus_dma_tag_t	sc_dmat;
+
+	struct	ubinfo	sc_ui;		/* init block address desc	*/
+	struct	qt_cdata *sc_ib;	/* virt address of init block	*/
+	struct	qt_cdata *sc_pib;	/* phys address of init block	*/
+
+	struct	ifubinfo sc_ifuba;	/* UNIBUS resources */
+	struct	ifrw sc_ifr[NRCV];	/* UNIBUS receive buffer maps */
+	struct	ifxmt sc_ifw[NXMT];	/* UNIBUS receive buffer maps */
+
 	char	rindex;			/* Receive Completed Index	*/
 	char	nxtrcv;			/* Next Receive Index		*/
 	char	nrcv;			/* Number of Receives active	*/
-	char	tindex;			/* Transmit index		*/
-	char	otindex;		/* Old transmit index		*/
-	char	nxmit;			/* # of xmits in progress	*/
-	struct	qtdevice *addr;		/* device CSR addr		*/
-} qt_softc[NQT];
 
-struct	uba_device *qtinfo[NQT];
- 
-int	qtattach(), qtintr(), qtinit(), qtoutput(), qtioctl();
- 
-extern	struct ifnet loif;
+	int	xnext;			/* Next descriptor to transmit	*/
+	int	xlast;			/* Last descriptor transmitted	*/
+	int	nxmit;			/* # packets in send queue	*/
+	short	vector;			/* Interrupt vector assigned	*/
+	volatile struct	qtdevice *addr;	/* device CSR addr		*/
+};
 
-u_short qtstd[] = { 0 };
+static	int qtmatch(struct device *, struct cfdata *, void *);
+static	void qtattach(struct device *, struct device *, void *);
+static	void qtintr(void *);
+static	int qtinit(struct ifnet *);
+static	int qtioctl(struct ifnet *, u_long, caddr_t);
+static	int qtturbo(struct qt_softc *);
+static	void qtstart(struct ifnet *ifp);
+static	void qtsrr(struct qt_softc *, int);
+static	void qtrint(struct qt_softc *sc);
+static	void qttint(struct qt_softc *sc);
 
-struct	uba_driver qtdriver =
-	{ 0, 0, qtattach, 0, qtstd, "qe", qtinfo };
+/* static	void qtrestart(struct qt_softc *sc); */
  
+CFATTACH_DECL(qt, sizeof(struct qt_softc),
+    qtmatch, qtattach, NULL, NULL);
+
 /*
  * Maximum packet size needs to include 4 bytes for the CRC 
  * on received packets.
@@ -174,16 +187,30 @@ struct	uba_driver qtdriver =
 #define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + 4)
 #define	MINPACKETSIZE 64
 
-/*
- * The C compiler's propensity for prepending '_'s to names is the reason
- * for the hack below.  We need the "handler" address (the code which
- * sets up the interrupt stack frame) in order to initialize the vector.
-*/
+#define loint(x)	((int)(x) & 0xffff)
+#define hiint(x)	(((int)(x) >> 16) & 0x3f)
+#define	XNAME		sc->sc_dev.dv_xname
 
-static int qtfoo()
-	{
-	asm("mov $qtintr, r0");		/* return value is in r0 */
-	}
+/*
+ * Check if this card is a turbo delqa.
+ */
+int
+qtmatch(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct	qt_softc ssc;
+	struct	qt_softc *sc = &ssc;
+	struct	uba_attach_args *ua = aux;
+	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+
+
+	sc->addr = (struct qtdevice *)ua->ua_ioh;
+	if (qtturbo(sc) == 0)
+		return 0;
+
+	scb_fake((ubasc->uh_lastiv-4) + VAX_NBPG, 0x16); /* XXX */
+	return 10;
+}
+
 
 /*
  * Interface exists.  More accurately, something exists at the CSR (see
@@ -198,81 +225,56 @@ static int qtfoo()
  * when the device interrupts to say it has started.
 */
 
-qtattach(ui)
-	struct uba_device *ui;
+void
+qtattach(struct device *parent, struct device *self, void *aux)
 	{
-	register struct qt_softc *sc = &qt_softc[ui->ui_unit];
+	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+	register struct qt_softc *sc = (struct qt_softc *)self;
 	register struct ifnet *ifp = &sc->is_if;
-	register struct qt_init *iniblk = (struct qt_init *)SEG5;
-	segm	seg5;
-	long	bufaddr;
-	extern int nextiv();
- 
-	ifp->if_unit = ui->ui_unit;
-	ifp->if_name = "qe";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST;
- 
-/*
- * Fill in most of the INIT block: vector, options (interrupt enable), ring
- * locations.  The physical address is copied from the ROMs as part of the
- * -YM testing proceedure.  The CSR is saved here rather than in qtinit()
- * because the qtturbo() routine needs it.
- *
- * The INIT block must be quadword aligned.  Using malloc() guarantees click
- * (64 byte) alignment.  Since the only time the INIT block is referenced is
- * at 'startup' or 'reset' time there is really no time penalty (and a modest
- * D space savings) involved.
-*/
-	sc->addr = (struct qtdevice *)ui->ui_addr;
-	sc->initclick = MALLOC(coremap, btoc(sizeof (struct qt_init)));
-	saveseg5(seg5);
-	mapseg5(sc->initclick, 077406);
-	bzero(iniblk, sizeof (struct qt_init));
-	sc->rring = (struct qt_rring *)(((int)sc->r_align + 7) & ~7);
-	sc->tring = (struct qt_tring *)(((int)sc->t_align + 7) & ~7);
+	struct uba_attach_args *ua = aux;
 
-/*
- * Fetch the next available interrupt vector.  The routine is in the kernel
- * (for several reasons) so use SKcall.  Then initialize the vector with
- * the address of our 'handler' and PSW of supervisor, priority 4 and unit
-*/
-	iniblk->vector = SKcall(nextiv, 0);
-	mtkd(iniblk->vector, qtfoo());
-	mtkd(iniblk->vector + 2, PSL_CURSUP | PSL_BR4 | ifp->if_unit);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qtintr, sc, 
+	    &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+	    sc->sc_dev.dv_xname, "intr");
 
-	iniblk->options = INIT_OPTIONS_INT;
-	bufaddr = startnet + (long)sc->rring;
-	iniblk->rx_lo = loint(bufaddr);
-	iniblk->rx_hi = hiint(bufaddr);
-	bufaddr = startnet + (long)sc->tring;
-	iniblk->tx_lo = loint(bufaddr);
-	iniblk->tx_hi = hiint(bufaddr);
-	restorseg5(seg5);
+	sc->addr = (struct qtdevice *)ua->ua_ioh;
+	ubasc->uh_lastiv -= 4;
+	sc->vector = ubasc->uh_lastiv;
 
 /*
  * Now allocate the buffers and initialize the buffers.  This should _never_
  * fail because main memory is allocated after the DMA pool is used up.
 */
 
-	if	(!qbaini(sc, NRCV + NXMT))
-		return;		/* XXX */
- 
-	ifp->if_init = qtinit;
-	ifp->if_output = qtoutput;
+	sc->is_addr[0] = sc->addr->sarom[0];
+	sc->is_addr[1] = sc->addr->sarom[2];
+	sc->is_addr[2] = sc->addr->sarom[4];
+	sc->is_addr[3] = sc->addr->sarom[6];
+	sc->is_addr[4] = sc->addr->sarom[8];
+	sc->is_addr[5] = sc->addr->sarom[10];
+
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST;
 	ifp->if_ioctl = qtioctl;
-	ifp->if_reset = 0;
-	if	(qtturbo(sc))
-		if_attach(ifp);
+	ifp->if_start = qtstart;
+	ifp->if_init = qtinit;
+/*	ifp->if_stop = qtstop;	*/
+	IFQ_SET_READY(&ifp->if_snd);
+ 
+	printf("\n%s: delqa-plus in Turbo mode, hardware address %s\n",
+	    XNAME, ether_sprintf(sc->is_addr));
+	if_attach(ifp);
+	ether_ifattach(ifp, sc->is_addr);
 	}
  
+int
 qtturbo(sc)
 	register struct qt_softc *sc;
 	{
 	register int i;
-	register struct qtdevice *addr = sc->addr;
-	struct	qt_init *iniblk = (struct qt_init *)SEG5;
-	segm	seg5;
+	volatile struct qtdevice *addr = sc->addr;
 
 /*
  * Issue the software reset.  Delay 150us.  The board should now be in
@@ -288,7 +290,7 @@ qtturbo(sc)
 	addr->srr = 0x8000;		/* Turn off ITB, set DELQA select */
 	if	(i != 0x8001)
 		{
-		printf("qt@%o !-YM\n", addr);
+		printf("qt@%p !-YM\n", addr);
 		return(0);
 		}
 /*
@@ -306,77 +308,95 @@ qtturbo(sc)
 		}
 	if	(i >= 1000)
 		{
-		printf("qt@%o !Turbo\n", addr);
+		printf("qt@%p !Turbo\n", addr);
 		return(0);
 		}
-/*
- * Board has entered Turbo mode.  Now copy the physical address from the
- * ROMs to the INIT block.  Fill in the address in the part of the structure 
- * "visible" to the rest of the system.
-*/
-	saveseg5(seg5);
-	mapseg5(sc->initclick, 077406);
-	sc->is_addr[0] = addr->sarom[0];
-	sc->is_addr[1] = addr->sarom[2];
-	sc->is_addr[2] = addr->sarom[4];
-	sc->is_addr[3] = addr->sarom[6];
-	sc->is_addr[4] = addr->sarom[8];
-	sc->is_addr[5] = addr->sarom[10];
-	bcopy(sc->is_addr, iniblk->paddr, 6);
-	restorseg5(seg5);
 	return(1);
 	}
 
-qtinit(unit)
-	int unit;
+int
+qtinit(struct ifnet *ifp)
 	{
-	int	s;
-	register struct qt_softc *sc = &qt_softc[unit];
-	struct qtdevice *addr = sc->addr;
-	struct	ifnet *ifp = &sc->is_if;
+	register struct qt_softc *sc = ifp->if_softc;
+	volatile struct qtdevice *addr = sc->addr;
+	register struct qt_init *iniblk;
+	struct ifrw *ifrw;
+	struct ifxmt *ifxp;
 	struct	qt_rring *rp;
 	struct	qt_tring *tp;
-	register struct	qt_uba	*xp;
-	register int i;
-	long	buf_adr;
+	register int i, error;
  
-	if	(!ifp->if_addrlist)		/* oops! */
-		return;
+	if (ifp->if_flags & IFF_RUNNING)
+		return 0; /* Already in good shape */
+
+	if (sc->sc_ib == NULL) {
+		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
+			printf("%s: can't initialize\n", XNAME);
+			ifp->if_flags &= ~IFF_UP;
+			return 0;
+		}
+		sc->sc_ui.ui_size = sizeof(struct qt_cdata);
+		if ((error = ubmemalloc((void *)sc->sc_dev.dv_parent,
+		    &sc->sc_ui, 0))) {
+			printf(": failed ubmemalloc(), error = %d\n", error);
+			return error;
+		}
+		sc->sc_ib = (struct qt_cdata *)sc->sc_ui.ui_vaddr;
+		sc->sc_pib = (struct qt_cdata *)sc->sc_ui.ui_baddr;
+
+/*
+ * Fill in most of the INIT block: vector, options (interrupt enable), ring
+ * locations.  The physical address is copied from the ROMs as part of the
+ * -YM testing proceedure.  The CSR is saved here rather than in qtinit()
+ * because the qtturbo() routine needs it.
+ *
+ * The INIT block must be quadword aligned.  Using malloc() guarantees click
+ * (64 byte) alignment.  Since the only time the INIT block is referenced is
+ * at 'startup' or 'reset' time there is really no time penalty (and a modest
+ * D space savings) involved.
+*/
+		memset(sc->sc_ib, 0, sizeof(struct qt_cdata));
+		iniblk = &sc->sc_ib->qc_init;
+
+		iniblk->vector = sc->vector;
+		memcpy(iniblk->paddr, sc->is_addr, 6);
+
+		iniblk->options = INIT_OPTIONS_INT;
+		iniblk->rx_lo = loint(&sc->sc_pib->qc_r);
+		iniblk->rx_hi = hiint(&sc->sc_pib->qc_r);
+		iniblk->tx_lo = loint(&sc->sc_pib->qc_t);
+		iniblk->tx_hi = hiint(&sc->sc_pib->qc_t);
+	}
+
+
 /*
  * Now initialize the receive ring descriptors.  Because this routine can be
  * called with outstanding I/O operations we check the ring descriptors for
  * a non-zero 'rhost0' (or 'thost0') word and place those buffers back on
  * the free list.
 */
-	for	(i = 0, rp = sc->rring; i < QT_MAX_RCV; i++, rp++)
-		{
-		rp->rmd3 = RMD3_OWN;
-		if	(xp = rp->rhost0)
-			{
-			rp->rhost0 = 0;
-			xp->next = sc->freelist;
-			sc->freelist = xp;
-			}
+	for (i = 0; i < NRCV; i++) {
+		rp = &sc->sc_ib->qc_r[i];
+		ifrw = &sc->sc_ifr[i];
+		rp->rmd1 = MCLBYTES;
+		rp->rmd4 = loint(ifrw->ifrw_info);
+		rp->rmd5 = hiint(ifrw->ifrw_info);
+		rp->rmd3 = 0;			/* clear RMD3_OWN */
 		}
-	for	(i = 0, tp = sc->tring ; i < QT_MAX_XMT; i++, tp++)
-		{
-		sc->tring[i].tmd3 = TMD3_OWN;
-		if	(xp = tp->thost0)
-			{
-			tp->thost0 = 0;
-			xp->next = sc->freelist;
-			sc->freelist = xp;
-			}
+	for (i = 0; i < NXMT; i++) {
+		tp = &sc->sc_ib->qc_t[i];
+		ifxp = &sc->sc_ifw[i];
+		tp->tmd4 = loint(ifxp->ifw_info);
+		tp->tmd5 = hiint(ifxp->ifw_info);
+		tp->tmd3 = TMD3_OWN;
 		}
- 
-	sc->nxmit = 0;
-	sc->otindex = 0;
-	sc->tindex = 0;
+
+	sc->xnext = sc->xlast = sc->nxmit = 0;
 	sc->rindex = 0;
 	sc->nxtrcv = 0;
 	sc->nrcv = 0;
  
-	s = splimp();
 /*
  * Now we tell the device the address of the INIT block.  The device
  * _must_ be in the Turbo mode at this time.  The "START" command is
@@ -386,69 +406,47 @@ qtinit(unit)
  * being received an error is printed, the flags cleared and the device left
  * marked down.
 */
-	buf_adr = ctob((long)sc->initclick);
-	addr->ibal = loint(buf_adr);
-	addr->ibah = hiint(buf_adr);
+	addr->ibal = loint(&sc->sc_pib->qc_init);
+	addr->ibah = hiint(&sc->sc_pib->qc_init);
 	addr->srqr = 2;
-/*
- * set internal state to 'startup' and start a one second timer.  the interrupt
- * service routine will be entered either 1) when the device posts the 'start'
- * interrupt or 2) when the timer expires.  The interrupt routine will fill
- * the receive rings, etc.
-*/
-	sc->qt_flags = QTF_STARTUP;
-	TIMEOUT(qtintr, unit, 60);
-	splx(s);
+
+	sc->is_if.if_flags |= IFF_RUNNING;
+	return 0;
 	}
 
 /*
  * Start output on interface.
  */
 
-qtstart(unit)
-	int	unit;
+void
+qtstart(struct ifnet *ifp)
 	{
-	int 	len, s;
-	register struct qt_softc *sc = &qt_softc[unit];
+	int 	len, nxmit;
+	register struct qt_softc *sc = ifp->if_softc;
 	register struct qt_tring *rp;
-	struct	mbuf *m;
-	long	buf_addr;
-	register struct	qt_uba *xp;
+	struct	mbuf *m = NULL;
  
-	s = splimp();
-	while	(sc->nxmit < NXMT)
-		{
+	for (nxmit = sc->nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&sc->is_if.if_snd, m);
 		if	(m == 0)
 			break;
-		rp = &sc->tring[sc->tindex];
-#ifdef	QTDEBUG
-		if	((rp->tmd3 & TMD3_OWN) == 0)
-			printf("qt xmit in progress\n");
-#endif
-/*
- * Now pull a buffer off of the freelist.  Guaranteed to be a buffer
- * because both the receive and transmit sides limit themselves to
- * NRCV and NXMT buffers respectively.
-*/
-		xp = sc->freelist;
-		sc->freelist = xp->next;
 
-		buf_addr = xp->ubabuf.ifu_w.ifrw_info;
-		len = if_wubaput(&xp->ubabuf, m);
-		if	(len < MINPACKETSIZE)
+		rp = &sc->sc_ib->qc_t[sc->xnext];
+		if ((rp->tmd3 & TMD3_OWN) == 0)
+			panic("qtstart");
+
+		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->xnext], m);
+		if (len < MINPACKETSIZE)
 			len = MINPACKETSIZE;
-		rp->tmd4 = loint(buf_addr);
-		rp->tmd5 = hiint(buf_addr) & TMD5_HADR;
 		rp->tmd3 = len & TMD3_BCT;	/* set length,clear ownership */
-		rp->thost0 = xp;		/* set entry active */
 		sc->addr->arqr = ARQR_TRQ;	/* tell device it has buffer */
-		sc->nxmit++;
-		if	(++sc->tindex >= QT_MAX_XMT)
-			sc->tindex = 0;
-		}
-	splx(s);
+		if	(++sc->xnext >= NXMT)
+			sc->xnext = 0;
 	}
+	if (sc->nxmit != nxmit)
+		sc->nxmit = nxmit;
+	/* XXX - set OACTIVE */
+}
  
 /*
  * General interrupt service routine.  Receive, transmit, device start 
@@ -457,33 +455,20 @@ qtstart(unit)
  * START then check if the device is now running.
 */
 
-qtintr(unit)
-	int unit;
+void
+qtintr(void *arg)
 	{
-	register struct qt_softc *sc = &qt_softc[unit];
-	register int status;
-	int	s;
+	struct qt_softc *sc = arg;
+	short status;
+
  
 	status = sc->addr->srr;
 	if	(status < 0)
 		/* should we reset the device after a bunch of these errs? */
-		qtsrr(unit, status);
-	if	(sc->qt_flags == QTF_STARTUP)
-		{
-		if	((status & SRR_RESP) == 2)
-			{
-			sc->qt_flags = QTF_RUNNING;
-			sc->is_if.if_flags |= (IFF_UP | IFF_RUNNING);
-			}
-		else
-			printf("qt%d !start\n", unit);
-		}
-	s = splimp();
-	qtrint(unit);
-	if	(sc->nxmit)
-		qttint(unit);
-	qtstart(unit);
-	splx(s);
+		qtsrr(sc, status);
+	qtrint(sc);
+	qttint(sc);
+	qtstart(&sc->is_ec.ec_if);
 	}
  
 /*
@@ -494,36 +479,16 @@ qtintr(unit)
  
 #define BBLMIS (TMD2_BBL|TMD2_MIS)
 
-qttint(unit)
-	int unit;
+void
+qttint(struct qt_softc *sc)
 	{
-	register struct qt_softc *sc = &qt_softc[unit];
 	register struct qt_tring *rp;
-	register struct	qt_uba *xp;
  
-	while	(sc->nxmit > 0)
+	while (sc->nxmit > 0)
 		{
-		rp = &sc->tring[sc->otindex];
-		if	((rp->tmd3 & TMD3_OWN) == 0)
+		rp = &sc->sc_ib->qc_t[sc->xlast];
+		if ((rp->tmd3 & TMD3_OWN) == 0)
 			break;
-/*
- * Now check the buffer address (the first word in the ring descriptor
- * available for the host's use).  If it is NULL then we have already seen
- * and processed (or never presented to the board in the first place) this 
- * entry and the ring descriptor should not be counted.
-*/
-		xp = rp->thost0;
-		if	(xp == 0)
-			break;
-/*
- * Clear the buffer address from the ring descriptor and put the
- * buffer back on the freelist for future use.
-*/
-		rp->thost0 = 0;
-		xp->next = sc->freelist;
-		sc->freelist = xp;
-
-		sc->nxmit--;
 		sc->is_if.if_opackets++;
 /*
  * Collisions don't count as output errors, but babbling and missing packets
@@ -535,12 +500,16 @@ qttint(unit)
 			 ((rp->tmd2 & TMD2_ERR2) && (rp->tmd2 & BBLMIS)))
 			{
 #ifdef QTDEBUG
-			printf("qt%d tmd2 %b\n", unit, rp->tmd2, TMD2_BITS);
+			char buf[100];
+			bitmask_snprintf(rp->tmd2, TMD2_BITS, buf, 100);
+			printf("%s: tmd2 %s\n", XNAME, buf);
 #endif
 			sc->is_if.if_oerrors++;
 			}
-		if	(++sc->otindex >= QT_MAX_XMT)
-			sc->otindex = 0;
+		if_ubaend(&sc->sc_ifuba, &sc->sc_ifw[sc->xlast]);
+		if	(++sc->xlast >= NXMT)
+			sc->xlast = 0;
+		sc->nxmit--;
 		}
 	}
  
@@ -549,29 +518,20 @@ qttint(unit)
  * a mbuf chain for processing later.
 */
 
-qtrint(unit)
-	int unit;
+void
+qtrint(struct qt_softc *sc)
 	{
-	register struct qt_softc *sc = &qt_softc[unit];
 	register struct qt_rring *rp;
-	register struct	qt_uba *xp;
+	struct ifnet *ifp = &sc->is_ec.ec_if;
+	struct mbuf *m;
 	int	len;
-	long	bufaddr;
  
-	while	(sc->rring[sc->rindex].rmd3 & RMD3_OWN)
+	while	(sc->sc_ib->qc_r[(int)sc->rindex].rmd3 & RMD3_OWN)
 		{
-		rp = &sc->rring[sc->rindex];
-/*
- * If the host word is 0 then this is a buffer either already seen or not
- * presented to the device in the first place.
-*/
-		xp = rp->rhost0;
-		if	(xp == 0)
-			break;
-
+		rp = &sc->sc_ib->qc_r[(int)sc->rindex];
 		if     ((rp->rmd0 & (RMD0_STP|RMD0_ENP)) != (RMD0_STP|RMD0_ENP))
 			{
-			printf("qt%d chained packet\n", unit);
+			printf("%s: chained packet\n", XNAME);
 			sc->is_if.if_ierrors++;
 			goto rnext;
 			}
@@ -580,299 +540,60 @@ qtrint(unit)
  
 		if	((rp->rmd0 & RMD0_ERR3) || (rp->rmd2 & RMD2_ERR4))
 			{
-			sc->is_if.if_ierrors++;
 #ifdef QTDEBUG
-			printf("qt%d rmd0 %b\n", unit, rp->rmd0, RMD0_BITS);
-			printf("qt%d rmd2 %b\n", unit, rp->rmd2, RMD2_BITS);
+			char buf[100];
+			bitmask_snprintf(rp->rmd0, RMD0_BITS, buf, 100);
+			printf("%s: rmd0 %s\n", XNAME, buf);
+			bitmask_snprintf(rp->rmd2, RMD2_BITS, buf, 100);
+			printf("%s: rmd2 %s\n", XNAME, buf);
 #endif
+			sc->is_if.if_ierrors++;
+			goto rnext;
 			}
-		else
-			qtread(sc, &xp->ubabuf,
-				len - sizeof (struct ether_header));
+		m = if_ubaget(&sc->sc_ifuba, &sc->sc_ifr[(int)sc->rindex],
+		    ifp, len);
+		if (m == 0) {
+			sc->is_if.if_ierrors++;
+			goto rnext;
+		}
+		(*ifp->if_input)(ifp, m);
 rnext:
 		--sc->nrcv;
-		if	(++sc->rindex >= QT_MAX_RCV)
+		rp->rmd3 = 0;
+		rp->rmd1 = MCLBYTES;
+		if	(++sc->rindex >= NRCV)
 			sc->rindex = 0;
-/*
- * put the buffer back on the free list and clear the first host word
- * in the ring descriptor so we don't process this one again.
-*/
-		xp->next = sc->freelist;
-		sc->freelist = xp;
-		rp->rhost0 = 0;
 		}
-	while	(sc->nrcv < NRCV)
-		{
-		rp = &sc->rring[sc->nxtrcv];
-#ifdef	QTDEBUG
-		if	((rp->rmd3 & RMD3_OWN) == 0)
-			printf("qtrint: !OWN\n");
-#endif
-		xp = sc->freelist;
-		sc->freelist = xp->next;
-		bufaddr = xp->ubabuf.ifu_r.ifrw_info;
-		rp->rmd1 = MAXPACKETSIZE;
-		rp->rmd4 = loint(bufaddr);
-		rp->rmd5 = hiint(bufaddr);
-		rp->rhost0 = xp;
-		rp->rmd3 = 0;			/* clear RMD3_OWN */
-		++sc->nrcv;
-		sc->addr->arqr = ARQR_RRQ;	/* tell device it has buffer */
-		if	(++sc->nxtrcv >= QT_MAX_RCV)
-			sc->nxtrcv = 0;
-		}
+	sc->addr->arqr = ARQR_RRQ;	/* tell device it has buffer */
 	}
 
-/*
- * Place data on the appropriate queue and call the start routine to
- * send the data to the device.
-*/
-
-qtoutput(ifp, m0, dst)
-	struct	ifnet *ifp;
-	struct	mbuf *m0;
-	struct	sockaddr *dst;
-	{
-	int	type, s, trail;
-	u_char	edst[6];
-	struct	in_addr idst;
-	register struct ether_header *eh;
-	register struct qt_softc *is = &qt_softc[ifp->if_unit];
-	register struct mbuf *m = m0;
-	struct	mbuf *mcopy = (struct mbuf *)0;
- 
-	if	((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
-		{
-		m_freem(m0);
-		return(ENETDOWN);
-		}
-	switch	(dst->sa_family)
-		{
-#ifdef INET
-		case	AF_INET:
-			idst = ((struct sockaddr_in *)dst)->sin_addr;
-			if	(!arpresolve(&is->is_ac, m, &idst, edst,&trail))
-				return(0);	/* wait for arp to finish */
-			if	(!bcmp(edst, etherbroadcastaddr,sizeof (edst)))
-				mcopy = m_copy(m, 0, (int)M_COPYALL);
-			type = ETHERTYPE_IP;
-			break;
-#endif
-#ifdef NS
-		case	AF_NS:
-			type = ETHERTYPE_NS;
-			bcopy(&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    		edst, sizeof (edst));
-			if	(!bcmp(edst, &ns_broadcast, sizeof (edst)))
-				return(looutput(&loif, m, dst));
-			break;
-#endif
-		case	AF_UNSPEC:
-			eh = (struct ether_header *)dst->sa_data;
-			bcopy(eh->ether_dhost, (caddr_t)edst, sizeof (edst));
-			type = eh->ether_type;
-			break;
-		default:
-			printf("qt%d can't handle af%d\n", ifp->if_unit,
-				dst->sa_family);
-			m_freem(m);
-			return(EAFNOSUPPORT);
-		}
-/*
- * Add local net header.  If no space in first mbuf, allocate another.
-*/
-	if	(m->m_off > MMAXOFF ||
-			MMINOFF + sizeof (struct ether_header) > m->m_off)
-		{
-		m = m_get(M_DONTWAIT, MT_HEADER);
-		if	(m == 0)
-			{
-			m_freem(m0);
-nobufs:			if	(mcopy)
-				m_freem(mcopy);
-			return(ENOBUFS);
-			}
-		m->m_next = m0;
-		m->m_off = MMINOFF;
-		m->m_len = sizeof (struct ether_header);
-		}
-	else
-		{
-		m->m_off -= sizeof (struct ether_header);
-		m->m_len += sizeof (struct ether_header);
-		}
-	eh = mtod(m, struct ether_header *);
-	eh->ether_type = htons((u_short)type);
- 	bcopy(edst, (caddr_t)eh->ether_dhost, sizeof (edst));
- 	bcopy(is->is_addr, (caddr_t)eh->ether_shost, sizeof (is->is_addr));
- 
-	s = splimp();
-	if	(IF_QFULL(&ifp->if_snd))
-		{
-		IF_DROP(&ifp->if_snd);
-		m_freem(m);
-		splx(s);
-		goto nobufs;
-		}
-	IF_ENQUEUE(&ifp->if_snd, m);
-	qtstart(ifp->if_unit);
-	splx(s);
-	return(mcopy ? looutput(&loif, mcopy, dst) : 0);
-	}
- 
+int
 qtioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int	cmd;
+	u_long	cmd;
 	caddr_t	data;
 	{
-	struct qt_softc *sc = &qt_softc[ifp->if_unit];
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s = splimp(), error = 0;
-#ifdef	NS
-	register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-#endif
- 
-	switch	(cmd)
-		{
-		case	SIOCSIFADDR:
-/*
- * Resetting the board is probably overkill, but then again this is only
- * done when the system comes up or possibly when a reset is needed after a
- * major network fault (open wire, etc).
-*/
-			qtrestart(sc);
-			switch	(ifa->ifa_addr.sa_family)
-				{
-#ifdef INET
-				case	AF_INET:
-					((struct arpcom *)ifp)->ac_ipaddr =
-						IA_SIN(ifa)->sin_addr;
-					arpwhohas(ifp, &IA_SIN(ifa)->sin_addr);
-					break;
-#endif
-#ifdef NS
-				case	AF_NS:
-					if	(ns_nullhost(*ina))
-						ina->x_host = 
-						*(union ns_host *)(sc->is_addr);
-					else
-						{
-						qt_ns(ina->x_host.c_host);
-						qtrestart(sc);
-						}
-					break;
-#endif
-				}
-			break;
-		case	SIOCSIFFLAGS:
-			if	((ifp->if_flags & IFF_UP) == 0 &&
-				    sc->qt_flags & QTF_RUNNING)
-				{
-/*
- * We've been asked to stop the board and leave it that way.  qtturbo()
- * does this with the side effect of placing the device back in Turbo mode.
-*/
-				qtturbo(sc);
-				sc->qt_flags &= ~QTF_RUNNING;
-				}
-			else if (ifp->if_flags & IFF_UP &&
-					!(sc->qt_flags & QTF_RUNNING))
-				qtrestart(sc);
-			break;
-		default:
-			error = EINVAL;
-		}
+	int error;
+	int s = splnet();
+
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET)
+		error = 0;
 	splx(s);
-	return(error);
-	}
- 
-#ifdef	NS
-qt_ns(cp)
-	register char *cp;
+	return (error);
+}
+
+void
+qtsrr(sc, srrbits)
+	struct qt_softc *sc;
+	int	srrbits;
 	{
-	segm	seg5;
-	register struct qt_init *iniblk = (struct qt_init *)SEG5;
-
-	saveseg5(seg5);
-	mapseg5(sc->initclick, 077406);
-	bcopy(cp, sc->is_addr, 6);
-	bcopy(cp, iniblk->paddr, 6);
-	restorseg5(seg5);
-	}
-#endif
-
-/*
- * Pull the data off of the board and pass back to the upper layers of
- * the networking code.  Trailers are counted as errors and the packet
- * dropped.  SEG5 is saved and restored (used to peek at the packet type).
-*/
-
-qtread(sc, ifuba, len)
-	register struct qt_softc *sc;
-	struct	ifuba *ifuba;
-	int	len;
-	{
-	struct	ether_header *eh;
-    	register struct	mbuf *m;
-	struct	ifqueue *inq;
-	int	type;
-	segm	seg5;
- 
-	saveseg5(seg5);
-	mapseg5(ifuba->ifu_r.ifrw_click, 077406);
-	eh = (struct ether_header *)SEG5;
-	eh->ether_type = ntohs((u_short)eh->ether_type);
-	type = eh->ether_type;
-	restorseg5(seg5);
-	if	(len == 0 || type >= ETHERTYPE_TRAIL &&
-			type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER)
-		{
-		sc->is_if.if_ierrors++;
-		return;
-		}
-
-	m = if_rubaget(ifuba, len, 0, &sc->is_if);
-	if	(m == 0)
-		return;
- 
-	switch	(type)
-		{
-#ifdef INET
-		case	ETHERTYPE_IP:
-			schednetisr(NETISR_IP);
-			inq = &ipintrq;
-			break;
-		case	ETHERTYPE_ARP:
-			arpinput(&sc->is_ac, m);
-			return;
-#endif
-#ifdef NS
-		case	ETHERTYPE_NS:
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
-			break;
-#endif
-		default:
-			m_freem(m);
-			return;
-		}
- 
-	if	(IF_QFULL(inq))
-		{
-		IF_DROP(inq);
-		m_freem(m);
-		return;
-		}
-	IF_ENQUEUE(inq, m);
+	char buf[100];
+	bitmask_snprintf(srrbits, SRR_BITS, buf, sizeof buf);
+	printf("%s: srr=%s\n", sc->sc_dev.dv_xname, buf);
 	}
 
-
-qtsrr(unit, srrbits)
-	int	unit, srrbits;
-	{
-	printf("qt%d srr=%b\n", unit, srrbits, SRR_BITS);
-	}
-
+#ifdef notyet
 /*
  * Reset the device.  This moves it from DELQA-T mode to DELQA-Normal mode.
  * After the reset put the device back in -T mode.  Then call qtinit() to
@@ -880,41 +601,12 @@ qtsrr(unit, srrbits)
  * started interrupt".
 */
 
-qtrestart(sc)
+void
+qtreset(sc)
 	register struct qt_softc *sc;
 	{
  
 	qtturbo(sc);
-	qtinit(sc - qt_softc);
-	}
-
-qbaini(sc, num)
-	struct	qt_softc *sc;
-	int num;
-	{
-	register int i;
-	register memaddr click;
-	struct	qt_uba	*xp;
-	register struct	ifuba	*ifuba;
-
-	for	(i = 0; i < num; i++)
-		{
-		xp = &sc->ifrw[i];
-		ifuba = &xp->ubabuf;
-		click = m_ioget(MAXPACKETSIZE);
-		if	(click == 0)
-			{
-			click = MALLOC(coremap, btoc(MAXPACKETSIZE));
-			if	(click == 0)
-				return(0);	/* _can't_ happen */
-			}
-		ifuba->ifu_hlen = sizeof (struct ether_header);
-		ifuba->ifu_w.ifrw_click = ifuba->ifu_r.ifrw_click = click;
-		ifuba->ifu_w.ifrw_info = ifuba->ifu_r.ifrw_info = 
-			ctob((long)click);
-		xp->next = sc->freelist;
-		sc->freelist = xp;
-		}
-	return(1);
+	qtinit(&sc->is_ec.ec_if);
 	}
 #endif
