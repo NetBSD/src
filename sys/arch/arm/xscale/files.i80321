@@ -1,7 +1,9 @@
-#	$NetBSD: files.i80321,v 1.12 2003/10/06 16:06:05 thorpej Exp $
+#	$NetBSD: files.i80321,v 1.13 2005/02/12 09:44:15 rearnsha Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #
+
+defparam opt_i80321.h	COUNTS_PER_SEC
 
 file	arch/arm/xscale/i80321_icu.c
 file	arch/arm/arm32/irq_dispatch.S
