@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.12 2002/04/14 21:32:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.13 2002/06/26 01:06:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -453,7 +453,9 @@ iq80310_intr_dispatch(struct clockframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend;
+	int oldirqstate, pcpl, irq, ibit, hwpend, rv, stray;
+
+	stray = 1;
 
 	/* First, disable external IRQs. */
 	i80200_intr_disable(INTCTL_IM);
@@ -463,6 +465,8 @@ iq80310_intr_dispatch(struct clockframe *frame)
 	for (hwpend = iq80310_intstat_read(); hwpend != 0;) {
 		irq = ffs(hwpend) - 1;
 		ibit = (1U << irq);
+
+		stray = 0;
 
 		hwpend &= ~ibit;
 
@@ -477,6 +481,7 @@ iq80310_intr_dispatch(struct clockframe *frame)
 		}
 
 		ipending &= ~ibit;
+		rv = 0;
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
@@ -485,12 +490,18 @@ iq80310_intr_dispatch(struct clockframe *frame)
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+			rv |= (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 		}
 		restore_interrupts(oldirqstate);
 
 		current_spl_level = pcpl;
+
+		if (rv == 0)
+			printf("Stray interrupt: IRQ %d\n", irq);
 	}
+
+	if (stray)
+		printf("Stray external interrupt\n");
 
 	/* Check for pendings soft intrs. */
 	if ((ipending & ~IRQ_BITS) & ~current_spl_level) {
