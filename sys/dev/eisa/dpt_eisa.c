@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.3 2000/01/05 16:28:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.3 2000/01/05 16:28:41 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,6 +184,6 @@ dpt_eisa_attach(parent, self, aux)
 		return;	
 	}
 
-	/* Now attach to the bus-independant code */
+	/* Now attach to the bus-independent code */
 	dpt_init(sc, intrstr);
 }
