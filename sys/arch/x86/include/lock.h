@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2003/02/27 00:10:57 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2003/05/08 01:04:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
+
+#include <machine/cpufunc.h>
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
@@ -95,9 +97,8 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
 	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_LOCKED) {
-		continue;	/* spin */
-	}
+	    != __SIMPLELOCK_UNLOCKED)
+		x86_pause();
 	__lockbarrier();
 }
 
