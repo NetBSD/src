@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.4 2003/07/25 21:24:37 dsl Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.5 2003/07/26 08:32:19 dsl Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -11,7 +11,8 @@
 #
 # Optional variables:
 #	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
-#	FLOPPY_BOOT	Bootstrap to use.  [${DESTDIR}/usr/mdec/biosboot.sym]
+#	FLOPPY_BOOT	Bootstrap to use.  [${DESTDIR}/usr/mdec/biosboot]
+#	FLOPPYBOOTOPTIONS Options for installboot, eg -o console=com0
 #
 
 .include <bsd.own.mk>
@@ -27,7 +28,7 @@ FLOPPYSIZE=	2880
 FLOPPYKERNDIR?=		instkernel
 FLOPPYSUFFIX?=		.fs
 MDEC=			${DESTDIR}/usr/mdec
-FLOPPYINSTBOOT=		"dd conv=notrunc if=${MDEC}/bootxx_ustarfs of=@IMAGE@"
+FLOPPYINSTBOOT=		"${TOOL_INSTALLBOOT} ${FLOPPYBOOTOPTIONS} -m${MACHINE} @IMAGE@ ${MDEC}/bootxx_ustarfs"
 FLOPPYKERNOBJ!=		cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
 FLOPPY_BOOT?=		${MDEC}/biosboot
