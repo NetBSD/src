@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 1998/11/11 06:43:52 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.43 1998/11/29 15:01:49 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -179,35 +179,12 @@ cpu_set_kpc(p, pc, arg)
 	nyproc->PC = (unsigned)pc + 2;
 }
 
-int	reno_zmagic __P((struct proc *, struct exec_package *));
-
 int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	int error;
-	struct exec *ep;
-	/*
-	 * Compatibility with reno programs.
-	 */
-	ep=epp->ep_hdr;
-	switch (ep->a_midmag) {
-	case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
-		error = reno_zmagic(p, epp);
-		break;
-	case 0x108:
-printf("Warning: reno_nmagic\n");
-		error = exec_aout_prep_nmagic(p, epp);
-		break;
-	case 0x107:
-printf("Warning: reno_omagic\n");
-		error = exec_aout_prep_omagic(p, epp);
-		break;
-	default:
-		error = ENOEXEC;
-	}
-	return(error);
+	return ENOEXEC;
 }
 
 int
@@ -219,61 +196,6 @@ sys_sysarch(p, v, retval)
 
 	return (ENOSYS);
 };
-
-#ifdef COMPAT_ULTRIX
-extern struct emul emul_ultrix;
-#endif
-/*
- * 4.3BSD Reno programs have an 1K header first in the executable
- * file, containing a.out header. Otherwise programs are identical.
- *
- *	from: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
- */
-
-int
-reno_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-#ifdef COMPAT_ULTRIX
-	epp->ep_emul = &emul_ultrix;
-#endif
-
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, 0x400, VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, execp->a_text+0x400,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
 
 /*
  * Dump the machine specific header information at the start of a core dump.
