@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in_systm.h	7.4 (Berkeley) 6/28/90
- *	$Id: in_systm.h,v 1.4 1994/01/08 23:50:41 mycroft Exp $
+ *	from: @(#)in_systm.h	8.1 (Berkeley) 6/10/93
+ *	$Id: in_systm.h,v 1.5 1994/05/13 06:06:13 mycroft Exp $
  */
-
-#ifndef _NETINET_IN_SYSTM_H_
-#define _NETINET_IN_SYSTM_H_
 
 /*
  * Miscellaneous internetwork
@@ -56,7 +53,5 @@ typedef u_long	n_long;			/* long as received from the net */
 typedef	u_long	n_time;			/* ms since 00:00 GMT, byte rev */
 
 #ifdef KERNEL
-n_time	iptime __P((void));
+n_time	 iptime __P((void));
 #endif
-
-#endif /* !_NETINET_IN_SYSTM_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in_cksum.c	7.3 (Berkeley) 6/28/90
- *	$Id: in_cksum.c,v 1.7 1994/01/10 23:20:07 mycroft Exp $
+ *	from: @(#)in_cksum.c	8.1 (Berkeley) 6/10/93
+ *	$Id: in_cksum.c,v 1.8 1994/05/13 06:06:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -44,8 +44,8 @@
  * code and should be modified for each CPU to be as fast as possible.
  */
 
-#define	ADDCARRY(x) (x > 65535 ? x -= 65535 : x)
-#define	REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
+#define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
+#define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
 
 int
 in_cksum(m, len)
@@ -76,7 +76,7 @@ in_cksum(m, len)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous
+			 * s_util.c[0] is already saved when scanning previous 
 			 * mbuf.
 			 */
 			s_util.c[1] = *(char *)w;

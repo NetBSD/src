@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_debug.c	7.7 (Berkeley) 5/9/91
- *	$Id: pk_debug.c,v 1.3 1993/12/18 00:41:33 mycroft Exp $
+ *	from: @(#)pk_debug.c	8.1 (Berkeley) 6/10/93
+ *	$Id: pk_debug.c,v 1.4 1994/05/13 06:04:46 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -136,5 +136,6 @@ struct mbuf *m;
 	c->mbc_num = (1 + c->mbc_num) % c->mbc_size;
 	if (*mp)
 		m_freem(*mp);
-	*mp = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+	if (*mp = m_copym(m, 0, M_COPYALL, M_DONTWAIT))
+		(*mp)->m_flags |= m->m_flags & 0x08;
 }

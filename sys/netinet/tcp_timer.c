@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,10 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_timer.c	7.18 (Berkeley) 6/28/90
- *	$Id: tcp_timer.c,v 1.6 1994/01/08 23:07:22 mycroft Exp $
+ *	from: @(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tcp_timer.c,v 1.7 1994/05/13 06:06:46 mycroft Exp $
  */
 
+#ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -61,7 +62,7 @@
 int	tcp_keepidle = TCPTV_KEEP_IDLE;
 int	tcp_keepintvl = TCPTV_KEEPINTVL;
 int	tcp_maxidle;
-
+#endif /* TUBA_INCLUDE */
 /*
  * Fast timeout routine for processing delayed acks
  */
@@ -132,8 +133,10 @@ tpgone:
 	if ((int)tcp_iss < 0)
 		tcp_iss = 0;				/* XXX */
 #endif
+	tcp_now++;					/* for timestamps */
 	splx(s);
 }
+#ifndef TUBA_INCLUDE
 
 /*
  * Cancel all timers for TCP tp.
@@ -226,7 +229,7 @@ tcp_timers(tp, timer)
 		 * size increase exponentially with time.  If the
 		 * window is larger than the path can handle, this
 		 * exponential growth results in dropped packet(s)
-		 * almost immediately.  To get more time between
+		 * almost immediately.  To get more time between 
 		 * drops but still "push" the network to take advantage
 		 * of improving conditions, we switch from exponential
 		 * to linear window opening at some threshhold size.
@@ -307,3 +310,4 @@ tcp_timers(tp, timer)
 	}
 	return (tp);
 }
+#endif /* TUBA_INCLUDE */

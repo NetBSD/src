@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_subr.c	7.6 (Berkeley) 5/29/91
- *	$Id: hd_subr.c,v 1.3 1993/12/18 00:41:27 mycroft Exp $
+ *	from: @(#)hd_subr.c	8.1 (Berkeley) 6/10/93
+ *	$Id: hd_subr.c,v 1.4 1994/05/13 06:04:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -54,6 +55,7 @@
 #include <netccitt/hdlc.h>
 #include <netccitt/hd_var.h>
 #include <netccitt/x25.h>
+#include <netccitt/pk_var.h>
 
 hd_init ()
 {
@@ -91,7 +93,10 @@ struct sockaddr *addr;
 			return (ENOBUFS);
 		bzero((caddr_t)hdp, sizeof(*hdp));
 		hdp->hd_pkp =
-			pk_newlink ((struct x25_ifaddr *)ifa, (caddr_t)hdp);
+			(caddr_t) pk_newlink ((struct x25_ifaddr *) ifa, 
+					      (caddr_t) hdp);
+		((struct x25_ifaddr *)ifa)->ia_pkcb = 
+			(struct pkcb *) hdp->hd_pkp;
 		if (hdp -> hd_pkp == 0) {
 			free(hdp, M_PCB);
 			return (ENOBUFS);
@@ -103,6 +108,16 @@ struct sockaddr *addr;
 		hdp->hd_output = hd_ifoutput;
 		hdp->hd_next = hdcbhead;
 		hdcbhead = hdp;
+	} else if (hdp->hd_pkp == 0) { /* interface got reconfigured */
+		hdp->hd_pkp =
+			(caddr_t) pk_newlink ((struct x25_ifaddr *) ifa, 
+					      (caddr_t) hdp);
+		((struct x25_ifaddr *)ifa)->ia_pkcb = 
+			(struct pkcb *) hdp->hd_pkp;
+		if (hdp -> hd_pkp == 0) {
+			free(hdp, M_PCB);
+			return (ENOBUFS);
+		}
 	}
 
 	switch (prc) {
@@ -118,6 +133,14 @@ struct sockaddr *addr;
 		if (hdp->hd_state == ABM)
 			hd_message (hdp, "Operator shutdown: link closed");
 		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
+
+		/* fall thru to ... */
+
+	case PRC_DISCONNECT_REQUEST:
+		/* drop reference to pkcb --- it's dead meat */
+		hdp->hd_pkp = (caddr_t) 0;
+		((struct x25_ifaddr *)ifa)->ia_pkcb = (struct pkcb *) 0;
+
 		hd_writeinternal (hdp, DISC, POLLON);
 		hdp->hd_state = DISC_SENT;
 		SET_TIMER (hdp);

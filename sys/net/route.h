@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.h	8.3 (Berkeley) 4/19/94
- *	$Id: route.h,v 1.4 1994/05/11 09:26:46 mycroft Exp $
+ *	$Id: route.h,v 1.5 1994/05/13 06:03:19 mycroft Exp $
  */
 
 /*
@@ -244,8 +244,7 @@ int	 route_usrreq __P((struct socket *,
 void	 rt_ifmsg __P((struct ifnet *));
 void	 rt_maskedcopy __P((struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *));
-void	 rt_missmsg __P((int, struct sockaddr *, struct sockaddr *,
-	    struct sockaddr *, struct sockaddr *, int, int));
+void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
 void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
 int	 rt_setgate __P((struct rtentry *,
 	    struct sockaddr *, struct sockaddr *));
@@ -261,17 +260,4 @@ int	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
-
-#ifdef	GATEWAY
-#define	RTHASHSIZ	64
-#else
-#define	RTHASHSIZ	8
-#endif
-#if	(RTHASHSIZ & (RTHASHSIZ - 1)) == 0
-#define RTHASHMOD(h)	((h) & (RTHASHSIZ - 1))
-#else
-#define RTHASHMOD(h)	((h) % RTHASHSIZ)
-#endif
-struct	mbuf *rthost[RTHASHSIZ];
-struct	mbuf *rtnet[RTHASHSIZ];
-#endif
+#endif /* KERNEL */

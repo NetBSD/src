@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)netisr.h	7.8 (Berkeley) 5/7/91
- *	$Id: netisr.h,v 1.6 1994/04/18 23:31:41 mycroft Exp $
+ *	from: @(#)netisr.h	8.1 (Berkeley) 6/10/93
+ *	$Id: netisr.h,v 1.7 1994/05/13 06:03:01 mycroft Exp $
  */
-
-#ifndef _NET_NETISR_H_
-#define _NET_NETISR_H_
 
 /*
  * The networking code runs off software interrupts.
@@ -69,5 +66,3 @@
 int	netisr;				/* scheduling bits for network */
 #endif
 #endif
-
-#endif /* !_NET_NETISR_H_ */

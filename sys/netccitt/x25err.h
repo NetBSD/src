@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,12 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)x25err.h	7.2 (Berkeley) 5/11/90
- *	$Id: x25err.h,v 1.3 1993/05/20 04:12:28 cgd Exp $
+ *	from: @(#)x25err.h	8.1 (Berkeley) 6/10/93
+ *	$Id: x25err.h,v 1.4 1994/05/13 06:05:10 mycroft Exp $
  */
-
-#ifndef _NETCCITT_X25ERR_H_
-#define _NETCCITT_X25ERR_H_
 
 /* 
  *  
@@ -66,4 +63,3 @@
 #define EXCNCG		118	/* Clear: network congestion		*/
 #define EXCNOB		119	/* Clear: not obtainable		*/
 
-#endif /* !_NETCCITT_X25ERR_H_ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.12 1994/02/10 18:46:06 mycroft Exp $
+ *	from: @(#)udp_usrreq.c	8.4 (Berkeley) 1/21/94
+ *	$Id: udp_usrreq.c,v 1.13 1994/05/13 06:06:56 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/errno.h>
 #include <sys/stat.h>
 
 #include <net/if.h>
@@ -63,20 +64,17 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
-int	udp_ttl = UDP_TTL;
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
 struct	inpcb *udp_last_inpcb = &udb;
 
-static void	udp_detach __P((struct inpcb *));
-static void	udp_notify __P((struct inpcb *, int));
-static struct mbuf *
-        	udp_saveopt __P((caddr_t, int, int));
+static	void udp_detach __P((struct inpcb *));
+static	void udp_notify __P((struct inpcb *, int));
+static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 
 void
 udp_init()
 {
-
 	udb.inp_next = udb.inp_prev = &udb;
 }
 
@@ -151,8 +149,9 @@ udp_input(m, iphlen)
 			return;
 		}
 	}
+
 	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr)) ||
-	    in_broadcast(ip->ip_dst)) {
+	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
 		struct socket *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -167,8 +166,9 @@ udp_input(m, iphlen)
 		 * Those applications open the multiple sockets to overcome an
 		 * inadequacy of the UDP socket interface, but for backwards
 		 * compatibility we avoid the problem here rather than
-		 * fixing the interface.  Maybe 4.4BSD will remedy this?)
+		 * fixing the interface.  Maybe 4.5BSD will remedy this?)
 		 */
+
 		/*
 		 * Construct sockaddr format source address.
 		 */
@@ -202,22 +202,23 @@ udp_input(m, iphlen)
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
 					if (sbappendaddr(&last->so_rcv,
 						(struct sockaddr *)&udp_in,
-						n, (struct mbuf *)0) == 0)
+						n, (struct mbuf *)0) == 0) {
 						m_freem(n);
-					else
+						udpstat.udps_fullsock++;
+					} else
 						sorwakeup(last);
 				}
 			}
 			last = inp->inp_socket;
 			/*
-			 * Don't look for additional matches if this one
-			 * does not have the SO_REUSEADDR socket option set.
-			 * This heuristic avoids searching through all pcbs
-			 * in the common case of a non-shared port.  It
-			 * assumes that an application will never clear
-			 * the SO_REUSEADDR option after setting it.
+			 * Don't look for additional matches if this one does
+			 * not have either the SO_REUSEPORT or SO_REUSEADDR
+			 * socket options set.  This heuristic avoids searching
+			 * through all pcbs in the common case of a non-shared
+			 * port.  It * assumes that an application will never
+			 * clear these options after setting them.
 			 */
-			if ((last->so_options & SO_REUSEADDR) == 0)
+			if ((last->so_options&(SO_REUSEPORT|SO_REUSEADDR) == 0))
 				break;
 		}
 
@@ -227,11 +228,14 @@ udp_input(m, iphlen)
 			 * (No need to send an ICMP Port Unreachable
 			 * for a broadcast or multicast datgram.)
 			 */
+			udpstat.udps_noportbcast++;
 			goto bad;
 		}
 		if (sbappendaddr(&last->so_rcv, (struct sockaddr *)&udp_in,
-		     m, (struct mbuf *)0) == 0)
+		     m, (struct mbuf *)0) == 0) {
+			udpstat.udps_fullsock++;
 			goto bad;
+		}
 		sorwakeup(last);
 		return;
 	}
@@ -250,14 +254,14 @@ udp_input(m, iphlen)
 		udpstat.udpps_pcbcachemiss++;
 	}
 	if (inp == 0) {
-		/* don't send ICMP response for broadcast packet */
 		udpstat.udps_noport++;
+		if (m->m_flags & (M_BCAST | M_MCAST)) {
+			udpstat.udps_noportbcast++;
+			goto bad;
+		}
 		*ip = save_ip;
 		ip->ip_len += iphlen;
-	    {
-		register struct in_addr foo = {};
-		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, foo);
-	    }
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 		return;
 	}
 
@@ -314,7 +318,7 @@ bad:
  * Create a "control" mbuf containing the specified data
  * with the specified type for presentation with a datagram.
  */
-static struct mbuf *
+struct mbuf *
 udp_saveopt(p, size, type)
 	caddr_t p;
 	register int size;
@@ -326,7 +330,7 @@ udp_saveopt(p, size, type)
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
 		return ((struct mbuf *) NULL);
 	cp = (struct cmsghdr *) mtod(m, struct cmsghdr *);
-	bcopy(p, (caddr_t)(cp + 1), size);
+	bcopy(p, CMSG_DATA(cp), size);
 	size += sizeof(*cp);
 	m->m_len = size;
 	cp->cmsg_len = size;
@@ -344,7 +348,6 @@ udp_notify(inp, errno)
 	register struct inpcb *inp;
 	int errno;
 {
-
 	inp->inp_socket->so_error = errno;
 	sorwakeup(inp->inp_socket);
 	sowwakeup(inp->inp_socket);
@@ -360,7 +363,8 @@ udp_ctlinput(cmd, sa, ip)
 	extern struct in_addr zeroin_addr;
 	extern u_char inetctlerrmap[];
 
-	if ((unsigned)cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0)
+	if (!PRC_IS_REDIRECT(cmd) &&
+	    ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0))
 		return;
 	if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
@@ -409,7 +413,11 @@ udp_output(inp, m, addr, control)
 	 * Calculate data length and get a mbuf
 	 * for UDP and IP headers.
 	 */
-	M_PREPEND(m, sizeof(struct udpiphdr), M_WAIT);
+	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
+	if (m == 0) {
+		error = ENOBUFS;
+		goto release;
+	}
 
 	/*
 	 * Fill in mbuf with extended UDP header
@@ -495,7 +503,7 @@ udp_usrreq(so, req, m, addr, control)
 		error = soreserve(so, udp_sendspace, udp_recvspace);
 		if (error)
 			break;
-		((struct inpcb *) so->so_pcb)->inp_ip.ip_ttl = udp_ttl;
+		((struct inpcb *) so->so_pcb)->inp_ip.ip_ttl = ip_defttl;
 		break;
 
 	case PRU_DETACH:
@@ -606,4 +614,28 @@ udp_detach(inp)
 		udp_last_inpcb = &udb;
 	in_pcbdetach(inp);
 	splx(s);
+}
+
+/*
+ * Sysctl for udp variables.
+ */
+udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case UDPCTL_CHECKSUM:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &udpcksum));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }
