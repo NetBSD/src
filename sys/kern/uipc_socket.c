@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.33 1998/04/25 17:35:18 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.34 1998/04/27 13:31:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -809,15 +809,17 @@ release:
 
 int
 soshutdown(so, how)
-	register struct socket *so;
-	register int how;
+	struct socket *so;
+	int how;
 {
-	register struct protosw *pr = so->so_proto;
+	struct protosw *pr = so->so_proto;
 
-	how++;
-	if (how & FREAD)
+	if (!(how == SHUT_RD || how == SHUT_WR || how == SHUT_RDWR))
+		return (EINVAL);
+
+	if (how == SHUT_RD || how == SHUT_RDWR)
 		sorflush(so);
-	if (how & FWRITE)
+	if (how == SHUT_WR || how == SHUT_RDWR)
 		return (*pr->pr_usrreq)(so, PRU_SHUTDOWN, (struct mbuf *)0,
 		    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 	return (0);
