@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2001/01/12 19:31:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,8 +41,7 @@
 void	 append  __P((const u_char **, int, int, FILE *,
 	    void (*)(const RECHEADER *, FILE *), struct field *));
 void	 concat __P((FILE *, FILE *));
-length_t enterkey __P((struct recheader *,
-	    DBT *, int, struct field *));
+length_t enterkey __P((struct recheader *, DBT *, int, struct field *));
 void	 fixit __P((int *, char **));
 void	 fldreset __P((struct field *));
 FILE	*ftmp __P((void));
