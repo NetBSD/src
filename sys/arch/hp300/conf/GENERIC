@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.64 2001/01/02 04:28:37 simonb Exp $
+#	$NetBSD: GENERIC,v 1.65 2001/06/30 11:00:33 darcy Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 # Support for various CPU types
 options 	HP320
@@ -37,6 +37,10 @@ options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
