@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.22 2000/04/23 19:55:51 mhitch Exp $	*/
+/*	$NetBSD: par.c,v 1.23 2000/08/27 10:35:43 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -73,8 +73,6 @@ struct	par_softc {
 } *par_softcp;
 
 #define getparsp(x)	(x > 0 ? NULL : par_softcp)
-
-struct callout parintr_ch = CALLOUT_INITIALIZER;
 
 /* sc_flags values */
 #define	PARF_ALIVE	0x01	
@@ -518,36 +516,21 @@ parmstohz(m)
 /* stuff below here if for interrupt driven output of data thru
    the parallel port. */
 
-int partimeout_pending;
 int parsend_pending;
 
 void
 parintr(arg)
 	void *arg;
 {
-	int s, mask;
+	int s;
 
-	mask = (int)arg;
 	s = splclock();
 
 #ifdef DEBUG
 	if (pardebug & PDB_INTERRUPT)
-		printf("parintr %s\n", mask ? "FLG" : "tout");
+		printf("parintr\n");
 #endif
-	/*
-	 * if invoked from timeout handler, mask will be 0,
-	 * if from interrupt, it will contain the cia-icr mask,
-	 * which is != 0
-	 */
-	if (mask) {
-		if (partimeout_pending)
-			callout_stop(&parintr_ch);
-		if (parsend_pending)
-			parsend_pending = 0;
-	}
-
-	/* either way, there won't be a timeout pending any longer */
-	partimeout_pending = 0;
+	parsend_pending = 0;
   
 	wakeup(parintr);
 	splx(s);
@@ -576,9 +559,6 @@ parsendch (ch)
 		((ciab.pra ^ CIAB_PRA_SEL)
 		 & (CIAB_PRA_SEL|CIAB_PRA_BUSY|CIAB_PRA_POUT)));
 #endif
-      /* wait a second, and try again */
-      callout_reset(&parintr_ch, hz, parintr, NULL);
-      partimeout_pending = 1;
       /* this is essentially a flipflop to have us wait for the
 	 first character being transmitted when trying to transmit
 	 the second, etc. */
@@ -586,16 +566,15 @@ parsendch (ch)
       /* it's quite important that a parallel putc can be
 	 interrupted, given the possibility to lock a printer
 	 in an offline condition.. */
-      if ((error = tsleep(parintr, PCATCH | (PZERO - 1), "parsendch", 0)) > 0)
+      error = tsleep(parintr, PCATCH | (PZERO - 1), "parsendch", hz);
+      if (error == EWOULDBLOCK)
+	error = 0;
+      if (error > 0)
 	{
 #ifdef DEBUG
 	  if (pardebug & PDB_INTERRUPT)
 	    printf ("parsendch interrupted, error = %d\n", error);
 #endif
-	  if (partimeout_pending)
-	    callout_stop(&parintr_ch);
-
-	  partimeout_pending = 0;
 	}
     }
 
