@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.32 2002/09/29 23:24:00 wiz Exp $	*/
+/*	$NetBSD: miivar.h,v 1.33 2002/11/07 07:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ struct mii_data {
 	 * request is made.
 	 */
 	LIST_HEAD(mii_listhead, mii_softc) mii_phys;
-	int mii_instance;
+	u_int mii_instance;
 
 	/*
 	 * PHY driver fills this in with active media status.
@@ -119,7 +119,7 @@ struct mii_softc {
 
 	int mii_phy;			/* our MII address */
 	int mii_offset;			/* first PHY, second PHY, etc. */
-	int mii_inst;			/* instance for ifmedia */
+	u_int mii_inst;			/* instance for ifmedia */
 
 	/* Our PHY functions. */
 	const struct mii_phy_funcs *mii_funcs;
@@ -167,8 +167,8 @@ typedef struct mii_softc mii_softc_t;
 struct mii_attach_args {
 	struct mii_data *mii_data;	/* pointer to parent data */
 	int mii_phyno;			/* MII address */
-	int mii_id1;			/* PHY ID register 1 */
-	int mii_id2;			/* PHY ID register 2 */
+	u_int mii_id1;			/* PHY ID register 1 */
+	u_int mii_id2;			/* PHY ID register 2 */
 	int mii_capmask;		/* capability mask from BMSR */
 	int mii_flags;			/* flags from parent */
 };
@@ -255,7 +255,7 @@ int	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 
-int mii_oui __P((int, int));
+u_int	mii_oui __P((u_int, u_int));
 #define	MII_OUI(id1, id2)	mii_oui(id1, id2)
 #define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
 #define	MII_REV(id2)		((id2) & IDR2_REV)

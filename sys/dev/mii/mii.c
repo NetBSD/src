@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.31 2002/09/27 15:37:23 provos Exp $	*/
+/*	$NetBSD: mii.c,v 1.32 2002/11/07 07:41:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.31 2002/09/27 15:37:23 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.32 2002/11/07 07:41:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -313,10 +313,10 @@ bitreverse(unsigned char x)
 	return ((nibbletab[x & 15] << 4) | nibbletab[x >> 4]);
 }
 
-int
-mii_oui(int id1, int id2)
+u_int
+mii_oui(u_int id1, u_int id2)
 {
-	int h;
+	u_int h;
 
 	h = (id1 << 6) | (id2 >> 10);
 
