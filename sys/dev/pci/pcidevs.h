@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.619 2004/04/17 01:56:31 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.620 2004/04/22 11:27:45 skd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2363,6 +2363,7 @@
 #define	PCI_PRODUCT_SIS_86C205	0x0005		/* 86C205 */
 #define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
 #define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
+#define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* SiS 180 SATA controller */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
@@ -2398,6 +2399,7 @@
 #define	PCI_PRODUCT_SIS_961	0x0961		/* SiS 961 Host Bridge */
 #define	PCI_PRODUCT_SIS_962	0x0962		/* SiS 962 Host Bridge */
 #define	PCI_PRODUCT_SIS_963	0x0963		/* SiS 963 Host Bridge */
+#define	PCI_PRODUCT_SIS_964	0x0964		/* SiS 964 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
