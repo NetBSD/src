@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 1999/09/17 19:59:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2000/01/23 21:08:17 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -207,6 +207,7 @@ config_console()
 	if (!(is_draco()))
 #endif
 		amiga_config_found(cf, NULL, "grfcc", NULL);
+
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
@@ -274,10 +275,14 @@ mbattach(pdp, dp, auxp)
 	}
 	if (is_a4000() || is_a1200())
 		config_found(dp, "idesc", simple_devprint);
+	if (is_a1200())
+		config_found(dp, "wdc", simple_devprint);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(dp, "afsc", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
+	if (/*is_a600() || */is_a1200())
+		config_found(dp, "pccard", simple_devprint);
 #ifdef DRACO
 	if (!is_draco())
 #endif
@@ -309,6 +314,7 @@ mbprint(auxp, pnp)
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
+#include "wd.h"
 
 #if NFD > 0
 extern  struct cfdriver fd_cd;
@@ -318,6 +324,9 @@ extern  struct cfdriver sd_cd;
 #endif
 #if NCD > 0
 extern  struct cfdriver cd_cd;
+#endif
+#if NWD > 0
+extern	struct cfdriver wd_cd;
 #endif
 
 struct cfdriver *genericconf[] = {
@@ -329,6 +338,9 @@ struct cfdriver *genericconf[] = {
 #endif
 #if NCD > 0
 	&cd_cd,
+#endif
+#if NWD > 0
+	&wd_cd,
 #endif
 	NULL,
 };
