@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.5 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read.c,v 1.5 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -1191,12 +1191,17 @@ mkstatic(hte)
 	nhte->h_link = xmalloc(sizeof (hte_t));
 	nhte = nhte->h_link;
 	nhte->h_name = hte->h_name;
-	nhte->h_static = 1;
 	nhte->h_used = 1;
 	nhte->h_def = 1;	/* error in lint1 */
+	nhte->h_static = 1;
+	nhte->h_syms = NULL;
 	nhte->h_lsym = &nhte->h_syms;
+	nhte->h_calls = NULL;
 	nhte->h_lcall = &nhte->h_calls;
+	nhte->h_usyms = NULL;
 	nhte->h_lusym = &nhte->h_usyms;
+	nhte->h_link = NULL;
+	nhte->h_hte = NULL;
 
 	/*
 	 * move all symbols used in this translation unit into the new
