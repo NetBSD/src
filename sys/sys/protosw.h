@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.7 1995/03/26 20:24:33 jtc Exp $	*/
+/*	$NetBSD: protosw.h,v 1.8 1996/02/09 18:25:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -208,5 +208,8 @@ char	*prcorequests[] = {
 #endif
 
 #ifdef _KERNEL
-extern	struct protosw *pffindproto(), *pffindtype();
+struct sockaddr;
+struct protosw *pffindproto __P((int, int, int));
+struct protosw *pffindtype __P((int, int));
+void pfctlinput __P((int, struct sockaddr *));
 #endif

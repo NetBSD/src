@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.10 1996/02/04 02:12:42 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.11 1996/02/09 18:25:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -339,6 +339,10 @@ struct walkarg;
 int sysctl_dumpentry __P((struct radix_node *, void *));
 int sysctl_iflist __P((int, struct walkarg *));
 int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
+int sysctl_clockrate __P((char *, size_t *));
+int sysctl_rdstring __P((void *, size_t *, void *, char *));
+int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_vnode __P((char *, size_t *));
 
 void fill_eproc __P((struct proc *, struct eproc *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.13 1996/02/09 06:32:22 mycroft Exp $	*/
+/*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -336,6 +336,12 @@ int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
-
+#else
+# if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD)
+#  define COMPAT_OLDSOCK
+#  define MSG_COMPAT	0x8000
+# endif
 #endif /* !_KERNEL */
+
 #endif /* !_SYS_SOCKET_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tablet.h,v 1.9 1996/02/07 04:03:13 christos Exp $	*/
+/*	$NetBSD: tablet.h,v 1.10 1996/02/09 18:25:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.37 1996/02/01 22:33:47 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.38 1996/02/09 18:25:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -316,9 +316,9 @@ void	 disksort __P((struct buf *, struct buf *));
 u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
-char	*readdisklabel __P((dev_t, void (*)(), struct disklabel *,
+char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
-int	 writedisklabel __P((dev_t, void (*)(), struct disklabel *,
+int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 #endif
 #endif /* _LOCORE */
