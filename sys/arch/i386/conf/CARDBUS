@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.62 2002/07/22 11:05:59 wiz Exp $
+#	$NetBSD: CARDBUS,v 1.63 2002/08/02 05:26:44 ichiro Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.62 $"
+#ident		"CARDBUS-$Revision: 1.63 $"
 
 maxusers	32		# estimated number of users
 
@@ -599,7 +599,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards

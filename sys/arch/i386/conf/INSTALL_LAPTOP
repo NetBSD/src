@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.34 2002/07/22 11:06:02 wiz Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.35 2002/08/02 05:26:47 ichiro Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -411,7 +411,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
