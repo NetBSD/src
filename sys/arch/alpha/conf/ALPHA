@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.36 1997/01/31 18:00:33 cgd Exp $
+#	$NetBSD: ALPHA,v 1.36.4.1 1997/03/11 20:50:12 is Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -118,8 +118,8 @@ le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
+asc0	at	tcds? slot ?
+asc1	at	tcds? slot ?
 cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
@@ -170,7 +170,7 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # SCSI bus support
-scsibus* at	esp?
+scsibus* at	asc?
 scsibus* at	ncr?
 
 # SCSI devices

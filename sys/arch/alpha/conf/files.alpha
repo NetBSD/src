@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.37 1997/01/31 02:49:57 cgd Exp $
+#	$NetBSD: files.alpha,v 1.37.4.1 1997/03/11 20:50:16 is Exp $
 #
 # alpha-specific configuration info
 
@@ -105,10 +105,10 @@ attach	tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device	esp: scsi
-attach	esp at tcds
-file	arch/alpha/tc/esp.c		esp		needs-count
-file	arch/alpha/tc/tcds_dma.c	esp
+device	asc: scsi, ncr53c9x
+attach	asc at tcds
+file	arch/alpha/tc/asc.c		asc		needs-count
+file	arch/alpha/tc/tcds_dma.c	asc
 
 # Baseboard Lance ethernet.
 attach	le at ioasic with le_ioasic

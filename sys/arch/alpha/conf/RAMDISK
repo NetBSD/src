@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.11 1997/01/14 23:37:59 cgd Exp $
+#	$NetBSD: RAMDISK,v 1.11.4.1 1997/03/11 20:50:15 is Exp $
 #
 # Generic Alpha kernel with built-in RAM disk image.
 
@@ -6,4 +6,5 @@ include	"arch/alpha/conf/GENERIC"
 
 # Enable the hooks used for initializing the ram-disk.
 options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options		MINIROOTSIZE=8192	# 4 Megabytes!

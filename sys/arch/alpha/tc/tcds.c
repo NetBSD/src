@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.17 1996/12/08 00:22:24 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.17.6.1 1997/03/11 20:50:27 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -135,7 +135,7 @@ tcdsattach(parent, self, aux)
 
 		slotc->sc_slot = i;
 		slotc->sc_tcds = sc;
-		slotc->sc_esp = NULL;
+		slotc->sc_asc = NULL;
 		slotc->sc_intrhand = tcds_intrnull;
 		slotc->sc_intrarg = (void *)(long)i;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.c,v 1.10 1996/11/12 05:14:30 cgd Exp $	*/
+/*	$NetBSD: dec_3000_300.c,v 1.10.8.1 1997/03/11 20:50:10 is Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -105,7 +105,7 @@ dec_3000_300_device_register(dev, aux)
 		initted =1;
 	}
 
-	if (scsiboot && (strcmp(cd->cd_name, "esp") == 0)) {
+	if (scsiboot && (strcmp(cd->cd_name, "asc") == 0)) {
 		if (b->slot == 4 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
 		      == 0) {
