@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16.4.3 2000/11/28 22:12:09 tv Exp $
+#	$NetBSD: list,v 1.16.4.4 2002/03/20 22:21:58 he Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -62,4 +62,4 @@ LINK	instbin				sysinst
 COPY	${ARCHDIR}/dot.profile		.profile
 COPY	${ARCHDIR}/../install.md	install.md
 COPY	${DESTDIR}/usr/mdec/boot	boot
-SPECIAL sync; ${DESTDIR}/usr/mdec/binstall -m${DESTDIR}/usr/mdec -v ffs ${TARGDIR}
+SPECIAL sync; ${DESTDIR}/usr/mdec/binstall -f${OBJDIR}/miniroot.fs -m${DESTDIR}/usr/mdec -v ffs ${TARGDIR}
