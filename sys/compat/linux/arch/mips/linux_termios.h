@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.2 2001/09/02 07:56:11 manu Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.3 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _MIPS_LINUX_TERMIOS_H
 #define _MIPS_LINUX_TERMIOS_H
 
-/* 
+/*
  * From Linux's include/asm-mips/termios.h
  */
 #define LINUX_NCC 8
@@ -48,14 +48,14 @@
  */
 #define LINUX_NCCS 23
 
-/* 
+/*
  * From Linux's include/asm-mips/ioctls.h
  */
 #define LINUX_tIOC		('t' << 8)
 
 #define LINUX_TCGETS		0x540d
 #define LINUX_TCSETS		0x540e
-#define LINUX_TCSETSW		0x540f	
+#define LINUX_TCSETSW		0x540f
 #define LINUX_TCSETSF		0x5410
 #define LINUX_TCGETA		0x5401
 #define LINUX_TCSETA		0x5402
@@ -106,9 +106,9 @@
 #define LINUX_TIOCSERGETMULTI	0x548f
 #define LINUX_TIOCSERSETMULTI	0x5490
 
-/* 
- * linux_termios c_cc chars: 
- * From Linux's include/asm-mips/termbits.h 
+/*
+ * linux_termios c_cc chars:
+ * From Linux's include/asm-mips/termbits.h
  */
 #define LINUX_VINTR 	0
 #define LINUX_VQUIT 	1
@@ -126,13 +126,13 @@
 #define LINUX_VREPRINT	12
 #define LINUX_VDISCARD	13
 #define LINUX_VWERASE	14
-#define LINUX_VLNEXT	15    
+#define LINUX_VLNEXT	15
 #define LINUX_VEOF	16
 #define LINUX_VEOL	17
 
-/* 
- * Old style linux_termio 
- * XXX Not found anywhere in Linux 
+/*
+ * Old style linux_termio
+ * XXX Not found anywhere in Linux
  */
 #define	LINUX_OLD_VINTR		LINUX_VINTR
 #define	LINUX_OLD_VQUIT		LINUX_VQUIT
@@ -145,13 +145,13 @@
 #define	LINUX_OLD_VEOL2		LINUX_VEOL2
 #define	LINUX_OLD_VSWTC		LINUX_VSWTC
 
-/* 
- * All the remaining stuff is from  Linux's include/asm-mips/termbits.h 
+/*
+ * All the remaining stuff is from  Linux's include/asm-mips/termbits.h
  * Note that most of theses values are octal (one leading 0), not hex...
- * Linux c_iflag masks 
+ * Linux c_iflag masks
  */
 #define LINUX_IGNBRK	0000001
-#define LINUX_BRKINT	0000002	
+#define LINUX_BRKINT	0000002
 #define LINUX_IGNPAR	0000004
 #define LINUX_PARMRK	0000010
 #define LINUX_INPCK	0000020
@@ -165,8 +165,8 @@
 #define LINUX_IUCLC	0001000
 #define LINUX_IMAXBEL	0020000
 
-/* 
- * Linux c_oflag masks 
+/*
+ * Linux c_oflag masks
  */
 #define LINUX_OPOST	0020000
 #define LINUX_ONLCR	0000004
@@ -201,17 +201,17 @@
 /* Hmm.. Linux/i386 considers this part of TABDLY.. */
 #define LINUX_XTABS  0014000
 
-/* 
- * Linux c_cflag bit masks 
+/*
+ * Linux c_cflag bit masks
  * XXX not found in Linux, but it is needed to build
  */
-#define LINUX_NSPEEDS   16 
+#define LINUX_NSPEEDS   16
 
 #define LINUX_CBAUD	0010017
 #define LINUX_B0	0000000     /* hang up */
 #define LINUX_B50  	0000001
 #define LINUX_B75   	0000002
-#define LINUX_B110  	0000003	
+#define LINUX_B110  	0000003
 #define LINUX_B134  	0000004
 #define LINUX_B150  	0000005
 #define LINUX_B200  	0000006
@@ -248,18 +248,18 @@
 #define LINUX_CS6	0000020
 #define LINUX_CS7 	0000040
 #define LINUX_CS8	0000060
-   
+
 #define LINUX_CSTOPB 	0000100
 #define LINUX_CREAD  	0000200
 #define LINUX_PARENB 	0000400
 #define LINUX_PARODD 	0001000
 #define LINUX_HUPCL  	0002000
-   
+
 #define LINUX_CLOCAL 	0004000
 #define LINUX_CRTSCTS	020000000000    /* flow control */
 
-/* 
- * Linux c_lflag masks 
+/*
+ * Linux c_lflag masks
  */
 #define LINUX_ISIG   	0000001
 #define LINUX_ICANON 	0000002
@@ -270,7 +270,7 @@
 #define LINUX_ECHONL 	0000100
 #define LINUX_NOFLSH 	0000200
 #define LINUX_TOSTOP 	0100000
-#define LINUX_ECHOCTL	0001000 
+#define LINUX_ECHOCTL	0001000
 #define LINUX_ECHOPRT	0002000
 #define LINUX_ECHOKE 	0004000
 #define LINUX_FLUSHO 	0020000

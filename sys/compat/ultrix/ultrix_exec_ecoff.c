@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_exec_ecoff.c,v 1.7 2004/04/21 07:05:07 simonb Exp $	*/
+/*	$NetBSD: ultrix_exec_ecoff.c,v 1.8 2005/02/26 23:10:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -72,7 +72,7 @@
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.7 2004/04/21 07:05:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.8 2005/02/26 23:10:22 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>

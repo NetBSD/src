@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.10 2003/06/29 22:29:23 fvdl Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.11 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.10 2003/06/29 22:29:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -75,7 +75,7 @@ bsd_to_irix_stat(bsp, isp)
 	isp->ist_nlink = bsp->st_nlink;
 	isp->ist_uid = bsp->st_uid;
 	isp->ist_gid = bsp->st_gid;
-	if ((bsp->st_mode & S_IFMT) == S_IFBLK || 
+	if ((bsp->st_mode & S_IFMT) == S_IFBLK ||
 	    (bsp->st_mode & S_IFMT) == S_IFCHR)
 		isp->ist_rdev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_rdev);
 	else
@@ -107,7 +107,7 @@ bsd_to_irix_stat64(bsp, isp)
 	isp->ist_nlink = bsp->st_nlink;
 	isp->ist_uid = bsp->st_uid;
 	isp->ist_gid = bsp->st_gid;
-	if ((bsp->st_mode & S_IFMT) == S_IFBLK || 
+	if ((bsp->st_mode & S_IFMT) == S_IFBLK ||
 	    (bsp->st_mode & S_IFMT) == S_IFCHR)
 		isp->ist_rdev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_rdev);
 	else
@@ -154,13 +154,13 @@ irix_sys_xstat(l, v, retval)
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
 		return error;
 
-	
+
 	switch (SCARG(uap, version)) {
 	case IRIX__STAT_VER: {
 		struct irix_stat ist;
 
 		bsd_to_irix_stat(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat))) != 0)
 			return error;
 		break;
@@ -169,7 +169,7 @@ irix_sys_xstat(l, v, retval)
 		struct irix_stat64 ist;
 
 		bsd_to_irix_stat64(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat64))) != 0)
 			return error;
 		break;
@@ -212,13 +212,13 @@ irix_sys_lxstat(l, v, retval)
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
 		return error;
 
-	
+
 	switch (SCARG(uap, version)) {
 	case IRIX__STAT_VER: {
 		struct irix_stat ist;
 
 		bsd_to_irix_stat(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat))) != 0)
 			return error;
 		break;
@@ -227,7 +227,7 @@ irix_sys_lxstat(l, v, retval)
 		struct irix_stat64 ist;
 
 		bsd_to_irix_stat64(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat64))) != 0)
 			return error;
 		break;
@@ -269,13 +269,13 @@ irix_sys_fxstat(l, v, retval)
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
 		return error;
 
-	
+
 	switch (SCARG(uap, version)) {
 	case IRIX__STAT_VER: {
 		struct irix_stat ist;
 
 		bsd_to_irix_stat(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat))) != 0)
 			return error;
 		break;
@@ -284,7 +284,7 @@ irix_sys_fxstat(l, v, retval)
 		struct irix_stat64 ist;
 
 		bsd_to_irix_stat64(&st, &ist);
-		if ((error = copyout(&ist, SCARG(uap, buf), 
+		if ((error = copyout(&ist, SCARG(uap, buf),
 		    sizeof (struct irix_stat64))) != 0)
 			return error;
 		break;

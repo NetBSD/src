@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.8 2003/10/29 23:19:11 mycroft Exp $	*/
+/*	$NetBSD: ffs.S,v 1.9 2005/02/26 22:58:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.8 2003/10/29 23:19:11 mycroft Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.9 2005/02/26 22:58:56 perry Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ ENTRY(ffs)
 	movl	%sp@(4),%d0
 	jeq	L2
 	movql	#31,%d1
-L1:	
+L1:
 	lsrl	#1,%d0
 	dbcs	%d1,L1
 	movql	#32,%d0

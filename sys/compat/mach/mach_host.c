@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.27 2003/12/29 01:30:27 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.28 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.27 2003/12/29 01:30:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.28 2005/02/26 23:10:19 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.27 2003/12/29 01:30:27 manu Exp $");
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_services.h>
 
-int 
+int
 mach_host_info(args)
 	struct mach_trap_args *args;
 {
@@ -74,7 +74,7 @@ mach_host_info(args)
 		struct mach_host_basic_info *info
 		    = (struct mach_host_basic_info *)&rep->rep_data[0];
 
-		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		rep->rep_msgh.msgh_size = sizeof(*reps)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_basic_info(info);
@@ -85,7 +85,7 @@ mach_host_info(args)
 		struct mach_host_priority_info *info
 		    = (struct mach_host_priority_info *)&rep->rep_data[0];
 
-		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		rep->rep_msgh.msgh_size = sizeof(*reps)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 		mach_host_priority_info(info);
@@ -95,7 +95,7 @@ mach_host_info(args)
 	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
 		reps = (mach_host_info_reply_simple_t *)rep;
-		reps->rep_msgh.msgh_size = 
+		reps->rep_msgh.msgh_size =
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
 		*msglen = sizeof(*reps);
 		break;
@@ -104,7 +104,7 @@ mach_host_info(args)
 		struct mach_host_sched_info *info
 		    = (struct mach_host_sched_info *)&rep->rep_data[0];
 
-		rep->rep_msgh.msgh_size = sizeof(*reps) 
+		rep->rep_msgh.msgh_size = sizeof(*reps)
 		    - sizeof(rep->rep_trailer) + sizeof(*info);
 		rep->rep_count = sizeof(*info) / sizeof(mach_integer_t);
 
@@ -115,7 +115,7 @@ mach_host_info(args)
 	}
 
 	case MACH_HOST_RESOURCE_SIZES:
-		uprintf("mach_host_info() Unimplemented host_info flavor %d\n", 
+		uprintf("mach_host_info() Unimplemented host_info flavor %d\n",
 		    req->req_flavor);
 	default:
 		uprintf("Unknown host_info flavor %d\n", req->req_flavor);
@@ -129,7 +129,7 @@ mach_host_info(args)
 }
 
 
-int 
+int
 mach_host_page_size(args)
 	struct mach_trap_args *args;
 {
@@ -141,7 +141,7 @@ mach_host_page_size(args)
 	mach_set_header(rep, req, *msglen);
 
 	rep->rep_page_size = PAGE_SIZE;
-	
+
 	mach_set_trailer(rep, *msglen);
 
 	return 0;

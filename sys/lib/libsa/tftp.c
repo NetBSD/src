@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.17 2004/03/24 17:29:14 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.18 2005/02/26 22:58:57 perry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -97,7 +97,7 @@ static int tftp_getnextblock __P((struct tftp_handle *));
 static void tftp_terminate __P((struct tftp_handle *));
 #endif
 
-static ssize_t 
+static ssize_t
 recvtftp(d, pkt, len, tleft)
 	struct iodesc *d;
 	void  *pkt;
@@ -152,7 +152,7 @@ recvtftp(d, pkt, len, tleft)
 }
 
 /* send request, expect first block (or error) */
-static int 
+static int
 tftp_makereq(h)
 	struct tftp_handle *h;
 {
@@ -196,7 +196,7 @@ tftp_makereq(h)
 }
 
 /* ack block, expect next */
-static int 
+static int
 tftp_getnextblock(h)
 	struct tftp_handle *h;
 {
@@ -253,7 +253,7 @@ tftp_terminate(h)
 }
 #endif
 
-int 
+int
 tftp_open(path, f)
 	const char           *path;
 	struct open_file *f;
@@ -281,7 +281,7 @@ tftp_open(path, f)
 	return (0);
 }
 
-int 
+int
 tftp_read(f, addr, size, resid)
 	struct open_file *f;
 	void           *addr;
@@ -365,7 +365,7 @@ tftp_read(f, addr, size, resid)
 	return (0);
 }
 
-int 
+int
 tftp_close(f)
 	struct open_file *f;
 {
@@ -382,7 +382,7 @@ tftp_close(f)
 	return (0);
 }
 
-int 
+int
 tftp_write(f, start, size, resid)
 	struct open_file *f;
 	void           *start;
@@ -392,7 +392,7 @@ tftp_write(f, start, size, resid)
 	return (EROFS);
 }
 
-int 
+int
 tftp_stat(f, sb)
 	struct open_file *f;
 	struct stat    *sb;
@@ -408,7 +408,7 @@ tftp_stat(f, sb)
 	return (0);
 }
 
-off_t 
+off_t
 tftp_seek(f, offset, where)
 	struct open_file *f;
 	off_t           offset;

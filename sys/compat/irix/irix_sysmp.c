@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.11 2003/12/04 19:38:22 atatat Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.12 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.11 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.12 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -123,7 +123,7 @@ irix_sys_sysmp(l, v, retval)
 
 	case IRIX_MP_SAGET1: /* Get system accounting structure for one CPU */
 	case IRIX_MP_SAGET:  /* Get system accounting structure for all CPU */
-		return irix_sysmp_saget((int)SCARG(uap, arg1), 
+		return irix_sysmp_saget((int)SCARG(uap, arg1),
 		    (char *)SCARG(uap, arg2), (size_t)SCARG(uap, arg3));
 		break;
 
@@ -135,7 +135,7 @@ irix_sys_sysmp(l, v, retval)
 	}
 	return 0;
 }
- 
+
 static int
 irix_sysmp_kernaddr(kernaddr, retval)
 	int kernaddr;
@@ -151,7 +151,7 @@ irix_sysmp_kernaddr(kernaddr, retval)
 		break;
 
 	default:
-		printf("Warning: sysmp(KERNADDR) unimplemented address %d\n", 
+		printf("Warning: sysmp(KERNADDR) unimplemented address %d\n",
 		    kernaddr);
 		return EINVAL;
 		break;
@@ -170,7 +170,7 @@ irix_sysmp_sasz(cmd, retval)
 		*retval = sizeof(struct irix_sysmp_rminfo);
 		break;
 	default:
-		printf("Warning: sysmp(SASZ) unimplemented struct %d\n", 
+		printf("Warning: sysmp(SASZ) unimplemented struct %d\n",
 		    cmd);
 		return EINVAL;
 		break;
@@ -191,7 +191,7 @@ irix_sysmp_saget(cmd, buf, len)
 
 	switch (cmd) {
 	case IRIX_MPSA_RMINFO: {
-		struct irix_sysmp_rminfo *irm = 
+		struct irix_sysmp_rminfo *irm =
 		    (struct irix_sysmp_rminfo *)kbuf;
 
 		irm->freemem = uvmexp.free + uvmexp.filepages;
@@ -211,7 +211,7 @@ irix_sysmp_saget(cmd, buf, len)
 		break;
 	}
 	default:
-		printf("Warning: sysmp(SAGET) unimplemented struct %d\n", 
+		printf("Warning: sysmp(SAGET) unimplemented struct %d\n",
 		    cmd);
 		error = EINVAL;
 		break;

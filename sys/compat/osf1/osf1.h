@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.25 2002/11/27 16:44:03 atatat Exp $ */
+/* $NetBSD: osf1.h,v 1.26 2005/02/26 23:10:21 perry Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -393,7 +393,7 @@ struct osf1_rusage {
 #define OSF1_RLIMIT_NOFILE	6
 #define OSF1_RLIMIT_AS		7
 
-#define OSF1_RLIM_INFINITY	0x7fffffffffffffffL 
+#define OSF1_RLIM_INFINITY	0x7fffffffffffffffL
 
 struct osf1_rlimit {
 	rlim_t	rlim_cur;

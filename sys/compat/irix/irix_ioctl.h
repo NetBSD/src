@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.h,v 1.3 2002/10/05 21:29:02 manu Exp $ */
+/*	$NetBSD: irix_ioctl.h,v 1.4 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct irix_ioctl_usrdata {
 };
 
 /* From IRIX's <net/raw.h> */
-#define IRIX_SIOCNREAD	SVR4_IOR('s', 10, int) 
+#define IRIX_SIOCNREAD	SVR4_IOR('s', 10, int)
 
 /* From IRIX's <sys/mtio.h> */
 #define IRIX_MTIOCODE(x)     ('t'<<8|(x))

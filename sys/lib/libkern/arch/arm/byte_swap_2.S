@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:27:14 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4 2005/02/26 22:58:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,4 +45,4 @@ _PROF_PROLOGUE
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
-	mov		pc, lr  
+	mov		pc, lr

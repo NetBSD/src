@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.8 2004/03/24 16:21:06 drochner Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.9 2005/02/26 22:58:57 perry Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -118,7 +118,7 @@ fn_match(const char *fname, const char *pattern)
 	return 0;
 }
 
-void 
+void
 ufs_ls(const char *path)
 {
 	int             fd;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2004/04/21 01:05:36 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2005/02/26 23:10:18 perry Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -33,7 +33,7 @@ SRCS+=	vfs_syscalls_20.c
 # really, all machines where sizeof(int) != sizeof(long) (LP64)
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "sparc64" \
   && ${MACHINE_ARCH} != "x86_64")
-SRCS+=	kern_ipc_10.c 
+SRCS+=	kern_ipc_10.c
 .endif
 
 # only needed during build
@@ -43,5 +43,5 @@ libinstall::
 .undef DESTDIR
 .include <bsd.lib.mk>
 
-showsources: ${SRCS} 
+showsources: ${SRCS}
 	@echo ${.ALLSRC}

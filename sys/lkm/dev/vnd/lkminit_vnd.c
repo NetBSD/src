@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.2 2004/03/21 10:51:16 mrg Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.2 2004/03/21 10:51:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.3 2005/02/26 22:58:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -71,7 +71,7 @@ vnd_lkm(struct lkm_table *lkmtp, int cmd)
 
 int
 vnd_lkmentry (lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;		  
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

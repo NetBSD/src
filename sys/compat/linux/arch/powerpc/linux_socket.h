@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.3 2003/07/26 19:59:31 jdolecek Exp $ */
+/*	$NetBSD: linux_socket.h,v 1.4 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _POWERPC_LINUX_SOCKET_H
 #define _POWERPC_LINUX_SOCKET_H
 
-/* 
- * Everything is from Linux's include/asm-ppc/socket.h 
+/*
+ * Everything is from Linux's include/asm-ppc/socket.h
  */
 
 /*

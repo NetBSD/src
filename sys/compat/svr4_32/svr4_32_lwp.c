@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.5 2003/01/20 08:27:40 martin Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.6 2005/02/26 23:10:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.5 2003/01/20 08:27:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.6 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,12 +88,12 @@ svr4_32_sys__lwp_create(l, v, retval)
 	struct svr4_32_sys__lwp_create_args *uap = v;
 	struct sys__lwp_create_args lc;
 	int flags;
-	
+
 	flags = 0;
-	
+
 	if (SCARG(uap, flags) & SVR4_LWP_DETACHED)
 	    flags  &= LWP_DETACHED;
-       
+
 	if (SCARG(uap, flags) & SVR4_LWP_SUSPENDED)
 	    flags  &= LWP_SUSPENDED;
 
@@ -107,7 +107,7 @@ svr4_32_sys__lwp_create(l, v, retval)
 	SCARG(&lc, new_lwp) = SCARG(uap, lwpid);
 #endif
 	SCARG(&lc, flags) = flags;
-	
+
 	return sys__lwp_create(l, &lc, retval);
 }
 
@@ -139,7 +139,7 @@ svr4_32_sys__lwp_info(l, v, retval)
 	TIMEVAL_TO_TIMESPEC(&p->p_stats->p_ru.ru_stime, &lwpinfo.lwp_stime);
 	TIMEVAL_TO_TIMESPEC(&p->p_stats->p_ru.ru_utime, &lwpinfo.lwp_utime);
 
-	if ((error = copyout(&lwpinfo, (caddr_t)(u_long)SCARG(uap, lwpinfo), 
+	if ((error = copyout(&lwpinfo, (caddr_t)(u_long)SCARG(uap, lwpinfo),
 			     sizeof(lwpinfo))) == -1)
 	       return error;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.25 2005/01/16 19:57:09 drochner Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.26 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.25 2005/01/16 19:57:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.26 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ osf1_sys_sigaction(l, v, retval)
 	return 0;
 }
 
-int 
+int
 osf1_sys_sigaltstack(l, v, retval)
 	struct lwp *l;
 	void *v;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2004/08/02 18:45:53 manu Exp $
+	$NetBSD: syscalls.master,v 1.28 2005/02/26 23:10:18 perry Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -34,8 +34,8 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 ;
-; NB: A lot of system calls are used from FreeBSD emulation, because theses 
-; system calls are just native NetBSD plus a check in /emul/<e_name>. 
+; NB: A lot of system calls are used from FreeBSD emulation, because theses
+; system calls are just native NetBSD plus a check in /emul/<e_name>.
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.15 2003/11/08 22:36:01 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.16 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,14 +162,14 @@ typedef struct irix_mountid {
 } irix_mountid_t;
 
 /* From IRIX's <sys/dirent.h> */
-typedef struct irix_dirent { 
+typedef struct irix_dirent {
 	irix_ino_t	d_ino;
 	irix_off_t	d_off;
 	unsigned short	d_reclen;
 	char		d_name[IRIX_NAME_MAX + 1];
 } irix_dirent_t;
 
-typedef struct irix_dirent64 { 
+typedef struct irix_dirent64 {
 	irix_ino64_t	d_ino;
 	irix_off64_t	d_off;
 	unsigned short	d_reclen;

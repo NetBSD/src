@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.18 2003/06/29 22:29:48 fvdl Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.18 2003/06/29 22:29:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.19 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,15 +150,15 @@ svr4_sock_ioctl(fp, l, retval, fd, cmd, data)
 			(void) strncpy(br.ifr_name, sr.svr4_ifr_name,
 			    sizeof(br.ifr_name));
 
-			if ((error = (*ctl)(fp, SIOCGIFFLAGS, 
+			if ((error = (*ctl)(fp, SIOCGIFFLAGS,
 					    (caddr_t) &br, p)) != 0) {
-				DPRINTF(("SIOCGIFFLAGS %s: error %d\n", 
+				DPRINTF(("SIOCGIFFLAGS %s: error %d\n",
 					 sr.svr4_ifr_name, error));
 				return error;
 			}
 
 			sr.svr4_ifr_flags = bsd_to_svr4_flags(br.ifr_flags);
-			DPRINTF(("SIOCGIFFLAGS %s = %x\n", 
+			DPRINTF(("SIOCGIFFLAGS %s = %x\n",
 				sr.svr4_ifr_name, sr.svr4_ifr_flags));
 			return copyout(&sr, data, sizeof(sr));
 		}

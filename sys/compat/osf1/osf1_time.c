@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.7 2003/10/27 07:07:34 chs Exp $ */
+/* $NetBSD: osf1_time.c,v 1.8 2005/02/26 23:10:21 perry Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.7 2003/10/27 07:07:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.8 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,14 +165,14 @@ osf1_sys_setitimer(l, v, retval)
 		error = copyin((caddr_t)SCARG(&a, oitv), (caddr_t)&b_oitv,
 		    sizeof b_oitv);
 		if (error == 0) {
-	
+
 			/* fill in and copy out the NetBSD timeval */
 			memset(&o_oitv, 0, sizeof o_oitv);
 			o_oitv.it_interval.tv_sec = b_oitv.it_interval.tv_sec;
 			o_oitv.it_interval.tv_usec = b_oitv.it_interval.tv_usec;
 			o_oitv.it_value.tv_sec = b_oitv.it_value.tv_sec;
 			o_oitv.it_value.tv_usec = b_oitv.it_value.tv_usec;
-	
+
 			error = copyout((caddr_t)&o_oitv,
 			    (caddr_t)SCARG(uap, oitv), sizeof o_oitv);
 		}
