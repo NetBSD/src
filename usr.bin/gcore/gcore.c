@@ -1,3 +1,5 @@
+/*      $NetBSD: gcore.c,v 1.2 1995/09/05 02:51:00 tls Exp $      */
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)gcore.c	8.2 (Berkeley) 9/23/93";
+#else
+static char rcsid[] = "$NetBSD: gcore.c,v 1.2 1995/09/05 02:51:00 tls Exp $";
+#endif
 #endif /* not lint */
 
 /*
