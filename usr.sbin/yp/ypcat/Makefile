@@ -2,6 +2,6 @@
 
 PROG=	ypcat
 NOMAN=
-DESTDIR=/usr/bin
+BINDIR=/usr/bin
 
 .include <bsd.prog.mk>
