@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2003/07/28 08:54:39 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.7 2003/09/02 06:36:22 mrg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -85,7 +85,7 @@ CFLAGS+=	-I${GROFF_DIST}/src/include -I${NETBSDSRCDIR}/gnu/usr.bin/groff/src/inc
 CXXFLAGS+=	-fno-rtti -fno-exceptions
 
 # If we're using GCC3, we only need -lsupc++
-.if ${USE_TOOLS_TOOLCHAIN} == "no"
+.if ${HAVE_GCC3} == "yes"
 USE_LIBSTDCXX=	no
 .endif
 
