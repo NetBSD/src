@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/01/22 13:52:48 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4 2003/03/26 22:33:56 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -226,7 +226,8 @@
 							\
 	/* ! _UC_USER case. Restore full context */	\
 							\
-4:	pta/l	_C_LABEL(setcontext), tr0		;\
+4:	PIC_GET_GOT(tr0)				;\
+	PIC_PTAL(_C_LABEL(setcontext), r0, tr0)		;\
 	blink	tr0, r18				;\
 	brk	/* Catch setcontext() failure */
 
