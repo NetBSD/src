@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.81 1994/05/05 05:37:05 cgd Exp $
+ *	$Id: wd.c,v 1.82 1994/05/05 08:31:00 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1523,7 +1523,7 @@ wdcunwedge(wdc)
 	++wdc->sc_errors;
 
 	/* Wake up in a little bit and restart the operation. */
-	timeout(wdcrestart, (caddr_t)wdc, RECOVERYTIME);
+	timeout(wdcrestart, wdc, RECOVERYTIME);
 }
 
 int
@@ -1564,7 +1564,7 @@ wdctimeout(arg)
 		wderror(wdc, NULL, "lost interrupt");
 		wdcunwedge(wdc);
 	}
-	timeout(wdctimeout, (caddr_t)wdc, hz);
+	timeout(wdctimeout, wdc, hz);
 	splx(s);
 }
 
