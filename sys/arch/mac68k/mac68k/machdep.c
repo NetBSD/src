@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 1997/03/15 18:10:06 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -133,7 +133,7 @@
 
 #include <machine/viareg.h>
 #include "macrom.h"
-#include "ether.h"
+#include "arp.h"
 
 /* The following is used externally (sysctl_hw) */
 char    machine[] = "mac68k";	/* cpu "architecture" */
@@ -1227,7 +1227,7 @@ void
 netintr()
 {
 #ifdef INET
-#if NETHER
+#if NARP
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();

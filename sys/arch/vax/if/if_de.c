@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.25 1996/11/15 03:11:19 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.26 1997/03/15 18:11:10 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -60,15 +60,14 @@
 #include <machine/sid.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -109,10 +108,9 @@ int	dedebug = 0;
  */
 struct	de_softc {
 	struct	device ds_dev;	/* Configuration common part */
-	struct	arpcom ds_ac;		/* Ethernet common part */
+	struct	ethercom ds_ec;		/* Ethernet common part */
 	struct	dedevice *ds_vaddr;	/* Virtual address of this interface */
-#define	ds_if	ds_ac.ac_if		/* network-visible interface */
-#define	ds_addr	ds_ac.ac_enaddr		/* hardware Ethernet address */
+#define	ds_if	ds_ec.ec_if		/* network-visible interface */
 	int	ds_flags;
 #define	DSF_RUNNING	2		/* board is enabled */
 #define	DSF_SETADDR	4		/* physical address is changed */
@@ -176,6 +174,7 @@ deattach(parent, self, aux)
 	struct dedevice *addr;
 	char *c;
 	int csr1;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	addr = (struct dedevice *)ua->ua_addr;
 	ds->ds_vaddr = addr;
@@ -218,10 +217,9 @@ deattach(parent, self, aux)
 	(void)dewait(ds, "read addr ");
 
 	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
- 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, (caddr_t)ds->ds_addr,
-	    sizeof (ds->ds_addr));
+ 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
-		ether_sprintf(ds->ds_addr));
+		ether_sprintf(myaddr));
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
 	ds->ds_deuba.iff_flags = UBA_CANTWAIT;
@@ -230,7 +228,7 @@ deattach(parent, self, aux)
 	ds->ds_deuba.iff_flags |= UBA_NEEDBDP;
 #endif
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 }
 
 /*
@@ -605,7 +603,7 @@ deioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&ds->ds_ac, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -614,7 +612,8 @@ deioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 			
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(ds->ds_addr);
+				ina->x_host = 
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				de_setaddr(ina->x_host.c_host, ds);
 			break;
@@ -661,7 +660,7 @@ de_setaddr(physaddr, ds)
 	addr->pclow = PCSR0_INTE|CMD_GETCMD;
 	if (dewait(ds, "address change") == 0) {
 		ds->ds_flags |= DSF_SETADDR;
-		bcopy((caddr_t) physaddr, (caddr_t) ds->ds_addr, 6);
+		bcopy((caddr_t) physaddr, LLADDR(ds->ds_if.if_sadl), 6);
 	}
 }
 

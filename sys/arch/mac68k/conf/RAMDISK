@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.10 1997/02/14 06:27:20 scottr Exp $
+#	$NetBSD: RAMDISK,v 1.11 1997/03/15 18:09:54 is Exp $
 #
 # Generic mac68k kernel with built-in RAM disk image.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.3 1996/05/07 00:46:45 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.4 1997/03/15 18:09:27 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -45,7 +45,7 @@ struct lereg1 {
  * Ethernet software status per interface.
  *
  * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
+ * ethercom.ec_if, which the routing code uses to locate the interface.
  * This structure contains the output queue for the interface, its address, ...
  */
 struct le_softc {

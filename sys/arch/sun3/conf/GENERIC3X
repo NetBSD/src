@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC3X,v 1.1 1997/02/24 03:53:52 jeremy Exp $
+#	$NetBSD: GENERIC3X,v 1.2 1997/03/15 18:10:59 is Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*

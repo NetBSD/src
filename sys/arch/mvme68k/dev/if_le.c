@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 1997/01/31 01:53:06 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12 1997/03/15 18:10:12 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,10 +49,11 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <vm/vm.h>
@@ -141,7 +142,7 @@ le_pcc_attach(parent, self, aux)
 	sc->sc_addr = (u_long)sc->sc_mem;
 	sc->sc_memsize = 4 * NBPG;	/* XXX */
 
-	myetheraddr(sc->sc_arpcom.ac_enaddr);
+	myetheraddr(sc->sc_enaddr);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.2 1995/09/18 21:31:48 pk Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.3 1997/03/15 18:10:45 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -44,7 +44,7 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include "if_ether.h"
 #include <netinet/in_systm.h>
 
 #include "stand.h"

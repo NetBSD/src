@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.57 1997/03/04 15:12:04 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.58 1997/03/15 18:09:56 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -35,14 +35,14 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -129,8 +129,9 @@ ae_size_card_memory(bst, bsh, ofs)
  * Do bus-independent setup.
  */
 int
-aesetup(sc)
+aesetup(sc, lladdr)
 	struct ae_softc *sc;
+	u_int8_t *lladdr;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
@@ -175,10 +176,10 @@ printf(": failed to clear shared memory - check configuration\n");
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, lladdr);
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(lladdr));
 
 	printf("type %s, %dKB memory\n", sc->type_str, sc->mem_size / 1024);
 

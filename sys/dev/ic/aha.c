@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.2 1997/02/26 04:52:13 sommerfe Exp $	*/
+/*	$NetBSD: aha.c,v 1.3 1997/03/15 18:11:21 is Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB

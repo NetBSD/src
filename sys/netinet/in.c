@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.33 1996/09/14 14:40:23 mrg Exp $	*/
+/*	$NetBSD: in.c,v 1.34 1997/03/15 18:12:36 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -47,10 +47,12 @@
 #include <net/if.h>
 #include <net/route.h>
 
+#include <net/if_ether.h>
+
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
 
