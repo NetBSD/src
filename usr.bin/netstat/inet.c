@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.18 1996/10/25 07:41:35 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.19 1996/12/09 12:48:37 neil Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.18 1996/10/25 07:41:35 thorpej Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.19 1996/12/09 12:48:37 neil Exp $";
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ icmp_stats(off, name)
 
 	p(icps_error, "\t%lu call%s to icmp_error\n");
 	p(icps_oldicmp,
-	    "\t%lu error%s not generated 'cuz old message was icmp\n");
+	    "\t%lu error%s not generated because old message was icmp\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_outhist[i] != 0) {
 			if (first) {
