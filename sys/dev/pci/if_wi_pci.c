@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.30 2003/12/14 10:04:33 dyoung Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.31 2004/03/28 09:44:59 nakayama Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.30 2003/12/14 10:04:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.31 2004/03/28 09:44:59 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,8 @@ wi_pci_enable(sc)
 	}
 
 	/* reset HFA3842 MAC core */
-	wi_pci_reset(sc);
+	if (sc->sc_reset != NULL)
+		wi_pci_reset(sc);
 
 	return (0);
 }
@@ -391,7 +392,8 @@ wi_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_reset = wi_pci_reset;
+	if (!wpp->wpp_chip)
+		sc->sc_reset = wi_pci_reset;
 
 	/* Add a suspend hook to restore PCI config state */
 	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
