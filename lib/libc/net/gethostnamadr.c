@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.14 1996/10/08 04:09:58 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.15 1996/10/14 10:41:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.14 1996/10/08 04:09:58 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.15 1996/10/14 10:41:07 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -216,11 +216,12 @@ getanswer(answer, anslen, iquery)
 			cp += n;
 			continue;
 		}
-		if (class != getclass) {
-			cp += n;
-			continue;
-		}
-		if (haveanswer == 0) {
+		if (haveanswer) {
+			if (class != getclass) {
+				cp += n;
+				continue;
+			}
+		} else {
 			host.h_length = n;
 			getclass = class;
 			host.h_addrtype = (class == C_IN) ? AF_INET : AF_UNSPEC;
