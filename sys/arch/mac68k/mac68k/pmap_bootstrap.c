@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 1997/10/20 08:14:18 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.38.2.1 1998/11/23 04:47:42 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
-extern int maxmem, physmem;
+extern int physmem;
 extern int avail_remaining, avail_range, avail_end;
 extern vm_offset_t avail_start, avail_next;
 extern vm_offset_t virtual_avail, virtual_end;
@@ -78,14 +78,10 @@ extern	int	zsinited;
 /*
  * These are used to map the RAM:
  */
-int		numranges; /* = 0 == don't use the ranges */
+int	numranges;	/* = 0 == don't use the ranges */
 u_long	low[8];
 u_long	high[8];
-extern int		nbnumranges;
-extern u_long	nbphys[];
-extern u_long	nblog[];
-extern   signed long	nblen[];
-#define VIDMAPSIZE	btoc(m68k_round_page(vidlen))
+u_long	maxaddr;	/* PA of the last physical page */
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
@@ -93,6 +89,8 @@ extern u_int32_t	videorowbytes;
 extern u_int32_t	videosize;
 static int		vidlen;
 static u_int32_t	newvideoaddr;
+
+#define VIDMAPSIZE	btoc(vidlen)
 
 extern caddr_t	ROMBase;
 
@@ -321,6 +319,8 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Invalidate all but the final entry in the last kernel PT page
 	 * (u-area PTEs will be validated later).  The final entry maps
 	 * the last page of physical memory.
+	 * Invalidate all entries in the last kernel PT page
+	 * (u-area PTEs will be validated later).
 	 */
 	pte = PA2VA(lkptpa, u_int *);
 	epte = &pte[NPTEPG-1];
@@ -451,6 +451,15 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.  Since the last page is used
+	 * for rebooting the system (code is copied there and
+	 * excution continues from copied code before the MMU
+	 * is disabled), the msgbuf will get trounced between
+	 * reboots if it's placed in the last physical page.
+	 * To work around this, we move avail_end back one more
+	 * page so the msgbuf can be preserved.
 	 */
 	avail_next = avail_start = m68k_round_page(nextpa);
 	avail_remaining = 0;
@@ -467,15 +476,11 @@ pmap_bootstrap(nextpa, firstpa)
 	avail_remaining -= m68k_round_page(MSGBUFSIZE);
 	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
 
-	/* XXX -- this doesn't look correct to me. */
-	while (high[numranges - 1] < low[numranges - 1]) {
-		numranges--;
-		high[numranges - 1] -= low[numranges] - high[numranges];
-	}
-
-	avail_remaining = m68k_trunc_page(avail_remaining);
-	avail_end = avail_start + avail_remaining;
-	avail_remaining = m68k_btop(avail_remaining);
+	maxaddr = high[numranges - 1] - m68k_ptob(1);
+	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+	avail_remaining -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+	avail_end = high[numranges - 1];
+	avail_remaining = m68k_btop(m68k_trunc_page(avail_remaining));
 
 	mem_size = m68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -577,7 +582,6 @@ bootstrap_mac68k(tc)
 			printf("Done.\n");
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
-		nbnumranges = 0;
 		numranges = 1;
 		low[0] = 0;
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
