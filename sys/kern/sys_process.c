@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.40 1994/09/14 16:40:29 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.41 1994/09/24 07:17:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,7 @@ ptrace(p, uap, retval)
 		/*
 		 *	(2) it's already being traced, or
 		 */
-		if (!ISSET(t->p_flag, P_TRACED))
+		if (ISSET(t->p_flag, P_TRACED))
 			return (EBUSY);
 
 		/*
