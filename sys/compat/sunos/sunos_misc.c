@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.9 1993/11/22 22:54:48 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.10 1993/12/12 20:43:22 deraadt Exp $
  */
 
 /*
@@ -54,12 +54,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/namei.h>
 #include <ufs/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
@@ -73,6 +76,8 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
+
+#include <netinet/in.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -189,6 +194,23 @@ gettype(tptr)
 #define	SUNM_MULTI	0x40	/* (ignored) */
 #define	SUNM_SYS5	0x80	/* Sys 5-specific semantics (rejected) */
 
+struct	sun_nfs_args {
+	struct	sockaddr_in *addr;	/* file server address */
+	caddr_t	fh;			/* file handle to be mounted */
+	int	flags;			/* flags */
+	int	wsize;			/* write size in bytes */
+	int	rsize;			/* read size in bytes */
+	int	timeo;			/* initial timeout in .1 secs */
+	int	retrans;		/* times to retry send */
+	char	*hostname;		/* server's hostname */
+	int	acregmin;		/* attr cache file min secs */
+	int	acregmax;		/* attr cache file max secs */
+	int	acdirmin;		/* attr cache dir min secs */
+	int	acdirmax;		/* attr cache dir max secs */
+	char	*netname;		/* server's netname */
+	struct	pathcnf *pathconf;	/* static pathconf kludge */
+};
+
 struct sun_mount_args {
 	int	type;
 	char	*dir;
@@ -201,6 +223,8 @@ sun_mount(p, uap, retval)
 	int *retval;
 {
 	int oflags = uap->flags, nflags, error;
+	extern char sigcode[], esigcode[];
+#define	szsigcode	(esigcode - sigcode)
 
 	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
 		return (EINVAL);
@@ -214,6 +238,36 @@ sun_mount(p, uap, retval)
 	if (oflags & SUNM_REMOUNT)
 		nflags |= MNT_UPDATE;
 	uap->flags = nflags;
+
+	if (uap->type == MOUNT_NFS) {
+		struct sun_nfs_args sna;
+		struct sockaddr_in sain;
+		struct nfs_args na;
+		struct sockaddr sa;
+
+		if (error = copyin(uap->data, &sna, sizeof sna))
+			return (error);
+		if (error = copyin(sna.addr, &sain, sizeof sain))
+			return (error);
+		bcopy(&sain, &sa, sizeof sa);
+		sa.sa_len = sizeof(sain);
+		uap->data = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+		na.addr = (struct sockaddr *)((int)uap->data + sizeof na);
+		na.sotype = SOCK_DGRAM;
+		na.proto = IPPROTO_UDP;
+		na.fh = (nfsv2fh_t *)sna.fh;
+		na.flags = sna.flags;
+		na.wsize = sna.wsize;
+		na.rsize = sna.rsize;
+		na.timeo = sna.timeo;
+		na.retrans = sna.retrans;
+		na.hostname = sna.hostname;
+
+		if (error = copyout(&sa, na.addr, sizeof sa))
+			return (error);
+		if (error = copyout(&na, uap->data, sizeof na))
+			return (error);
+	}
 	return (mount(p, uap, retval));
 }
 
@@ -361,13 +415,12 @@ out:
 
 /*
  * The Sun bit-style arguments are not in the same order as the
- * NetBSD ones. We must remap them the bits.
+ * NetBSD ones. We must remap the bits.
  */
 
 #if defined(sparc)
 #define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
-#endif
-#if defined(sun3) || defined(amiga) || defined(mac) || defined(hp300)
+#else /* all m68k architectures */
 #define	DEVZERO	makedev(2, 12)		/* major,minor of /dev/zero */
 #endif
 
@@ -433,6 +486,11 @@ sun_mmap(p, uap, retval)
 
 	if (flags & SUN_MAP_FIXED)
 		newflags |= MAP_FIXED;
+
+	if ((newflags & MAP_FIXED) == 0 &&
+		uap->addr != 0 &&
+		uap->addr < (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ))
+		uap->addr = (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
@@ -662,4 +720,209 @@ sun_open(p, uap, retval)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
 	}
 	return ret;
+}
+
+struct nfssvc_args {
+	int	fd;
+	caddr_t mskval;
+	int msklen;
+	caddr_t mtchval;
+	int mtchlen;
+};
+struct sun_nfssvc_args {
+	int	fd;
+};
+sun_nfssvc(p, uap, retval)
+	struct proc *p;
+	struct sun_nfssvc_args *uap;
+	int *retval;
+{
+	struct nfssvc_args outuap;
+	struct sockaddr sa;
+	int error;
+	extern char sigcode[], esigcode[];
+
+	bzero(&outuap, sizeof outuap);
+	outuap.fd = uap->fd;
+	outuap.mskval = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	outuap.msklen = sizeof sa;
+	outuap.mtchval = outuap.mskval + sizeof sa;
+	outuap.mtchlen = sizeof sa;
+
+	bzero(&sa, sizeof sa);
+	if (error = copyout(&sa, outuap.mskval, outuap.msklen))
+		return (error);
+	if (error = copyout(&sa, outuap.mtchval, outuap.mtchlen))
+		return (error);
+
+	return nfssvc(p, &outuap, retval);
+}
+
+struct sun_ustat {
+	daddr_t	f_tfree;	/* total free */
+	ino_t	f_tinode;	/* total inodes free */
+	char	f_fname[6];	/* filsys name */
+	char	f_fpack[6];	/* filsys pack name */
+};
+struct sun_ustat_args {
+	int	dev;
+	struct	sun_ustat *buf;
+};
+sun_ustat(p, uap, retval)
+	struct proc *p;
+	struct sun_ustat_args *uap;
+	int *retval;
+{
+	struct sun_ustat us;
+	int error;
+
+	bzero(&us, sizeof us);
+
+	/*
+	 * XXX: should set f_tfree and f_tinode at least
+	 * How do we translate dev -> fstat? (and then to sun_ustat)
+	 */
+
+	if (error = copyout(&us, uap->buf, sizeof us))
+		return (error);
+	return 0;
+}
+
+struct sun_quotactl_args {
+	int	cmd;
+	char	*special;
+	int	uid;
+	caddr_t	addr;
+};
+sun_quotactl(p, uap, retval)
+	struct proc *p;
+	struct sun_quotactl_args *uap;
+	int *retval;
+{
+	return EINVAL;
+}
+
+sun_vhangup(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	int *retval;
+{
+	return 0;
+}
+
+struct sun_statfs {
+	long	f_type;		/* type of info, zero for now */
+	long	f_bsize;	/* fundamental file system block size */
+	long	f_blocks;	/* total blocks in file system */
+	long	f_bfree;	/* free blocks */
+	long	f_bavail;	/* free blocks available to non-super-user */
+	long	f_files;	/* total file nodes in file system */
+	long	f_ffree;	/* free file nodes in fs */
+	fsid_t	f_fsid;		/* file system id */
+	long	f_spare[7];	/* spare for later */
+};
+static
+sunstatfs(sp, buf)
+	struct statfs *sp;
+	caddr_t buf;
+{
+	struct sun_statfs ssfs;
+
+	bzero(&ssfs, sizeof ssfs);
+	ssfs.f_type = 0;
+	ssfs.f_bsize = sp->f_fsize;
+	ssfs.f_blocks = sp->f_blocks;
+	ssfs.f_bfree = sp->f_bfree;
+	ssfs.f_bavail = sp->f_bavail;
+	ssfs.f_files = sp->f_files;
+	ssfs.f_ffree = sp->f_ffree;
+	ssfs.f_fsid = sp->f_fsid;
+	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
+}	
+
+struct sun_statfs_args {
+	char	*path;
+	struct	sun_statfs *buf;
+};
+sun_statfs(p, uap, retval)
+	struct proc *p;
+	struct sun_statfs_args *uap;
+	int *retval;
+{
+	register struct mount *mp;
+	register struct nameidata *ndp;
+	register struct statfs *sp;
+	int error;
+	struct nameidata nd;
+
+	ndp = &nd;
+	ndp->ni_nameiop = LOOKUP | FOLLOW;
+	ndp->ni_segflg = UIO_USERSPACE;
+	ndp->ni_dirp = uap->path;
+	if (error = namei(ndp, p))
+		return (error);
+	mp = ndp->ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(ndp->ni_vp);
+	if (error = VFS_STATFS(mp, sp, p))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return sunstatfs(sp, (caddr_t)uap->buf);
+}
+
+struct sun_fstatfs_args {
+	int	fd;
+	struct	sun_statfs *buf;
+};
+sun_fstatfs(p, uap, retval)
+	struct proc *p;
+	struct sun_fstatfs_args *uap;
+	int *retval;
+{
+	struct file *fp;
+	struct mount *mp;
+	register struct statfs *sp;
+	int error;
+
+	if (error = getvnode(p->p_fd, uap->fd, &fp))
+		return (error);
+	mp = ((struct vnode *)fp->f_data)->v_mount;
+	sp = &mp->mnt_stat;
+	if (error = VFS_STATFS(mp, sp, p))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return sunstatfs(sp, (caddr_t)uap->buf);
+}
+
+struct sun_exportfs_args {
+	char	*path;
+	char	*ex;			/* struct sun_export * */
+};
+sun_exportfs(p, uap, retval)
+	struct proc *p;
+	struct sun_exportfs_args *uap;
+	int *retval;
+{
+	/*
+	 * XXX: should perhaps translate into a mount(2)
+	 * with MOUNT_EXPORT?
+	 */
+	return 0;
+}
+
+struct sun_mknod_args {
+	char	*fname;
+	int	fmode;
+	int	dev;
+};
+
+sun_mknod(p, uap, retval)
+	struct proc *p;
+	struct sun_mknod_args *uap;
+	int *retval;
+{
+	if (S_ISFIFO(uap->fmode))
+		return mkfifo(p, uap, retval);
+
+	return mknod(p, uap, retval);
 }

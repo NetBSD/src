@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sun_exec.c,v 1.1 1993/11/28 18:03:19 deraadt Exp $
+ *	$Id: sun_exec.c,v 1.2 1993/12/12 20:43:18 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -66,23 +66,26 @@ sun_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	struct sun_exec *sunmag;
+	int error = ENOEXEC;
 
 	sunmag = (struct sun_exec *)epp->ep_execp;
 	if(sunmag->a_machtype != SUN_M_NATIVE)
 		return (ENOEXEC);
 
-	epp->ep_emul = EMUL_SUNOS;
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		return sun_exec_aout_prep_zmagic(p, epp);
+		error = sun_exec_aout_prep_zmagic(p, epp);
+		break;
 	case NMAGIC:
-		return sun_exec_aout_prep_nmagic(p, epp);
+		error = sun_exec_aout_prep_nmagic(p, epp);
+		break;
 	case OMAGIC:
-		return sun_exec_aout_prep_omagic(p, epp);
-	default:
+		error = sun_exec_aout_prep_omagic(p, epp);
 		break;
 	}
-	return (ENOEXEC);
+	if (error==0)
+		epp->ep_emul = EMUL_SUNOS;
+	return error;
 }
 
 /*
