@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.20 1995/01/02 20:06:41 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.21 1995/01/02 20:39:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -142,6 +142,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
+#include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/ic/i82586.h>
 #include <i386/isa/if_ieatt.h>
