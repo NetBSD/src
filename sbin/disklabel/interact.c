@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $	*/
+/*	$NetBSD: interact.c,v 1.14 2000/08/14 22:37:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.13 1999/12/17 13:06:49 abs Exp $");
+__RCSID("$NetBSD: interact.c,v 1.14 2000/08/14 22:37:08 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -58,10 +58,10 @@ static void cmd_round __P((struct disklabel *, char *, int));
 static void cmd_name __P((struct disklabel *, char *, int));
 static int runcmd __P((char *, struct disklabel *, int));
 static int getinput __P((const char *, const char *, const char *, char *));
+static int alphacmp __P((const void *, const void *));
 static void defnum __P((char *, struct disklabel *, int));
+static void dumpnames __P((const char *, const char * const *, size_t));
 static int getnum __P((char *, int, struct disklabel *));
-static void deffstypename __P((char *, int));
-static int getfstypename __P((const char *));
 
 static int rounding = 0;	/* sector rounding */
 static int chaining = 0;	/* make partitions contiguous */
@@ -111,7 +111,6 @@ cmd_chain(lp, s, fd)
 
 	i = getinput(":", "Automatically adjust partitions",
 	    chaining ? "yes" : "no", line);
-
 	if (i <= 0)
 		return;
 
@@ -156,30 +155,37 @@ cmd_info(lp, s, fd)
 {
 	char line[BUFSIZ];
 	char def[BUFSIZ];
-	const char * const *cpp;
-	const char *t;
 	int v, i;
 	u_int32_t u;
 
 	printf("# Current values:\n");
 	showinfo(stdout, lp);
 
-	/* d_typename */
+	/* d_type */
 	for (;;) {
-		strncpy(def, lp->d_typename, sizeof(def));
-		def[sizeof(def) - 1] = '\0';
-		i = getinput(":", "Disk type", def, line);
-		if (i <= 0)
+		i = lp->d_type;
+		if (i < 0 || i >= DKMAXTYPES)
+			i = 0;
+		snprintf(def, sizeof(def), "%s", dktypenames[i]);
+		i = getinput(":", "Disk type [?]", def, line);
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
-		cpp = dktypenames;
-		for (; cpp < &dktypenames[DKMAXTYPES]; cpp++)
-			if ((t = *cpp) && !strcmp(t, line)) {
-				lp->d_type = cpp - dktypenames;
+		if (!strcmp(line, "?")) {
+			dumpnames("Supported disk types", dktypenames,
+			    DKMAXTYPES);
+			continue;
+		}
+		for (i = 0; i < DKMAXTYPES; i++) {
+			if (!strcasecmp(dktypenames[i], line)) {
+				lp->d_type = i;
 				goto done_typename;
 			}
+		}
 		v = atoi(line);
 		if ((unsigned)v >= DKMAXTYPES) {
-			warnx("unknown disk type: %s", line);
+			warnx("Unknown disk type: %s", line);
 			continue;
 		}
 		lp->d_type = v;
@@ -187,17 +193,28 @@ done_typename:
 		break;
 	}
 
+	/* d_typename */
+	snprintf(def, sizeof(def), "%.*s",
+	    (int) sizeof(lp->d_typename), lp->d_typename);
+	i = getinput(":", "Disk name", def, line);
+	if (i == -1)
+		return;
+	else if (i == 1)
+		(void) strncpy(lp->d_typename, line, sizeof(lp->d_typename));
+
 	/* d_packname */
 	cmd_name(lp, s, fd);
 
 	/* d_npartitions */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_npartitions);
+		snprintf(def, sizeof(def), "%u", lp->d_npartitions);
 		i = getinput(":", "Number of partitions", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid number of partitions `%s'\n", line);
 			continue;
 		}
 		lp->d_npartitions = u;
@@ -206,9 +223,11 @@ done_typename:
 
 	/* d_secsize */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secsize);
+		snprintf(def, sizeof(def), "%u", lp->d_secsize);
 		i = getinput(":", "Sector size (bytes)", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
 			printf("Invalid sector size `%s'\n", line);
@@ -220,12 +239,14 @@ done_typename:
 
 	/* d_nsectors */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_nsectors);
+		snprintf(def, sizeof(def), "%u", lp->d_nsectors);
 		i = getinput(":", "Number of sectors per track", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector `%s'\n", line);
+			printf("Invalid number of sectors `%s'\n", line);
 			continue;
 		}
 		lp->d_nsectors = u;
@@ -234,9 +255,11 @@ done_typename:
 
 	/* d_ntracks */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_ntracks);
+		snprintf(def, sizeof(def), "%u", lp->d_ntracks);
 		i = getinput(":", "Number of tracks per cylinder", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
 			printf("Invalid number of tracks `%s'\n", line);
@@ -248,12 +271,15 @@ done_typename:
 
 	/* d_secpercyl */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secpercyl);
+		snprintf(def, sizeof(def), "%u", lp->d_secpercyl);
 		i = getinput(":", "Number of sectors/cylinder", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector/cylinder `%s'\n", line);
+			printf("Invalid number of sector/cylinder `%s'\n",
+			    line);
 			continue;
 		}
 		lp->d_secpercyl = u;
@@ -262,9 +288,11 @@ done_typename:
 
 	/* d_ncylinders */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_ncylinders);
+		snprintf(def, sizeof(def), "%u", lp->d_ncylinders);
 		i = getinput(":", "Total number of cylinders", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
 			printf("Invalid sector size `%s'\n", line);
@@ -276,12 +304,14 @@ done_typename:
 
 	/* d_secperunit */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_secperunit);
+		snprintf(def, sizeof(def), "%u", lp->d_secperunit);
 		i = getinput(":", "Total number of sectors", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid number of sector `%s'\n", line);
+			printf("Invalid number of sectors `%s'\n", line);
 			continue;
 		}
 		lp->d_secperunit = u;
@@ -292,13 +322,14 @@ done_typename:
 
 	/* d_interleave */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_interleave);
+		snprintf(def, sizeof(def), "%u", lp->d_interleave);
 		i = getinput(":", "Hardware sectors interleave", def, line);
-
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid sector interleave `%s'\n", line);
 			continue;
 		}
 		lp->d_interleave = u;
@@ -307,12 +338,14 @@ done_typename:
 
 	/* d_trackskew */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_trackskew);
+		snprintf(def, sizeof(def), "%u", lp->d_trackskew);
 		i = getinput(":", "Sector 0 skew, per track", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid track sector skew `%s'\n", line);
 			continue;
 		}
 		lp->d_trackskew = u;
@@ -321,12 +354,14 @@ done_typename:
 
 	/* d_cylskew */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_cylskew);
+		snprintf(def, sizeof(def), "%u", lp->d_cylskew);
 		i = getinput(":", "Sector 0 skew, per cylinder", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid cylinder sector `%s'\n", line);
 			continue;
 		}
 		lp->d_cylskew = u;
@@ -335,12 +370,14 @@ done_typename:
 
 	/* d_headswitch */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_headswitch);
+		snprintf(def, sizeof(def), "%u", lp->d_headswitch);
 		i = getinput(":", "Head switch time (usec)", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid head switch time `%s'\n", line);
 			continue;
 		}
 		lp->d_headswitch = u;
@@ -349,18 +386,19 @@ done_typename:
 
 	/* d_trkseek */
 	for (;;) {
-		snprintf(def, sizeof def, "%u", lp->d_trkseek);
+		snprintf(def, sizeof(def), "%u", lp->d_trkseek);
 		i = getinput(":", "Track seek time (usec)", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if (sscanf(line, "%u", &u) != 1) {
-			printf("Invalid sector size `%s'\n", line);
+			printf("Invalid track seek time `%s'\n", line);
 			continue;
 		}
 		lp->d_trkseek = u;
 		break;
 	}
-
 }
 
 static void
@@ -370,8 +408,11 @@ cmd_name(lp, s, fd)
 	int fd;
 {
 	char line[BUFSIZ];
-	int i = getinput(":", "Label name", lp->d_packname, line);
+	int i;
 
+	snprintf(line, sizeof(line), "%.*s",
+	    (int) sizeof(lp->d_packname), lp->d_packname);
+	i = getinput(":", "Label name", lp->d_packname, line);
 	if (i <= 0)
 		return;
 	(void) strncpy(lp->d_packname, line, sizeof(lp->d_packname));
@@ -387,7 +428,6 @@ cmd_round(lp, s, fd)
 	char line[BUFSIZ];
 
 	i = getinput(":", "Rounding", rounding ? "cylinders" : "sectors", line);
-
 	if (i <= 0)
 		return;
 
@@ -420,21 +460,36 @@ cmd_part(lp, s, fd)
 		lp->d_npartitions = part + 1;
 
 	for (;;) {
-		deffstypename(def, p->p_fstype);
-		i = getinput(":", "Filesystem type", def, line);
-		if (i <= 0)
+		i = p->p_fstype;
+		if (i < 0 || i >= FSMAXTYPES)
+			i = 0;
+		snprintf(def, sizeof(def), "%s", fstypenames[i]);
+		i = getinput(":", "Filesystem type [?]", def, line);
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
-		if ((i = getfstypename(line)) == -1) {
-			printf("Invalid file system typename `%s'\n", line);
+		if (!strcmp(line, "?")) {
+			dumpnames("Supported file system types",
+			    fstypenames, FSMAXTYPES);
 			continue;
 		}
-		p->p_fstype = i;
+		for (i = 0; i < FSMAXTYPES; i++)
+			if (!strcasecmp(line, fstypenames[i])) {
+				p->p_fstype = i;
+				goto done_typename;
+			}
+		printf("Invalid file system typename `%s'\n", line);
+		continue;
+done_typename:
 		break;
 	}
 	for (;;) {
 		defnum(def, lp, p->p_offset);
 		i = getinput(":", "Start offset", def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if ((i = getnum(line, 0, lp)) == -1) {
 			printf("Bad offset `%s'\n", line);
@@ -447,7 +502,9 @@ cmd_part(lp, s, fd)
 		defnum(def, lp, p->p_size);
 		i = getinput(":", "Partition size ('$' for all remaining)",
 		    def, line);
-		if (i <= 0)
+		if (i == -1)
+			return;
+		else if (i == 0)
 			break;
 		if ((i = getnum(line, lp->d_secperunit - p->p_offset, lp))
 		    == -1) {
@@ -482,7 +539,6 @@ cmd_label(lp, s, fd)
 	int i;
 
 	i = getinput("?", "Label disk", "n", line);
-
 	if (i <= 0 || (*line != 'y' && *line != 'Y') )
 		return;
 
@@ -555,6 +611,72 @@ getinput(sep, prompt, def, line)
 	}
 }
 
+static int
+alphacmp(a, b)
+	const void *a, *b;
+{
+
+	return (strcasecmp(*(const char **)a, *(const char **)b));
+}
+
+
+static void
+dumpnames(prompt, olist, numentries)
+	const char *prompt;
+	const char * const *olist;
+	size_t numentries;
+{
+	int i, j, w;
+	int columns, width, lines;
+	const char *p;
+	const char **list;
+
+	list = (const char **)malloc(sizeof(char *) * numentries);
+	width = 0;
+	printf("%s:\n", prompt);
+	for (i = 0; i < numentries; i++) {
+		list[i] = olist[i];
+		w = strlen(list[i]);
+		if (w > width)
+			width = w;
+	}
+#if 0
+	for (i = 0; i < numentries; i++)
+		printf("%s%s", i == 0 ? "" : ", ", list[i]);
+	puts("");
+#endif
+	(void)qsort((void *)list, numentries, sizeof(char *), alphacmp);
+	width++;		/* want two spaces between items */
+	width = (width + 8) &~ 7;
+
+#define ttywidth 72
+	columns = ttywidth / width;
+#undef ttywidth
+	if (columns == 0)
+		columns = 1;
+	lines = (numentries + columns - 1) / columns;
+	for (i = 0; i < lines; i++) {
+		for (j = 0; j < columns; j++) {
+			p = list[j * lines + i];
+			if (j == 0)
+				putc('\t', stdout);
+			if (p) {
+				fputs(p, stdout);
+			}
+			if (j * lines + i + lines >= numentries) {
+				putc('\n', stdout);
+				break;
+			}
+			w = strlen(p);
+			while (w < width) {
+				w = (w + 8) &~ 7;
+				putc('\t', stdout);
+			}
+		}
+	}
+	free(list);
+}
+
 
 static void
 defnum(buf, lp, size)
@@ -598,6 +720,7 @@ getnum(buf, max, lp)
 		rv = (int) (d * lp->d_secpercyl);
 		break;
 
+	case 'm':
 	case 'M':
 		rv =  (int) (d * 1024 * 1024 / lp->d_secsize);
 		break;
@@ -611,30 +734,6 @@ getnum(buf, max, lp)
 		return ROUND(rv);
 	else
 		return rv;
-}
-
-
-static void
-deffstypename(buf, i)
-	char *buf;
-	int i;
-{
-	if (i < 0 || i >= FSMAXTYPES)
-		i = 0;
-	(void) strcpy(buf, fstypenames[i]);
-}
-
-
-static int
-getfstypename(buf)
-	const char *buf;
-{
-	int i;
-
-	for (i = 0; i < FSMAXTYPES; i++)
-		if (strcmp(buf, fstypenames[i]) == 0)
-			return i;
-	return -1;
 }
 
 
