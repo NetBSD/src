@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.5 1998/04/27 16:48:09 kleink Exp $	*/
+/*	$NetBSD: strings.h,v 1.6 1998/05/06 17:12:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,14 +40,17 @@
 #define _STRINGS_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
+#ifndef	_XOPEN_SOURCE
 #ifndef	NULL
 #define	NULL	0
+#endif
 #endif
 
 #include <sys/cdefs.h>
