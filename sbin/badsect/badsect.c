@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.24 2003/08/07 10:04:11 agc Exp $	*/
+/*	$NetBSD: badsect.c,v 1.25 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.24 2003/08/07 10:04:11 agc Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.25 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ main(argc, argv)
 	char name[MAXPATHLEN];
 
 	if (argc < 3) {
-		(void) fprintf(stderr, "Usage: %s bbdir blkno [ blkno ]\n",
+		(void) fprintf(stderr, "usage: %s bbdir blkno [ blkno ]\n",
 		    getprogname());
 		exit(1);
 	}

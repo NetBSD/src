@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.13 2003/08/07 11:25:19 agc Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -512,6 +512,6 @@ gettype(t, names)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: diskpart [-dp] [-s size] disk-type\n");
+	(void)fprintf(stderr, "usage: diskpart [-dp] [-s size] disk-type\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.10 2003/06/23 13:05:50 agc Exp $	*/
+/*	$NetBSD: pmc.c,v 1.11 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.10 2003/06/23 13:05:50 agc Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.11 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -373,7 +373,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s -h\n"
+	fprintf(stderr, "usage: %s -h\n"
 			"       %s -C\n"
 			"       %s -c <event> command [options] ...\n",
 	    getprogname(), getprogname(), getprogname());

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.5 2003/07/26 19:46:34 salo Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.6 2004/01/05 23:23:33 jmmv Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1829,7 +1829,7 @@ main(int ac, char **av)
 {
 	size_t i;
 	if (ac != 3) {
-		fprintf(stderr, "Usage: %s filesystem new-size\n",
+		fprintf(stderr, "usage: %s filesystem new-size\n",
 		    getprogname());
 		exit(1);
 	}

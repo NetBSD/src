@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.9 2003/07/13 08:05:58 itojun Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.10 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.9 2003/07/13 08:05:58 itojun Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.10 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 
 
@@ -349,7 +349,7 @@ list_timers(void)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s\n", getprogname());
+	fprintf(stderr, "usage: %s\n", getprogname());
 	fprintf(stderr, "       %s -k [-A] [-p seconds] timer\n",
 	    getprogname());
 	fprintf(stderr, "       %s -u [-A] [-p seconds] timer\n",

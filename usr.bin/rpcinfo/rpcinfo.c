@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.18 2003/10/21 02:24:59 fvdl Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.19 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1534,7 +1534,7 @@ progping(netid, argc, argv)
 static void
 usage()
 {
-	fprintf(stderr, "Usage: rpcinfo [-m | -s] [host]\n");
+	fprintf(stderr, "usage: rpcinfo [-m | -s] [host]\n");
 #ifdef PORTMAP
 	fprintf(stderr, "       rpcinfo -p [host]\n");
 #endif

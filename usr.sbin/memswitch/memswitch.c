@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.7 2003/07/13 12:28:14 itojun Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.8 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ int main __P((int, char*[]));
 void
 usage(void)
 {
-	fprintf (stderr, "Usage: %s -a\n", progname);
+	fprintf (stderr, "usage: %s -a\n", progname);
 	fprintf (stderr, "       %s [-h] variable ...\n", progname);
 	fprintf (stderr, "       %s -w variable=value ...\n", progname);
 	fprintf (stderr, "       %s [-rs] filename\n", progname);

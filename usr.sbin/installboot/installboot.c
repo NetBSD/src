@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.13 2003/05/08 20:33:44 petrov Exp $	*/
+/*	$NetBSD: installboot.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.13 2003/05/08 20:33:44 petrov Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -506,9 +506,9 @@ usage(void)
 
 	prog = getprogname();
 	fprintf(stderr,
-"Usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
+"usage: %s [-nv] [-m machine] [-o options] [-t fstype]\n"
 "\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
-"Usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
+"usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
 	    prog, prog);
 	machine_usage();
 	fstype_usage();

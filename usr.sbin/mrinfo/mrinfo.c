@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.22 2003/05/16 23:10:15 dsl Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.23 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.22 2003/05/16 23:10:15 dsl Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.23 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 #endif
 
@@ -308,7 +308,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: mrinfo [-n] [-t timeout] [-r retries] [router]\n");
+	    "usage: mrinfo [-n] [-t timeout] [-r retries] [router]\n");
 	exit(1);
 }
 

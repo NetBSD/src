@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.23 2004/01/04 03:34:00 jschauma Exp $ */
+/* $NetBSD: chio.c,v 1.24 2004/01/05 23:23:32 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.23 2004/01/04 03:34:00 jschauma Exp $");
+__RCSID("$NetBSD: chio.c,v 1.24 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -850,7 +850,7 @@ usage(void)
 {
 	int i;
 
-	(void)fprintf(stderr, "Usage: %s command arg1 arg2 ...\n",
+	(void)fprintf(stderr, "usage: %s command arg1 arg2 ...\n",
 	    getprogname());
 
 	(void)fprintf(stderr, "Where command (and args) are:\n");

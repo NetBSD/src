@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.73 2003/11/21 21:47:42 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.74 2004/01/05 23:23:32 jmmv Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.73 2003/11/21 21:47:42 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.74 2004/01/05 23:23:32 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -559,7 +559,7 @@ usage(void)
 {
 	int indent = 7 + (int)strlen(getprogname()) + 1;
 
-	(void)fprintf(stderr, "Usage: %s [-afiluvBS] "
+	(void)fprintf(stderr, "usage: %s [-afiluvBS] "
 		"[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
 		"[-s id/start/size[/bootmenu]]] \\\n"

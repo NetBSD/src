@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.23 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.23 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ main(ac, av)
 	    break;
 	default:
 	usage:
-	    fprintf(stderr, "Usage: mklocale [-d] [-o output] [source]\n");
+	    fprintf(stderr, "usage: mklocale [-d] [-o output] [source]\n");
 	    exit(1);
 	}
     }

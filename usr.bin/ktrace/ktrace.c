@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.29 2003/11/24 16:53:38 manu Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.29 2003/11/24 16:53:38 manu Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ usage()
 # define SHRT_OPTION ""
 #endif
 	(void)fprintf(stderr,
-	    "Usage:\t%s [-aCcid%s] %s[-f trfile] [-g pgid] [-p pid] "
+	    "usage:\t%s [-aCcid%s] %s[-f trfile] [-g pgid] [-p pid] "
 	    "[-t [Aaceilmnsuvw+]]\n\t%s [-aCcid%s] %s[-f trfile] [-t "
 	    "[Aaceilmnsuvw+]] command\n",
 	    getprogname(), SHRT_OPTION, LONG_OPTION,

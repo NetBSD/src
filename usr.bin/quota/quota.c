@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.27 2003/09/21 17:01:43 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.28 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.27 2003/09/21 17:01:43 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.28 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ usage()
 {
 
 	fprintf(stderr, "%s\n%s\n%s\n",
-	    "Usage: quota [-guqv]",
+	    "usage: quota [-guqv]",
 	    "\tquota [-qv] -u username ...",
 	    "\tquota [-qv] -g groupname ...");
 	exit(1);
