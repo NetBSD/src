@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.14 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.15 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -327,6 +327,7 @@ ka43_conf(parent, self, aux)
 }
 
 
+extern caddr_t le_iomem;
 /*
  * The interface for communication with the LANCE ethernet controller
  * is setup in the xxx_steal_pages() routine. We decrease highest
@@ -339,11 +340,6 @@ ka43_steal_pages()
 	extern	vaddr_t avail_start;
 	int	val;
 
-        /* Interrupt vector number in interrupt mask table */
-        inr_ni = VS3100_NI;
-        inr_sr = VS3100_SR;
-        inr_st = VS3100_ST;
-        inr_vf = VS3100_VF;
 
         /*
          * Oh holy shit! It took me over one year(!) to find out that

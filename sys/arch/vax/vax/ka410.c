@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.16 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.17 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -149,16 +149,12 @@ ka410_mchk(addr)
 	return 0;
 }
 
+extern caddr_t le_iomem;
+
 void
 ka410_steal_pages()
 {
 	extern	vaddr_t avail_start;
-
-	/* Interrupt vector number in interrupt mask table */
-	inr_ni = VS3100_NI;
-	inr_sr = VS3100_SR;
-	inr_st = VS3100_ST;
-	inr_vf = VS3100_VF;
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 }

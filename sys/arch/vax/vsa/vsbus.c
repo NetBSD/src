@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.15 1999/03/09 12:57:58 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.16 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,26 +66,20 @@
 int	vsbus_match	__P((struct device *, struct cfdata *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));
 int	vsbus_print	__P((void *, const char *));
+int	vsbus_search	__P((struct device *, struct cfdata *, void *));
 
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
 
-static	struct vs_cpu *vs_cpu;
-
-#define VSBUS_MAXINTR	8
-
 struct	vsbus_softc {
 	struct	device sc_dev;
-	struct	ivec_dsp sc_dsp[VSBUS_MAXINTR];
+	volatile struct vs_cpu *sc_cpu;
+	u_char	sc_mask;	/* Interrupts to enable after autoconf */
 };
 
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
 };
-
-void	vsbus_intr_setup __P((struct vsbus_softc *));
-
-#define VSBUS_MAXDEVS	8
 
 int
 vsbus_print(aux, name)
@@ -94,11 +88,9 @@ vsbus_print(aux, name)
 {
 	struct vsbus_attach_args *va = aux;
 
-	if (name) {
-		printf ("device %d at %s", va->va_type, name);
-		return (UNSUPP);
-	}
-	return (UNCONF); 
+	printf(" csr 0x%lx vec %o ipl %x maskbit %x", va->va_paddr,
+	    va->va_cvec & 511, va->va_br, va->va_maskno - 1);
+	return(UNCONF); 
 }
 
 int
@@ -126,132 +118,108 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
-	struct	vsbus_attach_args va;
 
 	printf("\n");
 
-	vs_cpu = (void *)vax_map_physmem(VS_REGS, 1);
-	/*
-	 * first setup interrupt-table, so that devices can register
-	 * their interrupt-routines...
-	 */
-	vsbus_intr_setup(sc);
+	sc->sc_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 
+	/*
+	 * First: find which interrupts we won't care about.
+	 * There are interrupts that interrupt on a periodic basic
+	 * that we don't want to interfere with the rest of the 
+	 * interrupt probing.
+	 */
+	sc->sc_cpu->vc_intmsk = 0;
+	sc->sc_cpu->vc_intclr = 0xff;
+	DELAY(1000000); /* Wait a second */
+	sc->sc_mask = sc->sc_cpu->vc_intreq;
+	printf("%s: interrupt mask %x\n", self->dv_xname, sc->sc_mask);
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
-	/* Always have network */
-	va.va_type = inr_ni;
-	config_found(self, &va, vsbus_print);
+	config_search(vsbus_search, self, NULL);
 
-	/* Always have serial line */
-	va.va_type = inr_sr;
-	config_found(self, &va, vsbus_print);
-
-	/* XXX - Detecting smg on 4000 VLC crashes, SCSI is 53c94 */
-	if (vax_boardtype == VAX_BTYP_48)
-		return;
-
-	/* If sm_addr is set, a monochrome graphics adapter is found */
-	/* XXX - fixa! */
-	va.va_type = inr_vf;
-	config_found(self, &va, vsbus_print);
-
-	/* XXX - Avoid searching for SCSI on 4000/60 */
-	if (vax_boardtype == VAX_BTYP_46)
-		return;
-
-	/*
-	 * Check for mass storage devices. This is tricky :-/
-	 * VS2K always has both MFM and SCSI.
-	 * VS3100 has either MFM/SCSI, SCSI/SCSI or neither of them.
-	 * The device registers are at different places for them all.
-	 */
-	if (vax_boardtype == VAX_BTYP_410) {
-#ifdef notyet
-		va.va_type = inr_dc;
-		config_found(self, &va, vsbus_print);
-#endif
-		va.va_type = 0x200C0080;
-		config_found(self, &va, vsbus_print);
-		return;
-	}
-
-	if ((vax_confdata & KA420_CFG_STCMSK) == KA420_CFG_NONE)
-		return; /* No ctlrs */
-
-	/* Ok, we have at least one scsi ctlr */
-	va.va_type = 0x200C0080;
-	config_found(self, &va, vsbus_print);
-
-#ifdef notyet
-	/* The last one is MFM or SCSI */
-	if ((vax_confdata & KA420_CFG_STCMSK) == KA420_CFG_RB) {
-		va.va_type = inr_dc;
-		config_found(self, &va, vsbus_print);
-	} else {
-		va.va_type = 0x200C0180;
-		config_found(self, &va, vsbus_print);
-	}
-#endif
+	/* Autoconfig finished, enable interrupts */
+	sc->sc_cpu->vc_intmsk = ~sc->sc_mask;
 }
 
-static	void stray __P((int));
-
-static void
-stray(arg)
-	int arg;
+int
+vsbus_search(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	printf("stray interrupt nr %d.\n", arg);
+	struct	vsbus_softc *sc = (void *)parent;
+	struct	vsbus_attach_args va;
+	int i, vec, br;
+	u_char c;
+
+	va.va_paddr = cf->cf_loc[0];
+	va.va_addr = vax_map_physmem(va.va_paddr, 1);
+
+	sc->sc_cpu->vc_intmsk = 0;
+	sc->sc_cpu->vc_intclr = 0xff;
+	scb_vecref(0, 0); /* Clear vector ref */
+
+	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
+	vax_unmap_physmem(va.va_addr, 1);
+	c = sc->sc_cpu->vc_intreq & ~sc->sc_mask;
+	if (i > 10)
+		c = sc->sc_mask; /* Fooling interrupt */
+	if (c == 0 || i == 0)
+		goto forgetit;
+
+	sc->sc_cpu->vc_intmsk = c;
+	DELAY(100);
+	sc->sc_cpu->vc_intmsk = 0;
+	va.va_maskno = ffs((u_int)c);
+	i = scb_vecref(&vec, &br);
+	if (i == 0)
+		goto fail;
+	if (vec == 0)
+		goto fail;
+
+	scb_vecalloc(vec, va.va_ivec, cf->cf_unit, SCB_ISTACK);
+	va.va_br = br;
+	va.va_cvec = vec;
+
+	config_attach(parent, cf, &va, vsbus_print);
+	return 0;
+
+fail:
+	printf("%s%d at %s csr %x %s\n",
+	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
+forgetit:
+	return 0;
 }
 
-static int inrs[] = {IVEC_DC, IVEC_SC, IVEC_VS, IVEC_VF,
-		IVEC_NS, IVEC_NP, IVEC_ST, IVEC_SR};
-
-void
-vsbus_intr_setup(sc)
-	struct vsbus_softc *sc;
+/*
+ * Sets a new interrupt mask. Returns the old one.
+ * Works like spl functions.
+ */
+unsigned char
+vsbus_setmask(mask)
+	unsigned char mask;
 {
-	extern struct ivec_dsp idsptch;		/* subr.s */
-	void **scbP = (void*)scb;
-	int i;
+	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	unsigned char ch;
 
-	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
-	vs_cpu->vc_intclr = 0xFF;	/* clear all old interrupts */
-
-	for (i = 0; i < VSBUS_MAXINTR; i++) {
-		bcopy(&idsptch, &sc->sc_dsp[i], sizeof(struct ivec_dsp));
-		sc->sc_dsp[i].hoppaddr = stray;
-		sc->sc_dsp[i].pushlarg = i;
-		scbP[inrs[i]/4] = &sc->sc_dsp[i];
-	}
+	ch = sc->sc_cpu->vc_intmsk;
+	sc->sc_cpu->vc_intmsk = mask;
+	return ch;
 }
 
+/*
+ * Clears the interrupts in mask.
+ */
 void
-vsbus_intr_attach(nr, func, arg)
-	int nr;
-	void (*func)(int);
-	int arg;
+vsbus_clrintr(mask)
+	unsigned char mask;
 {
 	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
 
-	sc->sc_dsp[nr].hoppaddr = func;
-	sc->sc_dsp[nr].pushlarg = arg;
-}
-
-void
-vsbus_intr_enable(nr)
-	int nr;
-{
-	vs_cpu->vc_intclr = (1<<nr);
-	vs_cpu->vc_intmsk |= (1<<nr);
-}
-
-void
-vsbus_intr_disable(nr)
-	int nr;
-{
-	vs_cpu->vc_intmsk = vs_cpu->vc_intmsk & ~(1<<nr);
+	sc->sc_cpu->vc_intclr = mask;
 }
 
 #ifdef notyet

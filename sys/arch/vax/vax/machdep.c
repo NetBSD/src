@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.72 1999/02/27 06:39:38 scottr Exp $	 */
+/* $NetBSD: machdep.c,v 1.73 1999/03/13 15:16:48 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -506,9 +506,9 @@ consinit()
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-		extern void ksym_init(int *, int *);
-		ksym_init(&end, esym);
-//		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+//		extern void ksym_init(int *, int *);
+//		ksym_init(&end, esym);
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef donotworkbyunknownreason
 	if (boothowto & RB_KDB)
@@ -902,7 +902,7 @@ vax_map_physmem(phys, size)
 	printf("vax_map_physmem: alloc'ed %d pages for paddr %lx, at %lx\n",
 	    size, phys, addr);
 #endif
-	return addr;
+	return addr | (phys & PGOFSET);
 }
 
 /*
@@ -919,6 +919,6 @@ vax_unmap_physmem(addr, size)
 	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
 	    size, addr);
 #endif
-	rmfree(iomap, pageno, size);
+	rmfree(iomap, size, pageno);
 	iounaccess(addr, size);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.14 1999/03/09 11:43:13 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.15 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -144,16 +144,27 @@ smg_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct	vsbus_attach_args *va = aux;
+	struct vsbus_attach_args *va = aux;
+	volatile short *curcmd = (short *)va->va_addr;
+	volatile short *cfgtst = (short *)vax_map_physmem(VS_CFGTST, 1);
+	short tmp, tmp2;
 
-	if (va->va_type != inr_vf)
-		return 0;
+	/*
+	 * Try to find the cursor chip by testing the flip-flop.
+	 * If nonexistent, no glass tty.
+	 */
+	curcmd[0] = 0x7fff;
+	DELAY(300000);
+	tmp = cfgtst[0];
+	curcmd[0] = 0x8000;
+	DELAY(300000);
+	tmp2 = cfgtst[0];
+	vax_unmap_physmem((vaddr_t)cfgtst, 1);
 
-	if (sm_addr == 0)
-		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
-	if (sm_addr == 0)
+	if (tmp2 != tmp)
+		return 20; /* Using periodic interrupt */
+	else
 		return 0;
-	return 1;
 }
 
 void
@@ -164,6 +175,11 @@ smg_attach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args aa;
 
 	printf("\n");
+	sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
+	if (sm_addr == 0) {
+		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
+		return;
+	}
 	curscr = &smg_conscreen;
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;

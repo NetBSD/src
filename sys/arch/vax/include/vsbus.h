@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.6 1999/02/02 18:37:22 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.7 1999/03/13 15:16:47 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,60 +36,27 @@
  * Generic definitions for the (virtual) vsbus. contains common info
  * used by all VAXstations.
  */
-struct confargs {
-	char	ca_name[16];		/* device name */
-	int	ca_intslot;		/* device interrupt-slot */
-	int	ca_intpri;		/* device interrupt "priority" */
-	int	ca_intvec;		/* interrup-vector offset */
-	int	ca_intbit;		/* bit in interrupt-register */
-	int	ca_ioaddr;		/* device hardware I/O address */
-
-	int	ca_aux1;		/* additional info (DMA, etc.) */
-	int	ca_aux2;
-	int	ca_aux3;
-	int	ca_aux4;
-	int	ca_aux5;
-	int	ca_aux6;
-	int	ca_aux7;
-	int	ca_aux8;
-
-#define ca_recvslot	ca_intslot	/* DC/DZ: Receiver configuration */
-#define ca_recvpri	ca_intpri
-#define ca_recvvec	ca_intvec
-#define ca_recvbit	ca_intbit
-#define ca_xmitslot	ca_aux1		/* DC/DZ: transmitter configuration */
-#define ca_xmitpri	ca_aux2		/* DC/DZ:  */
-#define ca_xmitvec	ca_aux3
-#define ca_xmitbit	ca_aux4
-#define ca_dcflags	ca_aux5
-
-#define ca_dareg	ca_aux1		/* SCSI: DMA address register */
-#define ca_dcreg	ca_aux2		/* SCSI: DMA byte count register */
-#define ca_ddreg	ca_aux3		/* SCSI: DMA transfer direction */
-#define ca_dbase	ca_aux4		/* SCSI: DMA buffer address */
-#define ca_dsize	ca_aux5		/* SCSI: DMA buffer size */
-#define ca_dflag	ca_aux6		/* SCSI: DMA flags (eg. shared) */
-#define ca_idval	ca_aux7		/* SCSI: host-ID to use/set */
-#define ca_idreg	ca_aux8		/* SCSI: host-ID port register */
-
-#define ca_enaddr	ca_aux1		/* LANCE: Ethernet address in ROM */
-#define ca_leflags	ca_aux2
-};
 
 struct	vsbus_attach_args {
-	int va_type;
+	vaddr_t	va_addr;		/* virtual CSR address */
+	paddr_t	va_paddr;		/* physical CSR address */
+	void	(*va_ivec) __P((int));	/* Interrupt routine */
+	short	va_br;			/* Interrupt level */
+	short	va_cvec;		/* Interrupt vector address */
+	u_char	va_maskno;		/* Interrupt vector in mask */
 };
 
 /*
  * Some chip addresses and constants, same on all VAXstations.
  */
+#define VS_CFGTST	0x20020000      /* config register */
+#define VS_REGS         0x20080000      /* Misc cpu internal regs */
 #define NI_ADDR         0x20090000      /* Ethernet address */
 #define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
 #define VS_CLOCK        0x200b0000      /* clock chip address */
 #define SCA_REGS        0x200c0000      /* disk device addresses */
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
-#define VS_REGS         0x20080000      /* Misc cpu internal regs */
 
 /*
  * Small monochrome graphics framebuffer, present on all machines.
@@ -97,38 +64,5 @@ struct	vsbus_attach_args {
 #define	SMADDR		0x30000000
 #define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
 
-/*
- * interrupt vector numbers
- */
-#define IVEC_BASE       0x20040020
-#define IVEC_SR         0x000002C0
-#define IVEC_ST         0x000002C4
-#define IVEC_NP         0x00000250
-#define IVEC_NS         0x00000254
-#define IVEC_VF         0x00000244
-#define IVEC_VS         0x00000248
-#define IVEC_SC         0x000003F8
-#define IVEC_DC         0x000003FC
-
-/*
- * Interrupt mask bits.
- */
-#define	VS3100_SR	7
-#define	VS3100_ST	6
-#define	VS3100_NI	5
-#define	VS3100_VF	3
-
-#define	VS4000_SR	5
-#define	VS4000_ST	4
-#define	VS4000_NI	1
-
-caddr_t le_iomem; /* base addr of RAM -- CPU's view */
-int	inr_ni, inr_sr, inr_st, inr_vf; /* Interrupt register bit */
-
-void vsbus_intr_enable __P((int));
-void vsbus_intr_disable  __P((int));
-void vsbus_intr_attach __P((int, void(*)(int), int));
-
-int vsbus_lockDMA __P((struct confargs *));
-int vsbus_unlockDMA __P((struct confargs *));
-
+u_char	vsbus_setmask __P((unsigned char));
+void	vsbus_clrintr __P((unsigned char));
