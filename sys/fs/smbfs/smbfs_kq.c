@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.3 2003/04/07 12:04:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.3 2003/04/07 12:04:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $"
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/file.h>
+#include <sys/dirent.h>
 
 #include <machine/limits.h>
 
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $"
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_subr.h>
+#include <netsmb/smb_rq.h>
 
 #include <fs/smbfs/smbfs.h>
 #include <fs/smbfs/smbfs_node.h>
@@ -69,34 +71,51 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.2 2003/03/24 06:39:51 jdolecek Exp $"
 
 #include <miscfs/genfs/genfs.h>
 
+/*
+ * The maximum of outstanding SMB requests is 65536, since the
+ * message id is 16bit. Don't consume all. If there is more
+ * than 30k directory notify requests, fall back to polling mode.
+ */
+#define DNOTIFY_MAX	30000
+
 struct kevq {
-	SLIST_ENTRY(kevq)	kev_link;
+	SLIST_ENTRY(kevq)	kev_link;	/* link on kevlist */
+	SLIST_ENTRY(kevq)	k_link;		/* link on poll/dn list */
+
 	struct vnode		*vp;
 	u_int			usecount;
 	u_int			flags;
 #define KEVQ_BUSY	0x01	/* currently being processed */
 #define KEVQ_WANT	0x02	/* want to change this entry */
+#define KEVQ_DNOT	0x04	/* kevent using NT directory change notify */
 	struct timespec		omtime;	/* old modification time */
 	struct timespec		octime;	/* old change time */
 	nlink_t			onlink;	/* old number of references to file */
+	struct smb_rq		*rq;	/* request structure */
 };
-SLIST_HEAD(kevqlist, kevq);
 
-static struct lock smbfskevq_lock;
-static struct proc *psmbfskq;
-static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
+static struct proc *smbkqp;		/* the kevent handler */
+static struct smb_cred smbkq_scred;
 
-void
-smbfs_kqinit(void)
-{
-	lockinit(&smbfskevq_lock, PSOCK, "smbkqlck", 0, 0);
-}
+static struct simplelock smbkq_lock = SIMPLELOCK_INITIALIZER;
+					/* guard access to k*evlist */
+static SLIST_HEAD(, kevq) kevlist = SLIST_HEAD_INITIALIZER(kevlist);
+static SLIST_HEAD(, kevq) kplist = SLIST_HEAD_INITIALIZER(kplist);
+static SLIST_HEAD(, kevq) kdnlist = SLIST_HEAD_INITIALIZER(kdnlist);
+
+static int dnot_num = 0;		/* number of active dir notifications */
+static u_int32_t kevs;
+
+static void smbfskq_dirnotify(void *);
 
 /*
- * This quite simplistic routine periodically checks for server changes
- * of any of the watched files every NFS_MINATTRTIME/2 seconds.
+ * This routine periodically checks server for change
+ * of any of the watched files every SMBFS_MINATTRTIME/2 seconds.
  * Only changes in size, modification time, change time and nlinks
  * are being checked, everything else is ignored.
+ * Directory events are watched via NT DIRECTORY CHANGE NOTIFY
+ * if the server supports it.
+ *
  * The routine only calls VOP_GETATTR() when it's likely it would get
  * some new data, i.e. when the vnode expires from attrcache. This
  * should give same result as periodically running stat(2) from userland,
@@ -113,12 +132,15 @@ smbfs_kqpoll(void *arg)
 	struct kevq *ke;
 	struct vattr attr;
 	int error;
-	struct proc *p = psmbfskq;
+	struct proc *p = smbkqp;
 	u_quad_t osize;
+	int needwake;
 
 	for(;;) {
-		lockmgr(&smbfskevq_lock, LK_EXCLUSIVE, NULL);
-		SLIST_FOREACH(ke, &kevlist, kev_link) {
+		simple_lock(&smbkq_lock);
+
+		/* check all entries on poll list for changes */
+		SLIST_FOREACH(ke, &kplist, k_link) {
 			/* skip if still in attrcache */
 			if (smbfs_attr_cachelookup(ke->vp, &attr) != ENOENT)
 				continue;
@@ -128,14 +150,17 @@ smbfs_kqpoll(void *arg)
 			 * for changes.
 			 */
 			ke->flags |= KEVQ_BUSY;
-			lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
+			simple_unlock(&smbkq_lock);
 
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
 			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
-			if (error)
+			if (error) {
+				/* relock and proceed with next */
+				simple_lock(&smbkq_lock);
 				continue;
+			}
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -161,7 +186,7 @@ smbfs_kqpoll(void *arg)
 				ke->onlink = attr.va_nlink;
 			}
 
-			lockmgr(&smbfskevq_lock, LK_EXCLUSIVE, NULL);
+			simple_lock(&smbkq_lock);
 			ke->flags &= ~KEVQ_BUSY;
 			if (ke->flags & KEVQ_WANT) {
 				ke->flags &= ~KEVQ_WANT;
@@ -169,59 +194,132 @@ smbfs_kqpoll(void *arg)
 			}
 		}
 
-		if (SLIST_EMPTY(&kevlist)) {
-			/* Nothing more to watch, exit */
-			psmbfskq = NULL;
-			lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
-			kthread_exit(0);
+		/* Exit if there are no more kevents to watch for */
+		if (kevs == 0) {
+			smbkqp = NULL;
+			simple_unlock(&smbkq_lock);
+			break;
 		}
-		lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
+
+		/* only wake periodically if poll list is nonempty */
+		needwake = !SLIST_EMPTY(&kplist);
 
 		/* wait a while before checking for changes again */
-		tsleep(psmbfskq, PSOCK, "smbkqpw",
-			SMBFS_ATTRTIMO * hz / 2);
+		error = ltsleep(smbkqp, PSOCK, "smbkqidl",
+			needwake ? (SMBFS_ATTRTIMO * hz / 2) : 0, &smbkq_lock);
 
+		if (!error) {
+			/* woken up, check if any pending notifications */
+			while (!SLIST_EMPTY(&kdnlist)) {
+				int s, hint;
+
+				s = splnet();
+				ke = SLIST_FIRST(&kdnlist);
+				SLIST_REMOVE_HEAD(&kdnlist, k_link);
+				SLIST_NEXT(ke, k_link) = NULL;
+				splx(s);
+
+				error = smbfs_smb_nt_dirnotify_fetch(ke->rq,
+				    &hint);
+				ke->rq = NULL;	/* rq deallocated by now */
+				if (error) {
+					/*
+					 * if there is error, switch to
+					 * polling for this one
+					 */
+					ke->flags &= KEVQ_DNOT;
+					SLIST_INSERT_HEAD(&kplist, ke, k_link);
+					continue;
+				}
+
+				VN_KNOTE(ke->vp, hint);
+
+				/* reissue the notify request */
+				(void) smbfs_smb_nt_dirnotify_setup(
+				    VTOSMB(ke->vp),
+				    &ke->rq, &smbkq_scred,
+				    smbfskq_dirnotify, ke);
+			}
+		}
 	}
+
+	kthread_exit(0);
+}
+
+static void
+smbfskq_dirnotify(void *arg)
+{
+	struct kevq *ke = arg;
+
+	if (SLIST_NEXT(ke, k_link)) {
+		/* already on notify list */
+		return;
+	}
+
+	SLIST_INSERT_HEAD(&kdnlist, ke, k_link);
+	wakeup(smbkqp);
 }
 
 static void
 filt_smbfsdetach(struct knote *kn)
 {
-	struct vnode *vp = (struct vnode *)kn->kn_hook;
-	struct kevq *ke;
+	struct kevq *ke = (struct kevq *)kn->kn_hook;
+	struct smb_rq *rq = NULL;
 
 	/* XXXLUKEM lock the struct? */
-	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&ke->vp->v_klist, kn, knote, kn_selnext);
 
 	/* Remove the vnode from watch list */
-	lockmgr(&smbfskevq_lock, LK_EXCLUSIVE, NULL);
-	SLIST_FOREACH(ke, &kevlist, kev_link) {
-		if (ke->vp == vp) {
-			while (ke->flags & KEVQ_BUSY) {
-				ke->flags |= KEVQ_WANT;
-				lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
-				(void) tsleep(ke, PSOCK, "smbkqdet", 0);
-				lockmgr(&smbfskevq_lock, LK_EXCLUSIVE, NULL);
-			}
+	simple_lock(&smbkq_lock);
 
-			if (ke->usecount > 1) {
-				/* keep, other kevents need this */
-				ke->usecount--;
-			} else {
-				/* last user, g/c */
-				SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-				FREE(ke, M_KEVENT);
-			}
-			break;
-		}
+	/* the handler does something to it, wait */
+	while (ke->flags & KEVQ_BUSY) {
+		ke->flags |= KEVQ_WANT;
+		ltsleep(ke, PSOCK, "smbkqdw", 0, &smbkq_lock);
 	}
-	lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
+
+	if (ke->usecount > 1) {
+		/* keep, other kevents need this */
+		ke->usecount--;
+	} else {
+		/* last user, g/c */
+		if (ke->flags & KEVQ_DNOT) {
+			dnot_num--;
+			rq = ke->rq;
+
+			/* If on dirnotify list, remove */
+			if (SLIST_NEXT(ke, k_link))
+				SLIST_REMOVE(&kdnlist, ke, kevq, k_link);
+		} else
+			SLIST_REMOVE(&kplist, ke, kevq, k_link);
+		SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
+		FREE(ke, M_KEVENT);
+	}
+	kevs--;
+
+	simple_unlock(&smbkq_lock);
+
+	/* If there was request still pending, cancel it now */
+	if (rq) {
+		smb_iod_removerq(rq);
+
+		/*
+		 * Explicitly cancel the request, so that server can
+		 * free directory change notify resources.
+		 */
+		smbfs_smb_ntcancel(SSTOCP(rq->sr_share), rq->sr_mid,
+		    &smbkq_scred);
+
+		/* Free */
+		smb_rq_done(rq);
+	}
 }
 
 static int
 filt_smbfsread(struct knote *kn, long hint)
 {
-	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct kevq *ke = (struct kevq *)kn->kn_hook;
+	struct vnode *vp = ke->vp;
 
 	/*
 	 * filesystem is gone, so set the EOF flag and schedule
@@ -233,7 +331,7 @@ filt_smbfsread(struct knote *kn, long hint)
 	}
 
 	/* There is no size info for directories */
-	if (((struct vnode *)kn->kn_hook)->v_type == VDIR) {
+	if (vp->v_type == VDIR) {
 		/*
 		 * This is kind of hackish, since we need to
 		 * set the flag when we are called with the hint
@@ -245,10 +343,10 @@ filt_smbfsread(struct knote *kn, long hint)
 		 */
 		if (hint & NOTE_WRITE) {
 			kn->kn_fflags |= NOTE_WRITE;
-			return (1);
+			return (1 * sizeof(struct dirent));
 		} else if (hint == 0 && (kn->kn_fflags & NOTE_WRITE)) {
 			kn->kn_fflags &= ~NOTE_WRITE;
-			return (1);
+			return (1 * sizeof(struct dirent));
 		} else
 			return (0);
 	}
@@ -283,15 +381,15 @@ smbfs_kqfilter(void *v)
 		struct vnode	*a_vp;
 		struct knote	*a_kn;
 	} */ *ap = v;
-	struct vnode *vp;
-	struct knote *kn;
-	struct kevq *ke;
+	struct vnode *vp = ap->a_vp;
+	struct knote *kn = ap->a_kn;
+	struct kevq *ke, *ken;
 	int error = 0;
 	struct vattr attr;
 	struct proc *p = curproc;	/* XXX */
+	int dnot;
+	struct smb_vc *vcp = SSTOVC(VTOSMB(vp)->n_mount->sm_share);
 
-	vp = ap->a_vp;
-	kn = ap->a_kn;
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &smbfsread_filtops;
@@ -303,14 +401,15 @@ smbfs_kqfilter(void *v)
 		return (1);
 	}
 
-	kn->kn_hook = vp;
-
-	/* XXXLUKEM lock the struct? */
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+	/* Find out if we can use directory change notify for this file */
+	dnot = (vp->v_type == VDIR
+	    && (SMB_CAPS(vcp) & SMB_CAP_NT_SMBS)
+	    && dnot_num < DNOTIFY_MAX);
 
 	/*
 	 * Put the vnode to watched list.
 	 */
+	kevs++;
 	
 	/*
 	 * Fetch current attributes. It's only needed when the vnode
@@ -320,16 +419,26 @@ smbfs_kqfilter(void *v)
 	memset(&attr, 0, sizeof(attr));
 	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
 
-	lockmgr(&smbfskevq_lock, LK_EXCLUSIVE, NULL);
-
-	/* ensure the poller is running */
-	if (!psmbfskq) {
-		error = kthread_create1(smbfs_kqpoll, NULL, &psmbfskq,
-				"smbkqpoll");
-		if (error)
-			goto out;
+	/* ensure the handler is running */
+	if (!smbkqp) {
+		error = kthread_create1(smbfs_kqpoll, NULL, &smbkqp,
+				"smbkq");
+		smb_makescred(&smbkq_scred, smbkqp, smbkqp->p_ucred);
+		if (error) {
+			kevs--;
+			return (error);
+		}
 	}
 
+	/*
+	 * Allocate new kev. It's more probable it will be needed,
+	 * and the malloc is cheaper than scanning possibly
+	 * large kevlist list second time after malloc.
+	 */
+	MALLOC(ken, struct kevq *, sizeof(struct kevq), M_KEVENT, M_WAITOK);
+
+	/* Check the list and insert new entry */
+	simple_lock(&smbkq_lock);
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
 		if (ke->vp == vp)
 			break;
@@ -338,24 +447,45 @@ smbfs_kqfilter(void *v)
 	if (ke) {
 		/* already watched, so just bump usecount */
 		ke->usecount++;
+		FREE(ken, M_KEVENT);	/* dispose, don't need */
 	} else {
 		/* need a new one */
-		MALLOC(ke, struct kevq *, sizeof(struct kevq), M_KEVENT,
-			M_WAITOK);
+		ke = ken;
 		ke->vp = vp;
 		ke->usecount = 1;
-		ke->flags = 0;
+		ke->flags = (dnot) ? KEVQ_DNOT : 0;
 		ke->omtime = attr.va_mtime;
 		ke->octime = attr.va_ctime;
 		ke->onlink = attr.va_nlink;
+
+		if (dnot) {
+			/* If directory notify, queue request for execution */
+			SLIST_NEXT(ke, k_link) = NULL;
+
+			error = smbfs_smb_nt_dirnotify_setup(VTOSMB(vp),
+			    &ke->rq, &smbkq_scred, smbfskq_dirnotify, ke);
+			if (error) {
+				kevs--;
+				FREE(ke, M_KEVENT);
+				return (error);
+			}
+			dnot_num++;
+		} else {
+			/* add to poll list */
+			SLIST_INSERT_HEAD(&kplist, ke, k_link);
+		}
+
 		SLIST_INSERT_HEAD(&kevlist, ke, kev_link);
+
+		/* kick the handler */
+		wakeup(smbkqp);
 	}
 
-	/* kick the poller */
-	wakeup(psmbfskq);
+	/* XXXLUKEM lock the struct? */
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+	kn->kn_hook = ke;
 
-    out:
-	lockmgr(&smbfskevq_lock, LK_RELEASE, NULL);
+	simple_unlock(&smbkq_lock);
 
-	return (error);
+	return (0);
 }
