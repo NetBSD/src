@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.36 2001/02/19 22:22:17 cgd Exp $	*/
+/*	$NetBSD: malloc.c,v 1.37 2001/05/03 15:35:12 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -333,6 +333,13 @@ extend_pgdir(size_t idx)
 {
     struct  pginfo **new, **old;
     size_t newlen, oldlen;
+
+    /* check for overflow */
+    if ((((~(1UL << ((sizeof(size_t) * NBBY) - 1)) / sizeof(*page_dir)) + 1)
+	+ (malloc_pagesize / sizeof *page_dir)) < idx) {
+	errno = ENOMEM;
+	return 0;
+    }
 
     /* Make it this many pages */
     newlen = pageround(idx * sizeof *page_dir) + malloc_pagesize;
