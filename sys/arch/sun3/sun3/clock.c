@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 1997/03/05 19:00:07 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 1997/03/18 22:21:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -73,7 +73,6 @@
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
-static void frob_leds __P((void));
 
 static volatile void *intersil_va;
 
@@ -269,7 +268,7 @@ setstatclockrate(newhz)
 /*
  * This is is called by the "custom" interrupt handler.
  * Note that we can get ZS interrupts while this runs,
- * and those may touch the interrupt_reg, so we have to
+ * and zshard may touch the interrupt_reg, so we must
  * be careful to use the single_inst_* macros to modify
  * the interrupt register atomically.
  */
@@ -292,23 +291,7 @@ clock_intr(cf)
 	hardclock(&cf);
 
 	/* Entertainment! */
-	frob_leds();
-}
-
-static void
-frob_leds()
-{
-	static unsigned char led_pattern = 0xFE;
-	extern int ticks;
-
-	if ((ticks & 7) != 0)
-		return;
-
-	/* XXX - Move this LED frobbing to the idle loop? */
-	led_pattern = (led_pattern << 1) | 1;
-	if (led_pattern == 0xFF)
-		led_pattern = 0xFE;
-	set_control_byte((char *) DIAG_REG, led_pattern);
+	leds_intr();
 }
 
 
