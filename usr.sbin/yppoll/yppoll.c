@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.12 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.13 2003/12/10 17:10:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -38,10 +38,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by John Brezak.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -60,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.12 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.13 2003/12/10 17:10:34 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
