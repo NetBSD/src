@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.6 2003/01/28 14:43:18 jdolecek Exp $
+#	$NetBSD: tc.mi,v 1.7 2003/07/26 14:22:37 he Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -10,6 +10,8 @@
 ./usr/include/g++/algobase.h			comp-cxx-include
 ./usr/include/g++/algorithm			comp-cxx-include
 ./usr/include/g++/alloc.h			comp-cxx-include
+./usr/include/g++/backward			comp-cxx-include
+./usr/include/g++/bits				comp-cxx-include
 ./usr/include/g++/bitset			comp-cxx-include
 ./usr/include/g++/builtinbuf.h			comp-cxx-include
 ./usr/include/g++/bvector.h			comp-cxx-include
@@ -38,6 +40,7 @@
 ./usr/include/g++/deque.h			comp-cxx-include
 ./usr/include/g++/editbuf.h			comp-cxx-include
 ./usr/include/g++/exception			comp-cxx-include
+./usr/include/g++/ext				comp-cxx-include
 ./usr/include/g++/floatio.h			comp-cxx-include
 ./usr/include/g++/fstream			comp-cxx-include
 ./usr/include/g++/fstream.h			comp-cxx-include
