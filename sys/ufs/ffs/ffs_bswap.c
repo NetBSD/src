@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.1 1998/03/18 15:57:27 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.2 1998/06/08 17:59:08 ragge Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -34,8 +34,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
