@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2002/03/16 16:55:53 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2002/03/18 22:46:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -189,7 +189,7 @@ bdev_decl(sw);
 #include "isdntel.h"
 #else
 #define	NISDN	0
-#define	ISDNCTL	0
+#define	NISDNCTL	0
 #define	NISDNTRC	0
 #define	NISDNBCHAN	0
 #define	NISDNTEL	0
