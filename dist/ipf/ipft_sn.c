@@ -1,7 +1,7 @@
-/*	$NetBSD: ipft_sn.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: ipft_sn.c,v 1.1.1.2 2000/05/03 10:55:48 veego Exp $	*/
 
 /*
- * Copyright (C) 1993-1998 by Darren Reed.
+ * Copyright (C) 1993-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -39,7 +39,7 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipft_sn.c,v 2.1 1999/08/04 17:30:04 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_sn.c,v 2.2 2000/03/13 22:10:24 darrenr Exp";
 #endif
 
 struct	llc	{

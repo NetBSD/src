@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.1.1.1 1999/12/11 22:23:59 veego Exp $	*/
+/*	$NetBSD: relay.c,v 1.1.1.2 2000/05/03 10:55:55 veego Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -105,6 +105,7 @@ char *argv[];
 {
 	struct	sockaddr_in	sin;
 	natlookup_t	nl;
+	natlookup_t	*nlp = &nl;
 	int	fd, sl = sizeof(sl), se;
 
 	openlog(argv[0], LOG_PID|LOG_NDELAY, LOG_DAEMON);
@@ -144,7 +145,7 @@ char *argv[];
 		nl.nl_outport = sin.sin_port;
 	}
 
-	if (ioctl(fd, SIOCGNATL, &nl) == -1) {
+	if (ioctl(fd, SIOCGNATL, &nlp) == -1) {
 		se = errno;
 		perror("ioctl");
 		errno = se;
