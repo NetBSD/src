@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.35 1997/12/01 08:41:48 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.36 1998/04/16 09:02:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.35 1997/12/01 08:41:48 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.36 1998/04/16 09:02:56 kleink Exp $");
 #endif
 
 #include <stdio.h>
@@ -1235,7 +1235,7 @@ pr_icmph(struct icmp *icp,
 			break;
 		case ICMP_UNREACH_NEEDFRAG:
 			(void)printf("frag needed and DF set.  Next MTU=%d",
-			       icp->icmp_nextmtu);
+			       ntohs(icp->icmp_nextmtu));
 			break;
 		case ICMP_UNREACH_SRCFAIL:
 			(void)printf("Source Route Failed");
