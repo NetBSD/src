@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.23 1998/08/14 16:50:03 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.24 1998/09/22 03:58:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,8 +91,12 @@
  * If we ever support processor numbers higher than 63, we'll have to
  * rethink the CPU mask.
  *
- * XXX When we support multiple processors, pm_asn and pm_asngen need
- * XXX to be per-processor.
+ * Note pm_asn and pm_asngen are arrays allocated in pmap_create().
+ * Their size is based on the PCS count from the HWRPB, and indexed
+ * by processor ID (from `whami').
+ *
+ * The kernel pmap is a special case; it gets statically-allocated
+ * arrays which hold enough for ALPHA_MAXPROCS.
  */
 struct pmap {
 	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
@@ -102,8 +106,8 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_nlev2;	/* level 2 pt page count */
 	long			pm_nlev3;	/* level 3 pt page count */
-	unsigned int		pm_asn;		/* address space number */
-	unsigned long		pm_asngen;	/* ASN generation number */
+	unsigned int		*pm_asn;	/* address space number */
+	unsigned long		*pm_asngen;	/* ASN generation number */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 };
 
@@ -199,7 +203,7 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 paddr_t vtophys __P((vaddr_t));
 
 /* Machine-specific functions. */
-void	pmap_bootstrap __P((paddr_t ptaddr, u_int maxasn));
+void	pmap_bootstrap __P((paddr_t ptaddr, u_int maxasn, u_long ncpuids));
 void	pmap_emulate_reference __P((struct proc *p, vaddr_t v,
 		int user, int write));
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
