@@ -1,4 +1,4 @@
-/*	$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $	*/
+/*	$NetBSD: wwrint.c,v 1.5 1997/11/21 08:37:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,14 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwrint.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $";
+__RCSID("$NetBSD: wwrint.c,v 1.5 1997/11/21 08:37:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <unistd.h>
 #include "ww.h"
 #include "tt.h"
 
@@ -60,7 +62,7 @@ static char rcsid[] = "$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $
 void
 wwrint()
 {
-	register n;
+	int n;
 
 	wwnread++;
 	n = read(0, wwibq, wwibe - wwibq);

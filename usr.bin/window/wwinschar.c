@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinschar.c,v 1.4 1996/02/08 21:49:09 mycroft Exp $	*/
+/*	$NetBSD: wwinschar.c,v 1.5 1997/11/21 08:37:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,22 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwinschar.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwinschar.c,v 1.4 1996/02/08 21:49:09 mycroft Exp $";
+__RCSID("$NetBSD: wwinschar.c,v 1.5 1997/11/21 08:37:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 
+void
 wwinschar(w, row, col, c, m)
-register struct ww *w;
-char c, m;
+	struct ww *w;
+	int row, col;
+	char c, m;
 {
-	register i;
+	int i;
 	int nvis;
 	short x = c | m << WWC_MSHIFT;
 
@@ -59,7 +63,7 @@ char c, m;
 	 * First, shift the line.
 	 */
 	{
-		register union ww_char *p, *q;
+		union ww_char *p, *q;
 
 		p = &w->ww_buf[row][w->ww_b.r];
 		q = p - 1;
@@ -82,10 +86,10 @@ char c, m;
 	 * Now find out how much is actually changed, and fix wwns.
 	 */
 	{
-		register union ww_char *buf;
-		register char *win;
-		register union ww_char *ns;
-		register unsigned char *smap;
+		union ww_char *buf;
+		char *win;
+		union ww_char *ns;
+		unsigned char *smap;
 		char touched;
 
 		nvis = 0;
@@ -119,7 +123,7 @@ char c, m;
 	 * Can/Should we use delete character?
 	 */
 	if ((tt.tt_inschar || tt.tt_insspace) && nvis > (wwncol - col) / 2) {
-		register union ww_char *p, *q;
+		union ww_char *p, *q;
 
 		if (tt.tt_inschar)
 			xxinschar(row, col, c, m);

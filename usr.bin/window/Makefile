@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/20 03:58:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 1997/11/21 08:35:41 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-WARNS=	0
 PROG=	window
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	context.c error.c lcmd.c lcmd1.c lcmd2.c main.c mloop.c parser1.c \

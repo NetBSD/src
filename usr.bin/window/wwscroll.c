@@ -1,4 +1,4 @@
-/*	$NetBSD: wwscroll.c,v 1.3 1995/09/28 10:35:53 tls Exp $	*/
+/*	$NetBSD: wwscroll.c,v 1.4 1997/11/21 08:37:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,23 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwscroll.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwscroll.c,v 1.3 1995/09/28 10:35:53 tls Exp $";
+__RCSID("$NetBSD: wwscroll.c,v 1.4 1997/11/21 08:37:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 
+void
 wwscroll(w, n)
-register struct ww *w;
-int n;
+	struct ww *w;
+	int n;
 {
-	register dir;
-	register top;
+	int dir;
+	int top;
 
 	if (n == 0)
 		return;
@@ -83,12 +86,13 @@ int n;
  * Don't adjust ww_scroll.
  * And don't redraw 'leaveit' lines.
  */
+int
 wwscroll1(w, row1, row2, dir, leaveit)
-register struct ww *w;
-int row1, row2, dir;
-int leaveit;
+	struct ww *w;
+	int row1, row2, dir;
+	int leaveit;
 {
-	register i;
+	int i;
 	int row1x, row2x;
 	int nvis;
 	int nvismax;
@@ -123,8 +127,8 @@ int leaveit;
 	if (nvis < nvismax / 2)
 		goto no_scroll;		/* not worth it */
 	if ((dir > 0 ? tt.tt_scroll_down == 0 : tt.tt_scroll_up == 0) ||
-	    (tt.tt_scroll_top != row1x || tt.tt_scroll_bot != row2x - 1) &&
-	    tt.tt_setscroll == 0)
+	    ((tt.tt_scroll_top != row1x || tt.tt_scroll_bot != row2x - 1) &&
+	    tt.tt_setscroll == 0))
 		if (tt.tt_delline == 0 || tt.tt_insline == 0)
 			goto no_scroll;
 	xxscroll(dir, row1x, row2x);
@@ -133,8 +137,8 @@ int leaveit;
 	 * Fix up the old screen.
 	 */
 	{
-		register union ww_char *tmp;
-		register union ww_char **cpp, **cqq;
+		union ww_char *tmp;
+		union ww_char **cpp, **cqq;
 
 		if (dir > 0) {
 			cpp = &wwos[row1x];
@@ -165,8 +169,8 @@ no_scroll:
 		 */
 		if (dir > 0) {
 			{
-				register union ww_char *tmp;
-				register union ww_char **cpp, **cqq;
+				union ww_char *tmp;
+				union ww_char **cpp, **cqq;
 
 				cpp = &wwns[row1x];
 				cqq = cpp + 1;
@@ -176,7 +180,7 @@ no_scroll:
 				*cpp = tmp;
 			}
 			if (scrolled) {
-				register char *p, *q;
+				char *p, *q;
 
 				p = &wwtouched[row1x];
 				q = p + 1;
@@ -184,7 +188,7 @@ no_scroll:
 					*p++ = *q++;
 				*p |= WWU_TOUCHED;
 			} else {
-				register char *p;
+				char *p;
 
 				p = &wwtouched[row1x];
 				for (i = row2x - row1x; --i >= 0;)
@@ -194,8 +198,8 @@ no_scroll:
 			wwredrawwin1(w, row2x - 1, row2 - leaveit, dir);
 		} else {
 			{
-				register union ww_char *tmp;
-				register union ww_char **cpp, **cqq;
+				union ww_char *tmp;
+				union ww_char **cpp, **cqq;
 
 				cpp = &wwns[row2x];
 				cqq = cpp - 1;
@@ -205,7 +209,7 @@ no_scroll:
 				*cqq = tmp;
 			}
 			if (scrolled) {
-				register char *p, *q;
+				char *p, *q;
 
 				p = &wwtouched[row2x];
 				q = p - 1;
@@ -213,7 +217,7 @@ no_scroll:
 					*--p = *--q;
 				*q |= WWU_TOUCHED;
 			} else {
-				register char *p;
+				char *p;
 
 				p = &wwtouched[row1x];
 				for (i = row2x - row1x; --i >= 0;)
@@ -224,7 +228,7 @@ no_scroll:
 		}
 	} else {
 		if (scrolled) {
-			register char *p;
+			char *p;
 
 			p = &wwtouched[row1x];
 			for (i = row2x - row1x; --i >= 0;)

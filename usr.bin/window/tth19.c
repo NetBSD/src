@@ -1,4 +1,4 @@
-/*	$NetBSD: tth19.c,v 1.3 1995/09/28 10:34:47 tls Exp $	*/
+/*	$NetBSD: tth19.c,v 1.4 1997/11/21 08:36:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tth19.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: tth19.c,v 1.3 1995/09/28 10:34:47 tls Exp $";
+__RCSID("$NetBSD: tth19.c,v 1.4 1997/11/21 08:36:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +78,7 @@ extern struct tt_str *gen_VE;
 int h19_msp10c;
 
 #define PAD(ms10) { \
-	register i; \
+	int i; \
 	for (i = ((ms10) + 5) / h19_msp10c; --i >= 0;) \
 		ttputc('\0'); \
 }
@@ -86,10 +87,27 @@ int h19_msp10c;
 
 #define H19_SETINSERT(m) ttesc((tt.tt_insert = (m)) ? '@' : 'O')
 
+void	h19_clear __P((void));
+void	h19_clreol __P((void));
+void	h19_clreos __P((void));
+void	h19_delchar __P((int));
+void	h19_delline __P((int));
+void	h19_end __P((void));
+void	h19_inschar __P((char));
+void	h19_insline __P((int));
+void	h19_move __P((int, int));
+void	h19_putc __P((char));
+void	h19_scroll_up __P((int));
+void	h19_scroll_down __P((int));
+void	h19_setmodes __P((int));
+void	h19_start __P((void));
+void	h19_write __P((char *, int));
+
+void
 h19_setmodes(new)
-register new;
+	int new;
 {
-	register diff;
+	int diff;
 
 	diff = new ^ tt.tt_modes;
 	if (diff & WWM_REV)
@@ -99,7 +117,9 @@ register new;
 	tt.tt_modes = new;
 }
 
+void
 h19_insline(n)
+	int n;
 {
 	while (--n >= 0) {
 		ttesc('L');
@@ -107,7 +127,9 @@ h19_insline(n)
 	}
 }
 
+void
 h19_delline(n)
+	int n;
 {
 	while (--n >= 0) {
 		ttesc('M');
@@ -115,8 +137,9 @@ h19_delline(n)
 	}
 }
 
+void
 h19_putc(c)
-register char c;
+	char c;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);
@@ -127,9 +150,10 @@ register char c;
 		tt.tt_col = NCOL - 1;
 }
 
+void
 h19_write(p, n)
-register char *p;
-register n;
+	char *p;
+	int n;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);
@@ -141,8 +165,9 @@ register n;
 		tt.tt_col = NCOL - 1;
 }
 
+void
 h19_move(row, col)
-register char row, col;
+	int row, col;
 {
 	if (tt.tt_row == row) {
 		if (tt.tt_col == col)
@@ -182,6 +207,7 @@ out:
 	tt.tt_row = row;
 }
 
+void
 h19_start()
 {
 	if (gen_VS)
@@ -193,6 +219,7 @@ h19_start()
 	tt.tt_nmodes = tt.tt_modes = 0;
 }
 
+void
 h19_end()
 {
 	if (tt.tt_insert)
@@ -202,23 +229,27 @@ h19_end()
 	ttesc('v');
 }
 
+void
 h19_clreol()
 {
 	ttesc('K');
 }
 
+void
 h19_clreos()
 {
 	ttesc('J');
 }
 
+void
 h19_clear()
 {
 	ttesc('E');
 }
 
+void
 h19_inschar(c)
-register char c;
+	char c;
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);
@@ -231,26 +262,33 @@ register char c;
 		tt.tt_col = NCOL - 1;
 }
 
+void
 h19_delchar(n)
+	int n;
 {
 	while (--n >= 0)
 		ttesc('N');
 }
 
+void
 h19_scroll_down(n)
+	int n;
 {
 	h19_move(NROW - 1, 0);
 	while (--n >= 0)
 		ttctrl('j');
 }
 
+void
 h19_scroll_up(n)
+	int n;
 {
 	h19_move(0, 0);
 	while (--n >= 0)
 		ttesc('I');
 }
 
+int
 tt_h19()
 {
 	float cpms = (float) wwbaud / 10000;	/* char per ms */

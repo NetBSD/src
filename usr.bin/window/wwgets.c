@@ -1,4 +1,4 @@
-/*	$NetBSD: wwgets.c,v 1.6 1996/02/08 20:45:08 mycroft Exp $	*/
+/*	$NetBSD: wwgets.c,v 1.7 1997/11/21 08:37:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,27 +36,30 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwgets.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwgets.c,v 1.6 1996/02/08 20:45:08 mycroft Exp $";
+__RCSID("$NetBSD: wwgets.c,v 1.7 1997/11/21 08:37:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <string.h>
 #include "ww.h"
 #include "char.h"
-#include <string.h>
 
+static void rub __P((int, struct ww *));
+
+void
 wwgets(buf, n, w)
-char *buf;
-int n;
-register struct ww *w;
+	char *buf;
+	int n;
+	struct ww *w;
 {
-	register char *p = buf;
-	register int c;
+	char *p = buf;
+	int c;
 	int uc = ISSET(w->ww_wflags, WWW_UNCTRL);
-	static void rub();
 
 	CLR(w->ww_wflags, WWW_UNCTRL);
 	for (;;) {
@@ -107,9 +110,10 @@ register struct ww *w;
 
 static void
 rub(c, w)
-struct ww *w;
+	int c;
+	struct ww *w;
 {
-	register i;
+	int i;
 
 	for (i = strlen(unctrl(c)); --i >= 0;)
 		(void) wwwrite(w, "\b \b", 3);

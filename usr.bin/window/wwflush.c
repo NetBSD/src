@@ -1,4 +1,4 @@
-/*	$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $	*/
+/*	$NetBSD: wwflush.c,v 1.6 1997/11/21 08:37:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $";
+__RCSID("$NetBSD: wwflush.c,v 1.6 1997/11/21 08:37:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
 #include "ww.h"
 #include "tt.h"
-#include <sys/signal.h>
+#include "xx.h"
 
+void
 wwflush()
 {
-	register row, col;
+	int row, col;
 
 	if ((row = wwcursorrow) < 0)
 		row = 0;
@@ -68,6 +73,7 @@ wwflush()
 		xxflush(1);
 }
 
+void
 wwcheckpoint()
 {
 	sigset_t sigset, osigset;
@@ -102,18 +108,20 @@ wwcheckpoint()
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }
 
+void
 wwcopyscreen(s1, s2)
-	register union ww_char **s1, **s2;
+	union ww_char **s1, **s2;
 {
-	register i;
-	register s = wwncol * sizeof **s1;
+	int i;
+	int s = wwncol * sizeof **s1;
 
 	for (i = wwnrow; --i >= 0;)
-		bcopy((char *) *s1++, (char *) *s2++, s);
+		memmove((char *) *s2++, (char *) *s1++, s);
 }
 
 void
-wwalarm()
+wwalarm(dummy)
+	int dummy;
 {
 	wwdocheckpoint = 1;
 }

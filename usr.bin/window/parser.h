@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.3 1995/09/28 10:34:29 tls Exp $	*/
+/*	$NetBSD: parser.h,v 1.4 1997/11/21 08:36:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,6 @@
  *	@(#)parser.h	8.1 (Berkeley) 6/6/93
  */
 
-#include "value.h"
 #include "context.h"
 #include "token.h"
 #include "string.h"
@@ -47,3 +46,20 @@
 #define p_synerred()	(cx.x_synerred)
 #define p_clearerr()	(cx.x_erred = cx.x_synerred = 0)
 #define p_abort()	(cx.x_abort)
+
+int	p_assign __P((char *, struct value *, int));
+int	p_convstr __P((struct value *v));
+void	p_error __P((const char *msg, ...));
+int	p_expr __P((struct value *, char));
+int	p_expr0 __P((struct value *, char));
+int	p_expr1 __P((struct value *, char));
+int	p_expr11 __P((struct value *, char));
+int	p_expr12 __P((struct value *, char));
+int	p_expr2 __P((struct value *, char));
+int	p_expr3_10 __P((int, struct value *, char));
+int	p_expression __P((char));
+int	p_function __P((char *, struct value *, int));
+int	p_if __P((char));
+int	p_statement __P((char));
+void	p_statementlist __P((char));
+void	p_synerror __P((void));

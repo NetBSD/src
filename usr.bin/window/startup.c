@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.4 1996/02/08 20:45:04 mycroft Exp $	*/
+/*	$NetBSD: startup.c,v 1.5 1997/11/21 08:36:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,20 +36,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: startup.c,v 1.4 1996/02/08 20:45:04 mycroft Exp $";
+__RCSID("$NetBSD: startup.c,v 1.5 1997/11/21 08:36:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "defs.h"
-#include "value.h"
 #include "var.h"
 #include "char.h"
 #include "local.h"
 
+int
 doconfig()
 {
 	char buf[100];
@@ -59,7 +61,7 @@ doconfig()
 	if ((home = getenv("HOME")) == 0)
 		home = ".";
 	(void) sprintf(buf, "%.*s/%s",
-		(sizeof buf - sizeof runcom) / sizeof (char) - 1,
+		(int)((sizeof buf - sizeof runcom) / sizeof (char) - 1),
 		home, runcom);
 	return dosource(buf);
 }
@@ -67,10 +69,11 @@ doconfig()
 /*
  * The default is two windows of equal size.
  */
+void
 dodefault()
 {
 	struct ww *w;
-	register r = wwnrow / 2 - 1;
+	int r = wwnrow / 2 - 1;
 
 	if (openwin(1, r + 2, 0, wwnrow - r - 2, wwncol, default_nline,
 	    (char *) 0, WWT_PTY, WWU_HASFRAME, default_shellfile,
@@ -83,6 +86,7 @@ dodefault()
 	wwprintf(w, "Escape character is %s.\r\n", unctrl(escapec));
 }
 
+void
 setvars()
 {
 	/* try to use a random ordering to balance the tree */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $	*/
+/*	$NetBSD: parser2.c,v 1.4 1997/11/21 08:36:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,14 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $";
+__RCSID("$NetBSD: parser2.c,v 1.4 1997/11/21 08:36:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include "defs.h"
 #include "parser.h"
 #include "var.h"
 #include "lcmd.h"
@@ -53,23 +55,25 @@ static char rcsid[] = "$NetBSD: parser2.c,v 1.3 1995/09/28 10:34:32 tls Exp $";
  * name == 0 means we don't have a function name but
  * want to parse the arguments anyway.  flag == 0 in this case.
  */
+int
 p_function(name, v, flag)
-char *name;
-register struct value *v;
+	char *name;
+	struct value *v;
+	int flag;
 {
 	struct value t;
-	register struct lcmd_tab *c = 0;
-	register struct alias *a = 0;
-	register struct lcmd_arg *ap;		/* this arg */
+	struct lcmd_tab *c = 0;
+	struct alias *a = 0;
+	struct lcmd_arg *ap;			/* this arg */
 	struct lcmd_arg *lp = 0;		/* list arg */
-	register i;
+	int i;
 	struct value av[LCMD_NARG + 1];
-	register struct value *vp;
+	struct value *vp;
 
 	if (name != 0)
-		if (c = lcmd_lookup(name))
+		if ((c = lcmd_lookup(name)))
 			name = c->lc_name;
-		else if (a = alias_lookup(name))
+		else if ((a = alias_lookup(name)))
 			name = a->a_name;
 		else {
 			p_error("%s: No such command or alias.", name);
@@ -95,8 +99,8 @@ register struct value *v;
 		}
 		if (token != T_ASSIGN) {
 			if (i >= LCMD_NARG ||
-			    c != 0 && (ap = lp) == 0 &&
-			    (ap = c->lc_arg + i)->arg_name == 0) {
+			    (c != 0 && (ap = lp) == 0 &&
+			    (ap = c->lc_arg + i)->arg_name == 0)) {
 				p_error("%s: Too many arguments.", name);
 				flag = 0;
 			} else
@@ -156,10 +160,10 @@ register struct value *v;
 				vp = 0;
 			} else if (t.v_type == V_ERR) {
 				/* do nothing */
-			} else if ((ap->arg_flags&ARG_TYPE) == ARG_NUM &&
-				   t.v_type != V_NUM ||
-				   (ap->arg_flags&ARG_TYPE) == ARG_STR &&
-				   t.v_type != V_STR) {
+			} else if (((ap->arg_flags&ARG_TYPE) == ARG_NUM &&
+				    t.v_type != V_NUM) ||
+				   ((ap->arg_flags&ARG_TYPE) == ARG_STR &&
+				   t.v_type != V_STR)) {
 				if (*ap->arg_name)
 					p_error("%s: Argument %d (%s) type mismatch.",
 						name, vp - av + 1,
@@ -212,10 +216,11 @@ abort:
 	return -1;
 }
 
+int
 p_assign(name, v, flag)
-char *name;
-struct value *v;
-char flag;
+	char *name;
+	struct value *v;
+	char flag;
 {
 	(void) s_gettok();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdelete.c,v 1.4 1996/02/08 21:49:01 mycroft Exp $	*/
+/*	$NetBSD: wwdelete.c,v 1.5 1997/11/21 08:37:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwdelete.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwdelete.c,v 1.4 1996/02/08 21:49:01 mycroft Exp $";
+__RCSID("$NetBSD: wwdelete.c,v 1.5 1997/11/21 08:37:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,16 +50,17 @@ static char rcsid[] = "$NetBSD: wwdelete.c,v 1.4 1996/02/08 21:49:01 mycroft Exp
 /*
  * Pull w free from the cover list.
  */
+void
 wwdelete(w)
-register struct ww *w;
+	struct ww *w;
 {
-	register i;
+	int i;
 
 	for (i = w->ww_i.t; i < w->ww_i.b; i++) {
-		register j;
-		register unsigned char *smap = wwsmap[i];
-		register union ww_char *ns = wwns[i];
-		register int nchanged = 0;
+		int j;
+		unsigned char *smap = wwsmap[i];
+		union ww_char *ns = wwns[i];
+		int nchanged = 0;
 
 		for (j = w->ww_i.l; j < w->ww_i.r; j++)
 			if (smap[j] == w->ww_index) {
@@ -71,7 +73,7 @@ register struct ww *w;
 	}
 
 	{
-		register struct ww *wp;
+		struct ww *wp;
 
 		for (wp = w->ww_forw; wp != &wwhead; wp = wp->ww_forw)
 			wp->ww_order--;
@@ -86,8 +88,10 @@ register struct ww *w;
 	w->ww_forw = w->ww_back = 0;
 }
 
+void
 wwdelete1(w, t, b, l, r)
-register struct ww *w;
+	struct ww *w;
+	int t, b, l, r;
 {
 	int i;
 	int tt, bb, ll, rr;
@@ -105,11 +109,11 @@ again:
 		goto again;
 	}
 	for (i = tt; i < bb; i++) {
-		register j;
-		register unsigned char *smap = wwsmap[i];
-		register union ww_char *ns = wwns[i];
-		register char *win = w->ww_win[i];
-		register union ww_char *buf = w->ww_buf[i];
+		int j;
+		unsigned char *smap = wwsmap[i];
+		union ww_char *ns = wwns[i];
+		char *win = w->ww_win[i];
+		union ww_char *buf = w->ww_buf[i];
 		int nvis = w->ww_nvis[i];
 		int nchanged = 0;
 

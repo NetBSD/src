@@ -1,4 +1,4 @@
-/*	$NetBSD: parser1.c,v 1.3 1995/09/28 10:34:31 tls Exp $	*/
+/*	$NetBSD: parser1.c,v 1.4 1997/11/21 08:36:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,16 +36,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parser1.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parser1.c,v 1.3 1995/09/28 10:34:31 tls Exp $";
+__RCSID("$NetBSD: parser1.c,v 1.4 1997/11/21 08:36:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include "defs.h"
 #include "parser.h"
 
+void
 p_start()
 {
 	char flag = 1;
@@ -68,15 +71,17 @@ p_start()
 	}
 }
 
+void
 p_statementlist(flag)
-char flag;
+	char flag;
 {
 	for (; p_statement(flag) >= 0; p_clearerr())
 		;
 }
 
+int
 p_statement(flag)
-char flag;
+	char flag;
 {
 	switch (token) {
 	case T_EOL:
@@ -89,8 +94,9 @@ char flag;
 	}
 }
 
+int
 p_if(flag)
-char flag;
+	char flag;
 {
 	struct value t;
 	char true = 0;
@@ -143,12 +149,12 @@ top:
 	return -1;
 }
 
+int
 p_expression(flag)
-char flag;
+	char flag;
 {
 	struct value t;
 	char *cmd;
-	int p_function(), p_assign();
 
 	switch (token) {
 	case T_NUM:
@@ -189,8 +195,9 @@ char flag;
 	return 0;
 }
 
+int
 p_convstr(v)
-register struct value *v;
+	struct value *v;
 {
 	if (v->v_type != V_NUM)
 		return 0;
@@ -203,6 +210,7 @@ register struct value *v;
 	return 0;
 }
 
+void
 p_synerror()
 {
 	if (!cx.x_synerred) {
@@ -211,16 +219,29 @@ p_synerror()
 	}
 }
 
-/*VARARGS1*/
-p_error(msg, a, b, c)
-char *msg;
+void
+#if __STDC__
+p_error(const char *msg, ...)
+#else
+p_error(msg, ..)
+	char *msg;
+	va_dcl
+#endif
 {
+	va_list ap;
+#if __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
 	if (!cx.x_erred) {
 		cx.x_erred = 1;
-		error(msg, a, b, c);
+		verror(msg, ap);
 	}
+	va_end(ap);
 }
 
+void
 p_memerror()
 {
 	cx.x_erred = cx.x_abort = 1;

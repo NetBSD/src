@@ -1,4 +1,4 @@
-/*	$NetBSD: wwerror.c,v 1.3 1995/09/28 10:35:29 tls Exp $	*/
+/*	$NetBSD: wwerror.c,v 1.4 1997/11/21 08:37:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,22 +36,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwerror.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwerror.c,v 1.3 1995/09/28 10:35:29 tls Exp $";
+__RCSID("$NetBSD: wwerror.c,v 1.4 1997/11/21 08:37:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <errno.h>
+#include <string.h>
 #include "ww.h"
 
 char *
 wwerror()
 {
-	extern int errno;
-	char *strerror();
-
 	switch (wwerrno) {
 	case WWE_NOERR:
 		return "No error";
