@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.111 2001/01/20 01:05:53 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.112 2001/01/20 07:18:06 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -196,9 +196,12 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-
 locore.o: ${I386}/i386/locore.s assym.h
 	${NORMAL_S}
+
+apmcall.o in_cksum.o pnpbioscall.o: assym.h
+
+freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o svr4_sigcode.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
