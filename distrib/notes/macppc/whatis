@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.4 2001/07/05 05:03:02 mbw Exp $
+.\"	$NetBSD: whatis,v 1.5 2002/06/20 20:23:23 mbw Exp $
 .
-This is the second major release of
+This is the third major release of
 .Nx
 for the \*M platform, including the Apple iBook, iMac, PowerMacintosh, and
 PowerBook models, as well as clones.
@@ -13,18 +13,11 @@ See the supported hardware list for details.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-A simpler install procedure for models released after 1996, which have
-Open Firmware version 3 and only one hard drive.  The procedure described
-in this document will no longer render your drive unbootable on these models.
+Support for the some of the latest models.
 .It
-Migration to the ELF binary format from a.out.
-You can still use your pre-1.5 a.out applications, though.
+Support for the built-in AirPort/AirMac interface.
 .It
-Support for the latest laptop models which previously required a special
-ADB keyboard patch (the iBook, iBook SE, iBook (Dual USB), PowerBook
-(FireWire), and the PowerBook G4 (Titanium)).
-.It
-Support for the latest iMac machines, the iMac (Early 2001).
+Experimental support for the built-in audio on most models.
 .bullet)
 .Pp
 .Nx \*V
