@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2000/06/29 15:18:41 soren Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2000/10/05 02:36:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -69,9 +69,9 @@ cpu_attach(parent, self, aux)
 		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
 
 #if 1
-	config = mips3_read_config();
+	config = mips3_cp0_config_read();
 	config &= ~MIPS3_CONFIG_SC;
-	mips3_write_config(config);
+	mips3_cp0_config_write(config);
 #endif
 
 	printf(": ");
