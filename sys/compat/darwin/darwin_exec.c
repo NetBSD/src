@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.5 2002/11/26 23:54:10 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.6 2002/11/28 21:23:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.5 2002/11/26 23:54:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.6 2002/11/28 21:23:54 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ extern struct sysent darwin_sysent[];
 extern const char * const darwin_syscallnames[];
 #endif
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #else
-void mach_syscall_intern __P((struct proc *));
+void mach_syscall_intern(struct proc *);
 #endif
 
 const struct emul emul_darwin = {
