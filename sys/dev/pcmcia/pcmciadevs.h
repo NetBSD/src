@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.53 1999/10/27 19:10:58 is Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.54 1999/10/28 08:12:14 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.50 1999/10/27 19:10:02 is Exp 
+ *	NetBSD: pcmciadevs,v 1.52 1999/10/28 07:21:28 jun Exp 
  */
 
 /*-
@@ -334,6 +334,9 @@
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T	-1
 #define	PCMCIA_STR_COREGA_ETHER_II_PCC_T	"Corega"
+#define	PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX	{ "corega K.K.", "corega FastEther PCC-TX", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX	-1
+#define	PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX	"Corega"
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
 #define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
