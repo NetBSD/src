@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.6 1994/07/10 16:58:05 briggs Exp $
+ *	$Id: clock.c,v 1.7 1994/07/29 00:52:18 grantham Exp $
  */
 
 #if !defined(STANDALONE)
@@ -99,6 +99,8 @@ static int month_days[12] = {
 };
 
 #define DIFF19041970 2082844800
+#define DIFF19701990 630720000
+#define DIFF19702010 1261440000
 
 /*
  * Mac II machine-dependent clock routines.
@@ -298,6 +300,11 @@ u_long pramt_2_ugmt(u_long t)
    return(t = t - DIFF19041970 + tz.tz_minuteswest);
 }
 
+	/* time booter left MacOS ; default is 1990 */
+unsigned long macos_boottime = DIFF19701990;
+	/* BIAS in minutes from GMT */
+long macos_gmtbias = -300;
+
 /*
  * Set global GMT time register, using a file system time base for comparison
  * and sanity checking.
@@ -309,6 +316,14 @@ void inittodr(time_t base)
 
    pramtime = pram_readtime();
    timbuf = pramt_2_ugmt(pramtime);
+
+	/* Earlier than 1990 and later than 2010, assume PRAM was read */
+	/*  incorrectly. */
+   if(timbuf < DIFF19701990 || timbuf > DIFF19702010)
+      timbuf = macos_boottime;
+
+	/* GMT bias is passwd in from Booter */
+   timbuf += macos_gmtbias;
 
    if (base < 5*SECYR) {
       printf("WARNING: file system time earlier than 1975\n");
