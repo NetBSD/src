@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.28 1997/07/06 12:38:27 fvdl Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.29 1997/10/16 23:29:26 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1403,7 +1403,8 @@ vm_map_clean(map, start, end, syncio, invalidate)
 	}
 
 	/*
-	 * Make a first pass to check for holes.
+	 * Make a first pass to check for holes and (if invalidating)
+	 * wired pages.
 	 */
 	for (current = entry; current->start < end; current = current->next) {
 		if (current->is_sub_map) {
@@ -1415,6 +1416,10 @@ vm_map_clean(map, start, end, syncio, invalidate)
 		     current->end != current->next->start)) {
 			vm_map_unlock_read(map);
 			return(KERN_INVALID_ADDRESS);
+		}
+		if (current->wired_count) {
+			vm_map_unlock_read(map);
+			return(KERN_PAGES_LOCKED);
 		}
 	}
 

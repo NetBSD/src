@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.13 1997/10/16 23:29:31 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -124,6 +124,7 @@ extern int		page_shift;
 #define	KERN_RESOURCE_SHORTAGE	6
 #define	KERN_NOT_RECEIVER	7
 #define	KERN_NO_ACCESS		8
+#define	KERN_PAGES_LOCKED	9
 
 #ifndef ASSEMBLER
 /*
