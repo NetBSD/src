@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.17 1996/10/28 08:43:18 is Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.18 1996/10/30 08:11:21 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -152,7 +152,7 @@ const char *const mmcc_table[16] = {
 const char *const aregs[8] = {"a0","a1","a2","a3","a4","a5","a6","sp"};
 const char *const dregs[8] = {"d0","d1","d2","d3","d4","d5","d6","d7"};
 const char *const fpregs[8] = {
-	"fp7","fp6","fp5","fp4","fp3","fp2","fp1","fp0" };
+	"fp0","fp1","fp2","fp3","fp4","fp5","fp6","fp7" };
 const char *const fpcregs[3] = { "fpiar", "fpsr", "fpcr" };
 
 /*
@@ -2107,15 +2107,15 @@ print_freglist(dbuf, mod, rl, cntl)
 	regs = cntl ? fpcregs : fpregs;
 	upper = cntl ? 3 : 8;
 
-	if (!cntl && mod == AR_DEC) {
+	if (!cntl && mod != AR_DEC) {
 		list = rl;
 		rl = 0;
 		/* I am sure there is some trick... */
 		for (bit = 0; bit < upper; bit++)
 			if (list & (1 << bit)) 
-				rl |= 1 << (upper-bit-1);
+				rl |= (0x80 >> bit);
 	} 
-	for (bit = upper-1, list = 0; bit >= 0; bit--) {
+	for (bit = 0, list = 0; bit < upper; bit++) {
 		if (ISBITSET(rl,bit)) {
 			if (list == 0) {
 				addstr(dbuf, regs[bit]);
@@ -2130,14 +2130,14 @@ print_freglist(dbuf, mod, rl, cntl)
 		} else {
 			if (list) {
 				if (list > 1)
-					addstr(dbuf, regs[bit+1]);
+					addstr(dbuf, regs[bit-1]);
 				addchar('/');
 				list = 0;
 			}
 		}
 	}
 	if (list > 1)
-		addstr(dbuf, regs[0]);
+		addstr(dbuf, regs[upper-1]);
 
 	if (dbuf->casm[-1] == '/' || dbuf->casm[-1] == '-')
 		dbuf->casm--;
