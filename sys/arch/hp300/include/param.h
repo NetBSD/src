@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 1997/03/15 22:01:02 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.31 1997/04/01 03:03:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,9 +212,11 @@ extern	unsigned short hp300_impipl;
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-extern void _delay __P((u_int));
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
+
+int	spl0 __P((void));
+void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
 
 #ifdef COMPAT_HPUX
