@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.10 2004/04/30 23:58:05 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.11 2004/05/06 03:07:10 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.10 2004/04/30 23:58:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.11 2004/05/06 03:07:10 dyoung Exp $");
 #endif
 
 /*
@@ -91,11 +91,18 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.10 2004/04/30 23:58:05 dyoung Exp $"
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
+#ifdef __NetBSD__
+static int ieee80211_debug_nodenum;
+#endif /* __NetBSD__ */
+
 #ifdef __FreeBSD__
 SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 	    0, "IEEE 802.11 media debugging printfs");
 #endif
 #endif
+
+int	ieee80211_inact_max = IEEE80211_INACT_MAX;
+static int ieee80211_inact_max_nodenum;
 
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
 		enum ieee80211_phymode);
@@ -906,6 +913,90 @@ ieee80211_media2rate(int mword)
 	return 0;
 #undef N
 }
+
+#ifdef __NetBSD__
+/* TBD factor with sysctl_ath_verify. */
+static int
+sysctl_ieee80211_verify(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	IEEE80211_DPRINTF(("%s: t = %d, nodenum = %d, rnodenum = %d\n",
+	    __func__, t, node.sysctl_num, rnode->sysctl_num));
+
+	if (node.sysctl_num == ieee80211_inact_max_nodenum) {
+		if (t < 0)
+			return (EINVAL);
+#ifdef IEEE80211_DEBUG
+	} else if (node.sysctl_num == ieee80211_debug_nodenum) {
+		if (t < 0 || t > 2)
+			return (EINVAL);
+#endif /* IEEE80211_DEBUG */
+	} else
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+/*
+ * Setup sysctl(3) MIB, net.ieee80211.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
+{
+	int rc, ieee80211_node_num;
+	struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ieee80211_node_num = node->sysctl_num;
+
+#ifdef IEEE80211_DEBUG
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", NULL, sysctl_ieee80211_verify, 0, &ieee80211_debug, 0,
+	    CTL_NET, ieee80211_node_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ieee80211_debug_nodenum = node->sysctl_num;
+
+#endif /* IEEE80211_DEBUG */
+
+	/* control inactivity timer */
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "maxinact", NULL, sysctl_ieee80211_verify, 0, &ieee80211_inact_max,
+	    0, CTL_NET, ieee80211_node_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ieee80211_inact_max_nodenum = node->sysctl_num;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+#endif /* __NetBSD__ */
 
 #ifdef __FreeBSD__
 /*

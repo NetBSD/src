@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.6 2004/04/30 23:51:50 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -312,5 +312,7 @@ extern	int ieee80211_debug;
 #define	IEEE80211_DPRINTF(X)
 #define	IEEE80211_DPRINTF2(X)
 #endif
+
+extern	int ieee80211_inact_max;
 
 #endif /* _NET80211_IEEE80211_VAR_H_ */

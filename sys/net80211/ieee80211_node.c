@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.12 2004/05/01 01:49:03 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.13 2004/05/06 03:07:10 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.12 2004/05/01 01:49:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.13 2004/05/06 03:07:10 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -813,7 +813,7 @@ restart:
 		if (ni->ni_scangen == gen)	/* previously handled */
 			continue;
 		ni->ni_scangen = gen;
-		if (++ni->ni_inact > IEEE80211_INACT_MAX) {
+		if (++ni->ni_inact > ieee80211_inact_max) {
 			IEEE80211_DPRINTF(("station %s timed out "
 			    "due to inactivity (%u secs)\n",
 			    ether_sprintf(ni->ni_macaddr),
