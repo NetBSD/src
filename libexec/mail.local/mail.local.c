@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.19 2001/12/20 20:10:35 soren Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.20 2002/05/26 00:02:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.19 2001/12/20 20:10:35 soren Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.20 2002/05/26 00:02:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mail.local.c,v 1.19 2001/12/20 20:10:35 soren Exp $");
 #include <fcntl.h>
 #include <pwd.h>
 #include <netdb.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -305,28 +306,12 @@ usage()
 	err(FATAL, "usage: mail.local [-l] [-f from] user ...");
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#if __STDC__
 err(int isfatal, const char *fmt, ...)
-#else
-err(isfatal, fmt)
-	int isfatal;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	if (isfatal)
