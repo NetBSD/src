@@ -1,4 +1,4 @@
-/*	$KAME: sainfo.c,v 1.15 2001/11/16 04:12:59 sakane Exp $	*/
+/*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,15 +70,27 @@ static LIST_HEAD(_sitree, sainfo) sitree;
  * no matching entry found and if there is anonymous entry, return it.
  * else return NULL.
  * XXX by each data type, should be changed to compare the buffer.
+ * First pass is for sainfo from a specified peer, second for others.
  */
 struct sainfo *
-getsainfo(src, dst)
-	const vchar_t *src, *dst;
+getsainfo(src, dst, peer)
+	const vchar_t *src, *dst, *peer;
 {
 	struct sainfo *s = NULL;
 	struct sainfo *anonymous = NULL;
+	int pass = 1;
 
+	if (peer == NULL)
+		pass = 2;
+    again:
 	LIST_FOREACH(s, &sitree, chain) {
+		if (s->id_i != NULL) {
+			if (pass == 2)
+				continue;
+			if (memcmp(peer->v, s->id_i->v, s->id_i->l) != 0)
+				continue;
+		} else if (pass == 1)
+			continue;
 		if (s->idsrc == NULL) {
 			anonymous = s;
 			continue;
@@ -99,7 +111,11 @@ getsainfo(src, dst)
 	if (anonymous) {
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"anonymous sainfo selected.\n");
+	} else if (pass == 1) {
+		pass = 2;
+		goto again;
 	}
+
 	return anonymous;
 }
 
@@ -112,7 +128,6 @@ newsainfo()
 	if (new == NULL)
 		return NULL;
 
-	new->idvtype = IDTYPE_ADDRESS;
 	new->lifetime = IPSECDOI_ATTR_SA_LD_SEC_DEFAULT;
 	new->lifebyte = IPSECDOI_ATTR_SA_LD_KB_MAX;
 
@@ -214,11 +229,16 @@ sainfo2str(si)
 	static char buf[256];
 
 	if (si->idsrc == NULL)
-		return "anonymous";
+		snprintf(buf, sizeof(buf), "anonymous");
+	else {
+		snprintf(buf, sizeof(buf), "%s", ipsecdoi_id2str(si->idsrc));
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			" %s", ipsecdoi_id2str(si->iddst));
+	}
 
-	snprintf(buf, sizeof(buf), "%s", ipsecdoi_id2str(si->idsrc));
-	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		" %s", ipsecdoi_id2str(si->iddst));
+	if (si->id_i != NULL)
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			" from %s", ipsecdoi_id2str(si->id_i));
 
 	return buf;
 }

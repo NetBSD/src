@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.101 2002/07/17 03:43:38 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.106 2003/07/05 00:02:56 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -64,9 +64,9 @@ Parameters are specified with
 font.
 Square brackets
 .Po
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB
+.Ql \&]
 .Pc
 are used to show optional keywords and parameters.
 Note that
@@ -76,24 +76,24 @@ numbers.
 The
 .Ar port
 number is always enclosed by
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB .
+.Ql \&] .
 In this case, the port number is not an optional keyword.
 If it is possible to omit
 .Ar port
 number,
 the expression becomes
-.Bq Ic Bq Ar port .
+.Bq Bq Ar port .
 The vertical bar
 .Pq Ql \*(Ba
 is used to indicate
 a choice between optional parameters.
 Parentheses
 .Po
-.Ql \*(lP
+.Ql \&(
 and
-.Ql \*(rP
+.Ql \&)
 .Pc
 are used to group keywords and parameters when necessary.
 Major parameters are listed below.
@@ -114,9 +114,9 @@ means IPv6 and/or IPv4 address.
 .It Ar port
 means a TCP/UDP port number.
 The port number is always enclosed by
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB .
+.Ql \&] .
 .It Ar timeunit
 is one of following:
 .Ic sec , secs , second , seconds ,
@@ -238,7 +238,7 @@ All of the modes are acceptable.
 The first exchange mode is what racoon uses when it is the initiator.
 .\"
 .It Ic doi Ic ipsec_doi ;
-means to use IPSEC-DOI as specified RFC 2407.
+means to use IPsec DOI as specified RFC 2407.
 You can omit this statement.
 .\"
 .It Ic situation Ic identity_only ;
@@ -302,7 +302,7 @@ specifies a certificate specification.
 .Ar certspec
 is one of followings:
 .Bl -tag -width Ds -compact
-.It Ic x509 Ar certfile Ar privkeyfile;
+.It Ic x509 Ar certfile Ar privkeyfile ;
 .Ar certfile
 means a file name of certificate.
 .Ar privkeyfile
@@ -396,7 +396,7 @@ If PFS is required by both sides and if the responder's group is not equal to
 the initiator's one, then the responder will reject the proposal.
 .El
 .\"
-.It Ic support_mip6 (on \(ba off) ;
+.It Ic support_proxy (on \(ba off) ;
 If this value is set on then both values of ID payloads in phase 2 exchange
 are always used as the addresses of end-point of IPsec-SAs.
 The default is off.
@@ -444,7 +444,7 @@ is one of following:
 for oakley.
 For other transforms, this statement should not be used.
 .\"
-.It Ic hash_algorithm Ar algorithm;
+.It Ic hash_algorithm Ar algorithm ;
 define the hash algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
@@ -565,7 +565,7 @@ will compute the actual phase 2 proposals by computing
 the permutation of the specified algorithms,
 and then combining them with the security protocol specified by the SPD.
 For example, if
-.Ic des, 3des, hmac_md5,
+.Ic des , 3des , hmac_md5 ,
 and
 .Ic hmac_sha1
 are specified as algorithms, we have four combinations for use with ESP,
@@ -626,7 +626,8 @@ The default is off.
 .It Ic maximum_length Ar number ;
 define a maximum padding length.
 If
-.Ic randomize_length is off, this is ignored.
+.Ic randomize_length
+is off, this is ignored.
 The default is 20 bytes.
 .It Ic exclusive_tail (on \(ba off) ;
 means to put the number of pad bytes minus one into last part of the padding.
@@ -724,3 +725,8 @@ Yokogawa IPsec implementation.
 Some statements may not be handled by
 .Xr racoon 8
 yet.
+.\"
+.Sh SECURITY CONSIDERATIONS
+The use of IKE phase 1 aggressive mode is not recommended,
+as describved in
+.Li http://www.kb.cert.org/vuls/id/886601 .

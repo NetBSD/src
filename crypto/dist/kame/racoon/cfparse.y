@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.113 2002/09/27 05:55:52 itojun Exp $	*/
+/*	$KAME: cfparse.y,v 1.117 2003/06/27 07:32:37 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -135,7 +135,7 @@ static int fix_lifebyte __P((u_long));
 	/* algorithm */
 %token ALGORITHM_CLASS ALGORITHMTYPE STRENGTHTYPE
 	/* sainfo */
-%token SAINFO
+%token SAINFO FROM
 	/* remote */
 %token REMOTE ANONYMOUS
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
@@ -144,7 +144,7 @@ static int fix_lifebyte __P((u_long));
 %token DNSSEC CERT_X509
 %token NONCE_SIZE DH_GROUP KEEPALIVE PASSIVE INITIAL_CONTACT
 %token PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL
-%token GENERATE_POLICY SUPPORT_MIP6
+%token GENERATE_POLICY SUPPORT_PROXY
 %token PROPOSAL
 %token EXEC_PATH EXEC_COMMAND EXEC_SUCCESS EXEC_FAILURE
 %token GSSAPI_ID
@@ -219,7 +219,7 @@ special_statement
 
 	/* include */
 include_statement
-	:	INCLUDE QUOTEDSTRING
+	:	INCLUDE QUOTEDSTRING EOS
 		{
 			char path[MAXPATHLEN];
 
@@ -229,7 +229,6 @@ include_statement
 			if (yycf_switch_buffer(path) != 0)
 				return -1;
 		}
-		EOS
 	;
 
 	/* self infomation */
@@ -397,7 +396,7 @@ sainfo_statement
 				return -1;
 			}
 		}
-		sainfo_name BOC sainfo_specs
+		sainfo_name sainfo_peer BOC sainfo_specs
 		{
 			struct sainfo *check;
 
@@ -419,7 +418,9 @@ sainfo_statement
 			}
 
 			/* duplicate check */
-			check = getsainfo(cur_sainfo->idsrc, cur_sainfo->iddst);
+			check = getsainfo(cur_sainfo->idsrc,
+					  cur_sainfo->iddst,
+					  cur_sainfo->id_i);
 			if (check && (!check->idsrc && !cur_sainfo->idsrc)) {
 				yyerror("duplicated sainfo: %s",
 					sainfo2str(cur_sainfo));
@@ -516,6 +517,38 @@ sainfo_id
 			memcpy($$->v + sizeof(*id_b), $2->v, $2->l);
 		}
 	;
+sainfo_peer
+	:	/* nothing */
+		{
+			cur_sainfo->id_i = NULL;
+		}
+
+	|	FROM IDENTIFIERTYPE identifierstring
+		{
+			struct ipsecdoi_id_b *id_b;
+			vchar_t *idv;
+
+			if (set_identifier(&idv, $2, $3) != 0) {
+				yyerror("failed to set identifer.\n");
+				return -1;
+			}
+			cur_sainfo->id_i = vmalloc(sizeof(*id_b) + idv->l);
+			if (cur_sainfo->id_i == NULL) {
+				yyerror("failed to allocate identifier");
+				return -1;
+			}
+
+			id_b = (struct ipsecdoi_id_b *)cur_sainfo->id_i->v;
+			id_b->type = idtype2doi($2);
+
+			id_b->proto_id = 0;
+			id_b->port = 0;
+
+			memcpy(cur_sainfo->id_i->v + sizeof(*id_b),
+			       idv->v, idv->l);
+			vfree(idv);
+		}
+	;
 sainfo_specs
 	:	/* nothing */
 	|	sainfo_specs sainfo_spec
@@ -577,7 +610,7 @@ algorithm
 
 			$$ = newsainfoalg();
 			if ($$ == NULL) {
-				yyerror("failed to get algorithm alocation");
+				yyerror("failed to get algorithm allocation");
 				return -1;
 			}
 
@@ -805,7 +838,7 @@ remote_spec
 	|	KEEPALIVE { cur_rmconf->keepalive = TRUE; } EOS
 	|	PASSIVE SWITCH { cur_rmconf->passive = $2; } EOS
 	|	GENERATE_POLICY SWITCH { cur_rmconf->gen_policy = $2; } EOS
-	|	SUPPORT_MIP6 SWITCH { cur_rmconf->support_mip6 = $2; } EOS
+	|	SUPPORT_PROXY SWITCH { cur_rmconf->support_proxy = $2; } EOS
 	|	INITIAL_CONTACT SWITCH { cur_rmconf->ini_contact = $2; } EOS
 	|	PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL { cur_rmconf->pcheck_level = $2; } EOS
 	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
@@ -1324,7 +1357,7 @@ cfparse()
 
 	yycf_init_buffer();
 
-	if (yycf_set_buffer(lcconf->racoon_conf) != 0)
+	if (yycf_switch_buffer(lcconf->racoon_conf) != 0)
 		return -1;
 
 	prhead = NULL;
@@ -1366,7 +1399,7 @@ cfreparse()
 	clean_tmpalgtype();
 	yycf_init_buffer();
 
-	if (yycf_set_buffer(lcconf->racoon_conf) != 0)
+	if (yycf_switch_buffer(lcconf->racoon_conf) != 0)
 		return -1;
 
 	return(cfparse());

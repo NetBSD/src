@@ -1,4 +1,4 @@
-/*	$KAME: var.h,v 1.12 2001/11/13 12:38:51 jinmei Exp $	*/
+/*	$KAME: var.h,v 1.13 2003/05/17 18:18:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,9 +76,9 @@ do { \
 	if (getnameinfo((x), (x)->sa_len, (y), sizeof(y), (z), sizeof(z), \
 			NIFLAGS) != 0) { \
 		if (y) \
-			strncpy((y), "(invalid)", sizeof(y)); \
+			strlcpy((y), "(invalid)", sizeof(y)); \
 		if (z) \
-			strncpy((z), "(invalid)", sizeof(z)); \
+			strlcpy((z), "(invalid)", sizeof(z)); \
 	} \
 } while (0);
 

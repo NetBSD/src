@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.8,v 1.30 2002/04/26 02:53:11 itojun Exp $
+.\"	$KAME: racoon.8,v 1.31 2003/06/16 08:39:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -137,4 +137,7 @@ command first appeared in
 .Dq YIPS
 Yokogawa IPsec implementation.
 .\"
-.\".Sh BUGS
+.Sh SECURITY CONSIDERATIONS
+The use of IKE phase 1 aggressive mode is not recommended,
+as describved in
+.Li http://www.kb.cert.org/vuls/id/886601 .

@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.114 2002/06/10 20:01:21 itojun Exp $	*/
+/*	$KAME: oakley.c,v 1.115 2003/01/10 08:38:23 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1289,7 +1289,7 @@ oakley_validate_auth(iph1)
 			}
 			if (error != 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"Invalid authority of the CERT.\n");
+					"the peer's certificate is not verified.\n");
 				return ISAKMP_NTYPE_INVALID_CERT_AUTHORITY;
 			}
 		}

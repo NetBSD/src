@@ -1,4 +1,4 @@
-/*	$KAME: admin.c,v 1.23 2001/06/01 10:12:55 sakane Exp $	*/
+/*	$KAME: admin.c,v 1.24 2003/05/29 08:59:51 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -345,7 +345,7 @@ admin_process(so2, combuf)
 				"%s\n", saddrwop2str(remote));
 
 			/* begin ident mode */
-			if (isakmp_ph1begin_i(rmconf, remote) < 0) {
+			if (isakmp_ph1begin_i(rmconf, remote, local) < 0) {
 				com->ac_errno = -1;
 				break;
 			}
