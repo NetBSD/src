@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.14 1994/04/22 01:35:19 chopps Exp $
+ *	$Id: ite_cc.c,v 1.15 1994/04/22 02:53:54 chopps Exp $
  */
 
 #include "ite.h"
@@ -30,23 +30,23 @@
 #include <sys/termios.h>
 #ifndef KFONT_CUSTOM
 #ifdef KFONT_8X11
-#define kernel_font_width       kernel_font_width_8x11
-#define kernel_font_height      kernel_font_height_8x11
-#define kernel_font_baseline    kernel_font_baseline_8x11
-#define kernel_font_boldsmear   kernel_font_boldsmear_8x11
-#define kernel_font_lo  kernel_font_lo_8x11
-#define kernel_font_hi  kernel_font_hi_8x11
-#define kernel_font     kernel_font_8x11
-#define kernel_cursor   kernel_cursor_8x11
+#define kernel_font_width	kernel_font_width_8x11
+#define kernel_font_height	kernel_font_height_8x11
+#define kernel_font_baseline	kernel_font_baseline_8x11
+#define kernel_font_boldsmear	kernel_font_boldsmear_8x11
+#define kernel_font_lo	kernel_font_lo_8x11
+#define kernel_font_hi	kernel_font_hi_8x11
+#define kernel_font	kernel_font_8x11
+#define kernel_cursor	kernel_cursor_8x11
 #else
-#define kernel_font_width       kernel_font_width_8x8
-#define kernel_font_height      kernel_font_height_8x8
-#define kernel_font_baseline    kernel_font_baseline_8x8
-#define kernel_font_boldsmear   kernel_font_boldsmear_8x8
-#define kernel_font_lo  kernel_font_lo_8x8
-#define kernel_font_hi  kernel_font_hi_8x8
-#define kernel_font     kernel_font_8x8
-#define kernel_cursor   kernel_cursor_8x8
+#define kernel_font_width	kernel_font_width_8x8
+#define kernel_font_height	kernel_font_height_8x8
+#define kernel_font_baseline	kernel_font_baseline_8x8
+#define kernel_font_boldsmear	kernel_font_boldsmear_8x8
+#define kernel_font_lo	kernel_font_lo_8x8
+#define kernel_font_hi	kernel_font_hi_8x8
+#define kernel_font	kernel_font_8x8
+#define kernel_cursor	kernel_cursor_8x8
 #endif
 #endif
 
