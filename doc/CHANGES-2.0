@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.219 2004/05/23 12:00:25 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.220 2004/05/25 01:12:17 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3034,3 +3034,9 @@ sys/ufs/ufs/ufs_vnops.c				1.114
 	file's group ID to its effective gid, in addition to the presently
 	permitted set of supplementary gids.
 	[kleink, ticket #379]
+
+sys/arch/amd64/include/int_mwgwtypes.h		1.3
+sys/arch/amd64/include/int_fmtio.h		1.3
+
+	Change {u,}int_fast{8,16}_t to 32-bit types.
+	[kleink, ticket #380]
