@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24 1996/02/02 18:08:59 mycroft Exp $  */
+/* $NetBSD: machdep.c,v 1.25 1996/02/11 13:43:37 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -334,7 +334,12 @@ cpu_initclocks()
 	(cpu_calls[cpunumber].cpu_clock) ();
 }
 
-cpu_sysctl()
+cpu_sysctl(a, b, c, d, e, f, g)
+	int	*a;
+	u_int	b;
+	void	*c, *e;
+	size_t	*d, f;
+	struct	proc *g;
 {
 	printf("cpu_sysctl:\n");
 	return (EOPNOTSUPP);
