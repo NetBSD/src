@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2001/11/25 05:10:03 isaki Exp $
+#	$NetBSD: INSTALL,v 1.44 2001/11/25 05:21:12 isaki Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.43 $"
+#ident 		"INSTALL-$Revision: 1.44 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -149,7 +149,7 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-## File systems
+## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	KERNFS		# kernel data-structure filesystem
@@ -166,7 +166,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
 
-# File system options.
+## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
@@ -197,7 +197,6 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
 
 
 #### Device configurations
@@ -264,7 +263,6 @@ ne*	at intio0 addr 0xece300 intr 249	# Nereid Ethernet
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne*	at neptune? addr 0x300			# NE2000 or clone
-#se0	at scsibus? target ? lun ?		# Ether+; broken
 
 
 #### Pseudo devices
@@ -307,16 +305,22 @@ pseudo-device	sl		1
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-#pseudo-device	bpfilter	8
+#pseudo-device	bpfilter	4
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
 #pseudo-device	ipfilter
 
 ## for IPv6
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+
+## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
+#pseudo-device  vlan
+
+## Simple inter-network traffic bridging
+#pseudo-device  bridge
 
 #### Other device configuration
 
