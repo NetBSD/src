@@ -1,7 +1,0 @@
-#	$NetBSD: std.ofwgencfg,v 1.1 2002/02/06 21:30:29 thorpej Exp $
-#
-# Configuration options for generic OpenFirmware configurations.
-#
-
-# Pull in OFWGENCFG config definitions.
-include "arch/arm/ofw/files.ofwgencfg"
