@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.8 1995/01/06 09:55:52 pk Exp $	*/
+/*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -149,9 +149,9 @@ typedef struct __rpc_svcxprt {
  * Service request
  */
 struct svc_req {
-	u_long		rq_prog;	/* service program number */
-	u_long		rq_vers;	/* service protocol version */
-	u_long		rq_proc;	/* the desired procedure */
+	u_int32_t	rq_prog;	/* service program number */
+	u_int32_t	rq_vers;	/* service protocol version */
+	u_int32_t	rq_proc;	/* the desired procedure */
 	struct opaque_auth rq_cred;	/* raw creds from the wire */
 	caddr_t		rq_clntcred;	/* read only cooked cred */
 	SVCXPRT	*rq_xprt;		/* associated transport */
