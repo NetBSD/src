@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.9 2002/10/12 08:42:21 someya Exp $	*/
+/*	$NetBSD: autri.c,v 1.10 2002/10/20 01:06:10 someya Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -1444,6 +1444,7 @@ autri_startch(struct autri_softc *sc, int ch, int ch_intr)
 
 	reg = (ch & 0x20) ? AUTRI_START_B : AUTRI_START_A;
 	ch &= 0x1f;
+	ch_intr &= 0x1f;
 	chmask = (1 << ch) | (1 << ch_intr);
 
 	autri_reg_set_4(sc, reg, chmask);
@@ -1457,6 +1458,7 @@ autri_stopch(struct autri_softc *sc, int ch, int ch_intr)
 
 	reg = (ch & 0x20) ? AUTRI_STOP_B : AUTRI_STOP_A;
 	ch &= 0x1f;
+	ch_intr &= 0x1f;
 	chmask = (1 << ch) | (1 << ch_intr);
 
 	autri_reg_set_4(sc, reg, chmask);
