@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2002/10/01 12:57:06 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2002/10/01 19:08:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -108,14 +108,13 @@ static __inline void softintr __P((int));
  * this "instruction", acting as a sequence point for code generation.
  */
 
-#define	__splbarrier() __asm __volatile("":::"memory")
+#define	__splbarrier() __asm __volatile("" : : : "memory")
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
  */
 static __inline int
-splraise(ncpl)
-	register int ncpl;
+splraise(int ncpl)
 {
 	register int ocpl = lapic_tpr;
 
@@ -130,8 +129,7 @@ splraise(ncpl)
  * interrupts are pending, call Xspllower() to process them.
  */
 static __inline void
-spllower(ncpl)
-	register int ncpl;
+spllower(int ncpl)
 {
 	register int cmask;
 
