@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.22 2000/06/03 19:06:25 fvdl Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.22 2000/06/03 19:06:25 fvdl Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -217,7 +217,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 
 	ufp = fopen(_PATH_UTMP, "r");
 	if (!ufp) {
-		syslog(LOG_ERR, "%m");
+		syslog(LOG_WARNING, "%m");
 		return (0);
 	}
 
@@ -250,7 +250,7 @@ do_names_3(int all)
 	
 	ufp = fopen(_PATH_UTMP, "r");
 	if (!ufp) {
-		syslog(LOG_ERR, "%m");
+		syslog(LOG_WARNING, "%m");
 		return (NULL);
 	}
 
@@ -314,7 +314,7 @@ do_names_2(int all)
 	
 	ufp = fopen(_PATH_UTMP, "r");
 	if (!ufp) {
-		syslog(LOG_ERR, "%m");
+		syslog(LOG_WARNING, "%m");
 		return (NULL);
 	}
 
