@@ -1,0 +1,465 @@
+This is Info file am-utils.info, produced by Makeinfo version 1.68 from
+the input file am-utils.texi.
+
+START-INFO-DIR-ENTRY
+* Am-utils: (am-utils).          The Amd automounter suite of utilities
+END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Wildcard Names,  Next: rwho servers,  Prev: Architecture Sharing,  Up: Examples
+
+Wildcard Names & Replicated Servers
+===================================
+
+   By using the wildcard facility, Amd can "overlay" an existing
+directory with additional entries.  The system files are usually
+mounted under `/usr'.  If instead, Amd is mounted on `/usr', additional
+names can be overlayed to augment or replace names in the "master"
+`/usr'.  A map to do this would have the form:
+
+     local  type:=auto;fs:=local-map
+     share  type:=auto;fs:=share-map
+     *      -type:=nfs;rfs:=/export/exec/${arch};sublink:="${key}" \
+             rhost:=fserv1  rhost:=fserv2  rhost:=fserv3
+
+   Note that the assignment to `${sublink}' is surrounded by double
+quotes to prevent the incoming key from causing the map to be
+misinterpreted.  This map has the effect of directing any access to
+`/usr/local' or `/usr/share' to another automount point.
+
+   In this example, it is assumed that the `/usr' files are replicated
+on three fileservers: `fserv1', `fserv2' and `fserv3'.  For any
+references other than to `local' and `share' one of the servers is used
+and a symbolic link to ${autodir}/${rhost}/export/exec/${arch}/whatever
+is returned once an appropriate filesystem has been mounted.
+
+
+File: am-utils.info,  Node: rwho servers,  Next: /vol,  Prev: Wildcard Names,  Up: Examples
+
+`rwho' servers
+==============
+
+   The `/usr/spool/rwho' directory is a good candidate for automounting.
+For efficiency reasons it is best to capture the rwho data on a small
+number of machines and then mount that information onto a large number
+of clients.  The data written into the rwho files is byte order
+dependent so only servers with the correct byte ordering can be used by
+a client:
+
+     /defaults         type:=nfs
+     usr/spool/rwho    -byte==little;rfs:=/usr/spool/rwho \
+                           rhost:=vaxA  rhost:=vaxB \
+                       || -rfs:=/usr/spool/rwho \
+                           rhost:=sun4  rhost:=hp300
+
+
+File: am-utils.info,  Node: /vol,  Next: /defaults with selectors,  Prev: rwho servers,  Up: Examples
+
+`/vol'
+======
+
+   `/vol' is used as a catch-all for volumes which do not have other
+conventional names.
+
+   Below is part of the `/vol' map for the domain `doc.ic.ac.uk'.  The
+`r+d' tree is used for new or experimental software that needs to be
+available everywhere without installing it on all the fileservers.
+Users wishing to try out the new software then simply include
+`/vol/r+d/{bin,ucb}' in their path.
+
+   The main tree resides on one host `gould.doc.ic.ac.uk', which has
+different `bin', `etc', `lib' and `ucb' sub-directories for each
+machine architecture.  For example, `/vol/r+d/bin' for a Sun-4 would be
+stored in the sub-directory `bin/sun4' of the filesystem `/usr/r+d'.
+When it was accessed a symbolic link pointing to
+`/a/gould/usr/r+d/bin/sun4' would be returned.
+
+     /defaults    type:=nfs;opts:=rw,grpid,nosuid,intr,soft
+     wp           -opts:=rw,grpid,nosuid;rhost:=charm \
+                  host==charm;type:=link;fs:=/usr/local/wp \
+                  host!=charm;type:=nfs;rfs:=/vol/wp
+     ...
+     #
+     src          -opts:=rw,grpid,nosuid;rhost:=charm \
+                  host==charm;type:=link;fs:=/usr/src \
+                  host!=charm;type:=nfs;rfs:=/vol/src
+     #
+     r+d          type:=auto;fs:=${map};pref:=r+d/
+     # per architecture bin,etc,lib&ucb...
+     r+d/bin      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}/${arch}
+     r+d/etc      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}/${arch}
+     r+d/include  rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}
+     r+d/lib      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}/${arch}
+     r+d/man      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}
+     r+d/src      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}
+     r+d/ucb      rhost:=gould.doc.ic.ac.uk;rfs:=/usr/r+d;sublink:=${/key}/${arch}
+     # hades pictures
+     pictures     -opts:=rw,grpid,nosuid;rhost:=thpfs \
+                  host==thpfs;type:=link;fs:=/nbsd/pictures \
+                  host!=thpfs;type:=nfs;rfs:=/nbsd;sublink:=pictures
+     # hades tools
+     hades        -opts:=rw,grpid,nosuid;rhost:=thpfs \
+                  host==thpfs;type:=link;fs:=/nbsd/hades \
+                  host!=thpfs;type:=nfs;rfs:=/nbsd;sublink:=hades
+     # bsd tools for hp.
+     bsd          -opts:=rw,grpid,nosuid;arch==hp9000;rhost:=thpfs \
+                  host==thpfs;type:=link;fs:=/nbsd/bsd \
+                  host!=thpfs;type:=nfs;rfs:=/nbsd;sublink:=bsd
+
+
+File: am-utils.info,  Node: /defaults with selectors,  Next: /tftpboot in a chroot-ed environment,  Prev: /vol,  Up: Examples
+
+`/defaults' with selectors
+==========================
+
+   It is sometimes useful to have different defaults for a given map.
+To achieve this, the `/defaults' entry must be able to process normal
+selectors.  This feature is turned on by setting `selectors_on_default
+= yes' in the `amd.conf' file.  *Note selectors_on_default Parameter::.
+
+   In this example, I set different default NFS mount options for hosts
+which are running over a slower network link.  By setting a smaller size
+for the NFS read and write buffer sizes, you can greatly improve remote
+file service performance.
+
+     /defaults \
+       wire==slip-net;opts:=rw,intr,rsize=1024,wsize=1024,timeo=20,retrans=10 \
+       wire!=slip-net;opts:=rw,intr
+
+
+File: am-utils.info,  Node: /tftpboot in a chroot-ed environment,  Prev: /defaults with selectors,  Up: Examples
+
+`/tftpboot' in a chroot-ed environment
+======================================
+
+   In this complex example, we attempt to run an Amd process *inside* a
+chroot-ed environment.  `tftpd' (Trivial FTP) is used to trivially
+retrieve files used to boot X-Terminals, Network Printers, Network
+routers, diskless workstations, and other such devices.  For security
+reasons, `tftpd' (and also `ftpd') processes are run using the
+chroot(2) system call.  This provides an environment for these
+processes, where access to any files outside the directory where the
+chroot-ed process runs is denied.
+
+   For example, if you start `tftpd' on your system with
+
+     chroot /tftpboot /usr/sbin/tftpd
+
+then the `tftpd' process will not be able to access any files outside
+`/tftpboot'.  This ensures that no one can retrieve files such as
+`/etc/passwd' and run password crackers on it.
+
+   Since the TFTP service works by broadcast, it is necessary to have at
+least one TFTP server running on each subnet.  If you have lots of files
+that you need to make available for `tftp', and many subnets, it could
+take significant amounts of disk space on each host serving them.
+
+   A solution we implemented at Columbia University was to have every
+host run `tftpd', but have those servers retrieve the boot files from
+two replicated servers.  Those replicated servers have special
+partitions dedicated to the many network boot files.
+
+   We start Amd as follows:
+
+     amd /tftpboot/.amd amd.tftpboot
+
+   That is, Amd is serving the directory `/tftpboot/.amd'.  The `tftp'
+server runs inside `/tftpboot' and is chroot-ed in that directory too.
+The `amd.tftpboot' map looks like:
+
+     #
+     # Amd /tftpboot directory -> host map
+     #
+     
+     /defaults  opts:=nosuid,ro,intr,soft;fs:=/tftpboot/import;type:=nfs
+     
+     tp         host==lol;rfs:=/n/lol/import/tftpboot;type:=lofs \
+                host==ober;rfs:=/n/ober/misc/win/tftpboot;type:=lofs \
+                rhost:=ober;rfs:=/n/ober/misc/win/tftpboot \
+                rhost:=lol;rfs:=/n/lol/import/tftpboot
+
+   To help understand this example, I list a few of the file entries
+that are created inside `/tftpboot':
+
+     $ ls -la /tftpboot
+     dr-xr-xr-x   2 root   512 Aug 30 23:11 .amd
+     drwxrwsr-x  12 root   512 Aug 30 08:00 import
+     lrwxrwxrwx   1 root    33 Feb 27  1997 adminpr.cfg -> ./.amd/tp/hplj/adminpr.cfg
+     lrwxrwxrwx   1 root    22 Dec  5  1996 tekxp -> ./.amd/tp/xterms/tekxp
+     lrwxrwxrwx   1 root     1 Dec  5  1996 tftpboot -> .
+
+   Here is an explanation of each of the entries listed above:
+
+`.amd'
+     This is the Amd mount point.  Note that you do not need to run a
+     separate Amd process for the TFTP service.  The chroot(2) system
+     call only protects against file access, but the same process can
+     still serve files and directories inside and outside the chroot-ed
+     environment, because Amd itself was not run in chroot-ed mode.
+
+`import'
+     This is the mount point where Amd will mount the directories
+     containing the boot files.  The map is designed so that remote
+     directories will be NFS mounted (even if they are already mounted
+     elsewhere), and local directories are loopback mounted (since they
+     are not accessible outside the chroot-ed `/tftpboot' directory).
+
+`adminpr.cfg'
+`tekxp'
+     Two manually created symbolic links to directories *inside* the
+     Amd-managed directory.  The crossing of the component `tp' will
+     cause Amd to automount one of the remote replicas.  Once crossed,
+     access to files inside proceeds as usual.  The `adminpr.cfg' is a
+     configuration file for an HP Laser-Jet 4si printer, and the `tekxp'
+     is a directory for Tektronix X-Terminal boot files.
+
+`tftpboot'
+     This innocent looking symlink is important.  Usually, when devices
+     boot via the TFTP service, they perform the `get file' command to
+     retrieve FILE.  However, some devices assume that `tftpd' does not
+     run in a chroot-ed environment, but rather "unprotected", and thus
+     use a full pathname for files to retrieve, as in `get
+     /tftpboot/file'.  This symlink effectively strips out the leading
+     `/tftpboot/'.
+
+
+File: am-utils.info,  Node: Internals,  Next: Acknowledgments & Trademarks,  Prev: Examples,  Up: Top
+
+Internals
+*********
+
+   Note that there are more error and logging messages possible than are
+listed here.  Most of them are self-explanatory.  Refer to the program
+sources for more details on the rest.
+
+* Menu:
+
+* Log Messages::
+
+
+File: am-utils.info,  Node: Log Messages,  Prev: Internals,  Up: Internals
+
+Log Messages
+============
+
+   In the following sections a brief explanation is given of some of the
+log messages made by Amd.  Where the message is in `typewriter' font,
+it corresponds exactly to the message produced by Amd.  Words in
+"italic" are replaced by an appropriate string.  Variables, `${var}',
+indicate that the value of the appropriate variable is output.
+
+   Log messages are either sent directly to a file, or logged via the
+syslog(3) mechanism.  *Note log_file Parameter::.  In either case,
+entries in the file are of the form:
+     date-string  hostname amd[pid]  message
+
+* Menu:
+
+* Fatal errors::
+* Info messages::
+
+
+File: am-utils.info,  Node: Fatal errors,  Next: Info messages,  Prev: Log Messages,  Up: Log Messages
+
+Fatal errors
+------------
+
+   Amd attempts to deal with unusual events.  Whenever it is not
+possible to deal with such an error, Amd will log an appropriate
+message and, if it cannot possibly continue, will either exit or abort.
+These messages are selected by `-x fatal' on the command line.  When
+syslog(3) is being used, they are logged with level `LOG_FATAL'.  Even
+if Amd continues to operate it is likely to remain in a precarious
+state and should be restarted at the earliest opportunity.
+
+Attempting to inherit not-a-filesystem
+     The prototype mount point created during a filesystem restart did
+     not contain a reference to the restarted filesystem.  This error
+     "should never happen".
+
+Can't bind to domain "NIS-domain"
+     A specific NIS domain was requested on the command line, but no
+     server for that domain is available on the local net.
+
+Can't determine IP address of this host (hostname)
+     When Amd starts it determines its own IP address.  If this lookup
+     fails then Amd cannot continue.  The hostname it looks up is that
+     obtained returned by gethostname(2) system call.
+
+Can't find root file handle for automount point
+     Amd creates its own file handles for the automount points.  When it
+     mounts itself as a server, it must pass these file handles to the
+     local kernel.  If the filehandle is not obtainable the mount point
+     is ignored.  This error "should never happen".
+
+Must be root to mount filesystems (euid = euid)
+     To prevent embarrassment, Amd makes sure it has appropriate system
+     privileges.  This amounts to having an euid of 0.  The check is
+     made after argument processing complete to give non-root users a
+     chance to access the `-v' option.
+
+No work to do - quitting
+     No automount points were given on the command line and so there is
+     no work to do.
+
+Out of memory
+     While attempting to malloc some memory, the memory space available
+     to Amd was exhausted.  This is an unrecoverable error.
+
+Out of memory in realloc
+     While attempting to realloc some memory, the memory space
+     available to Amd was exhausted.  This is an unrecoverable error.
+
+cannot create rpc/udp service
+     Either the NFS or AMQ endpoint could not be created.
+
+gethostname: description
+     The gethostname(2) system call failed during startup.
+
+host name is not set
+     The gethostname(2) system call returned a zero length host name.
+     This can happen if Amd is started in single user mode just after
+     booting the system.
+
+ifs_match called!
+     An internal error occurred while restarting a pre-mounted
+     filesystem.  This error "should never happen".
+
+mount_afs: description
+     An error occurred while Amd was mounting itself.
+
+run_rpc failed
+     Somehow the main NFS server loop failed.  This error "should never
+     happen".
+
+unable to free rpc arguments in amqprog_1
+     The incoming arguments to the AMQ server could not be free'ed.
+
+unable to free rpc arguments in nfs_program_1
+     The incoming arguments to the NFS server could not be free'ed.
+
+unable to register (AMQ_PROGRAM, AMQ_VERSION, udp)
+     The AMQ server could not be registered with the local portmapper
+     or the internal RPC dispatcher.
+
+unable to register (NFS_PROGRAM, NFS_VERSION, 0)
+     The NFS server could not be registered with the internal RPC
+     dispatcher.
+
+   XXX: This section needs to be updated
+
+
+File: am-utils.info,  Node: Info messages,  Prev: Fatal errors,  Up: Log Messages
+
+Info messages
+-------------
+
+   Amd generates information messages to record state changes.  These
+messages are selected by `-x info' on the command line.  When syslog(3)
+is being used, they are logged with level `LOG_INFO'.
+
+   The messages listed below can be generated and are in a format
+suitable for simple statistical analysis.  "mount-info" is the string
+that is displayed by "Amq" in its mount information column and placed
+in the system mount table.
+
+"${path}" forcibly timed out
+     An automount point has been timed out by the Amq command.
+
+"${path}" has timed out
+     No access to the automount point has been made within the timeout
+     period.
+
+Filehandle denied for "${rhost}:${rfs}"
+     The mount daemon refused to return a file handle for the requested
+     filesystem.
+
+Filehandle error for "${rhost}:${rfs}": description
+     The mount daemon gave some other error for the requested
+     filesystem.
+
+Finishing with status exit-status
+     Amd is about to exit with the given exit status.
+
+Re-synchronizing cache for map ${map}
+     The named map has been modified and the internal cache is being
+     re-synchronized.
+
+file server ${rhost} is down - timeout of "${path}" ignored
+     An automount point has timed out, but the corresponding file
+     server is known to be down.  This message is only produced once
+     for each mount point for which the server is down.
+
+file server ${rhost} type nfs is down
+     An NFS file server that was previously up is now down.
+
+file server ${rhost} type nfs is up
+     An NFS file server that was previously down is now up.
+
+file server ${rhost} type nfs starts down
+     A new NFS file server has been referenced and is known to be down.
+
+file server ${rhost} type nfs starts up
+     A new NFS file server has been referenced and is known to be up.
+
+mount of "${path}" on ${fs} timed out
+     Attempts to mount a filesystem for the given automount point have
+     failed to complete within 30 seconds.
+
+mount-info mounted fstype ${type} on ${fs}
+     A new file system has been mounted.
+
+mount-info restarted fstype ${type} on ${fs}
+     Amd is using a pre-mounted filesystem to satisfy a mount request.
+
+mount-info unmounted fstype ${type} from ${fs}
+     A file system has been unmounted.
+
+mount-info unmounted fstype ${type} from ${fs} link ${fs}/${sublink}
+     A file system of which only a sub-directory was in use has been
+     unmounted.
+
+restarting mount-info on ${fs}
+     A pre-mounted file system has been noted.
+
+   XXX: This section needs to be updated
+
+
+File: am-utils.info,  Node: Acknowledgments & Trademarks,  Next: Index,  Prev: Internals,  Up: Top
+
+Acknowledgments & Trademarks
+****************************
+
+   Many thanks to the Amd Developers
+<amd-dev@majordomo.cs.columbia.edu> mailing list through the months
+developing am-utils.  These members have contributed to the
+discussions, ideas, code and documentation, and subjected their systems
+to alpha quality code.  Special thanks go to those
+authors (http://www.cs.columbia.edu/~ezk/am-utils/AUTHORS.txt) who have
+submitted patches.
+
+   Thanks to the Formal Methods Group at Imperial College for suffering
+patiently while Amd was being developed on their machines.
+
+   Thanks to the many people who have helped with the development of
+Amd, especially Piete Brooks at the Cambridge University Computing Lab
+for many hours of testing, experimentation and discussion.
+
+   Thanks to the Amd Workers <amd-workers@majordomo.glue.umd.edu>
+mailing list members for many suggestions and bug reports to Amd.
+
+   * DEC, VAX and Ultrix are registered trademarks of Digital Equipment
+     Corporation.
+
+   * AIX and IBM are registered trademarks of International Business
+     Machines Corporation.
+
+   * Sun, NFS and SunOS are registered trademarks of Sun Microsystems,
+     Inc.
+
+   * UNIX is a registered trademark in the USA and other countries,
+     exclusively licensed through X/Open Company, Ltd.
+
+   * All other registered trademarks are owned by their respective
+     owners.
+
