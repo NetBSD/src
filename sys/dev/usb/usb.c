@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.56 2001/11/13 07:55:30 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.57 2001/11/20 13:48:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.56 2001/11/13 07:55:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.57 2001/11/20 13:48:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ USB_ATTACH(usb)
 	usbd_device_handle dev;
 	usbd_status err;
 	int usbrev;
+	int speed;
 	struct usb_event ue;
 	
 	DPRINTF(("usbd_attach\n"));
@@ -155,8 +156,17 @@ USB_ATTACH(usb)
 
 	usbrev = sc->sc_bus->usbrev;
 	printf(": USB revision %s", usbrev_str[usbrev]);
-	if (usbrev != USBREV_1_0 && usbrev != USBREV_1_1) {
+	switch (usbrev) {
+	case USBREV_1_0:
+	case USBREV_1_1:
+		speed = USB_SPEED_FULL;
+		break;
+	case USBREV_2_0:
+		speed = USB_SPEED_HIGH;
+		break;
+	default:
 		printf(", not supported\n");
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 	printf("\n");
@@ -176,13 +186,14 @@ USB_ATTACH(usb)
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
 	}
 #else
 	callout_init(&sc->sc_bus->softi);
 #endif
 #endif
 
-	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
+	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
 	if (!err) {
 		dev = sc->sc_port.device;
