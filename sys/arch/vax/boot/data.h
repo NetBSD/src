@@ -1,4 +1,4 @@
-/*	$NetBSD: data.h,v 1.2 1995/04/25 14:14:25 ragge Exp $ */
+/*	$NetBSD: data.h,v 1.3 1995/06/16 15:07:58 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,7 +97,7 @@ struct rpb {	/* size		description */
 	/* offset: 180 */
 	long  cca_addr;	/*  4  Physical address of CCA */
 	long  slr;		/*  4  Saved system length register */
-	long  memdesc[8];	/* 64  Longword array of memory descriptors */
+	long  memdesc[16];	/* 64  Longword array of memory descriptors */
 	long  smp_pc;		/*  4  SMP boot page physical address */
 	long  wait;	/*  4  Bugcheck loop code for attached processor */
 	/* offset: 260 */
