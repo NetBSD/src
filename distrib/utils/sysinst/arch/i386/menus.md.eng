@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.14 1998/11/07 20:17:28 jonathan Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.15 1998/11/07 20:57:52 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,8 @@
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
 menu fullpart, title  "  Select your choice";
-	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 	option "Use only part of the disk", exit, action  {usefull = 0;};
+	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 
 menu wdtype, title  "  Select type";
 	display action { msg_display (MSG_wdtype, diskdev); };
