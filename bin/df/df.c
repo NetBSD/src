@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.36 2000/12/30 16:20:58 hubertf Exp $	*/
+/*	$NetBSD: df.c,v 1.37 2001/01/04 15:39:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.36 2000/12/30 16:20:58 hubertf Exp $");
+__RCSID("$NetBSD: df.c,v 1.37 2001/01/04 15:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ bread(off, buf, cnt)
 	if ((nr = read(rfd, buf, cnt)) != cnt) {
 		/* Probably a dismounted disk if errno == EIO. */
 		if (errno != EIO)
-			(void)fprintf(stderr, "\ndf: %qd: %s\n",
+			(void)fprintf(stderr, "\ndf: %lld: %s\n",
 			    (long long)off, strerror(nr > 0 ? EIO : errno));
 		return (0);
 	}

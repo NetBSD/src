@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.19 2000/10/22 15:41:31 kleink Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.20 2001/01/04 15:39:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.19 2000/10/22 15:41:31 kleink Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.20 2001/01/04 15:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ ls_list(arcn, now)
 #		ifdef NET2_STAT
 		(void)printf("%9lu ", sbp->st_size);
 #		else
-		(void)printf("%9qu ", (long long)sbp->st_size);
+		(void)printf("%9llu ", (long long)sbp->st_size);
 #		endif
 	}
 
