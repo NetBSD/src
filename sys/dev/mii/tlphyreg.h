@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.h,v 1.3 1997/11/17 09:08:26 thorpej Exp $	 */
+/*	$NetBSD: tlphyreg.h,v 1.1 1998/08/10 23:59:58 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -29,21 +29,29 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* control register */
-#   define  CTRL_PDOWN      0x0800 /* power down */
+#ifndef _DEV_MII_TLPHYREG_H_
+#define	_DEV_MII_TLPHYREG_H_
 
-/* ThunderLAN specific registers */
-#define	PHY_TL_CTRL	0x11	/* Read/Write */
-#	define	TL_CTRL_ILINK	0x8000 /* Ignore link */
-#	define	TL_CTRL_SWPOL	0x4000 /* swap polarity */
-#	define	TL_CTRL_AUISEL	0x2000 /* Select AUI */
-#	define	TL_CTRL_SQEEN	0x1000 /* Enable SQE */
-#	define	TL_CTRL_NFEW	0x0004 /* Not far end wrap */
-#	define	TL_CTRL_INTEN	0x0002 /* Interrupts enable */
-#	define	TL_CTRL_TINT	0x0001 /* Test Interrupts */
+/*
+ * Registers for the TI ThunderLAN internal PHY.
+ */
 
-#define	PHY_TL_ST	0x12	/* Read Only */
-#	define	TL_ST_MII_Int	0x8000 /* MII interrupt */
-#	define	TL_ST_PHOK	0x4000 /* Power higth OK */
-#	define	TL_ST_PolOK	0x2000 /* Polarity OK */
-#	define	TL_ST_TPE	0x1000 /* Twisted pair energy */
+#define	MII_TLPHY_ID	0x10	/* ThunderLAN PHY ID */
+#define	ID_10BASETAUI	0x0001	/* 10baseT/AUI PHY */
+
+#define	MII_TLPHY_CTRL	0x11	/* Control regiseter */
+#define	CTRL_ILINK	0x8000	/* Ignore link */
+#define	CTRL_SWPOL	0x4000	/* swap polarity */
+#define	CTRL_AUISEL	0x2000	/* Select AUI */
+#define	CTRL_SQEEN	0x1000	/* Enable SQE */
+#define	CTRL_NFEW	0x0004	/* Not far end wrap */
+#define	CTRL_INTEN	0x0002	/* Interrupts enable */
+#define	CTRL_TINT	0x0001	/* Test Interrupts */
+
+#define	MII_TLPHY_ST	0x12	/* Status register */
+#define	ST_MII_INT	0x8000	/* MII interrupt */
+#define	ST_PHOK		0x4000	/* Power high OK */
+#define	ST_POLOK	0x2000	/* Polarity OK */
+#define	ST_TPE		0x1000	/* Twisted pair energy */
+
+#endif /* _DEV_MII_TLPHYREG_H_ */
