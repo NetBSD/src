@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.14 1998/02/15 17:08:18 kleink Exp $	*/
+/*	$NetBSD: du.c,v 1.15 2000/04/02 12:46:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.14 1998/02/15 17:08:18 kleink Exp $");
+__RCSID("$NetBSD: du.c,v 1.15 2000/04/02 12:46:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,6 +250,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-ckx] [file ...]\n");
+		"usage: du [-H | -L | -P] [-a | -s] [-ckrx] [file ...]\n");
 	exit(1);
 }
