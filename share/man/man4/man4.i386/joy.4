@@ -1,4 +1,4 @@
-.\" $NetBSD: joy.4,v 1.12 2001/04/02 20:42:19 wiz Exp $
+.\" $NetBSD: joy.4,v 1.13 2001/12/07 19:02:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthieu Herrb
 .\" All rights reserved.
@@ -92,15 +92,15 @@ struct joystick {
 .Ed
 .Pp
 The fields have the following functions:
-.Bl -tag -width b1
+.Bl -tag -width xxx
 .It Fa x
-The current X coordinate of the joystick (or position of paddle 1)
+current X coordinate of the joystick (or position of paddle 1)
 .It Fa y
-The current Y coordinate of the joystick (or position of paddle 2)
+current Y coordinate of the joystick (or position of paddle 2)
 .It Fa b1
-The current state of button 1
+current state of button 1
 .It Fa b2
-The current state of button 2
+current state of button 2
 .El
 .Pp
 The b1 and b2 fields in struct joystick are set to 1 if the
@@ -135,7 +135,6 @@ second joystick
 .Xr pci 4 ,
 .Xr pnpbios 4
 .Sh AUTHORS
-.Pp
 Jean-Marc Zucconi wrote the
 .Fx
 driver. Matthieu Herrb ported it to
