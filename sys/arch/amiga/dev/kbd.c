@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.24 1996/10/10 23:56:16 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.25 1996/10/11 21:12:51 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -274,12 +274,12 @@ kbdioctl(dev, cmd, data, flag, p)
 }
 
 int
-kbdselect(dev, rw, p)
+kbdpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
-	return ev_select (&kbd_softc.k_events, rw, p);
+	return ev_poll (&kbd_softc.k_events, events, p);
 }
 
 
