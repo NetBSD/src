@@ -484,7 +484,7 @@ getstartup(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, xntp_options)) != EOF)
+	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1)
 		switch (c) {
 #ifdef DEBUG
 		case 'd':
