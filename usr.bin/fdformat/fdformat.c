@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.8 2001/02/19 23:03:45 cgd Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.9 2001/03/28 03:17:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -118,7 +118,10 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
+	fprintf(stderr,
+	    "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n"
+	    "\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n"
+	    "\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
 	exit(1);
 }
 
