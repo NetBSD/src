@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.352 2004/07/23 23:55:54 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.353 2004/07/24 06:21:43 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6103,11 +6103,6 @@ sys/arch/i386/conf/INSTALL_LAPTOP		1.63
 
 	Enable ehci(4) by default.
 	[tron, ticket #702]
-
-doc/CHANGES					1.330 via patch
-
-	Note addition of strcasestr(3).
-	[junyoung, ticket #703]
 
 sys/kern/vfs_cache.c				1.57
 
