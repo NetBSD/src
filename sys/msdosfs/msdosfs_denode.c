@@ -1,8 +1,8 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.15 1995/09/09 19:38:03 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.16 1995/10/15 15:34:23 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1995 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -55,6 +55,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>		/* defines "time" */
+#include <sys/dirent.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/msdosfsmount.h>
@@ -283,7 +284,7 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 		else {
 			error = pcbmap(ldep, 0xffff, 0, &size, 0);
 			if (error == E2BIG) {
-				ldep->de_FileSize = size << pmp->pm_cnshift;
+				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
 			} else
 				printf("deget(): pcbmap returned %d\n", error);
@@ -424,7 +425,7 @@ detrunc(dep, length, flags, cred, p)
 		}
 	}
 
-	fc_purge(dep, (length + pmp->pm_crbomask) >> pmp->pm_cnshift);
+	fc_purge(dep, de_clcount(pmp, length));
 
 	/*
 	 * If the new length is not a multiple of the cluster size then we
@@ -442,6 +443,7 @@ detrunc(dep, length, flags, cred, p)
 			    NOCRED, &bp);
 		}
 		if (error) {
+			brelse(bp);
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): bread fails %d\n", error);
 #endif
@@ -485,7 +487,7 @@ detrunc(dep, length, flags, cred, p)
 #endif
 			return (error);
 		}
-		fc_setcache(dep, FC_LASTFC, (length - 1) >> pmp->pm_cnshift,
+		fc_setcache(dep, FC_LASTFC, de_cluster(pmp, length - 1),
 			    eofentry);
 	}
 
@@ -656,8 +658,10 @@ msdosfs_inactive(ap)
 	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
 #endif
-	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
+		dep->de_Name[0] = SLOT_DELETED;
+	}
 	deupdat(dep, 0);
 	VOP_UNLOCK(vp);
 	/*
