@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2004/11/25 08:09:15 jmc Exp $
+#	$NetBSD: Makefile,v 1.85 2004/11/28 07:00:53 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -75,6 +75,12 @@ SUBDIR+=	fgen
 .if ${MACHINE} == "bebox"
 SUBDIR+=	bebox-elf2pef
 SUBDIR+=	bebox-mkbootimage
+.endif
+
+.if ${MACHINE} == "amiga"
+SUBDIR+=	amiga-elf2bb
+SUBDIR+=	amiga-aout2bb
+SUBDIR+=	amiga-txlt
 .endif
 
 .endif	# ! NOSUBDIR					# }
