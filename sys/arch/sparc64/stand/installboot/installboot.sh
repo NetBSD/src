@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: installboot.sh,v 1.3 1998/12/11 11:46:54 mrg Exp $
+#	$NetBSD: installboot.sh,v 1.4 1998/12/11 12:15:44 mrg Exp $
 #
 # Copyright (c) 1998 Matthew R. Green
 # All rights reserved.
@@ -28,15 +28,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-usage='installboot [-vd] <bootblk> <disk>'
+usage='installboot [-v] [-n] <bootblk> <disk>'
 
 verbose=0
-debug=0
+nowrite=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-		-d)
-			debug=1
+		-n)
+			nowrite=1
 			shift
 			;;
 		-v)
@@ -68,8 +68,8 @@ fi
 if [ ! -b $disk -a ! -c $disk ]; then
 	trydisk=/dev/$disk
 	if [ ! -b $trydisk -a ! -c $trydisk ]; then
-		# XXX should we use ${disk}c ? or nothing?
-		trydisk=/dev/${disk}a
+		# XXX should we use ${disk}a ? or nothing?
+		trydisk=/dev/${disk}c
 		if [ ! -b $trydisk -a ! -c $trydisk ]; then
 			echo "Can not find that disk"
 			exit 1
@@ -94,7 +94,7 @@ if [ $verbose = 1 ]; then
 	echo $cmd
 fi
 
-if [ $debug = 0 ]; then
+if [ $nowrite = 0 ]; then
 	exec $cmd
 fi
 
