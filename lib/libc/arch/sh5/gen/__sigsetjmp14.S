@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.1 2002/07/11 14:23:05 scw Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.2 2002/10/08 20:19:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,9 +52,9 @@
 
 ENTRY_NOPROFILE(__sigsetjmp14)
 #ifndef _LP64
-	st.l	r2, _JBLEN, r3		/* Save mask */
+	st.l	r2, _JBLEN*4, r3	/* Save mask */
 #else
-	st.q	r2, _JBLEN, r3		/* Save mask */
+	st.q	r2, _JBLEN*8, r3	/* Save mask */
 #endif
 	pta/l	_C_LABEL(__setjmp14), tr0
 	pta/u	_C_LABEL(_setjmp), tr1
@@ -63,9 +63,9 @@ ENTRY_NOPROFILE(__sigsetjmp14)
 
 ENTRY_NOPROFILE(__siglongjmp14)
 #ifndef _LP64
-	ld.l	r2, _JBLEN, r0		/* Fetch mask */
+	ld.l	r2, _JBLEN*4, r0	/* Fetch mask */
 #else
-	ld.q	r2, _JBLEN, r0		/* Fetch mask */
+	ld.q	r2, _JBLEN*8, r0	/* Fetch mask */
 #endif
 	pta/l	_C_LABEL(__longjmp14), tr0
 	pta/u	_C_LABEL(_longjmp), tr1
