@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.5 2003/02/26 23:13:19 thorpej Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.6 2003/05/17 15:53:42 mjl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ do {									\
  * scheduled to timeout further in time than INT_MAX, but c->c_time can
  * be positive or negative so comparing it with anything is dangerous.
  * The only way we can use the c->c_time value in any predictable way
- * is when we caluculate how far in the future `to' will timeout -
+ * is when we calculate how far in the future `to' will timeout -
  * "c->c_time - hardclock_ticks". The result will always be positive for
  * future timeouts and 0 or negative for due timeouts.
  */
