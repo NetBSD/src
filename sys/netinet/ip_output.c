@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.42 1998/01/12 03:02:52 scottr Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.43 1998/02/13 10:23:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -733,7 +733,7 @@ ip_pcbopts(pcbopt, m)
 	struct mbuf **pcbopt;
 	register struct mbuf *m;
 {
-	register cnt, optlen;
+	register int cnt, optlen;
 	register u_char *cp;
 	u_char opt;
 
