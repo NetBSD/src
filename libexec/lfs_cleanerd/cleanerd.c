@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.52 2005/02/26 05:43:04 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.53 2005/03/30 21:28:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.52 2005/02/26 05:43:04 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.53 2005/03/30 21:28:30 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	if (cmd_err || (argc != 1))
-		errx(1, "usage: lfs_cleanerd [-bdms] [-l load] [-n nsegs] [-r report_freq] [-t timeout] fs_name");
+		errx(1, "usage: lfs_cleanerd [-bcdfmsq] [-l load] [-n nsegs] [-r report_freq] [-t timeout] fs_name");
 
 	fs_name = argv[0];
 
