@@ -35,6 +35,5 @@ device		com5 	at scn0 port 5 tty
 device		com6 	at scn0 port 6 tty
 device		com7 	at scn0 port 7 tty
 
-pseudo-device	rtc
 pseudo-device	pty	4
 

@@ -1,7 +1,7 @@
 #
 # SMALL 532 Distribution - 
 #
-#	$Id: SMALL_NS,v 1.2 1993/09/13 07:23:46 phil Exp $
+#	$Id: SMALL_NS,v 1.3 1993/12/03 00:18:32 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
@@ -30,8 +30,6 @@ device		com4 	at scn0 port 4 tty
 device		com5 	at scn0 port 5 tty
 device		com6 	at scn0 port 6 tty
 device		com7 	at scn0 port 7 tty
-
-pseudo-device	rtc
 
 pseudo-device	loop
 pseudo-device	ether
