@@ -1,3 +1,5 @@
+/*	$NetBSD: gamesupport.c,v 1.2 1995/03/24 03:58:43 cgd Exp $	*/
+
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
+
 /*
  * io.c - input/output routines for Phantasia
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
+
 /*
  * fight.c   Phantasia monster fighting routines
  */

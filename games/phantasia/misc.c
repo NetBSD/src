@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
+
 /*
  * misc.c  Phantasia miscellaneous support routines
  */

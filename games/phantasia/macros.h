@@ -1,3 +1,5 @@
+/*	$NetBSD: macros.h,v 1.2 1995/03/24 03:58:52 cgd Exp $	*/
+
 /*
  * macros.h - macro definitions for Phantasia
  */

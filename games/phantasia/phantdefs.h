@@ -1,3 +1,5 @@
+/*	$NetBSD: phantdefs.h,v 1.2 1995/03/24 03:59:28 cgd Exp $	*/
+
 /*
  * phantdefs.h - important constants for Phantasia
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 1995/03/24 03:58:54 cgd Exp $	*/
+
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
  *

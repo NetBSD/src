@@ -1,3 +1,5 @@
+/*	$NetBSD: setup.c,v 1.3 1995/03/24 04:00:51 cgd Exp $	*/
+
 /*
  * setup.c - set up all files for Phantasia
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: include.h,v 1.2 1995/03/24 03:58:45 cgd Exp $	*/
+
 /*
  * include.h - includes all important files for Phantasia
  */

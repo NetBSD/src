@@ -1,3 +1,5 @@
+/*	$NetBSD: convert.c,v 1.2 1995/03/24 03:58:34 cgd Exp $	*/
+
 /*
  *	Convert Phantasia 3.3.1 and 3.3.1+ characs file format to 3.3.2
  *

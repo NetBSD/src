@@ -1,3 +1,5 @@
+/*	$NetBSD: phantglobs.h,v 1.2 1995/03/24 03:59:38 cgd Exp $	*/
+
 /*
  * phantglobs.h - global declarations for Phantasia
  */
