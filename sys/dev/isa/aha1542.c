@@ -16,7 +16,10 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.4  1993/04/12 08:17:23  deraadt
+ * Revision 1.5  1993/04/15 07:11:01  glass
+ * NDDB made a re-appearance....
+ *
+ * Revision 1.4  1993/04/12  08:17:23  deraadt
  * new scsi subsystem.
  * changes also in config/mkioconf.c & sys/scsi/*
  *
@@ -91,11 +94,11 @@
 #include "scsi/scsiconf.h"
 
 
-#ifdef	NDDB
+#ifdef	DDB
 int	Debugger();
-#else	NDDB
+#else	DDB
 #define Debugger() panic("should call debugger here (adaptec.c)")
-#endif	NDDB
+#endif	DDB
 
 extern int delaycount;  /* from clock setup code */
 
