@@ -32,11 +32,11 @@
 ./usr/X11R6/lib/libXt.so.6.0
 ./usr/X11R6/lib/libXtst.so.6.1
 ./usr/X11R6/lib/liboldX.so.6.0
+./usr/X11R6/man/cat1/XFree86.0
 ./usr/X11R6/man/cat1/beforelight.0
+./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/kbd_mode.0
+./usr/X11R6/man/cat1/reconfig.0
 ./usr/X11R6/man/cat1/xf86config.0
 ./usr/X11R6/man/cat1/xvidtune.0
-./usr/X11R6/man/cat1/XFree86.0
-./usr/X11R6/man/cat1/dga.0
-./usr/X11R6/man/cat1/reconfig.0
 ./usr/X11R6/man/cat5
