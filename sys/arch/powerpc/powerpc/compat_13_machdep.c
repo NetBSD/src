@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5 2003/01/18 06:23:32 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/02/03 21:48:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +70,21 @@ compat_13_sys_sigreturn(l, v, retval)
 	tf = trapframe(l);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);
-	*tf = sc.sc_frame;
+
+	/* Restore register context. */
+	memcpy(tf->fixreg, sc.sc_frame.fixreg, sizeof(tf->fixreg));
+	tf->lr   = sc.sc_frame.lr;
+	tf->cr   = sc.sc_frame.cr;
+	tf->xer  = sc.sc_frame.xer;
+	tf->ctr  = sc.sc_frame.ctr;
+	tf->srr0 = sc.sc_frame.srr0;
+	tf->srr1 = sc.sc_frame.srr1;
+#ifdef PPC_OEA
+	tf->tf_xtra[TF_VRSAVE] = sc.sc_frame.vrsave;
+	tf->tf_xtra[TF_MQ] = sc.sc_frame.mq;
+#endif
+
+	/* Restore signal stack. */
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)

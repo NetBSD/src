@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2003/01/20 00:53:56 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2003/02/03 21:48:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,14 +43,14 @@ typedef int sig_atomic_t;
 struct sigcontext13 {
 	int sc_onstack;			/* saved onstack flag */
 	int sc_mask;			/* saved signal mask (old style) */
-	struct trapframe sc_frame;	/* saved registers */
+	struct utrapframe sc_frame;	/* saved registers */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
 	int __sc_mask13;		/* saved signal mask (old style) */
-	struct trapframe sc_frame;	/* saved registers */
+	struct utrapframe sc_frame;	/* saved registers */
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
 
@@ -70,10 +70,9 @@ do {									\
 	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[_REG_MSR];	\
 	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[_REG_CTR];	\
 	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[_REG_XER];	\
-	(sc)->sc_frame.dar    = 0;					\
-	(sc)->sc_frame.dsisr  = 0;					\
-	(sc)->sc_frame.exc    = 0;					\
+	(sc)->sc_frame.mq     = 0;					\
 	(sc)->sc_frame.vrsave = (uc)->uc_mcontext.__vrf.__vrsave;	\
+	(sc)->sc_frame.spare  = 0;					\
 } while (/*CONSTCOND*/0)
 
 #define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
@@ -86,11 +85,13 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_MSR] = (sc)->sc_frame.srr1;	\
 	(uc)->uc_mcontext.__gregs[_REG_CTR] = (sc)->sc_frame.ctr;	\
 	(uc)->uc_mcontext.__gregs[_REG_XER] = (sc)->sc_frame.xer;	\
+	(uc)->uc_mcontext.__gregs[_REG_MQ] = (sc)->sc_frame.mq;		\
 	(uc)->uc_mcontext.__vrf.__vrsave  = (sc)->sc_frame.vrsave;	\
 } while (/*CONSTCOND*/0)
 
 struct sigframe {
 	struct sigcontext sf_sc;
 };
+
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_POWERPC_SIGNAL_H_ */
