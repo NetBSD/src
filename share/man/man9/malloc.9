@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.20 2001/12/04 23:42:02 wiz Exp $
+.\"	$NetBSD: malloc.9,v 1.21 2001/12/05 12:44:25 ad Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,8 @@
 .Ft void *
 .Fn malloc "unsigned long size" "int type" "int flags"
 .Fn MALLOC "space" "cast" "unsigned long size" "int type" "int flags"
+.Ft unsigned long
+.Fn malloc_roundup "unsigned long size"
 .Ft void
 .Fn free "void *addr" "int type"
 .Fn FREE "void *addr" "int type"
@@ -54,6 +56,8 @@ The
 function allocates uninitialized memory in kernel address space for an
 object whose size is specified by
 .Fa size .
+.Fn malloc_roundup
+returns the actual size of the allocation unit for the given value.
 .Fn free
 releases memory at address
 .Fa addr
