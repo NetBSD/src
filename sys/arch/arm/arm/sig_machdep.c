@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.12 2002/06/23 00:16:20 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.13 2002/06/23 19:16:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2002/06/23 00:16:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13 2002/06/23 19:16:43 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -148,14 +148,15 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
 	 */
 	tf->tf_r0 = sig;
 	tf->tf_r1 = code;
 	tf->tf_r2 = (int)&fp->sf_sc;
-	tf->tf_r3 = (int)catcher;
+	tf->tf_pc = (int)catcher;
 	tf->tf_usr_sp = (int)fp;
-	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_usr_lr = (int)p->p_sigctx.ps_sigcode;
 #ifndef acorn26
 	/* XXX This should not be needed. */
 	cpu_icache_sync_all();
