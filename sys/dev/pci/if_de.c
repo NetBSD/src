@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.79 1998/09/22 04:23:18 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.80 1998/09/25 18:06:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3822,7 +3822,7 @@ tulip_print_abnormal_interrupt(
     const char * const *msgp = tulip_status_bits;
     const char *sep;
     u_int32_t mask;
-    const char thrsh[] = "72|128\0\0\096|256\0\0\0128|512\0\0160|1024\0";
+    const char thrsh[] = "72|128\0\0\0" "96|256\0\0\0" "128|512\0\0" "160|1024";
 
     csr &= (1 << (sizeof(tulip_status_bits)/sizeof(tulip_status_bits[0]))) - 1;
     printf(TULIP_PRINTF_FMT ": abnormal interrupt:", TULIP_PRINTF_ARGS);
