@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.117 2000/02/25 02:17:45 groo Exp $	*/
+/*	$NetBSD: conf.c,v 1.118 2000/02/25 10:04:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+#include "lm.h"
 cdev_decl(lm);
 
 cdev_decl(cn);
@@ -284,6 +285,15 @@ cdev_decl(i4brbch);
 cdev_decl(i4btel);
 #endif
 
+/* open, close, read, write, ioctl, mmap */
+#define cdev_vmegen_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, (dev_type_poll((*))) enodev, dev_init(c,n,mmap) }
+
+#include "vmegeneric.h"
+cdev_decl(vmegeneric);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -369,7 +379,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 64: USB generic driver */
 	cdev_mouse_init(NWSMUX,	wsmux), /* 65: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 66: USB tty */
-	cdev_lm78_init(1,lm),		/* 67: LM7[89] */
+	cdev_lm78_init(NLM, lm),	/* 67: LM7[89] */
+	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68 generic VME access */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
