@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.32 1998/05/25 22:11:37 mark Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.33 1998/05/31 06:07:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -131,6 +131,23 @@ struct pci_attach_args {
 #define	PCI_FLAGS_IO_ENABLED	0x01		/* I/O space is enabled */
 #define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
 
+/*
+ * PCI device 'quirks'.
+ *
+ * In general strange behaviour which can be handled by a driver (e.g.
+ * a bridge's inability to pass a type of access correctly) should be.
+ * The quirks table should only contain information which impacts
+ * the operation of the MI PCI code and which can't be pushed lower
+ * (e.g. because it's unacceptable to require a driver to be present
+ * for the information to be known).
+ */
+struct pci_quirkdata {
+	pci_vendor_id_t		vendor;		/* Vendor ID */
+	pci_product_id_t	product;	/* Product ID */
+	int			quirks;		/* quirks; see below */
+};
+#define	PCI_QUIRK_MULTIFUNCTION		1
+
 #include "locators.h"
 
 /*
@@ -164,6 +181,8 @@ int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
+const struct pci_quirkdata *
+	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
 void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */
