@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.62 1995/03/23 12:11:07 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.63 1995/03/23 12:13:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -618,13 +618,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		return error;
 
 	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		if (*(int *)addr)
-			cd->flags |= CDF_WLABEL;
-		else
-			cd->flags &= ~CDF_WLABEL;
-		return 0;
+		return EBADF;
 
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
