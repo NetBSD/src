@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.87 2003/04/19 21:27:04 bjh21 Exp $
+$NetBSD: UPDATING,v 1.88 2003/04/30 07:23:49 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -42,6 +42,12 @@ Recent changes:
 	This only affects people building with UNPRIVED.
 	For complete safety, remove the DESTDIR entirely and
 	update tools/mtree, before running make build.
+
+20021219:
+	CVS repository layout was changed.  See the following for details
+	if you are using (anonymous) cvs to update your tree.
+
+	http://mail-index.netbsd.org/netbsd-announce/2002/12/19/0000.html
 
 20021219:
 	install(1) had a '-N dbdir' option added, to specify an
