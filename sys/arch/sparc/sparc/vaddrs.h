@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.4 1994/11/20 20:54:44 deraadt Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.5 1994/12/06 08:34:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,8 @@
 #define	ZS1_VA		(IODEV_0 + 2*NBPG)
 #define	AUXREG_VA	(IODEV_0 + 3*NBPG)
 #define	TMPMAP_VA	(IODEV_0 + 4*NBPG)
-#define	IODEV_BASE	(IODEV_0 + 5*NBPG)
+#define	MSGBUF_VA	(IODEV_0 + 5*NBPG)
+#define	IODEV_BASE	(IODEV_0 + 6*NBPG)
 #define	IODEV_END	0xff000000		/* 16 MB of iospace */
 
 #define	DVMA_BASE	0xfff00000
