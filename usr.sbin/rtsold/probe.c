@@ -1,4 +1,4 @@
-/*	$NetBSD: probe.c,v 1.7 2002/05/31 21:24:26 itojun Exp $	*/
+/*	$NetBSD: probe.c,v 1.8 2002/07/14 00:37:47 wiz Exp $	*/
 /*	$KAME: probe.c,v 1.15 2002/05/31 21:22:08 itojun Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ static int probesock;
 static void sendprobe __P((struct in6_addr *, struct ifinfo *));
 
 int
-probe_init()
+probe_init(void)
 {
 	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));

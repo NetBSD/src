@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.9 2002/05/31 10:22:15 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.10 2002/07/14 00:37:47 wiz Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int rssock;
 static struct sockaddr_in6 sin6_allrouters = {sizeof(sin6_allrouters), AF_INET6};
 
 int
-sockopen()
+sockopen(void)
 {
 	static u_char *rcvcmsgbuf = NULL, *sndcmsgbuf = NULL;
 	int rcvcmsglen, sndcmsglen, on;
