@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 1998/10/19 03:09:31 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.8 1998/12/03 15:46:28 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -251,11 +251,7 @@ int		first;
 	 *	.word	new_addr
 	 *	<unused>
 	 */
-#ifdef RTLD
-	if ((void *)addr == binder_entry) {
-#else
-	if (offset == 0) {
-#endif
+	if (first) {
 		/* Build binder jump slot */
 		sp->opcode1 = GETSLOTADDR;
 		sp->opcode2 = LDRPCADDR;
