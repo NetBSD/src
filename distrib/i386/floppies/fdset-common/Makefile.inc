@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/02/01 14:25:09 he Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/02/01 15:13:01 he Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -103,7 +103,7 @@ boot: ${BOOTCODE}
 	cp ${BOOTCODE} boot
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} disk?.fs
+	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
