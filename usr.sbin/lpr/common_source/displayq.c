@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.9 1997/04/19 06:33:13 thorpej Exp $	*/
+/*	$NetBSD: displayq.c,v 1.10 1997/07/10 06:19:53 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)displayq.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: displayq.c,v 1.10 1997/07/10 06:19:53 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -115,7 +119,7 @@ displayq(format)
 	if (cgetstr(bp, "st", &ST) < 0)
 		ST = DEFSTAT;
 	cgetstr(bp, "rm", &RM);
-	if (cp = checkremote())
+	if ((cp = checkremote()) != NULL)
 		printf("Warning: %s\n", cp);
 
 	/*
