@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.9 2000/02/04 05:30:55 chopps Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.10 2000/02/04 08:42:47 chopps Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -469,12 +469,13 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	if ((ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg)) == NULL)
 		return (NULL);
 
-	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
-	reg |= irq;
-	pcic_write(h, PCIC_INTR, reg);
-
 	h->ih_irq = irq;
+	if (h->flags & PCIC_FLAG_ENABLED) {
+		reg = pcic_read(h, PCIC_INTR);
+		reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+		reg |= irq;
+		pcic_write(h, PCIC_INTR, reg);
+	}
 
 	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
 
@@ -492,10 +493,10 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	int reg;
 
 	h->ih_irq = 0;
-
-	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
-	pcic_write(h, PCIC_INTR, reg);
-
+	if (h->flags & PCIC_FLAG_ENABLED) {
+		reg = pcic_read(h, PCIC_INTR);
+		reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+		pcic_write(h, PCIC_INTR, reg);
+	}
 	isa_intr_disestablish(ic, ih);
 }
