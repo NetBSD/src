@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2004/06/11 13:59:40 chs Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 2004/08/07 21:40:47 chs Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2004/06/11 13:59:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11 2004/08/07 21:40:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,8 @@ const struct cdevsw mem_cdevsw = {
 
 static caddr_t zeropage;
 
-/* A lock for the vmmap, 16-byte aligned as PA-RISC semaphores must be. */
-static __cpu_simple_lock_t vmmap_lock;
+/* A lock for the vmmap. */
+static struct lock vmmap_lock;
 
 int
 memmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -289,7 +289,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	struct iovec *iov;
 	vaddr_t	v, o;
 	vm_prot_t prot;
-	int32_t lockheld = 0;
 	u_int c;
 	int error = 0;
 	int rw;
@@ -324,20 +323,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				goto use_kmem;
 			}
 
-			/*
-			 * If we don't already hold the vmmap lock,
-			 * acquire it.
-			 */
-			while (!lockheld) {
-				lockheld = __cpu_simple_lock_try(&vmmap_lock);
-				if (lockheld)
-					break;
-				error = tsleep((caddr_t)&vmmap_lock, 
-				    PZERO | PCATCH,
-				    "mmrw", 0);
-				if (error)
-					return (error);
-			}
+			lockmgr(&vmmap_lock, LK_EXCLUSIVE, NULL);
 
 			/* Temporarily map the memory at vmmap. */
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
@@ -351,6 +337,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
+
+			lockmgr(&vmmap_lock, LK_RELEASE, NULL);
 			break;
 
 		case DEV_KMEM:				/*  /dev/kmem  */
@@ -395,13 +383,6 @@ use_kmem:
 			return (ENXIO);
 		}
 	}
-
-	/* If we hold the vmmap lock, release it. */
-	if (lockheld) {
-		__cpu_simple_unlock(&vmmap_lock);
-		wakeup((caddr_t)&vmmap_lock);
-	}
-
 	return (error);
 }
 
