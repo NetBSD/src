@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2002/09/12 13:35:56 joda Exp $
+# $NetBSD: Makefile,v 1.18 2002/09/13 17:29:56 thorpej Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -46,6 +46,7 @@ HOST_CPPFLAGS+= -I.				\
 	 -I${NETBSDSRCDIR}/include/heimdal	\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/roken		\
+	 -DKRB5=1				\
 	 -DHAVE_CONFIG_H
 
 DPSRCS=		print_version.h
