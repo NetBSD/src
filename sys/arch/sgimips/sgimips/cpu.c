@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2003/07/15 03:35:54 lukem Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2003/07/15 03:35:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_machtypes.h"
 
@@ -73,11 +73,4 @@ cpu_attach(parent, self, aux)
 {
 	printf(": ");
 	cpu_identify();
-
-#ifdef IP22
-	if (mach_type == MACH_SGI_IP22) {		/* XXX Indy */
-		extern void ip22_cache_init(struct device *);
-		ip22_cache_init(self);
-	}
-#endif
 }

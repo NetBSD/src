@@ -1,6 +1,7 @@
-/*	$NetBSD: lpt_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
+ * Copyright (c) 2003 Christopher SEKIYA 
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
  *
@@ -33,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/machtype.h>
 
 #include <sgimips/dev/macevar.h>
 
@@ -77,7 +79,11 @@ lpt_mace_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return 1;
+
+	if (mach_type == MACH_SGI_IP32)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -86,13 +92,24 @@ lpt_mace_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-#if 0
 	struct lpt_mace_softc *msc = (void *)self;
 	struct lpt_softc *sc = &msc->sc_lpt;
 	struct mace_attach_args *maa = aux;
-#endif
 
-	printf(": stub\n");
+	sc->sc_iot = maa->maa_st;
+
+	/* XXX should use bus_space_map() */
+	if (bus_space_subregion(sc->sc_iot, maa->maa_sh,
+	    maa->maa_offset, LPT_NPORTS, &sc->sc_ioh) != 0) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+
+	printf("\n");
+
+	lpt_attach_subr(sc);
+
+	mace_intr_establish(maa->maa_intr, maa->maa_intrmask, lptintr, sc);
 
 	return;
 }

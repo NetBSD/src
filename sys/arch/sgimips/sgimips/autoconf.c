@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2003/07/15 03:35:54 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2003/07/15 03:35:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_machtypes.h"
@@ -82,24 +82,6 @@ cpu_configure()
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
 	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);
-
-	/* XXXrkb: hack until we get interrupt setup code right */
-	if (mach_type == MACH_SGI_IP32) {
-	   u_int64_t mask;
-
-	    mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK);
-	    aprint_debug("MACE_ISA_MASK was %llx\n", mask);
-	    mask |= ((1UL << 20) | (1UL << 26));
-	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = mask;
-	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_FLUSH_W) = 0xffffffff;
-	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0x30ff10ULL;
-
-	    aprint_debug("CRM_MASK: %llx, MACEISA_MASK (%x) %llx\n", 
-	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK),
-	      MACE_ISA_INT_MASK,
-	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK));
-
-	}
 
 	_splnone();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2002/05/15 19:23:56 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,8 @@ struct sgimips_pci_chipset {
 	pcireg_t	(*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void		(*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int,
 				pcireg_t);
-/* XXX */
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 };
 
 extern struct sgimips_bus_dma_tag pci_bus_dma_tag;

@@ -1,6 +1,7 @@
-/*	$NetBSD: pckbc_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
+ * Copyright (c) 2003 Christopher SEKIYA
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
  *
@@ -33,26 +34,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.7 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/tty.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/types.h>
+#include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/errno.h>
+#include <sys/queue.h>
+#include <sys/lock.h>
 
-#include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/machtype.h>
 
 #include <sgimips/dev/macevar.h>
 
@@ -62,11 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $")
 struct pckbc_mace_softc {
 	struct pckbc_softc sc_pckbc;
 
-	/* XXX intr cookie */
+	int sc_irq[PCKBC_NSLOTS];
 };
 
 static int	pckbc_mace_match(struct device *, struct cfdata *, void *);
 static void	pckbc_mace_attach(struct device *, struct device *, void *);
+void pckbc_mace_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 CFATTACH_DECL(pckbc_mace, sizeof(struct pckbc_mace_softc),
     pckbc_mace_match, pckbc_mace_attach, NULL, NULL);
@@ -77,7 +74,11 @@ pckbc_mace_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return 1;
+
+	if (mach_type == MACH_SGI_IP32)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -86,15 +87,39 @@ pckbc_mace_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-#if 0
 	struct pckbc_mace_softc *msc = (void *)self;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct mace_attach_args *maa = aux;
-#endif
+	struct pckbc_internal *t;
+	bus_space_handle_t ioh_d, ioh_c;
 
-	printf(": stub\n");
+	msc->sc_irq[PCKBC_KBD_SLOT] =
+	    msc->sc_irq[PCKBC_AUX_SLOT] = maa->maa_intr;
 
-	return;
+	sc->intr_establish = pckbc_mace_intr_establish;
+
+	/* XXX should be bus_space_map() */
+	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
+	    maa->maa_offset, 1, &ioh_d) ||
+	    bus_space_subregion(maa->maa_st, maa->maa_sh,
+	    maa->maa_offset + 0x20, 1, &ioh_c))
+		panic("pckbc_attach: couldn't map");
+
+	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK|M_ZERO);
+	t->t_iot = maa->maa_st;
+	t->t_ioh_d = ioh_d;
+	t->t_ioh_c = ioh_c;
+	t->t_addr = maa->maa_sh;
+	t->t_cmdbyte = KC8_CPU; /* Enable ports */
+	callout_init(&t->t_cleanup);
+
+	t->t_sc = sc;
+	sc->id = t;
+
+	printf("\n");
+
+	/* Finish off the attach. */
+	pckbc_attach(sc);
 }
 
 /* XXX */
@@ -108,5 +133,15 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	pckbc_slot_t kbcslot;
 {
+
 	return (ENXIO);
+}
+
+void
+pckbc_mace_intr_establish(sc, slot)
+	struct pckbc_softc *sc;
+	pckbc_slot_t slot;
+{
+
+	mace_intr_establish(5, 0, pckbcintr, sc);
 }

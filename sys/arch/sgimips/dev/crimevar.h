@@ -1,7 +1,7 @@
-/*	$NetBSD: macevar.h,v 1.4 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.1 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 2000 Soren S. Jorvang
+ * Copyright (c) 2003 Christopher SEKIYA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct mace_attach_args {
-	bus_space_tag_t maa_st;
-	bus_space_handle_t maa_sh;
-	bus_dma_tag_t	maa_dmat;
-	void *isa_ringbuffer;
+#include <machine/bus.h>
 
-	long	maa_offset;
-	int	maa_intr;
-	int	maa_intrmask;
+struct crime_softc {
+	struct device sc_dev;
+
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 };
 
-void *	mace_intr_establish(int, int, int (*)(void *), void *);
-void	mace_intr(int);
+extern struct crime_softc *crime_sc;
+
+void *crime_intr_establish(int, int, int, int (*)(void *), void *);
+void crime_intr(u_int);
+void crime_intr_mask(unsigned int);

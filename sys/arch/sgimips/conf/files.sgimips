@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.24 2003/09/15 06:39:20 simonb Exp $
+#	$NetBSD: files.sgimips,v 1.25 2003/10/05 15:38:08 tsutsui Exp $
 
 maxpartitions 16
 
@@ -24,14 +24,14 @@ device crime
 attach crime at mainbus
 file arch/sgimips/dev/crime.c		crime
 
-device mace {[offset = -1], [intr = -1]}
+device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
 file arch/sgimips/dev/mace.c		mace
 
 attach com at mace with com_mace
 file arch/sgimips/dev/com_mace.c	com_mace
 
-device lpt # XXX
+device lpt
 attach lpt at mace with lpt_mace
 file arch/sgimips/dev/lpt_mace.c	lpt_mace
 file dev/ic/lpt.c			lpt_mace
@@ -39,7 +39,7 @@ file dev/ic/lpt.c			lpt_mace
 attach pckbc at mace with pckbc_mace
 file arch/sgimips/dev/pckbc_mace.c	pckbc_mace
 
-device mcclock # XXX
+device mcclock
 attach mcclock at mace with mcclock_mace
 file arch/sgimips/dev/mcclock_mace.c	mcclock_mace
 

@@ -1,6 +1,8 @@
-/*	$NetBSD: mace.c,v 1.12 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: mace.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
+ * Copyright (c) 2003 Christopher Sekiya
+ * Copyright (c) 2002,2003 Rafal K. Boni
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
  *
@@ -34,39 +36,79 @@
 
 /*
  * O2 MACE
+ *
+ * The MACE is weird -- although it is a 32-bit device, writes only seem to
+ * work properly if they are 64-bit-at-once writes (at least, out in ISA
+ * space and probably MEC space -- the PCI stuff seems to be okay with _4).
+ * Therefore, the _8* routines are used even though the top 32 bits are
+ * thrown away.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.12 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/callout.h>
+#include <sys/mbuf.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
 
+#include <uvm/uvm_extern.h>
+
+#define	_SGIMIPS_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/machtype.h>
 
 #include <sgimips/dev/macevar.h>
 #include <sgimips/dev/macereg.h>
+#include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
 
 #include "locators.h"
 
+#define MACE_NINTR 32 /* actually only 8, but interrupts are shared */
+
+struct {
+	unsigned int	irq;
+	unsigned int	intrmask;
+	int	(*func)(void *);
+	void	*arg;
+} maceintrtab[MACE_NINTR];
+
 struct mace_softc {
 	struct device sc_dev;
+
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_dma_tag_t dmat; /* 32KB ring buffers, 4KB segments, for ISA  */
+	int nsegs;
+	bus_dma_segment_t seg;
+	bus_dmamap_t map;
+
+	void *isa_ringbuffer;
 };
 
 static int	mace_match(struct device *, struct cfdata *, void *);
 static void	mace_attach(struct device *, struct device *, void *);
 static int	mace_print(void *, const char *);
 static int	mace_search(struct device *, struct cfdata *, void *);
-void mace_intr(int irqs);
 
 CFATTACH_DECL(mace, sizeof(struct mace_softc),
     mace_match, mace_attach, NULL, NULL);
+
+#if defined(BLINK)
+static struct callout mace_blink_ch = CALLOUT_INITIALIZER;
+static void	mace_blink(void *);
+#endif
 
 static int
 mace_match(parent, match, aux)
@@ -90,25 +132,90 @@ mace_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	u_int32_t id;
+	struct mace_softc *sc = (struct mace_softc *)self;
+	struct mainbus_attach_args *ma = aux;
+	u_int32_t scratch;
 
-        id = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_REV_INFO_R);
-	aprint_normal(": rev %x", id);
-	printf("\n");
+	sc->iot = SGIMIPS_BUS_SPACE_MACE;
+	sc->dmat = &sgimips_default_bus_dma_tag;
+
+	if (bus_space_map(sc->iot, ma->ma_addr, NULL,
+	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
+		panic("mace_attach: could not allocate memory\n");
+
+#if 0
+	/*
+	 * There's something deeply wrong with the alloc() routine -- it
+	 * returns a pointer to memory that is used by the kernel i/o
+	 * buffers.  Disable for now.
+	 */
+
+	if ((bus_dmamem_alloc(sc->dmat, 32768, PAGE_SIZE, 32768,
+	    &sc->seg, 1, &sc->nsegs, BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to allocate DMA memory\n");
+		return;
+	}
+
+	if ((bus_dmamem_map(sc->dmat, &sc->seg, sc->nsegs, 32768,
+	    (caddr_t *)&sc->isa_ringbuffer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
+	    != 0) {
+		printf(": unable to map control data\n");
+		return;
+	}
+
+	if ((bus_dmamap_create(sc->dmat, 32768, 1, 32768, 0,
+	    BUS_DMA_NOWAIT, &sc->map)) != 0) {
+		printf(": unable to create DMA map for control data\n");
+		return;
+	}
+
+	if ((scratch = bus_dmamap_load(sc->dmat, sc->map, sc->isa_ringbuffer,
+	    32768, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to load DMA map for control data %i\n",
+		    scratch);
+	}
+
+	memset(sc->isa_ringbuffer, 0, 32768);
+
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_RINGBASE,
+	    MIPS_KSEG1_TO_PHYS(sc->isa_ringbuffer) & 0xffff8000);
+
+	aprint_normal(" isa ringbuffer 0x%x size 32k",
+	    MIPS_KSEG1_TO_PHYS((unsigned long)sc->isa_ringbuffer));
+#endif
+
+	aprint_normal("\n");
 
 	aprint_debug("%s: isa sts %llx\n", self->dv_xname,
-	    *(volatile u_int64_t *)0xbf310010);
+	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_STATUS));
 	aprint_debug("%s: isa msk %llx\n", self->dv_xname,
-	    *(volatile u_int64_t *)0xbf310018);
+	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK));
 
-	/* 
-	 * Disable interrupts.  These are enabled and unmasked during 
-	 * interrupt establishment 
+	/*
+	 * Turn on all ISA interrupts.  These are actually masked and
+	 * registered via the CRIME, as the MACE ISA interrupt mask is
+	 * really whacky and nigh on impossible to map to a sane autoconfig
+	 * scheme.
 	 */
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_ADDR) = 0;
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS) = 0;
-        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_CONTROL) = 0xff008500;
-        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = 0;
+
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK, 0xffffffff);
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_INT_STATUS, 0);
+
+	/* set up LED for solid green or blink, if that's your fancy */
+	scratch = bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_FLASH_NIC_REG);
+	scratch |= MACE_ISA_LED_RED;
+	scratch &= ~(MACE_ISA_LED_GREEN);
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_FLASH_NIC_REG, scratch);
+
+#if defined(BLINK)
+	mace_blink(sc);
+#endif
+
+	/* Initialize the maceintr elements to sane values */
+	for (scratch = 0; scratch < MACE_NINTR; scratch++) {
+		maceintrtab[scratch].func = NULL;
+		maceintrtab[scratch].irq = 0;
+	}
 
 	config_search(mace_search, self, NULL);
 }
@@ -126,12 +233,10 @@ mace_print(aux, pnp)
 
 	if (maa->maa_offset != MACECF_OFFSET_DEFAULT)
 		aprint_normal(" offset 0x%lx", maa->maa_offset);
-#if 0
 	if (maa->maa_intr != MACECF_INTR_DEFAULT)
 		aprint_normal(" intr %d", maa->maa_intr);
-	if (maa->maa_offset != MACECF_STRIDE_DEFAULT)
-		aprint_normal(" stride 0x%lx", maa->maa_stride);
-#endif
+	if (maa->maa_offset != MACECF_INTRMASK_DEFAULT)
+		aprint_normal(" intrmask 0x%x", maa->maa_intrmask);
 
 	return UNCONF;
 }
@@ -142,18 +247,18 @@ mace_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct mace_softc *sc = (struct mace_softc *)parent;
 	struct mace_attach_args maa;
 	int tryagain;
 
 	do {
 		maa.maa_offset = cf->cf_loc[MACECF_OFFSET];
-#if 0
 		maa.maa_intr = cf->cf_loc[MACECF_INTR];
-		maa.maa_stride = cf->cf_loc[MACECF_STRIDE];
-#endif
-		maa.maa_st = 3;
-								/* XXX */
-		maa.maa_sh = MIPS_PHYS_TO_KSEG1(maa.maa_offset + 0x1f000000);
+		maa.maa_intrmask = cf->cf_loc[MACECF_INTRMASK];
+		maa.maa_st = SGIMIPS_BUS_SPACE_MACE;
+		maa.maa_sh = sc->ioh;	/* XXX */
+		maa.maa_dmat = &sgimips_default_bus_dma_tag;
+		maa.isa_ringbuffer = sc->isa_ringbuffer;
 
 		tryagain = 0;
 		if (config_match(parent, cf, &maa) > 0) {
@@ -166,13 +271,6 @@ mace_search(parent, cf, aux)
 	return 0;
 }
 
-#define MACE_NINTR 8	/* XXX */
-
-struct {
-	int	(*func)(void *);
-	void	*arg;
-} maceintrtab[MACE_NINTR];
-
 void *
 mace_intr_establish(intr, level, func, arg)
 	int intr;
@@ -180,38 +278,81 @@ mace_intr_establish(intr, level, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
-        u_int64_t mask;
+	int i;
 
-        if (intr < 0 || intr >= 8)
-                panic("invalid interrupt number");
+	if (intr < 0 || intr >= 8)
+		panic("invalid interrupt number");
 
-        if (maceintrtab[intr].func != NULL)
-                return NULL;	/* panic("Cannot share MACE interrupts!"); */
+	for (i = 0; i < MACE_NINTR; i++)
+		if (maceintrtab[intr].func == NULL) {
+		        maceintrtab[intr].func = func;
+		        maceintrtab[intr].arg = arg;
+			maceintrtab[intr].irq = (1 << intr);
+			maceintrtab[intr].intrmask = level;
+			break;
+		}
 
-        maceintrtab[intr].func = func;
-        maceintrtab[intr].arg = arg;
-        mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK);
-        mask |= (1 << intr);
-        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = mask;
-	aprint_debug("mace: established interrupt %d (level %i)\n", intr, level);
-	aprint_debug("mace: CRM_MASK now %llx\n", *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK));
+	crime_intr_mask(intr);
+	aprint_normal("mace: established interrupt %d (level %x)\n",
+	    intr, level);
 	return (void *)&maceintrtab[intr];
 }
 
-void 
+void
 mace_intr(int irqs)
 {
+	u_int64_t isa_irq, isa_mask;
 	int i;
- 
-	/* printf("mace_intr: irqs %x\n", irqs); */
- 
-	for (i = 0; i < MACE_NINTR; i++) {
-		if (irqs & (1 << i)) {
-			if (maceintrtab[i].func != NULL)
+
+	/* irq 4 is the ISA cascade interrupt.  Must handle with care. */
+	if (irqs & (1 << 4)) {
+		isa_mask = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		    + MACE_ISA_INT_MASK));
+		isa_irq = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		    + MACE_ISA_INT_STATUS));
+		for (i = 0; i < MACE_NINTR; i++) {
+			if ((maceintrtab[i].irq == (1 << 4)) &&
+			    (isa_irq & maceintrtab[i].intrmask)) {
+				if (isa_irq & 0xfc000000)
+					printf("dispatching\n");
+
 		  		(maceintrtab[i].func)(maceintrtab[i].arg);
-			else
-				printf("Unexpected mace interrupt %d\n", i);
-        	}
+	        	}
+		}
+#if 0
+		mips3_sd((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		    + MACE_ISA_INT_STATUS), isa_mask);
+#endif
+		irqs &= ~(1 << 4);
 	}
+
+	for (i = 0; i < MACE_NINTR; i++)
+		if ((irqs & maceintrtab[i].irq))
+		  	(maceintrtab[i].func)(maceintrtab[i].arg);
 }
 
+#if defined(BLINK)
+static void
+mace_blink(void *self)
+{
+	struct mace_softc *sc = (struct mace_softc *) self;
+	register int s;
+	int value;
+
+	s = splhigh();
+	value = bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_FLASH_NIC_REG);
+	value ^= MACE_ISA_LED_GREEN;
+	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_FLASH_NIC_REG, value);
+	splx(s);
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_reset(&mace_blink_ch, s, mace_blink, sc);
+
+}
+#endif

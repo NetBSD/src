@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 2003/09/28 12:56:09 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.24 2003/10/05 15:38:08 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -38,7 +38,8 @@ options 	IP22		# Indy / Indigo2
 options 	IP32		# O2
 
 options 	MIPS3		# MIPS3 support
-options 	MIPS3_L2CACHE_ABSENT
+options 	MIPS3_L2CACHE_ABSENT	# required if L2cache is disabled
+#options 	ENABLE_MIPS4_CACHE_R10K	# enable R10000 cache ops
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -163,11 +164,11 @@ macepci0 	at mace0 offset 0x080000 intr 7
 pci0 		at macepci0 bus 0
 
 # MACE devices
-mec0 		at mace0 offset 0x280000 intr 3
+#mec0 		at mace0 offset 0x280000 intr 3
 pckbc0		at mace0 offset 0x320000 intr 5
-lpt0 		at mace0 offset 0x380000 intr 4
-com0 		at mace0 offset 0x390000 intr 4
-com1 		at mace0 offset 0x398000 intr 4
+lpt0 		at mace0 offset 0x380000 intr 4 intrmask 0x000f0000
+com0 		at mace0 offset 0x390000 intr 4 intrmask 0x03f00000
+com1 		at mace0 offset 0x398000 intr 4 intrmask 0xfc000000
 mcclock0	at mace0 offset 0x3a0000
 
 # PCI network devices

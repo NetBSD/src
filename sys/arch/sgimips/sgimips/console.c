@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.10 2003/07/15 03:35:54 lukem Exp $	*/
+/*	$NetBSD: console.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10 2003/07/15 03:35:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -98,15 +98,15 @@ consinit()
 		    strncmp(consdev, "serial", 6) == 0 &&
 		    (consdev[7] == '0' || consdev[7] == '1')) {
 			/* XXX: hardcoded MACE iotag */
-			if (comcnattach(3, ((consdev[7] == '0') ? 
-					MIPS_PHYS_TO_KSEG1(MACE_ISA_SER1_BASE) :
-					MIPS_PHYS_TO_KSEG1(MACE_ISA_SER2_BASE)),
-					speed, COM_FREQ, COM_TYPE_NORMAL,
-					comcnmode) == 0)
+			if (comcnattach(3, MIPS_PHYS_TO_KSEG1(MACE_BASE +
+			    ((consdev[7] == '0') ?
+			    MACE_ISA_SER1_BASE : MACE_ISA_SER2_BASE)),
+			    speed, COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
 				return;
 
-			printf("can't init serial hardware console!\n");
+			panic("can't init serial hardware console!");
 		}
+		panic("ip32 supports serial console only.  sorry.");
 	}
 #endif	/* IP32 && (NCOM > 0) */
 
