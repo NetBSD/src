@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.24 1996/03/17 02:00:42 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.25 1996/03/31 22:38:31 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -72,7 +72,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 
-#include <sparc/dev/btreg.h> 
+#include <sparc/dev/btreg.h>
 #include <sparc/dev/bwtworeg.h>
 #include <sparc/dev/sbusvar.h>
 #if defined(SUN4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: xyreg.h,v 1.2 1996/02/22 06:50:57 thorpej Exp $	*/
+/*	$NetBSD: xyreg.h,v 1.3 1996/03/31 22:39:02 pk Exp $	*/
 
 /*
  *
@@ -90,9 +90,9 @@ struct xyc {
  *     add iopb to the chain, and clear AREQ to resume I/O
  *
  * when the controller is done with a command it may interrupt (if you
- * ask it to) and it will set the XYC_IPND bit in the csr.   clear 
+ * ask it to) and it will set the XYC_IPND bit in the csr.   clear
  * the interrupt by writing one to this bit.
- * 
+ *
  * the format of the iopb is described in section 2.4 of the manual.
  * note that it is byte-swapped on the sun.
  */
