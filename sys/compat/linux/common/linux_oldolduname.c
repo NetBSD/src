@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.57 2003/01/18 21:26:36 jdolecek Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.58 2003/01/19 16:41:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.57 2003/01/18 21:26:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.58 2003/01/19 16:41:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

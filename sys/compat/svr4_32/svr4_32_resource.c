@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.2 2001/11/13 02:09:29 lukem Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.3 2003/01/19 16:47:15 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.2 2001/11/13 02:09:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.3 2003/01/19 16:47:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,13 @@ svr4_to_native_rl(rl)
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
 
 int
-svr4_32_sys_getrlimit(p, v, retval)
-	struct proc *p;
+svr4_32_sys_getrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_getrlimit_args *uap = v;
+	struct proc *p = l->l_proc;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim;
 	struct svr4_rlimit slim;
@@ -142,12 +143,13 @@ svr4_32_sys_getrlimit(p, v, retval)
 
 
 int
-svr4_32_sys_setrlimit(p, v, retval)
-	struct proc *p;
+svr4_32_sys_setrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_setrlimit_args *uap = v;
+	struct proc *p = l->l_proc;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim, *limp;
 	struct svr4_rlimit slim;
@@ -194,12 +196,13 @@ svr4_32_sys_setrlimit(p, v, retval)
 
 
 int
-svr4_32_sys_getrlimit64(p, v, retval)
-	struct proc *p;
+svr4_32_sys_getrlimit64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_getrlimit64_args *uap = v;
+	struct proc *p = l->l_proc;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim;
 	struct svr4_rlimit64 slim;
@@ -242,12 +245,13 @@ svr4_32_sys_getrlimit64(p, v, retval)
 
 
 int
-svr4_32_sys_setrlimit64(p, v, retval)
-	struct proc *p;
+svr4_32_sys_setrlimit64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_setrlimit64_args *uap = v;
+	struct proc *p = l->l_proc;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim, *limp;
 	struct svr4_rlimit64 slim;
