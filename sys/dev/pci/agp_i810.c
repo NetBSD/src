@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.17 2003/07/20 18:56:32 hannken Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.18 2003/08/26 17:33:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.17 2003/07/20 18:56:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.18 2003/08/26 17:33:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82830MP_IV:
 	case PCI_PRODUCT_INTEL_82845G_IGD:
 	case PCI_PRODUCT_INTEL_82855GM_IGD:
+	case PCI_PRODUCT_INTEL_82865_IGD:
 		return (1);
 	}
 
@@ -165,6 +166,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		isc->chiptype = CHIP_I830;
 		break;
 	case PCI_PRODUCT_INTEL_82855GM_IGD:
+	case PCI_PRODUCT_INTEL_82865_IGD:
 		isc->chiptype = CHIP_I855;
 		break;
 	}
