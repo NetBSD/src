@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.17 1998/11/07 05:50:19 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.18 1998/11/20 19:37:06 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -399,7 +399,9 @@ int uvmfault_anonget(ufi, amap, anon)
 				/*
 				 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN
 				 * page into the uvm_swap_get function with
-				 * all data structures unlocked.
+				 * all data structures unlocked.  note that
+				 * it is ok to read an_swslot here because
+				 * we hold PG_BUSY on the page.
 				 */
 				uvmexp.pageins++;
 				result = uvm_swap_get(pg, anon->an_swslot,
