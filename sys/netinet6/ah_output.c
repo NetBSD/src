@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_output.c,v 1.12 2000/10/02 03:55:42 itojun Exp $	*/
-/*	$KAME: ah_output.c,v 1.25 2000/10/01 12:37:18 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.13 2001/02/19 04:24:27 itojun Exp $	*/
+/*	$KAME: ah_output.c,v 1.28 2001/02/19 04:23:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -537,6 +537,15 @@ ah4_finaldst(m)
 	q = (u_char *)(ip + 1);
 	i = 0;
 	while (i < optlen) {
+		if (i + IPOPT_OPTVAL >= optlen)
+			return NULL;
+		if (q[i + IPOPT_OPTVAL] == IPOPT_EOL ||
+		    q[i + IPOPT_OPTVAL] == IPOPT_NOP ||
+		    i + IPOPT_OLEN < optlen)
+			;
+		else
+			return NULL;
+
 		switch (q[i + IPOPT_OPTVAL]) {
 		case IPOPT_EOL:
 			i = optlen;	/* bye */
