@@ -1,4 +1,4 @@
-.\"	$NetBSD: guspnp.4,v 1.12 2001/10/28 16:28:39 jdolecek Exp $
+.\"	$NetBSD: guspnp.4,v 1.13 2003/03/31 03:14:32 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,11 +48,13 @@ or cards active in the system.
 .Sh DESCRIPTION
 The
 .Nm guspnp
-driver provides support for audiosubsystems using the Interwave (Am78C20x)
-family of ICs, usually the Gravis Ultrasound Plug and Play. Unlike the
+driver provides support for audio subsystems using the Interwave (Am78C20x)
+family of ICs, usually the Gravis Ultrasound Plug and Play.
+Unlike the
 .Nm gus
 driver guspnp driver does not require any local memory for the IC, but uses
-the codec for both playback and recording. The
+the codec for both playback and recording.
+The
 .Nm guspnp
 driver can simultaneously playback and record 8- and 16-bit samples at
 frequencies from 5.51kHz to 48kHz.
@@ -61,10 +63,13 @@ The
 .Nm guspnp
 driver relies on
 .Nm isapnp
-to allocate suitable resources for it. This version of the driver only
-uses the first logical device of 5 the interwave IC has. The 4 Unused
-logical devices are ATAPI CD-ROM device, PnP Joystick device, Legacy
-soundcard emulation device (SoundBlaster) and MIDI serial device. Support
+to allocate suitable resources for it.
+This version of the driver only
+uses the first logical device of the five the Interwave IC has.
+The four unused
+logical devices are the ATAPI CD-ROM device, PnP Joystick device, legacy
+soundcard emulation device (SoundBlaster) and MIDI serial device.
+Support
 for at least ATAPI CD-ROM and Joystick is being worked on.
 This version of the driver will use 1 IRQ and 2 DRQs.
 .Sh HARDWARE
@@ -105,11 +110,12 @@ interpolation.
 .Pp
 If the implementation has a 'bad' oscillator, using frequencies 44.8kHz
 and 38.4kHz will result in incorrect playback frequency. The author has
-a GUS PnP Pro which displays this behaviour.
+a GUS PnP Pro which displays this behavior.
 .Pp
 Other members of the Interwave family have not been tested and don't
 have the glue needed to make them work. Should someone need to implement it,
-not many changes in the existing code are needed. Output voltage control in
+not many changes in the existing code are needed.
+Output voltage control in
 register CFIG2 [7] should be set differently for some other members of the
 family.
 .Pp
