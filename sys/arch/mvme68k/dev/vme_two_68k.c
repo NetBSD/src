@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.2 2002/03/24 17:22:33 scw Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.3 2002/05/14 02:03:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ void vmetwo_attach __P((struct device *, struct device *, void *));
 struct cfattach vmetwo_ca = {
 	sizeof(struct vmetwo_softc), vmetwo_match, vmetwo_attach
 };
-struct cfdriver vmetwo_cd;
+extern struct cfdriver vmetwo_cd;
 
 
 /* ARGSUSED */
