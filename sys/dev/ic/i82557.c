@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.50 2001/05/21 23:58:44 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.51 2001/05/22 00:27:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -322,8 +322,8 @@ fxp_attach(struct fxp_softc *sc)
 	/* Initialize MAC address and media structures. */
 	fxp_get_info(sc, enaddr);
 
-	printf("%s: Ethernet address %s, %s Mb/s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr), sc->phy_10Mbps_only ? "10" : "10/100");
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
 
@@ -530,9 +530,8 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	 * Get info about the primary PHY
 	 */
 	fxp_read_eeprom(sc, &data, 6, 1);
-	sc->phy_primary_addr = data & 0xff;
-	sc->phy_primary_device = (data >> 8) & 0x3f;
-	sc->phy_10Mbps_only = data >> 15;
+	sc->phy_primary_device =
+	    (data & FXP_PHY_DEVICE_MASK) >> FXP_PHY_DEVICE_SHIFT;
 
 	/*
 	 * Read MAC address.
@@ -1369,7 +1368,8 @@ fxp_init(struct ifnet *ifp)
 	cbp->save_bf =		save_bf;/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
 	cbp->underrun_retry =	1;	/* retry mode (1) on DMA underrun */
-	cbp->mediatype =	!sc->phy_10Mbps_only; /* interface mode */
+					/* interface mode */
+	cbp->mediatype =	(sc->sc_flags & FXPF_MII) ? 1 : 0;
 	cbp->nsai =		1;	/* (don't) disable source addr insert */
 	cbp->preamble_length =	2;	/* (7 byte) preamble */
 	cbp->loopback =		0;	/* (don't) loopback */
