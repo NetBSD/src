@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2000/06/01 15:38:26 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2000/06/02 22:09:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,7 +128,7 @@ findroot(void)
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
-			booted_parition = part;
+			booted_partition = part;
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2000/06/01 17:43:01 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2000/06/02 22:09:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -83,7 +83,7 @@ findroot(void)
 	/*
 	 * XXX Match up MBR boot specification with BSD disklabel for root?
 	 */
-	booted_parition = 0;
+	booted_partition = 0;
 
 	return;
 }
