@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.2 1997/01/11 06:48:09 lukem Exp $	*/
+/*	$NetBSD: search.h,v 1.3 1998/12/12 20:08:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 
 typedef struct el_search_t {
     char *patbuf;		/* The pattern buffer		*/
-    int  patlen;		/* Length of the pattern buffer	*/
+    size_t  patlen;		/* Length of the pattern buffer	*/
     int  patdir;		/* Direction of the last search	*/
     int  chadir;		/* Character search direction	*/
     char chacha;		/* Character we are looking for	*/

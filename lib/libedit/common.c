@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.6 1998/05/20 01:00:33 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.7 1998/12/12 20:08:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.6 1998/05/20 01:00:33 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.7 1998/12/12 20:08:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -802,8 +802,8 @@ ed_search_prev_history(el, c)
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
-	if ((strncmp(hp, el->el_line.buffer, 
-		     el->el_line.lastchar - el->el_line.buffer) || 
+	if ((strncmp(hp, el->el_line.buffer, (size_t)
+		     (el->el_line.lastchar - el->el_line.buffer)) || 
 	    hp[el->el_line.lastchar-el->el_line.buffer]) && 
 	    c_hmatch(el, hp)) {
 	    found++;
@@ -860,8 +860,8 @@ ed_search_next_history(el, c)
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
-	if ((strncmp(hp, el->el_line.buffer, 
-		     el->el_line.lastchar - el->el_line.buffer) || 
+	if ((strncmp(hp, el->el_line.buffer, (size_t)
+		     (el->el_line.lastchar - el->el_line.buffer)) || 
 	     hp[el->el_line.lastchar-el->el_line.buffer]) && 
 	    c_hmatch(el, hp))
 	    found = h;
