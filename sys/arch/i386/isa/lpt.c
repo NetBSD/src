@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.16 1993/10/29 21:33:32 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.17 1993/10/29 21:35:20 mycroft Exp $
  */
 
 /*
@@ -417,10 +417,8 @@ lptclose(dev, flag)
 	int	unit = LPTUNIT(minor(dev));
 	struct	lpt_softc *sc = lptcd.cd_devs[unit];
 	u_short	iobase = sc->sc_iobase;
-	int	error;
 
-	if (error = pushbytes(sc))
-		return error;
+	(void) pushbytes(sc);
 
 	outb(iobase + lpt_control, LPC_NINIT);
 	brelse(sc->sc_inbuf);
