@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.13 2002/02/12 15:26:49 uch Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.14 2002/03/16 20:46:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -438,7 +438,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	/*
 	 * 1. open shlib file
