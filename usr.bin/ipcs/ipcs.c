@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.18 1999/08/25 05:11:51 thorpej Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.19 2000/03/28 23:36:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -54,6 +54,11 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+struct seminfo seminfo;
+struct shminfo shminfo;
+struct shmid_ds *shmsegs;
+struct msginfo msginfo;
 
 void	cvt_time __P((time_t, char *, int));
 char   *fmt_perm __P((u_short));
