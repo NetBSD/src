@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.30 2004/01/03 10:07:02 dbj Exp $	*/
+/*	$NetBSD: pass1.c,v 1.31 2004/01/03 10:11:41 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.30 2004/01/03 10:07:02 dbj Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.31 2004/01/03 10:11:41 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,8 @@ checkinode(inumber, idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (size < sblock->fs_maxsymlinklen ||
+		if ((sblock->fs_maxsymlinklen < 0) ||
+		    (size < sblock->fs_maxsymlinklen) ||
 		    (isappleufs && (size < APPLEUFS_MAXSYMLINKLEN)) ||
 		    (sblock->fs_maxsymlinklen == 0 && DIP(dp, blocks) == 0)) {
 			if (is_ufs2)
