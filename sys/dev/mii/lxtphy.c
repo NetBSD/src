@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.4 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.5 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ struct cfattach lxtphy_ca = {
 };
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	lxtphy_reset __P((struct lxtphy_softc *));
 void	lxtphy_status __P((struct lxtphy_softc *));
 
 int
@@ -143,7 +142,7 @@ lxtphyattach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	lxtphy_reset(sc);
+	mii_phy_reset(&sc->sc_mii);
 
 	sc->sc_mii.mii_capabilities =
 	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
@@ -254,7 +253,7 @@ lxtphy_service(self, mii, cmd)
 			return (0);
 
 		sc->sc_ticks = 0;
-		lxtphy_reset(sc);
+		mii_phy_reset(&sc->sc_mii);
 		(void) mii_phy_auto(&sc->sc_mii);
 		break;
 	}
@@ -311,25 +310,4 @@ lxtphy_status(sc)
 		mii->mii_media_active |= IFM_10_T;
 	if (csr & CSR_DUPLEX)
 		mii->mii_media_active |= IFM_FDX;
-}
-
-void
-lxtphy_reset(sc)
-	struct lxtphy_softc *sc;
-{
-	int reg, i;
-
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
-
-	/* Make sure the PHY is isolated. */
-	if (sc->sc_mii.mii_inst != 0)
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }

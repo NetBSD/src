@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.3 1998/11/04 23:07:15 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.4 1998/11/04 23:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ struct cfattach sqphy_ca = {
 };
 
 int	sqphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	sqphy_reset __P((struct sqphy_softc *));
 void	sqphy_status __P((struct sqphy_softc *));
 
 int
@@ -143,7 +142,7 @@ sqphyattach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	sqphy_reset(sc);
+	mii_phy_reset(&sc->sc_mii);
 
 	sc->sc_mii.mii_capabilities =
 	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
@@ -253,7 +252,7 @@ sqphy_service(self, mii, cmd)
 			return (0);
 
 		sc->sc_ticks = 0;
-		sqphy_reset(sc);
+		mii_phy_reset(&sc->sc_mii);
 		(void) mii_phy_auto(&sc->sc_mii);
 		break;
 	}
@@ -307,25 +306,4 @@ sqphy_status(sc)
 		mii->mii_media_active |= IFM_10_T;
 	if (status & STATUS_DPLX_DET)
 		mii->mii_media_active |= IFM_FDX;
-}
-
-void
-sqphy_reset(sc)
-	struct sqphy_softc *sc;
-{
-	int reg, i;
-
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_RESET|BMCR_ISO);
-
-	/* Wait 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(&sc->sc_mii, MII_BMCR);
-		if ((reg & BMCR_RESET) == 0)
-			break;
-		delay(1000);
-	}
-
-	/* Make sure the PHY is isolated. */
-	if (sc->sc_mii.mii_inst != 0)
-		PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 }
