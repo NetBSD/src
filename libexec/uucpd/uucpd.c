@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.12 1998/07/03 04:10:43 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.13 1998/07/03 17:21:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.12 1998/07/03 04:10:43 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.13 1998/07/03 17:21:22 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,17 +106,25 @@ main(argc, argv)
 
 	environ = nenv;
 #ifdef BSDINETD
-	close(1); close(2);
-	dup(0); dup(0);
+	close(1);
+	close(2);
+	dup(0);
+	dup(0);
 	hisaddrlen = sizeof (hisctladdr);
 	if (getpeername(0, (struct sockaddr *)&hisctladdr, &hisaddrlen) < 0) {
 		fprintf(stderr, "%s: ", argv[0]);
 		perror("getpeername");
-		_exit(1);
+		exit(1);
 	}
-	if (fork() == 0)
+	switch (fork()) {
+	case -1:
+		break;
+	case 0:
 		doit(&hisctladdr);
-	dologout();
+		break;
+	default:
+		dologout();
+	}
 	exit(1);
 #else /* !BSDINETD */
 	sp = getservbyname("uucp", "tcp");
@@ -248,22 +256,22 @@ struct	utmp utmp;
 void
 dologout()
 {
-	union wait status;
+	int status;
 	int pid, wtmp;
 
 #ifdef BSDINETD
-	while ((pid=wait((int *)&status)) > 0) {
+	while ((pid = wait(&status)) > 0) {
 #else  /* !BSDINETD */
-	while ((pid=wait3((int *)&status,WNOHANG,0)) > 0) {
+	while ((pid = wait3(&status,WNOHANG,0)) > 0) {
 #endif /* !BSDINETD */
 		wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 		if (wtmp >= 0) {
 			sprintf(utmp.ut_line, "uucp%.4d", pid);
 			SCPYN(utmp.ut_name, "");
 			SCPYN(utmp.ut_host, "");
-			(void) time(&utmp.ut_time);
-			(void) write(wtmp, (char *)&utmp, sizeof (utmp));
-			(void) close(wtmp);
+			(void)time(&utmp.ut_time);
+			(void)write(wtmp, (char *)&utmp, sizeof (utmp));
+			(void)close(wtmp);
 		}
 	}
 }
@@ -296,8 +304,8 @@ dologin(pw, sin)
 		SCPYN(utmp.ut_name, pw->pw_name);
 		SCPYN(utmp.ut_host, remotehost);
 		time(&utmp.ut_time);
-		(void) write(wtmp, (char *)&utmp, sizeof (utmp));
-		(void) close(wtmp);
+		(void)write(wtmp, (char *)&utmp, sizeof (utmp));
+		(void)close(wtmp);
 	}
 	if ((f = open(_PATH_LASTLOG, O_RDWR)) >= 0) {
 		struct lastlog ll;
@@ -306,7 +314,7 @@ dologin(pw, sin)
 		lseek(f, pw->pw_uid * sizeof(struct lastlog), 0);
 		SCPYN(ll.ll_line, remotehost);
 		SCPYN(ll.ll_host, remotehost);
-		(void) write(f, (char *) &ll, sizeof ll);
-		(void) close(f);
+		(void)write(f, (char *) &ll, sizeof ll);
+		(void)close(f);
 	}
 }
