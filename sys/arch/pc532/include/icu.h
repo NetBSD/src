@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.3 1995/05/16 07:30:41 phil Exp $	*/
+/*	$NetBSD: icu.h,v 1.4 1995/06/18 07:13:48 phil Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -35,6 +35,9 @@
 
 /* icu.h: defines for use with the ns32532 icu. */
 
+#ifndef _MACHINE_ICU_H_
+#define _MACHINE_ICU_H_
+
 /* We don't use vector interrupts, but make it right anyway */
 #define VEC_ICU		0x10
 
@@ -68,19 +71,30 @@
 #define LCCV	28
 #define HCCV	30
 
+/* Byte and Word access to ICU registers
+ */
+#define ICUB(n)	*((unsigned char  *)(ICU_ADR + n))
+#define ICUW(n)	*((unsigned short *)(ICU_ADR + n))
+
+#ifndef LOCORE
+/* Interrupt trigger modes
+ */
+enum {HIGH_LEVEL, LOW_LEVEL, RAISING_EDGE, FALLING_EDGE} int_modes;
+#endif /* !LOCORE */
+
 /* Hardware interrupt request lines.
  */
 #define IR_CLK		2		/* highest priority */
 #define IR_SCSI0	5		/* Adaptec 6250 */
 #define IR_SCSI1	4		/* NCR DP8490 */
 #define IR_TTY0		13
+#define IR_TTY0RDY	12
 #define IR_TTY1		11
+#define IR_TTY1RDY	10
 #define IR_TTY2		9
+#define IR_TTY2RDY	8
 #define IR_TTY3		7
-
-/* SCSI controllers */
-#define AIC6250		0
-#define DP8490		1
+#define IR_TTY3RDY	6
 
 /*    edge polarity
  *	0	0	falling edge
@@ -94,3 +108,27 @@
 
 #define ints_off	bicpsrw	PSR_I
 #define ints_on		bispsrw	PSR_I
+
+/* SCSI controllers */
+#define AIC6250		0
+#define DP8490		1
+#define ICU_SCSI_BIT	0x80
+
+#ifndef LOCORE
+/*
+ * Select a SCSI controller.
+ */
+static __inline int
+scsi_select_ctlr(int ctlr)
+{
+	int old;
+
+	old = (ICUB(PDAT) & ICU_SCSI_BIT) == 0;
+	if (ctlr == DP8490)
+		ICUB(PDAT) &= ~ICU_SCSI_BIT;	/* select = 0 for 8490 */
+	else
+		ICUB(PDAT) |= ICU_SCSI_BIT;	/* select = 1 for AIC6250 */
+	return(old);
+}
+#endif /* !LOCORE */
+#endif /* _MACHINE_ICU_H_ */
