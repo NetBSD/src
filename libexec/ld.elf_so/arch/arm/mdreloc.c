@@ -89,10 +89,22 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
-			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("RELATIVE in %s --> %p @ %p", obj->path,
-			    (void *)*where, where));
+		    {
+			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
+			extern Elf_Addr	_GOT_END_[];
+
+			/* This is the ...iffy hueristic. */
+			if (!self ||
+			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+			    (caddr_t)where >= (caddr_t)_GOT_END_) {
+				*where += (Elf_Addr)obj->relocbase;
+				rdbg(dodebug, ("RELATIVE in %s --> %p",
+				    obj->path, (void *)*where));
+			} else
+				rdbg(dodebug, ("RELATIVE in %s stays at %p",
+				    obj->path, (void *)*where));
 			break;
+		    }
 
 		case R_TYPE(COPY):
 			/*
