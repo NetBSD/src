@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1999/01/19 21:04:49 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.58 1999/01/19 22:57:47 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -198,10 +198,10 @@ pmap_bootstrap()
 	kvtopte(istack)->pg_v = 0;
 
 	/* Some scratch pages */
-	scratch = (void *)istack + ISTACK_SIZE;
+	scratch = (void *)((u_int)istack + ISTACK_SIZE);
 
 	/* Physical-to-virtual translation table */
-	(unsigned)pv_table = scratch + 4 * VAX_NBPG;
+	(unsigned)pv_table = (u_int)scratch + 4 * VAX_NBPG;
 
 	avail_start = (unsigned)pv_table + (ROUND_PAGE(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -376,7 +376,7 @@ pmap_pinit(pmap)
 	pmap->pm_p0br = (void *)kmem_alloc_wait(pte_map, bytesiz);
 #endif
 	pmap->pm_p0lr = vax_btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
-	pmap->pm_p1br = (void *)pmap->pm_p0br + bytesiz - 0x800000;
+	(vaddr_t)pmap->pm_p1br = (vaddr_t)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - vax_btoc(MAXSSIZ));
 	pmap->pm_stack = USRSTACK;
 
@@ -688,7 +688,7 @@ if(startpmapdebug)
 printf("pmap_bootstrap_alloc: size 0x %x\n",size);
 #endif
 	size = round_page(size);
-	mem = (void *)avail_start + KERNBASE;
+	mem = (caddr_t)avail_start + KERNBASE;
 	avail_start += size;
 	memset(mem, 0, size);
 	return (mem);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.40 1999/01/19 21:04:48 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.41 1999/01/19 22:57:47 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -215,7 +215,7 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + sc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (void *)scb + 512;
+		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
 		func = scb_vec[vec/4].hoppaddr;
 		arg = scb_vec[vec/4].pushlarg;
 		(*func)(arg);
