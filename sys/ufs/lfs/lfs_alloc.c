@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.40 2000/06/30 20:45:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.41 2000/07/03 08:20:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -300,6 +300,7 @@ lfs_vcreate(mp, ino, vp)
 	ip->i_ffs_mode = 0;
 	ip->i_ffs_size = 0;
 	ip->i_ffs_blocks = 0;
+	ip->i_lfs_effnblks = 0;
 	++ump->um_lfs->lfs_uinodes;
 }
 
