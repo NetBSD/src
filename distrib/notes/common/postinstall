@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.42 2002/07/21 20:29:47 rafal Exp $
+.\"	$NetBSD: postinstall,v 1.43 2002/07/22 14:55:14 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,32 +56,40 @@ to get to a
 .Pa /bin/sh
 prompt.
 If you are asked for a terminal type, respond with
-.ie r_hp300 \{\
-.Ic hp300h
+.
+.ds termtype vt220
+.
+.ie \n[hp300] \{\
+.ds termtype hp300h
+.Ic \*[termtype]
 for a local console, or whatever is appropriate for your serial console.
 .\}
 .el \{\
-.ie r_macppc \{\
-.Ic vt100
+.ie \n[macppc] \{\
+.ds termtype vt100
+.Ic \*[termtype]
 (or whatever is appropriate for your terminal type)
 .\}
 .el \{\
-.ie r_pmax \{\
+.ie \n[pmax] \{\
+.ds termtype termtype
 the correct terminal type as discussed in the
 .Sx Once you've booted the diskimage
 section.
 .\}
 .el \{\
-.ie r_sparc \{\
-.Ic sun
+.ie \n[sparc] \{\
+.ds termtype sun
+.Ic \*[termtype]
 for a local console, or whatever is appropriate for your serial
 console (some systems display garbage with a
-.Ic sun
+.Ic \*[termtype]
 terminal type, you may need to use
 .Ic sun-ss5 )
+.ds termtype sun
 .\}
 .el \{\
-.Ic vt220
+.Ic \*[termtype]
 (or whatever is appropriate for your terminal type)
 .\}
 .\}
@@ -127,12 +135,7 @@ or
 Do the following:
 .Pp
 .Dl # Ic "mount /usr"
-.       ie r_hp300   .Dl # Ic "export TERM=hp300h"
-.el \{ .ie r_macppc  .Dl # Ic "export TERM=vt100"
-.el \{ .ie r_pmax    .Dl # Ic "export TERM=termtype"
-.el \{ .ie r_sparc   .Dl # Ic "export TERM=sun"
-.el \{               .Dl # Ic "export TERM=vt220"
-\}\}\}\}
+.Dl # Ic "export TERM=\*[termtype]"
 .Pp
 If you have
 .Pa /var
