@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.83 2003/08/28 14:54:32 enami Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.84 2003/08/30 07:54:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.83 2003/08/28 14:54:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.84 2003/08/30 07:54:32 ragge Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -827,6 +827,7 @@ kmeminit(void)
 {
 	__link_set_decl(malloc_types, struct malloc_type);
 	struct malloc_type * const *ksp;
+	vaddr_t kmb, kml;
 #ifdef KMEMSTATS
 	long indx;
 #endif
@@ -852,9 +853,11 @@ kmeminit(void)
 
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
-	kmem_map = uvm_km_suballoc(kernel_map, (void *)&kmembase,
-	    (void *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
+	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
+	    &kml, (vsize_t)(nkmempages << PAGE_SHIFT), 
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
+	kmembase = (char *)kmb;
+	kmemlimit = (char *)kml;
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)
