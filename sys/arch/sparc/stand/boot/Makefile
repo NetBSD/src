@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2000/02/22 23:06:31 he Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2000/02/28 19:01:15 he Exp $
 
 PROG=		boot
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c vers.c
@@ -15,6 +15,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 .include <bsd.own.mk>
+.include <bsd.obj.mk>
 
 OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 
