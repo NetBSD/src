@@ -15,7 +15,7 @@ RM=	rm -f
 
 ALL=	ucbarpa.cf ucbvax.cf vangogh.cf \
 	chez.cf python.cf \
-	sun-lamp.cf boat-anchor.cf netbsd-proto.cf trinity.cf \
+	sun-lamp.cf pain.cf boat-anchor.cf netbsd-proto.cf trinity.cf \
 	clientproto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
