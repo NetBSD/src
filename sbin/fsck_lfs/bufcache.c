@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.4 2005/03/19 00:43:17 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.5 2005/04/06 02:38:17 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -182,15 +182,27 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 
 	/*
 	 * First check the buffer cache lists.
+	 * We might sometimes need to resize a buffer.  If we are growing
+	 * the buffer, its contents are invalid; but shrinking is okay.
 	 */
 	if ((bp = incore(vp, lbn)) != NULL) {
 		assert(!(bp->b_flags & B_NEEDCOMMIT));
 		assert(!(bp->b_flags & B_BUSY));
-		assert(bp->b_bcount == size);
 		bp->b_flags |= B_BUSY;
 		bremfree(bp);
-		return bp;
+		if (bp->b_bcount == size)
+			return bp;
+		else if (bp->b_bcount > size) {
+			assert(!(bp->b_flags & B_DELWRI));
+			bp->b_bcount = size;
+			bp->b_data = realloc(bp->b_data, size);
+			return bp;
+		}
+
+		buf_destroy(bp);
+		bp = NULL;
 	}
+
 	/*
 	 * Not on the list.
 	 * Get a new block of the appropriate size and use that.
