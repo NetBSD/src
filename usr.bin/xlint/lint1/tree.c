@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.35 2003/05/14 12:45:07 wiz Exp $	*/
+/*	$NetBSD: tree.c,v 1.36 2003/05/30 13:37:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.35 2003/05/14 12:45:07 wiz Exp $");
+__RCSID("$NetBSD: tree.c,v 1.36 2003/05/30 13:37:49 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1036,6 +1036,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			error(170);
 			return (0);
 		}
+		while (rn->tn_op == CVT)
+			rn = rn->tn_left;
 		if (rn->tn_op != COLON)
 			LERROR("typeok()");
 		break;
