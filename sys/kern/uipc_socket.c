@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.39 1998/09/25 23:32:27 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.40 1998/12/16 00:26:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -480,6 +480,8 @@ nopages:
 		    } while (space > 0 && atomic);
 		    if (dontroute)
 			    so->so_options |= SO_DONTROUTE;
+		    if (resid > 0)
+			    so->so_state |= SS_MORETOCOME;
 		    s = splsoftnet();				/* XXX */
 		    error = (*so->so_proto->pr_usrreq)(so,
 			(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
@@ -487,6 +489,8 @@ nopages:
 		    splx(s);
 		    if (dontroute)
 			    so->so_options &= ~SO_DONTROUTE;
+		    if (resid > 0)
+			    so->so_state &= ~SS_MORETOCOME;
 		    clen = 0;
 		    control = 0;
 		    top = 0;
