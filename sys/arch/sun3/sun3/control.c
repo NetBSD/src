@@ -74,9 +74,12 @@ void set_pte_pmeg(pmeg_num, page_num,pte)
 {
     vm_offset_t va;
 
+    printf("starting set_pte_pmeg\n");
+    va = temp_seg_va;
     set_segmap(temp_seg_va, pmeg_num);
     va += NBPG*page_num;
     set_pte(va, pte);
     set_segmap(temp_seg_va, SEGINV);
+    printf("ending set_pte_pmeg\n");
 }
 

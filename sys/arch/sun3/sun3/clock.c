@@ -2,7 +2,7 @@
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.5 1993/08/02 02:08:25 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.6 1993/08/08 12:21:53 glass Exp $
  */
 
 #include "systm.h"
@@ -12,11 +12,10 @@
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
-#include "obio.h"
+#include <machine/mon.h>
+#include <machine/obio.h>
 
-#define CLOCK_ADDR 0x6000000
-
-#define intersil_clock ((struct intersil7170 *) CLOCK_ADDR)
+#define intersil_clock ((struct intersil7170 *) intersil_va)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
@@ -32,7 +31,7 @@
 #define SECS_YEAR(year) \
        (INTERSIL_LEAP_YEAR(year) ? SECS_PER_LEAP : SECS_PER_YEAR)
 
-
+vm_offset_t intersil_va = NULL;
     
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -57,6 +56,8 @@ static int month_days[12] = {
  */
 void startrtclock()
 {
+    if (!intersil_va)
+	mon_panic("clock: va address for rt clock not initialized");
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IDISABLE);
     intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;

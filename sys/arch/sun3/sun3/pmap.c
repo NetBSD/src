@@ -20,14 +20,15 @@
 /*
  * globals needed by the vm system
  *
+
+
+
+
  * [frankly the stupid vm system should allocate these]
  */
 
 vm_offset_t virtual_avail, virtual_end;
 vm_offset_t avail_start, avail_end;
-int msgbufmapped = 0;
-struct msgbuf *msgbufp = NULL;
-caddr_t vmmap;
 
 
 /* current_projects:
@@ -77,6 +78,12 @@ caddr_t vmmap;
 
 #define PMAP_LOCK() s = splpmap()
 #define PMAP_UNLOCK() splx(s)
+
+#define dequeue_first(val, type, queue) { \
+	val = (type) queue_first(queue); \
+	    dequeue_head(queue); \
+}
+
 /*
  * locking issues:
  *
@@ -95,8 +102,8 @@ struct pv_entry {
 };
 
 typedef struct pv_entry *pv_entry_t;
-pv_entry_t pv_head_table;
-#define pa_to_pvp(pa) &pv_head_table[pa >>PGSHIFT]
+pv_entry_t pv_head_table = NULL;
+#define pa_to_pvp(pa) &pv_head_table[PA_PGNUM(pa)]
 
 #define PV_VALID  8
 #define PV_WRITE  4
@@ -110,10 +117,10 @@ pv_entry_t pv_head_table;
 /* cache support */
 static unsigned char *pv_cache_table = NULL;
 #define set_cache_flags(pa, flags) \
-    pv_cache_table[pa >>PGSHIFT] |= flags & PV_NC
+    pv_cache_table[PA_PGNUM(pa)] |= flags & PV_NC
 #define force_cache_flags(pa, flags) \
-    pv_cache_table[pa >>PGSHIFT] = flags & PV_NC
-#define get_cache_flags(pa) (pv_cache_table[pa >>PGSHIFT])
+    pv_cache_table[PA_PGNUM(pa)] = flags & PV_NC
+#define get_cache_flags(pa) (pv_cache_table[PA_PGNUM(pa)])
 
 /* modified bits support */
 static unsigned char *pv_modified_table = NULL;
@@ -123,7 +130,7 @@ static unsigned char *pv_modified_table = NULL;
     (pte & (PG_OBIO|PG_VME16D|PG_VME32D) ? 0 : \
      ((pte & PG_MOD) >>PG_MOD_SHIFT))
 
-
+int pv_initialized = 0;
 
 #define PMEG_INVAL (NPMEG-1)
 #define PMEG_NULL (pmeg_t) NULL
@@ -243,14 +250,14 @@ void pmap_protect __P((pmap_t pmap, vm_offset_t sva, vm_offset_t eva, vm_prot_t 
 
 void pmap_update __P((void));
 
-
-int get_pte_val(pmap, va,ptep)
+int get_pte_val(pmap, va, ptep)
      pmap_t pmap;
-     vm_offset_t va,*ptep;
+     vm_offset_t va, *ptep;
 {
     int saved_context,s;
     unsigned char sme;
     pmeg_t pmegp;
+    int module_debug;
 
     if (pmap->pm_context) {
 	PMAP_LOCK();
@@ -316,10 +323,10 @@ void context_allocate(pmap)
     if (queue_empty(&context_free_queue)) { /* steal one from active*/
 	if (queue_empty(&context_active_queue))
 	    panic("pmap: no contexts to be found");
-	context = (context_t) dequeue_head(&context_active_queue);
+	dequeue_first(context, context_t, &context_active_queue);
 	context_free(context->context_upmap);
     } else 
-	context = (context_t) dequeue_head(&context_free_queue);
+	dequeue_first(context, context_t, &context_free_queue);	
     enqueue_tail(&context_active_queue,context);
     if (context->context_upmap != NULL)
 	panic("pmap: context in use???");
@@ -384,6 +391,40 @@ void pmeg_steal(pmeg_num)
     remqueue(&pmeg_free_queue, pmegp);
 }
 
+void pmeg_clean(pmegp)
+     pmeg_t pmegp;
+{
+    int i;
+    
+    for (i = 0; i < NPAGSEG; i++)
+	set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
+}
+
+/*
+ * This routine makes sure that pmegs on the pmeg_free_queue contain
+ * no valid ptes.  It pulls things off the queue, cleans them, and
+ * puts them at the end.  Ending condition is finding the first queue element
+ * at the head of the queue again.
+ */
+
+void pmeg_clean_free()
+{
+    pmeg_t pmegp, pmegp_first;
+    int loop = 0;
+
+    if (queue_empty(&pmeg_free_queue))
+	panic("pmap: no free pmegs available to clean");
+
+    pmegp_first = NULL;
+    dequeue_first(pmegp, pmeg_t, &pmeg_free_queue);
+    while (pmegp != pmegp_first) {
+	pmeg_clean(pmegp);
+	if (pmegp_first == NULL)
+	    pmegp_first = pmegp;
+	enqueue_tail(&pmeg_free_queue, pmegp);
+	dequeue_first(pmegp, pmeg_t, &pmeg_free_queue);
+    }
+}
 void pmeg_flush(pmegp)
      pmeg_t pmegp;
 {
@@ -396,7 +437,8 @@ void pmeg_flush(pmegp)
 	if (pmegp->pmeg_owner) {
 	    pte = get_pte_pmeg(pmegp->pmeg_index, i);
 	    if (pte & PG_VALID) {
-		save_modified_bits(pte);
+		if (pv_initialized)
+		    save_modified_bits(pte);
 		pv_unlink(pmegp->pmeg_owner, PG_PA(pte), pmegp->pmeg_va);
 		pmegp->pmeg_vpages--;
 		set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
@@ -418,16 +460,16 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
     pmeg_t pmegp;    
 
     if (!queue_empty(&pmeg_free_queue)) 
-	pmegp = (pmeg_t) dequeue_head(&pmeg_free_queue);
-    else if (!queue_empty(&pmeg_inactive_queue)){
-	pmegp = (pmeg_t) dequeue_head(&pmeg_inactive_queue);
+	dequeue_first(pmegp, pmeg_t, &pmeg_free_queue)
+    else if (!queue_empty(&pmeg_inactive_queue)) {
+	dequeue_first(pmegp, pmeg_t, &pmeg_inactive_queue);
 	pmeg_flush(pmegp);
     }
     else if (!queue_empty(&pmeg_active_queue)) {
-	pmegp = (pmeg_t) dequeue_head(&pmeg_active_queue);
+	dequeue_first(pmegp, pmeg_t, &pmeg_active_queue);
 	while (pmegp->pmeg_owner == kernel_pmap) {
-	    enqueue_tail(&pmeg_inactive_queue, pmegp);
-	    pmegp = (pmeg_t) dequeue_head(&pmeg_active_queue);
+	    enqueue_tail(&pmeg_active_queue, pmegp);
+	    dequeue_first(pmegp, pmeg_t, &pmeg_active_queue);
 	}
 	pmap_remove_range(pmegp->pmeg_owner, pmegp->pmeg_va,
 			  pmegp->pmeg_va+NBSG);
@@ -441,12 +483,14 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
     pmegp = (pmeg_t) enqueue_tail(&pmeg_active_queue, pmegp);
     return pmegp;
 }
+
 void pmeg_release(pmegp)
      pmeg_t pmegp;
 {
     remqueue(&pmeg_active_queue, pmegp);
     enqueue_tail(&pmeg_inactive_queue, pmegp);
 }
+
 void pmeg_release_empty(pmegp, segnum, update)
      pmeg_t pmegp;
      int segnum;
@@ -521,6 +565,7 @@ unsigned char pv_compute_cache(head)
     pv_entry_t pv;
     int cread, cwrite, ccache, clen;
 
+    if (!pv_initialized) return 0;
     cread = cwrite = ccache = clen = 0;
     if (!head->pv_pmap) return 0;
     for (pv = head; pv != NULL; pv=pv->pv_next) {
@@ -542,6 +587,7 @@ int pv_compute_modified(head)
     unsigned int seg;
     
 
+    if (!pv_initialized) return 0;
     if (!head->pv_pmap) return 0;
     modified = 0;
     for (pv = head; pv != NULL; pv=pv->pv_next) {
@@ -567,6 +613,7 @@ void pv_remove_all(pa)
 {
     pv_entry_t npv,head,last;
 
+    if (!pv_initialized) return 0;
     head = pa_to_pvp(pa);
     for (npv = head ; npv != NULL; last= npv, npv = npv->pv_next ) {
 	if (npv->pv_pmap == NULL) continue; /* empty */
@@ -583,42 +630,58 @@ unsigned char pv_link(pmap, pa, va, flags)
     pv_entry_t last,pv,head,npv;
     int s;
 
+    if (!pv_initialized) return 0;
     head = pv = pa_to_pvp(pa);
     PMAP_LOCK();
+
+    printf("entering pv_link, pv == %x\n", pv);
+    printf("entering pv_link, pv_head_table == %x\n", pv_head_table);
+    printf("entering pv_link, pa == %x pgnum %x\n", pa, PA_PGNUM(pa));    
     if (pv->pv_pmap == NULL) {	/* not currently "managed" */
  	pv->pv_va = va;
 	pv->pv_pmap = pmap,
 	pv->pv_next = NULL;
 	pv->pv_flags = flags;
+	printf("pv_link: before force_cache_flags\n");
 	force_cache_flags(pa, flags);
+	printf("pv_link: not currently managed\n");
 	return flags & PV_NC;
     }
+    printf("entering pv_link loop\n");
     for (npv = pv ; npv != NULL; last= npv, npv = npv->pv_next ) {
-	if ((pv->pv_pmap != pmap) || (pv->pv_va != va)) { 
-	    if (flags == npv->pv_flags)	    /* no change */
-		return get_cache_flags(pa);
-	    npv->pv_flags = flags;
-	    goto recompute;
-	}
+	if ((npv->pv_pmap != pmap) || (npv->pv_va != va)) continue;
+	printf("pv_link: found match\n");
+	if (flags == npv->pv_flags) /* no change */
+	    return get_cache_flags(pa);
+	npv->pv_flags = flags;
+	goto recompute;
     }
+    printf("entering pv_link new entry\n");
 /*zalloc(pv_zone);*/
     pv = malloc(sizeof(struct pv_entry), M_VMPVENT, M_WAITOK);
     pv->pv_va = va;
     pv->pv_pmap = pmap,
     pv->pv_next = NULL;
     pv->pv_flags = flags;
+    printf("entering pv_link before last\n");
     last->pv_next = pv;
+    printf("entering pv_link after last\n");
 
  recompute:
     if (get_cache_flags(pa) & PG_NC) return flags & PV_NC; /* already NC */
     if (flags & PV_NC) {	/* being NCed, wasn't before */
 	force_cache_flags(pa, flags);
+	printf("pv_link: change pte 1\n");
 	pv_change_pte(head, MAKE_PV_REAL(PV_NC), 0);
+	printf("pv_link: change pte 1 end\n");
 	return flags & PV_NC;
     }
+    printf("pv_link: cache compute\n");
     nflags = pv_compute_cache(head);
     force_cache_flags(pa, nflags);
+    printf("pv_link: change pte 2 \n");
     pv_change_pte(head, MAKE_PV_REAL(nflags), 0); /*  */
+    printf("pv_link: change pte 2 after\n");
     return nflags & PV_NC;
 }
 void pv_change_pte(pv_list, set_bits, clear_bits)
@@ -631,6 +694,7 @@ void pv_change_pte(pv_list, set_bits, clear_bits)
     vm_offset_t pte;
     unsigned int seg;
 
+    if (!pv_initialized) return;
     if (pv_list->pv_pmap == NULL) /* nothing to hack on */
 	return;
     if (!set_bits && !clear_bits) return; /* nothing to do */
@@ -660,6 +724,7 @@ void pv_unlink(pmap, pa, va)
     pv_entry_t pv,pv_list,dead,last;
     unsigned char saved_flags,nflags;
 
+    if (!pv_initialized) return;
     pv_list = pa_to_pvp(pa);
     if (pv_list->pv_pmap == NULL) {
 	printf("pv_unlinking too many times\n");
@@ -709,20 +774,33 @@ void pv_init()
 {
     int i;
 
+    mon_printf("kernel_map: %x\n", kernel_map);
     pv_head_table = (pv_entry_t) kmem_alloc(kernel_map,
-					    (avail_end >> PGSHIFT) *
+					    PA_PGNUM(avail_end) *
 					    sizeof(struct pv_entry));
-    for (i = 0; i < (avail_end >>PGSHIFT); i++) { /* dumb XXX*/
+    if (!pv_head_table)
+	mon_panic("pmap: kmem_alloc() of pv table failed");
+    for (i = 0; i < PA_PGNUM(avail_end); i++) { /* dumb XXX*/
 	bzero(&pv_head_table[i], sizeof(struct pv_entry));
     }
     pv_modified_table = (unsigned char *) kmem_alloc(kernel_map,
-						     (avail_end >> PGSHIFT)*
+						     PA_PGNUM(avail_end)*
 						     sizeof(char));
-    bzero(pv_modified_table, sizeof(char)* (avail_end >> PGSHIFT));
+    if (!pv_modified_table)
+	mon_panic("pmap: kmem_alloc() of pv modified table failed");
+    
+    bzero(pv_modified_table, sizeof(char)* PA_PGNUM(avail_end));
     pv_cache_table = (unsigned char *) kmem_alloc(kernel_map,
-						  (avail_end >> PGSHIFT) *
+						  PA_PGNUM(avail_end) *
 						  sizeof(char));
-    bzero(pv_cache_table, sizeof(char)* (avail_end >> PGSHIFT));
+    if (!pv_cache_table)
+	mon_panic("pmap: kmem_alloc() of pv cache table failed");
+    bzero(pv_cache_table, sizeof(char)* PA_PGNUM(avail_end));
+    pv_initialized++;
+    printf("PV: head: %x\n modified: %x\n cache: %x\n",
+	   pv_head_table,
+	   pv_modified_table,
+	   pv_cache_table);
 }
 
 void sun3_protection_init()
@@ -781,60 +859,14 @@ void pmap_bootstrap()
     /* pmeg_init(); done in sun3_vm_init() */
     context_init();
     
-    /*
-     * we need to kill off a segment to handle the stupid non-contexted
-     * pmeg 
-     *
-     */
-    temp_seg = sun3_round_seg(virtual_avail);
-    set_temp_seg_addr(temp_seg);
-    mon_printf("%x virtual bytes lost allocating temporary segment for pmap\n",
-	       temp_seg - virtual_avail); 
-    set_segmap(temp_seg, SEGINV);
-    virtual_avail = temp_seg + NBSG;
-
-    sme = get_segmap(virtual_avail);
-    if (sme == SEGINV)
-	printf("bad pmeg encountered while looking for msgbuf page");
-
-    pmeg_steal(sme);
-    /* msgbuf */
-    avail_end -= NBPG;
-    msgbufp = (struct msgbuf *) virtual_avail;
-    /* could use pmap_map(), but i want to make sure.*/
-    pte = PG_VALID | PG_WRITE |PG_SYSTEM | PG_NC | (avail_end >>PGSHIFT);
-    set_pte((vm_offset_t) msgbufp, pte);
-    msgbufmapped = 1;
-
-    virtual_avail +=NBPG;
-    eva = sun3_round_up_seg(virtual_avail);
-    for (va = virtual_avail; va < eva; va += NBPG)
-	set_pte(va, PG_INVAL);
-    
-    /* vmmap (used by /dev/mem */
-    vmmap = (caddr_t) virtual_avail;
-    set_pte((vm_offset_t) vmmap, PG_INVAL);
-    virtual_avail += NBPG;
-
-    /*
-     * vpages array:
-     *   just some virtual addresses for temporary mappings
-     *   in the pmap module
-     */
-
-    tmp_vpages[0] = virtual_avail;
-    set_pte(tmp_vpages[0], PG_INVAL);
-    virtual_avail += NBPG;
-    tmp_vpages[1] = virtual_avail;
-    set_pte(tmp_vpages[0], PG_INVAL);
-    virtual_avail += NBPG;
-
-    virtual_avail = eva;
 
     mon_printf("kernel virtual address begin:\t %x\n", virtual_avail);
     mon_printf("kernel virtual address end:\t %x\n", virtual_end);
     mon_printf("physical memory begin:\t %x\n", avail_start);    
     mon_printf("physical memory end:\t %x\n", avail_end);
+
+    pmeg_clean_free();
+    mon_printf("free pmegs cleaned\n");
 }
 /*
  *	Initialize the pmap module.
@@ -993,31 +1025,44 @@ void pmap_remove_range_mmu(pmap, sva, eva)
     pmeg_t pmegp;
     vm_offset_t va,pte;
     
+    printf("entering pmap_remove_range_mmu: %x -> %x\n", sva, eva);
     saved_context = get_context();
     if (pmap != kernel_pmap)
 	set_context(pmap->pm_context->context_num);
+    printf("pmap_remove_range_mmu: past stupid context thing\n");
     sme = get_segmap(sva);
     if (sme == SEGINV) {
 	if (pmap == kernel_pmap) return;
 	pmegp = pmeg_cache(pmap, VA_SEGNUM(sva), PM_UPDATE_CACHE);
-	if (!pmegp) return;
+	if (!pmegp) goto outta_here;
 	set_segmap(sva, pmegp->pmeg_index);
     }
     else
 	pmegp = pmeg_p(sme);
     /* have pmeg, will travel */
-    if (!pmegp->pmeg_vpages) return; /* no valid pages anyway */
+    if (!pmegp->pmeg_vpages) goto outta_here; /* no valid pages anyway */
+    printf("pmap_remove_range_mmu: starting removal");
     va = sva;
     while (va < eva) {
 	pte = get_pte(va);
 	if (pte & PG_VALID) {
-	    save_modified_bits(pte);
+	    printf("before save_modified_bits(): %x\n", pv_modified_table);
+	    printf("before save_modified_bits(): PG_PGNUM(pte)== %x\n",
+		   PG_PGNUM(pte));
+	    printf("before save_modified_bits(): pv_init %d\n",
+		   pv_initialized);
+	    if (pv_initialized)
+		save_modified_bits(pte);
+	    printf("after save_modified_bits()\n");
 	    pv_unlink(pmap, PG_PA(pte), va);
+	    printf("after after pv_unlink()\n");
 	    pmegp->pmeg_vpages--;
+	    printf("after pmegp->pmeg_vpages--\n");
 	    set_pte(va, PG_INVAL);
 	}
 	va+= NBPG;
     }
+    printf("pmap_remove_range_mmu: past removal");
     if (pmegp->pmeg_vpages <= 0) {
 	if (is_pmeg_wired(pmegp))
 	    printf("pmap: removing wired pmeg\n");
@@ -1031,6 +1076,8 @@ void pmap_remove_range_mmu(pmap, sva, eva)
 	else
 	    set_segmap(sva, SEGINV);
     }
+    printf("pmap_remove_range_mmu: past cleanup");
+outta_here:
     set_context(saved_context);
 }
 
@@ -1048,7 +1095,8 @@ void pmap_remove_range_contextless(pmap, sva, eva,pmegp)
     for (i = sp; i < ep; i++) {
 	pte = get_pte_pmeg(pmegp->pmeg_index, i);
 	if (pte & PG_VALID) {
-	    save_modified_bits(pte);
+	    if (pv_initialized)
+		save_modified_bits(pte);
 	    pv_unlink(pmap, PG_PA(pte), va);
 	    pmegp->pmeg_vpages--;
 	    set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
@@ -1196,7 +1244,8 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
     current_pte = get_pte(va);
     if (!(current_pte & PG_VALID)) goto add_pte; /* just adding */
     pmegp->pmeg_vpages--;	/* removing valid page here, way lame XXX*/
-    save_modified_bits(current_pte);
+    if (pv_initialized)
+	save_modified_bits(current_pte);
     if (PG_PGNUM(current_pte) != PG_PGNUM(pte_proto)) /* !same physical addr*/
 	pv_unlink(kernel_pmap, PG_PA(current_pte), va); 
 
@@ -1212,7 +1261,9 @@ add_pte:	/* can be destructive */
     if (mem_type & PG_TYPE) 
 	set_pte(va, pte_proto | PG_NC);
     else {
+	printf("before pv_link\n");
 	nflags = pv_link(kernel_pmap, pa, va, PG_TO_PV_FLAGS(pte_proto));
+	printf("after pv_link\n");
 	if (nflags & PV_NC)
 	    set_pte(va, pte_proto | PG_NC);
 	else
@@ -1270,7 +1321,8 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
      */
     current_pte = get_pte(va);
     if (!(current_pte & PG_VALID)) goto add_pte;
-    save_modified_bits(current_pte);
+    if (pv_initialized)
+	save_modified_bits(current_pte);
     pmegp->pmeg_vpages--;	/* removing valid page here, way lame XXX*/
     if (PG_PGNUM(current_pte) != PG_PGNUM(pte_proto)) 
 	pv_unlink(pmap, PG_PA(current_pte), va); 
@@ -1315,7 +1367,7 @@ pmap_enter(pmap, va, pa, prot, wired)
     mem_type = pa & PMAP_MEMMASK;
     pte_proto = PG_VALID | pmap_pte_prot(prot) | (pa & PMAP_NC ? PG_NC : 0);
     pa &= ~PMAP_SPECMASK;
-    pte_proto |= (pa >> PGSHIFT);
+    pte_proto |= PA_PGNUM(pa);
 
     /* treatment varies significantly:
      *  kernel ptes are in all contexts, and are always in the mmu
@@ -1337,9 +1389,11 @@ pmap_clear_modify(pa)
 {
     int s;
 
+    if (!pv_initialized) return;
+
     PMAP_LOCK();
-    pv_modified_table[PG_PGNUM(pa)] = 0;
-    pv_change_pte(&pv_head_table[PG_PGNUM(pa)], 0, PG_MOD);
+    pv_modified_table[PA_PGNUM(pa)] = 0;
+    pv_change_pte(&pv_head_table[PA_PGNUM(pa)], 0, PG_MOD);
     PMAP_UNLOCK();
 }
 boolean_t
@@ -1348,11 +1402,12 @@ pmap_is_modified(pa)
 {
     int s;
 
-    if (pv_modified_table[PG_PGNUM(pa)]) return 1;
+    if (!pv_initialized) return 0;
+    if (pv_modified_table[PA_PGNUM(pa)]) return 1;
     PMAP_LOCK();
-    pv_modified_table[PG_PGNUM(pa)] = pv_compute_modified(pa_to_pvp(pa));
+    pv_modified_table[PA_PGNUM(pa)] = pv_compute_modified(pa_to_pvp(pa));
     PMAP_UNLOCK();
-    return pv_modified_table[PG_PGNUM(pa)];
+    return pv_modified_table[PA_PGNUM(pa)];
 }
 
 void pmap_clear_reference(pa)
@@ -1360,6 +1415,7 @@ void pmap_clear_reference(pa)
 {
     int s;
     
+    if (!pv_initialized) return;
     PMAP_LOCK();
     pv_remove_all(pa);
     PMAP_UNLOCK();
@@ -1443,9 +1499,9 @@ void pmap_copy_page(src, dst)
     int s;
 
     PMAP_LOCK();
-    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (src >>PGSHIFT);
+    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| PA_PGNUM(src);
     set_pte(tmp_vpages[0], pte);
-    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (dst >>PGSHIFT);
+    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| PA_PGNUM(dst);
     set_pte(tmp_vpages[1], pte);
     bcopy((char *) tmp_vpages[0], (char *) tmp_vpages[1], NBPG);
     set_pte(tmp_vpages[0], PG_INVAL);
@@ -1549,7 +1605,8 @@ void pmap_protect_range_contextless(pmap, sva, eva,pte_proto, pmegp)
     for (i = sp; i < ep; i++) {
 	pte = get_pte_pmeg(pmegp->pmeg_index, i);
 	if (pte & PG_VALID) {
-	    save_modified_bits(pte);
+	    if (pv_initialized)
+		save_modified_bits(pte);
 	    pte_proto |= (PG_MOD|PG_SYSTEM|PG_TYPE|PG_ACCESS|PG_FRAME) & pte;
 	    nflags = pv_link(pmap, PG_PA(pte), va, PG_TO_PV_FLAGS(pte_proto));
 	    if (nflags & PV_NC)
@@ -1589,7 +1646,8 @@ void pmap_protect_range_mmu(pmap, sva, eva,pte_proto)
     while (va < eva) {
 	pte = get_pte(va);
 	if (pte & PG_VALID) {
-	    save_modified_bits(pte);
+	    if (pv_initialized)
+		save_modified_bits(pte);
 	    pte_proto |= (PG_MOD|PG_SYSTEM|PG_TYPE|PG_ACCESS|PG_FRAME) & pte;
 	    nflags = pv_link(pmap, PG_PA(pte), va, PG_TO_PV_FLAGS(pte_proto));
 	    if (nflags & PV_NC)
@@ -1685,7 +1743,7 @@ void pmap_zero_page(pa)
     int s;
 
     PMAP_LOCK();
-    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| (pa >>PGSHIFT);
+    pte = PG_VALID |PG_SYSTEM|PG_WRITE|PG_NC|PG_MMEM| PA_PGNUM(pa);
     set_pte(tmp_vpages[0], pte);
     bzero((char *) tmp_vpages[0], NBPG);
     set_pte(tmp_vpages[0], PG_INVAL);
