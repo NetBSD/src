@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.9 1997/04/21 11:26:22 mrg Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.10 1997/07/20 05:00:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT(
+"@(#) Copyright (c) 1996, 1997\n\
+	The NetBSD Foundation, Inc.  All rights reserved.\n");
+__RCSID("$NetBSD: ccdconfig.c,v 1.10 1997/07/20 05:00:51 thorpej Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -94,13 +102,14 @@ static	struct nlist nl[] = {
 #define CCD_DUMP		4	/* dump a ccd's configuration */
 #define CCD_STATS		5	/* show a ccd's stats */
 
+int	main __P((int, char *[]));
 static	int checkdev __P((char *));
 static	int do_io __P((char *, u_long, struct ccd_ioctl *));
 static	int do_single __P((int, char **, int));
 static	int do_all __P((int));
 static	int dump_ccd __P((int, char **, int));
 static	int flags_to_val __P((char *));
-static	int pathtodevt __P((char *, dev_t *));
+static	int pathtounit __P((char *, int *));
 static	void print_ccd_info __P((struct ccd_softc *, kvm_t *));
 static	void print_ccd_stats __P((struct ccd_softc *));
 static	char *resolve_ccdname __P((char *));
@@ -109,7 +118,7 @@ static	void usage __P((void));
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, options = 0, action = CCD_CONFIG;
 
@@ -189,6 +198,7 @@ main(argc, argv)
 
 		case CCD_DUMP:
 		case CCD_STATS:
+		default:
 			exit(dump_ccd(argc, argv, action));
 			/* NOTREACHED */
 	}
@@ -203,8 +213,9 @@ do_single(argc, argv, action)
 {
 	struct ccd_ioctl ccio;
 	char *ccd, *cp, *cp2, **disks;
-	int noflags = 0, i, ileave, flags, j, error;
+	int noflags = 0, i, ileave, flags, j;
 
+	flags = 0;
 	bzero(&ccio, sizeof(ccio));
 
 	/*
@@ -324,6 +335,8 @@ do_all(action)
 	char *cp, **argv;
 	int argc, rval;
 
+	rval = 0;
+
 	if ((f = fopen(ccdconf, "r")) == NULL) {
 		warn("fopen: %s", ccdconf);
 		return (1);
@@ -395,7 +408,6 @@ pathtounit(path, unitp)
 	int *unitp;
 {
 	struct stat st;
-	dev_t dev;
 	int maxpartitions;
 
 	if (stat(path, &st) != 0)
@@ -416,7 +428,7 @@ static char *
 resolve_ccdname(name)
 	char *name;
 {
-	char c, *cp, *path;
+	char c, *path;
 	size_t len, newlen;
 	int rawpart;
 
