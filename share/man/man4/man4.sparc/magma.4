@@ -1,4 +1,4 @@
-.\"     $NetBSD: magma.4,v 1.5 2001/04/11 19:11:29 wiz Exp $
+.\"     $NetBSD: magma.4,v 1.6 2002/01/15 02:00:07 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
 .\" All rights reserved.
@@ -66,6 +66,13 @@ Up to four cards are supported in the system.
 .Pp
 All tty ports have full automatic hardware (RTS/CTS) flow control available
 and a 12 byte FIFO on the chip in each direction so errors should be minimal.
+.Sh FILES
+.Bl -tag -width /dev/bpp[0-3][0-1] -compact
+.It Pa /dev/tty[0-3][0-a]
+Serial ports
+.It Pa /dev/bpp[0-3][0-1]
+Parallel ports
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "mtty%d%x: ring buffer overflow"
@@ -88,25 +95,19 @@ or
 .Dv MTTY_RX_DTR_THRESHOLD
 #define's to something smaller may help slow machines avoid this problem.
 .El
-.Sh FILES
-.Bl -tag -width /dev/bpp[0-3][0-1] -compact
-.It Pa /dev/tty[0-3][0-a]
-Serial ports
-.It Pa /dev/bpp[0-3][0-1]
-Parallel ports
-.El
 .Sh SEE ALSO
 .Xr read 2 ,
 .Xr termios 4 ,
 .Xr tty 4
-.Sh AUTHORS
-The driver was written by Iain Hibbert
-.Aq plunky@skate.demon.co.uk
 .Sh HISTORY
 The driver was loosely based upon the
 .Xr cy 4
 Cyclades Cyclom device driver written
 by Andrew Herbert and Timo Rossi.
+.Sh AUTHORS
+The driver was written by
+.An Iain Hibbert
+.Aq plunky@skate.demon.co.uk .
 .Sh TO DO
 CD1190 parallel support.
 .Pp
