@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
+/*	$NetBSD: vis.c,v 1.5 1997/10/20 03:06:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $";
+__RCSID("$NetBSD: vis.c,v 1.5 1997/10/20 03:06:48 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $";
 int eflags, fold, foldwidth=80, none, markeol, debug;
 
 int foldit __P((char *, int, int));
+int main __P((int, char **));
 void process __P((FILE *, char *));
 
 int
@@ -66,7 +67,7 @@ main(argc, argv)
 	FILE *fp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "nwctsobfF:ld")) != EOF)
+	while ((ch = getopt(argc, argv, "nwctsobfF:ld")) != -1)
 		switch((char)ch) {
 		case 'n':
 			none++;
@@ -134,8 +135,8 @@ process(fp, filename)
 	char *filename;
 {
 	static int col = 0;
-	register char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
-	register int c, rachar; 
+	char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
+	int c, rachar; 
 	char buff[5];
 	
 	c = getc(fp);
