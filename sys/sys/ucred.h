@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.15 2003/02/18 08:37:43 dsl Exp $	*/
+/*	$NetBSD: ucred.h,v 1.16 2003/03/05 18:39:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,6 +65,19 @@ struct ucred {
 #ifdef _KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
 
+/* flags that control when do_setres{u,g}id will do anything */
+#define	ID_E_EQ_E	0x001		/* effective equals effective */
+#define	ID_E_EQ_R	0x002		/* effective equals real */
+#define	ID_E_EQ_S	0x004		/* effective equals saved */
+#define	ID_R_EQ_E	0x010		/* real equals effective */
+#define	ID_R_EQ_R	0x020		/* real equals real */
+#define	ID_R_EQ_S	0x040		/* real equals saved */
+#define	ID_S_EQ_E	0x100		/* saved equals effective */
+#define	ID_S_EQ_R	0x200		/* saved equals real */
+#define	ID_S_EQ_S	0x400		/* saved equals saved */
+
+int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
+int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
 
 struct ucred	*crcopy(struct ucred *);
 struct ucred	*crdup(const struct ucred *);
