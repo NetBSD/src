@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp $
+$NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -964,7 +964,7 @@ product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 /* Galileo Technology products */
 product GALILEO GT64010A	0x0146	GT-64010A System Controller
 product GALILEO	GT64115		0x4111	GT-64115 System Controller
-product GALILEO	GT64011		0x4146	GT-64111 System Controller
+product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 
@@ -1248,6 +1248,9 @@ product RICOH Rx5C478	0x0478 5C478 PCI-CardBus bridge
 /* RISCom (SDL Communications, Inc?) products */
 product RISCOM N2	0x5568	N2
 
+/* RNS products */
+product RNS FDDI	0x2200	2200 FDDI
+
 /* S3 products */
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
@@ -1284,6 +1287,7 @@ product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
+product SGI RAD1	0x0005	PsiTech RAD1
 product SGI TIGON	0x0009	Tigon Gigabit Ethernet
 
 /* SGS Thomson products */
