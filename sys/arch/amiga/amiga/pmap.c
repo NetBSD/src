@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1996/05/10 01:47:45 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1996/05/12 02:38:23 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1558,7 +1558,7 @@ validate:
 			s = "UST";
 		else
 			s = "other";
-		printf("pmap_init: validating %s kernel page at %p -> %p\n",
+		printf("pmap_init: validating %s kernel page at %lx -> %lx\n",
 		    s, va, pa);
 
 	}
