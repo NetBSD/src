@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2004/10/24 17:01:07 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2005/01/08 14:30:39 fredb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2004/10/24 17:01:07 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2005/01/08 14:30:39 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ time_t	dumpdate;
 size_t	pagesize;
 FILE	*terminal;
 char	*tmpdir;
+int	dotflag = 0;
 
 FILE *Mtreefile = NULL;
 
@@ -285,6 +286,8 @@ main(argc, argv)
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
+			if (ino == ROOTINO)
+				dotflag = 1;
 			if (mflag)
 				pathcheck(name);
 			treescan(name, ino, addfile);
