@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.76 1994/04/07 06:51:17 mycroft Exp $
+ *	$Id: wd.c,v 1.77 1994/04/09 03:43:36 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -712,10 +712,8 @@ wdcintr(wdc)
 	/* Clear the pending interrupt. */
 	(void) inb(wdc->sc_iobase+wd_status);
 
-	if (!wdc->sc_q.b_active) {
-		printf("%s: extra interrupt\n", wdc->sc_dev.dv_xname);
+	if (!wdc->sc_q.b_active)
 		return 0;
-	}
     
 	bp = wdc->sc_q.b_forw->b_actf;
 	wd = wdcd.cd_devs[WDUNIT(bp->b_dev)];
