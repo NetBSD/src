@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.8 1999/07/29 10:37:17 augustss Exp $
+#	$NetBSD: GENERIC_TINY,v 1.9 1999/08/29 16:59:19 thorpej Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -418,6 +418,10 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Printer
 #ulpt*	at uhub? port ?
+
+# USB Mass Storage
+#umass*	at uhub? port ? configuration ? interface ?
+#scsibus* at umass? channel ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?
