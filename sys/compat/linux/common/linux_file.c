@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.46 2002/03/16 20:43:53 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.47 2002/03/22 14:53:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.46 2002/03/16 20:43:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.47 2002/03/22 14:53:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,6 +393,7 @@ linux_sys_fcntl(p, v, retval)
 		bsd_to_linux_flock(&bfl, &lfl);
 		return copyout(&lfl, arg, sizeof lfl);
 		break;
+
 	case LINUX_F_SETLK:
 	case LINUX_F_SETLKW:
 		cmd = (cmd == LINUX_F_SETLK ? F_SETLK : F_SETLKW);
@@ -408,6 +409,7 @@ linux_sys_fcntl(p, v, retval)
 		SCARG(&fca, arg) = bfp;
 		return sys_fcntl(p, &fca, retval);
 		break;
+
 	case LINUX_F_SETOWN:
 	case LINUX_F_GETOWN:	
 		/*
@@ -419,39 +421,69 @@ linux_sys_fcntl(p, v, retval)
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
-		if (fp->f_type == DTYPE_SOCKET) {
+
+		FILE_USE(fp);
+		switch (fp->f_type) {
+		case DTYPE_SOCKET:
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
-			break;
+			goto doit;
+
+		case DTYPE_VNODE:
+			vp = (struct vnode *)fp->f_data;
+			if (vp->v_type != VCHR) {
+				error = EINVAL;
+				goto done;
+			}
+			if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0)
+				goto done;
+
+			d_tty = cdevsw[major(va.va_rdev)].d_tty;
+			if (!d_tty || (tp = (*d_tty)(va.va_rdev)) == NULL) {
+				error = EINVAL;
+				goto done;
+			}
+			if (cmd == LINUX_F_GETOWN) {
+				retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id
+				    : NO_PID;
+				error = 0;
+				goto done;
+			}
+			if ((long)arg <= 0) {
+				pgid = -(long)arg;
+			} else {
+				struct proc *p1 = pfind((long)arg);
+				if (p1 == NULL) {
+					error = ESRCH;
+					goto done;
+				}
+				pgid = (long)p1->p_pgrp->pg_id;
+			}
+			pgrp = pgfind(pgid);
+			if (pgrp == NULL || pgrp->pg_session != p->p_session) {
+				error = EPERM;
+				goto done;
+			}
+			tp->t_pgrp = pgrp;
+			error = 0;
+			goto done;
+
+		case DTYPE_PIPE:
+			error = EINVAL;
+			goto done;
+
+		default:
+			panic("linux_fcntl: Bad file %d\n", fp->f_type);
 		}
-		vp = (struct vnode *)fp->f_data;
-		if (vp->v_type != VCHR)
-			return EINVAL;
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
-			return error;
-		d_tty = cdevsw[major(va.va_rdev)].d_tty;
-		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
-			return EINVAL;
-		if (cmd == LINUX_F_GETOWN) {
-			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
-			return 0;
-		}
-		if ((long)arg <= 0) {
-			pgid = -(long)arg;
-		} else {
-			struct proc *p1 = pfind((long)arg);
-			if (p1 == 0)
-				return (ESRCH);
-			pgid = (long)p1->p_pgrp->pg_id;
-		}
-		pgrp = pgfind(pgid);
-		if (pgrp == NULL || pgrp->pg_session != p->p_session)
-			return EPERM;
-		tp->t_pgrp = pgrp;
-		return 0;
+
+done:
+		FILE_UNUSE(fp, p);
+		return error;
 	default:
 		return EOPNOTSUPP;
 	}
 
+doit:
+	FILE_UNUSE(fp, p);
 	SCARG(&fca, fd) = fd;
 	SCARG(&fca, cmd) = cmd;
 	SCARG(&fca, arg) = arg;
