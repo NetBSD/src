@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.12 1995/02/22 01:42:43 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.13 1995/03/01 03:48:53 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -48,14 +48,9 @@ static int	scsi_drq_intr(void), scsi_irq_intr(void);
 
 long	via1_noint(), via2_noint();
 long	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
-long	via2_nubus_intr(), rbv_nubus_intr();
-int	slot_noint();
+long	via2_nubus_intr();
+void	slot_noint();
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
-
-long via1_spent[2][7]={
-	{0,0,0,0,0,0,0}, 
-	{0,0,0,0,0,0,0}, 
- };
 
 long (*via1itab[7])()={
 	via1_noint,
@@ -77,15 +72,15 @@ long (*via2itab[7])()={
 	via2_noint,
 };	/* VIA2 interrupt handler table */
 
+void		via2_intr(struct frame *);
+void		rbv_intr(struct frame *);
 
 static int	via_inited=0;
+void		(*real_via2_intr)(struct frame *);
 int		mac68k_trip_debugger=0;
-static void	via2_intr(struct frame *);
-static void	rbv_intr(struct frame *);
-void		(*real_via2_intr)(struct frame *) = via2_intr;
 
 /* nubus slot interrupt routines */
-int (*slotitab[6])() = {
+void (*slotitab[6])() = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
@@ -135,15 +130,16 @@ void VIA_initialize()
 		via2itab[1] = via2_nubus_intr;
 
 	}else{	/* RBV */
-		real_via2_intr = rbv_intr;
-		via2itab[1] = rbv_nubus_intr;
+		/* I'm sure that I'll find something to put in here
+			someday. -- BG */
+		/* enable specific interrupts */
+		/* via_reg(VIA2, rIER) = RBV_INTS | 0x80; */
 	}
 	via_inited=1;
 }
 
 
-void
-via1_intr(struct frame *fp)
+void via1_intr(struct frame *fp)
 {
 	static intpend = 0;
 	register unsigned char intbits, enbbits;
@@ -167,18 +163,7 @@ via1_intr(struct frame *fp)
 	while(bitnum < 7){
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
-			before = time;
-			via1itab[bitnum](bitnum);/* run interrupt handler */
-			after = time;
-			via1_spent[0][bitnum] += (after.tv_sec-before.tv_sec)*
-			    1000000;
-			if(after.tv_usec < before.tv_usec)
-				via1_spent[0][bitnum] -=
-					before.tv_usec-after.tv_usec;
-			else
-				via1_spent[0][bitnum] +=
-					after.tv_usec - before.tv_usec;
-			via1_spent[1][bitnum]++;
+			via1itab[bitnum](bitnum);	/* run interrupt handler */
 			intpend &= ~bitmsk;	/* fix previous pending */
 			via_reg(VIA1, vIFR) = bitmsk;
 					/* turn off interrupt pending. */
@@ -191,15 +176,13 @@ via1_intr(struct frame *fp)
 #endif
 }
 
-static void
-via2_intr(struct frame *fp)
+void via2_intr(struct frame *fp)
 {
 	static intpend = 0;
 	register unsigned char intbits, enbbits;
 	register char bitnum, bitmsk;
 
 	intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
-/*	if(via_inited)printf("via2 %02x\n", intbits); */
 	intbits &= via_reg(VIA2, vIER);	/* only care about enabled */
 	intbits &= ~ intpend;  		/* to stop recursion */
 
@@ -209,27 +192,22 @@ via2_intr(struct frame *fp)
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
 			via_reg(VIA2, vIFR) = bitmsk;
-					/* turn off interrupt pending. */
 			via2itab[bitnum](bitnum);
 			intpend &= ~bitmsk;
 		}
 		bitnum++;
 		bitmsk <<= 1;
 	}
-	if (intpend) printf("via2_intr(): intpend at end 0x%x.\n", intpend);
 }
 
-static void
-rbv_intr(struct frame *fp)
+void rbv_intr(struct frame *fp)
 {
 	static intpend = 0;
 	register unsigned char intbits, enbbits;
 	register char bitnum, bitmsk;
 
 	intbits = via_reg(VIA2, rIFR);	/* get interrupts pending */
-/*	if(via_inited)printf("rbv %02x\n", intbits); */
 	intbits &= via_reg(VIA2, rIER);	/* only care about enabled */
-
 	intbits &= ~ intpend;  		/* to stop recursion */
 
 	bitmsk = 1;
@@ -238,14 +216,12 @@ rbv_intr(struct frame *fp)
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
 			via_reg(VIA2, rIFR) = bitmsk;
-					/* turn off interrupt pending. */
 			via2itab[bitnum](bitnum);
 			intpend &= ~bitmsk;
 		}
 		bitnum++;
 		bitmsk <<= 1;
 	}
-	if (intpend) printf("via2_intr(): intpend at end 0x%x.\n", intpend);
 }
 
 long via1_noint(int bitnum)
@@ -262,7 +238,7 @@ long via2_noint(int bitnum)
 
 int add_nubus_intr(addr, func, unit)
 int addr;
-int (*func)();
+void (*func)();
 int unit;
 {
 	int	s = splhigh();
@@ -286,21 +262,21 @@ int unit;
 long
 via2_nubus_intr(int bit)
 {
-	int	i, mask;
-	int	ignore=0;
+	int	i, mask, ignore=0;
+	int	ints;
 
 	do {
+	    ints = via_reg(VIA2, vBufA);
 	    mask = 1;
 	    for (i = 0; i < 6; i++) {
-		if ((via_reg(VIA2, vBufA) & mask) == 0) {
+		if ((ints & mask) == 0) {
 			(*slotitab[i])(slotutab[i], i+9);
 			if (slotitab[i] == slot_noint)
 				ignore |= mask;
 		}
 		mask <<= 1;
 	    } 
-	    i = via_reg(VIA2, vBufA);
-	} while (((i & 0x3f) | ignore) != 0x3f);
+	} while (((via_reg(VIA2, vBufA) & 0x3f) | ignore) != 0x3f);
 
 	return 1;
 }
@@ -308,28 +284,29 @@ via2_nubus_intr(int bit)
 long
 rbv_nubus_intr(int bit)
 {
-	int	i, mask;
-	int	ignore=0;
+	int	i, mask, ignore;
+	int	ints;
 
+	ignore = 0;
 	do {
+	    ints = via_reg(VIA2, rSlotInt);
 	    mask = 1;
 	    for (i = 0; i < 6; i++) {
-		if ((via_reg(VIA2, rBufA) & mask) == 0) {
+		if ((ints & mask) == 0) {
 			(*slotitab[i])(slotutab[i], i+9);
 			if (slotitab[i] == slot_noint)
 				ignore |= mask;
 		}
 		mask <<= 1;
 	    } 
-	    i = via_reg(VIA2, rBufA);
-	} while (((i & 0x3f) | ignore) != 0x3f);
+	} while (((via_reg(VIA2, rSlotInt) & 0x3f) | ignore) != 0x3f);
 
 	return 1;
 }
 
 static char zero = 0;
 
-int slot_noint(int unit, int slot)
+void slot_noint(int unit, int slot)
 {
 /*	printf("slot_noint() slot %x\n", slot); */
 
