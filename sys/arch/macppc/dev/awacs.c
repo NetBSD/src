@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.6 2001/03/15 19:42:42 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.7 2001/03/15 19:55:16 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -971,6 +971,7 @@ awacs_set_rate(sc, rate)
 	case 8820:
 		c = AWACS_RATE_8820;
 		break;
+	case 8000: /* XXX */
 	case 7350:
 		c = AWACS_RATE_7350;
 		break;
