@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.2.2.2 2002/08/13 02:20:07 nathanw Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.2.2.3 2002/08/13 03:11:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,12 +38,13 @@
 #include "opt_perfctrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.2 2002/08/13 02:20:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.3 2002/08/13 03:11:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/types.h>
 
@@ -52,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.2 2002/08/13 02:20:07 nathanw Exp 
 #endif
 
 int
-sys_pmc_control(struct proc *p, void *v, register_t *rv)
+sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 {
 #ifndef PERFCTRS
 	return ENXIO;
@@ -120,7 +121,7 @@ sys_pmc_control(struct proc *p, void *v, register_t *rv)
 }
 
 int
-sys_pmc_get_info(struct proc *p, void *v, register_t *rv)
+sys_pmc_get_info(struct lwp *l, void *v, register_t *rv)
 {
 #ifndef PERFCTRS
 	return ENXIO;
