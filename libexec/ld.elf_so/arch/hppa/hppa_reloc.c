@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.8 2002/09/06 03:05:36 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.9 2002/09/06 03:12:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ _rtld_function_descriptor_function(const void *addr)
  * This handles an IPLT relocation, with or without a symbol.
  */
 int
-_rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
     bool dodebug)
 {
 	Elf_Addr	*where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
@@ -320,7 +320,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 
 int
 _rtld_relocate_nonplt_objects(obj, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
@@ -470,7 +470,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 
 int
 _rtld_relocate_plt_lazy(obj, dodebug)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
