@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.6 2002/08/27 23:44:57 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.7 2002/10/05 07:57:31 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.6 2002/08/27 23:44:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.7 2002/10/05 07:57:31 gmcgarry Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -340,12 +340,12 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate space for lwp0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
