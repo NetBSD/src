@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_map.h,v 1.25 2001/03/15 06:10:57 chs Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.26 2001/05/25 04:06:15 chs Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -44,17 +44,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -82,7 +82,7 @@
 /*
  * UVM_MAP_CLIP_START: ensure that the entry begins at or after
  * the starting address, if it doesn't we split the entry.
- * 
+ *
  * => map must be locked by caller
  */
 
@@ -299,7 +299,7 @@ vmi_list_unlock(s)
 
 #ifdef UVM_MAP_INLINE
 #define MAP_INLINE static __inline
-#else 
+#else
 #define MAP_INLINE /* nothing */
 #endif /* UVM_MAP_INLINE */
 
@@ -325,7 +325,7 @@ void		uvm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
 void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
 MAP_INLINE
 vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
-int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
+int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t,
 			vm_map_t, vaddr_t *, int));
 vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
 			struct uvm_object *, voff_t, vsize_t, int));

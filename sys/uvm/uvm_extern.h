@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.62 2001/05/02 01:22:19 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.63 2001/05/25 04:06:12 chs Exp $	*/
 
 /*
  *
@@ -255,7 +255,7 @@ struct uvmexp {
 	int ncolors;	/* number of page color buckets: must be p-o-2 */
 	int colormask;	/* color bucket mask */
 
-	/* 
+	/*
 	 * Adding anything before this line will break binary compatibility
 	 * with top(1) on NetBSD 1.5.
 	 */
@@ -565,7 +565,7 @@ void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 
 /* uvm_init.c */
-void			uvm_init __P((void));	
+void			uvm_init __P((void));
 				/* init the uvm system */
 
 /* uvm_io.c */
@@ -598,12 +598,12 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, voff_t, vsize_t,
 				uvm_flag_t));
-int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
+int			uvm_map_pageable __P((vm_map_t, vaddr_t,
 				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
-int			uvm_map_protect __P((vm_map_t, vaddr_t, 
+int			uvm_map_protect __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t, boolean_t));
 struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
 				boolean_t));
@@ -618,12 +618,12 @@ void			uvmspace_unshare __P((struct proc *));
 
 /* uvm_meter.c */
 void			uvm_meter __P((void));
-int			uvm_sysctl __P((int *, u_int, void *, size_t *, 
+int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 				void *, size_t, struct proc *));
 
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
-				vm_prot_t, vm_prot_t, int, 
+				vm_prot_t, vm_prot_t, int,
 				void *, voff_t, vsize_t));
 
 /* uvm_page.c */
@@ -632,7 +632,7 @@ struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
-void			uvm_pagerealloc __P((struct vm_page *, 
+void			uvm_pagerealloc __P((struct vm_page *,
 					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
 void			uvm_page_physload __P((paddr_t, paddr_t,
@@ -651,19 +651,19 @@ void			uvm_aiodone_daemon __P((void *));
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
 				paddr_t, paddr_t, paddr_t,
-				struct pglist *, int, int)); 
+				struct pglist *, int, int));
 void			uvm_pglistfree __P((struct pglist *));
 
 /* uvm_swap.c */
 void			uvm_swap_init __P((void));
 
 /* uvm_unix.c */
-int			uvm_coredump __P((struct proc *, struct vnode *, 
+int			uvm_coredump __P((struct proc *, struct vnode *,
 				struct ucred *, struct core *));
 int			uvm_grow __P((struct proc *, vaddr_t));
 /* should only be needed if COMPAT_NETBSD32 is defined */
 struct core32;
-int			uvm_coredump32 __P((struct proc *, struct vnode *, 
+int			uvm_coredump32 __P((struct proc *, struct vnode *,
 				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
