@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.9 2004/05/12 02:07:38 jrf Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.10 2004/06/24 16:52:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.9 2004/05/12 02:07:38 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.10 2004/06/24 16:52:03 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1946,7 +1946,7 @@ ntfs_procfixups(
 			return (EINVAL);
 		}
 		*cfxp = *fxp;
-		((caddr_t) cfxp) += ntmp->ntm_bps;
+		cfxp = (u_int16_t *)((caddr_t)cfxp + ntmp->ntm_bps);
 	}
 	return (0);
 }
