@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1998/05/19 19:00:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1998/06/09 20:31:28 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@
 #include <machine/mon.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
+#include <machine/vmparam.h>
 
 #include <sun3/sun3/cache.h>
 #include <sun3/sun3/machdep.h>
@@ -561,9 +562,12 @@ void   mmu_flusha __P((void));
 #endif	/* 0 */
 
 /** Internal functions
- ** - all functions used only within this module are defined in
- **   pmap_pvt.h
+ ** Most functions used only within this module are defined in
+ **   pmap_pvt.h (why not here if used only here?)
  **/
+#ifdef MACHINE_NEW_NONCONTIG
+static void pmap_page_upload __P((void));
+#endif
 
 /** Interface functions
  ** - functions required by the Mach VM Pmap interface, with MACHINE_CONTIG
@@ -908,6 +912,10 @@ pmap_bootstrap(nextva)
 	/* Notify the VM system of our page size. */
 	PAGE_SIZE = NBPG;
 	vm_set_page_size();
+
+#if defined(MACHINE_NEW_NONCONTIG)
+	pmap_page_upload();
+#endif
 }
 
 
@@ -3653,6 +3661,36 @@ pmap_virtual_space(vstart, vend)
 	*vend = virtual_end;
 }
 
+#if defined(MACHINE_NEW_NONCONTIG)
+
+/*
+ * Provide memory to the VM system.
+ *
+ * Assume avail_start is always in the
+ * first segment as pmap_bootstrap does.
+ */
+static void
+pmap_page_upload()
+{
+	vm_offset_t	a, b;	/* memory range */
+	int i;
+
+	/* Supply the memory in segments. */
+	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
+		a = atop(avail_mem[i].pmem_start);
+		b = atop(avail_mem[i].pmem_end);
+		if (i == 0)
+			a = atop(avail_start);
+
+		vm_page_physload(a, b, a, b);
+
+		if (avail_mem[i].pmem_next == NULL)
+			break;
+	}
+}
+
+#else	/* MACHINE_NEW_NONCONTIG */
+
 /* pmap_free_pages			INTERFACE
  **
  * Return the number of physical pages still available.
@@ -3691,35 +3729,6 @@ pmap_free_pages()
 	return left;
 }
 
-/* pmap_page_index			INTERFACE
- **
- * Return the index of the given physical page in a list of useable
- * physical pages in the system.  Holes in physical memory may be counted
- * if so desired.  As long as pmap_free_pages() and pmap_page_index()
- * agree as to whether holes in memory do or do not count as valid pages,
- * it really doesn't matter.  However, if you like to save a little
- * memory, don't count holes as valid pages.  This is even more true when
- * the holes are large.
- *
- * We will not count holes as valid pages.  We can generate page indices
- * that conform to this by using the memory bank structures initialized
- * in pmap_alloc_pv().
- */
-int
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-	struct pmap_physmem_struct *bank = avail_mem;
-
-	/* Search for the memory bank with this page. */
-	/* XXX - What if it is not physical memory? */
-	while (pa > bank->pmem_end)
-		bank = bank->pmem_next;
-	pa -= bank->pmem_start;
-
-	return (bank->pmem_pvbase + m68k_btop(pa));
-}
-
 /* pmap_next_page			INTERFACE
  **
  * Place the physical address of the next available page in the
@@ -3750,6 +3759,38 @@ pmap_next_page(pa)
 	*pa = avail_next;
 	avail_next += NBPG;
 	return TRUE;
+}
+
+#endif /* ! MACHINE_NEW_NONCONTIG */
+
+/* pmap_page_index			INTERFACE
+ **
+ * Return the index of the given physical page in a list of useable
+ * physical pages in the system.  Holes in physical memory may be counted
+ * if so desired.  As long as pmap_free_pages() and pmap_page_index()
+ * agree as to whether holes in memory do or do not count as valid pages,
+ * it really doesn't matter.  However, if you like to save a little
+ * memory, don't count holes as valid pages.  This is even more true when
+ * the holes are large.
+ *
+ * We will not count holes as valid pages.  We can generate page indices
+ * that conform to this by using the memory bank structures initialized
+ * in pmap_alloc_pv().
+ */
+int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	struct pmap_physmem_struct *bank = avail_mem;
+	vm_offset_t off;
+
+	/* Search for the memory bank with this page. */
+	/* XXX - What if it is not physical memory? */
+	while (pa > bank->pmem_end)
+		bank = bank->pmem_next;
+	off = pa - bank->pmem_start;
+
+	return (bank->pmem_pvbase + m68k_btop(off));
 }
 
 /* pmap_count			INTERFACE
