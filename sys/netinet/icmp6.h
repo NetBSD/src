@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.h,v 1.17 2001/01/21 15:39:32 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.31 2001/01/21 15:32:16 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.18 2001/01/22 02:28:02 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.32 2001/01/22 02:26:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -445,8 +445,8 @@ struct rr_result {		/* router renumbering result message */
 #define ICMP6_RR_RESULT_FLAGS_OOB		0x0002
 #define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x0001
 #elif BYTE_ORDER == LITTLE_ENDIAN
-#define ICMP6_RR_RESULT_FLAGS_OOB		0x02
-#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x01
+#define ICMP6_RR_RESULT_FLAGS_OOB		0x0200
+#define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		0x0100
 #endif
 
 /*
