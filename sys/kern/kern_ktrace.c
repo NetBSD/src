@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.70 2003/05/02 12:43:01 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.71 2003/05/15 12:56:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.70 2003/05/02 12:43:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.71 2003/05/15 12:56:16 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -169,7 +169,7 @@ ktrsysret(p, code, error, retval)
 	struct proc *p; 
 	register_t code; 
 	int error; 
-	register_t retval;
+	register_t *retval;
 {
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
@@ -179,7 +179,8 @@ ktrsysret(p, code, error, retval)
 	ktp.ktr_code = code;
 	ktp.ktr_eosys = 0;			/* XXX unused */
 	ktp.ktr_error = error;
-	ktp.ktr_retval = retval;		/* what about val2 ? */
+	ktp.ktr_retval = retval ? retval[0] : 0;
+	ktp.ktr_retval_1 = retval ? retval[1] : 0;
 
 	kth.ktr_buf = (caddr_t)&ktp;
 	kth.ktr_len = sizeof(struct ktr_sysret);

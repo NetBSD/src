@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2003/01/21 20:42:03 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.89 2003/05/15 12:56:17 dsl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -2132,7 +2132,7 @@ syscall(tf, code, pc)
 	userret(l, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
+		ktrsysret(p, code, error, rval);
 #endif
 	share_fpu(l, tf);
 #ifdef DEBUG
