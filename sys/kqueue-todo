@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.25 2002/09/25 13:29:22 jdolecek Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.26 2002/09/25 14:45:41 jdolecek Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
@@ -37,6 +37,21 @@ done:
 	- section 9 man page for internal api
 	- use pool for everything (that it can sanely be used for)
 	- lib/libc/sys/kqueue.2 manpage merged
+	- need to test bits of the tree that call closef() to determine
+	  if knote_fdclose() is required. (aka fdrelease()/fdfree()):
+		* ktrderef()		(f)ktrace - OK	[ jdolecek - references
+			struct file, no descriptor available for userland ]
+		* unp_detach()		OK		[ jdolecek -
+			the sockets aren't attached to any process descriptor
+			and thus can't have kevent attached to them]
+		* nfsrv_zapsock()	nfsd - OK	[ jdolecek - the socket
+			will never be available as descriptor for nfsd]
+		* portal_unmount()	mount_portal - OK [ jdolecek - holds
+			reference to struct file of the socket the process
+			calling portal_mount() used; this DTRT WRT eventual
+			kevents, the knote would be g/c when the process
+			terminates without regard to the extra reference
+			to the struct file ]
 
 merge in from FreeBSD:
 	usr.bin/tail
@@ -55,13 +70,6 @@ to fix:
 	- look for XXXLUKEM in the comments. these usually indicate
 	  areas to either fix or sanity check they're ok (and remove
 	  the XXXLUKEM comment)
-
-	- need to test bits of the tree that call closef() to determine
-	  if knote_fdclose() is required. (aka fdrelease()/fdfree()):
-		* ktrderef()		ktrace [jdolecek - OK]
-		* unp_detach()
-		* nfsrv_zapsock()	nfsd
-		* portal_unmount()	mount_portal ?
 
 	- kqfilter for systrace (evaluate feasibility)
 
