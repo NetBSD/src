@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 21:46:04 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.5 2003/06/23 22:50:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@ ENTRY(pthread__switch)
 	lwz	%r6, pthread__switch_return_point@got(%r9)
 #else
 	lis	%r6, pthread__switch_return_point@ha
-	addi	%r6, %r6, switch_return@l
+	addi	%r6, %r6, pthread__switch_return_point@l
 #endif
 	stw	%r6, (_REG_PC + 16)(%r1)
 
