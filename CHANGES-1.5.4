@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.40 2002/09/05 06:13:14 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.41 2002/09/05 06:20:10 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1330,6 +1330,10 @@ lib/libc/net/getaddrinfo.c			1.63
 lib/libc/net/gethnamaddr.c			1.52
 lib/libc/net/getnetnamadr.c			1.24
   allocate 64K recieve buffer for DNS responses.
+
+lib/libc/net/gethnamaddr.c			1.37
+  on gethostby* with NIS backend, make a lookup against ipnodes.{byname,byaddr}
+  for non-IPv4 address.  obeys solaris8 practice.
 
 lib/libc/net/gethnamaddr.c			1.38
   Varargsify dprintf to allow for format string checking
