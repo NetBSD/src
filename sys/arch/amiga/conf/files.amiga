@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.34 1996/02/24 08:59:21 chopps Exp $
+#	$NetBSD: files.amiga,v 1.35 1996/03/01 19:42:26 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -125,6 +125,9 @@ device	mfcp at mfc
 file	arch/amiga/dev/mfc.c		mfcs mfcp needs-count
 
 include "../../../scsi/files.scsi"
+major {sd = 4}
+major {st = 5}
+major {cd = 7}
 
 # wd 33c93 contrllers
 define	sbic 
