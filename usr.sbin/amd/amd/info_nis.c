@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.3 1994/06/13 20:47:27 mycroft Exp $
+ *	$Id: info_nis.c,v 1.4 1996/05/09 22:57:57 christos Exp $
  */
 
 /*
@@ -48,6 +48,12 @@
 #ifdef HAS_NIS_MAPS
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include <time.h>
+
+/*
+ * NIS+ servers in NIS compat mode don't have yp_order()
+ */
+static int has_yp_order = FALSE;
 
 /*
  * Figure out the nis domain name
@@ -186,14 +192,27 @@ time_t *tp;
 			return error;
 	}
 
-	/*
-	 * Check if map has changed
-	 */
-	if (yp_order(domain, map, &order))
-		return EIO;
-	if ((time_t) order > *tp) {
-		*tp = (time_t) order;
-		return -1;
+
+	if (has_yp_order) {
+		/*
+		 * Check if map has changed
+		 */
+		if (yp_order(domain, map, &order))
+			return EIO;
+		if ((time_t) order > *tp) {
+			*tp = (time_t) order;
+			return -1;
+		}
+	} else {
+		/*
+		 * NIS+ server without yp_order
+		 * Check if timeout has expired to invalidate the cache 
+		 */
+		order = time(NULL);
+		if ((time_t)order - *tp > am_timeo) {
+			*tp = (time_t)order;
+			return(-1);
+		}
 	}
 
 	/*
@@ -223,6 +242,8 @@ char *map;
 time_t *tp;
 {
 	int order;
+	int yp_order_result;
+	char *master;
 
 	if (!domain) {
 		int error = determine_nis_domain();
@@ -234,12 +255,34 @@ time_t *tp;
 	 * To see if the map exists, try to find
 	 * a master for it.
 	 */
-	if (yp_order(domain, map, &order))
-		return ENOENT;
-	*tp = (time_t) order;
+	yp_order_result = yp_order(domain, map, &order);
+	switch (yp_order_result) {
+	case 0:
+		has_yp_order = TRUE;
+		*tp = (time_t)order;
 #ifdef DEBUG
-	dlog("NIS master for %s@%s has order %d", map, domain, order);
+		dlog("NIS master for %s@%s has order %d", map, domain, order);
 #endif
+		break;
+	    
+	case  YPERR_YPERR:
+		/* NIS+ server found ! */
+		has_yp_order = FALSE;
+		/* try yp_master() instead */
+		if (yp_master(domain, map, &master)) {
+			return ENOENT;
+		} else {
+#ifdef DEBUG
+			dlog("NIS master for %s@%s is a NIS+ server", 
+			     map, domain);
+#endif
+			/* Use fake timestamps */
+			*tp = time(NULL);
+		}
+		break;
+	default:
+		return ENOENT;
+	}
 	return 0;
 }
 #endif /* HAS_NIS_MAPS */
