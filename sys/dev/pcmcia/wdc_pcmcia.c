@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.25 1999/12/09 03:22:41 sommerfeld Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.26 2000/01/08 07:34:49 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,13 @@ struct wdc_pcmcia_product {
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
+
+	/* EXP IDE/ATAPI DVD Card use with some DVD players.  Does not have a vendor ID or product ID */
+	{ -1,
+	  -1,
+	  0,
+	  PCMCIA_CIS_EXP_EXPMULTIMEDIA,
+	  PCMCIA_STR_EXP_EXPMULTIMEDIA },
 
 	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
 	{ -1, -1, 0,
