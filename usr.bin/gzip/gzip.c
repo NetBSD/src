@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.39 2004/04/27 01:23:35 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.40 2004/04/27 02:25:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.39 2004/04/27 01:23:35 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.40 2004/04/27 02:25:06 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -102,7 +102,7 @@ enum filetype {
 
 #define OS_CODE		3	/* Unix */
 
-static	const char	gzip_version[] = "NetBSD gzip 20040425";
+static	const char	gzip_version[] = "NetBSD gzip 20040427";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
