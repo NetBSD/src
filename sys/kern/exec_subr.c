@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.24 2000/09/13 15:00:24 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.25 2000/11/05 22:41:35 tv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -74,7 +74,7 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 		vref(vp);
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
-        vcp->ev_flags = flags;
+	vcp->ev_flags = flags;
 }
 #endif /* DEBUG */
 
