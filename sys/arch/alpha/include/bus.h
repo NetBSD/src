@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.22 1998/05/13 21:21:16 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.23 1998/06/03 18:25:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -478,6 +478,15 @@ struct alpha_bus_dma_tag {
 	 */
 	bus_size_t _wsize;
 	struct alpha_bus_dma_tag *_next_window;
+
+	/*
+	 * Some chipsets have a built-in boundary constraint, independent
+	 * of what the device requests.  This allows that boundary to
+	 * be specified.  If the device has a more restrictive contraint,
+	 * the map will use that, otherwise this boundary will be used.
+	 * This value is ignored if 0.
+	 */
+	bus_size_t _boundary;
 
 	/*
 	 * A chipset may have more than one SGMAP window, so SGMAP
