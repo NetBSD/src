@@ -1,4 +1,5 @@
-/*	$NetBSD: test.c,v 1.1.1.2 2004/12/13 10:24:55 pooka Exp $	*/
+/*	$NetBSD: test.c,v 1.1.1.3 2005/02/21 14:33:41 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Christos Zoulas 2003.
