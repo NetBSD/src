@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1999/05/21 05:28:31 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 1999/05/21 06:19:55 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 1999/05/21 05:28:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 1999/05/21 06:19:55 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -749,7 +749,7 @@ pmap_remove(pmap, sva, eva)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (asid & 0xfc0) >> 6;
+		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB flush: %d <-> %d",
 				asid, pmap->pm_asid);
@@ -931,7 +931,7 @@ pmap_protect(pmap, sva, eva, prot)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (asid & 0xfc0) >> 6;
+		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
 				asid, pmap->pm_asid);
@@ -1296,7 +1296,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (asid & 0xfc0) >> 6;
+		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
 				asid, pmap->pm_asid);
