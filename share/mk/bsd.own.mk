@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.256 2002/01/25 05:21:40 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.257 2002/01/26 23:53:00 reinoud Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -330,7 +330,7 @@ TARGETS+=	all clean cleandir depend dependall includes \
 .PHONY:		all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
-		html installhtml cheanhtml
+		html installhtml cleanhtml subdir-all subdir-install subdir-depend
 
 .if ${NEED_OWN_INSTALL_TARGET} == "yes"
 .if !target(install)
