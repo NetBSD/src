@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.23 1997/02/23 20:42:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.24 1997/03/13 03:00:41 perry Exp $
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
 #					# and ECOFF_TOOLCHAIN
 
 SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd lfs_cleanerd \
-	mail.local makekey makewhatis rexecd rlogind rshd rpc.rquotad \
+	mail.local makekey makewhatis rexecd rlogind rmail rshd rpc.rquotad \
 	rpc.rstatd rpc.rusersd rpc.rwalld rpc.sprayd talkd \
 	tftpd uucpd
 
