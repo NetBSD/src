@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.96 2004/03/23 00:17:12 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.97 2004/03/30 21:26:40 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.96 2004/03/23 00:17:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97 2004/03/30 21:26:40 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -943,6 +943,8 @@ dev_compatible(dev, aux, bpname)
 					dev->dv_xname, bpname, "network"));
 			if (strcmp(bpname, "network") == 0)
 				return (0);
+			if (strcmp(bpname, "ethernet") == 0)
+				return (0);
 			break;
 		default:
 			break;
@@ -1134,7 +1136,9 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0) {
+		   strcmp(dvname, "hme") == 0 ||
+		   strcmp(dvname, "tlp") == 0) {
+
 		/*
 		 * ethernet devices.
 		 */
