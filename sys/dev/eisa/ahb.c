@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.17 1998/02/04 05:13:39 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.18 1998/02/17 03:02:30 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -131,6 +131,9 @@ struct ahb_softc {
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
 
+	bus_dmamap_t sc_dmamap_ecb;	/* maps the ecbs */
+	struct ahb_ecb *sc_ecbs;	/* all our ecbs */
+
 	struct ahb_ecb *sc_ecbhash[ECB_HASH_SIZE];
 	TAILQ_HEAD(, ahb_ecb) sc_free_ecb;
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
@@ -140,6 +143,11 @@ struct ahb_softc {
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer *sc_queuelast;
 };
+
+/*
+ * Offset of an ECB from the beginning of the ECB DMA mapping.
+ */
+#define	AHB_ECB_OFF(e)	(((u_long)(e)) - ((u_long)&sc->sc_ecbs[0]))
 
 struct ahb_probe_data {
 	int sc_irq;
@@ -154,12 +162,12 @@ struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct	ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 void	ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_probe_data *));
-void	ahb_init __P((struct ahb_softc *));
+int	ahb_init __P((struct ahb_softc *));
 void	ahbminphys __P((struct buf *));
 int	ahb_scsi_cmd __P((struct scsipi_xfer *));
 int	ahb_poll __P((struct ahb_softc *, struct scsipi_xfer *, int));
 void	ahb_timeout __P((void *));
-int	ahb_create_ecbs __P((struct ahb_softc *));
+int	ahb_create_ecbs __P((struct ahb_softc *, struct ahb_ecb *, int));
 void	ahb_enqueue __P((struct ahb_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *ahb_dequeue __P((struct ahb_softc *));
 
@@ -271,9 +279,13 @@ ahbattach(parent, self, aux)
 	if (ahb_find(iot, ioh, &apd))
 		panic("ahbattach: ahb_find failed!");
 
-	ahb_init(sc);
 	TAILQ_INIT(&sc->sc_free_ecb);
 	LIST_INIT(&sc->sc_queue);
+
+	if (ahb_init(sc) != 0) {
+		/* Error during initialization! */
+		return;
+	}
 
 	/*
 	 * fill in the prototype scsipi_link.
@@ -383,7 +395,7 @@ ahb_send_mbox(sc, opcode, ecb)
 	 * XXX WHAT DOES THIS COMMENT MEAN?!  --thorpej
 	 */
 	bus_space_write_4(iot, ioh, MBOXOUT0,
-	    ecb->dmamap_self->dm_segs[0].ds_addr);
+	    sc->sc_dmamap_ecb->dm_segs[0].ds_addr + AHB_ECB_OFF(ecb));
 	bus_space_write_1(iot, ioh, ATTN, opcode |
 		ecb->xs->sc_link->scsipi_scsi.target);
 
@@ -546,23 +558,8 @@ ahb_init_ecb(sc, ecb)
 	int hashnum, error;
 
 	/*
-	 * XXX Should we put a DIAGNOSTIC check for multiple
-	 * XXX ECB inits here?
+	 * Create the DMA map for this ECB.
 	 */
-
-	bzero(ecb, sizeof(struct ahb_ecb));
-
-	/*
-	 * Create the DMA maps for this ECB.
-	 */
-	error = bus_dmamap_create(dmat, sizeof(struct ahb_ecb), 1,
-	    sizeof(struct ahb_ecb), 0, BUS_DMA_NOWAIT, &ecb->dmamap_self);
-	if (error) {
-		printf("%s: can't create ecb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
 	error = bus_dmamap_create(dmat, AHB_MAXXFER, AHB_NSEG, AHB_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ecb->dmamap_xfer);
 	if (error) {
@@ -572,23 +569,11 @@ ahb_init_ecb(sc, ecb)
 	}
 
 	/*
-	 * Load the permanent DMA maps.
-	 */
-	error = bus_dmamap_load(dmat, ecb->dmamap_self, ecb,
-	    sizeof(struct ahb_ecb), NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load ecb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, ecb->dmamap_self);
-		bus_dmamap_destroy(dmat, ecb->dmamap_xfer);
-		return (error);
-	}
-
-	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ecb->hashkey = ecb->dmamap_self->dm_segs[0].ds_addr;
+	ecb->hashkey = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+	    AHB_ECB_OFF(ecb);
 	hashnum = ECB_HASH(ecb->hashkey);
 	ecb->nexthash = sc->sc_ecbhash[hashnum];
 	sc->sc_ecbhash[hashnum] = ecb;
@@ -597,47 +582,26 @@ ahb_init_ecb(sc, ecb)
 }
 
 int
-ahb_create_ecbs(sc)
+ahb_create_ecbs(sc, ecbstore, count)
 	struct ahb_softc *sc;
+	struct ahb_ecb *ecbstore;
+	int count;
 {
-	bus_dma_segment_t seg;
-	bus_size_t size;
 	struct ahb_ecb *ecb;
-	int rseg, error;
+	int i, error;
 
-	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't allocate memory for ecbs\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&ecb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: can't map memory for ecbs\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return (error);
-	}
-
-	bzero(ecb, size);
-	while (size > sizeof(struct ahb_ecb)) {
-		error = ahb_init_ecb(sc, ecb);
-		if (error) {
-			printf("%s: can't initialize ecb\n",
-			    sc->sc_dev.dv_xname);
-			return (error);
+	bzero(ecbstore, sizeof(struct ahb_ecb) * count);
+	for (i = 0; i < count; i++) {
+		ecb = &ecbstore[i];
+		if ((error = ahb_init_ecb(sc, ecb)) != 0) {
+			printf("%s: unable to initialize ecb, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ecb, ecb, chain);
-		(caddr_t)ecb += ALIGN(sizeof(struct ahb_ecb));
-		size -= ALIGN(sizeof(struct ahb_ecb));
-		sc->sc_numecbs++;
 	}
-
-	return (0);
+ out:
+	return (i);
 }
 
 /*
@@ -665,20 +629,6 @@ ahb_get_ecb(sc, flags)
 		if (ecb) {
 			TAILQ_REMOVE(&sc->sc_free_ecb, ecb, chain);
 			break;
-		}
-		if (sc->sc_numecbs < AHB_ECB_MAX) {
-			/*
-			 * ahb_create_ecbs() might have managed to create
-			 * one before it failed.  If so, don't abort,
-			 * just grab it and continue to hobble along.
-			 */
-			if (ahb_create_ecbs(sc) != 0 &&
-			    sc->sc_free_ecb.tqh_first == NULL) {
-				printf("%s: can't allocate ecbs\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -725,6 +675,10 @@ ahb_done(sc, ecb)
 	struct scsipi_xfer *xs = ecb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahb_done\n"));
+
+	bus_dmamap_sync(dmat, sc->sc_dmamap_ecb,
+	    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * If we were a data transfer, unload the map that described
@@ -892,11 +846,64 @@ ahb_find(iot, ioh, sc)
 	return 0;
 }
 
-void
+int
 ahb_init(sc)
 	struct ahb_softc *sc;
 {
+	bus_dma_segment_t seg;
+	int i, error, rseg;
 
+#define	ECBSIZE		(AHB_ECB_MAX * sizeof(struct ahb_ecb))
+
+	/*
+	 * Allocate the ECBs.
+	 */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, ECBSIZE,
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate ecbs, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    ECBSIZE, (caddr_t *)&sc->sc_ecbs,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map ecbs, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+
+	/*
+	 * Create and load the DMA map used for the ecbs.
+	 */
+	if ((error = bus_dmamap_create(sc->sc_dmat, ECBSIZE,
+	    1, ECBSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_dmamap_ecb)) != 0) {
+		printf("%s: unable to create ecb DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_ecb,
+	    sc->sc_ecbs, ECBSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load ecb DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+
+#undef ECBSIZE
+
+	/*
+	 * Initialize the ecbs.
+	 */
+	i = ahb_create_ecbs(sc, sc->sc_ecbs, AHB_ECB_MAX);
+	if (i == 0) {
+		printf("%s: unable to create ecbs\n",
+		    sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	} else if (i != AHB_ECB_MAX) {
+		printf("%s: WARNING: only %d of %d ecbs created\n",
+		    sc->sc_dev.dv_xname, i, AHB_ECB_MAX);
+	}
+
+	return (0);
 }
 
 void
@@ -1028,11 +1035,11 @@ ahb_scsi_cmd(xs)
 	ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 	ecb->opt2 = sc_link->scsipi_scsi.lun | ECB_NRB;
 	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length = xs->cmdlen);
-	ecb->sense_ptr = ecb->dmamap_self->dm_segs[0].ds_addr +
-	    offsetof(struct ahb_ecb, ecb_sense);
+	ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+	    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);
 	ecb->req_sense_length = sizeof(ecb->ecb_sense);
-	ecb->status = ecb->dmamap_self->dm_segs[0].ds_addr +
-	    offsetof(struct ahb_ecb, ecb_status);
+	ecb->status = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+	    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_status);
 	ecb->ecb_status.host_stat = 0x00;
 	ecb->ecb_status.target_stat = 0x00;
 
@@ -1084,8 +1091,8 @@ ahb_scsi_cmd(xs)
 			    ecb->dmamap_xfer->dm_segs[seg].ds_len;
 		}
 
-		ecb->data_addr = ecb->dmamap_self->dm_segs[0].ds_addr +
-		    offsetof(struct ahb_ecb, ahb_dma);
+		ecb->data_addr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ahb_dma);
 		ecb->data_length = ecb->dmamap_xfer->dm_nsegs *
 		    sizeof(struct ahb_dma_seg);
 		ecb->opt1 |= ECB_S_G;
@@ -1094,6 +1101,10 @@ ahb_scsi_cmd(xs)
 		ecb->data_length = 0;
 	}
 	ecb->link_addr = (physaddr)0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ecb,
+	    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
 	ahb_send_mbox(sc, OP_START_ECB, ecb);
