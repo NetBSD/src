@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.244 2003/12/24 04:35:02 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.245 2003/12/24 04:38:35 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3095,3 +3095,7 @@ usr.bin/menuc/menu_sys.def			patch
 	m a stale pointer into the old menus array. So re-target it.
 	[martin, ticket #1571]
 
+distrib/utils/sysinst/arch/sparc64/md.c		patch
+
+	When upgrading an old system, install new bootblocks too. PR#17204
+	[martin, ticket #1572]
