@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2000/05/04 11:58:22 takemura Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/29 15:10:14 takemura Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates
 
-PROJECT_DIRS=libsa pbsdboot
+PROJECT_DIRS=libsa pbsdboot libz
 
 winfiles: 
 	for dir in $(PROJECT_DIRS); do \
