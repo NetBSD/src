@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.6 2001/07/07 07:04:56 ichiro Exp $
+#	$NetBSD: IPAQ,v 1.7 2001/07/07 15:53:25 ichiro Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -130,15 +130,39 @@ saip0	at mainbus?
 options	CONSPEED=19200
 sacom*  at saip? addr 0xd000d000 size 0x24	intr 17
 
-#OS Timer
+# OS Timer
 saost*  at saip? addr 0x90000000 size 0x20
 
+# Internal LCD controller
 #salcd* at saip?
 #hpcfb* at salcd?
-    
-# Workstation Console attachments
-#wsdisplay*     at      hpcfb? console?
-    
+
+# PCMCIA bus support
+sagpcic*	at saip?
+pcmcia*		at sagpcic?
+
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
+# PCMCIA IDE controllers and disks
+wdc*	at pcmcia? function ?
+wd*	at wdc?
+
+# PCMCIA network interfaces
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+#sm*	at pcmcia? function ?		# Megahertz Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
+
 # Serial ports
 #com*    at pioc? offset 0x03f8 irq 10
 #com*    at pioc? offset 0x02f8 irq -1
@@ -149,6 +173,9 @@ saost*  at saip? addr 0x90000000 size 0x20
 #lpt*    at pioc? offset 0x0278 irq 0
 #lpt*    at pioc? offset 0x0378 irq -1
 #lpt*    at pioc? offset 0x03bc irq -1
+
+# Workstation Console attachments
+#wsdisplay*     at      hpcfb? console?
 
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
