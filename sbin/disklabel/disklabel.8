@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.52 2004/03/20 18:51:06 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.53 2004/05/28 17:46:49 erh Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -394,6 +394,24 @@ disk for which no entry appears in
 if you create the
 prototype file by dumping some other disk's label to a file and editing
 it appropriately (total size, partition offsets, types, etc.)
+.Sh EXIT STATUS
+The exit status of
+.Nm
+is set to indicate any errors or warnings.  The values used are:
+.Bl -tag -width indent
+.It 0
+The
+.Nm
+utility has completed successfully.
+.It 1
+A fatal error has occured, such as unknown options passed on the command line,
+or writing the dislabel failed.
+.It 4
+An I/O error of some sort occurred.
+.It 101..n
+One or more warnings occured while reading the disklabel.  Subtract 100 to
+get the number of warnings detected.
+.El
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while it is open.

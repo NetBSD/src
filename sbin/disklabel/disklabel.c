@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.130 2004/03/19 18:22:31 dyoung Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.131 2004/05/28 17:46:49 erh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.130 2004/03/19 18:22:31 dyoung Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.131 2004/05/28 17:46:49 erh Exp $");
 #endif
 #endif	/* not lint */
 
@@ -343,6 +343,8 @@ main(int argc, char *argv[])
 			showpartitions(stdout, lp, Cflag);
 		}
 		error = checklabel(lp);
+		if (error)
+			error += 100;
 		break;
 
 	case RESTORE:
@@ -357,6 +359,8 @@ main(int argc, char *argv[])
 			err(4, "%s", argv[1]);
 		if (getasciilabel(t, lp))
 			error = writelabel(f, bootarea, lp);
+		else
+			error = 1;
 		break;
 
 	case SETWRITABLE:
