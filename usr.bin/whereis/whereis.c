@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.14 2004/04/01 20:50:32 christos Exp $	*/
+/*	$NetBSD: whereis.c,v 1.15 2004/04/01 21:41:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.14 2004/04/01 20:50:32 christos Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.15 2004/04/01 21:41:14 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,7 +61,8 @@ main(int argc, char *argv[])
 	struct stat sb;
 	size_t len;
 	int ch, mib[2];
-	char *p, *t, *std, path[MAXPATHLEN];
+	char *p, *std, path[MAXPATHLEN];
+	const char *t;
 	int which = strcmp(getprogname(), "which") == 0;
 	int useenvpath = which, found = 0;
 
@@ -111,6 +112,7 @@ main(int argc, char *argv[])
 					t = ".";
 			} else
 				if (strlen(t) == 0)
+/*###114 [cc] warning: assignment discards qualifiers from pointer target type%%%*/
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
 			if (stat(path, &sb) == -1)
