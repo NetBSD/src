@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.497 2004/08/12 16:07:07 lukem Exp $
+# $NetBSD: mi,v 1.498 2004/08/19 09:54:06 drochner Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -112,6 +112,7 @@
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dmesg					base-sysutil-root
+./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
 ./sbin/dump_lfs					base-sysutil-root
 ./sbin/dumpfs					base-obsolete		obsolete
