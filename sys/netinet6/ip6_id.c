@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.11 2003/12/10 05:22:18 itojun Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.12 2003/12/26 19:04:56 wiz Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -48,11 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -87,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.11 2003/12/10 05:22:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.12 2003/12/26 19:04:56 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
