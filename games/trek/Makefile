@@ -10,8 +10,8 @@ SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
 	shield.c snova.c srscan.c systemname.c torped.c utility.c \
 	visual.c warp.c win.c cgetc.c
 MAN6=	trek.0
-DPADD=	${LIBM} ${LIBCOMPAT}
-LDADD=	-lm -lcompat
+DPADD=	${LIBM}
+LDADD=	-lm
 HIDEGAME=hidegame
 
 .include <bsd.prog.mk>
