@@ -1,4 +1,4 @@
-.\"	$NetBSD: binpatch.8,v 1.6 2001/09/05 23:53:23 wiz Exp $
+.\"	$NetBSD: binpatch.8,v 1.7 2001/11/26 00:06:40 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Op Fl r Ar value
 .Ar binfile
 .Sh DESCRIPTION
-.Nm binpatch
+.Nm
 is used to modify or examine the data associated with a symbol in a binary
 file
 .Ar binfile .
@@ -58,7 +58,7 @@ The flags
 and
 .Fl l
 specify the size of the data to be modified or examined
-(byte, word and long respectively.) The
+(byte, word and long respectively.)  The
 .Ar binfile
 is scanned in search of the symbol
 .Ar symname
@@ -79,18 +79,15 @@ no symbol search is performed.
 .Pp
 The
 .Fl o
-flag specifies an offset in byte, word or long (
-.Fl b
-,
-.Fl w
-,
+flag specifies an offset in byte, word or long
+.Fl ( b ,
+.Fl w ,
 or
-.Fl l
-) units from the given locator (
-.Fl s
+.Fl l )
+units from the given locator
+.Fl ( s
 or
-.Fl a
-) for
-.Nm binpatch
-to perform it's described actions.
-
+.Fl a )
+for
+.Nm
+to perform its described actions.
