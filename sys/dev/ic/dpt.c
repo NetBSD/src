@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.4 1999/10/19 23:34:54 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.5 1999/10/20 11:54:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.4 1999/10/19 23:34:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.5 1999/10/20 11:54:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ dpt_intr(xxx_sc)
 #endif
 	
 	/* Don't get stalled by HA_ST_MORE */
-	if (moretimo < DPT_MORE_TIMEOUT / 10)
+	if (moretimo < DPT_MORE_TIMEOUT / 100)
 		moretimo = 0;
 	
 	for (;;) {
@@ -175,7 +175,7 @@ dpt_intr(xxx_sc)
 		 * around. 
 		 */ 
 		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0) {
-			if (more != 0 && moretimo++ < DPT_MORE_TIMEOUT / 10) {
+			if (more != 0 && moretimo++ < DPT_MORE_TIMEOUT / 100) {
 				DELAY(10);
 				continue;
 			}
@@ -235,7 +235,7 @@ dpt_intr(xxx_sc)
 		}
 		
 		/* Don't get stalled by HA_ST_MORE */
-		if (moretimo < DPT_MORE_TIMEOUT / 10)
+		if (moretimo < DPT_MORE_TIMEOUT / 100)
 			moretimo = 0;
 	}
 
