@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/07/26 11:28:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2001/08/09 16:10:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,9 @@ G_CSRCS=	${G_LIB2ADD:M*.c*}
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${GCCARCH} -I${GCCCPINC} ${GCPPFLAGS:M-D*} \
 		${GCPPFLAGS:M-I*:N-I.*}
+
+INCS=		exception new new.h typeinfo
+INCSDIR=	/usr/include/g++
 
 .PATH: ${DIST}/gcc
 
