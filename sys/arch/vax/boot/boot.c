@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1997/06/08 17:49:16 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.8 1998/07/01 10:52:11 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -128,6 +128,7 @@ copyunix(howto, devtype, aio)
 	printf("+%d", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
+	esym = (int)addr;
 	if (howto & RB_KDB && x.a_syms) {
 		*(int *)addr = x.a_syms;		/* symbol table size */
 		addr += sizeof (int);
