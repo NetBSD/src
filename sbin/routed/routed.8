@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.24 1999/02/23 10:47:40 christos Exp $
+.\"	$NetBSD: routed.8,v 1.25 2000/03/02 21:01:03 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,7 +202,7 @@ It tracks several advertising routers to speed recovery when the
 currently chosen router dies.
 If all discovered routers disappear,
 the daemon resumes listening to RIP responses.
-It continues listen to RIP while using Router Discovery
+It continues listening to RIP while using Router Discovery
 if multi-homed to ensure all interfaces are used.
 .Pp
 The Router Discovery standard requires that advertisements
@@ -245,6 +245,8 @@ The following options are available:
 force
 .Nm
 to supply routing information.
+With this explicit option, the daemon is always in "quiet-mode" for RIP
+and does not supply routing information to other computers.
 This is the default if multiple network interfaces are present on which
 RIP or Router Discovery have not been disabled, and if the kernel switch
 ipforwarding=1.
@@ -402,7 +404,7 @@ route is restored.
 Such gateways can be useful on media that do not support broadcasts
 or multicasts but otherwise act like classic shared media like
 Ethernets such as some ATM networks.
-One can list all RIP routers reachable on the ATM network in
+One can list all RIP routers reachable on the HIPPI or ATM network in
 .Pa /etc/gateways
 with a series of
 "host" lines.
@@ -498,7 +500,7 @@ to the scope of the RIP protocol.
 .Pp
 As can be seen when debugging is turned on with
 .Fl t ,
-such lines create psuedo-interfaces.
+such lines create pseudo-interfaces.
 To set parameters for remote or external interfaces,
 a line starting with
 .Cm if=alias(Hname) ,
@@ -533,6 +535,8 @@ a subnet should be
 .Cm mask2 .
 For example \f2ripv1_mask=192.0.2.16/28,27\f1 marks 192.0.2.16/28
 as a subnet of 192.0.2.0/27 instead of 192.0.2.0/24.
+It is better to turn on RIPv2 instead of using this facility, for example
+with \f2ripv2_out\f1.
 .It Cm passwd Ns \&= Ns Ar XXX[|KeyID[start|stop]]
 specifies a RIPv2 cleartext password that will be included on
 all RIPv2 responses sent, and checked on all RIPv2 responses received.
@@ -592,13 +596,14 @@ causes RIPv1 received responses to be ignored.
 .It Cm no_ripv2_in
 causes RIPv2 received responses to be ignored.
 .It Cm ripv2_out
-turns off RIPv1 output and causes RIPv2 advertisements to be
+turns on RIPv2 output and causes RIPv2 advertisements to be
 multicast when possible.
 .It Cm ripv2
 is equivalent to
 .Cm no_ripv1_in
 and
 .Cm no_ripv1_out .
+This enables RIPv2.
 .It Cm no_rdisc
 disables the Internet Router Discovery Protocol.
 .It Cm no_solicit
