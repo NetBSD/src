@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/28 04:33:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/06 18:25:29 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -50,10 +50,11 @@ unconfig:
 	-rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib -d "${DBG}" \
+	    ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk DBG="${DBG}" all
+	${MAKE} -f ${CBIN}.mk all
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
