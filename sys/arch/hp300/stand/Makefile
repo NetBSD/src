@@ -1,7 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.7 1994/06/19 01:49:49 hpeyerl Exp $
-
-DESTDIR=
+#	     $Id: Makefile,v 1.8 1994/06/27 04:00:52 hpeyerl Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
