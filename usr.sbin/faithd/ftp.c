@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.2 1999/12/09 15:20:02 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.3 1999/12/20 15:35:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -508,7 +508,7 @@ passivefail:
 		error = setsockopt(wport6, IPPROTO_IPV6, IPV6_FAITH,
 			&on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IPV6_FAITH): %s", ERRSTR);
 	    }
 #endif
 		error = bind(wport6, (struct sockaddr *)sin6, sin6->sin6_len);
@@ -629,7 +629,7 @@ passivefail2:
 		error = setsockopt(wport6, IPPROTO_IP, IP_FAITH,
 			&on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IP_FAITH): %s", ERRSTR);
 	    }
 #endif
 		error = bind(wport6, (struct sockaddr *)sin, sin->sin_len);
