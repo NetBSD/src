@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47 2001/11/08 06:27:45 gmcgarry Exp $	*/
+/*	$NetBSD: conf.c,v 1.48 2001/11/17 23:53:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -122,7 +122,7 @@ cdev_decl(dca);
 cdev_decl(apci);
 #include "ite.h"
 cdev_decl(ite);
-/* XXX shouldn't this be optional? */
+#include "hil.h"
 cdev_decl(hil);
 #include "dcm.h"
 cdev_decl(dcm);
@@ -164,7 +164,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
 	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
-	cdev_hil_init(1,hil),		/* 14: human interface loop */
+	cdev_hil_init(NHIL,hil),	/* 14: human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -343,7 +343,7 @@ cons_decl(dcm);
 #include "topcat.h"
 
 struct	consdev constab[] = {
-#if NITE > 0
+#if (NITE > 0) && (NHIL > 0)
 #if NDVBOX > 0
 	cons_init(dvbox),
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1999/09/17 19:59:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 2001/11/17 23:53:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -260,19 +260,6 @@ cpu_configure()
 	LIST_INIT(&dev_data_list);
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
-
-	/*
-	 * XXX In order for the HIL to configure, interrupts need to be
-	 * XXX enabled.  However, we need to initialize the HIL driver's
-	 * XXX software state prior to that, since a pending interrupt
-	 * XXX might cause the HIL's interrupt handler to be run in an
-	 * XXX uninitialized environment otherwise.
-	 *
-	 * XXX These should be consolidated into some kind of table.
-	 */
-	hilsoftinit(0, HILADDR);
-	(void)spl0();
-	hilinit(0, HILADDR);
 
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)

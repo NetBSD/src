@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2001/09/16 16:34:29 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 2001/11/17 23:53:39 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
+#include "hil.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1138,6 +1139,7 @@ nmihand(frame)
 		return;
 	innmihand = 1;
 
+#if NHIL > 0
 	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
 		printf("Got a keyboard NMI");
@@ -1175,14 +1177,17 @@ nmihand(frame)
 
 		goto nmihand_out;	/* no more work to do */
 	}
+#endif
 
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
- nmihand_out:
+#if NHIL > 0
+nmihand_out:
 	innmihand = 0;
+#endif
 }
 
 /*
