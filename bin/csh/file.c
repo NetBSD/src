@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)file.c	5.17 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: file.c,v 1.6 1994/03/09 04:23:37 cgd Exp $";
+static char rcsid[] = "$Id: file.c,v 1.7 1994/04/28 15:57:41 pk Exp $";
 #endif /* not lint */
 
 #ifdef FILEC
@@ -114,7 +114,7 @@ setup_tty(on)
 	(void) tcgetattr(SHIN, &tchars);
 	tchars.c_cc[VEOL] = ESC;
 	if (tchars.c_lflag & ICANON)
-	    on = TCSANOW;
+	    on = TCSADRAIN;
 	else {
 	    on = TCSAFLUSH;
 	    tchars.c_lflag |= ICANON;
@@ -124,7 +124,7 @@ setup_tty(on)
     else {
 	(void) tcgetattr(SHIN, &tchars);
 	tchars.c_cc[VEOL] = _POSIX_VDISABLE;
-	(void) tcsetattr(SHIN, TCSANOW, &tchars);
+	(void) tcsetattr(SHIN, TCSADRAIN, &tchars);
     }
 }
 
