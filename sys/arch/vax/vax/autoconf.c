@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.2 1995/02/23 17:53:46 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.3 1995/04/18 22:02:35 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -309,9 +309,16 @@ mem_attach(parent, self, aux)
 	void    *aux;
 {
 	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
+
 	switch(cpunumber){
+#ifdef VAX750
 	case VAX_750:
 		ka750_memenable(sa,self);
+		break;
+#endif
+
+	default:
+		break;
 	}
 
 }
