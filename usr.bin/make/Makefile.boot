@@ -1,20 +1,36 @@
-#	$NetBSD: Makefile.boot,v 1.5 1995/06/14 15:18:43 christos Exp $
+#	$NetBSD: Makefile.boot,v 1.6 1996/08/13 16:40:31 christos Exp $
 # a very simple makefile...
-#	$Id: Makefile.boot,v 1.5 1995/06/14 15:18:43 christos Exp $
+#	$Id: Makefile.boot,v 1.6 1996/08/13 16:40:31 christos Exp $
 #
 # You only want to use this if you aren't running NetBSD.
 #
 # modify MACHINE and MACHINE_ARCH as appropriate for your target architecture
 #
-CFLAGS= -I. -DMACHINE=\"sparc\" -DMACHINE_ARCH=\"sparc\" \
+MACHINE=sun
+MACHINE_ARCH=sparc
+CFLAGS= -I. -DMACHINE=\"${MACHINE}\" -DMACHINE_ARCH=\"${MACHINE_ARCH}\" \
 	-DMAKE_BOOTSTRAP
+LIBS=
 
 OBJ=arch.o buf.o compat.o cond.o dir.o for.o hash.o job.o main.o make.o \
     parse.o str.o suff.o targ.o var.o util.o
 
-bmake: ${OBJ}
-	@echo 'make of make and make.0 started.'
-	(cd lst.lib; make)
-	${CC} *.o lst.lib/*.o -o bmake
+LIBOBJ= lst.lib/lstAppend.o lst.lib/lstAtEnd.o lst.lib/lstAtFront.o \
+	lst.lib/lstClose.o lst.lib/lstConcat.o lst.lib/lstDatum.o \
+	lst.lib/lstDeQueue.o lst.lib/lstDestroy.o lst.lib/lstDupl.o \
+	lst.lib/lstEnQueue.o lst.lib/lstFind.o lst.lib/lstFindFrom.o \
+	lst.lib/lstFirst.o lst.lib/lstForEach.o lst.lib/lstForEachFrom.o \
+	lst.lib/lstInit.o lst.lib/lstInsert.o lst.lib/lstIsAtEnd.o \
+	lst.lib/lstIsEmpty.o lst.lib/lstLast.o lst.lib/lstMember.o \
+	lst.lib/lstNext.o lst.lib/lstOpen.o lst.lib/lstRemove.o \
+	lst.lib/lstReplace.o lst.lib/lstSucc.o
+
+bmake: ${OBJ} ${LIBOBJ}
+#	@echo 'make of make and make.0 started.'
+	${CC} ${CFLAGS} ${OBJ} ${LIBOBJ} -o bmake ${LIBS}
+	@ls -l $@
 #	nroff -h -man make.1 > make.0
 #	@echo 'make of make and make.0 completed.'
+
+clean:
+	rm -f ${OBJ} ${LIBOBJ} ${PORTOBJ} bmake
