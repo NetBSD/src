@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24 1995/09/06 12:35:38 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.25 1995/09/11 19:41:21 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -67,7 +67,6 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
-/*static*/ int	espprint	__P((void *, char *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ int	espgetbyte	__P((struct esp_softc *, u_char *));
 /*static*/ void	espselect	__P((struct esp_softc *,
@@ -104,17 +103,6 @@ struct scsi_device esp_dev = {
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
-
-/*
- * Does anyone actually use this, and what for ?
- */
-int
-espprint(aux, name)
-	void *aux;
-	char *name;
-{
-	return -1;
-}
 
 /*
  * Read the ESP registers, and save their contents for later use.
@@ -427,7 +415,7 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(self, &sc->sc_link, espprint);
+	config_found(self, &sc->sc_link, NULL);
 
 	bootpath_store(1, NULL);
 }
