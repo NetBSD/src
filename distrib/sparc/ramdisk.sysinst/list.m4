@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.3 1999/11/09 15:48:02 mycroft Exp $
+#	$NetBSD: list.m4,v 1.4 2000/02/07 11:10:29 pk Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -65,11 +65,10 @@ SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/mdec/installboot
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK	/bin/cat		usr/sbin/update
 ifelse(MACHINE,i386,	SYMLINK	/bin/cat	usr/sbin/bad144)
 ifelse(MACHINE,i386,	SYMLINK	/bin/cat	usr/sbin/mbrlabel)
 ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/bin/getopt)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/sbin/sysctl)
+ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	sbin/sysctl)
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
