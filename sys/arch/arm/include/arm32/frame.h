@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2003/11/14 16:57:28 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -199,11 +199,12 @@ void validate_trapframe __P((trapframe_t *, int));
  */
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r4, cpsr		/* save CPSR */			;\
+	mrs	r4, cpsr_all		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	3f			/* Nope, get out now */		;\
+	bic	r4, r4, #(I32_bit)					;\
 1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
 	msr	cpsr_all, r0						;\
 	ldr	r1, [r5]		/* Pending AST? */		;\
@@ -238,11 +239,12 @@ void validate_trapframe __P((trapframe_t *, int));
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r4, cpsr		/* save CPSR */			;\
+	mrs	r4, cpsr_all		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	2f			/* Nope, get out now */		;\
+	bic	r4, r4, #(I32_bit)					;\
 1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
 	msr	cpsr_all, r0						;\
 	ldr	r1, [r5]		/* Pending AST? */		;\
