@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.48 1998/03/30 02:41:22 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.49 1998/08/09 06:17:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -303,6 +303,7 @@ zstty_attach(parent, self, aux)
 	printf("\n");
 
 	tp = ttymalloc();
+	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
@@ -465,8 +466,6 @@ zsopen(dev, flags, mode, p)
 	 */
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
-
-		tp->t_dev = dev;
 
 		s2 = splzs();
 
