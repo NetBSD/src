@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.97 2002/10/03 22:32:37 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.98 2002/10/04 04:23:20 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.97 2002/10/03 22:32:37 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.98 2002/10/04 04:23:20 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -494,7 +494,8 @@ wi_intr(void *arg)
 		if (status & WI_EV_INFO)
 			wi_info_intr(sc);
 
-		if (!(ifp->if_flags & IFF_OACTIVE) &&
+		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
+		    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0 &&
 		    !IFQ_IS_EMPTY(&ifp->if_snd))
 			wi_start(ifp);
 	}
@@ -528,6 +529,7 @@ wi_init(struct ifnet *ifp)
 
 	/* common 802.11 configuration */
 	ic->ic_flags &= ~IEEE80211_F_IBSSON;
+	sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_BSS);
@@ -691,12 +693,15 @@ wi_start(struct ifnet *ifp)
 {
 	struct wi_softc	*sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 	struct mbuf *m0, *m;
 	struct wi_frame frmhdr;
 	int cur, fid, off;
 
 	if (ifp->if_flags & IFF_OACTIVE)
+		return;
+	if (sc->sc_flags & WI_FLAGS_OUTRANGE)
 		return;
 
 	memset(&frmhdr, 0, sizeof(frmhdr));
@@ -741,7 +746,8 @@ wi_start(struct ifnet *ifp)
 			    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 			    IEEE80211_FC0_TYPE_DATA &&
-			    ieee80211_find_node(ic, wh->i_addr1) == NULL) {
+			    ((ni = ieee80211_find_node(ic, wh->i_addr1)) ==
+			    NULL || ni->ni_associd == 0)) {
 				m_freem(m0);
 				ifp->if_oerrors++;
 				continue;
@@ -1008,26 +1014,23 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_IEEE80211;
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0)
 		imr->ifm_status |= IFM_ACTIVE;
-	if (ic->ic_fixed_rate != -1)
-		rate = ic->ic_sup_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
+	len = sizeof(val);
+	if (wi_read_rid(sc, WI_RID_CUR_TX_RATE, &val, &len) != 0)
+		rate = 0;
 	else {
-		len = sizeof(val);
-		if (wi_read_rid(sc, WI_RID_CUR_TX_RATE, &val, &len) != 0)
-			rate = 0;
-		else {
-			/* convert to 802.11 rate */
-			rate = val * 2;
-			if (sc->sc_firmware_type == WI_LUCENT) {
-				if (rate == 10)
-					rate = 11;	/* 5.5Mbps */
-			} else {
-				if (rate == 4*2)
-					rate = 11;	/* 5.5Mbps */
-				else if (rate == 8*2)
-					rate = 22;	/* 11Mbps */
-			}
+		/* convert to 802.11 rate */
+		rate = val * 2;
+		if (sc->sc_firmware_type == WI_LUCENT) {
+			if (rate == 10)
+				rate = 11;	/* 5.5Mbps */
+		} else {
+			if (rate == 4*2)
+				rate = 11;	/* 5.5Mbps */
+			else if (rate == 8*2)
+				rate = 22;	/* 11Mbps */
 		}
 	}
 	imr->ifm_active |= ieee80211_rate2media(rate, IEEE80211_T_DS);
@@ -1189,6 +1192,7 @@ wi_info_intr(struct wi_softc *sc)
 		DPRINTF(("wi_info_intr: LINK_STAT 0x%x\n", le16toh(stat)));
 		switch (le16toh(stat)) {
 		case CONNECTED:
+			sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 			if (ic->ic_state == IEEE80211_S_RUN)
 				break;
 			/* FALLTHROUGH */
@@ -1196,6 +1200,7 @@ wi_info_intr(struct wi_softc *sc)
 			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
 			break;
 		case AP_IN_RANGE:
+			sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 			break;
 		case AP_OUT_OF_RANGE:
 			if (sc->sc_firmware_type == WI_SYMBOL &&
@@ -1205,7 +1210,9 @@ wi_info_intr(struct wi_softc *sc)
 					sc->sc_scan_timer = 0;
 				break;
 			}
-			/* FALLTHROUGH */
+			if (ic->ic_opmode == IEEE80211_M_STA)
+				sc->sc_flags |= WI_FLAGS_OUTRANGE;
+			break;
 		case DISCONNECTED:
 		case ASSOC_FAILED:
 			if (ic->ic_opmode == IEEE80211_M_STA)
@@ -2003,9 +2010,11 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
+		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		return 0;
 
 	case IEEE80211_S_RUN:
+		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		buflen = IEEE80211_ADDR_LEN;
 		wi_read_rid(sc, WI_RID_CURRENT_BSSID, ni->ni_bssid, &buflen);
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, ni->ni_bssid);
