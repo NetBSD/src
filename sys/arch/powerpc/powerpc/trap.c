@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2003/08/08 06:10:43 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 2003/08/12 05:06:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2003/08/08 06:10:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/08/12 05:06:56 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -88,12 +88,6 @@ trap(struct trapframe *frame)
 
 	if (frame->srr1 & PSL_PR)
 		type |= EXC_USER;
-
-#ifdef DIAGNOSTIC
-	if (!doing_shutdown && pcb->pcb_pmreal != curpm)
-		panic("trap: curpm (%p) != pcb->pcb_pmreal (%p)",
-		    curpm, pcb->pcb_pmreal);
-#endif
 
 	uvmexp.traps++;
 
