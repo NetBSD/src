@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.8 2001/11/13 07:48:49 lukem Exp $ */
+/* $NetBSD: vga_pci.c,v 1.9 2001/12/13 08:38:35 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.8 2001/11/13 07:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.9 2001/12/13 08:38:35 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,13 @@ struct vga_pci_softc {
 	struct vga_bar sc_rom;
 };
 
-int	vga_pci_match __P((struct device *, struct cfdata *, void *));
-void	vga_pci_attach __P((struct device *, struct device *, void *));
+int	vga_pci_match(struct device *, struct cfdata *, void *);
+void	vga_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach vga_pci_ca = {
-	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
+	sizeof(struct vga_pci_softc), 
+	vga_pci_match, 
+	vga_pci_attach,
 };
 
 int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -87,10 +89,7 @@ const struct vga_funcs vga_pci_funcs = {
 };
 
 int
-vga_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vga_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int potential;
@@ -131,9 +130,7 @@ vga_pci_match(parent, match, aux)
 }
 
 void
-vga_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vga_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vga_pci_softc *psc = (void *) self;
 	struct vga_softc *sc = &psc->sc_vga;
@@ -183,10 +180,8 @@ vga_pci_attach(parent, self, aux)
 }
 
 int
-vga_pci_cnattach(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, 
+    pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
 }
