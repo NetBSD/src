@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 1997/04/21 16:16:31 matthias Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5 2002/12/09 23:47:47 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -83,9 +83,9 @@
 	register void *r1 __asm("r1") = from; \
 	register void *r2 __asm("r2") = to; \
 	__asm __volatile ("movs" type \
-		: "=r" (r1), "=r" (r2) \
-		: "0" (r1), "1" (r2), "r" (r0) \
-		: "r0", "memory" \
+		: "+r" (r0), "+r" (r1), "+r" (r2) \
+		: \
+		: "memory" \
 	);
 #define movs_update(type, from, to, n) do { \
 		movs(type, from, to, n); \
