@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)def.h	5.22 (Berkeley) 6/25/90
- *	$Id: def.h,v 1.4 1994/03/23 01:32:50 cgd Exp $
+ *	$Id: def.h,v 1.5 1994/05/07 01:09:56 jtc Exp $
  */
 
 #include <sys/param.h>		/* includes <sys/types.h> */
@@ -269,7 +269,7 @@ struct ignoretab {
  */
 #define trunc(stream) {						\
 	(void)fflush(stream);					\
-	(void)ftruncate(fileno(stream), (long)ftell(stream));	\
+	(void)ftruncate(fileno(stream), (off_t)ftell(stream));	\
 }
 
 /*
