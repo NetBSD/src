@@ -1,4 +1,4 @@
-/* $NetBSD: shell_shell.c,v 1.9 1996/10/13 03:06:08 christos Exp $ */
+/* $NetBSD: shell_shell.c,v 1.10 1996/10/15 21:08:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,7 +42,7 @@
  *
  * Created      : 09/10/94
  */
-
+#define HISTOGRAM
 /* Include standard header files */
 
 #include <sys/param.h>
@@ -82,14 +82,19 @@ void shell_vmmap	__P((int argc, char *argv[]));
 void shell_flush	__P((int argc, char *argv[]));
 void shell_pextract	__P((int argc, char *argv[]));
 void shell_vnode	__P((int argc, char *argv[]));
+void shell_wakeup	__P((int argc, char *argv[]));
 void debug_show_all_procs __P((int argc, char *argv[]));
 void debug_show_callout	__P((int argc, char *argv[]));
 void debug_show_fs	__P((int argc, char *argv[]));
 void debug_show_vm_map	__P((vm_map_t map, char *text));
 void debug_show_pmap	__P((pmap_t pmap));
 void pmap_dump_pvs	__P((void));
+void pmap_dump_mpvs	__P((void));
+#if NASC > 0
 void asc_dump		__P((void));
+#endif
 void pmap_pagedir_dump	__P((void));
+void checkinodes	__P((void));
 
 /* Now for the main code */
 
@@ -109,17 +114,17 @@ readhex(buf)
 	if (buf == NULL)
 		return(0);
 
-/* skip any spaces */
+	/* skip any spaces */
 
 	while (*buf == ' ')
 		++buf;
 
-/* return 0 if a zero length string is passed */
+	/* return 0 if a zero length string is passed */
 
 	if (*buf == 0)
 		return(0);
 
-/* Convert the characters */
+	/* Convert the characters */
 
 	value = 0;
 
@@ -150,7 +155,7 @@ shell_poke(argc, argv)
 		return;
 	}
 
-/* Decode the two arguments */
+	/* Decode the two arguments */
 
 	addr = readhex(argv[1]);
 	data = readhex(argv[2]);
@@ -177,7 +182,7 @@ shell_peek(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = readhex(argv[1]);
 
@@ -205,7 +210,7 @@ shell_dumpb(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = (u_char *)readhex(argv[1]);
 
@@ -233,7 +238,7 @@ shell_dumpw(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = (u_char *)readhex(argv[1]);
 
@@ -260,7 +265,7 @@ shell_vmmap(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = (u_char *)readhex(argv[1]);
 
@@ -282,7 +287,7 @@ shell_pmap(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = (u_char *)readhex(argv[1]);
 
@@ -360,8 +365,8 @@ shell_flush(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	idcflush();
-	tlbflush();
+	cache_clean();
+	tlb_flush();
 }
 
 
@@ -421,7 +426,7 @@ shell_pextract(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	addr = (u_char *)readhex(argv[1]);
 
@@ -444,9 +449,9 @@ shell_vnode(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
-	vp = (struct vnode *)readhex(argv[1]);
+	vp = (struct vnode *)(readhex(argv[1]) & ~0x7f);
 
 	printf("vp = %08x\n", (u_int)vp);
 	printf("vp->v_type = %d\n", vp->v_type);
@@ -471,7 +476,7 @@ shell_buf(argc, argv)
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
 	bp = (struct buf *)readhex(argv[1]);
 
@@ -492,56 +497,23 @@ shell_buf(argc, argv)
 }
 
 
-
-#ifdef XXX1
 void
-shell_bufstats(argc, argv)
+shell_wakeup(argc, argv)
 	int argc;
 	char *argv[];	
 {
-	vfs_bufstats();
-}
-
-
-void
-shell_vndbuf(argc, argv)
-	int argc;
-	char *argv[];	
-{
-	struct vnode *vp;
+	u_int ident;
 
 	if (argc < 2) {
-		printf("Syntax: vndbuf <vp>\n\r");
+		printf("Syntax: wakeup <ident>\n\r");
 		return;
 	}
 
-/* Decode the one argument */
+	/* Decode the one argument */
 
-	vp = (struct vnode *)readhex(argv[1]);
-
-	dumpvndbuf(vp);
+	ident = readhex(argv[1]);
+	wakeup((void *)ident);
 }
-
-
-void
-shell_vncbuf(argc, argv)
-	int argc;
-	char *argv[];	
-{
-	struct vnode *vp;
-
-	if (argc < 2) {
-		printf("Syntax: vndbuf <vp>\n\r");
-		return;
-	}
-
-/* Decode the one argument */
-
-	vp = (struct vnode *)readhex(argv[1]);
-
-	dumpvncbuf(vp);
-}
-#endif
 
 /* shell - a crude shell */
 
@@ -559,28 +531,28 @@ shell()
 	printf("CTRL-D, exit or reboot to terminate\n\n");
 
 	do {
-/* print prompt */
+		/* print prompt */
 
 		printf("kshell> ");
 
-/* Read line from keyboard */
+		/* Read line from keyboard */
 
 		if (readstring(buffer, 200, NULL, NULL) == -1)
 			return(0);
 
 		ptr = buffer;
 
-/* Slice leading spaces */
+		/* Slice leading spaces */
 
 		while (*ptr == ' ')
 			++ptr;
 
-/* Loop back if zero length string */
+		/* Loop back if zero length string */
 
 		if (*ptr == 0)
 			continue;
 
-/* Count the number of space separated args */
+		/* Count the number of space separated args */
 
 		args = 0;
 		ptr1 = ptr;
@@ -594,10 +566,10 @@ shell()
 				++ptr1;
 		}
 
-/*
- * Construct the array of pointers to the args and terminate
- * each argument with 0x00
- */
+		/*
+		 * Construct the array of pointers to the args and terminate
+		 * each argument with 0x00
+		 */
 
 		args = 0;
 		ptr1 = ptr;
@@ -616,7 +588,7 @@ shell()
 
 		argv[args] = NULL;
 
-/* Interpret commands */
+		/* Interpret commands */
 
 		if (strcmp(argv[0], "exit") == 0)
 			quit = 1;
@@ -668,24 +640,22 @@ shell()
 			forceboot(args, argv);
 		else if (strcmp(argv[0], "dumppvs") == 0)
 			pmap_dump_pvs();
+		else if (strcmp(argv[0], "dumpmpvs") == 0)
+			pmap_dump_mpvs();
 		else if (strcmp(argv[0], "pextract") == 0)
 			shell_pextract(args, argv);
 		else if (strcmp(argv[0], "vnode") == 0)
 			shell_vnode(args, argv);
+		else if (strcmp(argv[0], "wakeup") == 0)
+			shell_wakeup(args, argv);
+		else if (strcmp(argv[0], "checkinodes") == 0)
+			checkinodes();
 #if NASC > 0
 		else if (strcmp(argv[0], "ascdump") == 0)
 			asc_dump();
 #endif
 		else if (strcmp(argv[0], "buf") == 0)
 			shell_buf(args, argv);
-#ifdef XXX1
-		else if (strcmp(argv[0], "vndbuf") == 0)
-			shell_vndbuf(args, argv);
-		else if (strcmp(argv[0], "vncbuf") == 0)
-			shell_vncbuf(args, argv);
-		else if (strcmp(argv[0], "bufstats") == 0)
-			shell_bufstats(args, argv);
-#endif
 		else if (strcmp(argv[0], "help") == 0
 		    || strcmp(argv[0], "?") == 0) {
 			printf("peekb <hexaddr>\r\n");
@@ -703,7 +673,6 @@ shell()
 			printf("listfs\n");
 			printf("devices\n");
 			printf("callouts\n");
-			printf("prompt\r\n");
 			printf("vmmap <vmmap addr>\r\n");
 			printf("pmap <pmap addr>\r\n");
 			printf("pdstat\r\n");
@@ -711,16 +680,14 @@ shell()
 			printf("exit\r\n");
 			printf("forceboot\r\n");
 			printf("dumppvs\r\n");
+			printf("dumpmpvs\r\n");
 			printf("pextract <phys addr>\r\n");
 			printf("vnode <vp>\r\n");
 			printf("buf <bp>\r\n");
+			printf("wakeup <ident>\r\n");
+			printf("checkinodes\r\n");
 #if NASC > 0
 			printf("ascdump\r\n");
-#endif
-#ifdef XXX1
-			printf("vndbuf\r\n");
-			printf("vncbuf\r\n");
-			printf("bufstats\r\n");
 #endif
 		}
 	} while (!quit);
