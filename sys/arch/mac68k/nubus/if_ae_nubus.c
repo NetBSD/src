@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.9 1997/03/17 20:26:01 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.10 1997/03/18 00:34:31 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -118,10 +118,7 @@ ae_nubus_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
-	int success;
-#ifdef AE_OLD_GET_ENADDR
-	int i;
-#endif
+	int i,success;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	bst = na->na_tag;
@@ -260,7 +257,7 @@ ae_nubus_attach(parent, self, aux)
 		/* reset the NIC chip */
 		bus_space_write_1(bst, bsh, GC_RESET_OFFSET, 0);
 
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(na, myaddr)) {
 			/* Fall back to snarf directly from ROM.  Ick. */
 			for (i = 0; i < ETHER_ADDR_LEN; ++i)
 				myaddr[i] =
