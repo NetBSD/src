@@ -1,6 +1,6 @@
-#	@(#)Makefile	5.2 (Berkeley) 3/22/91
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-MAN8=	MAKEDEV.0 crash.0 format.0 rbootd.0
+MAN8=	MAKEDEV.0 crash.0 format.0
 MANSUBDIR=/hp300
 
 all: ${MAN8}
