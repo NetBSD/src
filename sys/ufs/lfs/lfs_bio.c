@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.20 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.21 2000/05/31 01:40:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ lfs_bwrite_ext(bp, flags)
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CLEANING;
 		} else {
-			if(!(ip->i_flag & IN_MODIFIED))
+			if(!(ip->i_flag & (IN_MODIFIED | IN_ACCESSED))
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
 		}
