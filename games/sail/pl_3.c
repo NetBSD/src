@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.10 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.11 2001/01/04 02:43:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.10 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.11 2001/01/04 02:43:32 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 #include <stdlib.h>
+
+void	acceptcombat(void);
+void	grapungrap(void);
+void	unfoulplayer(void);
 
 void
 acceptcombat(void)
