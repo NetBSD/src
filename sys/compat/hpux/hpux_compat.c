@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.38 1997/10/19 19:25:11 carrel Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.39 1998/02/10 17:45:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@
 int unimpresponse = 0;
 #endif
 
-#define NERR	83
+#define NERR	84
 #define BERR	1000
 
 /* indexed by BSD errno */
@@ -105,9 +105,9 @@ int bsdtohpuxerrnomap[NERR] = {
 /*30*/	 30,  31,  32,  33,  34, 246, 245, 244, 216, 217,
 /*40*/	218, 219, 220, 221, 222, 223, 224, 225, 226, 227,
 /*50*/	228, 229, 230, 231, 232, 233, 234, 235, 236, 237,
-/*60*/	238, 239, 249, 248, 241, 242, 247,BERR,BERR,BERR,
+/*60*/	238, 239, 249, 248, 241, 242, 247,BERR,BERR,  69,
 /*70*/   70,  71,BERR,BERR,BERR,BERR,BERR,  46, 251,BERR,
-/*80*/ BERR,BERR,  11
+/*80*/ BERR,BERR,  36,  35
 };
 
 extern char sigcode[], esigcode[];
