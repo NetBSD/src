@@ -23,8 +23,8 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.5 1994/05/14 18:50:57 cgd Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.5 1994/05/14 18:50:57 cgd Exp $";
+    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.6 1994/11/13 11:20:52 glass Exp $ (LBL)";*/
+static char rcsid[] = "$Id: slstats.c,v 1.6 1994/11/13 11:20:52 glass Exp $";
 #endif
 
 #include <stdio.h>
@@ -154,13 +154,13 @@ intpr()
 
 		if ((line % 20) == 0) {
 			printf("%8.8s %6.6s %6.6s %6.6s %6.6s",
-				"in", "pack", "comp", "uncomp", "err");
+				"IN", "PACK", "COMP", "UNCOMP", "ERR");
 			if (vflag)
-				printf(" %6.6s %6.6s", "toss", "ip");
+				printf(" %6.6s %6.6s", "TOSS", "IP");
 			printf(" | %8.8s %6.6s %6.6s %6.6s %6.6s",
-				"out", "pack", "comp", "uncomp", "ip");
+				"OUT", "PACK", "COMP", "UNCOMP", "IP");
 			if (vflag)
-				printf(" %6.6s %6.6s", "search", "miss");
+				printf(" %6.6s %6.6s", "SEARCH", "MISS");
 			putchar('\n');
 		}
 		printf("%8u %6d %6u %6u %6u",
