@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.16.6.1 2005/02/13 10:34:11 yamt Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.16.6.2 2005/02/13 13:17:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.16.6.1 2005/02/13 10:34:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.16.6.2 2005/02/13 13:17:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -828,8 +828,7 @@ __sh_hd64465_map_2page(paddr_t pa)
 	for (i = 0; i < 3; i++, pa += 0x01000000, va += 0x01000000) {
 		if (__sh_hd64465_map(va, pa, 0x2000, mode[i]) != 0) {
 			pmap_kremove(v, 0x03000000);
-			uvm_km_free(kernel_map, v, 0x03000000, 0,
-			    UVM_KMF_VAONLY);
+			uvm_km_free(kernel_map, v, 0x03000000, UVM_KMF_VAONLY);
 			return (0);
 		}
 	}
