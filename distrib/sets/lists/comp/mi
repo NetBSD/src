@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.340 2001/05/12 18:07:20 hubertf Exp $
+#	$NetBSD: mi,v 1.341 2001/05/15 17:08:20 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -472,6 +472,7 @@
 ./usr/include/net/if_llc.h		comp-c-include
 ./usr/include/net/if_media.h		comp-c-include
 ./usr/include/net/if_ppp.h		comp-c-include
+./usr/include/net/if_pppoe.h		comp-c-include
 ./usr/include/net/if_pppvar.h		comp-c-include
 ./usr/include/net/if_slvar.h		comp-c-include
 ./usr/include/net/if_sppp.h		comp-c-include
@@ -2943,6 +2944,7 @@
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman
 ./usr/share/man/cat9/cltom.0		comp-sys-catman
+./usr/share/man/cat9/cnmagic.0		comp-sys-catman
 ./usr/share/man/cat9/copy.0		comp-sys-catman
 ./usr/share/man/cat9/copyin.0		comp-sys-catman
 ./usr/share/man/cat9/copyinstr.0		comp-sys-catman
@@ -4893,6 +4895,7 @@
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man
 ./usr/share/man/man9/cltom.9		comp-sys-man
+./usr/share/man/man9/cnmagic.9		comp-sys-man
 ./usr/share/man/man9/copy.9		comp-sys-man
 ./usr/share/man/man9/copyin.9		comp-sys-man
 ./usr/share/man/man9/copyinstr.9		comp-sys-man
