@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/28 06:17:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1996/10/22 19:09:50 explorer Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/compat/sunos $S/arch/${MACHINE}/${MACHINE}
+.PATH:	$S/compat/sunos $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
 CFLAGS+= -DCOMPAT_SUNOS
 NOMAN=	yep
