@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.68 2001/09/22 22:45:50 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.69 2001/09/22 22:49:32 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -1052,6 +1052,7 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, cd9660_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc cd9660_fifoop_opv_desc =
