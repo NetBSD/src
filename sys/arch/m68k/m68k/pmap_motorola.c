@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.6 2003/08/07 16:28:17 agc Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.7 2003/09/27 20:01:59 cl Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.6 2003/08/07 16:28:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.7 2003/09/27 20:01:59 cl Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -417,7 +417,7 @@ pmap_init()
 		panic("pmap_init: can't allocate data structures");
 
 	Segtabzero = (st_entry_t *) addr;
-	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)(void *)&Segtabzeropa);
 	addr += M68K_STSIZE;
 
 	pv_table = (struct pv_entry *) addr;
