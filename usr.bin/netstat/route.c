@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $	*/
+/*	$NetBSD: route.c,v 1.30 1998/10/31 06:42:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $");
+__RCSID("$NetBSD: route.c,v 1.30 1998/10/31 06:42:22 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $");
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/un.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -55,6 +56,7 @@ __RCSID("$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $");
 #undef _KERNEL
 #include <netinet/in.h>
 #include <netatalk/at.h>
+#include <netiso/iso.h>
 
 #include <netns/ns.h>
 
@@ -95,8 +97,18 @@ struct bits {
 	{ 0 }
 };
 
+/*
+ * XXX we put all of the sockaddr types in here to force the alignment
+ * to be correct.
+ */
 static union {
 	struct	sockaddr u_sa;
+	struct	sockaddr_in u_in;
+	struct	sockaddr_un u_un;
+	struct	sockaddr_iso u_iso;
+	struct	sockaddr_at u_at;
+	struct	sockaddr_dl u_dl;
+	struct	sockaddr_ns u_ns;
 	u_short	u_data[128];
 } pt_u;
 
