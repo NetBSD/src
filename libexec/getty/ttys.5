@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttys.5,v 1.14 2000/11/07 07:02:18 lukem Exp $
+.\"	$NetBSD: ttys.5,v 1.15 2002/01/15 02:22:11 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -175,7 +175,7 @@ file and spawn any necessary
 .Xr getty 8
 processes.
 .Pp
-.Sy Nota Bene:
+.Sy Nota Bene :
 Sending
 .Dv SIGHUP
 to
@@ -187,6 +187,10 @@ change the state of the various
 device flags listed above; the
 .Xr ttyflags 8
 program must be run for changes in those flags to take effect on the devices.
+.Sh FILES
+.Bl -tag -width /etc/ttys -compact
+.It Pa /etc/ttys
+.El
 .Sh EXAMPLES
 .Bd -literal
 # root login on console at 1200 baud
@@ -203,10 +207,6 @@ ttyv0	"/usr/new/xterm -L :0"		vs100	on window="/usr/new/Xvs100 0"
 ttyp0	none	network
 ttyp1	none	network	off
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/ttys -compact
-.It Pa /etc/ttys
-.El
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr getttyent 3 ,
