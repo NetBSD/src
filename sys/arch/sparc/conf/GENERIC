@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.104 2000/04/19 06:50:35 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.105 2000/05/08 13:49:49 augustss Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 maxusers	32
 
@@ -100,6 +100,8 @@ options 	NFS_BOOT_BOOTPARAM
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
+
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.142 2000/04/30 19:08:20 dante Exp $
+#	$NetBSD: INSTALL,v 1.143 2000/05/08 13:49:47 augustss Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -142,6 +142,7 @@ options 	INET6		# IPv6
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
