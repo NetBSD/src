@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_filter.c,v 1.2 1998/01/09 08:07:49 perry Exp $	*/
+/*	$NetBSD: ex_filter.c,v 1.3 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_filter.c	10.33 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_filter.c	10.34 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ err:		if (input[0] != -1)
 		/* Delete any lines written to the utility. */
 		if (rval == 0 && ftype == FILTER_BANG &&
 		    (cut(sp, NULL, fm, tm, CUT_LINEMODE) ||
-		    delete(sp, fm, tm, 1))) {
+		    del(sp, fm, tm, 1))) {
 			rval = 1;
 			break;
 		}

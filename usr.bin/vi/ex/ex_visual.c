@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_visual.c,v 1.8 2000/10/11 14:46:22 is Exp $	*/
+/*	$NetBSD: ex_visual.c,v 1.9 2001/03/31 11:37:51 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_visual.c	10.12 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)ex_visual.c	10.13 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,10 +82,11 @@ ex_visual(sp, cmdp)
 	}
 
 	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
-		len = snprintf(buf, sizeof(buf),
-		     "%luz%c%lu", (long)sp->lno, pos, cmdp->count);
+		len = snprintf(buf, sizeof(buf), "%luz%c%lu",
+			(unsigned long) sp->lno, pos, cmdp->count);
 	else
-		len = snprintf(buf, sizeof(buf), "%luz%c", (long)sp->lno, pos);
+		len = snprintf(buf, sizeof(buf), "%luz%c",
+			(unsigned long) sp->lno, pos);
 	(void)v_event_push(sp, NULL, buf, len, CH_NOMAP | CH_QUOTED);
 
 	/*
@@ -121,7 +122,7 @@ nopush:	/*
 	 * already a reason to wait.
 	 */
 	if (!F_ISSET(sp, SC_SCR_EXWROTE))
-		F_SET(sp, SC_EX_DONTWAIT);
+		F_SET(sp, SC_EX_WAIT_NO);
 
 	if (F_ISSET(sp, SC_EX_GLOBAL)) {
 		/*

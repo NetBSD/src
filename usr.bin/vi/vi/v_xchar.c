@@ -1,4 +1,4 @@
-/*	$NetBSD: v_xchar.c,v 1.7 1998/01/09 08:08:45 perry Exp $	*/
+/*	$NetBSD: v_xchar.c,v 1.8 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_xchar.c	10.8 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)v_xchar.c	10.9 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ nodel:		msgq(sp, M_BERR, "206|No characters to delete");
 	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
 	    &vp->m_start, &vp->m_stop, 0))
 		return (1);
-	return (delete(sp, &vp->m_start, &vp->m_stop, 0));
+	return (del(sp, &vp->m_start, &vp->m_stop, 0));
 }
 
 /*
@@ -105,5 +105,5 @@ v_Xchar(sp, vp)
 	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
 	    &vp->m_start, &vp->m_stop, 0))
 		return (1);
-	return (delete(sp, &vp->m_start, &vp->m_stop, 0));
+	return (del(sp, &vp->m_start, &vp->m_stop, 0));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.2 1998/01/09 08:06:54 perry Exp $	*/
+/*	$NetBSD: mem.h,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -101,7 +101,7 @@
 /* Free a GET_SPACE returned buffer. */
 #define	FREE_SPACE(sp, bp, blen) {					\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
-	if (L__gp != NULL && (CHAR_T *)bp == (CHAR_T *)L__gp->tmp_bp)			\
+	if (L__gp != NULL && bp == L__gp->tmp_bp)			\
 		F_CLR(L__gp, G_TMP_INUSE);				\
 	else								\
 		free(bp);						\

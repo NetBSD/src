@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.9 2000/05/31 19:49:26 jdc Exp $	*/
+/*	$NetBSD: v_ex.c,v 1.10 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_ex.c	10.38 (Berkeley) 4/28/96";
+static const char sccsid[] = "@(#)v_ex.c	10.42 (Berkeley) 6/28/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ v_exmode(sp, vp)
 	gp = sp->gp;
 
 	/* Try and switch screens -- the screen may not permit it. */
-	if (sp->gp->scr_screen(sp, SC_EX)) {
+	if (gp->scr_screen(sp, SC_EX)) {
 		msgq(sp, M_ERR,
 		    "207|The Q command requires the ex terminal interface");
 		return (1);
@@ -353,9 +353,6 @@ v_event_exec(sp, vp)
 	case E_WRITE:
 		ex_cinit(&cmd, C_WRITE, 0, OOBLNO, OOBLNO, 0, NULL);
 		break;
-	case E_WRITEQUIT:
-		ex_cinit(&cmd, C_WQ, 0, OOBLNO, OOBLNO, 0, NULL);
-		break;
 	default:
 		abort();
 	}
@@ -490,7 +487,7 @@ v_ex(sp, vp)
 	 * that.
 	 */
 	if (do_resolution) {
-		F_SET(sp, SC_EX_DONTWAIT);
+		F_SET(sp, SC_EX_WAIT_NO);
 		if (vs_ex_resolve(sp, &ifcontinue))
 			return (1);
 	}
@@ -539,6 +536,14 @@ v_ex_done(sp, vp)
 
 	vp->m_final.lno = sp->lno;
 	vp->m_final.cno = sp->cno;
+
+	/*
+	 * Don't re-adjust the cursor after executing an ex command,
+	 * and ex movements are permanent.
+	 */
+	F_CLR(vp, VM_RCM_MASK);
+	F_SET(vp, VM_RCM_SET);
+
 	return (0);
 }
 

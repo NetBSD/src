@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.7 1998/01/09 08:08:38 perry Exp $	*/
+/*	$NetBSD: v_search.c,v 1.8 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_search.c	10.16 (Berkeley) 5/8/96";
+static const char sccsid[] = "@(#)v_search.c	10.18 (Berkeley) 9/19/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)v_search.c	10.16 (Berkeley) 5/8/96";
 #include "vi.h"
 
 static int v_exaddr __P((SCR *, VICMD *, dir_t));
-static int v_search __P((SCR *, VICMD *, char *, u_int, dir_t));
+static int v_search __P((SCR *, VICMD *, char *, size_t, u_int, dir_t));
 
 /*
  * v_srch -- [count]?RE[? offset]
@@ -87,7 +87,7 @@ v_exaddr(sp, vp, dir)
 	 */
 	if (F_ISSET(vp, VC_ISDOT))
 		return (v_search(sp, vp,
-		    NULL, SEARCH_PARSE | SEARCH_MSG | SEARCH_SET, dir));
+		    NULL, 0, SEARCH_PARSE | SEARCH_MSG | SEARCH_SET, dir));
 
 	/* Get the search pattern. */
 	if (v_tcmd(sp, vp, dir == BACKWARD ? CH_BSEARCH : CH_FSEARCH,
@@ -125,8 +125,30 @@ v_exaddr(sp, vp, dir)
 	gp = sp->gp;
 	gp->excmd.cp = tp->lb;
 	gp->excmd.clen = tp->len;
-	F_SET(&gp->excmd, E_VISEARCH);
+	F_INIT(&gp->excmd, E_VISEARCH);
 
+	/*
+	 * XXX
+	 * Warn if the search wraps.  This is a pretty special case, but it's
+	 * nice feature that wasn't in the original implementations of ex/vi.
+	 * (It was added at some point to System V's version.)  This message
+	 * is only displayed if there are no keys in the queue. The problem is
+	 * the command is going to succeed, and the message is informational,
+	 * not an error.  If a macro displays it repeatedly, e.g., the pattern
+	 * only occurs once in the file and wrapscan is set, you lose big.  For
+	 * example, if the macro does something like:
+	 *
+	 *	:map K /pattern/^MjK
+	 *
+	 * Each search will display the message, but the following "/pattern/"
+	 * will immediately overwrite it, with strange results.  The System V
+	 * vi displays the "wrapped" message multiple times, but because it's
+	 * overwritten each time, it's not as noticeable.  As we don't discard
+	 * messages, it's a real problem for us.
+	 */
+	if (!KEYS_WAITING(sp))
+		F_SET(&gp->excmd, E_SEARCH_WMSG);
+		
 	/* Save the current line/column. */
 	s_lno = sp->lno;
 	s_cno = sp->cno;
@@ -281,7 +303,7 @@ v_searchN(sp, vp)
 		dir = sp->searchdir;
 		break;
 	}
-	return (v_search(sp, vp, NULL, SEARCH_PARSE, dir));
+	return (v_search(sp, vp, NULL, 0, SEARCH_PARSE, dir));
 }
 
 /*
@@ -295,7 +317,7 @@ v_searchn(sp, vp)
 	SCR *sp;
 	VICMD *vp;
 {
-	return (v_search(sp, vp, NULL, SEARCH_PARSE, sp->searchdir));
+	return (v_search(sp, vp, NULL, 0, SEARCH_PARSE, sp->searchdir));
 }
 
 /*
@@ -315,9 +337,9 @@ v_searchw(sp, vp)
 
 	len = VIP(sp)->klen + sizeof(RE_WSTART) + sizeof(RE_WSTOP);
 	GET_SPACE_RET(sp, bp, blen, len);
-	(void)snprintf(bp, blen, "%s%s%s", RE_WSTART, VIP(sp)->keyw, RE_WSTOP);
+	len = snprintf(bp, blen, "%s%s%s", RE_WSTART, VIP(sp)->keyw, RE_WSTOP);
 
-	rval = v_search(sp, vp, bp, SEARCH_SET, FORWARD);
+	rval = v_search(sp, vp, bp, len, SEARCH_SET, FORWARD);
 
 	FREE_SPACE(sp, bp, blen);
 	return (rval);
@@ -328,22 +350,37 @@ v_searchw(sp, vp)
  *	The search commands.
  */
 static int
-v_search(sp, vp, ptrn, flags, dir)
+v_search(sp, vp, ptrn, plen, flags, dir)
 	SCR *sp;
 	VICMD *vp;
 	u_int flags;
 	char *ptrn;
+	size_t plen;
 	dir_t dir;
 {
+	/* Display messages. */
+	LF_SET(SEARCH_MSG);
+
+	/* If it's a motion search, offset past end-of-line is okay. */
+	if (ISMOTION(vp))
+		LF_SET(SEARCH_EOL);
+
+	/*
+	 * XXX
+	 * Warn if the search wraps.  See the comment above, in v_exaddr().
+	 */
+	if (!KEYS_WAITING(sp))
+		LF_SET(SEARCH_WMSG);
+		
 	switch (dir) {
 	case BACKWARD:
-		if (b_search(sp, &vp->m_start, &vp->m_stop, ptrn, NULL,
-		    flags | SEARCH_MSG | (ISMOTION(vp) ? SEARCH_EOL : 0)))
+		if (b_search(sp,
+		    &vp->m_start, &vp->m_stop, ptrn, plen, NULL, flags))
 			return (1);
 		break;
 	case FORWARD:
-		if (f_search(sp, &vp->m_start, &vp->m_stop, ptrn, NULL,
-		    flags | SEARCH_MSG | (ISMOTION(vp) ? SEARCH_EOL : 0)))
+		if (f_search(sp,
+		    &vp->m_start, &vp->m_stop, ptrn, plen, NULL, flags))
 			return (1);
 		break;
 	case NOTSET:
@@ -461,15 +498,18 @@ v_correct(sp, vp, isdelta)
 	 * the current one (this is safe because we know the search had to move
 	 * to succeed).
 	 *
-	 * Searches become line mode operations if they start at column 0 and
-	 * end at column 0 of another line.
+	 * Searches become line mode operations if they start at the first
+	 * nonblank and end at column 0 of another line.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {
 		if (db_get(sp, --vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
-		if (vp->m_start.cno == 0)
-			F_SET(vp, VM_LMODE);
 		vp->m_stop.cno = len ? len - 1 : 0;
+		len = 0;
+		if (nonblank(sp, vp->m_start.lno, &len))
+			return (1);
+		if (vp->m_start.cno <= len)
+			F_SET(vp, VM_LMODE);
 	} else
 		--vp->m_stop.cno;
 

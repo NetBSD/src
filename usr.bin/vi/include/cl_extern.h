@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_extern.h,v 1.3 1999/10/04 23:31:51 lukem Exp $	*/
+/*	$NetBSD: cl_extern.h,v 1.4 2001/03/31 11:37:51 aymeric Exp $	*/
 
 #ifndef HAVE_CURSES_ADDNSTR
 int addnstr __P((char *, int));
@@ -21,7 +21,9 @@ void *newterm __P((const char *, FILE *, FILE *));
 #ifndef HAVE_CURSES_SETUPTERM
 void setupterm __P((char *, int, int *));
 #endif
-#ifndef HAVE_CURSES_TIGETSTR
+#ifdef HAVE_CURSES_TIGETSTR
+char *tigetstr();
+#else
 char *tigetstr __P((char *));
 #endif
 #ifndef HAVE_CURSES_TIGETSTR
@@ -39,7 +41,7 @@ int cl_insertln __P((SCR *));
 int cl_keyval __P((SCR *, scr_keyval_t, CHAR_T *, int *));
 int cl_move __P((SCR *, size_t, size_t));
 int cl_refresh __P((SCR *, int));
-int cl_rename __P((SCR *));
+int cl_rename __P((SCR *, char *, int));
 int cl_suspend __P((SCR *, int *));
 void cl_usage __P((void));
 int sig_init __P((GS *, SCR *));

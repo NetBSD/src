@@ -1,4 +1,4 @@
-/*	$NetBSD: vi_extern.h,v 1.2 1998/01/09 08:08:23 perry Exp $	*/
+/*	$NetBSD: vi_extern.h,v 1.3 2001/03/31 11:37:51 aymeric Exp $	*/
 
 int cs_init __P((SCR *, VCS *));
 int cs_next __P((SCR *, VCS *));
@@ -118,7 +118,7 @@ void vs_home __P((SCR *));
 void vs_update __P((SCR *, const char *, const char *));
 void vs_msg __P((SCR *, mtype_t, char *, size_t));
 int vs_ex_resolve __P((SCR *, int *));
-int vs_resolve __P((SCR *));
+int vs_resolve __P((SCR *, SCR *, int));
 int vs_repaint __P((SCR *, EVENT *));
 int vs_refresh __P((SCR *, int));
 int vs_column __P((SCR *, size_t *));
@@ -138,7 +138,7 @@ int vs_sm_position __P((SCR *, MARK *, u_long, pos_t));
 recno_t vs_sm_nlines __P((SCR *, SMAP *, recno_t, size_t));
 int vs_split __P((SCR *, SCR *, int));
 int vs_discard __P((SCR *, SCR **));
-int vs_fg __P((SCR *, CHAR_T *));
+int vs_fg __P((SCR *, SCR **, CHAR_T *, int));
 int vs_bg __P((SCR *));
 int vs_swap __P((SCR *, SCR **, char *));
 int vs_resize __P((SCR *, long, adj_t));

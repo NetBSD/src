@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.3 1998/01/09 08:06:28 perry Exp $	*/
+/*	$NetBSD: api.c,v 1.4 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,7 +14,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)api.c	8.18 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)api.c	8.26 (Berkeley) 10/14/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -23,7 +23,6 @@ static const char sccsid[] = "@(#)api.c	8.18 (Berkeley) 4/27/96";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -201,6 +200,34 @@ api_setmark(sp, markname, mp)
 }
 
 /*
+ * api_nextmark --
+ *	Return the first mark if next not set, otherwise return the
+ *	subsequent mark.
+ *
+ * PUBLIC: int api_nextmark __P((SCR *, int, char *));
+ */
+int
+api_nextmark(sp, next, namep)
+	SCR *sp;
+	int next;
+	char *namep;
+{
+	LMARK *mp;
+
+	mp = sp->ep->marks.lh_first;
+	if (next)
+		for (; mp != NULL; mp = mp->q.le_next)
+			if (mp->name == *namep) {
+				mp = mp->q.le_next;
+				break;
+			}
+	if (mp == NULL)
+		return (1);
+	*namep = mp->name;
+	return (0);
+}
+
+/*
  * api_getcursor --
  *	Get the cursor.
  *
@@ -271,16 +298,18 @@ api_imessage(sp, text)
 }
 
 /*
- * api_iscreen
- *	Create a new screen and return its id.
+ * api_edit
+ *	Create a new screen and return its id 
+ *	or edit a new file in the current screen.
  *
- * PUBLIC: int api_iscreen __P((SCR *, char *, int *));
+ * PUBLIC: int api_edit __P((SCR *, char *, SCR **, int));
  */
 int
-api_iscreen(sp, file, idp)
+api_edit(sp, file, spp, newscreen)
 	SCR *sp;
 	char *file;
-	int *idp;
+	SCR **spp;
+	int newscreen;
 {
 	ARGS *ap[2], a;
 	EXCMD cmd;
@@ -290,10 +319,11 @@ api_iscreen(sp, file, idp)
 		ex_cadd(&cmd, &a, file, strlen(file));
 	} else
 		ex_cinit(&cmd, C_EDIT, 0, OOBLNO, OOBLNO, 0, NULL);
-	cmd.flags |= E_NEWSCREEN;			/* XXX */
+	if (newscreen)
+		cmd.flags |= E_NEWSCREEN;		/* XXX */
 	if (cmd.cmd->fn(sp, &cmd))
 		return (1);
-	*idp = sp->nextdisp->id;
+	*spp = sp->nextdisp;
 	return (0);
 }
 
@@ -382,31 +412,40 @@ api_unmap(sp, name)
 /*
  * api_opts_get --
  *	Return a option value as a string, in allocated memory.
+ *	If the option is of type boolean, boolvalue is (un)set
+ *	according to the value; otherwise boolvalue is -1.
  *
- * PUBLIC: int api_opts_get __P((SCR *, char *, char **));
+ * PUBLIC: int api_opts_get __P((SCR *, char *, char **, int *));
  */
 int
-api_opts_get(sp, name, value)
+api_opts_get(sp, name, value, boolvalue)
 	SCR *sp;
 	char *name, **value;
+	int *boolvalue;
 {
-	int offset;
 	OPTLIST const *op;
+	int offset;
 
-	if ((op = opts_search(name)) == NULL)
+	if ((op = opts_search(name)) == NULL) {
+		opts_nomatch(sp, name);
 		return (1);
+	}
 
 	offset = op - optlist;
+	if (boolvalue != NULL)
+		*boolvalue = -1;
 	switch (op->type) {
 	case OPT_0BOOL:
 	case OPT_1BOOL:
 		MALLOC_RET(sp, *value, char *, strlen(op->name) + 2 + 1);
 		(void)sprintf(*value,
 		    "%s%s", O_ISSET(sp, offset) ? "" : "no", op->name);
+		if (boolvalue != NULL)
+			*boolvalue = O_ISSET(sp, offset);
 		break;
 	case OPT_NUM:
 		MALLOC_RET(sp, *value, char *, 20);
-		(void)sprintf(*value, "%ld", (u_long)O_VAL(sp, offset));
+		(void)sprintf(*value, "%lu", (u_long)O_VAL(sp, offset));
 		break;
 	case OPT_STR:
 		if (O_STR(sp, offset) == NULL) {
@@ -426,19 +465,51 @@ api_opts_get(sp, name, value)
  * api_opts_set --
  *	Set options.
  *
- * PUBLIC: int api_opts_set __P((SCR *, char *));
+ * PUBLIC: int api_opts_set __P((SCR *, char *, char *, u_long, int));
  */
-int 
-api_opts_set(sp, name)
+int
+api_opts_set(sp, name, str_value, num_value, bool_value)
 	SCR *sp;
-	char *name;
+	char *name, *str_value;
+	u_long num_value;
+	int bool_value;
 {
-	ARGS *ap[2], a;
-	EXCMD cmd;
+	ARGS *ap[2], a, b;
+	OPTLIST const *op;
+	int rval;
+	size_t blen;
+	char *bp;
 
-	ex_cinit(&cmd, C_SET, 0, OOBLNO, OOBLNO, 0, ap);
-	ex_cadd(&cmd, &a, name, strlen(name));
-	return (cmd.cmd->fn(sp, &cmd));
+	if ((op = opts_search(name)) == NULL) {
+		opts_nomatch(sp, name);
+		return (1);
+	}
+
+	switch (op->type) {
+	case OPT_0BOOL:
+	case OPT_1BOOL:
+		GET_SPACE_RET(sp, bp, blen, 64);
+		a.len = snprintf(bp, 64, "%s%s", bool_value ? "" : "no", name);
+		break;
+	case OPT_NUM:
+		GET_SPACE_RET(sp, bp, blen, 64);
+		a.len = snprintf(bp, 64, "%s=%lu", name, num_value);
+		break;
+	case OPT_STR:
+		GET_SPACE_RET(sp, bp, blen, 1024);
+		a.len = snprintf(bp, 1024, "%s=%s", name, str_value);
+		break;
+	}
+	a.bp = bp;
+	b.len = 0;
+	b.bp = NULL;
+	ap[0] = &a;
+	ap[1] = &b;
+	rval = opts_set(sp, ap, NULL);
+
+	FREE_SPACE(sp, bp, blen);
+
+	return (rval);
 }
 
 /*
