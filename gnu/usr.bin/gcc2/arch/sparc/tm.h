@@ -1,10 +1,10 @@
 /* Configuration for NetBSD Sparc */
-/* $Id: tm.h,v 1.4 1994/01/10 12:26:10 pk Exp $ */
+/* $Id: tm.h,v 1.5 1994/01/27 19:43:11 pk Exp $ */
 
 #include "sparc/sparc.h"
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p} %{g:-lg}"
+#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dsparc -D__NetBSD__ -Dunix -D__GCC_NEW_VARARGS__"
