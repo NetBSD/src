@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.5 1999/11/30 15:55:25 kleink Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.6 2000/01/23 00:10:56 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,16 +204,16 @@ int
 inet6_rthdr_segments(cmsg)
     const struct cmsghdr *cmsg;
 {
-    register struct ip6_rthdr *rthdr;
+    const register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (const struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
       {
-	struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+	const struct ip6_rthdr0 *rt0 = (const struct ip6_rthdr0 *)rthdr;
 
 	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
 #ifdef DEBUG
@@ -283,16 +283,16 @@ inet6_rthdr_getflags(cmsg, index)
     const struct cmsghdr *cmsg;
     int index;
 {
-    register struct ip6_rthdr *rthdr;
+    const register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
 
-    rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    rthdr = (const struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
       {
-	struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)rthdr;
+	const struct ip6_rthdr0 *rt0 = (const struct ip6_rthdr0 *)rthdr;
 	int naddr;
 
 	if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len) {
