@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.27 1998/08/31 01:50:08 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.28 1998/08/31 01:54:14 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -115,12 +115,6 @@ struct pool uvm_vmspace_pool;
  */
 
 struct pool uvm_map_entry_pool;
-
-/*
- * pool for vm_map structures
- */
-
-struct pool uvm_map_pool;
 
 /*
  * macros
@@ -334,9 +328,6 @@ uvm_map_init()
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
 	    0, 0, 0, "vmmpepl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
-	pool_init(&uvm_map_pool, sizeof(struct vm_map),
-	    0, 0, 0, "vmmppl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
 }
 
