@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.51 1997/09/30 22:55:38 christos Exp $
+#	$NetBSD: Makefile.pmax,v 1.52 1997/10/08 21:26:16 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -99,9 +99,10 @@ LINKFLAGS+=	-x
 .endif
 
 SYSTEM_LD_TAIL+=;\
-		mv $@ $@.elf; \
-		elf2aout $@.elf $@; \
-		chmod 755 $@
+		echo elf2aout $@ $@.aout; elf2aout $@ $@.aout; \
+		chmod 755 $@.aout; \
+		echo elf2ecoff $@ $@.ecoff; elf2ecoff $@ $@.ecoff; \
+		chmod 755 $@.ecoff
 
 %LOAD
 
