@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.4 2004/05/23 05:09:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -56,12 +56,13 @@
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: herror.c,v 1.2.206.1 2004/03/09 08:33:54 marka Exp";
 #else
-__RCSID("$NetBSD: herror.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+__RCSID("$NetBSD: herror.c,v 1.4 2004/05/23 05:09:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -88,6 +89,10 @@ int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
 #if !(__GLIBC__ > 2 || __GLIBC__ == 2 &&  __GLIBC_MINOR__ >= 3)
 #undef	h_errno
 int	h_errno;
+#endif
+
+#ifdef __weak_alias
+__weak_alias(herror,_herror)
 #endif
 
 /*
