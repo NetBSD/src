@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.16 1998/05/25 21:24:21 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.17 1998/05/26 15:33:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -502,6 +502,7 @@ pdq_queue_commands(
      * mask.
      */
 
+    ci->ci_queued_commands[ci->ci_request_producer] = op;
 #if defined(PDQVERBOSE)
     ((pdq_response_generic_t *) ci->ci_response_bufstart)->generic_op = PDQC_BOGUS_CMD;
 #endif
@@ -609,10 +610,11 @@ pdq_process_command_responses(
 
     PDQ_OS_CMDRSP_POSTSYNC(pdq, PDQ_SIZE_COMMAND_RESPONSE);
     rspgen = (const pdq_response_generic_t *) ci->ci_response_bufstart;
+    PDQ_ASSERT(rspgen->generic_op == ci->ci_queued_commands[ci->ci_request_completion]);
     PDQ_ASSERT(rspgen->generic_status == PDQR_SUCCESS);
-    PDQ_PRINTF(("PDQ Process Command Response: %s completed (status=%d)\n",
+    PDQ_PRINTF(("PDQ Process Command Response: %s completed (status=%d [0x%x])\n",
 		pdq_cmd_info[rspgen->generic_op].cmd_name,
-		rspgen->generic_status));
+		rspgen->generic_status, rspgen->generic_status));
 
     if (rspgen->generic_op == PDQC_STATUS_CHARS_GET && (pdq->pdq_flags & PDQ_PRINTCHARS)) {
 	pdq->pdq_flags &= ~PDQ_PRINTCHARS;
@@ -1557,12 +1559,6 @@ pdq_initialize(
     }
     dbp = pdq->pdq_dbp;
 
-    pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool;
-    pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool + sizeof(dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
-    pdq->pdq_rx_info.rx_buffers = (void *) dbp->pdqdb_receive_buffers;
-
-    pdq->pdq_host_smt_info.rx_buffers = (void *) dbp->pdqdb_host_smt_buffers;
-
     PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", dbp, pdq->pdq_pa_descriptor_block));
     PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_receives));
     PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_transmits));
@@ -1618,6 +1614,7 @@ pdq_initialize(
     /*
      * Initialize the command information block
      */
+    pdq->pdq_command_info.ci_request_bufstart = dbp->pdqdb_cmd_request_buf;
     pdq->pdq_command_info.ci_pa_request_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_request_bufstart);
     pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_requests);
     PDQ_PRINTF(("PDQ Command Request Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
@@ -1633,6 +1630,7 @@ pdq_initialize(
     PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_command_requests,
 			sizeof(dbp->pdqdb_command_requests));
 
+    pdq->pdq_command_info.ci_response_bufstart = dbp->pdqdb_cmd_response_buf;
     pdq->pdq_command_info.ci_pa_response_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_response_bufstart);
     pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_responses);
     PDQ_PRINTF(("PDQ Command Response Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
@@ -1676,10 +1674,12 @@ pdq_initialize(
     /*
      * Initialize the receive information blocks (normal and SMT).
      */
+    pdq->pdq_rx_info.rx_buffers = pdq->pdq_receive_buffers;
     pdq->pdq_rx_info.rx_free = PDQ_RING_MASK(dbp->pdqdb_receives);
     pdq->pdq_rx_info.rx_target = pdq->pdq_rx_info.rx_free - PDQ_RX_SEGCNT * 8;
     pdq->pdq_rx_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_receives);
 
+    pdq->pdq_host_smt_info.rx_buffers = pdq->pdq_host_smt_buffers;
     pdq->pdq_host_smt_info.rx_free = PDQ_RING_MASK(dbp->pdqdb_host_smt);
     pdq->pdq_host_smt_info.rx_target = pdq->pdq_host_smt_info.rx_free - PDQ_RX_SEGCNT * 3;
     pdq->pdq_host_smt_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_host_smt);

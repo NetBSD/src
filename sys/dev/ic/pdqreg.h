@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.10 1998/05/25 21:24:21 matt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.11 1998/05/26 15:33:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -361,22 +361,42 @@ typedef struct {
      * The rest of the descriptor block is unused.
      * As such we could use it for other things.
      */
-    pdq_consumer_block_t pdqdb_consumer;	/*   64;	0x1380..0x13BF */
-    void *pdqdb_receive_buffers[256];		/* 1024/2048;	0x13C0..0x17BF 0x13C0..0x1BBF */
-    void *pdqdb_host_smt_buffers[64];		/*  256/ 512;	0x17C0..0x18BF 0x1BC0..0x1DBF */
-    pdq_uint8_t pdqdb_tx_hdr[4];
+    pdq_uint32_t pdqdb__filler1[16];		/*   64;	0x1380..0x13BF */
+    pdq_consumer_block_t pdqdb_consumer;	/*   64;	0x13C0..0x13FF */
     /*
      * The maximum command size is 512 so as long as thes
      * command is at least that long all will be fine.
      */
-#if defined(__alpha) || defined(__alpha__)
-    pdq_uint32_t pdqdb_command_pool[143];
-#else
-    pdq_uint32_t pdqdb_command_pool[463];
-#endif
+    pdq_uint32_t pdqdb__filler2[64];		/*  256;	0x1400..0x14FF */
+    pdq_uint8_t pdqdb_cmd_request_buf[1024];	/* 1024;	0x1500..0x18FF */
+    pdq_uint8_t pdqdb_cmd_response_buf[1024];	/* 1024;	0x1900..0x1CFF */
+    pdq_uint32_t pdqdb__filler3[128];		/*  512;	0x1D00..0x1EFF */
+    pdq_uint8_t pdqdb_tx_hdr[4];		/*    4;	0x1F00..0x1F03 */
+    pdq_uint32_t pdqdb__filler4[63];		/*  252;	0x1F04..0x1FFF */
 } pdq_descriptor_block_t;
 
 #define	PDQ_SIZE_COMMAND_RESPONSE	512
+
+typedef enum {
+    PDQC_START=0,
+    PDQC_FILTER_SET=1,
+    PDQC_FILTER_GET=2,
+    PDQC_CHARS_SET=3,
+    PDQC_STATUS_CHARS_GET=4,
+    PDQC_COUNTERS_GET=5,
+    PDQC_COUNTERS_SET=6,
+    PDQC_ADDR_FILTER_SET=7,
+    PDQC_ADDR_FILTER_GET=8,
+    PDQC_ERROR_LOG_CLEAR=9,
+    PDQC_ERROR_LOG_GET=10,
+    PDQC_FDDI_MIB_GET=11,
+    PDQC_DEC_EXT_MIB_GET=12,
+    PDQC_DEV_SPECIFIC_GET=13,
+    PDQC_SNMP_SET=14,
+    PDQC_SMT_MIB_GET=16,
+    PDQC_SMT_MIB_SET=17,
+    PDQC_BOGUS_CMD=18
+} pdq_cmd_code_t;
 
 typedef struct {
     /*
@@ -404,6 +424,8 @@ typedef struct {
      */
     pdq_physaddr_t ci_pa_request_descriptors;
     pdq_physaddr_t ci_pa_response_descriptors;
+
+    pdq_cmd_code_t ci_queued_commands[16];
 } pdq_command_info_t;
 
 #define	PDQ_SIZE_UNSOLICITED_EVENT	512
@@ -491,6 +513,8 @@ struct _pdq_t {
     pdq_tx_info_t pdq_tx_info;
     pdq_rx_info_t pdq_rx_info;
     pdq_rx_info_t pdq_host_smt_info;
+    void *pdq_receive_buffers[256];
+    void *pdq_host_smt_buffers[64];
     pdq_physaddr_t pdq_pa_consumer_block;
     pdq_physaddr_t pdq_pa_descriptor_block;
 };
@@ -499,26 +523,6 @@ struct _pdq_t {
 	((pdq)->pdq_pa_descriptor_block + \
 		((u_int8_t *) (m) - (u_int8_t *) (pdq)->pdq_dbp))
 
-typedef enum {
-    PDQC_START=0,
-    PDQC_FILTER_SET=1,
-    PDQC_FILTER_GET=2,
-    PDQC_CHARS_SET=3,
-    PDQC_STATUS_CHARS_GET=4,
-    PDQC_COUNTERS_GET=5,
-    PDQC_COUNTERS_SET=6,
-    PDQC_ADDR_FILTER_SET=7,
-    PDQC_ADDR_FILTER_GET=8,
-    PDQC_ERROR_LOG_CLEAR=9,
-    PDQC_ERROR_LOG_GET=10,
-    PDQC_FDDI_MIB_GET=11,
-    PDQC_DEC_EXT_MIB_GET=12,
-    PDQC_DEV_SPECIFIC_GET=13,
-    PDQC_SNMP_SET=14,
-    PDQC_SMT_MIB_GET=16,
-    PDQC_SMT_MIB_SET=17,
-    PDQC_BOGUS_CMD=18
-} pdq_cmd_code_t;
 
 typedef enum {
     PDQR_SUCCESS=0,
