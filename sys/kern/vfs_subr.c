@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.54 1996/06/01 20:24:05 jtk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.55 1996/10/01 22:49:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,8 +86,10 @@ int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 	LIST_REMOVE(bp, b_vnbufs);					\
 	(bp)->b_vnbufs.le_next = NOLIST;				\
 }  
-TAILQ_HEAD(freelst, vnode) vnode_free_list;	/* vnode free list */
-struct mntlist mountlist;			/* mounted filesystem list */
+TAILQ_HEAD(freelst, vnode) vnode_free_list =	/* vnode free list */
+    TAILQ_HEAD_INITIALIZER(vnode_free_list);
+struct mntlist mountlist =			/* mounted filesystem list */
+    CIRCLEQ_HEAD_INITIALIZER(mountlist);
 
 int vfs_lock __P((struct mount *));
 void vfs_unlock __P((struct mount *));
@@ -140,8 +142,10 @@ void
 vntblinit()
 {
 
-	TAILQ_INIT(&vnode_free_list);
-	CIRCLEQ_INIT(&mountlist);
+	/*
+	 * Nothing to do here anymore; vnode_free_list and mountlist
+	 * are now initialized data.
+	 */
 }
 
 /*
