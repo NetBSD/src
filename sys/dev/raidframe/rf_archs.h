@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.21 2004/02/29 21:38:41 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.22 2004/02/29 23:27:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -141,7 +141,7 @@
 #endif
 
 #ifndef RF_ACC_TRACE
-#define RF_ACC_TRACE 0
+#define RF_ACC_TRACE 1
 #endif
 
 #include "rf_options.h"
