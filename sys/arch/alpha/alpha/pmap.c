@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.29 1998/03/28 19:53:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.30 1998/03/30 17:52:03 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 1998/03/28 19:53:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 1998/03/30 17:52:03 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1056,6 +1056,8 @@ pmap_destroy(pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
+	if (pmap == NULL)
+		return;
 
 	simple_lock(&pmap->pm_lock);
 	if (--pmap->pm_count > 0) {
@@ -1127,9 +1129,11 @@ pmap_reference(pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
-	simple_lock(&pmap->pm_lock);
-	pmap->pm_count++;
-	simple_unlock(&pmap->pm_lock);
+	if (pmap != NULL) {
+		simple_lock(&pmap->pm_lock);
+		pmap->pm_count++;
+		simple_unlock(&pmap->pm_lock);
+	}
 }
 
 /*
@@ -1154,6 +1158,9 @@ pmap_remove(pmap, sva, eva)
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
 #endif
+
+	if (pmap == NULL)
+		return;
 
 #ifdef PMAPSTATS
 	remove_stats.calls++;
@@ -1303,6 +1310,9 @@ pmap_protect(pmap, sva, eva, prot)
 		    pmap, sva, eva, prot);
 #endif
 
+	if (pmap == NULL)
+		return;
+
 #ifdef PMAPSTATS
 	protect_stats.calls++;
 #endif
@@ -1393,6 +1403,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		       pmap, va, pa, prot, wired);
 #endif
+	if (pmap == NULL)
+		return;
 
 	managed = PAGE_IS_MANAGED(pa);
 
@@ -1753,6 +1765,8 @@ pmap_change_wiring(pmap, va, wired)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
 #endif
+	if (pmap == NULL)
+		return;
 
 	pte = pmap_l3pte(pmap, va);
 #ifdef DEBUG
