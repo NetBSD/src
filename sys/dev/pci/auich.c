@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.76 2004/11/10 14:14:09 cube Exp $	*/
+/*	$NetBSD: auich.c,v 1.77 2004/11/10 17:17:14 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.76 2004/11/10 14:14:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.77 2004/11/10 17:17:14 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,6 +624,9 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS,
 					  status & ~(ICH_SRI|ICH_PRI|ICH_GSCI));
 			*val = 0xffff;
+			DPRINTF(ICH_DEBUG_CODECIO,
+			    ("%s: read_codec error\n", sc->sc_dev.dv_xname));
+			return -1;
 		}
 		return 0;
 	} else {
