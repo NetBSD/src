@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.4 2005/03/03 02:06:16 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.5 2005/03/30 01:30:21 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.4 2005/03/03 02:06:16 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.5 2005/03/30 01:30:21 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -106,7 +106,8 @@ static struct pam_conv pamc = { openpam_ttyconv, NULL };
  */
 u_int	timeout = 300;
 
-struct	passwd *pwd;
+struct	passwd *pwd, pwres;
+char	pwbuf[1024];
 struct	group *gr;
 int	failures, have_ss;
 char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
@@ -180,8 +181,10 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "a:Ffh:ps")) != -1)
 		switch (ch) {
 		case 'a':
-			if (uid)
-				errx(1, "-a option: %s", strerror(EPERM));
+			if (uid) {
+				errno = EPERM;
+				err(EXIT_FAILURE, "-a option");
+			}
 			decode_ss(optarg);
 #ifdef notdef
 			(void)sockaddr_snprintf(optarg,
@@ -195,8 +198,10 @@ main(int argc, char *argv[])
 			fflag = 1;
 			break;
 		case 'h':
-			if (uid)
-				errx(1, "-h option: %s", strerror(EPERM));
+			if (uid) {
+				errno = EPERM;
+				err(EXIT_FAILURE, "-h option");
+			}
 			hflag = 1;
 			if (domain && (p = strchr(optarg, '.')) != NULL &&
 			    strcasecmp(p, domain) == 0)
@@ -248,7 +253,7 @@ main(int argc, char *argv[])
 		nested = strdup(user_from_uid(getuid(), 0));
 		if (nested == NULL) {
                 	syslog(LOG_ERR, "strdup: %m");
-                	sleepexit(1);
+                	sleepexit(EXIT_FAILURE);
 		}
 	}
 
@@ -288,7 +293,7 @@ main(int argc, char *argv[])
 	syslog(LOG_ERR, "%s: %s", msg, pam_strerror(pamh, pam_err)); 	\
 	warnx("%s: %s", msg, pam_strerror(pamh, pam_err));		\
 	pam_end(pamh, pam_err);						\
-	sleepexit(1); 							\
+	sleepexit(EXIT_FAILURE);					\
 } while (/*CONSTCOND*/0)
 
 		pam_err = pam_start("login", username, &pamc, &pamh);
@@ -298,7 +303,7 @@ main(int argc, char *argv[])
 			/* Things went really bad... */
 			syslog(LOG_ERR, "pam_start failed: %s",
 			    pam_strerror(pamh, pam_err));
-			errx(1, "pam_start failed");
+			errx(EXIT_FAILURE, "pam_start failed");
 		}
 
 #define PAM_SET_ITEM(item, var)	do {					\
@@ -317,7 +322,12 @@ main(int argc, char *argv[])
 		if (have_ss)
 			PAM_SET_ITEM(PAM_SOCKADDR, &ss); 
 
-		pwd = getpwnam(username);
+		if (getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
+		    &pwd) != 0) {
+			pam_end(pamh, PAM_SUCCESS);
+			syslog(LOG_ERR, "Cannot find user `%s'", username);
+			errx(EXIT_FAILURE, "Cannot find user `%s'", username);
+		}
 
 		/*
 		 * Establish the class now, before we might goto
@@ -356,7 +366,14 @@ main(int argc, char *argv[])
 				PAM_END("pam_get_item(PAM_USER)");
 
 			username = (char *)newuser;
-			pwd = getpwnam(username);
+			if (getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
+			    &pwd) != 0) {
+				pam_end(pamh, PAM_SUCCESS);
+				syslog(LOG_ERR, "Cannot find user `%s'",
+				    username);
+				errx(EXIT_FAILURE, "Cannot find user `%s'",
+				    username);
+			}
 			lc = login_getpwclass(pwd);
 			auth_passed = 1;
 
@@ -407,7 +424,7 @@ skip_auth:
 			if (cnt >= login_retries) {
 				badlogin(username);
 				pam_end(pamh, PAM_SUCCESS);
-				sleepexit(1);
+				sleepexit(EXIT_FAILURE);
 			}
 			sleep((u_int)((cnt - 3) * 5));
 		}
@@ -438,13 +455,13 @@ skip_auth:
 			(void)printf("Home directory %s required\n",
 			    pwd->pw_dir);
 			pam_end(pamh, PAM_SUCCESS);
-                        exit(1);
+                        exit(EXIT_FAILURE);
 		}
 
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
 		if (chdir("/")) {
 			pam_end(pamh, PAM_SUCCESS);
-			exit(0);
+			exit(EXIT_SUCCESS);
 		}
 		pwd->pw_dir = "/";
 		(void)printf("Logging in with home = \"/\".\n");
@@ -473,7 +490,7 @@ skip_auth:
 	    LOGIN_SETLOGIN) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
 		pam_end(pamh, PAM_SUCCESS);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (tty[sizeof("tty")-1] == 'd')
@@ -495,7 +512,7 @@ skip_auth:
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
 		pam_end(pamh, PAM_SUCCESS);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	pam_err = pam_setcred(pamh, pam_silent|PAM_ESTABLISH_CRED);
@@ -527,7 +544,7 @@ skip_auth:
 		syslog(LOG_ERR, "fork failed: %m");
 		warn("fork failed");
 		pam_end(pamh, pam_err);		
-		exit(1);
+		exit(EXIT_FAILURE);
 		break;
 
 	case 0: /* Child */
@@ -552,7 +569,7 @@ skip_auth:
 				warnx("wrong PID: %d != %d", pid, xpid);
 			else
 				warn("wait for pid %d failed", pid);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		
 		(void)signal(SIGINT, oint);
@@ -564,7 +581,7 @@ skip_auth:
 			    pam_strerror(pamh, pam_err));
 		}
 		pam_end(pamh, PAM_SUCCESS);
-		exit(0);	
+		exit(EXIT_SUCCESS);	
 		break;
 	}
 
@@ -592,7 +609,7 @@ skip_auth:
 
 	if ((pwd->pw_shell = strdup(shell)) == NULL) {
 		syslog(LOG_ERR, "Cannot alloc mem");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	
 	(void)setenv("HOME", pwd->pw_dir, 1);
@@ -628,7 +645,7 @@ skip_auth:
 	if (setusercontext(lc, pwd, pwd->pw_uid,
 	    (LOGIN_SETALL & ~LOGIN_SETLOGIN)) != 0) {
 		syslog(LOG_ERR, "setusercontext failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (!quietlog) {
@@ -664,7 +681,7 @@ skip_auth:
 	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 1);
 
 	execlp(pwd->pw_shell, tbuf, 0);
-	err(1, "%s", pwd->pw_shell);
+	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
 
 #define	NBUFSIZ		(MAXLOGNAME + 1)
@@ -682,7 +699,7 @@ getloginname(void)
 		for (p = nbuf; (ch = getchar()) != '\n'; ) {
 			if (ch == EOF) {
 				badlogin(username);
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 			if (p < nbuf + (NBUFSIZ - 1))
 				*p++ = ch;
@@ -741,7 +758,7 @@ timedout(int signo)
 {
 
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 static void
@@ -807,13 +824,13 @@ decode_ss(const char *arg)
 	size_t len = strlen(arg);
 	
 	if (len > sizeof(*ssp) * 4 + 1 || len < sizeof(*ssp))
-		errx(1, "Bad argument");
+		errx(EXIT_FAILURE, "Bad argument");
 
 	if ((ssp = malloc(len)) == NULL)
-		err(1, NULL);
+		err(EXIT_FAILURE, NULL);
 
 	if (strunvis((char *)ssp, arg) != sizeof(*ssp))
-		errx(1, "Decoding error");
+		errx(EXIT_FAILURE, "Decoding error");
 
 	(void)memcpy(&ss, ssp, sizeof(ss));
 	have_ss = 1;
@@ -825,5 +842,5 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-Ffps] [-a address] [-h hostname] [username]\n",
 	    getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
