@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.142 2003/07/12 13:30:04 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.143 2003/07/26 20:34:13 salo Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.142 2003/07/12 13:30:04 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.143 2003/07/26 20:34:13 salo Exp $");
 #endif /* not lint */
 
 /*
@@ -1620,16 +1620,16 @@ go_fetch(const char *url)
 		url += sizeof(ABOUT_URL) -1;
 		if (strcasecmp(url, "ftp") == 0) {
 			fputs(
-"This version of ftp has been enhanced by Luke Mewburn <lukem@netbsd.org>\n"
+"This version of ftp has been enhanced by Luke Mewburn <lukem@NetBSD.org>\n"
 "for the NetBSD project.  Execute `man ftp' for more details.\n", ttyout);
 		} else if (strcasecmp(url, "lukem") == 0) {
 			fputs(
 "Luke Mewburn is the author of most of the enhancements in this ftp client.\n"
-"Please email feedback to <lukem@netbsd.org>.\n", ttyout);
+"Please email feedback to <lukem@NetBSD.org>.\n", ttyout);
 		} else if (strcasecmp(url, "netbsd") == 0) {
 			fputs(
 "NetBSD is a freely available and redistributable UNIX-like operating system.\n"
-"For more information, see http://www.netbsd.org/index.html\n", ttyout);
+"For more information, see http://www.NetBSD.org/index.html\n", ttyout);
 		} else if (strcasecmp(url, "version") == 0) {
 			fprintf(ttyout, "Version: %s %s%s\n",
 			    FTP_PRODUCT, FTP_VERSION,

@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -30,18 +30,18 @@
  *		Steven Wallace <swallace@freebsd.org>
  *		Wolfram Schneider <wosch@cs.tu-berlin.de>
  *		Arne Helme <arne@acm.org>
- *		Luke Mewburn <lukem@netbsd.org>
+ *		Luke Mewburn <lukem@NetBSD.org>
  *		matthew green <mrg@eterna.com.au>
- *		Simon Burge <simonb@netbsd.org>
+ *		Simon Burge <simonb@NetBSD.org>
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $
+ * $Id: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.18 2003/06/23 13:05:54 agc Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2003/05/14 14:31:00 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2003/07/26 20:34:13 salo Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.84 2003/05/14 14:31:00 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2003/07/26 20:34:13 salo Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,7 +467,7 @@ main(int argc, char *argv[])
 	 * string "username@", and will append the hostname itself. We
 	 * do this by default since many servers are picky about not
 	 * having a FQDN in the anonymous password.
-	 * - thorpej@netbsd.org
+	 * - thorpej@NetBSD.org
 	 */
 	len = strlen(anonuser) + 2;
 	anonpass = xmalloc(len);
