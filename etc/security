@@ -18,7 +18,7 @@ echo "checking setuid files and devices:"
 
 MP=`mount -t ufs | sed 's;/dev/;&r;' | awk '{ print $3 }'`
 set $MP
-ls -lgT `while test $# -ge 1; do
+ls -lgdT `while test $# -ge 1; do
 	mount=$1
 	shift
 	find $mount -xdev \( \( -type f \( -perm -u+s -or -perm -g+s \) \) -or -type b -or -type c \) | sort
