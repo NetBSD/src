@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.3 2000/01/24 02:54:03 matt Exp $ */
+/*      $NetBSD: if_ze.c,v 1.4 2000/05/08 18:51:17 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -51,6 +51,7 @@
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/sid.h>
 
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
@@ -117,7 +118,10 @@ zeattach(parent, self, aux)
 	 */
 	ea = (int *)vax_map_physmem(NISA_ROM, 1);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_enaddr[i] = (ea[i] >> 8) & 0377;
+		if (vax_boardtype == VAX_BTYP_660)
+			sc->sc_enaddr[i] = (ea[i] >> 24) & 0377;
+		else
+			sc->sc_enaddr[i] = (ea[i] >> 8) & 0377;
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
 	scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
