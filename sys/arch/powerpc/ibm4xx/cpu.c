@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2003/06/13 04:05:26 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2003/06/13 04:29:39 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -50,17 +50,17 @@ struct cputab {
 	char *name;
 };
 static struct cputab models[] = {
-	{ PVR_401A1 >> 16, "401A1" },
-	{ PVR_401B2 >> 16, "401B21" },
-	{ PVR_401C2 >> 16, "401C2" },
-	{ PVR_401D2 >> 16, "401D2" },
-	{ PVR_401E2 >> 16, "401E2" },
-	{ PVR_401F2 >> 16, "401F2" },
-	{ PVR_401G2 >> 16, "401G2" },
-	{ PVR_403 >> 16, "403" },
-	{ PVR_405GP >> 16, "405GP" },
-	{ PVR_405GPR >> 16, "405GPr" },
-	{ 0,		    NULL }
+	{ PVR_401A1  >> 16,	"401A1" },
+	{ PVR_401B2  >> 16,	"401B21" },
+	{ PVR_401C2  >> 16,	"401C2" },
+	{ PVR_401D2  >> 16,	"401D2" },
+	{ PVR_401E2  >> 16,	"401E2" },
+	{ PVR_401F2  >> 16,	"401F2" },
+	{ PVR_401G2  >> 16,	"401G2" },
+	{ PVR_403    >> 16,	"403" },
+	{ PVR_405GP  >> 16,	"405GP" },
+	{ PVR_405GPR >> 16,	"405GPr" },
+	{ 0,			NULL }
 };
 
 static int	cpumatch(struct device *, struct cfdata *, void *);
