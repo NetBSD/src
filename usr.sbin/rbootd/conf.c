@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.4 1995/08/21 17:05:11 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
  *	for Software Science (CSS).
@@ -39,7 +41,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.1 (Berkeley) 6/4/93
- *	      $Id: conf.c,v 1.3 1995/08/21 16:57:54 thorpej Exp $
  *
  * From: Utah Hdr: conf.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
@@ -47,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: conf.c,v 1.3 1995/08/21 16:57:54 thorpej Exp $";
+static char rcsid[] = "$NetBSD: conf.c,v 1.4 1995/08/21 17:05:11 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

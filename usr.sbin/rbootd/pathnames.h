@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1995/08/21 17:05:15 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
  *	for Software Science (CSS).
@@ -39,7 +41,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/4/93
- *	      $Id: pathnames.h,v 1.2 1994/01/11 16:41:38 brezak Exp $
  *
  * From: Utah Hdr: pathnames.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
