@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.84 1997/07/17 00:46:50 perry Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.85 1997/08/14 22:17:32 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -452,7 +452,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "iomega", "jaz 1GB", 		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
-	/* Letting the motor run kills floppy drives and disks quit fast. */
+	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
 
@@ -486,6 +486,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNCWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 };
 
 /*
