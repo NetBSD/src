@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)symlink.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: symlink.2,v 1.5 1994/04/19 00:11:24 jtc Exp $
+.\"	$Id: symlink.2,v 1.6 1994/04/22 00:13:51 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SYMLINK 2
@@ -67,12 +67,6 @@ The symbolic link succeeds unless:
 A component of the
 .Fa name2
 prefix is not a directory.
-.It Bq Er EINVAL
-Either
-.Fa name1
-or
-.Fa name2
-contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded 
 .Dv {NAME_MAX}
