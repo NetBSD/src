@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.43 2002/08/05 06:55:07 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.44 2002/08/28 09:38:10 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.43 2002/08/05 06:55:07 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.44 2002/08/28 09:38:10 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -653,6 +653,10 @@ awi_start(struct ifnet *ifp)
 				continue;
 			}
 		}
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf)
+			bpf_mtap(ic->ic_rawbpf, m0);
+#endif
 		if (dowep) {
 			if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
 				ifp->if_oerrors++;
