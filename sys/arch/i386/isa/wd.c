@@ -34,18 +34,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.20 1993/07/05 04:44:48 deraadt Exp $
+ *	$Id: wd.c,v 1.21 1993/07/06 00:42:43 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
 /* The following defines represent only a very small part of the mods, most */
 /* of them are not marked in any way.  -tih				 */
 
-#undef	WDOPENLOCK	/* Prevent reentrancy in wdopen() for testing */
 #define	TIHMODS		/* wdopen() workaround, some splx() calls */
-#define	TIHBAD144	/* new bad144 bad sector handling */
 #define	QUIETWORKS	/* define this when wdopen() can actually set DKFL_QUIET */
 #define INSTRUMENT	/* Add instrumentation stuff by Brad Parker */
+#define TIPCAT		/* theo says: whatever it is, it looks important! */
 
 /* TODO: peel out buffer at low ipl, speed improvement */
 /* TODO: find and fix the timing bugs apparent on some controllers */
@@ -75,11 +74,12 @@
 #include "syslog.h"
 #include "vm/vm.h"
 
-#ifndef WDCTIMEOUT
-#define WDCTIMEOUT	500000  /* arbitrary timeout for drive ready waits */
+#ifndef WDCNDELAY
+#define WDCNDELAY	100000	/* delay = 25us; so 2.5s for a controller state change */
 #endif
+#define WDCDELAY	25
 
-#define	RETRIES		5	/* number of retries before giving up */
+#define	WDIORETRIES	5	/* number of retries before giving up */
 
 #define wdnoreloc(dev)	(minor(dev) & 0x80)	/* ignore partition table */
 #define wddospart(dev)	(minor(dev) & 0x40)	/* use dos partitions */
@@ -131,18 +131,14 @@ struct	disk {
 	struct wdparams dk_params; /* ESDI/IDE drive/controller parameters */
 	struct disklabel dk_dd;	/* device configuration data */
 	struct cpu_disklabel dk_cpd;
-#ifdef TIHBAD144
 	long	dk_badsect[127];	/* 126 plus trailing -1 marker */
-#endif
 };
 
 struct board {
 	short dkc_port;
 };
 
-#ifdef TIHBAD144
 void bad144intern(struct disk *);
-#endif
 void wddisksort();
 
 struct	board	wdcontroller[NWDC];
@@ -151,10 +147,6 @@ struct	buf	wdtab[NWDC];		/* various per-controller info */
 struct	buf	wdutab[NWD];		/* head of queue per drive */
 struct	buf	rwdbuf[NWD];		/* buffers for raw IO */
 long	wdxfer[NWD];			/* count of transfers */
-
-#ifdef WDOPENLOCK
-int wdopenbusy = 0;
-#endif
 
 int wdprobe(), wdattach();
 
@@ -178,10 +170,6 @@ wdprobe(struct isa_device *dvp)
 	struct disk *du;
 	int wdc;
 
-#ifdef WDOPENLOCK
-	wdopenbusy = 0;
-#endif
-
 	if (dvp->id_unit >= NWDC)
 		return(0);
 
@@ -201,20 +189,12 @@ wdprobe(struct isa_device *dvp)
 	if(inb(wdc+wd_error) == 0x5a || inb(wdc+wd_cyl_lo) != 0xa5)
 		goto nodevice;
 
-	/* reset the device */
-	outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
-	DELAY(1000);
-	outb(wdc+wd_ctlr, WDCTL_IDS);
-	DELAY(1000);
+	wdreset(dvp->id_unit, wdc, 0);
 
 	/* execute a controller only command */
 	if (wdcommand(du, WDCC_DIAGNOSE) < 0)
 		goto nodevice;
 
-	(void) inb(wdc+wd_error);	/* XXX! */
-	outb(wdc+wd_ctlr, WDCTL_4BIT);
-	DELAY(1000);
-    
 	bzero(&wdtab[du->dk_ctrlr], sizeof(struct buf));
 
 	free(du, M_TEMP);
@@ -475,7 +455,6 @@ loop:
 	head = (blknum % secpercyl) / secpertrk;
 	sector = blknum % secpertrk;
     
-#ifdef TIHBAD144
 	/* Check for bad sectors if we have them, and not formatting */
 	/* Only do this in single-sector mode, or when starting a */
 	/* multiple-sector transfer. */
@@ -508,7 +487,6 @@ loop:
 			}
 		}
 	}
-#endif
 	if( du->dk_flags & DKFL_SINGLE) {
 		du->dk_bct = du->dk_bc;
 		du->dk_skipm = du->dk_skip;
@@ -544,19 +522,11 @@ retry:
 		}
 
 		/* controller idle? */
-		timeout = 0;
-		while (inb(wdc+wd_status) & WDCS_BUSY) {
-			DELAY(1);
-			if (++timeout < WDCTIMEOUT)
+		for (timeout=0; inb(wdc+wd_status) & WDCS_BUSY; ) {
+			DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY)
 				continue;
-			printf("wdc%d: busy too long, resetting\n", ctrlr);
-			/* reset the device */
-			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
-			DELAY(1000);
-			outb(wdc+wd_ctlr, WDCTL_IDS);
-			DELAY(1000);
-			(void) inb(wdc+wd_error);       /* XXX! */
-			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			wdreset(ctrlr, wdc, 1);
 			break;
 		}
 	
@@ -587,19 +557,11 @@ retry:
 		outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit<<4) | (head & 0xf));
 	
 		/* wait for drive to become ready */
-		timeout = 0;
-		while ((inb(wdc+wd_status) & WDCS_READY) == 0) {
-			DELAY(1);
-			if (++timeout < WDCTIMEOUT)
+		for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+			DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY)
 				continue;
-			printf("wdc%d: busy too long, resetting\n", ctrlr);
-			/* reset the device */
-			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
-			DELAY(1000);
-			outb(wdc+wd_ctlr, WDCTL_IDS);
-			DELAY(1000);
-			(void) inb(wdc+wd_error);       /* XXX! */
-			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			wdreset(ctrlr, wdc, 1);
 			goto retry;
 		}
 	
@@ -624,19 +586,11 @@ retry:
 		return;
     
 	/* ready to send data?	*/
-	timeout = 0;
-	while ((inb(wdc+wd_altsts) & WDCS_DRQ) == 0) {
-		DELAY(1);
-		if (++timeout < WDCTIMEOUT)
+	for (timeout=0; (inb(wdc+wd_altsts) & WDCS_DRQ) == 0; ) {
+		DELAY(WDCDELAY);
+		if (++timeout < WDCNDELAY)
 			continue;
-		printf("wdc%d: busy too long, resetting\n", ctrlr);
-		/* reset the device */
-		outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
-		DELAY(1000);
-		outb(wdc+wd_ctlr, WDCTL_IDS);
-		DELAY(1000);
-		(void) inb(wdc+wd_error);       /* XXX! */
-		outb(wdc+wd_ctlr, WDCTL_4BIT);
+		wdreset(ctrlr, wdc, 1);
 		goto retry;
 	}
     
@@ -706,7 +660,7 @@ wdintr(struct intrframe wdif)
 	
 		/* error or error correction? */
 		if (status & WDCS_ERR) {
-			if (++wdtab[ctrlr].b_errcnt < RETRIES) {
+			if (++wdtab[ctrlr].b_errcnt < WDIORETRIES) {
 				wdtab[ctrlr].b_active = 0;
 			} else {
 				if((du->dk_flags & DKFL_QUIET) == 0) {
@@ -833,17 +787,6 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (du == 0)
 		return (ENXIO);
     
-#ifdef WDOPENLOCK
-	printf("[Enter wd%d%c]\n", lunit, part+'a');
-	if (wdopenbusy) {
-		printf("[Sleep wd%d%c]\n", lunit, part+'a');
-		while (wdopenbusy)
-			;
-	}
-	printf("[Lock  wd%d%c]\n", lunit, part+'a');
-	wdopenbusy = 1;
-#endif
-
 #ifdef QUIETWORKS
 	if (part == WDRAW)
 		du->dk_flags |= DKFL_QUIET;
@@ -855,9 +798,6 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	
 	if ((du->dk_flags & DKFL_BSDLABEL) == 0) {
 		du->dk_flags |= DKFL_WRITEPROT;
-#ifdef WDOPENLOCK
-		printf("[Init  wd%d%c]\n", lunit, part+'a');
-#endif
 		wdutab[lunit].b_actf = NULL;
 
 		/*
@@ -924,18 +864,12 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 done:
 		if (error) {
-#ifdef WDOPENLOCK
-			printf("[Error wd%d%c]\n", lunit, part+'a');
-			wdopenbusy = 0;
-#endif
 			return(error);
 		}
 	}
 
-#ifdef TIHBAD144
 	if (du->dk_flags & DKFL_BADSECT)
 		bad144intern(du);
-#endif
 
 	/*
 	 * Warn if a partion is opened
@@ -965,10 +899,6 @@ done:
 	}
 
 	if (part >= du->dk_dd.d_npartitions && part != WDRAW) {
-#ifdef WDOPENLOCK
-		printf("[ENXIO wd%d%c]\n", lunit, part+'a');
-		wdopenbusy = 0;
-#endif
 		return (ENXIO);
 	}
     
@@ -982,10 +912,6 @@ done:
 		du->dk_bopenpart |= mask;
 		break;
 	}
-#ifdef WDOPENLOCK
-	printf("[Done  wd%d%c]\n", lunit, part+'a');
-	wdopenbusy = 0;
-#endif
 	return (0);
 }
 
@@ -1001,7 +927,7 @@ wdcontrol(register struct buf *bp)
 	register struct disk *du;
 	register unit, lunit;
 	unsigned char  stat;
-	int s, ctrlr;
+	int s, ctrlr, timeout;
 	int wdc;
     
 	du = wddrives[wdunit(bp->b_dev)];
@@ -1019,15 +945,26 @@ tryagainrecal:
 		s = splbio();		/* not called from intr level ... */
 		wdgetctlr(unit, du);
 #ifdef TIPCAT
-		while ((inb(wdc+wd_status) & WDCS_READY) == 0)
-			;
+
+		for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+			DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY)
+				continue;
+			wdreset(ctrlr, wdc, 1);
+			goto tryagainrecal;
+		}
 #endif
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 		wdtab[ctrlr].b_active = 1;
 		outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
 #ifdef TIPCAT
-		while ((inb(wdc+wd_status) & WDCS_READY) == 0)
-			;
+		for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+			DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY)
+				continue;
+			wdreset(ctrlr, wdc, 1);
+			goto tryagainrecal;
+		}
 #endif
 		du->dk_state = RECAL;
 		splx(s);
@@ -1040,7 +977,7 @@ tryagainrecal:
 				       stat, WDCS_BITS, inb(wdc+wd_error),
 				       WDERR_BITS);
 			}
-			if (++wdtab[ctrlr].b_errcnt < RETRIES)
+			if (++wdtab[ctrlr].b_errcnt < WDIORETRIES)
 				goto tryagainrecal;
 			bp->b_error = ENXIO;	/* XXX needs translation */
 			goto badopen;
@@ -1078,36 +1015,32 @@ badopen:
 static int
 wdcommand(struct disk *du, int cmd)
 {
-	int timeout=0, stat, wdc;
+	int timeout, stat, wdc;
     
-	DELAY(2000);
-	/* controller ready for command? */
+	/*DELAY(2000);*/
 	wdc = du->dk_port;
 
-	while ( (stat = inb(wdc + wd_status)) & WDCS_BUSY ) {
-		DELAY(1);
-		if(++timeout > WDCTIMEOUT*10) {
-			printf("timeout 1\n");
+	/* controller ready for command? */
+	for (timeout=0; (stat=inb(wdc+wd_status)) & WDCS_BUSY; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY)
 			return -1;
-		}
 	}
     
 	/* send command, await results */
 	outb(wdc+wd_command, cmd);
-	while ( (stat = inb(wdc+wd_status)) & WDCS_BUSY ) {
-		DELAY(1);
-		if(++timeout > WDCTIMEOUT*10) {
-			printf("timeout 2\n");
+	for (timeout=0; (stat=inb(wdc+wd_status)) & WDCS_BUSY; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY)
 			return -1;
-		}
 	}
 	if (cmd != WDCC_READP)
 		return (stat);
     
 	/* is controller ready to return data? */
-	while (( (stat = inb(wdc+wd_status)) & (WDCS_ERR|WDCS_DRQ)) == 0) {
-		DELAY(1);
-		if(++timeout > WDCTIMEOUT*10)
+	for (timeout=0; ((stat=inb(wdc+wd_status)) & (WDCS_ERR|WDCS_DRQ)) == 0; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY)
 			return -1;
 	}
 	return (stat);
@@ -1126,9 +1059,11 @@ wdsetctlr(dev_t dev, struct disk *du)
 		du->dk_dd.d_ncylinders, du->dk_dd.d_ntracks, du->dk_dd.d_nsectors);
 */
     
-	DELAY(2000);
-	x = splbio();
 	wdc = du->dk_port;
+
+	/*DELAY(2000);*/
+
+	x = splbio();
 	outb(wdc+wd_cyl_lo, du->dk_dd.d_ncylinders);		/* TIH: was ...ders+1 */
 	outb(wdc+wd_cyl_hi, (du->dk_dd.d_ncylinders)>>8);	/* TIH: was ...ders+1 */
 	outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit << 4) + du->dk_dd.d_ntracks-1);
@@ -1155,26 +1090,28 @@ wdgetctlr(int u, struct disk *du)
 	int stat, x, i, wdc;
 	char tb[DEV_BSIZE];
 	struct wdparams *wp;
-	long timeout = 5000000;
+	int timeout;
     
 	x = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
 #ifdef TIPCAT
-	while ((inb(wdc+wd_status) & WDCS_READY) == 0 && timeout > 0)
-		timeout--;
-	if (timeout <= 0) {
-		splx(x);
-		return (-1);
+	for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY) {
+			splx(x);
+			return -1;
+		}
 	}
 #endif
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
 	stat = wdcommand(du, WDCC_READP);
 #ifdef TIPCAT
-	while ((inb(wdc+wd_status) & WDCS_READY) == 0 && timeout > 0)
-		timeout--;
-	if (timeout <= 0) {
-		splx(x);
-		return (-1);
+	for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY) {
+			splx(x);
+			return -1;
+		}
 	}
 #endif
     
@@ -1288,9 +1225,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 			error = EBADF;
 		else {
 			du->dk_cpd.bad = *(struct dkbad *)addr;
-#ifdef TIHBAD144
 			bad144intern(du);
-#endif
 		}
 		break;
 
@@ -1503,7 +1438,6 @@ wddump(dev_t dev)
 		head = (blknum % secpercyl) / secpertrk;
 		sector = blknum % secpertrk;
 	
-#ifdef TIHBAD144
 		if (du->dk_flags & DKFL_BADSECT) {
 			long newblk;
 			int i;
@@ -1522,7 +1456,6 @@ wddump(dev_t dev)
 				}
 			}
 		}
-#endif
 		sector++;		/* origin 1 */
 	    
 		/* select drive.     */
@@ -1585,7 +1518,6 @@ wddump(dev_t dev)
 }
 #endif
 
-#ifdef TIHBAD144
 /*
  * Internalize the bad sector table.
  */
@@ -1612,10 +1544,6 @@ bad144intern(struct disk *du)
 		}
 	}
 }
-#endif
-
-wdprint() {}
-
 
 /* this routine was adopted from the kernel sources */
 /* more efficient because b_cylin is not really as useful at this level */
@@ -1704,3 +1632,24 @@ insert:
 		dp->b_actl = bp;
 }
 
+wdreset(ctrlr, wdc, err)
+int ctrlr;
+{
+	int stat, timeout;
+
+	if(err)
+		printf("wdc%d: busy too long, resetting\n", ctrlr);
+
+	/* reset the device  */
+	outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+	DELAY(1000);
+	outb(wdc+wd_ctlr, WDCTL_4BIT);
+
+	for (timeout=0; (stat=inb(wdc+wd_status)) & WDCS_BUSY; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY) {
+			printf("wdc%d: failed to reset controller\n", ctrlr);
+			break;
+		}
+	}
+}
