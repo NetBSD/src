@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.14 1996/10/07 18:24:48 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.15 1996/10/07 18:29:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -359,9 +359,8 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 
 	/*
 	 * Check mount point.  Though we're not trying to exec this binary,
-	 * we will be executing code from it, so if the mount point (or
-	 * tracing) disallows execution or set-id-ness, we punt or kill
-	 * the set-id.
+	 * we will be executing code from it, so if the mount point
+	 * disallows execution or set-id-ness, we punt or kill the set-id.
 	 */
 	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
 		error = EACCES;
