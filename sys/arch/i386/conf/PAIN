@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.49 1995/01/25 04:58:19 cgd Exp $
+#	$NetBSD: PAIN,v 1.50 1995/03/05 22:32:57 mycroft Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -39,12 +39,13 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 #options	COMPAT_SVR4	# binary compatibility with SVR4
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options		COMPAT_LINUX	# binary compatibility with Linux
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
 options		FFS,QUOTA	# UFS and quotas
-options		LFS		# log-structured file system
+#options	LFS		# log-structured file system
 options		MFS		# memory file system
 
 options		NFSCLIENT	# Network File System client
@@ -146,7 +147,7 @@ ed0	at isa? port 0x300 iomem 0xc8000 iosiz 16384 irq 5	# WD/SMC, 3C503, and NE[1
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 #ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
-le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5	# IsoLan, NE2100, and DEPCA
+#le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5	# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 #spkr0	at isa? ...
