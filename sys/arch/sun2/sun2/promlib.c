@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.5 2001/08/16 01:47:45 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.6 2001/08/26 18:39:15 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -458,6 +458,7 @@ prom_init()
 		prom_printf("boot options: %s\n", p);
 #endif
 		for(; *(++p); ) {
+			fl = 0;
 			BOOT_FLAG(*p, fl);
 			if (fl)
 				boothowto |= fl;
