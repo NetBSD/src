@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2003/01/19 19:49:47 scw Exp $
+#	$NetBSD: Makefile,v 1.12 2003/03/13 13:44:17 scw Exp $
 
 INCSDIR= /usr/include/sh5
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h byte_swap.h \
+	bootparams.h bswap.h byte_swap.h \
 	cdefs.h conreg.h cpu.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \

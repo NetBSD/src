@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2002/12/06 10:07:10 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,7 +76,66 @@
 static void compute_ctc_tick_per_us(void);
 #endif
 
-struct boot_params evbsh5_bootparams;
+/*
+ * A reasonable default set of boot parameters, in case we were booted
+ * via jtag, or the simulator.
+ */
+struct boot_params bootparams = {
+	/* bp_magic */
+	BP_MAGIC,
+
+	/* bp_version */
+	BP_VERSION,
+
+	/* bp_flags */
+	RB_SINGLE | RB_KDB,
+
+	/* bp_kseg0_phys */
+	0xffffffff80000000ll,
+
+	/* bp_machine */
+	"Unknown machine (using \"Cayman\" defaults)",
+
+	/* bp_cpu[1] */
+	{
+		{
+			SH5_CPUID_STB1,		/* cpuid */
+			0,			/* version */
+			0x0d,			/* pport */
+#ifdef SH5_CPU_SPEED
+			SH5_CPU_SPEED*1000*1000,/* speed */
+#else
+			256000000,
+#endif
+		}
+	},
+
+	/* bp_mem[4] */
+	{
+		{
+			BP_MEM_TYPE_SDRAM,	/* type */
+			0xff,			/* pport */
+			0xfffffff80000000ll,	/* physstart */
+			0x00800000ll		/* physsize */
+		},
+		{ BP_MEM_TYPE_UNUSED },
+		{ BP_MEM_TYPE_UNUSED },
+		{ BP_MEM_TYPE_UNUSED }
+	},
+
+	/* bp_bootdev */
+	{
+		"/mainbus0/superhyway0,0x8/femi0,0x4000000/sysfpga0,0x1000/sm0",
+		"netbsd",
+		0
+	},
+
+	/* bp_consdev */
+	{
+		"/mainbus0/superhyway0,0x9/pbridge0,0x1030000/scif0",
+		38400
+	}
+};
 
 struct vm_map *exec_map;
 struct vm_map *mb_map;
@@ -85,8 +144,6 @@ struct vm_map *phys_map;
 char machine[] = MACHINE;
 
 char cpu_model[128];
-
-#define	EVBSH5_RAM_START_PHYS	0x80000000
 
 /*
  * Physical addresses of important devices on the Cayman board
@@ -105,63 +162,82 @@ char cpu_model[128];
 bus_space_handle_t _evbsh5_bh_pbridge;
 bus_space_handle_t _evbsh5_bh_sysfpga;
 
-static struct mem_region mr[2];
+static struct mem_region mr[BP_N_MEMBLOCKS + 1];
+
+void	*symbol_table;
+long	symbol_table_size;
+
 
 void
-evbsh5_init(vaddr_t endkernel)
+evbsh5_init(void *symtab, vaddr_t endkernel)
 {
-	extern char sh5_panic_stack[];
 #if NDTFCONS > 0
 	extern char *_dtf_buffer;
 	extern void _dtf_trap_frob(void);
 	vaddr_t dtfbuf;
 	paddr_t frob_p;
 #endif
+	struct boot_params *bp;
 	u_long ksize;
 	vsize_t size;
 	caddr_t v;
+	paddr_t kseg0_phys;
+	int i, j;
+
+	bp = (struct boot_params *)endkernel;
+	if (bp->bp_magic == BP_MAGIC && bp->bp_version == BP_VERSION)
+		bootparams = *bp;
+	else
+		symtab = (void *)endkernel;	/* Assume no symbol table */
+
+	bp = &bootparams;
+	kseg0_phys = (paddr_t)bp->bp_kseg0_phys;
+	symbol_table = symtab;
+	symbol_table_size = (long)endkernel - (long)symtab;
+
+	cpu_identify();
 
 	endkernel = sh5_round_page(endkernel);
+	ksize = sh5_round_page(endkernel - SH5_KSEG0_BASE);
 
-	ksize = endkernel - SH5_KSEG0_BASE;
+	for (i = j = 0; i < BP_N_MEMBLOCKS; i++) {
+		paddr_t pa;
+		psize_t ps;
 
-	mr[0].mr_start = EVBSH5_RAM_START_PHYS + ksize;
-	mr[0].mr_kvastart = SH5_KSEG0_BASE + ksize;
-	mr[0].mr_size = sh5_trunc_page(evbsh5_bootparams.bp_physramsize)- ksize;
-	mr[1].mr_start = 0;
-	mr[1].mr_size = 0;
+		if (bp->bp_mem[i].type != BP_MEM_TYPE_SDRAM)
+			continue;
 
-	pmap_bootstrap(endkernel, EVBSH5_RAM_START_PHYS, mr);
+		pa = (paddr_t) bp->bp_mem[i].physstart;
+		ps = (psize_t) bp->bp_mem[i].physsize;
 
-	__asm __volatile("putcon %0, sr" :: "r"(SH5_CONREG_SR_IMASK_ALL));
+		if (pa == kseg0_phys) {
+			pa += ksize;
+			ps -= ksize;
+		}
 
-	/* XXX: Will need to be revisited for SMP */
-	curcpu()->ci_panicstkphys = EVBSH5_RAM_START_PHYS +
-	    (((uintptr_t)&sh5_panic_stack[0]) - SH5_KSEG0_BASE) +
-	    (USPACE - sizeof(struct trapframe));
+		mr[j].mr_start = pa;
+		mr[j].mr_size = ps;
 
-	/*
-	 * Fix up the cpu-specific TLB/cache manipulation functions
-	 */
-	__cpu_tlbinv_cookie = _sh5_stb1_tlbinv_cookie;
-	__cpu_tlbinv_all = _sh5_stb1_tlbinv_all;
-	__cpu_tlbload = _sh5_stb1_tlbload;
-	__cpu_cache_dpurge = _sh5_stb1_cache_dpurge;
-	__cpu_cache_dpurge_iinv = _sh5_stb1_cache_dpurge_iinv;
-	__cpu_cache_dinv = _sh5_stb1_cache_dinv;
-	__cpu_cache_dinv_iinv = _sh5_stb1_cache_dinv_iinv;
-	__cpu_cache_iinv = _sh5_stb1_cache_iinv;
-	__cpu_cache_iinv_all = _sh5_stb1_cache_iinv_all;
-	__cpu_cache_purge_all = _sh5_stb1_cache_purge_all;
+		if (pa >= kseg0_phys &&
+		    (pa + ps) < (kseg0_phys + SH5_KSEG0_SIZE))
+			mr[j].mr_kvastart = SH5_KSEG0_BASE + (pa - kseg0_phys);
+		else
+			mr[j].mr_kvastart = SH5_KSEG1_SIZE;
+		j++;
+	}
+
+	mr[j].mr_start = 0;
+	mr[j].mr_size = 0;
+
+	pmap_bootstrap(endkernel, kseg0_phys, mr);
 
 #if NDTFCONS > 0
 	dtfbuf = (vaddr_t) &_dtf_buffer;
 	frob_p = (paddr_t) (uintptr_t) _dtf_trap_frob;
-	frob_p = EVBSH5_RAM_START_PHYS + (frob_p - SH5_KSEG0_BASE);
+	frob_p = kseg0_phys + (frob_p - SH5_KSEG0_BASE);
 
 	dtf_init(0xc100018, frob_p,
-	    (paddr_t)(EVBSH5_RAM_START_PHYS + (dtfbuf - SH5_KSEG0_BASE)),
-	    dtfbuf);
+	    (paddr_t)(kseg0_phys + (dtfbuf - SH5_KSEG0_BASE)), dtfbuf);
 #endif
 
 	/*
@@ -182,7 +258,7 @@ evbsh5_init(vaddr_t endkernel)
 	_sh5_ctc_ticks_per_us = SH5_CPU_SPEED;
 #endif
 
-	boothowto = RB_SINGLE | RB_KDB;
+	boothowto = bp->bp_flags;
 
 	/*
 	 * Call allocsys() now so we can steal pages from KSEG0.
@@ -316,10 +392,10 @@ cpu_startup(void)
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	strcpy(cpu_model, "SuperH SH5");
+	strcpy(cpu_model, bootparams.bp_machine);
+	printf("%s%s, %d-bit mode\n", version, cpu_model,
+	    (sizeof(void *) == 8) ? 64 : 32);
 
-	printf("%s%s running in %d-bit mode at %dMHz\n", version, cpu_model,
-	    (sizeof(void *) == 8) ? 64 : 32, (u_int)_sh5_ctc_ticks_per_us);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
@@ -357,11 +433,6 @@ cpu_reboot(int how, char *bootstr)
 
 	for (;;)
 		;
-}
-
-void
-device_register(struct device *dev, void *arg)
-{
 }
 
 void

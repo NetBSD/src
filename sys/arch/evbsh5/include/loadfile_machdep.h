@@ -1,7 +1,7 @@
-/*	$NetBSD: cacheops.h,v 1.6 2003/03/13 13:44:17 scw Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1 2003/03/13 13:44:21 scw Exp $	*/
 
 /*
- * Copyright 2002 Wasabi Systems, Inc.
+ * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Steve C. Woodford for Wasabi Systems, Inc.
@@ -35,58 +35,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SH5_CACHEOPS_H
-#define __SH5_CACHEOPS_H
+#ifndef __EVBSH5_LOADFILE_MACHDEP_H
+#define __EVBSH5_LOADFILE_MACHDEP_H
 
-/*
- * The SH5 architecture manual specifies that the cacheops always operate
- * on a cacheline size of 32. I'm not sure if this will always be the
- * case, but for now let's believe the docs.
- */
-#define	SH5_CACHELINE_SIZE	32
+#define BOOT_ELF32
 
-struct sh5_cache_info {
-	u_int		size;
-	u_char		type;
-	u_char		write;
-	u_short		line_size;
-	u_short		nways;
-	u_short		nsets;
-};
+#define LOAD_KERNEL	LOAD_ALL
+#define COUNT_KERNEL	COUNT_ALL
 
-#define	SH5_CACHE_INFO_TYPE_NONE	0
-#define	SH5_CACHE_INFO_TYPE_VIVT	1
-#define	SH5_CACHE_INFO_TYPE_VIPT	2
-#define	SH5_CACHE_INFO_TYPE_PI		3
+#define LOADADDR(a)		(((u_long)(a)) + offset)
+#define ALIGNENTRY(a)		((u_long)(a))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
 
-#define	SH5_CACHE_INFO_WRITE_NONE	0
-#define	SH5_CACHE_INFO_WRITE_THRU	1
-#define	SH5_CACHE_INFO_WRITE_BACK	2
-
-struct sh5_cache_ops {
-	void (*dpurge)(vaddr_t, paddr_t, vsize_t);
-	void (*dpurge_iinv)(vaddr_t, paddr_t, vsize_t);
-	void (*dinv)(vaddr_t, paddr_t, vsize_t);
-	void (*dinv_iinv)(vaddr_t, paddr_t, vsize_t);
-	void (*iinv)(vaddr_t, paddr_t, vsize_t);
-	void (*iinv_all)(void);
-	void (*purge_all)(void);
-	struct sh5_cache_info dinfo;
-	struct sh5_cache_info iinfo;
-};
-
-#define	cpu_cache_dpurge	sh5_cache_ops.dpurge
-#define	cpu_cache_dpurge_iinv	sh5_cache_ops.dpurge_iinv
-#define	cpu_cache_dinv		sh5_cache_ops.dinv
-#define	cpu_cache_dinv_iinv	sh5_cache_ops.dinv_iinv
-#define	cpu_cache_iinv		sh5_cache_ops.iinv
-#define	cpu_cache_iinv_all	sh5_cache_ops.iinv_all
-#define	cpu_cache_purge_all	sh5_cache_ops.purge_all
-#define	cpu_cache_dinfo		sh5_cache_ops.dinfo
-#define	cpu_cache_iinfo		sh5_cache_ops.iinfo
-
-#ifdef _KERNEL
-extern struct sh5_cache_ops sh5_cache_ops;
+#ifdef _STANDALONE
+#define WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
+#else
+#define WARN(a)			warn a
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		malloc(a)
+#define FREE(a, b)		free(a)
 #endif
 
-#endif /* __SH5_CACHEOPS_H */
+#endif /* __EVBSH5_LOADFILE_MACHDEP_H */

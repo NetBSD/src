@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: cpu_ident.c,v 1.1 2003/03/13 13:44:18 scw Exp $	*/
 
 /*
- * Copyright 2002 Wasabi Systems, Inc.
+ * Copyright 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Steve C. Woodford for Wasabi Systems, Inc.
@@ -37,44 +37,85 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/types.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <machine/cacheops.h>
 #include <machine/cpu.h>
+#include <machine/pmap.h>
+#include <machine/bootparams.h>
 
-struct device *booted_device;
-int bootpart;
+#include <sh5/sh5/stb1var.h>
+
+struct sh5_cache_ops sh5_cache_ops;
+struct sh5_tlb_ops sh5_tlb_ops;
+
+/*
+ * The STB1 was the first "Evaluation" implementation of the SH5
+ * architecture. We use its cache/tlb description in the case where
+ * we don't recognise the CPU ID.
+ *
+ * This is enough to limp along to the point where we can bitch to
+ * the user that their cpu is not supported.
+ */
+static struct sh5_cache_ops stb1_cache_ops = {
+	_sh5_stb1_cache_dpurge,
+	_sh5_stb1_cache_dpurge_iinv,
+	_sh5_stb1_cache_dinv,
+	_sh5_stb1_cache_dinv_iinv,
+	_sh5_stb1_cache_iinv,
+	_sh5_stb1_cache_iinv_all,
+	_sh5_stb1_cache_purge_all,
+	{
+		/* Data cache */
+		STB1_CACHE_SIZE,
+		SH5_CACHE_INFO_TYPE_VIPT,
+		SH5_CACHE_INFO_WRITE_BACK,
+		STB1_CACHE_LINE_SIZE,
+		STB1_CACHE_NWAYS,
+		STB1_CACHE_NSETS
+	},
+	{
+		/* Instruction cache */
+		STB1_CACHE_SIZE,
+		SH5_CACHE_INFO_TYPE_VIVT,
+		SH5_CACHE_INFO_WRITE_NONE,
+		STB1_CACHE_LINE_SIZE,
+		STB1_CACHE_NWAYS,
+		STB1_CACHE_NSETS
+	}
+};
+
+static struct sh5_tlb_ops stb1_tlb_ops = {
+	_sh5_stb1_tlbinv_cookie,
+	_sh5_stb1_tlbinv_all,
+	_sh5_stb1_tlbload,
+	STB1_TLB_NSLOTS,
+	STB1_TLB_NSLOTS
+};
+
 
 void
-cpu_configure(void)
+cpu_identify(void)
 {
+	struct boot_params *bp = &bootparams;
 
-	booted_device = NULL;
+	switch (bp->bp_cpu[0].cpuid) {
+#ifdef CPU_STB1
+	case SH5_CPUID_STB1:
+		sh5_cache_ops = stb1_cache_ops;
+		sh5_tlb_ops = stb1_tlb_ops;
+		break;
+#endif
 
-	softintr_init();
-
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("autoconfig failed, no root");
-
-	_cpu_intr_set(IPL_NONE);
-}
-
-void
-cpu_rootconf(void)
-{
-
-	printf("boot device: %s",
-	    (booted_device != NULL) ? booted_device->dv_xname : "<unknown>");
-
-	if (bootpart)
-		printf(" (partition %d)\n", bootpart);
-	else
-		printf("\n");
-
-	setroot(booted_device, bootpart);
-}
-
-void
-device_register(struct device *dev, void *aux)
-{
+	default:
+		/*
+		 * Default to the STB1 ops.
+		 * We'll bitch later about lack of specific cpu support.
+		 */
+		sh5_cache_ops = stb1_cache_ops;
+		sh5_tlb_ops = stb1_tlb_ops;
+		break;
+	}
 }
