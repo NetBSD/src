@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6var.h,v 1.2 1996/07/10 22:50:50 explorer Exp $	*/
+/*	$NetBSD: smc93cx6var.h,v 1.3 1996/10/21 22:34:41 thorpej Exp $	*/
 
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -34,9 +34,9 @@ struct seeprom_descriptor {
 #if defined(__FreeBSD__)
 	u_long sd_iobase;
 #elif defined(__NetBSD__)
-	bus_chipset_tag_t sd_bc;
-	bus_io_handle_t sd_ioh;
-	bus_io_size_t sd_offset;
+	bus_space_tag_t sd_iot;
+	bus_space_handle_t sd_ioh;
+	bus_size_t sd_offset;
 #endif
 	u_int16_t sd_MS;
 	u_int16_t sd_RDY;
@@ -67,9 +67,9 @@ struct seeprom_descriptor {
 #define	SEEPROM_OUTB(sd, value)	outb(sd->sd_iobase, value)
 #elif defined(__NetBSD__)
 #define	SEEPROM_INB(sd) \
-	bus_io_read_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset)
+	bus_space_read_1(sd->sd_iot, sd->sd_ioh, sd->sd_offset)
 #define	SEEPROM_OUTB(sd, value) \
-	bus_io_write_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset, value)
+	bus_space_write_1(sd->sd_iot, sd->sd_ioh, sd->sd_offset, value)
 #endif
 
 #if defined(__FreeBSD__)
@@ -77,5 +77,5 @@ int read_seeprom __P((struct seeprom_descriptor *sd,
     u_int16_t *buf, u_int start_addr, int count));
 #elif defined(__NetBSD__)
 int read_seeprom __P((struct seeprom_descriptor *sd,
-    u_int16_t *buf, bus_io_size_t start_addr, bus_io_size_t count));
+    u_int16_t *buf, bus_size_t start_addr, bus_size_t count));
 #endif

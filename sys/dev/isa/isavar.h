@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.23 1996/05/08 23:32:31 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.24 1996/10/21 22:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -65,8 +65,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	char	*iba_busname;			/* XXX should be common */
-	bus_chipset_tag_t iba_bc;		/* XXX should be common */
+	char	*iba_busname;		/* XXX should be common */
+	bus_space_tag_t iba_iot;	/* isa i/o space tag */
+	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	isa_chipset_tag_t iba_ic;
 };
 
@@ -74,7 +75,9 @@ struct isabus_attach_args {
  * ISA driver attach arguments
  */
 struct isa_attach_args {
-	bus_chipset_tag_t ia_bc;
+	bus_space_tag_t ia_iot;		/* isa i/o space tag */
+	bus_space_tag_t ia_memt;	/* isa mem space tag */
+
 	isa_chipset_tag_t ia_ic;
 
 	int	ia_iobase;		/* base i/o address */
@@ -85,7 +88,7 @@ struct isa_attach_args {
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
 
-	bus_io_handle_t ia_delayioh;	/* i/o handle for `delay port' */
+	bus_space_handle_t ia_delaybah; /* i/o handle for `delay port' */
 };
 
 #define	IOBASEUNK	-1		/* i/o address is unknown */
@@ -110,16 +113,18 @@ struct isa_softc {
 	TAILQ_HEAD(, isadev)
 		sc_subdevs;		/* list of all children */
 
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;		/* isa io space tag */
+	bus_space_tag_t sc_memt;	/* isa mem space tag */
+
 	isa_chipset_tag_t sc_ic;
 
 	/*
 	 * This i/o handle is used to map port 0x84, which is
-	 * read to provide a 1.25us delay.  This i/o handle
+	 * read to provide a 1.25us delay.  This access handle
 	 * is mapped in isaattach(), and exported to drivers
 	 * via isa_attach_args.
 	 */
-	bus_io_handle_t   sc_delayioh;
+	bus_space_handle_t   sc_delaybah;
 };
 
 #define		cf_iobase		cf_loc[0]
