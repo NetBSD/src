@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.15 1998/06/25 23:57:35 thorpej Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.15.24.1 2000/10/18 00:10:28 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,6 +111,9 @@ struct hil_softc {
 	u_char	hl_kbddev;		/* keyboard device on loop */
 	u_char	hl_kbdlang;		/* keyboard language */
 	u_char	hl_kbdflags;		/* keyboard state */
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /* hl_kbdflags */
