@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.24 2001/12/12 16:55:10 fredette Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.25 2002/06/21 19:09:29 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 
 #define VND_CONFIG	1
 #define VND_UNCONFIG	2
+#define VND_GET		3
 
 int	verbose = 0;
 char	*tabname;
@@ -116,7 +117,7 @@ main(argc, argv)
 {
 	int ch, rv, action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "cf:t:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "cf:lt:uv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
@@ -124,6 +125,9 @@ main(argc, argv)
 		case 'f':
 			if (setdisktab(optarg) == -1)
 				usage();
+			break;
+		case 'l':
+			action = VND_GET;
 			break;
 		case 't':
 			tabname = optarg;
@@ -149,10 +153,46 @@ main(argc, argv)
 			usage();
 		rv = config(argv[0], argv[1], (argc == 3) ? argv[2] : NULL,
 		    action);
-	} else {
+	} else if (action == VND_UNCONFIG) {
 		if (argc != 1 || tabname != NULL)
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
+	} else {
+		char *vn, path[64];
+		struct vnd_user vnu;
+		int v, n;
+
+		if (argc != 0 && argc != 1)
+			usage();
+
+		vn = argc ? argv[0] : "vnd0";
+
+		v = opendisk(vn, O_RDWR, path, sizeof(path), 0);
+		if (v == -1)
+			err(1, "open: %s", vn);
+
+		for (n = 0; ; n++) {
+			vnu.vnu_unit = argc ? -1 : n;
+			rv = ioctl(v, VNDIOCGET, &vnu);
+			if (rv == -1) {
+				if (errno == ENXIO)
+					break;
+				err(1, "VNDIOCGET");
+			}
+
+			if (vnu.vnu_ino == 0)
+				printf("vnd%d: not in use\n",
+				    vnu.vnu_unit);
+			else
+				printf("vnd%d: dev %d,%d inode %d\n",
+				    vnu.vnu_unit,
+				    major(vnu.vnu_dev), minor(vnu.vnu_dev),
+				    vnu.vnu_ino);
+
+			if (argc)
+				break;
+		}
+		close(v);
 	}
 	exit(rv);
 }
@@ -290,6 +330,7 @@ usage()
 	(void)fprintf(stderr, "%s%s",
 	    "usage: vnconfig [-c] [-f disktab] [-t typename] [-v] special-file"
 		" regular-file [geomspec]\n",
-	    "       vnconfig -u [-v] special-file\n");
+	    "       vnconfig -u [-v] special-file\n"
+	    "       vnconfig -l [special-file]\n");
 	exit(1);
 }
