@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.22 2000/10/09 11:14:17 ad Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.23 2001/08/18 19:35:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.22 2000/10/09 11:14:17 ad Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.23 2001/08/18 19:35:35 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ local_chpw(uname)
 
 	pw_copy(pfd, tfd, pw, &old_pw);
 
-	if (pw_mkdb() < 0)
+	if (pw_mkdb(uname, pw_expiry == 0) < 0)
 		pw_error((char *)NULL, 0, 1);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.21 2001/02/13 00:11:45 cgd Exp $	*/
+/*	$NetBSD: chpass.c,v 1.22 2001/08/18 19:35:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.21 2001/02/13 00:11:45 cgd Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.22 2001/08/18 19:35:34 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ main(argc, argv)
 	pw_copy(pfd, tfd, pw, (op == LOADENTRY) ? NULL : &old_pw);
 
 	/* Now finish the passwd file update. */
-	if (pw_mkdb() < 0)
+	if (pw_mkdb(username, 0) < 0)
 		pw_error(NULL, 0, 1);
 
 	exit(0);
