@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.4 1996/06/03 22:00:50 mark Exp $ */
+/* $NetBSD: psl.h,v 1.5 1996/10/15 00:26:46 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -59,21 +59,22 @@
 #define SPL_LEVELS	8
 
 #define spl0()		splx(SPL_0)
-#define splhigh()	splx(SPL_HIGH)
+#define splsoft()	raisespl(SPL_SOFT)
+#define splsoftnet()	splsoft()
+#define splsoftclock()	lowerspl(SPL_SOFT)
 #define splbio()	raisespl(SPL_BIO)
 #define splnet()	raisespl(SPL_NET)
 #define spltty()	raisespl(SPL_TTY)
 #define splimp()	raisespl(SPL_IMP)
 #define splclock()	raisespl(SPL_CLOCK)
 #define splstatclock()	raisespl(SPL_CLOCK)
-#define splsoftnet()	raisespl(SPL_SOFT)
+#define splhigh()	splx(SPL_HIGH)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
 int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
-int splsoftclock __P(());
 
 void setsoftnet	__P(());
 void setsoftast	__P(());
