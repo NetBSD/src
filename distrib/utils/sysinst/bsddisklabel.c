@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.28 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.29 2004/07/12 22:33:21 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -474,6 +474,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	do {
 		set_ptn_menu(&pi);
+		current_cylsize = dlcylsize;
 		process_menu(pi.menu_no, &pi);
 	} while (pi.free_space < 0 || pi.free_parts < 0);
 
