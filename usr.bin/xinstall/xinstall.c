@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.37 1999/07/06 14:45:31 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.38 1999/08/01 05:02:06 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.37 1999/07/06 14:45:31 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.38 1999/08/01 05:02:06 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.37 1999/07/06 14:45:31 christos Exp $");
 struct passwd *pp;
 struct group *gp;
 int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0,
-    dorename = 0;
+    dorename = 0, unpriv = 0;
 static int numberedbackup = 0;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
@@ -114,7 +114,7 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:prsS:")) != -1)
+	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:prsS:U")) != -1)
 		switch((char)ch) {
 		case 'B':
 			suffix = optarg;
@@ -199,6 +199,9 @@ main(argc, argv)
 			/* fall through; -S implies -s */
 		case 's':
 			dostrip = 1;
+			break;
+		case 'U':
+			unpriv = 1;
 			break;
 		case '?':
 		default:
@@ -439,14 +442,16 @@ install(from_name, to_name, fset, flags)
 		  err(1, "stripping %s", to_name);
 	}
 
-	/*
-	 * Set owner, group, mode for target; do the chown first,
-	 * chown may lose the setuid bits.
-	 */
-	if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
-		serrno = errno;
-		(void)unlink(to_name);
-		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
+	if (!unpriv) {
+		/*
+		 * Set owner, group, mode for target; do the chown first,
+		 * chown may lose the setuid bits.
+		 */
+		if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
+			serrno = errno;
+			(void)unlink(to_name);
+			errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
+		}
 	}
 	if (fchmod(to_fd, mode)) {
 		serrno = errno;
@@ -525,11 +530,9 @@ copy(from_fd, from_name, to_fd, to_name, size)
 				(void)unlink(to_name);
 				errx(1, "%s: %s", from_name, strerror(serrno));
 			}
-			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1) {
-				serrno = errno;
-				(void)unlink(to_name);
-				errx(1, "madvise: %s", strerror(serrno));
-			}
+			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1)
+				warnx("madvise: %s", strerror(errno));
+
 			if (write(to_fd, p, size) != size) {
 				serrno = errno;
 				(void)unlink(to_name);
@@ -667,8 +670,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "\
-usage: install [-bcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
-       install [-bcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
-       install -pd [-m mode] [-o owner] [-g group] directory ...\n");
+usage: install [-Ubcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
+       install [-Ubcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
+       install [-Up] -d [-m mode] [-o owner] [-g group] directory ...\n");
 	exit(1);
 }
