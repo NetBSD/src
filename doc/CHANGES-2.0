@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.370 2004/08/03 22:37:40 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.371 2004/08/04 12:05:34 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6313,3 +6313,10 @@ sys/netinet/ip_icmp.c				1.85-1.87
 	may not be set.  (found by panic when PF is configured 
 	"block return all")
 	[christos, ticket #732]
+
+sbin/dmesg/dmesg.8				1.15-1.16
+
+	Expand description of the system message buffer, and cross-reference
+	MSGBUFSIZE in options(4).  Bump date and some minor cleanup.
+	Part of fix for PR#26439.
+	[briggs, ticket #727]
