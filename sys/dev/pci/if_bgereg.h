@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.6.2.3 2003/06/16 13:20:48 grant Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.6.2.4 2003/06/16 13:24:00 grant Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -73,6 +73,8 @@
 #define BGE_STATUS_BLOCK		0x00000B00
 #define BGE_STATUS_BLOCK_END		0x00000B4F
 #define BGE_SOFTWARE_GENCOMM		0x00000B50
+#define BGE_SOFTWARE_GENCOMM_SIG	0x00000B54
+#define BGE_SOFTWARE_GENCOMM_NICCFG	0x00000B58
 #define BGE_SOFTWARE_GENCOMM_END	0x00000FFF
 #define BGE_UNMAPPED			0x00001000
 #define BGE_UNMAPPED_END		0x00001FFF
