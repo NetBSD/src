@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1996/10/13 03:30:39 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1996/11/08 20:50:55 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -299,16 +299,14 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-        if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
-#if LABELSECTOR != 0
-            bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
-#endif
+	/* XXX this assumes everything <=LABELSECTOR is label! */
+	/*      (but since LABELSECTOR is zero, this is ok) */
+        if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
             (bp->b_flags & B_READ) == 0 && wlabel == 0) {
                 bp->b_error = EROFS;
                 goto bad;
