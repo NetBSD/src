@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.32 2004/12/15 15:37:01 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.33 2004/12/15 15:39:03 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -518,7 +518,8 @@ to the data in an mbuf chain starting
 .Fa off
 bytes from the beginning, continuing for
 .Fa len
-bytes. Neither
+bytes.
+Neither
 .Fa off
 nor
 .Fa len
@@ -530,15 +531,14 @@ the second argument will be the pointer to the data buffer of a
 packet (starting after
 .Fa off
 bytes in the stream), and the third argument is the amount
-of data in bytes in this call. If
+of data in bytes in this call.
+If
 .Fa f
-returns something not equal to
-.Dv zero
+returns something not equal to zero
 .Fn m_apply
 will bail out, returning the return code of
 .Fa f .
-Upon successful completion it will return
-.Dv zero .
+Upon successful completion it will return zero.
 .It Fn m_free "struct mbuf *m"
 Frees mbuf
 .Fa m .
