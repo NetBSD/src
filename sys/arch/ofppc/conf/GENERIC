@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.43 2001/09/12 21:05:37 manu Exp $
+#	$NetBSD: GENERIC,v 1.44 2001/10/22 14:46:08 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -113,8 +113,8 @@ mainbus*	at root
 ofbus*		at mainbus?
 ofbus*		at ofbus?
 
-# CPU
-cpu*		at ofbus?
+# CPUs
+cpu*		at mainbus?
 
 # Generic OpenFirmware disk support
 ofdisk*		at ofbus?
