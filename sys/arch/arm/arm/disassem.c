@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.1 2001/01/12 13:43:11 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.2 2001/01/12 21:35:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -247,6 +247,8 @@ static void disasm_insn_ldrstr    __P((disasm_interface_t *di, u_int insn,
     u_int loc));
 static void disasm_insn_ldcstc    __P((disasm_interface_t *di, u_int insn,
     u_int loc));
+static u_int disassemble_readword __P((u_int address));
+static void disassemble_printaddr __P((u_int address));
 
 vm_offset_t
 disasm(di, loc, altfmt)
