@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.39 1996/02/29 20:55:13 cgd Exp $
+#	$NetBSD: Makefile.amiga,v 1.40 1996/03/15 20:09:52 is Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,12 @@ AMIGA=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
-CFLAGS=		${DEBUG} -O2 -Werror -mc68020 -msoft-float
+.if empty(IDENT:M-DM68060)
+CFLAGS=		${DEBUG} -O2 -Werror -m68020 -msoft-float ${COPTS}
+.else
+CFLAGS=		${DEBUG} -O2 -Werror -m68060 -msoft-float ${COPTS}
+.endif
+
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
