@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.24 1995/04/27 12:08:54 christos Exp $
+#	$NetBSD: files.amiga,v 1.25 1995/05/12 13:09:22 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -166,12 +166,16 @@ device	mlhsc at zbus: scsi, sci
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
-define	fas
-file	arch/amiga/dev/fas.c		fas
+define	sfas
+file	arch/amiga/dev/sfas.c		sfas
 
 # FastlaneZ3
-device	flz3sc at zbus: scsi, fas
-file	arch/amiga/dev/flz3sc.c		flz3sc needs-flag
+device	flsc at zbus: scsi, sfas
+file	arch/amiga/dev/flsc.c		flsc needs-flag
+
+# Blizzard1230
+device	bzsc at zbus: scsi, sfas
+file	arch/amiga/dev/bzsc.c		bzsc needs-flag
 
 # Amiga 4000/1200 IDE masquerading as SCSI
 device	idesc at mainbus: scsi
