@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.7 1993/12/04 02:20:11 cgd Exp $
+ *	$Id: param.h,v 1.8 1994/02/22 07:29:02 hpeyerl Exp $
  */
 
 /*
@@ -98,6 +98,14 @@
 #else
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
+#endif
+
+/*
+ * Disklabel location
+ */
+#ifndef OLD_DISKLABEL
+#define LABELSECTOR     (1024/DEV_BSIZE)
+#define LABELOFFSET     0
 #endif
 
 /*
