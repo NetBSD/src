@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.19 2003/04/21 08:41:28 bjh21 Exp $	*/
+/*	$NetBSD: yacc.y,v 1.20 2003/05/12 06:05:52 tshiozak Exp $	*/
 
 %{
 /*-
@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: yacc.y,v 1.19 2003/04/21 08:41:28 bjh21 Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.20 2003/05/12 06:05:52 tshiozak Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -688,6 +688,7 @@ dump_tables()
     for (list = types.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
+	memset(&re, 0, sizeof(re));
 	re.fre_min = htonl(list->min);
 	re.fre_max = htonl(list->max);
 	re.fre_map = htonl(list->map);
@@ -701,6 +702,7 @@ dump_tables()
     for (list = maplower.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
+	memset(&re, 0, sizeof(re));
 	re.fre_min = htonl(list->min);
 	re.fre_max = htonl(list->max);
 	re.fre_map = htonl(list->map);
@@ -714,6 +716,7 @@ dump_tables()
     for (list = mapupper.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
+	memset(&re, 0, sizeof(re));
 	re.fre_min = htonl(list->min);
 	re.fre_max = htonl(list->max);
 	re.fre_map = htonl(list->map);
