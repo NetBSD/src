@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.2 1999/11/15 18:49:14 fvdl Exp $	*/
+/*	$NetBSD: softdep.h,v 1.3 2000/06/22 15:23:05 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -8,39 +8,14 @@
  * "Soft Updates: A Solution to the Metadata Update Problem in File
  * Systems", CSE-TR-254-95, August 1995).
  *
- * The following are the copyrights and redistribution conditions that
- * apply to this copy of the soft update software. For a license
- * to use, redistribute or sell the soft update software under
- * conditions other than those described here, please contact the
- * author at one of the following addresses:
- *
- *	Marshall Kirk McKusick		mckusick@mckusick.com
- *	1614 Oxford Street		+1-510-843-9542
- *	Berkeley, CA 94709-1608
- *	USA
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. None of the names of McKusick, Ganger, Patt, or the University of
- *    Michigan may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- * 4. Redistributions in any form must be accompanied by information on
- *    how to obtain complete source code for any accompanying software
- *    that uses this software. This source code must either be included
- *    in the distribution or be available for no more than the cost of
- *    distribution plus a nominal fee, and must be freely redistributable
- *    under reasonable conditions. For an executable file, complete
- *    source code means the source code for all modules it contains.
- *    It does not mean source code for modules or files that typically
- *    accompany the operating system on which the executable file runs,
- *    e.g., standard library modules or system header files.
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification, immediately at the beginning of the file.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY MARSHALL KIRK MCKUSICK ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -54,8 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)softdep.h	9.6 (McKusick) 2/25/99
- *	$Id: softdep.h,v 1.2 1999/11/15 18:49:14 fvdl Exp $
+ * from: @(#)softdep.h	9.6 (McKusick) 2/25/99
  */
 
 #include <sys/queue.h>
