@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.9 1994/05/17 10:32:53 cgd Exp $
+ *	$Id: conf.c,v 1.10 1994/05/20 09:52:15 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -356,6 +356,74 @@ iszerodev(dev)
 {
 
 	return (major(dev) == mem_no && minor(dev) == 12);
+}
+
+/*
+ * Returns true if dev is a disk device.
+ *
+isdisk(dev, type)
+	dev_t dev;
+	int type;
+{
+
+	/* XXXX This needs to be dynamic for LKMs. */
+	switch (major(dev)) {
+	case 2:
+	case 4:
+	case 5:
+	case 6:
+		return (type == VBLK);
+	case 8:
+	case 9:
+	case 17:
+	case 19:
+		return (type == VCHR);
+	default:
+		return (0);
+}
+
+static int chrtoblktbl[] = {
+	/* XXXX This needs to be dynamic for LKMs. */
+	/*VCHR*/	/*VBLK*/
+	/*  0 */	NODEV,
+	/*  1 */	NODEV,
+	/*  2 */	NODEV,
+	/*  3 */	NODEV,
+	/*  4 */	NODEV,
+	/*  5 */	NODEV,
+	/*  6 */	NODEV,
+	/*  7 */	0,
+	/*  8 */	4,
+	/*  9 */	2,
+	/* 10 */	NODEV,
+	/* 11 */	NODEV,
+	/* 12 */	NODEV,
+	/* 13 */	NODEV,
+	/* 14 */	NODEV,
+	/* 15 */	NODEV,
+	/* 16 */	NODEV,
+	/* 17 */	5,
+	/* 18 */	NODEV,
+	/* 19 */	6,
+	/* 20 */	7,
+	/* 21 */	NODEV,
+	/* 22 */	NODEV,
+};
+
+/*
+ * Convert a character device number to a block device number.
+ */
+chrtoblk(dev)
+	dev_t dev;
+{
+	int blkmaj;
+
+	if (major(dev) >= nchrdev)
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
+		return (NODEV);
+	return (makedev(blkmaj, minor(dev)));
 }
 
 /*
