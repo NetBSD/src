@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.146 1995/04/17 12:06:43 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 1995/04/21 06:43:24 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -401,6 +401,15 @@ identifycpu()
 #endif
 #endif
 	}
+
+#if defined(I486_CPU) || defined(I586_CPU)
+	/*
+	 * On a 486 or above, enable ring 0 write protection and outer ring
+	 * alignment checking.
+	 */
+	if (cpu_class >= CPUCLASS_486)
+		lcr0(rcr0() | CR0_WP | CR0_AM);
+#endif
 }
 
 /*  
