@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.2 1997/03/29 19:49:04 thorpej Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.3 1997/04/04 01:52:45 cgd Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.2 1997/03/29 19:49:04 thorpej Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.3 1997/04/04 01:52:45 cgd Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -87,6 +87,7 @@ static	void	nattable_sync __P((void)), nat_delete __P((struct nat *));
 static	nat_t	*nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_short, int));
 static	void	fix_outcksum __P((u_short *, u_long));
 static	void	fix_incksum __P((u_short *, u_long));
+extern	struct ifnet	*get_unit __P((char *));
 
 static void fix_outcksum(sp, n)
 u_short *sp;
