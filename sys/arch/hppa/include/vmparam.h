@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2002/12/10 05:14:28 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2003/04/01 20:47:25 thorpej Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -31,6 +31,15 @@
 /*
  * Machine dependent constants for HP PA
  */
+
+/*
+ * We use 4K pages on the HP PHA.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
 /*
  * USRSTACK is the top (end) of the user stack.
  */
