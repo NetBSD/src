@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.146 2000/09/15 06:50:46 jeffs Exp $	*/
+/*	$NetBSD: trap.c,v 1.147 2000/09/16 05:07:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2000/09/15 06:50:46 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2000/09/16 05:07:06 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -191,9 +191,6 @@ syscall(status, cause, opc)
 	struct sysent *callp;
 
 	uvmexp.syscalls++;
-
-	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		_splset(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
