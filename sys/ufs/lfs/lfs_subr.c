@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.25 2002/05/24 22:13:57 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.26 2002/06/16 00:13:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.25 2002/05/24 22:13:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.26 2002/06/16 00:13:15 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ void
 lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
-	int s;
 	
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
@@ -152,6 +151,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;
+	sp->seg_iocount = 0;
 	(void) lfs_initseg(fs);
 	
 	/*
@@ -160,9 +160,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	 * so we artificially increment it by one until we've scheduled all of
 	 * the writes we intend to do.
 	 */
-	s = splbio();
 	++fs->lfs_iocount;
-	splx(s);
 }
 
 /*
@@ -174,7 +172,6 @@ lfs_segunlock(struct lfs *fs)
 {
 	struct segment *sp;
 	unsigned long sync, ckp;
-	int s;
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	struct mount *mp;
@@ -265,7 +262,9 @@ lfs_segunlock(struct lfs *fs)
 
 		free(sp->bpp, M_SEGMENT);
 		sp->bpp = NULL;
-		free(sp, M_SEGMENT);
+		/* The sync case holds a reference in `sp' to be freed below */
+		if (!sync)
+			free(sp, M_SEGMENT);
 		fs->lfs_sp = NULL;
 
 		/*
@@ -273,7 +272,6 @@ lfs_segunlock(struct lfs *fs)
 		 * At the moment, the user's process hangs around so we can
 		 * sleep.
 		 */
-		s = splbio();
 		if (--fs->lfs_iocount < LFS_THROTTLE)
 			wakeup(&fs->lfs_iocount);
 		if(fs->lfs_iocount == 0) {
@@ -283,16 +281,32 @@ lfs_segunlock(struct lfs *fs)
 			wakeup(&fs->lfs_iocount);
 		}
 		/*
+		 * If we're not checkpointing, we don't have to block
+		 * other processes to wait for a synchronous write
+		 * to complete.
+		 */
+		if (!ckp) {
+			--fs->lfs_seglock;
+			fs->lfs_lockpid = 0;
+			wakeup(&fs->lfs_seglock);
+		}
+		/*
 		 * We let checkpoints happen asynchronously.  That means
 		 * that during recovery, we have to roll forward between
 		 * the two segments described by the first and second
 		 * superblocks to make sure that the checkpoint described
 		 * by a superblock completed.
 		 */
-		while (sync && fs->lfs_iocount)
+		while (ckp && sync && fs->lfs_iocount)
 			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
-				     "lfs vflush", 0);
-		splx(s);
+				     "lfs_iocount", 0);
+		while (sync && sp->seg_iocount) {
+			(void)tsleep(&sp->seg_iocount, PRIBIO + 1,
+				     "seg_iocount", 0);
+			/* printf("sleeping on iocount %x == %d\n", sp, sp->seg_iocount); */
+		}
+		if (sync)
+			free(sp, M_SEGMENT);
 		if (ckp) {
 			fs->lfs_nactive = 0;
 			/* If we *know* everything's on disk, write both sbs */
@@ -300,10 +314,11 @@ lfs_segunlock(struct lfs *fs)
 				lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
+
+			--fs->lfs_seglock;
+			fs->lfs_lockpid = 0;
+			wakeup(&fs->lfs_seglock);
 		}
-		--fs->lfs_seglock;
-		fs->lfs_lockpid = 0;
-		wakeup(&fs->lfs_seglock);
 	} else if (fs->lfs_seglock == 0) {
 		panic ("Seglock not held");
 	} else {
