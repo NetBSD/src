@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.23 2001/05/13 04:24:28 jmc Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.24 2001/07/07 16:51:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -827,7 +827,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		if ((state->pf == NULL) || (state->gotmfc == 2)) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
-			bzero(state->pf, sizeof(*state->pf));
+			memset(state->pf, 0, sizeof(*state->pf));
 			state->pf->number = state->count++;
 			state->pf->last_config_index = -1;
 			SIMPLEQ_INIT(&state->pf->cfe_head);
@@ -875,7 +875,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			if (state->pf == NULL) {
 				state->pf = malloc(sizeof(*state->pf),
 				    M_DEVBUF, M_NOWAIT);
-				bzero(state->pf, sizeof(*state->pf));
+				memset(state->pf, 0, sizeof(*state->pf));
 				state->pf->number = state->count++;
 				state->pf->last_config_index = -1;
 				SIMPLEQ_INIT(&state->pf->cfe_head);
