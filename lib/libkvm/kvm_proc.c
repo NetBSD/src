@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.51 2003/03/19 11:36:34 dsl Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.52 2003/03/20 22:53:12 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.51 2003/03/19 11:36:34 dsl Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.52 2003/03/20 22:53:12 ross Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.51 2003/03/19 11:36:34 dsl Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #include <nlist.h>
@@ -153,6 +154,8 @@ struct miniproc {
 
 
 #define	PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(void *)(foo))
+#define	CONSTPTRTOINT64(foo) ((const u_int64_t)(const uintptr_t)	\
+					(const void *)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -493,24 +496,24 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		mib[1] = KERN_PROC2;
 		mib[2] = op;
 		mib[3] = arg;
-		mib[4] = esize;
+		mib[4] = (int)esize;
 		mib[5] = 0;
-		st = sysctl(mib, 6, NULL, &size, NULL, 0);
+		st = sysctl(mib, 6, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getproc2");
 			return (NULL);
 		}
 
-		mib[5] = size / esize;
+		mib[5] = (int) (size / esize);
 		kd->procbase2 = (struct kinfo_proc2 *)_kvm_malloc(kd, size);
 		if (kd->procbase2 == NULL)
 			return (NULL);
-		st = sysctl(mib, 6, kd->procbase2, &size, NULL, 0);
+		st = sysctl(mib, 6, kd->procbase2, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getproc2");
 			return (NULL);
 		}
-		nprocs = size / esize;
+		nprocs = (int) (size / esize);
 	} else {
 		char *kp2c;
 		struct kinfo_proc *kp;
@@ -704,7 +707,8 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 	int *cnt;
 {
 	size_t size;
-	int mib[5], st, nlwps;
+	int mib[5], nlwps;
+	ssize_t st;
 	struct kinfo_lwp *kl;
 
 	if (kd->lwpbase != NULL) {
@@ -721,24 +725,24 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_LWP;
 		mib[2] = pid;
-		mib[3] = esize;
+		mib[3] = (int)esize;
 		mib[4] = 0;
-		st = sysctl(mib, 5, NULL, &size, NULL, 0);
+		st = sysctl(mib, 5, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getlwps");
 			return (NULL);
 		}
 
-		mib[4] = size / esize;
+		mib[4] = (int) (size / esize);
 		kd->lwpbase = (struct kinfo_lwp *)_kvm_malloc(kd, size);
 		if (kd->lwpbase == NULL)
 			return (NULL);
-		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, 0);
+		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getlwps");
 			return (NULL);
 		}
-		nlwps = size / esize;
+		nlwps = (int) (size / esize);
 	} else {
 		/* grovel through the memory image */
 		struct proc p;
@@ -778,10 +782,10 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 			kl->l_priority = l.l_priority;
 			kl->l_usrpri = l.l_usrpri;
 			kl->l_stat = l.l_stat;
-			kl->l_wchan = PTRTOINT64(l.l_wchan);
+			kl->l_wchan = CONSTPTRTOINT64(l.l_wchan);
 			if (l.l_wmesg)
 				(void)kvm_read(kd, (u_long)l.l_wmesg,
-				    kl->l_wmesg, WMESGLEN);
+				    kl->l_wmesg, (size_t)WMESGLEN);
 			kl->l_cpuid = KI_NOCPU;
 			laddr = (u_long)PTRTOINT64(l.l_sibling.le_next);
 		}
@@ -814,7 +818,7 @@ kvm_getprocs(kd, op, arg, cnt)
 		mib[1] = KERN_PROC;
 		mib[2] = op;
 		mib[3] = arg;
-		st = sysctl(mib, 4, NULL, &size, NULL, 0);
+		st = sysctl(mib, 4, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
 			return (NULL);
@@ -822,7 +826,7 @@ kvm_getprocs(kd, op, arg, cnt)
 		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
 		if (kd->procbase == NULL)
 			return (NULL);
-		st = sysctl(mib, 4, kd->procbase, &size, NULL, 0);
+		st = sysctl(mib, 4, kd->procbase, &size, NULL, (size_t)0);
 		if (st == -1) {
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
 			return (NULL);
@@ -833,7 +837,7 @@ kvm_getprocs(kd, op, arg, cnt)
 			    (u_long)size, (u_long)sizeof(struct kinfo_proc));
 			return (NULL);
 		}
-		nprocs = size / sizeof(struct kinfo_proc);
+		nprocs = (int) (size / sizeof(struct kinfo_proc));
 	} else if (ISSYSCTL(kd)) {
 		_kvm_err(kd, kd->program, "kvm_open called with KVM_NO_FILES, "
 		    "can't use kvm_getprocs");
@@ -980,7 +984,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		if (ep != NULL)
 			cc = ep - cp + 1;
 		if (len + cc > kd->arglen) {
-			int off;
+			ptrdiff_t off;
 			char **pp;
 			char *op = kd->argspc;
 
@@ -1087,7 +1091,7 @@ kvm_doargv(kd, p, nchr, info)
 	 */
 	if (p->p_stat == SZOMB)
 		return (NULL);
-	cnt = kvm_ureadm(kd, p, kd->usrstack - sizeof(arginfo),
+	cnt = (int)kvm_ureadm(kd, p, kd->usrstack - sizeof(arginfo),
 	    (void *)&arginfo, sizeof(arginfo));
 	if (cnt != sizeof(arginfo))
 		return (NULL);
@@ -1159,7 +1163,7 @@ kvm_doargv2(kd, pid, type, nchr)
 	mib[2] = pid;
 	mib[3] = type == KERN_PROC_ARGV ? KERN_PROC_NARGV : KERN_PROC_NENV;
 	bufs = sizeof(narg);
-	if (sysctl(mib, 4, &narg, &bufs, NULL, NULL) == -1)
+	if (sysctl(mib, 4, &narg, &bufs, NULL, (size_t)0) == -1)
 		return (NULL);
 
 	if (kd->argv == NULL) {
@@ -1188,7 +1192,9 @@ kvm_doargv2(kd, pid, type, nchr)
 			    newarglen);
 		if (kd->argspc == NULL)
 			return (NULL);
-		kd->arglen = newarglen;
+		if (newarglen > INT_MAX)
+			return NULL;
+		kd->arglen = (int)newarglen;
 	}
 	memset(kd->argspc, 0, (size_t)kd->arglen);	/* XXX necessary? */
 
@@ -1197,7 +1203,7 @@ kvm_doargv2(kd, pid, type, nchr)
 	mib[2] = pid;
 	mib[3] = type;
 	bufs = kd->arglen;
-	if (sysctl(mib, 4, kd->argspc, &bufs, NULL, NULL) == -1)
+	if (sysctl(mib, 4, kd->argspc, &bufs, NULL, (size_t)0) == -1)
 		return (NULL);
 
 	bp = kd->argspc;
