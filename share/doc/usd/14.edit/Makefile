@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.5 1993/07/31 15:30:17 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/01/24 22:37:44 cgd Exp $
 
 DIR=	usd/14.edit
 DOC=	14.edit
@@ -10,7 +10,7 @@ CLEANFILES+=	editvindex
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
 
 # index for versatec is different from the one in edit.tut
