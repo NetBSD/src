@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.28 1998/08/27 23:26:37 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.29 1998/09/13 20:56:38 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -31,19 +31,19 @@ HOST_LDFLAGS?=
 STRIPPROG?=	strip
 
 
+.SUFFIXES:	.m .o .ln .lo
+
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
 #  used for Objective C source)
-.SUFFIXES:	.m .o .ln .lo
-
-.c.lo:
-	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
-
 .m:
 	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
-
 .m.o:
 	${COMPILE.m} ${.IMPSRC}
+
+# Host-compiled C objects
+.c.lo:
+	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
 
 
 .if defined(PARALLEL)
