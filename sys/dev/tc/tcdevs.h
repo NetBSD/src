@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.3 1996/03/05 23:15:59 cgd Exp 
+ *	NetBSD: tcdevs,v 1.4 1996/05/09 21:35:27 cgd Exp 
  */
 
 /*
@@ -65,6 +65,15 @@
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
+
+#define	TC_DEVICE_PMAGD	"sfbp"
+#define	TC_DESCRIPTION_PMAGD	"Smart Frame Buffer Plus, unknown bpp"
+
+#define	TC_DEVICE_PMAGD_AA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_AA	"Smart Frame Buffer Plus, 8bpp"
+
+#define	TC_DEVICE_PMAGD_BA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_BA	"Smart Frame Buffer Plus, 32bpp"
 
 #define	TC_DEVICE_PMAZ_AA	"asc"
 #define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"
