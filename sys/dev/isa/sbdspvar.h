@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.41 1999/02/19 16:10:44 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.42 1999/03/22 07:37:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include "midi.h"
 #if NMIDI > 0
-#include <dev/isa/mpu401var.h>
+#include <dev/isa/mpuvar.h>
 #endif
 
 #define SB_MASTER_VOL	0
@@ -174,7 +174,7 @@ struct sbdsp_softc {
 
 #if NMIDI > 0
 	int	sc_hasmpu;
-	struct	mpu401_softc sc_mpu_sc;	/* MPU401 Uart state */
+	struct	mpu_softc sc_mpu;	/* MPU401 Uart state */
 #endif
 };
 
