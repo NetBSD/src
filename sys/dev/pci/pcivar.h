@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.24 1997/07/17 01:01:06 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -122,20 +122,22 @@ struct pci_attach_args {
 #define	PCI_FLAGS_IO_ENABLED	0x01		/* I/O space is enabled */
 #define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
 
+#include "locators.h"
+
 /*
  * Locators devices that attach to 'pcibus', as specified to config.
  */
-#define	pcibuscf_bus		cf_loc[0]
-#define	PCIBUS_UNK_BUS		-1		/* wildcarded 'bus' */
+#define	pcibuscf_bus		cf_loc[PCIBUSCF_BUS]
+#define	PCIBUS_UNK_BUS		PCIBUSCF_BUS_DEFAULT	/* wildcarded 'bus' */
 
 /*
  * Locators for PCI devices, as specified to config.
  */
-#define	pcicf_dev		cf_loc[0]
-#define	PCI_UNK_DEV		-1		/* wildcarded 'dev' */
+#define	pcicf_dev		cf_loc[PCICF_DEV]
+#define	PCI_UNK_DEV		PCICF_DEV_DEFAULT	/* wildcarded 'dev' */
 
-#define	pcicf_function		cf_loc[1]
-#define	PCI_UNK_FUNCTION	-1		/* wildcarded 'function' */
+#define	pcicf_function		cf_loc[PCICF_FUNCTION]
+#define	PCI_UNK_FUNCTION	PCICF_FUNCTION_DEFAULT /* wildcarded 'function' */
 
 /*
  * Configuration space access and utility functions.  (Note that most,
