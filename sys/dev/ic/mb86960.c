@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.38 2000/03/30 12:45:31 augustss Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.39 2000/05/12 16:45:43 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1566,15 +1566,7 @@ mb86960_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	u_char *cp;
 	u_int32_t crc;
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	int len;
 	struct ether_multistep step;
 
 	/*
@@ -1604,13 +1596,8 @@ mb86960_getmcaf(ec, af)
 			goto allmulti;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			crc ^= *cp++;
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 

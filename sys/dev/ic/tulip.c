@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.61 2000/04/07 18:58:15 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.62 2000/05/12 16:45:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -151,8 +151,8 @@ void	tlp_21140_reset __P((struct tulip_softc *));
 void	tlp_21142_reset __P((struct tulip_softc *));
 void	tlp_pmac_reset __P((struct tulip_softc *));
 
-u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
-#define	tlp_mchash(addr, sz) (tlp_crc32((addr), ETHER_ADDR_LEN) & ((sz) - 1))
+#define	tlp_mchash(addr, sz)						\
+	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((sz) - 1))
 
 /*
  * MII bit-bang glue.
@@ -2221,34 +2221,6 @@ tlp_add_rxbuf(sc, idx)
 }
 
 /*
- * tlp_crc32:
- *
- *	Compute the 32-bit CRC of the provided buffer.
- */
-u_int32_t
-tlp_crc32(buf, len)
-	const u_int8_t *buf;
-	size_t len;
-{
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	u_int32_t crc;
-	int i;
-
-	crc = 0xffffffff;
-	for (i = 0; i < len; i++) {
-		crc ^= buf[i];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-	}
-	return (crc);
-}
-
-/*
  * tlp_srom_crcok:
  *
  *	Check the CRC of the Tulip SROM.
@@ -2259,7 +2231,7 @@ tlp_srom_crcok(romdata)
 {
 	u_int32_t crc;
 
-	crc = tlp_crc32(romdata, TULIP_ROM_CRC32_CHECKSUM);
+	crc = ether_crc32_le(romdata, TULIP_ROM_CRC32_CHECKSUM);
 	crc = (crc & 0xffff) ^ 0xffff;
 	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM))
 		return (1);
@@ -2267,7 +2239,7 @@ tlp_srom_crcok(romdata)
 	/*
 	 * Try an alternate checksum.
 	 */
-	crc = tlp_crc32(romdata, TULIP_ROM_CRC32_CHECKSUM1);
+	crc = ether_crc32_le(romdata, TULIP_ROM_CRC32_CHECKSUM1);
 	crc = (crc & 0xffff) ^ 0xffff;
 	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM1))
 		return (1);
@@ -2756,7 +2728,8 @@ tlp_winb_filter_setup(sc)
 		 * According to the FreeBSD `wb' driver, yes, you
 		 * really do invert the hash.
 		 */
-		hash = (~(tlp_crc32(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26))
+		hash =
+		    (~(ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26))
 		    & 0x3f;
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
@@ -2819,7 +2792,7 @@ tlp_al981_filter_setup(sc)
 			goto allmulti;
 		}
 
-		hash = (tlp_crc32(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26)
+		hash = (ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26)
 		    & 0x3f;
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
