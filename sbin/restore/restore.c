@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)restore.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: restore.c,v 1.4 1994/06/08 19:33:41 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)restore.c	8.3 (Berkeley) 9/13/94";*/
+static char *rcsid = "$Id: restore.c,v 1.5 1994/12/28 02:21:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,6 +86,8 @@ addfile(name, ino, type)
 		dprintf(stdout, "%s: not on the tape\n", name);
 		return (descend);
 	}
+	if (ino == WINO && command == 'i' && !vflag)
+		return (descend);
 	if (!mflag) {
 		(void) sprintf(buf, "./%u", ino);
 		name = buf;
@@ -125,9 +127,13 @@ deletefile(name, ino, type)
 
 	if (TSTINO(ino, dumpmap) == 0)
 		return (descend);
-	ep = lookupino(ino);
-	if (ep != NULL)
+	ep = lookupname(name);
+	if (ep != NULL) {
 		ep->e_flags &= ~NEW;
+		ep->e_flags |= REMOVED;
+		if (ep->e_type != NODE)
+			freeentry(ep);
+	}
 	return (descend);
 }
 
@@ -147,21 +153,38 @@ deletefile(name, ino, type)
 static struct entry *removelist;
 
 /*
+ *	Remove invalid whiteouts from the old tree.
  *	Remove unneeded leaves from the old tree.
  *	Remove directories from the lookup chains.
  */
 void
 removeoldleaves()
 {
-	register struct entry *ep;
-	register ino_t i;
+	register struct entry *ep, *nextep;
+	register ino_t i, mydirino;
 
 	vprintf(stdout, "Mark entries to be removed.\n");
+	if (ep = lookupino(WINO)) {
+		vprintf(stdout, "Delete whiteouts\n");
+		for ( ; ep != NULL; ep = nextep) {
+			nextep = ep->e_links;
+			mydirino = ep->e_parent->e_ino;
+			/*
+			 * We remove all whiteouts that are in directories
+			 * that have been removed or that have been dumped.
+			 */
+			if (TSTINO(mydirino, usedinomap) &&
+			    !TSTINO(mydirino, dumpmap))
+				continue;
+			delwhiteout(ep);
+			freeentry(ep);
+		}
+	}
 	for (i = ROOTINO + 1; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL)
 			continue;
-		if (TSTINO(i, clrimap))
+		if (TSTINO(i, usedinomap))
 			continue;
 		for ( ; ep != NULL; ep = ep->e_links) {
 			dprintf(stdout, "%s: REMOVE\n", myname(ep));
@@ -746,6 +769,15 @@ createlinks()
 	register ino_t i;
 	char name[BUFSIZ];
 
+	if (ep = lookupino(WINO)) {
+		vprintf(stdout, "Add whiteouts\n");
+		for ( ; ep != NULL; ep = ep->e_links) {
+			if ((ep->e_flags & NEW) == 0)
+				continue;
+			(void) addwhiteout(myname(ep));
+			ep->e_flags &= ~NEW;
+		}
+	}
 	vprintf(stdout, "Add links\n");
 	for (i = ROOTINO; i < maxino; i++) {
 		ep = lookupino(i);
@@ -777,7 +809,7 @@ checkrestore()
 	register ino_t i;
 
 	vprintf(stdout, "Check the symbol table.\n");
-	for (i = ROOTINO; i < maxino; i++) {
+	for (i = WINO; i < maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_flags &= ~KEEP;
 			if (ep->e_type == NODE)
