@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 1996/11/19 04:43:58 cgd Exp $
+#	$NetBSD: RAMDISK,v 1.7 1996/11/25 04:16:19 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -75,8 +75,8 @@ tcasic*	at	mainbus0
 tc*	at	tcasic?
 
 # TurboChannel devices
-ioasic0	at	tc? slot ? offset ?
-mcclock0 at	ioasic? offset ?
+ioasic*	at	tc? slot ? offset ?
+mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
@@ -119,15 +119,15 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-mcclock0 at	isa? port 0x70
-pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
-com0	at	isa? port 0x3f8 irq 4		# standard serial ports
-com1	at	isa? port 0x2f8 irq 3
-lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
-# VGA ON ISA CANNOT BE USED IN THE PRESENCE OF PCI VGA CARDS + VGA ON PCI.
-#vga0	at	isa?				# ISA (EISA: XXX) VGA
-#wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+mcclock* at	isa? port 0x70
+pcppi*	at	isa?				# PC prog. periph. interface
+pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pms*	at	pcppi?				# PS/2-style mouse (aux port)
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+vga*	at	isa?				# ISA (EISA: XXX) VGA
+#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 # EISA devices
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
