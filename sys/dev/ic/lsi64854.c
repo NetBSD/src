@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.21 2002/09/23 04:57:59 chs Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.22 2002/10/01 07:07:03 petrov Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.21 2002/09/23 04:57:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.22 2002/10/01 07:07:03 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +438,9 @@ lsi64854_scsi_intr(arg)
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		DPRINTF(LDB_SCSI, ("dmaintr: empty esp FIFO of %d ", resid));
+		if (nsc->sc_rev == NCR_VARIANT_FAS366 &&
+		    (NCR_READ_REG(nsc, NCR_CFG3) & NCRFASCFG3_EWIDE))
+			resid <<= 1;
 	}
 
 	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
