@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.59 1998/10/19 03:09:34 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.60 1998/10/31 08:56:24 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2124,7 +2124,9 @@ consider_relocation(entry, dataseg)
 			}
 			continue;
 		}
-
+#ifdef RELOC_EXTERNAL_DATA_THROUGH_GOT_P
+	    again:
+#endif
 		/*
 		 * First, do the PIC specific relocs.
 		 * r_relative and r_copy should not occur at this point
@@ -2249,8 +2251,13 @@ consider_relocation(entry, dataseg)
 				sp->defined = N_SIZE;
 
 			} else if (!sp->defined && sp->common_size == 0 &&
-				   sp->so_defined)
+				   sp->so_defined) {
+#ifdef RELOC_EXTERNAL_DATA_THROUGH_GOT_P
+				if (!dataseg && RELOC_EXTERNAL_DATA_THROUGH_GOT_P(reloc))
+					goto again;
+#endif
 				alloc_rrs_reloc(entry, sp);
+			}
 
 		} else {
 			/*
