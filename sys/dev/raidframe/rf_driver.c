@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.22 2000/01/08 22:57:31 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.23 2000/01/09 00:00:18 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -642,7 +642,6 @@ rf_AllocRaidAccDesc(
 	desc->numPending = 0;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
-	desc->tid = 0; /* XXX Make this go away */
 	return (desc);
 }
 
