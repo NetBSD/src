@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.104 2004/07/01 20:38:09 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.104 2004/07/01 20:38:09 jmc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.104 2004/07/01 20:38:09 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.105 2004/07/13 11:59:12 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1690,9 +1690,9 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: %s [-Beiknqrst] [-D variable] [-d flags] [-f makefile]\n\
-            [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
-            [variable=value] [target ...]\n", progname);
+"usage: %s [-BeikNnqrstWX] [-D variable] [-d flags] [-f makefile]\n\
+            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
+            [-V variable] [variable=value] [target ...]\n", progname);
 	exit(2);
 }
 
