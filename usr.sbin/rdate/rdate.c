@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.7 1997/06/17 06:10:47 cgd Exp $	*/
+/*	$NetBSD: rdate.c,v 1.8 1997/10/18 03:51:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,19 +37,24 @@
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rdate.c,v 1.7 1997/06/17 06:10:47 cgd Exp $";
+__RCSID("$NetBSD: rdate.c,v 1.8 1997/10/18 03:51:03 lukem Exp $");
 #endif/* lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <sys/time.h>
 #include <sys/socket.h>
-#include <netdb.h>
+#include <sys/time.h>
+
 #include <netinet/in.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
@@ -60,6 +65,9 @@ static char rcsid[] = "$NetBSD: rdate.c,v 1.7 1997/06/17 06:10:47 cgd Exp $";
 #endif
 
 extern char    *__progname;
+
+	int	main __P((int, char **));
+static	void	usage __P((void));
 
 static void
 usage()
@@ -84,9 +92,9 @@ main(argc, argv)
 	struct protoent *pp, ppp;
 	struct servent *sp, ssp;
 	struct sockaddr_in sa;
-	extern int      optind;
 	int             c;
 
+	adjustment = 0;
 	while ((c = getopt(argc, argv, "psa")) != -1)
 		switch (c) {
 		case 'p':

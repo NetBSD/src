@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1997/03/26 21:12:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 03:50:58 lukem Exp $
 
 PROG=	rdate
-SRCS=	rdate.c
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 
