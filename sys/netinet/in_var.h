@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.32.2.1 1999/05/03 22:24:49 perry Exp $	*/
+/*	$NetBSD: in_var.h,v 1.32.2.2 1999/06/07 19:57:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,10 +153,12 @@ void	in_socktrim __P((struct sockaddr_in *));
 	/* struct in_ifaddr *ia; */ \
 { \
 	for (ia = IN_IFADDR_HASH((addr).s_addr).lh_first; \
-	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)) && \
-	    (ia->ia_ifp->if_flags & IFF_UP) == 0; \
-	    ia = ia->ia_hash.le_next) \
-		 continue; \
+	     ia != NULL; \
+	     ia = ia->ia_hash.le_next) { \
+		if (in_hosteq(ia->ia_addr.sin_addr, (addr)) && \
+		    (ia->ia_ifp->if_flags & IFF_UP) != 0) \
+			break; \
+	} \
 }
 
 /*
