@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/06 22:57:23 fvdl Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2003/10/17 16:23:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,14 +40,10 @@
 /*
  * The x86-64 signal trampoline is invoked only to return from
  * the signal; the kernel calls the signal handler directly.
- *
- * On entry, the stack looks like:
- *
- *	sp->	sigcontext structure
  */
 NENTRY(__sigtramp_siginfo_2)
-	movq	%rsp,%r10
-	pushq	%r10			/* fake return address */
+	movq	%r15,%rdi
+	pushq	$0			/* fake return address */
 	movq	$SYS_setcontext, %rax
 	syscall
 	movq	$SYS_exit, %rax
