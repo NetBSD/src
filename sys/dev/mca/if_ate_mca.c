@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.7 2002/10/02 16:34:10 thorpej Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.8 2002/10/04 15:22:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.7 2002/10/02 16:34:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.8 2002/10/04 15:22:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.7 2002/10/02 16:34:10 thorpej Exp $
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
-#include <dev/ic/ate_subr.h>
 
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
@@ -228,9 +227,9 @@ ate_mca_detect(iot, ioh, enaddr)
 	bus_space_handle_t ioh;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 {
-	u_char eeprom[FE_EEPROM_SIZE];
+	u_int8_t eeprom[FE_EEPROM_SIZE];
 
 	/* Get our station address from EEPROM. */
-	ate_read_eeprom(iot, ioh, eeprom);
-	bcopy(eeprom + FE_ATI_EEP_ADDR, enaddr, ETHER_ADDR_LEN);
+	mb86965_read_eeprom(iot, ioh, eeprom);
+	memcpy(enaddr, eeprom + FE_ATI_EEP_ADDR, ETHER_ADDR_LEN);
 }

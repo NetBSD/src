@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.35 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.36 2002/10/04 15:22:30 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.35 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.36 2002/10/04 15:22:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.35 2002/10/02 03:10:47 thorpej Exp $");
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
-#include <dev/ic/ate_subr.h>
 
 #include <dev/isa/isavar.h>
 
@@ -224,7 +223,7 @@ ate_find(iot, ioh, iobase, irq)
 	bus_space_handle_t ioh;
 	int *iobase, *irq;
 {
-	u_char eeprom[FE_EEPROM_SIZE];
+	u_int8_t eeprom[FE_EEPROM_SIZE];
 	int n;
 
 	static int const irqmap[4][4] = {
@@ -245,7 +244,7 @@ ate_find(iot, ioh, iobase, irq)
 	};
 
 #if ATE_DEBUG >= 4
-	log(LOG_INFO, "ate_find: probe (0x%x) for ATI\n", iobase);
+	log(LOG_INFO, "ate_find: probe (0x%x) for ATE\n", iobase);
 #if 0
 	fe_dump(LOG_INFO, sc);
 #endif
@@ -274,7 +273,7 @@ ate_find(iot, ioh, iobase, irq)
 	 * at this stage, but I cannot test the presence of the chip
 	 * any further without reading EEPROM.  FIXME.
 	 */
-	ate_read_eeprom(iot, ioh, eeprom);
+	mb86965_read_eeprom(iot, ioh, eeprom);
 
 	/* Make sure that config info in EEPROM and 86965 agree. */
 	if (eeprom[FE_EEPROM_CONF] != bus_space_read_1(iot, ioh, FE_BMPR19)) {
@@ -322,18 +321,18 @@ ate_detect(iot, ioh, enaddr)
 	bus_space_handle_t ioh;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 {
-	u_char eeprom[FE_EEPROM_SIZE];
+	u_int8_t eeprom[FE_EEPROM_SIZE];
 	int type;
 
 	/* Get our station address from EEPROM. */
-	ate_read_eeprom(iot, ioh, eeprom);
+	mb86965_read_eeprom(iot, ioh, eeprom);
 	memcpy(enaddr, eeprom + FE_ATI_EEP_ADDR, ETHER_ADDR_LEN);
 
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
 #ifdef ATE_DEBUG
-		printf("fmv_detect: invalid ethernet address\n");
+		printf("ate_detect: invalid ethernet address\n");
 #endif
 		return (0);
 	}
