@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.64 1997/02/10 00:19:08 pk Exp $
-#	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
+#	$NetBSD: Makefile,v 1.65 1997/02/21 08:14:08 mikel Exp $
+#	from: @(#)Makefile	8.4 (Berkeley) 1/25/94
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -16,9 +16,9 @@ NOOBJ=	oobj
 BINOWN= root
 BINGRP= wheel
 BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
-	daily.conf dm.conf floppytab ftpusers ftpchroot gettytab group hosts \
-	hosts.equiv hosts.lpd inetd.conf lkm.conf man.conf monthly \
-	monthly.conf motd mrouted.conf myname netstart networks \
+	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
+	gettytab group hosts hosts.equiv hosts.lpd inetd.conf lkm.conf \
+	man.conf monthly monthly.conf mrouted.conf myname netstart networks \
 	newsyslog.conf phones printcap protocols rbootd.conf rc rc.conf \
 	rc.lkm rc.local remote rpc security security.conf services shells \
 	syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
@@ -51,7 +51,7 @@ distribution: distrib-dirs
 	(cd root; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
-		${INSTALL} -c -o root -g wheel -m 644 dot.klogin \
+		${INSTALL} -c -o root -g wheel -m 600 dot.klogin \
 		    ${DESTDIR}/root/.klogin; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.login \
 		    ${DESTDIR}/root/.login; \
