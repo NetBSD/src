@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 1995/09/21 01:56:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 1995/10/02 09:38:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1135,10 +1135,12 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
+#if NETHER
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
