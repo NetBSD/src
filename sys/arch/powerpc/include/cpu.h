@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.3 2001/11/15 14:42:31 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.4 2001/12/08 08:22:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -143,6 +143,7 @@ extern volatile int intr_depth;
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
+#define	cpu_proc_fork(p1, p2)
 
 extern int powersave;
 extern int cpu_timebase;

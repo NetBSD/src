@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.3 2001/08/24 00:08:34 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.4 2001/12/08 08:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,6 +96,8 @@ extern struct cpu_info cpu_info_store;
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_number()			0
+
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*
  * Arguments to hardclock, softclock and statclock
