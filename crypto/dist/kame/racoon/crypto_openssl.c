@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto_openssl.c,v 1.11 2003/08/26 03:31:51 itojun Exp $");
+__RCSID("$NetBSD: crypto_openssl.c,v 1.12 2003/10/21 03:05:18 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -893,7 +893,7 @@ eay_rsa_verify(src, sig, pubkey)
 	evp = d2i_PUBKEY(NULL, &bp, pubkey->l);
 	if (evp == NULL)
 #ifndef EAYDEBUG
-		return NULL;
+		return 0;
 #endif
 
 	len = RSA_size(evp->pkey.rsa);
@@ -1348,7 +1348,7 @@ eay_3des_weakkey(key)
 	vchar_t *key;
 {
 	if (key->l < 24)
-		return NULL;
+		return 0;
 
 #ifdef USE_NEW_DES_API
 	return (DES_is_weak_key((void *)key->v) ||
