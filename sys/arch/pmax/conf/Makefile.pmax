@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.57 1998/04/19 04:51:18 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.58 1998/04/19 08:01:01 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -47,7 +47,7 @@ MIPS=	$S/arch/mips
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dpmax ${GP}
+		-D__pmax__ -Dpmax ${GP}
 #	-Wno-uninitialized avoids bogus warnings in cpu_reboot()
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
 .if (${HAVE_GCC28} != "")
