@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.14 1996/05/19 21:05:54 veego Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.15 1997/10/19 19:08:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,5 +109,6 @@ enum grfunits {
 	GRF_CL5426_UNIT,
 	GRF_ULOWELL_UNIT,
 	GRF_CV64_UNIT,
-	GRF_ET4000_UNIT
+	GRF_ET4000_UNIT,
+	GRF_CV3D_UNIT
 };
