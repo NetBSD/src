@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.21 1999/12/16 05:35:43 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.22 1999/12/20 00:38:21 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -84,19 +84,7 @@ isp_attach(isp)
 		sdparam *sdp = isp->isp_param;
 		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd_slow;
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
-		if (isp->isp_bustype == ISP_BT_SBUS) {
-			isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
-		} else {
-			/*
-			 * Too much target breakage at present.
-			 */
-#if	0
-			if (isp->isp_fwrev >= ISP_FW_REV(7,55,0))
-				isp->isp_osinfo._link.scsipi_scsi.max_lun = 31;
-			else
-#endif
-				isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
-		}
+		isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 		    sdp->isp_initiator_id;
 		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
