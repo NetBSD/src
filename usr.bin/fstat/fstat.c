@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: fstat.c,v 1.14 1995/03/28 17:24:12 jtc Exp $";
+/*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95;*/
+static char *rcsid = "$Id: fstat.c,v 1.15 1996/02/20 16:04:47 fvdl Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ static char *rcsid = "$Id: fstat.c,v 1.14 1995/03/28 17:24:12 jtc Exp $";
 #undef _KERNEL
 #define NFS
 #include <sys/mount.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
@@ -77,6 +77,7 @@ static char *rcsid = "$Id: fstat.c,v 1.14 1995/03/28 17:24:12 jtc Exp $";
 #include <ctype.h>
 #include <errno.h>
 #include <kvm.h>
+#include <limits.h>
 #include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
@@ -155,6 +156,7 @@ main(argc, argv)
 	struct kinfo_proc *p, *plast;
 	int arg, ch, what;
 	char *memf, *nlistf;
+	char buf[_POSIX2_LINE_MAX];
 	int cnt;
 
 	arg = 0;
@@ -229,8 +231,8 @@ main(argc, argv)
 	if (nlistf != NULL || memf != NULL)
 		setgid(getgid());
 
-	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, NULL)) == NULL) {
-		fprintf(stderr, "fstat: %s\n", kvm_geterr(kd));
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL) {
+		fprintf(stderr, "fstat: %s\n", buf);
 		exit(1);
 	}
 #ifdef notdef
