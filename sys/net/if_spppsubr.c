@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.40 2002/01/14 07:39:14 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.41 2002/01/15 12:28:08 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.40 2002/01/14 07:39:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.41 2002/01/15 12:28:08 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4923,23 +4923,31 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    if (sp->myauth.name != NULL)
 			cfg->myname_length = strlen(sp->myauth.name)+1;
 		} else {
-		    int rv;
-		    size_t len = strlen(sp->myauth.name);
-		    if (cfg->myname_length < len+1)
-			return ENAMETOOLONG;
-		    rv = copyout(sp->myauth.name, cfg->myname, len);
-		    if (rv) return rv;
+		    if (sp->myauth.name == NULL) {
+			cfg->myname_length = 0;
+		    } else {
+			int rv;
+			size_t len = strlen(sp->myauth.name)+1;
+			if (cfg->myname_length < len)
+			    return ENAMETOOLONG;
+			rv = copyout(sp->myauth.name, cfg->myname, len);
+			if (rv) return rv;
+		    }
 		}
 		if (cfg->hisname_length == 0) {
 		    if(sp->hisauth.name != NULL)
 			cfg->hisname_length = strlen(sp->hisauth.name)+1;
 		} else {
-		    int rv;
-		    size_t len = strlen(sp->hisauth.name);
-		    if (cfg->hisname_length < len+1)
-			return ENAMETOOLONG;
-		    rv = copyout(sp->hisauth.name, cfg->hisname, len);
-		    if (rv) return rv;
+		    if (sp->hisauth.name == NULL) {
+		    	cfg->hisname_length = 0;
+		    } else {
+			int rv;
+			size_t len = strlen(sp->hisauth.name)+1;
+			if (cfg->hisname_length < len)
+			    return ENAMETOOLONG;
+			rv = copyout(sp->hisauth.name, cfg->hisname, len);
+			if (rv) return rv;
+		    }
 		}
 	    }
 	    break;
@@ -4957,28 +4965,52 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
 		sp->hisauth.secret = NULL;
 
-		if (cfg->hisname != NULL && cfg->hisname_length) {
+		if (cfg->hisname != NULL && cfg->hisname_length > 0) {
+		    if (cfg->hisname_length >= MCLBYTES)
+			return ENAMETOOLONG;
 		    sp->hisauth.name = malloc(cfg->hisname_length, M_DEVBUF, M_WAITOK);
 		    rv = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
-		    if (rv) return rv;
+		    if (rv) {
+			free(sp->hisauth.name, M_DEVBUF);
+			sp->hisauth.name = NULL;
+			return rv;
+		    }
 		    sp->hisauth.name[cfg->hisname_length-1] = 0;
 		}
-		if (cfg->hissecret != NULL && cfg->hissecret_length) {
+		if (cfg->hissecret != NULL && cfg->hissecret_length > 0) {
+		    if (cfg->hissecret_length >= MCLBYTES)
+			return ENAMETOOLONG;
 		    sp->hisauth.secret = malloc(cfg->hissecret_length, M_DEVBUF, M_WAITOK);
 		    rv = copyin(cfg->hissecret, sp->hisauth.secret, cfg->hissecret_length);
-		    if (rv) return rv;
+		    if (rv) {
+		    	free(sp->hisauth.secret, M_DEVBUF);
+		    	sp->hisauth.secret = NULL;
+			return rv;
+		    }
 		    sp->hisauth.secret[cfg->hisname_length-1] = 0;
 		}
-		if (cfg->myname != NULL && cfg->myname_length) {
+		if (cfg->myname != NULL && cfg->myname_length > 0) {
+		    if (cfg->myname_length >= MCLBYTES)
+			return ENAMETOOLONG;
 		    sp->myauth.name = malloc(cfg->myname_length, M_DEVBUF, M_WAITOK);
 		    rv = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
-		    if (rv) return rv;
+		    if (rv) {
+			free(sp->myauth.name, M_DEVBUF);
+			sp->myauth.name = NULL;
+			return rv;
+		    }
 		    sp->myauth.name[cfg->myname_length-1] = 0;
 		}
-		if (cfg->mysecret != NULL && cfg->mysecret_length) {
+		if (cfg->mysecret != NULL && cfg->mysecret_length > 0) {
+		    if (cfg->mysecret_length >= MCLBYTES)
+			return ENAMETOOLONG;
 		    sp->myauth.secret = malloc(cfg->mysecret_length, M_DEVBUF, M_WAITOK);
 		    rv = copyin(cfg->mysecret, sp->myauth.secret, cfg->mysecret_length);
-		    if (rv) return rv;
+		    if (rv) {
+		    	free(sp->myauth.secret, M_DEVBUF);
+		    	sp->myauth.secret = NULL;
+			return rv;
+		    }
 		    sp->myauth.secret[cfg->myname_length-1] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
