@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.9 2002/04/06 21:46:51 martin Exp $ 
+ *	$Id: isac.c,v 1.10 2002/04/08 12:20:49 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.9 2002/04/06 21:46:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.10 2002/04/08 12:20:49 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -188,7 +188,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 
 			c |= ISAC_CMDR_RMC;
 
-			if(sc->sc_enabled &&
+			if(sc->sc_intr_valid == ISIC_INTR_VALID &&
 			   (((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S))
 			{
 				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_ibuf);
@@ -551,7 +551,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
-	sc->sc_dying = 0;
+	sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
