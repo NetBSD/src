@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 2001/08/05 00:01:27 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 2001/08/17 00:14:38 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -33,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/param.h>
 
 #include <machine/asm.h>
 #include <stdlib.h>
@@ -59,6 +60,8 @@ __start:
 	add	r2, r1, r0, lsl #2
 	add	r2, r2, #0x0004
 
+	/* Ensure the stack is properly aligned before calling C code. */
+	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "
 	sub	sp, sp, #8
 	str	r5, [sp, #4]
 	str	r4, [sp, #0]
@@ -67,7 +70,7 @@ __start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.3 2001/08/05 00:01:27 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.4 2001/08/17 00:14:38 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
