@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.7 2000/10/29 12:32:24 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.8 2000/11/02 16:40:45 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,11 @@ is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
-.ie r_pmax \{\
+.ie \n[macppc]:\n[sparc] \{\
+To do the upgrade, you must boot from the installer kernel using one of
+the methods described above.
+.\}
+.el .ie r_pmax \{\
 To do the upgrade, you must install new bootblocks and boot off
 the
 .Ic install
@@ -66,7 +70,7 @@ kernel as described in the
 .Sx Installing from an existing system
 section.
 .\}
-.ie r_x68k \{\
+.el .ie r_x68k \{\
 As noted above, you must have the
 .Pa loadbsd.x
 utility and the installation kernel you chose, or, the
