@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.1 2001/08/08 16:39:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.2 2001/12/30 02:19:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ int
 pthread_key_delete(pthread_key_t key)
 {
 	pthread_t self, thread;
-	extern pt_spin_t allqueue_lock;
-	extern struct pt_queue_t allqueue;
+	extern pthread_spin_t allqueue_lock;
+	extern struct pthread_queue_t allqueue;
 
 	/* This takes a little work. When pthread_key_create() returns
 	 * a new key, the data for that key must be NULL in all threads.

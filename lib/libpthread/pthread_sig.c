@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.6 2001/11/26 19:19:54 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.7 2001/12/30 02:19:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,10 +48,10 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-static pt_spin_t	pt_sigacts_lock;
+static pthread_spin_t	pt_sigacts_lock;
 static struct sigaction pt_sigacts[_NSIG];
 
-static pt_spin_t	pt_process_siglock;
+static pthread_spin_t	pt_process_siglock;
 static sigset_t	pt_process_sigmask;
 static sigset_t	pt_process_siglist;
 
@@ -173,8 +173,8 @@ void
 pthread__signal(pthread_t t, int sig, int code)
 {
 	pthread_t self, target, good, okay;
-	extern pt_spin_t allqueue_lock;
-	extern struct pt_queue_t allqueue;
+	extern pthread_spin_t allqueue_lock;
+	extern struct pthread_queue_t allqueue;
 	ucontext_t *uc;
 
 	if (t)
