@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2003/06/11 07:35:39 hamajima Exp $
+# $NetBSD: GENERIC,v 1.158 2003/06/11 16:24:13 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 maxusers	32
 
@@ -75,8 +75,11 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_LINUX	# Linux binary compatibility
-options 	COMPAT_MACH	# Mach binary compatibility (experimental)
-options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
+#options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
+#options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
+#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
+#options	DEBUG_DARWIN	# COMPAT_DARWIN debugging
+#options	DEBUG_MACH	# COMPAT_MACH debugging
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
