@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2001/12/07 06:57:49 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2002/01/07 04:47:10 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -19,8 +19,6 @@ IMAGE1?=	${BASENAME}1.fs
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
 FSTMP=		ustar.fs
 
@@ -37,12 +35,12 @@ realall: netbsd ${BOOTNAME}
 	@echo Making disk number one
 	-mv -f ${IMAGE1} ${IMAGE1}.tmp
 	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CRDEV} ${IMAGE1}.tmp
-	disklabel -rw ${VND_CRDEV} ${DISKTYPE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE1}.tmp
+	disklabel -rw ${VND} ${DISKTYPE}
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_RDEV}
 	@echo "installing new bootblocks"
 	${MDEC}/installboot.new -v ${MDEC}/fdboot_ustar ${VND_RDEV}
-	vnconfig -u ${VND_CRDEV}
+	vnconfig -u ${VND}
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -77,7 +75,7 @@ realall: netbsd ${BOOTNAME}
 	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
 unconfig:
-	-vnconfig -u ${VND_RDEV}
+	-vnconfig -u ${VND}
 
 ${BOOTNAME}:
 	cp -fp ${MDEC}/boot ${BOOTNAME}
