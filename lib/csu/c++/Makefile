@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1994/02/10 01:10:01 cgd Exp $
+#	$Id: Makefile,v 1.3 1995/01/07 23:09:08 mycroft Exp $
 
 CFLAGS+=	-DLIBC_SCCS -fpic
 OBJS=		c++rt0.o
@@ -6,7 +6,7 @@ OBJS=		c++rt0.o
 all: ${OBJS}
 
 c++rt0.o: c++rt0.c
-	${CC} ${CFLAGS} -c ${.ALLSRC}
+	${COMPILE.c} ${.ALLSRC}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
