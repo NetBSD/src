@@ -1,8 +1,9 @@
-#	$Id: Makefile,v 1.9 1994/09/19 04:49:02 mycroft Exp $
+#	$Id: Makefile,v 1.10 1995/08/25 10:08:45 pk Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
-NOMAN=	noman
+#NOMAN=	noman
+MAN= rtld.1
 LDDIR?= $(.CURDIR)/..
 #PICFLAG=-pic
 PICFLAG=-fpic
@@ -11,6 +12,7 @@ LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
 ASFLAGS+=-k
 LDADD+=	-lc_pic
 BINDIR= /usr/libexec
+MLINKS=	rtld.1 ld.so.1
 
 .PATH: $(LDDIR) $(LDDIR)/$(MACHINE_ARCH) ${.CURDIR}/../../../../lib/libc/stdio
 
