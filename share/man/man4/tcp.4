@@ -1,4 +1,5 @@
-.\"	$NetBSD: tcp.4,v 1.16 2004/04/25 02:48:10 snj Exp $
+.\"	$NetBSD: tcp.4,v 1.17 2004/04/25 22:25:05 jonathan Exp $
+.\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,6 +134,31 @@ The
 .Dv TCP_MAXSEG
 option allows the user to determine the result of this negotiation,
 and to reduce it if desired.
+.It Dv TCP_MD5SIG
+This option enables the use of MD5 digests (also known as TCP-MD5)
+on writes to the specified socket.
+In the current release, only outgoing traffic is digested;
+digests on incoming traffic are not verified.
+The current default behavior for the system is to respond to a system
+advertising this option with TCP-MD5; this may change.
+.Pp
+One common use for this in a FreeBSD router deployment is to enable
+based routers to interwork with Cisco equipment at peering points.
+Support for this feature conforms to RFC 2385.
+Only IPv4 (AF_INET) sessions are supported.
+.Pp
+In order for this option to function correctly, it is necessary for the
+administrator to add a tcp-md5 key entry to the system's security
+associations database (SADB) using the
+.Xr setkey 8
+utility.
+This entry must have an SPI of 0x1000 and can therefore only be specified
+on a per-host basis at this time.
+.Pp
+If an SADB entry cannot be found for the destination, the outgoing traffic
+will have an invalid digest option prepended, and the following error message
+will be visible on the system console:
+.Em "tcp_signature_compute: SADB lookup failed for %d.%d.%d.%d" .
 .El
 .Pp
 The option level for the

@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.11 2004/03/24 15:34:55 atatat Exp $	*/
-/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
+/*	$NetBSD: key.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3018,6 +3018,7 @@ key_setsaval(sav, m, mhp)
 		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
+		case SADB_X_SATYPE_TCPSIGNATURE:
 			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
 			    sav->alg_auth != SADB_X_AALG_NULL)
 				error = EINVAL;
@@ -3073,6 +3074,7 @@ key_setsaval(sav, m, mhp)
 			sav->key_enc = NULL;	/*just in case*/
 			break;
 		case SADB_SATYPE_AH:
+		case SADB_X_SATYPE_TCPSIGNATURE:
 		default:
 			error = EINVAL;
 			break;
@@ -3095,6 +3097,9 @@ key_setsaval(sav, m, mhp)
 		break;
 	case SADB_X_SATYPE_IPCOMP:
 		error = xform_init(sav, XF_IPCOMP);
+		break;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		error = xform_init(sav, XF_TCPSIGNATURE);
 		break;
 	}
 	if (error) {
@@ -3263,6 +3268,14 @@ key_mature(sav)
 			return(EINVAL);
 		}
 		error = xform_init(sav, XF_IPCOMP);
+		break;
+	case IPPROTO_TCP:
+		if (sav->alg_enc != SADB_EALG_NONE) {
+			ipseclog((LOG_DEBUG, "%s: protocol and algorithm "
+				"mismated.\n", __func__));
+			return(EINVAL);
+		}
+		error = xform_init(sav, XF_TCPSIGNATURE);
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_mature: Invalid satype.\n"));
@@ -4390,6 +4403,8 @@ key_satype2proto(satype)
 		return IPPROTO_ESP;
 	case SADB_X_SATYPE_IPCOMP:
 		return IPPROTO_IPCOMP;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		return IPPROTO_TCP;
 	default:
 		return 0;
 	}
@@ -4412,6 +4427,8 @@ key_proto2satype(proto)
 		return SADB_SATYPE_ESP;
 	case IPPROTO_IPCOMP:
 		return SADB_X_SATYPE_IPCOMP;
+	case IPPROTO_TCP:
+		return SADB_X_SATYPE_TCPSIGNATURE;
 	default:
 		return 0;
 	}
@@ -6775,6 +6792,7 @@ key_parse(m, so)
 	case SADB_SATYPE_AH:
 	case SADB_SATYPE_ESP:
 	case SADB_X_SATYPE_IPCOMP:
+	case SADB_X_SATYPE_TCPSIGNATURE:
 		switch (msg->sadb_msg_type) {
 		case SADB_X_SPDADD:
 		case SADB_X_SPDDELETE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.14 2003/09/12 07:45:21 itojun Exp $	*/
+/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/usr.sbin/setkey/parse.y,v 1.1.2.4 2004/04/06 10:02:12 bms Exp $	*/
 /*	$KAME: parse.y,v 1.80 2003/06/27 07:15:45 itojun Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ extern void yyerror __P((const char *));
 
 %token EOT SLASH BLCL ELCL
 %token ADD GET DELETE DELETEALL FLUSH DUMP
-%token PR_ESP PR_AH PR_IPCOMP
+%token PR_ESP PR_AH PR_IPCOMP PR_TCP
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
 %token F_MODE MODE F_REQID
 %token F_EXT EXTENSION NOCYCLICSEQ
@@ -115,7 +115,7 @@ extern void yyerror __P((const char *));
 %type <num> ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD ALG_ENC_NOKEY
 %type <num> ALG_AUTH ALG_AUTH_NOKEY
 %type <num> ALG_COMP
-%type <num> PR_ESP PR_AH PR_IPCOMP
+%type <num> PR_ESP PR_AH PR_IPCOMP PR_TCP
 %type <num> EXTENSION MODE
 %type <ulnum> DECSTRING
 %type <val> PL_REQUESTS portstr key_string
@@ -252,8 +252,12 @@ protocol_spec
 		{
 			$$ = SADB_X_SATYPE_IPCOMP;
 		}
+	|	PR_TCP
+		{
+			$$ = SADB_X_SATYPE_TCPSIGNATURE;
+		}
 	;
-	
+
 spi
 	:	DECSTRING { p_spi = $1; }
 	|	HEXSTRING
@@ -402,7 +406,11 @@ auth_alg
 
 			p_key_auth_len = $2.len;
 			p_key_auth = $2.buf;
-			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
+			if (p_alg_auth == SADB_X_AALG_TCP_MD5) {
+				if ((p_key_auth_len < 1) || (p_key_auth_len >
+				    80))
+				return -1;
+			} else if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
 			    p_alg_auth, PFKEY_UNUNIT64(p_key_auth_len)) < 0) {
 				yyerror(ipsec_strerror());
 				return -1;
@@ -654,6 +662,7 @@ portstr
 upper_spec
 	:	DECSTRING { $$ = $1; }
 	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
+	|	PR_TCP { $$ = IPPROTO_TCP; }
 	|	STRING
 		{
 			struct protoent *ent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.15 2003/08/07 16:33:15 agc Exp $	*/
+/*	$NetBSD: tcp.h,v 1.16 2004/04/25 22:25:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -88,6 +88,9 @@ struct tcphdr {
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
+#define	TCPOPT_SIGNATURE		19	/* Keyed MD5: RFC 2385 */
+#define	   TCPOLEN_SIGNATURE		18
+
 /*
  * Default maximum segment size for TCP.
  * With an IP MSS of 576, this is 536,
@@ -109,5 +112,6 @@ struct tcphdr {
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
-
+/* Bits 0x04, 0x08 reserved for FreeBSD compatibility: TCP_NOPUSH, TCP_NOOPT */
+#define TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
 #endif /* _NETINET_TCP_H_ */

@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.7 2004/03/02 02:22:56 thorpej Exp $	*/
-/*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.8 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ struct secspacq {
 #define	IPSEC_MODE_ANY		0	/* i.e. wildcard. */
 #define	IPSEC_MODE_TRANSPORT	1
 #define	IPSEC_MODE_TUNNEL	2
+#define	IPSEC_MODE_TCPMD5	3	/* TCP MD5 mode */
 
 /*
  * Direction of security policy.
@@ -479,6 +480,8 @@ INITFN void ah_attach(void);
 INITFN void esp_attach(void);
 INITFN void ipcomp_attach(void);
 INITFN void ipe4_attach(void);
+INITFN void ipe4_attach(void);
+INITFN void tcpsignature_attach(void);
 
 INITFN void ipsec_attach(void);
 

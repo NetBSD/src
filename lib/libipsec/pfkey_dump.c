@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.17 2003/09/08 10:16:31 itojun Exp $	*/
+/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/lib/libipsec/pfkey_dump.c,v 1.1.2.5 2004/02/14 22:28:29 bms Exp $	*/
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey_dump.c,v 1.17 2003/09/08 10:16:31 itojun Exp $");
+__RCSID("$NetBSD: pfkey_dump.c,v 1.18 2004/04/25 22:25:05 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +104,8 @@ static char *str_satype[] = {
 	"ripv2",
 	"mip",
 	"ipcomp",
+	"policy",
+	"tcp"
 };
 
 static char *str_mode[] = {
@@ -126,6 +128,7 @@ static struct val2str str_alg_auth[] = {
 	{ SADB_X_AALG_MD5, "md5", },
 	{ SADB_X_AALG_SHA, "sha", },
 	{ SADB_X_AALG_NULL, "null", },
+	{ SADB_X_AALG_TCP_MD5, "tcp-md5", },
 	{ SADB_X_AALG_SHA2_256, "hmac-sha2-256", },
 	{ SADB_X_AALG_SHA2_384, "hmac-sha2-384", },
 	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },

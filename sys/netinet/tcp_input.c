@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.201 2004/04/25 22:25:03 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.201 2004/04/25 22:25:03 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2665,6 +2665,19 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 				/* tcp_mark_sacked(tp, lwe, rwe); */
 			}
 			break;
+#ifdef TCP_SIGNATURE
+		/*
+		 * XXX In order to reply to a host which has set the
+		 * TCP_SIGNATURE option in its initial SYN, we have to
+		 * record the fact that the option was observed here
+		 * for the syncache code to perform the correct response.
+		 */
+		case TCPOPT_SIGNATURE:
+			if (optlen != TCPOLEN_SIGNATURE)
+				continue;
+			tp->t_flags |= (TOF_SIGNATURE | TOF_SIGLEN);
+			break;
+#endif
 		}
 	}
 }
@@ -3388,6 +3401,11 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 	tcpstat.tcps_accepts++;
 
+#ifdef TCP_SIGNATURE
+	if (sc->sc_flags & SCF_SIGNATURE)
+		tp->t_flags |= TF_SIGNATURE;
+#endif
+
 	/* Initialize tp->t_ourmss before we deal with the peer's! */
 	tp->t_ourmss = sc->sc_ourmaxseg;
 	tcp_mss_from_peer(tp, sc->sc_peermaxseg);
@@ -3669,6 +3687,17 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
+#ifdef TCP_SIGNATURE
+	/*
+	 * If listening socket requested TCP digests, and received SYN
+	 * contains the option, flag this in the syncache so that
+	 * syncache_respond() will do the right thing with the SYN+ACK.
+	 * XXX Currently we always record the option by default and will
+	 * attempt to use it in syncache_respond().
+	 */
+	if (tb.t_flags & TOF_SIGNATURE)
+		sc->sc_flags = SCF_SIGNATURE;
+#endif
 	sc->sc_tp = tp;
 	if (syn_cache_respond(sc, m) == 0) {
 		syn_cache_insert(sc, tp);
@@ -3719,6 +3748,11 @@ syn_cache_respond(sc, m)
 	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
+
+#ifdef TCP_SIGNATURE
+	optlen += ((sc->sc_flags & SCF_SIGNATURE) ?
+	    (TCPOLEN_SIGNATURE + 2) : 0);
+#endif
 
 	tlen = hlen + sizeof(struct tcphdr) + optlen;
 
@@ -3817,6 +3851,26 @@ syn_cache_respond(sc, m)
 		*lp   = htonl(sc->sc_timestamp);
 		optp += TCPOLEN_TSTAMP_APPA;
 	}
+
+#ifdef TCP_SIGNATURE
+	/*
+	 * Handle TCP-MD5 passive opener response.
+	 */
+	if (sc->sc_flags & SCF_SIGNATURE) {
+		u_int8_t *bp = optp;
+		int i;
+
+		*bp++ = TCPOPT_SIGNATURE;
+		*bp++ = TCPOLEN_SIGNATURE;
+		for (i = 0; i < TCP_SIGLEN; i++)
+			*bp++ = 0;
+		tcp_signature_compute(m, sizeof(struct ip), 0, optlen,
+			optp + 2, IPSEC_DIR_OUTBOUND);
+		*bp++ = TCPOPT_NOP;
+		*bp++ = TCPOPT_EOL;
+		optp += TCPOLEN_SIGNATURE + 2;
+	}
+#endif /* TCP_SIGNATURE */
 
 	/* Compute the packet's checksum. */
 	switch (sc->sc_src.sa.sa_family) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.109 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.110 2004/04/25 22:25:05 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -151,6 +151,21 @@
 
 #include <sys/callout.h>
 
+#ifdef TCP_SIGNATURE
+/*
+ * Defines which are needed by the xform_tcp module and tcp_[in|out]put
+ * for SADB verification and lookup.
+ */
+#define	TCP_SIGLEN	16	/* length of computed digest in bytes */
+#define	TCP_KEYLEN_MIN	1	/* minimum length of TCP-MD5 key */
+#define	TCP_KEYLEN_MAX	80	/* maximum length of TCP-MD5 key */
+/*
+ * Only a single SA per host may be specified at this time. An SPI is
+ * needed in order for the KEY_ALLOCSA() lookup to work.
+ */
+#define	TCP_SIG_SPI	0x1000
+#endif /* TCP_SIGNATURE */
+
 /*
  * Tcp control block, one per tcp; fields:
  */
@@ -182,6 +197,7 @@ struct tcpcb {
 #define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
 #define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
 #define	TF_DEAD		0x8000		/* dead and to-be-released */
+#define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
@@ -374,6 +390,9 @@ struct tcp_opt_info {
 	u_int16_t	maxseg;
 };
 
+#define	TOF_SIGNATURE	0x0040		/* signature option present */
+#define	TOF_SIGLEN	0x0080		/* sigature length valid (RFC2385) */
+
 /*
  * Data for the TCP compressed state engine.
  */
@@ -415,6 +434,7 @@ struct syn_cache {
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 #define	SCF_DEAD		0x0004		/* this entry to be released */
+#define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_peermaxseg;
@@ -751,6 +771,9 @@ int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);
 void	 tcp_rmx_rtt(struct tcpcb *);
 void	 tcp_setpersist(struct tcpcb *);
+#ifdef TCP_SIGNATURE
+int	 tcp_signature_compute(struct mbuf *, int, int, int, u_char *, u_int);
+#endif
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
