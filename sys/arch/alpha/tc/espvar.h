@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.4 1996/07/09 00:55:13 cgd Exp $	*/
+/*	$NetBSD: espvar.h,v 1.5 1996/09/09 18:10:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -39,7 +39,7 @@
 #define	ESP200		0x03
 #define	NCR53C94	0x04
 
-/* 
+/*
  * ECB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
  * with a request sense command.  Basicly, we refrain from fiddling with
@@ -64,11 +64,24 @@ struct ecb {
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
+#if ESP_DEBUG > 0
+	char trace[1000];
+#endif
 };
+#if ESP_DEBUG > 0
+#define ECB_TRACE(ecb, msg, a, b) do { \
+	const char *f = "[" msg "]"; \
+	int n = strlen((ecb)->trace); \
+	if (n < (sizeof((ecb)->trace)-100)) \
+		sprintf((ecb)->trace + n, f,  a, b); \
+} while(0)
+#else
+#define ECB_TRACE(ecb, msg, a, b)
+#endif
 
-/* 
- * Some info about each (possible) target on the SCSI bus.  This should 
- * probably have been a "per target+lunit" structure, but we'll leave it at 
+/*
+ * Some info about each (possible) target on the SCSI bus.  This should
+ * probably have been a "per target+lunit" structure, but we'll leave it at
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
 struct esp_tinfo {
@@ -83,8 +96,8 @@ struct esp_tinfo {
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
 #define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
 #define T_SYNCMODE	0x08	/* sync mode has been negotiated */
-#define T_XXX		0x10	/* Target is XXX */
-#define T_SYNCHNEGO	0x20	/* .. */
+#define T_SYNCHOFF	0x10	/* .. */
+#define T_RSELECTOFF	0x20	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
@@ -105,15 +118,15 @@ struct esp_tinfo {
 
 #ifdef ESP_DEBUG
 extern int esp_debug;
-#define ESP_ECBS(str)	do {if (esp_debug & ESP_SHOWECBS) printf str;} while (0)
-#define ESP_MISC(str)	do {if (esp_debug & ESP_SHOWMISC) printf str;} while (0)
-#define ESP_INTS(str)	do {if (esp_debug & ESP_SHOWINTS) printf str;} while (0)
-#define ESP_TRACE(str)	do {if (esp_debug & ESP_SHOWTRAC) printf str;} while (0)
-#define ESP_CMDS(str)	do {if (esp_debug & ESP_SHOWCMDS) printf str;} while (0)
-#define ESP_START(str)	do {if (esp_debug & ESP_SHOWSTART) printf str;}while (0)
-#define ESP_PHASE(str)	do {if (esp_debug & ESP_SHOWPHASE) printf str;}while (0)
-#define ESP_DMA(str)	do {if (esp_debug & ESP_SHOWDMA) printf str;} while (0)
-#define ESP_MSGS(str) 	do {if (esp_debug & ESP_SHOWMSGS) printf str;} while (0)
+#define ESP_ECBS(str)  do {if (esp_debug & ESP_SHOWECBS) printf str;} while (0)
+#define ESP_MISC(str)  do {if (esp_debug & ESP_SHOWMISC) printf str;} while (0)
+#define ESP_INTS(str)  do {if (esp_debug & ESP_SHOWINTS) printf str;} while (0)
+#define ESP_TRACE(str) do {if (esp_debug & ESP_SHOWTRAC) printf str;} while (0)
+#define ESP_CMDS(str)  do {if (esp_debug & ESP_SHOWCMDS) printf str;} while (0)
+#define ESP_START(str) do {if (esp_debug & ESP_SHOWSTART) printf str;}while (0)
+#define ESP_PHASE(str) do {if (esp_debug & ESP_SHOWPHASE) printf str;}while (0)
+#define ESP_DMA(str)   do {if (esp_debug & ESP_SHOWDMA) printf str;}while (0)
+#define ESP_MSGS(str)  do {if (esp_debug & ESP_SHOWMSGS) printf str;}while (0)
 #else
 #define ESP_ECBS(str)
 #define ESP_MISC(str)
@@ -198,6 +211,7 @@ struct esp_softc {
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
 	int sc_minsync;				/* minimum sync period / 4 */
+	int sc_maxxfer;				/* maximum transfer size */
 };
 
 /* values for sc_state */
@@ -207,7 +221,7 @@ struct esp_softc {
 #define ESP_RESELECTED	0x04	/* Has been reselected */
 #define ESP_HASNEXUS	0x05	/* Actively using the SCSI bus */
 #define ESP_CLEANING	0x06
-#define	ESP_SBR		0x07	/* Expect a SCSI RST because we commanded it */
+#define ESP_SBR		0x07	/* Expect a SCSI RST because we commanded it */
 
 /* values for sc_flags */
 #define ESP_DROP_MSGI	0x01	/* Discard all msgs (parity err detected) */
@@ -300,22 +314,13 @@ ESP_READ_REG(sc, reg)
 	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
+#ifndef SPARC_DRIVER
 /* DMA macros for ESP */
-#ifdef SPARC_DRIVER
-#define	DMA_ENINTR(r)		((r->enintr)(r))
-#define	DMA_ISINTR(r)		((r->isintr)(r))
-#define	DMA_RESET(r)		((r->reset)(r))
-#define	DMA_START(a, b, c, d)	((a->start)(a, b, c, d))
-#define	DMA_INTR(r)		((r->intr)(r))
-#define DMA_DRAIN(sc)	if (sc->sc_rev < DMAREV_2) { \
-				DMACSR(sc) |= D_DRAIN; \
-				DMAWAIT1(sc); \
-			}
-#else
-#define	DMA_ENINTR(r)		tcds_dma_enintr(r)
-#define	DMA_ISINTR(r)		tcds_dma_isintr(r)
-#define	DMA_RESET(r)		tcds_dma_reset(r)
-#define	DMA_START(a, b, c, d)	tcds_dma_start(a, b, c, d)
-#define	DMA_INTR(r)		tcds_dma_intr(r)
-#define	DMA_DRAIN(sc)
+#define	DMA_ISINTR(sc)		tcds_dma_isintr(sc)
+#define	DMA_RESET(sc)		tcds_dma_reset(sc)
+#define	DMA_INTR(sc)		tcds_dma_intr(sc)
+#define	DMA_SETUP(sc, addr, len, datain, dmasize) \
+				tcds_dma_setup(sc, addr, len, datain, dmasize)
+#define	DMA_GO(sc)		tcds_dma_go(sc)
+#define	DMA_ISACTIVE(sc)	tcds_dma_isactive(sc)
 #endif
