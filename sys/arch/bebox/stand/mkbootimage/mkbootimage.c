@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.1 1999/06/28 00:35:23 sakamoto Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.1.12.1 2001/04/22 18:09:24 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +46,7 @@
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define	BO(x)	bswap32(x)
 #else
-#define	BO(x)
+#define	BO(x)	(x)
 #endif
 
 static void usage(void);
