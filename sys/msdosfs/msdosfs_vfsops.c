@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.17 1994/07/18 21:38:18 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.18 1994/07/19 04:30:03 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -640,7 +640,7 @@ loop:
 		if (VOP_ISLOCKED(vp))	/* file is busy		 */
 			continue;
 		dep = VTODE(vp);
-		if ((dep->de_flag & DE_UPD) == 0 &&
+		if ((dep->de_flag & DE_UPDATE) == 0 &&
 		    vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
 		if (vget(vp, 1))	/* not there anymore?	 */
