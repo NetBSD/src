@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.16 2004/05/28 18:55:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $
+ *	$Id: layer_vnops.c,v 1.16 2004/05/28 18:55:20 wrstuden Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.15 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.16 2004/05/28 18:55:20 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,10 +750,36 @@ layer_inactive(v)
 	 */
 	VOP_UNLOCK(vp, 0);
 
-	/* ..., but don't cache the device node. */
-	if (vp->v_type == VBLK || vp->v_type == VCHR)
+	/*
+	 * ..., but don't cache the device node. Also, if we did a
+	 * remove, don't cache the node.
+	 */
+	if (vp->v_type == VBLK || vp->v_type == VCHR
+	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED))
 		vgone(vp);
 	return (0);
+}
+
+int
+layer_remove(v)
+	void *v;
+{
+	struct vop_remove_args /* {
+		struct vonde		*a_dvp;
+		struct vnode		*a_vp;
+		struct componentname	*a_cnp;
+	} */ *ap = v;
+
+	int		error;
+	struct vnode	*vp = ap->a_vp;
+
+	vref(vp);
+	if ((error = LAYERFS_DO_BYPASS(vp, ap)) == 0)
+		VTOLAYER(vp)->layer_flags |= LAYERFS_REMOVED;
+
+	vrele(vp);
+
+	return (error);
 }
 
 int
