@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.23 1996/03/29 00:11:42 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.24 1996/03/30 22:51:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -77,6 +77,7 @@
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <sys/audioio.h>
 #include <dev/audiovar.h>
@@ -84,10 +85,6 @@
 
 #ifdef AUDIO_DEBUG
 #include <machine/stdarg.h>
-#ifndef TOLOG
-#define TOLOG	0x04
-#endif
-void kprintf __P((const char *fmt, int flags, struct tty *tp, va_list ap));
 
 void
 #ifdef __STDC__
@@ -100,7 +97,7 @@ Dprintf(fmt, va_alist)
 	va_list ap;
 
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, ap);
+	log(LOG_DEBUG, "%:", fmt, ap);
 	va_end(ap);
 }
 
@@ -151,12 +148,6 @@ void	audio_alloc_auzero __P((struct audio_softc *, int));
 void	audio_printsc __P((struct audio_softc *));
 void	audioattach __P((int));
 int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-int	audioopen __P((dev_t, int, int, struct proc *));
-int	audioclose __P((dev_t, int, int, struct proc *));
-int	audioread __P((dev_t, struct uio *, int));
-int	audiowrite __P((dev_t, struct uio *, int));
-int	audioioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	audioselect __P((dev_t, int, struct proc *));
 void	audio_init_ring __P((struct audio_buffer *, int));
 void	audio_initbufs __P((struct audio_softc *));
 static __inline int audio_sleep_timo __P((int *, char *, int));
@@ -395,7 +386,7 @@ audiowrite(dev, uio, ioflag)
 int
 audioioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
