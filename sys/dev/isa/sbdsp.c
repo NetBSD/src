@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.100 1999/08/04 10:50:52 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.101 1999/10/10 00:14:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2304,7 +2304,7 @@ sbdsp_get_props(addr)
 	       (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
 
-#if NMIDI > 0
+#if NMPU > 0
 /*
  * MIDI related routines.
  */
