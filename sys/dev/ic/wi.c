@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.137 2003/10/19 22:00:54 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.138 2003/10/24 23:58:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.137 2003/10/19 22:00:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.138 2003/10/24 23:58:22 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2334,7 +2334,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int buflen;
 	u_int16_t val;
 	struct wi_ssid ssid;
-	u_int8_t old_bssid[IEEE80211_ADDR_LEN];
+	struct wi_macaddr bssid, old_bssid;
 	enum ieee80211_state ostate;
 #ifdef WI_DEBUG
 	static const char *stname[] =
@@ -2353,9 +2353,10 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
 		buflen = IEEE80211_ADDR_LEN;
-		IEEE80211_ADDR_COPY(old_bssid, ni->ni_bssid);
-		wi_read_rid(sc, WI_RID_CURRENT_BSSID, ni->ni_bssid, &buflen);
-		IEEE80211_ADDR_COPY(ni->ni_macaddr, ni->ni_bssid);
+		IEEE80211_ADDR_COPY(old_bssid.wi_mac_addr, ni->ni_bssid);
+		wi_read_rid(sc, WI_RID_CURRENT_BSSID, &bssid, &buflen);
+		IEEE80211_ADDR_COPY(ni->ni_bssid, &bssid);
+		IEEE80211_ADDR_COPY(ni->ni_macaddr, &bssid);
 		buflen = sizeof(val);
 		wi_read_rid(sc, WI_RID_CURRENT_CHAN, &val, &buflen);
 		if (!isset(ic->ic_chan_avail, le16toh(val)))
@@ -2363,7 +2364,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    le16toh(val));
 		ni->ni_chan = &ic->ic_channels[le16toh(val)];
 
-		if (IEEE80211_ADDR_EQ(old_bssid, ni->ni_bssid))
+		if (IEEE80211_ADDR_EQ(old_bssid.wi_mac_addr, ni->ni_bssid))
 			sc->sc_false_syns++;
 		else
 			sc->sc_false_syns = 0;

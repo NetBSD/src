@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.46 2003/10/16 10:57:35 dyoung Exp $	*/
+/*	$NetBSD: wireg.h,v 1.47 2003/10/24 23:58:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -409,10 +409,13 @@ struct wi_pcf {
 #define	WI_PORTTYPE_HOSTAP	0x6
 
 /*
- * Mac addresses. (0xFC01, 0xFC08)
+ * Mac addresses. (0xFC01, 0xFC08, 0xFD42)
  */
 struct wi_macaddr {
-	u_int8_t		wi_mac_addr[6];
+	union {
+		u_int16_t	wi_mac_addr_aligned[3];
+		u_int8_t	wi_mac_addr[6];
+	};
 };
 
 /*
