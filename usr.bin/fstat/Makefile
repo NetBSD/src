@@ -1,9 +1,7 @@
-#	from: @(#)Makefile	5.5 (Berkeley) 4/23/91
-#	$Id: Makefile,v 1.4 1994/01/28 00:45:44 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	fstat
-SRCS=	fstat.c devname.c
-.PATH:	${.CURDIR}/../../bin/ps
+CFLAGS+=-I/sys
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
