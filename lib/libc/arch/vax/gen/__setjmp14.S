@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __setjmp14.S,v 1.1 1998/10/01 18:59:16 christos Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.2 1998/10/10 00:08:51 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,10 +58,10 @@ ENTRY(__setjmp14, R6)
 	movl	(sp)+,(r6)+		# save onsigstack status of caller
 	pushl	$0
 	pushl	$0
-	addl	r6,28,r6
+	addl3	r6,28,r6
 	pushl	r6
 	calls	$3,__sigblock14		# get signal mask
-	subl	r6,24,r6
+	subl3	r6,24,r6
 	movl	(ap),r0
 	moval	4(ap)[r0],(r6)+		# save sp of caller
 	movl	12(fp),(r6)+		# save frame pointer of caller
@@ -88,7 +88,7 @@ loop:
 	bbc	$1,6(fp),2f		# was r1 saved?
 	movl	r1,(r2)
 2:
-	movl	$loop,16(fp)
+	movab	loop,16(fp)
 	ret				# pop another frame
 
 done:
