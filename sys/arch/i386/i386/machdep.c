@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.109 1994/05/24 07:23:01 deraadt Exp $
+ *	$Id: machdep.c,v 1.110 1994/06/14 19:55:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -564,7 +564,7 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 struct sigreturn_args {
@@ -707,6 +707,7 @@ boot(howto)
 			/*NOTREACHED*/
 		}
 	}
+	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
