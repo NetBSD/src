@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.125 1998/11/12 21:32:16 thorpej Exp $
+#	$NetBSD: files.i386,v 1.126 1998/11/26 15:35:58 pk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -274,7 +274,7 @@ defopt	PCIC_ISA_ALLOC_IOBASE
 defopt	PCIC_ISA_ALLOC_IOSIZE
 defopt	PCIC_ISA_INTR_ALLOC_MASK
 
-device	pcic {[controller = -1], [socket = -1]}
+device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia controller on ISA bus.
