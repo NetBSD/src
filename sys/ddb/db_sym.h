@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.17 2003/04/16 09:00:30 jdolecek Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.18 2003/04/24 20:00:49 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -28,9 +28,19 @@
  * 	Author: Alessandro Forin, Carnegie Mellon University
  *	Date:	8/90
  */
+#include <sys/ksyms.h>
 
+typedef vaddr_t db_sym_t;
+#define	DB_SYM_NULL	((db_sym_t)0)
+typedef int		db_strategy_t;	/* search strategy */
+
+#define	DB_STGY_ANY	(KSYMS_ANY|KSYMS_CLOSEST)    /* anything goes */
+#define DB_STGY_XTRN	(KSYMS_EXTERN|KSYMS_CLOSEST) /* only external symbols */
+#define DB_STGY_PROC	(KSYMS_PROC|KSYMS_CLOSEST)   /* only procedures */
+
+#ifdef DB_AOUT_SYMBOLS
 /*
- * This module can handle multiple symbol tables
+ * This struct is unused.
  */
 typedef struct {
 	const char	*name;		/* symtab name */
@@ -38,29 +48,6 @@ typedef struct {
 	char		*end;
 	char		*private;	/* optional machdep pointer */
 } db_symtab_t;
-
-extern db_symtab_t	*db_last_symtab; /* where last symbol was found */
-
-/*
- * Symbol representation is specific to the symtab style:
- * BSD compilers use dbx' nlist, other compilers might use
- * a different one
- */
-typedef	char *		db_sym_t;	/* opaque handle on symbols */
-#define	DB_SYM_NULL	((db_sym_t)0)
-
-/*
- * Non-stripped symbol tables will have duplicates, for instance
- * the same string could match a parameter name, a local var, a
- * global var, etc.
- * We are most concern with the following matches.
- */
-typedef int		db_strategy_t;	/* search strategy */
-
-#define	DB_STGY_ANY	0			/* anything goes */
-#define DB_STGY_XTRN	1			/* only external symbols */
-#define DB_STGY_PROC	2			/* only procedures */
-
 
 /*
  * Internal db_forall function calling convention:
@@ -94,22 +81,13 @@ typedef struct {
 			    db_forall_func_t *db_forall_func, void *);
 } db_symformat_t;
 
-extern boolean_t	db_qualify_ambiguous_names;
-					/* if TRUE, check across symbol tables
-					 * for multiple occurrences of a name.
-					 * Might slow down quite a bit */
+#endif
 
 extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 
 /*
  * Functions exported by the symtable module
  */
-int		db_add_symbol_table(char *, char *, const char *, char *);
-					/* extend the list of symbol tables */
-
-void		db_del_symbol_table(const char *);
-					/* remove a symbol table from list */
-
 boolean_t	db_eqname(char *, char *, int);
 					/* strcmp, modulo leading char */
 
@@ -118,8 +96,6 @@ int		db_value_of_name(char *, db_expr_t *);
 
 void		db_sifting(char *, int);
 				/* print partially matching symbol names */
-
-boolean_t	db_symbol_is_ambiguous(db_sym_t);
 
 db_sym_t	db_search_symbol(db_addr_t, db_strategy_t, db_expr_t *);
 					/* find symbol given value */
@@ -139,12 +115,4 @@ void		db_symstr(char *, db_expr_t, db_strategy_t);
 void		db_printsym(db_expr_t, db_strategy_t,
 		    void(*)(const char *, ...));
 					/* print closest symbol to a value */
-
 int		db_sym_numargs(db_sym_t, int *, char **);
-
-#ifdef DB_AOUT_SYMBOLS
-extern	const db_symformat_t db_symformat_aout;
-#endif
-#ifdef DB_ELF_SYMBOLS
-extern	const db_symformat_t db_symformat_elf;
-#endif
