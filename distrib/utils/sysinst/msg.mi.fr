@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.26 1999/07/04 09:41:03 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.27 1999/07/04 21:52:12 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,8 @@
 message usage
 {utilisation : sysinst [-r version]
 }
+
+message newline {\n}
 
 message yes {Oui}
 
