@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 1996/05/17 12:56:49 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 1996/05/19 14:55:27 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,8 @@
 
 #include "assym.h"
 
+	.globl	_kernel_text
+_kernel_text:
 L_base:
 	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
 	.fill	NBPG/4-1,4,0/*xdeadbeef*/
