@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.99 2000/11/03 09:07:25 toddpw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.100 2000/11/10 01:03:29 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.99 2000/11/02 07:15:44 msaitoh Exp 
+ *	NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp 
  */
 
 /*-
@@ -162,6 +162,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Digital Equipment Corporation",
 	    "Digital Mobile Media CD-ROM"	},
+	},
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
+	    PCMCIA_CIS_ELSA_MC2_IEEE,
+	    0,
+	    "Elsa",
+	    "AirLancer MC-2 IEEE"	},
+	},
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI300_IEEE,
+	    PCMCIA_CIS_ELSA_XI300_IEEE,
+	    0,
+	    "Elsa",
+	    "XI300 Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
@@ -1155,6 +1169,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "RATOC System Inc.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ELSA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Elsa",
 	    NULL,
 	},
 	{
