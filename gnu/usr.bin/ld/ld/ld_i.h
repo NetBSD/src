@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_i.h,v 1.2 2000/12/16 09:29:29 mycroft Exp $	*/
+/*	$NetBSD: ld_i.h,v 1.3 2001/07/25 11:59:22 aymeric Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,6 +64,7 @@
  */
 
 #include <ranlib.h>
+#include <link_aout.h>
 
 /* Macro to control the number of undefined references printed */
 #define MAX_UREFS_PRINTED	10
