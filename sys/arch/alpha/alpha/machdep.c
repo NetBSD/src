@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.203 2000/03/27 06:41:02 enami Exp $ */
+/* $NetBSD: machdep.c,v 1.204 2000/03/29 03:09:15 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2000/03/27 06:41:02 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2000/03/29 03:09:15 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,7 +661,7 @@ nobootinfo:
 	 * Initialize error message buffer (at end of core).
 	 */
 	{
-		vsize_t sz = (vsize_t)round_page((vaddr_t)MSGBUFSIZE);
+		vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 		vsize_t reqsz = sz;
 
 		vps = &vm_physmem[vm_nphysseg - 1];
