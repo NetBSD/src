@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.28 1996/09/07 12:40:59 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.29 1996/09/07 14:20:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -680,7 +680,7 @@ sys_poll(p, v, retval)
 {
 	register struct sys_poll_args /* {
 		syscallarg(struct pollfd *) fds;
-		syscallarg(size_t) nfds;
+		syscallarg(u_int) nfds;
 		syscallarg(int) timeout;
 	} */ *uap = v;
 	caddr_t bits;

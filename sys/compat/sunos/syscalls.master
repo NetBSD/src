@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 1996/09/07 12:40:49 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.38 1996/09/07 14:22:01 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -232,7 +232,7 @@
 			    int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
-153	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+153	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL		
 #ifdef NFSSERVER
