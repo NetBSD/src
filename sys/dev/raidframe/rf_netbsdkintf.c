@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.163 2003/10/21 00:22:04 fvdl Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.164 2003/10/25 18:34:14 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.163 2003/10/21 00:22:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.164 2003/10/25 18:34:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2367,7 +2367,7 @@ rf_markalldirty(raidPtr)
 	int sparecol;
 	int r,c;
 	int i,j;
-	int srow, scol;
+	int srow = -1, scol = -1;
 
 	raidPtr->mod_counter++;
 	for (r = 0; r < raidPtr->numRow; r++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.13 2003/06/29 22:30:08 fvdl Exp $	*/
+/*	$NetBSD: dpti.c,v 1.14 2003/10/25 18:36:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.13 2003/06/29 22:30:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.14 2003/10/25 18:36:35 christos Exp $");
 
 #include "opt_i2o.h"
 
@@ -540,6 +540,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 		}
 
 		memset(bufs, 0, sizeof(bufs));
+		nbuf = 0; /* XXX: gcc */
 	} else
 		nbuf = -1;
 

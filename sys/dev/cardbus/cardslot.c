@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.22 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.23 2003/10/25 18:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.23 2003/10/25 18:37:24 christos Exp $");
 
 #include "opt_cardslot.h"
 
@@ -107,8 +107,8 @@ cardslotattach(parent, self, aux)
 	struct cbslot_attach_args *cba = caa->caa_cb_attach;
 	struct pcmciabus_attach_args *pa = caa->caa_16_attach;
 
-	struct cardbus_softc *csc;
-	struct pcmcia_softc *psc;
+	struct cardbus_softc *csc = NULL;
+	struct pcmcia_softc *psc = NULL;
 
 	sc->sc_slot = sc->sc_dev.dv_unit;
 	sc->sc_cb_softc = NULL;

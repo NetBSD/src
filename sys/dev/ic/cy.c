@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.32 2003/06/29 22:30:11 fvdl Exp $	*/
+/*	$NetBSD: cy.c,v 1.33 2003/10/25 18:35:42 christos Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32 2003/06/29 22:30:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.33 2003/10/25 18:35:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -247,8 +247,8 @@ cy_attach(struct cy_softc *sc)
 static struct cy_port *
 cy_getport(dev_t dev)
 {
-	int i, j, k, u = minor(dev) & ~CYDIALOUT_MASK;
-	struct cy_softc *sc;
+	int i, j, k = 0, u = minor(dev) & ~CYDIALOUT_MASK;
+	struct cy_softc *sc = NULL;
 
 	for (i = 0, j = 0; i < cy_cd.cd_ndevs; i++) {
 		k = j;

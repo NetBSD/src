@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.10 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.11 2003/10/25 18:36:14 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.10 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.11 2003/10/25 18:36:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ cs_isa_probe(parent, cf, aux)
 	struct cs_softc sc;
 	int rv = 0, have_io = 0, have_mem = 0;
 	u_int16_t isa_cfg, isa_membase;
-	int maddr, irq;
+	int maddr, irq = -1; /* XXX: gcc */
 
 	if (ia->ia_nio < 1)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.21 2002/11/01 11:31:58 mrg Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.22 2003/10/25 18:37:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21 2002/11/01 11:31:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.22 2003/10/25 18:37:03 christos Exp $");
 
 #include "rnd.h"
 
@@ -199,7 +199,8 @@ edc_mca_attach(parent, self, aux)
 		typestr = "IBM Integ. ESDI Fixed Disk & Controller";
 		break;
 	default:
-		/* never reached */ ;
+		typestr = NULL;
+		break;
 	}
 		
 	irq = ESDIC_IRQ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.123 2003/09/07 10:45:11 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.124 2003/10/25 18:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.123 2003/09/07 10:45:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.124 2003/10/25 18:35:43 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -685,9 +685,9 @@ tlp_start(ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct tulip_txsoft *txs, *last_txs;
+	struct tulip_txsoft *txs, *last_txs = NULL;
 	bus_dmamap_t dmamap;
-	int error, firsttx, nexttx, lasttx, ofree, seg;
+	int error, firsttx, nexttx, lasttx = 1, ofree, seg;
 
 	DPRINTF(sc, ("%s: tlp_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
@@ -836,6 +836,8 @@ tlp_start(ifp)
 			lasttx = nexttx;
 		}
 
+		KASSERT(lasttx != -1);
+
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].td_ctl |= htole32(TDCTL_Tx_FS);
 		sc->sc_txdescs[lasttx].td_ctl |= htole32(TDCTL_Tx_LS);
@@ -911,6 +913,7 @@ tlp_start(ifp)
 		 * Some clone chips want IC on the *first* segment in
 		 * the packet.  Appease them.
 		 */
+		KASSERT(last_txs != NULL);
 		if ((sc->sc_flags & TULIPF_IC_FS) != 0 &&
 		    last_txs->txs_firstdesc != lasttx) {
 			sc->sc_txdescs[last_txs->txs_firstdesc].td_ctl |=

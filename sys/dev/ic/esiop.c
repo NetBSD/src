@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.21 2003/08/04 19:50:11 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.22 2003/10/25 18:35:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.21 2003/08/04 19:50:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.22 2003/10/25 18:35:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ esiop_intr(v)
 	struct esiop_cmd *esiop_cmd;
 	struct esiop_lun *esiop_lun;
 	struct scsipi_xfer *xs;
-	int istat, sist, sstat1, dstat;
+	int istat, sist, sstat1, dstat = 0;
 	u_int32_t irqcode;
 	int need_reset = 0;
 	int offset, target, lun, tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.41 2003/06/29 22:30:11 fvdl Exp $	*/
+/*	$NetBSD: dpt.c,v 1.42 2003/10/25 18:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.41 2003/06/29 22:30:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.42 2003/10/25 18:35:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1273,9 +1273,9 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 	struct eata_sp sp;
 	struct eata_cp *cp;
 	struct eata_sg *sg;
-	bus_dmamap_t xfer;
+	bus_dmamap_t xfer = 0; /* XXX: gcc */
 	bus_dma_segment_t *ds;
-	int datain, s, rv, i, uslen;
+	int datain = 0, s, rv = 0, i, uslen; /* XXX: gcc */
 
 	/*
 	 * Get a CCB and fill.
