@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.82 2000/05/25 21:23:37 thorpej Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.83 2000/05/27 19:01:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.82 2000/05/25 21:23:37 thorpej Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.83 2000/05/27 19:01:13 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -1330,16 +1330,23 @@ editit()
 		sleep(1);
 	}
 	if (pid == 0) {
-		char *ed;
+		const char *ed;
+		char *buf;
+		int retval;
 
 		sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 		setgid(getgid());
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
-		execlp(ed, ed, tmpfil, 0);
-		perror(ed);
-		exit(1);
+		/*
+		 * Use system(3) in case someone's editor is "editor arg1 arg2".
+		 */
+		asprintf(&buf, "%s %s", ed, tmpfil);
+		retval = system(buf);
+		if (retval == -1)
+			perror(ed);
+		exit(retval);
 	}
 	while ((xpid = wait(&stat)) >= 0)
 		if (xpid == pid)
