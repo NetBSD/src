@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.24 2000/10/06 16:39:24 thorpej Exp $	*/
+/*	$NetBSD: gencode.c,v 1.25 2000/12/28 22:04:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.24 2000/10/06 16:39:24 thorpej Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.25 2000/12/28 22:04:22 thorpej Exp $");
 #endif
 #endif
 
@@ -533,17 +533,28 @@ gen_bcmp(offset, size, v)
 /*
  * Various code constructs need to know the layout of the data link
  * layer.  These variables give the necessary offsets.  off_linktype
- * is set to -1 for no encapsulation, in which case, IP is assumed.
+ * is set to -1 for no encapsulation, in which case the check is then
+ * deferred to linktype_af.  If that is AF_UNSPEC, AF_INET and AF_INET6
+ * are allowed, for backwards compatibility.  Otherwise, it is the
+ * family to expect.
  */
 static u_int off_linktype;
 static u_int off_nl;
 static int linktype;
+static int linktype_af;
 
 static void
 init_linktype(type)
 	int type;
 {
 	linktype = type;
+
+	if (DLT_IS_RAWAF(type)) {
+		off_linktype = -1;
+		off_nl = 0;
+		linktype_af = DLT_RAWAF_AF(type);
+		return;
+	}
 
 	switch (type) {
 
@@ -564,6 +575,7 @@ init_linktype(type)
 		 */
 		off_linktype = -1;
 		off_nl = 16;
+		linktype_af = AF_INET;
 		return;
 
 	case DLT_SLIP_BSDOS:
@@ -641,6 +653,7 @@ init_linktype(type)
 	case DLT_RAW:
 		off_linktype = -1;
 		off_nl = 0;
+		linktype_af = AF_UNSPEC;
 		return;
 	}
 	bpf_error("libpcap: unknown data link type 0x%x", linktype);
@@ -680,14 +693,43 @@ gen_linktype(proto)
 {
 	struct block *b0, *b1;
 
-	/* If we're not using encapsulation and checking for IP, we're done */
-	if (off_linktype == -1 && proto == ETHERTYPE_IP)
-		return gen_true();
+	/*
+	 * If we're not using encapsulation, compare the proto against
+	 * the one we're expecting.
+	 *
+	 * Note: this catches the RAWAF case.
+	 */
+	if (off_linktype == -1) {
+		switch (linktype_af) {
+		case AF_UNSPEC:
+			if (proto == ETHERTYPE_IP)
+				return gen_true();
 #ifdef INET6
-	/* this isn't the right thing to do, but sometimes necessary */
-	if (off_linktype == -1 && proto == ETHERTYPE_IPV6)
-		return gen_true();
+			/*
+			 * This isn't the right thing to do, but sometimes
+			 * it is necessary.
+			 */
+			if (proto == ETHERTYPE_IPV6)
+				return gen_true();
 #endif
+			break;
+
+		case AF_INET:
+			if (proto == ETHERTYPE_IP)
+				return gen_true();
+			else
+				return gen_false();
+			break;
+#ifdef INET6
+		case AF_INET6:
+			if (proto == ETHERTYPE_IPV6)
+				return gen_true();
+			else
+				return gen_false();
+			break;
+#endif
+		}
+	}
 
 	switch (linktype) {
 
@@ -737,15 +779,18 @@ gen_linktype(proto)
 		break;
 
 	case DLT_NULL:
-		/* XXX */
-		if (proto == ETHERTYPE_IP)
+		switch (proto) {
+		case ETHERTYPE_IP:
 			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET)));
+			break;
 #ifdef INET6
-		else if (proto == ETHERTYPE_IPV6)
+		case ETHERTYPE_IPV6:
 			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET6)));
-#endif /* INET6 */
-		else
+			break;
+#endif
+		default:
 			return gen_false();
+		}
 		break;
 	case DLT_ARCNET:
 		/*
@@ -2084,7 +2129,10 @@ gen_scode(name, q)
 			if (alist == NULL || *alist == NULL)
 				bpf_error("unknown host '%s'", name);
 			tproto = proto;
-			if (off_linktype == -1 && tproto == Q_DEFAULT)
+			if (off_linktype == -1 &&
+			    (linktype_af == AF_UNSPEC ||
+			     linktype_af == AF_INET) &&
+			    tproto == Q_DEFAULT)
 				tproto = Q_IP;
 			b = gen_host(**alist++, 0xffffffff, tproto, dir);
 			while (*alist) {
@@ -2101,7 +2149,11 @@ gen_scode(name, q)
 				bpf_error("unknown host '%s'", name);
 			b = tmp = NULL;
 			tproto = tproto6 = proto;
-			if (off_linktype == -1 && tproto == Q_DEFAULT) {
+			if (off_linktype == -1 &&
+			    (linktype_af == AF_UNSPEC ||
+			     linktype_af == AF_INET ||
+			     linktype_af == AF_INET6) &&
+			    tproto == Q_DEFAULT) {
 				tproto = Q_IP;
 				tproto6 = Q_IPV6;
 			}
@@ -2109,6 +2161,10 @@ gen_scode(name, q)
 				switch (res->ai_family) {
 				case AF_INET:
 					if (tproto == Q_IPV6)
+						continue;
+					if (off_linktype == -1 &&
+					    (linktype_af != AF_INET &&
+					     linktype_af != AF_UNSPEC))
 						continue;
 
 					sin = (struct sockaddr_in *)
@@ -2118,6 +2174,10 @@ gen_scode(name, q)
 					break;
 				case AF_INET6:
 					if (tproto6 == Q_IP)
+						continue;
+					if (off_linktype == -1 &&
+					    (linktype_af != AF_INET6 &&
+					     linktype_af != AF_UNSPEC))
 						continue;
 
 					sin6 = (struct sockaddr_in6 *)
