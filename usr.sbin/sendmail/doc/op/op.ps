@@ -1,6 +1,6 @@
 %!PS-Adobe-3.0
 %%Creator: groff version 1.10
-%%CreationDate: Tue Jan 14 17:22:49 1997
+%%CreationDate: Fri Mar 28 18:26:01 1997
 %%DocumentNeededResources: font Times-Bold
 %%+ font Times-Roman
 %%+ font Times-Italic
@@ -209,7 +209,7 @@ BP
 /F0 16/Times-Bold@0 SF(SENDMAIL)244.888 143.4 Q/F1 12/Times-Bold@0 SF
 (INST)170.172 172.2 Q(ALLA)-1.08 E(TION AND OPERA)-1.14 E(TION GUIDE)
 -1.14 E/F2 10/Times-Roman@0 SF(Eric Allman)263.42 196.2 Q
-(eric@Sendmail.ORG)245.205 208.2 Q -1.11(Ve)260.225 232.2 S(rsion 8.103)
+(eric@Sendmail.ORG)245.205 208.2 Q -1.11(Ve)260.225 232.2 S(rsion 8.104)
 1.11 E -.15(Fo)236.965 256.2 S 2.5(rS).15 G(endmail V)-2.5 E(ersion 8.8)
 -1.11 E/F3 10/Times-Italic@0 SF(Sendmail)97 300.6 Q F2 .482
 (implements a general purpose internetw)2.982 F .482(ork mail routing f)
@@ -5407,13 +5407,13 @@ F3 -.1(ge)2.68 G(tla).1 E F1 .18
 2.5 E F1(Ne)142 608.6 Q 2.876(wk)-.25 G .676 -.15(ey m)-2.976 H .375(aps can be added by creating a class initialization function and a lookup func-)
 .15 F 2.5(tion. These)117 620.6 R(are then added to the routine)2.5 E F3
 (setupmaps.)2.5 E F1(The initialization function is called as)142 636.8
-Q F3(xxx)157 653 Q F1(_map_init\(MAP *map, char *mapname, char *ar)A
-(gs\))-.18 E(The)117 669.2 Q F3(map)3.848 E F1 1.348
-(is an internal data structure.)3.848 F(The)6.348 E F3(mapname)3.848 E
-F1 1.348(is the name of the map \(used for error)3.848 F .32 LW 76 678.8
-72 678.8 DL 80 678.8 76 678.8 DL 84 678.8 80 678.8 DL 88 678.8 84 678.8
-DL 92 678.8 88 678.8 DL 96 678.8 92 678.8 DL 100 678.8 96 678.8 DL 104
-678.8 100 678.8 DL 108 678.8 104 678.8 DL 112 678.8 108 678.8 DL 116
+Q F3(xxx)157 653 Q F1(_map_init\(MAP *map, char *ar)A(gs\))-.18 E(The)
+117 669.2 Q F3(map)3.279 E F1 .779(is an internal data structure.)3.279
+F(The)5.779 E F3(ar)3.279 E(gs)-.37 E F1 .78
+(is a pointer to the portion of the con\214guration)3.279 F .32 LW 76
+678.8 72 678.8 DL 80 678.8 76 678.8 DL 84 678.8 80 678.8 DL 88 678.8 84
+678.8 DL 92 678.8 88 678.8 DL 96 678.8 92 678.8 DL 100 678.8 96 678.8 DL
+104 678.8 100 678.8 DL 108 678.8 104 678.8 DL 112 678.8 108 678.8 DL 116
 678.8 112 678.8 DL 120 678.8 116 678.8 DL 124 678.8 120 678.8 DL 128
 678.8 124 678.8 DL 132 678.8 128 678.8 DL 136 678.8 132 678.8 DL 140
 678.8 136 678.8 DL 144 678.8 140 678.8 DL 148 678.8 144 678.8 DL 152
@@ -5433,165 +5433,167 @@ DL 92 678.8 88 678.8 DL 96 678.8 92 678.8 DL 100 678.8 96 678.8 DL 104
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
-(SMM:08-63)195.86 E/F1 10/Times-Roman@0 SF 2.593(messages\). The)117 96
-R/F2 10/Times-Italic@0 SF(ar)2.593 E(gs)-.37 E F1 .093(is a pointer to the rest of the con\214guration \214le line; \215ags and \214lenames can)
-2.593 F 2.17(be e)117 108 R 2.17(xtracted from this line.)-.15 F 2.17
-(The initialization function must return)7.17 F/F3 9/Times-Roman@0 SF
-(TR)4.67 E(UE)-.36 E F1 2.17(if it successfully)4.67 F(opened the map,)
-117 120 Q F3 -.666(FA)2.5 G(LSE).666 E F1(otherwise.)2.5 E
-(The lookup function is called as)142 136.2 Q F2(xxx)157 152.4 Q F1
-(_map_lookup\(MAP *map, char b)A(uf[], int b)-.2 E(ufsize, char **a)-.2
-E 1.3 -.65(v, i)-.2 H(nt *statp\)).65 E(The)117 168.6 Q F2(map)3.476 E
-F1 .976(de\214nes the map internally)3.476 F 5.975(.T)-.65 G .975
-(he parameters)-5.975 F F2 -.2(bu)3.475 G(f).2 E F1(and)3.475 E F2 -.2
-(bu)3.475 G(fsize).2 E F1(ha)3.475 E 1.275 -.15(ve t)-.2 H .975
-(he input k).15 F -.15(ey)-.1 G 5.975(.T)-.5 G(his)-5.975 E .042
-(may be \(and often is\) used destructi)117 180.6 R -.15(ve)-.25 G(ly)
-.15 E 5.043(.T)-.65 G(he)-5.043 E F2(av)2.543 E F1 .043(is a list of ar)
-2.543 F .043(guments passed in from the re)-.18 F(write)-.25 E 3.655
-(line. The)117 192.6 R 1.155
-(lookup function should return a pointer to the ne)3.655 F 3.654(wv)-.25
-G 3.654(alue. IF)-3.904 F 1.154(the map lookup f)3.654 F(ails,)-.1 E F2
-(*statp)117 204.6 Q F1 1.271(should be set to an e)3.771 F 1.272
-(xit status code; in particular)-.15 F 3.772(,i)-.4 G 3.772(ts)-3.772 G
-1.272(hould be set to)-3.772 F F3(EX_TEMPF)3.772 E(AIL)-.666 E F1(if)
-3.772 E(reco)117 216.6 Q -.15(ve)-.15 G
-(ry is to be attempted by the higher le).15 E -.15(ve)-.25 G 2.5(lc).15
-G(ode.)-2.5 E F0 2.5(6.3.5. Queueing)102 240.6 R(Function)2.5 E F1 .783
-(The routine)142 256.8 R F2(shouldqueue)3.283 E F1 .783
+(SMM:08-63)195.86 E/F1 10/Times-Roman@0 SF .397(\214le line follo)117 96
+R .396(wing the map class name; \215ags and \214lenames can be e)-.25 F
+.396(xtracted from this line.)-.15 F(The)5.396 E
+(initialization function must return)117 108 Q/F2 9/Times-Roman@0 SF(TR)
+2.5 E(UE)-.36 E F1(if it successfully opened the map,)2.5 E F2 -.666(FA)
+2.5 G(LSE).666 E F1(otherwise.)2.5 E(The lookup function is called as)
+142 124.2 Q/F3 10/Times-Italic@0 SF(xxx)157 140.4 Q F1
+(_map_lookup\(MAP *map, char b)A(uf[], char **a)-.2 E 1.3 -.65(v, i)-.2
+H(nt *statp\)).65 E(The)117 156.6 Q F3(map)2.772 E F1 .272
+(de\214nes the map internally)2.772 F 5.273(.T)-.65 G(he)-5.273 E F3 -.2
+(bu)2.773 G(f).2 E F1 .273(has the input k)2.773 F -.15(ey)-.1 G 5.273
+(.T)-.5 G .273(his may be \(and often is\) used)-5.273 F(destructi)117
+168.6 Q -.15(ve)-.25 G(ly).15 E 5.152(.T)-.65 G(he)-5.152 E F3(av)2.652
+E F1 .151(is a list of ar)2.652 F .151(guments passed in from the re)
+-.18 F .151(write line.)-.25 F .151(The lookup function)5.151 F .204
+(should return a pointer to the ne)117 180.6 R 2.705(wv)-.25 G 2.705
+(alue. IF)-2.955 F .205(the map lookup f)2.705 F(ails,)-.1 E F3(*statp)
+2.705 E F1 .205(should be set to an e)2.705 F(xit)-.15 E .302
+(status code; in particular)117 192.6 R 2.802(,i)-.4 G 2.802(ts)-2.802 G
+.302(hould be set to)-2.802 F F2(EX_TEMPF)2.802 E(AIL)-.666 E F1 .302
+(if reco)2.802 F -.15(ve)-.15 G .301(ry is to be attempted by the).15 F
+(higher le)117 204.6 Q -.15(ve)-.25 G 2.5(lc).15 G(ode.)-2.5 E F0 2.5
+(6.3.5. Queueing)102 228.6 R(Function)2.5 E F1 .782(The routine)142
+244.8 R F3(shouldqueue)3.282 E F1 .783
 (is called to decide if a message should be queued or processed)3.283 F
-(immediately)117 268.8 Q 6.618(.T)-.65 G 1.618
+(immediately)117 256.8 Q 6.619(.T)-.65 G 1.618
 (ypically this compares the message priority to the current load a)
--7.418 F -.15(ve)-.2 G 4.119(rage. The).15 F(def)117 280.8 Q
-(ault de\214nition is:)-.1 E(bool)157 297 Q(shouldqueue\(pri, ctime\))
-157 309 Q(long pri;)175 321 Q(time_t ctime;)175 333 Q({)157 345 Q
-(if \(CurrentLA < QueueLA\))175 357 Q(return \(F)193 369 Q(ALSE\);)-.74
-E(return \(pri > \(QueueF)175 381 Q
-(actor / \(CurrentLA \255 QueueLA + 1\)\)\);)-.15 E(})157 393 Q 2.063
-(If the current load a)117 409.2 R -.15(ve)-.2 G 2.062(rage \(global v)
-.15 F(ariable)-.25 E F2(Curr)4.562 E(entLA)-.37 E F1 4.562(,w)C 2.062
-(hich is set before this function is)-4.562 F 1.057
-(called\) is less than the lo)117 421.2 R 3.558(wt)-.25 G 1.058
+-7.419 F -.15(ve)-.2 G 4.118(rage. The).15 F(def)117 268.8 Q
+(ault de\214nition is:)-.1 E(bool)157 285 Q(shouldqueue\(pri, ctime\))
+157 297 Q(long pri;)175 309 Q(time_t ctime;)175 321 Q({)157 333 Q
+(if \(CurrentLA < QueueLA\))175 345 Q(return \(F)193 357 Q(ALSE\);)-.74
+E(return \(pri > \(QueueF)175 369 Q
+(actor / \(CurrentLA \255 QueueLA + 1\)\)\);)-.15 E(})157 381 Q 2.062
+(If the current load a)117 397.2 R -.15(ve)-.2 G 2.062(rage \(global v)
+.15 F(ariable)-.25 E F3(Curr)4.562 E(entLA)-.37 E F1 4.562(,w)C 2.062
+(hich is set before this function is)-4.562 F 1.058
+(called\) is less than the lo)117 409.2 R 3.558(wt)-.25 G 1.058
 (hreshold load a)-3.558 F -.15(ve)-.2 G 1.058(rage \(option).15 F F0(x)
-3.558 E F1 3.558(,v)C(ariable)-3.808 E F2(QueueLA)3.558 E F1(\),)A F2
-(shouldqueue)3.558 E F1(returns)117 433.2 Q F3 -.666(FA)2.587 G(LSE).666
-E F1 .086(immediately \(that is, it should)2.587 F F2(not)2.586 E F1
+3.557 E F1 3.557(,v)C(ariable)-3.807 E F3(QueueLA)3.557 E F1(\),)A F3
+(shouldqueue)3.557 E F1(returns)117 421.2 Q F2 -.666(FA)2.586 G(LSE).666
+E F1 .086(immediately \(that is, it should)2.586 F F3(not)2.586 E F1
 2.586(queue\). If)2.586 F .086(the current load a)2.586 F -.15(ve)-.2 G
-.086(rage e).15 F .086(xceeds the)-.15 F .587(high threshold load a)117
-445.2 R -.15(ve)-.2 G .587(rage \(option).15 F F0(X)3.087 E F1 3.087(,v)
-C(ariable)-3.337 E F2(RefuseLA)3.087 E F1(\),)A F2(shouldqueue)3.088 E
-F1(returns)3.088 E F3(TR)3.088 E(UE)-.36 E F1(immedi-)3.088 E(ately)117
-457.2 Q 7.126(.O)-.65 G 2.125
-(therwise, it computes the function based on the message priority)-7.126
-F 4.625(,t)-.65 G 2.125(he queue f)-4.625 F(actor)-.1 E(\(option)117
-469.2 Q F0(q)2.5 E F1 2.5(,g)C(lobal v)-2.5 E(ariable)-.25 E F2(QueueF)
+.087(rage e).15 F .087(xceeds the)-.15 F .588(high threshold load a)117
+433.2 R -.15(ve)-.2 G .588(rage \(option).15 F F0(X)3.087 E F1 3.087(,v)
+C(ariable)-3.337 E F3(RefuseLA)3.087 E F1(\),)A F3(shouldqueue)3.087 E
+F1(returns)3.087 E F2(TR)3.087 E(UE)-.36 E F1(immedi-)3.087 E(ately)117
+445.2 Q 7.125(.O)-.65 G 2.125
+(therwise, it computes the function based on the message priority)-7.125
+F 4.626(,t)-.65 G 2.126(he queue f)-4.626 F(actor)-.1 E(\(option)117
+457.2 Q F0(q)2.5 E F1 2.5(,g)C(lobal v)-2.5 E(ariable)-.25 E F3(QueueF)
 2.5 E(actor)-.75 E F1(\), and the current and threshold load a)A -.15
-(ve)-.2 G(rages.).15 E 1.066(An implementation wishing to tak)142 485.4
-R 3.566(et)-.1 G 1.067
-(he actual age of the message into account can also)-3.566 F 1.41
-(use the)117 497.4 R F2(ctime)3.91 E F1(parameter)3.91 E 3.91(,w)-.4 G
+(ve)-.2 G(rages.).15 E 1.067(An implementation wishing to tak)142 473.4
+R 3.567(et)-.1 G 1.066
+(he actual age of the message into account can also)-3.567 F 1.41
+(use the)117 485.4 R F3(ctime)3.91 E F1(parameter)3.91 E 3.91(,w)-.4 G
 1.41(hich is the time that the message w)-3.91 F 1.41
-(as \214rst submitted to)-.1 F F2(sendmail)3.91 E F1(.)A .928
-(Note that the)117 509.4 R F2(pri)3.428 E F1 .928(parameter is already weighted by the number of times the message has been)
-3.428 F .395(tried \(although this tends to lo)117 521.4 R .395
+(as \214rst submitted to)-.1 F F3(sendmail)3.91 E F1(.)A .929
+(Note that the)117 497.4 R F3(pri)3.428 E F1 .928(parameter is already weighted by the number of times the message has been)
+3.428 F .395(tried \(although this tends to lo)117 509.4 R .395
 (wer the priority of the message with time\); the e)-.25 F .395
-(xpectation is that)-.15 F(the)117 533.4 Q F2(ctime)2.674 E F1 -.1(wo)
+(xpectation is that)-.15 F(the)117 521.4 Q F3(ctime)2.674 E F1 -.1(wo)
 2.674 G .174
 (uld be used as an \231escape clause\232 to ensure that messages are e)
 .1 F -.15(ve)-.25 G .174(ntually processed.).15 F F0 2.5
-(6.3.6. Refusing)102 557.4 R(Incoming SMTP Connections)2.5 E F1 1.149
-(The function)142 573.6 R F2 -.37(re)3.648 G(fuseconnections).37 E F1
-(returns)3.648 E F3(TR)3.648 E(UE)-.36 E F1 1.148
-(if incoming SMTP connections should be)3.648 F 3.563(refused. The)117
-585.6 R 1.063(current implementation is based e)3.563 F(xclusi)-.15 E
+(6.3.6. Refusing)102 545.4 R(Incoming SMTP Connections)2.5 E F1 1.148
+(The function)142 561.6 R F3 -.37(re)3.648 G(fuseconnections).37 E F1
+(returns)3.648 E F2(TR)3.648 E(UE)-.36 E F1 1.148
+(if incoming SMTP connections should be)3.648 F 3.564(refused. The)117
+573.6 R 1.063(current implementation is based e)3.563 F(xclusi)-.15 E
 -.15(ve)-.25 G 1.063(ly on the current load a).15 F -.15(ve)-.2 G 1.063
-(rage and the).15 F(refuse load a)117 597.6 Q -.15(ve)-.2 G
+(rage and the).15 F(refuse load a)117 585.6 Q -.15(ve)-.2 G
 (rage option \(option).15 E F0(X)2.5 E F1 2.5(,g)C(lobal v)-2.5 E
-(ariable)-.25 E F2(RefuseLA)2.5 E F1(\):)A(bool)157 613.8 Q
-(refuseconnections\(\))157 625.8 Q({)157 637.8 Q
-(return \(CurrentLA >= RefuseLA\);)175 649.8 Q(})157 661.8 Q 2.5(Am)117
-678 S(ore cle)-2.5 E -.15(ve)-.25 G 2.5(ri).15 G
-(mplementation could look at more system resources.)-2.5 E EP
+(ariable)-.25 E F3(RefuseLA)2.5 E F1(\):)A(bool)157 601.8 Q
+(refuseconnections\(\))157 613.8 Q({)157 625.8 Q
+(return \(CurrentLA >= RefuseLA\);)175 637.8 Q(})157 649.8 Q 2.5(Am)117
+666 S(ore cle)-2.5 E -.15(ve)-.25 G 2.5(ri).15 G
+(mplementation could look at more system resources.)-2.5 E F0 2.5
+(6.3.7. Load)102 690 R -.6 -1(Av e)2.5 H(rage Computation)1 E F1 .243
+(The routine)142 706.2 R F3 -.1(ge)2.743 G(tla).1 E F1 .243
+(returns the current load a)2.743 F -.15(ve)-.2 G .243
+(rage \(as a rounded inte).15 F 2.743(ger\). The)-.15 F(distrib)2.744 E
+(ution)-.2 E 1.157(includes se)117 718.2 R -.15(ve)-.25 G 1.157
+(ral possible implementations.).15 F 1.157(If you are porting to a ne)
+6.157 F 3.657(we)-.25 G -.4(nv)-3.657 G 1.157(ironment you may).4 F EP
 %%Page: 64 60
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF 193.36(SMM:08-64 Sendmail)72 60 R
-(Installation and Operation Guide)2.5 E 2.5(6.3.7. Load)102 96 R -.6 -1
-(Av e)2.5 H(rage Computation)1 E/F1 10/Times-Roman@0 SF .244
-(The routine)142 112.2 R/F2 10/Times-Italic@0 SF -.1(ge)2.743 G(tla).1 E
-F1 .243(returns the current load a)2.743 F -.15(ve)-.2 G .243
-(rage \(as a rounded inte).15 F 2.743(ger\). The)-.15 F(distrib)2.743 E
-(ution)-.2 E 1.156(includes se)117 124.2 R -.15(ve)-.25 G 1.157
-(ral possible implementations.).15 F 1.157(If you are porting to a ne)
-6.157 F 3.657(we)-.25 G -.4(nv)-3.657 G 1.157(ironment you may).4 F
-(need to add some ne)117 138.2 Q 2.5(wt)-.25 G(weaks.)-2.5 E/F3 7
-/Times-Roman@0 SF(25)-4 I F0 2.5(6.4. Con\214guration)87 162.2 R(in sr)
-2.5 E(c/daemon.c)-.18 E F1 .4(The \214le)127 178.4 R F2(sr)2.9 E
-(c/daemon.c)-.37 E F1 .4
+(Installation and Operation Guide)2.5 E/F1 10/Times-Roman@0 SF
+(need to add some ne)117 98 Q 2.5(wt)-.25 G(weaks.)-2.5 E/F2 7
+/Times-Roman@0 SF(25)-4 I F0 2.5(6.4. Con\214guration)87 122 R(in sr)2.5
+E(c/daemon.c)-.18 E F1 .4(The \214le)127 138.2 R/F3 10/Times-Italic@0 SF
+(sr)2.9 E(c/daemon.c)-.37 E F1 .4
 (contains a number of routines that are dependent on the local netw)2.9
-F(ork-)-.1 E(ing en)102 190.4 Q 2.5(vironment. The)-.4 F -.15(ve)2.5 G
+F(ork-)-.1 E(ing en)102 150.2 Q 2.5(vironment. The)-.4 F -.15(ve)2.5 G
 (rsion supplied assumes you ha).15 E .3 -.15(ve B)-.2 H(SD style sock)
-.15 E(ets.)-.1 E 2.16(In pre)127 206.6 R 2.16
-(vious releases, we recommended that you modify the routine)-.25 F F2
-(maphostname)4.66 E F1 2.16(if you)4.66 F -.1(wa)102 218.6 S 1.919
+.15 E(ets.)-.1 E 2.16(In pre)127 166.4 R 2.16
+(vious releases, we recommended that you modify the routine)-.25 F F3
+(maphostname)4.66 E F1 2.16(if you)4.66 F -.1(wa)102 178.4 S 1.918
 (nted to generalize).1 F F0($[)4.418 E F1(...)4.418 E F0($])4.418 E F1
 4.418(lookups. W)4.418 F 4.418(en)-.8 G 2.418 -.25(ow r)-4.418 H 1.918
-(ecommend that you create a ne).25 F 4.418(wk)-.25 G -.15(ey)-4.518 G
-1.918(ed map).15 F(instead.)102 230.6 Q F0 2.5(7. CHANGES)72 254.6 R
-(IN VERSION 8)2.5 E F1 .195(The follo)112 270.8 R .196
+(ecommend that you create a ne).25 F 4.419(wk)-.25 G -.15(ey)-4.519 G
+1.919(ed map).15 F(instead.)102 190.4 Q F0 2.5(7. CHANGES)72 214.4 R
+(IN VERSION 8)2.5 E F1 .196(The follo)112 230.6 R .196
 (wing summarizes changes since the last commonly a)-.25 F -.25(va)-.2 G
-.196(ilable v).25 F .196(ersion of)-.15 F F2(sendmail)2.696 E F1
-(\(5.67\).)2.696 E -.15(Fo)87 282.8 S 2.703(rad).15 G .203
-(etailed list, consult the \214le RELEASE_NO)-2.703 F .203
-(TES in the root directory of the)-.4 F F2(sendmail)2.702 E F1(distrib)
-2.702 E(ution.)-.2 E F0 2.5(7.1. Connection)87 306.8 R(Caching)2.5 E F1
-.397(Instead of closing SMTP connections immediately)127 323 R 2.897(,t)
--.65 G .398(hose connections are cached for possible)-2.897 F .598
-(future use.)102 335 R .598(The adv)5.598 F .597
+.196(ilable v).25 F .196(ersion of)-.15 F F3(sendmail)2.695 E F1
+(\(5.67\).)2.695 E -.15(Fo)87 242.6 S 2.702(rad).15 G .202
+(etailed list, consult the \214le RELEASE_NO)-2.702 F .203
+(TES in the root directory of the)-.4 F F3(sendmail)2.703 E F1(distrib)
+2.703 E(ution.)-.2 E F0 2.5(7.1. Connection)87 266.6 R(Caching)2.5 E F1
+.398(Instead of closing SMTP connections immediately)127 282.8 R 2.897
+(,t)-.65 G .397(hose connections are cached for possible)-2.897 F .597
+(future use.)102 294.8 R .597(The adv)5.597 F .597
 (ent of MX records made this ef)-.15 F(fecti)-.25 E .897 -.15(ve f)-.25
-H .597(or mailing lists; in addition, substantial).15 F
-(performance impro)102 347 Q -.15(ve)-.15 G(ments can be e).15 E
-(xpected for queue processing.)-.15 E F0 2.5(7.2. MX)87 371 R
-(Piggybacking)2.5 E F1 1.257(If tw)127 387.2 R 3.757(oh)-.1 G 1.257
+H .598(or mailing lists; in addition, substantial).15 F
+(performance impro)102 306.8 Q -.15(ve)-.15 G(ments can be e).15 E
+(xpected for queue processing.)-.15 E F0 2.5(7.2. MX)87 330.8 R
+(Piggybacking)2.5 E F1 1.258(If tw)127 347 R 3.757(oh)-.1 G 1.257
 (osts with dif)-3.757 F 1.257
 (ferent names in a single message happen to ha)-.25 F 1.557 -.15(ve t)
--.2 H 1.257(he same set of MX).15 F .94(hosts, the)102 399.2 R 3.44(yc)
+-.2 H 1.257(he same set of MX).15 F .94(hosts, the)102 359 R 3.44(yc)
 -.15 G .94(an be sent in the same transaction.)-3.44 F -1.11(Ve)5.94 G
 .94(rsion 8 notices this and tries to batch the mes-)1.11 F(sages.)102
-411.2 Q F0 2.5(7.3. RFC)87 435.2 R(1123 Compliance)2.5 E F1 3.462(An)127
-451.4 S .962(umber of changes ha)-3.462 F 1.262 -.15(ve b)-.2 H .962
-(een made to mak).15 F(e)-.1 E F2(sendmail)3.462 E F1 .963
-(\231conditionally compliant\232 \(that is,)3.463 F F2(sendmail)102
-463.4 Q F1 .05(satis\214es all of the \231MUST\232 clauses and most b)
-2.55 F .049(ut not all of the \231SHOULD\232 clauses in RFC)-.2 F
-(1123\).)102 475.4 Q(The major areas of change are \(numbers are RFC 1123 section numbers\):)
-127 491.6 Q 15(5.2.7 Response)102 507.8 R(to RCPT command is f)2.5 E
-(ast.)-.1 E 15(5.2.8 Numeric)102 524 R(IP addresses are logged in Recei)
-2.5 E -.15(ve)-.25 G(d: lines.).15 E 10(5.2.17 Self)102 540.2 R
-(domain literal is properly handled.)2.5 E 15(5.3.2 Better)102 556.4 R
-(control o)2.5 E -.15(ve)-.15 G 2.5(ri).15 G(ndi)-2.5 E
-(vidual timeouts.)-.25 E 15(5.3.3 Error)102 572.6 R
-(messages are sent as \231From:<>\232.)2.5 E 15(5.3.3 Error)102 588.8 R
+371 Q F0 2.5(7.3. RFC)87 395 R(1123 Compliance)2.5 E F1 3.463(An)127
+411.2 S .963(umber of changes ha)-3.463 F 1.262 -.15(ve b)-.2 H .962
+(een made to mak).15 F(e)-.1 E F3(sendmail)3.462 E F1 .962
+(\231conditionally compliant\232 \(that is,)3.462 F F3(sendmail)102
+423.2 Q F1 .049(satis\214es all of the \231MUST\232 clauses and most b)
+2.549 F .05(ut not all of the \231SHOULD\232 clauses in RFC)-.2 F
+(1123\).)102 435.2 Q(The major areas of change are \(numbers are RFC 1123 section numbers\):)
+127 451.4 Q 15(5.2.7 Response)102 467.6 R(to RCPT command is f)2.5 E
+(ast.)-.1 E 15(5.2.8 Numeric)102 483.8 R
+(IP addresses are logged in Recei)2.5 E -.15(ve)-.25 G(d: lines.).15 E
+10(5.2.17 Self)102 500 R(domain literal is properly handled.)2.5 E 15
+(5.3.2 Better)102 516.2 R(control o)2.5 E -.15(ve)-.15 G 2.5(ri).15 G
+(ndi)-2.5 E(vidual timeouts.)-.25 E 15(5.3.3 Error)102 532.4 R
+(messages are sent as \231From:<>\232.)2.5 E 15(5.3.3 Error)102 548.6 R
 (messages are ne)2.5 E -.15(ve)-.25 G 2.5(rs).15 G(ent to \231<>\232.)
--2.5 E 15(5.3.3 Route-addrs)102 605 R(are pruned.)2.5 E
-(The areas in which)102 621.2 Q F2(sendmail)2.5 E F1
-(is not \231unconditionally compliant\232 are:)2.5 E(5.2.6)102 637.4 Q
-F2(Sendmail)17.5 E F1(does do header munging.)2.5 E(5.2.10)102 653.6 Q
-F2(Sendmail)12.5 E F1(doesn')2.5 E 2.5(ta)-.18 G -.1(lwa)-2.5 G
+-2.5 E 15(5.3.3 Route-addrs)102 564.8 R(are pruned.)2.5 E
+(The areas in which)102 581 Q F3(sendmail)2.5 E F1
+(is not \231unconditionally compliant\232 are:)2.5 E(5.2.6)102 597.2 Q
+F3(Sendmail)17.5 E F1(does do header munging.)2.5 E(5.2.10)102 613.4 Q
+F3(Sendmail)12.5 E F1(doesn')2.5 E 2.5(ta)-.18 G -.1(lwa)-2.5 G
 (ys use the e).1 E(xact SMTP message te)-.15 E(xt as listed in RFC 821.)
--.15 E .32 LW 76 678.8 72 678.8 DL 80 678.8 76 678.8 DL 84 678.8 80
-678.8 DL 88 678.8 84 678.8 DL 92 678.8 88 678.8 DL 96 678.8 92 678.8 DL
-100 678.8 96 678.8 DL 104 678.8 100 678.8 DL 108 678.8 104 678.8 DL 112
-678.8 108 678.8 DL 116 678.8 112 678.8 DL 120 678.8 116 678.8 DL 124
-678.8 120 678.8 DL 128 678.8 124 678.8 DL 132 678.8 128 678.8 DL 136
-678.8 132 678.8 DL 140 678.8 136 678.8 DL 144 678.8 140 678.8 DL 148
-678.8 144 678.8 DL 152 678.8 148 678.8 DL 156 678.8 152 678.8 DL 160
-678.8 156 678.8 DL 164 678.8 160 678.8 DL 168 678.8 164 678.8 DL 172
-678.8 168 678.8 DL 176 678.8 172 678.8 DL 180 678.8 176 678.8 DL 184
-678.8 180 678.8 DL 188 678.8 184 678.8 DL 192 678.8 188 678.8 DL 196
-678.8 192 678.8 DL 200 678.8 196 678.8 DL 204 678.8 200 678.8 DL 208
-678.8 204 678.8 DL 212 678.8 208 678.8 DL 216 678.8 212 678.8 DL/F4 5
+-.15 E(5.3.1.1)102 629.6 Q F3(Sendmail)10 E F1(doesn')2.5 E 2.5(tg)-.18
+G(uarantee only one connect for each host in queue runs.)-2.5 E(5.3.1.1)
+102 645.8 Q F3(Sendmail)10 E F1(doesn')2.5 E 2.5(ta)-.18 G -.1(lwa)-2.5
+G(ys pro).1 E(vide adequate concurrenc)-.15 E 2.5(yl)-.15 G(imits.)-2.5
+E .32 LW 76 678.8 72 678.8 DL 80 678.8 76 678.8 DL 84 678.8 80 678.8 DL
+88 678.8 84 678.8 DL 92 678.8 88 678.8 DL 96 678.8 92 678.8 DL 100 678.8
+96 678.8 DL 104 678.8 100 678.8 DL 108 678.8 104 678.8 DL 112 678.8 108
+678.8 DL 116 678.8 112 678.8 DL 120 678.8 116 678.8 DL 124 678.8 120
+678.8 DL 128 678.8 124 678.8 DL 132 678.8 128 678.8 DL 136 678.8 132
+678.8 DL 140 678.8 136 678.8 DL 144 678.8 140 678.8 DL 148 678.8 144
+678.8 DL 152 678.8 148 678.8 DL 156 678.8 152 678.8 DL 160 678.8 156
+678.8 DL 164 678.8 160 678.8 DL 168 678.8 164 678.8 DL 172 678.8 168
+678.8 DL 176 678.8 172 678.8 DL 180 678.8 176 678.8 DL 184 678.8 180
+678.8 DL 188 678.8 184 678.8 DL 192 678.8 188 678.8 DL 196 678.8 192
+678.8 DL 200 678.8 196 678.8 DL 204 678.8 200 678.8 DL 208 678.8 204
+678.8 DL 212 678.8 208 678.8 DL 216 678.8 212 678.8 DL/F4 5
 /Times-Roman@0 SF(25)93.6 689.2 Q/F5 8/Times-Roman@0 SF
 (If you do, please send updates to sendmail@Sendmail.ORG.)3.2 I EP
 %%Page: 65 61
@@ -5599,352 +5601,351 @@ F2(Sendmail)12.5 E F1(doesn')2.5 E 2.5(ta)-.18 G -.1(lwa)-2.5 G
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
-(SMM:08-65)195.86 E/F1 10/Times-Roman@0 SF(5.3.1.1)102 96 Q/F2 10
-/Times-Italic@0 SF(Sendmail)10 E F1(doesn')2.5 E 2.5(tg)-.18 G
-(uarantee only one connect for each host in queue runs.)-2.5 E(5.3.1.1)
-102 112.2 Q F2(Sendmail)10 E F1(doesn')2.5 E 2.5(ta)-.18 G -.1(lwa)-2.5
-G(ys pro).1 E(vide adequate concurrenc)-.15 E 2.5(yl)-.15 G(imits.)-2.5
-E F0 2.5(7.4. Extended)87 136.2 R(SMTP Support)2.5 E F1 -1.11(Ve)127
-152.4 S .154(rsion 8 includes both sending and recei)1.11 F .155
+(SMM:08-65)195.86 E 2.5(7.4. Extended)87 96 R(SMTP Support)2.5 E/F1 10
+/Times-Roman@0 SF -1.11(Ve)127 112.2 S .155
+(rsion 8 includes both sending and recei)1.11 F .154
 (ving support for Extended SMTP support as de\214ned)-.25 F(by RFC 1651 \(basic\) and RFC 1653 \(SIZE\); and limited support for RFC 1652 \(BOD)
-102 164.4 Q(Y\).)-.55 E F0 2.5(7.5. Eight-Bit)87 188.4 R(Clean)2.5 E F1
-(Pre)127 204.6 Q 1.264(vious v)-.25 F 1.264(ersions of)-.15 F F2
-(sendmail)3.764 E F1 1.264(used the 0200 bit for quoting.)3.764 F 1.263
-(This v)6.263 F 1.263(ersion a)-.15 F -.2(vo)-.2 G 1.263(ids that use.)
-.2 F(Ho)102 216.6 Q(we)-.25 E -.15(ve)-.25 G .8 -.4(r, f).15 H
+102 124.2 Q(Y\).)-.55 E F0 2.5(7.5. Eight-Bit)87 148.2 R(Clean)2.5 E F1
+(Pre)127 164.4 Q 1.263(vious v)-.25 F 1.263(ersions of)-.15 F/F2 10
+/Times-Italic@0 SF(sendmail)3.763 E F1 1.264
+(used the 0200 bit for quoting.)3.763 F 1.264(This v)6.264 F 1.264
+(ersion a)-.15 F -.2(vo)-.2 G 1.264(ids that use.).2 F(Ho)102 176.4 Q
+(we)-.25 E -.15(ve)-.25 G .8 -.4(r, f).15 H
 (or compatibility with RFC 822, you can set option `7' to get se).4 E
--.15(ve)-.25 G 2.5(nb).15 G(it stripping.)-2.5 E(Indi)127 232.8 Q
+-.15(ve)-.25 G 2.5(nb).15 G(it stripping.)-2.5 E(Indi)127 192.6 Q
 (vidual mailers can still produce se)-.25 E -.15(ve)-.25 G 2.5(nb).15 G
-(it output using the `7' mailer \215ag.)-2.5 E F0 2.5(7.6. User)87 256.8
-R(Database)2.5 E F1 1.072(The user database is an as-yet e)127 273 R
-1.072(xperimental attempt to pro)-.15 F 1.073(vide uni\214ed lar)-.15 F
-1.073(ge-site name sup-)-.18 F 2.5(port. W)102 285 R 2.5(ea)-.8 G
+(it output using the `7' mailer \215ag.)-2.5 E F0 2.5(7.6. User)87 216.6
+R(Database)2.5 E F1 1.073(The user database is an as-yet e)127 232.8 R
+1.072(xperimental attempt to pro)-.15 F 1.072(vide uni\214ed lar)-.15 F
+1.072(ge-site name sup-)-.18 F 2.5(port. W)102 244.8 R 2.5(ea)-.8 G
 (re installing it at Berk)-2.5 E(ele)-.1 E(y; future v)-.15 E
 (ersions may sho)-.15 E 2.5(ws)-.25 G(igni\214cant modi\214cations.)-2.5
-E F0 2.5(7.7. Impr)87 309 R -.1(ove)-.18 G 2.5(dB).1 G(IND Support)-2.5
-E F1 .489
+E F0 2.5(7.7. Impr)87 268.8 R -.1(ove)-.18 G 2.5(dB).1 G(IND Support)
+-2.5 E F1 .489
 (The BIND support, particularly for MX records, had a number of anno)127
-325.2 R .489(ying \231features\232 which)-.1 F(ha)102 337.2 Q 1.212 -.15
+285 R .49(ying \231features\232 which)-.1 F(ha)102 297 Q 1.212 -.15
 (ve b)-.2 H .912(een remo).15 F -.15(ve)-.15 G 3.412(di).15 G 3.412(nt)
 -3.412 G .912(his release.)-3.412 F .912(In particular)5.912 F 3.412(,t)
 -.4 G .912(hese more tightly bind \(pun intended\) the name)-3.412 F
-(serv)102 349.2 Q(er to)-.15 E F2(sendmail)2.5 E F1 2.5(,s)C 2.5(ot)-2.5
-G(hat the name serv)-2.5 E
+(serv)102 309 Q(er to)-.15 E F2(sendmail)2.5 E F1 2.5(,s)C 2.5(ot)-2.5 G
+(hat the name serv)-2.5 E
 (er resolution rules are incorporated directly into)-.15 E F0(sendmail)
-2.5 E F1(.)A F0 2.5(7.8. K)87 373.2 R(ey)-.25 E(ed Files)-.1 E F1 .366
-(Generalized k)127 389.4 R -.15(ey)-.1 G .366(ed \214les is an idea tak)
-.15 F .366(en directly from)-.1 F/F3 9/Times-Roman@0 SF(ID)2.865 E(A)
--.36 E F2(sendmail)2.865 E F1 .365(\(albeit with a completely)2.865 F
-(dif)102 401.4 Q(ferent implementation\).)-.25 E(The)5 E 2.5(yc)-.15 G
-(an be useful on lar)-2.5 E(ge sites.)-.18 E -1.11(Ve)127 417.6 S
+2.5 E F1(.)A F0 2.5(7.8. K)87 333 R(ey)-.25 E(ed Files)-.1 E F1 .365
+(Generalized k)127 349.2 R -.15(ey)-.1 G .365(ed \214les is an idea tak)
+.15 F .365(en directly from)-.1 F/F3 9/Times-Roman@0 SF(ID)2.866 E(A)
+-.36 E F2(sendmail)2.866 E F1 .366(\(albeit with a completely)2.866 F
+(dif)102 361.2 Q(ferent implementation\).)-.25 E(The)5 E 2.5(yc)-.15 G
+(an be useful on lar)-2.5 E(ge sites.)-.18 E -1.11(Ve)127 377.4 S
 (rsion 8 also understands YP)1.11 E(.)-1.11 E F0 2.5(7.9. Multi-W)87
-441.6 R(ord Classes)-.75 E F1(Classes can no)127 457.8 Q 2.5(wb)-.25 G
+401.4 R(ord Classes)-.75 E F1(Classes can no)127 417.6 Q 2.5(wb)-.25 G
 2.5(em)-2.5 G(ultiple w)-2.5 E 2.5(ords. F)-.1 F(or e)-.15 E(xample,)
--.15 E(CShofmann.CS.Berk)142 474 Q(ele)-.1 E -.65(y.)-.15 G(EDU).65 E
-(allo)102 490.2 Q 2.663
+-.15 E(CShofmann.CS.Berk)142 433.8 Q(ele)-.1 E -.65(y.)-.15 G(EDU).65 E
+(allo)102 450 Q 2.664
 (ws you to match the entire string \231hofmann.CS.Berk)-.25 F(ele)-.1 E
--.65(y.)-.15 G 2.664(EDU\232 using the single construct).65 F
-(\231$=S\232.)102 502.2 Q F0 2.5(7.10. Deferr)87 526.2 R(ed Macr)-.18 E
-2.5(oE)-.18 G(xpansion)-2.5 E F1(The)127 542.4 Q F0($&)2.5 E F2(x)A F1
+-.65(y.)-.15 G 2.663(EDU\232 using the single construct).65 F
+(\231$=S\232.)102 462 Q F0 2.5(7.10. Deferr)87 486 R(ed Macr)-.18 E 2.5
+(oE)-.18 G(xpansion)-2.5 E F1(The)127 502.2 Q F0($&)2.5 E F2(x)A F1
 (construct has been adopted from)2.5 E F3(ID)2.5 E(A)-.36 E F1(.)A F0
-2.5(7.11. IDENT)87 566.4 R(Pr)2.5 E(otocol Support)-.18 E F1
-(The IDENT protocol as de\214ned in RFC 1413 is supported.)127 582.6 Q
-F0 2.5(7.12. P)87 606.6 R(arsing Bug Fixes)-.1 E F1 4.03(An)127 622.8 S
+2.5(7.11. IDENT)87 526.2 R(Pr)2.5 E(otocol Support)-.18 E F1
+(The IDENT protocol as de\214ned in RFC 1413 is supported.)127 542.4 Q
+F0 2.5(7.12. P)87 566.4 R(arsing Bug Fixes)-.1 E F1 4.03(An)127 582.6 S
 1.53(umber of small b)-4.03 F 1.53(ugs ha)-.2 F 1.53
 (ving to do with things lik)-.2 F 4.03(eb)-.1 G 1.53
-(ackslash-escaped quotes inside of)-4.03 F(comments ha)102 634.8 Q .3
+(ackslash-escaped quotes inside of)-4.03 F(comments ha)102 594.6 Q .3
 -.15(ve b)-.2 H(een \214x).15 E(ed.)-.15 E F0 2.5(7.13. Separate)87
-658.8 R(En)2.5 E -.1(ve)-.4 G(lope/Header Pr).1 E(ocessing)-.18 E F1
-.854(Since the From: line is passed in separately from the en)127 675 R
--.15(ve)-.4 G .854(lope sender).15 F 3.354(,t)-.4 G .854(hese ha)-3.354
-F 1.154 -.15(ve b)-.2 H .854(oth been).15 F .428(made visible; the)102
-687 R F0($g)2.928 E F1 .428(macro is set to the en)2.928 F -.15(ve)-.4 G
-.427(lope sender during processing of mailer ar).15 F .427(gument v)-.18
-F(ec-)-.15 E(tors and the header sender during processing of headers.)
-102 699 Q EP
+618.6 R(En)2.5 E -.1(ve)-.4 G(lope/Header Pr).1 E(ocessing)-.18 E F1
+.854(Since the From: line is passed in separately from the en)127 634.8
+R -.15(ve)-.4 G .854(lope sender).15 F 3.354(,t)-.4 G .854(hese ha)
+-3.354 F 1.154 -.15(ve b)-.2 H .854(oth been).15 F .427
+(made visible; the)102 646.8 R F0($g)2.927 E F1 .427
+(macro is set to the en)2.927 F -.15(ve)-.4 G .428
+(lope sender during processing of mailer ar).15 F .428(gument v)-.18 F
+(ec-)-.15 E(tors and the header sender during processing of headers.)102
+658.8 Q .085(It is also possible to specify separate per)127 675 R .085
+(-mailer en)-.2 F -.15(ve)-.4 G .084(lope and header processing.).15 F
+(The)5.084 E F0(S)2.584 E F1(ender)A(-)-.2 E -.55(RW)102 687 S .512
+(Set and).55 F F0(R)3.012 E F1(ecipientR)A .512(Wset ar)-.55 F .512
+(guments for mailers can be speci\214ed as)-.18 F F2(en)3.013 E
+(velope/header)-.4 E F1 .513(to gi)3.013 F .813 -.15(ve d)-.25 H(if-).15
+E(ferent re)102 699 Q(writings for en)-.25 E -.15(ve)-.4 G(lope v).15 E
+(ersus header addresses.)-.15 E EP
 %%Page: 66 62
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF 193.36(SMM:08-66 Sendmail)72 60 R
-(Installation and Operation Guide)2.5 E/F1 10/Times-Roman@0 SF .084
-(It is also possible to specify separate per)127 96 R .085(-mailer en)
--.2 F -.15(ve)-.4 G .085(lope and header processing.).15 F(The)5.085 E
-F0(S)2.585 E F1(ender)A(-)-.2 E -.55(RW)102 108 S .513(Set and).55 F F0
-(R)3.013 E F1(ecipientR)A .513(Wset ar)-.55 F .512
-(guments for mailers can be speci\214ed as)-.18 F/F2 10/Times-Italic@0
-SF(en)3.012 E(velope/header)-.4 E F1 .512(to gi)3.012 F .812 -.15(ve d)
--.25 H(if-).15 E(ferent re)102 120 Q(writings for en)-.25 E -.15(ve)-.4
-G(lope v).15 E(ersus header addresses.)-.15 E F0 2.5(7.14. Owner)87 144
-R(-List Pr)-.37 E(opagates to En)-.18 E -.1(ve)-.4 G(lope).1 E F1 1
-(When an alias has an associated o)127 160.2 R 1.001
+(Installation and Operation Guide)2.5 E 2.5(7.14. Owner)87 96 R
+(-List Pr)-.37 E(opagates to En)-.18 E -.1(ve)-.4 G(lope).1 E/F1 10
+/Times-Roman@0 SF 1.001(When an alias has an associated o)127 112.2 R 1
 (wner\255list name, that alias is used to change the en)-.25 F -.15(ve)
--.4 G(lope).15 E(sender address.)102 172.2 Q(This will cause do)5 E
+-.4 G(lope).15 E(sender address.)102 124.2 Q(This will cause do)5 E
 (wnstream errors to be returned to that o)-.25 E(wner)-.25 E(.)-.55 E F0
-2.5(7.15. Dynamic)87 196.2 R(Header Allocation)2.5 E F1(The \214x)127
-212.4 Q(ed size limit on header lines has been eliminated.)-.15 E F0 2.5
-(7.16. New)87 236.4 R(Command Line Flags)2.5 E F1(The)127 252.6 Q F0
+2.5(7.15. Dynamic)87 148.2 R(Header Allocation)2.5 E F1(The \214x)127
+164.4 Q(ed size limit on header lines has been eliminated.)-.15 E F0 2.5
+(7.16. New)87 188.4 R(Command Line Flags)2.5 E F1(The)127 204.6 Q F0
 <ad42>2.5 E F1(\215ag has been added to pass in body type information.)
-2.5 E(The)127 268.8 Q F0<ad70>2.5 E F1
+2.5 E(The)127 220.8 Q F0<ad70>2.5 E F1
 (\215ag has been added to pass in protocol information.)2.5 E(The)127
-285 Q F0<ad58>2.6 E F1 .1(\215ag has been added to allo)2.6 F 2.6(wl)
--.25 G .1(ogging of all protocol in and out of)-2.6 F F2(sendmail)2.6 E
-F1 .1(for deb)2.6 F(ug-)-.2 E(ging.)102 297 Q(The)127 313.2 Q F0<ad4f>
-2.5 E F1(\215ag implies setting long-form options.)2.5 E F0 2.5
-(7.17. Enhanced)87 337.2 R(Command Line Flags)2.5 E F1(The)127 353.4 Q
-F0<ad71>4.006 E F1 1.507(\215ag can limit limit a queue run to speci\214c recipients, senders, or queue ids using)
-4.006 F F0(\255qR)102 365.4 Q F2(substring)A F0 2.5<2cad>C(qS)-2.5 E F2
+237 Q F0<ad58>2.6 E F1 .1(\215ag has been added to allo)2.6 F 2.6(wl)
+-.25 G .1(ogging of all protocol in and out of)-2.6 F/F2 10
+/Times-Italic@0 SF(sendmail)2.6 E F1 .1(for deb)2.6 F(ug-)-.2 E(ging.)
+102 249 Q(The)127 265.2 Q F0<ad4f>2.5 E F1
+(\215ag implies setting long-form options.)2.5 E F0 2.5(7.17. Enhanced)
+87 289.2 R(Command Line Flags)2.5 E F1(The)127 305.4 Q F0<ad71>4.007 E
+F1 1.507(\215ag can limit limit a queue run to speci\214c recipients, senders, or queue ids using)
+4.007 F F0(\255qR)102 317.4 Q F2(substring)A F0 2.5<2cad>C(qS)-2.5 E F2
 (substring)A F0 2.5(,o)C 2.5<72ad>-2.5 G(qI)-2.5 E F2(substring)A F0
 -.18(re)2.5 G(specti).18 E -.1(ve)-.1 G(ly).1 E(.)-.7 E 2.5(7.18. New)87
-389.4 R(and Old Con\214guration Line T)2.5 E(ypes)-.74 E F1(The)127
-405.6 Q F0(K)2.5 E F1(line has been added to declare database maps.)2.5
-E(The)127 421.8 Q F0(V)2.5 E F1
+341.4 R(and Old Con\214guration Line T)2.5 E(ypes)-.74 E F1(The)127
+357.6 Q F0(K)2.5 E F1(line has been added to declare database maps.)2.5
+E(The)127 373.8 Q F0(V)2.5 E F1
 (line has been added to declare the con\214guration v)2.5 E(ersion le)
--.15 E -.15(ve)-.25 G(l.).15 E(The)127 438 Q F0(M)2.797 E F1 .296(line has a \231D=\232 \214eld that lets you change into a temporary directory while that mailer)
-2.797 F .58(is running.)102 450 R .58
-(It also has a \231U=\232 \214eld to allo)5.58 F 3.08(wy)-.25 G .581
-(ou to set the user and group id to be used when run-)-3.08 F
-(ning the mailer)102 462 Q(.)-.55 E F0 2.5(7.19. New)87 486 R(Options)
-2.5 E F1(Se)127 502.2 Q -.15(ve)-.25 G .9(ral ne).15 F 3.4(wo)-.25 G .9
+-.15 E -.15(ve)-.25 G(l.).15 E(The)127 390 Q F0(M)2.796 E F1 .297(line has a \231D=\232 \214eld that lets you change into a temporary directory while that mailer)
+2.796 F .581(is running.)102 402 R .581
+(It also has a \231U=\232 \214eld to allo)5.581 F 3.081(wy)-.25 G .58
+(ou to set the user and group id to be used when run-)-3.081 F
+(ning the mailer)102 414 Q(.)-.55 E F0 2.5(7.19. New)87 438 R(Options)
+2.5 E F1(Se)127 454.2 Q -.15(ve)-.25 G .9(ral ne).15 F 3.4(wo)-.25 G .9
 (ptions ha)-3.4 F 1.2 -.15(ve b)-.2 H .9(een added, man).15 F 3.4(yt)
 -.15 G 3.4(os)-3.4 G .9(upport ne)-3.4 F 3.4(wf)-.25 G .9
-(eatures, others to allo)-3.4 F 3.4(wt)-.25 G(uning)-3.4 E 1.722(that w)
-102 514.2 R 1.722(as pre)-.1 F 1.722(viously a)-.25 F -.25(va)-.2 G
+(eatures, others to allo)-3.4 F 3.4(wt)-.25 G(uning)-3.4 E 1.723(that w)
+102 466.2 R 1.723(as pre)-.1 F 1.722(viously a)-.25 F -.25(va)-.2 G
 1.722(ilable only by recompiling.).25 F(The)6.722 E 4.222(ya)-.15 G
 1.722(re described in detail in Section 5.6.)-4.222 F(Brie\215y)102
-526.2 Q(,)-.65 E 31(bI)102 542.4 S
-(nsist on a minimum number of disk blocks.)-31 E 29.33(CS)102 558.6 S
-(et checkpoint interv)-29.33 E(al.)-.25 E 29.89(ED)102 574.8 S(ef)-29.89
-E(ault error message.)-.1 E 28.78(GE)102 591 S(nable GECOS matching.)
--28.78 E 31(hM)102 607.2 S(aximum hop count.)-31 E 33.22(jS)102 623.4 S
-(end errors in MIME-encapsulated format.)-33.22 E 32.11(JF)102 639.6 S
-(orw)-32.26 E(ard \214le path.)-.1 E 31(kC)102 655.8 S
-(onnection cache size)-31 E 28.78(KC)102 672 S
-(onnection cache lifetime.)-28.78 E 33.22(lE)102 688.2 S .334
-(nable Errors-T)-33.22 F .334(o: header)-.8 F 5.334(.T)-.55 G .334
+478.2 Q(,)-.65 E 31(bI)102 494.4 S
+(nsist on a minimum number of disk blocks.)-31 E 29.33(CS)102 510.6 S
+(et checkpoint interv)-29.33 E(al.)-.25 E 29.89(ED)102 526.8 S(ef)-29.89
+E(ault error message.)-.1 E 28.78(GE)102 543 S(nable GECOS matching.)
+-28.78 E 31(hM)102 559.2 S(aximum hop count.)-31 E 33.22(jS)102 575.4 S
+(end errors in MIME-encapsulated format.)-33.22 E 32.11(JF)102 591.6 S
+(orw)-32.26 E(ard \214le path.)-.1 E 31(kC)102 607.8 S
+(onnection cache size)-31 E 28.78(KC)102 624 S
+(onnection cache lifetime.)-28.78 E 33.22(lE)102 640.2 S .333
+(nable Errors-T)-33.22 F .333(o: header)-.8 F 5.334(.T)-.55 G .334
 (hese headers violate RFC 1123; this option is included to pro-)-5.334 F
-(vide back compatibility with old v)138 700.2 Q(ersions of)-.15 E F2
-(sendmail)2.5 E F1(.)A EP
+(vide back compatibility with old v)138 652.2 Q(ersions of)-.15 E F2
+(sendmail)2.5 E F1(.)A 28.78(OS)102 668.4 S
+(et incoming SMTP daemon options, such as an alternate SMTP port.)-28.78
+E 31(pP)102 684.6 S(ri)-31 E -.25(va)-.25 G .3 -.15(cy o).25 H(ptions.)
+.15 E 29.33(RD)102 700.8 S(on')-29.33 E 2.5(tp)-.18 G(rune route-addrs.)
+-2.5 E EP
 %%Page: 67 63
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
-(SMM:08-67)195.86 E/F1 10/Times-Roman@0 SF 28.78(OS)102 96 S
-(et incoming SMTP daemon options, such as an alternate SMTP port.)-28.78
-E 31(pP)102 112.2 S(ri)-31 E -.25(va)-.25 G .3 -.15(cy o).25 H(ptions.)
-.15 E 29.33(RD)102 128.4 S(on')-29.33 E 2.5(tp)-.18 G(rune route-addrs.)
--2.5 E 28.78(UU)102 144.6 S(ser database spec.)-28.78 E 28.78(VF)102
-160.8 S(allback \231MX\232 host.)-28.93 E 28.78<7799>102 177 S
-(Best MX\232 handling technique.)-28.78 E 31(7D)102 193.2 S 2.5(on)-31 G
-(ot run eight bit clean.)-2.5 E 31(8E)102 209.4 S
-(ight bit data handling mode.)-31 E F0 2.5(7.20. Extended)87 233.4 R
-(Options)2.5 E F1(The)127 249.6 Q F0(r)3.764 E F1 1.264
-(\(read timeout\),)3.764 F F0(I)3.764 E F1 1.264(\(use BIND\), and)3.764
-F F0(T)3.764 E F1 1.264(\(queue timeout\) options ha)3.764 F 1.564 -.15
-(ve b)-.2 H 1.264(een e).15 F 1.264(xtended to)-.15 F
-(pass in more information.)102 261.6 Q F0 2.5(7.21. New)87 285.6 R
-(Mailer Flags)2.5 E F1(Se)127 301.8 Q -.15(ve)-.25 G(ral ne).15 E 2.5
-(wm)-.25 G(ailer \215ags ha)-2.5 E .3 -.15(ve b)-.2 H(een added.).15 E
-31.56(aT)102 318 S .636(ry to use ESMTP when creating a connection.)
--31.91 F .636(If this is not set,)5.636 F/F2 10/Times-Italic@0 SF
-(sendmail)3.136 E F1 .635(will still try if)3.136 F .22
-(the other end hints that it kno)138 330 R .221
+(SMM:08-67)195.86 E/F1 10/Times-Roman@0 SF 28.78(UU)102 96 S
+(ser database spec.)-28.78 E 28.78(VF)102 112.2 S
+(allback \231MX\232 host.)-28.93 E 28.78<7799>102 128.4 S
+(Best MX\232 handling technique.)-28.78 E 31(7D)102 144.6 S 2.5(on)-31 G
+(ot run eight bit clean.)-2.5 E 31(8E)102 160.8 S
+(ight bit data handling mode.)-31 E F0 2.5(7.20. Extended)87 184.8 R
+(Options)2.5 E F1(The)127 201 Q F0(r)3.764 E F1 1.264(\(read timeout\),)
+3.764 F F0(I)3.764 E F1 1.264(\(use BIND\), and)3.764 F F0(T)3.764 E F1
+1.264(\(queue timeout\) options ha)3.764 F 1.564 -.15(ve b)-.2 H 1.264
+(een e).15 F 1.264(xtended to)-.15 F(pass in more information.)102 213 Q
+F0 2.5(7.21. New)87 237 R(Mailer Flags)2.5 E F1(Se)127 253.2 Q -.15(ve)
+-.25 G(ral ne).15 E 2.5(wm)-.25 G(ailer \215ags ha)-2.5 E .3 -.15(ve b)
+-.2 H(een added.).15 E 31.56(aT)102 269.4 S .636
+(ry to use ESMTP when creating a connection.)-31.91 F .636
+(If this is not set,)5.636 F/F2 10/Times-Italic@0 SF(sendmail)3.136 E F1
+.636(will still try if)3.136 F .221(the other end hints that it kno)138
+281.4 R .22
 (ws about ESMTP in its greeting message; this \215ag says to try)-.25 F
--2.15 -.25(ev e)138 342 T 2.596(ni).25 G 2.596(fi)-2.596 G 2.596(td)
--2.596 G(oesn')-2.596 E 2.596(th)-.18 G 2.596(int. If)-2.596 F .095
+-2.15 -.25(ev e)138 293.4 T 2.595(ni).25 G 2.595(fi)-2.595 G 2.595(td)
+-2.595 G(oesn')-2.595 E 2.595(th)-.18 G 2.595(int. If)-2.595 F .095
 (the EHLO \(e)2.595 F .095(xtended hello\) command f)-.15 F(ails,)-.1 E
-F2(sendmail)2.595 E F1 -.1(fa)2.595 G .095(lls back to).1 F(old SMTP)138
-354 Q(.)-1.11 E 28.78(AT)102 370.2 S
+F2(sendmail)2.596 E F1 -.1(fa)2.596 G .096(lls back to).1 F(old SMTP)138
+305.4 Q(.)-1.11 E 28.78(AT)102 321.6 S
 (ry the user part of addresses for this mailer as aliases.)-29.13 E 31
-(bE)102 386.4 S
+(bE)102 337.8 S
 (nsure that there is a blank line at the end of all messages.)-31 E
-31.56(cS)102 402.6 S .68(trip all comments from addresses; this should only be used as a last resort when dealing)
--31.56 F(with crank)138 414.6 Q 2.5(ym)-.15 G(ailers.)-2.5 E 31(gN)102
-430.8 S -2.15 -.25(ev e)-31 H 2.641(ru).25 G .141
-(se the null sender as the en)-2.641 F -.15(ve)-.4 G .141(lope sender)
-.15 F 2.641(,e)-.4 G -.15(ve)-2.891 G 2.641(nw).15 G .14
-(hen running SMTP)-2.641 F 5.14(.A)-1.11 G .14(lthough this)-5.14 F
-1.521(violates RFC 1123, it may be necessary when you must deal with some obnoxious old)
-138 442.8 R(hosts.)138 454.8 Q 31(kT)102 471 S(urn of)-31.45 E 2.5(ft)
+31.56(cS)102 354 S .68(trip all comments from addresses; this should only be used as a last resort when dealing)
+-31.56 F(with crank)138 366 Q 2.5(ym)-.15 G(ailers.)-2.5 E 31(gN)102
+382.2 S -2.15 -.25(ev e)-31 H 2.64(ru).25 G .14
+(se the null sender as the en)-2.64 F -.15(ve)-.4 G .141(lope sender).15
+F 2.641(,e)-.4 G -.15(ve)-2.891 G 2.641(nw).15 G .141(hen running SMTP)
+-2.641 F 5.141(.A)-1.11 G .141(lthough this)-5.141 F 1.521(violates RFC 1123, it may be necessary when you must deal with some obnoxious old)
+138 394.2 R(hosts.)138 406.2 Q 31(kT)102 422.4 S(urn of)-31.45 E 2.5(ft)
 -.25 G(he loopback check in the HELO protocol; doing this may cause mailer loops.)
--2.5 E 31(oA)102 487.2 S -.1(lwa)-31 G
+-2.5 E 31(oA)102 438.6 S -.1(lwa)-31 G
 (ys run the mailer as the recipient of the message.).1 E 28.78(wT)102
-503.4 S(his user should ha)-28.78 E .3 -.15(ve a p)-.2 H
-(asswd \214le entry).15 E(.)-.65 E 31(5T)102 519.6 S
-(ry ruleset 5 if no local aliases.)-31.35 E 31(7S)102 535.8 S
-(trip all output to 7 bits.)-31 E 33.22(:C)102 552 S
-(heck for :include: \214les.)-33.22 E 34(|C)102 568.2 S
-(heck for |program addresses.)-34 E 33.22(/C)102 584.4 S
-(heck for /\214le addresses.)-33.22 E 26.79(@C)102 600.6 S
+454.8 S(his user should ha)-28.78 E .3 -.15(ve a p)-.2 H
+(asswd \214le entry).15 E(.)-.65 E 31(5T)102 471 S
+(ry ruleset 5 if no local aliases.)-31.35 E 31(7S)102 487.2 S
+(trip all output to 7 bits.)-31 E 33.22(:C)102 503.4 S
+(heck for :include: \214les.)-33.22 E 34(|C)102 519.6 S
+(heck for |program addresses.)-34 E 33.22(/C)102 535.8 S
+(heck for /\214le addresses.)-33.22 E 26.79(@C)102 552 S
 (heck this user ag)-26.79 E(ainst the user database.)-.05 E F0 2.5
-(7.22. Long)87 624.6 R(Option Names)2.5 E F1 .856
-(All options can be speci\214ed using long names, and some ne)127 640.8
+(7.22. Long)87 576 R(Option Names)2.5 E F1 .856
+(All options can be speci\214ed using long names, and some ne)127 592.2
 R 3.356(wo)-.25 G .856(ptions can only be speci\214ed)-3.356 F
-(with long names.)102 652.8 Q F0 2.5(7.23. New)87 676.8 R(Pr)2.5 E
-(e-De\214ned Macr)-.18 E(os)-.18 E F1(The follo)127 693 Q
-(wing macros are pre-de\214ned:)-.25 E 23.5($k The)102 709.2 R
-(UUCP node name, nominally from)2.5 E F2(uname)2.5 E F1(\(2\) call.)A EP
+(with long names.)102 604.2 Q F0 2.5(7.23. New)87 628.2 R(Pr)2.5 E
+(e-De\214ned Macr)-.18 E(os)-.18 E F1(The follo)127 644.4 Q
+(wing macros are pre-de\214ned:)-.25 E 23.5($k The)102 660.6 R
+(UUCP node name, nominally from)2.5 E F2(uname)2.5 E F1(\(2\) call.)A
+20.72($m The)102 676.8 R(domain part of our full hostname.)2.5 E 23.5
+($_ The)102 693 R(RFC 1413-pro)2.5 E(vided sender address.)-.15 E EP
 %%Page: 68 64
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF 193.36(SMM:08-68 Sendmail)72 60 R
-(Installation and Operation Guide)2.5 E/F1 10/Times-Roman@0 SF 20.72
-($m The)102 96 R(domain part of our full hostname.)2.5 E 23.5($_ The)102
-112.2 R(RFC 1413-pro)2.5 E(vided sender address.)-.15 E F0 2.5
-(7.24. New)87 136.2 R(LHS T)2.5 E(ok)-.92 E(en)-.1 E F1 -1.11(Ve)127
-152.4 S 1.375(rsion 8 allo)1.11 F(ws)-.25 E F0($@)3.875 E F1 1.376
-(on the Left Hand Side of an \231R\232 line to match zero tok)3.875 F
-3.876(ens. This)-.1 F(is)3.876 E
-(intended to be used to match the null input.)102 164.4 Q F0 2.5
-(7.25. Bigger)87 188.4 R(Defaults)2.5 E F1 -1.11(Ve)127 204.6 S 1.284
+(Installation and Operation Guide)2.5 E 2.5(7.24. New)87 96 R(LHS T)2.5
+E(ok)-.92 E(en)-.1 E/F1 10/Times-Roman@0 SF -1.11(Ve)127 112.2 S 1.376
+(rsion 8 allo)1.11 F(ws)-.25 E F0($@)3.876 E F1 1.376
+(on the Left Hand Side of an \231R\232 line to match zero tok)3.876 F
+3.875(ens. This)-.1 F(is)3.875 E
+(intended to be used to match the null input.)102 124.2 Q F0 2.5
+(7.25. Bigger)87 148.2 R(Defaults)2.5 E F1 -1.11(Ve)127 164.4 S 1.283
 (rsion 8 allo)1.11 F 1.284(ws up to 100 rulesets instead of 30.)-.25 F
-1.283(It is recommended that rulesets 0\2559 be)6.284 F(reserv)102 216.6
+1.284(It is recommended that rulesets 0\2559 be)6.284 F(reserv)102 176.4
 Q(ed for)-.15 E/F2 10/Times-Italic@0 SF(sendmail)2.5 E F1 1.1 -.55('s d)
 D(edicated use in future releases.).55 E
 (The total number of MX records that can be used has been raised to 20.)
-127 232.8 Q .335(The number of queued messages that can be handled at one time has been raised from 600 to)
-127 249 R(1000.)102 261 Q F0 2.5(7.26. Differ)87 285 R(ent Default T)
--.18 E(uning P)-.92 E(arameters)-.1 E F1 -1.11(Ve)127 301.2 S .8
-(rsion 8 has changed the def)1.11 F .8
+127 192.6 Q .335(The number of queued messages that can be handled at one time has been raised from 600 to)
+127 208.8 R(1000.)102 220.8 Q F0 2.5(7.26. Differ)87 244.8 R
+(ent Default T)-.18 E(uning P)-.92 E(arameters)-.1 E F1 -1.11(Ve)127 261
+S .8(rsion 8 has changed the def)1.11 F .8
 (ault parameters for tuning queue costs to mak)-.1 F 3.3(et)-.1 G .8
 (he number of)-3.3 F .712(recipients more important than the size of the message \(for small messages\).)
-102 313.2 R .712(This is reasonable if)5.712 F
-(you are connected with reasonably f)102 325.2 Q(ast links.)-.1 E F0 2.5
-(7.27. A)87 349.2 R(uto-Quoting in Addr)-.5 E(esses)-.18 E F1(Pre)127
-365.4 Q(viously)-.25 E 2.611(,t)-.65 G .111
-(he \231Full Name <email address>\232 syntax w)-2.611 F .111
+102 273 R .712(This is reasonable if)5.712 F
+(you are connected with reasonably f)102 285 Q(ast links.)-.1 E F0 2.5
+(7.27. A)87 309 R(uto-Quoting in Addr)-.5 E(esses)-.18 E F1(Pre)127
+325.2 Q(viously)-.25 E 2.61(,t)-.65 G .111
+(he \231Full Name <email address>\232 syntax w)-2.61 F .111
 (ould generate incorrect protocol output)-.1 F
-(if \231Full Name\232 had special characters such as dot.)102 377.4 Q
+(if \231Full Name\232 had special characters such as dot.)102 337.2 Q
 (This v)5 E(ersion puts quotes around such names.)-.15 E F0 2.5
-(7.28. Symbolic)87 401.4 R(Names On Err)2.5 E(or Mailer)-.18 E F1(Se)127
-417.6 Q -.15(ve)-.25 G(ral names ha).15 E .3 -.15(ve b)-.2 H(een b).15 E
+(7.28. Symbolic)87 361.2 R(Names On Err)2.5 E(or Mailer)-.18 E F1(Se)127
+377.4 Q -.15(ve)-.25 G(ral names ha).15 E .3 -.15(ve b)-.2 H(een b).15 E
 (uilt in to the $@ portion of the $#error mailer)-.2 E(.)-.55 E F0 2.5
-(7.29. SMTP)87 441.6 R(VRFY Doesn't Expand)2.5 E F1(Pre)127 457.8 Q
-1.437(vious v)-.25 F 1.437(ersions of)-.15 F F2(sendmail)3.937 E F1
-1.438(treated VRFY and EXPN the same.)3.937 F 1.438(In this v)6.438 F
-1.438(ersion, VRFY)-.15 F(doesn')102 469.8 Q 2.5(te)-.18 G
+(7.29. SMTP)87 401.4 R(VRFY Doesn't Expand)2.5 E F1(Pre)127 417.6 Q
+1.438(vious v)-.25 F 1.438(ersions of)-.15 F F2(sendmail)3.938 E F1
+1.438(treated VRFY and EXPN the same.)3.938 F 1.437(In this v)6.437 F
+1.437(ersion, VRFY)-.15 F(doesn')102 429.6 Q 2.5(te)-.18 G
 (xpand aliases or follo)-2.65 E 2.5(w.)-.25 G(forw)-2.5 E(ard \214les.)
--.1 E(EXPN still does.)5 E .682
-(As an optimization, if you run with your def)127 486 R .681(ault deli)
--.1 F -.15(ve)-.25 G .681(ry mode being queue-only or deli).15 F -.15
-(ve)-.25 G -.2(r-).15 G 1.582
+-.1 E(EXPN still does.)5 E .681
+(As an optimization, if you run with your def)127 445.8 R .682
+(ault deli)-.1 F -.15(ve)-.25 G .682(ry mode being queue-only or deli)
+.15 F -.15(ve)-.25 G -.2(r-).15 G 1.582
 (in-background, the RCPT command will also not chase aliases and .forw)
-102 498 R 1.582(ard \214les.)-.1 F 1.583(It will chase)6.582 F
-(them when it processes the queue.)102 510 Q F0 2.5(7.30. [IPC])87 534 R
-(Mailers Allo)2.5 E 2.5(wM)-.1 G(ultiple Hosts)-2.5 E F1 .448
-(When an address resolv)127 550.2 R .448
-(es to a mailer that has \231[IPC]\232 as its \231P)-.15 F .447
-(ath\232, the $@ part \(host name\))-.15 F .137
+102 457.8 R 1.582(ard \214les.)-.1 F 1.582(It will chase)6.582 F
+(them when it processes the queue.)102 469.8 Q F0 2.5(7.30. [IPC])87
+493.8 R(Mailers Allo)2.5 E 2.5(wM)-.1 G(ultiple Hosts)-2.5 E F1 .447
+(When an address resolv)127 510 R .448
+(es to a mailer that has \231[IPC]\232 as its \231P)-.15 F .448
+(ath\232, the $@ part \(host name\))-.15 F .138
 (can be a colon-separated list of hosts instead of a single hostname.)
-102 562.2 R .138(This asks)5.138 F F2(sendmail)2.638 E F1 .138
-(to search the)2.638 F .161(list for the \214rst entry that is a)102
-574.2 R -.25(va)-.2 G .161(ilable e).25 F .16
-(xactly as though it were an MX record.)-.15 F .16
-(The intent is to route)5.16 F .737(internal traf)102 586.2 R .738
+102 522 R .137(This asks)5.137 F F2(sendmail)2.637 E F1 .137
+(to search the)2.637 F .16(list for the \214rst entry that is a)102 534
+R -.25(va)-.2 G .16(ilable e).25 F .161
+(xactly as though it were an MX record.)-.15 F .161
+(The intent is to route)5.161 F .738(internal traf)102 546 R .738
 (\214c through internal netw)-.25 F .738
-(orks without publishing an MX record to the net.)-.1 F .738(MX e)5.738
-F(xpan-)-.15 E(sion is still done on the indi)102 598.2 Q(vidual items.)
--.25 E F0 2.5(7.31. Aliases)87 622.2 R(Extended)2.5 E F1 1.457
-(The implementation has been mer)127 638.4 R 1.457(ged with maps.)-.18 F
-1.456(Among other things, this supports NIS-)6.457 F(based aliases.)102
-650.4 Q F0 2.5(7.32. P)87 674.4 R(ortability and Security Enhancements)
--.2 E F1 2.5(An)127 690.6 S(umber of internal changes ha)-2.5 E .3 -.15
-(ve b)-.2 H(een made to enhance portability).15 E(.)-.65 E(Se)127 706.8
+(orks without publishing an MX record to the net.)-.1 F .737(MX e)5.737
+F(xpan-)-.15 E(sion is still done on the indi)102 558 Q(vidual items.)
+-.25 E F0 2.5(7.31. Aliases)87 582 R(Extended)2.5 E F1 1.456
+(The implementation has been mer)127 598.2 R 1.457(ged with maps.)-.18 F
+1.457(Among other things, this supports NIS-)6.457 F(based aliases.)102
+610.2 Q F0 2.5(7.32. P)87 634.2 R(ortability and Security Enhancements)
+-.2 E F1 2.5(An)127 650.4 S(umber of internal changes ha)-2.5 E .3 -.15
+(ve b)-.2 H(een made to enhance portability).15 E(.)-.65 E(Se)127 666.6
 Q -.15(ve)-.25 G(ral \214x).15 E(es ha)-.15 E .3 -.15(ve b)-.2 H
-(een made to increase the paranoia f).15 E(actor)-.1 E(.)-.55 E EP
+(een made to increase the paranoia f).15 E(actor)-.1 E(.)-.55 E F0 2.5
+(7.33. Miscellaneous)87 690.6 R(Changes)2.5 E F2(Sendmail)127 706.8 Q F1
+(writes a)2.5 E F2(/etc/sendmail.pid)2.5 E F1
+(\214le with the current process id of the SMTP daemon.)2.5 E EP
 %%Page: 69 65
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
-(SMM:08-69)195.86 E 2.5(7.33. Miscellaneous)87 96 R(Changes)2.5 E/F1 10
-/Times-Italic@0 SF(Sendmail)127 112.2 Q/F2 10/Times-Roman@0 SF(writes a)
-2.5 E F1(/etc/sendmail.pid)2.5 E F2
-(\214le with the current process id of the SMTP daemon.)2.5 E -1 -.8
-(Tw o)127 128.4 T 1.646(people using the same program in their .forw)
-4.946 F 1.647(ard \214le are considered dif)-.1 F 1.647(ferent so that)
--.25 F(duplicate elimination doesn')102 140.4 Q 2.5(td)-.18 G
-(elete one of them.)-2.5 E(The)127 156.6 Q F1(mailstats)3.181 E F2 .681
-(program prints mailer names and gets the location of the)3.181 F F1
-(sendmail.st)3.18 E F2 .68(\214le from)3.18 F F1(/etc/sendmail.cf)102
-168.6 Q F2(.)A(Man)127 184.8 Q 2.5(ym)-.15 G(inor b)-2.5 E(ugs ha)-.2 E
+(SMM:08-69)195.86 E/F1 10/Times-Roman@0 SF -1 -.8(Tw o)127 96 T 1.647
+(people using the same program in their .forw)4.947 F 1.646
+(ard \214le are considered dif)-.1 F 1.646(ferent so that)-.25 F
+(duplicate elimination doesn')102 108 Q 2.5(td)-.18 G
+(elete one of them.)-2.5 E(The)127 124.2 Q/F2 10/Times-Italic@0 SF
+(mailstats)3.18 E F1 .681
+(program prints mailer names and gets the location of the)3.18 F F2
+(sendmail.st)3.181 E F1 .681(\214le from)3.181 F F2(/etc/sendmail.cf)102
+136.2 Q F1(.)A(Man)127 152.4 Q 2.5(ym)-.15 G(inor b)-2.5 E(ugs ha)-.2 E
 .3 -.15(ve b)-.2 H(een \214x).15 E
 (ed, such as handling of backslashes inside of quotes.)-.15 E 2.5(Ah)127
-201 S(ook \(ruleset 5\) has been added to allo)-2.5 E 2.5(wr)-.25 G -.25
-(ew)-2.5 G(riting of local addresses after aliasing.).25 E F0 2.5(8. A)
-72 225 R(CKNO)-.55 E(WLEDGEMENTS)-.5 E F2(I')112 241.2 Q 2.036 -.15
-(ve w)-.5 H(ork).05 E 1.737(ed on)-.1 F F1(sendmail)4.237 E F2 1.737
+168.6 S(ook \(ruleset 5\) has been added to allo)-2.5 E 2.5(wr)-.25 G
+-.25(ew)-2.5 G(riting of local addresses after aliasing.).25 E F0 2.5
+(8. A)72 192.6 R(CKNO)-.55 E(WLEDGEMENTS)-.5 E F1(I')112 208.8 Q 2.037
+-.15(ve w)-.5 H(ork).05 E 1.737(ed on)-.1 F F2(sendmail)4.237 E F1 1.737
 (for man)4.237 F 4.237(yy)-.15 G 1.737(ears, and man)-4.237 F 4.237(ye)
 -.15 G(mplo)-4.237 E 1.737(yers ha)-.1 F 2.037 -.15(ve b)-.2 H 1.737
-(een remarkably patient).15 F .404(about letting me w)87 253.2 R .404
-(ork on a lar)-.1 F .404(ge project that w)-.18 F .403
-(as not part of my of)-.1 F .403(\214cial job)-.25 F 5.403(.T)-.4 G .403
-(his includes time on the)-5.403 F .281(INGRES Project at the Uni)87
-265.2 R -.15(ve)-.25 G .282(rsity of California at Berk).15 F(ele)-.1 E
+(een remarkably patient).15 F .403(about letting me w)87 220.8 R .403
+(ork on a lar)-.1 F .403(ge project that w)-.18 F .404
+(as not part of my of)-.1 F .404(\214cial job)-.25 F 5.404(.T)-.4 G .404
+(his includes time on the)-5.404 F .282(INGRES Project at the Uni)87
+232.8 R -.15(ve)-.25 G .282(rsity of California at Berk).15 F(ele)-.1 E
 1.582 -.65(y, a)-.15 H 2.782(tB).65 G .282(ritton Lee, and ag)-2.782 F
-.282(ain on the Mammoth)-.05 F(and T)87 277.2 Q(itan Projects at Berk)
--.35 E(ele)-.1 E -.65(y.)-.15 G .454(Much of the second w)112 293.4 R
+.281(ain on the Mammoth)-.05 F(and T)87 244.8 Q(itan Projects at Berk)
+-.35 E(ele)-.1 E -.65(y.)-.15 G .453(Much of the second w)112 261 R
 -2.25 -.2(av e)-.1 H .453(of impro)3.153 F -.15(ve)-.15 G .453
-(ments should be credited to Bryan Costales of ICSI.).15 F .453(As he)
-5.453 F .781(passed me drafts of his book on)87 305.4 R F1(sendmail)
-3.281 E F2 3.281(Iw)3.281 G .781(as inspired to start w)-3.381 F .781
-(orking on things ag)-.1 F 3.282(ain. Bryan)-.05 F -.1(wa)3.282 G(s).1 E
-(also a)87 317.4 Q -.25(va)-.2 G(ilable to bounce ideas of).25 E 2.5(fo)
--.25 G(f.)-2.5 E(Man)112 333.6 Q 2.857 -.65(y, m)-.15 H(an).65 E 4.057
-(yp)-.15 G 1.557(eople contrib)-4.057 F 1.556
-(uted chunks of code and ideas to)-.2 F F1(sendmail)4.056 E F2 6.556(.I)
-C 4.056(th)-6.556 G 1.556(as pro)-4.056 F -.15(ve)-.15 G 4.056(nt).15 G
-4.056(ob)-4.056 G 4.056(ea)-4.056 G .463(group netw)87 345.6 R .463
-(ork ef)-.1 F 2.963(fort. V)-.25 F .463(ersion 8 in particular w)-1.11 F
-.463(as a group project.)-.1 F .464(The follo)5.464 F .464
-(wing people made notable)-.25 F(contrib)87 357.6 Q(utions:)-.2 E
-(John Beck, He)127 373.8 Q(wlett-P)-.25 E(ackard)-.15 E -.25(Ke)127
-385.8 S(ith Bostic, CSRG, Uni).25 E -.15(ve)-.25 G
-(rsity of California, Berk).15 E(ele)-.1 E(y)-.15 E(Andre)127 397.8 Q
-2.5(wC)-.25 G(heng, Sun Microsystems)-2.5 E(Michael J. Corrig)127 409.8
+(ments should be credited to Bryan Costales of ICSI.).15 F .454(As he)
+5.454 F .781(passed me drafts of his book on)87 273 R F2(sendmail)3.281
+E F1 3.281(Iw)3.281 G .781(as inspired to start w)-3.381 F .781
+(orking on things ag)-.1 F 3.281(ain. Bryan)-.05 F -.1(wa)3.281 G(s).1 E
+(also a)87 285 Q -.25(va)-.2 G(ilable to bounce ideas of).25 E 2.5(fo)
+-.25 G(f.)-2.5 E(Man)112 301.2 Q 2.856 -.65(y, m)-.15 H(an).65 E 4.056
+(yp)-.15 G 1.556(eople contrib)-4.056 F 1.556
+(uted chunks of code and ideas to)-.2 F F2(sendmail)4.056 E F1 6.556(.I)
+C 4.056(th)-6.556 G 1.557(as pro)-4.056 F -.15(ve)-.15 G 4.057(nt).15 G
+4.057(ob)-4.057 G 4.057(ea)-4.057 G .464(group netw)87 313.2 R .464
+(ork ef)-.1 F 2.964(fort. V)-.25 F .464(ersion 8 in particular w)-1.11 F
+.463(as a group project.)-.1 F .463(The follo)5.463 F .463
+(wing people made notable)-.25 F(contrib)87 325.2 Q(utions:)-.2 E
+(John Beck, He)127 341.4 Q(wlett-P)-.25 E(ackard)-.15 E -.25(Ke)127
+353.4 S(ith Bostic, CSRG, Uni).25 E -.15(ve)-.25 G
+(rsity of California, Berk).15 E(ele)-.1 E(y)-.15 E(Andre)127 365.4 Q
+2.5(wC)-.25 G(heng, Sun Microsystems)-2.5 E(Michael J. Corrig)127 377.4
 Q(an, Uni)-.05 E -.15(ve)-.25 G(rsity of California, San Die).15 E(go)
 -.15 E(Bryan Costales, International Computer Science Institute)127
-421.8 Q -.15(Pa)127 433.8 S -.5(..)-4.402 -6 O 2.5(r\().552 6 O
-(Pell\) Emanuelsson)-2.5 E(Craig Ev)127 445.8 Q(erhart, T)-.15 E
-(ransarc Corporation)-.35 E -.8(To)127 457.8 S 2.5(mI).8 G -.25(va)-2.5
+389.4 Q -.15(Pa)127 401.4 S -.5(..)-4.402 -6 O 2.5(r\().552 6 O
+(Pell\) Emanuelsson)-2.5 E(Craig Ev)127 413.4 Q(erhart, T)-.15 E
+(ransarc Corporation)-.35 E -.8(To)127 425.4 S 2.5(mI).8 G -.25(va)-2.5
 G 2.5(rH).25 G(elbekkmo, Norwe)-2.5 E(gian School of Economics)-.15 E
-(Allan E. Johannesen, WPI)127 469.8 Q(Jonathan Kamens, OpenV)127 481.8 Q
-(ision T)-.6 E(echnologies, Inc.)-.7 E -.8(Ta)127 493.8 S
+(Allan E. Johannesen, WPI)127 437.4 Q(Jonathan Kamens, OpenV)127 449.4 Q
+(ision T)-.6 E(echnologies, Inc.)-.7 E -.8(Ta)127 461.4 S
 (kahiro Kanbe, Fuji Xerox Information Systems Co., Ltd.).8 E
-(Brian Kantor)127 505.8 Q 2.5(,U)-.4 G(ni)-2.5 E -.15(ve)-.25 G
-(rsity of California, San Die).15 E(go)-.15 E(Murray S. K)127 517.8 Q
+(Brian Kantor)127 473.4 Q 2.5(,U)-.4 G(ni)-2.5 E -.15(ve)-.25 G
+(rsity of California, San Die).15 E(go)-.15 E(Murray S. K)127 485.4 Q
 (uchera)-.15 E(wy)-.15 E 2.5(,H)-.65 G(ookUp Communication Corp.)-2.5 E
-(Bruce Lilly)127 529.8 Q 2.5(,S)-.65 G(on)-2.5 E 2.5(yU)-.15 G(.S.)-2.5
-E(Karl London)127 541.8 Q(Motonori Nakamura, Ritsumeikan Uni)127 553.8 Q
+(Bruce Lilly)127 497.4 Q 2.5(,S)-.65 G(on)-2.5 E 2.5(yU)-.15 G(.S.)-2.5
+E(Karl London)127 509.4 Q(Motonori Nakamura, Ritsumeikan Uni)127 521.4 Q
 -.15(ve)-.25 G(rsity & K).15 E(yoto Uni)-.25 E -.15(ve)-.25 G(rsity).15
-E(John Gardiner Myers, Carne)127 565.8 Q(gie Mellon Uni)-.15 E -.15(ve)
--.25 G(rsity).15 E(Neil Rick)127 577.8 Q(ert, Northern Illinois Uni)-.1
-E -.15(ve)-.25 G(rsity).15 E(Eric Schnoebelen, Con)127 589.8 Q .3 -.15
-(vex C)-.4 H(omputer Corp.).15 E(Eric W)127 601.8 Q(assenaar)-.8 E 2.5
+E(John Gardiner Myers, Carne)127 533.4 Q(gie Mellon Uni)-.15 E -.15(ve)
+-.25 G(rsity).15 E(Neil Rick)127 545.4 Q(ert, Northern Illinois Uni)-.1
+E -.15(ve)-.25 G(rsity).15 E(Eric Schnoebelen, Con)127 557.4 Q .3 -.15
+(vex C)-.4 H(omputer Corp.).15 E(Eric W)127 569.4 Q(assenaar)-.8 E 2.5
 (,N)-.4 G(ational Institute for Nuclear and High Ener)-2.5 E(gy Ph)-.18
-E(ysics, Amsterdam)-.05 E(Christophe W)127 613.8 Q(olfhugel, P)-.8 E
+E(ysics, Amsterdam)-.05 E(Christophe W)127 581.4 Q(olfhugel, P)-.8 E
 (asteur Institute & Herv)-.15 E 2.5(eS)-.15 G(chauer Consultants \(P)
--2.5 E(aris\))-.15 E 3.22(Ia)87 630 S .72(pologize for an)-3.22 F .72
-(yone I ha)-.15 F 1.019 -.15(ve o)-.2 H .719
+-2.5 E(aris\))-.15 E 3.219(Ia)87 597.6 S .719(pologize for an)-3.219 F
+.719(yone I ha)-.15 F 1.019 -.15(ve o)-.2 H .719
 (mitted, misspelled, misattrib).15 F .719(uted, or otherwise missed.)-.2
-F .719(At this point, I)5.719 F 1.092
-(suspect that at least a hundred people ha)87 642 R 1.393 -.15(ve c)-.2
-H(ontrib).15 E 1.093(uted code, and man)-.2 F 3.593(ym)-.15 G 1.093
-(ore ha)-3.593 F 1.393 -.15(ve c)-.2 H(ontrib).15 E 1.093(uted ideas,)
--.2 F 1.534(comments, and encouragement.)87 654 R(I')6.534 E 1.834 -.15
-(ve t)-.5 H 1.534(ried to list them in the RELEASE_NO).15 F 1.533
-(TES in the distrib)-.4 F(ution)-.2 E(directory)87 666 Q 5(.I)-.65 G
-(appreciate their contrib)-2.5 E(ution as well.)-.2 E .742
-(Special thanks are reserv)112 682.2 R .742(ed for Michael Corrig)-.15 F
-.743(an and Christophe W)-.05 F .743(olfhugel, who besides being)-.8 F
--.1(wo)87 694.2 S 2.1(nderful guinea pigs and contrib).1 F 2.1(utors ha)
+F .72(At this point, I)5.72 F 1.093
+(suspect that at least a hundred people ha)87 609.6 R 1.393 -.15(ve c)
+-.2 H(ontrib).15 E 1.093(uted code, and man)-.2 F 3.592(ym)-.15 G 1.092
+(ore ha)-3.592 F 1.392 -.15(ve c)-.2 H(ontrib).15 E 1.092(uted ideas,)
+-.2 F 1.533(comments, and encouragement.)87 621.6 R(I')6.534 E 1.834
+-.15(ve t)-.5 H 1.534(ried to list them in the RELEASE_NO).15 F 1.534
+(TES in the distrib)-.4 F(ution)-.2 E(directory)87 633.6 Q 5(.I)-.65 G
+(appreciate their contrib)-2.5 E(ution as well.)-.2 E .743
+(Special thanks are reserv)112 649.8 R .743(ed for Michael Corrig)-.15 F
+.742(an and Christophe W)-.05 F .742(olfhugel, who besides being)-.8 F
+-.1(wo)87 661.8 S 2.1(nderful guinea pigs and contrib).1 F 2.1(utors ha)
 -.2 F 2.4 -.15(ve a)-.2 H 2.1(lso consented to be added to the `).15 F
-(`sendmail@Send-)-.74 E(mail.ORG')87 706.2 Q 3.61('l)-.74 G 1.11
-(ist and, by answering the b)-3.61 F 1.111
-(ulk of the questions sent to that list, ha)-.2 F 1.411 -.15(ve f)-.2 H
-1.111(reed me up to do).15 F(other w)87 718.2 Q(ork.)-.1 E EP
+(`sendmail@Send-)-.74 E(mail.ORG')87 673.8 Q 3.611('l)-.74 G 1.111
+(ist and, by answering the b)-3.611 F 1.111
+(ulk of the questions sent to that list, ha)-.2 F 1.41 -.15(ve f)-.2 H
+1.11(reed me up to do).15 F(other w)87 685.8 Q(ork.)-.1 E EP
 %%Page: 70 66
 %%BeginPageSetup
 BP
@@ -5965,7 +5966,7 @@ BP
 (erify addresses, don')-.15 E 2.5(tc)-.18 G(ollect or deli)-2.5 E -.15
 (ve)-.25 G(r).15 E 17.22(iI)184 317.4 S(nitialize the alias database)
 -17.22 E 15(pP)184 329.4 S(rint the mail queue)-15 E<ad42>72 349.8 Q F2
-(type)A F1(Indicate body type.)43.03 E<ad43>72 366 Q F2(\214le)A F1 .947
+(type)A F1(Indicate body type.)43.03 E<ad43>72 366 Q F2(\214le)A F1 .946
 (Use a dif)47.47 F .946(ferent con\214guration \214le.)-.25 F F2
 (Sendmail)5.946 E F1 .946(runs as the in)3.446 F -.2(vo)-.4 G .946
 (king user \(rather than root\)).2 F(when this \215ag is speci\214ed.)
@@ -5974,19 +5975,19 @@ BP
 F1(The sender')41.64 E 2.5(sm)-.55 G(achine address is)-2.5 E F2(addr)
 2.5 E F1(.)A<ad46>72 426.6 Q F2(name)A F1
 (Sets the full name of this user to)39.14 E F2(name)2.5 E F1(.)A<ad68>72
-442.8 Q F2(cnt)2.5 E F1 .725(Sets the \231hop count\232 to)46.64 F F2
-(cnt)3.225 E F1 5.725(.T)C .726
+442.8 Q F2(cnt)2.5 E F1 .726(Sets the \231hop count\232 to)46.64 F F2
+(cnt)3.226 E F1 5.725(.T)C .725
 (his represents the number of times this message has been)-5.725 F .02
 (processed by)144 454.8 R F2(sendmail)2.52 E F1 .02(\(to the e)2.52 F
 .02(xtent that it is supported by the underlying netw)-.15 F(orks\).)-.1
 E F2(Cnt)5.02 E F1 1.521(is incremented during processing, and if it reaches MAXHOP \(currently 30\))
-144 466.8 R F2(sendmail)4.021 E F1(thro)144 478.8 Q(ws a)-.25 E -.1(wa)
+144 466.8 R F2(sendmail)4.02 E F1(thro)144 478.8 Q(ws a)-.25 E -.1(wa)
 -.15 G 2.5(yt).1 G(he message with an error)-2.5 E(.)-.55 E 58.86
 (\255n Don')72 495 R 2.5(td)-.18 G 2.5(oa)-2.5 G(liasing or forw)-2.5 E
 (arding.)-.1 E<ad4e>72 511.2 Q F2(noti\214cations)2.5 E F1 -.8(Ta)7.19 G
-3.128(ga).8 G .628(ll addresses being sent as w)-3.128 F .628
-(anting the indicated)-.1 F F2(noti\214cations)3.128 E F1 3.127(,w)C
-.627(hich consists of the)-3.127 F -.1(wo)144 523.2 S .474
+3.127(ga).8 G .627(ll addresses being sent as w)-3.127 F .628
+(anting the indicated)-.1 F F2(noti\214cations)3.128 E F1 3.128(,w)C
+.628(hich consists of the)-3.128 F -.1(wo)144 523.2 S .474
 (rd \231NEVER\232 or a comma-separated list of \231SUCCESS\232, \231F).1
 F .474(AILURE\232, and \231DELA)-.74 F<599a>-1.05 E .86
 (for successful deli)144 535.2 R -.15(ve)-.25 G(ry).15 E 3.36(,f)-.65 G
@@ -5997,21 +5998,21 @@ E(Y\232.)-1.05 E<ad72>72 563.4 Q F2(addr)2.5 E F1(An obsolete form of)
 (xv)C(alue)-1.666 E F1(Set option)33.594 E F2(x)2.5 E F1
 (to the speci\214ed)2.5 E F2(value)2.5 E F1 5(.T)C
 (hese options are described in Section 5.6.)-5 E<ad4f>72 595.8 Q F2
-(option)A F3(=)A F2(value)A F1(Set)6.22 E F2(option)5.173 E F1 2.674
-(to the speci\214ed)5.173 F F2(value)5.174 E F1 2.674
-(\(for long form option names\).)5.174 F 2.674(These options are)7.674 F
+(option)A F3(=)A F2(value)A F1(Set)6.22 E F2(option)5.174 E F1 2.674
+(to the speci\214ed)5.174 F F2(value)5.174 E F1 2.674
+(\(for long form option names\).)5.174 F 2.673(These options are)7.674 F
 (described in Section 5.6.)144 607.8 Q<ad4d>72 624 Q F2 1.666(xv)C
 27.204(alue Set)-1.666 F(macr)2.5 E 2.5(oxt)-.45 G 2.5(ot)-2.5 G
 (he speci\214ed value)-2.5 E(.)-.15 E F1<ad70>72 640.2 Q F2(pr)A(otocol)
--.45 E F1 .401(Set the sending protocol.)27.92 F .401
-(Programs are encouraged to set this.)5.401 F .4
-(The protocol \214eld can be)5.401 F .114(in the form)144 652.2 R F2(pr)
-2.614 E(otocol)-.45 E F3(:)A F2(host)A F1 .114
-(to set both the sending protocol and sending host.)2.614 F -.15(Fo)
-5.115 G 2.615(re).15 G(xample,)-2.765 E 2.147(\231\255pUUCP:uunet\232 sets the sending protocol to UUCP and the sending host to uunet.)
-144 664.2 R .973(\(Some e)144 676.2 R .974
+-.45 E F1 .4(Set the sending protocol.)27.92 F .401
+(Programs are encouraged to set this.)5.4 F .401
+(The protocol \214eld can be)5.401 F .115(in the form)144 652.2 R F2(pr)
+2.615 E(otocol)-.45 E F3(:)A F2(host)A F1 .114
+(to set both the sending protocol and sending host.)2.615 F -.15(Fo)
+5.114 G 2.614(re).15 G(xample,)-2.764 E 2.147(\231\255pUUCP:uunet\232 sets the sending protocol to UUCP and the sending host to uunet.)
+144 664.2 R .974(\(Some e)144 676.2 R .974
 (xisting programs use \255oM to set the r and s macros; this is equi)
--.15 F -.25(va)-.25 G .974(lent to using).25 F .32 LW 76 685.8 72 685.8
+-.15 F -.25(va)-.25 G .973(lent to using).25 F .32 LW 76 685.8 72 685.8
 DL 80 685.8 76 685.8 DL 84 685.8 80 685.8 DL 88 685.8 84 685.8 DL 92
 685.8 88 685.8 DL 96 685.8 92 685.8 DL 100 685.8 96 685.8 DL 104 685.8
 100 685.8 DL 108 685.8 104 685.8 DL 112 685.8 108 685.8 DL 116 685.8 112
@@ -6032,49 +6033,49 @@ BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
 (SMM:08-71)195.86 E/F1 10/Times-Roman@0 SF(\255p.\))144 96 Q<ad71>72
-112.2 Q/F2 10/Times-Italic@0 SF(time)A F1 -.35(Tr)44.14 G 3.168(yt).35 G
-3.167(op)-3.168 G .667(rocess the queued up mail.)-3.167 F .667
+112.2 Q/F2 10/Times-Italic@0 SF(time)A F1 -.35(Tr)44.14 G 3.167(yt).35 G
+3.167(op)-3.167 G .667(rocess the queued up mail.)-3.167 F .667
 (If the time is gi)5.667 F -.15(ve)-.25 G .667(n, a).15 F F2(sendmail)
 3.167 E F1 .667(will run through the)3.167 F
 (queue at the speci\214ed interv)144 124.2 Q(al to deli)-.25 E -.15(ve)
 -.25 G 2.5(rq).15 G(ueued mail; otherwise, it only runs once.)-2.5 E
-<ad71>72 140.4 Q F2(Xstring)A F1 .312
+<ad71>72 140.4 Q F2(Xstring)A F1 .313
 (Run the queue once, limiting the jobs to those matching)31.91 F F2
-(Xstring)2.813 E F1 5.313(.T)C .313(he k)-5.313 F .613 -.15(ey l)-.1 H
-(etter).15 E F2(X)2.813 E F1 .313(can be)2.813 F F0(I)144 152.4 Q F1
-.671(to limit based on queue identi\214er)3.171 F(,)-.4 E F0(R)3.171 E
-F1 .67(to limit based on recipient, or)3.171 F F0(S)3.17 E F1 .67
-(to limit based on)3.17 F(sender)144 164.4 Q 6.053(.A)-.55 G 1.054(particular queued job is accepted if one of the corresponding addresses con-)
+(Xstring)2.812 E F1 5.312(.T)C .312(he k)-5.312 F .612 -.15(ey l)-.1 H
+(etter).15 E F2(X)2.812 E F1 .312(can be)2.812 F F0(I)144 152.4 Q F1 .67
+(to limit based on queue identi\214er)3.17 F(,)-.4 E F0(R)3.17 E F1 .671
+(to limit based on recipient, or)3.17 F F0(S)3.171 E F1 .671
+(to limit based on)3.171 F(sender)144 164.4 Q 6.054(.A)-.55 G 1.054(particular queued job is accepted if one of the corresponding addresses con-)
 -2.5 F(tains the indicated)144 176.4 Q F2(string)2.5 E F1(.)A(\255R ret)
 72 192.6 Q 1.687(What information you w)46.64 F 1.687
 (ant returned if the message bounces;)-.1 F F2 -.37(re)4.187 G(t).37 E
-F1 1.687(can be \231HDRS\232 for)4.187 F .877
-(headers only or \231FULL\232 for headers plus body)144 204.6 R 5.877
-(.T)-.65 G .878(his is a request only; the other end is)-5.877 F
+F1 1.687(can be \231HDRS\232 for)4.187 F .878
+(headers only or \231FULL\232 for headers plus body)144 204.6 R 5.878
+(.T)-.65 G .877(his is a request only; the other end is)-5.878 F
 (not required to honor the parameter)144 216.6 Q(.)-.55 E 61.08
 (\255t Read)72 232.8 R .752(the header for \231T)3.252 F .752
 (o:\232, \231Cc:\232, and \231Bcc:\232 lines, and send to e)-.8 F -.15
-(ve)-.25 G .752(ryone listed in those).15 F 2.539(lists. The)144 244.8 R
-.039(\231Bcc:\232 line will be deleted before sending.)2.539 F(An)5.039
-E 2.539(ya)-.15 G .04(ddresses in the ar)-2.539 F .04(gument v)-.18 F
+(ve)-.25 G .752(ryone listed in those).15 F 2.54(lists. The)144 244.8 R
+.039(\231Bcc:\232 line will be deleted before sending.)2.54 F(An)5.039 E
+2.539(ya)-.15 G .039(ddresses in the ar)-2.539 F .039(gument v)-.18 F
 (ec-)-.15 E(tor will be deleted from the send list.)144 256.8 Q 56.64
-(\255U Indicate)72 273 R 1.029
-(that this is an initial User Agent submission.)3.529 F 1.028
-(In future releases, sendmail may)6.028 F 1.12
+(\255U Indicate)72 273 R 1.028
+(that this is an initial User Agent submission.)3.528 F 1.029
+(In future releases, sendmail may)6.029 F 1.121
 (complain about syntactically in)144 285 R -.25(va)-.4 G 1.121
 (lid messages rather than \214xing them when this \215ag is).25 F
 (not set.)144 297 Q(\255V en)72 313.2 Q 32.32(vid The)-.4 F(indicated)
-3.18 E F2(en)3.18 E(vid)-.4 E F1 .68(is passed with the en)3.18 F -.15
-(ve)-.4 G .679(lope of the message and returned if the mes-).15 F
+3.179 E F2(en)3.179 E(vid)-.4 E F1 .679(is passed with the en)3.179 F
+-.15(ve)-.4 G .68(lope of the message and returned if the mes-).15 F
 (sage bounces.)144 325.2 Q<ad58>72 341.4 Q F2(lo)2.5 E(g\214le)-.1 E F1
-.724(Log all traf)31.74 F .724(\214c in and out of)-.25 F F2(sendmail)
-3.225 E F1 .725(in the indicated)3.225 F F2(lo)3.225 E(g\214le)-.1 E F1
-.725(for deb)3.225 F .725(ugging mailer prob-)-.2 F 2.5(lems. This)144
+.725(Log all traf)31.74 F .725(\214c in and out of)-.25 F F2(sendmail)
+3.225 E F1 .725(in the indicated)3.225 F F2(lo)3.224 E(g\214le)-.1 E F1
+.724(for deb)3.224 F .724(ugging mailer prob-)-.2 F 2.5(lems. This)144
 353.4 R(produces a lot of data v)2.5 E
-(ery quickly and should be used sparingly)-.15 E(.)-.65 E .638
+(ery quickly and should be used sparingly)-.15 E(.)-.65 E .637
 (There are a number of options that may be speci\214ed as primiti)97
-369.6 R .937 -.15(ve \215)-.25 H 3.137(ags. These).15 F .637
-(are the e, i, m, and v)3.137 F 2.5(options. Also,)72 381.6 R
+369.6 R .938 -.15(ve \215)-.25 H 3.138(ags. These).15 F .638
+(are the e, i, m, and v)3.138 F 2.5(options. Also,)72 381.6 R
 (the f option may be speci\214ed as the)2.5 E F0<ad73>2.5 E F1(\215ag.)
 2.5 E EP
 %%Page: 72 68
@@ -6082,47 +6083,46 @@ E 2.539(ya)-.15 G .04(ddresses in the ar)-2.539 F .04(gument v)-.18 F
 BP
 %%EndPageSetup
 /F0 12/Times-Bold@0 SF 3(APPENDIX B)250.002 98.4 R -.12(QU)220.29 141.6
-S(EUE FILE FORMA).12 E(TS)-1.14 E/F1 10/Times-Roman@0 SF .291
+S(EUE FILE FORMA).12 E(TS)-1.14 E/F1 10/Times-Roman@0 SF .292
 (This appendix describes the format of the queue \214les.)97 201 R .292
-(These \214les li)5.292 F .592 -.15(ve i)-.25 H 2.792(nt).15 G .292
+(These \214les li)5.292 F .592 -.15(ve i)-.25 H 2.792(nt).15 G .291
 (he directory de\214ned by the)-2.792 F/F2 10/Times-Bold@0 SF(Q)72 213 Q
 F1(option in the)2.5 E/F3 10/Times-Italic@0 SF(sendmail.cf)2.5 E F1
 (\214le, usually)2.5 E F3(/var/spool/mqueue)2.5 E F1(or)2.5 E F3
-(/usr/spool/mqueue)2.5 E F1(.)A .23(All queue \214les ha)97 229.2 R .53
--.15(ve t)-.2 H .23(he name).15 F F3(x)2.73 E F2(f)1.666 E F3(AAA99999)A
-F1(where)2.73 E F3(AAA99999)2.73 E F1 .23(is the)2.73 F F3(id)2.73 E F1
-.229(for this message and the)2.73 F F3(x)2.729 E F1 .229(is a)2.729 F
-3.601(type. The)72 241.2 R 1.101(\214rst letter of the id encodes the hour of the day that the message w)
+(/usr/spool/mqueue)2.5 E F1(.)A .229(All queue \214les ha)97 229.2 R
+.529 -.15(ve t)-.2 H .229(he name).15 F F3(x)2.729 E F2(f)1.666 E F3
+(AAA99999)A F1(where)2.73 E F3(AAA99999)2.73 E F1 .23(is the)2.73 F F3
+(id)2.73 E F1 .23(for this message and the)2.73 F F3(x)2.73 E F1 .23
+(is a)2.73 F 3.601(type. The)72 241.2 R 1.101(\214rst letter of the id encodes the hour of the day that the message w)
 3.601 F 1.101(as recei)-.1 F -.15(ve)-.25 G 3.601(db).15 G 3.601(yt)
--3.601 G 1.101(he system)-3.601 F .552
+-3.601 G 1.101(he system)-3.601 F .551
 (\(with A being the hour between midnight and 1:00AM\).)72 253.2 R .552
-(All \214les with the same id collecti)5.552 F -.15(ve)-.25 G .551
+(All \214les with the same id collecti)5.552 F -.15(ve)-.25 G .552
 (ly de\214ne one).15 F(message.)72 265.2 Q(The types are:)97 281.4 Q 31
 (dT)72 297.6 S(he data \214le.)-31 E(The message body \(e)5 E
 (xcluding the header\) is k)-.15 E(ept in this \214le.)-.1 E 31(qT)72
 313.8 S(he queue control \214le.)-31 E
 (This \214le contains the information necessary to process the job)5 E
-(.)-.4 E 33.22(tA)72 330 S .344(temporary \214le.)-30.376 F .344
-(These are an image of the)5.344 F F2(qf)2.844 E F1 .344
-(\214le when it is being reb)2.844 F 2.845(uilt. It)-.2 F .345
-(should be renamed)2.845 F(to a)108 342 Q F2(qf)2.5 E F1(\214le v)2.5 E
-(ery quickly)-.15 E(.)-.65 E 31(xA)72 358.2 S .567(transcript \214le, e)
--27.933 F .567(xisting during the life of a session sho)-.15 F .566
-(wing e)-.25 F -.15(ve)-.25 G .566(rything that happens during that).15
-F(session.)108 370.2 Q(The)97 386.4 Q F2(qf)3.333 E F1 .833
-(\214le is structured as a series of lines each be)3.333 F .834
-(ginning with a code letter)-.15 F 5.834(.T)-.55 G .834
-(he lines are as fol-)-5.834 F(lo)72 398.4 Q(ws:)-.25 E 28.78(VT)72
-414.6 S .82(he v)-28.78 F .82
-(ersion number of the queue \214le format, used to allo)-.15 F 3.319(wn)
--.25 G -.25(ew)-3.319 G F3(sendmail)3.569 E F1 .819
-(binaries to read queue)3.319 F .003(\214les created by older v)108
-426.6 R 2.504(ersions. Def)-.15 F .004(aults to v)-.1 F .004
-(ersion zero.)-.15 F .004
+(.)-.4 E 33.22(tA)72 330 S .345(temporary \214le.)-30.375 F .344
+(These are an image of the)5.345 F F2(qf)2.844 E F1 .344
+(\214le when it is being reb)2.844 F 2.844(uilt. It)-.2 F .344
+(should be renamed)2.844 F(to a)108 342 Q F2(qf)2.5 E F1(\214le v)2.5 E
+(ery quickly)-.15 E(.)-.65 E 31(xA)72 358.2 S .566(transcript \214le, e)
+-27.934 F .567(xisting during the life of a session sho)-.15 F .567
+(wing e)-.25 F -.15(ve)-.25 G .567(rything that happens during that).15
+F(session.)108 370.2 Q(The)97 386.4 Q F2(qf)3.334 E F1 .834
+(\214le is structured as a series of lines each be)3.334 F .833
+(ginning with a code letter)-.15 F 5.833(.T)-.55 G .833
+(he lines are as fol-)-5.833 F(lo)72 398.4 Q(ws:)-.25 E 28.78(VT)72
+414.6 S .819(he v)-28.78 F .819
+(ersion number of the queue \214le format, used to allo)-.15 F 3.32(wn)
+-.25 G -.25(ew)-3.32 G F3(sendmail)3.57 E F1 .82(binaries to read queue)
+3.32 F .004(\214les created by older v)108 426.6 R 2.504(ersions. Def)
+-.15 F .004(aults to v)-.1 F .004(ersion zero.)-.15 F .004
 (Must be the \214rst line of the \214le if present.)5.004 F 28.78(HA)72
-442.8 S .33(header de\214nition.)-25.95 F .33(There may be an)5.33 F
-2.829(yn)-.15 G .329(umber of these lines.)-2.829 F .329
-(The order is important: the)5.329 F 2.829(yr)-.15 G(epre-)-2.829 E .046
+442.8 S .329(header de\214nition.)-25.951 F .329(There may be an)5.329 F
+2.829(yn)-.15 G .329(umber of these lines.)-2.829 F .33
+(The order is important: the)5.33 F 2.83(yr)-.15 G(epre-)-2.83 E .046
 (sent the order in the \214nal message.)108 454.8 R .046
 (These use the same syntax as header de\214nitions in the con\214gu-)
 5.046 F(ration \214le.)108 466.8 Q 29.33(CT)72 483 S .575
@@ -6131,38 +6131,38 @@ F(session.)108 370.2 Q(The)97 386.4 Q F2(qf)3.333 E F1 .833
 (Recipient addresses follo)5.575 F .575(wing this)-.25 F 2.814
 (line will be \215agged so that deli)108 495 R -.15(ve)-.25 G 2.814
 (ries will be run as the).15 F F3(localuser)5.314 E F1 2.814
-(\(a user name from the)5.314 F .562(/etc/passwd \214le\);)108 507 R F3
-(aliasname)3.062 E F1 .561(is the name of the alias that e)3.062 F .561
+(\(a user name from the)5.314 F .561(/etc/passwd \214le\);)108 507 R F3
+(aliasname)3.061 E F1 .561(is the name of the alias that e)3.061 F .562
 (xpanded to this address \(used for print-)-.15 F(ing messages\).)108
-519 Q 28.78(QT)72 535.2 S .797(he `)-28.78 F .797(`original recipient')
+519 Q 28.78(QT)72 535.2 S .798(he `)-28.78 F .798(`original recipient')
 -.74 F .798
 (', speci\214ed by the ORCPT= \214eld in an ESMTP transaction.)-.74 F
-.798(Used e)5.798 F(xclu-)-.15 E(si)108 547.2 Q -.15(ve)-.25 G
+.797(Used e)5.797 F(xclu-)-.15 E(si)108 547.2 Q -.15(ve)-.25 G
 (ly for Deli).15 E -.15(ve)-.25 G(ry Status Noti\214cations.).15 E
 (It applies only to the immediately follo)5 E(wing `R' line.)-.25 E
 29.33(RA)72 563.4 S .705(recipient address.)-26.125 F .705
 (This will normally be completely aliased, b)5.705 F .705
-(ut is actually realiased when the)-.2 F .492(job is processed.)108
-575.4 R .492(There will be one line for each recipient.)5.492 F -1.11
-(Ve)5.492 G .493(rsion 1 qf \214les also include a lead-)1.11 F .689(ing colon-terminated list of \215ags, which can be `S' to return a message on successful \214nal deli)
-108 587.4 R(v-)-.25 E(ery)108 599.4 Q 3.327(,`)-.65 G .828
-(F' to return a message on f)-3.327 F .828
+(ut is actually realiased when the)-.2 F .493(job is processed.)108
+575.4 R .492(There will be one line for each recipient.)5.493 F -1.11
+(Ve)5.492 G .492(rsion 1 qf \214les also include a lead-)1.11 F .689(ing colon-terminated list of \215ags, which can be `S' to return a message on successful \214nal deli)
+108 587.4 R(v-)-.25 E(ery)108 599.4 Q 3.328(,`)-.65 G .828
+(F' to return a message on f)-3.328 F .828
 (ailure, `D' to return a message if the message is delayed, `B' to)-.1 F
-.941(indicate that the body should be returned, `N' to suppress returning the body)
-108 611.4 R 3.44(,a)-.65 G .94(nd `P' to declare)-3.44 F(this as a `)108
-623.4 Q(`primary')-.74 E 2.5('\()-.74 G
+.94(indicate that the body should be returned, `N' to suppress returning the body)
+108 611.4 R 3.441(,a)-.65 G .941(nd `P' to declare)-3.441 F(this as a `)
+108 623.4 Q(`primary')-.74 E 2.5('\()-.74 G
 (command line or SMTP-session\) address.)-2.5 E 30.44(ST)72 639.6 S
 (he sender address.)-30.44 E(There may only be one of these lines.)5 E
 29.89(TT)72 655.8 S(he job creation time.)-29.89 E
 (This is used to compute when to time out the job)5 E(.)-.4 E 30.44(PT)
-72 672 S .113(he current message priority)-30.44 F 5.113(.T)-.65 G .113
-(his is used to order the queue.)-5.113 F .114(Higher numbers mean lo)
-5.114 F .114(wer priori-)-.25 F 3.677(ties. The)108 684 R 1.176
-(priority changes as the message sits in the queue.)3.677 F 1.176
+72 672 S .114(he current message priority)-30.44 F 5.114(.T)-.65 G .113
+(his is used to order the queue.)-5.114 F .113(Higher numbers mean lo)
+5.113 F .113(wer priori-)-.25 F 3.676(ties. The)108 684 R 1.176
+(priority changes as the message sits in the queue.)3.676 F 1.177
 (The initial priority depends on the)6.176 F
 (message class and the size of the message.)108 696 Q 27.11(MA)72 712.2
-S 2.703(message. This)-24.407 F .203(line is printed by the)2.703 F F3
-(mailq)2.703 E F1 .204
+S 2.704(message. This)-24.406 F .204(line is printed by the)2.704 F F3
+(mailq)2.704 E F1 .203
 (command, and is generally used to store status infor)2.704 F(-)-.2 E
 2.5(mation. It)108 724.2 R(can contain an)2.5 E 2.5(yt)-.15 G -.15(ex)
 -2.5 G(t.).15 E F2 193.36(SMM:08-72 Sendmail)72 756 R
@@ -6172,27 +6172,27 @@ S 2.703(message. This)-24.407 F .203(line is printed by the)2.703 F F3
 BP
 %%EndPageSetup
 /F0 10/Times-Bold@0 SF(Sendmail Installation and Operation Guide)72 60 Q
-(SMM:08-73)195.86 E/F1 10/Times-Roman@0 SF 30.44(FF)72 96 S .044
+(SMM:08-73)195.86 E/F1 10/Times-Roman@0 SF 30.44(FF)72 96 S .043
 (lag bits, represented as one letter per \215ag.)-30.44 F .043
-(De\214ned \215ag bits are)5.043 F F0(r)2.543 E F1 .043
-(indicating that this is a response)2.543 F .142(message and)108 108 R
-F0(w)2.642 E F1 .142(indicating that a w)2.642 F .143
+(De\214ned \215ag bits are)5.043 F F0(r)2.543 E F1 .044
+(indicating that this is a response)2.544 F .143(message and)108 108 R
+F0(w)2.643 E F1 .143(indicating that a w)2.643 F .142
 (arning message has been sent announcing that the mail has been)-.1 F
 (delayed.)108 120 Q 28.78(NT)72 136.2 S(he total number of deli)-28.78 E
 -.15(ve)-.25 G(ry attempts.).15 E 28.78(KT)72 152.4 S
 (he time \(as seconds since January 1, 1970\) of the last deli)-28.78 E
--.15(ve)-.25 G(ry attempt.).15 E 32.67(IT)72 168.6 S .725
+-.15(ve)-.25 G(ry attempt.).15 E 32.67(IT)72 168.6 S .724
 (he i-number of the data \214le; this can be used to reco)-32.67 F -.15
-(ve)-.15 G 3.224(ry).15 G .724(our mail queue after a disastrous disk)
--3.224 F(crash.)108 180.6 Q 31($A)72 196.8 S .829(macro de\214nition.)
--27.671 F .829(The v)5.829 F .829
-(alues of certain macros \(as of this writing, only)-.25 F F0($r)3.33 E
-F1(and)3.33 E F0($s)3.33 E F1 3.33(\)a)C .83(re passed)-3.33 F
-(through to the queue run phase.)108 208.8 Q 29.33(BT)72 225 S .925
-(he body type.)-29.33 F .925(The remainder of the line is a te)5.925 F
-.925(xt string de\214ning the body type.)-.15 F .924(If this \214eld is)
-5.924 F .009(missing, the body type is assumed to be \231unde\214ned\232 and no special processing is attempted.)
-108 237 R(Le)5.009 E -.05(ga)-.15 G(l).05 E -.25(va)108 249 S
+(ve)-.15 G 3.225(ry).15 G .725(our mail queue after a disastrous disk)
+-3.225 F(crash.)108 180.6 Q 31($A)72 196.8 S .83(macro de\214nition.)
+-27.67 F .83(The v)5.83 F .829
+(alues of certain macros \(as of this writing, only)-.25 F F0($r)3.329 E
+F1(and)3.329 E F0($s)3.329 E F1 3.329(\)a)C .829(re passed)-3.329 F
+(through to the queue run phase.)108 208.8 Q 29.33(BT)72 225 S .924
+(he body type.)-29.33 F .925(The remainder of the line is a te)5.924 F
+.925(xt string de\214ning the body type.)-.15 F .925(If this \214eld is)
+5.925 F .009(missing, the body type is assumed to be \231unde\214ned\232 and no special processing is attempted.)
+108 237 R(Le)5.008 E -.05(ga)-.15 G(l).05 E -.25(va)108 249 S
 (lues are \2317BIT\232 and \2318BITMIME\232.).25 E 28.78(OT)72 265.2 S
 (he original MTS v)-28.78 E(alue \(from the ESMTP transaction\).)-.25 E
 -.15(Fo)5 G 2.5(rD).15 G(eli)-2.5 E -.15(ve)-.25 G 2.5(rS).15 G
@@ -6200,9 +6200,9 @@ F1(and)3.33 E F0($s)3.33 E F1 3.33(\)a)C .83(re passed)-3.33 F
 (he original en)-29.89 E -.15(ve)-.4 G
 (lope id \(from the ESMTP transaction\).).15 E -.15(Fo)5 G 2.5(rD).15 G
 (eli)-2.5 E -.15(ve)-.25 G 2.5(rS).15 G(tatus Noti\214cations only)-2.5
-E(.)-.65 E 4.073(As an e)97 297.6 R 4.073(xample, the follo)-.15 F 4.072
+E(.)-.65 E 4.072(As an e)97 297.6 R 4.072(xample, the follo)-.15 F 4.073
 (wing is a queue \214le sent to \231eric@mammoth.Berk)-.25 F(ele)-.1 E
--.65(y.)-.15 G 4.072(EDU\232 and).65 F(\231bostic@ok)72 311.6 Q(eef)-.1
+-.65(y.)-.15 G 4.073(EDU\232 and).65 F(\231bostic@ok)72 311.6 Q(eef)-.1
 E(fe.CS.Berk)-.25 E(ele)-.1 E -.65(y.)-.15 G(EDU\232).65 E/F2 7
 /Times-Roman@0 SF(1)-4 I F1(:)4 I(P835771)112 327.8 Q(T404261372)112
 339.8 Q(Seric)112 351.8 Q(Ceric:sendmail@v)112 363.8 Q(angogh.CS.Berk)
@@ -6227,7 +6227,7 @@ Q -.15(ve)-.25 G(d: by foo.bar).15 E(.baz.de \(5.57/Ultrix3.0-C\))-.55 E
 (Hmessage-id: <9207170931.AA22757@foo.bar)112 531.8 Q(.baz.de>)-.55 E
 (HT)112 543.8 Q(o: sendmail@v)-.8 E(angogh.CS.Berk)-.25 E(ele)-.1 E -.65
 (y.)-.15 G(EDU).65 E(Hsubject: this is an e)112 555.8 Q(xample message)
--.15 E .658(This sho)72 572 R .658(ws the person who sent the message, the submission time \(in seconds since January 1, 1970\), the)
+-.15 E .657(This sho)72 572 R .658(ws the person who sent the message, the submission time \(in seconds since January 1, 1970\), the)
 -.25 F(message priority)72 584 Q 2.5(,t)-.65 G
 (he message class, the recipients, and the headers for the message.)-2.5
 E .32 LW 76 669.2 72 669.2 DL 80 669.2 76 669.2 DL 84 669.2 80 669.2 DL
@@ -6242,11 +6242,11 @@ E .32 LW 76 669.2 72 669.2 DL 80 669.2 76 669.2 DL 84 669.2 80 669.2 DL
 669.2 DL 188 669.2 184 669.2 DL 192 669.2 188 669.2 DL 196 669.2 192
 669.2 DL 200 669.2 196 669.2 DL 204 669.2 200 669.2 DL 208 669.2 204
 669.2 DL 212 669.2 208 669.2 DL 216 669.2 212 669.2 DL/F3 5
-/Times-Roman@0 SF(1)93.6 679.6 Q/F4 8/Times-Roman@0 SF .718(This e)3.2 J
-.718(xample is contri)-.12 F -.12(ve)-.2 G 2.718(da).12 G .718
-(nd probably inaccurate for your en)-2.718 F 2.719(vironment. Glance)
--.32 F -.12(ove)2.719 G 2.719(ri).12 G 2.719(tt)-2.719 G 2.719(og)-2.719
-G .719(et an idea; nothing can replace)-2.719 F(looking at what your o)
+/Times-Roman@0 SF(1)93.6 679.6 Q/F4 8/Times-Roman@0 SF .719(This e)3.2 J
+.719(xample is contri)-.12 F -.12(ve)-.2 G 2.719(da).12 G .719
+(nd probably inaccurate for your en)-2.719 F 2.719(vironment. Glance)
+-.32 F -.12(ove)2.718 G 2.718(ri).12 G 2.718(tt)-2.718 G 2.718(og)-2.718
+G .718(et an idea; nothing can replace)-2.718 F(looking at what your o)
 72 692.4 Q(wn system generates.)-.2 E EP
 %%Page: 74 70
 %%BeginPageSetup
@@ -6254,31 +6254,31 @@ BP
 %%EndPageSetup
 /F0 12/Times-Bold@0 SF 3(APPENDIX C)249.672 98.4 R(SUMMAR)198.282 141.6
 Q 3(YO)-.42 G 3(FS)-3 G(UPPOR)-3 E 3(TF)-.48 G(ILES)-3 E/F1 10
-/Times-Roman@0 SF 1.519(This is a summary of the support \214les that)97
-201 R/F2 10/Times-Italic@0 SF(sendmail)4.019 E F1 1.52
-(creates or generates.)4.019 F(Man)6.52 E 4.02(yo)-.15 G 4.02(ft)-4.02 G
-1.52(hese can be)-4.02 F(changed by editing the sendmail.cf \214le; check there to \214nd the actual pathnames.)
+/Times-Roman@0 SF 1.52(This is a summary of the support \214les that)97
+201 R/F2 10/Times-Italic@0 SF(sendmail)4.019 E F1 1.519
+(creates or generates.)4.019 F(Man)6.519 E 4.019(yo)-.15 G 4.019(ft)
+-4.019 G 1.519(hese can be)-4.019 F(changed by editing the sendmail.cf \214le; check there to \214nd the actual pathnames.)
 72 213 Q(/usr/sbin/sendmail)72 229.2 Q(The binary of)144 241.2 Q F2
 (sendmail)2.5 E F1(.)A(/usr/bin/ne)72 257.4 Q -.1(wa)-.25 G(liases).1 E
-3.735(Al)144 269.4 S 1.235
-(ink to /usr/sbin/sendmail; causes the alias database to be reb)-3.735 F
-3.734(uilt. Running)-.2 F 1.234(this pro-)3.734 F
+3.734(Al)144 269.4 S 1.235
+(ink to /usr/sbin/sendmail; causes the alias database to be reb)-3.734 F
+3.735(uilt. Running)-.2 F 1.235(this pro-)3.735 F
 (gram is completely equi)144 281.4 Q -.25(va)-.25 G(lent to gi).25 E
 (ving)-.25 E F2(sendmail)2.5 E F1(the)2.5 E/F3 10/Times-Bold@0 SF
 (\255bi)2.5 E F1(\215ag.)2.5 E 13.38(/usr/bin/mailq Prints)72 297.6 R
-3.702(al)3.702 G 1.202(isting of the mail queue.)-3.702 F 1.203
-(This program is equi)6.202 F -.25(va)-.25 G 1.203(lent to using the).25
-F F3(\255bp)3.703 E F1 1.203(\215ag to)3.703 F F2(sendmail)144 309.6 Q
+3.703(al)3.703 G 1.203(isting of the mail queue.)-3.703 F 1.202
+(This program is equi)6.203 F -.25(va)-.25 G 1.202(lent to using the).25
+F F3(\255bp)3.702 E F1 1.202(\215ag to)3.702 F F2(sendmail)144 309.6 Q
 F1(.)A 5.9(/etc/sendmail.cf The)72 325.8 R
 (con\214guration \214le, in te)2.5 E(xtual form.)-.15 E
 (/usr/lib/sendmail.hf)72 342 Q(The SMTP help \214le.)144 354 Q 7
 (/etc/sendmail.st A)72 370.2 R(statistics \214le; need not be present.)
 2.5 E .89(/etc/sendmail.pid Created)72 386.4 R .318
 (in daemon mode; it contains the process id of the current SMTP daemon.)
-2.818 F .318(If you)5.318 F .337(use this in scripts; use `)144 398.4 R
-.337(`head \2551')-.74 F 2.838('t)-.74 G 2.838(og)-2.838 G .338
-(et just the \214rst line; later v)-2.838 F .338(ersions of)-.15 F F2
-(sendmail)2.838 E F1(may)2.838 E(add information to subsequent lines.)
+2.818 F .318(If you)5.318 F .338(use this in scripts; use `)144 398.4 R
+.338(`head \2551')-.74 F 2.838('t)-.74 G 2.838(og)-2.838 G .338
+(et just the \214rst line; later v)-2.838 F .337(ersions of)-.15 F F2
+(sendmail)2.837 E F1(may)2.837 E(add information to subsequent lines.)
 144 410.4 Q 25.62(/etc/aliases The)72 426.6 R(te)2.5 E(xtual v)-.15 E
 (ersion of the alias \214le.)-.15 E(/etc/aliases.{pag,dir})72 442.8 Q
 (The alias \214le in)144 454.8 Q F2(dbm)2.5 E F1(\(3\) format.)1.666 E
@@ -6452,7 +6452,7 @@ E 23.5(.........................................................................
 2.5 F(63)26 E 2.5(6.3.6. Refusing)102 314 R(Incoming SMTP Connections)
 2.5 E 23.5(....................................................................... 63)
 2.94 F 2.5(6.3.7. Load)102 328.4 R -1.17 -.74(Av e)2.5 H
-(rage Computation).74 E 23.5(.......................................................................................... 64)
+(rage Computation).74 E 23.5(.......................................................................................... 63)
 2.74 F 2.5(6.4. Con\214guration)87 342.8 R(in src/daemon.c)2.5 E 23.5(.............................................................................................. 64)
 4.62 F 2.5(7. CHANGES)72 357.2 R(IN VERSION 8)2.5 E 23.5(.......................................................................................................... 64)
 4.9 F 2.5(7.1. Connection)87 371.6 R 1.56(Caching ..............................................................................................................)
@@ -6506,7 +6506,7 @@ G(ultiple Hosts)-2.5 E 23.5(....................................................
 2.5 F(68)26 E 2.5(7.32. Portability)87 182.4 R
 (and Security Enhancements)2.5 E 23.5(............................................................................... 68)
 2.68 F 2.5(7.33. Miscellaneous)87 196.8 R 1.29(Changes .......................................................................................................)
-2.5 F(69)26 E 2.5(8. A)72 211.2 R(CKNO)-.4 E .1(WLEDGEMENTS ............................................................................................................)
+2.5 F(68)26 E 2.5(8. A)72 211.2 R(CKNO)-.4 E .1(WLEDGEMENTS ............................................................................................................)
 -.35 F(69)26 E(Appendix A.)72 225.6 Q(COMMAND LINE FLA)5 E 1.97(GS .........................................................................................)
 -.4 F(70)26 E(Appendix B.)72 240 Q -.1(QU)5 G(EUE FILE FORMA).1 E 1.38(TS ............................................................................................)
 -1.11 F(72)26 E(Appendix C.)72 254.4 Q(SUMMAR)5 E 2.5(YO)-.65 G 2.5(FS)
