@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.8 2003/10/08 14:55:04 scw Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.9 2003/10/23 10:50:01 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.8 2003/10/08 14:55:04 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.9 2003/10/23 10:50:01 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,6 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.8 2003/10/08 14:55:04 scw Exp 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>
+
+#include <evbarm/ixdp425/ixdp425reg.h>
 
 #include "com.h"
 #if NCOM > 0
@@ -247,6 +249,8 @@ int kgdb_devmode = KGDB_DEVMODE;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	u_int32_t reg;
+
 #ifdef DIAGNOSTIC
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
@@ -302,10 +306,30 @@ cpu_reboot(int howto, char *bootstr)
 	 * Make really really sure that all interrupts are disabled,
 	 */
 	(void) disable_interrupts(I32_bit|F32_bit);
-/*
- * XXX system reset routine
- */
-	(void) disable_interrupts(I32_bit|F32_bit);
+	IXPREG(IXP425_INT_ENABLE) = 0;
+
+	/*
+	 * Map the boot Flash device down at physical address 0.
+	 * This is safe since NetBSD runs out of an alias of
+	 * SDRAM at 0x10000000.
+	 */
+	reg = EXP_CSR_READ_4(ixp425_softc, EXP_CNFG0_OFFSET);
+	reg |= EXP_CNFG0_MEM_MAP;
+	EXP_CSR_WRITE_4(ixp425_softc, EXP_CNFG0_OFFSET, reg);
+
+	/*
+	 * Jump into the bootcode's reset vector
+	 *
+	 * XXX:
+	 * Redboot doesn't like the state in which we leave the PCI
+	 * ethernet card, and so fails to detect it on reboot. This
+	 * pretty much necessitates a hard reset/power cycle to be
+	 * able to download a new kernel image over ethernet.
+	 *
+	 * I suspect this is due to a bug in Redboot's i82557 driver.
+	 */
+	cpu_reset();
+
 	/* ...and if that didn't work, just croak. */
 	printf("RESET FAILED!\n");
 	for (;;);
@@ -410,9 +434,9 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0x10000000;
 /* XXX */
-#if BOARDTYPE == zao425
+#if EVBARM_BOARDTYPE == zao425
 	bootconfig.dram[0].pages = 0x04000000 / PAGE_SIZE; /* SDRAM 64MB */
-#elif BOARDTYPE == ixdp425
+#elif EVBARM_BOARDTYPE == ixdp425
 	bootconfig.dram[0].pages = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
 #endif
 
