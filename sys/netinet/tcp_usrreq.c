@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.21 1996/05/22 13:55:34 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.22 1996/05/23 16:13:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
+
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -94,23 +95,22 @@ tcp_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
-	if (control && control->m_len) {
-		m_freem(control);
-		if (m)
-			m_freem(m);
-		return (EINVAL);
-	}
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
+	if (control && control->m_len) {
+		m_freem(control);
+		error = EINVAL;
+		goto release;
+	}
 	/*
 	 * When a TCP is attached to a socket, then there will be
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
-		splx(s);
-		return (EINVAL);		/* XXX */
+		error = EINVAL;
+		goto release;
 	}
 	if (inp) {
 		tp = intotcpcb(inp);
@@ -121,6 +121,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		ostate = tp->t_state;
 	} else
 		ostate = 0;
+
 	switch (req) {
 
 	/*
@@ -128,7 +129,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * and an internet control block.
 	 */
 	case PRU_ATTACH:
-		if (inp) {
+		if (inp != 0) {
 			error = EISCONN;
 			break;
 		}
@@ -159,19 +160,19 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 */
 	case PRU_BIND:
 		error = in_pcbbind(inp, nam, p);
-		if (error)
-			break;
 		break;
 
 	/*
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
-		if (inp->inp_lport == 0)
+		if (inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
 			    (struct proc *)0);
-		if (error == 0)
-			tp->t_state = TCPS_LISTEN;
+			if (error)
+				break;
+		}
+		tp->t_state = TCPS_LISTEN;
 		break;
 
 	/*
@@ -275,8 +276,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SENSE:
-		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		(void) splx(s);
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
+		splx(s);
 		return (0);
 
 	case PRU_RCVOOB:
@@ -340,6 +343,8 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *)0, req);
+
+release:
 	splx(s);
 	return (error);
 }
