@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.82 2002/06/05 10:03:31 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.83 2002/07/04 12:35:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.82 2002/06/05 10:03:31 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.83 2002/07/04 12:35:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2521,7 +2521,7 @@ dg_broadcast(in)
 		if (ifa->ifa_addr->sa_family != AF_INET ||
 		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
 			continue;
-		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
 		if (sin->sin_addr.s_addr == in->s_addr) {
 			freeifaddrs(ifap);
 			return (1);
