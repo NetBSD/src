@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.8 1997/04/27 22:08:51 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.9 1997/04/28 15:43:47 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -435,6 +435,7 @@ ncr53c9x_select(sc, ecb)
 	ncr53c9x_setsync(sc, ti);
 
 	if (ncr53c9x_dmaselect && (ti->flags & T_NEGOTIATE) == 0) {
+		size_t dmacl;
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1);
 
@@ -442,7 +443,8 @@ ncr53c9x_select(sc, ecb)
 		clen = ecb->clen + 1;
 		sc->sc_cmdlen = clen;
 		sc->sc_cmdp = (caddr_t)&ecb->cmd;
-		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &clen);
+		dmacl = clen;
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmacl);
 		/* Program the SCSI counter */
 		NCR_WRITE_REG(sc, NCR_TCL, clen);
 		NCR_WRITE_REG(sc, NCR_TCM, clen >> 8);
