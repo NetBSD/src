@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.2 2001/06/13 10:46:02 wiz Exp $
+\	$NetBSD: bootblk.fth,v 1.3 2001/08/15 20:10:24 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -125,9 +125,10 @@ fload	assym.fth.h
 sbsize buffer: sb-buf
 -1 value boot-ihandle
 dev_bsize value bsize
+0 value raid-offset	\ Offset if it's a raid-frame partition
 
 : strategy ( addr size start -- nread )
-   bsize * 0 " seek" boot-ihandle $call-method
+   raid-offset + bsize * 0 " seek" boot-ihandle $call-method
    -1 = if 
       ." strategy: Seek failed" cr
       abort
@@ -411,15 +412,8 @@ h# 2000 buffer: indir-block
    then
 ;
 
-: ufs-open ( bootpath,len -- )
-   boot-ihandle -1 =  if
-      over cif-open dup 0=  if 		( boot-path len ihandle? )
-         ." Could not open device" space type cr 
-         abort
-      then 				( boot-path len ihandle )
-      to boot-ihandle			\ Save ihandle to boot device
-   then 2drop
-   sboff 0 " seek" boot-ihandle $call-method
+: read-super ( sector -- )
+0 " seek" boot-ihandle $call-method
    -1 = if 
       ." Seek failed" cr
       abort
@@ -433,9 +427,24 @@ h# 2000 buffer: indir-block
    else 
       drop
    then
+;
+
+: ufs-open ( bootpath,len -- )
+   boot-ihandle -1 =  if
+      over cif-open dup 0=  if 		( boot-path len ihandle? )
+         ." Could not open device" space type cr 
+         abort
+      then 				( boot-path len ihandle )
+      to boot-ihandle			\ Save ihandle to boot device
+   then 2drop
+   sboff read-super
    sb-buf fs_magic l@ fs_magic_value <>  if
-      ." Invalid superblock magic" cr
-      abort
+      64 dup to raid-offset 
+      dev_bsize * sboff + read-super
+      sb-buf fs_magic l@ fs_magic_value <>  if
+         ." Invalid superblock magic" cr
+         abort
+      then
    then
    sb-buf fs_bsize l@ dup maxbsize >  if
       ." Superblock bsize" space . ." too large" cr
