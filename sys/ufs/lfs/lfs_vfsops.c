@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.111 2003/03/21 23:11:30 dsl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.112 2003/03/28 08:03:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.111 2003/03/21 23:11:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.112 2003/03/28 08:03:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1067,6 +1067,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->lfs_nadirop = 0;
 	fs->lfs_seglock = 0;
 	fs->lfs_pdflush = 0;
+	fs->lfs_sleepers = 0;
 	simple_lock_init(&fs->lfs_interlock);
 	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
 
@@ -1272,6 +1273,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (!fs->lfs_ronly) {
 		fs->lfs_pflags &= ~LFS_PF_CLEAN;
 		lfs_writesuper(fs, fs->lfs_sboffs[0]);
+		lfs_writesuper(fs, fs->lfs_sboffs[1]);
 	}
 	
 	/* Allow vget now that roll-forward is complete */
@@ -1353,6 +1355,16 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
+
+	/* wake up the cleaner so it can die */
+	wakeup(&fs->lfs_nextseg);
+	wakeup(&lfs_allclean_wakeup);
+	simple_lock(&fs->lfs_interlock);
+	while (fs->lfs_sleepers)
+		ltsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,
+			&fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
+
 #ifdef QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
 		int i;
@@ -1412,10 +1424,6 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vput(ump->um_devvp);
-
-	/* wake up the cleaner so it can die */
-	wakeup(&fs->lfs_nextseg);
-	wakeup(&lfs_allclean_wakeup);
 
 	/* Free per-mount data structures */
 	free(fs->lfs_suflags[0], M_SEGMENT);
