@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.9 2000/09/04 22:06:28 lukem Exp $	*/
+/*	$NetBSD: chared.c,v 1.10 2000/11/11 22:18:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.9 2000/09/04 22:06:28 lukem Exp $");
+__RCSID("$NetBSD: chared.c,v 1.10 2000/11/11 22:18:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -341,7 +341,7 @@ cv_delfini(EditLine *el)
 	case NOP:
 	case INSERT:
 	default:
-		abort();
+		EL_ABORT((el->el_errfile, "Bad oaction %d\n", oaction));
 		break;
 	}
 
