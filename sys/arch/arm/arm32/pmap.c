@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2002/06/01 23:50:54 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2002/06/02 14:44:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2002/06/01 23:50:54 lukem Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2002/06/02 14:44:42 drochner Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1266,7 +1266,6 @@ pmap_alloc_l1pt(void)
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&pt->pt_plist);
 	error = uvm_pglistalloc(L1_TABLE_SIZE, physical_start, physical_end,
 	    L1_TABLE_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.2 2001/11/23 16:09:11 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.3 2002/06/02 14:44:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -213,20 +213,15 @@ kloader_load()
 int
 kloader_alloc_memory(size_t sz)
 {
-	int i, n, error;
+	int n, error;
 
 	n = (sz + BUCKET_SIZE - 1) / BUCKET_SIZE + 1; /* 2nd loader */
 
-	TAILQ_INIT(&kloader.pg_head);
-
-	for (i = 0; i < n; i++) {
-		error = uvm_pglistalloc(PAGE_SIZE, avail_start, avail_end,
-		    PAGE_SIZE, PAGE_SIZE, &kloader.pg_head, 0, 0);
-		if (error) {
-			uvm_pglistfree(&kloader.pg_head);
-			DPRINTF("can't allocate memory.\n");
-			return (1);
-		}
+	error = uvm_pglistalloc(n * PAGE_SIZE, avail_start, avail_end,
+				PAGE_SIZE, 0, &kloader.pg_head, n, 0);
+	if (error) {
+		DPRINTF("can't allocate memory.\n");
+		return (1);
 	}
 
 	kloader.cur_pg = TAILQ_FIRST(&kloader.pg_head);

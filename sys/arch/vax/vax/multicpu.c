@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.10 2002/06/01 23:50:56 lukem Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.11 2002/06/02 14:44:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -94,7 +94,6 @@ cpu_slavesetup(struct device *dev)
 	int error;
 
 	/* Get an UAREA */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
 	    &mlist, 1, 1);
 	if (error)

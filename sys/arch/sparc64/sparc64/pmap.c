@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2002/05/18 00:51:15 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2002/06/02 14:44:41 drochner Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1480,7 +1480,6 @@ pmap_init()
 		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	size = sizeof(struct pv_entry) * physmem;
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
 		panic("cpu_start: no memory");

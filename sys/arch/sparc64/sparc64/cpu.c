@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2001/12/31 16:26:10 matt Exp $ */
+/*	$NetBSD: cpu.c,v 1.19 2002/06/02 14:44:41 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -145,7 +145,6 @@ cpu_init(pa, cpu_num)
 	int error;
 
 	size = NBPG; /* XXXX 8K, 64K, 512K, or 4MB */
-	TAILQ_INIT(&mlist);
 	if ((error = uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)size, (paddr_t)0, &mlist, 1, 0)) != 0)
 		panic("cpu_start: no memory, error %d", error);

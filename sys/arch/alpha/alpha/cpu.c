@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64 2001/07/13 21:34:35 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.65 2002/06/02 14:44:35 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2001/07/13 21:34:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2002/06/02 14:44:35 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -319,7 +319,6 @@ recognized:
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
 	    &mlist, 1, 1);
 	if (error != 0) {
