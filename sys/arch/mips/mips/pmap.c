@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1999/01/16 08:51:04 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1999/02/26 19:03:40 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 1999/01/16 08:51:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 1999/02/26 19:03:40 is Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1010,6 +1010,48 @@ pmap_protect(pmap, sva, eva, prot)
 				MachTLBUpdate(sva | (pmap->pm_tlbpid <<
 					MIPS_TLB_PID_SHIFT), entry);
 		}
+	}
+}
+
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	size_t		len;
+{
+	pmap_t pmap;
+
+	pmap = p->p_vmspace->vm_map.pmap;
+
+	if (CPUISMIPS3) {
+#if 0
+		printf("pmap_procwr: va %lx len %lx\n", va, len);
+#endif
+		mips3_FlushDCache(va, len);
+		mips3_FlushICache(MIPS_PHYS_TO_KSEG0(va &
+		    (mips_L1ICacheSize - 1)), len);
+	} else {
+		pt_entry_t *pte;
+		unsigned entry;
+
+#if 0
+printf("pmap_procwr: va %lx", va);
+#endif
+		if (!(pte = pmap_segmap(pmap, va)))
+			return;
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+		entry = pte->pt_entry;
+		if (!mips_pg_v(entry))
+			return;
+#if 0
+printf(" flush %lx", pfn_to_vad(entry) + (va & PGOFSET));
+#endif
+		mips1_FlushICache(MIPS_PHYS_TO_KSEG0(mips1_pfn_to_vad(entry)
+		    + (va & PGOFSET)),
+		    len);
+#if 0
+printf("\n");
+#endif
 	}
 }
 
