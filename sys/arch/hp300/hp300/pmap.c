@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1998/12/19 23:51:47 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1998/12/20 01:15:52 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -300,12 +300,15 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #define	PRM_CFLUSH	2
 
 /*
- *	Routine:	pmap_virtual_space
+ * pmap_virtual_space:		[ INTERFACE ]
  *
- *	Function:
- *		Report the range of available kernel virtual address
- *		space to the VM system during bootstrap.  Called by
- *		vm_bootstrap_steal_memory().
+ *	Report the range of available kernel virtual address
+ *	space to the VM system during bootstrap.
+ *
+ *	This is only an interface function if we do not use
+ *	pmap_steal_memory()!
+ *
+ *	Note: no locking is necessary in this function.
  */
 void
 pmap_virtual_space(vstartp, vendp)
@@ -317,12 +320,12 @@ pmap_virtual_space(vstartp, vendp)
 }
 
 /*
- *	Routine:	pmap_init
+ * pmap_init:			[ INTERFACE ]
  *
- *	Function:
- *		Initialize the pmap module.
- *		Called by vm_init, to initialize any structures that the pmap
- *		system needs to map virtual memory.
+ *	Initialize the pmap module.  Called by vm_init(), to initialize any
+ *	structures that the pmap system needs to map virtual memory.
+ *
+ *	Note: no locking is necessary in this function.
  */
 void
 pmap_init()
@@ -567,6 +570,11 @@ bogons:
 	pmap_initialized = TRUE;
 }
 
+/*
+ * pmap_alloc_pv:
+ *
+ *	Allocate a pv_entry.
+ */
 struct pv_entry *
 pmap_alloc_pv()
 {
@@ -607,6 +615,11 @@ pmap_alloc_pv()
 	return pv;
 }
 
+/*
+ * pmap_free_pv:
+ *
+ *	Free a pv_entry.
+ */
 void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
@@ -634,6 +647,11 @@ pmap_free_pv(pv)
 	}
 }
 
+/*
+ * pmap_collect_pv:
+ *
+ *	Perform compaction on the PV list, called via pmap_collect().
+ */
 void
 pmap_collect_pv()
 {
@@ -696,11 +714,15 @@ pmap_collect_pv()
 }
 
 /*
+ * pmap_map:
+ *
  *	Used to map a range of physical addresses into kernel
  *	virtual address space.
  *
  *	For now, VM is already on, we only need to map the
  *	specified memory.
+ *
+ *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
  */
 vaddr_t
 pmap_map(va, spa, epa, prot)
@@ -721,16 +743,11 @@ pmap_map(va, spa, epa, prot)
 }
 
 /*
+ * pmap_create:			[ INTERFACE ]
+ *
  *	Create and return a physical map.
  *
- *	If the size specified for the map
- *	is zero, the map is an actual physical
- *	map, and may be referenced by the
- *	hardware.
- *
- *	If the size specified is non-zero,
- *	the map will be used in software only, and
- *	is bounded by that size.
+ *	Note: no locking is necessary in this function.
  */
 pmap_t
 pmap_create(size)
@@ -759,8 +776,11 @@ pmap_create(size)
 }
 
 /*
- * Initialize a preallocated and zeroed pmap structure,
- * such as one in a vmspace structure.
+ * pmap_pinit:
+ *
+ *	Initialize a preallocated and zeroed pmap structure.
+ *
+ *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_create()!
  */
 void
 pmap_pinit(pmap)
@@ -787,9 +807,10 @@ pmap_pinit(pmap)
 }
 
 /*
- *	Retire the given physical map from service.
- *	Should only be called if the map contains
- *	no valid mappings.
+ * pmap_destroy:		[ INTERFACE ]
+ *
+ *	Drop the reference count on the specified pmap, releasing
+ *	all resources if the reference count drops to zero.
  */
 void
 pmap_destroy(pmap)
@@ -812,9 +833,11 @@ pmap_destroy(pmap)
 }
 
 /*
- * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
- * Should only be called if the map contains no valid mappings.
+ * pmap_release:
+ *
+ *	Relese the resources held by a pmap.
+ *
+ *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_destroy().
  */
 void
 pmap_release(pmap)
@@ -849,6 +872,8 @@ pmap_release(pmap)
 }
 
 /*
+ * pmap_reference:		[ INTERFACE ]
+ *
  *	Add a reference to the specified pmap.
  */
 void
@@ -867,7 +892,14 @@ pmap_reference(pmap)
 }
 
 /*
- *	Mark that a processor is about to be used by a given pmap.
+ * pmap_activate:		[ INTERFACE ]
+ *
+ *	Activate the pmap used by the specified process.  This includes
+ *	reloading the MMU context if the current process, and marking
+ *	the pmap in use by the processor.
+ *
+ *	Note: we may only use spin locks here, since we are called
+ *	by a critical section in cpu_switch()!
  */
 void
 pmap_activate(p)
@@ -882,15 +914,25 @@ pmap_activate(p)
 }
 
 /*
- *	Mark that a processor is no longer in use by a given pmap.
+ * pmap_deactivate:		[ INTERFACE ]
+ *
+ *	Mark that the pmap used by the specified process is no longer
+ *	in use by the processor.
+ *
+ *	The comment above pmap_activate() wrt. locking applies here,
+ *	as well.
  */
 void
 pmap_deactivate(p)
 	struct proc *p;
 {
+
+	/* No action necessary in this pmap implementation. */
 }
 
 /*
+ * pmap_remove:			[ INTERFACE ]
+ *
  *	Remove the given range of addresses from the specified map.
  *
  *	It is assumed that the start and end are properly
@@ -997,9 +1039,10 @@ pmap_remove(pmap, sva, eva)
 }
 
 /*
- *	pmap_page_protect:
+ * pmap_page_protect:		[ INTERFACE ]
  *
- *	Lower the permission for all mappings to a given page.
+ *	Lower the permission for all mappings to a given page to
+ *	the permissions specified.
  */
 void
 pmap_page_protect(pa, prot)
@@ -1059,8 +1102,10 @@ pmap_page_protect(pa, prot)
 }
 
 /*
- *	Set the physical protection on the
- *	specified range of this map as requested.
+ * pmap_protect:		[ INTERFACE ]
+ *
+ *	Set the physical protectoin on the specified range of this map
+ *	as requested.
  */
 void
 pmap_protect(pmap, sva, eva, prot)
@@ -1155,15 +1200,17 @@ pmap_protect(pmap, sva, eva, prot)
 }
 
 /*
- *	Insert the given physical page (p) at
- *	the specified virtual address (v) in the
+ * pmap_enter:			[ INTERFACE ]
+ *
+ *	Insert the given physical page (pa) at
+ *	the specified virtual address (va) in the
  *	target physical map with the protection requested.
  *
  *	If specified, the page will be wired down, meaning
- *	that the related pte can not be reclaimed.
+ *	that the related pte cannot be reclaimed.
  *
- *	NB:  This is the only routine which MAY NOT lazy-evaluate
- *	or lose information.  That is, this routine must actually
+ *	Note: This is the only routine which MAY NOT lazy-evaluate
+ *	or lose information.  Thatis, this routine must actually
  *	insert this page into the given map NOW.
  */
 void
@@ -1442,11 +1489,11 @@ validate:
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
- *			pair.
- *	In/out conditions:
- *			The mapping must already exist in the pmap.
+ * pmap_change_wiring:		[ INTERFACE ]
+ *
+ *	Change the wiring attribute for a map/virtual-address pair.
+ *
+ *	The mapping must already exist in the pmap.
  */
 void
 pmap_change_wiring(pmap, va, wired)
@@ -1498,12 +1545,11 @@ pmap_change_wiring(pmap, va, wired)
 }
 
 /*
- *	Routine:	pmap_extract
- *	Function:
- *		Extract the physical page address associated
- *		with the given map/virtual_address pair.
+ * pmap_extract:		[ INTERFACE ]
+ *
+ *	Extract the physical address associated with the given
+ *	pmap/virtual address pair.
  */
-
 paddr_t
 pmap_extract(pmap, va)
 	pmap_t	pmap;
@@ -1526,13 +1572,16 @@ pmap_extract(pmap, va)
 }
 
 /*
- *	Copy the range specified by src_addr/len
+ * pmap_copy:		[ INTERFACE ]
+ *
+ *	Copy the mapping range specified by src_addr/len
  *	from the source map to the range dst_addr/len
  *	in the destination map.
  *
  *	This routine is only advisory and need not do anything.
  */
-void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
+void
+pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	pmap_t		dst_pmap;
 	pmap_t		src_pmap;
 	vaddr_t		dst_addr;
@@ -1546,14 +1595,14 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 }
 
 /*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
+ * pmap_update:
  *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
+ *	Require that all active physical maps contain no
+ *	incorrect entires NOW, by processing any deferred
+ *	pmap operations.
  */
-void pmap_update()
+void
+pmap_update()
 {
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
@@ -1562,15 +1611,18 @@ void pmap_update()
 }
 
 /*
- *	Routine:	pmap_collect
- *	Function:
- *		Garbage collects the physical map system for
- *		pages which are no longer used.
- *		Success need not be guaranteed -- that is, there
- *		may well be pages which are not referenced, but
- *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
+ * pmap_collect:		[ INTERFACE ]
+ *
+ *	Garbage collects the physical map system for pages which are no
+ *	longer used.  Success need not be guaranteed -- that is, there
+ *	may well be pages which are not referenced, but others may be
+ *	collected.
+ *
+ *	Called by the pageout daemon when pages are scarce.
+ *
+ *	Note: THIS IMPLEMENTATION IS BOGUS!  When we're called, the
+ *	process using this pmap is about to be swapped out!  So, we
+ *	should free all of the page tables being used by that process!
  */
 void
 pmap_collect(pmap)
@@ -1596,11 +1648,13 @@ pmap_collect(pmap)
 }
 
 /*
- *	Routine:	pmap_collect1()
+ * pmap_collect1():
  *
- *	Function:
- *		Helper function for pmap_collect().  Do the actual
- *		garbage-collection of range of physical addresses.
+ *	Garbage-collect KPT pages.  Helper for the above (bogus)
+ *	pmap_collect().
+ *
+ *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
+ *	WAY OF HANDLING PT PAGES!
  */
 void
 pmap_collect1(pmap, startpa, endpa)
@@ -1702,12 +1756,15 @@ ok:
 }
 
 /*
- *	pmap_zero_page zeros the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bzero to clear its contents, one machine dependent page
- *	at a time.
+ * pmap_zero_page:		[ INTERFACE ]
  *
- *	XXX this is a bad implementation for virtual cache machines
+ *	Zero the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bzero to clear its contents, one
+ *	machine dependent page at a time.
+ *
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *
+ *	Note: this is a bad implementation for virtual cache machines
  *	(320/350) because pmap_enter doesn't cache-inhibit the temporary
  *	kernel mapping and we wind up with data cached for that KVA.
  *	It is probably a win for physical cache machines (370/380)
@@ -1730,17 +1787,15 @@ pmap_zero_page(phys)
 }
 
 /*
- *	pmap_copy_page copies the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bcopy to copy the page, one machine dependent page at a
- *	time.
+ * pmap_copy_page:		[ INTERFACE ]
  *
+ *	Copy the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bcopy to copy the page, one machine
+ *	dependent page at a time.
  *
- *	XXX this is a bad implementation for virtual cache machines
- *	(320/350) because pmap_enter doesn't cache-inhibit the temporary
- *	kernel mapping and we wind up with data cached for that KVA.
- *	It is probably a win for physical cache machines (370/380)
- *	as the cache loading is not wasted.
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *
+ *	Note: see above wrt. cache effects.
  */
 void
 pmap_copy_page(src, dst)
@@ -1761,18 +1816,16 @@ pmap_copy_page(src, dst)
 }
 
 /*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
+ * pmap_pageable:		[ INTERFACE ]
  *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
+ *	Make the specified pages (by pmap, offset) pageable (or not) as
+ *	requested.
  *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
+ *	A page which is not pageable may not take a fault; therefore,
+ *	its page table entry must remain valid for the duration.
+ *
+ *	This routine is merely advisory; pmap_enter() will specify that
+ *	these pages are to be wired down (or not) as appropriate.
  */
 void
 pmap_pageable(pmap, sva, eva, pageable)
@@ -1837,9 +1890,10 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
+ * pmap_clear_modify:		[ INTERFACE ]
+ *
  *	Clear the modify bits on the specified physical page.
  */
-
 void
 pmap_clear_modify(pa)
 	paddr_t	pa;
@@ -1851,12 +1905,12 @@ pmap_clear_modify(pa)
 }
 
 /*
- *	pmap_clear_reference:
+ * pmap_clear_reference:	[ INTERFACE ]
  *
  *	Clear the reference bit on the specified physical page.
  */
-
-void pmap_clear_reference(pa)
+void
+pmap_clear_reference(pa)
 	paddr_t	pa;
 {
 
@@ -1866,12 +1920,11 @@ void pmap_clear_reference(pa)
 }
 
 /*
- *	pmap_is_referenced:
+ * pmap_is_referenced:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_referenced(pa)
 	paddr_t	pa;
@@ -1887,12 +1940,11 @@ pmap_is_referenced(pa)
 }
 
 /*
- *	pmap_is_modified:
+ * pmap_is_modified:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_modified(pa)
 	paddr_t	pa;
@@ -1907,6 +1959,15 @@ pmap_is_modified(pa)
 	return(pmap_testbit(pa, PG_M));
 }
 
+/*
+ * pmap_phys_address:		[ INTERFACE ]
+ *
+ *	Return the physical address corresponding to the specified
+ *	cookie.  Used by the device pager to decode a device driver's
+ *	mmap entry point return value.
+ *
+ *	Note: no locking is necessary in this function.
+ */
 paddr_t
 pmap_phys_address(ppn)
 	int ppn;
@@ -1916,12 +1977,14 @@ pmap_phys_address(ppn)
 
 #ifdef COMPAT_HPUX
 /*
- * 'PUX hack for dealing with the so called multi-mapped address space.
- * The first 256mb is mapped in at every 256mb region from 0x10000000
- * up to 0xF0000000.  This allows for 15 bits of tag information.
+ * pmap_mapmulti:
  *
- * We implement this at the segment table level, the machine independent
- * VM knows nothing about it.
+ *	'PUX hack for dealing with the so called multi-mapped address space.
+ *	The first 256mb is mapped in at every 256mb region from 0x10000000
+ *	up to 0xF0000000.  This allows for 15 bits of tag information.
+ *
+ *	We implement this at the segment table level, the machine independent
+ *	VM knows nothing about it.
  */
 int
 pmap_mapmulti(pmap, va)
@@ -1948,17 +2011,23 @@ pmap_mapmulti(pmap, va)
 	}
 	return (KERN_INVALID_ADDRESS);
 }
-#endif
+#endif /* COMPAT_HPUX */
 
 /*
  * Miscellaneous support routines follow
  */
 
 /*
- * Invalidate a single page denoted by pmap/va.
- * If (pte != NULL), it is the already computed PTE for the page.
- * If (flags & PRM_TFLUSH), we must invalidate any TLB information.
- * If (flags & PRM_CFLUSH), we must flush/invalidate any cache information.
+ * pmap_remove_mapping:
+ *
+ *	Invalidate a single page denoted by pmap/va.
+ *
+ *	If (pte != NULL), it is the already computed PTE for the page.
+ *
+ *	If (flags & PRM_TFLUSH), we must invalidate any TLB information.
+ *
+ *	If (flags & PRM_CFLUSH), we must flush/invalidate any cache
+ *	information.
  */
 /* static */
 void
@@ -2192,6 +2261,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	splx(s);
 }
 
+/*
+ * pmap_testbit:
+ *
+ *	Test the modified/referenced bits of a physical page.
+ */
 /* static */
 boolean_t
 pmap_testbit(pa, bit)
@@ -2239,6 +2313,12 @@ pmap_testbit(pa, bit)
 	return(FALSE);
 }
 
+/*
+ * pmap_changebit:
+ *
+ *	Change the modified/referenced bits, or other PTE bits,
+ *	for a physical page.
+ */
 /* static */
 void
 pmap_changebit(pa, set, mask)
@@ -2343,6 +2423,11 @@ pmap_changebit(pa, set, mask)
 	splx(s);
 }
 
+/*
+ * pmap_enter_ptpage:
+ *
+ *	Allocate and map a PT page for the specified pmap/va pair.
+ */
 /* static */
 void
 pmap_enter_ptpage(pmap, va)
@@ -2590,6 +2675,11 @@ pmap_enter_ptpage(pmap, va)
 }
 
 #ifdef DEBUG
+/*
+ * pmap_pvdump:
+ *
+ *	Dump the contents of the PV list for the specified physical page.
+ */
 /* static */
 void
 pmap_pvdump(pa)
@@ -2606,6 +2696,13 @@ pmap_pvdump(pa)
 }
 
 /* static */
+/*
+ * pmap_check_wiring:
+ *
+ *	Count the number of valid mappings in the specified PT page,
+ *	and ensure that it is consistent with the number of wirings
+ *	to that page that the VM system has.
+ */
 void
 pmap_check_wiring(str, va)
 	char *str;
@@ -2639,4 +2736,4 @@ pmap_check_wiring(str, va)
 		printf("*%s*: %lx: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
 }
-#endif
+#endif /* DEBUG */
