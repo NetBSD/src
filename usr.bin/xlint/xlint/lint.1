@@ -1,4 +1,4 @@
-.\"	$NetBSD: lint.1,v 1.10 1999/03/22 18:16:47 garbled Exp $
+.\"	$NetBSD: lint.1,v 1.11 2000/03/22 01:09:34 garbled Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -66,6 +66,9 @@
 .Bk -words
 .Op Fl o Ar outputfile
 .Ek
+.Bk -words
+.Op Fl B Ar directory
+.Ek
 .Ar
 .Nm lint
 .Op Fl abceghprvzHFV
@@ -86,6 +89,9 @@
 .Ek
 .Bk -words
 .Op Fl d Ar directory
+.Ek
+.Bk -words
+.Op Fl B Ar directory
 .Ek
 .Ar
 .Sh DESCRIPTION
@@ -304,6 +310,9 @@ declarations, but never used.
 Do not complain about structures that are never defined
 (for example, using a structure pointer without knowing
 its contents).
+.It Fl B Ns Ar path
+Path to use when looking for the lint1 and lint2 binaries. Defualts to
+.Pa /usr/libexec .
 .It Fl C Ns Ar library
 Create a
 .Nm
@@ -524,6 +533,9 @@ will be used to search for the libraries.
 .It Ev TMPDIR
 usually the path for temporary files can be redefined by setting
 this environment variable.
+.It Ev CC
+Location of the C compiler program.  Defaults to
+.Pa /usr/bin/cc .
 .El
 .Sh FILES
 .Bl -tag -width /usr/libdata/lint/llib-lc.ln -compact
