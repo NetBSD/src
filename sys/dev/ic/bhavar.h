@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.17 2000/03/27 17:00:50 kleink Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.18 2000/04/19 02:39:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,19 +69,24 @@ do {									\
 	    BHA_CCB_OFFSET(ccb), sizeof(struct bha_ccb), (ops));	\
 } while (0)
 
-#define	BHA_MBI_OFFSET(sc, mbi)	((u_long)(mbi) - (u_long)(sc)->sc_mbi)
-#define	BHA_MBO_OFFSET(sc, mbo)	((u_long)(mbo) - (u_long)(sc)->sc_mbo)
+/*
+ * Offset in the DMA mapping for mailboxes.
+ * Since all mailboxes are allocated on a single DMA'able memory
+ * due to the hardware limitation, an offset of any mailboxes can be
+ * calculated using same expression.
+ */
+#define	BHA_MBX_OFFSET(sc, mbx)	((u_long)(mbx) - (u_long)(sc)->sc_mbo)
 
 #define	BHA_MBI_SYNC(sc, mbi, ops)					\
 do {									\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap_mbox,		\
-	    BHA_MBI_OFFSET((sc), (mbi)), sizeof(struct bha_mbx_in), (ops)); \
+	    BHA_MBX_OFFSET((sc), (mbi)), sizeof(struct bha_mbx_in), (ops)); \
 } while (0)
 
 #define	BHA_MBO_SYNC(sc, mbo, ops)					\
 do {									\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap_mbox,		\
-	    BHA_MBO_OFFSET((sc), (mbo)), sizeof(struct bha_mbx_out), (ops)); \
+	    BHA_MBX_OFFSET((sc), (mbo)), sizeof(struct bha_mbx_out), (ops)); \
 } while (0)
 
 struct bha_softc {
