@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.58 2004/07/15 07:13:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.58 2004/07/15 07:13:44 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1609,33 +1609,19 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	u_int32_t reg;
 	int i;
 
-	for (i = 1000; --i >= 0; ) {
-		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_RD|ATW_BBPCTL_WR) == 0)
-			break;
-		DELAY(100);
-	}
-
-	if (i < 0) {
-		printf("%s: BBPCTL busy (pre-write)\n", sc->sc_dev.dv_xname);
-		return ETIMEDOUT;
-	}
-
 	reg = sc->sc_bbpctl_wr |
 	     LSHIFT(val & 0xff, ATW_BBPCTL_DATA_MASK) |
 	     LSHIFT(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
-	ATW_WRITE(sc, ATW_BBPCTL, reg);
-
-	for (i = 1000; --i >= 0; ) {
-		DELAY(100);
+	for (i = 10; --i >= 0; ) {
+		ATW_WRITE(sc, ATW_BBPCTL, reg);
+		DELAY(2000);
 		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_WR) == 0)
 			break;
 	}
 
-	ATW_CLR(sc, ATW_BBPCTL, ATW_BBPCTL_WR);
-
 	if (i < 0) {
-		printf("%s: BBPCTL busy (post-write)\n", sc->sc_dev.dv_xname);
+		printf("%s: BBPCTL still busy\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
 	return 0;
