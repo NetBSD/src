@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sort.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_sort.c,v 1.2 1999/11/20 20:06:45 veego Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_sort.c	4.10 (Berkeley) 3/3/91";
@@ -185,6 +185,7 @@ static const char rcsid[] = "Id: ns_sort.c,v 8.5 1999/10/13 16:39:12 vixie Exp";
 #include <stdio.h>
 #include <syslog.h>
 #include <resolv.h>
+#include <string.h>
 
 #include <isc/eventlib.h>
 #include <isc/logging.h>
