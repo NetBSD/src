@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.396 2001/01/28 00:50:23 nathanw Exp $
+#	$NetBSD: GENERIC,v 1.397 2001/01/30 23:32:35 tshiozak Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.396 $"
+#ident 		"GENERIC-$Revision: 1.397 $"
 
 maxusers	32		# estimated number of users
 
@@ -689,6 +689,9 @@ scsibus* at umass? channel ?
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -810,6 +813,7 @@ midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB1 MIDI port
+midi*   at umidi?               # USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
