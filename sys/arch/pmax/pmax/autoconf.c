@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1999/05/25 09:32:27 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1999/05/31 07:42:56 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 1999/05/25 09:32:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 1999/05/31 07:42:56 nisimura Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -102,12 +102,10 @@ extern struct devnametobdevmaj dev_name2blk[];
 void
 configure()
 {
-	int s;
-
 	/*
 	 * Kick off autoconfiguration
 	 */
-	s = splhigh();
+	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
 
@@ -118,7 +116,7 @@ configure()
 #ifdef DEBUG
 	printf("autconfiguration done, spl back to 0x%x\n", s);
 #endif
-	spl0();
+	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 
 	/*
 	 * Probe SCSI bus using old-style pmax configuration table.
