@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.12 1997/06/16 01:45:19 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.13 1997/06/22 07:42:46 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -73,7 +73,7 @@ static int tc_consprobeslot __P((tc_addr_t slotaddr));
 
 
 /*#include <pmax/pmax/nameglue.h>*/
-#define KV(x) ((tc_addr_t)MACH_PHYS_TO_UNCACHED(x))
+#define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 
 
 

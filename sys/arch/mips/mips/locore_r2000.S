@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.34 1997/06/21 06:32:24 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.35 1997/06/22 07:42:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,14 +76,14 @@
 	.globl	_C_LABEL(mips1_UTLBMiss)
 _C_LABEL(mips1_UTLBMiss):
 	.set	noat
-	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, _C_LABEL(curpcb)
 	bltz	k0, 1f				# R3000 chip bug
 	lw	k1, U_PCB_SEGTAB(k1)		# get the current segment table
 	srl	k0, k0, SEGSHIFT		# compute segment table index
 	sll	k0, k0, 2
 	addu	k1, k1, k0
-	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, 0(k1)			# get pointer to segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
 	andi	k0, k0, (NPTEPG - 1) << 2
@@ -92,13 +92,13 @@ _C_LABEL(mips1_UTLBMiss):
 	lw	k0, 0(k1)			# get page PTE
 	nop
 	beq	k0, zero, 2f			# dont load invalid entries
-	mtc0	k0, MACH_COP_0_TLB_LOW
-	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	mtc0	k0, MIPS_COP_0_TLB_LOW
+	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
 	tlbwr					# update TLB
 	j	k1
 	rfe
 1:
-	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
 	nop
 	j	k1
 	rfe
@@ -130,8 +130,8 @@ _C_LABEL(mips1_exception):
  * Find out what mode we came from and jump to the proper handler.
  */
 	.set	noat
-	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
-	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
+	mfc0	k0, MIPS_COP_0_STATUS_REG	# Get the status register
+	mfc0	k1, MIPS_COP_0_CAUSE_REG	# Get the cause register value.
 	and	k0, k0, MIPS1_SR_KU_PREV	# test for user mode
 	sll	k0, k0, 4			# shift user bit for cause index
 	and	k1, k1, MIPS1_CR_EXC_CODE	# Mask out the cause bits.
@@ -166,7 +166,7 @@ _C_LABEL(mips1_exceptionEnd):
  */
 mips1_SlowFault:
 	.set	noat
-	mfc0	k0, MACH_COP_0_STATUS_REG
+	mfc0	k0, MIPS_COP_0_STATUS_REG
 	nop
 	and	k0, k0, MIPS1_SR_KU_PREV
 	bne	k0, zero, _C_LABEL(mips1_UserGenException)
@@ -204,22 +204,22 @@ NNON_LEAF(mips1_KernGenException, TRAP_FRAME_SIZE, ra)
 	sw	a2, TRAP_FRAME_OFFSET+(A2 * 4)(sp)
 	sw	a3, TRAP_FRAME_OFFSET+(A3 * 4)(sp)
 	sw	t0, TRAP_FRAME_OFFSET+(T0 * 4)(sp)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	mfc0	a0, MIPS_COP_0_STATUS_REG	# 1st arg is STATUS
 	sw	t1, TRAP_FRAME_OFFSET+(T1 * 4)(sp)
 	sw	t2, TRAP_FRAME_OFFSET+(T2 * 4)(sp)
 	sw	t3, TRAP_FRAME_OFFSET+(T3 * 4)(sp)
 	sw	t4, TRAP_FRAME_OFFSET+(T4 * 4)(sp)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	mfc0	a1, MIPS_COP_0_CAUSE_REG	# 2nd arg is CAUSE
 	sw	t5, TRAP_FRAME_OFFSET+(T5 * 4)(sp)
 	sw	t6, TRAP_FRAME_OFFSET+(T6 * 4)(sp)
 	sw	t7, TRAP_FRAME_OFFSET+(T7 * 4)(sp)
 	sw	t8, TRAP_FRAME_OFFSET+(T8 * 4)(sp)
-	mfc0	a2, MACH_COP_0_BAD_VADDR	# 3rd arg is fault address
+	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	sw	t9, TRAP_FRAME_OFFSET+(T9 * 4)(sp)
 	sw	ra, TRAP_FRAME_OFFSET+(RA * 4)(sp)
 	sw	a0, TRAP_FRAME_OFFSET+(SR * 4)(sp)
 	sw	v0, TRAP_FRAME_OFFSET+(MULLO * 4)(sp)
-	mfc0	a3, MACH_COP_0_EXC_PC		# 4th arg is PC
+	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	sw	v1, TRAP_FRAME_OFFSET+(MULHI * 4)(sp)
 	sw	a3, TRAP_FRAME_OFFSET+(PC * 4)(sp)
 
@@ -229,7 +229,7 @@ NNON_LEAF(mips1_KernGenException, TRAP_FRAME_SIZE, ra)
 	lw	a0, TRAP_FRAME_OFFSET+(SR * 4)(sp)
 	lw	t0, TRAP_FRAME_OFFSET+(MULLO * 4)(sp)
 	lw	t1, TRAP_FRAME_OFFSET+(MULHI * 4)(sp)
-	mtc0	a0, MACH_COP_0_STATUS_REG
+	mtc0	a0, MIPS_COP_0_STATUS_REG
 	mtlo	t0
 	mthi	t1
 	lw	k0, TRAP_FRAME_OFFSET+(PC * 4)(sp)	# might be changed inside trap
@@ -290,22 +290,22 @@ NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
 	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
 	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	mfc0	a0, MIPS_COP_0_STATUS_REG	# 1st arg is STATUS
 	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
 	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
 	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
 	sw	s0, U_PCB_REGS+(S0 * 4)(k1)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	mfc0	a1, MIPS_COP_0_CAUSE_REG	# 2nd arg is CAUSE
 	sw	s1, U_PCB_REGS+(S1 * 4)(k1)
 	sw	s2, U_PCB_REGS+(S2 * 4)(k1)
 	sw	s3, U_PCB_REGS+(S3 * 4)(k1)
 	sw	s4, U_PCB_REGS+(S4 * 4)(k1)
-	mfc0	a2, MACH_COP_0_BAD_VADDR	# 3rd arg is fault address
+	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	sw	s5, U_PCB_REGS+(S5 * 4)(k1)
 	sw	s6, U_PCB_REGS+(S6 * 4)(k1)
 	sw	s7, U_PCB_REGS+(S7 * 4)(k1)
 	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
-	mfc0	a3, MACH_COP_0_EXC_PC		# 4th arg is PC
+	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
 	sw	gp, U_PCB_REGS+(GP * 4)(k1)
 	sw	sp, U_PCB_REGS+(SP * 4)(k1)
@@ -321,10 +321,10 @@ NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 	.set	at
-	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
+	and	t0, a0, ~MIPS_SR_COP_1_BIT	# Turn off the FPU.
 	.set	noat
 	jal	_C_LABEL(trap)
-	mtc0	t0, MACH_COP_0_STATUS_REG
+	mtc0	t0, MIPS_COP_0_STATUS_REG
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
@@ -333,7 +333,7 @@ NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	lw	a0, U_PCB_REGS+(SR * 4)(a1)
 	lw	t0, U_PCB_REGS+(MULLO * 4)(a1)
 	lw	t1, U_PCB_REGS+(MULHI * 4)(a1)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	move	k1, a1
@@ -394,12 +394,12 @@ NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
 	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
 	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
 	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	mfc0	a0, MIPS_COP_0_STATUS_REG	# 1st arg is STATUS
 	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
 	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
 	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
 	sw	s0, U_PCB_REGS+(S0 * 4)(k1)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	mfc0	a1, MIPS_COP_0_CAUSE_REG	# 2nd arg is CAUSE
 	sw	s1, U_PCB_REGS+(S1 * 4)(k1)
 	sw	s2, U_PCB_REGS+(S2 * 4)(k1)
 	sw	s3, U_PCB_REGS+(S3 * 4)(k1)
@@ -408,7 +408,7 @@ NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
 	sw	s6, U_PCB_REGS+(S6 * 4)(k1)
 	sw	s7, U_PCB_REGS+(S7 * 4)(k1)
 	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
-	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
 	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
 	sw	gp, U_PCB_REGS+(GP * 4)(k1)
 	sw	sp, U_PCB_REGS+(SP * 4)(k1)
@@ -425,10 +425,10 @@ NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 	.set	at
-	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
+	and	t0, a0, ~MIPS_SR_COP_1_BIT	# Turn off the FPU.
 	.set	noat
 	jal	_C_LABEL(syscall)
-	mtc0	t0, MACH_COP_0_STATUS_REG
+	mtc0	t0, MIPS_COP_0_STATUS_REG
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
@@ -437,7 +437,7 @@ NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
 	lw	a0, U_PCB_REGS+(SR * 4)(a1)
 	lw	t0, U_PCB_REGS+(MULLO * 4)(a1)
 	lw	t1, U_PCB_REGS+(MULHI * 4)(a1)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	move	k1, a1
@@ -511,17 +511,17 @@ NNON_LEAF(mips1_KernIntr, INTR_FRAME_SIZE, ra)
 	sw	a2, INTR_FRAME_OFFSET+(A2 * 4)(sp)
 	sw	a3, INTR_FRAME_OFFSET+(A3 * 4)(sp)
 	sw	t0, INTR_FRAME_OFFSET+(T0 * 4)(sp)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	mfc0	a0, MIPS_COP_0_STATUS_REG	# 1st arg is STATUS
 	sw	t1, INTR_FRAME_OFFSET+(T1 * 4)(sp)
 	sw	t2, INTR_FRAME_OFFSET+(T2 * 4)(sp)
 	sw	t3, INTR_FRAME_OFFSET+(T3 * 4)(sp)
 	sw	t4, INTR_FRAME_OFFSET+(T4 * 4)(sp)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# Second arg is the cause reg.
+	mfc0	a1, MIPS_COP_0_CAUSE_REG	# Second arg is the cause reg.
 	sw	t5, INTR_FRAME_OFFSET+(T5 * 4)(sp)
 	sw	t6, INTR_FRAME_OFFSET+(T6 * 4)(sp)
 	sw	t7, INTR_FRAME_OFFSET+(T7 * 4)(sp)
 	sw	t8, INTR_FRAME_OFFSET+(T8 * 4)(sp)
-	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
 	sw	t9, INTR_FRAME_OFFSET+(T9 * 4)(sp)
 	sw	ra, INTR_FRAME_OFFSET+(RA * 4)(sp)
 	la	a3, INTR_FRAME_OFFSET(sp)	# 4th arg is p. to trapframe
@@ -538,7 +538,7 @@ NNON_LEAF(mips1_KernIntr, INTR_FRAME_SIZE, ra)
 	lw	a0, INTR_FRAME_OFFSET+(SR * 4)(sp)
 	lw	t0, INTR_FRAME_OFFSET+(MULLO * 4)(sp)
 	lw	t1, INTR_FRAME_OFFSET+(MULHI * 4)(sp)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# Restore the SR, disable intrs
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# Restore the SR, disable intrs
 	mtlo	t0
 	mthi	t1
 	lw	k0, STAND_RA_OFFSET(sp)		# restore original PC
@@ -604,17 +604,17 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	sw	a2, U_PCB_REGS+(A2 * 4)(k1)
 	sw	a3, U_PCB_REGS+(A3 * 4)(k1)
 	sw	t0, U_PCB_REGS+(T0 * 4)(k1)
-	mfc0	a0, MACH_COP_0_STATUS_REG	# 1st arg is STATUS
+	mfc0	a0, MIPS_COP_0_STATUS_REG	# 1st arg is STATUS
 	sw	t1, U_PCB_REGS+(T1 * 4)(k1)
 	sw	t2, U_PCB_REGS+(T2 * 4)(k1)
 	sw	t3, U_PCB_REGS+(T3 * 4)(k1)
 	sw	t4, U_PCB_REGS+(T4 * 4)(k1)
-	mfc0	a1, MACH_COP_0_CAUSE_REG	# 2nd arg is CAUSE
+	mfc0	a1, MIPS_COP_0_CAUSE_REG	# 2nd arg is CAUSE
 	sw	t5, U_PCB_REGS+(T5 * 4)(k1)
 	sw	t6, U_PCB_REGS+(T6 * 4)(k1)
 	sw	t7, U_PCB_REGS+(T7 * 4)(k1)
 	sw	t8, U_PCB_REGS+(T8 * 4)(k1)
-	mfc0	a2, MACH_COP_0_EXC_PC		# 3rd arg is PC
+	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
 	sw	t9, U_PCB_REGS+(T9 * 4)(k1)
 	sw	gp, U_PCB_REGS+(GP * 4)(k1)
 	sw	sp, U_PCB_REGS+(SP * 4)(k1)
@@ -633,10 +633,10 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
  * Call the interrupt handler.
  */
 	.set	at
-	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
+	and	t0, a0, ~MIPS_SR_COP_1_BIT	# Turn off the FPU.
 	.set	noat
 	jal	_C_LABEL(interrupt)
-	mtc0	t0, MACH_COP_0_STATUS_REG
+	mtc0	t0, MIPS_COP_0_STATUS_REG
 /*
  * Check pending asynchoronous traps.
  */
@@ -644,7 +644,7 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	nop
 	lw	a0, U_PCB_REGS+(SR * 4)(a1)
 	lw	v0, _C_LABEL(astpending)	# any pending ast?
-	mtc0	a0, MACH_COP_0_STATUS_REG	# restore SR disabling intrs
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# restore SR disabling intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
 /*
  * We have pending asynchronous traps; save remaining user state in u.u_pcb.
@@ -660,15 +660,15 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	sw	s8, U_PCB_REGS+(S8 * 4)(a1)
 
 	lw	a0, U_PCB_REGS+(PC * 4)(a1)	# argument is interrupted PC
-	li	t0, MACH_HARD_INT_MASK | MIPS_SR_INT_IE
+	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
 	jal	_C_LABEL(ast)
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts (spl0)
+	mtc0	t0, MIPS_COP_0_STATUS_REG	# enable interrupts (spl0)
 
 	lw	a1, _C_LABEL(curpcb)
 	nop
 	lw	a0, U_PCB_REGS+(SR * 4)(a1)
 	lw	s0, U_PCB_REGS+(S0 * 4)(a1)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# this should disable interrupts
 	lw	s1, U_PCB_REGS+(S1 * 4)(a1)
 	lw	s2, U_PCB_REGS+(S2 * 4)(a1)
 	lw	s3, U_PCB_REGS+(S3 * 4)(a1)
@@ -748,12 +748,12 @@ _C_LABEL(mips1_exceptionentry_end):
 NLEAF(mips1_TLBModException)
 	.set	noat
 	tlbp					# find the TLB entry
-	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
-	mfc0	k1, MACH_COP_0_TLB_INDEX	# check to be sure its valid
+	mfc0	k0, MIPS_COP_0_TLB_LOW		# get the physical address
+	mfc0	k1, MIPS_COP_0_TLB_INDEX	# check to be sure its valid
 	or	k0, k0, MIPS1_TLB_MOD_BIT	# update TLB
 	blt	k1, zero, 4f			# not found!!!
-	mtc0	k0, MACH_COP_0_TLB_LOW
-	li	k1, MACH_CACHED_MEMORY_ADDR
+	mtc0	k0, MIPS_COP_0_TLB_LOW
+	li	k1, MIPS_KSEG0_START
 	subu	k0, k0, k1
 	srl	k0, k0, MIPS1_TLB_PHYS_PAGE_SHIFT
 	la	k1, pmap_attributes
@@ -762,7 +762,7 @@ NLEAF(mips1_TLBModException)
 	nop
 	or	k1, k1, 1			# set modified bit
 	sb	k1, 0(k0)			# save new value
-	mfc0	k0, MACH_COP_0_EXC_PC		# get return address
+	mfc0	k0, MIPS_COP_0_EXC_PC		# get return address
 	nop
 	j	k0
 	rfe
@@ -790,7 +790,7 @@ END(mips1_TLBModException)
  */
 NLEAF(mips1_TLBMissException)
 	.set	noat
-	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
+	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
@@ -802,8 +802,8 @@ NLEAF(mips1_TLBMissException)
 	sll	k0, k0, 2			# compute offset from index
 	addu	k1, k1, k0
 	lw	k0, 0(k1)			# get PTE entry
-	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
-	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
+	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
+	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, MIPS1_PG_V		# check for valid entry
 	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
 	nop
@@ -821,15 +821,15 @@ NLEAF(mips1_TLBMissException)
 	sw	sp, 24(a0)
 	move	sp, a0
 	la	a0, 1f
-	mfc0	a2, MACH_COP_0_STATUS_REG
-	mfc0	a3, MACH_COP_0_CAUSE_REG
-	mfc0	a1, MACH_COP_0_EXC_PC
+	mfc0	a2, MIPS_COP_0_STATUS_REG
+	mfc0	a3, MIPS_COP_0_CAUSE_REG
+	mfc0	a1, MIPS_COP_0_EXC_PC
 	sw	a2, 16(sp)
 	sw	a3, 20(sp)
 	sw	sp, 24(sp)
 	move	a2, ra
 	jal	_C_LABEL(printf)
-	mfc0	a3, MACH_COP_0_BAD_VADDR
+	mfc0	a3, MIPS_COP_0_BAD_VADDR
 	.data
 1:
 	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
@@ -861,20 +861,20 @@ END(mips1_TLBMissException)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBWriteIndexed)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
 
 	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
-	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index.
-	mtc0	a1, MACH_COP_0_TLB_HI		# Set up entry high.
-	mtc0	a2, MACH_COP_0_TLB_LOW		# Set up entry low.
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
+	mtc0	a1, MIPS_COP_0_TLB_HI		# Set up entry high.
+	mtc0	a2, MIPS_COP_0_TLB_LOW		# Set up entry low.
 	nop
 	tlbwi					# Write the TLB
 
-	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID.
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBWriteIndexed)
 
 #if 0
@@ -897,19 +897,19 @@ END(mips1_TLBWriteIndexed)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBWriteRandom)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	v0, MACH_COP_0_TLB_HI		# Save the current PID.
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	v0, MIPS_COP_0_TLB_HI		# Save the current PID.
 	nop
 
-	mtc0	a0, MACH_COP_0_TLB_HI		# Set up entry high.
-	mtc0	a1, MACH_COP_0_TLB_LOW		# Set up entry low.
+	mtc0	a0, MIPS_COP_0_TLB_HI		# Set up entry high.
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# Set up entry low.
 	nop
 	tlbwr					# Write the TLB
 
-	mtc0	v0, MACH_COP_0_TLB_HI		# Restore the PID.
+	mtc0	v0, MIPS_COP_0_TLB_HI		# Restore the PID.
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBWriteRandom)
 #endif
 
@@ -932,7 +932,7 @@ END(mips1_TLBWriteRandom)
  */
 LEAF(mips1_SetPID)
 	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
-	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
+	mtc0	a0, MIPS_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
 END(mips1_SetPID)
@@ -954,26 +954,26 @@ END(mips1_SetPID)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBFlush)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
-	li	t1, MACH_CACHED_MEMORY_ADDR	# invalid address
-	mtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
+	li	t1, MIPS_KSEG0_START		# invalid address
+	mtc0	t1, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
 /*
  * Align the starting value (t1) and the upper bound (t2).
  */
 	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
 	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
 1:
-	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register.
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
 	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
 	bne	t1, t2, 1b
 	tlbwi					# Write the TLB entry.
 
-	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBFlush)
 
 #if 0
@@ -995,35 +995,35 @@ END(mips1_TLBFlush)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBFlushPID)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID
 	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# Align the pid to flush.
 /*
  * Align the starting value (t1) and the upper bound (t2).
  */
 	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
 	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
-	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register
 1:
 	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
 	tlbr					# Read from the TLB
-	mfc0	t4, MACH_COP_0_TLB_HI		# Fetch the hi register.
+	mfc0	t4, MIPS_COP_0_TLB_HI		# Fetch the hi register.
 	nop
 	and	t4, t4, MIPS1_TLB_PID		# compare PIDs
 	bne	t4, a0, 2f
-	li	v0, MACH_CACHED_MEMORY_ADDR	# invalid address
-	mtc0	v0, MACH_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+	li	v0, MIPS_KSEG0_START		# invalid address
+	mtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
 	nop
 	tlbwi					# Write the entry.
 2:
 	bne	t1, t2, 1b
-	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register
 
-	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBFlushPID)
 #endif
 
@@ -1045,25 +1045,25 @@ END(mips1_TLBFlushPID)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBFlushAddr)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 	nop
 
-	mtc0	a0, MACH_COP_0_TLB_HI		# look for addr & PID
+	mtc0	a0, MIPS_COP_0_TLB_HI		# look for addr & PID
 	nop
 	tlbp					# Probe for the entry.
-	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
-	li	t1, MACH_CACHED_MEMORY_ADDR	# Load invalid entry.
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
+	li	t1, MIPS_KSEG0_START		# Load invalid entry.
 	bltz	v0, 1f				# index < 0 => !found
-	mtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+	mtc0	t1, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
 	nop
 	tlbwi
 1:
-	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBFlushAddr)
 
 /*--------------------------------------------------------------------------
@@ -1084,27 +1084,27 @@ END(mips1_TLBFlushAddr)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBUpdate)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Save current PID
 	nop					# 2 cycles before intr disabled
-	mtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	nop
 	tlbp					# Probe for the entry.
-	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
-	mtc0	a1, MACH_COP_0_TLB_LOW		# init low reg.
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# init low reg.
 	bltz	v0, 1f				# index < 0 => !found
 	sra	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
 	b	2f
 	tlbwi					# update slot found
 1:
-	mtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	nop
 	tlbwr					# enter into a random slot
 2:
-	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBUpdate)
 
 /*--------------------------------------------------------------------------
@@ -1128,27 +1128,27 @@ END(mips1_TLBUpdate)
 	.comm	tlbhi, 4
 	.comm	tlblo, 4
 LEAF(mips1_TLBFind)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 	nop
-	mtc0	a0, MACH_COP_0_TLB_HI		# Set up entry high.
+	mtc0	a0, MIPS_COP_0_TLB_HI		# Set up entry high.
 	nop
 	tlbp					# Probe for the entry.
-	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 	nop
 	bltz	v0, 1f				# not found
 	nop
 	tlbr					# read TLB
-	mfc0	t1, MACH_COP_0_TLB_HI		# See what we got
-	mfc0	t2, MACH_COP_0_TLB_LOW		# See what we got
+	mfc0	t1, MIPS_COP_0_TLB_HI		# See what we got
+	mfc0	t2, MIPS_COP_0_TLB_LOW		# See what we got
 	sw	t1, tlbhi
 	sw	t2, tlblo
 	srl	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
 1:
-	mtc0	t0, MACH_COP_0_TLB_HI		# Restore current PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore current PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBFind)
 
 /*--------------------------------------------------------------------------
@@ -1169,22 +1169,22 @@ END(mips1_TLBFind)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBRead)
-	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
-	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
 	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
-	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index register
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	nop
 	tlbr					# Read from the TLB
-	mfc0	t3, MACH_COP_0_TLB_HI		# fetch the hi entry
-	mfc0	t4, MACH_COP_0_TLB_LOW		# fetch the low entry
+	mfc0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
+	mfc0	t4, MIPS_COP_0_TLB_LOW		# fetch the low entry
 	sw	t3, tlbhi
 	sw	t4, tlblo
 
-	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
 END(mips1_TLBRead)
 
 /*--------------------------------------------------------------------------
@@ -1202,7 +1202,7 @@ END(mips1_TLBRead)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBGetPID)
-	mfc0	v0, MACH_COP_0_TLB_HI		# get PID
+	mfc0	v0, MIPS_COP_0_TLB_HI		# get PID
 	nop
 	and	v0, v0, MIPS1_TLB_PID		# mask off PID
 	j	ra
@@ -1238,9 +1238,9 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	or	v0, MIPS_KSEG1_START		# Run uncached.
 	j	v0
 	nop
 1:
@@ -1256,15 +1256,15 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
 	nop
 	nop
 	nop
-	li	v0, MACH_SR_SWAP_CACHES		# Swap caches
-	mtc0	v0, MACH_COP_0_STATUS_REG
+	li	v0, MIPS_SR_SWAP_CACHES		# Swap caches
+	mtc0	v0, MIPS_COP_0_STATUS_REG
 	nop					# Insure caches stable
 	nop
 	nop
 	nop
 	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the i-cache.
 	nop
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Swap back caches and enable.
 	nop
 	nop
 	nop
@@ -1295,20 +1295,20 @@ END(mips1_ConfigCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips1_SizeCache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
+	mfc0	t0, MIPS_COP_0_STATUS_REG	# Save the current status reg.
 	nop
-	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
+	or	v0, t0, MIPS_SR_ISOL_CACHES	# Isolate the caches.
 	nop					# Make sure no stores in pipe
-	mtc0	v0, MACH_COP_0_STATUS_REG
+	mtc0	v0, MIPS_COP_0_STATUS_REG
 	nop					# Make sure isolated
 	nop
 	nop
 /*
  * Clear cache size boundaries.
  */
-	li	v0, MACH_MIN_CACHE_SIZE
-	li	v1, MACH_CACHED_MEMORY_ADDR
-	li	t2, MACH_MAX_CACHE_SIZE
+	li	v0, MIPS_MIN_CACHE_SIZE
+	li	v1, MIPS_KSEG0_START
+	li	t2, MIPS_MAX_CACHE_SIZE
 1:
 	addu	t1, v0, v1			# Compute address to clear
 	sw	zero, 0(t1)			# Clear cache memory
@@ -1317,7 +1317,7 @@ LEAF(mips1_SizeCache)
 
 	li	v0, -1
 	sw	v0, 0(v1)			# Store marker in cache
-	li	v0, MACH_MIN_CACHE_SIZE
+	li	v0, MIPS_MIN_CACHE_SIZE
 2:
 	addu	t1, v0, v1			# Compute address
 	lw	t3, 0(t1)			# Look for marker
@@ -1329,7 +1329,7 @@ LEAF(mips1_SizeCache)
 
 	move	v0, zero			# must be no cache
 3:
-	mtc0	t0, MACH_COP_0_STATUS_REG
+	mtc0	t0, MIPS_COP_0_STATUS_REG
 	nop					# Make sure unisolated
 	nop
 	nop
@@ -1355,21 +1355,21 @@ END(mips1_SizeCache)
 LEAF(mips1_FlushCache)
 	lw	t1, _C_LABEL(mips_L1InstCacheSize)	# Must load before isolating
 	lw	t2, _C_LABEL(mips_L1DataCacheSize)	# Must load before isolating
-	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	mfc0	t3, MIPS_COP_0_STATUS_REG 	# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	or	v0, MIPS_KSEG1_START		# Run uncached.
 	j	v0
 	nop
 /*
  * Flush the instruction cache.
  */
 1:
-	li	v0, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
-	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap caches.
-	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	li	v0, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES
+	mtc0	v0, MIPS_COP_0_STATUS_REG	# Isolate and swap caches.
+	li	t0, MIPS_KSEG1_START
 	subu	t0, t0, t1
-	li	t1, MACH_UNCACHED_MEMORY_ADDR
+	li	t1, MIPS_KSEG1_START
 	la	v0, 1f				# Run cached
 	j	v0
 	nop
@@ -1379,16 +1379,16 @@ LEAF(mips1_FlushCache)
 	sb	zero, -4(t0)
 
 	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR
+	or	v0, MIPS_KSEG1_START
 	j	v0				# Run uncached
 	nop
 /*
  * Flush the data cache.
  */
 1:
-	li	v0, MACH_SR_ISOL_CACHES
-	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap back caches
-	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	li	v0, MIPS_SR_ISOL_CACHES
+	mtc0	v0, MIPS_COP_0_STATUS_REG	# Isolate and swap back caches
+	li	t0, MIPS_KSEG1_START
 	subu	t0, t0, t2
 	la	v0, 1f
 	j	v0				# Back to cached mode
@@ -1402,7 +1402,7 @@ LEAF(mips1_FlushCache)
 	nop					#   out of pipe.
 	nop
 	nop
-	mtc0	t3, MACH_COP_0_STATUS_REG	# Restore status reg.
+	mtc0	t3, MIPS_COP_0_STATUS_REG	# Restore status reg.
 	nop					# Insure cache unisolated.
 	nop
 	nop
@@ -1430,17 +1430,17 @@ END(mips1_FlushCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips1_FlushICache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	mfc0	t0, MIPS_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 
 	la	v1, 1f
-	or	v1, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	or	v1, MIPS_KSEG1_START		# Run uncached.
 	j	v1
 	nop
 1:
 	bc0f	1b				# make sure stores are complete
-	li	v1, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
-	mtc0	v1, MACH_COP_0_STATUS_REG
+	li	v1, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES
+	mtc0	v1, MIPS_COP_0_STATUS_REG
 	nop
 	addu	a1, a1, a0			# compute ending address
 1:
@@ -1448,7 +1448,7 @@ LEAF(mips1_FlushICache)
 	bne	a0, a1, 1b
 	sb	zero, -4(a0)
 
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	mtc0	t0, MIPS_COP_0_STATUS_REG	# enable interrupts
 	j	ra				# return and run cached
 	nop
 END(mips1_FlushICache)
@@ -1472,16 +1472,16 @@ END(mips1_FlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips1_FlushDCache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	mfc0	t0, MIPS_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 	nop
 1:
 	bc0f	1b				# make sure stores are complete
 # BUG: should drain write buffer.
 # The insn above does not work on some all DEC machines, or all variants
 # of the mips architecture.
-	li	v1, MACH_SR_ISOL_CACHES
-	mtc0	v1, MACH_COP_0_STATUS_REG
+	li	v1, MIPS_SR_ISOL_CACHES
+	mtc0	v1, MIPS_COP_0_STATUS_REG
 	nop
 	addu	t1, a1, a0			# compute ending address
 1:
@@ -1498,7 +1498,7 @@ LEAF(mips1_FlushDCache)
 
 	nop					# drain pipeline
 	nop
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	mtc0	t0, MIPS_COP_0_STATUS_REG	# enable interrupts
 	nop
 	j	ra				# return and run cached
 	nop
@@ -1547,7 +1547,7 @@ LEAF(mips1_proc_trampoline)
 	lw	a0, U_PCB_REGS + (SR * 4)(a1)
 	lw	t0, U_PCB_REGS + (MULLO * 4)(a1)
 	lw	t1, U_PCB_REGS + (MULHI * 4)(a1)
-	mtc0	a0, MACH_COP_0_STATUS_REG	# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS_REG	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	nop
@@ -1598,28 +1598,28 @@ LEAF(mips1_switch_exit)
 	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
 	lw	t0, P_MD_UPTE+0(v1)		# t0 = first u. pte
 	lw	t1, P_MD_UPTE+4(v1)		# t1 = 2nd u. pte
-	li	v0, MACH_CACHED_MEMORY_ADDR	# clear wired entries for pcb
-	mtc0	v0, MACH_COP_0_TLB_HI
-	mtc0	zero, MACH_COP_0_TLB_LOW
+	li	v0, MIPS_KSEG0_START		# clear wired entries for pcb
+	mtc0	v0, MIPS_COP_0_TLB_HI
+	mtc0	zero, MIPS_COP_0_TLB_LOW
 	li	v0, 2 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 2
+	mtc0	v0, MIPS_COP_0_TLB_INDEX	# clear wired entry 2
 	nop
 	tlbwi
 	li	v0, 3 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 3
+	mtc0	v0, MIPS_COP_0_TLB_INDEX	# clear wired entry 3
 	nop
 	tlbwi
 	li	v0, UADDR			# still using UADDR for kstack
 	nop
-	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
+	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MIPS_COP_0_TLB_LOW		# init low entry
 	li	t0, 1 << MIPS1_TLB_INDEX_SHIFT
 	tlbwi					# Write the TLB entry.
 	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	t0, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
+	mtc0	t0, MIPS_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
+	mtc0	t1, MIPS_COP_0_TLB_LOW		# init low entry
 	subu	v0, v0, NBPG			# back to start of u-area
 	tlbwi					# Write the TLB entry.
 
@@ -1651,57 +1651,57 @@ END(mips1_switch_exit)
 LEAF(mips1_cpu_switch_resume)
 	sll	v0, v0, MIPS1_TLB_PID_SHIFT	# v0 = aligned PID
 	or	v0, v0, UADDR			# v0 = first HI entry
-	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
+	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MIPS_COP_0_TLB_LOW		# init low entry
 	li	s1, 1 << MIPS1_TLB_INDEX_SHIFT
 	tlbwi					# Write the TLB entry.
 	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	s1, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
+	mtc0	s1, MIPS_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
+	mtc0	t1, MIPS_COP_0_TLB_LOW		# init low entry
 	nop
 	tlbwi					# Write the TLB entry.
  # now map p_addr; may need to flush random TLB entries
 	andi	v0, MIPS1_TLB_PID		# mask PID
 	or	v0, s0				# insert p_addr
-	mtc0	v0, MACH_COP_0_TLB_HI
+	mtc0	v0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for entry
 	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
+	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
 	bltz	s1, 1f				# not found
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	mtc0	zero, MACH_COP_0_TLB_LOW
+	li	s1, MIPS_KSEG0_START
+	mtc0	s1, MIPS_COP_0_TLB_HI
+	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
+	mtc0	v0, MIPS_COP_0_TLB_HI		# restore High
 1:
 	li	s1, 2 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	mtc0	t0, MACH_COP_0_TLB_LOW
+	mtc0	s1, MIPS_COP_0_TLB_INDEX
+	mtc0	t0, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
 	addu	v0, v0, NBPG
-	mtc0	v0, MACH_COP_0_TLB_HI
+	mtc0	v0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for entry
 	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
+	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
 	bltz	s1, 1f				# not found
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	mtc0	zero, MACH_COP_0_TLB_LOW
+	li	s1, MIPS_KSEG0_START
+	mtc0	s1, MIPS_COP_0_TLB_HI
+	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
+	mtc0	v0, MIPS_COP_0_TLB_HI		# restore High
 1:
 	li	s1, 3 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	mtc0	t1, MACH_COP_0_TLB_LOW
+	mtc0	s1, MIPS_COP_0_TLB_INDEX
+	mtc0	t1, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
 /*
@@ -1723,7 +1723,7 @@ LEAF(mips1_cpu_switch_resume)
 	lw	sp, U_PCB_CONTEXT+32(t0)
 	lw	s8, U_PCB_CONTEXT+36(t0)
 	nop
-	mtc0	v0, MACH_COP_0_STATUS_REG
+	mtc0	v0, MIPS_COP_0_STATUS_REG
 	j	ra
 	li	v0, 1				# possible return to 'savectx()'
 END(mips1_cpu_switch_resume)

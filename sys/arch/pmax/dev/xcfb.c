@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.20 1996/10/14 01:39:57 mhitch Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.21 1997/06/22 07:42:35 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -243,7 +243,7 @@ xcfbinit(fi, base, unit, silent)
 	 * runs faster in cached address space, but the X server is going
 	 * to blow away the data cache whenever it updates the screen, so..
 	 */
-	base = (char *) MACH_PHYS_TO_UNCACHED(XINE_PHYS_CFB_START);
+	base = (char *) MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
 	
 	/* Fill in main frame buffer info struct. */
 	fi->fi_unit = unit;
@@ -272,7 +272,7 @@ xcfbinit(fi, base, unit, silent)
 	 * mapped into the user's address space uncached.
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
-		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&xcfbu));
+		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&xcfbu));
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
 	fi->fi_fbu->scrInfo.max_row = 50;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 1997/06/22 03:17:45 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 1997/06/22 07:43:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -503,7 +503,7 @@ syscall(status, cause, opc, frame)
 	cnt.v_syscall++;
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx(MIPS_SR_INT_IE | (status & MACH_HARD_INT_MASK));
+		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
@@ -621,9 +621,9 @@ child_return(p)
 }
 
 #ifdef MIPS3
-#define TRAPTYPE(x) (((x) & MIPS3_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
+#define TRAPTYPE(x) (((x) & MIPS3_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
 #else
-#define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT)
+#define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
 #endif
 #define KERNLAND(x) ((int)(x) < 0)
 
@@ -666,7 +666,7 @@ trap(status, cause, vaddr, opc, frame)
 	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx((status & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
+		splx((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	default:
@@ -870,7 +870,7 @@ trap(status, cause, vaddr, opc, frame)
 		/* read break instruction */
 		instr = fuiword((caddr_t)va);
 
-		if (p->p_md.md_ss_addr != va || instr != MACH_BREAK_SSTEP) {
+		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			sig = SIGTRAP; 
 			break;
 		}
@@ -886,7 +886,7 @@ trap(status, cause, vaddr, opc, frame)
 			rv = vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
 			if (rv == KERN_SUCCESS) {
-				rv = suiword((caddr_t)va, MACH_BREAK_SSTEP);
+				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 				(void)vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 				}
@@ -919,13 +919,13 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGILL;
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
-		if ((cause & MACH_CR_COP_ERR) != 0x10000000) {
+		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
 			}
 		switchfpregs(fpcurproc, p);
 		fpcurproc = p;
-		p->p_md.md_regs[PS] |= MACH_SR_COP_1_BIT;
+		p->p_md.md_regs[PS] |= MIPS_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		userret(p, opc, sticks);
 		return; /* GEN */
@@ -980,7 +980,7 @@ interrupt(status, cause, pc, frame)
 	/* Device interrupt */
 	if (mips_hardware_intr)
 		splx((*mips_hardware_intr)(mask, pc, status, cause));
-	if (mask & MACH_INT_MASK_5) {
+	if (mask & MIPS_INT_MASK_5) {
 		intrcnt[FPU_INTR]++;
 		if (USERMODE(status))
 			MachFPInterrupt(status, cause, pc, frame->f_regs);
@@ -991,8 +991,8 @@ interrupt(status, cause, pc, frame)
 	}
 
 	/* Network software interrupt */
-	if ((mask & MACH_SOFT_INT_MASK_1)
-	    || (netisr && (status & MACH_SOFT_INT_MASK_1))) {
+	if ((mask & MIPS_SOFT_INT_MASK_1)
+	    || (netisr && (status & MIPS_SOFT_INT_MASK_1))) {
 		register isr;
 		isr = netisr; netisr = 0;	/* XXX need protect? */
 		clearsoftnet();
@@ -1016,7 +1016,7 @@ interrupt(status, cause, pc, frame)
 	}
 
 	/* Software clock interrupt */
-	if (mask & MACH_SOFT_INT_MASK_0) {
+	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		cnt.v_soft++;
 		intrcnt[SOFTCLOCK_INTR]++;
@@ -1066,7 +1066,7 @@ trapDump(msg)
 		cause = (trp->cause & ((CPUISMIPS3) ?
 		    MIPS3_CR_EXC_CODE : MIPS1_CR_EXC_CODE));
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[cause >> MACH_CR_EXC_CODE_SHIFT],
+			trap_type[cause >> MIPS_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
@@ -1108,7 +1108,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned retAddr;
 	int condition;
 
-	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
+	inst.word = (instPC < MIPS_KSEG0_START) ?
 		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
 
 #if 0
@@ -1207,9 +1207,9 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BCx:
 		case OP_BCy:
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fpcCSR & MACH_FPC_COND_BIT;
+				condition = fpcCSR & MIPS_FPU_COND_BIT;
 			else
-				condition = !(fpcCSR & MACH_FPC_COND_BIT);
+				condition = !(fpcCSR & MIPS_FPU_COND_BIT);
 			if (condition)
 				retAddr = GetBranchDest((InstFmt *)instPC);
 			else
@@ -1261,7 +1261,7 @@ mips_singlestep(p)
                 va = f->f_regs[PC] + sizeof(int);
 	p->p_md.md_ss_addr = va;
 	p->p_md.md_ss_instr = fuiword((caddr_t)va);
-        rv = suiword((caddr_t)va, MACH_BREAK_SSTEP);
+        rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
         if (rv < 0) {
 		vm_offset_t sa, ea;
 		sa = trunc_page((vm_offset_t)va);
@@ -1269,7 +1269,7 @@ mips_singlestep(p)
                 rv = vm_map_protect(&p->p_vmspace->vm_map,
                         sa, ea, VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
-                        rv = suiword((caddr_t)va, MACH_BREAK_SSTEP);
+                        rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
                         (void)vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
@@ -1279,7 +1279,7 @@ mips_singlestep(p)
         unsigned pc = f->f_regs[PC];
         unsigned va = 0;
         int rv;
-        int curinstr, bpinstr = MACH_BREAK_SSTEP;
+        int curinstr, bpinstr = MIPS_BREAK_SSTEP;
 	struct uio uio;
 	struct iovec iov;
 
@@ -1931,7 +1931,7 @@ break_insert()
 	for (i = 0; i < MAXBRK; i++) {
 		if (brk_tab[i].addr != 0) {
 			brk_tab[i].inst = *(unsigned *)brk_tab[i].addr;
-			*(unsigned *)brk_tab[i].addr = MACH_BREAK_BRKPT;
+			*(unsigned *)brk_tab[i].addr = MIPS_BREAK_BRKPT;
 			MachFlushDCache(brk_tab[i].addr,4);
 			MachFlushICache(brk_tab[i].addr,4);	 
 		}
@@ -2009,7 +2009,7 @@ mdbsetsstep(frame)
 	if ((int)va < 0) {
 		/* kernel address */
 		mdb_ss_instr = mdbpeek((caddr_t)va);
-		mdbpoke((caddr_t)va, MACH_BREAK_SSTEP);
+		mdbpoke((caddr_t)va, MIPS_BREAK_SSTEP);
 		MachFlushDCache(va, 4);
 		MachFlushICache(va, 4);
 	}
@@ -2034,7 +2034,7 @@ mdbclrsstep(frame)
 		return(FALSE);
 
 	/* read break instruction */
-	if (mdbpeek((caddr_t)va) != MACH_BREAK_SSTEP)
+	if (mdbpeek((caddr_t)va) != MIPS_BREAK_SSTEP)
 		return(FALSE);
 
 	if ((int)va < 0) {
@@ -2432,7 +2432,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 	newaddr = frame->f_regs[PC];
 	switch (type) { 
 	case T_BREAK:
-		if (*(int *)newaddr == MACH_BREAK_SOVER) {
+		if (*(int *)newaddr == MIPS_BREAK_SOVER) {
 			break_restore();
 			frame->f_regs[PC] += 4;
 			printf("\nStop break (panic)\n# ");
@@ -2441,7 +2441,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			printf("\n# ");
 			break;
 		}
-		if (*(int *)newaddr == MACH_BREAK_BRKPT) {
+		if (*(int *)newaddr == MIPS_BREAK_BRKPT) {
 			break_restore();
 			printf("\rBRK %08x\t", newaddr);
 			if (mdbprintins(*(int *)newaddr, newaddr)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.4 1996/10/14 17:28:46 jonathan Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.5 1997/06/22 07:42:27 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -49,11 +49,11 @@ dc_ds_consinit(dev)
 #if defined(DEBUG) && 1			/* XXX untested */
 	printf("dc_ds(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
-	       MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
+	       MIPS_PHYS_TO_KSEG1(KN01_SYS_DZ));
 #endif
 	/* let any  pending PROM output from boot drain */
 	DELAY(100000);
-	dc_consinit(dev, (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
+	dc_consinit(dev, (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_DZ));
 	return (1);
 }
 
@@ -93,7 +93,7 @@ dc_ds_attach(parent, self, aux)
 
 
 	dcaddr = (caddr_t)ca->ca_addr;
-	(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+	(void) dcattach(sc, (void*)MIPS_PHYS_TO_KSEG1(dcaddr),
 			/* dtr/dsr mask: comm port only */
 			1 << DCCOMM_PORT,
 			/* rts/cts mask: none */

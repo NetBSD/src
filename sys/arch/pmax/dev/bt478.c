@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.8 1997/06/16 02:53:32 jonathan Exp $	*/
+/*	$NetBSD: bt478.c,v 1.9 1997/06/22 07:42:25 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -205,7 +205,7 @@ bt478InitColorMap (fi)
 	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
 	register int i;
 
-	*(volatile char *)MACH_PHYS_TO_UNCACHED
+	*(volatile char *)MIPS_PHYS_TO_KSEG1
 		(KN01_PHYS_COLMASK_START) = 0xff;	/* XXX */
 	wbflush();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.8 1997/06/21 04:06:11 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.9 1997/06/22 07:44:04 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,14 +20,14 @@
 #include <dev/tc/ioasicvar.h>
 #include <machine/autoconf.h>
 
-#include <pmax/dev/device.h>	/* XXX */
-#include <pmax/dev/scsi.h>	/* XXX */
+#include <pmax/dev/device.h>		/* XXX */
+#include <pmax/dev/scsi.h>		/* XXX */
 
-#include <pmax/dev/ascreg.h>	/* XXX */
+#include <pmax/dev/ascreg.h>		/* XXX */
 #include <dev/tc/ascvar.h>
 
-#include <mips/cpu.h> /* XXX CPUISMIPS3 */
-#include <mips/locore.h> /* XXX XXX bus.h needs cache-consistency*/
+#include <machine/cpu.h>
+#include <machine/bus.h>		/* bus, cache consistency, etc  */
 
 /*XXX*/
 #include <pmax/pmax/asic.h>		/* XXX ioasic register defs? */
@@ -91,7 +91,7 @@ asc_ioasic_attach(parent, self, aux)
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
+	ascaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -105,7 +105,8 @@ asc_ioasic_attach(parent, self, aux)
 	 * (2) timing based on turbochannel frequency
 	 */
 
-	asc->buff = (u_char *)MACH_PHYS_TO_CACHED(asc_iomem);
+	/* XXX why cached? Device registers must be uncached. */
+	asc->buff = (u_char *)MIPS_PHYS_TO_KSEG0(asc_iomem);
 	bufsiz = 8192;
 	*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
@@ -146,9 +147,9 @@ asic_dma_start(asc, state, cp, flag)
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vm_offset_t)cp, state->dmalen);
 #endif /* MIPS3 */
-	phys = MACH_CACHED_TO_PHYS(cp);
+	phys = MIPS_KSEG0_TO_PHYS(cp);
 	cp = (caddr_t)mips_trunc_page(cp + NBPG);
-	nphys = MACH_CACHED_TO_PHYS(cp);
+	nphys = MIPS_KSEG0_TO_PHYS(cp);
 
 	asc->dma_next = cp;
 	asc->dma_xfer = state->dmalen - (nphys - phys);
@@ -179,7 +180,7 @@ asic_dma_end(asc, state, flag)
 	int nb;
 
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	to = (u_short *)MACH_PHYS_TO_CACHED(*dmap >> 3);
+	to = (u_short *)MIPS_PHYS_TO_KSEG0(*dmap >> 3);
 	*dmap = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
 	wbflush();
@@ -187,12 +188,12 @@ asic_dma_end(asc, state, flag)
 	if (flag == ASCDMA_READ) {
 #ifdef MIPS3
 		if (CPUISMIPS3)
-			MachFlushDCache(MACH_UNCACHED_TO_PHYS(state->dmaBufAddr),
+			MachFlushDCache(MIPS_KSEG1_TO_PHYS(state->dmaBufAddr),
 			   state->dmalen);
 		else
 #endif /* MIPS3 */
-			MachFlushDCache(MACH_PHYS_TO_CACHED(
-			    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)),
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(
+			    MIPS_KSEG1_TO_PHYS(state->dmaBufAddr)),
 			    state->dmalen);
 		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
 			/* pick up last upto6 bytes, sigh. */
@@ -229,7 +230,7 @@ asc_dma_intr()
 		*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	} else {
 		asc->dma_next += NBPG;
-		next_phys = MACH_CACHED_TO_PHYS(asc->dma_next);
+		next_phys = MIPS_KSEG0_TO_PHYS(asc->dma_next);
 	}
 	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
 		IOASIC_DMA_ADDR(next_phys);

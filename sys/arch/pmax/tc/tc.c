@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.13 1997/06/16 01:45:16 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.14 1997/06/22 07:42:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -97,7 +97,7 @@ int consprobeslot __P((int slot));
 #include <pmax/pmax/turbochannel.h>
 
 /*#include <pmax/pmax/nameglue.h>*/
-#define KV(x) ((tc_addr_t)MACH_PHYS_TO_UNCACHED(x))
+#define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 
 
 

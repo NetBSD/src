@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1997/06/22 03:17:43 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1997/06/22 07:43:02 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -222,7 +222,7 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - mips_btop(MACH_CACHED_TO_PHYS(firstaddr));
+	i = maxmem - mips_btop(MIPS_KSEG0_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
@@ -231,7 +231,7 @@ pmap_bootstrap(firstaddr)
 	firstaddr = mips_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
-	avail_start = MACH_CACHED_TO_PHYS(firstaddr);
+	avail_start = MIPS_KSEG0_TO_PHYS(firstaddr);
 	avail_end = mips_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
@@ -278,7 +278,7 @@ pmap_bootstrap_alloc(size)
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
 
-	val = MACH_PHYS_TO_CACHED(avail_start);
+	val = MIPS_PHYS_TO_KSEG0(avail_start);
 	size = round_page(size);
 	avail_start += size;
 
@@ -375,7 +375,7 @@ pmap_pinit(pmap)
 			panic("pmap_pinit: segtab alloc failed");
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 		i = mipspagesperpage * (NBPG / sizeof(struct segtab));
 		s = splimp();
 		while (--i != 0) {
@@ -480,7 +480,7 @@ pmap_release(pmap)
 				    (vm_offset_t)pte, PAGE_SIZE);
 #endif
 			vm_page_free1(
-			    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+			    PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -980,7 +980,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 #ifdef MIPS1
 	if ((!CPUISMIPS3) && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
-		MachFlushICache(MACH_PHYS_TO_CACHED(pa), PAGE_SIZE);
+		MachFlushICache(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
 	}
 #endif
 
@@ -1030,7 +1030,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			panic("pmap_enter: segmap alloc failed");
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 #ifdef DIAGNOSTIC
 		for (i = 0; i < NPTEPG; i++) {
 			if ((pte+i)->pt_entry)
@@ -1267,7 +1267,7 @@ pmap_zero_page(phys)
 		MachFlushDCache(phys, NBPG);
 	}
 #endif
-	p = (int *)MACH_PHYS_TO_CACHED(phys);
+	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	/* XXX blkclr()? */
 	do {
@@ -1308,8 +1308,8 @@ pmap_copy_page(src, dst)
 		MachFlushDCache(src, NBPG);
 	}
 #endif
-	s = (int *)MACH_PHYS_TO_CACHED(src);
-	d = (int *)MACH_PHYS_TO_CACHED(dst);
+	s = (int *)MIPS_PHYS_TO_KSEG0(src);
+	d = (int *)MIPS_PHYS_TO_KSEG0(dst);
 	end = s + PAGE_SIZE / sizeof(int);
 	do {
 		tmp0 = s[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.6 1997/05/25 05:58:36 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.7 1997/06/22 07:42:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,7 +60,7 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
-#include <mips/cpuregs.h>		/* defines MACH_PHYS_TO_UNCACHED */
+#include <mips/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;
@@ -78,7 +78,7 @@ typedef int32_t		tc_offset_t;
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
 		
-#define	TC_PHYS_TO_UNCACHED(addr) MACH_PHYS_TO_UNCACHED(addr)
+#define	TC_PHYS_TO_UNCACHED(addr) MIPS_PHYS_TO_KSEG1(addr)
 
 
 /*
