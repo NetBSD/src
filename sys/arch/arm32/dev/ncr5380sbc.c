@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.2 1996/03/27 22:05:19 mark Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.3 1996/04/26 22:25:56 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Melvin Tang-Richardson (Modified for weird regs)
@@ -83,6 +83,10 @@
 #include <scsi/scsi_debug.h>
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
+
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
 
 #define DEBUG XXX
 
@@ -1306,7 +1310,7 @@ ncr5380_select(sc, sr)
 	struct sci_req *sr;
 {
 	int timo;
-	u_char bus, data, icmd;
+	u_char data, icmd/*, bus*/;
 
 	/* Check for reselect */
 	ncr5380_reselect(sc);
@@ -1548,7 +1552,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, timo;
+	int n, phase/*, timo*/;
 	int act_flags;
 	register u_char icmd;
 
@@ -2063,7 +2067,7 @@ ncr5380_data_xfer(sc, phase)
 	struct sci_req *sr = sc->sc_current;
 	struct scsi_xfer *xs = sr->sr_xs;
 	int expected_phase;
-	int i, len;
+	int len/*, i*/;
 
 	if (sr->sr_flags & SR_SENSE) {
 		NCR_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
@@ -2153,7 +2157,7 @@ ncr5380_status(sc)
 	int len;
 	u_char status;
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+/*	struct scsi_xfer *xs = sr->sr_xs;*/
 
 	/* acknowledge phase change */
 	SetReg ( sc->sci_tcmd, PHASE_STATUS );
