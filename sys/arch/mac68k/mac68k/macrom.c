@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.42 1998/09/29 05:24:08 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.43 1999/01/10 22:52:55 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -1209,7 +1209,7 @@ mrg_fixupROMBase(obase, nbase)
 		jEgret = 0;
 		mrg_OStraps[0x92] = 0;
 	} else {
-		jEgret = (void (*))rom->Egret - oldbase + newbase;
+		jEgret = (void (*))(rom->Egret - oldbase + newbase);
 		mrg_OStraps[0x92] = rom->Egret - oldbase + newbase;
 	}
 	mrg_InitEgret = rom->InitEgret == 0 ?
@@ -1221,7 +1221,7 @@ mrg_fixupROMBase(obase, nbase)
 		printf("Can't read RTC without it. Using MacOS boot time.\n");
 		jClkNoMem = 0;
 	} else
-		jClkNoMem = (void (*)) rom->jClkNoMem - oldbase + newbase;
+		jClkNoMem = (void (*))(rom->jClkNoMem - oldbase + newbase);
 	/*
 	 * Get the ToolBox Routines we may need.  These are
 	 * used in the ADB Initialization of some systems.
@@ -1260,7 +1260,7 @@ mrg_fixupROMBase(obase, nbase)
 	 * in the ROM which will be mapped in mrg_InitResources.
 	 */
 	ROMResourceMap = rom->ROMResourceMap == 0 ?
-	    0 : (void (*))rom->ROMResourceMap - oldbase + newbase;
+	    0 : (void (*))(rom->ROMResourceMap - oldbase + newbase);
 
 	for (i = 0; i < sizeof(mrg_AVInitEgretJT) / sizeof(mrg_AVInitEgretJT[0]); i++)
 		mrg_AVInitEgretJT[i] = mrg_AVInitEgretJT[i] == 0 ?
