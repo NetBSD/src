@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.7 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: scif.c,v 1.8 2002/10/19 08:43:33 scw Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1473,7 +1473,7 @@ scifcnprobe(struct consdev *cp)
 {
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(cdevsw_lookup_major(&scif_cdevsw), 0);
-	cp->cn_pri = CN_REMOTE;
+	cp->cn_pri = CN_NORMAL;
 }
 
 void
