@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.22 2002/12/15 23:32:01 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.23 2003/01/17 02:59:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,9 +68,9 @@ int
 sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_create_args /* {
-	syscallarg(const ucontext_t *) ucp;
-	syscallarg(u_long) flags;
-	syscallarg(lwpid_t *) new_lwp;
+		syscallarg(const ucontext_t *) ucp;
+		syscallarg(u_long) flags;
+		syscallarg(lwpid_t *) new_lwp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
@@ -145,7 +145,7 @@ int
 sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_suspend_args /* {
-	syscallarg(lwpid_t) target;
+		syscallarg(lwpid_t) target;
 	} */ *uap = v;
 	int target_lid;
 	struct proc *p = l->l_proc;
@@ -218,7 +218,7 @@ int
 sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_continue_args /* {
-	syscallarg(lwpid_t) target;
+		syscallarg(lwpid_t) target;
 	} */ *uap = v;
 	int target_lid;
 	struct proc *p = l->l_proc;
@@ -261,10 +261,11 @@ lwp_continue(struct lwp *l)
 	}
 }
 
-int sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
+int
+sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_wakeup_args /* {
-	syscallarg(lwpid_t) wakeup;
+		syscallarg(lwpid_t) wakeup;
 	} */ *uap = v;
 	lwpid_t target_lid;
 	struct lwp *t;
@@ -295,8 +296,8 @@ int
 sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_wait_args /* {
-	syscallarg(lwpid_t) wait_for;
-	syscallarg(lwpid_t *) departed;
+		syscallarg(lwpid_t) wait_for;
+		syscallarg(lwpid_t *) departed;
 	} */ *uap = v;
 	int error;
 	lwpid_t dep;
