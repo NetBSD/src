@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.46 2004/12/14 02:32:03 chs Exp $ */
+/*	$NetBSD: vsbus.c,v 1.46.4.1 2005/02/12 15:47:26 yamt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.46 2004/12/14 02:32:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.46.4.1 2005/02/12 15:47:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,8 @@ vsbus_attach(parent, self, aux)
 			*(char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
 		}
 		sc->sc_dmasize = dsize;
-		sc->sc_dmaaddr = uvm_km_valloc(kernel_map, dsize);
+		sc->sc_dmaaddr = uvm_km_alloc(kernel_map, dsize, 0,
+		    UVM_KMF_VAONLY);
 		ioaccess(sc->sc_dmaaddr, dbase, dsize/VAX_NBPG);
 		break;
 	}
