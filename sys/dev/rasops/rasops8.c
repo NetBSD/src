@@ -1,4 +1,4 @@
-/* $NetBSD: rasops8.c,v 1.2 1999/04/13 00:40:09 ad Exp $ */
+/* 	$NetBSD: rasops8.c,v 1.3 1999/04/26 04:27:47 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,10 +28,8 @@
  */
 
 #include "opt_rasops.h"
-#ifdef RASOPS8
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.2 1999/04/13 00:40:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.3 1999/04/26 04:27:47 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,11 +44,7 @@ static void 	rasops8_putchar __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar8 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar12 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar16 __P((void *, int, int, u_int, long attr));
-static void 	rasops8_erasecols __P((void *, int, int, int, long));
-static void 	rasops8_eraserows __P((void *, int, int, long));
 static void	rasops8_makestamp __P((long));
-static int32_t	rasops8_bg_color __P((long));
-static void	rasops8_do_cursor __P((struct rasops_info *));
 void		rasops8_init __P((struct rasops_info *ri));
 
 /* 
@@ -92,74 +86,16 @@ rasops8_init(ri)
 	case 16:
 		ri->ri_ops.putchar = rasops8_putchar16;
 		break;
-		
+
 	default:
 		ri->ri_ops.putchar = rasops8_putchar;
 		break;
 	}
-	
-	ri->ri_ops.erasecols = rasops8_erasecols;
-	ri->ri_ops.eraserows = rasops8_eraserows;		
-	ri->ri_do_cursor = rasops8_do_cursor;
 }
 
 
 /*
- * Get background color from attribute and copy across all 4 bytes
- * of an int32_t.
- */
-static __inline__ int32_t
-rasops8_bg_color(attr)
-	long attr;
-{
-	int32_t bg;
-	
-	bg = ((int32_t)attr >> 16) & 15;
-	return bg | (bg << 8) | (bg << 16) | (bg << 24);
-}
-
-
-/*
- * Actually turn the cursor on or off. This does the dirty work for
- * rasops_cursor().
- */
-static void
-rasops8_do_cursor(ri)
-	struct rasops_info *ri;
-{
-	u_char *dp, *rp;
-	int full1, height, cnt, slop1, slop2, row, col;
-	
-	row = ri->ri_crow;
-	col = ri->ri_ccol;
-	
-	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
-	height = ri->ri_font->fontheight;
-	
-	slop1 = (int)rp & 3;
-	slop2 = (ri->ri_xscale - slop1) & 3;
-	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
-
-	while (height--) {
-		dp = rp;
-		rp += ri->ri_stride;
-	
-		for (cnt = slop1; cnt; cnt--)
-			*dp++ ^= 0xff;
-	
-		for (cnt = full1; cnt; cnt--) {
-			*(int32_t *)dp ^= 0xffffffff;
-			dp += 4;
-		}
-	
-		for (cnt = slop2; cnt; cnt--)
-			*dp++ ^= 0xff;
-	}
-}
-
-
-/*
- * Paint a single character.
+ * Put a single character.
  */
 static void
 rasops8_putchar(cookie, row, col, uc, attr)
@@ -222,7 +158,6 @@ rasops8_putchar(cookie, row, col, uc, attr)
 		while (width--)
 			*rp++ = clr[1];
 	}	
-
 }
 
 
@@ -230,7 +165,8 @@ rasops8_putchar(cookie, row, col, uc, attr)
  * Recompute the 4x1 blitting stamp.
  */
 static void
-rasops8_makestamp(long attr)
+rasops8_makestamp(attr)
+	long attr;
 {
 	int i;
 	int32_t fg, bg;
@@ -256,7 +192,7 @@ rasops8_makestamp(long attr)
 
 
 /*
- * Paint a single character. This is for 8-pixel wide fonts.
+ * Put a single character. This is for 8-pixel wide fonts.
  */
 static void
 rasops8_putchar8(cookie, row, col, uc, attr)
@@ -330,7 +266,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 
 
 /*
- * Paint a single character. This is for 12-pixel wide fonts.
+ * Put a single character. This is for 12-pixel wide fonts.
  */
 static void
 rasops8_putchar12(cookie, row, col, uc, attr)
@@ -407,7 +343,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 
 
 /*
- * Paint a single character. This is for 16-pixel wide fonts.
+ * Put a single character. This is for 16-pixel wide fonts.
  */
 static void
 rasops8_putchar16(cookie, row, col, uc, attr)
@@ -484,143 +420,3 @@ rasops8_putchar16(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
-
-
-/*
- * Erase rows. 
- */
-static void
-rasops8_eraserows(cookie, row, num, attr)
-	void *cookie;
-	int row, num;
-	long attr;
-{
-	struct rasops_info *ri;
-	int32_t *dp, clr;
-	int n8, n1, cnt;
-	
-	ri = (struct rasops_info *)cookie;
-
-#ifdef RASOPS_CLIPPING
-	if (row < 0) {
-		num += row;
-		row = 0;
-	}
-
-	if ((row + num) > ri->ri_rows)
-		num = ri->ri_rows - row;
-	
-	if (num <= 0)
-		return;
-#endif
-		
-	num *= ri->ri_font->fontheight;
-	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
-	clr = rasops8_bg_color(attr);
-
-	n8 = ri->ri_emustride >> 5;
-	n1 = (ri->ri_emustride >> 2) & 7;
-	
-	while (num--) {
-		for (cnt = n8; cnt; cnt--) {
-			dp[0] = clr;
-			dp[1] = clr;
-			dp[2] = clr;
-			dp[3] = clr;
-			dp[4] = clr;
-			dp[5] = clr;
-			dp[6] = clr;
-			dp[7] = clr;
-			dp += 8;
-		}
-		
-		for (cnt = n1; cnt; cnt--)
-			*dp++ = clr;
-			
-		DELTA(dp, ri->ri_delta, int32_t *);
-	}
-}
-
-
-/*
- * Erase columns.
- */
-static void
-rasops8_erasecols(cookie, row, col, num, attr)
-	void *cookie;
-	int row, col, num;
-	long attr;
-{
-	int n8, clr, height, cnt, slop1, slop2;
-	struct rasops_info *ri;
-	int32_t *dst;
-	u_char *dstb, *rp;
-	
-	ri = (struct rasops_info *)cookie;
-
-#ifdef RASOPS_CLIPPING	
-	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
-
-	if (col < 0) {
-		num += col;
-		col = 0;
-	}
-
-	if ((col + num) > ri->ri_cols)
-		num = ri->ri_cols - col;
-	
-	if (num <= 0)
-		return;
-#endif
-		
-	num = num * ri->ri_xscale;
-	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
-	clr = rasops8_bg_color(attr);
-	height = ri->ri_font->fontheight;
-	
-	slop1 = (int)rp & 3;
-	slop2 = (num - slop1) & 3;
-	num -= slop1 + slop2;
-	n8 = num >> 5;
-	num = (num >> 2) & 7;
-
-	while (height--) {
-		dstb = rp;
-		rp += ri->ri_stride;
-	
-		/* Align span to 4 bytes */
-		for (cnt = slop1; cnt; cnt--)
-			*dstb++ = (u_char)clr;
-	
-		dst = (int32_t *)dstb;
-		
-		/* Write 32 bytes per loop */
-		for (cnt = n8; cnt; cnt--) {
-			dst[0] = clr;
-			dst[1] = clr;
-			dst[2] = clr;
-			dst[3] = clr;
-			dst[4] = clr;
-			dst[5] = clr;
-			dst[6] = clr;
-			dst[7] = clr;
-			dst += 8;
-		}
-		
-		/* Write 4 bytes per loop */	
-		for (cnt = num; cnt; cnt--)
-			*dst++ = clr;
-	
-		/* Write unaligned trailing slop */ 
-		if (slop2 == 0)
-			continue;
-			
-		dstb = (u_char *)dst;
-		
-		for (cnt = slop2; cnt; cnt--)
-			*dstb++ = (u_char)clr;
-	}
-}
-
-#endif /* RASOPS8 */

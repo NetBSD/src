@@ -1,11 +1,22 @@
-# $NetBSD: files.rasops,v 1.1 1999/04/13 00:17:58 ad Exp $
+# 	$NetBSD: files.rasops,v 1.2 1999/04/26 04:27:47 ad Exp $
 
-file dev/rasops/rasops.c	rasterconsole
-file dev/rasops/rasops1.c	rasterconsole
-file dev/rasops/rasops8.c	rasterconsole
-file dev/rasops/rasops15.c	rasterconsole
-file dev/rasops/rasops24.c	rasterconsole
-file dev/rasops/rasops32.c	rasterconsole
+define rasops1
+define rasops2
+define rasops8
+define rasops15
+define rasops16
+define rasops24
+define rasops32
 
-defopt opt_rasops.h 	RASOPS1 RASOPS8 RASOPS15 RASOPS16 RASOPS24 RASOPS32
-			RASOPS_CLIPPING
+file dev/rasops/rasops.c rasops_glue | rasops1 | rasops2 | rasops8 | 
+    rasops15 | rasops16 | rasops24 | rasops32 needs-flag
+
+file dev/rasops/rasops_masks.c rasops1 | rasops2
+file dev/rasops/rasops1.c rasops1
+file dev/rasops/rasops2.c rasops2
+file dev/rasops/rasops8.c rasops8
+file dev/rasops/rasops15.c rasops15 | rasops16
+file dev/rasops/rasops24.c rasops24
+file dev/rasops/rasops32.c rasops32
+
+defopt opt_rasops.h 	RASOPS_CLIPPING
