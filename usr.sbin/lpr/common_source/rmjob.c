@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.9 1997/03/08 22:50:52 cgd Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.10 1997/03/10 06:13:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -349,7 +349,7 @@ rmremote()
 		cp += strlen(cp);
 	}
 	for (i = 0; i < requests; i++) {
-		(void)snprintf(cp, len - (cp - s) - 2, " %d", requ[i]);
+		(void)snprintf(cp, len - (cp - s) - 1, " %d", requ[i]);
 		cp += strlen(cp);
 	}
 	cp[0] = '\n';
