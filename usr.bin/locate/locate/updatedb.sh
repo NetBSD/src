@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.6 2001/11/07 15:31:41 lukem Exp $
+#	$NetBSD: updatedb.sh,v 1.7 2002/05/05 07:27:35 kim Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,8 @@ FCODES="/var/db/locate.database"	# the database
 
 PATH="/bin:/usr/bin"
 FILELIST=`mktemp -t locate.list` || exit 1
-trap "rm -f $FILELIST" EXIT
-trap "rm -f $FILELIST; exit 1" INT QUIT TERM
+trap "rm -f '$FILELIST'" EXIT
+trap "rm -f '$FILELIST'; exit 1" INT QUIT TERM
 
 # Make a file list and compute common bigrams.
 # Entries of each directory shall be sorted (find -s).
@@ -63,12 +63,12 @@ find -s $SRCHPATHS \( \
     \) -a -prune -o -print \
 	>> "$FILELIST"
 
-BIGRAMS="`$LIBDIR/locate.bigram <$FILELIST`"
+BIGRAMS=`$LIBDIR/locate.bigram <"$FILELIST"`
 
 # code the file list
 if [ -z "$BIGRAMS" ]; then
 	echo 'locate: updatedb failed' >&2
 else
-	$LIBDIR/locate.code $BIGRAMS <"$FILELIST" >$FCODES
-	chmod 644 $FCODES
+	$LIBDIR/locate.code "$BIGRAMS" <"$FILELIST" >"$FCODES"
+	chmod 644 "$FCODES"
 fi
