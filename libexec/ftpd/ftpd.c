@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.74 1999/12/13 04:36:10 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.75 1999/12/13 16:30:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.74 1999/12/13 04:36:10 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.75 1999/12/13 16:30:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,7 @@ int	mode;
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
 int	family = AF_INET;
+int	mapped = 0;		/* IPv4 connection on AF_INET6 socket */
 sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
@@ -378,9 +379,12 @@ main(argc, argv)
 			"Connection from IPv4 mapped address is not supported.");
 		exit(0);
 #endif
-	}
+
+		mapped = 1;
+	} else
+		mapped = 0;
 #ifdef IP_TOS
-	if (family == AF_INET) {
+	if (!mapped && his_addr.su_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
 		if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
@@ -1167,7 +1171,7 @@ getdatasock(mode)
 	}
 	(void) seteuid((uid_t)pw->pw_uid);
 #ifdef IP_TOS
-	if (ctrl_addr.su_family == AF_INET) {
+	if (!mapped && ctrl_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
@@ -1219,9 +1223,11 @@ dataconn(name, size, mode)
 		switch (from.su_family) {
 		case AF_INET:
 #ifdef IP_TOS
-			tos = IPTOS_THROUGHPUT;
-			(void) setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
-			    sizeof(int));
+			if (!mapped) {
+				tos = IPTOS_THROUGHPUT;
+				(void) setsockopt(s, IPPROTO_IP, IP_TOS,
+				    (char *)&tos, sizeof(int));
+			}
 			break;
 #endif
 		}
