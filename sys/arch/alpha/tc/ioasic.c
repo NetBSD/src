@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.17 1998/01/19 02:56:05 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.18 1998/02/04 00:10:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.17 1998/01/19 02:56:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.18 1998/02/04 00:10:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -414,7 +414,7 @@ ioasic_lance_dma_setup(sc)
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
-	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: can't map DMA area for LANCE\n",
 		    sc->sc_dv.dv_xname);
 		bus_dmamem_free(dmat, &seg, rseg);
