@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.7 2001/11/17 01:10:17 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.8 2001/11/27 03:17:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -195,7 +195,6 @@ struct proc {
 
 	struct vnode 	*p_textvp;	/* Vnode of executable */
 
-	int		p_locks;       	/* DEBUG: lockmgr count of held locks */
 	const struct emul *p_emul;	/* Emulation information */
 	void		*p_emuldata;	/* Per-process emulation data, or NULL.
 					 * Malloc type M_EMULDATA 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.41.2.1 2001/06/21 20:09:48 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.41.2.2 2001/11/27 03:17:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ struct lock {
 		struct {
 			/* pid of exclusive lock holder */
 			pid_t lk_sleep_lockholder;
+			lwpid_t lk_sleep_locklwp;
 
 			/* priority at which to sleep */
 			int lk_sleep_prio;
@@ -154,6 +155,7 @@ struct lock {
 	} lk_un;
 
 #define	lk_lockholder	lk_un.lk_un_sleep.lk_sleep_lockholder
+#define	lk_locklwp	lk_un.lk_un_sleep.lk_sleep_locklwp
 #define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
 #define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.48.2.2 2001/11/14 19:18:47 nathanw Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.48.2.3 2001/11/27 03:17:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.2 2001/11/14 19:18:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.3 2001/11/27 03:17:18 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -627,7 +627,7 @@ nfssvc_nfsd(nsd, argp, l)
 			 * of the failing routine usually turns up the
 			 * lock leak.. once we know what it is..
 			 */
-			lockcount = p->p_locks;
+			lockcount = l->l_locks;
 #endif
 			if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
 			     nd->nd_procnum == NFSPROC_WRITE &&
@@ -638,7 +638,7 @@ nfssvc_nfsd(nsd, argp, l)
 			    error = (*(nfsrv3_procs[nd->nd_procnum]))(nd,
 				slp, nfsd->nfsd_procp, &mreq);
 #ifdef DIAGNOSTIC
-			if (p->p_locks != lockcount) {
+			if (l->l_locks != lockcount) {
 				/*
 				 * If you see this panic, audit
 				 * nfsrv3_procs[nd->nd_procnum] for vnode
@@ -652,7 +652,7 @@ nfssvc_nfsd(nsd, argp, l)
 				printf("nfsd: locking botch in op %d"
 				    " (before %d, after %d)\n",
 				    nd ? nd->nd_procnum : -1,
-				    lockcount, p->p_locks);
+				    lockcount, l->l_locks);
 			}
 #endif
 			if (mreq == NULL)
