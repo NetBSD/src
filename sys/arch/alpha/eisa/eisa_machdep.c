@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.2 2000/08/10 23:30:08 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.3 2000/08/11 00:43:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.2 2000/08/10 23:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.3 2000/08/11 00:43:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,4 +525,127 @@ eisa_init()
 
 	free(cdata, M_TEMP);
 	free(data, M_TEMP);
+}
+
+static struct ecu_data *
+eisa_lookup_data(int slot)
+{
+	struct ecu_data *ecud;
+
+	for (ecud = SIMPLEQ_FIRST(&ecu_data_list); ecud != NULL;
+	     ecud = SIMPLEQ_NEXT(ecud, ecud_list)) {
+		if (ecud->ecud_slot == slot)
+			return (ecud);
+	}
+	return (NULL);
+}
+
+static struct ecu_func *
+eisa_lookup_func(int slot, int func)
+{
+	struct ecu_data *ecud;
+	struct ecu_func *ecuf;
+
+	ecud = eisa_lookup_data(slot);
+	if (ecud == NULL)
+		return (NULL);
+
+	for (ecuf = SIMPLEQ_FIRST(&ecud->ecud_funcs); ecuf != NULL;
+	     ecuf = SIMPLEQ_NEXT(ecuf, ecuf_list)) {
+		if (ecuf->ecuf_funcno == func)
+			return (ecuf);
+	}
+	return (NULL);
+}
+
+int
+eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_mem *dp)
+{
+	struct ecu_func *ecuf;
+	struct ecu_mem *ecum;
+
+	ecuf = eisa_lookup_func(slot, func);
+	if (ecuf == NULL)
+		return (ENOENT);
+
+	for (ecum = SIMPLEQ_FIRST(&ecuf->ecuf_mem); ecum != NULL;
+	     ecum = SIMPLEQ_NEXT(ecum, ecum_list)) {
+		if (entry-- == 0)
+			break;
+	}
+	if (ecum == NULL)
+		return (ENOENT);
+
+	*dp = ecum->ecum_mem;
+	return (0);
+}
+
+int
+eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_irq *dp)
+{
+	struct ecu_func *ecuf;
+	struct ecu_irq *ecui;
+
+	ecuf = eisa_lookup_func(slot, func);
+	if (ecuf == NULL)
+		return (ENOENT);
+
+	for (ecui = SIMPLEQ_FIRST(&ecuf->ecuf_irq); ecui != NULL;
+	     ecui = SIMPLEQ_NEXT(ecui, ecui_list)) {
+		if (entry-- == 0)
+			break;
+	}
+	if (ecui == NULL)
+		return (ENOENT);
+
+	*dp = ecui->ecui_irq;
+	return (0);
+}
+
+int
+eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_dma *dp)
+{
+	struct ecu_func *ecuf;
+	struct ecu_dma *ecud;
+
+	ecuf = eisa_lookup_func(slot, func);
+	if (ecuf == NULL)
+		return (ENOENT);
+
+	for (ecud = SIMPLEQ_FIRST(&ecuf->ecuf_dma); ecud != NULL;
+	     ecud = SIMPLEQ_NEXT(ecud, ecud_list)) {
+		if (entry-- == 0)
+			break;
+	}
+	if (ecud == NULL)
+		return (ENOENT);
+
+	*dp = ecud->ecud_dma;
+	return (0);
+}
+
+int
+eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_io *dp)
+{
+	struct ecu_func *ecuf;
+	struct ecu_io *ecuio;
+
+	ecuf = eisa_lookup_func(slot, func);
+	if (ecuf == NULL)
+		return (ENOENT);
+
+	for (ecuio = SIMPLEQ_FIRST(&ecuf->ecuf_io); ecuio != NULL;
+	     ecuio = SIMPLEQ_NEXT(ecuio, ecuio_list)) {
+		if (entry-- == 0)
+			break;
+	}
+	if (ecuio == NULL)
+		return (ENOENT);
+
+	*dp = ecuio->ecuio_io;
+	return (0);
 }
