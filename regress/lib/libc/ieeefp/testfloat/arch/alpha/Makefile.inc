@@ -1,0 +1,1 @@
+COPTS+=	-mieee-with-inexact
