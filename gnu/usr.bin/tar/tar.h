@@ -234,6 +234,9 @@ TAR_EXTERN int 	f_compress;		/* -z */
 TAR_EXTERN int	f_do_chown;		/* +do-chown */
 TAR_EXTERN int  f_totals;		/* +totals */
 
+TAR_EXTERN int  f_only;			/* +only */
+TAR_EXTERN int  f_force;		/* +force */
+
 /*
  * We now default to Unix Standard format rather than 4.2BSD tar format.
  * The code can actually produce all three:
