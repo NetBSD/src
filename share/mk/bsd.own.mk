@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.201 2001/10/28 00:52:41 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.202 2001/10/28 02:03:00 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -31,7 +31,7 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 .MAKEOVERRIDES+=	_SRC_TOP_
 .endif
 
-.if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN) && defined(TOOLDIR)
+.if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
 USETOOLS?=	yes
 .endif
 USETOOLS?=	no
