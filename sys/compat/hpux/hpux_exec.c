@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.4 1996/09/03 03:12:19 mycroft Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.5 1996/10/14 06:53:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
