@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.8 1998/05/20 01:04:56 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.9 1998/09/27 18:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.8 1998/05/20 01:04:56 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.9 1998/09/27 18:04:12 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -540,6 +540,7 @@ tty_setup(el)
     el->el_tty.t_ed.c_lflag |=  el->el_tty.t_t[ED_IO][MD_LIN].t_setmask;
 
     tty__setchar(&el->el_tty.t_ed, el->el_tty.t_c[ED_IO]);
+    tty_bind_char(el, 1);
     return 0;
 }
 
