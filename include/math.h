@@ -11,11 +11,11 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.6 1994/02/11 18:36:42 jtc Exp $
+ * $Id: math.h,v 1.7 1994/02/14 02:11:39 cgd Exp $
  */
 
 #ifndef _MATH_H_
-#define _MATH_H
+#define _MATH_H_
 
 /*
  * ANSI/POSIX
