@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.10 1998/02/03 19:12:19 perry Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.11 1998/08/19 00:20:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.10 1998/02/03 19:12:19 perry Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.11 1998/08/19 00:20:59 thorpej Exp $");
 #endif
 #endif	/* not lint */
 
@@ -107,11 +107,12 @@ fgoto(in_refresh)
 		outcol %= COLS;
 		if (AM == 0) {
 			while (l > 0) {
-				if (__pfast)
+				if (__pfast) {
 					if (CR)
 						tputs(CR, 0, __cputchar);
 					else
 						putchar('\r');
+				}
 				if (NL)
 					tputs(NL, 0, __cputchar);
 				else
