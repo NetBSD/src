@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.3 1998/09/05 23:57:29 eeh Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.4 2000/06/12 23:32:48 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -69,66 +69,18 @@
  */
 
 #ifndef IODEV_0
-#define	IODEV_0	0x0fe000000L	/* must match VM_MAX_KERNEL_ADDRESS */
+#define	IODEV_0	0x0fe000000UL	/* must match VM_MAX_KERNEL_ADDRESS */
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
-#define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
+#define _MAXNCPU	64
 
 /* [4m:] interrupt and counter registers take (1 + NCPU) pages. */
 
-#define	TIMERREG_VA	(IODEV_0)
-#define	COUNTERREG_VA	(  TIMERREG_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
-#define	ZS0_VA		(COUNTERREG_VA + _MAXNBPG)
-#define	ZS1_VA		(       ZS0_VA + _MAXNBPG)
-#define	AUXREG_VA	(       ZS1_VA + _MAXNBPG)
+#define	CPUINFO_VA	(    INTSTACK)
+#define	AUXREG_VA	(   EINTSTACK)
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
-#define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
-#define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
-#define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
-#define	IODEV_END	0x0ff000000L		/* 16 MB of iospace */
-
-/*
- * The next constant defines the amount of reserved DVMA space on the
- * Sun4m. The amount of space *must* be a multiple of 16MB, and thus
- * (((u_int)0) - DVMA4M_BASE) must be divisible by 16*1024*1024!
- * Note that pagetables must be allocated at a cost of 1k per MB of DVMA
- * space, plus severe alignment restrictions. So don't make DVMA4M_BASE too
- * low (max space = 2G).
- *
- * Since DVMA space overlaps with normal kernel address space (notably
- * the device mappings and the PROM), we don't want to put any DVMA
- * mappings where any of this useful stuff is (i.e. if we dvma_malloc
- * a buffer, we want to still have a SRMMU mapping to it, and we can't
- * have that if its on top of kernel code). Thus the last two
- * constants define the actual DVMA addresses used. These can be anything
- * as long as they are within the bounds setup by the first 2 constants.
- * This is especially important on MP systems with cache coherency: to
- * avoid consistency problems, DVMA addresses must map to the same place
- * in both processor and IOMMU space.
- */
-/*
- * Actually, I don't know how much of this is really relevant to sun4u
- * machines.  I do know that IOMMU TSBs using 8K pages can map the
- * following size segments:
- *
- *	VA size		VA base		TSB size
- *	--------	--------	---------
- *	8MB		ff800000	8K
- *	16MB		ff000000	16K
- *	32MB		fe000000	32K
- *	64MB		fc000000	64K
- *	128MB		f8000000	128K
- *	256MB		f0000000	256K
- *	512MB		e0000000	512K
- *	1GB		c0000000	1MB
- *
- * We will use the 8MB size for now.
- */
-
-#define DVMA_BASE	0x0ff800000L	/* can change subject to above rule */
-#define DVMA_TOP	0x0ffffffffL 	/* do not modify */
-#define DVMA_START	0x0ff800000L	/* 8M of DVMA */
-#define DVMA_END	0x0fff00000L	/* XXX is this enough? */
+#define	IODEV_BASE	(    MSGBUF_VA + _MAXNBPG)
+#define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
 
 #endif /* IODEV_0 */

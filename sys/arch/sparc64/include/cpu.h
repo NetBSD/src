@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2000/06/12 05:29:43 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.19 2000/06/12 23:32:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,14 +74,35 @@
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/sched.h>
+/*
+ * The cpu_info structure is part of a 64KB structure mapped both the kernel
+ * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
+ * Each processor's cpu_info is accessible at CPUINFO_VA only for that
+ * processor.  Other processors can access that through an additional mapping
+ * in the kernel pmap.
+ *
+ * The 64KB page contains:
+ *
+ * cpu_info
+ * interrupt stack (all remaining space)
+ * idle PCB
+ * idle stack (STACKSPACE - sizeof(PCB))
+ * 32KB TSB
+ */
+
 struct cpu_info {
+	struct proc		*ci_curproc;
+	struct pcb		*ci_cpcb;
+	struct cpu_info		*ci_next;
+	int			ci_number;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
+	u_long			ci_spin_locks;	/* # of spin locks held */
+	u_long			ci_simple_locks;/* # of simple locks held */
 #endif
 };
 
+extern struct cpu_info *cpus;
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
@@ -93,7 +114,7 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	0
+#define	cpu_number()	(curcpu()->ci_number)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -188,6 +209,8 @@ extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
 
+/* cpu.c */
+u_int64_t cpu_start __P((int));
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));
