@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1995/06/16 15:06:50 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.4 1995/09/16 15:54:20 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -58,18 +58,16 @@ main()
 
 	io=0;
 	bootdev=bdev;
-#ifdef JUSTASK
-	howto = RB_ASKNAME|RB_SINGLE;
-#else
 	autoconf();
+
 	if ((howto & RB_ASKNAME) == 0) {
 		type = (devtype >> B_TYPESHIFT) & B_TYPEMASK;
 		if ((unsigned)type < ndevs && devsw[type].dv_name)
-			strcpy(line, UNIX);
+			strcpy(line, "/netbsd");
 		else
 			howto |= RB_SINGLE|RB_ASKNAME;
 	}
-#endif
+
 	for (retry = 0;;) {
 		if (io >= 0)
 			printf("\nNboot\n");
@@ -77,16 +75,14 @@ main()
 			printf(": ");
 			gets(line);
 			if (line[0] == 0) {
-				strcpy(line, UNIX);
+				strcpy(line, "/netbsd");
 				printf(": %s\n", line);
 			}
 		} else
 			printf(": %s\n", line);
 		io = open(line, 0);
 		if (io >= 0) {
-#ifdef VAX750
 			loadpcs();
-#endif
 			copyunix(howto, opendev, io);
 			close(io);
 			howto |= RB_SINGLE|RB_ASKNAME;
@@ -150,14 +146,13 @@ copyunix(howto, devtype, aio)
 	for (i = 0; i < 128*512; i++)	/* slop */
 		*addr++ = 0;
 	printf(" start 0x%x\n", (x.a_entry&0x7fffffff));
-	hoppabort((x.a_entry&0x7fffffff),howto,devtype,esym);
+	hoppabort((x.a_entry&0x7fffffff),howto, devtype, esym);
 	return;
 shread:
 	printf("Short read\n");
 	return;
 }
 
-#ifdef VAX750
 /* 750 Patchable Control Store magic */
 
 #include "../include/mtpr.h"
@@ -185,11 +180,11 @@ loadpcs()
 	register int *jp;	/* known to be r9 below */
 	register int j;
 	static int pcsdone = 0;
-	int mid=mfpr(PR_SID);
+	int mid = mfpr(PR_SID);
 	char pcs[100];
 	char *cp;
 
-	if (MACHID(mid) !=VAX_750 || V750UCODE(mid)<95 || pcsdone)
+	if ((mid >> 24) != VAX_750 || ((mid >> 8) & 255) < 95 || pcsdone)
 		return;
 	printf("Updating 11/750 microcode: ");
 	for (cp = line; *cp; cp++)
@@ -203,8 +198,10 @@ loadpcs()
 		i = 0;
 	strcpy(pcs + i, "pcs750.bin");
 	i = open(pcs, 0);
-	if (i < 0)
+	if (i < 0) {
+		printf("bad luck - missing pcs750.bin :-(\n");
 		return;
+	}
 	/*
 	 * We ask for more than we need to be sure we get only what we expect.
 	 * After read:
@@ -250,4 +247,3 @@ loadpcs()
 	printf("new rev level=%d\n", V750UCODE(mid));
 	pcsdone = 1;
 }
-#endif
