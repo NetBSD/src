@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.3 1999/02/27 22:21:13 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.4 1999/03/29 21:30:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ stp4020print(aux, busname)
 	void *aux;
 	const char *busname;
 {
-	struct pcmciabus_attach_args *paa;
+	struct pcmciabus_attach_args *paa = aux;
 	struct stp4020_socket *h = paa->pch;
 
 	printf(" socket %d", h->sock);
