@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2000/03/28 19:16:05 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2000/03/29 03:54:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,6 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay __P((int));
 
 /*
  * pull in #defines for kinds of processors
@@ -192,7 +191,6 @@ void	vm86_gpfault __P((struct proc *, int));
 void	child_return __P((void *));
 
 /* consinit.c */
-void consinit __P((void));
 void kgdb_port_init __P((void));
 
 /* bus_machdep.c */
