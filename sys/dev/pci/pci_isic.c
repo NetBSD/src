@@ -33,7 +33,7 @@
  *	pci_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pci_isic.c,v 1.1.1.1 2001/01/05 12:50:20 martin Exp $ 
+ *	$Id: pci_isic.c,v 1.2 2001/01/09 21:26:30 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -88,7 +88,9 @@ static int pci_isic_match __P((struct device *, struct cfdata *, void *));
 static void pci_isic_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
+#ifdef ISICPCI_ELSA_QS1PCI
 static void isic_pciattach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
+#endif
 
 struct cfattach pci_isic_ca = {
 	sizeof(struct pci_l1_softc), pci_isic_match, pci_isic_attach
@@ -197,6 +199,7 @@ pci_isic_attach(parent, self, aux)
 /*---------------------------------------------------------------------------*
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
+#ifdef ISICPCI_ELSA_QS1PCI
 static void
 isic_pciattach(psc, pa)
 	struct pci_l1_softc *psc;
@@ -351,4 +354,4 @@ isic_pciattach(psc, pa)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
-
+#endif
