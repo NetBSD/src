@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.1 2001/10/05 22:27:43 reinoud Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.1.14.1 2002/07/14 17:45:56 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -61,20 +61,21 @@ struct vidc20_softc {
 	bus_space_tag_t	sc_iot;
 };
 
-static int  vidcmatch  __P((struct device *self, struct cfdata *cf, void *aux));
-static void vidcattach __P((struct device *parent, struct device *self, void *aux));
-static int  vidcprint  __P((void *aux, const char *name));
-static int  vidcsearch __P((struct device *, struct cfdata *, void *));
+static int  vidcmatch(struct device *, struct cfdata *, void *);
+static void vidcattach(struct device *, struct device *, void *);
+static int  vidcsearch(struct device *, struct cfdata *, void *);
 
 /*
- * vidc_base gives the base of the VIDC chip in memory; this is for the rest isnt
- * busspaceified yet. Initialised with VIDC_BASE for backwards compatibility.
+ * vidc_base gives the base of the VIDC chip in memory; this is for
+ * the rest isnt busspaceified yet. Initialised with VIDC_BASE for
+ * backwards compatibility.
  */
-int *vidc_base = (int *) VIDC_BASE;
+int *vidc_base = (int *)VIDC_BASE;
 
 
 /*
- * vidc_fref is the reference frequency in Mhz of the detected VIDC (dependent on IOMD/IOC)
+ * vidc_fref is the reference frequency in Mhz of the detected VIDC
+ * (dependent on IOMD/IOC)
  * XXX default is RPC600 ?
  */
 int  vidc_fref = 24000000;
@@ -91,40 +92,10 @@ struct cfattach vidc_ca = {
  * We must assume things are ok.
  */
 static int
-vidcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vidcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-/*	struct mainbus_attach_args *mb = aux;*/
 
 	return(1);
-}
-
-/*
- * vidcprint()
- *
- * print routine used during config of children
- */
-
-static int
-vidcprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	struct mainbus_attach_args *mb = aux;
-
-	if (mb->mb_iobase != MAINBUSCF_BASE_DEFAULT)
-		printf(" base 0x%x", mb->mb_iobase);
-	if (mb->mb_iosize > 1)
-		printf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
-	if (mb->mb_irq != -1)
-		printf(" irq %d", mb->mb_irq);
-	if (mb->mb_drq != -1)
-		printf(" drq 0x%08x", mb->mb_drq);
-
-/* XXXX print flags */
-	return (QUIET);
 }
 
 /*
@@ -134,35 +105,11 @@ vidcprint(aux, name)
  */
 
 static int
-vidcsearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vidcsearch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct vidc20_softc *sc = (struct vidc20_softc *)parent;
-	struct mainbus_attach_args mb;
-	int tryagain;
-
-	do {
-		if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
-			mb.mb_iobase = MAINBUSCF_BASE_DEFAULT;
-			mb.mb_iosize = 0;
-			mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
-			mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-		} else {
-			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
-			mb.mb_iosize = 0;
-			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
-			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
-		}
-		mb.mb_iot = sc->sc_iot;
-
-		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &mb) > 0) {
-			config_attach(parent, cf, &mb, vidcprint);
-/*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
-		}
-	} while (tryagain);
+	
+	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+		config_attach(parent, cf, NULL, NULL);
 
 	return (0);
 }
@@ -173,25 +120,29 @@ vidcsearch(parent, cf, aux)
  * Configure all the child devices of the VIDC
  */
 static void
-vidcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vidcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidc20_softc *sc = (struct vidc20_softc *)self;
 	struct mainbus_attach_args *mb = aux;
 
 	sc->sc_iot = mb->mb_iot;
 
-	printf(": vidc20\n");
-
+	/*
+	 * Since the VIDC is write-only, infer the type of VIDC from the
+	 * type of IOMD.
+	 */
 	switch (IOMD_ID) {
 	case ARM7500_IOC_ID:
+		printf(": ARM7500 video and sound macrocell\n");
+		vidc_fref = 32000000;
+		break;
 	case ARM7500FE_IOC_ID:
+		printf(": ARM7500FE video and sound macrocell\n");
 		vidc_fref = 32000000;
 		break;
 	default:				/* XXX default? */
 	case RPC600_IOMD_ID:
+		printf(": VIDC20\n");
 		vidc_fref = 24000000;
 		break;
 	};

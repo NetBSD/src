@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.1.2.2 2002/05/30 07:14:45 gehenna Exp $
+#	$NetBSD: majors.hp300,v 1.1.2.3 2002/07/14 17:46:12 gehenna Exp $
 #
 # Device majors for hp300
 #
@@ -37,3 +37,4 @@ device-major	raid		char 35  block 15	raid
 device-major	svr4_net	char 36			compat_svr4
 
 device-major	clockctl	char 42			clockctl
+device-major	systrace	char 43			systrace
