@@ -1,4 +1,4 @@
-/* $NetBSD: viapmvar.h,v 1.1 2000/05/08 16:40:44 joda Exp $ */
+/*	$NetBSD: viapmvar.h,v 1.2 2000/05/12 16:42:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,12 +38,11 @@
 enum vapm_devtype { VIAPM_POWER, VIAPM_HWMON, VIAPM_SMBUS };
 
 struct viapm_attach_args {
-    enum vapm_devtype	va_type;
-    pci_chipset_tag_t	va_pc;
-    pcitag_t		va_tag;
-    int			va_offset;
-    bus_space_tag_t	va_iot;
+	enum vapm_devtype	va_type;
+	pci_chipset_tag_t	va_pc;
+	pcitag_t		va_tag;
+	int			va_offset;
+	bus_space_tag_t		va_iot;
 };
-
 
 #endif /* _DEV_PCI_VIAPMVAR_H_ */
