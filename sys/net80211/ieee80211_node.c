@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.4 2003/09/23 15:59:09 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.6 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.3 2003/09/14 01:14:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.4 2003/09/23 15:59:09 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -49,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.3 2003/09/14 01:14:55 dyoung Ex
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
@@ -63,16 +65,23 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.3 2003/09/14 01:14:55 dyoung Ex
 #include <net/if_arp.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
 #endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h> 
+#ifdef __FreeBSD__
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
 #endif
 
 static struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);

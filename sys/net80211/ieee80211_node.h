@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.3 2003/09/14 01:14:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.4 2003/09/23 15:59:09 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -104,6 +104,37 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 };
 
+#ifdef __NetBSD__
+#define ieee80211_node_incref(ni)			\
+	do {						\
+		int _s = splnet();			\
+		(ni)->ni_refcnt++;			\
+		splx(_s);				\
+	} while (0)
+
+static __inline int
+ieee80211_node_decref(struct ieee80211_node *ni)
+{
+	int refcnt, s;
+	s = splnet();
+	refcnt = --ni->ni_refcnt;
+	splx(s);
+	return refcnt;
+}
+
+#else
+#define ieee80211_node_incref(ni) atomic_add_int(&(ni)->ni_refcnt, 1)
+static __inline int
+ieee80211_node_decref(struct ieee80211_node *ni)
+{
+	int orefcnt;
+	do {
+		orefcnt = ni->ni_refcnt;
+	} while (atomic_cmpset_int(&ni->ni_refcnt, orefcnt, orefcnt - 1) == 0);
+	return orefcnt - 1;
+}
+#endif
+
 static __inline struct ieee80211_node *
 ieee80211_ref_node(struct ieee80211_node *ni)
 {
@@ -114,7 +145,7 @@ ieee80211_ref_node(struct ieee80211_node *ni)
 static __inline void
 ieee80211_unref_node(struct ieee80211_node **ni)
 {
-	ieee80211_node_decref(ni);
+	ieee80211_node_decref(*ni);
 	*ni = NULL;			/* guard against use */
 }
 
