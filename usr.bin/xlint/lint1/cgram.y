@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.3 1995/10/02 17:08:31 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.4 1995/10/02 17:14:06 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.3 1995/10/02 17:08:31 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.4 1995/10/02 17:14:06 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -760,7 +760,7 @@ notype_init_decl:
 	| notype_decl {
 		idecl($1, 1);
 	  } T_ASSIGN initializer {
-		  chksz($1);
+		chksz($1);
 	  }
 	;
 
@@ -772,7 +772,7 @@ type_init_decl:
 	| type_decl {
 		idecl($1, 1);
 	  } T_ASSIGN initializer {
-		  chksz($1);
+		chksz($1);
 	  }
 	;
 

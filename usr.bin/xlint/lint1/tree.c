@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.4 1995/10/02 17:08:47 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.5 1995/10/02 17:14:44 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.4 1995/10/02 17:08:47 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.5 1995/10/02 17:14:44 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -729,12 +729,8 @@ cconv(tn)
 	if (tn->tn_type->t_tspec == ARRAY) {
 		if (!tn->tn_lvalue) {
 			/* %soperand of '%s' must be lvalue */
-			if (gflag) {
-				/* XXX print correct operator */
-				warning(114, "", modtab[AMPER].m_name);
-			} else {
-				error(114, "", modtab[AMPER].m_name);
-			}
+			/* XXX print correct operator */
+			gnuism(114, "", modtab[AMPER].m_name);
 		}
 		tn = mktnode(AMPER, tincref(tn->tn_type->t_subt, PTR),
 			     tn, NULL);
@@ -2626,11 +2622,7 @@ plength(tp)
 		break;
 	case VOID:
 		/* cannot do pointer arithmetic on operand of ... */
-		if (gflag) {
-			warning(136);
-		} else {
-			error(136);
-		}
+		gnuism(136);
 		break;
 	case STRUCT:
 	case UNION:

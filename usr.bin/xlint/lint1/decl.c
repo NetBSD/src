@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.3 1995/10/02 17:08:36 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.4 1995/10/02 17:14:11 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.3 1995/10/02 17:08:36 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.4 1995/10/02 17:14:11 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -91,74 +91,74 @@ initdecl()
 		ttab_t	it_ttab;
 	} ittab[] = {
 		{ SIGNED,   { 0, 0,
-				      SIGNED, UNSIGN,
-				      0, 0, 0, 0, 0, "signed" } },
+			      SIGNED, UNSIGN,
+			      0, 0, 0, 0, 0, "signed" } },
 		{ UNSIGN,   { 0, 0,
-				      SIGNED, UNSIGN,
-				      0, 0, 0, 0, 0, "unsigned" } },
+			      SIGNED, UNSIGN,
+			      0, 0, 0, 0, 0, "unsigned" } },
 		{ CHAR,	    { CHAR_BIT, CHAR_BIT,
-				      SCHAR, UCHAR,
-				      1, 0, 0, 1, 1, "char" } },
+			      SCHAR, UCHAR,
+			      1, 0, 0, 1, 1, "char" } },
 		{ SCHAR,    { CHAR_BIT, CHAR_BIT,
-				      SCHAR, UCHAR,
-				      1, 0, 0, 1, 1, "signed char" } },
+			      SCHAR, UCHAR,
+			      1, 0, 0, 1, 1, "signed char" } },
 		{ UCHAR,    { CHAR_BIT, CHAR_BIT,
-				      SCHAR, UCHAR,
-				      1, 1, 0, 1, 1, "unsigned char" } },
+			      SCHAR, UCHAR,
+			      1, 1, 0, 1, 1, "unsigned char" } },
 		{ SHORT,    { sizeof (short) * CHAR_BIT, 2 * CHAR_BIT,
-				      SHORT, USHORT,
-				      1, 0, 0, 1, 1, "short" } },
+			      SHORT, USHORT,
+			      1, 0, 0, 1, 1, "short" } },
 		{ USHORT,   { sizeof (u_short) * CHAR_BIT, 2 * CHAR_BIT,
-				      SHORT, USHORT,
-				      1, 1, 0, 1, 1, "unsigned short" } },
+			      SHORT, USHORT,
+			      1, 1, 0, 1, 1, "unsigned short" } },
 		{ INT,      { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
-				      INT, UINT,
-				      1, 0, 0, 1, 1, "int" } },
+			      INT, UINT,
+			      1, 0, 0, 1, 1, "int" } },
 		{ UINT,     { sizeof (u_int) * CHAR_BIT, 3 * CHAR_BIT,
-				      INT, UINT,
-				      1, 1, 0, 1, 1, "unsigned int" } },
+			      INT, UINT,
+			      1, 1, 0, 1, 1, "unsigned int" } },
 		{ LONG,     { sizeof (long) * CHAR_BIT, 4 * CHAR_BIT,
-				      LONG, ULONG,
-				      1, 0, 0, 1, 1, "long" } },
+			      LONG, ULONG,
+			      1, 0, 0, 1, 1, "long" } },
 		{ ULONG,    { sizeof (u_long) * CHAR_BIT, 4 * CHAR_BIT,
-				      LONG, ULONG,
-				      1, 1, 0, 1, 1, "unsigned long" } },
+			      LONG, ULONG,
+			      1, 1, 0, 1, 1, "unsigned long" } },
 		{ QUAD,     { sizeof (quad_t) * CHAR_BIT, 8 * CHAR_BIT,
-				      QUAD, UQUAD,
-				      1, 0, 0, 1, 1, "long long" } },
+			      QUAD, UQUAD,
+			      1, 0, 0, 1, 1, "long long" } },
 		{ UQUAD,    { sizeof (u_quad_t) * CHAR_BIT, 8 * CHAR_BIT,
-				      QUAD, UQUAD,
-				      1, 1, 0, 1, 1, "unsigned long long" } },
+			      QUAD, UQUAD,
+			      1, 1, 0, 1, 1, "unsigned long long" } },
 		{ FLOAT,    { sizeof (float) * CHAR_BIT, 4 * CHAR_BIT,
-				      FLOAT, FLOAT,
-				      0, 0, 1, 1, 1, "float" } },
+			      FLOAT, FLOAT,
+			      0, 0, 1, 1, 1, "float" } },
 		{ DOUBLE,   { sizeof (double) * CHAR_BIT, 8 * CHAR_BIT,
-				      DOUBLE, DOUBLE,
-				      0, 0, 1, 1, 1, "double" } },
+			      DOUBLE, DOUBLE,
+			      0, 0, 1, 1, 1, "double" } },
 		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT,
-				      LDOUBLE, LDOUBLE,
-				      0, 0, 1, 1, 1, "long double" } },
+			      LDOUBLE, LDOUBLE,
+			      0, 0, 1, 1, 1, "long double" } },
 		{ VOID,     { -1, -1,
-				      VOID, VOID,
-				      0, 0, 0, 0, 0, "void" } },
+			      VOID, VOID,
+			      0, 0, 0, 0, 0, "void" } },
 		{ STRUCT,   { -1, -1,
-				      STRUCT, STRUCT,
-				      0, 0, 0, 0, 0, "struct" } },
+			      STRUCT, STRUCT,
+			      0, 0, 0, 0, 0, "struct" } },
 		{ UNION,    { -1, -1,
-				      UNION, UNION,
-				      0, 0, 0, 0, 0, "union" } },
+			      UNION, UNION,
+			      0, 0, 0, 0, 0, "union" } },
 		{ ENUM,     { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
-				      ENUM, ENUM,
-				      1, 0, 0, 1, 1, "enum" } },
+			      ENUM, ENUM,
+			      1, 0, 0, 1, 1, "enum" } },
 		{ PTR,      { sizeof (void *) * CHAR_BIT, 4 * CHAR_BIT,
-				      PTR, PTR,
-				      0, 1, 0, 0, 1, "pointer" } },
+			      PTR, PTR,
+			      0, 1, 0, 0, 1, "pointer" } },
 		{ ARRAY,    { -1, -1,
-				      ARRAY, ARRAY,
-				      0, 0, 0, 0, 0, "array" } },
+			      ARRAY, ARRAY,
+			      0, 0, 0, 0, 0, "array" } },
 		{ FUNC,     { -1, -1,
-				      FUNC, FUNC,
-				      0, 0, 0, 0, 0, "function" } },
+			      FUNC, FUNC,
+			      0, 0, 0, 0, 0, "function" } },
 	};
 
 	/* declaration stack */
@@ -293,6 +293,15 @@ void
 addscl(sc)
 	scl_t	sc;
 {
+	if (sc == INLINE) {
+		/* syntax error */
+		gnuism(249);
+		if (dcs->d_inline)
+			/* duplicate '%s' */
+			warning(10, "inline");
+		dcs->d_inline = 1;
+		return;
+	}
 	if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
 	    dcs->d_smod != NOTSPEC || dcs->d_lmod != NOTSPEC) {
 		/* storage class after type is obsolescent */
@@ -644,6 +653,7 @@ clrtyp()
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
 	dcs->d_const = dcs->d_volatile = 0;
+	dcs->d_inline = 0;
 	dcs->d_mscl = dcs->d_terr = 0;
 	dcs->d_nedecl = 0;
 }
@@ -1693,11 +1703,7 @@ compltag(tp, fmem)
 		sp->memb = fmem;
 		if (sp->size == 0) {
 			/* zero sized %s */
-			if (gflag) {
-				warning(47, ttab[t].tt_name);
-			} else {
-				error(47, ttab[t].tt_name);
-			}
+			gnuism(47, ttab[t].tt_name);
 		} else {
 			n = 0;
 			for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
@@ -1790,6 +1796,15 @@ decl1ext(dsym, initflg)
 	if (dsym->s_type->t_tspec == FUNC && dsym->s_def == TDEF)
 		dsym->s_def = DECL;
 
+	if (dcs->d_inline) {
+		if (dsym->s_type->t_tspec == FUNC) {
+			dsym->s_inline = 1;
+		} else {
+			/* variable declared inline: %s */
+			warning(310, dsym->s_name);
+		}
+	}
+
 	/* Write the declaration into the output file */
 	if (plibflg && llibflg &&
 	    dsym->s_type->t_tspec == FUNC && dsym->s_type->t_proto) {
@@ -1800,7 +1815,7 @@ decl1ext(dsym, initflg)
 		rval = dsym->s_type->t_subt->t_tspec != VOID;
 		outfdef(dsym, dsym->s_type, &dsym->s_dpos, rval, 0, NULL);
 	} else {
-		outsym(dsym, dsym->s_scl);
+		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
@@ -1823,7 +1838,7 @@ decl1ext(dsym, initflg)
 
 			/*
 			 * Overtake the rememberd params if the new symbol
-			 * is no prototype.
+			 * is not a prototype.
 			 */
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
@@ -1833,8 +1848,8 @@ decl1ext(dsym, initflg)
 
 			/*
 			 * Remember the position of the declaration if the
-			 * old symbols was a prototype and the new is not.
-			 * Also remember the position if the old symbols
+			 * old symbol was a prototype and the new is not.
+			 * Also remember the position if the old symbol
 			 * was defined and the new is not.
 			 */
 			if (rdsym->s_type->t_proto && !dsym->s_type->t_proto) {
@@ -1852,6 +1867,10 @@ decl1ext(dsym, initflg)
 			/* Once a name is defined, it remains defined. */
 			if (rdsym->s_def == DEF)
 				dsym->s_def = DEF;
+
+			/* once a function is inline, it remains inline */
+			if (rdsym->s_inline)
+				dsym->s_inline = 1;
 
 			compltyp(dsym, rdsym);
 
@@ -2261,6 +2280,10 @@ decl1arg(sym, initflg)
 			sym->s_type = gettyp(DOUBLE);
 	}
 
+	if (dcs->d_inline)
+		/* argument declared inline: %s */
+		warning(311, sym->s_name);
+
 	/*
 	 * Arguments must have complete types. lengths() prints the needed
 	 * error messages (null dimension is impossible because arrays are
@@ -2454,6 +2477,22 @@ decl1loc(dsym, initflg)
 		}
 	}
 
+	/*
+	 * functions may be declared inline at local scope, although
+	 * this has no effect for a later definition of the same
+	 * function.
+	 * XXX it should have an effect if tflag is set. this would
+	 * also be the way gcc behaves.
+	 */
+	if (dcs->d_inline) {
+		if (dsym->s_type->t_tspec == FUNC) {
+			dsym->s_inline = 1;
+		} else {
+			/* variable declared inline: %s */
+			warning(310, dsym->s_name);
+		}
+	}
+
 	chkfdef(dsym, 1);
 
 	chktyp(dsym);
@@ -2467,9 +2506,9 @@ decl1loc(dsym, initflg)
 		 * spaeter definiert wird, haben wir die Brille auf.
 		 */
 		if (dsym->s_xsym == NULL) {
-			outsym(dsym, EXTERN);
+			outsym(dsym, EXTERN, dsym->s_def);
 		} else {
-			outsym(dsym, dsym->s_xsym->s_scl);
+			outsym(dsym, dsym->s_xsym->s_scl, dsym->s_def);
 		}
 	}
 
@@ -2996,8 +3035,9 @@ chkglvar(sym)
 			STRUCT_ASSIGN(curr_pos, sym->s_dpos);
 			if (sym->s_type->t_tspec == FUNC) {
 				if (sym->s_def == DEF) {
-					/* static function %s unused */
-					warning(236, sym->s_name);
+					if (!sym->s_inline)
+						/* static function %s unused */
+						warning(236, sym->s_name);
 				} else {
 					/* static function %s decl. but ... */
 					warning(290, sym->s_name);

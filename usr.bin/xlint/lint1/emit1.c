@@ -1,4 +1,4 @@
-/*	$NetBSD: emit1.c,v 1.2 1995/07/03 21:24:02 cgd Exp $	*/
+/*	$NetBSD: emit1.c,v 1.3 1995/10/02 17:14:14 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit1.c,v 1.2 1995/07/03 21:24:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: emit1.c,v 1.3 1995/10/02 17:14:14 jpo Exp $";
 #endif
 
 #include <ctype.h>
@@ -199,16 +199,17 @@ outtt(tag, tdef)
 }
 
 /*
- * write information about an global with storage class extern
- * declared/defined symbol
+ * write information about an global declared/defined symbol
+ * with storage class extern
  *
  * informations about function definitions are written in outfdef(),
  * not here
  */
 void
-outsym(sym, sc)
-	sym_t	*sym;
+outsym(sym, sc, def)
+        sym_t	*sym;
 	scl_t	sc;
+	def_t	def;
 {
 	/*
 	 * Static function declarations must also be written to the output
@@ -235,7 +236,7 @@ outsym(sym, sc)
 
 	/* flags */
 
-	switch (sym->s_def) {
+	switch (def) {
 	case DEF:
 		/* defined */
 		outchar('d');
@@ -251,7 +252,7 @@ outsym(sym, sc)
 	default:
 		lerror("outsym() 2");
 	}
-	if (llibflg && sym->s_def != DECL) {
+	if (llibflg && def != DECL) {
 		/*
 		 * mark it as used so we get no warnings from lint2 about
 		 * unused symbols in libraries.

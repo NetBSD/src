@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.2 1995/07/03 21:24:04 cgd Exp $	*/
+/*	$NetBSD: err.c,v 1.3 1995/10/02 17:14:17 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.2 1995/07/03 21:24:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.3 1995/10/02 17:14:17 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -51,6 +51,9 @@ int	sytxerr;
 #include "lint1.h"
 
 static	const	char *basename __P((const char *));
+static	void	verror __P((int, va_list));
+static	void	vwarning __P((int, va_list));
+
 
 const	char *msgs[] = {
 	"syntax error: empty declaration",			      /* 0 */
@@ -363,6 +366,8 @@ const	char *msgs[] = {
 	"static variable %s set but not used",			      /* 307 */
 	"extra bits set to 1 in conversion of '%s' to '%s', op %s",   /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
+	"variable declared inline: %s",				      /* 310 */
+	"argument declared inline: %s",				      /* 311 */
 };
 
 /*
@@ -388,45 +393,66 @@ basename(path)
 	return (*cp1 == '\0' ? cp2 : cp1);
 }
 
-#ifdef __STDC__
-void
-error(int n, ...)
-{
-#else
-void
-error(va_alist)
-	va_dcl
-{
+static void
+verror(n, ap)
 	int	n;
-#endif
 	va_list	ap;
+{
 	const	char *fn;
 
-#ifdef __STDC__
-	va_start(ap, n);
-#else
-	va_start(ap);
-	n = va_arg(ap, int);
-#endif
 	fn = basename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 	nerr++;
+}
+
+static void
+vwarning(n, ap)
+	int	n;
+	va_list	ap;
+{
+	const	char *fn;
+
+	if (lline == isrcline || lline + 1 == isrcline)
+		/* this warning is suppressed by a LINTED comment */
+		return;
+
+	fn = basename(curr_pos.p_file);
+	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
+	(void)vprintf(msgs[n], ap);
+	(void)printf("\n");
+}
+
+void
+#ifdef __STDC__
+error(int n, ...)
+#else
+error(n, va_alist)
+	int	n;
+	va_dcl
+#endif
+{
+	va_list	ap;
+
+#ifdef __STDC__
+	va_start(ap, n);
+#else
+	va_start(ap);
+#endif
+	verror(n, ap);
 	va_end(ap);
 }
 
+void
 #ifdef __STDC__
-void
 lerror(const char *msg, ...)
-{
 #else
-void
-lerror(va_alist)
-	va_dcl
-{
+lerror(msg, va_alist)
 	const	char *msg;
+	va_dcl
 #endif
+{
 	va_list	ap;
 	const	char *fn;
 
@@ -434,7 +460,6 @@ lerror(va_alist)
 	va_start(ap, msg);
 #else
 	va_start(ap);
-	msg = va_arg(ap, const char *);
 #endif
 	fn = basename(curr_pos.p_file);
 	(void)fprintf(stderr, "%s(%d): lint error: ", fn, curr_pos.p_line);
@@ -444,48 +469,35 @@ lerror(va_alist)
 	exit(1);
 }
 
+void
 #ifdef __STDC__
-void
 warning(int n, ...)
-{
 #else
-void
-warning(va_alist)
-	va_dcl
+warning(n, va_alist)
 	int	n;
-{
+	va_dcl
 #endif
+{
 	va_list	ap;
-	const	char *fn;
 
 #ifdef __STDC__
 	va_start(ap, n);
 #else
 	va_start(ap);
-	n = va_arg(ap, int);
 #endif
-	if (lline == isrcline || lline + 1 == isrcline)
-		/* this warning is suppressed by a LINTED comment */
-		return;
-
-	fn = basename(curr_pos.p_file);
-	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
-	(void)vprintf(msgs[n], ap);
-	(void)printf("\n");
+	vwarning(n, ap);
 	va_end(ap);
 }
 
+void
 #ifdef __STDC__
-void
 message(int n, ...)
-{
 #else
-void
-message(va_alist)
-	va_dcl
-{
+message(n, va_alist)
 	int	n;
+	va_dcl
 #endif
+{
 	va_list	ap;
 	const	char *fn;
 
@@ -493,11 +505,34 @@ message(va_alist)
 	va_start(ap, n);
 #else
 	va_start(ap);
-	n = va_arg(ap, int);
 #endif
 	fn = basename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
+	va_end(ap);
+}
+
+void
+#ifdef __STDC__
+gnuism(int n, ...)
+#else
+gnuism(n, va_alist)
+	int	n;
+	va_dcl
+#endif
+{
+	va_list	ap;
+
+#ifdef __STDC__
+	va_start(ap, n);
+#else
+	va_start(ap);
+#endif
+	if (sflag && !gflag) {
+		verror(n, ap);
+	} else if (!(!sflag && gflag)) {
+		vwarning(n, ap);
+	}
 	va_end(ap);
 }
