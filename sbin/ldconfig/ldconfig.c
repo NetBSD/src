@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.13 1996/01/09 00:04:35 pk Exp $
+ *	$Id: ldconfig.c,v 1.14 1996/06/30 22:30:32 jtc Exp $
  */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ char	*argv[];
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-r][-s][-v][dir ...]",
+			errx(1, "Usage: %s [-m][-r][-s][-v][dir ...]",
 				__progname);
 			break;
 		}
