@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.6.20.1 2001/03/05 22:49:31 nathanw Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.6.20.2 2002/07/10 17:15:51 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -92,5 +92,3 @@ void svr4_getcontext __P((struct lwp *, struct svr4_ucontext *));
 int svr4_setcontext __P((struct lwp *, struct svr4_ucontext *));
 
 #endif /* !_SVR4_UCONTEXT_H_ */
-
-

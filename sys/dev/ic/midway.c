@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.48.2.9 2002/06/24 22:09:59 nathanw Exp $	*/
+/*	$NetBSD: midway.c,v 1.48.2.10 2002/07/10 17:23:27 nathanw Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.48.2.9 2002/06/24 22:09:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.48.2.10 2002/07/10 17:23:27 nathanw Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -1300,8 +1300,7 @@ caddr_t data;
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 		    
-		  if ((error = suser(curproc->p_ucred, 
-		      &curproc->p_acflag)) != 0)
+		  if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
@@ -1328,8 +1327,7 @@ caddr_t data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = suser(curproc->p_ucred,
-		    &curproc->p_acflag)) == 0)
+		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 
