@@ -547,7 +547,8 @@ void dhcpinform PROTO ((struct packet *));
 void nak_lease PROTO ((struct packet *, struct iaddr *cip));
 void ack_lease PROTO ((struct packet *, struct lease *, unsigned char, TIME));
 void dhcp_reply PROTO ((struct lease *));
-struct lease *find_lease PROTO ((struct packet *, struct shared_network *));
+struct lease *find_lease PROTO ((struct packet *,
+				 struct shared_network *, int *));
 struct lease *mockup_lease PROTO ((struct packet *,
 				   struct shared_network *,
 				   struct host_decl *));
@@ -637,27 +638,27 @@ int if_register_socket PROTO ((struct interface_info *));
 #ifdef USE_SOCKET_FALLBACK
 void if_reinitialize_fallback PROTO ((struct interface_info *));
 void if_register_fallback PROTO ((struct interface_info *));
-size_t send_fallback PROTO ((struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t, 
-			   struct in_addr,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t send_fallback PROTO ((struct interface_info *,
+			      struct packet *, struct dhcp_packet *, size_t, 
+			      struct in_addr,
+			      struct sockaddr_in *, struct hardware *));
 void fallback_discard PROTO ((struct protocol *));
 #endif
 
 #ifdef USE_SOCKET_SEND
 void if_reinitialize_send PROTO ((struct interface_info *));
 void if_register_send PROTO ((struct interface_info *));
-size_t send_packet PROTO ((struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t, 
-			   struct in_addr,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t, 
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
 #endif
 #ifdef USE_SOCKET_RECEIVE
 void if_reinitialize_receive PROTO ((struct interface_info *));
 void if_register_receive PROTO ((struct interface_info *));
-size_t receive_packet PROTO ((struct interface_info *,
-			   unsigned char *, size_t,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t receive_packet PROTO ((struct interface_info *,
+			       unsigned char *, size_t,
+			       struct sockaddr_in *, struct hardware *));
 #endif
 #if defined (USE_SOCKET_SEND) && !defined (USE_SOCKET_FALLBACK)
 void if_enable PROTO ((struct interface_info *));
@@ -670,17 +671,17 @@ int if_register_bpf PROTO ( (struct interface_info *));
 #ifdef USE_BPF_SEND
 void if_reinitialize_send PROTO ((struct interface_info *));
 void if_register_send PROTO ((struct interface_info *));
-size_t send_packet PROTO ((struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t,
-			   struct in_addr,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t,
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
 #endif
 #ifdef USE_BPF_RECEIVE
 void if_reinitialize_receive PROTO ((struct interface_info *));
 void if_register_receive PROTO ((struct interface_info *));
-size_t receive_packet PROTO ((struct interface_info *,
-			   unsigned char *, size_t,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t receive_packet PROTO ((struct interface_info *,
+			       unsigned char *, size_t,
+			       struct sockaddr_in *, struct hardware *));
 #endif
 #if defined (USE_BPF_SEND)
 void if_enable PROTO ((struct interface_info *));
@@ -694,17 +695,17 @@ int if_register_nit PROTO ( (struct interface_info *));
 #ifdef USE_NIT_SEND
 void if_reinitialize_send PROTO ((struct interface_info *));
 void if_register_send PROTO ((struct interface_info *));
-size_t send_packet PROTO ((struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t,
-			   struct in_addr,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t,
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
 #endif
 #ifdef USE_NIT_RECEIVE
 void if_reinitialize_receive PROTO ((struct interface_info *));
 void if_register_receive PROTO ((struct interface_info *));
-size_t receive_packet PROTO ((struct interface_info *,
-			   unsigned char *, size_t,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t receive_packet PROTO ((struct interface_info *,
+			       unsigned char *, size_t,
+			       struct sockaddr_in *, struct hardware *));
 #endif
 #if defined (USE_BPF_SEND)
 void if_enable PROTO ((struct interface_info *));
@@ -714,10 +715,10 @@ void if_enable PROTO ((struct interface_info *));
 #ifdef USE_RAW_SEND
 void if_reinitialize_send PROTO ((struct interface_info *));
 void if_register_send PROTO ((struct interface_info *));
-size_t send_packet PROTO ((struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t,
-			   struct in_addr,
-			   struct sockaddr_in *, struct hardware *));
+ssize_t send_packet PROTO ((struct interface_info *,
+			    struct packet *, struct dhcp_packet *, size_t,
+			    struct in_addr,
+			    struct sockaddr_in *, struct hardware *));
 #endif
 
 /* dispatch.c */
@@ -830,11 +831,11 @@ void assemble_hw_header PROTO ((struct interface_info *, unsigned char *,
 void assemble_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				    int *, u_int32_t, u_int32_t, u_int16_t,
 				    unsigned char *, int));
-size_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
-				int, struct hardware *));
-size_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
-				    int, struct sockaddr_in *,
-				    unsigned char *, int));
+ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
+				 int, struct hardware *));
+ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
+				     int, struct sockaddr_in *,
+				     unsigned char *, int));
 
 /* dhxpxlt.c */
 void convert_statement PROTO ((FILE *));
