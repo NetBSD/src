@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi.c,v 1.6 1994/06/26 13:00:32 briggs Exp $
+ * $Id: scsi.c,v 1.6.2.1 1994/07/24 01:23:12 cgd Exp $
  *
  */
 
@@ -114,9 +114,9 @@ struct ncr5380_data {
 
 /* From Guide to Mac II family hardware, p. 137 */
 /* These are "adjusted" in the init routine. */
-static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x50F10000;
-static volatile long			*sci_4byte_addr=  (long *) 0x50F06000;
-static volatile u_char			*sci_1byte_addr=(u_char *) 0x50F12000;
+static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x10000;
+static volatile long			*sci_4byte_addr=  (long *) 0x6000;
+static volatile u_char			*sci_1byte_addr=(u_char *) 0x12000;
 
 static unsigned int	ncr5380_adapter_info(struct ncr5380_data *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
@@ -186,12 +186,11 @@ ncrprobe(parent, cf, aux)
 	struct cfdata	*cf;
 	void		*aux;
 {
-extern	int			has5380scsi;
 static	int			probed = 0;
 	int			unit = cf->cf_unit;
 	struct ncr5380_data	*ncr5380;
 
-	if (!has5380scsi) {
+	if (!mac68k_machine.scsi80) {
 		return 0;
 	}
 
@@ -214,16 +213,14 @@ static	int			probed = 0;
 	ncr5380data[unit] = ncr5380;
 
 	if (!probed) {
-		extern unsigned long	IOBase;
 		/*
 		 * Adjust values based on IOBase.
 		 */
- 		ncr = (volatile sci_regmap_t *)
-			((u_int) ncr - INTIOBASE + IOBase);
+ 		ncr = (volatile sci_regmap_t *) (IOBase + (u_int) ncr);
  		sci_4byte_addr = (volatile long *)
-			((u_int) sci_4byte_addr - INTIOBASE + IOBase);
+			(IOBase + (u_int) sci_4byte_addr);
  		sci_1byte_addr = (volatile u_char *)
-			((u_int) sci_1byte_addr - INTIOBASE + IOBase);
+			(IOBase + (u_int) sci_1byte_addr);
 		probed = 1;
 	}
 

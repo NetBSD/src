@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: mac68k_init.c,v 1.4 1994/07/04 22:44:24 briggs Exp $
+ * $Id: mac68k_init.c,v 1.4.2.1 1994/07/24 01:23:35 cgd Exp $
  *
  */
 
@@ -54,15 +54,10 @@ extern u_int	Sysseg1;
 
 extern u_long	esym;	/* Set in machdep.c:getenvvars() */
 
-volatile unsigned char	*Via1Base = (volatile unsigned char *) INTIOBASE;
-unsigned long		NuBusBase = NBBASE;
-unsigned long		IOBase    = INTIOBASE;
-int			has5380scsi = 0;	/* Set in setmachdep() */
-int			has53c96scsi = 0;	/* Set in setmachdep() */
-
 static u_int	Sysseg1_pa;
 
 extern volatile unsigned char	*sccA;
+extern volatile unsigned char	*Via1Base;
 extern unsigned char		*ASCBase;
 extern unsigned long		videoaddr;
 
@@ -118,7 +113,10 @@ extern void	etext(); /* Okaaaaay... */
 	u_int	p0_ptpa, p0_u_area_pa, i;
 	u_int	sg_proto, pg_proto;
 	u_int	*sg, *pg, *pg2;
+	u_int	oldIOBase, oldNBBase;
 
+	oldIOBase = IOBase;
+	oldNBBase = NuBusBase;
 	/* init "tracking" values */
 	vend   = get_top_of_ram();
 	avail  = vend;
@@ -286,7 +284,7 @@ extern void	etext(); /* Okaaaaay... */
 	 */
 	pg      -= ptextra;
 	pg2      = pg;
-	pg_proto = (INTIOBASE & PG_FRAME) | PG_RW | PG_CI | PG_V;
+	pg_proto = (IOBase & PG_FRAME) | PG_RW | PG_CI | PG_V;
 	while (pg_proto < INTIOTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -379,7 +377,7 @@ extern void	etext(); /* Okaaaaay... */
 	 * Init mem sizes.
 	 */
 	maxmem  = pend >> PGSHIFT;
-	physmem = (mach_memsize*1024*1024) >> PGSHIFT;
+	physmem = (mac68k_machine.mach_memsize*1024*1024) >> PGSHIFT;
 
 	/*
 	 * Get the pmap module in sync with reality.
@@ -416,10 +414,8 @@ extern void	etext(); /* Okaaaaay... */
 	 * Reset pointers that will be wrong, now.
 	 * They are set this way to avoid blowing up the working MacII, et al.
 	 */
-	sccA = (volatile unsigned char *) ((u_int) sccA - INTIOBASE + IOBase);
 	Via1Base = (volatile unsigned char *)
-			((u_int) Via1Base - INTIOBASE + IOBase);
-	ASCBase  = (unsigned char *) ((u_int) ASCBase - INTIOBASE + IOBase);
-	videoaddr = videoaddr - NBBASE + NuBusBase;
-	NewScreenAddress();
+			((u_int) Via1Base - oldIOBase + IOBase);
+	ASCBase  = (unsigned char *) ((u_int) ASCBase - oldIOBase + IOBase);
+	videoaddr = videoaddr - oldNBBase + NuBusBase;
 }

@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.15 1994/06/26 12:53:36 briggs Exp $
+#     $Id: GENERIC,v 1.15.2.1 1994/07/24 01:22:49 cgd Exp $
 
 include	"std.mac68k"
 
@@ -20,20 +20,20 @@ options		KTRACE			# system call tracing support
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
-#options		DDB
+options		DDB
 options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
 #options	NFSSERVER	# Sun NFS-compatible filesystem
 #options	NFSCLIENT	# Sun NFS-compatible filesystem
-#options		LOFS		# Loop-back filesystem
-#options		ISOFS		# ISO-9660 w/ RockRidge
+options		NULLFS		# Null (formerly loop-back) filesystem
+options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
 #options	UMAPFS		# uid/gid remapping filesystem
 #options	LFS		# Log-based filesystem (still experimental)
-options		PORTAL		# portal filesystem (still experimental)
-options		PROCFS
+#options	PORTAL		# portal filesystem (still experimental)
+options		PROCFS		# Process filesystem
 
 options		SCSI
 #options	SCSIDEBUG
@@ -55,7 +55,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 options		MC68040
 options		MC68030		# Includes the 020+851
 options		FPCOPROC
-options		FPSP
+#options	FPSP
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
@@ -74,8 +74,7 @@ cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 
 pseudo-device	loop
-pseudo-device	pty	16
+pseudo-device	pty		16
 pseudo-device	sl
+pseudo-device	bpfilter	4
 pseudo-device	ppp
-
-pseudo-device	con	6
