@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.2 1996/02/22 10:10:49 leo Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.3 1996/07/20 20:48:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -39,6 +39,8 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/dkbad.h>
+
+int isbad __P((struct dkbad *, int, int, int));
 
 /*
  * Search the bad sector table looking for
