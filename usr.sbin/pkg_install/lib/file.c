@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.37 2000/01/25 12:09:20 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.38 2000/07/06 16:06:36 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.37 2000/01/25 12:09:20 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.38 2000/07/06 16:06:36 hubertf Exp $");
 #endif
 #endif
 
@@ -445,8 +445,9 @@ fileFindByPath(char *base, char *fname)
 				snprintf(url, FILENAME_MAX, "%s-[0-9]*.tgz", tmp);
 				rc = expandURL(tmp, url);
 				if (rc >= 0) {
-					printf("fileFindByPath: late success, expandURL('%s') returns '%s'\n",
-					       url, tmp);
+					if (Verbose)
+						printf("fileFindByPath: late success, expandURL('%s') returns '%s'\n",
+							url, tmp);
 					return tmp;
 				}
 			}
