@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2003/07/10 11:23:53 lukem Exp $
+# $NetBSD: Makefile,v 1.20 2003/07/26 17:06:38 salo Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -79,7 +79,7 @@ VAX_IBOOT?=	${TOLL_INSTALLBOOT} -m vax -o sunsum,append
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
 
-RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/${RELEASENAME}/
+RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}/
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 

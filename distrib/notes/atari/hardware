@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.20 2002/06/29 09:46:39 lukem Exp $
+.\"	$NetBSD: hardware,v 1.21 2003/07/26 17:06:55 salo Exp $
 .
 .Nx*M
 \*V runs on a TT030, Falcon, Hades and MilanI.
@@ -103,5 +103,5 @@ Teles S0/16.3-ISA ISDN adapter (with I4B)
 This list is incomplete by definition.
 We can not test all SCSI peripherals, ISA cards or PCI cards.
 If you have problems with such a peripheral, please contact the
-.Mt port-\*M@netbsd.org
+.Mt port-\*M@NetBSD.org
 mailing list.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.16 2002/07/11 04:52:50 scottr Exp $
+.\"	$NetBSD: prep,v 1.17 2003/07/26 17:07:04 salo Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -14,7 +14,7 @@ document.
 Other configurations are possible, but less common.
 If you are unable to install based on the information in this document,
 post a message to
-.Mt port-hp300@netbsd.org
+.Mt port-hp300@NetBSD.org
 asking for help.
 The configurations described in this document are as follows:
 .Pp
@@ -27,7 +27,7 @@ installation from a
 server on the same subnet (you must have root access).
 Other server platforms will work, but are described in the NetBSD Diskless
 HOW-TO.
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
 .It
 \*M loads
@@ -39,7 +39,7 @@ installation from a
 server on the same subnet (you must have root access).
 Other server platforms will work, but are described in the NetBSD Diskless
 HOW-TO.
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 You will need
 .Tn HP-UX
 on your \*M if it does not have a SCSI interface or a floppy drive.
@@ -408,7 +408,7 @@ when you're done.
 It may prevent you from selecting which device to boot from.
 .enum)
 See the FAQ for additional help.
-.Lk http://www.netbsd.org/Ports/hp300/faq.html#domain
+.Lk http://www.NetBSD.org/Ports/hp300/faq.html#domain
 .
 .Ss2 Searching for a bootable system
 .
@@ -449,7 +449,7 @@ RESET To Power-Up, SPACE clears input   Select System, type RETURN       ?
 .Pp
 The FAQ lists additional things you can do with the BootROM and describes
 the order the BootROM looks for bootable devices.
-.Lk http://www.netbsd.org/Ports/hp300/faq.html
+.Lk http://www.NetBSD.org/Ports/hp300/faq.html
 .Pp
 A normal power-on sequence (from a 400s) looks something like this:
 .(disp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.50 2003/03/16 13:10:01 darcy Exp $
+.\"	$NetBSD: postinstall,v 1.51 2003/07/26 17:07:00 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -306,14 +306,14 @@ Also, you may want to read through the
 .Nx*M
 FAQ entry on X11.
 .br
-.Lk http://www.netbsd.org/Ports/faq.html#x11
+.Lk http://www.NetBSD.org/Ports/faq.html#x11
 .\}
 .if \n[macppc] \{\
 Also, you may want to read through the
 .Nx*M
 X11R6 FAQ.
 .br
-.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/Ports/macppc/x11.html
 .\}
 .\} \" ! !\n[next68k]
 .if \n[i386]:\n[shark] \{\
@@ -361,13 +361,13 @@ from source and precompiled binaries.
 .Pp
 .(bullet
 More information on the package system is at
-.Lk http://www.netbsd.org/Documentation/software/packages.html
+.Lk http://www.NetBSD.org/Documentation/software/packages.html
 .It
 A list of available packages suitable for browsing is at
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/README.html
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages ,
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages ,
 usually in the
 .Pa \*V/\*M/All
 subdir.
@@ -375,7 +375,7 @@ You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v apache
@@ -388,7 +388,7 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
 \&...
 .Ed
 .Pp
@@ -399,7 +399,7 @@ depend on.
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
 They are typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine), with the commands:

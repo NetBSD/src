@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.24 2003/07/18 06:33:45 tron Exp $
+.\"	$NetBSD: hardware,v 1.25 2003/07/26 17:07:18 salo Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -121,13 +121,13 @@ UltraSPARC based machines in 32-bit or 64-bit mode are supported by the
 .Nx Ns /sparc64
 port.
 Refer to
-.Lk http://www.netbsd.org/Ports/sparc64/index.html
+.Lk http://www.NetBSD.org/Ports/sparc64/index.html
 .It
 JavaStation models.
 Refer to the
 .Nx*M
 JavaStation Support page
-.Lk http://www.netbsd.org/Ports/sparc/javastation.html
+.Lk http://www.NetBSD.org/Ports/sparc/javastation.html
 .It
 Solbourne machines
 .bullet)
@@ -317,7 +317,7 @@ Very few have been tested with
 .Nx*M .
 There is a byte endian issue which
 currently prevents 16 bit devices from working.
-.Lk http://www.netbsd.org/Hardware/pcmcia.html
+.Lk http://www.NetBSD.org/Hardware/pcmcia.html
 .(Note
 Note: there is a conflict between the
 .Em audioamd
@@ -325,7 +325,7 @@ device in sun4c and some sun4m models and the
 .Em nell
 device.
 See the FAQ for more information.
-.Lk http://www.netbsd.org/Ports/sparc/faq.html#nell
+.Lk http://www.NetBSD.org/Ports/sparc/faq.html#nell
 .Note)
 .bullet)
 .It

@@ -1,7 +1,7 @@
-/*	$NetBSD: utmp.c,v 1.4 2002/08/03 11:37:17 itojun Exp $	*/
+/*	$NetBSD: utmp.c,v 1.5 2003/07/26 17:07:37 salo Exp $	*/
 
 /*
- * Written by Gordon W. Ross <gwr@netbsd.org>
+ * Written by Gordon W. Ross <gwr@NetBSD.org>
  * Public domain.
  */
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2002/06/29 09:33:10 lukem Exp $
+.\"	$NetBSD: hardware,v 1.14 2003/07/26 17:06:54 salo Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -28,7 +28,7 @@ You may want to buy a firmware update CD from Compaq Computer Corporation.
 .Pp
 More information on supported platforms and devices can be found on the
 \*M port web pages at
-.Lk http://www.netbsd.org/ .
+.Lk http://www.NetBSD.org/ .
 .Pp
 A basic system will fit on a 200 MB disk (including swap) without too
 much difficulty, but you will probably want at least 500 MB of disk
@@ -58,7 +58,7 @@ testers; these are marked as
 below.
 If you have one of these devices, and it does work,
 please get in touch with
-.Mt port-\*M-maintainer@netbsd.org
+.Mt port-\*M-maintainer@NetBSD.org
 and let us know that it works.
 If it doesn't work, do the same thing and we can probably fix it pretty easily.
 .

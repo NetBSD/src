@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2002/07/19 07:17:51 scottr Exp $
+.\"	$NetBSD: install,v 1.27 2003/07/26 17:07:06 salo Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,7 +302,7 @@ and SE/30), it is necessary to install Connectix's MODE32 to work around
 ROM issues which prevent you from enabling 32-bit addressing. Please see the
 .Nx*M
 FAQ at
-.Lk http://www.netbsd.org/Ports/\*M/faq/
+.Lk http://www.NetBSD.org/Ports/\*M/faq/
 for more information.
 .tag)
 .Pp
@@ -332,7 +332,7 @@ menu before Booting (your preferences will not be saved if you
 forget to do this).
 .Pp
 If the system does not come up, send mail to
-.Mt port-\*M@netbsd.org
+.Mt port-\*M@NetBSD.org
 describing your software, your hardware, and as complete a description of
 the problem as you can.
 .Pp

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.8 2000/06/14 17:24:11 cgd Exp $
+# $NetBSD: install.sh,v 1.9 2003/07/26 17:06:28 salo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -15,7 +15,7 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #          This product includes software developed for the
-#          NetBSD Project.  See http://www.netbsd.org/ for
+#          NetBSD Project.  See http://www.NetBSD.org/ for
 #          information about NetBSD.
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.

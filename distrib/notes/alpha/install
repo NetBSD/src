@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.25 2002/06/30 12:28:55 lukem Exp $
+.\"	$NetBSD: install,v 1.26 2003/07/26 17:06:54 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ the port-\*M mailing list by mailing a line saying
 to
 .Mt majordomo@netsbd.org .
 Also, see
-.Lk http://www.netbsd.org
+.Lk http://www.NetBSD.org
 for more information.
 .Pp
 If you encounter any problems, please report them via the mailing list or the
@@ -263,11 +263,11 @@ with
 Detailed instructions on netbooting can be found by visiting the
 .Nx
 \*M platform page:
-.Lk http://www.netbsd.org/Ports/\*M
+.Lk http://www.NetBSD.org/Ports/\*M
 .Pp
 At the time of this
 release, the URL for the netbooting instructions is:
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
 You'll want to map root to
 .Li root
@@ -369,7 +369,7 @@ Many older systems will not be able to use the newer 2.0 stepping
 of the 21140, however.
 If your system appears not to be receiving packets, this may be the problem.
 (You may or may not be able to update your firmware to fix this; see
-the \*M port pages on www.netbsd.org for more information on
+the \*M port pages on www.NetBSD.org for more information on
 this.)
 In general, 10 Mb cards from manufacturers other than
 .Tn DEC
@@ -674,12 +674,12 @@ option to mount.
 To download the install sets with ftp, create a directory in
 which to put them and then use the ftp client to download them.
 Mirror sites are listed at:
-.Lk http://www.netbsd.org/Sites/net.html
+.Lk http://www.NetBSD.org/Sites/net.html
 A typical session might be:
 .Pp
 .Dl # Ic mkdir /mnt/usr/release
 .Dl # Ic cd /mnt/usr/release
-.Dl # Ic ftp ftp.netbsd.org
+.Dl # Ic ftp ftp.NetBSD.org
 .D1 Em "the following commands are given to the " Ic ftp Em "program after logging in"
 .Dl ftp\*> Ic "prompt"
 .Dl ftp\*> Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"

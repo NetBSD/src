@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.232 2003/06/05 12:40:23 scw Exp $
+.\"	$NetBSD: main,v 1.233 2003/07/26 17:06:57 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -232,7 +232,7 @@ kernel, which contains all the tools required to install
 Determine your machine's model, quirks, and Open Firmware version from the
 .Nx*M
 Model Support webpage.
-.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/Ports/macppc/models.html
 .Pp
 At present,
 .Nx*M
@@ -362,7 +362,7 @@ and are thus not part of the binary distribution.
 For information on them, please see the
 .Nx
 web site at
-.Lk http://www.netbsd.org/ . )
+.Lk http://www.NetBSD.org/ . )
 .Pp
 .Nx
 is a completely integrated system.
@@ -905,7 +905,7 @@ exists.
 .Pp
 .
 Refer to
-.Lk http://www.netbsd.org/Sites/net.html .
+.Lk http://www.NetBSD.org/Sites/net.html .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -1097,7 +1097,7 @@ of the release files.
 .Pp
 Other directories provide unpacked source trees for distribution via
 the source update protocol, for more information see:
-.Lk http://www.netbsd.org/Sites/net.html#sup
+.Lk http://www.NetBSD.org/Sites/net.html#sup
 .\}
 .
 .
@@ -1479,7 +1479,7 @@ If you've got something to say, do so!
 We'd like your input.
 There are various mailing lists available via the mailing list
 server at
-.Mt majordomo@netbsd.org .
+.Mt majordomo@NetBSD.org .
 To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
 reply with instructions.
@@ -1487,7 +1487,7 @@ reply with instructions.
 There are various mailing lists set up to deal with comments and
 questions about this release.
 Please send comments to:
-.Mt netbsd-comments@netbsd.org .
+.Mt netbsd-comments@NetBSD.org .
 .Pp
 To report bugs, use the
 .Xr send-pr 1
@@ -1496,7 +1496,7 @@ command shipped with
 and fill in as much information about the problem as you can.
 Good bug reports include lots of details.
 Additionally, bug reports can be sent by mail to:
-.Mt netbsd-bugs@netbsd.org .
+.Mt netbsd-bugs@NetBSD.org .
 .Pp
 Use of
 .Xr send-pr 1
@@ -1510,7 +1510,7 @@ There are also port-specific mailing lists, to discuss aspects of
 each port of
 .Nx .
 Use majordomo to find their addresses, or visit
-.Lk http://www.netbsd.org/MailingLists/ .
+.Lk http://www.NetBSD.org/MailingLists/ .
 If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the
@@ -1520,7 +1520,7 @@ below).
 .Pp
 If you'd like to help with this effort, and have an idea as to how
 you could be useful, send us mail or subscribe to:
-.Mt netbsd-help@netbsd.org .
+.Mt netbsd-help@NetBSD.org .
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists.
@@ -1616,304 +1616,304 @@ If you're one of them, and would like to mentioned, tell us!)
 .Pp
 .
 .
-.Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@netbsd.org newsmips
+.Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@NetBSD.org newsmips
 .
 .br_ne 1i
 .It-span Em "The NetBSD core group:"
 .It Ta Ta
-.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@netbsd.org
-.It Ta Frank van der Linden Ta Mt fvdl@netbsd.org
-.It Ta Luke Mewburn Ta Mt lukem@netbsd.org
-.It Ta Christos Zoulas Ta Mt christos@netbsd.org
+.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
+.It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
-.It Ta Lennart Augustsson Ta Mt augustss@netbsd.org Ta Sy pmppc
-.It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
-.It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy sbmips
-.It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
-.It Ta Matt Fredette Ta Mt fredette@netbsd.org Ta Sy sun2
-.It Ta Chris Gilbert Ta Mt chris@netbsd.org Ta Sy cats
-.It Ta Ross Harvey Ta Mt ross@netbsd.org Ta Sy alpha
-.It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@netbsd.org Ta Sy sh3
-.It Ta Ben Harris Ta Mt bjh21@netbsd.org Ta Sy acorn26
-.It Ta Martin Husemann Ta Mt martin@netbsd.org Ta Sy sparc64
-.It Ta Darrin Jewell Ta Mt dbj@netbsd.org Ta Sy next68k
-.It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy cobalt
-.It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy sgimips
-.It Ta Wayne Knowles Ta Mt wdk@netbsd.org Ta Sy mipsco
-.It Ta Paul Kranenburg Ta Mt pk@netbsd.org Ta Sy sparc
-.It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy i386
-.It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy amd64
-.It Ta Anders Magnusson Ta Mt ragge@netbsd.org Ta Sy vax
-.It Ta Phil Nelson Ta Mt phil@netbsd.org Ta Sy pc532
-.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org Ta Sy x68k
-.It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org Ta Sy luna68k
-.It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org Ta Sy prep
-.It Ta Scott Reynolds Ta Mt scottr@netbsd.org Ta Sy mac68k
-.It Ta Andrey Petrov Ta Mt petrov@netbsd.org Ta Sy sparc64
-.It Ta Kazuki Sakamoto Ta Mt sakamoto@netbsd.org Ta Sy bebox
-.It Ta Noriyuki Soda Ta Mt soda@netbsd.org Ta Sy arc
-.It Ta Wolfgang Solfrank Ta Mt ws@netbsd.org Ta Sy ofppc
-.It Ta Ignatios Souvatzis Ta Mt is@netbsd.org Ta Sy amiga
-.It Ta Jonathan Stone Ta Mt jonathan@netbsd.org Ta Sy pmax
-.It Ta Shin Takemura Ta Mt takemura@netbsd.org Ta Sy hpcmips
-.It Ta Jason Thorpe Ta Mt thorpej@netbsd.org Ta Sy alpha
-.It Ta Jason Thorpe Ta Mt thorpej@netbsd.org Ta Sy hp300
-.It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org Ta Sy macppc
-.It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org Ta Sy newsmips
-.It Ta Izumi Tsutsui Ta Mt tsutsui@netbsd.org Ta Sy news68k
-.It Ta Leo Weppelman Ta Mt leo@netbsd.org Ta Sy atari
-.It Ta Nathan Williams Ta Mt nathanw@netbsd.org Ta Sy sun3
-.It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy evbsh5
-.It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvme68k
-.It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvmeppc
-.It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org Ta Sy acorn32
+.It Ta Lennart Augustsson Ta Mt augustss@NetBSD.org Ta Sy pmppc
+.It Ta Simon Burge Ta Mt simonb@NetBSD.org Ta Sy pmax
+.It Ta Simon Burge Ta Mt simonb@NetBSD.org Ta Sy sbmips
+.It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org Ta Sy sun3x
+.It Ta Matt Fredette Ta Mt fredette@NetBSD.org Ta Sy sun2
+.It Ta Chris Gilbert Ta Mt chris@NetBSD.org Ta Sy cats
+.It Ta Ross Harvey Ta Mt ross@NetBSD.org Ta Sy alpha
+.It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@NetBSD.org Ta Sy sh3
+.It Ta Ben Harris Ta Mt bjh21@NetBSD.org Ta Sy acorn26
+.It Ta Martin Husemann Ta Mt martin@NetBSD.org Ta Sy sparc64
+.It Ta Darrin Jewell Ta Mt dbj@NetBSD.org Ta Sy next68k
+.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.org Ta Sy cobalt
+.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.org Ta Sy sgimips
+.It Ta Wayne Knowles Ta Mt wdk@NetBSD.org Ta Sy mipsco
+.It Ta Paul Kranenburg Ta Mt pk@NetBSD.org Ta Sy sparc
+.It Ta "Frank van der Linden" Ta Mt fvdl@NetBSD.org Ta Sy i386
+.It Ta "Frank van der Linden" Ta Mt fvdl@NetBSD.org Ta Sy amd64
+.It Ta Anders Magnusson Ta Mt ragge@NetBSD.org Ta Sy vax
+.It Ta Phil Nelson Ta Mt phil@NetBSD.org Ta Sy pc532
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org Ta Sy x68k
+.It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.org Ta Sy luna68k
+.It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.org Ta Sy prep
+.It Ta Scott Reynolds Ta Mt scottr@NetBSD.org Ta Sy mac68k
+.It Ta Andrey Petrov Ta Mt petrov@NetBSD.org Ta Sy sparc64
+.It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.org Ta Sy bebox
+.It Ta Noriyuki Soda Ta Mt soda@NetBSD.org Ta Sy arc
+.It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org Ta Sy ofppc
+.It Ta Ignatios Souvatzis Ta Mt is@NetBSD.org Ta Sy amiga
+.It Ta Jonathan Stone Ta Mt jonathan@NetBSD.org Ta Sy pmax
+.It Ta Shin Takemura Ta Mt takemura@NetBSD.org Ta Sy hpcmips
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org Ta Sy alpha
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org Ta Sy hp300
+.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.org Ta Sy macppc
+.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.org Ta Sy newsmips
+.It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.org Ta Sy news68k
+.It Ta Leo Weppelman Ta Mt leo@NetBSD.org Ta Sy atari
+.It Ta Nathan Williams Ta Mt nathanw@NetBSD.org Ta Sy sun3
+.It Ta Steve Woodford Ta Mt scw@NetBSD.org Ta Sy evbsh5
+.It Ta Steve Woodford Ta Mt scw@NetBSD.org Ta Sy mvme68k
+.It Ta Steve Woodford Ta Mt scw@NetBSD.org Ta Sy mvmeppc
+.It Ta Reinoud Zandijk Ta Mt reinoud@NetBSD.org Ta Sy acorn32
 .It Ta Ta
 .
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
-.It Ta James Chacon Ta Mt jmc@netbsd.org
-.It Ta Erik Berls Ta Mt cyber@netbsd.org
-.It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
-.It Ta Perry Metzger Ta Mt perry@netbsd.org
-.It Ta Luke Mewburn Ta Mt lukem@netbsd.org
-.It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
+.It Ta James Chacon Ta Mt jmc@NetBSD.org
+.It Ta Erik Berls Ta Mt cyber@NetBSD.org
+.It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
+.It Ta Perry Metzger Ta Mt perry@NetBSD.org
+.It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
 .It-span Em "NetBSD Developers:"
 .It Ta Ta
-.It Ta Nathan Ahlstrom Ta Mt nra@netbsd.org
-.It Ta Steve Allen Ta Mt wormey@netbsd.org
-.It Ta Julian Assange Ta Mt proff@netbsd.org
-.It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
-.It Ta Christoph Badura Ta Mt bad@netbsd.org
-.It Ta Bang Jun-Young Ta Mt junyoung@netbsd.org
-.It Ta Dieter Baron Ta Mt dillo@netbsd.org
-.It Ta Robert V. Baron Ta Mt rvb@netbsd.org
-.It Ta Grant Beattie Ta Mt grant@netbsd.org
-.It Ta Jason Beegan Ta Mt jtb@netbsd.org
-.It Ta Erik Berls Ta Mt cyber@netbsd.org
-.It Ta Hiroyuki Bessho Ta Mt bsh@netbsd.org
-.It Ta John Birrell Ta Mt jb@netbsd.org
-.It Ta Mason Loring Bliss Ta Mt mason@netbsd.org
-.It Ta Rafal Boni Ta Mt rafal@netbsd.org
-.It Ta Manuel Bouyer Ta Mt bouyer@netbsd.org
-.It Ta John Brezak Ta Mt brezak@netbsd.org
-.It Ta Allen Briggs Ta Mt briggs@netbsd.org
-.It Ta Mark Brinicombe Ta Mt mark@netbsd.org
-.It Ta Aaron Brown Ta Mt abrown@netbsd.org
-.It Ta Andrew Brown Ta Mt atatat@netbsd.org
-.It Ta David Brownlee Ta Mt abs@netbsd.org
-.It Ta Frederick Bruckman Ta Mt fredb@netbsd.org
-.It Ta Jon Buller Ta Mt jonb@netbsd.org
-.It Ta Simon Burge Ta Mt simonb@netbsd.org
-.It Ta Robert Byrnes Ta Mt byrnes@netbsd.org
-.It Ta D'Arcy J.M. Cain Ta Mt darcy@netbsd.org
-.It Ta Dave Carrel Ta Mt carrel@netbsd.org
-.It Ta Daniel Carosone Ta Mt dan@netbsd.org
-.It Ta James Chacon Ta Mt jmc@netbsd.org
-.It Ta Bill Coldwell Ta Mt billc@netbsd.org
-.It Ta Julian Coleman Ta Mt jdc@netbsd.org
-.It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org
-.It Ta Chuck Cranor Ta Mt chuck@netbsd.org
-.It Ta Alistair Crooks Ta Mt agc@netbsd.org
-.It Ta Aidan Cully Ta Mt aidan@netbsd.org
-.It Ta Johan Danielsson Ta Mt joda@netbsd.org
-.It Ta John Darrow Ta Mt jdarrow@netbsd.org
-.It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
-.It Ta Rob Deker Ta Mt deker@netbsd.org
-.It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
-.It Ta Tracy Di Marco White Ta Mt gendalia@netbsd.org
-.It Ta Jarom\('ir Dolecek Ta Mt jdolecek@netbsd.org
-.It Ta Andy Doran Ta Mt ad@netbsd.org
-.It Ta Roland Dowdeswell Ta Mt elric@netbsd.org
-.It Ta Emmanuel Dreyfus Ta Mt manu@netbsd.org
-.It Ta Matthias Drochner Ta Mt drochner@netbsd.org
-.It Ta Jun Ebihara Ta Mt jun@netbsd.org
-.It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
-.It Ta Stoned Elipot Ta Mt seb@netbsd.org
-.It Ta Enami Tsugutomo Ta Mt enami@netbsd.org
-.It Ta Bernd Ernesti Ta Mt veego@netbsd.org
-.It Ta Erik Fair Ta Mt fair@netbsd.org
-.It Ta Gavan Fantom Ta Mt gavan@netbsd.org
-.It Ta Hubert Feyrer Ta Mt hubertf@netbsd.org
-.It Ta Jason R. Fink Ta Mt jrf@netbsd.org
-.It Ta Matt Fredette Ta Mt fredette@netbsd.org
-.It Ta Thorsten Frueauf Ta Mt frueauf@netbsd.org
-.It Ta Castor Fu Ta Mt castor@netbsd.org
-.It Ta Ichiro Fukuhara Ta Mt ichiro@netbsd.org
-.It Ta Thomas Gerner Ta Mt thomas@netbsd.org
-.It Ta Simon J. Gerraty Ta Mt sjg@netbsd.org
-.It Ta Justin Gibbs Ta Mt gibbs@netbsd.org
-.It Ta Chris Gilbert Ta Mt chris@netbsd.org
-.It Ta Eric Gillespie Ta Mt epg@netbsd.org
-.It Ta Adam Glass Ta Mt glass@netbsd.org
-.It Ta Michael Graff Ta Mt explorer@netbsd.org
-.It Ta Brian C. Grayson Ta Mt bgrayson@netbsd.org
-.It Ta Matthew Green Ta Mt mrg@netbsd.org
-.It Ta Andreas Gustafsson Ta Mt gson@netbsd.org
-.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@netbsd.org
-.It Ta Juergen Hannken-Illjes Ta Mt hannken@netbsd.org
-.It Ta Charles M. Hannum Ta Mt mycroft@netbsd.org
-.It Ta Ben Harris Ta Mt bjh21@netbsd.org
-.It Ta Ross Harvey Ta Mt ross@netbsd.org
-.It Ta Eric Haszlakiewicz Ta Mt erh@netbsd.org
-.It Ta John Hawkinson Ta Mt jhawk@netbsd.org
-.It Ta HAYAKAWA Koichi Ta Mt haya@netbsd.org
-.It Ta Ren\('e Hexel Ta Mt rh@netbsd.org
-.It Ta Michael L. Hitch Ta Mt mhitch@netbsd.org
-.It Ta Christian E. Hopps Ta Mt chopps@netbsd.org
-.It Ta Ken Hornstein Ta Mt kenh@netbsd.org
-.It Ta Marc Horowitz Ta Mt marc@netbsd.org
-.It Ta Eduardo Horvath Ta Mt eeh@netbsd.org
-.It Ta Nick Hudson Ta Mt skrll@netbsd.org
-.It Ta Shell Hung Ta Mt shell@netbsd.org
-.It Ta Martin Husemann Ta Mt martin@netbsd.org
-.It Ta Dean Huxley Ta Mt dean@netbsd.org
-.It Ta Love H\(:ornquist \(oAstrand Ta Mt lha@netbsd.org
-.It Ta Bernardo Innocenti Ta Mt bernie@netbsd.org
-.It Ta Tetsuya Isaki Ta Mt isaki@netbsd.org
-.It Ta ITOH Yasufumi Ta Mt itohy@netbsd.org
-.It Ta IWAMOTO Toshihiro Ta Mt toshii@netbsd.org
-.It Ta Matthew Jacob Ta Mt mjacob@netbsd.org
-.It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@netbsd.org
-.It Ta Darrin Jewell Ta Mt dbj@netbsd.org
-.It Ta Chris Jones Ta Mt cjones@netbsd.org
-.It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org
-.It Ta Takahiro Kambe Ta Mt taca@netbsd.org
-.It Ta Antti Kantee Ta Mt pooka@netbsd.org
-.It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
-.It Ta Mattias Karlsson Ta Mt keihan@netbsd.org
-.It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
-.It Ta Mario Kemper Ta Mt magick@netbsd.org
-.It Ta Thomas Klausner Ta Mt wiz@netbsd.org
-.It Ta Klaus Klein Ta Mt kleink@netbsd.org
-.It Ta Wayne Knowles Ta Mt wdk@netbsd.org
-.It Ta Takayoshi Kochi Ta Mt kochi@netbsd.org
-.It Ta John Kohl Ta Mt jtk@netbsd.org
-.It Ta Paul Kranenburg Ta Mt pk@netbsd.org
-.It Ta Martti Kuparinen Ta Mt martti@netbsd.org
-.It Ta Kevin Lahey Ta Mt kml@netbsd.org
-.It Ta Johnny C. Lam Ta Mt jlam@netbsd.org
-.It Ta Martin J. Laubach Ta Mt mjl@netbsd.org
-.It Ta Ted Lemon Ta Mt mellon@netbsd.org
-.It Ta Frank van der Linden Ta Mt fvdl@netbsd.org
-.It Ta Joel Lindholm Ta Mt joel@netbsd.org
-.It Ta Mike Long Ta Mt mikel@netbsd.org
-.It Ta Warner Losh Ta Mt imp@netbsd.org
-.It Ta Tomasz Luchowski Ta Mt zuntum@netbsd.org
-.It Ta Federico Lupi Ta Mt federico@netbsd.org
-.It Ta Brett Lymn Ta Mt blymn@netbsd.org
-.It Ta Paul Mackerras Ta Mt paulus@netbsd.org
-.It Ta Anders Magnusson Ta Mt ragge@netbsd.org
-.It Ta MAEKAWA Masahide Ta Mt gehenna@netbsd.org
-.It Ta David Maxwell Ta Mt david@netbsd.org
-.It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
-.It Ta Gregory McGarry Ta Mt gmcgarry@netbsd.org
-.It Ta Jared D. McNeill Ta Mt jmcneill@netbsd.org
-.It Ta Neil J. McRae Ta Mt neil@netbsd.org
-.It Ta Perry Metzger Ta Mt perry@netbsd.org
-.It Ta Julio M. Merino Vidal Ta Mt jmmv@netbsd.org
-.It Ta Minoura Makoto Ta Mt minoura@netbsd.org
-.It Ta Luke Mewburn Ta Mt lukem@netbsd.org
-.It Ta der Mouse Ta Mt mouse@netbsd.org
-.It Ta Joseph Myers Ta Mt jsm@netbsd.org
-.It Ta Ken Nakata Ta Mt kenn@netbsd.org
-.It Ta Takeshi Nakayama Ta Mt nakayama@netbsd.org
-.It Ta Phil Nelson Ta Mt phil@netbsd.org
-.It Ta Bob Nestor Ta Mt rnestor@netbsd.org
-.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org
-.It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org
-.It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
-.It Ta Jesse Off Ta Mt joff@netbsd.org
-.It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
-.It Ta OKANO Takayoshi Ta Mt kano@netbsd.org
-.It Ta Masaru Oki Ta Mt oki@netbsd.org
-.It Ta Atsushi Onoe Ta Mt onoe@netbsd.org
-.It Ta Greg Oster Ta Mt oster@netbsd.org
-.It Ta Herb Peyerl Ta Mt hpeyerl@netbsd.org
-.It Ta Matthias Pfaller Ta Mt matthias@netbsd.org
-.It Ta Chris Pinnock Ta Mt cjep@netbsd.org
-.It Ta Dante Profeta Ta Mt dante@netbsd.org
-.It Ta Chris Provenzano Ta Mt proven@netbsd.org
-.It Ta Niels Provos Ta Mt provos@netbsd.org
-.It Ta Michael Rauch Ta Mt mrauch@netbsd.org
-.It Ta Darren Reed Ta Mt darrenr@netbsd.org
-.It Ta Tyler R. Retzlaff Ta Mt rtr@netbsd.org
-.It Ta Scott Reynolds Ta Mt scottr@netbsd.org
-.It Ta Michael Richardson Ta Mt mcr@netbsd.org
-.It Ta Tim Rightnour Ta Mt garbled@netbsd.org
-.It Ta Gordon Ross Ta Mt gwr@netbsd.org
-.It Ta Ilpo Ruotsalainen Ta Mt lonewolf@netbsd.org
-.It Ta Heiko W. Rupp Ta Mt hwr@netbsd.org
-.It Ta David Sainty Ta Mt dsainty@netbsd.org
-.It Ta SAITOH Masanobu Ta Mt msaitoh@netbsd.org
-.It Ta Kazuki Sakamoto Ta Mt sakamoto@netbsd.org
-.It Ta Curt Sampson Ta Mt cjs@netbsd.org
-.It Ta Wilfredo Sanchez Ta Mt wsanchez@netbsd.org
-.It Ta Ty Sarna Ta Mt tsarna@netbsd.org
-.It Ta SATO Kazumi Ta Mt sato@netbsd.org
-.It Ta Jan Schaumann Ta Mt jschauma@netbsd.org
-.It Ta Matthias Scheler Ta Mt tron@netbsd.org
-.It Ta Karl Schilke (rAT) Ta Mt rat@netbsd.org
-.It Ta Amitai Schlair Ta Mt schmonz@netbsd.org
-.It Ta Konrad Schroder Ta Mt perseant@netbsd.org
-.It Ta Lubomir Sedlacik Ta Mt salo@netbsd.org
-.It Ta Reed Shadgett Ta Mt dent@netbsd.org
-.It Ta Tim Shepard Ta Mt shep@netbsd.org
-.It Ta Takeshi Shibagaki Ta Mt shiba@netbsd.org
-.It Ta Takao Shinohara Ta Mt shin@netbsd.org
-.It Ta Takuya SHIOZAKI Ta Mt tshiozak@netbsd.org
-.It Ta Chuck Silvers Ta Mt chs@netbsd.org
-.It Ta Thor Lancelot Simon Ta Mt tls@netbsd.org
-.It Ta Jeff Smith Ta Mt jeffs@netbsd.org
-.It Ta Noriyuki Soda Ta Mt soda@netbsd.org
-.It Ta Wolfgang Solfrank Ta Mt ws@netbsd.org
-.It Ta SOMEYA Yoshihiko Ta Mt someya@netbsd.org
-.It Ta Bill Sommerfeld Ta Mt sommerfeld@netbsd.org
-.It Ta Ignatios Souvatzis Ta Mt is@netbsd.org
-.It Ta Bill Squier Ta Mt groo@netbsd.org
-.It Ta Jonathan Stone Ta Mt jonathan@netbsd.org
-.It Ta Bill Studenmund Ta Mt wrstuden@netbsd.org
-.It Ta Kevin Sullivan Ta Mt sullivan@netbsd.org
-.It Ta SUNAGAWA Keiki Ta Mt kei@netbsd.org
-.It Ta Kimmo Suominen Ta Mt kim@netbsd.org
-.It Ta Shin Takemura Ta Mt takemura@netbsd.org
-.It Ta TAMURA Kent Ta Mt kent@netbsd.org
-.It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
-.It Ta Matt Thomas Ta Mt matt@netbsd.org
-.It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
-.It Ta Christoph Toshok Ta Mt toshok@netbsd.org
-.It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org
-.It Ta Izumi Tsutsui Ta Mt tsutsui@netbsd.org
-.It Ta UCHIYAMA Yasushi Ta Mt uch@netbsd.org
-.It Ta Masao Uebayashi Ta Mt uebayasi@netbsd.org
-.It Ta Shuichiro URATA Ta Mt ur@netbsd.org
-.It Ta Todd Vierling Ta Mt tv@netbsd.org
-.It Ta Aymeric Vincent Ta Mt aymeric@netbsd.org
-.It Ta Paul Vixie Ta Mt vixie@netbsd.org
-.It Ta Krister Walfridsson Ta Mt kristerw@netbsd.org
-.It Ta Lex Wennmacher Ta Mt wennmach@netbsd.org
-.It Ta Leo Weppelman Ta Mt leo@netbsd.org
-.It Ta Assar Westerlund Ta Mt assar@netbsd.org
-.It Ta Todd Whitesel Ta Mt toddpw@netbsd.org
-.It Ta Nathan Williams Ta Mt nathanw@netbsd.org
-.It Ta Rob Windsor Ta Mt windsor@netbsd.org
-.It Ta Dan Winship Ta Mt danw@netbsd.org
-.It Ta Jim Wise Ta Mt jwise@netbsd.org
-.It Ta Michael Wolfson Ta Mt mbw@netbsd.org
-.It Ta Steve Woodford Ta Mt scw@netbsd.org
-.It Ta Colin Wood Ta Mt ender@netbsd.org
-.It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
-.It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
-.It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
-.It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
-.It Ta Christos Zoulas Ta Mt christos@netbsd.org
+.It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
+.It Ta Steve Allen Ta Mt wormey@NetBSD.org
+.It Ta Julian Assange Ta Mt proff@NetBSD.org
+.It Ta Lennart Augustsson Ta Mt augustss@NetBSD.org
+.It Ta Christoph Badura Ta Mt bad@NetBSD.org
+.It Ta Bang Jun-Young Ta Mt junyoung@NetBSD.org
+.It Ta Dieter Baron Ta Mt dillo@NetBSD.org
+.It Ta Robert V. Baron Ta Mt rvb@NetBSD.org
+.It Ta Grant Beattie Ta Mt grant@NetBSD.org
+.It Ta Jason Beegan Ta Mt jtb@NetBSD.org
+.It Ta Erik Berls Ta Mt cyber@NetBSD.org
+.It Ta Hiroyuki Bessho Ta Mt bsh@NetBSD.org
+.It Ta John Birrell Ta Mt jb@NetBSD.org
+.It Ta Mason Loring Bliss Ta Mt mason@NetBSD.org
+.It Ta Rafal Boni Ta Mt rafal@NetBSD.org
+.It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
+.It Ta John Brezak Ta Mt brezak@NetBSD.org
+.It Ta Allen Briggs Ta Mt briggs@NetBSD.org
+.It Ta Mark Brinicombe Ta Mt mark@NetBSD.org
+.It Ta Aaron Brown Ta Mt abrown@NetBSD.org
+.It Ta Andrew Brown Ta Mt atatat@NetBSD.org
+.It Ta David Brownlee Ta Mt abs@NetBSD.org
+.It Ta Frederick Bruckman Ta Mt fredb@NetBSD.org
+.It Ta Jon Buller Ta Mt jonb@NetBSD.org
+.It Ta Simon Burge Ta Mt simonb@NetBSD.org
+.It Ta Robert Byrnes Ta Mt byrnes@NetBSD.org
+.It Ta D'Arcy J.M. Cain Ta Mt darcy@NetBSD.org
+.It Ta Dave Carrel Ta Mt carrel@NetBSD.org
+.It Ta Daniel Carosone Ta Mt dan@NetBSD.org
+.It Ta James Chacon Ta Mt jmc@NetBSD.org
+.It Ta Bill Coldwell Ta Mt billc@NetBSD.org
+.It Ta Julian Coleman Ta Mt jdc@NetBSD.org
+.It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org
+.It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
+.It Ta Alistair Crooks Ta Mt agc@NetBSD.org
+.It Ta Aidan Cully Ta Mt aidan@NetBSD.org
+.It Ta Johan Danielsson Ta Mt joda@NetBSD.org
+.It Ta John Darrow Ta Mt jdarrow@NetBSD.org
+.It Ta Matt DeBergalis Ta Mt deberg@NetBSD.org
+.It Ta Rob Deker Ta Mt deker@NetBSD.org
+.It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.org
+.It Ta Tracy Di Marco White Ta Mt gendalia@NetBSD.org
+.It Ta Jarom\('ir Dolecek Ta Mt jdolecek@NetBSD.org
+.It Ta Andy Doran Ta Mt ad@NetBSD.org
+.It Ta Roland Dowdeswell Ta Mt elric@NetBSD.org
+.It Ta Emmanuel Dreyfus Ta Mt manu@NetBSD.org
+.It Ta Matthias Drochner Ta Mt drochner@NetBSD.org
+.It Ta Jun Ebihara Ta Mt jun@NetBSD.org
+.It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
+.It Ta Stoned Elipot Ta Mt seb@NetBSD.org
+.It Ta Enami Tsugutomo Ta Mt enami@NetBSD.org
+.It Ta Bernd Ernesti Ta Mt veego@NetBSD.org
+.It Ta Erik Fair Ta Mt fair@NetBSD.org
+.It Ta Gavan Fantom Ta Mt gavan@NetBSD.org
+.It Ta Hubert Feyrer Ta Mt hubertf@NetBSD.org
+.It Ta Jason R. Fink Ta Mt jrf@NetBSD.org
+.It Ta Matt Fredette Ta Mt fredette@NetBSD.org
+.It Ta Thorsten Frueauf Ta Mt frueauf@NetBSD.org
+.It Ta Castor Fu Ta Mt castor@NetBSD.org
+.It Ta Ichiro Fukuhara Ta Mt ichiro@NetBSD.org
+.It Ta Thomas Gerner Ta Mt thomas@NetBSD.org
+.It Ta Simon J. Gerraty Ta Mt sjg@NetBSD.org
+.It Ta Justin Gibbs Ta Mt gibbs@NetBSD.org
+.It Ta Chris Gilbert Ta Mt chris@NetBSD.org
+.It Ta Eric Gillespie Ta Mt epg@NetBSD.org
+.It Ta Adam Glass Ta Mt glass@NetBSD.org
+.It Ta Michael Graff Ta Mt explorer@NetBSD.org
+.It Ta Brian C. Grayson Ta Mt bgrayson@NetBSD.org
+.It Ta Matthew Green Ta Mt mrg@NetBSD.org
+.It Ta Andreas Gustafsson Ta Mt gson@NetBSD.org
+.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta Juergen Hannken-Illjes Ta Mt hannken@NetBSD.org
+.It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.org
+.It Ta Ben Harris Ta Mt bjh21@NetBSD.org
+.It Ta Ross Harvey Ta Mt ross@NetBSD.org
+.It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
+.It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
+.It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
+.It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
+.It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.org
+.It Ta Christian E. Hopps Ta Mt chopps@NetBSD.org
+.It Ta Ken Hornstein Ta Mt kenh@NetBSD.org
+.It Ta Marc Horowitz Ta Mt marc@NetBSD.org
+.It Ta Eduardo Horvath Ta Mt eeh@NetBSD.org
+.It Ta Nick Hudson Ta Mt skrll@NetBSD.org
+.It Ta Shell Hung Ta Mt shell@NetBSD.org
+.It Ta Martin Husemann Ta Mt martin@NetBSD.org
+.It Ta Dean Huxley Ta Mt dean@NetBSD.org
+.It Ta Love H\(:ornquist \(oAstrand Ta Mt lha@NetBSD.org
+.It Ta Bernardo Innocenti Ta Mt bernie@NetBSD.org
+.It Ta Tetsuya Isaki Ta Mt isaki@NetBSD.org
+.It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.org
+.It Ta IWAMOTO Toshihiro Ta Mt toshii@NetBSD.org
+.It Ta Matthew Jacob Ta Mt mjacob@NetBSD.org
+.It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.org
+.It Ta Darrin Jewell Ta Mt dbj@NetBSD.org
+.It Ta Chris Jones Ta Mt cjones@NetBSD.org
+.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.org
+.It Ta Takahiro Kambe Ta Mt taca@NetBSD.org
+.It Ta Antti Kantee Ta Mt pooka@NetBSD.org
+.It Ta Masanori Kanaoka Ta Mt kanaoka@NetBSD.org
+.It Ta Mattias Karlsson Ta Mt keihan@NetBSD.org
+.It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@NetBSD.org
+.It Ta Mario Kemper Ta Mt magick@NetBSD.org
+.It Ta Thomas Klausner Ta Mt wiz@NetBSD.org
+.It Ta Klaus Klein Ta Mt kleink@NetBSD.org
+.It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
+.It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
+.It Ta John Kohl Ta Mt jtk@NetBSD.org
+.It Ta Paul Kranenburg Ta Mt pk@NetBSD.org
+.It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
+.It Ta Kevin Lahey Ta Mt kml@NetBSD.org
+.It Ta Johnny C. Lam Ta Mt jlam@NetBSD.org
+.It Ta Martin J. Laubach Ta Mt mjl@NetBSD.org
+.It Ta Ted Lemon Ta Mt mellon@NetBSD.org
+.It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
+.It Ta Joel Lindholm Ta Mt joel@NetBSD.org
+.It Ta Mike Long Ta Mt mikel@NetBSD.org
+.It Ta Warner Losh Ta Mt imp@NetBSD.org
+.It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
+.It Ta Federico Lupi Ta Mt federico@NetBSD.org
+.It Ta Brett Lymn Ta Mt blymn@NetBSD.org
+.It Ta Paul Mackerras Ta Mt paulus@NetBSD.org
+.It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
+.It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
+.It Ta David Maxwell Ta Mt david@NetBSD.org
+.It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.org
+.It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
+.It Ta Jared D. McNeill Ta Mt jmcneill@NetBSD.org
+.It Ta Neil J. McRae Ta Mt neil@NetBSD.org
+.It Ta Perry Metzger Ta Mt perry@NetBSD.org
+.It Ta Julio M. Merino Vidal Ta Mt jmmv@NetBSD.org
+.It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
+.It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta der Mouse Ta Mt mouse@NetBSD.org
+.It Ta Joseph Myers Ta Mt jsm@NetBSD.org
+.It Ta Ken Nakata Ta Mt kenn@NetBSD.org
+.It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
+.It Ta Phil Nelson Ta Mt phil@NetBSD.org
+.It Ta Bob Nestor Ta Mt rnestor@NetBSD.org
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org
+.It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.org
+.It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.org
+.It Ta Jesse Off Ta Mt joff@NetBSD.org
+.It Ta Tatoku Ogaito Ta Mt tacha@NetBSD.org
+.It Ta OKANO Takayoshi Ta Mt kano@NetBSD.org
+.It Ta Masaru Oki Ta Mt oki@NetBSD.org
+.It Ta Atsushi Onoe Ta Mt onoe@NetBSD.org
+.It Ta Greg Oster Ta Mt oster@NetBSD.org
+.It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.org
+.It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
+.It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
+.It Ta Dante Profeta Ta Mt dante@NetBSD.org
+.It Ta Chris Provenzano Ta Mt proven@NetBSD.org
+.It Ta Niels Provos Ta Mt provos@NetBSD.org
+.It Ta Michael Rauch Ta Mt mrauch@NetBSD.org
+.It Ta Darren Reed Ta Mt darrenr@NetBSD.org
+.It Ta Tyler R. Retzlaff Ta Mt rtr@NetBSD.org
+.It Ta Scott Reynolds Ta Mt scottr@NetBSD.org
+.It Ta Michael Richardson Ta Mt mcr@NetBSD.org
+.It Ta Tim Rightnour Ta Mt garbled@NetBSD.org
+.It Ta Gordon Ross Ta Mt gwr@NetBSD.org
+.It Ta Ilpo Ruotsalainen Ta Mt lonewolf@NetBSD.org
+.It Ta Heiko W. Rupp Ta Mt hwr@NetBSD.org
+.It Ta David Sainty Ta Mt dsainty@NetBSD.org
+.It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
+.It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.org
+.It Ta Curt Sampson Ta Mt cjs@NetBSD.org
+.It Ta Wilfredo Sanchez Ta Mt wsanchez@NetBSD.org
+.It Ta Ty Sarna Ta Mt tsarna@NetBSD.org
+.It Ta SATO Kazumi Ta Mt sato@NetBSD.org
+.It Ta Jan Schaumann Ta Mt jschauma@NetBSD.org
+.It Ta Matthias Scheler Ta Mt tron@NetBSD.org
+.It Ta Karl Schilke (rAT) Ta Mt rat@NetBSD.org
+.It Ta Amitai Schlair Ta Mt schmonz@NetBSD.org
+.It Ta Konrad Schroder Ta Mt perseant@NetBSD.org
+.It Ta Lubomir Sedlacik Ta Mt salo@NetBSD.org
+.It Ta Reed Shadgett Ta Mt dent@NetBSD.org
+.It Ta Tim Shepard Ta Mt shep@NetBSD.org
+.It Ta Takeshi Shibagaki Ta Mt shiba@NetBSD.org
+.It Ta Takao Shinohara Ta Mt shin@NetBSD.org
+.It Ta Takuya SHIOZAKI Ta Mt tshiozak@NetBSD.org
+.It Ta Chuck Silvers Ta Mt chs@NetBSD.org
+.It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.org
+.It Ta Jeff Smith Ta Mt jeffs@NetBSD.org
+.It Ta Noriyuki Soda Ta Mt soda@NetBSD.org
+.It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
+.It Ta SOMEYA Yoshihiko Ta Mt someya@NetBSD.org
+.It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.org
+.It Ta Ignatios Souvatzis Ta Mt is@NetBSD.org
+.It Ta Bill Squier Ta Mt groo@NetBSD.org
+.It Ta Jonathan Stone Ta Mt jonathan@NetBSD.org
+.It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
+.It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
+.It Ta SUNAGAWA Keiki Ta Mt kei@NetBSD.org
+.It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
+.It Ta Shin Takemura Ta Mt takemura@NetBSD.org
+.It Ta TAMURA Kent Ta Mt kent@NetBSD.org
+.It Ta Shin'ichiro TAYA Ta Mt taya@NetBSD.org
+.It Ta Matt Thomas Ta Mt matt@NetBSD.org
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
+.It Ta Christoph Toshok Ta Mt toshok@NetBSD.org
+.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.org
+.It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.org
+.It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.org
+.It Ta Masao Uebayashi Ta Mt uebayasi@NetBSD.org
+.It Ta Shuichiro URATA Ta Mt ur@NetBSD.org
+.It Ta Todd Vierling Ta Mt tv@NetBSD.org
+.It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
+.It Ta Paul Vixie Ta Mt vixie@NetBSD.org
+.It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.org
+.It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.org
+.It Ta Leo Weppelman Ta Mt leo@NetBSD.org
+.It Ta Assar Westerlund Ta Mt assar@NetBSD.org
+.It Ta Todd Whitesel Ta Mt toddpw@NetBSD.org
+.It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
+.It Ta Rob Windsor Ta Mt windsor@NetBSD.org
+.It Ta Dan Winship Ta Mt danw@NetBSD.org
+.It Ta Jim Wise Ta Mt jwise@NetBSD.org
+.It Ta Michael Wolfson Ta Mt mbw@NetBSD.org
+.It Ta Steve Woodford Ta Mt scw@NetBSD.org
+.It Ta Colin Wood Ta Mt ender@NetBSD.org
+.It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
+.It Ta Yuji Yamano Ta Mt yyamano@NetBSD.org
+.It Ta Reinoud Zandijk Ta Mt reinoud@NetBSD.org
+.It Ta Maria Zevenhoven Ta Mt maria7@NetBSD.org
+.It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i

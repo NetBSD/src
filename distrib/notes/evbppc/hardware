@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1 2002/12/09 14:03:55 scw Exp $
+.\"	$NetBSD: hardware,v 1.2 2003/07/26 17:07:03 salo Exp $
 .
 .Nx*M
 is a port of
@@ -60,7 +60,7 @@ PCI cards
 .(bullet -compact
 Most MI PCI cards should work, although very few have been tested with
 .Nx*M
-.Lk http://www.netbsd.org/Hardware/pci.html
+.Lk http://www.NetBSD.org/Hardware/pci.html
 .bullet)
 .bullet)
 .

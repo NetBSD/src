@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.13 2002/06/30 13:03:41 lukem Exp $
+.\"	$NetBSD: install,v 1.14 2003/07/26 17:07:20 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ the port-\*M maillist by mailing a line saying
 to
 .Mt majordomo@netsbd.org .
 Also, see
-.Lk http://www.netbsd.org
+.Lk http://www.NetBSD.org
 for more information.
 .Pp
 If you encounter any problems, please report them via the mailing list or the
