@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.54 2004/04/29 16:10:55 jrf Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.55 2004/05/22 22:52:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.54 2004/04/29 16:10:55 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.55 2004/05/22 22:52:14 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, p);
 	if (error)
 		goto bad;
 
@@ -420,7 +420,7 @@ portal_open(v)
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
 	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0);
+			(struct mbuf *) 0, (struct mbuf *) 0, 0, p);
 	if (error)
 		goto bad;
 

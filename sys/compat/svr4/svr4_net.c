@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.35 2003/09/13 08:32:10 jdolecek Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.36 2004/05/22 22:52:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.35 2003/09/13 08:32:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.36 2004/05/22 22:52:13 jonathan Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -203,7 +203,7 @@ svr4_netopen(dev, flag, mode, p)
 	if ((error = falloc(p, &fp, &fd)) != 0)
 		return error;
 
-	if ((error = socreate(family, &so, type, protocol)) != 0) {
+	if ((error = socreate(family, &so, type, protocol, p)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
 		fdremove(p->p_fd, fd);
 		FILE_UNUSE(fp, NULL);
