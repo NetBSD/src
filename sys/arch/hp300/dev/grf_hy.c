@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.13 2001/07/22 13:34:04 wiz Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.14 2001/12/08 03:34:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ hy_mode(gp, cmd, data)
 		fi->npl = gi->gd_planes;
 		fi->bppu = fi->npl;
 		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		bcopy("A1096A", fi->name, 7);	/* ?? */
+		memcpy(fi->name, "A1096A", 7);	/* ?? */
 		fi->attr = 0;			/* ?? */
 		/*
 		 * If mapped, return the UVA where mapped.

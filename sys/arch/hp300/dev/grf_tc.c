@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.17 2001/11/17 23:35:31 gmcgarry Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.18 2001/12/08 03:34:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -430,24 +430,24 @@ tc_mode(gp, cmd, data)
 		/* XXX */
 		switch (gp->g_sw->gd_hwid) {
 		case GID_HRCCATSEYE:
-			bcopy("HP98550", fi->name, 8);
+			memcpy(fi->name, "HP98550", 8);
 			break;
 		case GID_LRCATSEYE:
-			bcopy("HP98549", fi->name, 8);
+			memcpy(fi->name, "HP98549", 8);
 			break;
 		case GID_HRMCATSEYE:
-			bcopy("HP98548", fi->name, 8);
+			memcpy(fi->name, "HP98548", 8);
 			break;
 		case GID_TOPCAT:
 			switch (gi->gd_colors) {
 			case 64:
-				bcopy("HP98547", fi->name, 8);
+				memcpy(fi->name, "HP98547", 8);
 				break;
 			case 16:
-				bcopy("HP98545", fi->name, 8);
+				memcpy(fi->name, "HP98545", 8);
 				break;
 			case 2:
-				bcopy("HP98544", fi->name, 8);
+				memcpy(fi->name, "HP98544", 8);
 				break;
 			}
 			break;

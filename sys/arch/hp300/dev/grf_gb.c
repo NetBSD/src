@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.16 2001/11/17 23:35:31 gmcgarry Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.17 2001/12/08 03:34:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -376,7 +376,7 @@ gb_mode(gp, cmd, data)
 		fi->npl = gi->gd_planes;
 		fi->bppu = fi->npl;
 		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		bcopy("HP98700", fi->name, 8);
+		memcpy(fi->name,  "HP98700", 8);
 		fi->attr = 2;	/* HW block mover */
 		/*
 		 * If mapped, return the UVA where mapped.
