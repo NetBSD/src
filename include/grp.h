@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.9 1998/05/06 19:17:37 kleink Exp $	*/
+/*	$NetBSD: grp.h,v 1.10 1998/06/22 13:29:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -54,7 +54,7 @@
 struct group {
 	char	*gr_name;		/* group name */
 	char	*gr_passwd;		/* group password */
-	int	gr_gid;			/* group id */
+	gid_t	gr_gid;			/* group id */
 	char	**gr_mem;		/* group members */
 };
 
