@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.8 1999/09/28 23:32:04 ad Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.9 1999/10/04 17:10:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -307,16 +307,21 @@ device_reassign(argc, argv)
 	memset(data, 0, dlen);
 
 	cmd.opcode = SCSI_REASSIGN_BLOCKS;
+	cmd.byte2 = 0;
+	cmd.unused[0] = 0;
+	cmd.unused[1] = 0;
+	cmd.unused[2] = 0;
+	cmd.control = 0;
 
 	/* Defect descriptor length. */
-	_lto2l(argc * 4, data->length);
+	_lto2b(argc * 4, data->length);
 
 	/* Build the defect descriptor list. */
 	for (i = 0; i < argc; i++) {
 		blkno = strtoul(argv[i], &cp, 10);
 		if (*cp != '\0')
 			errx(1, "invalid block number: %s\n", argv[i]);
-		_lto4l(blkno, data->defect_descriptor[i].dlbaddr);
+		_lto4b(blkno, data->defect_descriptor[i].dlbaddr);
 	}
 
 	scsi_command(fd, &cmd, sizeof(cmd), data, dlen, 30000, SCCMD_WRITE);
