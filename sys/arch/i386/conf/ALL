@@ -13,11 +13,11 @@ options MFS
 options NFS
 #options IMP	 
 options INET
-#options NS
-#options ISO
-#options TPIP
-#options EON
-#options CCITT
+options NS
+options ISO
+options TPIP
+options EON
+options CCITT
 options ISOFS
 options DDB
 options FDESC
