@@ -25,6 +25,7 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/biosboot.sym
+./usr/mdec/biosboot_ser.sym
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
