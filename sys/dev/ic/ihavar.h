@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.4 2001/09/27 15:11:34 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.5 2001/09/29 14:23:37 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -65,11 +65,7 @@ struct iha_sg_element {
 	u_int32_t sg_len;	/* Data Length  */
 };
 
-struct iha_sglist {
-	struct iha_sg_element sg_element[IHA_MAX_SG_ENTRIES];
-};
-	
-#define IHA_SG_SIZE (sizeof(struct iha_sglist))
+#define IHA_SG_SIZE (sizeof(struct iha_sg_element) * IHA_MAX_SG_ENTRIES)
 
 /*
  * iha_scsi_req_q - SCSI Request structure used by the
@@ -185,7 +181,7 @@ struct iha_softc {
 
 	struct iha_scsi_req_q *sc_scb;		    /* SCB array	     */
 	struct iha_scsi_req_q *sc_actscb;	    /* SCB using SCSI bus    */
-	struct iha_sglist *sc_sglist;
+	struct iha_sg_element *sc_sglist;
 
 	TAILQ_HEAD(, iha_scsi_req_q) sc_freescb,
 				     sc_pendscb,
