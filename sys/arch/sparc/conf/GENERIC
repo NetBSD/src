@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.79 1999/04/26 04:25:38 ad Exp $
+# 	$NetBSD: GENERIC,v 1.80 1999/04/30 21:09:50 abs Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -185,8 +185,9 @@ xbox*	at sbus? slot ? offset ?
 sbus*	at xbox?
 
 ## SBus to PCMCIA bridge
-nell*	at sbus? slot ? offset ?		# PCMCIA bridge
-pcmcia*	at nell?
+# Currently enabling nell* with audioamd* causes panic at attach
+#nell*	at sbus? slot ? offset ?		# PCMCIA bridge
+#pcmcia*	at nell?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -257,9 +258,9 @@ mtty*	at magma?
 mbpp*	at magma?
 
 ## PCMCIA serial interfaces
-com*	at pcmcia?
-pcmcom*	at pcmcia?
-com*	at pcmcom?
+#com*	at pcmcia?
+#pcmcom*	at pcmcia?
+#com*	at pcmcom?
 
 #### Disk controllers and disks
 
@@ -322,8 +323,8 @@ sw0	at obio0 addr 0x0a000000 level 3
 scsibus* at sw?
 
 ## PCMCIA SCSI controllers
-aic*	at pcmcia?
-scsibus* at aic?
+#aic*	at pcmcia?
+#scsibus* at aic?
 
 
 ## These entries find devices on all SCSI busses and assign
@@ -358,8 +359,8 @@ fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
 
 ## PCMCIA IDE controllers
-wdc*	at pcmcia?
-wd*	at wdc?
+#wdc*	at pcmcia?
+#wd*	at wdc?
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -419,21 +420,21 @@ qe*		at qec?
 en0	at sbus? slot ? offset ?
 
 # PCMCIA ethernet devices
-ep*	at pcmcia?
-mbe*	at pcmcia?
-ne*	at pcmcia?
-sm*	at pcmcia?
+#ep*	at pcmcia?
+#mbe*	at pcmcia?
+#ne*	at pcmcia?
+#sm*	at pcmcia?
 
 # MII/PHY support
-exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-tlphy*	at mii? phy ?			# ThunderLAN PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
+#lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+#nsphy*	at mii? phy ?			# NS83840 PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 ## Loopback network interface; required
 pseudo-device	loop
