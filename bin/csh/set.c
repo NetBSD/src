@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.13 1998/07/28 11:41:47 mycroft Exp $	*/
+/*	$NetBSD: set.c,v 1.14 1999/03/19 12:58:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.13 1998/07/28 11:41:47 mycroft Exp $");
+__RCSID("$NetBSD: set.c,v 1.14 1999/03/19 12:58:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,12 +291,12 @@ dolet(v, t)
 		p = xset(p, &v);
 	    }
 	}
-	if (op == '=')
+	if (op == '=') {
 	    if (hadsub)
 		asx(vp, subscr, p);
 	    else
 		set(vp, p);
-	else if (hadsub) {
+	} else if (hadsub) {
 	    struct varent *gv = getvx(vp, subscr);
 
 	    asx(vp, subscr, operate(op, gv->vec[subscr - 1], p));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.16 1998/08/19 01:31:46 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.17 1999/03/19 12:58:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.16 1998/08/19 01:31:46 thorpej Exp $");
+__RCSID("$NetBSD: sem.c,v 1.17 1999/03/19 12:58:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,9 +125,9 @@ execute(t, wanttty, pipein, pipeout)
 	 * parsed.
 	 */
 	while (t->t_dtyp == NODE_COMMAND)
-	    if (eq(t->t_dcom[0], STRnice))
-		if (t->t_dcom[1])
-		    if (strchr("+-", t->t_dcom[1][0]))
+	    if (eq(t->t_dcom[0], STRnice)) {
+		if (t->t_dcom[1]) {
+		    if (strchr("+-", t->t_dcom[1][0])) {
 			if (t->t_dcom[2]) {
 			    setname("nice");
 			    t->t_nice =
@@ -137,28 +137,28 @@ execute(t, wanttty, pipein, pipeout)
 			}
 			else
 			    break;
-		    else {
+		    } else {
 			t->t_nice = 4;
 			lshift(t->t_dcom, 1);
 			t->t_dflg |= F_NICE;
 		    }
-		else
+		} else
 		    break;
-	    else if (eq(t->t_dcom[0], STRnohup))
+	    } else if (eq(t->t_dcom[0], STRnohup)) {
 		if (t->t_dcom[1]) {
 		    t->t_dflg |= F_NOHUP;
 		    lshift(t->t_dcom, 1);
 		}
 		else
 		    break;
-	    else if (eq(t->t_dcom[0], STRtime))
+	    } else if (eq(t->t_dcom[0], STRtime)) {
 		if (t->t_dcom[1]) {
 		    t->t_dflg |= F_TIME;
 		    lshift(t->t_dcom, 1);
 		}
 		else
 		    break;
-	    else
+	    } else
 		break;
 
 	/* is it a command */
