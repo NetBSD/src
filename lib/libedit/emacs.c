@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.16 2003/11/02 20:07:58 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.17 2004/08/13 12:10:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.16 2003/11/02 20:07:58 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.17 2004/08/13 12:10:39 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -71,7 +71,10 @@ em_delete_or_list(EditLine *el, int c __attribute__((__unused__)))
 			return (CC_ERROR);
 		}
 	} else {
-		c_delafter(el, el->el_state.argument);	/* delete after dot */
+		if (el->el_state.doingarg)
+			c_delafter(el, el->el_state.argument);
+		else
+			c_delafter1(el);
 		if (el->el_line.cursor > el->el_line.lastchar)
 			el->el_line.cursor = el->el_line.lastchar;
 				/* bounds check */
@@ -479,4 +482,27 @@ em_inc_search_prev(EditLine *el, int c __attribute__((__unused__)))
 
 	el->el_search.patlen = 0;
 	return (ce_inc_search(el, ED_SEARCH_PREV_HISTORY));
+}
+
+
+/* em_delete_prev_char():
+ *	Delete the character to the left of the cursor
+ *	[^?]
+ */
+protected el_action_t
+/*ARGSUSED*/
+em_delete_prev_char(EditLine *el, int c __attribute__((__unused__)))
+{
+
+	if (el->el_line.cursor <= el->el_line.buffer)
+		return (CC_ERROR);
+
+	if (el->el_state.doingarg)
+		c_delbefore(el, el->el_state.argument);
+	else
+		c_delbefore1(el);
+	el->el_line.cursor -= el->el_state.argument;
+	if (el->el_line.cursor < el->el_line.buffer)
+		el->el_line.cursor = el->el_line.buffer;
+	return (CC_REFRESH);
 }
