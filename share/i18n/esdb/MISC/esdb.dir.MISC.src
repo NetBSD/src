@@ -1,0 +1,5 @@
+# $NetBSD: esdb.dir.MISC.src,v 1.1 2003/06/27 08:40:58 tshiozak Exp $
+
+Shift_JIS			MISC/Shift_JIS.esdb
+Big5				MISC/Big5.esdb
+GB18030				MISC/GB18030.esdb

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.234 2003/06/26 09:24:25 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.235 2003/06/27 08:41:00 tshiozak Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -274,6 +274,26 @@
 ./usr/share/groff_font/devps
 ./usr/share/groff_font/devps/generate
 ./usr/share/groff_font/devutf8
+./usr/share/i18n
+./usr/share/i18n/csmapper
+./usr/share/i18n/csmapper/CP
+./usr/share/i18n/csmapper/EBCDIC
+./usr/share/i18n/csmapper/GB
+./usr/share/i18n/csmapper/ISO-8859
+./usr/share/i18n/csmapper/ISO646
+./usr/share/i18n/csmapper/JIS
+./usr/share/i18n/csmapper/KS
+./usr/share/i18n/csmapper/MISC
+./usr/share/i18n/esdb
+./usr/share/i18n/esdb/CP
+./usr/share/i18n/esdb/EBCDIC
+./usr/share/i18n/esdb/EUC
+./usr/share/i18n/esdb/ISO-2022
+./usr/share/i18n/esdb/ISO-8859
+./usr/share/i18n/esdb/ISO646
+./usr/share/i18n/esdb/MISC
+./usr/share/i18n/esdb/UTF
+./usr/share/i18n/iconv
 ./usr/share/info
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
