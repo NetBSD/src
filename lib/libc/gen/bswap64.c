@@ -1,4 +1,4 @@
-/*  $NetBSD: bswap64.c,v 1.4 2003/08/09 22:37:49 martin Exp $    */
+/*  $NetBSD: bswap64.c,v 1.5 2003/08/10 08:24:52 mrg Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap64.c,v 1.4 2003/08/09 22:37:49 martin Exp $");
+__RCSID("$NetBSD: bswap64.c,v 1.5 2003/08/10 08:24:52 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -38,8 +38,8 @@ bswap64(x)
 	 */
 	u_int32_t tl, th;
 
-	th = bswap32(x & 0x00000000ffffffffUL);
-	tl = bswap32((x >> 32) & 0x00000000ffffffffUL);
+	th = bswap32((u_int32_t)(x & 0x00000000ffffffffULL));
+	tl = bswap32((u_int32_t)((x >> 32) & 0x00000000ffffffffULL));
 	return ((u_int64_t)th << 32) | tl;
 #endif
 }
