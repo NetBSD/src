@@ -1,23 +1,12 @@
-/*-
- * This code is derived from software copyrighted by the Free Software
- * Foundation.
- *
- * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
- */
-
-#ifndef lint
-static char sccsid[] = "@(#)errarg.cc	6.3 (Berkeley) 5/8/91";
-#endif /* not lint */
-
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -26,16 +15,16 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdio.h>
 #include "assert.h"
 #include "errarg.h"
-#include "lib.h"
 
-errarg::errarg(const char *p) : s(p == 0 ? "(null)" : p), type(STRING)
+errarg::errarg(const char *p) : type(STRING)
 {
+  s = p ? p : "(null)";
 }
 
 errarg::errarg() : type(EMPTY)
@@ -47,16 +36,19 @@ errarg::errarg(unsigned char cc) : type(CHAR)
   c = cc;
 }
 
-errarg::errarg(int nn) : type(INTEGER), n(nn)
+errarg::errarg(int nn) : type(INTEGER)
 {
+  n = nn;
 }
 
-errarg::errarg(char cc) : type(CHAR), c(cc)
+errarg::errarg(char cc) : type(CHAR)
 {
+  c = cc;
 }
 
-errarg::errarg(double dd) : type(DOUBLE), d(dd)
+errarg::errarg(double dd) : type(DOUBLE)
 {
+  d = dd;
 }
 
 int errarg::empty() const
@@ -64,6 +56,10 @@ int errarg::empty() const
   return type == EMPTY;
 }
 
+extern "C" {
+  const char *itoa(int);
+}
+	    
 void errarg::print() const
 {
   switch (type) {

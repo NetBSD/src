@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdio.h>
@@ -39,7 +39,7 @@ static char *salloc(int len, int *sizep)
 
 static void sfree(char *ptr, int)
 {
-  delete ptr;
+  a_delete ptr;
 }
 
 static char *sfree_alloc(char *ptr, int oldsz, int len, int *sizep)
@@ -48,7 +48,7 @@ static char *sfree_alloc(char *ptr, int oldsz, int len, int *sizep)
     *sizep = oldsz;
     return ptr;
   }
-  delete ptr;
+  a_delete ptr;
   if (len == 0) {
     *sizep = 0;
     return 0;
@@ -64,7 +64,7 @@ static char *srealloc(char *ptr, int oldsz, int oldlen, int newlen, int *sizep)
     return ptr;
   }
   if (newlen == 0) {
-    delete ptr;
+    a_delete ptr;
     *sizep = 0;
     return 0;
   }
@@ -72,7 +72,7 @@ static char *srealloc(char *ptr, int oldsz, int oldlen, int newlen, int *sizep)
     char *p = new char[*sizep = newlen*2];
     if (oldlen < newlen && oldlen != 0)
       memcpy(p, ptr, oldlen);
-    delete ptr;
+    a_delete ptr;
     return p;
   }
 }

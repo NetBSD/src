@@ -1,3 +1,4 @@
+// -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -18,10 +19,18 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdlib.h>
+#include "device.h"
+#include "defs.h"
 
-#define FATAL_ERROR_EXIT_CODE 3
+const char *device = DEVICE;
 
-void fatal_error_exit()
+struct device_init {
+  device_init();
+} _device_init;
+
+device_init::device_init()
 {
-  exit(FATAL_ERROR_EXIT_CODE);
+  char *tem = getenv("GROFF_TYPESETTER");
+  if (tem)
+    device = tem;
 }

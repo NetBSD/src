@@ -1,3 +1,4 @@
+// -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -17,11 +18,11 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-#include <stdlib.h>
+#include "lib.h"
+#include "searchpath.h"
+#include "macropath.h"
+#include "defs.h"
 
-#define FATAL_ERROR_EXIT_CODE 3
+#define MACROPATH_ENVVAR "GROFF_TMAC_PATH"
 
-void fatal_error_exit()
-{
-  exit(FATAL_ERROR_EXIT_CODE);
-}
+search_path macro_path(MACROPATH_ENVVAR, MACROPATH);
