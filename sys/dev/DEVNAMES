@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.69 2001/07/28 12:42:34 tsutsui Exp $
+#	$NetBSD: DEVNAMES,v 1.70 2001/07/30 20:04:59 ad Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -653,6 +653,7 @@ mkclock			newsmips
 mlhsc			amiga
 mlhsc			amigappc
 mlx			MI
+mly			MI
 mms			bebox
 mms			i386
 moxa			MI
