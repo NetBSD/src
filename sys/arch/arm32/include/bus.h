@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 1999/03/23 21:29:04 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 1999/03/29 12:42:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -253,8 +253,14 @@ struct bus_space {
 #define	bus_space_barrier(t, h, o, l, f)				\
 	(*(t)->bs_barrier)((t)->bs_cookie, (h), (o), (l), (f))
 
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
 #define	BUS_BARRIER_READ	0x01
 #define	BUS_BARRIER_WRITE	0x02
+#endif
 
 /*
  * Bus read (single) operations.
