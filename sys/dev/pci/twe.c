@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.40 2003/09/21 18:35:31 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.41 2003/09/21 19:01:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.40 2003/09/21 18:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.41 2003/09/21 19:01:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,10 @@ static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
 static int	twe_match(struct device *, struct cfdata *, void *);
 static int	twe_param_get(struct twe_softc *, int, int, size_t,
-    void (*)(struct twe_ccb *, int), struct twe_param **);
+		    void (*)(struct twe_ccb *, int), struct twe_param **);
+static int	twe_param_get_1(struct twe_softc *, int, int, uint8_t *);
+static int	twe_param_get_2(struct twe_softc *, int, int, uint16_t *);
+static int	twe_param_get_4(struct twe_softc *, int, int, uint32_t *);
 static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
@@ -306,7 +309,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int size, i, rv, rseg;
 	size_t max_segs, max_xfer;
-	struct twe_param *dtp, *ctp;
+	struct twe_param *dtp;
 	bus_dma_segment_t seg;
 	struct twe_cmd *tc;
 	struct twe_attach_args twea;
@@ -453,16 +456,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	   		continue;
 	   	}
 
-		rv = twe_param_get(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_Capacity, 4, NULL, &ctp);
+		rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + i,
+		    TWE_PARAM_UNITINFO_Capacity, &sc->sc_dsize[i]);
 		if (rv != 0) {
 			aprint_error("%s: error %d fetching capacity for unit %d\n",
 			    sc->sc_dv.dv_xname, rv, i);
 			continue;
 		}
 
-		sc->sc_dsize[i] = le32toh(*(u_int32_t *)ctp->tp_data);
-		free(ctp, M_DEVBUF);
 		sc->sc_nunits++;
 	}
 	free(dtp, M_DEVBUF);
@@ -491,8 +492,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 static int
 twe_reset(struct twe_softc *sc)
 {
-	struct twe_param *tp;
-	u_int aen, status;
+	uint16_t aen;
+	u_int status;
 	volatile u_int32_t junk;
 	int got, rv;
 
@@ -513,16 +514,14 @@ twe_reset(struct twe_softc *sc)
 
 	/* Pull AENs out of the controller; look for a soft reset AEN. */
 	for (got = 0;;) {
-		rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
-		    2, NULL, &tp);
+		rv = twe_param_get_2(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
+		    &aen);
 		if (rv != 0)
 			printf("%s: error %d while draining response queue\n",
 			    sc->sc_dv.dv_xname, rv);
-		aen = TWE_AEN_CODE(le16toh(*(u_int16_t *)tp->tp_data));
-		free(tp, M_DEVBUF);
-		if (aen == TWE_AEN_QUEUE_EMPTY)
+		if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY)
 			break;
-		if (aen == TWE_AEN_SOFT_RESET)
+		if (TWE_AEN_CODE(aen) == TWE_AEN_SOFT_RESET)
 			got = 1;
 	}
 	if (!got) {
@@ -708,6 +707,55 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	if (rv != 0)
 		printf("%s: unable to retrieve AEN (%d)\n",
 		    sc->sc_dv.dv_xname, rv);
+}
+
+/*
+ * These are short-hand functions that execute TWE_OP_GET_PARAM to
+ * fetch 1, 2, and 4 byte parameter values, respectively.
+ */
+static int
+twe_param_get_1(struct twe_softc *sc, int table_id, int param_id,
+    uint8_t *valp)
+{
+	struct twe_param *tp;
+	int rv;
+
+	rv = twe_param_get(sc, table_id, param_id, 1, NULL, &tp);
+	if (rv != 0)
+		return (rv);
+	*valp = *(uint8_t *)tp->tp_data;
+	free(tp, M_DEVBUF);
+	return (0);
+}
+
+static int
+twe_param_get_2(struct twe_softc *sc, int table_id, int param_id,
+    uint16_t *valp)
+{
+	struct twe_param *tp;
+	int rv;
+
+	rv = twe_param_get(sc, table_id, param_id, 2, NULL, &tp);
+	if (rv != 0)
+		return (rv);
+	*valp = le16toh(*(uint16_t *)tp->tp_data);
+	free(tp, M_DEVBUF);
+	return (0);
+}
+
+static int
+twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
+    uint32_t *valp)
+{
+	struct twe_param *tp;
+	int rv;
+
+	rv = twe_param_get(sc, table_id, param_id, 4, NULL, &tp);
+	if (rv != 0)
+		return (rv);
+	*valp = le32toh(*(uint32_t *)tp->tp_data);
+	free(tp, M_DEVBUF);
+	return (0);
 }
 
 /*
@@ -1378,26 +1426,27 @@ done:
 static void
 twe_describe_controller(struct twe_softc *sc)
 {
-	struct twe_param *p[7];
+	struct twe_param *p[6];
 	int rv = 0;
-	
+	uint8_t ports;
+
 	/* get the port count */
-	rv |= twe_param_get(sc, TWE_PARAM_CONTROLLER,
-		TWE_PARAM_CONTROLLER_PortCount, 1, NULL, &p[0]);
+	rv |= twe_param_get_1(sc, TWE_PARAM_CONTROLLER,
+		TWE_PARAM_CONTROLLER_PortCount, &ports);
 
 	/* get version strings */
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_Mon,
-		16, NULL, &p[1]);
+		16, NULL, &p[0]);
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_FW,
-		16, NULL, &p[2]);
+		16, NULL, &p[1]);
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_BIOS,
-		16, NULL, &p[3]);
+		16, NULL, &p[2]);
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_PCB,
-		8, NULL, &p[4]);
+		8, NULL, &p[3]);
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_ATA,
-		8, NULL, &p[5]);
+		8, NULL, &p[4]);
 	rv |= twe_param_get(sc, TWE_PARAM_VERSION, TWE_PARAM_VERSION_PCI,
-		8, NULL, &p[6]);
+		8, NULL, &p[5]);
 
 	if (rv) {
 		/* some error occurred */
@@ -1407,13 +1456,13 @@ twe_describe_controller(struct twe_softc *sc)
 	}
 
 	aprint_normal("%s: %d ports, Firmware %.16s, BIOS %.16s\n",
-		sc->sc_dv.dv_xname,
-		p[0]->tp_data[0], p[2]->tp_data, p[3]->tp_data);
+		sc->sc_dv.dv_xname, ports,
+		p[1]->tp_data, p[2]->tp_data);
 
 	aprint_verbose("%s: Monitor %.16s, PCB %.8s, Achip %.8s, Pchip %.8s\n",
 		sc->sc_dv.dv_xname,
-		p[1]->tp_data, p[4]->tp_data,
-		p[5]->tp_data, p[6]->tp_data);
+		p[0]->tp_data, p[3]->tp_data,
+		p[4]->tp_data, p[5]->tp_data);
 
 	free(p[0], M_DEVBUF);
 	free(p[1], M_DEVBUF);
@@ -1421,5 +1470,4 @@ twe_describe_controller(struct twe_softc *sc)
 	free(p[3], M_DEVBUF);
 	free(p[4], M_DEVBUF);
 	free(p[5], M_DEVBUF);
-	free(p[6], M_DEVBUF);
 }
