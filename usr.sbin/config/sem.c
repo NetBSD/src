@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.5 1996/03/17 06:29:37 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.6 1996/03/17 07:05:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -789,18 +789,46 @@ adddev(name, at, loclist, flags)
 			goto bad;
 		ib = i->i_base;
 		cp = intern(atbuf);
+
+		/*
+		 * Devices can attach to two types of things: Attributes,
+		 * and other devices (which have the appropriate attributes
+		 * to allow attachment).
+		 *
+		 * (1) If we're attached to an attribute, then we don't need
+		 *     look at the parent base device to see what attributes
+		 *     it has, and make sure that we can attach to them.
+		 *
+		 * (2) If we're attached to a real device (i.e. named in
+		 *     the config file), we want to remember that so that
+		 *     at cross-check time, if the device we're attached to
+		 *     is missing but other devices which also provide the
+		 *     attribute are present, we don't get a false "OK."
+		 *
+		 * (3) If the thing we're attached to is an attribute
+		 *     but is actually named in the config file, we still
+		 *     have to remember its devbase.
+		 */
+
+		/* Figure out parent's devbase, to satisfy case (3). */
+		ab = ht_lookup(devbasetab, cp);
+
+		/* Are we an attribute?  Case (1). */
 		if ((attr = ht_lookup(attrtab, cp)) == NULL) {
 			/*
+			 * A real, non-attribute device was named.  Case (2).
+			 *
 			 * Have to work a bit harder to see whether we have
 			 * something like "tg0 at esp0" (where esp is merely
 			 * not an attribute) or "tg0 at nonesuch0" (where
 			 * nonesuch is not even a device).
 			 */
-			if ((ab = ht_lookup(devbasetab, cp)) == NULL) {
+			if (ab == NULL) {
 				error("%s at %s: `%s' unknown",
 				    name, at, atbuf);
 				goto bad;
 			}
+
 			/*
 			 * See if the named parent carries an attribute
 			 * that allows it to supervise device ib.

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1996/03/17 06:29:23 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1996/03/17 07:05:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -383,17 +383,26 @@ hasparent(i)
 	register struct nvlist *nv;
 	int atunit = i->i_atunit;
 
-	if (i->i_atdev != NULL && devbase_has_instances(i->i_atdev, atunit))
-		return (1);
 	/*
-	 * XXX This does not necessarily do the right thing.  Consider
-	 * XXX the case where you have device A which can attach (via an
-	 * XXX interface attribute) to devices B and C, and you define
-	 * XXX instances of device B, but instances of A at instances of
-	 * XXX C.  This code, as well as the code to generate/pack
-	 * XXX the parent locators, get that wrong, and you end up
-	 * XXX with instances of A at instances of B, even though it should
-	 * XXX have been an error.  This bug has been here for a while.
+	 * We determine whether or not a device has a parent in in one
+	 * of two ways:
+	 *	(1) If a parent device was named in the config file,
+	 *	    i.e. cases (2) and (3) in sem.c:adddev(), then
+	 *	    we search its devbase for a matching unit number.
+	 *	(2) If the device was attach to an attribute, then we
+	 *	    search all attributes the device can be attached to
+	 *	    for parents (with appropriate unit numebrs) that
+	 *	    may be able to attach the device.
+	 */
+
+	/*
+	 * Case (1): A parent was named.  Either it's configured, or not.
+	 */
+	if (i->i_atdev != NULL)
+		return (devbase_has_instances(i->i_atdev, atunit));
+
+	/*
+	 * Case (2): No parent was named.  Look for devs that provide the attr.
 	 */
 	if (i->i_atattr != NULL)
 		for (nv = i->i_atattr->a_refs; nv != NULL; nv = nv->nv_next)
