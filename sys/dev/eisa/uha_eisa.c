@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.7 1997/03/29 02:32:30 mycroft Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.7.2.1 1997/05/13 03:02:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -62,7 +62,6 @@ struct cfattach uha_eisa_ca = {
 #ifndef	DDB
 #define Debugger() panic("should call debugger here (uha_eisa.c)")
 #endif /* ! DDB */
-#define KVTOPHYS(x)	vtophys(x)
 
 int	u24_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct uha_probe_data *));
@@ -112,6 +111,7 @@ uha_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ea->ea_iot;
+	bus_dma_tag_t dmat = ea->ea_dmat;
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
@@ -130,8 +130,11 @@ uha_eisa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = dmat;
 	if (!u24_find(iot, ioh, &upd))
 		panic("uha_eisa_attach: u24_find failed!");
+
+	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, upd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
@@ -239,7 +242,8 @@ u24_start_mbox(sc, mscp)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, U24_OGMPTR, KVTOPHYS(mscp));
+	bus_space_write_4(iot, ioh, U24_OGMPTR,
+	    mscp->dmamap_self->dm_segs[0].ds_addr);
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x80);
 	else
