@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.88 2004/10/29 12:57:26 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.89 2004/10/29 16:42:47 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.88 2004/10/29 12:57:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.89 2004/10/29 16:42:47 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1861,66 +1861,66 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	for (i = 0; i < 256; i++) {
 		if (iot[i].d.desc == NULL)
 			continue;
-		printf("id %d:\t", i);
+		logprintf("id %d:\t", i);
 		switch (iot[i].d.desc->bDescriptorSubtype) {
 		case UDESCSUB_AC_INPUT:
-			printf("AC_INPUT type=%s\n", uaudio_get_terminal_name
-			       (UGETW(iot[i].d.it->wTerminalType)));
+			logprintf("AC_INPUT type=%s\n", uaudio_get_terminal_name
+				  (UGETW(iot[i].d.it->wTerminalType)));
 			break;
 		case UDESCSUB_AC_OUTPUT:
-			printf("AC_OUTPUT type=%s ", uaudio_get_terminal_name
-			       (UGETW(iot[i].d.ot->wTerminalType)));
-			printf("src=%d\n", iot[i].d.ot->bSourceId);
+			logprintf("AC_OUTPUT type=%s ", uaudio_get_terminal_name
+				  (UGETW(iot[i].d.ot->wTerminalType)));
+			logprintf("src=%d\n", iot[i].d.ot->bSourceId);
 			break;
 		case UDESCSUB_AC_MIXER:
-			printf("AC_MIXER src=");
+			logprintf("AC_MIXER src=");
 			for (j = 0; j < iot[i].d.mu->bNrInPins; j++)
-				printf("%d ", iot[i].d.mu->baSourceId[j]);
-			printf("\n");
+				logprintf("%d ", iot[i].d.mu->baSourceId[j]);
+			logprintf("\n");
 			break;
 		case UDESCSUB_AC_SELECTOR:
-			printf("AC_SELECTOR src=");
+			logprintf("AC_SELECTOR src=");
 			for (j = 0; j < iot[i].d.su->bNrInPins; j++)
-				printf("%d ", iot[i].d.su->baSourceId[j]);
-			printf("\n");
+				logprintf("%d ", iot[i].d.su->baSourceId[j]);
+			logprintf("\n");
 			break;
 		case UDESCSUB_AC_FEATURE:
-			printf("AC_FEATURE src=%d\n", iot[i].d.fu->bSourceId);
+			logprintf("AC_FEATURE src=%d\n", iot[i].d.fu->bSourceId);
 			break;
 		case UDESCSUB_AC_PROCESSING:
-			printf("AC_PROCESSING src=");
+			logprintf("AC_PROCESSING src=");
 			for (j = 0; j < iot[i].d.pu->bNrInPins; j++)
-				printf("%d ", iot[i].d.pu->baSourceId[j]);
-			printf("\n");
+				logprintf("%d ", iot[i].d.pu->baSourceId[j]);
+			logprintf("\n");
 			break;
 		case UDESCSUB_AC_EXTENSION:
-			printf("AC_EXTENSION src=");
+			logprintf("AC_EXTENSION src=");
 			for (j = 0; j < iot[i].d.eu->bNrInPins; j++)
-				printf("%d ", iot[i].d.eu->baSourceId[j]);
-			printf("\n");
+				logprintf("%d ", iot[i].d.eu->baSourceId[j]);
+			logprintf("\n");
 			break;
 		default:
-			printf("unknown audio control (subtype=%d)\n",
-			       iot[i].d.desc->bDescriptorSubtype);
+			logprintf("unknown audio control (subtype=%d)\n",
+				  iot[i].d.desc->bDescriptorSubtype);
 		}
 		for (j = 0; j < iot[i].inputs_size; j++) {
 			int k;
-			printf("\tinput%d: ", j);
+			logprintf("\tinput%d: ", j);
 			tml = iot[i].inputs[j];
 			if (tml == NULL) {
-				printf("NULL\n");
+				logprintf("NULL\n");
 				continue;
 			}
 			for (k = 0; k < tml->size; k++)
-				printf("%s ", uaudio_get_terminal_name
-				       (tml->terminals[k]));
-			printf("\n");
+				logprintf("%s ", uaudio_get_terminal_name
+					  (tml->terminals[k]));
+			logprintf("\n");
 		}
-		printf("\toutput: ");
+		logprintf("\toutput: ");
 		tml = iot[i].output;
 		for (j = 0; j < tml->size; j++)
-			printf("%s ", uaudio_get_terminal_name(tml->terminals[j]));
-		printf("\n");
+			logprintf("%s ", uaudio_get_terminal_name(tml->terminals[j]));
+		logprintf("\n");
 	}
 #endif
 
