@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.23 2000/07/09 20:57:51 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.24 2000/07/09 21:58:43 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -175,9 +175,9 @@ extern int stdinnode;
 extern int fbnode;
 
 /* Interrupt handlers. */
+int zscheckintr __P((void *));
 static int zshard __P((void *));
 static int zssoft __P((void *));
-static struct intrhand levelsoft = { zssoft, 0, IPL_SOFTSERIAL };
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -274,15 +274,14 @@ zs_attach(zsc, zsd, pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel;
-	static int didintr, prevpri;
+	int s, channel, softpri = PIL_TTY;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
 		return;
 	}
 
-	printf(" softpri %d\n", PIL_TTY);
+	printf(" softpri %d\n", softpri);
 
 	/*
 	 * Initialize software state for each channel.
@@ -362,17 +361,13 @@ zs_attach(zsc, zsd, pri)
 	 * to the interrupt handlers aren't used.  Note, we only do this
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
-	if (!didintr) {
-		didintr = 1;
-		prevpri = pri;
-		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0,
-				   zshard, NULL);
-		intr_establish(PIL_TTY, &levelsoft); /*XXX*/
-	} else if (pri != prevpri)
-		panic("broken zs interrupt scheme");
+	bus_intr_establish(zsc->zsc_bustag, pri, 0, zshard, zsc);
+	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
+		panic("zsattach: could not establish soft interrupt\n");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    zsc->zsc_dev.dv_xname, "intr");
+
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -416,81 +411,76 @@ zs_print(aux, name)
 	return (UNCONF);
 }
 
+/* Deprecate this? */
 static volatile int zssoftpending;
 
-/*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
- */
 static int
 zshard(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int unit, rr3, rval, softreq;
+	struct zsc_softc *zsc = (struct zsc_softc *)arg;
+	int rr3, rval;
 
-	rval = softreq = 0;
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		struct zs_chanstate *cs;
-
-		zsc = zs_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rr3 = zsc_intr_hard(zsc);
+	rval = 0;
+	while ((rr3 = zsc_intr_hard(zsc))) {
 		/* Count up the interrupts. */
-		if (rr3) {
-			rval |= rr3;
-			zsc->zsc_intrcnt.ev_count++;
-		}
-		if ((cs = zsc->zsc_cs[0]) != NULL)
-			softreq |= zsc->zsc_cs[0]->cs_softreq;
-		if ((cs = zsc->zsc_cs[1]) != NULL)
-			softreq |= zsc->zsc_cs[1]->cs_softreq;
+		rval |= rr3;
+		zsc->zsc_intrcnt.ev_count++;
 	}
-
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
+	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
+	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
+	    zsc->zsc_softintr) {
 		zssoftpending = PIL_TTY;
-		send_softint(-1, PIL_TTY, &levelsoft);
+		softintr_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
 }
 
+int
+zscheckintr(arg)
+	void *arg;
+{
+	struct zsc_softc *zsc;
+	int unit, rval;
+
+	rval = 0;
+	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
+
+		zsc = zs_cd.cd_devs[unit];
+		if (zsc == NULL)
+			continue;
+		rval = (zshard((void *)zsc) || rval);
+	}
+	return (rval);
+}
+
+
 /*
- * Similar scheme as for zshard (look at all of them)
+ * We need this only for TTY_DEBUG purposes.
  */
 static int
 zssoft(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int s, unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return (0);
-	zssoftpending = 0;
+	struct zsc_softc *zsc = (struct zsc_softc *)arg;
+	int s;
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		zsc = zs_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void)zsc_intr_soft(zsc);
+	zssoftpending = 0;
+	(void)zsc_intr_soft(zsc);
 #ifdef TTY_DEBUG
-		{
-			struct zstty_softc *zst0 = zsc->zsc_cs[0]->cs_private;
-			struct zstty_softc *zst1 = zsc->zsc_cs[1]->cs_private;
-			if (zst0->zst_overflows || zst1->zst_overflows ) {
-				struct trapframe *frame = (struct trapframe *)arg;
-
-				printf("zs silo overflow from %p\n",
-				       (long)frame->tf_pc);
-			}
+	{
+		struct zstty_softc *zst0 = zsc->zsc_cs[0]->cs_private;
+		struct zstty_softc *zst1 = zsc->zsc_cs[1]->cs_private;
+		if (zst0->zst_overflows || zst1->zst_overflows ) {
+			struct trapframe *frame = (struct trapframe *)arg;
+			
+			printf("zs silo overflow from %p\n",
+			       (long)frame->tf_pc);
 		}
-#endif
 	}
+#endif
 	splx(s);
 	return (1);
 }
