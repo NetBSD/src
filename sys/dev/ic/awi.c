@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.32 2001/06/25 12:06:14 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.33 2001/06/25 12:09:51 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -944,6 +944,10 @@ awi_start(ifp)
 				break;
 			}
 			IF_DEQUEUE(&sc->sc_mgtq, m0);
+#ifdef AWI_DEBUG
+			if (awi_dump)
+				awi_dump_pkt(sc, m0, -1);
+#endif
 		} else {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				break;
@@ -964,6 +968,10 @@ awi_start(ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			AWI_BPF_MTAP(sc, m0, AWI_BPF_NORM);
 			m0 = awi_fix_txhdr(sc, m0);
+#ifdef AWI_DEBUG
+			if (awi_dump)
+				awi_dump_pkt(sc, m0, -1);
+#endif
 			if (sc->sc_wep_algo != NULL && m0 != NULL)
 				m0 = awi_wep_encrypt(sc, m0, 1);
 			if (m0 == NULL) {
@@ -972,10 +980,6 @@ awi_start(ifp)
 			}
 			ifp->if_opackets++;
 		}
-#ifdef AWI_DEBUG
-		if (awi_dump)
-			awi_dump_pkt(sc, m0, -1);
-#endif
 		AWI_BPF_MTAP(sc, m0, AWI_BPF_RAW);
 		len = 0;
 		for (m = m0; m != NULL; m = m->m_next) {
