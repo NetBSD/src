@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.19 1995/06/11 22:33:52 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.20 1995/09/19 22:42:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -382,11 +382,12 @@ stio2stios(t, ts)
 }
 
 int
-sunos_ioctl(p, uap, retval)
+sunos_ioctl(p, v, retval)
 	register struct proc *p;
-	struct sunos_ioctl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_ioctl_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register int (*ctl)();
