@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.8 1999/09/08 21:17:58 jsm Exp $	*/
+/*	$NetBSD: assorted.c,v 1.9 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.8 1999/09/08 21:17:58 jsm Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.9 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,7 @@ struct ship *ship, *from;
 	Write(W_POINTS, from, points, 0, 0, 0);
 	unboard(ship, ship, 0);		/* all offense */
 	unboard(ship, ship, 1);		/* all defense */
-	switch (die()) {
+	switch (dieroll()) {
 	case 3:
 	case 4:		/* ship may sink */
 		Write(W_SINK, ship, 1, 0, 0, 0);

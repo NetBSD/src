@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2000/11/30 21:50:58 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.16 2000/11/30 22:02:20 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -60,7 +60,7 @@ extern char nobells;			/* -b, don't ring bell before Signal */
 extern gid_t gid;
 extern gid_t egid;
 
-#define die()		((rand() >> 3) % 6 + 1)
+#define dieroll()		((rand() >> 3) % 6 + 1)
 #define sqr(a)		((a) * (a))
 #define abs(a)		((a) > 0 ? (a) : -(a))
 #define min(a,b)	((a) < (b) ? (a) : (b))

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.10 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.11 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.10 1999/09/30 18:01:33 jsm Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.11 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ unfoul()
 			    !is_toughmelee(sp, to, 0, 0))
 				continue;
 			for (i = fouled2(sp, to); --i >= 0;)
-				if (die() <= 2)
+				if (dieroll() <= 2)
 					cleanfoul(sp, to, 0);
 		}
 	}
@@ -173,12 +173,12 @@ int key;
 		index = fromstrength/10;
 		if (index > 8)
 			index = 8;
-		toinjured = MT[index][2 - die() / 3];
+		toinjured = MT[index][2 - dieroll() / 3];
 		totalto += toinjured;
 		index = strengthto/10;
 		if (index > 8)
 			index = 8;
-		frominjured = MT[index][2 - die() / 3];
+		frominjured = MT[index][2 - dieroll() / 3];
 		totalfrom += frominjured;
 		menfrom -= frominjured;
 		mento -= toinjured;
@@ -392,7 +392,7 @@ compcombat()
 			if (hit >= 0) {
 				if (load != L_GRAPE)
 					hit = hit > 10 ? 10 : hit;
-				table(shootat, load, hit, closest, sp, die());
+				table(shootat, load, hit, closest, sp, dieroll());
 			}
 		}
 	}
@@ -439,8 +439,8 @@ next()
 		return -1;
 	}
 	Write(W_TURN, SHIP(0), turn, 0, 0, 0);
-	if (turn % 7 == 0 && (die() >= cc->windchange || !windspeed)) {
-		switch (die()) {
+	if (turn % 7 == 0 && (dieroll() >= cc->windchange || !windspeed)) {
+		switch (dieroll()) {
 		case 1:
 			winddir = 1;
 			break;
@@ -464,7 +464,7 @@ next()
 		if (winddir < 1)
 			winddir += 8;
 		if (windspeed)
-			switch (die()) {
+			switch (dieroll()) {
 			case 1:
 			case 2:
 				windspeed--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.8 1999/09/08 21:17:59 jsm Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.9 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.8 1999/09/08 21:17:59 jsm Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.9 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ acceptcombat()
 		if (windspeed == 6 && temp <= 3)
 			hit--;
 		if (hit >= 0) {
-			roll = die();
+			roll = dieroll();
 			if (load == L_GRAPE)
 				chits = hit;
 			else {
@@ -232,7 +232,7 @@ grapungrap()
 		switch (sgetch("Attempt to grapple or ungrapple $$: ",
 			sp, 1)) {
 		case 'g':
-			if (die() < 3
+			if (dieroll() < 3
 			    || ms->nationality == capship(sp)->nationality) {
 				Write(W_GRAP, ms, sp->file->index, 0, 0, 0);
 				Write(W_GRAP, sp, player, 0, 0, 0);
@@ -245,7 +245,7 @@ grapungrap()
 			for (i = grappled2(ms, sp); --i >= 0;) {
 				if (ms->nationality
 					== capship(sp)->nationality
-				    || die() < 3) {
+				    || dieroll() < 3) {
 					cleangrapple(ms, sp, 0);
 					Msg("Attempt succeeds!");
 					makesignal(ms, "ungrappling with $$",
@@ -270,7 +270,7 @@ unfoulplayer()
 		if (sgetch("Attempt to unfoul with the $$? ", to, 1) != 'y')
 			continue;
 		for (i = fouled2(ms, to); --i >= 0;) {
-			if (die() <= 2) {
+			if (dieroll() <= 2) {
 				cleanfoul(ms, to, 0);
 				Msg("Attempt succeeds!");
 				makesignal(ms, "Unfouling $$", to);
