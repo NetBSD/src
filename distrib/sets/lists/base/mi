@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153 2000/03/14 09:06:50 shin Exp $
+# $NetBSD: mi,v 1.154 2000/03/15 12:17:27 soren Exp $
 .
 ./altroot
 ./bin
@@ -83,6 +83,7 @@
 ./sbin/init
 ./sbin/ipf
 ./sbin/lmcctl
+./sbin/mbrlabel
 ./sbin/mknod
 ./sbin/modload
 ./sbin/modunload
@@ -574,7 +575,6 @@
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
-./usr/sbin/mbrlabel
 ./usr/sbin/mdconfig
 ./usr/sbin/mdsetimage
 ./usr/sbin/mk-amd-map
