@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.10 1994/01/03 23:53:39 mycroft Exp $
+ *	$Id: wd7000.c,v 1.11 1994/03/06 17:19:21 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -359,7 +359,7 @@ wds_scsi_cmd(struct scsi_xfer *sxp)
 		return TRY_AGAIN_LATER;
 	}
 
-	DELAY(10000);
+	delay(10000);
 	/*printf("%08x/%08x mbox: %02x %02x %02x %02x\n", &r->cmd, KVTOPHYS(&r->cmd),
 		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
 		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);*/
@@ -369,7 +369,7 @@ repoll:		printf("wds%d: polling.", unit);
 		i = 0;
 		while( (inb(base+WDS_STAT) & WDS_IRQ) == 0) {
 			printf(".");
-			DELAY(10000);
+			delay(10000);
 			if(++i == 10) {
 				printf("failed %02x\n", inb(base+WDS_IRQSTAT));
 				/*r->busy = 0;*/
@@ -411,11 +411,11 @@ wdsintr(int unit)
 	u_char c;
 
 	/*printf("stat=%02x\n", inb(wds[unit].addr + WDS_STAT));*/
-	DELAY(1000);
+	delay(1000);
 	c = inb(wds[unit].addr + WDS_IRQSTAT);
 	printf("wdsintr: %02x\n", c);
 	if( (c&WDSI_MASK) == WDSI_MSVC) {
-		DELAY(1000);
+		delay(1000);
 		c = c & ~WDSI_MASK;
 		flushcache();
 		in = &wds[unit].imbs[c];
@@ -544,7 +544,7 @@ wds_getvers(int unit)
 		return -1;
 	}
 
-	DELAY(10000);
+	delay(10000);
 	/*printf("%08x/%08x mbox: %02x %02x %02x %02x\n", &r->cmd, KVTOPHYS(&r->cmd),
 		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
 		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);*/
@@ -554,7 +554,7 @@ wds_getvers(int unit)
 		i = 0;
 		while( (inb(base+WDS_STAT) & WDS_IRQ) == 0) {
 			printf(".");
-			DELAY(10000);
+			delay(10000);
 			if(++i == 10) {
 				printf("failed %02x\n", inb(base+WDS_IRQSTAT));
 				/*r->busy = 0;*/
@@ -624,7 +624,7 @@ wds_init(struct isa_device *dev)
 	for(i=0; i<4; i++)
 		if( (inb(base+WDS_STAT) & WDS_RDY) != 0) {
 			goto ready;
-		DELAY(10);
+		delay(10);
 	}
 	return 1;
 
@@ -637,9 +637,9 @@ ready:
 	 * the controller exists. reset and init.
 	 */
 	outb(base+WDS_HCR, WDSH_SCSIRESET|WDSH_ASCRESET);
-	DELAY(3);
+	delay(3);
 	outb(base+WDS_HCR, WDSH_DRQEN);
-	DELAY(20000);
+	delay(20000);
 
 #if 1
 	outb(0xd6, 0xc3);
@@ -654,7 +654,7 @@ ready:
 			if( (inb(base+WDS_STAT) & (WDS_RDY)) == WDS_RDY)
 				break;
 			printf(".");
-			DELAY(10000);
+			delay(10000);
 		}
 		if( (inb(base+WDS_STAT) & (WDS_RDY)) != WDS_RDY) {
 			printf("failed\n");

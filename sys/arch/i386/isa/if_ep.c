@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.19 1994/03/04 01:31:50 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.20 1994/03/06 17:19:01 mycroft Exp $
  */
 /*
  * TODO:
@@ -172,12 +172,12 @@ isa_epprobe(is)
 	u_short k;
 
 	outw(BASE + EP_COMMAND, GLOBAL_RESET);
-	DELAY(1000);
+	delay(1000);
 	elink_reset();	/* global reset to ELINK_ID_PORT */
-	DELAY(1000);
+	delay(1000);
 	outb(ELINK_ID_PORT, 0x00);
 	elink_idseq(ELINK_509_POLY);
-	DELAY(1000);
+	delay(1000);
 
 	/*
 	 * MFG_ID should have 0x6d50.
@@ -351,11 +351,11 @@ epinit(unit)
 	GO_WINDOW(1);
 	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {
 		outw(BASE + EP_COMMAND, START_TRANSCEIVER);
-		DELAY(1000);
+		delay(1000);
 	}
 	if (ifp->if_flags & IFF_LINK0) {
 		outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
-		DELAY(1000);
+		delay(1000);
 		if((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
 			GO_WINDOW(4);
 			outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
@@ -883,7 +883,7 @@ epreadeeprom(id_port, offset)
 {
 	int     i, data = 0;
 	outb(id_port, 0x80 + offset);
-	DELAY(1000);
+	delay(1000);
 	for (i = 0; i < 16; i++)
 		data = (data << 1) | (inw(id_port) & 1);
 	return (data);
@@ -899,7 +899,7 @@ epbusyeeprom(is)
 	while (i++ < 100) {
 		j = inw(BASE + EP_W0_EEPROM_COMMAND);
 		if (j & EEPROM_BUSY)
-			DELAY(100);
+			delay(100);
 		else
 			break;
 	}
