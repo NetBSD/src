@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.39.2.2 1997/07/17 13:42:49 bouyer Exp $
+#	$NetBSD: files.sparc,v 1.39.2.3 1997/08/26 15:20:30 bouyer Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -94,8 +94,8 @@ device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device audio
-attach audio at mainbus, obio, sbus
+device audioamd: audio
+attach audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/amd7930.c		audio
 file	arch/sparc/sparc/amd7930intr.s		audio
 

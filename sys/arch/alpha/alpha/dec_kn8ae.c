@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.8.2.1 1997/07/01 17:33:03 bouyer Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.8.2.2 1997/08/26 15:20:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.2.1 1997/07/01 17:33:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.2.2 1997/08/26 15:20:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,8 @@ dec_kn8ae_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "scsi") == 0);
-		netboot = (strcmp(b->protocol, "bootp") == 0);
-		netboot = (strcmp(b->protocol, "mop") == 0);
+		netboot = (strcmp(b->protocol, "bootp") == 0) ||
+		    (strcmp(b->protocol, "mop") == 0);
 #if	BDEBUG
 		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
 		    b->bus, b->slot, b->channel);
