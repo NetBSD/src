@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.8 2003/09/08 06:18:49 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.9 2003/09/08 07:09:53 wiz Exp $	*/
 /*	$KAME: setkey.c,v 1.29 2003/09/08 06:08:52 itojun Exp $	*/
 
 /*
@@ -93,7 +93,8 @@ void
 usage()
 {
 
-	printf("usage: setkey [-v] -c\n");
+	printf("usage: setkey [-v] file ...\n");
+	printf("       setkey [-v] -c\n");
 	printf("       setkey [-v] -f filename\n");
 	printf("       setkey [-Palv] -D\n");
 	printf("       setkey [-Pv] -F\n");
