@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.14 1998/09/11 07:20:48 mycroft Exp $	*/
+/*	$NetBSD: mknod.c,v 1.15 1998/09/11 07:22:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.14 1998/09/11 07:20:48 mycroft Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.15 1998/09/11 07:22:13 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -390,6 +390,7 @@ usage()
 {
 
 	fprintf(stderr, "usage: mknod [-F format] name [b | c] major minor\n");
+	fprintf(stderr, "       mknod [-F format] name [b | c] major unit subunit\n");
 	fprintf(stderr, "       mknod name [b | c] number\n");
 	exit(1);
 }
