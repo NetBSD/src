@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.8 2000/04/29 00:42:26 mycroft Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.9 2000/05/01 12:30:30 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -104,7 +104,7 @@ void	 __CTRACE(const char *fmt, ...);
 int	 __delay(void);
 unsigned int __hash(char *s, int len);
 void	 __id_subwins(WINDOW *orig);
-void	 __init_getch(char *sp);
+void	 __init_getch(void);
 void	 __init_acs(void);
 char	*__longname(char *bp, char *def);	/* Original BSD version */
 int	 __mvcur(int ly, int lx, int y, int x, int in_refresh);
