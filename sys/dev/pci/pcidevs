@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.58 1998/05/04 05:51:19 thorpej Exp $
+$NetBSD: pcidevs,v 1.59 1998/05/05 17:22:04 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -477,6 +477,7 @@ vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
 vendor ZORAN		0x11de	Zoran Corporation
+vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
@@ -496,6 +497,7 @@ vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
+vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
@@ -503,7 +505,9 @@ vendor C4T		0x6374	c't Magazin
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
 vendor TRIGEM2		0x8800	Trigem Computer (2nd PCI Vendor ID)
+vendor PROLAN		0x8c4a	ProLAN
 vendor COMPUTONE	0x8e0e	Computone Corperation
+vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
 vendor ATRONICS		0x907f	Atronics
 vendor ARC		0xedd8	ARC Logic
@@ -661,6 +665,9 @@ product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P			0xf130	NetFlex 3/P
 
+/* Compex products - XXX better descriptions */
+product COMPEX NE2KETHER	0x1401	Ethernet
+
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
 product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
@@ -786,6 +793,9 @@ product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product ITT AGX016	0x0001	AGX016
 product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 
+/* KTI products - XXX better descriptions */
+product KTI NE2KETHER	0x3000	Ethernet
+
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
 
@@ -809,6 +819,9 @@ product MYLEX 960P	0x0001	DAC960P RAID controller
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
+
+/* NetVin products - XXX better descriptions */
+product NETVIN 5000	0x5000	5000 Ethernet
 
 /* National Semiconductor products */
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
@@ -847,6 +860,9 @@ product OPTI 82C822	0xc822	82C822
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
+
+/* ProLAN products - XXX better descriptions */
+product PROLAN NE2KETHER 0x1980 Ethernet
 
 /* Promise products */
 product PROMISE DC5030	0x5300	DC5030
@@ -906,6 +922,9 @@ product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
 
 /* STB Systems products */
 product STB2 VELOCITY128 0x0018	Velocity128 (AGP)
+
+/* Surecom Technology products */
+product SURECOM NE34	0x0e34	NE-34 Ethernet
 
 /* Symphony Labs products */
 product SYMPHONY 82C101	0x0001	82C101
