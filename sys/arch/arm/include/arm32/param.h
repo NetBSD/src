@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2004/12/23 04:39:41 joff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -53,7 +53,7 @@
 
 #define SSIZE           1               /* initial stack size/NBPG */
 #define SINCR           1               /* increment of stack/NBPG */
-#define UPAGES          2               /* pages of u-area */
+#define UPAGES          16              /* pages of u-area */
 #define USPACE          (UPAGES * NBPG) /* total size of u-area */
 
 #ifndef MSGBUFSIZE
