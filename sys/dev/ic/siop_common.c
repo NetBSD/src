@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.17 2002/04/20 00:15:54 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.18 2002/04/22 09:43:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.17 2002/04/20 00:15:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.18 2002/04/22 09:43:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ siop_setuptables(siop_cmd)
 		siop_cmd->siop_tables->msg_out[2] = siop_cmd->xs->xs_tag_id + 1;
 		siop_cmd->siop_tables->t_msgout.count = htole32(3);
 		msgoffset = 3;
-		siop_cmd->tag = siop_cmd->xs->xs_tag_id + 1;
+		siop_cmd->tag = siop_cmd->xs->xs_tag_id;
 	} else
 		siop_cmd->tag = 0;
 	if (sc->targets[target]->status == TARST_ASYNC) {
