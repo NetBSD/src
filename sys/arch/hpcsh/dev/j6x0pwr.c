@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.1 2003/10/18 01:38:39 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
