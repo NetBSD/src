@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.10 1998/03/04 13:51:57 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.11 1998/07/26 22:35:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -270,7 +270,7 @@ int auth_cmd P((int, char *[]));
 int ayt_status P((void));
 int tn P((int, char *[]));
 void command P((int, char *, int));
-void cmdrc P((char *, char *));
+void cmdrc P((const char *, const char *));
 unsigned long sourceroute P((char *, char **, unsigned long *));
 
 /* main.c */
@@ -342,7 +342,7 @@ void env_opt_end P((int));
 int telrcv P((void));
 int rlogin_susp P((void));
 int Scheduler P((int));
-void telnet P((char *));
+void telnet P((const char *));
 void xmitAO P((void));
 void xmitEL P((void));
 void xmitEC P((void));

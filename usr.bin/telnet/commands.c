@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.23 1998/07/09 18:34:02 msaitoh Exp $	*/
+/*	$NetBSD: commands.c,v 1.24 1998/07/26 22:35:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.23 1998/07/09 18:34:02 msaitoh Exp $");
+__RCSID("$NetBSD: commands.c,v 1.24 1998/07/26 22:35:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -2146,7 +2146,8 @@ tn(argc, argv)
     char *srp = 0;
     unsigned long srlen;
 #endif
-    char *cmd, *hostp = 0, *portp = 0, *user = 0;
+    char *cmd, *hostp = 0, *portp = 0;
+    const char *user = 0;
 #ifdef __GNUC__	/* Avoid vfork clobbering */
     (void) &user;
 #endif
@@ -2606,7 +2607,7 @@ static char rcbuf[128];
 
 void
 cmdrc(m1, m2)
-	char *m1, *m2;
+	const char *m1, *m2;
 {
     register Command *c;
     FILE *rcfile;
@@ -2728,7 +2729,7 @@ cmdrc(m1, m2)
  */
 	unsigned long
 sourceroute(arg, cpp, lenp)
-	char	*arg;
+	char *arg;
 	char	**cpp;
 	unsigned long *lenp;
 {

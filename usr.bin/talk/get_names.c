@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.6 1998/07/06 06:55:40 mrg Exp $	*/
+/*	$NetBSD: get_names.c,v 1.7 1998/07/26 22:26:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.6 1998/07/06 06:55:40 mrg Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.7 1998/07/26 22:26:29 mycroft Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -57,8 +57,8 @@ get_names(argc, argv)
 	char *argv[];
 {
 	char hostname[MAXHOSTNAMELEN + 1];
-	char *his_name, *my_name;
-	char *my_machine_name, *his_machine_name;
+	const char *his_name, *my_name;
+	const char *my_machine_name, *his_machine_name;
 	char *his_tty;
 	char *cp;
 	char *names;
