@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.1 1996/01/31 23:19:34 mark Exp $ */
+/* $NetBSD: console.c,v 1.2 1996/02/05 16:49:01 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,7 +41,7 @@
  * Created      : 17/09/94
  * Last updated : 15/11/95
  *
- *    $Id: console.c,v 1.1 1996/01/31 23:19:34 mark Exp $
+ *    $Id: console.c,v 1.2 1996/02/05 16:49:01 mark Exp $
  */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@
 
 #include "vt.h"
 
-#define CONSOLE_VERSION "[V203A] "
+#define CONSOLE_VERSION "[V203B] "
 
 /*
  * Externals
