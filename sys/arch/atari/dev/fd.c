@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.43 2002/10/23 09:10:50 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.44 2002/11/01 11:31:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -743,7 +743,8 @@ register struct fd_softc	*sc;
 #endif
 		bp->b_resid = sc->io_bytes;
 
-		disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		biodone(bp);
 	}

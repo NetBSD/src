@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.168 2002/10/23 09:13:44 jdolecek Exp $	*/
+/*	$NetBSD: cd.c,v 1.169 2002/11/01 11:31:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.168 2002/10/23 09:13:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.169 2002/11/01 11:31:59 mrg Exp $");
 
 #include "rnd.h"
 
@@ -826,7 +826,7 @@ cdstart(periph)
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
 		if (error) {
-			disk_unbusy(&cd->sc_dk, 0); 
+			disk_unbusy(&cd->sc_dk, 0, 0);
 			printf("%s: not queued, error %d\n",
 			    cd->sc_dev.dv_xname, error);
 		}
@@ -840,7 +840,8 @@ cddone(xs)
 	struct cd_softc *cd = (void *)xs->xs_periph->periph_dev;
 
 	if (xs->bp != NULL) {
-		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
+		    (xs->bp->b_flags & B_READ));;
 #if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif

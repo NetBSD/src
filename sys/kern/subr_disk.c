@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.44 2002/11/01 03:34:07 enami Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.45 2002/11/01 11:32:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.44 2002/11/01 03:34:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.45 2002/11/01 11:32:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -286,7 +286,7 @@ disk_busy(struct disk *diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(struct disk *diskp, long bcount)
+disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 	int s;
 	struct timeval dv_time, diff_time;
@@ -305,8 +305,13 @@ disk_unbusy(struct disk *diskp, long bcount)
 
 	diskp->dk_timestamp = dv_time;
 	if (bcount > 0) {
-		diskp->dk_bytes += bcount;
-		diskp->dk_xfer++;
+		if (read) {
+			diskp->dk_rbytes += bcount;
+			diskp->dk_rxfer++;
+		} else {
+			diskp->dk_wbytes += bcount;
+			diskp->dk_wxfer++;
+		}
 	}
 }
 
@@ -321,8 +326,10 @@ disk_resetstat(struct disk *diskp)
 {
 	int s = splbio(), t;
 
-	diskp->dk_xfer = 0;
-	diskp->dk_bytes = 0;
+	diskp->dk_rxfer = 0;
+	diskp->dk_rbytes = 0;
+	diskp->dk_wxfer = 0;
+	diskp->dk_wbytes = 0;
 
 	t = splclock();
 	diskp->dk_attachtime = mono_time;
@@ -390,7 +397,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	int error;
 
 	if (where == NULL) {
-		*sizep = disk_count * sizeof(struct disk_sysctl);
+		*sizep = disk_count * sizeof(sdisk);
 		return (0);
 	}
 
@@ -409,9 +416,13 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		if (left < sizeof(struct disk_sysctl))
 			break;
 		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));
-		sdisk.dk_xfer = diskp->dk_xfer;
+		sdisk.dk_xfer = diskp->dk_rxfer + diskp->dk_wxfer;
+		sdisk.dk_rxfer = diskp->dk_rxfer;
+		sdisk.dk_wxfer = diskp->dk_wxfer;
 		sdisk.dk_seek = diskp->dk_seek;
-		sdisk.dk_bytes = diskp->dk_bytes;
+		sdisk.dk_bytes = diskp->dk_rbytes + diskp->dk_wbytes;
+		sdisk.dk_rbytes = diskp->dk_rbytes;
+		sdisk.dk_wbytes = diskp->dk_wbytes;
 		sdisk.dk_attachtime_sec = diskp->dk_attachtime.tv_sec;
 		sdisk.dk_attachtime_usec = diskp->dk_attachtime.tv_usec;
 		sdisk.dk_timestamp_sec = diskp->dk_timestamp.tv_sec;
@@ -430,7 +441,6 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	simple_unlock(&disklist_slock);
 	return (error);
 }
-
 
 struct bufq_fcfs {
 	TAILQ_HEAD(, buf) bq_head;	/* actual list of buffers */

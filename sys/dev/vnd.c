@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.87 2002/10/23 09:13:05 jdolecek Exp $	*/
+/*	$NetBSD: vnd.c,v 1.88 2002/11/01 11:31:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.87 2002/10/23 09:13:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.88 2002/11/01 11:31:56 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -592,7 +592,7 @@ vndiodone(bp)
 
 	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
 	pbp->b_resid -= resid;
-	disk_unbusy(&vnd->sc_dkdev, resid);
+	disk_unbusy(&vnd->sc_dkdev, resid, (pbp->b_flags & B_READ));
 	vnx->vx_pending--;
 
 	if (vbp->vb_buf.b_error) {
