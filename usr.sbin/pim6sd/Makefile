@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.6 2000/11/01 06:19:35 itojun Exp $
+# $NetBSD: Makefile,v 1.7 2001/05/10 18:50:33 itojun Exp $
 
 PROG=	pim6sd
 SRCS=	mld6.c mld6_proto.c \
 	inet6.c kern.c main.c config.c debug.c routesock.c vers.c callout.c \
 	route.c vif.c timer.c mrt.c pim6.c pim6_proto.c rp.c crc.c trace.c \
 	cfparse.y cftoken.l
-CFLAGS+= -g
 CPPFLAGS+=-I. -I${.CURDIR}
 CPPFLAGS+=-DINET6 -DPIM -DIOCTL_OK_ON_RAW_SOCKET
 CPPFLAGS+=-DHAVE_STDARG_H -DYY_NO_UNPUT -DHAVE_GETIFADDRS
