@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.6 1999/02/12 01:10:06 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.7 1999/02/12 15:01:08 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -19,7 +19,7 @@ INSTALL_INFO?=	install-info
 .txi.info .texi.info .texinfo.info:
 	@${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
 
-.if defined(TEXINFO) && !empty(TEXINFO) && ${MKSHARE} != "no"
+.if defined(TEXINFO) && !empty(TEXINFO) && ${MKINFO} != "no"
 INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
 FILES+=		${INFOFILES}
 
@@ -37,7 +37,7 @@ FILESMODE_${F}=	${INFOMODE}
 FILESNAME_${F}=	${F:T}
 .endfor
 
-.if ${MKSHARE} != "no"
+.if ${MKINFO} != "no"
 all: ${INFOFILES}
 .else
 all:
