@@ -1,10 +1,14 @@
-.\"	$NetBSD: whatis,v 1.14 2002/07/08 14:42:51 lukem Exp $
+.\"	$NetBSD: whatis,v 1.15 2003/07/18 17:56:48 mbw Exp $
 .
 .Nx \*V
 is the seventh major release for the \*M.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
+A longstanding sun4c MMU bug has been squashed.  sun4c models should be 
+more stable and SPARCstation 1, SPARCstation 1+, and Sun IPC models should
+run substantially faster.
+.It
 Enable support for DHCP net booting in the standard kernels,
 and try bootp/DHCP before bootparams during net booting.
 .It
