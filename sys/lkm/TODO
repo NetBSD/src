@@ -1,6 +1,8 @@
-$NetBSD: TODO,v 1.5 2001/09/18 20:18:20 jdolecek Exp $
+$NetBSD: TODO,v 1.6 2001/12/12 00:05:30 jdolecek Exp $
 
 Always a lot to do.  :)
+
+o  Make LKMs work on PowerPC platforms
 
 o  Learn how loadable devices can configure themselves, like the interrupt,
    dma, probing, attaching, etc.  Then start adding some of those to the
