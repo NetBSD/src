@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.45 1998/09/18 14:38:48 enami Exp $	*/
+/*	$NetBSD: ast.c,v 1.46 2000/05/20 18:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -169,7 +169,7 @@ astattach(parent, self, aux)
 	/*
 	 * Enable the master interrupt.
 	 */
-	bus_space_write_1(iot, sc->sc_slaveioh[3], 7, 0x80);
+	bus_space_write_1(iot, sc->sc_slaveioh[3], com_scratch, 0x80);
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;
@@ -196,7 +196,7 @@ astintr(arg)
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = ~bus_space_read_1(iot, sc->sc_slaveioh[3], 7) & alive;
+	bits = ~bus_space_read_1(iot, sc->sc_slaveioh[3], com_scratch) & alive;
 	if (bits == 0)
 		return (0);
 
@@ -209,7 +209,8 @@ astintr(arg)
 		TRY(2);
 		TRY(3);
 #undef TRY
-		bits = ~bus_space_read_1(iot, sc->sc_slaveioh[3], 7) & alive;
+		bits = ~bus_space_read_1(iot, sc->sc_slaveioh[3],
+		    com_scratch) & alive;
 		if (bits == 0)
 			return (1);
  	}
