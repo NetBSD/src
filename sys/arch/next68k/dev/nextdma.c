@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.10 1999/01/27 06:08:29 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.11 1999/02/13 09:44:50 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -199,7 +199,8 @@ next_dmamap_sync(t, map, offset, len, ops)
 	 * @@@ should probably be fixed to use offset and len args.
 	 * should also optimize this to work on pages for larger regions?
 	 */
-	if (ops & BUS_DMASYNC_PREWRITE) {
+	if ((ops & BUS_DMASYNC_PREWRITE) ||
+			(ops & BUS_DMASYNC_PREREAD)) {
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
@@ -211,7 +212,8 @@ next_dmamap_sync(t, map, offset, len, ops)
 		}
 	}
 
-	if (ops & BUS_DMASYNC_POSTREAD) {
+	if ((ops & BUS_DMASYNC_POSTREAD) ||
+			(ops & BUS_DMASYNC_POSTWRITE)) {
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
@@ -417,6 +419,10 @@ next_dma_print(nd)
 	dd_saved_stop   = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP);
 
 	if (nd->_nd_map) {
+		printf("NDMAP: nd->_nd_map->dm_mapsize = %d\n",
+				nd->_nd_map->dm_mapsize);
+		printf("NDMAP: nd->_nd_map->dm_nsegs = %d\n",
+				nd->_nd_map->dm_nsegs);
 		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_addr = 0x%08lx\n",
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
 		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_len = %d\n",
@@ -425,6 +431,10 @@ next_dma_print(nd)
 		printf("NDMAP: nd->_nd_map = NULL\n");
 	}
 	if (nd->_nd_map_cont) {
+		printf("NDMAP: nd->_nd_map_cont->dm_mapsize = %d\n",
+				nd->_nd_map_cont->dm_mapsize);
+		printf("NDMAP: nd->_nd_map_cont->dm_nsegs = %d\n",
+				nd->_nd_map_cont->dm_nsegs);
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_addr = 0x%08lx\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
