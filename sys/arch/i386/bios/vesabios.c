@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.8 2002/10/02 05:47:11 thorpej Exp $ */
+/* $NetBSD: vesabios.c,v 1.9 2003/01/01 01:24:19 thorpej Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,6 @@ vesabios_print(aux, pnp)
 	struct vesabiosdev_attach_args *vbaa = aux;
 
 	if (pnp)
-		printf("%s at %s", vbaa->vbaa_type, pnp);
+		aprint_normal("%s at %s", vbaa->vbaa_type, pnp);
 	return (UNCONF);
 }
