@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.17 2002/02/13 08:17:39 ross Exp $
+.\"	$NetBSD: ipsec.4,v 1.18 2002/09/04 00:12:52 wiz Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -301,7 +301,7 @@ policy against AH tunnel or any IPsec encapsulating policy with AH
 like
 .Dq Li esp/tunnel/A-B/use ah/transport/A-B/require
 .Pc ,
-tunnelled packets will be rejected.
+tunneled packets will be rejected.
 This is because we enforce policy check on inner packet on reception,
 and AH authenticates encapsulating
 .Pq outer
