@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2001/12/12 17:27:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.36 2001/12/14 16:55:14 thorpej Exp $
 
 REQUIRETOOLS=	yes
 
@@ -77,8 +77,8 @@ ${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if !empty(HAVE_GCC28)
-NOPIC=		# defined
-NOPROFILE=	# defined
+MKPIC:=		no
+MKPROFILE:=	no
 
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
