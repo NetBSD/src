@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.39 1995/04/10 19:46:56 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.40 1995/04/21 21:55:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1484,13 +1484,65 @@ void
 vfs_unmountall()
 {
 	register struct mount *mp, *nmp;
-	int allerror;
+	int allerror, error;
 
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
-		allerror |= dounmount(mp, MNT_FORCE, &proc0);
+		if (error = dounmount(mp, MNT_FORCE, &proc0)) {
+			printf("unmount of %s failed with error %d\n",
+			    mp->mnt_stat.f_mntonname, error);
+			allerror = 1;
+		}
 	}
 	if (allerror)
-		printf("some file systems would not unmount\n");
+		printf("WARNING: some file systems would not unmount\n");
+}
+
+/*
+ * Sync and unmount file systems before shutting down.
+ */
+void
+vfs_shutdown()
+{
+	register struct buf *bp;
+	int iter, nbusy;
+
+	/* XXX Should suspend scheduling. */
+	(void) spl0();
+
+	printf("syncing disks... ");
+
+	/* Release inodes held by texts before update. */
+	if (panicstr == 0)
+		vnode_pager_umount(NULL);
+#ifdef notdef
+	vnshutdown();
+#endif
+
+	/* Sync once before unmount, in case we hang on something. */
+	sync(&proc0, (void *)0, (int *)0);
+
+	/* Unmount file systems. */
+	if (panicstr == 0)
+		vfs_unmountall();
+
+	/* Sync again after unmount, just in case. */
+	sync(&proc0, (void *)0, (int *)0);
+
+	/* Wait for sync to finish. */
+	for (iter = 0; iter < 20; iter++) {
+		nbusy = 0;
+		for (bp = &buf[nbuf]; --bp >= buf; )
+			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+				nbusy++;
+		if (nbusy == 0)
+			break;
+		printf("%d ", nbusy);
+		DELAY(40000 * iter);
+	}
+	if (nbusy)
+		printf("giving up\n");
+	else
+		printf("done\n");
 }
