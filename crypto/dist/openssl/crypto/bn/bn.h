@@ -68,9 +68,6 @@
 extern "C" {
 #endif
 
-#ifdef VMS
-#undef BN_LLONG /* experimental, so far... */
-#endif
 
 #define BN_MUL_COMBA
 #define BN_SQR_COMBA
@@ -89,11 +86,6 @@ extern "C" {
  * For machines with only one compiler (or shared libraries), this should
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
-#if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
-# ifndef BN_DIV2W
-#  define BN_DIV2W
-# endif
-#endif
 
 #define BN_ULLONG	u_int64_t
 #define BN_ULONG	u_int32_t

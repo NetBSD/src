@@ -213,7 +213,6 @@ typedef struct bio_st BIO;
 
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
 
-#ifndef WIN16
 typedef struct bio_method_st
 	{
 	int type;
@@ -227,21 +226,6 @@ typedef struct bio_method_st
 	int (*destroy)(BIO *);
         long (*callback_ctrl)(BIO *, int, bio_info_cb *);
 	} BIO_METHOD;
-#else
-typedef struct bio_method_st
-	{
-	int type;
-	const char *name;
-	int (_far *bwrite)();
-	int (_far *bread)();
-	int (_far *bputs)();
-	int (_far *bgets)();
-	long (_far *ctrl)();
-	int (_far *create)();
-	int (_far *destroy)();
-	long (_fat *callback_ctrl)();
-	} BIO_METHOD;
-#endif
 
 struct bio_st
 	{
@@ -491,21 +475,12 @@ int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
-#  if defined(WIN16) && defined(_WINDLL)
-BIO_METHOD *BIO_s_file_internal(void);
-BIO *BIO_new_file_internal(char *filename, char *mode);
-BIO *BIO_new_fp_internal(FILE *stream, int close_flag);
-#    define BIO_s_file	BIO_s_file_internal
-#    define BIO_new_file	BIO_new_file_internal
-#    define BIO_new_fp	BIO_new_fp_internal
-#  else /* FP_API */
 BIO_METHOD *BIO_s_file(void );
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 #    define BIO_s_file_internal		BIO_s_file
 #    define BIO_new_file_internal	BIO_new_file
 #    define BIO_new_fp_internal		BIO_s_file
-#  endif /* FP_API */
 BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);
@@ -532,13 +507,8 @@ int BIO_nread(BIO *bio, char **buf, int num);
 int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
-#ifndef WIN16
 long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 	long argl,long ret);
-#else
-long _far _loadds BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
-	long argl,long ret);
-#endif
 
 BIO_METHOD *BIO_s_mem(void);
 BIO *BIO_new_mem_buf(void *buf, int len);
@@ -551,9 +521,6 @@ BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
 BIO_METHOD *BIO_f_buffer(void);
-#ifdef VMS
-BIO_METHOD *BIO_f_linebuffer(void);
-#endif
 BIO_METHOD *BIO_f_nbio_test(void);
 /* BIO_METHOD *BIO_f_ber(void); */
 

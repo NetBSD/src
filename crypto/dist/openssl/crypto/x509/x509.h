@@ -80,10 +80,6 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
-/* Under Win32 this is defined in wincrypt.h */
-#undef X509_NAME
-#endif
 
   /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
 #define DECLARE_PKCS12_STACK_OF(type) /* Nothing */

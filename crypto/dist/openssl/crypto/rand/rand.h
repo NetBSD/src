@@ -99,20 +99,6 @@ int RAND_poll(void);
 }
 #endif
 
-#if defined(WINDOWS) || defined(WIN32)
-#include <windows.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-void RAND_screen(void);
-int RAND_event(UINT, WPARAM, LPARAM);
-
-#ifdef  __cplusplus
-}
-#endif
-#endif
 
 #ifdef  __cplusplus
 extern "C" {
