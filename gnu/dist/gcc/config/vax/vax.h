@@ -146,7 +146,7 @@ extern int target_flags;
 #define PCC_BITFIELD_TYPE_MATTERS (! TARGET_VAXC_ALIGNMENT)
 
 /* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT 32
+#define BIGGEST_ALIGNMENT 64	/* xxxQxI needs quadword (DImode) */
 
 /* No structure field wants to be aligned rounder than this.  */
 #define BIGGEST_FIELD_ALIGNMENT (TARGET_VAXC_ALIGNMENT ? 8 : 32)
