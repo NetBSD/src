@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.34 2001/11/16 12:09:19 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.35 2002/01/21 18:26:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -223,7 +223,9 @@ is received), there is a single default route and a variable number of
 redirected host routes in the kernel table.
 On a host with more than one network interface,
 this default route will be via only one of the interfaces.
-Thus, multi-homed hosts running with \f3\-q\f1 might need
+Thus, multi-homed hosts running with
+.Fl q
+might need
 .Cm no_rdisc
 described below.
 .Pp
@@ -529,14 +531,17 @@ instead of 192.0.2.
 Do not use this feature unless necessary.  It is dangerous.
 .It Cm ripv1_mask Ns \&= Ns Ar nname/mask1,mask2
 specifies that netmask of the network of which
-.Cm nname/mask1\f1
+.Cm nname/mask1
 is
 a subnet should be
 .Cm mask2 .
-For example \f2ripv1_mask=192.0.2.16/28,27\f1 marks 192.0.2.16/28
+For example
+.Cm ripv1_mask Ns \&= Ns Ar 192.0.2.16/28,27
+marks 192.0.2.16/28
 as a subnet of 192.0.2.0/27 instead of 192.0.2.0/24.
 It is better to turn on RIPv2 instead of using this facility, for example
-with \f2ripv2_out\f1.
+with
+.Cm ripv2_out .
 .It Cm passwd Ns \&= Ns Ar XXX[|KeyID[start|stop]]
 specifies a RIPv2 cleartext password that will be included on
 all RIPv2 responses sent, and checked on all RIPv2 responses received.
