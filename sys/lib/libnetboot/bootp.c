@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.5 1994/10/26 06:43:05 cgd Exp $	*/
+/*	$NetBSD: bootp.c,v 1.6 1995/04/22 14:10:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -179,8 +179,8 @@ bootprecv(d, pkt, len)
 	bp = (struct bootp *)checkudp(d, pkt, &len);
 #ifdef DEBUG
 	if (debug)
-		printf("bootprecv: checked.  bp = 0x%x, len = %d\n",
-		    (unsigned)bp, len);
+		printf("bootprecv: checked.  bp = 0x%lx, len = %d\n",
+		    (long)bp, len);
 #endif
 	if (bp == NULL || len < sizeof(*bp) || bp->bp_xid != d->xid) {
 #ifdef DEBUG
