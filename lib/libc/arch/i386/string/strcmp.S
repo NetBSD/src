@@ -1,84 +1,77 @@
 /*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
+ * Written by J.T. Conklin <jtc@acorntoolworks.com>
  * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.15 2005/02/07 05:22:52 christos Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.16 2005/02/09 18:15:16 christos Exp $")
 #endif
 
-/*
- * NOTE: I've unrolled the loop eight times: large enough to make a
- * significant difference, and small enough not to totally trash the
- * cache.
- */
-
 ENTRY(strcmp)
-	movl	0x04(%esp),%eax
-	movl	0x08(%esp),%edx
-	jmp	L2			/* Jump into the loop! */
+	pushl	%esi
+	pushl	%ebx
+	movl	12(%esp),%ebx
+	movl	16(%esp),%esi
 
-	_ALIGN_TEXT,0x90
-L1:	incl	%eax
-	incl	%edx
-L2:	movb	(%eax),%cl
-	testb	%cl,%cl			/* null terminator??? */
-	jz	L3
-	cmpb	%cl,(%edx)		/* chars match??? */
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	jne	L3
-	incl	%eax
-	incl	%edx
-	movb	(%eax),%cl
-	testb	%cl,%cl
-	jz	L3
-	cmpb	%cl,(%edx)
-	je	L1
-	_ALIGN_TEXT,0x90
-L3:	movzbl	(%eax),%eax		/* unsigned comparison */
-	movzbl	(%edx),%edx
+	/*
+	 * Align s1 to word boundary.
+	 * Consider unrolling loop?
+	 */
+.Ls1align:
+	testb	$3,%bl
+	je	.Ls1aligned
+	movb	(%ebx),%al
+	incl	%ebx
+	movb	(%esi),%dl
+	incl	%esi
+	testb	%al,%al
+	je	.Ldone
+	cmpb	%al,%dl
+	je	.Ls1align
+	jmp	.Ldone
+
+	/*
+	 * Check whether s2 is aligned to a word boundry.  If it is, we
+	 * can compare by words.  Otherwise we have to compare by bytes.
+	 */
+.Ls1aligned:
+	testl	$3,%esi
+	jne	.Lbyte_loop
+
+	subl	$4,%ebx
+	subl	$4,%esi
+
+	_ALIGN_TEXT
+.Lword_loop:
+	movl	4(%ebx),%eax
+	addl	$4,%ebx
+	movl	4(%esi),%edx
+	addl	$4,%esi
+	cmpl	%eax,%edx
+	jne	.Lbyte_loop
+	subl	$0x01010101,%edx
+	notl	%eax
+	andl	%eax,%edx
+	testl	$0x80808080,%edx
+	je	.Lword_loop
+
+	_ALIGN_TEXT
+.Lbyte_loop:
+	movb	(%ebx),%al
+	incl	%ebx
+	movb	(%esi),%dl
+	incl	%esi
+	testb	%al,%al
+	je	.Ldone
+	cmpb	%al,%dl
+	je	.Lbyte_loop
+
+.Ldone:
+	movzbl	%al,%eax
+	movzbl	%dl,%edx
 	subl	%edx,%eax
+	popl	%ebx
+	popl	%esi
 	ret
