@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.13 1996/08/05 01:00:12 scottr Exp $
+#	$NetBSD: std.mac68k,v 1.14 1996/10/14 07:01:10 scottr Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -16,6 +16,8 @@ fpu0	at obio?
 zsc0	at obio?
 zstty*	at zsc? channel ?
 
+options	EXEC_AOUT
+options	EXEC_SCRIPT
 options	TIMEZONE=0		# minutes west of GMT--read from booter
 options	DST=0			# daylight savings time/summer time
 options HZ=60			# mac clock runs at 60hz
