@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.85 2003/11/18 03:23:53 jhawk Exp $
+#	$NetBSD: security,v 1.86 2003/11/18 03:30:40 jhawk Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -548,8 +548,9 @@ fi
 # Mailboxes should be owned by user and unreadable.
 #
 if checkyesno check_varmail; then
-	ls -l /var/mail | \
+	ls -lA /var/mail | \
 	awk '	NR == 1 { next; }
+		$9 ~ /^\./ {next; }
 	    	$3 != $9 {
 			print "user " $9 " mailbox is owned by " $3
 		}
