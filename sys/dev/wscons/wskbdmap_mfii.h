@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.1 1998/04/07 13:43:17 hannken Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.2 1998/04/18 09:51:20 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #define KC(n)		(0xe000 | (n))  /* see wsksymvar.h */
 
-static const keysym_t wscons_keydesc_us[] = {
+static const keysym_t pckbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
     KC(1),   KS_Cmd_Debugger,	KS_Escape,
     KC(2),  			KS_1,		KS_exclam,
@@ -147,7 +147,7 @@ static const keysym_t wscons_keydesc_us[] = {
     /*  221, menu, */
 };
 
-static const keysym_t wscons_keydesc_de[] = {
+static const keysym_t pckbd_keydesc_de[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,		KS_quotedbl,	KS_twosuperior,
     KC(4),   KS_3,		KS_section,	KS_threesuperior,
@@ -175,7 +175,7 @@ static const keysym_t wscons_keydesc_de[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
-static const keysym_t wscons_keydesc_de_nodead[] = {
+static const keysym_t pckbd_keydesc_de_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(13),  KS_apostrophe,	KS_grave,
     KC(27),  KS_plus,		KS_asterisk,	KS_asciitilde,
@@ -185,10 +185,10 @@ static const keysym_t wscons_keydesc_de_nodead[] = {
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
-static const struct wscons_keydesc wscons_keydesctab[] = {
-	KBD_MAP(KB_US,			0,	wscons_keydesc_us),
-	KBD_MAP(KB_DE,			KB_US,	wscons_keydesc_de),
-	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	wscons_keydesc_de_nodead),
+static const struct wscons_keydesc pckbd_keydesctab[] = {
+	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 };
 
 #undef KBD_MAP
