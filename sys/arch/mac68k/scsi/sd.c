@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.5 1994/02/08 03:54:11 briggs Exp $
+ *      $Id: sd.c,v 1.6 1994/02/10 04:23:45 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ int     Debugger();
 #define MAKESDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
 #define SDPART(z)	(minor(z) & 0x07)
 #define SDUNIT(z)	(minor(z) >> 3)
-#define	RAW_PART	3
+#define	RAW_PART	2
 
 struct sd_data {
 	struct dkdevice sc_dk;
@@ -612,16 +612,19 @@ sdgetdisklabel(sd)
 	bzero(&sd->sc_dk.dk_label, sizeof(struct disklabel));
 	bzero(&sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 	/*
-	 * make partition 3 the whole disk in case of failure then get pdinfo
-	 * for historical reasons, make part a same as raw part
+	 * make partition RAW_PART the whole disk in case of failure then get
+	 * pdinfo for historical reasons, make part a same as raw part, but
+	 * set p_fstype to FS_UNUSED for part a so we can allocate it later
+	 * (7 partitions just isn't enough to let root be singled out).
 	 */
 	sd->sc_dk.dk_label.d_partitions[0].p_offset = 0;
 	sd->sc_dk.dk_label.d_partitions[0].p_size
 	    = sd->params.disksize * (sd->params.blksize / DEV_BSIZE);
-	sd->sc_dk.dk_label.d_partitions[0].p_fstype = 9;	/* XXXX */
+	sd->sc_dk.dk_label.d_partitions[0].p_fstype = FS_UNUSED;
 	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_offset = 0;
 	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_size
 	    = sd->params.disksize * (sd->params.blksize / DEV_BSIZE);
+	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_fstype = FS_OTHER;
 	sd->sc_dk.dk_label.d_npartitions = MAXPARTITIONS;
 
 	sd->sc_dk.dk_label.d_secsize = sd->params.blksize;
@@ -637,6 +640,7 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
+	printf("Disklabelling %s.\n", sd->sc_dk.dk_dev.dv_xname);
 	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dk.dk_dev.dv_unit,
 				      RAW_PART), sdstrategy,
 	    			      &sd->sc_dk.dk_label,
