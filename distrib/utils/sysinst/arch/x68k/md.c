@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1999/08/16 08:29:07 abs Exp $ */
+/*	$NetBSD: md.c,v 1.5 1999/11/27 14:03:22 minoura Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -130,7 +130,7 @@ md_get_info(void)
 		}
 #endif
 	/* preserve first 64 sectors for system. */
-	dlsize -= 64;
+	ptstart = 64;
 
 	/* preserve existing partitions? */
 
