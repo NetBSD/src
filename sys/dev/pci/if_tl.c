@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.27 1999/11/19 18:27:18 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.28 1999/12/12 17:55:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -105,7 +105,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
 
 #include <dev/mii/tlphyvar.h>
 
@@ -154,6 +153,10 @@ static void tl_intreg_write __P((tl_softc_t*, u_int32_t, u_int32_t));
 static u_int8_t tl_intreg_read_byte __P((tl_softc_t*, u_int32_t));
 static void tl_intreg_write_byte __P((tl_softc_t*, u_int32_t, u_int8_t));
 
+void	tl_mii_sync __P((struct tl_softc *));
+void	tl_mii_sendbits __P((struct tl_softc *, u_int32_t, int));
+
+
 #if defined(TLDEBUG_RX) 
 static void ether_printheader __P((struct ether_header*));
 #endif
@@ -190,24 +193,6 @@ static __inline u_int8_t netsio_read(sc, bits)
 {
 	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
 }
-
-/*
- * MII bit-bang glue.
- */
-u_int32_t tl_mii_bitbang_read __P((struct device *));
-void tl_mii_bitbang_write __P((struct device *, u_int32_t));
-
-const struct mii_bitbang_ops tl_mii_bitbang_ops = {
-	tl_mii_bitbang_read,
-	tl_mii_bitbang_write,
-	{
-		TL_NETSIO_MDATA,	/* MII_BIT_MDO */
-		TL_NETSIO_MDATA,	/* MII_BIT_MDI */
-		TL_NETSIO_MCLK,		/* MII_BIT_MDC */
-		TL_NETSIO_MTXEN,	/* MII_BIT_DIR_HOST_PHY */
-		0,			/* MII_BIT_DIR_PHY_HOST */
-	}
-};
 
 struct cfattach tl_ca = {
 	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
@@ -706,23 +691,38 @@ tl_intreg_write_byte(sc, reg, val)
 	TL_HR_WRITE_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x03), val);
 }
 
-u_int32_t
-tl_mii_bitbang_read(self)
-	struct device *self;
+void
+tl_mii_sync(sc)
+	struct tl_softc *sc;
 {
-	struct tl_softc *sc = (void *) self;
+	int i;
 
-	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio));
+	netsio_clr(sc, TL_NETSIO_MTXEN);
+	for (i = 0; i < 32; i++) {
+		netsio_clr(sc, TL_NETSIO_MCLK);
+		netsio_set(sc, TL_NETSIO_MCLK);
+	}
 }
 
 void
-tl_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+tl_mii_sendbits(sc, data, nbits)
+	struct tl_softc *sc;
+	u_int32_t data;
+	int nbits;
 {
-	struct tl_softc *sc = (void *) self;
+	int i;
 
-	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio, val & 0xff);
+	netsio_set(sc, TL_NETSIO_MTXEN);
+	for (i = 1 << (nbits - 1); i; i = i >>  1) {
+		netsio_clr(sc, TL_NETSIO_MCLK);
+		netsio_read(sc, TL_NETSIO_MCLK);
+		if (data & i)
+			netsio_set(sc, TL_NETSIO_MDATA);
+		else
+			netsio_clr(sc, TL_NETSIO_MDATA);
+		netsio_set(sc, TL_NETSIO_MCLK);
+		netsio_read(sc, TL_NETSIO_MCLK);
+	}
 }
 
 int
@@ -730,8 +730,39 @@ tl_mii_read(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
+	struct tl_softc *sc = (struct tl_softc *)self;
+	int val = 0, i, err;
 
-	return (mii_bitbang_readreg(self, &tl_mii_bitbang_ops, phy, reg));
+	/*
+	 * Read the PHY register by manually driving the MII control lines.
+	 */
+
+	tl_mii_sync(sc);
+	tl_mii_sendbits(sc, MII_COMMAND_START, 2);
+	tl_mii_sendbits(sc, MII_COMMAND_READ, 2);
+	tl_mii_sendbits(sc, phy, 5);
+	tl_mii_sendbits(sc, reg, 5);
+
+	netsio_clr(sc, TL_NETSIO_MTXEN);
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
+	netsio_clr(sc, TL_NETSIO_MCLK);
+
+	err = netsio_read(sc, TL_NETSIO_MDATA);
+	netsio_set(sc, TL_NETSIO_MCLK);
+
+	/* Even if an error occurs, must still clock out the cycle. */
+	for (i = 0; i < 16; i++) {
+		val <<= 1;
+		netsio_clr(sc, TL_NETSIO_MCLK);
+		if (err == 0 && netsio_read(sc, TL_NETSIO_MDATA))
+			val |= 1;
+		netsio_set(sc, TL_NETSIO_MCLK);
+	}
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
+
+	return (err ? 0 : val);
 }
 
 void
@@ -739,8 +770,22 @@ tl_mii_write(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
+	struct tl_softc *sc = (struct tl_softc *)self;
 
-	mii_bitbang_writereg(self, &tl_mii_bitbang_ops, phy, reg, val);
+	/*
+	 * Write the PHY register by manually driving the MII control lines.
+	 */
+
+	tl_mii_sync(sc);
+	tl_mii_sendbits(sc, MII_COMMAND_START, 2);
+	tl_mii_sendbits(sc, MII_COMMAND_WRITE, 2);
+	tl_mii_sendbits(sc, phy, 5);
+	tl_mii_sendbits(sc, reg, 5);
+	tl_mii_sendbits(sc, MII_COMMAND_ACK, 2);
+	tl_mii_sendbits(sc, val, 16);
+
+	netsio_clr(sc, TL_NETSIO_MCLK);
+	netsio_set(sc, TL_NETSIO_MCLK);
 }
 
 void
