@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.5 1999/11/21 12:53:57 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.6 1999/11/22 02:14:30 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -146,8 +146,8 @@ const struct wskbd_consops vrkiu_consops = {
 
 struct wskbd_mapdata vrkiu_keymapdata = {
 	pckbd_keydesctab,
-#ifdef VRKIU_LAYOUT
-	VRKIU_LAYOUT,
+#ifdef PCKBD_LAYOUT
+	PCKBD_LAYOUT,
 #else
 	KB_US,
 #endif
@@ -398,37 +398,37 @@ vrkiuattach(parent, self, aux)
 
 	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
 		keytrans = mobilepro_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_US;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
 		keytrans = mobilepro_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_US;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
 		keytrans = mcr_jp_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_JP;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
 		keytrans = z50_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_US;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
 		keytrans = tripad_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_JP;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
 		keytrans = mccs_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_JP;
 #endif
 	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
 		keytrans = intertop_keytrans;
-#if !defined(VRKIU_LAYOUT)
+#if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_JP;
 #endif
 	}
