@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.18.4.1 1996/05/30 04:03:43 mhitch Exp $	*/
+/*	$NetBSD: cfb.c,v 1.18.4.2 1996/09/09 20:45:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -233,6 +233,7 @@ cfbattach(parent, self, aux)
 		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 				  cfb_intr, fi);
 	}
+	printf("\n");
 }
 
 
