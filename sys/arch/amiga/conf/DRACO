@@ -1,10 +1,9 @@
-# $NetBSD: DRACO,v 1.66.4.2 2002/08/01 05:36:59 lukem Exp $
+# $NetBSD: DRACO,v 1.66.4.3 2002/10/24 10:28:48 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.179.4.2 2002/08/01 04:16:42 lukem Exp $
-
+# Created from: #NetBSD$
 #GENERIC machine description file
 
 #This machine description file is used to generate the default NetBSD
@@ -26,7 +25,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.66.4.2 $"
+#ident  		"GENERIC-$Revision: 1.66.4.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -64,6 +63,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
