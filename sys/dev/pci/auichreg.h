@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.3 2002/08/07 10:31:09 kent Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.4 2002/10/08 10:25:45 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -114,11 +114,6 @@
 #define		ICH_GSTS_BITS	"\020\01gsci\02miict\03moint\06piint\07point\010mint\011pcr\012scr\013pri\014sri\015b1s12\016b2s12\017b3s12\020rcs\021ad3\022md3"
 #define	ICH_CAS		0x34	/* 1/8 bit */
 #define	ICH_SEMATIMO	1000	/* us */
-
-/* Bits in the AC97_REG_POWER register */
-#define		ICH_PM_PCMI	0x100
-#define		ICH_PM_PCMO	0x200
-#define		ICH_PM_MICI	0x400
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
