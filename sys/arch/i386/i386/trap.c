@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 1994/11/16 20:14:42 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 1994/12/10 00:28:38 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -235,26 +235,21 @@ trap(frame)
 		goto out;
 
 	case T_DNA|T_USER: {
-		int rv;
-#if NNPX > 0
-		/* if a transparent fault (due to context switch "late") */
-		if (npxdna())
-			return;
-#endif
 #ifdef MATH_EMULATE
-		rv = math_emulate(&frame);
-		if (rv == 0) {
+		int rv;
+		if ((rv = math_emulate(&frame)) == 0) {
 			if (frame.tf_eflags & PSL_T)
 				goto trace;
 			return;
 		}
+		trapsignal(p, rv, type &~ T_USER);
+		break;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		rv = SIGKILL;
-#endif
-		trapsignal(p, rv, type &~ T_USER);
+		trapsignal(p, SIGKILL, type &~ T_USER);
 		break;
+#endif
 	}
 
 	case T_BOUND|T_USER:
