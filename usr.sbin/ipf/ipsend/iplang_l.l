@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.1.1.1.2.2 1997/11/17 16:27:19 mrg Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.1.1.1.2.3 1998/11/24 07:21:56 cgd Exp $	*/
 
 %e 1500
 %p 4000
@@ -6,7 +6,7 @@
 %o 6000
 %{
 /*
- * Copyright (C) 1997 by Darren Reed.
+ * Copyright (C) 1997-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include "y.tab.h"
+#include "iplang_y.h"
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 
