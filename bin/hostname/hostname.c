@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hostname.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: hostname.c,v 1.6 1994/09/22 09:25:22 mycroft Exp $";
+static char *rcsid = "$Id: hostname.c,v 1.7 1994/09/22 09:41:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ static char *rcsid = "$Id: hostname.c,v 1.6 1994/09/22 09:25:22 mycroft Exp $";
 void usage __P((void));
 
 int
-main(argc,argv)
+main(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -72,6 +72,9 @@ main(argc,argv)
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (argc > 1)
+		usage();
 
 	if (*argv) {
 		if (sethostname(*argv, strlen(*argv)))
