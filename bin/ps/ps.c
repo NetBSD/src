@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.7 2002/05/02 18:11:35 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.8 2002/06/06 17:08:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.7 2002/05/02 18:11:35 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.8 2002/06/06 17:08:04 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -480,7 +480,7 @@ pick_representative_lwp(ki, kl, nlwps)
 	if (nlwps == 1)
 		return kl;
 
-	switch (ki->p_stat) {
+	switch (ki->p_realstat) {
 	case SSTOP:
 		/* Pick the first stopped LWP */
 		for (i = 0; i < nlwps; i++) {
