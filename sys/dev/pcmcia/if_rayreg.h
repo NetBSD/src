@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.3 2000/08/10 11:48:46 ad Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.4 2002/03/10 11:32:18 martin Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -33,14 +33,14 @@
 /*
  * CCR registers 
  */
-#define RAY_COR		(0xf00 + 0)	/* config option register */
-#define	RAY_CCSR	(0xf00 + 1)	/* card config and status register */
-#define	RAY_PIN		(0xf00 + 2)	/* not in hw */
-#define	RAY_SOCKETCOPY	(0xf00 + 3)	/* not used by hw */
-#define	RAY_HCSIR	(0xf00 + 5)	/* HCS intr register */
-#define	RAY_ECFIR	(0xf00 + 6)	/* ECF intr register */
-#define	RAY_AR0		(0xf00 + 8)	/* authorization register 0 (unused) */
-#define	RAY_AR1		(0xf00 + 9)	/* authorization register 1 (unused) */
+#define RAY_COR		0	/* config option register */
+#define	RAY_CCSR	1	/* card config and status register */
+#define	RAY_PIN		2	/* not in hw */
+#define	RAY_SOCKETCOPY	3	/* not used by hw */
+#define	RAY_HCSIR	5	/* HCS intr register */
+#define	RAY_ECFIR	6	/* ECF intr register */
+#define	RAY_AR0		8	/* authorization register 0 (unused) */
+#define	RAY_AR1		9	/* authorization register 1 (unused) */
 /*
  * XXX these registers cannot be accessed with pcmcia.c's 14 byte mapping
  * of the CCR for us
