@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.4 1996/05/20 00:55:44 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.5 1996/07/10 22:52:36 explorer Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -30,6 +30,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from Id: aic7770.c,v 1.29 1996/05/30 07:18:52 gibbs Exp
  */
 
 #if defined(__FreeBSD__)
@@ -189,6 +191,7 @@ aic7770probe(void)
 
 #define bootverbose	1
 
+int	ahc_eisa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
 int	ahc_eisa_match __P((struct device *, void *, void *));
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
@@ -371,8 +374,7 @@ ahc_eisa_attach(parent, self, aux)
 	 * usefull for debugging irq problems
 	 */
 	if(bootverbose) {
-		printf(
-		       "%s: Using %s Interrupts\n",
+		printf("%s: Using %s Interrupts\n",
 		       ahc_name(ahc),
 		       ahc->pause & IRQMS ?
 				"Level Sensitive" : "Edge Triggered");
