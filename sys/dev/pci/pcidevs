@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.188 2000/01/31 18:34:19 thorpej Exp $
+$NetBSD: pcidevs,v 1.189 2000/02/03 13:58:28 joda Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -487,7 +487,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor 2MICRO		0x1217  2 Micro Inc
+vendor O2MICRO		0x1217  O2 Micro Inc
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
@@ -913,8 +913,8 @@ product ESSTECH	MAESTRO2	0x1968	Maestro 2
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
 
-/* 2 Micro Inc */
-product 2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
+/* O2 Micro Inc */
+product O2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
