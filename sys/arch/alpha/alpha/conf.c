@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.65 2002/06/28 23:34:48 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.66 2002/07/19 16:38:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65 2002/06/28 23:34:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.66 2002/07/19 16:38:16 thorpej Exp $");
 
 #include "opt_systrace.h"
 #include <sys/param.h>
@@ -311,7 +311,7 @@ struct cdevsw	cdevsw[] =
 	cdev__ocm_init(NSTIC,stic),	/* 68: PixelStamp mmap interface */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 69: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 70: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 70: system call tracing */
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif

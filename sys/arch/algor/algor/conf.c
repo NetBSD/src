@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2002/06/17 16:32:57 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2002/07/19 16:38:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.6 2002/06/17 16:32:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.7 2002/07/19 16:38:16 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -332,7 +332,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
 	cdev_clockctl_init(NCLOCKCTL,clockctl),	/* 66: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 67: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 67: system call tracing */
 #else
 	cdev_notdef(),			/* 67: system call tracing */
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3 2002/06/17 16:32:57 christos Exp $ */
+/* $NetBSD: conf.c,v 1.4 2002/07/19 16:38:15 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include "opt_systrace.h"
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.3 2002/06/17 16:32:57 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.4 2002/07/19 16:38:15 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -132,7 +132,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NRAID,raid),    	/* 26: RAIDframe disk driver */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 27: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 28: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 28: system call tracing */
 #else
 	cdev_notdef(),			/* 28: system call tracing */
 #endif
