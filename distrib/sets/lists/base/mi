@@ -245,6 +245,7 @@
 ./usr/bin/rlog
 ./usr/bin/rlogin
 ./usr/bin/rpcinfo
+./usr/bin/rs
 ./usr/bin/rsh
 ./usr/bin/rup
 ./usr/bin/ruptime
@@ -661,6 +662,7 @@
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/pc532
 ./usr/share/man/man4/sparc
+./usr/share/man/man4/sun3
 ./usr/share/man/man4/tahoe
 ./usr/share/man/man4/vax
 ./usr/share/man/man5
@@ -673,6 +675,7 @@
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/pc532
 ./usr/share/man/man8/sparc
+./usr/share/man/man8/sun3
 ./usr/share/man/man8/tahoe
 ./usr/share/man/man8/vax
 ./usr/share/man/whatis.db

@@ -173,6 +173,7 @@
 ./usr/share/man/cat1/rlogin.0
 ./usr/share/man/cat1/rm.0
 ./usr/share/man/cat1/rmdir.0
+./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
