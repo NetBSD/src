@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/27 03:14:56 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/02 06:20:26 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/input
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/input
 .include <bsd.own.mk>
 
 MODULE=	fpit_drv
+MAN=	fpit.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/fpit
 
 SRCS=	xf86Fpit.c
