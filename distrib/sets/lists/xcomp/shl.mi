@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.2 2004/03/06 03:54:24 rtr Exp $
+#	$NetBSD: shl.mi,v 1.3 2005/03/22 13:45:46 tron Exp $
 ./usr/X11R6/lib/libFS_pic.a
 ./usr/X11R6/lib/libGLU_pic.a
 ./usr/X11R6/lib/libGL_pic.a
@@ -33,6 +33,7 @@
 ./usr/X11R6/lib/libXxf86dga_pic.a
 ./usr/X11R6/lib/libXxf86misc_pic.a
 ./usr/X11R6/lib/libXxf86vm_pic.a
+./usr/X11R6/lib/libdmx_pic.a
 ./usr/X11R6/lib/libdps_pic.a
 ./usr/X11R6/lib/libdpstk_pic.a
 ./usr/X11R6/lib/libexpat_pic.a
