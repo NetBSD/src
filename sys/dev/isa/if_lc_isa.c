@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.4.2.1 1997/11/17 03:35:45 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.4.2.2 1997/12/22 00:13:46 perry Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -80,120 +80,145 @@
 
 extern struct cfdriver lc_cd;
 
+static int lemac_isa_find __P((lemac_softc_t *, struct isa_attach_args *,
+    int));
+#ifdef __BROKEN_INDIRECT_CONFIG
+static int lemac_isa_probe __P((struct device *, void *, void *));
+#else
+static int lemac_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
+static void lemac_isa_attach __P((struct device *, struct device *, void *));
+
+struct cfattach lc_isa_ca = {
+	sizeof(lemac_softc_t), lemac_isa_probe, lemac_isa_attach
+};
+
 static int
-lemac_isa_probe(
-    struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match,
-#else
-    struct cfdata *match,
-#endif
-    void *aux)
+lemac_isa_find(sc, ia, attach)
+	lemac_softc_t *sc;
+	struct isa_attach_args *ia;
+	int attach;
 {
-    struct isa_attach_args * const ia = aux;
+	bus_addr_t maddr;
+	bus_addr_t msize;
+	int rv = 0, irq;
+
+	/*
+	 * Disallow wildcarded i/o addresses.
+	 */
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
+
+	/*
+	 * Make sure this is a valid LEMAC address.
+	 */
+	if (ia->ia_iobase & (LEMAC_IOSIZE - 1))
+		return 0;
+
+	sc->sc_iot = ia->ia_iot;
+
+	/*
+	 * Map the LEMAC's port space for the probe sequence.
+	 */
+	ia->ia_iosize = LEMAC_IOSIZE;
+
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	    &sc->sc_ioh)) {
+		if (attach)
+			printf(": can't map i/o space\n");
+		return 0;
+	}
+
+	/*
+	 * Read the Ethernet address from the EEPROM.
+	 * It must start with one of the DEC OUIs and pass the
+	 * DEC ethernet checksum test.
+	 */
+	if (lemac_port_check(sc->sc_iot, sc->sc_ioh) == 0)
+		goto outio;
+
+	/*
+	 * Get information about memory space and attempt to map it.
+	 */
+	lemac_info_get(sc->sc_iot, sc->sc_ioh, &maddr, &msize, &irq);
+
+	if (ia->ia_maddr != maddr && ia->ia_maddr != MADDRUNK)
+		goto outio;
+
+	sc->sc_memt = ia->ia_memt;
+	if (bus_space_map(ia->ia_memt, maddr, msize, 0, &sc->sc_memh)) {
+		if (attach)
+			printf(": can't map mem space\n");
+		goto outio;
+	}
+
+
+	/*
+	 * Double-check IRQ configuration.
+	 */
+	if (ia->ia_irq != irq && ia->ia_irq != IRQUNK)
+		printf("%s: overriding IRQ %d to %d\n", sc->sc_dv.dv_xname,
+		       ia->ia_irq, irq);
+
+	if (attach) {
+		sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);
+		if (sc->sc_ats == NULL)
+			printf("\n%s: warning: can't establish shutdown hook\n",
+			    sc->sc_dv.dv_xname);
+
+		lemac_ifattach(sc);
+
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE,
+		    IPL_NET, lemac_intr, sc);
+	}
+
+	/*
+	 * I guess we've found one.
+	 */
+	rv = 1;
+
+	ia->ia_maddr = maddr;
+	ia->ia_msize = msize;
+	ia->ia_irq = irq;
+
+	if (rv == 0 || !attach)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, msize);
+outio:
+	if (rv == 0 || !attach)
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, LEMAC_IOSIZE);
+	return rv;
+}
+
+static int
+lemac_isa_probe(parent, match, aux)
+	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
-    struct cfdata *cf = ((struct device *)match)->dv_cfdata;
+	void *match;
 #else
-    struct cfdata *cf = match;
+	struct cfdata *match;
 #endif
-    int irq, rv = 0;
-    bus_addr_t maddr;
-    bus_addr_t msize;
-    bus_space_handle_t memh;
-    bus_space_handle_t ioh;
-
-    /*
-     * Disallow wildcarded i/o addresses.
-     */
-    if (ia->ia_iobase == IOBASEUNK)
-	return 0;
-
-    /*
-     * Make sure this is a valid LEMAC address.
-     */
-    if (ia->ia_iobase & (LEMAC_IOSIZE - 1))
-	return 0;
-
-    /*
-     * Map the LEMAC's port space for the probe sequence.
-     */
-    if (bus_space_map(ia->ia_iot, ia->ia_iobase, LEMAC_IOSIZE, 0, &ioh))
-	return 0;
-
-    /*
-     * Read the Ethernet address from the EEPROM.
-     * It must start with one of the DEC OUIs and pass the
-     * DEC ethernet checksum test.
-     */
-    if (lemac_port_check(ia->ia_iot, ioh) == 0)
-	goto out;
-
-    /*
-     * Get information about memory space and attempt to map it.
-     */
-    lemac_info_get(ia->ia_iot, ioh, &maddr, &msize, &irq);
-    if (ia->ia_maddr != maddr && ia->ia_maddr != MADDRUNK)
-	goto out;
-    if (bus_space_map(ia->ia_memt, maddr, msize, 0, &memh))
-	goto out;
-    bus_space_unmap(ia->ia_memt, memh, msize);
-
-    /*
-     * Double-check IRQ configuration.
-     */
-    if (ia->ia_irq != irq && ia->ia_irq != IRQUNK)
-	printf("%s%d: overriding IRQ %d to %d\n", lc_cd.cd_name, cf->cf_unit,
-	       ia->ia_irq, irq);
-    ia->ia_irq = irq;
-
-    /*
-     * I guess we've found one.
-     */
-    rv = 1;
-
- out:
-    bus_space_unmap(ia->ia_iot, ioh, LEMAC_IOSIZE);
-    return rv;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
+#else
+	struct cfdata *cf = match;
+#endif
+	lemac_softc_t sc;
+	(void)sprintf(sc.sc_dv.dv_xname, "%s%d", lc_cd.cd_name, cf->cf_unit);
+    
+	return lemac_isa_find(&sc, ia, 0);
 }
 
 static void
-lemac_isa_attach(
-    struct device *parent,
-    struct device *self,
-    void *aux)
+lemac_isa_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
-    lemac_softc_t *sc = (void *)self;
-    struct isa_attach_args *ia = aux;
+	lemac_softc_t *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 
-    /* Map i/o space. */
-    sc->sc_iot = ia->ia_iot;
-    if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
-      &sc->sc_ioh)) {
-	printf(": can't map i/o space\n");
-	return;
-    }
-
-    if (ia->ia_msize && ia->ia_maddr) {
-	sc->sc_memt = ia->ia_memt;
-	/* Map memory space. */
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
-	  &sc->sc_memh)) {
-	    printf(": can't map mem space\n");
-	    return;
-	}
-    }
-
-    sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);
-    if (sc->sc_ats == NULL)
-	printf("\n%s: warning: couldn't establish shutdown hook\n",
-	       sc->sc_dv.dv_xname);
-
-    lemac_ifattach(sc);
-
-    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-				   IPL_NET, lemac_intr, sc);
+	(void) lemac_isa_find(sc, ia, 1);
 }
-
-struct cfattach lc_isa_ca = {
-    sizeof(lemac_softc_t), lemac_isa_probe, lemac_isa_attach
-};
