@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1.1.1.4.2 1996/06/27 19:39:35 oki Exp $
+#	$Id: install.sh,v 1.1.1.1.4.3 1996/07/01 13:08:55 oki Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -329,28 +329,28 @@ while [ $part_used -lt $partition ]; do
 	elif [ "$ename" = "" ]; then
 		ename=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
 		echo ":te=4.2BSD:be#${blocksize}:fe#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$fname" = "" ]; then
 		fname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pf#${_size}:of#${_offset}" >> $DT
 		echo ":tf=4.2BSD:bf#${blocksize}:ff#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$gname" = "" ]; then
 		gname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pg#${_size}:og#${_offset}" >> $DT
 		echo ":tg=4.2BSD:bg#${blocksize}:fg#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$hname" = "" ]; then
 		hname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
 		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
 		part_used=$partition
