@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.20 1995/01/18 09:17:35 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.21 1995/04/17 12:22:08 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -114,6 +114,8 @@ adosfs_getattr(sp)
 		fblks += howmany(fblks, ANODENDATBLKENT(ap));
 		vap->va_bytes = fblks * amp->bsize;
 		vap->va_size = ap->fsize;
+
+		vap->va_blocksize = amp->bsize;
 	}
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
