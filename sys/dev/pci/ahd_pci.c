@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.7 2003/09/02 20:59:51 fvdl Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.8 2003/10/09 14:26:54 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -40,16 +40,16 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx_pci.c#76 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx_pci.c#80 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.14 2003/06/28 04:39:49 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.16 2003/06/28 04:39:49 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.7 2003/09/02 20:59:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.8 2003/10/09 14:26:54 fvdl Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -403,8 +403,7 @@ ahd_pci_attach(parent, self, aux)
 		return;
 
 	devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
-	if ((devconfig & PCIXINITPAT) == PCIXINIT_PCI33_66 ||
-		(devconfig & PCIXINITPAT) == PCIXINIT_PCIX66_100) {
+	if ((devconfig & PCIXINITPAT) == PCIXINIT_PCI33_66) {
 		ahd->chip |= AHD_PCI;
 		/* Disable PCIX workarounds when running in PCI mode. */
 		ahd->bugs &= ~AHD_PCIX_BUG_MASK;
