@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.44 2002/04/22 09:41:22 augustss Exp $
+#	$NetBSD: files.pcmcia,v 1.45 2004/07/07 08:47:22 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -36,6 +36,10 @@ file	dev/pcmcia/nca_pcmcia.c			nca_pcmcia
 attach	esp at pcmcia with esp_pcmcia
 file	dev/pcmcia/esp_pcmcia.c			esp_pcmcia
 
+# Fujitsu MB87030-based cards
+attach	spc at pcmcia with spc_pcmcia
+file	dev/pcmcia/spc_pcmcia.c			spc_pcmcia
+
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 
@@ -58,8 +62,8 @@ attach	mbe at pcmcia with mbe_pcmcia
 file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
 
 # PCMCIA Floppy controller
-attach	fdc at pcmcia with fdc_pcmcia
-file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
+#attach	fdc at pcmcia with fdc_pcmcia
+#file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
 
 # PCMCIA multi-port serial cards
 device	pcmcom {[slave = -1]}
