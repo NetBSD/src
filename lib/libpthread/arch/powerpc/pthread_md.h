@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.1 2001/11/13 20:21:24 briggs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/14 15:27:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,7 +48,8 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__r_r1)
+#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[1])
+#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[34])
 
 /*
  * Usable stack space below the ucontext_t.

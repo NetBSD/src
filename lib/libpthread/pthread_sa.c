@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.11 2001/09/25 19:41:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.12 2001/11/14 15:27:09 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, int sig,
 
 	next = pthread__next(self);
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
-	    self, next, next->pt_uc, next->pt_uc->uc_mcontext.sc_pc));
+	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
 	pthread__upcall_switch(self, next);
 	/* NOTREACHED */
 	assert(0);
