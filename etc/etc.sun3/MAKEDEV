@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 1998/02/11 19:33:56 gwr Exp $
+#	$NetBSD: MAKEDEV,v 1.23 1998/10/15 21:22:54 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,7 @@
 #	tun*	network tunnel driver
 #	md*	memory pseudo-disk
 #	random	Random number generator
+#	scsibus* SCSI busses
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -93,6 +94,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3
 	sh $0 tun0 tun1
 	sh $0 lkm random
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 local
 	;;
 
@@ -243,6 +245,10 @@ lkm)
 random)
 	mk  random c 80 0 444
 	mk urandom c 80 1
+	;;
+
+scsibus*)
+	mk scsibus${unit} c 81 $unit 644 wheel
 	;;
 
 local)
