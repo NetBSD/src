@@ -1,5 +1,4 @@
-/*      $Id: sa11x0_comreg.h,v 1.1 2001/02/23 03:48:20 ichiro Exp $ */
-/*      $NetBSD: sa11x0_comreg.h,v 1.1 2001/02/23 03:48:20 ichiro Exp $        */
+/*      $NetBSD: sa11x0_comreg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.

@@ -1,5 +1,4 @@
-/*	$Id: sa11x0_irqhandler.c,v 1.1 2001/02/23 03:48:21 ichiro Exp $ */
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.1 2001/02/23 03:48:21 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.

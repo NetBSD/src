@@ -1,6 +1,5 @@
-/*	$Id: sa11x0_ost.c,v 1.1 2001/02/23 03:48:21 ichiro Exp $ */
+/*	$NetBSD: sa11x0_ost.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
 
-/*	$NetBSD: sa11x0_ost.c,v 1.1 2001/02/23 03:48:21 ichiro Exp $	*/
 /*
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited.
