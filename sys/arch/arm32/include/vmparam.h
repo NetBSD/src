@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1999/12/04 21:20:12 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2000/01/10 07:44:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -99,7 +99,34 @@
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
 #define	ALT_PAGE_TBLS_BASE	0xf0c00000
 #define	KERNEL_VM_BASE		0xf1000000
+/*
+ * The Kernel VM Size varies depending on the machine depending on how
+ * much space is needed (and where) for other mappings.
+ * In some cases the chosen value may not be the maximum in order that
+ * we don't waste memory with kernel pages tables as we can't currently
+ * grow the kernel page tables after booting.
+ * You only need to increase these values if you find that the number of
+ * buffers is being limited due to lack of VA space.
+ */
+#if defined(FOOTBRIDGE)
+/*
+ * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
+ * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ */
+#define KERNEL_VM_SIZE		0x07000000
+#elif defined(SHARK)
+/*
+ * The range 0xf1000000 - 0xf6ffffff is available for kernel VM space
+ * OFW sites at 0xf7000000
+ */
+#define	KERNEL_VM_SIZE		0x04000000
+#else
+/*
+ * The range 0xf1000000 - 0xf3ffffff is available for kernel VM space
+ * Fixed mappings exist from 0xf4000000 - 0xffffffff
+ */
 #define	KERNEL_VM_SIZE		0x03000000
+#endif
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
