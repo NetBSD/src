@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.45 1999/02/17 02:37:41 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.46 1999/02/18 07:08:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -131,8 +131,8 @@ struct audio_hw_if pas_hw_if = {
 	0,
 	0,
 	0,
-	sbdsp_haltdma,
-	sbdsp_haltdma,
+	sbdsp_halt_output,
+	sbdsp_halt_input,
 	sbdsp_speaker_ctl,
 	pas_getdev,
 	0,
