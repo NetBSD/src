@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.7 2001/01/18 20:28:27 jdolecek Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.8 2001/01/19 12:27:14 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,10 @@
 #include <compat/linux/arch/i386/linux_errno.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_errno.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_errno.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_errno.h>
 #else
 #include <compat/linux/arch/i386/linux_errno.h> /* XXX:Allow kdump to compile */
 #endif
