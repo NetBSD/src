@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.7 2002/06/02 15:50:40 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.8 2002/12/04 17:54:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.7 2002/06/02 15:50:40 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.8 2002/12/04 17:54:39 mycroft Exp $");
 #endif
 #endif
 
@@ -1080,9 +1080,9 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata1),
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata2));
 			printf("fsid ");
-			print_int64((u_int32_t *)&fap->fa2_fsid, HEX);
+			print_int64((u_int32_t *)&fap->fa3_fsid, HEX);
 			printf(" nodeid ");
-			print_int64((u_int32_t *)&fap->fa2_fileid, HEX);
+			print_int64((u_int32_t *)&fap->fa3_fileid, HEX);
 			printf(" a/m/ctime %u.%06u ",
 			       (u_int32_t) ntohl(fap->fa3_atime.nfsv3_sec),
 			       (u_int32_t) ntohl(fap->fa3_atime.nfsv3_nsec));
