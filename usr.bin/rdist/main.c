@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/10/18 14:34:57 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/10/19 13:59:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/10/18 14:34:57 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1997/10/19 13:59:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ int	groupid;	/* user's group ID */
 struct	passwd *pw;	/* pointer to static area used by getpwent */
 struct	group *gr;	/* pointer to static area used by getgrent */
 
+int	main __P((int, char **));
 static void usage __P((void));
 static void docmdargs __P((int, char *[]));
 
@@ -91,7 +92,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *arg;
+	char *arg;
 	int cmdargs = 0;
 	char *dhosts[NHOSTS], **hp = dhosts;
 
@@ -106,7 +107,7 @@ main(argc, argv)
 	gethostname(host, sizeof(host));
 	strcpy(tempfile, _PATH_TMP);
 	strcat(tempfile, _RDIST_TMP);
-	if ((tempname = rindex(tempfile, '/')) != 0)
+	if ((tempname = strrchr(tempfile, '/')) != 0)
 		tempname++;
 	else
 		tempname = tempfile;
@@ -246,8 +247,8 @@ docmdargs(nargs, args)
 	int nargs;
 	char *args[];
 {
-	register struct namelist *nl, *prev;
-	register char *cp;
+	struct namelist *nl, *prev;
+	char *cp;
 	struct namelist *files, *hosts;
 	struct subcmd *cmds;
 	char *dest;
@@ -257,6 +258,7 @@ docmdargs(nargs, args)
 	if (nargs < 2)
 		usage();
 
+	files = NULL;
 	prev = NULL;
 	for (i = 0; i < nargs - 1; i++) {
 		nl = makenl(args[i]);
@@ -269,7 +271,7 @@ docmdargs(nargs, args)
 	}
 
 	cp = args[i];
-	if ((dest = index(cp, ':')) != NULL)
+	if ((dest = strchr(cp, ':')) != NULL)
 		*dest++ = '\0';
 	tnl.n_name = cp;
 	hosts = expand(&tnl, E_ALL);
@@ -299,7 +301,7 @@ docmdargs(nargs, args)
  */
 void
 prnames(nl)
-	register struct namelist *nl;
+	struct namelist *nl;
 {
 	printf("( ");
 	while (nl != NULL) {
@@ -307,32 +309,4 @@ prnames(nl)
 		nl = nl->n_next;
 	}
 	printf(")\n");
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-warn(const char *fmt, ...)
-#else
-warn(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	extern int yylineno;
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "rdist: line %d: Warning: ", yylineno);
-	(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
-	va_end(ap);
 }
