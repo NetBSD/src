@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 1997/03/21 01:47:15 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.34 1997/03/21 14:30:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -805,7 +805,16 @@ viking_hotfix(sc)
 void
 viking_mmu_enable()
 {
-	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	int pcr;
+
+	/*
+	 * Before enabling the MMU, flush the data cache so the
+	 * in-memory MMU page tables are up-to-date.
+	 */
+	sta(0x80000000, ASI_DCACHECLR, 0);      /* Unlock */
+	sta(0, ASI_DCACHECLR, 0);
+
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	if (cpuinfo.mxcc)
 		pcr |= SRMMU_PCR_TC;
 	else
