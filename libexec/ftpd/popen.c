@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $	*/
+/*	$NetBSD: popen.c,v 1.13.2.1 2001/04/01 16:08:21 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $");
+__RCSID("$NetBSD: popen.c,v 1.13.2.1 2001/04/01 16:08:21 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ ftpd_popen(program, type, stderrfd)
 	gargv[0] = argv[0];
 	for (gargc = argc = 1; argv[argc]; argc++) {
 		glob_t gl;
-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE|GLOB_LIMIT;
 
 		memset(&gl, 0, sizeof(gl));
 		if (glob(argv[argc], flags, NULL, &gl)) {
