@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.16 2003/01/18 08:18:50 thorpej Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.17 2003/01/21 04:06:07 matt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.16 2003/01/18 08:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.17 2003/01/21 04:06:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.16 2003/01/18 08:18:50 thorpej Exp $
 
 
 int
-mach_sys_semaphore_signal_all_trap(struct proc *p, void *v, register_t *r) {
+mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_semaphore_signal_all_trap_args *ap = v;
 #endif
@@ -100,7 +100,7 @@ mach_sys_semaphore_signal_all_trap(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_semaphore_signal_thread_trap(struct proc *p, void *v, register_t *r) {
+mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_semaphore_signal_thread_trap_args *ap = v;
 #endif
@@ -112,7 +112,7 @@ mach_sys_semaphore_signal_thread_trap(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_semaphore_wait_signal_trap(struct proc *p, void *v, register_t *r) {
+mach_sys_semaphore_wait_signal_trap(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_semaphore_wait_signal_trap_args *ap = v;
 #endif
@@ -124,7 +124,7 @@ mach_sys_semaphore_wait_signal_trap(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_semaphore_timedwait_trap(struct proc *p, void *v, register_t *r) {
+mach_sys_semaphore_timedwait_trap(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_semaphore_timedwait_trap_args *ap = v;
 #endif
@@ -136,7 +136,7 @@ mach_sys_semaphore_timedwait_trap(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_semaphore_timedwait_signal_trap(struct proc *p, void *v, register_t *r)
+mach_sys_semaphore_timedwait_signal_trap(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_semaphore_timedwait_signal_trap_args *ap = v;
@@ -151,7 +151,7 @@ mach_sys_semaphore_timedwait_signal_trap(struct proc *p, void *v, register_t *r)
 
 
 int
-mach_sys_init_process(struct proc *p, void *v, register_t *r) {
+mach_sys_init_process(struct lwp *l, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_init_process();\n"));
 	return 0;
@@ -159,7 +159,7 @@ mach_sys_init_process(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_task_for_pid(struct proc *p, void *v, register_t *r) {
+mach_sys_task_for_pid(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_task_for_pid_args *ap = v;
 #endif
@@ -171,7 +171,7 @@ mach_sys_task_for_pid(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_pid_for_task(struct proc *p, void *v, register_t *r) {
+mach_sys_pid_for_task(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_pid_for_task_args *ap = v;
 #endif
@@ -183,7 +183,7 @@ mach_sys_pid_for_task(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_macx_swapon(struct proc *p, void *v, register_t *r) {
+mach_sys_macx_swapon(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_swapon_args *ap = v;
 #endif
@@ -195,7 +195,7 @@ mach_sys_macx_swapon(struct proc *p, void *v, register_t *r) {
 }
 
 int
-mach_sys_macx_swapoff(struct proc *p, void *v, register_t *r) {
+mach_sys_macx_swapoff(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_swapoff_args *ap = v;
 #endif
@@ -206,7 +206,7 @@ mach_sys_macx_swapoff(struct proc *p, void *v, register_t *r) {
 }
 
 int
-mach_sys_macx_triggers(struct proc *p, void *v, register_t *r) {
+mach_sys_macx_triggers(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_triggers_args *ap = v;
 #endif
@@ -219,7 +219,7 @@ mach_sys_macx_triggers(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_swtch_pri(struct proc *p, void *v, register_t *r) {
+mach_sys_swtch_pri(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_swtch_pri_args *ap = v;
 #endif
@@ -231,7 +231,7 @@ mach_sys_swtch_pri(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_swtch(struct proc *p, void *v, register_t *r) {
+mach_sys_swtch(struct lwp *l, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_swtch();\n"));
 	return 0;
@@ -239,7 +239,7 @@ mach_sys_swtch(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_wait_until(struct proc *p, void *v, register_t *r) {
+mach_sys_wait_until(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_wait_until_args *ap = v;
 #endif
@@ -251,7 +251,7 @@ mach_sys_wait_until(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_timer_create(struct proc *p, void *v, register_t *r) {
+mach_sys_timer_create(struct lwp *l, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_timer_create();\n"));
 	return 0;
@@ -259,7 +259,7 @@ mach_sys_timer_create(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_timer_destroy(struct proc *p, void *v, register_t *r) {
+mach_sys_timer_destroy(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_destroy_args *ap = v;
 #endif
@@ -270,7 +270,7 @@ mach_sys_timer_destroy(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_timer_arm(struct proc *p, void *v, register_t *r) {
+mach_sys_timer_arm(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_arm_args *ap = v;
 #endif
@@ -282,7 +282,7 @@ mach_sys_timer_arm(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_timer_cancel(struct proc *p, void *v, register_t *r) {
+mach_sys_timer_cancel(struct lwp *l, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_cancel_args *ap = v;
 #endif
@@ -294,7 +294,7 @@ mach_sys_timer_cancel(struct proc *p, void *v, register_t *r) {
 
 
 int
-mach_sys_get_time_base_info(struct proc *p, void *v, register_t *r) {
+mach_sys_get_time_base_info(struct lwp *l, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_get_time_base_info();\n"));
 	return 0;

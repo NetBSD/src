@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.4 2003/01/02 12:46:06 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.5 2003/01/21 04:06:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.4 2003/01/02 12:46:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.5 2003/01/21 04:06:07 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ mach_bootstrap_look_up(args)
 {
 	mach_bootstrap_look_up_request_t *req = args->smsg;
 	mach_bootstrap_look_up_reply_t *rep = args->rmsg;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	const char service_name[] = "lookup\21"; /* XXX Why */
 	int service_name_len;
@@ -69,7 +69,7 @@ mach_bootstrap_look_up(args)
 	    sizeof(rep->rep_bootstrap_port) + service_name_len *
 	    sizeof(rep->rep_trailer);
 
-	mr = mach_right_get(NULL, p, MACH_PORT_TYPE_DEAD_NAME, 0);
+	mr = mach_right_get(NULL, l, MACH_PORT_TYPE_DEAD_NAME, 0);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |

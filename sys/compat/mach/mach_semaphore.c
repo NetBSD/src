@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.4 2002/12/27 09:59:26 manu Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.5 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.4 2002/12/27 09:59:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.5 2003/01/21 04:06:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,8 +69,8 @@ static void mach_waiting_proc_put
     (struct mach_waiting_proc *, struct mach_semaphore *, int);
 
 int
-mach_sys_semaphore_wait_trap(p, v, retval)
-	struct proc *p;
+mach_sys_semaphore_wait_trap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -90,7 +90,7 @@ mach_sys_semaphore_wait_trap(p, v, retval)
 	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);	
 
 	if (blocked != 0) {
-		mwp = mach_waiting_proc_get(p, ms);	
+		mwp = mach_waiting_proc_get(l->l_proc, ms);	
 		while (ms->ms_value < 0)
 			tsleep(mwp, PZERO|PCATCH, "sem_wait", 0);
 		mach_waiting_proc_put(mwp, ms, 0);
@@ -99,8 +99,8 @@ mach_sys_semaphore_wait_trap(p, v, retval)
 }
 
 int
-mach_sys_semaphore_signal_trap(p, v, retval)
-	struct proc *p;
+mach_sys_semaphore_signal_trap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.16 2003/01/03 13:40:05 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.17 2003/01/21 04:06:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ extern struct mach_port *mach_saved_bootstrap_port;
 /* In-kernel Mach port right description */
 struct mach_right {
 	mach_port_t mr_name;		/* The right name */
-	struct proc *mr_p;		/* points back to struct proc */
+	struct lwp *mr_lwp;		/* points back to struct lwp */
 	int mr_type;			/* right type (recv, send, sendonce) */
 	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
 	int mr_refcount;		/* Reference count */
@@ -234,13 +234,13 @@ struct mach_right {
 	struct mach_right *mr_sethead;	/* Points back to right set */
 };
 
-mach_port_t mach_right_newname(struct proc *, mach_port_t);
+mach_port_t mach_right_newname(struct lwp *, mach_port_t);
 struct mach_right *mach_right_get(struct mach_port *, 
-    struct proc *, int, mach_port_t);
+    struct lwp *, int, mach_port_t);
 void mach_right_put(struct mach_right *, int);
 void mach_right_put_shlocked(struct mach_right *, int);
 void mach_right_put_exclocked(struct mach_right *, int);
-struct mach_right *mach_right_check(mach_port_t, struct proc *, int);
+struct mach_right *mach_right_check(mach_port_t, struct lwp *, int);
 
 /* In-kernel Mach port description */
 struct mach_port {
@@ -256,7 +256,7 @@ void mach_port_init(void);
 struct mach_port *mach_port_get(void);
 void mach_port_put(struct mach_port *);
 void mach_remove_recvport(struct mach_port *);
-void mach_add_recvport(struct mach_port *, struct proc *);
+void mach_add_recvport(struct mach_port *, struct lwp *);
 int mach_port_check(struct mach_port *);
 #ifdef DEBUG_MACH
 void mach_debug_port(void);
