@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.51 2003/10/28 22:56:19 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.52 2003/10/30 19:30:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,6 +104,9 @@
  * ICH3:http://www.intel.com/design/chipsets/datashts/290716.htm
  * ICH4:http://www.intel.com/design/chipsets/datashts/290744.htm
  * ICH5:http://www.intel.com/design/chipsets/datashts/252516.htm
+ * AMD8111:
+ *	http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/24674.pdf
+ *	http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25720.pdf
  *
  * TODO:
  *	- Add support for the dedicated microphone input.
@@ -115,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.51 2003/10/28 22:56:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.52 2003/10/30 19:30:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +392,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	bus_size_t mix_size, aud_size;
-	pcireg_t csr;
+	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
 
@@ -406,6 +409,18 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %s\n", d->name);
 
+	/*
+	 * For ICH4/ICH5, make sure the compatible BARs are writable.
+	 * We can not access all registers of ICH4/ICH5 with NAMBAR
+	 * and NABMBAR.  But they are sufficient for the current driver.
+	 */
+	if ((d->vendor == PCI_VENDOR_INTEL
+	     && d->product == PCI_PRODUCT_INTEL_82801DB_AC)
+	    || (d->vendor == PCI_VENDOR_INTEL
+		&& d->product == PCI_PRODUCT_INTEL_82801EB_AC)) {
+		v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG, v | ICH_CFG_IOSE);
+	}
 	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
 		aprint_error("%s: can't map codec i/o space\n",
@@ -421,9 +436,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->dmat = pa->pa_dmat;
 
 	/* enable bus mastering */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
+	    v | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
