@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.36 2001/02/23 23:57:47 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.37 2001/02/24 23:30:01 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -403,7 +403,7 @@ isp_sbus_mbxdma(isp)
 
 	/* Load the buffer */
 	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap,
-	    &seg, rs, len, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
+	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
 	}
@@ -411,7 +411,7 @@ isp_sbus_mbxdma(isp)
 
 	/* Map DMA buffer in CPU addressable space */
 	if (bus_dmamem_map(dmatag, &seg, rs, len, (caddr_t *)&isp->isp_rquest,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    BUS_DMA_NOWAIT)) {
 		bus_dmamap_unload(dmatag, sbc->sbus_rquest_dmamap);
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
@@ -496,8 +496,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		return (CMD_COMPLETE);
 	}
 
-	bus_dmamap_sync(sbc->sbus_dmatag, dmap, dmap->dm_segs[0].ds_addr,
-	    xs->datalen, in? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sbc->sbus_dmatag, dmap, 0, xs->datalen,
+	    in? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	if (in) {
 		rq->req_flags |= REQFLAG_DATA_IN;
