@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.2 1995/12/13 19:36:33 thorpej Exp $	*/
+/*	$NetBSD: isinf.c,v 1.3 1996/02/05 04:31:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";
 #else
-static char rcsid[] = "$NetBSD: isinf.c,v 1.2 1995/12/13 19:36:33 thorpej Exp $";
+static char rcsid[] = "$NetBSD: isinf.c,v 1.3 1996/02/05 04:31:12 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+int
 isnan(d)
 	double d;
 {
@@ -56,6 +57,7 @@ isnan(d)
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
+int
 isinf(d)
 	double d;
 {
