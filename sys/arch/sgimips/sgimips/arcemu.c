@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.6 2004/06/08 22:51:21 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.7 2004/10/02 08:53:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6 2004/06/08 22:51:21 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.7 2004/10/02 08:53:09 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ arcemu_ip12_eeprom_read()
 	struct seeprom_descriptor sd;
 	bus_space_handle_t bsh;
 	bus_space_tag_t tag;
-	uint32_t reg;
+	paddr_t reg;
 
 	tag = SGIMIPS_BUS_SPACE_NORMAL;
 	bus_space_map(tag, 0x1fa00000 + 0x1801bf, 1, 0, &bsh);
@@ -433,31 +433,31 @@ arcemu_unimpl_voidptr_voidptr(void *a)
 	return (NULL);
 }
 
-static uint32_t
-arcemu_unimpl_Load(char *a, uint32_t b, uint32_t c, uint32_t *d)
+static paddr_t
+arcemu_unimpl_Load(char *a, paddr_t b, paddr_t c, paddr_t *d)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Invoke(uint32_t a, uint32_t b, uint32_t c, char **d, char **e)
+static paddr_t
+arcemu_unimpl_Invoke(paddr_t a, paddr_t b, paddr_t c, char **d, char **e)
 {
 	arcemu_unimpl();	
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Execute(char *a, uint32_t b, char **c, char **d)
+static paddr_t
+arcemu_unimpl_Execute(char *a, paddr_t b, char **c, char **d)
 {
 	arcemu_unimpl();	
 
 	return (0);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_GetConfigurationData(void *a, void *b)
 {
 	arcemu_unimpl();	
@@ -473,7 +473,7 @@ arcemu_unimpl_AddChild(void *a, void *b)
 	return (NULL);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_DeleteComponent(void *a)
 {
 	arcemu_unimpl();
@@ -481,7 +481,7 @@ arcemu_unimpl_DeleteComponent(void *a)
 	return (0);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_GetComponent(char *a)
 {
 	arcemu_unimpl();
@@ -489,7 +489,7 @@ arcemu_unimpl_GetComponent(char *a)
 	return (0);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_SaveConfiguration()
 {
 	arcemu_unimpl();
@@ -505,7 +505,7 @@ arcemu_unimpl_GetMemoryDescriptor(void *a)
 	return (NULL);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_GetRelativeTime()
 {
 	arcemu_unimpl();
@@ -513,48 +513,48 @@ arcemu_unimpl_GetRelativeTime()
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_GetDirectoryEntry(uint32_t a, void *b, uint32_t c, uint32_t *d)
+static paddr_t
+arcemu_unimpl_GetDirectoryEntry(paddr_t a, void *b, paddr_t c, paddr_t *d)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Open(char *a, uint32_t b, uint32_t *c)
+static paddr_t
+arcemu_unimpl_Open(char *a, paddr_t b, paddr_t *c)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Close(uint32_t a)
+static paddr_t
+arcemu_unimpl_Close(paddr_t a)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_GetReadStatus(uint32_t a)
+static paddr_t
+arcemu_unimpl_GetReadStatus(paddr_t a)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Seek(uint32_t a, int64_t *b, uint32_t c)
+static paddr_t
+arcemu_unimpl_Seek(paddr_t a, int64_t *b, paddr_t c)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_Mount(char *a, uint32_t b)
+static paddr_t
+arcemu_unimpl_Mount(char *a, paddr_t b)
 {
 	arcemu_unimpl();
 
@@ -569,7 +569,7 @@ arcemu_unimpl_GetEnvironmentVariable(char *a)
 	return (NULL);
 }
 
-static uint32_t
+static paddr_t
 arcemu_unimpl_SetEnvironmentVariable(char *a, char *b)
 {
 	arcemu_unimpl();
@@ -577,16 +577,16 @@ arcemu_unimpl_SetEnvironmentVariable(char *a, char *b)
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_GetFileInformation(uint32_t a, void *b)
+static paddr_t
+arcemu_unimpl_GetFileInformation(paddr_t a, void *b)
 {
 	arcemu_unimpl();
 
 	return (0);
 }
 
-static uint32_t
-arcemu_unimpl_SetFileInformation(uint32_t a, uint32_t b, uint32_t c)
+static paddr_t
+arcemu_unimpl_SetFileInformation(paddr_t a, paddr_t b, paddr_t c)
 {
 	arcemu_unimpl();
 
