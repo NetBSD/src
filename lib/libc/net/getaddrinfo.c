@@ -512,29 +512,40 @@ get_name(addr, afd, res, numaddr, pai, port0)
 }
 
 static int
-get_addr(hostname, af, res, pai, port0)
+get_addr(hostname, af, res0, pai, port0)
 	const char *hostname;
 	int af;
-	struct addrinfo **res;
+	struct addrinfo **res0;
 	struct addrinfo *pai;
 	int port0;
 {
 #ifdef USE_GETIPNODEBY
 	return get_addr0(hostname, af, res, pai, port0);
 #else
-	int i, error;
+	int i, error, ekeep;
 	struct addrinfo *cur;
+	struct addrinfo **res;
 
+	res = res0;
+	ekeep = 0;
 	for (i = 0; afdl[i].a_af; i++) {
 		if (af == AF_UNSPEC || af == afdl[i].a_af) 
 			;
 		else
 			continue;
+		/* It is WRONG, we need getipnodebyname(). */
+again:
 		error = get_addr0(hostname, afdl[i].a_af, res, pai, port0);
-		if (error == EAI_FAIL)
+		switch (error) {
+		case EAI_AGAIN:
+			goto again;
+		case EAI_FAIL:
 			return error;
-		else
-			error = 0;
+		default:
+			if (ekeep == 0)
+				ekeep = error;
+			break;
+		}
 		if (*res) {
 			/* make chain of addrs */
 			for (cur = *res;
@@ -547,7 +558,11 @@ get_addr(hostname, af, res, pai, port0)
 		}
 	}
 
-	return error;
+	/* if we got something, it's okay */
+	if (*res0)
+		return 0;
+
+	return error ? error : ekeep;
 #endif
 }
 
