@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.51 1999/06/02 21:23:08 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.52 1999/06/02 22:40:51 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -190,39 +190,6 @@ static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 /*
  * local inlines
  */
-
-/* XXX Should not exist! */
-static __inline void vm_map_set_recursive __P((vm_map_t));
-static __inline void
-vm_map_set_recursive(map)
-	vm_map_t map;
-{
-
-#ifdef DIAGNOSTIC
-	if (map->flags & VM_MAP_INTRSAFE)
-		panic("vm_map_set_recursive: intrsafe map");
-#endif
-	simple_lock(&map->lock.lk_interlock);
-	map->lock.lk_flags |= LK_CANRECURSE;
-	simple_unlock(&map->lock.lk_interlock);
-}
-
-/* XXX Should not exist! */
-static __inline void vm_map_clear_recursive __P((vm_map_t));
-static __inline void
-vm_map_clear_recursive(map)
-	vm_map_t map;
-{
-
-#ifdef DIAGNOSTIC
-	if (map->flags & VM_MAP_INTRSAFE)
-		panic("vm_map_clear_recursive: intrsafe map");
-#endif
-	simple_lock(&map->lock.lk_interlock);
-	if (map->lock.lk_exclusivecount <= 1)
-		map->lock.lk_flags &= ~LK_CANRECURSE;
-	simple_unlock(&map->lock.lk_interlock);
-}
 
 /* XXX Should not exist! */
 #define	vm_map_downgrade(map)						\
@@ -2185,18 +2152,6 @@ uvm_map_pageable(map, start, end, new_pageable)
 	 * Pass 2.
 	 */
 
-	/*
-	 * XXX Note, even if we're a kernel map, just set recursion on
-	 * XXX the lock.  If the pmap (via uvm_fault()) needs to lock
-	 * XXX this map again in this thread, it will be able to due
-	 * XXX to the recursion setting.  Note that we have already
-	 * XXX done what we need to do to the map entries, so we
-	 * XXX should be okay.
-	 *
-	 * JEEZ, THIS IS A MESS!
-	 */
-
-	vm_map_set_recursive(map);
 	vm_map_downgrade(map);
 
 	rv = 0;
@@ -2217,13 +2172,12 @@ uvm_map_pageable(map, start, end, new_pageable)
 		entry = entry->next;
 	}
 
-	/*
-	 * Get back to an exclusive, non-recursive lock.  (XXX: see above)
-	 */
-	vm_map_upgrade(map);
-	vm_map_clear_recursive(map);
-
 	if (rv) {        /* failed? */
+		/*
+		 * Get back to an exclusive (write) lock.
+		 */
+		vm_map_upgrade(map);
+
 		/*
 		 * first drop the wiring count on all the entries
 		 * which haven't actually been wired yet.
@@ -2242,7 +2196,8 @@ uvm_map_pageable(map, start, end, new_pageable)
 		return(rv);
 	}
 
-	vm_map_unlock(map);
+	/* We are holding a read lock here. */
+	vm_map_unlock_read(map);
 	
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
 	return(KERN_SUCCESS);
