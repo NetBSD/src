@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.15 2003/08/01 05:42:48 provos Exp $	*/
+/*	$NetBSD: policy.c,v 1.16 2004/10/29 19:55:43 dsl Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.15 2003/08/01 05:42:48 provos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.16 2004/10/29 19:55:43 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,7 +313,7 @@ systrace_policyfilename(char *dirname, const char *name)
 
 	p = name;
 	while (*p) {
-		if (!isalnum(*p)) {
+		if (!isalnum((unsigned char)*p)) {
 			if (i != plen)
 				file[i++] = '_';
 		} else
@@ -526,7 +526,7 @@ systrace_policyline(char *line)
 	/* Remove trailing white space */
 	p = line + strlen(line) - 1;
 	while (p > line) {
-		if (!isspace(*p))
+		if (!isspace((unsigned char)*p))
 			break;
 		*p-- = '\0';
 	}
