@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 1994/10/26 07:51:03 cgd Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 1994/11/14 20:53:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -183,27 +183,6 @@ db_disasm(loc, moto_syntax)
 	
 	dbuf.dasm[0] = 0;
 	dbuf.info[0] = 0;
-		
-#if 0
-	/* This is now done in db_examine. */
-	diff = INT_MAX;
-	sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
-	db_symbol_values(sym, &symname, 0);
-
-	/* addstr(&dbuf, "["); */
-	if (symname == NULL) 
-		printu (&dbuf, loc, SIZE_LONG);
-	else if (diff == 0) {
-		addstr(&dbuf, symname);
-		iprintu(&dbuf, loc, SIZE_LONG);
-		iaddstr(&dbuf, ":: ");
-	} else {
-		addstr(&dbuf, symname);
-		addstr(&dbuf, "+");
-		printu(&dbuf, diff, SIZE_LONG);
-	}
-	addstr(&dbuf, ":  ");
-#endif
 
 	opc = *dbuf.val;
 	dbuf.used++;
@@ -873,23 +852,22 @@ opcode_branch(dbuf, opc)
 
 	disp = BITFIELD(opc,7,0);
 	if (disp == 0) {
+		/* 16-bit signed displacement */
 		disp = *(dbuf->val + 1);
 		dbuf->used++;
 		sz = SIZE_WORD;
-#if 0		/* XXX Note GNU as doesn't like this */
 		addchar('w');
-#endif
 	} else if (disp == 0xff) {
+		/* 32-bit signed displacement */
 		disp = *(long *)(dbuf->val + 1);
 		dbuf->used += 2;
 		sz = SIZE_LONG;
 		addchar('l');
 	} else {
-		disp = *((char *)dbuf->val + 1);
-		/*
-		 * XXX gas chokes on this, I am not sure if
-		 * XXX it can even be made to emit it (short of .word)
-		 */
+		/* 8-bit signed displacement in opcode. */
+		/* Needs to be sign-extended... */
+		if (ISBITSET(disp,7))
+			disp -= 256;
 		sz = SIZE_BYTE;
 		addchar('b');
 	}
@@ -1594,6 +1572,9 @@ opcode_fpu(dbuf, opc)
 	}
 }
 
+/*
+ * XXX - This screws up on:  fmovem  a0@(312),fpcr/fpsr/fpi
+ */
 void
 opcode_fmove_ext(dbuf, opc, ext)
 	dis_buffer_t *dbuf;
@@ -2771,7 +2752,7 @@ make_cond(dbuf, bit, base)
 	const char *ccs;
 
 	cc = BITFIELD(*dbuf->val,bit,bit-3);
-	ccs = cc_table[cc];
+	ccs = cc_table[cc&15];
 
 	addstr(dbuf, base);
 	addstr(dbuf, ccs);
@@ -2782,7 +2763,7 @@ print_fcond(dbuf, cp)
 	dis_buffer_t *dbuf;
 	char cp;
 {
-	addstr(dbuf,fpcc_table[cp]);
+	addstr(dbuf,fpcc_table[cp&31]); 	/* XXX - not 63 ?*/
 }
 
 void
@@ -2790,7 +2771,7 @@ print_mcond(dbuf, cp)
 	dis_buffer_t *dbuf;
 	char cp;
 {
-	addstr(dbuf,mmcc_table[cp]);
+	addstr(dbuf,mmcc_table[cp&15]);
 }
 
 /*
