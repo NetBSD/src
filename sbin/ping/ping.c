@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.53 1999/07/04 15:24:35 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.54 2000/01/20 01:04:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.53 1999/07/04 15:24:35 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.54 2000/01/20 01:04:41 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -1012,14 +1012,14 @@ pr_pack(u_char *buf,
 			    &opack_icmp.icmp_data[PHDR_LEN],
 			    datalen-PHDR_LEN)) {
 			for (i=PHDR_LEN; i<datalen; i++) {
-				if (icp->icmp_data[PHDR_LEN+i]
-				    != opack_icmp.icmp_data[PHDR_LEN+i])
+				if (icp->icmp_data[i] !=
+				    opack_icmp.icmp_data[i])
 					break;
 			}
 			PR_PACK_SUB();
 			(void)printf("\nwrong data byte #%d should have been"
-				     " %#x but was %#x",
-				     i, (u_char)opack_icmp.icmp_data[i],
+				     " %#x but was %#x", i,
+				     (u_char)opack_icmp.icmp_data[i],
 				     (u_char)icp->icmp_data[i]);
 			for (i=PHDR_LEN; i<datalen; i++) {
 				if ((i%16) == PHDR_LEN)
