@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.1 2002/11/20 18:06:26 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.2 2003/05/09 16:25:46 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -36,6 +36,8 @@
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
 
+#include <arm/s3c2xx0/s3c2800reg.h>	/* for S3C2800_DBANK0_START */
+
 /*
  * Kernel start routine for Samsung SMDK2800.
  * This code is excuted at the very first after the kernel is loaded
@@ -43,11 +45,17 @@
  */
 	.text
 
+#ifndef	SDRAM_START
+#define	SDRAM_START	S3C2800_DBANK0_START
+#endif
+#define KERNEL_TEXT_ADDR	(SDRAM_START+0x00200000)
+
 	.global	_C_LABEL(smdk2800_start)
 _C_LABEL(smdk2800_start):
-	/* Are we running on ROM ? */
-	cmp	pc, #0x08200000
-	bhs	smdk2800_start_ram
+	/* Are we running on right place ? */
+	adr r0, _C_LABEL(smdk2800_start)
+	cmp	r0, #KERNEL_TEXT_ADDR
+	beq	smdk2800_start_ram
 	
 	/* move me to RAM
 	 * XXX: we can use memcpy if it is PIC
@@ -56,7 +64,7 @@ _C_LABEL(smdk2800_start):
 	adr r0, _C_LABEL(smdk2800_start)
 	add r1, r1, #3
 	mov r1, r1, LSR #2
-	mov r2, #0x08200000
+	mov r2, #KERNEL_TEXT_ADDR
 	mov r4, r2
 
 	cmp r0, r2
@@ -92,8 +100,6 @@ smdk2800_start_ram:
 	 *  in VA 0xc0200000..  
 	 */
 
-	/* get ttb prepared by boot program */
-	mrc p15, 0, r0, c2, c0, 0
 	/* Disable MMU for a while */
 	mrc	p15, 0, r2, c1, c0, 0
 	bic	r2, r2, #CPU_CONTROL_MMU_ENABLE
@@ -103,20 +109,19 @@ smdk2800_start_ram:
 	nop
 	nop
 	
-	/*
-	 * Map VA 0xc0000000..0xc3ffffff to PA 0x08000000..0x09ffffff
-	 */
-	mov	r1, #(L1_S_AP(AP_KRW))
-	orr	r1, r1, #(L1_TYPE_S)
-	orr	r1, r1, #0x08000000
-	mov	r2, #(0xc00 * 4)
+	mov	r0,#SDRAM_START      /* pagetable */
+	adr	r4, mmu_init_table
+	b	2f
 1:
-	str	r1, [r0, r2]
+	str	r3, [r0, r2]
 	add	r2, r2, #4
-	add	r1, r1, #L1_S_SIZE
-	cmp	r2, #(0xc20 * 4)
-	blo	1b
-
+	add	r3, r3, #(L1_S_SIZE)
+	adds	r1, r1, #-1
+	bhi	1b
+2:	
+	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
+	cmp	r1, #0
+	bne	1b	
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
@@ -140,3 +145,19 @@ smdk2800_start_ram:
 
 Lstart:
 	.word	start
+
+#define MMU_INIT(va,pa,n_sec,attr) \
+	.word	n_sec					    ; \
+	.word	4*((va)>>L1_S_SHIFT)			    ; \
+	.word	(pa)|(attr)				    ;
+	
+mmu_init_table:	
+	/* fill all table VA==PA */
+	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+	/* map SDRAM VA==PA, WT cacheable */
+	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	/* map VA 0xc0000000..0xc3ffffff to PA 0x08000000..0x0bffffff */
+	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+
+	.word 0	/* end of table */
+
