@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.98 2003/10/19 17:45:35 cl Exp $	*/
+/*	$NetBSD: npx.c,v 1.99 2003/12/05 21:24:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.98 2003/10/19 17:45:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.99 2003/12/05 21:24:57 jdolecek Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -604,7 +604,7 @@ npxdna_s87(struct cpu_info *ci)
 	l = curlwp;
 #endif
 
-	IPRINTF(("%s: dna for %p\n", ci->ci_dev->dv_xname, p));
+	IPRINTF(("%s: dna for lwp %p\n", ci->ci_dev->dv_xname, l));
 	/*
 	 * If someone else was using our FPU, save their state (which does an
 	 * implicit initialization); otherwise, initialize the FPU state to
@@ -672,8 +672,8 @@ npxsave_cpu (struct cpu_info *ci, int save)
 	if (l == NULL)
 		return;
 
-	IPRINTF(("%s: fp cpu %s %p\n", ci->ci_dev->dv_xname,
-	    save? "save" : "flush", p));
+	IPRINTF(("%s: fp cpu %s lwp %p\n", ci->ci_dev->dv_xname,
+	    save? "save" : "flush", l));
 
 	if (save) {
 #ifdef DIAGNOSTIC
@@ -734,8 +734,8 @@ npxsave_lwp(struct lwp *l, int save)
 	if (oci == NULL)
 		return;
 
-	IPRINTF(("%s: fp proc %s %p\n", ci->ci_dev->dv_xname,
-	    save? "save" : "flush", p));
+	IPRINTF(("%s: fp %s lwp %p\n", ci->ci_dev->dv_xname,
+	    save? "save" : "flush", l));
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
@@ -747,10 +747,10 @@ npxsave_lwp(struct lwp *l, int save)
 		int spincount;
 #endif
 
-		IPRINTF(("%s: fp ipi to %s %s %p\n",
+		IPRINTF(("%s: fp ipi to %s %s lwp %p\n",
 		    ci->ci_dev->dv_xname,
 		    oci->ci_dev->dv_xname,
-		    save? "save" : "flush", p));
+		    save? "save" : "flush", l));
 
 		x86_send_ipi(oci,
 		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
