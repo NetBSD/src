@@ -1,7 +1,7 @@
-/*	$NetBSD: wdcvar.h,v 1.36 2003/04/28 05:20:30 nakayama Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.37 2003/09/19 21:36:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,6 +69,7 @@ struct channel_softc { /* Per channel data */
 #define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
+#define	WDCF_DISABLED 0x80	/* channel is disabled */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
@@ -102,7 +103,6 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
-#define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
@@ -181,7 +181,7 @@ struct wdc_xfer {
  */
 
 int   wdcprobe __P((struct channel_softc *));
-void  wdcattach __P((struct channel_softc *));
+void  wdcattach __P((struct device *));
 int   wdcdetach __P((struct device *, int));
 int   wdcactivate __P((struct device *, enum devact));
 int   wdcintr __P((void *));

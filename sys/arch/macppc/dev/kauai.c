@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.3 2003/08/17 18:10:09 chs Exp $	*/
+/*	$NetBSD: kauai.c,v 1.4 2003/09/19 21:35:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.3 2003/08/17 18:10:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.4 2003/09/19 21:35:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,10 +180,7 @@ kauai_attach(parent, self, aux)
 	chp->wdc = &sc->sc_wdcdev;
 	chp->ch_queue = &sc->wdc_queue;
 
-	wdcattach(chp);
-
-	/* Modify access timings. */
-	kauai_set_modes(chp);
+	config_interrupts(self, wdcattach);
 }
 
 void
@@ -211,8 +208,6 @@ kauai_set_modes(chp)
 			    DMA_CONFIG_REG, sc->sc_dmatiming_r[drive]);
 		}
 	}
-
-	wdc_print_modes(chp);
 }
 
 /*
