@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.2 2004/01/03 16:37:41 chris Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.3 2004/07/04 13:12:58 chris Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.2 2004/01/03 16:37:41 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.3 2004/07/04 13:12:58 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 		//(0x4000 >> 1)  |  (1<<23);
 	}
 #endif
-	sc->sc_ih = intr_claim(0x0B, IPL_NET, "cs", cs_intr, sc);
+	sc->sc_ih = intr_claim(IRQ_INT5, IPL_NET, "cs", cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -198,11 +198,7 @@ cs_rsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dma_attach = NULL;
 	sc->sc_dma_process_rx = NULL;
 
-	/* 
-	 * don't talk to the EEPROM, it seems that the cs driver doesn't
-	 * currently to the right thing for reading the EEPROM
-	 */
-	sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
+	sc->sc_cfgflags |= CFGFLG_PARSE_EEPROM;
 	sc->sc_io_read_1 = cs_rbus_read_1;
 
 	/* 
