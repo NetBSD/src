@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2001/04/22 17:22:58 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.98 2001/04/22 23:42:18 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -625,39 +625,6 @@ if(startpmapdebug)
 		pte += LTOHPN;
 	}
 	mtpr(0, PR_TBIA);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-	int *ptp;
-
-#ifdef PMAPDEBUG
-if(startpmapdebug)
-	printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
-#endif
-
-	/*
-	 * May this routine affect page tables? 
-	 * We assume that, and uses TBIA.
-	 */
-	ptp = (int *)kvtopte(va);
-	for (i = 0 ; i < npgs ; i++) {
-		ptp[0] = PG_V | PG_KW |
-		    PG_PFNUM(VM_PAGE_TO_PHYS(pgs[i])) | PG_SREF;
-		ptp[1] = ptp[0] + 1;
-		ptp[2] = ptp[0] + 2;
-		ptp[3] = ptp[0] + 3;
-		ptp[4] = ptp[0] + 4;
-		ptp[5] = ptp[0] + 5;
-		ptp[6] = ptp[0] + 6;
-		ptp[7] = ptp[0] + 7;
-		ptp += LTOHPN;
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2001/04/21 23:51:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2001/04/22 23:42:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1304,20 +1304,6 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pgs[i]),
-			       VM_PROT_READ|VM_PROT_WRITE);
-	}
 }
 
 void
