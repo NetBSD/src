@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.52 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.53 2004/02/10 20:57:20 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.52 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.53 2004/02/10 20:57:20 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -802,7 +802,7 @@ nd6_na_input(m, off, icmp6len)
 		 * argument as the 1st one.
 		 */
 		nd6_output(ifp, ifp, ln->ln_hold,
-			   (struct sockaddr_in6 *)rt_key(rt), rt);
+		    (struct sockaddr_in6 *)rt_key(rt), rt);
 		ln->ln_hold = NULL;
 	}
 
@@ -836,7 +836,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	struct ip6_hdr *ip6;
 	struct nd_neighbor_advert *nd_na;
 	struct ip6_moptions im6o;
-	struct sockaddr_in6 src_sa, dst_sa;
+	struct sockaddr_in6 dst_sa;
 	struct in6_addr *src0;
 	int icmp6len, maxlen, error;
 	caddr_t mac;
@@ -887,10 +887,9 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	ip6->ip6_hlim = 255;
-	bzero(&src_sa, sizeof(src_sa));
 	bzero(&dst_sa, sizeof(dst_sa));
-	src_sa.sin6_len = dst_sa.sin6_len = sizeof(struct sockaddr_in6);
-	src_sa.sin6_family = dst_sa.sin6_family = AF_INET6;
+	dst_sa.sin6_len = sizeof(struct sockaddr_in6);
+	dst_sa.sin6_family = AF_INET6;
 	dst_sa.sin6_addr = *daddr6;
 	if (IN6_IS_ADDR_UNSPECIFIED(daddr6)) {
 		/* reply to DAD */
@@ -915,8 +914,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 		    ip6_sprintf(&dst_sa.sin6_addr), error));
 		goto bad;
 	}
-	src_sa.sin6_addr = *src0;
-	ip6->ip6_src = src_sa.sin6_addr;
+	ip6->ip6_src = *src0;
 	nd_na = (struct nd_neighbor_advert *)(ip6 + 1);
 	nd_na->nd_na_type = ND_NEIGHBOR_ADVERT;
 	nd_na->nd_na_code = 0;
