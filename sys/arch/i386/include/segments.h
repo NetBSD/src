@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)segments.h	7.1 (Berkeley) 5/9/91
- *	$Id: segments.h,v 1.5 1993/12/20 05:25:43 mycroft Exp $
+ *	$Id: segments.h,v 1.6 1994/04/03 18:53:53 mycroft Exp $
  */
 
 /*
@@ -63,42 +63,42 @@
 /*
  * Memory and System segment descriptors
  */
-struct	segment_descriptor	{
-	unsigned sd_lolimit:16 ;	/* segment extent (lsb) */
-	unsigned sd_lobase:24 ;		/* segment base address (lsb) */
-	unsigned sd_type:5 ;		/* segment type */
-	unsigned sd_dpl:2 ;		/* segment descriptor priority level */
-	unsigned sd_p:1 ;		/* segment descriptor present */
-	unsigned sd_hilimit:4 ;		/* segment extent (msb) */
-	unsigned sd_xx:2 ;		/* unused */
-	unsigned sd_def32:1 ;		/* default 32 vs 16 bit size */
-	unsigned sd_gran:1 ;		/* limit granularity (byte/page units)*/
-	unsigned sd_hibase:8 ;		/* segment base address  (msb) */
-} ;
+struct segment_descriptor {
+	unsigned sd_lolimit:16;		/* segment extent (lsb) */
+	unsigned sd_lobase:24;		/* segment base address (lsb) */
+	unsigned sd_type:5;		/* segment type */
+	unsigned sd_dpl:2;		/* segment descriptor priority level */
+	unsigned sd_p:1;		/* segment descriptor present */
+	unsigned sd_hilimit:4;		/* segment extent (msb) */
+	unsigned sd_xx:2;		/* unused */
+	unsigned sd_def32:1;		/* default 32 vs 16 bit size */
+	unsigned sd_gran:1;		/* limit granularity (byte/page) */
+	unsigned sd_hibase:8;		/* segment base address (msb) */
+};
 
 /*
  * Gate descriptors (e.g. indirect descriptors)
  */
-struct	gate_descriptor	{
-	unsigned gd_looffset:16 ;	/* gate offset (lsb) */
-	unsigned gd_selector:16 ;	/* gate segment selector */
-	unsigned gd_stkcpy:5 ;		/* number of stack wds to cpy */
-	unsigned gd_xx:3 ;		/* unused */
-	unsigned gd_type:5 ;		/* segment type */
-	unsigned gd_dpl:2 ;		/* segment descriptor priority level */
-	unsigned gd_p:1 ;		/* segment descriptor present */
-	unsigned gd_hioffset:16 ;	/* gate offset (msb) */
-} ;
+struct gate_descriptor {
+	unsigned gd_looffset:16;	/* gate offset (lsb) */
+	unsigned gd_selector:16;	/* gate segment selector */
+	unsigned gd_stkcpy:5;		/* number of stack wds to cpy */
+	unsigned gd_xx:3;		/* unused */
+	unsigned gd_type:5;		/* segment type */
+	unsigned gd_dpl:2;		/* segment descriptor priority level */
+	unsigned gd_p:1;		/* segment descriptor present */
+	unsigned gd_hioffset:16;	/* gate offset (msb) */
+};
 
 /*
  * Generic descriptor
  */
-union	descriptor	{
-	struct	segment_descriptor sd;
-	struct	gate_descriptor gd;
+union descriptor {
+	struct segment_descriptor sd;
+	struct gate_descriptor gd;
 };
 
-	/* system segments and gate types */
+/* system segments and gate types */
 #define	SDT_SYSNULL	 0	/* system null */
 #define	SDT_SYS286TSS	 1	/* system 286 TSS available */
 #define	SDT_SYSLDT	 2	/* system local descriptor table */
@@ -116,7 +116,7 @@ union	descriptor	{
 #define	SDT_SYS386IGT	14	/* system 386 interrupt gate */
 #define	SDT_SYS386TGT	15	/* system 386 trap gate */
 
-	/* memory segment types */
+/* memory segment types */
 #define	SDT_MEMRO	16	/* memory read only */
 #define	SDT_MEMROA	17	/* memory read only accessed */
 #define	SDT_MEMRW	18	/* memory read write */
@@ -159,21 +159,17 @@ union	descriptor	{
  * which are translated into inconvenient segment descriptors
  * when needed to be used by the 386 hardware
  */
-
-struct	soft_segment_descriptor	{
-	unsigned ssd_base ;		/* segment base address  */
-	unsigned ssd_limit ;		/* segment extent */
-	unsigned ssd_type:5 ;		/* segment type */
-	unsigned ssd_dpl:2 ;		/* segment descriptor priority level */
-	unsigned ssd_p:1 ;		/* segment descriptor present */
-	unsigned ssd_xx:4 ;		/* unused */
-	unsigned ssd_xx1:2 ;		/* unused */
-	unsigned ssd_def32:1 ;		/* default 32 vs 16 bit size */
-	unsigned ssd_gran:1 ;		/* limit granularity (byte/page units)*/
+struct soft_segment_descriptor {
+	unsigned ssd_base;		/* segment base address  */
+	unsigned ssd_limit;		/* segment extent */
+	unsigned ssd_type:5;		/* segment type */
+	unsigned ssd_dpl:2;		/* segment descriptor priority level */
+	unsigned ssd_p:1;		/* segment descriptor present */
+	unsigned ssd_xx:4;		/* unused */
+	unsigned ssd_xx1:2;		/* unused */
+	unsigned ssd_def32:1;		/* default 32 vs 16 bit size */
+	unsigned ssd_gran:1;		/* limit granularity (byte/page units)*/
 };
-
-extern ssdtosd() ;	/* to decode a ssd */
-extern sdtossd() ;	/* to encode a sd */
 
 /*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
@@ -186,7 +182,6 @@ struct region_descriptor {
 /*
  * Segment Protection Exception code bits
  */
-
 #define	SEGEX_EXT	0x01	/* recursive or externally induced */
 #define	SEGEX_IDT	0x02	/* interrupt descriptor table */
 #define	SEGEX_TI	0x04	/* local descriptor table */
@@ -231,6 +226,8 @@ extern int currentldt;
 extern union descriptor gdt[NGDT];
 extern union descriptor ldt[NLDT];
 extern struct soft_segment_descriptor gdt_segs[];
+extern ssdtosd();	/* to decode a ssd */
+extern sdtossd();	/* to encode a sd */
 #endif
 
 #if __GNUC__ >= 2
