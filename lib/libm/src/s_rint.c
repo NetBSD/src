@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rint.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_rint.c,v 1.11 2002/05/26 22:01:58 wiz Exp $");
 #endif
 
 /*
@@ -28,22 +28,14 @@ __RCSID("$NetBSD: s_rint.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 TWO52[2]={
   4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
  -4.50359962737049600000e+15, /* 0xC3300000, 0x00000000 */
 };
 
-#ifdef __STDC__
-	double rint(double x)
-#else
-	double rint(x)
-	double x;
-#endif
+double
+rint(double x)
 {
 	int32_t i0,j0,sx;
 	u_int32_t i,i1;

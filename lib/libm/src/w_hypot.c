@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_hypot.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_hypot.c,v 1.9 2002/05/26 22:02:01 wiz Exp $");
 #endif
 
 /*
@@ -23,12 +23,8 @@ __RCSID("$NetBSD: w_hypot.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double hypot(double x, double y)/* wrapper hypot */
-#else
-	double hypot(x,y)		/* wrapper hypot */
-	double x,y;
-#endif
+double
+hypot(double x, double y)/* wrapper hypot */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_hypot(x,y);

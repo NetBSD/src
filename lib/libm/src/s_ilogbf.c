@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogbf.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_ilogbf.c,v 1.7 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int ilogbf(float x)
-#else
-	int ilogbf(x)
-	float x;
-#endif
+int
+ilogbf(float x)
 {
 	int32_t hx,ix;
 

@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_pow.c,v 1.6 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_pow.c,v 1.7 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 /*
@@ -25,12 +25,8 @@ __RCSID("$NetBSD: w_pow.c,v 1.6 1999/07/02 15:37:45 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double pow(double x, double y)	/* wrapper pow */
-#else
-	double pow(x,y)			/* wrapper pow */
-	double x,y;
-#endif
+double
+pow(double x, double y)	/* wrapper pow */
 {
 #ifdef _IEEE_LIBM
 	return  __ieee754_pow(x,y);

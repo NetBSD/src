@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_significandf.c,v 1.5 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_significandf.c,v 1.6 2002/05/26 22:01:58 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float significandf(float x)
-#else
-	float significandf(x)
-	float x;
-#endif
+float
+significandf(float x)
 {
 	return __ieee754_scalbf(x,(float) -ilogbf(x));
 }

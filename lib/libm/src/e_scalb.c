@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_scalb.c,v 1.8 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_scalb.c,v 1.9 2002/05/26 22:01:52 wiz Exp $");
 #endif
 
 /*
@@ -25,19 +25,11 @@ __RCSID("$NetBSD: e_scalb.c,v 1.8 1999/07/02 15:37:41 simonb Exp $");
 #include "math_private.h"
 
 #ifdef _SCALB_INT
-#ifdef __STDC__
-	double __ieee754_scalb(double x, int fn)
+double
+__ieee754_scalb(double x, int fn)
 #else
-	double __ieee754_scalb(x,fn)
-	double x; int fn;
-#endif
-#else
-#ifdef __STDC__
-	double __ieee754_scalb(double x, double fn)
-#else
-	double __ieee754_scalb(x,fn)
-	double x, fn;
-#endif
+double
+__ieee754_scalb(double x, double fn)
 #endif
 {
 #ifdef _SCALB_INT

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cos.c,v 1.9 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_cos.c,v 1.10 2002/05/26 22:01:54 wiz Exp $");
 #endif
 
 /* cos(x)
@@ -49,12 +49,8 @@ __RCSID("$NetBSD: s_cos.c,v 1.9 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double cos(double x)
-#else
-	double cos(x)
-	double x;
-#endif
+double
+cos(double x)
 {
 	double y[2],z=0.0;
 	int32_t n, ix;
