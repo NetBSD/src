@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.38 2004/04/26 03:01:55 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.39 2004/04/27 01:23:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.38 2004/04/26 03:01:55 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.39 2004/04/27 01:23:35 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -713,16 +713,18 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep)
 				    /* don't write anything with -t */
 				    tflag == 0 &&
 #endif
-				    write(STDOUT_FILENO, outbuf, wr) != wr)
+				    write(out, outbuf, wr) != wr)
 					maybe_err(1, "error writing "
-						     "to stdout\n");
+						     "to output\n");
+
+				out_tot += wr;
 
 				if (error == Z_STREAM_END)
 					goto stop;
+
 				z.next_out = outbuf;
 				z.avail_out = BUFLEN;
 
-				out_tot += wr;
 				break;
 			}
 			if (error < 0) {
@@ -872,6 +874,10 @@ file_compress(char *file)
 			savename = NULL;
 #endif
 		out = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+		if (out == -1) {
+			maybe_warn("could not create output: %s", outfile);
+			goto lose;
+		}
 	} else
 		out = STDOUT_FILENO;
 
@@ -889,6 +895,9 @@ file_compress(char *file)
 	 * output, just in case.
 	 */
 	if (cflag == 0) {
+		if (close(out) == -1)
+			maybe_warn("couldn't close ouput");
+
 		if (stat(outfile, &osb) < 0) {
 			maybe_warn("couldn't stat: %s", outfile);
 			maybe_warnx("leaving original %s", file);
