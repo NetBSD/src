@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1997/04/28 18:36:31 mycroft Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 1997/04/28 18:46:15 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -205,7 +205,8 @@ OF_open(dname)
 	};
 	
 	args.dname = dname;
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1 ||
+	    args.handle == 0)
 		return -1;
 	return args.handle;
 }
