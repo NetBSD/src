@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2002/02/15 16:48:01 christos Exp $  
+	$NetBSD: syscalls.master,v 1.6 2002/02/15 16:50:13 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -363,7 +363,7 @@
 			    struct linux_sigaltstack *oss); }
 207	UNIMPL		sendfile
 208	UNIMPL
-/* XXX: wrong? */
+; XXX: wrong?
 209	NOARGS		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
 210	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
