@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.8 1997/07/21 14:07:25 jtc Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.9 1998/02/03 18:23:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.8 1997/07/21 14:07:25 jtc Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.9 1998/02/03 18:23:51 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,8 +71,8 @@ user_from_uid(uid, nouser)
 	} c_uid[NCACHE];
 	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
-	register struct passwd *pw;
-	register struct ncache *cp;
+	struct passwd *pw;
+	struct ncache *cp;
 
 	cp = c_uid + (uid & MASK);
 	if (cp->uid != uid || !*cp->name) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.8 1997/07/13 19:53:56 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.9 1998/02/03 18:25:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.8 1997/07/13 19:53:56 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.9 1998/02/03 18:25:08 perry Exp $");
 #endif
 #endif
 
@@ -63,14 +63,14 @@ _MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
  * perform this optimization.
  */
 _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	register u_long frompc, selfpc;
+	u_long frompc, selfpc;
 {
-	register u_short *frompcindex;
-	register struct tostruct *top, *prevtop;
-	register struct gmonparam *p;
-	register long toindex;
+	u_short *frompcindex;
+	struct tostruct *top, *prevtop;
+	struct gmonparam *p;
+	long toindex;
 #ifdef _KERNEL
-	register int s;
+	int s;
 #endif
 
 	p = &_gmonparam;

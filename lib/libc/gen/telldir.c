@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.6 1997/07/21 14:07:38 jtc Exp $	*/
+/*	$NetBSD: telldir.c,v 1.7 1998/02/03 18:23:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.6 1997/07/21 14:07:38 jtc Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.7 1998/02/03 18:23:54 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,8 +85,8 @@ long
 telldir(dirp)
 	const DIR *dirp;
 {
-	register int index;
-	register struct ddloc *lp;
+	int index;
+	struct ddloc *lp;
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
 		return (-1);
@@ -105,11 +105,11 @@ telldir(dirp)
  */
 void
 __seekdir(dirp, loc)
-	register DIR *dirp;
+	DIR *dirp;
 	long loc;
 {
-	register struct ddloc *lp;
-	register struct ddloc **prevlp;
+	struct ddloc *lp;
+	struct ddloc **prevlp;
 	struct dirent *dp;
 
 	prevlp = &dd_hash[LOCHASH(loc)];

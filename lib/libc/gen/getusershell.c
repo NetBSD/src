@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.7 1997/07/21 14:07:17 jtc Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.8 1998/02/03 18:23:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.7 1997/07/21 14:07:17 jtc Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.8 1998/02/03 18:23:47 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,8 +106,8 @@ setusershell()
 static char **
 initshells()
 {
-	register char **sp, *cp;
-	register FILE *fp;
+	char **sp, *cp;
+	FILE *fp;
 	struct stat statb;
 
 	if (shells != NULL)

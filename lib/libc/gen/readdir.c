@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.9 1997/10/10 14:31:55 fvdl Exp $	*/
+/*	$NetBSD: readdir.c,v 1.10 1998/02/03 18:23:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.9 1997/10/10 14:31:55 fvdl Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.10 1998/02/03 18:23:51 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,9 +56,9 @@ __weak_alias(readdir,_readdir);
  */
 struct dirent *
 readdir(dirp)
-	register DIR *dirp;
+	DIR *dirp;
 {
-	register struct dirent *dp;
+	struct dirent *dp;
 
 	for (;;) {
 		if (dirp->dd_loc >= dirp->dd_size) {
