@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.8 2000/04/05 14:28:55 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.9 2000/06/18 07:02:04 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -31,6 +31,7 @@ options		__ELF__		# we use elf
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
+config		netbsd_wd0	root on wd0h type ffs dumps on wd0b
 
 ## UVM options.
 options 	UVM_PAGE_TRKOWN
@@ -131,15 +132,15 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
-#options		SYSCALL_DEBUG
-#options		COMPAT_AOUT	# NetBSD/sparc compat support
+#options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
+#options 	SYSCALL_DEBUG
+#options 	COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
-#file-system	KERNFS		# kernel data-structure filesystem
+file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
@@ -193,6 +194,9 @@ ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
 
+## PROM console driver -- if all else fails
+pcons0	at mainbus0				# PROM console
+
 ## Auxiliary system registers -- We use the OBP for power management
 #auxreg0 at sbus0
 auxio0	at ebus?				# auxio registers
@@ -227,7 +231,7 @@ ms0	at zs1 channel 1	# mouse
 ##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (com)
 
 ## These are two SAB82532 controllers
-#sab0	at ebus?			# ttya/ttyb
+#sab0	at ebus?
 #sabtty0	at sab0 channel 0	# ttya
 #sabtty1	at sab0 channel 1	# ttyb
 
@@ -271,8 +275,13 @@ ms0	at zs1 channel 1	# mouse
 #fas*	at sbus? slot ? offset ?
 #scsibus* at fas?
 
-## GLM support is missing
-#scsi*	at pci?						# 53C875 "glm" compatible
+## NCR/Symbios 53c8xx support
+siop*	at pci? dev ? function ?			# 53C875 "glm" compatible
+scsibus* at siop?
+
+# PCI SCSI cards
+ahc*	at pci? dev ? function ?
+scsibus* at ahc?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
@@ -336,14 +345,21 @@ pseudo-device	vnd	4
 #lebuffer*	at sbus? slot ? offset ?		# SBus
 #le*		at lebuffer?				# SBus
 
-## HME not supported yet
+## Happy Meal Ethernet
 #hme*		at sbus0 slot ? offset ?
-hme*		at pci?					# network "hme" compatible
+hme*		at pci?	dev ? function ?		# network "hme" compatible
 
 ## qec/be, qec/hme
 #qec*		at sbus? slot ? offset ?
 #be*		at qec?
 #qe*		at qec?
+
+# DEC Tulip
+tlp*		at pci? dev ? function ?
+options 	TLP_MATCH_21040
+options 	TLP_MATCH_21041
+options 	TLP_MATCH_21140
+options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -389,8 +405,8 @@ pseudo-device	bpfilter	8
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 #audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
-#audiocs*	at ebus?                		# SUNW,CS4231
-#audio*		at audiocs?
+audiocs*	at ebus?                		# SUNW,CS4231
+audio*		at audiocs?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
