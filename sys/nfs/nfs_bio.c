@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.77 2002/03/23 05:00:57 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.78 2002/03/25 02:08:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.77 2002/03/23 05:00:57 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.78 2002/03/25 02:08:09 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -648,8 +648,7 @@ nfs_write(v)
 			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
-				       ~(nmp->nm_wsize - 1)),
-			    PGO_CLEANIT | PGO_WEAK);
+				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
