@@ -1,8 +1,4 @@
-#	$NetBSD: shlib_version,v 1.51 1998/02/14 01:40:22 thorpej Exp $
-#
-# NOTICE: The next time the minor number is bumped (when kleink adds
-# his __posix_* syscalls), add getsid.{o,po,so} to sys/Makefile.inc and
-# tcgetsid.c to termios/Makefile.inc.
+#	$NetBSD: shlib_version,v 1.52 1998/02/14 20:23:28 kleink Exp $
 #
 major=12
-minor=25
+minor=26
