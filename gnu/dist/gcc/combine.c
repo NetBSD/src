@@ -3355,37 +3355,44 @@ simplify_rtx (x, op0_mode, last, in_dest)
 	  true = subst (true, pc_rtx, pc_rtx, 0, 0);
 	  false = subst (false, pc_rtx, pc_rtx, 0, 0);
 
-	  /* Restarting if we generate a store-flag expression will cause
-	     us to loop.  Just drop through in this case.  */
+	  /* If true and false are not general_operands, an if_then_else
+	     is unlikely to be simpler.  */
+	  if (general_operand (true, VOIDmode)
+	      && general_operand (false, VOIDmode))
+	    {
+	      /* Restarting if we generate a store-flag expression will cause
+		 us to loop.  Just drop through in this case.  */
 
 	  /* If the result values are STORE_FLAG_VALUE and zero, we can
 	     just make the comparison operation.  */
-	  if (true == const_true_rtx && false == const0_rtx)
-	    x = gen_binary (cond_code, mode, cond, cop1);
-	  else if (true == const0_rtx && false == const_true_rtx)
-	    x = gen_binary (reverse_condition (cond_code), mode, cond, cop1);
+	      if (true == const_true_rtx && false == const0_rtx)
+		x = gen_binary (cond_code, mode, cond, cop1);
+	      else if (true == const0_rtx && false == const_true_rtx)
+		x = gen_binary (reverse_condition (cond_code),
+				mode, cond, cop1);
 
 	  /* Likewise, we can make the negate of a comparison operation
 	     if the result values are - STORE_FLAG_VALUE and zero.  */
-	  else if (GET_CODE (true) == CONST_INT
-		   && INTVAL (true) == - STORE_FLAG_VALUE
-		   && false == const0_rtx)
-	    x = gen_unary (NEG, mode, mode,
-			   gen_binary (cond_code, mode, cond, cop1));
-	  else if (GET_CODE (false) == CONST_INT
-		   && INTVAL (false) == - STORE_FLAG_VALUE
-		   && true == const0_rtx)
-	    x = gen_unary (NEG, mode, mode,
-			   gen_binary (reverse_condition (cond_code), 
-				       mode, cond, cop1));
-	  else
-	    return gen_rtx_IF_THEN_ELSE (mode,
-					 gen_binary (cond_code, VOIDmode,
-						     cond, cop1),
-					 true, false);
+	      else if (GET_CODE (true) == CONST_INT
+		       && INTVAL (true) == - STORE_FLAG_VALUE
+		       && false == const0_rtx)
+		x = gen_unary (NEG, mode, mode,
+			       gen_binary (cond_code, mode, cond, cop1));
+	      else if (GET_CODE (false) == CONST_INT
+		       && INTVAL (false) == - STORE_FLAG_VALUE
+		       && true == const0_rtx)
+		x = gen_unary (NEG, mode, mode,
+			       gen_binary (reverse_condition (cond_code), 
+					   mode, cond, cop1));
+	      else
+		return gen_rtx_IF_THEN_ELSE (mode,
+					     gen_binary (cond_code, VOIDmode,
+							 cond, cop1),
+					     true, false);
 
-	  code = GET_CODE (x);
-	  op0_mode = VOIDmode;
+	      code = GET_CODE (x);
+	      op0_mode = VOIDmode;
+	    }
 	}
     }
 
@@ -6738,9 +6745,18 @@ if_then_else_cond (x, ptrue, pfalse)
   rtx cond0, cond1, true0, true1, false0, false1;
   unsigned HOST_WIDE_INT nz;
 
+  /* If we are comparing a value against zero, we are done.  */
+  if ((code == NE || code == EQ)
+      && GET_CODE (XEXP (x, 1)) == CONST_INT && INTVAL (XEXP (x, 1)) == 0)
+    {
+      *ptrue = (code == NE) ? const_true_rtx : const0_rtx;
+      *pfalse = (code == NE) ? const0_rtx : const_true_rtx;
+      return XEXP (x, 0);
+    }
+
   /* If this is a unary operation whose operand has one of two values, apply
      our opcode to compute those values.  */
-  if (GET_RTX_CLASS (code) == '1'
+  else if (GET_RTX_CLASS (code) == '1'
       && (cond0 = if_then_else_cond (XEXP (x, 0), &true0, &false0)) != 0)
     {
       *ptrue = gen_unary (code, mode, GET_MODE (XEXP (x, 0)), true0);
