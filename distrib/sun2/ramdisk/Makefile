@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/21 23:23:23 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/17 20:27:40 fredette Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,6 @@ LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
 KERNEL  = ${KERNOBJDIR}/RAMDISK/netbsd
-MDSETIMAGE?=	mdsetimage
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd1
@@ -27,9 +26,10 @@ DISKTYPE=	rdroot
 SIZE=		400k
 # bigendian, minfree, opt, b/i , cpg
 NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
+MDSETIMAGE?=	mdsetimage
+MTREE?=		mtree
 
 KERNELS= netbsd.RAMDISK 
-MTREE?=		mtree
 CLEANFILES= $(KERNELS) ${IMAGE}.fs netbsd-tmp
 
 all: $(KERNELS)
@@ -41,8 +41,9 @@ netbsd.RAMDISK : ${IMAGE}.fs
 
 ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	dd if=/dev/zero of=${IMAGE}.fs bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}.fs
-	disklabel -rw ${VND} ${DISKTYPE}
+	vnconfig -f ${DESTDIR}/etc/disktab -t ${DISKTYPE} -v \
+	  -c ${VND} ${IMAGE}.fs
+	disklabel -rw -f ${DESTDIR}/etc/disktab ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${TREE} -p ${MOUNT_POINT}/ -u
@@ -54,11 +55,13 @@ ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
+	dd if=${VND_DEV} of=${IMAGE}-tmp.fs bs=${SIZE} count=1
 	vnconfig -u ${VND}
+	mv ${IMAGE}-tmp.fs ${IMAGE}.fs
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}.fs
 
 # Do not delete this if I change my mind and kill make...
@@ -72,6 +75,7 @@ ${CBIN} : libhack.o
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${TOP}/../utils/libhack
+CPPFLAGS+=-I${DESTDIR}/usr/include
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
@@ -92,4 +96,5 @@ release: $(KERNELS)
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+.include <bsd.sys.mk>
 .include <bsd.subdir.mk>
