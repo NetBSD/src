@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.56 2000/03/16 04:58:35 enami Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.57 2000/03/16 05:16:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -329,9 +329,9 @@ static const char *const fscknames[] = {
 
 #ifndef _LOCORE
 /*
- * Structure used to perform a format or other raw operation, returning
- * data and/or register values.  Register identification and format
- * are device- and driver-dependent.
+ * Structure used to perform a format or other raw operation,
+ * returning data and/or register values.  Register identification
+ * and format are device- and driver-dependent.
  */
 struct format_op {
 	char	*df_buf;

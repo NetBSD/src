@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.9 2000/02/11 02:05:28 oster Exp $
+.\"	$NetBSD: disklabel.5,v 1.10 2000/03/16 05:16:19 enami Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,7 +132,7 @@ is
 #endif
 
 
-#define DISKMAGIC	((u_int32_t) 0x82564557) /* The disk magic number */
+#define DISKMAGIC	((u_int32_t)0x82564557) /* The disk magic number */
 
 #ifndef _LOCORE
 struct disklabel {
@@ -177,8 +177,8 @@ struct disklabel {
 	u_int16_t d_sparespertrack;	/* # of spare sectors per track */
 	u_int16_t d_sparespercyl;	/* # of spare sectors per cylinder */
 	/*
-	 * Alternative cylinders include maintenance, replacement, configuration
-	 * description areas, etc.
+	 * Alternative cylinders include maintenance, replacement,
+	 * configuration description areas, etc.
 	 */
 	u_int32_t d_acylinders;		/* # of alt. cylinders per unit */
 
@@ -260,7 +260,7 @@ struct disklabel {
 #define DTYPE_RAID	14	/* RAIDframe */
 
 #ifdef DKTYPENAMES
-static char *dktypenames[] = {
+static const char *const dktypenames[] = {
 	"unknown",
 	"SMD",
 	"MSCP",
@@ -276,16 +276,16 @@ static char *dktypenames[] = {
 	"vnd",
 	"ATAPI",
 	"RAID",
-	0
+	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
 #endif
 
 /*
-* Filesystem type and version.
-* Used to interpret other filesystem-specific
-* per-partition information.
-*/
+ * Filesystem type and version.
+ * Used to interpret other filesystem-specific
+ * per-partition information.
+ */
 #define	FS_UNUSED	0	/* unused */
 #define	FS_SWAP		1	/* swap */
 #define	FS_V6		2	/* Sixth Edition */
@@ -302,13 +302,13 @@ static char *dktypenames[] = {
 #define	FS_BOOT		13	/* partition contains bootstrap */
 #define	FS_ADOS		14	/* AmigaDOS fast file system */
 #define	FS_HFS		15	/* Macintosh HFS */
-#define	FS_FILECORE	16	/* Acorn Disk Filing System */
-#define FS_EX2FS	17	/* Linux Extended 2 file system */
-#define FS_NTFS		18	/* Windows/NT file system */
+#define	FS_FILECORE	16	/* Acorn Filecore Filing System */
+#define	FS_EX2FS	17	/* Linux Extended 2 file system */
+#define	FS_NTFS		18	/* Windows/NT file system */
 #define	FS_RAID		19	/* RAIDframe component */
 
-#ifdef	DKTYPENAMES
-static char *fstypenames[] = {
+#ifdef	FSTYPENAMES
+static const char *const fstypenames[] = {
 	"unused",
 	"swap",
 	"Version 6",
@@ -329,14 +329,14 @@ static char *fstypenames[] = {
 	"Linux Ext2",
 	"NTFS",
 	"RAID",
-	0
+	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #endif
 
 /*
-* flags shared by various drives:
-*/
+ * flags shared by various drives:
+ */
 #define	D_REMOVABLE	0x01	/* removable media */
 #define	D_ECC		0x02	/* supports ECC */
 #define	D_BADSECT	0x04	/* supports bad sector forw. */
@@ -344,8 +344,8 @@ static char *fstypenames[] = {
 #define	D_CHAIN		0x10	/* can do back-back transfers */
 
 /*
-* Drive data for SMD.
-*/
+ * Drive data for SMD.
+ */
 
 #define	d_smdflags	d_drivedata[0]
 #define	D_SSE		0x1	/* supports skip sectoring */
@@ -354,8 +354,8 @@ static char *fstypenames[] = {
 #define	d_sdist		d_drivedata[3]
 
 /*
-* Drive data for ST506.
-*/
+ * Drive data for ST506.
+ */
 #define d_precompcyl	d_drivedata[0]
 #define d_gap3		d_drivedata[1]	/* used only when formatting */
 
@@ -378,9 +378,9 @@ struct format_op {
 };
 
 /*
-* Structure used internally to retrieve
-* information about a partition on a disk.
-*/
+ * Structure used internally to retrieve information about a partition
+ * on a disk.
+ */
 struct partinfo {
 	struct	disklabel *disklab;
 	struct	partition *part;
@@ -406,11 +406,16 @@ Disk specific ioctls ar defined in
 
 #define DIOCSSTEP	_IOW('d', 107, int) /* set step rate */
 #define DIOCSRETRIES	_IOW('d', 108, int) /* set # of retries */
+#define DIOCKLABEL	_IOW('d', 119, int) /* keep/drop label on close? */
 #define DIOCWLABEL	_IOW('d', 109, int) /* write en/disable label */
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad) /* set kernel dkbad */
+#define DIOCEJECT	_IOW('d', 112, int) /* eject removable disk */
+#define DIOCLOCK	_IOW('d', 113, int) /* lock/unlock pack */
 
-#endif _LOCORE
+	/* get default label, clear label */
+#define	DIOCGDEFLABEL	_IOR('d', 114, struct disklabel)
+#define	DIOCCLRLABEL	_IO('d', 115)
 .Ed
 .Sh SEE ALSO
 .Xr disktab 5 ,
