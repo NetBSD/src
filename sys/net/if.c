@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.95 2001/07/29 03:28:30 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.96 2001/08/02 01:42:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -613,14 +613,18 @@ if_detach_queues(ifp, q)
 	struct mbuf *m, *prev, *next;
 
 	prev = NULL;
-	for (m = q->ifq_head; m; prev = m, m = next) {
+	for (m = q->ifq_head; m; m = next) {
 		next = m->m_nextpkt;
 #ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0)
+		if ((m->m_flags & M_PKTHDR) == 0) {
+			prev = m;
 			continue;
+		}
 #endif
-		if (m->m_pkthdr.rcvif != ifp)
+		if (m->m_pkthdr.rcvif != ifp) {
+			prev = m;
 			continue;
+		}
 
 		if (prev)
 			prev->m_nextpkt = m->m_nextpkt;
