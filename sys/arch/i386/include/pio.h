@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.16 2001/04/26 17:55:54 thorpej Exp $	*/
+/*	$NetBSD: pio.h,v 1.17 2001/04/30 01:17:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 
 #define	inb(port) \
-	(__use_immediate_port(port) ? __inbc(port) : __inb(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inbc(port) : __inb(port))
 
 static __inline u_int8_t
 __inbc(int port)
@@ -91,7 +91,7 @@ insb(int port, void *addr, int cnt)
 }
 
 #define	inw(port) \
-	(__use_immediate_port(port) ? __inwc(port) : __inw(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inwc(port) : __inw(port))
 
 static __inline u_int16_t
 __inwc(int port)
@@ -121,7 +121,7 @@ insw(int port, void *addr, int cnt)
 }
 
 #define	inl(port) \
-	(__use_immediate_port(port) ? __inlc(port) : __inl(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inlc(port) : __inl(port))
 
 static __inline u_int32_t
 __inlc(int port)
@@ -151,7 +151,8 @@ insl(int port, void *addr, int cnt)
 }
 
 #define	outb(port, data) \
-	(__use_immediate_port(port) ? __outbc(port, data) : __outb(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outbc(port, data) : \
+						__outb(port, data))
 
 static __inline void
 __outbc(int port, u_int8_t data)
@@ -176,7 +177,8 @@ outsb(int port, const void *addr, int cnt)
 }
 
 #define	outw(port, data) \
-	(__use_immediate_port(port) ? __outwc(port, data) : __outw(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : \
+						__outw(port, data))
 
 static __inline void
 __outwc(int port, u_int16_t data)
@@ -201,7 +203,8 @@ outsw(int port, const void *addr, int cnt)
 }
 
 #define	outl(port, data) \
-	(__use_immediate_port(port) ? __outlc(port, data) : __outl(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : \
+						__outl(port, data))
 
 static __inline void
 __outlc(int port, u_int32_t data)

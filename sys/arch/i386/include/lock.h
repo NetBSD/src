@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2000/05/02 04:41:06 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2001/04/30 01:17:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
 }
 
-void
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
