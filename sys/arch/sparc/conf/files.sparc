@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.114 2002/08/23 18:00:46 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.115 2002/08/24 05:26:56 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -43,6 +43,14 @@ file	arch/sparc/sparc/iommu.c		iommu
 
 device obio { [addr = -1], [level = -1] }
 attach obio at mainbus
+
+device cpuunit { }
+attach cpuunit at mainbus
+file	arch/sparc/sparc/cpuunit.c		cpuunit
+
+device bootbus { [slot = -1], [offset = -1] }
+attach bootbus at cpuunit
+file	arch/sparc/dev/bootbus.c		bootbus
 
 include "dev/vme/files.vme"
 device sparcvme: vmebus
@@ -89,10 +97,6 @@ device power
 attach power at obio
 file	arch/sparc/dev/power.c			power	needs-flag
 
-device cpuunit { }
-attach cpuunit at mainbus
-file	arch/sparc/sparc/cpuunit.c		cpuunit
-
 device cpu
 attach cpu at mainbus with cpu_mainbus
 attach cpu at cpuunit with cpu_cpuunit
@@ -116,6 +120,7 @@ include "dev/sun/files.sun"
 device zs {channel = -1}
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
+attach zs at bootbus with zs_bootbus
 file	arch/sparc/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 
