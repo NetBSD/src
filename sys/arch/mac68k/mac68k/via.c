@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.34 1995/09/28 04:11:18 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.35 1996/01/24 05:52:58 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -214,7 +214,7 @@ rbv_intr(struct frame *fp)
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
 
-	intbits = (via2_reg(vIFR + rIFR) &= via2_reg(vIER + rIER));
+	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
 	if (intbits == 0) return;
 
