@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.2 1996/07/03 13:07:17 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.3 1996/07/03 14:05:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -196,9 +196,7 @@ loop_128:
 	jnb	loop_128
 
 finished_128:
-	addl	$128, %esi
-
-	subl	$32, %esi
+	subl	$32-128, %esi
 	jb	finished_32
 
 loop_32:
