@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.8 2000/09/18 22:18:00 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.9 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.34 2000/10/01 12:37:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,11 +79,11 @@
 
 #define IPLEN_FLIPPED
 
-#ifdef INET
 #define ESPMAXLEN \
 	(sizeof(struct esp) < sizeof(struct newesp) \
 		? sizeof(struct newesp) : sizeof(struct esp))
 
+#ifdef INET
 void
 #if __STDC__
 esp4_input(struct mbuf *m, ...)
@@ -644,7 +644,7 @@ noreplaycheck:
 	 * pre-compute and cache intermediate key
 	 */
 	if (esp_schedule(algo, sav) != 0) {
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		goto bad;
 	}
 

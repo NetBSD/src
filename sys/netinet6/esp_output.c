@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.8 2000/09/26 08:37:38 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.33 2000/09/19 15:15:12 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.9 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.34 2000/10/01 12:37:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -187,16 +187,19 @@ esp_output(m, nexthdrp, md, isr, af)
 	int afnumber;
 	size_t extendsiz;
 	int error = 0;
+	struct ipsecstat *stat;
 
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		afnumber = 4;
+		stat = &ipsecstat;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		afnumber = 6;
+		stat = &ipsec6stat;
 		break;
 #endif
 	default:
@@ -383,7 +386,7 @@ esp_output(m, nexthdrp, md, isr, af)
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				ipsecstat.out_inval++;
+				stat->out_inval++;
 				m_freem(m);
 				return EINVAL;
 			}
@@ -501,7 +504,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	error = esp_schedule(algo, sav);
 	if (error) {
 		m_freem(m);
-		ipsecstat.in_inval++;
+		stat->out_inval++;
 		goto fail;
 	}
 
@@ -514,18 +517,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	if ((*algo->encrypt)(m, espoff, plen + extendsiz, sav, algo, ivlen)) {
 		/* m is already freed */
 		ipseclog((LOG_ERR, "packet encryption failure\n"));
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
+		stat->out_inval++;
 		error = EINVAL;
 		goto fail;
 	}
@@ -546,7 +538,9 @@ esp_output(m, nexthdrp, md, isr, af)
 	struct mbuf *n;
 	u_char *p;
 	size_t siz;
+#ifdef INET
 	struct ip *ip;
+#endif
 
 	aalgo = ah_algorithm_lookup(sav->alg_auth);
 	if (!aalgo)
@@ -559,18 +553,7 @@ esp_output(m, nexthdrp, md, isr, af)
 		ipseclog((LOG_ERR, "ESP checksum generation failure\n"));
 		m_freem(m);
 		error = EINVAL;
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
+		stat->out_inval++;
 		goto fail;
 	}
 
@@ -631,32 +614,9 @@ noantireplay:
 	if (!m) {
 		ipseclog((LOG_ERR,
 		    "NULL mbuf after encryption in esp%d_output", afnumber));
-	} else {
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_success++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_success++;
-			break;
-#endif
-		}
-	}
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		ipsecstat.out_esphist[sav->alg_enc]++;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		ipsec6stat.out_esphist[sav->alg_enc]++;
-		break;
-#endif
-	}
+	} else
+		stat->out_success++;
+	stat->out_esphist[sav->alg_enc]++;
 	key_sa_recordxfer(sav, m);
 	return 0;
 

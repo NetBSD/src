@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_output.c,v 1.11 2000/07/18 14:56:42 itojun Exp $	*/
-/*	$KAME: ah_output.c,v 1.23 2000/07/15 16:07:48 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.12 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: ah_output.c,v 1.25 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,7 +71,9 @@
 
 #include <net/net_osdep.h>
 
+#ifdef INET
 static struct in_addr *ah4_finaldst __P((struct mbuf *));
+#endif
 
 /*
  * compute AH header size.
@@ -126,6 +128,7 @@ ah_hdrsiz(isr)
 	return sizeof(struct newah) + 16;
 }
 
+#ifdef INET
 /*
  * Modify the packet so that it includes the authentication data.
  * The mbuf passed must start with IPv4 header.
@@ -316,6 +319,7 @@ ah4_output(m, isr)
 
 	return 0;
 }
+#endif
 
 /* Calculate AH length */
 int
@@ -458,7 +462,7 @@ ah6_output(m, nexthdrp, md, isr)
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				ipsecstat.out_inval++;
+				ipsec6stat.out_inval++;
 				m_freem(m);
 				return EINVAL;
 			}
@@ -490,6 +494,7 @@ ah6_output(m, nexthdrp, md, isr)
 }
 #endif
 
+#ifdef INET
 /*
  * Find the final destination if there is loose/strict source routing option.
  * Returns NULL if there's no source routing options.
@@ -566,3 +571,4 @@ ah4_finaldst(m)
 	}
 	return NULL;
 }
+#endif

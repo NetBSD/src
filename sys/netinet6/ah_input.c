@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.18 2000/08/16 09:54:39 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.30 2000/07/15 16:07:48 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.19 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.34 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -590,7 +590,7 @@ ah6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
 	if (ah == NULL) {
 		ipseclog((LOG_DEBUG, "IPv6 AH input: can't pullup\n"));
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		return IPPROTO_DONE;
 	}
 #endif
@@ -674,7 +674,7 @@ ah6_input(mp, offp, proto)
 		sizeof(struct ah) + sizoff + siz1);
 	if (ah == NULL) {
 		ipseclog((LOG_NOTICE, "couldn't pullup gather IPv6 AH checksum part"));
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		m = NULL;
 		goto fail;
 	}
