@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.18 2002/08/15 18:57:51 mycroft Exp $	*/
+/*	$NetBSD: atactl.c,v 1.19 2002/08/15 19:17:04 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static const struct {
 	const int	id;
 	const char	*name;
 } smart_attrs[] = {
-	{ 1,		"Raw read error date" },
+	{ 1,		"Raw read error rate" },
 	{ 2,		"Throughput performance" },
 	{ 3,		"Spin-up time" },
 	{ 4,		"Start/stop count" },
