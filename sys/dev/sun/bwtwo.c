@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.1 2000/08/20 14:28:49 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2 2000/08/20 19:58:53 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,12 +98,12 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 #include <dev/sun/btreg.h>
 #include <dev/sun/bwtworeg.h>
 #include <dev/sun/bwtwovar.h>
