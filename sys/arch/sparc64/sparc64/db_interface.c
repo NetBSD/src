@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2000/08/07 18:46:30 tv Exp $ */
+/*	$NetBSD: db_interface.c,v 1.41 2000/08/08 19:59:41 tv Exp $ */
 
 /*
  * Mach Operating System
@@ -823,7 +823,7 @@ db_dump_buf(addr, have_addr, count, modif)
 		"\012DONE\011DIRTY\010DELWRI\007CALL\006CACHE\005BUSY\004BAD"
 		"\003ASYNC\002NEEDCOMMIT\001AGE";
 
-	char sbuf[sizeof(flagnames) + 8];
+	char sbuf[sizeof(flagnames) + 64];
 
 	if (!have_addr) {
 		db_printf("No buf address\n");
