@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.15 2003/08/19 09:29:22 jdolecek Exp $
+.\"     $NetBSD: config.9,v 1.16 2003/08/19 09:33:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,7 +151,8 @@ Conditionally include contents of file
 .Ar filename
 to currently processed configuration. If the specified
 .Ar filename
-doesn't exist, it is silently ignored.
+doesn't exist, a warning is printed, but the error
+ignored.
 .It defflag [filename] {options}
 The space-separated list of pre-processor macros
 .Em options
