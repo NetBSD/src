@@ -1,4 +1,4 @@
-/*	$NetBSD: md_autoconf.c,v 1.1 2005/01/13 17:09:17 shige Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.1 2005/03/18 14:12:34 shige Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,8 +33,10 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_autoconf.c,v 1.1 2005/01/13 17:09:17 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.1 2005/03/18 14:12:34 shige Exp $");
 
+#include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -42,7 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: md_autoconf.c,v 1.1 2005/01/13 17:09:17 shige Exp $"
 
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 
-void obs405_device_register(struct device *dev, void *aux)
+
+void
+cpu_rootconf(void)
+{
+
+	setroot(booted_device, booted_partition);
+}
+
+void obs405_device_register(struct device *dev, void *aux, int com_freq)
 {
 	struct device *parent = dev->dv_parent;
 
@@ -50,7 +60,7 @@ void obs405_device_register(struct device *dev, void *aux)
 	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
 	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
 		/* Set the frequency of the on-chip UART. */
-		com_opb_device_register(dev, OBS405_COM_FREQ);
+		com_opb_device_register(dev, com_freq);
 		return;
 	}
 

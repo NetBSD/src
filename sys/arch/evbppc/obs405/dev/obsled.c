@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.1 2005/01/24 18:47:37 shige Exp $	*/
+/*	$NetBSD: obsled.c,v 1.2 2005/03/18 14:12:34 shige Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.1 2005/01/24 18:47:37 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.2 2005/03/18 14:12:34 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 
-#include <machine/obs405.h>
+#include <machine/obs266.h>
 
 #include <powerpc/ibm4xx/dev/gpiovar.h>
 
@@ -60,11 +60,11 @@ obsled_match(struct device *parent, struct cfdata *cf, void *aux)
         struct gpio_attach_args *ga = aux;
 
 	/* XXX: support only OpenBlockS266 LED */
-        if (ga->ga_addr == OBS405_GPIO_LED1)
+        if (ga->ga_addr == OBS266_GPIO_LED1)
                 return (1);
-        else if (ga->ga_addr == OBS405_GPIO_LED2)
+        else if (ga->ga_addr == OBS266_GPIO_LED2)
                 return (1);
-        else if (ga->ga_addr == OBS405_GPIO_LED4)
+        else if (ga->ga_addr == OBS266_GPIO_LED4)
                 return (1);
 
         return (0);
@@ -83,7 +83,7 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
         sc->sc_tag = ga->ga_tag;
         sc->sc_addr = ga->ga_addr;
 
-	obs405_led_set(OBS405_LED_OFF);
+	obs266_led_set(OBS266_LED_OFF);
 #if 0
 	{
 		gpio_tag_t tag = sc->sc_tag;
@@ -93,7 +93,7 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-obs405_led_set(int led)
+obs266_led_set(int led)
 {
 	struct device *dp = NULL;
 	struct devicelist *dlp = &alldevs;
