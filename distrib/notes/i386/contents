@@ -1,8 +1,8 @@
-The i386-specific portion of the NetBSD 1.2G release is found in the
+The i386-specific portion of the NetBSD _VER release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.2G/i386/
+.../NetBSD-_VER/i386/
 			INSTALL		Installation notes; this file.
 
 			binary/		i386 binary distribution sets;
@@ -19,7 +19,7 @@ out as follows:
 					installation section, below.
 
 There an i386 floppy image named "boot-12G.fs" in the "i386/floppy"
-subdirectory of the NetBSD 1.2G distribution. It is bootable. This
+subdirectory of the NetBSD _VER distribution. It is bootable. This
 floppy is used both for installations and for upgrades.  It is
 described in more detail below.  There is also a gzipped version of
 this floppy named "boot-12G.fs.gz" available, for easier downloading.
@@ -65,13 +65,13 @@ Bootable installation/upgrade floppy:
         another snapshot.]
 
 The NetBSD/i386 binary distribution sets contain the binaries which
-comprise the NetBSD 1.2G release for the i386.  There are eight binary
+comprise the NetBSD _VER release for the i386.  There are eight binary
 distribution sets and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "i386/binary"
-subdirectory of the NetBSD 1.2G distribution tree, and are as follows:
+subdirectory of the NetBSD _VER distribution tree, and are as follows:
 
 
-	base12G	The NetBSD/i386 1.2G base binary distribution.  You
+	base12G	The NetBSD/i386 _VER base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -102,7 +102,7 @@ subdirectory of the NetBSD 1.2G distribution tree, and are as follows:
 	games12G	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.9M uncompressed ]
 
-	kern12GG	This set contains a NetBSD/i386 1.2G GENERIC kernel,
+	kern12G	This set contains a NetBSD/i386 _VER GENERIC kernel,
 		named "/netbsd". You MUST install this distribution
 		set.
 		[ .8M gzipped, 1.7M uncompressed ]
@@ -133,7 +133,7 @@ contains a generic kernel to be unloaded onto the drive. It must be
 extracted in order to have a minimally functioning system.
 
 The i386 security distribution set is named "secr12G" and can be found
-in the "i386/security" subdirectory of the NetBSD 1.2G distribution
+in the "i386/security" subdirectory of the NetBSD _VER distribution
 tree.  It contains security related binaries which depend on
 cryptographic source code. You do not need this distribution set to use
 encrypted passwords in your password file; the "base12G" distribution
