@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.25 2002/10/04 14:33:30 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.26 2002/10/06 16:33:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.25 2002/10/04 14:33:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.26 2002/10/06 16:33:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,14 +478,14 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
-	auich_read_codec(sc, AC97_REG_EXTENDED_ID, &ext_id);
-	if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
-		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &ext_status);
-		if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
-			ext_status |= AC97_ENAB_VRA;
-		if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
-			ext_status |= AC97_ENAB_MICVRA;
-		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
+	auich_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &ext_id);
+	if ((ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM)) != 0) {
+		auich_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &ext_status);
+		if ((ext_id & AC97_EXT_AUDIO_VRA) != 0)
+			ext_status |= AC97_EXT_AUDIO_VRA;
+		if ((ext_id & AC97_EXT_AUDIO_VRM) != 0)
+			ext_status |= AC97_EXT_AUDIO_VRM;
+		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, ext_status);
 
 		/* so it claims to do variable rate, let's make sure */
 		if (auich_set_rate(sc, AUMODE_PLAY, 44100) == 44100)
@@ -1325,7 +1325,7 @@ auich_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
-		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &sc->ext_status);
+		auich_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_status);
 		break;
 
 	case PWR_RESUME:
@@ -1341,7 +1341,7 @@ auich_powerhook(int why, void *addr)
 		auich_reset_codec(sc);
 		DELAY(1000);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, sc->ext_status);
+		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_status);
 		break;
 
 	case PWR_SOFTSUSPEND:

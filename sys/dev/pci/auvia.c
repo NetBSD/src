@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.22 2002/10/05 18:08:30 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.23 2002/10/06 16:33:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.22 2002/10/05 18:08:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.23 2002/10/06 16:33:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,15 +327,15 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	 * Print a warning if the codec doesn't support hardware variable
 	 * rate audio.
 	 */
-	if (auvia_read_codec(sc, AC97_REG_EXTENDED_ID, &v)
-		|| !(v & AC97_CODEC_DOES_VRA)) {
+	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
+		|| !(v & AC97_EXT_AUDIO_VRA)) {
 		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
 		sc->sc_fixed_rate = AUVIA_FIXED_RATE; /* XXX wrong value */
 	} else {
 		/* enable VRA */
-		auvia_write_codec(sc, AC97_REG_EXTENDED_STATUS,
-			AC97_ENAB_VRA | AC97_ENAB_MICVRA);
+		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL,
+				  AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM);
 		sc->sc_fixed_rate = 0;
 	}
 
