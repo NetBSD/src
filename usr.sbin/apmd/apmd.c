@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.14 2000/03/04 21:27:18 mycroft Exp $	*/
+/*	$NetBSD: apmd.c,v 1.14.4.1 2001/02/03 18:24:01 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -306,6 +306,7 @@ main(int argc, char *argv[])
     fd_set selcopy;
     struct apm_event_info apmevent;
     int suspends, standbys, resumes;
+    int ac_is_off;
     int noacsleep = 0;
     int lowbattsleep = 0;
     mode_t mode = 0660;
@@ -406,6 +407,7 @@ main(int argc, char *argv[])
 	struct apm_power_info pinfo;
 	power_status(ctl_fd, 1, &pinfo);
 	do_ac_state(pinfo.ac_state);
+	ac_is_off = (pinfo.ac_state == APM_AC_OFF);
     }
 
     (void) signal(SIGTERM, sigexit);
@@ -466,7 +468,11 @@ main(int argc, char *argv[])
 		{
 		    struct apm_power_info pinfo;
 		    power_status(ctl_fd, 0, &pinfo);
-		    do_ac_state(pinfo.ac_state);
+		    /* power status can change without ac status changing */
+		    if (ac_is_off != (pinfo.ac_state == APM_AC_OFF)) {
+		    	do_ac_state(pinfo.ac_state);
+			ac_is_off = (pinfo.ac_state == APM_AC_OFF);
+		    }
 		    break;
 		}
 		default:
