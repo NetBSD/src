@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.2 1995/01/05 07:30:03 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.3 1995/02/12 19:19:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -62,11 +62,12 @@ static struct aconfdata aconftab[] = {
 	{ "ql",		514,	70 },
 	/* Ameristar */
 	{ "le",		1053,	1 },
-	{ "xx",		1053,	10 },
+	{ "es",		1053,	10 },
 	/* Univeristy lowell */
 	{ "ulwl",	1030,	0 },
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
+	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
 	/* Greater valley products */
 	{ "gvpbus",	2017,	2 },
 	{ "gvpbus",	2017,	11 },
@@ -99,25 +100,19 @@ static struct aconfdata aconftab[] = {
 	/* Cirrus CL GD 5426 -> Picasso, Piccolo, EGS Spectrum */
 	{ "grfcl",	2167,	11},	/* Picasso-II mem*/
 	{ "grfcl",	2167,	12},	/* regs */
-	{ "grfclx",	2193,	2},	/* Spectrum mem */
-	{ "grfclx",	2193,	1},	/* Spectrum regs */
-	{ "grfclx",	2195,	5},	/* Piccolo mem */
-	{ "grfclx",	2195,	6},	/* Piccolo regs */
-	/* Hacker Inc. */
-	{ "mlhsc",	2011,	1 },
-
-	/* MacroSystemsUS */
-	{ "wesc",	2203,	19},	/* Warp engine */
-	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
-	{ "flz3sc",	8512,	11},	/* FastlaneZ3 */
-	{ "flz3mem",	8512,	12},	/* FastlaneZ3 memory */
-	/* Cirrus CL GD 5426 -> Piccolo, EGS Spectrum */
 	{ "grfcl",	2193,	2},	/* Spectrum mem */
 	{ "grfcl",	2193,	1},	/* Spectrum regs */
-	{ "grfcl",	2195,	6},	/* Piccolo mem */
-	{ "grfcl",	2195,	5},	/* Piccolo regs */
+	{ "grfcl",	2195,	5},	/* Piccolo mem */
+	{ "grfcl",	2195,	6},	/* Piccolo regs */
+	/* MacroSystemsUS */
+	{ "wesc",	2203,	19},	/* Warp engine */
+	/* phase 5 digital products? */
+	{ "flz3sc",	8512,	11},	/* FastlaneZ3 */
+	{ "flz3mem",	8512,	12},	/* FastlaneZ3 memory */
 	/* Commodore Amiga */
-	{ "afsc",	514,	84}	/* A4091 SCSI HD Controller */
+	{ "afsc",	514,	84},	/* A4091 SCSI HD Controller */
+	/* Hacker Inc. */
+	{ "mlhsc",	2011,	1 }
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -127,6 +122,7 @@ static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
  * the Zorro III device.
  */
 static struct preconfdata preconftab[] = {
+	{ 18260, 6, 0 },
 	/* Retina BLT Z3 */
 	{ 18260, 16, 0}
 };

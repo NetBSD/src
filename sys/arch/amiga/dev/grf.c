@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.17 1994/12/28 09:25:05 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.18 1995/02/12 19:19:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,7 +250,7 @@ grfioctl(dev, cmd, data, flag, p)
 		return(gp->g_mode(gp, GM_GRFGETVMODE, data));
 	case GRFSETVMODE:
 		error = gp->g_mode(gp, GM_GRFSETVMODE, data);
-		if (error == 0 && gp->g_itedev)
+		if (error == 0 && gp->g_itedev && !(gp->g_flags & GF_GRFON))
 			ite_reinit(gp->g_itedev);
 		break;
 	case GRFGETNUMVM:
@@ -266,6 +266,7 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCSSPRITEINF:
 	case GRFIOCGSPRITEINF:
 	case GRFIOCGSPRITEMAX:
+	case GRFIOCBITBLT:
 	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
                      Amiga. 15/11/94 ill */
 		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));

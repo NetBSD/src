@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.7 1995/01/05 07:22:40 chopps Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.8 1995/02/12 19:19:18 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>

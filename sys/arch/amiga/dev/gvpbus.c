@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.6 1994/12/28 09:25:22 chopps Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.7 1995/02/12 19:19:08 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,6 +38,8 @@
 void gvpbusattach __P((struct device *, struct device *, void *));
 int gvpbusmatch __P((struct device *, struct cfdata *, void *));
 int gvpbusprint __P((void *auxp, char *));
+
+extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
 struct cfdriver gvpbuscd = {
 	NULL, "gvpbus", (cfmatch_t)gvpbusmatch, gvpbusattach, 
@@ -102,6 +104,10 @@ gvpbusattach(pdp, dp, auxp)
 		ga.flags |= GVP_ACCEL;
 		break;
 	/* scsi */
+	case GVP_A1291_SCSI:
+		ga.flags = GVP_SCSI | GVP_ACCEL;
+		sbic_no_dma = 1;	/* Kludge !!!!!!! mlh */
+		break;
 	case GVP_GFORCE_040_SCSI:
 		ga.flags = GVP_SCSI | GVP_IO | GVP_ACCEL;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.16 1994/10/26 02:01:52 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.17 1995/02/12 19:18:37 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -52,6 +52,7 @@
 #include <sys/user.h>
 #include <machine/pte.h>
 #include <amiga/amiga/cia.h>
+#include <amiga/amiga/isr.h>
 
 main()
 {
@@ -65,6 +66,7 @@ main()
 	struct pcb *pcb = (struct pcb *)0;
 	register unsigned i;
 	struct CIA *cia = (struct CIA *)0;
+	struct isr *isr = (struct isr *)0;
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
 	printf("#define\tP_BACK %d\n", &p->p_back);
@@ -96,7 +98,6 @@ main()
 	printf("#define\tT_PRIVINST %d\n", T_PRIVINST);
 	printf("#define\tT_TRACE %d\n", T_TRACE);
 	printf("#define\tT_MMUFLT %d\n", T_MMUFLT);
-	printf("#define\tT_SSIR %d\n", T_SSIR);
 	printf("#define\tT_FMTERR %d\n", T_FMTERR);
 	printf("#define\tT_COPERR %d\n", T_COPERR);
 	printf("#define\tT_FPERR %d\n", T_FPERR);
@@ -157,5 +158,8 @@ main()
 	printf("#define\tAMIGA_68020 %d\n", AMIGA_68020);
 	printf("#define\tAMIGA_68030 %d\n", AMIGA_68030);
 	printf("#define\tAMIGA_68040 %d\n", AMIGA_68040);
+	printf("#define\tISR_FORW %d\n", &isr->isr_forw);
+	printf("#define\tISR_INTR %d\n", &isr->isr_intr);
+	printf("#define\tISR_ARG %d\n", &isr->isr_arg);
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.7 1994/10/26 02:06:19 cgd Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.8 1995/02/12 19:19:37 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,17 +44,31 @@
 #ifndef _MACHINE_MPTR_H_
 #define _MACHINE_MPTR_H_
 
+#ifdef KERNEL
 /*
- * simulated software interrupt register
+ * simulated software interrupt register (extends hardware
+ * SOFTINT bit)
  */
+
+/*
+ * this makes it pretty machine dependant. Should this go into
+ * <amiga/amiga/mtpr.h> ?
+ */
+#include <amiga/amiga/custom.h>
 
 extern unsigned char ssir;
 
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
+#define SIR_NET		0x1	/* call netintr */
+#define SIR_CLOCK	0x2	/* call softclock */
+#define	SIR_CBACK	0x4	/* walk the sicallback-chain */
 
 #define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
+#define setsoftint()	(custom.intreq = INTF_SETCLR|INTF_SOFTINT)
+#define clrsoftint()	(custom.intreq = INTF_SOFTINT)
+#define setsoftnet()	(ssir |= SIR_NET, setsoftint())
+#define setsoftclock()	(ssir |= SIR_CLOCK, setsoftint())
+#define setsoftcback()	(ssir |= SIR_CBACK, setsoftint())
+
+#endif /* KERNEL */
 
 #endif /* !_MACHINE_MPTR_H_ */
