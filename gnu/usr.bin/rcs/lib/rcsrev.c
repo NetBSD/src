@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsrev.c,v $
+ * Revision 1.4  1996/05/21 13:35:31  mrg
+ * don't use gets().  pr#2287 (patch sent to rcs maintainers)
+ *
  * Revision 1.3  1995/02/24 02:25:12  mycroft
  * RCS 5.6.7.4
  *
@@ -100,7 +103,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(revId, "$Id: rcsrev.c,v 1.3 1995/02/24 02:25:12 mycroft Exp $")
+libId(revId, "$Id: rcsrev.c,v 1.4 1996/05/21 13:35:31 mrg Exp $")
 
 static char const *branchtip P((char const*));
 static char const *lookupsym P((char const*));
@@ -837,17 +840,17 @@ int argc; char * argv[];
                 /* all output goes to stderr, to have diagnostics and       */
                 /* errors in sequence.                                      */
 		aputs("\nEnter revision number or <return> or '.': ",stderr);
-		if (!gets(symrevno)) break;
+		if (!fgets(symrevno, 100, stdin)) break;
                 if (*symrevno == '.') break;
 		aprintf(stderr,"%s;\n",symrevno);
 		expandsym(symrevno,&numricrevno);
 		aprintf(stderr,"expanded number: %s; ",numricrevno.string);
 		aprintf(stderr,"Date: ");
-		gets(date); aprintf(stderr,"%s; ",date);
+		fgets(date, 20, stdin); aprintf(stderr,"%s; ",date);
 		aprintf(stderr,"Author: ");
-		gets(author); aprintf(stderr,"%s; ",author);
+		fgets(author, 20, stdin); aprintf(stderr,"%s; ",author);
 		aprintf(stderr,"State: ");
-		gets(state); aprintf(stderr, "%s;\n", state);
+		fgets(state, 20, stdin); aprintf(stderr, "%s;\n", state);
 		target = genrevs(numricrevno.string, *date?date:(char *)0, *author?author:(char *)0,
 				 *state?state:(char*)0, &gendeltas);
 		if (target) {

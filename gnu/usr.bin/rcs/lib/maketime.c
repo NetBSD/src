@@ -30,7 +30,7 @@ Report problems and direct all questions to:
 #include "maketime.h"
 
 char const maketId[]
-  = "$Id: maketime.c,v 1.3 1995/02/24 02:08:02 mycroft Exp $";
+  = "$Id: maketime.c,v 1.4 1996/05/21 13:35:27 mrg Exp $";
 
 static int isleap P((int));
 static int month_days P((struct tm const*));
@@ -305,7 +305,7 @@ main(argc, argv) int argc; char **argv;
 	time_t default_time = time((time_t *)0);
 	int default_zone = argv[1] ? atoi(argv[1]) : 0;
 	char buf[1000];
-	while (gets(buf)) {
+	while (fgets(buf, 1000, stdin)) {
 		time_t t = str2time(buf, default_time, default_zone);
 		printf("%s", asctime(gmtime(&t)));
 	}
