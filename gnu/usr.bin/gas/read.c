@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.6 1994/02/04 13:57:40 pk Exp $";
+static char rcsid[] = "$Id: read.c,v 1.7 1994/05/25 21:05:30 phil Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -1683,7 +1683,7 @@ register unsigned int nbytes;	/* 1=.byte, 2=.word, 4=.long */
 #ifdef TC_NS32K
 				fix_new_ns32k(frag_now, p - frag_now->fr_literal, nbytes,
 					       exp.X_add_symbol, exp.X_subtract_symbol,
-					       exp.X_add_number, 0, 0, 2, 0, 0);
+					       exp.X_add_number, 0, 0, 2, 0, 0, NO_RELOC);
 #else
 #ifdef PIC
 				fix_new(frag_now, p - frag_now->fr_literal, nbytes,
