@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.22 2002/11/25 01:54:01 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.23 2002/11/26 01:23:30 yamt Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.22 2002/11/25 01:54:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.23 2002/11/26 01:23:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,6 +292,7 @@ ext2fs_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
+	ino_t foundino;
 
 	int	dirblksize = VTOI(ap->a_dvp)->i_e2fs->e2fs_bsize;
 
@@ -450,7 +451,7 @@ searchloop:
 				 * reclen in ndp->ni_ufs area, and release
 				 * directory buffer.
 				 */
-				dp->i_ino = fs2h32(ep->e2d_ino);
+				foundino = fs2h32(ep->e2d_ino);
 				dp->i_reclen = fs2h16(ep->e2d_reclen);
 				brelse(bp);
 				goto found;
@@ -580,12 +581,12 @@ found:
 			dp->i_count = 0;
 		else
 			dp->i_count = dp->i_offset - prevoff;
-		if (dp->i_number == dp->i_ino) {
+		if (dp->i_number == foundino) {
 			VREF(vdp);
 			*vpp = vdp;
 			return (0);
 		}
-		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
 			return (error);
 		/*
 		 * If directory is "sticky", then user must own
@@ -623,9 +624,9 @@ found:
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->i_number == dp->i_ino)
+		if (dp->i_number == foundino)
 			return (EISDIR);
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -660,7 +661,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -674,11 +675,11 @@ found:
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = tdp;
-	} else if (dp->i_number == dp->i_ino) {
+	} else if (dp->i_number == foundino) {
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
