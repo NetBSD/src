@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.263 2000/10/03 02:58:30 thorpej Exp $
+$NetBSD: pcidevs,v 1.264 2000/10/12 02:52:58 itojun Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -519,16 +519,19 @@ vendor FORTEMEDIA	0x1319	Forte Media
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
+vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics Inc
 vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
+vendor INVERTEX		0x14e1	Invertex
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	SiByte, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -1036,6 +1039,10 @@ product GALILEO	GT64130		0x6320	GT-64130 System Controller
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
 
+/* Hi/Fn products */
+product HIFN 7751	0x0005	7751
+product HIFN 6500	0x0006	6500
+
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
 product IBM ALTALITE 	0x0005	CPU Bridge - Alta Lite
@@ -1158,6 +1165,9 @@ product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
+
+/* Invertex */
+product INVERTEX AEON		0x0005	AEON
 
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
@@ -1287,6 +1297,9 @@ product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
 product NETGEAR GA620	0x620a	GA620 Gigabit Ethernet
+
+/* Network Security Technologies, Inc. */
+product NETSEC 7751		0x7751	7751
 
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
