@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.44 2001/07/26 16:53:39 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.45 2001/07/26 22:59:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.44 2001/07/26 16:53:39 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.45 2001/07/26 22:59:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -984,7 +984,7 @@ goth:
  * Calculate number of inodes per group.
  */
 int32_t
-calcipg(int32_t cpg, int32_t bpcg, off_t *usedbp)
+calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 {
 	int i;
 	int32_t ipg, new_ipg, ncg, ncyl;
@@ -998,7 +998,7 @@ calcipg(int32_t cpg, int32_t bpcg, off_t *usedbp)
 	 * Note that fssize is still in sectors, not filesystem blocks.
 	 */
 	ncyl = howmany(fssize, secpercyl);
-	ncg = howmany(ncyl, cpg);
+	ncg = howmany(ncyl, cylpg);
 	/*
 	 * Iterate a few times to allow for ipg depending on itself.
 	 */
@@ -1006,8 +1006,8 @@ calcipg(int32_t cpg, int32_t bpcg, off_t *usedbp)
 	for (i = 0; i < 10; i++) {
 		usedb = (sblock.fs_iblkno + ipg / INOPF(&sblock))
 			* NSPF(&sblock) * (off_t)sectorsize;
-		new_ipg = (cpg * (quad_t)bpcg - usedb) / density * fssize
-			  / ncg / secpercyl / cpg;
+		new_ipg = (cylpg * (quad_t)bpcg - usedb) / density * fssize
+			  / ncg / secpercyl / cylpg;
 		new_ipg = roundup(new_ipg, INOPB(&sblock));
 		if (new_ipg == ipg)
 			break;
@@ -1023,7 +1023,7 @@ calcipg(int32_t cpg, int32_t bpcg, off_t *usedbp)
 static void
 iput(struct dinode *ip, ino_t ino)
 {
-	struct dinode buf[MAXINOPB];
+	struct dinode ibuf[MAXINOPB];
 	daddr_t d;
 	int c, i;
 
@@ -1050,16 +1050,16 @@ iput(struct dinode *ip, ino_t ino)
 		exit(32);
 	}
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
-	rdfs(d, sblock.fs_bsize, buf);
+	rdfs(d, sblock.fs_bsize, ibuf);
 	if (needswap) {
-		ffs_dinode_swap(ip, &buf[ino_to_fsbo(&sblock, ino)]);
+		ffs_dinode_swap(ip, &ibuf[ino_to_fsbo(&sblock, ino)]);
 		/* ffs_dinode_swap() doesn't swap blocks addrs */
 		for (i=0; i<NDADDR + NIADDR; i++)
-			(&buf[ino_to_fsbo(&sblock, ino)])->di_db[i] = 
+			(&ibuf[ino_to_fsbo(&sblock, ino)])->di_db[i] = 
 				bswap32(ip->di_db[i]);
 	} else
-		buf[ino_to_fsbo(&sblock, ino)] = *ip;
-	wtfs(d, sblock.fs_bsize, buf);
+		ibuf[ino_to_fsbo(&sblock, ino)] = *ip;
+	wtfs(d, sblock.fs_bsize, ibuf);
 }
 
 /*
