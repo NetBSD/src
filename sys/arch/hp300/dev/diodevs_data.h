@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: 
+ *	NetBSD: diodevs,v 1.2 1997/01/30 09:18:38 thorpej Exp 
  */
 
 /*-
