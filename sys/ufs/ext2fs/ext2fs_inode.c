@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.40 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.41 2004/08/14 01:08:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.40 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.41 2004/08/14 01:08:02 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ ext2fs_inactive(v)
 		vn_finished_write(mp, V_LOWER);
 	}
 	if (ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		VOP_UPDATE(vp, NULL, NULL, 0);
 		vn_finished_write(mp, V_LOWER);
@@ -179,7 +179,10 @@ ext2fs_update(v)
 	EXT2FS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	if (ap->a_flags & UPDATE_CLOSE)
+		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	else
+		flags = ip->i_flag & IN_MODIFIED;
 	if (flags == 0)
 		return (0);
 	fs = ip->i_e2fs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.117 2004/07/24 15:02:32 dbj Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.118 2004/08/14 01:08:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.117 2004/07/24 15:02:32 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.118 2004/08/14 01:08:07 mycroft Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1096,7 +1096,7 @@ ufs_rename(void *v)
 		}
 		if ((error = ufs_dirrewrite(dp, xp, ip->i_number, 
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
-		    newparent : doingdirectory, IN_CHANGE|IN_UPDATE)) != 0)
+		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
 		if (doingdirectory) {
 			if (!newparent) {
@@ -1821,7 +1821,7 @@ ufsspec_write(void *v)
 	 * Set update and change flags.
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
-		VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
+		VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -1890,7 +1890,7 @@ ufsfifo_write(void *v)
 	/*
 	 * Set update and change flags.
 	 */
-	VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
+	VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 

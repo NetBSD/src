@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.83 2004/03/30 14:50:46 oster Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.84 2004/08/14 01:08:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.83 2004/03/30 14:50:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.84 2004/08/14 01:08:04 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -149,6 +149,7 @@ lfs_update(void *v)
 	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	int s;
+	int flags;
 	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -175,9 +176,12 @@ lfs_update(void *v)
 	LFS_ITIMES(ip,
 		   ap->a_access ? ap->a_access : &ts,
 		   ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)) == 0) {
+	if (ap->a_flags & UPDATE_CLOSE)
+		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
+	else
+		flags = ip->i_flag & (IN_MODIFIED | IN_CLEANING);
+	if (flags == 0)
 		return (0);
-	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {

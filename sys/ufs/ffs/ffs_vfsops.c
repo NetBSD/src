@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.151 2004/07/05 07:28:46 pk Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.152 2004/08/14 01:08:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.151 2004/07/05 07:28:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.152 2004/08/14 01:08:03 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1288,7 +1288,7 @@ loop:
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
-		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{
@@ -1303,8 +1303,12 @@ loop:
 				goto loop;
 			continue;
 		}
-		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
+		if (vp->v_type == VREG && waitfor == MNT_LAZY)
+			error = VOP_UPDATE(vp, NULL, NULL, 0);
+		else
+			error = VOP_FSYNC(vp, cred,
+			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
+		if (error)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);

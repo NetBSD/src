@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.154 2004/07/05 07:28:46 pk Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.155 2004/08/14 01:08:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.154 2004/07/05 07:28:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.155 2004/08/14 01:08:06 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -595,7 +595,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 			ip->i_nlink = ip->i_ffs_effnlink = ip->i_ffs1_nlink;
 			ip->i_size = ip->i_ffs1_size;
 
-			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 
 			/* Re-initialize to get type right */
 			ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
