@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.73 2000/03/16 18:08:29 jdolecek Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.74 2000/03/30 02:43:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,7 +104,6 @@ nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
 enum vtype nv2tov_type[8] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON, VNON };
 enum vtype nv3tov_type[8]={ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO };
 int nfs_ticks;
-extern struct nfs_public nfs_pub;
 
 /* NFS client/server stats. */
 struct nfsstats nfsstats;
@@ -538,8 +537,6 @@ extern int nqsrv_clockskew;
 extern int nqsrv_writeslack;
 extern int nqsrv_maxlease;
 extern int nqnfs_piggy[NFS_NPROCS];
-extern nfstype nfsv2_type[9];
-extern nfstype nfsv3_type[9];
 extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 
