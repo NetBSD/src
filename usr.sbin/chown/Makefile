@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.4 (Berkeley) 10/26/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	chown
 CFLAGS+=-DSUPPORT_DOT
