@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.18 2002/09/15 16:54:29 chs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.19 2002/11/14 17:58:48 atatat Exp $	*/
 
 /*
  *
@@ -92,7 +92,7 @@ void		amap_copy	/* clear amap needs-copy flag */
 void		amap_cow_now	/* resolve all COW faults now */
 			__P((struct vm_map *, struct vm_map_entry *));
 int		amap_extend	/* make amap larger */
-			__P((struct vm_map_entry *, vsize_t));
+			__P((struct vm_map_entry *, vsize_t, int));
 int		amap_flags	/* get amap's flags */
 			__P((struct vm_amap *));
 void		amap_free	/* free amap */
@@ -135,6 +135,12 @@ void		amap_wipeout	/* remove all anons from amap */
 
 #define AMAP_SHARED	0x1	/* amap is shared */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
+
+/*
+ * amap_extend directions
+ */
+#define AMAP_EXTEND_BACKWARDS	0	/* add "size" to start of map */
+#define AMAP_EXTEND_FORWARDS	1	/* add "size" to end of map */
 
 #endif /* _KERNEL */
 
