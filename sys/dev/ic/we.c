@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.1 2001/03/23 17:34:41 jdolecek Exp $	*/
+/*	$NetBSD: we.c,v 1.2 2001/03/29 08:48:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,11 +55,6 @@
  * and the SMC Elite Ultra (8216).
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-#include "rnd.h" 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -73,24 +68,6 @@
 #include <net/if_media.h>
 
 #include <net/if_ether.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h> 
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h> 
-#endif 
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/bswap.h>
