@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.66 2002/04/04 14:26:44 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.67 2002/04/05 00:12:14 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1081,6 +1081,7 @@ set_crypt_type(void)
 		fclose(pwc);
 	}
 
+	free(fn);
 	return (0);
 }
 
