@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.9 2001/10/16 12:53:29 bjh21 Exp $
+/	$NetBSD: units.lib,v 1.10 2001/11/04 03:33:49 groo Exp $
 
 / primitive units
 
@@ -509,6 +509,7 @@ rutherford		1e+6 /sec
 rydberg			1.36054e+1 ev
 sabin			1 ft2
 sack			3 bu
+score			20
 seam			8 bu
 section			mi2
 shippington		40 ft3
