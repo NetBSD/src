@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.21 2003/08/07 16:30:51 agc Exp $	*/
+/*	$NetBSD: cons.h,v 1.22 2003/10/17 18:16:43 cdi Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -103,9 +103,10 @@ struct consdev {
 
 /* values for cn_pri - reflect our policy for console selection */
 #define	CN_DEAD		0	/* device doesn't exist */
-#define CN_NORMAL	1	/* device exists but is nothing special */
-#define CN_INTERNAL	2	/* "internal" bit-mapped display */
-#define CN_REMOTE	3	/* serial interface with remote bit set */
+#define CN_NULL		1	/* noop console */
+#define CN_NORMAL	2	/* device exists but is nothing special */
+#define CN_INTERNAL	3	/* "internal" bit-mapped display */
+#define CN_REMOTE	4	/* serial interface with remote bit set */
 
 #ifdef _KERNEL
 
@@ -121,7 +122,10 @@ void	cnbell __P((u_int, u_int, u_int));
 void	cnflush __P((void));
 void	cnhalt __P((void));
 void	cnrint __P((void));
+void	nullcnprobe __P((struct consdev *));
+void	nullcninit __P((struct consdev *));
 void	nullcnpollc __P((dev_t, int));
+void	nullconsattach __P((int));
 
 /* console-specific types */
 #define	dev_type_cnprobe(n)	void n __P((struct consdev *))
