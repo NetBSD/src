@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.44 1997/06/22 09:34:34 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.45 1997/07/20 22:42:37 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -194,9 +194,6 @@ include "dev/rcons/files.rcons"
 pseudo-device	rasterconsole
 file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
 file	arch/pmax/dev/font.c			rasterconsole	# rcons fontdef
-
-file	netinet/in_cksum.c
-file	netns/ns_cksum.c			ns
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
 file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
