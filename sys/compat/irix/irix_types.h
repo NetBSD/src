@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.6 2001/12/22 14:43:45 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.7 2001/12/23 20:15:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ typedef __int32_t irix_app32_long_t;
 typedef __uint64_t irix_app32_ulong_long_t;
 typedef __int64_t irix_app32_long_long_t;
 typedef __uint32_t irix_ino_t;
-typedef __int64_t irix_off_t;
+typedef __int32_t irix_off_t;
 
 #if 1 /* _MIPS_SZLONG == 32 */
 typedef unsigned long irix_mode_t;
@@ -148,5 +148,13 @@ struct irix_stat64 {
 typedef struct irix_mountid {
 	unsigned int ival[4];
 } irix_mountid_t;
+
+/* From IRIX's <sys/dirent.h> */
+typedef struct irix_dirent { 
+	irix_ino_t	d_ino;
+	irix_off_t	d_off;
+	unsigned short	d_reclen;
+	char		d_name[1];
+} irix_dirent_t;
 
 #endif /* _IRIX_TYPES_H_ */
