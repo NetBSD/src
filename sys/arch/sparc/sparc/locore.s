@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.133 2000/07/24 08:48:03 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.134 2000/08/31 16:59:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -54,6 +54,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -4413,6 +4414,30 @@ ENTRY(write_user_windows)
  */
 
 /*
+ * When calling external functions from cpu_switch() and idle(), we must
+ * preserve the global registers mentioned above across the call.  We also
+ * set up a stack frame since we will be running in our caller's frame
+ * in cpu_switch().
+ */
+#define SAVE_GLOBALS_AND_CALL(name)	\
+	save	%sp, -CCFSZ, %sp;	\
+	mov	%g1, %i0;		\
+	mov	%g2, %i1;		\
+	mov	%g3, %i2;		\
+	mov	%g4, %i3;		\
+	mov	%g6, %i4;		\
+	call	_C_LABEL(name);		\
+	 mov	%g7, %i5;		\
+	mov	%i5, %g7;		\
+	mov	%i4, %g6;		\
+	mov	%i3, %g4;		\
+	mov	%i2, %g3;		\
+	mov	%i1, %g2;		\
+	mov	%i0, %g1;		\
+	restore
+
+
+/*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
  * freed.  (curproc is already NULL.)
@@ -4481,6 +4506,8 @@ ENTRY(switchexit)
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(cpcb), %g6
 	sethi	%hi(curproc), %g7
+	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
 /*
@@ -4488,15 +4515,22 @@ ENTRY(switchexit)
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
  */
-	.globl	_ASM_LABEL(idle)
-_ASM_LABEL(idle):
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+idle:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Release the scheduler lock */
+	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
+#endif
+idle_enter_no_schedlock:
 	wr	%g1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
 	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bnz,a	idle_leave
+#else
 	bnz,a	Lsw_scan
-	 wr	%g1, PIL_CLOCK << 8, %psr	! (void) splclock();
+#endif
+	 wr	%g1, PSR_PIL, %psr	! (void) splhigh();
 
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
@@ -4505,33 +4539,16 @@ _ASM_LABEL(idle):
 	bz	1b
 	 nop
 
-	/*
-	 * We must preserve several global registers across the call
-	 * to uvm_pageidlezero().  Use the %ix registers for this, but
-	 * since we might still be running in our caller's frame
-	 * (if we came here from cpu_switch()), we need to setup a
-	 * frame first.
-	 */
-	save	%sp, -CCFSZ, %sp
-	mov	%g1, %i0
-	mov	%g2, %i1
-	mov	%g4, %i2
-	mov	%g6, %i3
-	mov	%g7, %i4
+	SAVE_GLOBALS_AND_CALL(uvm_pageidlezero)
+	b,a	1b
 
-	! zero some pages
-	call	_C_LABEL(uvm_pageidlezero)
-	 nop
-
-	! restore global registers again which are now
-	! clobbered by uvm_pageidlezero()
-	mov	%i0, %g1
-	mov	%i1, %g2
-	mov	%i2, %g4
-	mov	%i3, %g6
-	mov	%i4, %g7
-	b	1b
-	 restore
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+idle_leave:
+	/* Before we leave the idle loop, detain the scheduler lock */
+	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	SAVE_GLOBALS_AND_CALL(sched_lock_idle)
+	b,a	Lsw_scan
+#endif
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -4584,28 +4601,13 @@ ENTRY(cpu_switch)
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	sethi	%hi(cpcb), %g6
 	ld	[%g6 + %lo(cpcb)], %o0
-	std	%o6, [%o0 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
-	rd	%psr, %g1		! oldpsr = %psr;
+	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
+	rd	%psr, %g1			! oldpsr = %psr;
 	sethi	%hi(curproc), %g7
 	ld	[%g7 + %lo(curproc)], %g4	! lastproc = curproc;
-	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
-	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
-
-	/*
-	 * In all the fiddling we did to get this far, the thing we are
-	 * waiting for might have come ready, so let interrupts in briefly
-	 * before checking for other processes.  Note that we still have
-	 * curproc set---we have to fix this or we can get in trouble with
-	 * the run queues below.
-	 * Also note that we can remove a process from the run queues
-	 * below at splclock(), because there are currently no drivers
-	 * that can run above splclock and call wakeup(). Otherwise, we
-	 * should run at splstatclock() until we have the new process.
-	 */
+	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
+	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
 	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
-	wr	%g1, 0, %psr			! (void) spl0();
-	nop; nop; nop				! paranoia
-	wr	%g1, PIL_CLOCK << 8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -4674,8 +4676,6 @@ Lsw_scan:
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
 	 *	%o3 = vm
-	 *	%o4 = sswap
-	 *	%o5 = <free>
 	 */
 
 	/* firewalls */
@@ -4704,6 +4704,10 @@ Lsw_scan:
 
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Done with the run queues; release the scheduler lock */
+	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
+#endif
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
