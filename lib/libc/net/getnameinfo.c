@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.9 2000/01/22 23:59:46 mycroft Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.10 2000/02/09 12:25:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,6 +76,10 @@ struct sockinet {
 	u_short	si_port;
 };
 
+#ifdef INET6
+static char *ip6_sa2str __P((struct sockaddr_in6 *, char *, int));
+#endif 
+
 #define ENI_NOSOCKET 	0
 #define ENI_NOSERVNAME	1
 #define ENI_NOHOSTNAME	2
@@ -99,12 +103,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	struct hostent *hp;
 	u_short port;
 	int family, i;
-	const char *addr;
-	char *p;
+	char *addr, *p;
 	u_int32_t v4a;
-#ifdef USE_GETIPNODEBY
 	int h_error;
-#endif
 	char numserv[512];
 	char numaddr[512];
 
@@ -126,8 +127,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (salen != afd->a_socklen)
 		return ENI_SALEN;
 	
-	port = ((const struct sockinet *)sa)->si_port; /* network byte order */
-	addr = (const char *)sa + afd->a_off;
+	port = ((struct sockinet *)sa)->si_port; /* network byte order */
+	addr = (char *)sa + afd->a_off;
 
 	if (serv == NULL || servlen == 0) {
 		/*
@@ -158,7 +159,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	switch (sa->sa_family) {
 	case AF_INET:
 		v4a = (u_int32_t)
-			ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr);
+			ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
@@ -168,8 +169,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		const struct sockaddr_in6 *sin6;
-		sin6 = (const struct sockaddr_in6 *)sa;
+		struct sockaddr_in6 *sin6;
+		sin6 = (struct sockaddr_in6 *)sa;
 		switch (sin6->sin6_addr.s6_addr[0]) {
 		case 0x00:
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
@@ -199,41 +200,55 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		 * means that the caller does not want the result.
 		 */
 	} else if (flags & NI_NUMERICHOST) {
+		int numaddrlen;
+
 		/* NUMERICHOST and NAMEREQD conflicts with each other */
 		if (flags & NI_NAMEREQD)
 			return ENI_NOHOSTNAME;
 		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
 		    == NULL)
 			return ENI_SYSTEM;
-		if (strlen(numaddr) > hostlen)
+		numaddrlen = strlen(numaddr);
+		if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 			return ENI_MEMORY;
 		strcpy(host, numaddr);
 #if defined(INET6) && defined(NI_WITHSCOPEID)
 		if (afd->a_af == AF_INET6 &&
-		    (IN6_IS_ADDR_LINKLOCAL((const struct in6_addr *)addr) ||
-		     IN6_IS_ADDR_MULTICAST((const struct in6_addr *)addr)) &&
-		    ((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
+		    (IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr) ||
+		     IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr)) &&
+		    ((struct sockaddr_in6 *)sa)->sin6_scope_id) {
 #ifndef ALWAYS_WITHSCOPE
 			if (flags & NI_WITHSCOPEID)
 #endif /* !ALWAYS_WITHSCOPE */
 			{
-				char *ep = strchr(host, '\0');
-				unsigned int ifindex =
-					((const struct sockaddr_in6 *)sa)->sin6_scope_id;
+				char scopebuf[MAXHOSTNAMELEN], *s;
+				int scopelen;
 
-				*ep = SCOPE_DELIMITER;
-				if ((if_indextoname(ifindex, ep + 1)) == NULL)
+				if ((s = ip6_sa2str((struct sockaddr_in6 *)sa,
+						    scopebuf, 0)) == NULL)
 					/* XXX what should we do? */
-					strncpy(ep + 1, "???", 3);
+					strcpy(scopebuf, "0");
+
+				scopelen = strlen(scopebuf);
+				if (scopelen + 1 + numaddrlen + 1 > hostlen)
+					return ENI_MEMORY;
+
+				/*
+				 * Shift the host string to allocate
+				 * space for the scope ID part.
+				 */
+				memmove(host + scopelen + 1, host,
+					numaddrlen);
+				/* copy the scope ID and the delimiter */
+				memcpy(host, scopebuf, scopelen);
+				host[scopelen] = SCOPE_DELIMITER;
+				host[scopelen + 1 + numaddrlen] = '\0';
 			}
 		}
 #endif /* INET6 */
 	} else {
-#ifdef USE_GETIPNODEBY
-		hp = getipnodebyaddr(addr, afd->a_addrlen, afd->a_af, &h_error);
-#else
 		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
-#endif
+		h_error = h_errno;
 
 		if (hp) {
 			if (flags & NI_NOFQDN) {
@@ -241,15 +256,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				if (p) *p = '\0';
 			}
 			if (strlen(hp->h_name) > hostlen) {
-#ifdef USE_GETIPNODEBY
-				freehostent(hp);
-#endif
 				return ENI_MEMORY;
 			}
 			strcpy(host, hp->h_name);
-#ifdef USE_GETIPNODEBY
-			freehostent(hp);
-#endif
 		} else {
 			if (flags & NI_NAMEREQD)
 				return ENI_NOHOSTNAME;
@@ -263,3 +272,33 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	}
 	return SUCCESS;
 }
+
+#ifdef INET6
+/* ARGSUSED */
+static char *
+ip6_sa2str(sa6, buf, flags)
+	struct sockaddr_in6 *sa6;
+	char *buf;
+	int flags;
+{
+	unsigned int ifindex = (unsigned int)sa6->sin6_scope_id;
+	struct in6_addr *a6 = &sa6->sin6_addr;
+
+#ifdef notyet
+	if (flags & NI_NUMERICSCOPE) {
+		sprintf(buf, "%d", sa6->sin6_scope_id);
+		return(buf);
+	}
+#endif
+ 
+	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6))
+		return(if_indextoname(ifindex, buf));
+
+	if (IN6_IS_ADDR_SITELOCAL(a6) || IN6_IS_ADDR_MC_SITELOCAL(a6))
+		return(NULL);	/* XXX */
+	if (IN6_IS_ADDR_MC_ORGLOCAL(a6))
+		return(NULL);	/* XXX */
+
+	return(NULL);		/* XXX */
+}
+#endif 
