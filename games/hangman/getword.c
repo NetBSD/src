@@ -1,6 +1,8 @@
+/*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +34,15 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getword.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: getword.c,v 1.3 1994/06/29 21:22:50 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $";
+#endif
 #endif /* not lint */
 
-# include	"hangman.h"
-
-# if pdp11
-#	define	RN	(((off_t) rand() << 16) | (off_t) rand())
-# else
-#	define	RN	rand()
-# endif
+#include "hangman.h"
+#include <stdlib.h>
 
 /*
  * getword:
@@ -52,10 +52,12 @@ getword()
 {
 	register FILE		*inf;
 	register char		*wp, *gp;
+	register long		 pos;
 
 	inf = Dict;
 	for (;;) {
-		fseek(inf, abs(RN % Dict_size), 0);
+		pos = (double)rand() / (RAND_MAX + 1.0) * (double)Dict_size;
+		fseek(inf, pos, 0);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;
 		if (fgets(Word, BUFSIZ, inf) == NULL)

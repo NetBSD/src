@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.do.c,v 1.2 1993/08/02 17:17:03 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.do.c,v 1.3 1995/03/23 08:29:53 cgd Exp $";
 #endif /* not lint */
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */

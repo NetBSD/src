@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.pager.c,v 1.3 1995/02/28 18:31:36 jtc Exp $";
+static char rcsid[] = "$NetBSD: hack.pager.c,v 1.4 1995/03/23 08:31:16 cgd Exp $";
 #endif /* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */

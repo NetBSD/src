@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: moreobj.c,v 1.2 1993/08/02 17:20:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: moreobj.c,v 1.3 1995/03/23 08:33:54 cgd Exp $";
 #endif /* not lint */
 
 /* moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
