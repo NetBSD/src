@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1999/02/24 15:10:17 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.1 1999/11/11 21:35:18 he Exp $
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
@@ -15,7 +15,7 @@ ${PPSEUDO}: ${ARCHDIR}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' | \
-	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DGPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
