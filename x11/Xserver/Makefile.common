@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.20.2.2 2005/04/06 21:31:10 tron Exp $
+#	$NetBSD: Makefile.common,v 1.20.2.3 2005/04/06 21:38:07 tron Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -47,6 +47,10 @@ XSERVER_XNEWSMIPS?=	yes
 XSERVER_NEEDS_XFONT=	yes
 XSERVER_NEEDS_MIEXT=	yes
 XSERVER_XFREE86=	yes
+# XXX xfree 4.5 installs libafb for i386 and others?
+.if ${MACHINE} == "i386"
+XSERVER_HAS_AFB=	yes
+.endif
 .endif
 
 .if ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcsh"
