@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.164 2003/02/26 06:31:14 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.165 2003/04/11 19:41:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.164 2003/02/26 06:31:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.165 2003/04/11 19:41:37 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -196,6 +196,21 @@ int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+/*
+ * XXX - Setting ip_checkinterface mostly implements the receive side of
+ * the Strong ES model described in RFC 1122, but since the routing table
+ * and transmit implementation do not implement the Strong ES model,
+ * setting this to 1 results in an odd hybrid.
+ *
+ * XXX - ip_checkinterface currently must be disabled if you use ipnat
+ * to translate the destination address to another local interface.
+ *
+ * XXX - ip_checkinterface must be disabled if you add IP aliases
+ * to the loopback interface instead of the interface where the
+ * packets for those addresses are received.
+ */
+int	ip_checkinterface = 0;
+
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
@@ -407,6 +422,7 @@ ip_input(struct mbuf *m)
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len;
 	int downmatch;
+	int checkif;
 
 	MCLAIM(m, &ip_rx_mowner);
 #ifdef	DIAGNOSTIC
@@ -593,6 +609,26 @@ ip_input(struct mbuf *m)
 		return;
 
 	/*
+	 * Enable a consistency check between the destination address
+	 * and the arrival interface for a unicast packet (the RFC 1122
+	 * strong ES model) if IP forwarding is disabled and the packet
+	 * is not locally generated.
+	 *
+	 * XXX - Checking also should be disabled if the destination
+	 * address is ipnat'ed to a different interface.
+	 *
+	 * XXX - Checking is incompatible with IP aliases added
+	 * to the loopback interface instead of the interface where
+	 * the packets are received.
+	 *
+	 * XXX - We need to add a per ifaddr flag for this so that
+	 * we get finer grain control.
+	 */
+	checkif = ip_checkinterface && (ipforwarding == 0) &&
+	    (m->m_pkthdr.rcvif != NULL) &&
+	    ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0);
+
+	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 *
 	 * Traditional 4.4BSD did not consult IFF_UP at all.
@@ -602,6 +638,8 @@ ip_input(struct mbuf *m)
 	downmatch = 0;
 	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
+			if (checkif && ia->ia_ifp != m->m_pkthdr.rcvif)
+				continue;
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
 			else
@@ -1943,6 +1981,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_maxfragpackets));
 
+	case IPCTL_CHECKINTERFACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_checkinterface));
 	default:
 		return (EOPNOTSUPP);
 	}
