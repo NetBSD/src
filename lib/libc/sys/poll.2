@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.21 2005/03/10 00:29:37 kleink Exp $
+.\"	$NetBSD: poll.2,v 1.22 2005/03/10 00:31:38 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,22 +160,22 @@ will return without blocking.
 .Pp
 If
 .Fa ts
-is a non-nil pointer, it references a timespec structure which specifies a
+is a non-null pointer, it references a timespec structure which specifies a
 maximum interval to wait for any file descriptor to become ready.
 If
 .Fa ts
-is a nil pointer,
+is a null pointer,
 .Fn pollts
 blocks indefinitely.
 If
 .Fa ts
-is a non-nil pointer, referencing a zero-valued timespec structure, then
+is a non-null pointer, referencing a zero-valued timespec structure, then
 .Fn pollts
 will return without blocking.
 .Pp
 If
 .Fa sigmask
-is a non-nil pointer, then the
+is a non-null pointer, then the
 .Fn pollts
 function shall replace the signal mask of the caller by the set of
 signals pointed to by
