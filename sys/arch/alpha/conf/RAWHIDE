@@ -1,16 +1,16 @@
-# $NetBSD: RAWHIDE,v 1.4 1998/06/03 21:16:28 mjacob Exp $
+# $NetBSD: RAWHIDE,v 1.5 1998/09/02 02:02:34 enami Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
 include	"arch/alpha/conf/std.alpha"
 maxusers	64
 #makeoptions	DEBUG="-g"
-options		DEC_KN300	# KN300:	AlphaServer 4100
+options 	DEC_KN300	# KN300:	AlphaServer 4100
 options 	KTRACE		# System call tracing support
 options 	DEBUG		# Expensive debugging checks/support
 options 	KMEMSTATS	# Collect kmem usage statistics
 options 	DIAGNOSTIC	# Cheap kernel consistency checks
-options		DDB		# Kernel Dynamic Debugger
+options 	DDB		# Kernel Dynamic Debugger
 
 file-system	FFS		# Fast file system
 file-system	MFS		# Memory-based file system
