@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.115 1999/02/28 07:42:47 is Exp $
+#	$NetBSD: GENERIC,v 1.116 1999/03/09 11:58:56 is Exp $
 
 #
 #if 0
@@ -328,6 +328,8 @@ cbsc0		at zbus0		# CyberSCSI I
 scsibus*	at cbsc0
 cbiisc0 	at zbus0		# CyberSCSI II
 scsibus*	at cbiisc0
+cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
 idesc0		at mainbus0		# A4000 & A1200 IDE
