@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.7 1995/03/26 20:35:31 jtc Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.8 1995/08/16 00:38:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -269,7 +269,6 @@ struct tp_pcb {
 #ifdef TP_PERF_MEAS
 	/* performance stats - see tp_stat.h */
 	struct tp_pmeas		*tp_p_meas;
-	struct mbuf			*tp_p_mbuf;
 #endif /* TP_PERF_MEAS */
 
 	/* addressing */
