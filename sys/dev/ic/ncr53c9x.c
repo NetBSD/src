@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.20.2.3 1998/02/07 23:26:40 mellon Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.20.2.4 1999/01/18 05:38:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,7 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
@@ -148,9 +149,25 @@ ncr53c9x_attach(sc, adapter, dev)
 {
 
 	/*
+	 * Allocate SCSI message buffers.
+	 * Front-ends can override allocation to avoid alignment
+	 * handling in the DMA engines. Note that that ncr53c9x_msgout()
+	 * can request a 1 byte DMA transfer.
+	 */
+	if (sc->sc_omess == NULL)
+		sc->sc_omess = malloc(NCR_MAX_MSG_LEN, M_DEVBUF, M_NOWAIT);
+
+	if (sc->sc_imess == NULL)
+		sc->sc_imess = malloc(NCR_MAX_MSG_LEN+1, M_DEVBUF, M_NOWAIT);
+
+	if (sc->sc_omess == NULL || sc->sc_imess == NULL) {
+		printf("out of memory\n");
+		return;
+	}
+
+	/*
 	 * Note, the front-end has set us up to print the chip variation.
 	 */
-
 	if (sc->sc_rev >= NCR_VARIANT_MAX) {
 		printf("\n%s: unknown variant %d, devices not attached\n",
 		    sc->sc_dev.dv_xname, sc->sc_rev);
@@ -214,6 +231,7 @@ ncr53c9x_attach(sc, adapter, dev)
 		    NCR_READ_REG(sc, NCR_CFG5));
 		NCR_SCSIREGS(sc);
 	}
+
 }
 
 /*
