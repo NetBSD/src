@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.7 2000/04/14 06:03:39 simonb Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.8 2000/10/30 20:56:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ext2fs.c,v 1.7 2000/04/14 06:03:39 simonb Exp $");
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.8 2000/10/30 20:56:58 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,9 @@ __RCSID("$NetBSD: mount_ext2fs.c,v 1.7 2000/04/14 06:03:39 simonb Exp $");
 
 #include "mntopts.h"
 
-void	ext2fs_usage __P((void));
+static void	ext2fs_usage __P((void));
 int	main __P((int, char *[]));
+int	mount_ext2fs __P((int argc, char **argv));
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -75,8 +76,18 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	return mount_ext2fs(argc, argv);
+}
+#endif
+
+int
+mount_ext2fs(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -133,7 +144,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 ext2fs_usage()
 {
 	(void)fprintf(stderr,

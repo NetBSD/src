@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.1 2000/01/20 19:22:11 wrstuden Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.2 2000/10/30 20:57:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.1 2000/01/20 19:22:11 wrstuden Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.2 2000/10/30 20:57:00 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,17 +62,27 @@ __RCSID("$NetBSD: mount_overlay.c,v 1.1 2000/01/20 19:22:11 wrstuden Exp $");
 
 #include "mntopts.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
 int	main __P((int, char *[]));
-int	subdir __P((const char *, const char *));
-void	usage __P((void));
+int	mount_overlay __P((int argc, char **argv));
+static void	usage __P((void));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_overlay(argc, argv);
+}
+#endif
+
+int
+mount_overlay(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -106,24 +116,7 @@ main(argc, argv)
 	exit(0);
 }
 
-int
-subdir(p, dir)
-	const char *p;
-	const char *dir;
-{
-	int l;
-
-	l = strlen(dir);
-	if (l <= 1)
-		return (1);
-
-	if ((strncmp(p, dir, l) == 0) && (p[l] == '/' || p[l] == '\0'))
-		return (1);
-
-	return (0);
-}
-
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,

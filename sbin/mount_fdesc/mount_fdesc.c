@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.10 1999/06/25 19:28:36 perseant Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.10 1999/06/25 19:28:36 perseant Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.11 2000/10/30 20:56:59 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,27 @@ __RCSID("$NetBSD: mount_fdesc.c,v 1.10 1999/06/25 19:28:36 perseant Exp $");
 
 #include "mntopts.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
-void	usage __P((void));
+static void	usage __P((void));
 int	main __P((int, char *[]));
+int	mount_fdesc __P((int argc, char **argv));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_fdesc(argc, argv);
+}
+#endif
+
+int
+mount_fdesc(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -98,7 +109,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
