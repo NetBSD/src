@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.17 2002/06/14 00:55:18 wiz Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2004/11/12 05:52:04 jmc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	rlogin
-SRCS=	rlogin.c
+SRCS=	rlogin.c getport.c
 WARNS=	2
+
+.PATH.c: ${.CURDIR}/../rsh
+CPPFLAGS+=-I${.CURDIR}/../rsh
 
 BINOWN=	root
 BINMODE=4555
