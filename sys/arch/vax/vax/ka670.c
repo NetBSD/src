@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.1 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: ka670.c,v 1.2 1999/08/07 10:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,15 +52,13 @@
 #include <machine/ka670.h>
 #include <machine/clock.h>
 
-static	void ka670_conf __P((struct device*, struct device*, void*));
+static	void ka670_conf __P((void));
 
 static	int ka670_mchk __P((caddr_t));
 static	void ka670_memerr __P((void));
 static	int ka670_cache_init __P((void));	/* "int mapen" as argument? */
-static  void ka670_halt __P((void));
-static  void ka670_reboot __P((int));
-static  void ka670_clrf __P((void));
-
+static	void ka670_halt __P((void));
+static	void ka670_reboot __P((int));
 
 struct	cpu_dep ka670_calls = {
 	0,
@@ -71,9 +69,9 @@ struct	cpu_dep ka670_calls = {
 	generic_clkwrite,
 	8,	/* 8 VUP */
 	2,	/* SCB pages */
-        ka670_halt,
-        ka670_reboot,
-        ka670_clrf,
+	ka670_halt,
+	ka670_reboot,
+	0,
 };
 
 #define KA670_MC_RESTART	0x00008000	/* Restart possible*/
@@ -188,11 +186,9 @@ ka670_cache_init()
 	return (0);
 }
 void
-ka670_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka670_conf()
 {
-	printf(": KA670\n");
+	printf("cpu: KA670\n");
 
 	/*
 	 * ka670_conf() gets called with MMU enabled, now it's save to
@@ -202,21 +198,15 @@ ka670_conf(parent, self, aux)
 }
 
 static void
-ka670_clrf()
-{
-return;
-}
-
-static void
 ka670_halt()
 {
-        asm("halt");
+	asm("halt");
 }
 
 static void
 ka670_reboot(arg)
-        int arg;
+	int arg;
 {
-        asm("halt");
+	asm("halt");
 }
 

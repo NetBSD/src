@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.19 1999/05/01 16:13:44 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.20 1999/08/07 10:36:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,7 +53,7 @@
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-static	void	ka410_conf __P((struct device*, struct device*, void*));
+static	void	ka410_conf __P((void));
 static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
 static	void	ka410_halt __P((void));
@@ -85,9 +85,7 @@ struct	cpu_dep ka410_calls = {
 
 
 void
-ka410_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka410_conf()
 {
         extern  int clk_adrshift, clk_tweak;
 	struct vs_cpu *ka410_cpu;
@@ -97,14 +95,14 @@ ka410_conf(parent, self, aux)
 	switch (vax_cputype) {
 	case VAX_TYP_UV2:
 		ka410_cpu->vc_410mser = 1;
-		printf(": KA410\n");
+		printf("cpu: KA410\n");
 		break;
 
 	case VAX_TYP_CVAX:
-		printf(": KA41/42\n");
+		printf("cpu: KA41/42\n");
 		ka410_cpu->vc_vdcorg = 0; /* XXX */
 		ka410_cpu->vc_parctl = PARCTL_CPEN | PARCTL_DPEN ;
-		printf("%s: Enabling primary cache, ", self->dv_xname);
+		printf("cpu: Enabling primary cache, ");
 mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, PR_CADR);
 		if (vax_confdata & KA420_CFG_CACHPR) {
 			l2cache = (void *)vax_map_physmem(KA420_CH2_BASE,
