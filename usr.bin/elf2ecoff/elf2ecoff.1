@@ -15,17 +15,17 @@
 .Os NetBSD 1.2
 .Sh NAME
 .Nm elf2ecoff
-.\" Why doesn't this work right?  mdoc(7) nor mdoc.samples(7) lists
-.\" .Nd, except for a passing reference in the latter.
 .Nd convert a NetBSD ELF-format executable to NetBSD a.out format
 .Sh SYNOPSIS
-.Nm elf2ecoff elf-file ecoff-file
+.Nm elf2ecoff
+.Ar elf-file
+.Ar ecoff-file
 .Sh DESCRIPTION
 Reads a fully-linked ELF executable (such as a  linked kernel)
 and produces an equivalent ECOFF format executable file.
 .Pp
 The
-.Nm elf2ecoff
+.Nm
 utility is used to convert native NetBSD ELF binaries
 to a.out format, for compatibility with DECstation diskless-boot
 PROM code and diskless-boot servers that require ECOFF format binaries.
@@ -40,18 +40,18 @@ PROM code and diskless-boot servers that require ECOFF format binaries.
 .Xr kvm 3 ,
 .Xr kvm_mkdb 8 .
 .Sh BUGS
-.Nm Elf2ecoff
+.Nm
 assumes there are no multiply-referenced symbols in the input ELF symbol
 section.   It may be necessary to link with
-.Nm -x
+.Fl x
 to avoid duplicate symbols.
 .Pp
 In some environments, the GNU binutils
-.Nm objcopy
+.Xr objcopy 1
 utility may be a better solution than
-.Nm elf2ecoff .
+.Nm "" .
 .Sh HISTORY
-.Nm Elf2ecoff
+.Nm
 was originally developed  for NetBSD/pmax by Ted Lemon
 and was first distributed with the pmax port of
 .Nx 1.1 .
