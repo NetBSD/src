@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.2 2001/12/17 20:27:39 fredette Exp $
+#	$NetBSD: install.md,v 1.3 2002/04/22 21:17:52 fredette Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ md_installboot() {
 	( cd /usr/mdec ;\
 	cp -p ./ufsboot /mnt/ufsboot ;\
 	sync ; sleep 1 ; sync ;\
-	./installboot -v /mnt/ufsboot bootxx /dev/r${1}a )
+	./installboot -v /dev/r${1}a bootxx ufsboot )
 	echo "done."
 }
 
