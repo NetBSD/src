@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1998/03/25 03:57:55 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1998/03/25 07:43:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 1998/03/25 03:57:55 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/03/25 07:43:12 jonathan Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -114,21 +114,12 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
 
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
+	/* Reset any bus errors due to probing nonexistent devices. */
+	(*platform.bus_reset)();
 
-
+	/* Configuration is finished, turn on interrupts. */
 #ifdef DEBUG
 	printf("autconfiguration done, spl back to 0x%x\n", s);
-#endif
-	/*
-	 * Configuration is finished,  turn on interrupts. */
-#if 0
-	 /* This is just spl0(), except on the 3MIN, where TURBOChannel
-	 * option cards interrupt at IPLs 0-2, and some dumb drivers like
-	 * the cfb want to just disable interrupts.
-	 */
-	/* hairy 3min spls */
-if (systype != DS_3MIN)			/* XXX */
 #endif
 	spl0();
 
