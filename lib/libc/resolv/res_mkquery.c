@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.4 2004/05/21 15:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -76,11 +76,13 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.1.2.2.4.2 2004/03/16 12:34:18 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.4 2004/05/21 15:35:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
+
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
@@ -90,6 +92,11 @@ __RCSID("$NetBSD: res_mkquery.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include "port_after.h"
+
+#ifdef __weak_alias
+__weak_alias(res_nmkquery,_res_nmkquery)
+__weak_alias(res_nopt,_res_nopt)
+#endif
 
 /* Options.  Leave them on. */
 #define DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.4 2004/05/21 15:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,12 +76,13 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.9.2.5.4.2 2004/03/16 12:34:18 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.4 2004/05/21 15:35:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -99,6 +100,18 @@ __RCSID("$NetBSD: res_init.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
 #include <netdb.h>
 
 #include "port_after.h"
+
+#ifdef __weak_alias
+__weak_alias(res_ninit,_res_ninit)
+__weak_alias(res_randomid,__res_randomid)
+__weak_alias(res_nclose,_res_nclose)
+__weak_alias(res_ndestroy,_res_ndestroy)
+__weak_alias(res_get_nibblesuffix,__res_get_nibblesuffix)
+__weak_alias(res_get_nibblesuffix2,__res_get_nibblesuffix2)
+__weak_alias(res_getservers,__res_getservers)
+__weak_alias(res_setservers,__res_setservers)
+#endif
+
 
 /* ensure that sockaddr_in6 and IN6ADDR_ANY_INIT are declared / defined */
 #include <resolv.h>
