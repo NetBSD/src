@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.12 1999/03/25 05:22:44 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.13 1999/04/11 04:27:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 #include <sys/disklabel.h>
 #include <machine/dec_prom.h>
 #include <machine/stdarg.h>
+#include <common.h>
 #include <rz.h>
 
 struct	rz_softc {
@@ -162,7 +163,7 @@ rzopen(struct open_file *f, ...)
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
-#ifndef SMALL
+#ifndef BOOTRZ	/* Smaller code for first stage disk bootloader */
 		free(sc, sizeof(struct rz_softc));
 #endif
 		return (ENXIO);
@@ -170,10 +171,14 @@ rzopen(struct open_file *f, ...)
 	return (0);
 }
 
-#ifndef SMALL
+#ifndef LIBSA_NO_DEV_CLOSE
+int
 rzclose(f)
 	struct open_file *f;
 {
+	if (callv == &callvec)
+		prom_close(((struct rz_softc *)f->f_devdata)->sc_fd);
+
 	free(f->f_devdata, sizeof(struct rz_softc));
 	f->f_devdata = (void *)0;
 	return (0);
