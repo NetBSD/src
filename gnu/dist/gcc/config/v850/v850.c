@@ -399,16 +399,16 @@ print_operand (file, x, code)
           else if (TDA_NAME_P (name))
             fprintf (file, "tdaoff");
           else
-            abort();
+            abort ();
         }
       else
-        abort();
+        abort ();
       break;
     case 'P':
       if (special_symbolref_operand (x, VOIDmode))
         output_addr_const (file, x);
       else
-        abort();
+        abort ();
       break;
     case 'Q':
       if (special_symbolref_operand (x, VOIDmode))
@@ -429,10 +429,10 @@ print_operand (file, x, code)
           else if (TDA_NAME_P (name))
             fprintf (file, "ep");
           else
-            abort();
+            abort ();
         }
       else
-        abort();
+        abort ();
       break;
     case 'R':		/* 2nd word of a double.  */
       switch (GET_CODE (x))
@@ -448,7 +448,7 @@ print_operand (file, x, code)
       break;
     case 'S':
       {
-        /* if it's a referance to a TDA variable, use sst/sld vs. st/ld */
+        /* if it's a reference to a TDA variable, use sst/sld vs. st/ld */
         if (GET_CODE (x) == MEM && ep_memory_operand (x, GET_MODE (x), FALSE))
           fputs ("s", file);
 
@@ -584,7 +584,7 @@ print_operand_address (file, addr)
               reg_name = "ep";
             }
           else
-            abort();
+            abort ();
 
           fprintf (file, "%s(", off_name);
           output_addr_const (file, addr);
@@ -616,7 +616,7 @@ print_operand_address (file, addr)
               reg_name = "ep";
             }
           else
-            abort();
+            abort ();
 
           fprintf (file, "%s(", off_name);
           output_addr_const (file, addr);
@@ -2082,11 +2082,11 @@ construct_restore_jr (op)
       last = 29;
     }
 
-  /* Paranoia */
-  for (i = (first == 2 ? 20 : first + 1); i < 29; i++)
-    if ((mask & (1 << i)) == 0)
-      abort ();
-
+  /* Note, it is possible to have gaps in the register mask.
+     We ignore this here, and generate a JR anyway.  We will
+     be popping more registers thatn is strictly necessary, but
+     it does save code space.  */
+  
   if (first == last)
     sprintf (buff, "jr __return_%s", reg_names [first]);
   else
@@ -2157,8 +2157,8 @@ pattern_is_ok_for_prologue (op, mode)
 	return 0;
 
       /* If the register is being pushed somewhere other than the stack
-	 space just aquired by the first operand then abandon this quest.
-	 Note: the test is <= becuase both values are negative.	 */
+	 space just acquired by the first operand then abandon this quest.
+	 Note: the test is <= because both values are negative.	 */
       if (INTVAL (XEXP (plus, 1))
 	  <= INTVAL (XEXP (SET_SRC (XVECEXP (op, 0, 0)), 1)))
 	{
@@ -2254,7 +2254,7 @@ construct_save_jarl (op)
   if (mask & (1 << 31))
     {
       if (stack_bytes != -16)
-	abort();
+	abort ();
       
       last = 31;
     }
@@ -2268,11 +2268,11 @@ construct_save_jarl (op)
       last = 29;
     }
 
-  /* Paranoia */
-  for (i = (first == 2 ? 20 : first + 1); i < 29; i++)
-    if ((mask & (1 << i)) == 0)
-      abort ();
-
+  /* Note, it is possible to have gaps in the register mask.
+     We ignore this here, and generate a JARL anyway.  We will
+     be pushing more registers thatn is strictly necessary, but
+     it does save code space.  */
+  
   if (first == last)
     sprintf (buff, "jarl __save_%s, r10", reg_names [first]);
   else

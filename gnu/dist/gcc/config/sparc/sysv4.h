@@ -1,7 +1,6 @@
 /* Target definitions for GNU compiler for Sparc running System V.4
-   Copyright (C) 1991, 1992, 1995, 1996 Free Software Foundation, Inc.
-
-   Written by Ron Guilmette (rfg@netcom.com).
+   Copyright (C) 1991, 92, 95, 96, 97, 1998 Free Software Foundation, Inc.
+   Contributed by Ron Guilmette (rfg@monkeys.com).
 
 This file is part of GNU CC.
 
@@ -33,6 +32,16 @@ Boston, MA 02111-1307, USA.  */
 #undef DATA_SECTION_ASM_OP
 
 #include "svr4.h"
+
+/* ??? Put back the SIZE_TYPE/PTRDIFF_TYPE definitions set by sparc.h.
+   Why, exactly, is svr4.h messing with this?  Seems like the chip 
+   would know best.  */
+
+#undef SIZE_TYPE
+#define SIZE_TYPE (TARGET_ARCH64 ? "long unsigned int" : "unsigned int")
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE (TARGET_ARCH64 ? "long int" : "int")
 
 /* Undefined some symbols which are defined in "svr4.h" but which are
    appropriate only for typical svr4 systems, but not for the specific
@@ -136,10 +145,7 @@ do { ASM_OUTPUT_ALIGN ((FILE), Pmode == SImode ? 2 : 3);		\
    f0-f31		32-63			40-71
 */
 
-#define DBX_REGISTER_NUMBER(REGNO)					\
-  (((REGNO) < 32) ? (REGNO)						\
-   : ((REGNO) < 63) ? ((REGNO) + 8)					\
-   : (abort (), 0))
+#define DBX_REGISTER_NUMBER(REGNO) ((REGNO) < 32 ? (REGNO) : (REGNO) + 8)
 
 /* A set of symbol definitions for assembly pseudo-ops which will
    get us switched to various sections of interest.  These are used
