@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.19 2001/06/04 11:44:30 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.20 2001/06/23 13:34:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -82,7 +82,7 @@ find_cur_line(FIELD *cur, unsigned pos);
 static int
 split_line(FIELD *field, unsigned pos);
 static void
-bump_lines(FIELD *field, int pos, int amt);
+bump_lines(FIELD *field, int pos, int amt, bool do_len);
 
 
 /*
@@ -111,7 +111,7 @@ _formi_create_dbg_file(void)
  * the row the cursor is currently on.
  */
 static void
-bump_lines(FIELD *field, int pos, int amt)
+bump_lines(FIELD *field, int pos, int amt, bool do_len)
 {
 	int i, row;
 #ifdef DEBUG
@@ -138,8 +138,10 @@ bump_lines(FIELD *field, int pos, int amt)
 	if (((int)field->lines[row].length + amt) < 0) {
 		field->lines[row].length = 0;
 		field->lines[row].end = 0;
-	} else
-		field->lines[row].length += amt;
+	} else {
+		if (do_len == TRUE)
+			field->lines[row].length += amt;
+	}
 	
 	if (field->lines[row].length > 1)
 		field->lines[row].end += amt;
@@ -627,7 +629,7 @@ split_line(FIELD *field, unsigned pos)
 	
 #ifdef DEBUG
 	if (dbg_ok == TRUE) {
-		bump_lines(field, 0, 0); /* will report line data for us */
+		bump_lines(field, 0, 0, FALSE); /* will report line data for us */
 	}
 #endif
 	
@@ -1130,7 +1132,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	if ((field->overlay == 0)
 	    || ((field->overlay == 1) && (pos >= field->buffers[0].length))) {
 		field->buffers[0].length++;
-		bump_lines(field, (int) pos, 1);
+		bump_lines(field, (int) pos, 1, TRUE);
 	}
 	
 
@@ -1142,7 +1144,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		      &field->buffers[0].string[pos],
 		      field->buffers[0].length - pos);
 		field->buffers[0].length--;
-		bump_lines(field, (int) pos, -1);
+		bump_lines(field, (int) pos, -1, TRUE);
 	} else {
 		field->buf0_status = TRUE;
 		if ((field->rows + field->nrows) == 1) {
@@ -1211,9 +1213,10 @@ int
 _formi_manipulate_field(FORM *form, int c)
 {
 	FIELD *cur;
-	char *str;
-	unsigned int i, start, end, pos, row, len, status;
-
+	char *str, saved;
+	unsigned int i, start, end, pos, row, status, old_count;
+	int len;
+	
 	cur = form->fields[form->cur_field];
 
 #ifdef DEBUG
@@ -1571,29 +1574,42 @@ _formi_manipulate_field(FORM *form, int c)
 			return E_REQUEST_DENIED;
 
 		row = cur->start_line + cur->cursor_ypos;
-		start = cur->start_char + cur->cursor_xpos;
+		start = cur->start_char + cur->cursor_xpos
+			+ cur->lines[row].start;
 		end = cur->buffers[0].length;
-		if (start == cur->lines[row].start) {
-			if (cur->row_count > 1) {
-				if (_formi_join_line(cur,
-						start, JOIN_NEXT) != E_OK) {
+		if (start == cur->lines[row].end) {
+			if ((cur->rows + cur->nrows) > 1) {
+				if (cur->row_count > 1) {
+					if (_formi_join_line(cur,
+							     start,
+							     JOIN_NEXT_NW)
+					    != E_OK) {
+						return E_REQUEST_DENIED;
+					}
+				} else
 					return E_REQUEST_DENIED;
-				}
-			} else {
-				cur->buffers[0].string[start] = '\0';
-				if (cur->lines[row].end > 0) {
-					cur->lines[row].end--;
-					cur->lines[row].length--;
-				}
-			}
-		} else {
-			bcopy(&cur->buffers[0].string[start + 1],
-			      &cur->buffers[0].string[start],
-			      (unsigned) end - start + 1);
-			bump_lines(cur, _FORMI_USE_CURRENT, -1);
+			} else
+				return E_REQUEST_DENIED;
 		}
-		
+
+		saved = cur->buffers[0].string[start];
+		bcopy(&cur->buffers[0].string[start + 1],
+		      &cur->buffers[0].string[start],
+		      (unsigned) end - start + 1);
 		cur->buffers[0].length--;
+		bump_lines(cur, _FORMI_USE_CURRENT, -1, TRUE);
+		if ((cur->rows + cur->nrows) > 1) {
+			if (_formi_wrap_field(cur, start) != E_OK) {
+				bcopy(&cur->buffers[0].string[start],
+				      &cur->buffers[0].string[start + 1],
+				      (unsigned) end - start);
+				cur->buffers[0].length++;
+				cur->buffers[0].string[start] = saved;
+				bump_lines(cur, _FORMI_USE_CURRENT, 1, TRUE);
+				_formi_wrap_field(cur, start);
+				return E_REQUEST_DENIED;
+			}
+		}
 		break;
 		
 	case REQ_DEL_PREV:
@@ -1612,11 +1628,12 @@ _formi_manipulate_field(FORM *form, int c)
 				return E_REQUEST_DENIED;
 			}
 		}
-		
+
+		saved = cur->buffers[0].string[start - 1];
 		bcopy(&cur->buffers[0].string[start],
 		      &cur->buffers[0].string[start - 1],
 		      (unsigned) end - start + 1);
-		bump_lines(cur, start - 1, -1);
+		bump_lines(cur, (int) start - 1, -1, TRUE);
 		cur->buffers[0].length--;
 
 		if ((cur->rows + cur->nrows) == 1) {
@@ -1633,7 +1650,13 @@ _formi_manipulate_field(FORM *form, int c)
 				pos = cur->buffers[0].length - 1;
 
 			if ((_formi_wrap_field(cur, pos) != E_OK)) {
-				/* XXX back out char deletion here */
+				bcopy(&cur->buffers[0].string[start - 1],
+				      &cur->buffers[0].string[start],
+				      (unsigned) end - start);
+				cur->buffers[0].length++;
+				cur->buffers[0].string[start - 1] = saved;
+				bump_lines(cur, (int) start - 1, 1, TRUE);
+				_formi_wrap_field(cur, pos);
 				return E_REQUEST_DENIED;
 			}
 			
@@ -1656,20 +1679,45 @@ _formi_manipulate_field(FORM *form, int c)
 		bcopy(&cur->buffers[0].string[end + 1],
 		      &cur->buffers[0].string[start],
 		      (unsigned) cur->buffers[0].length - end + 1);
-/* XXXX wrong */
-		if (cur->row_count > 1) {
-			cur->row_count--;
-			bcopy(&cur->lines[row + 1], &cur->lines[row],
-			      sizeof(struct _formi_field_lines)
-			      * cur->row_count);
 
-			len = end - start;
-			for (i = row; i < cur->row_count; i++) {
-				cur->lines[i].start -= len;
-				cur->lines[i].end -= len;
+		if (((cur->rows + cur->nrows) == 1) ||
+		    (cur->row_count == 1)) {
+			  /* single line case */
+			cur->buffers[0].length = 0;
+			cur->lines[0].end = cur->lines[0].length = 0;
+			cur->cursor_xpos = cur->cursor_ypos = 0;
+		} else {
+			  /* multiline field */
+			old_count = cur->row_count;
+			cur->row_count--;
+			if (cur->row_count == 0)
+				cur->row_count = 1;
+
+			if (cur->row_count > 1)
+				bcopy(&cur->lines[row + 1],
+				      &cur->lines[row],
+				      (unsigned) (cur->row_count - row)
+				      * sizeof(struct _formi_field_lines));
+
+			cur->lines[row].start = start;
+			len = start - end - 1; /* yes, this is negative */
+
+			if (row < (cur->row_count - 1))
+				bump_lines(cur, (int) start, len, FALSE);
+			else if (old_count == 1) {
+				cur->lines[0].end = cur->lines[0].length = 0;
+				cur->cursor_xpos = 0;
+				cur->cursor_ypos = 0;
+			} else if (cur->row_count == 1) {
+				cur->lines[0].length = cur->buffers[0].length
+					+ len;
+				cur->lines[0].end = cur->lines[0].length - 1;
 			}
 			
-			if (row > cur->row_count) {
+			cur->buffers[0].length += len;
+			
+			if (row > (cur->row_count - 1)) {
+				row--;
 				if (cur->cursor_ypos == 0) {
 					if (cur->start_line > 0) {
 						cur->start_line--;
@@ -1677,11 +1725,20 @@ _formi_manipulate_field(FORM *form, int c)
 				} else {
 					cur->cursor_ypos--;
 				}
-				row--;
 			}
-			
-			if (cur->cursor_xpos > cur->lines[row].length)
-				cur->cursor_xpos = cur->lines[row].length;
+
+			if (old_count > 1) {
+				if (cur->cursor_xpos > cur->lines[row].length)
+					cur->cursor_xpos =
+						cur->lines[row].length - 1;
+				if (row >= cur->rows)
+					cur->start_line = row
+						- cur->cursor_ypos;
+				else {
+					cur->start_line = 0;
+					cur->cursor_ypos = row;
+				}
+			} 
 		}
 		break;
 		
@@ -1694,7 +1751,7 @@ _formi_manipulate_field(FORM *form, int c)
 		      (unsigned) cur->buffers[0].length - end + 1);
 		len = end - start;
 		cur->buffers[0].length -= len;
-		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len);
+		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len, TRUE);
 		
 		if (cur->cursor_xpos > cur->lines[row].length)
 			cur->cursor_xpos = cur->lines[row].length;
@@ -1709,7 +1766,7 @@ _formi_manipulate_field(FORM *form, int c)
 		      &cur->buffers[0].string[start],
 		      cur->buffers[0].length - end + 1);
 		cur->buffers[0].length -= len;
-		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len);
+		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len, TRUE);
 		
 		if (cur->cursor_xpos > cur->lines[row].length)
 			cur->cursor_xpos = cur->lines[row].length;
