@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.30 1994/12/24 16:44:27 ws Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.31 1994/12/27 19:10:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -527,16 +527,14 @@ procfs_access(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	struct vattr *vap;
-	struct vattr vattr;
+	struct vattr va;
 	int error;
 
-	vap = &vattr;
-	if (error = VOP_GETATTR(ap->a_vp, vap, ap->a_cred, ap->a_p))
+	if (error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_p))
 		return (error);
 
-	return (vaccess(vap->va_mode, vap->va_uid, vap->va_gid,
-			ap->a_mode, ap->a_cred));
+	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
+	    ap->a_cred));
 }
 
 /*

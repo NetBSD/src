@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.33 1994/12/24 16:44:24 ws Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.34 1994/12/27 19:11:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -312,7 +312,7 @@ int
 kernfs_access(ap)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
-		int  a_mode;
+		int a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap;
