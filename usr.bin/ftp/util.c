@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.52 1999/06/26 00:17:02 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.53 1999/06/29 10:43:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.52 1999/06/26 00:17:02 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.53 1999/06/29 10:43:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: util.c,v 1.52 1999/06/26 00:17:02 lukem Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
 #include <termios.h>
@@ -285,15 +286,14 @@ ftp_login(host, user, pass)
 		user = "anonymous";	/* as per RFC 1635 */
 	}
 
-	if (user == NULL) {
+	if (user == NULL)
 		freeuser = 1;
-		if (pass == NULL)
-			freepass = 1;
-		freeacct = 1;
-		if (ruserpass(host, &user, &pass, &acct) < 0) {
-			code = -1;
-			goto cleanup_ftp_login;
-		}
+	if (pass == NULL)
+		freepass = 1;
+	freeacct = 1;
+	if (ruserpass(host, &user, &pass, &acct) < 0) {
+		code = -1;
+		goto cleanup_ftp_login;
 	}
 
 	while (user == NULL) {
@@ -787,8 +787,11 @@ static void
 updateprogressmeter(dummy)
 	int dummy;
 {
+	int oerrno;
 
+	oerrno = errno;
 	progressmeter(0);
+	errno = oerrno;
 }
 #endif	/* NO_PROGRESS */
 
@@ -1076,13 +1079,39 @@ setttywidth(a)
 	int a;
 {
 	struct winsize winsize;
+	int oerrno;
 
+	oerrno = errno;
 	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1 &&
 	    winsize.ws_col != 0)
 		ttywidth = winsize.ws_col;
 	else
 		ttywidth = 80;
+	errno = oerrno;
 }
+
+void
+crankrate(int sig)
+{
+
+	switch (sig) {
+	case SIGUSR1:
+		if (rate_get)
+			rate_get += rate_get_incr;
+		if (rate_put)
+			rate_put += rate_put_incr;
+		break;
+	case SIGUSR2:
+		if (rate_get && rate_get > rate_get_incr)
+			rate_get -= rate_get_incr;
+		if (rate_put && rate_put > rate_put_incr)
+			rate_put -= rate_put_incr;
+		break;
+	default:
+		err(1, "crankrate invoked with unknown signal: %d", sig);
+	}
+}
+
 
 /*
  * Set the SIGALRM interval timer for wait seconds, 0 to disable.
@@ -1146,29 +1175,41 @@ controlediting()
 #endif /* !NO_EDITCOMPLETE */
 
 /*
- * Parse the specified socket buffer size.
+ * Convert the string `arg' to an int, which may have an optional SI suffix
+ * (`b', `k', `m', `g'). Returns the number for success, -1 otherwise.
  */
 int
-getsockbufsize(arg)
+strsuftoi(arg)
 	const char *arg;
 {
 	char *cp;
-	int val;
+	long val;
 
 	if (!isdigit((unsigned char)arg[0]))
 		return (-1);
 
 	val = strtol(arg, &cp, 10);
 	if (cp != NULL) {
-		if (cp[1] != '\0')
+		if (cp[0] != '\0' && cp[1] != '\0')
 			 return (-1);
-		if (cp[0] == 'k')
-			val *= 1024;
-		if (cp[0] == 'm')
-			val *= 1024 * 1024;
+		switch (tolower((unsigned char)cp[0])) {
+		case '\0':
+		case 'b':
+			break;
+		case 'k':
+			val <<= 10;
+			break;
+		case 'm':
+			val <<= 20;
+			break;
+		case 'g':
+			val <<= 30;
+			break;
+		default:
+			return (-1);
+		}
 	}
-
-	if (val < 0)
+	if (val < 0 || val > INT_MAX)
 		return (-1);
 
 	return (val);

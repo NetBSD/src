@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 1999/06/20 22:07:29 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.44 1999/06/29 10:43:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 1999/06/20 22:07:29 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 1999/06/29 10:43:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,11 @@ main(argc, argv)
 	hist = NULL;
 #endif
 	mark = HASHBYTES;
+	rate_get = 0;
+	rate_get_incr = DEFAULTINCR;
+	rate_put = 0;
+	rate_put_incr = DEFAULTINCR;
+
 	marg_sl = sl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
@@ -190,7 +195,7 @@ main(argc, argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtvV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtT:vV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -261,6 +266,32 @@ main(argc, argv)
 			trace = 1;
 			break;
 
+		case 'T':
+		{
+			int targc;
+			char *targv[6], *oac;
+
+				/* look for `dir,max[,incr]' */
+			targc = 0;
+			targv[targc++] = "-T";
+			oac = xstrdup(optarg);
+
+			while ((cp = strsep(&oac, ",")) != NULL) {
+				if (*cp == '\0') {
+					warnx("bad throttle value: %s", optarg);
+					usage();
+					/* NOTREACHED */
+				}
+				targv[targc++] = cp;
+				if (targc >= 5)
+					break;
+			}
+			if (parserate(targc, targv, 1) == -1)
+				usage();
+			free(oac);
+			break;
+		}
+
 		case 'v':
 			progress = verbose = 1;
 			break;
@@ -298,6 +329,8 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)xsignal(SIGWINCH, setttywidth);
+	(void)xsignal(SIGUSR1, crankrate);
+	(void)xsignal(SIGUSR2, crankrate);
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&argc;
@@ -752,11 +785,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
-"       %s [-f] [-o outfile] file:///file\n"
-"       %s [-fR] [-o outfile] ftp://[user[:pass]@]host[:port]/path[/]\n"
-"       %s [-f] [-o outfile] http://host[:port]/path\n"
-"       %s [-fR] [-o outfile] host:path[/]\n",
-	    __progname, __progname, __progname, __progname, __progname);
+"usage: %s [-AadefginpRtvV] [-r retry] [-o outfile] [-P port] [-T dir,max[,inc]\n"
+"       [host [port]] [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
+"       [http://[user[:pass]@]host[:port]/path] [host:path[/]]\n", __progname);
 	exit(1);
 }
