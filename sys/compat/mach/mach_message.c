@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.4 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.5 2002/12/19 22:23:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.4 2002/12/17 18:42:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.5 2002/12/19 22:23:07 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -92,6 +92,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	size_t send_size, rcv_size;
 	struct mach_port *mp;
 	struct mach_message *mm;
+	struct mach_right *mr;
 	int timeout;
 
 	/*
@@ -231,18 +232,29 @@ out3:			free(sm, M_EMULDATA);
 			 * Queue the message in the remote port, and wakeup 
 			 * any process that would be sleeping for it.
 		 	 */
-			 mp = ((struct mach_right *)
-			     sm->msgh_remote_port)->mr_port;
+			 mr = (struct mach_right *)sm->msgh_remote_port;
+			 mp = mr->mr_port;
 			 (void)mach_message_get(sm, send_size, mp);
-			 wakeup(mp);
+			 wakeup(mp->mp_recv);
+
+			 /* 
+			  * If the port is in a port set, wakup any process
+			  * sleeping on the port set head.
+			  */
+			 if (mp->mp_recv->mr_sethead != NULL)
+				wakeup(mp->mp_recv->mr_sethead);
 		}
 
 out1:
-	if (error != 0) 
-		free(sm, M_EMULDATA);
-		return error;
+		if (error != 0) {
+			free(sm, M_EMULDATA);
+			return error;
+		}
 	}
 
+	/*
+	 * Receiving messages. XXX Handle port sets here.
+	 */
 	if (SCARG(uap, option) & MACH_RCV_MSG) {
 		/* 
 		 * Find a buffer for the reply
@@ -257,18 +269,26 @@ out1:
 		/* 
 		 * Check for receive right on the port 
 		 */
-		if ((mach_right_check((struct mach_right *)
-		    SCARG(uap, rcv_name), p, MACH_PORT_TYPE_RECEIVE)) == 0)
+		mr = (struct mach_right *)SCARG(uap, rcv_name);
+		if ((mach_right_check(mr, p, MACH_PORT_TYPE_RECEIVE)) == 0)
 			return EPERM;
-
 		/*
 		 * If there is no message queued on the port,
 		 * block until we get some.
 		 */
-		mp = ((struct mach_right *)SCARG(uap, rcv_name))->mr_port;
-		timeout = SCARG(uap, timeout) * hz / 1000;
+		mp = mr->mr_port;
+
+#ifdef DEBUG_MACH
+		if (mp->mp_recv != mr)
+			uprintf("mach_msg_trp: bad receive port/right\n");
+#endif
+		if (SCARG(uap, option) & MACH_RCV_TIMEOUT)
+			timeout = SCARG(uap, timeout) * hz / 1000;
+		else
+			timeout = 0;
+
 		if (mp->mp_count == 0) {
-			error = tsleep(mp, PZERO, "mach_msg", timeout);
+			error = tsleep(mp->mp_recv, PZERO, "mach_msg", timeout);
 			if ((error == ERESTART) || (error == EINTR))
 				return EINTR;
 			if (mp->mp_count == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.16 2002/12/17 18:42:56 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.17 2002/12/19 22:23:06 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.16 2002/12/17 18:42:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.17 2002/12/19 22:23:06 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,18 +238,18 @@ mach_e_proc_init(p, vmspace)
 	med = (struct mach_emuldata *)p->p_emuldata;
 	med->med_p = 0;
 
-	LIST_INIT(&med->med_recv);
-	LIST_INIT(&med->med_send);
-	LIST_INIT(&med->med_sendonce);
+	LIST_INIT(&med->med_right);
 
-	med->med_bootstrap = mach_port_get(NULL);
-	med->med_kernel = mach_port_get(NULL);
-	med->med_host = mach_port_get(NULL);
+	med->med_bootstrap = mach_port_get();
+	med->med_kernel = mach_port_get();
+	med->med_host = mach_port_get();
+	med->med_exception = mach_port_get();
 
 	/* Make sure they will not be deallocated */
 	med->med_bootstrap->mp_refcount++;
 	med->med_kernel->mp_refcount++;
 	med->med_host->mp_refcount++;
+	med->med_exception->mp_refcount++;
 
 	return;
 }
@@ -266,21 +266,19 @@ mach_e_proc_exit(p)
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
-	while ((mr = LIST_FIRST(&med->med_recv)) != NULL)
-		mach_right_put_exclocked(mr);
-	while ((mr = LIST_FIRST(&med->med_send)) != NULL)
-		mach_right_put_exclocked(mr);
-	while ((mr = LIST_FIRST(&med->med_sendonce)) != NULL)
+	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
 	med->med_bootstrap->mp_refcount--;
 	med->med_kernel->mp_refcount--;
 	med->med_host->mp_refcount--;
+	med->med_exception->mp_refcount--;
 
 	mach_port_put(med->med_bootstrap);
 	mach_port_put(med->med_kernel);
 	mach_port_put(med->med_host);
+	mach_port_put(med->med_exception);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
