@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.114.4.4 2001/03/11 21:10:34 he Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.114.4.5 2001/04/06 00:24:47 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -459,6 +459,14 @@ ip_input(struct mbuf *m)
 #endif
 
 #ifdef PFIL_HOOKS
+#ifdef IPSEC
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+	if (ipsec_gethist(m, NULL))
+		goto nofilt;
+#endif
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -479,6 +487,9 @@ ip_input(struct mbuf *m)
 				return;
 			ip = mtod(m, struct ip *);
 		}
+#ifdef IPSEC
+nofilt:;
+#endif
 #endif /* PFIL_HOOKS */
 
 	/*
@@ -1452,7 +1463,7 @@ ip_forward(m, srcrt)
 
 #ifdef IPSEC
 	/* Don't lookup socket in forwading case */
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
