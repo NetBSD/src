@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.21 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.22 2003/05/14 18:22:07 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.96 2003/02/06 21:22:43 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.98 2003/05/14 02:15:47 markus Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -51,6 +51,9 @@ extern Authmethod method_pubkey;
 extern Authmethod method_passwd;
 extern Authmethod method_kbdint;
 extern Authmethod method_hostbased;
+#ifdef KRB5
+extern Authmethod method_kerberos;
+#endif
 
 Authmethod *authmethods[] = {
 	&method_none,
@@ -58,6 +61,9 @@ Authmethod *authmethods[] = {
 	&method_passwd,
 	&method_kbdint,
 	&method_hostbased,
+#ifdef KRB5
+	&method_kerberos,
+#endif
 	NULL
 };
 
