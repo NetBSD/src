@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.4 2003/04/02 10:39:49 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.5 2003/06/15 18:10:56 tsutsui Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -71,10 +71,10 @@ void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
 void ffs_fragacct(struct fs *, int, int32_t[], int, int);
-int ffs_isblock(struct fs *, u_char *, daddr_t);
-int ffs_isfreeblock(struct fs *, u_char *, daddr_t);
-void ffs_clrblock(struct fs *, u_char *, daddr_t);
-void ffs_setblock(struct fs *, u_char *, daddr_t);
+int ffs_isblock(struct fs *, u_char *, int32_t);
+int ffs_isfreeblock(struct fs *, u_char *, int32_t);
+void ffs_clrblock(struct fs *, u_char *, int32_t);
+void ffs_setblock(struct fs *, u_char *, int32_t);
 
 	/* ufs_bmap.c */
 int ufs_getlbns(struct inode *, daddr_t, struct indir *, int *);
