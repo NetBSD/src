@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.59 2001/05/26 17:50:30 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.60 2001/05/26 23:02:06 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -408,6 +408,7 @@ gvpbus			amiga
 gvpbus			amigappc
 hb			news68k
 hb			newsmips
+hcsc			MI
 hd64570			MI		Attribute
 hdc			vax
 hdfd			atari
