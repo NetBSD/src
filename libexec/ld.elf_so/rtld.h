@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.69 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.70 2003/08/12 09:18:49 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -211,15 +211,20 @@ extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
 
 /* rtld.c */
+
+/*
+ * We export these symbols using _rtld_symbol_lookup and is_exported.
+ */
+char *dlerror(void);
+void *dlopen(const char *, int);
+void *dlsym(void *, const char *);
+int dlclose(void *);
+int dladdr(const void *, Dl_info *);
+
 void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 void _rtld_die(void);
-char *_rtld_dlerror(void);
-void *_rtld_dlopen(const char *, int);
 void *_rtld_objmain_sym(const char *);
-void *_rtld_dlsym(void *, const char *);
-int _rtld_dlclose(void *);
-int _rtld_dladdr(const void *, Dl_info *);
 void _rtld_debug_state(void);
 void _rtld_linkmap_add(Obj_Entry *);
 void _rtld_linkmap_delete(Obj_Entry *);
