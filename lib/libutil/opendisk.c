@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.1 1997/09/25 04:53:33 lukem Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.2 1997/09/29 06:08:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.1 1997/09/25 04:53:33 lukem Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.2 1997/09/29 06:08:45 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,20 +61,20 @@ opendisk(path, flags, buf, buflen, iscooked)
 {
 	int f, rawpart;
 
-	if ((flags & O_CREAT) != 0) {
-		errno = EINVAL;
-		return (-1);
-	}
 	if (buf == NULL) {
 		errno = EFAULT;
+		return (-1);
+	}
+	snprintf(buf, buflen, "%s", path);
+
+	if ((flags & O_CREAT) != 0) {
+		errno = EINVAL;
 		return (-1);
 	}
 
 	rawpart = getrawpartition();
 	if (rawpart < 0)
 		return (-1);	/* sysctl(3) in getrawpartition sets errno */
-
-	snprintf(buf, buflen, "%s", path);
 
 	f = open(buf, flags);
 	if (f != -1 || errno != ENOENT)
