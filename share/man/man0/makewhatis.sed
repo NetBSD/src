@@ -1,6 +1,6 @@
 #!/usr/bin/sed -nf
 #
-#	$NetBSD: makewhatis.sed,v 1.8 1995/02/23 17:23:54 jtc Exp $
+#	$NetBSD: makewhatis.sed,v 1.1 1997/05/09 14:31:27 mycroft Exp $
 #
 # Copyright (c) 1988 The Regents of the University of California.
 # All rights reserved.
