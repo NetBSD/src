@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.25 2000/03/19 19:16:13 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.26 2000/03/23 14:49:29 soren Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -199,6 +199,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
+#define MachHitFlushDCache	mips3_HitFlushDCache
 #endif
 
 /* cpu_switch_resume is called inside locore.S */
