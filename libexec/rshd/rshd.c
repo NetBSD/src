@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.28 2002/09/23 12:48:03 mycroft Exp $	*/
+/*	$NetBSD: rshd.c,v 1.29 2003/03/03 18:29:55 dsl Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.28 2002/09/23 12:48:03 mycroft Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.29 2003/03/03 18:29:55 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,16 +542,12 @@ fail:
 			} while ((set[0].revents | set[1].revents) & POLLIN);
 			exit(0);
 		}
-		setpgrp(0, getpid());
 		(void) close(s);
 		(void) close(pv[0]);
 		dup2(pv[1], 2);
 		close(pv[1]);
 	}
-#if	BSD > 43
-	if (setlogin(pwd->pw_name) < 0)
-		syslog(LOG_ERR, "setlogin() failed: %m");
-#endif
+	setsid();
 
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
