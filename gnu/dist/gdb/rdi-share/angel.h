@@ -13,8 +13,8 @@
  * described at the start of this file to ensure that a complete view
  * of the Angel world can be derived purely from the source.
  *
- * $Revision: 1.1.1.1 $
- *     $Date: 1999/02/10 22:09:20 $
+ * $Revision: 1.2 $
+ *     $Date: 1999/02/10 22:18:16 $
  *
  *
  * NOTE: Currently the Angel source is designed to be simple,
