@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.38 1998/06/04 22:58:33 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.39 1998/06/05 02:13:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,10 +29,11 @@
 
 #include "opt_dec_eb164.h"
 #include "opt_dec_kn20aa.h"
+#include "opt_dec_550.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.38 1998/06/04 22:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.39 1998/06/05 02:13:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.38 1998/06/04 22:58:33 thorpej Exp $");
 #endif
 #ifdef DEC_EB164
 #include <alpha/pci/pci_eb164.h>
+#endif
+#ifdef DEC_550
+#include <alpha/pci/pci_550.h>
 #endif
 
 int	ciamatch __P((struct device *, struct cfdata *, void *));
@@ -231,6 +235,15 @@ ciaattach(parent, self, aux)
 		pci_eb164_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
 		evcnt_attach(self, "intr", &eb164_intr_evcnt);
+#endif
+		break;
+#endif
+
+#ifdef DEC_550
+	case ST_DEC_550:
+		pci_550_pickintr(ccp);
+#ifdef EVCNT_COUNTERS
+		evcnt_attach(self, "intr", &dec_550_intr_evcnt);
 #endif
 		break;
 #endif
