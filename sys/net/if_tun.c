@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.35 1998/08/20 19:55:07 veego Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.36 1998/11/30 21:43:11 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -338,7 +338,8 @@ tun_output(ifp, m0, dst, rt)
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
 		}
-
+		/* FALLTHROUGH */
+	case AF_UNSPEC:
 		s = splimp();
 		if (IF_QFULL(&ifp->if_snd)) {
 			IF_DROP(&ifp->if_snd);
