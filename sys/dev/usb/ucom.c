@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.16 2000/03/27 12:33:55 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.17 2000/04/05 11:11:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ struct ucom_softc {
 	int			sc_swflags;
 
 	u_char			sc_opening;	/* lock during open */
+	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 };
 
@@ -126,6 +127,8 @@ Static void	ucom_hwiflow	__P((struct ucom_softc *));
 Static int	ucomparam	__P((struct tty *, struct termios *));
 Static void	ucomstart	__P((struct tty *));
 Static void	ucom_shutdown	__P((struct ucom_softc *));
+Static int	ucom_do_ioctl	__P((struct ucom_softc *, u_long, caddr_t,
+				     int, struct proc *));
 Static void	ucom_dtr	__P((struct ucom_softc *, int));
 Static void	ucom_rts	__P((struct ucom_softc *, int));
 Static void	ucom_break	__P((struct ucom_softc *, int));
@@ -177,6 +180,7 @@ USB_DETACH(ucom)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 	int maj, mn;
+	int s;
 
 	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p\n", 
 		 sc, flags, sc->sc_tty));
@@ -190,7 +194,13 @@ USB_DETACH(ucom)
 	}
 #endif
 
-	/* XXX  Use reference count? */
+	s = splusb();
+	if (--sc->sc_refcnt >= 0) {
+		/* Wake everyone.. how? */
+		/* Wait for processes to go away. */
+		usb_detach_wait(USBDEV(sc->sc_dev));
+	}
+	splx(s);
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -199,6 +209,7 @@ USB_DETACH(ucom)
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
+	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn, mn | UCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn, mn | UCOMCALLUNIT_MASK, VCHR);
@@ -290,6 +301,11 @@ ucomopen(dev, flag, mode, p)
 	 */
 	while (sc->sc_opening)
 		tsleep(&sc->sc_opening, PRIBIO, "ucomop", 0);
+
+	if (sc->sc_dying) {
+		splx(s);
+		return (EIO);
+	}
 	sc->sc_opening = 1;
 	
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -430,11 +446,10 @@ ucomclose(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
+	sc->sc_refcnt++;
+
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
-
-	if (sc->sc_dying)
-		return (0);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
@@ -448,6 +463,9 @@ ucomclose(dev, flag, mode, p)
 	if (sc->sc_methods->ucom_close != NULL)
 		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
 
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+
 	return (0);
 }
  
@@ -459,11 +477,16 @@ ucomread(dev, uio, flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
+	int error;
 
 	if (sc->sc_dying)
 		return (EIO);
  
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	sc->sc_refcnt++;
+	error = ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	return (error);
 }
  
 int
@@ -474,11 +497,16 @@ ucomwrite(dev, uio, flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
+	int error;
 
 	if (sc->sc_dying)
 		return (EIO);
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	sc->sc_refcnt++;
+	error = ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	return (error);
 }
 
 struct tty *
@@ -500,6 +528,23 @@ ucomioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	int error;
+
+	sc->sc_refcnt++;
+	error = ucom_do_ioctl(sc, cmd, data, flag, p);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	return (error);
+}
+
+Static int
+ucom_do_ioctl(sc, cmd, data, flag, p)
+	struct ucom_softc *sc;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -577,7 +622,7 @@ ucomioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
-void
+Static void
 tiocm_to_ucom(sc, how, ttybits)
 	struct ucom_softc *sc;
 	int how, ttybits;
@@ -609,7 +654,7 @@ tiocm_to_ucom(sc, how, ttybits)
 	ucom_rts(sc, (sc->sc_mcr & UMCR_RTS) != 0);
 }
 
-int
+Static int
 ucom_to_tiocm(sc)
 	struct ucom_softc *sc;
 {
@@ -641,7 +686,7 @@ XXX;
 	return (ttybits);
 }
 
-void
+Static void
 ucom_break(sc, onoff)
 	struct ucom_softc *sc;
 	int onoff;
@@ -653,7 +698,7 @@ ucom_break(sc, onoff)
 		    UCOM_SET_BREAK, onoff);
 }
 
-void
+Static void
 ucom_dtr(sc, onoff)
 	struct ucom_softc *sc;
 	int onoff;
@@ -665,7 +710,7 @@ ucom_dtr(sc, onoff)
 		    UCOM_SET_DTR, onoff);
 }
 
-void
+Static void
 ucom_rts(sc, onoff)
 	struct ucom_softc *sc;
 	int onoff;
@@ -677,7 +722,7 @@ ucom_rts(sc, onoff)
 		    UCOM_SET_RTS, onoff);
 }
 
-void
+Static void
 ucom_status_change(sc)
 	struct ucom_softc *sc;
 {
@@ -690,7 +735,7 @@ ucom_status_change(sc)
 	}
 }
 
-int
+Static int
 ucomparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -763,7 +808,7 @@ XXX what if the hardware is not open
 /*
  * (un)block input via hw flowcontrol
  */
-void
+Static void
 ucom_hwiflow(sc)
 	struct ucom_softc *sc;
 {
@@ -786,7 +831,7 @@ XXX
 #endif
 }
 
-void
+Static void
 ucomstart(tp)
 	struct tty *tp;
 {
@@ -849,7 +894,7 @@ out:
 	splx(s);
 }
 
-void
+Static void
 ucomstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -868,7 +913,7 @@ ucomstop(tp, flag)
 	splx(s);
 }
 
-void
+Static void
 ucomwritecb(xfer, p, status)
 	usbd_xfer_handle xfer;
 	usbd_private_handle p;
@@ -904,7 +949,7 @@ ucomwritecb(xfer, p, status)
 	splx(s);
 }
 
-usbd_status
+Static usbd_status
 ucomstartread(sc)
 	struct ucom_softc *sc;
 {
@@ -924,7 +969,7 @@ ucomstartread(sc)
 	return (USBD_NORMAL_COMPLETION);
 }
  
-void
+Static void
 ucomreadcb(xfer, p, status)
 	usbd_xfer_handle xfer;
 	usbd_private_handle p;
@@ -968,7 +1013,7 @@ ucomreadcb(xfer, p, status)
 	}
 }
 
-void
+Static void
 ucom_cleanup(sc)
 	struct ucom_softc *sc;
 {
@@ -985,7 +1030,7 @@ ucom_cleanup(sc)
 
 #endif /* NUCOM > 0 */
 
-int
+Static int
 ucomprint(aux, pnp)
 	void *aux;
 	const char *pnp;
@@ -996,7 +1041,7 @@ ucomprint(aux, pnp)
 	return (UNCONF);
 }
 
-int
+Static int
 ucomsubmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
