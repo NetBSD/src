@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.10 1997/10/17 07:35:05 mrg Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.11 1997/10/17 13:02:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,14 @@ __RCSID("$NetBSD: repquota.c,v 1.10 1997/10/17 07:35:05 mrg Exp $");
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <ufs/ufs/quota.h>
-#include <fstab.h>
-#include <pwd.h>
-#include <grp.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <fstab.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
@@ -74,20 +76,28 @@ struct fileusage {
 };
 #define FUHASH 1024	/* must be power of two */
 struct fileusage *fuhead[MAXQUOTAS][FUHASH];
-struct fileusage *lookup();
-struct fileusage *addid();
 u_long highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 
 int	vflag;			/* verbose */
 int	aflag;			/* all file systems */
 
+struct fileusage *addid __P((u_long, int, char *));
+int	hasquota __P((struct fstab *, int, char **));
+struct fileusage *lookup __P((u_long, int));
+int	main __P((int, char **));
+int	oneof __P((char *, char **, int));
+int	repquota __P((struct fstab *, int, char *));
+char   *timeprt __P((time_t));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct fstab *fs;
-	register struct passwd *pw;
-	register struct group *gr;
+	struct fstab *fs;
+	struct passwd *pw;
+	struct group *gr;
 	int gflag = 0, uflag = 0, errs = 0;
 	long i, argnum, done = 0;
 	extern char *optarg;
@@ -161,6 +171,7 @@ main(argc, argv)
 	exit(errs);
 }
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n\t%s\n\t%s\n",
@@ -169,16 +180,16 @@ usage()
 	exit(1);
 }
 
+int
 repquota(fs, type, qfpathname)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char *qfpathname;
 {
-	register struct fileusage *fup;
+	struct fileusage *fup;
 	FILE *qf;
 	u_long id;
 	struct dqblk dqbuf;
-	char *timeprt();
 	static struct dqblk zerodqblk;
 	static int warned = 0;
 	static int multiple = 0;
@@ -250,11 +261,12 @@ repquota(fs, type, qfpathname)
 /*
  * Check to see if target appears in list of size cnt.
  */
+int
 oneof(target, list, cnt)
-	register char *target, *list[];
+	char *target, *list[];
 	int cnt;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < cnt; i++)
 		if (strcmp(target, list[i]) == 0)
@@ -265,13 +277,14 @@ oneof(target, list, cnt)
 /*
  * Check to see if a particular quota is to be enabled.
  */
+int
 hasquota(fs, type, qfnamep)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 {
-	register char *opt;
-	char *cp, *index(), *strtok();
+	char *opt;
+	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
@@ -282,7 +295,7 @@ hasquota(fs, type, qfnamep)
 	}
 	strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;
@@ -310,7 +323,7 @@ lookup(id, type)
 	u_long id;
 	int type;
 {
-	register struct fileusage *fup;
+	struct fileusage *fup;
 
 	for (fup = fuhead[type][id & (FUHASH-1)]; fup != 0; fup = fup->fu_next)
 		if (fup->fu_id == id)
@@ -329,9 +342,8 @@ addid(id, type, name)
 {
 	struct fileusage *fup, **fhp;
 	int len;
-	extern char *calloc();
 
-	if (fup = lookup(id, type))
+	if ((fup = lookup(id, type)) != NULL)
 		return (fup);
 	if (name)
 		len = strlen(name);
@@ -350,7 +362,7 @@ addid(id, type, name)
 	if (name) {
 		bcopy(name, fup->fu_name, len + 1);
 	} else {
-		sprintf(fup->fu_name, "%u", id);
+		sprintf(fup->fu_name, "%lu", (u_long)id);
 	}
 	return (fup);
 }
@@ -374,13 +386,14 @@ timeprt(seconds)
 	minutes = (seconds + 30) / 60;
 	hours = (minutes + 30) / 60;
 	if (hours >= 36) {
-		sprintf(buf, "%ddays", (hours + 12) / 24);
+		sprintf(buf, "%lddays", (long)((hours + 12) / 24));
 		return (buf);
 	}
 	if (minutes >= 60) {
-		sprintf(buf, "%2d:%d", minutes / 60, minutes % 60);
+		sprintf(buf, "%2ld:%ld", (long)(minutes / 60),
+		    (long)(minutes % 60));
 		return (buf);
 	}
-	sprintf(buf, "%2d", minutes);
+	sprintf(buf, "%2ld", (long)minutes);
 	return (buf);
 }
