@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.96 2003/04/19 19:33:29 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.97 2003/04/20 12:54:05 bjh21 Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -4561,12 +4561,12 @@ ahc_init(struct ahc_softc *ahc)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOW_MISC) {
-		printf("%s: hardware scb %d bytes; kernel scb %d bytes; "
-		       "ahc_dma %d bytes\n",
+		printf("%s: hardware scb %lu bytes; kernel scb %lu bytes; "
+		       "ahc_dma %lu bytes\n",
 			ahc_name(ahc),
-			sizeof(struct hardware_scb),
-			sizeof(struct scb),
-			sizeof(struct ahc_dma_seg));
+			(u_long)sizeof(struct hardware_scb),
+			(u_long)sizeof(struct scb),
+			(u_long)sizeof(struct ahc_dma_seg));
 	}
 #endif /* AHC_DEBUG */
 
