@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.3 2003/01/27 15:33:36 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.4 2003/01/31 22:01:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -50,6 +50,11 @@
 #include "pc.h"
 #if NPC_JAZZIO > 0
 #include <arc/jazz/pccons_jazziovar.h>
+#endif
+
+#include "vga_isa.h"
+#if NVGA_ISA > 0
+#include <dev/isa/vga_isavar.h>
 #endif
 
 #include "vga_jazzio.h"
@@ -155,6 +160,17 @@ c_jazz_eisa_cons_init()
 			return;
 		}
 #endif
+
+#if NVGA_ISA > 0
+		if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
+#if NPCKBC_JAZZIO > 0
+			pckbc_cnattach(&jazzio_bus, PICA_SYS_KBD,
+			    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+#endif
+			return;
+		}
+#endif
+
 #if NPC_JAZZIO > 0
 		if (pccons_jazzio_cnattach(arc_displayc_id, &jazzio_bus) == 0)
 			return;
