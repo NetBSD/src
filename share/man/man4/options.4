@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.4 1997/01/09 05:46:49 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.5 1997/01/15 06:20:02 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -503,7 +503,7 @@ set to
 What this option allows as far as security is
 concerned, is the ability to safely ensure that the correct script
 it run by the interpreter, as it is passed as an already open file.
-.It Cd options TIMEZONE=integer
+.It Cd options RTC_OFFSET=integer
 The kernel (and typically the hardware battery backed-up clock on
 those machines that have one) keeps time in
 .Em UTC
@@ -512,7 +512,7 @@ those machines that have one) keeps time in
 or Greenwich Mean Time)
 and not in the time of the local time zone.
 The
-.Em TIMEZONE
+.Em RTC_OFFSET
 option is used on some ports (such as the i386) to tell the kernel
 that the hardware clock is offset from
 .Em UTC
@@ -521,70 +521,28 @@ machine boots several operating systems and one of them wants the
 hardware clock to run in the local time zone and not in
 .Em UTC ,
 e.g.
-.Em TIMEZONE=300
+.Em RTC_OFFSET=300
 means
-the hardware clock is running US Eastern Time (300 minutes behind 
+the hardware clock is set to US Eastern Time (300 minutes behind 
 .Em UTC ) ,
 and not 
 .Em UTC .
-.Bd -filled -offset indent
-.Em HISTORICAL NOTE:
-The
-.Em TIMEZONE
-option at one time was used to set the kernel's idea of what time zone
-the system was operating in -- this information was returned by
-.Xr gettimeofday 2 .
-Time zone information is now managed by user space software based
-on the contents of the
-.Pa /etc/localtime
-file or the
-.Ev TZ
-environment variable.
-(See
-.Xr zic 8 ,
-.Xr tzfile 5 ,
+(Note:
+.Em RTC_OFFSET
+is used to initialize a kernel variable named
+.Va rtc_offset
+which is the source actually used to determine the clock offset, and
+which may be accessed via the kern.rtc_offset sysctl variable.
+See
+.Xr sysctl 8
 and
-.Xr tzset 3
-for details).
-This usage of the
-.Em TIMEZONE
-option is now obsolete.
-.Ed
-.It Cd options DST=[0|1]
-On some ports (such as the i386) that permit offsetting the system's
-hardware real time clock with the
-.Em TIMEZONE
-option
-(see
-.Em TIMEZONE
-above) the
-.Em DST
-option being set to one indicates that the hardware clock real time
-clock is set for
-.Dq daylight savings time ,
-and that because of this 60
-minutes should be subtracted from the 
-.Em TIMEZONE
-value (60 minutes being the standard DST correction.) The effect of
-this on such ports is thus identical to simply subtracting 60 from the
-value of
-.Em TIMEZONE ,
-and the use of the option is thus purely aesthetic in nature.
-.Bd -filled -offset indent
-.Em HISTORICAL NOTE:
-Long ago,
-.Dq daylight savings time
-computations were made in the kernel and not in user space.
-The
-.Em DST
-option was used at that time to set the kernel's idea of whether DST
-information should be returned by
-.Xr gettimeofday 2 .
-As with
-.Em TIMEZONE
-(which see), the moving of timezone handling from the kernel to user
-space libraries has obsoleted the old usage of this option.
-.Ed
+.Xr sysctl 3
+for details. Since the kernel clock is initialized from the hardware
+clock very early in the boot process, it is not possible to meaningfully change
+.Va rtc_offset
+in system initialization scripts.  Changing this value currently may
+only be done at kernel compile time or by patching the kernel and
+rebooting.)
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -802,9 +760,6 @@ from the values of the kernel global variables physmem and bufpages
 .Xr config 8 ,
 .Xr init 8 ,
 .Xr gettimeofday 2 ,
-.Xr tzset 3 ,
-.Xr zic 8 ,
-.Xr tzfile 5 ,
 .Xr sysctl 8 ,
 .Xr sysctl 3 ,
 .Xr xntpd 8 ,
