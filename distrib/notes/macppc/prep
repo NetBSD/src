@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.15 2001/05/17 07:39:27 mbw Exp $
+.\"	$NetBSD: prep,v 1.16 2001/05/19 05:43:29 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -29,8 +29,8 @@ stress this enough times).
 .Lk http://www.netbsd.org/Ports/macppc/models.html
 .Pp
 .It
-Spend about 15 minutes and read all the way through this document
-once.  While you're reading, use the writing implement to cross out the
+Spend about 15 minutes and read through this document from this point
+onward.  While you're reading, use the writing implement to cross out the
 sections that do not apply to your model (or hilight the sections that do
 depending on your preferences).
 .Pp
@@ -44,7 +44,9 @@ procedure you think you'll be going through.
 Now create your bootable media and media for the distribution sets.
 .Pp
 .It
-Prepare your machine, depending on the instructions for your model.
+Prepare your machine, depending on the instructions for your model
+(for example: partition your drive, download and run System Disk, or hook
+up a serial console).
 .Pp
 .It
 Boot into Open Firmware, and verify that it has the version of Open
@@ -168,8 +170,8 @@ You must first hook up a serial console
 device in Open Firmware).
 .Pp
 Hold down a special key combination on the keyboard attached to
-the ADB port on your system (not the serial console) when your system
-boots.
+the ADB port on your system (not the serial console or PS/2 port) when
+your system boots.
 .Pp
 After the chime starts, but before it stops, hold down the
 .Key COMMAND-OPTION-O-F
@@ -563,6 +565,25 @@ Without the patch, the machine will still work, but its MAC address
 may conflict with another ethernet device on your network.
 .Note)
 .Pp
+You can check your Open Firmware settings with the 
+.Pa printenv
+command:
+.(disp
+.Dl 0 > Ic "printenv"
+little-endian?      false               false
+real-mode?          false               false
+auto-boot?          false               true
+diag-switch?        false               false
+[...]
+use-nvramrc?        true                false
+real-base           F00000              -1
+[...]
+load-base           600000              4000
+[...]
+input-device        kbd                 ttya
+output-device       /chaos/control      ttya
+.disp)
+.Pp
 .(Note
 Open Firmware 1.0.5 settings and nvram patches will be erased if you boot into
 .Tn MacOS No Ns .
@@ -612,6 +633,24 @@ it will be different than what Open Firmware 3 uses to contact your netboot
 server. Your machine will still work, but its MAC address may conflict with
 another ethernet device on your network.
 .Note)
+.Pp
+You can check your Open Firmware settings with the
+.Pa printenv
+command:
+.(disp
+.Dl 0 > Ic "printenv"
+-------------- Partition: common -------- Signature: 0x70 ---------------
+little-endian?      false               false
+real-mode?          false               false
+auto-boot?          false               true
+diag-switch?        false               false
+[...]
+use-nvramrc?        true                false
+real-base           -1                  -1
+[...]
+input-device        keyboard            keyboard
+output-device       screen              screen
+.disp)
 .
 .Ss2 Available Boot Media
 .
@@ -857,38 +896,93 @@ CD-R
 .
 .Ss2 Partitioning your hard drive for NetBSD
 .
+(All Open Firmware versions)
+.Pp
 .(bullet -offset indent
 .
 .Em "Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x"
 .br
 You must use the 
 .Nx
-installer to partition your disk if you want it to be bootable.
-.br
-Skip forward to
-.Sx Installing the NetBSD System
+installer to partition your disk if you want it to be bootable.  With 
+this release of
+.Nx No Ns ,
+there is no way to dual-boot 
+.Tn MacOS
+and
+.Nx
+on one hard drive.
+.Pp
+You can use the instructions in this section to partition a disk that may
+also be used with 
+.Tn MacOS No Ns ,
+although a disk prepared in this way 
+.Em will not boot 
+.Em Nx No Ns .
+That means, your root partition
+.No ( Ns Pa / No Ns )
+must be on a drive prepared with the
+.Nx
+installer, but the partitions not necessary to boot (for example
+.Pa /usr No Ns , 
+.Pa /home No Ns , 
+or 
+.Pa /export No Ns )
+may be on the same disk as
+.Tn MacOS No Ns .
+.Pp
+Unless you are planning to use partitions on the same disk as
+.Tn MacOS No Ns ,
+skip forward to
+.Sx Preparing the Bootable Media
 .It
 .Em "Open Firmware 2.4"
 .br
 We recommend using the 
 .Nx
-installer to partition your disk, but you will not be able to share it 
-with
+installer to partition your disk, but you will not be able to use
+partitions on this drive with
 .Tn MacOS .
-.br
-If you'd like to dual-boot with 
+.Pp
+If you'd like to have
 .Tn MacOS
-on a shared drive, read the rest of this section.
+and 
+.Nx 
+partitions on one hard drive (and for both to be bootable),
+then read the rest of this section.
 .It
 .Em "Open Firmware 3"
 .br
-.Em "Do not edit your partitions in the installer."
-You must partition your disk in
+You must have at least one disk that was partitioned using a
 .Tn MacOS
-before installing
+tool before installing
 .Nx
 on your system.
+.Pp
+This is the drive that will be holding the bootloader,
+.Pa ofwboot.xcf No Ns .
+Your
+.Nx
+partitions may either be on this same disk (using the method described
+in the rest of this section), or on a separate disk accessible only to 
+.Nx No Ns .
+If you are dedicating an entire disk to
+.Nx No Ns ,
+then your
+.Tn MacOS
+partitioned disk only needs HFS or HFS+ partitions.
+.Pp
+The rest of this section describes how to make a
+single disk dual-bootable which is necessary for machines which have only
+one hard drive (such as the iBook, iMac, PowerBook, and PowerMacintosh Cube
+systems).
 .bullet)
+.Pp
+.Em Using the 
+.Em Nx installer to install a disklabel or bootloader will
+.Em render your disk unusable by Tn MacOS No Ns .
+.Em Either will also prevent Open Firmware 3 machines from booting
+.Pa ofwboot.xcf Ns .
 .Pp
 Unfortunately, the partitioning tools for
 .Nx
@@ -904,24 +998,50 @@ Drive Setup will erase the contents of your drive -- it does not preserve
 data from any of your partitions.  Make the following partitions:
 .(tag "A/UX_Rootxxx" -offset indent
 .It Em HFS No or Em HFS+
-Must be large enough to hold the bootloader, over 100 KB.
+Must be large enough to hold the bootloader, over 100 KB.  May be as large
+as you desire for 
+.Tn MacOS
+usage.
 .It Em A/UX Root
 Must be at least 20 MB. Alternatively, you may decide to use one partition for
 your entire
 .Nx
-installation, in which case it should be at least 200 MB.
+installation, in which case it should be at least 200 MB without X, or 250
+MB with X.
+.Nx
+interprets an
+.Em A/UX Root
+partition as the first partition 
+.No ( Ns Em a No Ns )
+on the disk.  
+This partition is not readable from
+.Tn MacOS No Ns .
 .It Em A/UX Swap
 Any size. The recommenation is 1.5 times your RAM, although this is not
 strictly necessary for machines with a lot of RAM.
+.Nx
+interprets an
+.Em A/UX Swap
+partition as the second partition
+.No ( Ns Em b No Ns )
+on the disk.
+This partition is not readable from
+.Tn MacOS No Ns .
 .It Em A/UX User, A/UX Free1, A/UX Free2, A/UX Free3
 Use these for any additional partitions you may want to use under
 .Nx Ns ,
 such as 
-.Pa /usr No (at least 200 MB), Pa /home No Ns , Pa /usr/local No Ns , or
+.Pa /usr No (at least 200 MB),\  Pa /home No Ns ,\  Pa /usr/local No Ns ,\ or
 .Pa /usr/pkg No Ns .
+.Nx
+interprets these partitions as normal
+.Nx No Ns -style
+partitions.
+These partitions are not readable from
+.Tn MacOS No Ns .
 .It Em HFS
-Any size.  You may want to leave an additional  partition available to 
-share between
+Any size.  You may want to leave an additional partition available to 
+transfer files between
 .Tn MacOS
 and 
 .Nx .
