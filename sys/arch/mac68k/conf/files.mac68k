@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.34 1995/07/01 16:28:13 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.35 1995/09/03 03:37:32 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -42,7 +42,7 @@ major	{st = 5}
 major	{cd = 6}
 
 device	ncrscsi at mainbus: scsi
-file	arch/mac68k/dev/scsi.c		ncrscsi needs-flag
+file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
 device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
