@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.12 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.13 2005/03/12 08:01:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -129,6 +129,10 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_vlanvar.h>
+
+#include <netinet/in_systm.h>	/* XXX for IP_MAXPACKET */
+#include <netinet/in.h>		/* XXX for IP_MAXPACKET */
+#include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -659,8 +663,10 @@ re_attach(struct rtk_softc *sc)
 
 	/* Create DMA maps for TX buffers */
 	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * RTK_NTXSEGS,
-		    RTK_NTXSEGS, MCLBYTES, 0, BUS_DMA_ALLOCNOW,
+		error = bus_dmamap_create(sc->sc_dmat,
+		    round_page(IP_MAXPACKET),
+		    RTK_TX_DESC_CNT - 4, RTK_TDESC_CMD_FRAGLEN,
+		    0, BUS_DMA_ALLOCNOW,
 		    &sc->rtk_ldata.rtk_tx_dmamap[i]);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -732,7 +738,8 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_start = re_start;
 	ifp->if_stop = re_stop;
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_TSOv4;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	if (sc->rtk_type == RTK_8169)
@@ -1485,7 +1492,7 @@ done:
 }
 
 static int
-re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
+re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t		map;
 	int			error, i, curidx;
@@ -1503,27 +1510,42 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * chip. I'm not sure if this is a requirement or a bug.)
 	 */
 
-	rtk_flags = 0;
+	if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
+		u_int32_t segsz = m->m_pkthdr.segsz;
 
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
-		rtk_flags |= RTK_TDESC_CMD_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
-		rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
-		rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+		rtk_flags = RTK_TDESC_CMD_LGSEND |
+		    (segsz << RTK_TDESC_CMD_MSSVAL_SHIFT);
+	} else {
+		rtk_flags = 0;
+		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			rtk_flags |= RTK_TDESC_CMD_IPCSUM;
+		if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+			rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
+		if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+			rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+	}
 
 	map = sc->rtk_ldata.rtk_tx_dmamap[*idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 
 	if (error) {
+		/* XXX try to defrag if EFBIG? */
+
 		aprint_error("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
+
+		if (error == EFBIG &&
+		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT) {
+			return error;
+		}
+
 		return ENOBUFS;
 	}
 
-	if (map->dm_nsegs > sc->rtk_ldata.rtk_tx_free - 4)
-		return ENOBUFS;
+	if (map->dm_nsegs > sc->rtk_ldata.rtk_tx_free - 4) {
+		error = ENOBUFS;
+		goto fail_unload;
+	}
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
@@ -1539,8 +1561,16 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	curidx = *idx;
 	while (1) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
-		if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
-			return ENOBUFS;
+		if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN) {
+			while (i > 0) {
+				sc->rtk_ldata.rtk_tx_list[
+				    (curidx + RTK_TX_DESC_CNT - i) %
+				    RTK_TX_DESC_CNT].rtk_cmdstat = 0;
+				i--;
+			}
+			error = ENOBUFS;
+			goto fail_unload;
+		}
 
 		cmdstat = map->dm_segs[i].ds_len;
 		d->rtk_bufaddr_lo =
@@ -1570,7 +1600,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	sc->rtk_ldata.rtk_tx_dmamap[*idx] =
 	    sc->rtk_ldata.rtk_tx_dmamap[curidx];
 	sc->rtk_ldata.rtk_tx_dmamap[curidx] = map;
-	sc->rtk_ldata.rtk_tx_mbuf[curidx] = m_head;
+	sc->rtk_ldata.rtk_tx_mbuf[curidx] = m;
 	sc->rtk_ldata.rtk_tx_free -= map->dm_nsegs;
 
 	/*
@@ -1579,7 +1609,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * transmission attempt.
 	 */
 
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head)) != NULL) {
+	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
 		sc->rtk_ldata.rtk_tx_list[*idx].rtk_vlanctl =
 		    htole32(htons(VLAN_TAG_VALUE(mtag)) |
 		    RTK_TDESC_VLANCTL_TAG);
@@ -1597,6 +1627,11 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	*idx = curidx;
 
 	return 0;
+
+fail_unload:
+	bus_dmamap_unload(sc->sc_dmat, map);
+
+	return error;
 }
 
 /*
@@ -1614,11 +1649,19 @@ re_start(struct ifnet *ifp)
 
 	idx = sc->rtk_ldata.rtk_tx_prodidx;
 	while (sc->rtk_ldata.rtk_tx_mbuf[idx] == NULL) {
+		int error;
+
 		IF_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		if (re_encap(sc, m_head, &idx)) {
+		error = re_encap(sc, m_head, &idx);
+		if (error == EFBIG) {
+			ifp->if_oerrors++;
+			m_freem(m_head);
+			continue;
+		}
+		if (error) {
 			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
