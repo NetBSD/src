@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1997/02/02 21:33:30 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1997/05/11 19:11:40 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1028,21 +1028,6 @@ pmap_protect(pmap, sva, eva, prot)
 			sva += NBPG;
 		}
 	}
-}
-
-void
-mac68k_set_pte(va, pge)
-	vm_offset_t va;
-	vm_offset_t pge;
-{
-extern	vm_offset_t tmp_vpages[];
-	register pt_entry_t *pte;
-
-	if (va != tmp_vpages[0])
-		return;
-
-	pte = pmap_pte(pmap_kernel(), va);
-	*pte = (pt_entry_t) pge;
 }
 
 /*

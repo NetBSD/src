@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.25 1997/05/11 19:11:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -137,44 +137,54 @@ grfmv_attach(parent, self, aux)
 	nubus_dir dir, mode_dir;
 	int mode;
 
+	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
 
 	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
 
+	if (bus_space_map(sc->sc_tag,
+	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &sc->sc_handle)) {
+		printf(": grfmv_attach: failed to map slot %d\n", na->slot);
+		return;
+	}
+
 	nubus_get_main_dir(&sc->sc_slot, &dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &dir, na->rsrcid, &dirent) <= 0)
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_handle,
+	    &sc->sc_slot, &dir, na->rsrcid, &dirent) <= 0) {
+bad:
+		bus_space_unmap(sc->sc_tag, sc->sc_handle, NBMEMSIZE);
 		return;
+	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &sc->board_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir,
-	    NUBUS_RSRC_TYPE, &dirent) <= 0)
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_handle,
+	    &sc->sc_slot, &sc->board_dir, NUBUS_RSRC_TYPE, &dirent) <= 0)
 		if ((na->rsrcid != 128) ||
-		    (nubus_find_rsrc(&sc->sc_slot, &dir, 129, &dirent) <= 0))
-			return;
+		    (nubus_find_rsrc(sc->sc_tag, sc->sc_handle,
+		    &sc->sc_slot, &dir, 129, &dirent) <= 0))
+			goto bad;
 
 	mode = NUBUS_RSRC_FIRSTMODE;
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
-		printf("\n%s: probe failed to get board rsrc.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_handle,
+	    &sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
+		printf(": probe failed to get board rsrc.\n");
+		goto bad;
 	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &mode_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
-	    <= 0) {
-		printf("\n%s: probe failed to get mode dir.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_handle,
+	    &sc->sc_slot, &mode_dir, VID_PARAMS, &dirent) <= 0) {
+		printf(": probe failed to get mode dir.\n");
+		goto bad;
 	}
 
-	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t)&image_store,
-				sizeof(struct image_data)) <= 0) {
-		printf("\n%s: probe failed to get indirect mode data.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_get_ind_data(sc->sc_tag, sc->sc_handle, &sc->sc_slot,
+	    &dirent, (caddr_t)&image_store, sizeof(struct image_data)) <= 0) {
+		printf(": probe failed to get indirect mode data.\n");
+		goto bad;
 	}
 
 	/* Need to load display info (and driver?), etc... (?) */
@@ -183,7 +193,7 @@ grfmv_attach(parent, self, aux)
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)(sc->sc_slot.virtual_base + image.offset);
+	gm->fbbase = (caddr_t)(sc->sc_handle + image.offset); /* XXX evil! */
 	gm->fboff = image.offset;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
@@ -194,8 +204,8 @@ grfmv_attach(parent, self, aux)
 	gm->ptype = image.pixelType;
 	gm->psize = image.pixelSize;
 
-	strncpy(cardname, nubus_get_card_name(&sc->sc_slot),
-		CARD_NAME_LEN);
+	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_handle,
+	    &sc->sc_slot), CARD_NAME_LEN);
 	cardname[CARD_NAME_LEN-1] = '\0';
 	printf(": %s\n", cardname);
 
@@ -209,7 +219,7 @@ grfmv_attach(parent, self, aux)
 		if (strncmp(cardname, "Samsung 768", 11) == 0)
 			sc->card_id = NUBUS_DRHW_SAM768;
 		else if (strncmp(cardname, "Toby frame", 10) != 0)
-			printf("%s: This display card pretends to be a TFB!",
+			printf("%s: This display card pretends to be a TFB!\n",
 			    sc->sc_dev.dv_xname);
 	}
 
@@ -218,30 +228,30 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_TFB:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_radius, sc);
+		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 		sc->cli_offset = 0xF05000;
 		sc->cli_value = 0x80;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc);
 		break;
 	case NUBUS_DRHW_SAM768:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
+		add_nubus_intr(na->slot, grfmv_intr_cti, sc);
 		break;
 	case NUBUS_DRHW_CB264:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
+		add_nubus_intr(na->slot, grfmv_intr_cb264, sc);
 		break;
 	case NUBUS_DRHW_CB364:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb364, sc);
+		add_nubus_intr(na->slot, grfmv_intr_cb364, sc);
 		break;
 	case NUBUS_DRHW_SE30:
 		/* Do nothing--SE/30 interrupts are disabled */
@@ -285,7 +295,7 @@ grfmv_phys(gp, addr)
 	vm_offset_t addr;
 {
 	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
-				(addr - gp->sc_slot->virtual_base));
+	    (addr - gp->sc_handle));	/* XXX evil hack */
 }
 
 /* Interrupt handlers... */
@@ -305,14 +315,12 @@ grfmv_intr_generic(vsc, slot)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
 	slotbase[sc->cli_offset] = zero;
 }
 
 /*
- * Generic routine to clear interrupts for cards where it simply takes
- * a CLR.B to clear the interrupt.  The offset of this byte varies between
- * cards.
+ * Routine to clear interrupts for (XXX an unidentified!) Radius card.
  */
 /*ARGSUSED*/
 static void
@@ -320,12 +328,12 @@ grfmv_intr_radius(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	unsigned char	c;
+	u_char c;
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
 
 	/*
 	 * The value 0x66 was the observed value on one	card.  It is read
@@ -359,7 +367,8 @@ grfmv_intr_cti(vsc, slot)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = ((volatile char *)sc->sc_slot.virtual_base) + 0x00080000;
+	slotbase = ((volatile char *)sc->sc_handle)	/* XXX evil hack */
+	    + 0x00080000;
 	*slotbase = (*slotbase | 0x02);
 	*slotbase = (*slotbase & 0xFD);
 }
@@ -374,7 +383,7 @@ grfmv_intr_cb264(vsc, slot)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -429,7 +438,7 @@ grfmv_intr_cb364(vsc, slot)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0

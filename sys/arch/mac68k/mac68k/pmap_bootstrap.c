@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.31 1997/05/11 19:11:42 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -538,7 +538,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		extern vm_offset_t	tmp_vpages[];
 		vm_offset_t	va = virtual_avail;
 
 		CADDR1 = (caddr_t)va;
@@ -546,8 +545,6 @@ pmap_bootstrap(nextpa, firstpa)
 		CADDR2 = (caddr_t)va;
 		va += NBPG;
 		vmmap = (caddr_t)va;
-		va += NBPG;
-		tmp_vpages[0] = va;
 		va += NBPG;
 		msgbufp = (struct msgbuf *)va;
 		va += NBPG;

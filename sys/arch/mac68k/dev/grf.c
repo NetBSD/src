@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.42 1997/05/11 19:11:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,6 +126,8 @@ grfattach(parent, self, aux)
 	/* Load forwarded pointers. */
 	sc->sc_grfmode = ga->ga_grfmode;
 	sc->sc_slot = ga->ga_slot;
+	sc->sc_tag = ga->ga_tag;
+	sc->sc_handle = ga->ga_handle;
 	sc->sc_mode = ga->ga_mode;
 	sc->sc_phys = ga->ga_phys;
 
