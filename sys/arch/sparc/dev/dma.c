@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.42 1997/04/27 22:12:40 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.43 1997/05/24 20:16:14 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -137,8 +137,7 @@ dmaattach(parent, self, aux)
 
 	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
 		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
-			     ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.6 1996/12/10 22:55:05 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.7 1997/05/24 20:16:32 pk Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -194,11 +194,9 @@ tcxattach(parent, self, args)
 	sc->sc_physadr[TCX_REG_THC].rr_paddr += 0x1000;
 
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-			mapiodev(&ca->ca_ra.ra_reg[TCX_REG_CMAP], 0,
-				sizeof *sc->sc_bt, ca->ca_bustype);
+		mapiodev(&ca->ca_ra.ra_reg[TCX_REG_CMAP], 0, sizeof *sc->sc_bt);
 	sc->sc_thc = (volatile struct tcx_thc *)
-			mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC], 0,
-				sizeof *sc->sc_thc, ca->ca_bustype);
+		mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC], 0, sizeof *sc->sc_thc);
 
 	switch (ca->ca_bustype) {
 	case BUS_SBUS:
@@ -494,8 +492,8 @@ tcxmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz)
-			return (REG2PHYS(&sc->sc_physadr[mo->mo_bank],
-					 u, sc->sc_bustype) | PMAP_NC);
+			return (REG2PHYS(&sc->sc_physadr[mo->mo_bank], u) |
+				PMAP_NC);
 	}
 #ifdef DEBUG
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 1997/05/02 13:03:46 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -382,8 +382,7 @@ fdcattach(parent, self, aux)
 		fdc->sc_reg = (caddr_t)ca->ca_ra.ra_vaddr;
 	else
 		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_reg, 0,
-						ca->ca_ra.ra_len,
-						ca->ca_bustype);
+						ca->ca_ra.ra_len);
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_istate = ISTATE_IDLE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.47 1997/04/04 20:29:27 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.48 1997/05/24 20:16:26 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -358,9 +358,9 @@ leattach(parent, self, aux)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 
-	lesc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
-					      sizeof(struct lereg1),
-					      ca->ca_bustype);
+	lesc->sc_r1 = (struct lereg1 *)
+		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct lereg1));
+
 #if defined(SUN4C) || defined(SUN4M)
 	lebuf = NULL;
 	if (lebufchild) {
