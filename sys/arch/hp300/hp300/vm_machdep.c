@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 1997/02/02 08:03:06 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 1997/03/15 23:40:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -170,10 +170,15 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
-	if (error)
-		return error;
+	if (fputype) {
+		/* Save floating point registers. */
+		error = process_read_fpregs(p, &md_core.freg);
+		if (error)
+			return error;
+	} else {
+		/* Make sure these are clear. */
+		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
 	cseg.c_addr = 0;
