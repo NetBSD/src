@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.66 2003/02/23 23:36:35 enami Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.67 2003/03/05 18:46:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.66 2003/02/23 23:36:35 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.67 2003/03/05 18:46:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,61 +339,17 @@ linux_sys_setresgid(l, v, retval)
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	gid_t rgid, egid, sgid;
-	int error;
-
-	rgid = SCARG(uap, rgid);
-	egid = SCARG(uap, egid);
-	sgid = SCARG(uap, sgid);
 
 	/*
 	 * Note: These checks are a little different than the NetBSD
 	 * setregid(2) call performs.  This precisely follows the
 	 * behavior of the Linux kernel.
 	 */
-	if (rgid != (gid_t)-1 &&
-	    rgid != pc->p_rgid &&
-	    rgid != pc->pc_ucred->cr_gid &&
-	    rgid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (egid != (gid_t)-1 &&
-	    egid != pc->p_rgid &&
-	    egid != pc->pc_ucred->cr_gid &&
-	    egid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (sgid != (gid_t)-1 &&
-	    sgid != pc->p_rgid &&
-	    sgid != pc->pc_ucred->cr_gid &&
-	    sgid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	/*
-	 * Now assign the real, effective, and saved GIDs.
-	 * Note that Linux, unlike NetBSD in setregid(2), does not
-	 * set the saved UID in this call unless the user specifies
-	 * it.
-	 */
-	if (rgid != (gid_t)-1)
-		pc->p_rgid = rgid;
-
-	if (egid != (gid_t)-1) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_gid = egid;
-	}
-
-	if (sgid != (gid_t)-1)
-		pc->p_svgid = sgid;
-
-	if (rgid != (gid_t)-1 && egid != (gid_t)-1 && sgid != (gid_t)-1)
-		p->p_flag |= P_SUGID;
-	return (0);
+	return do_setresgid(l, SCARG(uap,rgid), SCARG(uap, egid),
+			    SCARG(uap, sgid),
+			    ID_R_EQ_R | ID_R_EQ_E | ID_R_EQ_S |
+			    ID_E_EQ_R | ID_E_EQ_E | ID_E_EQ_S |
+			    ID_S_EQ_R | ID_S_EQ_E | ID_S_EQ_S );
 }
 
 int
