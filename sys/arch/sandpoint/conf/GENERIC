@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2002/03/27 06:39:16 briggs Exp $
+# $NetBSD: GENERIC,v 1.25 2002/04/12 02:57:00 briggs Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -114,7 +114,7 @@ pcib*	at pci? dev ? function ?	# Winbond 83c553 PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
-#pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
+pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
 
 vga*	at pci? dev ? function ?
 
@@ -164,3 +164,10 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+wd*	at pciide? channel ? drive ? flags 0x0000
+atapibus* at pciide? channel ?
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
