@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getnetent_r.c,v 1.1.1.1.10.1 2002/06/28 11:48:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getnetent_r.c,v 8.4 1999/01/18 07:46:52 vixie Exp";
+static const char rcsid[] = "Id: getnetent_r.c,v 8.6 2001/11/01 08:02:11 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -28,6 +28,7 @@ static const char rcsid[] = "Id: getnetent_r.c,v 8.4 1999/01/18 07:46:52 vixie E
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/param.h>
@@ -41,11 +42,22 @@ copy_netent(struct netent *, struct netent *, NET_R_COPY_ARGS);
 NET_R_RETURN
 getnetbyname_r(const char *name,  struct netent *nptr, NET_R_ARGS) {
 	struct netent *ne = getnetbyname(name);
+#ifdef NET_R_SETANSWER
+	int n = 0;
 
+	if (ne == NULL || (n = copy_netent(ne, nptr, NET_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = ne;
+	if (ne == NULL)
+		*h_errnop = h_errno;
+	return (n);
+#else
 	if (ne == NULL)
 		return (NET_R_BAD);
 
 	return (copy_netent(ne, nptr, NET_R_COPY));
+#endif
 }
 
 #ifndef GETNETBYADDR_ADDR_T
@@ -54,11 +66,23 @@ getnetbyname_r(const char *name,  struct netent *nptr, NET_R_ARGS) {
 NET_R_RETURN
 getnetbyaddr_r(GETNETBYADDR_ADDR_T addr, int type, struct netent *nptr, NET_R_ARGS) {
 	struct netent *ne = getnetbyaddr(addr, type);
+#ifdef NET_R_SETANSWER
+	int n = 0;
+
+	if (ne == NULL || (n = copy_netent(ne, nptr, NET_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = ne;
+	if (ne == NULL)
+		*h_errnop = h_errno;
+	return (n);
+#else
 
 	if (ne == NULL)
 		return (NET_R_BAD);
 
 	return (copy_netent(ne, nptr, NET_R_COPY));
+#endif
 }
 
 /*
@@ -70,11 +94,23 @@ getnetbyaddr_r(GETNETBYADDR_ADDR_T addr, int type, struct netent *nptr, NET_R_AR
 NET_R_RETURN
 getnetent_r(struct netent *nptr, NET_R_ARGS) {
 	struct netent *ne = getnetent();
+#ifdef NET_R_SETANSWER
+	int n = 0;
+
+	if (ne == NULL || (n = copy_netent(ne, nptr, NET_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = ne;
+	if (ne == NULL)
+		*h_errnop = h_errno;
+	return (n);
+#else
 
 	if (ne == NULL)
 		return (NET_R_BAD);
 
 	return (copy_netent(ne, nptr, NET_R_COPY));
+#endif
 }
 
 NET_R_SET_RETURN
@@ -119,7 +155,7 @@ copy_netent(struct netent *ne, struct netent *nptr, NET_R_COPY_ARGS) {
 	len += strlen(ne->n_name) + 1;
 	len += numptr * sizeof(char*);
 	
-	if (len > buflen) {
+	if (len > (int)buflen) {
 		errno = ERANGE;
 		return (NET_R_BAD);
 	}
@@ -188,6 +224,6 @@ copy_netent(struct netent *ne, struct netent *nptr, NET_R_COPY_ARGS) {
 }
 #endif /* !NETENT_DATA */
 #else /* NET_R_RETURN */
-	static int getnetent_r_unknown_systemm = 0;
+	static int getnetent_r_unknown_system = 0;
 #endif /* NET_R_RETURN */
 #endif /* !defined(_REENTRANT) || !defined(DO_PTHREADS) */
