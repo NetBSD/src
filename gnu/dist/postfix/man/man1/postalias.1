@@ -9,8 +9,9 @@ Postfix alias database maintenance
 .na
 .nf
 .fi
-\fBpostalias\fR [\fB-Ninvw\fR] [\fB-c \fIconfig_dir\fR]
-[\fB-q \fIkey\fR] [\fIfile_type\fR:]\fIfile_name\fR ...
+\fBpostalias\fR [\fB-Ninrvw\fR] [\fB-c \fIconfig_dir\fR]
+[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
+[\fIfile_type\fR:]\fIfile_name\fR ...
 .SH DESCRIPTION
 .ad
 .fi
@@ -30,7 +31,11 @@ Include the terminating null character that terminates lookup keys
 and values. By default, Postfix does whatever is the default for
 the host operating system.
 .IP "\fB-c \fIconfig_dir\fR"
-Read the \fBmain.cf\fR configuration file in the named directory.
+Read the \fBmain.cf\fR configuration file in the named directory
+instead of the default configuration directory.
+.IP "\fB-d \fIkey\fR"
+Search the specified maps for \fIkey\fR and remove one entry per map.
+The exit status is non-zero if the requested information was not found.
 .IP \fB-i\fR
 Incremental mode. Read entries from standard input and do not
 truncate an existing database. By default, \fBpostalias\fR creates
@@ -43,11 +48,15 @@ the host operating system.
 Search the specified maps for \fIkey\fR and print the first value
 found on the standard output stream. The exit status is non-zero
 if the requested information was not found.
+.IP \fB-r\fR
+When updating a table, do not warn about duplicate entries; silently
+replace them.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
 .IP \fB-w\fR
-Do not warn about duplicate entries; silently ignore them.
+When updating a table, do not warn about duplicate entries; silently
+ignore them.
 .PP
 Arguments:
 .IP \fIfile_type\fR
@@ -76,6 +85,15 @@ The name of the alias database source file when rebuilding a database.
 Problems are logged to the standard error stream. No output means
 no problems were detected. Duplicate entries are skipped and are
 flagged with a warning.
+
+\fBpostalias\fR terminates with zero exit status in case of success
+(including successful \fBpostmap -q\fR lookup) and terminates
+with non-zero exit status in case of failure.
+.SH BUGS
+.ad
+.fi
+The "delete key" support is limited to one delete operation
+per command invocation.
 .SH ENVIRONMENT
 .na
 .nf

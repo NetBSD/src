@@ -24,6 +24,11 @@
 # By default, mail is bounced when a destination is not found, and
 # delivery is deferred if a destination is unreachable.
 #
+# In the case of SMTP, specify a domain, host, host:port, [host]:port,
+# [address] or [address]:port; the form [host] turns off MX lookups.
+# If you specify multiple SMTP destinations, Postfix will try them
+# in the specified order.
+#
 fallback_relay = 
 
 # The ignore_mx_lookup_error parameter controls what happens when a
@@ -33,12 +38,52 @@ fallback_relay =
 #
 ignore_mx_lookup_error = no
 
-# The smtp_skip_4xx_greeting parameter controls what happens when
-# an SMTP server greets us with a 4XX status code. By default, Postfix
-# backs off. Specify "smtp_skip_4xx_greeting = yes" to move on the
-# the next mail exchanger.
+# The smtp_always_send_ehlo parameter specifies that the SMTP client
+# should always send EHLO at the start of an SMTP session.
 # 
-smtp_skip_4xx_greeting = no
+# By default, Postfix sends EHLO only when the word "ESMTP" appears
+# in the server greeting banner (example: 220 spike.porcupine.org
+# ESMTP Postfix).
+#
+smtp_always_send_ehlo = no
+
+# The smtp_never_send_ehlo parameter specifies that the SMTP client 
+# should never send EHLO at the start of an SMTP session.
+#
+# By default, Postfix sends EHLO whenever the word "ESMTP" appears
+# in the server greeting banner (example: 220 spike.porcupine.org
+# ESMTP Postfix).
+#
+smtp_never_send_ehlo = no
+
+# The smtp_bind_address parameter specifies a numerical network
+# address that the client should bind to when making a connection.
+# This can be used in the main.cf file, or in the master.cf file,
+# for example:
+# 
+# 	smtp ... smtp -o smtp_bind_address=111.222.333.444
+# 
+#smtp_bind_address=111.222.333.444
+
+# The smtp_skip_4xx_greeting parameter controls what happens when
+# an SMTP server greets us with a 4XX status code (go away, try
+# again later).
+#
+# By default, Postfix moves on the the next mail exchanger. Specify
+# "smtp_skip_4xx_greeting = no" if Postfix should defer delivery
+# immediately.
+#
+smtp_skip_4xx_greeting = yes
+
+# The smtp_skip_5xx_greeting parameter controls what happens when
+# an SMTP server greets us with a 5XX status code (go away, do not
+# try again later).
+#
+# By default, Postfix moves on the the next mail exchanger. Specify
+# "smtp_skip_5xx_greeting = no" if Postfix should bounce the mail 
+# immediately.
+#
+smtp_skip_5xx_greeting = yes
 
 # The smtp_skip_quit_response parameter controls whether the SMTP
 # client waits for the response to the QUIT command. The default is
@@ -76,64 +121,82 @@ smtp_destination_recipient_limit = $default_destination_recipient_limit
 #
 
 # The smtp_connect_timeout parameter specifies the SMTP client
-# timeout in seconds for completing a TCP connection.
+# timeout for completing a TCP connection.
 #
 # When no connection can be made within the deadline, the SMTP client
 # tries the next address on the mail exchanger list. Specify 0 to
 # disable the timeout.
 #
-# smtp_connect_timeout = 30
-smtp_connect_timeout = 0
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+# smtp_connect_timeout = 30s
+smtp_connect_timeout = 0s
 
 # The smtp_helo_timeout parameter specifies the SMTP client timeout
-# in seconds for receiving the SMTP greeting banner.
+# for receiving the SMTP greeting banner.
 #
 # When the server drops the connection without sending a greeting
 # banner, or when it sends no greeting banner within the deadline,
 # the SMTP client tries the next address on the mail exchanger list.
 #
-smtp_helo_timeout = 300
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_helo_timeout = 300s
 
 # The smtp_mail_timeout parameter specifies the SMTP client timeout
-# in seconds for sending the SMTP MAIL FROM command, and for receiving
-# the server response.
+# for sending the SMTP MAIL FROM command, and for receiving the server
+# response.
 #
 # In case of problems the client does NOT try the next address on
 # the mail exchanger list.
 #
-smtp_mail_timeout = 300
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_mail_timeout = 300s
 
 # The smtp_rcpt_timeout parameter specifies the SMTP client timeout
-# in seconds for sending the SMTP RCPT TO command, and for receiving
-# the server response.
+# for sending the SMTP RCPT TO command, and for receiving the server
+# response.
 #
 # In case of problems the client does NOT try the next address on
 # the mail exchanger list.
 #
-smtp_rcpt_timeout = 300
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_rcpt_timeout = 300s
 
 # The smtp_data_init_timeout parameter specifies the SMTP client
-# timeout in seconds for sending the SMTP DATA command, and for
-# receiving the server response.
+# timeout for sending the SMTP DATA command, and for receiving the
+# server response.
 #
 # In case of problems the client does NOT try the next address on
 # the mail exchanger list.
 #
-smtp_data_init_timeout = 120
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_data_init_timeout = 120s
 
 # The smtp_data_xfer_timeout parameter specifies the SMTP client
-# timeout in seconds for sending the SMTP message content. When
-# the connection stalls for more than $smtp_data_xfer_timeout the
-# SMTP client terminates the transfer.
+# timeout for sending the SMTP message content. When the connection
+# stalls for more than $smtp_data_xfer_timeout the SMTP client
+# terminates the transfer.
 #
 # In case of problems the client does NOT try the next address on
 # the mail exchanger list.
 #
-smtp_data_xfer_timeout = 180
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_data_xfer_timeout = 180s
 
 # The smtp_data_done_timeout parameter specifies the SMTP client
-# timeout in seconds for sending the SMTP ".", and for receiving
-# the server response.
+# timeout for sending the SMTP ".", and for receiving the server
+# response.
 # 
 # When no response is received within the deadline, a warning is
 # logged that the mail may be delivered multiple times.
@@ -141,10 +204,16 @@ smtp_data_xfer_timeout = 180
 # In case of problems the client does NOT try the next address on
 # the mail exchanger list.
 #
-smtp_data_done_timeout = 600
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_data_done_timeout = 600s
 
 # The smtp_quit_timeout parameter specifies the SMTP client timeout
-# in seconds for sending the SMTP QUIT command, and for receiving
-# the server response.
+# for sending the SMTP QUIT command, and for receiving the server
+# response.
 #
-smtp_quit_timeout = 300
+# Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+# The default time unit is s (seconds).
+#
+smtp_quit_timeout = 300s
