@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.88 2001/02/10 05:05:27 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89 2001/02/26 21:09:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ int
 sys_exit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
-		syscallarg(int) rval;
+		syscallarg(int)	rval;
 	} */ *uap = v;
 
 	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
@@ -142,8 +142,8 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 void
 exit1(struct proc *p, int rv)
 {
-	struct proc *q, *nq;
-	int s;
+	struct proc	*q, *nq;
+	int		s;
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
@@ -399,21 +399,20 @@ int
 sys_wait4(struct proc *q, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
-		syscallarg(int) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
+		syscallarg(int)			pid;
+		syscallarg(int *)		status;
+		syscallarg(int)			options;
+		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	int nfound;
-	struct proc *p, *t;
-	int status, error, s;
+	struct proc	*p, *t;
+	int		nfound, status, error, s;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
-loop:
+ loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
 		if (SCARG(uap, pid) != WAIT_ANY &&
