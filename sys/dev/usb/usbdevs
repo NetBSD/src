@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.1 1998/07/12 19:52:00 augustss Exp $
+$NetBSD: usbdevs,v 1.2 1998/09/05 15:42:12 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ $NetBSD: usbdevs,v 1.1 1998/07/12 19:52:00 augustss Exp $
  */
 
 vendor NEC		0x0409	NEC
+vendor KODAK		0x0409	Eastman Kodak
 vendor NANAO		0x0440	Nanao
 vendor UNIXTAR		0x0451  Unixtar
 vendor GENIUS		0x0458	Genius
@@ -61,6 +62,9 @@ vendor INTEL		0x8086	Intel
 
 /* NEC products */
 product NEC HUB			0x55aa	hub
+
+/* Kodak products */
+product Kodak DC260		0x0110	Digital Science DC260
 
 /* Nanao products */
 product NANAO HUB		0x0000	hub
