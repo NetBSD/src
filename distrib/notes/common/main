@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.202 2002/07/21 20:29:47 rafal Exp $
+.\"	$NetBSD: main,v 1.203 2002/07/22 16:45:14 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,7 +114,7 @@ on a machine of the \*M architecture.
 .Bl -bullet
 .It
 Fetch the
-.if r_i386 \{\
+.if \n[i386] \{\
 appropriate pair of boot floppy images from the
 .Pa installation/floppy/
 directory.
@@ -128,7 +128,7 @@ and
 .Pa bootlap2.fs
 if installing on a laptop.
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 files necessary to boot your system.
 The files depend on what model you
 are using and how you plan to boot your machine.
@@ -146,7 +146,7 @@ or the boot floppy image
 .Pa installation/floppy/boot.fs
 which include the bootloader and installation kernel.
 .\}
-.if r_sparc \{\
+.if \n[sparc] \{\
 CD image,
 .Pa sparc_bootable.iso
 or the floppy disk images,
@@ -164,9 +164,9 @@ The actual binary distribution is in the
 .Pa binary/sets/
 directory.
 When you boot the install
-.if r_i386 floppies,
-.if r_macppc kernel from floppy, hard drive, or CD-ROM,
-.if r_sparc floppies or CD-ROM,
+.if \n[i386] floppies,
+.if \n[macppc] kernel from floppy, hard drive, or CD-ROM,
+.if \n[sparc] floppies or CD-ROM,
 the installation program
 can fetch these files for you (using e.g. ftp),
 if you have a network connection.
@@ -174,7 +174,7 @@ There are several other methods to get the binary sets onto
 your machine.
 .Pp
 You will at a minimum need
-.ie r_i386 \{\
+.ie \n[i386] \{\
 one of the kernel sets, typically
 .Pa kern-GENERIC.tgz ,
 as well as
@@ -225,7 +225,7 @@ Otherwise, write the floppy images directly to a pair of floppies
 The disk(s) you just prepared will be used to boot the installation
 kernel, which contains all the tools required to install
 .Nx .
-.if r_macppc \{\
+.if \n[macppc] \{\
 .It
 Determine your machine's model, quirks, and Open Firmware version from the
 .Nx*M
@@ -272,7 +272,7 @@ You should have the Open Firmware
 prompt on your screen before attempting to boot
 .Nx*M .
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 .It
 At the Open Firmware prompt, type the command to boot.
 To boot from a floppy, the command is
@@ -302,7 +302,7 @@ command to confirm that the
 kernel is called
 .Pa NETBSD.MACPPC .
 .\}
-.if r_sparc \{\
+.if \n[sparc] \{\
 .It
 You will need to get to the OpenBoot PROM
 .Dq Ic "ok"
@@ -490,7 +490,7 @@ An in-kernel boot time device configuration manager
 activated with the
 .Fl c
 boot loader flag.
-\}
+.\}
 .It
 A work-in-progress snapshot of ACPI support,
 based on the 20010831 snapshot of the Intel ACPICA reference implementation.
@@ -958,19 +958,19 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.setsize 55 247
+.showsize 55 247
 .It Sy pkgsrc
 This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
-.setsize 12 94
+.showsize 12 94
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.setsize 4 16
+.showsize 4 16
 .It Sy src
 This set contains all of the base
 .Nx \*V
@@ -979,7 +979,7 @@ sources which are not in
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.setsize 27 136
+.showsize 27 136
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
@@ -987,10 +987,10 @@ kernel for all architectures;
 .Xr config 8 ;
 and
 .Xr dbsym 8 .
-.setsize 22 114
+.showsize 22 114
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.setsize 78 394
+.showsize 78 394
 .tag)
 .Pp
 All the above source sets are located in the
@@ -1111,7 +1111,7 @@ own checksum files, just as the source distribution does.
 .so prep -----------------------------------------------
 .br_ne 7P
 .
-.ie r_mac68k .Ss "Installing the NetBSD System (Sysinst Method)"
+.ie \n[mac68k] .Ss "Installing the NetBSD System (Sysinst Method)"
 .el .Ss "Installing the NetBSD System"
 .
 .so install -----------------------------------------------
