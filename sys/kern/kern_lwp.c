@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.20 2002/11/25 21:44:00 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.21 2002/12/15 22:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	vaddr_t uaddr;
+	boolean_t inmem;
 	ucontext_t *newuc;
 	int s, error;
 
@@ -86,7 +87,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	/* XXX check against resource limits */
 
-	uaddr = uvm_km_valloc(kernel_map, USPACE);
+	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		return (ENOMEM);
 	}
@@ -98,6 +99,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	newlwp(l, p, uaddr,
 	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, NULL, startlwp, newuc, &l2);
+	if (inmem)
+		l2->l_flag |= L_INMEM;
 
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
 		SCHED_LOCK(s);
