@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.2 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.3 2001/11/29 16:20:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -434,7 +434,7 @@ switch_resume:
 
 	/* Process is now on a processor. */
 	mov	r0, #LSONPROC			/* l->l_stat = LSONPROC */
-	strb	r0, [r6, #(L_STAT)]
+	str	r0, [r6, #(L_STAT)]
 
 	/* We have a new curproc now so make a note it */
 	ldr	r7, Lcurproc
