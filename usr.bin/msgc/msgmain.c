@@ -1,4 +1,4 @@
-/*	$NetBSD: msgmain.c,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msgmain.c,v 1.2 1997/10/19 05:19:18 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@ main (int argc, char **argv)
 	prog_name = argv[0];
 	
 	/* Process the arguments. */
-	while ( (ch = getopt (argc, argv, "o:")) != EOF ) {
+	while ( (ch = getopt (argc, argv, "o:")) != -1 ) {
 		switch (ch) {
 		case 'o': /* output file name */
 			out_name = optarg;
