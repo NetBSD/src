@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.20.2.5 1998/05/05 23:01:27 mycroft Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.20.2.6 1998/05/09 03:33:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -97,20 +97,28 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 		size = ifp->if_mtu - sizeof(struct tcpiphdr);
 	else
 		size = tcp_mssdflt;
-	size -= tcp_optlen(tp);
+	size -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
 
  out:
 	*txsegsizep = min(tp->t_peermss, size);
 	*rxsegsizep = min(tp->t_ourmss, size);
 
 	if (*txsegsizep != tp->t_segsz) {
-	        /* 
-		 * XXX:  should we check to make sure these are all
-		 *       at least txsegsize in length, now?
+		/*
+		 * If the new segment size is larger, we don't want to 
+		 * mess up the congestion window, but if it is smaller
+		 * we'll have to reduce the congestion window to ensure
+		 * that we don't get into trouble with initial windows
+		 * and the rest.  In any case, if the segment size
+		 * has changed, chances are the path has, too, and
+		 * our congestion window will be different.
 		 */
-		tp->snd_cwnd = (tp->snd_cwnd / tp->t_segsz) * *txsegsizep;
-		tp->snd_ssthresh = (tp->snd_ssthresh / tp->t_segsz) * 
-		    *txsegsizep;
+		if (*txsegsizep < tp->t_segsz) {
+			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz) 
+					   * *txsegsizep, *txsegsizep);
+			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz)
+					       * *txsegsizep, *txsegsizep);
+		}
 		tp->t_segsz = *txsegsizep;
 	}
 }
@@ -330,8 +338,11 @@ send:
 	optlen = 0;
 	hdrlen = sizeof (struct tcpiphdr);
 	if (flags & TH_SYN) {
+		struct rtentry *rt = in_pcbrtentry(tp->t_inpcb);
+
 		tp->snd_nxt = tp->iss;
-		tp->t_ourmss = tcp_mss_to_advertise(tp);
+		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
+						    rt->rt_ifp : NULL);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;

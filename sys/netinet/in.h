@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.28.2.1 1998/01/29 09:34:05 mellon Exp $	*/
+/*	$NetBSD: in.h,v 1.28.2.2 1998/05/09 03:33:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -254,7 +254,8 @@ struct ip_mreq {
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
 #define	IPCTL_SUBNETSARELOCAL	8	/* treat subnets as local addresses */
 #define	IPCTL_MTUDISC		9	/* allow path MTU discovery */
-#define	IPCTL_MAXID	       10
+#define	IPCTL_MTUDISCTIMEOUT   10	/* timeout path MTU discovery */
+#define	IPCTL_MAXID	       11
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -267,6 +268,7 @@ struct ip_mreq {
 	{ "allowsrcrt", CTLTYPE_INT }, \
 	{ "subnetsarelocal", CTLTYPE_INT }, \
 	{ "mtudisc", CTLTYPE_INT }, \
+ 	{ "mtudisctimeout", CTLTYPE_INT }, \
 }
 
 
