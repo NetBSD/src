@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.53 1997/07/27 23:06:04 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.54 1997/07/27 23:51:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -254,7 +254,6 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->get_out_port == 0 ||
 	    hwp->set_in_port == 0 ||
 	    hwp->get_in_port == 0 ||
-	    hwp->commit_settings == 0 ||
 	    hwp->start_output == 0 ||
 	    hwp->start_input == 0 ||
 	    hwp->halt_output == 0 ||
@@ -664,7 +663,8 @@ audio_open(dev, flags, ifmt, p)
 	DPRINTF(("audio_open: rr.buf=%p-%p pr.buf=%p-%p\n",
 		 sc->sc_rr.start, sc->sc_rr.end, sc->sc_pr.start, sc->sc_pr.end));
 	
-	hw->commit_settings(sc->hw_hdl);
+	if (hw->commit_settings)
+		hw->commit_settings(sc->hw_hdl);
 
 	sc->sc_rchan = 0;
 	sc->sc_wchan = 0;
@@ -1283,9 +1283,19 @@ audio_ioctl(dev, cmd, addr, flag, p)
 
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
-		error = hw->setfd(sc->hw_hdl, *(int *)addr);
-		if (error == 0)
-			sc->sc_full_duplex = *(int *)addr;
+		if (hw->props & AUDIO_PROP_FULLDUPLEX) {
+			if (hw->setfd)
+				error = hw->setfd(sc->hw_hdl, *(int *)addr);
+			else
+				error = 0;
+			if (!error)
+				sc->sc_full_duplex = *(int *)addr;
+		} else {
+			if (*(int *)addr)
+				error = ENOTTY;
+			else
+				error = 0;
+		}
 		break;
 
 	case AUDIO_GETPROPS:
@@ -1976,9 +1986,11 @@ audiosetinfo(sc, ai)
 			audio_init_record(sc);
 	}
 
-	error = hw->commit_settings(sc->hw_hdl);
-	if (error)
-		return (error);
+	if (hw->commit_settings) {
+		error = hw->commit_settings(sc->hw_hdl);
+		if (error)
+			return (error);
+	}
 
 	if (cleared) {
 		s = splaudio();
@@ -2119,37 +2131,37 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 	int error = EINVAL;
 
 	DPRINTF(("mixer_ioctl(%d,'%c',%d)\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 
 	switch (cmd) {
 	case AUDIO_GETDEV:
-	    DPRINTF(("AUDIO_GETDEV\n"));
-	    error = hw->getdev(sc->hw_hdl, (audio_device_t *)addr);
-	    break;
+		DPRINTF(("AUDIO_GETDEV\n"));
+		error = hw->getdev(sc->hw_hdl, (audio_device_t *)addr);
+		break;
 		
 	case AUDIO_MIXER_DEVINFO:
-	    DPRINTF(("AUDIO_MIXER_DEVINFO\n"));
-	    error = hw->query_devinfo(sc->hw_hdl, (mixer_devinfo_t *)addr);
-	    break;
+		DPRINTF(("AUDIO_MIXER_DEVINFO\n"));
+		error = hw->query_devinfo(sc->hw_hdl, (mixer_devinfo_t *)addr);
+		break;
 
 	case AUDIO_MIXER_READ:
-	    DPRINTF(("AUDIO_MIXER_READ\n"));
-	    error = hw->get_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
-	    break;
+		DPRINTF(("AUDIO_MIXER_READ\n"));
+		error = hw->get_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
+		break;
 
 	case AUDIO_MIXER_WRITE:
-	    DPRINTF(("AUDIO_MIXER_WRITE\n"));
-	    error = hw->set_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
-	    if (error == 0)
-		error = hw->commit_settings(sc->hw_hdl);
-	    break;
+		DPRINTF(("AUDIO_MIXER_WRITE\n"));
+		error = hw->set_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
+		if (!error && hw->commit_settings)
+			error = hw->commit_settings(sc->hw_hdl);
+		break;
 
 	default:
-	    error = EINVAL;
-	    break;
+		error = EINVAL;
+		break;
 	}
 	DPRINTF(("mixer_ioctl(%d,'%c',%d) result %d\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 #endif
