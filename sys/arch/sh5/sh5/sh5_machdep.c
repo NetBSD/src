@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_machdep.c,v 1.1 2002/07/05 13:32:06 scw Exp $	*/
+/*	$NetBSD: sh5_machdep.c,v 1.2 2002/09/10 11:59:50 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,36 +58,16 @@ char	machine_arch[] = MACHINE_ARCH;
  */
 u_int _sh5_ctc_ticks_per_us;
 
-void (*__cpu_cache_purge)(vaddr_t, vsize_t);
-void (*__cpu_cache_invalidate)(vaddr_t, vsize_t);
+/*
+ * This is used to calibrate the delay() loop in locore_subr.S
+ */
+u_int _sh5_delay_constant;
 
-void
-delay(u_int microseconds)
-{
-	register_t ctcreg;
-	u_int ctc;
-
-	if (microseconds == 0)
-		return;
-
-	__asm __volatile("getcon ctc, %0" : "=r"(ctcreg));
-
-	/*
-	 * XXX: Assumes CTC is 32-bits wide.
-	 */
-	ctc = (u_int)ctcreg - (microseconds * _sh5_ctc_ticks_per_us);
-
-	if (ctc > (u_int)ctcreg) {
-		/* Counter will wrap-around while we're waiting... */
-		do {
-			__asm __volatile("getcon ctc, %0" : "=r"(ctcreg));
-		} while (ctc >= (u_int)ctcreg);
-	} else {
-		do {
-			__asm __volatile("getcon ctc, %0" : "=r"(ctcreg));
-		} while (ctc <= (u_int)ctcreg);
-	}
-}
+void (*__cpu_cache_dpurge)(vaddr_t, vsize_t);
+void (*__cpu_cache_dpurge_iinv)(vaddr_t, vsize_t);
+void (*__cpu_cache_dinv)(vaddr_t, vsize_t);
+void (*__cpu_cache_dinv_iinv)(vaddr_t, vsize_t);
+void (*__cpu_cache_iinv)(vaddr_t, vsize_t);
 
 /*
  * These variables are needed by /sbin/savecore
