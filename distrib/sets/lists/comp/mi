@@ -34,6 +34,9 @@
 ./usr/include/arpa/telnet.h
 ./usr/include/arpa/tftp.h
 ./usr/include/assert.h
+./usr/include/bfd/ansidecl.h
+./usr/include/bfd/bfd.h
+./usr/include/bfd/libiberty.h
 ./usr/include/bitstring.h
 ./usr/include/bm.h
 ./usr/include/cpio.h
@@ -55,10 +58,14 @@
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
+./usr/include/dev/i2c/i2c_bus.h
+./usr/include/dev/i2c/i2c_eeprom.h
 ./usr/include/dev/ic
 ./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/ahareg.h
 ./usr/include/dev/ic/ahavar.h
+./usr/include/dev/ic/aic6360reg.h
+./usr/include/dev/ic/aic6360var.h
 ./usr/include/dev/ic/aic7xxxreg.h
 ./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
@@ -66,9 +73,9 @@
 ./usr/include/dev/ic/am7990var.h
 ./usr/include/dev/ic/bhareg.h
 ./usr/include/dev/ic/bhavar.h
+./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/comreg.h
 ./usr/include/dev/ic/comvar.h
-./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/cs4231reg.h
 ./usr/include/dev/ic/cyreg.h
 ./usr/include/dev/ic/cyvar.h
@@ -80,6 +87,8 @@
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/hayespreg.h
 ./usr/include/dev/ic/i8042reg.h
+./usr/include/dev/ic/i82365reg.h
+./usr/include/dev/ic/i82365var.h
 ./usr/include/dev/ic/i8237reg.h
 ./usr/include/dev/ic/i8253reg.h
 ./usr/include/dev/ic/i82586reg.h
@@ -87,6 +96,8 @@
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
 ./usr/include/dev/ic/intersil7170.h
+./usr/include/dev/ic/interwavereg.h
+./usr/include/dev/ic/interwavevar.h
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
@@ -102,6 +113,8 @@
 ./usr/include/dev/ic/ncr5380var.h
 ./usr/include/dev/ic/ncr53c9xreg.h
 ./usr/include/dev/ic/ncr53c9xvar.h
+./usr/include/dev/ic/ne2000reg.h
+./usr/include/dev/ic/ne2000var.h
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
@@ -111,6 +124,9 @@
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
 ./usr/include/dev/ic/smc93cx6var.h
+./usr/include/dev/ic/st16650reg.h
+./usr/include/dev/ic/tms320av110reg.h
+./usr/include/dev/ic/tms320av110var.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/z8530reg.h
@@ -123,6 +139,7 @@
 ./usr/include/dev/isa/espvar.h
 ./usr/include/dev/isa/gusreg.h
 ./usr/include/dev/isa/ics2101var.h
+./usr/include/dev/isa/if_ed_isavar.h
 ./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
@@ -150,6 +167,7 @@
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/isapnp
+./usr/include/dev/isapnp/if_le_isapnpvar.h
 ./usr/include/dev/isapnp/if_levar.h
 ./usr/include/dev/isapnp/isapnpreg.h
 ./usr/include/dev/isapnp/isapnpvar.h
@@ -159,6 +177,11 @@
 ./usr/include/dev/microcode/isp
 ./usr/include/dev/microcode/isp/asm_pci.h
 ./usr/include/dev/microcode/isp/asm_sbus.h
+./usr/include/dev/mii/generic_phy.h
+./usr/include/dev/mii/mii_adapter.h
+./usr/include/dev/mii/mii_adapters_id.h
+./usr/include/dev/mii/mii_phy.h
+./usr/include/dev/mii/tlphy.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
@@ -166,12 +189,16 @@
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
+./usr/include/dev/pci/if_tlregs.h
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
+./usr/include/dev/pcmcia/pcmciachip.h
+./usr/include/dev/pcmcia/pcmciareg.h
+./usr/include/dev/pcmcia/pcmciavar.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
@@ -733,8 +760,8 @@
 ./usr/include/objc/encoding.h
 ./usr/include/objc/hash.h
 ./usr/include/objc/list.h
-./usr/include/objc/objc.h
 ./usr/include/objc/objc-api.h
+./usr/include/objc/objc.h
 ./usr/include/objc/sarray.h
 ./usr/include/objc/typedstream.h
 ./usr/include/paths.h
@@ -802,6 +829,7 @@
 ./usr/include/sgtty.h
 ./usr/include/signal.h
 ./usr/include/skey.h
+./usr/include/soundcard.h
 ./usr/include/stab.h
 ./usr/include/stdarg.h
 ./usr/include/stddef.h
@@ -875,6 +903,7 @@
 ./usr/include/sys/reboot.h
 ./usr/include/sys/resource.h
 ./usr/include/sys/resourcevar.h
+./usr/include/sys/rnd.h
 ./usr/include/sys/scanio.h
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
@@ -925,6 +954,7 @@
 ./usr/include/syslog.h
 ./usr/include/tar.h
 ./usr/include/tcpd.h
+./usr/include/termcap.h
 ./usr/include/termios.h
 ./usr/include/time.h
 ./usr/include/ttyent.h
