@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.11 1994/05/08 05:52:29 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.12 1994/05/09 06:38:00 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -64,7 +64,6 @@ dev_t	dumpdev = NODEV;
 struct	swdevt swdevt[] = {
 	{ NODEV,	1,	0 },
 	{ NODEV,	0,	0 },
-	{ 0,		0,	0 },
 };
 
 #if NFD > 0
