@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.86 2001/07/17 05:02:50 sakane Exp $	*/
+/*	$KAME: oakley.c,v 1.87 2001/08/06 08:13:43 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1283,7 +1283,8 @@ oakley_validate_auth(iph1)
 		}
 
 		/* compare ID payload and certificate name */
-		if (iph1->rmconf->verify_cert && oakley_check_certid(iph1))
+		if (iph1->rmconf->verify_cert &&
+		    (error = oakley_check_certid(iph1)) != 0)
 			return error;
 
 		/* verify certificate */
