@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2003/08/07 16:26:53 agc Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 2004/08/21 10:59:41 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -125,5 +125,36 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
+
+#if defined (__ARM_ARCH_6__) || defined (__ARM_ARCH_6J__)
+#define _ARM_ARCH_6
+#endif
+
+#if defined (_ARM_ARCH_6) || defined (__ARM_ARCH_5__) || \
+    defined (__ARM_ARCH_5T__) || defined (__ARM_ARCH_5TE__) || \
+    defined (__ARM_ARCH_5TEJ__)
+#define _ARM_ARCH_5
+#endif
+
+#if defined (_ARM_ARCH_5) || defined (__ARM_ARCH_4T__)
+#define _ARM_ARCH_4T
+#endif
+
+
+#if defined (_ARM_ARCH_4T)
+# define RET	bx	lr
+# ifdef __STDC__
+#  define RETc(c) bx##c	lr
+# else
+#  define RETc(c) bx/**/c	lr
+# endif
+#else
+# define RET	mov	pc, lr
+# ifdef __STDC__
+#  define RETc(c) mov##c	pc, lr
+# else
+#  define RETc(c) mov/**/c	pc, lr
+# endif
+#endif
 
 #endif /* !_ARM_ASM_H_ */
