@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1998/11/16 23:43:58 jonathan Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2000/03/01 00:15:09 he Exp $
 
 .include <bsd.own.mk>
 
@@ -71,6 +71,15 @@ clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.lo *.c
 
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	gzip -c -9 < $(.OBJDIR)/miniroot-${REV}.fs \
+		> $(RELEASEDIR)/installation/miniroot/miniroot-${REV}.fs.gz
+.endif	# RELEASEDIR check
 .endif	# DESTDIR check
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
