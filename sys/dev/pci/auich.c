@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.37 2003/05/03 18:11:32 wiz Exp $	*/
+/*	$NetBSD: auich.c,v 1.38 2003/06/13 05:13:43 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.37 2003/05/03 18:11:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.38 2003/06/13 05:13:43 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,13 +320,18 @@ static const struct auich_devtype {
 	int	product;
 	const char *name;
 	const char *shortname;
+	int	quirks;
+#define QUIRK_IGNORE_CODEC_READY	0x01
+#define QUIRK_IGNORE_CODEC_READY_MAYBE	0x02
 } auich_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
 	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
-	    "i82801AB (ICH0) AC-97 Audio",	"ICH0" }, /* i810-L */
+	    "i82801AB (ICH0) AC-97 Audio",	"ICH0",
+	    QUIRK_IGNORE_CODEC_READY_MAYBE }, /* i810-L */
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
-	    "i82801BA (ICH2) AC-97 Audio",	"ICH2" },
+	    "i82801BA (ICH2) AC-97 Audio",	"ICH2",
+	    QUIRK_IGNORE_CODEC_READY_MAYBE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
 	    "i82440MX AC-97 Audio",		"440MX" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
@@ -336,7 +341,8 @@ static const struct auich_devtype {
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97 Audio",		"nForce-MCP" },
+	    "nForce MCP AC-97 Audio",		"nForce-MCP",
+	    QUIRK_IGNORE_CODEC_READY },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
 	    "nForce2 MCP-T AC-97 Audio",	"nForce-MCP-T" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
@@ -447,11 +453,11 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sts_reg = ICH_STS;
 		sc->sc_sample_size = 2;
 	}
-	/* nForce MCP quirk */
-	if (d->vendor == PCI_VENDOR_NVIDIA
-	    && d->product == PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC) {
+
+	if (d->quirks & QUIRK_IGNORE_CODEC_READY) {
 		sc->sc_ignore_codecready = TRUE;
 	}
+
 	/* Workaround for a 440MX B-stepping erratum */
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
 	if (d->vendor == PCI_VENDOR_INTEL
@@ -471,9 +477,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	auich_reset_codec(sc);
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
 	if (!(status & ICH_PCR)) { /* reset failure */
-		if (d->vendor == PCI_VENDOR_INTEL
-		    && d->product == PCI_PRODUCT_INTEL_82801DB_AC) {
-			/* MSI 845G Max never return ICH_PCR */
+			/* It never return ICH_PCR in some cases */
+		if (d->quirks & QUIRK_IGNORE_CODEC_READY_MAYBE) {
 			sc->sc_ignore_codecready = TRUE;
 		} else {
 			return;
