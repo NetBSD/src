@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.65 2002/09/27 20:42:14 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.66 2002/09/30 18:54:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -193,18 +193,15 @@ emitcfdrivers(FILE *fp)
 		}
 		if (has_iattrs && fprintf(fp, "NULL };\n") < 0)
 			return (1);
-		if (fprintf(fp, "struct cfdriver %s_cd = {\n",
-			    d->d_name) < 0)
-			return (1);
-		if (fprintf(fp, "\t{ }, NULL, \"%s\", %s, 0, ",
-			    d->d_name, d->d_classattr != NULL ?
-			    d->d_classattr->a_devclass : "DV_DULL") < 0)
+		if (fprintf(fp, "CFDRIVER_DECL(%s, %s, ", d->d_name, /* ) */
+		    d->d_classattr != NULL ? d->d_classattr->a_devclass
+					   : "DV_DULL") < 0)
 			return (1);
 		if (has_iattrs && fprintf(fp, "%s_attrs", d->d_name) < 0)
 			return (1);
 		else if (has_iattrs == 0 && fprintf(fp, "NULL") < 0)
 			return (1);
-		if (fprintf(fp, "\n};\n\n") < 0)
+		if (fprintf(fp, /* ( */ ")\n\n") < 0)
 			return (1);
 	}
 
