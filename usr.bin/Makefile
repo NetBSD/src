@@ -1,8 +1,8 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-#	$Id: Makefile,v 1.19 1993/05/21 14:43:36 cgd Exp $
+#	$Id: Makefile,v 1.20 1993/05/22 10:27:18 cgd Exp $
 
-SUBDIR=	ar biff basename cal calendar \
+SUBDIR=	ar biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	cpio crontab ctags cut dirname du elvis elvisrecover \
 	env error expand false file find finger fmt fold fpr from \
