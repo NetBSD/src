@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.126 2003/09/29 12:44:30 jmmv Exp $
+$NetBSD: acronyms,v 1.127 2003/10/10 12:16:05 jmmv Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -196,6 +196,7 @@ TLB	translation lookaside buffer
 TMA	too many abbreviations
 TMI	too much information
 TOEFL	test of english as a foreign language
+TRT	the right thing
 TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTYL	talk to you later
