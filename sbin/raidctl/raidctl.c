@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.19 2000/05/28 00:49:35 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.20 2000/05/28 22:22:11 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -804,12 +804,9 @@ do_meter(fd, option)
 	double elapsed;
 	int elapsed_sec;
 	int elapsed_usec;
-	double full_elapsed;
-	int full_elapsed_sec;
-	int full_elapsed_usec;
-	int simple_eta,last_eta,full_eta;
+	int simple_eta,last_eta;
 	double rate;
-	int amount,full_amount;
+	int amount;
 	int tbit_value;
 	int wait_for_more_data;
 	char buffer[1024];
@@ -839,45 +836,30 @@ do_meter(fd, option)
 
 		get_bar(bar_buffer, percent_done, 40);
 		
-		elapsed_sec = current_time.tv_sec - last_time.tv_sec;
-		
-		elapsed_usec = current_time.tv_usec - last_time.tv_usec;
-		
+		elapsed_sec = current_time.tv_sec - start_time.tv_sec;
+		elapsed_usec = current_time.tv_usec - start_time.tv_usec;
 		if (elapsed_usec < 0) {
 			elapsed_usec-=1000000;
 			elapsed_sec++;
 		}
-		
+
 		elapsed = (double) elapsed_sec + 
 			(double) elapsed_usec / 1000000.0;
-		if (elapsed <= 0.0) {
-			elapsed = 0.0001; /* XXX */
-		}
-		
-		full_elapsed_sec = current_time.tv_sec - start_time.tv_sec;
-		full_elapsed_usec = current_time.tv_usec - start_time.tv_usec;
-		if (full_elapsed_usec < 0) {
-			full_elapsed_usec-=1000000;
-			full_elapsed_sec++;
-		}
 
-		full_elapsed = (double) full_elapsed_sec + 
-			(double) full_elapsed_usec / 1000000.0;
+		amount = progressInfo.completed - start_value;
 
-		full_amount = progressInfo.completed - start_value;
-
-		amount = progressInfo.completed - last_value;
 		if (amount <= 0) { /* we don't do negatives (yet?) */
 			amount = 0;
 			wait_for_more_data = 1;
 		} else {
 			wait_for_more_data = 0;
 		}
+
 		rate = amount / elapsed;
 
 		if (rate > 0.0) {
 			simple_eta = (int) (((double)progressInfo.total - 
-					     (double) progressInfo.completed)
+					     (double) progressInfo.completed) 
 					    / rate);
 		} else {
 			simple_eta = -1;
@@ -889,12 +871,7 @@ do_meter(fd, option)
 			last_eta = simple_eta;
 		}
 
-		rate = full_amount / full_elapsed;
-		full_eta = (int) (((double)progressInfo.total - 
-				   (double) progressInfo.completed) 
-				  / rate);
-
-		get_time_string(eta_buffer, full_eta);
+		get_time_string(eta_buffer, simple_eta);
 
 		snprintf(buffer,1024,"\r%3d%% |%s| ETA: %s %c",
 			 percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
