@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.4 2004/04/24 19:32:37 cl Exp $	*/
+/*	$NetBSD: events.c,v 1.5 2004/05/07 23:05:30 cl Exp $	*/
 
 /*
  *
@@ -33,12 +33,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.5 2004/05/07 23:05:30 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/reboot.h>
 
 #include <machine/intrdefs.h>
 
@@ -60,8 +61,9 @@ typedef struct ev_vector {
 
 static ev_vector_t ev_vectors[MAXEVENTS];
 
-int xen_debug_handler(void *);
-int xen_die_handler(void *);
+static int xen_debug_handler(void *);
+static int xen_die_handler(void *);
+static int xen_stop_handler(void *);
 
 void
 init_events()
@@ -76,6 +78,9 @@ init_events()
 
 	event_set_handler(_EVENT_DEBUG, &xen_debug_handler, NULL, IPL_DEBUG);
 	hypervisor_enable_event(_EVENT_DEBUG);
+
+	event_set_handler(_EVENT_STOP, &xen_stop_handler, NULL, IPL_DIE);
+	hypervisor_enable_event(_EVENT_STOP);
 }
 
 unsigned int
@@ -165,17 +170,25 @@ event_set_handler(int num, ev_handler_t handler, void *arg, int level)
 	return 0;
 }
 
-int
+static int
 xen_die_handler(void *arg)
 {
-	printf("die event\n");
+	printf("hypervisor: DIE event received...\n");
+	cpu_reboot(0, NULL);
+	/* NOTREACHED */
 	return 0;
 }
 
-int
+static int
 xen_debug_handler(void *arg)
 {
-	printf("die event\n");
+	printf("debug event\n");
 	return 0;
 }
 
+static int
+xen_stop_handler(void *arg)
+{
+	printf("stop event\n");
+	return 0;
+}
