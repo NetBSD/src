@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.3 2000/02/03 20:28:26 dante Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.4 2000/02/04 13:16:22 dante Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,8 +38,12 @@
  * Device probe and attach routines for the following
  * Advanced Systems Inc. SCSI controllers:
  *
- *   Single Channel Products:
- *      ABP940UW - Bus-Master PCI Ultra-Wide (240 CDB)
+ *      ABP-940UW	- Bus-Master PCI Ultra-Wide (240 CDB)
+ *	ABP-940UW (68)	- Bus-Master PCI Ultra-Wide (240 CDB)
+ *	ABP-940UWD	- Bus-Master PCI Ultra-Wide (240 CDB)
+ *	ABP-970UW	- Bus-Master PCI Ultra-Wide (240 CDB)
+ *	ASB-3940UW	- Bus-Master PCI Ultra-Wide (240 CDB)
+ *	ASB-3940U2W-00	- Bus-Master PCI Ultra2-Wide (240 CDB)
  */
 
 #include <sys/types.h>
