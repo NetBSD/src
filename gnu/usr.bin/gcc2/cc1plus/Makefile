@@ -1,4 +1,4 @@
-PROG=		gcc1plus
+PROG=		cc1plus
 BINDIR=		/usr/libexec
 SRCS=		cp-parse.c cp-decl.c cp-decl2.c cp-typeck.c cp-type2.c \
 		cp-tree.c cp-ptree.c cp-cvt.c cp-search.c cp-lex.c \
