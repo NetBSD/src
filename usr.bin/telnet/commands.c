@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.60 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.61 2005/04/03 02:43:57 atatat Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.60 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.61 2005/04/03 02:43:57 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -2414,7 +2414,7 @@ static char
 	sethelp[] = 	"set operating parameters ('set ?' for more)",
 	unsethelp[] = 	"unset operating parameters ('unset ?' for more)",
 	togglestring[] ="toggle operating parameters ('toggle ?' for more)",
-	slchelp[] =	"change state of special charaters ('slc ?' for more)",
+	slchelp[] =	"change state of special characters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
 #ifdef TN3270
 	transcomhelp[] = "specify Unix command for transparent mode pipe",
