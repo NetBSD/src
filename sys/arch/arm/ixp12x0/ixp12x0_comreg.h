@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_comreg.h,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_comreg.h,v 1.6 2003/02/22 05:32:00 igy Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -43,11 +43,12 @@
 #define IXPCOMSPEED(b)		(IXPCOM_FREQ / (b) - 1)
 #define IXPCOMSPEED2BRD(b)	(IXPCOMSPEED(b) << 16)
 
-/* size of I/O space */
+/* I/O space */
 #define IXPCOM_UART_SIZE	0x00004000UL
-
-/* Register base virtual addresses mapped by initarm() */
-#define	IXPCOM_UART_BASE	0xf0000000UL
+#define IXPCOM_UART_OFFSET	0x00000000UL
+#define	IXPCOM_UART_HWBASE	(IXP12X0_SYS_HWBASE + IXPCOM_UART_OFFSET)
+/* IXPCOM_UART_VBASE should be used only for console's ioh. */
+#define	IXPCOM_UART_VBASE	(IXP12X0_SYS_VBASE + IXPCOM_UART_OFFSET)
 
 /* UART control register */
 #define IXPCOM_CR	0x00003800UL
