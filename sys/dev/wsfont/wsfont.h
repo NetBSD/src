@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.4 1999/04/26 23:41:57 ad Exp $ */
+/* 	$NetBSD: wsfont.h,v 1.5 1999/04/29 02:42:43 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -42,10 +42,10 @@
  *	struct wsdisplay_font *font;
  *	int cookie;
  *
- *	if ((cookie = wsfont_find(NULL, 8, 16, 0, 0)) < 0)
+ *	if ((cookie = wsfont_find(NULL, 8, 16, 0, 0)) <= 0)
  *		panic("unable to get 8x16 font");
  *
- *	if (wsfont_lock(cookie, &font, WSFONT_L2R, WSFONT_R2L) < 0)
+ *	if (wsfont_lock(cookie, &font, WSFONT_L2R, WSFONT_R2L) <= 0)
  *		panic("unable to lock font");
  *
  *	... do stuff ...
