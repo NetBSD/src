@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.69 2000/03/07 02:59:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.70 2000/03/07 03:09:47 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1816,18 +1816,19 @@ KernelWakeupFunc(vbp)
  * initialize a buf structure for doing an I/O in the kernel.
  */
 static void 
-InitBP(
-    struct buf * bp,
-    struct vnode * b_vp,
-    unsigned rw_flag,
-    dev_t dev,
-    RF_SectorNum_t startSect,
-    RF_SectorCount_t numSect,
-    caddr_t buf,
-    void (*cbFunc) (struct buf *),
-    void *cbArg,
-    int logBytesPerSector,
-    struct proc * b_proc)
+InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
+       logBytesPerSector, b_proc)
+	struct buf *bp;
+	struct vnode *b_vp;
+	unsigned rw_flag;
+	dev_t dev;
+	RF_SectorNum_t startSect;
+	RF_SectorCount_t numSect;
+	caddr_t buf;
+	void (*cbFunc) (struct buf *);
+	void *cbArg;
+	int logBytesPerSector;
+	struct proc *b_proc;
 {
 	/* bp->b_flags       = B_PHYS | rw_flag; */
 	bp->b_flags = B_CALL | rw_flag;	/* XXX need B_PHYS here too??? */
@@ -2151,7 +2152,7 @@ raidwrite_component_label(dev, b_vp, clabel)
 }
 
 void 
-rf_markalldirty( raidPtr )
+rf_markalldirty(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t clabel;
@@ -2247,7 +2248,7 @@ rf_markalldirty( raidPtr )
 
 
 void
-rf_update_component_labels( raidPtr )
+rf_update_component_labels(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t clabel;
@@ -2335,7 +2336,7 @@ rf_update_component_labels( raidPtr )
 
 
 void
-rf_final_update_component_labels( raidPtr )
+rf_final_update_component_labels(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t clabel;
@@ -2433,7 +2434,7 @@ rf_final_update_component_labels( raidPtr )
 }
 
 void
-rf_close_component( raidPtr, vp, auto_configured )
+rf_close_component(raidPtr, vp, auto_configured)
 	RF_Raid_t *raidPtr;
 	struct vnode *vp;
 	int auto_configured;
@@ -2458,7 +2459,7 @@ rf_close_component( raidPtr, vp, auto_configured )
 
 
 void
-rf_UnconfigureVnodes( raidPtr )
+rf_UnconfigureVnodes(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	int r,c; 
