@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.19 1994/04/29 03:56:26 cgd Exp $
+ *	$Id: swap_pager.c,v 1.20 1994/04/29 08:21:49 mycroft Exp $
  */
 
 /*
@@ -393,11 +393,22 @@ swap_pager_getpage(pager, m, sync)
 	vm_page_t m;
 	boolean_t sync;
 {
+	register int rv;
+
 #ifdef DEBUG
 	if (swpagerdebug & SDB_FOLLOW)
 		printf("swpg_getpage(%x, %x, %d)\n", pager, m, sync);
 #endif
-	return(swap_pager_io((sw_pager_t)pager->pg_data, m, B_READ));
+#ifdef DIAGNOSTIC
+	if (m->flags & PG_FAULTING)
+		panic("swap_pager_getpage: page is already faulting");
+	m->flags |= PG_FAULTING;
+#endif
+	rv = swap_pager_io((sw_pager_t)pager->pg_data, m, B_READ);
+#ifdef DIAGNOSTIC
+	m->flags &= ~PG_FAULTING;
+#endif
+	return(rv);
 }
 
 static int
