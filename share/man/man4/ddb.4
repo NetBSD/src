@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.41 2000/05/15 20:37:56 jhawk Exp $
+.\"	$NetBSD: ddb.4,v 1.42 2000/05/20 02:28:33 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -319,23 +319,24 @@ don't assume that each external label is a procedure entry mask
 .Xc
 A synonym for
 .Ic examine .
-.It Ic xf
-Examine forward.
-.Ic xf
-re-executes the most recent
-.Ic execute
-command with the same parameters except that
-.Ar address
-is set to
-.Ar next .
-.It Ic xb
-Examine backward.
-.Ic xb
-re-executes the most recent
-.Ic execute
-command with the same parameters, except that
-.Ar address
-is set to the last start address minus its size.
+.\" XXX - these commands aren't implemented; jhawk 19 May 2000
+.\" .It Ic xf
+.\" Examine forward.
+.\" .Ic xf
+.\" re-executes the most recent
+.\" .Ic execute
+.\" command with the same parameters except that
+.\" .Ar address
+.\" is set to
+.\" .Ar next .
+.\" .It Ic xb
+.\" Examine backward.
+.\" .Ic xb
+.\" re-executes the most recent
+.\" .Ic execute
+.\" command with the same parameters, except that
+.\" .Ar address
+.\" is set to the last start address minus its size.
 .It Xo
 .Ic print Ns Op Cm /axzodurc
 .Ar address Op Ar address ...
