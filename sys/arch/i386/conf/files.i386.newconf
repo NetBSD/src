@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.50 1995/04/17 15:28:30 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.51 1995/04/17 16:58:14 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -31,34 +31,18 @@ file	dev/cninit.c
 major	{vnd = 14}
 
 #
-# Generic SCSI drivers
+# Machine-independent SCSI drivers
 #
-define	scsi {}
-file	scsi/scsi_base.c		scsi
-file	scsi/scsi_ioctl.c		scsi
-file	scsi/scsiconf.c			scsi
 
-device	scsibus at scsi {target = -1, lun = -1}
-
-device	cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-major	{cd = 6}
-device	ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-device	sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
+include "../../../scsi/files.scsi"
 major	{sd = 4}
-device	st at scsibus: tape
-file	scsi/st.c			st needs-flag
 major	{st = 5}
-device	su at scsibus: disk
-file	scsi/su.c			su needs-flag
-device	uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
+major	{cd = 6}
 
 #
-# Bus types
+# System bus types
 #
+
 device	isa at root {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
@@ -69,17 +53,27 @@ device	pci at root {[bus = -1], [dev = -1]}
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
-file	dev/isa/isa.c			isa needs-flag
+
+include "../../../dev/isa/files.isa"
+major	{mcd = 7}
+major	{scd = 15}
+major	{wd = 0}
+major	{wt = 3}
+
 file	arch/i386/isa/isa_machdep.c	isa
 
+# PC clock
 file	arch/i386/isa/clock.c		isa
-define	isadma
-file	dev/isa/isadma.c		isadma needs-flag
+
+# Numeric Processing Extension; Math Co-processor
 device	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
+# PC console support a la "pccons"
 device	pc at isa: tty
 file	arch/i386/isa/pccons.c		pc needs-count
+
+# PC console support a la "pcvt"
 device	vt at isa: tty
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-count
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-count
@@ -88,22 +82,7 @@ file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-count
 file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-count
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-count
 
-define	commulti {[slave = -1]}
-device	ast at isa: commulti
-file	dev/isa/ast.c			ast
-device	boca at isa: commulti
-file	dev/isa/boca.c			boca
-device	rtfps at isa: commulti
-file	dev/isa/rtfps.c			rtfps
-
-device	com at isa, commulti: tty
-file	dev/isa/com.c			com needs-count
-device	cy at isa: tty
-file	dev/isa/cy.c			cy needs-count
-
-device	lpt at isa
-file	dev/isa/lpt.c			lpt needs-flag
-
+# PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
 device	mms at isa
@@ -111,82 +90,23 @@ file	arch/i386/isa/mms.c		mms needs-flag
 device	pms at isa
 file	arch/i386/isa/pms.c		pms needs-flag
 
-device	aha at isa: scsi, isadma
-file	dev/isa/aha1542.c		aha
-device	aic at isa: scsi, isadma
-file	dev/isa/aic6360.c		aic
-device	bt at isa: scsi, isadma
-file	dev/isa/bt742a.c		bt
-device	sea at isa: scsi, isadma
-file	dev/isa/seagate.c		sea
-device	uha at isa: scsi, isadma
-file	dev/isa/ultra14f.c		uha
-device	wds at isa: scsi, isadma
-file	dev/isa/wd7000.c		wds
-
+# Floppy disk controller
 device	fdc at isa {drive = -1}
 device	fd at fdc: disk, isadma
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
-device	mcd at isa: disk
-file	dev/isa/mcd.c			mcd needs-flag
-major	{mcd = 7}
-device	scd at isa: disk
-file	dev/isa/t/scd.c			scd needs-flag
-major	{scd = 15}
-device	wdc at isa {drive = -1}
-device	wd at wdc: disk, isadma
-file	dev/isa/wd.c			wdc needs-flag
-major	{wd = 0}
-device	wt at isa: tape, isadma
-file	dev/isa/wt.c			wt needs-flag
-major	{wt = 3}
 
-define	elink
-file	dev/isa/elink.c			elink
-
-device	ed at isa: ether, ifnet
-file	dev/isa/if_ed.c			ed
-device	eg at isa: ether, ifnet
-file	dev/isa/if_eg.c			eg
-device	el at isa: ether, ifnet
-file	dev/isa/if_el.c			el
-device	ep at isa: ether, ifnet, elink
-file	dev/isa/if_ep.c			ep
-#device	hp at isa: ether, ifnet
-#file	dev/isa/if_hp.c			hp
-device	ie at isa: ether, ifnet, elink
-file	dev/isa/if_ie.c			ie
-device	ix at isa: ether, ifnet
-file	dev/isa/if_ix.c			ix
-device	le at isa: ether, ifnet, isadma
-file	dev/isa/if_le.c			le
-
-define	sbdsp
-file	dev/isa/sbdsp.c			sbdsp
-device	sb at isa: audio, isadma, sbdsp
-file	dev/isa/sb.c			sb needs-flag
-device	pas at isa: audio, isadma, sbdsp
-file	dev/isa/pas.c			pas needs-flag
-
-define	ad1848
-file	dev/isa/ad1848.c		ad1848
-device	pss at isa {[port = -1], [size = 0],
-		     [iomem = -1], [iosiz = 0],
-		     [irq = -1], [drq = -1]}
-device	sp at pss: audio, isadma, ad1848
-file	dev/isa/pss.c			pss needs-flag
-device	wss at isa: audio, isadma, ad1848
-file	dev/isa/wss.c			wss needs-flag
-
+# PC speaker
 device	spkr at isa: tty
 file	arch/i386/isa/spkr.c		speaker needs-flag
 
 #
 # EISA-only drivers
 #
-device	ahb at isa: scsi
-file	dev/eisa/aha1742.c	ahb
+
+include "../../../dev/eisa/files.eisa"
+# XXX not yet:
+# file	arch/i386/eisa/eisa_machdep.c	eisa
 
 #
 # PCI-only drivers
@@ -198,45 +118,14 @@ file	arch/i386/pci/pci_machdep.c	pci
 #
 # Compatibility modules
 #
-file	compat/svr4/svr4_exec.c		compat_svr4
-file	compat/svr4/svr4_fcntl.c	compat_svr4
-file	compat/svr4/svr4_ioctl.c	compat_svr4
-file	compat/svr4/svr4_misc.c		compat_svr4
-file	compat/svr4/svr4_signal.c	compat_svr4
-file	compat/svr4/svr4_stat.c		compat_svr4
-file	compat/svr4/svr4_syscalls.c	compat_svr4
-file	compat/svr4/svr4_sysent.c	compat_svr4
-file	compat/svr4/svr4_util.c		compat_svr4
-file	compat/svr4/svr4_net.c		compat_svr4
-file	compat/svr4/svr4_termios.c	compat_svr4
-file	compat/svr4/svr4_stream.c	compat_svr4
-file	compat/svr4/svr4_ttold.c	compat_svr4
-file	compat/svr4/svr4_filio.c	compat_svr4
-file	compat/svr4/svr4_error.c	compat_svr4
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "../../../compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c	compat_svr4
 
-file	compat/ibcs2/ibcs2_errno.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_fcntl.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_ioctl.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_ipc.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_misc.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_signal.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_socksys.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_stat.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_syscalls.c	compat_ibcs2
-file	compat/ibcs2/ibcs2_util.c	compat_ibcs2
+# iBCS-2 Binary Compatibility (COMPAT_IBCS2)
+include "../../../compat/ibcs2/files.ibcs2"
 
-file	compat/linux/linux_exec.c		compat_linux
-file	compat/linux/linux_file.c		compat_linux
-file	compat/linux/linux_sysent.c		compat_linux
-file	compat/linux/linux_ioctl.c		compat_linux
-file	compat/linux/linux_misc.c		compat_linux
-file	compat/linux/linux_signal.c		compat_linux
-file	compat/linux/linux_syscalls.c		compat_linux
-file	compat/linux/linux_util.c		compat_linux
-file	compat/linux/linux_error.c		compat_linux
-file	compat/linux/linux_socket.c		compat_linux
-file	compat/linux/linux_ipc.c		compat_linux
-file	arch/i386/i386/linux_machdep.c		compat_linux
+# Linux Binary Compatibility (COMPAT_LINUX)
+include "../../../compat/linux/files.linux"
+file	arch/i386/i386/linux_machdep.c	compat_linux
