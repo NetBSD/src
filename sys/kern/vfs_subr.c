@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.221 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.222 2004/04/22 03:47:58 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.221 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.222 2004/04/22 03:47:58 enami Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2949,7 +2949,8 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 	if (sbp == (mbp = &mp->mnt_stat))
 		return;
 
-	(void)memcpy(&sbp->f_fsid, &mbp->f_fsidx, sizeof(sbp->f_fsid));
+	(void)memcpy(&sbp->f_fsidx, &mbp->f_fsidx, sizeof(sbp->f_fsidx));
+	sbp->f_fsid = mbp->f_fsid;
 	sbp->f_owner = mbp->f_owner;
 	sbp->f_flag = mbp->f_flag;
 	sbp->f_syncwrites = mbp->f_syncwrites;
