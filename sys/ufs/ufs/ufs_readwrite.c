@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.58 2004/08/15 16:46:18 mycroft Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.59 2004/09/10 09:36:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.58 2004/08/15 16:46:18 mycroft Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.59 2004/09/10 09:36:05 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -44,7 +44,6 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.58 2004/08/15 16:46:18 mycroft E
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
 #define	fs_bmask		lfs_bmask
-#define	fs_maxfilesize		lfs_maxfilesize
 #else
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct fs
