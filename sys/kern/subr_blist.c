@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.3 2005/04/06 11:35:54 yamt Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.4 2005/04/06 11:36:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.3 2005/04/06 11:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.4 2005/04/06 11:36:37 yamt Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -122,6 +122,29 @@ __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp
 void panic(const char *ctl, ...);
 
 #endif
+
+/*
+ * blmeta and bl_bitmap_t MUST be a power of 2 in size.
+ */
+
+typedef struct blmeta {
+	union {
+	    uint64_t	bmu_avail;	/* space available under us	*/
+	    uint64_t	bmu_bitmap;	/* bitmap if we are a leaf	*/
+	} u;
+	uint64_t	bm_bighint;	/* biggest contiguous block hint*/
+} blmeta_t;
+
+struct blist {
+	uint64_t		bl_blocks;	/* area of coverage		*/
+	uint64_t		bl_radix;	/* coverage radix		*/
+	uint64_t		bl_skip;	/* starting skip		*/
+	uint64_t		bl_free;	/* number of free blocks	*/
+	blmeta_t	*bl_root;	/* root of radix tree		*/
+	uint64_t		bl_rootblks;	/* blks allocated for tree */
+};
+
+#define BLIST_META_RADIX	16
 
 /*
  * static support functions

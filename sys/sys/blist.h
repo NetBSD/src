@@ -1,4 +1,4 @@
-/*	$NetBSD: blist.h,v 1.3 2005/04/06 11:35:54 yamt Exp $	*/
+/*	$NetBSD: blist.h,v 1.4 2005/04/06 11:36:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -64,28 +64,8 @@
 
 #define BLIST_NONE	((uint64_t)-1)
 
-/*
- * blmeta and bl_bitmap_t MUST be a power of 2 in size.
- */
+typedef struct blist *blist_t;
 
-typedef struct blmeta {
-	union {
-	    uint64_t	bmu_avail;	/* space available under us	*/
-	    uint64_t	bmu_bitmap;	/* bitmap if we are a leaf	*/
-	} u;
-	uint64_t	bm_bighint;	/* biggest contiguous block hint*/
-} blmeta_t;
-
-typedef struct blist {
-	uint64_t		bl_blocks;	/* area of coverage		*/
-	uint64_t		bl_radix;	/* coverage radix		*/
-	uint64_t		bl_skip;	/* starting skip		*/
-	uint64_t		bl_free;	/* number of free blocks	*/
-	blmeta_t	*bl_root;	/* root of radix tree		*/
-	uint64_t		bl_rootblks;	/* blks allocated for tree */
-} *blist_t;
-
-#define BLIST_META_RADIX	16
 #define BLIST_BMAP_RADIX	(sizeof(uint64_t)*8)
 
 #define BLIST_MAX_ALLOC		BLIST_BMAP_RADIX
