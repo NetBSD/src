@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.245 2000/05/15 07:50:44 bouyer Exp $
+# $NetBSD: mi,v 1.246 2000/05/17 18:20:31 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -392,6 +392,7 @@
 ./usr/share/man/cat4/cs.0
 ./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
+./usr/share/man/cat4/cz.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/depca.0
@@ -1405,6 +1406,7 @@
 ./usr/share/man/man4/cs.4
 ./usr/share/man/man4/cue.4
 ./usr/share/man/man4/cy.4
+./usr/share/man/man4/cz.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/de.4
 ./usr/share/man/man4/depca.4
