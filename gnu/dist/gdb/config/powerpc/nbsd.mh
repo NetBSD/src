@@ -1,0 +1,4 @@
+# Host: Big-endian PowerPC running NetBSD
+XM_FILE= xm-nbsd.h
+NAT_FILE= nm-nbsd.h
+NATDEPFILES= infptrace.o inftarg.o corelow.o rs6000-nat.o fork-child.o solib.o kcorelow.o
