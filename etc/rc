@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.42 1994/05/29 19:10:22 mycroft Exp $
+#	$Id: rc,v 1.43 1994/06/03 05:02:10 jtc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -109,10 +109,6 @@ fi
 
 echo '.'
 mount -a -t nfs
-
-echo 'runtime link editor directory cache'
-rm -f /var/run/ld.so.hints
-ldconfig
 
 echo -n 'starting system logger'
 rm -f /dev/log
