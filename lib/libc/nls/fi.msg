@@ -220,3 +220,5 @@ $ SIGUSR1
 30 K‰ytt‰j‰n m‰‰ritelt‰v‰ signaali 1
 $ SIGUSR2
 31 K‰ytt‰j‰n m‰‰ritelt‰v‰ signaali 2
+$ SIGPWR
+32 Virransaannin tilassa muutos
