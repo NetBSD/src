@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.8 2002/09/27 03:18:21 thorpej Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.9 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,6 +235,11 @@ USB_ATTACH(uhidev)
 					USB_ATTACH_ERROR_RETURN;
 				}
 #endif
+#if NRND > 0
+				rnd_attach_source(&dev->rnd_source, 
+						  USBDEVNAME(dev->sc_dev), 
+						  RND_TYPE_TTY, 0);
+#endif
 			}
 		}
 	}
@@ -324,6 +329,9 @@ USB_DETACH(uhidev)
 	rv = 0;
 	for (i = 0; i < sc->sc_nrepid; i++) {
 		if (sc->sc_subdevs[i] != NULL) {
+#if NRND > 0
+			rnd_detach_source(&sc->sc_subdevs[i]->rnd_source);
+#endif
 			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
 			sc->sc_subdevs[i] = NULL;
 		}
@@ -386,6 +394,9 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (scd->sc_in_rep_size != cc)
 		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
 		       scd->sc_in_rep_size, cc);
+#endif
+#if NRND > 0
+	rnd_add_uint32(&scd->rnd_source, (u_int32_t)(sc->sc_ibuf));
 #endif
 	scd->sc_intr(scd, p, cc);
 }
