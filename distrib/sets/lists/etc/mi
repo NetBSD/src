@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2000/03/14 08:49:22 shin Exp $
+# $NetBSD: mi,v 1.46 2000/04/08 23:06:45 tsarna Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -145,6 +145,7 @@
 ./etc/shells
 ./etc/skeykeys
 ./etc/spwd.db
+./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
 ./etc/weekly
@@ -190,3 +191,4 @@
 ./var/run/utmp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.yp
+
