@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.21.2.3 1997/06/02 05:01:12 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.21.2.4 1998/11/02 03:33:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,14 +35,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.21.2.3 1997/06/02 05:01:12 lukem Exp $";
+__RCSID("$NetBSD: getpwent.c,v 1.21.2.4 1998/11/02 03:33:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <fcntl.h>
 #include <db.h>
@@ -66,6 +68,23 @@ static char rcsid[] = "$NetBSD: getpwent.c,v 1.21.2.3 1997/06/02 05:01:12 lukem 
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #endif
+
+#include "pw_private.h"
+
+#ifdef __weak_alias
+__weak_alias(endpwent,_endpwent);
+__weak_alias(getpwent,_getpwent);
+__weak_alias(getpwnam,_getpwnam);
+__weak_alias(getpwuid,_getpwuid);
+__weak_alias(setpassent,_setpassent);
+__weak_alias(setpwent,_setpwent);
+#endif
+
+
+/*
+ * The lookup techniques and data extraction code here must be kept
+ * in sync with that in `pwd_mkdb'.
+ */
 
 static struct passwd _pw_passwd;	/* password structure */
 static DB *_pw_db;			/* password database */
@@ -92,18 +111,32 @@ static int	_pw_hesnum;
 enum _pwmode { PWMODE_NONE, PWMODE_FULL, PWMODE_USER, PWMODE_NETGRP };
 static enum _pwmode __pwmode;
 
+enum _ypmap { YPMAP_NONE, YPMAP_ADJUNCT, YPMAP_MASTER };
+
 static struct passwd	*__pwproto = (struct passwd *)NULL;
 static int		 __pwproto_flags;
 static char		 line[1024];
 static long		 prbuf[1024 / sizeof(long)];
 static DB		*__pwexclude = (DB *)NULL;
+ 
+static int	__pwexclude_add __P((const char *));
+static int	__pwexclude_is __P((const char *));
+static void	__pwproto_set __P((void));
+static int	__ypmaptype __P((void));
+static int	__pwparse __P((struct passwd *, char *));
+
+	/* macros for deciding which YP maps to use. */
+#define PASSWD_BYNAME	(__ypmaptype() == YPMAP_MASTER \
+			    ? "master.passwd.byname" : "passwd.byname")
+#define PASSWD_BYUID	(__ypmaptype() == YPMAP_MASTER \
+			    ? "master.passwd.byuid" : "passwd.byuid")
 
 /*
  * add a name to the compat mode exclude list
  */
 static int
 __pwexclude_add(name)
-const char *name;
+	const char *name;
 {
 	DBT key, data;
 
@@ -134,7 +167,7 @@ const char *name;
  */
 static int
 __pwexclude_is(name)
-const char *name;
+	const char *name;
 {
 	DBT key, data;
 
@@ -231,6 +264,48 @@ __pwproto_set()
 	__pwproto_flags = _pw_flags;
 }
 
+static int
+__ypmaptype()
+{
+	static int maptype = -1;
+	int order, r;
+
+	if (maptype != -1)
+		return (maptype);
+
+	maptype = YPMAP_NONE;
+	if (geteuid() != 0)
+		return (maptype);
+
+	if (!__ypdomain) {
+		if( _yp_check(&__ypdomain) == 0)
+			return (maptype);
+	}
+
+	r = yp_order(__ypdomain, "master.passwd.byname", &order);
+	if (r == 0) {
+		maptype = YPMAP_MASTER;
+		return (maptype);
+	}
+
+	/*
+	 * NIS+ in YP compat mode doesn't support
+	 * YPPROC_ORDER -- no point in continuing.
+	 */
+	if (r == YPERR_YPERR)
+		return (maptype);
+
+	/* master.passwd doesn't exist -- try passwd.adjunct */
+	if (r == YPERR_MAP) {
+		r = yp_order(__ypdomain, "passwd.adjunct.byname", &order);
+		if (r == 0)
+			maptype = YPMAP_ADJUNCT;
+		return (maptype);
+	}
+
+	return (maptype);
+}
+
 /*
  * parse an old-style passwd file line (from NIS or HESIOD)
  */
@@ -239,31 +314,15 @@ __pwparse(pw, s)
 	struct passwd *pw;
 	char *s;
 {
-	char *bp, *cp, *ep;
-	unsigned long id;
+	static char adjunctpw[YPMAXRECORD + 2];
+	int flags, maptype;
 
-	/* since this is currently using strsep(), parse it first */
-	bp = s;
-	pw->pw_name = strsep(&bp, ":\n");
-	pw->pw_passwd = strsep(&bp, ":\n");
-	if (!(cp = strsep(&bp, ":\n")))
+	maptype = __ypmaptype();
+	flags = _PASSWORD_NOWARN;
+	if (maptype != YPMAP_MASTER)
+		flags |= _PASSWORD_OLDFMT;
+	if (! __pw_scan(s, pw, &flags))
 		return 1;
-	id = strtoul(cp, &ep, 10);
-	if (id > UID_MAX || *ep != '\0')
-		return 1;
-	pw->pw_uid = (uid_t)id;
-	if (!(cp = strsep(&bp, ":\n")))
-		return 1;
-	id = strtoul(cp, &ep, 10);
-	if (id > GID_MAX || *ep != '\0')
-		return 1;
-	pw->pw_gid = (gid_t)id;
-	pw->pw_change = 0;
-	pw->pw_class = "";
-	pw->pw_gecos = strsep(&bp, ":\n");
-	pw->pw_dir = strsep(&bp, ":\n");
-	pw->pw_shell = strsep(&bp, ":\n");
-	pw->pw_expire = 0;
 
 	/* now let the prototype override, if set. */
 	if(__pwproto != (struct passwd *)NULL) {
@@ -282,6 +341,23 @@ __pwparse(pw, s)
 		if(__pwproto->pw_shell != (char *)NULL)
 			pw->pw_shell = __pwproto->pw_shell;
 	}
+	if ((maptype == YPMAP_ADJUNCT) &&
+	    (strstr(pw->pw_passwd, "##") != NULL)) {
+		char *data, *bp;
+		int datalen;
+
+		if (yp_match(__ypdomain, "passwd.adjunct.byname", pw->pw_name,
+		    (int)strlen(pw->pw_name), &data, &datalen) == 0) {
+			if (datalen > sizeof(adjunctpw) - 1)
+				datalen = sizeof(adjunctpw) - 1;
+			strncpy(adjunctpw, data, datalen);
+
+				/* skip name to get password */
+			if ((bp = strsep(&data, ":")) != NULL &&
+			    (bp = strsep(&data, ":")) != NULL)
+				pw->pw_passwd = bp;
+		}
+	}
 	return 0;
 }
 #endif /* YP || HESIOD */
@@ -290,6 +366,8 @@ __pwparse(pw, s)
  * local files implementation of getpw*()
  * varargs: type, [ uid (type == _PW_KEYBYUID) | name (type == _PW_KEYBYNAME) ]
  */
+static int	_local_getpw __P((void *, void *, va_list));
+
 static int
 _local_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -347,6 +425,8 @@ _local_getpw(rv, cb_data, ap)
  * hesiod implementation of getpw*()
  * varargs: type, [ uid (type == _PW_KEYBYUID) | name (type == _PW_KEYBYNAME) ]
  */
+static int	_dns_getpw __P((void *, void *, va_list));
+
 static int
 _dns_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -409,6 +489,8 @@ _dns_getpw(rv, cb_data, ap)
  * nis implementation of getpw*()
  * varargs: type, [ uid (type == _PW_KEYBYUID) | name (type == _PW_KEYBYNAME) ]
  */
+static int	_nis_getpw __P((void *, void *, va_list));
+
 static int
 _nis_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -419,7 +501,7 @@ _nis_getpw(rv, cb_data, ap)
 	uid_t		 uid;
 	int		 search;
 	char		*key, *data;
-	char		*map = "passwd.byname";
+	char		*map = PASSWD_BYNAME;
 	int		 keylen, datalen, r;
 
 	if(__ypdomain == NULL) {
@@ -438,15 +520,15 @@ _nis_getpw(rv, cb_data, ap)
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
 		snprintf(line, sizeof(line), "%u", uid);
-		map = "passwd.byuid";
+		map = PASSWD_BYUID;
 		break;
 	default:
 		abort();
-			}
+	}
 	line[sizeof(line) - 1] = '\0';
 	if (search != _PW_KEYBYNUM) {
 		data = NULL;
-		r = yp_match(__ypdomain, map, line, strlen(line),
+		r = yp_match(__ypdomain, map, line, (int)strlen(line),
 				&data, &datalen);
 		switch (r) {
 		case 0:
@@ -523,6 +605,8 @@ _nis_getpw(rv, cb_data, ap)
  * See if the compat token is in the database.  Only works if pwd_mkdb knows
  * about the token.
  */
+static int	__has_compatpw __P((void));
+
 static int
 __has_compatpw()
 {
@@ -550,6 +634,8 @@ __has_compatpw()
 /*
  * log an error if "files" or "compat" is specified in passwd_compat database
  */
+static int	_bad_getpw __P((void *, void *, va_list));
+
 static int
 _bad_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -572,6 +658,8 @@ _bad_getpw(rv, cb_data, ap)
  * only Hesiod and NIS is supported - it doesn't make sense to lookup
  * compat names from 'files' or 'compat'.
  */
+static int	__getpwcompat __P((int, uid_t, const char *));
+
 static int
 __getpwcompat(type, uid, name)
 	int		 type;
@@ -604,6 +692,8 @@ __getpwcompat(type, uid, name)
  * varargs (ignored):
  *	type, [ uid (type == _PW_KEYBYUID) | name (type == _PW_KEYBYNAME) ]
  */
+static int	_compat_getpwent __P((void *, void *, va_list));
+
 static int
 _compat_getpwent(rv, cb_data, ap)
 	void	*rv;
@@ -721,6 +811,7 @@ again:
  * compat implementation of getpwnam() and getpwuid()
  * varargs: type, [ uid (type == _PW_KEYBYUID) | name (type == _PW_KEYBYNAME) ]
  */
+static int	_compat_getpw __P((void *, void *, va_list));
 
 static int
 _compat_getpw(rv, cb_data, ap)
@@ -1007,8 +1098,12 @@ __initdb()
 #if defined(YP) || defined(HESIOD)
 	__pwmode = PWMODE_NONE;
 #endif
-	p = (geteuid()) ? _PATH_MP_DB : _PATH_SMP_DB;
-	_pw_db = dbopen(p, O_RDONLY, 0, DB_HASH, NULL);
+	if (geteuid() == 0) {
+		_pw_db = dbopen((p = _PATH_SMP_DB), O_RDONLY, 0, DB_HASH, NULL);
+		if (_pw_db)
+			return(1);
+	}
+	_pw_db = dbopen((p = _PATH_MP_DB), O_RDONLY, 0, DB_HASH, NULL);
 	if (_pw_db)
 		return 1;
 	if (!warned)
@@ -1041,27 +1136,24 @@ __hashpw(key)
 	if (data.size > max && !(line = realloc(line, (max += 1024))))
 		return NS_UNAVAIL;
 
+	/* THIS CODE MUST MATCH THAT IN pwd_mkdb. */
 	t = line;
 #define	EXPAND(e)	e = t; while ((*t++ = *p++));
+#define	SCALAR(v)	memmove(&(v), p, sizeof v); p += sizeof v
 	EXPAND(_pw_passwd.pw_name);
 	EXPAND(_pw_passwd.pw_passwd);
-	memmove((char *)&_pw_passwd.pw_uid, p, sizeof(int));
-	p += sizeof(int);
-	memmove((char *)&_pw_passwd.pw_gid, p, sizeof(int));
-	p += sizeof(int);
-	memmove((char *)&_pw_passwd.pw_change, p, sizeof(time_t));
-	p += sizeof(time_t);
+	SCALAR(_pw_passwd.pw_uid);
+	SCALAR(_pw_passwd.pw_gid);
+	SCALAR(_pw_passwd.pw_change);
 	EXPAND(_pw_passwd.pw_class);
 	EXPAND(_pw_passwd.pw_gecos);
 	EXPAND(_pw_passwd.pw_dir);
 	EXPAND(_pw_passwd.pw_shell);
-	memmove((char *)&_pw_passwd.pw_expire, p, sizeof(time_t));
-	p += sizeof(time_t);
+	SCALAR(_pw_passwd.pw_expire);
 
 	/* See if there's any data left.  If so, read in flags. */
 	if (data.size > (p - (char *)data.data)) {
-		memmove((char *)&_pw_flags, p, sizeof(int));
-		p += sizeof(int);
+		SCALAR(_pw_flags);
 	} else
 		_pw_flags = _PASSWORD_NOUID|_PASSWORD_NOGID;	/* default */
 
