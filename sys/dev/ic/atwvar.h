@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.6 2004/01/10 06:02:32 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.7 2004/01/29 10:06:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -179,7 +179,6 @@ struct atw_tx_radiotap_header {
 struct atw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
-	void			*sc_ih;		/* interrupt handler */
 	int			(*sc_enable)(struct atw_softc *);
 	void			(*sc_disable)(struct atw_softc *);
 	void			(*sc_power)(struct atw_softc *, int);
@@ -191,8 +190,6 @@ struct atw_softc {
 	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211com *);
 	void			(*sc_node_free)(struct ieee80211com *,
 					struct ieee80211_node *);
-
-	int			sc_pci;			/* attach to PCI-Bus */
 
 	struct atw_stats sc_stats;	/* debugging stats */
 
