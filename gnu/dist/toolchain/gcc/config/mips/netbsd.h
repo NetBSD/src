@@ -27,7 +27,11 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef MACHINE_TYPE
-#define MACHINE_TYPE "NetBSD/pmax"
+#ifdef TARGET_BIG_ENDIAN_DEFAULT
+#define MACHINE_TYPE "NetBSD ELF/mipseb"
+#else
+#define MACHINE_TYPE "NetBSD ELF/mipsel"
+#endif
 #endif
 
 #define TARGET_MEM_FUNCTIONS
@@ -42,9 +46,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Now clean up after it.  */
 #undef OBJECT_FORMAT_COFF
-#undef DWARF_FRAME_REGNUM
-#undef DWARF_FRAME_RETURN_COLUMN
-#undef INCOMING_RETURN_ADDR_RTX
 #undef INVOKE__main
 #undef NAME__MAIN
 #undef SYMBOL__MAIN
@@ -137,8 +138,7 @@ Boston, MA 02111-1307, USA.  */
 #define MIPS_CACHEFLUSH_FUNC "_cacheflush"
 
 /* Use sjlj exceptions. */
-#undef DWARF2_UNWIND_INFO
-/* #define DWARF2_UNWIND_INFO 0 */
+#define DWARF2_UNWIND_INFO 0
 
 /* Turn off special section processing by default.  */
 #undef MIPS_DEFAULT_GVALUE
