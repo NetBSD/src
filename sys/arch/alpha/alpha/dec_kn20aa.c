@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.26 1997/06/07 19:08:19 cgd Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.27 1997/08/23 14:28:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.26 1997/06/07 19:08:19 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.27 1997/08/23 14:28:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.26 1997/06/07 19:08:19 cgd Exp $");
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#ifndef CONSPEED
+#define CONSPEED TTYDEF_SPEED
+#endif
+static int comcnrate = CONSPEED;
 
 const char *
 dec_kn20aa_model_name()
@@ -86,30 +91,17 @@ dec_kn20aa_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comconsrate;				/*XXX*/
-			extern int comcngetc __P((dev_t));		/*XXX*/
-			extern void comcnputc __P((dev_t, int));	/*XXX*/
-			extern void comcnpollc __P((dev_t, int));	/*XXX*/
-			static struct consdev comcons = { NULL, NULL,
-			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
-
 			/*
 			 * Delay to allow PROM putchars to complete.
 			 * FIFO depth * character time,
 			 * character time = (1000000 / (defaultrate / 10))
 			 */
-			DELAY(160000000 / comconsrate);
+			DELAY(160000000 / comcnrate);
 
-			comconsaddr = 0x3f8;
-			comconstag = ccp->cc_iot;
-			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
-			    0, &comconsioh))
-				panic("can't map serial console I/O ports");
-			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-			cominit(comconstag, comconsioh, comconsrate);
+			if(comcnattach(ccp->cc_iot, 0x3f8, comcnrate,
+				    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
+				panic("can't init serial console");
 
-			cn_tab = &comcons;
-			comcons.cn_dev = makedev(26, 0);	/* XXX */
 			break;
 		}
 
