@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.15 1994/02/15 22:51:23 pk Exp $
+ *	$Id: rtld.c,v 1.16 1994/03/28 02:11:53 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@
 #include <sys/mman.h>
 #ifndef BSD
 #define MAP_COPY	MAP_PRIVATE
-#define MAP_FILE	0
 #define MAP_ANON	0
 #endif
 #include <fcntl.h>
@@ -476,14 +475,14 @@ again:
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data,
 				PROT_READ|PROT_EXEC,
-				MAP_FILE|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+				MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
 
 	if (mmap(addr + hdr.a_text, hdr.a_data,
 				PROT_READ|PROT_WRITE|PROT_EXEC,
-				MAP_FILE|MAP_FIXED|MAP_COPY,
+				MAP_FIXED|MAP_COPY,
 				fd, hdr.a_text) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
@@ -947,7 +946,7 @@ maphints()
 	}
 
 	msize = PAGSIZ;
-	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
+	addr = mmap(0, msize, PROT_READ, MAP_COPY, fd, 0);
 
 	if (addr == (caddr_t)-1) {
 		hheader = (struct hints_header *)-1;
@@ -969,7 +968,7 @@ maphints()
 
 	if (hheader->hh_ehints > msize) {
 		if (mmap(addr+msize, hheader->hh_ehints - msize,
-				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
+				PROT_READ, MAP_COPY|MAP_FIXED,
 				fd, msize) != (caddr_t)(addr+msize)) {
 
 			munmap((caddr_t)hheader, msize);
