@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.10 2003/08/07 16:42:38 agc Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.11 2004/12/21 11:25:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.10 2003/08/07 16:42:38 agc Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.11 2004/12/21 11:25:43 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: citrus_utf8.c,v 1.10 2003/08/07 16:42:38 agc Exp $");
 static int _UTF8_count_array[256];
 static int const *_UTF8_count = NULL;
 
-static u_int32_t _UTF8_range[] = {
+static const u_int32_t _UTF8_range[] = {
 	0,	/*dummy*/
 	0x00000000, 0x00000080, 0x00000800, 0x00010000, 
 	0x00200000, 0x04000000, 0x80000000,
