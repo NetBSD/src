@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.4 2001/09/04 02:51:17 wiz Exp $
+.\"	$NetBSD: uiomove.9,v 1.5 2001/09/04 02:52:44 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,6 @@
 .Ft int
 .Fn uiomove "void *buf" "int n" "struct uio *uio"
 .Sh DESCRIPTION
-
 The
 .Nm
 function copies up to
@@ -53,7 +52,7 @@ to by
 and the addresses described by
 .Fa uio ,
 which may be in user-space or kernel-space.
-
+.Pp
 The
 .Fa uio
 argument is a pointer to a
@@ -71,12 +70,12 @@ struct uio {
 	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
 .Ed
-
+.Pp
 A
 .Fa struct uio
 typically describes data in motion.
 Several of the fields described below reflect that expectation.
-
+.Pp
 .Bl -tag -width uio_xxxxxx
 .It uio_iov
 Pointer to array of
@@ -104,7 +103,7 @@ A flag indicating whether date should be read into the space
 A pointer to the process whose data area is described by the
 structure, or NULL if the area is in kernel-space.
 .El
-
+.Pp
 The value of
 .Fa uio->uio_rw
 controls whether
@@ -114,13 +113,13 @@ copies data from
 to
 .Fa uio
 or vice versa.
-
+.Pp
 The lesser of
 .Fa n
 or
 .Fa uio->resid
 bytes are copied.
-
+.Pp
 .Nm
 changes fields of the structure pointed to by
 .Fa uio ,
@@ -133,12 +132,9 @@ to point that much farther into the region described.
 This allows multiple calls to
 .Nm
 to easily be used to fill or drain the region of data.
-
-
 .Sh RETURN VALUES
 .Nm
 returns 0 on success or EFAULT if a bad address is encountered.
-
 .Sh SEE ALSO
 .Xr fetch 9 ,
 .Xr store 9 ,
