@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -36,9 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)fsi_lex.l	8.2 (Berkeley) 2/17/94
  *
- * $Id: fsi_lex.l,v 1.1 1993/11/27 21:20:11 mycroft Exp $
+ * $Id: fsi_lex.l,v 1.2 1994/06/13 19:49:33 mycroft Exp $
  *
  */
 
@@ -163,9 +163,9 @@ struct r {
 <Q>\\r			{ *optr++ = '\r'; /* escape */ }
 <Q>\\n			{ *optr++ = '\n'; /* escape */ }
 <Q>\\f			{ *optr++ = '\f'; /* escape */ }
+<Q>"\\ "		{ *optr++ = ' '; /* force space */ }
 <Q>\\.			{ yyerror("Unknown \\ sequence"); }
 <Q>([ \t]|"\\\n"){2,}	{ char *p = yytext-1; while (p = strchr(p+1, '\n')) yylineno++; }
-<Q>"\\ "		{ *optr++ = ' '; /* force space */ }
 <Q>\"			{ BEGIN F; quoted = 0;
 				*optr = '\0';
 				yylval.s = strdup(ostr);

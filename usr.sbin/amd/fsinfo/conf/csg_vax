@@ -1,4 +1,4 @@
-// $Id: csg_vax,v 1.1 1993/11/27 21:20:30 mycroft Exp $
+// $Id: csg_vax,v 1.2 1994/06/13 19:49:45 mycroft Exp $
 // csg vax config - really just for {s,r}vax
 
 #define FSTYPE_UFS	4.2

@@ -1,4 +1,4 @@
-// $Id: sky.doc.ic.ac.uk,v 1.1 1993/11/27 21:21:03 mycroft Exp $
+// $Id: sky.doc.ic.ac.uk,v 1.2 1994/06/13 19:49:56 mycroft Exp $
 // sky
 
 #define FSTYPE_UFS	4.2

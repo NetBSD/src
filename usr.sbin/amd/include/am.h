@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)am.h	5.6 (Berkeley) 6/6/93
  *
- * $Id: am.h,v 1.1 1993/11/27 21:21:56 mycroft Exp $
+ * $Id: am.h,v 1.2 1994/06/13 19:50:03 mycroft Exp $
  *
  */
 
@@ -49,7 +49,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
-#include <rpcsvc/nfs_prot.h>
+#include "nfs_prot.h"
 #ifdef MNTENT_HDR
 #include MNTENT_HDR
 #endif /* MNTENT_HDR */
