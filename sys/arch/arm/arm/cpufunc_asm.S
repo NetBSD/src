@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.5 2001/08/27 00:00:27 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.6 2001/08/30 01:15:39 matt Exp $	*/
 
 /*
  * xscale support code Copyright (c) 2001 Matt Thomas
@@ -312,8 +312,10 @@ ENTRY(xscale_setttb)
         mcr     15, 0, r0, c7, c5, 0	/* invalidate icache & BTB */
 
 	/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
+	mrc	15, 0, r0, c2, c0, 0	/* read some register in CP15 */
+        mov	r0, r0			/* for the read to complete */
+        sub	pc, pc, #4		/* branch to next instruction */
+					/*  (flush the instruction pipeline) */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all, r3
 #else
@@ -373,6 +375,7 @@ ENTRY(sa110_tlb_flushID_SE)
 ENTRY(xscale_tlb_flushID_SE)
 	mcr	15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
 	mcr	15, 0, r0, c8, c5, 1		/* flush I tlb single entry */
+	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	mov	pc, lr
 #endif	/* CPU_XSCALE */
 
@@ -591,7 +594,8 @@ ENTRY(sa110_cache_flushD)
 
 #if defined(CPU_XSCALE)
 ENTRY(xscale_cache_flushI_SE)
-	mcr	15, 0, r0, c7, c5, 1		/* flush D cache single entry */
+	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	mov	pc, lr
 #endif
 
@@ -801,6 +805,7 @@ ENTRY(xscale_cache_purgeID_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
 	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_XSCALE */
@@ -1001,6 +1006,7 @@ xscale_cache_purgeID_rng_loop:
 	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_purgeID_rng_loop
@@ -1038,6 +1044,7 @@ ENTRY(xscale_cache_syncI_rng)
 xscale_cache_syncI_rng_loop:
 	mcr	15, 0, r0, c7, c10, 1		/* clean D cache entry */
 	mcr	15, 0, r0, c7, c5, 1		/* flush I cache single entry */
+	mcr	15, 0, r0, c7, c5, 6		/* inv. branch target buffer */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	xscale_cache_syncI_rng_loop
@@ -1105,8 +1112,7 @@ ENTRY(arm8_context_switch)
 	mov     pc, lr
 #endif	/* CPU_ARM8 */
 
-#if defined(CPU_SA110) || defined(CPU_XSCALE)
-ENTRY_NP(xscale_context_switch)
+#if defined(CPU_SA110)
 ENTRY(sa110_context_switch)
 	/* Switch the memory to the new process */
 
@@ -1127,7 +1133,33 @@ ENTRY(sa110_context_switch)
 	mov     r0, r0
 	mov     r0, r0
 	mov     pc, lr
-#endif
+#endif	/* CPU_SA110 */
+
+#if defined(CPU_XSCALE)
+ENTRY(xscale_context_switch)
+	/* Switch the memory to the new process */
+
+	/*
+	 * CF_CACHE_PURGE_ID will ALWAYS be called prior to this
+	 * Thus the data cache will contain only kernel data
+	 * and the instruction cache will contain only kernel code
+	 * and all the kernel mappings shared by all processes.
+	 */
+
+	/* Write the TTB */
+	mcr     15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+
+	/* Make sure that pipeline is emptied */
+	mrc	15, 0, r0, c2, c0, 0	/* read some register in CP15 */
+        mov	r0, r0			/* for the read to complete */
+        sub	pc, pc, #4		/* branch to next instruction */
+
+	/* return */
+	mov     pc, lr
+#endif	/* CPU_XSCALE */
 
 /*
  * other potentially useful software functions are:
