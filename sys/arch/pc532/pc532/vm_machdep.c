@@ -37,13 +37,13 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  *
- *	$Id: vm_machdep.c,v 1.4 1994/05/25 00:03:22 phil Exp $
+ *	$Id: vm_machdep.c,v 1.5 1994/07/13 15:09:15 phil Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.4 1994/05/25 00:03:22 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.5 1994/07/13 15:09:15 phil Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,6 @@ pagemove(from, to, size)
 {
 	register struct pte *fpte, *tpte;
 
-printf ("pagemove from=0x%x to=0x%x size=0x%x\n", from, to, size);
 	if (size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
