@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.25 2003/06/26 21:14:44 ichiro Exp $
+$NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -54,6 +54,7 @@ vendor COREGA		0x1259	Corega
 vendor ALLIEDTELESYN	0x1259	Allied Telesyn International
 vendor ABOCOM		0x13d1	AboCom Systems
 vendor PLANEX		0x14ea	Planex Communications Inc
+vendor ATHEROS		0x168c	Atheros Communications, Inc.
 vendor HAWKING		0x17b3	Hawking Technology
 vendor INTEL		0x8086	Intel
 vendor ADP		0x9004	Adaptec
@@ -132,3 +133,6 @@ product INTEL MODEM56	0x1002	56k Modem
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
+
+/* Atheros Communications, Inc. products */
+product	ATHEROS AR5001	0x0013	AR5001 Wireless LAN 802.11a/b/g CardBus Card
