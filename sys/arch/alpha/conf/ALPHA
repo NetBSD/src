@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.83 1998/07/02 23:36:59 mjacob Exp $
+# $NetBSD: ALPHA,v 1.84 1998/07/27 01:57:56 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -204,6 +204,7 @@ pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
+cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
