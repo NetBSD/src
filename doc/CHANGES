@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.62 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.63 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		is printed first instead of last.  [lukem 20021223]
 	build.sh: Add '-i installworlddir', to run "make installworld"
 		after all other operations have completed.  [lukem 20021225]
+	dreamcast: Add support for the SEGA LAN Adapter, based on patch in
+		dreamcast/17493 from Christian Groessler.  [tsutsui 20021227]
