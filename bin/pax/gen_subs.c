@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.8 1997/07/30 05:04:23 thorpej Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.9 1998/02/03 07:48:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.8 1997/07/30 05:04:23 thorpej Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.9 1998/02/03 07:48:42 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,6 +403,11 @@ asc_uqd(str, len, base)
 {
 	char *stop;
 	u_quad_t tval = 0;
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &tval;
+#endif
 
 	stop = str + len;
 

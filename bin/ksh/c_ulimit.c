@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.2 1997/01/12 19:11:42 tls Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.3 1998/02/03 07:48:32 mycroft Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -118,6 +118,11 @@ c_ulimit(wp)
 #ifdef HAVE_SETRLIMIT
 	struct rlimit	limit;
 #endif /* HAVE_SETRLIMIT */
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &val;
+#endif
 
 	if (!options[0]) {
 		/* build options string on first call - yuck */
