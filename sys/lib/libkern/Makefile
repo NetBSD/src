@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1994/05/16 11:01:45 cgd Exp $
+#	$Id: Makefile,v 1.11 1994/05/21 03:22:42 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -37,5 +37,9 @@ SRCS+=	mcount.c
 .PATH: ${LIBC}/arch/${MACHINE_ARCH}/quad ${LIBC}/quad
 
 install:
+
+# mcount cannot be compiled with profiling
+mcount.po: mcount.o
+	cp mcount.o mcount.po
 
 .include <bsd.lib.mk>
