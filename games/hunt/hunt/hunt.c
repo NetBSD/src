@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.17 2003/04/01 12:01:34 drochner Exp $	*/
+/*	$NetBSD: hunt.c,v 1.18 2003/05/03 09:10:23 christos Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.17 2003/04/01 12:01:34 drochner Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.18 2003/05/03 09:10:23 christos Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -87,6 +87,8 @@ void	dump_scores __P((SOCKET));
 long	env_init __P((long));
 void	fill_in_blanks __P((void));
 void	leave __P((int, char *)) __attribute__((__noreturn__));
+void	leavex __P((int, char *)) __attribute__((__noreturn__));
+void	fincurs __P((void));
 int	main __P((int, char *[]));
 # ifdef INTERNET
 SOCKET *list_drivers __P((void));
@@ -251,7 +253,7 @@ main(ac, av)
 # endif /* !USE_CURSES */
 	in_visual = TRUE;
 	if (LINES < SCREEN_HEIGHT || COLS < SCREEN_WIDTH)
-		leave(1, "Need a larger window");
+		leavex(1, "Need a larger window");
 	clear_the_screen();
 	(void) signal(SIGINT, intr);
 	(void) signal(SIGTERM, sigterm);
@@ -266,7 +268,7 @@ main(ac, av)
 		find_driver(TRUE);
 
 		if (Daemon.sin_port == 0)
-			leave(1, "Game not found, try again");
+			leavex(1, "Game not found, try again");
 
 	jump_in:
 		do {
@@ -283,7 +285,6 @@ main(ac, av)
 			if (connect(Socket, (struct sockaddr *) &Daemon,
 			    DAEMON_SIZE) < 0) {
 				if (errno != ECONNREFUSED) {
-					warn("connect");
 					leave(1, "connect");
 				}
 			}
@@ -309,8 +310,7 @@ main(ac, av)
 		(void) strcpy(Daemon.sun_path, Sock_name);
 		if (connect(Socket, &Daemon, DAEMON_SIZE) < 0) {
 			if (errno != ENOENT) {
-				warn("connect");
-				leave(1, "connect2");
+				leavex(1, "connect2");
 			}
 			start_driver();
 
@@ -339,7 +339,7 @@ main(ac, av)
 		if ((enter_status = quit(enter_status)) == Q_QUIT)
 			break;
 	}
-	leave(0, (char *) NULL);
+	leavex(0, (char *) NULL);
 	/* NOTREACHED */
 	return(0);
 }
@@ -409,12 +409,12 @@ list_drivers()
 		sethostent(1);		/* don't bother to close host file */
 # endif
 		if (gethostname(local_name, sizeof local_name) < 0) {
-			leave(1, "Sorry, I have no name.");
+			leavex(1, "Sorry, I have no name.");
 			/* NOTREACHED */
 		}
 		local_name[sizeof(local_name) - 1] = '\0';
 		if ((hp = gethostbyname(local_name)) == NULL) {
-			leave(1, "Can't find myself.");
+			leavex(1, "Can't find myself.");
 			/* NOTREACHED */
 		}
 		local_address = * ((struct in_addr *) hp->h_addr);
@@ -426,7 +426,6 @@ list_drivers()
 
 	test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 	if (test_socket < 0) {
-		warn("socket");
 		leave(1, "socket system call failed");
 		/* NOTREACHED */
 	}
@@ -436,7 +435,7 @@ list_drivers()
 
 	if (Sock_host != NULL) {	/* explicit host given */
 		if ((hp = gethostbyname(Sock_host)) == NULL) {
-			leave(1, "Unknown host");
+			leavex(1, "Unknown host");
 			/* NOTREACHED */
 		}
 		test.sin_addr = *((struct in_addr *) hp->h_addr);
@@ -460,7 +459,6 @@ list_drivers()
 	option = 1;
 	if (setsockopt(test_socket, SOL_SOCKET, SO_BROADCAST,
 	    &option, sizeof option) < 0) {
-		warn("setsockopt broadcast");
 		leave(1, "setsockopt broadcast");
 		/* NOTREACHED */
 	}
@@ -472,7 +470,6 @@ list_drivers()
 		test.sin_addr = brdv[i].sin_addr;
 		if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
 		    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
-			warn("sendto");
 			leave(1, "sendto");
 			/* NOTREACHED */
 		}
@@ -480,7 +477,6 @@ list_drivers()
 	test.sin_addr = local_address;
 	if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
 	    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
-		warn("sendto");
 		leave(1, "sendto");
 		/* NOTREACHED */
 	}
@@ -528,7 +524,6 @@ get_response:
 		}
 
 		if (errno != 0 && errno != EINTR) {
-			warn("poll/recvfrom");
 			leave(1, "poll/recvfrom");
 			/* NOTREACHED */
 		}
@@ -651,7 +646,7 @@ start_driver()
 
 # ifdef MONITOR
 	if (Am_monitor) {
-		leave(1, "No one playing.");
+		leavex(1, "No one playing.");
 		/* NOTREACHED */
 	}
 # endif
@@ -674,7 +669,6 @@ start_driver()
 	refresh();
 	procid = fork();
 	if (procid == -1) {
-		warn("fork");
 		leave(1, "fork failed.");
 	}
 	if (procid == 0) {
@@ -712,7 +706,7 @@ start_driver()
 void
 bad_con()
 {
-	leave(1, "The game is full.  Sorry.");
+	leavex(1, "The game is full.  Sorry.");
 	/* NOTREACHED */
 }
 
@@ -723,7 +717,7 @@ bad_con()
 void
 bad_ver()
 {
-	leave(1, "Version number mismatch. No go.");
+	leavex(1, "Version number mismatch. No go.");
 	/* NOTREACHED */
 }
 
@@ -735,7 +729,7 @@ SIGNAL_TYPE
 sigterm(dummy)
 	int dummy;
 {
-	leave(0, (char *) NULL);
+	leavex(0, (char *) NULL);
 	/* NOTREACHED */
 }
 
@@ -748,7 +742,7 @@ SIGNAL_TYPE
 sigemt(dummy)
 	int dummy;
 {
-	leave(1, "Unable to start driver.  Try again.");
+	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
 }
 
@@ -816,7 +810,7 @@ intr(dummy)
 				(void) write(Socket, "q", 1);
 				(void) close(Socket);
 			}
-			leave(0, (char *) NULL);
+			leavex(0, (char *) NULL);
 		}
 		else if (ch == 'n') {
 			(void) signal(SIGINT, intr);
@@ -840,15 +834,7 @@ intr(dummy)
 	}
 }
 
-/*
- * leave:
- *	Leave the game somewhat gracefully, restoring all current
- *	tty stats.
- */
-void
-leave(eval, mesg)
-	int	eval;
-	char	*mesg;
+void fincurs()
 {
 	if (in_visual) {
 # ifdef USE_CURSES
@@ -867,9 +853,36 @@ leave(eval, mesg)
 		_puts(TE);
 # endif /* !USE_CURSES */
 	}
-	if (mesg != NULL)
-		puts(mesg);
-	exit(eval);
+}
+
+/*
+ * leave:
+ *	Leave the game somewhat gracefully, restoring all current
+ *	tty stats.
+ */
+void
+leave(eval, mesg)
+	int	eval;
+	char	*mesg;
+{
+	int serrno = errno;
+	fincurs();
+	errno = serrno;
+	err(eval, mesg ? mesg : "");
+}
+
+/*
+ * leave:
+ *	Leave the game somewhat gracefully, restoring all current
+ *	tty stats.
+ */
+void
+leavex(eval, mesg)
+	int	eval;
+	char	*mesg;
+{
+	fincurs();
+	errx(eval, mesg ? mesg : "");
 }
 
 #if !defined(USE_CURSES) && defined(SIGTSTP)
