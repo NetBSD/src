@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.10 2002/01/15 02:23:17 wiz Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.11 2002/06/06 01:03:12 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd garbage collect a log-structured file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdfmqs
+.Op Fl bcdfmqs
 .Op Fl l Ar load-threshhold
 .Op Fl n Ar number-of-segments
 .Op Fl r Ar report-frequency
@@ -72,6 +72,10 @@ The following options are available:
 .It Fl b
 Use bytes written, rather than segments read, when determining how many
 segments to clean at once.
+.It Fl c
+Coalescing mode.  For each live inode, check to see if it has too many
+blocks that are not contiguous, and if it does, rewrite it.  After a
+single pass through the filesystem the cleaner will exit.
 .It Fl d
 Run in debug mode.
 Do not become a daemon process, and print debugging information.  More
