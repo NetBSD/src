@@ -1,12 +1,12 @@
 #
-# $NetBSD: ATARITT,v 1.56 2003/04/10 22:06:54 christos Exp $
+# $NetBSD: ATARITT,v 1.57 2003/09/22 14:13:22 cl Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.30 2002/12/28 22:11:30 leo Exp $
+#		NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
 
 #This configuration file is for a GENERIC ATARI-TT
 
@@ -109,6 +109,8 @@ options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
 options 	COMPAT_14	# Compatibility to NetBSD1.4
+options 	COMPAT_15	# Compatibility to NetBSD1.5
+options 	COMPAT_16	# Compatibility to NetBSD1.6
 
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
