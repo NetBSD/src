@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.41 1999/12/16 20:17:22 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.42 2000/02/09 23:25:15 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 1999/12/16 20:17:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2000/02/09 23:25:15 sommerfeld Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -312,7 +312,7 @@ recognized:
 	    &mlist, 1, 1);
 	if (error != 0) {
 		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-			panic("cpu_attach: unable to alloate idle stack for"
+			panic("cpu_attach: unable to allocate idle stack for"
 			    " primary");
 		}
 		printf("%s: unable to allocate idle stack\n", dev->dv_xname);
