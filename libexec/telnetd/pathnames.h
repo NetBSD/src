@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/4/93
- *	$Id: pathnames.h,v 1.3 1994/02/25 03:20:50 cgd Exp $
+ *	$NetBSD: pathnames.h,v 1.4 1996/02/24 01:22:18 jtk Exp $
  */
 
 #if BSD > 43
