@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.1 1996/12/16 20:38:06 cgd Exp $	*/
+/*	$NetBSD: symbol.c,v 1.2 1998/03/25 04:13:02 mhitch Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -102,8 +102,12 @@ _rtld_symlook_obj(
 #endif
 	if (strcmp(name, strp) == 0) {
 	    if (symp->st_shndx != Elf_eshn_undefined
+#if !defined(__mips__)	/* Following doesn't work on MIPS? mhitch */
 		|| (!in_plt && symp->st_value != 0 &&
 		    ELF_SYM_TYPE(symp->st_info) == Elf_estt_func)) {
+#else
+	    ) {
+#endif
 		return symp;
 	    }
 	}
