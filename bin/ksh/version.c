@@ -1,3 +1,5 @@
+/*	$NetBSD: version.c,v 1.2 1997/01/12 19:12:27 tls Exp $	*/
+
 /*
  * value of $KSH_VERSION (or $SH_VERSION)
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: eval.c,v 1.2 1997/01/12 19:11:48 tls Exp $	*/
+
 /*
  * Expansion - quoting, separation, substitution, globbing
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: sigact.h,v 1.2 1997/01/12 19:12:16 tls Exp $	*/
+
 /* NAME:
  *      sigact.h - sigaction et al
  *
@@ -20,7 +22,7 @@
  */
 /*
  * RCSid:
- *      $Id: sigact.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $
+ *      $NetBSD: sigact.h,v 1.2 1997/01/12 19:12:16 tls Exp $
  */
 /* Changes to sigact.h for pdksh, Michael Rendell <michael@cs.mun.ca>:
  *	- changed SIG_HDLR to RETSIGTYPE for use with GNU autoconf

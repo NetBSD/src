@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$NetBSD: emacs-gen.sh,v 1.2 1997/01/12 19:11:46 tls Exp $
 
 case $# in
 1)	file=$1;;

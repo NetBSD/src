@@ -1,3 +1,5 @@
+/*	$NetBSD: var.c,v 1.2 1997/01/12 19:12:26 tls Exp $	*/
+
 #include "sh.h"
 #include "ksh_time.h"
 #include "ksh_limval.h"

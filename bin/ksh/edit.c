@@ -1,3 +1,5 @@
+/*	$NetBSD: edit.c,v 1.2 1997/01/12 19:11:44 tls Exp $	*/
+
 /*
  * Command line editing - common code
  *

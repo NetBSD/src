@@ -1,3 +1,5 @@
+/*	$NetBSD: syn.c,v 1.2 1997/01/12 19:12:19 tls Exp $	*/
+
 /*
  * shell parser (C version)
  */
