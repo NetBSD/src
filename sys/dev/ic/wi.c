@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.53 2002/03/17 02:52:59 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.54 2002/03/21 07:31:37 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.53 2002/03/17 02:52:59 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.54 2002/03/21 07:31:37 itohy Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1673,15 +1673,15 @@ wi_init(ifp)
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
 			 * ONLY HWB3163 EVAL-CARD Firmware version
-			 * less than 0.8 variant3
+			 * less than 0.8 variant2
 			 *
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
 			 * (ichiro@netbsd.org)
 			 */
-			if (sc->sc_prism2_ver < 83 ) {
-				/* firm ver < 0.8 variant 3 */
+			if (sc->sc_prism2_ver < 82 ) {
+				/* firm ver < 0.8 variant 2 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			}
 			WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
