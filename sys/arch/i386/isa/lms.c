@@ -326,15 +326,15 @@ int lmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 
 		if (sc->x > 127)
 			info.xmotion = 127;
-		else if (sc->x < -128)
-			info.xmotion = -128;
+		else if (sc->x < -127)
+			info.xmotion = -127;
 		else
 			info.xmotion = sc->x;
 
 		if (sc->y > 127)
 			info.ymotion = 127;
-		else if (sc->y < -128)
-			info.ymotion = -128;
+		else if (sc->y < -127)
+			info.ymotion = -127;
 		else
 			info.ymotion = sc->y;
 
@@ -372,14 +372,16 @@ void lmsintr(unit)
 	outb(ioport+CNTRL, 0x90);
 	lo = inb(ioport+DATA) & 15;
 	dx = (hi << 4) | lo;
+	dx = (dx == -128) ? -127 : dx;
+
 	outb(ioport+CNTRL, 0xF0);
 	hi = inb(ioport+DATA);
 	outb(ioport+CNTRL, 0xD0);
 	lo = inb(ioport+DATA);
 	outb(ioport+CNTRL, 0);
-
 	dy = ((hi & 15) << 4) | (lo & 15);
 	dy = (dy == -128) ? 127 : -dy;
+
 	buttons = (~hi >> 5) & 7;
 	changed = buttons ^ sc->button;
 	sc->button = buttons;
