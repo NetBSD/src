@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.38 2002/09/27 15:37:09 provos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.39 2003/04/28 05:20:29 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.38 2002/09/27 15:37:09 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.39 2003/04/28 05:20:29 nakayama Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -271,6 +271,8 @@ _wdc_ata_bio_start(chp, xfer)
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
+		if (ata_bio->flags & ATA_LBA48)
+			dma_flags |= WDC_DMA_LBA48;
 	}
 	if (ata_bio->flags & ATA_SINGLE)
 		ata_delay = ATA_DELAY;
