@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.10 1998/06/17 11:55:04 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.11 1998/06/25 11:12:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,7 @@ int wdcdebug_pciide_mask = DEBUG_PROBE;
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
+#include <dev/pci/pciide_apollo_reg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
@@ -116,6 +117,10 @@ void piix3_4_setup_chip __P((struct pciide_softc*,
 static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
+
+void apollo_setup_cap __P((struct pciide_softc*));
+void apollo_setup_chip __P((struct pciide_softc*,
+				pci_chipset_tag_t, pcitag_t));
 
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
@@ -189,6 +194,19 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
     }
 };
 
+const struct pciide_product_desc pciide_via_products[] =  {
+    { PCI_PRODUCT_VIATECH_VT82C586_IDE,
+      0,
+      "VT82C586 (Apollo VP) IDE Controller",
+      apollo_setup_cap,
+      apollo_setup_chip,
+     },
+     { 0,
+       0,
+       NULL,
+     }
+};
+
 struct pciide_vendor_desc {
     u_int32_t ide_vendor;
     const struct pciide_product_desc *ide_products;
@@ -197,6 +215,7 @@ struct pciide_vendor_desc {
 const struct pciide_vendor_desc pciide_vendors[] = {
     { PCI_VENDOR_INTEL, pciide_intel_products },
     { PCI_VENDOR_CMDTECH, pciide_cmd_products },
+    { PCI_VENDOR_VIATECH, pciide_via_products },
     { 0, NULL }
 };
 
@@ -1035,6 +1054,115 @@ piix_setup_sidetim_timings(mode, dma, channel)
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
 }
 
+void
+apollo_setup_cap(sc)
+	struct pciide_softc *sc;
+{
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586_IDE)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
+	    WDC_CAPABILITY_DMA;
+	sc->sc_wdcdev.pio_mode = 4;
+	sc->sc_wdcdev.dma_mode = 2;
+
+}
+void
+apollo_setup_chip(sc, pc, tag)
+	struct pciide_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	u_int32_t udmatim_reg, ideconf_reg, ctlmisc_reg, datatim_reg;
+	u_int8_t idedma_ctl;
+	int mode;
+	int channel, drive;
+	struct channel_softc *chp;
+	struct ata_drive_datas *drvp;
+
+	ideconf_reg = pci_conf_read(pc, tag, APO_IDECONF);
+	ctlmisc_reg = pci_conf_read(pc, tag, APO_CTLMISC);
+	
+	WDCDEBUG_PRINT(("apollo_setup_chip: old APO_IDECONF=0x%x, "
+	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	    ideconf_reg, ctlmisc_reg,
+	    pci_conf_read(pc, tag, APO_DATATIM),
+	    pci_conf_read(pc, tag, APO_UDMA)),
+	    DEBUG_PROBE);
+
+	datatim_reg = 0;
+	udmatim_reg = 0;
+	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
+		chp = &sc->wdc_channels[channel];
+		idedma_ctl = 0;
+		for (drive = 0; drive < 2; drive++) {
+			drvp = &chp->ch_drive[drive];
+			/* If no drive, skip */
+			if ((drvp->drive_flags & DRIVE) == 0)
+				continue;
+			/* add timing values, setup DMA if needed */
+			if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
+			    (drvp->drive_flags & DRIVE_UDMA) == 0) ||
+			    sc->sc_dma_ok == 0) {
+				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+				mode = drvp->PIO_mode;
+				goto pio;
+			}
+			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
+				/* Abort DMA setup */
+				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+				mode = drvp->PIO_mode;
+				goto pio;
+			}
+			if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+			    (drvp->drive_flags & DRIVE_UDMA)) {
+				/* use Ultra/DMA */
+				drvp->drive_flags &= ~DRIVE_DMA;
+				udmatim_reg |= APO_UDMA_EN(channel, drive) |
+				    APO_UDMA_EN_MTH(channel, drive) |
+				    APO_UDMA_TIME(channel, drive,
+					apollo_udma_tim[drvp->UDMA_mode]);
+				/* can use PIO timings, MW DMA unused */
+				mode = drvp->PIO_mode;
+			} else {
+				/* use Multiword DMA */
+				drvp->drive_flags &= ~DRIVE_UDMA;
+				/* mode = min(pio, dma+2) */
+				if (drvp->PIO_mode <= (drvp->DMA_mode +2))
+					mode = drvp->PIO_mode;
+				else
+					mode = drvp->DMA_mode;
+			}
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+pio:			/* setup PIO mode */
+			datatim_reg |=
+			    APO_DATATIM_PULSE(channel, drive,
+				apollo_pio_set[mode]) |
+			    APO_DATATIM_RECOV(channel, drive,
+				apollo_pio_rec[mode]);
+			drvp->PIO_mode = mode;
+			drvp->DMA_mode = mode + 2;
+			printf("%s:%d:%d: using PIO mode %d",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive, drvp->PIO_mode);
+			if (drvp[drive].drive_flags & DRIVE_DMA)
+			    printf(", DMA mode %d", drvp->DMA_mode);
+			if (drvp->drive_flags & DRIVE_UDMA)
+			    printf(", UDMA mode %d", drvp->UDMA_mode);
+			printf("\n");
+		}
+		if (idedma_ctl != 0) {
+			/* Add software bits in status register */
+			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
+			    idedma_ctl);
+		}
+	}
+	WDCDEBUG_PRINT(("apollo_setup_chip: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	    datatim_reg, udmatim_reg), DEBUG_PROBE);
+	pci_conf_write(pc, tag, APO_DATATIM, datatim_reg);
+	pci_conf_write(pc, tag, APO_UDMA, udmatim_reg);
+}
 
 
 int
