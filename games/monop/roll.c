@@ -39,25 +39,9 @@ static char sccsid[] = "@(#)roll.c	5.5 (Berkeley) 6/1/90";
  *	This routine rolls ndie nside-sided dice.
  */
 
-# define	reg	register
+#include <stdlib.h>
 
-# if !defined(vax) && !defined(tahoe)
-# define	MAXRAND	32767L
-
-roll(ndie, nsides)
-int	ndie, nsides; {
-
-	reg long	tot;
-	reg unsigned	n, r;
-
-	tot = 0;
-	n = ndie;
-	while (n--)
-		tot += rand();
-	return (int) ((tot * (long) nsides) / ((long) MAXRAND + 1)) + ndie;
-}
-
-# else
+#define	reg	register
 
 roll(ndie, nsides)
 reg int	ndie, nsides; {
@@ -68,7 +52,6 @@ reg int	ndie, nsides; {
 	num_sides = nsides;
 	tot = 0;
 	while (ndie--)
-		tot += (r = rand()) * (num_sides / 017777777777) + 1;
+		tot += (r = rand()) * (num_sides / RAND_MAX) + 1;
 	return tot;
 }
-# endif
