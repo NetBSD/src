@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.12 2002/06/24 05:48:28 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.13 2002/07/09 12:03:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.32 2002/06/11 08:11:45 itojun Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.33 2002/07/09 11:56:27 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -56,7 +56,9 @@ get_remote_hostname(int socket, int verify_reverse_mapping)
 	if (getnameinfo((struct sockaddr *)&from, fromlen, name, sizeof(name),
 	    NULL, 0, NI_NAMEREQD) != 0) {
 		/* Host name not found.  Use ip address. */
+#if 0
 		log("Could not reverse map address %.100s.", ntop);
+#endif
 		return xstrdup(ntop);
 	}
 
