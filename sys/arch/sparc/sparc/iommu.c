@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.17 1998/03/30 14:21:39 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.18 1998/07/30 22:28:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,10 +37,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <uvm/uvm.h>
 
+#define _SPARC_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
@@ -61,6 +68,8 @@ struct iommu_softc {
 struct	iommu_softc *iommu_sc;/*XXX*/
 int	has_iocache;
 
+struct extent *iommu_dvmamap;
+
 
 /* autoconfiguration driver */
 int	iommu_print __P((void *, const char *));
@@ -71,6 +80,47 @@ struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
 };
 
+/* IOMMU DMA map functions */
+int	iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int));
+int	iommu_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int));
+int	iommu_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int));
+int	iommu_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int));
+void	iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int));
+
+int	iommu_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+void	iommu_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs));
+int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags));
+int	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, int off, int prot, int flags));
+
+
+struct sparc_bus_dma_tag iommu_dma_tag = {
+	NULL,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	iommu_dmamap_load,
+	iommu_dmamap_load_mbuf,
+	iommu_dmamap_load_uio,
+	iommu_dmamap_load_raw,
+	iommu_dmamap_unload,
+	iommu_dmamap_sync,
+
+	iommu_dmamem_alloc,
+	iommu_dmamem_free,
+	iommu_dmamem_map,
+	_bus_dmamem_unmap,
+	iommu_dmamem_mmap
+};
 /*
  * Print the location of some iommu-attached device (called just
  * before attaching that device).  If `iommu' is not NULL, the
@@ -253,7 +303,9 @@ iommu_attach(parent, self, aux)
 		bp = ma->ma_bp + 1;
 	else
 		bp = NULL;
-printf("[[iommu: bootpath component: %s]]\n", bp?bp->name:"NULL!");
+
+	iommu_dvmamap = extent_create("iommudvma", DVMA4M_BASE, DVMA4M_END,
+					M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	/*
 	 * Loop through ROM children (expect Sbus among them).
@@ -266,7 +318,7 @@ printf("[[iommu: bootpath component: %s]]\n", bp?bp->name:"NULL!");
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
-		ia.iom_dmatag = ma->ma_dmatag;
+		ia.iom_dmatag = &iommu_dma_tag;
 		ia.iom_node = node;
 		ia.iom_bp = bp;
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
@@ -366,3 +418,332 @@ if ((int)sc->sc_dvmacur + len > 0)
 	return iovaddr + off;
 }
 #endif
+
+
+/*
+ * IOMMU DMA map functions.
+ */
+int
+iommu_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+	bus_size_t sgsize;
+	bus_addr_t dvmaddr, curaddr;
+	vm_offset_t vaddr = (vm_offset_t)buf;
+	pmap_t pmap;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	sgsize = round_page(buflen + (vaddr & PGOFSET));
+
+	/*
+	 * XXX Need to implement "don't dma across this boundry".
+	 */
+	if (map->_dm_boundary != 0)
+		panic("bus_dmamap_load: boundaries not implemented");
+
+	if (extent_alloc(iommu_dvmamap, sgsize, NBPG, EX_NOBOUNDARY,
+            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+		return (ENOMEM);
+
+	cpuinfo.cache_flush(buf, buflen);
+
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_len = sgsize /*was:buflen*/;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	for (; buflen > 0; ) {
+		/*
+		 * Get the physical address for this page.
+		 */
+		curaddr = (bus_addr_t)pmap_extract(pmap, vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - (vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		iommu_enter(dvmaddr, curaddr & ~PGOFSET);
+
+		dvmaddr += NBPG;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+	return (0);
+}
+
+/*
+ * Like _bus_dmamap_load(), but for mbufs.
+ */
+int
+iommu_dmamap_load_mbuf(t, map, m, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct mbuf *m;
+	int flags;
+{
+
+	panic("_bus_dmamap_load: not implemented");
+}
+
+/*
+ * Like _bus_dmamap_load(), but for uios.
+ */
+int
+iommu_dmamap_load_uio(t, map, uio, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct uio *uio;
+	int flags;
+{
+
+	panic("_bus_dmamap_load_uio: not implemented");
+}
+
+/*
+ * Like _bus_dmamap_load(), but for raw memory allocated with
+ * bus_dmamem_alloc().
+ */
+int
+iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+
+	panic("_bus_dmamap_load_raw: not implemented");
+}
+
+/*
+ * Common function for unloading a DMA map.  May be called by
+ * bus-specific DMA map unload functions.
+ */
+void
+iommu_dmamap_unload(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	bus_addr_t addr;
+	bus_size_t len;
+
+	if (map->dm_nsegs != 1)
+		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+
+	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
+	len = map->dm_segs[0].ds_len;
+
+	iommu_remove(addr, len);
+	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
+
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+}
+
+/*
+ * Common function for DMA map synchronization.  May be called
+ * by bus-specific DMA map synchronization functions.
+ */
+void
+iommu_dmamap_sync(t, map, offset, len, ops)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
+	int ops;
+{
+
+	/*
+	 * XXX Should flush CPU write buffers.
+	 */
+}
+
+/*
+ * Common function for DMA-safe memory allocation.  May be called
+ * by bus-specific DMA memory allocation functions.
+ */
+int
+iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
+	bus_dma_tag_t t;
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags;
+{
+	vm_offset_t curaddr;
+	bus_addr_t dvmaddr;
+	vm_page_t m;
+	int error;
+	struct pglist *mlist;
+
+	size = round_page(size);
+	error = _bus_dmamem_alloc_common(t, size, alignment, boundary,
+					 segs, nsegs, rsegs, flags);
+	if (error != 0)
+		return (error);
+
+	if (extent_alloc(iommu_dvmamap, size, NBPG, EX_NOBOUNDARY,
+            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+		return (ENOMEM);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_len = size;
+	*rsegs = 1;
+
+	mlist = segs[0]._ds_mlist;
+	/* Map memory into DVMA space */
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		curaddr = VM_PAGE_TO_PHYS(m);
+
+		iommu_enter(dvmaddr, curaddr);
+		dvmaddr += PAGE_SIZE;
+	}
+
+	return (0);
+}
+
+/*
+ * Common function for freeing DMA-safe memory.  May be called by
+ * bus-specific DMA memory free functions.
+ */
+void
+iommu_dmamem_free(t, segs, nsegs)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+{
+	bus_addr_t addr;
+	bus_size_t len;
+
+	if (nsegs != 1)
+		panic("bus_dmamem_free: nsegs = %d", nsegs);
+
+	addr = segs[0].ds_addr;
+	len = segs[0].ds_len;
+
+	iommu_remove(addr, len);
+	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
+	/*
+	 * Return the list of pages back to the VM system.
+	 */
+	_bus_dmamem_free_common(t, segs, nsegs);
+}
+
+/*
+ * Common function for mapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory map functions.
+ */
+int
+iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	vm_page_t m;
+	vm_offset_t va, sva;
+	bus_addr_t addr;
+	struct pglist *mlist;
+	int cbit;
+	size_t oversize;
+	u_long align;
+	extern int has_iocache;
+	extern u_long dvma_cachealign;
+
+	if (nsegs != 1)
+		panic("iommu_dmamem_map: nsegs = %d", nsegs);
+
+	cbit = has_iocache ? 0 : PMAP_NC;
+	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
+
+	size = round_page(size);
+
+	/*
+	 * Find a region of kernel virtual addresses that can accomodate
+	 * our aligment requirements.
+	 */
+	oversize = size + align - PAGE_SIZE;
+	sva = uvm_km_valloc(kernel_map, oversize);
+	if (sva == 0)
+		return (ENOMEM);
+
+	/* Compute start of aligned region */
+	va = sva;
+	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
+
+	/* Return excess virtual addresses */
+	if (va != sva)
+		(void)uvm_unmap(kernel_map, sva, va, 0);
+	if (va + size != sva + oversize)
+		(void)uvm_unmap(kernel_map, va + size, sva + oversize, 0);
+
+
+	*kvap = (caddr_t)va;
+	mlist = segs[0]._ds_mlist;
+
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+
+		if (size == 0)
+			panic("iommu_dmamem_map: size botch");
+
+		addr = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, addr | cbit,
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+#if 0
+			if (flags & BUS_DMA_COHERENT)
+				/* XXX */;
+#endif
+		va += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+
+	return (0);
+}
+
+/*
+ * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * bus-specific DMA mmap(2)'ing functions.
+ */
+int
+iommu_dmamem_mmap(t, segs, nsegs, off, prot, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs, off, prot, flags;
+{
+
+	panic("_bus_dmamem_mmap: not implemented");
+}
