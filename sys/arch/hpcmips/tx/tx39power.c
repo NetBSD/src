@@ -1,7 +1,11 @@
-/*	$NetBSD: tx39power.c,v 1.6 2000/05/22 17:17:44 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.7 2000/10/04 13:53:56 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,24 +15,29 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_tx39_debug.h"
 #include "opt_tx39powerdebug.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,49 +45,51 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39powerreg.h>
 #include <hpcmips/tx/tx39spireg.h>
 
-#include <hpcmips/dev/video_subr.h>
+#define ISSET(x, v)		((x) & (v))
+#define ISSETPRINT(r, m)	__is_set_print(r, TX39_POWERCTRL_##m, #m)
 
-#undef POWERBUTTON_IS_DEBUGGER
-
-#define ISSET(x, v)	((x) & (v))
-#define ISSETPRINT(r, m) __is_set_print(r, TX39_POWERCTRL_##m, #m)
-
-int	tx39power_match __P((struct device*, struct cfdata*, void*));
-void	tx39power_attach __P((struct device*, struct device*, void*));
-
-int	tx39power_intr __P((void*));
-int	tx39power_ok_intr __P((void*));
-int	tx39power_button_intr __P((void*));
+int	tx39power_match(struct device *, struct cfdata *, void *);
+void	tx39power_attach(struct device *, struct device *, void *);
 
 struct tx39power_softc {
 	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
+
+	/* save interrupt status for resume */
+	txreg_t sc_icu_state[TX39_INTRSET_MAX + 1];
 };
 
 struct cfattach tx39power_ca = {
 	sizeof(struct tx39power_softc), tx39power_match, tx39power_attach
 };
 
+void tx39power_suspend_cpu(void); /* automatic hardware resume */
+
+static int tx39power_intr_p(void *);
+static int tx39power_intr_n(void *);
+static int tx39power_ok_intr_p(void *);
+static int tx39power_ok_intr_n(void *);
+static int tx39power_button_intr_p(void *);
+static int tx39power_button_intr_n(void *);
+#ifdef TX39POWERDEBUG
+static void tx39power_dump(struct tx39power_softc *);
+#endif
+
 int
-tx39power_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39power_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 2; /* 1st attach group of txsim */
 }
 
 void
-tx39power_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx39power_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39power_softc *sc = (void*)self;
@@ -90,6 +101,167 @@ tx39power_attach(parent, self, aux)
 
 	printf("\n");
 #ifdef TX39POWERDEBUG
+	__tx39power_dump (sc);
+#endif
+	/* 
+	 *	Disable SPI module 
+	 */
+	reg = tx_conf_read(tc, TX39_SPICTRL_REG);
+	if (ISSET(reg, TX39_SPICTRL_ENSPI)) {
+		reg &= ~TX39_SPICTRL_ENSPI;
+	}
+	printf("SPI module disabled\n");
+
+	/*
+	 * enable stop timer
+	 */
+	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
+
+	reg &= ~(TX39_POWERCTRL_STPTIMERVAL_MASK <<
+		 TX39_POWERCTRL_STPTIMERVAL_SHIFT);
+	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg, 1);
+
+	reg |= TX39_POWERCTRL_ENSTPTIMER;
+	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
+
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWRINT),
+			  IST_EDGE, IPL_CLOCK, 
+			  tx39power_intr_p, sc);
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWRINT),
+			  IST_EDGE, IPL_CLOCK,			    
+			  tx39power_intr_n, sc);
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWROKINT),
+			  IST_EDGE, IPL_CLOCK, 
+			  tx39power_ok_intr_p, sc);
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWROKINT),
+			  IST_EDGE, IPL_CLOCK,			    
+			  tx39power_ok_intr_n, sc);
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSONBUTNINT),
+			  IST_EDGE, IPL_CLOCK,
+			  tx39power_button_intr_p, sc);
+	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGONBUTNINT),
+			  IST_EDGE, IPL_CLOCK,			    
+			  tx39power_button_intr_n, sc);
+}
+
+void
+tx39power_suspend_cpu() /* I assume already splhigh */
+{
+	tx_chipset_tag_t tc = tx_conf_get_tag();
+	struct tx39power_softc *sc = tc->tc_powert;
+	txreg_t reg, *iregs = sc->sc_icu_state;
+
+	printf ("%s: CPU sleep\n", sc->sc_dev.dv_xname);
+	__asm__ __volatile__(".set noreorder");
+	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
+	reg |= TX39_POWERCTRL_STOPCPU;
+#ifdef TX392X
+	reg |= TX39_POWERCTRL_WARMSTART;
+#endif
+	/* save interrupt state */
+	iregs[0] = tx_conf_read(tc, TX39_INTRENABLE6_REG);
+	iregs[1] = tx_conf_read(tc, TX39_INTRENABLE1_REG);
+	iregs[2] = tx_conf_read(tc, TX39_INTRENABLE2_REG);
+	iregs[3] = tx_conf_read(tc, TX39_INTRENABLE3_REG);
+	iregs[4] = tx_conf_read(tc, TX39_INTRENABLE4_REG);
+	iregs[5] = tx_conf_read(tc, TX39_INTRENABLE5_REG);
+#ifdef TX392X
+	iregs[7] = tx_conf_read(tc, TX39_INTRENABLE7_REG);
+	iregs[8] = tx_conf_read(tc, TX39_INTRENABLE8_REG);
+#endif
+	/* disable all interrupt (don't disable GLOBALEN) */
+	tx_conf_write(tc, TX39_INTRENABLE6_REG, TX39_INTRENABLE6_GLOBALEN);
+	tx_conf_write(tc, TX39_INTRENABLE1_REG, 0);
+	tx_conf_write(tc, TX39_INTRENABLE2_REG, 0);
+	tx_conf_write(tc, TX39_INTRENABLE3_REG, 0);
+	tx_conf_write(tc, TX39_INTRENABLE4_REG, 0);
+	tx_conf_write(tc, TX39_INTRENABLE5_REG, 0);
+#ifdef TX392X
+	tx_conf_write(tc, TX39_INTRENABLE7_REG, 0);
+	tx_conf_write(tc, TX39_INTRENABLE8_REG, 0);
+#endif
+	/* enable power button interrupt only */
+	tx_conf_write(tc, TX39_INTRCLEAR5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
+	tx_conf_write(tc, TX39_INTRENABLE5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
+	__asm__ __volatile__("sync");
+
+	/* stop CPU clock */
+	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
+	__asm__ __volatile__("sync");
+	/* wait until power button pressed */
+	/* clear interrupt */
+	tx_conf_write(tc, TX39_INTRCLEAR5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
+
+	/* restore interrupt state */
+	tx_conf_write(tc, TX39_INTRENABLE6_REG, iregs[0]);
+	tx_conf_write(tc, TX39_INTRENABLE1_REG, iregs[1]);
+	tx_conf_write(tc, TX39_INTRENABLE2_REG, iregs[2]);
+	tx_conf_write(tc, TX39_INTRENABLE3_REG, iregs[3]);
+	tx_conf_write(tc, TX39_INTRENABLE4_REG, iregs[4]);
+	tx_conf_write(tc, TX39_INTRENABLE5_REG, iregs[5]);
+#ifdef TX392X
+	tx_conf_write(tc, TX39_INTRENABLE7_REG, iregs[7]);
+	tx_conf_write(tc, TX39_INTRENABLE8_REG, iregs[8]);
+#endif
+	__asm__ __volatile__(".set reorder");
+
+	printf ("%s: CPU wakeup\n", sc->sc_dev.dv_xname);
+}
+
+static int
+tx39power_button_intr_p(void *arg)
+{
+	config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+			 CONFIG_HOOK_BUTTONEVENT_POWER,
+			 (void *)1 /* on */);
+	return 0;
+}
+
+static int
+tx39power_button_intr_n(void *arg)
+{
+	config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+			 CONFIG_HOOK_BUTTONEVENT_POWER,
+			 (void *)0 /* off */);
+	return 0;
+}
+
+int
+tx39power_intr_p(void *arg)
+{
+	printf("power_p\n");
+	return 0;
+}
+
+static int
+tx39power_intr_n(void *arg)
+{
+	printf("power_n\n");
+	return 0;
+}
+
+static int
+tx39power_ok_intr_p(void *arg)
+{
+	printf("power NG\n");
+	config_hook_call(CONFIG_HOOK_PMEVENT,
+			 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
+	return 0;
+}
+
+static int
+tx39power_ok_intr_n(void *arg)
+{
+	printf("power OK\n");
+	return 0;
+}
+
+#ifdef TX39POWERDEBUG
+static void
+__tx39power_dump (struct tx39power_softc *sc)
+{
+	tx_chipset_tag_t tc = sc->sc_tc;
+
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	ISSETPRINT(reg, ONBUTN);
 	ISSETPRINT(reg, PWRINT);
@@ -120,88 +292,6 @@ tx39power_attach(parent, self, aux)
 #endif /* TX391X */
 	printf("STPTIMERVAL=%d ", TX39_POWERCTRL_STPTIMERVAL(reg));
 	printf("\n");
+}
 #endif /* TX39POWERDEBUG */
-#ifdef DISABLE_SPI_AND_DOZE /* XXX test XXX */
-	/* 
-	 *	Disable SPI module 
-	 */
-	reg = tx_conf_read(tc, TX39_SPICTRL_REG);
-	if (ISSET(reg, TX39_SPICTRL_ENSPI)) {
-		reg &= ~TX39_SPICTRL_ENSPI;
-	}
-	printf("SPI module disabled\n");
 
-	/* 
-	 *	Disable Stop timer (Doze CPU mode)
-	 */
-	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
-	printf("STPTIMER disabled.\n");
-	reg &= ~TX39_POWERCTRL_ENSTPTIMER;
-	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
-#endif /* DISABLE_SPI_AND_DOZE */
-
-	/*
-	 * enable stop timer
-	 */
-	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
-
-	reg &= ~(TX39_POWERCTRL_STPTIMERVAL_MASK <<
-		 TX39_POWERCTRL_STPTIMERVAL_SHIFT);
-	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg, 1);
-
-	reg |= TX39_POWERCTRL_ENSTPTIMER;
-	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
-
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWRINT),
-			    IST_EDGE, IPL_CLOCK, 
-			    tx39power_intr, sc);
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWRINT),
-			    IST_EDGE, IPL_CLOCK,			    
-			    tx39power_intr, sc);
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWROKINT),
-			    IST_EDGE, IPL_CLOCK, 
-			    tx39power_ok_intr, sc);
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWROKINT),
-			    IST_EDGE, IPL_CLOCK,			    
-			    tx39power_ok_intr, sc);
-#if 0
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSONBUTNINT),
-			    IST_EDGE, IPL_CLOCK,
-			    tx39power_button_intr, sc);
-#endif
-	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGONBUTNINT),
-			    IST_EDGE, IPL_CLOCK,			    
-			    tx39power_button_intr, sc);
-
-}
-
-int
-tx39power_button_intr(arg)
-	void *arg;
-{
-	struct tx39power_softc *sc = arg;
-	
-	if (sc->sc_tc->tc_videot)
-		video_calibration_pattern(sc->sc_tc->tc_videot); /* debug */
-
-#if defined DDB && defined POWERBUTTON_IS_DEBUGGER
-	cpu_Debugger();
-#endif	
-	return 0;
-}
-
-int
-tx39power_intr(arg)
-	void *arg;
-{
-	printf("power\n");
-	return 0;
-}
-
-int
-tx39power_ok_intr(arg)
-	void *arg;
-{
-	printf("power NG\n");
-	return 0;
-}

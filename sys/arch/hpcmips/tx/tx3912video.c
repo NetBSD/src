@@ -1,7 +1,11 @@
-/*	$NetBSD: tx3912video.c,v 1.17 2000/06/29 08:18:00 mrg Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.18 2000/10/04 13:53:55 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,20 +15,27 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #define TX3912VIDEO_DEBUG
 
 #include "opt_tx39_debug.h"
@@ -42,6 +53,7 @@
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>
@@ -56,8 +68,18 @@
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
 
+#ifdef TX3912VIDEO_DEBUG
+int	tx3912video_debug = 1;
+#define	DPRINTF(arg) if (tx3912video_debug) printf arg;
+#define	DPRINTFN(n, arg) if (tx3912video_debug > (n)) printf arg;
+#else
+#define	DPRINTF(arg)
+#define DPRINTFN(n, arg)
+#endif
+
 struct tx3912video_softc {
 	struct device sc_dev;
+	void *sc_powerhook;	/* power management hook */
 	struct hpcfb_fbconf sc_fbconf;
 	struct hpcfb_dspconf sc_dspconf;
 	struct video_chip *sc_chip;
@@ -66,26 +88,25 @@ struct tx3912video_softc {
 /* TX3912 built-in video chip itself */
 static struct video_chip tx3912video_chip;
 
-void	tx3912video_framebuffer_init __P((struct video_chip *));
-int	tx3912video_framebuffer_alloc __P((struct video_chip *,
-					   paddr_t, paddr_t *));
-void	tx3912video_reset __P((struct video_chip *));
-void	tx3912video_resolution_init __P((struct video_chip *));
+int	tx3912video_power(void *, int, long, void *);
+void	tx3912video_framebuffer_init(struct video_chip *);
+int	tx3912video_framebuffer_alloc(struct video_chip *, paddr_t, paddr_t *);
+void	tx3912video_reset(struct video_chip *);
+void	tx3912video_resolution_init(struct video_chip *);
+int	tx3912video_match(struct device *, struct cfdata *, void *);
+void	tx3912video_attach(struct device *, struct device *, void *);
+int	tx3912video_print(void *, const char *);
 
-int	tx3912video_match __P((struct device *, struct cfdata *, void *));
-void	tx3912video_attach __P((struct device *, struct device *, void *));
-int	tx3912video_print __P((void *, const char *));
+void	tx3912video_hpcfbinit(struct tx3912video_softc *);
+int	tx3912video_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	tx3912video_mmap(void *, off_t, int);
 
-void	tx3912video_hpcfbinit __P((struct tx3912video_softc *));
-int	tx3912video_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	tx3912video_mmap __P((void *, off_t, int));
-
-void	tx3912video_clut_init __P((struct tx3912video_softc *));
-void	tx3912video_clut_install __P((void *, struct rasops_info *));
-void	tx3912video_clut_get __P((struct tx3912video_softc *,
-				u_int32_t *, int, int));
-static int __get_color8 __P((int));
-static int __get_color4 __P((int));
+void	tx3912video_clut_init(struct tx3912video_softc *);
+void	tx3912video_clut_install(void *, struct rasops_info *);
+void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int, int);
+			     
+static int __get_color8(int);
+static int __get_color4(int);
 
 struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
@@ -98,19 +119,13 @@ struct hpcfb_accessops tx3912video_ha = {
 };
 
 int
-tx3912video_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx3912video_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
 
 void
-tx3912video_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx3912video_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tx3912video_softc *sc = (void *)self;
 	struct video_chip *chip;
@@ -144,14 +159,19 @@ tx3912video_attach(parent, self, aux)
 
 	/* if serial console, power off video module */
 #ifndef TX3912VIDEO_DEBUG
-	if (!console) {
-		printf("%s: power off\n", sc->sc_dev.dv_xname);
-		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
-		val &= ~(TX3912_VIDEOCTRL1_DISPON |
-			 TX3912_VIDEOCTRL1_ENVID);
-		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, val);
-	}
+	if (!console)
+		tx3912video_power(sc, 0, 0, (void *)PWR_SUSPEND);
+	else
 #endif /* TX3912VIDEO_DEBUG */
+		tx3912video_power(sc, 0, 0, (void *)PWR_RESUME);
+
+	/* Add a hard power hook to power saving */
+	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
+				       CONFIG_HOOK_PMEVENT_HARDPOWER,
+				       CONFIG_HOOK_SHARE,
+				       tx3912video_power, sc);
+	if (sc->sc_powerhook == 0)
+		printf("WARNING unable to establish hard power hook");
 
 #ifdef TX3912VIDEO_DEBUG
 	/* attach debug draw routine (debugging use) */
@@ -177,6 +197,35 @@ tx3912video_attach(parent, self, aux)
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
 	config_found(self, &ha, hpcfbprint);
+}
+
+int
+tx3912video_power(void *ctx, int type, long id, void *msg)
+{
+	struct tx3912video_softc *sc = ctx;
+	struct video_chip *chip = sc->sc_chip;
+	tx_chipset_tag_t tc = chip->vc_v;
+	int why = (int)msg;
+	txreg_t val;
+
+	switch (why) {
+	case PWR_RESUME:
+		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
+		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
+		val |= (TX3912_VIDEOCTRL1_DISPON | TX3912_VIDEOCTRL1_ENVID);
+		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, val);
+		break;
+	case PWR_SUSPEND:
+		/* FALLTHROUGH */
+	case PWR_STANDBY:
+		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
+		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
+		val &= ~(TX3912_VIDEOCTRL1_DISPON | TX3912_VIDEOCTRL1_ENVID);
+		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, val);
+		break;
+	}
+
+	return 0;
 }
 
 void
@@ -237,8 +286,7 @@ tx3912video_hpcfbinit(sc)
 }
 
 int
-tx3912video_init(fb_start, fb_end)
-	paddr_t fb_start, *fb_end;
+tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 {
 	struct video_chip *chip = &tx3912video_chip;
 	tx_chipset_tag_t tc;
@@ -297,9 +345,8 @@ tx3912video_init(fb_start, fb_end)
 }
 
  int
-tx3912video_framebuffer_alloc(chip, fb_start, fb_end)
-	struct video_chip *chip;
-	paddr_t fb_start, *fb_end; /* buffer allocation hint */
+tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
+			      paddr_t *fb_end /* buffer allocation hint */)
 {
 	struct extent_fixed ex_fixed[10];
 	struct extent *ex;
@@ -337,9 +384,8 @@ tx3912video_framebuffer_alloc(chip, fb_start, fb_end)
 	return (0);
 }
 
- void
-tx3912video_framebuffer_init(chip)
-	struct video_chip *chip;
+void
+tx3912video_framebuffer_init(struct video_chip *chip)
 {
 	u_int32_t fb_addr, fb_size, vaddr, bank, base;
 	txreg_t reg;
@@ -379,9 +425,8 @@ tx3912video_framebuffer_init(chip)
 	memset((void*)vaddr, 0, fb_size);
 }
 
- void
-tx3912video_resolution_init(chip)
-	struct video_chip *chip;
+void
+tx3912video_resolution_init(struct video_chip *chip)
 {
 	int h, v, split, bit8, horzval, lineval;
 	tx_chipset_tag_t tc = chip->vc_v;
@@ -419,8 +464,7 @@ tx3912video_resolution_init(chip)
 }
 
 void
-tx3912video_reset(chip)
-	struct video_chip *chip;
+tx3912video_reset(struct video_chip *chip)
 {
 	tx_chipset_tag_t tc = chip->vc_v;
 	txreg_t reg;
@@ -449,12 +493,7 @@ tx3912video_reset(chip)
 }
 
 int
-tx3912video_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct tx3912video_softc *sc = (struct tx3912video_softc *)v;
 	struct hpcfb_fbconf *fbconf;
@@ -560,10 +599,7 @@ tx3912video_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-tx3912video_mmap(ctx, offset, prot)
-	void *ctx;
-	off_t offset;
-	int prot;
+tx3912video_mmap(void *ctx, off_t offset, int prot)
 {
 	struct tx3912video_softc *sc = (struct tx3912video_softc *)ctx;
 
@@ -618,8 +654,7 @@ static const int dither_level4[4] = {
 };
 
 static int
-__get_color8(luti)
-	int luti;
+__get_color8(int luti)
 {
 	KASSERT(luti >=0 && luti < 8);
 	dlp = &dither_list[dither_level8[luti]];
@@ -628,8 +663,7 @@ __get_color8(luti)
 }
 
 static int
-__get_color4(luti)
-	int luti;
+__get_color4(int luti)
 {
 	KASSERT(luti >=0 && luti < 4);
 	dlp = &dither_list[dither_level4[luti]];
@@ -638,10 +672,8 @@ __get_color4(luti)
 }
 
 void
-tx3912video_clut_get(sc, rgb, beg, cnt)
-	struct tx3912video_softc *sc;
-	u_int32_t *rgb;
-	int beg, cnt;
+tx3912video_clut_get(struct tx3912video_softc *sc, u_int32_t *rgb, int beg,
+		     int cnt)
 {
 	int i;
 
@@ -657,9 +689,7 @@ tx3912video_clut_get(sc, rgb, beg, cnt)
 }
 
 void
-tx3912video_clut_install(ctx, ri)
-	void *ctx;
-	struct rasops_info *ri;
+tx3912video_clut_install(void *ctx, struct rasops_info *ri)
 {
 	struct tx3912video_softc *sc = ctx;
 	const int system_cmap[0x10] = {
@@ -690,8 +720,7 @@ tx3912video_clut_install(ctx, ri)
 }
 
 void
-tx3912video_clut_init(sc)
-	struct tx3912video_softc *sc;
+tx3912video_clut_init(struct tx3912video_softc *sc)
 {
 	tx_chipset_tag_t tc = sc->sc_chip->vc_v;
 
