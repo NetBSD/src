@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.44 2000/02/02 17:09:47 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.45 2000/03/06 10:21:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -455,7 +455,6 @@ tlp_attach(sc, enaddr)
 	 */
 	(*sc->sc_mediasw->tmsw_init)(sc);
 
-	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.26 2000/02/08 00:22:13 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.27 2000/03/06 10:21:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -237,7 +237,6 @@ epic_attach(sc)
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
