@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.116 2000/02/07 20:17:04 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.117 2000/02/08 00:21:23 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3269,3 +3269,28 @@ distrib/sets/lists/man/mi			1.205 via patch
 share/man/man4/tl.4				1.10 via patch
 
   Update thunderlan ethernet driver manual page to reality.
+
+distrib/notes/i386/xfer				patch
+
+  Expand and explain the choice of floppy image sets.  Drop the
+  explanation of the single-floppy image since it no longer builds.
+
+distrib/notes/common/sysinst			patch
+
+  Expand a bit on the PCMCIA workaround, and say that we plan to
+  fix this more elegantly in the future.
+
+distrib/i386/floppies/Makefile			patch
+
+  No longer boot the single-floppy "bootfloppy" image; it no longer
+  fits.  Do build the "bootfloppy-small" image.
+
+distrib/notes/common/main			patch
+distrib/notes/common/donations			patch
+
+  Revert to 7-bit characters in the names so characters don't get
+  lost in the more ``plainer'' versions of these notes.
+
+distrib/notes/common/contents			patch
+
+  We are going to distribute X11 code based on XFree86 3.3.6.
