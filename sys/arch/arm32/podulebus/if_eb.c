@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.10 1996/10/13 03:06:39 christos Exp $ */
+/* $NetBSD: if_eb.c,v 1.11 1996/10/14 23:50:21 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -92,6 +92,7 @@
 
 #include <arm32/podulebus/if_ebreg.h>
 #include <arm32/podulebus/podulebus.h>
+#include <arm32/podulebus/podules.h>
 
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1514
@@ -112,9 +113,6 @@
 #else
 #define dprintf(x)
 #endif
-
-#define MY_MANUFACTURER 0x53
-#define MY_PODULE       0xe4
 
 /*
  * per-line info and status
@@ -256,7 +254,7 @@ ebprobe(parent, match, aux)
 
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHERB, -1) == 0)
 		return(0);
 
 	iobase = pa->pa_podule->mod_base + EB_8004_BASE;
@@ -329,8 +327,8 @@ ebattach(parent, self, aux)
 	if (sum == 0 || sum == 0x10) {
 		sc->sc_arpcom.ac_enaddr[0] = 0x00;
 		sc->sc_arpcom.ac_enaddr[1] = 0x00;
-		sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
-		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
+		sc->sc_arpcom.ac_enaddr[2] = 0xa4;
+		sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2] + 0x10;
 		sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
 		sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
 	}
@@ -1272,10 +1270,10 @@ ebgetpackets(sc)
 		if (status & 0x0f) {
 			++sc->sc_arpcom.ac_if.if_ierrors;
 			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
-/*			sc->sc_config2 |= EB_CFG2_OUTPUT;
+			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);
-			return; */
+			return;
 			addr = ptr;
 			continue;
 		}
@@ -1285,10 +1283,10 @@ ebgetpackets(sc)
 		if (len > ETHER_MAX_LEN) {
 			++sc->sc_arpcom.ac_if.if_ierrors;
 			printf("rx packet size error len=%d\n", len);
-/*			sc->sc_config2 |= EB_CFG2_OUTPUT;
+			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);
-			return;*/
+			return;
 			addr = ptr;
 			continue;
 		}
@@ -1567,7 +1565,9 @@ eb_watchdog(ifp)
 
 	eb_reinit(sc);
 
+/*	printf("%s: Reinitialised\n", sc->sc_dev.dv_xname);*/
+
 	sc->sc_arpcom.ac_if.if_timer = 0;
 }
 
-/* End of if_ea.c */
+/* End of if_eb.c */
