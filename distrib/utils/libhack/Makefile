@@ -1,13 +1,14 @@
-# $NetBSD: Makefile,v 1.5 1999/02/13 02:54:18 lukem Exp $
+# $NetBSD: Makefile,v 1.6 1999/03/13 19:08:43 sommerfe Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
 # (See Makefile.inc also.)
 
 LIB=	hack
-SRCS=	getgrent.c gethost.c getnet.c getnetgr.c getpwent.c setlocale.c yplib.c
-
+SRCS=	getcap.c getgrent.c gethost.c getnet.c getnetgr.c getpwent.c setlocale.c yplib.c
+WARNS=	1
 MKPIC=	no
+MKLINT= no
 MKPROFILE=no
 
 all: libhack.a

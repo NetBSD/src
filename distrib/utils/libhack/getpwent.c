@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.2 1995/10/13 18:10:27 gwr Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.3 1999/03/13 19:08:44 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -36,6 +36,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
 
@@ -105,6 +106,7 @@ setpassent(stayopen)
 {
 	if (pw_fp)
 		rewind(pw_fp);
+	return 1;
 }
 
 /* rewind to the beginning. */

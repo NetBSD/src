@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.3 1998/08/10 02:22:30 perry Exp $	*/
+/*	$NetBSD: gethost.c,v 1.4 1999/03/13 19:08:44 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -82,6 +82,13 @@ static struct in_addr host_addr;
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
+void _sethtent __P((int));
+void _endhtent __P((void));
+struct hostent *_gethtent __P((void));
+struct hostent *_gethtbyname __P((const char *));
+struct hostent *_gethtbyaddr __P((const char *, int, int));
+
+
 #if PACKETSZ > 1024
 #define	MAXPACKET	PACKETSZ
 #else
@@ -95,8 +102,6 @@ gethostbyname(name)
 	const char *name;
 {
 	register const char *cp;
-	int n, i;
-	extern struct hostent *_gethtbyname();
 
 	/*
 	 * disallow names consisting only of digits/dots, unless
@@ -139,9 +144,7 @@ gethostbyaddr(addr, len, type)
 	const char *addr;
 	int len, type;
 {
-	int n, i;
 	char qbuf[MAXDNAME];
-	extern struct hostent *_gethtbyaddr();
 
 	if (type != AF_INET)
 		return ((struct hostent *) NULL);
@@ -227,13 +230,13 @@ again:
 
 struct hostent *
 _gethtbyname(name)
-	char *name;
+	const char *name;
 {
 	register struct hostent *p;
 	register char **cp;
 	
 	_sethtent(0);
-	while (p = _gethtent()) {
+	while ((p = _gethtent()) != NULL) {
 		if (strcasecmp(p->h_name, name) == 0)
 			break;
 		for (cp = p->h_aliases; *cp != 0; cp++)
@@ -255,7 +258,7 @@ _gethtbyaddr(addr, len, type)
 	register struct hostent *p;
 
 	_sethtent(0);
-	while (p = _gethtent())
+	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();

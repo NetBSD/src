@@ -1,4 +1,6 @@
-/*	$NetBSD: getnetgr.c,v 1.2 1995/10/13 18:10:26 gwr Exp $	*/
+/*	$NetBSD: getnetgr.c,v 1.3 1999/03/13 19:08:44 sommerfe Exp $	*/
+
+#include <netgroup.h>
 
 /*
  * Just stub these out, so it looks like

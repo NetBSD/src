@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
+/*	$NetBSD: yplib.c,v 1.2 1999/03/13 19:08:44 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -44,27 +44,23 @@
 
 #include <sys/types.h>
 
-/* #include <rpcsvc/yp_prot.h> */
-#define YP_TRUE	 	((long)1)	/* general purpose success code */
-#define YP_FALSE 	((long)0)	/* general purpose failure code */
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-/* #include <rpcsvc/ypclnt.h> */
-#define YPERR_DOMAIN	3		/* can't bind to a server for domain */
-#define YPERR_YPERR 	6		/* some internal YP server or client error */
-#define YPERR_YPBIND	10		/* can't communicate with ypbind */
-#define YPERR_NODOM 	12		/* local domain name not set */
-
-#ifndef NULL
-#define NULL (void*)0
-#endif
-
+#include <rpc/rpc.h>
+#include <rpc/xdr.h>
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
 
 static char _yp_domain[256];
 
 int
 _yp_dobind(dom, ypdb)
 	const char *dom;
-	void **ypdb;
+	struct dom_binding **ypdb;
 {
 	return YPERR_YPBIND;
 }
@@ -146,7 +142,7 @@ int
 yp_all(indomain, inmap, incallback)
 	const char     *indomain;
 	const char     *inmap;
-	void *incallback;
+	struct ypall_callback *incallback;
 {
 	return YPERR_DOMAIN;
 }
