@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.4 1997/10/03 15:53:13 christos Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.5 1998/09/18 16:43:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -110,7 +110,7 @@ int	pcap_offline_read(pcap_t *, int, pcap_handler, u_char *);
 int	pcap_read(pcap_t *, int cnt, pcap_handler, u_char *);
 
 /* Ultrix pads to make everything line up on a nice boundary */
-#if defined(ultrix) || defined(__alpha)
+#if defined(ultrix) || (defined(__alpha) && !defined(__NetBSD__))
 #define       PCAP_FDDIPAD 3
 #endif
 
