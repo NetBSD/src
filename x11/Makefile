@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/23 05:02:42 grant Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/11 00:10:54 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,12 +26,12 @@ BUILDTARGETS+=	do-build
 START_TIME!=	date
 
 build:
-	@echo "Build started at: ${START_TIME}"
+	@echo "X11 build started at: ${START_TIME}"
 .for tgt in ${BUILDTARGETS}
 	@(cd ${.CURDIR} && ${MAKE} ${tgt})
 .endfor
-	@echo   "Build started at:  ${START_TIME}"
-	@printf "Build finished at: " && date
+	@echo   "X11 build started at:  ${START_TIME}"
+	@printf "X11 build finished at: " && date
 
 do-build:
 .for targ in dependall install
