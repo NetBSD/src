@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.20 2001/08/21 22:47:18 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.21 2001/08/26 12:25:38 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.20 2001/08/21 22:47:18 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.21 2001/08/26 12:25:38 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -149,6 +149,7 @@ irq_handler(struct irqframe *irqf)
 #if NFIQ > 0
 	/* Check for downgraded FIQs. */
 	if (fiq_want_downgrade) {
+		KASSERT(fiq_downgrade_handler != NULL);
 		fiq_want_downgrade = 0;
 		(fiq_downgrade_handler)();
 		goto handled;
