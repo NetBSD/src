@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.8 1995/02/01 12:37:21 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.9 1995/03/01 21:09:19 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -97,9 +97,6 @@ dmamatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
-	if (cputyp == CPU_SUN4 && ca->ca_bustype == BUS_OBIO &&
-	    cpumod == SUN4_100) 
-		return 0; /* see 4/110 comment in cpu.c */
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }
@@ -355,7 +352,7 @@ dmaintr(sc)
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
-	if (*sc->sc_dmalen ||
+	if (*sc->sc_dmalen == 0 ||
 	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.24 1995/02/22 21:32:34 pk Exp $
+#	$NetBSD: files.sparc.newconf,v 1.25 1995/03/01 21:11:50 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -10,9 +10,9 @@ maxusers 2 8 64
 
 device mainbus at root {}
 
-device obio at mainbus { [addr = 0], [level = -1] }
-device vmel at mainbus { [addr = 0], [level = -1], [vect = -1] }
-device vmes at mainbus { [addr = 0], [level = -1], [vect = -1] }
+device obio at mainbus { [addr = -1], [level = -1] }
+device vmel at mainbus { [addr = -1], [level = -1], [vect = -1] }
+device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
 file	arch/sparc/dev/obio.c		obio vmel vmes
 
 device audio at mainbus
