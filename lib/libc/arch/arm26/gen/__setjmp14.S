@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2000/05/09 21:55:47 bjh21 Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 2000/12/29 13:39:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -51,7 +51,7 @@ ENTRY(__setjmp14)
 	add	r2, r0, #(_JB_SIGMASK * 4)
 	mov	r1, #0x00000000
 	mov	r0, #0x00000000
-	bl	_C_FUNC(__sigprocmask14)
+	bl	_C_LABEL(__sigprocmask14)
 	ldmfd	r13!, {r0-r2, r14}
 
 	ldr	r1, Lsetjmp_magic
@@ -90,7 +90,7 @@ ENTRY(__longjmp14)
 	mov	r2, #0x00000000
 	add	r1, r0, #(_JB_SIGMASK * 4)
 	mov	r0, #3				/* SIG_SETMASK */
-	bl	_C_FUNC(__sigprocmask14)
+	bl	_C_LABEL(__sigprocmask14)
 	ldmfd	r13!, {r0-r2, r14}
 
 	add	r0, r0, #4
@@ -125,6 +125,6 @@ ENTRY(__longjmp14)
 
 	/* validation failed, die die die. */
 botch:
-	bl	_C_FUNC(longjmperror)
-	bl	_C_FUNC(abort)
+	bl	_C_LABEL(longjmperror)
+	bl	_C_LABEL(abort)
 	b	. - 8		/* Cannot get here */
