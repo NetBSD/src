@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.3 2000/12/23 11:53:46 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.4 2000/12/23 12:37:18 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.4 2000/12/23 12:37:18 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,6 +64,8 @@ __RCSID("$NetBSD: iso2022.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
 static int getcs __P((char *, _Iso2022Charset *));
 int _ISO2022_init __P((_RuneLocale *));
 int _ISO2022_init_stream __P((_RuneLocale *));
+struct seqtable;
+static int seqmatch __P((const char *, size_t, const struct seqtable *));
 rune_t _ISO2022_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
 static int recommendation __P((_RuneLocale *, _Iso2022Charset *));
 int _ISO2022_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
@@ -99,6 +101,8 @@ typedef struct {
 	size_t	gl;
 	size_t	gr;
 	u_char vers;
+	char singlegl;
+	char singlegr;
 } _Iso2022State;
 
 static _RuneState _ISO2022_RuneState = {
@@ -108,6 +112,7 @@ static _RuneState _ISO2022_RuneState = {
 	_ISO2022_unpackstate		/* unpackstate */
 };
 
+#define iscntl(x)	(((__uint8_t)(x) & ~0x1f) == 0x00)
 #define is94(x)		(0x21 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7e)
 #define is96(x)		(0x20 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7f)
 #define isecma(x)	(0x30 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7f)
@@ -328,7 +333,7 @@ _ISO2022_init_stream(rl)
 	size_t s;
 	_Iso2022State *pst;
 
-	s = FOPEN_MAX * sizeof(void *) + sizeof(_Iso2022State);
+	s = FOPEN_MAX * 2 * (sizeof(void *) + sizeof(_Iso2022State));
 	_StreamStateTable = malloc(s);
 	if (!_StreamStateTable)
 		return ENOBUFS;
@@ -346,6 +351,99 @@ _ISO2022_init_stream(rl)
 #define	CEI(rl)	((_Iso2022Info *)((rl)->__rune_variable))
 #define	CES(rl)	((_Iso2022State *)(state))
 
+#define	ESC	'\033'
+#define	ECMA	-1
+#define	INTERM	-2
+#define	OECMA	-3
+static struct seqtable {
+	int type;
+	int csoff;
+	int finaloff;
+	int intermoff;
+	int versoff;
+	int len;
+	int chars[10];
+} seqtable[] = {
+	/* G0 94MULTI special */
+	{ CS94MULTI, -1, 2, -1, -1,	3, { ESC, '$', OECMA }, },
+	/* G0 94MULTI special with version identification */
+	{ CS94MULTI, -1, 5, -1, 2,	6, { ESC, '&', ECMA, ESC, '$', OECMA }, },
+	/* G? 94 */
+	{ CS94, 1, 2, -1, -1,		3, { ESC, CS94, ECMA, }, },
+	/* G? 94 with 2nd intermediate char */
+	{ CS94, 1, 3, 2, -1,		4, { ESC, CS94, INTERM, ECMA, }, },
+	/* G? 96 */
+	{ CS96, 1, 2, -1, -1,		3, { ESC, CS96, ECMA, }, },
+	/* G? 96 with 2nd intermediate char */
+	{ CS96, 1, 3, 2, -1,		4, { ESC, CS96, INTERM, ECMA, }, },
+	/* G? 94MULTI */
+	{ CS94MULTI, 2, 3, -1, -1,	4, { ESC, '$', CS94, ECMA, }, },
+	/* G? 96MULTI */
+	{ CS96MULTI, 2, 3, -1, -1,	4, { ESC, '$', CS96, ECMA, }, },
+	/* G? 94MULTI with version specification */
+	{ CS94MULTI, 5, 6, -1, 2,	7, { ESC, '&', ECMA, ESC, '$', CS94, ECMA, }, },
+	/* LS2/3 */
+	{ -1, -1, -1, -1, -1,		2, { ESC, 'n', }, },
+	{ -1, -1, -1, -1, -1,		2, { ESC, 'o', }, },
+	/* LS1/2/3R */
+	{ -1, -1, -1, -1, -1,		2, { ESC, '~', }, },
+	{ -1, -1, -1, -1, -1,		2, { ESC, /*{*/ '}', }, },
+	{ -1, -1, -1, -1, -1,		2, { ESC, '|', }, },
+	/* SS2/3 */
+	{ -1, -1, -1, -1, -1,		2, { ESC, 'N', }, },
+	{ -1, -1, -1, -1, -1,		2, { ESC, 'O', }, },
+	/* end of records */
+	{ 0, }
+};
+
+static int
+seqmatch(s, n, sp)
+	const char *s;
+	size_t n;
+	const struct seqtable *sp;
+{
+	const int *p;
+
+	p = sp->chars;
+	while (p - sp->chars < n && p - sp->chars < sp->len) {
+		switch (*p) {
+		case ECMA:
+			if (!isecma(*s))
+				goto terminate;
+			break;
+		case OECMA:
+			if (*s && strchr("@AB", *s))
+				break;
+			else
+				goto terminate;
+		case INTERM:
+			if (!isinterm(*s))
+				goto terminate;
+			break;
+		case CS94:
+			if (*s && strchr("()*+", *s))
+				break;
+			else
+				goto terminate;
+		case CS96:
+			if (*s && strchr(",-./", *s))
+				break;
+			else
+				goto terminate;
+		default:
+			if (*s != *p)
+				goto terminate;
+			break;
+		}
+
+		p++;
+		s++;
+	}
+
+terminate:
+	return p - sp->chars;
+}
+
 rune_t
 _ISO2022_sgetrune(rl, string, n, result, state)
 	_RuneLocale *rl;
@@ -355,121 +453,78 @@ _ISO2022_sgetrune(rl, string, n, result, state)
 	void *state;
 {
 	rune_t rune = 0;
-	int singlegr, singlegl;
 	int cur;
-
-	singlegr = singlegl = -1;
+	struct seqtable *sp;
+	int nmatch;
+	int i;
 
 	while (1) {
-		/* G0 94MULTI special */
-		if (3 <= n && string[0] == '\033' && string[1] == '$'
-		 && strchr("@AB", string[2])) {
-			CES(rl)->g[0].type = CS94MULTI;
-			CES(rl)->g[0].final = string[2];
-			CES(rl)->g[0].interm = '\0';
-			CES(rl)->g[0].vers = '\0';
-			string += 3;
-			continue;
-		}
-		/* G0 94MULTI special with version specification */
-		if (6 <= n && string[0] == '\033' && string[1] == '&'
-		 && isecma(string[2]) && string[3] == '\033' && string[4] == '$'
-		 && strchr("@AB", string[5])) {
-			CES(rl)->g[0].type = CS94MULTI;
-			CES(rl)->g[0].final = string[5];
-			CES(rl)->g[0].interm = '\0';
-			CES(rl)->g[0].vers = string[2];
-			string += 6;
-			continue;
-		}
-		/* G? 94 */
-		if (3 <= n && string[0] == '\033'
-		 && string[1] && strchr("()*+", string[1])
-		 && isecma(string[2])) {
-			CES(rl)->g[string[1] - '('].type = CS94;
-			CES(rl)->g[string[1] - '('].final = string[2];
-			CES(rl)->g[string[1] - '('].interm = '\0';
-			CES(rl)->g[string[1] - '('].vers = '\0';
-			string += 3;
-			continue;
-		}
-		/* G? 94 with 2nd intermediate char */
-		if (4 <= n && string[0] == '\033'
-		 && string[1] && strchr("()*+", string[1])
-		 && isinterm(string[2]) && isecma(string[3])) {
-			CES(rl)->g[string[1] - '('].type = CS94;
-			CES(rl)->g[string[1] - '('].final = string[3];
-			CES(rl)->g[string[1] - '('].interm = string[2];
-			CES(rl)->g[string[1] - '('].vers = '\0';
-			string += 4;
-			continue;
-		}
-		/* G? 96 */
-		if (3 <= n && string[0] == '\033'
-		 && string[1] && strchr(",-./", string[1])
-		 && isecma(string[2])) {
-			CES(rl)->g[string[1] - ','].type = CS96;
-			CES(rl)->g[string[1] - ','].final = string[2];
-			CES(rl)->g[string[1] - ','].interm = '\0';
-			CES(rl)->g[string[1] - ','].vers = '\0';
-			string += 3;
-			continue;
-		}
-		/* G? 96 with 2nd intermediate char */
-		if (4 <= n && string[0] == '\033'
-		 && string[1] && strchr(",-./", string[1])
-		 && isinterm(string[2]) && isecma(string[3])) {
-			CES(rl)->g[string[1] - ','].type = CS96;
-			CES(rl)->g[string[1] - ','].final = string[3];
-			CES(rl)->g[string[1] - ','].interm = string[2];
-			CES(rl)->g[string[1] - ','].vers = '\0';
-			string += 4;
-			continue;
-		}
-		/* G? 94MULTI */
-		if (4 <= n && string[0] == '\033' && string[1] == '$'
-		 && string[2] && strchr("()*+", string[2])
-		 && isecma(string[3])) {
-			CES(rl)->g[string[2] - '('].type = CS94MULTI;
-			CES(rl)->g[string[2] - '('].final = string[3];
-			CES(rl)->g[string[2] - '('].interm = '\0';
-			CES(rl)->g[string[2] - '('].vers = '\0';
-			string += 4;
-			continue;
-		}
-		/* G? 96MULTI */
-		if (4 <= n && string[0] == '\033' && string[1] == '$'
-		 && string[2] && strchr(",-./", string[2])
-		 && isecma(string[3])) {
-			CES(rl)->g[string[2] - ','].type = CS96MULTI;
-			CES(rl)->g[string[2] - ','].final = string[3];
-			CES(rl)->g[string[2] - ','].interm = '\0';
-			CES(rl)->g[string[2] - ','].vers = '\0';
-			string += 4;
-			continue;
-		}
-		/* G? 94MULTI with version specification */
-		if (7 <= n && string[0] == '\033' && string[1] == '&'
-		 && isecma(string[2]) && string[3] == '\033' && string[4] == '$'
-		 && string[5] && strchr("()*+", string[5])
-		 && isecma(string[6])) {
-			CES(rl)->g[string[5] - '('].type = CS94MULTI;
-			CES(rl)->g[string[5] - '('].final = string[6];
-			CES(rl)->g[string[5] - '('].interm = '\0';
-			CES(rl)->g[string[5] - '('].vers = string[2];
-			string += 4;
-			continue;
-		}
-
 		/* SI/SO */
 		if (1 <= n && string[0] == '\017') {
 			CES(rl)->gl = 0;
 			string++;
+			n--;
 			continue;
 		}
 		if (1 <= n && string[0] == '\016') {
 			CES(rl)->gl = 1;
 			string++;
+			n--;
+			continue;
+		}
+
+		/* SS2/3R */
+		if (1 <= n && string[0] && strchr("\217\216", string[0])) {
+			CES(rl)->singlegl = CES(rl)->singlegr =
+			    (string[0] - '\216') + 2;
+			string++;
+			n--;
+			continue;
+		}
+
+		/* eat the letter if this is not ESC */
+		if (1 <= n && string[0] != '\033')
+			break;
+
+		/* look for a perfect match from escape sequences */
+		for (sp = &seqtable[0]; sp->len; sp++) {
+			nmatch = seqmatch(string, n, sp);
+			if (sp->len == nmatch && n >= sp->len)
+				break;
+		}
+
+		if (!sp->len)
+			goto notseq;
+
+		if (sp->type != -1) {
+			if (sp->csoff == -1)
+				i = 0;
+			else {
+				switch (sp->type) {
+				case CS94:
+				case CS94MULTI:
+					i = string[sp->csoff] - '(';
+					break;
+				case CS96:
+				case CS96MULTI:
+					i = string[sp->csoff] - ',';
+					break;
+				}
+			}
+			CES(rl)->g[i].type = sp->type;
+			CES(rl)->g[i].final = '\0';
+			CES(rl)->g[i].interm = '\0';
+			CES(rl)->g[i].vers = '\0';
+			/* sp->finaloff must not be -1 */
+			if (sp->finaloff != -1)
+				CES(rl)->g[i].final = string[sp->finaloff];
+			if (sp->intermoff != -1)
+				CES(rl)->g[i].interm = string[sp->intermoff];
+			if (sp->versoff != -1)
+				CES(rl)->g[i].vers = string[sp->versoff];
+
+			string += sp->len;
+			n -= sp->len;
 			continue;
 		}
 
@@ -478,6 +533,7 @@ _ISO2022_sgetrune(rl, string, n, result, state)
 		 && string[1] && strchr("no", string[1])) {
 			CES(rl)->gl = string[1] - 'n' + 2;
 			string += 2;
+			n -= 2;
 			continue;
 		}
 
@@ -486,38 +542,76 @@ _ISO2022_sgetrune(rl, string, n, result, state)
 		 && string[1] && strchr("~}|", string[1])) {
 			CES(rl)->gr = 3 - (string[1] - '|');
 			string += 2;
+			n -= 2;
 			continue;
 		}
 
 		/* SS2/3 */
 		if (2 <= n && string[0] == '\033'
 		 && string[1] && strchr("NO", string[1])) {
-			singlegl = (string[1] - 'N') + 2;
+			CES(rl)->singlegl = (string[1] - 'N') + 2;
 			string += 2;
+			n -= 2;
 			continue;
 		}
 
-		/* SS2/3R */
-		if (1 <= n && string[0] && strchr("\217\216", string[0])) {
-			singlegl = singlegr = (string[0] - '\216') + 2;
-			string++;
-			continue;
+	notseq:
+		/*
+		 * if we've got an unknown escape sequence, eat the ESC at the
+		 * head.  otherwise, wait till full escape sequence comes.
+		 */
+		for (sp = &seqtable[0]; sp->len; sp++) {
+			nmatch = seqmatch(string, n, sp);
+			if (!nmatch)
+				continue;
+
+			/*
+			 * if we are in the middle of escape sequence,
+			 * we still need to wait for more characters to come
+			 */
+			if (n < sp->len) {
+				if (nmatch == n) {
+					if (result)
+						*result = string;
+					return (___INVALID_RUNE(rl));
+				}
+			} else {
+				if (nmatch == sp->len) {
+					/* this case should not happen */
+					goto eat;
+				}
+			}
 		}
 
 		break;
 	}
 
-	/* normal chars. */
-	if (*string & 0x80)
-		cur = (singlegr == -1) ? CES(rl)->gr : singlegr;
-	else
-		cur = (singlegl == -1) ? CES(rl)->gl : singlegl;
+eat:
+	/* no letter to eat */
+	if (n < 1) {
+		if (result)
+			*result = string;
+		return (___INVALID_RUNE(rl));
+	}
+
+	/* normal chars.  always eat C0/C1 as is. */
+	if (iscntl(*string & 0x7f))
+		cur = -1;
+	else if (*string & 0x80) {
+		cur = (CES(rl)->singlegr == -1)
+			? CES(rl)->gr : CES(rl)->singlegr;
+	} else {
+		cur = (CES(rl)->singlegl == -1)
+			? CES(rl)->gl : CES(rl)->singlegl;
+	}
 
 	if (cur == -1) {
 asis:
 		rune = *string++ & 0xff;
 		if (result)
 			*result = string;
+		/* reset single shift state */
+		CES(rl)->singlegr = CES(rl)->singlegl = -1;
 		return rune;
 	}
 
@@ -616,6 +710,8 @@ asis:
 
 	if (result)
 		*result = string;
+	/* reset single shift state */
+	CES(rl)->singlegr = CES(rl)->singlegl = -1;
 	return rune;
 }
 
@@ -689,7 +785,6 @@ _ISO2022_sputrune(rl, c, string, n, result, state)
 	char tmp[MB_LEN_MAX];
 	int target;
 	u_char mask;
-	int singlegl, singlegr;
 	int bit8;
 
 	if (!(c & ~0xff)) {
@@ -717,7 +812,6 @@ _ISO2022_sputrune(rl, c, string, n, result, state)
 	}
 	target = recommendation(rl, &cs);
 	p = tmp;
-	singlegl = singlegr = -1;
 	bit8 = CEI(rl)->flags & F_8BIT;
 
 	/* designate the charset onto the target plane(G0/1/2/3). */
@@ -782,26 +876,26 @@ planeok:
 	} else if (target == 2 && (CEI(rl)->flags & F_SS2)) {
 		*p++ = '\033';
 		*p++ = 'N';
-		singlegl = 2;
+		CES(rl)->singlegl = 2;
 	} else if (target == 3 && (CEI(rl)->flags & F_SS3)) {
 		*p++ = '\033';
 		*p++ = 'O';
-		singlegl = 3;
+		CES(rl)->singlegl = 3;
 	} else if (bit8 && target == 2 && (CEI(rl)->flags & F_SS2R)) {
 		*p++ = '\216';
 		*p++ = 'N';
-		singlegl = singlegr = 2;
+		CES(rl)->singlegl = CES(rl)->singlegr = 2;
 	} else if (bit8 && target == 3 && (CEI(rl)->flags & F_SS3R)) {
 		*p++ = '\217';
 		*p++ = 'O';
-		singlegl = singlegr = 3;
+		CES(rl)->singlegl = CES(rl)->singlegr = 3;
 	} else
 		abort();
 
 sideok:
-	if (singlegl == target)
+	if (CES(rl)->singlegl == target)
 		mask = 0x00;
-	else if (singlegr == target)
+	else if (CES(rl)->singlegr == target)
 		mask = 0x80;
 	else if (CES(rl)->gl == target)
 		mask = 0x00;
@@ -822,6 +916,9 @@ sideok:
 	}
 	while (i-- > 0)
 		*p++ = ((c >> (i << 3)) & 0x7f) | mask;
+
+	/* reset single shift state */
+	CES(rl)->singlegl = CES(rl)->singlegr = -1;
 
 	len = p - tmp;
 	if (n < len) {
@@ -858,6 +955,7 @@ _ISO2022_initstate(rl, s)
 			CES(rl)->g[i].interm = CEI(rl)->initg[i].interm;
 		}
 	}
+	CES(rl)->singlegl = CES(rl)->singlegr = -1;
 }
 
 void
