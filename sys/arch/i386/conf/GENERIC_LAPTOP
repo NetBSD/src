@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.31 2001/11/16 13:46:32 junyoung Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.32 2001/11/18 03:24:39 someya Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	32		# estimated number of users
 
@@ -589,6 +589,7 @@ ugen*	at uhub? port ?
 
 # PCI audio devices
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
@@ -641,6 +642,7 @@ opl*	at ym?
 # Audio support
 #audio*	at aria?
 audio*	at auich?
+audio*	at autri?
 audio*	at auvia?
 audio*	at clcs?
 audio*	at clct?
@@ -674,6 +676,7 @@ mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support
+midi*	at autri?		# Trident 4DWAVE MIDI port
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
 #midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
