@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.45 1995/01/03 01:31:05 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.46 1995/01/13 14:46:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1125,14 +1125,9 @@ uha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if (xs->bp)
-		flags |= SCSI_NOSLEEP;	/* just to be sure */
-	if (flags & ITSDONE) {
-		printf("%s: already done?", uha->sc_dev.dv_xname);
+	if ((flags & (ITSDONE|INUSE)) != INUSE) {
+		printf("%s: done or not in use?\n", uha->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
-	}
-	if ((flags & INUSE) == 0) {
-		printf("%s: not in use?", uha->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
 	if ((mscp = uha_get_mscp(uha, flags)) == NULL) {

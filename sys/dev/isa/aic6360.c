@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.25 1995/01/07 06:49:35 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.26 1995/01/13 14:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -957,6 +957,11 @@ aic_scsi_cmd(xs)
 	    sc_link->target));
 
 	flags = xs->flags;
+	if ((flags & (ITSDONE|INUSE)) != INUSE) {
+		printf("%s: done or not in use?\n", sc->sc_dev.dv_xname);
+		xs->flags &= ~ITSDONE;
+		xs->flags |= INUSE;
+	}
 
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
