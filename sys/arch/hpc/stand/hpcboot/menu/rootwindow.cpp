@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.7 2003/12/21 03:22:20 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.8 2003/12/23 04:41:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 				    TEXT("WARNING"),
 				    MB_ICONQUESTION | MB_YESNO) != IDYES)
 					break;
+				UpdateWindow(w);
 			}
 		boot:
 			SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
