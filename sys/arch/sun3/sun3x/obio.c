@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 1998/02/05 04:58:00 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 1998/02/08 05:07:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,16 +70,18 @@ obio_match(parent, cf, aux)
 }
 
 /*
- * We need some control over the order of attachment on OBIO,
- * and all OBIO device addresses are known and fixed foerver.
- * Therefore, this uses a list of addresses to attach.
- * XXX - Any other way to control search/attach order?
+ * We need control over the order of attachment on OBIO,
+ * so do "direct" style autoconfiguration with addresses
+ * from the list below.  OBIO addresses are fixed forever.
  *
  * Warning: This whole list is very carefully ordered!
  * In general, anything not already shown here should
  * be added at or near the end.
  */
 static int obio_alist[] = {
+
+	/* This is used by the Ethernet and SCSI drivers. */
+	OBIO_IOMMU,
 
 	/* Misc. registers - needed by many things */
 	OBIO_ENABLEREG,
@@ -103,17 +105,19 @@ static int obio_alist[] = {
 	OBIO_CLOCK1,	/* clock.c (3/470) */
 	OBIO_CLOCK2,	/* clock.c (3/80) */
 
-	/* This is used by the Ethernet and SCSI drivers. */
-	OBIO_IOMMU,
-
 	OBIO_INTEL_ETHER,
 	OBIO_LANCE_ETHER,
 
 	OBIO_EMULEX_SCSI, /* 3/80 only */
 
-	/* ...todo... */
-	OBIO_FDC,
-	OBIO_PRINTER_PORT,
+	/* Memory subsystem */
+	OBIO_PCACHE_TAGS,
+	OBIO_ECCPARREG,
+	OBIO_IOC_TAGS,
+	OBIO_IOC_FLUSH,
+
+	OBIO_FDC,	/* floppy disk (3/80) */
+	OBIO_PRINTER_PORT, /* printer port (3/80 */
 };
 #define OBIO_ALIST_LEN (sizeof(obio_alist) / \
                         sizeof(obio_alist[0]))
@@ -212,10 +216,8 @@ obio_submatch(parent, cf, aux)
 /*
  * This is our record of "interesting" OBIO mappings that
  * the PROM has left in the virtual space reserved for it.
- * Each non-null array element holds the virtual address
- * of an OBIO mapping where the OBIO address mapped is:
- *     (array_index * SAVE_INCR)
- * and the length of the mapping is one page.
+ * Each row of the array holds a virtual address and the
+ * physical address it maps to (if found).
  */
 static struct prom_map {
 	vm_offset_t pa, va;
@@ -235,16 +237,19 @@ static struct prom_map {
  * a mapping will have to be created.
  */
 caddr_t
-obio_find_mapping(int pa, int size)
+obio_find_mapping(int pa, int sz)
 {
 	int i, off;
 
-	if (size >= NBPG)
-		return (caddr_t)0;
-
 	off = pa & PGOFSET;
 	pa -= off;
+	sz += off;
 
+	/* The saved mappings are all one page long. */
+	if (sz > NBPG)
+		return (caddr_t)0;
+
+	/* Linear search for it.  The list is short. */
 	for (i = 0; i < PROM_MAP_CNT; i++) {
 		if (pa == prom_mappings[i].pa) {
 			return ((caddr_t)(prom_mappings[i].va + off));
