@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2003/11/04 14:24:25 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.151 2004/01/02 18:52:17 cl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2003/11/04 14:24:25 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2004/01/02 18:52:17 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -262,7 +262,7 @@ userret(l, pc, oticks)
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*

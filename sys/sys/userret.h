@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.2 2003/11/01 01:38:47 cl Exp $ */
+/* $NetBSD: userret.h,v 1.3 2004/01/02 18:52:17 cl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ mi_userret(struct lwp *l)
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 }
 
