@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.7 1998/09/28 17:55:21 rvb Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.8 1998/10/28 19:54:50 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,12 @@
 /*
  * HISTORY
  * $Log: coda_namecache.c,v $
+ * Revision 1.8  1998/10/28 19:54:50  rvb
+ * Venus must be passed O_CREAT flag on VOP_OPEN iff this is
+ * a creat so that we can will allow a mode 444 file to be
+ * written into.  Sync with the latest coda.h and deal with
+ * collateral damage.
+ *
  * Revision 1.7  1998/09/28 17:55:21  rvb
  * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
  * The latter are normal informational messages that are sometimes
@@ -710,7 +716,7 @@ coda_nc_purge_user(uid, dcstat)
 		return;
 
 	CODA_NC_DEBUG(CODA_NC_PURGEUSER, 
-		myprintf(("ZapDude: uid %lx\n", uid)); )
+		myprintf(("ZapDude: uid %x\n", uid)); )
 	coda_nc_stat.zapUsers++;
 
 	for (cncp = CODA_NC_LRUGET(coda_nc_lru);
