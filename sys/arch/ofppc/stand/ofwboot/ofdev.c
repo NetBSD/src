@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.1 1996/09/30 16:35:03 ws Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,12 +37,12 @@
 #include <sys/disklabel.h>
 #include <netinet/in.h>
 
-#include <stand.h>
-#include <ufs.h>
-#include <cd9660.h>
-#include <nfs.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/nfs.h>
 
-#include "ofdev.h"
+#include <powerpc/stand/ofwboot/ofdev.h>
 
 extern char bootdev[];
 
@@ -148,13 +148,14 @@ static struct fs_ops file_system_ufs = {
 	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
 };
 static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek, cd9660_stat
+	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	    cd9660_stat
 };
 static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
 };
 
-struct fs_ops file_system[2];
+struct fs_ops file_system[3];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -315,7 +316,8 @@ devopen(of, name, file)
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
-		bcopy(&file_system_cd9660, file_system + 1, sizeof file_system[0]);
+		bcopy(&file_system_cd9660, file_system + 1,
+		    sizeof file_system[0]);
 		nfsys = 2;
 		return 0;
 	}
