@@ -180,6 +180,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
+	kd->argbuf = 0;
 	kd->argv = 0;
 	kd->vmst = 0;
 	kd->vm_page_buckets = 0;
@@ -324,6 +325,8 @@ kvm_close(kd)
 		free((void *)kd->swapspc);
 	if (kd->argspc != 0)
 		free((void *)kd->argspc);
+	if (kd->argbuf != 0)
+		free((void *)kd->argbuf);
 	if (kd->argv != 0)
 		free((void *)kd->argv);
 	free((void *)kd);
