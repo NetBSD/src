@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.39 1997/03/12 21:50:15 cgd Exp $
+#	$NetBSD: ALPHA,v 1.40 1997/03/13 00:43:37 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -149,20 +149,20 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 
 # PCI devices
-#ahc*	at	pci? dev ? function ?		# AHA-[23]9xx SCSI
-#bha*	at	pci? dev ? function ?		# BusLogic [57]4X SCSI (broken)
-de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
+ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
-ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
-fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
-isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0
+ep*	at	pci? dev ? function ?		# 3COM 3c59x Ethernet (untested)
+fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
-pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
-vga*	at	pci? dev ? function ?		# PCI VGA graphics
-ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
-sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
-tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
+pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 
 # ISA/EISA bus support
 isa*	at	pceb?
@@ -184,9 +184,9 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # SCSI bus support
-#scsibus* at	ahc?
+scsibus* at	ahc?
 scsibus* at	asc?
-#scsibus* at	bha?
+scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
 
