@@ -3539,7 +3539,7 @@ tc_gen_reloc (section, fixp)
   reloc = (arelent *) xmalloc (sizeof (arelent));
   reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
 #ifdef OBJ_ELF
-  if (code == BFD_RELOC_32_GOT_PCREL)
+  if (code == BFD_RELOC_32_GOT_PCREL || code == BFD_RELOC_32_PLT_PCREL)
     *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_frag->fr_symbol);
   else
 #endif
@@ -3551,10 +3551,12 @@ tc_gen_reloc (section, fixp)
   else
     reloc->addend = 0;
 #elif defined(OBJ_ELF)
-  if (code != BFD_RELOC_32_GOT_PCREL)
-    reloc->addend = fixp->fx_offset;
-  else
-    reloc->addend = fixp->fx_addnumber;
+  reloc->addend = fixp->fx_offset;
+  if (code == BFD_RELOC_32_GOT_PCREL || code == BFD_RELOC_32_PLT_PCREL)
+    {
+      if (S_IS_DEFINED(fixp->fx_frag->fr_symbol))
+	reloc->addend -= S_GET_VALUE(fixp->fx_frag->fr_symbol);
+    }
 #else
   if (!fixp->fx_pcrel)
     {
