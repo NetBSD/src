@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.5 2002/10/02 14:26:03 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.6 2002/10/07 10:39:27 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -46,7 +46,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
 Version:	8.3.3
-Current Vers:	4.9.9/8.3.3/9.2.1
+Current Vers:	4.9.10/8.3.3/9.2.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
@@ -60,7 +60,7 @@ _res declaration differences.  DNSSEC portion is disabled.
 
 Package:	bind/resolver
 Version:	4.9.9
-Current Vers:	4.9.9/8.3.3/9.2.1
+Current Vers:	4.9.10/8.3.3/9.2.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
