@@ -1,7 +1,7 @@
-# Makefile for libdriver
+# Makefile for libbib
 
-LIB=		driver
-SRCS=		input.cc printer.cc
+LIB=		bib
+SRCS=		common.cc index.cc linear.cc search.cc map.c
 CFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
