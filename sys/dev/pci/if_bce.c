@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.6 2004/08/21 23:48:33 thorpej Exp $	 */
+/* $NetBSD: if_bce.c,v 1.7 2005/01/30 17:38:49 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -782,6 +782,12 @@ bce_rxintr(struct bce_softc *sc)
 		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;	/* MAGIC */
 
 		/*
+		 * The chip includes the CRC with every packet.  Trim
+		 * it off here.
+		 */
+		len -= ETHER_CRC_LEN;
+
+		/*
 		 * If the packet is small enough to fit in a
 		 * single header mbuf, allocate one and copy
 		 * the data into it.  This greatly reduces
@@ -815,7 +821,6 @@ bce_rxintr(struct bce_softc *sc)
 			}
 		}
 
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;
