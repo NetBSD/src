@@ -1,12 +1,12 @@
-/*	$NetBSD: umass_scsipi.c,v 1.13 2003/09/10 05:30:15 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.14 2003/09/10 05:42:18 mycroft Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and by Charles M. Hamnnum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.13 2003/09/10 05:30:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.14 2003/09/10 05:42:18 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
