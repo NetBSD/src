@@ -1,3 +1,5 @@
+/*	$NetBSD: db_dbgreg.s,v 1.2 1998/12/01 04:31:00 thorpej Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1995 Carnegie Mellon University
@@ -121,26 +123,26 @@ ENTRY(dr6)
  */
 ENTRY(dr0)
 	movl	S_ARG0, %eax
-	movl	%eax,_dr_addr
+	movl	%eax,_C_LABEL(dr_addr)
 	movl	%eax, %db0
 	movl	$0, %ecx
 	jmp	0f
 ENTRY(dr1)
 	movl	S_ARG0, %eax
-	movl	%eax,_dr_addr+1*4
+	movl	%eax,_C_LABEL(dr_addr)+1*4
 	movl	%eax, %db1
 	movl	$2, %ecx
 	jmp	0f
 ENTRY(dr2)
 	movl	S_ARG0, %eax
-	movl	%eax,_dr_addr+2*4
+	movl	%eax,_C_LABEL(dr_addr)+2*4
 	movl	%eax, %db2
 	movl	$4, %ecx
 	jmp	0f
 
 ENTRY(dr3)
 	movl	S_ARG0, %eax
-	movl	%eax,_dr_addr+3*4
+	movl	%eax,_C_LABEL(dr_addr)+3*4
 	movl	%eax, %db3
 	movl	$6, %ecx
 
@@ -149,9 +151,9 @@ ENTRY(dr3)
 	movl	%esp, %ebp
 
 	movl	%db7, %edx
-	movl	%edx,_dr_addr+4*4
+	movl	%edx,_C_LABEL(dr_addr)+4*4
 	andl	dr_msk(,%ecx,2),%edx	/* clear out new entry */
-	movl	%edx,_dr_addr+5*4
+	movl	%edx,_C_LABEL(dr_addr)+5*4
 	movzbl	B_ARG3, %eax
 	andb	$3, %al
 	shll	%cl, %eax
@@ -170,7 +172,7 @@ ENTRY(dr3)
 	orl	%eax, %edx
 
 	movl	%edx, %db7
-	movl	%edx,_dr_addr+7*4
+	movl	%edx,_C_LABEL(dr_addr)+7*4
 	movl	%edx, %eax
 	leave
 	ret
@@ -185,5 +187,3 @@ ENTRY(dr_addr)
 	.long	0,0,0,0
 	.long	0,0,0,0
 	.text
-
-
