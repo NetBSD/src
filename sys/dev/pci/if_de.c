@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.92 2000/06/28 16:08:42 mrg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.93 2000/09/28 10:29:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -272,8 +272,10 @@ tulip_txprobe(
     /*
      * Construct a LLC TEST message which will point to ourselves.
      */
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_dhost, 6);
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_shost, 6);
+    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_dhost,
+	ETHER_ADDR_LEN);
+    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_shost,
+	ETHER_ADDR_LEN);
     mtod(m, struct ether_header *)->ether_type = htons(3);
     mtod(m, unsigned char *)[14] = 0;
     mtod(m, unsigned char *)[15] = 0;
@@ -2499,7 +2501,8 @@ tulip_srom_decode(
     /*
      * Save the hardware address.
      */
-    bcopy((caddr_t) shp->sh_ieee802_address, (caddr_t) sc->tulip_enaddr, 6);
+    bcopy((caddr_t) shp->sh_ieee802_address, (caddr_t) sc->tulip_enaddr,
+	ETHER_ADDR_LEN);
     /*
      * If this is a multiple port card, add the adapter index to the last
      * byte of the hardware address.  (if it isn't multiport, adding 0
@@ -2964,7 +2967,7 @@ tulip_read_macaddr(
 	if (sc->tulip_rombuf[0] == 0 && sc->tulip_rombuf[1] == 0
 		&& sc->tulip_rombuf[2] == 0)
 	    return -4;
-	bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+	bcopy(sc->tulip_rombuf, sc->tulip_enaddr, ETHER_ADDR_LEN);
 	sc->tulip_features |= TULIP_HAVE_OKROM;
 	goto check_oui;
     } else {
@@ -3003,7 +3006,8 @@ tulip_read_macaddr(
 		    if (!tulip_srom_decode(sc))
 			return -5;
 		} else {
-		    bcopy(root_sc->tulip_enaddr, sc->tulip_enaddr, 6);
+		    bcopy(root_sc->tulip_enaddr, sc->tulip_enaddr,
+			ETHER_ADDR_LEN);
 		    sc->tulip_enaddr[5] += sc->tulip_unit - root_sc->tulip_unit;
 		}
 		/*
@@ -3037,7 +3041,7 @@ tulip_read_macaddr(
     if (bcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
 	return -2;
 
-    bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+    bcopy(sc->tulip_rombuf, sc->tulip_enaddr, ETHER_ADDR_LEN);
 
     cksum = *(u_int16_t *) &sc->tulip_enaddr[0];
     cksum *= 2;
@@ -4791,7 +4795,7 @@ tulip_ifioctl(
 	case SIOCGIFADDR: {
 	    bcopy((caddr_t) sc->tulip_enaddr,
 		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		  6);
+		  ETHER_ADDR_LEN);
 	    break;
 	}
 
