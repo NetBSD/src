@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.32 1996/05/29 06:05:05 mhitch Exp $
+#	$NetBSD: files.pmax,v 1.33 1996/09/30 08:11:23 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -73,13 +73,19 @@ attach oldscsibus at oldscsi
 
 # asc:  system-slot or turbochannel-option SCSI interface
 device asc: oldscsi,scsi
-attach asc at ioasic, tc
+attach asc at ioasic with asc_ioasic
+file	dev/tc/asc_ioasic.c		asc_ioasic
+attach asc at tc with asc_tc
+file	dev/tc/asc_tc.c			asc_tc
+
+
 file	dev/tc/asc.c			asc needs-flag
 
 # sii:  kn01 SCSI interface 
 device sii: oldscsi,scsi
-attach sii at mainbus
 file	arch/pmax/dev/sii.c		sii needs-flag
+attach sii at mainbus with sii_ds
+file	arch/pmax/dev/sii_ds.c		sii_ds
 
 
 device	tz: tape
@@ -97,8 +103,12 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dc
-attach dc at mainbus, ioasic
-file	arch/pmax/dev/dc.c		dc needs-count
+file	arch/pmax/dev/dc.c		dc
+attach dc at ioasic with dc_ioasic
+file	arch/pmax/dev/dc_ioasic.c	dc_ioasic
+attach dc at mainbus with dc_ds
+file	arch/pmax/dev/dc_ds.c		dc_ds
+
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
 device dtop
@@ -121,9 +131,10 @@ file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
 # 3100 (pmax) onboard framebuffer
 device pm
-attach pm at mainbus
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
+attach pm at mainbus with pm_ds
+file	arch/pmax/dev/pm_ds.c		dc_ds
 
 ########################################################################
 # Turbochannel options.
