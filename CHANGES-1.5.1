@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.87 2001/06/25 16:42:59 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.88 2001/06/25 18:47:24 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5395,3 +5395,13 @@ sys/dev/pci/tga.c				1.32
 distrib/sets/lists/base/md.sparc64		1.5 via patch
 
   Update for boot block changes.
+
+sys/arch/mvme68k/conf/RAMDISK			1.4
+etc/etc.mvme68k/disktab				1.4
+distrib/mvme68k/ramdisk/Makefile		patch
+
+  Bump the miniroot size to fit larger embedded image.
+
+etc/changelist					1.19,1.22 (partial) via patch
+
+  Remove entries for pim6dd.conf and sendmail-IPv4only.cf.
