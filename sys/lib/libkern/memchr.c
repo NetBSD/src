@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $	*/
+/*	$NetBSD: memchr.c,v 1.3 1998/01/21 21:17:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)memchr.c     5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $";
+#if 0
+static char *sccsid = "@(#)memchr.c	5.6 (Berkeley) 1/26/91";
+#else
+__RCSID("$NetBSD: memchr.c,v 1.3 1998/01/21 21:17:08 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
@@ -46,7 +50,7 @@ static char *rcsid = "$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $";
 #else
 #include <lib/libkern/libkern.h>
 #define	NULL	((char *)0)
-#endif 
+#endif
 
 void *
 memchr(s, c, n)
