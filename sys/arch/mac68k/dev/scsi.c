@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.11 1995/01/15 06:27:54 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.12 1995/02/01 13:50:42 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -237,16 +237,14 @@ register volatile sci_padded_regmap_t	*regs = ncr;
 	ncr5380->sc_link.adapter_target = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
 	ncr5380->sc_link.device = &ncr5380_dev;
+	ncr5380->sc_link.openings = 1;
+#ifdef SCSIDEBUG
+	ncr5380->sc_link.flags = SDEV_DB1 | SDEV_DB2 /* | SDEV_DB3 | SDEV_DB4 */;
+#endif
 
 	printf("\n");
 
 	config_found(dev, &(ncr5380->sc_link), ncr_print);
-}
-
-static unsigned int
-ncr5380_adapter_info(struct ncr5380_data *ncr5380)
-{
-	return 1;
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
@@ -278,35 +276,20 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 
 	if ( flags & SCSI_RESET ) {
 		printf("flags & SCSIRESET.\n");
-		if ( ! ( flags & SCSI_NOSLEEP ) ) {
-			s = splbio();
-			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
-			splx(s);
-			return(SUCCESSFULLY_QUEUED);
-		} else {
-			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
-			if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-				return (COMPLETE); /* ERROR */
-			}
-			return (COMPLETE);
-		}
-	}
-	/*
-	 * OK.  Now that that's over with, let's pack up that
-	 * SCSI puppy and send it off.  If we can, we'll just
-	 * queue and go; otherwise, we'll wait for the command
-	 * to finish.
-	if ( ! ( flags & SCSI_NOSLEEP ) ) {
 		s = splbio();
-		ncr5380_send_cmd(xs);
+		ncr5380_reset_target(xs->sc_link->scsibus,
+				     xs->sc_link->target);
 		splx(s);
-		return(SUCCESSFULLY_QUEUED);
+		return(COMPLETE);
 	}
-	 */
 
+	xs->resid=0;
 	r = ncr5380_send_cmd(xs);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
+#ifdef SCSIDEBUG
+	printf("SCSI transfer done.\n");
+#endif	/* SCSIDEBUG */
 	switch(r) {
 		case COMPLETE: case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
@@ -317,17 +300,6 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 			break;
 	}
 	return r;
-/*
-	do {
-		if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-			if ( ! ( xs->flags & SCSI_SILENT ) )
-				printf("cmd fail.\n");
-			cmd_cleanup
-			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
-		}
-	} while ( ! ( xs->flags & ITSDONE ) );
-*/
 }
 
 static int
@@ -421,12 +393,13 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	int	s;
 	int	sense;
 
-/*	ncr5380_show_scsi_cmd(xs); */
+#ifdef SCSIDEBUG
+	ncr5380_show_scsi_cmd(xs);
+#endif
 	s = splbio();
 	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
-	xs->resid=0;
 	splx(s);
 	if (sense) {
 		switch (sense) {
@@ -445,7 +418,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 				return COMPLETE;
 			case 0x08:	/* Busy */
 				xs->error = XS_BUSY;
-				return TRY_AGAIN_LATER;
+				return COMPLETE;
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
 				return COMPLETE;
@@ -472,6 +445,8 @@ select_target(register volatile sci_padded_regmap_t *regs,
 	tid = 1 << tid;
 
 	regs->sci_sel_enb = 0; /*myid;	we don't want any interrupts. */
+	regs->sci_tcmd = 0;	/* Get into a harmless state. */
+	regs->sci_mode = 0;	/* Get into a harmless state. */
 
 	regs->sci_odata = myid;
 	regs->sci_mode = SCI_MODE_ARB;
