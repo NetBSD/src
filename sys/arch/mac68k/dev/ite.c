@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.30 1996/12/18 03:06:06 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.30.4.1 1997/03/12 15:08:40 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,9 +64,10 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <machine/viareg.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/viareg.h>
 
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
@@ -82,7 +83,6 @@
 #include "nubus.h"
 #include "itevar.h"
 #include "grfvar.h"
-#include "ascvar.h"
 
 #include "6x10.h"
 #define CHARWIDTH	6
@@ -155,6 +155,11 @@ static int	attr;			/* current video attribute */
 static char	tab_stops[255];		/* tab stops */
 static int	scrreg_top;		/* scroll region */
 static int	scrreg_bottom;
+
+/* Console bell parameters */
+static int	bell_freq = 1880;	/* frequency */
+static int	bell_length = 10;	/* duration */
+static int	bell_volume = 100;	/* volume */
 
 /* For polled ADB mode */
 static int	polledkey;
@@ -511,7 +516,7 @@ putc_normal(ch)
 {
 	switch (ch) {
 	case '\a':		/* Beep			 */
-		asc_ringbell();
+		mac68k_ring_bell(bell_freq, bell_length, bell_volume);
 		break;
 	case 127:		/* Delete		 */
 	case '\b':		/* Backspace		 */
@@ -997,22 +1002,31 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case ITEIOC_RINGBELL:
-		{
-			asc_ringbell();
-			return (0);
-		}
+		return mac68k_ring_bell(bell_freq, bell_length, bell_volume);
 	case ITEIOC_SETBELL:
 		{
 			struct bellparams *bp = (void *) addr;
 
-			asc_setbellparams(bp->freq, bp->len, bp->vol);
+			/* Do some sanity checks. */
+			if (bp->freq < 10 || bp->freq > 40000)
+				return (EINVAL);
+			if (bp->len < 0 || bp->len > 3600)
+				return (EINVAL);
+			if (bp->vol < 0 || bp->vol > 100)
+				return (EINVAL);
+
+			bell_freq = bp->freq;
+			bell_length = bp->len;
+			bell_volume = bp->vol;
 			return (0);
 		}
 	case ITEIOC_GETBELL:
 		{
 			struct bellparams *bp = (void *) addr;
 
-			asc_getbellparams(&bp->freq, &bp->len, &bp->vol);
+			bell_freq = bp->freq;
+			bell_length = bp->len;
+			bell_volume = bp->vol;
 			return (0);
 		}
 	}

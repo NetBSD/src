@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.6 1996/12/28 23:46:16 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.6.6.1 1997/03/12 15:08:42 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/reboot.h>
 
 #include <dev/md.h>

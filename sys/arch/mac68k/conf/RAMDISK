@@ -1,0 +1,9 @@
+#	$NetBSD: RAMDISK,v 1.10.2.2 1997/03/12 15:08:22 is Exp $
+#
+# Generic mac68k kernel with built-in RAM disk image.
+
+include	"arch/mac68k/conf/GENERIC"
+
+# Enable the hooks used for initializing the ram-disk.
+options		MEMORY_DISK_HOOKS
+options		MINIROOTSIZE=5120	# 2.5 MB

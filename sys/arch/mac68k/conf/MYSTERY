@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.10 1997/01/31 06:02:20 thorpej Exp $
+#	$NetBSD: MYSTERY,v 1.10.2.1 1997/03/12 15:08:20 is Exp $
 #
 # SPOT
 
@@ -59,7 +59,7 @@ options 	SYSVSHM,SYSVSEM,SYSVMSG
 # Mac-specific options
 options 	M68030
 options 	COMPAT_NOMID
-options 	COMPAT_SUNOS
+#options 	COMPAT_SUNOS
 options 	COMPAT_09
 options 	COMPAT_10
 options 	COMPAT_11
@@ -68,12 +68,12 @@ options 	ZS_CONSOLE_ABORT
 
 config		netbsd	root on ? type ?
 
-intvid0		at obio?	# Internal video hardware
+asc0		at obio?			# ASC/EASC audio
+intvid0		at obio?			# Internal video hardware
 
 nubus0		at mainbus?
-
-ae*		at nubus?
-macvid*		at nubus?
+ae*		at nubus?			# 8390-based Ethernet NIC
+macvid*		at nubus?			# NuBus video card
 
 # Attach grf semantics to all video hardware as it is found
 grf*		at intvid?
@@ -82,9 +82,9 @@ grf*		at macvid?
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-#ncrscsi0	at obio?		# SCSI NCR 5380
-esp0		at obio?		# SCSI NCR 53C96
-sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
+#ncrscsi0	at obio?			# SCSI NCR 5380
+esp0		at obio?			# SCSI NCR 53C96
+sbc0		at obio? flags 0x1		# MI SCSI NCR 5380
 
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives

@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.19 1997/01/31 06:13:42 thorpej Exp $
+#	$NetBSD: PUMA,v 1.19.2.1 1997/03/12 15:08:21 is Exp $
 #
 # PUMA
 
@@ -48,22 +48,24 @@ options 	COMPAT_12
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
-nubus0		at mainbus?
+asc0		at obio?			# ASC/EASC audio
 
-ae*		at nubus?
-macvid*		at nubus?
+nubus0		at mainbus?
+ae*		at nubus?			# 8390-based Ethernet NIC
+macvid*		at nubus?			# NuBus video card
 
 grf*		at macvid?
 
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-ncrscsi0	at obio?		# SCSI NCR 5380
+# Use only one of ncrscsi or sbc
+ncrscsi0	at obio?			# SCSI NCR 5380
 
 scsibus*	at scsi?
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+st*		at scsibus? target ? lun ?	# SCSI tape drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	16

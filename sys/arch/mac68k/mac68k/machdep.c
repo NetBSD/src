@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 1997/02/03 17:32:57 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130.2.1 1997/03/12 15:08:59 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -95,8 +95,9 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/extent.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -169,6 +170,10 @@ u_int32_t mac68k_vidlog;	/* logical addr */
 u_int32_t mac68k_vidphys;	/* physical addr */
 u_int32_t mac68k_vidlen;	/* mem length */
 
+/* Callback and cookie to run bell */
+int	(*mac68k_bell_callback) __P((void *, int, int, int));
+caddr_t	mac68k_bell_cookie;
+
 vm_map_t buffer_map;
 
 /*
@@ -196,9 +201,25 @@ int     physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int     safepri = PSL_LOWIPL;
 
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ *
+ * The extent maps are not static!  Machine-dependent NuBus and on-board
+ * I/O routines need access to them for bus address space allocation.
+ */
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct	extent *iomem_ex;
+static	iomem_malloc_safe;
+
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
 void		dumpsys __P((void));
+
+int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+		    int, bus_space_handle_t *));
 
 /*
  * Console initialization: called early on from main,
@@ -436,6 +457,7 @@ again:
 	/*
 	 * Configure the system.
 	 */
+	iomem_malloc_safe = 1;
 	configure();
 }
 
@@ -1424,13 +1446,11 @@ getenvvars(flag, buf)
 	/*
          * For now, we assume that the boot device is off the first controller.
          */
-	if (bootdev == 0) {
-		bootdev = (root_scsi_id << 16) | 4;
-	}
+	if (bootdev == 0)
+		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
 
-	if (boothowto == 0) {
+	if (boothowto == 0)
 		boothowto = getenv("SINGLE_USER");
-	}
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
@@ -2486,6 +2506,20 @@ mac68k_set_io_offsets(base)
 {
 	extern volatile u_char *sccA;
 
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *) base;
@@ -2860,6 +2894,36 @@ printstar(void)
 				movl sp@+,a0");
 }
 
+/*
+ * Console bell callback; modularizes the console terminal emulator
+ * and the audio system, so neither requires direct knowledge of the
+ * other.
+ */
+
+void
+mac68k_set_bell_callback(callback, cookie)
+	int (*callback) __P((void *, int, int, int));
+	void *cookie;
+{
+	mac68k_bell_callback = callback;
+	mac68k_bell_cookie = (caddr_t) cookie;
+}
+
+int
+mac68k_ring_bell(freq, length, volume)
+	int freq, length, volume;
+{
+	if (mac68k_bell_callback)
+		return ((*mac68k_bell_callback)(mac68k_bell_cookie,
+		    freq, length, volume));
+	else
+		return (ENXIO);
+}
+
+/*
+ * bus.h implementation
+ */
+
 int
 bus_space_map(t, bpa, size, cacheable, bshp)
 	bus_space_tag_t t;
@@ -2868,8 +2932,17 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-	vm_offset_t	va;
-	u_long		pa, endpa;
+	u_long pa, endpa;
+	int error;
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0));
+	if (error)
+		return (error);
 
 	pa = mac68k_trunc_page(bpa + t);
 	endpa = mac68k_round_page((bpa + t + size) - 1);
@@ -2879,18 +2952,99 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		panic("bus_space_map: overflow");
 #endif
 
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
+	}
+
+	return (error);
+}
+
+int
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+    bpap, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment, boundary;
+	int cacheable;
+	bus_addr_t *bpap;
+	bus_space_handle_t *bshp;
+{
+	u_long bpa;
+	int error;
+
+	/*
+	 * Sanity check the allocation against the extent's boundaries.
+	 */
+	if (rstart < iomem_ex->ex_start || rend > iomem_ex->ex_end)
+		panic("bus_space_alloc: bad region start/end");
+
+	/*
+	 * Do the requested allocation.
+	 */
+	error = extent_alloc_subregion(iomem_ex, rstart, rend, size, alignment,
+	    boundary, EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
+	    &bpa);
+
+	if (error)
+		return (error);
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_alloc: can't free region\n");
+		}
+	}
+
+	*bpap = bpa;
+
+	return (error);
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	u_long pa, endpa;
+	vm_offset_t va;
+
+	pa = mac68k_trunc_page(bpa);
+	endpa = mac68k_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
 	if (va == 0)
-		return 1;
-	*bshp = (caddr_t)(va + (bpa & PGOFSET));
+		return (ENOMEM);
 
-	for(; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
-				VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 		if (!cacheable)
 			pmap_changebit(pa, PG_CI, TRUE);
 	}
-	return (0);
+ 
+	return 0;
 }
 
 void
@@ -2900,6 +3054,7 @@ bus_space_unmap(t, bsh, size)
 	bus_size_t size;
 {
 	vm_offset_t	va, endva;
+	bus_addr_t bpa;
 
 	va = mac68k_trunc_page(bsh);
 	endva = mac68k_round_page((bsh + size) - 1);
@@ -2909,7 +3064,29 @@ bus_space_unmap(t, bsh, size)
 		panic("bus_space_unmap: overflow");
 #endif
 
+	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+
+	/*
+	 * Free the kernel virtual mapping.
+	 */
 	kmem_free(kernel_map, va, endva - va);
+
+	if (extent_free(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n",
+		    bpa, size);
+		printf("bus_space_unmap: can't free region\n");
+	}
+}
+
+void    
+bus_space_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	/* bus_space_unmap() does all that we need to do. */
+	bus_space_unmap(t, bsh, size);
 }
 
 int

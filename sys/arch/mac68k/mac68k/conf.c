@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40 1997/01/13 23:46:11 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.40.2.1 1997/03/12 15:08:58 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,13 +88,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
 cdev_decl(cn);
 cdev_decl(ctty);
 
@@ -139,6 +132,8 @@ cdev_decl(tun);
 dev_decl(filedesc,open);
 #include "ipfilter.h"
 cdev_decl(ipl);
+#include "asc.h"
+cdev_decl(asc);
 
 struct cdevsw	cdevsw[] =
 {
@@ -152,7 +147,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_grf_init(1,grf),		/* 10: frame buffer */
+	cdev_fb_init(NGRF,grf),		/* 10: frame buffer */
 	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
@@ -178,6 +173,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
+	cdev_audio_init(NASC,asc),	/* 36: ASC audio device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

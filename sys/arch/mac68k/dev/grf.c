@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39 1996/12/16 16:17:05 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.6.1 1997/03/12 15:08:32 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,9 @@
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
-#include <machine/grfioctl.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -361,7 +362,7 @@ grfmap(dev, addrp, p)
 		*addrp = (caddr_t) mac68k_trunc_page(mac68k_vidphys);
 	else
 		*addrp = (caddr_t) mac68k_trunc_page(
-		    NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot));
+		    NUBUS_SLOT2PA(gp->sc_slot->slot));
 
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */

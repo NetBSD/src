@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.30 1996/12/18 07:21:06 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.30.6.1 1997/03/12 15:09:01 is Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -422,17 +422,14 @@ mrg_NewPtr()
 {
 	int result = noErr;
 	u_int numbytes;
-	u_int32_t trapword;
+/*	u_int32_t trapword; */
 	caddr_t ptr;
 
-	asm("	movl	d1, %0
-		movl	d0, %1"
-		: "=g" (trapword), "=g" (numbytes) : : "d0", "d1");
+	asm("	movl	d0, %0"
+		: "=g" (numbytes) : : "d0" );
 
 #if defined(MRG_SHOWTRAPS)
-	printf("mrg: NewPtr(%d bytes, %sclear, %ssys)", numbytes,
-		TRAP_SYS(trapword) ? "" : "no ",
-		TRAP_CLEAR(trapword) ? "" : "no ");
+	printf("mrg: NewPtr(%d bytes, ? clear, ? sys)", numbytes);
 #endif
 
 		/* plus 4 for size */
@@ -447,7 +444,7 @@ mrg_NewPtr()
 #endif
 	}else{
 #if defined(MRG_SHOWTRAPS)
-		printf(" succeded = %x.\n", ptr);
+		printf(" succeded = %p.\n", ptr);
 #endif
 		*(u_int32_t *)ptr = numbytes;
 		ptr += 4;
@@ -467,7 +464,7 @@ mrg_DisposPtr()
 	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
-	printf("mrg: DisposPtr(%x)\n", ptr);
+	printf("mrg: DisposPtr(%p)\n", ptr);
 #endif
 
 	if(ptr == 0){
@@ -487,7 +484,7 @@ mrg_GetPtrSize()
 	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
-	printf("mrg: GetPtrSize(%x)\n", ptr);
+	printf("mrg: GetPtrSize(%p)\n", ptr);
 #endif
 
 	if(ptr == 0){
@@ -502,12 +499,12 @@ mrg_SetPtrSize()
 	caddr_t ptr;
 	int newbytes;
 
-	asm("	movl	a1, %0
+	asm("	movl	a0, %0
 		movl	d0, %1"
-		: "=g" (ptr), "=g" (newbytes) : : "d0", "a1");
+		: "=g" (ptr), "=g" (newbytes) : : "d0", "a0");
 
 #if defined(MRG_SHOWTRAPS)
-	printf("mrg: SetPtrSize(%x, %d) failed\n", ptr, newbytes);
+	printf("mrg: SetPtrSize(%p, %d) failed\n", ptr, newbytes);
 #endif
 
 	return(memFullErr);	/* How would I handle this, anyway? */
@@ -652,32 +649,35 @@ mrg_aline_super(struct frame *frame)
 	tron();
 #endif
 
-/* 	put trapword in d1 */
-/* 	put trapaddr in a1 */
 /* 	put a0 in a0 */
+/* 	put a1 in a1 */
 /* 	put d0 in d0 */
+/* 	put d1 in d1 */
+/*	put trapaddr in a2 */
 /* save a6 */
 /* 	call the damn routine */
 /* restore a6 */
 /* 	store d0 in d0bucket */
 /* 	store a0 in d0bucket */
-/* This will change a1,d1,d0,a0 and possibly a6 */
+/* This will change a2,a1,d1,d0,a0 and possibly a6 */
 
 	asm("
-		movl	%2, a1
-		movw	%3, d1
-		movl	%4, d0
-		movl	%5, a0
-		jbsr	a1@
+		movl	%2, d0
+		movl	%3, d1
+		movl	%4, a0
+		movl	%5, a1
+		movl	%6, a2
+		jbsr	a2@
 		movl	a0, %0
 		movl	d0, %1"
 
 		: "=g" (a0bucket), "=g" (d0bucket)
 
-		: "g" (trapaddr), "g" (trapword),
-			"m" (frame->f_regs[0]), "m" (frame->f_regs[8])
+		: "m" (frame->f_regs[0]), "m" (frame->f_regs[1]),
+		  "m" (frame->f_regs[8]), "m" (frame->f_regs[9]),
+		  "g" (trapaddr)
 
-		: "d0", "d1", "a0", "a1", "a6"
+		: "d0", "d1", "a0", "a1", "a2", "a6"
 
 	);
 
