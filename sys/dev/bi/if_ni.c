@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.11 2001/06/03 15:15:02 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.12 2001/07/18 16:51:39 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -203,7 +203,7 @@ ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
 
 	if (p)
 		*p = seg.ds_addr;
-	bzero(*v, size);
+	memset(*v, 0, size);
 }
 
 static int
@@ -453,7 +453,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	msg->nm_len = 18;
 	msg->nm_opcode2 = NI_STPTDB;
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 	ptdb->np_index = 1;
 	ptdb->np_fque = 1;
 
@@ -823,7 +823,7 @@ ni_setup(struct ni_softc *sc)
 		return; /* What to do? */
 
 	ptdb = (struct ni_ptdb *)&msg->nm_text[0];
-	bzero(ptdb, sizeof(struct ni_ptdb));
+	memset(ptdb, 0, sizeof(struct ni_ptdb));
 
 	msg->nm_opcode = BVP_MSG;
 	msg->nm_len = 18;

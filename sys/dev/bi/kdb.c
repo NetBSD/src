@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.24 2001/06/04 21:31:28 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.25 2001/07/18 16:51:39 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -190,7 +190,7 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, sc->sc_kdb,
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
 		goto err2;
 	}
-	bzero(sc->sc_kdb, sizeof(struct mscp_pack));
+	memset(sc->sc_kdb, 0, sizeof(struct mscp_pack));
 
 	ma.ma_mc = &kdb_mscp_ctlr;
 	ma.ma_type = MSCPBUS_DISK|MSCPBUS_KDB;
