@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.94 1998/10/19 12:13:57 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.95 1998/10/20 01:39:41 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.87 1998/10/19 12:11:50 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.88 1998/10/20 01:38:57 thorpej Exp 
  */
 
 /*
@@ -489,6 +489,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
+#define	PCI_VENDOR_REALTEK2	0x1211		/* Realtek Semiconductor (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
@@ -959,7 +960,10 @@
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
 
 /* Realtek (Creative Labs?) products */
-#define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK2_RT8139_2	0x1211		/* 8139 10/100 Ethernet (2nd PCI Device ID) */
 
 /* RISCom (SDL Communications, Inc?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
