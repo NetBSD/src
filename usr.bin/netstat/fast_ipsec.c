@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.1 2004/05/07 00:55:15 jonathan Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.2 2004/05/09 03:18:50 petrov Exp $");
 #endif
 #endif /* not lint*/
 
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: fast_ipsec.c,v 1.1 2004/05/07 00:55:15 jonathan Exp $");
 #include <netipsec/ipsec_var.h>
 #include <netipsec/keydb.h>
 
+#include <machine/int_fmtio.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
@@ -68,7 +70,8 @@ __RCSID("$NetBSD: fast_ipsec.c,v 1.1 2004/05/07 00:55:15 jonathan Exp $");
 void
 ipsec_switch(u_long off, char * name)
 {
-	int slen, status;
+	int status;
+	size_t slen;
 	
 	slen = 0;
 	status = sysctlbyname("net.inet.ipsec.stats", NULL, &slen, NULL, 0);
@@ -142,7 +145,8 @@ fast_ipsec_stats(u_long off, char *name)
 	struct espstat espstats;
 	struct ipcompstat ipcs;
 	struct ipipstat ipips;
-	int status, slen;
+	int status;
+	size_t slen;
 	int i;
 
 	memset(&ipsecstats, 0, sizeof(ipsecstats));
@@ -175,9 +179,9 @@ fast_ipsec_stats(u_long off, char *name)
 
 	printf("(Fast) IPsec:\n");
 
-#define	STAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%llu " fmt "\n", x)
+#define	STAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" " fmt "\n", x)
 	if (ipsecstats.ips_in_polvio+ipsecstats.ips_out_polvio)
-		printf("\t%llu policy violations: %llu input %llu output\n",
+		printf("\t%"PRIu64" policy violations: %"PRIu64" input %"PRIu64" output\n",
 		        ipsecstats.ips_in_polvio + ipsecstats.ips_out_polvio,
 			ipsecstats.ips_in_polvio, ipsecstats.ips_out_polvio);
 	STAT(ipsecstats.ips_out_nosa, "no SA found (output)");
@@ -191,7 +195,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("\n");
 	
 	printf("IPsec ah:\n");
-#define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%llu ah " fmt "\n", x)
+#define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" ah " fmt "\n", x)
 	AHSTAT(ahstats.ahs_input,   "input packets processed");
 	AHSTAT(ahstats.ahs_output,  "output packets processed");
 	AHSTAT(ahstats.ahs_hdrops,  "headers too short");
@@ -213,7 +217,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("\tah histogram:\n");
 	for (i = 0; i < AH_ALG_MAX; i++)
 		if (ahstats.ahs_hist[i])
-			printf("\t\tah packets with %s: %llu\n"
+			printf("\t\tah packets with %s: %"PRIu64"\n"
 				, algname(i, aalgs, N(aalgs))
 				, ahstats.ahs_hist[i]
 			);
@@ -223,7 +227,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("\n");
 
 	printf("IPsec esp:\n");
-#define	ESPSTAT(x,fmt) if ((x) || sflag <= 1) printf("\t%llu esp " fmt "\n", x)
+#define	ESPSTAT(x,fmt) if ((x) || sflag <= 1) printf("\t%"PRIu64" esp " fmt "\n", x)
 	ESPSTAT(espstats.esps_input,	"input packets processed");
 	ESPSTAT(espstats.esps_output,	"output packets processed");
 	ESPSTAT(espstats.esps_hdrops,	"headers too short");
@@ -245,7 +249,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("\tesp histogram:\n");
 	for (i = 0; i < ESP_ALG_MAX; i++)
 		if (espstats.esps_hist[i])
-			printf("\t\tesp packets with %s: %llu\n"
+			printf("\t\tesp packets with %s: %"PRIu64"\n"
 				, algname(i, espalgs, N(espalgs))
 				, espstats.esps_hist[i]
 			);
@@ -255,7 +259,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("IPsec ipip:\n");
 
 #define	IPIPSTAT(x,fmt) \
-	if ((x) || sflag <= 1) printf("\t%llu ipip " fmt "\n", x)
+	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipip " fmt "\n", x)
 	IPIPSTAT(ipips.ipips_ipackets,	"total input packets");
 	IPIPSTAT(ipips.ipips_opackets,	"total output packets");
 	IPIPSTAT(ipips.ipips_hdrops,	"packets too short for header length");
@@ -270,7 +274,7 @@ fast_ipsec_stats(u_long off, char *name)
 
 	printf("IPsec ipcomp:\n");
 #define	IPCOMP(x,fmt) \
-	if ((x) || sflag <= 1) printf("\t%llu ipcomp " fmt "\n", x)
+	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipcomp " fmt "\n", x)
 
 	IPCOMP(ipcs.ipcomps_hdrops,	"packets too short for header length");
 	IPCOMP(ipcs.ipcomps_nopf,	"protocol family not supported");
@@ -289,7 +293,7 @@ fast_ipsec_stats(u_long off, char *name)
 	printf("\tIPcomp histogram:\n");
 	for (i = 0; i < IPCOMP_ALG_MAX; i++)
 		if (ipcs.ipcomps_hist[i])
-			printf("\t\tIPcomp packets with %s: %llu\n"
+			printf("\t\tIPcomp packets with %s: %"PRIu64"\n"
 				, algname(i, ipcompalgs, N(ipcompalgs))
 				, ipcs.ipcomps_hist[i]
 			);
