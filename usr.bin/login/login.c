@@ -244,11 +244,7 @@ main(argc, argv)
 #else
 			if (pwd->pw_uid != 0)
 				rootlogin = 0;
-#ifdef DES
 			rval = strcmp(crypt(p, salt), pwd->pw_passwd);
-#else
-			rval = strcmp(p, pwd->pw_passwd);
-#endif
 #endif
 		}
 		bzero(p, strlen(p));
