@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.633 2003/10/14 14:59:03 wiz Exp $
+#	$NetBSD: mi,v 1.634 2003/10/18 09:10:16 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2247,6 +2247,7 @@
 ./usr/share/man/cat3/getmaxpartitions.0	comp-c-catman
 ./usr/share/man/cat3/getmaxx.0		comp-c-catman
 ./usr/share/man/cat3/getmaxy.0		comp-c-catman
+./usr/share/man/cat3/getmaxyx.0		comp-c-catman
 ./usr/share/man/cat3/getmntinfo.0	comp-c-catman
 ./usr/share/man/cat3/getmntopts.0	comp-c-catman
 ./usr/share/man/cat3/getmode.0	comp-c-catman
@@ -5702,6 +5703,7 @@
 ./usr/share/man/man3/getmaxpartitions.3		comp-c-man
 ./usr/share/man/man3/getmaxx.3		comp-c-man
 ./usr/share/man/man3/getmaxy.3		comp-c-man
+./usr/share/man/man3/getmaxyx.3		comp-c-man
 ./usr/share/man/man3/getmntinfo.3		comp-c-man
 ./usr/share/man/man3/getmntopts.3		comp-c-man
 ./usr/share/man/man3/getmode.3		comp-c-man
