@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.32 2000/05/10 00:08:03 itojun Exp $	*/
+/*	$NetBSD: fil.c,v 1.33 2000/05/11 19:46:05 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.32 2000/05/10 00:08:03 itojun Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.33 2000/05/11 19:46:05 veego Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.4 2000/04/28 15:38:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp";
 #endif
 #endif
 
@@ -1074,6 +1074,10 @@ logit:
 	 * Once we're finished return to our caller, freeing the packet if
 	 * we are dropping it (* BSD ONLY *).
 	 */
+	if ((changed == -1) && (pass & FR_PASS)) {
+		pass &= ~FR_PASS;
+		pass |= FR_BLOCK;
+	}
 #if defined(_KERNEL)
 # if !SOLARIS
 #  if !defined(linux)
@@ -1337,7 +1341,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.4 2000/04/28 15:38:32 darrenr Exp
+ * Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
