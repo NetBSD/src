@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/24 16:18:45 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/07 06:51:47 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,7 @@ LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
 
-CLEANFILES=	${PROG}.x $(PROG).map
+CLEANFILES+=	${PROG}.x $(PROG).map
 
 
 ${PROG}: $(OBJS)
