@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.8 2002/10/05 09:51:17 scw Exp $
+#	$NetBSD: files.sh5,v 1.9 2002/10/14 14:13:27 scw Exp $
 
 
 #
@@ -111,6 +111,10 @@ file	arch/sh5/pci/sh5_pci.c				sh5pci needs-flag
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+# Binary compatibility with 32-bit SH5 userland
+include "compat/netbsd32/files.netbsd32"
+file	arch/sh5/sh5/netbsd32_machdep.c		compat_netbsd32
 
 # Source files
 file	arch/sh5/sh5/autoconf.c
