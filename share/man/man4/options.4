@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.176 2002/07/05 18:33:20 mason Exp $
+.\"	$NetBSD: options.4,v 1.177 2002/07/08 10:37:04 abs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -829,6 +829,12 @@ disk, to be populated with
 .It Cd options VNODE_OP_NOINLINE
 Do not inline the VOP_*() calls in the kernel.
 On i386 GENERIC, this saves 36k of kernel text.  Useful
+for install media kernels, small memory systems and embedded systems.
+.It Cd options MALLOC_NOINLINE
+Time critical fixed size memory allocation is performed with MALLOC() and
+FREE().  Normally these expand to inline code, but with
+.Em MALLOC_NOINLINE
+these call the normal malloc() and free() functions. Useful
 for install media kernels, small memory systems and embedded systems.
 .It Cd options HZ=integer
 On ports that support it, set the system clock frequency (see
