@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 1997/05/17 16:19:50 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 1997/10/09 12:29:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -102,6 +102,9 @@ extern unsigned char _etext, _eprol;
  * First 5 arguments are specified by the PowerPC SVR4 ABI.  The
  * last argument, ps_strings, is a NetBSD extension.
  */
+void _start __P((int, char **, char **, const Obj_Entry *,
+		void (*) __P((void)), struct ps_strings *));
+
 void
 _start(argc, argv, envp, obj, cleanup, ps_strings)
 	int argc;
