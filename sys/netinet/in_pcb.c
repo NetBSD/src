@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.82 2003/06/15 02:49:33 matt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.83 2003/06/26 00:19:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.82 2003/06/15 02:49:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.83 2003/06/26 00:19:13 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -417,6 +417,8 @@ in_pcbconnect(v, nam)
 			return error;
 		}
 		INADDR_TO_IA(ifaddr->sin_addr, ia);
+		if (ia == NULL)
+			return (EADDRNOTAVAIL);
 	}
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
