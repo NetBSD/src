@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.7 2000/01/18 20:02:32 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.8 2000/01/25 01:50:12 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -9,7 +9,7 @@ maxusers	32		# estimated number of users
 
 # Pull in config fragments for kernel crypto
 prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
+include "conf/files.crypto-us"
 prefix
 
 # CPU support.  At least one is REQUIRED.
@@ -96,7 +96,7 @@ options 	COMPAT_AOUT	# binary compatibility w/ NetBSD a.out
 # File systems
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
+file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system 	NTFS		# Windows/NT file system
@@ -104,10 +104,10 @@ file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	NULLFS		# loopback file system
+file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 
@@ -491,6 +491,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
+ray*	at pcmcia? function ?		# Raytheon RayLink 802.11
 
 mhzc*	at pcmcia? function ?		# Megaherz combo cards
 com*	at mhzc?
