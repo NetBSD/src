@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.11 2000/03/30 11:27:14 augustss Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.12 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -52,10 +52,8 @@
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-
 #include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

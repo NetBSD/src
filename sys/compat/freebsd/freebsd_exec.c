@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.5 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.6 2000/06/28 15:39:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -45,7 +45,6 @@
 # include <sys/exec_elf.h>
 #endif /* EXEC_ELF32 */
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 #include <machine/freebsd_machdep.h>
 

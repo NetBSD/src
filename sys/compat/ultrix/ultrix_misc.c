@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.57 2000/04/28 12:52:52 simonb Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.58 2000/06/28 15:39:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -131,8 +131,6 @@
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-
-#include <vm/vm.h>					/* pmap declarations */
 
 #include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */

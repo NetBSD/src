@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.7 2000/03/30 11:27:14 augustss Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.8 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -50,8 +50,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.9 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.10 2000/06/28 15:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -38,7 +38,7 @@
 #include <sys/syscallargs.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
-#include <vm/vm.h>	/* XXX for <sys/sysctl.h> */
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/swap.h>
 

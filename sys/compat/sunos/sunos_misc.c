@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.104 2000/03/30 11:27:19 augustss Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.105 2000/06/28 15:39:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,6 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-
-#include <vm/vm.h>
 
 static int sunstatfs __P((struct statfs *, caddr_t));
 

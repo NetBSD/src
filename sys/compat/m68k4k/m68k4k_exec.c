@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.4 2000/04/11 04:37:49 chs Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.5 2000/06/28 15:39:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -53,8 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
 

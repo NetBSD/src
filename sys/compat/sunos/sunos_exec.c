@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.19 2000/06/06 19:04:19 soren Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.20 2000/06/28 15:39:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -45,7 +45,6 @@
 #include <sys/wait.h>
 
 #include <sys/mman.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

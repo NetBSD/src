@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.10 2000/06/26 14:21:08 mrg Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.11 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -43,8 +43,6 @@
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>
-
-#include <vm/vm.h>
 
 #ifdef SYSVSEM
 int

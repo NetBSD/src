@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.20 2000/06/06 19:04:17 soren Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.21 2000/06/28 15:39:31 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -47,8 +47,6 @@
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>

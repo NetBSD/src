@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.5 2000/06/26 14:21:08 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.6 2000/06/28 15:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -44,8 +44,6 @@
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
-
-#include <vm/vm.h>
 
 #ifdef SYSVSEM
 int

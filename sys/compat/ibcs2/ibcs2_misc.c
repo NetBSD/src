@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.47 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.48 2000/06/28 15:39:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -86,8 +86,8 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <vm/vm.h>
-#include <sys/sysctl.h>		/* must be included after vm.h */
+#include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>
 
 #if defined(__i386__)
 #include <i386/include/reg.h>

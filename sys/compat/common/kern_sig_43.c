@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.12 2000/03/30 11:27:14 augustss Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.13 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
 void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
