@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.14 2000/09/17 23:03:43 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.15 2000/09/21 17:44:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.14 2000/09/17 23:03:43 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.15 2000/09/21 17:44:34 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -287,6 +287,7 @@ cypher()
 				printf("\nYou can still carry up to %d kilogram%s\n", WEIGHT, (WEIGHT == 1 ? "." : "s."));
 			} else
 				puts("\nYou are in perfect health.");
+			wordnumber++;
 			break;
 
 		case USE:

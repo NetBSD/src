@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.8 2000/09/21 09:49:03 jsm Exp $	*/
+/*	$NetBSD: getcom.c,v 1.9 2000/09/21 17:44:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.8 2000/09/21 09:49:03 jsm Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.9 2000/09/21 17:44:34 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -78,6 +78,9 @@ getword(buf1, buf2, flag)
 	char   *buf1, *buf2;
 	int     flag;
 {
+	int cnt;
+
+	cnt = 1;
 	while (isspace(*buf1))
 		buf1++;
 	if (*buf1 != ',') {
@@ -85,23 +88,34 @@ getword(buf1, buf2, flag)
 			*buf2 = 0;
 			return (0);
 		}
-		while (*buf1 && !isspace(*buf1) && *buf1 != ',')
+		while (cnt < WORDLEN && *buf1 && !isspace(*buf1) && *buf1 != ',')
 			if (flag < 0) {
-				if (isupper(*buf1))
+				if (isupper(*buf1)) {
 					*buf2++ = tolower(*buf1++);
-				else
+					cnt++;
+				} else {
 					*buf2++ = *buf1++;
+					cnt++;
+				}
 			} else if (flag > 0) {
-				if (islower(*buf1))
+				if (islower(*buf1)) {
 					*buf2++ = toupper(*buf1++);
-				else
+					cnt++;
+				} else {
 					*buf2++ = *buf1++;
-			} else
+					cnt++;
+				}
+			} else {
 				*buf2++ = *buf1++;
+				cnt++;
+			}
+		if (cnt == WORDLEN)
+			while (*buf1 && !isspace(*buf1))
+				buf1++;
 	} else
 		*buf2++ = *buf1++;
-	*buf2 = 0;
+	*buf2 = '\0';
 	while (isspace(*buf1))
 		buf1++;
-	return (*buf1 ? buf1 : 0);
+	return (*buf1 ? buf1 : NULL);
 }

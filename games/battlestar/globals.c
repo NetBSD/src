@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.12 2000/09/17 23:03:43 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.13 2000/09/21 17:44:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.12 2000/09/17 23:03:43 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.13 2000/09/21 17:44:34 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -228,7 +228,7 @@ int     followfight = -1;
 struct room *location;
 
  /* current input line */
-char    words[NWORD][15];
+char    words[NWORD][WORDLEN];
 int     wordvalue[NWORD];
 int     wordtype[NWORD];
 int     wordcount, wordnumber;
