@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2004/01/23 03:54:54 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.30 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -65,9 +65,9 @@
  * (within reasonable limits). 
  *
  */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	1
+#define	ALIGNBYTES		(sizeof(int) - 1)
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define	ALIGNED_POINTER(p,t)	1
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
@@ -79,16 +79,16 @@
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
+#define	BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
 #define	UPAGES	2		/* pages of u-area */
-#define USPACE (UPAGES * NBPG)	/* total size of u-area */
+#define	USPACE (UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*
@@ -153,18 +153,18 @@
 /*
  * Mach derived conversion macros
  */
-#define ns532_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
-#define ns532_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
-#define ns532_btod(x)		((unsigned)(x) >> PDSHIFT)
-#define ns532_dtob(x)		((unsigned)(x) << PDSHIFT)
-#define ns532_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define ns532_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define ns532_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define ns532_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define	ns532_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
+#define	ns532_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
+#define	ns532_btod(x)		((unsigned)(x) >> PDSHIFT)
+#define	ns532_dtob(x)		((unsigned)(x) << PDSHIFT)
+#define	ns532_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define	ns532_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define	ns532_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define	ns532_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /* Macros to read and write from absolute addresses.  */
 
-#define WR_ADR(type,adr,val)	(*((volatile type *)(adr))=(val))
-#define RD_ADR(type,adr)	(*((volatile type *)(adr)))
+#define	WR_ADR(type,adr,val)	(*((volatile type *)(adr))=(val))
+#define	RD_ADR(type,adr)	(*((volatile type *)(adr)))
 
 #endif

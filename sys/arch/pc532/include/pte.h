@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2003/04/02 07:36:02 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #ifndef _NS532_PTE_H_
-#define _NS532_PTE_H_
+#define	_NS532_PTE_H_
 
 /*
  * ns32532 MMU hardware structure:
@@ -159,9 +159,9 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define	PG_N		0x00000040	/* non-cacheable */
 #define	PG_U		0x00000080	/* has been used */
 #define	PG_M		0x00000100	/* has been modified */
-#define PG_AVAIL1	0x00000200	/* ignored by hardware */
-#define PG_AVAIL2	0x00000400	/* ignored by hardware */
-#define PG_AVAIL3	0x00000800	/* ignored by hardware */
+#define	PG_AVAIL1	0x00000200	/* ignored by hardware */
+#define	PG_AVAIL2	0x00000400	/* ignored by hardware */
+#define	PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define	PG_FRAME	0xfffff000	/* page frame mask */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1994/10/14 18:27:14 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#define	_MACHINE_DISKLABEL_H_
 
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
