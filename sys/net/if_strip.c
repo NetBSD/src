@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.10 1997/05/07 04:47:15 mikel Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.11 1997/05/24 14:39:44 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ stripinit(sc)
 
 	sc->sc_buf = sc->sc_ep - SLMAX;
 	sc->sc_mp = sc->sc_buf;
-	sl_compress_init(&sc->sc_comp, -1);
+	sl_compress_init(&sc->sc_comp);
 
 	/* Initialize radio probe/reset state machine */
 	sc->sc_state = ST_DEAD;		/* assumet the worst. */
