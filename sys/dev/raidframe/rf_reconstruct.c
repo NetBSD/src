@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.5 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.5.2.1 1999/09/28 04:47:27 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -299,14 +299,14 @@ rf_ReconstructFailedDisk(raidPtr, row, col)
 		raidPtr->reconInProgress++;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		rc = rf_ReconstructFailedDiskBasic(raidPtr, row, col);
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	} else {
 		RF_ERRORMSG1("RECON: no way to reconstruct failed disk for arch %c\n",
 		    lp->parityConfig);
 		rc = EIO;
 	}
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->reconInProgress--;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
 	wakeup(&raidPtr->waitForReconCond);	/* XXX Methinks this will be
 						 * needed at some point... GO */
@@ -464,6 +464,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			RF_WAIT_COND(raidPtr->waitForReconCond, raidPtr->mutex);
 		}
 
+		raidPtr->reconInProgress++;
+
 
 		/* first look for a spare drive onto which to reconstruct 
 		   the data.  spare disk descriptors are stored in row 0. 
@@ -478,6 +480,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 			RF_ERRORMSG2("Unable to reconstruct to disk at row %d col %d: operation not supported for RF_DISTRIBUTE_SPARE\n", row, col);
 
+			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}			
@@ -513,8 +516,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			       raidPtr->Disks[row][col].devname, retcode);
 
 			/* XXX the component isn't responding properly... 
-			   must be
-			   * still dead :-( */
+			   must be still dead :-( */
+			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return(retcode);
 
@@ -525,12 +528,14 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 			if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, 
 						   proc)) != 0) {
+				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
 			}
 			retcode = VOP_IOCTL(vp, DIOCGPART, (caddr_t) & dpart,
 					    FREAD, proc->p_ucred, proc);
 			if (retcode) {
+				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
 			}
@@ -563,8 +568,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		printf("       row %d col %d -> spare at row %d col %d\n", 
 		       row, col, row, col);
 
-		raidPtr->reconInProgress++;
-
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		
 		reconDesc = AllocRaidReconDesc((void *) raidPtr, row, col, 
@@ -580,13 +583,17 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		reconDesc->reconExecTicks = 0;
 		reconDesc->maxReconExecTicks = 0;
 		rc = rf_ContinueReconstructFailedDisk(reconDesc);
+
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	} else {
 		RF_ERRORMSG1("RECON: no way to reconstruct failed disk for arch %c\n",
 			     lp->parityConfig);
 		rc = EIO;
 	}
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->reconInProgress--;
 	
 	if (!rc) {
 		/* Need to set these here, as at this point it'll be claiming
