@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.50 2003/07/28 21:33:57 matt Exp $
+#	$NetBSD: bsd.dep.mk,v 1.51 2003/07/28 23:57:24 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -25,30 +25,29 @@ DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
 		${SRCS:M*.cc}	${DPSRCS:M*.cc}		\
 		${SRCS:M*.cpp}	${DPSRCS:M*.cpp}	\
 		${SRCS:M*.cxx}	${DPSRCS:M*.cxx}
-DEPENDSRCS.dep=	${DEPENDSRCS.src:C/(.*)/\1.dep/g:S/^.dep$//}
+DEPENDSRCS.dep=	${DEPENDSRCS.src:R:S/$/.d/g}
 DEPENDSRCS=	.depend ${DEPENDSRCS.dep}
 
 .depend: ${SRCS} ${DPSRCS} ${DEPENDSRCS.dep}
 	@rm -f .depend
 	cat ${DEPENDSRCS.dep} > .depend
 
-.SUFFIXES: .c .c.dep .m .m.dep .s .s.dep .S .S.dep
-.SUFFIXES: .C .C.dep .cc .cc.dep .cpp .cpp.dep .cxx .cxx.dep
+.SUFFIXES: .d .c .m .s .S .C .cc .cpp .cxx
 
-.c.c.dep:
-	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
+.c.d:
+	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.m.m.dep:
-	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
+.m.d:
+	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.s.s.dep .S.S.dep:
-	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
+.s.d .S.d:
+	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${AINC} ${.IMPSRC}
 
-.C.C.dep .cc.cc.dep .cpp.cpp.dep .cxx.cxx.dep:
-	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
+.C.d .cc.d .cpp.d .cxx.d:
+	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
 	    ${DESTDIR}/usr/include/g++} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
