@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.5 1999/11/15 23:31:16 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.6 1999/11/20 08:34:14 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -137,17 +137,26 @@ macfb_is_console(paddr_t addr)
 }
 
 void
+macfb_clear(dc)
+	struct macfb_devconfig *dc;
+{
+	int i, rows;
+
+	/* clear the display */
+	rows = dc->dc_ht;
+	for (i = 0; rows-- > 0; i += dc->dc_rowbytes)
+		memset((u_char *)dc->dc_vaddr + dc->dc_offset + i,
+		    0, dc->dc_rowbytes);
+}
+
+void
 macfb_init(dc)
 	struct macfb_devconfig *dc;
 {
 	struct raster *rap;
 	struct rcons *rcp;
-	int i;
 
-	/* clear the display */
-	for (i = 0; i < (dc->dc_ht * dc->dc_rowbytes); i += dc->dc_rowbytes)
-		bzero((u_char *)dc->dc_vaddr + dc->dc_offset + i,
-		    dc->dc_rowbytes);
+	macfb_clear(dc);
 
 #ifdef WSDISPLAY_COMPAT_ITEFONT
 	init_itefont();
