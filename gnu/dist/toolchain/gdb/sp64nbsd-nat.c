@@ -1,4 +1,4 @@
-/* Functions specific to running gdb native on a SPARC running NetBSD
+/* Functions specific to running gdb native on a UltraSPARC running NetBSD
    Copyright 1989, 1992, 1993, 1994, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
