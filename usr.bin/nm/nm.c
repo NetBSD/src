@@ -1,6 +1,8 @@
+/*	$NetBSD: nm.c,v 1.6 1995/08/31 23:42:00 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hans Huebner.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nm.c	5.8 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: nm.c,v 1.5 1994/12/24 17:26:46 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: nm.c,v 1.6 1995/08/31 23:42:00 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
