@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.8 2000/06/25 13:32:34 simonb Exp $	*/
+/*	$NetBSD: atrun.c,v 1.9 2002/06/06 09:29:31 martin Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -62,7 +62,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.8 2000/06/25 13:32:34 simonb Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.9 2002/06/06 09:29:31 martin Exp $");
 #endif
 
 static int debug = 0;
@@ -152,8 +152,8 @@ run_file(filename, uid, gid)
 	off_t size;
 	struct passwd *pentry;
 	int fflags;
-	uid_t nuid;
-	gid_t ngid;
+	uint nuid;
+	uint ngid;
 
 	PRIV_START
 
@@ -230,7 +230,7 @@ run_file(filename, uid, gid)
 	(void)fcntl(fd_in, F_SETFD, fflags & ~FD_CLOEXEC);
 
 	(void)snprintf(fmt, sizeof(fmt),
-	    "#!/bin/sh\n# atrun uid=%%ld gid=%%ld\n# mail %%%ds %%d",
+	    "#!/bin/sh\n# atrun uid=%%u gid=%%u\n# mail %%%ds %%d",
 	    LOGIN_NAME_MAX);
 	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
