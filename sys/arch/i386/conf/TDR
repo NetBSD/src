@@ -1,7 +1,7 @@
 #
 #	TDR -- Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.20.2.1 1993/09/14 19:26:46 mycroft Exp $
+#	$Id: TDR,v 1.20.2.2 1993/09/29 05:37:27 mycroft Exp $
 #
 
 # standard options
@@ -53,59 +53,53 @@ config		netbsd root on wd0 swap on wd0
 
 include		"std.i386"
 
-#timer1 at isa? port 0x48 irq 8			# only in EISA boxes
+#timer1 at isa? port 0x48			# only in EISA boxes
 
 #console
-pc0 at isa? port 0x60 irq 1
+pc0 at isa? port 0x60
 
 #math co-processor
-npx0 at isa? port 0xf0 irq 13
+npx0 at isa? port 0xf0
 
 #serial ports
-com0 at isa? port 0x3f8 irq 4
-com1 at isa? port 0x2f8 irq 3
-#com2 at isa? port 0x3e8 irq 5
-#com3 at isa? port 0x2e8 irq 9
+com0 at isa? port 0x3f8
+com1 at isa? port 0x2f8
+#com2 at isa? port 0x3e8
+#com3 at isa? port 0x2e8
 
 #parallel ports
-#lpt0 at isa? port 0x378 irq 7
-#lpt1 at isa? port 0x278 irq 5
-#lpa0 at isa? port 0x3bc
+#lpt0 at isa? port 0x378
+#lpt1 at isa? port 0x278
+#lpt2 at isa? port 0x3bc
 
 #bus mice
-#mms0 at isa? port 0x23c irq 5			# MicroSoft InPort
-#mms0 at isa? port 0x238 irq ?
-#lms0 at isa? port 0x23c irq 5			# Logitech
-#lms0 at isa? port 0x238 irq ?
-#pms0 at isa? port 0x60 irq 5			# PS/2 auxiliary port; broken
+#mms0 at isa? port 0x23c			# MicroSoft InPort
+#mms0 at isa? port 0x238
+#lms0 at isa? port 0x23c			# Logitech
+#lms0 at isa? port 0x238
+#pms0 at isa? port 0x60				# PS/2 auxiliary port; broken
 
 #non-scsi disk controllers
-wdc0 at isa? port 0x1f0 irq 14			# MFM, RLL, IDE, ESDI
-wd0 at wdc0 drive 0
-wd1 at wdc0 drive 1
-#wdc1 at isa? port 0x170 irq 12
-#wd2 at wdc1 drive 0
-#wd3 at wdc1 drive 1
+wdc0 at isa? port 0x1f0				# MFM, RLL, IDE, ESDI
+#wdc1 at isa? port 0x170
+wd* at wdc? drive ?
 
 #non-scsi floppy controllers
-fdc0 at isa? port 0x3f0 irq 6 drq 2
-fd0 at fdc0 drive 0
-fd1 at fdc0 drive 1
-#fdc1 at isa? port 0x370 irq ? drq ?
-#fd2 at fdc1 drive 0
-#fd3 at fdc1 drive 1
+fdc0 at isa? port 0x3f0 drq 2
+#fdc1 at isa? port 0x370 drq ?
+fd* at fdc? drive ?
 
 #non-scsi tape drives
-#wt0 at isa? port 0x300 irq 5 drq 1		# QIC-02, QIC-36
+#wt0 at isa? port 0x300 drq 1			# QIC-02, QIC-36
 
 #scsi
-#aha0 at isa? port 0x330 irq 11 drq 5		# Adaptec 1542
-#aha1 at isa? port 0x334 irq ? drq ?
-#ahb0 at eisa? irq 11 drq 5			# Adaptec 1742
-#bt0 at isa? port 0x330 irq 11 drq 5		# Bustec 742
-#bt1 at isa? port 0x334 irq ? drq ?
-#uha0 at isa? port 0x330 irq 11 drq 5		# UltraStor 14f, 34f
-#wds0 at isa? port 0x350 irq 11 drq 5		# WD 7000
+#aha0 at isa? port 0x330 drq 5			# Adaptec 1542
+#aha1 at isa? port 0x334 drq ?
+#ahb0 at eisa? drq 5				# Adaptec 1742
+#bt0 at isa? port 0x330 drq 5			# Bustec 742
+#bt1 at isa? port 0x334 drq ?
+#uha0 at isa? port 0x330 drq 5			# UltraStor 14f, 34f
+#wds0 at isa? port 0x350 drq 5			# WD 7000
 
 #tg0 at scsi? target 0
 #tg* at scsi? target ?
@@ -117,13 +111,13 @@ fd1 at fdc0 drive 1
 #ch* at tg? drive ?				# SCSI autochangers
 
 #ethernet
-ed0 at isa? port 0x280 irq 9 iomem 0xd0000
-#ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
-#ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
-#ed0 at isa? port 0x300 irq 10 iomem 0xd0000	# old SMC default
-#ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
-#hp0 at isa? port 0x300 irq 5
-#is0 at isa? port 0x280 irq 10 drq 7		# IsoLAN AT 4141, IsoLink 4110
+ed0 at isa? port 0x280 iomem 0xd0000
+#ed0 at isa? port 0x300				# Novell NE1000, NE2000
+#ed0 at isa? port 0x300 iomem 0xcc000		# SMC hardware config
+#ed0 at isa? port 0x300 iomem 0xd0000		# old SMC default
+#ed0 at isa? port 0x250 iomem 0xd8000		# 3C503 default config
+#hp0 at isa? port 0x300
+#is0 at isa? port 0x280 drq 7			# IsoLAN AT 4141, IsoLink 4110
 
 #pseudo-device	fpe			# floating point emulator
 #pseudo-device	spkr			# speaker queue
