@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.51 2002/07/10 15:12:36 fredette Exp $	 */
+/*	$NetBSD: rtld.c,v 1.52 2002/08/09 10:03:08 soren Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -543,7 +543,7 @@ _rtld_die()
 
 	if (msg == NULL)
 		msg = "Fatal error";
-	xerrx(1, "%s\n", msg);
+	xerrx(1, "%s", msg);
 }
 
 static Obj_Entry *
