@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.37 2000/02/22 16:36:29 augustss Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.38 2000/06/27 05:00:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,34 +39,34 @@
 #ifndef _SYS_EXEC_ELF_H_
 #define	_SYS_EXEC_ELF_H_
 
-#include <machine/types.h>
+#include <machine/int_types.h>
 
-typedef	u_int8_t  	Elf_Byte;
+typedef	__uint8_t  	Elf_Byte;
 
-typedef	u_int32_t	Elf32_Addr;
+typedef	__uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
-typedef	u_int32_t Elf32_Off;
+typedef	__uint32_t Elf32_Off;
 #define	ELF32_FSZ_OFF	4
-typedef	int32_t   Elf32_Sword;
+typedef	__int32_t   Elf32_Sword;
 #define	ELF32_FSZ_SWORD	4
-typedef	u_int32_t Elf32_Word;
+typedef	__uint32_t Elf32_Word;
 #define	ELF32_FSZ_WORD	4
-typedef	u_int16_t Elf32_Half;
+typedef	__uint16_t Elf32_Half;
 #define	ELF32_FSZ_HALF	2
 
-typedef	u_int64_t	Elf64_Addr;
+typedef	__uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
-typedef	u_int64_t	Elf64_Off;
+typedef	__uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	int64_t		Elf64_Sword;
+typedef	__int64_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
-typedef	int32_t		Elf64_Shalf;
+typedef	__int32_t	Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
-typedef	u_int64_t	Elf64_Word;
+typedef	__uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
-typedef	u_int32_t	Elf64_Half;
+typedef	__uint32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
-typedef	u_int16_t Elf64_Quarter;
+typedef	__uint16_t	Elf64_Quarter;
 #define	ELF64_FSZ_QUARTER 2
 
 /*
@@ -567,9 +567,9 @@ typedef struct {
 #define	ELF_NOTE_GNU_NAME		"GNU\0"
 
 /* GNU-specific OS/version value stuff */
-#define	ELF_NOTE_GNU_OSMASK		(u_int32_t)0xff000000
-#define	ELF_NOTE_GNU_OSLINUX		(u_int32_t)0x01000000
-#define	ELF_NOTE_GNU_OSMACH		(u_int32_t)0x00000000
+#define	ELF_NOTE_GNU_OSMASK		(__uint32_t)0xff000000
+#define	ELF_NOTE_GNU_OSLINUX		(__uint32_t)0x01000000
+#define	ELF_NOTE_GNU_OSMACH		(__uint32_t)0x00000000
 
 #if defined(ELFSIZE)
 #define	CONCAT(x,y)	__CONCAT(x,y)
