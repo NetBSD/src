@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.129 2001/09/21 21:01:13 tv Exp $
+#	$NetBSD: Makefile,v 1.130 2001/09/22 05:37:17 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -45,7 +45,6 @@
 #   buildstartmsg: displays the start time of the build.
 #   beforeinstall: creates the distribution directories.
 #   do-force-domestic: check's that FORCE_DOMESTIC isn't set (deprecated.)
-#   do-share-mk: installs /usr/share/mk files.
 #   do-cleandir: cleans the tree.
 #   do-make-obj: creates object directories if required.
 #   do-make-tools: builds host toolchain.
@@ -64,10 +63,6 @@ MKOBJDIRS ?= no
 
 .if defined(NBUILDJOBS)
 _J= -j${NBUILDJOBS}
-.endif
-
-.if defined(DESTDIR)
-_M=-m ${DESTDIR}/usr/share/mk
 .endif
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
@@ -108,21 +103,12 @@ buildendmsg:
 	@echo -n "Build finished at: "
 	@date
 
-# If sharesrc is around, use its share/mk files to bootstrap until the
-# mk files are installed (first step of make build).  If installing to
-# DESTDIR, don't bother, since the build will fail later on anyway.
-
 beforeinstall:
 .ifndef NODISTRIBDIRS
 .ifndef DESTDIR
-.if exists(share/mk)
-	(cd ${.CURDIR}/etc && \
-	    ${MAKE} -m ${.CURDIR}/share/mk DESTDIR=/ distrib-dirs)
+	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=/ distrib-dirs)
 .else
-	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
-.endif
-.else
-	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=${DESTDIR} distrib-dirs)
+	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs)
 .endif
 .endif
 
@@ -145,7 +131,6 @@ build:
 	@${MAKE} ${_M} buildstartmsg
 	@${MAKE} ${_M} beforeinstall
 	@${MAKE} ${_M} do-force-domestic
-	@${MAKE} ${_M} do-share-mk
 	@${MAKE} ${_M} do-cleandir
 	@${MAKE} ${_M} do-make-obj
 	@${MAKE} ${_M} do-make-tools
@@ -167,11 +152,6 @@ do-force-domestic:
 	@false
 .endif
 
-do-share-mk:
-.if ${MKSHARE} != "no"
-	(cd ${.CURDIR}/share/mk && ${MAKE} install)
-.endif
-
 do-cleandir:
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
 	${MAKE} ${_J} ${_M} cleandir
@@ -180,15 +160,11 @@ do-cleandir:
 do-make-obj:
 .if ${MKOBJDIRS} != "no"
 	${MAKE} ${_J} ${_M} obj
-.if defined(USE_NEW_TOOLCHAIN)
 	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
-.endif
 .endif
 
 do-make-tools:
-.if defined(USE_NEW_TOOLCHAIN)
 	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
-.endif
 
 do-make-includes:
 .if !defined(NOINCLUDES)
@@ -229,4 +205,12 @@ includes-bin includes-games includes-libexec includes-regress \
 includes-sbin includes-usr.sbin:
 	@${TRUE}
 
+.if !exists(${.CURDIR}/share/mk)
+.BEGIN:
+	@echo 'BUILD ABORTED: share/mk does not exist, cannot run make.'
+	@false
+.endif
+
 .include <bsd.subdir.mk>
+
+_M:=	-m ${.CURDIR}/share/mk
