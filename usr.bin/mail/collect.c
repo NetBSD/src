@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)collect.c	8.2 (Berkeley) 4/19/94";
-static char rcsid[] = "$Id: collect.c,v 1.4 1994/11/28 20:03:30 jtc Exp $";
+static char rcsid[] = "$Id: collect.c,v 1.5 1995/02/08 16:15:52 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -201,6 +201,7 @@ cont:
 			shell(&linebuf[2]);
 			break;
 		case ':':
+		case '_':
 			/*
 			 * Escape to command mode, but be nice!
 			 */
@@ -256,6 +257,7 @@ cont:
 			strcpy(linebuf + 2, getdeadletter());
 			/* fall into . . . */
 		case 'r':
+		case '<':
 			/*
 			 * Invoke a file:
 			 * Search for the file name,
